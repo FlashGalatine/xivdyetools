@@ -160,7 +160,7 @@ describe('CollapsiblePanel', () => {
       panel.init();
 
       const content = query<HTMLElement>(container, '.collapsible-content');
-      expect(content?.style.maxHeight).toBe('0');
+      expect(content?.style.maxHeight).toBe('0px');
       expect(content?.style.opacity).toBe('0');
     });
   });
@@ -197,7 +197,7 @@ describe('CollapsiblePanel', () => {
 
       // Close
       click(button);
-      expect(content?.style.maxHeight).toBe('0');
+      expect(content?.style.maxHeight).toBe('0px');
 
       // Open
       click(button);

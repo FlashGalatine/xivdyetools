@@ -190,8 +190,9 @@ export async function verifyBotSignature(
 ): Promise<boolean> {
   const { maxAgeMs = 5 * 60 * 1000, clockSkewMs = 60 * 1000 } = options;
 
-  // Validate required fields
-  if (!signature || !timestamp || !userDiscordId || !userName) {
+  // Validate required fields (signature and timestamp are required;
+  // userDiscordId and userName are optional for system-level bot requests)
+  if (!signature || !timestamp) {
     return false;
   }
 
@@ -217,6 +218,6 @@ export async function verifyBotSignature(
   }
 
   // Verify the signature
-  const message = `${timestamp}:${userDiscordId}:${userName}`;
+  const message = `${timestamp}:${userDiscordId ?? ''}:${userName ?? ''}`;
   return hmacVerifyHex(message, signature, secret);
 }

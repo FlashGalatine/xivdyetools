@@ -186,13 +186,19 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
       first: async <T = unknown>() => {
         queries.push(query);
         enforceMaxHistory();
-        // Special handling for banned_users queries to prevent false ban detection
-        // Use _setBanStatus(true) to simulate a banned user in tests
-        if (query.includes('banned_users')) {
+        // Special handling for ban-check queries (SELECT 1 FROM banned_users)
+        // to prevent false ban detection in middleware.
+        // Use _setBanStatus(true) to simulate a banned user in tests.
+        // Other banned_users queries (e.g., SELECT * FROM banned_users for
+        // getActiveBan) are handled by mockFn like any other query.
+        const isBanCheckQuery =
+          query.includes('banned_users') && /SELECT\s+1\s+FROM/i.test(query);
+        if (isBanCheckQuery) {
           if (banStatus === true) {
             return { 1: 1 } as T; // User is banned
           }
-          // Default: user not banned (don't call mockFn to avoid side effects)
+          // Default: user not banned (don't call mockFn to avoid side effects
+          // from generic catch-all mocks that return non-null for all queries)
           return null;
         }
         if (mockFn) {

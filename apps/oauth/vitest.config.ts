@@ -9,7 +9,15 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       include: ['src/**/*.ts'],
-      exclude: ['src/types.ts', '**/*.test.ts', '**/*.d.ts', 'src/__tests__/mocks/**'],
+      exclude: [
+        'src/types.ts',
+        '**/*.test.ts',
+        '**/*.d.ts',
+        'src/__tests__/mocks/**',
+        // Durable Objects — not testable via vitest (requires workerd runtime)
+        'src/services/rate-limit-do.ts',
+        'src/durable-objects/**',
+      ],
       thresholds: {
         statements: 90,
         branches: 90,

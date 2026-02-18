@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { SELF, fetchWithEnv, createProductionEnv, env, createMockDB, VALID_CODE_VERIFIER } from './mocks/cloudflare-test.js';
+import { SELF, fetchWithEnv, createProductionEnv, env, createMockDB, VALID_CODE_VERIFIER, VALID_CODE_CHALLENGE } from './mocks/cloudflare-test.js';
 import { resetRateLimiter } from '../services/rate-limit.js';
 import { signState, type StateData } from '../utils/state-signing.js';
 import type { Env } from '../types.js';
@@ -75,7 +75,7 @@ describe('XIVAuth Handler', () => {
 
         it('should reject invalid code_challenge_method', async () => {
             const params = new URLSearchParams({
-                code_challenge: 'challenge123',
+                code_challenge: VALID_CODE_CHALLENGE,
                 code_challenge_method: 'plain',
             });
 
@@ -92,7 +92,7 @@ describe('XIVAuth Handler', () => {
 
         it('should accept S256 code_challenge_method', async () => {
             const params = new URLSearchParams({
-                code_challenge: 'challenge123',
+                code_challenge: VALID_CODE_CHALLENGE,
                 code_challenge_method: 'S256',
             });
 
@@ -107,7 +107,7 @@ describe('XIVAuth Handler', () => {
 
         it('should reject disallowed redirect_uri', async () => {
             const params = new URLSearchParams({
-                code_challenge: 'challenge123',
+                code_challenge: VALID_CODE_CHALLENGE,
                 redirect_uri: 'http://evil.com/callback',
             });
 
@@ -124,7 +124,7 @@ describe('XIVAuth Handler', () => {
 
         it('should allow localhost redirect_uri', async () => {
             const params = new URLSearchParams({
-                code_challenge: 'challenge123',
+                code_challenge: VALID_CODE_CHALLENGE,
                 redirect_uri: 'http://localhost:5173/auth/callback',
             });
 
@@ -137,7 +137,7 @@ describe('XIVAuth Handler', () => {
 
         it('should redirect to XIVAuth OAuth URL', async () => {
             const params = new URLSearchParams({
-                code_challenge: 'challenge123',
+                code_challenge: VALID_CODE_CHALLENGE,
             });
 
             const response = await SELF.fetch(`http://localhost/auth/xivauth?${params}`, {
@@ -151,13 +151,13 @@ describe('XIVAuth Handler', () => {
             expect(location.pathname).toBe('/oauth/authorize');
             expect(location.searchParams.get('client_id')).toBe('test-xivauth-client-id');
             expect(location.searchParams.get('response_type')).toBe('code');
-            expect(location.searchParams.get('code_challenge')).toBe('challenge123');
+            expect(location.searchParams.get('code_challenge')).toBe(VALID_CODE_CHALLENGE);
             expect(location.searchParams.get('code_challenge_method')).toBe('S256');
         });
 
         it('should include correct scopes in XIVAuth URL', async () => {
             const params = new URLSearchParams({
-                code_challenge: 'challenge123',
+                code_challenge: VALID_CODE_CHALLENGE,
             });
 
             const response = await SELF.fetch(`http://localhost/auth/xivauth?${params}`, {
@@ -174,7 +174,7 @@ describe('XIVAuth Handler', () => {
 
         it('should encode state with provider marker', async () => {
             const params = new URLSearchParams({
-                code_challenge: 'challenge123',
+                code_challenge: VALID_CODE_CHALLENGE,
                 return_path: '/settings',
             });
 
@@ -189,14 +189,14 @@ describe('XIVAuth Handler', () => {
             // Decode the signed state (format: base64url(json).signature)
             const stateData = decodeSignedState(state!);
             expect(stateData.provider).toBe('xivauth');
-            expect(stateData.code_challenge).toBe('challenge123');
+            expect(stateData.code_challenge).toBe(VALID_CODE_CHALLENGE);
             expect(stateData.return_path).toBe('/settings');
             expect(stateData.csrf).toBeTruthy();
         });
 
         it('should use default return_path when not provided', async () => {
             const params = new URLSearchParams({
-                code_challenge: 'challenge123',
+                code_challenge: VALID_CODE_CHALLENGE,
             });
 
             const response = await SELF.fetch(`http://localhost/auth/xivauth?${params}`, {
@@ -211,7 +211,7 @@ describe('XIVAuth Handler', () => {
 
         it('should use provided state for CSRF', async () => {
             const params = new URLSearchParams({
-                code_challenge: 'challenge123',
+                code_challenge: VALID_CODE_CHALLENGE,
                 state: 'my-csrf-token',
             });
 

@@ -140,18 +140,30 @@ export function createMockFetcher(config?: MockFetcherConfig): MockFetcher {
       const method = init?.method ?? (input instanceof Request ? input.method : 'GET');
       const headers: Record<string, string> = {};
 
-      // Extract headers
-      if (init?.headers) {
-        if (init.headers instanceof Headers) {
-          init.headers.forEach((value, key) => {
+      // Extract headers from init or from Request object
+      const headerSource = init?.headers ?? (input instanceof Request ? input.headers : undefined);
+      if (headerSource) {
+        if (headerSource instanceof Headers) {
+          headerSource.forEach((value, key) => {
             headers[key] = value;
           });
-        } else if (Array.isArray(init.headers)) {
-          for (const [key, value] of init.headers) {
+        } else if (Array.isArray(headerSource)) {
+          for (const [key, value] of headerSource) {
             headers[key] = value;
           }
         } else {
-          Object.assign(headers, init.headers);
+          Object.assign(headers, headerSource);
+        }
+      }
+
+      // Extract body from init or from Request object
+      let bodyText: string | undefined = init?.body?.toString();
+      if (bodyText === undefined && input instanceof Request) {
+        try {
+          const cloned = input.clone();
+          bodyText = await cloned.text() || undefined;
+        } catch {
+          // Body may have already been consumed
         }
       }
 
@@ -160,7 +172,7 @@ export function createMockFetcher(config?: MockFetcherConfig): MockFetcher {
         url,
         method,
         headers,
-        body: init?.body?.toString(),
+        body: bodyText,
         timestamp: Date.now(),
       });
 
