@@ -1,0 +1,48 @@
+{
+  "name": "@xivdyetools/crypto",
+  "version": "1.0.0",
+  "description": "Shared cryptographic utilities for the xivdyetools ecosystem",
+  "author": "XIV Dye Tools",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "type-check": "tsc --noEmit",
+    "clean": "rimraf dist",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "xivdyetools",
+    "crypto",
+    "base64url",
+    "jwt",
+    "encoding"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FlashGalatine/xivdyetools.git",
+    "directory": "packages/crypto"
+  }
+}

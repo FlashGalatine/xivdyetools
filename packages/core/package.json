@@ -1,0 +1,70 @@
+{
+  "name": "@xivdyetools/core",
+  "version": "1.16.0",
+  "description": "Core color algorithms and dye database for XIV Dye Tools",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "npm run build:version && npm run build:locales && tsc && npm run copy:locales",
+    "build:version": "tsx scripts/generate-version.ts",
+    "build:locales": "tsx scripts/build-locales.ts",
+    "copy:locales": "tsx scripts/copy-locales.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "vitest run src/__tests__/integration",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "type-check": "tsc --noEmit",
+    "docs": "typedoc",
+    "clean": "rimraf dist coverage",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "ffxiv",
+    "final-fantasy-xiv",
+    "color",
+    "dye",
+    "harmony",
+    "accessibility",
+    "colorblind",
+    "color-theory",
+    "rgb",
+    "hsv",
+    "universalis"
+  ],
+  "author": "Flash Galatine",
+  "license": "MIT",
+  "homepage": "https://github.com/FlashGalatine/xivdyetools#readme",
+  "bugs": {
+    "url": "https://github.com/FlashGalatine/xivdyetools/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FlashGalatine/xivdyetools.git",
+    "directory": "packages/core"
+  },
+  "dependencies": {
+    "@xivdyetools/logger": "workspace:*",
+    "@xivdyetools/types": "workspace:*",
+    "spectral.js": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.10",
+    "@vitest/coverage-v8": "^4.0.18",
+    "csv-parse": "^6.1.0",
+    "tsx": "^4.7.0",
+    "typedoc": "^0.28.14",
+    "typedoc-plugin-markdown": "^4.9.0",
+    "vitest": "^4.0.18",
+    "yaml": "^2.3.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

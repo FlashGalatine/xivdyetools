@@ -1,0 +1,78 @@
+{
+  "name": "@xivdyetools/rate-limiter",
+  "version": "1.3.0",
+  "description": "Shared rate limiting utilities for the xivdyetools ecosystem",
+  "author": "XIV Dye Tools",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./memory": {
+      "types": "./dist/backends/memory.d.ts",
+      "import": "./dist/backends/memory.js"
+    },
+    "./kv": {
+      "types": "./dist/backends/kv.d.ts",
+      "import": "./dist/backends/kv.js"
+    },
+    "./upstash": {
+      "types": "./dist/backends/upstash.d.ts",
+      "import": "./dist/backends/upstash.js"
+    },
+    "./presets": {
+      "types": "./dist/presets/index.d.ts",
+      "import": "./dist/presets/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "type-check": "tsc --noEmit",
+    "clean": "rimraf dist",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.36.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260207.0",
+    "vitest": "^4.0.18"
+  },
+  "peerDependencies": {
+    "@cloudflare/workers-types": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@cloudflare/workers-types": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "xivdyetools",
+    "rate-limiter",
+    "rate-limiting",
+    "cloudflare-workers",
+    "kv",
+    "upstash",
+    "redis"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FlashGalatine/xivdyetools.git",
+    "directory": "packages/rate-limiter"
+  }
+}

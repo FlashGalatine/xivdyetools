@@ -1,0 +1,82 @@
+{
+  "name": "@xivdyetools/types",
+  "version": "1.7.0",
+  "description": "Shared TypeScript type definitions for the xivdyetools ecosystem",
+  "author": "XIV Dye Tools",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./color": {
+      "types": "./dist/color/index.d.ts",
+      "import": "./dist/color/index.js"
+    },
+    "./dye": {
+      "types": "./dist/dye/index.d.ts",
+      "import": "./dist/dye/index.js"
+    },
+    "./character": {
+      "types": "./dist/character/index.d.ts",
+      "import": "./dist/character/index.js"
+    },
+    "./preset": {
+      "types": "./dist/preset/index.d.ts",
+      "import": "./dist/preset/index.js"
+    },
+    "./auth": {
+      "types": "./dist/auth/index.d.ts",
+      "import": "./dist/auth/index.js"
+    },
+    "./api": {
+      "types": "./dist/api/index.d.ts",
+      "import": "./dist/api/index.js"
+    },
+    "./error": {
+      "types": "./dist/error/index.d.ts",
+      "import": "./dist/error/index.js"
+    },
+    "./localization": {
+      "types": "./dist/localization/index.d.ts",
+      "import": "./dist/localization/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "type-check": "tsc --noEmit",
+    "clean": "rimraf dist",
+    "lint": "eslint src",
+    "prepublishOnly": "npm run clean && npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.18",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "xivdyetools",
+    "ffxiv",
+    "dyes",
+    "typescript",
+    "types"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FlashGalatine/xivdyetools.git",
+    "directory": "packages/types"
+  }
+}

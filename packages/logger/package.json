@@ -1,0 +1,62 @@
+{
+  "name": "@xivdyetools/logger",
+  "version": "1.1.2",
+  "description": "Unified logging for xivdyetools ecosystem (browser, Node.js, Cloudflare Workers)",
+  "author": "XIV Dye Tools",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/presets/browser.d.ts",
+      "import": "./dist/presets/browser.js"
+    },
+    "./worker": {
+      "types": "./dist/presets/worker.d.ts",
+      "import": "./dist/presets/worker.js"
+    },
+    "./library": {
+      "types": "./dist/presets/library.d.ts",
+      "import": "./dist/presets/library.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "type-check": "tsc --noEmit",
+    "clean": "rimraf dist coverage",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.18",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "xivdyetools",
+    "logging",
+    "logger",
+    "cloudflare-workers",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FlashGalatine/xivdyetools.git",
+    "directory": "packages/logger"
+  }
+}

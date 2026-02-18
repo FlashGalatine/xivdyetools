@@ -1,0 +1,390 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-12-05",
+  "categories": {
+    "jobs": {
+      "name": "FFXIV Jobs",
+      "description": "Color schemes inspired by job identities",
+      "icon": "⚔️"
+    },
+    "grand-companies": {
+      "name": "Grand Companies",
+      "description": "Official Grand Company colors",
+      "icon": "🏛️"
+    },
+    "seasons": {
+      "name": "Seasons",
+      "description": "Seasonal color palettes",
+      "icon": "🍂"
+    },
+    "events": {
+      "name": "FFXIV Events",
+      "description": "Colors for in-game seasonal events",
+      "icon": "🎉"
+    },
+    "aesthetics": {
+      "name": "Aesthetics",
+      "description": "General aesthetic themes",
+      "icon": "🎨"
+    },
+    "community": {
+      "name": "Community",
+      "description": "Community-submitted palettes",
+      "icon": "👥"
+    }
+  },
+  "palettes": [
+    {
+      "id": "job-rdm",
+      "name": "Red Mage",
+      "category": "jobs",
+      "description": "The crimson elegance of the Red Mage",
+      "dyes": [5738, 13115, 13117, 5729],
+      "tags": ["red mage", "rdm", "caster", "melee", "crimson"]
+    },
+    {
+      "id": "job-blm",
+      "name": "Black Mage",
+      "category": "jobs",
+      "description": "Dark arcane power",
+      "dyes": [5813, 13115, 13117],
+      "tags": ["black mage", "blm", "caster", "magic", "dark"]
+    },
+    {
+      "id": "job-whm",
+      "name": "White Mage",
+      "category": "jobs",
+      "description": "Pure healing light",
+      "dyes": [5729, 5785, 5746],
+      "tags": ["white mage", "whm", "healer", "pure", "nature"]
+    },
+    {
+      "id": "job-pld",
+      "name": "Paladin",
+      "category": "jobs",
+      "description": "Noble defender of the realm",
+      "dyes": [5801, 13116, 5729],
+      "tags": ["paladin", "pld", "tank", "holy", "knight"]
+    },
+    {
+      "id": "job-war",
+      "name": "Warrior",
+      "category": "jobs",
+      "description": "Fury of the inner beast",
+      "dyes": [5740, 5734, 5746],
+      "tags": ["warrior", "war", "tank", "rage", "beast"]
+    },
+    {
+      "id": "job-drk",
+      "name": "Dark Knight",
+      "category": "jobs",
+      "description": "Darkness within",
+      "dyes": [13115, 5809, 5742],
+      "tags": ["dark knight", "drk", "tank", "darkness", "shadow"]
+    },
+    {
+      "id": "job-gnb",
+      "name": "Gunbreaker",
+      "category": "jobs",
+      "description": "Modern gunblade warrior",
+      "dyes": [30121, 5730, 5734],
+      "tags": ["gunbreaker", "gnb", "tank", "gunblade", "modern"]
+    },
+    {
+      "id": "job-drg",
+      "name": "Dragoon",
+      "category": "jobs",
+      "description": "Azure dragoon legacy",
+      "dyes": [30120, 30116, 13116],
+      "tags": ["dragoon", "drg", "melee", "dragon", "jump"]
+    },
+    {
+      "id": "job-mnk",
+      "name": "Monk",
+      "category": "jobs",
+      "description": "Fists of enlightenment",
+      "dyes": [5763, 5744, 5764],
+      "tags": ["monk", "mnk", "melee", "martial arts", "fist"]
+    },
+    {
+      "id": "job-nin",
+      "name": "Ninja",
+      "category": "jobs",
+      "description": "Shadow assassin",
+      "dyes": [13115, 5742, 5809],
+      "tags": ["ninja", "nin", "melee", "shadow", "stealth"]
+    },
+    {
+      "id": "job-sam",
+      "name": "Samurai",
+      "category": "jobs",
+      "description": "Wandering swordsman",
+      "dyes": [5740, 5729, 13115],
+      "tags": ["samurai", "sam", "melee", "sword", "bushido"]
+    },
+    {
+      "id": "job-rpr",
+      "name": "Reaper",
+      "category": "jobs",
+      "description": "Harbinger of death",
+      "dyes": [5807, 13115, 5742],
+      "tags": ["reaper", "rpr", "melee", "death", "scythe"]
+    },
+    {
+      "id": "job-vpr",
+      "name": "Viper",
+      "category": "jobs",
+      "description": "Venomous dual-blade striker",
+      "dyes": [5780, 5807, 13115],
+      "tags": ["viper", "vpr", "melee", "poison", "dual blade"]
+    },
+    {
+      "id": "job-brd",
+      "name": "Bard",
+      "category": "jobs",
+      "description": "Songs of the forest",
+      "dyes": [5774, 5746, 5764],
+      "tags": ["bard", "brd", "ranged", "music", "nature"]
+    },
+    {
+      "id": "job-mch",
+      "name": "Machinist",
+      "category": "jobs",
+      "description": "Industrial precision",
+      "dyes": [30122, 5788, 5734],
+      "tags": ["machinist", "mch", "ranged", "technology", "guns"]
+    },
+    {
+      "id": "job-dnc",
+      "name": "Dancer",
+      "category": "jobs",
+      "description": "Graceful performance",
+      "dyes": [5810, 5729, 13117],
+      "tags": ["dancer", "dnc", "ranged", "graceful", "support"]
+    },
+    {
+      "id": "job-smn",
+      "name": "Summoner",
+      "category": "jobs",
+      "description": "Primal summoner",
+      "dyes": [5786, 30118, 5746],
+      "tags": ["summoner", "smn", "caster", "primal", "egi"]
+    },
+    {
+      "id": "job-sch",
+      "name": "Scholar",
+      "category": "jobs",
+      "description": "Tactical healer",
+      "dyes": [5808, 5729, 13117],
+      "tags": ["scholar", "sch", "healer", "fairy", "tactics"]
+    },
+    {
+      "id": "job-ast",
+      "name": "Astrologian",
+      "category": "jobs",
+      "description": "Star-gazing healer",
+      "dyes": [5802, 5805, 13117],
+      "tags": ["astrologian", "ast", "healer", "stars", "cards"]
+    },
+    {
+      "id": "job-sge",
+      "name": "Sage",
+      "category": "jobs",
+      "description": "Barrier healer of science",
+      "dyes": [30123, 5788, 13116],
+      "tags": ["sage", "sge", "healer", "barrier", "nouliths"]
+    },
+    {
+      "id": "job-pct",
+      "name": "Pictomancer",
+      "category": "jobs",
+      "description": "Artistic magic",
+      "dyes": [13708, 13713, 13711, 5729],
+      "tags": ["pictomancer", "pct", "caster", "art", "paint"]
+    },
+    {
+      "id": "gc-maelstrom",
+      "name": "Maelstrom",
+      "category": "grand-companies",
+      "description": "Limsa Lominsa's naval forces",
+      "dyes": [5738, 13115, 5729],
+      "tags": ["maelstrom", "limsa lominsa", "navy", "storm"]
+    },
+    {
+      "id": "gc-adders",
+      "name": "Twin Adders",
+      "category": "grand-companies",
+      "description": "Gridania's forest guardians",
+      "dyes": [30118, 5774, 5746],
+      "tags": ["twin adders", "gridania", "forest", "nature"]
+    },
+    {
+      "id": "gc-flames",
+      "name": "Immortal Flames",
+      "category": "grand-companies",
+      "description": "Ul'dah's desert warriors",
+      "dyes": [5734, 13117, 5740],
+      "tags": ["immortal flames", "uldah", "desert", "fire"]
+    },
+    {
+      "id": "season-spring",
+      "name": "Spring",
+      "category": "seasons",
+      "description": "Fresh blooms and new beginnings",
+      "dyes": [5810, 5785, 5768],
+      "tags": ["spring", "flowers", "fresh", "bloom"]
+    },
+    {
+      "id": "season-summer",
+      "name": "Summer",
+      "category": "seasons",
+      "description": "Warm beaches and sunny skies",
+      "dyes": [5794, 30118, 5744],
+      "tags": ["summer", "beach", "sun", "warm"]
+    },
+    {
+      "id": "season-autumn",
+      "name": "Autumn",
+      "category": "seasons",
+      "description": "Falling leaves and harvest time",
+      "dyes": [5754, 5746, 5740],
+      "tags": ["autumn", "fall", "leaves", "harvest"]
+    },
+    {
+      "id": "season-winter",
+      "name": "Winter",
+      "category": "seasons",
+      "description": "Frost and snow",
+      "dyes": [5729, 5788, 13116],
+      "tags": ["winter", "snow", "frost", "cold"]
+    },
+    {
+      "id": "event-starlight",
+      "name": "Starlight Celebration",
+      "category": "events",
+      "description": "Winter holiday cheer",
+      "dyes": [5738, 5780, 5729],
+      "tags": ["starlight", "christmas", "holiday", "winter"]
+    },
+    {
+      "id": "event-moonfire",
+      "name": "Moonfire Faire",
+      "category": "events",
+      "description": "Summer festival by the sea",
+      "dyes": [5794, 5729, 13117],
+      "tags": ["moonfire", "summer", "beach", "festival"]
+    },
+    {
+      "id": "event-rising",
+      "name": "The Rising",
+      "category": "events",
+      "description": "Anniversary celebration",
+      "dyes": [13117, 5813, 30123],
+      "tags": ["rising", "anniversary", "celebration"]
+    },
+    {
+      "id": "event-hatching",
+      "name": "Hatching-tide",
+      "category": "events",
+      "description": "Spring egg festival",
+      "dyes": [13708, 13711, 5768],
+      "tags": ["hatching", "easter", "spring", "eggs"]
+    },
+    {
+      "id": "event-valentione",
+      "name": "Valentione's Day",
+      "category": "events",
+      "description": "Day of love and affection",
+      "dyes": [5738, 5810, 5729],
+      "tags": ["valentione", "valentine", "love", "romance"]
+    },
+    {
+      "id": "event-heavensturn",
+      "name": "Heavensturn",
+      "category": "events",
+      "description": "New year celebration",
+      "dyes": [5740, 13117, 13115],
+      "tags": ["heavensturn", "new year", "celebration"]
+    },
+    {
+      "id": "aesthetic-gothic",
+      "name": "Gothic",
+      "category": "aesthetics",
+      "description": "Dark and mysterious",
+      "dyes": [13115, 5809, 5742],
+      "tags": ["gothic", "dark", "mysterious", "elegant"]
+    },
+    {
+      "id": "aesthetic-pastel",
+      "name": "Pastel Dream",
+      "category": "aesthetics",
+      "description": "Soft and dreamy colors",
+      "dyes": [13708, 13713, 13711],
+      "tags": ["pastel", "soft", "dreamy", "cute"]
+    },
+    {
+      "id": "aesthetic-military",
+      "name": "Military",
+      "category": "aesthetics",
+      "description": "Tactical and rugged",
+      "dyes": [5776, 5746, 5730],
+      "tags": ["military", "tactical", "camo", "rugged"]
+    },
+    {
+      "id": "aesthetic-royal",
+      "name": "Royal",
+      "category": "aesthetics",
+      "description": "Regal and luxurious",
+      "dyes": [13117, 5813, 30123],
+      "tags": ["royal", "regal", "luxury", "noble"]
+    },
+    {
+      "id": "aesthetic-cyberpunk",
+      "name": "Cyberpunk",
+      "category": "aesthetics",
+      "description": "Neon future vibes",
+      "dyes": [48169, 30121, 13115],
+      "tags": ["cyberpunk", "neon", "future", "tech"]
+    },
+    {
+      "id": "aesthetic-nature",
+      "name": "Natural",
+      "category": "aesthetics",
+      "description": "Earth tones and greenery",
+      "dyes": [5774, 5746, 5768],
+      "tags": ["natural", "earth", "green", "organic"]
+    },
+    {
+      "id": "aesthetic-monochrome",
+      "name": "Monochrome",
+      "category": "aesthetics",
+      "description": "Classic black and white",
+      "dyes": [13115, 5730, 5729],
+      "tags": ["monochrome", "black", "white", "classic"]
+    },
+    {
+      "id": "aesthetic-ocean",
+      "name": "Ocean",
+      "category": "aesthetics",
+      "description": "Deep sea colors",
+      "dyes": [5794, 30121, 30123],
+      "tags": ["ocean", "sea", "blue", "water"]
+    },
+    {
+      "id": "aesthetic-sunset",
+      "name": "Sunset",
+      "category": "aesthetics",
+      "description": "Warm evening hues",
+      "dyes": [5744, 5741, 5805],
+      "tags": ["sunset", "warm", "orange", "evening"]
+    },
+    {
+      "id": "aesthetic-forest",
+      "name": "Forest",
+      "category": "aesthetics",
+      "description": "Deep woodland colors",
+      "dyes": [5780, 5746, 13117],
+      "tags": ["forest", "woodland", "green", "nature"]
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "description": "FFXIV character customization colors extracted from game data",
+    "gridColumns": 8
+  },
+  "files": {
+    "shared": [
+      "eye_colors",
+      "highlight_colors",
+      "lip_colors_dark",
+      "lip_colors_light",
+      "tattoo_colors",
+      "face_paint_dark",
+      "face_paint_light"
+    ],
+    "raceSpecific": [
+      "hair_colors",
+      "skin_colors"
+    ]
+  },
+  "subraces": [
+    "Midlander",
+    "Highlander",
+    "Wildwood",
+    "Duskwight",
+    "Plainsfolk",
+    "Dunesfolk",
+    "SeekerOfTheSun",
+    "KeeperOfTheMoon",
+    "SeaWolf",
+    "Hellsguard",
+    "Raen",
+    "Xaela",
+    "Helion",
+    "TheLost",
+    "Rava",
+    "Veena"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "out": "docs/api",
+  "theme": "default",
+  "includeVersion": true,
+  "readme": "README.md",
+  "name": "XIV Dye Tools Core API",
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "excludeInternal": true,
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Services",
+    "Types",
+    "Utilities",
+    "*"
+  ],
+  "searchInComments": true,
+  "sort": ["source-order"]
+}
+
+
+
+
+
+
+
+
+
+
+

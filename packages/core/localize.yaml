@@ -1,0 +1,39 @@
+en:  # English
+  Dye: "Dye"
+  General_Purpose: "General-purpose"
+  Dark: "Dark"
+  Metallic: "Metallic"
+  Pastel: "Pastel"
+  Cosmic: "Cosmic"
+  Cosmic_Exploration: "Cosmic Exploration"
+  Cosmic_Fortunes: "Cosmic Fortunes"
+ja:  # Japanese
+  Dye: "カララント:"
+  General_Purpose: null
+  Dark: "ダーク"
+  Metallic: "メタリック"
+  Pastel: "パステル"
+  Cosmic: "コスモ"
+  Cosmic_Exploration: "コスモエクスプローラー"
+  Cosmic_Fortunes: "コスモフォーチュン"
+de:  # German
+  Dye: "Farbstoff"
+  General_Purpose: null
+  Dark: "Dunkel"  # prefix. Example: Dunkelblauer is Dark Blue
+  Metallic: "Metallic"
+  Pastel: "Pastell"  # prefix. Example: Pastellblauer is Pastel Blue
+  Cosmic: "Kosmo"
+  Cosmic_Exploration: "Kosmo-Erkundung"
+  Cosmic_Fortunes: "Kosmo-Glück"
+fr:  # French
+  Dye: "Teinture"
+  General_Purpose: null
+  Dark: "foncé"  # suffix. Example: bleu foncé is Dark Blue
+  Metallic:
+    - "métallique"
+    - "cuivre jaune"
+    - "argent brillant"
+  Pastel: "pastel"
+  Cosmic: "cosmique"
+  Cosmic_Exploration: "l'exploration cosmique"
+  Cosmic_Fortunes: "Roue de la fortune cosmique"
