@@ -1,0 +1,51 @@
+name: Deploy OAuth Worker
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'apps/oauth/**'
+      - 'packages/types/**'
+      - 'packages/logger/**'
+      - 'packages/rate-limiter/**'
+      - 'packages/crypto/**'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-oauth
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy OAuth Worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build dependencies
+        run: pnpm turbo run build --filter=xivdyetools-oauth-worker...
+
+      - name: Type-check
+        run: pnpm turbo run type-check --filter=xivdyetools-oauth-worker
+
+      - name: Test
+        run: pnpm turbo run test --filter=xivdyetools-oauth-worker
+
+      - name: Deploy to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/oauth
+          command: deploy --env production

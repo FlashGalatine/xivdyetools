@@ -1,0 +1,50 @@
+name: Publish Package to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to publish'
+        required: true
+        type: choice
+        options:
+          - '@xivdyetools/types'
+          - '@xivdyetools/crypto'
+          - '@xivdyetools/logger'
+          - '@xivdyetools/auth'
+          - '@xivdyetools/rate-limiter'
+          - '@xivdyetools/core'
+          - '@xivdyetools/test-utils'
+
+jobs:
+  publish:
+    name: Publish ${{ inputs.package }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm turbo run build --filter=${{ inputs.package }}...
+
+      - name: Test
+        run: pnpm turbo run test --filter=${{ inputs.package }}
+
+      - name: Publish
+        run: pnpm --filter ${{ inputs.package }} publish --provenance --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -1,0 +1,48 @@
+name: Deploy Universalis Proxy
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'apps/universalis-proxy/**'
+      - 'packages/rate-limiter/**'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-universalis-proxy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Universalis Proxy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build dependencies
+        run: pnpm turbo run build --filter=xivdyetools-universalis-proxy...
+
+      - name: Type-check
+        run: pnpm turbo run type-check --filter=xivdyetools-universalis-proxy
+
+      - name: Test
+        run: pnpm turbo run test --filter=xivdyetools-universalis-proxy
+
+      - name: Deploy to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/universalis-proxy
+          command: deploy --env production
