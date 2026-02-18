@@ -1,8 +1,9 @@
 /**
- * Vite plugin to parse CHANGELOG-laymans.md and provide changelog data at build time
+ * Vite plugin to parse user-friendly changelog and provide changelog data at build time
  *
- * This plugin reads CHANGELOG-laymans.md (user-friendly changelog) from the project root,
- * extracts version entries with their highlights, and exposes them as a virtual module.
+ * This plugin reads a user-friendly changelog (CHANGELOG-tldr.md or CHANGELOG-laymans.md)
+ * from the project root, extracts version entries with their highlights, and exposes them
+ * as a virtual module.
  *
  * Usage in code:
  *   import { changelogEntries } from 'virtual:changelog'
@@ -10,7 +11,7 @@
  * @module vite-plugin-changelog-parser
  */
 import type { Plugin } from 'vite';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 
 // ============================================================================
@@ -134,6 +135,9 @@ function extractHighlights(sectionContent: string): string[] {
 const VIRTUAL_MODULE_ID = 'virtual:changelog';
 const RESOLVED_VIRTUAL_MODULE_ID = '\0' + VIRTUAL_MODULE_ID;
 
+/** Candidate filenames for the user-friendly changelog, in priority order */
+const CHANGELOG_CANDIDATES = ['CHANGELOG-tldr.md', 'CHANGELOG-laymans.md'] as const;
+
 export function changelogParser(): Plugin {
   let changelogPath: string;
   let cachedEntries: ChangelogEntry[] | null = null;
@@ -142,8 +146,20 @@ export function changelogParser(): Plugin {
     name: 'changelog-parser',
 
     configResolved(config) {
-      // Resolve the changelog path relative to project root (use laymans version for user-friendly content)
-      changelogPath = resolve(config.root, 'CHANGELOG-laymans.md');
+      // Resolve relative to the project directory (where package.json lives),
+      // not config.root which may point to a subdirectory (e.g. 'src')
+      const projectDir = resolve(config.root, '..');
+
+      // Try each candidate filename, use the first one that exists
+      for (const filename of CHANGELOG_CANDIDATES) {
+        const candidate = resolve(projectDir, filename);
+        if (existsSync(candidate)) {
+          changelogPath = candidate;
+          return;
+        }
+      }
+      // Fallback to first candidate (will produce a clear error on load if missing)
+      changelogPath = resolve(projectDir, CHANGELOG_CANDIDATES[0]);
     },
 
     resolveId(id) {
@@ -161,7 +177,7 @@ export function changelogParser(): Plugin {
             cachedEntries = parseChangelog(content);
             console.log(`[changelog-parser] Parsed ${cachedEntries.length} changelog entries`);
           } catch (error) {
-            console.warn('[changelog-parser] Failed to parse CHANGELOG-laymans.md:', error);
+            console.warn(`[changelog-parser] Failed to parse ${changelogPath}:`, error);
             cachedEntries = [];
           }
         }
@@ -176,7 +192,7 @@ export function changelogParser(): Plugin {
       server.watcher.add(changelogPath);
       server.watcher.on('change', (path) => {
         if (path === changelogPath) {
-          console.log('[changelog-parser] CHANGELOG-laymans.md changed, invalidating cache');
+          console.log('[changelog-parser] Changelog changed, invalidating cache');
           cachedEntries = null;
 
           // Invalidate the virtual module to trigger HMR
