@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" stroke-width="1.5" stroke="currentColor" fill="none">
+  <title>Warning</title>
+  <!-- Triangle with exclamation - warning indicator -->
+  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke-linejoin="round"/>
+  <path d="M12 9v4" stroke-linecap="round"/>
+  <circle cx="12" cy="16" r="0.5" fill="currentColor"/>
+</svg>

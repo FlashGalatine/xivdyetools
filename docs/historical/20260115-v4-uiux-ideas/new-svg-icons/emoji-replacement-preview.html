@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XIV Dye Tools - Emoji to SVG Replacement Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Glassmorphism Utilities */
+        .glass-panel {
+            background: rgba(20, 20, 25, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Grid Background Pattern */
+        body {
+            background-color: #0f0f12;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* Icon Hover Effects */
+        .icon-card {
+            transition: all 0.2s ease;
+        }
+        .icon-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        .icon-card:hover svg {
+            color: #60a5fa;
+        }
+
+        /* Category Colors */
+        .category-ui { --cat-color: #60a5fa; }
+        .category-action { --cat-color: #34d399; }
+        .category-status { --cat-color: #fbbf24; }
+        .category-preset { --cat-color: #a78bfa; }
+        .category-system { --cat-color: #f472b6; }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+        }
+
+        /* Emoji vs SVG comparison */
+        .comparison-emoji {
+            font-size: 32px;
+            line-height: 1;
+        }
+        .comparison-arrow {
+            color: #6b7280;
+        }
+
+        /* Copy button */
+        .copy-btn {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .icon-card:hover .copy-btn {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="text-gray-200 font-sans min-h-screen p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="mb-12 text-center">
+            <h1 class="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+                Emoji to SVG Replacement Guide
+            </h1>
+            <p class="text-gray-400 max-w-3xl mx-auto mb-6">
+                Comprehensive mapping of all emojis found in <code class="text-blue-400">xivdyetools-web-app</code> to professional SVG icons.
+                <br>Based on deep-dive analysis of 90+ emoji occurrences across 20+ files.
+            </p>
+            <div class="flex justify-center gap-4 text-sm">
+                <span class="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400">18 Unique Emojis</span>
+                <span class="px-3 py-1 rounded-full bg-green-500/20 text-green-400">5 Categories</span>
+                <span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400">24x24 Icons</span>
+            </div>
+        </header>
+
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
+            <div class="glass-panel rounded-xl p-4 text-center category-preset">
+                <div class="text-3xl font-bold text-purple-400">5</div>
+                <div class="text-sm text-gray-400">Preset Categories</div>
+            </div>
+            <div class="glass-panel rounded-xl p-4 text-center category-action">
+                <div class="text-3xl font-bold text-green-400">4</div>
+                <div class="text-sm text-gray-400">Action Icons</div>
+            </div>
+            <div class="glass-panel rounded-xl p-4 text-center category-status">
+                <div class="text-3xl font-bold text-yellow-400">5</div>
+                <div class="text-sm text-gray-400">Status Icons</div>
+            </div>
+            <div class="glass-panel rounded-xl p-4 text-center category-ui">
+                <div class="text-3xl font-bold text-blue-400">5</div>
+                <div class="text-sm text-gray-400">UI Elements</div>
+            </div>
+            <div class="glass-panel rounded-xl p-4 text-center category-system">
+                <div class="text-3xl font-bold text-pink-400">8</div>
+                <div class="text-sm text-gray-400">System/Debug</div>
+            </div>
+        </div>
+
+        <!-- Icons Container -->
+        <div id="icon-container" class="space-y-12"></div>
+
+        <!-- Implementation Guide -->
+        <div class="mt-16 glass-panel rounded-2xl p-8">
+            <h2 class="text-2xl font-semibold text-white mb-6 flex items-center border-b border-gray-700 pb-4">
+                <span class="text-blue-400 mr-2">📋</span> Implementation Guide
+            </h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-lg font-medium text-white mb-3">1. Add to Icon Constants</h3>
+                    <pre class="code-block rounded-lg p-4 overflow-x-auto text-gray-300">
+// src/constants/icons.ts
+export const EMOJI_ICONS = {
+  // Preset Categories
+  jobs: `&lt;svg&gt;...&lt;/svg&gt;`,
+  grandCompanies: `&lt;svg&gt;...&lt;/svg&gt;`,
+  seasons: `&lt;svg&gt;...&lt;/svg&gt;`,
+  events: `&lt;svg&gt;...&lt;/svg&gt;`,
+  community: `&lt;svg&gt;...&lt;/svg&gt;`,
+
+  // Actions
+  edit: `&lt;svg&gt;...&lt;/svg&gt;`,
+  delete: `&lt;svg&gt;...&lt;/svg&gt;`,
+  // ... etc
+};</pre>
+                </div>
+                <div>
+                    <h3 class="text-lg font-medium text-white mb-3">2. Replace in Components</h3>
+                    <pre class="code-block rounded-lg p-4 overflow-x-auto text-gray-300">
+// Before (emoji)
+{ name: 'Jobs', icon: '⚔️' }
+
+// After (SVG)
+import { EMOJI_ICONS } from '@/constants/icons';
+{ name: 'Jobs', icon: EMOJI_ICONS.jobs }</pre>
+                </div>
+            </div>
+            <div class="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                <p class="text-yellow-400 text-sm">
+                    <strong>Note:</strong> Console logging emojis (🚀, ✅, ❌, etc.) can optionally remain as-is since they're only visible in DevTools.
+                    Focus on replacing UI-visible emojis first for a professional appearance.
+                </p>
+            </div>
+        </div>
+
+        <!-- File Locations Reference -->
+        <div class="mt-8 glass-panel rounded-2xl p-8">
+            <h2 class="text-2xl font-semibold text-white mb-6 flex items-center border-b border-gray-700 pb-4">
+                <span class="text-purple-400 mr-2">📍</span> File Locations Reference
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-gray-400 border-b border-gray-700">
+                            <th class="pb-3 pr-4">Emoji</th>
+                            <th class="pb-3 pr-4">Primary Location</th>
+                            <th class="pb-3 pr-4">Usage Context</th>
+                            <th class="pb-3">Priority</th>
+                        </tr>
+                    </thead>
+                    <tbody id="file-locations" class="text-gray-300">
+                        <!-- Generated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script to Render Icons -->
+    <script>
+        // SVG Icon Definitions - All 24x24 viewBox, stroke-width 1.5
+        const emojiReplacements = [
+            {
+                category: "Preset Category Icons",
+                categoryClass: "category-preset",
+                categoryColor: "#a78bfa",
+                description: "Used in preset submission forms and category displays",
+                items: [
+                    {
+                        emoji: "⚔️",
+                        name: "Jobs",
+                        constName: "jobs",
+                        files: ["preset-submission-form.ts:41", "preset-edit-form.ts:40"],
+                        priority: "High",
+                        svg: `<path d="M14.5 17.5L3 6V3h3l11.5 11.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M13 19l6-6 2 2-6 6-2-2z" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M9.5 6.5L21 18v3h-3L6.5 9.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M5 19l6-6 2 2-6 6-2-2z" stroke="currentColor" fill="none" stroke-linejoin="round"/>`
+                    },
+                    {
+                        emoji: "🏰",
+                        name: "Grand Companies",
+                        constName: "grandCompanies",
+                        files: ["preset-submission-form.ts:42", "preset-edit-form.ts:41"],
+                        priority: "High",
+                        svg: `<path d="M4 21V11l4-4v14" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M8 21V7l4-4 4 4v14" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M16 21V11l4 4v6" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M10 21v-4h4v4" stroke="currentColor" fill="none"/>
+                              <path d="M11 10h2v2h-2z" stroke="currentColor" fill="currentColor" fill-opacity="0.3"/>
+                              <rect x="5" y="13" width="2" height="2" stroke="currentColor" fill="none"/>
+                              <rect x="17" y="15" width="2" height="2" stroke="currentColor" fill="none"/>`
+                    },
+                    {
+                        emoji: "🌸",
+                        name: "Seasons",
+                        constName: "seasons",
+                        files: ["preset-submission-form.ts:43", "preset-edit-form.ts:42"],
+                        priority: "High",
+                        svg: `<circle cx="12" cy="12" r="2" stroke="currentColor" fill="currentColor" fill-opacity="0.3"/>
+                              <path d="M12 2c0 3-2 5-2 5s2 2 2 5c0-3 2-5 2-5s-2-2-2-5z" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M22 12c-3 0-5-2-5-2s-2 2-5 2c3 0 5 2 5 2s2-2 5-2z" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M19.07 4.93c-2.12 2.12-2.12 4.24-2.12 4.24s2.12 0 4.24-2.12c-2.12-2.12-4.24-2.12-4.24-2.12s0 2.12 2.12 4.24" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M4.93 19.07c2.12-2.12 2.12-4.24 2.12-4.24s-2.12 0-4.24 2.12c2.12 2.12 4.24 2.12 4.24 2.12s0-2.12-2.12-4.24" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M4.93 4.93c2.12 2.12 4.24 2.12 4.24 2.12s0-2.12-2.12-4.24c-2.12 2.12-2.12 4.24-2.12 4.24s2.12 0 4.24-2.12" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M19.07 19.07c-2.12-2.12-4.24-2.12-4.24-2.12s0 2.12 2.12 4.24c2.12-2.12 2.12-4.24 2.12-4.24s-2.12 0-4.24 2.12" stroke="currentColor" fill="none" stroke-linejoin="round"/>`
+                    },
+                    {
+                        emoji: "🎉",
+                        name: "Events",
+                        constName: "events",
+                        files: ["preset-submission-form.ts:44", "preset-edit-form.ts:43"],
+                        priority: "High",
+                        svg: `<path d="M4 20l8-16 3 6 5-2-8 16-3-6-5 2z" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M6 10l-2-1" stroke="currentColor" stroke-linecap="round"/>
+                              <path d="M4 6l-1-2" stroke="currentColor" stroke-linecap="round"/>
+                              <path d="M10 5l1-3" stroke="currentColor" stroke-linecap="round"/>
+                              <circle cx="3" cy="3" r="1" fill="currentColor"/>
+                              <circle cx="7" cy="4" r="0.5" fill="currentColor"/>
+                              <circle cx="20" cy="8" r="1" fill="currentColor"/>
+                              <circle cx="18" cy="4" r="0.5" fill="currentColor"/>
+                              <circle cx="21" cy="12" r="0.5" fill="currentColor"/>
+                              <path d="M17 3l1 2" stroke="currentColor" stroke-linecap="round"/>
+                              <path d="M20 5l2 1" stroke="currentColor" stroke-linecap="round"/>`
+                    },
+                    {
+                        emoji: "🎨",
+                        name: "Community / Art",
+                        constName: "community",
+                        files: ["preset-submission-form.ts:46", "preset-edit-form.ts:45", "multiple tests"],
+                        priority: "High",
+                        svg: `<path d="M12 2C6.48 2 2 6.48 2 12c0 5.52 4.48 10 10 10 1.1 0 2-.9 2-2 0-.51-.2-.98-.52-1.34-.31-.35-.48-.82-.48-1.33 0-1.1.9-2 2-2h2.36c3.1 0 5.64-2.54 5.64-5.64C23 6.17 18.18 2 12 2z" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <circle cx="7.5" cy="10.5" r="1.5" fill="currentColor"/>
+                              <circle cx="10.5" cy="6.5" r="1.5" fill="currentColor"/>
+                              <circle cx="15.5" cy="6.5" r="1.5" fill="currentColor"/>
+                              <circle cx="18" cy="10" r="1.5" fill="currentColor"/>`
+                    },
+                    {
+                        emoji: "📁",
+                        name: "Folder / Category",
+                        constName: "folder",
+                        files: ["preset-edit-form.ts:244", "hybrid-preset-service.ts:198"],
+                        priority: "Medium",
+                        svg: `<path d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V9C21 7.89543 20.1046 7 19 7H12L10 5H5C3.89543 5 3 5.89543 3 7Z" stroke="currentColor" fill="none" stroke-linejoin="round"/>`
+                    }
+                ]
+            },
+            {
+                category: "Action Icons",
+                categoryClass: "category-action",
+                categoryColor: "#34d399",
+                description: "Interactive buttons and user actions",
+                items: [
+                    {
+                        emoji: "✏️",
+                        name: "Edit",
+                        constName: "edit",
+                        files: ["my-submissions-panel.ts:417", "preset-detail.ts:658"],
+                        priority: "High",
+                        svg: `<path d="M16.862 4.487l2.651 2.651M19.513 7.138L8.3 18.35l-3.8 1 1-3.8L16.712 4.338a1.875 1.875 0 012.651 0l.15.15a1.875 1.875 0 010 2.65z" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+                    },
+                    {
+                        emoji: "🗑️",
+                        name: "Delete / Trash",
+                        constName: "delete",
+                        files: ["my-submissions-panel.ts:426", "preset-detail.ts:659", "collection-service.ts:446"],
+                        priority: "High",
+                        svg: `<path d="M4 6h16M6 6v12a2 2 0 002 2h8a2 2 0 002-2V6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M10 11v5M14 11v5" stroke="currentColor" stroke-linecap="round"/>`
+                    },
+                    {
+                        emoji: "🔗",
+                        name: "Link / Share",
+                        constName: "link",
+                        files: ["preset-detail-view.ts:329", "preset-detail.ts:642"],
+                        priority: "High",
+                        svg: `<path d="M10 13a4 4 0 005.66 0l3-3a4 4 0 00-5.66-5.66l-1.5 1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M14 11a4 4 0 00-5.66 0l-3 3a4 4 0 105.66 5.66l1.5-1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+                    },
+                    {
+                        emoji: "📝",
+                        name: "Write / Submit",
+                        constName: "write",
+                        files: ["my-submissions-panel.ts:180", "preset-tool.ts:695"],
+                        priority: "Medium",
+                        svg: `<path d="M14 3v4a1 1 0 001 1h4" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M9 9h1M9 13h6M9 17h6" stroke="currentColor" stroke-linecap="round"/>`
+                    }
+                ]
+            },
+            {
+                category: "Status Icons",
+                categoryClass: "category-status",
+                categoryColor: "#fbbf24",
+                description: "State indicators and feedback",
+                items: [
+                    {
+                        emoji: "⚠️",
+                        name: "Warning",
+                        constName: "warning",
+                        files: ["preset-tool.ts:668", "empty-state.test.ts"],
+                        priority: "High",
+                        svg: `<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M12 9v4" stroke="currentColor" stroke-linecap="round"/>
+                              <circle cx="12" cy="16" r="0.5" fill="currentColor"/>`
+                    },
+                    {
+                        emoji: "🔐",
+                        name: "Locked / Auth Required",
+                        constName: "locked",
+                        files: ["preset-tool.ts:683", "auth-service.ts (multiple)"],
+                        priority: "High",
+                        svg: `<rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" fill="none"/>
+                              <path d="M8 11V7a4 4 0 018 0v4" stroke="currentColor" fill="none" stroke-linecap="round"/>
+                              <circle cx="12" cy="16" r="1" fill="currentColor"/>`
+                    },
+                    {
+                        emoji: "🔒",
+                        name: "Lock / Security",
+                        constName: "lock",
+                        files: ["image-upload-display.ts:161"],
+                        priority: "Medium",
+                        svg: `<rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" fill="none"/>
+                              <path d="M8 11V7a4 4 0 018 0v4" stroke="currentColor" fill="none"/>
+                              <circle cx="12" cy="16" r="1" fill="currentColor"/>`
+                    },
+                    {
+                        emoji: "📭",
+                        name: "Empty / No Content",
+                        constName: "empty",
+                        files: ["preset-tool.ts:705"],
+                        priority: "Medium",
+                        svg: `<path d="M3 9l9-6 9 6v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M3 9l9 6 9-6" stroke="currentColor" fill="none"/>
+                              <path d="M12 15v-3" stroke="currentColor" stroke-linecap="round" stroke-dasharray="2 2"/>`
+                    },
+                    {
+                        emoji: "✅",
+                        name: "Success / Complete",
+                        constName: "success",
+                        files: ["main.ts (multiple)", "services/index.ts (13 occurrences)"],
+                        priority: "Low (Console)",
+                        svg: `<circle cx="12" cy="12" r="9" stroke="currentColor" fill="none"/>
+                              <path d="M8 12l3 3 5-6" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+                    }
+                ]
+            },
+            {
+                category: "UI Element Icons",
+                categoryClass: "category-ui",
+                categoryColor: "#60a5fa",
+                description: "Device and interface elements",
+                items: [
+                    {
+                        emoji: "📷",
+                        name: "Camera",
+                        constName: "camera",
+                        files: ["camera-preview-modal.ts:216", "camera-service.ts (multiple)"],
+                        priority: "High",
+                        svg: `<path d="M3 7a2 2 0 012-2h3l1.5-2h5L16 5h3a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <circle cx="12" cy="11" r="4" stroke="currentColor" fill="none"/>`
+                    },
+                    {
+                        emoji: "📡",
+                        name: "Network / Connection",
+                        constName: "network",
+                        files: ["offline-banner.ts:99", "main.ts:86"],
+                        priority: "High",
+                        svg: `<path d="M12 20v-4" stroke="currentColor" stroke-linecap="round"/>
+                              <path d="M12 12V8" stroke="currentColor" stroke-linecap="round"/>
+                              <path d="M12 4l6 4-6 4-6-4 6-4z" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M6 8v4l6 4 6-4V8" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <circle cx="12" cy="20" r="2" stroke="currentColor" fill="none"/>`
+                    },
+                    {
+                        emoji: "🌐",
+                        name: "Globe / Remote",
+                        constName: "globe",
+                        files: ["hybrid-preset-service.ts:219,236", "main.ts:47"],
+                        priority: "Medium",
+                        svg: `<circle cx="12" cy="12" r="9" stroke="currentColor" fill="none"/>
+                              <path d="M3.6 9h16.8M3.6 15h16.8" stroke="currentColor"/>
+                              <path d="M12 3c2.5 3 3.5 6 3.5 9s-1 6-3.5 9c-2.5-3-3.5-6-3.5-9s1-6 3.5-9z" stroke="currentColor" fill="none"/>`
+                    },
+                    {
+                        emoji: "📚",
+                        name: "Tutorial / Guide",
+                        constName: "tutorial",
+                        files: ["tutorial-service.ts:565", "collection-service.ts:118"],
+                        priority: "Medium",
+                        svg: `<path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke="currentColor" stroke-linecap="round"/>
+                              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-linecap="round"/>`
+                    },
+                    {
+                        emoji: "🔍",
+                        name: "Search",
+                        constName: "search",
+                        files: ["base-component.ts:745", "empty-state (default icon)"],
+                        priority: "Medium",
+                        svg: `<circle cx="10" cy="10" r="6" stroke="currentColor" fill="none"/>
+                              <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-linecap="round"/>`
+                    }
+                ]
+            },
+            {
+                category: "System / Debug Icons",
+                categoryClass: "category-system",
+                categoryColor: "#f472b6",
+                description: "Console logging and development feedback (optional replacements)",
+                items: [
+                    {
+                        emoji: "🚀",
+                        name: "Startup / Launch",
+                        constName: "rocket",
+                        files: ["main.ts:33", "services/index.ts:171"],
+                        priority: "Low (Console)",
+                        svg: `<path d="M4.5 16.5L8 13l-1.5-1.5 6-6C15 3 18 2 21 2c0 3-1 6-3.5 8.5l-6 6L10 15l-3.5 3.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M14.5 9.5l-5 5" stroke="currentColor" stroke-linecap="round"/>
+                              <path d="M5 21l3-3M3 19l3-3" stroke="currentColor" stroke-linecap="round"/>`
+                    },
+                    {
+                        emoji: "❌",
+                        name: "Error / Failure",
+                        constName: "error",
+                        files: ["main.ts:95"],
+                        priority: "Low (Console)",
+                        svg: `<circle cx="12" cy="12" r="9" stroke="currentColor" fill="none"/>
+                              <path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-linecap="round"/>`
+                    },
+                    {
+                        emoji: "🔧",
+                        name: "Settings / Config",
+                        constName: "settings",
+                        files: ["main.ts:43", "tests (multiple)"],
+                        priority: "Low (Console)",
+                        svg: `<path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" fill="none"/>
+                              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1.08-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1.08 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" fill="none"/>`
+                    },
+                    {
+                        emoji: "📦",
+                        name: "Package / Storage",
+                        constName: "package",
+                        files: ["indexeddb-service.ts:99,123"],
+                        priority: "Low (Console)",
+                        svg: `<path d="M12.89 1.45l8 4A2 2 0 0122 7.24v9.53a2 2 0 01-1.11 1.79l-8 4a2 2 0 01-1.78 0l-8-4A2 2 0 012 16.76V7.24a2 2 0 011.11-1.79l8-4a2 2 0 011.78 0z" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M2.32 6.16L12 11l9.68-4.84" stroke="currentColor"/>
+                              <path d="M12 22V11" stroke="currentColor"/>`
+                    },
+                    {
+                        emoji: "📢",
+                        name: "Announcer",
+                        constName: "announcer",
+                        files: ["announcer-service.ts (multiple)"],
+                        priority: "Low (Console)",
+                        svg: `<path d="M19 5L5 12l14 7V5z" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M5 12H2" stroke="currentColor" stroke-linecap="round"/>
+                              <path d="M5 12v6a2 2 0 002 2h1" stroke="currentColor" fill="none" stroke-linecap="round"/>`
+                    },
+                    {
+                        emoji: "🍞",
+                        name: "Toast",
+                        constName: "toast",
+                        files: ["toast-service.ts (multiple)"],
+                        priority: "Low (Console)",
+                        svg: `<rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" fill="none"/>
+                              <path d="M3 10h18" stroke="currentColor"/>
+                              <path d="M8 14h8" stroke="currentColor" stroke-linecap="round"/>
+                              <path d="M10 6V4a2 2 0 014 0v2" stroke="currentColor"/>`
+                    },
+                    {
+                        emoji: "🏗️",
+                        name: "Build",
+                        constName: "build",
+                        files: ["main.ts:34"],
+                        priority: "Low (Console)",
+                        svg: `<path d="M2 20h20" stroke="currentColor" stroke-linecap="round"/>
+                              <path d="M5 20V10l7-7 7 7v10" stroke="currentColor" fill="none" stroke-linejoin="round"/>
+                              <path d="M9 20v-6h6v6" stroke="currentColor" fill="none"/>
+                              <path d="M5 10h14" stroke="currentColor" stroke-dasharray="2 2" opacity="0.5"/>`
+                    },
+                    {
+                        emoji: "📥",
+                        name: "Import",
+                        constName: "import",
+                        files: ["collection-service.ts:644"],
+                        priority: "Low (Console)",
+                        svg: `<path d="M12 3v12" stroke="currentColor" stroke-linecap="round"/>
+                              <path d="M8 11l4 4 4-4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-linecap="round"/>`
+                    }
+                ]
+            }
+        ];
+
+        // Render all icons
+        const container = document.getElementById('icon-container');
+        const fileLocationsBody = document.getElementById('file-locations');
+
+        emojiReplacements.forEach(group => {
+            const section = document.createElement('div');
+            section.className = `glass-panel rounded-2xl p-8 ${group.categoryClass}`;
+
+            let iconsHtml = '';
+            group.items.forEach(item => {
+                const priorityClass = item.priority.includes('High') ? 'text-red-400' :
+                                     item.priority.includes('Medium') ? 'text-yellow-400' : 'text-gray-500';
+
+                iconsHtml += `
+                    <div class="icon-card flex flex-col items-center p-4 rounded-xl border border-transparent hover:border-white/10 cursor-pointer group relative">
+                        <!-- Emoji vs SVG Comparison -->
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="comparison-emoji">${item.emoji}</span>
+                            <span class="comparison-arrow text-xl">→</span>
+                            <div class="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" stroke-width="1.5" stroke="currentColor" fill="none" class="text-gray-200 w-8 h-8">
+                                    <title>${item.name}</title>
+                                    ${item.svg}
+                                </svg>
+                            </div>
+                        </div>
+                        <span class="text-sm font-medium text-white mb-1">${item.name}</span>
+                        <code class="text-xs text-gray-500 mb-2">${item.constName}</code>
+                        <span class="text-xs ${priorityClass}">${item.priority}</span>
+                    </div>
+                `;
+
+                // Add to file locations table
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-800';
+                row.innerHTML = `
+                    <td class="py-3 pr-4">
+                        <span class="text-2xl">${item.emoji}</span>
+                        <span class="ml-2 text-gray-500">${item.name}</span>
+                    </td>
+                    <td class="py-3 pr-4 font-mono text-xs text-blue-400">${item.files[0]}</td>
+                    <td class="py-3 pr-4 text-gray-400">${group.category}</td>
+                    <td class="py-3">
+                        <span class="px-2 py-0.5 rounded text-xs ${priorityClass} bg-gray-800">${item.priority}</span>
+                    </td>
+                `;
+                fileLocationsBody.appendChild(row);
+            });
+
+            section.innerHTML = `
+                <div class="mb-6 border-b border-gray-700 pb-4">
+                    <h2 class="text-2xl font-semibold text-white mb-2 flex items-center">
+                        <span class="w-2 h-8 rounded-full mr-3 block" style="background-color: ${group.categoryColor}"></span>
+                        ${group.category}
+                    </h2>
+                    <p class="text-gray-400 ml-5">${group.description}</p>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    ${iconsHtml}
+                </div>
+            `;
+            container.appendChild(section);
+        });
+    </script>
+</body>
+</html>

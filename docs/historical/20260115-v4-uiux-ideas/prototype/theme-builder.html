@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XIV Dye Tools V4 - Theme Builder</title>
+    <style>
+        :root {
+            /* Active theme variables (updated by JavaScript) */
+            --bg-app: #121212;
+            --bg-panel: #1e1e1e;
+            --bg-header: #0a0a0a;
+            --bg-glass: rgba(30, 30, 30, 0.7);
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --text-header: #e0e0e0;
+            --text-header-muted: rgba(224, 224, 224, 0.7);
+            --accent-primary: #d4af37;
+            --accent-hover: #f0c040;
+            --accent-blue: #4a90e2;
+            --border-subtle: rgba(255, 255, 255, 0.1);
+            --shadow-soft: 0 4px 6px rgba(0, 0, 0, 0.3);
+            --shadow-glow: 0 0 10px rgba(212, 175, 55, 0.2);
+            --bg-gradient-start: #252525;
+            --bg-gradient-end: #121212;
+            --card-gradient-end: #151515;
+
+            /* Dimensions */
+            --header-height: 48px;
+            --tool-bar-height: 64px;
+            --drawer-width: 380px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Utilities */
+        .glass {
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        /* App Header */
+        .app-header {
+            height: var(--header-height);
+            background-color: var(--bg-header);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            color: var(--text-header);
+            box-shadow: var(--shadow-soft);
+            z-index: 100;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            fill: var(--accent-primary);
+        }
+
+        .nav-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-header);
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s, background-color 0.2s;
+        }
+
+        .nav-btn:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Tool Banner */
+        .tool-banner {
+            height: var(--tool-bar-height);
+            background: linear-gradient(to bottom, var(--bg-gradient-start), var(--bg-gradient-end));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            overflow-x: auto;
+        }
+
+        .tool-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            position: relative;
+            min-width: 72px;
+        }
+
+        .tool-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tool-btn.active {
+            color: var(--accent-primary);
+        }
+
+        .tool-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 32px;
+            height: 3px;
+            background: var(--accent-primary);
+            border-radius: 2px 2px 0 0;
+        }
+
+        .tool-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .tool-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* App Container */
+        .app-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+        }
+
+        /* Theme Builder Sidebar */
+        .builder-sidebar {
+            width: var(--drawer-width);
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        /* Color Section */
+        .color-section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-subtle);
+        }
+
+        .color-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .color-picker-wrapper {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid var(--border-subtle);
+            cursor: pointer;
+        }
+
+        .color-picker-wrapper:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .color-picker {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            width: 60px;
+            height: 60px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .color-info {
+            flex: 1;
+        }
+
+        .color-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .color-value {
+            font-size: 11px;
+            font-family: 'Consolas', monospace;
+            color: var(--text-secondary);
+        }
+
+        /* Preset Themes */
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .preset-btn {
+            padding: 12px 8px;
+            border-radius: 8px;
+            border: 2px solid var(--border-subtle);
+            background: var(--bg-glass);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-1px);
+        }
+
+        .preset-btn.active {
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .preset-swatches {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            margin-bottom: 6px;
+        }
+
+        .preset-swatch {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .preset-name {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Export Section */
+        .export-section {
+            padding: 16px;
+            border-top: 1px solid var(--border-subtle);
+            background: var(--bg-panel);
+        }
+
+        .export-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background: var(--accent-primary);
+            color: var(--bg-app);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 8px;
+        }
+
+        .export-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .secondary-btn {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+        }
+
+        .secondary-btn:hover {
+            border-color: var(--accent-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Preview Area */
+        .preview-area {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .preview-section {
+            background: var(--bg-panel);
+            border-radius: 12px;
+            border: 1px solid var(--border-subtle);
+            overflow: hidden;
+        }
+
+        .preview-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .preview-content {
+            padding: 16px;
+        }
+
+        /* Sample Cards */
+        .sample-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .sample-card {
+            background: linear-gradient(to bottom, var(--bg-panel), var(--card-gradient-end));
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            overflow: hidden;
+        }
+
+        .sample-card-header {
+            padding: 12px 16px;
+            background: var(--accent-primary);
+            color: var(--bg-app);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .sample-card-preview {
+            display: flex;
+            height: 60px;
+        }
+
+        .preview-half {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 8px;
+        }
+
+        .preview-label {
+            font-size: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: white;
+        }
+
+        .sample-card-details {
+            padding: 16px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .detail-col {
+            font-size: 12px;
+        }
+
+        .col-header {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .data-label {
+            color: var(--text-secondary);
+        }
+
+        .data-value {
+            font-family: 'Consolas', monospace;
+        }
+
+        /* Glass Panel Preview */
+        .glass-preview {
+            padding: 24px;
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .glass-card {
+            padding: 20px;
+            border-radius: 12px;
+            min-width: 200px;
+        }
+
+        .glass-card h4 {
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .glass-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Button Preview */
+        .button-preview {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 16px;
+        }
+
+        .btn-sample {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            border: none;
+            color: var(--bg-app);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: none;
+            color: var(--accent-primary);
+        }
+
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Toggle Preview */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .toggle-row:last-child {
+            border-bottom: none;
+        }
+
+        .toggle-switch {
+            width: 44px;
+            height: 24px;
+            background: var(--border-subtle);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .toggle-switch.active {
+            background: var(--accent-primary);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(20px);
+        }
+
+        .toggle-label {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        /* CSS Output Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            background: var(--bg-panel);
+            border-radius: 16px;
+            border: 1px solid var(--border-subtle);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .code-block {
+            background: var(--bg-app);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre;
+            color: var(--text-primary);
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-subtle);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Slider */
+        .slider-row {
+            margin-bottom: 16px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .slider-label {
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .slider-value {
+            font-size: 12px;
+            font-family: 'Consolas', monospace;
+            color: var(--text-secondary);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border-subtle);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            cursor: pointer;
+            border: 2px solid var(--bg-panel);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Dark Mode Indicator */
+        .mode-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .mode-indicator.dark {
+            background: rgba(0, 0, 0, 0.3);
+            color: #a0a0a0;
+        }
+
+        .mode-indicator.light {
+            background: rgba(255, 255, 255, 0.3);
+            color: #404040;
+        }
+
+        .mode-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .mode-indicator.dark .mode-dot {
+            background: #6366f1;
+        }
+
+        .mode-indicator.light .mode-dot {
+            background: #fbbf24;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- App Header -->
+    <header class="app-header">
+        <div class="logo-section">
+            <svg class="logo-icon" viewBox="0 0 24 24">
+                <path
+                    d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
+                <path d="M10 12h4v4h-4z" />
+            </svg>
+            <span>XIV Dye Tools</span>
+            <span id="mode-indicator" class="mode-indicator dark">
+                <span class="mode-dot"></span>
+                Dark Mode
+            </span>
+        </div>
+        <div class="nav-controls">
+            <button class="nav-btn" title="Reset to Default" onclick="resetToDefault()">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path
+                        d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Tool Banner -->
+    <nav class="tool-banner">
+        <button class="tool-btn" title="Harmony Explorer">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10" opacity="0.3" />
+                <circle cx="12" cy="3" r="2.5" fill="currentColor" stroke="none" />
+            </svg>
+            <span class="tool-label">Harmony</span>
+        </button>
+        <button class="tool-btn" title="Palette Extractor">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="7" r="4" opacity="0.7" />
+            </svg>
+            <span class="tool-label">Extractor</span>
+        </button>
+        <button class="tool-btn active" title="Theme Builder">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707" />
+                <circle cx="12" cy="12" r="4" />
+            </svg>
+            <span class="tool-label">Themes</span>
+        </button>
+        <button class="tool-btn" title="Community Presets">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2" opacity="0.3" />
+                <rect x="5" y="6" width="4" height="5" rx="0.5" fill="currentColor" stroke="none" opacity="0.6" />
+                <rect x="10" y="6" width="4" height="5" rx="0.5" fill="currentColor" stroke="none" opacity="0.8" />
+                <rect x="15" y="6" width="4" height="5" rx="0.5" fill="currentColor" stroke="none" />
+            </svg>
+            <span class="tool-label">Presets</span>
+        </button>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="app-container">
+        <!-- Theme Builder Sidebar -->
+        <aside class="builder-sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-title">Theme Builder</span>
+            </div>
+            <div class="sidebar-content">
+                <!-- Preset Themes -->
+                <div class="color-section">
+                    <div class="section-title">Preset Themes</div>
+                    <div class="preset-grid" id="preset-grid">
+                        <!-- Presets added by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Background Colors -->
+                <div class="color-section">
+                    <div class="section-title">Backgrounds</div>
+
+                    <div class="color-row">
+                        <div class="color-picker-wrapper">
+                            <input type="color" class="color-picker" id="bg-app" value="#121212"
+                                onchange="updateColor('bg-app', this.value)">
+                        </div>
+                        <div class="color-info">
+                            <div class="color-label">App Background</div>
+                            <div class="color-value" id="bg-app-value">#121212</div>
+                        </div>
+                    </div>
+
+                    <div class="color-row">
+                        <div class="color-picker-wrapper">
+                            <input type="color" class="color-picker" id="bg-panel" value="#1e1e1e"
+                                onchange="updateColor('bg-panel', this.value)">
+                        </div>
+                        <div class="color-info">
+                            <div class="color-label">Panel Background</div>
+                            <div class="color-value" id="bg-panel-value">#1e1e1e</div>
+                        </div>
+                    </div>
+
+                    <div class="color-row">
+                        <div class="color-picker-wrapper">
+                            <input type="color" class="color-picker" id="bg-header" value="#0a0a0a"
+                                onchange="updateColor('bg-header', this.value)">
+                        </div>
+                        <div class="color-info">
+                            <div class="color-label">Header Background</div>
+                            <div class="color-value" id="bg-header-value">#0a0a0a</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Text Colors -->
+                <div class="color-section">
+                    <div class="section-title">Text</div>
+
+                    <div class="color-row">
+                        <div class="color-picker-wrapper">
+                            <input type="color" class="color-picker" id="text-primary" value="#e0e0e0"
+                                onchange="updateColor('text-primary', this.value)">
+                        </div>
+                        <div class="color-info">
+                            <div class="color-label">Primary Text</div>
+                            <div class="color-value" id="text-primary-value">#e0e0e0</div>
+                        </div>
+                    </div>
+
+                    <div class="color-row">
+                        <div class="color-picker-wrapper">
+                            <input type="color" class="color-picker" id="text-secondary" value="#a0a0a0"
+                                onchange="updateColor('text-secondary', this.value)">
+                        </div>
+                        <div class="color-info">
+                            <div class="color-label">Secondary Text</div>
+                            <div class="color-value" id="text-secondary-value">#a0a0a0</div>
+                        </div>
+                    </div>
+
+                    <div class="color-row">
+                        <div class="color-picker-wrapper">
+                            <input type="color" class="color-picker" id="text-header" value="#e0e0e0"
+                                onchange="updateColor('text-header', this.value)">
+                        </div>
+                        <div class="color-info">
+                            <div class="color-label">Header Text</div>
+                            <div class="color-value" id="text-header-value">#e0e0e0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accent Colors -->
+                <div class="color-section">
+                    <div class="section-title">Accents</div>
+
+                    <div class="color-row">
+                        <div class="color-picker-wrapper">
+                            <input type="color" class="color-picker" id="accent-primary" value="#d4af37"
+                                onchange="updateColor('accent-primary', this.value)">
+                        </div>
+                        <div class="color-info">
+                            <div class="color-label">Primary Accent</div>
+                            <div class="color-value" id="accent-primary-value">#d4af37</div>
+                        </div>
+                    </div>
+
+                    <div class="color-row">
+                        <div class="color-picker-wrapper">
+                            <input type="color" class="color-picker" id="accent-hover" value="#f0c040"
+                                onchange="updateColor('accent-hover', this.value)">
+                        </div>
+                        <div class="color-info">
+                            <div class="color-label">Accent Hover</div>
+                            <div class="color-value" id="accent-hover-value">#f0c040</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Glass Effect -->
+                <div class="color-section">
+                    <div class="section-title">Glass Effect</div>
+
+                    <div class="slider-row">
+                        <div class="slider-header">
+                            <span class="slider-label">Glass Opacity</span>
+                            <span class="slider-value" id="glass-opacity-value">70%</span>
+                        </div>
+                        <input type="range" min="30" max="95" value="70" id="glass-opacity"
+                            oninput="updateGlassOpacity(this.value)">
+                    </div>
+
+                    <div class="slider-row">
+                        <div class="slider-header">
+                            <span class="slider-label">Blur Intensity</span>
+                            <span class="slider-value" id="blur-value">10px</span>
+                        </div>
+                        <input type="range" min="0" max="20" value="10" id="blur-intensity"
+                            oninput="updateBlur(this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Section -->
+            <div class="export-section">
+                <button class="export-btn" onclick="showExportModal()">Export CSS Variables</button>
+                <button class="export-btn secondary-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
+            </div>
+        </aside>
+
+        <!-- Preview Area -->
+        <main class="preview-area">
+            <!-- Glass Panel Preview -->
+            <div class="preview-section">
+                <div class="preview-header">Glassmorphism Preview</div>
+                <div class="glass-preview">
+                    <div class="glass-card glass">
+                        <h4>Glass Panel</h4>
+                        <p>This panel uses backdrop-filter for the blur effect.</p>
+                    </div>
+                    <div class="glass-card glass">
+                        <h4>Configuration</h4>
+                        <p>Adjust opacity and blur in the sidebar.</p>
+                    </div>
+                    <div class="glass-card glass">
+                        <h4>Theme Aware</h4>
+                        <p>Works with light and dark themes.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result Cards Preview -->
+            <div class="preview-section">
+                <div class="preview-header">Result Cards</div>
+                <div class="preview-content">
+                    <div class="sample-card-grid">
+                        <div class="sample-card">
+                            <div class="sample-card-header">Dalamud Red</div>
+                            <div class="sample-card-preview">
+                                <div class="preview-half" style="background-color: #7E1D27;">
+                                    <span class="preview-label">Original</span>
+                                </div>
+                                <div class="preview-half" style="background-color: #7E1D27;">
+                                    <span class="preview-label">Match</span>
+                                </div>
+                            </div>
+                            <div class="sample-card-details">
+                                <div class="detail-col">
+                                    <div class="col-header">Technical</div>
+                                    <div class="data-row">
+                                        <span class="data-label">ΔE</span>
+                                        <span class="data-value" style="color:#4caf50;">0.00</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">HEX</span>
+                                        <span class="data-value">#7E1D27</span>
+                                    </div>
+                                </div>
+                                <div class="detail-col">
+                                    <div class="col-header">Acquisition</div>
+                                    <div class="data-row">
+                                        <span class="data-label">Source</span>
+                                        <span class="data-value">Crafted</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">Price</span>
+                                        <span class="data-value">12,500 G</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sample-card">
+                            <div class="sample-card-header">Jet Black</div>
+                            <div class="sample-card-preview">
+                                <div class="preview-half" style="background-color: #1a1a1a;">
+                                    <span class="preview-label">Original</span>
+                                </div>
+                                <div class="preview-half" style="background-color: #1a1a1a;">
+                                    <span class="preview-label">Match</span>
+                                </div>
+                            </div>
+                            <div class="sample-card-details">
+                                <div class="detail-col">
+                                    <div class="col-header">Technical</div>
+                                    <div class="data-row">
+                                        <span class="data-label">ΔE</span>
+                                        <span class="data-value" style="color:#4caf50;">0.00</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">HEX</span>
+                                        <span class="data-value">#1A1A1A</span>
+                                    </div>
+                                </div>
+                                <div class="detail-col">
+                                    <div class="col-header">Acquisition</div>
+                                    <div class="data-row">
+                                        <span class="data-label">Source</span>
+                                        <span class="data-value">Crafted</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">Price</span>
+                                        <span class="data-value">95,000 G</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buttons Preview -->
+            <div class="preview-section">
+                <div class="preview-header">Buttons & Controls</div>
+                <div class="button-preview">
+                    <button class="btn-sample btn-primary">Primary Button</button>
+                    <button class="btn-sample btn-secondary">Secondary</button>
+                    <button class="btn-sample btn-ghost">Ghost Button</button>
+                </div>
+                <div style="padding: 0 16px 16px;">
+                    <div class="toggle-row">
+                        <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                        <span class="toggle-label">Enable Dark Mode</span>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-switch" onclick="this.classList.toggle('active')"></div>
+                        <span class="toggle-label">Show Market Prices</span>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                        <span class="toggle-label">Glassmorphism Effects</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal-overlay" id="export-modal" style="display: none;">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <span class="modal-title">Export Theme CSS</span>
+                <button class="modal-close" onclick="hideExportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="code-block" id="css-output">
+                    <!-- CSS will be inserted here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="export-btn secondary-btn" onclick="hideExportModal()">Close</button>
+                <button class="export-btn" onclick="copyExportedCSS()">Copy CSS</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Presets
+        const presets = [
+            {
+                name: 'Premium Dark',
+                isDark: true,
+                colors: {
+                    'bg-app': '#121212',
+                    'bg-panel': '#1e1e1e',
+                    'bg-header': '#0a0a0a',
+                    'text-primary': '#e0e0e0',
+                    'text-secondary': '#a0a0a0',
+                    'text-header': '#e0e0e0',
+                    'accent-primary': '#d4af37',
+                    'accent-hover': '#f0c040'
+                }
+            },
+            {
+                name: 'Standard Light',
+                isDark: false,
+                colors: {
+                    'bg-app': '#D3D3D3',
+                    'bg-panel': '#F5F5F5',
+                    'bg-header': '#8B1A1A',
+                    'text-primary': '#1A1A1A',
+                    'text-secondary': '#4A4A4A',
+                    'text-header': '#FFFFFF',
+                    'accent-primary': '#8B1A1A',
+                    'accent-hover': '#6B1515'
+                }
+            },
+            {
+                name: 'Standard Dark',
+                isDark: true,
+                colors: {
+                    'bg-app': '#2D2D2D',
+                    'bg-panel': '#1F1F1F',
+                    'bg-header': '#E85A5A',
+                    'text-primary': '#F5F5F5',
+                    'text-secondary': '#B0B0B0',
+                    'text-header': '#1A1A1A',
+                    'accent-primary': '#E85A5A',
+                    'accent-hover': '#F08080'
+                }
+            },
+            {
+                name: 'Hydaelyn',
+                isDark: false,
+                colors: {
+                    'bg-app': '#B2C4CE',
+                    'bg-panel': '#F9F8F4',
+                    'bg-header': '#4056A4',
+                    'text-primary': '#312D57',
+                    'text-secondary': '#0C4A6E',
+                    'text-header': '#FFFFFF',
+                    'accent-primary': '#4056A4',
+                    'accent-hover': '#314488'
+                }
+            },
+            {
+                name: 'OG Classic',
+                isDark: true,
+                colors: {
+                    'bg-app': '#181820',
+                    'bg-panel': '#000B9D',
+                    'bg-header': '#1E40AF',
+                    'text-primary': '#F9F8F4',
+                    'text-secondary': '#E4DFD0',
+                    'text-header': '#F9F8F4',
+                    'accent-primary': '#1E40AF',
+                    'accent-hover': '#153290'
+                }
+            },
+            {
+                name: 'Sugar Riot',
+                isDark: true,
+                colors: {
+                    'bg-app': '#0A0A0A',
+                    'bg-panel': '#1A0A1A',
+                    'bg-header': '#FF1493',
+                    'text-primary': '#FFFFFF',
+                    'text-secondary': '#FFB6FF',
+                    'text-header': '#0A0A0A',
+                    'accent-primary': '#FF1493',
+                    'accent-hover': '#FF69B4'
+                }
+            },
+            {
+                name: 'Cotton Candy',
+                isDark: false,
+                colors: {
+                    'bg-app': '#FFF5F9',
+                    'bg-panel': '#FFFFFF',
+                    'bg-header': '#FFB6D9',
+                    'text-primary': '#8B1A4A',
+                    'text-secondary': '#A0526D',
+                    'text-header': '#8B1A4A',
+                    'accent-primary': '#FFB6D9',
+                    'accent-hover': '#FF9BC9'
+                }
+            },
+            {
+                name: 'High Contrast',
+                isDark: true,
+                colors: {
+                    'bg-app': '#000000',
+                    'bg-panel': '#000000',
+                    'bg-header': '#FFFF00',
+                    'text-primary': '#FFFFFF',
+                    'text-secondary': '#CCCCCC',
+                    'text-header': '#000000',
+                    'accent-primary': '#FFFF00',
+                    'accent-hover': '#FFFF66'
+                }
+            }
+        ];
+
+        let currentPreset = 0;
+        let glassOpacity = 70;
+        let blurIntensity = 10;
+
+        // Initialize preset grid
+        function initPresets() {
+            const grid = document.getElementById('preset-grid');
+            presets.forEach((preset, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'preset-btn' + (index === 0 ? ' active' : '');
+                btn.onclick = () => applyPreset(index);
+                btn.innerHTML = `
+                    <div class="preset-swatches">
+                        <div class="preset-swatch" style="background:${preset.colors['bg-app']}"></div>
+                        <div class="preset-swatch" style="background:${preset.colors['accent-primary']}"></div>
+                        <div class="preset-swatch" style="background:${preset.colors['text-primary']}"></div>
+                    </div>
+                    <div class="preset-name">${preset.name}</div>
+                `;
+                grid.appendChild(btn);
+            });
+        }
+
+        // Apply a preset theme
+        function applyPreset(index) {
+            currentPreset = index;
+            const preset = presets[index];
+
+            // Update all color pickers
+            Object.entries(preset.colors).forEach(([key, value]) => {
+                updateColor(key, value, false);
+                const picker = document.getElementById(key);
+                if (picker) picker.value = value;
+            });
+
+            // Update computed values
+            updateComputedValues();
+
+            // Update mode indicator
+            updateModeIndicator(preset.isDark);
+
+            // Update active state
+            document.querySelectorAll('.preset-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === index);
+            });
+        }
+
+        // Update a single color
+        function updateColor(key, value, updateComputed = true) {
+            document.documentElement.style.setProperty(`--${key}`, value);
+
+            const valueEl = document.getElementById(`${key}-value`);
+            if (valueEl) valueEl.textContent = value.toUpperCase();
+
+            if (updateComputed) updateComputedValues();
+        }
+
+        // Update computed values (gradients, glass, etc.)
+        function updateComputedValues() {
+            const bgApp = getComputedStyle(document.documentElement).getPropertyValue('--bg-app').trim();
+            const bgPanel = getComputedStyle(document.documentElement).getPropertyValue('--bg-panel').trim();
+            const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim();
+
+            // Update gradients
+            const lighterBg = lightenColor(bgApp, 15);
+            document.documentElement.style.setProperty('--bg-gradient-start', lighterBg);
+            document.documentElement.style.setProperty('--bg-gradient-end', bgApp);
+
+            const darkerPanel = darkenColor(bgPanel, 10);
+            document.documentElement.style.setProperty('--card-gradient-end', darkerPanel);
+
+            // Update glass
+            const panelRgb = hexToRgb(bgPanel);
+            const alpha = glassOpacity / 100;
+            document.documentElement.style.setProperty('--bg-glass', `rgba(${panelRgb.r}, ${panelRgb.g}, ${panelRgb.b}, ${alpha})`);
+
+            // Update border
+            const borderColor = `rgba(255, 255, 255, ${isDarkColor(bgApp) ? 0.1 : 0.2})`;
+            document.documentElement.style.setProperty('--border-subtle', borderColor);
+
+            // Update shadow glow
+            const accentRgb = hexToRgb(accent);
+            document.documentElement.style.setProperty('--shadow-glow', `0 0 10px rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, 0.2)`);
+        }
+
+        // Update glass opacity
+        function updateGlassOpacity(value) {
+            glassOpacity = parseInt(value);
+            document.getElementById('glass-opacity-value').textContent = `${value}%`;
+            updateComputedValues();
+        }
+
+        // Update blur
+        function updateBlur(value) {
+            blurIntensity = parseInt(value);
+            document.getElementById('blur-value').textContent = `${value}px`;
+
+            // Update glass class blur
+            document.querySelectorAll('.glass').forEach(el => {
+                el.style.backdropFilter = `blur(${value}px)`;
+                el.style.webkitBackdropFilter = `blur(${value}px)`;
+            });
+        }
+
+        // Update mode indicator
+        function updateModeIndicator(isDark) {
+            const indicator = document.getElementById('mode-indicator');
+            indicator.className = `mode-indicator ${isDark ? 'dark' : 'light'}`;
+            indicator.innerHTML = `<span class="mode-dot"></span>${isDark ? 'Dark' : 'Light'} Mode`;
+        }
+
+        // Reset to default
+        function resetToDefault() {
+            applyPreset(0);
+            document.getElementById('glass-opacity').value = 70;
+            document.getElementById('blur-intensity').value = 10;
+            updateGlassOpacity(70);
+            updateBlur(10);
+        }
+
+        // Show export modal
+        function showExportModal() {
+            const css = generateCSS();
+            document.getElementById('css-output').textContent = css;
+            document.getElementById('export-modal').style.display = 'flex';
+        }
+
+        // Hide export modal
+        function hideExportModal() {
+            document.getElementById('export-modal').style.display = 'none';
+        }
+
+        // Generate CSS
+        function generateCSS() {
+            const style = getComputedStyle(document.documentElement);
+            const vars = [
+                'bg-app', 'bg-panel', 'bg-header', 'bg-glass',
+                'text-primary', 'text-secondary', 'text-header',
+                'accent-primary', 'accent-hover',
+                'border-subtle', 'shadow-soft', 'shadow-glow',
+                'bg-gradient-start', 'bg-gradient-end', 'card-gradient-end'
+            ];
+
+            let css = `/* Custom Theme for XIV Dye Tools v4 */\nbody.theme-custom {\n`;
+            vars.forEach(v => {
+                const value = style.getPropertyValue(`--${v}`).trim();
+                css += `    --${v}: ${value};\n`;
+            });
+            css += `}\n`;
+
+            return css;
+        }
+
+        // Copy to clipboard
+        function copyToClipboard() {
+            const css = generateCSS();
+            navigator.clipboard.writeText(css).then(() => {
+                alert('CSS copied to clipboard!');
+            });
+        }
+
+        // Copy exported CSS
+        function copyExportedCSS() {
+            const css = document.getElementById('css-output').textContent;
+            navigator.clipboard.writeText(css).then(() => {
+                alert('CSS copied to clipboard!');
+            });
+        }
+
+        // Helper: Hex to RGB
+        function hexToRgb(hex) {
+            hex = hex.replace('#', '');
+            return {
+                r: parseInt(hex.substr(0, 2), 16),
+                g: parseInt(hex.substr(2, 2), 16),
+                b: parseInt(hex.substr(4, 2), 16)
+            };
+        }
+
+        // Helper: RGB to Hex
+        function rgbToHex(r, g, b) {
+            return '#' + [r, g, b].map(x => {
+                const hex = Math.max(0, Math.min(255, Math.round(x))).toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }).join('');
+        }
+
+        // Helper: Lighten color
+        function lightenColor(hex, percent) {
+            const rgb = hexToRgb(hex);
+            return rgbToHex(
+                rgb.r + (255 - rgb.r) * (percent / 100),
+                rgb.g + (255 - rgb.g) * (percent / 100),
+                rgb.b + (255 - rgb.b) * (percent / 100)
+            );
+        }
+
+        // Helper: Darken color
+        function darkenColor(hex, percent) {
+            const rgb = hexToRgb(hex);
+            return rgbToHex(
+                rgb.r * (1 - percent / 100),
+                rgb.g * (1 - percent / 100),
+                rgb.b * (1 - percent / 100)
+            );
+        }
+
+        // Helper: Is dark color
+        function isDarkColor(hex) {
+            const rgb = hexToRgb(hex);
+            const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+            return luminance < 0.5;
+        }
+
+        // Close modal on backdrop click
+        document.getElementById('export-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'export-modal') hideExportModal();
+        });
+
+        // Initialize
+        initPresets();
+        updateComputedValues();
+    </script>
+</body>
+
+</html>

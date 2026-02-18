@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" stroke-width="1.5" stroke="currentColor" fill="none">
+  <title>Package / Storage</title>
+  <!-- 3D Box - package/storage indicator -->
+  <path d="M12.89 1.45l8 4A2 2 0 0122 7.24v9.53a2 2 0 01-1.11 1.79l-8 4a2 2 0 01-1.78 0l-8-4A2 2 0 012 16.76V7.24a2 2 0 011.11-1.79l8-4a2 2 0 011.78 0z" stroke-linejoin="round"/>
+  <path d="M2.32 6.16L12 11l9.68-4.84"/>
+  <path d="M12 22V11"/>
+</svg>

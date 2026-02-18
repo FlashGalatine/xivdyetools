@@ -1,0 +1,225 @@
+{
+  "auditReportVersion": 2,
+  "vulnerabilities": {
+    "@cloudflare/vitest-pool-workers": {
+      "name": "@cloudflare/vitest-pool-workers",
+      "severity": "high",
+      "isDirect": true,
+      "via": [
+        "miniflare",
+        "wrangler"
+      ],
+      "effects": [],
+      "range": "0.2.1 || 0.8.0 - 0.12.4",
+      "nodes": [
+        "node_modules/@cloudflare/vitest-pool-workers"
+      ],
+      "fixAvailable": {
+        "name": "@cloudflare/vitest-pool-workers",
+        "version": "0.12.6",
+        "isSemVerMajor": true
+      }
+    },
+    "devalue": {
+      "name": "devalue",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1112183,
+          "name": "devalue",
+          "dependency": "devalue",
+          "title": "devalue vulnerable to denial of service due to memory/CPU exhaustion in devalue.parse",
+          "url": "https://github.com/advisories/GHSA-g2pg-6438-jwpf",
+          "severity": "high",
+          "cwe": [
+            "CWE-405"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": ">=5.1.0 <5.6.2"
+        },
+        {
+          "source": 1112188,
+          "name": "devalue",
+          "dependency": "devalue",
+          "title": "Devalue is vulnerable to denial of service due to memory exhaustion in devalue.parse",
+          "url": "https://github.com/advisories/GHSA-vw5p-8cq8-m7mv",
+          "severity": "high",
+          "cwe": [
+            "CWE-20",
+            "CWE-405"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": ">=5.3.0 <=5.6.1"
+        }
+      ],
+      "effects": [],
+      "range": "5.1.0 - 5.6.1",
+      "nodes": [
+        "node_modules/devalue"
+      ],
+      "fixAvailable": true
+    },
+    "hono": {
+      "name": "hono",
+      "severity": "high",
+      "isDirect": true,
+      "via": [
+        {
+          "source": 1112134,
+          "name": "hono",
+          "dependency": "hono",
+          "title": "Hono JWK Auth Middleware has JWT algorithm confusion when JWK lacks \"alg\" (untrusted header.alg fallback)",
+          "url": "https://github.com/advisories/GHSA-3vhc-576x-3qv4",
+          "severity": "high",
+          "cwe": [
+            "CWE-347"
+          ],
+          "cvss": {
+            "score": 8.2,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:H/A:N"
+          },
+          "range": "<4.11.4"
+        },
+        {
+          "source": 1112135,
+          "name": "hono",
+          "dependency": "hono",
+          "title": "Hono JWT Middleware's JWT Algorithm Confusion via Unsafe Default (HS256) Allows Token Forgery and Auth Bypass",
+          "url": "https://github.com/advisories/GHSA-f67f-6cw9-8mq4",
+          "severity": "high",
+          "cwe": [
+            "CWE-347"
+          ],
+          "cvss": {
+            "score": 8.2,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:H/A:N"
+          },
+          "range": "<4.11.4"
+        }
+      ],
+      "effects": [],
+      "range": "<=4.11.3",
+      "nodes": [
+        "node_modules/hono"
+      ],
+      "fixAvailable": true
+    },
+    "miniflare": {
+      "name": "miniflare",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "undici"
+      ],
+      "effects": [
+        "@cloudflare/vitest-pool-workers",
+        "wrangler"
+      ],
+      "range": "4.20250906.1 - 4.20260114.0",
+      "nodes": [
+        "node_modules/miniflare"
+      ],
+      "fixAvailable": {
+        "name": "@cloudflare/vitest-pool-workers",
+        "version": "0.12.6",
+        "isSemVerMajor": true
+      }
+    },
+    "undici": {
+      "name": "undici",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1112497,
+          "name": "undici",
+          "dependency": "undici",
+          "title": "Undici has an unbounded decompression chain in HTTP responses on Node.js Fetch API via Content-Encoding leads to resource exhaustion",
+          "url": "https://github.com/advisories/GHSA-g9mf-h72j-4rw9",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-770"
+          ],
+          "cvss": {
+            "score": 5.9,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": ">=7.0.0 <7.18.2"
+        }
+      ],
+      "effects": [
+        "miniflare"
+      ],
+      "range": "7.0.0 - 7.18.1",
+      "nodes": [
+        "node_modules/undici"
+      ],
+      "fixAvailable": {
+        "name": "@cloudflare/vitest-pool-workers",
+        "version": "0.12.6",
+        "isSemVerMajor": true
+      }
+    },
+    "wrangler": {
+      "name": "wrangler",
+      "severity": "high",
+      "isDirect": true,
+      "via": [
+        {
+          "source": 1112456,
+          "name": "wrangler",
+          "dependency": "wrangler",
+          "title": "Wrangler affected by OS Command Injection in `wrangler pages deploy`",
+          "url": "https://github.com/advisories/GHSA-36p8-mvp6-cv38",
+          "severity": "high",
+          "cwe": [
+            "CWE-78"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": ">=4.0.0 <4.59.1"
+        },
+        "miniflare"
+      ],
+      "effects": [
+        "@cloudflare/vitest-pool-workers"
+      ],
+      "range": "<=0.0.0-31bfd374c || 4.0.0 - 4.59.2",
+      "nodes": [
+        "node_modules/wrangler"
+      ],
+      "fixAvailable": {
+        "name": "@cloudflare/vitest-pool-workers",
+        "version": "0.12.6",
+        "isSemVerMajor": true
+      }
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 2,
+      "high": 4,
+      "critical": 0,
+      "total": 6
+    },
+    "dependencies": {
+      "prod": 4,
+      "dev": 264,
+      "optional": 102,
+      "peer": 0,
+      "peerOptional": 0,
+      "total": 267
+    }
+  }
+}

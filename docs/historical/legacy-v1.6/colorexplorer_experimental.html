@@ -1,0 +1,2045 @@
+<!-- ⚠️ DEPRECATED: This file is no longer maintained. See v2.0.0 in src/ folder. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0">
+        <!-- DEVELOPMENT CSP: Uncomment for localhost testing (allows inline scripts) -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self' localhost:*; script-src 'self' 'unsafe-inline' localhost:*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com localhost:*; font-src 'self'; img-src 'self' data: blob: localhost:*; connect-src 'self' https://universalis.app localhost:*; base-uri 'self'; form-action 'none';"> -->
+    <!-- PRODUCTION CSP: Used for deployed version (strict, blocks inline scripts) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://universalis.app; base-uri 'self'; form-action 'none';">
+    <!-- Mobile Web App Configuration -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>XIV Harmony Explorer - Generate Dye Palettes | XIV Dye Tools</title>
+    <meta name="description" content="Generate complementary, analogous, triadic, and tetradic color harmony palettes using FFXIV dyes. Perfect for finding dye combinations for gear, housing, and glamour. Color theory made easy for Final Fantasy XIV players.">
+    <meta name="keywords" content="FFXIV dyes, color harmony, color palette, FF14 dyes, complementary colors, analogous colors, triadic colors, color theory, dye combinations, FFXIV glamour">
+    <!-- Open Graph / Discord embeds -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://xivdyetools.projectgalatine.com/colorexplorer_stable.html">
+    <meta property="og:title" content="XIV Harmony Explorer - Generate Dye Palettes">
+    <meta property="og:description" content="Generate complementary, analogous, triadic, and other color harmony palettes based on FFXIV dyes. Perfect for finding the perfect dye combinations for your gear and housing.">
+    <meta property="og:image" content="https://xivdyetools.projectgalatine.com/embed_icon.png">
+    <!-- Twitter / X embeds -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://xivdyetools.projectgalatine.com/colorexplorer_stable.html">
+    <meta property="twitter:title" content="XIV Harmony Explorer">
+    <meta property="twitter:description" content="Generate complementary, analogous, triadic, and other color harmony palettes based on FFXIV dyes. Perfect for finding the perfect dye combinations for your gear and housing.">
+    <meta property="twitter:image" content="https://xivdyetools.projectgalatine.com/embed_image.png">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="embed_icon.png">
+    <!-- PWA Metadata -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/icons/icon-512x512.png">
+    <link href="assets/css/tailwind.css" rel="stylesheet">
+    <!-- ===== CRITICAL FONTS (Body text - minimal blocking) ===== -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style">
+
+    <!-- ===== DEFERRED DECORATIVE FONTS (Load after page render) ===== -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cinzel+Decorative:wght@400;700&family=Lexend:wght@400;500;600&family=Lexend+Giga:wght@400;500;600&family=Habibi&display=swap" as="style">
+
+    <!-- ===== FALLBACK for no-script environments ===== -->
+    <noscript>
+    </noscript>
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="assets/css/shared-styles.css">
+    <style>@keyframes slideIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}.animate-slide-in{animation:slideIn 0.3s ease-out;}.search-results{max-height:300px;overflow-y:auto;}.search-result-item:hover{background-color:var(--theme-bg-secondary);}.tooltip{position:absolute;background-color:rgba(0,0,0,0.8);color:var(--theme-bg);padding:4px 8px;border-radius:4px;font-size:12px;pointer-events:none;z-index:1002;white-space:nowrap;}.color-dot{transition:all 0.2s ease;}.color-dot.highlighted{r:16;filter:drop-shadow(0 0 8px currentColor) brightness(1.3);stroke-width:4;}.app-container{display:flex;min-height:calc(100vh - 200px);gap:0;max-width:100%;margin:0 auto;}.left-sidebar{width:380px;flex-shrink:0;padding:1.5rem;background-color:var(--theme-bg-secondary);border-right:1px solid var(--theme-border);overflow-y:auto;max-height:calc(100vh - 200px);position:sticky;top:0;}.right-content{flex:1;padding:1.5rem;overflow-y:auto;max-width:calc(100vw - 380px);}.sidebar-section{margin-bottom:1rem;}.sidebar-section:last-child{margin-bottom:0;}.zoom-backdrop{display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:rgba(0,0,0,0.8);z-index:1000;backdrop-filter:blur(4px);animation:fadeIn 0.3s ease-out;}.zoom-backdrop.active{display:block;}@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}.harmony-section{transition:all 0.3s ease-out;}.harmony-section.zoomed{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(1);width:90vw;max-width:1200px;max-height:90vh;overflow-y:auto;z-index:1001;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);animation:zoomIn 0.3s ease-out;}@keyframes zoomIn{from{transform:translate(-50%,-50%) scale(0.8);opacity:0;}to{transform:translate(-50%,-50%) scale(1);opacity:1;}}.harmony-section.zoomed .color-wheel{width:240px !important;height:240px !important;transition:all 0.3s ease-out;}.color-wheel{transition:all 0.3s ease-out;}@media (max-width:639px){body{padding:0;font-size:14px;}.container{padding:0.5rem !important;}h1{font-size:1.25rem !important;}h1 span{font-size:0.95rem !important;}.flex.justify-center.items-center.gap-3{flex-direction:column;gap:0.5rem !important;}header p{font-size:0.875rem;margin-top:0.5rem;}#nav-container{margin-left:0 !important;width:100%;}.app-container{flex-direction:column;min-height:auto;gap:0.5rem;}.left-sidebar{width:100%;padding:1rem;max-height:none;position:relative;border-right:none;border-bottom:1px solid #e5e7eb;overflow:visible;}.sidebar-section{margin-bottom:0.75rem;}.right-content{max-width:100%;padding:1rem;overflow:visible;}#color-search,#color-select,#acquisition-filter,#server-select{padding:0.5rem 0.5rem 0.5rem 2.5rem;font-size:14px;min-height:40px;}.toggle-bg{width:36px !important;height:22px !important;}.toggle-dot{width:16px !important;height:16px !important;}button{padding:0.5rem 0.75rem;font-size:0.875rem;min-height:40px;}.flex.flex-wrap.gap-3.justify-center{gap:0.5rem !important;flex-direction:column;}.flex.flex-wrap.gap-3.justify-center button{width:100%;}.color-swatch{width:60px !important;height:60px !important;font-size:11px;}#harmony-results{grid-template-columns:1fr !important;gap:1rem !important;}.color-wheel{width:120px !important;height:120px !important;}.harmony-section.zoomed .color-wheel{width:180px !important;height:180px !important;}.harmony-section{padding:1rem;}.harmony-section.zoomed{width:95vw;max-height:90vh;padding:1rem;}label{font-size:0.75rem;}.text-sm{font-size:0.75rem;}.text-md{font-size:0.875rem;}#selected-color-display{padding:1rem;margin-bottom:1rem;}.sidebar-section.bg-gray-50{padding:0.75rem;}.space-y-1.5>*+*{margin-top:0.375rem;}}@media (min-width:640px) and (max-width:767px){.container{padding:0.75rem !important;}h1{font-size:1.5rem !important;}h1 span{font-size:1.125rem !important;}.app-container{flex-direction:column;}.left-sidebar{width:100%;padding:1.25rem;}.right-content{padding:1.25rem;}.color-swatch{width:70px !important;height:70px !important;}.color-wheel{width:140px !important;height:140px !important;}.flex.flex-wrap.gap-3.justify-center{gap:0.75rem !important;}}@media (min-width:768px) and (max-width:1023px){.container{padding:1rem !important;}.app-container{flex-direction:row;}.left-sidebar{width:300px;padding:1.25rem;position:sticky;top:0;}.right-content{flex:1;padding:1.25rem;}#harmony-results{grid-template-columns:1fr !important;}.color-swatch{width:80px !important;height:80px !important;}.color-wheel{width:160px !important;height:160px !important;}}@media (min-width:1024px){.app-container{flex-direction:row;}.left-sidebar{width:380px;position:sticky;border-right:1px solid var(--theme-border);border-bottom:none;}.right-content{max-width:calc(100vw - 380px);}#harmony-results{grid-template-columns:repeat(2,1fr) !important;}.color-swatch{width:100px !important;height:100px !important;}.color-wheel{width:200px !important;height:200px !important;}}@media (min-width:1920px){.container{max-width:1600px;margin:0 auto;}h1{font-size:2rem !important;}h1 span{font-size:1.5rem !important;}.left-sidebar{padding:2rem;}.right-content{padding:2rem;}}@media (max-width:767px) and (orientation:portrait){.app-container{width:100%;}body{overflow-x:hidden;}}@media (max-width:767px) and (orientation:landscape){h1{font-size:1.125rem !important;}header{margin-bottom:0.5rem;}.app-container{min-height:auto;}.left-sidebar{max-height:40vh;overflow-y:auto;}.right-content{max-height:60vh;overflow-y:auto;}}@media (hover:none) and (max-width:767px){button{transition:transform 0.1s,opacity 0.1s;}button:active{transform:scale(0.95);opacity:0.8;}input:active{transform:scale(0.98);}}</style>
+    <!-- Shared Components Script - Load early so DOMContentLoaded can initialize theme and components -->
+    <script src="assets/js/shared-components.js"></script>
+    <!-- Override initComponents for experimental navigation -->
+    <script>function initComponents(){loadComponent('components/nav-experimental.html','nav-container');loadComponent('components/footer.html','footer-container')}</script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Help & Guide</h2>
+                <button class="modal-close" onclick="closeHelpModal()">×</button>
+            </div>
+
+            <!-- Quick Start Section -->
+            <div class="help-section">
+                <h3>Quick Start</h3>
+                <p>Generate harmonious color palettes based on color theory. Select a base dye and harmony type to discover complementary colors.</p>
+            </div>
+
+            <!-- Mobile Tip -->
+            <div class="mobile-tip desktop-hidden">
+                <span class="mobile-tip-icon">🎨</span>
+                <p><strong>Mobile Tip:</strong> Pinch to zoom color wheels for detailed viewing!</p>
+            </div>
+
+            <!-- Key Features -->
+            <div class="help-section">
+                <h3>Key Features</h3>
+                <ul>
+                    <li>Six harmony types: Complementary, Analogous, Triadic, Split-Complementary, Tetradic, and Square</li>
+                    <li>Real-time color wheel visualization</li>
+                    <li>Deviance scoring shows alignment with color theory</li>
+                    <li>Export palettes as JSON, CSS, or SCSS</li>
+                    <li>Optional market prices via Universalis API</li>
+                </ul>
+            </div>
+
+            <!-- Mobile Tip -->
+            <div class="mobile-tip desktop-hidden">
+                <span class="mobile-tip-icon">💡</span>
+                <p><strong>Pro Tip:</strong> Lower deviance scores (0-2) indicate better color theory alignment</p>
+            </div>
+
+            <!-- Tips & Tricks -->
+            <div class="help-section">
+                <h3>Tips & Tricks</h3>
+                <ul>
+                    <li>Use search bar to quickly find specific dyes</li>
+                    <li>Try different harmony types to discover new combinations</li>
+                    <li>Deviance score helps identify theoretically perfect matches</li>
+                    <li>Click "Show All 6 Harmonies" to compare all types at once</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-6">
+            <div class="flex justify-center items-center gap-3 mb-4 flex-wrap">
+                <button id="help-toggle" class="help-button" title="Help & Guide" onclick="openHelpModal()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </button>
+                <h1 class="tool-title text-3xl md:text-4xl 2xl:text-5xl font-bold text-gray-900">XIV Harmony Explorer <span class="text-2xl md:text-3xl 2xl:text-4xl text-gray-500">v<span class="number">1.6.1</span></span></h1>
+            </div>
+            <p class="text-md text-gray-600 mt-2">
+                Discover color harmonies using the FFXIV dye palette.
+                <div id="nav-container" class="component-loading inline-block ml-4"></div>
+            </p>
+        </header>
+
+        <main class="app-container">
+            <!-- Left Sidebar - Configuration Controls -->
+            <div class="left-sidebar">
+                <!-- Search Bar -->
+                <div class="sidebar-section relative">
+                    <label for="color-search" class="block text-sm font-medium text-gray-700 mb-2">Search Colors:</label>
+                    <div class="relative">
+                        <input
+                            type="text"
+                            id="color-search"
+                            placeholder="Type to search colors..."
+                            class="w-full p-2 pr-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                        />
+                        <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+
+                    <!-- Search Results Dropdown -->
+                    <div id="search-results" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg hidden search-results">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Color Select -->
+                <div class="sidebar-section">
+                    <label for="color-select" class="block text-sm font-medium text-gray-700 mb-2">Or Select a Base Color:</label>
+                    <select id="color-select" class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
+
+                <!-- Acquisition Filter -->
+                <div class="sidebar-section">
+                    <label for="acquisition-filter" class="block text-sm font-medium text-gray-700 mb-2">Filter by Acquisition:</label>
+                    <select id="acquisition-filter" class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        <option value="all">All Sources</option>
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
+
+                <!-- Data Center / World Selector -->
+                <div class="sidebar-section">
+                    <label for="server-select" class="block text-sm font-medium text-gray-700 mb-2">Market Board Server:</label>
+                    <select id="server-select" class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
+
+                <!-- Price Data Controls -->
+                <div class="sidebar-section bg-gray-50 p-3 rounded-lg">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm font-semibold text-gray-700">Market Prices</h3>
+                        <label class="flex items-center cursor-pointer">
+                            <span class="mr-2 text-xs text-gray-600">Show</span>
+                            <div class="relative">
+                                <input id="show-market-prices-toggle" type="checkbox" class="sr-only" checked>
+                                <div class="toggle-bg w-10 h-6 bg-gray-300 rounded-full shadow-inner"></div>
+                                <div class="toggle-dot absolute w-4 h-4 bg-white rounded-full shadow inset-y-1 left-1 transition"></div>
+                            </div>
+                        </label>
+                    </div>
+                    <div id="price-settings-panel">
+                        <div class="space-y-1.5 mb-3">
+                            <div class="flex items-center">
+                                <input id="price-base-dyes" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded price-category-checkbox">
+                                <label for="price-base-dyes" class="ml-2 block text-xs text-gray-700">Base Dyes</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="price-craft-dyes" type="checkbox" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded price-category-checkbox">
+                                <label for="price-craft-dyes" class="ml-2 block text-xs text-gray-700">Craft Dyes</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="price-beast-tribe-dyes" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded price-category-checkbox">
+                                <label for="price-beast-tribe-dyes" class="ml-2 block text-xs text-gray-700">Allied Society Dyes</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="price-cosmic-dyes" type="checkbox" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded price-category-checkbox">
+                                <label for="price-cosmic-dyes" class="ml-2 block text-xs text-gray-700">Cosmic Dyes</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="price-special-dyes" type="checkbox" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded price-category-checkbox">
+                                <label for="price-special-dyes" class="ml-2 block text-xs text-gray-700">Special Dyes</label>
+                            </div>
+                        </div>
+                        <button id="refresh-prices-btn" onclick="refreshMarketPrices()" class="w-full px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            Refresh Prices
+                        </button>
+                        <div id="price-status" class="mt-2 text-xs text-gray-500 text-center"></div>
+                    </div>
+                </div>
+
+                <!-- Exclude Options -->
+                <div class="sidebar-section">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-2">Exclude Options</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-center">
+                            <input id="exclude-metallic-checkbox" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <label for="exclude-metallic-checkbox" class="ml-2 block text-sm text-gray-700">
+                                Metallic Colors
+                            </label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="exclude-facewear-checkbox" type="checkbox" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <label for="exclude-facewear-checkbox" class="ml-2 block text-sm text-gray-700">
+                                Facewear Colors
+                            </label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="exclude-extremes-checkbox" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <label for="exclude-extremes-checkbox" class="ml-2 block text-sm text-gray-700">
+                                Jet Black & Pure White
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Content - Color Display and Harmony Results -->
+            <div class="right-content">
+                <!-- Selected Color Display -->
+                <div id="selected-color-display" class="mb-6 p-6 rounded-lg shadow-lg flex flex-col items-center transition-colors duration-500">
+                    <!-- Selected color details will be shown here -->
+                </div>
+
+                <!-- Harmony Results -->
+                <div id="harmony-results" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- Color harmony sections will be populated here -->
+                </div>
+
+                <!-- Export Controls -->
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-700">Export Options</h3>
+                    <div class="flex flex-wrap gap-3 justify-center">
+                        <button onclick="exportPalette('json')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                            Export as JSON
+                        </button>
+                        <button onclick="exportPalette('css')" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                            Export as CSS Variables
+                        </button>
+                        <button onclick="exportPalette('scss')" class="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition">
+                            Export as SCSS
+                        </button>
+                        <button onclick="copyAllHexCodes()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                            Copy All Hex Codes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg hidden transition-all duration-300">
+        <span id="toast-message">Copied to clipboard!</span>
+    </div>
+
+    <!-- Zoom Backdrop -->
+    <div id="zoom-backdrop" class="zoom-backdrop" onclick="zoomOut()"></div>
+
+    <script>
+        /**
+         * Toggle dropdown menu
+         */
+        function toggleDropdown(button) {
+            const dropdown = button.nextElementSibling;
+            dropdown.classList.toggle('show');
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.nav-dropdown')) {
+                    dropdown.classList.remove('show');
+                }
+            }, { once: true });
+        }
+
+        let ffxivDyes = [];
+        let currentPalettes = {};
+        let tooltip = null;
+        let priceCache = {};
+        let lastPriceUpdate = null;
+
+        // Price data categories mapping
+        // Price categories now provided by shared-components.js:
+        // const PRICE_CATEGORIES = { ... } // See assets/js/shared-components.js for the source of truth
+
+        // Helper function to check if a color should have price fetched
+        // Maps tool-specific checkbox IDs to shared PRICE_CATEGORIES
+        function shouldFetchPriceExplorer(color) {
+            if (!color) return false;
+            if (!color.itemID) return false;
+
+            // Special dyes category
+            if (document.getElementById('price-special-dyes')?.checked && color.category === 'Special') {
+                return true;
+            }
+
+            if (!color.acquisition) return false;
+
+            // Base Dyes: Dye Vendor
+            if (document.getElementById('price-base-dyes')?.checked &&
+                ['Dye Vendor'].includes(color.acquisition)) {
+                return true;
+            }
+
+            // Craft Dyes: Crafting, Treasure Chest
+            if (document.getElementById('price-craft-dyes')?.checked &&
+                ['Crafting', 'Treasure Chest'].includes(color.acquisition)) {
+                return true;
+            }
+
+            // Allied Society Dyes (formerly Beast Tribe): Amalj'aa, Ixali, Sylphic, Kobold, Sahagin Vendors
+            if (document.getElementById('price-beast-tribe-dyes')?.checked &&
+                ['Amalj\'aa Vendor', 'Ixali Vendor', 'Sahagin Vendor', 'Kobold Vendor', 'Sylphic Vendor'].includes(color.acquisition)) {
+                return true;
+            }
+
+            // Cosmic Dyes: Cosmic Exploration, Cosmic Fortunes
+            if (document.getElementById('price-cosmic-dyes')?.checked &&
+                ['Cosmic Exploration', 'Cosmic Fortunes'].includes(color.acquisition)) {
+                return true;
+            }
+
+            return false;
+        }
+
+        /**
+         * Safe localStorage getter with error handling
+         */
+        function safeGetStorage(key, defaultValue = null) {
+            try {
+                if (typeof Storage === 'undefined') {
+                    console.warn('localStorage unavailable: Storage API not supported');
+                    return defaultValue;
+                }
+                return localStorage.getItem(key);
+            } catch (e) {
+                console.warn(`localStorage getItem failed for key "${key}":`, e.message);
+                return defaultValue;
+            }
+        }
+
+        /**
+         * Safe localStorage setter with error handling
+         */
+        function safeSetStorage(key, value) {
+            try {
+                if (typeof Storage === 'undefined') {
+                    console.warn('localStorage unavailable: Storage API not supported');
+                    return false;
+                }
+                localStorage.setItem(key, value);
+                return true;
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    console.warn('localStorage quota exceeded for key:', key);
+                } else {
+                    console.warn(`localStorage setItem failed for key "${key}":`, e.message);
+                }
+                return false;
+            }
+        }
+
+        // safeFetchJSON function provided by shared-components.js
+
+        /**
+         * Creates and manages tooltip
+         */
+        function createTooltip() {
+            tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            tooltip.style.display = 'none';
+            document.body.appendChild(tooltip);
+        }
+
+        function showTooltip(text, x, y) {
+            if (!tooltip) return;
+            tooltip.textContent = text;
+            tooltip.style.display = 'block';
+            tooltip.style.left = (x + 10) + 'px';
+            tooltip.style.top = (y + 10) + 'px';
+        }
+
+        function hideTooltip() {
+            if (!tooltip) return;
+            tooltip.style.display = 'none';
+        }
+
+        /**
+         * Highlights a color dot on the color wheel
+         */
+        function highlightColorDot(hex, harmonyType) {
+            // Find the color wheel for this specific harmony type
+            const colorWheel = document.querySelector(`.color-wheel[data-harmony-type="${harmonyType}"]`);
+            if (!colorWheel) return;
+
+            // Find the dot within this specific color wheel
+            const dot = colorWheel.querySelector(`.color-dot[data-hex="${hex}"]`);
+            if (dot) {
+                // Store original values if not already stored
+                if (!dot.dataset.originalR) {
+                    dot.dataset.originalR = dot.getAttribute('r');
+                    dot.dataset.originalStrokeWidth = dot.getAttribute('stroke-width');
+                }
+                // Apply highlight effects
+                dot.setAttribute('r', '16');
+                dot.setAttribute('stroke-width', '4');
+                dot.style.filter = 'drop-shadow(0 0 8px currentColor) brightness(1.3)';
+            }
+        }
+
+        /**
+         * Removes highlight from a color dot on the color wheel
+         */
+        function unhighlightColorDot(hex, harmonyType) {
+            // Find the color wheel for this specific harmony type
+            const colorWheel = document.querySelector(`.color-wheel[data-harmony-type="${harmonyType}"]`);
+            if (!colorWheel) return;
+
+            // Find the dot within this specific color wheel
+            const dot = colorWheel.querySelector(`.color-dot[data-hex="${hex}"]`);
+            if (dot && dot.dataset.originalR) {
+                // Restore original values
+                dot.setAttribute('r', dot.dataset.originalR);
+                dot.setAttribute('stroke-width', dot.dataset.originalStrokeWidth);
+                dot.style.filter = '';
+            }
+        }
+
+        /**
+         * Shows a highlighted line on the color wheel from base color to the matched color
+         */
+        function showDevianceLine(hex, harmonyType, strokeColor) {
+            const colorWheel = document.querySelector(`.color-wheel[data-harmony-type="${harmonyType}"]`);
+            if (!colorWheel) return;
+
+            // Get the base color dot (it should be in currentPalettes.base)
+            const baseColor = currentPalettes.base;
+            if (!baseColor) return;
+
+            // Find the matched color dot
+            const matchedDot = colorWheel.querySelector(`.color-dot[data-hex="${hex}"]`);
+            const baseDot = colorWheel.querySelector(`.color-dot[data-hex="${baseColor.hex}"]`);
+
+            if (!matchedDot || !baseDot) return;
+
+            // Get positions
+            const x1 = baseDot.getAttribute('cx');
+            const y1 = baseDot.getAttribute('cy');
+            const x2 = matchedDot.getAttribute('cx');
+            const y2 = matchedDot.getAttribute('cy');
+
+            // Check if a deviance line already exists, remove it first
+            const existingLine = colorWheel.querySelector('.deviance-line');
+            if (existingLine) {
+                existingLine.remove();
+            }
+
+            // Create a new highlighted line
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x1);
+            line.setAttribute('y1', y1);
+            line.setAttribute('x2', x2);
+            line.setAttribute('y2', y2);
+            line.setAttribute('stroke', strokeColor);
+            line.setAttribute('stroke-width', '3');
+            line.setAttribute('class', 'deviance-line');
+            line.style.pointerEvents = 'none';
+
+            // Insert the line before the dots so it appears behind them
+            const firstDot = colorWheel.querySelector('.color-dot');
+            if (firstDot) {
+                colorWheel.insertBefore(line, firstDot);
+            } else {
+                colorWheel.appendChild(line);
+            }
+        }
+
+        /**
+         * Hides the deviance line on the color wheel
+         */
+        function hideDevianceLine(harmonyType) {
+            const colorWheel = document.querySelector(`.color-wheel[data-harmony-type="${harmonyType}"]`);
+            if (!colorWheel) return;
+
+            const devianceLine = colorWheel.querySelector('.deviance-line');
+            if (devianceLine) {
+                devianceLine.remove();
+            }
+        }
+
+        /**
+         * Zooms in on a specific harmony section
+         */
+        function zoomIn(harmonyType) {
+            const section = document.querySelector(`.harmony-section[data-harmony-type="${harmonyType}"]`);
+            const backdrop = document.getElementById('zoom-backdrop');
+
+            if (!section || !backdrop) return;
+
+            // Add zoomed class to section
+            section.classList.add('zoomed');
+
+            // Show backdrop
+            backdrop.classList.add('active');
+
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+
+            // Update button visibility
+            const zoomInBtn = section.querySelector('.zoom-in-btn');
+            const zoomOutBtn = section.querySelector('.zoom-out-btn');
+            if (zoomInBtn) zoomInBtn.style.display = 'none';
+            if (zoomOutBtn) zoomOutBtn.style.display = 'inline-block';
+
+            // Enable swipe navigation for zoomed view
+            harmonySwipeState.isActive = true;
+            harmonySwipeState.currentHarmonyType = harmonyType;
+        }
+
+        /**
+         * Zooms out from a harmony section
+         */
+        function zoomOut() {
+            const zoomedSection = document.querySelector('.harmony-section.zoomed');
+            const backdrop = document.getElementById('zoom-backdrop');
+
+            if (!zoomedSection || !backdrop) return;
+
+            // Remove zoomed class
+            zoomedSection.classList.remove('zoomed');
+
+            // Hide backdrop
+            backdrop.classList.remove('active');
+
+            // Restore body scroll
+            document.body.style.overflow = '';
+
+            // Update button visibility
+            const zoomInBtn = zoomedSection.querySelector('.zoom-in-btn');
+            const zoomOutBtn = zoomedSection.querySelector('.zoom-out-btn');
+            if (zoomInBtn) zoomInBtn.style.display = 'inline-block';
+            if (zoomOutBtn) zoomOutBtn.style.display = 'none';
+
+            // Clear swipe state
+            harmonySwipeState.isActive = false;
+        }
+
+        // ===== SWIPE GESTURE SUPPORT FOR ZOOMED HARMONY VIEW =====
+        let harmonySwipeState = {
+            isActive: false,
+            touchStartX: 0,
+            touchEndX: 0,
+            currentHarmonyType: null
+        };
+
+        // ===== SWIPE-TO-CLOSE SUPPORT FOR ZOOM BACKDROP MODAL =====
+        /**
+         * Swipe state tracker for modal close gesture
+         */
+        let modalSwipeState = {
+            isActive: false,
+            touchStartY: 0,
+            touchStartX: 0
+        };
+
+        /**
+         * Check if zoom backdrop modal is currently open
+         */
+        function isZoomBackdropOpen() {
+            const backdrop = document.getElementById('zoom-backdrop');
+            return backdrop && backdrop.classList.contains('active');
+        }
+
+        /**
+         * Handle touch start for modal swipe-to-close
+         */
+        function handleModalSwipeStart(e) {
+            if (!isZoomBackdropOpen()) return;
+
+            // Guard against empty touch array
+            if (e.touches && e.touches.length > 0) {
+                modalSwipeState.touchStartY = e.touches[0].clientY;
+                modalSwipeState.touchStartX = e.touches[0].clientX;
+                modalSwipeState.isActive = true;
+            }
+        }
+
+        /**
+         * Handle touch end for modal swipe-to-close
+         * Swipe up (>= 100px vertical) closes the modal
+         */
+        function handleModalSwipeEnd(e) {
+            if (!isZoomBackdropOpen() || !modalSwipeState.isActive) return;
+
+            // Guard against empty touch array
+            if (!e.changedTouches || e.changedTouches.length === 0) return;
+
+            const deltaY = modalSwipeState.touchStartY - e.changedTouches[0].clientY;
+            const deltaX = Math.abs(e.changedTouches[0].clientX - modalSwipeState.touchStartX);
+
+            // Swipe up to close (vertical movement >= 100px, horizontal < 30px)
+            if (deltaY >= 100 && deltaX < 30) {
+                zoomOut();
+                hapticSuccess();
+            }
+
+            modalSwipeState.isActive = false;
+        }
+
+        // ===== PINCH-TO-ZOOM SUPPORT FOR COLOR WHEEL SECTIONS =====
+        let harmonyGestureManagers = {}; // Store gesture managers per harmony type
+
+        /**
+         * Handle pinch gesture on harmony section
+         * Triggers zoom in/out based on pinch direction
+         * @param {Object} pinchData - Pinch event data from TouchGestureManager
+         * @param {string} harmonyType - Type of harmony section
+         */
+        function handleHarmonyPinch(pinchData, harmonyType) {
+            const section = document.querySelector(`.harmony-section[data-harmony-type="${harmonyType}"]`);
+            if (!section) return;
+
+            const isZoomed = section.classList.contains('zoomed');
+
+            // Pinch out (zoom in) - fingers moving apart
+            if (pinchData.isZoomIn && !isZoomed) {
+                zoomIn(harmonyType);
+            }
+            // Pinch in (zoom out) - fingers moving together
+            else if (!pinchData.isZoomIn && isZoomed) {
+                zoomOut();
+            }
+        }
+
+        /**
+         * Initialize pinch-to-zoom listeners for harmony sections
+         * Called after harmony sections are rendered
+         */
+        function initializeHarmonyPinchZoom() {
+            // Only initialize on touch devices
+            if (!isTouchDevice()) return;
+
+            // Clean up existing gesture managers
+            Object.values(harmonyGestureManagers).forEach(manager => {
+                if (manager && manager.destroy) {
+                    manager.destroy();
+                }
+            });
+            harmonyGestureManagers = {};
+
+            // Find all harmony sections
+            const harmonySections = document.querySelectorAll('.harmony-section');
+            harmonySections.forEach(section => {
+                const harmonyType = section.getAttribute('data-harmony-type');
+                if (!harmonyType) return;
+
+                // Create gesture manager for this section
+                const gestureManager = new TouchGestureManager(section);
+                gestureManager.on('onPinch', (pinchData) => {
+                    handleHarmonyPinch(pinchData, harmonyType);
+                });
+
+                // Store reference for cleanup
+                harmonyGestureManagers[harmonyType] = gestureManager;
+            });
+        }
+
+        /**
+         * Navigate to a different harmony type while staying zoomed
+         */
+        function navigateZoomedHarmony(direction) {
+            if (!harmonySwipeState.isActive) return;
+
+            const harmonyTypes = ['complementary', 'analogous', 'triadic', 'split-complementary', 'tetradic', 'square'];
+            const currentIndex = harmonyTypes.indexOf(harmonySwipeState.currentHarmonyType);
+            if (currentIndex === -1) return;
+
+            const newIndex = direction === 'next'
+                ? (currentIndex + 1) % harmonyTypes.length
+                : (currentIndex - 1 + harmonyTypes.length) % harmonyTypes.length;
+
+            const newHarmonyType = harmonyTypes[newIndex];
+
+            // Fade out current section
+            const currentSection = document.querySelector('.harmony-section.zoomed');
+            if (currentSection) {
+                currentSection.style.opacity = '0';
+                setTimeout(() => {
+                    currentSection.classList.remove('zoomed');
+
+                    // Show new section and fade in
+                    const newSection = document.querySelector(`.harmony-section[data-harmony-type="${newHarmonyType}"]`);
+                    if (newSection) {
+                        newSection.classList.add('zoomed');
+                        newSection.style.opacity = '0';
+                        setTimeout(() => {
+                            newSection.style.opacity = '1';
+                            harmonySwipeState.currentHarmonyType = newHarmonyType;
+                            hapticLight();
+                        }, 50);
+                    }
+                }, 200);
+            }
+        }
+
+        /**
+         * Handle touch start for swipe detection on zoomed harmony
+         */
+        function handleHarmonyTouchStart(e) {
+            if (!harmonySwipeState.isActive) return;
+            // Guard against empty touch array
+            if (e.changedTouches && e.changedTouches.length > 0) {
+                harmonySwipeState.touchStartX = e.changedTouches[0].screenX;
+            }
+        }
+
+        /**
+         * Handle touch end for swipe detection on zoomed harmony
+         */
+        function handleHarmonyTouchEnd(e) {
+            if (!harmonySwipeState.isActive) return;
+
+            // Guard against empty touch array
+            if (!e.changedTouches || e.changedTouches.length === 0) return;
+
+            harmonySwipeState.touchEndX = e.changedTouches[0].screenX;
+            const swipeThreshold = 50;
+            const swipeDistance = Math.abs(harmonySwipeState.touchEndX - harmonySwipeState.touchStartX);
+
+            if (swipeDistance > swipeThreshold) {
+                if (harmonySwipeState.touchEndX < harmonySwipeState.touchStartX) {
+                    // Swiped left - next harmony
+                    navigateZoomedHarmony('next');
+                } else {
+                    // Swiped right - previous harmony
+                    navigateZoomedHarmony('prev');
+                }
+            }
+        }
+
+        /**
+         * Shows a toast notification
+         */
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            toastMessage.textContent = message;
+            
+            if (type === 'success') {
+                toast.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg transition-all duration-300';
+            } else if (type === 'error') {
+                toast.className = 'fixed bottom-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg transition-all duration-300';
+            }
+            
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 2000);
+        }
+
+        /**
+         * Copies text to clipboard
+         */
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('Copied to clipboard!');
+            } catch (err) {
+                showToast('Failed to copy', 'error');
+                console.error('Failed to copy:', err);
+            }
+        }
+
+        /**
+         * Enriches color data with cleaned acquisition text
+         */
+        function enrichColorData(colors) {
+            return colors.map(color => {
+                return {
+                    ...color,
+                    acquisitionClean: cleanAcquisitionText(color.acquisition)
+                };
+            });
+        }
+
+        /**
+         * Removes currency/price information from acquisition text
+         */
+        function cleanAcquisitionText(acquisition) {
+            if (!acquisition) return acquisition;
+            // Remove anything in parentheses (includes Gil amounts and Cosmocredits)
+            return acquisition.replace(/\s*\([^)]*\)/g, '').trim();
+        }
+
+        /**
+         * Converts hex to hue angle for color wheel
+         */
+        function hexToHue(hex) {
+            // Validate hex format (#RRGGBB)
+            if (!hex || hex.length < 7) return 0;
+
+            const r = parseInt(hex.slice(1, 3), 16) / 255;
+            const g = parseInt(hex.slice(3, 5), 16) / 255;
+            const b = parseInt(hex.slice(5, 7), 16) / 255;
+            
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const delta = max - min;
+            
+            if (delta === 0) return 0;
+            
+            let hue;
+            if (max === r) {
+                hue = 60 * (((g - b) / delta) % 6);
+            } else if (max === g) {
+                hue = 60 * (((b - r) / delta) + 2);
+            } else {
+                hue = 60 * (((r - g) / delta) + 4);
+            }
+            
+            return hue < 0 ? hue + 360 : hue;
+        }
+
+        // APIThrottler class and apiThrottler instance now provided by shared-components.js
+
+        /**
+         * Creates a color wheel SVG
+         */
+        function createColorWheel(baseColor, relatedColors, harmonyType) {
+            const size = 160;
+            const center = size / 2;
+            const radius = 60;
+            const innerRadius = 44;
+
+            // Get theme colors for SVG strokes
+            const themeTextMuted = getComputedStyle(document.documentElement).getPropertyValue('--theme-text-muted').trim();
+            const themeBg = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg').trim();
+
+            const getPointOnCircle = (hue, r) => {
+                const angle = (hue - 90) * (Math.PI / 180);
+                return {
+                    x: center + r * Math.cos(angle),
+                    y: center + r * Math.sin(angle)
+                };
+            };
+
+            const baseHue = hexToHue(baseColor.hex);
+            const basePoint = getPointOnCircle(baseHue, radius);
+
+            let svg = `<svg viewBox="0 0 ${size} ${size}" class="mx-auto mb-4 color-wheel" data-harmony-type="${harmonyType}" style="width: ${size}px; height: ${size}px;">`;
+
+            // Optimized to 60 segments (6° each) for better performance
+            // 50% reduction in DOM elements vs. 120 segments while maintaining visual quality
+            const segments = 60;
+            for (let i = 0; i < segments; i++) {
+                const angle1 = (i * 360) / segments;
+                const angle2 = ((i + 1) * 360) / segments;
+
+                // Convert HSL to color for each segment
+                const color = `hsl(${angle1}, 100%, 50%)`;
+
+                // Calculate points for the segment
+                const outer1 = getPointOnCircle(angle1, radius);
+                const outer2 = getPointOnCircle(angle2, radius);
+                const inner1 = getPointOnCircle(angle1, innerRadius);
+                const inner2 = getPointOnCircle(angle2, innerRadius);
+
+                // Create path for segment
+                svg += `<path d="M ${outer1.x} ${outer1.y} A ${radius} ${radius} 0 0 1 ${outer2.x} ${outer2.y} L ${inner2.x} ${inner2.y} A ${innerRadius} ${innerRadius} 0 0 0 ${inner1.x} ${inner1.y} Z" fill="${color}" opacity="0.4" />`;
+            }
+            
+            // Lines connecting colors (using theme-muted color for lines)
+            relatedColors.forEach(color => {
+                const point = getPointOnCircle(hexToHue(color.hex), radius);
+                svg += `<line x1="${basePoint.x}" y1="${basePoint.y}" x2="${point.x}" y2="${point.y}"
+                    stroke="${themeTextMuted}" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.6" />`;
+            });
+
+            // Related color dots with hover events (using theme background for stroke contrast)
+            relatedColors.forEach(color => {
+                const point = getPointOnCircle(hexToHue(color.hex), radius);
+                svg += `<circle cx="${point.x}" cy="${point.y}" r="10" fill="${color.hex}"
+                    stroke="${themeBg}" stroke-width="2" class="color-dot" data-name="${color.name}" data-hex="${color.hex}"
+                    onmousemove="showTooltip('${color.name}', event.pageX, event.pageY)"
+                    onmouseout="hideTooltip()" style="cursor: pointer;" />`;
+            });
+
+            // Base color dot (larger) with hover event (using theme background for stroke contrast)
+            svg += `<circle cx="${basePoint.x}" cy="${basePoint.y}" r="14" fill="${baseColor.hex}"
+                stroke="${themeBg}" stroke-width="3" class="color-dot" data-name="${baseColor.name}" data-hex="${baseColor.hex}"
+                onmousemove="showTooltip('${baseColor.name} (Base)', event.pageX, event.pageY)"
+                onmouseout="hideTooltip()" style="cursor: pointer;" />`;
+            
+            svg += '</svg>';
+            return svg;
+        }
+
+        /**
+         * Loads server data and populates dropdown
+         */
+        async function loadServerData() {
+            try {
+                const [dcResponse, worldsResponse] = await Promise.all([
+                    fetch('/assets/json/data-centers.json'),
+                    fetch('/assets/json/worlds.json')
+                ]);
+                
+                const dataCenters = await dcResponse.json();
+                const worlds = await worldsResponse.json();
+
+                const serverSelect = document.getElementById('server-select');
+                serverSelect.innerHTML = '';
+
+                // Sort Data Centers alphabetically by name
+                const sortedDataCenters = [...dataCenters].sort((a, b) => a.name.localeCompare(b.name));
+
+                // Add Data Centers
+                const dcOptgroup = document.createElement('optgroup');
+                dcOptgroup.label = 'Data Centers';
+                sortedDataCenters.forEach(dc => {
+                    const option = document.createElement('option');
+                    option.value = `DC:${dc.name}`;
+                    option.textContent = `${dc.name} (${dc.region})`;
+                    if (dc.name === 'Crystal') {
+                        option.selected = true;
+                    }
+                    dcOptgroup.appendChild(option);
+                });
+                serverSelect.appendChild(dcOptgroup);
+
+                // Add Worlds grouped by Data Center
+                sortedDataCenters.forEach(dc => {
+                    const worldOptgroup = document.createElement('optgroup');
+                    worldOptgroup.label = `${dc.name} Worlds`;
+                    
+                    const dcWorlds = worlds
+                        .filter(w => dc.worlds.includes(w.id))
+                        .sort((a, b) => a.name.localeCompare(b.name));
+                    
+                    dcWorlds.forEach(world => {
+                        const option = document.createElement('option');
+                        option.value = `WORLD:${world.id}`;
+                        option.textContent = world.name;
+                        worldOptgroup.appendChild(option);
+                    });
+                    
+                    serverSelect.appendChild(worldOptgroup);
+                });
+            } catch (error) {
+                console.error('Error loading server data:', error);
+            }
+        }
+
+        /**
+         * Checks if a dye should have price data fetched
+         */
+        // Using shouldFetchPriceExplorer (defined above) which implements the same logic
+        // without referencing the removed PRICE_CATEGORIES object
+
+        /**
+         * Fetches market prices from Universalis API using aggregated endpoint
+         * Uses APIThrottler to prevent rate limiting
+         */
+        async function fetchMarketPrices(itemIds, server) {
+            if (itemIds.length === 0) return {};
+
+            const serverValue = server.startsWith('DC:') ? server.substring(3) : server.substring(6);
+            const itemIdsString = itemIds.join(',');
+            // Use aggregated endpoint which returns minListing data
+            const url = `https://universalis.app/api/v2/aggregated/${serverValue}/${itemIdsString}`;
+
+            try {
+                // Use throttled request to respect API rate limits
+                const data = await apiThrottler.request(url);
+                const prices = {};
+
+                // Parse aggregated endpoint response format
+                if (data.results && Array.isArray(data.results)) {
+                    data.results.forEach(result => {
+                        const itemId = result.itemId.toString();
+
+                        // Try to get price from nq.minListing (prefer DC, then region)
+                        if (result.nq && result.nq.minListing) {
+                            let price = null;
+
+                            // For data centers, use dc price
+                            if (server.startsWith('DC:') && result.nq.minListing.dc && result.nq.minListing.dc.price) {
+                                price = result.nq.minListing.dc.price;
+                            }
+                            // For specific worlds, use world price if available, otherwise dc price
+                            else if (server.startsWith('WORLD:')) {
+                                if (result.nq.minListing.world && result.nq.minListing.world.price) {
+                                    price = result.nq.minListing.world.price;
+                                } else if (result.nq.minListing.dc && result.nq.minListing.dc.price) {
+                                    price = result.nq.minListing.dc.price;
+                                }
+                            }
+
+                            // Fallback to region price if no dc/world price
+                            if (!price && result.nq.minListing.region && result.nq.minListing.region.price) {
+                                price = result.nq.minListing.region.price;
+                            }
+
+                            if (price) {
+                                prices[itemId] = price;
+                                console.log(`Fetched price for item ${itemId}: ${price} Gil`);
+                            }
+                        }
+                    });
+                }
+
+                console.log('All fetched prices:', prices);
+                return prices;
+            } catch (error) {
+                console.error('Error fetching prices:', error);
+                throw error;
+            }
+        }
+
+        /**
+         * Refreshes market prices for visible dyes
+         */
+        async function refreshMarketPrices() {
+            const refreshBtn = document.getElementById('refresh-prices-btn');
+            const statusDiv = document.getElementById('price-status');
+            
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = 'Fetching Prices...';
+            statusDiv.textContent = 'Connecting to Universalis API...';
+            
+            try {
+                const server = document.getElementById('server-select').value;
+                
+                // Get all visible colors (base + harmonies)
+                const visibleColors = [currentPalettes.base];
+                Object.keys(currentPalettes).forEach(key => {
+                    if (key !== 'base') {
+                        visibleColors.push(...currentPalettes[key]);
+                    }
+                });
+
+                // Filter to colors that should have prices
+                const colorsNeedingPrices = visibleColors.filter(color => shouldFetchPriceExplorer(color));
+                const itemIds = [...new Set(colorsNeedingPrices.map(c => c.itemID))];
+
+                if (itemIds.length === 0) {
+                    statusDiv.textContent = 'No dyes selected for price fetching.';
+                    refreshBtn.disabled = false;
+                    refreshBtn.textContent = 'Refresh Market Prices';
+                    return;
+                }
+                
+                // Fetch prices in batches of 100
+                const batchSize = 100;
+                const newPrices = {};
+                
+                for (let i = 0; i < itemIds.length; i += batchSize) {
+                    const batch = itemIds.slice(i, i + batchSize);
+                    const batchPrices = await fetchMarketPrices(batch, server);
+                    Object.assign(newPrices, batchPrices);
+                }
+                
+                // Update cache
+                priceCache = { ...priceCache, ...newPrices };
+                lastPriceUpdate = new Date();
+
+                // Update acquisition text for all colors that had prices fetched
+                // Iterate through all harmony palettes (base + all harmony types)
+                const allSwatchColors = [currentPalettes.base];
+                Object.keys(currentPalettes).forEach(key => {
+                    if (key !== 'base' && Array.isArray(currentPalettes[key])) {
+                        allSwatchColors.push(...currentPalettes[key]);
+                    }
+                });
+
+                // Update the BASE COLOR display at the top
+                const baseColor = currentPalettes.base;
+                if (baseColor) {
+                    const selectedColorDisplay = document.getElementById('selected-color-display');
+                    if (selectedColorDisplay) {
+                        // Find the acquisition paragraph (contains "Acquisition: ...")
+                        const paragraphs = selectedColorDisplay.querySelectorAll('p');
+                        paragraphs.forEach(p => {
+                            if (p.textContent.includes('Acquisition:')) {
+                                const acquisitionText = getAcquisitionText(baseColor);
+                                p.textContent = acquisitionText ? `Acquisition: ${acquisitionText}` : '';
+                                console.log(`Updated BASE COLOR display: ${p.textContent}`);
+                            }
+                        });
+                    }
+                }
+
+                // For each color, find its swatch in the DOM and update acquisition text
+                allSwatchColors.forEach(color => {
+                    if (!color || !color.name) return;
+
+                    // Find the swatch div by searching for a span with the color name
+                    const colorNameSpans = Array.from(document.querySelectorAll('span.font-semibold')).filter(span => span.textContent.trim() === color.name);
+
+                    colorNameSpans.forEach(nameSpan => {
+                        // Find the parent swatch div (it should be a few levels up)
+                        let swatchDiv = nameSpan.closest('div.group');
+                        if (swatchDiv) {
+                            // Find the acquisition text div within this swatch
+                            let acquisitionDiv = Array.from(swatchDiv.querySelectorAll('div')).find(div =>
+                                div.className.includes('text-xs') &&
+                                div.className.includes('opacity-70')
+                            );
+
+                            if (acquisitionDiv) {
+                                acquisitionDiv.textContent = getAcquisitionText(color);
+                                console.log(`Updated price for ${color.name}: ${acquisitionDiv.textContent}`);
+                            }
+                        }
+                    });
+                });
+
+                const priceCount = Object.keys(newPrices).length;
+                statusDiv.textContent = `Updated ${priceCount} prices at ${lastPriceUpdate.toLocaleTimeString()}`;
+                
+            } catch (error) {
+                if (lastPriceUpdate) {
+                    statusDiv.textContent = `Using cached data from ${lastPriceUpdate.toLocaleTimeString()}. Error: Cannot connect to Universalis API.`;
+                } else {
+                    statusDiv.textContent = 'Cannot connect to Universalis API.';
+                }
+            } finally {
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = 'Refresh Market Prices';
+            }
+        }
+
+        /**
+         * Populates acquisition filter dropdown
+         */
+        function populateAcquisitionFilter() {
+            const acquisitionSet = new Set();
+            ffxivDyes.forEach(color => {
+                if (color.acquisitionClean) {
+                    acquisitionSet.add(color.acquisitionClean);
+                }
+            });
+            
+            const sortedAcquisitions = Array.from(acquisitionSet).sort();
+            const filter = document.getElementById('acquisition-filter');
+            
+            sortedAcquisitions.forEach(acquisition => {
+                const option = document.createElement('option');
+                option.value = acquisition;
+                option.textContent = acquisition;
+                filter.appendChild(option);
+            });
+        }
+
+        /**
+         * Filters colors based on acquisition method
+         */
+        function getFilteredColors() {
+            const acquisitionFilter = document.getElementById('acquisition-filter').value;
+            const excludeExtremes = document.getElementById('exclude-extremes-checkbox').checked;
+            const excludeMetallic = document.getElementById('exclude-metallic-checkbox').checked;
+
+            let filtered = ffxivDyes;
+
+            // Filter by acquisition if not "all"
+            if (acquisitionFilter !== 'all') {
+                filtered = filtered.filter(color => color.acquisitionClean === acquisitionFilter);
+            }
+
+            // Filter out Jet Black and Pure White if exclusion is enabled
+            if (excludeExtremes) {
+                filtered = filtered.filter(color => color.name !== 'Jet Black' && color.name !== 'Pure White');
+            }
+
+            // Filter out metallic colors if exclusion is enabled
+            if (excludeMetallic) {
+                filtered = filtered.filter(color => !color.name.toLowerCase().includes('metallic'));
+            }
+
+            return filtered;
+        }
+        /**
+         * Get category priority for sorting
+         * Standardized category ordering across all tools:
+         * - Neutral: 0
+         * - Colors (A-Z): 1-26 (when encountered in data, treated as priority 2 for unknown categories)
+         * - Special: 98
+         * - Facewear: 99 (typically excluded from filtering)
+         *
+         * @param {string} category - The dye category name
+         * @returns {number} Priority value for sorting (lower values appear first)
+         */
+        function getCategoryPriority(category) {
+            const priorityMap = {
+                'Neutral': 0,
+                'Special': 98,
+                'Facewear': 99
+            };
+            // Default priority for unknown "Colors" categories is 1-26 range (2 as default)
+            return priorityMap[category] !== undefined ? priorityMap[category] : 2;
+        }
+
+        /**
+         * Sort colors by category (using priority) and then by name alphabetically
+         * Used by dropdown population for consistent ordering across tools
+         *
+         * @param {Array} colors - Array of color objects
+         * @returns {Array} Sorted color array
+         */
+        function sortColorsByCategory(colors) {
+            return [...colors].sort((a, b) => {
+                const aPriority = getCategoryPriority(a.category);
+                const bPriority = getCategoryPriority(b.category);
+
+                // Sort by category priority first
+                if (aPriority !== bPriority) {
+                    return aPriority - bPriority;
+                }
+
+                // Then by category name alphabetically (for unknown categories)
+                const categoryComparison = a.category.localeCompare(b.category);
+                if (categoryComparison !== 0) {
+                    return categoryComparison;
+                }
+
+                // Finally by color name alphabetically
+                return a.name.localeCompare(b.name);
+            });
+        }
+
+        /**
+         * Sorts the filtered color data and populates the dropdown with categorized optgroups
+         *
+         * Pattern: Standardized dropdown generation (Color Harmony Explorer variant)
+         * - Filters colors based on acquisition method and exclusions
+         * - Sorts by category priority, then alphabetically by name
+         * - Creates optgroups for each category
+         * - Uses array index as option value (for compatibility with filtered ffxivDyes array)
+         * - Maintains consistency with other tools' sorting and grouping logic
+         */
+        function populateDropdown() {
+            const select = document.getElementById('color-select');
+            select.innerHTML = '';
+
+            // Guard: Validate select element
+            if (!select) {
+                console.warn('populateDropdown: Invalid select element');
+                return;
+            }
+
+            const filteredColors = getFilteredColors();
+
+            // Sort using standardized function
+            const sortedColors = sortColorsByCategory(filteredColors);
+
+            let currentCategory = '';
+            let currentOptgroup = null;
+
+            sortedColors.forEach((color) => {
+                const index = ffxivDyes.indexOf(color);
+
+                // Create new optgroup when category changes
+                if (color.category !== currentCategory) {
+                    currentCategory = color.category;
+                    currentOptgroup = document.createElement('optgroup');
+                    currentOptgroup.label = currentCategory;
+                    select.appendChild(currentOptgroup);
+                }
+
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = color.name;
+
+                if (currentOptgroup) {
+                    currentOptgroup.appendChild(option);
+                } else {
+                    select.appendChild(option);
+                }
+            });
+        }
+
+        /**
+         * Handles color search
+         */
+        function handleSearch(query) {
+            const resultsContainer = document.getElementById('search-results');
+            
+            if (!query.trim()) {
+                resultsContainer.classList.add('hidden');
+                return;
+            }
+
+            const searchLower = query.toLowerCase();
+            const matches = ffxivDyes
+                .map((color, index) => ({ color, index }))
+                .filter(({ color }) => 
+                    color.name.toLowerCase().includes(searchLower) ||
+                    color.category.toLowerCase().includes(searchLower) ||
+                    color.hex.toLowerCase().includes(searchLower)
+                )
+                .slice(0, 10);
+
+            if (matches.length === 0) {
+                resultsContainer.innerHTML = '<div class="p-3 text-gray-500 text-center">No colors found</div>';
+                resultsContainer.classList.remove('hidden');
+                return;
+            }
+
+            resultsContainer.innerHTML = matches.map(({ color, index }) => {
+                return `
+                    <div class="search-result-item p-3 cursor-pointer flex items-center gap-3" onclick="selectColorByIndex(${index})">
+                        <div class="w-8 h-8 rounded-md border-2 border-gray-300" style="background-color: ${color.hex};"></div>
+                        <div class="flex-grow">
+                            <div class="font-medium">${color.name}</div>
+                            <div class="text-sm text-gray-500">${color.category} • ${color.hex}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            resultsContainer.classList.remove('hidden');
+        }
+
+        /**
+         * Selects a color by index
+         */
+        function selectColorByIndex(index) {
+            const select = document.getElementById('color-select');
+            select.value = index;
+            document.getElementById('color-search').value = '';
+            document.getElementById('search-results').classList.add('hidden');
+            debouncedUpdateUI();
+        }
+
+        /**
+         * Calculate Euclidean distance between two colors in RGB space
+         *
+         * Uses the standard RGB Euclidean distance formula:
+         * distance = sqrt((r1-r2)² + (g1-g2)² + (b1-b2)²)
+         *
+         * Range: 0 (identical colors) to ~441 (white vs black)
+         *
+         * @param {Object} rgb1 - First color with properties r, g, b (0-255)
+         * @param {Object} rgb2 - Second color with properties r, g, b (0-255)
+         * @returns {number} Euclidean distance in RGB space
+         *
+         * @example
+         * const dist = colorDistance({ r: 255, g: 0, b: 0 }, { r: 0, g: 0, b: 0 }); // 255
+         */
+        function colorDistance(rgb1, rgb2) {
+            const dr = rgb1.r - rgb2.r;
+            const dg = rgb1.g - rgb2.g;
+            const db = rgb1.b - rgb2.b;
+            return Math.sqrt(dr * dr + dg * dg + db * db);
+        }
+
+        /**
+         * Calculates deviance rating from color distance
+         * Returns a rating from 0 (perfect match) to 10 (poor match)
+         * Based on RGB Euclidean distance
+         */
+        function calculateDevianceRating(distance) {
+            // Scale: 0-10 distance = 0 rating, 100+ distance = 10 rating
+            // Using linear scale: rating = distance / 10
+            const rating = Math.min(10, distance / 10);
+            // Round to 1 decimal place
+            return Math.round(rating * 10) / 10;
+        }
+
+        // hsvToRgb() function is provided by shared-components.js - using shared implementation
+
+        /**
+         * Finds the closest color
+         */
+        function findClosestColor(targetRgb) {
+            const excludeMetallic = document.getElementById('exclude-metallic-checkbox').checked;
+            const excludeFacewear = document.getElementById('exclude-facewear-checkbox').checked;
+            const excludeExtremes = document.getElementById('exclude-extremes-checkbox').checked;
+            let closestColor = null;
+            let minDistance = Infinity;
+
+            let searchableColors = ffxivDyes;
+
+            if (excludeMetallic) {
+                searchableColors = searchableColors.filter(color => !color.name.toLowerCase().includes('metallic'));
+            }
+
+            if (excludeFacewear) {
+                searchableColors = searchableColors.filter(color => color.category !== 'Facewear');
+            }
+
+            if (excludeExtremes) {
+                searchableColors = searchableColors.filter(color =>
+                    color.name !== 'Jet Black' && color.name !== 'Pure White'
+                );
+            }
+
+            const sourceToSearch = searchableColors.length > 0 ? searchableColors : ffxivDyes;
+
+            sourceToSearch.forEach(color => {
+                const distance = colorDistance(targetRgb, color.rgb);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestColor = color;
+                }
+            });
+            return closestColor;
+        }
+
+        /**
+         * Generates a color harmony palette
+         * Returns array of objects with idealRgb, matchedColor, and deviance
+         */
+        function generateHarmony(baseColor, type) {
+            const { h, s, v } = baseColor.hsv;
+            let targetHues = [];
+
+            switch (type) {
+                case 'complementary':
+                    targetHues = [(h + 180) % 360];
+                    break;
+                case 'analogous':
+                    targetHues = [(h + 330) % 360, (h + 30) % 360];
+                    break;
+                case 'triadic':
+                    targetHues = [(h + 120) % 360, (h + 240) % 360];
+                    break;
+                case 'split-complementary':
+                    targetHues = [(h + 150) % 360, (h + 210) % 360];
+                    break;
+                case 'tetradic':
+                    targetHues = [(h + 60) % 360, (h + 180) % 360, (h + 240) % 360];
+                    break;
+                case 'square':
+                    targetHues = [(h + 90) % 360, (h + 180) % 360, (h + 270) % 360];
+                    break;
+            }
+
+            return targetHues.map(targetH => {
+                const idealRgb = hsvToRgb(targetH, s, v);
+                const matchedColor = findClosestColor(idealRgb);
+                const distance = colorDistance(idealRgb, matchedColor.rgb);
+                const devianceRating = calculateDevianceRating(distance);
+
+                return {
+                    idealRgb: idealRgb,
+                    matchedColor: matchedColor,
+                    distance: distance,
+                    devianceRating: devianceRating
+                };
+            });
+        }
+
+
+        /**
+         * Gets display text for acquisition/price (plain text - HTML formatting handled at display level)
+         */
+        function getAcquisitionText(color) {
+            const showPrices = document.getElementById('show-market-prices-toggle').checked;
+
+            // If toggle is off, always show original acquisition
+            if (!showPrices) {
+                return color.acquisition + (color.price !== null && color.currency ? ` - ${color.price} ${color.currency}` : '');
+            }
+
+            // Toggle is on, show market prices if available
+            // Use string key for cache lookup to match how prices are stored
+            const itemIdKey = color.itemID ? color.itemID.toString() : null;
+            const shouldFetch = shouldFetchPriceExplorer(color);
+
+            console.log(`getAcquisitionText: ${color.name}, itemID=${color.itemID}, itemIdKey=${itemIdKey}, showPrices=${showPrices}, shouldFetch=${shouldFetch}, hasCache=${itemIdKey ? !!priceCache[itemIdKey] : false}, cacheValue=${itemIdKey ? priceCache[itemIdKey] : 'N/A'}`);
+
+            if (shouldFetch && itemIdKey && priceCache[itemIdKey]) {
+                const result = `Market Board - ${priceCache[itemIdKey].toLocaleString()} Gil`;
+                console.log(`  -> Returning market price: ${result}`);
+                return result;
+            }
+
+            if (shouldFetch && itemIdKey && !priceCache[itemIdKey]) {
+                if (lastPriceUpdate) {
+                    return `${color.acquisition}${color.price !== null && color.currency ? ` - ${color.price} ${color.currency}` : ''} (Sold Out)`;
+                }
+                return color.acquisition + (color.price !== null && color.currency ? ` - ${color.price} ${color.currency}` : '');
+            }
+
+            const result = color.acquisition + (color.price !== null && color.currency ? ` - ${color.price} ${color.currency}` : '');
+            console.log(`  -> Returning acquisition text: ${result}`);
+            return result;
+        }
+
+        /**
+         * Format acquisition text with Habibi font for numbers
+         */
+        function formatAcquisitionText(text) {
+            // Replace price amounts with Habibi-styled spans
+            return text.replace(/(\d+(?:,\d+)*)/g, '<span class="number">$1</span>');
+        }
+
+        /**
+         * Creates a color swatch with copy button and optional deviance rating
+         */
+        function createColorSwatchHTML(color, devianceRating = null, harmonyType = null) {
+            const textColor = (color.rgb.r * 0.299 + color.rgb.g * 0.587 + color.rgb.b * 0.114) > 186 ? 'text-black' : 'text-white';
+
+            const acquisitionText = getAcquisitionText(color);
+
+            // Determine badge color based on deviance rating
+            let badgeColor = '';
+            let badgeTextColor = '';
+            let badgeText = '';
+            let strokeColor = '';
+            if (devianceRating !== null) {
+                if (devianceRating === 0) {
+                    badgeColor = 'bg-green-500';
+                    badgeTextColor = 'text-black';
+                    badgeText = 'Perfect';
+                    strokeColor = '#22c55e';
+                } else if (devianceRating <= 3) {
+                    badgeColor = 'bg-green-500';
+                    badgeTextColor = 'text-black';
+                    badgeText = `Deviance: ${devianceRating}`;
+                    strokeColor = '#22c55e';
+                } else if (devianceRating <= 6) {
+                    badgeColor = 'bg-yellow-500';
+                    badgeTextColor = 'text-black';
+                    badgeText = `Deviance: ${devianceRating}`;
+                    strokeColor = '#eab308';
+                } else {
+                    badgeColor = 'bg-red-500';
+                    badgeTextColor = 'text-white';
+                    badgeText = `Deviance: ${devianceRating}`;
+                    strokeColor = '#ef4444';
+                }
+            }
+
+            return `
+                <div class="flex items-center p-3 rounded-lg group relative" style="background-color: ${color.hex};">
+                    <div class="w-8 h-8 rounded-md border-2 ${textColor === 'text-black' ? 'border-gray-300' : 'border-gray-500'}"
+                         style="background-color: ${color.hex}; cursor: pointer;"
+                         onmouseenter="highlightColorDot('${color.hex}', '${harmonyType}')"
+                         onmouseleave="unhighlightColorDot('${color.hex}', '${harmonyType}')"></div>
+                    <div class="ml-4 flex-grow ${textColor}">
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold">${color.name}</span>
+                            ${devianceRating !== null ? `<span class="${badgeColor} ${badgeTextColor} text-xs px-2 py-0.5 rounded-full font-medium" style="cursor: pointer;" onmouseenter="showDevianceLine('${color.hex}', '${harmonyType}', '${strokeColor}')" onmouseleave="hideDevianceLine('${harmonyType}')">${badgeText}</span>` : ''}
+                        </div>
+                        <div class="text-sm opacity-80"><span class="number">${color.hex.toUpperCase()}</span></div>
+                        ${acquisitionText ? `<div class="text-xs opacity-70 mt-1" style="display: inline-block;">${formatAcquisitionText(acquisitionText)}</div>` : ''}
+                    </div>
+                    <button
+                        onclick="copyToClipboard('${color.hex}')"
+                        class="ml-2 p-3 rounded-md ${textColor === 'text-black' ? 'hover:bg-black/10' : 'hover:bg-white/20'} transition opacity-0 group-hover:opacity-100 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        title="Copy hex code"
+                    >
+                        <svg class="w-5 h-5 ${textColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+        }
+        
+        /**
+         * Updates the entire UI
+         */
+        function updateUI() {
+            const select = document.getElementById('color-select');
+            const selectedIndex = select.value;
+            const baseColor = ffxivDyes[selectedIndex];
+
+            const selectedColorDisplay = document.getElementById('selected-color-display');
+            const selectedTextColor = (baseColor.rgb.r * 0.299 + baseColor.rgb.g * 0.587 + baseColor.rgb.b * 0.114) > 186 ? 'text-black' : 'text-white';
+            selectedColorDisplay.style.backgroundColor = baseColor.hex;
+            selectedColorDisplay.innerHTML = `
+                <h2 class="text-2xl font-bold ${selectedTextColor}">${baseColor.name}</h2>
+                <p class="text-lg ${selectedTextColor} opacity-90"><span class="number">${baseColor.hex.toUpperCase()}</span></p>
+                <p class="text-sm ${selectedTextColor} opacity-80">RGB: (<span class="number">${baseColor.rgb.r}</span>, <span class="number">${baseColor.rgb.g}</span>, <span class="number">${baseColor.rgb.b}</span>)</p>
+                ${getAcquisitionText(baseColor) ? `<p class="text-sm ${selectedTextColor} opacity-75 mt-2">Acquisition: ${formatAcquisitionText(getAcquisitionText(baseColor))}</p>` : ''}
+                <button 
+                    onclick="copyToClipboard('${baseColor.hex}')"
+                    class="mt-4 px-4 py-2 ${selectedTextColor === 'text-black' ? 'bg-black/10 hover:bg-black/20' : 'bg-white/20 hover:bg-white/30'} ${selectedTextColor} rounded-lg transition"
+                >
+                    Copy Hex Code
+                </button>
+            `;
+
+            const harmonies = [
+                { name: 'Complementary', type: 'complementary' },
+                { name: 'Analogous', type: 'analogous' },
+                { name: 'Triadic', type: 'triadic' },
+                { name: 'Split-Complementary', type: 'split-complementary' },
+                { name: 'Tetradic (Rectangular)', type: 'tetradic' },
+                { name: 'Square', type: 'square' },
+            ];
+
+            const resultsContainer = document.getElementById('harmony-results');
+            resultsContainer.innerHTML = '';
+            currentPalettes = { base: baseColor };
+
+            harmonies.forEach(harmony => {
+                const harmonyResults = generateHarmony(baseColor, harmony.type);
+                // Extract just the matched colors for the color wheel and palette storage
+                const paletteColors = harmonyResults.map(result => result.matchedColor);
+                currentPalettes[harmony.type] = paletteColors;
+
+                const section = document.createElement('div');
+                section.className = 'harmony-section bg-white p-4 rounded-lg shadow-md animate-slide-in';
+                section.setAttribute('data-harmony-type', harmony.type);
+
+                const colorWheel = createColorWheel(baseColor, paletteColors, harmony.type);
+                // Create swatches with deviance ratings
+                let swatchesHTML = harmonyResults.map(result =>
+                    createColorSwatchHTML(result.matchedColor, result.devianceRating, harmony.type)
+                ).join('<div class="my-2"></div>');
+
+                section.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold text-gray-700">${harmony.name}</h3>
+                        <div class="flex gap-2">
+                            <button
+                                onclick="copyPaletteHexCodes('${harmony.type}')"
+                                class="px-4 py-2.5 text-sm bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition min-h-[44px] flex items-center justify-center"
+                                title="Copy all hex codes from this palette"
+                            >
+                                Copy All
+                            </button>
+                            <button
+                                onclick="zoomIn('${harmony.type}')"
+                                class="zoom-in-btn p-2 sm:px-4 sm:py-2.5 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition min-h-[44px] min-w-[44px] flex items-center justify-center"
+                                title="Zoom in on this harmony"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+                                </svg>
+                            </button>
+                            <button
+                                onclick="zoomOut()"
+                                class="zoom-out-btn p-2 sm:px-4 sm:py-2.5 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition min-h-[44px] min-w-[44px] flex items-center justify-center"
+                                title="Zoom out"
+                                style="display: none;"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    ${colorWheel}
+                    <div class="space-y-2">${swatchesHTML}</div>
+                `;
+                resultsContainer.appendChild(section);
+            });
+
+            // Initialize pinch-to-zoom gestures after all harmony sections are rendered
+            initializeHarmonyPinchZoom();
+        }
+
+        // Debounced calculation for better mobile performance
+        const calculationDebounceTime = isMobile() ? 300 : 100;
+        const debouncedUpdateUI = debounce(updateUI, calculationDebounceTime);
+
+        /**
+         * Copies all hex codes from a specific palette
+         */
+        function copyPaletteHexCodes(paletteType) {
+            const colors = currentPalettes[paletteType];
+            if (!colors) return;
+            
+            const hexCodes = colors.map(c => c.hex).join(', ');
+            copyToClipboard(hexCodes);
+        }
+
+        /**
+         * Copies all hex codes from all palettes
+         */
+        function copyAllHexCodes() {
+            const allColors = [currentPalettes.base];
+            Object.keys(currentPalettes).forEach(key => {
+                if (key !== 'base') {
+                    allColors.push(...currentPalettes[key]);
+                }
+            });
+            
+            const uniqueHexCodes = [...new Set(allColors.map(c => c.hex))];
+            copyToClipboard(uniqueHexCodes.join(', '));
+        }
+
+        /**
+         * Exports palette in various formats
+         */
+        function exportPalette(format) {
+            const allColors = [currentPalettes.base];
+            const colorsByPalette = { base: currentPalettes.base };
+            
+            Object.keys(currentPalettes).forEach(key => {
+                if (key !== 'base') {
+                    colorsByPalette[key] = currentPalettes[key];
+                    allColors.push(...currentPalettes[key]);
+                }
+            });
+
+            let output = '';
+            const timestamp = new Date().toISOString().split('T')[0];
+
+            switch (format) {
+                case 'json':
+                    output = JSON.stringify(colorsByPalette, null, 2);
+                    downloadFile(`ffxiv-palette-${timestamp}.json`, output, 'application/json');
+                    break;
+
+                case 'css':
+                    output = ':root {\n';
+                    output += `  /* Base Color: ${currentPalettes.base.name} */\n`;
+                    output += `  --color-base: ${currentPalettes.base.hex};\n\n`;
+                    
+                    Object.keys(colorsByPalette).forEach(paletteKey => {
+                        if (paletteKey !== 'base') {
+                            output += `  /* ${paletteKey.charAt(0).toUpperCase() + paletteKey.slice(1)} Harmony */\n`;
+                            colorsByPalette[paletteKey].forEach((color, index) => {
+                                const varName = `--color-${paletteKey}-${index + 1}`;
+                                output += `  ${varName}: ${color.hex}; /* ${color.name} */\n`;
+                            });
+                            output += '\n';
+                        }
+                    });
+                    output += '}';
+                    downloadFile(`ffxiv-palette-${timestamp}.css`, output, 'text/css');
+                    break;
+
+                case 'scss':
+                    output = `// FFXIV Color Palette - Generated ${timestamp}\n\n`;
+                    output += `// Base Color: ${currentPalettes.base.name}\n`;
+                    output += `$color-base: ${currentPalettes.base.hex};\n\n`;
+                    
+                    Object.keys(colorsByPalette).forEach(paletteKey => {
+                        if (paletteKey !== 'base') {
+                            output += `// ${paletteKey.charAt(0).toUpperCase() + paletteKey.slice(1)} Harmony\n`;
+                            colorsByPalette[paletteKey].forEach((color, index) => {
+                                const varName = `$color-${paletteKey}-${index + 1}`;
+                                output += `${varName}: ${color.hex}; // ${color.name}\n`;
+                            });
+                            output += '\n';
+                        }
+                    });
+                    downloadFile(`ffxiv-palette-${timestamp}.scss`, output, 'text/scss');
+                    break;
+            }
+            
+            showToast(`Exported as ${format.toUpperCase()}`);
+        }
+
+        /**
+         * Downloads a file with the given content
+         */
+        function downloadFile(filename, content, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // --- Initialization ---
+        window.onload = async () => {
+            try {
+                console.log('Attempting to load colors_xiv.json...');
+
+                // Use safeFetchJSON for consistent error handling across all tools
+                const rawData = await safeFetchJSON('./assets/json/colors_xiv.json', []);
+
+                // Guard: Validate data was loaded
+                if (!rawData || rawData.length === 0) {
+                    throw new Error('Color data failed to load or is empty');
+                }
+
+                console.log('Color data loaded successfully, count:', rawData.length);
+
+                // Enrich the color data with cleaned acquisition text
+                ffxivDyes = enrichColorData(rawData);
+
+                // Create tooltip
+                createTooltip();
+                
+                // Load server data
+                console.log('Loading server data...');
+                await loadServerData();
+                
+                // Populate filters and dropdown
+                populateAcquisitionFilter();
+                populateDropdown();
+                
+                const select = document.getElementById('color-select');
+                // Set default color to Abyssal Blue
+                const abyssalBlueIndex = ffxivDyes.findIndex(color => color.name === "Abyssal Blue");
+                if (abyssalBlueIndex !== -1) {
+                    select.value = abyssalBlueIndex;
+                }
+
+                select.addEventListener('change', debouncedUpdateUI);
+
+                const checkbox = document.getElementById('exclude-metallic-checkbox');
+                checkbox.addEventListener('change', () => {
+                    // Store the currently selected dye name
+                    const currentSelectedIndex = select.value;
+                    const parsedIndex = parseInt(currentSelectedIndex, 10);
+                    const currentSelectedDye = (currentSelectedIndex !== '' && !isNaN(parsedIndex) && parsedIndex >= 0 && parsedIndex < ffxivDyes.length) ? ffxivDyes[parsedIndex] : null;
+                    const currentDyeName = currentSelectedDye ? currentSelectedDye.name : null;
+
+                    // Repopulate dropdown with new filters
+                    populateDropdown();
+
+                    // Restore the previously selected dye if it still exists
+                    if (currentDyeName) {
+                        const newIndex = Array.from(select.options).findIndex(opt => {
+                            const idx = parseInt(opt.value, 10);
+                            return !isNaN(idx) && idx >= 0 && idx < ffxivDyes.length && ffxivDyes[idx]?.name === currentDyeName;
+                        });
+                        if (newIndex !== -1) {
+                            select.value = select.options[newIndex].value;
+                        } else if (select.options.length > 0) {
+                            select.value = select.options[0].value;
+                        }
+                    }
+
+                    if (select.options.length > 0) {
+                        debouncedUpdateUI();
+                    }
+                });
+
+                const facewearCheckbox = document.getElementById('exclude-facewear-checkbox');
+                facewearCheckbox.addEventListener('change', debouncedUpdateUI);
+
+                const extremesCheckbox = document.getElementById('exclude-extremes-checkbox');
+                extremesCheckbox.addEventListener('change', () => {
+                    // Store the currently selected dye name
+                    const currentSelectedIndex = select.value;
+                    const parsedIndex = parseInt(currentSelectedIndex, 10);
+                    const currentSelectedDye = (currentSelectedIndex !== '' && !isNaN(parsedIndex) && parsedIndex >= 0 && parsedIndex < ffxivDyes.length) ? ffxivDyes[parsedIndex] : null;
+                    const currentDyeName = currentSelectedDye ? currentSelectedDye.name : null;
+
+                    // Repopulate dropdown with new filters
+                    populateDropdown();
+
+                    // Restore the previously selected dye if it still exists
+                    if (currentDyeName) {
+                        const newIndex = Array.from(select.options).findIndex(opt => {
+                            const idx = parseInt(opt.value, 10);
+                            return !isNaN(idx) && idx >= 0 && idx < ffxivDyes.length && ffxivDyes[idx]?.name === currentDyeName;
+                        });
+                        if (newIndex !== -1) {
+                            select.value = select.options[newIndex].value;
+                        } else if (select.options.length > 0) {
+                            select.value = select.options[0].value;
+                        }
+                    }
+
+                    if (select.options.length > 0) {
+                        debouncedUpdateUI();
+                    }
+                });
+
+                const acquisitionFilter = document.getElementById('acquisition-filter');
+                acquisitionFilter.addEventListener('change', () => {
+                    // Store the currently selected dye name
+                    const currentSelectedIndex = select.value;
+                    const parsedIndex = parseInt(currentSelectedIndex, 10);
+                    const currentSelectedDye = (currentSelectedIndex !== '' && !isNaN(parsedIndex) && parsedIndex >= 0 && parsedIndex < ffxivDyes.length) ? ffxivDyes[parsedIndex] : null;
+                    const currentDyeName = currentSelectedDye ? currentSelectedDye.name : null;
+
+                    // Repopulate dropdown with new filters
+                    populateDropdown();
+
+                    // Restore the previously selected dye if it still exists
+                    if (currentDyeName) {
+                        const newIndex = Array.from(select.options).findIndex(opt => {
+                            const idx = parseInt(opt.value, 10);
+                            return !isNaN(idx) && idx >= 0 && idx < ffxivDyes.length && ffxivDyes[idx]?.name === currentDyeName;
+                        });
+                        if (newIndex !== -1) {
+                            select.value = select.options[newIndex].value;
+                        } else if (select.options.length > 0) {
+                            select.value = select.options[0].value;
+                        }
+                    }
+
+                    if (select.options.length > 0) {
+                        debouncedUpdateUI();
+                    }
+                });
+
+                // Add event listeners for price category checkboxes
+                document.querySelectorAll('.price-category-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', debouncedUpdateUI);
+                });
+
+                // Add event listener for market price toggle
+                const priceToggle = document.getElementById('show-market-prices-toggle');
+                priceToggle.addEventListener('change', () => {
+                    const settingsPanel = document.getElementById('price-settings-panel');
+                    if (priceToggle.checked) {
+                        settingsPanel.style.display = 'block';
+                    } else {
+                        settingsPanel.style.display = 'none';
+                    }
+                    debouncedUpdateUI();
+                });
+
+                const searchInput = document.getElementById('color-search');
+                searchInput.addEventListener('input', (e) => handleSearch(e.target.value));
+                
+                // Close search results when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('#color-search') && !e.target.closest('#search-results')) {
+                        document.getElementById('search-results').classList.add('hidden');
+                    }
+                });
+
+                // Close zoom with Escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const zoomedSection = document.querySelector('.harmony-section.zoomed');
+                        if (zoomedSection) {
+                            zoomOut();
+                        }
+                    }
+                });
+
+                // Setup touch swipe listeners for zoomed harmony navigation (mobile)
+                if (isTouchDevice()) {
+                    document.addEventListener('touchstart', handleHarmonyTouchStart, false);
+                    document.addEventListener('touchend', handleHarmonyTouchEnd, false);
+
+                    // Add swipe-to-close gesture support for zoom backdrop modal
+                    const backdrop = document.getElementById('zoom-backdrop');
+                    if (backdrop) {
+                        backdrop.addEventListener('touchstart', handleModalSwipeStart, { passive: true });
+                        backdrop.addEventListener('touchend', handleModalSwipeEnd, { passive: true });
+                    }
+                }
+
+                updateUI();
+
+                // ===== MOBILE KEYBOARD OPTIMIZATION (PHASE 7.3) =====
+                // Initialize mobile keyboard helpers
+                if (isMobileDevice && typeof isMobileDevice === 'function') {
+                    // Prevent accidental zoom on input focus
+                    const inputs = document.querySelectorAll('input, select, textarea');
+                    inputs.forEach(input => {
+                        input.addEventListener('focus', function() {
+                            // Ensure font size is at least 16px to prevent iOS zoom
+                            this.style.fontSize = '16px';
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error("Detailed error:", error);
+                console.error("Error stack:", error.stack);
+                const main = document.querySelector('main');
+                main.innerHTML = `<p class="text-center text-red-500">Error: Could not load color data. Please check the console for details.<br>Error: ${escapeHTML(error.message)}</p>`;
+            }
+        };
+
+        // --- Help Modal Functions ---
+        function openHelpModal() {
+            document.getElementById('help-modal').classList.add('show');
+        }
+
+        function closeHelpModal() {
+            document.getElementById('help-modal').classList.remove('show');
+        }
+
+        // Close modal when clicking outside of content
+        document.addEventListener('DOMContentLoaded', () => {
+            const helpModal = document.getElementById('help-modal');
+
+            helpModal.addEventListener('click', (e) => {
+                if (e.target === helpModal) {
+                    closeHelpModal();
+                }
+            });
+
+            // Close modal when pressing ESC key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && helpModal.classList.contains('show')) {
+                    closeHelpModal();
+                }
+            });
+        });
+
+    </script>
+
+    <div id="footer-container" class="component-loading"></div>
+
+    <!-- Mobile Bottom Navigation Component -->
+    <div id="mobile-nav-container" class="component-loading"></div>
+    <script>
+        fetch('components/mobile-bottom-nav.html')
+            .then(r => {
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.text();
+            })
+            .then(html => {
+                document.getElementById('mobile-nav-container').innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Failed to load mobile navigation:', error);
+                // Navigation is optional - app works without it
+            });
+    </script>
+
+    <!-- Service Worker Registration for PWA Support -->
+    <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/service-worker.js').then(()=>console.log('Service Worker registered')).catch((error)=>console.log('Service Worker registration failed:',error))})}</script>
+</body>
+</html>

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swatch Matcher (Empty) - XIV Dye Tools V4</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        /* Swatch Matcher Styles */
+        .matcher-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 32px;
+            gap: 24px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .matcher-layout {
+            display: flex;
+            gap: 24px;
+            min-height: 500px;
+            justify-content: center;
+        }
+
+        .matcher-grid-container {
+            flex: 0 0 auto;
+            /* Don't grow, size to content/width */
+            width: 340px;
+            /* Fixed width for 8 cols approx */
+            background: var(--bg-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .color-sheet-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 4px;
+            margin-top: 12px;
+        }
+
+        .sheet-swatch {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.1s, border-color 0.1s;
+        }
+
+        .sheet-swatch:hover {
+            transform: scale(1.15);
+            z-index: 10;
+            border-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .sheet-swatch.selected {
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px var(--accent-primary);
+            z-index: 5;
+        }
+
+        .matcher-results-area {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .matcher-selected-card {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .matcher-matches-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Empty State Styles */
+        .empty-state-preview {
+            height: 80px;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .empty-state-preview .empty-message {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-style: italic;
+        }
+
+        .empty-state-matches {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 24px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            min-width: 400px;
+        }
+
+        .empty-state-matches .empty-icon {
+            width: 64px;
+            height: 64px;
+            opacity: 0.3;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-matches .empty-message {
+            color: var(--text-secondary);
+            font-size: 14px;
+            text-align: center;
+            max-width: 280px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Simple App Header -->
+    <header class="app-header">
+        <div class="logo-section">
+            <svg class="logo-icon" viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
+                <path d="M10 12h4v4h-4z" />
+            </svg>
+            <span>XIV Dye Tools</span>
+        </div>
+        <div class="nav-controls">
+            <button class="nav-btn" title="About">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z" />
+                </svg>
+            </button>
+            <button class="nav-btn" title="Language">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.91 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.91-4.33-3.56zm2.95-8H5.08c.96-1.65 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-1.01 1.74-2.59 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z" />
+                </svg>
+            </button>
+            <button class="nav-btn" title="Theme" id="header-theme-btn">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M20 15.31L23.31 12 20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69zM12 18V6c3.31 0 6 2.69 6 6s-2.69 6-6 6z" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Tool Selection Banner -->
+    <nav class="tool-banner">
+        <a href="harmony-explorer.html" class="tool-btn" title="Harmony Explorer">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" opacity="0.3" />
+                <circle cx="12" cy="3" r="2.5" fill="currentColor" stroke="none" />
+                <circle cx="20.66" cy="16.5" r="2.5" fill="currentColor" stroke="none" />
+                <circle cx="3.34" cy="16.5" r="2.5" fill="currentColor" stroke="none" />
+                <polygon points="12,3 20.66,16.5 3.34,16.5" fill="none" opacity="0.5" />
+            </svg>
+            <span class="tool-label">Harmony</span>
+        </a>
+        <a href="swatch-matcher.html" class="tool-btn active" title="Swatch Matcher">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="7" r="4" opacity="0.7" />
+                <path d="M5.5 21c0-4.5 3-7 6.5-7s6.5 2.5 6.5 7" opacity="0.4" />
+                <rect x="16" y="11" width="3" height="3" rx="0.5" fill="currentColor" stroke="none" />
+                <rect x="16" y="15" width="3" height="3" rx="0.5" fill="currentColor" stroke="none" opacity="0.6" />
+                <rect x="16" y="19" width="3" height="3" rx="0.5" fill="currentColor" stroke="none" opacity="0.3" />
+            </svg>
+            <span class="tool-label">Matcher</span>
+        </a>
+        <a href="palette-extractor.html" class="tool-btn" title="Palette Extractor">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" opacity="0.3" />
+                <circle cx="12" cy="12" r="6.5" opacity="0.5" />
+                <circle cx="12" cy="12" r="3.5" opacity="0.7" />
+                <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+            </svg>
+            <span class="tool-label">Extractor</span>
+        </a>
+        <a href="accessibility-checker.html" class="tool-btn" title="Accessibility Checker">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M 2 12 Q 12 5 22 12 Q 12 19 2 12 Z" />
+                <circle cx="12" cy="12" r="3.5" />
+                <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+            </svg>
+            <span class="tool-label">Accessibility</span>
+        </a>
+        <a href="dye-comparison.html" class="tool-btn" title="Dye Comparison">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="4" width="11" height="11" rx="2" opacity="0.4" />
+                <rect x="4" y="9" width="11" height="11" rx="2" />
+                <path d="M16 19l2 2 4-4" opacity="0.6" />
+                <path d="M8 12h.01" stroke-width="3" />
+                <path d="M13 7h.01" stroke-width="3" opacity="0.4" />
+            </svg>
+            <span class="tool-label">Compare</span>
+        </a>
+        <a href="gradient-builder.html" class="tool-btn" title="Gradient Builder">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M 4 8 C 4 6 5 5 7 5 L 17 5 C 19 5 20 6 20 8 L 20 16 C 20 18 19 19 17 19 L 7 19 C 5 19 4 18 4 16 Z" />
+                <circle cx="18" cy="16" r="1.5" fill="currentColor" stroke="none" />
+                <circle cx="8" cy="10" r="2" opacity="0.5" />
+                <circle cx="12" cy="10" r="2" opacity="0.5" />
+                <circle cx="16" cy="10" r="2" opacity="0.5" />
+                <line x1="6" y1="15" x2="10" y2="15" stroke-width="2" />
+                <path d="M 10 15 L 12 13 L 12 17 Z" fill="currentColor" stroke="none" opacity="0.7" />
+            </svg>
+            <span class="tool-label">Gradient</span>
+        </a>
+        <a href="dye-mixer.html" class="tool-btn" title="Dye Mixer">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5l-8 14h16l-8-14zM12 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" opacity="0.5" />
+                <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" fill="currentColor" stroke="none" />
+            </svg>
+            <span class="tool-label">Mixer</span>
+        </a>
+        <a href="budget-suggestions.html" class="tool-btn" title="Budget Suggestions">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9" opacity="0.3" />
+                <path d="M12 6v2m0 8v2" />
+                <path d="M9 10c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2s-.9 2-2 2h-2c-1.1 0-2 .9-2 2s.9 2 2 2h2c1.1 0 2-.9 2-2" />
+                <path d="M17 7l2-2m0 0l2 2m-2-2v5" opacity="0.7" />
+            </svg>
+            <span class="tool-label">Budget</span>
+        </a>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="app-container">
+
+        <!-- Configuration Sidebar -->
+        <aside class="config-sidebar">
+            <div class="drawer-header">
+                <span class="drawer-title">Configuration</span>
+            </div>
+            <div class="drawer-content">
+
+                <!-- Matcher Configuration -->
+                <div class="config-section matcher-config">
+                    <div class="config-group">
+                        <div class="config-label">Color Sheet</div>
+                        <div class="config-control" style="flex-direction: column; gap: 8px; align-items: stretch;">
+                            <select class="matcher-select" id="matcher-sheet-select"
+                                style="width:100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 4px;">
+                                <option selected>EyeColors.csv</option>
+                                <option disabled>HairColors.csv (N/A)</option>
+                                <option disabled>SkinColors.csv (N/A)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <div class="config-label">Character</div>
+                        <div class="config-control" style="flex-direction: column; gap: 8px; align-items: stretch;">
+                            <span style="font-size: 11px; color: var(--text-secondary);">Race</span>
+                            <select class="matcher-select" id="matcher-race-select"
+                                style="width:100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 4px;">
+                                <option selected>Hyur (Midlander)</option>
+                                <option>Hyur (Highlander)</option>
+                                <option>Elezen</option>
+                                <option>Lalafell</option>
+                                <option>Miqo'te</option>
+                                <option>Roegadyn</option>
+                                <option>Au Ra</option>
+                                <option>Hrothgar</option>
+                                <option>Viera</option>
+                            </select>
+                        </div>
+                        <div class="config-control"
+                            style="flex-direction: column; gap: 8px; align-items: stretch; margin-top: 8px;">
+                            <span style="font-size: 11px; color: var(--text-secondary);">Gender</span>
+                            <select class="matcher-select" id="matcher-gender-select"
+                                style="width:100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 4px;">
+                                <option selected>Male</option>
+                                <option>Female</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <div class="config-label">Search Settings</div>
+                        <div class="config-control" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                            <div style="display: flex; justify-content: space-between; width: 100%;">
+                                <span style="font-size: 11px; color: var(--text-secondary);">Max Results</span>
+                                <span style="font-size: 11px; font-weight: 600;" id="matcher-count-val">3</span>
+                            </div>
+                            <input type="range" class="step-slider" id="matcher-result-slider" min="1" max="8" value="3"
+                                style="width: 100%;">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <!-- Swatch Matcher View -->
+            <div class="matcher-view" style="display: flex;">
+                <div class="matcher-layout">
+                    <!-- Left: Color Sheet Grid -->
+                    <div class="matcher-grid-container glass">
+                        <div class="section-header"
+                            style="width:100%; justify-content: space-between; margin-bottom: 0;">
+                            <span class="section-title">EyeColors (192)</span>
+                        </div>
+                        <div class="color-sheet-grid" id="matcher-grid">
+                            <!-- Grid swatches with no selection -->
+                        </div>
+                    </div>
+
+                    <!-- Right: Results & Info -->
+                    <div class="matcher-results-area">
+                        <!-- Selected Color Technical Info - Empty State -->
+                        <div class="harmony-card matcher-selected-card">
+                            <div class="card-header"><span class="dye-name">Selected Color</span></div>
+                            <div class="empty-state-preview">
+                                <span class="empty-message">No color selected</span>
+                            </div>
+                            <div class="card-details">
+                                <div class="detail-col">
+                                    <div class="col-header">Technical</div>
+                                    <div class="data-row"><span class="data-label">HEX</span><span class="data-value"
+                                            id="matcher-data-hex">--</span></div>
+                                    <div class="data-row"><span class="data-label">RGB</span><span class="data-value"
+                                            id="matcher-data-rgb">--</span></div>
+                                    <div class="data-row"><span class="data-label">HSV</span><span class="data-value"
+                                            id="matcher-data-hsv">--</span></div>
+                                </div>
+                                <div class="detail-col">
+                                    <div class="col-header">Grid Info</div>
+                                    <div class="data-row"><span class="data-label">Index</span><span class="data-value"
+                                            id="matcher-data-index">--</span></div>
+                                    <div class="data-row"><span class="data-label">Row</span><span class="data-value"
+                                            id="matcher-data-row">--</span></div>
+                                    <div class="data-row"><span class="data-label">Col</span><span class="data-value"
+                                            id="matcher-data-col">--</span></div>
+                                </div>
+                            </div>
+                            <div class="card-actions">
+                                <div class="action-row"><button class="primary-action-btn" disabled>Copy Values</button></div>
+                            </div>
+                        </div>
+
+                        <!-- Matching Dyes - Empty State -->
+                        <div class="matcher-matches-section">
+                            <div class="section-header">
+                                <span class="section-title">Matching Dyes</span>
+                            </div>
+                            <div class="empty-state-matches">
+                                <svg class="empty-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" opacity="0.3"/>
+                                    <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.5"/>
+                                </svg>
+                                <span class="empty-message">Select a color from the grid on the left to find matching dyes</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <script>
+        // Toggle switches
+        document.querySelectorAll('.toggle-switch').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
+
+        // Max Results slider
+        const resultSlider = document.getElementById('matcher-result-slider');
+        const countVal = document.getElementById('matcher-count-val');
+        if (resultSlider && countVal) {
+            resultSlider.addEventListener('input', function() {
+                countVal.textContent = this.value;
+            });
+        }
+
+        // Generate color sheet grid (no selection)
+        const matcherGrid = document.getElementById('matcher-grid');
+        const eyeColors = [
+            // Row 1 - Light grays to dark
+            '#e8e4e0', '#d8d4d0', '#c8c4c0', '#b8b4b0', '#a8a4a0', '#989490', '#888480', '#787470',
+            // Row 2 - Browns light to dark
+            '#f0e8d8', '#e0d4c0', '#d0c4b0', '#c0b4a0', '#b0a490', '#a09480', '#908470', '#807460',
+            // Row 3 - Warm browns
+            '#e8d8c0', '#d8c8b0', '#c8b8a0', '#b8a890', '#a89880', '#988870', '#887860', '#786850',
+            // Row 4 - Reds/pinks
+            '#f0d0d0', '#e0c0c0', '#d0b0b0', '#c0a0a0', '#b09090', '#a08080', '#907070', '#806060',
+            // Row 5 - Deep reds
+            '#d8a0a0', '#c89090', '#b88080', '#a87070', '#986060', '#885050', '#784040', '#683030',
+            // Row 6 - Oranges
+            '#f0d8c0', '#e0c8b0', '#d0b8a0', '#c0a890', '#b09880', '#a08870', '#907860', '#806850',
+            // Row 7 - Yellows
+            '#f0e8c0', '#e0d8b0', '#d0c8a0', '#c0b890', '#b0a880', '#a09870', '#908860', '#807850',
+            // Row 8 - Greens light
+            '#d0e0c0', '#c0d0b0', '#b0c0a0', '#a0b090', '#90a080', '#809070', '#708060', '#607050',
+            // Row 9 - Greens
+            '#c0d8c0', '#b0c8b0', '#a0b8a0', '#90a890', '#809880', '#708870', '#607860', '#506850',
+            // Row 10 - Teals
+            '#c0d8d0', '#b0c8c0', '#a0b8b0', '#90a8a0', '#809890', '#708880', '#607870', '#506860',
+            // Row 11 - Blues light
+            '#c0d0e0', '#b0c0d0', '#a0b0c0', '#9090b0', '#8080a0', '#707090', '#606080', '#505070',
+            // Row 12 - Blues
+            '#b0c0d8', '#a0b0c8', '#90a0b8', '#8090a8', '#708098', '#607088', '#506078', '#405068',
+            // Row 13 - Purples
+            '#c8c0d8', '#b8b0c8', '#a8a0b8', '#9890a8', '#888098', '#787088', '#686078', '#585068',
+            // Row 14 - Magentas
+            '#d8c0d0', '#c8b0c0', '#b8a0b0', '#a890a0', '#988090', '#887080', '#786070', '#685060',
+            // Row 15 - Deep violets
+            '#c0b0c8', '#b0a0b8', '#a090a8', '#908098', '#807088', '#706078', '#605068', '#504058',
+            // Row 16 - Grays
+            '#e0e0e0', '#d0d0d0', '#c0c0c0', '#b0b0b0', '#a0a0a0', '#909090', '#808080', '#707070',
+            // Row 17 - Dark grays
+            '#606060', '#585858', '#505050', '#484848', '#404040', '#383838', '#303030', '#282828',
+            // Row 18 - Very dark
+            '#202020', '#1c1c1c', '#181818', '#141414', '#101010', '#0c0c0c', '#080808', '#040404',
+            // Row 19 - Warm neutrals
+            '#d8d0c8', '#c8c0b8', '#b8b0a8', '#a8a098', '#989088', '#888078', '#787068', '#686058',
+            // Row 20 - Cool neutrals
+            '#c8d0d8', '#b8c0c8', '#a8b0b8', '#98a0a8', '#889098', '#788088', '#687078', '#586068',
+            // Row 21 - Mixed tones
+            '#d0d0c8', '#c0c0b8', '#b0b0a8', '#a0a098', '#909088', '#808078', '#707068', '#606058',
+            // Row 22 - Special colors
+            '#e8e0d0', '#d8d0c0', '#c8c0b0', '#b8b0a0', '#a8a090', '#989080', '#888070', '#787060',
+            // Row 23 - Accent colors
+            '#d0c8c0', '#c0b8b0', '#b0a8a0', '#a09890', '#908880', '#807870', '#706860', '#605850',
+            // Row 24 - Final row
+            '#c8c0c0', '#b8b0b0', '#a8a0a0', '#989090', '#888080', '#787070', '#686060', '#585050'
+        ];
+
+        eyeColors.forEach((color, index) => {
+            const swatch = document.createElement('div');
+            swatch.className = 'sheet-swatch';
+            swatch.style.backgroundColor = color;
+            swatch.title = `Color ${index + 1}`;
+            matcherGrid.appendChild(swatch);
+        });
+    </script>
+
+</body>
+</html>

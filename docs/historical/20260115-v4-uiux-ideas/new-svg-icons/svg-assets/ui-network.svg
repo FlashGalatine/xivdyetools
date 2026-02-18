@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" stroke-width="1.5" stroke="currentColor" fill="none">
+  <title>Network / Connection</title>
+  <!-- Antenna/satellite dish - network indicator -->
+  <path d="M12 20v-4" stroke-linecap="round"/>
+  <path d="M12 12V8" stroke-linecap="round"/>
+  <path d="M12 4l6 4-6 4-6-4 6-4z" stroke-linejoin="round"/>
+  <path d="M6 8v4l6 4 6-4V8" stroke-linejoin="round"/>
+  <circle cx="12" cy="20" r="2"/>
+</svg>

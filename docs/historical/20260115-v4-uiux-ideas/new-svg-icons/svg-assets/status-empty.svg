@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" stroke-width="1.5" stroke="currentColor" fill="none">
+  <title>Empty / No Content</title>
+  <!-- Empty mailbox - no content indicator -->
+  <path d="M3 9l9-6 9 6v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke-linejoin="round"/>
+  <path d="M3 9l9 6 9-6"/>
+  <path d="M12 15v-3" stroke-linecap="round" stroke-dasharray="2 2"/>
+</svg>

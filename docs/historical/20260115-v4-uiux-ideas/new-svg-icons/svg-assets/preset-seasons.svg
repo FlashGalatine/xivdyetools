@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" stroke-width="1.5" stroke="currentColor" fill="none">
+  <title>Seasons</title>
+  <!-- Cherry Blossom - represents Seasonal themes -->
+  <circle cx="12" cy="12" r="2" fill="currentColor" fill-opacity="0.3"/>
+  <path d="M12 2c0 3-2 5-2 5s2 2 2 5c0-3 2-5 2-5s-2-2-2-5z" stroke-linejoin="round"/>
+  <path d="M22 12c-3 0-5-2-5-2s-2 2-5 2c3 0 5 2 5 2s2-2 5-2z" stroke-linejoin="round"/>
+  <path d="M19.07 4.93c-2.12 2.12-2.12 4.24-2.12 4.24s2.12 0 4.24-2.12c-2.12-2.12-4.24-2.12-4.24-2.12s0 2.12 2.12 4.24" stroke-linejoin="round"/>
+  <path d="M4.93 19.07c2.12-2.12 2.12-4.24 2.12-4.24s-2.12 0-4.24 2.12c2.12 2.12 4.24 2.12 4.24 2.12s0-2.12-2.12-4.24" stroke-linejoin="round"/>
+  <path d="M4.93 4.93c2.12 2.12 4.24 2.12 4.24 2.12s0-2.12-2.12-4.24c-2.12 2.12-2.12 4.24-2.12 4.24s2.12 0 4.24-2.12" stroke-linejoin="round"/>
+  <path d="M19.07 19.07c-2.12-2.12-4.24-2.12-4.24-2.12s0 2.12 2.12 4.24c2.12-2.12 2.12-4.24 2.12-4.24s-2.12 0-4.24 2.12" stroke-linejoin="round"/>
+</svg>

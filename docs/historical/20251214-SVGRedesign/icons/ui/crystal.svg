@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- XIV Dye Tools - Crystal Icon (FFXIV-style Gem) -->
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+  <title>Crystal</title>
+  <path d="M12 2L19 9L12 22L5 9L12 2Z" />
+  <path d="M12 2V22" opacity="0.5" />
+  <path d="M5 9L12 13L19 9" opacity="0.5" />
+  <path d="M19 4L21 4" opacity="0.4" />
+  <path d="M20 3V5" opacity="0.4" />
+</svg>

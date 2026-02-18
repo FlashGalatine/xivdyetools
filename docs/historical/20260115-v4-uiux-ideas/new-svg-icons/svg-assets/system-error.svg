@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" stroke-width="1.5" stroke="currentColor" fill="none">
+  <title>Error / Failure</title>
+  <!-- X in circle - error indicator -->
+  <circle cx="12" cy="12" r="9"/>
+  <path d="M15 9l-6 6M9 9l6 6" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,1559 @@
+<!-- ⚠️ DEPRECATED: This file is no longer maintained. See v2.0.0 in src/ folder. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0">
+        <!-- DEVELOPMENT CSP: Uncomment for localhost testing (allows inline scripts) -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self' localhost:*; script-src 'self' 'unsafe-inline' localhost:*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com localhost:*; font-src 'self'; img-src 'self' data: blob: localhost:*; connect-src 'self' https://universalis.app localhost:*; base-uri 'self'; form-action 'none';"> -->
+    <!-- PRODUCTION CSP: Used for deployed version (strict, blocks inline scripts) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://universalis.app; base-uri 'self'; form-action 'none';">
+    <!-- Mobile Web App Configuration -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>XIV Dye Matcher - Find Matching Dyes | XIV Dye Tools</title>
+    <meta name="description" content="Find matching FFXIV dyes from images or color picker. Upload images, extract colors, and instantly find the best matching dyes for your FFXIV gear and housing. Supports drag-and-drop and color sampling.">
+    <meta name="keywords" content="FFXIV dye matcher, find dyes, dye finder, color picker, FFXIV dyes, FF14 dyes, match dyes, image color extraction, dye search">
+    <!-- Open Graph / Discord embeds -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://xivdyetools.projectgalatine.com/colormatcher_experimental.html">
+    <meta property="og:title" content="XIV Dye Matcher - Find Matching Dyes (Experimental)">
+    <meta property="og:description" content="Find matching FFXIV dyes from images or color picker. Try the latest experimental features - features may be unstable.">
+    <meta property="og:image" content="https://xivdyetools.projectgalatine.com/embed_icon.png">
+    <!-- Twitter / X embeds -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://xivdyetools.projectgalatine.com/colormatcher_experimental.html">
+    <meta property="twitter:title" content="XIV Dye Matcher - Find Matching Dyes (Experimental)">
+    <meta property="twitter:description" content="Find matching FFXIV dyes from images or color picker. Try the latest experimental features - features may be unstable.">
+    <meta property="twitter:image" content="https://xivdyetools.projectgalatine.com/embed_image.png">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="embed_icon.png">
+    <!-- PWA Metadata -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/icons/icon-512x512.png">
+    <link href="assets/css/tailwind.css" rel="stylesheet">
+    <!-- ===== CRITICAL FONTS (Body text - minimal blocking) ===== -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style">
+
+    <!-- ===== DEFERRED DECORATIVE FONTS (Load after page render) ===== -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cinzel+Decorative:wght@400;700&family=Lexend:wght@400;500;600&family=Lexend+Giga:wght@400;500;600&family=Habibi&display=swap" as="style">
+
+    <!-- ===== FALLBACK for no-script environments ===== -->
+    <noscript>
+    </noscript>
+    <link rel="stylesheet" href="assets/css/shared-styles.css">
+    <style>#canvasWrapper{background-color:var(--theme-bg);}#canvasWrapper{position:relative;}#imageCanvas{cursor:crosshair;margin:0;padding:0;}.color-swatch{width:100px;height:100px;border-radius:0.5rem;border:2px solid rgba(0,0,0,0.1);}#eyedropperPreview{width:80px;height:80px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 2px black,0 4px 8px rgba(0,0,0,0.2);position:absolute;pointer-events:none;display:none;z-index:10;}.drag-over{border:4px dashed var(--theme-primary);background-color:rgba(0,0,0,0.05);}body.theme-standard-dark .drag-over,body.theme-hydaelyn-dark .drag-over,body.theme-classic-ff-dark .drag-over,body.theme-parchment-dark .drag-over,body.theme-sugar-riot-dark .drag-over{background-color:rgba(255,255,255,0.05);}.toggle-bg{background-color:var(--theme-bg-tertiary);transition:background-color 0.3s ease;}input:checked+.toggle-bg{background-color:var(--theme-primary);}.toggle-dot{transition:left 0.3s ease;}input:checked+.toggle-bg+.toggle-dot{left:calc(100% - 1.25rem);}.bg-gray-50{background-color:var(--theme-bg-tertiary);}.bg-gray-50 .text-gray-700{color:var(--theme-text-muted);}.text-gray-700{color:var(--theme-text-muted) !important;}.text-gray-900{color:var(--theme-text) !important;}.bg-white{background-color:var(--theme-card-bg);}.text-gray-600{color:var(--theme-text-muted);}#mb-server-select{background-color:var(--theme-bg-secondary);color:var(--theme-text);border-color:var(--theme-border);}#mb-server-select option{background-color:var(--theme-bg-secondary);color:var(--theme-text);}#mb-server-select optgroup{background-color:var(--theme-bg-tertiary);color:var(--theme-text);}#sampleSize{background-color:var(--theme-bg-secondary);color:var(--theme-text);border-color:var(--theme-border);}#sampleSize option{background-color:var(--theme-bg-secondary);color:var(--theme-text);}#mainContainer>div:first-child{position:sticky;top:1rem;height:fit-content;max-height:calc(100vh - 6rem);overflow-y:auto;}.bg-white.rounded-xl{padding:1.25rem;}h2{font-size:1.375rem;margin-bottom:1rem;}h3{font-size:1rem;margin-bottom:0.75rem;}.privacy-notice{background-color:var(--theme-bg-secondary);border:1px solid var(--theme-border);border-left:3px solid #10b981;border-radius:0.5rem;padding:0.75rem;display:flex;gap:0.5rem;margin-top:0.75rem;}.privacy-notice-icon{flex-shrink:0;font-size:1.125rem;line-height:1.25;}.privacy-notice-content{flex:1;min-width:0;}.privacy-notice-title{font-size:0.75rem;font-weight:600;color:var(--theme-text);margin-bottom:0.125rem;}.privacy-notice-text{font-size:0.75rem;color:var(--theme-text-muted);line-height:1.4;}body.theme-standard-dark .privacy-notice,body.theme-hydaelyn-dark .privacy-notice,body.theme-classic-ff-dark .privacy-notice,body.theme-parchment-dark .privacy-notice,body.theme-sugar-riot-dark .privacy-notice{border-left-color:#34d399;}#toast-container{position:fixed;top:1rem;right:1rem;z-index:100;pointer-events:none;}.toast{display:flex;align-items:center;gap:0.75rem;min-width:250px;max-width:400px;padding:1rem;margin-bottom:0.75rem;border-radius:0.5rem;background-color:var(--theme-card-bg);border-left:4px solid;box-shadow:0 4px 12px rgba(0,0,0,0.15);pointer-events:auto;animation:slideIn 0.3s ease-out;}.toast.success{border-left-color:#10b981;background-color:var(--theme-card-bg);}.toast.success .toast-icon{color:#10b981;}.toast.error{border-left-color:#ef4444;background-color:var(--theme-card-bg);}.toast.error .toast-icon{color:#ef4444;}.toast.info{border-left-color:var(--theme-primary);background-color:var(--theme-card-bg);}.toast.info .toast-icon{color:var(--theme-primary);}.toast-icon{flex-shrink:0;width:20px;height:20px;}.toast-message{flex:1;font-size:0.875rem;color:var(--theme-text);}.toast.success .toast-message{color:var(--theme-text);}.toast.error .toast-message{color:var(--theme-text);}.toast.info .toast-message{color:var(--theme-text);}.toast.hiding{animation:slideOut 0.3s ease-out;}@keyframes slideIn{from{transform:translateX(400px);opacity:0;}to{transform:translateX(0);opacity:1;}}@keyframes slideOut{from{transform:translateX(0);opacity:1;}to{transform:translateX(400px);opacity:0;}}.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;}.modal.show{display:flex;}.modal-content{background-color:var(--theme-bg);border-radius:0.75rem;padding:2rem;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 25px rgba(0,0,0,0.15);}.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;}.modal-title{font-size:1.5rem;font-weight:700;margin:0;}.modal-close{background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--theme-text-muted);padding:0.5rem;width:44px;height:44px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;transition:color 0.2s;border-radius:0.375rem;}.modal-close:hover{color:var(--theme-text);background-color:var(--theme-bg-secondary);}@media (hover:none){.modal-close:active{transform:scale(0.95);opacity:0.8;}}.shortcuts-table{width:100%;border-collapse:collapse;font-size:0.875rem;}.shortcuts-table th{text-align:left;padding:0.75rem;border-bottom:2px solid #e5e7eb;font-weight:600;color:#374151;}.shortcuts-table td{padding:0.75rem;border-bottom:1px solid #f3f4f6;color:var(--theme-text-muted);}.shortcuts-table .kbd{background-color:var(--theme-bg-secondary);border:1px solid #d1d5db;border-radius:0.25rem;padding:0.25rem 0.5rem;font-family:'Courier New',monospace;font-size:0.8rem;white-space:nowrap;display:inline-block;color:var(--theme-text);}.shortcuts-group{margin-bottom:1.5rem;}.shortcuts-group h3{font-size:1rem;font-weight:600;margin:0 0 0.75rem 0;color:#374151;}.floating-zoom-toolbar{position:absolute;top:0.75rem;left:0.75rem;display:flex;align-items:center;gap:0.5rem;background-color:rgba(255,255,255,0.95);padding:0.5rem;border-radius:0.5rem;box-shadow:0 4px 6px rgba(0,0,0,0.1);z-index:50;pointer-events:auto;flex-wrap:wrap;max-width:calc(100% - 1.5rem);}@media (max-width:639px){body{padding:0.5rem;font-size:14px;}h1{font-size:1.5rem;}h1 span{font-size:1.125rem;}h2{font-size:1.125rem;margin-bottom:0.75rem;}h3{font-size:0.875rem;}#mainContainer{grid-template-columns:1fr !important;gap:1rem;}#mainContainer>div:first-child{position:static;max-height:none;overflow:visible;}.bg-white.rounded-xl{padding:1rem;}.flex.items-center.gap-4{flex-direction:column;align-items:flex-start;gap:1rem;}input[type="color"]{width:60px !important;height:60px !important;}#toast-container{top:0.5rem;right:0.5rem;left:0.5rem;}.toast{min-width:auto;max-width:100%;}.modal-content{width:95%;max-width:100%;padding:1.5rem;max-height:85vh;}.modal-title{font-size:1.25rem;}.floating-zoom-toolbar{top:0.5rem;left:0.5rem;padding:0.375rem;gap:0.375rem;background-color:rgba(255,255,255,0.97);}.floating-zoom-toolbar button{padding:0.5rem 0.75rem !important;font-size:0.75rem;min-height:36px !important;min-width:36px !important;}select{font-size:14px;}#mb-server-select,#sampleSize{font-size:0.875rem;}p.text-xs.text-gray-500.mt-2{font-size:11px;margin-top:0.5rem;}}@media (min-width:640px) and (max-width:767px){body{padding:0.75rem;font-size:15px;}h1{font-size:1.75rem;}#mainContainer{grid-template-columns:1fr !important;}.bg-white.rounded-xl{padding:1.25rem;}input[type="color"]{width:70px !important;height:70px !important;}#toast-container{top:0.75rem;right:0.75rem;}}@media (min-width:768px){#mainContainer{grid-template-columns:320px 1fr !important;}#mainContainer>div:first-child{position:sticky;top:1rem;height:fit-content;max-height:calc(100vh - 6rem);overflow-y:auto;}body{padding:1rem;}}@media (min-width:1024px){#mainContainer{grid-template-columns:380px 1fr !important;}body{padding:0.75rem;}}@media (min-width:1920px){#mainContainer{max-width:1400px;margin:0 auto;}.bg-white.rounded-xl{padding:1.5rem;}h1{font-size:2rem;}h2{font-size:1.5rem;}}@media (max-width:767px) and (orientation:portrait){#mainContainer{width:100%;}body{overflow-x:hidden;}}@media (max-width:767px) and (orientation:landscape){h1{font-size:1.25rem;}.modal-content{max-height:90vh;}.flex.justify-between.items-center.gap-4{gap:0.5rem;}}@media (hover:none) and (max-width:767px){button{transition:transform 0.1s,opacity 0.1s;}button:active{transform:scale(0.95);opacity:0.8;}input[type="color"]:active{transform:scale(0.98);}}</style>
+    <!-- Shared Components Script - Load early so DOMContentLoaded can initialize theme and components -->
+    <script src="assets/js/shared-components.js"></script>
+    <!-- Override initComponents for experimental navigation -->
+    <script>function initComponents(){loadComponent('components/nav-experimental.html','nav-container');loadComponent('components/footer.html','footer-container')}</script>
+</head>
+<body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen p-3">
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Help & Guide</h2>
+                <button class="modal-close" onclick="closeHelpModal()">×</button>
+            </div>
+
+            <!-- Quick Start Section -->
+            <div class="help-section">
+                <h3>Quick Start</h3>
+                <p>Find matching FFXIV dyes from images, color picker, or direct capture. Upload any image to extract colors and get instant dye matches.</p>
+            </div>
+
+            <!-- Mobile Tip -->
+            <div class="mobile-tip desktop-hidden">
+                <span class="mobile-tip-icon">📱</span>
+                <p><strong>Mobile Tip:</strong> Tap the camera icon to capture photos directly from your device camera!</p>
+            </div>
+
+            <!-- Key Features -->
+            <div class="help-section">
+                <h3>Key Features</h3>
+                <ul>
+                    <li>Upload images via drag-and-drop or file selection</li>
+                    <li>Paste images from clipboard (Ctrl+V / Cmd+V)</li>
+                    <li>Capture photos directly from device camera (mobile/desktop)</li>
+                    <li>Use color picker to select specific colors</li>
+                    <li>Click image to sample color with eyedropper</li>
+                </ul>
+            </div>
+
+            <!-- Mobile Tip -->
+            <div class="mobile-tip desktop-hidden">
+                <span class="mobile-tip-icon">👆</span>
+                <p><strong>Touch Gestures:</strong> Pinch to zoom the image, double-tap to fit to screen</p>
+            </div>
+
+            <!-- Tips & Tricks -->
+            <div class="help-section">
+                <h3>Tips & Tricks</h3>
+                <ul>
+                    <li>Larger sample sizes provide more accurate color matching</li>
+                    <li>Use the eyedropper to precisely sample specific areas</li>
+                    <li>Adjust zoom to examine fine details in images</li>
+                    <li>Market prices show when "Show Prices" is enabled</li>
+                </ul>
+            </div>
+
+            <!-- Keyboard Shortcuts (Desktop) -->
+            <div class="shortcuts-group mobile-hidden">
+                <h3>Image Input</h3>
+                <table class="shortcuts-table">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Shortcut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Paste Image</td>
+                            <td><span class="kbd">Ctrl+V</span> or <span class="kbd">Cmd+V</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="shortcuts-group mobile-hidden">
+                <h3>Zoom Controls</h3>
+                <table class="shortcuts-table">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Shortcut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Zoom In</td>
+                            <td><span class="kbd">+</span></td>
+                        </tr>
+                        <tr>
+                            <td>Zoom Out</td>
+                            <td><span class="kbd">−</span></td>
+                        </tr>
+                        <tr>
+                            <td>Zoom to Width</td>
+                            <td><span class="kbd">W</span></td>
+                        </tr>
+                        <tr>
+                            <td>Zoom to Fit</td>
+                            <td><span class="kbd">F</span></td>
+                        </tr>
+                        <tr>
+                            <td>Reset Zoom</td>
+                            <td><span class="kbd">R</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="shortcuts-group mobile-hidden">
+                <h3>Canvas Interactions</h3>
+                <table class="shortcuts-table">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Shortcut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Zoom with Mouse</td>
+                            <td><span class="kbd">Shift</span> + Mouse Wheel</td>
+                        </tr>
+                        <tr>
+                            <td>Pan / Move Image</td>
+                            <td><span class="kbd">Shift</span> + Left Click & Drag</td>
+                        </tr>
+                        <tr>
+                            <td>Fit to Window</td>
+                            <td><span class="kbd">Shift</span> + Middle Click</td>
+                        </tr>
+                        <tr>
+                            <td>Reset View</td>
+                            <td><span class="kbd">Shift</span> + Right Click</td>
+                        </tr>
+                        <tr>
+                            <td>Pick Color</td>
+                            <td>Left Click on Canvas</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="w-full mb-4">
+        <div class="flex justify-center items-center gap-4">
+            <div class="flex items-center gap-2">
+                <button id="help-toggle" class="help-button" title="Help & Guide" onclick="openHelpModal()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </button>
+                <div>
+                    <h1 class="tool-title text-3xl md:text-4xl 2xl:text-5xl font-bold text-gray-900">XIV Dye Matcher <span class="text-2xl md:text-3xl 2xl:text-4xl text-gray-500">v<span class="number">1.6.1</span></span></h1>
+                    <p class="text-sm text-gray-600 mt-1">Pick a color or upload an image to find the closest dye match.</p>
+                </div>
+            </div>
+            <div id="nav-container" class="component-loading"></div>
+        </div>
+    </div>
+
+    <!-- Responsive Layout - Adapts from single column (mobile) to two column (desktop) -->
+    <div id="mainContainer" class="w-full flex-1 grid gap-4">
+
+        <!-- LEFT COLUMN: Dye Information -->
+        <div class="bg-white rounded-xl shadow-lg p-5 flex flex-col">
+            <h2 class="text-xl font-semibold mb-4 text-gray-900">Dye Matcher</h2>
+
+            <!-- Color Picker Section -->
+            <div class="mb-4">
+                <label for="colorPicker" class="block text-xs font-semibold text-gray-700 mb-2">Pick Your Color:</label>
+                <div class="flex flex-col items-center justify-center gap-3">
+                    <input type="color" id="colorPicker" value="#8A2BE2" class="w-20 h-20 p-1 bg-white rounded-lg cursor-pointer border-2 border-gray-300">
+                    <div class="text-center">
+                        <p id="userHex" class="font-mono text-lg font-semibold text-gray-900"></p>
+                        <p class="text-sm text-gray-500">Your color</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="mb-4 pb-4 border-b border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">Closest Match</h3>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div id="matchedColor" class="w-full h-32 rounded-lg mb-4 border-2 border-gray-200 shadow-sm"></div>
+                    <p id="matchedName" class="text-xl font-semibold text-gray-900 mb-2"></p>
+                    <div class="space-y-2 text-sm">
+                        <p class="text-gray-600"><span class="font-medium">Hex:</span> <span id="matchedHex" class="font-mono"></span></p>
+                        <p class="text-gray-600"><span class="font-medium">Category:</span> <span id="matchedCategory"></span></p>
+                        <p class="text-gray-600"><span class="font-medium">Acquisition:</span> <span id="matchedAcquisition"></span></p>
+                        <p id="matchedPrice" class="text-gray-600" style="display: none;"><span class="font-medium">Market Price:</span> <span id="matchedPriceValue" class="font-mono"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="mb-4 pb-4 border-b border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">Filters</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" id="excludeMetallic" class="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-2">
+                        <label for="excludeMetallic" class="text-sm text-gray-700">Exclude Metallic Dyes</label>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" id="excludeExtremes" class="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-2">
+                        <label for="excludeExtremes" class="text-sm text-gray-700">Exclude Pure White & Jet Black</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market Board Section -->
+            <div class="flex-1">
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">Market Board</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="mb-server-select" class="block text-sm font-medium text-gray-700 mb-2">Server:</label>
+                        <select id="mb-server-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-sm">
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+
+                    <!-- Price Categories -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <label class="text-sm font-semibold text-gray-700">Show Prices</label>
+                            <label class="flex items-center cursor-pointer">
+                                <input id="show-mb-prices-toggle" type="checkbox" class="sr-only" checked>
+                                <div class="toggle-bg w-10 h-6 bg-gray-300 rounded-full shadow-inner"></div>
+                                <div class="toggle-dot absolute w-4 h-4 bg-white rounded-full shadow inset-y-1 left-1 transition"></div>
+                            </label>
+                        </div>
+                        <div id="mb-price-settings" class="space-y-2">
+                            <div class="text-xs space-y-2">
+                                <div class="flex items-center">
+                                    <input id="mb-price-base" type="checkbox" class="h-3 w-3 text-indigo-600 border-gray-300 rounded mb-price-checkbox">
+                                    <label for="mb-price-base" class="ml-2 text-gray-600">Base Dyes</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input id="mb-price-craft" type="checkbox" checked class="h-3 w-3 text-indigo-600 border-gray-300 rounded mb-price-checkbox">
+                                    <label for="mb-price-craft" class="ml-2 text-gray-600">Craft Dyes</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input id="mb-price-beast" type="checkbox" class="h-3 w-3 text-indigo-600 border-gray-300 rounded mb-price-checkbox">
+                                    <label for="mb-price-beast" class="ml-2 text-gray-600">Allied Society Dyes</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input id="mb-price-cosmic" type="checkbox" checked class="h-3 w-3 text-indigo-600 border-gray-300 rounded mb-price-checkbox">
+                                    <label for="mb-price-cosmic" class="ml-2 text-gray-600">Cosmic Dyes</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input id="mb-price-special" type="checkbox" checked class="h-3 w-3 text-indigo-600 border-gray-300 rounded mb-price-checkbox">
+                                    <label for="mb-price-special" class="ml-2 text-gray-600">Special Dyes</label>
+                                </div>
+                            </div>
+                            <button id="mb-refresh-btn" onclick="refreshMarketPricesMatcher()" class="w-full px-3 py-2 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium mt-3" disabled>
+                                Refresh Prices
+                            </button>
+                            <div id="mb-price-status" class="mt-2 text-xs text-gray-500 text-center"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Image Matching -->
+        <div class="bg-white rounded-xl shadow-lg p-5 flex flex-col">
+            <h2 class="text-xl font-semibold mb-4 text-gray-900">Match from Image</h2>
+
+            <!-- Image Upload -->
+            <div class="mb-4">
+                <label for="imageLoader" class="sr-only">Choose a file</label>
+                <input type="file" name="imageLoader" id="imageLoader" accept="image/*" class="block w-full px-3 py-2 text-xs bg-indigo-100 text-indigo-700 rounded font-semibold cursor-pointer hover:bg-indigo-200 transition file:hidden" title="Browse for image file"/>
+                <!-- Hidden camera input for mobile camera capture -->
+                <input type="file" name="cameraCapture" id="cameraCapture" accept="image/*" capture="environment" style="display: none;"/>
+                <p class="text-xs text-gray-500 mt-1">Drag & drop • Click to browse • Paste (Ctrl+V)</p>
+                <button id="cameraBtn" class="mt-2 w-full px-3 py-2 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded font-semibold text-sm transition min-h-[44px]" title="Capture photo from camera">📷 Take Photo</button>
+
+                <!-- Privacy Notice for Camera -->
+                <div class="privacy-notice">
+                    <span class="privacy-notice-icon" title="Privacy protected">🔒</span>
+                    <div class="privacy-notice-content">
+                        <p class="privacy-notice-title">Your privacy is protected</p>
+                        <p class="privacy-notice-text">Photos are processed locally in your browser and never stored on any server.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample Size Control -->
+            <div class="mb-4 pb-4 border-b border-gray-200">
+                <label for="sampleSize" class="block text-xs font-semibold text-gray-700 mb-2">Sample Size:</label>
+                <select id="sampleSize" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="1">1x1 (Most Precise)</option>
+                    <option value="2">2x2</option>
+                    <option value="4">4x4</option>
+                    <option value="16" selected>16x16 (Default)</option>
+                    <option value="32">32x32</option>
+                    <option value="64">64x64 (Most Averaged)</option>
+                </select>
+                <p class="text-xs text-gray-400 mt-1">Larger = smoother, Smaller = accurate</p>
+            </div>
+
+            <!-- Image Canvas Area -->
+            <div id="imageContainer" class="flex-1 flex flex-col relative" style="display: none;">
+                <!-- Canvas -->
+                <div id="canvasWrapper" class="flex-1 overflow-auto rounded-lg shadow-md border border-gray-200 bg-gray-50 relative">
+                    <canvas id="imageCanvas" style="display: block;"></canvas>
+
+                    <!-- Floating Zoom Controls Toolbar -->
+                    <div class="floating-zoom-toolbar">
+                        <button id="clearImageBtn" class="px-3 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition font-medium text-sm min-h-[44px]">
+                            Clear
+                        </button>
+                        <div class="flex items-center gap-2 bg-white p-2 rounded shadow-sm">
+                            <button id="zoomOutBtn" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded transition text-gray-700 font-medium text-sm min-h-[44px] min-w-[44px] flex items-center justify-center" title="Zoom Out (-)">−</button>
+                            <span id="zoomLevel" class="text-sm font-medium text-gray-700 min-w-[50px] text-center">100%</span>
+                            <button id="zoomInBtn" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded transition text-gray-700 font-medium text-sm min-h-[44px] min-w-[44px] flex items-center justify-center" title="Zoom In (+)">+</button>
+                            <span class="text-gray-300 text-sm">•</span>
+                            <button id="zoomToFitBtn" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded transition text-gray-700 font-medium text-sm min-h-[44px] min-w-[44px] flex items-center justify-center" title="Fit">F</button>
+                            <button id="zoomToWidthBtn" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded transition text-gray-700 font-medium text-sm min-h-[44px] min-w-[44px] flex items-center justify-center" title="Width">W</button>
+                            <button id="resetZoomBtn" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded transition text-gray-700 font-medium text-sm min-h-[44px] min-w-[44px] flex items-center justify-center" title="Reset">R</button>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2 text-center">Click • Shift+Wheel zoom • Shift+Drag pan</p>
+                <div id="eyedropperPreview"></div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="upload-prompt" class="flex-1 flex flex-col items-center justify-center text-center py-8">
+                <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <p class="text-gray-600 font-medium text-sm">No image loaded</p>
+                <p class="text-xs text-gray-500 mt-1">Upload to start matching</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer Container - loaded dynamically from components/footer.html -->
+    <div id="footer-container" class="component-loading"></div>
+
+    <script>
+        /**
+         * Toggle dropdown menu
+         */
+        function toggleDropdown(button) {
+            const dropdown = button.nextElementSibling;
+            dropdown.classList.toggle('show');
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.nav-dropdown')) {
+                    dropdown.classList.remove('show');
+                }
+            }, { once: true });
+        }
+
+        // Market Board price categories
+        // Price categories now provided by shared-components.js
+        // Helper function to check if a dye should have price fetched for Color Matcher
+        function shouldFetchPriceMatcher(dye) {
+            if (!dye) return false;
+            if (!dye.itemID) return false;
+
+            // Special dyes category
+            if (document.getElementById('show-mb-prices-toggle')?.checked &&
+                document.getElementById('mb-price-special')?.checked &&
+                dye.category === 'Special') {
+                return true;
+            }
+
+            if (!dye.acquisition) return false;
+
+            const showPrices = document.getElementById('show-mb-prices-toggle')?.checked;
+            if (!showPrices) return false;
+
+            // Base Dyes: Dye Vendor
+            if (document.getElementById('mb-price-base')?.checked &&
+                ['Dye Vendor'].includes(dye.acquisition)) {
+                return true;
+            }
+
+            // Craft Dyes: Crafting, Treasure Chest
+            if (document.getElementById('mb-price-craft')?.checked &&
+                ['Crafting', 'Treasure Chest'].includes(dye.acquisition)) {
+                return true;
+            }
+
+            // Allied Society Dyes (ID still uses 'beast' for backward compatibility):
+            // Amalj'aa, Ixali, Sylphic, Kobold, Sahagin Vendors
+            if (document.getElementById('mb-price-beast')?.checked &&
+                ['Amalj\'aa Vendor', 'Ixali Vendor', 'Sahagin Vendor', 'Kobold Vendor', 'Sylphic Vendor'].includes(dye.acquisition)) {
+                return true;
+            }
+
+            // Cosmic Dyes: Cosmic Exploration, Cosmic Fortunes
+            if (document.getElementById('mb-price-cosmic')?.checked &&
+                ['Cosmic Exploration', 'Cosmic Fortunes'].includes(dye.acquisition)) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // This variable will hold the color data once it's fetched.
+        let ffxivDyes = [];
+        let mbPriceCache = {};
+        let mbLastPriceUpdate = null;
+
+        // --- DOM Elements ---
+        const mainContainer = document.getElementById('mainContainer');
+        const colorPicker = document.getElementById('colorPicker');
+        const userHexP = document.getElementById('userHex');
+        const matchedColorDiv = document.getElementById('matchedColor');
+        const matchedNameP = document.getElementById('matchedName');
+
+        const imageLoader = document.getElementById('imageLoader');
+        const imageContainer = document.getElementById('imageContainer');
+        const canvas = document.getElementById('imageCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const canvasWrapper = document.getElementById('canvasWrapper');
+        const sampleSizeSelect = document.getElementById('sampleSize');
+        const eyedropperPreview = document.getElementById('eyedropperPreview');
+        const excludeMetallicCheckbox = document.getElementById('excludeMetallic');
+        const excludeExtremesCheckbox = document.getElementById('excludeExtremes');
+        const clearImageBtn = document.getElementById('clearImageBtn');
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const zoomToFitBtn = document.getElementById('zoomToFitBtn');
+        const zoomToWidthBtn = document.getElementById('zoomToWidthBtn');
+        const resetZoomBtn = document.getElementById('resetZoomBtn');
+        const zoomLevelSpan = document.getElementById('zoomLevel');
+
+        // Zoom and pan state
+        let zoomScale = 1.0;
+        let originalImageWidth = 0;
+        let originalImageHeight = 0;
+        let currentImage = null;
+        let isPanning = false;
+        let startPanX = 0;
+        let startPanY = 0;
+
+        // Storage functions (safeGetStorage, safeSetStorage) provided by shared-components.js
+        // safeFetchJSON function provided by shared-components.js
+
+        /**
+         * Updates the canvas display based on current zoom
+         */
+        function updateCanvasZoom() {
+            if (!currentImage) return;
+
+            const newWidth = originalImageWidth * zoomScale;
+            const newHeight = originalImageHeight * zoomScale;
+
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(currentImage, 0, 0, newWidth, newHeight);
+
+            zoomLevelSpan.textContent = Math.round(zoomScale * 100) + '%';
+        }
+
+        /**
+         * Zooms in on the image
+         */
+        function zoomIn() {
+            zoomScale = Math.min(zoomScale * 1.25, 10); // Max 10x zoom
+            updateCanvasZoom();
+        }
+
+        /**
+         * Zooms out on the image
+         */
+        function zoomOut() {
+            zoomScale = Math.max(zoomScale / 1.25, 0.25); // Min 0.25x zoom
+            updateCanvasZoom();
+        }
+
+        /**
+         * Resets zoom to 100%
+         */
+        function resetZoom() {
+            zoomScale = 1.0;
+            updateCanvasZoom();
+            // Use requestAnimationFrame to ensure layout is complete before resetting scroll
+            requestAnimationFrame(() => {
+                canvasWrapper.scrollLeft = 0;
+                canvasWrapper.scrollTop = 0;
+            });
+        }
+
+        /**
+         * Zooms to fit the image in the canvas wrapper
+         */
+        function zoomToFit() {
+            if (!currentImage) return;
+
+            // Use timeout to ensure all layout calculations are fully complete
+            setTimeout(() => {
+                // Dynamically measure the canvas wrapper's actual dimensions
+                const canvasWrapperRect = canvasWrapper.getBoundingClientRect();
+                let availableWidth = canvasWrapperRect.width;
+                let availableHeight = canvasWrapperRect.height;
+
+                // Apply padding: canvas wrapper has padding-4 (1rem = 16px each side)
+                availableWidth -= 32;
+                availableHeight -= 32;
+
+                const scaleX = availableWidth / originalImageWidth;
+                const scaleY = availableHeight / originalImageHeight;
+
+                // Use the smaller scale to ensure the entire image fits
+                // Ensure zoom doesn't exceed 100% zoom-in
+                zoomScale = Math.min(scaleX, scaleY, 1.0);
+                // Set minimum to the smaller scale (allows any image to fit, even if scrolling required)
+                // But never allow negative or zero zoom
+                zoomScale = Math.max(zoomScale, 0.1);
+                updateCanvasZoom();
+
+                // Reset scroll after canvas is rendered
+                setTimeout(() => {
+                    canvasWrapper.scrollLeft = 0;
+                    canvasWrapper.scrollTop = 0;
+                }, 50);
+            }, 50);
+        }
+
+        /**
+         * Zooms to fit the image width in the canvas wrapper
+         */
+        function zoomToWidth() {
+            if (!currentImage) return;
+
+            // Use timeout to ensure all layout calculations are fully complete
+            setTimeout(() => {
+                // Dynamically measure the canvas wrapper's actual width
+                const canvasWrapperRect = canvasWrapper.getBoundingClientRect();
+                let availableWidth = canvasWrapperRect.width;
+
+                // Apply padding: canvas wrapper has padding-4 (1rem = 16px each side)
+                availableWidth -= 32;
+
+                // Calculate zoom to fit width
+                zoomScale = availableWidth / originalImageWidth;
+                // Never allow negative, zero, or less than 10% zoom
+                zoomScale = Math.max(zoomScale, 0.1);
+                updateCanvasZoom();
+
+                // Reset scroll after canvas is rendered
+                setTimeout(() => {
+                    canvasWrapper.scrollLeft = 0;
+                    canvasWrapper.scrollTop = 0;
+                }, 50);
+            }, 50);
+        }
+
+        /**
+         * Clears the loaded image
+         */
+        function clearImage() {
+            currentImage = null;
+            zoomScale = 1.0;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            imageContainer.style.display = 'none';
+            document.getElementById('upload-prompt').style.display = 'flex';
+            imageLoader.value = '';
+            showToast('Image cleared', 'info');
+        }
+
+        // Core color conversion functions (hexToRgb, rgbToHex, colorDistance) provided by shared-components.js
+        // APIThrottler class and apiThrottler instance now provided by shared-components.js
+
+        /**
+         * Find the closest matching FFXIV dye to the user's selected color
+         *
+         * Algorithm: Euclidean distance in RGB color space
+         * - Calculates distance from user color to all available dyes
+         * - Returns dye with smallest distance as closest match
+         * - Always excludes: Facewear category dyes
+         * - Optionally excludes: Metallic dyes, Pure White, Jet Black (based on checkboxes)
+         *
+         * Special Logic: Pure White and Jet Black are excluded from normal filtering but
+         * will be suggested if they are an exact/near-exact match (distance < 5) to ensure
+         * these important colors can still be suggested when appropriate.
+         *
+         * @returns {void} Results displayed in UI: match name, hex code, item ID, and market price
+         * @see colorDistance - RGB distance calculation function from shared-components.js
+         * @see excludeMetallicCheckbox - User filter checkbox
+         * @see excludeExtremesCheckbox - User filter checkbox for Pure White/Jet Black
+         *
+         * @example
+         * // User picks #FF6B6B, finds closest dye match
+         * // Returns: "Pomegranate" (#E84040) with distance ~25 in RGB space
+         */
+        function findClosestMatch() {
+            if (ffxivDyes.length === 0) {
+                console.log("Color data not loaded yet.");
+                return; // Don't run if data isn't loaded
+            }
+
+            const userHex = colorPicker.value;
+            const userRgb = hexToRgb(userHex);
+            if (!userRgb) return;
+
+            const isMetallicExcluded = excludeMetallicCheckbox.checked;
+            const isExtremesExcluded = excludeExtremesCheckbox.checked;
+
+            // Apply all filters, but keep track of excluded extremes for exact-match fallback
+            let dyesToSearch = ffxivDyes.filter(dye => {
+                // Always exclude Facewear colors
+                if (dye.category === 'Facewear') return false;
+
+                // Exclude metallic if checkbox is checked
+                if (isMetallicExcluded && dye.name.toLowerCase().includes('metallic')) return false;
+
+                return true;
+            });
+
+            let closestColor = null;
+            let smallestDistance = Infinity;
+            let excludedExtremeMatch = null;
+            let excludedExtremeDistance = Infinity;
+
+            dyesToSearch.forEach(dye => {
+                const dyeRgb = hexToRgb(dye.hex);
+                if (dyeRgb) {
+                    const distance = colorDistance(userRgb, dyeRgb);
+
+                    const isExcludedExtreme = isExtremesExcluded && (dye.name === 'Pure White' || dye.name === 'Jet Black');
+
+                    if (isExcludedExtreme) {
+                        // Track excluded extremes in case of exact/near-exact match
+                        if (distance < excludedExtremeDistance) {
+                            excludedExtremeDistance = distance;
+                            excludedExtremeMatch = dye;
+                        }
+                    } else {
+                        // Normal filtering
+                        if (distance < smallestDistance) {
+                            smallestDistance = distance;
+                            closestColor = dye;
+                        }
+                    }
+                }
+            });
+
+            // If excluded extreme is an exact/near-exact match (distance < 5), use it
+            if (isExtremesExcluded && excludedExtremeMatch && excludedExtremeDistance < 5 && excludedExtremeDistance < smallestDistance) {
+                closestColor = excludedExtremeMatch;
+            }
+
+            updateResultsUI(userHex, closestColor);
+        }
+
+        // Debounced calculation for better mobile performance
+        const calculationDebounceTime = isMobile() ? 300 : 100;
+        const debouncedFindClosestMatch = debounce(findClosestMatch, calculationDebounceTime);
+
+        function updateResultsUI(userHex, matchedDye) {
+            userHexP.innerHTML = `<span class="number">${userHex.toUpperCase()}</span>`;
+            if (matchedDye) {
+                matchedColorDiv.style.backgroundColor = matchedDye.hex;
+                matchedNameP.textContent = matchedDye.name;
+                document.getElementById('matchedHex').innerHTML = `<span class="number">${matchedDye.hex.toUpperCase()}</span>`;
+                document.getElementById('matchedCategory').textContent = matchedDye.category || 'Unknown';
+                document.getElementById('matchedAcquisition').textContent = matchedDye.acquisition || 'Unknown';
+
+                // Display market price if applicable
+                const priceElement = document.getElementById('matchedPrice');
+                const priceValueElement = document.getElementById('matchedPriceValue');
+                if (document.getElementById('show-mb-prices-toggle').checked && shouldFetchPriceMatcher(matchedDye)) {
+                    const itemIdKey = matchedDye.itemID.toString();
+                    if (mbPriceCache[itemIdKey]) {
+                        priceValueElement.innerHTML = `<span class="number">${mbPriceCache[itemIdKey].toLocaleString()}</span> Gil`;
+                        priceElement.style.display = 'block';
+                    } else {
+                        priceElement.style.display = 'none';
+                    }
+                } else {
+                    priceElement.style.display = 'none';
+                }
+            } else {
+                matchedColorDiv.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-secondary').trim();
+                matchedNameP.textContent = 'No Match Found';
+                document.getElementById('matchedHex').innerHTML = '';
+                document.getElementById('matchedCategory').textContent = '';
+                document.getElementById('matchedAcquisition').textContent = '';
+                document.getElementById('matchedPrice').style.display = 'none';
+            }
+        }
+
+        // --- Image & Eyedropper Functions ---
+        /**
+         * Process and validate image file with comprehensive error checking
+         */
+        function processImageFile(file) {
+            // Guard: Validate file object exists
+            if (!file) {
+                showToast('No file provided', 'error');
+                return;
+            }
+
+            // Guard: Validate file has a name
+            if (!file.name) {
+                showToast('Invalid file: no filename', 'error');
+                return;
+            }
+
+            // Validate MIME type
+            const SUPPORTED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+            if (!SUPPORTED_TYPES.includes(file.type)) {
+                if (file.type === 'image/svg+xml') {
+                    showToast('SVG images are not supported for color sampling', 'error');
+                } else {
+                    showToast(`Unsupported file type: ${file.type || 'unknown'}. Supported: JPEG, PNG, GIF, WebP, BMP`, 'error');
+                }
+                return;
+            }
+
+            // Check file size with detailed feedback
+            const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB hard limit
+            const WARN_FILE_SIZE = 10 * 1024 * 1024; // 10MB warning threshold
+            const MIN_FILE_SIZE = 1024; // 1KB minimum
+
+            // Guard: File is too small (likely invalid)
+            if (file.size < MIN_FILE_SIZE) {
+                showToast('File is too small to be a valid image', 'error');
+                return;
+            }
+
+            if (file.size > MAX_FILE_SIZE) {
+                showToast(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum: 50MB`, 'error');
+                return;
+            }
+
+            if (file.size > WARN_FILE_SIZE) {
+                showToast(`Large file (${(file.size / 1024 / 1024).toFixed(1)}MB). Loading may be slow.`, 'warning');
+            }
+
+            const reader = new FileReader();
+
+            reader.onerror = () => {
+                showToast('Failed to read file', 'error');
+                console.error('FileReader error:', reader.error);
+            };
+
+            reader.onload = (event) => {
+                const img = new Image();
+
+                img.onerror = () => {
+                    showToast('Failed to load image. File may be corrupted.', 'error');
+                    console.error('Image load error');
+                };
+
+                img.onload = () => {
+                    try {
+                        // Validate image dimensions
+                        const MAX_WIDTH = 16384; // 16k width limit
+                        const MAX_HEIGHT = 16384; // 16k height limit
+                        const MIN_WIDTH = 10; // 10px minimum
+                        const MIN_HEIGHT = 10; // 10px minimum
+
+                        // Guard: Check image dimensions are reasonable
+                        if (img.width < MIN_WIDTH || img.height < MIN_HEIGHT) {
+                            showToast(`Image too small (${img.width}x${img.height}). Minimum: ${MIN_WIDTH}x${MIN_HEIGHT}px`, 'error');
+                            return;
+                        }
+
+                        if (img.width > MAX_WIDTH || img.height > MAX_HEIGHT) {
+                            showToast(`Image too large (${img.width}x${img.height}). Maximum: ${MAX_WIDTH}x${MAX_HEIGHT}px`, 'error');
+                            return;
+                        }
+
+                        // Warn about very large images that might be slow
+                        const WARN_THRESHOLD = 8192; // Warn if either dimension exceeds 8k
+                        if (img.width > WARN_THRESHOLD || img.height > WARN_THRESHOLD) {
+                            console.warn(`Large image dimensions: ${img.width}x${img.height}. Color sampling may be slow.`);
+                        }
+
+                        currentImage = img;
+                        originalImageWidth = img.width;
+                        originalImageHeight = img.height;
+                        zoomScale = 1.0;
+                        imageContainer.style.display = 'block';
+                        document.getElementById('upload-prompt').style.display = 'none';
+
+                        // Auto zoom handling for large images
+                        const wrapperWidth = canvasWrapper.clientWidth;
+                        const wrapperHeight = canvasWrapper.clientHeight;
+                        if (img.width > wrapperWidth || img.height > wrapperHeight) {
+                            // For portrait images or images significantly taller than the wrapper, use zoom to width
+                            if (img.height > img.width || img.height > wrapperHeight * 1.5) {
+                                zoomToWidth();
+                            } else {
+                                zoomToFit();
+                            }
+                        } else {
+                            updateCanvasZoom();
+                        }
+
+                        showToast('Image loaded successfully!', 'success');
+                    } catch (error) {
+                        showToast('Error processing image', 'error');
+                        console.error('Image processing error:', error);
+                    }
+                };
+                img.src = event.target.result;
+            };
+
+            try {
+                reader.readAsDataURL(file);
+            } catch (error) {
+                showToast('Failed to read file', 'error');
+                console.error('Error reading file:', error);
+            }
+        }
+
+        function getAverageColor(x, y) {
+            // Verify canvas context is initialized
+            if (!ctx || !ctx.canvas) return '#000000';
+
+            // Safe parseInt with null check and default fallback
+            const size = (sampleSizeSelect && sampleSizeSelect.value)
+                ? parseInt(sampleSizeSelect.value, 10)
+                : 1;
+            const halfSize = Math.floor(size / 2);
+            const startX = Math.max(0, Math.floor(x - halfSize));
+            const startY = Math.max(0, Math.floor(y - halfSize));
+            const endX = Math.min(ctx.canvas.width, startX + size);
+            const endY = Math.min(ctx.canvas.height, startY + size);
+            const sampleWidth = endX - startX;
+            const sampleHeight = endY - startY;
+
+            if (sampleWidth <= 0 || sampleHeight <= 0) return '#000000';
+
+            const imageData = ctx.getImageData(startX, startY, sampleWidth, sampleHeight);
+            const data = imageData.data;
+            let r = 0, g = 0, b = 0;
+            const numPixels = sampleWidth * sampleHeight;
+
+            for (let i = 0; i < data.length; i += 4) {
+                r += data[i]; g += data[i+1]; b += data[i+2];
+            }
+            return rgbToHex(r / numPixels, g / numPixels, b / numPixels);
+        }
+
+        function getCanvasCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (e.clientX - rect.left) * scaleX,
+                y: (e.clientY - rect.top) * scaleY
+            };
+        }
+
+        function handleCanvasMouseMove(e) {
+            const { x, y } = getCanvasCoordinates(e);
+            const avgColorHex = getAverageColor(x, y);
+
+            eyedropperPreview.style.backgroundColor = avgColorHex;
+            const imageContainerRect = imageContainer.getBoundingClientRect();
+            eyedropperPreview.style.left = `${e.clientX - imageContainerRect.left - 40}px`;
+            eyedropperPreview.style.top = `${e.clientY - imageContainerRect.top - 40}px`;
+        }
+
+        // Debounced eyedropper handler for better mobile performance
+        // Mobile: debounce 100ms for faster interaction
+        // Desktop: debounce 50ms for smooth preview
+        const eyedropperDebounceTime = isMobile() ? 100 : 50;
+        const debouncedHandleCanvasMouseMove = debounce(handleCanvasMouseMove, eyedropperDebounceTime);
+
+        function handleCanvasClick(e) {
+            const { x, y } = getCanvasCoordinates(e);
+            colorPicker.value = getAverageColor(x, y);
+            debouncedFindClosestMatch();
+        }
+
+        // --- Toast Notification System ---
+        function showToast(message, type = 'info', duration = 3000) {
+            const toastContainer = document.getElementById('toast-container');
+
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            // Create icon
+            const icon = document.createElement('div');
+            icon.className = 'toast-icon';
+            if (type === 'success') {
+                icon.innerHTML = '<svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>';
+            } else if (type === 'error') {
+                icon.innerHTML = '<svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>';
+            } else {
+                icon.innerHTML = '<svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>';
+            }
+
+            // Create message
+            const messageEl = document.createElement('div');
+            messageEl.className = 'toast-message';
+            messageEl.textContent = message;
+
+            // Assemble toast
+            toast.appendChild(icon);
+            toast.appendChild(messageEl);
+            toastContainer.appendChild(toast);
+
+            // Auto-remove toast after duration
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => {
+                    toastContainer.removeChild(toast);
+                }, 300); // Match slideOut animation duration
+            }, duration);
+        }
+
+        // --- Help Modal Functions ---
+        function openHelpModal() {
+            document.getElementById('help-modal').classList.add('show');
+        }
+
+        function closeHelpModal() {
+            document.getElementById('help-modal').classList.remove('show');
+        }
+
+        // --- Modal Swipe-to-Close Support ---
+        /**
+         * Swipe state tracker for modal close gesture
+         */
+        let helpModalSwipeState = {
+            isActive: false,
+            touchStartY: 0,
+            touchStartX: 0
+        };
+
+        /**
+         * Check if help modal is currently open
+         */
+        function isHelpModalOpen() {
+            const modal = document.getElementById('help-modal');
+            return modal && modal.classList.contains('show');
+        }
+
+        /**
+         * Handle touch start for help modal swipe-to-close
+         */
+        function handleHelpModalSwipeStart(e) {
+            if (!isHelpModalOpen()) return;
+
+            // Guard against empty touch array
+            if (e.touches && e.touches.length > 0) {
+                helpModalSwipeState.touchStartY = e.touches[0].clientY;
+                helpModalSwipeState.touchStartX = e.touches[0].clientX;
+                helpModalSwipeState.isActive = true;
+            }
+        }
+
+        /**
+         * Handle touch end for help modal swipe-to-close
+         * Swipe up (>= 100px vertical) closes the modal
+         */
+        function handleHelpModalSwipeEnd(e) {
+            if (!isHelpModalOpen() || !helpModalSwipeState.isActive) return;
+
+            // Guard against empty touch array
+            if (!e.changedTouches || e.changedTouches.length === 0) return;
+
+            const deltaY = helpModalSwipeState.touchStartY - e.changedTouches[0].clientY;
+            const deltaX = Math.abs(e.changedTouches[0].clientX - helpModalSwipeState.touchStartX);
+
+            // Swipe up to close (vertical movement >= 100px, horizontal < 30px)
+            if (deltaY >= 100 && deltaX < 30) {
+                closeHelpModal();
+                hapticSuccess();
+            }
+
+            helpModalSwipeState.isActive = false;
+        }
+
+        // --- Clipboard Paste Handler ---
+        /**
+         * Handle clipboard paste events with fallback support
+         */
+        function handleClipboardPaste(e) {
+            // Guard: Validate clipboard access
+            if (!e || !e.clipboardData) {
+                console.warn('Clipboard access not available');
+                return;
+            }
+
+            // Guard: Check for clipboard items
+            if (!e.clipboardData.items && !e.clipboardData.files) {
+                return;
+            }
+
+            let foundImage = false;
+
+            // Try to access clipboard items (modern API)
+            const items = e.clipboardData.items || e.clipboardData.files;
+
+            if (!items || items.length === 0) {
+                return;
+            }
+
+            // Look for image data in the clipboard
+            for (let item of items) {
+                // Guard: Validate item exists and has type
+                if (!item || !item.type) continue;
+
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    foundImage = true;
+
+                    // Guard: Validate getAsFile method exists
+                    if (!item.getAsFile) {
+                        console.warn('getAsFile not available for clipboard item');
+                        continue;
+                    }
+
+                    const blob = item.getAsFile();
+                    if (!blob) {
+                        showToast('Could not access clipboard image', 'error');
+                        continue;
+                    }
+
+                    // Convert blob to File object
+                    const file = new File([blob], `pasted-image-${Date.now()}`, { type: item.type });
+                    processImageFile(file);
+                    break;
+                }
+            }
+        }
+
+        // --- Event Listeners Setup ---
+        function setupEventListeners() {
+            colorPicker.addEventListener('input', debouncedFindClosestMatch);
+            imageLoader.addEventListener('change', (e) => {
+                // Validate file input before processing
+                if (e.target.files && e.target.files.length > 0) {
+                    processImageFile(e.target.files[0]);
+                }
+            });
+
+            // Camera capture support (mobile)
+            const cameraBtn = document.getElementById('cameraBtn');
+            const cameraCapture = document.getElementById('cameraCapture');
+            if (cameraBtn && cameraCapture) {
+                cameraBtn.addEventListener('click', () => {
+                    cameraCapture.click();
+                });
+                cameraCapture.addEventListener('change', (e) => {
+                    // Validate file input before processing
+                    if (e.target.files && e.target.files.length > 0) {
+                        processImageFile(e.target.files[0]);
+                        hapticSuccess();
+                    }
+                });
+            }
+
+            excludeMetallicCheckbox.addEventListener('change', debouncedFindClosestMatch);
+            excludeExtremesCheckbox.addEventListener('change', debouncedFindClosestMatch);
+
+            // Zoom and clear buttons
+            zoomInBtn.addEventListener('click', zoomIn);
+            zoomOutBtn.addEventListener('click', zoomOut);
+            zoomToFitBtn.addEventListener('click', zoomToFit);
+            zoomToWidthBtn.addEventListener('click', zoomToWidth);
+            resetZoomBtn.addEventListener('click', resetZoom);
+            clearImageBtn.addEventListener('click', clearImage);
+
+            // Keyboard shortcuts for zoom
+            document.addEventListener('keydown', (e) => {
+                if (imageContainer.style.display === 'none') return;
+
+                if (e.key === '+' || e.key === '=') {
+                    e.preventDefault();
+                    zoomIn();
+                } else if (e.key === '-' || e.key === '_') {
+                    e.preventDefault();
+                    zoomOut();
+                } else if (e.key === 'w' || e.key === 'W') {
+                    e.preventDefault();
+                    zoomToWidth();
+                } else if (e.key === 'r' || e.key === 'R') {
+                    e.preventDefault();
+                    resetZoom();
+                }
+            });
+
+            // ===== MOBILE TOUCH GESTURES =====
+            // Initialize touch gesture manager for mobile interactions
+            if (isTouchDevice()) {
+                const gestureManager = new TouchGestureManager(canvasWrapper);
+
+                // Pinch-to-zoom support
+                gestureManager.on('onPinch', (gesture) => {
+                    // Scale factor from pinch gesture
+                    if (gesture.isZoomIn) {
+                        zoomIn();
+                        hapticLight();
+                    } else {
+                        zoomOut();
+                        hapticLight();
+                    }
+                });
+
+                // Two-finger pan support
+                let panStartX = 0;
+                let panStartY = 0;
+                gestureManager.on('onPan', (gesture) => {
+                    if (gesture.dx === 0 && gesture.dy === 0) {
+                        panStartX = gesture.x;
+                        panStartY = gesture.y;
+                        return;
+                    }
+                    // Allow panning on canvas with touch
+                    canvasWrapper.scrollLeft -= gesture.dx;
+                    canvasWrapper.scrollTop -= gesture.dy;
+                });
+
+                // Double-tap to zoom to fit
+                gestureManager.on('onDoubleTap', () => {
+                    zoomToFit();
+                    hapticSuccess();
+                });
+
+                // Long-press to reset zoom
+                gestureManager.on('onLongPress', () => {
+                    resetZoom();
+                    hapticSuccess();
+                });
+            }
+
+            // Shift+MouseWheel for zoom
+            canvasWrapper.addEventListener('wheel', (e) => {
+                if (e.shiftKey) {
+                    e.preventDefault();
+                    if (e.deltaY < 0) {
+                        zoomIn();
+                    } else {
+                        zoomOut();
+                    }
+                }
+            }, { passive: false });
+
+            // Shift+LeftClickDrag for panning
+            canvasWrapper.addEventListener('mousedown', (e) => {
+                if (e.shiftKey && e.button === 0) {
+                    // Shift+LeftClick
+                    e.preventDefault();
+                    isPanning = true;
+                    startPanX = e.clientX + canvasWrapper.scrollLeft;
+                    startPanY = e.clientY + canvasWrapper.scrollTop;
+                    canvasWrapper.style.cursor = 'grabbing';
+                } else if (e.shiftKey && e.button === 1) {
+                    // Shift+MiddleClick - Zoom to Fit
+                    e.preventDefault();
+                    zoomToFit();
+                } else if (e.shiftKey && e.button === 2) {
+                    // Shift+RightClick - Reset Zoom
+                    e.preventDefault();
+                    resetZoom();
+                }
+            });
+
+            // Prevent context menu on Shift+RightClick
+            canvasWrapper.addEventListener('contextmenu', (e) => {
+                if (e.shiftKey) {
+                    e.preventDefault();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isPanning) {
+                    isPanning = false;
+                    canvasWrapper.style.cursor = '';
+                }
+            });
+
+            canvasWrapper.addEventListener('mousemove', (e) => {
+                if (isPanning) {
+                    e.preventDefault();
+                    canvasWrapper.scrollLeft = startPanX - e.clientX;
+                    canvasWrapper.scrollTop = startPanY - e.clientY;
+                }
+            });
+
+            let rect;
+            canvas.addEventListener('mouseenter', () => {
+                rect = canvas.getBoundingClientRect();
+                eyedropperPreview.style.display = 'block';
+            });
+            canvas.addEventListener('mouseleave', () => eyedropperPreview.style.display = 'none');
+            // Use debounced eyedropper handler for better performance
+            canvas.addEventListener('mousemove', debouncedHandleCanvasMouseMove);
+            canvas.addEventListener('click', handleCanvasClick);
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                document.body.addEventListener(eventName, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                document.body.addEventListener(eventName, () => mainContainer.classList.add('drag-over'));
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                document.body.addEventListener(eventName, () => mainContainer.classList.remove('drag-over'));
+            });
+
+            document.body.addEventListener('drop', (e) => {
+                // Validate drag-drop files before processing
+                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    const file = e.dataTransfer.files[0];
+                    processImageFile(file);
+                }
+            });
+
+            // Clipboard paste support with fallback
+            // Check if browser supports clipboard API before adding listener
+            if (document.body && typeof ClipboardEvent !== 'undefined') {
+                document.addEventListener('paste', handleClipboardPaste);
+            } else {
+                console.warn('Clipboard API not fully supported; paste functionality unavailable');
+            }
+
+            // Help modal event listeners
+            const helpModal = document.getElementById('help-modal');
+
+            // Close modal when clicking outside of content
+            helpModal.addEventListener('click', (e) => {
+                if (e.target === helpModal) {
+                    closeHelpModal();
+                }
+            });
+
+            // Close modal when pressing ESC key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && helpModal.classList.contains('show')) {
+                    closeHelpModal();
+                }
+            });
+
+            // Add swipe-to-close gesture support for help modal (mobile)
+            if (isTouchDevice()) {
+                helpModal.addEventListener('touchstart', handleHelpModalSwipeStart, { passive: true });
+                helpModal.addEventListener('touchend', handleHelpModalSwipeEnd, { passive: true });
+            }
+        }
+
+        /**
+         * Check if a dye should have its price fetched
+         */
+        /**
+         * Fetches market prices from Universalis API
+         */
+        async function fetchMarketPricesMatcher(itemIds, server) {
+            if (itemIds.length === 0) return {};
+
+            const serverValue = server.startsWith('DC:') ? server.substring(3) : server.substring(6);
+            const itemIdsString = itemIds.join(',');
+            const url = `https://universalis.app/api/v2/aggregated/${serverValue}/${itemIdsString}`;
+
+            try {
+                console.log(`Fetching prices from: ${url}`);
+                // Use throttled request to respect API rate limits
+                const data = await apiThrottler.request(url);
+                const prices = {};
+
+                if (data.results && Array.isArray(data.results)) {
+                    data.results.forEach(result => {
+                        const itemId = result.itemId.toString();
+
+                        if (result.nq && result.nq.minListing) {
+                            let price = null;
+
+                            if (server.startsWith('DC:') && result.nq.minListing.dc && result.nq.minListing.dc.price) {
+                                price = result.nq.minListing.dc.price;
+                            }
+                            else if (server.startsWith('WORLD:')) {
+                                if (result.nq.minListing.world && result.nq.minListing.world.price) {
+                                    price = result.nq.minListing.world.price;
+                                } else if (result.nq.minListing.dc && result.nq.minListing.dc.price) {
+                                    price = result.nq.minListing.dc.price;
+                                }
+                            }
+
+                            if (!price && result.nq.minListing.region && result.nq.minListing.region.price) {
+                                price = result.nq.minListing.region.price;
+                            }
+
+                            if (price) {
+                                prices[itemId] = price;
+                            }
+                        }
+                    });
+                }
+
+                console.log(`Successfully fetched prices for ${Object.keys(prices).length} items`);
+                return prices;
+            } catch (error) {
+                console.error('Error fetching prices:', error);
+                throw error;
+            }
+        }
+
+        /**
+         * Refreshes market prices
+         */
+        async function refreshMarketPricesMatcher() {
+            const refreshBtn = document.getElementById('mb-refresh-btn');
+            const statusDiv = document.getElementById('mb-price-status');
+            const serverSelect = document.getElementById('mb-server-select');
+
+            // Validate server is selected
+            const server = serverSelect.value;
+            if (!server || server === '') {
+                statusDiv.textContent = 'Please select a server first.';
+                return;
+            }
+
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = 'Fetching Prices...';
+            statusDiv.textContent = 'Connecting to Universalis API...';
+
+            try {
+
+                // Get the matched dye
+                const matchedName = document.getElementById('matchedName').textContent;
+                if (!matchedName) {
+                    statusDiv.textContent = 'Select a color first to fetch prices.';
+                    refreshBtn.disabled = false;
+                    refreshBtn.textContent = 'Refresh Prices';
+                    return;
+                }
+
+                const matchedDye = ffxivDyes.find(d => d.name === matchedName);
+                if (!matchedDye || !shouldFetchPriceMatcher(matchedDye)) {
+                    statusDiv.textContent = 'No prices available for this dye.';
+                    refreshBtn.disabled = false;
+                    refreshBtn.textContent = 'Refresh Prices';
+                    return;
+                }
+
+                const itemIds = [matchedDye.itemID];
+                const newPrices = await fetchMarketPricesMatcher(itemIds, server);
+
+                mbPriceCache = { ...mbPriceCache, ...newPrices };
+                mbLastPriceUpdate = new Date();
+
+                // Update the display with the matched dye
+                const userHex = document.getElementById('userHex').textContent;
+                updateResultsUI(userHex, matchedDye);
+
+                statusDiv.textContent = `Updated at ${mbLastPriceUpdate.toLocaleTimeString()}`;
+
+            } catch (error) {
+                if (mbLastPriceUpdate) {
+                    statusDiv.textContent = `Using cached data. Error: Cannot connect to Universalis API.`;
+                } else {
+                    statusDiv.textContent = 'Cannot connect to Universalis API.';
+                }
+            } finally {
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = 'Refresh Prices';
+            }
+        }
+
+        /**
+         * Initialize Market Board server select
+         */
+        async function initializeMarketBoard() {
+            try {
+                const [dcResponse, worldsResponse] = await Promise.all([
+                    fetch('/assets/json/data-centers.json'),
+                    fetch('/assets/json/worlds.json')
+                ]);
+
+                const dataCenters = await dcResponse.json();
+                const worlds = await worldsResponse.json();
+
+                const serverSelect = document.getElementById('mb-server-select');
+                serverSelect.innerHTML = '';
+
+                // Sort Data Centers alphabetically by name
+                const sortedDataCenters = [...dataCenters].sort((a, b) => a.name.localeCompare(b.name));
+
+                // Add Data Centers
+                const dcOptgroup = document.createElement('optgroup');
+                dcOptgroup.label = 'Data Centers';
+                sortedDataCenters.forEach(dc => {
+                    const option = document.createElement('option');
+                    option.value = `DC:${dc.name}`;
+                    option.textContent = `${dc.name} (${dc.region})`;
+                    if (dc.name === 'Crystal') {
+                        option.selected = true;
+                    }
+                    dcOptgroup.appendChild(option);
+                });
+                serverSelect.appendChild(dcOptgroup);
+
+                // Add Worlds
+                sortedDataCenters.forEach(dc => {
+                    const worldOptgroup = document.createElement('optgroup');
+                    worldOptgroup.label = `${dc.name} Worlds`;
+
+                    const dcWorlds = worlds
+                        .filter(w => dc.worlds.includes(w.id))
+                        .sort((a, b) => a.name.localeCompare(b.name));
+
+                    dcWorlds.forEach(world => {
+                        const option = document.createElement('option');
+                        option.value = `WORLD:${world.id}`;
+                        option.textContent = world.name;
+                        worldOptgroup.appendChild(option);
+                    });
+
+                    serverSelect.appendChild(worldOptgroup);
+                });
+
+                // Setup toggle listener
+                const priceToggle = document.getElementById('show-mb-prices-toggle');
+                const priceSettings = document.getElementById('mb-price-settings');
+
+                priceToggle.addEventListener('change', () => {
+                    priceSettings.style.display = priceToggle.checked ? 'block' : 'none';
+                    // Update the matched color display to show/hide price
+                    const matchedName = document.getElementById('matchedName').textContent;
+                    if (matchedName && matchedName !== 'No Match Found') {
+                        const matchedDye = ffxivDyes.find(d => d.name === matchedName);
+                        if (matchedDye) {
+                            const userHex = document.getElementById('userHex').textContent;
+                            updateResultsUI(userHex, matchedDye);
+                        }
+                    }
+                });
+
+                // Enable refresh button now that data is loaded
+                const refreshBtn = document.getElementById('mb-refresh-btn');
+                refreshBtn.disabled = false;
+
+            } catch (error) {
+                console.error('Error initializing market board:', error);
+                const statusDiv = document.getElementById('mb-price-status');
+                statusDiv.textContent = 'Error loading server data.';
+            }
+        }
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize market board
+            initializeMarketBoard();
+
+            safeFetchJSON('./assets/json/colors_xiv.json')
+                .then(data => {
+                    ffxivDyes = data; // Load data into the global variable
+                    console.log('Color data loaded successfully.');
+                    setupEventListeners(); // Set up event listeners after data is loaded
+                    findClosestMatch();   // Perform initial match
+
+                    // ===== MOBILE KEYBOARD OPTIMIZATION (PHASE 7.3) =====
+                    // Initialize mobile keyboard helpers
+                    if (isMobileDevice && typeof isMobileDevice === 'function') {
+                        // Prevent accidental zoom on input focus
+                        const inputs = document.querySelectorAll('input, select, textarea');
+                        inputs.forEach(input => {
+                            input.addEventListener('focus', function() {
+                                // Ensure font size is at least 16px to prevent iOS zoom
+                                this.style.fontSize = '16px';
+                            });
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading color data:', error);
+                    alert('Could not load color data. Please make sure colors_xiv.json is in the assets/json directory.');
+                });
+        });
+
+    </script>
+
+    <!-- Mobile Bottom Navigation Component -->
+    <div id="mobile-nav-container" class="component-loading"></div>
+    <script>
+        fetch('components/mobile-bottom-nav.html')
+            .then(r => {
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.text();
+            })
+            .then(html => {
+                document.getElementById('mobile-nav-container').innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Failed to load mobile navigation:', error);
+                // Navigation is optional - app works without it
+            });
+    </script>
+
+    <!-- Service Worker Registration for PWA Support -->
+    <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/service-worker.js').then(()=>console.log('Service Worker registered')).catch((error)=>console.log('Service Worker registration failed:',error))})}</script>
+
+</body>
+</html>

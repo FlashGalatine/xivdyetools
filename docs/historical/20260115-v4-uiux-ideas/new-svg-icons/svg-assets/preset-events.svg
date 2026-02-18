@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" stroke-width="1.5" stroke="currentColor" fill="none">
+  <title>Events</title>
+  <!-- Party Popper - represents Events/Celebrations -->
+  <path d="M4 20l8-16 3 6 5-2-8 16-3-6-5 2z" stroke-linejoin="round"/>
+  <path d="M6 10l-2-1" stroke-linecap="round"/>
+  <path d="M4 6l-1-2" stroke-linecap="round"/>
+  <path d="M10 5l1-3" stroke-linecap="round"/>
+  <circle cx="3" cy="3" r="1" fill="currentColor"/>
+  <circle cx="7" cy="4" r="0.5" fill="currentColor"/>
+  <circle cx="20" cy="8" r="1" fill="currentColor"/>
+  <circle cx="18" cy="4" r="0.5" fill="currentColor"/>
+  <circle cx="21" cy="12" r="0.5" fill="currentColor"/>
+  <path d="M17 3l1 2" stroke-linecap="round"/>
+  <path d="M20 5l2 1" stroke-linecap="round"/>
+</svg>

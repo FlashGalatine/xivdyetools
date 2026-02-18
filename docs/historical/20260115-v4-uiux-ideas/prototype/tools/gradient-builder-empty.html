@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gradient Builder (Empty) - XIV Dye Tools V4</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        /* Empty state styles */
+        .gradient-node.empty .node-circle {
+            background: transparent !important;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .gradient-node.empty .node-circle:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .gradient-node.empty .node-circle::before {
+            content: "+";
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 300;
+        }
+
+        .gradient-step.empty {
+            background: transparent !important;
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            opacity: 0.5;
+        }
+
+        .gradient-track.empty {
+            background: repeating-linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.1) 0px,
+                rgba(255, 255, 255, 0.1) 4px,
+                transparent 4px,
+                transparent 8px
+            ) !important;
+        }
+
+        .empty-state-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-height: 300px;
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 40px;
+        }
+
+        .empty-state-message svg {
+            width: 64px;
+            height: 64px;
+            opacity: 0.3;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-message .message-title {
+            font-size: 16px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state-message .message-subtitle {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Simple App Header -->
+    <header class="app-header">
+        <div class="logo-section">
+            <svg class="logo-icon" viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
+                <path d="M10 12h4v4h-4z" />
+            </svg>
+            <span>XIV Dye Tools</span>
+        </div>
+        <div class="nav-controls">
+            <button class="nav-btn" title="About">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z" />
+                </svg>
+            </button>
+            <button class="nav-btn" title="Language">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.91 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.91-4.33-3.56zm2.95-8H5.08c.96-1.65 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-1.01 1.74-2.59 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z" />
+                </svg>
+            </button>
+            <button class="nav-btn" title="Theme" id="header-theme-btn">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M20 15.31L23.31 12 20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69zM12 18V6c3.31 0 6 2.69 6 6s-2.69 6-6 6z" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Tool Selection Banner -->
+    <nav class="tool-banner">
+        <a href="harmony-explorer.html" class="tool-btn" title="Harmony Explorer">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" opacity="0.3" />
+                <circle cx="12" cy="3" r="2.5" fill="currentColor" stroke="none" />
+                <circle cx="20.66" cy="16.5" r="2.5" fill="currentColor" stroke="none" />
+                <circle cx="3.34" cy="16.5" r="2.5" fill="currentColor" stroke="none" />
+                <polygon points="12,3 20.66,16.5 3.34,16.5" fill="none" opacity="0.5" />
+            </svg>
+            <span class="tool-label">Harmony</span>
+        </a>
+        <a href="swatch-matcher.html" class="tool-btn" title="Swatch Matcher">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="7" r="4" opacity="0.7" />
+                <path d="M5.5 21c0-4.5 3-7 6.5-7s6.5 2.5 6.5 7" opacity="0.4" />
+                <rect x="16" y="11" width="3" height="3" rx="0.5" fill="currentColor" stroke="none" />
+                <rect x="16" y="15" width="3" height="3" rx="0.5" fill="currentColor" stroke="none" opacity="0.6" />
+                <rect x="16" y="19" width="3" height="3" rx="0.5" fill="currentColor" stroke="none" opacity="0.3" />
+            </svg>
+            <span class="tool-label">Matcher</span>
+        </a>
+        <a href="palette-extractor.html" class="tool-btn" title="Palette Extractor">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" opacity="0.3" />
+                <circle cx="12" cy="12" r="6.5" opacity="0.5" />
+                <circle cx="12" cy="12" r="3.5" opacity="0.7" />
+                <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+            </svg>
+            <span class="tool-label">Extractor</span>
+        </a>
+        <a href="accessibility-checker.html" class="tool-btn" title="Accessibility Checker">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M 2 12 Q 12 5 22 12 Q 12 19 2 12 Z" />
+                <circle cx="12" cy="12" r="3.5" />
+                <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+            </svg>
+            <span class="tool-label">Accessibility</span>
+        </a>
+        <a href="dye-comparison.html" class="tool-btn" title="Dye Comparison">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="4" width="11" height="11" rx="2" opacity="0.4" />
+                <rect x="4" y="9" width="11" height="11" rx="2" />
+                <path d="M16 19l2 2 4-4" opacity="0.6" />
+                <path d="M8 12h.01" stroke-width="3" />
+                <path d="M13 7h.01" stroke-width="3" opacity="0.4" />
+            </svg>
+            <span class="tool-label">Compare</span>
+        </a>
+        <a href="gradient-builder.html" class="tool-btn active" title="Gradient Builder">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M 4 8 C 4 6 5 5 7 5 L 17 5 C 19 5 20 6 20 8 L 20 16 C 20 18 19 19 17 19 L 7 19 C 5 19 4 18 4 16 Z" />
+                <circle cx="18" cy="16" r="1.5" fill="currentColor" stroke="none" />
+                <circle cx="8" cy="10" r="2" opacity="0.5" />
+                <circle cx="12" cy="10" r="2" opacity="0.5" />
+                <circle cx="16" cy="10" r="2" opacity="0.5" />
+                <line x1="6" y1="15" x2="10" y2="15" stroke-width="2" />
+                <path d="M 10 15 L 12 13 L 12 17 Z" fill="currentColor" stroke="none" opacity="0.7" />
+            </svg>
+            <span class="tool-label">Gradient</span>
+        </a>
+        <a href="dye-mixer.html" class="tool-btn" title="Dye Mixer">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5l-8 14h16l-8-14zM12 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" opacity="0.5" />
+                <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" fill="currentColor" stroke="none" />
+            </svg>
+            <span class="tool-label">Mixer</span>
+        </a>
+        <a href="budget-suggestions.html" class="tool-btn" title="Budget Suggestions">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9" opacity="0.3" />
+                <path d="M12 6v2m0 8v2" />
+                <path d="M9 10c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2s-.9 2-2 2h-2c-1.1 0-2 .9-2 2s.9 2 2 2h2c1.1 0 2-.9 2-2" />
+                <path d="M17 7l2-2m0 0l2 2m-2-2v5" opacity="0.7" />
+            </svg>
+            <span class="tool-label">Budget</span>
+        </a>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="app-container">
+
+        <!-- Configuration Sidebar -->
+        <aside class="config-sidebar">
+            <div class="drawer-header">
+                <span class="drawer-title">Configuration</span>
+            </div>
+            <div class="drawer-content">
+
+                <!-- Gradient Configuration -->
+                <div class="config-section gradient-config" style="display: block;">
+                    <div class="config-group">
+                        <div class="config-label">Gradient Steps</div>
+                        <div class="config-control" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                            <div style="display: flex; justify-content: space-between; width: 100%;">
+                                <span style="font-size: 11px; color: var(--text-secondary);">Count: <span
+                                        id="step-count-val">8</span></span>
+                            </div>
+                            <input type="range" class="step-slider" min="1" max="8" value="8" style="width: 100%;">
+                        </div>
+                    </div>
+                    <div class="config-group">
+                        <div class="config-label">Interpolation</div>
+                        <div class="config-control">
+                            <span>Linear</span>
+                            <svg class="icon" viewBox="0 0 24 24" style="width: 16px;">
+                                <path d="M7 10l5 5 5-5z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <!-- Gradient Builder View -->
+            <div class="gradient-view" style="display: flex;">
+                <div class="gradient-builder-ui">
+                    <!-- Start Node (Empty) -->
+                    <div class="gradient-node main start empty">
+                        <div class="node-circle" title="Click to select start color"></div>
+                        <span class="node-label">Select Color</span>
+                    </div>
+
+                    <!-- Path (Empty) -->
+                    <div class="gradient-path-container">
+                        <div class="gradient-track empty"></div>
+                        <!-- Empty Steps (8 Steps) -->
+                        <div class="gradient-step empty" style="left: 11%;" title="Step 1"></div>
+                        <div class="gradient-step empty" style="left: 22%;" title="Step 2"></div>
+                        <div class="gradient-step empty" style="left: 33%;" title="Step 3"></div>
+                        <div class="gradient-step empty" style="left: 44%;" title="Step 4"></div>
+                        <div class="gradient-step empty" style="left: 55%;" title="Step 5"></div>
+                        <div class="gradient-step empty" style="left: 66%;" title="Step 6"></div>
+                        <div class="gradient-step empty" style="left: 77%;" title="Step 7"></div>
+                        <div class="gradient-step empty" style="left: 88%;" title="Step 8"></div>
+                    </div>
+
+                    <!-- End Node (Empty) -->
+                    <div class="gradient-node main end empty">
+                        <div class="node-circle" title="Click to select end color"></div>
+                        <span class="node-label">Select Color</span>
+                    </div>
+                </div>
+
+                <div style="width: 100%; overflow: hidden; display: flex; flex-direction: column; position: relative;">
+                    <div class="instruction-label" style="margin-bottom: 10px;">Gradient Results</div>
+
+                    <!-- Empty State Message -->
+                    <div class="empty-state-message">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M 4 8 C 4 6 5 5 7 5 L 17 5 C 19 5 20 6 20 8 L 20 16 C 20 18 19 19 17 19 L 7 19 C 5 19 4 18 4 16 Z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                            <circle cx="8" cy="10" r="2" opacity="0.5" />
+                            <circle cx="12" cy="10" r="2" opacity="0.5" />
+                            <circle cx="16" cy="10" r="2" opacity="0.5" />
+                            <line x1="6" y1="15" x2="10" y2="15" stroke="currentColor" stroke-width="2" />
+                            <path d="M 10 15 L 12 13 L 12 17 Z" opacity="0.7" />
+                        </svg>
+                        <div class="message-title">Set a start and end color to generate gradient steps</div>
+                        <div class="message-subtitle">Click the + buttons above to select your gradient colors</div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+
+        <!-- Dye Selection Drawer -->
+        <aside class="dye-drawer glass">
+            <div class="drawer-header">
+                <span class="drawer-title">Color Palette</span>
+                <button class="nav-btn"><svg class="icon" viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                    </svg></button>
+            </div>
+            <div class="drawer-content">
+                <div class="section-label"><span>Favorites</span></div>
+                <div class="favorites-section">
+                    <div class="swatch-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 0;">
+                        <div class="swatch" style="background-color: #2b3352;" title="Dragoon Blue"></div>
+                        <div class="swatch" style="background-color: #f7f7f7;" title="Pure White"></div>
+                        <div class="swatch" style="background-color: #8c2530;" title="Rolanberry Red"></div>
+                    </div>
+                </div>
+                <div class="filter-bar">
+                    <div class="filter-chip active">All</div>
+                    <div class="filter-chip">Metallic</div>
+                    <div class="filter-chip">Pastel</div>
+                    <div class="filter-chip">Dark</div>
+                </div>
+                <div class="section-label">Natural Tones</div>
+                <div class="swatch-grid">
+                    <div class="swatch" style="background-color: #f6efe3;"></div>
+                    <div class="swatch" style="background-color: #e5dac1;"></div>
+                    <div class="swatch" style="background-color: #bfaea2;"></div>
+                    <div class="swatch" style="background-color: #928678;"></div>
+                    <div class="swatch" style="background-color: #5c544d;"></div>
+                    <div class="swatch" style="background-color: #d8c29e;"></div>
+                    <div class="swatch" style="background-color: #ac8e6b;"></div>
+                    <div class="swatch selected" style="background-color: #6d5440;"></div>
+                    <div class="swatch" style="background-color: #4b392b;"></div>
+                    <div class="swatch" style="background-color: #2b2016;"></div>
+                </div>
+                <div class="section-label">Red Tones</div>
+                <div class="swatch-grid">
+                    <div class="swatch" style="background-color: #e4bbca;"></div>
+                    <div class="swatch" style="background-color: #b33941;"></div>
+                    <div class="swatch selected" style="background-color: #8c2530;"></div>
+                    <div class="swatch" style="background-color: #631016;"></div>
+                    <div class="swatch" style="background-color: #3b0507;"></div>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <script>
+        // Toggle switches
+        document.querySelectorAll('.toggle-switch').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
+    </script>
+
+</body>
+</html>

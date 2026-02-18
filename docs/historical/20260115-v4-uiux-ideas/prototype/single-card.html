@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Result Card - XIV Dye Tools V4</title>
+    <style>
+        :root {
+            /* Theme Variables - Default (Dark Premium) */
+            --bg-app: #121212;
+            --bg-panel: #1e1e1e;
+            --bg-header: #0a0a0a;
+            --bg-glass: rgba(30, 30, 30, 0.7);
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --text-header: #e0e0e0;
+            --text-header-muted: #a0a0a0;
+            --accent-primary: #d4af37;
+            --accent-hover: #f0c040;
+            --accent-blue: #4a90e2;
+            --border-subtle: rgba(255, 255, 255, 0.1);
+            --shadow-soft: 0 4px 6px rgba(0, 0, 0, 0.3);
+            --shadow-glow: 0 0 10px rgba(212, 175, 55, 0.2);
+            --bg-gradient-start: #252525;
+            --bg-gradient-end: #121212;
+            --card-gradient-end: #151515;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at center, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .cards-container {
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .card-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 6px 12px;
+            border-radius: 4px;
+        }
+
+        /* Harmony Card Styles */
+        .harmony-card {
+            min-width: 320px;
+            background: var(--bg-panel);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-subtle);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .harmony-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            border-color: var(--text-secondary);
+        }
+
+        .card-header {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            text-align: center;
+        }
+
+        .dye-name {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: var(--text-primary);
+        }
+
+        .card-preview {
+            height: 100px;
+            width: 100%;
+            display: flex;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .preview-half {
+            flex: 1;
+            height: 100%;
+            position: relative;
+        }
+
+        .preview-label {
+            position: absolute;
+            bottom: 4px;
+            width: 100%;
+            text-align: center;
+            font-size: 9px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+        }
+
+        .card-details {
+            padding: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            background: linear-gradient(to bottom, var(--bg-panel), var(--card-gradient-end));
+        }
+
+        .detail-col {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .col-header {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 2px;
+        }
+
+        .data-row {
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .data-label {
+            color: var(--text-secondary);
+        }
+
+        .data-value {
+            color: var(--text-primary);
+            font-family: monospace;
+        }
+
+        .price-large {
+            color: var(--accent-primary);
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .card-actions {
+            padding: 8px;
+            display: flex;
+            justify-content: center;
+            border-top: 1px solid var(--border-subtle);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .action-row {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            align-items: center;
+        }
+
+        .primary-action-btn {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            color: var(--bg-app);
+            background: var(--accent-primary);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .primary-action-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Context Menu */
+        .context-menu-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .context-menu-btn {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .context-menu-btn:hover,
+        .context-menu-btn.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border-color: var(--text-secondary);
+        }
+
+        .context-menu {
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            width: 200px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            padding: 6px 0;
+            z-index: 100;
+            margin-bottom: 8px;
+            display: none;
+        }
+
+        .context-menu.visible {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.1s;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .menu-icon {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+            opacity: 0.7;
+        }
+
+        .menu-item:hover .menu-icon {
+            opacity: 1;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 class="page-title">Unified Result Card</h1>
+    <p class="page-subtitle">XIV Dye Tools V4 Component Showcase</p>
+
+    <div class="cards-container">
+        <!-- Card 1: Context Menu Hidden -->
+        <div class="card-wrapper">
+            <span class="card-label">Menu Collapsed</span>
+            <div class="harmony-card">
+                <div class="card-header">
+                    <span class="dye-name">Opo-opo Brown</span>
+                </div>
+                <div class="card-preview">
+                    <div class="preview-half" style="background-color: #5c4d3c;">
+                        <span class="preview-label">Source</span>
+                    </div>
+                    <div class="preview-half" style="background-color: #6d5440;">
+                        <span class="preview-label">Match</span>
+                    </div>
+                </div>
+                <div class="card-details">
+                    <div class="detail-col">
+                        <div class="col-header">Technical</div>
+                        <div class="data-row">
+                            <span class="data-label">ΔE</span>
+                            <span class="data-value" style="color:#4caf50;">1.2</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">HEX</span>
+                            <span class="data-value">#6D5440</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">RGB</span>
+                            <span class="data-value">109,84,64</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">HSV</span>
+                            <span class="data-value">30,30,43</span>
+                        </div>
+                    </div>
+                    <div class="detail-col">
+                        <div class="col-header">Acquisition</div>
+                        <div class="data-row">
+                            <span class="data-label">Source</span>
+                            <span class="data-value">Vendor</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Cost</span>
+                            <span class="data-value">40 G</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Market</span>
+                            <span class="data-value">Balmung</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="price-large">45 G</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <div class="action-row">
+                        <button class="primary-action-btn">Select Dye</button>
+                        <div class="context-menu-container">
+                            <button class="context-menu-btn">
+                                <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;">
+                                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Context Menu Expanded -->
+        <div class="card-wrapper">
+            <span class="card-label">Menu Expanded</span>
+            <div class="harmony-card">
+                <div class="card-header">
+                    <span class="dye-name">Ruby Red</span>
+                </div>
+                <div class="card-preview">
+                    <div class="preview-half" style="background-color: #a83240;">
+                        <span class="preview-label">Source</span>
+                    </div>
+                    <div class="preview-half" style="background-color: #ab3344;">
+                        <span class="preview-label">Match</span>
+                    </div>
+                </div>
+                <div class="card-details">
+                    <div class="detail-col">
+                        <div class="col-header">Technical</div>
+                        <div class="data-row">
+                            <span class="data-label">ΔE</span>
+                            <span class="data-value" style="color:#4caf50;">0.8</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">HEX</span>
+                            <span class="data-value">#AB3344</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">RGB</span>
+                            <span class="data-value">171,51,68</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">HSV</span>
+                            <span class="data-value">352,70,67</span>
+                        </div>
+                    </div>
+                    <div class="detail-col">
+                        <div class="col-header">Acquisition</div>
+                        <div class="data-row">
+                            <span class="data-label">Source</span>
+                            <span class="data-value">Crafted</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Cost</span>
+                            <span class="data-value">---</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Market</span>
+                            <span class="data-value">Balmung</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="price-large">1,250 G</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <div class="action-row">
+                        <button class="primary-action-btn">Select Dye</button>
+                        <div class="context-menu-container">
+                            <button class="context-menu-btn active">
+                                <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;">
+                                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                                </svg>
+                            </button>
+                            <!-- Visible Menu -->
+                            <div class="context-menu visible">
+                                <div class="menu-item">
+                                    <svg class="menu-icon" viewBox="0 0 24 24">
+                                        <path d="M10 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h5v-2h2v2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-5v2h-2V3z" />
+                                    </svg>
+                                    Add to Comparison
+                                </div>
+                                <div class="menu-item">
+                                    <svg class="menu-icon" viewBox="0 0 24 24">
+                                        <path d="M12 2L2 22h20L12 2zm0 3l8 15H4l8-15z" />
+                                    </svg>
+                                    Add to Mixer
+                                </div>
+                                <div class="menu-item">
+                                    <svg class="menu-icon" viewBox="0 0 24 24">
+                                        <path d="M12 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9 7h-6v13h-2v-6h-2v6H9V9H3V7h18v2z" />
+                                    </svg>
+                                    Add to Access. Check
+                                </div>
+                                <div class="menu-item">
+                                    <svg class="menu-icon" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10" />
+                                    </svg>
+                                    See Color Harmonies
+                                </div>
+                                <div class="menu-item">
+                                    <svg class="menu-icon" viewBox="0 0 24 24">
+                                        <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z" />
+                                    </svg>
+                                    Budget Suggestions
+                                </div>
+                                <div class="menu-item">
+                                    <svg class="menu-icon" viewBox="0 0 24 24">
+                                        <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                                    </svg>
+                                    Copy Hex Code
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

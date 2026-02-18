@@ -1,0 +1,1728 @@
+<!-- ⚠️ DEPRECATED: This file is no longer maintained. See v2.0.0 in src/ folder. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0">
+        <!-- DEVELOPMENT CSP: Uncomment for localhost testing (allows inline scripts) -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self' localhost:*; script-src 'self' 'unsafe-inline' localhost:*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com localhost:*; font-src 'self'; img-src 'self' data: blob: localhost:*; connect-src 'self' https://universalis.app localhost:*; base-uri 'self'; form-action 'none';"> -->
+    <!-- PRODUCTION CSP: Used for deployed version (strict, blocks inline scripts) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://universalis.app; base-uri 'self'; form-action 'none';">
+    <!-- Mobile Web App Configuration -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>XIV Accessibility Checker - Simulate Colorblindness | XIV Dye Tools</title>
+    <meta name="description" content="Check how FFXIV dyes appear to players with colorblindness. Simulate deuteranopia, protanopia, tritanopia, and achromatopsia. Compare dye distinguishability and get accessibility scores for glamour outfits.">
+    <meta name="keywords" content="FFXIV colorblindness simulator, dye accessibility, color contrast, colorblind simulation, deuteranopia, protanopia, tritanopia, accessibility checker, XIV dyes, FF14">
+    <!-- Open Graph / Discord embeds -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://xivdyetools.projectgalatine.com/coloraccessibility_stable.html">
+    <meta property="og:title" content="XIV Accessibility Checker">
+    <meta property="og:description" content="Simulate colorblindness and check how your dye combinations appear to all players. Features deuteranopia, protanopia, tritanopia, and monochrome simulations.">
+    <meta property="og:image" content="https://xivdyetools.projectgalatine.com/embed_icon.png">
+    <!-- Twitter / X embeds -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://xivdyetools.projectgalatine.com/coloraccessibility_stable.html">
+    <meta property="twitter:title" content="XIV Accessibility Checker">
+    <meta property="twitter:description" content="Simulate colorblindness and check how your dye combinations appear to all players.">
+    <meta property="twitter:image" content="https://xivdyetools.projectgalatine.com/embed_image.png">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="embed_icon.png">
+    <!-- PWA Metadata -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/icons/icon-512x512.png">
+    <link href="assets/css/tailwind.css" rel="stylesheet">
+    <!-- ===== CRITICAL FONTS (Body text - minimal blocking) ===== -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style">
+
+    <!-- ===== DEFERRED DECORATIVE FONTS (Load after page render) ===== -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cinzel+Decorative:wght@400;700&family=Lexend:wght@400;500;600&family=Lexend+Giga:wght@400;500;600&family=Habibi&display=swap" as="style">
+
+    <!-- ===== FALLBACK for no-script environments ===== -->
+    <noscript>
+    </noscript>
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="assets/css/shared-styles.css">
+    <style>.dye-swatch{width:100%;height:80px;border-radius:0.5rem;border:2px solid rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:center;font-weight:600;color:#ffffff;text-shadow:0 0 3px rgba(0,0,0,0.8);}.experimental-badge{display:inline-block;background-color:#fbbf24;color:#78350f;padding:0.25rem 0.75rem;border-radius:0.5rem;font-size:0.75rem;font-weight:600;margin-left:0.5rem;letter-spacing:0.05em;}.palette-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:1rem;margin-bottom:2rem;}.palette-item{text-align:center;}.palette-label{font-size:0.75rem;font-weight:600;text-transform:uppercase;color:var(--theme-text-muted);margin-top:0.5rem;}.palette-label{color:var(--theme-text-muted);}.vision-comparison{display:grid;gap:1.5rem;margin-bottom:2rem;}.vision-type{border-radius:0.75rem;overflow:hidden;border:1px solid var(--theme-border);background-color:var(--theme-card-bg);}.vision-header{padding:1rem;background-color:var(--theme-bg-secondary);border-bottom:1px solid var(--theme-border);}.vision-title{font-weight:600;font-size:0.95rem;color:var(--theme-text);}.vision-content{padding:1rem;}.vision-palette{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:0.75rem;}.vision-swatch{height:60px;border-radius:0.375rem;border:1px solid var(--theme-border);}.score-card{border-radius:0.75rem;padding:1.5rem;background-color:var(--theme-bg-secondary);border:1px solid var(--theme-border);margin-bottom:1.5rem;}.score-value{font-size:2.5rem;font-weight:700;color:var(--theme-primary);}.score-label{font-size:0.875rem;color:var(--theme-text-muted);font-weight:500;margin-top:0.5rem;}.warning-card{border-radius:0.75rem;padding:1rem;background-color:#fef3c7;border:1px solid #fcd34d;margin-bottom:0.75rem;}.warning-title{font-weight:600;color:#92400e;margin-bottom:0.5rem;}.contrast-table{width:100%;border-collapse:collapse;font-size:0.85rem;}.contrast-table th,.contrast-table td{padding:0.75rem;border:1px solid #e5e7eb;text-align:center;}.contrast-table th{background-color:var(--theme-bg-secondary);font-weight:600;color:var(--theme-text);}.contrast-value{font-weight:600;}.contrast-low{background-color:#fecaca;color:#991b1b;}.contrast-medium{background-color:#fde047;color:#713f12;}.contrast-high{background-color:#bbf7d0;color:#065f46;}button.clear-button{background-color:var(--theme-text-muted);color:var(--theme-text);transition:background-color 0.2s,color 0.2s;}button.clear-button:hover{background-color:#9ca3af;}#warnings-header{background-color:#fef3c7;border-left-color:#f59e0b;}#warnings-header h2{color:#d97706;}#warnings-header p{color:#d97706;}#warnings-toggle{color:#d97706;}#suggestions-container>div{background-color:var(--theme-bg);border-color:var(--theme-text-muted);}#suggestions-container h3{color:var(--theme-text);}#suggestions-container p.font-medium{color:var(--theme-text);}#suggestions-container p.text-xs{color:var(--theme-text-muted);}footer a{color:#4f46e5;}footer a:hover{color:#4338ca;}@media (max-width:639px){body{font-size:13px;}.container{padding:0.5rem 0.5rem !important;}h1{font-size:1.25rem !important;}h1 span{font-size:0.625rem !important;padding:0.25rem 0.5rem !important;}h2{font-size:1rem !important;}h3{font-size:0.875rem !important;}header p{font-size:0.75rem;margin-top:0.5rem;}#nav-container{display:block;margin-left:0 !important;width:100%;margin-top:0.5rem;}.grid.lg\\:grid-cols-3{grid-template-columns:1fr !important;gap:1rem !important;}.lg\\:col-span-1{position:relative;}.sticky{position:relative !important;top:auto !important;}.bg-white.rounded-lg{padding:1rem !important;}#dye-slots-container > * + * {margin-top:0.5rem;}#dye-slots-container>div{margin-bottom:0.5rem;}select,input[type="text"],input[type="search"]{padding:0.5rem 0.5rem !important;font-size:13px;min-height:40px;}input[type="range"]{height:24px;}.toggle-bg{width:36px !important;height:22px !important;}.toggle-dot{width:16px !important;height:16px !important;}button{padding:0.5rem 0.75rem !important;font-size:0.875rem;min-height:40px;}.dye-swatch{height:60px;font-size:0.75rem;}.palette-grid{grid-template-columns:repeat(auto-fit,minmax(70px,1fr)) !important;gap:0.75rem !important;}.palette-item{padding:0.5rem 0;}.palette-label{font-size:0.625rem;margin-top:0.25rem;}.vision-comparison{gap:0.75rem !important;}.vision-header{padding:0.75rem;}.vision-title{font-size:0.85rem;}.vision-content{padding:0.75rem;}.vision-palette{grid-template-columns:repeat(auto-fit,minmax(60px,1fr)) !important;gap:0.5rem !important;}.vision-swatch{height:50px;}.score-card{padding:1rem;margin-bottom:1rem;}.score-value{font-size:2rem;}.warning-card{padding:0.75rem;margin-bottom:0.5rem;}.warning-title{font-size:0.85rem;}.contrast-table{font-size:0.75rem;}.contrast-table th,.contrast-table td{padding:0.5rem;}.bg-blue-50,.bg-amber-50{padding:1rem !important;}.bg-blue-50 p,.bg-amber-50 p{font-size:0.75rem;}main{margin-top:0;}.flex.gap-3{flex-direction:column;gap:0.5rem !important;}.space-y-2>*+*{margin-top:0.5rem;}.space-y-4>*+*{margin-top:0.75rem;}.space-y-6>*+*{margin-top:1rem;}}@media (min-width:640px) and (max-width:767px){.container{padding:0.75rem !important;}h1{font-size:1.5rem !important;}h1 span{font-size:0.75rem !important;}h2{font-size:1.125rem !important;}.grid.lg\\:grid-cols-3{grid-template-columns:1fr !important;}.bg-white.rounded-lg{padding:1.25rem !important;}.palette-grid{grid-template-columns:repeat(2,1fr) !important;}.dye-swatch{height:70px;}.vision-palette{grid-template-columns:repeat(3,1fr) !important;}}@media (min-width:768px) and (max-width:1023px){.container{padding:1rem !important;}h1{font-size:2rem !important;}h2{font-size:1.25rem !important;}.grid.lg\\:grid-cols-3{grid-template-columns:300px 1fr !important;gap:1.5rem !important;}.lg\\:col-span-1{position:sticky;top:1rem;}.palette-grid{grid-template-columns:repeat(3,1fr) !important;}.dye-swatch{height:80px;}.vision-palette{grid-template-columns:repeat(4,1fr) !important;}}@media (min-width:1024px){.grid.lg\\:grid-cols-3{grid-template-columns:repeat(3,1fr) !important;}.lg\\:col-span-1{position:sticky;top:2rem;}.lg\\:col-span-2{grid-column:span 2;}.dye-swatch{height:80px;}.palette-grid{grid-template-columns:repeat(4,1fr) !important;}.vision-palette{grid-template-columns:repeat(auto-fit,minmax(80px,1fr)) !important;}}@media (min-width:1920px){body{font-size:16px;}h1{font-size:3rem;}h2{font-size:1.5rem;}h3{font-size:1.25rem;}.container{max-width:1600px;padding-left:3rem;padding-right:3rem;}main{max-width:1800px;}button{padding:0.65rem 1.25rem;font-size:1rem;}select{padding:0.75rem 1rem;font-size:1rem;}label{font-size:1rem;}}@media (max-width:767px) and (orientation:portrait){body{overflow-x:hidden;}}@media (max-width:767px) and (orientation:landscape){h1{font-size:1.125rem !important;}header{margin-bottom:0.5rem;}.container{max-height:100vh;overflow-y:auto;}.grid.lg\\:grid-cols-3{gap:0.5rem !important;}}@media (hover:none) and (max-width:767px){button{transition:transform 0.1s,opacity 0.1s;}button:active{transform:scale(0.95);opacity:0.8;}input[type="range"]:active{transform:scale(1.05);}}</style>
+    <!-- Shared Components Script - Load early so DOMContentLoaded can initialize theme and components -->
+    <script src="assets/js/shared-components.js"></script>
+    <!-- Override initComponents for experimental navigation -->
+    <script>function initComponents(){loadComponent('components/nav-experimental.html','nav-container');loadComponent('components/footer.html','footer-container')}</script>
+</head>
+<body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Help & Guide</h2>
+                <button class="modal-close" onclick="closeHelpModal()">×</button>
+            </div>
+
+            <!-- Quick Start Section -->
+            <div class="help-section">
+                <h3>Quick Start</h3>
+                <p>Simulate how your glamour dyes appear to players with different types of colorblindness. Select up to 8 dyes and choose a vision type.</p>
+            </div>
+
+            <!-- Mobile Tip -->
+            <div class="mobile-tip desktop-hidden">
+                <span class="mobile-tip-icon">👁️</span>
+                <p><strong>Mobile Tip:</strong> Swipe between vision types to quickly compare how your outfit appears!</p>
+            </div>
+
+            <!-- Key Features -->
+            <div class="help-section">
+                <h3>Key Features</h3>
+                <ul>
+                    <li>Simulate 4 vision types: Deuteranopia, Protanopia, Tritanopia, and Achromatopsia</li>
+                    <li>Select up to 8 dyes for complete outfit coverage</li>
+                    <li>Accessibility scoring shows distinguishability</li>
+                    <li>Dual dye support for each armor piece</li>
+                    <li>Alternative dye suggestions for better contrast</li>
+                </ul>
+            </div>
+
+            <!-- Mobile Tip -->
+            <div class="mobile-tip desktop-hidden">
+                <span class="mobile-tip-icon">🎨</span>
+                <p><strong>Pro Tip:</strong> Higher accessibility scores (80+) mean better distinguishability for colorblind players</p>
+            </div>
+
+            <!-- Tips & Tricks -->
+            <div class="help-section">
+                <h3>Tips & Tricks</h3>
+                <ul>
+                    <li>Test critical color combinations first (main outfit pieces)</li>
+                    <li>Aim for accessibility scores above 70 for good visibility</li>
+                    <li>Use suggested alternatives if your colors are too similar</li>
+                    <li>Enable dual dyes to test complex glamour patterns</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 md:p-8 flex-grow">
+        <header class="text-center mb-8 2xl:mb-12">
+            <div class="flex justify-center items-center gap-3 mb-2 flex-wrap">
+                <button id="help-toggle" class="help-button" title="Help & Guide" onclick="openHelpModal()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </button>
+                <h1 class="tool-title text-3xl md:text-4xl 2xl:text-5xl font-bold text-gray-900">XIV Accessibility Checker <span class="text-2xl md:text-3xl 2xl:text-4xl text-gray-500">v<span class="number">1.6.1</span></span></h1>
+            </div>
+            <p class="text-gray-600 mt-2 2xl:text-lg">
+                Plan accessible glamour outfits by simulating how your dye combinations appear to colorblind players.
+                <div id="nav-container" class="component-loading inline-block ml-4"></div>
+            </p>
+        </header>
+
+
+        <main class="max-w-7xl 2xl:max-w-screen-2xl mx-auto">
+
+            <!-- Instructions -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 2xl:p-6 mb-6 2xl:mb-8">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-sm 2xl:text-base text-blue-800">
+                        <strong>How to use:</strong> Select up to 8 dyes representing your outfit (one per armor slot). The tool will simulate how colorblind players see your colors and highlight potential accessibility issues.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Beta Notice -->
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 2xl:p-6 mb-6 2xl:mb-8">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-sm 2xl:text-base text-amber-800">
+                        <strong>⚠ BETA Notice:</strong> This tool uses scientific colorblindness simulation algorithms (Brettel 1997), but has not been validated with actual colorblind players. We recommend testing with real users for critical designs. If you have colorblindness experience, please provide feedback to help improve this tool!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Two-column layout: Left (controls) and Right (results) -->
+            <div class="grid lg:grid-cols-3 gap-8 mb-8">
+
+                <!-- LEFT PANEL: Controls -->
+                <div class="lg:col-span-1">
+                    <div class="sticky top-8 space-y-6">
+
+                        <!-- Dye Selection Section -->
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-lg font-semibold text-gray-900">Select Outfit Dyes</h2>
+                                <label class="flex items-center cursor-pointer gap-2">
+                                    <span class="text-xs font-medium text-gray-600">Dual Dyes</span>
+                                    <div class="relative">
+                                        <input id="enable-secondary-dyes" type="checkbox" class="sr-only">
+                                        <div class="toggle-bg w-10 h-6 bg-gray-300 rounded-full shadow-inner"></div>
+                                        <div class="toggle-dot absolute w-4 h-4 bg-white rounded-full shadow inset-y-1 left-1 transition"></div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div id="dye-slots-container" class="space-y-3">
+                                <!-- Slots will be populated by JavaScript -->
+                            </div>
+
+                            <button onclick="clearAllDyes()" class="w-full mt-4 px-3 py-2 rounded-lg transition font-medium clear-button">
+                                Clear All
+                            </button>
+                        </div>
+
+                        <!-- Vision Simulation Controls -->
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h2 class="text-lg font-semibold text-gray-900 mb-4">Vision Type Simulation</h2>
+
+                            <div class="space-y-4">
+                                <!-- Deuteranopia -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Deuteranopia (Red-Green)
+                                    </label>
+                                    <div class="flex items-center gap-3">
+                                        <input id="deuteranopia-slider" type="range" min="0" max="100" value="100" class="flex-grow">
+                                        <span id="deuteranopia-value" class="text-sm font-semibold text-gray-600 w-12 text-right"><span class="number">100</span>%</span>
+                                    </div>
+                                </div>
+
+                                <!-- Protanopia -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Protanopia (Red-Green)
+                                    </label>
+                                    <div class="flex items-center gap-3">
+                                        <input id="protanopia-slider" type="range" min="0" max="100" value="100" class="flex-grow">
+                                        <span id="protanopia-value" class="text-sm font-semibold text-gray-600 w-12 text-right"><span class="number">100</span>%</span>
+                                    </div>
+                                </div>
+
+                                <!-- Tritanopia -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Tritanopia (Blue-Yellow)
+                                    </label>
+                                    <div class="flex items-center gap-3">
+                                        <input id="tritanopia-slider" type="range" min="0" max="100" value="100" class="flex-grow">
+                                        <span id="tritanopia-value" class="text-sm font-semibold text-gray-600 w-12 text-right"><span class="number">100</span>%</span>
+                                    </div>
+                                </div>
+
+                                <!-- Analysis Options -->
+                                <div class="pt-4 border-t border-gray-200 space-y-2">
+                                    <label class="flex items-center cursor-pointer">
+                                        <input id="show-warnings" type="checkbox" checked class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                        <span class="ml-2 text-sm text-gray-700">Show warnings</span>
+                                    </label>
+                                    <label class="flex items-center cursor-pointer">
+                                        <input id="show-contrast" type="checkbox" checked class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                        <span class="ml-2 text-sm text-gray-700">Show contrast ratios</span>
+                                    </label>
+                                    <label class="flex items-center cursor-pointer">
+                                        <input id="show-suggestions" type="checkbox" checked class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                        <span class="ml-2 text-sm text-gray-700">Show suggestions</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT PANEL: Results -->
+                <div class="lg:col-span-2 space-y-8">
+
+                    <!-- Accessibility Score -->
+                    <div id="score-section" class="hidden">
+                        <div class="score-card">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <div class="score-value" id="score-number">0</div>
+                                    <div class="score-label">Overall Accessibility Score</div>
+                                </div>
+                                <div id="score-rating" class="text-sm font-semibold text-right"></div>
+                            </div>
+                            <div class="mt-4 text-sm text-gray-700 space-y-1" id="score-details">
+                                <!-- Details populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Original Palette -->
+                    <div id="palette-section" class="hidden">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Original Palette</h2>
+                        <div class="palette-grid" id="original-palette-grid">
+                            <!-- Swatches populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Vision Simulations -->
+                    <div id="simulations-section" class="hidden">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold text-gray-900">How Colorblind Players See Your Colors</h2>
+                            <span class="text-xs text-gray-500 hidden md:hidden sm:inline-block">
+                                <svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18"></path>
+                                </svg>
+                                Swipe to change vision type
+                                <svg class="inline-block w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="vision-comparison" id="vision-comparison">
+                            <!-- Vision simulations populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Warnings -->
+                    <div id="warnings-section" class="hidden">
+                        <div id="warnings-header" class="cursor-pointer p-4 bg-amber-50 border-l-4 border-amber-500 rounded-lg transition mb-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h2 class="text-lg font-semibold">⚠ Accessibility Issues</h2>
+                                    <p class="text-sm mt-1" id="warnings-summary">You have 0 issues</p>
+                                </div>
+                                <span id="warnings-toggle" class="text-xl">▶</span>
+                            </div>
+                        </div>
+                        <div id="warnings-container" class="space-y-3">
+                            <!-- Warnings populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Contrast Ratios -->
+                    <div id="contrast-section" class="hidden">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Color Distance Matrix</h2>
+                        <div id="contrast-container" class="overflow-x-auto">
+                            <!-- Contrast table populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Suggestions -->
+                    <div id="suggestions-section" class="hidden">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Dye Suggestions</h2>
+                        <div id="suggestions-container">
+                            <!-- Suggestions populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <div id="footer-container" class="component-loading"></div>
+
+    <script>
+        // Global state
+        let ffxivDyes = [];
+        let secondaryDyesEnabled = false;
+        let selectedDyes = [
+            { primary: null, secondary: null },
+            { primary: null, secondary: null },
+            { primary: null, secondary: null },
+            { primary: null, secondary: null },
+            { primary: null, secondary: null },
+            { primary: null, secondary: null }
+        ];
+        const dyeSlots = ['Head', 'Body', 'Hands', 'Legs', 'Feet', 'Weapon'];
+
+        // Vision type state management for swipe gestures
+        const visionTypes = ['normal', 'deuteranopia', 'protanopia', 'tritanopia', 'achromatopsia'];
+        let currentVisionIndex = 1; // Start at deuteranopia (default visible state)
+
+        // Colorblindness transformation matrices (Brettel 1997)
+        const colorblindMatrices = {
+            normal: [
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1]
+            ],
+            deuteranopia: [
+                [0.625, 0.375, 0],
+                [0.7, 0.3, 0],
+                [0, 0.3, 0.7]
+            ],
+            protanopia: [
+                [0.567, 0.433, 0],
+                [0.558, 0.442, 0],
+                [0, 0.242, 0.758]
+            ],
+            tritanopia: [
+                [0.95, 0.05, 0],
+                [0, 0.433, 0.567],
+                [0, 0.475, 0.525]
+            ]
+        };
+
+        /**
+         * Safe localStorage getter with error handling
+         */
+        // Storage and utility functions now provided by shared-components.js:
+        // - safeGetStorage(key, defaultValue)
+        // - safeSetStorage(key, value)
+        // - safeFetchJSON(url, fallbackData)
+        // - toggleDropdown(button)
+
+        // Color conversion functions now provided by shared-components.js:
+        // - rgbToHsv(r, g, b) - Convert RGB to HSV
+        // - hexToRgb(hex) - Convert hex to RGB
+        // - rgbToHex(r, g, b) - Convert RGB to hex
+        // - hsvToRgb(h, s, v) - Convert HSV to RGB
+        // - colorDistance(rgb1, rgb2) - Calculate color distance
+        // - getColorDistance(hex1, hex2) - Calculate color distance from hex
+
+        /**
+         * Apply colorblindness simulation using Brettel 1997 algorithm
+         *
+         * Simulates how people with specific types of color vision deficiency perceive colors
+         * by applying transformation matrices based on photoreceptor sensitivity.
+         *
+         * @param {string} hex - Hex color string to transform (e.g., "#FF0000")
+         * @param {string} visionType - Type of colorblindness to simulate:
+         *   - "deuteranopia" - Red-green weak (affects ~1% of population)
+         *   - "protanopia" - Red-green absent (affects ~1% of population)
+         *   - "tritanopia" - Blue-yellow deficiency (affects ~0.001% of population)
+         * @param {number} intensity - Simulation intensity (0-100):
+         *   - 0: Original color (no effect)
+         *   - 100: Full colorblindness simulation
+         *   - Values in between: Gradual transition for progressive effect visualization
+         * @returns {string} Hex color string representing how the color appears with the specified vision deficiency
+         *
+         * @see Based on Brettel, Viénot, and Mollon (1997) research on color vision deficiency
+         * @see https://vision.psyche.mit.edu/color_blindness.html
+         *
+         * @example
+         * // See how red appears to someone with deuteranopia at 50% intensity
+         * const simulated = applyColorblindness("#FF0000", "deuteranopia", 50);
+         */
+
+        // ===== PERFORMANCE FIX 2: Memoize Color Transformations =====
+        // Cache for expensive color transformation calculations
+        const transformationCache = new Map();
+
+        /**
+         * Generate a cache key for colorblindness transformation results
+         * @param {string} hex - Hex color code (e.g., "#FF0000")
+         * @param {string} visionType - Type of colorblindness (deuteranopia, protanopia, tritanopia, achromatopsia)
+         * @param {number} intensity - Intensity level (0-100)
+         * @returns {string} Unique cache key combining all parameters
+         * @private
+         */
+        function getCacheKey(hex, visionType, intensity) {
+            return `${hex}-${visionType}-${intensity}`;
+        }
+
+        /**
+         * Clear all cached colorblindness transformations
+         * Used when settings change to ensure fresh calculations
+         * @private
+         */
+        function clearTransformationCache() {
+            transformationCache.clear();
+        }
+
+        function applyColorblindness(hex, visionType, intensity) {
+            // Check cache first
+            const cacheKey = getCacheKey(hex, visionType, intensity);
+            if (transformationCache.has(cacheKey)) {
+                return transformationCache.get(cacheKey);
+            }
+
+            const rgb = hexToRgb(hex);
+            const matrix = colorblindMatrices[visionType];
+
+            // Normalize RGB values to 0-1 range for transformation
+            let r = rgb.r / 255;
+            let g = rgb.g / 255;
+            let b = rgb.b / 255;
+
+            // Apply Brettel transformation matrix to simulate photoreceptor response
+            const newR = matrix[0][0] * r + matrix[0][1] * g + matrix[0][2] * b;
+            const newG = matrix[1][0] * r + matrix[1][1] * g + matrix[1][2] * b;
+            const newB = matrix[2][0] * r + matrix[2][1] * g + matrix[2][2] * b;
+
+            // Interpolate between original color and simulated color based on intensity
+            // Formula: result = (1 - intensity) * original + intensity * simulated
+            const intensityFraction = intensity / 100;
+            const finalR = r * (1 - intensityFraction) + newR * intensityFraction;
+            const finalG = g * (1 - intensityFraction) + newG * intensityFraction;
+            const finalB = b * (1 - intensityFraction) + newB * intensityFraction;
+
+            // Convert from 0-1 range back to 0-255 range and return as hex
+            const result = rgbToHex(
+                Math.round(finalR * 255),
+                Math.round(finalG * 255),
+                Math.round(finalB * 255)
+            );
+
+            // Store in cache before returning
+            transformationCache.set(cacheKey, result);
+            return result;
+        }
+
+        /**
+         * Apply achromatopsia (complete color blindness) transformation
+         *
+         * Simulates complete color blindness by converting colors to grayscale based
+         * on human luminance perception using standard coefficients.
+         *
+         * @param {string} hex - Hex color string to transform
+         * @param {number} intensity - Simulation intensity (0-100):
+         *   - 0: Original color
+         *   - 100: Complete grayscale (achromatopsia)
+         * @returns {string} Hex color string representing the simulated grayscale color
+         *
+         * @example
+         * // Convert blue to grayscale at 75% intensity
+         * const gray = applyAchromatopsia("#0000FF", 75);
+         */
+        function applyAchromatopsia(hex, intensity) {
+            // Check cache first
+            const cacheKey = getCacheKey(hex, 'achromatopsia', intensity);
+            if (transformationCache.has(cacheKey)) {
+                return transformationCache.get(cacheKey);
+            }
+
+            const rgb = hexToRgb(hex);
+
+            // Calculate luminance using standard weighting (ITU-R BT.601)
+            // These weights reflect human eye sensitivity: most sensitive to green, least to blue
+            const luminance = 0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b;
+
+            // Interpolate between original color and grayscale based on intensity
+            const intensityFraction = intensity / 100;
+            const finalR = rgb.r * (1 - intensityFraction) + luminance * intensityFraction;
+            const finalG = rgb.g * (1 - intensityFraction) + luminance * intensityFraction;
+            const finalB = rgb.b * (1 - intensityFraction) + luminance * intensityFraction;
+
+            const result = rgbToHex(
+                Math.round(finalR),
+                Math.round(finalG),
+                Math.round(finalB)
+            );
+
+            // Store in cache before returning
+            transformationCache.set(cacheKey, result);
+            return result;
+        }
+
+        /**
+         * Calculate relative luminance of a color according to WCAG standards
+         * Used for calculating contrast ratios between colors to ensure accessibility
+         * Algorithm: https://www.w3.org/WAI/WCAG21/Techniques/general/G17
+         *
+         * @param {string} hex - Hex color code (e.g., "#FF0000")
+         * @returns {number} Relative luminance value (0-1), higher = brighter
+         * @private
+         *
+         * @example
+         * const lum = getRelativeLuminance("#FFFFFF"); // Returns ~1.0 for white
+         * const lum2 = getRelativeLuminance("#000000"); // Returns 0 for black
+         */
+        function getRelativeLuminance(hex) {
+            const rgb = hexToRgb(hex);
+            let r = rgb.r / 255;
+            let g = rgb.g / 255;
+            let b = rgb.b / 255;
+
+            // Apply gamma correction for sRGB color space
+            r = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
+            g = g <= 0.03928 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
+            b = b <= 0.03928 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
+
+            // Standard WCAG luminance coefficients (weighted by human perception)
+            return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        }
+
+        /**
+         * Calculate contrast ratio between two colors
+         */
+        function getContrastRatio(hex1, hex2) {
+            const l1 = getRelativeLuminance(hex1);
+            const l2 = getRelativeLuminance(hex2);
+
+            const lighter = Math.max(l1, l2);
+            const darker = Math.min(l1, l2);
+
+            return (lighter + 0.05) / (darker + 0.05);
+        }
+
+
+        /**
+         * Initialize dye slot selectors
+         */
+        function initializeDyeSlots() {
+            const container = document.getElementById('dye-slots-container');
+            container.innerHTML = '';
+
+            dyeSlots.forEach((slot, index) => {
+                const div = document.createElement('div');
+                div.className = 'dye-slot';
+                div.innerHTML = `
+                    <label class="block text-sm font-medium text-gray-700 mb-2">${slot}</label>
+                    <div class="flex gap-2 mb-2">
+                        <select id="dye-slot-${index}-primary" class="flex-grow px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Primary...</option>
+                        </select>
+                        <button onclick="clearDyeSlot(${index}, 'primary')" class="px-3 py-2 rounded-lg transition clear-button min-h-[44px] min-w-[44px] flex items-center justify-center">✕</button>
+                    </div>
+                    <div id="dye-secondary-${index}" class="flex gap-2 mb-2 hidden">
+                        <select id="dye-slot-${index}-secondary" class="flex-grow px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Secondary...</option>
+                        </select>
+                        <button onclick="clearDyeSlot(${index}, 'secondary')" class="px-3 py-2 rounded-lg transition clear-button min-h-[44px] min-w-[44px] flex items-center justify-center">✕</button>
+                    </div>
+                    <div id="dye-preview-${index}" class="mt-2 hidden">
+                        <div class="dye-swatch" id="dye-swatch-${index}"></div>
+                        <p class="text-xs text-gray-600 mt-1" id="dye-name-${index}"></p>
+                    </div>
+                `;
+                container.appendChild(div);
+
+                const primarySelect = document.getElementById(`dye-slot-${index}-primary`);
+                const secondarySelect = document.getElementById(`dye-slot-${index}-secondary`);
+                populateDyeDropdown(primarySelect);
+                populateDyeDropdown(secondarySelect);
+
+                primarySelect.addEventListener('change', () => handleDyeSelection(index, 'primary'));
+                secondarySelect.addEventListener('change', () => handleDyeSelection(index, 'secondary'));
+            });
+
+            updateSecondaryDyeVisibility();
+        }
+
+        /**
+         * Toggle secondary dye visibility
+         */
+        function updateSecondaryDyeVisibility() {
+            dyeSlots.forEach((_, index) => {
+                const secondaryDiv = document.getElementById(`dye-secondary-${index}`);
+                if (secondaryDyesEnabled) {
+                    secondaryDiv.classList.remove('hidden');
+                } else {
+                    secondaryDiv.classList.add('hidden');
+                }
+            });
+        }
+
+        // Category sorting functions now provided by shared-components.js:
+        // - getCategoryPriority(category) - Get priority number for sorting
+        // - sortDyesByCategory(dyes) - Sort dyes by category and name
+
+        // Populate dye dropdown function now provided by shared-components.js:
+        // - populateDyeDropdown(select, dyeArray = null)
+
+        /**
+         * Handle dye selection change
+         */
+        function handleDyeSelection(slotIndex, dyeType) {
+            const select = document.getElementById(`dye-slot-${slotIndex}-${dyeType}`);
+            const itemId = select.value;
+
+            if (!itemId) {
+                selectedDyes[slotIndex][dyeType] = null;
+            } else {
+                const dye = ffxivDyes.find(d => d.itemID == itemId);
+                if (dye) {
+                    selectedDyes[slotIndex][dyeType] = dye;
+                }
+            }
+
+            displayDyePreview(slotIndex);
+            debouncedUpdateVisualization();
+        }
+
+        /**
+         * Display dye preview
+         */
+        function displayDyePreview(slotIndex) {
+            // Guard: Validate slot index and DOM elements exist
+            if (slotIndex < 0 || slotIndex >= selectedDyes.length) return;
+
+            const preview = document.getElementById(`dye-preview-${slotIndex}`);
+            const swatch = document.getElementById(`dye-swatch-${slotIndex}`);
+            const name = document.getElementById(`dye-name-${slotIndex}`);
+
+            // Guard: Check that DOM elements were found
+            if (!preview || !swatch || !name) return;
+
+            // Guard: Validate slot exists and has properties
+            const slot = selectedDyes[slotIndex];
+            if (!slot) return;
+
+            const primary = slot.primary;
+            const secondary = slot.secondary;
+
+            if (!primary && !secondary) {
+                preview.classList.add('hidden');
+                return;
+            }
+
+            // Create split swatch if both dyes exist
+            if (primary && secondary) {
+                swatch.style.background = `linear-gradient(to right, ${primary.hex} 50%, ${secondary.hex} 50%)`;
+                name.textContent = `${primary.name} / ${secondary.name}`;
+            } else if (primary) {
+                swatch.style.backgroundColor = primary.hex;
+                name.textContent = primary.name;
+            } else if (secondary) {
+                swatch.style.backgroundColor = secondary.hex;
+                name.textContent = secondary.name;
+            }
+
+            swatch.textContent = '';
+            preview.classList.remove('hidden');
+        }
+
+        /**
+         * Clear single dye slot
+         */
+        function clearDyeSlot(slotIndex, dyeType) {
+            // Guard: Validate inputs
+            if (slotIndex < 0 || slotIndex >= selectedDyes.length) return;
+            if (!dyeType) return;
+
+            const element = document.getElementById(`dye-slot-${slotIndex}-${dyeType}`);
+            if (!element) return;
+
+            const slot = selectedDyes[slotIndex];
+            if (!slot) return;
+
+            element.value = '';
+            slot[dyeType] = null;
+            displayDyePreview(slotIndex);
+            debouncedUpdateVisualization();
+        }
+
+        /**
+         * Clear all dyes
+         */
+        function clearAllDyes() {
+            selectedDyes.forEach((slot, index) => {
+                if (!slot) return; // Guard: Skip invalid slots
+
+                const primaryInput = document.getElementById(`dye-slot-${index}-primary`);
+                const secondaryInput = document.getElementById(`dye-slot-${index}-secondary`);
+                const preview = document.getElementById(`dye-preview-${index}`);
+
+                // Guard: Only update elements that exist
+                if (primaryInput) primaryInput.value = '';
+                if (secondaryInput) secondaryInput.value = '';
+
+                slot.primary = null;
+                slot.secondary = null;
+
+                if (preview) preview.classList.add('hidden');
+            });
+            debouncedUpdateVisualization();
+        }
+
+        /**
+         * Get all active dyes (both primary and secondary)
+         */
+        function getActiveDyes() {
+            const dyes = [];
+            selectedDyes.forEach(slot => {
+                if (slot.primary) dyes.push(slot.primary);
+                if (slot.secondary) dyes.push(slot.secondary);
+            });
+            return dyes;
+        }
+
+        /**
+         * Update visualization based on selected dyes and settings
+         */
+        function updateVisualization() {
+            const activeDyes = getActiveDyes();
+
+            if (activeDyes.length === 0) {
+                document.getElementById('score-section').classList.add('hidden');
+                document.getElementById('palette-section').classList.add('hidden');
+                document.getElementById('simulations-section').classList.add('hidden');
+                document.getElementById('warnings-section').classList.add('hidden');
+                document.getElementById('contrast-section').classList.add('hidden');
+                document.getElementById('suggestions-section').classList.add('hidden');
+                return;
+            }
+
+            // Show sections
+            document.getElementById('palette-section').classList.remove('hidden');
+            document.getElementById('simulations-section').classList.remove('hidden');
+            if (document.getElementById('show-contrast').checked) {
+                document.getElementById('contrast-section').classList.remove('hidden');
+            }
+
+            // Update palettes
+            updateOriginalPalette();
+            updateVisionSimulations();
+
+            if (document.getElementById('show-warnings').checked) {
+                updateWarnings();
+                // updateWarnings() handles showing/hiding the section based on whether there are warnings
+            } else {
+                document.getElementById('warnings-section').classList.add('hidden');
+            }
+
+            if (document.getElementById('show-contrast').checked) {
+                updateContrastMatrix();
+            }
+
+            // Update score
+            updateAccessibilityScore();
+
+            if (document.getElementById('show-suggestions').checked) {
+                updateSuggestions();
+                document.getElementById('suggestions-section').classList.remove('hidden');
+            } else {
+                document.getElementById('suggestions-section').classList.add('hidden');
+            }
+        }
+
+        // Debounced calculation for better mobile performance
+        const calculationDebounceTime = isMobile() ? 300 : 100;
+        const debouncedUpdateVisualization = debounce(updateVisualization, calculationDebounceTime);
+
+        /**
+         * Update original palette display
+         */
+        // ===== PERFORMANCE FIX 4: Reuse DOM Elements =====
+        function updateOriginalPalette() {
+            const activeDyes = getActiveDyes();
+            const grid = document.getElementById('original-palette-grid');
+            const existingItems = grid.querySelectorAll('.palette-item');
+
+            // Update or reuse existing items
+            activeDyes.forEach((dye, index) => {
+                let item = existingItems[index];
+
+                if (item) {
+                    // Reuse existing item - just update colors and text
+                    const swatch = item.querySelector('.dye-swatch');
+                    const label = item.querySelector('.palette-label');
+
+                    swatch.style.backgroundColor = dye.hex;
+                    label.textContent = dye.name;
+                } else {
+                    // Create new item only if needed
+                    const div = document.createElement('div');
+                    div.className = 'palette-item';
+                    div.innerHTML = `
+                        <div class="dye-swatch" style="background-color: ${dye.hex}; display: block; height: 100px; border-radius: 0.5rem;"></div>
+                        <div class="palette-label">${dye.name}</div>
+                    `;
+                    grid.appendChild(div);
+                }
+            });
+
+            // Remove excess items if dyes were removed
+            for (let i = activeDyes.length; i < existingItems.length; i++) {
+                existingItems[i].remove();
+            }
+        }
+
+        /**
+         * Set all sliders to a specific vision type
+         * @param {string} visionType - 'normal', 'deuteranopia', 'protanopia', 'tritanopia', or 'achromatopsia'
+         */
+        function setVisionType(visionType) {
+            const sliders = {
+                deuteranopia: domCache.deuteranopiSlider,
+                protanopia: domCache.protanopiSlider,
+                tritanopia: domCache.tritanopiSlider
+            };
+
+            const values = {
+                deuteranopia: domCache.deuteranopiValue,
+                protanopia: domCache.protanopiValue,
+                tritanopia: domCache.tritanopiValue
+            };
+
+            // Reset all sliders to 0
+            Object.keys(sliders).forEach(type => {
+                if (sliders[type]) {
+                    sliders[type].value = 0;
+                    if (values[type]) {
+                        values[type].innerHTML = '<span class="number">0</span>%';
+                    }
+                }
+            });
+
+            // Set the specific vision type to 100% (or skip if 'normal' or 'achromatopsia')
+            if (visionType !== 'normal' && visionType !== 'achromatopsia' && sliders[visionType]) {
+                sliders[visionType].value = 100;
+                if (values[visionType]) {
+                    values[visionType].innerHTML = '<span class="number">100</span>%';
+                }
+            }
+
+            // Update visualization
+            debouncedUpdateVisualization();
+        }
+
+        /**
+         * Navigate to next vision type (swipe left)
+         */
+        function nextVisionType() {
+            currentVisionIndex = (currentVisionIndex + 1) % visionTypes.length;
+            setVisionType(visionTypes[currentVisionIndex]);
+
+            // Haptic feedback if available
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+        }
+
+        /**
+         * Navigate to previous vision type (swipe right)
+         */
+        function previousVisionType() {
+            currentVisionIndex = (currentVisionIndex - 1 + visionTypes.length) % visionTypes.length;
+            setVisionType(visionTypes[currentVisionIndex]);
+
+            // Haptic feedback if available
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+        }
+
+        /**
+         * Swipe gesture detection
+         */
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let touchStartY = 0;
+        let touchEndY = 0;
+        const swipeThreshold = 50; // Minimum distance for a swipe
+
+        function handleTouchStart(e) {
+            // Guard against empty touch array (edge case on some devices)
+            if (e.changedTouches && e.changedTouches.length > 0) {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }
+        }
+
+        function handleTouchEnd(e) {
+            // Guard against empty touch array (edge case on some devices)
+            if (e.changedTouches && e.changedTouches.length > 0) {
+                touchEndX = e.changedTouches[0].screenX;
+                touchEndY = e.changedTouches[0].screenY;
+                handleSwipe();
+            }
+        }
+
+        function handleSwipe() {
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+
+            // Only trigger if horizontal swipe is more dominant than vertical
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Swipe left (next vision type)
+                if (deltaX < -swipeThreshold) {
+                    nextVisionType();
+                }
+                // Swipe right (previous vision type)
+                else if (deltaX > swipeThreshold) {
+                    previousVisionType();
+                }
+            }
+        }
+
+        /**
+         * Update vision simulations
+         */
+        function updateVisionSimulations() {
+            const activeDyes = getActiveDyes();
+            const container = document.getElementById('vision-comparison');
+            container.innerHTML = '';
+
+            const deuteranopiaIntensity = safeParseInt('deuteranopia-slider', 0);
+            const protanopiaIntensity = safeParseInt('protanopia-slider', 0);
+            const tritanopiaIntensity = safeParseInt('tritanopia-slider', 0);
+
+            const visions = [
+                { name: 'Deuteranopia (Red-Green)', type: 'deuteranopia', intensity: deuteranopiaIntensity },
+                { name: 'Protanopia (Red-Green)', type: 'protanopia', intensity: protanopiaIntensity },
+                { name: 'Tritanopia (Blue-Yellow)', type: 'tritanopia', intensity: tritanopiaIntensity },
+                { name: 'Achromatopsia (Monochrome)', type: 'achromatopsia', intensity: 100 }
+            ];
+
+            // ===== PERFORMANCE FIX 1: Lazy Render Vision Simulations =====
+            // Only render vision types that have intensity > 0 (or achromatopsia which is always visible)
+            const visionsToRender = visions.filter(vision =>
+                vision.intensity > 0 || vision.type === 'achromatopsia'
+            );
+
+            visionsToRender.forEach(vision => {
+                const div = document.createElement('div');
+                div.className = 'vision-type';
+
+                // Determine if this vision type is currently active
+                const currentVisionType = visionTypes[currentVisionIndex];
+                const isActive = (vision.type === currentVisionType && vision.intensity > 0) ||
+                                 (currentVisionType === 'normal' && vision.intensity === 0);
+
+                const header = document.createElement('div');
+                header.className = 'vision-header';
+                // Add visual indicator for active vision type
+                const activeIndicator = isActive ? '<span style="color: #4f46e5; font-weight: bold;">● </span>' : '';
+                header.innerHTML = `<div class="vision-title">${activeIndicator}${vision.name}</div>`;
+                div.appendChild(header);
+
+                const content = document.createElement('div');
+                content.className = 'vision-content';
+
+                const palette = document.createElement('div');
+                palette.className = 'vision-palette';
+
+                activeDyes.forEach(dye => {
+                    let simulated;
+                    if (vision.type === 'achromatopsia') {
+                        simulated = applyAchromatopsia(dye.hex, 100);
+                    } else {
+                        simulated = applyColorblindness(dye.hex, vision.type, vision.intensity);
+                    }
+
+                    const swatch = document.createElement('div');
+                    swatch.className = 'vision-swatch';
+                    swatch.style.backgroundColor = simulated;
+                    palette.appendChild(swatch);
+                });
+
+                content.appendChild(palette);
+                div.appendChild(content);
+                container.appendChild(div);
+            });
+        }
+
+        /**
+         * Update warnings
+         */
+        function updateWarnings() {
+            const activeDyes = getActiveDyes();
+            const container = document.getElementById('warnings-container');
+            const warningsSection = document.getElementById('warnings-section');
+            const warningsSummary = document.getElementById('warnings-summary');
+            const warningsHeader = document.getElementById('warnings-header');
+            container.innerHTML = '';
+
+            const deuteranopiaIntensity = safeParseInt('deuteranopia-slider', 0);
+            const protanopiaIntensity = safeParseInt('protanopia-slider', 0);
+            const tritanopiaIntensity = safeParseInt('tritanopia-slider', 0);
+
+            const warnings = [];
+
+            // Check distinguishability for each vision type
+            if (deuteranopiaIntensity > 0) {
+                for (let i = 0; i < activeDyes.length; i++) {
+                    for (let j = i + 1; j < activeDyes.length; j++) {
+                        const c1 = applyColorblindness(activeDyes[i].hex, 'deuteranopia', deuteranopiaIntensity);
+                        const c2 = applyColorblindness(activeDyes[j].hex, 'deuteranopia', deuteranopiaIntensity);
+                        const distance = getColorDistance(c1, c2);
+
+                        if (distance < 30) {
+                            warnings.push({
+                                type: 'deuteranopia',
+                                dye1: activeDyes[i].name,
+                                dye2: activeDyes[j].name,
+                                distance: distance
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (protanopiaIntensity > 0) {
+                for (let i = 0; i < activeDyes.length; i++) {
+                    for (let j = i + 1; j < activeDyes.length; j++) {
+                        const c1 = applyColorblindness(activeDyes[i].hex, 'protanopia', protanopiaIntensity);
+                        const c2 = applyColorblindness(activeDyes[j].hex, 'protanopia', protanopiaIntensity);
+                        const distance = getColorDistance(c1, c2);
+
+                        if (distance < 30) {
+                            warnings.push({
+                                type: 'protanopia',
+                                dye1: activeDyes[i].name,
+                                dye2: activeDyes[j].name,
+                                distance: distance
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (tritanopiaIntensity > 0) {
+                for (let i = 0; i < activeDyes.length; i++) {
+                    for (let j = i + 1; j < activeDyes.length; j++) {
+                        const c1 = applyColorblindness(activeDyes[i].hex, 'tritanopia', tritanopiaIntensity);
+                        const c2 = applyColorblindness(activeDyes[j].hex, 'tritanopia', tritanopiaIntensity);
+                        const distance = getColorDistance(c1, c2);
+
+                        if (distance < 30) {
+                            warnings.push({
+                                type: 'tritanopia',
+                                dye1: activeDyes[i].name,
+                                dye2: activeDyes[j].name,
+                                distance: distance
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (warnings.length === 0) {
+                // Hide warnings section if no issues
+                warningsSection.classList.add('hidden');
+            } else {
+                // Show warnings section and update summary text with issue count
+                warningsSection.classList.remove('hidden');
+                const issueCount = warnings.length;
+                warningsSummary.innerHTML = `You have <span class="number">${issueCount}</span> issue${issueCount !== 1 ? 's' : ''}`;
+
+                // Populate warnings with default collapsed state
+                warnings.forEach(warning => {
+                    const div = document.createElement('div');
+                    div.className = 'warning-card';
+                    div.innerHTML = `
+                        <div class="warning-title">⚠ ${warning.dye1} and ${warning.dye2}</div>
+                        <p class="text-sm text-gray-700">These colors are too similar for ${warning.type} players (distance: <span class="number">${warning.distance.toFixed(1)}</span>). Consider using more contrasting dyes.</p>
+                    `;
+                    container.appendChild(div);
+                });
+
+                // Start collapsed
+                container.classList.add('hidden');
+
+                // Add click handler to toggle
+                warningsHeader.onclick = function(e) {
+                    e.preventDefault();
+                    container.classList.toggle('hidden');
+                    const toggle = document.getElementById('warnings-toggle');
+                    toggle.textContent = container.classList.contains('hidden') ? '▶' : '▼';
+                };
+            }
+        }
+
+        /**
+         * Update contrast matrix
+         */
+        // ===== PERFORMANCE FIX 3: Chunk Contrast Matrix Rendering =====
+        function updateContrastMatrix() {
+            const activeDyes = getActiveDyes();
+            const container = document.getElementById('contrast-container');
+
+            if (activeDyes.length < 2) {
+                container.innerHTML = '<p class="text-sm text-gray-600">Select at least 2 dyes to see color distances.</p>';
+                return;
+            }
+
+            // Build header first
+            let html = '<table class="contrast-table"><thead><tr><th>Dye</th>';
+            activeDyes.forEach(dye => {
+                html += `<th>${dye.name}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            container.innerHTML = html;
+
+            const tbody = container.querySelector('tbody');
+            let rowIndex = 0;
+
+            // Render rows asynchronously using requestIdleCallback
+            function renderNextRow() {
+                if (rowIndex >= activeDyes.length) return;
+
+                const dyeA = activeDyes[rowIndex];
+                let rowHtml = `<tr><td class="font-medium">${dyeA.name}</td>`;
+
+                activeDyes.forEach((dyeB, j) => {
+                    if (rowIndex === j) {
+                        rowHtml += '<td>-</td>';
+                    } else {
+                        const distance = getColorDistance(dyeA.hex, dyeB.hex);
+                        let className = 'contrast-value contrast-low';
+
+                        if (distance > 60) {
+                            className = 'contrast-value contrast-high';
+                        } else if (distance > 30) {
+                            className = 'contrast-value contrast-medium';
+                        }
+
+                        rowHtml += `<td class="${className}"><span class="number">${distance.toFixed(0)}</span></td>`;
+                    }
+                });
+
+                rowHtml += '</tr>';
+                const tr = document.createElement('tr');
+                tr.innerHTML = rowHtml;
+                tbody.appendChild(tr);
+
+                rowIndex++;
+                // Schedule next row with idle callback for smooth rendering
+                if (typeof requestIdleCallback !== 'undefined') {
+                    requestIdleCallback(renderNextRow, { timeout: 50 });
+                } else {
+                    // Fallback for browsers without requestIdleCallback
+                    setTimeout(renderNextRow, 0);
+                }
+            }
+
+            // Start rendering rows
+            if (typeof requestIdleCallback !== 'undefined') {
+                requestIdleCallback(renderNextRow);
+            } else {
+                setTimeout(renderNextRow, 0);
+            }
+
+            // Close table structure
+            setTimeout(() => {
+                if (!tbody.querySelector('tr:last-child')) {
+                    // Only add closing tag if not already added
+                    const closeTag = document.createElement('tr');
+                    closeTag.style.display = 'none';
+                    tbody.appendChild(closeTag);
+                }
+            }, activeDyes.length * 55); // Estimate completion time
+        }
+
+        /**
+         * Update accessibility score
+         */
+        function updateAccessibilityScore() {
+            const activeDyes = getActiveDyes();
+
+            if (activeDyes.length < 2) {
+                document.getElementById('score-section').classList.add('hidden');
+                return;
+            }
+
+            document.getElementById('score-section').classList.remove('hidden');
+
+            const deuteranopiaIntensity = safeParseInt('deuteranopia-slider', 0);
+            const protanopiaIntensity = safeParseInt('protanopia-slider', 0);
+            const tritanopiaIntensity = safeParseInt('tritanopia-slider', 0);
+
+            let distinguishabilityScore = 100;
+            const visionTypes = [
+                { type: 'deuteranopia', intensity: deuteranopiaIntensity },
+                { type: 'protanopia', intensity: protanopiaIntensity },
+                { type: 'tritanopia', intensity: tritanopiaIntensity }
+            ];
+
+            // Check pairs in each vision type
+            visionTypes.forEach(vision => {
+                if (vision.intensity === 0) return;
+
+                for (let i = 0; i < activeDyes.length; i++) {
+                    for (let j = i + 1; j < activeDyes.length; j++) {
+                        const c1 = applyColorblindness(activeDyes[i].hex, vision.type, vision.intensity);
+                        const c2 = applyColorblindness(activeDyes[j].hex, vision.type, vision.intensity);
+                        const distance = getColorDistance(c1, c2);
+
+                        if (distance < 30) {
+                            distinguishabilityScore -= 10;
+                        } else if (distance < 60) {
+                            distinguishabilityScore -= 2;
+                        }
+                    }
+                }
+            });
+
+            const score = Math.max(0, Math.min(100, distinguishabilityScore));
+
+            document.getElementById('score-number').innerHTML = `<span class="number">${score}</span>`;
+
+            let rating = '🟢 Excellent';
+            let ratingColor = '#059669';
+            if (score < 40) {
+                rating = '🔴 Poor';
+                ratingColor = '#dc2626';
+            } else if (score < 60) {
+                rating = '🟠 Fair';
+                ratingColor = '#ea580c';
+            } else if (score < 80) {
+                rating = '🟡 Good';
+                ratingColor = '#ca8a04';
+            }
+
+            document.getElementById('score-rating').innerHTML = `<div style="color: ${ratingColor}; font-weight: 600;">${rating}</div>`;
+
+            const details = document.getElementById('score-details');
+            details.innerHTML = `
+                <div><strong>Distinguishability:</strong> <span class="number">${score}</span>/100 across all vision types</div>
+                <div><strong>Dyes selected:</strong> <span class="number">${activeDyes.length}</span></div>
+                <div><strong>Simulation intensity:</strong> D: <span class="number">${deuteranopiaIntensity}</span>%, P: <span class="number">${protanopiaIntensity}</span>%, T: <span class="number">${tritanopiaIntensity}</span>%</div>
+            `;
+        }
+
+        /**
+         * Find dyes with distinguishability issues
+         */
+        function findProblematicPairs() {
+            const activeDyes = getActiveDyes();
+            const problematic = new Set();
+
+            const deuteranopiaIntensity = safeParseInt('deuteranopia-slider', 0);
+            const protanopiaIntensity = safeParseInt('protanopia-slider', 0);
+            const tritanopiaIntensity = safeParseInt('tritanopia-slider', 0);
+
+            const visionTypes = [
+                { type: 'deuteranopia', intensity: deuteranopiaIntensity },
+                { type: 'protanopia', intensity: protanopiaIntensity },
+                { type: 'tritanopia', intensity: tritanopiaIntensity }
+            ];
+
+            visionTypes.forEach(vision => {
+                if (vision.intensity === 0) return;
+
+                for (let i = 0; i < activeDyes.length; i++) {
+                    for (let j = i + 1; j < activeDyes.length; j++) {
+                        const c1 = applyColorblindness(activeDyes[i].hex, vision.type, vision.intensity);
+                        const c2 = applyColorblindness(activeDyes[j].hex, vision.type, vision.intensity);
+                        const distance = getColorDistance(c1, c2);
+
+                        if (distance < 30) {
+                            problematic.add(i);
+                            problematic.add(j);
+                        }
+                    }
+                }
+            });
+
+            return Array.from(problematic);
+        }
+
+        /**
+         * Find similar dyes based on hue/saturation
+         */
+        function findSimilarDyes(targetDye, maxDistance = 50) {
+            const targetHsv = targetDye.hsv;
+            const similar = [];
+
+            ffxivDyes.forEach(dye => {
+                if (dye.itemID === targetDye.itemID) return; // Skip the dye itself
+
+                const dHue = Math.abs(dye.hsv.h - targetHsv.h);
+                const dSat = Math.abs(dye.hsv.s - targetHsv.s);
+
+                // Find dyes with similar hue (wrapping around 360)
+                const minHueDiff = Math.min(dHue, 360 - dHue);
+
+                const distanceScore = Math.sqrt(minHueDiff * minHueDiff + dSat * dSat);
+
+                if (distanceScore < maxDistance) {
+                    similar.push({
+                        dye: dye,
+                        similarity: distanceScore
+                    });
+                }
+            });
+
+            return similar.sort((a, b) => a.similarity - b.similarity);
+        }
+
+        /**
+         * Update suggestions
+         */
+        function updateSuggestions() {
+            const activeDyes = getActiveDyes();
+            const container = document.getElementById('suggestions-container');
+
+            if (activeDyes.length === 0) {
+                document.getElementById('suggestions-section').classList.add('hidden');
+                return;
+            }
+
+            const problematicPairs = [];
+            const deuteranopiaIntensity = safeParseInt('deuteranopia-slider', 0);
+            const protanopiaIntensity = safeParseInt('protanopia-slider', 0);
+            const tritanopiaIntensity = safeParseInt('tritanopia-slider', 0);
+
+            const visionTypes = [
+                { type: 'deuteranopia', intensity: deuteranopiaIntensity },
+                { type: 'protanopia', intensity: protanopiaIntensity },
+                { type: 'tritanopia', intensity: tritanopiaIntensity }
+            ];
+
+            // Find problematic dyes with their slot locations
+            visionTypes.forEach(vision => {
+                if (vision.intensity === 0) return;
+
+                for (let i = 0; i < activeDyes.length; i++) {
+                    for (let j = i + 1; j < activeDyes.length; j++) {
+                        const c1 = applyColorblindness(activeDyes[i].hex, vision.type, vision.intensity);
+                        const c2 = applyColorblindness(activeDyes[j].hex, vision.type, vision.intensity);
+                        const distance = getColorDistance(c1, c2);
+
+                        if (distance < 30) {
+                            problematicPairs.push(activeDyes[i]);
+                            problematicPairs.push(activeDyes[j]);
+                        }
+                    }
+                }
+            });
+
+            if (problematicPairs.length === 0) {
+                container.innerHTML = '<p class="text-sm text-green-700 font-medium">✓ All dyes have good distinguishability!</p>';
+                return;
+            }
+
+            // Get unique problematic dyes
+            const uniqueProblematicDyes = [];
+            const seenItemIds = new Set();
+            problematicPairs.forEach(dye => {
+                if (!seenItemIds.has(dye.itemID)) {
+                    uniqueProblematicDyes.push(dye);
+                    seenItemIds.add(dye.itemID);
+                }
+            });
+
+            let html = '';
+
+            uniqueProblematicDyes.forEach(problematicDye => {
+                // Find which slot(s) contain this dye
+                const slots = [];
+                selectedDyes.forEach((slot, slotIndex) => {
+                    if (slot.primary && slot.primary.itemID === problematicDye.itemID) {
+                        slots.push({ slotIndex, type: 'primary' });
+                    }
+                    if (slot.secondary && slot.secondary.itemID === problematicDye.itemID) {
+                        slots.push({ slotIndex, type: 'secondary' });
+                    }
+                });
+
+                const similar = findSimilarDyes(problematicDye, 40).slice(0, 3);
+
+                if (similar.length > 0) {
+                    html += `
+                        <div class="mb-6 p-4 border border-gray-300 rounded-lg bg-white">
+                            <h3 class="font-semibold text-gray-900 mb-2">
+                                Suggestions for: <span style="color: ${problematicDye.hex}">${problematicDye.name}</span>
+                            </h3>
+                            <div class="space-y-3">
+                    `;
+
+                    similar.forEach(({ dye }) => {
+                        const slotInfo = slots.length > 0 ? slots[0] : null;
+                        if (slotInfo) {
+                            html += `
+                                <div class="flex gap-3 items-center">
+                                    <div class="w-16 h-16 rounded flex-shrink-0" style="background-color: ${dye.hex}; border: 2px solid rgba(0,0,0,0.1);"></div>
+                                    <div class="flex-grow">
+                                        <p class="font-medium text-gray-900">${dye.name}</p>
+                                        <p class="text-xs text-gray-600">${dye.category} • ${dye.acquisition}</p>
+                                    </div>
+                                    <button onclick="replaceDye(${slotInfo.slotIndex}, '${dye.itemID}')" class="px-4 py-2.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition min-h-[44px]">
+                                        Use
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    });
+
+                    html += `</div></div>`;
+                }
+            });
+
+            container.innerHTML = html || '<p class="text-sm text-gray-600">No suggestions available.</p>';
+        }
+
+        /**
+         * Replace dye in a slot
+         */
+        function replaceDye(slotIndex, itemId) {
+            const dye = ffxivDyes.find(d => d.itemID == itemId);
+            if (dye) {
+                document.getElementById(`dye-slot-${slotIndex}-primary`).value = itemId;
+                selectedDyes[slotIndex].primary = dye;
+                displayDyePreview(slotIndex);
+                debouncedUpdateVisualization();
+            }
+        }
+
+        /**
+         * Load dyes from URL parameters
+         */
+        function loadDyesFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const dyeParam = params.get('dyes');
+
+            if (!dyeParam) return false;
+
+            const itemIds = dyeParam.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+
+            itemIds.forEach((itemId, index) => {
+                if (index >= 6) return; // Max 6 slots
+                const dye = ffxivDyes.find(d => d.itemID == itemId);
+                if (dye) {
+                    document.getElementById(`dye-slot-${index}-primary`).value = itemId;
+                    selectedDyes[index].primary = dye;
+                    displayDyePreview(index);
+                }
+            });
+
+            if (itemIds.length > 0) {
+                debouncedUpdateVisualization();
+                return true;
+            }
+
+            return false;
+        }
+
+        /**
+         * Import from Dye Comparison tool
+         */
+        function importFromDyeComparison() {
+            // Look for dyes in order from Dye Comparison slots
+            for (let i = 1; i <= 4; i++) {
+                const selectId = `dye-select-${i}`;
+                const select = document.getElementById(selectId);
+                if (select && select.value) {
+                    const itemId = parseInt(select.value, 10);
+                    const dye = ffxivDyes.find(d => d.itemID == itemId);
+                    if (dye && selectedDyes[i - 1].primary === null) {
+                        document.getElementById(`dye-slot-${i - 1}-primary`).value = itemId;
+                        selectedDyes[i - 1].primary = dye;
+                        displayDyePreview(i - 1);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Save current dye selection to localStorage for other tools
+         */
+        function saveDyesToStorage() {
+            const activeDyes = getActiveDyes();
+            const itemIds = activeDyes.map(d => d.itemID);
+            safeSetStorage('xivdyetools_coloraccessibility_dyes', JSON.stringify(itemIds));
+        }
+
+        /**
+         * DOM Element Cache - Caches frequently accessed DOM elements for better performance
+         * Reduces repeated getElementById calls which are slower than direct references
+         */
+        const domCache = {
+            // Main containers
+            dyeSlotsContainer: null,
+            scoreSection: null,
+            paletteSection: null,
+            simulationsSection: null,
+            warningsSection: null,
+            suggestionsSection: null,
+            chartsContainer: null,
+
+            // Vision sliders
+            deuteranopiSlider: null,
+            protanopiSlider: null,
+            tritanopiSlider: null,
+            deuteranopiValue: null,
+            protanopiValue: null,
+            tritanopiValue: null,
+
+            // Toggles
+            enableSecondaryDyes: null,
+            showWarnings: null,
+            showContrast: null,
+            showSuggestions: null,
+
+            // Other
+            darkModeToggle: null
+        };
+
+        /**
+         * Initialize DOM cache - called after page loads
+         * This prevents repeated getElementById calls and improves performance
+         */
+        function initializeDomCache() {
+            // Main containers
+            domCache.dyeSlotsContainer = document.getElementById('dye-slots-container');
+            domCache.scoreSection = document.getElementById('score-section');
+            domCache.paletteSection = document.getElementById('palette-section');
+            domCache.simulationsSection = document.getElementById('simulations-section');
+            domCache.warningsSection = document.getElementById('warnings-section');
+            domCache.suggestionsSection = document.getElementById('suggestions-section');
+            domCache.chartsContainer = document.getElementById('charts-container');
+
+            // Vision sliders
+            domCache.deuteranopiSlider = document.getElementById('deuteranopia-slider');
+            domCache.protanopiSlider = document.getElementById('protanopia-slider');
+            domCache.tritanopiSlider = document.getElementById('tritanopia-slider');
+            domCache.deuteranopiValue = document.getElementById('deuteranopia-value');
+            domCache.protanopiValue = document.getElementById('protanopia-value');
+            domCache.tritanopiValue = document.getElementById('tritanopia-value');
+
+            // Toggles
+            domCache.enableSecondaryDyes = document.getElementById('enable-secondary-dyes');
+            domCache.showWarnings = document.getElementById('show-warnings');
+            domCache.showContrast = document.getElementById('show-contrast');
+            domCache.showSuggestions = document.getElementById('show-suggestions');
+
+            // Other
+            domCache.darkModeToggle = document.getElementById('dark-mode-toggle');
+        }
+
+        /**
+         * Handle slider changes
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize DOM cache first for optimal performance
+            initializeDomCache();
+
+            // Load dye data
+            safeFetchJSON('./assets/json/colors_xiv.json')
+                .then(data => {
+                    ffxivDyes = data;
+                    initializeDyeSlots();
+
+                    // Load dyes from URL parameters if available
+                    loadDyesFromUrl();
+
+                    // Setup slider listeners using cached DOM elements for better performance
+                    [
+                        { slider: domCache.deuteranopiSlider, value: domCache.deuteranopiValue },
+                        { slider: domCache.protanopiSlider, value: domCache.protanopiValue },
+                        { slider: domCache.tritanopiSlider, value: domCache.tritanopiValue }
+                    ].forEach(({ slider, value }) => {
+                        if (slider && value) {
+                            slider.addEventListener('input', (e) => {
+                                value.innerHTML = `<span class="number">${e.target.value}</span>%`;
+                                // Invalidate transformation cache when intensity changes
+                                clearTransformationCache();
+                                debouncedUpdateVisualization();
+                            });
+                        }
+                    });
+
+                    // Load secondary dyes preference from localStorage
+                    const savedSecondaryDyesState = safeGetStorage('xivdyetools_coloraccessibility_secondaryDyes');
+                    if (savedSecondaryDyesState !== null) {
+                        try {
+                            secondaryDyesEnabled = JSON.parse(savedSecondaryDyesState);
+                            if (domCache.enableSecondaryDyes) {
+                                domCache.enableSecondaryDyes.checked = secondaryDyesEnabled;
+                            }
+                            updateSecondaryDyeVisibility();
+                        } catch (parseError) {
+                            console.warn('Invalid secondaryDyesEnabled value in localStorage, resetting to default:', parseError.message);
+                            // Reset to default (secondary dyes disabled)
+                            secondaryDyesEnabled = false;
+                            safeSetStorage('xivdyetools_coloraccessibility_secondaryDyes', JSON.stringify(false));
+                        }
+                    }
+
+                    // Setup secondary dyes toggle using cached DOM element
+                    if (domCache.enableSecondaryDyes) {
+                        domCache.enableSecondaryDyes.addEventListener('change', (e) => {
+                            secondaryDyesEnabled = e.target.checked;
+                            safeSetStorage('xivdyetools_coloraccessibility_secondaryDyes', JSON.stringify(secondaryDyesEnabled));
+                            updateSecondaryDyeVisibility();
+                        });
+                    }
+
+                    // Setup checkbox listeners using cached DOM elements
+                    [
+                        { element: domCache.showWarnings, handler: debouncedUpdateVisualization },
+                        { element: domCache.showContrast, handler: debouncedUpdateVisualization },
+                        { element: domCache.showSuggestions, handler: debouncedUpdateVisualization }
+                    ].forEach(({ element, handler }) => {
+                        if (element) {
+                            element.addEventListener('change', handler);
+                        }
+                    });
+
+                    // Setup swipe gesture listeners for vision type navigation
+                    // Apply to the simulations section for swipe-based navigation
+                    const simulationsSection = document.getElementById('simulations-section');
+                    if (simulationsSection) {
+                        simulationsSection.addEventListener('touchstart', handleTouchStart, { passive: true });
+                        simulationsSection.addEventListener('touchend', handleTouchEnd, { passive: true });
+                    }
+
+                    // Also apply to the main results panel for broader touch area
+                    const resultsPanel = document.querySelector('.lg\\:col-span-2');
+                    if (resultsPanel) {
+                        resultsPanel.addEventListener('touchstart', handleTouchStart, { passive: true });
+                        resultsPanel.addEventListener('touchend', handleTouchEnd, { passive: true });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading dyes:', error);
+                    if (domCache.dyeSlotsContainer) {
+                        domCache.dyeSlotsContainer.innerHTML = '<p class="text-red-600">Error loading dye data.</p>';
+                    }
+                });
+
+            // ===== MOBILE KEYBOARD OPTIMIZATION (PHASE 7.3) =====
+            // Initialize mobile keyboard helpers
+            if (isMobileDevice && typeof isMobileDevice === 'function') {
+                // Prevent accidental zoom on input focus
+                const inputs = document.querySelectorAll('input, select, textarea');
+                inputs.forEach(input => {
+                    input.addEventListener('focus', function() {
+                        // Ensure font size is at least 16px to prevent iOS zoom
+                        this.style.fontSize = '16px';
+                    });
+                });
+            }
+        });
+
+        // --- Help Modal Functions ---
+        function openHelpModal() {
+            document.getElementById('help-modal').classList.add('show');
+        }
+
+        function closeHelpModal() {
+            document.getElementById('help-modal').classList.remove('show');
+        }
+
+        // Close modal when clicking outside of content
+        document.addEventListener('DOMContentLoaded', () => {
+            const helpModal = document.getElementById('help-modal');
+
+            helpModal.addEventListener('click', (e) => {
+                if (e.target === helpModal) {
+                    closeHelpModal();
+                }
+            });
+
+            // Close modal when pressing ESC key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && helpModal.classList.contains('show')) {
+                    closeHelpModal();
+                }
+            });
+        });
+    </script>
+
+    <!-- Mobile Bottom Navigation Component -->
+    <div id="mobile-nav-container" class="component-loading"></div>
+    <script>
+        fetch('components/mobile-bottom-nav.html')
+            .then(r => {
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.text();
+            })
+            .then(html => {
+                document.getElementById('mobile-nav-container').innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Failed to load mobile navigation:', error);
+                // Navigation is optional - app works without it
+            });
+    </script>
+
+    <!-- Service Worker Registration for PWA Support -->
+    <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/service-worker.js').then(()=>console.log('Service Worker registered')).catch((error)=>console.log('Service Worker registration failed:',error))})}</script>
+</body>
+</html>

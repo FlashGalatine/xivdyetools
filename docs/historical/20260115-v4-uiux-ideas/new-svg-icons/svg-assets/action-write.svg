@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" stroke-width="1.5" stroke="currentColor" fill="none">
+  <title>Write / Submit</title>
+  <!-- Document with lines - write/submit action -->
+  <path d="M14 3v4a1 1 0 001 1h4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" stroke-linejoin="round"/>
+  <path d="M9 9h1M9 13h6M9 17h6" stroke-linecap="round"/>
+</svg>

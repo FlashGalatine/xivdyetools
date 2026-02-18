@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XIV Dye Tools - Emoji Audit Summary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f0f12;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .glass-panel {
+            background: rgba(20, 20, 25, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .status-exists { background: rgba(34, 197, 94, 0.2); border-color: rgba(34, 197, 94, 0.4); }
+        .status-missing { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); }
+        .status-console { background: rgba(107, 114, 128, 0.2); border-color: rgba(107, 114, 128, 0.4); }
+    </style>
+</head>
+<body class="text-gray-200 font-sans min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="mb-12 text-center">
+            <h1 class="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-400">
+                Emoji Audit Summary
+            </h1>
+            <p class="text-gray-400 max-w-2xl mx-auto">
+                Analysis of emoji usage in <code class="text-blue-400">xivdyetools-web-app</code> compared against existing SVG icon files.
+            </p>
+        </header>
+
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-3 gap-6 mb-12">
+            <div class="glass-panel status-exists rounded-xl p-6 text-center">
+                <div class="text-4xl font-bold text-green-400">13</div>
+                <div class="text-sm text-gray-400 mt-2">Already Have SVG</div>
+                <div class="text-xs text-gray-500 mt-1">Just need to use them</div>
+            </div>
+            <div class="glass-panel status-missing rounded-xl p-6 text-center">
+                <div class="text-4xl font-bold text-red-400">9</div>
+                <div class="text-sm text-gray-400 mt-2">Need New SVGs</div>
+                <div class="text-xs text-gray-500 mt-1">Icons to create</div>
+            </div>
+            <div class="glass-panel status-console rounded-xl p-6 text-center">
+                <div class="text-4xl font-bold text-gray-400">6</div>
+                <div class="text-sm text-gray-400 mt-2">Console Only</div>
+                <div class="text-xs text-gray-500 mt-1">Optional (dev tools)</div>
+            </div>
+        </div>
+
+        <!-- Already Exists Section -->
+        <div class="glass-panel status-exists rounded-2xl p-8 mb-8">
+            <h2 class="text-2xl font-semibold text-green-400 mb-2 flex items-center">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Already Have SVG Replacements
+            </h2>
+            <p class="text-gray-400 mb-6">These emojis already have professional SVG icons in the codebase. Just import and use!</p>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="text-left text-gray-400 border-b border-green-500/30">
+                        <tr>
+                            <th class="pb-3 pr-4">Emoji</th>
+                            <th class="pb-3 pr-4">Name</th>
+                            <th class="pb-3 pr-4">Existing File</th>
+                            <th class="pb-3">Use With</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-300">
+                        <tr class="border-b border-gray-800"><td class="py-3 text-2xl">⚔️</td><td>Jobs</td><td class="text-blue-400 font-mono text-xs">category-icons.ts</td><td class="font-mono text-xs text-green-400">getCategoryIcon('jobs')</td></tr>
+                        <tr class="border-b border-gray-800"><td class="py-3 text-2xl">🏰</td><td>Grand Companies</td><td class="text-blue-400 font-mono text-xs">category-icons.ts</td><td class="font-mono text-xs text-green-400">getCategoryIcon('grand-companies')</td></tr>
+                        <tr class="border-b border-gray-800"><td class="py-3 text-2xl">🌸</td><td>Seasons</td><td class="text-blue-400 font-mono text-xs">category-icons.ts</td><td class="font-mono text-xs text-green-400">getCategoryIcon('seasons')</td></tr>
+                        <tr class="border-b border-gray-800"><td class="py-3 text-2xl">🎉</td><td>Events</td><td class="text-blue-400 font-mono text-xs">category-icons.ts</td><td class="font-mono text-xs text-green-400">getCategoryIcon('events')</td></tr>
+                        <tr class="border-b border-gray-800"><td class="py-3 text-2xl">🎨</td><td>Community</td><td class="text-blue-400 font-mono text-xs">category-icons.ts</td><td class="font-mono text-xs text-green-400">getCategoryIcon('community')</td></tr>
+                        <tr class="border-b border-gray-800"><td class="py-3 text-2xl">⚠️</td><td>Warning</td><td class="text-blue-400 font-mono text-xs">ui-icons.ts</td><td class="font-mono text-xs text-green-400">getUIIcon('warning')</td></tr>
+                        <tr class="border-b border-gray-800"><td class="py-3 text-2xl">🔧</td><td>Settings</td><td class="text-blue-400 font-mono text-xs">ui-icons.ts</td><td class="font-mono text-xs text-green-400">getUIIcon('settings')</td></tr>
+                        <tr class="border-b border-gray-800"><td class="py-3 text-2xl">📷</td><td>Camera</td><td class="text-blue-400 font-mono text-xs">ui-icons.ts</td><td class="font-mono text-xs text-green-400">getUIIcon('camera')</td></tr>
+                        <tr class="border-b border-gray-800"><td class="py-3 text-2xl">🌐</td><td>Globe</td><td class="text-blue-400 font-mono text-xs">ui-icons.ts</td><td class="font-mono text-xs text-green-400">getUIIcon('globe')</td></tr>
+                        <tr class="border-b border-gray-800"><td class="py-3 text-2xl">🔍</td><td>Search</td><td class="text-blue-400 font-mono text-xs">ui-icons.ts</td><td class="font-mono text-xs text-green-400">getUIIcon('search')</td></tr>
+                        <tr class="border-b border-gray-800"><td class="py-3 text-2xl">✏️</td><td>Edit</td><td class="text-blue-400 font-mono text-xs">ui-icons.ts</td><td class="font-mono text-xs text-green-400">getUIIcon('edit')</td></tr>
+                        <tr class="border-b border-gray-800"><td class="py-3 text-2xl">🗑️</td><td>Delete/Trash</td><td class="text-blue-400 font-mono text-xs">ui-icons.ts</td><td class="font-mono text-xs text-green-400">getUIIcon('trash')</td></tr>
+                        <tr><td class="py-3 text-2xl">📁</td><td>Folder</td><td class="text-blue-400 font-mono text-xs">empty-state-icons.ts</td><td class="font-mono text-xs text-green-400">getEmptyStateIcon('folder')</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Missing Section -->
+        <div class="glass-panel status-missing rounded-2xl p-8 mb-8">
+            <h2 class="text-2xl font-semibold text-red-400 mb-2 flex items-center">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                Need New SVG Icons
+            </h2>
+            <p class="text-gray-400 mb-6">These emojis are used in UI but don't have SVG equivalents. Icons provided in <code class="text-blue-400">missing-emoji-icons.ts</code></p>
+
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                    <div class="text-3xl mb-2">🔗</div>
+                    <div class="font-medium text-white">Link / Copy URL</div>
+                    <div class="text-xs text-gray-500 mt-1">preset-detail.ts, preset-detail-view.ts</div>
+                    <div class="text-xs text-red-400 mt-2">→ Add ICON_LINK to ui-icons.ts</div>
+                </div>
+                <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                    <div class="text-3xl mb-2">📝</div>
+                    <div class="font-medium text-white">Write / Submit</div>
+                    <div class="text-xs text-gray-500 mt-1">my-submissions-panel.ts, preset-tool.ts</div>
+                    <div class="text-xs text-red-400 mt-2">→ Add ICON_DOCUMENT to ui-icons.ts</div>
+                </div>
+                <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                    <div class="text-3xl mb-2">🔐</div>
+                    <div class="font-medium text-white">Locked / Auth</div>
+                    <div class="text-xs text-gray-500 mt-1">preset-tool.ts, auth-service.ts</div>
+                    <div class="text-xs text-red-400 mt-2">→ Add ICON_LOCKED to ui-icons.ts</div>
+                </div>
+                <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                    <div class="text-3xl mb-2">🔒</div>
+                    <div class="font-medium text-white">Lock / Security</div>
+                    <div class="text-xs text-gray-500 mt-1">image-upload-display.ts</div>
+                    <div class="text-xs text-red-400 mt-2">→ Add ICON_LOCK to ui-icons.ts</div>
+                </div>
+                <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                    <div class="text-3xl mb-2">📭</div>
+                    <div class="font-medium text-white">Empty / No Content</div>
+                    <div class="text-xs text-gray-500 mt-1">preset-tool.ts</div>
+                    <div class="text-xs text-red-400 mt-2">→ Add ICON_EMPTY_INBOX to empty-state-icons.ts</div>
+                </div>
+                <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                    <div class="text-3xl mb-2">📡</div>
+                    <div class="font-medium text-white">Network / Connection</div>
+                    <div class="text-xs text-gray-500 mt-1">offline-banner.ts, main.ts</div>
+                    <div class="text-xs text-red-400 mt-2">→ Add ICON_NETWORK to ui-icons.ts</div>
+                </div>
+                <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                    <div class="text-3xl mb-2">📚</div>
+                    <div class="font-medium text-white">Tutorial / Guide</div>
+                    <div class="text-xs text-gray-500 mt-1">tutorial-service.ts</div>
+                    <div class="text-xs text-red-400 mt-2">→ Add ICON_BOOK to ui-icons.ts</div>
+                </div>
+                <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                    <div class="text-3xl mb-2">✅</div>
+                    <div class="font-medium text-white">Success</div>
+                    <div class="text-xs text-gray-500 mt-1">Various services</div>
+                    <div class="text-xs text-red-400 mt-2">→ Add ICON_SUCCESS to ui-icons.ts</div>
+                </div>
+                <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                    <div class="text-3xl mb-2">❌</div>
+                    <div class="font-medium text-white">Error</div>
+                    <div class="text-xs text-gray-500 mt-1">main.ts, error handlers</div>
+                    <div class="text-xs text-red-400 mt-2">→ Add ICON_ERROR to ui-icons.ts</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Console Only Section -->
+        <div class="glass-panel status-console rounded-2xl p-8">
+            <h2 class="text-2xl font-semibold text-gray-400 mb-2 flex items-center">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                Console/Debug Only (Optional)
+            </h2>
+            <p class="text-gray-500 mb-6">These emojis only appear in developer console logs. Can remain as-is or optionally replace.</p>
+
+            <div class="flex flex-wrap gap-4">
+                <div class="flex items-center gap-2 bg-gray-800/50 px-4 py-2 rounded-lg">
+                    <span class="text-2xl">🚀</span>
+                    <span class="text-gray-400">Startup</span>
+                </div>
+                <div class="flex items-center gap-2 bg-gray-800/50 px-4 py-2 rounded-lg">
+                    <span class="text-2xl">🏗️</span>
+                    <span class="text-gray-400">Build</span>
+                </div>
+                <div class="flex items-center gap-2 bg-gray-800/50 px-4 py-2 rounded-lg">
+                    <span class="text-2xl">📦</span>
+                    <span class="text-gray-400">Package</span>
+                </div>
+                <div class="flex items-center gap-2 bg-gray-800/50 px-4 py-2 rounded-lg">
+                    <span class="text-2xl">📢</span>
+                    <span class="text-gray-400">Announcer</span>
+                </div>
+                <div class="flex items-center gap-2 bg-gray-800/50 px-4 py-2 rounded-lg">
+                    <span class="text-2xl">🍞</span>
+                    <span class="text-gray-400">Toast</span>
+                </div>
+                <div class="flex items-center gap-2 bg-gray-800/50 px-4 py-2 rounded-lg">
+                    <span class="text-2xl">📥</span>
+                    <span class="text-gray-400">Import</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Items -->
+        <div class="mt-12 glass-panel rounded-2xl p-8">
+            <h2 class="text-2xl font-semibold text-white mb-4">Action Items</h2>
+            <ol class="space-y-4 text-gray-300">
+                <li class="flex items-start gap-3">
+                    <span class="flex-shrink-0 w-8 h-8 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center font-bold">1</span>
+                    <div>
+                        <strong class="text-white">Copy icons from missing-emoji-icons.ts</strong>
+                        <p class="text-sm text-gray-500">Add ICON_LINK, ICON_DOCUMENT, ICON_LOCKED, etc. to ui-icons.ts</p>
+                    </div>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="flex-shrink-0 w-8 h-8 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center font-bold">2</span>
+                    <div>
+                        <strong class="text-white">Update UI_ICONS map</strong>
+                        <p class="text-sm text-gray-500">Register new icons in the lookup map at the bottom of ui-icons.ts</p>
+                    </div>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="flex-shrink-0 w-8 h-8 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center font-bold">3</span>
+                    <div>
+                        <strong class="text-white">Replace emoji usage in components</strong>
+                        <p class="text-sm text-gray-500">Use getUIIcon() / getCategoryIcon() instead of emoji literals</p>
+                    </div>
+                </li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" stroke-width="1.5" stroke="currentColor" fill="none">
+  <title>Announcer</title>
+  <!-- Megaphone - announcer indicator -->
+  <path d="M19 5L5 12l14 7V5z" stroke-linejoin="round"/>
+  <path d="M5 12H2" stroke-linecap="round"/>
+  <path d="M5 12v6a2 2 0 002 2h1" stroke-linecap="round"/>
+</svg>

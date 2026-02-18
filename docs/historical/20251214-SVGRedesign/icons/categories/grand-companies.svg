@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- XIV Dye Tools - Grand Companies Category Icon (Banner/Flag) -->
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+  <title>Grand Companies Category</title>
+  <path d="M5 4v16" stroke-width="2" />
+  <path d="M5 4h12l-3 5 3 5H5" />
+  <circle cx="5" cy="4" r="1" fill="currentColor" stroke="none" />
+</svg>

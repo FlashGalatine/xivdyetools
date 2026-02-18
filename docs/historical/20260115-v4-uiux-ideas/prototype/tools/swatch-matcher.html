@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swatch Matcher - XIV Dye Tools V4</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        /* Swatch Matcher Styles */
+        .matcher-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 32px;
+            gap: 24px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .matcher-layout {
+            display: flex;
+            gap: 24px;
+            min-height: 500px;
+            justify-content: center;
+        }
+
+        .matcher-grid-container {
+            flex: 0 0 auto;
+            /* Don't grow, size to content/width */
+            width: 340px;
+            /* Fixed width for 8 cols approx */
+            background: var(--bg-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .color-sheet-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 4px;
+            margin-top: 12px;
+        }
+
+        .sheet-swatch {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.1s, border-color 0.1s;
+        }
+
+        .sheet-swatch:hover {
+            transform: scale(1.15);
+            z-index: 10;
+            border-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .sheet-swatch.selected {
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px var(--accent-primary);
+            z-index: 5;
+        }
+
+        .matcher-results-area {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .matcher-selected-card {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .matcher-matches-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Simple App Header -->
+    <header class="app-header">
+        <div class="logo-section">
+            <svg class="logo-icon" viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
+                <path d="M10 12h4v4h-4z" />
+            </svg>
+            <span>XIV Dye Tools</span>
+        </div>
+        <div class="nav-controls">
+            <button class="nav-btn" title="About">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z" />
+                </svg>
+            </button>
+            <button class="nav-btn" title="Language">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.91 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.91-4.33-3.56zm2.95-8H5.08c.96-1.65 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-1.01 1.74-2.59 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z" />
+                </svg>
+            </button>
+            <button class="nav-btn" title="Theme" id="header-theme-btn">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M20 15.31L23.31 12 20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69zM12 18V6c3.31 0 6 2.69 6 6s-2.69 6-6 6z" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Tool Selection Banner -->
+    <nav class="tool-banner">
+        <a href="harmony-explorer.html" class="tool-btn" title="Harmony Explorer">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" opacity="0.3" />
+                <circle cx="12" cy="3" r="2.5" fill="currentColor" stroke="none" />
+                <circle cx="20.66" cy="16.5" r="2.5" fill="currentColor" stroke="none" />
+                <circle cx="3.34" cy="16.5" r="2.5" fill="currentColor" stroke="none" />
+                <polygon points="12,3 20.66,16.5 3.34,16.5" fill="none" opacity="0.5" />
+            </svg>
+            <span class="tool-label">Harmony</span>
+        </a>
+        <a href="swatch-matcher.html" class="tool-btn active" title="Swatch Matcher">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="7" r="4" opacity="0.7" />
+                <path d="M5.5 21c0-4.5 3-7 6.5-7s6.5 2.5 6.5 7" opacity="0.4" />
+                <rect x="16" y="11" width="3" height="3" rx="0.5" fill="currentColor" stroke="none" />
+                <rect x="16" y="15" width="3" height="3" rx="0.5" fill="currentColor" stroke="none" opacity="0.6" />
+                <rect x="16" y="19" width="3" height="3" rx="0.5" fill="currentColor" stroke="none" opacity="0.3" />
+            </svg>
+            <span class="tool-label">Matcher</span>
+        </a>
+        <a href="palette-extractor.html" class="tool-btn" title="Palette Extractor">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" opacity="0.3" />
+                <circle cx="12" cy="12" r="6.5" opacity="0.5" />
+                <circle cx="12" cy="12" r="3.5" opacity="0.7" />
+                <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+            </svg>
+            <span class="tool-label">Extractor</span>
+        </a>
+        <a href="accessibility-checker.html" class="tool-btn" title="Accessibility Checker">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M 2 12 Q 12 5 22 12 Q 12 19 2 12 Z" />
+                <circle cx="12" cy="12" r="3.5" />
+                <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+            </svg>
+            <span class="tool-label">Accessibility</span>
+        </a>
+        <a href="dye-comparison.html" class="tool-btn" title="Dye Comparison">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="4" width="11" height="11" rx="2" opacity="0.4" />
+                <rect x="4" y="9" width="11" height="11" rx="2" />
+                <path d="M16 19l2 2 4-4" opacity="0.6" />
+                <path d="M8 12h.01" stroke-width="3" />
+                <path d="M13 7h.01" stroke-width="3" opacity="0.4" />
+            </svg>
+            <span class="tool-label">Compare</span>
+        </a>
+        <a href="gradient-builder.html" class="tool-btn" title="Gradient Builder">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M 4 8 C 4 6 5 5 7 5 L 17 5 C 19 5 20 6 20 8 L 20 16 C 20 18 19 19 17 19 L 7 19 C 5 19 4 18 4 16 Z" />
+                <circle cx="18" cy="16" r="1.5" fill="currentColor" stroke="none" />
+                <circle cx="8" cy="10" r="2" opacity="0.5" />
+                <circle cx="12" cy="10" r="2" opacity="0.5" />
+                <circle cx="16" cy="10" r="2" opacity="0.5" />
+                <line x1="6" y1="15" x2="10" y2="15" stroke-width="2" />
+                <path d="M 10 15 L 12 13 L 12 17 Z" fill="currentColor" stroke="none" opacity="0.7" />
+            </svg>
+            <span class="tool-label">Gradient</span>
+        </a>
+        <a href="dye-mixer.html" class="tool-btn" title="Dye Mixer">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5l-8 14h16l-8-14zM12 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" opacity="0.5" />
+                <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" fill="currentColor" stroke="none" />
+            </svg>
+            <span class="tool-label">Mixer</span>
+        </a>
+        <a href="budget-suggestions.html" class="tool-btn" title="Budget Suggestions">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9" opacity="0.3" />
+                <path d="M12 6v2m0 8v2" />
+                <path d="M9 10c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2s-.9 2-2 2h-2c-1.1 0-2 .9-2 2s.9 2 2 2h2c1.1 0 2-.9 2-2" />
+                <path d="M17 7l2-2m0 0l2 2m-2-2v5" opacity="0.7" />
+            </svg>
+            <span class="tool-label">Budget</span>
+        </a>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="app-container">
+
+        <!-- Configuration Sidebar -->
+        <aside class="config-sidebar">
+            <div class="drawer-header">
+                <span class="drawer-title">Configuration</span>
+            </div>
+            <div class="drawer-content">
+
+                <!-- Matcher Configuration -->
+                <div class="config-section matcher-config">
+                    <div class="config-group">
+                        <div class="config-label">Color Sheet</div>
+                        <div class="config-control" style="flex-direction: column; gap: 8px; align-items: stretch;">
+                            <select class="matcher-select" id="matcher-sheet-select"
+                                style="width:100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 4px;">
+                                <option selected>EyeColors.csv</option>
+                                <option disabled>HairColors.csv (N/A)</option>
+                                <option disabled>SkinColors.csv (N/A)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <div class="config-label">Character</div>
+                        <div class="config-control" style="flex-direction: column; gap: 8px; align-items: stretch;">
+                            <span style="font-size: 11px; color: var(--text-secondary);">Race</span>
+                            <select class="matcher-select" id="matcher-race-select"
+                                style="width:100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 4px;">
+                                <option selected>Hyur (Midlander)</option>
+                                <option>Hyur (Highlander)</option>
+                                <option>Elezen</option>
+                                <option>Lalafell</option>
+                                <option>Miqo'te</option>
+                                <option>Roegadyn</option>
+                                <option>Au Ra</option>
+                                <option>Hrothgar</option>
+                                <option>Viera</option>
+                            </select>
+                        </div>
+                        <div class="config-control"
+                            style="flex-direction: column; gap: 8px; align-items: stretch; margin-top: 8px;">
+                            <span style="font-size: 11px; color: var(--text-secondary);">Gender</span>
+                            <select class="matcher-select" id="matcher-gender-select"
+                                style="width:100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 4px;">
+                                <option selected>Male</option>
+                                <option>Female</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <div class="config-label">Search Settings</div>
+                        <div class="config-control" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                            <div style="display: flex; justify-content: space-between; width: 100%;">
+                                <span style="font-size: 11px; color: var(--text-secondary);">Max Results</span>
+                                <span style="font-size: 11px; font-weight: 600;" id="matcher-count-val">3</span>
+                            </div>
+                            <input type="range" class="step-slider" id="matcher-result-slider" min="1" max="8" value="3"
+                                style="width: 100%;">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <!-- Swatch Matcher View -->
+            <div class="matcher-view" style="display: flex;">
+                <div class="matcher-layout">
+                    <!-- Left: Color Sheet Grid -->
+                    <div class="matcher-grid-container glass">
+                        <div class="section-header"
+                            style="width:100%; justify-content: space-between; margin-bottom: 0;">
+                            <span class="section-title">EyeColors (192)</span>
+                        </div>
+                        <div class="color-sheet-grid" id="matcher-grid"></div>
+                    </div>
+
+                    <!-- Right: Results & Info -->
+                    <div class="matcher-results-area">
+                        <!-- Selected Color Technical Info -->
+                        <div class="harmony-card matcher-selected-card">
+                            <div class="card-header"><span class="dye-name">Selected Color</span></div>
+                            <div class="card-preview" style="height: 80px;">
+                                <div class="preview-half" id="matcher-preview-color"
+                                    style="background-color: #333; flex:1;">
+                                    <span class="preview-label">Color</span>
+                                </div>
+                            </div>
+                            <div class="card-details">
+                                <div class="detail-col">
+                                    <div class="col-header">Technical</div>
+                                    <div class="data-row"><span class="data-label">HEX</span><span class="data-value"
+                                            id="matcher-data-hex">--</span></div>
+                                    <div class="data-row"><span class="data-label">RGB</span><span class="data-value"
+                                            id="matcher-data-rgb">--</span></div>
+                                    <div class="data-row"><span class="data-label">HSV</span><span class="data-value"
+                                            id="matcher-data-hsv">--</span></div>
+                                    <div class="data-row"><span class="data-label">LAB</span><span class="data-value"
+                                            id="matcher-data-lab">--</span></div>
+                                </div>
+                                <div class="detail-col">
+                                    <div class="col-header">Grid Info</div>
+                                    <div class="data-row"><span class="data-label">Index</span><span class="data-value"
+                                            id="matcher-data-index">--</span></div>
+                                    <div class="data-row"><span class="data-label">Row</span><span class="data-value"
+                                            id="matcher-data-row">--</span></div>
+                                    <div class="data-row"><span class="data-label">Col</span><span class="data-value"
+                                            id="matcher-data-col">--</span></div>
+                                </div>
+                            </div>
+                            <div class="card-actions">
+                                <div class="action-row"><button class="primary-action-btn">Copy Values</button></div>
+                            </div>
+                        </div>
+
+                        <!-- Matching Dyes (Mocked Results) -->
+                        <div class="matcher-matches-section">
+                            <div class="section-header">
+                                <span class="section-title">Matching Dyes</span>
+                            </div>
+                            <div class="harmony-results"
+                                style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                                <!-- Mock Match 1 -->
+                                <div class="harmony-card" style="min-width: 280px;">
+                                    <div class="card-header"><span class="dye-name">Kobold Brown</span></div>
+                                    <div class="card-preview">
+                                        <div class="preview-half" style="background-color: #6d5440;"><span
+                                                class="preview-label">Target</span></div>
+                                        <div class="preview-half" style="background-color: #6b4743;"><span
+                                                class="preview-label">Match</span></div>
+                                    </div>
+                                    <div class="card-details">
+                                        <div class="detail-col">
+                                            <div class="col-header">Technical</div>
+                                            <div class="data-row"><span class="data-label">ΔE</span><span
+                                                    class="data-value" style="color:#4caf50;">2.1</span></div>
+                                            <div class="data-row"><span class="data-label">HEX</span><span
+                                                    class="data-value">#6B4743</span></div>
+                                            <div class="data-row"><span class="data-label">RGB</span><span
+                                                    class="data-value">107,71,67</span></div>
+                                            <div class="data-row"><span class="data-label">HSV</span><span
+                                                    class="data-value">6,37,42</span></div>
+                                            <div class="data-row"><span class="data-label">LAB</span><span
+                                                    class="data-value">35, 14, 10</span></div>
+                                        </div>
+                                        <div class="detail-col">
+                                            <div class="col-header">Acquisition</div>
+                                            <div class="data-row"><span class="data-label">Source</span><span
+                                                    class="data-value">Vendor</span></div>
+                                            <div class="data-row"><span class="data-label">Cost</span><span
+                                                    class="data-value">40 G</span></div>
+                                            <div class="data-row"><span class="data-label">Market</span><span
+                                                    class="data-value">Balmung</span></div>
+                                            <div class="data-row"><span class="price-large">216 G</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="card-actions">
+                                        <div class="action-row"><button class="primary-action-btn">Select Dye</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Mock Match 2 -->
+                                <div class="harmony-card" style="min-width: 280px;">
+                                    <div class="card-header"><span class="dye-name">Wine Red</span></div>
+                                    <div class="card-preview">
+                                        <div class="preview-half" style="background-color: #6d5440;"><span
+                                                class="preview-label">Target</span></div>
+                                        <div class="preview-half" style="background-color: #59252c;"><span
+                                                class="preview-label">Match</span></div>
+                                    </div>
+                                    <div class="card-details">
+                                        <div class="detail-col">
+                                            <div class="col-header">Technical</div>
+                                            <div class="data-row"><span class="data-label">ΔE</span><span
+                                                    class="data-value" style="color:#ffc107;">4.5</span></div>
+                                            <div class="data-row"><span class="data-label">HEX</span><span
+                                                    class="data-value">#59252C</span></div>
+                                            <div class="data-row"><span class="data-label">RGB</span><span
+                                                    class="data-value">89,37,44</span></div>
+                                            <div class="data-row"><span class="data-label">HSV</span><span
+                                                    class="data-value">352,58,35</span></div>
+                                            <div class="data-row"><span class="data-label">LAB</span><span
+                                                    class="data-value">22, 24, 12</span></div>
+                                        </div>
+                                        <div class="detail-col">
+                                            <div class="col-header">Acquisition</div>
+                                            <div class="data-row"><span class="data-label">Source</span><span
+                                                    class="data-value">Market</span></div>
+                                            <div class="data-row"><span class="data-label">Cost</span><span
+                                                    class="data-value">---</span></div>
+                                            <div class="data-row"><span class="data-label">Market</span><span
+                                                    class="data-value">Mateus</span></div>
+                                            <div class="data-row"><span class="price-large">150 G</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="card-actions">
+                                        <div class="action-row"><button class="primary-action-btn">Select Dye</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Mock Match 3 -->
+                                <div class="harmony-card" style="min-width: 280px;">
+                                    <div class="card-header"><span class="dye-name">Rust Red</span></div>
+                                    <div class="card-preview">
+                                        <div class="preview-half" style="background-color: #6d5440;"><span
+                                                class="preview-label">Target</span></div>
+                                        <div class="preview-half" style="background-color: #8b4513;"><span
+                                                class="preview-label">Match</span></div>
+                                    </div>
+                                    <div class="card-details">
+                                        <div class="detail-col">
+                                            <div class="col-header">Technical</div>
+                                            <div class="data-row"><span class="data-label">ΔE</span><span
+                                                    class="data-value" style="color:#ffc107;">5.2</span></div>
+                                            <div class="data-row"><span class="data-label">HEX</span><span
+                                                    class="data-value">#8B4513</span></div>
+                                            <div class="data-row"><span class="data-label">RGB</span><span
+                                                    class="data-value">139,69,19</span></div>
+                                            <div class="data-row"><span class="data-label">HSV</span><span
+                                                    class="data-value">25,86,55</span></div>
+                                            <div class="data-row"><span class="data-label">LAB</span><span
+                                                    class="data-value">37, 23, 40</span></div>
+                                        </div>
+                                        <div class="detail-col">
+                                            <div class="col-header">Acquisition</div>
+                                            <div class="data-row"><span class="data-label">Source</span><span
+                                                    class="data-value">Vendor</span></div>
+                                            <div class="data-row"><span class="data-label">Cost</span><span
+                                                    class="data-value">40 G</span></div>
+                                            <div class="data-row"><span class="data-label">Market</span><span
+                                                    class="data-value">Balmung</span></div>
+                                            <div class="data-row"><span class="price-large">180 G</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="card-actions">
+                                        <div class="action-row"><button class="primary-action-btn">Select Dye</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Mock Match 4 -->
+                                <div class="harmony-card" style="min-width: 280px;">
+                                    <div class="card-header"><span class="dye-name">Desert Yellow</span></div>
+                                    <div class="card-preview">
+                                        <div class="preview-half" style="background-color: #6d5440;"><span
+                                                class="preview-label">Target</span></div>
+                                        <div class="preview-half" style="background-color: #c9a246;"><span
+                                                class="preview-label">Match</span></div>
+                                    </div>
+                                    <div class="card-details">
+                                        <div class="detail-col">
+                                            <div class="col-header">Technical</div>
+                                            <div class="data-row"><span class="data-label">ΔE</span><span
+                                                    class="data-value" style="color:#ff9800;">6.8</span></div>
+                                            <div class="data-row"><span class="data-label">HEX</span><span
+                                                    class="data-value">#C9A246</span></div>
+                                            <div class="data-row"><span class="data-label">RGB</span><span
+                                                    class="data-value">201,162,70</span></div>
+                                            <div class="data-row"><span class="data-label">HSV</span><span
+                                                    class="data-value">42,65,79</span></div>
+                                            <div class="data-row"><span class="data-label">LAB</span><span
+                                                    class="data-value">68, 6, 53</span></div>
+                                        </div>
+                                        <div class="detail-col">
+                                            <div class="col-header">Acquisition</div>
+                                            <div class="data-row"><span class="data-label">Source</span><span
+                                                    class="data-value">Craft</span></div>
+                                            <div class="data-row"><span class="data-label">Cost</span><span
+                                                    class="data-value">---</span></div>
+                                            <div class="data-row"><span class="data-label">Market</span><span
+                                                    class="data-value">Gilgamesh</span></div>
+                                            <div class="data-row"><span class="price-large">320 G</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="card-actions">
+                                        <div class="action-row"><button class="primary-action-btn">Select Dye</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Mock Match 5 -->
+                                <div class="harmony-card" style="min-width: 280px;">
+                                    <div class="card-header"><span class="dye-name">Turquoise Green</span></div>
+                                    <div class="card-preview">
+                                        <div class="preview-half" style="background-color: #6d5440;"><span
+                                                class="preview-label">Target</span></div>
+                                        <div class="preview-half" style="background-color: #3d8b8b;"><span
+                                                class="preview-label">Match</span></div>
+                                    </div>
+                                    <div class="card-details">
+                                        <div class="detail-col">
+                                            <div class="col-header">Technical</div>
+                                            <div class="data-row"><span class="data-label">ΔE</span><span
+                                                    class="data-value" style="color:#f44336;">8.4</span></div>
+                                            <div class="data-row"><span class="data-label">HEX</span><span
+                                                    class="data-value">#3D8B8B</span></div>
+                                            <div class="data-row"><span class="data-label">RGB</span><span
+                                                    class="data-value">61,139,139</span></div>
+                                            <div class="data-row"><span class="data-label">HSV</span><span
+                                                    class="data-value">180,56,55</span></div>
+                                            <div class="data-row"><span class="data-label">LAB</span><span
+                                                    class="data-value">53, -23, -8</span></div>
+                                        </div>
+                                        <div class="detail-col">
+                                            <div class="col-header">Acquisition</div>
+                                            <div class="data-row"><span class="data-label">Source</span><span
+                                                    class="data-value">Dungeon</span></div>
+                                            <div class="data-row"><span class="data-label">Cost</span><span
+                                                    class="data-value">---</span></div>
+                                            <div class="data-row"><span class="data-label">Market</span><span
+                                                    class="data-value">Cactuar</span></div>
+                                            <div class="data-row"><span class="price-large">450 G</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="card-actions">
+                                        <div class="action-row"><button class="primary-action-btn">Select Dye</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Mock Match 6 -->
+                                <div class="harmony-card" style="min-width: 280px;">
+                                    <div class="card-header"><span class="dye-name">Slate Grey</span></div>
+                                    <div class="card-preview">
+                                        <div class="preview-half" style="background-color: #6d5440;"><span
+                                                class="preview-label">Target</span></div>
+                                        <div class="preview-half" style="background-color: #5e5e5e;"><span
+                                                class="preview-label">Match</span></div>
+                                    </div>
+                                    <div class="card-details">
+                                        <div class="detail-col">
+                                            <div class="col-header">Technical</div>
+                                            <div class="data-row"><span class="data-label">ΔE</span><span
+                                                    class="data-value" style="color:#f44336;">9.1</span></div>
+                                            <div class="data-row"><span class="data-label">HEX</span><span
+                                                    class="data-value">#5E5E5E</span></div>
+                                            <div class="data-row"><span class="data-label">RGB</span><span
+                                                    class="data-value">94,94,94</span></div>
+                                            <div class="data-row"><span class="data-label">HSV</span><span
+                                                    class="data-value">0,0,37</span></div>
+                                            <div class="data-row"><span class="data-label">LAB</span><span
+                                                    class="data-value">40, 0, 0</span></div>
+                                        </div>
+                                        <div class="detail-col">
+                                            <div class="col-header">Acquisition</div>
+                                            <div class="data-row"><span class="data-label">Source</span><span
+                                                    class="data-value">Vendor</span></div>
+                                            <div class="data-row"><span class="data-label">Cost</span><span
+                                                    class="data-value">40 G</span></div>
+                                            <div class="data-row"><span class="data-label">Market</span><span
+                                                    class="data-value">Balmung</span></div>
+                                            <div class="data-row"><span class="price-large">95 G</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="card-actions">
+                                        <div class="action-row"><button class="primary-action-btn">Select Dye</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <script>
+        // Toggle switches
+        document.querySelectorAll('.toggle-switch').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
+
+        // Max Results slider
+        const resultSlider = document.getElementById('matcher-result-slider');
+        const countVal = document.getElementById('matcher-count-val');
+        if (resultSlider && countVal) {
+            resultSlider.addEventListener('input', function() {
+                countVal.textContent = this.value;
+            });
+        }
+
+        // Eye Colors data from EyeColors.csv
+        const eyeColors = [
+            { index: 0, hex: "#F7F7F7", r: 247, g: 247, b: 247, h: 0.0, s: 0.000, v: 0.969 },
+            { index: 1, hex: "#E7E7E7", r: 231, g: 231, b: 231, h: 0.0, s: 0.000, v: 0.906 },
+            { index: 2, hex: "#D3D3D3", r: 211, g: 211, b: 211, h: 0.0, s: 0.000, v: 0.827 },
+            { index: 3, hex: "#B3B3B3", r: 179, g: 179, b: 179, h: 0.0, s: 0.000, v: 0.702 },
+            { index: 4, hex: "#878787", r: 135, g: 135, b: 135, h: 0.0, s: 0.000, v: 0.529 },
+            { index: 5, hex: "#5C5C5C", r: 92, g: 92, b: 92, h: 0.0, s: 0.000, v: 0.361 },
+            { index: 6, hex: "#3B3B3B", r: 59, g: 59, b: 59, h: 0.0, s: 0.000, v: 0.231 },
+            { index: 7, hex: "#262626", r: 38, g: 38, b: 38, h: 0.0, s: 0.000, v: 0.149 },
+            { index: 8, hex: "#FCF9EB", r: 252, g: 249, b: 235, h: 49.4, s: 0.067, v: 0.988 },
+            { index: 9, hex: "#FAF7DF", r: 250, g: 247, b: 223, h: 53.3, s: 0.108, v: 0.980 },
+            { index: 10, hex: "#F0EACB", r: 240, g: 234, b: 203, h: 50.3, s: 0.154, v: 0.941 },
+            { index: 11, hex: "#D7CFAF", r: 215, g: 207, b: 175, h: 48.0, s: 0.186, v: 0.843 },
+            { index: 12, hex: "#B9AF90", r: 185, g: 175, b: 144, h: 45.4, s: 0.222, v: 0.725 },
+            { index: 13, hex: "#998C70", r: 153, g: 140, b: 112, h: 41.0, s: 0.268, v: 0.600 },
+            { index: 14, hex: "#7B6B52", r: 123, g: 107, b: 82, h: 36.6, s: 0.333, v: 0.482 },
+            { index: 15, hex: "#63513A", r: 99, g: 81, b: 58, h: 33.7, s: 0.414, v: 0.388 },
+            { index: 16, hex: "#FAF6E1", r: 250, g: 246, b: 225, h: 50.4, s: 0.100, v: 0.980 },
+            { index: 17, hex: "#F7F0CF", r: 247, g: 240, b: 207, h: 49.5, s: 0.162, v: 0.969 },
+            { index: 18, hex: "#EDE2B6", r: 237, g: 226, b: 182, h: 48.0, s: 0.232, v: 0.929 },
+            { index: 19, hex: "#D4C89B", r: 212, g: 200, b: 155, h: 47.4, s: 0.269, v: 0.831 },
+            { index: 20, hex: "#B7A981", r: 183, g: 169, b: 129, h: 44.4, s: 0.295, v: 0.718 },
+            { index: 21, hex: "#978764", r: 151, g: 135, b: 100, h: 41.2, s: 0.338, v: 0.592 },
+            { index: 22, hex: "#7A6849", r: 122, g: 104, b: 73, h: 38.0, s: 0.402, v: 0.478 },
+            { index: 23, hex: "#634F33", r: 99, g: 79, b: 51, h: 35.0, s: 0.485, v: 0.388 },
+            { index: 24, hex: "#F9F1D4", r: 249, g: 241, b: 212, h: 47.0, s: 0.149, v: 0.976 },
+            { index: 25, hex: "#F4E8BB", r: 244, g: 232, b: 187, h: 47.4, s: 0.234, v: 0.957 },
+            { index: 26, hex: "#E9D79B", r: 233, g: 215, b: 155, h: 46.2, s: 0.335, v: 0.914 },
+            { index: 27, hex: "#D1BD82", r: 209, g: 189, b: 130, h: 44.8, s: 0.378, v: 0.820 },
+            { index: 28, hex: "#B49F6B", r: 180, g: 159, b: 107, h: 42.7, s: 0.406, v: 0.706 },
+            { index: 29, hex: "#957F53", r: 149, g: 127, b: 83, h: 40.0, s: 0.443, v: 0.584 },
+            { index: 30, hex: "#78613D", r: 120, g: 97, b: 61, h: 36.6, s: 0.492, v: 0.471 },
+            { index: 31, hex: "#614A2C", r: 97, g: 74, b: 44, h: 34.0, s: 0.546, v: 0.380 },
+            { index: 32, hex: "#F5E9C7", r: 245, g: 233, b: 199, h: 44.3, s: 0.188, v: 0.961 },
+            { index: 33, hex: "#F0DDA7", r: 240, g: 221, b: 167, h: 44.4, s: 0.304, v: 0.941 },
+            { index: 34, hex: "#E2C982", r: 226, g: 201, b: 130, h: 44.4, s: 0.425, v: 0.886 },
+            { index: 35, hex: "#CBAF69", r: 203, g: 175, b: 105, h: 42.9, s: 0.483, v: 0.796 },
+            { index: 36, hex: "#AE9357", r: 174, g: 147, b: 87, h: 41.4, s: 0.500, v: 0.682 },
+            { index: 37, hex: "#907644", r: 144, g: 118, b: 68, h: 39.5, s: 0.528, v: 0.565 },
+            { index: 38, hex: "#745A32", r: 116, g: 90, b: 50, h: 36.4, s: 0.569, v: 0.455 },
+            { index: 39, hex: "#5E4524", r: 94, g: 69, b: 36, h: 34.1, s: 0.617, v: 0.369 },
+            { index: 40, hex: "#F2E2BC", r: 242, g: 226, b: 188, h: 42.2, s: 0.223, v: 0.949 },
+            { index: 41, hex: "#EBD296", r: 235, g: 210, b: 150, h: 42.4, s: 0.362, v: 0.922 },
+            { index: 42, hex: "#DCBA6C", r: 220, g: 186, b: 108, h: 41.8, s: 0.509, v: 0.863 },
+            { index: 43, hex: "#C4A154", r: 196, g: 161, b: 84, h: 41.2, s: 0.571, v: 0.769 },
+            { index: 44, hex: "#A98746", r: 169, g: 135, b: 70, h: 39.4, s: 0.586, v: 0.663 },
+            { index: 45, hex: "#8B6C36", r: 139, g: 108, b: 54, h: 38.1, s: 0.612, v: 0.545 },
+            { index: 46, hex: "#705328", r: 112, g: 83, b: 40, h: 35.8, s: 0.643, v: 0.439 },
+            { index: 47, hex: "#5A3F1C", r: 90, g: 63, b: 28, h: 33.9, s: 0.689, v: 0.353 },
+            { index: 48, hex: "#EFD8B3", r: 239, g: 216, b: 179, h: 37.0, s: 0.251, v: 0.937 },
+            { index: 49, hex: "#E5C287", r: 229, g: 194, b: 135, h: 37.7, s: 0.410, v: 0.898 },
+            { index: 50, hex: "#D5A658", r: 213, g: 166, b: 88, h: 37.4, s: 0.587, v: 0.835 },
+            { index: 51, hex: "#BD8E41", r: 189, g: 142, b: 65, h: 37.3, s: 0.656, v: 0.741 },
+            { index: 52, hex: "#A37836", r: 163, g: 120, b: 54, h: 36.3, s: 0.669, v: 0.639 },
+            { index: 53, hex: "#865F2A", r: 134, g: 95, b: 42, h: 34.6, s: 0.687, v: 0.525 },
+            { index: 54, hex: "#6C4A1F", r: 108, g: 74, b: 31, h: 33.5, s: 0.713, v: 0.424 },
+            { index: 55, hex: "#583917", r: 88, g: 57, b: 23, h: 31.4, s: 0.739, v: 0.345 },
+            { index: 56, hex: "#EBCEAC", r: 235, g: 206, b: 172, h: 32.4, s: 0.268, v: 0.922 },
+            { index: 57, hex: "#E1B27C", r: 225, g: 178, b: 124, h: 32.1, s: 0.449, v: 0.882 },
+            { index: 58, hex: "#CF9149", r: 207, g: 145, b: 73, h: 32.2, s: 0.647, v: 0.812 },
+            { index: 59, hex: "#B87A34", r: 184, g: 122, b: 52, h: 31.8, s: 0.717, v: 0.722 },
+            { index: 60, hex: "#9E662B", r: 158, g: 102, b: 43, h: 30.8, s: 0.728, v: 0.620 },
+            { index: 61, hex: "#835222", r: 131, g: 82, b: 34, h: 29.7, s: 0.740, v: 0.514 },
+            { index: 62, hex: "#693F19", r: 105, g: 63, b: 25, h: 28.5, s: 0.762, v: 0.412 },
+            { index: 63, hex: "#553112", r: 85, g: 49, b: 18, h: 27.8, s: 0.788, v: 0.333 },
+            { index: 64, hex: "#E8C5A9", r: 232, g: 197, b: 169, h: 26.7, s: 0.272, v: 0.910 },
+            { index: 65, hex: "#DBA477", r: 219, g: 164, b: 119, h: 27.0, s: 0.457, v: 0.859 },
+            { index: 66, hex: "#C87E43", r: 200, g: 126, b: 67, h: 26.6, s: 0.665, v: 0.784 },
+            { index: 67, hex: "#B1672D", r: 177, g: 103, b: 45, h: 26.4, s: 0.746, v: 0.694 },
+            { index: 68, hex: "#985726", r: 152, g: 87, b: 38, h: 25.8, s: 0.750, v: 0.596 },
+            { index: 69, hex: "#7D461D", r: 125, g: 70, b: 29, h: 25.6, s: 0.768, v: 0.490 },
+            { index: 70, hex: "#653616", r: 101, g: 54, b: 22, h: 24.3, s: 0.782, v: 0.396 },
+            { index: 71, hex: "#512910", r: 81, g: 41, b: 16, h: 23.1, s: 0.802, v: 0.318 },
+            { index: 72, hex: "#E5BCA9", r: 229, g: 188, b: 169, h: 19.0, s: 0.262, v: 0.898 },
+            { index: 73, hex: "#D79577", r: 215, g: 149, b: 119, h: 18.8, s: 0.447, v: 0.843 },
+            { index: 74, hex: "#C26B43", r: 194, g: 107, b: 67, h: 18.9, s: 0.655, v: 0.761 },
+            { index: 75, hex: "#AA552E", r: 170, g: 85, b: 46, h: 18.9, s: 0.729, v: 0.667 },
+            { index: 76, hex: "#934826", r: 147, g: 72, b: 38, h: 18.7, s: 0.741, v: 0.576 },
+            { index: 77, hex: "#7A3A1E", r: 122, g: 58, b: 30, h: 18.3, s: 0.754, v: 0.478 },
+            { index: 78, hex: "#622D17", r: 98, g: 45, b: 23, h: 17.6, s: 0.765, v: 0.384 },
+            { index: 79, hex: "#4F2311", r: 79, g: 35, b: 17, h: 17.4, s: 0.785, v: 0.310 },
+            { index: 80, hex: "#E3B4AC", r: 227, g: 180, b: 172, h: 8.7, s: 0.242, v: 0.890 },
+            { index: 81, hex: "#D3887C", r: 211, g: 136, b: 124, h: 8.3, s: 0.412, v: 0.827 },
+            { index: 82, hex: "#BB5948", r: 187, g: 89, b: 72, h: 8.9, s: 0.615, v: 0.733 },
+            { index: 83, hex: "#A54433", r: 165, g: 68, b: 51, h: 8.9, s: 0.691, v: 0.647 },
+            { index: 84, hex: "#8E392B", r: 142, g: 57, b: 43, h: 8.5, s: 0.697, v: 0.557 },
+            { index: 85, hex: "#752F22", r: 117, g: 47, b: 34, h: 9.4, s: 0.709, v: 0.459 },
+            { index: 86, hex: "#5E2419", r: 94, g: 36, b: 25, h: 9.6, s: 0.734, v: 0.369 },
+            { index: 87, hex: "#4C1C12", r: 76, g: 28, b: 18, h: 10.3, s: 0.763, v: 0.298 },
+            { index: 88, hex: "#DFAEB1", r: 223, g: 174, b: 177, h: 356.3, s: 0.220, v: 0.875 },
+            { index: 89, hex: "#CE7F84", r: 206, g: 127, b: 132, h: 356.2, s: 0.383, v: 0.808 },
+            { index: 90, hex: "#B64D52", r: 182, g: 77, b: 82, h: 357.1, s: 0.577, v: 0.714 },
+            { index: 91, hex: "#9F3A3E", r: 159, g: 58, b: 62, h: 357.6, s: 0.635, v: 0.624 },
+            { index: 92, hex: "#893034", r: 137, g: 48, b: 52, h: 357.3, s: 0.650, v: 0.537 },
+            { index: 93, hex: "#712628", r: 113, g: 38, b: 40, h: 358.4, s: 0.664, v: 0.443 },
+            { index: 94, hex: "#5A1D1F", r: 90, g: 29, b: 31, h: 358.0, s: 0.678, v: 0.353 },
+            { index: 95, hex: "#481619", r: 72, g: 22, b: 25, h: 356.4, s: 0.694, v: 0.282 },
+            { index: 96, hex: "#DAABB8", r: 218, g: 171, b: 184, h: 343.4, s: 0.216, v: 0.855 },
+            { index: 97, hex: "#C77A8F", r: 199, g: 122, b: 143, h: 343.6, s: 0.387, v: 0.780 },
+            { index: 98, hex: "#AD4762", r: 173, g: 71, b: 98, h: 344.1, s: 0.590, v: 0.678 },
+            { index: 99, hex: "#96344E", r: 150, g: 52, b: 78, h: 344.1, s: 0.653, v: 0.588 },
+            { index: 100, hex: "#812C42", r: 129, g: 44, b: 66, h: 344.5, s: 0.659, v: 0.506 },
+            { index: 101, hex: "#6A2335", r: 106, g: 35, b: 53, h: 344.8, s: 0.670, v: 0.416 },
+            { index: 102, hex: "#551B29", r: 85, g: 27, b: 41, h: 345.5, s: 0.682, v: 0.333 },
+            { index: 103, hex: "#441520", r: 68, g: 21, b: 32, h: 345.9, s: 0.691, v: 0.267 },
+            { index: 104, hex: "#D5ACC3", r: 213, g: 172, b: 195, h: 326.3, s: 0.192, v: 0.835 },
+            { index: 105, hex: "#C07CA0", r: 192, g: 124, b: 160, h: 328.2, s: 0.354, v: 0.753 },
+            { index: 106, hex: "#A54B78", r: 165, g: 75, b: 120, h: 330.0, s: 0.545, v: 0.647 },
+            { index: 107, hex: "#8E3963", r: 142, g: 57, b: 99, h: 330.4, s: 0.599, v: 0.557 },
+            { index: 108, hex: "#7A3154", r: 122, g: 49, b: 84, h: 331.2, s: 0.598, v: 0.478 },
+            { index: 109, hex: "#642845", r: 100, g: 40, b: 69, h: 331.0, s: 0.600, v: 0.392 },
+            { index: 110, hex: "#501F36", r: 80, g: 31, b: 54, h: 331.8, s: 0.613, v: 0.314 },
+            { index: 111, hex: "#40182A", r: 64, g: 24, b: 42, h: 333.0, s: 0.625, v: 0.251 },
+            { index: 112, hex: "#D1AEC9", r: 209, g: 174, b: 201, h: 313.7, s: 0.167, v: 0.820 },
+            { index: 113, hex: "#BA7FAC", r: 186, g: 127, b: 172, h: 314.2, s: 0.317, v: 0.729 },
+            { index: 114, hex: "#9D4F8B", r: 157, g: 79, b: 139, h: 313.8, s: 0.497, v: 0.616 },
+            { index: 115, hex: "#873E77", r: 135, g: 62, b: 119, h: 313.2, s: 0.541, v: 0.529 },
+            { index: 116, hex: "#743567", r: 116, g: 53, b: 103, h: 312.4, s: 0.543, v: 0.455 },
+            { index: 117, hex: "#5F2B54", r: 95, g: 43, b: 84, h: 312.7, s: 0.547, v: 0.373 },
+            { index: 118, hex: "#4C2243", r: 76, g: 34, b: 67, h: 312.9, s: 0.553, v: 0.298 },
+            { index: 119, hex: "#3C1A35", r: 60, g: 26, b: 53, h: 312.4, s: 0.567, v: 0.235 },
+            { index: 120, hex: "#CEAED0", r: 206, g: 174, b: 208, h: 296.5, s: 0.163, v: 0.816 },
+            { index: 121, hex: "#B380B9", r: 179, g: 128, b: 185, h: 293.7, s: 0.308, v: 0.725 },
+            { index: 122, hex: "#94509D", r: 148, g: 80, b: 157, h: 292.9, s: 0.490, v: 0.616 },
+            { index: 123, hex: "#7E3F88", r: 126, g: 63, b: 136, h: 291.8, s: 0.537, v: 0.533 },
+            { index: 124, hex: "#6C3674", r: 108, g: 54, b: 116, h: 292.3, s: 0.534, v: 0.455 },
+            { index: 125, hex: "#582C5F", r: 88, g: 44, b: 95, h: 291.8, s: 0.537, v: 0.373 },
+            { index: 126, hex: "#47234C", r: 71, g: 35, b: 76, h: 292.7, s: 0.539, v: 0.298 },
+            { index: 127, hex: "#391B3C", r: 57, g: 27, b: 60, h: 294.5, s: 0.550, v: 0.235 },
+            { index: 128, hex: "#C6AED4", r: 198, g: 174, b: 212, h: 277.9, s: 0.179, v: 0.831 },
+            { index: 129, hex: "#A481BF", r: 164, g: 129, b: 191, h: 273.9, s: 0.325, v: 0.749 },
+            { index: 130, hex: "#7E53A4", r: 126, g: 83, b: 164, h: 271.9, s: 0.494, v: 0.643 },
+            { index: 131, hex: "#69428E", r: 105, g: 66, b: 142, h: 270.8, s: 0.535, v: 0.557 },
+            { index: 132, hex: "#5A3979", r: 90, g: 57, b: 121, h: 270.9, s: 0.529, v: 0.475 },
+            { index: 133, hex: "#492F63", r: 73, g: 47, b: 99, h: 270.0, s: 0.525, v: 0.388 },
+            { index: 134, hex: "#3B254F", r: 59, g: 37, b: 79, h: 271.4, s: 0.532, v: 0.310 },
+            { index: 135, hex: "#2F1D3E", r: 47, g: 29, b: 62, h: 272.7, s: 0.532, v: 0.243 },
+            { index: 136, hex: "#BEAFD7", r: 190, g: 175, b: 215, h: 262.5, s: 0.186, v: 0.843 },
+            { index: 137, hex: "#9583C4", r: 149, g: 131, b: 196, h: 256.6, s: 0.332, v: 0.769 },
+            { index: 138, hex: "#6955AA", r: 105, g: 85, b: 170, h: 254.1, s: 0.500, v: 0.667 },
+            { index: 139, hex: "#564594", r: 86, g: 69, b: 148, h: 252.9, s: 0.534, v: 0.580 },
+            { index: 140, hex: "#493C7E", r: 73, g: 60, b: 126, h: 251.8, s: 0.524, v: 0.494 },
+            { index: 141, hex: "#3C3167", r: 60, g: 49, b: 103, h: 252.2, s: 0.524, v: 0.404 },
+            { index: 142, hex: "#302853", r: 48, g: 40, b: 83, h: 251.2, s: 0.518, v: 0.325 },
+            { index: 143, hex: "#261F41", r: 38, g: 31, b: 65, h: 252.4, s: 0.523, v: 0.255 },
+            { index: 144, hex: "#B7B1D8", r: 183, g: 177, b: 216, h: 249.2, s: 0.181, v: 0.847 },
+            { index: 145, hex: "#8986C7", r: 137, g: 134, b: 199, h: 242.8, s: 0.327, v: 0.780 },
+            { index: 146, hex: "#5859AE", r: 88, g: 89, b: 174, h: 239.3, s: 0.494, v: 0.682 },
+            { index: 147, hex: "#474897", r: 71, g: 72, b: 151, h: 239.3, s: 0.530, v: 0.592 },
+            { index: 148, hex: "#3C3E80", r: 60, g: 62, b: 128, h: 238.2, s: 0.531, v: 0.502 },
+            { index: 149, hex: "#313368", r: 49, g: 51, b: 104, h: 237.8, s: 0.529, v: 0.408 },
+            { index: 150, hex: "#282954", r: 40, g: 41, b: 84, h: 238.6, s: 0.524, v: 0.329 },
+            { index: 151, hex: "#1F2042", r: 31, g: 32, b: 66, h: 238.3, s: 0.530, v: 0.259 },
+            { index: 152, hex: "#B2B4D8", r: 178, g: 180, b: 216, h: 236.8, s: 0.176, v: 0.847 },
+            { index: 153, hex: "#8289C7", r: 130, g: 137, b: 199, h: 233.9, s: 0.347, v: 0.780 },
+            { index: 154, hex: "#505DAE", r: 80, g: 93, b: 174, h: 231.7, s: 0.540, v: 0.682 },
+            { index: 155, hex: "#404C97", r: 64, g: 76, b: 151, h: 231.7, s: 0.576, v: 0.592 },
+            { index: 156, hex: "#364180", r: 54, g: 65, b: 128, h: 231.1, s: 0.578, v: 0.502 },
+            { index: 157, hex: "#2C3568", r: 44, g: 53, b: 104, h: 231.0, s: 0.577, v: 0.408 },
+            { index: 158, hex: "#232B54", r: 35, g: 43, b: 84, h: 230.2, s: 0.583, v: 0.329 },
+            { index: 159, hex: "#1B2142", r: 27, g: 33, b: 66, h: 230.8, s: 0.591, v: 0.259 },
+            { index: 160, hex: "#AFB7D7", r: 175, g: 183, b: 215, h: 228.0, s: 0.186, v: 0.843 },
+            { index: 161, hex: "#7C8DC5", r: 124, g: 141, b: 197, h: 226.0, s: 0.371, v: 0.773 },
+            { index: 162, hex: "#4862AB", r: 72, g: 98, b: 171, h: 224.2, s: 0.579, v: 0.671 },
+            { index: 163, hex: "#3A5094", r: 58, g: 80, b: 148, h: 225.3, s: 0.608, v: 0.580 },
+            { index: 164, hex: "#31447E", r: 49, g: 68, b: 126, h: 225.2, s: 0.611, v: 0.494 },
+            { index: 165, hex: "#283867", r: 40, g: 56, b: 103, h: 224.8, s: 0.612, v: 0.404 },
+            { index: 166, hex: "#1F2D52", r: 31, g: 45, b: 82, h: 223.5, s: 0.622, v: 0.322 },
+            { index: 167, hex: "#182341", r: 24, g: 35, b: 65, h: 223.9, s: 0.631, v: 0.255 },
+            { index: 168, hex: "#AEBBD6", r: 174, g: 187, b: 214, h: 220.5, s: 0.187, v: 0.839 },
+            { index: 169, hex: "#7A94C3", r: 122, g: 148, b: 195, h: 218.6, s: 0.374, v: 0.765 },
+            { index: 170, hex: "#456BA9", r: 69, g: 107, b: 169, h: 217.2, s: 0.592, v: 0.663 },
+            { index: 171, hex: "#385892", r: 56, g: 88, b: 146, h: 218.7, s: 0.616, v: 0.573 },
+            { index: 172, hex: "#2F4C7C", r: 47, g: 76, b: 124, h: 217.4, s: 0.621, v: 0.486 },
+            { index: 173, hex: "#263E65", r: 38, g: 62, b: 101, h: 217.1, s: 0.624, v: 0.396 },
+            { index: 174, hex: "#1E3250", r: 30, g: 50, b: 80, h: 216.0, s: 0.625, v: 0.314 },
+            { index: 175, hex: "#17263F", r: 23, g: 38, b: 63, h: 217.5, s: 0.635, v: 0.247 },
+            { index: 176, hex: "#ADBFD4", r: 173, g: 191, b: 212, h: 212.3, s: 0.184, v: 0.831 },
+            { index: 177, hex: "#799BC0", r: 121, g: 155, b: 192, h: 211.3, s: 0.370, v: 0.753 },
+            { index: 178, hex: "#4475A6", r: 68, g: 117, b: 166, h: 210.0, s: 0.590, v: 0.651 },
+            { index: 179, hex: "#37618F", r: 55, g: 97, b: 143, h: 211.4, s: 0.615, v: 0.561 },
+            { index: 180, hex: "#2F5379", r: 47, g: 83, b: 121, h: 210.8, s: 0.612, v: 0.475 },
+            { index: 181, hex: "#264462", r: 38, g: 68, b: 98, h: 210.0, s: 0.612, v: 0.384 },
+            { index: 182, hex: "#1D364E", r: 29, g: 54, b: 78, h: 209.4, s: 0.628, v: 0.306 },
+            { index: 183, hex: "#162A3D", r: 22, g: 42, b: 61, h: 209.2, s: 0.639, v: 0.239 },
+            { index: 184, hex: "#ADC2D2", r: 173, g: 194, b: 210, h: 205.9, s: 0.176, v: 0.824 },
+            { index: 185, hex: "#79A2BD", r: 121, g: 162, b: 189, h: 203.8, s: 0.360, v: 0.741 },
+            { index: 186, hex: "#4580A2", r: 69, g: 128, b: 162, h: 201.9, s: 0.574, v: 0.635 },
+            { index: 187, hex: "#386C8B", r: 56, g: 108, b: 139, h: 202.4, s: 0.597, v: 0.545 },
+            { index: 188, hex: "#2F5C76", r: 47, g: 92, b: 118, h: 202.0, s: 0.602, v: 0.463 },
+            { index: 189, hex: "#264C60", r: 38, g: 76, b: 96, h: 200.7, s: 0.604, v: 0.376 },
+            { index: 190, hex: "#1E3D4C", r: 30, g: 61, b: 76, h: 199.6, s: 0.605, v: 0.298 },
+            { index: 191, hex: "#162F3C", r: 22, g: 47, b: 60, h: 200.5, s: 0.633, v: 0.235 }
+        ];
+
+        // Populate the color grid
+        function populateColorGrid() {
+            const grid = document.getElementById('matcher-grid');
+            if (!grid) return;
+
+            grid.innerHTML = '';
+            eyeColors.forEach((color, index) => {
+                const swatch = document.createElement('div');
+                swatch.className = 'sheet-swatch';
+                swatch.style.backgroundColor = color.hex;
+                swatch.title = `Index ${color.index}: ${color.hex}`;
+                swatch.dataset.index = color.index;
+                swatch.dataset.hex = color.hex;
+                swatch.dataset.r = color.r;
+                swatch.dataset.g = color.g;
+                swatch.dataset.b = color.b;
+                swatch.dataset.h = color.h;
+                swatch.dataset.s = color.s;
+                swatch.dataset.v = color.v;
+
+                swatch.addEventListener('click', () => selectColor(color, swatch));
+                grid.appendChild(swatch);
+            });
+        }
+
+        // RGB to LAB conversion
+        function rgbToLab(r, g, b) {
+            // Convert RGB to XYZ
+            let rNorm = r / 255;
+            let gNorm = g / 255;
+            let bNorm = b / 255;
+
+            // Apply gamma correction
+            rNorm = rNorm > 0.04045 ? Math.pow((rNorm + 0.055) / 1.055, 2.4) : rNorm / 12.92;
+            gNorm = gNorm > 0.04045 ? Math.pow((gNorm + 0.055) / 1.055, 2.4) : gNorm / 12.92;
+            bNorm = bNorm > 0.04045 ? Math.pow((bNorm + 0.055) / 1.055, 2.4) : bNorm / 12.92;
+
+            rNorm *= 100;
+            gNorm *= 100;
+            bNorm *= 100;
+
+            // Convert to XYZ using sRGB D65 matrix
+            const x = rNorm * 0.4124564 + gNorm * 0.3575761 + bNorm * 0.1804375;
+            const y = rNorm * 0.2126729 + gNorm * 0.7151522 + bNorm * 0.0721750;
+            const z = rNorm * 0.0193339 + gNorm * 0.1191920 + bNorm * 0.9503041;
+
+            // D65 reference white
+            const refX = 95.047;
+            const refY = 100.000;
+            const refZ = 108.883;
+
+            let xNorm = x / refX;
+            let yNorm = y / refY;
+            let zNorm = z / refZ;
+
+            // Apply LAB conversion
+            const epsilon = 0.008856;
+            const kappa = 903.3;
+
+            xNorm = xNorm > epsilon ? Math.pow(xNorm, 1/3) : (kappa * xNorm + 16) / 116;
+            yNorm = yNorm > epsilon ? Math.pow(yNorm, 1/3) : (kappa * yNorm + 16) / 116;
+            zNorm = zNorm > epsilon ? Math.pow(zNorm, 1/3) : (kappa * zNorm + 16) / 116;
+
+            const L = 116 * yNorm - 16;
+            const a = 500 * (xNorm - yNorm);
+            const bVal = 200 * (yNorm - zNorm);
+
+            return { L: Math.round(L), a: Math.round(a), b: Math.round(bVal) };
+        }
+
+        // Handle color selection
+        function selectColor(color, swatchElement) {
+            // Remove selected class from all swatches
+            document.querySelectorAll('.sheet-swatch.selected').forEach(el => el.classList.remove('selected'));
+            
+            // Add selected class to clicked swatch
+            swatchElement.classList.add('selected');
+
+            // Update preview
+            const previewColor = document.getElementById('matcher-preview-color');
+            if (previewColor) {
+                previewColor.style.backgroundColor = color.hex;
+            }
+
+            // Calculate LAB values
+            const lab = rgbToLab(color.r, color.g, color.b);
+
+            // Update technical data
+            document.getElementById('matcher-data-hex').textContent = color.hex;
+            document.getElementById('matcher-data-rgb').textContent = `${color.r}, ${color.g}, ${color.b}`;
+            document.getElementById('matcher-data-hsv').textContent = `${color.h.toFixed(1)}°, ${(color.s * 100).toFixed(0)}%, ${(color.v * 100).toFixed(0)}%`;
+            document.getElementById('matcher-data-lab').textContent = `${lab.L}, ${lab.a}, ${lab.b}`;
+
+            // Update grid info
+            const row = Math.floor(color.index / 8) + 1;
+            const col = (color.index % 8) + 1;
+            document.getElementById('matcher-data-index').textContent = color.index;
+            document.getElementById('matcher-data-row').textContent = row;
+            document.getElementById('matcher-data-col').textContent = col;
+        }
+
+        // Initialize the grid on page load
+        document.addEventListener('DOMContentLoaded', populateColorGrid);
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,37 @@
+{
+  "auditDate": "2026-02-06",
+  "packages": {
+    "xivdyetools-discord-worker": {
+      "vulnerabilities": { "info": 0, "low": 0, "moderate": 0, "high": 0, "critical": 0, "total": 0 },
+      "dependencies": { "prod": 16, "dev": 201, "total": 216 }
+    },
+    "xivdyetools-core": {
+      "vulnerabilities": { "info": 0, "low": 0, "moderate": 0, "high": 0, "critical": 0, "total": 0 },
+      "dependencies": { "prod": 4, "dev": 277, "total": 280 }
+    },
+    "xivdyetools-auth": {
+      "vulnerabilities": { "info": 0, "low": 0, "moderate": 0, "high": 1, "critical": 0, "total": 1 },
+      "dependencies": { "prod": 3, "dev": 120, "total": 122 },
+      "details": [
+        {
+          "name": "@isaacs/brace-expansion",
+          "severity": "high",
+          "title": "Uncontrolled Resource Consumption (ReDoS)",
+          "url": "https://github.com/advisories/GHSA-7h2j-956f-4vf2",
+          "cwe": ["CWE-1333"],
+          "range": "<=5.0.0",
+          "fixAvailable": true,
+          "note": "Dev dependency only — not included in production bundle"
+        }
+      ]
+    },
+    "xivdyetools-rate-limiter": {
+      "vulnerabilities": { "info": 0, "low": 0, "moderate": 0, "high": 0, "critical": 0, "total": 0 },
+      "dependencies": { "prod": 3, "dev": 101, "total": 103 }
+    },
+    "xivdyetools-logger": {
+      "vulnerabilities": { "info": 0, "low": 0, "moderate": 0, "high": 0, "critical": 0, "total": 0 },
+      "dependencies": { "prod": 1, "dev": 152, "total": 152 }
+    }
+  }
+}

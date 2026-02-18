@@ -1,0 +1,1504 @@
+<!-- ⚠️ DEPRECATED: This file is no longer maintained. See v2.0.0 in src/ folder. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0">
+        <!-- DEVELOPMENT CSP: Uncomment for localhost testing (allows inline scripts) -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self' localhost:*; script-src 'self' 'unsafe-inline' localhost:*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com localhost:*; font-src 'self'; img-src 'self' data: blob: localhost:*; connect-src 'self' https://universalis.app localhost:*; base-uri 'self'; form-action 'none';"> -->
+    <!-- PRODUCTION CSP: Used for deployed version (strict, blocks inline scripts) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://universalis.app; base-uri 'self'; form-action 'none';">
+    <!-- Mobile Web App Configuration -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>XIV Dye Comparisons - Compare Up to 4 Dyes | XIV Dye Tools</title>
+    <meta name="description" content="Compare up to 4 FFXIV dyes side-by-side with color distance matrix, RGB/HSV values, hue-saturation charts, and market prices. Perfect for finding similar dyes or understanding color differences.">
+    <meta name="keywords" content="FFXIV dye comparison, compare dyes, dye colors, FF14 dyes, color distance, hue saturation, RGB values, HSV values, dye analysis">
+    <!-- Open Graph / Discord embeds -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://xivdyetools.projectgalatine.com/dyecomparison_experimental.html">
+    <meta property="og:title" content="XIV Dye Comparisons - Compare Up to 4 Dyes (Experimental)">
+    <meta property="og:description" content="Compare up to 4 FFXIV dyes side-by-side with detailed analysis. Try the latest experimental features - features may be unstable.">
+    <meta property="og:image" content="https://xivdyetools.projectgalatine.com/embed_icon.png">
+    <!-- Twitter / X embeds -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://xivdyetools.projectgalatine.com/dyecomparison_experimental.html">
+    <meta property="twitter:title" content="XIV Dye Comparisons - Compare Up to 4 Dyes (Experimental)">
+    <meta property="twitter:description" content="Compare up to 4 FFXIV dyes side-by-side with detailed analysis. Try the latest experimental features - features may be unstable.">
+    <meta property="twitter:image" content="https://xivdyetools.projectgalatine.com/embed_image.png">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="embed_icon.png">
+    <!-- PWA Metadata -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/icons/icon-512x512.png">
+    <link href="assets/css/tailwind.css" rel="stylesheet">
+    <!-- ===== CRITICAL FONTS (Body text - minimal blocking) ===== -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style">
+
+    <!-- ===== DEFERRED DECORATIVE FONTS (Load after page render) ===== -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cinzel+Decorative:wght@400;700&family=Lexend:wght@400;500;600&family=Lexend+Giga:wght@400;500;600&family=Habibi&display=swap" as="style">
+
+    <!-- ===== FALLBACK for no-script environments ===== -->
+    <noscript>
+    </noscript>
+    <link rel="stylesheet" href="assets/css/shared-styles.css">
+    <style>.dye-swatch{width:100%;height:120px;border-radius:0.5rem;border:2px solid rgba(0,0,0,0.1);}.comparison-card{min-height:400px;}#hue-sat-container{background-color:var(--theme-bg-secondary);border-color:var(--theme-border);overflow:auto;}#brightness-container{background-color:var(--theme-bg-secondary);border-color:var(--theme-border);overflow:auto;}#hue-sat-canvas,#brightness-canvas{background-color:var(--theme-bg-secondary);transition:transform 0.15s ease-out;}@media (max-width:639px){body{font-size:13px;}.container{padding:0.5rem !important;}h1{font-size:1.25rem !important;}h1 span{font-size:0.875rem !important;}h2{font-size:1rem !important;}h3{font-size:0.875rem !important;}header p{font-size:0.75rem;margin-top:0.5rem;}#nav-container{display:block;margin-top:0.5rem;}.block.text-lg{font-size:0.875rem !important;}select{padding:0.5rem !important;font-size:13px;min-height:40px;}.bg-gray-50.rounded-lg{padding:1rem !important;}.flex.justify-between.items-center{flex-direction:column;align-items:flex-start;gap:0.75rem;}.toggle-bg{width:36px !important;height:22px !important;}.toggle-dot{width:16px !important;height:16px !important;}.space-y-1\\.5>*+*{margin-top:0.375rem;}.bg-blue-50{padding:1rem !important;}.bg-blue-50 p{font-size:0.75rem;}#comparison-grid{grid-template-columns:1fr !important;gap:0.75rem !important;}.comparison-card{min-height:auto;padding:1rem !important;}.dye-swatch{height:60px;}.space-y-2.text-sm>*{margin-bottom:0.5rem;}button{padding:0.5rem 0.75rem !important;font-size:0.875rem;min-height:40px;}#hue-sat-container,#brightness-container{max-height:300px;}main{margin-top:0;}table{font-size:0.75rem;}table th,table td{padding:0.5rem;}}@media (min-width:640px) and (max-width:767px){.container{padding:0.75rem !important;}h1{font-size:1.5rem !important;}h1 span{font-size:1rem !important;}h2{font-size:1.125rem !important;}#comparison-grid{grid-template-columns:repeat(2,1fr) !important;gap:1rem !important;}.comparison-card{min-height:350px;padding:1.25rem !important;}.dye-swatch{height:80px;}#hue-sat-container,#brightness-container{max-height:350px;}}@media (min-width:768px) and (max-width:1023px){.container{padding:1rem !important;}h1{font-size:2rem !important;}h2{font-size:1.25rem !important;}#comparison-grid{grid-template-columns:repeat(3,1fr) !important;gap:1.25rem !important;}.comparison-card{min-height:380px;padding:1.5rem !important;}.dye-swatch{height:100px;}#hue-sat-container,#brightness-container{max-height:400px;}}@media (min-width:1024px){#comparison-grid{grid-template-columns:repeat(4,1fr) !important;}.comparison-card{min-height:400px;padding:1.5rem;}.dye-swatch{height:120px;}#hue-sat-container,#brightness-container{max-height:500px;}}@media (min-width:1920px){body{font-size:16px;}h1{font-size:3rem;}h2{font-size:1.5rem;}h3{font-size:1.25rem;}.container{max-width:1600px;padding-left:3rem;padding-right:3rem;}main{max-width:1800px;}#comparison-grid{gap:1.5rem;}.comparison-card{min-height:480px;padding:1.75rem;}button{padding:0.65rem 1.25rem;font-size:1rem;}select{padding:0.75rem 1rem;font-size:1rem;}label{font-size:1rem;}#hue-sat-container,#brightness-container{max-height:600px;}}@media (max-width:767px) and (orientation:portrait){body{overflow-x:hidden;}}@media (max-width:767px) and (orientation:landscape){h1{font-size:1.125rem !important;}header{margin-bottom:0.5rem;}.container{max-height:100vh;overflow-y:auto;}#hue-sat-container,#brightness-container{max-height:250px;}#comparison-grid{gap:0.5rem !important;}}@media (hover:none) and (max-width:767px){button{transition:transform 0.1s,opacity 0.1s;}button:active{transform:scale(0.95);opacity:0.8;}select:active,input:active{transform:scale(0.98);}}</style>
+    <!-- Shared Components Script - Load early so DOMContentLoaded can initialize theme and components -->
+    <script src="assets/js/shared-components.js"></script>
+    <!-- Override initComponents for experimental navigation -->
+    <script>function initComponents(){loadComponent('components/nav-experimental.html','nav-container');loadComponent('components/footer.html','footer-container')}</script>
+</head>
+<body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Help & Guide</h2>
+                <button class="modal-close" onclick="closeHelpModal()">×</button>
+            </div>
+
+            <!-- Quick Start Section -->
+            <div class="help-section">
+                <h3>Quick Start</h3>
+                <p>Compare up to 4 FFXIV dyes side-by-side with visual charts and color distance metrics. Select dyes to see detailed comparisons.</p>
+            </div>
+
+            <!-- Mobile Tip -->
+            <div class="mobile-tip desktop-hidden">
+                <span class="mobile-tip-icon">📊</span>
+                <p><strong>Mobile Tip:</strong> Pinch to zoom charts for detailed viewing of color relationships!</p>
+            </div>
+
+            <!-- Key Features -->
+            <div class="help-section">
+                <h3>Key Features</h3>
+                <ul>
+                    <li>Compare up to 4 dyes simultaneously</li>
+                    <li>Color distance matrix shows similarity</li>
+                    <li>Hue-Saturation 2D chart visualization</li>
+                    <li>Brightness comparison chart</li>
+                    <li>Export as JSON or CSS formats</li>
+                </ul>
+            </div>
+
+            <!-- Mobile Tip -->
+            <div class="mobile-tip desktop-hidden">
+                <span class="mobile-tip-icon">💡</span>
+                <p><strong>Pro Tip:</strong> Lower distance values (0-50) mean more similar colors</p>
+            </div>
+
+            <!-- Tips & Tricks -->
+            <div class="help-section">
+                <h3>Tips & Tricks</h3>
+                <ul>
+                    <li>Use color distance to find similar or contrasting dyes</li>
+                    <li>Charts help visualize color relationships at a glance</li>
+                    <li>Export comparison data for reference or sharing</li>
+                    <li>Market prices help plan budget-friendly alternatives</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 md:p-8 flex-grow">
+        <header class="text-center mb-8 2xl:mb-12">
+            <div class="flex justify-center items-center gap-3 mb-2 flex-wrap">
+                <button id="help-toggle" class="help-button" title="Help & Guide" onclick="openHelpModal()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </button>
+                <h1 class="tool-title text-3xl md:text-4xl 2xl:text-5xl font-bold text-gray-900">XIV Dye Comparisons <span class="text-2xl md:text-3xl 2xl:text-4xl text-gray-500">v<span class="number">1.6.1</span></span></h1>
+            </div>
+            <p class="text-gray-600 mt-2 2xl:text-lg">
+                Compare FFXIV dyes side-by-side to see similarities and differences.
+                <div id="nav-container" class="component-loading"></div>
+            </p>
+        </header>
+
+        <main class="max-w-7xl 2xl:max-w-screen-2xl mx-auto">
+
+            <!-- Market Board Section -->
+            <div class="mb-8 2xl:mb-10">
+                <label for="cmp-server-select" class="block text-lg 2xl:text-xl font-semibold text-gray-900 mb-3">Market Board Server:</label>
+                <select id="cmp-server-select" class="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+            </div>
+
+            <!-- Price Data Controls -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-semibold text-gray-700">Market Prices</h3>
+                    <label class="flex items-center cursor-pointer">
+                        <span class="mr-2 text-xs text-gray-600">Show</span>
+                        <div class="relative">
+                            <input id="show-cmp-prices-toggle" type="checkbox" class="sr-only" checked>
+                            <div class="toggle-bg w-10 h-6 bg-gray-300 rounded-full shadow-inner"></div>
+                            <div class="toggle-dot absolute w-4 h-4 bg-white rounded-full shadow inset-y-1 left-1 transition"></div>
+                        </div>
+                    </label>
+                </div>
+                <div id="cmp-price-settings">
+                    <div class="space-y-1.5 mb-3">
+                        <div class="flex items-center">
+                            <input id="cmp-price-base" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded cmp-price-checkbox">
+                            <label for="cmp-price-base" class="ml-2 block text-xs text-gray-700">Base Dyes</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="cmp-price-craft" type="checkbox" checked class="h-4 w-4 text-indigo-600 border-gray-300 rounded cmp-price-checkbox">
+                            <label for="cmp-price-craft" class="ml-2 block text-xs text-gray-700">Craft Dyes</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="cmp-price-beast" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded cmp-price-checkbox">
+                            <label for="cmp-price-beast" class="ml-2 block text-xs text-gray-700">Allied Society Dyes</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="cmp-price-cosmic" type="checkbox" checked class="h-4 w-4 text-indigo-600 border-gray-300 rounded cmp-price-checkbox">
+                            <label for="cmp-price-cosmic" class="ml-2 block text-xs text-gray-700">Cosmic Dyes</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="cmp-price-special" type="checkbox" checked class="h-4 w-4 text-indigo-600 border-gray-300 rounded cmp-price-checkbox">
+                            <label for="cmp-price-special" class="ml-2 block text-xs text-gray-700">Special Dyes</label>
+                        </div>
+                    </div>
+                    <button id="cmp-refresh-btn" onclick="refreshMarketPricesComparison()" class="w-full px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition" disabled>
+                        Refresh Prices
+                    </button>
+                    <div id="cmp-price-status" class="mt-2 text-xs text-gray-500 text-center"></div>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 2xl:p-6 mb-6 2xl:mb-8">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-sm 2xl:text-base text-blue-800">
+                        <strong>How to use:</strong> Select 2-4 dyes from the dropdowns below to compare them side-by-side.
+                        Color distance values help you identify similar dyes (lower = more similar).
+                    </p>
+                </div>
+            </div>
+
+            <!-- Comparison Grid -->
+            <div id="comparison-grid" class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 2xl:gap-8 mb-8">
+
+                <!-- Dye Slot 1 -->
+                <div class="comparison-card bg-white rounded-xl shadow-md p-6">
+                    <div class="mb-4">
+                        <label for="dye-select-1" class="block text-sm font-medium text-gray-700 mb-2">Dye 1</label>
+                        <select id="dye-select-1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select a dye...</option>
+                        </select>
+                    </div>
+                    <div id="dye-info-1" class="hidden">
+                        <div id="dye-swatch-1" class="dye-swatch mb-4"></div>
+                        <div class="space-y-2 text-sm">
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Name:</span>
+                                <p id="dye-name-1" class="text-gray-900 font-medium"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Category:</span>
+                                <p id="dye-category-1" class="text-gray-600"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Hex:</span>
+                                <p id="dye-hex-1" class="font-mono text-gray-900"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">RGB:</span>
+                                <p id="dye-rgb-1" class="font-mono text-gray-600"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700 cursor-help" title="HSV values can be used in other games like Monster Hunter Wilds">HSV:</span>
+                                <p id="dye-hsv-1" class="font-mono text-gray-600"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Acquisition:</span>
+                                <p id="dye-acquisition-1" class="text-gray-600"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Price:</span>
+                                <p id="dye-price-1" class="text-gray-600"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dye Slot 2 -->
+                <div class="comparison-card bg-white rounded-xl shadow-md p-6">
+                    <div class="mb-4">
+                        <label for="dye-select-2" class="block text-sm font-medium text-gray-700 mb-2">Dye 2</label>
+                        <select id="dye-select-2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select a dye...</option>
+                        </select>
+                    </div>
+                    <div id="dye-info-2" class="hidden">
+                        <div id="dye-swatch-2" class="dye-swatch mb-4"></div>
+                        <div class="space-y-2 text-sm">
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Name:</span>
+                                <p id="dye-name-2" class="text-gray-900 font-medium"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Category:</span>
+                                <p id="dye-category-2" class="text-gray-600"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Hex:</span>
+                                <p id="dye-hex-2" class="font-mono text-gray-900"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">RGB:</span>
+                                <p id="dye-rgb-2" class="font-mono text-gray-600"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700 cursor-help" title="HSV values can be used in other games like Monster Hunter Wilds">HSV:</span>
+                                <p id="dye-hsv-2" class="font-mono text-gray-600"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Acquisition:</span>
+                                <p id="dye-acquisition-2" class="text-gray-600"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Price:</span>
+                                <p id="dye-price-2" class="text-gray-600"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dye Slot 3 (Optional) -->
+                <div class="comparison-card bg-white rounded-xl shadow-md p-6">
+                    <div class="mb-4">
+                        <label for="dye-select-3" class="block text-sm font-medium text-gray-700 mb-2">Dye 3 (Optional)</label>
+                        <select id="dye-select-3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select a dye...</option>
+                        </select>
+                    </div>
+                    <div id="dye-info-3" class="hidden">
+                        <div id="dye-swatch-3" class="dye-swatch mb-4"></div>
+                        <div class="space-y-2 text-sm">
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Name:</span>
+                                <p id="dye-name-3" class="text-gray-900 font-medium"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Category:</span>
+                                <p id="dye-category-3" class="text-gray-600"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Hex:</span>
+                                <p id="dye-hex-3" class="font-mono text-gray-900"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">RGB:</span>
+                                <p id="dye-rgb-3" class="font-mono text-gray-600"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700 cursor-help" title="HSV values can be used in other games like Monster Hunter Wilds">HSV:</span>
+                                <p id="dye-hsv-3" class="font-mono text-gray-600"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Acquisition:</span>
+                                <p id="dye-acquisition-3" class="text-gray-600"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Price:</span>
+                                <p id="dye-price-3" class="text-gray-600"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dye Slot 4 (Optional) -->
+                <div class="comparison-card bg-white rounded-xl shadow-md p-6">
+                    <div class="mb-4">
+                        <label for="dye-select-4" class="block text-sm font-medium text-gray-700 mb-2">Dye 4 (Optional)</label>
+                        <select id="dye-select-4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select a dye...</option>
+                        </select>
+                    </div>
+                    <div id="dye-info-4" class="hidden">
+                        <div id="dye-swatch-4" class="dye-swatch mb-4"></div>
+                        <div class="space-y-2 text-sm">
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Name:</span>
+                                <p id="dye-name-4" class="text-gray-900 font-medium"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Category:</span>
+                                <p id="dye-category-4" class="text-gray-600"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Hex:</span>
+                                <p id="dye-hex-4" class="font-mono text-gray-900"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">RGB:</span>
+                                <p id="dye-rgb-4" class="font-mono text-gray-600"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700 cursor-help" title="HSV values can be used in other games like Monster Hunter Wilds">HSV:</span>
+                                <p id="dye-hsv-4" class="font-mono text-gray-600"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Acquisition:</span>
+                                <p id="dye-acquisition-4" class="text-gray-600"></p>
+                            </div>
+                            <div>
+                                <span class="dye-box-header font-semibold text-gray-700">Price:</span>
+                                <p id="dye-price-4" class="text-gray-600"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Color Charts -->
+            <div id="color-charts" class="bg-white rounded-xl shadow-md p-6 2xl:p-8 mb-8 hidden">
+                <h2 class="text-xl 2xl:text-2xl font-bold text-gray-900 mb-4">Color Charts</h2>
+                <div class="grid lg:grid-cols-2 gap-8 2xl:gap-12">
+                    <!-- Hue-Saturation Chart -->
+                    <div>
+                        <h3 class="text-lg 2xl:text-xl font-semibold text-gray-800 mb-3">Hue-Saturation Chart</h3>
+                        <p class="text-sm 2xl:text-base text-gray-600 mb-3">Circles show dye positions (Hue × Saturation)</p>
+                        <div id="hue-sat-container" class="border border-gray-300 rounded-lg overflow-hidden bg-gray-50 inline-block">
+                            <canvas id="hue-sat-canvas" width="1000" height="750" style="display: block; width: 100%; height: auto; max-width: 100%;"></canvas>
+                        </div>
+                        <div class="mt-3 flex justify-between text-xs text-gray-600">
+                            <span>Red (0°)</span>
+                            <span>Hue →</span>
+                            <span>Red (360°)</span>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-600">
+                            <div>Saturation (0% white) ↓ (100% vivid)</div>
+                        </div>
+                    </div>
+
+                    <!-- Brightness Chart -->
+                    <div>
+                        <h3 class="text-lg 2xl:text-xl font-semibold text-gray-800 mb-3">Brightness Chart</h3>
+                        <p class="text-sm 2xl:text-base text-gray-600 mb-3">Lines show dye brightness values</p>
+                        <div id="brightness-container" class="border border-gray-300 rounded-lg overflow-hidden bg-gray-50 inline-block">
+                            <canvas id="brightness-canvas" width="1000" height="750" style="display: block; width: 100%; height: auto; max-width: 100%;"></canvas>
+                        </div>
+                        <div class="mt-3 flex justify-between text-xs text-gray-600">
+                            <span>Black (0%)</span>
+                            <span>Brightness →</span>
+                            <span>White (100%)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Color Distance Matrix -->
+            <div id="distance-matrix" class="bg-white rounded-xl shadow-md p-6 2xl:p-8 mb-8 hidden">
+                <h2 class="text-xl 2xl:text-2xl font-bold text-gray-900 mb-4">Color Distance Matrix</h2>
+                <p class="text-sm text-gray-600 mb-4">Lower values indicate more similar colors. Distance calculated using RGB Euclidean distance.</p>
+                <div id="distance-table-container"></div>
+            </div>
+
+            <!-- Export Options -->
+            <div class="bg-white rounded-xl shadow-md p-6 2xl:p-8 text-center">
+                <h2 class="text-xl 2xl:text-2xl font-bold text-gray-900 mb-4">Export Comparison</h2>
+                <div class="flex flex-wrap justify-center gap-3 2xl:gap-4">
+                    <button id="export-json-btn" class="px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium min-h-[44px]" disabled>
+                        Export as JSON
+                    </button>
+                    <button id="copy-summary-btn" class="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium min-h-[44px]" disabled>
+                        Copy Summary
+                    </button>
+                    <button id="export-css-btn" class="px-4 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition font-medium min-h-[44px]" disabled>
+                        Export as CSS
+                    </button>
+                    <button id="copy-hex-btn" class="px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium min-h-[44px]" disabled>
+                        Copy Hex Codes
+                    </button>
+                    <button id="clear-all-btn" class="px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium min-h-[44px]" disabled>
+                        Clear All
+                    </button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Footer Container - loaded dynamically from components/footer.html -->
+    <div id="footer-container" class="component-loading"></div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg hidden transition-all duration-300">
+        <span id="toast-message">Copied to clipboard!</span>
+    </div>
+
+    <script>
+        /**
+         * Get computed CSS variable value from body element
+         * @param {string} varName - CSS variable name (with or without --)
+         * @returns {string} The computed CSS variable value
+         */
+        function getThemeColor(varName) {
+            const cleanVarName = varName.startsWith('--') ? varName : `--${varName}`;
+            const value = getComputedStyle(document.body).getPropertyValue(cleanVarName).trim();
+            return value;
+        }
+
+        /**
+         * Toggle dropdown menu
+         */
+        function toggleDropdown(button) {
+            const dropdown = button.nextElementSibling;
+            dropdown.classList.toggle('show');
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.nav-dropdown')) {
+                    dropdown.classList.remove('show');
+                }
+            }, { once: true });
+        }
+
+        /**
+         * Format color hex code with number styling
+         */
+        function formatHexCode(hex) {
+            return `<span class="number">${hex.toUpperCase()}</span>`;
+        }
+
+        /**
+         * Format RGB values with number styling
+         */
+        function formatRGBValues(r, g, b) {
+            return `R: <span class="number">${r}</span>, G: <span class="number">${g}</span>, B: <span class="number">${b}</span>`;
+        }
+
+        /**
+         * Format HSV values with number styling
+         */
+        function formatHSVValues(h, s, v) {
+            return `H: <span class="number">${h.toFixed(0)}</span>°, S: <span class="number">${s.toFixed(0)}</span>%, V: <span class="number">${v.toFixed(0)}</span>%`;
+        }
+
+        /**
+         * Format price with number styling
+         */
+        function formatPrice(priceText) {
+            // Handle "Market Board - 5250 Gil" format
+            if (priceText.includes('Market Board')) {
+                const match = priceText.match(/(\d+(?:,\d{3})*)\s(Gil)/);
+                if (match) {
+                    return priceText.replace(match[1], `<span class="number">${match[1]}</span>`);
+                }
+            }
+            // Handle "5250 Currency" format
+            const match = priceText.match(/^(\d+(?:,\d{3})*)\s(.+)$/);
+            if (match) {
+                return `<span class="number">${match[1]}</span> ${match[2]}`;
+            }
+            return priceText;
+        }
+
+        // Market Board price categories
+        // Price categories now provided by shared-components.js
+        // Helper function to check if a dye should have price fetched for Dye Comparison
+        function shouldFetchPriceComparison(dye) {
+            if (!dye) return false;
+            if (!dye.itemID) return false;
+
+            // Special dyes category
+            if (document.getElementById('show-cmp-prices-toggle')?.checked &&
+                document.getElementById('cmp-price-special')?.checked &&
+                dye.category === 'Special') {
+                return true;
+            }
+
+            if (!dye.acquisition) return false;
+
+            const showPrices = document.getElementById('show-cmp-prices-toggle')?.checked;
+            if (!showPrices) return false;
+
+            // Base Dyes: Dye Vendor
+            if (document.getElementById('cmp-price-base')?.checked &&
+                ['Dye Vendor'].includes(dye.acquisition)) {
+                return true;
+            }
+
+            // Craft Dyes: Crafting, Treasure Chest
+            if (document.getElementById('cmp-price-craft')?.checked &&
+                ['Crafting', 'Treasure Chest'].includes(dye.acquisition)) {
+                return true;
+            }
+
+            // Allied Society Dyes (ID still uses 'beast' for backward compatibility):
+            // Amalj'aa, Ixali, Sylphic, Kobold, Sahagin Vendors
+            if (document.getElementById('cmp-price-beast')?.checked &&
+                ['Amalj\'aa Vendor', 'Ixali Vendor', 'Sahagin Vendor', 'Kobold Vendor', 'Sylphic Vendor'].includes(dye.acquisition)) {
+                return true;
+            }
+
+            // Cosmic Dyes: Cosmic Exploration, Cosmic Fortunes
+            if (document.getElementById('cmp-price-cosmic')?.checked &&
+                ['Cosmic Exploration', 'Cosmic Fortunes'].includes(dye.acquisition)) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // Global variables
+        let ffxivDyes = [];
+        const selectedDyes = [null, null, null, null];
+        let cmpPriceCache = {};
+        let cmpLastPriceUpdate = null;
+
+        // Storage functions (safeGetStorage, safeSetStorage) provided by shared-components.js
+        // safeFetchJSON function provided by shared-components.js
+
+        /**
+         * Get category priority for sorting
+         * Standardized category ordering across all tools:
+         * - Neutral: 0
+         * - Colors (A-Z): 1-26 (when encountered in data, treated as priority 2 for unknown categories)
+         * - Special: 98
+         * - Facewear: 99 (typically excluded from filtering)
+         *
+         * @param {string} category - The dye category name
+         * @returns {number} Priority value for sorting (lower values appear first)
+         */
+        function getCategoryPriority(category) {
+            const priorityMap = {
+                'Neutral': 0,
+                'Special': 98,
+                'Facewear': 99
+            };
+            // Default priority for unknown "Colors" categories is 1-26 range (2 as default)
+            return priorityMap[category] !== undefined ? priorityMap[category] : 2;
+        }
+
+        /**
+         * Sort dyes by category (using priority) and then by name alphabetically
+         * Used by all dropdown population functions for consistent ordering
+         *
+         * @param {Array} dyes - Array of dye objects
+         * @returns {Array} Sorted dye array
+         */
+        function sortDyesByCategory(dyes) {
+            return [...dyes].sort((a, b) => {
+                const aPriority = getCategoryPriority(a.category);
+                const bPriority = getCategoryPriority(b.category);
+
+                // Sort by category priority first
+                if (aPriority !== bPriority) {
+                    return aPriority - bPriority;
+                }
+
+                // Then by category name alphabetically (for unknown categories)
+                const categoryComparison = a.category.localeCompare(b.category);
+                if (categoryComparison !== 0) {
+                    return categoryComparison;
+                }
+
+                // Finally by dye name alphabetically
+                return a.name.localeCompare(b.name);
+            });
+        }
+
+        /**
+         * Populate multiple dye dropdowns with organized categories and standardized sorting
+         * Creates optgroups for each category, sorted by priority, with dyes alphabetically ordered
+         *
+         * Pattern: Dye Comparison variant that populates 4 dropdowns simultaneously
+         * - All dyes sorted by getCategoryPriority() and then by name
+         * - Dyes grouped into optgroups by category
+         * - Each optgroup contains dyes alphabetically sorted by name
+         * - Option values use itemID for database lookup
+         * - All four dropdowns get identical content for uniform dye selection
+         */
+        function populateDropdowns() {
+            const selects = [
+                document.getElementById('dye-select-1'),
+                document.getElementById('dye-select-2'),
+                document.getElementById('dye-select-3'),
+                document.getElementById('dye-select-4')
+            ];
+
+            // Guard: Validate all select elements exist
+            if (selects.some(select => !select)) {
+                console.warn('populateDropdowns: One or more select elements not found');
+                return;
+            }
+
+            // Sort dyes using standardized function
+            const sortedDyes = sortDyesByCategory(ffxivDyes);
+
+            // Group dyes by category
+            const dyesByCategory = {};
+            sortedDyes.forEach(dye => {
+                if (!dyesByCategory[dye.category]) {
+                    dyesByCategory[dye.category] = [];
+                }
+                dyesByCategory[dye.category].push(dye);
+            });
+
+            // Get categories in priority order
+            const categories = Object.keys(dyesByCategory).sort((a, b) => {
+                const aPriority = getCategoryPriority(a);
+                const bPriority = getCategoryPriority(b);
+                if (aPriority !== bPriority) return aPriority - bPriority;
+                return a.localeCompare(b);
+            });
+
+            // Populate all four dropdowns with identical content
+            selects.forEach(select => {
+                categories.forEach(category => {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = category;
+
+                    // Dyes are already sorted alphabetically from sortDyesByCategory
+                    dyesByCategory[category].forEach(dye => {
+                        const option = document.createElement('option');
+                        option.value = dye.itemID;
+                        option.textContent = dye.name;
+                        optgroup.appendChild(option);
+                    });
+
+                    select.appendChild(optgroup);
+                });
+            });
+        }
+
+        /**
+         * Display dye information
+         */
+        function displayDye(index, dye) {
+            const num = index + 1;
+            const infoDiv = document.getElementById(`dye-info-${num}`);
+            const swatchDiv = document.getElementById(`dye-swatch-${num}`);
+
+            if (!dye) {
+                infoDiv.classList.add('hidden');
+                return;
+            }
+
+            // Show info
+            infoDiv.classList.remove('hidden');
+            swatchDiv.style.backgroundColor = dye.hex;
+
+            // Update text fields
+            document.getElementById(`dye-name-${num}`).textContent = dye.name;
+            document.getElementById(`dye-category-${num}`).textContent = dye.category;
+            document.getElementById(`dye-hex-${num}`).innerHTML = formatHexCode(dye.hex);
+            document.getElementById(`dye-rgb-${num}`).innerHTML = formatRGBValues(dye.rgb.r, dye.rgb.g, dye.rgb.b);
+            document.getElementById(`dye-hsv-${num}`).innerHTML = formatHSVValues(dye.hsv.h, dye.hsv.s, dye.hsv.v);
+            document.getElementById(`dye-acquisition-${num}`).textContent = dye.acquisition || 'Unknown';
+
+            // Show price (market board if available, otherwise acquisition price)
+            let priceText = 'N/A';
+            if (document.getElementById('show-cmp-prices-toggle').checked && shouldFetchPriceComparison(dye)) {
+                const itemIdKey = dye.itemID.toString();
+                if (cmpPriceCache[itemIdKey]) {
+                    priceText = `Market Board - ${cmpPriceCache[itemIdKey].toLocaleString()} Gil`;
+                } else if (dye.price && dye.currency) {
+                    priceText = `${dye.price.toLocaleString()} ${dye.currency}`;
+                }
+            } else if (dye.price && dye.currency) {
+                priceText = `${dye.price.toLocaleString()} ${dye.currency}`;
+            }
+            document.getElementById(`dye-price-${num}`).innerHTML = formatPrice(priceText);
+        }
+
+        /**
+         * Calculate Euclidean distance between two colors in RGB space
+         *
+         * Uses the standard RGB Euclidean distance formula:
+         * distance = sqrt((r1-r2)² + (g1-g2)² + (b1-b2)²)
+         *
+         * Range: 0 (identical colors) to ~441 (white vs black)
+         * Used for color distance matrix analysis and dye similarity comparison
+         *
+         * @param {Object} rgb1 - First color with properties r, g, b (0-255)
+         * @param {Object} rgb2 - Second color with properties r, g, b (0-255)
+         * @returns {number} Euclidean distance in RGB space
+         */
+        function colorDistance(rgb1, rgb2) {
+            const dr = rgb1.r - rgb2.r;
+            const dg = rgb1.g - rgb2.g;
+            const db = rgb1.b - rgb2.b;
+            return Math.sqrt(dr * dr + dg * dg + db * db);
+        }
+
+        // hsvToRgb() function is provided by shared-components.js - using shared implementation
+
+        // APIThrottler class and apiThrottler instance now provided by shared-components.js
+
+        /**
+         * Draw Hue-Saturation Chart (Optimized with resolution reduction)
+         */
+        function drawHueSaturationChart() {
+            const activeDyes = selectedDyes.filter(d => d !== null);
+            const canvas = document.getElementById('hue-sat-canvas');
+            const ctx = canvas.getContext('2d', { willReadFrequently: false });
+
+            if (!canvas || !ctx) return;
+
+            const width = canvas.width;
+            const height = canvas.height;
+            const leftPadding = 70;
+            const rightPadding = 40;
+            const topPadding = 40;
+            const bottomPadding = 40;
+            const chartWidth = width - leftPadding - rightPadding;
+            const chartHeight = height - topPadding - bottomPadding;
+
+            // Optimization: Reduce resolution and upscale for faster rendering
+            // Mobile: 4x reduction (6.25% of pixels) for better performance
+            // Desktop: 2x reduction (25% of pixels) for visual quality
+            const RESOLUTION_REDUCTION = isMobile() ? 4 : 2;
+            const reducedWidth = Math.ceil(chartWidth / RESOLUTION_REDUCTION);
+            const reducedHeight = Math.ceil(chartHeight / RESOLUTION_REDUCTION);
+
+            // Clear canvas using theme background color
+            ctx.fillStyle = getThemeColor('theme-bg');
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw hue-saturation gradient at reduced resolution
+            const imageData = ctx.createImageData(reducedWidth, reducedHeight);
+            const data = imageData.data;
+
+            for (let y = 0; y < reducedHeight; y++) {
+                for (let x = 0; x < reducedWidth; x++) {
+                    const hue = (x / reducedWidth) * 360;
+                    const saturation = ((reducedHeight - y) / reducedHeight) * 100; // Invert Y axis
+                    const rgb = hsvToRgb(hue, saturation, 70); // Use constant brightness of 70%
+
+                    const idx = (y * reducedWidth + x) * 4;
+                    data[idx] = rgb.r;
+                    data[idx + 1] = rgb.g;
+                    data[idx + 2] = rgb.b;
+                    data[idx + 3] = 255;
+                }
+            }
+
+            // Use two-stage canvas rendering for proper scaling
+            // Create temporary off-screen canvas at reduced resolution
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = reducedWidth;
+            tempCanvas.height = reducedHeight;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.putImageData(imageData, 0, 0);
+
+            // Scale up to main canvas with smoothing enabled
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(tempCanvas, leftPadding, topPadding, chartWidth, chartHeight);
+
+            // Draw axes using theme text color
+            ctx.strokeStyle = getThemeColor('theme-text-muted');
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(leftPadding, topPadding);
+            ctx.lineTo(leftPadding, topPadding + chartHeight);
+            ctx.lineTo(leftPadding + chartWidth, topPadding + chartHeight);
+            ctx.stroke();
+
+            // Draw tick marks and labels using theme text color
+            ctx.fillStyle = getThemeColor('theme-text-muted');
+            ctx.font = 'bold 14px Inter';
+            ctx.textAlign = 'center';
+
+            // Hue ticks (X axis)
+            for (let i = 0; i <= 360; i += 60) {
+                const x = leftPadding + (i / 360) * chartWidth;
+                ctx.beginPath();
+                ctx.moveTo(x, topPadding + chartHeight);
+                ctx.lineTo(x, topPadding + chartHeight + 5);
+                ctx.stroke();
+            }
+
+            // Saturation ticks (Y axis)
+            ctx.textAlign = 'right';
+            ctx.font = 'bold 14px Inter';
+            for (let i = 0; i <= 100; i += 25) {
+                const y = topPadding + chartHeight - (i / 100) * chartHeight;
+                ctx.beginPath();
+                ctx.moveTo(leftPadding - 5, y);
+                ctx.lineTo(leftPadding, y);
+                ctx.stroke();
+                ctx.fillText(i + '%', leftPadding - 15, y + 5);
+            }
+
+            // Draw dye circles
+            activeDyes.forEach((dye, index) => {
+                const x = leftPadding + (dye.hsv.h / 360) * chartWidth;
+                const y = topPadding + chartHeight - (dye.hsv.s / 100) * chartHeight;
+
+                // Draw circle with dye's actual color
+                ctx.fillStyle = dye.hex;
+                ctx.beginPath();
+                ctx.arc(x, y, 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw border using theme background color for contrast
+                ctx.strokeStyle = getThemeColor('theme-bg');
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+                // Draw label with text color based on theme
+                ctx.fillStyle = getThemeColor('theme-bg');
+                ctx.font = 'bold 16px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText((index + 1).toString(), x, y + 5);
+            });
+        }
+
+        /**
+         * Draw Brightness Chart (Optimized)
+         */
+        function drawBrightnessChart() {
+            const activeDyes = selectedDyes.filter(d => d !== null);
+            const canvas = document.getElementById('brightness-canvas');
+            const ctx = canvas.getContext('2d', { willReadFrequently: false });
+
+            if (!canvas || !ctx) return;
+
+            const width = canvas.width;
+            const height = canvas.height;
+            const leftPadding = 50;
+            const rightPadding = 50;
+            const topPadding = 40;
+            const bottomPadding = 40;
+            const chartWidth = width - leftPadding - rightPadding;
+            const chartHeight = height - topPadding - bottomPadding;
+
+            // Clear canvas using theme background color
+            ctx.fillStyle = getThemeColor('theme-bg');
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw brightness gradient bar using dark-to-light gradient (theme-aware)
+            const gradient = ctx.createLinearGradient(leftPadding, 0, leftPadding + chartWidth, 0);
+            gradient.addColorStop(0, '#1a1a1a');
+            gradient.addColorStop(1, '#e8e8e8');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(leftPadding, topPadding + chartHeight / 2 - 15, chartWidth, 30);
+
+            // Draw border using theme text-muted color
+            ctx.strokeStyle = getThemeColor('theme-text-muted');
+            ctx.lineWidth = 2;
+            ctx.strokeRect(leftPadding, topPadding + chartHeight / 2 - 15, chartWidth, 30);
+
+            // Draw axes labels using theme text-muted
+            ctx.fillStyle = getThemeColor('theme-text-muted');
+            ctx.font = 'bold 16px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText('0%', leftPadding, topPadding + chartHeight / 2 + 28);
+            ctx.fillText('50%', leftPadding + chartWidth / 2, topPadding + chartHeight / 2 + 28);
+            ctx.fillText('100%', leftPadding + chartWidth, topPadding + chartHeight / 2 + 28);
+
+            // Draw dye brightness lines
+            activeDyes.forEach((dye, index) => {
+                const x = leftPadding + (dye.hsv.v / 100) * chartWidth;
+                const yTop = topPadding;
+                const yBottom = topPadding + chartHeight;
+
+                // Draw line with dye's actual color
+                ctx.strokeStyle = dye.hex;
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(x, yTop);
+                ctx.lineTo(x, yBottom);
+                ctx.stroke();
+
+                // Draw label at top with dye color
+                ctx.fillStyle = dye.hex;
+                ctx.font = 'bold 18px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText((index + 1), x, yTop - 12);
+
+                // Draw brightness percentage
+                ctx.font = 'bold 16px Inter';
+                ctx.fillText(dye.hsv.v.toFixed(0) + '%', x, yBottom + 24);
+            });
+        }
+
+        /**
+         * Update color charts
+         */
+        function updateColorCharts() {
+            const activeDyes = selectedDyes.filter(d => d !== null);
+            const chartsContainer = document.getElementById('color-charts');
+
+            if (activeDyes.length < 1) {
+                chartsContainer.classList.add('hidden');
+                return;
+            }
+
+            chartsContainer.classList.remove('hidden');
+
+            // Draw charts using requestAnimationFrame for optimal performance
+            // This ensures rendering happens at the browser's next frame refresh
+            requestAnimationFrame(() => {
+                drawHueSaturationChart();
+                drawBrightnessChart();
+            });
+        }
+
+        /**
+         * Update distance matrix
+         */
+        function updateDistanceMatrix() {
+            const activeDyes = selectedDyes.filter(d => d !== null);
+            const matrixContainer = document.getElementById('distance-matrix');
+            const tableContainer = document.getElementById('distance-table-container');
+
+            if (activeDyes.length < 2) {
+                matrixContainer.classList.add('hidden');
+                return;
+            }
+
+            matrixContainer.classList.remove('hidden');
+
+            // Create table
+            let tableHTML = '<table class="w-full text-sm"><thead><tr><th class="p-2 border border-gray-300 bg-gray-100"></th>';
+
+            activeDyes.forEach(dye => {
+                tableHTML += `<th class="p-2 border border-gray-300 bg-gray-100 text-gray-900 font-semibold">${dye.name}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+
+            activeDyes.forEach((dyeA, indexA) => {
+                tableHTML += `<tr><td class="p-2 border border-gray-300 bg-gray-100 text-gray-900 font-semibold">${dyeA.name}</td>`;
+
+                activeDyes.forEach((dyeB, indexB) => {
+                    if (indexA === indexB) {
+                        tableHTML += '<td class="p-2 border border-gray-300 bg-gray-200 text-gray-500">—</td>';
+                    } else {
+                        const distance = colorDistance(dyeA.rgb, dyeB.rgb);
+                        const color = distance < 50 ? 'text-green-600 font-semibold' : distance < 100 ? 'text-yellow-600' : 'text-red-600';
+                        tableHTML += `<td class="p-2 border border-gray-300 ${color}"><span class="number">${distance.toFixed(2)}</span></td>`;
+                    }
+                });
+
+                tableHTML += '</tr>';
+            });
+
+            tableHTML += '</tbody></table>';
+            tableContainer.innerHTML = tableHTML;
+        }
+
+        // Debounced calculations for better mobile performance
+        const calculationDebounceTime = isMobile() ? 300 : 100;
+        const debouncedUpdateColorCharts = debounce(updateColorCharts, calculationDebounceTime);
+        const debouncedUpdateDistanceMatrix = debounce(updateDistanceMatrix, calculationDebounceTime);
+
+        // ===== PINCH-TO-ZOOM SUPPORT FOR CANVAS CHARTS =====
+
+        // Canvas zoom state
+        let canvasZoomState = {
+            hueSatScale: 1.0,
+            brightnessScale: 1.0,
+            minScale: 0.5,
+            maxScale: 3.0,
+            lastPinchTime: 0,
+            debounceDelay: 100
+        };
+
+        /**
+         * Apply zoom to canvas container
+         * @param {string} canvasId - ID of canvas element
+         * @param {number} scale - Zoom scale (0.5 to 3.0)
+         */
+        function applyCanvasZoom(canvasId, scale) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            // Clamp scale within min/max bounds
+            scale = Math.max(canvasZoomState.minScale, Math.min(canvasZoomState.maxScale, scale));
+
+            // Apply CSS transform
+            canvas.style.transform = `scale(${scale})`;
+            canvas.style.transformOrigin = 'center center';
+
+            // Update zoom state
+            if (canvasId === 'hue-sat-canvas') {
+                canvasZoomState.hueSatScale = scale;
+            } else if (canvasId === 'brightness-canvas') {
+                canvasZoomState.brightnessScale = scale;
+            }
+
+            // Trigger haptic feedback
+            hapticLight();
+        }
+
+        /**
+         * Handle pinch gesture on canvas
+         * @param {Object} pinchData - Pinch event data from TouchGestureManager
+         * @param {string} canvasId - ID of canvas element
+         */
+        function handleCanvasPinch(pinchData, canvasId) {
+            const now = Date.now();
+
+            // Debounce pinch events
+            if (now - canvasZoomState.lastPinchTime < canvasZoomState.debounceDelay) {
+                return;
+            }
+            canvasZoomState.lastPinchTime = now;
+
+            // Get current scale for this canvas
+            let currentScale = canvasId === 'hue-sat-canvas'
+                ? canvasZoomState.hueSatScale
+                : canvasZoomState.brightnessScale;
+
+            // Calculate new scale based on pinch delta
+            // pinchData.scale is ratio of current distance to previous distance
+            const scaleDelta = (pinchData.scale - 1.0) * 0.5; // Dampen the zoom speed
+            const newScale = currentScale + scaleDelta;
+
+            // Apply zoom
+            applyCanvasZoom(canvasId, newScale);
+        }
+
+        /**
+         * Initialize pinch-to-zoom listeners for canvas charts
+         */
+        function initializeCanvasPinchZoom() {
+            // Only initialize on touch devices
+            if (!isTouchDevice()) return;
+
+            // Hue-Saturation Chart
+            const hueSatContainer = document.getElementById('hue-sat-container');
+            if (hueSatContainer) {
+                const hueSatGesture = new TouchGestureManager(hueSatContainer);
+                hueSatGesture.on('onPinch', (pinchData) => {
+                    handleCanvasPinch(pinchData, 'hue-sat-canvas');
+                });
+            }
+
+            // Brightness Chart
+            const brightnessContainer = document.getElementById('brightness-container');
+            if (brightnessContainer) {
+                const brightnessGesture = new TouchGestureManager(brightnessContainer);
+                brightnessGesture.on('onPinch', (pinchData) => {
+                    handleCanvasPinch(pinchData, 'brightness-canvas');
+                });
+            }
+        }
+
+        /**
+         * Handle dye selection
+         */
+        function handleDyeSelection(index) {
+            const select = document.getElementById(`dye-select-${index + 1}`);
+            const itemID = parseInt(select.value);
+
+            if (itemID) {
+                const dye = ffxivDyes.find(d => d.itemID === itemID);
+                selectedDyes[index] = dye;
+            } else {
+                selectedDyes[index] = null;
+            }
+
+            displayDye(index, selectedDyes[index]);
+            debouncedUpdateColorCharts();
+            debouncedUpdateDistanceMatrix();
+            updateExportButtons();
+        }
+
+        /**
+         * Update export button states
+         */
+        function updateExportButtons() {
+            const hasSelection = selectedDyes.some(d => d !== null);
+            document.getElementById('export-json-btn').disabled = !hasSelection;
+            document.getElementById('copy-summary-btn').disabled = !hasSelection;
+            document.getElementById('export-css-btn').disabled = !hasSelection;
+            document.getElementById('copy-hex-btn').disabled = !hasSelection;
+            document.getElementById('clear-all-btn').disabled = !hasSelection;
+        }
+
+        /**
+         * Export as JSON
+         */
+        function exportAsJSON() {
+            const data = {
+                comparison: selectedDyes.filter(d => d !== null),
+                timestamp: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ffxiv-dye-comparison-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showToast('Exported as JSON!');
+        }
+
+        /**
+         * Copy summary to clipboard
+         */
+        function copySummary() {
+            const activeDyes = selectedDyes.filter(d => d !== null);
+            let summary = 'FFXIV Dye Comparison\n\n';
+
+            activeDyes.forEach((dye, index) => {
+                summary += `Dye ${index + 1}: ${dye.name}\n`;
+                summary += `  Hex: ${dye.hex}\n`;
+                summary += `  RGB: R${dye.rgb.r} G${dye.rgb.g} B${dye.rgb.b}\n`;
+                summary += `  Acquisition: ${dye.acquisition}\n\n`;
+            });
+
+            if (activeDyes.length >= 2) {
+                summary += 'Color Distances:\n';
+                for (let i = 0; i < activeDyes.length; i++) {
+                    for (let j = i + 1; j < activeDyes.length; j++) {
+                        const dist = colorDistance(activeDyes[i].rgb, activeDyes[j].rgb);
+                        summary += `  ${activeDyes[i].name} ↔ ${activeDyes[j].name}: ${dist.toFixed(2)}\n`;
+                    }
+                }
+            }
+
+            navigator.clipboard.writeText(summary);
+            showToast('Summary copied to clipboard!');
+        }
+
+        /**
+         * Export as CSS
+         */
+        function exportAsCSS() {
+            const activeDyes = selectedDyes.filter(d => d !== null);
+            let css = ':root {\n';
+
+            activeDyes.forEach((dye, index) => {
+                const varName = dye.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                css += `  --dye-${varName}: ${dye.hex.toUpperCase()};\n`;
+            });
+
+            css += '}';
+
+            const blob = new Blob([css], { type: 'text/css' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ffxiv-dyes-${Date.now()}.css`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showToast('Exported as CSS!');
+        }
+
+        /**
+         * Copy hex codes to clipboard
+         */
+        function copyHexCodes() {
+            const activeDyes = selectedDyes.filter(d => d !== null);
+            let hexCodes = '';
+
+            activeDyes.forEach((dye, index) => {
+                hexCodes += `${dye.name}: ${dye.hex.toUpperCase()}\n`;
+            });
+
+            navigator.clipboard.writeText(hexCodes);
+            showToast('Hex codes copied to clipboard!');
+        }
+
+        /**
+         * Clear all selections
+         */
+        function clearAll() {
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`dye-select-${i + 1}`).value = '';
+                selectedDyes[i] = null;
+                displayDye(i, null);
+            }
+            debouncedUpdateColorCharts();
+            debouncedUpdateDistanceMatrix();
+            updateExportButtons();
+        }
+
+        /**
+         * Show toast notification
+         */
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            toastMessage.textContent = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        /**
+         * Fetches market prices from Universalis API
+         */
+        async function fetchMarketPricesComparison(itemIds, server) {
+            if (itemIds.length === 0) return {};
+
+            const serverValue = server.startsWith('DC:') ? server.substring(3) : server.substring(6);
+            const itemIdsString = itemIds.join(',');
+            const url = `https://universalis.app/api/v2/aggregated/${serverValue}/${itemIdsString}`;
+
+            try {
+                console.log(`Fetching prices from: ${url}`);
+                // Use throttled request to respect API rate limits
+                const data = await apiThrottler.request(url);
+                const prices = {};
+
+                if (data.results && Array.isArray(data.results)) {
+                    data.results.forEach(result => {
+                        const itemId = result.itemId.toString();
+
+                        if (result.nq && result.nq.minListing) {
+                            let price = null;
+
+                            if (server.startsWith('DC:') && result.nq.minListing.dc && result.nq.minListing.dc.price) {
+                                price = result.nq.minListing.dc.price;
+                            }
+                            else if (server.startsWith('WORLD:')) {
+                                if (result.nq.minListing.world && result.nq.minListing.world.price) {
+                                    price = result.nq.minListing.world.price;
+                                } else if (result.nq.minListing.dc && result.nq.minListing.dc.price) {
+                                    price = result.nq.minListing.dc.price;
+                                }
+                            }
+
+                            if (!price && result.nq.minListing.region && result.nq.minListing.region.price) {
+                                price = result.nq.minListing.region.price;
+                            }
+
+                            if (price) {
+                                prices[itemId] = price;
+                            }
+                        }
+                    });
+                }
+
+                console.log(`Successfully fetched prices for ${Object.keys(prices).length} items`);
+                return prices;
+            } catch (error) {
+                console.error('Error fetching prices:', error);
+                throw error;
+            }
+        }
+
+        /**
+         * Refreshes market prices
+         */
+        async function refreshMarketPricesComparison() {
+            const refreshBtn = document.getElementById('cmp-refresh-btn');
+            const statusDiv = document.getElementById('cmp-price-status');
+            const serverSelect = document.getElementById('cmp-server-select');
+
+            // Validate server is selected
+            const server = serverSelect.value;
+            if (!server || server === '') {
+                statusDiv.textContent = 'Please select a server first.';
+                return;
+            }
+
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = 'Fetching Prices...';
+            statusDiv.textContent = 'Connecting to Universalis API...';
+
+            try {
+
+                // Get all selected dyes
+                const dyesNeedingPrices = selectedDyes
+                    .filter(d => d !== null && shouldFetchPriceComparison(d))
+                    .map(d => d.itemID);
+
+                if (dyesNeedingPrices.length === 0) {
+                    statusDiv.textContent = 'No dyes selected for price fetching.';
+                    refreshBtn.disabled = false;
+                    refreshBtn.textContent = 'Refresh Prices';
+                    return;
+                }
+
+                // Remove duplicates
+                const uniqueIds = [...new Set(dyesNeedingPrices)];
+                const newPrices = await fetchMarketPricesComparison(uniqueIds, server);
+
+                cmpPriceCache = { ...cmpPriceCache, ...newPrices };
+                cmpLastPriceUpdate = new Date();
+
+                // Update display for all selected dyes
+                selectedDyes.forEach((dye, index) => {
+                    if (dye) {
+                        displayDye(index, dye);
+                    }
+                });
+                debouncedUpdateDistanceMatrix();
+
+                statusDiv.textContent = `Updated ${uniqueIds.length} prices at ${cmpLastPriceUpdate.toLocaleTimeString()}`;
+
+            } catch (error) {
+                if (cmpLastPriceUpdate) {
+                    statusDiv.textContent = `Using cached data. Error: Cannot connect to Universalis API.`;
+                } else {
+                    statusDiv.textContent = 'Cannot connect to Universalis API.';
+                }
+            } finally {
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = 'Refresh Prices';
+            }
+        }
+
+        /**
+         * Initialize Market Board server select
+         */
+        async function initializeMarketBoardComparison() {
+            try {
+                const [dcResponse, worldsResponse] = await Promise.all([
+                    fetch('/assets/json/data-centers.json'),
+                    fetch('/assets/json/worlds.json')
+                ]);
+
+                const dataCenters = await dcResponse.json();
+                const worlds = await worldsResponse.json();
+
+                const serverSelect = document.getElementById('cmp-server-select');
+                serverSelect.innerHTML = '';
+
+                // Sort Data Centers alphabetically by name
+                const sortedDataCenters = [...dataCenters].sort((a, b) => a.name.localeCompare(b.name));
+
+                // Add Data Centers
+                const dcOptgroup = document.createElement('optgroup');
+                dcOptgroup.label = 'Data Centers';
+                sortedDataCenters.forEach(dc => {
+                    const option = document.createElement('option');
+                    option.value = `DC:${dc.name}`;
+                    option.textContent = `${dc.name} (${dc.region})`;
+                    if (dc.name === 'Crystal') {
+                        option.selected = true;
+                    }
+                    dcOptgroup.appendChild(option);
+                });
+                serverSelect.appendChild(dcOptgroup);
+
+                // Add Worlds
+                sortedDataCenters.forEach(dc => {
+                    const worldOptgroup = document.createElement('optgroup');
+                    worldOptgroup.label = `${dc.name} Worlds`;
+
+                    const dcWorlds = worlds
+                        .filter(w => dc.worlds.includes(w.id))
+                        .sort((a, b) => a.name.localeCompare(b.name));
+
+                    dcWorlds.forEach(world => {
+                        const option = document.createElement('option');
+                        option.value = `WORLD:${world.id}`;
+                        option.textContent = world.name;
+                        worldOptgroup.appendChild(option);
+                    });
+
+                    serverSelect.appendChild(worldOptgroup);
+                });
+
+                // Setup toggle listener
+                const priceToggle = document.getElementById('show-cmp-prices-toggle');
+                const priceSettings = document.getElementById('cmp-price-settings');
+
+                priceToggle.addEventListener('change', () => {
+                    priceSettings.style.display = priceToggle.checked ? 'block' : 'none';
+                    // Update all selected dyes to show/hide market prices
+                    selectedDyes.forEach((dye, index) => {
+                        if (dye) {
+                            displayDye(index, dye);
+                        }
+                    });
+                });
+
+                // Enable refresh button now that data is loaded
+                const refreshBtn = document.getElementById('cmp-refresh-btn');
+                refreshBtn.disabled = false;
+
+            } catch (error) {
+                console.error('Error initializing market board:', error);
+                const statusDiv = document.getElementById('cmp-price-status');
+                statusDiv.textContent = 'Error loading server data.';
+            }
+        }
+
+        /**
+         * Initialize application
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize market board
+            initializeMarketBoardComparison();
+
+            // Initialize pinch-to-zoom for canvas charts
+            initializeCanvasPinchZoom();
+
+            // Load dye data
+            safeFetchJSON('./assets/json/colors_xiv.json')
+                .then(data => {
+                    ffxivDyes = data;
+                    populateDropdowns();
+
+                    // Setup event listeners
+                    for (let i = 0; i < 4; i++) {
+                        document.getElementById(`dye-select-${i + 1}`).addEventListener('change', () => handleDyeSelection(i));
+                    }
+
+                    document.getElementById('export-json-btn').addEventListener('click', exportAsJSON);
+                    document.getElementById('copy-summary-btn').addEventListener('click', copySummary);
+                    document.getElementById('export-css-btn').addEventListener('click', exportAsCSS);
+                    document.getElementById('copy-hex-btn').addEventListener('click', copyHexCodes);
+                    document.getElementById('clear-all-btn').addEventListener('click', clearAll);
+                })
+                .catch(error => {
+                    console.error('Error loading dye data:', error);
+                    alert('Could not load dye data. Please refresh the page.');
+                });
+
+            // ===== MOBILE KEYBOARD OPTIMIZATION (PHASE 7.3) =====
+            // Initialize mobile keyboard helpers
+            if (isMobileDevice && typeof isMobileDevice === 'function') {
+                // Prevent accidental zoom on input focus
+                const inputs = document.querySelectorAll('input, select, textarea');
+                inputs.forEach(input => {
+                    input.addEventListener('focus', function() {
+                        // Ensure font size is at least 16px to prevent iOS zoom
+                        this.style.fontSize = '16px';
+                    });
+                });
+            }
+        });
+    </script>
+
+    <!-- Help Modal Functions -->
+    <script>function openHelpModal(){document.getElementById('help-modal').classList.add('show')}function closeHelpModal(){document.getElementById('help-modal').classList.remove('show')}document.addEventListener('DOMContentLoaded',()=>{const helpModal=document.getElementById('help-modal');helpModal.addEventListener('click',(e)=>{if(e.target===helpModal){closeHelpModal()}});document.addEventListener('keydown',(e)=>{if(e.key==='Escape' && helpModal.classList.contains('show')){closeHelpModal()}})});</script>
+
+    <!-- Mobile Bottom Navigation Component -->
+    <div id="mobile-nav-container" class="component-loading"></div>
+    <script>
+        fetch('components/mobile-bottom-nav.html')
+            .then(r => {
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.text();
+            })
+            .then(html => {
+                document.getElementById('mobile-nav-container').innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Failed to load mobile navigation:', error);
+                // Navigation is optional - app works without it
+            });
+    </script>
+
+    <!-- Service Worker Registration for PWA Support -->
+    <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/service-worker.js').then(()=>console.log('Service Worker registered')).catch((error)=>console.log('Service Worker registration failed:',error))})}</script>
+</body>
+</html>

@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dye Comparison - XIV Dye Tools V4</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+
+<body>
+
+    <!-- Simple App Header -->
+    <header class="app-header">
+        <div class="logo-section">
+            <svg class="logo-icon" viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
+                <path d="M10 12h4v4h-4z" />
+            </svg>
+            <span>XIV Dye Tools</span>
+        </div>
+        <div class="nav-controls">
+            <button class="nav-btn" title="About">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z" />
+                </svg>
+            </button>
+            <button class="nav-btn" title="Language">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.91 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.91-4.33-3.56zm2.95-8H5.08c.96-1.65 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-1.01 1.74-2.59 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z" />
+                </svg>
+            </button>
+            <button class="nav-btn" title="Theme" id="header-theme-btn">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M20 15.31L23.31 12 20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69zM12 18V6c3.31 0 6 2.69 6 6s-2.69 6-6 6z" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Tool Selection Banner -->
+    <nav class="tool-banner">
+        <a href="harmony-explorer.html" class="tool-btn" title="Harmony Explorer">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" opacity="0.3" />
+                <circle cx="12" cy="3" r="2.5" fill="currentColor" stroke="none" />
+                <circle cx="20.66" cy="16.5" r="2.5" fill="currentColor" stroke="none" />
+                <circle cx="3.34" cy="16.5" r="2.5" fill="currentColor" stroke="none" />
+                <polygon points="12,3 20.66,16.5 3.34,16.5" fill="none" opacity="0.5" />
+            </svg>
+            <span class="tool-label">Harmony</span>
+        </a>
+        <a href="swatch-matcher.html" class="tool-btn" title="Swatch Matcher">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="7" r="4" opacity="0.7" />
+                <path d="M5.5 21c0-4.5 3-7 6.5-7s6.5 2.5 6.5 7" opacity="0.4" />
+                <rect x="16" y="11" width="3" height="3" rx="0.5" fill="currentColor" stroke="none" />
+                <rect x="16" y="15" width="3" height="3" rx="0.5" fill="currentColor" stroke="none" opacity="0.6" />
+                <rect x="16" y="19" width="3" height="3" rx="0.5" fill="currentColor" stroke="none" opacity="0.3" />
+            </svg>
+            <span class="tool-label">Matcher</span>
+        </a>
+        <a href="palette-extractor.html" class="tool-btn" title="Palette Extractor">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" opacity="0.3" />
+                <circle cx="12" cy="12" r="6.5" opacity="0.5" />
+                <circle cx="12" cy="12" r="3.5" opacity="0.7" />
+                <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+            </svg>
+            <span class="tool-label">Extractor</span>
+        </a>
+        <a href="accessibility-checker.html" class="tool-btn" title="Accessibility Checker">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M 2 12 Q 12 5 22 12 Q 12 19 2 12 Z" />
+                <circle cx="12" cy="12" r="3.5" />
+                <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+            </svg>
+            <span class="tool-label">Accessibility</span>
+        </a>
+        <a href="dye-comparison.html" class="tool-btn active" title="Dye Comparison">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="4" width="11" height="11" rx="2" opacity="0.4" />
+                <rect x="4" y="9" width="11" height="11" rx="2" />
+                <path d="M16 19l2 2 4-4" opacity="0.6" />
+                <path d="M8 12h.01" stroke-width="3" />
+                <path d="M13 7h.01" stroke-width="3" opacity="0.4" />
+            </svg>
+            <span class="tool-label">Compare</span>
+        </a>
+        <a href="gradient-builder.html" class="tool-btn" title="Gradient Builder">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M 4 8 C 4 6 5 5 7 5 L 17 5 C 19 5 20 6 20 8 L 20 16 C 20 18 19 19 17 19 L 7 19 C 5 19 4 18 4 16 Z" />
+                <circle cx="18" cy="16" r="1.5" fill="currentColor" stroke="none" />
+                <circle cx="8" cy="10" r="2" opacity="0.5" />
+                <circle cx="12" cy="10" r="2" opacity="0.5" />
+                <circle cx="16" cy="10" r="2" opacity="0.5" />
+                <line x1="6" y1="15" x2="10" y2="15" stroke-width="2" />
+                <path d="M 10 15 L 12 13 L 12 17 Z" fill="currentColor" stroke="none" opacity="0.7" />
+            </svg>
+            <span class="tool-label">Gradient</span>
+        </a>
+        <a href="dye-mixer.html" class="tool-btn" title="Dye Mixer">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5l-8 14h16l-8-14zM12 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" opacity="0.5" />
+                <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" fill="currentColor" stroke="none" />
+            </svg>
+            <span class="tool-label">Mixer</span>
+        </a>
+        <a href="budget-suggestions.html" class="tool-btn" title="Budget Suggestions">
+            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9" opacity="0.3" />
+                <path d="M12 6v2m0 8v2" />
+                <path d="M9 10c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2s-.9 2-2 2h-2c-1.1 0-2 .9-2 2s.9 2 2 2h2c1.1 0 2-.9 2-2" />
+                <path d="M17 7l2-2m0 0l2 2m-2-2v5" opacity="0.7" />
+            </svg>
+            <span class="tool-label">Budget</span>
+        </a>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="app-container">
+
+        <!-- Configuration Sidebar -->
+        <aside class="config-sidebar">
+            <div class="drawer-header">
+                <span class="drawer-title">Configuration</span>
+            </div>
+            <div class="drawer-content">
+
+                <!-- Comparison Configuration -->
+                <div class="config-section comparison-config">
+                    <div class="config-group">
+                        <div class="config-label">Display Options</div>
+                        <div class="config-control">
+                            <span>Show Labels</span>
+                            <div class="toggle-switch active"></div>
+                        </div>
+                        <div class="config-control">
+                            <span>Show Hex Values</span>
+                            <div class="toggle-switch active"></div>
+                        </div>
+                        <div class="config-control">
+                            <span>Show Statistics</span>
+                            <div class="toggle-switch active"></div>
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <div class="config-label">Chart Options</div>
+                        <div class="config-control">
+                            <span>Show Grid Lines</span>
+                            <div class="toggle-switch active"></div>
+                        </div>
+                        <div class="config-control">
+                            <span>Animate Transitions</span>
+                            <div class="toggle-switch active"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <!-- Dye Comparison View -->
+            <div class="comparison-view" style="display: flex;">
+
+                <!-- Selected Dyes Section -->
+                <div class="comparison-section">
+                    <div class="section-header">
+                        <span class="section-title">Selected Dyes</span>
+                    </div>
+                    <div class="comparison-cards-row">
+                        <!-- Seafog Blue -->
+                        <div class="harmony-card">
+                            <div class="card-header">
+                                <span class="dye-name">Seafog Blue</span>
+                            </div>
+                            <div class="card-preview">
+                                <div class="preview-half" style="background-color: #9EC6C3;">
+                                    <span class="preview-label">Preview</span>
+                                </div>
+                                <div class="preview-half" style="background-color: #9EC6C3;">
+                                    <span class="preview-label">Cloth</span>
+                                </div>
+                            </div>
+                            <div class="card-details">
+                                <div class="detail-col">
+                                    <div class="col-header">Technical</div>
+                                    <div class="data-row">
+                                        <span class="data-label">HEX</span>
+                                        <span class="data-value">#9EC6C3</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">RGB</span>
+                                        <span class="data-value">158,198,195</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">HSV</span>
+                                        <span class="data-value">176,20,78</span>
+                                    </div>
+                                </div>
+                                <div class="detail-col">
+                                    <div class="col-header">Acquisition</div>
+                                    <div class="data-row">
+                                        <span class="data-label">Source</span>
+                                        <span class="data-value">Vendor</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">Cost</span>
+                                        <span class="data-value">216 G</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">Market</span>
+                                        <span class="data-value">Balmung</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="price-large">320 G</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-actions">
+                                <div class="action-row">
+                                    <button class="primary-action-btn">Remove</button>
+                                    <div class="context-menu-container">
+                                        <button class="context-menu-btn">
+                                            <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;">
+                                                <path
+                                                    d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Deepwood Green -->
+                        <div class="harmony-card">
+                            <div class="card-header">
+                                <span class="dye-name">Deepwood Green</span>
+                            </div>
+                            <div class="card-preview">
+                                <div class="preview-half" style="background-color: #3C4A3C;">
+                                    <span class="preview-label">Preview</span>
+                                </div>
+                                <div class="preview-half" style="background-color: #3C4A3C;">
+                                    <span class="preview-label">Cloth</span>
+                                </div>
+                            </div>
+                            <div class="card-details">
+                                <div class="detail-col">
+                                    <div class="col-header">Technical</div>
+                                    <div class="data-row">
+                                        <span class="data-label">HEX</span>
+                                        <span class="data-value">#3C4A3C</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">RGB</span>
+                                        <span class="data-value">60,74,60</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">HSV</span>
+                                        <span class="data-value">120,19,29</span>
+                                    </div>
+                                </div>
+                                <div class="detail-col">
+                                    <div class="col-header">Acquisition</div>
+                                    <div class="data-row">
+                                        <span class="data-label">Source</span>
+                                        <span class="data-value">Crafted</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">Cost</span>
+                                        <span class="data-value">---</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">Market</span>
+                                        <span class="data-value">Balmung</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="price-large">1,250 G</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-actions">
+                                <div class="action-row">
+                                    <button class="primary-action-btn">Remove</button>
+                                    <div class="context-menu-container">
+                                        <button class="context-menu-btn">
+                                            <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;">
+                                                <path
+                                                    d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dragoon Blue -->
+                        <div class="harmony-card">
+                            <div class="card-header">
+                                <span class="dye-name">Dragoon Blue</span>
+                            </div>
+                            <div class="card-preview">
+                                <div class="preview-half" style="background-color: #1E3A8A;">
+                                    <span class="preview-label">Preview</span>
+                                </div>
+                                <div class="preview-half" style="background-color: #1E3A8A;">
+                                    <span class="preview-label">Cloth</span>
+                                </div>
+                            </div>
+                            <div class="card-details">
+                                <div class="detail-col">
+                                    <div class="col-header">Technical</div>
+                                    <div class="data-row">
+                                        <span class="data-label">HEX</span>
+                                        <span class="data-value">#1E3A8A</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">RGB</span>
+                                        <span class="data-value">30,58,138</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">HSV</span>
+                                        <span class="data-value">224,78,54</span>
+                                    </div>
+                                </div>
+                                <div class="detail-col">
+                                    <div class="col-header">Acquisition</div>
+                                    <div class="data-row">
+                                        <span class="data-label">Source</span>
+                                        <span class="data-value">Vendor</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">Cost</span>
+                                        <span class="data-value">216 G</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">Market</span>
+                                        <span class="data-value">Balmung</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="price-large">450 G</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-actions">
+                                <div class="action-row">
+                                    <button class="primary-action-btn">Remove</button>
+                                    <div class="context-menu-container">
+                                        <button class="context-menu-btn">
+                                            <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;">
+                                                <path
+                                                    d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Vanilla Yellow -->
+                        <div class="harmony-card">
+                            <div class="card-header">
+                                <span class="dye-name">Vanilla Yellow</span>
+                            </div>
+                            <div class="card-preview">
+                                <div class="preview-half" style="background-color: #F4E4A8;">
+                                    <span class="preview-label">Preview</span>
+                                </div>
+                                <div class="preview-half" style="background-color: #F4E4A8;">
+                                    <span class="preview-label">Cloth</span>
+                                </div>
+                            </div>
+                            <div class="card-details">
+                                <div class="detail-col">
+                                    <div class="col-header">Technical</div>
+                                    <div class="data-row">
+                                        <span class="data-label">HEX</span>
+                                        <span class="data-value">#F4E4A8</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">RGB</span>
+                                        <span class="data-value">244,228,168</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">HSV</span>
+                                        <span class="data-value">47,31,96</span>
+                                    </div>
+                                </div>
+                                <div class="detail-col">
+                                    <div class="col-header">Acquisition</div>
+                                    <div class="data-row">
+                                        <span class="data-label">Source</span>
+                                        <span class="data-value">Vendor</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">Cost</span>
+                                        <span class="data-value">216 G</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">Market</span>
+                                        <span class="data-value">Balmung</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="price-large">280 G</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-actions">
+                                <div class="action-row">
+                                    <button class="primary-action-btn">Remove</button>
+                                    <div class="context-menu-container">
+                                        <button class="context-menu-btn">
+                                            <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;">
+                                                <path
+                                                    d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Section -->
+                <div class="comparison-section">
+                    <div class="section-header">
+                        <span class="section-title">Statistics</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">49<span class="stat-unit">%</span></div>
+                            <div class="stat-label">Avg Saturation</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">60<span class="stat-unit">%</span></div>
+                            <div class="stat-label">Avg Brightness</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">184<span class="stat-unit">°</span></div>
+                            <div class="stat-label">Hue Range</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">218.7</div>
+                            <div class="stat-label">Avg Distance</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualizations Section -->
+                <div class="comparison-section visualizations-row">
+
+                    <!-- Hue-Saturation Plot -->
+                    <div class="hue-sat-container">
+                        <div class="chart-title">Hue-Saturation Plot</div>
+                        <div class="hue-sat-plot">
+                            <!-- Axis Labels -->
+                            <div class="axis-label y-axis">Saturation</div>
+                            <div class="axis-label x-axis">Hue</div>
+
+                            <!-- Plot Wrapper -->
+                            <div class="plot-wrapper">
+                                <!-- Grid Lines (Horizontal) -->
+                                <div class="plot-grid-line horizontal" style="bottom: 25%;"></div>
+                                <div class="plot-grid-line horizontal" style="bottom: 50%;"></div>
+                                <div class="plot-grid-line horizontal" style="bottom: 75%;"></div>
+
+                                <!-- Grid Lines (Vertical) -->
+                                <div class="plot-grid-line vertical" style="left: 25%;"></div>
+                                <div class="plot-grid-line vertical" style="left: 50%;"></div>
+                                <div class="plot-grid-line vertical" style="left: 75%;"></div>
+
+                                <!-- Plot Area -->
+                                <div class="plot-area">
+                                    <!-- Y-axis ticks -->
+                                    <span class="axis-tick y-tick" style="bottom: 0;">0%</span>
+                                    <span class="axis-tick y-tick" style="bottom: 25%;">25%</span>
+                                    <span class="axis-tick y-tick" style="bottom: 50%;">50%</span>
+                                    <span class="axis-tick y-tick" style="bottom: 75%;">75%</span>
+                                    <span class="axis-tick y-tick" style="bottom: 100%;">100%</span>
+
+                                    <!-- X-axis ticks -->
+                                    <span class="axis-tick x-tick" style="left: 0;">0°</span>
+                                    <span class="axis-tick x-tick" style="left: 25%;">90°</span>
+                                    <span class="axis-tick x-tick" style="left: 50%;">180°</span>
+                                    <span class="axis-tick x-tick" style="left: 75%;">270°</span>
+                                    <span class="axis-tick x-tick" style="left: 100%;">360°</span>
+
+                                    <!-- Plot Nodes (positioned by Hue % on X, Saturation % on Y) -->
+                                    <!-- Seafog Blue: Hue ~180°, Sat 25% => left:50%, bottom:25% -->
+                                    <div class="plot-node" style="left: 50%; bottom: 25%; background-color: #9EC6C3;"
+                                        data-label="Seafog Blue"></div>
+
+                                    <!-- Deepwood Green: Hue ~120°, Sat 16% => left:33%, bottom:16% -->
+                                    <div class="plot-node" style="left: 33%; bottom: 16%; background-color: #3C4A3C;"
+                                        data-label="Deepwood Green"></div>
+
+                                    <!-- Dragoon Blue: Hue ~220°, Sat 78% => left:61%, bottom:78% -->
+                                    <div class="plot-node" style="left: 61%; bottom: 78%; background-color: #1E3A8A;"
+                                        data-label="Dragoon Blue"></div>
+
+                                    <!-- Vanilla Yellow: Hue ~45°, Sat 31% => left:12.5%, bottom:31% -->
+                                    <div class="plot-node" style="left: 12.5%; bottom: 31%; background-color: #F4E4A8;"
+                                        data-label="Vanilla Yellow"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Brightness Distribution Chart -->
+                    <div class="brightness-container">
+                        <div class="chart-title">Brightness Distribution</div>
+                        <div class="brightness-chart">
+                            <div class="bar-chart-area">
+                                <!-- Seafog Blue: 63% brightness -->
+                                <div class="bar-item">
+                                    <div class="bar" style="height: 63%; background-color: #9EC6C3;">
+                                        <span class="bar-value">63%</span>
+                                    </div>
+                                    <span class="bar-label">Seafog Blue</span>
+                                </div>
+
+                                <!-- Deepwood Green: 16% brightness -->
+                                <div class="bar-item">
+                                    <div class="bar" style="height: 16%; background-color: #3C4A3C;">
+                                        <span class="bar-value">16%</span>
+                                    </div>
+                                    <span class="bar-label">Deepwood</span>
+                                </div>
+
+                                <!-- Dragoon Blue: 62% brightness -->
+                                <div class="bar-item">
+                                    <div class="bar" style="height: 62%; background-color: #1E3A8A;">
+                                        <span class="bar-value">62%</span>
+                                    </div>
+                                    <span class="bar-label">Dragoon Blue</span>
+                                </div>
+
+                                <!-- Vanilla Yellow: 98% brightness -->
+                                <div class="bar-item">
+                                    <div class="bar" style="height: 98%; background-color: #F4E4A8;">
+                                        <span class="bar-value">98%</span>
+                                    </div>
+                                    <span class="bar-label">Vanilla Yellow</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Color Distance Matrix Section -->
+                <div class="comparison-section">
+                    <div class="section-header">
+                        <span class="section-title">Color Distance Matrix</span>
+                    </div>
+                    <div class="distance-matrix-container">
+                        <table class="pairwise-matrix">
+                            <thead>
+                                <tr>
+                                    <th class="matrix-corner"></th>
+                                    <th class="matrix-header-cell">
+                                        <div class="matrix-header-swatch" style="background-color: #9EC6C3;"></div>
+                                        <span>Seafog Blue</span>
+                                    </th>
+                                    <th class="matrix-header-cell">
+                                        <div class="matrix-header-swatch" style="background-color: #3C4A3C;"></div>
+                                        <span>Deepwood</span>
+                                    </th>
+                                    <th class="matrix-header-cell">
+                                        <div class="matrix-header-swatch" style="background-color: #1E3A8A;"></div>
+                                        <span>Dragoon Blue</span>
+                                    </th>
+                                    <th class="matrix-header-cell">
+                                        <div class="matrix-header-swatch" style="background-color: #F4E4A8;"></div>
+                                        <span>Vanilla Yellow</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="matrix-row-header">
+                                        <div class="matrix-row-swatch" style="background-color: #9EC6C3;"></div>
+                                        <span>Seafog Blue</span>
+                                    </td>
+                                    <td class="matrix-cell diagonal">—</td>
+                                    <td class="matrix-cell distance-medium"><span class="distance-value">169.1</span>
+                                    </td>
+                                    <td class="matrix-cell distance-medium"><span class="distance-value">154.7</span>
+                                    </td>
+                                    <td class="matrix-cell distance-medium"><span class="distance-value">188.0</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="matrix-row-header">
+                                        <div class="matrix-row-swatch" style="background-color: #3C4A3C;"></div>
+                                        <span>Deepwood</span>
+                                    </td>
+                                    <td class="matrix-cell distance-medium"><span class="distance-value">169.1</span>
+                                    </td>
+                                    <td class="matrix-cell diagonal">—</td>
+                                    <td class="matrix-cell distance-medium"><span class="distance-value">131.3</span>
+                                    </td>
+                                    <td class="matrix-cell distance-high"><span class="distance-value">349.0</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="matrix-row-header">
+                                        <div class="matrix-row-swatch" style="background-color: #1E3A8A;"></div>
+                                        <span>Dragoon Blue</span>
+                                    </td>
+                                    <td class="matrix-cell distance-medium"><span class="distance-value">154.7</span>
+                                    </td>
+                                    <td class="matrix-cell distance-medium"><span class="distance-value">131.3</span>
+                                    </td>
+                                    <td class="matrix-cell diagonal">—</td>
+                                    <td class="matrix-cell distance-high"><span class="distance-value">340.2</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="matrix-row-header">
+                                        <div class="matrix-row-swatch" style="background-color: #F4E4A8;"></div>
+                                        <span>Vanilla Yellow</span>
+                                    </td>
+                                    <td class="matrix-cell distance-medium"><span class="distance-value">188.0</span>
+                                    </td>
+                                    <td class="matrix-cell distance-high"><span class="distance-value">349.0</span></td>
+                                    <td class="matrix-cell distance-high"><span class="distance-value">340.2</span></td>
+                                    <td class="matrix-cell diagonal">—</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Dye Selection Drawer -->
+        <aside class="dye-drawer glass">
+            <div class="drawer-header">
+                <span class="drawer-title">Color Palette</span>
+                <button class="nav-btn"><svg class="icon" viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                    </svg></button>
+            </div>
+
+            <div class="drawer-content">
+                <!-- Favorites -->
+                <div class="section-label">
+                    <span>Favorites</span>
+                    <svg class="icon" style="width: 16px; height: 16px;" viewBox="0 0 24 24">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                </div>
+                <div class="favorites-section">
+                    <div class="swatch-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 0;">
+                        <div class="swatch" style="background-color: #2b3352;" title="Dragoon Blue"></div>
+                        <div class="swatch" style="background-color: #f7f7f7;" title="Pure White"></div>
+                        <div class="swatch" style="background-color: #8c2530;" title="Rolanberry Red"></div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filter-bar">
+                    <div class="filter-chip active">All</div>
+                    <div class="filter-chip">Metallic</div>
+                    <div class="filter-chip">Pastel</div>
+                    <div class="filter-chip">Dark</div>
+                    <div class="filter-chip">Vibrant</div>
+                </div>
+
+                <div class="section-label">Natural Tones</div>
+
+                <!-- Main Grid -->
+                <div class="swatch-grid">
+                    <div class="swatch" style="background-color: #f6efe3;"></div>
+                    <div class="swatch selected" style="background-color: #e5dac1;"></div>
+                    <div class="swatch" style="background-color: #bfaea2;"></div>
+                    <div class="swatch" style="background-color: #928678;"></div>
+                    <div class="swatch" style="background-color: #5c544d;"></div>
+
+                    <div class="swatch" style="background-color: #d8c29e;"></div>
+                    <div class="swatch" style="background-color: #ac8e6b;"></div>
+                    <div class="swatch selected" style="background-color: #6d5440;"></div>
+                    <div class="swatch" style="background-color: #4b392b;"></div>
+                    <div class="swatch" style="background-color: #2b2016;"></div>
+                </div>
+
+                <div class="section-label">Red Tones</div>
+                <div class="swatch-grid">
+                    <div class="swatch" style="background-color: #e4bbcaba;"></div>
+                    <div class="swatch" style="background-color: #b33941;"></div>
+                    <div class="swatch" style="background-color: #8c2530;"></div>
+                    <div class="swatch selected" style="background-color: #631016;"></div>
+                    <div class="swatch" style="background-color: #3b0507;"></div>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <script>
+        // Toggle switches
+        document.querySelectorAll('.toggle-switch').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
+    </script>
+
+</body>
+</html>
