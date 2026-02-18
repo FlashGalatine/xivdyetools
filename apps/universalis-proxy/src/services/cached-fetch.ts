@@ -81,6 +81,7 @@ export async function cachedFetch<T = unknown>(
       throw new UpstreamError(response.status, response.statusText);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     return response.json() as Promise<T>;
   });
 
