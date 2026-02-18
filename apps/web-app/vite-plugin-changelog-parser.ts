@@ -136,7 +136,7 @@ const VIRTUAL_MODULE_ID = 'virtual:changelog';
 const RESOLVED_VIRTUAL_MODULE_ID = '\0' + VIRTUAL_MODULE_ID;
 
 /** Candidate filenames for the user-friendly changelog, in priority order */
-const CHANGELOG_CANDIDATES = ['CHANGELOG-tldr.md', 'CHANGELOG-laymans.md'] as const;
+const CHANGELOG_CANDIDATES = ['CHANGELOG-laymans.md', 'CHANGELOG-tldr.md'] as const;
 
 export function changelogParser(): Plugin {
   let changelogPath: string;
