@@ -24,7 +24,7 @@
 The `.npmrc` files in all 7 libraries contain the same plaintext npm auth token. This token is in git history and must be revoked.
 
 1. Go to npmjs.com → Access Tokens
-2. Revoke the token `REDACTED-REVOKED-TOKEN`
+2. Revoke the exposed token (already done — token was revoked)
 3. Generate a new automation token for CI
 4. Store the new token securely (1Password, GitHub Secrets)
 
