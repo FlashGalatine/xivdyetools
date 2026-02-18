@@ -1,7 +1,7 @@
 /**
  * XIV Dye Tools - Universalis API Proxy
  *
- * Cloudflare Worker that proxies requests to Universalis API with:
+ * A Cloudflare Worker that proxies requests to the Universalis API with:
  * - Proper CORS headers on ALL responses (including errors)
  * - Cache API caching for optimal performance
  * - Request coalescing to prevent duplicate upstream requests
