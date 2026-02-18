@@ -406,7 +406,8 @@ describe('discord-api.ts', () => {
                 // Small delay to ensure some time has passed
                 await new Promise((resolve) => setTimeout(resolve, 10));
 
-                expect(context.elapsedMs).toBeGreaterThanOrEqual(10);
+                // Use a lower bound of 5ms to account for timer imprecision on CI runners
+                expect(context.elapsedMs).toBeGreaterThanOrEqual(5);
             });
         });
 

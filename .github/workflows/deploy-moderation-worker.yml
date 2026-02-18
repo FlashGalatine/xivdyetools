@@ -47,3 +47,4 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/moderation-worker
           command: deploy --env production
+          packageManager: pnpm

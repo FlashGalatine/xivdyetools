@@ -44,3 +44,4 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/universalis-proxy
           command: deploy --env production
+          packageManager: pnpm

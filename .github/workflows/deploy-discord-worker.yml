@@ -49,3 +49,4 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/discord-worker
           command: deploy --env production
+          packageManager: pnpm

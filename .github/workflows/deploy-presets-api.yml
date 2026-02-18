@@ -48,3 +48,4 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/presets-api
           command: deploy --env production
+          packageManager: pnpm
