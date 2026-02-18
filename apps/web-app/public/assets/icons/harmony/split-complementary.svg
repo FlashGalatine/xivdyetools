@@ -1,0 +1,13 @@
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+  <title>Split-Complementary Harmony</title>
+  <!-- Outer wheel -->
+  <circle cx="12" cy="12" r="10" opacity="0.3" />
+  <!-- Y-shape lines -->
+  <line x1="12" y1="3" x2="12" y2="12" />
+  <line x1="12" y1="12" x2="6" y2="20" />
+  <line x1="12" y1="12" x2="18" y2="20" />
+  <!-- Three dots -->
+  <circle cx="12" cy="3" r="2.5" fill="currentColor" stroke="none" />
+  <circle cx="6" cy="20" r="2.5" fill="currentColor" stroke="none" />
+  <circle cx="18" cy="20" r="2.5" fill="currentColor" stroke="none" />
+</svg>

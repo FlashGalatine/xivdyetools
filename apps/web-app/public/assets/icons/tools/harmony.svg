@@ -1,0 +1,11 @@
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+  <title>Harmony Explorer</title>
+  <!-- Outer color wheel -->
+  <circle cx="12" cy="12" r="10" opacity="0.3" />
+  <!-- Triadic harmony points (120° apart) -->
+  <circle cx="12" cy="3" r="2.5" fill="currentColor" stroke="none" />
+  <circle cx="20.66" cy="16.5" r="2.5" fill="currentColor" stroke="none" />
+  <circle cx="3.34" cy="16.5" r="2.5" fill="currentColor" stroke="none" />
+  <!-- Connecting triangle -->
+  <polygon points="12,3 20.66,16.5 3.34,16.5" fill="none" opacity="0.5" />
+</svg>

@@ -1,0 +1,45 @@
+name = "xivdyetools-presets-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+routes = [
+  { pattern = "api.xivdyetools.app", custom_domain = true },
+  { pattern = "api.xivdyetools.projectgalatine.com", custom_domain = true }
+]
+
+[dev]
+port = 8787
+local_protocol = "http"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "xivdyetools-presets"
+database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
+
+[[services]]
+binding = "DISCORD_WORKER"
+service = "xivdyetools-discord-worker"
+
+[vars]
+ENVIRONMENT = "development"
+API_VERSION = "v1"
+CORS_ORIGIN = "http://localhost:5173"
+
+[env.production]
+name = "xivdyetools-presets-api"
+vars = { ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com" }
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "xivdyetools-presets"
+database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
+
+[[env.production.services]]
+binding = "DISCORD_WORKER"
+service = "xivdyetools-discord-worker"
+
+# Secrets: BOT_API_SECRET, BOT_SIGNING_SECRET, JWT_SECRET,
+# MODERATOR_IDS, PERSPECTIVE_API_KEY, MODERATION_WEBHOOK_URL,
+# OWNER_DISCORD_ID, DISCORD_BOT_TOKEN,
+# DISCORD_BOT_WEBHOOK_URL, INTERNAL_WEBHOOK_SECRET

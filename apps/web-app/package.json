@@ -1,0 +1,63 @@
+{
+  "name": "xivdyetools-web-app",
+  "version": "4.1.5",
+  "private": true,
+  "description": "A comprehensive web-based toolset for Final Fantasy XIV players",
+  "main": "index.html",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src/**/*.ts --fix",
+    "format": "prettier --write src/**/*.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:coverage": "cross-env PLAYWRIGHT_PROJECT_NAME=chromium-coverage playwright test --project=chromium-coverage",
+    "test:e2e:comparison": "playwright test dye-comparison.spec.ts",
+    "test:e2e:mobile": "playwright test --project=mobile-chrome",
+    "build:css": "tailwindcss -i ./src/tailwind-input.css -o ./assets/css/tailwind.css",
+    "build:css:watch": "tailwindcss -i ./src/tailwind-input.css -o ./assets/css/tailwind.css --watch",
+    "check-bundle-size": "node scripts/check-bundle-size.js",
+    "validate:i18n": "node scripts/validate-i18n.js",
+    "build:check": "npm run build && npm run check-bundle-size"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^25.2.2",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/ui": "^4.0.18",
+    "@xivdyetools/test-utils": "workspace:*",
+    "autoprefixer": "^10.4.22",
+    "jsdom": "^28.0.0",
+    "msw": "^2.12.4",
+    "postcss": "^8.5.6",
+    "sharp": "^0.34.5",
+    "tailwindcss": "^4.1.17",
+    "vite": "^7.2.7",
+    "vitest": "^4.0.18"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.1.17",
+    "@xivdyetools/core": "workspace:*",
+    "@xivdyetools/logger": "workspace:*",
+    "@xivdyetools/types": "workspace:*",
+    "lit": "^3.1.0",
+    "spectral.js": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

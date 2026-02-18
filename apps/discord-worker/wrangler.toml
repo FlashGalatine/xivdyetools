@@ -1,0 +1,71 @@
+name = "xivdyetools-discord-worker"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+routes = [
+  { pattern = "bot.xivdyetools.app", custom_domain = true },
+  { pattern = "bot.xivdyetools.projectgalatine.com", custom_domain = true }
+]
+
+[[kv_namespaces]]
+binding = "KV"
+id = "1fcb7e037ccd4172a47fccd97cf8e753"
+
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "xivdyetools_bot_analytics"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "xivdyetools-presets"
+database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
+
+[[services]]
+binding = "PRESETS_API"
+service = "xivdyetools-presets-api"
+
+[[services]]
+binding = "UNIVERSALIS_PROXY"
+service = "xivdyetools-universalis-proxy"
+
+[vars]
+DISCORD_CLIENT_ID = "1447108133020369048"
+PRESETS_API_URL = "https://api.xivdyetools.app"
+ANNOUNCEMENT_CHANNEL_ID = "1441800851747508314"
+
+# Secrets: DISCORD_TOKEN, DISCORD_PUBLIC_KEY, BOT_API_SECRET,
+# BOT_SIGNING_SECRET, UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+
+[[rules]]
+type = "Data"
+globs = ["**/*.ttf"]
+fallthrough = true
+
+[env.production]
+name = "xivdyetools-discord-worker"
+
+[env.production.vars]
+DISCORD_CLIENT_ID = "1447108133020369048"
+PRESETS_API_URL = "https://api.xivdyetools.app"
+
+[[env.production.kv_namespaces]]
+binding = "KV"
+id = "1fcb7e037ccd4172a47fccd97cf8e753"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "xivdyetools-presets"
+database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
+
+[[env.production.services]]
+binding = "PRESETS_API"
+service = "xivdyetools-presets-api"
+
+[[env.production.services]]
+binding = "UNIVERSALIS_PROXY"
+service = "xivdyetools-universalis-proxy"
+
+[[env.production.analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "xivdyetools_bot_analytics"

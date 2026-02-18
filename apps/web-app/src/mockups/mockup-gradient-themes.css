@@ -1,0 +1,259 @@
+/**
+ * XIV Dye Tools v3.0.0 - Mockup-Only Gradient Themes
+ *
+ * Experimental gradient-enhanced themes for testing in mockup mode only.
+ * These themes are NOT loaded in production builds.
+ *
+ * Themes:
+ * - Gradient Light: Warm sunrise gradient (coral → gold)
+ * - Gradient Dark: Cool twilight gradient (purple → teal)
+ *
+ * @module mockups/mockup-gradient-themes
+ */
+
+/* =====================================================
+   GRADIENT LIGHT THEME
+   Warm sunrise aesthetic with coral-to-gold gradients
+   ===================================================== */
+html.theme-gradient-light {
+  color-scheme: light;
+
+  /* Solid colors for text, borders, SVG fills */
+  --theme-primary: #E85A5A;
+  --theme-primary-light: #F5A623;
+  --theme-primary-dark: #C84A4A;
+
+  /* Core theme colors */
+  --theme-background: #FDF8F5;
+  --theme-background-secondary: #FFF5EE;
+  --theme-card-background: #FFFFFF;
+  --theme-card-hover: #FFF9F5;
+  --theme-text: #3D2828;
+  --theme-text-header: #FFFFFF;
+  --theme-text-muted: #8B5A5A;
+  --theme-border: #F5C4B8;
+
+  /* Gradient variants */
+  --theme-primary-gradient: linear-gradient(135deg, #E85A5A 0%, #F5A623 50%, #E8C44A 100%);
+  --theme-primary-gradient-hover: linear-gradient(135deg, #F06A6A 0%, #F7B633 50%, #EAD05A 100%);
+  --theme-border-gradient: linear-gradient(90deg, #E85A5A33, #F5A62333, #E8C44A33);
+  --theme-background-gradient: linear-gradient(180deg, #FDF8F5 0%, #FFF5EE 100%);
+
+  /* Header gradient */
+  --theme-header-gradient: linear-gradient(135deg, #E85A5A 0%, #D94A4A 50%, #C03A3A 100%);
+}
+
+/* Apply gradient to header in gradient-light theme */
+html.theme-gradient-light .app-header {
+  background: var(--theme-header-gradient) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 10px 30px rgba(232, 90, 90, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Gradient primary buttons */
+html.theme-gradient-light .btn-theme-primary,
+html.theme-gradient-light .bg-blue-600,
+html.theme-gradient-light .bg-blue-500 {
+  background: var(--theme-primary) !important;
+  background: var(--theme-primary-gradient) !important;
+  color: var(--theme-text-header) !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(232, 90, 90, 0.3);
+}
+
+html.theme-gradient-light .btn-theme-primary:hover,
+html.theme-gradient-light .bg-blue-600:hover,
+html.theme-gradient-light .bg-blue-500:hover {
+  background: var(--theme-primary-gradient-hover) !important;
+  box-shadow: 0 4px 12px rgba(232, 90, 90, 0.4);
+}
+
+/* Gradient border effect for cards (using background trick) */
+html.theme-gradient-light .mockup-shell .p-4.rounded-lg[style*="border"] {
+  background:
+    linear-gradient(var(--theme-card-background), var(--theme-card-background)) padding-box,
+    var(--theme-border-gradient) border-box !important;
+  border: 1px solid transparent !important;
+}
+
+/* Selected/active states with gradient */
+html.theme-gradient-light [aria-current="page"],
+html.theme-gradient-light .harmony-header {
+  background: var(--theme-primary) !important;
+  background: var(--theme-primary-gradient) !important;
+}
+
+/* Featured sections */
+html.theme-gradient-light .featured-section-gradient {
+  background: linear-gradient(135deg, #E85A5A40 0%, #F5A62340 50%, #E8C44A40 100%) !important;
+  border: 2px solid #E85A5A !important;
+}
+
+
+/* =====================================================
+   GRADIENT DARK THEME
+   Cool twilight aesthetic with purple-to-teal gradients
+   ===================================================== */
+html.theme-gradient-dark {
+  color-scheme: dark;
+
+  /* Solid colors for text, borders, SVG fills */
+  --theme-primary: #8B5CF6;
+  --theme-primary-light: #A78BFA;
+  --theme-primary-dark: #7C3AED;
+
+  /* Core theme colors */
+  --theme-background: #0F0A1A;
+  --theme-background-secondary: #1A1025;
+  --theme-card-background: #150D20;
+  --theme-card-hover: #251535;
+  --theme-text: #E8E0F0;
+  --theme-text-header: #FFFFFF;
+  --theme-text-muted: #A89BBF;
+  --theme-border: #3D2A5A;
+
+  /* Gradient variants */
+  --theme-primary-gradient: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 50%, #14B8A6 100%);
+  --theme-primary-gradient-hover: linear-gradient(135deg, #9B6CF6 0%, #16C6E4 50%, #24C8B6 100%);
+  --theme-border-gradient: linear-gradient(90deg, #8B5CF640, #06B6D440, #14B8A640);
+  --theme-background-gradient: linear-gradient(180deg, #0F0A1A 0%, #1A1025 100%);
+
+  /* Header gradient - deep purple to teal */
+  --theme-header-gradient: linear-gradient(135deg, #7C3AED 0%, #5B21B6 50%, #4C1D95 100%);
+
+  /* Glow effects */
+  --glow-primary: 0 0 20px rgba(139, 92, 246, 0.4);
+  --glow-accent: 0 0 20px rgba(6, 182, 212, 0.3);
+}
+
+/* Apply gradient to header in gradient-dark theme */
+html.theme-gradient-dark .app-header {
+  background: var(--theme-header-gradient) !important;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+  box-shadow:
+    0 10px 30px rgba(139, 92, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Gradient primary buttons with glow */
+html.theme-gradient-dark .btn-theme-primary,
+html.theme-gradient-dark .bg-blue-600,
+html.theme-gradient-dark .bg-blue-500 {
+  background: var(--theme-primary) !important;
+  background: var(--theme-primary-gradient) !important;
+  color: var(--theme-text-header) !important;
+  border: none !important;
+  box-shadow: var(--glow-primary);
+}
+
+html.theme-gradient-dark .btn-theme-primary:hover,
+html.theme-gradient-dark .bg-blue-600:hover,
+html.theme-gradient-dark .bg-blue-500:hover {
+  background: var(--theme-primary-gradient-hover) !important;
+  box-shadow:
+    var(--glow-primary),
+    0 4px 16px rgba(6, 182, 212, 0.3);
+}
+
+/* Gradient border effect for cards */
+html.theme-gradient-dark .mockup-shell .p-4.rounded-lg[style*="border"] {
+  background:
+    linear-gradient(var(--theme-card-background), var(--theme-card-background)) padding-box,
+    var(--theme-border-gradient) border-box !important;
+  border: 1px solid transparent !important;
+}
+
+/* Selected/active states with gradient */
+html.theme-gradient-dark [aria-current="page"],
+html.theme-gradient-dark .harmony-header {
+  background: var(--theme-primary) !important;
+  background: var(--theme-primary-gradient) !important;
+  box-shadow: var(--glow-primary);
+}
+
+/* Featured sections with aurora-like gradient */
+html.theme-gradient-dark .featured-section-gradient {
+  background: linear-gradient(135deg, #8B5CF630 0%, #06B6D430 50%, #14B8A630 100%) !important;
+  border: 2px solid #8B5CF6 !important;
+  box-shadow: var(--glow-primary);
+}
+
+/* Subtle ambient glow on hover for interactive elements */
+html.theme-gradient-dark .btn-theme-secondary:hover {
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+}
+
+/* Input focus states with gradient border */
+html.theme-gradient-dark input:focus,
+html.theme-gradient-dark select:focus,
+html.theme-gradient-dark textarea:focus {
+  border-color: var(--theme-primary) !important;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) !important;
+}
+
+
+/* =====================================================
+   MOCKUP THEME SWITCHER STYLES
+   Styling for the experimental theme toggle in mockups
+   ===================================================== */
+.mockup-theme-switcher {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--theme-border);
+}
+
+.mockup-theme-switcher-label {
+  font-size: 0.75rem;
+  color: var(--theme-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.mockup-theme-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.625rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--theme-border);
+  background: var(--theme-background-secondary);
+  color: var(--theme-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.mockup-theme-btn:hover {
+  background: var(--theme-card-hover);
+  border-color: var(--theme-primary);
+}
+
+.mockup-theme-btn.active {
+  background: var(--theme-primary);
+  color: var(--theme-text-header);
+  border-color: var(--theme-primary);
+}
+
+/* Gradient preview swatches in the switcher */
+.mockup-theme-btn.gradient-light {
+  background: linear-gradient(135deg, #E85A5A 0%, #F5A623 100%);
+  color: white;
+  border-color: #E85A5A;
+}
+
+.mockup-theme-btn.gradient-dark {
+  background: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);
+  color: white;
+  border-color: #8B5CF6;
+}
+
+.mockup-theme-btn.gradient-light:hover,
+.mockup-theme-btn.gradient-dark:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}

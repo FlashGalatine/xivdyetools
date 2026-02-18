@@ -1,0 +1,50 @@
+name = "xivdyetools-moderation-worker"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+routes = [
+  { pattern = "moderation-bot.xivdyetools.app", custom_domain = true },
+  { pattern = "moderation-bot.xivdyetools.projectgalatine.com", custom_domain = true }
+]
+
+[[kv_namespaces]]
+binding = "KV"
+id = "1fcb7e037ccd4172a47fccd97cf8e753"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "xivdyetools-presets"
+database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
+
+[[services]]
+binding = "PRESETS_API"
+service = "xivdyetools-presets-api"
+
+[vars]
+DISCORD_CLIENT_ID = "1453806659708129374"
+PRESETS_API_URL = "https://api.xivdyetools.app"
+
+# Secrets: DISCORD_TOKEN, DISCORD_PUBLIC_KEY, BOT_API_SECRET,
+# BOT_SIGNING_SECRET, MODERATOR_IDS, MODERATION_CHANNEL_ID,
+# SUBMISSION_LOG_CHANNEL_ID
+
+[env.production]
+name = "xivdyetools-moderation-worker"
+
+[env.production.vars]
+DISCORD_CLIENT_ID = "YOUR_MODERATION_BOT_CLIENT_ID"
+PRESETS_API_URL = "https://api.xivdyetools.app"
+
+[[env.production.kv_namespaces]]
+binding = "KV"
+id = "1fcb7e037ccd4172a47fccd97cf8e753"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "xivdyetools-presets"
+database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
+
+[[env.production.services]]
+binding = "PRESETS_API"
+service = "xivdyetools-presets-api"

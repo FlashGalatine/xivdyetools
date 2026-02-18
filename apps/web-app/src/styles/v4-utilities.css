@@ -1,0 +1,265 @@
+/**
+ * XIV Dye Tools v4.0 - Utility Classes
+ * Glassmorphism, shadows, gradients, and v4 layout utilities
+ *
+ * These classes are opt-in for v4 components and layouts.
+ * They use the v4 CSS variables defined in themes.css.
+ */
+
+/* ============================================================================
+   V4 GLASSMORPHISM UTILITIES
+   ============================================================================ */
+
+/**
+ * Primary glassmorphism panel style
+ * Use for floating panels, sidebars, and modal backgrounds
+ */
+.v4-glass {
+  background: var(--v4-glass-bg);
+  backdrop-filter: var(--v4-glass-blur);
+  -webkit-backdrop-filter: var(--v4-glass-blur);
+  border: 1px solid var(--v4-glass-border);
+}
+
+/**
+ * Subtle glassmorphism for cards within glass panels
+ */
+.v4-glass-subtle {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid var(--v4-glass-border);
+}
+
+/**
+ * Strong glassmorphism for emphasis elements
+ */
+.v4-glass-strong {
+  background: var(--v4-glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--v4-glass-border);
+}
+
+/* Disable glassmorphism for high contrast themes */
+html.theme-high-contrast-light .v4-glass,
+html.theme-high-contrast-light .v4-glass-subtle,
+html.theme-high-contrast-light .v4-glass-strong,
+html.theme-high-contrast-dark .v4-glass,
+html.theme-high-contrast-dark .v4-glass-subtle,
+html.theme-high-contrast-dark .v4-glass-strong {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--theme-card-background);
+  border: 2px solid var(--theme-border);
+}
+
+/* ============================================================================
+   V4 SHADOW UTILITIES
+   ============================================================================ */
+
+/**
+ * Soft shadow for elevated surfaces
+ */
+.v4-shadow-soft {
+  box-shadow: var(--v4-shadow-soft);
+}
+
+/**
+ * Glow effect using accent color
+ */
+.v4-shadow-glow {
+  box-shadow: var(--v4-shadow-glow);
+}
+
+/**
+ * Card-level shadow
+ */
+.v4-shadow-card {
+  box-shadow: var(--v4-shadow-card);
+}
+
+/**
+ * Combined glow + soft shadow for prominent elements
+ */
+.v4-shadow-elevated {
+  box-shadow: var(--v4-shadow-soft), var(--v4-shadow-glow);
+}
+
+/* ============================================================================
+   V4 GRADIENT UTILITIES
+   ============================================================================ */
+
+/**
+ * Background gradient (top to bottom)
+ */
+.v4-gradient-bg {
+  background: linear-gradient(
+    180deg,
+    var(--v4-gradient-start) 0%,
+    var(--v4-gradient-end) 100%
+  );
+}
+
+/**
+ * Card gradient (subtle)
+ */
+.v4-gradient-card {
+  background: linear-gradient(
+    180deg,
+    var(--theme-card-background) 0%,
+    var(--v4-card-gradient-end) 100%
+  );
+}
+
+/**
+ * Horizontal accent gradient
+ */
+.v4-gradient-accent {
+  background: linear-gradient(
+    90deg,
+    var(--theme-primary) 0%,
+    rgba(var(--v4-accent-rgb), 0.8) 100%
+  );
+}
+
+/* ============================================================================
+   V4 LAYOUT UTILITIES
+   ============================================================================ */
+
+/**
+ * V4 header container
+ */
+.v4-header {
+  height: var(--v4-header-height);
+  min-height: var(--v4-header-height);
+}
+
+/**
+ * V4 tool banner container
+ */
+.v4-tool-banner {
+  height: var(--v4-tool-bar-height);
+  min-height: var(--v4-tool-bar-height);
+}
+
+/**
+ * V4 sidebar container
+ */
+.v4-sidebar {
+  width: var(--v4-sidebar-width);
+  min-width: var(--v4-sidebar-width);
+}
+
+/**
+ * V4 content padding
+ */
+.v4-content-padding {
+  padding: var(--v4-content-padding);
+}
+
+/**
+ * V4 result card fixed width
+ */
+.v4-result-card {
+  width: var(--v4-result-card-width);
+  min-width: var(--v4-result-card-width);
+  max-width: var(--v4-result-card-width);
+}
+
+/* ============================================================================
+   V4 TRANSITION UTILITIES
+   ============================================================================ */
+
+.v4-transition-fast {
+  transition: all var(--v4-transition-fast);
+}
+
+.v4-transition-normal {
+  transition: all var(--v4-transition-normal);
+}
+
+.v4-transition-slow {
+  transition: all var(--v4-transition-slow);
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .v4-transition-fast,
+  .v4-transition-normal,
+  .v4-transition-slow {
+    transition: none;
+  }
+}
+
+/* ============================================================================
+   V4 INTERACTIVE STATES
+   ============================================================================ */
+
+/**
+ * Interactive element with hover glow effect
+ */
+.v4-interactive {
+  transition: box-shadow var(--v4-transition-fast), transform var(--v4-transition-fast);
+}
+
+.v4-interactive:hover {
+  box-shadow: var(--v4-shadow-glow);
+}
+
+.v4-interactive:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v4-interactive {
+    transition: none;
+  }
+  .v4-interactive:active {
+    transform: none;
+  }
+}
+
+/* ============================================================================
+   V4 TEXT UTILITIES
+   ============================================================================ */
+
+/**
+ * Muted header text (for secondary info in headers)
+ */
+.v4-text-header-muted {
+  color: var(--v4-text-header-muted, rgba(255, 255, 255, 0.7));
+}
+
+/**
+ * Gradient text effect (uses accent color)
+ */
+.v4-text-gradient {
+  background: linear-gradient(
+    90deg,
+    var(--theme-primary) 0%,
+    rgba(var(--v4-accent-rgb), 0.8) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ============================================================================
+   V4 BORDER UTILITIES
+   ============================================================================ */
+
+/**
+ * Subtle glass-style border
+ */
+.v4-border-subtle {
+  border: 1px solid var(--v4-glass-border);
+}
+
+/**
+ * Accent glow border
+ */
+.v4-border-glow {
+  border: 1px solid rgba(var(--v4-accent-rgb), 0.3);
+  box-shadow: 0 0 8px rgba(var(--v4-accent-rgb), 0.15);
+}

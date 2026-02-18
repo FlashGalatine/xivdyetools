@@ -1,0 +1,125 @@
+{
+  "name": "XIV Dye Tools",
+  "short_name": "Dye Tools",
+  "description": "FFXIV color tools for finding matching dyes, analyzing color harmony, comparing dyes, and more",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#4f46e5",
+  "background_color": "#ffffff",
+  "categories": ["utilities", "productivity"],
+  "screenshots": [
+    {
+      "src": "assets/icons/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "assets/icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "form_factor": "wide"
+    }
+  ],
+  "icons": [
+    {
+      "src": "assets/icons/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Color Matcher",
+      "short_name": "Matcher",
+      "description": "Find matching FFXIV dyes from images",
+      "url": "/colormatcher_stable.html?launch=matcher",
+      "icons": [
+        {
+          "src": "assets/icons/icon-192x192.png",
+          "type": "image/png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Color Harmony Explorer",
+      "short_name": "Harmony",
+      "description": "Generate harmonious color palettes",
+      "url": "/colorexplorer_stable.html?launch=harmony",
+      "icons": [
+        {
+          "src": "assets/icons/icon-192x192.png",
+          "type": "image/png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Color Accessibility Checker",
+      "short_name": "Accessibility",
+      "description": "Simulate colorblindness vision types",
+      "url": "/coloraccessibility_stable.html?launch=accessibility",
+      "icons": [
+        {
+          "src": "assets/icons/icon-192x192.png",
+          "type": "image/png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Dye Comparison",
+      "short_name": "Comparison",
+      "description": "Compare up to 4 dyes visually",
+      "url": "/dyecomparison_stable.html?launch=comparison",
+      "icons": [
+        {
+          "src": "assets/icons/icon-192x192.png",
+          "type": "image/png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/share-handler",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "image",
+          "accept": ["image/*"]
+        }
+      ]
+    }
+  }
+}

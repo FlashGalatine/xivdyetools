@@ -1,0 +1,37 @@
+name = "xivdyetools-og-worker"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+routes = [
+  { pattern = "xivdyetools.app/harmony/*", zone_name = "xivdyetools.app" },
+  { pattern = "xivdyetools.app/gradient/*", zone_name = "xivdyetools.app" },
+  { pattern = "xivdyetools.app/mixer/*", zone_name = "xivdyetools.app" },
+  { pattern = "xivdyetools.app/swatch/*", zone_name = "xivdyetools.app" },
+  { pattern = "xivdyetools.app/comparison/*", zone_name = "xivdyetools.app" },
+  { pattern = "xivdyetools.app/accessibility/*", zone_name = "xivdyetools.app" }
+]
+
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "xivdyetools_og_analytics"
+
+[vars]
+APP_BASE_URL = "https://xivdyetools.app"
+OG_IMAGE_BASE_URL = "https://og.xivdyetools.app"
+
+[[rules]]
+type = "Data"
+globs = ["**/*.ttf"]
+fallthrough = true
+
+[env.production]
+name = "xivdyetools-og-worker"
+
+[env.production.vars]
+APP_BASE_URL = "https://xivdyetools.app"
+OG_IMAGE_BASE_URL = "https://og.xivdyetools.app"
+
+[[env.production.analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "xivdyetools_og_analytics"

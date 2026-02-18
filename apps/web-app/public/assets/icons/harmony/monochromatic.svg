@@ -1,0 +1,11 @@
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+  <title>Monochromatic Harmony</title>
+  <!-- Outer wheel -->
+  <circle cx="12" cy="12" r="10" opacity="0.3" />
+  <!-- Single position with gradient circles (concentric) showing saturation variation -->
+  <circle cx="12" cy="3" r="2" fill="currentColor" stroke="none" opacity="1" />
+  <circle cx="12" cy="8" r="2" fill="currentColor" stroke="none" opacity="0.6" />
+  <circle cx="12" cy="13" r="2" fill="currentColor" stroke="none" opacity="0.35" />
+  <!-- Line showing single hue axis -->
+  <line x1="12" y1="5" x2="12" y2="11" stroke-dasharray="1 2" opacity="0.5" />
+</svg>

@@ -1,0 +1,26 @@
+name = "xivdyetools-universalis-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+routes = [
+  { pattern = "proxy.xivdyetools.app", custom_domain = true },
+  { pattern = "proxy.xivdyetools.projectgalatine.com", custom_domain = true }
+]
+
+[vars]
+ENVIRONMENT = "development"
+ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173"
+UNIVERSALIS_API_BASE = "https://universalis.app/api/v2"
+RATE_LIMIT_REQUESTS = "60"
+RATE_LIMIT_WINDOW_SECONDS = "60"
+
+[env.production]
+name = "xivdyetools-universalis-proxy"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+ALLOWED_ORIGINS = "https://xivdyetools.app,https://xivdyetools.projectgalatine.com"
+UNIVERSALIS_API_BASE = "https://universalis.app/api/v2"
+RATE_LIMIT_REQUESTS = "30"
+RATE_LIMIT_WINDOW_SECONDS = "60"

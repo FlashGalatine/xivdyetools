@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- DEVELOPMENT CSP: Uncomment for localhost testing (allows inline scripts) -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self' localhost:*; script-src 'self' 'unsafe-inline' localhost:*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com localhost:*; font-src 'self'; img-src 'self' data: blob: localhost:*; connect-src 'self' https://universalis.app localhost:*; base-uri 'self'; form-action 'none';"> -->
+    <!-- PRODUCTION CSP: Strict Content Security Policy (no inline scripts/styles) -->
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://cdn.discordapp.com; connect-src 'self' https://universalis.app https://*.workers.dev https://*.xivdyetools.app; base-uri 'self'; form-action 'none';">
+    <title>XIV Dye Tools - FFXIV Dye Color Matcher, Harmony Generator & Accessibility Checker</title>
+    <meta name="description"
+        content="XIV Dye Tools: Free FFXIV dye tools for color matching, harmony generation, accessibility checking, dye comparison, and mixing. Perfect for glamour design and housing decoration.">
+    <meta name="keywords"
+        content="FFXIV, dyes, color matcher, color harmony, accessibility checker, dye comparison, dye mixer, glamour, housing decoration, fashion, Final Fantasy XIV">
+    <meta name="author" content="Flash Galatine (Balmung)">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    <!-- Open Graph / Discord / Social embeds -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://xivdyetools.app/">
+    <meta property="og:title" content="XIV Dye Tools - FFXIV Dye Color Matcher, Harmony Generator & Accessibility Checker">
+    <meta property="og:description"
+        content="Free tools for FFXIV players: Color Matcher, Harmony Generator, Accessibility Checker, Dye Comparison, and Dye Mixer. Find perfect dyes for your glamour and housing.">
+    <meta property="og:image" content="https://xivdyetools.app/assets/icons/opengraph.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="XIV Dye Tools - A comprehensive suite of FFXIV dye color utilities featuring Color Harmony Explorer">
+    <meta property="og:site_name" content="XIV Dye Tools">
+    <meta property="og:locale" content="en_US">
+    <!-- Twitter / X embeds -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@AsheJunius">
+    <meta name="twitter:creator" content="@AsheJunius">
+    <meta name="twitter:url" content="https://xivdyetools.app/">
+    <meta name="twitter:title" content="XIV Dye Tools - FFXIV Color Utilities">
+    <meta name="twitter:description"
+        content="Free FFXIV dye color tools: matching, harmony, accessibility, comparison, and mixing utilities for glamour design.">
+    <meta name="twitter:image" content="https://xivdyetools.app/assets/icons/opengraph.png">
+    <meta name="twitter:image:alt" content="XIV Dye Tools - FFXIV dye color utilities with Color Harmony Explorer">
+    <!-- Structured Data for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "XIV Dye Tools",
+        "url": "https://xivdyetools.app/",
+        "description": "Free FFXIV dye tools for color matching, harmony generation, accessibility checking, dye comparison, and mixing. Perfect for glamour design and housing decoration.",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Web Browser",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Person",
+            "name": "Flash Galatine",
+            "sameAs": "https://twitter.com/AsheJunius"
+        },
+        "featureList": [
+            "Dye Mixer - Find smooth color transitions between FFXIV dyes",
+            "Color Harmony Explorer - Generate complementary, triadic, and other color harmonies",
+            "Color Matcher - Match colors from images to FFXIV dyes",
+            "Dye Comparison - Compare up to 4 dyes side-by-side",
+            "Color Accessibility Checker - Simulate colorblindness for dye combinations"
+        ],
+        "screenshot": "https://xivdyetools.app/assets/icons/opengraph.png",
+        "softwareVersion": "1.6.0"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "XIV Dye Tools Collection",
+        "description": "FFXIV dye and color utilities",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "item": {
+                    "@type": "SoftwareApplication",
+                    "name": "Dye Mixer",
+                    "url": "https://xivdyetools.app/dye-mixer_stable.html",
+                    "description": "Find smooth color transitions between two FFXIV dyes using HSV color interpolation",
+                    "applicationCategory": "UtilitiesApplication"
+                }
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "item": {
+                    "@type": "SoftwareApplication",
+                    "name": "Color Harmony Explorer",
+                    "url": "https://xivdyetools.app/colorexplorer_stable.html",
+                    "description": "Generate color harmonies based on color theory - complementary, analogous, triadic, and more",
+                    "applicationCategory": "UtilitiesApplication"
+                }
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "item": {
+                    "@type": "SoftwareApplication",
+                    "name": "Color Matcher",
+                    "url": "https://xivdyetools.app/colormatcher_stable.html",
+                    "description": "Upload images or pick colors to find the closest matching FFXIV dye",
+                    "applicationCategory": "UtilitiesApplication"
+                }
+            },
+            {
+                "@type": "ListItem",
+                "position": 4,
+                "item": {
+                    "@type": "SoftwareApplication",
+                    "name": "Dye Comparison",
+                    "url": "https://xivdyetools.app/dyecomparison_stable.html",
+                    "description": "Compare up to 4 FFXIV dyes side-by-side with color distance analysis",
+                    "applicationCategory": "UtilitiesApplication"
+                }
+            },
+            {
+                "@type": "ListItem",
+                "position": 5,
+                "item": {
+                    "@type": "SoftwareApplication",
+                    "name": "Color Accessibility Checker",
+                    "url": "https://xivdyetools.app/coloraccessibility_stable.html",
+                    "description": "Simulate colorblindness to check how dyes appear to players with different vision types",
+                    "applicationCategory": "UtilitiesApplication"
+                }
+            }
+        ]
+    }
+    </script>
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+    <!-- PWA Metadata -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dye Tools">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/icons/icon-512x512.png">
+    <!-- Canonical URL for SEO -->
+    <link rel="canonical" href="https://xivdyetools.app/">
+
+    <!-- Resource Hints for Performance -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://universalis.app">
+    <!-- Google Fonts: Space Grotesk (headings), Onest (body), Fira Code (code), Varela Round (buttons) -->
+    <!-- Load fonts asynchronously to prevent render blocking -->
+    <script src="public/js/load-fonts.js" defer></script>
+    <noscript>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Onest:wght@100..900&family=Fira+Code:wght@400;500;600;700&family=Varela+Round&display=swap"
+            rel="stylesheet">
+    </noscript>
+
+    <!-- Critical CSS - Load immediately -->
+    <link href="assets/css/tailwind.css" rel="stylesheet">
+    <!-- Non-critical CSS - Defer loading to prevent render blocking -->
+    <script src="public/js/load-css.js" defer></script>
+    <noscript>
+        <link rel="stylesheet" href="assets/css/shared-styles.css">
+        <link rel="stylesheet" href="src/styles/themes.css">
+        <link rel="stylesheet" href="src/styles/globals.css">
+    </noscript>
+</head>
+
+<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col">
+
+    <!-- Navigation Container (loaded dynamically from components/nav.html) -->
+    <div id="nav-container" class="component-loading"></div>
+
+    <div class="container mx-auto p-4 md:p-8 flex-grow">
+        <header class="text-center mb-12">
+            <div class="flex justify-center items-center gap-4 mb-4 flex-wrap">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-900">XIV Dye Tools</h1>
+            </div>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                A comprehensive suite of color and dye utilities for Final Fantasy XIV players.
+                Create harmonious color palettes, match colors from images, compare dyes side-by-side, and check dye
+                accessibility for colorblind players.
+            </p>
+        </header>
+
+        <main class="max-w-6xl mx-auto">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+
+                <!-- Dye Mixer (New Tool) -->
+                <a href="dye-mixer_stable.html"
+                    class="tool-card block bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-indigo-500">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2">Dye Mixer</h2>
+                            <span
+                                class="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">v1.6.0</span>
+                        </div>
+                        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01">
+                            </path>
+                        </svg>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        Find smooth color transitions between two dyes using HSV color interpolation. Perfect for
+                        decorators and interior designers discovering bridge colors.
+                    </p>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>✓ HSV color space interpolation</li>
+                        <li>✓ 3, 4, 7, or 9 intermediate dyes</li>
+                        <li>✓ Visual gradient progression</li>
+                        <li>✓ Deviance rating system (0-10)</li>
+                        <li>✓ Responsive design</li>
+                    </ul>
+                </a>
+
+                <!-- Color Harmony Explorer -->
+                <a href="colorexplorer_stable.html"
+                    class="tool-card block bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-indigo-500">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2">Color Harmony Explorer</h2>
+                            <span
+                                class="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">v1.6.0</span>
+                        </div>
+                        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01">
+                            </path>
+                        </svg>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        Generate color harmonies based on traditional color theory principles. Create complementary,
+                        analogous, triadic, and other harmony types with interactive color wheels and deviance ratings.
+                    </p>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>✓ 6 harmony types (Complementary, Triadic, etc.)</li>
+                        <li>✓ Interactive color wheel highlighting</li>
+                        <li>✓ Deviance rating system (0-10 scale)</li>
+                        <li>✓ Market board price integration</li>
+                        <li>✓ Export to JSON, CSS, SCSS</li>
+                    </ul>
+                </a>
+
+                <!-- Color Matcher -->
+                <a href="colormatcher_stable.html"
+                    class="tool-card block bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-indigo-500">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2">Color Matcher</h2>
+                            <span
+                                class="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">v1.6.0</span>
+                        </div>
+                        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        Upload images or pick colors to find the closest matching FFXIV dye. Perfect for recreating
+                        glamours and housing designs from screenshots or reference images.
+                    </p>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>✓ Image upload with eyedropper tool</li>
+                        <li>✓ Intelligent auto zoom for images</li>
+                        <li>✓ Advanced zoom & pan (up to 1000%)</li>
+                        <li>✓ Smart filtering (Facewear, Metallic, Extremes)</li>
+                        <li>✓ Market Board price integration</li>
+                    </ul>
+                </a>
+
+                <!-- Dye Comparison -->
+                <a href="dyecomparison_stable.html"
+                    class="tool-card block bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-indigo-500">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2">Dye Comparison</h2>
+                            <span
+                                class="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">v1.6.0</span>
+                        </div>
+                        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                            </path>
+                        </svg>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        Compare up to 4 FFXIV dyes side-by-side to analyze similarities and differences. View complete
+                        color information and calculate color distances between dyes.
+                    </p>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>✓ Compare up to 4 dyes simultaneously</li>
+                        <li>✓ Color distance matrix visualization</li>
+                        <li>✓ Complete dye information display</li>
+                        <li>✓ Export as JSON or CSS</li>
+                        <li>✓ Copy hex codes to clipboard</li>
+                    </ul>
+                </a>
+
+                <!-- Color Accessibility Checker -->
+                <a href="coloraccessibility_stable.html"
+                    class="tool-card block bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-indigo-500">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2">Color Accessibility Checker</h2>
+                            <span
+                                class="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">v1.6.0</span>
+                        </div>
+                        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                            </path>
+                        </svg>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        Plan accessible glamour outfits by simulating colorblindness. Check how your dyes appear to
+                        players with deuteranopia, protanopia, tritanopia, and monochrome vision.
+                    </p>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>✓ Simulate 4 colorblindness types</li>
+                        <li>✓ Adjustable intensity sliders</li>
+                        <li>✓ Accessibility score calculation</li>
+                        <li>✓ Distinguishability warnings</li>
+                        <li>✓ Color suggestions for improvement</li>
+                    </ul>
+                </a>
+
+            </div>
+
+            <!-- Feature Highlights -->
+            <div class="bg-white rounded-xl p-6 mb-8">
+                <h3 class="text-xl font-bold text-gray-900 mb-4">All Tools Feature</h3>
+                <div class="grid md:grid-cols-3 gap-4 text-sm text-gray-600">
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-2">🎨 10 Theme Variants</h4>
+                        <p>Choose from 5 theme families (Standard, Hydaelyn, Classic FF, Parchment, Sugar Riot) in light
+                            and dark modes with persistent storage.</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-2">📊 Complete Dye Database</h4>
+                        <p>Access all 125 FFXIV dyes with RGB, HSV, hex values, and acquisition methods.</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-2">💰 Market Board Data</h4>
+                        <p>Real-time pricing from Universalis API for all data centers and worlds.</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="footer-container" class="component-loading"></div>
+
+    <!-- Shared Components Script (includes theme system and automatic initialization) -->
+    <script src="assets/js/shared-components.js"></script>
+
+    <!-- Service Worker Registration for PWA Support (moved to external file to comply with strict CSP) -->
+    <script src="public/js/sw-register.js"></script>
+
+</body>
+
+</html>

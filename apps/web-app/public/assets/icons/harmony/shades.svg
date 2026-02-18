@@ -1,0 +1,12 @@
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+  <title>Shades Harmony</title>
+  <!-- Outer wheel -->
+  <circle cx="12" cy="12" r="10" opacity="0.3" />
+  <!-- Vertical stack of circles showing light to dark progression -->
+  <circle cx="12" cy="4" r="2.5" fill="currentColor" stroke="none" opacity="0.25" />
+  <circle cx="12" cy="10" r="2.5" fill="currentColor" stroke="none" opacity="0.6" />
+  <circle cx="12" cy="16" r="2.5" fill="currentColor" stroke="none" opacity="1" />
+  <!-- Connecting line showing gradient -->
+  <line x1="12" y1="6.5" x2="12" y2="7.5" stroke-dasharray="1 1" opacity="0.4" />
+  <line x1="12" y1="12.5" x2="12" y2="13.5" stroke-dasharray="1 1" opacity="0.7" />
+</svg>

@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 138.77071 192.24226"
+   width="138.77071"
+   height="192.24226"
+   version="1.1"
+   id="svg33"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs15">
+    <!-- Rainbow gradient for crystal and brush bristles -->
+    <linearGradient
+       id="rainbowGradient"
+       x1="0"
+       y1="0"
+       x2="1"
+       y2="1">
+      <stop
+         offset="0%"
+         stop-color="#ff0000"
+         id="stop1" />
+      <stop
+         offset="17%"
+         stop-color="#ff8000"
+         id="stop2" />
+      <stop
+         offset="33%"
+         stop-color="#ffff00"
+         id="stop3" />
+      <stop
+         offset="50%"
+         stop-color="#00ff00"
+         id="stop4" />
+      <stop
+         offset="67%"
+         stop-color="#0080ff"
+         id="stop5" />
+      <stop
+         offset="83%"
+         stop-color="#4000ff"
+         id="stop6" />
+      <stop
+         offset="100%"
+         stop-color="#8000ff"
+         id="stop7" />
+    </linearGradient>
+    <!-- Lighter rainbow for crystal highlights -->
+    <linearGradient
+       id="rainbowHighlight"
+       x1="0"
+       y1="0"
+       x2="1"
+       y2="1">
+      <stop
+         offset="0%"
+         stop-color="#ff6666"
+         stop-opacity="0.7"
+         id="stop8" />
+      <stop
+         offset="33%"
+         stop-color="#ffff99"
+         stop-opacity="0.7"
+         id="stop9" />
+      <stop
+         offset="67%"
+         stop-color="#66ffcc"
+         stop-opacity="0.7"
+         id="stop10" />
+      <stop
+         offset="100%"
+         stop-color="#cc99ff"
+         stop-opacity="0.7"
+         id="stop11" />
+    </linearGradient>
+    <!-- Darker rainbow for crystal shadows -->
+    <linearGradient
+       id="rainbowShadow"
+       x1="1"
+       y1="0"
+       x2="0"
+       y2="1">
+      <stop
+         offset="0%"
+         stop-color="#990000"
+         id="stop12" />
+      <stop
+         offset="33%"
+         stop-color="#999900"
+         id="stop13" />
+      <stop
+         offset="67%"
+         stop-color="#009966"
+         id="stop14" />
+      <stop
+         offset="100%"
+         stop-color="#660099"
+         id="stop15" />
+    </linearGradient>
+    <linearGradient
+       xlink:href="#rainbowGradient"
+       id="linearGradient33"
+       x1="93.333336"
+       y1="210"
+       x2="123.33333"
+       y2="240"
+       gradientTransform="scale(1.5,0.66666667)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       xlink:href="#rainbowShadow"
+       id="linearGradient2"
+       x1="145.29663"
+       y1="27.529888"
+       x2="79.913147"
+       y2="92.913368"
+       gradientTransform="scale(0.6882472,1.4529663)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       xlink:href="#rainbowHighlight"
+       id="linearGradient3"
+       x1="145.29663"
+       y1="27.529888"
+       x2="210.68011"
+       y2="92.913368"
+       gradientTransform="scale(0.6882472,1.4529663)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       xlink:href="#rainbowGradient"
+       id="linearGradient4"
+       x1="77.781746"
+       y1="63.63961"
+       x2="141.42136"
+       y2="127.27922"
+       gradientTransform="scale(0.70710678,1.4142136)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       xlink:href="#rainbowHighlight"
+       id="linearGradient5"
+       x1="141.42136"
+       y1="63.63961"
+       x2="205.06097"
+       y2="127.27922"
+       gradientTransform="scale(0.70710678,1.4142136)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       xlink:href="#rainbowShadow"
+       id="linearGradient6"
+       x1="145.29663"
+       y1="92.913368"
+       x2="79.913147"
+       y2="158.29686"
+       gradientTransform="scale(0.6882472,1.4529663)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       xlink:href="#rainbowGradient"
+       id="linearGradient7"
+       x1="145.29663"
+       y1="92.913368"
+       x2="210.68011"
+       y2="158.29686"
+       gradientTransform="scale(0.6882472,1.4529663)"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <!-- Six-sided Crystal (elongated hexagon) -->
+  <!-- Points: top(100,40), upper-left(55,90), upper-right(145,90), 
+       lower-left(55,180), lower-right(145,180), bottom(100,230) -->
+  <!-- Paintbrush - moved closer to crystal -->
+  <!-- Decorative sparkles around crystal -->
+  <g
+     id="g33"
+     transform="translate(-25.229287,-38.878865)">
+    <g
+       id="crystal">
+      <!-- Upper left facet -->
+      <polygon
+         points="100,135 100,40 55,90 "
+         fill="url(#rainbowShadow)"
+         opacity="0.85"
+         id="polygon15"
+         style="fill:url(#linearGradient2)" />
+      <!-- Upper right facet -->
+      <polygon
+         points="100,135 100,40 145,90 "
+         fill="url(#rainbowHighlight)"
+         opacity="0.95"
+         id="polygon16"
+         style="fill:url(#linearGradient3)" />
+      <!-- Middle left facet -->
+      <polygon
+         points="100,135 55,90 55,180 "
+         fill="url(#rainbowGradient)"
+         opacity="0.75"
+         id="polygon17"
+         style="fill:url(#linearGradient4)" />
+      <!-- Middle right facet -->
+      <polygon
+         points="100,135 145,90 145,180 "
+         fill="url(#rainbowHighlight)"
+         opacity="0.9"
+         id="polygon18"
+         style="fill:url(#linearGradient5)" />
+      <!-- Lower left facet -->
+      <polygon
+         points="100,135 55,180 100,230 "
+         fill="url(#rainbowShadow)"
+         opacity="0.7"
+         id="polygon19"
+         style="fill:url(#linearGradient6)" />
+      <!-- Lower right facet -->
+      <polygon
+         points="100,135 145,180 100,230 "
+         fill="url(#rainbowGradient)"
+         opacity="0.85"
+         id="polygon20"
+         style="fill:url(#linearGradient7)" />
+      <!-- Crystal outline for definition -->
+      <polygon
+         points="145,180 100,230 55,180 55,90 100,40 145,90 "
+         fill="none"
+         stroke="#ffffff"
+         stroke-width="1.5"
+         opacity="0.5"
+         id="polygon21" />
+      <!-- Inner facet lines from center -->
+      <line
+         x1="100"
+         y1="40"
+         x2="100"
+         y2="230"
+         stroke="#ffffff"
+         stroke-width="0.5"
+         opacity="0.4"
+         id="line21" />
+      <line
+         x1="55"
+         y1="90"
+         x2="145"
+         y2="180"
+         stroke="#ffffff"
+         stroke-width="0.5"
+         opacity="0.3"
+         id="line22" />
+      <line
+         x1="145"
+         y1="90"
+         x2="55"
+         y2="180"
+         stroke="#ffffff"
+         stroke-width="0.5"
+         opacity="0.3"
+         id="line23" />
+    </g>
+    <g
+       id="paintbrush"
+       transform="rotate(-45,172.15716,325.63023)">
+      <!-- Brush handle - uses currentColor for theming -->
+      <rect
+         x="200"
+         y="140"
+         width="120"
+         height="20"
+         rx="3"
+         ry="3"
+         fill="currentColor"
+         id="rect23" />
+      <!-- Handle end cap -->
+      <rect
+         x="310"
+         y="138"
+         width="15"
+         height="24"
+         rx="4"
+         ry="4"
+         fill="currentColor"
+         id="rect24" />
+      <!-- Handle detail lines -->
+      <line
+         x1="290"
+         y1="142"
+         x2="290"
+         y2="158"
+         stroke="#ffffff"
+         stroke-width="1"
+         opacity="0.3"
+         id="line24" />
+      <line
+         x1="295"
+         y1="142"
+         x2="295"
+         y2="158"
+         stroke="#ffffff"
+         stroke-width="1"
+         opacity="0.3"
+         id="line25" />
+      <!-- Ferrule (metal band) -->
+      <rect
+         x="185"
+         y="137"
+         width="20"
+         height="26"
+         rx="2"
+         fill="#888888"
+         id="rect25" />
+      <rect
+         x="188"
+         y="137"
+         width="3"
+         height="26"
+         fill="#aaaaaa"
+         id="rect26" />
+      <rect
+         x="200"
+         y="137"
+         width="2"
+         height="26"
+         fill="#666666"
+         id="rect27" />
+      <!-- Brush bristles with rainbow gradient -->
+      <path
+         d="m 185,140 q -25,5 -40,10 -5,0 -5,0 0,5 5,0 15,5 40,10 z"
+         fill="url(#rainbowGradient)"
+         id="path27"
+         style="fill:url(#linearGradient33)" />
+      <!-- Bristle texture lines -->
+      <line
+         x1="182"
+         y1="143"
+         x2="148"
+         y2="148"
+         stroke="#ffffff"
+         stroke-width="0.5"
+         opacity="0.4"
+         id="line27" />
+      <line
+         x1="182"
+         y1="147"
+         x2="143"
+         y2="150"
+         stroke="#ffffff"
+         stroke-width="0.5"
+         opacity="0.3"
+         id="line28" />
+      <line
+         x1="182"
+         y1="151"
+         x2="143"
+         y2="150"
+         stroke="#ffffff"
+         stroke-width="0.5"
+         opacity="0.3"
+         id="line29" />
+      <line
+         x1="182"
+         y1="155"
+         x2="148"
+         y2="152"
+         stroke="#ffffff"
+         stroke-width="0.5"
+         opacity="0.4"
+         id="line30" />
+    </g>
+    <g
+       id="sparkles"
+       fill="#ffffff">
+      <polygon
+         points="33,75 38,75 40,70 42,75 47,75 43,78 45,83 40,80 35,83 37,78 "
+         opacity="0.7"
+         id="polygon30" />
+      <polygon
+         points="156,78 159,78 160,75 161,78 164,78 162,80 163,83 160,81 157,83 158,80 "
+         opacity="0.5"
+         id="polygon31" />
+      <circle
+         cx="45"
+         cy="200"
+         r="2"
+         opacity="0.6"
+         id="circle31" />
+      <circle
+         cx="155"
+         cy="120"
+         r="1.5"
+         opacity="0.5"
+         id="circle32" />
+      <circle
+         cx="50"
+         cy="130"
+         r="1"
+         opacity="0.4"
+         id="circle33" />
+    </g>
+  </g>
+</svg>

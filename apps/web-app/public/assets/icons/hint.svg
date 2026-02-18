@@ -1,0 +1,10 @@
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+  <title>Hint</title>
+  <!-- Light bulb outline -->
+  <path d="M 12 3 C 9 3 7 5 7 8 C 7 10 8 11.5 9 12.5 L 9 15 C 9 16 10 17 11 17 L 13 17 C 14 17 15 16 15 15 L 15 12.5 C 16 11.5 17 10 17 8 C 17 5 15 3 12 3 Z" />
+  <!-- Base/screw threads -->
+  <line x1="10" y1="17" x2="14" y2="17" />
+  <line x1="10.5" y1="19" x2="13.5" y2="19" />
+  <!-- Filament (small glow) -->
+  <circle cx="12" cy="9" r="1.5" fill="currentColor" stroke="none" opacity="0.5" />
+</svg>

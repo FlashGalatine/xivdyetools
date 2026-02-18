@@ -1,0 +1,31 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": false,
+    "verbatimModuleSyntax": false,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "jsx": "react-jsx",
+    "sourceMap": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@components/*": ["./src/components/*"],
+      "@services/*": ["./src/services/*"],
+      "@shared/*": ["./src/shared/*"],
+      "@apps/*": ["./src/apps/*"],
+      "@data/*": ["./src/data/*"],
+      "@mockups/*": ["./src/mockups/*"],
+      "@v4/*": ["./src/components/v4/*"]
+    },
+    "types": ["vitest/globals", "node"]
+  },
+  "include": ["src"],
+  "exclude": ["dist", "node_modules"]
+}

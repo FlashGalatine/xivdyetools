@@ -1,0 +1,66 @@
+/* XIV Dye Tools - Maintainer App Styles */
+
+/* Import Tailwind CSS v4 */
+@import "tailwindcss";
+
+/* Link to the config file for custom theme extensions */
+@config "../../tailwind.config.js";
+
+/* Custom styles */
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Form input base styles */
+input[type="text"],
+input[type="number"],
+select {
+  @apply bg-xiv-dark border border-gray-600 rounded px-3 py-2 text-gray-100;
+  @apply focus:outline-none focus:ring-2 focus:ring-xiv-accent focus:border-transparent;
+  @apply transition-colors duration-200;
+}
+
+input[type="text"]:hover,
+input[type="number"]:hover,
+select:hover {
+  @apply border-gray-500;
+}
+
+/* Checkbox styles */
+input[type="checkbox"] {
+  @apply w-4 h-4 rounded border-gray-600 bg-xiv-dark text-xiv-accent;
+  @apply focus:ring-xiv-accent focus:ring-2;
+}
+
+/* Button base styles */
+.btn {
+  @apply px-4 py-2 rounded font-medium transition-colors duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-xiv-darker;
+}
+
+.btn-primary {
+  @apply bg-xiv-accent text-white hover:bg-blue-600 focus:ring-xiv-accent;
+}
+
+.btn-secondary {
+  @apply bg-gray-600 text-white hover:bg-gray-500 focus:ring-gray-500;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-500 focus:ring-red-500;
+}
+
+/* Label styles */
+label {
+  @apply text-sm font-medium text-gray-300;
+}
+
+/* Card container */
+.card {
+  @apply bg-xiv-dark rounded-lg border border-gray-700 p-4;
+}
+
+/* Color swatch */
+.color-swatch {
+  @apply w-16 h-16 rounded-lg border-2 border-gray-600 shadow-inner;
+}

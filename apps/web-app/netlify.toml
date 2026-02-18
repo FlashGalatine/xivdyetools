@@ -1,0 +1,65 @@
+# Netlify Configuration for XIV Dye Tools v2.0.0
+# Deployment settings and HTTP headers
+
+[build]
+  # Vite build output directory
+  publish = "dist"
+  # Build command
+  command = "npm run build"
+
+# HTTP Headers for Security
+[[headers]]
+  # Apply to all routes
+  for = "/*"
+
+  [headers.values]
+    # Content Security Policy (CSP) - Strict, no unsafe-inline
+    Content-Security-Policy = """
+      default-src 'self';
+      script-src 'self';
+      style-src 'self' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: blob:;
+      connect-src 'self' https://universalis.app;
+      base-uri 'self';
+      form-action 'none';
+      frame-ancestors 'none';
+      upgrade-insecure-requests;
+    """
+
+    # Security Headers
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+    # Cache Control for static assets
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Special headers for HTML files (shorter cache)
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Special headers for JSON data
+[[headers]]
+  for = "/json/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+    Content-Type = "application/json; charset=utf-8"
+
+# Redirect rules
+[[redirects]]
+  from = "https://xivdyetools.netlify.app/*"
+  to = "https://xivdyetools.app/:splat"
+  status = 301
+  force = true
+
+# Redirect from old domain to new domain
+[[redirects]]
+  from = "https://xivdyetools.projectgalatine.com/*"
+  to = "https://xivdyetools.app/:splat"
+  status = 301
+  force = true

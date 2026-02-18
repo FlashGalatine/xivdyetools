@@ -1,0 +1,34 @@
+{
+  "name": "xivdyetools-og-worker",
+  "version": "1.0.2",
+  "private": true,
+  "description": "XIV Dye Tools OpenGraph Worker - Dynamic social media previews for shared dye tool links",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:production": "wrangler deploy --env production",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": ["cloudflare-workers", "opengraph", "ffxiv", "dye-tools"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20260207.0",
+    "@resvg/resvg-wasm": "^2.6.2",
+    "@xivdyetools/core": "workspace:*",
+    "@xivdyetools/types": "workspace:*",
+    "hono": "^4.11.10"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.2",
+    "@vitest/coverage-v8": "^4.0.18",
+    "vitest": "^4.0.18",
+    "wrangler": "^4.66.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

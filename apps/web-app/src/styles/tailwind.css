@@ -1,0 +1,18 @@
+/**
+ * XIV Dye Tools v2.0.0 - Tailwind CSS Entry Point
+ * Phase 12: Global utility styles
+ *
+ * Updated for Tailwind CSS v4 syntax
+ */
+
+/* Import global styles first (must precede @import "tailwindcss") */
+@import './globals.css';
+
+/* Import error boundary styles for graceful component failure handling */
+@import './error-boundary.css';
+
+/* Import Tailwind CSS v4 */
+@import "tailwindcss";
+
+/* Link to the config file for custom theme extensions */
+@config "../../tailwind.config.js";

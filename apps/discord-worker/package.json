@@ -1,0 +1,47 @@
+{
+  "name": "xivdyetools-discord-worker",
+  "version": "4.0.1",
+  "private": true,
+  "description": "XIV Dye Tools Discord Bot - Cloudflare Workers Edition",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:production": "wrangler deploy --env production",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:all": "vitest run && vitest run --config vitest.integration.config.ts",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src/",
+    "register-commands": "npx tsx scripts/register-commands.ts",
+    "upload-emojis": "npx tsx scripts/upload-emojis.ts"
+  },
+  "keywords": ["discord", "bot", "ffxiv", "cloudflare-workers"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@cf-wasm/photon": "^0.3.4",
+    "@cloudflare/workers-types": "^4.20260207.0",
+    "@resvg/resvg-wasm": "^2.6.2",
+    "@xivdyetools/auth": "workspace:*",
+    "@xivdyetools/core": "workspace:*",
+    "@xivdyetools/logger": "workspace:*",
+    "@xivdyetools/rate-limiter": "workspace:*",
+    "@xivdyetools/types": "workspace:*",
+    "hono": "^4.11.10"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.2",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@xivdyetools/test-utils": "workspace:*",
+    "discord-interactions": "^4.4.0",
+    "dotenv": "^17.2.3",
+    "tsx": "^4.21.0",
+    "vitest": "^4.0.18",
+    "wrangler": "^4.66.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

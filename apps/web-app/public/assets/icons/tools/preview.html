@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XIV Dye Tools - Icon Preview</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 2rem;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 0.5rem;
+      font-size: 2rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 2rem;
+      font-size: 0.9rem;
+    }
+
+    .section {
+      margin-bottom: 3rem;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .icon-card {
+      text-align: center;
+      padding: 1.5rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .icon-card:hover {
+      border-color: #667eea;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .icon-card h3 {
+      font-size: 0.875rem;
+      color: #333;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+
+    .icon-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .icon-label {
+      font-size: 0.75rem;
+      color: #999;
+      margin-top: 0.25rem;
+    }
+
+    /* Size variations */
+    .size-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .size-demo {
+      text-align: center;
+    }
+
+    .size-label {
+      font-size: 0.7rem;
+      color: #999;
+      margin-top: 0.25rem;
+    }
+
+    /* Color variations */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1rem;
+    }
+
+    .color-demo {
+      text-align: center;
+      padding: 1rem;
+      border-radius: 6px;
+    }
+
+    .color-demo.light {
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .color-demo.dark {
+      background: #1a1a1a;
+      color: #fff;
+    }
+
+    .color-demo.primary {
+      background: #667eea;
+      color: #fff;
+    }
+
+    .color-demo.secondary {
+      background: #764ba2;
+      color: #fff;
+    }
+
+    /* Comparison table */
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: 1rem;
+      text-align: center;
+      border: 1px solid #e0e0e0;
+    }
+
+    .comparison-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #333;
+      font-size: 0.875rem;
+    }
+
+    .comparison-table td {
+      background: white;
+    }
+
+    .emoji {
+      font-size: 24px;
+    }
+
+    /* Notes section */
+    .notes {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 2rem;
+    }
+
+    .notes h3 {
+      font-size: 1rem;
+      color: #333;
+      margin-bottom: 0.75rem;
+    }
+
+    .notes ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .notes li {
+      padding: 0.5rem 0;
+      color: #666;
+      font-size: 0.875rem;
+    }
+
+    .notes li::before {
+      content: "✓ ";
+      color: #667eea;
+      font-weight: bold;
+      margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 XIV Dye Tools Icon Preview</h1>
+    <p class="subtitle">Custom SVG icons to replace emoji tool indicators</p>
+
+    <!-- Individual Icon Showcase -->
+    <div class="section">
+      <h2 class="section-title">Individual Icons (24px)</h2>
+      <div class="grid">
+        <div class="icon-card">
+          <h3>Harmony Explorer</h3>
+          <div class="icon-display">
+            <img src="harmony.svg" alt="Harmony Explorer" width="24" height="24">
+          </div>
+          <div class="icon-label">Replaces: 🎨</div>
+        </div>
+
+        <div class="icon-card">
+          <h3>Color Matcher</h3>
+          <div class="icon-display">
+            <img src="matcher.svg" alt="Color Matcher" width="24" height="24">
+          </div>
+          <div class="icon-label">Replaces: 🎯</div>
+        </div>
+
+        <div class="icon-card">
+          <h3>Accessibility Checker</h3>
+          <div class="icon-display">
+            <img src="accessibility.svg" alt="Accessibility Checker" width="24" height="24">
+          </div>
+          <div class="icon-label">Replaces: 👁️</div>
+        </div>
+
+        <div class="icon-card">
+          <h3>Dye Comparison</h3>
+          <div class="icon-display">
+            <img src="comparison.svg" alt="Dye Comparison" width="24" height="24">
+          </div>
+          <div class="icon-label">Replaces: 📊</div>
+        </div>
+
+        <div class="icon-card">
+          <h3>Dye Mixer</h3>
+          <div class="icon-display">
+            <img src="mixer.svg" alt="Dye Mixer" width="24" height="24">
+          </div>
+          <div class="icon-label">Replaces: 🎭</div>
+        </div>
+
+        <div class="icon-card">
+          <h3>Tools Menu</h3>
+          <div class="icon-display">
+            <img src="tools.svg" alt="Tools Menu" width="24" height="24">
+          </div>
+          <div class="icon-label">Replaces: 🛠️</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Size Variations -->
+    <div class="section">
+      <h2 class="section-title">Size Variations</h2>
+      <div class="grid">
+        <div class="icon-card">
+          <h3>Harmony Explorer</h3>
+          <div class="size-row">
+            <div class="size-demo">
+              <img src="harmony.svg" alt="Harmony 16px" width="16" height="16">
+              <div class="size-label">16px</div>
+            </div>
+            <div class="size-demo">
+              <img src="harmony.svg" alt="Harmony 20px" width="20" height="20">
+              <div class="size-label">20px</div>
+            </div>
+            <div class="size-demo">
+              <img src="harmony.svg" alt="Harmony 24px" width="24" height="24">
+              <div class="size-label">24px</div>
+            </div>
+            <div class="size-demo">
+              <img src="harmony.svg" alt="Harmony 32px" width="32" height="32">
+              <div class="size-label">32px</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="icon-card">
+          <h3>Color Matcher</h3>
+          <div class="size-row">
+            <div class="size-demo">
+              <img src="matcher.svg" alt="Matcher 16px" width="16" height="16">
+              <div class="size-label">16px</div>
+            </div>
+            <div class="size-demo">
+              <img src="matcher.svg" alt="Matcher 20px" width="20" height="20">
+              <div class="size-label">20px</div>
+            </div>
+            <div class="size-demo">
+              <img src="matcher.svg" alt="Matcher 24px" width="24" height="24">
+              <div class="size-label">24px</div>
+            </div>
+            <div class="size-demo">
+              <img src="matcher.svg" alt="Matcher 32px" width="32" height="32">
+              <div class="size-label">32px</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="icon-card">
+          <h3>Accessibility Checker</h3>
+          <div class="size-row">
+            <div class="size-demo">
+              <img src="accessibility.svg" alt="Accessibility 16px" width="16" height="16">
+              <div class="size-label">16px</div>
+            </div>
+            <div class="size-demo">
+              <img src="accessibility.svg" alt="Accessibility 20px" width="20" height="20">
+              <div class="size-label">20px</div>
+            </div>
+            <div class="size-demo">
+              <img src="accessibility.svg" alt="Accessibility 24px" width="24" height="24">
+              <div class="size-label">24px</div>
+            </div>
+            <div class="size-demo">
+              <img src="accessibility.svg" alt="Accessibility 32px" width="32" height="32">
+              <div class="size-label">32px</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="icon-card">
+          <h3>Dye Comparison</h3>
+          <div class="size-row">
+            <div class="size-demo">
+              <img src="comparison.svg" alt="Comparison 16px" width="16" height="16">
+              <div class="size-label">16px</div>
+            </div>
+            <div class="size-demo">
+              <img src="comparison.svg" alt="Comparison 20px" width="20" height="20">
+              <div class="size-label">20px</div>
+            </div>
+            <div class="size-demo">
+              <img src="comparison.svg" alt="Comparison 24px" width="24" height="24">
+              <div class="size-label">24px</div>
+            </div>
+            <div class="size-demo">
+              <img src="comparison.svg" alt="Comparison 32px" width="32" height="32">
+              <div class="size-label">32px</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="icon-card">
+          <h3>Dye Mixer</h3>
+          <div class="size-row">
+            <div class="size-demo">
+              <img src="mixer.svg" alt="Mixer 16px" width="16" height="16">
+              <div class="size-label">16px</div>
+            </div>
+            <div class="size-demo">
+              <img src="mixer.svg" alt="Mixer 20px" width="20" height="20">
+              <div class="size-label">20px</div>
+            </div>
+            <div class="size-demo">
+              <img src="mixer.svg" alt="Mixer 24px" width="24" height="24">
+              <div class="size-label">24px</div>
+            </div>
+            <div class="size-demo">
+              <img src="mixer.svg" alt="Mixer 32px" width="32" height="32">
+              <div class="size-label">32px</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="icon-card">
+          <h3>Tools Menu</h3>
+          <div class="size-row">
+            <div class="size-demo">
+              <img src="tools.svg" alt="Tools 16px" width="16" height="16">
+              <div class="size-label">16px</div>
+            </div>
+            <div class="size-demo">
+              <img src="tools.svg" alt="Tools 20px" width="20" height="20">
+              <div class="size-label">20px</div>
+            </div>
+            <div class="size-demo">
+              <img src="tools.svg" alt="Tools 24px" width="24" height="24">
+              <div class="size-label">24px</div>
+            </div>
+            <div class="size-demo">
+              <img src="tools.svg" alt="Tools 32px" width="32" height="32">
+              <div class="size-label">32px</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Color Theme Examples -->
+    <div class="section">
+      <h2 class="section-title">Theme Examples (All Icons at 24px)</h2>
+      <div class="color-grid">
+        <div class="color-demo light">
+          <div style="margin-bottom: 0.5rem; font-weight: 600;">Light Theme</div>
+          <div style="display: flex; gap: 0.5rem; justify-content: center;">
+            <img src="harmony.svg" width="24" height="24" style="opacity: 0.8;">
+            <img src="matcher.svg" width="24" height="24" style="opacity: 0.8;">
+            <img src="accessibility.svg" width="24" height="24" style="opacity: 0.8;">
+            <img src="comparison.svg" width="24" height="24" style="opacity: 0.8;">
+            <img src="mixer.svg" width="24" height="24" style="opacity: 0.8;">
+            <img src="tools.svg" width="24" height="24" style="opacity: 0.8;">
+          </div>
+        </div>
+
+        <div class="color-demo dark">
+          <div style="margin-bottom: 0.5rem; font-weight: 600;">Dark Theme</div>
+          <div style="display: flex; gap: 0.5rem; justify-content: center;">
+            <img src="harmony.svg" width="24" height="24" style="filter: invert(1);">
+            <img src="matcher.svg" width="24" height="24" style="filter: invert(1);">
+            <img src="accessibility.svg" width="24" height="24" style="filter: invert(1);">
+            <img src="comparison.svg" width="24" height="24" style="filter: invert(1);">
+            <img src="mixer.svg" width="24" height="24" style="filter: invert(1);">
+            <img src="tools.svg" width="24" height="24" style="filter: invert(1);">
+          </div>
+        </div>
+
+        <div class="color-demo primary">
+          <div style="margin-bottom: 0.5rem; font-weight: 600;">Primary Accent</div>
+          <div style="display: flex; gap: 0.5rem; justify-content: center;">
+            <img src="harmony.svg" width="24" height="24" style="filter: brightness(0) invert(1);">
+            <img src="matcher.svg" width="24" height="24" style="filter: brightness(0) invert(1);">
+            <img src="accessibility.svg" width="24" height="24" style="filter: brightness(0) invert(1);">
+            <img src="comparison.svg" width="24" height="24" style="filter: brightness(0) invert(1);">
+            <img src="mixer.svg" width="24" height="24" style="filter: brightness(0) invert(1);">
+            <img src="tools.svg" width="24" height="24" style="filter: brightness(0) invert(1);">
+          </div>
+        </div>
+
+        <div class="color-demo secondary">
+          <div style="margin-bottom: 0.5rem; font-weight: 600;">Secondary Accent</div>
+          <div style="display: flex; gap: 0.5rem; justify-content: center;">
+            <img src="harmony.svg" width="24" height="24" style="filter: brightness(0) invert(1);">
+            <img src="matcher.svg" width="24" height="24" style="filter: brightness(0) invert(1);">
+            <img src="accessibility.svg" width="24" height="24" style="filter: brightness(0) invert(1);">
+            <img src="comparison.svg" width="24" height="24" style="filter: brightness(0) invert(1);">
+            <img src="mixer.svg" width="24" height="24" style="filter: brightness(0) invert(1);">
+            <img src="tools.svg" width="24" height="24" style="filter: brightness(0) invert(1);">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Before/After Comparison -->
+    <div class="section">
+      <h2 class="section-title">Before/After Comparison</h2>
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Tool</th>
+            <th>Before (Emoji)</th>
+            <th>After (SVG)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Harmony Explorer</td>
+            <td><span class="emoji">🎨</span></td>
+            <td><img src="harmony.svg" width="24" height="24"></td>
+          </tr>
+          <tr>
+            <td>Color Matcher</td>
+            <td><span class="emoji">🎯</span></td>
+            <td><img src="matcher.svg" width="24" height="24"></td>
+          </tr>
+          <tr>
+            <td>Accessibility Checker</td>
+            <td><span class="emoji">👁️</span></td>
+            <td><img src="accessibility.svg" width="24" height="24"></td>
+          </tr>
+          <tr>
+            <td>Dye Comparison</td>
+            <td><span class="emoji">📊</span></td>
+            <td><img src="comparison.svg" width="24" height="24"></td>
+          </tr>
+          <tr>
+            <td>Dye Mixer</td>
+            <td><span class="emoji">🎭</span></td>
+            <td><img src="mixer.svg" width="24" height="24"></td>
+          </tr>
+          <tr>
+            <td>Tools Menu</td>
+            <td><span class="emoji">🛠️</span></td>
+            <td><img src="tools.svg" width="24" height="24"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Implementation Notes -->
+    <div class="notes">
+      <h3>✨ Design Features</h3>
+      <ul>
+        <li>All icons use 24×24px viewBox for consistency</li>
+        <li>Stroke-based design with 1.5-2px width for clarity</li>
+        <li>Uses <code>currentColor</code> for theme compatibility</li>
+        <li>Rounded line caps and joins for modern aesthetic</li>
+        <li>Optimized for readability at 16px minimum size</li>
+        <li>Scalable vector graphics - crisp at any resolution</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>
