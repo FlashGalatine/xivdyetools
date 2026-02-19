@@ -14,14 +14,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **og-worker 1.0.3**: Added parameter bounds validation to OG image generation routes (FINDING-003)
 - **presets-api 1.4.13**: Enforce `BOT_SIGNING_SECRET` in production env validation (FINDING-001)
+- **oauth 2.3.6**: Block `STATE_TRANSITION_PERIOD=true` in production (FINDING-007)
+- **web-app 4.1.7**: Clear APIService cache on logout (FINDING-008)
+- **web-app 4.1.7**: Millisecond timestamp guard for token expiry (BUG-001)
 
 ### Added
 
 - **moderation-worker 1.1.5**: Startup environment variable validation with production fail-fast (REFACTOR-001)
+- **web-app 4.1.7**: Cross-tab session sync via `StorageEvent` (BUG-002)
+- **DEPRECATIONS.md**: Deprecation registry with removal timelines (REFACTOR-003)
 
 ### Docs
 
-- Audit findings FINDING-004 and BUG-003 marked as false positives (already correctly implemented)
+- Audit findings FINDING-004 and BUG-003 verified as false positives (already correctly implemented)
+- Audit findings FINDING-007, FINDING-008, FINDING-010, BUG-001, BUG-002 resolved with code changes
 
 ---
 

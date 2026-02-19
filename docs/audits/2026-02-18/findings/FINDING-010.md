@@ -42,3 +42,17 @@ if (!startupValidationDone) {
 
 ## References
 - [CWE-284](https://cwe.mitre.org/data/definitions/284.html)
+
+---
+
+## Resolution Note (2026-02-19) — Substantially resolved by REFACTOR-001 (moderation-worker 1.1.5)
+
+`apps/moderation-worker/src/utils/env-validation.ts` (new file): validates all required secrets,
+config variables, and bindings. MODERATOR_IDS is explicitly validated — each ID checked against
+`/^\d{17,19}$/` (Discord Snowflake format), and the field must be non-empty.
+
+The startup middleware in `index.ts` now calls `validateEnv()` and logs any errors on first request.
+
+**Remaining gap**: The moderation-worker Env type does not include an `ENVIRONMENT` field, so the
+production hard-fail pattern (used by presets-api) cannot be applied. The worker logs validation
+errors but continues. This is an acceptable limitation given the deployment model.

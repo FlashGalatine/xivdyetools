@@ -9,6 +9,8 @@
  */
 
 import { logger } from '@shared/logger';
+// FINDING-008: Import APIService to clear cache on logout
+import { APIService } from './api-service-wrapper.js';
 
 // ============================================
 // Types
@@ -197,6 +199,25 @@ class AuthServiceImpl {
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
+
+    // BUG-002: Sync auth state across tabs via StorageEvent
+    // StorageEvent fires on all tabs EXCEPT the one that made the change — the originating tab
+    // already has its state updated. Because of the `if (this.initialized) return` guard above,
+    // this listener is registered exactly once per page lifetime.
+    window.addEventListener('storage', (event) => {
+      if (event.key === TOKEN_STORAGE_KEY) {
+        if (event.newValue === null && this.state.isAuthenticated) {
+          // Token removed in another tab — log out this tab too
+          logger.info('Token cleared in another tab, synchronizing logout');
+          this.clearState();
+          this.notifyListeners();
+        } else if (event.newValue !== null && !this.state.isAuthenticated) {
+          // Token set in another tab — sync login state into this tab
+          this.loadFromStorage();
+          this.notifyListeners();
+        }
+      }
+    });
 
     if (import.meta.env.DEV) {
       console.info('🔐 [AuthService] Initializing...', { url: window.location.href });
@@ -419,7 +440,13 @@ class AuthServiceImpl {
       return;
     }
 
-    const expiresAt = expiresAtStr ? parseInt(expiresAtStr, 10) : payload.exp;
+    let expiresAt = expiresAtStr ? parseInt(expiresAtStr, 10) : payload.exp;
+    // BUG-001: Guard against millisecond timestamps — JWT exp is always Unix seconds (RFC 7519)
+    // A real seconds timestamp for year 2026 is ~1.77e9, well under 1e12
+    if (expiresAt && expiresAt > 1e12) {
+      logger.warn('Token expiry looks like milliseconds — converting to seconds');
+      expiresAt = Math.floor(expiresAt / 1000);
+    }
     const provider = payload.auth_provider || 'discord';
 
     // SECURITY: Store token in localStorage (see TOKEN_STORAGE_KEY doc for security rationale)
@@ -699,6 +726,8 @@ class AuthServiceImpl {
 
     this.clearStorage();
     this.clearState();
+    // FINDING-008: Clear cached market prices so they don't persist across sessions
+    void APIService.clearCache().catch(() => {});
     this.notifyListeners();
 
     logger.info('Logged out successfully');

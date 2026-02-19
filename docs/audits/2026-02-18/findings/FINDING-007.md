@@ -37,3 +37,14 @@ stateData = await verifyState(state, c.env.JWT_SECRET, allowUnsigned);
 ## References
 - [CWE-1188](https://cwe.mitre.org/data/definitions/1188.html)
 - [OWASP CSRF Prevention](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
+
+---
+
+## Resolution Note (2026-02-19) — Fixed in oauth 2.3.6
+
+`apps/oauth/src/utils/env-validation.ts`: Added a production validation error that blocks the
+worker from starting if `STATE_TRANSITION_PERIOD === 'true'` in production. The startup middleware
+already hard-fails in production on misconfiguration, so this effectively prevents accidental
+enablement in production.
+
+`DEPRECATIONS.md`: Entry added with target removal date of 2026-06-30 and migration checklist.

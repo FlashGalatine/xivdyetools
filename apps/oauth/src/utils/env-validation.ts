@@ -25,6 +25,10 @@ export interface EnvValidationResult {
  * - FRONTEND_URL: Web app URL for redirects
  * - WORKER_URL: This worker's public URL
  * - DB: D1 database binding
+ *
+ * Blocked in production (FINDING-007):
+ * - STATE_TRANSITION_PERIOD: Legacy flag that disables OAuth state CSRF protection.
+ *   Must never be 'true' in production.
  */
 export function validateEnv(env: Env): EnvValidationResult {
   const errors: string[] = [];
@@ -83,6 +87,14 @@ export function validateEnv(env: Env): EnvValidationResult {
   // Check D1 database binding
   if (!env.DB) {
     errors.push('Missing required D1 database binding: DB');
+  }
+
+  // FINDING-007: STATE_TRANSITION_PERIOD bypasses OAuth state signature verification
+  // (allows unsigned state params, weakening CSRF protection). Must never be enabled in production.
+  if (env.ENVIRONMENT === 'production' && env.STATE_TRANSITION_PERIOD === 'true') {
+    errors.push(
+      'STATE_TRANSITION_PERIOD must not be enabled in production (disables OAuth state CSRF protection)'
+    );
   }
 
   return {

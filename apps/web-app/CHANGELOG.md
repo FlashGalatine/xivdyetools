@@ -7,7 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [4.1.7] - 2026-02-19
+
+### Security
+
+- **FINDING-008**: `logout()` now clears the APIService market price cache on logout
+  - Prevents cached data from persisting into subsequent sessions on shared devices
+
+### Fixed
+
+- **BUG-001**: Added millisecond timestamp guard in `handleCallbackToken()`
+  - If `expires_at` exceeds `1e12` (which seconds-based Unix timestamps never will until year ~33,658),
+    it is divided by 1000 and a warning is logged — defensive protection against future API regressions
+- **BUG-002**: Added cross-tab session synchronization via `StorageEvent`
+  - Logging out in one tab now triggers logout in all other open tabs
+  - Logging in on one tab now syncs the session into other tabs that were already open
+
+---
+
+## [4.1.6] - 2026-01-26
 
 ### Fixed
 

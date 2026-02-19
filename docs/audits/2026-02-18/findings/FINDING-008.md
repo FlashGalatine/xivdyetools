@@ -35,3 +35,9 @@ localStorage.removeItem('jwt_expires_at');
 
 ## References
 - [CWE-212](https://cwe.mitre.org/data/definitions/212.html)
+
+---
+
+## Resolution Note (2026-02-19) — Fixed in web-app 4.1.7
+
+`apps/web-app/src/services/auth-service.ts`: `logout()` now calls `void APIService.clearCache().catch(() => {})` after clearing session state. The call is fire-and-forget (non-blocking, errors silently suppressed) so it cannot break the logout flow.

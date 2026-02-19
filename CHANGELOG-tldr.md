@@ -4,6 +4,15 @@ Quick summary of what changed and when. See [CHANGELOG.md](CHANGELOG.md) for ful
 
 ---
 
+## Unreleased
+
+**Security audit remediation.** Fixed 8 findings from the 2026-02-18 audit (2 false positives confirmed).
+
+- **presets-api 1.4.13** / **og-worker 1.0.3** / **moderation-worker 1.1.5**: Env validation hardened, OG image param bounds added
+- **oauth 2.3.6**: `STATE_TRANSITION_PERIOD` blocked in production
+- **web-app 4.1.7**: Cache cleared on logout, cross-tab session sync, token expiry guard
+- New `DEPRECATIONS.md` for tracking removal timelines
+
 ## 1.0.0 — 2026-02-18
 
 **Monorepo created.** Consolidated 15 separate repos into one.

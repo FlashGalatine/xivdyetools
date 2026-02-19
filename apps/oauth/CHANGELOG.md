@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.6] - 2026-02-19
+
+### Security
+
+- **FINDING-007**: Startup env validation now blocks `STATE_TRANSITION_PERIOD=true` in production
+  - If this legacy flag is enabled in production, the worker fails fast with a 500 error on the
+    first request, preventing accidental weakening of OAuth state CSRF protection
+- Added `STATE_TRANSITION_PERIOD` to `DEPRECATIONS.md` with target removal date of 2026-06-30
+
+---
+
 ## [2.3.5] - 2026-01-26
 
 ### Security
