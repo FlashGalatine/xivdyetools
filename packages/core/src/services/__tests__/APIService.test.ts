@@ -370,7 +370,13 @@ describe('APIService', () => {
       const stats = await apiService.getCacheStats();
       expect(stats).toHaveProperty('size');
       expect(stats).toHaveProperty('keys');
+      expect(stats).toHaveProperty('metrics');
       expect(Array.isArray(stats.keys)).toBe(true);
+      expect(stats.metrics).toHaveProperty('hits');
+      expect(stats.metrics).toHaveProperty('misses');
+      expect(stats.metrics).toHaveProperty('evictions');
+      expect(stats.metrics).toHaveProperty('errors');
+      expect(stats.metrics).toHaveProperty('lastReset');
     });
 
     it('should invalidate cache on version mismatch', async () => {
@@ -477,6 +483,175 @@ describe('APIService', () => {
       warnSpy.mockRestore();
 
       expect(result?.currentAverage).toBe(2000); // Fresh data
+    });
+  });
+
+  // ==========================================================================
+  // Cache Metrics Tests (OPT-002)
+  // ==========================================================================
+
+  describe('cache metrics (OPT-002)', () => {
+    it('should count cache hits', async () => {
+      const itemID = 5729;
+      const mockResponse = {
+        results: [
+          { itemId: itemID, nq: { minListing: { dc: { price: 1000 } } } },
+        ],
+      };
+      mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/universal/${itemID}`, {
+        status: 200,
+        body: mockResponse,
+      });
+
+      // First call = miss (fetches from API), second call = hit (from cache)
+      await apiService.getPriceData(itemID);
+      await apiService.getPriceData(itemID);
+
+      const stats = await apiService.getCacheStats();
+      expect(stats.metrics.hits).toBe(1);
+      expect(stats.metrics.misses).toBe(1);
+    });
+
+    it('should count cache misses', async () => {
+      const itemID = 5729;
+      const mockResponse = {
+        results: [
+          { itemId: itemID, nq: { minListing: { dc: { price: 1000 } } } },
+        ],
+      };
+      mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/universal/${itemID}`, {
+        status: 200,
+        body: mockResponse,
+      });
+
+      // First call with empty cache = miss
+      await apiService.getPriceData(itemID);
+
+      const stats = await apiService.getCacheStats();
+      expect(stats.metrics.misses).toBe(1);
+    });
+
+    it('should count evictions on version mismatch', async () => {
+      const itemID = 5729;
+      const cachedData: CachedData<PriceData> = {
+        data: {
+          itemID,
+          currentAverage: 100,
+          currentMinPrice: 90,
+          currentMaxPrice: 110,
+          lastUpdate: Date.now(),
+        },
+        timestamp: Date.now(),
+        ttl: API_CACHE_TTL,
+        version: '0.0.0', // Old version
+      };
+      memoryCache.set(`${itemID}:global`, cachedData);
+
+      const mockResponse = {
+        results: [
+          { itemId: itemID, nq: { minListing: { dc: { price: 2000 } } } },
+        ],
+      };
+      mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/universal/${itemID}`, {
+        status: 200,
+        body: mockResponse,
+      });
+
+      await apiService.getPriceData(itemID);
+
+      const stats = await apiService.getCacheStats();
+      expect(stats.metrics.evictions).toBe(1);
+    });
+
+    it('should count evictions on expired cache', async () => {
+      const itemID = 5729;
+      const cachedData: CachedData<PriceData> = {
+        data: {
+          itemID,
+          currentAverage: 100,
+          currentMinPrice: 90,
+          currentMaxPrice: 110,
+          lastUpdate: Date.now(),
+        },
+        timestamp: Date.now() - API_CACHE_TTL - 1000, // Expired
+        ttl: API_CACHE_TTL,
+        version: API_CACHE_VERSION,
+      };
+      memoryCache.set(`${itemID}:global`, cachedData);
+
+      const mockResponse = {
+        results: [
+          { itemId: itemID, nq: { minListing: { dc: { price: 2000 } } } },
+        ],
+      };
+      mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/universal/${itemID}`, {
+        status: 200,
+        body: mockResponse,
+      });
+
+      await apiService.getPriceData(itemID);
+
+      const stats = await apiService.getCacheStats();
+      expect(stats.metrics.evictions).toBe(1);
+    });
+
+    it('should count errors on cache backend failure', async () => {
+      const itemID = 5729;
+      const failingCache: ICacheBackend = {
+        get: () => { throw new Error('Backend failure'); },
+        set: async () => {},
+        delete: async () => {},
+        clear: async () => {},
+        keys: async () => [],
+      };
+
+      const errorService = new APIService(failingCache, mockFetch, noOpRateLimiter);
+
+      const mockResponse = {
+        results: [
+          { itemId: itemID, nq: { minListing: { dc: { price: 1000 } } } },
+        ],
+      };
+      mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/universal/${itemID}`, {
+        status: 200,
+        body: mockResponse,
+      });
+
+      await errorService.getPriceData(itemID);
+
+      const stats = await errorService.getCacheStats();
+      expect(stats.metrics.errors).toBe(1);
+    });
+
+    it('should reset metrics on clearCache', async () => {
+      const itemID = 5729;
+      const mockResponse = {
+        results: [
+          { itemId: itemID, nq: { minListing: { dc: { price: 1000 } } } },
+        ],
+      };
+      mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/universal/${itemID}`, {
+        status: 200,
+        body: mockResponse,
+      });
+
+      await apiService.getPriceData(itemID);
+      let stats = await apiService.getCacheStats();
+      expect(stats.metrics.misses).toBeGreaterThan(0);
+
+      await apiService.clearCache();
+      stats = await apiService.getCacheStats();
+      expect(stats.metrics.hits).toBe(0);
+      expect(stats.metrics.misses).toBe(0);
+      expect(stats.metrics.evictions).toBe(0);
+      expect(stats.metrics.errors).toBe(0);
+    });
+
+    it('should return a copy of metrics (not a reference)', async () => {
+      const stats1 = await apiService.getCacheStats();
+      const stats2 = await apiService.getCacheStats();
+      expect(stats1.metrics).not.toBe(stats2.metrics);
+      expect(stats1.metrics).toEqual(stats2.metrics);
     });
   });
 

@@ -318,6 +318,23 @@ export interface APIServiceOptions {
  *   baseUrl: 'https://universalis-proxy.xivdyetools.workers.dev/api/v2'
  * });
  */
+/**
+ * Cache performance metrics
+ * Tracks hit/miss/eviction/error counts for observability (OPT-002)
+ */
+export interface CacheMetrics {
+  /** Number of cache hits (valid cached data returned) */
+  hits: number;
+  /** Number of cache misses (no cached data found) */
+  misses: number;
+  /** Number of cache evictions (expired, version mismatch, or corrupted entries removed) */
+  evictions: number;
+  /** Number of cache backend errors */
+  errors: number;
+  /** Timestamp (ms) when metrics were last reset */
+  lastReset: number;
+}
+
 export class APIService {
   private cache: ICacheBackend;
   private fetchClient: FetchClient;
@@ -325,6 +342,15 @@ export class APIService {
   private pendingRequests: Map<string, Promise<PriceData | null>> = new Map();
   private readonly logger: Logger;
   private readonly baseUrl: string;
+
+  /** OPT-002: Cache performance counters */
+  private metrics: CacheMetrics = {
+    hits: 0,
+    misses: 0,
+    evictions: 0,
+    errors: 0,
+    lastReset: Date.now(),
+  };
 
   /**
    * Constructor with optional dependency injection
@@ -389,6 +415,7 @@ export class APIService {
     } catch (error) {
       // ERROR-001: Log cache backend error and fall through to API fetch
       // This distinguishes "cache broken" from "cache miss" in logs
+      this.metrics.errors++;
       this.logger.error(
         `Cache backend error for key ${cacheKey}: ${error instanceof Error ? error.message : 'Unknown error'}. Falling through to API fetch.`
       );
@@ -396,17 +423,20 @@ export class APIService {
     }
 
     if (!cached) {
+      this.metrics.misses++;
       return null;
     }
 
     // Check cache version
     if (cached.version && cached.version !== API_CACHE_VERSION) {
+      this.metrics.evictions++;
       await this.cache.delete(cacheKey);
       return null;
     }
 
     // Check if cache has expired
     if (Date.now() - cached.timestamp > cached.ttl) {
+      this.metrics.evictions++;
       await this.cache.delete(cacheKey);
       return null;
     }
@@ -415,12 +445,14 @@ export class APIService {
     if (cached.checksum) {
       const computedChecksum = generateChecksum(cached.data);
       if (computedChecksum !== cached.checksum) {
+        this.metrics.evictions++;
         this.logger.warn(`Cache corruption detected for key: ${cacheKey}`);
         await this.cache.delete(cacheKey);
         return null;
       }
     }
 
+    this.metrics.hits++;
     return cached.data;
   }
 
@@ -443,15 +475,29 @@ export class APIService {
    */
   async clearCache(): Promise<void> {
     await this.cache.clear();
+    this.resetMetrics();
     this.logger.info('Price cache cleared');
   }
 
   /**
-   * Get cache stats
+   * Get cache stats including performance metrics (OPT-002)
    */
-  async getCacheStats(): Promise<{ size: number; keys: string[] }> {
+  async getCacheStats(): Promise<{ size: number; keys: string[]; metrics: CacheMetrics }> {
     const keys = await this.cache.keys();
-    return { size: keys.length, keys };
+    return { size: keys.length, keys, metrics: { ...this.metrics } };
+  }
+
+  /**
+   * Reset cache performance metrics counters
+   */
+  resetMetrics(): void {
+    this.metrics = {
+      hits: 0,
+      misses: 0,
+      evictions: 0,
+      errors: 0,
+      lastReset: Date.now(),
+    };
   }
 
   // ============================================================================

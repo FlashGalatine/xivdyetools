@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **moderation-worker 1.1.5**: Startup environment variable validation with production fail-fast (REFACTOR-001)
 - **web-app 4.1.7**: Cross-tab session sync via `StorageEvent` (BUG-002)
 - **DEPRECATIONS.md**: Deprecation registry with removal timelines (REFACTOR-003)
+- **core 1.17.0**: Cache hit/miss/eviction/error metrics in `APIService` (OPT-002)
+- **universalis-proxy 1.4.1**: Structured cache hit/miss logging for observability (OPT-002)
 
 ### Docs
 

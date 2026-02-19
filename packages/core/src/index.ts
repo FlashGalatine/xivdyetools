@@ -3,7 +3,7 @@ export { ColorService } from './services/ColorService.js';
 export { ColorConverter } from './services/color/ColorConverter.js';
 export { DyeService } from './services/DyeService.js';
 export { APIService, MemoryCacheBackend } from './services/APIService.js';
-export type { ICacheBackend, APIServiceOptions } from './services/APIService.js';
+export type { ICacheBackend, APIServiceOptions, CacheMetrics } from './services/APIService.js';
 export { LocalizationService } from './services/LocalizationService.js';
 export { PresetService } from './services/PresetService.js';
 export { PaletteService } from './services/PaletteService.js';

@@ -59,6 +59,14 @@ export async function cachedFetch<T = unknown>(
   if (cacheResult) {
     const data = (await cacheResult.response.json()) as T;
 
+    // OPT-002: Structured cache hit logging for observability
+    console.log(JSON.stringify({
+      event: 'cache_result',
+      status: 'hit',
+      key: cacheKey,
+      stale: cacheResult.isStale,
+    }));
+
     if (cacheResult.isStale) {
       // Trigger background revalidation, but return stale data immediately
       ctx.waitUntil(
@@ -72,6 +80,13 @@ export async function cachedFetch<T = unknown>(
       isStale: cacheResult.isStale,
     };
   }
+
+  // OPT-002: Structured cache miss logging for observability
+  console.log(JSON.stringify({
+    event: 'cache_result',
+    status: 'miss',
+    key: cacheKey,
+  }));
 
   // Fetch from upstream with request coalescing
   const data = await coalescer.coalesce<T>(cacheKey, async () => {

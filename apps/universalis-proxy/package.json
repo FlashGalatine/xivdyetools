@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-universalis-proxy",
-  "version": "1.3.5",
+  "version": "1.4.1",
   "private": true,
   "description": "Cloudflare Worker proxy for Universalis API with CORS support",
   "type": "module",
