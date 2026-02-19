@@ -4,7 +4,7 @@ Quick summary of what changed and when. See [CHANGELOG.md](CHANGELOG.md) for ful
 
 ---
 
-## Unreleased
+## 1.1.0 — 2026-02-19
 
 **Security audit remediation.** Fixed 8 findings from the 2026-02-18 audit (2 false positives confirmed).
 
