@@ -7,7 +7,6 @@
  * @module services/storage-service
  */
 
-import { ErrorCode, AppError } from '@shared/types';
 import { STORAGE_PREFIX } from '@shared/constants';
 import { logger } from '@shared/logger';
 

@@ -14,7 +14,6 @@
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { MarketBoard } from '@components/market-board';
-import { createDyeActionDropdown } from '@components/dye-action-dropdown';
 import {
   ColorService,
   ConfigController,
@@ -32,7 +31,12 @@ import { ICON_PALETTE, ICON_MARKET } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import type { Dye, PriceData } from '@shared/types';
-import type { SwatchConfig, DisplayOptionsConfig, MarketConfig, MatchingMethod } from '@shared/tool-config-types';
+import type {
+  SwatchConfig,
+  DisplayOptionsConfig,
+  MarketConfig,
+  MatchingMethod,
+} from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 import type { ResultCardData, ContextAction } from '@components/v4/result-card';
 // Import v4-result-card custom element to ensure it's registered
@@ -40,7 +44,7 @@ import '@components/v4/result-card';
 // Import v4-share-button for share functionality
 import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
-import { ShareService, type SwatchShareParams } from '@services/share-service';
+import { ShareService } from '@services/share-service';
 
 // ============================================================================
 // Types and Constants
@@ -402,7 +406,7 @@ export class SwatchTool extends BaseComponent {
 
       // Fetch prices if enabled, or re-render to hide them
       if (showPrices && this.matchedDyes.length > 0) {
-        this.fetchPrices(this.matchedDyes.map((m) => m.dye));
+        void this.fetchPrices(this.matchedDyes.map((m) => m.dye));
       } else {
         this.updateMatchResults();
       }
@@ -424,7 +428,7 @@ export class SwatchTool extends BaseComponent {
       // Re-fetch prices with the new server if prices are enabled
       if (this.showPrices && this.matchedDyes.length > 0) {
         this.priceData.clear();
-        this.fetchPrices(this.matchedDyes.map((m) => m.dye));
+        void this.fetchPrices(this.matchedDyes.map((m) => m.dye));
       }
     }
   }
@@ -484,11 +488,11 @@ export class SwatchTool extends BaseComponent {
     setupMarketBoardListeners(
       marketContent,
       () => this.showPrices && this.matchedDyes.length > 0,
-      () => this.fetchPrices(this.matchedDyes.map((m) => m.dye)),
+      () => void this.fetchPrices(this.matchedDyes.map((m) => m.dye)),
       {
         onPricesToggled: () => {
           if (this.showPrices && this.matchedDyes.length > 0) {
-            this.fetchPrices(this.matchedDyes.map((m) => m.dye));
+            void this.fetchPrices(this.matchedDyes.map((m) => m.dye));
           } else {
             this.updateMatchResults();
           }
@@ -501,7 +505,7 @@ export class SwatchTool extends BaseComponent {
         onRefreshRequested: () => {
           if (this.showPrices && this.matchedDyes.length > 0) {
             this.priceData.clear();
-            this.fetchPrices(this.matchedDyes.map((m) => m.dye));
+            void this.fetchPrices(this.matchedDyes.map((m) => m.dye));
           }
         },
       }
@@ -965,8 +969,7 @@ export class SwatchTool extends BaseComponent {
     this.emptyStateContainer.appendChild(emptyIcon);
 
     const emptyText = this.createElement('span', {
-      textContent:
-        LanguageService.t('tools.character.noColorSelected'),
+      textContent: LanguageService.t('tools.character.noColorSelected'),
       attributes: {
         style: `
           color: var(--theme-text-muted, #888888);
@@ -1031,11 +1034,11 @@ export class SwatchTool extends BaseComponent {
       const viewportWidth = window.innerWidth;
       const containerPadding = 32; // From right panel padding
       const gridPadding = 20; // From gridPanel padding on each side
-      const availableWidth = viewportWidth - (containerPadding * 2);
+      const availableWidth = viewportWidth - containerPadding * 2;
 
       // Calculate swatch size: (available - grid padding - gaps) / 8 columns
       // 7 gaps at 4px each = 28px
-      const gridInnerWidth = availableWidth - (gridPadding * 2);
+      const gridInnerWidth = availableWidth - gridPadding * 2;
       const swatchSize = Math.floor((gridInnerWidth - 28) / 8);
       // Clamp to reasonable range (min 28px, max 44px)
       const clampedSwatchSize = Math.max(28, Math.min(44, swatchSize));
@@ -1322,9 +1325,7 @@ export class SwatchTool extends BaseComponent {
     navigator.clipboard
       .writeText(info)
       .then(() => {
-        ToastService.success(
-          LanguageService.t('success.copiedToClipboard')
-        );
+        ToastService.success(LanguageService.t('success.copiedToClipboard'));
       })
       .catch(() => {
         ToastService.error(LanguageService.t('common.copyFailed'));
@@ -1419,9 +1420,7 @@ export class SwatchTool extends BaseComponent {
             detail: { toolId: 'accessibility', dye },
           })
         );
-        ToastService.success(
-          LanguageService.t('harmony.addedToAccessibility')
-        );
+        ToastService.success(LanguageService.t('harmony.addedToAccessibility'));
         break;
 
       case 'see-harmonies':
@@ -1442,9 +1441,7 @@ export class SwatchTool extends BaseComponent {
 
       case 'copy-hex':
         void navigator.clipboard.writeText(dye.hex).then(() => {
-          ToastService.success(
-            LanguageService.t('success.copiedToClipboard')
-          );
+          ToastService.success(LanguageService.t('success.copiedToClipboard'));
         });
         break;
     }
@@ -1505,11 +1502,11 @@ export class SwatchTool extends BaseComponent {
     setupMarketBoardListeners(
       mobileMarketContent,
       () => this.showPrices && this.matchedDyes.length > 0,
-      () => this.fetchPrices(this.matchedDyes.map((m) => m.dye)),
+      () => void this.fetchPrices(this.matchedDyes.map((m) => m.dye)),
       {
         onPricesToggled: () => {
           if (this.showPrices && this.matchedDyes.length > 0) {
-            this.fetchPrices(this.matchedDyes.map((m) => m.dye));
+            void this.fetchPrices(this.matchedDyes.map((m) => m.dye));
           } else {
             this.updateMatchResults();
           }
@@ -1522,7 +1519,7 @@ export class SwatchTool extends BaseComponent {
         onRefreshRequested: () => {
           if (this.showPrices && this.matchedDyes.length > 0) {
             this.priceData.clear();
-            this.fetchPrices(this.matchedDyes.map((m) => m.dye));
+            void this.fetchPrices(this.matchedDyes.map((m) => m.dye));
           }
         },
       }
@@ -1810,21 +1807,17 @@ export class SwatchTool extends BaseComponent {
       return;
     }
 
-    this.matchedDyes = this.characterColorService.findClosestDyes(
-      this.selectedColor,
-      dyeService,
-      {
-        count: this.maxResults,
-        matchingMethod: this.matchingMethod,
-      }
-    );
+    this.matchedDyes = this.characterColorService.findClosestDyes(this.selectedColor, dyeService, {
+      count: this.maxResults,
+      matchingMethod: this.matchingMethod,
+    });
 
     logger.info(`[CharacterTool] Found ${this.matchedDyes.length} matching dyes`);
     this.updateMatchResults();
 
     // Fetch prices if enabled
     if (this.showPrices && this.matchedDyes.length > 0) {
-      this.fetchPrices(this.matchedDyes.map((m) => m.dye));
+      void this.fetchPrices(this.matchedDyes.map((m) => m.dye));
     }
   }
 
@@ -1920,9 +1913,15 @@ export class SwatchTool extends BaseComponent {
     // Load color sheet (category) if specified - do this FIRST before loading colors
     if (params.sheet && typeof params.sheet === 'string') {
       const validSheets: ColorCategory[] = [
-        'eyeColors', 'hairColors', 'skinColors', 'highlightColors',
-        'lipColorsDark', 'lipColorsLight', 'tattooColors',
-        'facePaintColorsDark', 'facePaintColorsLight',
+        'eyeColors',
+        'hairColors',
+        'skinColors',
+        'highlightColors',
+        'lipColorsDark',
+        'lipColorsLight',
+        'tattooColors',
+        'facePaintColorsDark',
+        'facePaintColorsLight',
       ];
       if (validSheets.includes(params.sheet as ColorCategory)) {
         const newCategory = params.sheet as ColorCategory;
@@ -1941,10 +1940,22 @@ export class SwatchTool extends BaseComponent {
       // Load race (subrace) if specified
       if (params.race && typeof params.race === 'string') {
         const validRaces: SubRace[] = [
-          'Midlander', 'Highlander', 'Wildwood', 'Duskwight',
-          'Plainsfolk', 'Dunesfolk', 'SeekerOfTheSun', 'KeeperOfTheMoon',
-          'SeaWolf', 'Hellsguard', 'Raen', 'Xaela',
-          'Helion', 'TheLost', 'Rava', 'Veena',
+          'Midlander',
+          'Highlander',
+          'Wildwood',
+          'Duskwight',
+          'Plainsfolk',
+          'Dunesfolk',
+          'SeekerOfTheSun',
+          'KeeperOfTheMoon',
+          'SeaWolf',
+          'Hellsguard',
+          'Raen',
+          'Xaela',
+          'Helion',
+          'TheLost',
+          'Rava',
+          'Veena',
         ];
         if (validRaces.includes(params.race as SubRace)) {
           const newRace = params.race as SubRace;
@@ -2007,9 +2018,7 @@ export class SwatchTool extends BaseComponent {
       }
 
       // Find matching CharacterColor by hex in the current color sheet
-      const matchingColor = this.colors.find(
-        (c) => c.hex.toLowerCase() === hexColor.toLowerCase()
-      );
+      const matchingColor = this.colors.find((c) => c.hex.toLowerCase() === hexColor.toLowerCase());
 
       if (matchingColor) {
         // Found the color - select it
@@ -2076,7 +2085,7 @@ export class SwatchTool extends BaseComponent {
    * Get localized category display name
    */
   private getCategoryDisplayName(category: ColorCategory): string {
-    const key = `tools.character.${category.replace(/Colors?$/, 'Colors')}`;
+    const _key = `tools.character.${category.replace(/Colors?$/, 'Colors')}`;
     const labels: Record<ColorCategory, string> = {
       eyeColors: LanguageService.t('tools.character.eyeColors'),
       hairColors: LanguageService.t('tools.character.hairColors'),
@@ -2085,10 +2094,8 @@ export class SwatchTool extends BaseComponent {
       lipColorsDark: LanguageService.t('tools.character.lipColorsDark'),
       lipColorsLight: LanguageService.t('tools.character.lipColorsLight'),
       tattooColors: LanguageService.t('tools.character.tattooColors'),
-      facePaintColorsDark:
-        LanguageService.t('tools.character.facePaintDark'),
-      facePaintColorsLight:
-        LanguageService.t('tools.character.facePaintLight'),
+      facePaintColorsDark: LanguageService.t('tools.character.facePaintDark'),
+      facePaintColorsLight: LanguageService.t('tools.character.facePaintLight'),
     };
     return labels[category];
   }

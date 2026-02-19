@@ -174,7 +174,7 @@ export function createDyeActionDropdown(dye: Dye, onAction?: DyeActionCallback):
     },
   ];
 
-  actions.forEach(({ action, icon, labelKey, defaultLabel }) => {
+  actions.forEach(({ action, icon, labelKey, defaultLabel: _defaultLabel }) => {
     const menuItem = document.createElement('button');
     menuItem.type = 'button';
     menuItem.className =
@@ -349,9 +349,7 @@ function addToComparison(dye: Dye): void {
 
   // Check if dye already exists
   if (currentDyes.includes(dye.id)) {
-    ToastService.info(
-      LanguageService.t('harmony.dyeAlreadyInComparison')
-    );
+    ToastService.info(LanguageService.t('harmony.dyeAlreadyInComparison'));
     return;
   }
 
@@ -401,9 +399,7 @@ function addToAccessibility(dye: Dye): void {
 
   // Check if dye already exists
   if (currentDyes.includes(dye.id)) {
-    ToastService.info(
-      LanguageService.t('harmony.dyeAlreadyInAccessibility')
-    );
+    ToastService.info(LanguageService.t('harmony.dyeAlreadyInAccessibility'));
     return;
   }
 
@@ -411,9 +407,7 @@ function addToAccessibility(dye: Dye): void {
   if (currentDyes.length < MAX_SLOTS.accessibility) {
     currentDyes.push(dye.id);
     StorageService.setItem(STORAGE_KEYS.accessibility, currentDyes);
-    ToastService.success(
-      LanguageService.t('harmony.addedToAccessibility')
-    );
+    ToastService.success(LanguageService.t('harmony.addedToAccessibility'));
     RouterService.navigateTo('accessibility');
     return;
   }
@@ -452,22 +446,19 @@ function showSlotSelectionModal(
   const dyeService = DyeService.getInstance();
 
   // Get localized tool name
-  let toolName: string;
+  let _toolName: string;
   if (tool === 'comparison') {
-    toolName = LanguageService.t('tools.comparison.shortName');
+    _toolName = LanguageService.t('tools.comparison.shortName');
   } else if (tool === 'mixer') {
-    toolName = LanguageService.t('tools.mixer.shortName');
+    _toolName = LanguageService.t('tools.mixer.shortName');
   } else {
-    toolName = LanguageService.t('tools.accessibility.shortName');
+    _toolName = LanguageService.t('tools.accessibility.shortName');
   }
 
   // Generate slot labels
   const slotLabels =
     tool === 'mixer'
-      ? [
-          LanguageService.t('mixer.startDye'),
-          LanguageService.t('mixer.endDye'),
-        ]
+      ? [LanguageService.t('mixer.startDye'), LanguageService.t('mixer.endDye')]
       : currentDyeIds.map((_, i) => `${LanguageService.t('common.slot')} ${i + 1}`);
 
   // Build slot buttons HTML
@@ -533,9 +524,7 @@ function showSlotSelectionModal(
         StorageService.setItem(storageKey, currentDyeIds);
 
         ModalService.dismiss(modalId);
-        ToastService.success(
-          LanguageService.t('harmony.replacedInTool')
-        );
+        ToastService.success(LanguageService.t('harmony.replacedInTool'));
         RouterService.navigateTo(tool);
       });
 

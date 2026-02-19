@@ -809,9 +809,7 @@ export class PresetTool extends BaseComponent {
     // Featured section (hidden on my-submissions tab)
     const featuredSection = this.createElement('div', { className: 'mb-6 hidden' });
     featuredSection.setAttribute('data-section', 'featured');
-    featuredSection.appendChild(
-      this.createHeader(LanguageService.t('preset.featured'))
-    );
+    featuredSection.appendChild(this.createHeader(LanguageService.t('preset.featured')));
     this.featuredContainer = this.createElement('div', { className: 'grid gap-4 grid-cols-2' });
     featuredSection.appendChild(this.featuredContainer);
     right.appendChild(featuredSection);
@@ -819,9 +817,7 @@ export class PresetTool extends BaseComponent {
     // Presets grid section
     const gridSection = this.createElement('div', { className: 'hidden' });
     gridSection.setAttribute('data-section', 'grid');
-    gridSection.appendChild(
-      this.createHeader(LanguageService.t('preset.allPresets'))
-    );
+    gridSection.appendChild(this.createHeader(LanguageService.t('preset.allPresets')));
     this.presetsGridContainer = this.createElement('div', {
       className: 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3',
     });
@@ -1096,12 +1092,10 @@ export class PresetTool extends BaseComponent {
       const deleteIcon = this.createElement('span', { className: 'w-3 h-3' });
       deleteIcon.innerHTML = ICON_TRASH;
       deleteBtn.appendChild(deleteIcon);
-      deleteBtn.appendChild(
-        document.createTextNode(LanguageService.t('preset.delete'))
-      );
+      deleteBtn.appendChild(document.createTextNode(LanguageService.t('preset.delete')));
       this.on(deleteBtn, 'click', (e: MouseEvent) => {
         e.stopPropagation();
-        this.handleDeletePreset(preset);
+        void this.handleDeletePreset(preset);
       });
       actionsRow.appendChild(deleteBtn);
 
@@ -1399,8 +1393,7 @@ export class PresetTool extends BaseComponent {
     }
 
     // Show confirmation dialog
-    const confirmMessage =
-      LanguageService.t('preset.confirmDelete');
+    const confirmMessage = LanguageService.t('preset.confirmDelete');
 
     if (!window.confirm(confirmMessage)) {
       return;

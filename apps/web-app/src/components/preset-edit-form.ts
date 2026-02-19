@@ -531,11 +531,13 @@ function createSubmitButton(
       } else if (result.duplicate) {
         // Dye combination already exists
         const dupName = result.duplicate.name || 'another preset';
-        ToastService.error(LanguageService.tInterpolate('preset.duplicateFound', { name: dupName }));
+        ToastService.error(
+          LanguageService.tInterpolate('preset.duplicateFound', { name: dupName })
+        );
       } else {
         ToastService.error(result.error || LanguageService.t('errors.saveChangesFailed'));
       }
-    } catch (err) {
+    } catch {
       ToastService.error(LanguageService.t('errors.saveChangesFailed'));
     } finally {
       submitBtn.disabled = false;

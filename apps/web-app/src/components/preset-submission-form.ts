@@ -406,7 +406,9 @@ function createDyeSelector(state: FormState): HTMLElement {
           // Add if under limit
           state.selectedDyes.push(dye);
         } else {
-          ToastService.warning(LanguageService.tInterpolate('preset.maxDyesAllowed', { count: String(MAX_DYES) }));
+          ToastService.warning(
+            LanguageService.tInterpolate('preset.maxDyesAllowed', { count: String(MAX_DYES) })
+          );
           return;
         }
 
@@ -552,9 +554,9 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
           ToastService.info(message);
 
           // Navigate to the duplicate preset after dismissing modal
-          console.log('[PresetSubmissionForm] calling ModalService.dismissTop() for duplicate');
+          console.info('[PresetSubmissionForm] calling ModalService.dismissTop() for duplicate');
           ModalService.dismissTop();
-          console.log('[PresetSubmissionForm] dismissTop() returned for duplicate');
+          console.info('[PresetSubmissionForm] dismissTop() returned for duplicate');
 
           // Store the duplicate preset ID for navigation
           if (result.duplicate.id) {
@@ -573,14 +575,14 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
           ToastService.success(LanguageService.t('preset.submittedSuccess'));
         }
 
-        console.log('[PresetSubmissionForm] calling ModalService.dismissTop()');
+        console.info('[PresetSubmissionForm] calling ModalService.dismissTop()');
         ModalService.dismissTop();
-        console.log('[PresetSubmissionForm] dismissTop() returned');
+        console.info('[PresetSubmissionForm] dismissTop() returned');
         onSubmit?.(result);
       } else {
         ToastService.error(result.error || LanguageService.t('errors.submitPresetFailed'));
       }
-    } catch (err) {
+    } catch {
       ToastService.error(LanguageService.t('errors.submitPresetFailed'));
     } finally {
       submitBtn.disabled = false;

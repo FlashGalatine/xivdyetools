@@ -10,7 +10,6 @@
  */
 
 import { MockupShell, type MockupToolId } from './MockupShell';
-import { CollapsiblePanel } from './CollapsiblePanel';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 
@@ -74,7 +73,6 @@ export { MobileDrawer } from './MobileDrawer';
 export { CollapsiblePanel } from './CollapsiblePanel';
 
 // Import tool mockup types
-import type { HarmonyMockup } from './tools/HarmonyMockup';
 import type { BaseComponent } from '@components/base-component';
 
 // Track active mockup instance for cleanup

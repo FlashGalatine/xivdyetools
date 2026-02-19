@@ -11,7 +11,7 @@ import { ModalService } from '@services/modal-service';
 import { StorageService } from '@services/storage-service';
 import { LanguageService } from '@services/language-service';
 import { TutorialService } from '@services/tutorial-service';
-import { STORAGE_KEYS, APP_NAME, APP_VERSION } from '@shared/constants';
+import { STORAGE_KEYS, APP_VERSION } from '@shared/constants';
 import {
   ICON_TOOL_HARMONY,
   ICON_TOOL_MATCHER,

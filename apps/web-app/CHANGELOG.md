@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **ESLint**: Resolved all 111 lint problems (87 errors, 24 warnings) across 27 source files
+  - Added `void` operator to 35 unhandled promises in event handlers and lifecycle callbacks
+  - Removed 27 unused imports, variables, and parameters
+  - Replaced 8 `as any` casts in `extractor-tool.ts` with proper `ResultCard` typing
+  - Changed 24 `console.log` calls to `console.info` to comply with `no-console` rule
+  - Fixed empty catch block in `saved-palettes-modal.ts` and unnecessary escape in `auth-service.ts`
+
+---
+
 ## [4.1.5] - 2026-01-26
 
 ### Fixed

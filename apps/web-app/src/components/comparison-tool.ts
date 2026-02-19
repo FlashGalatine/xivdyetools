@@ -265,7 +265,7 @@ export class ComparisonTool extends BaseComponent {
         this.updateShareButton(); // Enable share button after loading persisted dyes
         // Fetch prices for loaded dyes if Market Board is enabled
         if (this.comparisonOptions.showMarketPrices) {
-          this.fetchAndUpdatePrices();
+          void this.fetchAndUpdatePrices();
         }
         logger.info(`[ComparisonTool] Loaded ${dyes.length} persisted dyes`);
       }
@@ -557,8 +557,7 @@ export class ComparisonTool extends BaseComponent {
     if (this.selectedDyes.length === 0) {
       const placeholder = this.createElement('div', {
         className: 'p-3 rounded-lg border-2 border-dashed text-center text-sm',
-        textContent:
-          LanguageService.t('comparison.selectDyesToCompare'),
+        textContent: LanguageService.t('comparison.selectDyesToCompare'),
         attributes: {
           style: 'border-color: var(--theme-border); color: var(--theme-text-muted);',
         },
@@ -623,9 +622,7 @@ export class ComparisonTool extends BaseComponent {
     this.optionsContainer = this.createElement('div', { className: 'space-y-4' });
 
     // === COLOR FORMATS SECTION ===
-    const colorFormatsSection = this.createOptionsSection(
-      LanguageService.t('config.colorFormats')
-    );
+    const colorFormatsSection = this.createOptionsSection(LanguageService.t('config.colorFormats'));
     const colorFormatsOptions = [
       { key: 'showHex' as const, label: LanguageService.t('config.hexCodes') },
       { key: 'showRgb' as const, label: LanguageService.t('config.rgbValues') },
@@ -791,7 +788,7 @@ export class ComparisonTool extends BaseComponent {
         marketBoardService.setShowPrices(checkbox.checked);
         // Fetch prices if enabling and we have dyes selected
         if (checkbox.checked && this.selectedDyes.length > 0) {
-          this.fetchAndUpdatePrices();
+          void this.fetchAndUpdatePrices();
         }
       }
 
@@ -933,9 +930,7 @@ export class ComparisonTool extends BaseComponent {
       className: 'mb-8',
       attributes: { style: 'display: none;' },
     });
-    this.statsSection.appendChild(
-      this.createHeader(LanguageService.t('comparison.statistics'))
-    );
+    this.statsSection.appendChild(this.createHeader(LanguageService.t('comparison.statistics')));
     this.statsContainer = this.createElement('div');
     this.statsSection.appendChild(this.statsContainer);
     contentWrapper.appendChild(this.statsSection);
@@ -963,9 +958,7 @@ export class ComparisonTool extends BaseComponent {
       attributes: { style: 'display: none;' },
     });
     this.matrixSection.appendChild(
-      this.createHeader(
-        LanguageService.t('comparison.colorDistanceMatrix')
-      )
+      this.createHeader(LanguageService.t('comparison.colorDistanceMatrix'))
     );
     this.matrixContainer = this.createElement('div');
     this.matrixSection.appendChild(this.matrixContainer);
@@ -1308,13 +1301,13 @@ export class ComparisonTool extends BaseComponent {
     // Calculate hue range (considering hue wrapping)
     const hues = this.dyesWithHSV.map((d) => d.h).sort((a, b) => a - b);
     let maxGap = 0;
-    let gapStart = 0;
+    let _gapStart = 0;
     for (let i = 0; i < hues.length; i++) {
       const next = (i + 1) % hues.length;
       const gap = next === 0 ? 360 - hues[i] + hues[0] : hues[next] - hues[i];
       if (gap > maxGap) {
         maxGap = gap;
-        gapStart = hues[next === 0 ? 0 : next];
+        _gapStart = hues[next === 0 ? 0 : next];
       }
     }
     const hueRange = 360 - maxGap;
@@ -2248,7 +2241,7 @@ export class ComparisonTool extends BaseComponent {
         this.saveSelectedDyes();
         // Fetch prices for newly selected dyes if Market Board is enabled
         if (this.comparisonOptions.showMarketPrices && this.selectedDyes.length > 0) {
-          this.fetchAndUpdatePrices();
+          void this.fetchAndUpdatePrices();
         }
       }
     });
@@ -2267,8 +2260,7 @@ export class ComparisonTool extends BaseComponent {
       // Show placeholder
       const placeholder = this.createElement('div', {
         className: 'p-3 rounded-lg border-2 border-dashed text-center text-sm',
-        textContent:
-          LanguageService.t('comparison.selectDyesToCompare'),
+        textContent: LanguageService.t('comparison.selectDyesToCompare'),
         attributes: {
           style: 'border-color: var(--theme-border); color: var(--theme-text-muted);',
         },

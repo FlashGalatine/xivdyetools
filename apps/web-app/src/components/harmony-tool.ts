@@ -15,7 +15,7 @@ import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
 import { DyeFilters, type DyeFilterConfig } from '@components/dye-filters';
 import { MarketBoard } from '@components/market-board';
-import { HarmonyType, type HarmonyTypeInfo } from '@components/harmony-type';
+import { HarmonyType } from '@components/harmony-type';
 import { HarmonyResultPanel } from '@components/harmony-result-panel';
 import { ColorWheelDisplay } from '@components/color-wheel-display';
 import { PaletteExporter, type PaletteData } from '@components/palette-exporter';
@@ -31,11 +31,9 @@ import {
   HARMONY_OFFSETS,
   getHarmonyTypes,
   calculateHueDeviance,
-  calculateHarmonyColorDistance,
   findClosestDyesToHue,
   replaceExcludedDyes,
   findHarmonyDyes,
-  generateHarmonyPanelData,
 } from '@services/index';
 import type { ScoredDyeMatch, HarmonyConfig } from '@services/index';
 import { ConfigController } from '@services/config-controller';
@@ -43,17 +41,14 @@ import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import type { Dye, PriceData } from '@shared/types';
-import { DisplayOptionsConfig, DEFAULT_DISPLAY_OPTIONS, type MatchingMethod } from '@shared/tool-config-types';
+import {
+  DisplayOptionsConfig,
+  DEFAULT_DISPLAY_OPTIONS,
+  type MatchingMethod,
+} from '@shared/tool-config-types';
 // WEB-REF-003 FIX: ColorConverter usage moved to harmony-generator.ts
 import { HARMONY_ICONS } from '@shared/harmony-icons';
-import {
-  ICON_FILTER,
-  ICON_MARKET,
-  ICON_EXPORT,
-  ICON_COINS,
-  ICON_BEAKER,
-  ICON_MUSIC,
-} from '@shared/ui-icons';
+import { ICON_FILTER, ICON_MARKET, ICON_BEAKER, ICON_MUSIC } from '@shared/ui-icons';
 import { ICON_TOOL_HARMONY } from '@shared/tool-icons';
 import { COMPANION_DYES_MIN, COMPANION_DYES_MAX, COMPANION_DYES_DEFAULT } from '@shared/constants';
 import { SubscriptionManager } from '@shared/subscription-manager';
@@ -399,7 +394,7 @@ export class HarmonyTool extends BaseComponent {
         if (this.selectedDye) {
           this.generateHarmonies();
           if (config.showPrices) {
-            this.fetchPricesForDisplayedDyes();
+            void this.fetchPricesForDisplayedDyes();
           }
         }
       })
@@ -410,7 +405,7 @@ export class HarmonyTool extends BaseComponent {
       this.generateHarmonies();
       // Fetch prices on initial load if enabled
       if (this.showPrices) {
-        this.fetchPricesForDisplayedDyes();
+        void this.fetchPricesForDisplayedDyes();
       }
     } else {
       // No dye selected - show empty state message
@@ -451,10 +446,13 @@ export class HarmonyTool extends BaseComponent {
     const versionParam = params.get('v');
 
     // Debug: Log what we're reading from the URL
-    logger.info(
-      `[HarmonyTool] handleDeepLink called - URL search: "${window.location.search}"`,
-      { dyeIdParam, harmonyParam, algoParam, perceptualParam, versionParam }
-    );
+    logger.info(`[HarmonyTool] handleDeepLink called - URL search: "${window.location.search}"`, {
+      dyeIdParam,
+      harmonyParam,
+      algoParam,
+      perceptualParam,
+      versionParam,
+    });
 
     // If no share params present, skip
     if (!dyeIdParam && !harmonyParam) {
@@ -563,7 +561,7 @@ export class HarmonyTool extends BaseComponent {
 
           // Fetch prices if enabled
           if (this.showPrices) {
-            this.fetchPricesForDisplayedDyes();
+            void this.fetchPricesForDisplayedDyes();
           }
         } else {
           logger.warn(`[HarmonyTool] Share URL dye not found: itemID=${dyeId}`);
@@ -831,14 +829,19 @@ export class HarmonyTool extends BaseComponent {
     marketBoard.init();
 
     // Set up market board event listeners using shared utility
-    setupMarketBoardListeners(marketContent, () => this.showPrices, () => this.fetchPricesForDisplayedDyes(), {
-      onPricesToggled: () => {
-        this.generateHarmonies();
-      },
-      onServerChanged: () => {
-        if (this.selectedDye) this.generateHarmonies();
-      },
-    });
+    setupMarketBoardListeners(
+      marketContent,
+      () => this.showPrices,
+      () => this.fetchPricesForDisplayedDyes(),
+      {
+        onPricesToggled: () => {
+          this.generateHarmonies();
+        },
+        onServerChanged: () => {
+          if (this.selectedDye) this.generateHarmonies();
+        },
+      }
+    );
 
     panel.setContent(marketContent);
     return { panel, marketBoard };
@@ -1084,7 +1087,8 @@ export class HarmonyTool extends BaseComponent {
     const resultsHeader = this.createElement('div', {
       className: 'section-header',
       attributes: {
-        style: 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;',
+        style:
+          'display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;',
       },
     });
 
@@ -1375,7 +1379,11 @@ export class HarmonyTool extends BaseComponent {
       const targetColor = ColorService.hsvToHex(targetHue, baseHsv.s, baseHsv.v);
 
       // Get extra candidates to allow for filter replacements, then apply filters
-      let matches = this.findClosestDyesToHueInternal(allDyes, targetHue, this.companionDyesCount + 10);
+      let matches = this.findClosestDyesToHueInternal(
+        allDyes,
+        targetHue,
+        this.companionDyesCount + 10
+      );
       matches = this.replaceExcludedDyesInternal(matches, targetHue);
 
       // Use swapped dye if user has selected one, otherwise use best match
@@ -1415,7 +1423,7 @@ export class HarmonyTool extends BaseComponent {
 
     // Fetch prices for displayed dyes if prices are enabled
     if (this.showPrices) {
-      this.fetchPricesForDisplayedDyes();
+      void this.fetchPricesForDisplayedDyes();
     }
   }
 
@@ -1524,7 +1532,7 @@ export class HarmonyTool extends BaseComponent {
         RouterService.navigateTo('budget', { base: dye.hex.replace('#', '') });
         break;
       case 'copy-hex':
-        navigator.clipboard.writeText(dye.hex).then(() => {
+        void navigator.clipboard.writeText(dye.hex).then(() => {
           logger.info(`[HarmonyTool] Copied hex: ${dye.hex}`);
         });
         break;
@@ -1570,10 +1578,7 @@ export class HarmonyTool extends BaseComponent {
   /**
    * Replace excluded dyes with alternatives (delegated to harmony-generator)
    */
-  private replaceExcludedDyesInternal(
-    dyes: ScoredDyeMatch[],
-    targetHue: number
-  ): ScoredDyeMatch[] {
+  private replaceExcludedDyesInternal(dyes: ScoredDyeMatch[], targetHue: number): ScoredDyeMatch[] {
     return replaceExcludedDyes(dyes, targetHue, this.dyeFilters, this.filterConfig);
   }
 
@@ -1648,7 +1653,11 @@ export class HarmonyTool extends BaseComponent {
       const targetHue = (baseHsv.h + offset) % 360;
 
       // Get matches (same logic as generateHarmonies)
-      let matches = this.findClosestDyesToHueInternal(allDyes, targetHue, this.companionDyesCount + 10);
+      let matches = this.findClosestDyesToHueInternal(
+        allDyes,
+        targetHue,
+        this.companionDyesCount + 10
+      );
       matches = this.replaceExcludedDyesInternal(matches, targetHue);
 
       // Use swapped dye if available, otherwise best match
@@ -1831,7 +1840,10 @@ export class HarmonyTool extends BaseComponent {
 
       // Update harmony type buttons if they exist (shared method handles null containers)
       this.updateHarmonyTypeButtonStyles(this.harmonyTypesContainer, this.selectedHarmonyType);
-      this.updateHarmonyTypeButtonStyles(this.drawerHarmonyTypesContainer, this.selectedHarmonyType);
+      this.updateHarmonyTypeButtonStyles(
+        this.drawerHarmonyTypesContainer,
+        this.selectedHarmonyType
+      );
     }
   }
 

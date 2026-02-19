@@ -203,11 +203,7 @@ export class ShareService {
   /**
    * Add tool-specific parameters to a URL
    */
-  private static addParamsToUrl(
-    url: URL,
-    tool: ToolId,
-    params: Record<string, unknown>
-  ): void {
+  private static addParamsToUrl(url: URL, tool: ToolId, params: Record<string, unknown>): void {
     Object.entries(params).forEach(([key, value]) => {
       if (value === undefined || value === null) return;
 
@@ -226,10 +222,7 @@ export class ShareService {
   /**
    * Generate a human-readable title for the share
    */
-  private static generateTitle(
-    tool: ToolId,
-    params: Record<string, unknown>
-  ): string {
+  private static generateTitle(tool: ToolId, params: Record<string, unknown>): string {
     switch (tool) {
       case 'harmony': {
         const harmony = params.harmony as string;
@@ -261,10 +254,7 @@ export class ShareService {
   /**
    * Generate a description for the share
    */
-  private static generateDescription(
-    tool: ToolId,
-    params: Record<string, unknown>
-  ): string {
+  private static generateDescription(tool: ToolId, params: Record<string, unknown>): string {
     switch (tool) {
       case 'harmony': {
         const harmony = params.harmony as string;
@@ -469,9 +459,7 @@ export class ShareService {
    * Subscribe to share analytics events
    * @returns Unsubscribe function
    */
-  static subscribeToAnalytics(
-    listener: (event: ShareAnalyticsEvent) => void
-  ): () => void {
+  static subscribeToAnalytics(listener: (event: ShareAnalyticsEvent) => void): () => void {
     this.analyticsListeners.add(listener);
     return () => this.analyticsListeners.delete(listener);
   }
@@ -627,7 +615,7 @@ export class ShareService {
 
     const initiated = events.filter((e) => e.event === 'share_initiated').length;
     const copied = events.filter((e) => e.event === 'share_copied').length;
-    const failed = events.filter((e) => e.event === 'share_failed').length;
+    const _failed = events.filter((e) => e.event === 'share_failed').length;
 
     // Count by tool (from initiated events)
     const sharesByTool: Record<string, number> = {};

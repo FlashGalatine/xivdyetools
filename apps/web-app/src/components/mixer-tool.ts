@@ -21,7 +21,6 @@ import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
 import { DyeFilters } from '@components/dye-filters';
 import { MarketBoard } from '@components/market-board';
-import { createDyeActionDropdown } from '@components/dye-action-dropdown';
 import {
   ColorService,
   dyeService,
@@ -31,7 +30,6 @@ import {
   MarketBoardService,
   // WEB-REF-003 FIX: Import from extracted blending engine
   blendColors,
-  calculateMixerColorDistance,
   findMatchingDyes as findMatchingDyesEngine,
   getContrastColor,
 } from '@services/index';
@@ -39,17 +37,16 @@ import type { MixedColorResult } from '@services/index';
 import { ConfigController } from '@services/config-controller';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { ICON_TOOL_DYE_MIXER } from '@shared/tool-icons';
-import {
-  ICON_FILTER,
-  ICON_MARKET,
-  ICON_PALETTE,
-  ICON_BEAKER,
-  ICON_SLIDERS,
-} from '@shared/ui-icons';
+import { ICON_FILTER, ICON_MARKET, ICON_PALETTE, ICON_SLIDERS } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import type { Dye, PriceData } from '@shared/types';
-import type { MixerConfig, DisplayOptionsConfig, MixingMode, MatchingMethod } from '@shared/tool-config-types';
+import type {
+  MixerConfig,
+  DisplayOptionsConfig,
+  MixingMode,
+  MatchingMethod,
+} from '@shared/tool-config-types';
 // WEB-REF-003 FIX: ColorConverter usage moved to mixer-blending-engine.ts
 import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 import '@components/v4/result-card';
@@ -281,7 +278,10 @@ export class MixerTool extends BaseComponent {
    * @param storageKeyPrefix Storage key prefix for component state
    * @returns References to created selector and display container
    */
-  private buildDyeSelectorPanel(container: HTMLElement, storageKeyPrefix: string): DyeSelectorPanelRefs {
+  private buildDyeSelectorPanel(
+    container: HTMLElement,
+    _storageKeyPrefix: string
+  ): DyeSelectorPanelRefs {
     const dyeContainer = this.createElement('div', { className: 'space-y-3' });
 
     // Instruction text
@@ -482,7 +482,7 @@ export class MixerTool extends BaseComponent {
    * Bind settings slider events (shared by desktop and drawer)
    * Syncs both sliders when either changes
    */
-  private bindSettingsSliderEvents(slider: HTMLInputElement, valueDisplay: HTMLElement): void {
+  private bindSettingsSliderEvents(slider: HTMLInputElement, _valueDisplay: HTMLElement): void {
     this.on(slider, 'input', () => {
       this.maxResults = parseInt(slider.value, 10);
       // Update both displays
@@ -1153,7 +1153,8 @@ export class MixerTool extends BaseComponent {
     // Content wrapper with max-width to prevent over-expansion on ultrawide monitors
     const contentWrapper = this.createElement('div', {
       attributes: {
-        style: 'max-width: 1200px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 32px;',
+        style:
+          'max-width: 1200px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 32px;',
       },
     });
 
@@ -1727,9 +1728,7 @@ export class MixerTool extends BaseComponent {
         } else if (!this.selectedDyes[1]) {
           this.selectedDyes[1] = dye;
         } else {
-          ToastService.warning(
-            LanguageService.t('mixer.slotsFullReplacing')
-          );
+          ToastService.warning(LanguageService.t('mixer.slotsFullReplacing'));
           this.selectedDyes[0] = this.selectedDyes[1];
           this.selectedDyes[1] = dye;
         }
@@ -1740,18 +1739,14 @@ export class MixerTool extends BaseComponent {
         // Explicitly replace Slot 1
         this.selectedDyes[0] = dye;
         this.handleDyeSelection(this.selectedDyes.filter((d): d is Dye => d !== null));
-        ToastService.success(
-          LanguageService.t('mixer.replacedSlot1')
-        );
+        ToastService.success(LanguageService.t('mixer.replacedSlot1'));
         break;
 
       case 'add-mixer-slot-2':
         // Explicitly replace Slot 2
         this.selectedDyes[1] = dye;
         this.handleDyeSelection(this.selectedDyes.filter((d): d is Dye => d !== null));
-        ToastService.success(
-          LanguageService.t('mixer.replacedSlot2')
-        );
+        ToastService.success(LanguageService.t('mixer.replacedSlot2'));
         break;
 
       case 'add-accessibility':
@@ -1760,9 +1755,7 @@ export class MixerTool extends BaseComponent {
             detail: { toolId: 'accessibility', dye },
           })
         );
-        ToastService.success(
-          LanguageService.t('harmony.addedToAccessibility')
-        );
+        ToastService.success(LanguageService.t('harmony.addedToAccessibility'));
         break;
 
       case 'see-harmonies':
@@ -1783,9 +1776,7 @@ export class MixerTool extends BaseComponent {
 
       case 'copy-hex':
         void navigator.clipboard.writeText(dye.hex).then(() => {
-          ToastService.success(
-            LanguageService.t('success.copiedToClipboard')
-          );
+          ToastService.success(LanguageService.t('success.copiedToClipboard'));
         });
         break;
     }

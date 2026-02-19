@@ -15,12 +15,10 @@
 
 import { StorageService } from './storage-service';
 import { logger } from '@shared/logger';
-import type { ToolId } from './router-service';
 import {
   type ToolConfigMap,
   type ConfigKey,
   type ToolConfig,
-  DEFAULT_CONFIGS,
   getDefaultConfig,
 } from '@shared/tool-config-types';
 

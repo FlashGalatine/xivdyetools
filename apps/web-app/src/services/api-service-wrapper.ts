@@ -271,7 +271,7 @@ export class APIService {
           dbg('IndexedDB cache backend initialized');
         } else {
           // Fallback to console in test/mocked environments
-          console.debug('IndexedDB cache backend initialized');
+          console.info('IndexedDB cache backend initialized');
         }
       });
     }

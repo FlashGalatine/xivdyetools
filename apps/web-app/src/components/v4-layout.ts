@@ -34,7 +34,7 @@ import '@components/v4/v4-layout-shell';
 // Track active tool instance for cleanup
 let activeTool: BaseComponent | null = null;
 let layoutElement: V4LayoutShell | null = null;
-let configController: ConfigController | null = null;
+let _configController: ConfigController | null = null;
 let languageUnsubscribe: (() => void) | null = null;
 let configUnsubscribe: (() => void) | null = null;
 let modalContainer: ModalContainer | null = null;
@@ -128,7 +128,7 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
   RouterService.initialize();
 
   // Get config controller instance
-  configController = ConfigController.getInstance();
+  _configController = ConfigController.getInstance();
 
   const initialTool = RouterService.getCurrentToolId();
   logger.info(`[V4 Layout] Initializing with tool: ${initialTool}`);
@@ -199,15 +199,15 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
   }) as EventListener);
 
   // Listen for custom color selections from the Color Palette drawer
-  layoutElement.addEventListener('custom-color-selected', ((
-    e: CustomEvent<{ hex: string }>
-  ) => {
+  layoutElement.addEventListener('custom-color-selected', ((e: CustomEvent<{ hex: string }>) => {
     const { hex } = e.detail;
     logger.debug(`[V4 Layout] Custom color selected: ${hex}`);
 
     // Route custom color to active tool if it has selectCustomColor method
     if (activeTool && 'selectCustomColor' in activeTool) {
-      (activeTool as BaseComponent & { selectCustomColor: (hex: string) => void }).selectCustomColor(hex);
+      (
+        activeTool as BaseComponent & { selectCustomColor: (hex: string) => void }
+      ).selectCustomColor(hex);
     } else {
       logger.debug(
         `[V4 Layout] Tool ${RouterService.getCurrentToolId()} does not support custom color selection`
@@ -527,7 +527,7 @@ export function destroyV4Layout(): void {
   // Clean up router
   RouterService.destroy();
 
-  configController = null;
+  _configController = null;
 
   logger.info('[V4 Layout] Destroyed');
 }

@@ -360,7 +360,7 @@ export class MarketBoard extends BaseComponent {
         // Update service (which updates ConfigController and persists)
         this.service.setServer(serverSelect.value);
         // Emit for backward compatibility with existing tool listeners
-        console.log('📣 [MarketBoard] Emitting server-changed, server=', serverSelect.value);
+        console.info('📣 [MarketBoard] Emitting server-changed, server=', serverSelect.value);
         this.emit('server-changed', { server: serverSelect.value });
       });
     }
@@ -379,7 +379,7 @@ export class MarketBoard extends BaseComponent {
         }
 
         // Emit for backward compatibility with existing tool listeners
-        console.log('📣 [MarketBoard] Emitting showPricesChanged, checked=', toggleInput.checked);
+        console.info('📣 [MarketBoard] Emitting showPricesChanged, checked=', toggleInput.checked);
         this.emit('showPricesChanged', { showPrices: toggleInput.checked });
       });
     }
@@ -524,7 +524,7 @@ export class MarketBoard extends BaseComponent {
    */
   onMount(): void {
     // Load server data (data centers and worlds) on mount
-    this.loadServerData();
+    void this.loadServerData();
 
     // Clean up existing subscription before creating a new one (prevents exponential leak)
     this.languageUnsubscribe?.();
@@ -547,7 +547,7 @@ export class MarketBoard extends BaseComponent {
         serverSelect.value = server;
       }
       // Re-emit as DOM event for tool listeners
-      console.log('📣 [MarketBoard] Relaying server-changed from service, server=', server);
+      console.info('📣 [MarketBoard] Relaying server-changed from service, server=', server);
       this.emit('server-changed', { server });
     };
     this.service.addEventListener('server-changed', this.boundServerChangedHandler);
@@ -571,7 +571,10 @@ export class MarketBoard extends BaseComponent {
         priceSettings.classList.toggle('hidden', !showPrices);
       }
       // Re-emit as DOM event for tool listeners
-      console.log('📣 [MarketBoard] Relaying showPricesChanged from service, showPrices=', showPrices);
+      console.info(
+        '📣 [MarketBoard] Relaying showPricesChanged from service, showPrices=',
+        showPrices
+      );
       this.emit('showPricesChanged', { showPrices });
     };
     this.service.addEventListener('settings-changed', this.boundSettingsChangedHandler);

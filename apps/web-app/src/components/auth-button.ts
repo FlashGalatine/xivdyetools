@@ -265,7 +265,7 @@ export class AuthButton extends BaseComponent {
     const discordBtn = this.querySelector<HTMLButtonElement>('#auth-login-discord-btn');
     if (discordBtn) {
       this.on(discordBtn, 'click', () => {
-        authService.login(undefined, this.returnTool);
+        void authService.login(undefined, this.returnTool);
       });
     }
 
@@ -273,7 +273,7 @@ export class AuthButton extends BaseComponent {
     const xivauthBtn = this.querySelector<HTMLButtonElement>('#auth-login-xivauth-btn');
     if (xivauthBtn) {
       this.on(xivauthBtn, 'click', () => {
-        authService.loginWithXIVAuth(undefined, this.returnTool);
+        void authService.loginWithXIVAuth(undefined, this.returnTool);
       });
     }
 

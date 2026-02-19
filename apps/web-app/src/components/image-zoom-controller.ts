@@ -9,7 +9,6 @@
 
 import { BaseComponent } from './base-component';
 import { LanguageService } from '@services/language-service';
-import { ICON_ZOOM_FIT, ICON_ZOOM_WIDTH } from '@shared/ui-icons';
 import { clearContainer } from '@shared/utils';
 
 export interface ImageZoomControllerOptions {
@@ -65,8 +64,7 @@ export class ImageZoomController extends BaseComponent {
     // Create canvas container for scrolling
     // overflow: hidden ensures zoomed image is clipped within this container
     this.canvasContainerRef = this.createElement('div', {
-      className:
-        'w-full h-full overflow-hidden bg-gray-50 dark:bg-gray-900',
+      className: 'w-full h-full overflow-hidden bg-gray-50 dark:bg-gray-900',
       attributes: {
         id: 'canvas-container',
         style: 'position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden;',
@@ -108,7 +106,9 @@ export class ImageZoomController extends BaseComponent {
           padding: 4px;
           gap: 4px;
           z-index: 100;
-        `.replace(/\s+/g, ' ').trim(),
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     });
 
@@ -124,7 +124,9 @@ export class ImageZoomController extends BaseComponent {
       display: flex;
       align-items: center;
       justify-content: center;
-    `.replace(/\s+/g, ' ').trim();
+    `
+      .replace(/\s+/g, ' ')
+      .trim();
 
     const svgStyle = 'width: 16px; height: 16px; fill: currentColor;';
 
@@ -154,10 +156,12 @@ export class ImageZoomController extends BaseComponent {
 
     // Separator
     const separatorStyle = 'width: 1px; height: 20px; background: rgba(255, 255, 255, 0.2);';
-    zoomControls.appendChild(this.createElement('div', {
-      className: 'zoom-separator',
-      attributes: { style: separatorStyle },
-    }));
+    zoomControls.appendChild(
+      this.createElement('div', {
+        className: 'zoom-separator',
+        attributes: { style: separatorStyle },
+      })
+    );
 
     // Zoom out button
     this.zoomOutBtn = this.createElement('button', {
@@ -202,10 +206,12 @@ export class ImageZoomController extends BaseComponent {
     zoomControls.appendChild(this.zoomInBtn);
 
     // Separator
-    zoomControls.appendChild(this.createElement('div', {
-      className: 'zoom-separator',
-      attributes: { style: separatorStyle },
-    }));
+    zoomControls.appendChild(
+      this.createElement('div', {
+        className: 'zoom-separator',
+        attributes: { style: separatorStyle },
+      })
+    );
 
     // Reset button
     const resetBtn = this.createElement('button', {
@@ -220,10 +226,12 @@ export class ImageZoomController extends BaseComponent {
     zoomControls.appendChild(resetBtn);
 
     // Separator before clear
-    zoomControls.appendChild(this.createElement('div', {
-      className: 'zoom-separator',
-      attributes: { style: separatorStyle },
-    }));
+    zoomControls.appendChild(
+      this.createElement('div', {
+        className: 'zoom-separator',
+        attributes: { style: separatorStyle },
+      })
+    );
 
     // Clear/trash button
     const clearBtn = this.createElement('button', {
@@ -469,7 +477,7 @@ export class ImageZoomController extends BaseComponent {
     };
 
     // Helper to sample color at position and emit event
-    const sampleColorAt = (centerX: number, centerY: number): void => {
+    const _sampleColorAt = (centerX: number, centerY: number): void => {
       if (!this.canvasRef || !this.currentImage) return;
       const ctx = this.canvasRef.getContext('2d');
       if (ctx) {
@@ -515,7 +523,12 @@ export class ImageZoomController extends BaseComponent {
       e.stopPropagation();
 
       const mouseEvent = e as MouseEvent;
-      const distance = getDistance(startClientX, startClientY, mouseEvent.clientX, mouseEvent.clientY);
+      const distance = getDistance(
+        startClientX,
+        startClientY,
+        mouseEvent.clientX,
+        mouseEvent.clientY
+      );
 
       // Check if we've exceeded the drag threshold
       if (distance > this.dragThreshold) {
@@ -557,12 +570,12 @@ export class ImageZoomController extends BaseComponent {
         const height = Math.abs(coords.y - startY);
 
         // Emit event with region information
-        this.emit('image-sampled', { 
-          x, 
-          y, 
-          width, 
+        this.emit('image-sampled', {
+          x,
+          y,
+          width,
           height,
-          isRegion: true 
+          isRegion: true,
         });
       } else {
         // Click (no drag) - emit canvas-clicked event for file upload
@@ -651,12 +664,12 @@ export class ImageZoomController extends BaseComponent {
         const height = Math.abs(coords.y - startY);
 
         // Emit event with region information
-        this.emit('image-sampled', { 
-          x, 
-          y, 
-          width, 
+        this.emit('image-sampled', {
+          x,
+          y,
+          width,
           height,
-          isRegion: true 
+          isRegion: true,
         });
       } else {
         // Tap (no drag) - emit canvas-clicked event for file upload

@@ -136,7 +136,7 @@ function createPanelContent(): HTMLElement {
 
   // Detect platform for modifier key hint
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-  const modifierKey = isMac ? '⌘ Cmd' : 'Ctrl';
+  const _modifierKey = isMac ? '⌘ Cmd' : 'Ctrl';
   platformHint.innerHTML = `
     <span class="opacity-70">
       ${LanguageService.t('shortcuts.platformHint')}:

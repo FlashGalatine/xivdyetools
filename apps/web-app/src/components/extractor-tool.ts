@@ -18,7 +18,6 @@ import { ImageZoomController } from '@components/image-zoom-controller';
 import { RecentColorsPanel } from '@components/recent-colors-panel';
 import { DyeFilters, type DyeFilterConfig } from '@components/dye-filters';
 import { MarketBoard } from '@components/market-board';
-import { DyeCardRenderer } from '@components/dye-card-renderer';
 import { createDyeActionDropdown } from '@components/dye-action-dropdown';
 import {
   ColorService,
@@ -26,7 +25,6 @@ import {
   dyeService,
   LanguageService,
   MarketBoardService,
-  RouterService,
   StorageService,
   ToastService,
   // WEB-REF-003 Phase 3: Shared panel builders
@@ -42,12 +40,15 @@ import {
   ICON_IMAGE,
   ICON_PALETTE,
   ICON_SETTINGS,
-  ICON_COINS,
 } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import type { Dye, DyeWithDistance, PriceData } from '@shared/types';
-import type { ExtractorConfig, DisplayOptionsConfig, MatchingMethod } from '@shared/tool-config-types';
+import type {
+  ExtractorConfig,
+  DisplayOptionsConfig,
+  MatchingMethod,
+} from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 import { PaletteService, type PaletteMatch } from '@xivdyetools/core';
 import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
@@ -812,7 +813,7 @@ export class ExtractorTool extends BaseComponent {
       getShowPrices: () => this.showPrices,
       fetchPrices: () => this.fetchPricesForMatches(),
       onPricesToggled: () => {
-        console.log('🔔 [ExtractorTool] onPricesToggled called, showPrices=', this.showPrices);
+        console.info('🔔 [ExtractorTool] onPricesToggled called, showPrices=', this.showPrices);
         if (this.showPrices) {
           void this.fetchPricesForMatches();
         } else {
@@ -826,7 +827,7 @@ export class ExtractorTool extends BaseComponent {
       },
       onServerChanged: () => {
         // Service clears cache on server change; re-render results then fetch new prices
-        console.log('🔔 [ExtractorTool] onServerChanged called, showPrices=', this.showPrices);
+        console.info('🔔 [ExtractorTool] onServerChanged called, showPrices=', this.showPrices);
         if (this.showPrices) {
           // Re-render results to clear stale prices (cache was cleared by service)
           if (this.lastPaletteResults.length > 0) {
@@ -869,7 +870,9 @@ export class ExtractorTool extends BaseComponent {
           margin: 0 auto;
           padding: 32px;
           box-sizing: border-box;
-        `.replace(/\s+/g, ' ').trim(),
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     });
     const extractorLayout = this.extractorLayoutElement;
@@ -883,7 +886,9 @@ export class ExtractorTool extends BaseComponent {
           width: 100%;
           height: 300px;
           flex-shrink: 0;
-        `.replace(/\s+/g, ' ').trim(),
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     });
     const imageSection = this.imageSectionElement;
@@ -907,7 +912,9 @@ export class ExtractorTool extends BaseComponent {
           overflow: hidden;
           cursor: pointer;
           transition: all 0.2s;
-        `.replace(/\s+/g, ' ').trim(),
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     });
 
@@ -927,7 +934,9 @@ export class ExtractorTool extends BaseComponent {
           gap: 12px;
           pointer-events: none;
           z-index: 2;
-        `.replace(/\s+/g, ' ').trim(),
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     });
 
@@ -939,7 +948,9 @@ export class ExtractorTool extends BaseComponent {
           height: 150px;
           color: var(--theme-text-muted, #a0a0a0);
           opacity: 0.5;
-        `.replace(/\s+/g, ' ').trim(),
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     });
     dropIcon.innerHTML = ICON_IMAGE;
@@ -952,7 +963,9 @@ export class ExtractorTool extends BaseComponent {
           font-size: 16px;
           color: var(--theme-text, #e0e0e0);
           font-weight: 500;
-        `.replace(/\s+/g, ' ').trim(),
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     });
 
@@ -963,7 +976,9 @@ export class ExtractorTool extends BaseComponent {
         style: `
           font-size: 13px;
           color: var(--theme-text-muted, #a0a0a0);
-        `.replace(/\s+/g, ' ').trim(),
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     });
 
@@ -982,7 +997,9 @@ export class ExtractorTool extends BaseComponent {
           width: 100%;
           height: 100%;
           overflow: visible;
-        `.replace(/\s+/g, ' ').trim(),
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     });
     this.renderImageCanvas();
@@ -1002,7 +1019,9 @@ export class ExtractorTool extends BaseComponent {
           gap: 16px;
           overflow: hidden;
           min-width: 0;
-        `.replace(/\s+/g, ' ').trim(),
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     });
 
@@ -1016,7 +1035,9 @@ export class ExtractorTool extends BaseComponent {
           align-items: center;
           padding-bottom: 8px;
           border-bottom: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
-        `.replace(/\s+/g, ' ').trim(),
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     });
 
@@ -1030,7 +1051,9 @@ export class ExtractorTool extends BaseComponent {
           color: var(--theme-text-muted, #a0a0a0);
           font-weight: 600;
           letter-spacing: 1px;
-        `.replace(/\s+/g, ' ').trim(),
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     });
     this.resultsTitleElement = sectionTitle;
@@ -1051,7 +1074,9 @@ export class ExtractorTool extends BaseComponent {
       cursor: pointer;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-    `.replace(/\s+/g, ' ').trim();
+    `
+      .replace(/\s+/g, ' ')
+      .trim();
 
     const disabledBtnStyle = `${actionBtnStyle} opacity: 0.5; cursor: not-allowed;`;
 
@@ -1084,7 +1109,9 @@ export class ExtractorTool extends BaseComponent {
           justify-content: center;
           flex: 1;
           min-height: 0;
-        `.replace(/\s+/g, ' ').trim(),
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     });
     resultsSection.appendChild(this.resultsContainer);
@@ -1102,7 +1129,9 @@ export class ExtractorTool extends BaseComponent {
           text-align: center;
           color: var(--theme-text-muted, #a0a0a0);
           padding-top: 60px;
-        `.replace(/\s+/g, ' ').trim(),
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     });
     this.renderEmptyState();
@@ -2154,10 +2183,10 @@ export class ExtractorTool extends BaseComponent {
         closestDye =
           filteredDyes.length > 0
             ? filteredDyes.reduce((best, dye) => {
-              const bestDist = ColorService.getColorDistance(hex, best.hex);
-              const dyeDist = ColorService.getColorDistance(hex, dye.hex);
-              return dyeDist < bestDist ? dye : best;
-            })
+                const bestDist = ColorService.getColorDistance(hex, best.hex);
+                const dyeDist = ColorService.getColorDistance(hex, dye.hex);
+                return dyeDist < bestDist ? dye : best;
+              })
             : null;
       }
 
@@ -2310,7 +2339,7 @@ export class ExtractorTool extends BaseComponent {
    * WEB-REF-003 Phase 4: Delegates to MarketBoardService with race condition protection
    */
   private async fetchPricesForMatches(): Promise<void> {
-    console.log('💰 [ExtractorTool] fetchPricesForMatches called, showPrices=', this.showPrices);
+    console.info('💰 [ExtractorTool] fetchPricesForMatches called, showPrices=', this.showPrices);
     if (!this.showPrices) return;
 
     // Collect dyes to fetch prices for - either from palette results or matched dyes
@@ -2359,7 +2388,8 @@ export class ExtractorTool extends BaseComponent {
       const message = error.message.toLowerCase();
 
       // Check for HTTP status codes in error message
-      const statusMatch = message.match(/status[:\s]*(\d{3})/i) ||
+      const statusMatch =
+        message.match(/status[:\s]*(\d{3})/i) ||
         message.match(/(\d{3})[:\s]*(rate limit|too many|forbidden|not found|server error)/i);
       if (statusMatch) {
         const status = parseInt(statusMatch[1], 10);
@@ -2371,7 +2401,12 @@ export class ExtractorTool extends BaseComponent {
       // Check for specific error patterns
       if (message.includes('rate limit')) return 'H429';
       if (message.includes('timeout') || message.includes('timed out')) return 'TOUT';
-      if (message.includes('network') || message.includes('fetch') || message.includes('failed to fetch')) return 'NCON';
+      if (
+        message.includes('network') ||
+        message.includes('fetch') ||
+        message.includes('failed to fetch')
+      )
+        return 'NCON';
       if (message.includes('abort')) return 'CANC';
     }
 
@@ -2391,7 +2426,12 @@ export class ExtractorTool extends BaseComponent {
    * rather than re-rendering the entire grid
    */
   private updateV4ResultCardPrices(): void {
-    console.log('🔄 [ExtractorTool] updateV4ResultCardPrices:', this.v4ResultCards.length, 'cards, priceData size:', this.priceData.size);
+    console.info(
+      '🔄 [ExtractorTool] updateV4ResultCardPrices:',
+      this.v4ResultCards.length,
+      'cards, priceData size:',
+      this.priceData.size
+    );
 
     for (const card of this.v4ResultCards) {
       const currentData = card.data;
@@ -2399,10 +2439,18 @@ export class ExtractorTool extends BaseComponent {
 
       const priceInfo = this.priceData.get(currentData.dye.itemID);
       // Get market server from price data, falling back to selected server from UI
-      const marketServer = this.marketBoardService.getWorldNameForPrice(priceInfo)
-        ?? this.marketBoard?.getSelectedServer();
+      const marketServer =
+        this.marketBoardService.getWorldNameForPrice(priceInfo) ??
+        this.marketBoard?.getSelectedServer();
 
-      console.log('  📦 Updating card:', currentData.dye.name, '| server:', marketServer, '| price:', priceInfo?.currentMinPrice);
+      console.info(
+        '  📦 Updating card:',
+        currentData.dye.name,
+        '| server:',
+        marketServer,
+        '| price:',
+        priceInfo?.currentMinPrice
+      );
 
       // Update card's showPrice display option (controls visibility of price section)
       card.showPrice = this.displayOptions.showPrice && this.showPrices;
@@ -2428,14 +2476,17 @@ export class ExtractorTool extends BaseComponent {
   /**
    * Extract palette from a specific region of the loaded image
    */
-  private async extractPaletteFromRegion(x: number, y: number, width: number, height: number): Promise<void> {
+  private async extractPaletteFromRegion(
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ): Promise<void> {
     // Get canvas from ImageZoomController
     const canvas = this.imageZoom?.getCanvas();
 
     if (!canvas || !this.currentImage) {
-      ToastService.error(
-        LanguageService.t('matcher.noImageForPalette')
-      );
+      ToastService.error(LanguageService.t('matcher.noImageForPalette'));
       return;
     }
 
@@ -2515,9 +2566,7 @@ export class ExtractorTool extends BaseComponent {
     const canvas = this.imageZoom?.getCanvas();
 
     if (!canvas || !this.currentImage) {
-      ToastService.error(
-        LanguageService.t('matcher.noImageForPalette')
-      );
+      ToastService.error(LanguageService.t('matcher.noImageForPalette'));
       return;
     }
 
@@ -2529,8 +2578,7 @@ export class ExtractorTool extends BaseComponent {
 
     // Update button to show loading state
     if (this.extractPaletteBtn) {
-      this.extractPaletteBtn.textContent =
-        LanguageService.t('matcher.extractingPalette');
+      this.extractPaletteBtn.textContent = LanguageService.t('matcher.extractingPalette');
       this.extractPaletteBtn.disabled = true;
       this.extractPaletteBtn.style.opacity = '0.7';
     }
@@ -2738,7 +2786,9 @@ export class ExtractorTool extends BaseComponent {
           gap: 16px;
           justify-content: center;
           --v4-result-card-width: 280px;
-        `.replace(/\s+/g, ' ').trim(),
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     });
 
@@ -2770,19 +2820,19 @@ export class ExtractorTool extends BaseComponent {
       }
 
       // Create the v4-result-card element
-      const card = document.createElement('v4-result-card');
-      (card as any).data = cardData;
+      const card = document.createElement('v4-result-card') as unknown as ResultCard;
+      card.data = cardData;
       // Make primary button open context menu (same as Swatch tool)
       card.setAttribute('primary-opens-menu', 'true');
 
       // Apply display options from config
-      (card as any).showHex = this.displayOptions.showHex;
-      (card as any).showRgb = this.displayOptions.showRgb;
-      (card as any).showHsv = this.displayOptions.showHsv;
-      (card as any).showLab = this.displayOptions.showLab;
-      (card as any).showDeltaE = this.displayOptions.showDeltaE;
-      (card as any).showPrice = this.displayOptions.showPrice && this.showPrices;
-      (card as any).showAcquisition = this.displayOptions.showAcquisition;
+      card.showHex = this.displayOptions.showHex;
+      card.showRgb = this.displayOptions.showRgb;
+      card.showHsv = this.displayOptions.showHsv;
+      card.showLab = this.displayOptions.showLab;
+      card.showDeltaE = this.displayOptions.showDeltaE;
+      card.showPrice = this.displayOptions.showPrice && this.showPrices;
+      card.showAcquisition = this.displayOptions.showAcquisition;
 
       // Listen for context actions (both primary button and context menu trigger this)
       card.addEventListener('context-action', ((
@@ -2792,7 +2842,7 @@ export class ExtractorTool extends BaseComponent {
       }) as EventListener);
 
       // Store card reference for price updates
-      this.v4ResultCards.push(card as ResultCard);
+      this.v4ResultCards.push(card);
       cardsGrid.appendChild(card);
     }
 
@@ -2828,9 +2878,7 @@ export class ExtractorTool extends BaseComponent {
             detail: { toolId: 'accessibility', dye },
           })
         );
-        ToastService.success(
-          LanguageService.t('harmony.addedToAccessibility')
-        );
+        ToastService.success(LanguageService.t('harmony.addedToAccessibility'));
         break;
 
       case 'see-harmonies':
@@ -2851,9 +2899,7 @@ export class ExtractorTool extends BaseComponent {
 
       case 'copy-hex':
         void navigator.clipboard.writeText(dye.hex).then(() => {
-          ToastService.success(
-            LanguageService.t('success.copiedToClipboard')
-          );
+          ToastService.success(LanguageService.t('success.copiedToClipboard'));
         });
         break;
     }
@@ -2891,7 +2937,10 @@ export class ExtractorTool extends BaseComponent {
 
     // Add matched dye colors
     this.lastPaletteResults.forEach((match, index) => {
-      const dyeName = match.matchedDye.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const dyeName = match.matchedDye.name
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
       cssContent += `  --dye-${index + 1}-${dyeName}: ${match.matchedDye.hex.toUpperCase()};\n`;
     });
 
@@ -2899,7 +2948,10 @@ export class ExtractorTool extends BaseComponent {
 
     // Add utility classes for each color
     this.lastPaletteResults.forEach((match, index) => {
-      const dyeName = match.matchedDye.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const dyeName = match.matchedDye.name
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
       cssContent += `
 .bg-extracted-${index + 1} { background-color: var(--extracted-color-${index + 1}); }
 .text-extracted-${index + 1} { color: var(--extracted-color-${index + 1}); }
@@ -2919,9 +2971,7 @@ export class ExtractorTool extends BaseComponent {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    ToastService.success(
-      LanguageService.t('matcher.paletteExported')
-    );
+    ToastService.success(LanguageService.t('matcher.paletteExported'));
     logger.info('[ExtractorTool] Palette exported as CSS');
   }
 }

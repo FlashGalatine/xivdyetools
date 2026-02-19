@@ -1,3 +1,11 @@
+# Unreleased
+
+**Code Quality Sweep**
+- Fixed all linting warnings and errors across the web app
+- No visible changes to users — just cleaner, stricter code under the hood
+
+---
+
 # What's New in Version 4.1.5
 
 *Released: January 26, 2026*

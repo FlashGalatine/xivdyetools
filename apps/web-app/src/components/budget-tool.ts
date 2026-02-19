@@ -263,7 +263,7 @@ export class BudgetTool extends BaseComponent {
 
     // Load initial data if target dye is set
     if (this.targetDye) {
-      this.findAlternatives();
+      void this.findAlternatives();
     }
   }
 
@@ -445,7 +445,7 @@ export class BudgetTool extends BaseComponent {
         this.updateTargetDyeDisplay();
         this.updateQuickPickSelection();
         StorageService.setItem(STORAGE_KEYS.targetDyeId, dye.id);
-        this.findAlternatives();
+        void this.findAlternatives();
       }
     }
   }
@@ -543,7 +543,7 @@ export class BudgetTool extends BaseComponent {
     this.dyeFilters = new DyeFilters(filtersContent, {
       storageKeyPrefix: 'v3_budget',
       onFilterChange: () => {
-        this.findAlternatives();
+        void this.findAlternatives();
       },
       hideHeader: true, // Prevent double-nesting with external CollapsiblePanel
     });
@@ -582,11 +582,16 @@ export class BudgetTool extends BaseComponent {
     this.marketBoard.init();
 
     // Set up market board event listeners - budget tool always needs prices
-    setupMarketBoardListeners(marketContent, () => true, () => this.findAlternatives(), {
-      onServerChanged: () => {
-        this.findAlternatives();
-      },
-    });
+    setupMarketBoardListeners(
+      marketContent,
+      () => true,
+      () => void this.findAlternatives(),
+      {
+        onServerChanged: () => {
+          void this.findAlternatives();
+        },
+      }
+    );
 
     this.marketPanel.setContent(marketContent);
   }
@@ -691,7 +696,7 @@ export class BudgetTool extends BaseComponent {
         StorageService.setItem(STORAGE_KEYS.targetDyeId, this.targetDye.id);
       }
 
-      this.findAlternatives();
+      void this.findAlternatives();
       this.updateDrawerContent();
     });
 
@@ -808,7 +813,7 @@ export class BudgetTool extends BaseComponent {
         this.updateTargetDyeDisplay();
         this.updateQuickPickSelection();
         StorageService.setItem(STORAGE_KEYS.targetDyeId, dye.id);
-        this.findAlternatives();
+        void this.findAlternatives();
         this.updateDrawerContent();
       });
 
@@ -998,8 +1003,7 @@ export class BudgetTool extends BaseComponent {
     // Description text
     const description = this.createElement('p', {
       className: 'text-xs mb-3',
-      textContent:
-        LanguageService.t('budget.distanceDesc'),
+      textContent: LanguageService.t('budget.distanceDesc'),
       attributes: { style: 'color: var(--theme-text-muted);' },
     });
     container.appendChild(description);
@@ -1023,7 +1027,7 @@ export class BudgetTool extends BaseComponent {
         this.distanceValueDisplay.textContent = String(this.colorDistance);
       }
       StorageService.setItem(STORAGE_KEYS.colorDistance, this.colorDistance);
-      this.findAlternatives();
+      void this.findAlternatives();
       this.updateDrawerContent();
     });
 
@@ -1281,8 +1285,7 @@ export class BudgetTool extends BaseComponent {
 
     card.data = cardData;
     card.showActions = true;
-    card.primaryActionLabel =
-      LanguageService.t('budget.currentlySelected');
+    card.primaryActionLabel = LanguageService.t('budget.currentlySelected');
     card.showDeltaE = false; // Hide delta-E for target card (it's the reference)
 
     // Configure display options from global settings
@@ -1323,9 +1326,11 @@ export class BudgetTool extends BaseComponent {
       ? LanguageService.t('budget.showingXOfY')
           .replace('{showing}', String(displayCount))
           .replace('{total}', String(totalCount))
-      : `${totalCount} ${totalCount === 1
-          ? LanguageService.t('budget.alternativeWithinBudget')
-          : LanguageService.t('budget.alternativesWithinBudget')}`;
+      : `${totalCount} ${
+          totalCount === 1
+            ? LanguageService.t('budget.alternativeWithinBudget')
+            : LanguageService.t('budget.alternativesWithinBudget')
+        }`;
 
     // Section header (using consistent section-header/section-title pattern from other tools)
     const sectionHeader = this.createElement('div', {
@@ -1691,7 +1696,7 @@ export class BudgetTool extends BaseComponent {
     this.mobileDyeFilters = new DyeFilters(filtersContent, {
       storageKeyPrefix: 'v3_budget', // Share filter state with desktop
       onFilterChange: () => {
-        this.findAlternatives();
+        void this.findAlternatives();
       },
       hideHeader: true,
     });
@@ -1730,11 +1735,16 @@ export class BudgetTool extends BaseComponent {
     this.mobileMarketBoard.init();
 
     // Set up market board event listeners - budget tool always needs prices
-    setupMarketBoardListeners(marketContent, () => true, () => this.findAlternatives(), {
-      onServerChanged: () => {
-        this.findAlternatives();
-      },
-    });
+    setupMarketBoardListeners(
+      marketContent,
+      () => true,
+      () => void this.findAlternatives(),
+      {
+        onServerChanged: () => {
+          void this.findAlternatives();
+        },
+      }
+    );
 
     this.mobileMarketPanel.setContent(marketContent);
   }
@@ -1779,7 +1789,7 @@ export class BudgetTool extends BaseComponent {
         StorageService.setItem(STORAGE_KEYS.targetDyeId, this.targetDye.id);
       }
 
-      this.findAlternatives();
+      void this.findAlternatives();
     });
 
     container.appendChild(dyeContainer);
@@ -1893,7 +1903,7 @@ export class BudgetTool extends BaseComponent {
         this.updateQuickPickSelection();
         this.updateMobileQuickPickSelection();
         StorageService.setItem(STORAGE_KEYS.targetDyeId, dye.id);
-        this.findAlternatives();
+        void this.findAlternatives();
       });
 
       this.mobileQuickPickButtons.push(btn);
@@ -2081,8 +2091,7 @@ export class BudgetTool extends BaseComponent {
 
     const description = this.createElement('p', {
       className: 'text-xs mb-3',
-      textContent:
-        LanguageService.t('budget.distanceDesc'),
+      textContent: LanguageService.t('budget.distanceDesc'),
       attributes: { style: 'color: var(--theme-text-muted);' },
     });
     container.appendChild(description);
@@ -2108,7 +2117,7 @@ export class BudgetTool extends BaseComponent {
         this.distanceValueDisplay.textContent = String(this.colorDistance);
       }
       StorageService.setItem(STORAGE_KEYS.colorDistance, this.colorDistance);
-      this.findAlternatives();
+      void this.findAlternatives();
     });
 
     container.appendChild(slider);
@@ -2255,7 +2264,7 @@ export class BudgetTool extends BaseComponent {
         this.selectDye(dye);
         break;
       case 'copy-hex':
-        navigator.clipboard.writeText(dye.hex);
+        void navigator.clipboard.writeText(dye.hex);
         ToastService.success(LanguageService.t('success.copiedToClipboard'));
         break;
     }
@@ -2319,7 +2328,7 @@ export class BudgetTool extends BaseComponent {
 
     // Call findAlternatives() instead of filterAndSortAlternatives()
     // This properly hides empty state and fetches data
-    this.findAlternatives();
+    void this.findAlternatives();
     this.updateTargetDyeDisplay();
     this.updateDrawerContent();
   }

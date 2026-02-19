@@ -10,7 +10,7 @@
 import { BaseComponent } from './base-component';
 import { LanguageService, dyeService } from '@services/index';
 import { presetSubmissionService, authService } from '@services/index';
-import type { CommunityPreset, PresetStatus } from '@services/community-preset-service';
+import type { CommunityPreset } from '@services/community-preset-service';
 import { getCategoryIcon } from '@shared/category-icons';
 import { ICON_DOCUMENT } from '@shared/ui-icons';
 import { showPresetEditForm } from './preset-edit-form';
@@ -466,18 +466,15 @@ export class MySubmissionsPanel extends BaseComponent {
       if (deleteBtn) {
         e.stopPropagation(); // Prevent toggle
         const presetId = deleteBtn.dataset.presetId;
-        if (
-          presetId &&
-          confirm(LanguageService.t('preset.confirmDelete'))
-        ) {
-          this.handleDelete(presetId);
+        if (presetId && confirm(LanguageService.t('preset.confirmDelete'))) {
+          void this.handleDelete(presetId);
         }
       }
 
       // Refresh button
       const refreshBtn = target.closest('[data-action="refresh"]');
       if (refreshBtn) {
-        this.loadSubmissions();
+        void this.loadSubmissions();
       }
     });
   }

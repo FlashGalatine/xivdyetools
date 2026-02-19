@@ -37,19 +37,17 @@ import {
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { ICON_TOOL_MIXER } from '@shared/tool-icons';
 // Note: ICON_FILTER and ICON_MARKET still used by drawer code until Phase 2 refactor
-import {
-  ICON_FILTER,
-  ICON_MARKET,
-  ICON_EXPORT,
-  ICON_TEST_TUBE,
-  ICON_BEAKER_PIPE,
-  ICON_STAIRS,
-  ICON_PALETTE,
-} from '@shared/ui-icons';
+import { ICON_FILTER, ICON_MARKET, ICON_EXPORT, ICON_STAIRS, ICON_PALETTE } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import type { Dye, PriceData } from '@shared/types';
-import type { GradientConfig, DisplayOptionsConfig, MarketConfig, InterpolationMode, MatchingMethod } from '@shared/tool-config-types';
+import type {
+  GradientConfig,
+  DisplayOptionsConfig,
+  MarketConfig,
+  InterpolationMode,
+  MatchingMethod,
+} from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 
 // ============================================================================
@@ -503,7 +501,7 @@ export class GradientTool extends BaseComponent {
 
       // Fetch prices if enabled, or re-render to hide them
       if (showPrices) {
-        this.fetchPricesForDisplayedDyes();
+        void this.fetchPricesForDisplayedDyes();
       } else {
         this.renderIntermediateMatches();
       }
@@ -523,13 +521,13 @@ export class GradientTool extends BaseComponent {
 
       // Re-fetch prices with the new server (service clears cache automatically on server change)
       if (this.showPrices) {
-        this.fetchPricesForDisplayedDyes();
+        void this.fetchPricesForDisplayedDyes();
       }
     }
 
     // Re-interpolate if any config changed and we have data
     if (needsUpdate && this.startDye && this.endDye) {
-      this.updateInterpolation();
+      void this.updateInterpolation();
       this.updateDrawerContent();
     }
   }
@@ -723,10 +721,7 @@ export class GradientTool extends BaseComponent {
     }
 
     // Display each selected dye with role label
-    const labels = [
-      LanguageService.t('mixer.startDye'),
-      LanguageService.t('mixer.endDye'),
-    ];
+    const labels = [LanguageService.t('mixer.startDye'), LanguageService.t('mixer.endDye')];
 
     for (let i = 0; i < this.selectedDyes.length; i++) {
       const dye = this.selectedDyes[i];
@@ -938,7 +933,8 @@ export class GradientTool extends BaseComponent {
     // Content wrapper with max-width to prevent over-expansion on ultrawide monitors
     const contentWrapper = this.createElement('div', {
       attributes: {
-        style: 'max-width: 1200px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 32px; flex: 1;',
+        style:
+          'max-width: 1200px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 32px; flex: 1;',
       },
     });
 
@@ -1228,8 +1224,7 @@ export class GradientTool extends BaseComponent {
         this.startCircleElement.style.borderColor = 'rgba(255, 255, 255, 0.3)';
         this.startCircleElement.innerHTML =
           '<span style="font-size: 32px; color: rgba(255, 255, 255, 0.4); font-weight: 300;">+</span>';
-        this.startLabelElement.textContent =
-          LanguageService.t('gradient.selectColor');
+        this.startLabelElement.textContent = LanguageService.t('gradient.selectColor');
       }
     }
 
@@ -1247,8 +1242,7 @@ export class GradientTool extends BaseComponent {
         this.endCircleElement.style.borderColor = 'rgba(255, 255, 255, 0.3)';
         this.endCircleElement.innerHTML =
           '<span style="font-size: 32px; color: rgba(255, 255, 255, 0.4); font-weight: 300;">+</span>';
-        this.endLabelElement.textContent =
-          LanguageService.t('gradient.selectColor');
+        this.endLabelElement.textContent = LanguageService.t('gradient.selectColor');
       }
     }
 
@@ -1300,8 +1294,7 @@ export class GradientTool extends BaseComponent {
       this.startCircleElement.style.height = circleSize;
       // Update plus sign if no dye selected
       if (!this.startDye) {
-        this.startCircleElement.innerHTML =
-          `<span style="font-size: ${plusFontSize}; color: rgba(255, 255, 255, 0.4); font-weight: 300;">+</span>`;
+        this.startCircleElement.innerHTML = `<span style="font-size: ${plusFontSize}; color: rgba(255, 255, 255, 0.4); font-weight: 300;">+</span>`;
       }
     }
 
@@ -1311,8 +1304,7 @@ export class GradientTool extends BaseComponent {
       this.endCircleElement.style.height = circleSize;
       // Update plus sign if no dye selected
       if (!this.endDye) {
-        this.endCircleElement.innerHTML =
-          `<span style="font-size: ${plusFontSize}; color: rgba(255, 255, 255, 0.4); font-weight: 300;">+</span>`;
+        this.endCircleElement.innerHTML = `<span style="font-size: ${plusFontSize}; color: rgba(255, 255, 255, 0.4); font-weight: 300;">+</span>`;
       }
     }
 
@@ -1537,10 +1529,10 @@ export class GradientTool extends BaseComponent {
         matchedDye =
           filteredDyes.length > 0
             ? filteredDyes.reduce((best, dye) => {
-              const bestDist = ColorService.getColorDistance(theoreticalColor, best.hex);
-              const dyeDist = ColorService.getColorDistance(theoreticalColor, dye.hex);
-              return dyeDist < bestDist ? dye : best;
-            })
+                const bestDist = ColorService.getColorDistance(theoreticalColor, best.hex);
+                const dyeDist = ColorService.getColorDistance(theoreticalColor, dye.hex);
+                return dyeDist < bestDist ? dye : best;
+              })
             : null;
       }
 
@@ -1754,9 +1746,7 @@ export class GradientTool extends BaseComponent {
         break;
       case 'inspect-budget':
         StorageService.setItem('v3_budget_target', dye.id);
-        ToastService.success(
-          LanguageService.t('resultCard.sentToBudget')
-        );
+        ToastService.success(LanguageService.t('resultCard.sentToBudget'));
         RouterService.navigateTo('budget');
         break;
       case 'inspect-accessibility':
@@ -1776,9 +1766,7 @@ export class GradientTool extends BaseComponent {
           this.updateAfterSlotSelection();
           ToastService.success(LanguageService.t('resultCard.addedTo'));
         } else {
-          ToastService.info(
-            LanguageService.t('gradient.slotsFull')
-          );
+          ToastService.info(LanguageService.t('gradient.slotsFull'));
         }
         break;
       case 'transform-mixer':
@@ -1804,7 +1792,7 @@ export class GradientTool extends BaseComponent {
         RouterService.navigateTo('budget');
         break;
       case 'copy-hex':
-        navigator.clipboard.writeText(dye.hex).then(() => {
+        void navigator.clipboard.writeText(dye.hex).then(() => {
           ToastService.success(LanguageService.t('common.copied'));
         });
         break;
@@ -1968,10 +1956,10 @@ export class GradientTool extends BaseComponent {
         theoreticalColor: step.theoreticalColor,
         matchedDye: step.matchedDye
           ? {
-            name: step.matchedDye.name,
-            hex: step.matchedDye.hex,
-            id: step.matchedDye.id,
-          }
+              name: step.matchedDye.name,
+              hex: step.matchedDye.hex,
+              id: step.matchedDye.id,
+            }
           : null,
         distance: step.distance,
       })),
@@ -2178,10 +2166,7 @@ export class GradientTool extends BaseComponent {
     }
 
     // Display each selected dye with role label
-    const labels = [
-      LanguageService.t('mixer.startDye'),
-      LanguageService.t('mixer.endDye'),
-    ];
+    const labels = [LanguageService.t('mixer.startDye'), LanguageService.t('mixer.endDye')];
 
     for (let i = 0; i < this.selectedDyes.length; i++) {
       const dye = this.selectedDyes[i];

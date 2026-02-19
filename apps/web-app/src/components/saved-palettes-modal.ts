@@ -440,7 +440,9 @@ export function showSavePaletteDialog(
       });
       return;
     }
-  } catch {}
+  } catch {
+    // intentionally empty
+  }
 
   const fallback = document.createElement('div');
   fallback.className = 'modal-fallback';

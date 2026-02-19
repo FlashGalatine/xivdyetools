@@ -77,14 +77,12 @@ interface AuthResponse {
 /**
  * OAuth Worker URL - handles Discord OAuth flow
  */
-const OAUTH_WORKER_URL =
-  import.meta.env.VITE_OAUTH_WORKER_URL || 'https://auth.xivdyetools.app';
+const OAUTH_WORKER_URL = import.meta.env.VITE_OAUTH_WORKER_URL || 'https://auth.xivdyetools.app';
 
 /**
  * Presets API URL - handles preset operations
  */
-const PRESETS_API_URL =
-  import.meta.env.VITE_PRESETS_API_URL || 'https://api.xivdyetools.app';
+const PRESETS_API_URL = import.meta.env.VITE_PRESETS_API_URL || 'https://api.xivdyetools.app';
 
 /**
  * Storage key for auth token
@@ -171,7 +169,7 @@ function sanitizeReturnPath(path: string | null): string {
   } catch {
     // If parsing fails, use the trimmed path if it looks safe
     // Only allow simple paths without special characters at start
-    if (/^\/[a-zA-Z0-9\-_\/]*$/.test(trimmed)) {
+    if (/^\/[a-zA-Z0-9\-_/]*$/.test(trimmed)) {
       return trimmed;
     }
     return '/';
@@ -201,7 +199,7 @@ class AuthServiceImpl {
     if (this.initialized) return;
 
     if (import.meta.env.DEV) {
-      console.log('🔐 [AuthService] Initializing...', { url: window.location.href });
+      console.info('🔐 [AuthService] Initializing...', { url: window.location.href });
     }
 
     try {
@@ -219,7 +217,7 @@ class AuthServiceImpl {
       }
 
       if (import.meta.env.DEV) {
-        console.log('🔐 [AuthService] URL params:', {
+        console.info('🔐 [AuthService] URL params:', {
           hasCode: !!code,
           hasError: !!error,
           provider: providerFromUrl,
@@ -229,7 +227,7 @@ class AuthServiceImpl {
       if (code) {
         // New secure PKCE flow: we receive the auth code, then exchange it with our stored code_verifier
         if (import.meta.env.DEV) {
-          console.log('🔐 [AuthService] Auth code found in URL, exchanging for token...');
+          console.info('🔐 [AuthService] Auth code found in URL, exchanging for token...');
         }
         await this.handleCallbackCode(code, urlParams.get('csrf'));
         // Get return path before cleaning URL, default to home
@@ -238,7 +236,7 @@ class AuthServiceImpl {
           urlParams.get('return_path') || sessionStorage.getItem(OAUTH_RETURN_PATH_KEY);
         const returnPath = sanitizeReturnPath(rawPath);
         if (import.meta.env.DEV) {
-          console.log(`🔐 [AuthService] Navigating to return path: ${returnPath}`);
+          console.info(`🔐 [AuthService] Navigating to return path: ${returnPath}`);
         }
         sessionStorage.removeItem(OAUTH_RETURN_PATH_KEY);
         // Clean up URL and navigate to return path
@@ -257,7 +255,7 @@ class AuthServiceImpl {
 
       this.initialized = true;
       if (import.meta.env.DEV) {
-        console.log(
+        console.info(
           `✅ [AuthService] Initialized: ${this.state.isAuthenticated ? 'Logged in as ' + this.state.user?.username : 'Not logged in'}`
         );
       }
@@ -371,7 +369,7 @@ class AuthServiceImpl {
           : `${OAUTH_WORKER_URL}/auth/callback`;
 
       if (import.meta.env.DEV) {
-        console.log(`🔐 [AuthService] Exchanging code via ${provider} endpoint`);
+        console.info(`🔐 [AuthService] Exchanging code via ${provider} endpoint`);
       }
 
       // Exchange code for token via POST (code_verifier sent directly, not through redirect)
@@ -512,7 +510,7 @@ class AuthServiceImpl {
     if (returnTool) {
       finalPath = `/${returnTool}`;
       if (import.meta.env.DEV) {
-        console.log(`🔐 [AuthService] Using returnTool: ${returnTool} -> ${finalPath}`);
+        console.info(`🔐 [AuthService] Using returnTool: ${returnTool} -> ${finalPath}`);
       }
     }
 
@@ -559,7 +557,7 @@ class AuthServiceImpl {
     if (this.state.expiresAt) {
       const now = Math.floor(Date.now() / 1000);
       if (this.state.expiresAt < now) {
-        this.logout();
+        void this.logout();
         return false;
       }
     }
