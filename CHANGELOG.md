@@ -10,7 +10,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Nothing yet.
+### Security
+
+- **og-worker 1.0.3**: Added parameter bounds validation to OG image generation routes (FINDING-003)
+- **presets-api 1.4.13**: Enforce `BOT_SIGNING_SECRET` in production env validation (FINDING-001)
+
+### Added
+
+- **moderation-worker 1.1.5**: Startup environment variable validation with production fail-fast (REFACTOR-001)
+
+### Docs
+
+- Audit findings FINDING-004 and BUG-003 marked as false positives (already correctly implemented)
 
 ---
 

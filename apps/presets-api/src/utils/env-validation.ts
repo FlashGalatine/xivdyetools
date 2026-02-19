@@ -22,6 +22,9 @@ export interface EnvValidationResult {
  * - BOT_API_SECRET: Secret for bot authentication
  * - MODERATOR_IDS: Comma-separated Discord user IDs for moderators
  * - DB: D1 database binding
+ *
+ * Production-only required (FINDING-001):
+ * - BOT_SIGNING_SECRET: HMAC signing key for bot request signature verification
  */
 export function validateEnv(env: Env): EnvValidationResult {
   const errors: string[] = [];
@@ -77,6 +80,12 @@ export function validateEnv(env: Env): EnvValidationResult {
         errors.push(`Invalid Discord ID in MODERATOR_IDS: ${id}`);
       }
     }
+  }
+
+  // FINDING-001: BOT_SIGNING_SECRET is required in production for HMAC signature verification
+  // Optional in development to allow local testing without secrets
+  if (env.ENVIRONMENT === 'production' && (!env.BOT_SIGNING_SECRET || env.BOT_SIGNING_SECRET.trim() === '')) {
+    errors.push('Missing required env var in production: BOT_SIGNING_SECRET');
   }
 
   // Check D1 database binding

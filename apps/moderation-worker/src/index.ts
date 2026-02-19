@@ -37,6 +37,7 @@ import {
 } from './handlers/modals/index.js';
 import * as banService from './services/ban-service.js';
 import * as presetApi from './services/preset-api.js';
+import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { createUserTranslator } from './services/bot-i18n.js';
 import { requestIdMiddleware, type RequestIdVariables } from './middleware/request-id.js';
 import { loggerMiddleware } from './middleware/logger.js';
@@ -49,11 +50,20 @@ type Variables = RequestIdVariables & {
 // Create Hono app with environment type
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// Startup validation middleware - validates security config on first request
+// Startup validation middleware - validates all required env vars on first request
+// REFACTOR-001: Added full env validation alongside existing security config check
 let startupValidationDone = false;
 app.use('*', (c, next) => {
   if (!startupValidationDone) {
     startupValidationDone = true;
+
+    // REFACTOR-001: Full environment variable validation
+    const envResult = validateEnv(c.env);
+    if (!envResult.valid) {
+      logValidationErrors(envResult.errors);
+    }
+
+    // Existing: security config validation (signing secrets, API connectivity)
     const validation = presetApi.validateSecurityConfig(c.env);
 
     if (validation.errors.length > 0) {
@@ -62,7 +72,7 @@ app.use('*', (c, next) => {
     if (validation.warnings.length > 0) {
       console.warn('⚠️  Security configuration warnings:', validation.warnings);
     }
-    if (validation.valid && validation.warnings.length === 0) {
+    if (validation.valid && envResult.valid && validation.warnings.length === 0) {
       console.log('✅ Security configuration validated');
     }
   }

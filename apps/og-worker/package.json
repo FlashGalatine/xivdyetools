@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-og-worker",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "description": "XIV Dye Tools OpenGraph Worker - Dynamic social media previews for shared dye tool links",
   "type": "module",

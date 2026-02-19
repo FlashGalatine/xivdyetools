@@ -5,6 +5,19 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-02-19
+
+### Security
+
+- **FINDING-003**: Added parameter bounds validation to all OG image generation routes to prevent resource exhaustion
+  - Gradient: `steps` must be 2–20 (returns 400 if exceeded)
+  - Mixer: `ratio` must be 1–99 (returns 400 if out of range)
+  - Swatch: `limit` must be 1–20 (returns 400 if exceeded)
+  - Comparison/Accessibility: `dyeIds` limited to 1–16 IDs (returns 400 if exceeded)
+  - Replaced silent `isNaN` fallbacks with explicit error responses
+
+---
+
 ## [1.0.2] - 2026-01-26
 
 ### Security

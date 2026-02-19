@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.13] - 2026-02-19
+
+### Security
+
+- **FINDING-001**: Added production enforcement of `BOT_SIGNING_SECRET` in environment validation
+  - Startup validation now fails fast in production if `BOT_SIGNING_SECRET` is not configured
+  - Prevents accidental deployment without HMAC signing key for bot request verification
+
+---
+
 ## [1.4.12] - 2026-01-26
 
 ### Security

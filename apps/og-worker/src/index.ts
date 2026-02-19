@@ -48,6 +48,14 @@ const SUPPORTED_TOOLS: ToolId[] = [
   'accessibility',
 ];
 
+// FINDING-003: Parameter bounds for OG image generation routes
+// Prevents resource exhaustion from excessively large image parameters
+const OG_MAX_GRADIENT_STEPS = 20;
+const OG_MAX_MIXER_RATIO = 99;
+const OG_MIN_MIXER_RATIO = 1;
+const OG_MAX_SWATCH_LIMIT = 20;
+const OG_MAX_COMPARISON_DYES = 16;
+
 // ============================================================================
 // Hono App Setup
 // ============================================================================
@@ -203,10 +211,14 @@ app.get('/og/gradient/:startId/:endId/:steps', async (c) => {
     timestamp: Date.now(),
   });
 
+  if (isNaN(steps) || steps < 2 || steps > OG_MAX_GRADIENT_STEPS) {
+    return c.json({ error: `steps must be between 2 and ${OG_MAX_GRADIENT_STEPS}` }, 400);
+  }
+
   const svg = generateGradientOG({
     startDyeId,
     endDyeId,
-    steps: isNaN(steps) ? 5 : steps,
+    steps,
     algorithm,
   });
 
@@ -231,10 +243,14 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:ratio', async (c) => {
     timestamp: Date.now(),
   });
 
+  if (isNaN(ratio) || ratio < OG_MIN_MIXER_RATIO || ratio > OG_MAX_MIXER_RATIO) {
+    return c.json({ error: `ratio must be between ${OG_MIN_MIXER_RATIO} and ${OG_MAX_MIXER_RATIO}` }, 400);
+  }
+
   const svg = generateMixerOG({
     dyeAId,
     dyeBId,
-    ratio: isNaN(ratio) ? 50 : ratio,
+    ratio,
     algorithm,
   });
 
@@ -260,11 +276,15 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio', async (c) => {
     timestamp: Date.now(),
   });
 
+  if (isNaN(ratio) || ratio < OG_MIN_MIXER_RATIO || ratio > OG_MAX_MIXER_RATIO) {
+    return c.json({ error: `ratio must be between ${OG_MIN_MIXER_RATIO} and ${OG_MAX_MIXER_RATIO}` }, 400);
+  }
+
   const svg = generateMixerOG({
     dyeAId,
     dyeBId,
     dyeCId,
-    ratio: isNaN(ratio) ? 50 : ratio,
+    ratio,
     algorithm,
   });
 
@@ -293,9 +313,13 @@ app.get('/og/swatch/:color/:limit', async (c) => {
     timestamp: Date.now(),
   });
 
+  if (isNaN(limit) || limit < 1 || limit > OG_MAX_SWATCH_LIMIT) {
+    return c.json({ error: `limit must be between 1 and ${OG_MAX_SWATCH_LIMIT}` }, 400);
+  }
+
   const svg = await generateSwatchOG({
     color,
-    limit: isNaN(limit) ? 5 : limit,
+    limit,
     algorithm,
     sheet,
     race,
@@ -313,6 +337,10 @@ app.get('/og/swatch/:color/:limit', async (c) => {
 app.get('/og/comparison/:dyes', async (c) => {
   const dyesParam = c.req.param('dyes').replace('.png', '');
   const dyeIds = dyesParam.split(',').map((id) => parseInt(id, 10)).filter((id) => !isNaN(id));
+
+  if (dyeIds.length === 0 || dyeIds.length > OG_MAX_COMPARISON_DYES) {
+    return c.json({ error: `comparison requires 1–${OG_MAX_COMPARISON_DYES} valid dye IDs` }, 400);
+  }
 
   trackAnalytics(c.env, {
     event: 'og_image_request',
@@ -336,6 +364,10 @@ app.get('/og/accessibility/:dyes/:visionType', async (c) => {
   const visionTypeRaw = c.req.param('visionType').replace('.png', '');
   const visionType = visionTypeRaw.toLowerCase() as VisionType;
   const dyeIds = dyesParam.split(',').map((id) => parseInt(id, 10)).filter((id) => !isNaN(id));
+
+  if (dyeIds.length === 0 || dyeIds.length > OG_MAX_COMPARISON_DYES) {
+    return c.json({ error: `accessibility requires 1–${OG_MAX_COMPARISON_DYES} valid dye IDs` }, 400);
+  }
 
   trackAnalytics(c.env, {
     event: 'og_image_request',
