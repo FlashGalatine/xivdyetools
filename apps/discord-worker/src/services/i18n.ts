@@ -24,10 +24,8 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 // Note: getPreference import is lazy to avoid circular dependency
 // We use dynamic import within resolveUserLocale
 
-/**
- * Supported locale codes
- */
-export type LocaleCode = 'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh';
+export type { LocaleCode } from '@xivdyetools/bot-i18n';
+import type { LocaleCode } from '@xivdyetools/bot-i18n';
 
 /**
  * Locale display information

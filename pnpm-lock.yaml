@@ -47,6 +47,12 @@ importers:
       '@xivdyetools/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@xivdyetools/bot-i18n':
+        specifier: workspace:*
+        version: link:../../packages/bot-i18n
+      '@xivdyetools/color-blending':
+        specifier: workspace:*
+        version: link:../../packages/color-blending
       '@xivdyetools/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -425,6 +431,15 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^4.20260207.0
         version: 4.20260218.0
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18)
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(@types/node@25.2.3)(@vitest/ui@4.0.18)(jiti@2.6.1)(jsdom@28.1.0)(lightningcss@1.31.1)(msw@2.12.10(@types/node@25.2.3)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/bot-i18n:
+    devDependencies:
       '@vitest/coverage-v8':
         specifier: ^4.0.18
         version: 4.0.18(vitest@4.0.18)

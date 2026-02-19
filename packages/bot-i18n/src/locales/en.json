@@ -1,0 +1,737 @@
+{
+  "meta": {
+    "locale": "en",
+    "name": "English",
+    "nativeName": "English",
+    "flag": "🇺🇸"
+  },
+  "common": {
+    "dye": "Dye",
+    "dyes": "Dyes",
+    "color": "Color",
+    "category": "Category",
+    "hexColor": "Hex Color",
+    "rgb": "RGB",
+    "hsv": "HSV",
+    "itemId": "Item ID",
+    "distance": "Distance",
+    "quality": "Quality",
+    "footer": "XIV Dye Tools",
+    "error": "Error",
+    "success": "Success",
+    "inputColor": "Input Color",
+    "closestDye": "Closest Dye",
+    "matchQuality": "Match Quality",
+    "createdAt": "Created",
+    "marketBoard": "Market Board"
+  },
+  "errors": {
+    "userNotFound": "Could not identify user.",
+    "dyeNotFound": "Could not find a dye named \"{name}\".",
+    "colorNotFound": "Could not find a dye matching \"{input}\".",
+    "invalidColor": "Could not resolve \"{input}\" to a color.\n\nPlease provide a valid hex code (e.g., `#FF0000`) or dye name (e.g., `Dalamud Red`).",
+    "missingInput": "Please provide a color (hex code or dye name).",
+    "missingQuery": "Please provide a search term.",
+    "missingName": "Please provide a dye name.",
+    "missingSubcommand": "Please specify a subcommand.",
+    "unknownSubcommand": "Unknown subcommand: {name}",
+    "noMatchFound": "Could not find any matching dyes in the database.",
+    "noDyesAvailable": "No dyes available in the database.",
+    "failedToSave": "Could not save your preference. Please try again later.",
+    "failedToReset": "Could not clear your preference. Please try again later.",
+    "generationFailed": "An error occurred while generating the visualization. Please try again later."
+  },
+  "quality": {
+    "perfect": "Perfect",
+    "excellent": "Excellent",
+    "good": "Good",
+    "fair": "Fair",
+    "approximate": "Approximate"
+  },
+  "manual": {
+    "title": "XIV Dye Tools Manual",
+    "welcome": "Welcome to **XIV Dye Tools**! This bot helps you explore and match FFXIV dye colors.",
+    "commandsIntro": "Below you'll find all available commands organized by category.",
+    "autocompleteNote": "All commands support **autocomplete** for dye names!",
+    "colorMatching": "Color Matching",
+    "dyeInformation": "Dye Information",
+    "botInformation": "Bot Information",
+    "tipsResources": "Tips & Resources",
+    "extractor": {
+      "name": "`/extractor color <color> [count]` | `/extractor image <image>`",
+      "description": "Extract and match colors to FFXIV dyes.\n• `color`: Match a hex code or dye name to closest dyes\n• `image`: Extract dominant colors from an uploaded image"
+    },
+    "harmony": {
+      "name": "`/harmony <color> [type]`",
+      "description": "Generate harmonious dye combinations.\n• Types: Complementary, Analogous, Triadic, Split-Complementary, Tetradic, Square, Monochromatic\n• Creates a visual color wheel"
+    },
+    "mixer": {
+      "name": "`/mixer <dye1> <dye2> [mode]`",
+      "description": "Blend two dyes together using color science.\n• 6 blending modes: RGB, LAB, OKLAB, RYB, HSL, Spectral\n• Finds the closest FFXIV dye to the blended result"
+    },
+    "gradient": {
+      "name": "`/gradient <start> <end> [steps]`",
+      "description": "Create a color gradient between two colors.\n• Shows matched dyes for each gradient step\n• Configurable step count (2-10)"
+    },
+    "swatch": {
+      "name": "`/swatch color <type> <index>` | `/swatch grid <type> <row> <col>`",
+      "description": "Match FFXIV character colors to dyes.\n• Supports skin, hair, eyes, highlights, lips, tattoos, face paint\n• Race/clan specific palettes for skin and hair"
+    },
+    "preferences": {
+      "name": "`/preferences show` | `/preferences set <key> <value>` | `/preferences reset`",
+      "description": "Manage your bot preferences.\n• Set defaults for blending mode, matching method, result count\n• Configure character clan/gender and market world"
+    },
+    "dyeSearch": {
+      "name": "`/dye search <query>`",
+      "description": "Search for dyes by name.\n• Fuzzy matching finds partial matches\n• Shows hex codes and categories"
+    },
+    "dyeInfo": {
+      "name": "`/dye info <name>`",
+      "description": "Get detailed information about a specific dye.\n• Shows hex, RGB, HSV values\n• Displays category and item ID"
+    },
+    "dyeList": {
+      "name": "`/dye list [category]`",
+      "description": "List all dyes or filter by category.\n• Categories: Reds, Browns, Yellows, Greens, Blues, Purples, Neutral, Special"
+    },
+    "dyeRandom": {
+      "name": "`/dye random [unique_categories]`",
+      "description": "Show 5 randomly selected dyes.\n• Option to limit to 1 dye per category"
+    },
+    "about": {
+      "name": "`/about`",
+      "description": "Show bot information, version, and links."
+    },
+    "manualCmd": {
+      "name": "`/manual`",
+      "description": "Show this help guide."
+    },
+    "tips": {
+      "autocomplete": "**Autocomplete:** Start typing a dye name and suggestions will appear!",
+      "hexColors": "**Hex Colors:** Use standard web format like `#FF0000` (red) or `#5865F2` (blurple)",
+      "dyeNames": "**Dye Names:** Type partial names - \"dala\" will find \"Dalamud Red\"",
+      "facewearExcluded": "**Facewear Excluded:** Generic Facewear dyes (like \"Red\", \"Blue\") are excluded from results",
+      "links": "**Links:**"
+    }
+  },
+  "dye": {
+    "search": {
+      "noResults": "No dyes found matching \"{query}\".",
+      "tryDifferent": "Try a different search term",
+      "resultsTitle": "Search Results for \"{query}\"",
+      "foundCount": "Found {count} dye:",
+      "foundCountPlural": "Found {count} dyes:",
+      "moreResults": "...and {count} more results",
+      "useInfoHint": "Use /dye info <name> for detailed information"
+    },
+    "info": {
+      "detailedInfo": "Detailed information for this {category} dye."
+    },
+    "list": {
+      "noDyesInCategory": "No dyes found in the \"{category}\" category.",
+      "categoryTitle": "{category} Dyes",
+      "dyesInCategory": "{count} dyes in this category:",
+      "categoriesTitle": "Dye Categories",
+      "categorySummary": "There are {total} dyes across {count} categories:",
+      "useListHint": "Use /dye list <category> to see dyes in a category"
+    },
+    "random": {
+      "title": "Random Dyes",
+      "titleUnique": "Random Dyes (1 per category)",
+      "description": "Here are {count} randomly selected dyes:",
+      "descriptionUnique": "Here are {count} randomly selected dyes, one from each category:",
+      "runAgainHint": "Run again for different dyes!"
+    }
+  },
+  "match": {
+    "title": "Dye Match: {name}",
+    "topMatches": "Top {count} Dye Matches",
+    "findingMatches": "Finding closest matches for {input}",
+    "useInfoHint": "Use /dye info for acquisition details",
+    "useInfoNameHint": "Use /dye info <name> for acquisition details"
+  },
+  "extractor": {
+    "title": "Color Extractor: {name}",
+    "topMatches": "Top {count} Dye Matches",
+    "findingMatches": "Finding closest matches for {input}",
+    "useInfoHint": "Use /dye info for acquisition details",
+    "useInfoNameHint": "Use /dye info <name> for acquisition details",
+    "colorSubcommand": "Extract dyes from a color",
+    "imageSubcommand": "Extract dyes from an image",
+    "extractedColors": "Extracted Colors",
+    "dominantColor": "Dominant Color"
+  },
+  "gradient": {
+    "title": "Color Gradient",
+    "startColor": "Start",
+    "endColor": "End",
+    "start": "START",
+    "end": "END",
+    "steps": "{count} Steps",
+    "gradientFrom": "Gradient from {start} to {end}",
+    "description": "Create smooth color transitions between two colors",
+    "colorSpace": "Color Space",
+    "matching": "Matching"
+  },
+  "harmony": {
+    "title": "{type} Harmony",
+    "baseColor": "Base Color",
+    "harmonyColors": "Harmony Colors",
+    "complementary": "Complementary",
+    "analogous": "Analogous",
+    "triadic": "Triadic",
+    "splitComplementary": "Split-Complementary",
+    "tetradic": "Tetradic",
+    "square": "Square",
+    "monochromatic": "Monochromatic"
+  },
+  "mixer": {
+    "title": "Dye Blender",
+    "blendResult": "Blend Result",
+    "inputDyes": "Input Dyes",
+    "blendedColor": "Blended Color",
+    "closestMatch": "Closest Match",
+    "topMatches": "Top {count} Matches",
+    "blendingMode": "Blending Mode",
+    "bothRequired": "Both dye1 and dye2 are required.",
+    "footer": "Use /preferences set blending <mode> to change your default • /dye info {dyeName}",
+    "modes": {
+      "rgb": "RGB Average",
+      "lab": "LAB (Perceptual)",
+      "oklab": "OKLAB (Modern Perceptual)",
+      "ryb": "RYB (Artist)",
+      "hsl": "HSL (Hue-based)",
+      "spectral": "Spectral (Pigment Physics)"
+    },
+    "modeDescriptions": {
+      "rgb": "Simple additive channel averaging",
+      "lab": "Perceptually uniform CIELAB blending",
+      "oklab": "Modern perceptual color space (fixes blue→purple)",
+      "ryb": "Traditional artist's color wheel mixing",
+      "hsl": "Hue-Saturation-Lightness interpolation",
+      "spectral": "Kubelka-Munk pigment physics simulation"
+    }
+  },
+  "comparison": {
+    "title": "Dye Comparison",
+    "colorDistance": "Color Distance",
+    "contrastRatio": "Contrast Ratio",
+    "mostSimilar": "Most Similar",
+    "mostDifferent": "Most Different",
+    "wcagAA": "WCAG AA",
+    "wcagAAA": "WCAG AAA",
+    "passes": "Pass",
+    "fails": "Fail"
+  },
+  "accessibility": {
+    "title": "Color Vision Accessibility",
+    "normalVision": "Normal Vision",
+    "protanopia": "Protanopia",
+    "deuteranopia": "Deuteranopia",
+    "tritanopia": "Tritanopia",
+    "protanopiaDesc": "Reduced sensitivity to red light (~1% of males)",
+    "deuteranopiaDesc": "Reduced sensitivity to green light (~1% of males)",
+    "tritanopiaDesc": "Reduced sensitivity to blue light (rare)",
+    "description": "This visualization shows how the dye appears to people with different types of color vision deficiency:",
+    "simulatedAppearance": "Simulated Appearance",
+    "simulationMethod": "Brettel 1997 colorblind simulation",
+    "contrastAnalysis": "WCAG Contrast Analysis",
+    "contrastTitle": "Contrast Comparison",
+    "comparing": "Comparing {count} dyes",
+    "matrixDescription": "The matrix shows WCAG contrast ratios between each pair of dyes:",
+    "wcagAAADesc": "Excellent for all text sizes",
+    "wcagAADesc": "Acceptable for normal text",
+    "wcagFailDesc": "May be difficult to distinguish",
+    "wcagGuidelines": "WCAG 2.1 contrast guidelines"
+  },
+  "favorites": {
+    "title": "Your Favorites",
+    "empty": "You don't have any favorite dyes yet.",
+    "addHint": "Use `/favorites add <dye>` to add some!",
+    "added": "Added **{name}** to your favorites.",
+    "removed": "Removed **{name}** from your favorites.",
+    "cleared": "Cleared all your favorite dyes.",
+    "alreadyFavorite": "**{name}** is already in your favorites.",
+    "notInFavorites": "**{name}** is not in your favorites.",
+    "limitReached": "You've reached the maximum of {max} favorites.\n\nRemove one with `/favorites remove` first.",
+    "count": "{count}/{max} favorites"
+  },
+  "collection": {
+    "title": "Your Collections",
+    "empty": "You don't have any collections yet.",
+    "createHint": "Use `/collection create <name>` to create one!",
+    "created": "Created new collection: **{name}**",
+    "deleted": "Deleted collection: **{name}**",
+    "renamed": "Renamed collection from **{oldName}** to **{newName}**.",
+    "dyeAdded": "Added **{dye}** to collection \"{collection}\".",
+    "dyeRemoved": "Removed **{dye}** from collection \"{collection}\".",
+    "addDyeHint": "Use `/collection add {name} <dye>` to add dyes.",
+    "showHint": "Use /collection show <name> to view a collection",
+    "collectionEmpty": "This collection is empty.",
+    "alreadyExists": "A collection named \"{name}\" already exists.",
+    "notFound": "Could not find a collection named \"{name}\".",
+    "nameTooLong": "Collection names must be {max} characters or less.",
+    "limitReached": "You've reached the maximum of {max} collections.\n\nUse `/collection delete` to remove one first.",
+    "dyeLimitReached": "This collection has reached the maximum of {max} dyes.",
+    "dyeAlreadyInCollection": "**{dye}** is already in the collection \"{collection}\".",
+    "dyeNotInCollection": "**{dye}** is not in the collection \"{collection}\" (or collection doesn't exist).",
+    "count": "{count}/{max} collections"
+  },
+  "language": {
+    "title": "Language Settings",
+    "updated": "Your language preference has been set to **{language}**.",
+    "updateNote": "Dye names and bot messages will now use this language when available.",
+    "reset": "Your language preference has been cleared.",
+    "resetNote": "The bot will now use your Discord client's language setting (if supported) or default to English.",
+    "yourPreference": "Your preference",
+    "notSet": "Not set",
+    "discordLocale": "Discord locale",
+    "unsupported": "unsupported",
+    "effectiveLanguage": "Effective language",
+    "supportedLanguages": "Supported languages",
+    "missingLanguage": "Please specify a language to set.",
+    "invalidLanguage": "\"{locale}\" is not a supported language.\n\nSupported languages: {validList}"
+  },
+  "about": {
+    "title": "XIV Dye Tools Bot",
+    "version": "Version",
+    "description": "A Discord bot for FFXIV dye color exploration and matching.",
+    "commands": "Commands",
+    "totalCount": "{count} total",
+    "links": "Links",
+    "poweredBy": "Powered by Cloudflare Workers",
+    "categories": {
+      "colorTools": "Color Tools",
+      "dyeDatabase": "Dye Database",
+      "analysis": "Analysis",
+      "userData": "Your Data",
+      "community": "Community",
+      "utility": "Utility"
+    },
+    "cmd": {
+      "harmony": "Generate color harmonies (complementary, triadic, etc.)",
+      "match": "Find closest FFXIV dye to a hex color",
+      "matchImage": "Extract colors from an image and match to dyes",
+      "mixer": "Create color gradients between two colors",
+      "dyeSearch": "Search dyes by name",
+      "dyeInfo": "Get detailed dye information",
+      "dyeList": "List dyes by category",
+      "dyeRandom": "Get random dye suggestions",
+      "comparison": "Compare 2-4 dyes side by side",
+      "accessibility": "Colorblindness simulation & contrast",
+      "favorites": "Manage your favorite dyes",
+      "collection": "Create custom dye collections",
+      "preset": "Browse, submit & vote on community presets",
+      "language": "Set your preferred language",
+      "manual": "Show help guide",
+      "about": "Bot information (this command)",
+      "stats": "Usage statistics (authorized only)"
+    }
+  },
+  "paletteGrid": {
+    "extracted": "EXTRACTED",
+    "matchedDye": "MATCHED DYE",
+    "ofImage": "of image",
+    "noColors": "No colors extracted from image",
+    "quality": {
+      "perfect": "PERFECT",
+      "excellent": "EXCELLENT",
+      "good": "GOOD",
+      "fair": "FAIR",
+      "approximate": "APPROX"
+    }
+  },
+  "matchImage": {
+    "missingImage": "Please attach an image to analyze.",
+    "invalidAttachment": "Could not find the attached image.",
+    "noColors": "The image appears to be fully transparent or too small to analyze.",
+    "extractionFailed": "Could not extract colors from the image.",
+    "colorMatch": "Color Match",
+    "colorPalette": "{count} Color Palette",
+    "closestMatch": "Closest Dye Match",
+    "topMatches": "Top {count} Matching Dyes",
+    "extractionMethod": "Color extracted via K-means clustering",
+    "processingFailed": "An error occurred while processing the image.",
+    "onlyDiscord": "Only images uploaded directly to Discord can be analyzed.",
+    "imageTooLarge": "Image is too large. Please use a smaller image.",
+    "unsupportedFormat": "Unsupported image format. Please use PNG, JPEG, GIF, or WebP.",
+    "timeout": "Image download timed out. Please try again."
+  },
+  "buttons": {
+    "copyHex": "Copy HEX",
+    "copyRgb": "Copy RGB",
+    "copyHsv": "Copy HSV"
+  },
+  "matchImageHelp": {
+    "title": "How to Use /match_image",
+    "description": "The `/match_image` command analyzes your uploaded image to find the dominant color and matches it to the closest FFXIV dye. Here are some tips to get the best results!",
+    "howItWorks": "How It Works",
+    "howItWorksContent": "**1. Image Analysis**\n- Your image is processed using K-means clustering\n- The most dominant color(s) are extracted\n- Colors are matched against 136 FFXIV dyes\n\n**2. Dye Matching**\n- Uses Euclidean distance in RGB color space\n- Returns the closest matching dye(s)",
+    "tipsForBestResults": "Tips for Best Results",
+    "tipsContent": "**Crop Your Images**\n- Focus on the specific area you want to match\n- Remove UI elements and backgrounds\n\n**Choose Good Lighting**\n- Take screenshots in well-lit areas\n- Avoid dark shadows or extreme highlights\n\n**Avoid Dark Backgrounds**\n- Black backgrounds can skew results\n- Use neutral, lighter backgrounds when possible",
+    "commonIssues": "Common Issues",
+    "commonIssuesContent": "**\"I got a dark color but my gear is bright!\"**\n→ Your background is likely dark. Crop the image to just your gear.\n\n**\"The match seems off\"**\n→ Multiple colors? The algorithm picks the MOST common color.\n\n**\"Can I match a specific part?\"**\n→ Yes! Crop to that exact area before uploading.",
+    "proTips": "Pro Tips",
+    "proTipsContent": "• Use image editing software to crop before uploading\n• For metallic/shiny gear, results may vary\n• If you know the hex code, use `/match` instead\n• Extract multiple colors with the `colors` option (1-5)\n• Screenshot at 1920x1080 or higher for best quality",
+    "footer": "XIV Dye Tools - Made with love for FFXIV glamour enthusiasts",
+    "exampleUseCases": "Example Use Cases",
+    "goodExamples": "Good Examples",
+    "goodExamplesContent": "• Cropped screenshot of a single chest piece\n• Close-up of dyed armor with neutral background\n• Screenshot taken in bright daylight area\n• Image focused on the color you want to match",
+    "poorExamples": "Poor Examples",
+    "poorExamplesContent": "• Full-screen screenshot with lots of UI\n• Character in a dark dungeon or cave\n• Multiple armor pieces with different dyes\n• Image dominated by background colors",
+    "whenToUse": "When to Use /match_image vs /match",
+    "whenToUseContent": "**Use `/match_image` when:**\n• You have a screenshot and want to find the dye\n• You're unsure of the exact color code\n• You want to match a color from inspiration photos\n\n**Use `/match` when:**\n• You already know the hex color code\n• You need more precise/exact results\n• You're working with color swatches",
+    "technicalDetails": "Technical Details",
+    "supportedFormats": "Supported Formats",
+    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
+    "fileLimits": "File Limits",
+    "fileLimitsContent": "• Maximum size: 8MB\n• Processing time: ~1-3 seconds",
+    "matchQualityRatings": "Match Quality Ratings",
+    "matchQualityRatingsContent": "**Perfect** (0 distance)\n**Excellent** (<10 distance)\n**Good** (<25 distance)\n**Fair** (<50 distance)\n**Approximate** (≥50 distance)\n\n*Lower distance = better match*",
+    "poweredBy": "Powered by Photon WASM image processing"
+  },
+  "preset": {
+    "title": "Community Presets",
+    "apiDisabled": "Community presets are not configured on this bot.",
+    "notConfigured": "Community presets are not configured on this bot.",
+    "notFound": "Could not find a preset matching that name.",
+    "noneInCategory": "No presets found in this category.",
+    "useShowTip": "Use `/preset show <name>` to view details",
+    "randomTitle": "Random Preset",
+    "notEnoughDyes": "Please provide at least 2 dyes for your preset.",
+    "invalidDye": "Could not find one of the specified dyes.",
+    "duplicateExists": "Similar Preset Exists",
+    "duplicateVoted": "Your vote has been added to the existing preset.",
+    "submitted": "Preset Submitted!",
+    "submittedApproved": "Your preset has been approved and is now live!",
+    "submittedPending": "Your preset is now awaiting moderator approval.",
+    "voteRemoved": "Vote Removed",
+    "voteAdded": "Vote Added",
+    "currentVotes": "Current votes: {count}",
+    "colors": "Colors",
+    "tags": "Tags",
+    "author": "Author",
+    "votes": "Votes",
+    "moderation": {
+      "accessDenied": "You don't have permission to perform moderation actions.",
+      "pendingQueue": "Presets Awaiting Moderation",
+      "noPending": "No presets are currently awaiting moderation.",
+      "pendingCount": "{count} preset(s) pending review",
+      "missingId": "Please specify a preset ID for this action.",
+      "approved": "Preset Approved",
+      "approvedDesc": "**{name}** has been approved and is now live!",
+      "missingReason": "Please provide a reason for rejection.",
+      "rejected": "Preset Rejected",
+      "rejectedDesc": "**{name}** has been rejected.",
+      "stats": "Moderation Statistics"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "flagged": "Flagged"
+    },
+    "categories": {
+      "jobs": "FFXIV Jobs",
+      "grand-companies": "Grand Companies",
+      "seasons": "Seasons",
+      "events": "FFXIV Events",
+      "aesthetics": "Aesthetics",
+      "community": "Community"
+    }
+  },
+  "budget": {
+    "title": "Budget Dye Finder",
+    "findTitle": "Budget Alternatives for {dyeName}",
+    "foundAlternatives": "Found {count} cheaper alternatives:",
+    "noAlternatives": "No cheaper alternatives found within your criteria.",
+    "headerLabel": "BUDGET ALTERNATIVES FOR",
+    "onWorld": "on {world}",
+    "gilAmount": "{amount} Gil",
+    "saveAmount": "Save {amount} ({percent}%)",
+    "listingCount": "{count} listings",
+    "noAlternativesShort": "No cheaper alternatives found",
+    "targetDye": "Target Dye",
+    "targetPrice": "Target Price",
+    "alternative": "Alternative",
+    "alternatives": "Cheaper Alternatives",
+    "price": "Price",
+    "savings": "Savings",
+    "colorMatch": "Color Match",
+    "valueScore": "Value Score",
+    "noListings": "No listings",
+    "worldUsed": "Prices from {world}",
+    "pricesUpdated": "Prices updated {time}",
+    "worldSet": "Your default world has been set to **{world}**.",
+    "worldSetNote": "Future `/budget` commands will use this world by default.",
+    "quickPick": "Quick Pick: {name}",
+    "sortedBy": "Sorted by: {method}",
+    "sortMethods": {
+      "price": "Lowest Price",
+      "color_match": "Best Color Match",
+      "value_score": "Best Value"
+    },
+    "distanceQuality": {
+      "perfect": "Perfect",
+      "excellent": "Excellent",
+      "good": "Good",
+      "fair": "Fair",
+      "approximate": "Approximate"
+    },
+    "errors": {
+      "notConfigured": "The budget feature is not available on this server. Market board integration is not configured.",
+      "noWorldSet": "Please set your world first with `/budget set_world <world>` or specify a world with the `world` option.",
+      "worldNotFound": "Could not find world or datacenter \"{world}\".\n\nPlease check the spelling or try a datacenter name like \"Crystal\" or \"Chaos\".",
+      "missingDye": "Please specify a target dye.",
+      "dyeNotFound": "Could not find dye \"{name}\".",
+      "presetNotFound": "Could not find quick pick preset \"{id}\".",
+      "apiError": "Could not fetch market board data. Please try again later.",
+      "rateLimited": "Too many requests. Please wait a moment before checking prices again."
+    }
+  },
+  "swatch": {
+    "title": "Character Color Match",
+    "colorType": "Color Type",
+    "colorTypes": {
+      "skin": "Skin Tone",
+      "hair": "Hair Color",
+      "eyes": "Eye Color",
+      "highlight": "Hair Highlight",
+      "lips_dark": "Lip Color (Dark)",
+      "lips_light": "Lip Color (Light)",
+      "tattoo": "Tattoo/Limbal Ring",
+      "facepaint_dark": "Face Paint (Dark)",
+      "facepaint_light": "Face Paint (Light)"
+    },
+    "clan": "Clan",
+    "gender": "Gender",
+    "genders": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "gridPosition": "Grid Position",
+    "row": "Row",
+    "column": "Column",
+    "colorIndex": "Color Index",
+    "characterColor": "Character Color",
+    "closestDye": "Closest Dye",
+    "topMatches": "Top {count} Matches",
+    "raceSpecific": "Race-specific color palette",
+    "sharedPalette": "Shared color palette (all races)",
+    "index": "Index",
+    "matching": "Matching",
+    "footer": "Use /preferences set clan/gender to set defaults • /dye info {dyeName}",
+    "errors": {
+      "missingTypeAndIndex": "Both `type` and `index` are required.",
+      "missingGridParams": "Parameters `type`, `row`, and `col` are all required.",
+      "invalidColorType": "Invalid color type: `{type}`\n\nValid types: {validTypes}",
+      "invalidIndex": "Invalid index for {typeName}. Must be between {min} and {max}.",
+      "invalidRow": "Invalid row for {typeName}. Must be between {min} and {max}.",
+      "invalidColumn": "Invalid column. Must be between {min} and {max}.",
+      "gridOutOfRange": "Grid position ({row}, {col}) is out of range for {typeName}.",
+      "clanGenderRequired": "{typeName} requires {missing} to be specified.\n\nEither provide it as a parameter or set your default with `/preferences set clan <clan>` and `/preferences set gender <gender>`.",
+      "invalidClan": "Invalid clan: `{clan}`\n\nValid clans:\n{clanList}",
+      "colorNotFound": "Could not find the specified character color."
+    }
+  },
+  "preferences": {
+    "title": "Your Preferences",
+    "show": {
+      "title": "Current Preferences",
+      "description": "These settings affect how commands work for you.\nParameters you provide always override these defaults.",
+      "default": "Default",
+      "notSet": "Not set",
+      "hint": "Use /preferences set to customize (e.g., /preferences set language:en)"
+    },
+    "set": {
+      "success": "Preference Updated",
+      "successCount": "{count} Preferences Updated",
+      "updated": "**{key}** has been set to **{value}**.",
+      "affectedCommands": "This affects: {commands}",
+      "affects": "Affects",
+      "failedToUpdate": "Failed to Update",
+      "noOptions": "Please provide at least one preference to set.\n\nExample: `/preferences set language:en blending:oklab`",
+      "noValidOptions": "No valid preferences were provided.",
+      "overrideNote": "Command parameters will override these settings"
+    },
+    "reset": {
+      "success": "Preference Reset",
+      "allTitle": "All Preferences Reset",
+      "single": "**{key}** has been reset to its default value.",
+      "all": "All preferences have been reset to defaults.",
+      "allDescription": "All your preferences have been reset to system defaults.",
+      "failed": "Failed to reset preference(s). Please try again.",
+      "showHint": "Use /preferences show to see current values"
+    },
+    "keys": {
+      "language": "Language",
+      "blending": "Blending Mode",
+      "matching": "Matching Method",
+      "count": "Result Count",
+      "clan": "Character Clan",
+      "gender": "Character Gender",
+      "world": "Market World",
+      "market": "Show Market Prices"
+    },
+    "descriptions": {
+      "language": "Language for dye names and bot messages",
+      "blending": "Default algorithm for /mixer",
+      "matching": "Default color matching method",
+      "count": "Default number of results (1-10)",
+      "clan": "Default clan for /swatch",
+      "gender": "Default gender for /swatch",
+      "world": "Default world/datacenter for market prices",
+      "market": "Whether to show market prices by default"
+    },
+    "values": {
+      "results": "{count} results",
+      "male": "Male ♂️",
+      "female": "Female ♀️",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "validation": {
+      "invalidLanguage": "Invalid language. Valid options: `en`, `ja`, `de`, `fr`, `ko`, `zh`",
+      "invalidBlendingMode": "Invalid blending mode. Valid options:\n{options}",
+      "invalidMatchingMethod": "Invalid matching method. Valid options:\n{options}",
+      "invalidCount": "Invalid count. Must be a number between 1 and 10.",
+      "invalidClan": "Invalid clan. Valid clans:\n{options}",
+      "invalidGender": "Invalid gender. Valid options: `male`, `female`",
+      "invalidWorld": "Invalid world. Please enter a valid FFXIV world or datacenter name.",
+      "invalidMarket": "Invalid value. Use `on`/`off` or `true`/`false`.",
+      "error": "An error occurred while saving the preference. Please try again."
+    },
+    "errors": {
+      "invalidKey": "Unknown preference key: {key}",
+      "invalidValue": "Invalid value for {key}. Valid options: {options}",
+      "noSubcommand": "No subcommand provided"
+    }
+  },
+  "stats": {
+    "summary": {
+      "title": "XIV Dye Tools Bot",
+      "description": "A Discord bot for FFXIV dye color exploration and matching",
+      "features": "Features",
+      "featuresList": "• Color matching & extraction\n• Dye blending & gradients\n• Color harmony generation\n• Character color matching\n• Market price integration",
+      "links": "Links"
+    },
+    "overview": {
+      "title": "Usage Overview",
+      "period": "Last {days} days",
+      "totalCommands": "Total Commands",
+      "uniqueUsers": "Unique Users",
+      "successRate": "Success Rate",
+      "avgLatency": "Avg Latency"
+    },
+    "commands": {
+      "title": "Command Statistics",
+      "topCommands": "Top Commands",
+      "leastUsed": "Least Used",
+      "v4Migration": "V4 Migration Status",
+      "v4Usage": "V4 Commands",
+      "legacyUsage": "Legacy Commands"
+    },
+    "preferences": {
+      "title": "Preference Adoption",
+      "sampleSize": "Sample size: {count} users",
+      "languageDistribution": "Language Distribution",
+      "blendingModes": "Blending Mode Usage",
+      "matchingMethods": "Matching Method Usage"
+    },
+    "health": {
+      "title": "System Health",
+      "kvLatency": "KV Latency",
+      "analyticsStatus": "Analytics Engine",
+      "cacheStatus": "Cache API",
+      "externalServices": "External Services",
+      "universalis": "Universalis API",
+      "operational": "Operational",
+      "degraded": "Degraded",
+      "down": "Down"
+    }
+  },
+  "status": {
+    "analyzing": "Analyzing...",
+    "rendering": "Generating image...",
+    "fetchingMarket": "Fetching market data...",
+    "processing": "Processing...",
+    "finalizing": "Finalizing...",
+    "complete": "Complete!",
+    "queuePosition": "Queue Position: {position}",
+    "estimatedWait": "Estimated wait: {seconds}s",
+    "cooldown": "Please wait {seconds}s before using this command again."
+  },
+  "pagination": {
+    "page": "Page {current} of {total}",
+    "pageCompact": "{current}/{total}",
+    "first": "First",
+    "previous": "Previous",
+    "next": "Next",
+    "last": "Last",
+    "showing": "Showing {start}-{end} of {total}",
+    "noResults": "No results found.",
+    "emptyPage": "This page is empty."
+  },
+  "components": {
+    "blendingModeSelect": {
+      "placeholder": "Select blending mode...",
+      "label": "Blending Mode"
+    },
+    "matchingMethodSelect": {
+      "placeholder": "Select matching method...",
+      "label": "Matching Method"
+    },
+    "marketToggle": {
+      "show": "Show Prices",
+      "hide": "Hide Prices"
+    },
+    "refresh": {
+      "label": "Refresh"
+    },
+    "copy": {
+      "hex": "Copy HEX",
+      "rgb": "Copy RGB",
+      "hsv": "Copy HSV",
+      "lab": "Copy LAB"
+    }
+  },
+  "matching": {
+    "methods": {
+      "rgb": "RGB Euclidean",
+      "cie76": "CIE76 (ΔE*)",
+      "ciede2000": "CIEDE2000",
+      "oklab": "OKLAB Distance",
+      "hyab": "HyAB (Hybrid)",
+      "oklch_weighted": "OKLCH Weighted"
+    },
+    "methodDescriptions": {
+      "rgb": "Simple RGB color space distance",
+      "cie76": "Basic perceptual difference (LAB)",
+      "ciede2000": "Advanced perceptual difference",
+      "oklab": "Modern perceptual color space",
+      "hyab": "Hybrid LAB + Chroma distance",
+      "oklch_weighted": "Weighted OKLCH components"
+    }
+  },
+  "webhook": {
+    "newPresetPending": "New Preset Awaiting Review",
+    "newPresetPublished": "New Preset Published",
+    "fields": {
+      "category": "Category",
+      "author": "Author",
+      "source": "Source",
+      "dyes": "Dyes",
+      "tags": "Tags"
+    },
+    "autoApproved": "Auto-approved",
+    "buttons": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "revert": "Revert"
+    },
+    "editPending": "Preset Edit Pending Review",
+    "sources": {
+      "web": "Web App",
+      "discord": "Discord"
+    }
+  }
+}

@@ -8,13 +8,9 @@
  */
 
 import type { LocaleCode } from '../services/i18n.js';
-
-/**
- * Color blending modes for /mixer and /gradient commands
- *
- * @see https://xivdyetools.com/docs/blending-modes
- */
-export type BlendingMode = 'rgb' | 'lab' | 'oklab' | 'ryb' | 'hsl' | 'spectral';
+export type { BlendingMode } from '@xivdyetools/color-blending';
+export { BLENDING_MODES, isValidBlendingMode } from '@xivdyetools/color-blending';
+import type { BlendingMode } from '@xivdyetools/color-blending';
 
 /**
  * Color matching methods for finding closest dyes
@@ -91,18 +87,6 @@ export const PREFERENCE_DEFAULTS: Required<Omit<UserPreferences, 'clan' | 'gende
 };
 
 /**
- * Valid blending modes with descriptions (for autocomplete)
- */
-export const BLENDING_MODES: Array<{ value: BlendingMode; name: string; description: string }> = [
-  { value: 'rgb', name: 'RGB', description: 'Additive channel averaging (default)' },
-  { value: 'lab', name: 'LAB', description: 'Perceptually uniform CIELAB blending' },
-  { value: 'oklab', name: 'OKLAB', description: 'Modern perceptual (fixes LAB blue→purple)' },
-  { value: 'ryb', name: 'RYB', description: "Traditional artist's color wheel" },
-  { value: 'hsl', name: 'HSL', description: 'Hue-Saturation-Lightness interpolation' },
-  { value: 'spectral', name: 'Spectral', description: 'Kubelka-Munk physics simulation' },
-];
-
-/**
  * Valid matching methods with descriptions (for autocomplete)
  */
 export const MATCHING_METHODS: Array<{ value: MatchingMethod; name: string; description: string }> = [
@@ -132,13 +116,6 @@ export const CLANS_BY_RACE: Record<string, string[]> = {
  * Flat list of all valid clan names (lowercase for comparison)
  */
 export const VALID_CLANS: string[] = Object.values(CLANS_BY_RACE).flat();
-
-/**
- * Validate if a string is a valid blending mode
- */
-export function isValidBlendingMode(mode: string): mode is BlendingMode {
-  return BLENDING_MODES.some((m) => m.value === mode);
-}
 
 /**
  * Validate if a string is a valid matching method
