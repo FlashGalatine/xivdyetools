@@ -15,6 +15,10 @@ export type { PrimaryCharacter, JWTPayload, OAuthState } from './jwt.js';
 // Discord types
 export type { DiscordTokenResponse, DiscordUser } from './discord.js';
 
+// Discord Snowflake validation (FINDING-002)
+export type { DiscordSnowflake } from './discord-snowflake.js';
+export { isValidSnowflake, createSnowflake } from './discord-snowflake.js';
+
 // XIVAuth types
 export type {
   XIVAuthTokenResponse,

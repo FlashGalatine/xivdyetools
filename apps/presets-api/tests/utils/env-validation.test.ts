@@ -235,12 +235,12 @@ describe('Environment Validation', () => {
                 expect(result.errors).toContain('Invalid Discord ID in MODERATOR_IDS: 1234567890123456');
             });
 
-            it('should fail with an ID that is too long (> 19 digits)', () => {
-                const env = createValidEnv({ MODERATOR_IDS: '12345678901234567890' }); // 20 digits
+            it('should fail with an ID that is too long (> 20 digits)', () => {
+                const env = createValidEnv({ MODERATOR_IDS: '123456789012345678901' }); // 21 digits
                 const result = validateEnv(env);
 
                 expect(result.valid).toBe(false);
-                expect(result.errors).toContain('Invalid Discord ID in MODERATOR_IDS: 12345678901234567890');
+                expect(result.errors).toContain('Invalid Discord ID in MODERATOR_IDS: 123456789012345678901');
             });
 
             it('should fail with non-numeric characters', () => {

@@ -12,6 +12,7 @@ Quick summary of what changed and when. See [CHANGELOG.md](CHANGELOG.md) for ful
 - **oauth 2.3.6**: `STATE_TRANSITION_PERIOD` blocked in production
 - **web-app 4.1.7**: Cache cleared on logout, cross-tab session sync, token expiry guard
 - **core 1.17.0** / **universalis-proxy 1.4.1**: Cache hit/miss metrics and structured logging (OPT-002)
+- **types 1.8.0**: Shared `DiscordSnowflake` validation replaces inline regex in 4 files (FINDING-002)
 - New `DEPRECATIONS.md` for tracking removal timelines
 
 ## 1.0.0 — 2026-02-18

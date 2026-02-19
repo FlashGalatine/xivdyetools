@@ -157,11 +157,11 @@ describe('env-validation.ts', () => {
             });
 
             it('should fail for invalid Discord IDs (too long)', () => {
-                const env = createMinimalEnv({ MODERATOR_IDS: '12345678901234567890' });
+                const env = createMinimalEnv({ MODERATOR_IDS: '123456789012345678901' }); // 21 digits
                 const result = validateEnv(env);
 
                 expect(result.valid).toBe(false);
-                expect(result.errors).toContain('Invalid Discord ID in MODERATOR_IDS: 12345678901234567890');
+                expect(result.errors).toContain('Invalid Discord ID in MODERATOR_IDS: 123456789012345678901');
             });
 
             it('should fail for Discord IDs with non-numeric characters', () => {

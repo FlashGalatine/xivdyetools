@@ -6,6 +6,7 @@
  */
 
 import type { Env } from '../types.js';
+import { isValidSnowflake } from '@xivdyetools/types';
 
 export interface EnvValidationResult {
   valid: boolean;
@@ -74,9 +75,9 @@ export function validateEnv(env: Env): EnvValidationResult {
     if (ids.length === 0) {
       errors.push('MODERATOR_IDS must contain at least one Discord ID');
     }
-    // Discord snowflakes are 17-19 digit numbers
+    // FINDING-002: Validate Discord snowflake format via shared utility
     for (const id of ids) {
-      if (!/^\d{17,19}$/.test(id.trim())) {
+      if (!isValidSnowflake(id.trim())) {
         errors.push(`Invalid Discord ID in MODERATOR_IDS: ${id}`);
       }
     }

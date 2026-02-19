@@ -25,6 +25,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **DEPRECATIONS.md**: Deprecation registry with removal timelines (REFACTOR-003)
 - **core 1.17.0**: Cache hit/miss/eviction/error metrics in `APIService` (OPT-002)
 - **universalis-proxy 1.4.1**: Structured cache hit/miss logging for observability (OPT-002)
+- **types 1.8.0**: `DiscordSnowflake` branded type with `isValidSnowflake()` / `createSnowflake()` (FINDING-002)
+
+### Changed
+
+- **presets-api** / **discord-worker** / **moderation-worker**: Replaced inline snowflake regex with shared `isValidSnowflake()` from `@xivdyetools/types` (FINDING-002)
 
 ### Docs
 

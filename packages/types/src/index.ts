@@ -93,6 +93,7 @@ export type {
   OAuthState,
   DiscordTokenResponse,
   DiscordUser,
+  DiscordSnowflake,
   XIVAuthTokenResponse,
   XIVAuthCharacter,
   XIVAuthCharacterRegistration,
@@ -110,6 +111,7 @@ export type {
   UserInfoErrorResponse,
   UserInfoResponse,
 } from './auth/index.js';
+export { isValidSnowflake, createSnowflake } from './auth/index.js';
 
 // ============================================================================
 // API Types

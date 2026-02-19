@@ -11,6 +11,7 @@
 
 import type { Env } from '../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
+import { isValidSnowflake } from '@xivdyetools/types';
 import type {
   CommunityPreset,
   PresetListResponse,
@@ -247,13 +248,13 @@ let moderatorIdsCache: Set<string> | null = null;
 
 /**
  * Validates if a string is a valid Discord snowflake ID
- * Snowflakes are 17-19 digit numeric strings
+ * FINDING-002: Now delegates to shared utility from @xivdyetools/types
  *
  * @param id - The ID to validate
  * @returns true if valid snowflake format, false otherwise
  */
 function isValidDiscordSnowflake(id: string): boolean {
-  return /^\d{17,19}$/.test(id);
+  return isValidSnowflake(id);
 }
 
 /**

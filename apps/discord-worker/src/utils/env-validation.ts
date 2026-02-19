@@ -7,6 +7,7 @@
 
 import type { Env } from '../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
+import { isValidSnowflake } from '@xivdyetools/types';
 
 export interface EnvValidationResult {
   valid: boolean;
@@ -80,8 +81,8 @@ export function validateEnv(env: Env): EnvValidationResult {
   if (env.MODERATOR_IDS) {
     const ids = env.MODERATOR_IDS.split(',').filter((id) => id.trim());
     for (const id of ids) {
-      // Discord snowflakes are 17-19 digit numbers
-      if (!/^\d{17,19}$/.test(id.trim())) {
+      // FINDING-002: Validate Discord snowflake format via shared utility
+      if (!isValidSnowflake(id.trim())) {
         errors.push(`Invalid Discord ID in MODERATOR_IDS: ${id}`);
       }
     }
@@ -91,7 +92,7 @@ export function validateEnv(env: Env): EnvValidationResult {
   if (env.STATS_AUTHORIZED_USERS) {
     const ids = env.STATS_AUTHORIZED_USERS.split(',').filter((id) => id.trim());
     for (const id of ids) {
-      if (!/^\d{17,19}$/.test(id.trim())) {
+      if (!isValidSnowflake(id.trim())) {
         errors.push(`Invalid Discord ID in STATS_AUTHORIZED_USERS: ${id}`);
       }
     }
