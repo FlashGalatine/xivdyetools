@@ -18,6 +18,10 @@ Published to npm under the `@xivdyetools` scope:
 | [`@xivdyetools/auth`](packages/auth/) | 1.0.2 | JWT verification, HMAC signing, Discord Ed25519 verification |
 | [`@xivdyetools/rate-limiter`](packages/rate-limiter/) | 1.3.0 | Sliding window rate limiting (Memory, KV, Upstash backends) |
 | [`@xivdyetools/core`](packages/core/) | 1.16.0 | Color algorithms, 136-dye database, k-d tree matching, 6-language i18n |
+| [`@xivdyetools/color-blending`](packages/color-blending/) | 1.0.0 | Six color blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral) |
+| [`@xivdyetools/svg`](packages/svg/) | 1.0.0 | Platform-agnostic SVG card generators (pure functions: data in → SVG out) |
+| [`@xivdyetools/bot-i18n`](packages/bot-i18n/) | 1.0.0 | Bot UI string translations for 6 languages |
+| [`@xivdyetools/bot-logic`](packages/bot-logic/) | 1.0.0 | Platform-agnostic command business logic (shared by Discord + Stoat bots) |
 | [`@xivdyetools/test-utils`](packages/test-utils/) | 1.1.1 | Cloudflare Workers mocks (D1, KV, R2) and test factories |
 
 ### Applications (`apps/`)
@@ -25,6 +29,7 @@ Published to npm under the `@xivdyetools` scope:
 | App | Version | Description |
 |-----|---------|-------------|
 | [`discord-worker`](apps/discord-worker/) | 4.0.1 | Primary Discord bot (CF Worker + Hono, HTTP Interactions) |
+| [`stoat-worker`](apps/stoat-worker/) | 0.1.0 | Stoat (Revolt) bot (Node.js + revolt.js, WebSocket, prefix commands) |
 | [`moderation-worker`](apps/moderation-worker/) | 1.1.4 | Moderation bot for community presets (CF Worker) |
 | [`presets-api`](apps/presets-api/) | 1.4.12 | Community presets REST API (CF Worker + D1) |
 | [`oauth`](apps/oauth/) | 2.3.5 | Discord OAuth + JWT issuance (CF Worker + D1) |
@@ -69,6 +74,10 @@ pnpm --filter xivdyetools-discord-worker run dev
 types, crypto, logger ──────────────────────────────────┐ (no internal deps)
 auth (→ crypto), rate-limiter ──────────────────────────┤
 core (→ types, logger), test-utils (→ types, logger) ──┤
+color-blending (→ core) ────────────────────────────────┤
+svg (→ core, types, color-blending) ────────────────────┤
+bot-i18n ───────────────────────────────────────────────┤
+bot-logic (→ core, svg, bot-i18n, color-blending) ──────┤
                                                         │
                     Applications ◄──────────────────────┘
 ```
