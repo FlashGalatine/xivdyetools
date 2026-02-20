@@ -8,6 +8,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.2.0] — 2026-02-20
+
+### Added
+
+- **stoat-worker 0.1.0**: Initial scaffold for Stoat (Revolt) bot — revolt.js WebSocket client, prefix command parser (`!xivdye` / `!xd`), command router, dye resolver, and 4 commands (ping, help, about, info)
+
+### Docs
+
+- **stoat-worker**: README with command reference, architecture overview, development guide, and project structure
+- **stoat-worker**: CHANGELOG (initial 0.1.0 release)
+- **@xivdyetools/bot-logic**: README with API surface, usage examples, and dependency overview
+- **@xivdyetools/bot-logic**: CHANGELOG (initial 1.0.0 release)
+- **@xivdyetools/bot-i18n**: README with Translator class usage, locale utilities, and translation key reference
+- **@xivdyetools/bot-i18n**: CHANGELOG (initial 1.0.0 release)
+- **@xivdyetools/svg**: README with all 14 generators, SVG primitives, color utilities, and design principles
+- **@xivdyetools/svg**: CHANGELOG (initial 1.0.0 release)
+- **@xivdyetools/color-blending**: README with 6 blending modes, comparison examples, and API reference
+- **@xivdyetools/color-blending**: CHANGELOG (initial 1.0.0 release)
+
+---
+
 ## [1.1.0] — 2026-02-19
 
 ### Security
@@ -105,5 +126,6 @@ Initial release of the XIV Dye Tools monorepo, consolidating 15 previously indep
 
 ---
 
+[1.2.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/FlashGalatine/xivdyetools/releases/tag/v1.0.0

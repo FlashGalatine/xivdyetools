@@ -4,6 +4,13 @@ Quick summary of what changed and when. See [CHANGELOG.md](CHANGELOG.md) for ful
 
 ---
 
+## 1.2.0 — 2026-02-20
+
+**Stoat bot scaffold + library documentation.** Added the Revolt bot and documented 4 shared packages.
+
+- **stoat-worker 0.1.0**: Initial Stoat (Revolt) bot — revolt.js WebSocket client, prefix commands (`!xd`), command router, dye resolver, 4 commands (ping, help, about, info), 54 tests
+- **README + CHANGELOG** added for `@xivdyetools/bot-logic`, `@xivdyetools/bot-i18n`, `@xivdyetools/svg`, and `@xivdyetools/color-blending`
+
 ## 1.1.0 — 2026-02-19
 
 **Security audit remediation.** Fixed 8 findings from the 2026-02-18 audit (2 false positives confirmed).
