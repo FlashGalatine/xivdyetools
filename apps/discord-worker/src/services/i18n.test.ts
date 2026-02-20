@@ -39,6 +39,9 @@ vi.mock('@xivdyetools/core', () => ({
             getCategory: mockGetCategory,
         };
     }),
+    // bot-logic/input-resolution.ts creates a DyeService instance at module load time
+    DyeService: vi.fn().mockImplementation(function () { return {}; }),
+    dyeDatabase: [],
 }));
 
 import { LocalizationService } from '@xivdyetools/core';
@@ -396,14 +399,6 @@ describe('i18n.ts', () => {
             expect(result).toBe(false);
         });
 
-        it('should log error when initializeLocale fails with logger', async () => {
-            mockSetLocale.mockRejectedValueOnce(new Error('Failed'));
-
-            await initializeLocale('invalid' as LocaleCode, mockLogger);
-
-            expect((mockLogger as { error: typeof vi.fn }).error).toHaveBeenCalled();
-        });
-
         // Tests for non-Error exceptions (covers the `error instanceof Error ? error : undefined` branches)
         it('should pass Error to logger in getUserLanguagePreference', async () => {
             const testError = new Error('Test error');
@@ -450,15 +445,5 @@ describe('i18n.ts', () => {
             );
         });
 
-        it('should pass undefined to logger for non-Error in initializeLocale', async () => {
-            mockSetLocale.mockRejectedValueOnce('string error');
-
-            await initializeLocale('invalid' as LocaleCode, mockLogger);
-
-            expect((mockLogger as { error: typeof vi.fn }).error).toHaveBeenCalledWith(
-                'Failed to initialize locale',
-                undefined
-            );
-        });
     });
 });

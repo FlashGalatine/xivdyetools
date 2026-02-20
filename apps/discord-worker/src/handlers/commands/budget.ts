@@ -175,7 +175,7 @@ async function processFindCommand(
 
     // Initialize core library localization for dye names
     const locale = t.getLocale();
-    await initializeLocale(locale, logger);
+    await initializeLocale(locale);
 
     // Build localized dye name and category maps
     const dyeNames: Record<number, string> = {};

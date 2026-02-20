@@ -67,9 +67,16 @@ vi.mock('@xivdyetools/core', () => {
     }
   }
 
+  class MockLocalizationService {
+    async setLocale(_locale: string): Promise<void> {}
+    getDyeName(_itemID: number): string | undefined { return undefined; }
+    getCategory(category: string): string { return category; }
+  }
+
   return {
     DyeService: MockDyeService,
     dyeDatabase: {},
+    LocalizationService: MockLocalizationService,
   };
 });
 
@@ -546,7 +553,7 @@ describe('accessibility.ts', () => {
       await Promise.all(waitUntilPromises);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Accessibility command error',
+        'Accessibility render error',
         expect.any(Error)
       );
     });
@@ -573,7 +580,7 @@ describe('accessibility.ts', () => {
       await Promise.all(waitUntilPromises);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Accessibility command error',
+        'Accessibility render error',
         undefined
       );
     });

@@ -73,7 +73,7 @@ vi.mock('../../services/svg/renderer.js', () => ({
     renderSvgToPng: (...args: unknown[]) => mockRenderSvgToPng(...args),
 }));
 
-vi.mock('../../services/svg/palette-grid.js', () => ({
+vi.mock('@xivdyetools/svg', () => ({
     generatePaletteGrid: vi.fn(() => '<svg></svg>'),
 }));
 

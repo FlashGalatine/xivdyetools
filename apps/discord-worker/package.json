@@ -26,6 +26,7 @@
     "@resvg/resvg-wasm": "^2.6.2",
     "@xivdyetools/auth": "workspace:*",
     "@xivdyetools/bot-i18n": "workspace:*",
+    "@xivdyetools/bot-logic": "workspace:*",
     "@xivdyetools/color-blending": "workspace:*",
     "@xivdyetools/svg": "workspace:*",
     "@xivdyetools/core": "workspace:*",

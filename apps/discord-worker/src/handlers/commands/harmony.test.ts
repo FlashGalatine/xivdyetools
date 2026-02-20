@@ -30,7 +30,7 @@ vi.mock('../../services/bot-i18n.js', () => ({
   createTranslator: createTranslatorMock.mockReturnValue(translatorStub),
 }));
 
-vi.mock('../../services/svg/harmony-wheel.js', () => ({
+vi.mock('@xivdyetools/svg', () => ({
   generateHarmonyWheel: vi.fn(() => '<svg />'),
 }));
 
@@ -73,8 +73,14 @@ vi.mock('@xivdyetools/core', () => {
     findMonochromaticDyes() { return [mockDyeRed]; }
   }
 
+  class MockLocalizationService {
+    async setLocale(_locale: string): Promise<void> {}
+    getDyeName(_itemID: number): string | undefined { return undefined; }
+    getCategory(category: string): string { return category; }
+  }
+
   const dyeDatabase = {} as const;
-  return { DyeService: MockDyeService, dyeDatabase };
+  return { DyeService: MockDyeService, dyeDatabase, LocalizationService: MockLocalizationService };
 });
 
 describe('handleHarmonyCommand', () => {
@@ -365,7 +371,7 @@ describe('handleHarmonyCommand', () => {
     await Promise.all(waitUntilCalls);
 
     expect(mockLogger.error).toHaveBeenCalledWith(
-      'Harmony command error',
+      'Harmony render error',
       expect.any(Error)
     );
   });

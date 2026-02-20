@@ -1,44 +1,24 @@
 /**
- * /mixer Command Handler (V4) - Dye Blending
+ * /mixer Command Handler (V4 Adapter) - Dye Blending
  *
- * Blends two dyes using various color mixing algorithms and finds
- * the closest FFXIV dye(s) to the blended result.
+ * Thin adapter: extracts Discord options + user preferences,
+ * delegates to executeMixer(), and formats the Discord response with emojis.
  *
  * NOTE: This is the NEW v4 /mixer command for dye blending.
  * The old /mixer (gradient) is now /gradient.
  *
- * Blending Modes:
- * - RGB: Simple additive channel averaging
- * - LAB: Perceptually uniform CIELAB blending
- * - OKLAB: Modern perceptual (fixes LAB blue→purple)
- * - RYB: Traditional artist's color wheel
- * - HSL: Hue-Saturation-Lightness interpolation
- * - Spectral: Kubelka-Munk pigment simulation
- *
  * @module handlers/commands/mixer-v4
  */
 
-import { ColorService, type Dye } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import {
-  messageResponse,
-  deferredResponse,
-  errorEmbed,
-  hexToDiscordColor,
-} from '../../utils/response.js';
-import { resolveColorInput, dyeService, type ResolvedColor } from '../../utils/color.js';
-import { editOriginalResponse } from '../../utils/discord-api.js';
+import { messageResponse, errorEmbed } from '../../utils/response.js';
+import { resolveColorInput } from '../../utils/color.js';
 import { getDyeEmoji } from '../../services/emoji.js';
-import { blendColors, getBlendingModeDescription } from '../../services/color-blending.js';
 import {
   getUserPreferences,
   resolveBlendingMode,
-  resolveMatchingMethod,
   resolveCount,
 } from '../../services/preferences.js';
-import {
-  type BlendingMode,
-} from '../../types/preferences.js';
 import {
   createTranslator,
   createUserTranslator,
@@ -50,24 +30,9 @@ import {
   getLocalizedDyeName,
   type LocaleCode,
 } from '../../services/i18n.js';
+import { executeMixer } from '@xivdyetools/bot-logic';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
-// ============================================================================
-// Constants
-// ============================================================================
-
-/** Color for blend result embeds */
-const BLEND_COLOR = 0x9b59b6; // Purple for mixing theme
-
-// ============================================================================
-// Main Handler
-// ============================================================================
-
-/**
- * Handles the /mixer command (V4 - Dye Blending)
- *
- * Blends two dyes and finds the closest matching FFXIV dye(s).
- */
 export async function handleMixerV4Command(
   interaction: DiscordInteraction,
   env: Env,
@@ -75,23 +40,14 @@ export async function handleMixerV4Command(
   logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
-
-  // Get translator for validation errors (before deferring)
   const t = await createUserTranslator(env.KV, userId, interaction.locale);
 
-  // Extract options
   const options = interaction.data?.options || [];
-  const dye1Option = options.find((opt) => opt.name === 'dye1');
-  const dye2Option = options.find((opt) => opt.name === 'dye2');
-  const modeOption = options.find((opt) => opt.name === 'mode');
-  const countOption = options.find((opt) => opt.name === 'count');
+  const dye1Input = options.find((opt) => opt.name === 'dye1')?.value as string | undefined;
+  const dye2Input = options.find((opt) => opt.name === 'dye2')?.value as string | undefined;
+  const explicitMode = options.find((opt) => opt.name === 'mode')?.value as string | undefined;
+  const explicitCount = options.find((opt) => opt.name === 'count')?.value as number | undefined;
 
-  const dye1Input = dye1Option?.value as string | undefined;
-  const dye2Input = dye2Option?.value as string | undefined;
-  const explicitMode = modeOption?.value as string | undefined;
-  const explicitCount = countOption?.value as number | undefined;
-
-  // Validate required inputs
   if (!dye1Input || !dye2Input) {
     return messageResponse({
       embeds: [errorEmbed(t.t('common.error'), t.t('mixer.bothRequired'))],
@@ -99,233 +55,107 @@ export async function handleMixerV4Command(
     });
   }
 
-  // Resolve the first dye
   const dye1Resolved = resolveColorInput(dye1Input, { excludeFacewear: true });
   if (!dye1Resolved) {
     return messageResponse({
-      embeds: [
-        errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: dye1Input })),
-      ],
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: dye1Input }))],
       flags: 64,
     });
   }
 
-  // Resolve the second dye
   const dye2Resolved = resolveColorInput(dye2Input, { excludeFacewear: true });
   if (!dye2Resolved) {
     return messageResponse({
-      embeds: [
-        errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: dye2Input })),
-      ],
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: dye2Input }))],
       flags: 64,
     });
   }
 
-  // Get user preferences for defaults
   const prefs = await getUserPreferences(env.KV, userId, logger);
   const blendingMode = resolveBlendingMode(explicitMode, prefs);
   const count = resolveCount(explicitCount, prefs);
-
-  // Resolve locale for response
   const locale = t.getLocale();
 
-  // Process the blend (quick operation, no need to defer for simple blending)
-  return processMixerCommand(
-    interaction,
-    env,
-    dye1Resolved,
-    dye2Resolved,
+  await initializeLocale(locale);
+
+  const result = await executeMixer({
+    dye1: dye1Resolved,
+    dye2: dye2Resolved,
     blendingMode,
     count,
     locale,
-    logger
-  );
-}
+  });
 
-// ============================================================================
-// Processing
-// ============================================================================
-
-/**
- * Process the mixer command and return the response
- */
-async function processMixerCommand(
-  interaction: DiscordInteraction,
-  env: Env,
-  dye1: ResolvedColor,
-  dye2: ResolvedColor,
-  blendingMode: BlendingMode,
-  count: number,
-  locale: LocaleCode,
-  logger?: ExtendedLogger
-): Promise<Response> {
-  const t = createTranslator(locale);
-
-  // Initialize localization for dye names
-  await initializeLocale(locale);
-
-  try {
-    // Blend the two colors
-    const blendResult = blendColors(dye1.hex, dye2.hex, blendingMode, 0.5);
-
-    // Find closest dye(s) to the blended color
-    const matches: Array<{ dye: Dye; distance: number }> = [];
-    const excludeIds: number[] = [];
-
-    for (let i = 0; i < count; i++) {
-      const closestDye = findClosestDyeExcludingFacewear(blendResult.hex, [...excludeIds]);
-
-      if (closestDye) {
-        const distance = getColorDistance(blendResult.hex, closestDye.hex);
-        matches.push({ dye: closestDye, distance });
-        excludeIds.push(closestDye.id);
-      }
-    }
-
-    if (matches.length === 0) {
+  if (!result.ok) {
+    if (result.error === 'NO_MATCHES') {
       return messageResponse({
         embeds: [errorEmbed(t.t('common.error'), t.t('errors.noMatchFound'))],
         flags: 64,
       });
     }
-
-    // Build the response
-    return buildMixerResponse(dye1, dye2, blendResult.hex, blendingMode, matches, t);
-  } catch (error) {
-    if (logger) {
-      logger.error('Mixer command error', error instanceof Error ? error : undefined);
-    }
-
+    if (logger) logger.error('Mixer command error');
     return messageResponse({
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
       flags: 64,
     });
   }
-}
 
-// ============================================================================
-// Response Building
-// ============================================================================
+  // Build Discord embed description with emojis
+  const dye1Name = dye1Resolved.itemID && dye1Resolved.name
+    ? getLocalizedDyeName(dye1Resolved.itemID, dye1Resolved.name, locale)
+    : dye1Resolved.name;
+  const dye2Name = dye2Resolved.itemID && dye2Resolved.name
+    ? getLocalizedDyeName(dye2Resolved.itemID, dye2Resolved.name, locale)
+    : dye2Resolved.name;
 
-/**
- * Build the mixer command response
- */
-function buildMixerResponse(
-  dye1: ResolvedColor,
-  dye2: ResolvedColor,
-  blendedHex: string,
-  mode: BlendingMode,
-  matches: Array<{ dye: Dye; distance: number }>,
-  t: Translator
-): Response {
-  const locale = t.getLocale();
-
-  // Format input dyes
-  const dye1Emoji = dye1.id ? getDyeEmoji(dye1.id) : undefined;
-  const dye2Emoji = dye2.id ? getDyeEmoji(dye2.id) : undefined;
-  const dye1Name = dye1.itemID && dye1.name
-    ? getLocalizedDyeName(dye1.itemID, dye1.name, locale)
-    : dye1.name;
-  const dye2Name = dye2.itemID && dye2.name
-    ? getLocalizedDyeName(dye2.itemID, dye2.name, locale)
-    : dye2.name;
+  const dye1Emoji = dye1Resolved.id ? getDyeEmoji(dye1Resolved.id) : undefined;
+  const dye2Emoji = dye2Resolved.id ? getDyeEmoji(dye2Resolved.id) : undefined;
 
   const dye1Display = dye1Name
-    ? `${dye1Emoji ? `${dye1Emoji} ` : ''}**${dye1Name}** (\`${dye1.hex.toUpperCase()}\`)`
-    : `\`${dye1.hex.toUpperCase()}\``;
+    ? `${dye1Emoji ? `${dye1Emoji} ` : ''}**${dye1Name}** (\`${dye1Resolved.hex.toUpperCase()}\`)`
+    : `\`${dye1Resolved.hex.toUpperCase()}\``;
   const dye2Display = dye2Name
-    ? `${dye2Emoji ? `${dye2Emoji} ` : ''}**${dye2Name}** (\`${dye2.hex.toUpperCase()}\`)`
-    : `\`${dye2.hex.toUpperCase()}\``;
+    ? `${dye2Emoji ? `${dye2Emoji} ` : ''}**${dye2Name}** (\`${dye2Resolved.hex.toUpperCase()}\`)`
+    : `\`${dye2Resolved.hex.toUpperCase()}\``;
 
-  // Format blending mode (localized)
-  const modeDisplay = t.t(`mixer.modes.${mode}`) || mode;
+  const modeDisplay = t.t(`mixer.modes.${blendingMode}`) || blendingMode;
 
-  // Format matches
-  const matchLines = matches.map((match, i) => {
-    const { dye, distance } = match;
-    const quality = getMatchQuality(distance, t);
-    const emoji = getDyeEmoji(dye.id);
+  const matchLines = result.matches.map((match, i) => {
+    const emoji = getDyeEmoji(match.dye.id);
     const emojiPrefix = emoji ? `${emoji} ` : '';
-    const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
-
-    return `**${i + 1}.** ${emojiPrefix}**${localizedName}** • \`${dye.hex.toUpperCase()}\` • ${quality.emoji} ${quality.label} (Δ ${distance.toFixed(1)})`;
+    const localizedName = getLocalizedDyeName(match.dye.itemID, match.dye.name, locale);
+    const quality = getMatchQualityLabel(match.distance, t);
+    return `**${i + 1}.** ${emojiPrefix}**${localizedName}** • \`${match.dye.hex.toUpperCase()}\` • ${quality} (Δ ${match.distance.toFixed(1)})`;
   }).join('\n');
 
-  // Build embed
-  const topMatch = matches[0];
-  const topMatchName = getLocalizedDyeName(topMatch.dye.itemID, topMatch.dye.name, locale);
+  const topMatchName = getLocalizedDyeName(result.matches[0].dye.itemID, result.matches[0].dye.name, locale);
 
   return messageResponse({
-    embeds: [
-      {
-        title: `🎨 ${t.t('mixer.blendResult')}`,
-        description: [
-          `**${t.t('mixer.inputDyes')}:**`,
-          `• ${dye1Display}`,
-          `• ${dye2Display}`,
-          '',
-          `**${t.t('mixer.blendingMode')}:** ${modeDisplay}`,
-          `**${t.t('mixer.blendedColor')}:** \`${blendedHex.toUpperCase()}\``,
-          '',
-          matches.length > 1
-            ? `**${t.t('mixer.topMatches', { count: matches.length })}:**`
-            : `**${t.t('mixer.closestMatch')}:**`,
-          matchLines,
-        ].join('\n'),
-        color: hexToDiscordColor(blendedHex),
-        footer: {
-          text: t.t('mixer.footer', { dyeName: topMatchName }),
-        },
-      },
-    ],
+    embeds: [{
+      title: `🎨 ${t.t('mixer.blendResult')}`,
+      description: [
+        `**${t.t('mixer.inputDyes')}:**`,
+        `• ${dye1Display}`,
+        `• ${dye2Display}`,
+        '',
+        `**${t.t('mixer.blendingMode')}:** ${modeDisplay}`,
+        `**${t.t('mixer.blendedColor')}:** \`${result.blendedHex.toUpperCase()}\``,
+        '',
+        result.matches.length > 1
+          ? `**${t.t('mixer.topMatches', { count: result.matches.length })}:**`
+          : `**${t.t('mixer.closestMatch')}:**`,
+        matchLines,
+      ].join('\n'),
+      color: parseInt(result.blendedHex.replace('#', ''), 16),
+      footer: { text: t.t('mixer.footer', { dyeName: topMatchName }) },
+    }],
   });
 }
 
-// ============================================================================
-// Utility Functions
-// ============================================================================
-
-/**
- * Finds closest dye excluding Facewear category
- */
-function findClosestDyeExcludingFacewear(
-  targetHex: string,
-  excludeIds: number[] = [],
-  maxAttempts = 20
-): Dye | null {
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const candidate = dyeService.findClosestDye(targetHex, excludeIds);
-    if (!candidate) break;
-
-    if (candidate.category !== 'Facewear') {
-      return candidate;
-    }
-    excludeIds.push(candidate.id);
-  }
-  return null;
-}
-
-/**
- * Calculates Euclidean distance between two hex colors
- */
-function getColorDistance(hex1: string, hex2: string): number {
-  const rgb1 = ColorService.hexToRgb(hex1);
-  const rgb2 = ColorService.hexToRgb(hex2);
-
-  return Math.sqrt(
-    Math.pow(rgb1.r - rgb2.r, 2) +
-    Math.pow(rgb1.g - rgb2.g, 2) +
-    Math.pow(rgb1.b - rgb2.b, 2)
-  );
-}
-
-/**
- * Gets match quality emoji and label based on color distance
- */
-function getMatchQuality(distance: number, t: Translator): { emoji: string; label: string } {
-  if (distance === 0) return { emoji: '🎯', label: t.t('quality.perfect') };
-  if (distance < 10) return { emoji: '✨', label: t.t('quality.excellent') };
-  if (distance < 25) return { emoji: '👍', label: t.t('quality.good') };
-  if (distance < 50) return { emoji: '⚠️', label: t.t('quality.fair') };
-  return { emoji: '🔍', label: t.t('quality.approximate') };
+function getMatchQualityLabel(distance: number, t: Translator): string {
+  if (distance === 0) return `🎯 ${t.t('quality.perfect')}`;
+  if (distance < 10) return `✨ ${t.t('quality.excellent')}`;
+  if (distance < 25) return `👍 ${t.t('quality.good')}`;
+  if (distance < 50) return `⚠️ ${t.t('quality.fair')}`;
+  return `🔍 ${t.t('quality.approximate')}`;
 }

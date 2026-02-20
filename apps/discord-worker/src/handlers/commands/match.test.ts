@@ -66,7 +66,13 @@ vi.mock('@xivdyetools/core', () => {
     },
   };
 
-  return { DyeService: MockDyeService, dyeDatabase: [], ColorService };
+  class MockLocalizationService {
+    async setLocale(_locale: string): Promise<void> {}
+    getDyeName(_itemID: number): string | undefined { return undefined; }
+    getCategory(category: string): string { return category; }
+  }
+
+  return { DyeService: MockDyeService, dyeDatabase: [], ColorService, LocalizationService: MockLocalizationService };
 });
 
 // Mock emoji - can be overridden per test

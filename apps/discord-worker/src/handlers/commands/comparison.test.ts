@@ -67,9 +67,16 @@ vi.mock('@xivdyetools/core', () => {
     }
   }
 
+  class MockLocalizationService {
+    async setLocale(_locale: string): Promise<void> {}
+    getDyeName(_itemID: number): string | undefined { return undefined; }
+    getCategory(category: string): string { return category; }
+  }
+
   return {
     DyeService: MockDyeService,
     dyeDatabase: {},
+    LocalizationService: MockLocalizationService,
   };
 });
 

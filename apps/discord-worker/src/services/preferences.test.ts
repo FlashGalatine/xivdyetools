@@ -6,12 +6,17 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock xivdyetools-core to avoid JSON import issues
 vi.mock('@xivdyetools/core', () => ({
-  LocalizationService: {
-    clear: vi.fn(),
-    setLocale: vi.fn().mockResolvedValue(undefined),
-    getDyeName: vi.fn(() => null),
-    getCategory: vi.fn((category: string) => category),
-  },
+  // Must be constructable: bot-logic/localization.ts uses `new LocalizationService()`
+  LocalizationService: vi.fn().mockImplementation(function () {
+    return {
+      setLocale: vi.fn().mockResolvedValue(undefined),
+      getDyeName: vi.fn(() => null),
+      getCategory: vi.fn((category: string) => category),
+    };
+  }),
+  // bot-logic/input-resolution.ts creates a DyeService instance at module load time
+  DyeService: vi.fn().mockImplementation(function () { return {}; }),
+  dyeDatabase: [],
 }));
 
 // Create mock KV namespace
