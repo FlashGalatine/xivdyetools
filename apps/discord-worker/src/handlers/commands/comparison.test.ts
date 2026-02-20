@@ -107,7 +107,7 @@ vi.mock('../../services/i18n.js', () => ({
   getLocalizedDyeName: vi.fn((itemId: number, name: string) => name),
 }));
 
-vi.mock('../../services/svg/comparison-grid.js', () => ({
+vi.mock('@xivdyetools/svg', () => ({
   generateComparisonGrid: vi.fn().mockReturnValue('<svg>comparison</svg>'),
 }));
 
@@ -124,7 +124,7 @@ vi.mock('../../utils/discord-api.js', () => ({
 }));
 
 import { editOriginalResponse } from '../../utils/discord-api.js';
-import { generateComparisonGrid } from '../../services/svg/comparison-grid.js';
+import { generateComparisonGrid } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 
 describe('comparison.ts', () => {

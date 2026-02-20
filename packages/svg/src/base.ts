@@ -2,7 +2,8 @@
  * SVG Base Utilities
  *
  * Core utilities for generating SVG graphics as strings.
- * These SVGs are later converted to PNG using resvg-wasm for Discord display.
+ * These SVGs are later converted to PNG using a platform-specific renderer
+ * (e.g., resvg-wasm for Cloudflare Workers, @resvg/resvg-js for Node.js).
  */
 
 /**

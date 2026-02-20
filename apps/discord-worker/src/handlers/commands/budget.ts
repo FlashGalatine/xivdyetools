@@ -14,7 +14,7 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed, ephemeralResponse } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
-import { generateBudgetComparison, generateErrorSvg, type BudgetSvgLabels } from '../../services/svg/budget-comparison.js';
+import { generateBudgetComparison, generateErrorSvg, type BudgetSvgLabels } from '@xivdyetools/svg';
 import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, getLocalizedCategory } from '../../services/i18n.js';
 import { getUserPreferences, setPreference } from '../../services/preferences.js';

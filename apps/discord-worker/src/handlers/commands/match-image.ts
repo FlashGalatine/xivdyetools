@@ -19,7 +19,7 @@ import { dyeService } from '../../utils/color.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
-import { generatePaletteGrid, type PaletteEntry, type PaletteGridLabels } from '../../services/svg/palette-grid.js';
+import { generatePaletteGrid, type PaletteEntry, type PaletteGridLabels } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { validateAndFetchImage, processImageForExtraction } from '../../services/image/index.js';

@@ -42,7 +42,7 @@ import {
   getLocalizedDyeName,
   type LocaleCode,
 } from '../../services/i18n.js';
-import { generatePaletteGrid, type PaletteEntry, type PaletteGridLabels } from '../../services/svg/palette-grid.js';
+import { generatePaletteGrid, type PaletteEntry, type PaletteGridLabels } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { validateAndFetchImage, processImageForExtraction } from '../../services/image/index.js';
 import { getMatchQuality as getImageMatchQuality } from '../../types/image.js';

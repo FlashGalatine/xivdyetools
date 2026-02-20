@@ -31,7 +31,7 @@ import {
   getContrastTextColor,
   hexToRgb,
 } from './base.js';
-import { rgbToLab, type LAB } from '../color-blending.js';
+import { rgbToLab, type LAB } from '@xivdyetools/color-blending';
 
 // ============================================================================
 // Types

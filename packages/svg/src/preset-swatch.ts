@@ -15,10 +15,11 @@
  * |  #HEX    |  #HEX    |  #HEX    |  #HEX    |              |
  * +----------+----------+----------+----------+--------------+
  *
- * @module services/svg/preset-swatch
+ * @module svg/preset-swatch
  */
 
 import type { Dye } from '@xivdyetools/core';
+import type { PresetCategory } from '@xivdyetools/types';
 import {
   createSvgDocument,
   rect,
@@ -27,7 +28,23 @@ import {
   FONTS,
   escapeXml,
 } from './base.js';
-import { CATEGORY_DISPLAY, type PresetCategory } from '../../types/preset.js';
+
+// ============================================================================
+// Category Display (visual display constant, moved from discord-worker)
+// ============================================================================
+
+/**
+ * Category display metadata for preset swatches.
+ * Moved here from discord-worker's types/preset.ts since it is purely visual.
+ */
+export const CATEGORY_DISPLAY: Record<PresetCategory, { icon: string; name: string }> = {
+  jobs: { icon: '⚔️', name: 'FFXIV Jobs' },
+  'grand-companies': { icon: '🏛️', name: 'Grand Companies' },
+  seasons: { icon: '🍂', name: 'Seasons' },
+  events: { icon: '🎉', name: 'FFXIV Events' },
+  aesthetics: { icon: '🎨', name: 'Aesthetics' },
+  community: { icon: '🌐', name: 'Community' },
+};
 
 // ============================================================================
 // Types

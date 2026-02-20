@@ -16,10 +16,10 @@
  * |               #8B8B8B          Distance: 28 (Good)        |
  * +----------------------------------------------------------+
  *
- * @module services/svg/budget-comparison
+ * @module svg/budget-comparison
  */
 
-import type { Dye } from '@xivdyetools/types';
+import type { Dye } from '@xivdyetools/core';
 import {
   createSvgDocument,
   rect,
@@ -30,8 +30,46 @@ import {
   escapeXml,
   getContrastTextColor,
 } from './base.js';
-import type { BudgetSuggestion, DyePriceData, BudgetSortOption } from '../../types/budget.js';
-import { formatGil } from '../../types/budget.js';
+
+// ============================================================================
+// Local Types (minimal subset used by SVG rendering)
+// ============================================================================
+
+/**
+ * Price data for a dye on the market board.
+ * This interface is structurally compatible with the discord-worker's
+ * richer DyePriceData type — only the fields needed for SVG rendering
+ * are declared here.
+ */
+export interface DyePriceData {
+  currentMinPrice: number;
+  world: string;
+  listingCount: number;
+}
+
+/**
+ * A budget alternative suggestion.
+ */
+export interface BudgetSuggestion {
+  dye: Dye;
+  price: DyePriceData | null;
+  colorDistance: number;
+  savings: number;
+  savingsPercent: number;
+  valueScore: number;
+}
+
+/**
+ * Sort option for budget results.
+ */
+export type BudgetSortOption = 'price' | 'color_match' | 'value_score';
+
+/**
+ * Format a Gil amount with locale-appropriate separators.
+ */
+export function formatGil(amount: number): string {
+  return amount.toLocaleString('en-US');
+}
 
 // ============================================================================
 // Types

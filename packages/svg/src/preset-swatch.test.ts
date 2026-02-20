@@ -9,7 +9,7 @@ import {
 } from './preset-swatch.js';
 import { createMockDye } from '@xivdyetools/test-utils/factories';
 import type { Dye } from '@xivdyetools/types/dye';
-import type { PresetCategory } from '../../types/preset.js';
+import type { PresetCategory } from '@xivdyetools/types';
 
 describe('svg/preset-swatch.ts', () => {
     const mockDye1: Dye = createMockDye({

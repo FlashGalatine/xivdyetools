@@ -1,14 +1,9 @@
 /**
  * SVG Services - Public API
+ *
+ * All SVG card generators are now provided by @xivdyetools/svg.
+ * Only the WASM renderer (resvg-wasm) remains in this worker.
  */
 
-export * from './base.js';
-export * from './harmony-wheel.js';
-export * from './gradient.js';
-export * from './palette-grid.js';
-export * from './accessibility-comparison.js';
-export * from './contrast-matrix.js';
-export * from './comparison-grid.js';
-export * from './dye-info-card.js';
-export * from './random-dyes-grid.js';
+export * from '@xivdyetools/svg';
 export * from './renderer.js';

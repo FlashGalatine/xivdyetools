@@ -20,7 +20,7 @@ import { editOriginalResponse } from '../../utils/discord-api.js';
 import {
   generateGradientBar,
   type GradientStep,
-} from '../../services/svg/gradient.js';
+} from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import {

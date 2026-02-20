@@ -17,7 +17,7 @@ import {
   generateGradientBar,
   generateGradientColors,
   type GradientStep,
-} from '../../services/svg/gradient.js';
+} from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createTranslator, createUserTranslator, type Translator } from '../../services/bot-i18n.js';

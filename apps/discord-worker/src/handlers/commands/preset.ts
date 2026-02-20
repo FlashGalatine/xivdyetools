@@ -28,7 +28,7 @@ import {
   ephemeralResponse,
 } from '../../utils/response.js';
 import { editOriginalResponse, sendMessage } from '../../utils/discord-api.js';
-import { generatePresetSwatch } from '../../services/svg/preset-swatch.js';
+import { generatePresetSwatch } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';

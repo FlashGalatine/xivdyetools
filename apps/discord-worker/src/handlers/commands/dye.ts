@@ -22,8 +22,8 @@ import { getDyeEmoji } from '../../services/emoji.js';
 import { createCopyButtons } from '../buttons/index.js';
 import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, getLocalizedCategory, type LocaleCode } from '../../services/i18n.js';
-import { generateDyeInfoCard } from '../../services/svg/dye-info-card.js';
-import { generateRandomDyesGrid, type RandomDyeInfo } from '../../services/svg/random-dyes-grid.js';
+import { generateDyeInfoCard } from '@xivdyetools/svg';
+import { generateRandomDyesGrid, type RandomDyeInfo } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 

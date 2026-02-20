@@ -14,8 +14,8 @@ import { generateHarmonyWheel } from './harmony-wheel.js';
 import { generateBudgetComparison, generateNoWorldSetSvg, generateErrorSvg } from './budget-comparison.js';
 import { generateDyeInfoCard } from './dye-info-card.js';
 import { generateRandomDyesGrid } from './random-dyes-grid.js';
-import { createMockDye } from '../../test-utils.js';
-import type { BudgetSuggestion, DyePriceData } from '../../types/budget.js';
+import { createMockDye } from '@xivdyetools/test-utils/factories';
+import type { BudgetSuggestion, DyePriceData } from './budget-comparison.js';
 
 // ============================================================================
 // Helpers
@@ -28,17 +28,12 @@ function expectValidSvg(svg: string) {
   expect(svg).toContain('</svg>');
 }
 
-/** Creates a mock DyePriceData */
-function createMockPrice(itemID: number, price: number): DyePriceData {
+/** Creates a mock DyePriceData with only the fields required by the SVG package */
+function createMockPrice(_itemID: number, price: number): DyePriceData {
   return {
-    itemID,
-    currentAverage: price + 200,
     currentMinPrice: price,
-    currentMaxPrice: price + 500,
-    lastUpdate: Date.now(),
     world: 'Cactuar',
     listingCount: 10,
-    fetchedAt: new Date().toISOString(),
   };
 }
 
@@ -256,7 +251,7 @@ describe('SVG Pipeline: Dye Info Card', () => {
 
   it('integrates with color-blending rgbToLab for LAB values', () => {
     // This test validates the cross-module dependency:
-    // dye-info-card.ts imports rgbToLab from color-blending.ts
+    // dye-info-card.ts imports rgbToLab from @xivdyetools/color-blending
     const dye = createMockDye({
       id: 1,
       name: 'Dalamud Red',

@@ -14,7 +14,7 @@
  * |  HSV: H°, S%, V%   LAB: L, a, b                 |
  * +--------------------------------------------------+
  *
- * @module services/svg/dye-info-card
+ * @module svg/dye-info-card
  */
 
 import type { Dye } from '@xivdyetools/core';
@@ -29,7 +29,7 @@ import {
   getContrastTextColor,
   hexToRgb,
 } from './base.js';
-import { rgbToLab } from '../color-blending.js';
+import { rgbToLab } from '@xivdyetools/color-blending';
 
 // ============================================================================
 // Types

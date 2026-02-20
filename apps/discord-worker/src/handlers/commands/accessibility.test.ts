@@ -142,11 +142,8 @@ vi.mock('../../services/i18n.js', () => ({
   getLocalizedDyeName: vi.fn((itemId: number, name: string) => name),
 }));
 
-vi.mock('../../services/svg/accessibility-comparison.js', () => ({
+vi.mock('@xivdyetools/svg', () => ({
   generateAccessibilityComparison: vi.fn().mockReturnValue('<svg>accessibility</svg>'),
-}));
-
-vi.mock('../../services/svg/contrast-matrix.js', () => ({
   generateContrastMatrix: vi.fn().mockReturnValue('<svg>contrast</svg>'),
 }));
 
@@ -163,8 +160,7 @@ vi.mock('../../utils/discord-api.js', () => ({
 }));
 
 import { editOriginalResponse } from '../../utils/discord-api.js';
-import { generateAccessibilityComparison } from '../../services/svg/accessibility-comparison.js';
-import { generateContrastMatrix } from '../../services/svg/contrast-matrix.js';
+import { generateAccessibilityComparison, generateContrastMatrix } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 
 describe('accessibility.ts', () => {

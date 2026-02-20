@@ -18,11 +18,11 @@ import { editOriginalResponse } from '../../utils/discord-api.js';
 import {
   generateAccessibilityComparison,
   type VisionType,
-} from '../../services/svg/accessibility-comparison.js';
+} from '@xivdyetools/svg';
 import {
   generateContrastMatrix,
   type ContrastDye,
-} from '../../services/svg/contrast-matrix.js';
+} from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createTranslator, createUserTranslator, type Translator } from '../../services/bot-i18n.js';

@@ -11,7 +11,7 @@ import { deferredResponse, errorEmbed } from '../../utils/response.js';
 // DISCORD-REF-001 FIX: Import from centralized color utilities
 import { resolveColorInput as resolveColor } from '../../utils/color.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
-import { generateComparisonGrid } from '../../services/svg/comparison-grid.js';
+import { generateComparisonGrid } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';

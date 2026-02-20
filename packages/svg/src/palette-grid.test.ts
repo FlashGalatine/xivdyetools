@@ -1,21 +1,10 @@
 /**
  * Tests for Palette Grid SVG Generator
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { generatePaletteGrid, type PaletteEntry } from './palette-grid.js';
 import { createMockDye } from '@xivdyetools/test-utils/factories';
 import type { Dye } from '@xivdyetools/types/dye';
-
-// Mock the image types
-vi.mock('../../types/image.js', () => ({
-    getMatchQuality: vi.fn((distance: number) => {
-        if (distance === 0) return { shortLabel: 'EXACT', label: 'Exact Match' };
-        if (distance < 10) return { shortLabel: 'EXCELLENT', label: 'Excellent' };
-        if (distance < 25) return { shortLabel: 'GOOD', label: 'Good' };
-        if (distance < 50) return { shortLabel: 'FAIR', label: 'Fair' };
-        return { shortLabel: 'POOR', label: 'Poor' };
-    }),
-}));
 
 describe('svg/palette-grid.ts', () => {
     const mockDye: Dye = createMockDye({
@@ -235,7 +224,7 @@ describe('svg/palette-grid.ts', () => {
             expect(svg).toContain('<polygon');
         });
 
-        it('should show EXACT badge for distance 0', () => {
+        it('should show PERFECT badge for distance 0', () => {
             const entries: PaletteEntry[] = [
                 {
                     extracted: { r: 170, g: 17, b: 17 },
@@ -247,7 +236,7 @@ describe('svg/palette-grid.ts', () => {
 
             const svg = generatePaletteGrid({ entries });
 
-            expect(svg).toContain('EXACT');
+            expect(svg).toContain('PERFECT');
         });
 
         it('should show FAIR badge for distance 25-49', () => {
@@ -265,7 +254,7 @@ describe('svg/palette-grid.ts', () => {
             expect(svg).toContain('FAIR');
         });
 
-        it('should show POOR badge for distance >= 50', () => {
+        it('should show APPROX badge for distance >= 50', () => {
             const entries: PaletteEntry[] = [
                 {
                     extracted: { r: 180, g: 20, b: 20 },
@@ -277,7 +266,7 @@ describe('svg/palette-grid.ts', () => {
 
             const svg = generatePaletteGrid({ entries });
 
-            expect(svg).toContain('POOR');
+            expect(svg).toContain('APPROX');
         });
 
         it('should show GOOD badge for distance 10-24', () => {
