@@ -1,0 +1,43 @@
+{
+  "name": "xivdyetools-stoat-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "XIV Dye Tools Stoat (Revolt) Bot — WebSocket-based Node.js bot",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src/",
+    "clean": "rimraf dist coverage"
+  },
+  "keywords": ["stoat", "revolt", "bot", "ffxiv", "dye"],
+  "author": "Flash Galatine",
+  "license": "ISC",
+  "dependencies": {
+    "@xivdyetools/bot-i18n": "workspace:*",
+    "@xivdyetools/bot-logic": "workspace:*",
+    "@xivdyetools/color-blending": "workspace:*",
+    "@xivdyetools/core": "workspace:*",
+    "@xivdyetools/logger": "workspace:*",
+    "@xivdyetools/rate-limiter": "workspace:*",
+    "@xivdyetools/svg": "workspace:*",
+    "@xivdyetools/types": "workspace:*",
+    "revolt.js": "^7.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@xivdyetools/test-utils": "workspace:*",
+    "tsup": "^8.5.0",
+    "tsx": "^4.21.0",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
