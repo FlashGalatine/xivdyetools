@@ -21,6 +21,7 @@ import {
   createSvgDocument,
   rect,
   text,
+  truncateText,
   THEME,
   FONTS,
 } from './base.js';
@@ -428,6 +429,5 @@ function generateErrorMatrix(message: string): string {
  * Truncate a name to fit in the available space
  */
 function truncateName(name: string, maxLength: number): string {
-  if (name.length <= maxLength) return name;
-  return name.slice(0, maxLength - 1) + '…';
+  return truncateText(name, maxLength);
 }

@@ -10,6 +10,7 @@ import {
   rect,
   line,
   text,
+  truncateText,
   THEME,
   FONTS,
 } from './base.js';
@@ -163,8 +164,7 @@ export function generateGradientBar(options: GradientBarOptions): string {
  * Truncates a name to fit within the step width
  */
 function truncateName(name: string, maxLength: number): string {
-  if (name.length <= maxLength) return name;
-  return name.slice(0, maxLength - 2) + '..';
+  return truncateText(name, maxLength);
 }
 
 /**

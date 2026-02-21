@@ -206,6 +206,70 @@ describe('createMockD1Database', () => {
       expect(results[0].success).toBe(true);
       expect(results[1].success).toBe(true);
     });
+
+    it('returns actual statement results instead of empty arrays (BUG-007)', async () => {
+      const db = createMockD1Database();
+      db._setupMock((query) => {
+        if (query.includes('users')) return [{ id: 1, name: 'Alice' }];
+        if (query.includes('posts')) return [{ id: 10, title: 'Hello' }];
+        return null;
+      });
+
+      const stmt1 = db.prepare('SELECT * FROM users');
+      const stmt2 = db.prepare('SELECT * FROM posts');
+      const results = await db.batch([stmt1, stmt2]);
+
+      expect(results).toHaveLength(2);
+      // BUG-007: Previously both would have results: []
+      expect(results[0].results).not.toHaveLength(0);
+      expect(results[1].results).not.toHaveLength(0);
+    });
+  });
+
+  describe('bind timing (BUG-006)', () => {
+    it('does not record bindings until statement is executed', async () => {
+      const db = createMockD1Database();
+      const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
+
+      // Bind but don't execute
+      stmt.bind(42);
+
+      // BUG-006: Previously this would be 1 (recorded at bind time)
+      expect(db._bindings).toHaveLength(0);
+    });
+
+    it('records bindings when statement is executed via first()', async () => {
+      const db = createMockD1Database();
+      const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
+
+      stmt.bind(42);
+      await stmt.first();
+
+      expect(db._bindings).toHaveLength(1);
+      expect(db._bindings[0]).toEqual([42]);
+    });
+
+    it('records bindings when statement is executed via all()', async () => {
+      const db = createMockD1Database();
+      const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
+
+      stmt.bind(99);
+      await stmt.all();
+
+      expect(db._bindings).toHaveLength(1);
+      expect(db._bindings[0]).toEqual([99]);
+    });
+
+    it('records bindings when statement is executed via run()', async () => {
+      const db = createMockD1Database();
+      const stmt = db.prepare('INSERT INTO users VALUES (?)');
+
+      stmt.bind('Alice');
+      await stmt.run();
+
+      expect(db._bindings).toHaveLength(1);
+      expect(db._bindings[0]).toEqual(['Alice']);
+    });
   });
 
   describe('exec', () => {

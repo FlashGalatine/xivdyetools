@@ -25,6 +25,7 @@ import {
   createSvgDocument,
   rect,
   text,
+  truncateText,
   THEME,
   FONTS,
   getContrastTextColor,
@@ -191,9 +192,7 @@ function generateDyeCard(dyeInfo: RandomDyeInfo, x: number, y: number): string {
 
   // Dye name (truncate if too long)
   const maxNameLength = 18;
-  const displayName = localizedName.length > maxNameLength
-    ? localizedName.substring(0, maxNameLength - 1) + '…'
-    : localizedName;
+  const displayName = truncateText(localizedName, maxNameLength);
 
   elements.push(
     text(x + CARD_WIDTH / 2, infoY, displayName, {

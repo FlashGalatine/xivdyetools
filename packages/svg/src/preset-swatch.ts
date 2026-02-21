@@ -24,6 +24,7 @@ import {
   createSvgDocument,
   rect,
   text,
+  truncateText,
   THEME,
   FONTS,
 } from './base.js';
@@ -148,10 +149,7 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
 
   // Description (truncated if too long)
   const maxDescLength = 60;
-  const truncatedDesc =
-    description.length > maxDescLength
-      ? description.substring(0, maxDescLength - 3) + '...'
-      : description;
+  const truncatedDesc = truncateText(description, maxDescLength);
 
   elements.push(
     text(width / 2, PADDING + 50, truncatedDesc, {
@@ -215,10 +213,7 @@ function generateDyeSwatch(dye: Dye, x: number, y: number, width: number): strin
   // Dye name (truncated if needed)
   const labelY = y + SWATCH_HEIGHT + 18;
   const maxNameLength = Math.floor(width / 7); // Approximate chars that fit
-  const truncatedName =
-    dye.name.length > maxNameLength
-      ? dye.name.substring(0, maxNameLength - 2) + '..'
-      : dye.name;
+  const truncatedName = truncateText(dye.name, maxNameLength);
 
   elements.push(
     text(x + width / 2, labelY, truncatedName, {

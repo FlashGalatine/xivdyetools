@@ -178,12 +178,12 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
     const statement: MockD1PreparedStatement = {
       bind: (...values: unknown[]) => {
         boundValues = values;
-        bindings.push(values);
         return statement;
       },
 
       first: async <T = unknown>() => {
         queries.push(query);
+        bindings.push(boundValues);
         enforceMaxHistory();
         // Special handling for ban-check queries (SELECT 1 FROM banned_users)
         // to prevent false ban detection in middleware.
@@ -213,6 +213,7 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
 
       all: async <T = unknown>(): Promise<D1Result<T>> => {
         queries.push(query);
+        bindings.push(boundValues);
         enforceMaxHistory();
         if (mockFn) {
           const result = mockFn(query, boundValues);
@@ -229,6 +230,7 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
 
       run: async <T = unknown>(): Promise<D1Result<T>> => {
         queries.push(query);
+        bindings.push(boundValues);
         enforceMaxHistory();
         if (mockFn) {
           const result = mockFn(query, boundValues);
@@ -245,6 +247,7 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
 
       raw: async <T = unknown[]>(_options?: { columnNames?: boolean }): Promise<T> => {
         queries.push(query);
+        bindings.push(boundValues);
         enforceMaxHistory();
         if (mockFn) {
           const result = mockFn(query, boundValues);
@@ -272,9 +275,8 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
     batch: async <T = unknown>(statements: MockD1PreparedStatement[]): Promise<D1Result<T>[]> => {
       const results: D1Result<T>[] = [];
       for (const stmt of statements) {
-        // Execute each statement's run method
-        await stmt.run();
-        results.push({ results: [] as T[], success: true as const, meta: createDefaultMeta() });
+        const result = await stmt.all<T>();
+        results.push(result);
       }
       return results;
     },
@@ -298,8 +300,8 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
         batch: async <T = unknown>(statements: MockD1PreparedStatement[]): Promise<D1Result<T>[]> => {
           const results: D1Result<T>[] = [];
           for (const stmt of statements) {
-            await stmt.run();
-            results.push({ results: [] as T[], success: true as const, meta: createDefaultMeta() });
+            const result = await stmt.all<T>();
+            results.push(result);
           }
           return results;
         },

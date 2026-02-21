@@ -22,6 +22,8 @@ export {
   text,
   arcPath,
   group,
+  truncateText,
+  estimateTextWidth,
   THEME,
   FONTS,
 } from './base.js';

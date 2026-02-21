@@ -77,6 +77,59 @@ export function decodeJWT(token: string): JWTPayload | null {
 }
 
 /**
+ * Shared JWT signature verification helper (REFACTOR-003).
+ *
+ * Validates token structure, ensures HS256 algorithm, and verifies
+ * HMAC-SHA256 signature. Used by both `verifyJWT()` and `verifyJWTSignatureOnly()`.
+ *
+ * @param token - The JWT string
+ * @param secret - The HMAC secret
+ * @returns Decoded payload if signature is valid, null otherwise
+ */
+async function verifyJWTSignature(
+  token: string,
+  secret: string
+): Promise<JWTPayload | null> {
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  const [headerB64, payloadB64, signatureB64] = parts;
+
+  // Decode and validate header
+  const headerJson = base64UrlDecode(headerB64);
+  const header: JWTHeader = JSON.parse(headerJson) as JWTHeader;
+
+  // SECURITY: Reject non-HS256 algorithms (prevents algorithm confusion attacks)
+  if (header.alg !== 'HS256') {
+    return null;
+  }
+
+  // SECURITY: Verify signature using crypto.subtle.verify() which is
+  // inherently timing-safe (comparison happens in native crypto, not JS)
+  const signatureInput = `${headerB64}.${payloadB64}`;
+  const key = await getOrCreateHmacKey(secret, 'verify');
+  const encoder = new TextEncoder();
+  const signatureBytes = base64UrlDecodeBytes(signatureB64);
+
+  const isValid = await crypto.subtle.verify(
+    'HMAC',
+    key,
+    signatureBytes,
+    encoder.encode(signatureInput)
+  );
+
+  if (!isValid) {
+    return null;
+  }
+
+  // Decode payload
+  const payloadJson = base64UrlDecode(payloadB64);
+  return JSON.parse(payloadJson) as JWTPayload;
+}
+
+/**
  * Verify a JWT and return the payload if valid.
  *
  * Performs full verification:
@@ -102,43 +155,8 @@ export async function verifyJWT(
   secret: string
 ): Promise<JWTPayload | null> {
   try {
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      return null;
-    }
-
-    const [headerB64, payloadB64, signatureB64] = parts;
-
-    // Decode and validate header
-    const headerJson = base64UrlDecode(headerB64);
-    const header: JWTHeader = JSON.parse(headerJson) as JWTHeader;
-
-    // SECURITY: Reject non-HS256 algorithms (prevents algorithm confusion attacks)
-    if (header.alg !== 'HS256') {
-      return null;
-    }
-
-    // SECURITY: Verify signature using crypto.subtle.verify() which is
-    // inherently timing-safe (comparison happens in native crypto, not JS)
-    const signatureInput = `${headerB64}.${payloadB64}`;
-    const key = await getOrCreateHmacKey(secret, 'verify');
-    const encoder = new TextEncoder();
-    const signatureBytes = base64UrlDecodeBytes(signatureB64);
-
-    const isValid = await crypto.subtle.verify(
-      'HMAC',
-      key,
-      signatureBytes,
-      encoder.encode(signatureInput)
-    );
-
-    if (!isValid) {
-      return null;
-    }
-
-    // Decode payload
-    const payloadJson = base64UrlDecode(payloadB64);
-    const payload: JWTPayload = JSON.parse(payloadJson) as JWTPayload;
+    const payload = await verifyJWTSignature(token, secret);
+    if (!payload) return null;
 
     // FINDING-003: Require exp claim — tokens without expiration are rejected
     const now = Math.floor(Date.now() / 1000);
@@ -179,43 +197,8 @@ export async function verifyJWTSignatureOnly(
   maxAgeMs?: number
 ): Promise<JWTPayload | null> {
   try {
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      return null;
-    }
-
-    const [headerB64, payloadB64, signatureB64] = parts;
-
-    // Decode and validate header
-    const headerJson = base64UrlDecode(headerB64);
-    const header: JWTHeader = JSON.parse(headerJson) as JWTHeader;
-
-    // SECURITY: Still reject non-HS256 algorithms
-    if (header.alg !== 'HS256') {
-      return null;
-    }
-
-    // SECURITY: Verify signature using crypto.subtle.verify() which is
-    // inherently timing-safe (comparison happens in native crypto, not JS)
-    const signatureInput = `${headerB64}.${payloadB64}`;
-    const key = await getOrCreateHmacKey(secret, 'verify');
-    const encoder = new TextEncoder();
-    const signatureBytes = base64UrlDecodeBytes(signatureB64);
-
-    const isValid = await crypto.subtle.verify(
-      'HMAC',
-      key,
-      signatureBytes,
-      encoder.encode(signatureInput)
-    );
-
-    if (!isValid) {
-      return null;
-    }
-
-    // Decode payload
-    const payloadJson = base64UrlDecode(payloadB64);
-    const payload: JWTPayload = JSON.parse(payloadJson) as JWTPayload;
+    const payload = await verifyJWTSignature(token, secret);
+    if (!payload) return null;
 
     // Check max age if specified
     if (maxAgeMs !== undefined && payload.iat) {

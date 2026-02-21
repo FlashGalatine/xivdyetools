@@ -167,8 +167,8 @@ describe('svg/gradient.ts', () => {
 
             const svg = generateGradientBar({ steps });
 
-            // The truncated name should be in the output (with ..)
-            expect(svg).toContain('Very Long ..');
+            // The truncated name should be in the output (with …)
+            expect(svg).toContain('Very Long D…');
             expect(svg).toContain('Short');
         });
 

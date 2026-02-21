@@ -15,6 +15,8 @@ import {
     text,
     arcPath,
     group,
+    truncateText,
+    estimateTextWidth,
     THEME,
     FONTS,
 } from './base.js';
@@ -311,6 +313,58 @@ describe('svg/base.ts', () => {
             expect(FONTS.header).toBe('Space Grotesk');
             expect(FONTS.primary).toBe('Onest');
             expect(FONTS.mono).toBe('Habibi');
+        });
+    });
+
+    describe('truncateText', () => {
+        it('should return text unchanged if within max length', () => {
+            expect(truncateText('hello', 10)).toBe('hello');
+        });
+
+        it('should return text unchanged if exactly at max length', () => {
+            expect(truncateText('hello', 5)).toBe('hello');
+        });
+
+        it('should truncate and append Unicode ellipsis when exceeding max length', () => {
+            expect(truncateText('hello world', 8)).toBe('hello w…');
+        });
+
+        it('should handle single-character max length', () => {
+            expect(truncateText('hello', 1)).toBe('…');
+        });
+
+        it('should handle empty string', () => {
+            expect(truncateText('', 5)).toBe('');
+        });
+    });
+
+    describe('estimateTextWidth', () => {
+        it('should calculate width for Latin-only text', () => {
+            expect(estimateTextWidth('Hello', 8)).toBe(40); // 5 * 8
+        });
+
+        it('should calculate double width for CJK characters', () => {
+            // Japanese Katakana
+            expect(estimateTextWidth('テスト', 8)).toBe(48); // 3 * 8 * 2
+        });
+
+        it('should handle mixed Latin and CJK text', () => {
+            // 'A' = 8, 'テ' = 16, 'B' = 8 → 32
+            expect(estimateTextWidth('AテB', 8)).toBe(32);
+        });
+
+        it('should calculate width for Korean Hangul characters', () => {
+            // Korean Hangul syllables (U+AC00-U+D7AF)
+            expect(estimateTextWidth('한글', 8)).toBe(32); // 2 * 8 * 2
+        });
+
+        it('should calculate width for CJK Unified Ideographs', () => {
+            // Chinese characters (U+4E00-U+9FFF)
+            expect(estimateTextWidth('金属', 8)).toBe(32); // 2 * 8 * 2
+        });
+
+        it('should return 0 for empty string', () => {
+            expect(estimateTextWidth('', 8)).toBe(0);
         });
     });
 });

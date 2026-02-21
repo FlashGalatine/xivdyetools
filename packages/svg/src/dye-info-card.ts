@@ -26,6 +26,7 @@ import {
   FONTS,
   getContrastTextColor,
   hexToRgb,
+  estimateTextWidth,
 } from './base.js';
 import { rgbToLab } from '@xivdyetools/color-blending';
 
@@ -148,7 +149,7 @@ export function generateDyeInfoCard(options: DyeInfoCardOptions): string {
   );
 
   // Category badge
-  const categoryWidth = displayCategory.length * 8 + 20;
+  const categoryWidth = estimateTextWidth(displayCategory, 8) + 20;
   elements.push(
     rect(width - PADDING - categoryWidth, SWATCH_HEIGHT - 45, categoryWidth, 26, 'rgba(0,0,0,0.3)', {
       rx: 6,

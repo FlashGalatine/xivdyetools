@@ -77,7 +77,7 @@ describe('svg/preset-swatch.ts', () => {
                 description: longDesc,
             });
 
-            expect(svg).toContain('...');
+            expect(svg).toContain('…');
             expect(svg).not.toContain(longDesc);
         });
 
@@ -262,8 +262,8 @@ describe('svg/preset-swatch.ts', () => {
                 width: 200, // Small width = smaller swatch = shorter max name length
             });
 
-            // Should be truncated with ".."
-            expect(svg).toContain('..');
+            // Should be truncated with '…'
+            expect(svg).toContain('…');
             // Should not contain the full name
             expect(svg).not.toContain('A Very Long Dye Name That Exceeds The Maximum Allowed Length');
         });

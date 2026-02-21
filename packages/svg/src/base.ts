@@ -263,3 +263,38 @@ export const FONTS = {
   /** Use this for body text that may contain CJK characters (e.g., dye names) */
   primaryCjk: 'Onest, Noto Sans SC, Noto Sans KR',
 } as const;
+
+/**
+ * Truncates text to a maximum length, appending a Unicode ellipsis (U+2026) if truncated.
+ * Standardized across all SVG generators (REFACTOR-005).
+ *
+ * @param text - The text to truncate
+ * @param maxLength - Maximum character length (including the ellipsis)
+ * @returns The original text if within limits, or truncated text with '…'
+ */
+export function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength - 1) + '…';
+}
+
+/**
+ * Estimates the rendered width of text in pixels, accounting for CJK characters
+ * which are typically ~2x the width of Latin characters (BUG-012).
+ *
+ * @param text - The text to measure
+ * @param charWidth - Width of a single Latin character in pixels
+ * @returns Estimated total width in pixels
+ */
+export function estimateTextWidth(text: string, charWidth: number): number {
+  let width = 0;
+  for (const char of text) {
+    const code = char.codePointAt(0) ?? 0;
+    // CJK Unified Ideographs, Hiragana, Katakana, Hangul, CJK symbols
+    const isCJK =
+      (code >= 0x3000 && code <= 0x9fff) ||
+      (code >= 0xac00 && code <= 0xd7af) ||
+      (code >= 0xf900 && code <= 0xfaff);
+    width += isCJK ? charWidth * 2 : charWidth;
+  }
+  return width;
+}

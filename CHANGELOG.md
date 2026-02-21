@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **web-app**: New tests for CSRF fail-closed validation (missing `csrf` param and missing stored state)
 - **crypto**: New `hex.test.ts` test suite — 15 tests covering valid conversion, rejection of invalid input, and roundtrips
 - **bot-logic**: New `color-math.ts` shared utility module with `getColorDistance()` and `getMatchQualityInfo()`, plus 9-test suite (REFACTOR-001, REFACTOR-002)
+- **svg**: New `truncateText()` and `estimateTextWidth()` shared utilities in `base.ts` with 11-test suite (REFACTOR-005, BUG-012)
+- **test-utils**: New D1 mock tests for bind-at-execution-time (4 tests) and batch result passthrough (1 test) (BUG-006, BUG-007)
 
 ### Security
 
@@ -33,6 +35,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **test-utils**: Fix D1 mock `bind()` recording at bind-time instead of execution-time — bindings are now tracked when the statement is actually executed via `first()`/`all()`/`run()`/`raw()`, matching real D1 behavior (BUG-006)
+- **test-utils**: Fix D1 mock `batch()` discarding statement results — now returns actual results from each statement instead of always returning empty arrays (BUG-007)
+- **svg**: Fix CJK badge width miscalculation in dye-info-card — use `estimateTextWidth()` to account for full-width CJK characters in category badges (BUG-012)
 - **svg**: Remove double XML escaping across 7 SVG generators — `escapeXml()` was called on values already escaped by tagged template literals, producing `&amp;amp;` in output (BUG-001)
 - **rate-limiter**: Fix KV backend `checkOnly` off-by-one — `remaining` was 1 less than actual remaining capacity due to premature decrement (BUG-004)
 - **rate-limiter**: Fix KV backend `check` post-increment accounting — `remaining` now reflects the consumed request after `increment()` (BUG-005)
@@ -44,6 +49,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **bot-logic**: Consolidate duplicated `getColorDistance()` across match, mixer, and gradient commands into shared `color-math.ts` — single source of truth delegating to `ColorService.getColorDistance()` from core (REFACTOR-001)
 - **bot-logic**: Consolidate duplicated match quality thresholds across match, mixer, and gradient commands into shared `getMatchQualityInfo()` with consistent tiers and i18n key lookup (REFACTOR-002)
 - **svg**: Replace local `getColorDistance()` in `comparison-grid.ts` with `ColorService.getColorDistance()` from core (REFACTOR-001)
+- **auth**: Deduplicate JWT verification logic — extract shared `verifyJWTSignature()` helper used by both `verifyJWT()` and `verifyJWTSignatureOnly()`, eliminating ~30 lines of duplication (REFACTOR-003)
+- **svg**: Standardize text truncation across all SVG generators — replace 3 inconsistent ellipsis styles (`..`, `...`, `…`) with shared `truncateText()` utility using Unicode ellipsis (REFACTOR-005)
 
 ### Performance
 
