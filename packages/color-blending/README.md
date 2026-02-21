@@ -97,7 +97,7 @@ Red (#FF0000) + Blue (#0000FF):
 
 ## Connect With Me
 
-**Flash Galatine** | Balmung (Midgardsormr)
+**Flash Galatine** | Midgardsormr (Aether)
 
 🎮 **FFXIV**: [Lodestone Character](https://na.finalfantasyxiv.com/lodestone/character/7677106/)
 📝 **Blog**: [Project Galatine](https://blog.projectgalatine.com/)

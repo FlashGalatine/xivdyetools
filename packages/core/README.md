@@ -420,7 +420,7 @@ See [LICENSE](./LICENSE) for full details.
 
 ## Connect With Me
 
-**Flash Galatine** | Balmung (Midgardsormr)
+**Flash Galatine** | Midgardsormr (Aether)
 
 🎮 **FFXIV**: [Lodestone Character](https://na.finalfantasyxiv.com/lodestone/character/7677106/)
 📝 **Blog**: [Project Galatine](https://blog.projectgalatine.com/)
