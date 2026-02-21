@@ -14,6 +14,7 @@ import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
 import { generateGradientBar, type GradientStep } from '@xivdyetools/svg';
 import { dyeService, type ResolvedColor } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
+import { getColorDistance, getMatchQualityInfo } from '../color-math.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -52,22 +53,9 @@ export type GradientResult =
 // Helpers
 // ============================================================================
 
-function getColorDistance(hex1: string, hex2: string): number {
-  const rgb1 = ColorService.hexToRgb(hex1);
-  const rgb2 = ColorService.hexToRgb(hex2);
-  return Math.sqrt(
-    Math.pow(rgb1.r - rgb2.r, 2) +
-    Math.pow(rgb1.g - rgb2.g, 2) +
-    Math.pow(rgb1.b - rgb2.b, 2)
-  );
-}
-
 function getMatchQualityLabel(distance: number, t: ReturnType<typeof createTranslator>): string {
-  if (distance === 0) return t.t('quality.perfect');
-  if (distance < 10) return t.t('quality.excellent');
-  if (distance < 25) return t.t('quality.good');
-  if (distance < 50) return t.t('quality.fair');
-  return t.t('quality.approximate');
+  const qi = getMatchQualityInfo(distance);
+  return t.t(`quality.${qi.key}`);
 }
 
 /**

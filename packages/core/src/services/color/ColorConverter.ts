@@ -47,6 +47,7 @@ export class ColorConverter {
   private readonly hsvToRgbCache: LRUCache<string, RGB>;
   private readonly hexToHsvCache: LRUCache<string, HSV>;
   private readonly rgbToLabCache: LRUCache<string, LAB>;
+  private readonly rgbToOklabCache: LRUCache<string, OKLAB>;
 
   // Default singleton instance for static API compatibility
   // Per Issue #6: Eager initialization to avoid race conditions in concurrent scenarios
@@ -64,6 +65,7 @@ export class ColorConverter {
     this.hsvToRgbCache = new LRUCache<string, RGB>(cacheSize);
     this.hexToHsvCache = new LRUCache<string, HSV>(cacheSize);
     this.rgbToLabCache = new LRUCache<string, LAB>(cacheSize);
+    this.rgbToOklabCache = new LRUCache<string, OKLAB>(cacheSize);
   }
 
   /**
@@ -84,6 +86,7 @@ export class ColorConverter {
     this.hsvToRgbCache.clear();
     this.hexToHsvCache.clear();
     this.rgbToLabCache.clear();
+    this.rgbToOklabCache.clear();
   }
 
   /**
@@ -103,6 +106,7 @@ export class ColorConverter {
     hsvToRgb: number;
     hexToHsv: number;
     rgbToLab: number;
+    rgbToOklab: number;
   } {
     return {
       hexToRgb: this.hexToRgbCache.size,
@@ -111,6 +115,7 @@ export class ColorConverter {
       hsvToRgb: this.hsvToRgbCache.size,
       hexToHsv: this.hexToHsvCache.size,
       rgbToLab: this.rgbToLabCache.size,
+      rgbToOklab: this.rgbToOklabCache.size,
     };
   }
 
@@ -124,6 +129,7 @@ export class ColorConverter {
     hsvToRgb: number;
     hexToHsv: number;
     rgbToLab: number;
+    rgbToOklab: number;
   } {
     return this.getDefault().getCacheStats();
   }
@@ -1005,6 +1011,13 @@ export class ColorConverter {
       );
     }
 
+    // OPT-001: LRU cache for OKLAB conversions (hot path for dye matching)
+    const cacheKey = `${r},${g},${b}`;
+    const cached = this.rgbToOklabCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     // Convert sRGB to linear RGB
     const rLin = this.srgbToLinear(r);
     const gLin = this.srgbToLinear(g);
@@ -1021,11 +1034,14 @@ export class ColorConverter {
     const sRoot = Math.cbrt(s);
 
     // LMS to Oklab
-    return {
+    const result: OKLAB = {
       L: round(0.2104542553 * lRoot + 0.793617785 * mRoot - 0.0040720468 * sRoot, 6),
       a: round(1.9779984951 * lRoot - 2.428592205 * mRoot + 0.4505937099 * sRoot, 6),
       b: round(0.0259040371 * lRoot + 0.7827717662 * mRoot - 0.808675766 * sRoot, 6),
     };
+
+    this.rgbToOklabCache.set(cacheKey, result);
+    return result;
   }
 
   /**

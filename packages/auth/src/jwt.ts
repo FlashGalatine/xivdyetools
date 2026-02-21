@@ -16,7 +16,7 @@ import {
   base64UrlDecode,
   base64UrlDecodeBytes,
 } from '@xivdyetools/crypto';
-import { createHmacKey } from './hmac.js';
+import { getOrCreateHmacKey } from './hmac.js';
 
 /**
  * JWT payload structure
@@ -121,7 +121,7 @@ export async function verifyJWT(
     // SECURITY: Verify signature using crypto.subtle.verify() which is
     // inherently timing-safe (comparison happens in native crypto, not JS)
     const signatureInput = `${headerB64}.${payloadB64}`;
-    const key = await createHmacKey(secret, 'verify');
+    const key = await getOrCreateHmacKey(secret, 'verify');
     const encoder = new TextEncoder();
     const signatureBytes = base64UrlDecodeBytes(signatureB64);
 
@@ -198,7 +198,7 @@ export async function verifyJWTSignatureOnly(
     // SECURITY: Verify signature using crypto.subtle.verify() which is
     // inherently timing-safe (comparison happens in native crypto, not JS)
     const signatureInput = `${headerB64}.${payloadB64}`;
-    const key = await createHmacKey(secret, 'verify');
+    const key = await getOrCreateHmacKey(secret, 'verify');
     const encoder = new TextEncoder();
     const signatureBytes = base64UrlDecodeBytes(signatureB64);
 

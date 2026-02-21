@@ -175,6 +175,11 @@ app.get('/og/harmony/:dyeId/:harmonyType', async (c) => {
   const harmonyType = harmonyTypeRaw.toLowerCase() as HarmonyType;
   const algorithm = (c.req.query('algo') || 'oklab') as MatchingAlgorithm;
 
+  // FINDING-011: Validate dyeId to prevent NaN propagation
+  if (isNaN(dyeId)) {
+    return c.json({ error: 'Invalid dye ID' }, 400);
+  }
+
   // Track analytics
   trackAnalytics(c.env, {
     event: 'og_image_request',
@@ -202,6 +207,11 @@ app.get('/og/gradient/:startId/:endId/:steps', async (c) => {
   const endDyeId = parseInt(c.req.param('endId'), 10);
   const steps = parseInt(c.req.param('steps').replace('.png', ''), 10);
   const algorithm = (c.req.query('algo') || 'oklab') as MatchingAlgorithm;
+
+  // FINDING-011: Validate dye IDs to prevent NaN propagation
+  if (isNaN(startDyeId) || isNaN(endDyeId)) {
+    return c.json({ error: 'Invalid dye ID' }, 400);
+  }
 
   trackAnalytics(c.env, {
     event: 'og_image_request',
@@ -235,6 +245,11 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:ratio', async (c) => {
   const ratio = parseInt(c.req.param('ratio').replace('.png', ''), 10);
   const algorithm = (c.req.query('algo') || 'oklab') as MatchingAlgorithm;
 
+  // FINDING-011: Validate dye IDs to prevent NaN propagation
+  if (isNaN(dyeAId) || isNaN(dyeBId)) {
+    return c.json({ error: 'Invalid dye ID' }, 400);
+  }
+
   trackAnalytics(c.env, {
     event: 'og_image_request',
     tool: 'mixer',
@@ -267,6 +282,11 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio', async (c) => {
   const dyeCId = parseInt(c.req.param('dyeCId'), 10);
   const ratio = parseInt(c.req.param('ratio').replace('.png', ''), 10);
   const algorithm = (c.req.query('algo') || 'oklab') as MatchingAlgorithm;
+
+  // FINDING-011: Validate dye IDs to prevent NaN propagation
+  if (isNaN(dyeAId) || isNaN(dyeBId) || isNaN(dyeCId)) {
+    return c.json({ error: 'Invalid dye ID' }, 400);
+  }
 
   trackAnalytics(c.env, {
     event: 'og_image_request',

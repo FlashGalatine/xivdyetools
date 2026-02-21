@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **core**: `spectral-js.d.ts` type declarations for untyped spectral.js library
 - **web-app**: New tests for CSRF fail-closed validation (missing `csrf` param and missing stored state)
 - **crypto**: New `hex.test.ts` test suite — 15 tests covering valid conversion, rejection of invalid input, and roundtrips
+- **bot-logic**: New `color-math.ts` shared utility module with `getColorDistance()` and `getMatchQualityInfo()`, plus 9-test suite (REFACTOR-001, REFACTOR-002)
 
 ### Security
 
@@ -27,6 +28,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **logger**: Recurse into arrays during sensitive field redaction — previously array elements containing secrets were logged unredacted (FINDING-007)
 - **logger**: Merge custom `redactFields` with defaults — previously custom fields replaced defaults, silently removing protection for `password`, `token`, etc. (FINDING-008)
 - **auth**: Enforce 32-byte minimum key length in `createHmacKey` — reject weak secrets that undermine HMAC-SHA256 security (FINDING-009)
+- **og-worker**: Add NaN validation for all `parseInt`'d `dyeId` route parameters — prevents unhandled 500 errors from crafted non-numeric URLs in harmony, gradient, and mixer routes (FINDING-011)
+- **og-worker**: Apply `escapeHtml()` to `themeColor` meta tag — defense-in-depth against XSS if upstream hex validation is bypassed (FINDING-013)
 
 ### Fixed
 
@@ -35,6 +38,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **rate-limiter**: Fix KV backend `check` post-increment accounting — `remaining` now reflects the consumed request after `increment()` (BUG-005)
 - **moderation-worker**: Fix `safeParseJSON` prototype pollution check — use `Object.hasOwn()` instead of `in` operator, which false-positived on every object due to inherited `__proto__`/`constructor` (BUG-002)
 - **moderation-worker**: Fix rate limit response returning HTTP 429 instead of 200 — Discord silently discards non-200 interaction responses (BUG-003)
+
+### Changed
+
+- **bot-logic**: Consolidate duplicated `getColorDistance()` across match, mixer, and gradient commands into shared `color-math.ts` — single source of truth delegating to `ColorService.getColorDistance()` from core (REFACTOR-001)
+- **bot-logic**: Consolidate duplicated match quality thresholds across match, mixer, and gradient commands into shared `getMatchQualityInfo()` with consistent tiers and i18n key lookup (REFACTOR-002)
+- **svg**: Replace local `getColorDistance()` in `comparison-grid.ts` with `ColorService.getColorDistance()` from core (REFACTOR-001)
+
+### Performance
+
+- **core**: Add LRU cache for `rgbToOklab()` conversions — OKLAB is the recommended matching method and was the only uncached color space conversion on the hot path (OPT-001)
+- **auth**: Cache `CryptoKey` objects at module level — eliminates redundant `crypto.subtle.importKey()` calls when the same HMAC secret is reused across requests within a Worker isolate (OPT-002)
 
 - **bot-logic**: Add `--passWithNoTests` to test script for CI compatibility (reverted once tests were added)
 - **bot-logic** / **stoat-worker**: Resolve CI lint failures — add `^build` dependency to Turbo lint task, include test files in tsconfig, fix async/unused-var/misused-promises violations

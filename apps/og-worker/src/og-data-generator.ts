@@ -333,7 +333,7 @@ export function generateAccessibilityOGData(params: AccessibilityParams, env: En
  */
 export function generateOGHTML(ogData: OGData): string {
   const themeColorTag = ogData.themeColor
-    ? `<meta name="theme-color" content="${ogData.themeColor}">`
+    ? `<meta name="theme-color" content="${escapeHtml(ogData.themeColor)}">`
     : '';
 
   return `<!DOCTYPE html>

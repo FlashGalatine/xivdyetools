@@ -34,6 +34,10 @@ export type { LocaleCode } from './localization.js';
 // Shared result types
 export type { EmbedData, EmbedField } from './commands/types.js';
 
+// Shared color math utilities (REFACTOR-001, REFACTOR-002)
+export { getColorDistance, getMatchQualityInfo } from './color-math.js';
+export type { MatchQualityInfo } from './color-math.js';
+
 // Command: Harmony wheel
 export { executeHarmony, getHarmonyTypeChoices, HARMONY_TYPES } from './commands/harmony.js';
 export type {

@@ -14,6 +14,7 @@ import { ColorService, type Dye } from '@xivdyetools/core';
 import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
 import { dyeService, resolveColorInput } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
+import { getColorDistance, getMatchQualityInfo } from '../color-math.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -48,22 +49,9 @@ export type MatchResult =
 // Helpers
 // ============================================================================
 
-function getColorDistance(hex1: string, hex2: string): number {
-  const rgb1 = ColorService.hexToRgb(hex1);
-  const rgb2 = ColorService.hexToRgb(hex2);
-  return Math.sqrt(
-    Math.pow(rgb1.r - rgb2.r, 2) +
-    Math.pow(rgb1.g - rgb2.g, 2) +
-    Math.pow(rgb1.b - rgb2.b, 2)
-  );
-}
-
 function getMatchQuality(distance: number, t: ReturnType<typeof createTranslator>): { emoji: string; label: string } {
-  if (distance === 0) return { emoji: '🎯', label: t.t('quality.perfect') };
-  if (distance < 10) return { emoji: '✨', label: t.t('quality.excellent') };
-  if (distance < 25) return { emoji: '👍', label: t.t('quality.good') };
-  if (distance < 50) return { emoji: '⚠️', label: t.t('quality.fair') };
-  return { emoji: '🔍', label: t.t('quality.approximate') };
+  const qi = getMatchQualityInfo(distance);
+  return { emoji: qi.emoji, label: t.t(`quality.${qi.key}`) };
 }
 
 function formatRgb(hex: string): string {

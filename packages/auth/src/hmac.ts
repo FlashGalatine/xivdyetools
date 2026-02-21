@@ -24,6 +24,52 @@ export interface BotSignatureOptions {
   clockSkewMs?: number;
 }
 
+// ============================================================================
+// CryptoKey Cache (OPT-002)
+// ============================================================================
+
+/**
+ * Module-level cache for CryptoKeys.
+ *
+ * In Cloudflare Workers, module-level state persists across requests within
+ * an isolate, making this safe and effective. Eliminates redundant
+ * `crypto.subtle.importKey()` calls when the same secret is reused.
+ *
+ * Cache key format: `${secret}:${usage}` — bounded to 10 entries max
+ * to prevent unbounded growth during key rotation.
+ */
+const cryptoKeyCache = new Map<string, CryptoKey>();
+const CRYPTO_KEY_CACHE_MAX = 10;
+
+/**
+ * Get or create a cached CryptoKey for the given secret and usage.
+ * Exported for use by jwt.ts — not part of the public package API.
+ * @internal
+ */
+export async function getOrCreateHmacKey(
+  secret: string,
+  usage: 'sign' | 'verify' | 'both'
+): Promise<CryptoKey> {
+  const cacheKey = `${secret}:${usage}`;
+  const cached = cryptoKeyCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const key = await createHmacKey(secret, usage);
+
+  // Evict oldest entries if cache is full (simple FIFO)
+  if (cryptoKeyCache.size >= CRYPTO_KEY_CACHE_MAX) {
+    const firstKey = cryptoKeyCache.keys().next().value;
+    if (firstKey !== undefined) {
+      cryptoKeyCache.delete(firstKey);
+    }
+  }
+
+  cryptoKeyCache.set(cacheKey, key);
+  return key;
+}
+
 /**
  * Create an HMAC-SHA256 CryptoKey from a secret string.
  *
@@ -73,7 +119,7 @@ export async function createHmacKey(
  * ```
  */
 export async function hmacSign(data: string, secret: string): Promise<string> {
-  const key = await createHmacKey(secret, 'sign');
+  const key = await getOrCreateHmacKey(secret, 'sign');
   const encoder = new TextEncoder();
   const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(data));
   return base64UrlEncodeBytes(new Uint8Array(signature));
@@ -95,7 +141,7 @@ export async function hmacSignHex(
   data: string,
   secret: string
 ): Promise<string> {
-  const key = await createHmacKey(secret, 'sign');
+  const key = await getOrCreateHmacKey(secret, 'sign');
   const encoder = new TextEncoder();
   const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(data));
   return bytesToHex(new Uint8Array(signature));
@@ -115,7 +161,7 @@ export async function hmacVerify(
   secret: string
 ): Promise<boolean> {
   try {
-    const key = await createHmacKey(secret, 'verify');
+    const key = await getOrCreateHmacKey(secret, 'verify');
     const encoder = new TextEncoder();
     const signatureBytes = base64UrlDecodeBytes(signature);
 
@@ -145,7 +191,7 @@ export async function hmacVerifyHex(
   secret: string
 ): Promise<boolean> {
   try {
-    const key = await createHmacKey(secret, 'verify');
+    const key = await getOrCreateHmacKey(secret, 'verify');
     const encoder = new TextEncoder();
     const signatureBytes = hexToBytes(signature);
 

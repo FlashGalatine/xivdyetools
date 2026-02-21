@@ -20,6 +20,7 @@
  */
 
 import type { Dye } from '@xivdyetools/core';
+import { ColorService } from '@xivdyetools/core';
 import {
   createSvgDocument,
   rect,
@@ -129,17 +130,11 @@ function rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v: n
 }
 
 /**
- * Calculate Euclidean color distance in RGB space
+ * Calculate Euclidean color distance in RGB space.
+ * Delegates to ColorService to avoid duplication (REFACTOR-001).
  */
 function getColorDistance(hex1: string, hex2: string): number {
-  const rgb1 = hexToRgb(hex1);
-  const rgb2 = hexToRgb(hex2);
-
-  const dr = rgb1.r - rgb2.r;
-  const dg = rgb1.g - rgb2.g;
-  const db = rgb1.b - rgb2.b;
-
-  return Math.sqrt(dr * dr + dg * dg + db * db);
+  return ColorService.getColorDistance(hex1, hex2);
 }
 
 /**
