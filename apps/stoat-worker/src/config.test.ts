@@ -29,8 +29,6 @@ describe('isValidUlid', () => {
 });
 
 describe('loadConfig', () => {
-  const originalEnv = process.env;
-
   beforeEach(() => {
     vi.stubEnv('BOT_TOKEN', 'test-token-123');
     vi.stubEnv('STATS_AUTHORIZED_USERS', '');

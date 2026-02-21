@@ -43,6 +43,7 @@ async function main(): Promise<void> {
   });
 
   // ── Message handler ────────────────────────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   client.on('messageCreate', async (message) => {
     // Ignore bot's own messages
     if (message.authorId === client.user?.id) return;

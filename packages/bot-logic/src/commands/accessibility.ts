@@ -70,9 +70,9 @@ export async function executeAccessibility(input: AccessibilityInput): Promise<A
 
   try {
     if (dyes.length === 1) {
-      return await processSingleDye(dyes[0], visionTypes, locale, t);
+      return processSingleDye(dyes[0], visionTypes, locale, t);
     } else {
-      return await processMultiDye(dyes, locale, t);
+      return processMultiDye(dyes, locale, t);
     }
   } catch {
     return { ok: false, error: 'GENERATION_FAILED', errorMessage: 'Failed to generate accessibility image.' };
@@ -83,12 +83,12 @@ export async function executeAccessibility(input: AccessibilityInput): Promise<A
 // Internal helpers
 // ============================================================================
 
-async function processSingleDye(
+function processSingleDye(
   dyeInput: AccessibilityDye,
   visionTypes: VisionType[],
   locale: LocaleCode,
   t: ReturnType<typeof createTranslator>
-): Promise<AccessibilityResult> {
+): AccessibilityResult {
   const localizedName = dyeInput.itemID
     ? getLocalizedDyeName(dyeInput.itemID, dyeInput.name, locale)
     : dyeInput.name;
@@ -116,11 +116,11 @@ async function processSingleDye(
   return { ok: true, svgString, mode: 'simulation', embed };
 }
 
-async function processMultiDye(
+function processMultiDye(
   dyeInputs: AccessibilityDye[],
   locale: LocaleCode,
   t: ReturnType<typeof createTranslator>
-): Promise<AccessibilityResult> {
+): AccessibilityResult {
   const contrastDyes: ContrastDye[] = dyeInputs.map((d) => ({
     name: d.itemID ? getLocalizedDyeName(d.itemID, d.name, locale) : d.name,
     hex: d.hex,

@@ -43,7 +43,7 @@ export type DyeResolutionResult =
  */
 export function resolveDyeInputMulti(
   input: string,
-  locale: LocaleCode = 'en',
+  _locale: LocaleCode = 'en',
 ): DyeResolutionResult {
   const trimmed = input.trim();
   if (!trimmed) {

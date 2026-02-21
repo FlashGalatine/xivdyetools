@@ -17,6 +17,7 @@
       "inputs": ["src/**", "tsconfig.json"]
     },
     "lint": {
+      "dependsOn": ["^build"],
       "cache": true,
       "inputs": ["src/**", "eslint.config.*"]
     },

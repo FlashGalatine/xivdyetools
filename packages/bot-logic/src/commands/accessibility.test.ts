@@ -6,7 +6,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { executeAccessibility, VISION_TYPES } from './accessibility.js';
-import type { AccessibilityDye, VisionType } from './accessibility.js';
+import type { AccessibilityDye } from './accessibility.js';
 
 const whiteDye: AccessibilityDye = { hex: '#FFFFFF', name: 'Snow White', itemID: 5729 };
 const blackDye: AccessibilityDye = { hex: '#2B2B2B', name: 'Soot Black', itemID: 5730 };

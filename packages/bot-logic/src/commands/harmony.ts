@@ -111,7 +111,7 @@ function getLocalizedHarmonyType(type: string, t: Translator): string {
  * Generates a harmony wheel SVG and embed data for the given color.
  */
 export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult> {
-  const { baseHex, baseName, baseId: _baseId, baseItemID, harmonyType, locale, harmonyOptions } = input;
+  const { baseHex, baseName, baseItemID, harmonyType, locale, harmonyOptions } = input;
   const t = createTranslator(locale);
 
   await initializeLocale(locale);
