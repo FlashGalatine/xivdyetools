@@ -1015,7 +1015,8 @@ describe('stats.ts', () => {
     });
 
     it('should propagate non-Error rejection values', async () => {
-      vi.mocked(getStats).mockImplementationOnce(() => Promise.reject(new Error('string error')));
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+      vi.mocked(getStats).mockImplementationOnce(() => Promise.reject('string error'));
 
       const interaction = makeInteraction('anyone', 'summary');
 

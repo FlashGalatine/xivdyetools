@@ -10,7 +10,6 @@
  * - /budget quick <preset> - Quick picks for popular expensive dyes
  */
 
-import type { Dye } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed, ephemeralResponse } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
@@ -180,12 +179,10 @@ async function processFindCommand(
     // Build localized dye name and category maps
     const dyeNames: Record<number, string> = {};
     const categoryNames: Record<string, string> = {};
-    const targetDyeTyped = result.targetDye as Dye;
-    dyeNames[targetDyeTyped.itemID] = getLocalizedDyeName(targetDyeTyped.itemID, targetDyeTyped.name, locale);
-    categoryNames[targetDyeTyped.category] = getLocalizedCategory(targetDyeTyped.category, locale);
+    dyeNames[result.targetDye.itemID] = getLocalizedDyeName(result.targetDye.itemID, result.targetDye.name, locale);
+    categoryNames[result.targetDye.category] = getLocalizedCategory(result.targetDye.category, locale);
     for (const alt of result.alternatives) {
-      const altDye = alt.dye as Dye;
-      dyeNames[altDye.itemID] = getLocalizedDyeName(altDye.itemID, altDye.name, locale);
+      dyeNames[alt.dye.itemID] = getLocalizedDyeName(alt.dye.itemID, alt.dye.name, locale);
     }
 
     // Build translated SVG labels
@@ -246,9 +243,8 @@ async function processFindCommand(
     }
 
     // Get dye emoji and localized name for target
-    const targetDye = result.targetDye as Dye;
-    const localizedTargetName = dyeNames[targetDye.itemID] ?? targetDye.name;
-    const emoji = getDyeEmoji(targetDye.itemID);
+    const localizedTargetName = dyeNames[result.targetDye.itemID] ?? result.targetDye.name;
+    const emoji = getDyeEmoji(result.targetDye.itemID);
     const emojiPrefix = emoji ? `${emoji} ` : '';
 
     // Send response
@@ -258,7 +254,7 @@ async function processFindCommand(
         {
           title: `${emojiPrefix}${t.t('budget.findTitle', { dyeName: localizedTargetName })}`,
           description,
-          color: parseInt(targetDye.hex.replace('#', ''), 16),
+          color: parseInt(result.targetDye.hex.replace('#', ''), 16),
           image: { url: 'attachment://budget.png' },
           footer: { text: t.t('common.footer') },
         },
