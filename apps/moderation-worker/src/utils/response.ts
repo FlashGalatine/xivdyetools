@@ -300,9 +300,7 @@ export function decodeBase64Url(str: string): string {
  * }
  * ```
  */
-export function rateLimitedResponse(resetTime: number): Response {
-  const retryAfter = Math.ceil((resetTime - Date.now()) / 1000);
-
+export function rateLimitedResponse(_resetTime: number): Response {
   return new Response(
     JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -312,10 +310,9 @@ export function rateLimitedResponse(resetTime: number): Response {
       },
     }),
     {
-      status: 429,
+      status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Retry-After': String(Math.max(1, retryAfter)), // At least 1 second
       },
     }
   );

@@ -196,9 +196,9 @@ function hasPrototypePollution(
   // Dangerous keys that indicate prototype pollution attempts
   const dangerousKeys = ['__proto__', 'constructor', 'prototype'];
 
-  // Check keys at current level
+  // Check keys at current level (use Object.hasOwn to avoid false positives from inherited properties)
   for (const key of dangerousKeys) {
-    if (key in obj) {
+    if (Object.hasOwn(obj, key)) {
       return {
         detected: true,
         reason: `Dangerous key '${key}' found at ${path}`,

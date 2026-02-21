@@ -376,9 +376,9 @@ class AuthServiceImpl {
       return;
     }
 
-    // Verify CSRF state matches
-    if (csrf && storedState && csrf !== storedState) {
-      logger.error('CSRF state mismatch - possible attack detected');
+    // Verify CSRF state matches (fail-closed: reject if either value is missing)
+    if (!csrf || !storedState || csrf !== storedState) {
+      logger.error('CSRF state validation failed');
       return;
     }
 

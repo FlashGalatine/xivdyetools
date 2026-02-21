@@ -713,6 +713,32 @@ describe('AuthService', () => {
       expect(authService.isAuthenticated()).toBe(false);
     });
 
+    it('should reject when CSRF state param is missing (fail-closed)', async () => {
+      mockSessionStorage['xivdyetools_pkce_verifier'] = 'test-verifier';
+      mockSessionStorage['xivdyetools_oauth_state'] = 'correct-state';
+
+      (window.location as { search: string }).search = '?code=auth-code';
+
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+
+      expect(authService.isAuthenticated()).toBe(false);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('should reject when stored CSRF state is missing (fail-closed)', async () => {
+      mockSessionStorage['xivdyetools_pkce_verifier'] = 'test-verifier';
+      // No xivdyetools_oauth_state in session storage
+
+      (window.location as { search: string }).search = '?code=auth-code&csrf=test-state';
+
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+
+      expect(authService.isAuthenticated()).toBe(false);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
     it('should handle failed token exchange response', async () => {
       mockSessionStorage['xivdyetools_pkce_verifier'] = 'test-verifier';
       mockSessionStorage['xivdyetools_oauth_state'] = 'test-state';
@@ -773,8 +799,9 @@ describe('AuthService', () => {
       });
 
       mockSessionStorage['xivdyetools_pkce_verifier'] = 'test-verifier';
+      mockSessionStorage['xivdyetools_oauth_state'] = 'test-state';
 
-      (window.location as { search: string }).search = '?code=auth-code&provider=xivauth';
+      (window.location as { search: string }).search = '?code=auth-code&provider=xivauth&csrf=test-state';
 
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
@@ -807,8 +834,9 @@ describe('AuthService', () => {
 
       mockSessionStorage['xivdyetools_pkce_verifier'] = 'test-verifier';
       mockSessionStorage['xivdyetools_oauth_return_path'] = '/presets';
+      mockSessionStorage['xivdyetools_oauth_state'] = 'test-state';
 
-      (window.location as { search: string }).search = '?code=auth-code';
+      (window.location as { search: string }).search = '?code=auth-code&csrf=test-state';
 
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,

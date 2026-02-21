@@ -2,11 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { safeParseJSON } from './safe-json.js';
 
 /**
- * Note: The safeParseJSON implementation uses `key in obj` to detect prototype
- * pollution attacks. This means it will detect inherited properties like `__proto__`
- * and `constructor` on ANY object or array, causing ALL non-primitive JSON to fail.
- *
- * These tests verify the actual behavior of the implementation.
+ * Tests for safeParseJSON — validates prototype pollution detection using
+ * Object.hasOwn (only triggers on OWN properties, not inherited ones).
  */
 describe('safe-json', () => {
   describe('safeParseJSON', () => {
@@ -48,50 +45,70 @@ describe('safe-json', () => {
     });
 
     describe('prototype pollution detection on objects', () => {
-      it('should detect inherited __proto__ on simple object', () => {
-        // Even a simple object triggers pollution detection because
-        // '__proto__' in {} returns true in JavaScript
+      it('should allow simple objects without pollution keys', () => {
         const result = safeParseJSON('{"name": "test"}');
+
+        expect(result.success).toBe(true);
+        expect(result.data).toEqual({ name: 'test' });
+      });
+
+      it('should allow nested objects without pollution keys', () => {
+        const result = safeParseJSON('{"user": {"name": "Alice"}}');
+
+        expect(result.success).toBe(true);
+        expect(result.data).toEqual({ user: { name: 'Alice' } });
+      });
+
+      it('should allow empty object', () => {
+        const result = safeParseJSON('{}');
+
+        expect(result.success).toBe(true);
+        expect(result.data).toEqual({});
+      });
+
+      it('should allow array', () => {
+        const result = safeParseJSON('[1, 2, 3]');
+
+        expect(result.success).toBe(true);
+        expect(result.data).toEqual([1, 2, 3]);
+      });
+
+      it('should allow empty array', () => {
+        const result = safeParseJSON('[]');
+
+        expect(result.success).toBe(true);
+        expect(result.data).toEqual([]);
+      });
+
+      it('should detect explicit __proto__ key', () => {
+        const result = safeParseJSON('{"__proto__": {"isAdmin": true}}');
 
         expect(result.success).toBe(false);
         expect(result.error).toContain('prototype pollution');
         expect(result.error).toContain('__proto__');
       });
 
-      it('should detect inherited __proto__ on nested object', () => {
-        const result = safeParseJSON('{"user": {"name": "Alice"}}');
+      it('should detect explicit constructor key', () => {
+        const result = safeParseJSON('{"constructor": {"prototype": {}}}');
 
         expect(result.success).toBe(false);
         expect(result.error).toContain('prototype pollution');
-      });
-
-      it('should detect inherited __proto__ on empty object', () => {
-        const result = safeParseJSON('{}');
-
-        expect(result.success).toBe(false);
-        expect(result.error).toContain('prototype pollution');
-      });
-
-      it('should detect inherited __proto__ on array', () => {
-        const result = safeParseJSON('[1, 2, 3]');
-
-        expect(result.success).toBe(false);
-        expect(result.error).toContain('prototype pollution');
-      });
-
-      it('should detect inherited __proto__ on empty array', () => {
-        const result = safeParseJSON('[]');
-
-        expect(result.success).toBe(false);
-        expect(result.error).toContain('prototype pollution');
+        expect(result.error).toContain('constructor');
       });
 
       it('should detect explicit prototype key', () => {
-        // 'prototype' is NOT inherited, so this tests explicit key detection
         const result = safeParseJSON('{"prototype": {}}');
 
         expect(result.success).toBe(false);
+        expect(result.error).toContain('prototype pollution');
         expect(result.error).toContain('prototype');
+      });
+
+      it('should detect nested prototype pollution', () => {
+        const result = safeParseJSON('{"user": {"__proto__": {"isAdmin": true}}}');
+
+        expect(result.success).toBe(false);
+        expect(result.error).toContain('prototype pollution');
       });
     });
 
@@ -198,20 +215,15 @@ describe('safe-json', () => {
       });
     });
 
-    describe('structure validation (still runs before pollution check for some cases)', () => {
-      it('should reject arrays exceeding max length before pollution check', () => {
+    describe('structure validation', () => {
+      it('should reject arrays exceeding max length', () => {
         const arr = new Array(1001).fill(1);
         const json = JSON.stringify(arr);
 
         const result = safeParseJSON(json);
 
-        // May fail on pollution OR max length - both are valid failures
         expect(result.success).toBe(false);
-        // The error will contain one of these
-        expect(
-          result.error?.includes('Array exceeds maximum length') ||
-          result.error?.includes('prototype pollution')
-        ).toBe(true);
+        expect(result.error).toContain('Array exceeds maximum length');
       });
 
       it('should reject deeply nested arrays', () => {
@@ -227,11 +239,7 @@ describe('safe-json', () => {
         const result = safeParseJSON(json, { maxDepth: 20 });
 
         expect(result.success).toBe(false);
-        // May fail on depth OR pollution
-        expect(
-          result.error?.includes('nesting exceeds maximum depth') ||
-          result.error?.includes('prototype pollution')
-        ).toBe(true);
+        expect(result.error).toContain('nesting exceeds maximum depth');
       });
     });
   });

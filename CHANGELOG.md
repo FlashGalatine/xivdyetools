@@ -8,6 +8,55 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **@xivdyetools/bot-logic**: Comprehensive test suite — 193 tests across 10 files covering input resolution, CSS colors, localization, and all 8 commands (dye-info, harmony, match, comparison, gradient, mixer, accessibility, random)
+- **core**: `spectral-js.d.ts` type declarations for untyped spectral.js library
+- **web-app**: New tests for CSRF fail-closed validation (missing `csrf` param and missing stored state)
+
+### Security
+
+- **web-app**: Fix CSRF state validation fail-open — reject OAuth callback when `csrf` or stored state is missing, not only on mismatch (FINDING-001)
+- **rate-limiter**: Fix Upstash race condition — use atomic `INCR` + `EXPIRE NX` pipeline instead of separate `EXPIRE` call that could leave immortal keys on Worker crash (FINDING-002)
+
+### Fixed
+
+- **moderation-worker**: Fix `safeParseJSON` prototype pollution check — use `Object.hasOwn()` instead of `in` operator, which false-positived on every object due to inherited `__proto__`/`constructor` (BUG-002)
+- **moderation-worker**: Fix rate limit response returning HTTP 429 instead of 200 — Discord silently discards non-200 interaction responses (BUG-003)
+
+- **bot-logic**: Add `--passWithNoTests` to test script for CI compatibility (reverted once tests were added)
+- **bot-logic** / **stoat-worker**: Resolve CI lint failures — add `^build` dependency to Turbo lint task, include test files in tsconfig, fix async/unused-var/misused-promises violations
+- **discord-worker**: Fix 85+ lint errors (unused imports, unsafe type assertions, no-floating-promises, require-await, no-case-declarations) and fix `targetDye.hex` reference bug in budget handler
+- **discord-worker**: Fix `stats.test.ts` mock to reject with raw string instead of Error object
+- **moderation-worker** / **oauth** / **presets-api** / **universalis-proxy**: Resolve lint errors across all worker packages
+- **oauth**: Fix type-check errors — add type assertions for `response.json()`, fix mock Env properties (`XIVAUTH_CLIENT_ID`, `DB`), fix `XIVAuthCharacter.server` → `home_world`, fix D1Meta cast
+- **oauth**: Cast mock context through `unknown` to fix TS2352 type-check errors
+- **oauth**: Handle `URLSearchParams` in mock fetch body assertions
+- **core** / **rate-limiter**: Resolve type-check errors in tests — add missing Dye properties (`stainID`, `isMetallic`, `isPastel`, `isDark`, `isCosmic`), fix type-only imports, rename OklchWeights `L/C/H` → `kL/kC/kH`
+- **auth**: Fix type-check errors with strict `unknown` return types
+- **web-app**: Auto-format sources via `eslint --fix`; fix lint issues in components, services, and tests
+- **14 packages**: Resolve all remaining ESLint warnings — add type assertions to `JSON.parse()` calls, add explicit return types, fix `no-base-to-string`, replace `as any` with proper types, type `Object.create(null)` calls
+- **Turbo**: Add `dependsOn: ["^build"]` to lint task for correct dependency ordering
+- **ESLint**: Relax rules for test-utils files in root config; add `tsconfig.build.json` split for packages needing separate build/dev configs
+
+### Changed
+
+- **8 packages**: Patch version bumps for lint-only changes — auth 1.0.3, bot-i18n 1.0.1, color-blending 1.0.1, core 1.17.1, logger 1.1.3, rate-limiter 1.3.1, svg 1.0.1, test-utils 1.1.2
+
+### CI
+
+- Add `color-blending`, `svg`, `bot-i18n`, `bot-logic` to publish workflow
+
+### Docs
+
+- Update monorepo README with new packages and stoat-worker
+- Update all project READMEs with MIT license, social links, and server change (Midgardsormr, Aether)
+- **2026-02-21 audit**: Deep-dive analysis and security audit — 12 hidden bugs (2 critical), 14 security findings (2 high), 6 refactoring opportunities, 3 optimization opportunities, with prioritized remediation plan
+
+---
+
 ## [1.2.0] — 2026-02-20
 
 ### Added
@@ -126,6 +175,7 @@ Initial release of the XIV Dye Tools monorepo, consolidating 15 previously indep
 
 ---
 
+[Unreleased]: https://github.com/FlashGalatine/xivdyetools/compare/v1.2.0...HEAD
 [1.2.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/FlashGalatine/xivdyetools/releases/tag/v1.0.0
