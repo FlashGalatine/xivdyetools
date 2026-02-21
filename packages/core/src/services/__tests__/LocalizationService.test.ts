@@ -3,13 +3,12 @@
  * Phase 4.1: Target comprehensive coverage of the localization facade
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   LocalizationService,
   extractLocaleCode,
   resolveLocaleFromPreference,
   SUPPORTED_LOCALES,
-  LocalizationServiceConfig,
 } from '../LocalizationService.js';
 import type { LocaleCode, LocalePreference } from '../../types/index.js';
 import { LocaleLoader } from '../localization/LocaleLoader.js';
@@ -176,7 +175,7 @@ describe('resolveLocaleFromPreference', () => {
   describe('guild priority', () => {
     it('should use guild locale when explicit is null', () => {
       const preference: LocalePreference = {
-        explicit: null,
+        explicit: undefined,
         guild: 'ja',
         system: 'en',
         fallback: 'en',
@@ -186,7 +185,7 @@ describe('resolveLocaleFromPreference', () => {
 
     it('should extract locale from guild string (ja-JP)', () => {
       const preference: LocalePreference = {
-        explicit: null,
+        explicit: undefined,
         guild: 'ja-JP',
         system: 'en',
         fallback: 'en',
@@ -196,7 +195,7 @@ describe('resolveLocaleFromPreference', () => {
 
     it('should skip invalid guild locale', () => {
       const preference: LocalePreference = {
-        explicit: null,
+        explicit: undefined,
         guild: 'es-ES', // Spanish not supported
         system: 'de',
         fallback: 'en',
@@ -206,7 +205,7 @@ describe('resolveLocaleFromPreference', () => {
 
     it('should accept Chinese guild locale', () => {
       const preference: LocalePreference = {
-        explicit: null,
+        explicit: undefined,
         guild: 'zh-CN',
         system: 'de',
         fallback: 'en',
@@ -218,8 +217,8 @@ describe('resolveLocaleFromPreference', () => {
   describe('system priority', () => {
     it('should use system locale when explicit and guild are null/invalid', () => {
       const preference: LocalePreference = {
-        explicit: null,
-        guild: null,
+        explicit: undefined,
+        guild: undefined,
         system: 'de-DE',
         fallback: 'en',
       };
@@ -228,8 +227,8 @@ describe('resolveLocaleFromPreference', () => {
 
     it('should extract locale from system string', () => {
       const preference: LocalePreference = {
-        explicit: null,
-        guild: null,
+        explicit: undefined,
+        guild: undefined,
         system: 'fr-FR',
         fallback: 'en',
       };
@@ -238,8 +237,8 @@ describe('resolveLocaleFromPreference', () => {
 
     it('should skip invalid system locale', () => {
       const preference: LocalePreference = {
-        explicit: null,
-        guild: null,
+        explicit: undefined,
+        guild: undefined,
         system: 'it-IT', // Italian not supported
         fallback: 'en',
       };
@@ -248,8 +247,8 @@ describe('resolveLocaleFromPreference', () => {
 
     it('should accept Korean system locale', () => {
       const preference: LocalePreference = {
-        explicit: null,
-        guild: null,
+        explicit: undefined,
+        guild: undefined,
         system: 'ko-KR',
         fallback: 'en',
       };
@@ -260,9 +259,9 @@ describe('resolveLocaleFromPreference', () => {
   describe('fallback priority', () => {
     it('should use fallback when all others are null', () => {
       const preference: LocalePreference = {
-        explicit: null,
-        guild: null,
-        system: null,
+        explicit: undefined,
+        guild: undefined,
+        system: undefined,
         fallback: 'en',
       };
       expect(resolveLocaleFromPreference(preference)).toBe('en');
@@ -488,9 +487,9 @@ describe('LocalizationService', () => {
 
     it('should fall back through preference chain', async () => {
       await service.setLocaleFromPreference({
-        explicit: null,
-        guild: null,
-        system: null,
+        explicit: undefined,
+        guild: undefined,
+        system: undefined,
         fallback: 'en',
       });
       expect(service.getCurrentLocale()).toBe('en');
@@ -668,8 +667,8 @@ describe('LocalizationService', () => {
     it('should call static setLocaleFromPreference', async () => {
       await LocalizationService.setLocaleFromPreference({
         explicit: 'en',
-        guild: null,
-        system: null,
+        guild: undefined,
+        system: undefined,
         fallback: 'en',
       });
       expect(LocalizationService.getCurrentLocale()).toBe('en');

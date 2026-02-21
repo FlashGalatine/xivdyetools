@@ -9,6 +9,8 @@ import {
   MemoryCacheBackend,
   DefaultRateLimiter,
   DefaultFetchClient,
+} from '../APIService.js';
+import type {
   FetchClient,
   RateLimiter,
   ICacheBackend,
@@ -779,7 +781,7 @@ describe('APIService', () => {
 
       // Create a mock fetch that delays
       const delayedFetch: FetchClient = {
-        async fetch(url: string) {
+        async fetch(_url: string) {
           await responsePromise;
           const headers = new Headers({ 'content-type': 'application/json' });
           return {

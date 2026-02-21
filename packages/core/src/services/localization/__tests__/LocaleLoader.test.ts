@@ -202,37 +202,31 @@ describe('LocaleLoader', () => {
     // Directly test the private isValidLocaleData method for full branch coverage
 
     it('should return false for null data (line 80-81)', () => {
-      // @ts-expect-error - Accessing private method for testing
       const isValid = loader['isValidLocaleData'](null);
       expect(isValid).toBe(false);
     });
 
     it('should return false for undefined data', () => {
-      // @ts-expect-error - Accessing private method for testing
       const isValid = loader['isValidLocaleData'](undefined);
       expect(isValid).toBe(false);
     });
 
     it('should return false for string data', () => {
-      // @ts-expect-error - Accessing private method for testing
       const isValid = loader['isValidLocaleData']('not an object');
       expect(isValid).toBe(false);
     });
 
     it('should return false for number data', () => {
-      // @ts-expect-error - Accessing private method for testing
       const isValid = loader['isValidLocaleData'](12345);
       expect(isValid).toBe(false);
     });
 
     it('should return false for array data', () => {
-      // @ts-expect-error - Accessing private method for testing
       const isValid = loader['isValidLocaleData']([1, 2, 3]);
       expect(isValid).toBe(false);
     });
 
     it('should return false for empty object', () => {
-      // @ts-expect-error - Accessing private method for testing
       const isValid = loader['isValidLocaleData']({});
       expect(isValid).toBe(false);
     });
@@ -248,7 +242,6 @@ describe('LocaleLoader', () => {
         harmonyTypes: {},
         visionTypes: {},
       };
-      // @ts-expect-error - Accessing private method for testing
       const isValid = loader['isValidLocaleData'](invalidData);
       expect(isValid).toBe(false);
     });
@@ -265,7 +258,6 @@ describe('LocaleLoader', () => {
         harmonyTypes: {},
         visionTypes: {},
       };
-      // @ts-expect-error - Accessing private method for testing
       const isValid = loader['isValidLocaleData'](invalidData);
       expect(isValid).toBe(false);
     });
@@ -282,7 +274,6 @@ describe('LocaleLoader', () => {
         harmonyTypes: {},
         visionTypes: {},
       };
-      // @ts-expect-error - Accessing private method for testing
       const isValid = loader['isValidLocaleData'](invalidData);
       expect(isValid).toBe(false);
     });
@@ -299,7 +290,6 @@ describe('LocaleLoader', () => {
         harmonyTypes: {},
         visionTypes: {},
       };
-      // @ts-expect-error - Accessing private method for testing
       const isValid = loader['isValidLocaleData'](validData);
       expect(isValid).toBe(true);
     });

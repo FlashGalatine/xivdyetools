@@ -6,7 +6,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Logger, NoOpLogger, ConsoleLogger } from '../types/logger.js';
+import type { Logger } from '../types/logger.js';
+import { NoOpLogger, ConsoleLogger } from '../types/logger.js';
 
 describe('Logger', () => {
   describe('NoOpLogger', () => {
@@ -227,14 +228,15 @@ describe('Logger', () => {
       expect(logs[4]).toBe('DEBUG: test debug');
     });
 
-    it('should allow logger without optional debug method', () => {
+    it('should allow minimal logger with all required methods', () => {
       const minimalLogger: Logger = {
+        debug: () => {},
         info: () => {},
         warn: () => {},
         error: () => {},
       };
 
-      expect(minimalLogger.debug).toBeUndefined();
+      expect(() => minimalLogger.debug('test')).not.toThrow();
       expect(() => minimalLogger.info('test')).not.toThrow();
       expect(() => minimalLogger.warn('test')).not.toThrow();
       expect(() => minimalLogger.error('test')).not.toThrow();

@@ -15,6 +15,7 @@ const sampleDyes: Dye[] = [
   {
     itemID: 5729,
     id: 1,
+    stainID: 1,
     name: 'Snow White',
     hex: '#ECECEC',
     rgb: { r: 236, g: 236, b: 236 },
@@ -22,10 +23,15 @@ const sampleDyes: Dye[] = [
     category: 'Whites',
     acquisition: 'Dye Vendor',
     cost: 334,
+    isMetallic: false,
+    isPastel: false,
+    isDark: false,
+    isCosmic: false,
   },
   {
     itemID: 5730,
     id: 2,
+    stainID: 2,
     name: 'Ash Grey',
     hex: '#7D8485',
     rgb: { r: 125, g: 132, b: 133 },
@@ -33,10 +39,15 @@ const sampleDyes: Dye[] = [
     category: 'Grays',
     acquisition: 'Dye Vendor',
     cost: 334,
+    isMetallic: false,
+    isPastel: false,
+    isDark: false,
+    isCosmic: false,
   },
   {
     itemID: 5731,
     id: 3,
+    stainID: 3,
     name: 'Goobbue Grey',
     hex: '#6A6E6E',
     rgb: { r: 106, g: 110, b: 110 },
@@ -44,10 +55,15 @@ const sampleDyes: Dye[] = [
     category: 'Grays',
     acquisition: 'Crafting',
     cost: 0,
+    isMetallic: false,
+    isPastel: false,
+    isDark: false,
+    isCosmic: false,
   },
   {
     itemID: 5732,
     id: 4,
+    stainID: 4,
     name: 'Rose Pink',
     hex: '#EBB8B1',
     rgb: { r: 235, g: 184, b: 177 },
@@ -55,10 +71,15 @@ const sampleDyes: Dye[] = [
     category: 'Reds',
     acquisition: 'Dye Vendor',
     cost: 334,
+    isMetallic: false,
+    isPastel: false,
+    isDark: false,
+    isCosmic: false,
   },
   {
     itemID: 5733,
     id: 5,
+    stainID: 5,
     name: 'Lilac Purple',
     hex: '#CCB1DE',
     rgb: { r: 204, g: 177, b: 222 },
@@ -66,10 +87,15 @@ const sampleDyes: Dye[] = [
     category: 'Purples',
     acquisition: 'Dye Vendor',
     cost: 334,
+    isMetallic: false,
+    isPastel: false,
+    isDark: false,
+    isCosmic: false,
   },
   {
     itemID: 5734,
     id: 6,
+    stainID: 6,
     name: 'Metallic Silver',
     hex: '#ADADAD',
     rgb: { r: 173, g: 173, b: 173 },
@@ -77,6 +103,10 @@ const sampleDyes: Dye[] = [
     category: 'Metallics',
     acquisition: 'Beast Tribes',
     cost: 0,
+    isMetallic: true,
+    isPastel: false,
+    isDark: false,
+    isCosmic: false,
   },
 ];
 
@@ -99,6 +129,7 @@ describe('DyeService', () => {
   describe('constructor', () => {
     it('should initialize without data', () => {
       const emptyService = new DyeService();
+      expect(emptyService).toBeDefined();
     });
 
     it('should initialize with array data', () => {
@@ -147,6 +178,7 @@ describe('DyeService', () => {
     it('should check loaded status', () => {
       expect(dyeService.isLoadedStatus()).toBe(true);
       const emptyService = new DyeService();
+      expect(emptyService.isLoadedStatus()).toBe(false);
     });
 
     it('should get last loaded time', () => {

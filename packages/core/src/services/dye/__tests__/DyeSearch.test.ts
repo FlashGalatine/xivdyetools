@@ -11,6 +11,7 @@ describe('DyeSearch', () => {
     {
       itemID: 5729,
       id: 5729,
+      stainID: 5729,
       name: 'Snow White',
       hex: '#FFFFFF',
       rgb: { r: 255, g: 255, b: 255 },
@@ -18,10 +19,15 @@ describe('DyeSearch', () => {
       category: 'Neutral',
       acquisition: 'Dye Vendor',
       cost: 200,
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
     },
     {
       itemID: 5740,
       id: 5740,
+      stainID: 5740,
       name: 'Wine Red',
       hex: '#4D1818',
       rgb: { r: 77, g: 24, b: 24 },
@@ -29,10 +35,15 @@ describe('DyeSearch', () => {
       category: 'Reds',
       acquisition: 'Crafting',
       cost: 0,
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
     },
     {
       itemID: 5741,
       id: 5741,
+      stainID: 5741,
       name: 'Rust Red',
       hex: '#6B2929',
       rgb: { r: 107, g: 41, b: 41 },
@@ -40,10 +51,15 @@ describe('DyeSearch', () => {
       category: 'Reds',
       acquisition: 'Dye Vendor',
       cost: 200,
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
     },
     {
       itemID: 5742,
       id: 5742,
+      stainID: 5742,
       name: 'Sky Blue',
       hex: '#87CEEB',
       rgb: { r: 135, g: 206, b: 235 },
@@ -51,10 +67,15 @@ describe('DyeSearch', () => {
       category: 'Blues',
       acquisition: 'Dye Vendor',
       cost: 200,
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
     },
     {
       itemID: 5743,
       id: 5743,
+      stainID: 5743,
       name: 'Forest Green',
       hex: '#228B22',
       rgb: { r: 34, g: 139, b: 34 },
@@ -62,10 +83,15 @@ describe('DyeSearch', () => {
       category: 'Greens',
       acquisition: 'Crafting',
       cost: 0,
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
     },
     {
       itemID: 13116,
       id: 13116,
+      stainID: 13116,
       name: 'Metallic Silver',
       hex: '#8C8C8C',
       rgb: { r: 140, g: 140, b: 140 },
@@ -73,10 +99,15 @@ describe('DyeSearch', () => {
       category: 'Neutral',
       acquisition: 'Ixali Vendor',
       cost: 10000,
+      isMetallic: true,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
     },
     {
       itemID: 9999,
       id: 9999,
+      stainID: null,
       name: 'Facewear Red',
       hex: '#FF0000',
       rgb: { r: 255, g: 0, b: 0 },
@@ -84,6 +115,10 @@ describe('DyeSearch', () => {
       category: 'Facewear',
       acquisition: 'Special',
       cost: 50000,
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
     },
   ];
 
@@ -399,6 +434,7 @@ describe('DyeSearch', () => {
 
     it('should not affect original data', () => {
       const original = database.getAllDyes();
+      expect(original).toBeDefined();
       const sorted = search.getDyesSortedByHue();
 
       // Modifying sorted should not affect original
@@ -536,43 +572,43 @@ describe('DyeSearch', () => {
   describe('perceptual matching methods', () => {
     describe('findClosestDye with perceptual methods', () => {
       it('should find closest dye using rgb method', () => {
-        const closest = search.findClosestDye('#FF0000', undefined, { matchingMethod: 'rgb' });
+        const closest = search.findClosestDye('#FF0000', { matchingMethod: 'rgb' });
         expect(closest).not.toBeNull();
       });
 
       it('should find closest dye using cie76 method', () => {
-        const closest = search.findClosestDye('#FF0000', undefined, { matchingMethod: 'cie76' });
+        const closest = search.findClosestDye('#FF0000', { matchingMethod: 'cie76' });
         expect(closest).not.toBeNull();
       });
 
       it('should find closest dye using ciede2000 method', () => {
-        const closest = search.findClosestDye('#FF0000', undefined, {
+        const closest = search.findClosestDye('#FF0000', {
           matchingMethod: 'ciede2000',
         });
         expect(closest).not.toBeNull();
       });
 
       it('should find closest dye using oklab method', () => {
-        const closest = search.findClosestDye('#FF0000', undefined, { matchingMethod: 'oklab' });
+        const closest = search.findClosestDye('#FF0000', { matchingMethod: 'oklab' });
         expect(closest).not.toBeNull();
       });
 
       it('should find closest dye using hyab method', () => {
-        const closest = search.findClosestDye('#FF0000', undefined, { matchingMethod: 'hyab' });
+        const closest = search.findClosestDye('#FF0000', { matchingMethod: 'hyab' });
         expect(closest).not.toBeNull();
       });
 
       it('should find closest dye using oklch-weighted method', () => {
-        const closest = search.findClosestDye('#FF0000', undefined, {
+        const closest = search.findClosestDye('#FF0000', {
           matchingMethod: 'oklch-weighted',
         });
         expect(closest).not.toBeNull();
       });
 
       it('should find closest dye using oklch-weighted with custom weights', () => {
-        const closest = search.findClosestDye('#FF0000', undefined, {
+        const closest = search.findClosestDye('#FF0000', {
           matchingMethod: 'oklch-weighted',
-          weights: { L: 1, C: 1.5, h: 2 },
+          weights: { kL: 1, kC: 1.5, kH: 2 },
         });
         expect(closest).not.toBeNull();
       });
@@ -624,7 +660,7 @@ describe('DyeSearch', () => {
         const results = search.findDyesWithinDistance('#FF0000', {
           maxDistance: 100,
           matchingMethod: 'oklch-weighted',
-          weights: { L: 1, C: 1.5, h: 2 },
+          weights: { kL: 1, kC: 1.5, kH: 2 },
         });
         expect(Array.isArray(results)).toBe(true);
       });

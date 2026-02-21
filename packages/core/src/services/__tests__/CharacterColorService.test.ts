@@ -491,7 +491,7 @@ describe('CharacterColorService', () => {
       const matches = service.findClosestDyes(testColor, mockDyeService, {
         count: 2,
         matchingMethod: 'oklch-weighted',
-        weights: { L: 1, C: 1, h: 1 },
+        weights: { kL: 1, kC: 1, kH: 1 },
       });
       expect(matches).toBeDefined();
       expect(matches.length).toBe(2);

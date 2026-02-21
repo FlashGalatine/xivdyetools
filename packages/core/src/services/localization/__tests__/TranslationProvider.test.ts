@@ -123,7 +123,7 @@ describe('TranslationProvider', () => {
       xaela: 'Xaela',
       rava: 'Rava',
       veena: 'Veena',
-      helions: 'Helions',
+      helion: 'Helion',
       theLost: 'The Lost',
     },
   };

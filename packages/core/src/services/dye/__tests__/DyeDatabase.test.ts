@@ -19,6 +19,10 @@ describe('DyeDatabase', () => {
       category: 'Neutral',
       acquisition: 'Dye Vendor',
       cost: 200,
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
     },
     {
       itemID: 5740,
@@ -31,6 +35,10 @@ describe('DyeDatabase', () => {
       category: 'Reds',
       acquisition: 'Crafting',
       cost: 0,
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
     },
     {
       itemID: 13116,
@@ -43,6 +51,10 @@ describe('DyeDatabase', () => {
       category: 'Neutral',
       acquisition: 'Ixali Vendor',
       cost: 10000,
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
     },
     {
       itemID: 6001,
@@ -55,6 +67,10 @@ describe('DyeDatabase', () => {
       category: 'Blues',
       acquisition: 'Dye Vendor',
       cost: 200,
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
     },
     {
       itemID: 6002,
@@ -67,6 +83,10 @@ describe('DyeDatabase', () => {
       category: 'Greens',
       acquisition: 'Crafting',
       cost: 0,
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
     },
   ];
 
@@ -356,6 +376,7 @@ describe('DyeDatabase', () => {
       const facewearDye: Dye = {
         itemID: 9999,
         id: 9999,
+        stainID: null,
         name: 'Facewear Test',
         hex: '#FF0000',
         rgb: { r: 255, g: 0, b: 0 },
@@ -363,6 +384,10 @@ describe('DyeDatabase', () => {
         category: 'Facewear',
         acquisition: 'Test',
         cost: 0,
+        isMetallic: false,
+        isPastel: false,
+        isDark: false,
+        isCosmic: false,
       };
 
       database.initialize([...mockDyes, facewearDye]);

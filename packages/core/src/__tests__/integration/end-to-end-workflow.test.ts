@@ -5,7 +5,6 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { DyeService, ColorService, dyeDatabase } from '../../index.js';
-import type { Dye } from '../../types/index.js';
 
 describe('End-to-End Workflow - Integration Tests', () => {
     let dyeService: DyeService;
@@ -51,6 +50,7 @@ describe('End-to-End Workflow - Integration Tests', () => {
             // 1. Convert to all formats
             const rgb = ColorService.hexToRgb(testColor);
             const hsv = ColorService.rgbToHsv(rgb.r, rgb.g, rgb.b);
+            expect(hsv).toBeDefined();
 
             // 2. Find matching dye
             const match = dyeService.findClosestDye(testColor);

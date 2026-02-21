@@ -8,7 +8,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PresetService } from '../PresetService.js';
-import type { PresetData, PresetPalette, Dye } from '../../types/index.js';
+import type { PresetData, Dye } from '../../types/index.js';
 
 // Mock preset data for testing
 const mockPresetData: PresetData = {
@@ -149,6 +149,7 @@ const createMockDyeService = () => ({
         isPastel: false,
         isDark: false,
         isCosmic: false,
+        stainID: 1,
       },
       5738: {
         itemID: 5738,
@@ -164,6 +165,7 @@ const createMockDyeService = () => ({
         isPastel: false,
         isDark: false,
         isCosmic: false,
+        stainID: 10,
       },
       13115: {
         itemID: 13115,
@@ -179,6 +181,7 @@ const createMockDyeService = () => ({
         isPastel: false,
         isDark: false,
         isCosmic: false,
+        stainID: 101,
       },
       13117: {
         itemID: 13117,
@@ -194,6 +197,7 @@ const createMockDyeService = () => ({
         isPastel: false,
         isDark: false,
         isCosmic: false,
+        stainID: 103,
       },
     };
     return mockDyes[id] || null;

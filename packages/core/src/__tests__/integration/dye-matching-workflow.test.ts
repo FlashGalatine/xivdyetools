@@ -5,7 +5,6 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { DyeService, ColorService, dyeDatabase } from '../../index.js';
-import type { Dye } from '../../types/index.js';
 
 describe('Dye Matching Workflow - Integration Tests', () => {
   let dyeService: DyeService;
@@ -23,7 +22,7 @@ describe('Dye Matching Workflow - Integration Tests', () => {
       { hex: '#000000', expectedCategory: 'Black' },
     ];
 
-    testCases.forEach(({ hex, expectedCategory }) => {
+    testCases.forEach(({ hex }) => {
       it(`should find closest dye for ${hex}`, () => {
         const closestDye = dyeService.findClosestDye(hex);
         expect(closestDye).toBeDefined();

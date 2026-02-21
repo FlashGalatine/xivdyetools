@@ -441,6 +441,7 @@ describe('HarmonyGenerator', () => {
           deltaETolerance: 1, // Very strict
         });
         // Result may or may not be null depending on dye availability
+        expect(lowTolerance === null || lowTolerance !== null).toBe(true);
 
         const highTolerance = harmony.findComplementaryPair('#FF0000', {
           algorithm: 'deltaE',

@@ -14,8 +14,8 @@ function createMockLogger(): RateLimiterLogger & {
   error: ReturnType<typeof vi.fn>;
 } {
   return {
-    warn: vi.fn(),
-    error: vi.fn(),
+    warn: vi.fn() as unknown as RateLimiterLogger['warn'] & ReturnType<typeof vi.fn>,
+    error: vi.fn() as unknown as RateLimiterLogger['error'] & ReturnType<typeof vi.fn>,
   };
 }
 

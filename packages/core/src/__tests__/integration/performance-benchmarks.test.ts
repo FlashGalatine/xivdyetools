@@ -207,7 +207,7 @@ describe('Performance Benchmarks - Core Library', () => {
         // Complete workflow
         const match = dyeService.findClosestDye(testColor);
         if (match) {
-          const harmonies = dyeService.findTriadicDyes(testColor);
+          void dyeService.findTriadicDyes(testColor);
           const rgb = ColorService.hexToRgb(match.hex);
           ColorService.simulateColorblindness(rgb, 'protanopia');
         }

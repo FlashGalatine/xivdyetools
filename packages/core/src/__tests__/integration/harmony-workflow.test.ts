@@ -5,7 +5,6 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { DyeService, ColorService, dyeDatabase } from '../../index.js';
-import type { Dye } from '../../types/index.js';
 
 describe('Harmony Generation Workflow - Integration Tests', () => {
     let dyeService: DyeService;
