@@ -23,7 +23,6 @@ import {
   checkRateLimit,
   incrementRateLimit,
   RATE_LIMIT_CONFIGS,
-  type RateLimitType,
 } from './middleware/rate-limit.js';
 import { handlePresetCommand } from './handlers/commands/index.js';
 import { handleButtonInteraction } from './handlers/buttons/index.js';
@@ -147,29 +146,31 @@ app.post('/', async (c) => {
 
   const interaction = parseResult.data!
 
+  const interactionType = interaction.type as InteractionType;
+
   // Handle PING (required for Discord endpoint verification)
-  if (interaction.type === InteractionType.PING) {
+  if (interactionType === InteractionType.PING) {
     logger.info('Received PING, responding with PONG');
     return pongResponse();
   }
 
   // Handle Application Commands (slash commands)
-  if (interaction.type === InteractionType.APPLICATION_COMMAND) {
+  if (interactionType === InteractionType.APPLICATION_COMMAND) {
     return handleCommand(interaction, env, c.executionCtx, logger);
   }
 
   // Handle Autocomplete
-  if (interaction.type === InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE) {
+  if (interactionType === InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE) {
     return handleAutocomplete(interaction, env, logger);
   }
 
   // Handle Message Components (buttons, select menus)
-  if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
+  if (interactionType === InteractionType.MESSAGE_COMPONENT) {
     return handleComponent(interaction, env, c.executionCtx, logger);
   }
 
   // Handle Modal Submissions
-  if (interaction.type === InteractionType.MODAL_SUBMIT) {
+  if (interactionType === InteractionType.MODAL_SUBMIT) {
     return handleModal(interaction, env, c.executionCtx, logger);
   }
 

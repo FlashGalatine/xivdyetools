@@ -48,11 +48,8 @@ describe('timing.ts', () => {
     });
 
     describe('fallback implementation', () => {
-      let originalTimingSafeEqual: typeof crypto.subtle.timingSafeEqual;
-
       beforeEach(() => {
-        // Save original and make it throw to test fallback
-        originalTimingSafeEqual = crypto.subtle.timingSafeEqual;
+        // Make timingSafeEqual throw to test fallback
         vi.stubGlobal('crypto', {
           ...crypto,
           subtle: {

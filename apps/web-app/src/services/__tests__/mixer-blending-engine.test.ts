@@ -7,11 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  blendTwoColors,
-  blendColors,
-  calculateColorDistance,
-} from '../mixer-blending-engine';
+import { blendTwoColors, blendColors, calculateColorDistance } from '../mixer-blending-engine';
 import type { MixingMode, MatchingMethod } from '@shared/tool-config-types';
 
 // Mock the services
@@ -167,7 +163,12 @@ describe('mixer-blending-engine', () => {
       // First: Red + Green at 0.5 (each 50%)
       expect(ColorService.mixColorsRgb).toHaveBeenNthCalledWith(1, '#FF0000', '#00FF00', 0.5);
       // Second: Result + Blue at 0.333 (each color ends up at 33%)
-      expect(ColorService.mixColorsRgb).toHaveBeenNthCalledWith(2, expect.any(String), '#0000FF', 1/3);
+      expect(ColorService.mixColorsRgb).toHaveBeenNthCalledWith(
+        2,
+        expect.any(String),
+        '#0000FF',
+        1 / 3
+      );
     });
 
     it('should blend four colors with correct ratios', async () => {
@@ -177,7 +178,12 @@ describe('mixer-blending-engine', () => {
 
       expect(ColorService.mixColorsRgb).toHaveBeenCalledTimes(3);
       // Last call should have ratio 1/4 = 0.25
-      expect(ColorService.mixColorsRgb).toHaveBeenNthCalledWith(3, expect.any(String), '#FFFF00', 0.25);
+      expect(ColorService.mixColorsRgb).toHaveBeenNthCalledWith(
+        3,
+        expect.any(String),
+        '#FFFF00',
+        0.25
+      );
     });
   });
 

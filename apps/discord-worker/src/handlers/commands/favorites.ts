@@ -45,7 +45,7 @@ const DEPRECATION_COLOR = 0xfee75c; // Yellow
 export async function handleFavoritesCommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext
+  _ctx: ExecutionContext
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
 

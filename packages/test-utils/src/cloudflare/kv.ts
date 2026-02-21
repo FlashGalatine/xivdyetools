@@ -160,7 +160,7 @@ export function createMockKV(): MockKVNamespace {
       const limit = options?.limit ?? 1000;
       const expiredKeys: string[] = [];
 
-      for (const [key, _value] of store.entries()) {
+      for (const [key] of store.entries()) {
         if (key.startsWith(prefix)) {
           if (isExpiredAt(key, nowSeconds)) {
             // Collect expired keys for cleanup after iteration

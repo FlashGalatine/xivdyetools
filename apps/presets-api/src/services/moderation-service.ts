@@ -66,7 +66,7 @@ export function compileProfanityPatterns(
 ): CompiledProfanity {
   const allWords: string[] = [];
 
-  for (const [_locale, words] of Object.entries(wordLists)) {
+  for (const [, words] of Object.entries(wordLists)) {
     for (const word of words) {
       allWords.push(word.toLowerCase());
     }
@@ -365,7 +365,7 @@ export async function notifyModerators(
       );
 
       if (dmChannelResponse.ok) {
-        const dmChannel = (await dmChannelResponse.json()) as { id: string };
+        const dmChannel: { id: string } = await dmChannelResponse.json();
 
         // Send DM
         await fetch(

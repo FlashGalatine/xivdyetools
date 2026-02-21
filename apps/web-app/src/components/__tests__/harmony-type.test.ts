@@ -133,12 +133,7 @@ describe('HarmonyType', () => {
 
   describe('Basic Rendering', () => {
     it('should render harmony type container', () => {
-      harmony = new HarmonyType(
-        container,
-        createHarmonyInfo(),
-        '#FF0000',
-        createMatchedDyes()
-      );
+      harmony = new HarmonyType(container, createHarmonyInfo(), '#FF0000', createMatchedDyes());
       harmony.init();
 
       expect(container.children.length).toBeGreaterThan(0);
@@ -157,12 +152,7 @@ describe('HarmonyType', () => {
     });
 
     it('should render as a card with shadow', () => {
-      harmony = new HarmonyType(
-        container,
-        createHarmonyInfo(),
-        '#FF0000',
-        createMatchedDyes()
-      );
+      harmony = new HarmonyType(container, createHarmonyInfo(), '#FF0000', createMatchedDyes());
       harmony.init();
 
       const card = query(container, '.shadow-md');
@@ -191,12 +181,9 @@ describe('HarmonyType', () => {
     });
 
     it('should display deviance values', () => {
-      harmony = new HarmonyType(
-        container,
-        createHarmonyInfo(),
-        '#FF0000',
-        [{ dye: mockDyes[0], deviance: 15.5 }]
-      );
+      harmony = new HarmonyType(container, createHarmonyInfo(), '#FF0000', [
+        { dye: mockDyes[0], deviance: 15.5 },
+      ]);
       harmony.init();
 
       expect(container.textContent).toContain('15.5');
@@ -209,12 +196,7 @@ describe('HarmonyType', () => {
 
   describe('Empty State', () => {
     it('should show empty state when no matched dyes', () => {
-      harmony = new HarmonyType(
-        container,
-        createHarmonyInfo(),
-        '#FF0000',
-        []
-      );
+      harmony = new HarmonyType(container, createHarmonyInfo(), '#FF0000', []);
       harmony.init();
 
       expect(container.textContent).toContain('harmony.noMatchingDyes');
@@ -274,12 +256,7 @@ describe('HarmonyType', () => {
 
   describe('Updates', () => {
     it('should have update methods', () => {
-      harmony = new HarmonyType(
-        container,
-        createHarmonyInfo(),
-        '#FF0000',
-        createMatchedDyes()
-      );
+      harmony = new HarmonyType(container, createHarmonyInfo(), '#FF0000', createMatchedDyes());
       harmony.init();
 
       // Component should have update methods
@@ -312,36 +289,21 @@ describe('HarmonyType', () => {
 
   describe('Different Base Colors', () => {
     it('should handle red base color', () => {
-      harmony = new HarmonyType(
-        container,
-        createHarmonyInfo(),
-        '#FF0000',
-        createMatchedDyes()
-      );
+      harmony = new HarmonyType(container, createHarmonyInfo(), '#FF0000', createMatchedDyes());
       harmony.init();
 
       expect(container.children.length).toBeGreaterThan(0);
     });
 
     it('should handle blue base color', () => {
-      harmony = new HarmonyType(
-        container,
-        createHarmonyInfo(),
-        '#0000FF',
-        createMatchedDyes()
-      );
+      harmony = new HarmonyType(container, createHarmonyInfo(), '#0000FF', createMatchedDyes());
       harmony.init();
 
       expect(container.children.length).toBeGreaterThan(0);
     });
 
     it('should handle green base color', () => {
-      harmony = new HarmonyType(
-        container,
-        createHarmonyInfo(),
-        '#00FF00',
-        createMatchedDyes()
-      );
+      harmony = new HarmonyType(container, createHarmonyInfo(), '#00FF00', createMatchedDyes());
       harmony.init();
 
       expect(container.children.length).toBeGreaterThan(0);
@@ -354,12 +316,7 @@ describe('HarmonyType', () => {
 
   describe('Lifecycle', () => {
     it('should clean up on destroy', () => {
-      harmony = new HarmonyType(
-        container,
-        createHarmonyInfo(),
-        '#FF0000',
-        createMatchedDyes()
-      );
+      harmony = new HarmonyType(container, createHarmonyInfo(), '#FF0000', createMatchedDyes());
       harmony.init();
 
       harmony.destroy();

@@ -201,8 +201,8 @@ export function createMockDyeService(customDyes?: Dye[]): MockDyeService {
     getDyesByCategory: vi.fn((category: string) =>
       dyes.filter((d) => d.category.toLowerCase() === category.toLowerCase())
     ),
-    getDyeByName: vi.fn((name: string) =>
-      dyes.find((d) => d.name.toLowerCase() === name.toLowerCase()) || null
+    getDyeByName: vi.fn(
+      (name: string) => dyes.find((d) => d.name.toLowerCase() === name.toLowerCase()) || null
     ),
     getCategories: vi.fn(() => [...new Set(dyes.map((d) => d.category))]),
   };
@@ -258,7 +258,9 @@ export interface MockCollectionService {
   _favorites: number[];
 }
 
-export function createMockCollectionService(initialFavorites: number[] = []): MockCollectionService {
+export function createMockCollectionService(
+  initialFavorites: number[] = []
+): MockCollectionService {
   const favorites = [...initialFavorites];
   const subscribers: Array<(favorites: number[]) => void> = [];
 

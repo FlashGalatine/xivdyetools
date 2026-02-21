@@ -6,7 +6,6 @@ import { Hono } from 'hono';
 import type { Env, RefreshResponse, UserInfoResponse, JWTPayload } from '../types.js';
 import {
   verifyJWT,
-  createJWT,
   getAvatarUrl,
   verifyJWTSignatureOnly,
   verifyJWTWithRevocationCheck,
@@ -59,7 +58,7 @@ tokenRouter.post('/refresh', async (c) => {
 
     try {
       payload = await verifyJWT(token, c.env.JWT_SECRET);
-    } catch (err) {
+    } catch {
       // If verification failed (likely expired), verify signature and check grace period
       // SECURITY: We MUST verify the signature even for expired tokens
       // to prevent attackers from forging tokens with arbitrary user IDs

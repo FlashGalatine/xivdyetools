@@ -12,7 +12,6 @@
 
 import { messageResponse, errorEmbed } from '../../utils/response.js';
 import {
-  type LocaleCode,
   SUPPORTED_LOCALES,
   isValidLocale,
   getLocaleInfo,
@@ -48,7 +47,7 @@ const DEPRECATION_COLOR = 0xfee75c; // Yellow
 export async function handleLanguageCommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext
+  _ctx: ExecutionContext
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
 
@@ -201,7 +200,7 @@ async function handleShowLanguage(
 
   // Effective locale
   const effective = preference ?? mappedDiscord ?? 'en';
-  const effectiveInfo = getLocaleInfo(effective as LocaleCode);
+  const effectiveInfo = getLocaleInfo(effective);
   const effectiveDisplay = effectiveInfo
     ? `${effectiveInfo.flag} ${effectiveInfo.name} (${effectiveInfo.nativeName})`
     : effective;

@@ -393,12 +393,14 @@ export async function handlePaginationNavigation(
     case 'last':
       newPage = pagination.totalPages - 1;
       break;
-    default:
+    default: {
       // Try to parse as page number
       const pageNum = parseInt(value ?? '', 10);
       if (!isNaN(pageNum)) {
         newPage = Math.max(0, Math.min(pageNum, pagination.totalPages - 1));
       }
+      break;
+    }
   }
 
   // Update pagination in context
@@ -426,7 +428,7 @@ export async function handlePaginationNavigation(
  * @returns Footer text
  */
 export function formatPaginationFooter(pagination: PaginationState): string {
-  const { currentPage, totalPages, totalItems, pageSize } = pagination;
+  const { currentPage, totalItems, pageSize } = pagination;
   const start = currentPage * pageSize + 1;
   const end = Math.min((currentPage + 1) * pageSize, totalItems);
 

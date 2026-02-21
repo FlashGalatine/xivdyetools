@@ -218,7 +218,7 @@ xivauthRouter.get('/xivauth/callback', async (c) => {
       // In development, allow all origins including localhost
       validateRedirectUri(stateData.redirect_uri, allowedOrigins);
     }
-  } catch (err) {
+  } catch {
     console.error('Blocked redirect to untrusted origin:', stateData.redirect_uri);
     const errorRedirect = new URL(`${c.env.FRONTEND_URL}/auth/callback`);
     errorRedirect.searchParams.set('error', 'Untrusted redirect origin');

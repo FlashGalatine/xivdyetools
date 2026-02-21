@@ -10,7 +10,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "npm run build:version && npm run build:locales && tsc && npm run copy:locales",
+    "build": "npm run build:version && npm run build:locales && tsc -p tsconfig.build.json && npm run copy:locales",
     "build:version": "tsx scripts/generate-version.ts",
     "build:locales": "tsx scripts/build-locales.ts",
     "copy:locales": "tsx scripts/copy-locales.ts",

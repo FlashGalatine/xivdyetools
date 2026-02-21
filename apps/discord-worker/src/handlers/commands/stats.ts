@@ -139,8 +139,8 @@ export async function handleStatsCommand(
  */
 async function handleSummarySubcommand(
   env: Env,
-  t: Translator,
-  logger?: ExtendedLogger
+  _t: Translator,
+  _logger?: ExtendedLogger
 ): Promise<Response> {
   const stats = await getStats(env.KV);
 
@@ -195,8 +195,8 @@ async function handleSummarySubcommand(
  */
 async function handleOverviewSubcommand(
   env: Env,
-  t: Translator,
-  logger?: ExtendedLogger
+  _t: Translator,
+  _logger?: ExtendedLogger
 ): Promise<Response> {
   const stats = await getStats(env.KV);
 
@@ -253,8 +253,8 @@ async function handleOverviewSubcommand(
  */
 async function handleCommandsSubcommand(
   env: Env,
-  t: Translator,
-  logger?: ExtendedLogger
+  _t: Translator,
+  _logger?: ExtendedLogger
 ): Promise<Response> {
   const stats = await getStats(env.KV);
 
@@ -332,8 +332,8 @@ async function handleCommandsSubcommand(
  */
 async function handlePreferencesSubcommand(
   env: Env,
-  t: Translator,
-  logger?: ExtendedLogger
+  _t: Translator,
+  _logger?: ExtendedLogger
 ): Promise<Response> {
   // Count users with preferences set
   // We'll scan KV for preference keys to get adoption stats
@@ -434,8 +434,8 @@ async function handlePreferencesSubcommand(
  */
 async function handleHealthSubcommand(
   env: Env,
-  t: Translator,
-  logger?: ExtendedLogger
+  _t: Translator,
+  _logger?: ExtendedLogger
 ): Promise<Response> {
   // Check KV health
   let kvStatus = '🟢 Healthy';

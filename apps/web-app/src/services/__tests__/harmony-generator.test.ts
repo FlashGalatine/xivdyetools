@@ -306,12 +306,10 @@ describe('harmony-generator', () => {
 
   describe('findClosestDyesToHue', () => {
     it('should return empty array for empty dyes list', () => {
-      const result = findClosestDyesToHue(
-        [],
-        180,
-        5,
-        { usePerceptualMatching: false, matchingMethod: 'oklab' }
-      );
+      const result = findClosestDyesToHue([], 180, 5, {
+        usePerceptualMatching: false,
+        matchingMethod: 'oklab',
+      });
 
       expect(result).toEqual([]);
     });
@@ -325,12 +323,10 @@ describe('harmony-generator', () => {
         createMockDye({ id: 2, itemID: 2, category: 'General-purpose', hex: '#FF0000' }),
       ];
 
-      const result = findClosestDyesToHue(
-        dyes,
-        0,
-        5,
-        { usePerceptualMatching: false, matchingMethod: 'oklab' }
-      );
+      const result = findClosestDyesToHue(dyes, 0, 5, {
+        usePerceptualMatching: false,
+        matchingMethod: 'oklab',
+      });
 
       expect(result.length).toBe(1);
       expect(result[0].dye.category).toBe('General-purpose');
@@ -348,12 +344,10 @@ describe('harmony-generator', () => {
         createMockDye({ id: 2, itemID: 2, hex: '#FF4500' }), // Red-orange
       ];
 
-      const result = findClosestDyesToHue(
-        dyes,
-        0,
-        5,
-        { usePerceptualMatching: false, matchingMethod: 'oklab' }
-      );
+      const result = findClosestDyesToHue(dyes, 0, 5, {
+        usePerceptualMatching: false,
+        matchingMethod: 'oklab',
+      });
 
       // Should be sorted with smaller deviance first
       expect(result[0].deviance).toBeLessThanOrEqual(result[1].deviance);
@@ -367,12 +361,10 @@ describe('harmony-generator', () => {
         createMockDye({ id: i, itemID: i, hex: '#FF0000' })
       );
 
-      const result = findClosestDyesToHue(
-        dyes,
-        0,
-        3,
-        { usePerceptualMatching: false, matchingMethod: 'oklab' }
-      );
+      const result = findClosestDyesToHue(dyes, 0, 3, {
+        usePerceptualMatching: false,
+        matchingMethod: 'oklab',
+      });
 
       expect(result.length).toBe(3);
     });
@@ -403,9 +395,7 @@ describe('harmony-generator', () => {
 
   describe('replaceExcludedDyes', () => {
     it('should return dyes unchanged when no filters', () => {
-      const dyes: ScoredDyeMatch[] = [
-        { dye: createMockDye(), deviance: 10 },
-      ];
+      const dyes: ScoredDyeMatch[] = [{ dye: createMockDye(), deviance: 10 }];
 
       const result = replaceExcludedDyes(dyes, 180, null, null);
 
@@ -414,9 +404,7 @@ describe('harmony-generator', () => {
 
     it('should return dyes unchanged when filterConfig is null', () => {
       const dyeFilters = { isDyeExcluded: vi.fn().mockReturnValue(false) };
-      const dyes: ScoredDyeMatch[] = [
-        { dye: createMockDye(), deviance: 10 },
-      ];
+      const dyes: ScoredDyeMatch[] = [{ dye: createMockDye(), deviance: 10 }];
 
       const result = replaceExcludedDyes(dyes, 180, dyeFilters as any, null);
 

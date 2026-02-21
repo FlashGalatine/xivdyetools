@@ -78,7 +78,8 @@ class MockDataTransfer {
 }
 
 // Install DataTransfer mock globally
-(globalThis as unknown as { DataTransfer: typeof MockDataTransfer }).DataTransfer = MockDataTransfer;
+(globalThis as unknown as { DataTransfer: typeof MockDataTransfer }).DataTransfer =
+  MockDataTransfer;
 
 describe('ImageUploadDisplay', () => {
   let container: HTMLElement;

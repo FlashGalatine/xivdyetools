@@ -1,7 +1,7 @@
 /**
  * Tests for Discord Request Verification
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   verifyDiscordRequest,
   unauthorizedResponse,

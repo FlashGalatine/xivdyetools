@@ -104,8 +104,7 @@ export class OfflineBanner {
     // Message
     const message = document.createElement('span');
     message.id = 'offline-banner-message';
-    message.textContent =
-      LanguageService.t('offline.banner');
+    message.textContent = LanguageService.t('offline.banner');
     this.banner.appendChild(message);
 
     // Dismiss button
@@ -187,8 +186,7 @@ export class OfflineBanner {
   updateMessage(): void {
     const message = this.banner?.querySelector('#offline-banner-message');
     if (message) {
-      message.textContent =
-        LanguageService.t('offline.banner');
+      message.textContent = LanguageService.t('offline.banner');
     }
   }
 

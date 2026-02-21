@@ -81,15 +81,12 @@ export class DyeGrid extends BaseComponent {
                 LanguageService.tInterpolate('dyeSelector.noResults', {
                   query: this.emptyState.query || '',
                 }) || `No dyes match "${this.emptyState.query}"`,
-              description:
-                LanguageService.t('dyeSelector.noResultsHint'),
+              description: LanguageService.t('dyeSelector.noResultsHint'),
             })
           : getEmptyStateHTML({
               icon: ICON_PALETTE,
-              title:
-                LanguageService.t('dyeSelector.noDyesInCategory'),
-              description:
-                LanguageService.t('dyeSelector.tryCategoryHint'),
+              title: LanguageService.t('dyeSelector.noDyesInCategory'),
+              description: LanguageService.t('dyeSelector.tryCategoryHint'),
             });
       wrapper.innerHTML = emptyHtml;
       wrapper.classList.remove(
@@ -267,15 +264,11 @@ export class DyeGrid extends BaseComponent {
 
     if (wasFavorite) {
       CollectionService.removeFavorite(dyeId);
-      ToastService.success(
-        LanguageService.t('collections.removedFromFavorites')
-      );
+      ToastService.success(LanguageService.t('collections.removedFromFavorites'));
     } else {
       const added = CollectionService.addFavorite(dyeId);
       if (added) {
-        ToastService.success(
-          LanguageService.t('collections.addedToFavorites')
-        );
+        ToastService.success(LanguageService.t('collections.addedToFavorites'));
       } else {
         // Likely at max favorites
         const max = CollectionService.getMaxFavorites();

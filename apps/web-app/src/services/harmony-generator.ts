@@ -364,7 +364,7 @@ export function generateHarmonyPanelData(
   const displayDye = swappedDye || matches[0]?.dye || baseDye;
   const deviance = swappedDye
     ? calculateHueDeviance(swappedDye, targetHue)
-    : matches[0]?.deviance ?? 0;
+    : (matches[0]?.deviance ?? 0);
 
   // Closest dyes excludes the currently displayed dye
   const closestDyes = matches

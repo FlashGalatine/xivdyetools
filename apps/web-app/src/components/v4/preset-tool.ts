@@ -20,12 +20,23 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { BaseLitComponent } from './base-lit-component';
 import { ConfigController } from '@services/config-controller';
 import { hybridPresetService } from '@services/hybrid-preset-service';
-import { dyeService, LanguageService, authService, presetSubmissionService, ToastService, ModalService } from '@services/index';
+import {
+  dyeService,
+  LanguageService,
+  authService,
+  presetSubmissionService,
+  ToastService,
+  ModalService,
+} from '@services/index';
 import { RouterService } from '@services/router-service';
 import { logger } from '@shared/logger';
 import type { UnifiedPreset } from '@services/hybrid-preset-service';
 import type { CommunityPreset } from '@services/community-preset-service';
-import type { PresetsConfig, PresetCategoryFilter, PresetSortOption } from '@shared/tool-config-types';
+import type {
+  PresetsConfig,
+  PresetCategoryFilter,
+  PresetSortOption,
+} from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 import type { PresetCategory } from '@xivdyetools/core';
 import { ICON_LOCKED, ICON_DOCUMENT, ICON_WARNING } from '@shared/ui-icons';
@@ -452,7 +463,11 @@ export class PresetTool extends BaseLitComponent {
     try {
       const response = await presetSubmissionService.getMySubmissions();
       this.userSubmissions = response.presets;
-      logger.info('[v4-preset-tool] Loaded', this.userSubmissions.length, 'user submissions for ownership check');
+      logger.info(
+        '[v4-preset-tool] Loaded',
+        this.userSubmissions.length,
+        'user submissions for ownership check'
+      );
     } catch (error) {
       logger.warn('[v4-preset-tool] Failed to load user submissions:', error);
       // Don't clear existing - could be transient error
@@ -518,9 +533,7 @@ export class PresetTool extends BaseLitComponent {
   private handleVoteUpdate(e: CustomEvent<{ preset: UnifiedPreset }>): void {
     const updatedPreset = e.detail.preset;
     // Update the preset in the list
-    this.presets = this.presets.map((p) =>
-      p.id === updatedPreset.id ? updatedPreset : p
-    );
+    this.presets = this.presets.map((p) => (p.id === updatedPreset.id ? updatedPreset : p));
     // Update selected preset if it's the one being viewed
     if (this.selectedPreset?.id === updatedPreset.id) {
       this.selectedPreset = updatedPreset;
@@ -682,9 +695,7 @@ export class PresetTool extends BaseLitComponent {
       return html`
         <div class="empty-container">
           <span class="empty-icon">${unsafeHTML(ICON_LOCKED)}</span>
-          <p class="empty-message">
-            Please log in to view your submitted presets.
-          </p>
+          <p class="empty-message">Please log in to view your submitted presets.</p>
         </div>
       `;
     }
@@ -694,9 +705,7 @@ export class PresetTool extends BaseLitComponent {
       return html`
         <div class="empty-container">
           <span class="empty-icon">${unsafeHTML(ICON_DOCUMENT)}</span>
-          <p class="empty-message">
-            You haven't submitted any presets yet.
-          </p>
+          <p class="empty-message">You haven't submitted any presets yet.</p>
         </div>
       `;
     }
@@ -706,8 +715,8 @@ export class PresetTool extends BaseLitComponent {
         <span class="empty-icon">${unsafeHTML(ICON_EMPTY_INBOX)}</span>
         <p class="empty-message">
           ${this.searchQuery
-        ? `No presets found matching "${this.searchQuery}"`
-        : 'No presets found in this category'}
+            ? `No presets found matching "${this.searchQuery}"`
+            : 'No presets found in this category'}
         </p>
       </div>
     `;
@@ -731,10 +740,12 @@ export class PresetTool extends BaseLitComponent {
 
     return html`
       <div class="results-info">
-        <span class="results-count">${this.presets.length} preset${this.presets.length !== 1 ? 's' : ''}</span>
+        <span class="results-count"
+          >${this.presets.length} preset${this.presets.length !== 1 ? 's' : ''}</span
+        >
         ${this.config.category !== 'all'
-        ? html`<span class="category-badge">${this.getCategoryDisplayName()}</span>`
-        : nothing}
+          ? html`<span class="category-badge">${this.getCategoryDisplayName()}</span>`
+          : nothing}
       </div>
 
       <div class="preset-grid">
@@ -757,9 +768,10 @@ export class PresetTool extends BaseLitComponent {
       // Determine if this is the user's own preset by checking if it exists in userSubmissions
       // This is more accurate than just checking the toggle, as the user could be viewing
       // a preset from the general list that happens to be theirs
-      const isOwnPreset = this.isAuthenticated &&
+      const isOwnPreset =
+        this.isAuthenticated &&
         this.selectedPreset.apiPresetId !== undefined &&
-        this.userSubmissions.some(p => p.id === this.selectedPreset?.apiPresetId);
+        this.userSubmissions.some((p) => p.id === this.selectedPreset?.apiPresetId);
 
       return html`
         <v4-preset-detail
@@ -778,9 +790,7 @@ export class PresetTool extends BaseLitComponent {
       <div class="preset-tool">
         <header class="tool-header">
           <h1 class="tool-title">${LanguageService.t('tools.presets.communityTitle')}</h1>
-          <p class="tool-description">
-            ${LanguageService.t('tools.presets.communityDescription')}
-          </p>
+          <p class="tool-description">${LanguageService.t('tools.presets.communityDescription')}</p>
         </header>
 
         <div class="search-bar">

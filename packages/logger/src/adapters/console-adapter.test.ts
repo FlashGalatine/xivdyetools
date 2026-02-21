@@ -117,7 +117,6 @@ describe('ConsoleAdapter', () => {
 
     it('should pass error with debug level', () => {
       const logger = new ConsoleAdapter({ format: 'pretty', level: 'debug', sanitizeErrors: false });
-      const error = new Error('Debug error');
       // Test through entry creation - debug level with error context
       logger.debug('Debug with error');
       expect(consoleSpy.debug).toHaveBeenCalled();
@@ -130,8 +129,6 @@ describe('ConsoleAdapter', () => {
     });
 
     it('should pass error info with info level when error is in entry', () => {
-      // Create a custom logger to test the error branch
-      const logger = new ConsoleAdapter({ format: 'pretty', level: 'info' });
       // We need to test that the error object is passed when present in the entry
       // This tests the `if (error)` branches in writePretty for info level
       const loggerWithError = new ConsoleAdapter({ format: 'pretty', level: 'debug' });

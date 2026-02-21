@@ -53,7 +53,10 @@ const MATCHING_METHOD_LABELS: Record<MatchingMethod, string> = {
  * - 5-10: Clearly noticeable
  * - > 10: Very different colors
  */
-const DELTA_THRESHOLDS: Record<MatchingMethod, { excellent: number; good: number; acceptable: number; noticeable: number }> = {
+const DELTA_THRESHOLDS: Record<
+  MatchingMethod,
+  { excellent: number; good: number; acceptable: number; noticeable: number }
+> = {
   rgb: { excellent: 15, good: 35, acceptable: 60, noticeable: 100 },
   cie76: { excellent: 1, good: 3, acceptable: 5, noticeable: 10 },
   ciede2000: { excellent: 1, good: 3, acceptable: 5, noticeable: 10 },
@@ -122,12 +125,12 @@ export type ContextAction =
   | 'external-teamcraft'
   | 'external-saddlebag'
   // Legacy actions (for backwards compatibility with existing tool components)
-  | 'add-comparison'      // → use 'inspect-comparison'
-  | 'add-mixer'           // → use 'transform-mixer'
-  | 'add-accessibility'   // → use 'inspect-accessibility'
-  | 'see-harmonies'       // → use 'inspect-harmony'
-  | 'budget'              // → use 'inspect-budget'
-  | 'copy-hex'            // kept for clipboard functionality
+  | 'add-comparison' // → use 'inspect-comparison'
+  | 'add-mixer' // → use 'transform-mixer'
+  | 'add-accessibility' // → use 'inspect-accessibility'
+  | 'see-harmonies' // → use 'inspect-harmony'
+  | 'budget' // → use 'inspect-budget'
+  | 'copy-hex' // kept for clipboard functionality
   | 'add-mixer-slot-1'
   | 'add-mixer-slot-2';
 
@@ -983,9 +986,7 @@ export class ResultCard extends BaseLitComponent {
    */
   private setAsBudgetTarget(dye: Dye): void {
     StorageService.setItem(STORAGE_KEYS.budget, dye.id);
-    ToastService.success(
-      LanguageService.t('resultCard.sentToBudget')
-    );
+    ToastService.success(LanguageService.t('resultCard.sentToBudget'));
     RouterService.navigateTo('budget');
   }
 
@@ -994,19 +995,14 @@ export class ResultCard extends BaseLitComponent {
    * Shows slot selection modal if all slots are full
    * Note: Mixer is handled separately via addToMixer() due to different storage format
    */
-  private addToTool(
-    tool: 'comparison' | 'accessibility' | 'gradient',
-    dye: Dye
-  ): void {
+  private addToTool(tool: 'comparison' | 'accessibility' | 'gradient', dye: Dye): void {
     const storageKey = STORAGE_KEYS[tool];
     const maxSlots = MAX_SLOTS[tool];
     const currentDyes = StorageService.getItem<number[]>(storageKey) ?? [];
 
     // Check if dye already exists
     if (currentDyes.includes(dye.id)) {
-      ToastService.info(
-        LanguageService.t('resultCard.dyeAlreadyIn')
-      );
+      ToastService.info(LanguageService.t('resultCard.dyeAlreadyIn'));
       return;
     }
 
@@ -1014,9 +1010,7 @@ export class ResultCard extends BaseLitComponent {
     if (currentDyes.length < maxSlots) {
       currentDyes.push(dye.id);
       StorageService.setItem(storageKey, currentDyes);
-      ToastService.success(
-        LanguageService.t('resultCard.addedTo')
-      );
+      ToastService.success(LanguageService.t('resultCard.addedTo'));
       // Navigate to the appropriate tool
       RouterService.navigateTo(tool);
       return;
@@ -1037,9 +1031,7 @@ export class ResultCard extends BaseLitComponent {
 
     // Check if dye already exists in either slot
     if (currentDyes[0] === dye.id || currentDyes[1] === dye.id) {
-      ToastService.info(
-        LanguageService.t('resultCard.dyeAlreadyIn')
-      );
+      ToastService.info(LanguageService.t('resultCard.dyeAlreadyIn'));
       return;
     }
 
@@ -1047,9 +1039,7 @@ export class ResultCard extends BaseLitComponent {
     if (currentDyes[0] === null) {
       currentDyes[0] = dye.id;
       StorageService.setItem(STORAGE_KEYS.mixerV4, currentDyes);
-      ToastService.success(
-        LanguageService.t('resultCard.addedTo')
-      );
+      ToastService.success(LanguageService.t('resultCard.addedTo'));
       RouterService.navigateTo('mixer');
       return;
     }
@@ -1057,9 +1047,7 @@ export class ResultCard extends BaseLitComponent {
     if (currentDyes[1] === null) {
       currentDyes[1] = dye.id;
       StorageService.setItem(STORAGE_KEYS.mixerV4, currentDyes);
-      ToastService.success(
-        LanguageService.t('resultCard.addedTo')
-      );
+      ToastService.success(LanguageService.t('resultCard.addedTo'));
       RouterService.navigateTo('mixer');
       return;
     }
@@ -1097,10 +1085,7 @@ export class ResultCard extends BaseLitComponent {
     // Generate slot labels based on tool type
     const slotLabels =
       tool === 'mixer' || tool === 'gradient'
-        ? [
-          LanguageService.t('mixer.startDye'),
-          LanguageService.t('mixer.endDye'),
-        ]
+        ? [LanguageService.t('mixer.startDye'), LanguageService.t('mixer.endDye')]
         : currentDyeIds.map((_, i) => `${LanguageService.t('common.slot')} ${i + 1}`);
 
     // Build slot buttons HTML
@@ -1176,9 +1161,7 @@ export class ResultCard extends BaseLitComponent {
           }
 
           ModalService.dismiss(modalId);
-          ToastService.success(
-            LanguageService.t('resultCard.replacedInTool')
-          );
+          ToastService.success(LanguageService.t('resultCard.replacedInTool'));
           RouterService.navigateTo(tool);
         });
 
@@ -1262,7 +1245,11 @@ export class ResultCard extends BaseLitComponent {
     const hsv = dye.hsv;
 
     return html`
-      <article class="result-card" role="article" aria-label="Dye result: ${LanguageService.getDyeName(dye.id) || dye.name}">
+      <article
+        class="result-card"
+        role="article"
+        aria-label="Dye result: ${LanguageService.getDyeName(dye.id) || dye.name}"
+      >
         <!-- Header - Dark bg, centered name -->
         <header class="card-header">
           <h3 class="dye-name">${LanguageService.getDyeName(dye.id) || dye.name}</h3>
@@ -1284,97 +1271,116 @@ export class ResultCard extends BaseLitComponent {
           <div class="detail-column">
             <div class="column-header">${LanguageService.t('common.technical')}</div>
             ${this.showDeltaE
-        ? html`
+              ? html`
                   <div class="detail-row">
-                    <span class="detail-label" title="${this.data?.matchingMethod ? `Distance calculated using ${this.getMatchingMethodLabel(this.data.matchingMethod)} algorithm` : 'Color distance'}">${this.getMatchingMethodLabel(this.data?.matchingMethod)}</span>
-                    <span class="detail-value ${this.getDeltaEClass(deltaE, this.data?.matchingMethod)}">
+                    <span
+                      class="detail-label"
+                      title="${this.data?.matchingMethod
+                        ? `Distance calculated using ${this.getMatchingMethodLabel(this.data.matchingMethod)} algorithm`
+                        : 'Color distance'}"
+                      >${this.getMatchingMethodLabel(this.data?.matchingMethod)}</span
+                    >
+                    <span
+                      class="detail-value ${this.getDeltaEClass(deltaE, this.data?.matchingMethod)}"
+                    >
                       ${deltaE !== undefined ? deltaE.toFixed(2) : '—'}
                     </span>
                   </div>
                 `
-        : nothing}
+              : nothing}
             ${this.showDeltaE && hueDeviance !== undefined
-        ? html`
+              ? html`
                   <div class="detail-row">
                     <span class="detail-label">Hue°</span>
                     <span class="detail-value">${hueDeviance.toFixed(1)}°</span>
                   </div>
                 `
-        : nothing}
+              : nothing}
             ${this.showHex
-        ? html`
+              ? html`
                   <div class="detail-row">
                     <span class="detail-label">HEX</span>
                     <span class="detail-value">${matchedColor.toUpperCase()}</span>
                   </div>
                 `
-        : nothing}
+              : nothing}
             ${this.showRgb
-        ? html`
+              ? html`
                   <div class="detail-row">
                     <span class="detail-label">RGB</span>
                     <span class="detail-value">${dye.rgb.r}, ${dye.rgb.g}, ${dye.rgb.b}</span>
                   </div>
                 `
-        : nothing}
+              : nothing}
             ${this.showHsv && hsv
-        ? html`
+              ? html`
                   <div class="detail-row">
                     <span class="detail-label">HSV</span>
-                    <span class="detail-value">${Math.round(hsv.h)}°, ${Math.round(hsv.s)}%, ${Math.round(hsv.v)}%</span>
+                    <span class="detail-value"
+                      >${Math.round(hsv.h)}°, ${Math.round(hsv.s)}%, ${Math.round(hsv.v)}%</span
+                    >
                   </div>
                 `
-        : nothing}
+              : nothing}
             ${this.showLab
-        ? html`
+              ? html`
                   <div class="detail-row">
                     <span class="detail-label">LAB</span>
                     <span class="detail-value">${this.formatLabValues()}</span>
                   </div>
                 `
-        : nothing}
+              : nothing}
           </div>
 
           <!-- Acquisition Column - only show if acquisition or price enabled -->
           ${this.showAcquisition || this.showPrice
-        ? html`
+            ? html`
                 <div class="detail-column">
                   <div class="column-header">${LanguageService.t('common.acquisition')}</div>
                   ${this.showAcquisition
-            ? html`
+                    ? html`
                         <div class="detail-row">
                           <span class="detail-label">${LanguageService.t('common.source')}</span>
-                          <span class="detail-value">${dye.acquisition ? LanguageService.getAcquisition(dye.acquisition) : '—'}</span>
+                          <span class="detail-value"
+                            >${dye.acquisition
+                              ? LanguageService.getAcquisition(dye.acquisition)
+                              : '—'}</span
+                          >
                         </div>
                         <div class="detail-row">
                           <span class="detail-label">${LanguageService.t('common.cost')}</span>
                           <span class="detail-value">${this.formatVendorCost(vendorCost)}</span>
                         </div>
                       `
-            : nothing}
+                    : nothing}
                   ${this.showPrice
-            ? html`
+                    ? html`
                         <div class="detail-row">
                           <span class="detail-label">${LanguageService.t('common.market')}</span>
                           <span class="detail-value">${marketServer ?? 'N/A'}</span>
                         </div>
                         <div class="detail-row">
-                          <span class="detail-value large ${this.data?.marketError ? 'market-error' : ''}">${this.formatPrice(price, this.data?.marketError)}</span>
+                          <span
+                            class="detail-value large ${this.data?.marketError
+                              ? 'market-error'
+                              : ''}"
+                            >${this.formatPrice(price, this.data?.marketError)}</span
+                          >
                         </div>
                       `
-            : nothing}
+                    : nothing}
                 </div>
               `
-        : nothing}
+            : nothing}
         </div>
 
         <!-- Action Bar at Bottom -->
         ${this.showActions
-        ? html`
+          ? html`
               <div class="card-actions">
                 <div class="action-row">
                   ${this.showSlotPicker
-            ? html`
+                    ? html`
                         <div class="slot-picker-container">
                           <button
                             class="primary-action-btn"
@@ -1396,20 +1402,26 @@ export class ResultCard extends BaseLitComponent {
                               role="menuitem"
                               @click=${() => this.handleSlotAction(1)}
                             >
-                              ${LanguageService.t('common.replace')} ${LanguageService.t('common.slot')} 1
+                              ${LanguageService.t('common.replace')}
+                              ${LanguageService.t('common.slot')} 1
                             </button>
                             <button
                               class="slot-picker-item"
                               role="menuitem"
                               @click=${() => this.handleSlotAction(2)}
                             >
-                              ${LanguageService.t('common.replace')} ${LanguageService.t('common.slot')} 2
+                              ${LanguageService.t('common.replace')}
+                              ${LanguageService.t('common.slot')} 2
                             </button>
                           </div>
                         </div>
                       `
-            : html`
-                        <button class="primary-action-btn" type="button" @click=${this.handleSelectClick}>
+                    : html`
+                        <button
+                          class="primary-action-btn"
+                          type="button"
+                          @click=${this.handleSelectClick}
+                        >
                           ${this.primaryActionLabel}
                         </button>
                       `}
@@ -1527,7 +1539,7 @@ export class ResultCard extends BaseLitComponent {
                 </div>
               </div>
             `
-        : nothing}
+          : nothing}
       </article>
     `;
   }

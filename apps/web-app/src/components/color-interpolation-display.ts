@@ -257,8 +257,7 @@ export class ColorInterpolationDisplay extends BaseComponent {
 
     // Hint text
     const hint = this.createElement('p', {
-      textContent:
-        LanguageService.t('mixer.clickStopHint'),
+      textContent: LanguageService.t('mixer.clickStopHint'),
       className: 'text-xs text-gray-500 dark:text-gray-400 italic',
     });
     container.appendChild(hint);

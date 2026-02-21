@@ -930,7 +930,11 @@ export class V4LayoutShell extends BaseLitComponent {
 
         <!-- Mobile Drawer Overlay (tap outside to close palette) -->
         <div
-          class="v4-drawer-overlay ${this.paletteDrawerOpen && this.isMobile && this.shouldShowPalette ? 'visible' : ''}"
+          class="v4-drawer-overlay ${this.paletteDrawerOpen &&
+          this.isMobile &&
+          this.shouldShowPalette
+            ? 'visible'
+            : ''}"
           @click=${this.handleDrawerOverlayClick}
           role="button"
           tabindex="-1"
@@ -946,7 +950,7 @@ export class V4LayoutShell extends BaseLitComponent {
 
         <!-- Right Palette Drawer (hidden for extractor, swatch, presets) -->
         ${this.shouldShowPalette
-        ? html`
+          ? html`
               <dye-palette-drawer
                 ?is-open=${this.paletteDrawerOpen}
                 active-tool=${this.activeTool}
@@ -956,7 +960,7 @@ export class V4LayoutShell extends BaseLitComponent {
                 @clear-all-dyes=${this.handleClearAllDyes}
               ></dye-palette-drawer>
             `
-        : ''}
+          : ''}
       </div>
 
       <!-- Mobile Sidebar Toggle FAB -->
@@ -980,18 +984,27 @@ export class V4LayoutShell extends BaseLitComponent {
         aria-expanded=${!this.sidebarCollapsed}
         @click=${this.toggleSidebar}
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+          ></path>
         </svg>
       </button>
 
       <!-- Palette Drawer Toggle FAB (hidden when drawer is open or tool doesn't use palette) -->
       <button
         class="v4-palette-toggle ${this.paletteDrawerOpen ? 'drawer-open' : ''} ${!this
-        .shouldShowPalette
-        ? 'no-palette'
-        : ''}"
+          .shouldShowPalette
+          ? 'no-palette'
+          : ''}"
         type="button"
         title="${LanguageService.t('aria.showColorPalette')}"
         aria-label="${LanguageService.t('aria.showColorPalette')}"

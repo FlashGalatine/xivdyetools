@@ -60,10 +60,7 @@ vi.mock('@services/index', () => ({
       { name: 'Aether', region: 'NA' },
       { name: 'Crystal', region: 'NA' },
     ]),
-    getWorldsInDataCenter: vi.fn().mockReturnValue([
-      { name: 'Adamantoise' },
-      { name: 'Cactuar' },
-    ]),
+    getWorldsInDataCenter: vi.fn().mockReturnValue([{ name: 'Adamantoise' }, { name: 'Cactuar' }]),
     getWorldName: vi.fn((id: number) => `World-${id}`),
   },
 }));
@@ -396,10 +393,7 @@ describe('MarketBoard', () => {
 
       await marketBoard.fetchPricesForDyes(mockDyes);
 
-      expect(mockMarketBoardService.fetchPricesForDyes).toHaveBeenCalledWith(
-        mockDyes,
-        undefined
-      );
+      expect(mockMarketBoardService.fetchPricesForDyes).toHaveBeenCalledWith(mockDyes, undefined);
     });
 
     it('should pass progress callback to service', async () => {
@@ -409,10 +403,7 @@ describe('MarketBoard', () => {
 
       await marketBoard.fetchPricesForDyes(mockDyes, onProgress);
 
-      expect(mockMarketBoardService.fetchPricesForDyes).toHaveBeenCalledWith(
-        mockDyes,
-        onProgress
-      );
+      expect(mockMarketBoardService.fetchPricesForDyes).toHaveBeenCalledWith(mockDyes, onProgress);
     });
   });
 

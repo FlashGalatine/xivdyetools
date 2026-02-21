@@ -885,7 +885,9 @@ export class AccessibilityTool extends BaseComponent {
           background: var(--theme-background-secondary);
           color: var(--theme-text);
           cursor: pointer;
-        `.replace(/\s+/g, ' ').trim(),
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     }) as HTMLSelectElement;
 
@@ -969,9 +971,7 @@ export class AccessibilityTool extends BaseComponent {
       attributes: { style: 'display: none;' },
     });
     this.matrixSection.appendChild(
-      this.createHeader(
-        LanguageService.t('accessibility.pairComparisons')
-      )
+      this.createHeader(LanguageService.t('accessibility.pairComparisons'))
     );
     this.matrixContainer = this.createElement('div');
     this.matrixSection.appendChild(this.matrixContainer);
@@ -2441,7 +2441,11 @@ export class AccessibilityTool extends BaseComponent {
     // Load vision type if specified
     if (params.vision && typeof params.vision === 'string') {
       const validVisionTypes: VisionTypeId[] = [
-        'normal', 'deuteranopia', 'protanopia', 'tritanopia', 'achromatopsia'
+        'normal',
+        'deuteranopia',
+        'protanopia',
+        'tritanopia',
+        'achromatopsia',
       ];
       if (validVisionTypes.includes(params.vision as VisionTypeId)) {
         // Add this vision type to enabled types

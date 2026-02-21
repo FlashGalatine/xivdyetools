@@ -117,8 +117,6 @@ export function generateRandomDyesGrid(options: RandomDyesGridOptions): string {
   );
 
   // Calculate starting position for cards (centered)
-  const totalGridWidth = Math.min(dyes.length, cardsPerRow) * (CARD_WIDTH + CARD_GAP) - CARD_GAP;
-  const startX = (width - totalGridWidth) / 2;
   const startY = TITLE_HEIGHT + PADDING;
 
   // Draw dye cards
@@ -158,7 +156,6 @@ function generateDyeCard(dyeInfo: RandomDyeInfo, x: number, y: number): string {
   const elements: string[] = [];
 
   const swatchHeight = 80;
-  const infoHeight = CARD_HEIGHT - swatchHeight;
 
   // Card background
   elements.push(

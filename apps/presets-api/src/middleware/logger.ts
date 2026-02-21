@@ -88,7 +88,7 @@ export async function loggerMiddleware(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getLogger(c: Context<any>): ExtendedLogger | undefined {
   try {
-    return c.get('logger');
+    return c.get('logger') as ExtendedLogger | undefined;
   } catch {
     return undefined;
   }

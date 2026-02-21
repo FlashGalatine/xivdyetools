@@ -10,7 +10,6 @@ import {
   rect,
   line,
   text,
-  getContrastTextColor,
   THEME,
   FONTS,
 } from './base.js';

@@ -10,12 +10,13 @@
  * - /budget quick <preset> - Quick picks for popular expensive dyes
  */
 
+import type { Dye } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed, ephemeralResponse } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
-import { generateBudgetComparison, generateErrorSvg, type BudgetSvgLabels } from '@xivdyetools/svg';
-import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
+import { generateBudgetComparison, type BudgetSvgLabels } from '@xivdyetools/svg';
+import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, getLocalizedCategory } from '../../services/i18n.js';
 import { getUserPreferences, setPreference } from '../../services/preferences.js';
 import {
@@ -27,11 +28,10 @@ import {
   validateWorld,
   getWorldAutocomplete,
   getQuickPickById,
-  getQuickPickChoices,
 } from '../../services/budget/index.js';
 import type { BudgetSearchOptions, BudgetSortOption } from '../../types/budget.js';
 import { UniversalisError, formatGil } from '../../types/budget.js';
-import type { Env, DiscordInteraction, InteractionResponseType } from '../../types/env.js';
+import type { Env, DiscordInteraction } from '../../types/env.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 
 // ============================================================================
@@ -180,10 +180,12 @@ async function processFindCommand(
     // Build localized dye name and category maps
     const dyeNames: Record<number, string> = {};
     const categoryNames: Record<string, string> = {};
-    dyeNames[result.targetDye.itemID] = getLocalizedDyeName(result.targetDye.itemID, result.targetDye.name, locale);
-    categoryNames[result.targetDye.category] = getLocalizedCategory(result.targetDye.category, locale);
+    const targetDyeTyped = result.targetDye as Dye;
+    dyeNames[targetDyeTyped.itemID] = getLocalizedDyeName(targetDyeTyped.itemID, targetDyeTyped.name, locale);
+    categoryNames[targetDyeTyped.category] = getLocalizedCategory(targetDyeTyped.category, locale);
     for (const alt of result.alternatives) {
-      dyeNames[alt.dye.itemID] = getLocalizedDyeName(alt.dye.itemID, alt.dye.name, locale);
+      const altDye = alt.dye as Dye;
+      dyeNames[altDye.itemID] = getLocalizedDyeName(altDye.itemID, altDye.name, locale);
     }
 
     // Build translated SVG labels
@@ -244,7 +246,7 @@ async function processFindCommand(
     }
 
     // Get dye emoji and localized name for target
-    const targetDye = result.targetDye;
+    const targetDye = result.targetDye as Dye;
     const localizedTargetName = dyeNames[targetDye.itemID] ?? targetDye.name;
     const emoji = getDyeEmoji(targetDye.itemID);
     const emojiPrefix = emoji ? `${emoji} ` : '';

@@ -13,7 +13,6 @@ import type { Dye } from '@xivdyetools/types';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { Env } from '../../types/env.js';
 import type {
-  DyePriceData,
   BudgetSuggestion,
   BudgetSearchOptions,
   BudgetFindResult,

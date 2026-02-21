@@ -41,6 +41,7 @@ export function sanitizeDisplayText(text: string, maxLength?: number): string {
 
   let sanitized = text
     // Remove ASCII control characters (0x00-0x1F except tab/newline) and DEL (0x7F)
+    // eslint-disable-next-line no-control-regex -- intentionally matching control chars for sanitization
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
     // Remove common invisible Unicode characters
     .replace(/[\u200B-\u200D\uFEFF\u2060\u00AD]/g, '')

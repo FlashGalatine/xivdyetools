@@ -9,11 +9,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ComparisonTool } from '../comparison-tool';
-import {
-  createTestContainer,
-  cleanupTestContainer,
-  query,
-} from '../../__tests__/component-utils';
+import { createTestContainer, cleanupTestContainer, query } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
@@ -145,7 +141,7 @@ vi.mock('../collapsible-panel', () => ({
     init() {
       const div = document.createElement('div');
       div.className = 'collapsible-panel';
-      div.id = this.options.id as string || 'panel';
+      div.id = (this.options.id as string) || 'panel';
       this.container.appendChild(div);
     }
     destroy() {

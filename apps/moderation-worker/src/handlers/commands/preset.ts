@@ -281,6 +281,7 @@ async function handleStatsAction(ctx: ModerationContext): Promise<void> {
 // Subcommand Entry Points
 // ============================================================================
 
+// eslint-disable-next-line @typescript-eslint/require-await
 async function handleModerateSubcommand(
   interaction: DiscordInteraction,
   env: Env,
@@ -389,7 +390,7 @@ async function handleBanUserSubcommand(
   t: Translator,
   userId: string,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  _logger?: ExtendedLogger
 ): Promise<Response> {
   // Check channel restriction
   if (!isInModerationChannel(interaction, env)) {
@@ -474,6 +475,7 @@ async function handleBanUserSubcommand(
 // /preset unban_user
 // ============================================================================
 
+// eslint-disable-next-line @typescript-eslint/require-await
 async function handleUnbanUserSubcommand(
   interaction: DiscordInteraction,
   env: Env,

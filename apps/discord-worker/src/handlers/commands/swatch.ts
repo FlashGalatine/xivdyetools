@@ -15,17 +15,15 @@
  * @module handlers/commands/swatch
  */
 
-import { CharacterColorService } from '@xivdyetools/core';
+import { CharacterColorService, type CharacterColorMatch, type MatchingMethod as CoreMatchingMethod } from '@xivdyetools/core';
 import { dyeService } from '../../utils/color.js';
 import type { CharacterColor, SubRace, Gender as CoreGender } from '@xivdyetools/types';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import {
   messageResponse,
-  deferredResponse,
   errorEmbed,
   hexToDiscordColor,
 } from '../../utils/response.js';
-import { editOriginalResponse } from '../../utils/discord-api.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import {
   getUserPreferences,
@@ -36,7 +34,6 @@ import {
   VALID_CLANS,
   CLANS_BY_RACE,
   type MatchingMethod,
-  type Gender,
 } from '../../types/preferences.js';
 import {
   createTranslator,
@@ -483,9 +480,9 @@ async function processSwatchMatch(
     }
 
     // Find closest dye matches
-    const matches = characterColorService.findClosestDyes(characterColor, dyeService, {
+    const matches: CharacterColorMatch[] = characterColorService.findClosestDyes(characterColor, dyeService, {
       count,
-      matchingMethod: matchingMethod as any, // Core uses same string values
+      matchingMethod: matchingMethod as CoreMatchingMethod,
     });
 
     if (matches.length === 0) {
@@ -599,7 +596,7 @@ function buildSwatchResponse(
   clan: string | undefined,
   gender: CoreGender | undefined,
   matchingMethod: MatchingMethod,
-  matches: Array<{ characterColor: CharacterColor; dye: any; distance: number }>,
+  matches: CharacterColorMatch[],
   t: Translator
 ): Response {
   const locale = t.getLocale();

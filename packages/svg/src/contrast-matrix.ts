@@ -24,7 +24,6 @@ import {
   THEME,
   FONTS,
   escapeXml,
-  getContrastTextColor,
 } from './base.js';
 
 // ============================================================================

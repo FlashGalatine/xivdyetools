@@ -248,7 +248,12 @@ describe('ColorWheelDisplay', () => {
     });
 
     it('should show short name for split-complementary', () => {
-      wheel = new ColorWheelDisplay(container, '#FF0000', mockDyes.slice(0, 2), 'split-complementary');
+      wheel = new ColorWheelDisplay(
+        container,
+        '#FF0000',
+        mockDyes.slice(0, 2),
+        'split-complementary'
+      );
       wheel.init();
 
       const text = query(container, 'svg text');

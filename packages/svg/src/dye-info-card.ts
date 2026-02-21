@@ -22,7 +22,6 @@ import {
   createSvgDocument,
   rect,
   text,
-  line,
   THEME,
   FONTS,
   escapeXml,

@@ -102,7 +102,9 @@ async function initializeApp(): Promise<void> {
       (window as unknown as Record<string, unknown>).TutorialService = TutorialService;
       (window as unknown as Record<string, unknown>).ShareService = ShareService;
       console.info('[DEV] TutorialService exposed on window for debugging');
-      console.info('[DEV] ShareService exposed on window for debugging (try ShareService.getAnalyticsStats())');
+      console.info(
+        '[DEV] ShareService exposed on window for debugging (try ShareService.getAnalyticsStats())'
+      );
     }
   } catch (error) {
     const appError = ErrorHandler.log(error);

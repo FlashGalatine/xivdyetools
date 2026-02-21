@@ -60,6 +60,7 @@ interface ButtonInteraction {
 /**
  * Handle the Approve button click
  */
+// eslint-disable-next-line @typescript-eslint/require-await
 export async function handlePresetApproveButton(
   interaction: ButtonInteraction,
   env: Env,
@@ -168,11 +169,12 @@ async function processApproval(
 /**
  * Handle the Reject button click - shows modal for reason
  */
+// eslint-disable-next-line @typescript-eslint/require-await
 export async function handlePresetRejectButton(
   interaction: ButtonInteraction,
   env: Env,
-  ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  _ctx: ExecutionContext,
+  _logger?: ExtendedLogger
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
   const presetId = customId.replace('preset_reject_', '');
@@ -219,11 +221,12 @@ export async function handlePresetRejectButton(
 /**
  * Handle the Revert button click - shows modal for reason
  */
+// eslint-disable-next-line @typescript-eslint/require-await
 export async function handlePresetRevertButton(
   interaction: ButtonInteraction,
   env: Env,
-  ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  _ctx: ExecutionContext,
+  _logger?: ExtendedLogger
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
   const presetId = customId.replace('preset_revert_', '');

@@ -349,8 +349,10 @@ export class DisplayOptionsV4 extends BaseLitComponent {
   private renderColorFormatsGroup(): TemplateResult {
     return html`
       <div class="option-group">
-        ${this.renderSectionHeader(LanguageService.t('config.colorFormats'), this.colorFormatsCollapsed, () =>
-          this.toggleSection('colorFormats')
+        ${this.renderSectionHeader(
+          LanguageService.t('config.colorFormats'),
+          this.colorFormatsCollapsed,
+          () => this.toggleSection('colorFormats')
         )}
         <div class="option-group-content ${this.colorFormatsCollapsed ? 'collapsed' : ''}">
           <div class="option-row">
@@ -396,8 +398,10 @@ export class DisplayOptionsV4 extends BaseLitComponent {
   private renderResultMetadataGroup(): TemplateResult {
     return html`
       <div class="option-group">
-        ${this.renderSectionHeader(LanguageService.t('config.resultDetails'), this.resultMetadataCollapsed, () =>
-          this.toggleSection('resultMetadata')
+        ${this.renderSectionHeader(
+          LanguageService.t('config.resultDetails'),
+          this.resultMetadataCollapsed,
+          () => this.toggleSection('resultMetadata')
         )}
         <div class="option-group-content ${this.resultMetadataCollapsed ? 'collapsed' : ''}">
           <div class="option-row">

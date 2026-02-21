@@ -26,7 +26,6 @@ import {
   THEME,
   FONTS,
   escapeXml,
-  getContrastTextColor,
   rgbToHex,
   hexToRgb,
 } from './base.js';

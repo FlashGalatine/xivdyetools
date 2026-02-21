@@ -21,7 +21,6 @@ import {
   MAX_COLLECTIONS,
   MAX_DYES_PER_COLLECTION,
   MAX_COLLECTION_NAME_LENGTH,
-  type Collection,
 } from '../../services/user-storage.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { resolveDyeInput, dyeService } from '../../utils/color.js';
@@ -51,7 +50,7 @@ const DEPRECATION_COLOR = 0xfee75c; // Yellow
 export async function handleCollectionCommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext
+  _ctx: ExecutionContext
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
 

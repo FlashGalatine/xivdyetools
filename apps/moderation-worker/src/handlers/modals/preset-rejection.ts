@@ -26,6 +26,7 @@ import { extractTextInputValue, getModalUserId, getModalUsername } from '../../t
 /**
  * Handle the rejection reason modal submission
  */
+// eslint-disable-next-line @typescript-eslint/require-await
 export async function handlePresetRejectionModal(
   interaction: ModalInteraction,
   env: Env,
@@ -157,6 +158,7 @@ async function processRejection(
 /**
  * Handle the revert reason modal submission
  */
+// eslint-disable-next-line @typescript-eslint/require-await
 export async function handlePresetRevertModal(
   interaction: ModalInteraction,
   env: Env,

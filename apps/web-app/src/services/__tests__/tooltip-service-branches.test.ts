@@ -191,7 +191,10 @@ describe('TooltipService Branch Coverage', () => {
         toJSON: () => ({}),
       });
 
-      TooltipService.attach(targetElement, { content: 'Long test tooltip content', position: 'auto' });
+      TooltipService.attach(targetElement, {
+        content: 'Long test tooltip content',
+        position: 'auto',
+      });
       TooltipService.show(targetElement);
 
       const tooltipId = targetElement.getAttribute('aria-describedby');

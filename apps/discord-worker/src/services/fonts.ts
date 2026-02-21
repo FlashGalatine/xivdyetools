@@ -68,17 +68,17 @@ export function getFontBuffers(): Uint8Array[] {
   }
 
   const buffers: Uint8Array[] = [
-    new Uint8Array(spaceGroteskData),
-    new Uint8Array(onestData),
-    new Uint8Array(habibiData),
+    new Uint8Array(spaceGroteskData as ArrayBuffer),
+    new Uint8Array(onestData as ArrayBuffer),
+    new Uint8Array(habibiData as ArrayBuffer),
   ];
 
   // Add CJK fonts if available
   if (notoSansCjkData) {
-    buffers.push(new Uint8Array(notoSansCjkData));
+    buffers.push(new Uint8Array(notoSansCjkData as ArrayBuffer));
   }
   if (notoSansKrData) {
-    buffers.push(new Uint8Array(notoSansKrData));
+    buffers.push(new Uint8Array(notoSansKrData as ArrayBuffer));
   }
 
   fontBuffersCache = buffers;

@@ -344,10 +344,7 @@ describe('CollapsiblePanel', () => {
       const button = query<HTMLButtonElement>(container, 'button');
       click(button); // Toggle to closed
 
-      expect(mockSetItem).toHaveBeenCalledWith(
-        'v3_panel_test-panel',
-        false
-      );
+      expect(mockSetItem).toHaveBeenCalledWith('v3_panel_test-panel', false);
     });
 
     it('should load state from storage on init', () => {

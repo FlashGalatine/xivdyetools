@@ -11,7 +11,6 @@ import {
   handlePresetApproveButton,
   handlePresetRejectButton,
   handlePresetRevertButton,
-  isPresetModerationButton,
 } from './preset-moderation.js';
 import {
   handleBanConfirmButton,

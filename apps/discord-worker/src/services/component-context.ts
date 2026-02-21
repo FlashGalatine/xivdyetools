@@ -248,7 +248,7 @@ export async function getContext(
       return null;
     }
 
-    const context = (await response.json()) as ComponentContext;
+    const context: ComponentContext = await response.json();
 
     // Double-check expiration (Cache-Control should handle this, but be safe)
     if (context.expiresAt < Date.now()) {

@@ -17,7 +17,6 @@ describe('Browser Preset', () => {
   };
 
   // Store original values for restoration
-  const originalImportMeta = globalThis.import?.meta;
   const originalProcess = globalThis.process;
 
   beforeEach(() => {

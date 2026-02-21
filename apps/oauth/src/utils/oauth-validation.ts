@@ -6,8 +6,6 @@
  * (Discord authorize, XIVAuth authorize, callbacks, etc.)
  */
 
-import { STATE_EXPIRY_SECONDS } from '../constants/oauth.js';
-
 /**
  * Validate code_challenge format per RFC 7636
  * For S256 method, challenge is BASE64URL(SHA256(verifier)) = 43 characters

@@ -25,7 +25,7 @@
 
 import type { Context, Next } from 'hono';
 import type { Env } from '../types/env.js';
-import { KVRateLimiter, MODERATION_LIMITS } from '@xivdyetools/rate-limiter';
+import { KVRateLimiter } from '@xivdyetools/rate-limiter';
 
 /**
  * Rate limit configuration
@@ -150,7 +150,7 @@ export async function incrementRateLimit(
   kv: KVNamespace,
   userId: string,
   type: RateLimitType,
-  maxRetries: number = 3
+  _maxRetries: number = 3
 ): Promise<void> {
   const limiter = getLimiter(kv);
   const key = `${type}:${userId}`;

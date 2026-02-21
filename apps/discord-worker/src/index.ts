@@ -10,10 +10,10 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import type { Env, InteractionType as IType } from './types/env.js';
+import type { Env } from './types/env.js';
 import { InteractionType, InteractionResponseType } from './types/env.js';
 import { verifyDiscordRequest, unauthorizedResponse, badRequestResponse, timingSafeEqual } from './utils/verify.js';
-import { pongResponse, ephemeralResponse, messageResponse } from './utils/response.js';
+import { pongResponse, ephemeralResponse } from './utils/response.js';
 import {
   handleAboutCommand,
   handleHarmonyCommand,
@@ -25,7 +25,6 @@ import {
   handleMixerV4Command,
   handleSwatchCommand,
   // Legacy commands (kept for backward compatibility during migration)
-  handleMixerCommand,
   handleMatchCommand,
   handleMatchImageCommand,
   handleAccessibilityCommand,
@@ -50,10 +49,10 @@ import { STATUS_DISPLAY, type PresetNotificationPayload } from './types/preset.j
 import { getLocalizedDyeName } from './services/i18n.js';
 import { createTranslator } from './services/bot-i18n.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
-import { requestIdMiddleware, getRequestId, type RequestIdVariables } from './middleware/request-id.js';
-import { loggerMiddleware, getLogger } from './middleware/logger.js';
+import { requestIdMiddleware, type RequestIdVariables } from './middleware/request-id.js';
+import { loggerMiddleware } from './middleware/logger.js';
 import { sanitizePresetName, sanitizePresetDescription } from './utils/sanitize.js';
-import { VALID_CLANS, CLANS_BY_RACE } from './types/preferences.js';
+import { CLANS_BY_RACE } from './types/preferences.js';
 import { getWorldAutocomplete } from './services/budget/index.js';
 
 function formatDyesForEmbed(dyeIds: number[]): string {
@@ -400,29 +399,31 @@ app.post('/', async (c) => {
     return badRequestResponse('Invalid JSON body');
   }
 
+  const interactionType = interaction.type as InteractionType;
+
   // Handle PING (required for Discord endpoint verification)
-  if (interaction.type === InteractionType.PING) {
+  if (interactionType === InteractionType.PING) {
     logger.info('Received PING, responding with PONG');
     return pongResponse();
   }
 
   // Handle Application Commands (slash commands)
-  if (interaction.type === InteractionType.APPLICATION_COMMAND) {
+  if (interactionType === InteractionType.APPLICATION_COMMAND) {
     return handleCommand(interaction, env, c.executionCtx, logger);
   }
 
   // Handle Autocomplete
-  if (interaction.type === InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE) {
+  if (interactionType === InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE) {
     return handleAutocomplete(interaction, env, logger);
   }
 
   // Handle Message Components (buttons, select menus)
-  if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
+  if (interactionType === InteractionType.MESSAGE_COMPONENT) {
     return handleComponent(interaction, env, c.executionCtx, logger);
   }
 
   // Handle Modal Submissions
-  if (interaction.type === InteractionType.MODAL_SUBMIT) {
+  if (interactionType === InteractionType.MODAL_SUBMIT) {
     return handleModal(interaction, env, c.executionCtx, logger);
   }
 
@@ -845,10 +846,11 @@ async function handleComponent(
 /**
  * Handle modal submissions
  */
+// eslint-disable-next-line @typescript-eslint/require-await -- handler interface requires async
 async function handleModal(
   interaction: DiscordInteraction,
-  env: Env,
-  ctx: ExecutionContext,
+  _env: Env,
+  _ctx: ExecutionContext,
   logger: ExtendedLogger
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';

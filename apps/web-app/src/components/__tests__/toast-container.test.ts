@@ -264,7 +264,10 @@ describe('ToastContainer', () => {
 
       ToastService.error('Error!'); // Errors are dismissible by default
 
-      const dismissBtn = query(container, '[data-toast-id] button[aria-label="Dismiss notification"]');
+      const dismissBtn = query(
+        container,
+        '[data-toast-id] button[aria-label="Dismiss notification"]'
+      );
       expect(dismissBtn).not.toBeNull();
     });
 
@@ -274,7 +277,10 @@ describe('ToastContainer', () => {
 
       ToastService.info('Info'); // Info toasts are not dismissible by default
 
-      const dismissBtn = query(container, '[data-toast-id] button[aria-label="Dismiss notification"]');
+      const dismissBtn = query(
+        container,
+        '[data-toast-id] button[aria-label="Dismiss notification"]'
+      );
       expect(dismissBtn).toBeNull();
     });
 
@@ -284,7 +290,10 @@ describe('ToastContainer', () => {
 
       ToastService.error('Error!');
 
-      const dismissBtn = query<HTMLButtonElement>(container, '[data-toast-id] button[aria-label="Dismiss notification"]');
+      const dismissBtn = query<HTMLButtonElement>(
+        container,
+        '[data-toast-id] button[aria-label="Dismiss notification"]'
+      );
       click(dismissBtn);
 
       const toasts = queryAll(container, '[data-toast-id]');

@@ -49,6 +49,7 @@ interface ButtonInteraction {
 /**
  * Handle the ban confirm button click
  */
+// eslint-disable-next-line @typescript-eslint/require-await
 export async function handleBanConfirmButton(
   interaction: ButtonInteraction,
   env: Env,
@@ -121,11 +122,12 @@ export async function handleBanConfirmButton(
 /**
  * Handle the ban cancel button click
  */
+// eslint-disable-next-line @typescript-eslint/require-await
 export async function handleBanCancelButton(
-  interaction: ButtonInteraction,
-  env: Env,
-  ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  _interaction: ButtonInteraction,
+  _env: Env,
+  _ctx: ExecutionContext,
+  _logger?: ExtendedLogger
 ): Promise<Response> {
   return Response.json({
     type: InteractionResponseType.UPDATE_MESSAGE,

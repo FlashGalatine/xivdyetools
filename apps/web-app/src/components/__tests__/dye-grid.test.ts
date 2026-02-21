@@ -36,7 +36,8 @@ vi.mock('@services/index', () => ({
     t: (key: string) => key,
     getDyeName: (itemId: number) => `Dye-${itemId}`,
     getCategory: (category: string) => category,
-    tInterpolate: (key: string, params: Record<string, string>) => `${key}:${JSON.stringify(params)}`,
+    tInterpolate: (key: string, params: Record<string, string>) =>
+      `${key}:${JSON.stringify(params)}`,
     subscribe: vi.fn().mockReturnValue(() => {}),
   },
   CollectionService: {

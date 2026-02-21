@@ -15,7 +15,7 @@
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { messageResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
+import { messageResponse, errorEmbed } from '../../utils/response.js';
 import {
   getUserPreferences,
   setPreference,
@@ -24,13 +24,10 @@ import {
   getAffectedCommands,
 } from '../../services/preferences.js';
 import {
-  PREFERENCE_DEFAULTS,
   BLENDING_MODES,
   MATCHING_METHODS,
   CLANS_BY_RACE,
-  VALID_CLANS,
   type PreferenceKey,
-  type UserPreferences,
 } from '../../types/preferences.js';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
@@ -357,10 +354,6 @@ async function handleResetSubcommand(
   if (key) {
     const emoji = PREFERENCE_EMOJIS[key];
     const label = t.t(`preferences.keys.${key}`);
-    const defaultValue = getDefaultValue(key);
-    const defaultDisplay = defaultValue !== undefined
-      ? formatPreferenceValue(key, defaultValue, t)
-      : t.t('preferences.show.notSet');
 
     return messageResponse({
       embeds: [

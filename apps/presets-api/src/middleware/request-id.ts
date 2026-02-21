@@ -69,7 +69,7 @@ export async function requestIdMiddleware(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getRequestId(c: Context<any>): string {
   try {
-    return c.get('requestId') || 'unknown';
+    return (c.get('requestId') as string | undefined) || 'unknown';
   } catch {
     return 'unknown';
   }

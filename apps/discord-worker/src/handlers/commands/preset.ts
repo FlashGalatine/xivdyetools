@@ -114,6 +114,7 @@ export async function handlePresetCommand(
 /**
  * /preset list - Browse presets by category
  */
+// eslint-disable-next-line @typescript-eslint/require-await
 async function handleListSubcommand(
   interaction: DiscordInteraction,
   env: Env,
@@ -211,6 +212,7 @@ async function processListCommand(
 /**
  * /preset show - View a specific preset
  */
+// eslint-disable-next-line @typescript-eslint/require-await
 async function handleShowSubcommand(
   interaction: DiscordInteraction,
   env: Env,
@@ -274,6 +276,7 @@ async function processShowCommand(
 /**
  * /preset random - Get random preset
  */
+// eslint-disable-next-line @typescript-eslint/require-await
 async function handleRandomSubcommand(
   interaction: DiscordInteraction,
   env: Env,
@@ -334,6 +337,7 @@ async function processRandomCommand(
 /**
  * /preset submit - Create a new preset
  */
+// eslint-disable-next-line @typescript-eslint/require-await
 async function handleSubmitSubcommand(
   interaction: DiscordInteraction,
   env: Env,
@@ -507,6 +511,7 @@ async function processSubmitCommand(
 /**
  * /preset vote - Toggle vote on a preset
  */
+// eslint-disable-next-line @typescript-eslint/require-await
 async function handleVoteSubcommand(
   interaction: DiscordInteraction,
   env: Env,
@@ -586,6 +591,7 @@ async function processVoteCommand(
 /**
  * /preset edit - Edit one of your own presets
  */
+// eslint-disable-next-line @typescript-eslint/require-await
 async function handleEditSubcommand(
   interaction: DiscordInteraction,
   env: Env,

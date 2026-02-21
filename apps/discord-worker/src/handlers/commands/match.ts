@@ -17,7 +17,7 @@ import type { Env, DiscordInteraction } from '../../types/env.js';
 export async function handleMatchCommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext
+  _ctx: ExecutionContext
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
   const t = await createUserTranslator(env.KV, userId, interaction.locale);

@@ -78,6 +78,7 @@ export class MemoryRateLimiter implements RateLimiter {
   /**
    * Check if a request is allowed and record it
    */
+  // eslint-disable-next-line @typescript-eslint/require-await -- implements async interface
   async check(key: string, config: RateLimitConfig): Promise<RateLimitResult> {
     const now = Date.now();
     const windowStart = now - config.windowMs;
@@ -136,6 +137,7 @@ export class MemoryRateLimiter implements RateLimiter {
   /**
    * Reset rate limit for a specific key
    */
+  // eslint-disable-next-line @typescript-eslint/require-await -- implements async interface
   async reset(key: string): Promise<void> {
     this.requestLog.delete(key);
   }
@@ -143,6 +145,7 @@ export class MemoryRateLimiter implements RateLimiter {
   /**
    * Reset all rate limits
    */
+  // eslint-disable-next-line @typescript-eslint/require-await -- implements async interface
   async resetAll(): Promise<void> {
     this.requestLog.clear();
     this.requestCount = 0;

@@ -164,16 +164,11 @@ export function buildMarketPanel(
   marketBoard.init();
 
   // Set up market board event listeners using shared utility
-  setupMarketBoardListeners(
-    marketContent,
-    config.getShowPrices,
-    config.fetchPrices,
-    {
-      onPricesToggled: config.onPricesToggled,
-      onServerChanged: config.onServerChanged,
-      onRefreshRequested: config.onRefreshRequested,
-    }
-  );
+  setupMarketBoardListeners(marketContent, config.getShowPrices, config.fetchPrices, {
+    onPricesToggled: config.onPricesToggled,
+    onServerChanged: config.onServerChanged,
+    onRefreshRequested: config.onRefreshRequested,
+  });
 
   panel.setContent(marketContent);
   return { panel, marketBoard };

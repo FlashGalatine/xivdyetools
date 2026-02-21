@@ -1015,7 +1015,7 @@ describe('stats.ts', () => {
     });
 
     it('should propagate non-Error rejection values', async () => {
-      vi.mocked(getStats).mockImplementationOnce(() => Promise.reject('string error'));
+      vi.mocked(getStats).mockImplementationOnce(() => Promise.reject(new Error('string error')));
 
       const interaction = makeInteraction('anyone', 'summary');
 

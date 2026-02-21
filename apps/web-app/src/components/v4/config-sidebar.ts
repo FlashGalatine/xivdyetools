@@ -506,7 +506,7 @@ export class ConfigSidebar extends BaseLitComponent {
       }
 
       .auth-btn-discord {
-        background-color: #5865F2;
+        background-color: #5865f2;
         color: white;
       }
 
@@ -612,7 +612,9 @@ export class ConfigSidebar extends BaseLitComponent {
         font-size: 13px;
         cursor: pointer;
         text-align: left;
-        transition: background 0.15s, border-color 0.15s;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
       }
 
       .advanced-btn-icon {
@@ -658,7 +660,9 @@ export class ConfigSidebar extends BaseLitComponent {
         color: var(--theme-text, #e0e0e0);
         font-size: 12px;
         cursor: pointer;
-        transition: background 0.15s, border-color 0.15s;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
       }
 
       .advanced-btn-half .advanced-btn-icon {
@@ -809,7 +813,6 @@ export class ConfigSidebar extends BaseLitComponent {
 
     // Update ConfigController
     if (this.configController) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       // Type assertion needed because computed property keys lose type safety
       (this.configController as any).setConfig(tool, { [key]: value });
     }
@@ -981,7 +984,15 @@ export class ConfigSidebar extends BaseLitComponent {
    * Updates global display options that are shared across all tools.
    */
   private handleDisplayOptionsChange(
-    _tool: 'harmony' | 'mixer' | 'gradient' | 'swatch' | 'accessibility' | 'comparison' | 'budget' | 'extractor',
+    _tool:
+      | 'harmony'
+      | 'mixer'
+      | 'gradient'
+      | 'swatch'
+      | 'accessibility'
+      | 'comparison'
+      | 'budget'
+      | 'extractor',
     e: CustomEvent<DisplayOptionsChangeDetail>
   ): void {
     const { option, value, allOptions } = e.detail;
@@ -991,7 +1002,9 @@ export class ConfigSidebar extends BaseLitComponent {
 
     // Save to global config via ConfigController
     if (this.configController) {
-      (this.configController as ConfigController).setConfig('global', { displayOptions: allOptions });
+      (this.configController as ConfigController).setConfig('global', {
+        displayOptions: allOptions,
+      });
 
       // Broadcast to all tools so they pick up the new display options
       const toolsWithDisplayOptions = [
@@ -1025,14 +1038,16 @@ export class ConfigSidebar extends BaseLitComponent {
             class="config-select"
             .value=${this.harmonyConfig.harmonyType}
             @change=${(e: Event) => {
-        const value = (e.target as HTMLSelectElement).value;
-        this.handleConfigChange('harmony', 'harmonyType', value);
-      }}
+              const value = (e.target as HTMLSelectElement).value;
+              this.handleConfigChange('harmony', 'harmonyType', value);
+            }}
           >
             <option value="complementary">${LanguageService.t('config.complementary')}</option>
             <option value="analogous">${LanguageService.t('config.analogous')}</option>
             <option value="triadic">${LanguageService.t('config.triadic')}</option>
-            <option value="split-complementary">${LanguageService.t('config.splitComplementary')}</option>
+            <option value="split-complementary">
+              ${LanguageService.t('config.splitComplementary')}
+            </option>
             <option value="tetradic">${LanguageService.t('config.tetradic')}</option>
             <option value="square">${LanguageService.t('config.square')}</option>
             <option value="monochromatic">${LanguageService.t('config.monochromatic')}</option>
@@ -1048,19 +1063,19 @@ export class ConfigSidebar extends BaseLitComponent {
               label=${LanguageService.t('config.perceptualMatching')}
               .checked=${this.harmonyConfig.strictMatching}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-        this.handleConfigChange('harmony', 'strictMatching', e.detail.checked)}
+                this.handleConfigChange('harmony', 'strictMatching', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
           <div class="config-description">
             ${this.harmonyConfig.strictMatching
-        ? LanguageService.t('config.perceptualMatchingDesc')
-        : LanguageService.t('config.hueMatchingDesc')}
+              ? LanguageService.t('config.perceptualMatchingDesc')
+              : LanguageService.t('config.hueMatchingDesc')}
           </div>
         </div>
 
         ${this.harmonyConfig.strictMatching
-        ? this.renderMatchingMethodSection('harmony', this.harmonyConfig.matchingMethod)
-        : ''}
+          ? this.renderMatchingMethodSection('harmony', this.harmonyConfig.matchingMethod)
+          : ''}
 
         <v4-display-options
           .showHex=${this.globalDisplayOptions.showHex}
@@ -1072,7 +1087,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
-        this.handleDisplayOptionsChange('harmony', e)}
+            this.handleDisplayOptionsChange('harmony', e)}
         ></v4-display-options>
       </div>
     `;
@@ -1091,7 +1106,7 @@ export class ConfigSidebar extends BaseLitComponent {
               label=${LanguageService.t('config.vibrancyBoost')}
               .checked=${this.extractorConfig.vibrancyBoost}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-        this.handleConfigChange('extractor', 'vibrancyBoost', e.detail.checked)}
+                this.handleConfigChange('extractor', 'vibrancyBoost', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
           <div class="slider-wrapper">
@@ -1101,7 +1116,7 @@ export class ConfigSidebar extends BaseLitComponent {
               .min=${3}
               .max=${10}
               @slider-change=${(e: CustomEvent<{ value: number }>) =>
-        this.handleConfigChange('extractor', 'maxColors', e.detail.value)}
+                this.handleConfigChange('extractor', 'maxColors', e.detail.value)}
             ></v4-range-slider>
           </div>
           <div class="slider-wrapper" title=${LanguageService.t('config.dragThresholdTooltip')}>
@@ -1111,7 +1126,7 @@ export class ConfigSidebar extends BaseLitComponent {
               .min=${3}
               .max=${15}
               @slider-change=${(e: CustomEvent<{ value: number }>) =>
-        this.handleConfigChange('extractor', 'dragThreshold', e.detail.value)}
+                this.handleConfigChange('extractor', 'dragThreshold', e.detail.value)}
             ></v4-range-slider>
           </div>
         </div>
@@ -1128,7 +1143,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
-        this.handleDisplayOptionsChange('extractor', e)}
+            this.handleDisplayOptionsChange('extractor', e)}
         ></v4-display-options>
       </div>
     `;
@@ -1147,7 +1162,7 @@ export class ConfigSidebar extends BaseLitComponent {
               label=${LanguageService.t('config.deuteranopia')}
               .checked=${this.accessibilityConfig.deuteranopia}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-        this.handleConfigChange('accessibility', 'deuteranopia', e.detail.checked)}
+                this.handleConfigChange('accessibility', 'deuteranopia', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
           <div class="config-row">
@@ -1155,7 +1170,7 @@ export class ConfigSidebar extends BaseLitComponent {
               label=${LanguageService.t('config.protanopia')}
               .checked=${this.accessibilityConfig.protanopia}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-        this.handleConfigChange('accessibility', 'protanopia', e.detail.checked)}
+                this.handleConfigChange('accessibility', 'protanopia', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
           <div class="config-row">
@@ -1163,7 +1178,7 @@ export class ConfigSidebar extends BaseLitComponent {
               label=${LanguageService.t('config.tritanopia')}
               .checked=${this.accessibilityConfig.tritanopia}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-        this.handleConfigChange('accessibility', 'tritanopia', e.detail.checked)}
+                this.handleConfigChange('accessibility', 'tritanopia', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
           <div class="config-row">
@@ -1171,7 +1186,7 @@ export class ConfigSidebar extends BaseLitComponent {
               label=${LanguageService.t('config.achromatopsia')}
               .checked=${this.accessibilityConfig.achromatopsia}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-        this.handleConfigChange('accessibility', 'achromatopsia', e.detail.checked)}
+                this.handleConfigChange('accessibility', 'achromatopsia', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
         </div>
@@ -1183,7 +1198,7 @@ export class ConfigSidebar extends BaseLitComponent {
               label=${LanguageService.t('config.showLabels')}
               .checked=${this.accessibilityConfig.showLabels}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-        this.handleConfigChange('accessibility', 'showLabels', e.detail.checked)}
+                this.handleConfigChange('accessibility', 'showLabels', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
           <div class="config-row">
@@ -1191,7 +1206,7 @@ export class ConfigSidebar extends BaseLitComponent {
               label=${LanguageService.t('config.showHexValues')}
               .checked=${this.accessibilityConfig.showHexValues}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-        this.handleConfigChange('accessibility', 'showHexValues', e.detail.checked)}
+                this.handleConfigChange('accessibility', 'showHexValues', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
           <div class="config-row">
@@ -1199,7 +1214,7 @@ export class ConfigSidebar extends BaseLitComponent {
               label=${LanguageService.t('config.highContrastMode')}
               .checked=${this.accessibilityConfig.highContrastMode}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-        this.handleConfigChange('accessibility', 'highContrastMode', e.detail.checked)}
+                this.handleConfigChange('accessibility', 'highContrastMode', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
         </div>
@@ -1214,7 +1229,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
           .visibleGroups=${['colorFormats']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
-        this.handleDisplayOptionsChange('accessibility', e)}
+            this.handleDisplayOptionsChange('accessibility', e)}
         ></v4-display-options>
       </div>
     `;
@@ -1236,7 +1251,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
-        this.handleDisplayOptionsChange('comparison', e)}
+            this.handleDisplayOptionsChange('comparison', e)}
         ></v4-display-options>
       </div>
     `;
@@ -1257,7 +1272,7 @@ export class ConfigSidebar extends BaseLitComponent {
               .min=${3}
               .max=${12}
               @slider-change=${(e: CustomEvent<{ value: number }>) =>
-        this.handleConfigChange('gradient', 'stepCount', e.detail.value)}
+                this.handleConfigChange('gradient', 'stepCount', e.detail.value)}
             ></v4-range-slider>
           </div>
         </div>
@@ -1268,9 +1283,9 @@ export class ConfigSidebar extends BaseLitComponent {
             class="config-select"
             .value=${this.gradientConfig.interpolation}
             @change=${(e: Event) => {
-        const value = (e.target as HTMLSelectElement).value;
-        this.handleConfigChange('gradient', 'interpolation', value);
-      }}
+              const value = (e.target as HTMLSelectElement).value;
+              this.handleConfigChange('gradient', 'interpolation', value);
+            }}
           >
             <option value="oklch">OKLCH - ${LanguageService.t('gradient.mode.oklch')}</option>
             <option value="hsv">HSV - ${LanguageService.t('gradient.mode.hsv')}</option>
@@ -1278,9 +1293,7 @@ export class ConfigSidebar extends BaseLitComponent {
             <option value="lch">LCH - ${LanguageService.t('gradient.mode.lch')}</option>
             <option value="rgb">RGB - ${LanguageService.t('gradient.mode.rgb')}</option>
           </select>
-          <div class="config-description">
-            ${this.getColorSpaceDescription()}
-          </div>
+          <div class="config-description">${this.getColorSpaceDescription()}</div>
         </div>
 
         ${this.renderMatchingMethodSection('gradient', this.gradientConfig.matchingMethod)}
@@ -1295,7 +1308,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
-        this.handleDisplayOptionsChange('gradient', e)}
+            this.handleDisplayOptionsChange('gradient', e)}
         ></v4-display-options>
       </div>
     `;
@@ -1313,9 +1326,9 @@ export class ConfigSidebar extends BaseLitComponent {
             class="config-select"
             .value=${this.mixerConfig.mixingMode ?? 'ryb'}
             @change=${(e: Event) => {
-        const value = (e.target as HTMLSelectElement).value as MixingMode;
-        this.handleConfigChange('mixer', 'mixingMode', value);
-      }}
+              const value = (e.target as HTMLSelectElement).value as MixingMode;
+              this.handleConfigChange('mixer', 'mixingMode', value);
+            }}
           >
             <option value="spectral">${LanguageService.t('config.mixingSpectral')}</option>
             <option value="ryb">RYB - ${LanguageService.t('config.mixingRyb')}</option>
@@ -1324,9 +1337,7 @@ export class ConfigSidebar extends BaseLitComponent {
             <option value="hsl">HSL - ${LanguageService.t('config.mixingHsl')}</option>
             <option value="rgb">RGB - ${LanguageService.t('config.mixingRgb')}</option>
           </select>
-          <div class="config-description">
-            ${this.getMixingModeDescription()}
-          </div>
+          <div class="config-description">${this.getMixingModeDescription()}</div>
         </div>
 
         <div class="config-group">
@@ -1338,7 +1349,7 @@ export class ConfigSidebar extends BaseLitComponent {
               .min=${3}
               .max=${8}
               @slider-change=${(e: CustomEvent<{ value: number }>) =>
-        this.handleConfigChange('mixer', 'maxResults', e.detail.value)}
+                this.handleConfigChange('mixer', 'maxResults', e.detail.value)}
             ></v4-range-slider>
           </div>
         </div>
@@ -1355,7 +1366,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
-        this.handleDisplayOptionsChange('mixer', e)}
+            this.handleDisplayOptionsChange('mixer', e)}
         ></v4-display-options>
       </div>
     `;
@@ -1397,19 +1408,19 @@ export class ConfigSidebar extends BaseLitComponent {
           class="config-select"
           .value=${currentMethod}
           @change=${(e: Event) => {
-        const value = (e.target as HTMLSelectElement).value as MatchingMethod;
-        this.handleConfigChange(toolKey, 'matchingMethod', value);
-      }}
+            const value = (e.target as HTMLSelectElement).value as MatchingMethod;
+            this.handleConfigChange(toolKey, 'matchingMethod', value);
+          }}
         >
           <option value="oklab">OKLAB - ${LanguageService.t('config.matchingOklab')}</option>
           <option value="hyab">HyAB - ${LanguageService.t('config.matchingHyab')}</option>
-          <option value="ciede2000">CIEDE2000 - ${LanguageService.t('config.matchingCiede2000')}</option>
+          <option value="ciede2000">
+            CIEDE2000 - ${LanguageService.t('config.matchingCiede2000')}
+          </option>
           <option value="cie76">CIE76 - ${LanguageService.t('config.matchingCie76')}</option>
           <option value="rgb">RGB - ${LanguageService.t('config.matchingRgb')}</option>
         </select>
-        <div class="config-description">
-          ${this.getMatchingMethodDescription(currentMethod)}
-        </div>
+        <div class="config-description">${this.getMatchingMethodDescription(currentMethod)}</div>
       </div>
     `;
   }
@@ -1468,9 +1479,9 @@ export class ConfigSidebar extends BaseLitComponent {
             class="config-select"
             .value=${this.presetsConfig.category}
             @change=${(e: Event) => {
-        const value = (e.target as HTMLSelectElement).value as PresetCategoryFilter;
-        this.handleConfigChange('presets', 'category', value);
-      }}
+              const value = (e.target as HTMLSelectElement).value as PresetCategoryFilter;
+              this.handleConfigChange('presets', 'category', value);
+            }}
           >
             <option value="all">${LanguageService.t('config.allCategories')}</option>
             <option value="jobs">${LanguageService.t('config.jobs')}</option>
@@ -1488,9 +1499,9 @@ export class ConfigSidebar extends BaseLitComponent {
             class="config-select"
             .value=${this.presetsConfig.sortBy}
             @change=${(e: Event) => {
-        const value = (e.target as HTMLSelectElement).value;
-        this.handleConfigChange('presets', 'sortBy', value);
-      }}
+              const value = (e.target as HTMLSelectElement).value;
+              this.handleConfigChange('presets', 'sortBy', value);
+            }}
           >
             <option value="popular">${LanguageService.t('config.mostPopular')}</option>
             <option value="recent">${LanguageService.t('config.mostRecent')}</option>
@@ -1505,7 +1516,7 @@ export class ConfigSidebar extends BaseLitComponent {
               label=${LanguageService.t('config.showMyPresetsOnly')}
               .checked=${this.presetsConfig.showMyPresetsOnly}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-        this.handleConfigChange('presets', 'showMyPresetsOnly', e.detail.checked)}
+                this.handleConfigChange('presets', 'showMyPresetsOnly', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
           <div class="config-row">
@@ -1513,7 +1524,7 @@ export class ConfigSidebar extends BaseLitComponent {
               label=${LanguageService.t('config.showFavorites')}
               .checked=${this.presetsConfig.showFavorites}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-        this.handleConfigChange('presets', 'showFavorites', e.detail.checked)}
+                this.handleConfigChange('presets', 'showFavorites', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
         </div>
@@ -1528,7 +1539,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
-        this.handleDisplayOptionsChange('harmony', e)}
+            this.handleDisplayOptionsChange('harmony', e)}
         ></v4-display-options>
       </div>
     `;
@@ -1543,7 +1554,9 @@ export class ConfigSidebar extends BaseLitComponent {
 
     if (isAuthenticated && user) {
       // Logged in - show user card and submit button
-      const avatarUrl = user.avatar_url || `https://cdn.discordapp.com/embed/avatars/${parseInt(user.id || '0') % 5}.png`;
+      const avatarUrl =
+        user.avatar_url ||
+        `https://cdn.discordapp.com/embed/avatars/${parseInt(user.id || '0') % 5}.png`;
       const displayName = user.global_name || user.username || 'User';
       const providerLabel = user.auth_provider === 'xivauth' ? 'XIVAuth' : 'Discord';
 
@@ -1554,7 +1567,9 @@ export class ConfigSidebar extends BaseLitComponent {
             <img class="user-avatar" src="${avatarUrl}" alt="${displayName}" />
             <div class="user-info">
               <div class="user-name">${displayName}</div>
-              <div class="user-provider">${LanguageService.tInterpolate('config.via', { provider: providerLabel })}</div>
+              <div class="user-provider">
+                ${LanguageService.tInterpolate('config.via', { provider: providerLabel })}
+              </div>
             </div>
           </div>
           <button class="submit-btn" @click=${this.handleSubmitPreset}>
@@ -1574,13 +1589,17 @@ export class ConfigSidebar extends BaseLitComponent {
         <div class="auth-buttons">
           <button class="auth-btn auth-btn-discord" @click=${() => this.handleLogin('discord')}>
             <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+              <path
+                d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"
+              />
             </svg>
             ${LanguageService.t('config.loginWithDiscord')}
           </button>
           <button class="auth-btn auth-btn-xivauth" @click=${() => this.handleLogin('xivauth')}>
             <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+              <path
+                d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"
+              />
             </svg>
             ${LanguageService.t('config.loginWithXIVAuth')}
           </button>
@@ -1636,7 +1655,7 @@ export class ConfigSidebar extends BaseLitComponent {
               .step=${5000}
               .valueFormatter=${(v: number) => `${v.toLocaleString()} gil`}
               @slider-change=${(e: CustomEvent<{ value: number }>) =>
-        this.handleConfigChange('budget', 'maxPrice', e.detail.value)}
+                this.handleConfigChange('budget', 'maxPrice', e.detail.value)}
             ></v4-range-slider>
           </div>
           <div class="slider-wrapper">
@@ -1646,7 +1665,7 @@ export class ConfigSidebar extends BaseLitComponent {
               .min=${1}
               .max=${20}
               @slider-change=${(e: CustomEvent<{ value: number }>) =>
-        this.handleConfigChange('budget', 'maxResults', e.detail.value)}
+                this.handleConfigChange('budget', 'maxResults', e.detail.value)}
             ></v4-range-slider>
           </div>
         </div>
@@ -1660,7 +1679,7 @@ export class ConfigSidebar extends BaseLitComponent {
               .min=${0}
               .max=${100}
               @slider-change=${(e: CustomEvent<{ value: number }>) =>
-        this.handleConfigChange('budget', 'maxDeltaE', e.detail.value)}
+                this.handleConfigChange('budget', 'maxDeltaE', e.detail.value)}
             ></v4-range-slider>
           </div>
         </div>
@@ -1675,7 +1694,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
-        this.handleDisplayOptionsChange('budget', e)}
+            this.handleDisplayOptionsChange('budget', e)}
         ></v4-display-options>
       </div>
     `;
@@ -1704,9 +1723,9 @@ export class ConfigSidebar extends BaseLitComponent {
             class="config-select"
             .value=${this.swatchConfig.colorSheet}
             @change=${(e: Event) => {
-        const value = (e.target as HTMLSelectElement).value;
-        this.handleConfigChange('swatch', 'colorSheet', value);
-      }}
+              const value = (e.target as HTMLSelectElement).value;
+              this.handleConfigChange('swatch', 'colorSheet', value);
+            }}
           >
             <option value="eyeColors">${LanguageService.t('config.eyeColors')}</option>
             <option value="hairColors">${LanguageService.t('config.hairColors')}</option>
@@ -1715,8 +1734,12 @@ export class ConfigSidebar extends BaseLitComponent {
             <option value="lipColorsDark">${LanguageService.t('config.lipColorsDark')}</option>
             <option value="lipColorsLight">${LanguageService.t('config.lipColorsLight')}</option>
             <option value="tattooColors">${LanguageService.t('config.tattooColors')}</option>
-            <option value="facePaintColorsDark">${LanguageService.t('config.facePaintDark')}</option>
-            <option value="facePaintColorsLight">${LanguageService.t('config.facePaintLight')}</option>
+            <option value="facePaintColorsDark">
+              ${LanguageService.t('config.facePaintDark')}
+            </option>
+            <option value="facePaintColorsLight">
+              ${LanguageService.t('config.facePaintLight')}
+            </option>
           </select>
         </div>
 
@@ -1726,34 +1749,31 @@ export class ConfigSidebar extends BaseLitComponent {
             class="config-select"
             .value=${this.swatchConfig.race}
             @change=${(e: Event) => {
-        const value = (e.target as HTMLSelectElement).value;
-        this.handleConfigChange('swatch', 'race', value);
-      }}
+              const value = (e.target as HTMLSelectElement).value;
+              this.handleConfigChange('swatch', 'race', value);
+            }}
           >
             ${RACE_GROUPS.map(
-        (group) => html`
+              (group) => html`
                 <optgroup label="${LanguageService.getRace(group.raceKey)}">
                   ${group.subraces.map(
-          (subrace) => html`
-                      <option
-                        value="${subrace}"
-                        ?selected=${this.swatchConfig.race === subrace}
-                      >
+                    (subrace) => html`
+                      <option value="${subrace}" ?selected=${this.swatchConfig.race === subrace}>
                         ${LanguageService.getClan(SUBRACE_TO_CLAN_KEY[subrace])}
                       </option>
                     `
-        )}
+                  )}
                 </optgroup>
               `
-      )}
+            )}
           </select>
           <select
             class="config-select"
             .value=${this.swatchConfig.gender}
             @change=${(e: Event) => {
-        const value = (e.target as HTMLSelectElement).value;
-        this.handleConfigChange('swatch', 'gender', value);
-      }}
+              const value = (e.target as HTMLSelectElement).value;
+              this.handleConfigChange('swatch', 'gender', value);
+            }}
           >
             <option value="Male" ?selected=${this.swatchConfig.gender === 'Male'}>
               ${LanguageService.t('tools.character.male')}
@@ -1773,7 +1793,7 @@ export class ConfigSidebar extends BaseLitComponent {
               .min=${1}
               .max=${6}
               @slider-change=${(e: CustomEvent<{ value: number }>) =>
-        this.handleConfigChange('swatch', 'maxResults', e.detail.value)}
+                this.handleConfigChange('swatch', 'maxResults', e.detail.value)}
             ></v4-range-slider>
           </div>
         </div>
@@ -1792,7 +1812,7 @@ export class ConfigSidebar extends BaseLitComponent {
             .showAcquisition=${this.globalDisplayOptions.showAcquisition}
             .visibleGroups=${['colorFormats', 'resultMetadata']}
             @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
-        this.handleDisplayOptionsChange('swatch', e)}
+              this.handleDisplayOptionsChange('swatch', e)}
           ></v4-display-options>
         </div>
       </div>
@@ -1803,9 +1823,16 @@ export class ConfigSidebar extends BaseLitComponent {
    * Check if current tool supports market data
    */
   private toolSupportsMarket(): boolean {
-    return ['harmony', 'comparison', 'budget', 'mixer', 'extractor', 'gradient', 'presets', 'swatch'].includes(
-      this.activeTool
-    );
+    return [
+      'harmony',
+      'comparison',
+      'budget',
+      'mixer',
+      'extractor',
+      'gradient',
+      'presets',
+      'swatch',
+    ].includes(this.activeTool);
   }
 
   /**
@@ -1830,11 +1857,11 @@ export class ConfigSidebar extends BaseLitComponent {
             aria-expanded=${!this.marketBoardCollapsed}
             tabindex="0"
             @keydown=${(e: KeyboardEvent) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          this.toggleMarketBoard();
-        }
-      }}
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.toggleMarketBoard();
+              }
+            }}
           >
             <div class="config-label">${LanguageService.t('config.marketBoard')}</div>
             <span class="collapse-icon ${this.marketBoardCollapsed ? 'collapsed' : ''}"
@@ -1847,7 +1874,7 @@ export class ConfigSidebar extends BaseLitComponent {
                 label=${LanguageService.t('config.enableMarketBoard')}
                 .checked=${this.marketConfig.showPrices}
                 @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-        this.handleConfigChange('market', 'showPrices', e.detail.checked)}
+                  this.handleConfigChange('market', 'showPrices', e.detail.checked)}
               ></v4-toggle-switch>
             </div>
             <select
@@ -1855,14 +1882,16 @@ export class ConfigSidebar extends BaseLitComponent {
               .value=${this.marketConfig.selectedServer}
               ?disabled=${this.dataCenters.length === 0}
               @change=${(e: Event) => {
-        const value = (e.target as HTMLSelectElement).value;
-        this.handleConfigChange('market', 'selectedServer', value);
-      }}
+                const value = (e.target as HTMLSelectElement).value;
+                this.handleConfigChange('market', 'selectedServer', value);
+              }}
             >
               ${this.dataCenters.length === 0
-        ? html`<option value="Crystal">${LanguageService.t('config.loadingServers')}</option>`
-        : sortedDataCenters.map(
-          (dc) => html`
+                ? html`<option value="Crystal">
+                    ${LanguageService.t('config.loadingServers')}
+                  </option>`
+                : sortedDataCenters.map(
+                    (dc) => html`
                       <optgroup label="${dc.name} (${dc.region})">
                         <option
                           value="${dc.name}"
@@ -1871,10 +1900,10 @@ export class ConfigSidebar extends BaseLitComponent {
                           ${dc.name} - ${LanguageService.t('config.allWorlds')}
                         </option>
                         ${this.worlds
-              .filter((w) => dc.worlds.includes(w.id))
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map(
-                (world) => html`
+                          .filter((w) => dc.worlds.includes(w.id))
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map(
+                            (world) => html`
                               <option
                                 value="${world.name}"
                                 ?selected=${this.marketConfig.selectedServer === world.name}
@@ -1882,58 +1911,62 @@ export class ConfigSidebar extends BaseLitComponent {
                                 &nbsp;&nbsp;${world.name}
                               </option>
                             `
-              )}
+                          )}
                       </optgroup>
                     `
-        )}
+                  )}
             </select>
-            ${this.marketConfig.showPrices ? html`
-              <div class="config-label" style="margin-top: 16px; margin-bottom: 8px;">
-                ${LanguageService.t('marketBoard.priceCategories')}
-              </div>
-              <div class="config-row">
-                <v4-toggle-switch
-                  label=${LanguageService.t('marketBoard.baseDyes')}
-                  .checked=${this.priceCategories.baseDyes}
-                  @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-          this.handlePriceCategoryChange('baseDyes', e.detail.checked)}
-                ></v4-toggle-switch>
-              </div>
-              <div class="config-row">
-                <v4-toggle-switch
-                  label=${LanguageService.t('marketBoard.craftDyes')}
-                  .checked=${this.priceCategories.craftDyes}
-                  @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-          this.handlePriceCategoryChange('craftDyes', e.detail.checked)}
-                ></v4-toggle-switch>
-              </div>
-              <div class="config-row">
-                <v4-toggle-switch
-                  label=${LanguageService.t('marketBoard.alliedSocietyDyes')}
-                  .checked=${this.priceCategories.alliedSocietyDyes}
-                  @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-          this.handlePriceCategoryChange('alliedSocietyDyes', e.detail.checked)}
-                ></v4-toggle-switch>
-              </div>
-              <div class="config-row">
-                <v4-toggle-switch
-                  label=${LanguageService.t('marketBoard.cosmicDyes')}
-                  .checked=${this.priceCategories.cosmicDyes}
-                  @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-          this.handlePriceCategoryChange('cosmicDyes', e.detail.checked)}
-                ></v4-toggle-switch>
-              </div>
-              <div class="config-row">
-                <v4-toggle-switch
-                  label=${LanguageService.t('marketBoard.specialDyes')}
-                  .checked=${this.priceCategories.specialDyes}
-                  @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-          this.handlePriceCategoryChange('specialDyes', e.detail.checked)}
-                ></v4-toggle-switch>
-              </div>
-            ` : nothing}
+            ${this.marketConfig.showPrices
+              ? html`
+                  <div class="config-label" style="margin-top: 16px; margin-bottom: 8px;">
+                    ${LanguageService.t('marketBoard.priceCategories')}
+                  </div>
+                  <div class="config-row">
+                    <v4-toggle-switch
+                      label=${LanguageService.t('marketBoard.baseDyes')}
+                      .checked=${this.priceCategories.baseDyes}
+                      @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                        this.handlePriceCategoryChange('baseDyes', e.detail.checked)}
+                    ></v4-toggle-switch>
+                  </div>
+                  <div class="config-row">
+                    <v4-toggle-switch
+                      label=${LanguageService.t('marketBoard.craftDyes')}
+                      .checked=${this.priceCategories.craftDyes}
+                      @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                        this.handlePriceCategoryChange('craftDyes', e.detail.checked)}
+                    ></v4-toggle-switch>
+                  </div>
+                  <div class="config-row">
+                    <v4-toggle-switch
+                      label=${LanguageService.t('marketBoard.alliedSocietyDyes')}
+                      .checked=${this.priceCategories.alliedSocietyDyes}
+                      @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                        this.handlePriceCategoryChange('alliedSocietyDyes', e.detail.checked)}
+                    ></v4-toggle-switch>
+                  </div>
+                  <div class="config-row">
+                    <v4-toggle-switch
+                      label=${LanguageService.t('marketBoard.cosmicDyes')}
+                      .checked=${this.priceCategories.cosmicDyes}
+                      @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                        this.handlePriceCategoryChange('cosmicDyes', e.detail.checked)}
+                    ></v4-toggle-switch>
+                  </div>
+                  <div class="config-row">
+                    <v4-toggle-switch
+                      label=${LanguageService.t('marketBoard.specialDyes')}
+                      .checked=${this.priceCategories.specialDyes}
+                      @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                        this.handlePriceCategoryChange('specialDyes', e.detail.checked)}
+                    ></v4-toggle-switch>
+                  </div>
+                `
+              : nothing}
             <div class="config-description">
-              ${LanguageService.tInterpolate('config.pricesFetchedFrom', { server: this.marketConfig.selectedServer })}
+              ${LanguageService.tInterpolate('config.pricesFetchedFrom', {
+                server: this.marketConfig.selectedServer,
+              })}
             </div>
           </div>
         </div>
@@ -1956,11 +1989,11 @@ export class ConfigSidebar extends BaseLitComponent {
             aria-expanded=${!this.advancedSettingsCollapsed}
             tabindex="0"
             @keydown=${(e: KeyboardEvent) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          this.toggleAdvancedSettings();
-        }
-      }}
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.toggleAdvancedSettings();
+              }
+            }}
           >
             <div class="config-label">${LanguageService.t('config.advancedSettings')}</div>
             <span class="collapse-icon ${this.advancedSettingsCollapsed ? 'collapsed' : ''}">
@@ -2016,24 +2049,20 @@ export class ConfigSidebar extends BaseLitComponent {
                 label=${LanguageService.t('config.performanceMode')}
                 .checked=${this.advancedConfig.performanceMode}
                 @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-        this.handleAdvancedConfigChange('performanceMode', e.detail.checked)}
+                  this.handleAdvancedConfigChange('performanceMode', e.detail.checked)}
               ></v4-toggle-switch>
             </div>
-            <div class="config-description">
-              ${LanguageService.t('config.performanceModeDesc')}
-            </div>
+            <div class="config-description">${LanguageService.t('config.performanceModeDesc')}</div>
 
             <div class="config-row">
               <v4-toggle-switch
                 label=${LanguageService.t('config.enableAnalytics')}
                 .checked=${this.advancedConfig.analyticsEnabled}
                 @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-        this.handleAdvancedConfigChange('analyticsEnabled', e.detail.checked)}
+                  this.handleAdvancedConfigChange('analyticsEnabled', e.detail.checked)}
               ></v4-toggle-switch>
             </div>
-            <div class="config-description">
-              ${LanguageService.t('config.analyticsDesc')}
-            </div>
+            <div class="config-description">${LanguageService.t('config.analyticsDesc')}</div>
           </div>
         </div>
       </div>
@@ -2042,7 +2071,11 @@ export class ConfigSidebar extends BaseLitComponent {
 
   protected override render(): TemplateResult {
     return html`
-      <aside class="v4-config-sidebar" role="complementary" aria-label="${LanguageService.t('aria.toggleConfigSidebar')}">
+      <aside
+        class="v4-config-sidebar"
+        role="complementary"
+        aria-label="${LanguageService.t('aria.toggleConfigSidebar')}"
+      >
         <!-- Sidebar Header -->
         <header class="v4-sidebar-header">
           <span class="v4-sidebar-title">${LanguageService.t('common.options')}</span>

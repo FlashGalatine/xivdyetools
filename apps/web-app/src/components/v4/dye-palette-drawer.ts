@@ -597,7 +597,9 @@ export class DyePaletteDrawer extends BaseLitComponent {
         font-family: 'JetBrains Mono', monospace;
         font-size: 13px;
         outline: none;
-        transition: border-color 0.2s, background 0.2s;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
       }
 
       .custom-hex-input:focus {
@@ -638,7 +640,10 @@ export class DyePaletteDrawer extends BaseLitComponent {
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
-        transition: background 0.2s, transform 0.15s, opacity 0.2s;
+        transition:
+          background 0.2s,
+          transform 0.15s,
+          opacity 0.2s;
       }
 
       .custom-apply-btn:hover:not(:disabled) {
@@ -817,7 +822,9 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
     this.emit('dye-selected', { dye: randomDye });
     logger.debug(`[DyePaletteDrawer] Random dye selected: ${randomDye.name}`);
-    ToastService.info(LanguageService.tInterpolate('colorPalette.randomDyeSelected', { name: randomDye.name }));
+    ToastService.info(
+      LanguageService.tInterpolate('colorPalette.randomDyeSelected', { name: randomDye.name })
+    );
   }
 
   /**
@@ -949,7 +956,12 @@ export class DyePaletteDrawer extends BaseLitComponent {
             >
               ${unsafeHTML(ICON_BROOM)}
             </button>
-            <button class="close-btn" @click=${this.handleClose} title="${LanguageService.t('aria.closePalette')}" aria-label="${LanguageService.t('aria.closePalette')}">
+            <button
+              class="close-btn"
+              @click=${this.handleClose}
+              title="${LanguageService.t('aria.closePalette')}"
+              aria-label="${LanguageService.t('aria.closePalette')}"
+            >
               ${unsafeHTML(ICON_CLOSE)}
             </button>
           </div>
@@ -958,8 +970,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
         <div class="drawer-content">
           ${this.renderSearch()} ${this.renderFilters()}
           ${this.shouldShowCustomColor ? this.renderCustomColor() : nothing}
-          ${this.renderFavorites()}
-          ${this.renderDyeGrid(groupedDyes)}
+          ${this.renderFavorites()} ${this.renderDyeGrid(groupedDyes)}
         </div>
       </aside>
     `;
@@ -1001,7 +1012,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
     return html`
       <div class="filter-bar">
         ${filters.map(
-      (f) => html`
+          (f) => html`
             <button
               class="filter-chip ${this.activeFilter === f.id ? 'active' : ''}"
               @click=${() => this.handleFilterClick(f.id)}
@@ -1009,7 +1020,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
               ${LanguageService.t(f.labelKey)}
             </button>
           `
-    )}
+        )}
       </div>
     `;
   }
@@ -1022,7 +1033,14 @@ export class DyePaletteDrawer extends BaseLitComponent {
     // Normalize hex for color picker (needs 6-char format)
     let pickerValue = this.customColorHex;
     if (pickerValue.length === 4) {
-      pickerValue = '#' + pickerValue[1] + pickerValue[1] + pickerValue[2] + pickerValue[2] + pickerValue[3] + pickerValue[3];
+      pickerValue =
+        '#' +
+        pickerValue[1] +
+        pickerValue[1] +
+        pickerValue[2] +
+        pickerValue[2] +
+        pickerValue[3] +
+        pickerValue[3];
     }
     if (!isValid) {
       pickerValue = '#FF5500'; // Default fallback
@@ -1033,7 +1051,9 @@ export class DyePaletteDrawer extends BaseLitComponent {
         <div class="section-header" @click=${this.handleToggleCustomColor}>
           <span class="section-title">
             <svg class="favorites-icon" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+              <path
+                d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
+              />
             </svg>
             ${LanguageService.t('colorPalette.customColor')}
           </span>
@@ -1106,19 +1126,21 @@ export class DyePaletteDrawer extends BaseLitComponent {
         <button
           class="swatch-favorite-btn ${isFav ? 'is-favorite' : ''}"
           type="button"
-          title="${isFav ? LanguageService.t('aria.removeFromFavorites') : LanguageService.t('aria.addToFavorites')}"
+          title="${isFav
+            ? LanguageService.t('aria.removeFromFavorites')
+            : LanguageService.t('aria.addToFavorites')}"
           aria-label="${isFav
-        ? `${LanguageService.t('aria.removeFromFavorites')}: ${localizedName}`
-        : `${LanguageService.t('aria.addToFavorites')}: ${localizedName}`}"
+            ? `${LanguageService.t('aria.removeFromFavorites')}: ${localizedName}`
+            : `${LanguageService.t('aria.addToFavorites')}: ${localizedName}`}"
           @click=${(e: Event) => this.handleFavoriteToggle(e, dye)}
         >
           ${isFav
-        ? html`<svg viewBox="0 0 20 20" fill="currentColor">
+            ? html`<svg viewBox="0 0 20 20" fill="currentColor">
                 <path
                   d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
                 />
               </svg>`
-        : html`<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+            : html`<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path
                   d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
                 />
@@ -1152,12 +1174,16 @@ export class DyePaletteDrawer extends BaseLitComponent {
         </div>
         <div class="favorites-content ${this.favoritesExpanded ? 'expanded' : ''}">
           ${this.favoriteDyes.length > 0
-        ? html`
+            ? html`
                 <div class="swatch-grid">
                   ${this.favoriteDyes.map((dye) => this.renderSwatch(dye))}
                 </div>
               `
-        : html` <div class="favorites-empty">${LanguageService.t('collections.favoritesEmptyHint')}</div> `}
+            : html`
+                <div class="favorites-empty">
+                  ${LanguageService.t('collections.favoritesEmptyHint')}
+                </div>
+              `}
         </div>
       </div>
     `;
@@ -1185,13 +1211,15 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
     return html`
       ${Array.from(groupedDyes.entries()).map(
-      ([category, dyes]) => html`
+        ([category, dyes]) => html`
           <div class="category-section">
-            <div class="category-label">${LanguageService.t(CATEGORY_TRANSLATION_KEYS[category] || category)}</div>
+            <div class="category-label">
+              ${LanguageService.t(CATEGORY_TRANSLATION_KEYS[category] || category)}
+            </div>
             <div class="swatch-grid">${dyes.map((dye) => this.renderSwatch(dye))}</div>
           </div>
         `
-    )}
+      )}
     `;
   }
 }

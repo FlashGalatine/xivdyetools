@@ -235,7 +235,7 @@ function buildEmbeds(t: Translator) {
 export async function handleManualCommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext
+  _ctx: ExecutionContext
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
 

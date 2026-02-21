@@ -147,7 +147,9 @@ describe('display-options-helper', () => {
         toolName: 'TestTool',
       });
 
-      expect(logger.info).toHaveBeenCalledWith('[TestTool] setConfig: displayOptions.showRgb -> true');
+      expect(logger.info).toHaveBeenCalledWith(
+        '[TestTool] setConfig: displayOptions.showRgb -> true'
+      );
     });
 
     it('should not log changes when logChanges is false', () => {

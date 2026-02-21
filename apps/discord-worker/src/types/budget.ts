@@ -7,7 +7,6 @@
  * @module types/budget
  */
 
-import type { Dye, DyeWithDistance } from '@xivdyetools/types';
 import type { PriceData } from '@xivdyetools/types';
 
 // ============================================================================

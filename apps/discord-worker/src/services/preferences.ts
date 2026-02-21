@@ -362,12 +362,13 @@ export function validatePreferenceValue(
       }
       break;
 
-    case 'count':
+    case 'count': {
       const numValue = typeof value === 'string' ? parseInt(value, 10) : value;
       if (typeof numValue !== 'number' || !isValidCount(numValue)) {
         return { valid: false, reason: 'invalidCount' };
       }
       break;
+    }
 
     case 'clan':
       if (typeof value !== 'string' || !isValidClan(value)) {

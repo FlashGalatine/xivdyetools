@@ -58,7 +58,7 @@ app.use('*', async (c, next) => {
         return c.json({ success: false, error: ErrorCode.SERVICE_UNAVAILABLE, message: 'Service misconfigured' }, 500);
       }
       // In development, log warnings but continue
-      const logger = getLogger(c);
+      const logger = getLogger(c as Parameters<typeof getLogger>[0]);
       if (logger) {
         logger.warn('Continuing with invalid env configuration (development mode)');
       }

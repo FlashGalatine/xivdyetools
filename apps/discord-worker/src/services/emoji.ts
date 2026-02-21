@@ -23,7 +23,7 @@ export function getDyeEmoji(itemId: number): string | undefined {
  * Get Discord emoji string for a dye, with fallback to a colored square
  * @returns Emoji string or fallback
  */
-export function getDyeEmojiOrFallback(itemId: number, hex?: string): string {
+export function getDyeEmojiOrFallback(itemId: number, _hex?: string): string {
   const emoji = getDyeEmoji(itemId);
   if (emoji) return emoji;
 

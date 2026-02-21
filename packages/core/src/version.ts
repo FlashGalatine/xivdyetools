@@ -8,4 +8,4 @@
  * Current library version
  * Automatically synced with package.json version
  */
-export const VERSION = '1.16.0';
+export const VERSION = '1.17.0';

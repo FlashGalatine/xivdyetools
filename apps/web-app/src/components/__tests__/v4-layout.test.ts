@@ -9,10 +9,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { initializeV4Layout } from '../v4-layout';
-import {
-  createTestContainer,
-  cleanupTestContainer,
-} from '../../__tests__/component-utils';
+import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
 const { mockNavigateTo, mockGetCurrentToolId, mockSubscribe, mockInitialize } = vi.hoisted(() => ({
@@ -245,7 +242,9 @@ describe('V4Layout', () => {
 
       // Should not throw
       layoutShell?.dispatchEvent(
-        new CustomEvent('config-change', { detail: { tool: 'harmony', key: 'showPrices', value: true } })
+        new CustomEvent('config-change', {
+          detail: { tool: 'harmony', key: 'showPrices', value: true },
+        })
       );
 
       expect(container.children.length).toBeGreaterThan(0);

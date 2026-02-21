@@ -366,10 +366,7 @@ describe('price-utilities', () => {
 
   describe('hasCachedPrices', () => {
     it('should return true when at least one dye has cached price', () => {
-      const dyes = [
-        createMockDye({ itemID: 1001 }),
-        createMockDye({ itemID: 1002 }),
-      ];
+      const dyes = [createMockDye({ itemID: 1001 }), createMockDye({ itemID: 1002 })];
       const priceData = new Map([[1001, createMockPriceData()]]);
 
       const result = hasCachedPrices(dyes, priceData);
@@ -378,10 +375,7 @@ describe('price-utilities', () => {
     });
 
     it('should return false when no dyes have cached prices', () => {
-      const dyes = [
-        createMockDye({ itemID: 1001 }),
-        createMockDye({ itemID: 1002 }),
-      ];
+      const dyes = [createMockDye({ itemID: 1001 }), createMockDye({ itemID: 1002 })];
       const priceData = new Map([[9999, createMockPriceData()]]);
 
       const result = hasCachedPrices(dyes, priceData);
@@ -407,10 +401,7 @@ describe('price-utilities', () => {
     });
 
     it('should return true when all dyes have cached prices', () => {
-      const dyes = [
-        createMockDye({ itemID: 1001 }),
-        createMockDye({ itemID: 1002 }),
-      ];
+      const dyes = [createMockDye({ itemID: 1001 }), createMockDye({ itemID: 1002 })];
       const priceData = new Map([
         [1001, createMockPriceData()],
         [1002, createMockPriceData()],

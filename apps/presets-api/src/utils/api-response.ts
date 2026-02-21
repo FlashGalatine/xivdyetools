@@ -58,14 +58,14 @@ export type ErrorCodeType = (typeof ErrorCode)[keyof typeof ErrorCode];
  */
 export interface ApiErrorResponse {
   success: false;
-  error: ErrorCodeType | string;
+  error: string;
   message: string;
 }
 
 /**
  * Standard success response shape
  */
-export interface ApiSuccessResponse<T = Record<string, unknown>> {
+export interface ApiSuccessResponse {
   success: true;
   message?: string;
 }
@@ -86,7 +86,7 @@ type AnyContext = Context<any, any, any>;
  */
 export function errorResponse(
   c: AnyContext,
-  error: ErrorCodeType | string,
+  error: string,
   message: string,
   status: number = 400
 ): Response {

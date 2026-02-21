@@ -20,15 +20,12 @@ import {
   resolveCount,
 } from '../../services/preferences.js';
 import {
-  createTranslator,
   createUserTranslator,
   type Translator,
 } from '../../services/bot-i18n.js';
 import {
-  discordLocaleToLocaleCode,
   initializeLocale,
   getLocalizedDyeName,
-  type LocaleCode,
 } from '../../services/i18n.js';
 import { executeMixer } from '@xivdyetools/bot-logic';
 import type { Env, DiscordInteraction } from '../../types/env.js';

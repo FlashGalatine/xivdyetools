@@ -109,7 +109,7 @@ export function safeParseJSON<T = unknown>(
   let parsed: unknown;
   try {
     parsed = JSON.parse(body);
-  } catch (err) {
+  } catch {
     return {
       success: false,
       error: 'Invalid JSON syntax',

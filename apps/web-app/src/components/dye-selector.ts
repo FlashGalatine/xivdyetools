@@ -536,8 +536,7 @@ export class DyeSelector extends BaseComponent {
         className: 'text-center py-4 text-gray-500 dark:text-gray-400',
       });
       const emptyText = this.createElement('p', {
-        textContent:
-          LanguageService.t('collections.favoritesEmptyHint'),
+        textContent: LanguageService.t('collections.favoritesEmptyHint'),
         className: 'text-sm',
       });
       emptyState.appendChild(emptyText);

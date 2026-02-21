@@ -4,7 +4,6 @@
  */
 
 import type {
-  Env,
   CommunityPreset,
   PresetRow,
   PresetFilters,

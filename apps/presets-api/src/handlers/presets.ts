@@ -9,7 +9,6 @@ import { requireAuth, requireUserContext } from '../middleware/auth.js';
 import { requireNotBannedCheck } from '../middleware/ban-check.js';
 import {
   ErrorCode,
-  errorResponse,
   invalidJsonResponse,
   validationErrorResponse,
   forbiddenResponse,

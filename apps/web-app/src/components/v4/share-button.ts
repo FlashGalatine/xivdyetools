@@ -317,18 +317,13 @@ export class ShareButton extends BaseLitComponent {
   }
 
   protected override render(): TemplateResult {
-    const buttonClass = [
-      this.isCopied ? 'copied' : '',
-      this.isLoading ? 'loading' : '',
-    ]
+    const buttonClass = [this.isCopied ? 'copied' : '', this.isLoading ? 'loading' : '']
       .filter(Boolean)
       .join(' ');
 
     const icon = this.isCopied ? CHECK_ICON : SHARE_ICON;
     const label = this.getLabel();
-    const ariaLabel = this.compact
-      ? label
-      : undefined;
+    const ariaLabel = this.compact ? label : undefined;
 
     return html`
       <button
@@ -338,10 +333,7 @@ export class ShareButton extends BaseLitComponent {
         title=${label}
         aria-label=${ariaLabel || nothing}
       >
-        ${icon}
-        ${!this.compact
-          ? html`<span class="label">${label}</span>`
-          : nothing}
+        ${icon} ${!this.compact ? html`<span class="label">${label}</span>` : nothing}
       </button>
     `;
   }

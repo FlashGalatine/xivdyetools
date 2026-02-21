@@ -87,7 +87,7 @@ export async function verifyState(
       });
 
       return state;
-    } catch (err) {
+    } catch {
       throw new Error('Invalid state format');
     }
   }

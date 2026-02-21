@@ -23,6 +23,7 @@
  * const isValid = await timingSafeEqual(providedToken, expectedToken);
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/require-await -- async API contract; timingSafeEqual may be async in other runtimes
 export async function timingSafeEqual(a: string, b: string): Promise<boolean> {
   const encoder = new TextEncoder();
   const aBytes = encoder.encode(a);
@@ -40,7 +41,7 @@ export async function timingSafeEqual(a: string, b: string): Promise<boolean> {
 
   // Use crypto.subtle.timingSafeEqual if available (Cloudflare Workers)
   try {
-    const result = await crypto.subtle.timingSafeEqual(aPadded, bPadded);
+    const result = crypto.subtle.timingSafeEqual(aPadded, bPadded);
     // Also check original lengths matched
     return result && aBytes.length === bBytes.length;
   } catch {
@@ -60,6 +61,7 @@ export async function timingSafeEqual(a: string, b: string): Promise<boolean> {
  * @param b - Second array to compare
  * @returns true if arrays are equal, false otherwise
  */
+// eslint-disable-next-line @typescript-eslint/require-await -- async API contract; timingSafeEqual may be async in other runtimes
 export async function timingSafeEqualBytes(
   a: Uint8Array,
   b: Uint8Array
@@ -72,7 +74,7 @@ export async function timingSafeEqualBytes(
   bPadded.set(b);
 
   try {
-    const result = await crypto.subtle.timingSafeEqual(aPadded, bPadded);
+    const result = crypto.subtle.timingSafeEqual(aPadded, bPadded);
     return result && a.length === b.length;
   } catch {
     let diff = a.length ^ b.length;

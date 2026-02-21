@@ -56,17 +56,23 @@ export default tseslint.config(
     },
   },
 
-  // Relaxed rules for test files
+  // Relaxed rules for test files and test infrastructure
   {
-    files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/test-setup.ts', '**/test-helpers.ts'],
+    files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/__tests__/**', '**/test-setup.ts', '**/test-helpers.ts', '**/test-utils/src/**', '**/test-utils.ts', '**/test-utils.*.ts'],
     rules: {
       '@typescript-eslint/no-unsafe-return': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-floating-promises': 'off',
+      '@typescript-eslint/no-misused-promises': 'off',
+      '@typescript-eslint/await-thenable': 'off',
+      '@typescript-eslint/restrict-template-expressions': 'off',
       '@typescript-eslint/unbound-method': 'off',
       '@typescript-eslint/require-await': 'off',
       '@typescript-eslint/no-unnecessary-type-assertion': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
     },

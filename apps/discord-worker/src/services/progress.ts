@@ -14,7 +14,7 @@
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { editOriginalResponse } from '../utils/discord-api.js';
-import type { DiscordEmbed, InteractionResponseData } from '../utils/response.js';
+import type { DiscordEmbed } from '../utils/response.js';
 
 // ============================================================================
 // Types

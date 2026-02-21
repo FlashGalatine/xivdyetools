@@ -63,7 +63,7 @@ export class RateLimiter {
     this.requestLog = new Map();
 
     // Block concurrent requests until initialization is complete
-    this.state.blockConcurrencyWhile(async () => {
+    void this.state.blockConcurrencyWhile(async () => {
       await this.initialize();
     });
   }
@@ -150,6 +150,7 @@ export class RateLimiter {
    * @param config - Rate limit configuration
    * @returns Rate limit result
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   private async checkRateLimit(
     endpoint: string,
     config: RateLimitConfig
@@ -179,7 +180,7 @@ export class RateLimiter {
       this.requestLog.set(endpoint, recentTimestamps);
 
       // Persist to storage asynchronously (don't await to improve performance)
-      this.persistState();
+      void this.persistState();
     }
 
     return {
@@ -224,7 +225,7 @@ export class RateLimiter {
     });
 
     // Persist cleanup results
-    this.persistState();
+    void this.persistState();
   }
 
   /**

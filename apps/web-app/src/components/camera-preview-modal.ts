@@ -88,15 +88,13 @@ export async function showCameraPreviewModal(onCapture: OnCaptureCallback): Prom
   // Instructions
   const instructions = document.createElement('p');
   instructions.className = 'text-sm text-gray-600 dark:text-gray-400 text-center';
-  instructions.textContent =
-    LanguageService.t('camera.instructions');
+  instructions.textContent = LanguageService.t('camera.instructions');
   content.appendChild(instructions);
 
   // Privacy notice
   const privacyNotice = document.createElement('p');
   privacyNotice.className = 'text-xs text-center opacity-60 mt-1';
-  privacyNotice.textContent =
-    LanguageService.t('camera.privacyNotice');
+  privacyNotice.textContent = LanguageService.t('camera.privacyNotice');
   content.appendChild(privacyNotice);
 
   // Action buttons

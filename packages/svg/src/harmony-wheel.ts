@@ -84,8 +84,6 @@ function getHueFromHex(hex: string): number {
 export function generateHarmonyWheel(options: HarmonyWheelOptions): string {
   const {
     baseColor,
-    baseName,
-    harmonyType,
     dyes,
     width = 400,
     height = 400,

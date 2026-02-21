@@ -31,7 +31,7 @@ import {
   getContrastTextColor,
   hexToRgb,
 } from './base.js';
-import { rgbToLab, type LAB } from '@xivdyetools/color-blending';
+import { rgbToLab } from '@xivdyetools/color-blending';
 
 // ============================================================================
 // Types
@@ -82,7 +82,6 @@ export interface ComparisonGridOptions {
 const DEFAULT_WIDTH = 800;
 const PADDING = 24;
 const SWATCH_SIZE = 100;
-const SWATCH_GAP = 20;
 const TITLE_HEIGHT = 50;
 const DYE_SECTION_HEIGHT = 220; // Increased for LAB values
 const MATRIX_SECTION_HEIGHT = 120;

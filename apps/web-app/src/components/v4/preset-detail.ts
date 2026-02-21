@@ -664,46 +664,49 @@ export class PresetDetail extends BaseLitComponent {
         <!-- Badges -->
         <div class="badges">
           <span class="badge badge-category">
-            ${unsafeHTML(getCategoryIcon(this.preset.category))}
-            ${this.preset.category}
+            ${unsafeHTML(getCategoryIcon(this.preset.category))} ${this.preset.category}
           </span>
           ${this.preset.isCurated
-        ? html`<span class="badge badge-curated">Official</span>`
-        : html`<span class="badge badge-community">Community</span>`}
+            ? html`<span class="badge badge-curated">Official</span>`
+            : html`<span class="badge badge-community">Community</span>`}
           ${this.currentVoteCount > 0
-        ? html`<span class="badge badge-votes">★ ${this.currentVoteCount} votes</span>`
-        : nothing}
+            ? html`<span class="badge badge-votes">★ ${this.currentVoteCount} votes</span>`
+            : nothing}
         </div>
 
         <!-- Title & description -->
         <h2 class="preset-title">${this.preset.name}</h2>
         <p class="preset-description">${this.preset.description}</p>
         ${this.preset.author
-        ? html`<p class="preset-author">Created by ${this.preset.author}</p>`
-        : nothing}
+          ? html`<p class="preset-author">Created by ${this.preset.author}</p>`
+          : nothing}
 
         <!-- Dyes grid using v4-result-card -->
         <div class="dyes-section">
           <h3 class="section-title">Colors in Palette</h3>
           <div class="dyes-grid">
             ${this.preset.dyes.map((dyeId) => {
-          const dye = this.resolveDye(dyeId);
-          if (!dye) return nothing;
-          // Get price data for this dye
-          const priceInfo = this.priceData.get(dye.itemID);
-          // Resolve world name from price data, or fall back to selected server
-          const marketServer = this.marketBoardService?.getWorldNameForPrice(priceInfo)
-            ?? this.marketConfig.selectedServer;
-          return html`
+              const dye = this.resolveDye(dyeId);
+              if (!dye) return nothing;
+              // Get price data for this dye
+              const priceInfo = this.priceData.get(dye.itemID);
+              // Resolve world name from price data, or fall back to selected server
+              const marketServer =
+                this.marketBoardService?.getWorldNameForPrice(priceInfo) ??
+                this.marketConfig.selectedServer;
+              return html`
                 <v4-result-card
                   .data=${{
-              dye,
-              originalColor: dye.hex,
-              matchedColor: dye.hex,
-              marketServer: marketServer,
-              price: this.marketConfig.showPrices && priceInfo ? priceInfo.currentAverage : undefined,
-              vendorCost: dye.cost,
-            }}
+                    dye,
+                    originalColor: dye.hex,
+                    matchedColor: dye.hex,
+                    marketServer: marketServer,
+                    price:
+                      this.marketConfig.showPrices && priceInfo
+                        ? priceInfo.currentAverage
+                        : undefined,
+                    vendorCost: dye.cost,
+                  }}
                   ?show-actions=${false}
                   ?show-hex=${this.displayOptions.showHex}
                   ?show-rgb=${this.displayOptions.showRgb}
@@ -714,13 +717,13 @@ export class PresetDetail extends BaseLitComponent {
                   ?show-acquisition=${this.displayOptions.showAcquisition}
                 ></v4-result-card>
               `;
-        })}
+            })}
           </div>
         </div>
 
         <!-- Tags -->
         ${this.preset.tags && this.preset.tags.length > 0
-        ? html`
+          ? html`
               <div class="tags-section">
                 <h4 class="section-title">Tags</h4>
                 <div class="tags-list">
@@ -728,40 +731,40 @@ export class PresetDetail extends BaseLitComponent {
                 </div>
               </div>
             `
-        : nothing}
+          : nothing}
 
         <!-- Actions -->
         <div class="actions">
-          <button class="action-btn share-btn" @click=${this.handleShare}><span class="icon">${unsafeHTML(ICON_LINK)}</span> Copy Link</button>
+          <button class="action-btn share-btn" @click=${this.handleShare}>
+            <span class="icon">${unsafeHTML(ICON_LINK)}</span> Copy Link
+          </button>
           ${isVoteable
-        ? html`
+            ? html`
                 <button
                   class="action-btn vote-btn ${this.hasVoted ? 'voted' : ''}"
                   ?disabled=${this.isVoting}
                   @click=${this.handleVote}
                 >
                   ${this.hasVoted
-            ? html`✓ Voted (${this.currentVoteCount})`
-            : html`${unsafeHTML(ICON_CRYSTAL)} Vote (${this.currentVoteCount})`}
+                    ? html`✓ Voted (${this.currentVoteCount})`
+                    : html`${unsafeHTML(ICON_CRYSTAL)} Vote (${this.currentVoteCount})`}
                 </button>
               `
-        : nothing}
+            : nothing}
           ${this.isOwnPreset && this.preset.isFromAPI && this.preset.apiPresetId
-        ? html`
+            ? html`
                 <button class="action-btn edit-btn" @click=${this.handleEdit}>✏️ Edit</button>
                 <button class="action-btn delete-btn" @click=${this.handleDelete}>🗑️ Delete</button>
               `
-        : nothing}
+            : nothing}
         </div>
 
         <!-- Login CTA for non-authenticated users viewing voteable presets -->
         ${isVoteable && !isAuthenticated
-        ? html`
-              <div class="login-cta">
-                Login with Discord or XIVAuth to vote for this preset
-              </div>
+          ? html`
+              <div class="login-cta">Login with Discord or XIVAuth to vote for this preset</div>
             `
-        : nothing}
+          : nothing}
       </div>
     `;
   }

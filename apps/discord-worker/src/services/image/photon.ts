@@ -145,6 +145,7 @@ export function extractPixels(image: PhotonImage): Uint8Array {
  * const palette = paletteService.extractPalette(rgbPixels, { colorCount: 5 });
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/require-await -- callers expect async interface
 export async function processImageForExtraction(
   buffer: Uint8Array,
   options: ProcessImageOptions = {}

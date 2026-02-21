@@ -48,6 +48,7 @@ interface ButtonInteraction {
 /**
  * Route button interactions to appropriate handlers
  */
+// eslint-disable-next-line @typescript-eslint/require-await
 export async function handleButtonInteraction(
   interaction: ButtonInteraction,
   env: Env,

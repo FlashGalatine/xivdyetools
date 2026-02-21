@@ -73,7 +73,7 @@ export async function getCachedPrice(
       return null;
     }
 
-    const entry = (await response.json()) as CachedPriceEntry;
+    const entry: CachedPriceEntry = await response.json();
 
     // Check if cache is still fresh
     const age = Date.now() - entry.cachedAt;
@@ -112,7 +112,7 @@ export async function getCachedPriceWithStale(
       return { data: null, isStale: false };
     }
 
-    const entry = (await response.json()) as CachedPriceEntry;
+    const entry: CachedPriceEntry = await response.json();
     const age = Date.now() - entry.cachedAt;
 
     // Check if too old even for stale

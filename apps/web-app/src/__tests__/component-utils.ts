@@ -168,10 +168,7 @@ export function input(element: HTMLInputElement | HTMLTextAreaElement | null, va
  * @param element - Element that changed
  * @param value - New value (optional, for select elements)
  */
-export function change(
-  element: HTMLInputElement | HTMLSelectElement | null,
-  value?: string
-): void {
+export function change(element: HTMLInputElement | HTMLSelectElement | null, value?: string): void {
   if (!element) return;
   if (value !== undefined) {
     element.value = value;
@@ -282,11 +279,7 @@ export function spyOnCustomEvent(
  * @param eventName - Name of the custom event
  * @param detail - Event detail payload
  */
-export function dispatchCustomEvent<T>(
-  element: Element,
-  eventName: string,
-  detail?: T
-): void {
+export function dispatchCustomEvent<T>(element: Element, eventName: string, detail?: T): void {
   element.dispatchEvent(
     new CustomEvent(eventName, {
       detail,
@@ -349,10 +342,7 @@ export function cleanupComponent(
  * @param selector - CSS selector
  * @returns The found element or null
  */
-export function query<T extends Element = Element>(
-  container: Element,
-  selector: string
-): T | null {
+export function query<T extends Element = Element>(container: Element, selector: string): T | null {
   return container.querySelector<T>(selector);
 }
 
@@ -362,10 +352,7 @@ export function query<T extends Element = Element>(
  * @param selector - CSS selector
  * @returns Array of matching elements
  */
-export function queryAll<T extends Element = Element>(
-  container: Element,
-  selector: string
-): T[] {
+export function queryAll<T extends Element = Element>(container: Element, selector: string): T[] {
   return Array.from(container.querySelectorAll<T>(selector));
 }
 
@@ -376,11 +363,7 @@ export function queryAll<T extends Element = Element>(
  * @param selector - Optional selector to filter (default: '*')
  * @returns The first element containing the text, or null
  */
-export function queryByText(
-  container: Element,
-  text: string,
-  selector = '*'
-): Element | null {
+export function queryByText(container: Element, text: string, selector = '*'): Element | null {
   const elements = container.querySelectorAll(selector);
   for (const el of elements) {
     if (el.textContent?.includes(text)) {
@@ -397,14 +380,8 @@ export function queryByText(
  * @param value - Optional value to match
  * @returns The found element or null
  */
-export function queryByData(
-  container: Element,
-  dataAttr: string,
-  value?: string
-): Element | null {
-  const selector = value !== undefined
-    ? `[data-${dataAttr}="${value}"]`
-    : `[data-${dataAttr}]`;
+export function queryByData(container: Element, dataAttr: string, value?: string): Element | null {
+  const selector = value !== undefined ? `[data-${dataAttr}="${value}"]` : `[data-${dataAttr}]`;
   return container.querySelector(selector);
 }
 

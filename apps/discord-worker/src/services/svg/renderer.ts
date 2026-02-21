@@ -40,6 +40,7 @@ export async function initRenderer(logger?: ExtendedLogger): Promise<void> {
     try {
       // Initialize with the statically imported WASM module
       // In Cloudflare Workers, this is a WebAssembly.Module instance
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- wrangler bundles WASM as Module
       await initWasm(resvgWasm);
       wasmInitialized = true;
       if (logger) {

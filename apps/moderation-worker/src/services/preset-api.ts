@@ -173,7 +173,7 @@ async function request<T>(
       });
     }
 
-    const data = (await response.json()) as T & { message?: string; error?: string };
+    const data: T & { message?: string; error?: string } = await response.json();
 
     if (!response.ok) {
       throw new PresetAPIError(

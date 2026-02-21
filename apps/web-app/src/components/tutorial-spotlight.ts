@@ -39,7 +39,7 @@ function querySelectorDeep(selector: string): HTMLElement | null {
   if (regular) return regular;
 
   // Split multiple selectors and try each
-  const selectors = selector.split(',').map(s => s.trim());
+  const selectors = selector.split(',').map((s) => s.trim());
 
   // Search through all shadow roots
   function searchShadowRoots(root: Document | ShadowRoot): HTMLElement | null {

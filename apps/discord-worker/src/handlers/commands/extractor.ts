@@ -14,8 +14,6 @@
 
 import {
   ColorService,
-  DyeService,
-  dyeDatabase,
   PaletteService,
   type Dye,
   type PaletteMatch,
