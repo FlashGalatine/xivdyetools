@@ -539,7 +539,11 @@ describe('Callback Handler', () => {
             globalThis.fetch = vi.fn().mockImplementation((url: string, options?: RequestInit) => {
                 if (url.includes('oauth2/token')) {
                     // Verify redirect_uri is forced to the worker callback (matches authorize step)
-                    const body = options?.body ? (typeof options.body === 'string' ? options.body : JSON.stringify(options.body)) : '';
+                    const body = options?.body
+                        ? (options.body instanceof URLSearchParams ? options.body.toString()
+                            : typeof options.body === 'string' ? options.body
+                                : JSON.stringify(options.body))
+                        : '';
                     expect(body).toContain('redirect_uri=http%3A%2F%2Flocalhost%3A8788%2Fauth%2Fcallback');
 
                     return Promise.resolve(new Response(JSON.stringify({
@@ -639,7 +643,7 @@ describe('Callback Handler', () => {
     describe('POST /auth/callback (Production Environment)', () => {
         it('should sanitize error logging for token exchange failure in production', async () => {
             const prodEnv = createProductionEnv();
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
             globalThis.fetch = vi.fn().mockImplementation((url: string) => {
                 if (url.includes('oauth2/token')) {
@@ -671,7 +675,7 @@ describe('Callback Handler', () => {
 
         it('should sanitize error logging for generic errors in production', async () => {
             const prodEnv = createProductionEnv();
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
             globalThis.fetch = vi.fn().mockImplementation(() => {
                 throw new Error('Production network error');
@@ -700,7 +704,7 @@ describe('Callback Handler', () => {
         });
 
         it('should log full error details in development environment', async () => {
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
             globalThis.fetch = vi.fn().mockImplementation((url: string) => {
                 if (url.includes('oauth2/token')) {

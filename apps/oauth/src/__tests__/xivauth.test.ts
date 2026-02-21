@@ -775,7 +775,11 @@ describe('XIVAuth Handler', () => {
             globalThis.fetch = vi.fn().mockImplementation((url: string, options?: RequestInit) => {
                 if (url.includes('xivauth.net/oauth/token')) {
                     // Verify client_secret is included
-                    const body = options?.body ? (typeof options.body === 'string' ? options.body : JSON.stringify(options.body)) : '';
+                    const body = options?.body
+                        ? (options.body instanceof URLSearchParams ? options.body.toString()
+                            : typeof options.body === 'string' ? options.body
+                                : JSON.stringify(options.body))
+                        : '';
                     expect(body).toContain('client_secret=test-xivauth-secret');
 
                     return Promise.resolve(new Response(JSON.stringify({
