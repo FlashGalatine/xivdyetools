@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/color-blending",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Six color blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral/Kubelka-Munk) for the XIV Dye Tools ecosystem",
   "author": "XIV Dye Tools",
   "license": "MIT",

@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/auth",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Shared authentication utilities for xivdyetools ecosystem",
   "type": "module",
   "main": "./dist/index.js",

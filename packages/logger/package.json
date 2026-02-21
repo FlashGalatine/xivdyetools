@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/logger",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "Unified logging for xivdyetools ecosystem (browser, Node.js, Cloudflare Workers)",
   "author": "XIV Dye Tools",
   "license": "MIT",

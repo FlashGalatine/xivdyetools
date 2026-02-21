@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/bot-i18n",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Platform-agnostic translation engine for bot UI strings — error messages, help text, command descriptions, and status messages",
   "author": "XIV Dye Tools",
   "license": "MIT",
