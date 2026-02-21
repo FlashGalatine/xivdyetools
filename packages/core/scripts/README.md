@@ -180,4 +180,4 @@ The script uses XIVAPI v2:
 
 #### License
 
-Part of the XIVDyeTools monorepo. See root LICENSE file.
+MIT © 2025-2026 Flash Galatine. Part of the XIVDyeTools monorepo. See root LICENSE file.

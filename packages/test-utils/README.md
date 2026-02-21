@@ -141,12 +141,11 @@ This package includes full TypeScript support. Cloudflare Workers types are incl
 
 ## Connect With Me
 
-**Flash Galatine** | Balmung (Crystal)
+**Flash Galatine** | Balmung (Midgardsormr)
 
 🎮 **FFXIV**: [Lodestone Character](https://na.finalfantasyxiv.com/lodestone/character/7677106/)
 📝 **Blog**: [Project Galatine](https://blog.projectgalatine.com/)
 💻 **GitHub**: [@FlashGalatine](https://github.com/FlashGalatine)
-🐦 **X / Twitter**: [@AsheJunius](https://x.com/AsheJunius)
 📺 **Twitch**: [flashgalatine](https://www.twitch.tv/flashgalatine)
 🌐 **BlueSky**: [projectgalatine.com](https://bsky.app/profile/projectgalatine.com)
 ❤️ **Patreon**: [ProjectGalatine](https://patreon.com/ProjectGalatine)
@@ -155,4 +154,4 @@ This package includes full TypeScript support. Cloudflare Workers types are incl
 
 ## License
 
-MIT © 2025 Flash Galatine
+MIT © 2025-2026 Flash Galatine

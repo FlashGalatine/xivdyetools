@@ -130,6 +130,19 @@ src/
 - [02-stoat.md](../../docs/research/discord-alternatives/02-stoat.md) — Bot architecture and design
 - [06-shared-libraries.md](../../docs/research/discord-alternatives/06-shared-libraries.md) — Shared library extraction plan
 
+## Connect With Me
+
+**Flash Galatine** | Balmung (Midgardsormr)
+
+🎮 **FFXIV**: [Lodestone Character](https://na.finalfantasyxiv.com/lodestone/character/7677106/)
+📝 **Blog**: [Project Galatine](https://blog.projectgalatine.com/)
+💻 **GitHub**: [@FlashGalatine](https://github.com/FlashGalatine)
+📺 **Twitch**: [flashgalatine](https://www.twitch.tv/flashgalatine)
+🌐 **BlueSky**: [projectgalatine.com](https://bsky.app/profile/projectgalatine.com)
+❤️ **Patreon**: [ProjectGalatine](https://patreon.com/ProjectGalatine)
+☕ **Ko-Fi**: [flashgalatine](https://ko-fi.com/flashgalatine)
+💬 **Discord**: [Join Server](https://discord.gg/5VUSKTZCe5)
+
 ## License
 
-ISC
+MIT © 2025-2026 Flash Galatine

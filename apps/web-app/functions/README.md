@@ -35,3 +35,7 @@ location: https://xivdyetools.app/
 ## Removal
 
 Once the old domain is fully deprecated and no longer receives traffic, this middleware can be removed.
+
+## License
+
+MIT © 2025-2026 Flash Galatine

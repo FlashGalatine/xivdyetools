@@ -39,3 +39,7 @@ The script uses the existing `icon-192x192.png` as the source and creates optimi
 
 **Note**: The responsive image code in `src/components/app-layout.ts` will automatically use these WebP files when available, falling back to PNG if they don't exist.
 
+## License
+
+MIT © 2025-2026 Flash Galatine
+
