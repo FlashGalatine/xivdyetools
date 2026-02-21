@@ -116,6 +116,8 @@ export class KVRateLimiter implements ExtendedRateLimiter {
     const result = await this.checkOnly(key, config);
     if (result.allowed && !result.backendError) {
       await this.increment(key, config);
+      // BUG-004: Adjust remaining to reflect consumed request
+      result.remaining = Math.max(0, result.remaining - 1);
     }
     return result;
   }
@@ -137,18 +139,18 @@ export class KVRateLimiter implements ExtendedRateLimiter {
       const data = await this.kv.get(kvKey);
       const entry: KVEntry | null = data ? (JSON.parse(data) as KVEntry) : null;
 
-      // Check if window expired or no entry exists
+      // BUG-004: checkOnly reports remaining without consuming
       if (!entry || now - entry.windowStart >= config.windowMs) {
         return {
           allowed: true,
-          remaining: effectiveLimit - 1,
+          remaining: effectiveLimit,
           resetAt,
           limit: effectiveLimit,
         };
       }
 
       const allowed = entry.count < effectiveLimit;
-      const remaining = Math.max(0, effectiveLimit - entry.count - 1);
+      const remaining = Math.max(0, effectiveLimit - entry.count);
 
       return {
         allowed,

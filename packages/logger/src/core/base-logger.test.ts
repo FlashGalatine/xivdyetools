@@ -94,12 +94,17 @@ describe('BaseLogger', () => {
       expect(config.timestamps).toBe(true); // default preserved
     });
 
-    it('should allow custom redact fields', () => {
+    it('should allow custom redact fields (merged with defaults per FINDING-008)', () => {
       const customLogger = new TestLogger({
         redactFields: ['customSecret', 'myToken'],
       });
       const config = customLogger.getConfig();
-      expect(config.redactFields).toEqual(['customSecret', 'myToken']);
+      // Custom fields are merged with defaults, not replacing them
+      expect(config.redactFields).toContain('customSecret');
+      expect(config.redactFields).toContain('myToken');
+      // Defaults are preserved
+      expect(config.redactFields).toContain('password');
+      expect(config.redactFields).toContain('token');
     });
   });
 
@@ -347,15 +352,16 @@ describe('BaseLogger', () => {
       });
     });
 
-    it('should use custom redact fields', () => {
+    it('should merge custom redact fields with defaults (FINDING-008)', () => {
       const customLogger = new TestLogger({
         redactFields: ['customField'],
       });
       const result = customLogger.testRedactSensitiveFields({
-        password: 'visible', // not in custom list // pragma: allowlist secret
+        password: 'should-be-hidden', // in default list // pragma: allowlist secret
         customField: 'hidden',
       });
-      expect(result.password).toBe('visible');
+      // FINDING-008: Custom fields extend defaults, not replace
+      expect(result.password).toBe('[REDACTED]');
       expect(result.customField).toBe('[REDACTED]');
     });
 
@@ -414,12 +420,12 @@ describe('BaseLogger', () => {
         expect(l4.token).toBe('should-remain');
       });
 
-      it('should not recurse into arrays', () => {
+      it('should recurse into arrays and redact sensitive fields (FINDING-007)', () => {
         const result = logger.testRedactSensitiveFields({
           items: [{ token: 'in-array' }],
         });
-        // Arrays are not recursed; the array should remain as-is
-        expect(result.items).toEqual([{ token: 'in-array' }]);
+        // FINDING-007: Arrays are now recursed into
+        expect(result.items).toEqual([{ token: '[REDACTED]' }]);
       });
 
       it('should handle null nested values', () => {

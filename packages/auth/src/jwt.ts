@@ -140,9 +140,9 @@ export async function verifyJWT(
     const payloadJson = base64UrlDecode(payloadB64);
     const payload: JWTPayload = JSON.parse(payloadJson) as JWTPayload;
 
-    // Check expiration
+    // FINDING-003: Require exp claim — tokens without expiration are rejected
     const now = Math.floor(Date.now() / 1000);
-    if (payload.exp && payload.exp < now) {
+    if (!payload.exp || payload.exp < now) {
       return null;
     }
 

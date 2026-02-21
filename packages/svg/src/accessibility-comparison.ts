@@ -25,7 +25,6 @@ import {
   text,
   THEME,
   FONTS,
-  escapeXml,
   rgbToHex,
   hexToRgb,
 } from './base.js';
@@ -151,7 +150,7 @@ export function generateAccessibilityComparison(
 
   // Title
   elements.push(
-    text(width / 2, PADDING + 24, escapeXml(dyeName), {
+    text(width / 2, PADDING + 24, dyeName, {
       fill: THEME.text,
       fontSize: 22,
       fontFamily: FONTS.headerCjk,

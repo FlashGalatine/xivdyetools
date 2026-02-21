@@ -24,13 +24,17 @@ export abstract class BaseLogger implements ExtendedLogger {
   protected globalContext: LogContext = {};
 
   constructor(config: Partial<LoggerConfig> = {}) {
+    // FINDING-008: Merge custom redactFields with defaults instead of replacing
     this.config = {
       level: 'info',
       format: 'json',
       timestamps: true,
       sanitizeErrors: true,
-      redactFields: [...DEFAULT_REDACT_FIELDS],
       ...config,
+      redactFields: [
+        ...DEFAULT_REDACT_FIELDS,
+        ...(config.redactFields ?? []),
+      ],
     };
   }
 
@@ -177,15 +181,19 @@ export abstract class BaseLogger implements ExtendedLogger {
       }
     }
 
-    // Recursively redact nested plain objects
+    // Recursively redact nested plain objects and array elements (FINDING-007)
     if (depth < MAX_REDACT_DEPTH) {
       for (const [key, value] of Object.entries(redacted)) {
-        if (
-          redacted[key] !== '[REDACTED]' &&
-          value !== null &&
-          typeof value === 'object' &&
-          !Array.isArray(value)
-        ) {
+        if (redacted[key] === '[REDACTED]' || value === null || typeof value !== 'object') {
+          continue;
+        }
+        if (Array.isArray(value)) {
+          redacted[key] = value.map((item: unknown) =>
+            typeof item === 'object' && item !== null
+              ? this.redactSensitiveFields(item as LogContext, depth + 1)
+              : item
+          );
+        } else {
           redacted[key] = this.redactSensitiveFields(
             value as LogContext,
             depth + 1

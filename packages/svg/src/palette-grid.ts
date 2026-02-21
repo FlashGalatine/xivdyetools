@@ -21,7 +21,6 @@ import {
   line,
   THEME,
   FONTS,
-  escapeXml,
   rgbToHex,
 } from './base.js';
 
@@ -334,7 +333,7 @@ function generatePaletteRow(
     })
   );
   elements.push(
-    text(matchedInfoX, y + 55, escapeXml(entry.matchedDye.name), {
+    text(matchedInfoX, y + 55, entry.matchedDye.name, {
       fill: THEME.text,
       fontSize: 14,
       fontFamily: FONTS.primaryCjk,

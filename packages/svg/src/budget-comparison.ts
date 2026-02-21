@@ -27,7 +27,6 @@ import {
   line,
   THEME,
   FONTS,
-  escapeXml,
   getContrastTextColor,
 } from './base.js';
 
@@ -285,7 +284,7 @@ function generateHeader(
   const infoX = PADDING + TARGET_SWATCH_SIZE + 16;
   const targetName = labels.dyeNames[targetDye.itemID] ?? targetDye.name;
   elements.push(
-    text(infoX, 70, escapeXml(targetName), {
+    text(infoX, 70, targetName, {
       fill: THEME.text,
       fontSize: 24,
       fontFamily: FONTS.headerCjk,
@@ -296,7 +295,7 @@ function generateHeader(
   // Category (localized)
   const targetCategory = labels.categoryNames[targetDye.category] ?? targetDye.category;
   elements.push(
-    text(infoX, 92, escapeXml(targetCategory), {
+    text(infoX, 92, targetCategory, {
       fill: THEME.textMuted,
       fontSize: 14,
       fontFamily: FONTS.primaryCjk,
@@ -404,7 +403,7 @@ function generateAlternativeRow(
   const infoX = swatchX + SWATCH_SIZE + 14;
   const altName = labels.dyeNames[alt.dye.itemID] ?? alt.dye.name;
   elements.push(
-    text(infoX, y + 35, escapeXml(altName), {
+    text(infoX, y + 35, altName, {
       fill: THEME.text,
       fontSize: 16,
       fontFamily: FONTS.primaryCjk,
@@ -546,7 +545,7 @@ export function generateErrorSvg(message: string, width: number = DEFAULT_WIDTH)
   );
 
   elements.push(
-    text(width / 2, 80, escapeXml(message), {
+    text(width / 2, 80, message, {
       fill: THEME.textMuted,
       fontSize: 14,
       fontFamily: FONTS.primary,

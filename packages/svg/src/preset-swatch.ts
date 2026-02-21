@@ -26,7 +26,6 @@ import {
   text,
   THEME,
   FONTS,
-  escapeXml,
 } from './base.js';
 
 // ============================================================================
@@ -138,7 +137,7 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
 
   // Category icon and title
   elements.push(
-    text(width / 2, PADDING + 24, `${categoryDisplay.icon} ${escapeXml(name)}`, {
+    text(width / 2, PADDING + 24, `${categoryDisplay.icon} ${name}`, {
       fill: THEME.text,
       fontSize: 22,
       fontFamily: FONTS.headerCjk,
@@ -155,7 +154,7 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
       : description;
 
   elements.push(
-    text(width / 2, PADDING + 50, escapeXml(truncatedDesc), {
+    text(width / 2, PADDING + 50, truncatedDesc, {
       fill: THEME.textMuted,
       fontSize: 13,
       fontFamily: FONTS.primary,
@@ -222,7 +221,7 @@ function generateDyeSwatch(dye: Dye, x: number, y: number, width: number): strin
       : dye.name;
 
   elements.push(
-    text(x + width / 2, labelY, escapeXml(truncatedName), {
+    text(x + width / 2, labelY, truncatedName, {
       fill: THEME.text,
       fontSize: 11,
       fontFamily: FONTS.primaryCjk,
@@ -254,7 +253,7 @@ function generateEmptySwatch(width: number, name: string): string {
   elements.push(rect(0, 0, width, height, THEME.background, { rx: 12, ry: 12 }));
 
   elements.push(
-    text(width / 2, 40, escapeXml(name), {
+    text(width / 2, 40, name, {
       fill: THEME.text,
       fontSize: 18,
       fontFamily: FONTS.header,
@@ -300,7 +299,7 @@ export function generateCompactPresetSwatch(options: PresetSwatchOptions): strin
 
   // Preset name (left aligned)
   elements.push(
-    text(12, height / 2 + 4, escapeXml(name), {
+    text(12, height / 2 + 4, name, {
       fill: THEME.text,
       fontSize: 14,
       fontFamily: FONTS.primary,

@@ -36,7 +36,7 @@ async function createTestJWT(
 }
 
 describe('jwt.ts', () => {
-  const secret = 'test-jwt-secret-key-123';
+  const secret = 'test-jwt-secret-key-that-is-at-least-32-bytes!';
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -125,7 +125,7 @@ describe('jwt.ts', () => {
       };
       const token = await createTestJWT(payload, secret);
 
-      const verified = await verifyJWT(token, 'wrong-secret');
+      const verified = await verifyJWT(token, 'wrong-secret-that-is-at-least-32-bytes!!');
 
       expect(verified).toBeNull();
     });
@@ -170,8 +170,8 @@ describe('jwt.ts', () => {
       expect(verified).toBeNull();
     });
 
-    it('should handle token without exp claim', async () => {
-      // Create a token without exp - should still work if signature is valid
+    it('should reject token without exp claim (FINDING-003)', async () => {
+      // FINDING-003: Tokens without exp claim must be rejected
       const header = { alg: 'HS256', typ: 'JWT' };
       const payload = {
         sub: '123456789',
@@ -192,8 +192,8 @@ describe('jwt.ts', () => {
 
       const verified = await verifyJWT(token, secret);
 
-      // Should pass since no exp means no expiration check
-      expect(verified).not.toBeNull();
+      // FINDING-003: No exp means token is rejected
+      expect(verified).toBeNull();
     });
   });
 
@@ -222,7 +222,7 @@ describe('jwt.ts', () => {
       };
       const token = await createTestJWT(payload, secret);
 
-      const verified = await verifyJWTSignatureOnly(token, 'wrong-secret');
+      const verified = await verifyJWTSignatureOnly(token, 'wrong-secret-that-is-at-least-32-bytes!!');
 
       expect(verified).toBeNull();
     });

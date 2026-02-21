@@ -17,14 +17,14 @@ describe('getClientIp', () => {
     expect(getClientIp(request)).toBe('1.2.3.4');
   });
 
-  it('returns first X-Forwarded-For IP when CF-Connecting-IP is absent', () => {
+  it('returns first X-Forwarded-For IP when opted in and CF-Connecting-IP is absent', () => {
     const request = new Request('https://example.com', {
       headers: {
         'X-Forwarded-For': '1.2.3.4, 5.6.7.8, 9.10.11.12',
       },
     });
 
-    expect(getClientIp(request)).toBe('1.2.3.4');
+    expect(getClientIp(request, { trustXForwardedFor: true })).toBe('1.2.3.4');
   });
 
   it('trims whitespace from IPs', () => {
@@ -44,7 +44,7 @@ describe('getClientIp', () => {
       },
     });
 
-    expect(getClientIp(request)).toBe('1.2.3.4');
+    expect(getClientIp(request, { trustXForwardedFor: true })).toBe('1.2.3.4');
   });
 
   it('returns "unknown" when no IP headers present', () => {
@@ -85,14 +85,25 @@ describe('getClientIp', () => {
       expect(getClientIp(request, { trustXForwardedFor: false })).toBe('10.0.0.1');
     });
 
-    it('trusts X-Forwarded-For by default (backwards compatible)', () => {
+    it('ignores X-Forwarded-For by default (FINDING-006)', () => {
       const request = new Request('https://example.com', {
         headers: {
           'X-Forwarded-For': '1.2.3.4',
         },
       });
 
-      expect(getClientIp(request)).toBe('1.2.3.4');
+      // FINDING-006: Default changed to false for security
+      expect(getClientIp(request)).toBe('unknown');
+    });
+
+    it('trusts X-Forwarded-For when explicitly opted in', () => {
+      const request = new Request('https://example.com', {
+        headers: {
+          'X-Forwarded-For': '1.2.3.4',
+        },
+      });
+
+      expect(getClientIp(request, { trustXForwardedFor: true })).toBe('1.2.3.4');
     });
   });
 
@@ -114,7 +125,7 @@ describe('getClientIp', () => {
         },
       });
 
-      expect(getClientIp(request)).toBe('2001:db8:abcd::1');
+      expect(getClientIp(request, { trustXForwardedFor: true })).toBe('2001:db8:abcd::1');
     });
 
     it('does not alter lowercase IPv4 addresses', () => {

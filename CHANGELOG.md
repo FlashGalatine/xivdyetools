@@ -15,14 +15,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **@xivdyetools/bot-logic**: Comprehensive test suite — 193 tests across 10 files covering input resolution, CSS colors, localization, and all 8 commands (dye-info, harmony, match, comparison, gradient, mixer, accessibility, random)
 - **core**: `spectral-js.d.ts` type declarations for untyped spectral.js library
 - **web-app**: New tests for CSRF fail-closed validation (missing `csrf` param and missing stored state)
+- **crypto**: New `hex.test.ts` test suite — 15 tests covering valid conversion, rejection of invalid input, and roundtrips
 
 ### Security
 
 - **web-app**: Fix CSRF state validation fail-open — reject OAuth callback when `csrf` or stored state is missing, not only on mismatch (FINDING-001)
 - **rate-limiter**: Fix Upstash race condition — use atomic `INCR` + `EXPIRE NX` pipeline instead of separate `EXPIRE` call that could leave immortal keys on Worker crash (FINDING-002)
+- **auth**: Require `exp` claim in `verifyJWT` — reject tokens without expiration instead of treating them as never-expiring (FINDING-003)
+- **crypto**: Validate hex input in `hexToBytes` — reject odd-length strings and non-hex characters instead of silently producing corrupt output (FINDING-004)
+- **rate-limiter**: Default `trustXForwardedFor` to `false` in `getClientIp` — prevents IP spoofing in Cloudflare Workers where `CF-Connecting-IP` is the trusted source (FINDING-006)
+- **logger**: Recurse into arrays during sensitive field redaction — previously array elements containing secrets were logged unredacted (FINDING-007)
+- **logger**: Merge custom `redactFields` with defaults — previously custom fields replaced defaults, silently removing protection for `password`, `token`, etc. (FINDING-008)
+- **auth**: Enforce 32-byte minimum key length in `createHmacKey` — reject weak secrets that undermine HMAC-SHA256 security (FINDING-009)
 
 ### Fixed
 
+- **svg**: Remove double XML escaping across 7 SVG generators — `escapeXml()` was called on values already escaped by tagged template literals, producing `&amp;amp;` in output (BUG-001)
+- **rate-limiter**: Fix KV backend `checkOnly` off-by-one — `remaining` was 1 less than actual remaining capacity due to premature decrement (BUG-004)
+- **rate-limiter**: Fix KV backend `check` post-increment accounting — `remaining` now reflects the consumed request after `increment()` (BUG-005)
 - **moderation-worker**: Fix `safeParseJSON` prototype pollution check — use `Object.hasOwn()` instead of `in` operator, which false-positived on every object due to inherited `__proto__`/`constructor` (BUG-002)
 - **moderation-worker**: Fix rate limit response returning HTTP 429 instead of 200 — Discord silently discards non-200 interaction responses (BUG-003)
 

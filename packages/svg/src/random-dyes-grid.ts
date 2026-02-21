@@ -27,7 +27,6 @@ import {
   text,
   THEME,
   FONTS,
-  escapeXml,
   getContrastTextColor,
 } from './base.js';
 
@@ -197,7 +196,7 @@ function generateDyeCard(dyeInfo: RandomDyeInfo, x: number, y: number): string {
     : localizedName;
 
   elements.push(
-    text(x + CARD_WIDTH / 2, infoY, escapeXml(displayName), {
+    text(x + CARD_WIDTH / 2, infoY, displayName, {
       fill: THEME.text,
       fontSize: 13,
       fontFamily: FONTS.primaryCjk,

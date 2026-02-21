@@ -23,7 +23,6 @@ import {
   text,
   THEME,
   FONTS,
-  escapeXml,
 } from './base.js';
 
 // ============================================================================
@@ -165,7 +164,7 @@ export function generateContrastMatrix(options: ContrastMatrixOptions): string {
   // Title
   if (title) {
     elements.push(
-      text(width / 2, PADDING + 24, escapeXml(title), {
+      text(width / 2, PADDING + 24, title, {
         fill: THEME.text,
         fontSize: 20,
         fontFamily: FONTS.header,
@@ -196,7 +195,7 @@ export function generateContrastMatrix(options: ContrastMatrixOptions): string {
     // Name (truncated if needed)
     const displayName = truncateName(dye.name, 12);
     elements.push(
-      text(x, y + 16, escapeXml(displayName), {
+      text(x, y + 16, displayName, {
         fill: THEME.text,
         fontSize: 11,
         fontFamily: FONTS.primaryCjk,
@@ -227,7 +226,7 @@ export function generateContrastMatrix(options: ContrastMatrixOptions): string {
     // Name
     const displayName = truncateName(rowDye.name, 10);
     elements.push(
-      text(headerX + 10, headerY + 4, escapeXml(displayName), {
+      text(headerX + 10, headerY + 4, displayName, {
         fill: THEME.text,
         fontSize: 11,
         fontFamily: FONTS.primaryCjk,

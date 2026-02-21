@@ -21,7 +21,7 @@ export interface GetClientIpOptions {
    * Set to `false` to ignore X-Forwarded-For entirely, falling back to
    * 'unknown' when CF-Connecting-IP is absent.
    *
-   * @default true
+   * @default false
    */
   trustXForwardedFor?: boolean;
 }
@@ -54,7 +54,8 @@ export function getClientIp(
   request: Request,
   options: GetClientIpOptions = {}
 ): string {
-  const { trustXForwardedFor = true } = options;
+  // FINDING-006: Default to false — XFF is client-controlled and spoofable
+  const { trustXForwardedFor = false } = options;
 
   // Cloudflare's CF-Connecting-IP is the true client IP
   const cfIp = request.headers.get('CF-Connecting-IP');

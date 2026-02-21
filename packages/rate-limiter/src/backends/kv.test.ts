@@ -119,7 +119,7 @@ describe('KVRateLimiter', () => {
       // All should be allowed since we didn't increment
       const result = await limiter.checkOnly('user1', defaultConfig);
       expect(result.allowed).toBe(true);
-      expect(result.remaining).toBe(4); // Still first request
+      expect(result.remaining).toBe(5); // BUG-004: checkOnly reports without consuming
     });
   });
 
@@ -131,7 +131,7 @@ describe('KVRateLimiter', () => {
 
       // Check should show 2 requests made
       const result = await limiter.checkOnly('user1', defaultConfig);
-      expect(result.remaining).toBe(2); // 5 - 2 - 1 = 2
+      expect(result.remaining).toBe(3); // 5 - 2 = 3 (BUG-004: no extra -1)
     });
   });
 

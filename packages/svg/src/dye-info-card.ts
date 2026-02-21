@@ -24,7 +24,6 @@ import {
   text,
   THEME,
   FONTS,
-  escapeXml,
   getContrastTextColor,
   hexToRgb,
 } from './base.js';
@@ -140,7 +139,7 @@ export function generateDyeInfoCard(options: DyeInfoCardOptions): string {
   // Dye name on swatch
   // Uses headerCjk for CJK language support (Japanese/Korean/Chinese dye names)
   elements.push(
-    text(PADDING, SWATCH_HEIGHT - 50, escapeXml(displayName), {
+    text(PADDING, SWATCH_HEIGHT - 50, displayName, {
       fill: textColor,
       fontSize: 28,
       fontFamily: FONTS.headerCjk,

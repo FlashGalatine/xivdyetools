@@ -43,6 +43,11 @@ export async function createHmacKey(
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secret);
 
+  // FINDING-009: Enforce minimum key length for HMAC-SHA256 security
+  if (keyData.length < 32) {
+    throw new Error('HMAC secret must be at least 32 bytes (256 bits)');
+  }
+
   const keyUsages: ('sign' | 'verify')[] =
     usage === 'both' ? ['sign', 'verify'] : [usage];
 
