@@ -82,7 +82,7 @@ describe('Request ID Middleware', () => {
             const mockContext = {
                 get: () => { throw new Error('No request ID'); },
             };
-            const result = getRequestId(mockContext as Parameters<typeof getRequestId>[0]);
+            const result = getRequestId(mockContext as unknown as Parameters<typeof getRequestId>[0]);
             expect(result).toBe('unknown');
         });
 
@@ -90,7 +90,7 @@ describe('Request ID Middleware', () => {
             const mockContext = {
                 get: () => undefined,
             };
-            const result = getRequestId(mockContext as Parameters<typeof getRequestId>[0]);
+            const result = getRequestId(mockContext as unknown as Parameters<typeof getRequestId>[0]);
             expect(result).toBe('unknown');
         });
     });
@@ -165,7 +165,7 @@ describe('Logger Middleware', () => {
             const mockContext = {
                 get: () => { throw new Error('No logger'); },
             };
-            const result = getLogger(mockContext as Parameters<typeof getLogger>[0]);
+            const result = getLogger(mockContext as unknown as Parameters<typeof getLogger>[0]);
             expect(result).toBeUndefined();
         });
     });
