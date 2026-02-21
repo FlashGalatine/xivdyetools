@@ -373,7 +373,7 @@ describe('BanCheckMiddleware', () => {
 
         it('should work with JWT authentication', async () => {
             // Create a simple valid JWT for testing
-            const jwtSecret = 'test-jwt-secret';
+            const jwtSecret = 'test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!';
             const header = { alg: 'HS256', typ: 'JWT' };
             const payload = {
                 sub: '123456789',
@@ -431,7 +431,7 @@ describe('BanCheckMiddleware', () => {
         it('should block banned user with JWT authentication', async () => {
             mockDb._setBanStatus(true);
 
-            const jwtSecret = 'test-jwt-secret';
+            const jwtSecret = 'test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!';
             const header = { alg: 'HS256', typ: 'JWT' };
             const payload = {
                 sub: '123456789',

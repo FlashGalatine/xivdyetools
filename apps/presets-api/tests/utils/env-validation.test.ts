@@ -19,7 +19,7 @@ describe('Environment Validation', () => {
             CORS_ORIGIN: 'https://example.com',
             BOT_API_SECRET: 'test-secret',
             MODERATOR_IDS: '123456789012345678',
-            JWT_SECRET: 'test-jwt-secret',
+            JWT_SECRET: 'test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!',
             ...overrides,
         } as Env;
     }

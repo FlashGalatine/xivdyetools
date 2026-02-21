@@ -221,7 +221,7 @@ describe('AuthMiddleware', () => {
     describe('JWT Authentication', () => {
         // Skip tests that require JWT signature verification in Cloudflare Workers env
         it.skip('should authenticate with valid JWT (requires Cloudflare Workers crypto)', async () => {
-            const jwt = await createTestJWT('test-jwt-secret', {
+            const jwt = await createTestJWT('test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!', {
                 sub: 'jwt-user-123',
                 username: 'JWTUser',
                 global_name: 'JWT Display Name',
@@ -246,7 +246,7 @@ describe('AuthMiddleware', () => {
         });
 
         it.skip('should use username if global_name is null (requires Cloudflare Workers crypto)', async () => {
-            const jwt = await createTestJWT('test-jwt-secret', {
+            const jwt = await createTestJWT('test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!', {
                 sub: 'jwt-user-123',
                 username: 'JWTUser',
                 global_name: null,
@@ -268,7 +268,7 @@ describe('AuthMiddleware', () => {
         });
 
         it('should reject expired JWT', async () => {
-            const jwt = await createExpiredJWT('test-jwt-secret');
+            const jwt = await createExpiredJWT('test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!');
 
             const res = await app.request(
                 '/test/auth',
@@ -357,7 +357,7 @@ describe('AuthMiddleware', () => {
         });
 
         it.skip('should mark JWT user as moderator if in MODERATOR_IDS (requires Cloudflare Workers crypto)', async () => {
-            const jwt = await createTestJWT('test-jwt-secret', {
+            const jwt = await createTestJWT('test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!', {
                 sub: '123456789', // In MODERATOR_IDS
                 username: 'ModUser',
             });
@@ -591,7 +591,7 @@ describe('AuthMiddleware', () => {
 
         beforeEach(() => {
             signingEnv = createMockEnv({
-                BOT_SIGNING_SECRET: 'test-signing-secret',
+                BOT_SIGNING_SECRET: 'test-signing-secret-at-least-32-bytes!!!-at-least-32-bytes!!!',
             });
         });
 
@@ -640,7 +640,7 @@ describe('AuthMiddleware', () => {
                 timestamp,
                 '123456789',
                 'TestUser',
-                'test-signing-secret'
+                'test-signing-secret-at-least-32-bytes!!!-at-least-32-bytes!!!'
             );
 
             const res = await app.request(
@@ -690,7 +690,7 @@ describe('AuthMiddleware', () => {
                 expiredTimestamp,
                 '123456789',
                 'TestUser',
-                'test-signing-secret'
+                'test-signing-secret-at-least-32-bytes!!!-at-least-32-bytes!!!'
             );
 
             const res = await app.request(
@@ -717,7 +717,7 @@ describe('AuthMiddleware', () => {
                 futureTimestamp,
                 '123456789',
                 'TestUser',
-                'test-signing-secret'
+                'test-signing-secret-at-least-32-bytes!!!-at-least-32-bytes!!!'
             );
 
             const res = await app.request(
@@ -776,7 +776,7 @@ describe('AuthMiddleware', () => {
 
         it('should work with empty user ID and name in signature', async () => {
             const timestamp = Math.floor(Date.now() / 1000).toString();
-            const signature = await createValidSignature(timestamp, '', '', 'test-signing-secret');
+            const signature = await createValidSignature(timestamp, '', '', 'test-signing-secret-at-least-32-bytes!!!-at-least-32-bytes!!!');
 
             const res = await app.request(
                 '/test/auth',
@@ -802,7 +802,7 @@ describe('AuthMiddleware', () => {
                 timestamp,
                 '123456789',
                 'TestUser',
-                'test-signing-secret'
+                'test-signing-secret-at-least-32-bytes!!!-at-least-32-bytes!!!'
             );
 
             // But send different user ID in header (spoofing attempt)

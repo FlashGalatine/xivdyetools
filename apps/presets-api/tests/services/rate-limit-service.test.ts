@@ -363,7 +363,9 @@ describe('RateLimitService', () => {
             expect(ip).toBe('203.0.113.1');
         });
 
-        it('should fall back to X-Forwarded-For if CF-Connecting-IP not present', () => {
+        it('should ignore X-Forwarded-For when trustXForwardedFor is false (default)', () => {
+            // FINDING-006: X-Forwarded-For is client-controlled and spoofable.
+            // Default behavior now ignores it, returning 'unknown' instead.
             const request = new Request('https://example.com', {
                 headers: {
                     'X-Forwarded-For': '198.51.100.1, 10.0.0.1, 10.0.0.2',
@@ -371,10 +373,10 @@ describe('RateLimitService', () => {
             });
 
             const ip = getClientIp(request);
-            expect(ip).toBe('198.51.100.1');
+            expect(ip).toBe('unknown');
         });
 
-        it('should return first IP in X-Forwarded-For chain', () => {
+        it('should return unknown for X-Forwarded-For chain without CF-Connecting-IP', () => {
             const request = new Request('https://example.com', {
                 headers: {
                     'X-Forwarded-For': '192.0.2.1, 192.0.2.2, 192.0.2.3',
@@ -382,10 +384,10 @@ describe('RateLimitService', () => {
             });
 
             const ip = getClientIp(request);
-            expect(ip).toBe('192.0.2.1');
+            expect(ip).toBe('unknown');
         });
 
-        it('should trim whitespace from X-Forwarded-For IP', () => {
+        it('should return unknown for X-Forwarded-For with whitespace without CF-Connecting-IP', () => {
             const request = new Request('https://example.com', {
                 headers: {
                     'X-Forwarded-For': '  192.0.2.50  , 10.0.0.1',
@@ -393,7 +395,7 @@ describe('RateLimitService', () => {
             });
 
             const ip = getClientIp(request);
-            expect(ip).toBe('192.0.2.50');
+            expect(ip).toBe('unknown');
         });
 
         it('should return "unknown" if no IP headers present', () => {

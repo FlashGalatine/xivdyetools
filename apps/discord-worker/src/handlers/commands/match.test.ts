@@ -64,6 +64,16 @@ vi.mock('@xivdyetools/core', () => {
       }
       return { h: h * 360, s: s * 100, v: (max / 255) * 100 };
     },
+    getColorDistance: (hex1: string, hex2: string) => {
+      const parse = (h: string) => {
+        const c = h.replace('#', '');
+        const n = parseInt(c, 16);
+        return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+      };
+      const a = parse(hex1);
+      const b = parse(hex2);
+      return Math.sqrt((a.r - b.r) ** 2 + (a.g - b.g) ** 2 + (a.b - b.b) ** 2);
+    },
   };
 
   class MockLocalizationService {

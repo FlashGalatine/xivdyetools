@@ -58,7 +58,7 @@ export function createMockEnv(overrides: Partial<Env> = {}): Env {
     // Tests that specifically test signature validation should override this
     BOT_SIGNING_SECRET: undefined,
     MODERATOR_IDS: '123456789,987654321',
-    JWT_SECRET: 'test-jwt-secret',
+    JWT_SECRET: 'test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!',
     PERSPECTIVE_API_KEY: undefined,
     MODERATION_WEBHOOK_URL: undefined,
     OWNER_DISCORD_ID: undefined,

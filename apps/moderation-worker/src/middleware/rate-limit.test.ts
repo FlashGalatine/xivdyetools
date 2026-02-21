@@ -58,8 +58,8 @@ describe('rate-limit', () => {
       const result = await checkRateLimit(mockKV, 'user123', 'command', testConfig);
 
       expect(result.allowed).toBe(true);
-      // checkOnly returns remaining after hypothetical next request
-      expect(result.remaining).toBe(11); // 12 - 0 - 1 = 11
+      // checkOnly returns remaining before this request
+      expect(result.remaining).toBe(12); // 12 - 0 = 12
       expect(result.retryAfter).toBeUndefined();
     });
 
@@ -72,8 +72,8 @@ describe('rate-limit', () => {
       const result = await checkRateLimit(mockKV, 'user123', 'command', testConfig);
 
       expect(result.allowed).toBe(true);
-      // remaining = limit - count - 1 (what would be left after next request)
-      expect(result.remaining).toBe(6); // 12 - 5 - 1 = 6
+      // remaining = limit - count
+      expect(result.remaining).toBe(7); // 12 - 5 = 7
     });
 
     it('should deny requests when at limit', async () => {
@@ -120,8 +120,8 @@ describe('rate-limit', () => {
       const result = await checkRateLimit(mockKV, 'user123', 'command', configNoBurst);
 
       expect(result.allowed).toBe(true);
-      // remaining = limit - count - 1 (what would be left after next request)
-      expect(result.remaining).toBe(9); // 10 - 0 - 1 = 9
+      // remaining = limit - count
+      expect(result.remaining).toBe(10); // 10 - 0 = 10
     });
 
     it('should calculate retryAfter correctly', async () => {
@@ -154,8 +154,8 @@ describe('rate-limit', () => {
       const result = await checkRateLimit(mockKV, 'user456', 'autocomplete', RATE_LIMIT_CONFIGS.autocomplete);
 
       expect(result.allowed).toBe(true);
-      // remaining = limit - count - 1
-      expect(result.remaining).toBe(69); // 70 - 0 - 1 = 69
+      // remaining = limit - count
+      expect(result.remaining).toBe(70); // 70 - 0 = 70
     });
 
     it('should track different users separately', async () => {
@@ -171,9 +171,9 @@ describe('rate-limit', () => {
       const result1 = await checkRateLimit(mockKV, 'user1', 'command', testConfig);
       const result2 = await checkRateLimit(mockKV, 'user2', 'command', testConfig);
 
-      // remaining = limit - count - 1
-      expect(result1.remaining).toBe(1); // 12 - 10 - 1 = 1
-      expect(result2.remaining).toBe(6); // 12 - 5 - 1 = 6
+      // remaining = limit - count
+      expect(result1.remaining).toBe(2); // 12 - 10 = 2
+      expect(result2.remaining).toBe(7); // 12 - 5 = 7
     });
 
     it('should track different types separately', async () => {
@@ -191,8 +191,8 @@ describe('rate-limit', () => {
 
       expect(commandResult.allowed).toBe(false); // Over limit
       expect(autocompleteResult.allowed).toBe(true); // Under limit
-      // remaining = limit - count - 1
-      expect(autocompleteResult.remaining).toBe(64); // 70 - 5 - 1 = 64
+      // remaining = limit - count
+      expect(autocompleteResult.remaining).toBe(65); // 70 - 5 = 65
     });
   });
 
@@ -202,8 +202,8 @@ describe('rate-limit', () => {
 
       // Verify by checking the rate limit
       const result = await checkRateLimit(mockKV, 'user123', 'command', RATE_LIMIT_CONFIGS.command);
-      // remaining = limit - count - 1
-      expect(result.remaining).toBe(23); // 25 - 1 - 1 = 23
+      // remaining = limit - count
+      expect(result.remaining).toBe(24); // 25 - 1 = 24
     });
 
     it('should increment existing counter', async () => {
@@ -211,8 +211,8 @@ describe('rate-limit', () => {
       await incrementRateLimit(mockKV, 'user123', 'command');
 
       const result = await checkRateLimit(mockKV, 'user123', 'command', RATE_LIMIT_CONFIGS.command);
-      // remaining = limit - count - 1
-      expect(result.remaining).toBe(22); // 25 - 2 - 1 = 22
+      // remaining = limit - count
+      expect(result.remaining).toBe(23); // 25 - 2 = 23
     });
 
     it('should set TTL on counter', async () => {
@@ -242,8 +242,8 @@ describe('rate-limit', () => {
       await incrementRateLimit(mockKV, 'user123', 'autocomplete');
 
       const result = await checkRateLimit(mockKV, 'user123', 'autocomplete', RATE_LIMIT_CONFIGS.autocomplete);
-      // remaining = limit - count - 1
-      expect(result.remaining).toBe(68); // 70 - 1 - 1 = 68
+      // remaining = limit - count
+      expect(result.remaining).toBe(69); // 70 - 1 = 69
     });
 
     it('should increment version on subsequent calls', async () => {
@@ -252,8 +252,8 @@ describe('rate-limit', () => {
       await incrementRateLimit(mockKV, 'user123', 'command');
 
       const result = await checkRateLimit(mockKV, 'user123', 'command', RATE_LIMIT_CONFIGS.command);
-      // remaining = limit - count - 1
-      expect(result.remaining).toBe(21); // 25 - 3 - 1 = 21
+      // remaining = limit - count
+      expect(result.remaining).toBe(22); // 25 - 3 = 22
     });
   });
 

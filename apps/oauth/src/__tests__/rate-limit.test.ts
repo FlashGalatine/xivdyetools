@@ -149,7 +149,8 @@ describe('Rate Limiter Service', () => {
             expect(ip).toBe('1.2.3.4');
         });
 
-        it('should fall back to X-Forwarded-For', () => {
+        it('should ignore X-Forwarded-For when trustXForwardedFor is false (default)', () => {
+            // FINDING-006: X-Forwarded-For is client-controlled and not trusted by default
             const request = new Request('http://localhost/', {
                 headers: {
                     'X-Forwarded-For': '1.2.3.4, 5.6.7.8',
@@ -157,7 +158,7 @@ describe('Rate Limiter Service', () => {
             });
 
             const ip = getClientIp(request);
-            expect(ip).toBe('1.2.3.4');
+            expect(ip).toBe('unknown');
         });
 
         it('should return "unknown" when no IP headers present', () => {
@@ -167,7 +168,8 @@ describe('Rate Limiter Service', () => {
             expect(ip).toBe('unknown');
         });
 
-        it('should trim whitespace from X-Forwarded-For', () => {
+        it('should return unknown for X-Forwarded-For without CF-Connecting-IP', () => {
+            // FINDING-006: X-Forwarded-For not trusted by default
             const request = new Request('http://localhost/', {
                 headers: {
                     'X-Forwarded-For': '  1.2.3.4  , 5.6.7.8',
@@ -175,7 +177,7 @@ describe('Rate Limiter Service', () => {
             });
 
             const ip = getClientIp(request);
-            expect(ip).toBe('1.2.3.4');
+            expect(ip).toBe('unknown');
         });
     });
 

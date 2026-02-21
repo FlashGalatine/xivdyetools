@@ -27,8 +27,8 @@
 
 import { bytesToHex } from '../utils/crypto.js';
 
-/** Default signing secret for tests */
-export const TEST_SIGNING_SECRET = 'test-signing-secret';
+/** Default signing secret for tests (>= 32 bytes for FINDING-009 HMAC minimum) */
+export const TEST_SIGNING_SECRET = 'test-signing-secret-at-least-32-bytes!!!';
 
 /**
  * Creates an HMAC-SHA256 signature for bot authentication

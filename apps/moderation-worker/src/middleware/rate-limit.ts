@@ -195,9 +195,11 @@ export async function getRateLimitInfo(
   const result = await limiter.checkOnly(key, sharedConfig);
   const effectiveLimit = config.requestsPerMinute + (config.burstAllowance || 0);
 
-  // On backend error, remaining equals effectiveLimit, so current would be -1
+  // On backend error, remaining equals effectiveLimit, so current would be 0
   // Return 0 in that case since we don't know the actual count
-  const current = result.backendError ? 0 : Math.max(0, effectiveLimit - result.remaining - 1);
+  // BUG-004 follow-up: checkOnly no longer subtracts 1 from remaining (read-only),
+  // so we no longer need the - 1 offset here either.
+  const current = result.backendError ? 0 : Math.max(0, effectiveLimit - result.remaining);
 
   return {
     current,
