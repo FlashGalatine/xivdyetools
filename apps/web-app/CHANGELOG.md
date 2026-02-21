@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.1.8] - 2026-02-21
+
+### Security
+
+- **FINDING-001**: Fix CSRF state validation fail-open — reject OAuth callback when `csrf` or stored state is missing, not only on mismatch
+
+### Added
+
+- New tests for CSRF fail-closed validation (missing `csrf` param and missing stored state)
+
+### Changed
+
+- Auto-format sources via `eslint --fix`; fix lint issues in components, services, and tests
+
 ## [4.1.7] - 2026-02-19
 
 ### Security

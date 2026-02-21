@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-02-21
+
+### Security
+
+- **FINDING-002**: Fix Upstash race condition — use atomic `INCR` + `EXPIRE NX` pipeline instead of separate `EXPIRE` call that could leave immortal keys on Worker crash
+- **FINDING-006**: Default `trustXForwardedFor` to `false` in `getClientIp` — prevents IP spoofing in Cloudflare Workers where `CF-Connecting-IP` is the trusted source
+
+### Fixed
+
+- **BUG-004**: Fix KV backend `checkOnly` off-by-one — `remaining` was 1 less than actual remaining capacity due to premature decrement
+- **BUG-005**: Fix KV backend `check` post-increment accounting — `remaining` now reflects the consumed request after `increment()`
+
+## [1.3.1] - 2026-02-21
+
+### Changed
+
+- Patch version bump for lint-only changes
+
 ## [1.3.0] - 2026-02-06
 
 ### Security

@@ -1,28 +1,29 @@
-# What's New in Version 4.1.7
+# What's New in Version 4.1.8
 
-*Released: February 19, 2026*
-
----
-
-## 🔒 Session & Security Improvements
-
-**Logging Out is Now More Thorough**
-- When you log out, any cached market board price data is now cleared too
-- This matters if you share a device — the next person won't see your leftover data
-
-**Multi-Tab Session Sync**
-- If you have XIV Dye Tools open in multiple browser tabs, logging out in one tab now logs you out in all of them
-- Logging in on one tab also syncs your session to any other tabs you already have open
-- No more "ghost sessions" in forgotten tabs
+*Released: February 21, 2026*
 
 ---
 
-## ⚡ Behind-the-Scenes Improvements
+## 🔒 Security Audit Fixes
 
-**Code Quality Sweep**
-- Fixed all linting warnings and errors across the web app
-- No visible changes to users — just cleaner, stricter code under the hood
+**Stronger Login Protection**
+- Fixed a rare edge case where the login flow could accept an incomplete security check — it now properly rejects the request if any verification step is missing
+- This was found during a comprehensive security audit; no evidence it was ever exploited
 
+---
+
+## 🛠️ Under-the-Hood Improvements
+
+**Dye Matching is Faster**
+- Color matching calculations are now cached, so finding your closest dye match is snappier — especially noticeable if you're comparing lots of colors in a session
+
+**SVG Card Improvements**
+- Fixed a display issue where Japanese, Korean, and Chinese dye category labels could appear clipped or incorrectly sized on dye info cards
+- Special characters like `&` in dye names no longer appear garbled (e.g., `&amp;amp;`) on generated cards
+
+**Code Quality**
+- Fixed all linting warnings and auto-formatted the entire codebase
+- No visible changes to users — just cleaner, more maintainable code
 
 ---
 

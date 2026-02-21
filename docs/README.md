@@ -42,19 +42,30 @@ This documentation covers the following projects:
 
 | Project | Version | Description |
 |---------|---------|-------------|
-| **xivdyetools-core** | v1.5.4 | Core color algorithms and dye database (npm library) |
-| **xivdyetools-web-app** | v4.0.0 | Interactive web-based color tools (9 tools) |
-| **xivdyetools-discord-worker** | v2.3.1 | Serverless Discord bot (Cloudflare Workers) |
-| **xivdyetools-oauth** | v2.2.2 | Discord OAuth authentication worker |
-| **xivdyetools-presets-api** | v1.4.5 | Community presets REST API |
+| **xivdyetools-core** | v1.17.2 | Core color algorithms and dye database (npm library) |
+| **xivdyetools-web-app** | v4.1.8 | Interactive web-based color tools (9 tools) |
+| **xivdyetools-discord-worker** | v4.0.2 | Serverless Discord bot (Cloudflare Workers) |
+| **xivdyetools-moderation-worker** | v1.1.6 | Moderation bot for community presets (Cloudflare Workers) |
+| **xivdyetools-oauth** | v2.3.7 | Discord OAuth authentication worker |
+| **xivdyetools-presets-api** | v1.4.14 | Community presets REST API |
+| **xivdyetools-universalis-proxy** | v1.4.2 | CORS proxy for Universalis market data |
+| **xivdyetools-og-worker** | v1.0.4 | Dynamic OpenGraph image generation |
+| **xivdyetools-stoat-worker** | v0.1.1 | Revolt bot (Stoat) |
 
 ### Shared Libraries
 
 | Project | Version | Description |
 |---------|---------|-------------|
-| **@xivdyetools/types** | v1.1.1 | Shared TypeScript type definitions |
-| **@xivdyetools/logger** | v1.0.2 | Unified logging across environments |
-| **@xivdyetools/test-utils** | v1.0.3 | Shared testing utilities |
+| **@xivdyetools/types** | v1.8.0 | Shared TypeScript type definitions |
+| **@xivdyetools/auth** | v1.1.0 | JWT verification, HMAC signing, Discord Ed25519 |
+| **@xivdyetools/crypto** | v1.1.0 | Base64URL encoding and hex utilities |
+| **@xivdyetools/logger** | v1.2.0 | Unified logging across environments |
+| **@xivdyetools/rate-limiter** | v1.4.0 | Sliding window rate limiting |
+| **@xivdyetools/svg** | v1.1.0 | Platform-agnostic SVG card generators |
+| **@xivdyetools/bot-logic** | v1.1.0 | Platform-agnostic bot command logic |
+| **@xivdyetools/bot-i18n** | v1.0.1 | Bot internationalization |
+| **@xivdyetools/color-blending** | v1.0.1 | Color blending modes |
+| **@xivdyetools/test-utils** | v1.1.3 | Shared testing utilities |
 
 ### Developer Tools
 

@@ -2,7 +2,7 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: January 22, 2026*
+*Last Updated: February 21, 2026*
 
 ---
 
@@ -12,14 +12,15 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core Library** | v1.15.1 | `@xivdyetools/core` | npm | Active |
-| **Web Application** | v4.1.1 | — | Cloudflare Pages | Active |
-| **Discord Bot** | v2.3.4 | — | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.0.1 | — | Cloudflare Workers | Active |
-| **OAuth Worker** | v2.2.2 | — | Cloudflare Workers | Active |
-| **Presets API** | v1.4.7 | — | Cloudflare Workers | Active |
-| **Universalis Proxy** | v1.3.0 | — | Cloudflare Workers | Active |
-| **OpenGraph Worker** | v1.0.0 | — | Cloudflare Workers | Active |
+| **Core Library** | v1.17.2 | `@xivdyetools/core` | npm | Active |
+| **Web Application** | v4.1.8 | — | Cloudflare Pages | Active |
+| **Discord Bot** | v4.0.2 | — | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.1.6 | — | Cloudflare Workers | Active |
+| **OAuth Worker** | v2.3.7 | — | Cloudflare Workers | Active |
+| **Presets API** | v1.4.14 | — | Cloudflare Workers | Active |
+| **Universalis Proxy** | v1.4.2 | — | Cloudflare Workers | Active |
+| **OpenGraph Worker** | v1.0.4 | — | Cloudflare Workers | Active |
+| **Stoat Bot** | v0.1.1 | — | Cloudflare Workers | Active |
 
 ### Developer Tools
 
@@ -31,9 +32,17 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Types** | v1.7.0 | `@xivdyetools/types` | npm | Active |
-| **Logger** | v1.1.0 | `@xivdyetools/logger` | npm | Active |
-| **Test Utils** | v1.1.0 | `@xivdyetools/test-utils` | npm | Active |
+| **Types** | v1.8.0 | `@xivdyetools/types` | npm | Active |
+| **Auth** | v1.1.0 | `@xivdyetools/auth` | npm | Active |
+| **Crypto** | v1.1.0 | `@xivdyetools/crypto` | npm | Active |
+| **Logger** | v1.2.0 | `@xivdyetools/logger` | npm | Active |
+| **Rate Limiter** | v1.4.0 | `@xivdyetools/rate-limiter` | npm | Active |
+| **Core** | v1.17.2 | `@xivdyetools/core` | npm | Active |
+| **SVG** | v1.1.0 | `@xivdyetools/svg` | npm | Active |
+| **Bot Logic** | v1.1.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **Bot i18n** | v1.0.1 | `@xivdyetools/bot-i18n` | npm | Active |
+| **Color Blending** | v1.0.1 | `@xivdyetools/color-blending` | npm | Active |
+| **Test Utils** | v1.1.3 | `@xivdyetools/test-utils` | npm | Active |
 
 ### Deprecated
 
@@ -49,7 +58,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v1.15.1 | Jan 2026 | Current release |
+| v1.17.2 | Feb 2026 | LRU cache for rgbToOklab(), spectral-js.d.ts type declarations |
+| v1.17.1 | Feb 2026 | Lint fixes |
+| v1.15.1 | Jan 2026 | Previous stable |
 | v1.5.4 | Dec 2025 | Previous stable |
 | v1.5.3 | Dec 2025 | Pre-computed lowercase names, simplified findClosestNonFacewearDye |
 | v1.5.2 | Dec 2025 | Input validation, batch API URL validation, 100-item limit |
@@ -64,7 +75,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v4.1.1 | Jan 2026 | Current release, bug fixes and polish |
+| v4.1.8 | Feb 2026 | CSRF state validation fix, lint/format sweep |
+| v4.1.7 | Feb 2026 | Session security fixes, cross-tab sync |
+| v4.1.1 | Jan 2026 | Previous stable, bug fixes and polish |
 | v4.0.0 | Jan 2026 | **Major release**: Tool renaming (Color Matcher → Palette Extractor, Dye Mixer → Gradient Builder, Preset Browser → Community Presets), new Dye Mixer (RGB blending), new Swatch Matcher, 9 tools total, Glassmorphism UI, 12 themes, Lit.js web components |
 | v3.2.8 | Dec 2025 | Previous stable release |
 | v3.2.7 | Dec 2025 | Theme factory pattern (createThemePalette) |
@@ -83,7 +96,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v2.3.4 | Jan 2026 | Current release |
+| v4.0.2 | Feb 2026 | Lint sweep (85+ errors), targetDye.hex bug fix |
+| v4.0.1 | Feb 2026 | Previous stable |
+| v2.3.4 | Jan 2026 | Previous stable |
 | v2.3.1 | Dec 2025 | Previous stable |
 | v2.3.0 | Dec 2025 | KV schema versioning, analytics tracking fix, webhook auth security fix |
 | v2.2.0 | Dec 2025 | User ban system (`/preset ban_user`, `/preset unban_user`) |
@@ -96,7 +111,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v2.2.2 | Dec 2025 | Current release |
+| v2.3.7 | Feb 2026 | Type-check fixes, lint sweep |
+| v2.3.6 | Feb 2026 | Block STATE_TRANSITION_PERIOD in production |
+| v2.2.2 | Dec 2025 | Previous stable |
 | v2.2.1 | Dec 2025 | Timeout protection (10s token exchange, 5s user info fetch) |
 | v2.2.0 | Dec 2025 | Open redirect fix, improved state handling |
 | v2.1.0 | Dec 2025 | State handling improvements |
@@ -107,7 +124,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v1.4.7 | Jan 2026 | Current release |
+| v1.4.14 | Feb 2026 | Lint sweep |
+| v1.4.13 | Feb 2026 | Enforce BOT_SIGNING_SECRET in production |
+| v1.4.7 | Jan 2026 | Previous stable |
 | v1.4.5 | Dec 2025 | Previous stable |
 | v1.4.4 | Dec 2025 | Standardized API responses, cascade delete integration tests |
 | v1.4.3 | Dec 2025 | UTF-8 safe truncation for Discord embeds |
@@ -121,7 +140,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v1.3.0 | Jan 2026 | Current release |
+| v1.4.2 | Feb 2026 | Lint sweep |
+| v1.4.1 | Feb 2026 | Structured cache logging |
+| v1.3.0 | Jan 2026 | Previous stable |
 | v1.2.2 | Dec 2025 | Previous stable, 5MB response size limit |
 | v1.2.0 | Dec 2025 | Memory leak fix (60s entry cleanup), input validation (100 items max, ID range 1-1M) |
 | v1.1.0 | Dec 2025 | Dual-layer caching (Cache API + KV), request coalescing, stale-while-revalidate |
@@ -131,7 +152,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v1.7.0 | Jan 2026 | Current release |
+| v1.8.0 | Feb 2026 | DiscordSnowflake branded type with validation utilities |
+| v1.7.0 | Jan 2026 | Previous stable |
 | v1.1.1 | Dec 2025 | Previous stable, branded types runtime validation guidance |
 | v1.1.0 | Dec 2025 | Facewear ID support (synthetic IDs ≤ -1000) |
 | v1.0.0 | Nov 2025 | Initial release |
@@ -140,7 +162,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v1.1.0 | Jan 2026 | Current release |
+| v1.2.0 | Feb 2026 | Array recursion for redaction, merge custom redactFields with defaults |
+| v1.1.3 | Feb 2026 | Lint fixes |
+| v1.1.0 | Jan 2026 | Previous stable |
 | v1.0.2 | Dec 2025 | Previous stable, Authorization pattern fix |
 | v1.0.1 | Dec 2025 | Secret redaction pattern fixes |
 | v1.0.0 | Nov 2025 | Initial release |
@@ -149,22 +173,89 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v1.0.1 | Jan 2026 | Current release |
+| v1.1.6 | Feb 2026 | Fix safeParseJSON prototype pollution, fix rate limit HTTP 429 response |
+| v1.1.5 | Feb 2026 | Startup env validation |
+| v1.0.1 | Jan 2026 | Previous stable |
 | v1.0.0 | Dec 2025 | Initial release, separate moderation bot for community presets |
 
 ### xivdyetools-og-worker
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.0.4 | Feb 2026 | NaN validation for dyeId parameters, escapeHtml for themeColor |
+| v1.0.3 | Feb 2026 | Parameter bounds validation |
 | v1.0.0 | Jan 2026 | Initial release, dynamic OpenGraph metadata for social media previews |
 
 ### @xivdyetools/test-utils
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v1.1.0 | Jan 2026 | Current release |
+| v1.1.3 | Feb 2026 | Fix D1 mock bind timing and batch results |
+| v1.1.2 | Feb 2026 | Lint fixes |
+| v1.1.0 | Jan 2026 | Previous stable |
 | v1.0.3 | Dec 2025 | Previous stable |
 | v1.0.0 | Nov 2025 | Initial release |
+
+### @xivdyetools/auth
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| v1.1.0 | Feb 2026 | Require exp claim, 32-byte min key, deduplicate JWT verification, CryptoKey caching |
+| v1.0.3 | Feb 2026 | Lint fixes |
+| v1.0.2 | Jan 2026 | Previous stable |
+| v1.0.0 | Nov 2025 | Initial release |
+
+### @xivdyetools/crypto
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| v1.1.0 | Feb 2026 | Validate hex input in hexToBytes |
+| v1.0.0 | Nov 2025 | Initial release |
+
+### @xivdyetools/rate-limiter
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| v1.4.0 | Feb 2026 | Atomic Upstash pipeline, default trustXForwardedFor to false, KV off-by-one fixes |
+| v1.3.1 | Feb 2026 | Lint fixes |
+| v1.3.0 | Jan 2026 | Previous stable |
+| v1.0.0 | Nov 2025 | Initial release |
+
+### @xivdyetools/svg
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| v1.1.0 | Feb 2026 | Shared truncateText/estimateTextWidth, fix double XML escaping, fix CJK badge width |
+| v1.0.1 | Feb 2026 | Lint fixes |
+| v1.0.0 | Feb 2026 | Initial release |
+
+### @xivdyetools/bot-logic
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| v1.1.0 | Feb 2026 | Shared color-math.ts module, 193-test comprehensive suite |
+| v1.0.0 | Feb 2026 | Initial release |
+
+### @xivdyetools/bot-i18n
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| v1.0.1 | Feb 2026 | Lint fixes |
+| v1.0.0 | Feb 2026 | Initial release |
+
+### @xivdyetools/color-blending
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| v1.0.1 | Feb 2026 | Lint fixes |
+| v1.0.0 | Feb 2026 | Initial release |
+
+### xivdyetools-stoat-worker
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| v0.1.1 | Feb 2026 | Lint fixes |
+| v0.1.0 | Feb 2026 | Initial release — revolt.js bot with 4 commands |
 
 ---
 

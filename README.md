@@ -12,30 +12,30 @@ Published to npm under the `@xivdyetools` scope:
 
 | Package | Version | Description |
 |---------|---------|-------------|
-| [`@xivdyetools/types`](packages/types/) | 1.7.0 | Branded types (`HexColor`, `DyeId`, etc.) and shared interfaces |
-| [`@xivdyetools/crypto`](packages/crypto/) | 1.0.0 | Base64URL encoding utilities |
-| [`@xivdyetools/logger`](packages/logger/) | 1.1.2 | Multi-runtime logging (browser, Node, CF Workers) with secret redaction |
-| [`@xivdyetools/auth`](packages/auth/) | 1.0.2 | JWT verification, HMAC signing, Discord Ed25519 verification |
-| [`@xivdyetools/rate-limiter`](packages/rate-limiter/) | 1.3.0 | Sliding window rate limiting (Memory, KV, Upstash backends) |
-| [`@xivdyetools/core`](packages/core/) | 1.16.0 | Color algorithms, 136-dye database, k-d tree matching, 6-language i18n |
-| [`@xivdyetools/color-blending`](packages/color-blending/) | 1.0.0 | Six color blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral) |
-| [`@xivdyetools/svg`](packages/svg/) | 1.0.0 | Platform-agnostic SVG card generators (pure functions: data in → SVG out) |
-| [`@xivdyetools/bot-i18n`](packages/bot-i18n/) | 1.0.0 | Bot UI string translations for 6 languages |
-| [`@xivdyetools/bot-logic`](packages/bot-logic/) | 1.0.0 | Platform-agnostic command business logic (shared by Discord + Stoat bots) |
-| [`@xivdyetools/test-utils`](packages/test-utils/) | 1.1.1 | Cloudflare Workers mocks (D1, KV, R2) and test factories |
+| [`@xivdyetools/types`](packages/types/) | 1.8.0 | Branded types (`HexColor`, `DyeId`, etc.) and shared interfaces |
+| [`@xivdyetools/crypto`](packages/crypto/) | 1.1.0 | Base64URL encoding utilities |
+| [`@xivdyetools/logger`](packages/logger/) | 1.2.0 | Multi-runtime logging (browser, Node, CF Workers) with secret redaction |
+| [`@xivdyetools/auth`](packages/auth/) | 1.1.0 | JWT verification, HMAC signing, Discord Ed25519 verification |
+| [`@xivdyetools/rate-limiter`](packages/rate-limiter/) | 1.4.0 | Sliding window rate limiting (Memory, KV, Upstash backends) |
+| [`@xivdyetools/core`](packages/core/) | 1.17.2 | Color algorithms, 136-dye database, k-d tree matching, 6-language i18n |
+| [`@xivdyetools/color-blending`](packages/color-blending/) | 1.0.1 | Six color blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral) |
+| [`@xivdyetools/svg`](packages/svg/) | 1.1.0 | Platform-agnostic SVG card generators (pure functions: data in → SVG out) |
+| [`@xivdyetools/bot-i18n`](packages/bot-i18n/) | 1.0.1 | Bot UI string translations for 6 languages |
+| [`@xivdyetools/bot-logic`](packages/bot-logic/) | 1.1.0 | Platform-agnostic command business logic (shared by Discord + Stoat bots) |
+| [`@xivdyetools/test-utils`](packages/test-utils/) | 1.1.3 | Cloudflare Workers mocks (D1, KV, R2) and test factories |
 
 ### Applications (`apps/`)
 
 | App | Version | Description |
 |-----|---------|-------------|
-| [`discord-worker`](apps/discord-worker/) | 4.0.1 | Primary Discord bot (CF Worker + Hono, HTTP Interactions) |
-| [`stoat-worker`](apps/stoat-worker/) | 0.1.0 | Stoat (Revolt) bot (Node.js + revolt.js, WebSocket, prefix commands) |
-| [`moderation-worker`](apps/moderation-worker/) | 1.1.4 | Moderation bot for community presets (CF Worker) |
-| [`presets-api`](apps/presets-api/) | 1.4.12 | Community presets REST API (CF Worker + D1) |
-| [`oauth`](apps/oauth/) | 2.3.5 | Discord OAuth + JWT issuance (CF Worker + D1) |
-| [`universalis-proxy`](apps/universalis-proxy/) | 1.3.5 | CORS proxy for Universalis market data (CF Worker) |
-| [`og-worker`](apps/og-worker/) | 1.0.2 | Dynamic OpenGraph image generation (CF Worker + WASM) |
-| [`web-app`](apps/web-app/) | 4.1.5 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
+| [`discord-worker`](apps/discord-worker/) | 4.0.2 | Primary Discord bot (CF Worker + Hono, HTTP Interactions) |
+| [`stoat-worker`](apps/stoat-worker/) | 0.1.1 | Stoat (Revolt) bot (Node.js + revolt.js, WebSocket, prefix commands) |
+| [`moderation-worker`](apps/moderation-worker/) | 1.1.6 | Moderation bot for community presets (CF Worker) |
+| [`presets-api`](apps/presets-api/) | 1.4.14 | Community presets REST API (CF Worker + D1) |
+| [`oauth`](apps/oauth/) | 2.3.7 | Discord OAuth + JWT issuance (CF Worker + D1) |
+| [`universalis-proxy`](apps/universalis-proxy/) | 1.4.2 | CORS proxy for Universalis market data (CF Worker) |
+| [`og-worker`](apps/og-worker/) | 1.0.4 | Dynamic OpenGraph image generation (CF Worker + WASM) |
+| [`web-app`](apps/web-app/) | 4.1.8 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
 | [`maintainer`](apps/maintainer/) | 1.0.1 | Local dev tool for editing the dye database (Vite + Vue) |
 
 ### Documentation (`docs/`)

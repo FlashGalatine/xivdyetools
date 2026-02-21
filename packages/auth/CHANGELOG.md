@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-21
+
+### Security
+
+- **FINDING-003**: Require `exp` claim in `verifyJWT` — reject tokens without expiration instead of treating them as never-expiring
+- **FINDING-009**: Enforce 32-byte minimum key length in `createHmacKey` — reject weak secrets that undermine HMAC-SHA256 security
+
+### Changed
+
+- **REFACTOR-003**: Deduplicate JWT verification logic — extract shared `verifyJWTSignature()` helper used by both `verifyJWT()` and `verifyJWTSignatureOnly()`, eliminating ~30 lines of duplication
+
+### Performance
+
+- **OPT-002**: Cache `CryptoKey` objects at module level — eliminates redundant `crypto.subtle.importKey()` calls when the same HMAC secret is reused across requests within a Worker isolate
+
+## [1.0.3] - 2026-02-21
+
+### Changed
+
+- Patch version bump for lint-only changes
+
 ## [1.0.2] - 2026-02-06
 
 ### Security

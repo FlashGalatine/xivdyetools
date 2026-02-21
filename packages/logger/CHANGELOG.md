@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-02-21
+
+### Security
+
+- **FINDING-007**: Recurse into arrays during sensitive field redaction — previously array elements containing secrets were logged unredacted
+- **FINDING-008**: Merge custom `redactFields` with defaults instead of replacing — previously custom fields replaced defaults, silently removing protection for `password`, `token`, etc.
+
+### Changed
+
+- Lint fixes and code quality improvements
+
+## [1.1.3] - 2026-02-21
+
+### Changed
+
+- Patch version bump for lint-only changes
+
 ## [1.1.2] - 2026-02-06
 
 ### Security

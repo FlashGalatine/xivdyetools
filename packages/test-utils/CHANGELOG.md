@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2026-02-21
+
+### Fixed
+
+- **BUG-006**: Fix D1 mock `bind()` recording at bind-time instead of execution-time — bindings are now tracked when the statement is actually executed via `first()`/`all()`/`run()`/`raw()`, matching real D1 behavior
+- **BUG-007**: Fix D1 mock `batch()` discarding statement results — now returns actual results from each statement instead of always returning empty arrays
+
+### Added
+
+- New D1 mock tests for bind-at-execution-time (4 tests) and batch result passthrough (1 test)
+
+## [1.1.2] - 2026-02-21
+
+### Changed
+
+- Patch version bump for lint-only changes
+
 ## [1.1.1] - 2026-01-25
 
 ### Changed

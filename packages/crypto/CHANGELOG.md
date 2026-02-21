@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-21
+
+### Security
+
+- **FINDING-004**: Validate hex input in `hexToBytes` — reject odd-length strings and non-hex characters instead of silently producing corrupt output
+
+### Added
+
+- New `hex.test.ts` test suite — 15 tests covering valid conversion, rejection of invalid input, and roundtrips
+
 ## [1.0.0] - 2026-01-25
 
 ### Added

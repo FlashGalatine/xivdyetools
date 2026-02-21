@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-21
+
+### Added
+
+- Comprehensive test suite — 193 tests across 10 files covering input resolution, CSS colors, localization, and all 8 commands
+- **REFACTOR-001**: New `color-math.ts` shared utility module with `getColorDistance()` delegating to `ColorService.getColorDistance()` from core
+- **REFACTOR-002**: New `getMatchQualityInfo()` with consistent tiers and i18n key lookup, plus 9-test suite
+
+### Changed
+
+- **REFACTOR-001**: Consolidate duplicated `getColorDistance()` across match, mixer, and gradient commands into shared `color-math.ts`
+- **REFACTOR-002**: Consolidate duplicated match quality thresholds across match, mixer, and gradient commands into shared `getMatchQualityInfo()`
+
 ## [1.0.0] - 2026-02-18
 
 ### Added

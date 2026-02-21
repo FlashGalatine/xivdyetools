@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.7] - 2026-02-21
+
+### Changed
+
+- Fix type-check errors — add type assertions for `response.json()`, fix mock Env properties, fix `XIVAuthCharacter.server` → `home_world`, fix D1Meta cast
+- Cast mock context through `unknown` to fix TS2352 type-check errors
+- Handle `URLSearchParams` in mock fetch body assertions
+- Resolve lint errors
+
 ## [2.3.6] - 2026-02-19
 
 ### Security

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.6] - 2026-02-21
+
+### Fixed
+
+- **BUG-002**: Fix `safeParseJSON` prototype pollution check — use `Object.hasOwn()` instead of `in` operator, which false-positived on every object due to inherited `__proto__`/`constructor`
+- **BUG-003**: Fix rate limit response returning HTTP 429 instead of 200 — Discord silently discards non-200 interaction responses
+
+### Changed
+
+- Resolve lint errors
+
 ## [1.1.5] - 2026-02-19
 
 ### Added

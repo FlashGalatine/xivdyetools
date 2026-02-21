@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.2] - 2026-02-21
+
+### Added
+
+- `spectral-js.d.ts` type declarations for untyped spectral.js library
+
+### Performance
+
+- **OPT-001**: Add LRU cache for `rgbToOklab()` conversions — OKLAB is the recommended matching method and was the only uncached color space conversion on the hot path
+
+## [1.17.1] - 2026-02-21
+
+### Changed
+
+- Patch version bump for lint-only changes
+- Resolve type-check errors in tests — add missing Dye properties, fix type-only imports, rename OklchWeights `L/C/H` → `kL/kC/kH`
+
 ## [1.17.0] - 2026-02-19
 
 ### Added
