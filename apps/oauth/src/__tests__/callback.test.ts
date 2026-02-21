@@ -539,7 +539,7 @@ describe('Callback Handler', () => {
             globalThis.fetch = vi.fn().mockImplementation((url: string, options?: RequestInit) => {
                 if (url.includes('oauth2/token')) {
                     // Verify redirect_uri is forced to the worker callback (matches authorize step)
-                    const body = options?.body?.toString() || '';
+                    const body = options?.body ? (typeof options.body === 'string' ? options.body : JSON.stringify(options.body)) : '';
                     expect(body).toContain('redirect_uri=http%3A%2F%2Flocalhost%3A8788%2Fauth%2Fcallback');
 
                     return Promise.resolve(new Response(JSON.stringify({

@@ -134,7 +134,7 @@ function kMeansPlusPlusInit(pixels: RGB[], k: number): RGB[] {
 
   // CORE-PERF-003: Cache minimum distances to avoid O(k) inner loop
   // Initialize with distance to first centroid
-  const minDistances: number[] = new Array(pixels.length);
+  const minDistances: number[] = new Array<number>(pixels.length);
   for (let j = 0; j < pixels.length; j++) {
     minDistances[j] = rgbDistance(pixels[j], centroids[0]);
   }
@@ -188,7 +188,7 @@ function assignToClusters(
   pixels: RGB[],
   centroids: RGB[]
 ): { assignments: number[]; clusters: RGB[][] } {
-  const assignments: number[] = new Array(pixels.length);
+  const assignments: number[] = new Array<number>(pixels.length);
   const clusters: RGB[][] = centroids.map(() => []);
 
   for (let i = 0; i < pixels.length; i++) {

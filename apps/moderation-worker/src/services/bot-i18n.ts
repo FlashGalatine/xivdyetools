@@ -132,7 +132,7 @@ function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
  * Interpolate variables into a string
  */
 function interpolate(template: string, variables: Record<string, string | number>): string {
-  return template.replace(/\{(\w+)\}/g, (match, key) => {
+  return template.replace(/\{(\w+)\}/g, (match, key: string) => {
     return variables[key]?.toString() ?? match;
   });
 }

@@ -135,7 +135,7 @@ export class KVRateLimiter implements ExtendedRateLimiter {
 
     try {
       const data = await this.kv.get(kvKey);
-      const entry: KVEntry | null = data ? JSON.parse(data) : null;
+      const entry: KVEntry | null = data ? (JSON.parse(data) as KVEntry) : null;
 
       // Check if window expired or no entry exists
       if (!entry || now - entry.windowStart >= config.windowMs) {
@@ -199,7 +199,7 @@ export class KVRateLimiter implements ExtendedRateLimiter {
         // Read current value with metadata for version tracking
         const result = await this.kv.getWithMetadata<KVMetadata>(kvKey);
         const currentData: KVEntry | null = result.value
-          ? JSON.parse(result.value)
+          ? (JSON.parse(result.value) as KVEntry)
           : null;
         const currentVersion = result.metadata?.version ?? 0;
 
@@ -225,7 +225,7 @@ export class KVRateLimiter implements ExtendedRateLimiter {
         // Verify write succeeded (simple optimistic check)
         const verification = await this.kv.get(kvKey);
         if (verification) {
-          const verified: KVEntry = JSON.parse(verification);
+          const verified: KVEntry = JSON.parse(verification) as KVEntry;
           // If our write succeeded (count is at least what we wrote), done
           if (verified.count >= entry.count) {
             return;

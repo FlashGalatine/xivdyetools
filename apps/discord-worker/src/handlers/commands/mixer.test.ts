@@ -94,10 +94,10 @@ const translator = {
             'quality.fair': 'Fair',
             'quality.approximate': 'Approximate',
             'mixer.title': 'Color Gradient',
-            'mixer.steps': `${vars?.count ?? 6} Steps`,
+            'mixer.steps': `${String(vars?.count ?? 6)} Steps`,
             'mixer.startColor': 'Start Color',
             'mixer.endColor': 'End Color',
-            'match.topMatches': `Top ${vars?.count ?? ''} matches`,
+            'match.topMatches': `Top ${String(vars?.count ?? '')} matches`,
             'match.useInfoNameHint': 'Use /info <name>',
         };
         return map[key] ?? key;

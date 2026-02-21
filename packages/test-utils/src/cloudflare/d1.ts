@@ -55,7 +55,6 @@ export interface MockD1PreparedStatement {
   all: <T = unknown>() => Promise<D1Result<T>>;
   run: <T = unknown>() => Promise<D1Result<T>>;
   // raw() has complex overloads in D1 - simplified for testing
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw: <T = unknown[]>(options?: { columnNames?: boolean }) => Promise<T>;
 }
 

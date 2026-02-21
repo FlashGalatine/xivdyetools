@@ -308,7 +308,7 @@ app.post('/webhooks/github', async (c) => {
   // Parse payload
   let payload: import('./types/github.js').GitHubPushPayload;
   try {
-    payload = JSON.parse(rawBody);
+    payload = JSON.parse(rawBody) as import('./types/github.js').GitHubPushPayload;
   } catch {
     return c.json({ error: 'Invalid JSON body' }, 400);
   }
@@ -394,7 +394,7 @@ app.post('/', async (c) => {
   // Parse the interaction
   let interaction: DiscordInteraction;
   try {
-    interaction = JSON.parse(body);
+    interaction = JSON.parse(body) as DiscordInteraction;
   } catch {
     return badRequestResponse('Invalid JSON body');
   }

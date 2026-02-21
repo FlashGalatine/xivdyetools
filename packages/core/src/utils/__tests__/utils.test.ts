@@ -409,7 +409,6 @@ describe('Utils', () => {
     });
 
     it('should return false for String object', () => {
-      // eslint-disable-next-line no-new-wrappers
       expect(isString(new String(''))).toBe(false);
     });
   });

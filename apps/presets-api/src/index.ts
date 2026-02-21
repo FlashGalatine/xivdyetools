@@ -85,10 +85,11 @@ app.use(
   '*',
   cors({
     origin: (origin, c) => {
-      const allowedOrigin = c.env.CORS_ORIGIN;
+      const env = c.env as Env;
+      const allowedOrigin = env.CORS_ORIGIN;
       // Additional allowed origins from environment (comma-separated)
-      const additionalOrigins = c.env.ADDITIONAL_CORS_ORIGINS
-        ? c.env.ADDITIONAL_CORS_ORIGINS.split(',').map((o: string) => o.trim())
+      const additionalOrigins = env.ADDITIONAL_CORS_ORIGINS
+        ? env.ADDITIONAL_CORS_ORIGINS.split(',').map((o: string) => o.trim())
         : [];
 
       // SECURITY: Don't allow requests without an Origin header

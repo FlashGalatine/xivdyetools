@@ -190,7 +190,7 @@ async function handleShowLanguage(
 
   if (discordLocale) {
     const discordDisplay = mappedDiscord
-      ? (() => {
+      ? ((): string => {
           const info = getLocaleInfo(mappedDiscord);
           return info ? `${info.flag} ${info.name} (${info.nativeName})` : mappedDiscord;
         })()

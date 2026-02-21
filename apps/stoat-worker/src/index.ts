@@ -89,7 +89,7 @@ async function main(): Promise<void> {
   });
 
   // ── Graceful shutdown ──────────────────────────────────────────────
-  const shutdown = () => {
+  const shutdown = (): void => {
     logger.info('Shutting down...');
     process.exit(0);
   };

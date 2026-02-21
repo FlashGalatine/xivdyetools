@@ -210,7 +210,7 @@ describe('Logger', () => {
       const customLogger: Logger = {
         info: (message: string) => logs.push(`INFO: ${message}`),
         warn: (message: string) => logs.push(`WARN: ${message}`),
-        error: (message: string, error?: unknown) => logs.push(`ERROR: ${message} ${error ?? ''}`),
+        error: (message: string, error?: unknown) => logs.push(`ERROR: ${message} ${error instanceof Error ? error.message : typeof error === 'string' ? error : ''}`),
         debug: (message: string) => logs.push(`DEBUG: ${message}`),
       };
 

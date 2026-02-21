@@ -357,7 +357,7 @@ async function handlePreferencesSubcommand(
     const prefsJson = await env.KV.get(key.name);
     if (prefsJson) {
       try {
-        const prefs = JSON.parse(prefsJson);
+        const prefs = JSON.parse(prefsJson) as Record<string, unknown>;
         if (prefs.language) languageSet++;
         if (prefs.blending) blendingSet++;
         if (prefs.matching) matchingSet++;
@@ -372,7 +372,7 @@ async function handlePreferencesSubcommand(
   }
 
   // Calculate percentages (from sample)
-  const calcPercent = (count: number) => sampleSize > 0
+  const calcPercent = (count: number): string => sampleSize > 0
     ? ((count / sampleSize) * 100).toFixed(1)
     : '0.0';
 

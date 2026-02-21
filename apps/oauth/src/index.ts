@@ -73,14 +73,16 @@ app.use(
         return '';
       }
 
+      const env = c.env as Env;
+
       // Allow the configured frontend URL
-      if (origin === c.env.FRONTEND_URL) {
+      if (origin === env.FRONTEND_URL) {
         return origin;
       }
 
       // SECURITY: Only allow localhost in development environment
       // Prevents malicious localhost apps from accessing OAuth in production
-      if (c.env.ENVIRONMENT === 'development') {
+      if (env.ENVIRONMENT === 'development') {
         try {
           const url = new URL(origin);
           if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {

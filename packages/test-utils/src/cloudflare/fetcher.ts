@@ -157,7 +157,7 @@ export function createMockFetcher(config?: MockFetcherConfig): MockFetcher {
       }
 
       // Extract body from init or from Request object
-      let bodyText: string | undefined = init?.body?.toString();
+      let bodyText: string | undefined = init?.body ? (typeof init.body === 'string' ? init.body : JSON.stringify(init.body)) : undefined;
       if (bodyText === undefined && input instanceof Request) {
         try {
           const cloned = input.clone();

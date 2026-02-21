@@ -105,7 +105,7 @@ export function createBrowserLogger(options: BrowserLoggerOptions = {}): Extende
   // Wrap error method to send to error tracker in production
   if (errorTracker && !isDevMode) {
     const originalError = logger.error.bind(logger);
-    logger.error = (message: string, error?: unknown, context?: LogContext) => {
+    logger.error = (message: string, error?: unknown, context?: LogContext): void => {
       // Still log to console
       originalError(message, error, context);
 
@@ -113,7 +113,7 @@ export function createBrowserLogger(options: BrowserLoggerOptions = {}): Extende
       if (error instanceof Error) {
         errorTracker.captureException(error, context);
       } else if (error) {
-        errorTracker.captureMessage(`${message}: ${String(error)}`, 'error');
+        errorTracker.captureMessage(`${message}: ${error instanceof Error ? error.message : typeof error === 'string' ? error : JSON.stringify(error)}`, 'error');
       } else {
         errorTracker.captureMessage(message, 'error');
       }
@@ -121,7 +121,7 @@ export function createBrowserLogger(options: BrowserLoggerOptions = {}): Extende
 
     // Also send warnings to error tracker
     const originalWarn = logger.warn.bind(logger);
-    logger.warn = (message: string, context?: LogContext) => {
+    logger.warn = (message: string, context?: LogContext): void => {
       originalWarn(message, context);
       errorTracker.captureMessage(message, 'warning');
     };

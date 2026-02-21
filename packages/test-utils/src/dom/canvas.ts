@@ -170,10 +170,7 @@ export function setupCanvasMocks(): void {
 
   // Mock getContext - cast to any to satisfy TypeScript's strict overload signatures
   // This is intentional for testing purposes where we don't need the full context API
-  HTMLCanvasElement.prototype.getContext = function (
-    contextId: string
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): any {
+  HTMLCanvasElement.prototype.getContext = function (contextId: string): any {
     if (contextId === '2d') {
       return {
         ...mockContext,

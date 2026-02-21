@@ -5,7 +5,7 @@
  * renders the PNG, and formats the Discord response with emojis.
  */
 
-import type { HarmonyColorSpace } from '@xivdyetools/core';
+import type { HarmonyColorSpace, HarmonyOptions } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
 import { resolveColorInput } from '../../utils/color.js';
@@ -84,7 +84,7 @@ async function processHarmonyCommand(
 
   const result = await executeHarmony({
     baseHex, baseName, baseId, baseItemID, harmonyType, locale,
-    harmonyOptions: harmonyOptions as any,
+    harmonyOptions: harmonyOptions as HarmonyOptions | undefined,
   });
 
   if (!result.ok) {

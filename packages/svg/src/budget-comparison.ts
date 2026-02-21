@@ -155,7 +155,7 @@ const TARGET_SWATCH_SIZE = 72;
  * @example fillTemplate("{amount} Gil", { amount: "5,000" }) → "5,000 Gil"
  */
 function fillTemplate(template: string, vars: Record<string, string | number>): string {
-  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? ''));
+  return template.replace(/\{(\w+)\}/g, (_, key: string) => String(vars[key] ?? ''));
 }
 
 /**

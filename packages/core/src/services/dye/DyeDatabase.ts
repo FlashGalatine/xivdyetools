@@ -78,7 +78,7 @@ export class DyeDatabase {
    * Per Security: Deep clones object while preventing prototype pollution
    */
   private safeClone(obj: Record<string, unknown>): Record<string, unknown> {
-    const result: Record<string, unknown> = Object.create(null);
+    const result: Record<string, unknown> = Object.create(null) as Record<string, unknown>;
     for (const key of Object.keys(obj)) {
       if (DyeDatabase.DANGEROUS_KEYS.has(key)) {
         continue; // Skip dangerous keys
@@ -130,7 +130,7 @@ export class DyeDatabase {
             : typeof dye.itemID === 'number'
               ? String(dye.itemID)
               : String(dye.name ?? 'unknown');
-        const hexForLog = typeof dye.hex === 'string' ? dye.hex : String(dye.hex);
+        const hexForLog = typeof dye.hex === 'string' ? dye.hex : JSON.stringify(dye.hex);
         this.logger.warn(`Dye ${idForLog} has invalid hex format: ${hexForLog}`);
         return false;
       }
@@ -271,7 +271,7 @@ export class DyeDatabase {
 
           // Per MEM-001: Pre-compute lowercase name and category for search optimization
           normalizedDye.nameLower = String(normalizedDye.name).toLowerCase();
-          normalizedDye.categoryLower = String(normalizedDye.category ?? '').toLowerCase();
+          normalizedDye.categoryLower = (typeof normalizedDye.category === 'string' ? normalizedDye.category : '').toLowerCase();
 
           return normalizedDye;
         })

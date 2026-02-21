@@ -82,8 +82,7 @@ describe('Request ID Middleware', () => {
             const mockContext = {
                 get: () => { throw new Error('No request ID'); },
             };
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const result = getRequestId(mockContext as any);
+            const result = getRequestId(mockContext as Parameters<typeof getRequestId>[0]);
             expect(result).toBe('unknown');
         });
 
@@ -91,8 +90,7 @@ describe('Request ID Middleware', () => {
             const mockContext = {
                 get: () => undefined,
             };
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const result = getRequestId(mockContext as any);
+            const result = getRequestId(mockContext as Parameters<typeof getRequestId>[0]);
             expect(result).toBe('unknown');
         });
     });
@@ -167,8 +165,7 @@ describe('Logger Middleware', () => {
             const mockContext = {
                 get: () => { throw new Error('No logger'); },
             };
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const result = getLogger(mockContext as any);
+            const result = getLogger(mockContext as Parameters<typeof getLogger>[0]);
             expect(result).toBeUndefined();
         });
     });

@@ -67,6 +67,7 @@ describe('photon image processing', () => {
 
         it('wraps unknown errors', () => {
             vi.mocked(PhotonImage.new_from_byteslice).mockImplementationOnce(() => {
+                // eslint-disable-next-line @typescript-eslint/only-throw-error -- testing unknown error wrapping
                 throw 'string error';
             });
 

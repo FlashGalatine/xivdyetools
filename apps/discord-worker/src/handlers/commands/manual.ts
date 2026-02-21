@@ -23,7 +23,7 @@ const COLORS = {
 /**
  * Build embeds for the match_image help topic
  */
-function buildMatchImageHelpEmbeds(t: Translator) {
+function buildMatchImageHelpEmbeds(t: Translator): object[] {
   return [
     // Main help embed
     {
@@ -109,7 +109,7 @@ function buildMatchImageHelpEmbeds(t: Translator) {
 /**
  * Build embeds using translated strings
  */
-function buildEmbeds(t: Translator) {
+function buildEmbeds(t: Translator): object[] {
   return [
     // Overview
     {

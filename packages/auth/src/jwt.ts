@@ -111,7 +111,7 @@ export async function verifyJWT(
 
     // Decode and validate header
     const headerJson = base64UrlDecode(headerB64);
-    const header: JWTHeader = JSON.parse(headerJson);
+    const header: JWTHeader = JSON.parse(headerJson) as JWTHeader;
 
     // SECURITY: Reject non-HS256 algorithms (prevents algorithm confusion attacks)
     if (header.alg !== 'HS256') {
@@ -138,7 +138,7 @@ export async function verifyJWT(
 
     // Decode payload
     const payloadJson = base64UrlDecode(payloadB64);
-    const payload: JWTPayload = JSON.parse(payloadJson);
+    const payload: JWTPayload = JSON.parse(payloadJson) as JWTPayload;
 
     // Check expiration
     const now = Math.floor(Date.now() / 1000);
@@ -188,7 +188,7 @@ export async function verifyJWTSignatureOnly(
 
     // Decode and validate header
     const headerJson = base64UrlDecode(headerB64);
-    const header: JWTHeader = JSON.parse(headerJson);
+    const header: JWTHeader = JSON.parse(headerJson) as JWTHeader;
 
     // SECURITY: Still reject non-HS256 algorithms
     if (header.alg !== 'HS256') {
@@ -215,7 +215,7 @@ export async function verifyJWTSignatureOnly(
 
     // Decode payload
     const payloadJson = base64UrlDecode(payloadB64);
-    const payload: JWTPayload = JSON.parse(payloadJson);
+    const payload: JWTPayload = JSON.parse(payloadJson) as JWTPayload;
 
     // Check max age if specified
     if (maxAgeMs !== undefined && payload.iat) {

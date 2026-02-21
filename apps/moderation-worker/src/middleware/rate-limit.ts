@@ -216,7 +216,7 @@ export async function getRateLimitInfo(
  * @param c - Hono context
  * @param next - Next middleware
  */
-export async function rateLimitMiddleware(c: Context<{ Bindings: Env }>, next: Next) {
+export async function rateLimitMiddleware(c: Context<{ Bindings: Env }>, next: Next): Promise<void> {
   // Pass through - rate limiting is enforced at interaction handler level
   // This middleware just provides the infrastructure
   await next();

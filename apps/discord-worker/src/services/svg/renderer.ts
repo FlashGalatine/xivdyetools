@@ -36,7 +36,7 @@ export async function initRenderer(logger?: ExtendedLogger): Promise<void> {
     return;
   }
 
-  wasmInitPromise = (async () => {
+  wasmInitPromise = (async (): Promise<void> => {
     try {
       // Initialize with the statically imported WASM module
       // In Cloudflare Workers, this is a WebAssembly.Module instance

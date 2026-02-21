@@ -14,7 +14,6 @@
  * @module services/color/SpectralMixer
  */
 
-// @ts-expect-error - spectral.js has no type definitions
 import * as spectral from 'spectral.js';
 
 import type { HexColor } from '../../types/index.js';
@@ -59,7 +58,7 @@ export class SpectralMixer {
 
     // Convert to hex string
     // toString returns hex format by default with gamut mapping
-    const hexResult = mixed.toString({ format: 'hex', method: 'map' }) as string;
+    const hexResult = mixed.toString({ format: 'hex', method: 'map' });
 
     // Normalize to our HexColor format
     return ColorConverter.normalizeHex(hexResult);
@@ -93,7 +92,7 @@ export class SpectralMixer {
     const normalizedWeights = effectiveWeights.map((w) => w / totalWeight);
 
     // Create spectral Color objects with weights
-    const colorPairs: [typeof spectral.Color, number][] = colors.map((hex, i) => [
+    const colorPairs: [spectral.Color, number][] = colors.map((hex, i) => [
       new spectral.Color(hex),
       normalizedWeights[i],
     ]);
@@ -102,7 +101,7 @@ export class SpectralMixer {
     const mixed = spectral.mix(...colorPairs);
 
     // Convert to hex string
-    const hexResult = mixed.toString({ format: 'hex', method: 'map' }) as string;
+    const hexResult = mixed.toString({ format: 'hex', method: 'map' });
 
     return ColorConverter.normalizeHex(hexResult);
   }

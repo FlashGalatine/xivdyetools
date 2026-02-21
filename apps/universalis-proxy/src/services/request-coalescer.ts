@@ -146,7 +146,7 @@ export class RequestCoalescer {
 
       // Schedule cleanup with a small delay for rapid sequential requests
       this.ctx.waitUntil(
-        (async () => {
+        (async (): Promise<void> => {
           await new Promise((resolve) => setTimeout(resolve, 100));
           inFlightRequests.delete(key);
         })()

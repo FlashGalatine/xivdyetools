@@ -195,7 +195,7 @@ describe('analytics.ts', () => {
         warn: vi.fn(),
         debug: vi.fn(),
         child: vi.fn().mockReturnThis(),
-      } as any;
+      } as unknown as import('@xivdyetools/logger').ExtendedLogger;
 
       const event: CommandEvent = {
         commandName: 'harmony',
@@ -213,7 +213,8 @@ describe('analytics.ts', () => {
 
     it('should pass undefined to logger for non-Error exceptions', () => {
       mockAnalytics.writeDataPoint.mockImplementation(() => {
-        throw 'string error'; // Non-Error exception
+        // eslint-disable-next-line @typescript-eslint/only-throw-error -- intentionally testing non-Error exception handling
+        throw 'string error';
       });
 
       const mockLogger = {
@@ -222,7 +223,7 @@ describe('analytics.ts', () => {
         warn: vi.fn(),
         debug: vi.fn(),
         child: vi.fn().mockReturnThis(),
-      } as any;
+      } as unknown as import('@xivdyetools/logger').ExtendedLogger;
 
       const event: CommandEvent = {
         commandName: 'harmony',

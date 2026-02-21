@@ -39,8 +39,8 @@ export function rowToPreset(row: PresetRow): CommunityPreset {
     name: row.name,
     description: row.description,
     category_id: row.category_id as CommunityPreset['category_id'],
-    dyes: JSON.parse(row.dyes),
-    tags: JSON.parse(row.tags),
+    dyes: JSON.parse(row.dyes) as CommunityPreset['dyes'],
+    tags: JSON.parse(row.tags) as CommunityPreset['tags'],
     author_discord_id: row.author_discord_id,
     author_name: row.author_name,
     vote_count: row.vote_count,
@@ -49,7 +49,7 @@ export function rowToPreset(row: PresetRow): CommunityPreset {
     created_at: row.created_at,
     updated_at: row.updated_at,
     dye_signature: row.dye_signature || undefined,
-    previous_values: row.previous_values ? JSON.parse(row.previous_values) : null,
+    previous_values: row.previous_values ? (JSON.parse(row.previous_values) as CommunityPreset['previous_values']) : null,
   };
 }
 

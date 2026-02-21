@@ -118,7 +118,7 @@ export async function handleMatchCommand(
   });
 }
 
-function getMatchQuality(distance: number, t: Translator) {
+function getMatchQuality(distance: number, t: Translator): { emoji: string; label: string } {
   if (distance === 0) return { emoji: '🎯', label: t.t('quality.perfect') };
   if (distance < 10) return { emoji: '✨', label: t.t('quality.excellent') };
   if (distance < 25) return { emoji: '👍', label: t.t('quality.good') };

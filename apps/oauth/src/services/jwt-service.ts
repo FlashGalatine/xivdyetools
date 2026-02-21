@@ -218,7 +218,7 @@ export async function verifyJWT(
   }
 
   // Decode payload
-  const payload: JWTPayload = JSON.parse(base64UrlDecode(encodedPayload));
+  const payload: JWTPayload = JSON.parse(base64UrlDecode(encodedPayload)) as JWTPayload;
 
   // Check expiration
   const now = Math.floor(Date.now() / 1000);
@@ -238,8 +238,8 @@ export function decodeJWT(token: string): JWTPayload | null {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
 
-    const payload = JSON.parse(base64UrlDecode(parts[1]));
-    return payload as JWTPayload;
+    const payload = JSON.parse(base64UrlDecode(parts[1])) as JWTPayload;
+    return payload;
   } catch {
     return null;
   }
@@ -276,7 +276,7 @@ export async function verifyJWTSignatureOnly(
     }
 
     // Signature verified - decode and return payload
-    const payload: JWTPayload = JSON.parse(base64UrlDecode(encodedPayload));
+    const payload: JWTPayload = JSON.parse(base64UrlDecode(encodedPayload)) as JWTPayload;
     return payload;
   } catch {
     return null;

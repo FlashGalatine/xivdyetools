@@ -128,7 +128,7 @@ const translator = {
             'preset.duplicateVoted': 'Vote added to existing preset',
             'preset.voteAdded': 'Vote Added',
             'preset.voteRemoved': 'Vote Removed',
-            'preset.currentVotes': `Current votes: ${vars?.count ?? 0}`,
+            'preset.currentVotes': `Current votes: ${String(vars?.count ?? 0)}`,
             'preset.useShowTip': 'Use /preset show to view details',
             'preset.moderation.accessDenied': 'Access denied - moderators only',
         };

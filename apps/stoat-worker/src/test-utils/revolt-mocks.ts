@@ -96,7 +96,7 @@ export function createMockClient(): MockClientResult {
     logout: vi.fn(),
   };
 
-  const emit = (event: string, ...args: unknown[]) => {
+  const emit = (event: string, ...args: unknown[]): void => {
     for (const handler of handlers.get(event) ?? []) {
       handler(...args);
     }
