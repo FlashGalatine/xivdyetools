@@ -14,6 +14,10 @@ on:
           - '@xivdyetools/auth'
           - '@xivdyetools/rate-limiter'
           - '@xivdyetools/core'
+          - '@xivdyetools/color-blending'
+          - '@xivdyetools/svg'
+          - '@xivdyetools/bot-i18n'
+          - '@xivdyetools/bot-logic'
           - '@xivdyetools/test-utils'
 
 jobs:
