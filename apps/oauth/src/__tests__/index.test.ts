@@ -16,7 +16,7 @@ describe('OAuth Worker App', () => {
     describe('Health Check Routes', () => {
         it('GET / should return service info', async () => {
             const response = await SELF.fetch('http://localhost/');
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
             expect(json).toMatchObject({
@@ -27,7 +27,7 @@ describe('OAuth Worker App', () => {
 
         it('GET /health should return health status', async () => {
             const response = await SELF.fetch('http://localhost/health');
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
             expect(json.status).toBe('healthy');
@@ -137,7 +137,7 @@ describe('OAuth Worker App', () => {
     describe('404 Handler', () => {
         it('should return 404 for unknown routes', async () => {
             const response = await SELF.fetch('http://localhost/unknown/route');
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(404);
             expect(json.error).toBe('Not Found');
@@ -149,7 +149,7 @@ describe('OAuth Worker App', () => {
                 method: 'POST',
                 body: '{}',
             });
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(404);
             expect(json.message).toContain('POST');
@@ -182,7 +182,7 @@ describe('OAuth Worker App', () => {
                 }
             );
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(429);
             expect(json.error).toBe('Too Many Requests');
@@ -227,7 +227,7 @@ describe('OAuth Worker App', () => {
                 body: 'invalid json {{{',
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
             expect(response.status).toBe(400);
             expect(json.error).toBeDefined();
         });
@@ -246,7 +246,7 @@ describe('OAuth Worker App', () => {
                 }
             );
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
             expect(response.status).toBe(400);
             // In production, specific handler catches this before global error handler
             expect(json.success).toBe(false);
@@ -256,7 +256,7 @@ describe('OAuth Worker App', () => {
             const prodEnv = createProductionEnv();
 
             const response = await fetchWithEnv(prodEnv, 'http://localhost/');
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(json.environment).toBe('production');
         });
@@ -302,7 +302,7 @@ describe('OAuth Worker App', () => {
                 }
             );
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             // Even in error cases, production should return sanitized messages
             expect(response.status).toBeGreaterThanOrEqual(400);

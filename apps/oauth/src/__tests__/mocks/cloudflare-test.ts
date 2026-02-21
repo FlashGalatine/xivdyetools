@@ -103,7 +103,7 @@ export const createMockDB = (): D1Database & { _users: Map<string, UserRow> } =>
             },
             all: async <T>(): Promise<D1Result<T>> => {
                 // Handle character queries (return empty for now)
-                return { results: [] as T[], success: true, meta: {} as D1Meta };
+                return { results: [] as T[], success: true, meta: {} as D1Meta & Record<string, unknown> };
             },
         };
         return statement;
@@ -150,7 +150,7 @@ export const createBrokenProductionEnv = (): Partial<Env> => ({
 // Create environment with KV namespace for revocation tests
 export const createEnvWithKV = (): Env & { TOKEN_BLACKLIST: KVNamespace } => ({
     ...env,
-    TOKEN_BLACKLIST: createMockKV(),
+    TOKEN_BLACKLIST: createMockKV() as unknown as KVNamespace,
 });
 
 // SELF helper to make requests to the worker

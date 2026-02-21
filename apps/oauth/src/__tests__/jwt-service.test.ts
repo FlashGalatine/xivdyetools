@@ -15,18 +15,24 @@ import {
     verifyJWTWithRevocationCheck,
     verifyJWTSignatureOnly,
 } from '../services/jwt-service.js';
-import { createMockKV } from './mocks/cloudflare-test.js';
+import { createMockKV, createMockDB } from './mocks/cloudflare-test.js';
 import type { DiscordUser, Env } from '../types.js';
+
+/** MockKVNamespace cast to also satisfy KVNamespace for function calls */
+type TestKV = KVNamespace & ReturnType<typeof createMockKV>;
+const testKV = (): TestKV => createMockKV() as unknown as TestKV;
 
 // Mock environment
 const createMockEnv = (): Env => ({
     ENVIRONMENT: 'development',
     DISCORD_CLIENT_ID: 'test-client-id',
     DISCORD_CLIENT_SECRET: 'test-client-secret',
+    XIVAUTH_CLIENT_ID: 'test-xivauth-client-id',
     FRONTEND_URL: 'http://localhost:5173',
     WORKER_URL: 'http://localhost:8788',
     JWT_SECRET: 'test-jwt-secret-key-for-testing-32chars',
     JWT_EXPIRY: '3600',
+    DB: createMockDB(),
 });
 
 // Mock Discord user
@@ -279,19 +285,19 @@ describe('JWT Service', () => {
         });
 
         it('should return false when jti is empty', async () => {
-            const kv = createMockKV();
+            const kv = testKV();
             const result = await isTokenRevoked('', kv);
             expect(result).toBe(false);
         });
 
         it('should return false when token is not in blacklist', async () => {
-            const kv = createMockKV();
+            const kv = testKV();
             const result = await isTokenRevoked('not-revoked-jti', kv);
             expect(result).toBe(false);
         });
 
         it('should return true when token is in blacklist', async () => {
-            const kv = createMockKV();
+            const kv = testKV();
             // Add token to blacklist
             await kv.put('revoked:revoked-jti', '1');
 
@@ -321,14 +327,14 @@ describe('JWT Service', () => {
         });
 
         it('should return false when jti is empty', async () => {
-            const kv = createMockKV();
+            const kv = testKV();
             const now = Math.floor(Date.now() / 1000);
             const result = await revokeToken('', now + 3600, kv);
             expect(result).toBe(false);
         });
 
         it('should add token to blacklist successfully', async () => {
-            const kv = createMockKV();
+            const kv = testKV();
             const now = Math.floor(Date.now() / 1000);
             const expiresAt = now + 3600;
 
@@ -339,7 +345,7 @@ describe('JWT Service', () => {
         });
 
         it('should use minimum TTL of 60 seconds for nearly expired tokens', async () => {
-            const kv = createMockKV();
+            const kv = testKV();
             const now = Math.floor(Date.now() / 1000);
             const expiresAt = now + 10; // Only 10 seconds until expiry
 
@@ -367,7 +373,7 @@ describe('JWT Service', () => {
 
     describe('verifyJWTWithRevocationCheck', () => {
         it('should verify valid non-revoked token', async () => {
-            const kv = createMockKV();
+            const kv = testKV();
             const { token } = await createJWT(mockUser, mockEnv);
 
             const payload = await verifyJWTWithRevocationCheck(token, mockEnv.JWT_SECRET, kv);
@@ -376,7 +382,7 @@ describe('JWT Service', () => {
         });
 
         it('should throw for revoked token', async () => {
-            const kv = createMockKV();
+            const kv = testKV();
             const { token, jti, expires_at } = await createJWT(mockUser, mockEnv);
 
             // Revoke the token
@@ -396,7 +402,7 @@ describe('JWT Service', () => {
         });
 
         it('should throw for expired token (regardless of revocation)', async () => {
-            const kv = createMockKV();
+            const kv = testKV();
             const { token } = await createJWT(mockUser, mockEnv);
 
             // Advance time past expiry
@@ -408,7 +414,7 @@ describe('JWT Service', () => {
         });
 
         it('should throw for invalid signature', async () => {
-            const kv = createMockKV();
+            const kv = testKV();
             const { token } = await createJWT(mockUser, mockEnv);
             const wrongSecret = 'wrong-secret-key-for-testing-32chars';
 
@@ -418,7 +424,7 @@ describe('JWT Service', () => {
         });
 
         it('should handle token without JTI gracefully', async () => {
-            const kv = createMockKV();
+            const kv = testKV();
 
             // Create a token manually without JTI
             const base64UrlEncode = (data: string): string => {

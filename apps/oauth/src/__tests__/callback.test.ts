@@ -222,7 +222,7 @@ describe('Callback Handler', () => {
                 body: 'not-json',
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.success).toBe(false);
@@ -236,7 +236,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({ code_verifier: VALID_CODE_VERIFIER }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.success).toBe(false);
@@ -250,7 +250,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({ code: 'auth_code' }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.success).toBe(false);
@@ -267,7 +267,7 @@ describe('Callback Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.success).toBe(false);
@@ -285,7 +285,7 @@ describe('Callback Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.success).toBe(false);
@@ -309,7 +309,7 @@ describe('Callback Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -342,7 +342,7 @@ describe('Callback Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -372,7 +372,7 @@ describe('Callback Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -402,7 +402,7 @@ describe('Callback Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -441,7 +441,7 @@ describe('Callback Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -480,7 +480,7 @@ describe('Callback Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -519,7 +519,7 @@ describe('Callback Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
             expect(json.success).toBe(true);
@@ -607,7 +607,7 @@ describe('Callback Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
             expect(json.user.avatar).toBeNull();
@@ -628,7 +628,7 @@ describe('Callback Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(500);
             expect(json.success).toBe(false);
@@ -659,7 +659,7 @@ describe('Callback Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -686,7 +686,7 @@ describe('Callback Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(500);
             expect(json.success).toBe(false);

@@ -223,7 +223,7 @@ describe('discord.ts', () => {
 
     it('should return 401 response with custom message', async () => {
       const response = unauthorizedResponse('Custom error message');
-      const body = await response.json();
+      const body = (await response.json()) as Record<string, unknown>;
 
       expect(response.status).toBe(401);
       expect(body.error).toBe('Custom error message');
@@ -233,7 +233,7 @@ describe('discord.ts', () => {
   describe('badRequestResponse', () => {
     it('should return 400 response with message', async () => {
       const response = badRequestResponse('Bad request error');
-      const body = await response.json();
+      const body = (await response.json()) as Record<string, unknown>;
 
       expect(response.status).toBe(400);
       expect(response.headers.get('Content-Type')).toBe('application/json');

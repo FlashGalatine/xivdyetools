@@ -90,7 +90,7 @@ const createTestDB = () => {
                         for (const field of fieldNames) {
                             if (field === "updated_at") continue; // Skip datetime('now')
                             const value = boundParams[paramIndex] as string | null;
-                            (existing as Record<string, unknown>)[field] = value;
+                            (existing as unknown as Record<string, unknown>)[field] = value;
                             paramIndex++;
                         }
                         existing.updated_at = new Date().toISOString();
@@ -135,9 +135,9 @@ const createTestDB = () => {
                         server: c.home_world,
                         verified: c.verified ? 1 : 0,
                     }));
-                    return { results: results as T[], success: true, meta: {} as D1Meta };
+                    return { results: results as T[], success: true, meta: {} as D1Meta & Record<string, unknown> };
                 }
-                return { results: [] as T[], success: true, meta: {} as D1Meta };
+                return { results: [] as T[], success: true, meta: {} as D1Meta & Record<string, unknown> };
             },
         };
         return statement;
@@ -347,8 +347,8 @@ describe('User Service', () => {
             });
 
             const characters: XIVAuthCharacter[] = [
-                { id: 12345678, name: 'Main Character', server: 'Excalibur', verified: true },
-                { id: 87654321, name: 'Alt Character', server: 'Balmung', verified: false },
+                { id: 12345678, name: 'Main Character', home_world: 'Excalibur', verified: true },
+                { id: 87654321, name: 'Alt Character', home_world: 'Balmung', verified: false },
             ];
 
             await storeCharacters(db, user.id, characters);
@@ -369,12 +369,12 @@ describe('User Service', () => {
 
             // Store initial characters
             await storeCharacters(db, user.id, [
-                { id: 11111111, name: 'Old Character', server: 'Gilgamesh', verified: true },
+                { id: 11111111, name: 'Old Character', home_world: 'Gilgamesh', verified: true },
             ]);
 
             // Store new characters (should replace)
             await storeCharacters(db, user.id, [
-                { id: 22222222, name: 'New Character', server: 'Cactuar', verified: false },
+                { id: 22222222, name: 'New Character', home_world: 'Cactuar', verified: false },
             ]);
 
             const stored = await getCharacters(db, user.id);

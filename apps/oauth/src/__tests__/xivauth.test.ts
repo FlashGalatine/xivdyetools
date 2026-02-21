@@ -66,7 +66,7 @@ describe('XIVAuth Handler', () => {
                 redirect: 'manual',
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.error).toBe('Missing code_challenge');
@@ -83,7 +83,7 @@ describe('XIVAuth Handler', () => {
                 redirect: 'manual',
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.error).toBe('Invalid code_challenge_method');
@@ -115,7 +115,7 @@ describe('XIVAuth Handler', () => {
                 redirect: 'manual',
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.error).toBe('Invalid redirect_uri');
@@ -406,7 +406,7 @@ describe('XIVAuth Handler', () => {
                 body: 'not-json',
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.success).toBe(false);
@@ -420,7 +420,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({ code_verifier: VALID_CODE_VERIFIER }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.success).toBe(false);
@@ -434,7 +434,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({ code: 'auth_code' }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.success).toBe(false);
@@ -458,7 +458,7 @@ describe('XIVAuth Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -491,7 +491,7 @@ describe('XIVAuth Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -541,7 +541,7 @@ describe('XIVAuth Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
             expect(json.success).toBe(true);
@@ -592,7 +592,7 @@ describe('XIVAuth Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             // Should still succeed even if characters fetch fails
             expect(response.status).toBe(200);
@@ -637,7 +637,7 @@ describe('XIVAuth Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             // Should still succeed
             expect(response.status).toBe(200);
@@ -679,7 +679,7 @@ describe('XIVAuth Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
             expect(json.success).toBe(true);
@@ -735,7 +735,7 @@ describe('XIVAuth Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
             expect(json.success).toBe(true);
@@ -758,7 +758,7 @@ describe('XIVAuth Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(500);
             expect(json.success).toBe(false);
@@ -830,7 +830,7 @@ describe('XIVAuth Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             // Verify production returns generic error (no sensitive details leaked)
             expect(response.status).toBe(500);
@@ -854,7 +854,7 @@ describe('XIVAuth Handler', () => {
                 }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             // In development, response should also be generic for consistency
             expect(response.status).toBe(500);

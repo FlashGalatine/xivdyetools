@@ -31,7 +31,7 @@ describe('Authorize Handler', () => {
         it('should require code_challenge parameter', async () => {
             // SECURITY: code_verifier should NOT be accepted - it stays on the client
             const response = await SELF.fetch('http://localhost/auth/discord?state=test123');
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.error).toBe('Missing code_challenge');
@@ -43,7 +43,7 @@ describe('Authorize Handler', () => {
             });
 
             const response = await SELF.fetch(`http://localhost/auth/discord?${params}`);
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.error).toBe('Invalid code_challenge format');
@@ -57,7 +57,7 @@ describe('Authorize Handler', () => {
             });
 
             const response = await SELF.fetch(`http://localhost/auth/discord?${params}`);
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.error).toBe('Invalid code_challenge format');
@@ -69,7 +69,7 @@ describe('Authorize Handler', () => {
             });
 
             const response = await SELF.fetch(`http://localhost/auth/discord?${params}`);
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.error).toBe('Invalid code_challenge format');
@@ -97,7 +97,7 @@ describe('Authorize Handler', () => {
             });
 
             const response = await SELF.fetch(`http://localhost/auth/discord?${params}`);
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.error).toBe('Invalid code_challenge_method');
@@ -124,7 +124,7 @@ describe('Authorize Handler', () => {
             });
 
             const response = await SELF.fetch(`http://localhost/auth/discord?${params}`);
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.error).toBe('Invalid redirect_uri');

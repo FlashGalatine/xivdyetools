@@ -44,7 +44,7 @@ describe('Refresh Handler', () => {
                 body: 'not-json',
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.success).toBe(false);
@@ -58,7 +58,7 @@ describe('Refresh Handler', () => {
                 body: JSON.stringify({}),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(400);
             expect(json.success).toBe(false);
@@ -77,7 +77,7 @@ describe('Refresh Handler', () => {
                 body: JSON.stringify({ token }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
             expect(json.success).toBe(true);
@@ -98,7 +98,7 @@ describe('Refresh Handler', () => {
                 body: JSON.stringify({ token }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
             expect(json.success).toBe(true);
@@ -117,7 +117,7 @@ describe('Refresh Handler', () => {
                 body: JSON.stringify({ token }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -131,7 +131,7 @@ describe('Refresh Handler', () => {
                 body: JSON.stringify({ token: 'invalid-token-format' }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -174,7 +174,7 @@ describe('Refresh Handler', () => {
                 body: JSON.stringify({ token: forgedToken }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             // Should reject - signature doesn't match our secret
             expect(response.status).toBe(401);
@@ -191,7 +191,7 @@ describe('Refresh Handler', () => {
                 body: JSON.stringify({ token: originalToken }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
             expect(json.success).toBe(true);
 
             // Verify by using /me endpoint
@@ -199,7 +199,7 @@ describe('Refresh Handler', () => {
                 headers: { Authorization: `Bearer ${json.token}` },
             });
 
-            const meJson = await meResponse.json();
+            const meJson = (await meResponse.json()) as Record<string, any>;
 
             expect(meJson.user.id).toBe(mockUser.id);
             expect(meJson.user.username).toBe(mockUser.username);
@@ -209,7 +209,7 @@ describe('Refresh Handler', () => {
     describe('GET /auth/me', () => {
         it('should reject missing Authorization header', async () => {
             const response = await SELF.fetch('http://localhost/auth/me');
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -221,7 +221,7 @@ describe('Refresh Handler', () => {
                 headers: { Authorization: 'Basic dXNlcjpwYXNz' },
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.error).toContain('Authorization');
@@ -234,7 +234,7 @@ describe('Refresh Handler', () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
             expect(json.success).toBe(true);
@@ -251,7 +251,7 @@ describe('Refresh Handler', () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(json.user.avatar_url).toContain('cdn.discordapp.com');
             expect(json.user.avatar_url).toContain(mockUser.id);
@@ -266,7 +266,7 @@ describe('Refresh Handler', () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(json.user.avatar).toBeNull();
             expect(json.user.avatar_url).toBeNull();
@@ -282,7 +282,7 @@ describe('Refresh Handler', () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -298,7 +298,7 @@ describe('Refresh Handler', () => {
                 headers: { Authorization: `Bearer ${tamperedToken}` },
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -309,7 +309,7 @@ describe('Refresh Handler', () => {
                 headers: { Authorization: 'Bearer not-a-jwt' },
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -329,7 +329,7 @@ describe('Refresh Handler', () => {
                 body: JSON.stringify({}),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
             expect(json.success).toBe(true);
@@ -348,7 +348,7 @@ describe('Refresh Handler', () => {
                 },
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
             expect(json.success).toBe(true);
@@ -359,7 +359,7 @@ describe('Refresh Handler', () => {
                 method: 'POST',
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -377,7 +377,7 @@ describe('Refresh Handler', () => {
                 },
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -402,7 +402,7 @@ describe('Refresh Handler', () => {
                 }
             );
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
             expect(json.success).toBe(true);
@@ -432,7 +432,7 @@ describe('Refresh Handler', () => {
                 }
             );
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -457,7 +457,7 @@ describe('Refresh Handler', () => {
                 }
             );
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(401);
             expect(json.success).toBe(false);
@@ -520,7 +520,7 @@ describe('Refresh Handler', () => {
                 }
             );
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
             expect(json.success).toBe(true);
@@ -539,7 +539,7 @@ describe('Refresh Handler', () => {
                 },
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
             expect(json.success).toBe(true);
@@ -578,7 +578,7 @@ describe('Refresh Handler', () => {
                 }
             );
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             // Should succeed but indicate revocation failed
             expect(response.status).toBe(200);
@@ -598,7 +598,7 @@ describe('Refresh Handler', () => {
                 },
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             // Should return 401 for invalid/malformed tokens
             expect(response.status).toBe(401);
@@ -623,7 +623,7 @@ describe('Refresh Handler', () => {
                 body: JSON.stringify({ token: weirdToken }),
             });
 
-            const json = await response.json();
+            const json = (await response.json()) as Record<string, any>;
 
             // Should return error (either 401 or 500 depending on where it fails)
             expect(json.success).toBe(false);
