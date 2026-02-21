@@ -11,7 +11,7 @@ import {
 
 describe('TEST_SIGNING_SECRET', () => {
   it('is a defined constant', () => {
-    expect(TEST_SIGNING_SECRET).toBe('test-signing-secret');
+    expect(TEST_SIGNING_SECRET).toBe('test-signing-secret-at-least-32-bytes!!!');
   });
 });
 
