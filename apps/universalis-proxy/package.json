@@ -19,7 +19,7 @@
   "author": "FlashGalatine",
   "license": "MIT",
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260228.0",
+    "@cloudflare/workers-types": "^4.20260302.0",
     "@types/node": "^25.3.0",
     "@vitest/coverage-v8": "^4.0.18",
     "vitest": "^4.0.18",
@@ -27,6 +27,6 @@
   },
   "dependencies": {
     "@xivdyetools/rate-limiter": "workspace:*",
-    "hono": "^4.12.1"
+    "hono": "^4.12.2"
   }
 }
