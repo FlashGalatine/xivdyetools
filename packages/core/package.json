@@ -55,7 +55,7 @@
     "spectral.js": "^3.0.0"
   },
   "devDependencies": {
-    "@types/node": "^25.0.10",
+    "@types/node": "^25.3.0",
     "@vitest/coverage-v8": "^4.0.18",
     "csv-parse": "^6.1.0",
     "tsx": "^4.7.0",
