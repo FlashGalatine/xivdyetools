@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Paste from Clipboard**: Extractor tool now has an explicit "Paste from Clipboard" button in the image drop zone
+  - Uses `navigator.clipboard.read()` API on Chromium browsers; button hidden on unsupported browsers
+  - Added Ctrl+V / Cmd+V keyboard paste listener at the `ExtractorTool` level (works in all browsers)
+  - Added paste hint text ("Tip: Paste an image using Ctrl+V") to the drop zone for discoverability
+  - Removed redundant paste listener from `ImageUploadDisplay` to prevent double-processing
+- New `ICON_CLIPBOARD` SVG icon
+- New locale keys in all 6 languages: `matcher.pasteFromClipboard`, `matcher.pasteNoImage`, `matcher.pasteNotSupported`
+
+---
+
 ## [4.1.8] - 2026-02-21
 
 ### Security

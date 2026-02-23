@@ -292,23 +292,8 @@ export class ImageUploadDisplay extends BaseComponent {
       });
     }
 
-    // Paste from clipboard
-    this.on(document, 'paste', (e: Event) => {
-      const pasteEvent = e as ClipboardEvent;
-      const items = pasteEvent.clipboardData?.items;
-
-      if (items) {
-        for (let i = 0; i < items.length; i++) {
-          if (items[i].type.indexOf('image') !== -1) {
-            pasteEvent.preventDefault();
-            const blob = items[i].getAsFile();
-            if (blob) {
-              this.handleFiles([blob] as unknown as FileList);
-            }
-          }
-        }
-      }
-    });
+    // Paste from clipboard is handled by ExtractorTool (document-level listener)
+    // to avoid duplicate processing when both components are mounted
   }
 
   /**

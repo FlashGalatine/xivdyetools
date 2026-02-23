@@ -449,6 +449,7 @@ describe('UI Icons', () => {
         'zap',
         'chart',
         'keyboard',
+        'clipboard',
       ]);
     });
 

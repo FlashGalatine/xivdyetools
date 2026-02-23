@@ -40,6 +40,7 @@ import {
   ICON_IMAGE,
   ICON_PALETTE,
   ICON_SETTINGS,
+  ICON_CLIPBOARD,
 } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
@@ -277,6 +278,25 @@ export class ExtractorTool extends BaseComponent {
     this.onPanelEvent(leftPanel, 'color-selected', (event: CustomEvent) => {
       const { color } = event.detail;
       this.matchColor(color);
+    });
+
+    // Paste from clipboard (document-level listener)
+    // Handles Ctrl+V / Cmd+V paste with image data
+    this.on(document, 'paste', (e: Event) => {
+      const pasteEvent = e as ClipboardEvent;
+      const items = pasteEvent.clipboardData?.items;
+
+      if (items) {
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            pasteEvent.preventDefault();
+            const blob = items[i].getAsFile();
+            if (blob) {
+              this.handleDroppedFile(blob);
+            }
+          }
+        }
+      }
     });
 
     // Market board events are handled directly on marketContent in renderMarketPanel()
@@ -985,6 +1005,64 @@ export class ExtractorTool extends BaseComponent {
     this.dropContent.appendChild(dropIcon);
     this.dropContent.appendChild(dropText);
     this.dropContent.appendChild(dropSubtext);
+
+    // Paste from Clipboard button
+    // Uses navigator.clipboard.read() API (Chromium only); hidden in unsupported browsers
+    if (typeof navigator?.clipboard?.read === 'function') {
+      const pasteBtn = this.createElement('button', {
+        className: 'btn-theme-primary',
+        attributes: {
+          style: `
+            pointer-events: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+            padding: 8px 16px;
+            font-size: 13px;
+            border-radius: 8px;
+            cursor: pointer;
+          `
+            .replace(/\s+/g, ' ')
+            .trim(),
+        },
+      }) as HTMLButtonElement;
+      const pasteBtnIcon = this.createElement('span', {
+        attributes: {
+          style: 'width: 16px; height: 16px; display: inline-flex;',
+          'aria-hidden': 'true',
+        },
+      });
+      pasteBtnIcon.innerHTML = ICON_CLIPBOARD;
+      const pasteBtnText = this.createElement('span', {
+        textContent: LanguageService.t('matcher.pasteFromClipboard'),
+      });
+      pasteBtn.appendChild(pasteBtnIcon);
+      pasteBtn.appendChild(pasteBtnText);
+
+      this.on(pasteBtn, 'click', (e: Event) => {
+        e.stopPropagation(); // Don't trigger drop zone's file input click
+        void this.pasteFromClipboardAPI();
+      });
+
+      this.dropContent.appendChild(pasteBtn);
+    }
+
+    // Paste hint text (shown in all browsers — Ctrl+V always works)
+    const pasteHint = this.createElement('span', {
+      textContent: LanguageService.t('matcher.pasteHint'),
+      attributes: {
+        style: `
+          font-size: 12px;
+          color: var(--theme-text-muted, #a0a0a0);
+          opacity: 0.7;
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
+      },
+    });
+    this.dropContent.appendChild(pasteHint);
+
     this.dropZone.appendChild(this.dropContent);
 
     // Image canvas container (hidden until image loaded)
@@ -1285,6 +1363,34 @@ export class ExtractorTool extends BaseComponent {
       img.src = dataUrl;
     };
     reader.readAsDataURL(file);
+  }
+
+  /**
+   * Read image from clipboard using the Clipboard API (navigator.clipboard.read)
+   * This is the handler for the explicit "Paste from Clipboard" button.
+   * Ctrl+V paste is handled separately by the document-level paste listener in bindEvents.
+   */
+  private async pasteFromClipboardAPI(): Promise<void> {
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+
+      for (const item of clipboardItems) {
+        const imageType = item.types.find((type) => type.startsWith('image/'));
+        if (imageType) {
+          const blob = await item.getType(imageType);
+          const file = new File([blob], 'clipboard-image.png', { type: imageType });
+          this.handleDroppedFile(file);
+          return;
+        }
+      }
+
+      // No image found in clipboard
+      ToastService.error(LanguageService.t('matcher.pasteNoImage'));
+    } catch (error) {
+      // Permission denied or API error
+      logger.warn('[ExtractorTool] Clipboard read failed:', error);
+      ToastService.error(LanguageService.t('matcher.pasteNoImage'));
+    }
   }
 
   /**
