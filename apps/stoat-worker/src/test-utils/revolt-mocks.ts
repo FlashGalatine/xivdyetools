@@ -5,14 +5,14 @@
  * that mirror the revolt.js API surface used by the bot.
  */
 
-import { vi } from 'vitest';
+import { vi, type Mock } from 'vitest';
 
 // ── Mock Channel ───────────────────────────────────────────────────────
 
 export interface MockChannel {
   id: string;
   serverId: string | null;
-  sendMessage: ReturnType<typeof vi.fn>;
+  sendMessage: Mock<(...args: any[]) => Promise<any>>;
 }
 
 export function createMockChannel(overrides?: Partial<MockChannel>): MockChannel {
@@ -33,9 +33,9 @@ export interface MockMessage {
   channelId: string;
   channel: MockChannel;
   attachments: unknown[];
-  react: ReturnType<typeof vi.fn>;
-  unreact: ReturnType<typeof vi.fn>;
-  reply: ReturnType<typeof vi.fn>;
+  react: Mock<(...args: any[]) => Promise<void>>;
+  unreact: Mock<(...args: any[]) => Promise<void>>;
+  reply: Mock<(...args: any[]) => Promise<any>>;
 }
 
 export function createMockMessage(overrides?: Partial<MockMessage>): MockMessage {
@@ -60,16 +60,16 @@ export interface MockClientResult {
   /** The mock client object (pass to code under test) */
   client: {
     user: { id: string; username: string } | null;
-    channels: { get: ReturnType<typeof vi.fn> };
+    channels: { get: Mock<(id: string) => any> };
     websocket: { connected: boolean; ready: boolean };
     api: {
-      post: ReturnType<typeof vi.fn>;
-      patch: ReturnType<typeof vi.fn>;
-      delete: ReturnType<typeof vi.fn>;
+      post: Mock<(...args: any[]) => Promise<any>>;
+      patch: Mock<(...args: any[]) => Promise<any>>;
+      delete: Mock<(...args: any[]) => Promise<any>>;
     };
-    on: ReturnType<typeof vi.fn>;
-    loginBot: ReturnType<typeof vi.fn>;
-    logout: ReturnType<typeof vi.fn>;
+    on: Mock<(event: string, handler: (...args: unknown[]) => void) => void>;
+    loginBot: Mock<(token: string) => Promise<void>>;
+    logout: Mock<() => void>;
   };
   /** Emit a fake event to trigger registered handlers */
   emit: (event: string, ...args: unknown[]) => void;
