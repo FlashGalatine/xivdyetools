@@ -27,7 +27,7 @@
     "autoprefixer": "^10.4.22",
     "concurrently": "^9.1.2",
     "cors": "^2.8.5",
-    "express": "^4.21.2",
+    "express": "^5.2.1",
     "express-rate-limit": "^7.5.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.17",
