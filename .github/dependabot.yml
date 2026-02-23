@@ -1,0 +1,36 @@
+version: 2
+
+updates:
+  # npm dependencies (pnpm monorepo — root handles all workspaces)
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      # Group minor/patch updates together to reduce PR noise
+      production-deps:
+        applies-to: version-updates
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+      dev-deps:
+        applies-to: version-updates
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+    open-pull-requests-limit: 15
+    reviewers:
+      - FlashGalatine
+
+  # GitHub Actions versions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    reviewers:
+      - FlashGalatine
