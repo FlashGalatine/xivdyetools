@@ -801,7 +801,8 @@ describe('AuthService', () => {
       mockSessionStorage['xivdyetools_pkce_verifier'] = 'test-verifier';
       mockSessionStorage['xivdyetools_oauth_state'] = 'test-state';
 
-      (window.location as { search: string }).search = '?code=auth-code&provider=xivauth&csrf=test-state';
+      (window.location as { search: string }).search =
+        '?code=auth-code&provider=xivauth&csrf=test-state';
 
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
