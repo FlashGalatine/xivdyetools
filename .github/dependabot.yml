@@ -21,6 +21,16 @@ updates:
         update-types:
           - minor
           - patch
+    # oauth and presets-api must stay on vitest 3.x because
+    # @cloudflare/vitest-pool-workers requires vitest ^3.x.
+    # Ignore major bumps for vitest and its coverage companion.
+    ignore:
+      - dependency-name: vitest
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@vitest/coverage-v8"
+        update-types:
+          - version-update:semver-major
     open-pull-requests-limit: 15
     reviewers:
       - FlashGalatine
