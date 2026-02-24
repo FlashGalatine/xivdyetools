@@ -13,12 +13,22 @@ import {
 } from '../indexeddb-service';
 
 describe('IndexedDBService', () => {
+  /** Mock IDB request type for testing */
+  interface MockIDBRequest {
+    result: unknown;
+    error: Error | null;
+    onsuccess: ((event: { target: MockIDBRequest }) => void) | null;
+    onerror: ((event: { target: MockIDBRequest }) => void) | null;
+    onupgradeneeded?: ((event: { target: MockIDBRequest }) => void) | null;
+    onblocked?: ((event: { target: MockIDBRequest }) => void) | null;
+  }
+
   let indexedDBService: IndexedDBService;
-  let mockDB: any;
-  let mockStore: any;
-  let mockStoreData: Map<string, any>;
-  let mockTransaction: any;
-  let originalIndexedDB: any;
+  let mockDB: Record<string, unknown>;
+  let mockStore: Record<string, unknown>;
+  let mockStoreData: Map<string, unknown>;
+  let mockTransaction: Record<string, unknown>;
+  let originalIndexedDB: IDBFactory;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -78,8 +88,8 @@ describe('IndexedDBService', () => {
     };
 
     // Helper to create mock request
-    function createMockRequest(result: any) {
-      const request: any = {
+    function createMockRequest(result: unknown): MockIDBRequest {
+      const request: MockIDBRequest = {
         result,
         error: null,
         onsuccess: null,
@@ -96,7 +106,7 @@ describe('IndexedDBService', () => {
 
     // Create mock IDBOpenDBRequest
     const createMockOpenRequest = () => {
-      const request: any = {
+      const request: MockIDBRequest = {
         result: mockDB,
         error: null,
         onsuccess: null,
@@ -121,7 +131,7 @@ describe('IndexedDBService', () => {
     const mockIndexedDB = {
       open: vi.fn().mockImplementation(() => createMockOpenRequest()),
       deleteDatabase: vi.fn().mockImplementation(() => {
-        const request: any = {
+        const request: MockIDBRequest = {
           result: undefined,
           error: null,
           onsuccess: null,
@@ -137,18 +147,17 @@ describe('IndexedDBService', () => {
       }),
     };
 
-    // @ts-ignore
+    // @ts-expect-error - assigning mock to global
     global.indexedDB = mockIndexedDB;
 
     // Reset singleton and get fresh instance
-    // @ts-ignore - accessing private static for testing
+    // @ts-expect-error - accessing private static for testing
     IndexedDBService.instance = null;
     indexedDBService = IndexedDBService.getInstance();
   });
 
   afterEach(() => {
     indexedDBService.close();
-    // @ts-ignore
     global.indexedDB = originalIndexedDB;
     vi.restoreAllMocks();
   });
@@ -179,9 +188,9 @@ describe('IndexedDBService', () => {
     });
 
     it('should return false when indexedDB is not available', () => {
-      // @ts-ignore - reset singleton
+      // @ts-expect-error - reset singleton
       IndexedDBService.instance = null;
-      // @ts-ignore
+      // @ts-expect-error - assigning undefined to global
       global.indexedDB = undefined;
 
       const service = IndexedDBService.getInstance();
@@ -219,16 +228,16 @@ describe('IndexedDBService', () => {
     it('should return true if already initialized', async () => {
       await indexedDBService.initialize();
       // Force a new call by nullifying the promise but keeping db
-      // @ts-ignore
+      // @ts-expect-error - accessing private field
       indexedDBService.initPromise = null;
       const result = await indexedDBService.initialize();
       expect(result).toBe(true);
     });
 
     it('should return false when IndexedDB is not supported', async () => {
-      // @ts-ignore - reset singleton
+      // @ts-expect-error - reset singleton
       IndexedDBService.instance = null;
-      // @ts-ignore
+      // @ts-expect-error - assigning undefined to global
       global.indexedDB = undefined;
 
       const service = IndexedDBService.getInstance();
@@ -256,9 +265,9 @@ describe('IndexedDBService', () => {
       });
 
       it('should return null when not initialized', async () => {
-        // @ts-ignore - reset singleton
+        // @ts-expect-error - reset singleton
         IndexedDBService.instance = null;
-        // @ts-ignore
+        // @ts-expect-error - assigning undefined to global
         global.indexedDB = undefined;
 
         const service = IndexedDBService.getInstance();
@@ -281,9 +290,9 @@ describe('IndexedDBService', () => {
       });
 
       it('should return false when not initialized', async () => {
-        // @ts-ignore - reset singleton
+        // @ts-expect-error - reset singleton
         IndexedDBService.instance = null;
-        // @ts-ignore
+        // @ts-expect-error - assigning undefined to global
         global.indexedDB = undefined;
 
         const service = IndexedDBService.getInstance();
@@ -302,9 +311,9 @@ describe('IndexedDBService', () => {
       });
 
       it('should return false when not initialized', async () => {
-        // @ts-ignore - reset singleton
+        // @ts-expect-error - reset singleton
         IndexedDBService.instance = null;
-        // @ts-ignore
+        // @ts-expect-error - assigning undefined to global
         global.indexedDB = undefined;
 
         const service = IndexedDBService.getInstance();
@@ -323,9 +332,9 @@ describe('IndexedDBService', () => {
       });
 
       it('should return empty array when not initialized', async () => {
-        // @ts-ignore - reset singleton
+        // @ts-expect-error - reset singleton
         IndexedDBService.instance = null;
-        // @ts-ignore
+        // @ts-expect-error - assigning undefined to global
         global.indexedDB = undefined;
 
         const service = IndexedDBService.getInstance();
@@ -344,9 +353,9 @@ describe('IndexedDBService', () => {
       });
 
       it('should return empty array when not initialized', async () => {
-        // @ts-ignore - reset singleton
+        // @ts-expect-error - reset singleton
         IndexedDBService.instance = null;
-        // @ts-ignore
+        // @ts-expect-error - assigning undefined to global
         global.indexedDB = undefined;
 
         const service = IndexedDBService.getInstance();
@@ -366,9 +375,9 @@ describe('IndexedDBService', () => {
       });
 
       it('should return false when not initialized', async () => {
-        // @ts-ignore - reset singleton
+        // @ts-expect-error - reset singleton
         IndexedDBService.instance = null;
-        // @ts-ignore
+        // @ts-expect-error - assigning undefined to global
         global.indexedDB = undefined;
 
         const service = IndexedDBService.getInstance();
@@ -387,9 +396,9 @@ describe('IndexedDBService', () => {
       });
 
       it('should return 0 when not initialized', async () => {
-        // @ts-ignore - reset singleton
+        // @ts-expect-error - reset singleton
         IndexedDBService.instance = null;
-        // @ts-ignore
+        // @ts-expect-error - assigning undefined to global
         global.indexedDB = undefined;
 
         const service = IndexedDBService.getInstance();
@@ -424,9 +433,9 @@ describe('IndexedDBService', () => {
     });
 
     it('should return false when IndexedDB is not supported', async () => {
-      // @ts-ignore - reset singleton
+      // @ts-expect-error - reset singleton
       IndexedDBService.instance = null;
-      // @ts-ignore
+      // @ts-expect-error - assigning undefined to global
       global.indexedDB = undefined;
 
       const service = IndexedDBService.getInstance();
@@ -440,7 +449,7 @@ describe('IndexedDBService', () => {
       // Mock open to fail
       const mockFailingIndexedDB = {
         open: vi.fn().mockImplementation(() => {
-          const request: any = {
+          const request: MockIDBRequest = {
             result: null,
             error: new Error('Open failed'),
             onsuccess: null,
@@ -457,9 +466,9 @@ describe('IndexedDBService', () => {
         }),
       };
 
-      // @ts-ignore - reset singleton
+      // @ts-expect-error - reset singleton
       IndexedDBService.instance = null;
-      // @ts-ignore
+      // @ts-expect-error - assigning mock to global
       global.indexedDB = mockFailingIndexedDB;
 
       const service = IndexedDBService.getInstance();
@@ -471,7 +480,7 @@ describe('IndexedDBService', () => {
       // Mock open to be blocked
       const mockBlockedIndexedDB = {
         open: vi.fn().mockImplementation(() => {
-          const request: any = {
+          const request: MockIDBRequest = {
             result: null,
             error: null,
             onsuccess: null,
@@ -488,9 +497,9 @@ describe('IndexedDBService', () => {
         }),
       };
 
-      // @ts-ignore - reset singleton
+      // @ts-expect-error - reset singleton
       IndexedDBService.instance = null;
-      // @ts-ignore
+      // @ts-expect-error - assigning mock to global
       global.indexedDB = mockBlockedIndexedDB;
 
       const service = IndexedDBService.getInstance();
@@ -503,7 +512,7 @@ describe('IndexedDBService', () => {
 
       // Create a failing get request
       mockStore.get = vi.fn(() => {
-        const request: any = {
+        const request: MockIDBRequest = {
           result: undefined,
           error: new Error('Get failed'),
           onsuccess: null,
@@ -537,7 +546,7 @@ describe('IndexedDBService', () => {
       await indexedDBService.initialize();
 
       mockStore.put = vi.fn(() => {
-        const request: any = {
+        const request: MockIDBRequest = {
           result: undefined,
           error: new Error('Put failed'),
           onsuccess: null,
@@ -570,7 +579,7 @@ describe('IndexedDBService', () => {
       await indexedDBService.initialize();
 
       mockStore.delete = vi.fn(() => {
-        const request: any = {
+        const request: MockIDBRequest = {
           result: undefined,
           error: new Error('Delete failed'),
           onsuccess: null,
@@ -603,7 +612,7 @@ describe('IndexedDBService', () => {
       await indexedDBService.initialize();
 
       mockStore.getAllKeys = vi.fn(() => {
-        const request: any = {
+        const request: MockIDBRequest = {
           result: undefined,
           error: new Error('GetAllKeys failed'),
           onsuccess: null,
@@ -636,7 +645,7 @@ describe('IndexedDBService', () => {
       await indexedDBService.initialize();
 
       mockStore.getAll = vi.fn(() => {
-        const request: any = {
+        const request: MockIDBRequest = {
           result: undefined,
           error: new Error('GetAll failed'),
           onsuccess: null,
@@ -669,7 +678,7 @@ describe('IndexedDBService', () => {
       await indexedDBService.initialize();
 
       mockStore.clear = vi.fn(() => {
-        const request: any = {
+        const request: MockIDBRequest = {
           result: undefined,
           error: new Error('Clear failed'),
           onsuccess: null,
@@ -702,7 +711,7 @@ describe('IndexedDBService', () => {
       await indexedDBService.initialize();
 
       mockStore.count = vi.fn(() => {
-        const request: any = {
+        const request: MockIDBRequest = {
           result: undefined,
           error: new Error('Count failed'),
           onsuccess: null,
@@ -734,8 +743,9 @@ describe('IndexedDBService', () => {
     it('should handle deleteDatabase error', async () => {
       await indexedDBService.initialize();
 
-      (global.indexedDB.deleteDatabase as any) = vi.fn().mockImplementation(() => {
-        const request: any = {
+      const idbMock = global.indexedDB as unknown as Record<string, unknown>;
+      idbMock.deleteDatabase = vi.fn().mockImplementation(() => {
+        const request: MockIDBRequest = {
           result: undefined,
           error: new Error('Delete database failed'),
           onsuccess: null,
@@ -757,8 +767,9 @@ describe('IndexedDBService', () => {
     it('should handle deleteDatabase blocked', async () => {
       await indexedDBService.initialize();
 
-      (global.indexedDB.deleteDatabase as any) = vi.fn().mockImplementation(() => {
-        const request: any = {
+      const idbMock = global.indexedDB as unknown as Record<string, unknown>;
+      idbMock.deleteDatabase = vi.fn().mockImplementation(() => {
+        const request: MockIDBRequest = {
           result: undefined,
           error: null,
           onsuccess: null,
@@ -780,7 +791,8 @@ describe('IndexedDBService', () => {
     it('should handle deleteDatabase exception', async () => {
       await indexedDBService.initialize();
 
-      (global.indexedDB.deleteDatabase as any) = vi.fn().mockImplementation(() => {
+      const idbMock = global.indexedDB as unknown as Record<string, unknown>;
+      idbMock.deleteDatabase = vi.fn().mockImplementation(() => {
         throw new Error('Delete database error');
       });
 
@@ -796,9 +808,9 @@ describe('IndexedDBService', () => {
         }),
       };
 
-      // @ts-ignore - reset singleton
+      // @ts-expect-error - reset singleton
       IndexedDBService.instance = null;
-      // @ts-ignore
+      // @ts-expect-error - assigning mock to global
       global.indexedDB = mockThrowingIndexedDB;
 
       const service = IndexedDBService.getInstance();

@@ -12,7 +12,6 @@
 
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '../CollapsiblePanel';
-import { LanguageService } from '@services/index';
 import { clearContainer } from '@shared/utils';
 
 // SVG Icons

@@ -5,6 +5,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createBrowserLogger, browserLogger, perf } from './browser.js';
 import type { ErrorTracker } from '../types.js';
 
+// Node.js process global — available at runtime in vitest's node environment
+declare const process: { env: Record<string, string | undefined> };
+
 describe('Browser Preset', () => {
   let consoleSpy: {
     debug: ReturnType<typeof vi.spyOn>;
@@ -17,7 +20,7 @@ describe('Browser Preset', () => {
   };
 
   // Store original values for restoration
-  const originalProcess = globalThis.process;
+  const originalProcess = (globalThis as unknown as Record<string, unknown>)['process'];
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -43,7 +46,7 @@ describe('Browser Preset', () => {
 
     // Restore any global modifications
     if (originalProcess !== undefined) {
-      globalThis.process = originalProcess;
+      (globalThis as unknown as Record<string, unknown>)['process'] = originalProcess;
     }
   });
 

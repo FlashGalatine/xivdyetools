@@ -15,7 +15,6 @@ import {
   click,
   query,
   queryAll,
-  getAttr,
 } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 

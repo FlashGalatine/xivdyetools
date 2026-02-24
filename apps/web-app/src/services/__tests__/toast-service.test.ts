@@ -3,7 +3,7 @@
  * Tests for toast notification system
  */
 
-import { ToastService, type Toast, type ToastOptions, type ToastType } from '../toast-service';
+import { ToastService } from '../toast-service';
 
 describe('ToastService', () => {
   beforeEach(() => {

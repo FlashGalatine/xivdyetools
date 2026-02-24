@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix 159 ESLint errors across 38 files:
+  - Removed unused imports and destructured variables in 23 component test files
+  - Removed unused imports in 10 service/shared test files
+  - Replaced 36 `@ts-ignore` directives with `@ts-expect-error` in `camera-service.test.ts` and `indexeddb-service.test.ts`
+  - Replaced `any` types with proper types (`unknown`, `Record<string, unknown>`, domain-specific types) across test files
+  - Added `void` operator for 3 floating promises in `config-sidebar.ts`
+  - Prefixed unused variables with `_` in `result-card.ts`, `AccessibilityMockup.ts`, `BudgetMockup.ts`
+  - Removed unused imports in `v4-color-wheel.ts` and `HarmonyMockup.ts`
+
 ### Added
 
 - **Paste from Clipboard**: Extractor tool now has an explicit "Paste from Clipboard" button in the image drop zone

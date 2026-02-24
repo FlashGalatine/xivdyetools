@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Fix `globalThis` index signature errors in `browser.test.ts` — cast to `Record<string, unknown>` for dynamic property access
+- Fix missing `process` type in `browser.test.ts` — added ambient declaration for vitest's Node environment
+- Fix `Logger` type mismatch in `library.test.ts` — use `Logger` type for mock service fields
+
 ## [1.2.0] - 2026-02-21
 
 ### Security

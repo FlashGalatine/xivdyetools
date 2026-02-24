@@ -5,7 +5,6 @@
 
 import { TutorialService, type TutorialTool } from '../tutorial-service';
 import { StorageService } from '../storage-service';
-import { LanguageService } from '../language-service';
 import { ModalService } from '../modal-service';
 
 // Mock dependencies

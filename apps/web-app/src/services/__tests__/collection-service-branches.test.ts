@@ -10,7 +10,6 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { CollectionService } from '../collection-service';
-import { StorageService } from '../storage-service';
 
 // Mock localStorage
 const localStorageMock = (() => {

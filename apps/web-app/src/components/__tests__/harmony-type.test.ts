@@ -9,12 +9,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { HarmonyType, HarmonyTypeInfo } from '../harmony-type';
-import {
-  createTestContainer,
-  cleanupTestContainer,
-  query,
-  queryAll,
-} from '../../__tests__/component-utils';
+import { createTestContainer, cleanupTestContainer, query } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 
 vi.mock('@services/index', () => ({

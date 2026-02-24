@@ -825,13 +825,11 @@ describe('LanguageService Translation Loading Failures', () => {
 // ==========================================================================
 
 describe('LanguageService Browser Locale Detection Branches', () => {
-  let consoleInfoSpy: ReturnType<typeof vi.spyOn>;
-
   let originalNavigator: typeof navigator;
 
   beforeEach(() => {
     originalNavigator = global.navigator;
-    consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    vi.spyOn(console, 'info').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
@@ -980,7 +978,6 @@ describe('LanguageService setLocale error propagation', () => {
   it('should propagate errors from core LocalizationService.setLocale', async () => {
     // Mock LocalizationService.setLocale to throw
     const { LocalizationService } = await import('@xivdyetools/core');
-    const originalSetLocale = LocalizationService.setLocale;
 
     vi.spyOn(LocalizationService, 'setLocale').mockRejectedValueOnce(
       new Error('Core localization failed')

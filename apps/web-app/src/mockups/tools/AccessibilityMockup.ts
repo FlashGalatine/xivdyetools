@@ -130,7 +130,7 @@ export class AccessibilityMockup extends BaseComponent {
   private createDyeSelector(): HTMLElement {
     const container = this.createElement('div', { className: 'space-y-2' });
 
-    this.selectedDyes.forEach((dye, i) => {
+    this.selectedDyes.forEach((dye, _i) => {
       const item = this.createElement('div', {
         className: 'flex items-center gap-3 p-2 rounded-lg',
         attributes: { style: 'background: var(--theme-background-secondary);' },

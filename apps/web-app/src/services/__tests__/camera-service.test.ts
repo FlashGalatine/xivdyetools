@@ -9,10 +9,12 @@ import { CameraService, cameraService as defaultCameraService } from '../camera-
 
 describe('CameraService', () => {
   let cameraService: CameraService;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockStream: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockTrack: any;
-  let mockMediaDevices: any;
-  let originalMediaDevices: any;
+  let mockMediaDevices: Record<string, ReturnType<typeof vi.fn>>;
+  let originalMediaDevices: MediaDevices;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -66,7 +68,7 @@ describe('CameraService', () => {
     });
 
     // Get a fresh instance (reset the singleton)
-    // @ts-ignore - accessing private static for testing
+    // @ts-expect-error - accessing private static for testing
     CameraService.instance = null;
     cameraService = CameraService.getInstance();
   });
@@ -100,7 +102,7 @@ describe('CameraService', () => {
     });
 
     it('should return false when mediaDevices is not available', () => {
-      // @ts-ignore - reset singleton
+      // @ts-expect-error - reset singleton
       CameraService.instance = null;
 
       Object.defineProperty(navigator, 'mediaDevices', {
@@ -132,7 +134,7 @@ describe('CameraService', () => {
     });
 
     it('should not enumerate when not supported', async () => {
-      // @ts-ignore - reset singleton
+      // @ts-expect-error - reset singleton
       CameraService.instance = null;
 
       Object.defineProperty(navigator, 'mediaDevices', {
@@ -203,7 +205,7 @@ describe('CameraService', () => {
 
   describe('requestPermission', () => {
     it('should return false when not supported', async () => {
-      // @ts-ignore - reset singleton
+      // @ts-expect-error - reset singleton
       CameraService.instance = null;
 
       Object.defineProperty(navigator, 'mediaDevices', {
@@ -242,7 +244,7 @@ describe('CameraService', () => {
 
   describe('startStream', () => {
     it('should throw when camera not supported', async () => {
-      // @ts-ignore - reset singleton
+      // @ts-expect-error - reset singleton
       CameraService.instance = null;
 
       Object.defineProperty(navigator, 'mediaDevices', {
@@ -441,7 +443,7 @@ describe('CameraService', () => {
     });
 
     it('should not add listener when not supported', () => {
-      // @ts-ignore - reset singleton
+      // @ts-expect-error - reset singleton
       CameraService.instance = null;
 
       Object.defineProperty(navigator, 'mediaDevices', {

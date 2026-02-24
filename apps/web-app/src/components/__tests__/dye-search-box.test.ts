@@ -19,7 +19,7 @@ vi.mock('@services/tool-panel-builders', () => ({
   buildRadioPanelSection: vi.fn(),
 }));
 
-import { DyeSearchBox, type SortOption } from '../dye-search-box';
+import { DyeSearchBox } from '../dye-search-box';
 import {
   createTestContainer,
   cleanupTestContainer,
@@ -27,7 +27,6 @@ import {
   input,
   query,
   queryAll,
-  getAttr,
   hasClass,
 } from '../../__tests__/component-utils';
 

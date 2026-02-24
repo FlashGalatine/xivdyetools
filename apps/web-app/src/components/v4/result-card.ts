@@ -1080,7 +1080,7 @@ export class ResultCard extends BaseLitComponent {
     currentDyeIds: number[]
   ): void {
     const dyeService = DyeService.getInstance();
-    const toolName = this.getToolDisplayName(tool);
+    const _toolName = this.getToolDisplayName(tool);
 
     // Generate slot labels based on tool type
     const slotLabels =

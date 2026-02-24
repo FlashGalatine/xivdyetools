@@ -14,7 +14,6 @@ import {
   cleanupTestContainer,
   click,
   query,
-  input,
   getAttr,
 } from '../../__tests__/component-utils';
 
@@ -57,7 +56,7 @@ describe('ColorPickerDisplay', () => {
     picker = null;
     vi.clearAllMocks();
     // Remove EyeDropper mock by default
-    delete (window as any).EyeDropper;
+    delete (window as unknown as Record<string, unknown>).EyeDropper;
   });
 
   afterEach(() => {
@@ -302,7 +301,7 @@ describe('ColorPickerDisplay', () => {
 
     it('should render eyedropper button when API is supported', () => {
       // Mock EyeDropper API
-      (window as any).EyeDropper = vi.fn();
+      (window as unknown as Record<string, unknown>).EyeDropper = vi.fn();
 
       picker = new ColorPickerDisplay(container);
       picker.init();
@@ -314,7 +313,7 @@ describe('ColorPickerDisplay', () => {
     it('should call EyeDropper API when button clicked', async () => {
       const mockOpen = vi.fn().mockResolvedValue({ sRGBHex: '#ABCDEF' });
       // Must use a class constructor for EyeDropper
-      (window as any).EyeDropper = class {
+      (window as unknown as Record<string, unknown>).EyeDropper = class {
         open = mockOpen;
       };
 
@@ -332,7 +331,7 @@ describe('ColorPickerDisplay', () => {
     it('should update color from eyedropper result', async () => {
       const mockOpen = vi.fn().mockResolvedValue({ sRGBHex: '#ABCDEF' });
       // Must use a class constructor for EyeDropper
-      (window as any).EyeDropper = class {
+      (window as unknown as Record<string, unknown>).EyeDropper = class {
         open = mockOpen;
       };
 

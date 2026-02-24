@@ -9,7 +9,7 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { createHexColor, AppError, ErrorCode, type HexColor, type ErrorSeverity } from '../types';
+import { createHexColor, AppError, ErrorCode, type HexColor } from '../types';
 
 // ==========================================================================
 // createHexColor Function Tests

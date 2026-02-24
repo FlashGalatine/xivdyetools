@@ -15,8 +15,6 @@ import {
   preparePriceCardDataFromMap,
   getItemIdsForPriceFetch,
   hasCachedPrices,
-  type DyePriceDisplayOptions,
-  type PriceCardData,
 } from '../price-utilities';
 import type { Dye, PriceData } from '@shared/types';
 import type { MarketBoardService } from '../market-board-service';

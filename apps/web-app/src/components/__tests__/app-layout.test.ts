@@ -9,12 +9,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AppLayout } from '../app-layout';
-import {
-  createTestContainer,
-  cleanupTestContainer,
-  click,
-  query,
-} from '../../__tests__/component-utils';
+import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 
 vi.mock('@services/index', () => ({
   LanguageService: {

@@ -23,20 +23,6 @@ import { LanguageService } from '@services/index';
 import type { Dye } from '@shared/types';
 
 /**
- * Harmony node data for positioning on the wheel
- */
-interface HarmonyNodeData {
-  /** The hue angle (0-360) for positioning */
-  hue: number;
-  /** The color to display */
-  color: string;
-  /** Display label */
-  label: string;
-  /** Whether this is the main/base node */
-  isMain?: boolean;
-}
-
-/**
  * Supported harmony types
  */
 export type HarmonyType =

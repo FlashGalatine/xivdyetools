@@ -557,16 +557,14 @@ describe('Dev Mode Logging Behavior', () => {
 // ==========================================================================
 
 describe('Performance Monitoring Dev Mode', () => {
-  let consoleWarnSpy: MockInstance;
   let consoleLogSpy: MockInstance;
   let consoleGroupSpy: MockInstance;
-  let consoleGroupEndSpy: MockInstance;
 
   beforeEach(() => {
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     consoleGroupSpy = vi.spyOn(console, 'group').mockImplementation(() => {});
-    consoleGroupEndSpy = vi.spyOn(console, 'groupEnd').mockImplementation(() => {});
+    vi.spyOn(console, 'groupEnd').mockImplementation(() => {});
     perf.clearMetrics();
   });
 

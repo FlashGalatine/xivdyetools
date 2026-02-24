@@ -14,8 +14,6 @@ import {
   getCardDisplayOptions,
   mergeWithDefaults,
   DEFAULT_DISPLAY_OPTIONS,
-  type ApplyDisplayOptionsConfig,
-  type DisplayOptionsChangeCallback,
 } from '../display-options-helper';
 import type { DisplayOptionsConfig } from '@shared/tool-config-types';
 import { logger } from '@shared/logger';

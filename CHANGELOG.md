@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **rate-limiter**: Fix `vi.fn()` mock typing in `upstash.test.ts` — type generics now match `RateLimiterLogger` signatures (type-check error)
+- **logger**: Fix `globalThis`/`process` typing and `Logger` type mismatch in test presets (type-check errors)
+- **web-app**: Fix 159 ESLint errors across 38 files — removed unused imports/variables, replaced `@ts-ignore` with `@ts-expect-error`, replaced `any` with proper types, added `void` for floating promises
+
 ### Added
 
 - **web-app**: Paste from Clipboard feature for Extractor tool — visible "Paste" button (Chromium), Ctrl+V keyboard paste, and hint text in drop zone. Paste handling moved from `ImageUploadDisplay` to `ExtractorTool` to avoid duplicate processing

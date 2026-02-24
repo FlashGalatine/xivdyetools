@@ -9,7 +9,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { SwatchTool } from '../swatch-tool';
-import { createTestContainer, cleanupTestContainer, query } from '../../__tests__/component-utils';
+import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting

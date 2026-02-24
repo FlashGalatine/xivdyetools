@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { DyeCardRenderer, DyeCardOptions } from '../dye-card-renderer';
+import { DyeCardRenderer } from '../dye-card-renderer';
 import {
   createTestContainer,
   cleanupTestContainer,

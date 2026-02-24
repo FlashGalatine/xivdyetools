@@ -7,7 +7,7 @@
  * @module services/__tests__/world-service.test
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { WorldService } from '../world-service';
 
 // Store original fetch for cleanup

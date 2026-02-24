@@ -124,7 +124,7 @@ describe('Social Icons', () => {
     });
 
     it('should have all icons as SVG strings', () => {
-      for (const [key, value] of Object.entries(SOCIAL_ICONS)) {
+      for (const value of Object.values(SOCIAL_ICONS)) {
         expect(typeof value).toBe('string');
         expect(value).toContain('<svg');
         expect(value).toContain('</svg>');
@@ -244,7 +244,7 @@ describe('Tool Icons', () => {
     });
 
     it('should have all icons as SVG strings', () => {
-      for (const [key, value] of Object.entries(TOOL_ICONS)) {
+      for (const value of Object.values(TOOL_ICONS)) {
         expect(typeof value).toBe('string');
         expect(value).toContain('<svg');
         expect(value).toContain('</svg>');
@@ -454,7 +454,7 @@ describe('UI Icons', () => {
     });
 
     it('should have all icons as SVG strings', () => {
-      for (const [key, value] of Object.entries(UI_ICONS)) {
+      for (const value of Object.values(UI_ICONS)) {
         expect(typeof value).toBe('string');
         expect(value).toContain('<svg');
         expect(value).toContain('</svg>');

@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { DyeGrid, DyeGridOptions } from '../dye-grid';
+import { DyeGrid } from '../dye-grid';
 import {
   createTestContainer,
   cleanupTestContainer,
@@ -17,7 +17,6 @@ import {
   queryAll,
   getAttr,
   hasClass,
-  waitForRender,
 } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 

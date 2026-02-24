@@ -24,7 +24,6 @@ import {
   createTestContainer,
   cleanupTestContainer,
   click,
-  waitForRender,
   spyOnCustomEvent,
 } from '../../__tests__/component-utils';
 

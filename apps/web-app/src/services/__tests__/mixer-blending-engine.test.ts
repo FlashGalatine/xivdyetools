@@ -13,12 +13,12 @@ import type { MixingMode, MatchingMethod } from '@shared/tool-config-types';
 // Mock the services
 vi.mock('@services/index', () => ({
   ColorService: {
-    mixColorsRgb: vi.fn((hex1: string, hex2: string, ratio: number) => '#7F7F7F'),
-    mixColorsLab: vi.fn((hex1: string, hex2: string, ratio: number) => '#8080A0'),
-    mixColorsOklab: vi.fn((hex1: string, hex2: string, ratio: number) => '#80A0B0'),
-    mixColorsRyb: vi.fn((hex1: string, hex2: string, ratio: number) => '#808040'),
-    mixColorsHsl: vi.fn((hex1: string, hex2: string, ratio: number) => '#80FF80'),
-    mixColorsSpectral: vi.fn((hex1: string, hex2: string, ratio: number) => '#008000'),
+    mixColorsRgb: vi.fn(() => '#7F7F7F'),
+    mixColorsLab: vi.fn(() => '#8080A0'),
+    mixColorsOklab: vi.fn(() => '#80A0B0'),
+    mixColorsRyb: vi.fn(() => '#808040'),
+    mixColorsHsl: vi.fn(() => '#80FF80'),
+    mixColorsSpectral: vi.fn(() => '#008000'),
     getColorDistance: vi.fn(() => 100),
   },
   dyeService: {

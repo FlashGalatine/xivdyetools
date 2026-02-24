@@ -3,7 +3,7 @@
  * Tests for modal dialog system
  */
 
-import { ModalService, type ModalConfig, type Modal } from '../modal-service';
+import { ModalService, type ModalConfig } from '../modal-service';
 
 describe('ModalService', () => {
   beforeEach(() => {

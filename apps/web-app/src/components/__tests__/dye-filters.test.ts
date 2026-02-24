@@ -16,8 +16,6 @@ import {
   query,
   queryAll,
   getAttr,
-  hasClass,
-  waitForRender,
 } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 

@@ -21,6 +21,7 @@ import {
 } from '../harmony-generator';
 import type { Dye } from '@shared/types';
 import type { MatchingMethod } from '@shared/tool-config-types';
+import type { DyeFilters, DyeFilterConfig } from '@components/dye-filters';
 
 // Mock the services
 vi.mock('@services/index', () => ({
@@ -33,7 +34,7 @@ vi.mock('@services/index', () => ({
       if (hex === '#FFFF00') return { h: 60, s: 100, v: 100 };
       return { h: 0, s: 0, v: 50 };
     }),
-    hsvToHex: vi.fn((h: number, s: number, v: number) => '#MOCK00'),
+    hsvToHex: vi.fn(() => '#MOCK00'),
     getColorDistance: vi.fn(() => 50),
   },
   dyeService: {
@@ -106,7 +107,7 @@ describe('harmony-generator', () => {
     });
 
     it('should have icons for each type', () => {
-      HARMONY_TYPE_IDS.forEach(({ id, icon }) => {
+      HARMONY_TYPE_IDS.forEach(({ icon }) => {
         expect(icon).toBeTruthy();
         expect(typeof icon).toBe('string');
       });
@@ -193,7 +194,7 @@ describe('harmony-generator', () => {
     it('should use RGB distance', async () => {
       const { ColorService } = await import('@services/index');
 
-      const result = calculateColorDistance(hex1, hex2, 'rgb');
+      calculateColorDistance(hex1, hex2, 'rgb');
 
       expect(ColorService.getColorDistance).toHaveBeenCalledWith(hex1, hex2);
     });
@@ -246,7 +247,7 @@ describe('harmony-generator', () => {
     it('should default to OKLAB for unknown method', async () => {
       const { ColorConverter } = await import('@xivdyetools/core');
 
-      const result = calculateColorDistance(hex1, hex2, 'unknown' as MatchingMethod);
+      calculateColorDistance(hex1, hex2, 'unknown' as MatchingMethod);
 
       expect(ColorConverter.getDeltaE_Oklab).toHaveBeenCalledWith(hex1, hex2);
     });
@@ -406,7 +407,7 @@ describe('harmony-generator', () => {
       const dyeFilters = { isDyeExcluded: vi.fn().mockReturnValue(false) };
       const dyes: ScoredDyeMatch[] = [{ dye: createMockDye(), deviance: 10 }];
 
-      const result = replaceExcludedDyes(dyes, 180, dyeFilters as any, null);
+      const result = replaceExcludedDyes(dyes, 180, dyeFilters as unknown as DyeFilters, null);
 
       expect(result).toEqual(dyes);
     });
@@ -419,7 +420,12 @@ describe('harmony-generator', () => {
         { dye: createMockDye({ itemID: 2 }), deviance: 20 },
       ];
 
-      const result = replaceExcludedDyes(dyes, 180, dyeFilters as any, filterConfig as any);
+      const result = replaceExcludedDyes(
+        dyes,
+        180,
+        dyeFilters as unknown as DyeFilters,
+        filterConfig as unknown as DyeFilterConfig
+      );
 
       expect(result.length).toBe(2);
       expect(dyeFilters.isDyeExcluded).toHaveBeenCalledTimes(2);
@@ -461,7 +467,7 @@ describe('harmony-generator', () => {
         companionDyesCount: 3,
       };
 
-      const result = findHarmonyDyes(baseDye, 'complementary', config);
+      findHarmonyDyes(baseDye, 'complementary', config);
 
       // Complementary has one offset (180), so should process once
       expect(dyeService.getAllDyes).toHaveBeenCalled();
@@ -490,8 +496,8 @@ describe('harmony-generator', () => {
         baseDye,
         'complementary',
         config,
-        dyeFilters as any,
-        filterConfig as any
+        dyeFilters as unknown as DyeFilters,
+        filterConfig as unknown as DyeFilterConfig
       );
 
       // Dye with itemID 1 should be filtered out

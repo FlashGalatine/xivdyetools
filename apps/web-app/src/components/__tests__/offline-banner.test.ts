@@ -7,16 +7,9 @@
  * @module components/__tests__/offline-banner.test
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { OfflineBanner } from '../offline-banner';
-import {
-  createTestContainer,
-  cleanupTestContainer,
-  click,
-  query,
-  getText,
-  getAttr,
-} from '../../__tests__/component-utils';
+import { click, query, getAttr } from '../../__tests__/component-utils';
 
 // Track original navigator.onLine
 const originalNavigatorOnLine = Object.getOwnPropertyDescriptor(navigator, 'onLine');

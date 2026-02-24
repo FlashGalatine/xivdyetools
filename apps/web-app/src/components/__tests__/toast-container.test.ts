@@ -24,24 +24,12 @@ import {
   createTestContainer,
   cleanupTestContainer,
   click,
-  keyboard,
   query,
   queryAll,
   getText,
   getAttr,
 } from '../../__tests__/component-utils';
-import { ToastService, type Toast, type ToastType } from '@services/toast-service';
-
-// Mock toast data
-const createMockToast = (overrides: Partial<Toast> = {}): Toast => ({
-  id: `toast_${Date.now()}`,
-  message: 'Test message',
-  type: 'info' as ToastType,
-  duration: 3000,
-  dismissible: false,
-  timestamp: Date.now(),
-  ...overrides,
-});
+import { ToastService } from '@services/toast-service';
 
 describe('ToastContainer', () => {
   let container: HTMLElement;

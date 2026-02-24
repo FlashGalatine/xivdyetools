@@ -40,12 +40,12 @@ vi.mock('@upstash/redis', () => ({
 import { UpstashRateLimiter } from './upstash.js';
 
 function createMockLogger(): RateLimiterLogger & {
-  warn: ReturnType<typeof vi.fn>;
-  error: ReturnType<typeof vi.fn>;
+  warn: ReturnType<typeof vi.fn<RateLimiterLogger['warn']>>;
+  error: ReturnType<typeof vi.fn<RateLimiterLogger['error']>>;
 } {
   return {
-    warn: vi.fn(),
-    error: vi.fn(),
+    warn: vi.fn<RateLimiterLogger['warn']>(),
+    error: vi.fn<RateLimiterLogger['error']>(),
   };
 }
 

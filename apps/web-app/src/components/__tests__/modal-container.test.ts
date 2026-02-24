@@ -28,7 +28,6 @@ import {
   queryAll,
   getText,
   getAttr,
-  waitForRender,
 } from '../../__tests__/component-utils';
 import { ModalService } from '@services/modal-service';
 

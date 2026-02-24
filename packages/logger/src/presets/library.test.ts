@@ -2,7 +2,7 @@
  * Tests for Library Preset
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { NoOpLogger, ConsoleLogger, createLibraryLogger } from './library.js';
+import { NoOpLogger, ConsoleLogger, createLibraryLogger, type Logger } from './library.js';
 
 describe('Library Preset', () => {
   let consoleSpy: {
@@ -260,11 +260,11 @@ describe('Library Preset', () => {
       };
 
       interface ServiceOptions {
-        logger?: typeof customLogger;
+        logger?: Logger;
       }
 
       class DyeService {
-        private logger: typeof customLogger;
+        private logger: Logger;
 
         constructor(options: ServiceOptions = {}) {
           this.logger = options.logger ?? NoOpLogger;

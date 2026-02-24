@@ -12,7 +12,6 @@ import { ColorblindnessDisplay } from '../colorblindness-display';
 import {
   createTestContainer,
   cleanupTestContainer,
-  query,
   queryAll,
 } from '../../__tests__/component-utils';
 
@@ -27,7 +26,7 @@ vi.mock('@services/index', () => ({
     rgbToHex: vi.fn((r: number, g: number, b: number) => {
       return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase();
     }),
-    simulateColorblindnessHex: vi.fn((hex: string, _type: string) => {
+    simulateColorblindnessHex: vi.fn((hex: string) => {
       // Return modified hex to simulate colorblindness effect
       return hex;
     }),

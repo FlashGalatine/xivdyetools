@@ -694,7 +694,7 @@ export class ConfigSidebar extends BaseLitComponent {
   override connectedCallback(): void {
     super.connectedCallback();
     this.loadConfigsFromController();
-    this.loadServerData();
+    void this.loadServerData();
     // Subscribe to language changes to update translated text
     this.languageUnsubscribe = LanguageService.subscribe(() => {
       this.requestUpdate();
@@ -814,7 +814,8 @@ export class ConfigSidebar extends BaseLitComponent {
     // Update ConfigController
     if (this.configController) {
       // Type assertion needed because computed property keys lose type safety
-      (this.configController as any).setConfig(tool, { [key]: value });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this.configController.setConfig(tool, { [key]: value } as any);
     }
 
     // Emit event for parent components
@@ -1613,9 +1614,9 @@ export class ConfigSidebar extends BaseLitComponent {
    */
   private handleLogin(provider: 'discord' | 'xivauth'): void {
     if (provider === 'xivauth') {
-      authService.loginWithXIVAuth(undefined, 'presets');
+      void authService.loginWithXIVAuth(undefined, 'presets');
     } else {
-      authService.login(undefined, 'presets');
+      void authService.login(undefined, 'presets');
     }
   }
 
