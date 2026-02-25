@@ -181,6 +181,8 @@
     "perceptualMatching": "Wahrnehmungsbasierte Zuordnung",
     "perceptualMatchingDesc": "Verwendet DeltaE für wahrnehmungsgetreue Farbzuordnung",
     "hueMatchingDesc": "Verwendet Farbwinkel für künstlerische Farbharmonie",
+    "preventDuplicates": "Duplikate vermeiden",
+    "preventDuplicatesDesc": "Verhindert, dass dieselbe Farbe in mehreren Harmonie-Slots erscheint",
     "colorFormats": "Farbformate",
     "hexCodes": "Hex-Codes",
     "rgbValues": "RGB-Werte",

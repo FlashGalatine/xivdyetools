@@ -139,6 +139,7 @@ export class ConfigSidebar extends BaseLitComponent {
     harmonyType: 'tetradic',
     strictMatching: false,
     matchingMethod: 'oklab',
+    preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
   };
   @state() private extractorConfig: ExtractorConfig = {
@@ -1077,6 +1078,20 @@ export class ConfigSidebar extends BaseLitComponent {
         ${this.harmonyConfig.strictMatching
           ? this.renderMatchingMethodSection('harmony', this.harmonyConfig.matchingMethod)
           : ''}
+
+        <div class="config-group">
+          <div class="config-row">
+            <v4-toggle-switch
+              label=${LanguageService.t('config.preventDuplicates')}
+              .checked=${this.harmonyConfig.preventDuplicates ?? true}
+              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                this.handleConfigChange('harmony', 'preventDuplicates', e.detail.checked)}
+            ></v4-toggle-switch>
+          </div>
+          <div class="config-description">
+            ${LanguageService.t('config.preventDuplicatesDesc')}
+          </div>
+        </div>
 
         <v4-display-options
           .showHex=${this.globalDisplayOptions.showHex}

@@ -41,6 +41,8 @@ export interface HarmonyConfig {
   strictMatching: boolean;
   /** Color matching algorithm for finding closest dyes */
   matchingMethod: MatchingMethod;
+  /** Prevent the same dye from appearing in multiple harmony slots */
+  preventDuplicates: boolean;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
   // Legacy fields (deprecated, for migration)
@@ -345,6 +347,7 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     harmonyType: 'complementary',
     strictMatching: true,
     matchingMethod: 'oklab',
+    preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
   },
   extractor: {

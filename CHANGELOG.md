@@ -12,12 +12,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **ESLint v10 compatibility**: Fix 17 lint errors across 15 files for new `eslint:recommended` rules
+  - `no-useless-assignment`: Remove dead variable initializers in `ColorConverter`, `harmony-wheel`, `url-sanitizer`, `dye-grid`, `tool-banner`, and test files
+  - `preserve-caught-error`: Add `{ cause: error }` to re-thrown errors in `APIService`, `photon`, `validators`, `renderer`, `community-preset-service`, and test files
+  - `prefer-const`: Convert `uniqueUsersToday` to const in analytics service
+- **web-app**: Update TypeScript lib from ES2020 to ES2022 for `ErrorOptions` support
 - **rate-limiter**: Fix `vi.fn()` mock typing in `upstash.test.ts` — type generics now match `RateLimiterLogger` signatures (type-check error)
 - **logger**: Fix `globalThis`/`process` typing and `Logger` type mismatch in test presets (type-check errors)
 - **web-app**: Fix 159 ESLint errors across 38 files — removed unused imports/variables, replaced `@ts-ignore` with `@ts-expect-error`, replaced `any` with proper types, added `void` for floating promises
 
+### Changed
+
+- **deps**: Upgrade `@eslint/js` from 9.39.3 to 10.0.2 (major version with new recommended rules)
+- **deps**: Upgrade `eslint` from 10.0.1 to 10.0.2, `typescript-eslint` from 8.56.0 to 8.56.1
+- **deps**: Upgrade Cloudflare tooling — `wrangler` 4.67.0 → 4.68.1, `miniflare` 4.20260219.0 → 4.20260302.0, `@cloudflare/vitest-pool-workers` 0.12.14 → 0.12.17
+- **deps**: Upgrade `tailwindcss` from 4.2.0 to 4.2.1, `@tailwindcss/postcss` patch update
+- **deps**: Upgrade `hono` and `@cloudflare/workers-types` to latest patch versions
+
 ### Added
 
+- **web-app**: Prevent Duplicate Results toggle for Harmony Explorer — deduplicates dyes across harmony slots using a shared `Set<number>` tracker, with next-best unique match fallback. Configurable via `preventDuplicates` on `HarmonyConfig` (default: on). User-swapped dyes override dedup. Locale keys added in all 6 languages
 - **web-app**: Paste from Clipboard feature for Extractor tool — visible "Paste" button (Chromium), Ctrl+V keyboard paste, and hint text in drop zone. Paste handling moved from `ImageUploadDisplay` to `ExtractorTool` to avoid duplicate processing
 - **web-app**: `ICON_CLIPBOARD` SVG icon in `ui-icons.ts`
 - **web-app**: New locale keys (`pasteFromClipboard`, `pasteNoImage`, `pasteNotSupported`) in all 6 languages

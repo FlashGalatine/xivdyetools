@@ -154,6 +154,7 @@ export class HarmonyTool extends BaseComponent {
   private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
   private usePerceptualMatching: boolean = false;
   private matchingMethod: MatchingMethod = 'oklab';
+  private preventDuplicates: boolean = true;
 
   // Child components (desktop left panel)
   private dyeSelector: DyeSelector | null = null;
@@ -350,6 +351,7 @@ export class HarmonyTool extends BaseComponent {
     this.displayOptions = harmonyConfig.displayOptions ?? { ...DEFAULT_DISPLAY_OPTIONS };
     this.usePerceptualMatching = harmonyConfig.strictMatching;
     this.matchingMethod = harmonyConfig.matchingMethod ?? 'oklab';
+    this.preventDuplicates = harmonyConfig.preventDuplicates ?? true;
 
     // Note: Market config (showPrices, server) is now managed by MarketBoardService
     // which subscribes to ConfigController automatically. MarketBoard components
@@ -368,16 +370,18 @@ export class HarmonyTool extends BaseComponent {
           this.displayOptions.showDeltaE !== newDisplayOptions.showDeltaE ||
           this.displayOptions.showAcquisition !== newDisplayOptions.showAcquisition;
 
-        // Perceptual matching or matching method changes require regenerating harmonies
+        // Perceptual matching, matching method, or dedup changes require regenerating harmonies
         const algorithmChanged =
           this.usePerceptualMatching !== config.strictMatching ||
-          (config.matchingMethod !== undefined && this.matchingMethod !== config.matchingMethod);
+          (config.matchingMethod !== undefined && this.matchingMethod !== config.matchingMethod) ||
+          this.preventDuplicates !== (config.preventDuplicates ?? true);
 
         this.displayOptions = newDisplayOptions;
         this.usePerceptualMatching = config.strictMatching;
         if (config.matchingMethod !== undefined) {
           this.matchingMethod = config.matchingMethod;
         }
+        this.preventDuplicates = config.preventDuplicates ?? true;
 
         if ((needsRerender || algorithmChanged) && this.selectedDye) {
           this.generateHarmonies();
@@ -1373,12 +1377,16 @@ export class HarmonyTool extends BaseComponent {
       isBase: true,
     });
 
+    // Track dyes already used across slots to prevent duplicates
+    const usedDyeIds = new Set<number>();
+    usedDyeIds.add(this.selectedDye.itemID);
+
     // Render Harmony panels for each offset in the selected harmony type
     offsets.forEach((offset, index) => {
       const targetHue = (baseHsv.h + offset) % 360;
       const targetColor = ColorService.hsvToHex(targetHue, baseHsv.s, baseHsv.v);
 
-      // Get extra candidates to allow for filter replacements, then apply filters
+      // Get extra candidates to allow for filter replacements and dedup, then apply filters
       let matches = this.findClosestDyesToHueInternal(
         allDyes,
         targetHue,
@@ -1386,18 +1394,41 @@ export class HarmonyTool extends BaseComponent {
       );
       matches = this.replaceExcludedDyesInternal(matches, targetHue);
 
-      // Use swapped dye if user has selected one, otherwise use best match
+      // Use swapped dye if user has selected one (user intent overrides dedup)
       const swappedDye = this.swappedDyes.get(index);
-      const displayDye = swappedDye || matches[0].dye;
-      const deviance = swappedDye
-        ? calculateHueDeviance(swappedDye, targetHue)
-        : matches[0].deviance;
+      let displayDye: Dye;
+      let deviance: number;
+
+      if (swappedDye) {
+        displayDye = swappedDye;
+        deviance = calculateHueDeviance(swappedDye, targetHue);
+        usedDyeIds.add(swappedDye.itemID);
+      } else if (this.preventDuplicates) {
+        // Find first match not already used in another slot
+        const uniqueMatch = matches.find((m) => !usedDyeIds.has(m.dye.itemID));
+        displayDye = uniqueMatch?.dye ?? matches[0].dye;
+        deviance = uniqueMatch?.deviance ?? matches[0].deviance;
+        usedDyeIds.add(displayDye.itemID);
+      } else {
+        displayDye = matches[0].dye;
+        deviance = matches[0].deviance;
+      }
 
       // Closest dyes excludes the currently displayed dye
+      // When dedup is on, also exclude dyes already used in other slots
       const closestDyes = matches
-        .filter((m) => m.dye.itemID !== displayDye.itemID)
+        .filter(
+          (m) =>
+            m.dye.itemID !== displayDye.itemID &&
+            (!this.preventDuplicates || !usedDyeIds.has(m.dye.itemID))
+        )
         .slice(0, this.companionDyesCount)
-        .map((m) => m.dye);
+        .map((m) => {
+          if (this.preventDuplicates) {
+            usedDyeIds.add(m.dye.itemID);
+          }
+          return m.dye;
+        });
 
       this.renderResultPanel({
         label: `${LanguageService.t('harmony.harmony')} ${index + 1}`,
@@ -1648,6 +1679,11 @@ export class HarmonyTool extends BaseComponent {
     const baseHsv = ColorService.hexToHsv(this.selectedDye.hex);
     const allDyes = dyeService.getAllDyes();
 
+    // Mirror the same dedup tracking as generateHarmonies() so we fetch
+    // prices for exactly the dyes that are displayed
+    const usedDyeIds = new Set<number>();
+    usedDyeIds.add(this.selectedDye.itemID);
+
     for (let i = 0; i < offsets.length; i++) {
       const offset = offsets[i];
       const targetHue = (baseHsv.h + offset) % 360;
@@ -1660,19 +1696,40 @@ export class HarmonyTool extends BaseComponent {
       );
       matches = this.replaceExcludedDyesInternal(matches, targetHue);
 
-      // Use swapped dye if available, otherwise best match
+      // Use swapped dye if available (user intent overrides dedup)
       const swappedDye = this.swappedDyes.get(i);
-      const displayDye = swappedDye || matches[0]?.dye;
+      let displayDye: Dye | undefined;
+
+      if (swappedDye) {
+        displayDye = swappedDye;
+        usedDyeIds.add(swappedDye.itemID);
+      } else if (this.preventDuplicates) {
+        const uniqueMatch = matches.find((m) => !usedDyeIds.has(m.dye.itemID));
+        displayDye = uniqueMatch?.dye ?? matches[0]?.dye;
+        if (displayDye) usedDyeIds.add(displayDye.itemID);
+      } else {
+        displayDye = matches[0]?.dye;
+      }
 
       if (displayDye) {
         dyesToFetch.push(displayDye);
       }
 
-      // Also add closest dyes (companion dyes)
+      // Also add closest dyes (companion dyes), respecting dedup
       const closestDyes = matches
-        .filter((m) => displayDye && m.dye.itemID !== displayDye.itemID)
+        .filter(
+          (m) =>
+            displayDye &&
+            m.dye.itemID !== displayDye.itemID &&
+            (!this.preventDuplicates || !usedDyeIds.has(m.dye.itemID))
+        )
         .slice(0, this.companionDyesCount)
-        .map((m) => m.dye);
+        .map((m) => {
+          if (this.preventDuplicates) {
+            usedDyeIds.add(m.dye.itemID);
+          }
+          return m.dye;
+        });
 
       dyesToFetch.push(...closestDyes);
     }

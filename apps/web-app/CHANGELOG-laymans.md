@@ -1,3 +1,15 @@
+# What's New (Unreleased)
+
+---
+
+## 🎨 Harmony Explorer Improvements
+
+**No More Duplicate Results**
+- The Harmony Explorer now prevents the same dye from appearing in multiple harmony slots — you'll see a wider variety of dye suggestions
+- A new "Prevent Duplicates" toggle has been added to the OPTIONS sidebar (on by default) so you can turn it off if you prefer the old behavior
+
+---
+
 # What's New in Version 4.1.8
 
 *Released: February 21, 2026*

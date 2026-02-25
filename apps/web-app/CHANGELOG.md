@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **ESLint v10 compatibility**: Fix lint errors for new `eslint:recommended` rules
+  - `no-useless-assignment`: Remove dead initializers in `color-wheel-display.test.ts`, `dye-grid.ts`, `tool-banner.ts`, `types.test.ts`
+  - `preserve-caught-error`: Add `{ cause: error }` to re-thrown error in `community-preset-service.ts`
+- **TypeScript**: Update lib from ES2020 to ES2022 in `tsconfig.json` for `ErrorOptions` type support
 - Fix 159 ESLint errors across 38 files:
   - Removed unused imports and destructured variables in 23 component test files
   - Removed unused imports in 10 service/shared test files
@@ -22,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Prevent Duplicate Results**: Harmony Explorer now deduplicates dyes across harmony slots
+  - New "Prevent Duplicates" toggle in the OPTIONS sidebar (enabled by default)
+  - When enabled, each harmony slot picks the next-best unique match instead of repeating the same dye
+  - Both primary and companion dyes are tracked globally across slots
+  - User-swapped dyes are always respected, even if they create duplicates
+  - Falls back to best match if no unique candidates remain
+  - New `preventDuplicates` field on `HarmonyConfig`
+  - New locale keys in all 6 languages: `config.preventDuplicates`, `config.preventDuplicatesDesc`
 - **Paste from Clipboard**: Extractor tool now has an explicit "Paste from Clipboard" button in the image drop zone
   - Uses `navigator.clipboard.read()` API on Chromium browsers; button hidden on unsupported browsers
   - Added Ctrl+V / Cmd+V keyboard paste listener at the `ExtractorTool` level (works in all browsers)
