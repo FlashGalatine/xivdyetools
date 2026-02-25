@@ -33,7 +33,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - User-swapped dyes are always respected, even if they create duplicates
   - Falls back to best match if no unique candidates remain
   - New `preventDuplicates` field on `HarmonyConfig`
-  - New locale keys in all 6 languages: `config.preventDuplicates`, `config.preventDuplicatesDesc`
+- **Prevent Duplicate Results (Extractor)**: Palette Extractor now deduplicates dyes across palette slots
+  - Reuses the same "Prevent Duplicates" toggle in the OPTIONS sidebar (enabled by default)
+  - When multiple extracted colors match the same dye, later slots pick the next-best unique alternative
+  - Post-processing approach preserves raw extraction results — toggling the option re-renders without re-extracting
+  - New `preventDuplicates` field on `ExtractorConfig`
+  - Updated locale `config.preventDuplicatesDesc` in all 6 languages to be tool-agnostic ("result slots" instead of "harmony slots")
 - **Paste from Clipboard**: Extractor tool now has an explicit "Paste from Clipboard" button in the image drop zone
   - Uses `navigator.clipboard.read()` API on Chromium browsers; button hidden on unsupported browsers
   - Added Ctrl+V / Cmd+V keyboard paste listener at the `ExtractorTool` level (works in all browsers)

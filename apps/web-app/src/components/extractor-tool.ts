@@ -119,6 +119,7 @@ export class ExtractorTool extends BaseComponent {
   private currentImageDataUrl: string | null = null;
   private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
   private matchingMethod: MatchingMethod = 'oklab';
+  private preventDuplicates: boolean = true;
 
   // Child components
   private imageUpload: ImageUploadDisplay | null = null;
@@ -530,6 +531,13 @@ export class ExtractorTool extends BaseComponent {
       this.matchingMethod = config.matchingMethod;
       needsReextract = true;
       logger.info(`[ExtractorTool] setConfig: matchingMethod -> ${config.matchingMethod}`);
+    }
+
+    // Handle preventDuplicates - re-render to apply/remove dedup
+    if (config.preventDuplicates !== undefined && config.preventDuplicates !== this.preventDuplicates) {
+      this.preventDuplicates = config.preventDuplicates;
+      needsRerender = true;
+      logger.info(`[ExtractorTool] setConfig: preventDuplicates -> ${config.preventDuplicates}`);
     }
 
     // Re-extract palette if config changed and we're in palette mode with an image
@@ -2452,8 +2460,9 @@ export class ExtractorTool extends BaseComponent {
     let dyesToFetch: Dye[] = [];
 
     if (this.lastPaletteResults.length > 0) {
-      // Extract dyes from palette results
-      dyesToFetch = this.lastPaletteResults.map((match) => match.matchedDye);
+      // Extract dyes from palette results (apply dedup to match rendered results)
+      const dedupedResults = this.deduplicatePaletteResults(this.lastPaletteResults);
+      dyesToFetch = dedupedResults.map((match) => match.matchedDye);
     } else if (this.matchedDyes.length > 0) {
       dyesToFetch = this.matchedDyes;
     }
@@ -2853,10 +2862,61 @@ export class ExtractorTool extends BaseComponent {
   }
 
   /**
+   * Post-process palette matches to replace duplicate dyes with next-best alternatives.
+   * When preventDuplicates is enabled, each palette slot gets a unique dye by finding
+   * the next closest unused dye for each extracted color.
+   */
+  private deduplicatePaletteResults(matches: PaletteMatch[]): PaletteMatch[] {
+    if (!this.preventDuplicates || matches.length <= 1) {
+      return matches;
+    }
+
+    const usedDyeIds = new Set<number>();
+    const dedupedMatches: PaletteMatch[] = [];
+
+    for (const match of matches) {
+      if (!usedDyeIds.has(match.matchedDye.itemID)) {
+        // No conflict — use the original match
+        usedDyeIds.add(match.matchedDye.itemID);
+        dedupedMatches.push(match);
+      } else {
+        // Duplicate detected — find the next-best unique dye for this extracted color
+        const hex = `#${match.extracted.r.toString(16).padStart(2, '0')}${match.extracted.g.toString(16).padStart(2, '0')}${match.extracted.b.toString(16).padStart(2, '0')}`;
+        const candidates = dyeService.findDyesWithinDistance(hex, {
+          maxDistance: 200,
+          limit: 20,
+          matchingMethod: this.matchingMethod,
+        });
+
+        const alternative = candidates.find((dye) => !usedDyeIds.has(dye.itemID));
+        if (alternative) {
+          const distance = ColorService.getColorDistance(hex, alternative.hex);
+          usedDyeIds.add(alternative.itemID);
+          dedupedMatches.push({
+            extracted: match.extracted,
+            matchedDye: alternative,
+            distance,
+            dominance: match.dominance,
+          });
+        } else {
+          // No unique alternative found — keep the duplicate as last resort
+          usedDyeIds.add(match.matchedDye.itemID);
+          dedupedMatches.push(match);
+        }
+      }
+    }
+
+    return dedupedMatches;
+  }
+
+  /**
    * Render extracted palette results using v4-result-card components
    */
   private renderPaletteResults(matches: PaletteMatch[]): void {
     if (!this.resultsContainer) return;
+
+    // Apply deduplication if enabled (operates on raw matches, preserving originals)
+    matches = this.deduplicatePaletteResults(matches);
 
     // Clear existing results
     clearContainer(this.resultsContainer);

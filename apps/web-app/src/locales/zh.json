@@ -202,7 +202,7 @@
     "perceptualMatchingDesc": "使用DeltaE进行感知准确的颜色匹配",
     "hueMatchingDesc": "使用色相角度进行艺术色彩和谐",
     "preventDuplicates": "防止重复",
-    "preventDuplicatesDesc": "防止同一染料出现在多个和谐槽位中",
+    "preventDuplicatesDesc": "防止同一染料出现在多个结果槽位中",
     "colorFormats": "颜色格式",
     "hexCodes": "Hex代码",
     "rgbValues": "RGB值",

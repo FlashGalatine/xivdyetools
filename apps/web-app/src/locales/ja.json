@@ -182,7 +182,7 @@
     "perceptualMatchingDesc": "知覚的に正確な色のマッチングにDeltaEを使用",
     "hueMatchingDesc": "芸術的な色調和に色相角を使用",
     "preventDuplicates": "重複を防止",
-    "preventDuplicatesDesc": "同じ染料が複数のハーモニースロットに表示されるのを防ぎます",
+    "preventDuplicatesDesc": "同じ染料が複数の結果スロットに表示されるのを防ぎます",
     "colorFormats": "カラーフォーマット",
     "hexCodes": "Hexコード",
     "rgbValues": "RGB値",

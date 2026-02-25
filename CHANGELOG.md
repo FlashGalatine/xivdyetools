@@ -31,7 +31,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **web-app**: Prevent Duplicate Results toggle for Harmony Explorer — deduplicates dyes across harmony slots using a shared `Set<number>` tracker, with next-best unique match fallback. Configurable via `preventDuplicates` on `HarmonyConfig` (default: on). User-swapped dyes override dedup. Locale keys added in all 6 languages
+- **web-app**: Prevent Duplicate Results toggle for Harmony Explorer — deduplicates dyes across harmony slots using a shared `Set<number>` tracker, with next-best unique match fallback. Configurable via `preventDuplicates` on `HarmonyConfig` (default: on). User-swapped dyes override dedup
+- **web-app**: Prevent Duplicate Results toggle for Palette Extractor — deduplicates dyes across palette slots as a post-processing pass on `PaletteMatch[]`. Configurable via `preventDuplicates` on `ExtractorConfig` (default: on). Raw extraction results preserved for toggle re-render without re-extraction
+- **web-app**: Updated `config.preventDuplicatesDesc` locale strings in all 6 languages to be tool-agnostic ("result slots")
 - **web-app**: Paste from Clipboard feature for Extractor tool — visible "Paste" button (Chromium), Ctrl+V keyboard paste, and hint text in drop zone. Paste handling moved from `ImageUploadDisplay` to `ExtractorTool` to avoid duplicate processing
 - **web-app**: `ICON_CLIPBOARD` SVG icon in `ui-icons.ts`
 - **web-app**: New locale keys (`pasteFromClipboard`, `pasteNoImage`, `pasteNotSupported`) in all 6 languages

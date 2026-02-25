@@ -68,6 +68,8 @@ export interface ExtractorConfig {
   dragThreshold: number;
   /** Color matching algorithm for finding closest dyes */
   matchingMethod: MatchingMethod;
+  /** Prevent the same dye from appearing in multiple palette slots */
+  preventDuplicates: boolean;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
 }
@@ -355,6 +357,7 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     maxColors: 4,
     dragThreshold: 5,
     matchingMethod: 'oklab',
+    preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
   },
   accessibility: {

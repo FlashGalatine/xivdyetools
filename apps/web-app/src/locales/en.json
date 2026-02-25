@@ -182,7 +182,7 @@
     "perceptualMatchingDesc": "Uses DeltaE for perceptually accurate color matching",
     "hueMatchingDesc": "Uses hue angles for artistic color harmony",
     "preventDuplicates": "Prevent Duplicates",
-    "preventDuplicatesDesc": "Prevents the same dye from appearing in multiple harmony slots",
+    "preventDuplicatesDesc": "Prevents the same dye from appearing in multiple result slots",
     "colorFormats": "Color Formats",
     "hexCodes": "Hex Codes",
     "rgbValues": "RGB Values",

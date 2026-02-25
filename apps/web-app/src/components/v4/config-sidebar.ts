@@ -147,6 +147,7 @@ export class ConfigSidebar extends BaseLitComponent {
     maxColors: 8,
     dragThreshold: 5,
     matchingMethod: 'oklab',
+    preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
   };
   @state() private accessibilityConfig: AccessibilityConfig = {
@@ -1148,6 +1149,20 @@ export class ConfigSidebar extends BaseLitComponent {
         </div>
 
         ${this.renderMatchingMethodSection('extractor', this.extractorConfig.matchingMethod)}
+
+        <div class="config-group">
+          <div class="config-row">
+            <v4-toggle-switch
+              label=${LanguageService.t('config.preventDuplicates')}
+              .checked=${this.extractorConfig.preventDuplicates ?? true}
+              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                this.handleConfigChange('extractor', 'preventDuplicates', e.detail.checked)}
+            ></v4-toggle-switch>
+          </div>
+          <div class="config-description">
+            ${LanguageService.t('config.preventDuplicatesDesc')}
+          </div>
+        </div>
 
         <v4-display-options
           .showHex=${this.globalDisplayOptions.showHex}

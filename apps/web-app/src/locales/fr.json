@@ -182,7 +182,7 @@
     "perceptualMatchingDesc": "Utilise DeltaE pour une correspondance de couleur perceptuellement précise",
     "hueMatchingDesc": "Utilise les angles de teinte pour une harmonie artistique",
     "preventDuplicates": "Éviter les doublons",
-    "preventDuplicatesDesc": "Empêche la même teinture d'apparaître dans plusieurs emplacements d'harmonie",
+    "preventDuplicatesDesc": "Empêche la même teinture d'apparaître dans plusieurs emplacements de résultat",
     "colorFormats": "Formats de couleur",
     "hexCodes": "Codes Hex",
     "rgbValues": "Valeurs RGB",

@@ -2,11 +2,11 @@
 
 ---
 
-## 🎨 Harmony Explorer Improvements
+## 🎨 No More Duplicate Results
 
-**No More Duplicate Results**
-- The Harmony Explorer now prevents the same dye from appearing in multiple harmony slots — you'll see a wider variety of dye suggestions
-- A new "Prevent Duplicates" toggle has been added to the OPTIONS sidebar (on by default) so you can turn it off if you prefer the old behavior
+**Harmony Explorer & Palette Extractor**
+- Both the Harmony Explorer and Palette Extractor now prevent the same dye from appearing in multiple result cards — you'll see a wider variety of dye suggestions
+- A new "Prevent Duplicates" toggle has been added to the OPTIONS sidebar for each tool (on by default) so you can turn it off if you prefer the old behavior
 
 ---
 
