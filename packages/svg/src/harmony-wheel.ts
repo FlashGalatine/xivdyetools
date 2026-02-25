@@ -53,7 +53,7 @@ function rgbToHue(r: number, g: number, b: number): number {
   const min = Math.min(r, g, b);
   const delta = max - min;
 
-  let hue = 0;
+  let hue: number;
 
   if (delta === 0) {
     hue = 0; // Achromatic (gray)

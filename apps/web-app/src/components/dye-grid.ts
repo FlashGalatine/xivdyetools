@@ -373,7 +373,7 @@ export class DyeGrid extends BaseComponent {
     this.updateGridColumns();
 
     const key = event.key;
-    let newIndex = this.focusedIndex;
+    let newIndex: number;
 
     switch (key) {
       case 'ArrowRight':

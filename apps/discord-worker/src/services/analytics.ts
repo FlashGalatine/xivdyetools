@@ -255,7 +255,6 @@ export async function getStats(kv: KVNamespace): Promise<{
   let total = 0;
   let success = 0;
   let failure = 0;
-  let uniqueUsersToday = 0;
   const commandBreakdown: Record<string, number> = {};
 
   // Process results from list
@@ -281,7 +280,7 @@ export async function getStats(kv: KVNamespace): Promise<{
 
   // BUG-007: Count unique users from individual keys under USER_TRACK_PREFIX
   const userListResult = await kv.list({ prefix: `${USER_TRACK_PREFIX}${today}:` });
-  uniqueUsersToday = userListResult.keys.length;
+  const uniqueUsersToday = userListResult.keys.length;
 
   // Fallback: If metadata doesn't have counts (old data), fetch individually
   // This provides backward compatibility during migration

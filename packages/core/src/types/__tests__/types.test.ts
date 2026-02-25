@@ -597,7 +597,7 @@ describe('AppError', () => {
           expect(e.message).toBe('My message');
           expect(e.severity).toBe('warning');
         } else {
-          throw new Error('Should be AppError instance');
+          throw new Error('Should be AppError instance', { cause: e });
         }
       }
     });

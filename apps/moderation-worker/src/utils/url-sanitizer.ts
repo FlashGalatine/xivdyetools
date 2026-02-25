@@ -181,7 +181,7 @@ export function sanitizeHeaders(
  * ```
  */
 export function sanitizeErrorMessage(error: unknown): string {
-  let message = '';
+  let message: string;
 
   if (error instanceof Error) {
     message = error.message;
