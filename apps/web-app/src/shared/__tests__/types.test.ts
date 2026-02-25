@@ -328,7 +328,7 @@ describe('ErrorCode enum', () => {
 
   it('should be usable in switch statements', () => {
     const testCode = ErrorCode.API_CALL_FAILED;
-    let handled = false;
+    let handled: boolean;
 
     switch (testCode) {
       case ErrorCode.API_CALL_FAILED:

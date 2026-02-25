@@ -246,7 +246,7 @@ export class ToolBanner extends BaseLitComponent {
 
     if (currentIndex === -1) return;
 
-    let newIndex = currentIndex;
+    let newIndex: number;
 
     switch (e.key) {
       case 'ArrowRight':

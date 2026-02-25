@@ -384,7 +384,7 @@ export async function fetchImageWithTimeout(url: string): Promise<Uint8Array> {
     return new Uint8Array(buffer);
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error('Image fetch timed out');
+      throw new Error('Image fetch timed out', { cause: error });
     }
     throw error;
   } finally {

@@ -30,7 +30,7 @@ vi.mock('@services/index', () => ({
       // Simplified HSV calculation for testing
       const max = Math.max(r, g, b);
       const v = (max / 255) * 100;
-      let h = 0;
+      let h: number;
       if (r >= g && r >= b) h = 0;
       else if (g >= r && g >= b) h = 120;
       else h = 240;

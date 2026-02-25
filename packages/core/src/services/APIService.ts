@@ -715,7 +715,8 @@ export class APIService {
         return JSON.parse(text) as { results?: UniversalisItemResult[] };
       } catch (parseError) {
         throw new Error(
-          `Invalid JSON response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`
+          `Invalid JSON response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
+          { cause: parseError }
         );
       }
     } finally {

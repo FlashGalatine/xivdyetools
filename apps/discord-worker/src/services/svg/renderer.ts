@@ -51,7 +51,8 @@ export async function initRenderer(logger?: ExtendedLogger): Promise<void> {
         logger.error('WASM initialization failed', error instanceof Error ? error : undefined);
       }
       throw new Error(
-        `Failed to initialize SVG renderer: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to initialize SVG renderer: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   })();
@@ -105,7 +106,8 @@ export async function renderSvgToPng(
       logger.error('SVG rendering failed', error instanceof Error ? error : undefined);
     }
     throw new Error(
-      `Failed to render SVG: ${error instanceof Error ? error.message : 'Unknown error'}`
+      `Failed to render SVG: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      { cause: error }
     );
   }
 }

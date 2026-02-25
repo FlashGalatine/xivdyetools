@@ -344,9 +344,9 @@ export class ColorConverter {
     const x = c * (1 - Math.abs((hNorm % 2) - 1));
     const m = vNorm - c;
 
-    let rNorm = 0,
-      gNorm = 0,
-      bNorm = 0;
+    let rNorm: number,
+      gNorm: number,
+      bNorm: number;
 
     if (hNorm >= 0 && hNorm < 1) {
       [rNorm, gNorm, bNorm] = [c, x, 0];

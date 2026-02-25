@@ -67,7 +67,7 @@ export function loadImage(buffer: Uint8Array): PhotonImage {
     return PhotonImage.new_from_byteslice(buffer);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    throw new Error(`Failed to load image: ${message}`);
+    throw new Error(`Failed to load image: ${message}`, { cause: error });
   }
 }
 
