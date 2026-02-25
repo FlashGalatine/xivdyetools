@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **ESLint v10 compatibility**: Fix lint errors for new `eslint:recommended` rules
+  - `no-useless-assignment`: Remove dead initializers (`rNorm`, `gNorm`, `bNorm`) in `ColorConverter.hsvToRgb()`
+  - `preserve-caught-error`: Add `{ cause: parseError }` to re-thrown error in `APIService.get()`
+  - `preserve-caught-error`: Add `{ cause: e }` in `types.test.ts`
+
 ## [1.17.2] - 2026-02-21
 
 ### Added

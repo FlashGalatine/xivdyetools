@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **ESLint v10 compatibility**: Fix lint errors for new `eslint:recommended` rules
+  - `prefer-const`: Convert `uniqueUsersToday` to const in `analytics.ts`
+  - `preserve-caught-error`: Add `{ cause: error }` to re-thrown errors in `photon.ts`, `validators.ts`, and `renderer.ts` (2 locations)
+
 ## [4.0.2] - 2026-02-21
 
 ### Fixed
