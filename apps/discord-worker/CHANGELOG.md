@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Prevent Duplicate Results**: `/extractor image` now deduplicates dyes across palette slots — when a monochromatic image causes multiple extracted colors to match the same dye, later slots are reassigned to the next-best unique alternative via `findDyesWithinDistance()`. Always on (no toggle needed with max 5 slots and 136 dyes)
+
 ### Fixed
 
 - **ESLint v10 compatibility**: Fix lint errors for new `eslint:recommended` rules

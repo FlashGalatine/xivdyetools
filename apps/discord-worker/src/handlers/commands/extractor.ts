@@ -146,6 +146,52 @@ function findClosestDyeExcludingFacewear(
   return null;
 }
 
+/**
+ * Deduplicates palette matches so each slot shows a unique dye.
+ *
+ * When multiple extracted colors map to the same dye (common with monochromatic
+ * images), later slots are reassigned to the next-best unique alternative using
+ * a ranked distance search.
+ */
+function deduplicatePaletteResults(matches: PaletteMatch[]): PaletteMatch[] {
+  if (matches.length <= 1) return matches;
+
+  const usedDyeIds = new Set<number>();
+  const dedupedMatches: PaletteMatch[] = [];
+
+  for (const match of matches) {
+    if (!usedDyeIds.has(match.matchedDye.itemID)) {
+      usedDyeIds.add(match.matchedDye.itemID);
+      dedupedMatches.push(match);
+    } else {
+      // Duplicate — find the next-best unique dye for this extracted color
+      const hex = ColorService.rgbToHex(match.extracted.r, match.extracted.g, match.extracted.b);
+      const candidates = dyeService.findDyesWithinDistance(hex, {
+        maxDistance: 200,
+        limit: 20,
+      });
+
+      const alternative = candidates.find((dye) => !usedDyeIds.has(dye.itemID));
+      if (alternative) {
+        const distance = ColorService.getColorDistance(hex, alternative.hex);
+        usedDyeIds.add(alternative.itemID);
+        dedupedMatches.push({
+          extracted: match.extracted,
+          matchedDye: alternative,
+          distance,
+          dominance: match.dominance,
+        });
+      } else {
+        // No unique alternative found — keep the duplicate as last resort
+        usedDyeIds.add(match.matchedDye.itemID);
+        dedupedMatches.push(match);
+      }
+    }
+  }
+
+  return dedupedMatches;
+}
+
 // ============================================================================
 // Main Handler
 // ============================================================================
@@ -500,11 +546,14 @@ async function processImageExtraction(
     }
 
     // Step 4: Extract and match palette
-    const matches = paletteService.extractAndMatchPalette(rgbPixels, dyeService, {
+    const rawMatches = paletteService.extractAndMatchPalette(rgbPixels, dyeService, {
       colorCount,
       maxIterations: 25,
       maxSamples: 10000,
     });
+
+    // Step 4b: Deduplicate — ensure each slot shows a unique dye
+    const matches = deduplicatePaletteResults(rawMatches);
 
     if (matches.length === 0) {
       await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
