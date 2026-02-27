@@ -181,7 +181,7 @@ export class ChangelogModal {
     const viewFullBtn = document.createElement('a');
     viewFullBtn.className = 'text-sm text-blue-600 dark:text-blue-400 hover:underline';
     viewFullBtn.href =
-      'https://github.com/FlashGalatine/xivdyetools/blob/main/apps/web-app/CHANGELOG-tldr.md';
+      'https://github.com/FlashGalatine/xivdyetools/blob/main/apps/web-app/CHANGELOG.md';
     viewFullBtn.target = '_blank';
     viewFullBtn.rel = 'noopener noreferrer';
     viewFullBtn.textContent = LanguageService.t('changelog.viewFull');
