@@ -1,4 +1,6 @@
-# What's New (Unreleased)
+# What's New in Version 4.2.0
+
+*Released: February 27, 2026*
 
 ---
 
@@ -10,31 +12,20 @@
 
 ---
 
-# What's New in Version 4.1.8
+## 📋 Paste Images from Clipboard
 
-*Released: February 21, 2026*
-
----
-
-## 🔒 Security Audit Fixes
-
-**Stronger Login Protection**
-- Fixed a rare edge case where the login flow could accept an incomplete security check — it now properly rejects the request if any verification step is missing
-- This was found during a comprehensive security audit; no evidence it was ever exploited
+**Palette Extractor**
+- You can now paste images directly into the Palette Extractor using Ctrl+V (or Cmd+V on Mac)
+- A new "Paste" button also appears in the image drop zone on supported browsers (Chromium-based)
+- Great for quickly extracting colors from screenshots without saving them as files first
 
 ---
 
 ## 🛠️ Under-the-Hood Improvements
 
-**Dye Matching is Faster**
-- Color matching calculations are now cached, so finding your closest dye match is snappier — especially noticeable if you're comparing lots of colors in a session
-
-**SVG Card Improvements**
-- Fixed a display issue where Japanese, Korean, and Chinese dye category labels could appear clipped or incorrectly sized on dye info cards
-- Special characters like `&` in dye names no longer appear garbled (e.g., `&amp;amp;`) on generated cards
-
 **Code Quality**
-- Fixed all linting warnings and auto-formatted the entire codebase
+- Upgraded to ESLint v10 and resolved all new lint warnings across the entire codebase
+- Improved TypeScript strictness — better error handling and type safety throughout
 - No visible changes to users — just cleaner, more maintainable code
 
 ---
