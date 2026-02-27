@@ -534,7 +534,10 @@ export class ExtractorTool extends BaseComponent {
     }
 
     // Handle preventDuplicates - re-render to apply/remove dedup
-    if (config.preventDuplicates !== undefined && config.preventDuplicates !== this.preventDuplicates) {
+    if (
+      config.preventDuplicates !== undefined &&
+      config.preventDuplicates !== this.preventDuplicates
+    ) {
       this.preventDuplicates = config.preventDuplicates;
       needsRerender = true;
       logger.info(`[ExtractorTool] setConfig: preventDuplicates -> ${config.preventDuplicates}`);

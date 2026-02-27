@@ -18,10 +18,17 @@ import { resolve } from 'path';
 // Types
 // ============================================================================
 
+interface ChangelogSection {
+  header: string;
+  title: string;
+  bullets: string[];
+}
+
 interface ChangelogEntry {
   version: string;
   date: string;
   highlights: string[];
+  sections: ChangelogSection[];
 }
 
 // ============================================================================
@@ -77,14 +84,16 @@ function parseChangelog(content: string): ChangelogEntry[] {
     const dateMatch = sectionContent.match(/\*Released: ([^*]+)\*/);
     const date = dateMatch ? dateMatch[1].trim() : '';
 
-    // Extract bold headings from this section
+    // Extract bold headings (for backward compat) and full sections
     const highlights = extractHighlights(sectionContent);
+    const sections = extractSections(sectionContent);
 
-    if (highlights.length > 0) {
+    if (highlights.length > 0 || sections.length > 0) {
       entries.push({
         version: header.version,
         date,
         highlights,
+        sections,
       });
     }
   }
@@ -126,6 +135,53 @@ function extractHighlights(sectionContent: string): string[] {
   }
 
   return highlights;
+}
+
+/**
+ * Extract full sections from a version block
+ *
+ * Each section is delimited by a ## heading. Within each section, we capture:
+ * - header: the ## heading text (e.g., "🎨 No More Duplicate Results")
+ * - title: the first bold heading (e.g., "Harmony Explorer & Palette Extractor")
+ * - bullets: the dash-prefixed description lines
+ */
+function extractSections(sectionContent: string): ChangelogSection[] {
+  const sections: ChangelogSection[] = [];
+
+  // Split by ## headings (level 2). The first chunk is the version header area.
+  const sectionBlocks = sectionContent.split(/^## /gm);
+
+  // Skip the first block (it's the version header / date area)
+  for (let i = 1; i < sectionBlocks.length; i++) {
+    const block = sectionBlocks[i];
+
+    // First line of the block is the heading text (after the ## we split on)
+    const lines = block.split('\n');
+    const header = lines[0].trim();
+
+    // Find the bold title: **Title**
+    const titleMatch = block.match(/^\s*\*\*([^*]+)\*\*/m);
+    const title = titleMatch ? titleMatch[1].trim() : '';
+
+    // Extract bullet points: lines starting with -
+    const bullets: string[] = [];
+    for (const line of lines) {
+      const bulletMatch = line.match(/^\s*-\s+(.+)/);
+      if (bulletMatch) {
+        let bullet = bulletMatch[1].trim();
+        if (bullet.length > 200) {
+          bullet = bullet.slice(0, 197) + '...';
+        }
+        bullets.push(bullet);
+      }
+    }
+
+    if (header) {
+      sections.push({ header, title, bullets });
+    }
+  }
+
+  return sections;
 }
 
 // ============================================================================

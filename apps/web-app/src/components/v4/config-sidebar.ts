@@ -1089,9 +1089,7 @@ export class ConfigSidebar extends BaseLitComponent {
                 this.handleConfigChange('harmony', 'preventDuplicates', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
-          <div class="config-description">
-            ${LanguageService.t('config.preventDuplicatesDesc')}
-          </div>
+          <div class="config-description">${LanguageService.t('config.preventDuplicatesDesc')}</div>
         </div>
 
         <v4-display-options
@@ -1159,9 +1157,7 @@ export class ConfigSidebar extends BaseLitComponent {
                 this.handleConfigChange('extractor', 'preventDuplicates', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
-          <div class="config-description">
-            ${LanguageService.t('config.preventDuplicatesDesc')}
-          </div>
+          <div class="config-description">${LanguageService.t('config.preventDuplicatesDesc')}</div>
         </div>
 
         <v4-display-options

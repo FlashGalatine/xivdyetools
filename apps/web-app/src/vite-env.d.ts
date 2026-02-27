@@ -28,10 +28,17 @@ interface ImportMeta {
  * This module is generated at build time by parsing CHANGELOG.md
  */
 declare module 'virtual:changelog' {
+  interface ChangelogSection {
+    header: string;
+    title: string;
+    bullets: string[];
+  }
+
   interface ChangelogEntry {
     version: string;
     date: string;
     highlights: string[];
+    sections: ChangelogSection[];
   }
 
   export const changelogEntries: ChangelogEntry[];
