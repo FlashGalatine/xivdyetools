@@ -19,7 +19,7 @@ import { APP_VERSION } from '@shared/constants';
 import { logger } from '@shared/logger';
 
 // Import components
-import { offlineBanner } from '@components/index';
+import { offlineBanner } from '@components/offline-banner';
 
 // Import TutorialService for dev mode console access
 import { TutorialService } from '@services/index';
