@@ -90,24 +90,3 @@ export const ICON_EMPTY_INBOX = `<svg viewBox="0 0 24 24" fill="none" stroke="cu
   <path d="M12 15v-3" stroke-dasharray="2 2"/>
 </svg>`;
 
-/**
- * Map of icon names to SVG strings for easy lookup
- */
-export const EMPTY_STATE_ICONS: Record<string, string> = {
-  search: ICON_SEARCH,
-  palette: ICON_PALETTE,
-  coins: ICON_COINS,
-  harmony: ICON_HARMONY,
-  image: ICON_IMAGE,
-  warning: ICON_WARNING,
-  loading: ICON_LOADING,
-  folder: ICON_FOLDER,
-  'empty-inbox': ICON_EMPTY_INBOX,
-};
-
-/**
- * Get SVG icon by name, returns the SVG string or undefined
- */
-export function getEmptyStateIcon(name: string): string | undefined {
-  return EMPTY_STATE_ICONS[name];
-}

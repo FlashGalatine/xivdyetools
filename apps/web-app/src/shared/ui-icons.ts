@@ -55,22 +55,6 @@ export const ICON_EYEDROPPER = `<svg viewBox="0 0 24 24" fill="none" stroke="cur
   <line x1="11" y1="14.5" x2="9" y2="16.5" />
 </svg>`;
 
-/**
- * Save icon - Floppy disk
- */
-export const ICON_SAVE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M 19 21 L 5 21 C 3.9 21 3 20.1 3 19 L 3 5 C 3 3.9 3.9 3 5 3 L 16 3 L 21 8 L 21 19 C 21 20.1 20.1 21 19 21 Z" />
-  <rect x="6" y="3" width="9" height="5" />
-  <rect x="7" y="13" width="10" height="6" rx="1" />
-</svg>`;
-
-/**
- * Share icon - Chain link
- */
-export const ICON_SHARE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M 10 13 C 10.7 13.7 11.5 14 12.5 14 C 13.5 14 14.3 13.7 15 13 L 18 10 C 18.7 9.3 19 8.5 19 7.5 C 19 6.5 18.7 5.7 18 5 C 17.3 4.3 16.5 4 15.5 4 C 14.5 4 13.7 4.3 13 5 L 11.5 6.5" />
-  <path d="M 14 11 C 13.3 10.3 12.5 10 11.5 10 C 10.5 10 9.7 10.3 9 11 L 6 14 C 5.3 14.7 5 15.5 5 16.5 C 5 17.5 5.3 18.3 6 19 C 6.7 19.7 7.5 20 8.5 20 C 9.5 20 10.3 19.7 11 19 L 12.5 17.5" />
-</svg>`;
 
 /**
  * Hint icon - Light bulb
@@ -82,27 +66,6 @@ export const ICON_HINT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentCo
   <circle cx="12" cy="9" r="1.5" fill="currentColor" stroke="none" opacity="0.5" />
 </svg>`;
 
-/**
- * Zoom to Fit icon
- */
-export const ICON_ZOOM_FIT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <rect x="4" y="4" width="16" height="16" />
-  <polyline points="9,4 4,4 4,9" />
-  <polyline points="15,4 20,4 20,9" />
-  <polyline points="9,20 4,20 4,15" />
-  <polyline points="15,20 20,20 20,15" />
-</svg>`;
-
-/**
- * Zoom to Width icon
- */
-export const ICON_ZOOM_WIDTH = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <rect x="4" y="7" width="16" height="10" />
-  <line x1="2" y1="12" x2="7" y2="12" />
-  <polyline points="4,10 2,12 4,14" />
-  <line x1="22" y1="12" x2="17" y2="12" />
-  <polyline points="20,10 22,12 20,14" />
-</svg>`;
 
 /**
  * Crystal icon - FFXIV-style gem (from monorepo crystal.svg)
@@ -282,24 +245,6 @@ export const ICON_MUSIC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentC
   <path d="M12 18V2l7 4"/>
 </svg>`;
 
-/**
- * Test tube icon - Vertical test tube
- */
-export const ICON_TEST_TUBE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M14.5 2v17.5c0 1.4-1.1 2.5-2.5 2.5h0c-1.4 0-2.5-1.1-2.5-2.5V2"/>
-  <path d="M8.5 2h7"/>
-  <path d="M14.5 16h-5"/>
-</svg>`;
-
-/**
- * Beaker pipe icon - Beaker with pipe attachment
- */
-export const ICON_BEAKER_PIPE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M4.5 3h10"/>
-  <path d="M6 3v11a4 4 0 0 0 4 4h0a4 4 0 0 0 4-4V3"/>
-  <path d="M14 10h5a2 2 0 0 1 2 2v5"/>
-  <circle cx="21" cy="19" r="2"/>
-</svg>`;
 
 /**
  * Stairs icon - Staircase/steps (for interpolation)
@@ -359,15 +304,6 @@ export const ICON_IMAGE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentC
 </svg>`;
 
 /**
- * Info icon - Circle with "i" (for information)
- */
-export const ICON_INFO = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="12" cy="12" r="10"/>
-  <line x1="12" y1="16" x2="12" y2="12"/>
-  <circle cx="12" cy="8" r="0.5" fill="currentColor" stroke="none"/>
-</svg>`;
-
-/**
  * About icon - Triangle warning sign with question mark (for about modals)
  */
 export const ICON_ABOUT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -395,19 +331,6 @@ export const ICON_GLOBE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentC
   <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" fill="none"/>
 </svg>`;
 
-/**
- * Logo icon - XIV Dye Tools paint bucket with brush (branding)
- */
-export const ICON_LOGO = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" opacity="0.3"/>
-  <path d="M7 14v4c0 .55.45 1 1 1h8c.55 0 1-.45 1-1v-4"/>
-  <path d="M7 14c0-2 1-3 2.5-3.5"/>
-  <path d="M17 14c0-2-1-3-2.5-3.5"/>
-  <ellipse cx="12" cy="10" rx="3" ry="1.5" fill="currentColor" stroke="none" opacity="0.5"/>
-  <path d="M12 3v4" stroke-width="2"/>
-  <path d="M10 3h4" stroke-width="2"/>
-  <circle cx="12" cy="14" r="2" fill="currentColor" stroke="none" opacity="0.7"/>
-</svg>`;
 
 /**
  * Link icon - Chain link for copy/share URLs
@@ -517,21 +440,6 @@ export const ICON_FOLDER = `<svg viewBox="0 0 24 24" fill="none" stroke="current
   <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
 </svg>`;
 
-/**
- * Zap/Lightning icon - For performance mode
- */
-export const ICON_ZAP = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-</svg>`;
-
-/**
- * Chart/Analytics icon - For analytics/statistics
- */
-export const ICON_CHART = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <line x1="18" y1="20" x2="18" y2="10"/>
-  <line x1="12" y1="20" x2="12" y2="4"/>
-  <line x1="6" y1="20" x2="6" y2="14"/>
-</svg>`;
 
 /**
  * Clipboard/paste icon - For paste from clipboard actions
@@ -541,89 +449,4 @@ export const ICON_CLIPBOARD = `<svg viewBox="0 0 24 24" fill="none" stroke="curr
   <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
 </svg>`;
 
-/**
- * Keyboard icon - For keyboard shortcuts
- * Replaces: ⌨️ emoji
- */
-export const ICON_KEYBOARD = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <rect x="2" y="6" width="20" height="12" rx="2"/>
-  <line x1="6" y1="10" x2="6" y2="10.01"/>
-  <line x1="10" y1="10" x2="10" y2="10.01"/>
-  <line x1="14" y1="10" x2="14" y2="10.01"/>
-  <line x1="18" y1="10" x2="18" y2="10.01"/>
-  <line x1="6" y1="14" x2="6" y2="14.01"/>
-  <line x1="18" y1="14" x2="18" y2="14.01"/>
-  <line x1="10" y1="14" x2="14" y2="14"/>
-</svg>`;
 
-/**
- * Map of UI icon names to SVG strings
- */
-export const UI_ICONS: Record<string, string> = {
-  theme: ICON_THEME,
-  camera: ICON_CAMERA,
-  eyedropper: ICON_EYEDROPPER,
-  save: ICON_SAVE,
-  share: ICON_SHARE,
-  hint: ICON_HINT,
-  'zoom-fit': ICON_ZOOM_FIT,
-  'zoom-width': ICON_ZOOM_WIDTH,
-  crystal: ICON_CRYSTAL,
-  upload: ICON_UPLOAD,
-  warning: ICON_WARNING,
-  dice: ICON_DICE,
-  coins: ICON_COINS,
-  broom: ICON_BROOM,
-  filter: ICON_FILTER,
-  market: ICON_MARKET,
-  export: ICON_EXPORT,
-  beaker: ICON_BEAKER,
-  settings: ICON_SETTINGS,
-  palette: ICON_PALETTE,
-  sort: ICON_SORT,
-  eye: ICON_EYE,
-  sliders: ICON_SLIDERS,
-  target: ICON_TARGET,
-  sparkles: ICON_SPARKLES,
-  distance: ICON_DISTANCE,
-  music: ICON_MUSIC,
-  'test-tube': ICON_TEST_TUBE,
-  'beaker-pipe': ICON_BEAKER_PIPE,
-  stairs: ICON_STAIRS,
-  star: ICON_STAR,
-  search: ICON_SEARCH,
-  grid: ICON_GRID,
-  user: ICON_USER,
-  edit: ICON_EDIT,
-  trash: ICON_TRASH,
-  image: ICON_IMAGE,
-  info: ICON_INFO,
-  about: ICON_ABOUT,
-  globe: ICON_GLOBE,
-  logo: ICON_LOGO,
-  'context-menu': ICON_CONTEXT_MENU,
-  close: ICON_CLOSE,
-  // Emoji replacement icons
-  link: ICON_LINK,
-  document: ICON_DOCUMENT,
-  locked: ICON_LOCKED,
-  lock: ICON_LOCK,
-  network: ICON_NETWORK,
-  book: ICON_BOOK,
-  success: ICON_SUCCESS,
-  error: ICON_ERROR,
-  refresh: ICON_REFRESH,
-  import: ICON_IMPORT,
-  folder: ICON_FOLDER,
-  zap: ICON_ZAP,
-  chart: ICON_CHART,
-  keyboard: ICON_KEYBOARD,
-  clipboard: ICON_CLIPBOARD,
-};
-
-/**
- * Get UI icon by name
- */
-export function getUIIcon(name: string): string | undefined {
-  return UI_ICONS[name];
-}

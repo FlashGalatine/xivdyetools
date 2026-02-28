@@ -35,16 +35,10 @@ import {
 
 // Import from ui-icons.ts
 import {
-  getUIIcon,
-  UI_ICONS,
   ICON_THEME,
   ICON_CAMERA,
   ICON_EYEDROPPER,
-  ICON_SAVE,
-  ICON_SHARE,
   ICON_HINT,
-  ICON_ZOOM_FIT,
-  ICON_ZOOM_WIDTH,
   ICON_CRYSTAL,
   ICON_WARNING,
   ICON_UPLOAD,
@@ -292,176 +286,6 @@ describe('Tool Icons', () => {
 // ==========================================================================
 
 describe('UI Icons', () => {
-  describe('getUIIcon function', () => {
-    it('should return theme icon when name is "theme"', () => {
-      const icon = getUIIcon('theme');
-      expect(icon).toBe(ICON_THEME);
-      expect(icon).toContain('<svg');
-    });
-
-    it('should return camera icon when name is "camera"', () => {
-      const icon = getUIIcon('camera');
-      expect(icon).toBe(ICON_CAMERA);
-      expect(icon).toContain('<svg');
-    });
-
-    it('should return eyedropper icon when name is "eyedropper"', () => {
-      const icon = getUIIcon('eyedropper');
-      expect(icon).toBe(ICON_EYEDROPPER);
-      expect(icon).toContain('<svg');
-    });
-
-    it('should return save icon when name is "save"', () => {
-      const icon = getUIIcon('save');
-      expect(icon).toBe(ICON_SAVE);
-      expect(icon).toContain('<svg');
-    });
-
-    it('should return share icon when name is "share"', () => {
-      const icon = getUIIcon('share');
-      expect(icon).toBe(ICON_SHARE);
-      expect(icon).toContain('<svg');
-    });
-
-    it('should return hint icon when name is "hint"', () => {
-      const icon = getUIIcon('hint');
-      expect(icon).toBe(ICON_HINT);
-      expect(icon).toContain('<svg');
-    });
-
-    it('should return zoom-fit icon when name is "zoom-fit"', () => {
-      const icon = getUIIcon('zoom-fit');
-      expect(icon).toBe(ICON_ZOOM_FIT);
-      expect(icon).toContain('<svg');
-    });
-
-    it('should return zoom-width icon when name is "zoom-width"', () => {
-      const icon = getUIIcon('zoom-width');
-      expect(icon).toBe(ICON_ZOOM_WIDTH);
-      expect(icon).toContain('<svg');
-    });
-
-    it('should return crystal icon when name is "crystal"', () => {
-      const icon = getUIIcon('crystal');
-      expect(icon).toBe(ICON_CRYSTAL);
-      expect(icon).toContain('<svg');
-    });
-
-    it('should return upload icon when name is "upload"', () => {
-      const icon = getUIIcon('upload');
-      expect(icon).toBe(ICON_UPLOAD);
-      expect(icon).toContain('<svg');
-    });
-
-    it('should return warning icon when name is "warning"', () => {
-      const icon = getUIIcon('warning');
-      expect(icon).toBe(ICON_WARNING);
-      expect(icon).toContain('<svg');
-    });
-
-    it('should return dice icon when name is "dice"', () => {
-      const icon = getUIIcon('dice');
-      expect(icon).toBe(ICON_DICE);
-      expect(icon).toContain('<svg');
-    });
-
-    it('should return undefined for unknown icon name', () => {
-      const icon = getUIIcon('unknown');
-      expect(icon).toBeUndefined();
-    });
-
-    it('should return undefined for empty string', () => {
-      const icon = getUIIcon('');
-      expect(icon).toBeUndefined();
-    });
-
-    it('should be case-sensitive', () => {
-      const icon = getUIIcon('Theme');
-      expect(icon).toBeUndefined();
-    });
-
-    it('should handle hyphenated icon names correctly', () => {
-      expect(getUIIcon('zoom-fit')).toBeDefined();
-      expect(getUIIcon('zoom-width')).toBeDefined();
-      expect(getUIIcon('zoomfit')).toBeUndefined();
-      expect(getUIIcon('zoomwidth')).toBeUndefined();
-    });
-  });
-
-  describe('UI_ICONS object', () => {
-    it('should contain all expected UI icon keys', () => {
-      // V4: Updated with additional icons (about, globe, logo, context-menu, close, etc.)
-      expect(Object.keys(UI_ICONS)).toEqual([
-        'theme',
-        'camera',
-        'eyedropper',
-        'save',
-        'share',
-        'hint',
-        'zoom-fit',
-        'zoom-width',
-        'crystal',
-        'upload',
-        'warning',
-        'dice',
-        'coins',
-        'broom',
-        'filter',
-        'market',
-        'export',
-        'beaker',
-        'settings',
-        'palette',
-        'sort',
-        'eye',
-        'sliders',
-        'target',
-        'sparkles',
-        'distance',
-        'music',
-        'test-tube',
-        'beaker-pipe',
-        'stairs',
-        'star',
-        'search',
-        'grid',
-        'user',
-        'edit',
-        'trash',
-        'image',
-        'info',
-        'about',
-        'globe',
-        'logo',
-        'context-menu',
-        'close',
-        'link',
-        'document',
-        'locked',
-        'lock',
-        'network',
-        'book',
-        'success',
-        'error',
-        'refresh',
-        'import',
-        'folder',
-        'zap',
-        'chart',
-        'keyboard',
-        'clipboard',
-      ]);
-    });
-
-    it('should have all icons as SVG strings', () => {
-      for (const value of Object.values(UI_ICONS)) {
-        expect(typeof value).toBe('string');
-        expect(value).toContain('<svg');
-        expect(value).toContain('</svg>');
-      }
-    });
-  });
-
   describe('Individual icon constants', () => {
     it('ICON_THEME should be a valid SVG with path and circles', () => {
       expect(ICON_THEME).toContain('<svg');
@@ -481,33 +305,10 @@ describe('UI Icons', () => {
       expect(ICON_EYEDROPPER).toContain('path');
     });
 
-    it('ICON_SAVE should be a valid SVG with path and rect', () => {
-      expect(ICON_SAVE).toContain('<svg');
-      expect(ICON_SAVE).toContain('path');
-      expect(ICON_SAVE).toContain('rect');
-    });
-
-    it('ICON_SHARE should be a valid SVG with path', () => {
-      expect(ICON_SHARE).toContain('<svg');
-      expect(ICON_SHARE).toContain('path');
-    });
-
     it('ICON_HINT should be a valid SVG with path and lines', () => {
       expect(ICON_HINT).toContain('<svg');
       expect(ICON_HINT).toContain('path');
       expect(ICON_HINT).toContain('line');
-    });
-
-    it('ICON_ZOOM_FIT should be a valid SVG with rect and polyline', () => {
-      expect(ICON_ZOOM_FIT).toContain('<svg');
-      expect(ICON_ZOOM_FIT).toContain('rect');
-      expect(ICON_ZOOM_FIT).toContain('polyline');
-    });
-
-    it('ICON_ZOOM_WIDTH should be a valid SVG with rect and lines', () => {
-      expect(ICON_ZOOM_WIDTH).toContain('<svg');
-      expect(ICON_ZOOM_WIDTH).toContain('rect');
-      expect(ICON_ZOOM_WIDTH).toContain('line');
     });
 
     it('ICON_CRYSTAL should be a valid SVG with path', () => {

@@ -20,13 +20,11 @@ export { DyeSelector, type DyeSelectorOptions } from './dye-selector';
 export { ColorDisplay, type ColorDisplayOptions } from './color-display';
 export { HarmonyType, type HarmonyTypeInfo } from './harmony-type';
 export { ColorDistanceMatrix } from './color-distance-matrix';
-export { DyeComparisonChart, type ChartType } from './dye-comparison-chart';
 export { ColorInterpolationDisplay, type InterpolationStep } from './color-interpolation-display';
 export { ColorblindnessDisplay, type VisionTypeInfo } from './colorblindness-display';
 export { ImageUploadDisplay } from './image-upload-display';
 export { ColorPickerDisplay } from './color-picker-display';
 export { ColorWheelDisplay } from './color-wheel-display';
-export { MobileBottomNav, type MobileToolDef } from './mobile-bottom-nav';
 export { ToolsDropdown, type ToolDef } from './tools-dropdown';
 export { MarketBoard } from './market-board';
 export { PaletteExporter, type PaletteData, type PaletteExporterOptions } from './palette-exporter';
@@ -41,7 +39,6 @@ export {
   TOOLTIP_CONTENT,
   type InfoTooltipOptions,
 } from './info-tooltip';
-export { DyePreviewOverlay } from './dye-preview-overlay';
 export {
   createDyeActionDropdown,
   type DyeAction,
@@ -62,7 +59,6 @@ export { showPresetEditForm } from './preset-edit-form';
 export { MySubmissionsPanel } from './my-submissions-panel';
 export { PresetCard, type PresetCardCallback } from './preset-card';
 export { PresetDetailView, type PresetDetailViewCallbacks } from './preset-detail-view';
-export { FeaturedPresetsSection, type FeaturedPresetCallback } from './featured-presets-section';
 
 // Shared utility components (used by tools in both v3 and v4 layouts)
 export { CollapsiblePanel, type CollapsiblePanelOptions } from './collapsible-panel';
