@@ -33,6 +33,16 @@ export class ImageZoomController extends BaseComponent {
   // Drag threshold for click vs drag differentiation (in pixels)
   private dragThreshold: number = 5;
 
+  // Pixel sample area size for Shift+Click (NxN pixels)
+  private sampleAreaSize: number = 1;
+
+  // Panning state (Ctrl+Drag)
+  private isPanning: boolean = false;
+  private panStartX: number = 0;
+  private panStartY: number = 0;
+  private panOffsetX: number = 0;
+  private panOffsetY: number = 0;
+
   // Store zoom control functions for public access
   private updateZoomFn: ((newZoom: number, setCenter?: boolean) => void) | null = null;
   private getContainerDimensionsFn: (() => { width: number; height: number }) | null = null;
@@ -342,19 +352,19 @@ export class ImageZoomController extends BaseComponent {
       this.canvasRef.style.transformOrigin = 'top left';
       this.canvasRef.style.cursor = this.zoomLevel > 100 ? 'move' : 'crosshair';
 
-      // Center the canvas if centering is enabled
+      // Apply centering + pan offset to canvas margins
       if (this.isCentered && this.currentImage && this.canvasContainerRef) {
         const container = getContainerDimensions();
         const scaledWidth = this.currentImage.width * scale;
         const scaledHeight = this.currentImage.height * scale;
-        const marginLeft = Math.max(0, (container.width - scaledWidth) / 2);
-        const marginTop = Math.max(0, (container.height - scaledHeight) / 2);
+        const marginLeft = Math.max(0, (container.width - scaledWidth) / 2) + this.panOffsetX;
+        const marginTop = Math.max(0, (container.height - scaledHeight) / 2) + this.panOffsetY;
         this.canvasRef.style.marginLeft = `${marginLeft}px`;
         this.canvasRef.style.marginTop = `${marginTop}px`;
       } else {
-        // Reset margins when not centering
-        this.canvasRef.style.marginLeft = '0';
-        this.canvasRef.style.marginTop = '0';
+        // Apply pan offset only (no centering)
+        this.canvasRef.style.marginLeft = `${this.panOffsetX}px`;
+        this.canvasRef.style.marginTop = `${this.panOffsetY}px`;
       }
 
       this.zoomDisplay.textContent = `${this.zoomLevel.toFixed(2)}%`;
@@ -384,7 +394,8 @@ export class ImageZoomController extends BaseComponent {
         // Allow zoom > 100% if image is smaller than container
         const newZoom = Math.min(zoomX, zoomY);
 
-        // Enable centering for fit-to-screen
+        // Reset pan and enable centering for fit-to-screen
+        this.resetPan();
         updateZoom(Math.max(newZoom, MIN_ZOOM), true);
       });
     };
@@ -398,7 +409,8 @@ export class ImageZoomController extends BaseComponent {
         if (imageWidth <= 0) return;
 
         const newZoom = (container.width / imageWidth) * 100;
-        // Enable centering for fit-to-width
+        // Reset pan and enable centering for fit-to-width
+        this.resetPan();
         updateZoom(Math.max(Math.min(newZoom, MAX_ZOOM), MIN_ZOOM), true);
       });
     };
@@ -419,8 +431,11 @@ export class ImageZoomController extends BaseComponent {
       });
     }
 
-    // Reset disables centering and goes back to 100%
-    this.on(resetBtn, 'click', () => updateZoom(100, false));
+    // Reset disables centering, clears pan, and goes back to 100%
+    this.on(resetBtn, 'click', () => {
+      this.resetPan();
+      updateZoom(100, false);
+    });
 
     this.on(this.canvasContainerRef, 'wheel', (e: Event) => {
       const wheelEvent = e as WheelEvent;
@@ -433,6 +448,12 @@ export class ImageZoomController extends BaseComponent {
 
     this.on(document, 'keydown', (e: Event) => {
       const keyEvent = e as KeyboardEvent;
+
+      // Ctrl/Cmd pressed: show grab cursor to hint panning is available
+      if ((keyEvent.key === 'Control' || keyEvent.key === 'Meta') && this.canvasRef && this.currentImage) {
+        this.canvasRef.style.cursor = 'grab';
+      }
+
       if (
         document.activeElement === document.body ||
         (this.canvasContainerRef && document.activeElement?.contains(this.canvasContainerRef))
@@ -447,6 +468,14 @@ export class ImageZoomController extends BaseComponent {
           keyEvent.preventDefault();
           updateZoom(100);
         }
+      }
+    });
+
+    // Ctrl/Cmd released: restore default cursor
+    this.on(document, 'keyup', (e: Event) => {
+      const keyEvent = e as KeyboardEvent;
+      if ((keyEvent.key === 'Control' || keyEvent.key === 'Meta') && this.canvasRef && !this.isPanning) {
+        this.canvasRef.style.cursor = 'pointer';
       }
     });
   }
@@ -476,30 +505,76 @@ export class ImageZoomController extends BaseComponent {
       };
     };
 
-    // Helper to sample color at position and emit event
-    const _sampleColorAt = (centerX: number, centerY: number): void => {
+    // Helper to sample color at position, averaging an NxN area around the center.
+    // For size=1, returns the exact pixel color.
+    // For size>1, averages all pixels in the NxN area centered on (centerX, centerY).
+    const sampleColorAtArea = (centerX: number, centerY: number): void => {
       if (!this.canvasRef || !this.currentImage) return;
       const ctx = this.canvasRef.getContext('2d');
-      if (ctx) {
-        // Redraw original image first to clear selection box
-        ctx.drawImage(this.currentImage, 0, 0);
+      if (!ctx) return;
 
-        const pixel = ctx.getImageData(centerX, centerY, 1, 1).data;
-        const hex =
-          '#' +
-          [pixel[0], pixel[1], pixel[2]]
-            .map((x) => x.toString(16).padStart(2, '0'))
-            .join('')
-            .toUpperCase();
+      // Redraw original image first to clear any overlays
+      ctx.drawImage(this.currentImage, 0, 0);
 
-        // Emit sample event
-        if (this.onColorSampled) {
-          this.onColorSampled(hex, centerX, centerY);
-        }
+      const size = this.sampleAreaSize;
+      const halfSize = Math.floor(size / 2);
 
-        // Also emit custom event
-        this.emit('image-sampled', { hex, x: centerX, y: centerY });
+      // Calculate the top-left of the sample area, clamped to canvas bounds
+      const x0 = Math.max(0, Math.floor(centerX) - halfSize);
+      const y0 = Math.max(0, Math.floor(centerY) - halfSize);
+      const x1 = Math.min(this.canvasRef.width, x0 + size);
+      const y1 = Math.min(this.canvasRef.height, y0 + size);
+      const w = x1 - x0;
+      const h = y1 - y0;
+
+      if (w <= 0 || h <= 0) return;
+
+      const imageData = ctx.getImageData(x0, y0, w, h);
+      const data = imageData.data;
+      const pixelCount = w * h;
+
+      let rSum = 0, gSum = 0, bSum = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        rSum += data[i];
+        gSum += data[i + 1];
+        bSum += data[i + 2];
       }
+
+      const r = Math.round(rSum / pixelCount);
+      const g = Math.round(gSum / pixelCount);
+      const b = Math.round(bSum / pixelCount);
+
+      const hex = '#' + [r, g, b]
+        .map((x) => x.toString(16).padStart(2, '0'))
+        .join('')
+        .toUpperCase();
+
+      // Draw a visual indicator of the sampled area on the canvas
+      if (size > 1) {
+        ctx.strokeStyle = '#EF4444';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x0, y0, w, h);
+      } else {
+        // Draw a small crosshair for single-pixel sampling
+        ctx.strokeStyle = '#EF4444';
+        ctx.lineWidth = 1;
+        const cx = Math.floor(centerX);
+        const cy = Math.floor(centerY);
+        ctx.beginPath();
+        ctx.moveTo(cx - 5, cy);
+        ctx.lineTo(cx + 6, cy);
+        ctx.moveTo(cx, cy - 5);
+        ctx.lineTo(cx, cy + 6);
+        ctx.stroke();
+      }
+
+      // Emit via callback
+      if (this.onColorSampled) {
+        this.onColorSampled(hex, centerX, centerY);
+      }
+
+      // Emit custom event with isPixelSample flag
+      this.emit('image-sampled', { hex, x: centerX, y: centerY, isPixelSample: true });
     };
 
     // === MOUSE EVENTS ===
@@ -507,6 +582,17 @@ export class ImageZoomController extends BaseComponent {
       if (!this.canvasRef) return;
       e.stopPropagation();
       const mouseEvent = e as MouseEvent;
+
+      // Ctrl/Cmd+Drag: begin panning
+      if (mouseEvent.ctrlKey || mouseEvent.metaKey) {
+        this.isPanning = true;
+        this.panStartX = mouseEvent.clientX;
+        this.panStartY = mouseEvent.clientY;
+        this.canvasRef.style.cursor = 'grabbing';
+        e.preventDefault();
+        return;
+      }
+
       const coords = getCanvasCoords(mouseEvent.clientX, mouseEvent.clientY);
       startX = coords.x;
       startY = coords.y;
@@ -519,10 +605,29 @@ export class ImageZoomController extends BaseComponent {
     });
 
     this.on(this.canvasRef, 'mousemove', (e: Event) => {
+      const mouseEvent = e as MouseEvent;
+
+      // Panning mode: translate canvas via margin offsets
+      if (this.isPanning && this.canvasRef) {
+        e.stopPropagation();
+        const dx = mouseEvent.clientX - this.panStartX;
+        const dy = mouseEvent.clientY - this.panStartY;
+        // Apply offset relative to where pan started
+        const newLeft = this.panOffsetX + dx;
+        const newTop = this.panOffsetY + dy;
+        this.canvasRef.style.marginLeft = `${newLeft}px`;
+        this.canvasRef.style.marginTop = `${newTop}px`;
+        return;
+      }
+
+      // Update cursor hint when Ctrl is held (even without dragging)
+      if (!isDragging && this.canvasRef && this.currentImage) {
+        this.canvasRef.style.cursor = (mouseEvent.ctrlKey || mouseEvent.metaKey) ? 'grab' : 'pointer';
+      }
+
       if (!isDragging || !this.canvasRef || !this.currentImage) return;
       e.stopPropagation();
 
-      const mouseEvent = e as MouseEvent;
       const distance = getDistance(
         startClientX,
         startClientY,
@@ -548,12 +653,25 @@ export class ImageZoomController extends BaseComponent {
     });
 
     this.on(this.canvasRef, 'mouseup', (e: Event) => {
+      const mouseEvent = e as MouseEvent;
+
+      // End panning: commit the final pan offset
+      if (this.isPanning && this.canvasRef) {
+        const dx = mouseEvent.clientX - this.panStartX;
+        const dy = mouseEvent.clientY - this.panStartY;
+        this.panOffsetX += dx;
+        this.panOffsetY += dy;
+        this.isPanning = false;
+        this.isCentered = false;
+        this.canvasRef.style.cursor = (mouseEvent.ctrlKey || mouseEvent.metaKey) ? 'grab' : 'pointer';
+        return;
+      }
+
       if (!isDragging || !this.canvasRef || !this.currentImage) return;
       e.stopPropagation();
       isDragging = false;
       this.canvasRef.style.cursor = 'pointer';
 
-      const mouseEvent = e as MouseEvent;
       const coords = getCanvasCoords(mouseEvent.clientX, mouseEvent.clientY);
 
       if (hasDraggedPastThreshold) {
@@ -577,6 +695,9 @@ export class ImageZoomController extends BaseComponent {
           height,
           isRegion: true,
         });
+      } else if (mouseEvent.shiftKey) {
+        // Shift+Click: sample pixel/area color and match dyes
+        sampleColorAtArea(coords.x, coords.y);
       } else {
         // Click (no drag) - emit canvas-clicked event for file upload
         const ctx = this.canvasRef.getContext('2d');
@@ -588,7 +709,19 @@ export class ImageZoomController extends BaseComponent {
       hasDraggedPastThreshold = false;
     });
 
-    this.on(this.canvasRef, 'mouseleave', () => {
+    this.on(this.canvasRef, 'mouseleave', (e: Event) => {
+      // End panning if mouse leaves canvas
+      if (this.isPanning && this.canvasRef) {
+        const mouseEvent = e as MouseEvent;
+        const dx = mouseEvent.clientX - this.panStartX;
+        const dy = mouseEvent.clientY - this.panStartY;
+        this.panOffsetX += dx;
+        this.panOffsetY += dy;
+        this.isPanning = false;
+        this.isCentered = false;
+        this.canvasRef.style.cursor = 'pointer';
+      }
+
       if (isDragging && this.canvasRef && this.currentImage) {
         isDragging = false;
         hasDraggedPastThreshold = false;
@@ -703,6 +836,22 @@ export class ImageZoomController extends BaseComponent {
   }
 
   /**
+   * Set the sample area size for Shift+Click pixel sampling
+   * @param size Area size (1, 2, 4, 8, or 16 — NxN pixels)
+   */
+  public setSampleAreaSize(size: number): void {
+    this.sampleAreaSize = Math.max(1, Math.min(16, size));
+  }
+
+  /**
+   * Reset pan offset to origin (called by fit/reset actions)
+   */
+  private resetPan(): void {
+    this.panOffsetX = 0;
+    this.panOffsetY = 0;
+  }
+
+  /**
    * Fit the entire image within the container (Fit to Screen)
    */
   public fitToScreen(): void {
@@ -720,6 +869,7 @@ export class ImageZoomController extends BaseComponent {
       const zoomY = (container.height / imageHeight) * 100;
       const newZoom = Math.min(zoomX, zoomY);
 
+      this.resetPan();
       this.updateZoomFn(Math.max(newZoom, 10), true);
     });
   }
@@ -738,6 +888,7 @@ export class ImageZoomController extends BaseComponent {
       if (imageWidth <= 0) return;
 
       const newZoom = (container.width / imageWidth) * 100;
+      this.resetPan();
       this.updateZoomFn(Math.max(Math.min(newZoom, 400), 10), true);
     });
   }

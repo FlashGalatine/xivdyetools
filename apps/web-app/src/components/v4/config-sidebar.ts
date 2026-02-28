@@ -146,6 +146,7 @@ export class ConfigSidebar extends BaseLitComponent {
     vibrancyBoost: true,
     maxColors: 8,
     dragThreshold: 5,
+    sampleAreaSize: 1,
     matchingMethod: 'oklab',
     preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
@@ -1144,6 +1145,31 @@ export class ConfigSidebar extends BaseLitComponent {
                 this.handleConfigChange('extractor', 'dragThreshold', e.detail.value)}
             ></v4-range-slider>
           </div>
+        </div>
+
+        <div class="config-group">
+          <div class="config-label">${LanguageService.t('config.sampleAreaSize')}</div>
+          <select
+            class="config-select"
+            .value=${String(this.extractorConfig.sampleAreaSize ?? 1)}
+            title=${LanguageService.t('config.sampleAreaSizeTooltip')}
+            @change=${(e: Event) => {
+              const value = parseInt((e.target as HTMLSelectElement).value, 10);
+              this.handleConfigChange('extractor', 'sampleAreaSize', value);
+            }}
+          >
+            ${[1, 2, 4, 8, 16].map(
+              (size) => html`
+                <option
+                  value=${size}
+                  ?selected=${(this.extractorConfig.sampleAreaSize ?? 1) === size}
+                >
+                  ${size}×${size}${size === 1 ? ` (${LanguageService.t('config.singlePixel')})` : ''}
+                </option>
+              `
+            )}
+          </select>
+          <div class="config-description">${LanguageService.t('config.sampleAreaSizeTooltip')}</div>
         </div>
 
         ${this.renderMatchingMethodSection('extractor', this.extractorConfig.matchingMethod)}

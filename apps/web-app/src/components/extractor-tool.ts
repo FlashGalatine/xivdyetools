@@ -18,7 +18,6 @@ import { ImageZoomController } from '@components/image-zoom-controller';
 import { RecentColorsPanel } from '@components/recent-colors-panel';
 import { DyeFilters, type DyeFilterConfig } from '@components/dye-filters';
 import { MarketBoard } from '@components/market-board';
-import { createDyeActionDropdown } from '@components/dye-action-dropdown';
 import {
   ColorService,
   ConfigController,
@@ -524,6 +523,12 @@ export class ExtractorTool extends BaseComponent {
     if (config.dragThreshold !== undefined && this.imageZoom) {
       this.imageZoom.setDragThreshold(config.dragThreshold);
       logger.info(`[ExtractorTool] setConfig: dragThreshold -> ${config.dragThreshold}`);
+    }
+
+    // Handle sampleAreaSize
+    if (config.sampleAreaSize !== undefined && this.imageZoom) {
+      this.imageZoom.setSampleAreaSize(config.sampleAreaSize);
+      logger.info(`[ExtractorTool] setConfig: sampleAreaSize -> ${config.sampleAreaSize}`);
     }
 
     // Handle matchingMethod - re-match colors when algorithm changes
@@ -1495,12 +1500,15 @@ export class ExtractorTool extends BaseComponent {
       this.dropZoneFileInput?.click();
     });
 
-    // Listen for image-sampled (drag to select region) to extract palette from region
+    // Listen for image-sampled (drag to select region, or Shift+Click pixel sample)
     this.onPanelEvent(canvasWrapper, 'image-sampled', (event: CustomEvent) => {
-      const { x, y, width, height, isRegion } = event.detail;
+      const { x, y, width, height, isRegion, hex, isPixelSample } = event.detail;
       if (isRegion) {
         // User selected a region - extract palette from that region
         void this.extractPaletteFromRegion(x, y, width, height);
+      } else if (isPixelSample && hex) {
+        // Shift+Click pixel sample - match single color to closest dyes
+        this.matchColor(hex);
       }
     });
 
@@ -2344,16 +2352,21 @@ export class ExtractorTool extends BaseComponent {
   }
 
   /**
-   * Render matched dye results
+   * Render matched dye results using v4 unified result cards
    */
   private renderMatchedResults(): void {
     if (!this.resultsContainer) return;
 
-    // Clear existing results (keep header)
-    const header = this.resultsContainer.querySelector('h3');
+    // Clear existing results
     clearContainer(this.resultsContainer);
-    if (header) {
-      this.resultsContainer.appendChild(header);
+    this.v4ResultCards = [];
+
+    // Hide empty state
+    this.showEmptyState(false);
+
+    // Update section title
+    if (this.resultsTitleElement) {
+      this.resultsTitleElement.textContent = `${LanguageService.t('matcher.matchedDyes')} (${this.matchedDyes.length})`;
     }
 
     if (this.matchedDyes.length === 0) {
@@ -2368,87 +2381,69 @@ export class ExtractorTool extends BaseComponent {
       return;
     }
 
-    const grid = this.createElement('div', { className: 'grid gap-3 sm:grid-cols-2' });
-
-    this.matchedDyes.forEach((dye, index) => {
-      const card = this.createDyeCard(dye, index);
-      grid.appendChild(card);
-    });
-
-    this.resultsContainer.appendChild(grid);
-  }
-
-  /**
-   * Create a dye result card
-   */
-  private createDyeCard(dye: DyeWithDistance, index: number): HTMLElement {
-    const card = this.createElement('div', {
-      className: 'group flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors',
+    // Create grid container matching palette results layout
+    const cardsGrid = this.createElement('div', {
+      className: 'extractor-results-grid',
       attributes: {
-        style: 'background: var(--theme-card-background); border: 1px solid var(--theme-border);',
+        style: `
+          display: flex;
+          flex-wrap: wrap;
+          gap: 16px;
+          justify-content: center;
+          --v4-result-card-width: 280px;
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     });
 
-    // Rank badge
-    const rank = this.createElement('span', {
-      className:
-        'w-6 h-6 flex items-center justify-center text-xs font-bold rounded-full flex-shrink-0',
-      textContent: String(index + 1),
-      attributes: {
-        style:
-          index === 0
-            ? 'background: var(--theme-primary); color: var(--theme-text-header);'
-            : 'background: var(--theme-background-secondary); color: var(--theme-text-muted);',
-      },
-    });
+    for (const dye of this.matchedDyes) {
+      // Build ResultCardData from DyeWithDistance
+      const cardData: ResultCardData = {
+        dye,
+        originalColor: this.selectedColor || dye.hex,
+        matchedColor: dye.hex,
+        deltaE: dye.distance,
+        matchingMethod: this.matchingMethod,
+        vendorCost: dye.cost,
+      };
 
-    // Color swatches (sampled + dye)
-    const swatches = this.createElement('div', { className: 'flex gap-1' });
-    if (this.selectedColor) {
-      const sampledSwatch = this.createElement('div', {
-        className: 'w-5 h-10 rounded-l',
-        attributes: { style: `background: ${this.selectedColor};`, title: 'Sampled color' },
-      });
-      swatches.appendChild(sampledSwatch);
+      // Add market price if available
+      if (this.showPrices && this.priceData.has(dye.itemID)) {
+        const price = this.priceData.get(dye.itemID)!;
+        cardData.price = price.currentMinPrice;
+        cardData.marketServer =
+          WorldService.getWorldName(price.worldId) ||
+          this.marketBoard?.getSelectedServer() ||
+          'Market';
+      }
+
+      // Create the v4-result-card element
+      const card = document.createElement('v4-result-card') as unknown as ResultCard;
+      card.data = cardData;
+      card.setAttribute('primary-opens-menu', 'true');
+
+      // Apply display options from config
+      card.showHex = this.displayOptions.showHex;
+      card.showRgb = this.displayOptions.showRgb;
+      card.showHsv = this.displayOptions.showHsv;
+      card.showLab = this.displayOptions.showLab;
+      card.showDeltaE = this.displayOptions.showDeltaE;
+      card.showPrice = this.displayOptions.showPrice && this.showPrices;
+      card.showAcquisition = this.displayOptions.showAcquisition;
+
+      // Listen for context actions
+      card.addEventListener('context-action', ((
+        e: CustomEvent<{ action: ContextAction; dye: Dye }>
+      ) => {
+        this.handleContextAction(e.detail.action, e.detail.dye);
+      }) as EventListener);
+
+      this.v4ResultCards.push(card);
+      cardsGrid.appendChild(card);
     }
-    const dyeSwatch = this.createElement('div', {
-      className: 'w-5 h-10 rounded-r',
-      attributes: { style: `background: ${dye.hex};`, title: dye.hex },
-    });
-    swatches.appendChild(dyeSwatch);
 
-    // Dye info
-    const info = this.createElement('div', { className: 'flex-1 min-w-0' });
-    const dyeName = LanguageService.getDyeName(dye.itemID) ?? dye.name;
-    info.innerHTML = `
-      <p class="text-sm font-medium truncate" style="color: var(--theme-text);">${dyeName}</p>
-      <p class="text-xs number" style="color: var(--theme-text-muted);">
-        Δ ${dye.distance.toFixed(1)}
-        ${this.showPrices && this.priceData.has(dye.itemID) ? ` · ${this.priceData.get(dye.itemID)!.currentMinPrice.toLocaleString()} gil` : ''}
-      </p>
-    `;
-
-    card.appendChild(rank);
-    card.appendChild(swatches);
-    card.appendChild(info);
-
-    // Action dropdown (visible on hover)
-    const dropdownContainer = this.createElement('div', {
-      className: 'opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0',
-    });
-    const actionDropdown = createDyeActionDropdown(dye);
-    dropdownContainer.appendChild(actionDropdown);
-    card.appendChild(dropdownContainer);
-
-    // Hover effect
-    this.on(card, 'mouseenter', () => {
-      card.style.background = 'var(--theme-card-hover)';
-    });
-    this.on(card, 'mouseleave', () => {
-      card.style.background = 'var(--theme-card-background)';
-    });
-
-    return card;
+    this.resultsContainer.appendChild(cardsGrid);
   }
 
   /**

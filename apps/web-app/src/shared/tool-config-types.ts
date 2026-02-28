@@ -13,6 +13,9 @@ import type { MatchingMethod } from '@xivdyetools/core';
 // Re-export MatchingMethod for convenience
 export type { MatchingMethod } from '@xivdyetools/core';
 
+/** Pixel sampling area size for Shift+Click (NxN pixels) */
+export type SampleAreaSize = 1 | 2 | 4 | 8 | 16;
+
 // ============================================================================
 // Global Configuration
 // ============================================================================
@@ -66,6 +69,8 @@ export interface ExtractorConfig {
   maxColors: number;
   /** Drag threshold in pixels for click vs drag differentiation (3-15, default 5) */
   dragThreshold: number;
+  /** Pixel sample area size for Shift+Click sampling (NxN, default 1) */
+  sampleAreaSize: SampleAreaSize;
   /** Color matching algorithm for finding closest dyes */
   matchingMethod: MatchingMethod;
   /** Prevent the same dye from appearing in multiple palette slots */
@@ -356,6 +361,7 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     vibrancyBoost: true,
     maxColors: 4,
     dragThreshold: 5,
+    sampleAreaSize: 1,
     matchingMethod: 'oklab',
     preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
