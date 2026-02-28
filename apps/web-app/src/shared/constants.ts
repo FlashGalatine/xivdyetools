@@ -25,10 +25,6 @@ export const APP_DESCRIPTION =
 // FFXIV Constants
 // ============================================================================
 
-export const FFXIV_DYES_COUNT = 125;
-export const FFXIV_DATA_CENTER_COUNT = 6;
-export const FFXIV_SERVERS_PER_DATA_CENTER = 8;
-
 /**
  * Market Board price category definitions
  * Defines which dye acquisitions belong to which category
@@ -220,24 +216,6 @@ export const STORAGE_KEYS = {
 } as const;
 
 // ============================================================================
-// API Configuration
-// ============================================================================
-
-export const UNIVERSALIS_API_BASE = 'https://universalis.app/api/v2';
-export const UNIVERSALIS_API_TIMEOUT = 5000; // milliseconds
-export const UNIVERSALIS_API_RETRY_COUNT = 3;
-export const UNIVERSALIS_API_RETRY_DELAY = 1000; // milliseconds
-
-/**
- * Cache configuration for API responses
- */
-export const API_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-export const API_DEBOUNCE_DELAY = 500; // milliseconds
-export const API_CACHE_VERSION = '1.0.0'; // Increment to invalidate all cached data
-export const API_MAX_RESPONSE_SIZE = 1024 * 1024; // 1 MB maximum response size
-export const API_RATE_LIMIT_DELAY = 200; // milliseconds between requests
-
-// ============================================================================
 // Color Conversion Constraints
 // ============================================================================
 
@@ -257,11 +235,6 @@ export const SATURATION_MAX = 100;
 export const VALUE_MIN = 0;
 export const VALUE_MAX = 100;
 
-/**
- * Color distance calculation mode
- */
-export const COLOR_DISTANCE_MAX = Math.sqrt(255 ** 2 + 255 ** 2 + 255 ** 2); // ~441.67
-
 // ============================================================================
 // UI Configuration
 // ============================================================================
@@ -274,35 +247,6 @@ export const CARD_CLASSES =
 
 export const CARD_CLASSES_COMPACT =
   'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4';
-
-/**
- * Color Matcher image sampling configurations
- */
-export const SAMPLE_SIZE_MIN = 1;
-export const SAMPLE_SIZE_MAX = 64;
-export const SAMPLE_SIZE_DEFAULT = 16;
-
-/**
- * Canvas zoom levels
- */
-export const ZOOM_MIN = 0.5;
-export const ZOOM_MAX = 4;
-export const ZOOM_DEFAULT = 1;
-export const ZOOM_STEP = 0.25;
-
-/**
- * Dye Comparison chart dimensions
- */
-export const CHART_WIDTH = 1000;
-export const CHART_HEIGHT = 750;
-export const CHART_RESOLUTION_REDUCTION = 2; // Reduces pixel iterations
-
-/**
- * Harmony color wheel configuration
- */
-export const COLOR_WHEEL_RADIUS = 150;
-export const COLOR_WHEEL_CENTER_X = 250;
-export const COLOR_WHEEL_CENTER_Y = 250;
 
 /**
  * Maximum dyes selectable in comparisons
@@ -356,17 +300,6 @@ export const ERROR_MESSAGES = {
 } as const;
 
 // ============================================================================
-// Success Messages
-// ============================================================================
-
-export const SUCCESS_MESSAGES = {
-  COPIED_TO_CLIPBOARD: 'Copied to clipboard!',
-  DATA_EXPORTED: 'Data exported successfully!',
-  SETTINGS_SAVED: 'Settings saved successfully!',
-  THEME_CHANGED: 'Theme changed successfully!',
-} as const;
-
-// ============================================================================
 // Feature Flags
 // ============================================================================
 
@@ -407,14 +340,4 @@ export const DEBOUNCE_DELAYS = {
   API_CALL: 500,
   RESIZE: 200,
   SCROLL: 150,
-} as const;
-
-// ============================================================================
-// Animation Durations (milliseconds)
-// ============================================================================
-
-export const ANIMATION_DURATIONS = {
-  FAST: 100,
-  NORMAL: 300,
-  SLOW: 500,
 } as const;

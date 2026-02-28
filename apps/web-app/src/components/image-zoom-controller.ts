@@ -450,7 +450,11 @@ export class ImageZoomController extends BaseComponent {
       const keyEvent = e as KeyboardEvent;
 
       // Ctrl/Cmd pressed: show grab cursor to hint panning is available
-      if ((keyEvent.key === 'Control' || keyEvent.key === 'Meta') && this.canvasRef && this.currentImage) {
+      if (
+        (keyEvent.key === 'Control' || keyEvent.key === 'Meta') &&
+        this.canvasRef &&
+        this.currentImage
+      ) {
         this.canvasRef.style.cursor = 'grab';
       }
 
@@ -474,7 +478,11 @@ export class ImageZoomController extends BaseComponent {
     // Ctrl/Cmd released: restore default cursor
     this.on(document, 'keyup', (e: Event) => {
       const keyEvent = e as KeyboardEvent;
-      if ((keyEvent.key === 'Control' || keyEvent.key === 'Meta') && this.canvasRef && !this.isPanning) {
+      if (
+        (keyEvent.key === 'Control' || keyEvent.key === 'Meta') &&
+        this.canvasRef &&
+        !this.isPanning
+      ) {
         this.canvasRef.style.cursor = 'pointer';
       }
     });
@@ -533,7 +541,9 @@ export class ImageZoomController extends BaseComponent {
       const data = imageData.data;
       const pixelCount = w * h;
 
-      let rSum = 0, gSum = 0, bSum = 0;
+      let rSum = 0,
+        gSum = 0,
+        bSum = 0;
       for (let i = 0; i < data.length; i += 4) {
         rSum += data[i];
         gSum += data[i + 1];
@@ -544,10 +554,12 @@ export class ImageZoomController extends BaseComponent {
       const g = Math.round(gSum / pixelCount);
       const b = Math.round(bSum / pixelCount);
 
-      const hex = '#' + [r, g, b]
-        .map((x) => x.toString(16).padStart(2, '0'))
-        .join('')
-        .toUpperCase();
+      const hex =
+        '#' +
+        [r, g, b]
+          .map((x) => x.toString(16).padStart(2, '0'))
+          .join('')
+          .toUpperCase();
 
       // Draw a visual indicator of the sampled area on the canvas
       if (size > 1) {
@@ -622,7 +634,7 @@ export class ImageZoomController extends BaseComponent {
 
       // Update cursor hint when Ctrl is held (even without dragging)
       if (!isDragging && this.canvasRef && this.currentImage) {
-        this.canvasRef.style.cursor = (mouseEvent.ctrlKey || mouseEvent.metaKey) ? 'grab' : 'pointer';
+        this.canvasRef.style.cursor = mouseEvent.ctrlKey || mouseEvent.metaKey ? 'grab' : 'pointer';
       }
 
       if (!isDragging || !this.canvasRef || !this.currentImage) return;
@@ -663,7 +675,7 @@ export class ImageZoomController extends BaseComponent {
         this.panOffsetY += dy;
         this.isPanning = false;
         this.isCentered = false;
-        this.canvasRef.style.cursor = (mouseEvent.ctrlKey || mouseEvent.metaKey) ? 'grab' : 'pointer';
+        this.canvasRef.style.cursor = mouseEvent.ctrlKey || mouseEvent.metaKey ? 'grab' : 'pointer';
         return;
       }
 

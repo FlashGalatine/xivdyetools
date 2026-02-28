@@ -89,4 +89,3 @@ export const ICON_EMPTY_INBOX = `<svg viewBox="0 0 24 24" fill="none" stroke="cu
   <path d="M3 9l9 6 9-6"/>
   <path d="M12 15v-3" stroke-dasharray="2 2"/>
 </svg>`;
-

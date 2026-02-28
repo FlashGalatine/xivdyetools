@@ -1164,7 +1164,9 @@ export class ConfigSidebar extends BaseLitComponent {
                   value=${size}
                   ?selected=${(this.extractorConfig.sampleAreaSize ?? 1) === size}
                 >
-                  ${size}×${size}${size === 1 ? ` (${LanguageService.t('config.singlePixel')})` : ''}
+                  ${size}×${size}${size === 1
+                    ? ` (${LanguageService.t('config.singlePixel')})`
+                    : ''}
                 </option>
               `
             )}

@@ -140,9 +140,6 @@ export class PresetTool extends BaseComponent {
   private mobileCollapsiblePanels: CollapsiblePanel[] = [];
   private detailView: PresetDetailView | null = null;
 
-  // Detail view state
-  private selectedPreset: UnifiedPreset | null = null;
-
   // DOM References
   private categoryContainer: HTMLElement | null = null;
   private sortContainer: HTMLElement | null = null;
@@ -291,8 +288,6 @@ export class PresetTool extends BaseComponent {
     this.presets = [];
     this.featuredPresets = [];
     this.userSubmissions = [];
-    this.selectedPreset = null;
-
     super.destroy();
     logger.info('[PresetTool] Destroyed');
   }
@@ -424,23 +419,6 @@ export class PresetTool extends BaseComponent {
       accountContent.appendChild(this.authSectionContainer);
       this.renderAuthSection();
     }
-  }
-
-  /**
-   * Create a section with label
-   */
-  private createSection(label: string): HTMLElement {
-    const section = this.createElement('div', {
-      className: 'p-4 border-b',
-      attributes: { style: 'border-color: var(--theme-border);' },
-    });
-    const sectionLabel = this.createElement('h3', {
-      className: 'text-sm font-semibold uppercase tracking-wider mb-3',
-      textContent: label,
-      attributes: { style: 'color: var(--theme-text-muted);' },
-    });
-    section.appendChild(sectionLabel);
-    return section;
   }
 
   /**
@@ -1279,8 +1257,6 @@ export class PresetTool extends BaseComponent {
    * Show detail view for a preset
    */
   private showDetailView(preset: UnifiedPreset): void {
-    this.selectedPreset = preset;
-
     // Clean up existing detail view if any
     this.detailView?.destroy();
     this.detailView = null;
@@ -1309,8 +1285,6 @@ export class PresetTool extends BaseComponent {
    * Hide detail view and return to grid
    */
   private hideDetailView(): void {
-    this.selectedPreset = null;
-
     // Clean up detail view
     this.detailView?.destroy();
     this.detailView = null;

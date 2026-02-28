@@ -16,7 +16,7 @@ import { ImageUploadDisplay } from '@components/image-upload-display';
 import { ColorPickerDisplay } from '@components/color-picker-display';
 import { ImageZoomController } from '@components/image-zoom-controller';
 import { RecentColorsPanel } from '@components/recent-colors-panel';
-import { DyeFilters, type DyeFilterConfig } from '@components/dye-filters';
+import { DyeFilters } from '@components/dye-filters';
 import { MarketBoard } from '@components/market-board';
 import {
   ColorService,
@@ -102,8 +102,6 @@ export class ExtractorTool extends BaseComponent {
   private paletteColorCount: number = 4;
   private vibrancyBoost: boolean = true;
   private matchedDyes: DyeWithDistance[] = [];
-  private filterConfig: DyeFilterConfig | null = null;
-
   // WEB-REF-003 Phase 4: MarketBoardService (shared price cache with race condition protection)
   private marketBoardService: MarketBoardService;
 
@@ -115,7 +113,6 @@ export class ExtractorTool extends BaseComponent {
     return this.marketBoardService.getAllPrices();
   }
   private currentImage: HTMLImageElement | null = null;
-  private currentImageDataUrl: string | null = null;
   private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
   private matchingMethod: MatchingMethod = 'oklab';
   private preventDuplicates: boolean = true;
@@ -226,7 +223,6 @@ export class ExtractorTool extends BaseComponent {
     this.onPanelEvent(leftPanel, 'image-loaded', (event: CustomEvent) => {
       const { image, dataUrl } = event.detail;
       this.currentImage = image;
-      this.currentImageDataUrl = dataUrl;
 
       // Persist image to storage if it's small enough
       if (dataUrl && dataUrl.length < MAX_IMAGE_STORAGE_SIZE) {
@@ -392,7 +388,6 @@ export class ExtractorTool extends BaseComponent {
 
     img.onload = () => {
       this.currentImage = img;
-      this.currentImageDataUrl = dataUrl;
 
       // Hide drop content, show canvas
       if (this.dropContent) {
@@ -619,23 +614,6 @@ export class ExtractorTool extends BaseComponent {
   }
 
   /**
-   * Create a section with label
-   */
-  private createSection(label: string): HTMLElement {
-    const section = this.createElement('div', {
-      className: 'p-4 border-b',
-      attributes: { style: 'border-color: var(--theme-border);' },
-    });
-    const sectionLabel = this.createElement('h3', {
-      className: 'text-sm font-semibold uppercase tracking-wider mb-3',
-      textContent: label,
-      attributes: { style: 'color: var(--theme-text-muted);' },
-    });
-    section.appendChild(sectionLabel);
-    return section;
-  }
-
-  /**
    * Render image upload section
    */
   private renderImageUpload(container: HTMLElement): void {
@@ -827,8 +805,7 @@ export class ExtractorTool extends BaseComponent {
     const refs = buildFiltersPanel(this, container, {
       storageKey: 'matcher_filters',
       storageKeyPrefix: 'v3_matcher',
-      onFilterChange: (filters) => {
-        this.filterConfig = filters;
+      onFilterChange: (_filters) => {
         if (this.selectedColor) {
           this.matchColor(this.selectedColor);
         }
@@ -1330,7 +1307,6 @@ export class ExtractorTool extends BaseComponent {
       const img = new Image();
       img.onload = () => {
         this.currentImage = img;
-        this.currentImageDataUrl = dataUrl;
 
         // Persist image to storage if it's small enough
         if (dataUrl && dataUrl.length < MAX_IMAGE_STORAGE_SIZE) {
@@ -1415,7 +1391,6 @@ export class ExtractorTool extends BaseComponent {
   private clearImage(): void {
     // Clear image state
     this.currentImage = null;
-    this.currentImageDataUrl = null;
 
     // Clear from storage
     StorageService.removeItem(STORAGE_KEYS.imageDataUrl);
@@ -1541,20 +1516,6 @@ export class ExtractorTool extends BaseComponent {
 
     this.emptyStateContainer.appendChild(iconSpan);
     this.emptyStateContainer.appendChild(text);
-  }
-
-  /**
-   * Render recent colors panel
-   */
-  private renderRecentColors(container: HTMLElement): void {
-    this.recentColors = new RecentColorsPanel(container, {
-      onColorSelected: (hex) => {
-        this.matchColor(hex);
-      },
-      storageKey: 'v3_matcher_recent',
-      maxColors: 10,
-    });
-    this.recentColors.init();
   }
 
   /**
@@ -1908,8 +1869,7 @@ export class ExtractorTool extends BaseComponent {
     this.mobileDyeFilters = new DyeFilters(filtersContainer, {
       storageKeyPrefix: 'v3_matcher',
       hideHeader: true, // We have our own accordion header
-      onFilterChange: (filters) => {
-        this.filterConfig = filters;
+      onFilterChange: (_filters) => {
         if (this.selectedColor) {
           this.matchColor(this.selectedColor);
         }
@@ -2015,7 +1975,6 @@ export class ExtractorTool extends BaseComponent {
     this.onPanelEvent(uploadContainer, 'image-loaded', (event: CustomEvent) => {
       const { image, dataUrl } = event.detail;
       this.currentImage = image;
-      this.currentImageDataUrl = dataUrl;
 
       // Persist image to storage if it's small enough
       if (dataUrl && dataUrl.length < MAX_IMAGE_STORAGE_SIZE) {

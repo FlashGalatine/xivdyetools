@@ -307,7 +307,6 @@ export class TutorialService {
   };
 
   private static listeners: Set<(state: TutorialState) => void> = new Set();
-  private static spotlightElement: HTMLElement | null = null;
 
   // ============================================================================
   // State Management

@@ -76,8 +76,6 @@ export class TutorialSpotlight extends BaseComponent {
   private spotlight: HTMLElement | null = null;
   private tooltip: HTMLElement | null = null;
   private currentStep: TutorialStep | null = null;
-  private currentStepIndex = 0;
-  private totalSteps = 0;
   private unsubscribe: (() => void) | null = null;
   private resizeObserver: ResizeObserver | null = null;
 
@@ -223,8 +221,6 @@ export class TutorialSpotlight extends BaseComponent {
 
   private showStep(step: TutorialStep, stepIndex: number, totalSteps: number): void {
     this.currentStep = step;
-    this.currentStepIndex = stepIndex;
-    this.totalSteps = totalSteps;
 
     // Find target element (supports Shadow DOM traversal)
     const target = querySelectorDeep(step.target);

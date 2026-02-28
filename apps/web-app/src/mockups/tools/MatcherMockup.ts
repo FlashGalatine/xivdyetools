@@ -57,7 +57,6 @@ export class MatcherMockup extends BaseComponent {
   private options: MatcherMockupOptions;
   private selectedColor: string = '#E85A5A';
   private sampleSize: number = 5;
-  private paletteMode: boolean = false;
   private filtersPanel: CollapsiblePanel | null = null;
   private marketPanel: CollapsiblePanel | null = null;
 

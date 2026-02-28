@@ -23,7 +23,6 @@ import { showPresetEditForm } from './preset-edit-form';
  */
 export class MySubmissionsPanel extends BaseComponent {
   private submissions: CommunityPreset[] = [];
-  private isLoading = false;
   private expandedPresetId: string | null = null;
 
   constructor(container: HTMLElement) {
@@ -105,7 +104,6 @@ export class MySubmissionsPanel extends BaseComponent {
    * Load user's submissions from API
    */
   private async loadSubmissions(): Promise<void> {
-    this.isLoading = true;
     this.updateListContainer(this.renderLoadingState());
 
     try {
@@ -116,7 +114,7 @@ export class MySubmissionsPanel extends BaseComponent {
       console.error('Failed to load submissions:', error);
       this.updateListContainer(this.renderErrorState());
     } finally {
-      this.isLoading = false;
+      // loading complete
     }
   }
 

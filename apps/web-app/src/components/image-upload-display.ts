@@ -20,7 +20,6 @@ import { ICON_UPLOAD, ICON_CAMERA, ICON_HINT, ICON_LOCK } from '@shared/ui-icons
 export class ImageUploadDisplay extends BaseComponent {
   private uploadedImage: HTMLImageElement | null = null;
   private canvas: HTMLCanvasElement | null = null;
-  private isDragging: boolean = false;
 
   constructor(container: HTMLElement) {
     super(container);
@@ -238,7 +237,6 @@ export class ImageUploadDisplay extends BaseComponent {
           'bg-blue-50',
           'dark:bg-blue-900/10'
         );
-        this.isDragging = true;
       });
 
       this.on(dropZone, 'dragleave', () => {
@@ -248,7 +246,6 @@ export class ImageUploadDisplay extends BaseComponent {
           'bg-blue-50',
           'dark:bg-blue-900/10'
         );
-        this.isDragging = false;
       });
 
       this.on(dropZone, 'drop', (e: Event) => {
@@ -259,7 +256,6 @@ export class ImageUploadDisplay extends BaseComponent {
           'bg-blue-50',
           'dark:bg-blue-900/10'
         );
-        this.isDragging = false;
 
         const dragEvent = e as DragEvent;
         if (dragEvent.dataTransfer?.files) {

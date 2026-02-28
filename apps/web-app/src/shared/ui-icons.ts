@@ -55,7 +55,6 @@ export const ICON_EYEDROPPER = `<svg viewBox="0 0 24 24" fill="none" stroke="cur
   <line x1="11" y1="14.5" x2="9" y2="16.5" />
 </svg>`;
 
-
 /**
  * Hint icon - Light bulb
  */
@@ -65,7 +64,6 @@ export const ICON_HINT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentCo
   <line x1="10.5" y1="19" x2="13.5" y2="19" />
   <circle cx="12" cy="9" r="1.5" fill="currentColor" stroke="none" opacity="0.5" />
 </svg>`;
-
 
 /**
  * Crystal icon - FFXIV-style gem (from monorepo crystal.svg)
@@ -245,7 +243,6 @@ export const ICON_MUSIC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentC
   <path d="M12 18V2l7 4"/>
 </svg>`;
 
-
 /**
  * Stairs icon - Staircase/steps (for interpolation)
  */
@@ -330,7 +327,6 @@ export const ICON_GLOBE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentC
   <line x1="2" y1="12" x2="22" y2="12"/>
   <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" fill="none"/>
 </svg>`;
-
 
 /**
  * Link icon - Chain link for copy/share URLs
@@ -440,7 +436,6 @@ export const ICON_FOLDER = `<svg viewBox="0 0 24 24" fill="none" stroke="current
   <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
 </svg>`;
 
-
 /**
  * Clipboard/paste icon - For paste from clipboard actions
  */
@@ -448,5 +443,3 @@ export const ICON_CLIPBOARD = `<svg viewBox="0 0 24 24" fill="none" stroke="curr
   <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
   <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
 </svg>`;
-
-

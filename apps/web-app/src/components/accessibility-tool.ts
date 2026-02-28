@@ -531,26 +531,6 @@ export class AccessibilityTool extends BaseComponent {
   }
 
   /**
-   * Create a section with label
-   */
-  private createSection(label: string): HTMLElement {
-    const section = this.createElement('div', {
-      className: 'p-4 border-b',
-      attributes: { style: 'border-color: var(--theme-border);' },
-    });
-    const sectionLabel = this.createElement('h3', {
-      className: 'text-sm font-semibold uppercase tracking-wider mb-3',
-      textContent: label,
-      attributes: { style: 'color: var(--theme-text-muted);' },
-    });
-    section.appendChild(sectionLabel);
-    return section;
-  }
-
-  /**
-   * Create a header for right panel sections
-   */
-  /**
    * Create a header for right panel sections
    */
   private createHeader(text: string): HTMLElement {

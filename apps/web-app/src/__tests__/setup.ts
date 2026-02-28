@@ -57,7 +57,6 @@ vi.mock('@shared/logger', () => {
     logger: mockLogger,
     perf: mockPerf,
     __setTestEnvironment: vi.fn(),
-    initErrorTracking: vi.fn(),
   };
 });
 

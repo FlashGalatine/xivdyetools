@@ -480,24 +480,6 @@ export class MarketBoard extends BaseComponent {
   }
 
   /**
-   * Fetch price for a dye using current server settings
-   * @deprecated Use fetchPricesForDyes for batch fetching (better performance)
-   */
-  async fetchPrice(dye: Dye): Promise<PriceData | null> {
-    if (!this.showPrices || !this.shouldFetchPrice(dye)) {
-      return null;
-    }
-
-    try {
-      const prices = await this.service.fetchPricesForDyes([dye]);
-      return prices.get(dye.itemID) ?? null;
-    } catch (error) {
-      logger.error(`Failed to fetch price for ${dye.name}:`, error);
-      return null;
-    }
-  }
-
-  /**
    * Fetch prices for multiple dyes using batch API
    * Delegates to MarketBoardService with request versioning for race condition protection
    *
@@ -692,15 +674,5 @@ export class MarketBoard extends BaseComponent {
    */
   getPriceCategories(): PriceCategorySettings {
     return this.service.getPriceCategories();
-  }
-
-  /**
-   * Resolve a Universalis worldId to world name
-   * @param worldId - Universalis world ID
-   * @returns World name or undefined if not found
-   * @deprecated Use MarketBoardService.getWorldNameForPrice() or WorldService.getWorldName() directly
-   */
-  getWorldName(worldId: number | undefined): string | undefined {
-    return WorldService.getWorldName(worldId);
   }
 }

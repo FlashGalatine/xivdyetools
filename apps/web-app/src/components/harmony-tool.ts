@@ -18,7 +18,7 @@ import { MarketBoard } from '@components/market-board';
 import { HarmonyType } from '@components/harmony-type';
 import { HarmonyResultPanel } from '@components/harmony-result-panel';
 import { ColorWheelDisplay } from '@components/color-wheel-display';
-import { PaletteExporter, type PaletteData } from '@components/palette-exporter';
+import { PaletteExporter } from '@components/palette-exporter';
 import {
   ColorService,
   dyeService,
@@ -70,11 +70,6 @@ export interface HarmonyToolOptions {
   rightPanel: HTMLElement;
   drawerContent?: HTMLElement | null;
 }
-
-/**
- * Suggestions mode type
- */
-type SuggestionsMode = 'simple' | 'expanded';
 
 // WEB-REF-003 Phase 2: Shared panel builder result types
 interface BaseDyePanelRefs {
@@ -132,7 +127,6 @@ export class HarmonyTool extends BaseComponent {
   private selectedDye: Dye | null = null;
   private selectedHarmonyType: string;
   private companionDyesCount: number;
-  private suggestionsMode: SuggestionsMode;
   private filterConfig: DyeFilterConfig | null = null;
   /** Tracks user-swapped dyes per harmony slot (harmonyIndex -> swapped dye) */
   private swappedDyes: Map<number, Dye> = new Map();
@@ -202,9 +196,6 @@ export class HarmonyTool extends BaseComponent {
       StorageService.getItem<string>(STORAGE_KEYS.harmonyType) ?? 'complementary';
     this.companionDyesCount =
       StorageService.getItem<number>(STORAGE_KEYS.companionCount) ?? COMPANION_DYES_DEFAULT;
-    this.suggestionsMode =
-      StorageService.getItem<SuggestionsMode>(STORAGE_KEYS.suggestionsMode) ?? 'simple';
-
     // Load persisted selected dye
     const savedDyeId = StorageService.getItem<number>(STORAGE_KEYS.selectedDyeId);
     if (savedDyeId !== null) {
@@ -928,23 +919,6 @@ export class HarmonyTool extends BaseComponent {
       this.renderCompanionSlider(companionSection);
       contentContainer.appendChild(companionSection);
     }
-  }
-
-  /**
-   * Create a section with label
-   */
-  private createSection(label: string): HTMLElement {
-    const section = this.createElement('div', {
-      className: 'p-4 border-b',
-      attributes: { style: 'border-color: var(--theme-border);' },
-    });
-    const sectionLabel = this.createElement('h3', {
-      className: 'text-sm font-semibold uppercase tracking-wider mb-3',
-      textContent: label,
-      attributes: { style: 'color: var(--theme-text-muted);' },
-    });
-    section.appendChild(sectionLabel);
-    return section;
   }
 
   /**
@@ -1779,31 +1753,6 @@ export class HarmonyTool extends BaseComponent {
   // ============================================================================
   // Export Functionality
   // ============================================================================
-
-  private handleExport(): void {
-    if (!this.selectedDye) {
-      logger.warn('[HarmonyTool] No dye selected for export');
-      return;
-    }
-
-    const matchedDyes = this.getMatchedDyesForCurrentHarmony();
-    const paletteData: PaletteData = {
-      base: this.selectedDye,
-      groups: {
-        [this.selectedHarmonyType]: matchedDyes,
-      },
-      metadata: {
-        harmonyType: this.selectedHarmonyType,
-        generatedAt: new Date().toISOString(),
-      },
-    };
-
-    // For now, just log - full export implementation deferred
-    logger.info('[HarmonyTool] Export palette:', paletteData);
-
-    // TODO: Integrate PaletteExporter component
-    // this.paletteExporter?.exportPalette(paletteData);
-  }
 
   // ============================================================================
   // Share Functionality

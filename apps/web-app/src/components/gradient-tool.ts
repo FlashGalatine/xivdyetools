@@ -609,34 +609,6 @@ export class GradientTool extends BaseComponent {
   }
 
   /**
-   * Create a section with label
-   */
-  private createSection(label: string): HTMLElement {
-    const section = this.createElement('div', {
-      className: 'p-4 border-b',
-      attributes: { style: 'border-color: var(--theme-border);' },
-    });
-    const sectionLabel = this.createElement('h3', {
-      className: 'text-sm font-semibold uppercase tracking-wider mb-3',
-      textContent: label,
-      attributes: { style: 'color: var(--theme-text-muted);' },
-    });
-    section.appendChild(sectionLabel);
-    return section;
-  }
-
-  /**
-   * Create a header for right panel sections
-   */
-  private createHeader(text: string): HTMLElement {
-    return this.createElement('h3', {
-      className: 'text-sm font-semibold uppercase tracking-wider mb-3',
-      textContent: text,
-      attributes: { style: 'color: var(--theme-text-muted);' },
-    });
-  }
-
-  /**
    * Render consolidated dye selector section (select 2 dyes: start and end)
    */
   private renderDyeSelector(container: HTMLElement): void {
@@ -1842,14 +1814,6 @@ export class GradientTool extends BaseComponent {
       StorageService.setItem(storageKey, existing);
     }
     ToastService.success(LanguageService.t('resultCard.addedTo'));
-  }
-
-  /**
-   * Helper to convert hex to RGB string
-   */
-  private hexToRgbString(hex: string): string {
-    const rgb = ColorService.hexToRgb(hex);
-    return `${rgb.r},${rgb.g},${rgb.b}`;
   }
 
   /**

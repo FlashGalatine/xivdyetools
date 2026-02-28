@@ -109,12 +109,6 @@ export class PresetDetail extends BaseLitComponent {
   private priceData: Map<number, PriceData> = new Map();
 
   /**
-   * Whether prices are currently being fetched
-   */
-  @state()
-  private isFetchingPrices: boolean = false;
-
-  /**
    * Config controller instance
    */
   private configController: ConfigController | null = null;
@@ -525,8 +519,6 @@ export class PresetDetail extends BaseLitComponent {
       return;
     }
 
-    this.isFetchingPrices = true;
-
     try {
       // Fetch prices via MarketBoardService (handles race conditions internally)
       const prices = await this.marketBoardService.fetchPricesForDyes(dyes);
@@ -540,7 +532,7 @@ export class PresetDetail extends BaseLitComponent {
     } catch (error) {
       console.error('[v4-preset-detail] Failed to fetch prices:', error);
     } finally {
-      this.isFetchingPrices = false;
+      // fetch complete
     }
   }
 

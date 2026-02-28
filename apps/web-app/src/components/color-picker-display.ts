@@ -20,7 +20,6 @@ import '@shared/browser-api-types';
  */
 export class ColorPickerDisplay extends BaseComponent {
   private selectedColor: string = '#FF0000';
-  private eyedropperMode: boolean = false;
   private eyedropperCanvas: HTMLCanvasElement | null = null;
 
   constructor(container: HTMLElement, initialColor: string = '#FF0000') {

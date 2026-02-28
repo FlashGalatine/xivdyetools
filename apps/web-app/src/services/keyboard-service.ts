@@ -38,7 +38,6 @@ const TOOL_KEY_MAP: Record<string, string> = {
  * Follows the ThemeService/LanguageService singleton pattern
  */
 export class KeyboardService {
-  private static isInitialized = false;
   private static boundHandler: ((e: KeyboardEvent) => void) | null = null;
 
   /**
@@ -63,7 +62,6 @@ export class KeyboardService {
     this.boundHandler = this.handleKeyDown.bind(this);
     document.addEventListener('keydown', this.boundHandler);
 
-    this.isInitialized = true;
     logger.info('KeyboardService initialized');
   }
 
@@ -75,7 +73,6 @@ export class KeyboardService {
       document.removeEventListener('keydown', this.boundHandler);
       this.boundHandler = null;
     }
-    this.isInitialized = false;
   }
 
   /**

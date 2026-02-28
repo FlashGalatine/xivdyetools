@@ -18,10 +18,8 @@ export interface DyeCardOptions {
  * Does not extend BaseComponent as it's a stateless renderer
  */
 export class DyeCardRenderer {
-  private container: HTMLElement;
-
-  constructor(container: HTMLElement) {
-    this.container = container;
+  constructor(_container: HTMLElement) {
+    // container parameter kept for API compatibility
   }
 
   /**

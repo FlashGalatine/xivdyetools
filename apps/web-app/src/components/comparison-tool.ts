@@ -23,7 +23,6 @@ import {
   LanguageService,
   MarketBoardService,
   StorageService,
-  WorldService,
 } from '@services/index';
 import { ICON_TOOL_COMPARISON } from '@shared/tool-icons';
 import { ICON_BEAKER, ICON_SETTINGS, ICON_MARKET } from '@shared/ui-icons';
@@ -468,23 +467,6 @@ export class ComparisonTool extends BaseComponent {
   }
 
   /**
-   * Create a section with label
-   */
-  private createSection(label: string): HTMLElement {
-    const section = this.createElement('div', {
-      className: 'p-4 border-b',
-      attributes: { style: 'border-color: var(--theme-border);' },
-    });
-    const sectionLabel = this.createElement('h3', {
-      className: 'text-sm font-semibold uppercase tracking-wider mb-3',
-      textContent: label,
-      attributes: { style: 'color: var(--theme-text-muted);' },
-    });
-    section.appendChild(sectionLabel);
-    return section;
-  }
-
-  /**
    * Create a header for right panel sections (styled like mock-up with golden underline)
    */
   private createHeader(text: string): HTMLElement {
@@ -800,61 +782,6 @@ export class ComparisonTool extends BaseComponent {
     row.appendChild(toggleContainer);
 
     return row;
-  }
-
-  /**
-   * Populate the server dropdown with data centers and worlds
-   */
-  private populateServerDropdown(select: HTMLSelectElement): void {
-    const dataCenters = WorldService.getAllDataCenters();
-    const worlds = WorldService.getAllWorlds();
-    const marketBoardService = MarketBoardService.getInstance();
-    const currentServer = marketBoardService.getSelectedServer();
-
-    if (dataCenters.length === 0) {
-      const option = this.createElement('option', {
-        textContent: 'Loading servers...',
-        attributes: { value: 'Crystal' },
-      });
-      select.appendChild(option);
-      return;
-    }
-
-    // Sort data centers by region then name
-    const sortedDCs = [...dataCenters].sort((a, b) => {
-      if (a.region !== b.region) return a.region.localeCompare(b.region);
-      return a.name.localeCompare(b.name);
-    });
-
-    for (const dc of sortedDCs) {
-      const optgroup = this.createElement('optgroup', {
-        attributes: { label: `${dc.name} (${dc.region})` },
-      }) as HTMLOptGroupElement;
-
-      // Data center option (All Worlds)
-      const dcOption = this.createElement('option', {
-        textContent: `${dc.name} - All Worlds`,
-        attributes: { value: dc.name },
-      }) as HTMLOptionElement;
-      if (currentServer === dc.name) dcOption.selected = true;
-      optgroup.appendChild(dcOption);
-
-      // Individual world options
-      const dcWorlds = worlds
-        .filter((w) => dc.worlds.includes(w.id))
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-      for (const world of dcWorlds) {
-        const worldOption = this.createElement('option', {
-          textContent: `  ${world.name}`,
-          attributes: { value: world.name },
-        }) as HTMLOptionElement;
-        if (currentServer === world.name) worldOption.selected = true;
-        optgroup.appendChild(worldOption);
-      }
-
-      select.appendChild(optgroup);
-    }
   }
 
   // ============================================================================
