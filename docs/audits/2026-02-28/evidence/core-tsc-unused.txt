@@ -1,0 +1,9 @@
+# Core Package: TypeScript Unused Locals/Params Check
+
+**Command:** `npx tsc --noEmit --noUnusedLocals --noUnusedParameters` (from `packages/core/`)  
+**Date:** 2026-03-01
+
+## Result  
+**Clean — zero errors.**
+
+No unused local variables or unused parameters detected.

@@ -1,0 +1,58 @@
+# Core Package: Stale Files (Not Modified in 6+ Months)
+
+**Command:** `git log --all --diff-filter=M --since="6 months ago"` compared against all source files  
+**Date:** 2026-03-01
+
+## Files NOT Modified in Last 6 Months
+
+### Source Files
+- packages/core/src/constants/index.ts
+- packages/core/src/services/color/ColorAccessibility.ts
+- packages/core/src/services/color/ColorblindnessSimulator.ts
+- packages/core/src/services/color/ColorManipulator.ts
+- packages/core/src/services/color/RybColorMixer.ts
+- packages/core/src/services/dye/DyeSearch.ts
+- packages/core/src/services/dye/HarmonyGenerator.ts
+- packages/core/src/services/localization/LocaleLoader.ts
+- packages/core/src/services/localization/LocaleRegistry.ts
+- packages/core/src/services/localization/TranslationProvider.ts
+- packages/core/src/services/CharacterColorService.ts
+- packages/core/src/services/ColorService.ts
+- packages/core/src/services/DyeService.ts
+- packages/core/src/services/LocalizationService.ts
+- packages/core/src/services/PresetService.ts
+- packages/core/src/types/index.ts
+- packages/core/src/types/logger.ts
+- packages/core/src/types/spectral-js.d.ts
+- packages/core/src/utils/kd-tree.ts
+
+### Test Files (Not Modified in 6+ Months)
+- packages/core/src/services/color/__tests__/ColorAccessibility.test.ts
+- packages/core/src/services/color/__tests__/ColorblindnessSimulator.test.ts
+- packages/core/src/services/color/__tests__/ColorConverter.test.ts
+- packages/core/src/services/color/__tests__/ColorManipulator.test.ts
+- packages/core/src/services/color/__tests__/RybColorMixer.test.ts
+- packages/core/src/services/color/__tests__/SpectralMixer.test.ts
+- packages/core/src/services/__tests__/ColorService.test.ts
+- packages/core/src/services/__tests__/PaletteService.test.ts
+- packages/core/src/types/__tests__/index.test.ts
+- packages/core/src/utils/__tests__/kd-tree.test.ts
+- packages/core/src/__tests__/core.test.ts
+- packages/core/src/__tests__/integration/color-conversion-pipeline.test.ts
+
+### Files Recently Modified (Within 6 Months)
+- packages/core/src/index.ts
+- packages/core/src/version.ts
+- packages/core/src/utils/index.ts
+- packages/core/src/services/APIService.ts
+- packages/core/src/services/PaletteService.ts
+- packages/core/src/services/color/ColorConverter.ts
+- packages/core/src/services/color/SpectralMixer.ts
+- packages/core/src/services/dye/DyeDatabase.ts
+- All locale JSON files (de, en, fr, ja, ko, zh)
+- Multiple test files for recently modified services
+
+## Notes
+- The "stale" source files are not dead code — they are stable, mature modules (ColorService, DyeService, etc.) with comprehensive test coverage
+- Only `types/logger.ts` and `core.test.ts` merit attention (see DEAD-042 and DEAD-043)
+- All scripts (add-type-flags, compare-scrapes, etc.) last modified on 2026-02-18 (initial commit)

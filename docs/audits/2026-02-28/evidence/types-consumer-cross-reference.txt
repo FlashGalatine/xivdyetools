@@ -1,0 +1,70 @@
+# @xivdyetools/types — Consumer Cross-Reference
+
+Generated: 2026-03-01
+
+## Consumer Map by Project
+
+### packages/core (re-export barrel — imports ALL 88 symbols from types)
+Source: `packages/core/src/types/index.ts`
+Core re-exports the entire types surface via its deprecated `types/index.ts` barrel.
+
+### packages/svg
+- `PresetCategory` (type) — from main barrel
+
+### packages/test-utils (uses subpath exports)
+- `Dye` (type) — from `@xivdyetools/types/dye`
+- `AuthUser` (type) — from `@xivdyetools/types/auth`
+- `AuthContext`, `AuthSource` (type) — from `@xivdyetools/types/auth`
+- `CommunityPreset`, `PresetSubmission`, `PresetStatus`, `PresetCategory` (type) — from `@xivdyetools/types/preset`
+
+### apps/discord-worker
+- `CharacterColor`, `SubRace`, `Gender` (type) — swatch handler
+- `Dye`, `PriceData` (type) — budget types
+- `PresetStatus`, `PresetCategory`, `PresetSortOption`, `CategoryMeta`, `CommunityPreset`, `PresetPreviousValues`, `PresetFilters`, `PresetSubmission`, `PresetEditRequest`, `PresetListResponse`, `PresetSubmitResponse`, `PresetEditResponse`, `VoteResponse`, `ModerationLogEntry`, `ModerationStats` (type)
+- `isValidSnowflake` (value) — env validation
+
+### apps/moderation-worker
+- `isValidSnowflake` (value) — env validation, preset-api service
+- `PresetStatus`, `PresetCategory`, `PresetSortOption`, `CategoryMeta`, `CommunityPreset`, `PresetPreviousValues`, `PresetFilters`, `PresetSubmission`, `PresetEditRequest`, `PresetListResponse`, `PresetSubmitResponse`, `PresetEditResponse`, `VoteResponse`, `ModerationLogEntry`, `ModerationStats` (type)
+
+### apps/presets-api
+- `PresetStatus`, `PresetCategory`, `CategoryMeta`, `CommunityPreset`, `PresetPreviousValues`, `PresetSubmission`, `PresetFilters`, `PresetEditRequest`, `PresetListResponse`, `PresetSubmitResponse`, `PresetEditResponse`, `VoteResponse`, `ModerationResponse`, `CategoryListResponse` (type)
+- `AuthSource`, `AuthContext` (type)
+- `ModerationResult`, `ModerationLogEntry`, `RateLimitResult` (type)
+- `isValidSnowflake` (value)
+
+### apps/oauth
+- `AuthProvider`, `PrimaryCharacter`, `JWTPayload`, `OAuthState` (type)
+- `DiscordTokenResponse`, `DiscordUser` (type)
+- `XIVAuthTokenResponse`, `XIVAuthCharacter`, `XIVAuthCharacterRegistration`, `XIVAuthSocialIdentity`, `XIVAuthUser` (type)
+- `AuthResponse`, `RefreshResponse`, `UserInfoResponse` (type)
+
+### apps/web-app
+- `HexColor`, `VisionType`, `ColorblindMatrices` (type) — shared constants/types
+- `Dye`, `DyeWithDistance`, `PriceData` (type) — used in 30+ component/service files
+- `CharacterColor`, `CharacterColorMatch`, `SubRace`, `Gender` (type) — swatch tool
+- `AppError`, `ErrorCode` (value), `ErrorSeverity` (type)
+
+## Unique Consumed Symbols: 40 of 88
+
+## Symbols with Zero External Consumers: 48
+
+### Truly Dead (25)
+PresetSubmitCreatedResponse, PresetSubmitDuplicateResponse, PresetSubmitErrorResponse,
+PresetEditDuplicateInfo, PresetEditSuccessResponse, PresetEditDuplicateResponse, PresetEditErrorResponse,
+VoteSuccessResponse, VoteErrorResponse, ModerationSuccessResponse, ModerationErrorResponse,
+AuthSuccessResponse, AuthErrorResponse, RefreshSuccessResponse, RefreshErrorResponse,
+UserInfoData, UserInfoSuccessResponse, UserInfoErrorResponse,
+DiscordSnowflake, createSnowflake,
+ResolvedPreset, AuthenticatedPresetSubmission, CharacterColorCategory,
+APISuccessResponse, APIErrorResponse
+
+### Core-Only (consumed by core internals, zero app consumers — 15)
+Matrix3x3, LocalizedDye, DyeDatabase, Race, SharedColorCategory, RaceSpecificColorCategory,
+LocaleCode, TranslationKey, HarmonyTypeKey, JobKey, GrandCompanyKey, RaceKey, ClanKey,
+LocaleData, LocalePreference
+
+### Deprecated-Barrel-Only (flow through core's deprecated re-exports — 8)
+Result, AsyncResult, Nullable, Optional, isOk, isErr, APIResponse, CachedData*
+
+*CachedData is consumed via core re-export by web-app's api-service-wrapper.ts

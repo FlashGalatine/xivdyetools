@@ -1,0 +1,78 @@
+# Core Package: Consumer Cross-Reference Analysis
+
+**Date:** 2026-03-01  
+**Method:** Monorepo-wide grep for `from '@xivdyetools/core'` in all `.ts` files
+
+## Projects Depending on @xivdyetools/core (8)
+
+| Consumer | Dependency Type |
+|----------|----------------|
+| apps/web-app | workspace:* |
+| apps/discord-worker | workspace:* |
+| apps/og-worker | workspace:* |
+| apps/stoat-worker | workspace:* |
+| apps/maintainer | workspace:* |
+| packages/bot-logic | workspace:* |
+| packages/svg | workspace:* |
+| packages/color-blending | workspace:* |
+
+## Projects NOT Depending on @xivdyetools/core (6)
+
+apps/moderation-worker, apps/presets-api, apps/oauth, apps/universalis-proxy, packages/bot-i18n, packages/test-utils
+
+## Symbols Imported — Full Listing
+
+### Classes/Services (9 unique)
+| Symbol | Consumers |
+|--------|-----------|
+| ColorService | web-app, discord-worker, og-worker, maintainer, bot-logic, svg, color-blending (7) |
+| DyeService | web-app, discord-worker, og-worker, bot-logic (4) |
+| LocalizationService | web-app, discord-worker, bot-logic (3) |
+| CharacterColorService | web-app, discord-worker, og-worker (3) |
+| ColorConverter | web-app, og-worker (2) |
+| PaletteService | web-app, discord-worker (2) |
+| PresetService | web-app (1) |
+| APIService | web-app (1) |
+| NoOpLogger | web-app (1) — deprecated re-export |
+
+### Types (15 unique)
+| Symbol | Consumers |
+|--------|-----------|
+| Dye | web-app, discord-worker, og-worker, stoat-worker, bot-logic, svg (6) |
+| MatchingMethod | web-app, discord-worker, bot-logic (3) |
+| RGB | discord-worker, svg (2) |
+| HarmonyOptions | discord-worker, bot-logic (2) |
+| HarmonyColorSpace | discord-worker, bot-logic (2) |
+| PaletteMatch | web-app, discord-worker (2) |
+| PresetCategory | web-app (1) |
+| PresetPalette | web-app (1) |
+| PresetData | web-app (1) |
+| CategoryMeta | web-app (1) |
+| ICacheBackend | web-app (1) |
+| PriceData | web-app (1) |
+| CachedData | web-app (1) |
+| CharacterColorMatch | discord-worker (1) |
+| SubRace | og-worker (1) |
+| Gender | og-worker (1) |
+
+### Data (2 unique)
+| Symbol | Consumers |
+|--------|-----------|
+| dyeDatabase | web-app, og-worker, bot-logic (3) |
+| presetData | web-app (1) |
+
+### Utilities/Constants (2 unique)
+| Symbol | Consumers |
+|--------|-----------|
+| generateChecksum | web-app (1) |
+| isValidHexColor | maintainer (1) |
+| UNIVERSALIS_API_BASE | web-app (1) |
+
+## Barrel Exports with ZERO Monorepo Consumers (~99)
+
+### Services: MemoryCacheBackend, ConsoleLogger
+### Types: 33 types (APIServiceOptions, CacheMetrics, PaletteExtractionOptions, ExtractedColor, PaletteServiceOptions, CharacterMatchOptions, LocalizedDye, HSV, LAB, HexColor, VisionType, Matrix3x3, ColorblindMatrices, ErrorSeverity, LocaleCode, TranslationKey, HarmonyTypeKey, JobKey, GrandCompanyKey, LocaleData, LocalePreference, Logger, ResolvedPreset, PresetStatus, CommunityPreset, PresetSubmission, PresetListResponse, PresetSubmitResponse, VoteResponse, PresetFilters, CharacterColor, Race, OklchWeights, MatchingConfig, HarmonyMatchingAlgorithm, DeltaEFormula, RYB, FindClosestOptions, FindWithinDistanceOptions)
+### Values: AppError, ErrorCode, createHexColor, RACE_SUBRACES, SUBRACE_TO_RACE, COLOR_GRID_DIMENSIONS, MATCHING_PRESETS
+### Constants: RGB_MIN, RGB_MAX, HUE_MIN, HUE_MAX, SATURATION_MIN, SATURATION_MAX, VALUE_MIN, VALUE_MAX, COLOR_DISTANCE_MAX, VISION_TYPES, VISION_TYPE_LABELS, BRETTEL_MATRICES, PATTERNS, UNIVERSALIS_API_TIMEOUT, UNIVERSALIS_API_RETRY_COUNT, UNIVERSALIS_API_RETRY_DELAY, API_CACHE_TTL, API_DEBOUNCE_DELAY, API_CACHE_VERSION, API_MAX_RESPONSE_SIZE, API_RATE_LIMIT_DELAY
+### Utils: clamp, lerp, round, distance, unique, groupBy, sortByProperty, filterNulls, isValidRGB, isValidHSV, isString, isNumber, isArray, isObject, isNullish, sleep, retry, isAbortError
+### Data: all 11 character color data exports, characterColorData, VERSION

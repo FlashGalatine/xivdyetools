@@ -1,0 +1,73 @@
+# @xivdyetools/logger — Consumer Cross-Reference
+
+Generated: 2026-03-01
+
+## Consumer Map by Project
+
+### packages/core (re-exports from @xivdyetools/logger/library)
+- `Logger` (type) — re-exported from `types/index.ts` (deprecated)
+- `NoOpLogger` (value) — re-exported from `types/index.ts` (deprecated)
+- `ConsoleLogger` (value) — re-exported from `types/index.ts` (deprecated)
+- `createLibraryLogger` (value) — re-exported from `types/logger.ts` only (deprecated, NOT in core barrel)
+
+### apps/discord-worker
+- `ExtendedLogger` (type) — 16+ files
+- `createRequestLogger` (value) — from `@xivdyetools/logger/worker` (middleware/logger.ts)
+
+### apps/moderation-worker
+- `ExtendedLogger` (type) — 13+ files
+- `createRequestLogger` (value) — from `@xivdyetools/logger/worker` (middleware/logger.ts)
+
+### apps/presets-api
+- `ExtendedLogger` (type) — 3 files
+- `createRequestLogger` (value) — from `@xivdyetools/logger/worker` (middleware/logger.ts)
+
+### apps/oauth
+- `ExtendedLogger` (type) — 2 files
+- `createRequestLogger` (value) — from `@xivdyetools/logger/worker` (middleware/logger.ts)
+
+### apps/stoat-worker
+- `createLibraryLogger` (value) — from main barrel
+
+### apps/web-app
+- `createBrowserLogger` (value) — from `@xivdyetools/logger/browser`
+- `browserLogger` (value) — from `@xivdyetools/logger/browser` (aliased as `_browserLogger`)
+- `perf` (value) — from `@xivdyetools/logger/browser`
+
+## Consumed Symbols: 9 of 23
+
+| Symbol | # Consumer Projects | Import Path |
+|--------|:---:|---|
+| `ExtendedLogger` | 4 | `@xivdyetools/logger` |
+| `createRequestLogger` | 4 | `@xivdyetools/logger/worker` |
+| `Logger` | 1 | `@xivdyetools/logger/library` (via core) |
+| `NoOpLogger` | 1 | `@xivdyetools/logger/library` (via core) |
+| `ConsoleLogger` | 1 | `@xivdyetools/logger/library` (via core) |
+| `createLibraryLogger` | 2 | `@xivdyetools/logger/library` (core) + main barrel (stoat-worker) |
+| `createBrowserLogger` | 1 | `@xivdyetools/logger/browser` |
+| `browserLogger` | 1 | `@xivdyetools/logger/browser` |
+| `perf` | 1 | `@xivdyetools/logger/browser` |
+
+## Symbols with Zero External Consumers: 14
+
+### Implementation Classes (internal building blocks)
+BaseLogger, ConsoleAdapter, JsonAdapter, NoopAdapter
+
+### Types (structural typing makes explicit imports unnecessary)
+LogLevel, LogContext, LogEntry, LoggerConfig, ErrorTracker, BrowserLoggerOptions, WorkerLoggerOptions
+
+### Functions (superseded by higher-level APIs)
+createSimpleLogger, createWorkerLogger, getRequestId
+
+## Subpath Export Analysis
+
+| Subpath | Consumer Count | Consumers |
+|---------|:-:|---|
+| Main barrel (`@xivdyetools/logger`) | 6 | discord-worker, moderation-worker, presets-api, oauth, stoat-worker + 50+ `type ExtendedLogger` imports |
+| `./browser` | 1 | web-app |
+| `./worker` | 4 | discord-worker, moderation-worker, presets-api, oauth |
+| `./library` | 1 | core |
+
+## Internal-Only Constants (not in barrel)
+CORE_REDACT_FIELDS, WORKER_SPECIFIC_REDACT_FIELDS, WORKER_REDACT_FIELDS, DEFAULT_REDACT_FIELDS
+— exported from constants.ts, consumed only by base-logger.ts and worker.ts. Correctly not in barrel.

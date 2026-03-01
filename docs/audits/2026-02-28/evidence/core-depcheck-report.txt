@@ -1,0 +1,14 @@
+# Core Package: depcheck Report
+
+**Command:** `npx depcheck --json` (run from `packages/core/`)  
+**Date:** 2026-03-01
+
+## Unused Dependencies
+- (none)
+
+## Unused devDependencies
+- `@vitest/coverage-v8` — False positive: invoked via CLI (`vitest run --coverage`), not imported
+- `typedoc-plugin-markdown` — False positive: referenced in `typedoc.json` config, not imported
+
+## Missing Dependencies
+- (none)
