@@ -1,0 +1,16 @@
+﻿node.exe : npm warn Unknown project config "strict-peer-dependencies". This 
+will stop working in the next major version of npm.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\DrawF\AppData\Roaming\ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn Unknow...version of npm. 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm warn Unknown project config "auto-install-peers". This will stop working 
+in the next major version of npm.
+packages/svg/src/accessibility-comparison.test.ts(8,10): error TS6133: 'VisionType' is declared but its value is never read.
+packages/svg/src/comparison-grid.test.ts(5,39): error TS6133: 'ComparisonGridOptions' is declared but its value is never read.
+packages/svg/src/comparison-grid.ts(261,3): error TS6133: 'columnWidth' is declared but its value is never read.
+packages/svg/src/comparison-grid.ts(391,3): error TS6133: 'pairs' is declared but its value is never read.
+packages/svg/src/comparison-grid.ts(394,3): error TS6133: 'dyes' is declared but its value is never read.
