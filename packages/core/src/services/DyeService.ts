@@ -25,8 +25,9 @@
  * ```
  */
 
-import type { Dye, LocalizedDye, Logger } from '../types/index.js';
-import { NoOpLogger } from '../types/index.js';
+import type { Dye, LocalizedDye } from '../types/index.js';
+import type { Logger } from '@xivdyetools/logger/library';
+import { NoOpLogger } from '@xivdyetools/logger/library';
 import { DyeDatabase } from './dye/DyeDatabase.js';
 import type { FindClosestOptions, FindWithinDistanceOptions } from './dye/DyeSearch.js';
 
@@ -61,7 +62,7 @@ export interface DyeServiceOptions {
  * const dyeService = new DyeService(dyeDatabase);
  *
  * // With custom logger
- * import { ConsoleLogger } from '@xivdyetools/core';
+ * import { ConsoleLogger } from '@xivdyetools/logger/library';
  * const dyeService = new DyeService(dyeDatabase, { logger: ConsoleLogger });
  */
 export class DyeService {

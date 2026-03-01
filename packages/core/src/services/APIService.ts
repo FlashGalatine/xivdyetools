@@ -7,8 +7,10 @@
  * @module services/APIService
  */
 
-import type { PriceData, CachedData, Logger } from '../types/index.js';
-import { ErrorCode, AppError, NoOpLogger } from '../types/index.js';
+import type { PriceData, CachedData } from '../types/index.js';
+import { ErrorCode, AppError } from '../types/index.js';
+import type { Logger } from '@xivdyetools/logger/library';
+import { NoOpLogger } from '@xivdyetools/logger/library';
 import {
   UNIVERSALIS_API_BASE,
   UNIVERSALIS_API_TIMEOUT,

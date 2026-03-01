@@ -10,8 +10,8 @@ import {
   type PriceData,
   type CachedData,
   UNIVERSALIS_API_BASE,
-  NoOpLogger,
 } from '@xivdyetools/core';
+import { NoOpLogger } from '@xivdyetools/logger/library';
 import { indexedDBService, STORES } from './indexeddb-service';
 import { logger } from '@shared/logger';
 

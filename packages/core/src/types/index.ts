@@ -10,15 +10,6 @@
  * @module types
  */
 
-/**
- * @deprecated Removed in v2.0.0. Import directly from '@xivdyetools/logger/library' instead.
- */
-export type { Logger } from '@xivdyetools/logger/library';
-/**
- * @deprecated Removed in v2.0.0. Import directly from '@xivdyetools/logger/library' instead.
- */
-export { NoOpLogger, ConsoleLogger } from '@xivdyetools/logger/library';
-
 // ============================================================================
 // Re-export all types from @xivdyetools/types
 // ============================================================================

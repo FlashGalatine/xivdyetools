@@ -18,49 +18,14 @@ export {
   type CharacterMatchOptions,
 } from './services/CharacterColorService.js';
 
-// Types
+// Types (actively consumed by monorepo consumers)
 export type {
   Dye,
-  LocalizedDye,
   RGB,
-  HSV,
-  LAB,
-  HexColor,
-  VisionType,
-  Matrix3x3,
-  ColorblindMatrices,
-  ErrorSeverity,
+  PresetCategory,
   PriceData,
   CachedData,
-  LocaleCode,
-  TranslationKey,
-  HarmonyTypeKey,
-  JobKey,
-  GrandCompanyKey,
-  LocaleData,
-  LocalePreference,
-  Logger,
-  // Preset types
-  PresetCategory,
-  CategoryMeta,
-  PresetPalette,
-  ResolvedPreset,
-  PresetData,
-  // Community preset types (for API integration)
-  PresetStatus,
-  CommunityPreset,
-  PresetSubmission,
-  PresetListResponse,
-  PresetSubmitResponse,
-  VoteResponse,
-  PresetFilters,
-  // Character types
-  CharacterColor,
-  CharacterColorMatch,
-  SubRace,
-  Gender,
-  Race,
-  // Color matching types
+  // Color matching types (core-specific, not deprecated)
   MatchingMethod,
   OklchWeights,
   MatchingConfig,
@@ -80,16 +45,7 @@ export type { RYB } from './services/ColorService.js';
 // Dye search types
 export type { FindClosestOptions, FindWithinDistanceOptions } from './services/dye/DyeSearch.js';
 export {
-  AppError,
-  ErrorCode,
-  createHexColor,
-  NoOpLogger,
-  ConsoleLogger,
-  // Character constants
-  RACE_SUBRACES,
-  SUBRACE_TO_RACE,
-  COLOR_GRID_DIMENSIONS,
-  // Color matching presets
+  // Color matching presets (core-specific, not deprecated)
   MATCHING_PRESETS,
 } from './types/index.js';
 

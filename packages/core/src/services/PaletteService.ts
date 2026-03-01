@@ -20,8 +20,9 @@
  * ```
  */
 
-import type { RGB, Dye, Logger } from '../types/index.js';
-import { NoOpLogger } from '../types/index.js';
+import type { RGB, Dye } from '../types/index.js';
+import type { Logger } from '@xivdyetools/logger/library';
+import { NoOpLogger } from '@xivdyetools/logger/library';
 import { ColorService } from './ColorService.js';
 import type { DyeService } from './DyeService.js';
 

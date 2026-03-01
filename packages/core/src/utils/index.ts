@@ -17,7 +17,7 @@ import {
   VALUE_MAX,
   PATTERNS,
 } from '../constants/index.js';
-import type { Logger } from '../types/index.js';
+import type { Logger } from '@xivdyetools/logger/library';
 
 // ============================================================================
 // Cache Utilities

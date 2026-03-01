@@ -6,8 +6,8 @@
 
 import type { Dye, LAB } from '../../types/index.js';
 import { ErrorCode, AppError } from '../../types/index.js';
-import type { Logger } from '../../types/index.js';
-import { NoOpLogger } from '../../types/index.js';
+import type { Logger } from '@xivdyetools/logger/library';
+import { NoOpLogger } from '@xivdyetools/logger/library';
 import { KDTree, type Point3D } from '../../utils/kd-tree.js';
 import { ColorConverter } from '../color/ColorConverter.js';
 

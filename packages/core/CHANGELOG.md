@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Internal `Logger`/`NoOpLogger` imports now sourced directly from `@xivdyetools/logger/library` instead of deprecated `types/logger.ts` wrapper
+
 ### Removed
 
+- Deprecated `types/logger.ts` wrapper file — import `Logger`, `NoOpLogger`, `ConsoleLogger` directly from `@xivdyetools/logger/library` instead (DEAD-042)
+- ~35 zero-consumer deprecated re-exports from barrel: `LocalizedDye`, `HSV`, `LAB`, `HexColor`, `VisionType`, `Matrix3x3`, `ColorblindMatrices`, `ErrorSeverity`, `Logger`, `NoOpLogger`, `ConsoleLogger`, `AppError`, `ErrorCode`, `createHexColor`, all auth types, most preset types, all character types/constants, all localization types, all API response types (DEAD-047 Phase 1)
 - Legacy omnibus `core.test.ts` — coverage duplicated by per-service unit tests (DEAD-043)
 - Legacy `logger.test.ts` — tests deprecated re-exports; logger package has its own test suite (DEAD-044)
 - Deprecated `characterColorData` barrel export — use `CharacterColorService` or individual data exports instead (DEAD-049)
