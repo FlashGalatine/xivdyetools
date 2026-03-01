@@ -46,9 +46,6 @@ describe('commands/index exports', () => {
         expect(typeof commands.handleSwatchCommand).toBe('function');
 
         // Legacy commands (still exported for backward compatibility)
-        expect(commands.handleMixerCommand).toBeDefined();
-        expect(typeof commands.handleMixerCommand).toBe('function');
-
         expect(commands.handleMatchCommand).toBeDefined();
         expect(typeof commands.handleMatchCommand).toBe('function');
 

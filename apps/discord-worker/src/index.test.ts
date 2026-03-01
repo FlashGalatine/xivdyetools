@@ -27,7 +27,6 @@ vi.mock('./handlers/commands/index.js', () => ({
   handleMixerV4Command: vi.fn(),
   handleSwatchCommand: vi.fn(),
   // Legacy commands
-  handleMixerCommand: vi.fn(),
   handleMatchCommand: vi.fn(),
   handleMatchImageCommand: vi.fn(),
   handleAccessibilityCommand: vi.fn(),

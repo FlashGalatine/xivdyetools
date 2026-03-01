@@ -8,6 +8,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **web-app**: Shift+Click pixel sampling in Extractor tool — samples a pixel (or configurable NxN area) and finds closest matching dyes using v4 unified result cards
+- **web-app**: Ctrl/Cmd+Drag panning for zoomed images in Extractor tool with grab cursor feedback
+- **web-app**: Pixel Sample Area size config (1×1 to 16×16) in the Extractor sidebar
+- **web-app**: Pan offset persistence across zoom changes in Extractor tool
+- **web-app**: New locale keys for pixel sampling and panning in all 6 languages
+- **docs**: Dead code audit (2026-02-28) — 19 findings (DEAD-001 through DEAD-019) with categorized reports, evidence, and analysis manifest
+
+### Changed
+
+- **web-app**: Migrate `@shared/types` re-exports to direct `@xivdyetools/types` imports across 46 files; deprecated re-export blocks removed from `shared/types.ts` (local types `Theme`, `AppState`, `DataCenter`, `World` remain)
+
+### Removed
+
+- **web-app**: 5 orphaned v3 components — `tool-header`, `dye-comparison-chart`, `dye-preview-overlay`, `featured-presets-section`, `mobile-bottom-nav` (DEAD-002 – DEAD-005, DEAD-007)
+- **web-app**: Dead v3 components `AppLayout` and `SavedPalettesModal` plus their tests (DEAD-001, DEAD-006)
+- **web-app**: Components barrel files `components/index.ts` and `v4/index.ts`; `main.ts` updated to import `offlineBanner` directly (DEAD-008, DEAD-009)
+- **web-app**: Deprecated `fetchPrice()` and `getWorldName()` from MarketBoard component (DEAD-010)
+- **web-app**: `LocalStorageCacheBackend` class and all associated tests (DEAD-011)
+- **web-app**: ~30 unused constants from `shared/constants.ts` — API config, FFXIV stats, chart/zoom/sampling/color-wheel config, `SUCCESS_MESSAGES`, `ANIMATION_DURATIONS` (DEAD-012)
+- **web-app**: Unused empty-state icon exports and lookup functions (DEAD-013), unused UI icon exports and lookup functions (DEAD-014)
+- **web-app**: 26 unused local variables across 16 component/service files (DEAD-015)
+- **web-app**: `initErrorTracking()`, `errorTrackerInstance`, dead production error-tracking branches, `isProd()` (DEAD-017)
+- **web-app**: Dead icon exports from `empty-state-icons.ts` and `ui-icons.ts` (DEAD-009, DEAD-013, DEAD-014)
+- **discord-worker**: Dead code cleanup — Wave 5 (DEAD-020 through DEAD-023 from 2026-02-28 audit):
+  - 6 dead service/util files + tests: `pagination`, `progress`, `image-cache`, `color-blending`, `user-preferences`, `css-colors` (DEAD-020)
+  - 6 orphaned locale JSON files duplicating `@xivdyetools/bot-i18n` data (DEAD-021)
+  - Legacy `handleMixerCommand` handler, replaced by `handleGradientCommand` (DEAD-022)
+  - Unused `discord-interactions` devDependency (DEAD-023)
+
+---
+
 ## [1.4.0] - 2026-02-27
 
 ### Fixed

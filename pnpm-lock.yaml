@@ -84,9 +84,6 @@ importers:
       '@xivdyetools/test-utils':
         specifier: workspace:*
         version: link:../../packages/test-utils
-      discord-interactions:
-        specifier: ^4.4.0
-        version: 4.4.0
       dotenv:
         specifier: ^17.2.3
         version: 17.3.1

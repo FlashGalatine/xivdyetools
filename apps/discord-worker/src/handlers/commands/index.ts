@@ -5,8 +5,8 @@
  *
  * V4 Changes:
  * - Added: handleExtractorCommand (replaces handleMatchCommand + handleMatchImageCommand)
- * - Added: handleGradientCommand (replaces handleMixerCommand)
- * - Deprecated: handleMatchCommand, handleMatchImageCommand, handleMixerCommand
+ * - Added: handleGradientCommand (replaces legacy mixer)
+ * - Deprecated: handleMatchCommand, handleMatchImageCommand
  *   (kept for backward compatibility during migration)
  */
 
@@ -22,8 +22,6 @@ export { handleMixerV4Command } from './mixer-v4.js';
 export { handleSwatchCommand } from './swatch.js';
 
 // Legacy commands (deprecated in v4, kept for backward compatibility)
-// Note: handleMixerCommand (old gradient) is deprecated - use handleGradientCommand
-export { handleMixerCommand } from './mixer.js';
 export { handleMatchCommand } from './match.js';
 export { handleMatchImageCommand } from './match-image.js';
 
