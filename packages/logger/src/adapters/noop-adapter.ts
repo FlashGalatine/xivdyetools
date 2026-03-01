@@ -19,6 +19,9 @@ import type { LogEntry, LoggerConfig } from '../types.js';
  * - Disabling logging in tests
  * - Silent mode
  *
+ * @internal Implementation detail — consumers should use `NoOpLogger`
+ * (the pre-configured instance) instead.
+ *
  * @example
  * ```typescript
  * // In a library

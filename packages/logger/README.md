@@ -36,15 +36,15 @@ logger.error('Failed to load data', error, { endpoint: '/api/dyes' });
 ### Cloudflare Workers (oauth, presets-api, discord-worker)
 
 ```typescript
-import { createWorkerLogger, getRequestId } from '@xivdyetools/logger/worker';
+import { createRequestLogger } from '@xivdyetools/logger/worker';
 
 export default {
   async fetch(request: Request, env: Env) {
-    const requestId = getRequestId(request);
-    const logger = createWorkerLogger({
-      service: 'xivdyetools-presets-api',
-      environment: env.ENVIRONMENT,
-      version: env.API_VERSION,
+    const requestId = request.headers.get('x-request-id') || crypto.randomUUID();
+    const logger = createRequestLogger({
+      ENVIRONMENT: env.ENVIRONMENT,
+      API_VERSION: env.API_VERSION,
+      SERVICE_NAME: 'xivdyetools-presets-api',
     }, requestId);
 
     logger.info('Request received', {
@@ -126,11 +126,11 @@ perf.logMetrics(); // Log all metrics to console
 Optimized for Cloudflare Workers with JSON structured output.
 
 ```typescript
-import { createWorkerLogger, createRequestLogger, getRequestId } from '@xivdyetools/logger/worker';
+import { createRequestLogger } from '@xivdyetools/logger/worker';
 
 // In Hono middleware
 app.use('*', async (c, next) => {
-  const requestId = getRequestId(c.req.raw);
+  const requestId = c.req.header('x-request-id') || crypto.randomUUID();
 
   const logger = createRequestLogger({
     ENVIRONMENT: c.env.ENVIRONMENT,
@@ -312,12 +312,13 @@ console.log('Request received:', request.url);
 console.error('Error:', error);
 
 // After
-import { createWorkerLogger, getRequestId } from '@xivdyetools/logger/worker';
+import { createRequestLogger } from '@xivdyetools/logger/worker';
 
-const logger = createWorkerLogger({
-  service: 'my-worker',
-  environment: env.ENVIRONMENT,
-}, getRequestId(request));
+const requestId = request.headers.get('x-request-id') || crypto.randomUUID();
+const logger = createRequestLogger({
+  ENVIRONMENT: env.ENVIRONMENT,
+  SERVICE_NAME: 'my-worker',
+}, requestId);
 
 logger.info('Request received', { url: request.url });
 logger.error('Error', error);

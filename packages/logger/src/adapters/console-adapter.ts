@@ -16,6 +16,9 @@ import type { LogEntry, LoggerConfig } from '../types.js';
  * Outputs logs to the console using appropriate console methods
  * (console.debug, console.info, console.warn, console.error).
  *
+ * @internal Implementation detail — consumers should use `createBrowserLogger`,
+ * `createLibraryLogger`, `ConsoleLogger`, or `browserLogger` instead.
+ *
  * @example
  * ```typescript
  * const logger = new ConsoleAdapter({ format: 'pretty', prefix: 'MyApp' });

@@ -58,6 +58,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **types**: Dead code cleanup — Wave 10 Phase 1 (DEAD-060, DEAD-061, DEAD-063): removed entire utility module (`Result`, `AsyncResult`, `Nullable`, `Optional`, `isOk`, `isErr`), removed generic API response types (`APISuccessResponse`, `APIErrorResponse`, `APIResponse`), removed orphaned preset types (`AuthenticatedPresetSubmission`). `ResolvedPreset` migrated to `@xivdyetools/core` PresetService (audit had missed core consumer)
 - **types**: Dead code cleanup — Wave 10 Phase 2 (DEAD-057, DEAD-058, DEAD-059, DEAD-060, DEAD-064): marked 31 symbols `@internal` and removed from main barrel — 11 preset response sub-types, 7 auth response sub-types, `DiscordSnowflake`/`createSnowflake`, `CharacterColorCategory`, `Matrix3x3`, `Race`, `SharedColorCategory`, `RaceSpecificColorCategory`, `LocalizedDye`, `DyeDatabase`. All remain accessible via subpath imports
 - **core**: `ResolvedPreset` interface now defined and exported from `PresetService` (migrated from `@xivdyetools/types`)
+- **logger**: Dead code cleanup — Wave 11 (DEAD-066–070): removed `getRequestId` from barrel exports (deprecated, superseded by app-local Hono Context versions); marked 10 implementation-detail symbols `@internal` (`BaseLogger`, `ConsoleAdapter`, `JsonAdapter`, `NoopAdapter`, `createSimpleLogger`, `createWorkerLogger`, `LogEntry`); updated README and `@packageDocumentation` examples to use `createRequestLogger`
 
 ---
 

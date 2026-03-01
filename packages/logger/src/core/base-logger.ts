@@ -18,6 +18,11 @@ const LOG_LEVELS: LogLevel[] = ['debug', 'info', 'warn', 'error'];
  *
  * Extend this class and implement the `write` method to create
  * custom logging adapters.
+ *
+ * @internal Implementation detail — consumers should use factory functions
+ * (`createBrowserLogger`, `createWorkerLogger`, `createRequestLogger`,
+ * `createLibraryLogger`) or pre-configured instances (`NoOpLogger`,
+ * `ConsoleLogger`, `browserLogger`) instead.
  */
 export abstract class BaseLogger implements ExtendedLogger {
   protected config: LoggerConfig;
@@ -327,6 +332,9 @@ class DelegatingLogger implements ExtendedLogger {
  *
  * Use this when you only need the basic Logger interface without
  * the extended features.
+ *
+ * @internal No external consumers — prefer `createLibraryLogger` or
+ * `createBrowserLogger` for most use cases.
  */
 export function createSimpleLogger(
   writeFn: (entry: LogEntry) => void,

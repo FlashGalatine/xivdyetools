@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **DEAD-070**: Deprecated `getRequestId(request: Request)` — superseded by app-local `getRequestId(c: Context)` implementations. Removed from main barrel and `./worker` subpath re-exports; function remains in `worker.ts` for internal use by `createRequestLogger`. Marked `@deprecated` and `@internal`
+- **DEAD-066**: Marked `BaseLogger`, `ConsoleAdapter`, `JsonAdapter`, `NoopAdapter` as `@internal` — implementation details; consumers should use factory functions and pre-configured instances
+- **DEAD-067**: Marked `LogEntry` as `@internal` — internal to the write pipeline
+- **DEAD-068**: Marked `createSimpleLogger` as `@internal` — no external consumers; prefer `createLibraryLogger` or `createBrowserLogger`
+- **DEAD-069**: Marked `createWorkerLogger` as `@internal` — consumers should use `createRequestLogger` instead
+- Updated README examples to use `createRequestLogger` instead of deprecated `createWorkerLogger`/`getRequestId` pattern
+- Updated `@packageDocumentation` example to show `createRequestLogger` usage
+
 ## [1.2.1] - 2026-02-27
 
 ### Fixed

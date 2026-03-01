@@ -37,6 +37,9 @@ export interface WorkerLoggerOptions {
  * - Request correlation ID support
  * - Secret redaction
  *
+ * @internal Lower-level factory — consumers should use {@link createRequestLogger}
+ * which provides a more convenient API for Hono middleware patterns.
+ *
  * @example
  * ```typescript
  * // In your Cloudflare Worker
@@ -126,6 +129,13 @@ export function createRequestLogger(
 
 /**
  * Generate or extract request ID from headers
+ *
+ * @internal Superseded by app-local implementations that accept Hono `Context`.
+ * All worker apps define their own `getRequestId(c: Context)` in middleware.
+ * Kept for internal use by `createRequestLogger`.
+ *
+ * @deprecated Use app-local `getRequestId(c: Context)` instead.
+ * Will be removed in the next major version.
  *
  * @example
  * ```typescript

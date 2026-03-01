@@ -19,14 +19,16 @@
  *
  * @example Worker usage
  * ```typescript
- * import { createWorkerLogger, getRequestId } from '@xivdyetools/logger/worker';
+ * import { createRequestLogger } from '@xivdyetools/logger/worker';
  *
  * export default {
  *   async fetch(request: Request, env: Env) {
- *     const logger = createWorkerLogger({
- *       service: 'my-api',
- *       environment: env.ENVIRONMENT,
- *     }, getRequestId(request));
+ *     const requestId = request.headers.get('x-request-id') || crypto.randomUUID();
+ *     const logger = createRequestLogger({
+ *       ENVIRONMENT: env.ENVIRONMENT,
+ *       API_VERSION: env.API_VERSION,
+ *       SERVICE_NAME: 'my-api',
+ *     }, requestId);
  *
  *     logger.info('Request received');
  *   }
@@ -85,7 +87,6 @@ export {
   // Worker
   createWorkerLogger,
   createRequestLogger,
-  getRequestId,
   // Library
   NoOpLogger,
   ConsoleLogger,
