@@ -5,7 +5,13 @@
  */
 /* istanbul ignore file */
 import { PresetService, presetData } from '@xivdyetools/core';
-import type { PresetPalette, PresetCategory, PresetData, CategoryMeta, Dye } from '@xivdyetools/types';
+import type {
+  PresetPalette,
+  PresetCategory,
+  PresetData,
+  CategoryMeta,
+  Dye,
+} from '@xivdyetools/types';
 import { dyeService as sharedDyeService } from './dye-service-wrapper';
 import {
   CommunityPresetService,
