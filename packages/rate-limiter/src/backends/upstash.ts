@@ -32,34 +32,13 @@ import type {
   RateLimitResult,
   RateLimitConfig,
   RateLimiterLogger,
+  UpstashRateLimiterOptions,
 } from '../types.js';
 
 /**
  * Default key prefix for rate limit entries
  */
 const DEFAULT_KEY_PREFIX = 'ratelimit:';
-
-/**
- * Options for UpstashRateLimiter
- */
-export interface UpstashRateLimiterOptions {
-  /** Upstash Redis REST URL */
-  url: string;
-
-  /** Upstash Redis REST token */
-  token: string;
-
-  /**
-   * Key prefix for rate limit entries
-   * @default 'ratelimit:'
-   */
-  keyPrefix?: string;
-
-  /**
-   * Optional logger for observability
-   */
-  logger?: RateLimiterLogger;
-}
 
 /**
  * Upstash Redis-based rate limiter with atomic operations

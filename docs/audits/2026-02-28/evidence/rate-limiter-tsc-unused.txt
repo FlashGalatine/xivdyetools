@@ -1,0 +1,7 @@
+tsc --noEmit --noUnusedLocals --noUnusedParameters results
+================================================================
+Package: @xivdyetools/rate-limiter
+Date: 2026-02-28
+Command: npx tsc --noEmit --noUnusedLocals --noUnusedParameters -p packages/rate-limiter/tsconfig.json
+
+Result: CLEAN (exit code 0, no output)

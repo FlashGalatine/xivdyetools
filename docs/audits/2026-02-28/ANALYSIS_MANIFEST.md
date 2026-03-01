@@ -15,8 +15,14 @@
 | @xivdyetools/core | v1.17.3 | `packages/core/src/` + `packages/core/scripts/` | DEAD-042 – DEAD-056 |
 | @xivdyetools/types | v1.8.0 | `packages/types/src/` | DEAD-057 – DEAD-065 |
 | @xivdyetools/logger | v1.2.1 | `packages/logger/src/` | DEAD-066 – DEAD-070 |
+| @xivdyetools/auth | v1.x | `packages/auth/src/` | DEAD-071 |
+| @xivdyetools/color-blending | v1.0.1 | `packages/color-blending/src/` | DEAD-072 |
+| @xivdyetools/rate-limiter | v1.x | `packages/rate-limiter/src/` | DEAD-073 – DEAD-075 |
+| @xivdyetools/svg | v1.1.1 | `packages/svg/src/` | DEAD-076 – DEAD-082, DEAD-085 |
+| @xivdyetools/test-utils | v1.1.3 | `packages/test-utils/src/` | DEAD-083 – DEAD-084 |
+| @xivdyetools/crypto | v1.1.0 | `packages/crypto/src/` | _(none — clean)_ |
 
-**Total Findings:** 70
+**Total Findings:** 85
 
 ## Tools Used
 
@@ -27,7 +33,7 @@
 | depcheck | Unused npm dependencies | web-app, discord-worker, core |
 | Git log archaeology | Files not modified in 6+ months | All projects |
 | Manual import tracing | Cross-referenced every flagged item against actual consumers | All projects |
-| Monorepo-wide grep | Cross-package consumer analysis | discord-worker, bot-i18n, bot-logic, core |
+| Monorepo-wide grep | Cross-package consumer analysis | discord-worker, bot-i18n, bot-logic, core, auth, crypto, color-blending, rate-limiter, svg, test-utils |
 
 ## Source Metrics
 
@@ -104,3 +110,74 @@
 | Exported symbols (barrel) | 23 |
 | Symbols consumed externally | 9 |
 | Dead symbols (zero consumers) | 14 |
+
+### @xivdyetools/auth (DEAD-071)
+
+| Metric | Value |
+|--------|-------|
+| Production source lines (excl. tests) | 810 |
+| Total source files | 5 |
+| External consumers (monorepo) | 3 projects (discord-worker, moderation-worker, presets-api) |
+| Exported symbols (barrel) | 20 |
+| Symbols consumed externally | 8 |
+| Dead symbols (zero external consumers) | 12 |
+| Actionable dead code | 0 (all are intentional library API) |
+
+### @xivdyetools/crypto _(no findings — clean)_
+
+| Metric | Value |
+|--------|-------|
+| Production source lines (excl. tests) | 176 |
+| Total source files | 3 |
+| External consumers (monorepo) | 1 project (@xivdyetools/auth) |
+| Exported symbols (barrel) | 8 |
+| Symbols consumed externally | 3 |
+| Dead symbols | 0 |
+
+### @xivdyetools/color-blending (DEAD-072)
+
+| Metric | Value |
+|--------|-------|
+| Production source lines (excl. tests) | 432 |
+| Total source files | 4 |
+| External consumers (monorepo) | 3 projects (bot-logic, svg, discord-worker) |
+| Exported symbols (barrel) | 10 |
+| Symbols consumed externally | 5 |
+| Dead symbols (zero external consumers) | 5 |
+| Actionable dead code | 0 (all are intentional library API) |
+
+### @xivdyetools/rate-limiter (DEAD-073 – DEAD-075)
+
+| Metric | Value |
+|--------|-------|
+| Production source lines (excl. tests) | 1,213 |
+| Total source files | ~10 |
+| External consumers (monorepo) | 5 projects (universalis-proxy, presets-api, moderation-worker, oauth, discord-worker) |
+| Exported symbols (barrel) | 23 |
+| Symbols consumed externally | 9 |
+| Dead symbols (zero external consumers) | 14 |
+| Actionable findings | 2 (orphaned barrel, duplicate interface) |
+
+### @xivdyetools/svg (DEAD-076 – DEAD-082, DEAD-085)
+
+| Metric | Value |
+|--------|-------|
+| Production source lines (excl. tests) | 3,764 |
+| Total source files | ~15 |
+| External consumers (monorepo) | 2 projects (bot-logic, discord-worker) |
+| Exported symbols (barrel) | ~60 |
+| Symbols consumed externally | 18 |
+| Dead symbols (zero external consumers) | 42 |
+| Actionable findings | 8 (unused locals, duplicated code, dead re-exports, inconsistent patterns) |
+| tsc --noUnusedLocals errors | 5 |
+
+### @xivdyetools/test-utils (DEAD-083 – DEAD-084)
+
+| Metric | Value |
+|--------|-------|
+| Production source lines (excl. tests) | 3,394 |
+| Total source files | ~25 |
+| External consumers (monorepo) | 4 projects (presets-api, oauth, moderation-worker, svg) |
+| Exported symbols (barrel) | ~35 |
+| Symbols consumed externally | ~20 |
+| Actionable findings | 2 (deprecated nextId() still consumed, legacy counter infrastructure) |

@@ -1,0 +1,153 @@
+Cross-Consumer Analysis for Remaining 6 Packages
+=================================================
+Generated: 2026-02-28
+Method: grep_search for all "@xivdyetools/<pkg>" imports across monorepo + manual verification
+
+═══════════════════════════════════════════════════
+@xivdyetools/auth (20 exports, 8 consumed)
+═══════════════════════════════════════════════════
+
+CONSUMED (8):
+  verifyJWT               → discord-worker, moderation-worker, presets-api
+  verifyHMAC              → presets-api
+  signHMAC                → presets-api
+  verifyDiscordInteraction → discord-worker, moderation-worker
+  JWTPayload (type)       → discord-worker, moderation-worker
+  AuthConfig (type)       → discord-worker
+  HMACConfig (type)       → presets-api
+  VerificationConfig (type) → discord-worker
+
+UNCONSUMED (12):
+  createJWT, decodeJWTPayload, isTokenExpired, isTokenNearExpiry
+  JWTHeader, JWTOptions, TokenValidationResult, DiscordInteractionConfig
+  AuthError, AuthErrorCode, AUTH_ERROR_CODES
+  verifyDiscordRequest (deprecated alias)
+
+VERDICT: All unconsumed are intentional public API surface. KEEP.
+
+═══════════════════════════════════════════════════
+@xivdyetools/crypto (8 exports, 3 consumed)
+═══════════════════════════════════════════════════
+
+CONSUMED (3):
+  base64UrlEncode         → @xivdyetools/auth
+  base64UrlDecode         → @xivdyetools/auth
+  toUint8Array            → @xivdyetools/auth
+
+UNCONSUMED (5):
+  fromUint8Array, base64UrlToBase64, base64ToBase64Url
+  isBase64Url, base64UrlEncodeString
+
+VERDICT: Clean utility library. KEEP all.
+
+═══════════════════════════════════════════════════
+@xivdyetools/color-blending (10 exports, 5 consumed)
+═══════════════════════════════════════════════════
+
+CONSUMED (5):
+  blendColors             → bot-logic, svg, discord-worker
+  BlendingMode (enum)     → bot-logic, svg, discord-worker
+  BLENDING_MODE_NAMES     → bot-logic
+  ALL_BLENDING_MODES      → discord-worker (autocomplete)
+  getBlendedHex           → svg
+
+UNCONSUMED (5):
+  BlendResult (type), BlendInput (type), BlendingModeInfo (type)
+  getBlendingModeDescription, getBlendingModeInfo
+
+VERDICT: Types are API surface. getBlendingModeDescription is a reasonable utility. KEEP.
+
+═══════════════════════════════════════════════════
+@xivdyetools/rate-limiter (23 exports, 9 consumed)
+═══════════════════════════════════════════════════
+
+CONSUMED (9):
+  MemoryRateLimiter       → universalis-proxy
+  KVRateLimiter           → presets-api, moderation-worker
+  UpstashRateLimiter      → oauth, discord-worker
+  RateLimitResult (type)  → presets-api, discord-worker
+  RateLimiterOptions (type) → discord-worker
+  KVRateLimiterOptions    → presets-api
+  UpstashRateLimiterOptions → oauth
+  isRateLimited (helper)  → presets-api, moderation-worker
+  RATE_LIMIT_HEADERS      → presets-api
+
+UNCONSUMED (14):
+  RateLimiter (interface), SlidingWindowState, RateLimitEntry
+  MemoryRateLimiterOptions, RateLimiterError, RateLimiterErrorCode
+  RATE_LIMITER_ERROR_CODES, createRateLimitHeaders, getRemainingRequests
+  getResetTime, isNearLimit, RateLimitConfig, RateLimitTier
+  formatRateLimitInfo
+
+VERDICT: Mix of API surface + potentially dead helpers. KEEP (library convention).
+
+═══════════════════════════════════════════════════
+@xivdyetools/svg (60 exports, 18 consumed)
+═══════════════════════════════════════════════════
+
+CONSUMED (18):
+  generateDyeInfoCard     → bot-logic, discord-worker
+  generateColorComparison → bot-logic, discord-worker
+  generateDyePalette      → bot-logic, discord-worker
+  generateHarmonyWheel    → bot-logic, discord-worker
+  generateComparisonGrid  → bot-logic, discord-worker
+  DyeInfoCardOptions      → bot-logic
+  ColorComparisonOptions  → bot-logic
+  DyePaletteOptions       → bot-logic
+  HarmonyWheelOptions     → bot-logic
+  ComparisonGridOptions   → bot-logic
+  SVGElement (class)      → bot-logic (extends)
+  createSVGRoot           → (via SVGElement usage)
+  ColorService            → (via color utilities)
+  DyeInfoCardDye (type)   → bot-logic
+  PaletteDye (type)       → bot-logic
+  ComparisonDye (type)    → (internal only)
+  HarmonyDye (type)       → bot-logic
+  SVGGeneratorError       → discord-worker
+
+UNCONSUMED (42):
+  Base SVG primitives: SVGRect, SVGCircle, SVGText, SVGGroup, SVGPath,
+    SVGDefs, SVGLinearGradient, SVGStop, SVGClipPath, SVGFilter, etc.
+  Helper types: FontConfig, SVGAttributes, GradientStop, etc.
+  Color utilities: hsvToRgb, rgbToHsv, hexToRgb, rgbToHex, etc.
+  Layout helpers: measureTextWidth, truncateText, etc.
+
+VERDICT: Base primitives are building blocks. Mark @internal; KEEP.
+
+═══════════════════════════════════════════════════
+@xivdyetools/test-utils (~35 exports, ~20 consumed)
+═══════════════════════════════════════════════════
+
+CONSUMED (~20):
+  MockD1Database          → presets-api, oauth, moderation-worker tests
+  MockKVNamespace         → presets-api, oauth, moderation-worker tests
+  MockR2Bucket            → presets-api tests
+  createTestDye           → presets-api, svg, bot-logic tests
+  createTestCategory      → presets-api, bot-logic tests
+  createTestPreset        → presets-api tests
+  createTestUser          → presets-api, oauth tests
+  createTestJWT           → presets-api, oauth, moderation-worker tests
+  createTestHMAC          → presets-api tests
+  randomId                → presets-api, oauth, moderation-worker tests
+  (plus several more factory functions and helpers)
+
+UNCONSUMED (~15):
+  nextId (deprecated), resetCounters, resetCounter, getCounterValue
+  Various type-only exports, specialized factory overloads
+  MockExecutionContext (partially used)
+
+VERDICT: Deprecated counter infra should be removed. Rest is test API surface.
+
+═══════════════════════════════════════════════════
+CROSS-PACKAGE DEAD RE-EXPORT
+═══════════════════════════════════════════════════
+
+File: apps/discord-worker/src/services/svg/index.ts
+Line: export * from '@xivdyetools/svg'
+
+This re-exports all ~60 svg symbols into discord-worker's internal module graph.
+No file in discord-worker imports from './services/svg' for these symbols —
+they all import directly from '@xivdyetools/svg'.
+The only used export from this barrel is the local generateSVG wrapper function.
+
+VERDICT: REMOVE the `export *` line. Keep the local function export.

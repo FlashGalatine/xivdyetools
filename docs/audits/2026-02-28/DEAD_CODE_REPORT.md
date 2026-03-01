@@ -2,10 +2,10 @@
 
 ## Executive Summary
 
-- **Analysis Date:** 2026-02-28 (core addendum: 2026-03-01, types+logger addendum: 2026-03-01)
+- **Analysis Date:** 2026-02-28 (core addendum: 2026-03-01, types+logger addendum: 2026-03-01, remaining packages addendum: 2026-02-28)
 - **Analysis Depth:** Exhaustive (automated tools + manual analysis + git history + cross-consumer mapping)
-- **Total Findings:** 70
-- **Projects:** web-app (v4.2.0), discord-worker (v4.1.0), bot-i18n (v1.0.1), bot-logic (v1.1.0), **core (v1.17.3)**, **types (v1.8.0)**, **logger (v1.2.1)**
+- **Total Findings:** 85
+- **Projects:** web-app (v4.2.0), discord-worker (v4.1.0), bot-i18n (v1.0.1), bot-logic (v1.1.0), **core (v1.17.3)**, **types (v1.8.0)**, **logger (v1.2.1)**, **auth (v1.x)**, **crypto (v1.1.0)**, **color-blending (v1.0.1)**, **rate-limiter (v1.x)**, **svg (v1.1.1)**, **test-utils (v1.1.3)**
 
 | Project | Findings | Recommended Removals | Estimated Dead Lines |
 |---------|----------|---------------------|---------------------|
@@ -14,9 +14,15 @@
 | bot-i18n | DEAD-032 – 035 | 2 (2 keep) | ~200 |
 | bot-logic | DEAD-036 – 041 | 0 (all keep/mark @internal) | ~0 |
 | @xivdyetools/core | DEAD-042 – 056 | 7 now (5 keep, 3 v2.0.0) | ~1,140 |
-| **@xivdyetools/types** | **DEAD-057 – 065** | **5 remove (4 keep/mark)** | **~210** |
-| **@xivdyetools/logger** | **DEAD-066 – 070** | **1 remove (4 mark @internal)** | **~15** |
-| **Total** | **70** | **40** | **~11,965** |
+| @xivdyetools/types | DEAD-057 – 065 | 5 remove (4 keep/mark) | ~210 |
+| @xivdyetools/logger | DEAD-066 – 070 | 1 remove (4 mark @internal) | ~15 |
+| @xivdyetools/auth | DEAD-071 | 0 (keep — library API) | ~0 |
+| @xivdyetools/color-blending | DEAD-072 | 0 (keep — library API) | ~0 |
+| @xivdyetools/crypto | _(none)_ | 0 (clean) | 0 |
+| @xivdyetools/rate-limiter | DEAD-073 – 075 | 2 remove (1 keep) | ~32 |
+| @xivdyetools/svg | DEAD-076 – 082, 085 | 5 remove (3 keep/mark) | ~80 |
+| @xivdyetools/test-utils | DEAD-083 – 084 | 2 remove | ~50 |
+| **Total** | **85** | **49** | **~12,127** |
 
 ---
 
@@ -463,8 +469,8 @@ bot-logic has zero "dead code" in the traditional sense. All findings are about 
 |------------|-------------------|----------|
 | V3→V4 migration residue | web-app, discord-worker | DEAD-001–007, DEAD-022, DEAD-029 |
 | Speculative scaffolding never integrated | discord-worker, types | DEAD-020, DEAD-061, DEAD-063 |
-| Package extraction left duplicates | discord-worker, bot-i18n, core | DEAD-021, DEAD-035, DEAD-042, DEAD-047 |
-| Over-exported published API surface | bot-i18n, bot-logic, core, types, logger | DEAD-032–034, DEAD-036–041, DEAD-045–048, DEAD-055–058, DEAD-066–068 |
+| Package extraction left duplicates | discord-worker, bot-i18n, core, svg | DEAD-021, DEAD-035, DEAD-042, DEAD-047, DEAD-077, DEAD-078 |
+| Over-exported published API surface | bot-i18n, bot-logic, core, types, logger, auth, color-blending, rate-limiter, svg, test-utils | DEAD-032–034, DEAD-036–041, DEAD-045–048, DEAD-055–058, DEAD-066–068, DEAD-071, DEAD-072, DEAD-075, DEAD-076 |
 | Abandoned integration test approach | discord-worker | DEAD-030 |
 | Replaced dependencies not cleaned up | discord-worker | DEAD-023 |
 | Stale development scripts/artifacts | core | DEAD-050–053 |
@@ -473,7 +479,13 @@ bot-logic has zero "dead code" in the traditional sense. All findings are about 
 | Union-vs-subtypes pattern (consumers use unions, not sub-types) | types | DEAD-057, DEAD-058 |
 | Unadopted branded-type pattern | types | DEAD-059 |
 | Superseded by app-local implementations | logger | DEAD-070 |
-| Implementation details in public barrel | logger | DEAD-066, DEAD-069 |
+| Implementation details in public barrel | logger, rate-limiter | DEAD-066, DEAD-069, DEAD-073 |
+| Deprecated code still consumed | test-utils | DEAD-083, DEAD-084 |
+| Orphaned internal barrel/re-exports | rate-limiter, discord-worker (svg) | DEAD-073, DEAD-082 |
+| Duplicated utility implementations | svg, rate-limiter | DEAD-077, DEAD-078, DEAD-074, DEAD-085 |
+| Unused local variables (compiler-verified) | svg | DEAD-080 |
+| Accepted-but-unused options | svg | DEAD-081 |
+| Types exported but not in barrel | svg | DEAD-079 |
 
 ## Prevention Recommendations
 
@@ -664,23 +676,323 @@ export function getRequestId(c: Context): string { ... }
 | @xivdyetools/types | 88 | 40 | 48* | 54.5% | B |
 | @xivdyetools/core | ~129 | ~30 | ~99* | 76.7% | B+ |
 | @xivdyetools/logger | 23 | 9 | 14 | 60.9% | A- |
+| @xivdyetools/auth | 20 | 8 | 12 | 60.0% | A |
+| @xivdyetools/crypto | 8 | 3 | 5 | 62.5% | A+ |
+| @xivdyetools/color-blending | 10 | 5 | 5 | 50.0% | A |
+| @xivdyetools/rate-limiter | 23 | 9 | 14 | 60.9% | B+ |
+| @xivdyetools/svg | ~60 | 18 | 42 | 70.0% | B- |
+| @xivdyetools/test-utils | ~35 | ~20 | ~15 | 42.9% | B+ |
 
 \* For types and core, "dead" includes symbols consumed only through deprecated re-exports and core-internal-only symbols. Truly actionable dead code is lower.
 
 ## Shared Root Cause: Over-exported API Surface
 
-The dominant pattern across all 3 packages is **over-broad barrel exports**. Each package exports its full internal symbol set, but consumers only need a fraction:
+The dominant pattern across all packages is **over-broad barrel exports**. Each package exports its full internal symbol set, but consumers only need a fraction:
 
 - **Types:** 40 of 88 symbols consumed (45.5%)
 - **Core:** ~30 of ~129 symbols consumed (23.3%)
 - **Logger:** 9 of 23 symbols consumed (39.1%)
+- **Auth:** 8 of 20 symbols consumed (40.0%)
+- **Crypto:** 3 of 8 symbols consumed (37.5%)
+- **Color-blending:** 5 of 10 symbols consumed (50.0%)
+- **Rate-limiter:** 9 of 23 symbols consumed (39.1%)
+- **SVG:** 18 of ~60 symbols consumed (30.0%)
+- **Test-utils:** ~20 of ~35 symbols consumed (57.1%)
 
-**Combined:** ~79 of ~240 symbols consumed across the 3 foundation packages (**32.9%**).
+**Combined:** ~142 of ~396 symbols consumed across all 9 foundation packages (**35.9%**).
 
 ### Recommendation: Adopt `@internal` + Minimal Public API
 
 For the next major version of each package:
 1. Mark all implementation details `@internal`
-2. Document the intended public API surface (types: ~40 symbols, core: ~30, logger: ~9)
+2. Document the intended public API surface (types: ~40 symbols, core: ~30, logger: ~9, auth: ~8, svg: ~18)
 3. Consider separate `/internal` subpath exports for extensibility
 4. Run API surface audits at each major version bump
+
+---
+
+# Part 8: @xivdyetools/auth (DEAD-071)
+
+## Auth Package Executive Summary
+
+- **Package:** @xivdyetools/auth v1.x
+- **Source:** 810 lines across 5 source files
+- **Total Exported Symbols:** 20
+- **Consumed Externally:** 8 (40.0%)
+- **Dead Symbols:** 12 (60.0%)
+- **Total Findings:** 1
+- **Recommended Removals:** 0
+- **Health Score:** A (clean package, all "dead" exports are intentional API surface)
+
+### Consumer Landscape
+
+| Consumer | Symbols Used | Key Imports |
+|----------|:---:|---|
+| discord-worker | 4 | `verifyDiscordInteraction`, `verifyJWT`, `JWTPayload`, `VerificationConfig` |
+| moderation-worker | 3 | `verifyDiscordInteraction`, `verifyJWT`, `JWTPayload` |
+| presets-api | 4 | `verifyJWT`, `verifyHMAC`, `signHMAC`, `HMACConfig` |
+
+### Finding Details
+
+| ID | Title | Symbols | Rec. |
+|----|-------|:---:|------|
+| DEAD-071 | 12 unused auth exports | 12 | KEEP (library API surface) |
+
+The 12 unconsumed exports include `createJWT`, `decodeJWTPayload`, `isTokenExpired`, `isTokenNearExpiry`, and supporting types. These are all legitimate public API surface for an auth library — they exist for external consumers and future use cases.
+
+**No cleanup actions needed.**
+
+---
+
+# Part 9: @xivdyetools/crypto _(no findings)_
+
+## Crypto Package Executive Summary
+
+- **Package:** @xivdyetools/crypto v1.1.0
+- **Source:** 176 lines across 3 source files
+- **Total Exported Symbols:** 8
+- **Consumed Externally:** 3 (by @xivdyetools/auth only)
+- **Total Findings:** 0
+- **Health Score:** A+ (exceptionally clean)
+
+The crypto package is the cleanest package in the entire monorepo. Zero dependencies, zero dead code markers, zero TODO/FIXME/HACK comments. The 5 unconsumed exports (`fromUint8Array`, `base64UrlToBase64`, `base64ToBase64Url`, `isBase64Url`, `base64UrlEncodeString`) are standard utility functions appropriate for a crypto library.
+
+**No cleanup actions needed.**
+
+---
+
+# Part 10: @xivdyetools/color-blending (DEAD-072)
+
+## Color-Blending Package Executive Summary
+
+- **Package:** @xivdyetools/color-blending v1.0.1
+- **Source:** 432 lines across 4 source files
+- **Total Exported Symbols:** 10
+- **Consumed Externally:** 5 (50.0%)
+- **Dead Symbols:** 5 (50.0%)
+- **Total Findings:** 1
+- **Recommended Removals:** 0
+- **Health Score:** A (clean package, well-structured)
+
+### Consumer Landscape
+
+| Consumer | Symbols Used | Key Imports |
+|----------|:---:|---|
+| bot-logic | 3 | `blendColors`, `BlendingMode`, `BLENDING_MODE_NAMES` |
+| svg | 2 | `blendColors`, `BlendingMode` |
+| discord-worker | 3 | `blendColors`, `BlendingMode`, `ALL_BLENDING_MODES` |
+
+### Finding Details
+
+| ID | Title | Symbols | Rec. |
+|----|-------|:---:|------|
+| DEAD-072 | 5 unused color-blending exports | 5 | KEEP (library API surface) |
+
+The 5 unconsumed exports are 3 types (`BlendResult`, `BlendInput`, `BlendingModeInfo`) and 2 functions (`getBlendingModeDescription`, `getBlendingModeInfo`). All are standard library API surface.
+
+**No cleanup actions needed.**
+
+---
+
+# Part 11: @xivdyetools/rate-limiter (DEAD-073 – DEAD-075)
+
+## Rate-Limiter Package Executive Summary
+
+- **Package:** @xivdyetools/rate-limiter v1.x
+- **Source:** 1,213 lines across ~10 source files
+- **Total Exported Symbols:** 23
+- **Consumed Externally:** 9 (39.1%)
+- **Dead Symbols (zero external consumers):** 14 (60.9%)
+- **Total Findings:** 3
+- **Recommended Removals:** 2
+- **Estimated Dead Lines:** ~32
+- **Health Score:** B+ (2 minor structural issues, otherwise solid)
+
+### Consumer Landscape
+
+| Consumer | Symbols Used | Key Imports |
+|----------|:---:|---|
+| universalis-proxy | 1 | `MemoryRateLimiter` |
+| presets-api | 4 | `KVRateLimiter`, `RateLimitResult`, `isRateLimited`, `RATE_LIMIT_HEADERS` |
+| moderation-worker | 2 | `KVRateLimiter`, `isRateLimited` |
+| oauth | 2 | `UpstashRateLimiter`, `UpstashRateLimiterOptions` |
+| discord-worker | 3 | `UpstashRateLimiter`, `RateLimitResult`, `RateLimiterOptions` |
+
+### Summary by Category
+
+| Category | Findings | Remove | Keep | Est. Lines |
+|----------|----------|--------|------|------------|
+| Orphaned Files | DEAD-073 | 1 | 0 | ~14 |
+| Duplicate Definitions | DEAD-074 | 1 | 0 | ~18 |
+| Unused Exports | DEAD-075 | 0 | 1 | ~0 |
+| **Total** | **3** | **2** | **1** | **~32** |
+
+### Finding Details
+
+| ID | Title | Action | Details |
+|----|-------|--------|---------|
+| DEAD-073 | Orphaned `backends/index.ts` barrel | **REMOVE** | 14-line barrel file not imported by main `index.ts` or `package.json` exports. Dead since rate-limiter was created — the main barrel imports backends directly. |
+| DEAD-074 | Duplicate `UpstashRateLimiterOptions` | **REMOVE WITH CAUTION** | The `UpstashRateLimiterOptions` interface is defined in both `types.ts` and `backends/upstash.ts`. Delete the local copy in `upstash.ts` and import from `types.ts`. |
+| DEAD-075 | 14 unused exported symbols | KEEP | Standard library API surface (types, error codes, helper functions). |
+
+### Cleanup Execution Plan — Wave 12
+
+1. Delete `src/backends/index.ts` (DEAD-073)
+2. Remove local `UpstashRateLimiterOptions` from `src/backends/upstash.ts`, import from `../types` (DEAD-074)
+3. **Run `npm test -- --run` and `npm run type-check` to verify**
+
+---
+
+# Part 12: @xivdyetools/svg (DEAD-076 – DEAD-082, DEAD-085)
+
+## SVG Package Executive Summary
+
+- **Package:** @xivdyetools/svg v1.1.1
+- **Source:** 3,764 lines across ~15 source files
+- **Total Exported Symbols:** ~60
+- **Consumed Externally:** 18 (30.0%)
+- **Dead Symbols (zero external consumers):** 42 (70.0%)
+- **Total Findings:** 8
+- **Recommended Removals:** 5 (3 keep/mark @internal)
+- **Estimated Dead Lines:** ~80
+- **Health Score:** B- (most problematic package — concentrated issues in `comparison-grid.ts`)
+
+### Consumer Landscape
+
+| Consumer | Symbols Used | Key Imports |
+|----------|:---:|---|
+| bot-logic | ~12 | All 5 generator functions + Options types + Dye input types |
+| discord-worker | ~8 | All 5 generator functions + `SVGGeneratorError` |
+
+### Summary by Category
+
+| Category | Findings | Remove | Keep | Est. Lines |
+|----------|----------|--------|------|------------|
+| Unused Exports | DEAD-076 | 0 | 1 | ~0 (mark @internal) |
+| Duplicate Code | DEAD-077, DEAD-078, DEAD-085 | 0 | 3 | ~0 (refactor) |
+| Types Not in Barrel | DEAD-079 | 1 | 0 | ~2 (remove `export`) |
+| Unused Locals | DEAD-080 | 1 | 0 | ~12 |
+| Unused Options | DEAD-081 | 1 | 0 | ~5 |
+| Dead Re-exports | DEAD-082 | 1 | 0 | ~1 |
+| **Total** | **8** | **4 remove, 3 refactor** | **1** | **~80** |
+
+### Finding Details
+
+| ID | Title | Action | Details |
+|----|-------|--------|---------|
+| DEAD-076 | 42 unused barrel exports (base primitives) | **KEEP** | SVG building blocks (`SVGRect`, `SVGCircle`, `SVGText`, etc.) + color utilities. Mark `@internal`. |
+| DEAD-077 | Duplicate `rgbToHsv` in comparison-grid.ts and dye-info-card.ts | **REFACTOR** | Extract to `base.ts` shared utility. ~20 duplicated lines. |
+| DEAD-078 | Duplicate luminance/contrast in comparison-grid.ts | **REFACTOR** | `getRelativeLuminance()` and `getContrastRatio()` reimplemented instead of using existing `ColorService`. ~25 duplicated lines. |
+| DEAD-079 | `ComparisonDye`/`DyePair` exported but not in barrel | **REMOVE** export keyword | Types are `export`ed from their file but not re-exported from `index.ts`. Since no consumer imports them, remove the `export` keyword. |
+| DEAD-080 | 3 unused locals in comparison-grid.ts | **REMOVE** | `columnWidth` (L258), `pairs` (L393), `dyes` (L399) — all compiler-verified unused (tsc TS6133). |
+| DEAD-081 | `baseName` option in HarmonyWheelOptions | **REMOVE WITH CAUTION** | The `baseName` property is accepted in options but never rendered in the SVG output. Either implement it or remove it. |
+| DEAD-082 | Dead `export * from '@xivdyetools/svg'` in discord-worker | **REMOVE** | `apps/discord-worker/src/services/svg/index.ts` re-exports all ~60 svg symbols, but no discord-worker file imports them via this path. Only the local `generateSVG` wrapper is used. |
+| DEAD-085 | Inconsistent inline name truncation | **REFACTOR** | `comparison-grid.ts` uses inline substring truncation while `truncateText()` exists in `base.ts`. Standardize on the shared utility. |
+
+### Key Architecture Observation
+
+`comparison-grid.ts` is the most problematic file in the svg package, concentrating 5 of 8 findings (DEAD-077, DEAD-078, DEAD-080, DEAD-085, and contributing to DEAD-079). It appears to have been developed independently of the shared utility layer in `base.ts`, leading to duplicated implementations and unused locals.
+
+### Cleanup Execution Plan — Wave 13
+
+**Phase 1: Quick fixes (safe, no behavior change)**
+1. Remove 3 unused locals from `comparison-grid.ts` (DEAD-080)
+2. Remove `export` keyword from `ComparisonDye` and `DyePair` (DEAD-079)
+3. Remove `export * from '@xivdyetools/svg'` from `discord-worker/src/services/svg/index.ts` (DEAD-082)
+4. Remove `baseName` from `HarmonyWheelOptions` interface (DEAD-081)
+5. **Run `npm test -- --run` and `npm run type-check` in both svg and discord-worker**
+
+**Phase 2: Refactoring (behavior-preserving, requires testing)**
+1. Extract `rgbToHsv` to `base.ts`, update imports in comparison-grid.ts and dye-info-card.ts (DEAD-077)
+2. Replace local `getRelativeLuminance`/`getContrastRatio` with `ColorService` calls (DEAD-078)
+3. Replace inline truncation with `truncateText()` usage (DEAD-085)
+4. **Run full test suite to verify visual output hasn't changed**
+
+---
+
+# Part 13: @xivdyetools/test-utils (DEAD-083 – DEAD-084)
+
+## Test-Utils Package Executive Summary
+
+- **Package:** @xivdyetools/test-utils v1.1.3
+- **Source:** 3,394 lines across ~25 source files
+- **Total Exported Symbols:** ~35
+- **Consumed Externally:** ~20 (57.1%)
+- **Total Findings:** 2
+- **Recommended Removals:** 2
+- **Estimated Dead Lines:** ~50
+- **Health Score:** B+ (deprecated code still actively consumed — needs migration)
+
+### Consumer Landscape
+
+| Consumer | Key Imports |
+|----------|---|
+| presets-api tests | `MockD1Database`, `MockKVNamespace`, `MockR2Bucket`, `createTestDye`, `createTestPreset`, `createTestUser`, `createTestJWT`, `createTestHMAC`, `randomId` |
+| oauth tests | `MockD1Database`, `MockKVNamespace`, `createTestUser`, `createTestJWT`, `randomId` |
+| moderation-worker tests | `MockD1Database`, `MockKVNamespace`, `createTestJWT`, `randomId` |
+| svg tests | `createTestDye`, `createTestCategory` |
+
+### Finding Details
+
+| ID | Title | Action | Details |
+|----|-------|--------|---------|
+| DEAD-083 | Deprecated `nextId()` still consumed by `dye.ts` and `category.ts` factories | **REMOVE WITH CAUTION** | `nextId()` is marked `@deprecated` with JSDoc directing migration to `randomId()`, but 2 factory files still call it. Migrate those call sites to `randomId()`, then remove `nextId()`. |
+| DEAD-084 | Legacy counter infrastructure | **REMOVE** (after DEAD-083) | The `counters` Map, `resetCounters()`, `resetCounter()`, and `getCounterValue()` exist solely to support `nextId()`. Once `nextId()` is removed, this entire infrastructure (~30 lines in `counters.ts`) becomes dead. |
+
+### The Deprecation Gap
+
+The `nextId()` deprecation represents a common pattern: deprecated code that was never fully migrated. The deprecated marker was added, but two internal consumers were not updated:
+
+```typescript
+// packages/test-utils/src/utils/counters.ts
+/** @deprecated Use randomId() instead for unique IDs */
+export function nextId(prefix: string): number {
+  // Sequential counter — deterministic but fragile for tests
+  const current = counters.get(prefix) ?? 0;
+  const next = current + 1;
+  counters.set(prefix, next);
+  return next;
+}
+```
+
+```typescript
+// packages/test-utils/src/factories/dye.ts — STILL CALLS nextId()
+import { nextId } from '../utils/counters.js';
+export function createTestDye(overrides?: Partial<Dye>): Dye {
+  const id = nextId('dye');
+  // ...
+}
+```
+
+### Cleanup Execution Plan — Wave 14
+
+1. Update `src/factories/dye.ts`: Replace `nextId('dye')` with `randomId()` for ID generation
+2. Update `src/factories/category.ts`: Replace `nextId('category')` with `randomId()` for ID generation
+3. Remove `nextId()` from `src/utils/counters.ts`
+4. Remove `counters` Map, `resetCounters()`, `resetCounter()`, `getCounterValue()` from `counters.ts`
+5. If `counters.ts` is now empty, delete the file and update barrel imports
+6. Update `src/index.ts` to remove re-exports of deleted symbols
+7. **Run `npm test -- --run` across test-utils AND all consumers (presets-api, oauth, moderation-worker, svg)**
+
+---
+
+# Updated Post-Cleanup Verification (All Projects)
+
+After completing all cleanup waves (1-14):
+- [ ] All tests pass in each project (`npm test -- --run`)
+- [ ] Builds complete (`npm run build`)
+- [ ] Type checking passes (`npm run type-check`)
+- [ ] Lint passes (`npm run lint`)
+- [ ] discord-worker: `npm run dev` starts without errors
+- [ ] web-app: `npm run dev` starts without errors
+- [ ] bot-i18n: Publish new patch version if public API changed
+- [ ] bot-logic: No changes needed (all kept)
+- [ ] core: Publish new patch version after Wave 7; minor version after Wave 8
+- [ ] core: Run monorepo-wide type-check after any type-related removal
+- [ ] types: Publish new minor version after removing utility module/API types
+- [ ] types: Run monorepo-wide type-check after any barrel changes
+- [ ] logger: Publish new patch version after `@internal` markings (no API change)
+- [ ] rate-limiter: Publish new patch version after DEAD-073/074 cleanup
+- [ ] svg: Publish new patch version after Wave 13 Phase 1; minor version after Phase 2
+- [ ] test-utils: Publish new minor version after DEAD-083/084 (breaking for `nextId()` consumers)
+- [ ] test-utils: Run tests across presets-api, oauth, moderation-worker, svg after changes
