@@ -7,7 +7,8 @@
  * @module shared/constants
  */
 
-import type { ThemeName, VisionType, ColorblindMatrices } from './types';
+import type { VisionType, ColorblindMatrices } from '@xivdyetools/types';
+import type { ThemeName } from './types';
 import type { LocaleCode, LocaleDisplay } from './i18n-types';
 
 // ============================================================================

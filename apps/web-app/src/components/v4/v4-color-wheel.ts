@@ -20,7 +20,7 @@ import { html, css, CSSResultGroup, TemplateResult, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { BaseLitComponent } from './base-lit-component';
 import { LanguageService } from '@services/index';
-import type { Dye } from '@shared/types';
+import type { Dye } from '@xivdyetools/types';
 
 /**
  * Supported harmony types

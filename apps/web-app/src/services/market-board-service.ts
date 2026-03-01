@@ -19,7 +19,7 @@ import { ConfigController } from '@services/config-controller';
 import { appStorage } from '@services/storage-service';
 import { PRICE_CATEGORIES } from '@shared/constants';
 import { logger } from '@shared/logger';
-import type { Dye, PriceData } from '@shared/types';
+import type { Dye, PriceData } from '@xivdyetools/types';
 import type { MarketConfig } from '@shared/tool-config-types';
 
 // ============================================================================

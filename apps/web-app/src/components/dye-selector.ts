@@ -9,7 +9,7 @@
 
 import { BaseComponent } from './base-component';
 import { DyeService, LanguageService, CollectionService } from '@services/index';
-import type { Dye } from '@shared/types';
+import type { Dye } from '@xivdyetools/types';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import { ICON_CRYSTAL } from '@shared/ui-icons';

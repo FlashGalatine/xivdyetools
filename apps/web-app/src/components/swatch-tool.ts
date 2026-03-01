@@ -30,7 +30,7 @@ import { ICON_TOOL_CHARACTER } from '@shared/tool-icons';
 import { ICON_PALETTE, ICON_MARKET } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
-import type { Dye, PriceData } from '@shared/types';
+import type { Dye, PriceData } from '@xivdyetools/types';
 import type {
   SwatchConfig,
   DisplayOptionsConfig,

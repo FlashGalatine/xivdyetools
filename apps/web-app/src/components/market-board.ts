@@ -21,7 +21,7 @@ import {
   type PriceCategorySettings,
 } from '@services/market-board-service';
 import { ToastService } from '@services/toast-service';
-import type { Dye, PriceData } from '@shared/types';
+import type { Dye, PriceData } from '@xivdyetools/types';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 

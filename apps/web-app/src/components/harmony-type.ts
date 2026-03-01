@@ -12,7 +12,7 @@ import { ColorWheelDisplay } from './color-wheel-display';
 import { addInfoIconTo, TOOLTIP_CONTENT } from './info-tooltip';
 import { createDyeActionDropdown, type DyeAction } from './dye-action-dropdown';
 import { LanguageService } from '@services/index';
-import type { Dye, PriceData } from '@shared/types';
+import type { Dye, PriceData } from '@xivdyetools/types';
 import { clearContainer } from '@shared/utils';
 import { HARMONY_ICONS } from '@shared/harmony-icons';
 import { DyeCardRenderer } from './dye-card-renderer';

@@ -1,6 +1,6 @@
 import { BaseComponent } from './base-component';
 import { LanguageService, CollectionService, ToastService } from '@services/index';
-import { Dye } from '@shared/types';
+import { Dye } from '@xivdyetools/types';
 import { clearContainer } from '@shared/utils';
 import { getEmptyStateHTML } from './empty-state';
 import { ICON_SEARCH, ICON_PALETTE } from '@shared/empty-state-icons';

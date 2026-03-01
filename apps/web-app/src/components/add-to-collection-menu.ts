@@ -10,7 +10,7 @@
 
 import { CollectionService, LanguageService, ToastService } from '@services/index';
 import type { Collection, DyeId } from '@services/collection-service';
-import type { Dye } from '@shared/types';
+import type { Dye } from '@xivdyetools/types';
 import { showCreateCollectionDialog } from './collection-manager-modal';
 
 /**

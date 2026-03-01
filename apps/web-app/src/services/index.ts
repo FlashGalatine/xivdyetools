@@ -177,7 +177,8 @@ export type {
 } from './display-options-helper';
 
 // Re-export commonly used types
-export type { Dye, VisionType, ThemeName, PriceData } from '@shared/types';
+export type { Dye, VisionType, PriceData } from '@xivdyetools/types';
+export type { ThemeName } from '@shared/types';
 
 // Re-export commonly used utilities
 export { ErrorHandler, withErrorHandling, withAsyncErrorHandling } from '@shared/error-handler';

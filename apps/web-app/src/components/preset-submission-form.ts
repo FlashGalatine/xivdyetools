@@ -16,7 +16,7 @@ import {
   validateSubmission,
 } from '@services/index';
 import { getCategoryIcon } from '@shared/category-icons';
-import type { Dye } from '@shared/types';
+import type { Dye } from '@xivdyetools/types';
 import type { PresetCategory } from '@xivdyetools/core';
 import type { PresetSubmission, SubmissionResult } from '@services/preset-submission-service';
 

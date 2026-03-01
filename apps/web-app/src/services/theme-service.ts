@@ -8,7 +8,7 @@
  */
 
 import type { Theme, ThemeName, ThemePalette } from '@shared/types';
-import { ErrorCode, AppError } from '@shared/types';
+import { ErrorCode, AppError } from '@xivdyetools/types';
 import { THEME_NAMES, DEFAULT_THEME, STORAGE_KEYS } from '@shared/constants';
 import { appStorage } from './storage-service';
 import { logger } from '@shared/logger';

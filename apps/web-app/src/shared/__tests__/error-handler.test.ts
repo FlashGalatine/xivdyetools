@@ -20,7 +20,7 @@ import {
   validateNotEmpty,
   validateRange,
 } from '../error-handler';
-import { AppError, ErrorCode } from '../types';
+import { AppError, ErrorCode } from '@xivdyetools/types';
 import { logger } from '../logger';
 
 // Mock the logger

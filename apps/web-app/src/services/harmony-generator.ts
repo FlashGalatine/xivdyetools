@@ -13,7 +13,7 @@
 
 import { ColorService, dyeService, LanguageService } from '@services/index';
 import { ColorConverter } from '@xivdyetools/core';
-import type { Dye } from '@shared/types';
+import type { Dye } from '@xivdyetools/types';
 import type { MatchingMethod } from '@shared/tool-config-types';
 import type { DyeFilters, DyeFilterConfig } from '@components/dye-filters';
 

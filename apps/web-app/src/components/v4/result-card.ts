@@ -21,7 +21,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { BaseLitComponent } from './base-lit-component';
 import { ICON_CONTEXT_MENU } from '@shared/ui-icons';
-import type { Dye, DyeWithDistance } from '@shared/types';
+import type { Dye, DyeWithDistance } from '@xivdyetools/types';
 import type { MatchingMethod } from '@shared/tool-config-types';
 import { ColorService } from '@xivdyetools/core';
 import { LanguageService, StorageService, RouterService } from '@services/index';

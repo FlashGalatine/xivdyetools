@@ -43,7 +43,7 @@ import {
 } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
-import type { Dye, DyeWithDistance, PriceData } from '@shared/types';
+import type { Dye, DyeWithDistance, PriceData } from '@xivdyetools/types';
 import type {
   ExtractorConfig,
   DisplayOptionsConfig,

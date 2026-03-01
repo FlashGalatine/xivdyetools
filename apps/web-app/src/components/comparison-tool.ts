@@ -28,7 +28,7 @@ import { ICON_TOOL_COMPARISON } from '@shared/tool-icons';
 import { ICON_BEAKER, ICON_SETTINGS, ICON_MARKET } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
-import type { Dye } from '@shared/types';
+import type { Dye } from '@xivdyetools/types';
 import type { ComparisonConfig } from '@shared/tool-config-types';
 import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';

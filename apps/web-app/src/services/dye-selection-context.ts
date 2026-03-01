@@ -7,7 +7,7 @@
  * @module services/dye-selection-context
  */
 
-import type { Dye } from '@shared/types';
+import type { Dye } from '@xivdyetools/types';
 
 type SelectionChangedCallback = (toolId: string, dyes: Dye[]) => void;
 

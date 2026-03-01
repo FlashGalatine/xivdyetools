@@ -9,7 +9,7 @@
 
 import { BaseComponent } from './base-component';
 import { ColorService } from '@services/index';
-import type { VisionType } from '@shared/types';
+import type { VisionType } from '@xivdyetools/types';
 import { clearContainer } from '@shared/utils';
 
 /**

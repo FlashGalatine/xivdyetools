@@ -44,7 +44,7 @@ import {
 } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
-import type { Dye, PriceData } from '@shared/types';
+import type { Dye, PriceData } from '@xivdyetools/types';
 import type { BudgetConfig } from '@shared/tool-config-types';
 
 // ============================================================================

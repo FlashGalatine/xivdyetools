@@ -7,8 +7,8 @@
  * @module shared/error-handler
  */
 
-import { AppError, ErrorCode } from './types';
-import type { ErrorSeverity } from './types';
+import { AppError, ErrorCode } from '@xivdyetools/types';
+import type { ErrorSeverity } from '@xivdyetools/types';
 import { ERROR_MESSAGES } from './constants';
 import { logger } from './logger';
 

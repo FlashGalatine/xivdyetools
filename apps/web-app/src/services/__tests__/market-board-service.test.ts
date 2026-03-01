@@ -14,7 +14,7 @@ import { APIService } from '../api-service-wrapper';
 import { ConfigController } from '../config-controller';
 import { WorldService } from '../world-service';
 import { appStorage } from '../storage-service';
-import type { Dye, PriceData } from '@shared/types';
+import type { Dye, PriceData } from '@xivdyetools/types';
 
 // Mock dependencies
 vi.mock('../api-service-wrapper', () => ({

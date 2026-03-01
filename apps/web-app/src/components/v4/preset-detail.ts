@@ -23,14 +23,14 @@ import {
   LanguageService,
 } from '@services/index';
 import { MarketBoardService } from '@services/market-board-service';
-import type { PriceData } from '@shared/types';
+import type { PriceData } from '@xivdyetools/types';
 import { ConfigController } from '@services/config-controller';
 import type { DisplayOptionsConfig, MarketConfig } from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 import { getCategoryIcon, ICON_ARROW_BACK } from '@shared/category-icons';
 import { ICON_CRYSTAL, ICON_LINK } from '@shared/ui-icons';
 import type { UnifiedPreset } from '@services/hybrid-preset-service';
-import type { Dye } from '@shared/types';
+import type { Dye } from '@xivdyetools/types';
 
 // Import v4-result-card to ensure registration
 import './result-card';

@@ -1,5 +1,5 @@
 import type { MarketBoard } from '../components/market-board';
-import type { PriceData } from '@shared/types';
+import type { PriceData } from '@xivdyetools/types';
 
 export interface PricingState {
   showPrices: boolean;

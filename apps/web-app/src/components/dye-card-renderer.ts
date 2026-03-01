@@ -1,4 +1,4 @@
-import { Dye, DyeWithDistance, PriceData } from '@shared/types';
+import { Dye, DyeWithDistance, PriceData } from '@xivdyetools/types';
 import { LanguageService, ColorService, APIService } from '@services/index';
 import { CARD_CLASSES_COMPACT } from '@shared/constants';
 

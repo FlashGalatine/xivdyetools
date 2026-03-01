@@ -11,7 +11,7 @@ import { BaseComponent } from './base-component';
 import { LanguageService } from '@services/index';
 import { appStorage } from '@services/storage-service';
 import { EXPENSIVE_DYE_IDS } from '@shared/constants';
-import type { Dye } from '@shared/types';
+import type { Dye } from '@xivdyetools/types';
 import { clearContainer } from '@shared/utils';
 
 /**

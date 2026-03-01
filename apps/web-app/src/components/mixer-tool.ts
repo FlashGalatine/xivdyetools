@@ -40,7 +40,7 @@ import { ICON_TOOL_DYE_MIXER } from '@shared/tool-icons';
 import { ICON_FILTER, ICON_MARKET, ICON_PALETTE, ICON_SLIDERS } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
-import type { Dye, PriceData } from '@shared/types';
+import type { Dye, PriceData } from '@xivdyetools/types';
 import type {
   MixerConfig,
   DisplayOptionsConfig,

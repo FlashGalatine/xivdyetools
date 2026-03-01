@@ -11,59 +11,7 @@
  * @module shared/types
  */
 
-// ============================================================================
-// Re-exports from @xivdyetools/types
-// ============================================================================
-
-/**
- * @deprecated Import directly from '@xivdyetools/types' instead.
- * These re-exports will be removed in the next major version.
- */
-export type {
-  RGB,
-  HSV,
-  HexColor,
-  VisionType,
-  Matrix3x3,
-  ColorblindMatrices,
-} from '@xivdyetools/types';
-/**
- * @deprecated Import directly from '@xivdyetools/types' instead.
- * These re-exports will be removed in the next major version.
- */
-export { createHexColor } from '@xivdyetools/types';
-
-// Import HexColor for local use in this file
 import type { HexColor } from '@xivdyetools/types';
-
-/**
- * @deprecated Import directly from '@xivdyetools/types' instead.
- * These re-exports will be removed in the next major version.
- */
-export type { Dye, DyeWithDistance, DyeDatabase } from '@xivdyetools/types';
-
-/**
- * @deprecated Import directly from '@xivdyetools/types' instead.
- * These re-exports will be removed in the next major version.
- */
-export type { APIResponse, CachedData, PriceData, RateLimitResult } from '@xivdyetools/types';
-
-/**
- * @deprecated Import directly from '@xivdyetools/types' instead.
- * These re-exports will be removed in the next major version.
- */
-export type { ErrorSeverity } from '@xivdyetools/types';
-/**
- * @deprecated Import directly from '@xivdyetools/types' instead.
- * These re-exports will be removed in the next major version.
- */
-export { AppError, ErrorCode } from '@xivdyetools/types';
-
-/**
- * @deprecated Import directly from '@xivdyetools/types' instead.
- * These re-exports will be removed in the next major version.
- */
-export type { Result, AsyncResult, Nullable, Optional } from '@xivdyetools/types';
 
 // ============================================================================
 // Theme Types

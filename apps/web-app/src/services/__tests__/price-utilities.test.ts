@@ -16,7 +16,7 @@ import {
   getItemIdsForPriceFetch,
   hasCachedPrices,
 } from '../price-utilities';
-import type { Dye, PriceData } from '@shared/types';
+import type { Dye, PriceData } from '@xivdyetools/types';
 import type { MarketBoardService } from '../market-board-service';
 
 // Mock dye data

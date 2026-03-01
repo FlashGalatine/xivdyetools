@@ -12,7 +12,7 @@ import {
 } from '@services/index';
 import type { Collection } from '@services/collection-service';
 import { ICON_FOLDER } from '@shared/empty-state-icons';
-import type { Dye } from '@shared/types';
+import type { Dye } from '@xivdyetools/types';
 
 /**
  * Show the collection manager modal

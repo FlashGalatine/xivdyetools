@@ -10,7 +10,7 @@
 import { BaseComponent } from './base-component';
 import { createDyeActionDropdown, type DyeAction } from './dye-action-dropdown';
 import { LanguageService, APIService } from '@services/index';
-import type { Dye, PriceData } from '@shared/types';
+import type { Dye, PriceData } from '@xivdyetools/types';
 import { clearContainer } from '@shared/utils';
 
 // ============================================================================

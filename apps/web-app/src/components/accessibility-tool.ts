@@ -25,7 +25,7 @@ import {
 } from '@services/index';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
-import type { Dye } from '@shared/types';
+import type { Dye } from '@xivdyetools/types';
 import type { AccessibilityConfig, DisplayOptionsConfig } from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 import { ICON_TOOL_ACCESSIBILITY } from '@shared/tool-icons';

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DyeSelectionContext } from '../dye-selection-context';
-import type { Dye } from '@shared/types';
+import type { Dye } from '@xivdyetools/types';
 
 describe('DyeSelectionContext', () => {
   let context: DyeSelectionContext;

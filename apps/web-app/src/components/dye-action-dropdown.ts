@@ -8,7 +8,7 @@
  * @module components/dye-action-dropdown
  */
 
-import type { Dye } from '@shared/types';
+import type { Dye } from '@xivdyetools/types';
 import { LanguageService, StorageService, RouterService } from '@services/index';
 import { ToastService } from '@services/toast-service';
 import { ModalService } from '@services/modal-service';
