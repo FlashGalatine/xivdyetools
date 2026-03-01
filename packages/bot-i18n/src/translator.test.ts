@@ -7,13 +7,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import {
-  Translator,
-  createTranslator,
-  translate,
-  getAvailableLocales,
-  isLocaleSupported,
-} from './index.js';
+import { Translator, createTranslator } from './index.js';
 
 describe('Translator', () => {
   describe('constructor', () => {
@@ -149,59 +143,3 @@ describe('createTranslator', () => {
   });
 });
 
-describe('translate', () => {
-  it('translates without a reusable translator instance', () => {
-    expect(translate('en', 'meta.name')).toBe('English');
-  });
-
-  it('interpolates variables', () => {
-    const result = translate('en', 'errors.dyeNotFound', { name: 'Soot Black' });
-    expect(result).toBe('Could not find a dye named "Soot Black".');
-  });
-
-  it('returns key for missing translation', () => {
-    expect(translate('en', 'missing.key')).toBe('missing.key');
-  });
-});
-
-describe('getAvailableLocales', () => {
-  it('returns metadata for all 6 available locales', () => {
-    const available = getAvailableLocales();
-    expect(available).toHaveLength(6);
-
-    const codes = available.map((l) => l.locale);
-    expect(codes).toContain('en');
-    expect(codes).toContain('ja');
-    expect(codes).toContain('de');
-    expect(codes).toContain('fr');
-    expect(codes).toContain('ko');
-    expect(codes).toContain('zh');
-  });
-
-  it('returns proper metadata structure for each locale', () => {
-    for (const locale of getAvailableLocales()) {
-      expect(locale).toHaveProperty('locale');
-      expect(locale).toHaveProperty('name');
-      expect(locale).toHaveProperty('nativeName');
-      expect(locale).toHaveProperty('flag');
-    }
-  });
-});
-
-describe('isLocaleSupported', () => {
-  it('returns true for supported locales', () => {
-    expect(isLocaleSupported('en')).toBe(true);
-    expect(isLocaleSupported('ja')).toBe(true);
-    expect(isLocaleSupported('de')).toBe(true);
-    expect(isLocaleSupported('fr')).toBe(true);
-    expect(isLocaleSupported('ko')).toBe(true);
-    expect(isLocaleSupported('zh')).toBe(true);
-  });
-
-  it('returns false for unsupported locales', () => {
-    expect(isLocaleSupported('es')).toBe(false);
-    expect(isLocaleSupported('pt')).toBe(false);
-    expect(isLocaleSupported('')).toBe(false);
-    expect(isLocaleSupported('EN')).toBe(false); // case-sensitive
-  });
-});

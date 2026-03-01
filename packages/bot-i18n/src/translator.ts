@@ -108,29 +108,3 @@ export function createTranslator(locale: LocaleCode, logger?: TranslatorLogger):
   return new Translator(locale, logger);
 }
 
-/**
- * Quick one-off translation helper.
- */
-export function translate(
-  locale: LocaleCode,
-  key: string,
-  variables?: Record<string, string | number>,
-  logger?: TranslatorLogger
-): string {
-  return new Translator(locale, logger).t(key, variables);
-}
-
-/**
- * Get all available locales with metadata.
- * Used by language selection commands to show available options.
- */
-export function getAvailableLocales(): Array<LocaleData['meta']> {
-  return Object.values(locales).map((data) => data.meta);
-}
-
-/**
- * Type guard: check if a string is a supported locale code.
- */
-export function isLocaleSupported(locale: string): locale is LocaleCode {
-  return locale in locales;
-}

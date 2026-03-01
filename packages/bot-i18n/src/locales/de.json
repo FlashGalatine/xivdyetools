@@ -356,11 +356,6 @@
     "unsupportedFormat": "Nicht unterstütztes Bildformat. Bitte verwende PNG, JPEG, GIF oder WebP.",
     "timeout": "Bild-Download hat zu lange gedauert. Bitte versuche es erneut."
   },
-  "buttons": {
-    "copyHex": "HEX kopieren",
-    "copyRgb": "RGB kopieren",
-    "copyHsv": "HSV kopieren"
-  },
   "matchImageHelp": {
     "title": "So verwendest du /match_image",
     "description": "Der `/match_image`-Befehl analysiert dein hochgeladenes Bild, um die dominante Farbe zu finden und sie dem nächsten FFXIV-Farbstoff zuzuordnen. Hier sind einige Tipps für beste Ergebnisse!",
@@ -647,69 +642,6 @@
       "operational": "Betriebsbereit",
       "degraded": "Beeinträchtigt",
       "down": "Ausgefallen"
-    }
-  },
-  "status": {
-    "analyzing": "Analysiere...",
-    "rendering": "Generiere Bild...",
-    "fetchingMarket": "Rufe Marktdaten ab...",
-    "processing": "Verarbeite...",
-    "finalizing": "Schließe ab...",
-    "complete": "Fertig!",
-    "queuePosition": "Warteschlangenposition: {position}",
-    "estimatedWait": "Geschätzte Wartezeit: {seconds}s",
-    "cooldown": "Bitte warte {seconds}s, bevor du diesen Befehl erneut verwendest."
-  },
-  "pagination": {
-    "page": "Seite {current} von {total}",
-    "pageCompact": "{current}/{total}",
-    "first": "Erste",
-    "previous": "Zurück",
-    "next": "Weiter",
-    "last": "Letzte",
-    "showing": "Zeige {start}-{end} von {total}",
-    "noResults": "Keine Ergebnisse gefunden.",
-    "emptyPage": "Diese Seite ist leer."
-  },
-  "components": {
-    "blendingModeSelect": {
-      "placeholder": "Mischmodus auswählen...",
-      "label": "Mischmodus"
-    },
-    "matchingMethodSelect": {
-      "placeholder": "Matching-Methode auswählen...",
-      "label": "Matching-Methode"
-    },
-    "marketToggle": {
-      "show": "Preise anzeigen",
-      "hide": "Preise ausblenden"
-    },
-    "refresh": {
-      "label": "Aktualisieren"
-    },
-    "copy": {
-      "hex": "HEX kopieren",
-      "rgb": "RGB kopieren",
-      "hsv": "HSV kopieren",
-      "lab": "LAB kopieren"
-    }
-  },
-  "matching": {
-    "methods": {
-      "rgb": "RGB Euklidisch",
-      "cie76": "CIE76 (ΔE*)",
-      "ciede2000": "CIEDE2000",
-      "oklab": "OKLAB-Distanz",
-      "hyab": "HyAB (Hybrid)",
-      "oklch_weighted": "OKLCH Gewichtet"
-    },
-    "methodDescriptions": {
-      "rgb": "Einfache RGB-Farbraum-Distanz",
-      "cie76": "Grundlegende Wahrnehmungsdifferenz (LAB)",
-      "ciede2000": "Fortgeschrittene Wahrnehmungsdifferenz",
-      "oklab": "Moderner wahrnehmungsbasierter Farbraum",
-      "hyab": "Hybride LAB + Chroma Distanz",
-      "oklch_weighted": "Gewichtete OKLCH-Komponenten"
     }
   },
   "webhook": {

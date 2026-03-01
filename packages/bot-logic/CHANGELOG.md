@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-03-01
+
+### Changed
+
+- Removed `resolveCssColorName` from barrel export — internal helper, not part of public API (DEAD-036)
+- Marked `HARMONY_TYPES` and `VISION_TYPES` constants as `@internal` (DEAD-037)
+- Marked `EmbedData`, `EmbedField`, and `ResolveColorOptions` types as `@internal` (DEAD-038–040)
+- Cleaned up stale REFACTOR-001/002 comment markers from `color-math.ts` and `index.ts` (DEAD-041)
+
 ## [1.1.0] - 2026-02-21
 
 ### Added

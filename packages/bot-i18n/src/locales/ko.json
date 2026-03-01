@@ -356,11 +356,6 @@
     "unsupportedFormat": "지원되지 않는 이미지 형식입니다. PNG, JPEG, GIF 또는 WebP를 사용해 주세요.",
     "timeout": "이미지 다운로드 시간이 초과되었습니다. 다시 시도해 주세요."
   },
-  "buttons": {
-    "copyHex": "HEX 복사",
-    "copyRgb": "RGB 복사",
-    "copyHsv": "HSV 복사"
-  },
   "matchImageHelp": {
     "title": "/match_image 사용 방법",
     "description": "`/match_image` 명령어는 업로드된 이미지를 분석하여 지배적인 색상을 찾고 가장 가까운 FFXIV 염료와 매칭합니다. 최상의 결과를 위한 팁을 알려드립니다!",
@@ -647,69 +642,6 @@
       "operational": "정상",
       "degraded": "저하",
       "down": "중단"
-    }
-  },
-  "status": {
-    "analyzing": "분석 중...",
-    "rendering": "이미지 생성 중...",
-    "fetchingMarket": "마켓 데이터 가져오는 중...",
-    "processing": "처리 중...",
-    "finalizing": "마무리 중...",
-    "complete": "완료!",
-    "queuePosition": "대기열 위치: {position}",
-    "estimatedWait": "예상 대기 시간: {seconds}초",
-    "cooldown": "이 명령어를 다시 사용하려면 {seconds}초 기다려 주세요."
-  },
-  "pagination": {
-    "page": "{total}페이지 중 {current}페이지",
-    "pageCompact": "{current}/{total}",
-    "first": "처음",
-    "previous": "이전",
-    "next": "다음",
-    "last": "마지막",
-    "showing": "{total}개 중 {start}-{end} 표시",
-    "noResults": "결과를 찾을 수 없습니다.",
-    "emptyPage": "이 페이지는 비어 있습니다."
-  },
-  "components": {
-    "blendingModeSelect": {
-      "placeholder": "블렌딩 모드 선택...",
-      "label": "블렌딩 모드"
-    },
-    "matchingMethodSelect": {
-      "placeholder": "매칭 방법 선택...",
-      "label": "매칭 방법"
-    },
-    "marketToggle": {
-      "show": "가격 표시",
-      "hide": "가격 숨기기"
-    },
-    "refresh": {
-      "label": "새로고침"
-    },
-    "copy": {
-      "hex": "HEX 복사",
-      "rgb": "RGB 복사",
-      "hsv": "HSV 복사",
-      "lab": "LAB 복사"
-    }
-  },
-  "matching": {
-    "methods": {
-      "rgb": "RGB 유클리드",
-      "cie76": "CIE76 (ΔE*)",
-      "ciede2000": "CIEDE2000",
-      "oklab": "OKLAB 거리",
-      "hyab": "HyAB (하이브리드)",
-      "oklch_weighted": "OKLCH 가중"
-    },
-    "methodDescriptions": {
-      "rgb": "단순 RGB 색 공간 거리",
-      "cie76": "기본 지각 차이 (LAB)",
-      "ciede2000": "고급 지각 차이",
-      "oklab": "최신 지각 색 공간",
-      "hyab": "하이브리드 LAB + 채도 거리",
-      "oklch_weighted": "가중 OKLCH 성분"
     }
   },
   "webhook": {

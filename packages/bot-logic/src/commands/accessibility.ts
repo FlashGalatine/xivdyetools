@@ -24,6 +24,7 @@ import type { EmbedData } from './types.js';
 // Types
 // ============================================================================
 
+/** @internal Reference constant — not required by external consumers. */
 export const VISION_TYPES: VisionType[] = ['protanopia', 'deuteranopia', 'tritanopia'];
 
 export interface AccessibilityDye {

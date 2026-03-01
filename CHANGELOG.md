@@ -22,6 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - **web-app**: Migrate `@shared/types` re-exports to direct `@xivdyetools/types` imports across 46 files; deprecated re-export blocks removed from `shared/types.ts` (local types `Theme`, `AppState`, `DataCenter`, `World` remain)
+- **bot-i18n**: Marked `LocaleData` and `TranslatorLogger` type exports as `@internal` (DEAD-033)
+- **bot-logic**: Marked `HARMONY_TYPES`, `VISION_TYPES`, `EmbedData`, `EmbedField`, `ResolveColorOptions` as `@internal` (DEAD-037–040); cleaned up stale REFACTOR comment markers (DEAD-041)
 
 ### Removed
 
@@ -41,6 +43,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Legacy `handleMixerCommand` handler, replaced by `handleGradientCommand` (DEAD-022)
   - Unused `discord-interactions` devDependency (DEAD-023)
 - **discord-worker**: Dead code cleanup — Wave 6 (DEAD-024–027, 029, 035): `InteractionContext`/deadline infrastructure, 4 unused component builders, legacy KV preference functions, dead exports, unused re-exports
+- **bot-i18n**: 3 unused function exports (`translate`, `getAvailableLocales`, `isLocaleSupported`) and 5 unused locale key sections (`buttons`, `status`, `pagination`, `components`, `matching`) from all 6 language files (DEAD-032, DEAD-034)
+- **bot-logic**: `resolveCssColorName` from barrel export — internal helper not part of public API (DEAD-036)
 
 ---
 

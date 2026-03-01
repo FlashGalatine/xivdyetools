@@ -10,9 +10,6 @@
  * @module bot-logic
  */
 
-// Foundation: CSS color name resolution
-export { resolveCssColorName } from './css-colors.js';
-
 // Foundation: Color input resolution (hex, dye name, CSS color)
 export {
   isValidHex,
@@ -34,7 +31,7 @@ export type { LocaleCode } from './localization.js';
 // Shared result types
 export type { EmbedData, EmbedField } from './commands/types.js';
 
-// Shared color math utilities (REFACTOR-001, REFACTOR-002)
+// Shared color math utilities
 export { getColorDistance, getMatchQualityInfo } from './color-math.js';
 export type { MatchQualityInfo } from './color-math.js';
 

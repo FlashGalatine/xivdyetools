@@ -18,6 +18,7 @@ import type { EmbedData } from './types.js';
 // Types
 // ============================================================================
 
+/** @internal Reference constant — not required by external consumers. */
 export const HARMONY_TYPES = [
   'triadic',
   'complementary',

@@ -356,11 +356,6 @@
     "unsupportedFormat": "不支持的图片格式。请使用 PNG、JPEG、GIF 或 WebP。",
     "timeout": "图片下载超时。请重试。"
   },
-  "buttons": {
-    "copyHex": "复制HEX",
-    "copyRgb": "复制RGB",
-    "copyHsv": "复制HSV"
-  },
   "matchImageHelp": {
     "title": "如何使用 /match_image",
     "description": "`/match_image` 命令会分析您上传的图片，找出主导颜色并匹配最接近的FFXIV染剂。以下是一些获得最佳结果的技巧！",
@@ -647,69 +642,6 @@
       "operational": "正常",
       "degraded": "降级",
       "down": "停止"
-    }
-  },
-  "status": {
-    "analyzing": "分析中...",
-    "rendering": "生成图像...",
-    "fetchingMarket": "获取市场数据...",
-    "processing": "处理中...",
-    "finalizing": "最终处理...",
-    "complete": "完成！",
-    "queuePosition": "队列位置：{position}",
-    "estimatedWait": "预计等待：{seconds}秒",
-    "cooldown": "请等待 {seconds} 秒后再次使用此命令。"
-  },
-  "pagination": {
-    "page": "第 {current} 页，共 {total} 页",
-    "pageCompact": "{current}/{total}",
-    "first": "第一页",
-    "previous": "上一页",
-    "next": "下一页",
-    "last": "最后一页",
-    "showing": "显示 {start}-{end}，共 {total}",
-    "noResults": "未找到结果。",
-    "emptyPage": "此页为空。"
-  },
-  "components": {
-    "blendingModeSelect": {
-      "placeholder": "选择混合模式...",
-      "label": "混合模式"
-    },
-    "matchingMethodSelect": {
-      "placeholder": "选择匹配方法...",
-      "label": "匹配方法"
-    },
-    "marketToggle": {
-      "show": "显示价格",
-      "hide": "隐藏价格"
-    },
-    "refresh": {
-      "label": "刷新"
-    },
-    "copy": {
-      "hex": "复制HEX",
-      "rgb": "复制RGB",
-      "hsv": "复制HSV",
-      "lab": "复制LAB"
-    }
-  },
-  "matching": {
-    "methods": {
-      "rgb": "RGB欧几里得",
-      "cie76": "CIE76 (ΔE*)",
-      "ciede2000": "CIEDE2000",
-      "oklab": "OKLAB距离",
-      "hyab": "HyAB（混合）",
-      "oklch_weighted": "OKLCH加权"
-    },
-    "methodDescriptions": {
-      "rgb": "简单RGB色彩空间距离",
-      "cie76": "基本感知差异（LAB）",
-      "ciede2000": "高级感知差异",
-      "oklab": "现代感知色彩空间",
-      "hyab": "混合LAB + 色度距离",
-      "oklch_weighted": "加权OKLCH分量"
     }
   },
   "webhook": {

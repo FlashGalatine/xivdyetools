@@ -356,11 +356,6 @@
     "unsupportedFormat": "Unsupported image format. Please use PNG, JPEG, GIF, or WebP.",
     "timeout": "Image download timed out. Please try again."
   },
-  "buttons": {
-    "copyHex": "Copy HEX",
-    "copyRgb": "Copy RGB",
-    "copyHsv": "Copy HSV"
-  },
   "matchImageHelp": {
     "title": "How to Use /match_image",
     "description": "The `/match_image` command analyzes your uploaded image to find the dominant color and matches it to the closest FFXIV dye. Here are some tips to get the best results!",
@@ -647,69 +642,6 @@
       "operational": "Operational",
       "degraded": "Degraded",
       "down": "Down"
-    }
-  },
-  "status": {
-    "analyzing": "Analyzing...",
-    "rendering": "Generating image...",
-    "fetchingMarket": "Fetching market data...",
-    "processing": "Processing...",
-    "finalizing": "Finalizing...",
-    "complete": "Complete!",
-    "queuePosition": "Queue Position: {position}",
-    "estimatedWait": "Estimated wait: {seconds}s",
-    "cooldown": "Please wait {seconds}s before using this command again."
-  },
-  "pagination": {
-    "page": "Page {current} of {total}",
-    "pageCompact": "{current}/{total}",
-    "first": "First",
-    "previous": "Previous",
-    "next": "Next",
-    "last": "Last",
-    "showing": "Showing {start}-{end} of {total}",
-    "noResults": "No results found.",
-    "emptyPage": "This page is empty."
-  },
-  "components": {
-    "blendingModeSelect": {
-      "placeholder": "Select blending mode...",
-      "label": "Blending Mode"
-    },
-    "matchingMethodSelect": {
-      "placeholder": "Select matching method...",
-      "label": "Matching Method"
-    },
-    "marketToggle": {
-      "show": "Show Prices",
-      "hide": "Hide Prices"
-    },
-    "refresh": {
-      "label": "Refresh"
-    },
-    "copy": {
-      "hex": "Copy HEX",
-      "rgb": "Copy RGB",
-      "hsv": "Copy HSV",
-      "lab": "Copy LAB"
-    }
-  },
-  "matching": {
-    "methods": {
-      "rgb": "RGB Euclidean",
-      "cie76": "CIE76 (ΔE*)",
-      "ciede2000": "CIEDE2000",
-      "oklab": "OKLAB Distance",
-      "hyab": "HyAB (Hybrid)",
-      "oklch_weighted": "OKLCH Weighted"
-    },
-    "methodDescriptions": {
-      "rgb": "Simple RGB color space distance",
-      "cie76": "Basic perceptual difference (LAB)",
-      "ciede2000": "Advanced perceptual difference",
-      "oklab": "Modern perceptual color space",
-      "hyab": "Hybrid LAB + Chroma distance",
-      "oklch_weighted": "Weighted OKLCH components"
     }
   },
   "webhook": {

@@ -356,11 +356,6 @@
     "unsupportedFormat": "Format d'image non pris en charge. Veuillez utiliser PNG, JPEG, GIF ou WebP.",
     "timeout": "Le téléchargement de l'image a expiré. Veuillez réessayer."
   },
-  "buttons": {
-    "copyHex": "Copier HEX",
-    "copyRgb": "Copier RGB",
-    "copyHsv": "Copier HSV"
-  },
   "matchImageHelp": {
     "title": "Comment utiliser /match_image",
     "description": "La commande `/match_image` analyse votre image téléchargée pour trouver la couleur dominante et la faire correspondre à la teinture FFXIV la plus proche. Voici quelques conseils pour obtenir les meilleurs résultats !",
@@ -647,69 +642,6 @@
       "operational": "Opérationnel",
       "degraded": "Dégradé",
       "down": "Hors service"
-    }
-  },
-  "status": {
-    "analyzing": "Analyse en cours...",
-    "rendering": "Génération de l'image...",
-    "fetchingMarket": "Récupération des données du marché...",
-    "processing": "Traitement...",
-    "finalizing": "Finalisation...",
-    "complete": "Terminé !",
-    "queuePosition": "Position dans la file : {position}",
-    "estimatedWait": "Attente estimée : {seconds}s",
-    "cooldown": "Veuillez patienter {seconds}s avant d'utiliser cette commande à nouveau."
-  },
-  "pagination": {
-    "page": "Page {current} sur {total}",
-    "pageCompact": "{current}/{total}",
-    "first": "Première",
-    "previous": "Précédent",
-    "next": "Suivant",
-    "last": "Dernière",
-    "showing": "Affichage {start}-{end} sur {total}",
-    "noResults": "Aucun résultat trouvé.",
-    "emptyPage": "Cette page est vide."
-  },
-  "components": {
-    "blendingModeSelect": {
-      "placeholder": "Sélectionner le mode de mélange...",
-      "label": "Mode de mélange"
-    },
-    "matchingMethodSelect": {
-      "placeholder": "Sélectionner la méthode de correspondance...",
-      "label": "Méthode de correspondance"
-    },
-    "marketToggle": {
-      "show": "Afficher les prix",
-      "hide": "Masquer les prix"
-    },
-    "refresh": {
-      "label": "Actualiser"
-    },
-    "copy": {
-      "hex": "Copier HEX",
-      "rgb": "Copier RGB",
-      "hsv": "Copier HSV",
-      "lab": "Copier LAB"
-    }
-  },
-  "matching": {
-    "methods": {
-      "rgb": "RGB Euclidien",
-      "cie76": "CIE76 (ΔE*)",
-      "ciede2000": "CIEDE2000",
-      "oklab": "Distance OKLAB",
-      "hyab": "HyAB (Hybride)",
-      "oklch_weighted": "OKLCH Pondéré"
-    },
-    "methodDescriptions": {
-      "rgb": "Simple distance dans l'espace colorimétrique RGB",
-      "cie76": "Différence perceptuelle basique (LAB)",
-      "ciede2000": "Différence perceptuelle avancée",
-      "oklab": "Espace colorimétrique perceptuel moderne",
-      "hyab": "Distance hybride LAB + Chroma",
-      "oklch_weighted": "Composants OKLCH pondérés"
     }
   },
   "webhook": {

@@ -356,11 +356,6 @@
     "unsupportedFormat": "サポートされていない画像形式です。PNG、JPEG、GIF、またはWebPを使用してください。",
     "timeout": "画像のダウンロードがタイムアウトしました。もう一度お試しください。"
   },
-  "buttons": {
-    "copyHex": "HEXをコピー",
-    "copyRgb": "RGBをコピー",
-    "copyHsv": "HSVをコピー"
-  },
   "matchImageHelp": {
     "title": "/match_image の使い方",
     "description": "`/match_image` コマンドはアップロードされた画像を分析し、最も近いFFXIVカララントに一致する主要な色を見つけます。最良の結果を得るためのヒントをご紹介します！",
@@ -647,69 +642,6 @@
       "operational": "正常",
       "degraded": "低下",
       "down": "停止"
-    }
-  },
-  "status": {
-    "analyzing": "分析中...",
-    "rendering": "画像生成中...",
-    "fetchingMarket": "マーケットデータ取得中...",
-    "processing": "処理中...",
-    "finalizing": "完了処理中...",
-    "complete": "完了！",
-    "queuePosition": "キュー位置：{position}",
-    "estimatedWait": "推定待ち時間：{seconds}秒",
-    "cooldown": "このコマンドを再度使用するには{seconds}秒お待ちください。"
-  },
-  "pagination": {
-    "page": "{total}ページ中{current}ページ",
-    "pageCompact": "{current}/{total}",
-    "first": "最初",
-    "previous": "前へ",
-    "next": "次へ",
-    "last": "最後",
-    "showing": "{total}件中{start}-{end}を表示",
-    "noResults": "結果が見つかりませんでした。",
-    "emptyPage": "このページは空です。"
-  },
-  "components": {
-    "blendingModeSelect": {
-      "placeholder": "ブレンドモードを選択...",
-      "label": "ブレンドモード"
-    },
-    "matchingMethodSelect": {
-      "placeholder": "マッチング方法を選択...",
-      "label": "マッチング方法"
-    },
-    "marketToggle": {
-      "show": "価格を表示",
-      "hide": "価格を非表示"
-    },
-    "refresh": {
-      "label": "更新"
-    },
-    "copy": {
-      "hex": "HEXをコピー",
-      "rgb": "RGBをコピー",
-      "hsv": "HSVをコピー",
-      "lab": "LABをコピー"
-    }
-  },
-  "matching": {
-    "methods": {
-      "rgb": "RGBユークリッド",
-      "cie76": "CIE76 (ΔE*)",
-      "ciede2000": "CIEDE2000",
-      "oklab": "OKLAB距離",
-      "hyab": "HyAB（ハイブリッド）",
-      "oklch_weighted": "OKLCH重み付け"
-    },
-    "methodDescriptions": {
-      "rgb": "単純なRGB色空間距離",
-      "cie76": "基本的な知覚差（LAB）",
-      "ciede2000": "高度な知覚差",
-      "oklab": "最新の知覚色空間",
-      "hyab": "LAB + 彩度のハイブリッド距離",
-      "oklch_weighted": "重み付けOKLCHコンポーネント"
     }
   },
   "webhook": {

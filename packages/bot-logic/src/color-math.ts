@@ -1,11 +1,8 @@
 /**
  * Shared Color Math Utilities
  *
- * Consolidates duplicated color distance and match quality logic
- * that was previously copy-pasted across match, mixer, and gradient commands.
- *
- * REFACTOR-001: Single source of truth for `getColorDistance`
- * REFACTOR-002: Single source of truth for match quality thresholds
+ * Single source of truth for color distance calculation and match quality
+ * thresholds, used by match, mixer, and gradient commands.
  *
  * @module color-math
  */
@@ -13,7 +10,7 @@
 import { ColorService } from '@xivdyetools/core';
 
 // ============================================================================
-// Color Distance (REFACTOR-001)
+// Color Distance
 // ============================================================================
 
 /**
@@ -27,7 +24,7 @@ export function getColorDistance(hex1: string, hex2: string): number {
 }
 
 // ============================================================================
-// Match Quality (REFACTOR-002)
+// Match Quality
 // ============================================================================
 
 /**
