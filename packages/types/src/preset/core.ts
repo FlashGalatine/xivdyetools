@@ -6,8 +6,6 @@
  * @module preset/core
  */
 
-import type { Dye } from '../dye/dye.js';
-
 /**
  * Preset palette category identifiers
  */
@@ -90,16 +88,6 @@ export interface PresetPalette {
 
   /** Version for future updates */
   version?: string;
-}
-
-/**
- * Preset with resolved Dye objects
- *
- * Used when displaying a preset with full dye information.
- */
-export interface ResolvedPreset extends PresetPalette {
-  /** Full Dye objects for each dye ID (null if dye not found) */
-  resolvedDyes: (Dye | null)[];
 }
 
 /**

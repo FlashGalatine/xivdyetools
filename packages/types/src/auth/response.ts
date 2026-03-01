@@ -37,6 +37,7 @@ export interface AuthUser {
 
 /**
  * Successful authentication response
+ * @internal Not for direct consumer import — use `AuthResponse` union instead
  */
 export interface AuthSuccessResponse {
   /** Authentication succeeded */
@@ -54,6 +55,7 @@ export interface AuthSuccessResponse {
 
 /**
  * Failed authentication response
+ * @internal Not for direct consumer import — use `AuthResponse` union instead
  */
 export interface AuthErrorResponse {
   /** Authentication failed */
@@ -81,6 +83,7 @@ export type AuthResponse = AuthSuccessResponse | AuthErrorResponse;
 
 /**
  * Successful token refresh response
+ * @internal Not for direct consumer import — use `RefreshResponse` union instead
  */
 export interface RefreshSuccessResponse {
   /** Refresh succeeded */
@@ -95,6 +98,7 @@ export interface RefreshSuccessResponse {
 
 /**
  * Failed token refresh response
+ * @internal Not for direct consumer import — use `RefreshResponse` union instead
  */
 export interface RefreshErrorResponse {
   /** Refresh failed */
@@ -113,6 +117,7 @@ export type RefreshResponse = RefreshSuccessResponse | RefreshErrorResponse;
 
 /**
  * User info data returned in UserInfoResponse
+ * @internal Not for direct consumer import — use `UserInfoResponse` union instead
  */
 export interface UserInfoData {
   id: string;
@@ -124,6 +129,7 @@ export interface UserInfoData {
 
 /**
  * Successful user info response
+ * @internal Not for direct consumer import — use `UserInfoResponse` union instead
  */
 export interface UserInfoSuccessResponse {
   /** Request succeeded */
@@ -135,6 +141,7 @@ export interface UserInfoSuccessResponse {
 
 /**
  * Failed user info response
+ * @internal Not for direct consumer import — use `UserInfoResponse` union instead
  */
 export interface UserInfoErrorResponse {
   /** Request failed */

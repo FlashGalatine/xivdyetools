@@ -89,6 +89,7 @@ export interface Dye {
  * Localized dye with optional translated name
  *
  * Extends Dye with a localized name for display in non-English locales.
+ * @internal Used by core's DyeService — apps use `getLocalizedDyeName()` instead
  */
 export interface LocalizedDye extends Dye {
   /** Translated dye name (if available) */

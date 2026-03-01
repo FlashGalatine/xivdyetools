@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+
+- **DEAD-061**: Entire utility module — `Result<T,E>`, `AsyncResult<T,E>`, `Nullable<T>`, `Optional<T>`, `isOk()`, `isErr()` (zero consumers; Rust-inspired Result pattern never adopted)
+- **DEAD-063**: Generic API response types — `APISuccessResponse<T>`, `APIErrorResponse`, `APIResponse<T>` (zero consumers; each worker defines its own response types)
+- **DEAD-060**: Orphaned preset types — `ResolvedPreset` (migrated to `@xivdyetools/core` PresetService), `AuthenticatedPresetSubmission` (zero consumers; auth handled via middleware)
+- **DEAD-057**: 11 preset response sub-types removed from main barrel — `PresetSubmitCreatedResponse`, `PresetSubmitDuplicateResponse`, `PresetSubmitErrorResponse`, `PresetEditDuplicateInfo`, `PresetEditSuccessResponse`, `PresetEditDuplicateResponse`, `PresetEditErrorResponse`, `VoteSuccessResponse`, `VoteErrorResponse`, `ModerationSuccessResponse`, `ModerationErrorResponse` (consumers use union types; still accessible via `@xivdyetools/types/preset`)
+- **DEAD-058**: 7 auth response sub-types removed from main barrel — `AuthSuccessResponse`, `AuthErrorResponse`, `RefreshSuccessResponse`, `RefreshErrorResponse`, `UserInfoData`, `UserInfoSuccessResponse`, `UserInfoErrorResponse` (consumers use union types; still accessible via `@xivdyetools/types/auth`)
+- **DEAD-059**: `DiscordSnowflake` branded type and `createSnowflake()` removed from main barrel (zero adoption; `isValidSnowflake()` still exported; still accessible via `@xivdyetools/types/auth`)
+- **DEAD-060**: `CharacterColorCategory` removed from main barrel (zero direct consumers; still accessible via `@xivdyetools/types/character`)
+- **DEAD-064**: 6 core-only types removed from main barrel — `Matrix3x3`, `Race`, `SharedColorCategory`, `RaceSpecificColorCategory`, `LocalizedDye`, `DyeDatabase` (only consumed by core internals; still accessible via subpath imports)
+
+### Changed
+
+- Marked 31 symbols `@internal` in source files (DEAD-057, DEAD-058, DEAD-059, DEAD-060, DEAD-064)
+
+---
+
 ## [1.8.0] - 2026-02-19
 
 ### Added

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `isAbortError` unit tests — covers AbortError, TimeoutError, and DOMException.ABORT_ERR detection (DEAD-054)
+- `ResolvedPreset` interface — migrated from `@xivdyetools/types` and now exported from `PresetService` (DEAD-060)
 
 ### Changed
 

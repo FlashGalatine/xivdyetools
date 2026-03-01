@@ -31,6 +31,7 @@ export interface PresetListResponse {
 
 /**
  * Successful preset creation response
+ * @internal Not for direct consumer import — use `PresetSubmitResponse` union instead
  */
 export interface PresetSubmitCreatedResponse {
   /** Operation succeeded */
@@ -45,6 +46,7 @@ export interface PresetSubmitCreatedResponse {
 
 /**
  * Duplicate preset found response
+ * @internal Not for direct consumer import — use `PresetSubmitResponse` union instead
  */
 export interface PresetSubmitDuplicateResponse {
   /** Operation succeeded (duplicate handling is not an error) */
@@ -59,6 +61,7 @@ export interface PresetSubmitDuplicateResponse {
 
 /**
  * Failed preset submission response
+ * @internal Not for direct consumer import — use `PresetSubmitResponse` union instead
  */
 export interface PresetSubmitErrorResponse {
   /** Operation failed */
@@ -83,6 +86,7 @@ export type PresetSubmitResponse =
 
 /**
  * Duplicate preset info for edit conflict
+ * @internal Not for direct consumer import — use `PresetEditResponse` union instead
  */
 export interface PresetEditDuplicateInfo {
   id: string;
@@ -92,6 +96,7 @@ export interface PresetEditDuplicateInfo {
 
 /**
  * Successful preset edit response
+ * @internal Not for direct consumer import — use `PresetEditResponse` union instead
  */
 export interface PresetEditSuccessResponse {
   /** Operation succeeded */
@@ -106,6 +111,7 @@ export interface PresetEditSuccessResponse {
 
 /**
  * Preset edit blocked due to duplicate
+ * @internal Not for direct consumer import — use `PresetEditResponse` union instead
  */
 export interface PresetEditDuplicateResponse {
   /** Operation failed due to duplicate */
@@ -120,6 +126,7 @@ export interface PresetEditDuplicateResponse {
 
 /**
  * Failed preset edit response
+ * @internal Not for direct consumer import — use `PresetEditResponse` union instead
  */
 export interface PresetEditErrorResponse {
   /** Operation failed */
@@ -141,6 +148,7 @@ export type PresetEditResponse =
 
 /**
  * Successful vote response
+ * @internal Not for direct consumer import — use `VoteResponse` union instead
  */
 export interface VoteSuccessResponse {
   /** Operation succeeded */
@@ -155,6 +163,7 @@ export interface VoteSuccessResponse {
 
 /**
  * Failed vote response
+ * @internal Not for direct consumer import — use `VoteResponse` union instead
  */
 export interface VoteErrorResponse {
   /** Operation failed */
@@ -173,6 +182,7 @@ export type VoteResponse = VoteSuccessResponse | VoteErrorResponse;
 
 /**
  * Successful moderation response
+ * @internal Not for direct consumer import — use `ModerationResponse` union instead
  */
 export interface ModerationSuccessResponse {
   /** Operation succeeded */
@@ -184,6 +194,7 @@ export interface ModerationSuccessResponse {
 
 /**
  * Failed moderation response
+ * @internal Not for direct consumer import — use `ModerationResponse` union instead
  */
 export interface ModerationErrorResponse {
   /** Operation failed */

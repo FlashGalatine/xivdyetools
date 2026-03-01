@@ -13,6 +13,7 @@ import type { Dye } from './dye.js';
  *
  * Represents the current state of the loaded dye database,
  * including all dyes and metadata about the load state.
+ * @internal Apps use core's `DyeDatabase` class, not this interface directly
  */
 export interface DyeDatabase {
   /** Array of all loaded dyes */

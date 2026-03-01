@@ -46,6 +46,7 @@ export interface CharacterColorMatch {
 
 /**
  * Category of shared (race-agnostic) character colors
+ * @internal Used by core's CharacterColorService — not needed by app consumers
  */
 export type SharedColorCategory =
   | 'eyeColors'
@@ -58,11 +59,13 @@ export type SharedColorCategory =
 
 /**
  * Category of race-specific character colors
+ * @internal Used by core's CharacterColorService — not needed by app consumers
  */
 export type RaceSpecificColorCategory = 'hairColors' | 'skinColors';
 
 /**
  * All character color categories
+ * @internal Convenience union — consumers use SharedColorCategory or RaceSpecificColorCategory directly
  */
 export type CharacterColorCategory =
   | SharedColorCategory
@@ -107,6 +110,7 @@ export type Gender = 'Male' | 'Female';
 
 /**
  * FFXIV playable races (parent of subraces)
+ * @internal Used by core's CharacterColorService — apps use SubRace directly
  */
 export type Race =
   | 'Hyur'

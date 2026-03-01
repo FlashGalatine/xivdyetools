@@ -25,9 +25,18 @@ import type {
   PresetPalette,
   PresetCategory,
   CategoryMeta,
-  ResolvedPreset,
   Dye,
 } from '@xivdyetools/types';
+
+/**
+ * Preset with resolved Dye objects
+ *
+ * Used when displaying a preset with full dye information.
+ */
+export interface ResolvedPreset extends PresetPalette {
+  /** Full Dye objects for each dye ID (null if dye not found) */
+  resolvedDyes: (Dye | null)[];
+}
 
 /**
  * Interface for DyeService to resolve dye IDs to Dye objects

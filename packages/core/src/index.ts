@@ -6,6 +6,7 @@ export { APIService, MemoryCacheBackend } from './services/APIService.js';
 export type { ICacheBackend, APIServiceOptions, CacheMetrics } from './services/APIService.js';
 export { LocalizationService } from './services/LocalizationService.js';
 export { PresetService } from './services/PresetService.js';
+export type { ResolvedPreset } from './services/PresetService.js';
 export { PaletteService } from './services/PaletteService.js';
 export type {
   PaletteExtractionOptions,

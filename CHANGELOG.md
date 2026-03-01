@@ -55,6 +55,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **bot-logic**: `resolveCssColorName` from barrel export — internal helper not part of public API (DEAD-036)
 - **core**: Dead code cleanup — Wave 7 (DEAD-043, 044, 049–053): legacy omnibus test files (`core.test.ts`, `logger.test.ts`), deprecated `characterColorData` barrel export, 3 orphaned `add-type-flags` scripts, `compare-scrapes.js`, stale `response.json` debug artifact, tracked `dye_names.csv`
 - **core**: Dead code cleanup — Wave 8 (DEAD-042, DEAD-047 Phase 1): deprecated `types/logger.ts` wrapper file, ~35 zero-consumer deprecated barrel re-exports (auth types, preset sub-types, localization types, character types/constants, error types, color space types, `Logger`/`NoOpLogger`/`ConsoleLogger`)
+- **types**: Dead code cleanup — Wave 10 Phase 1 (DEAD-060, DEAD-061, DEAD-063): removed entire utility module (`Result`, `AsyncResult`, `Nullable`, `Optional`, `isOk`, `isErr`), removed generic API response types (`APISuccessResponse`, `APIErrorResponse`, `APIResponse`), removed orphaned preset types (`AuthenticatedPresetSubmission`). `ResolvedPreset` migrated to `@xivdyetools/core` PresetService (audit had missed core consumer)
+- **types**: Dead code cleanup — Wave 10 Phase 2 (DEAD-057, DEAD-058, DEAD-059, DEAD-060, DEAD-064): marked 31 symbols `@internal` and removed from main barrel — 11 preset response sub-types, 7 auth response sub-types, `DiscordSnowflake`/`createSnowflake`, `CharacterColorCategory`, `Matrix3x3`, `Race`, `SharedColorCategory`, `RaceSpecificColorCategory`, `LocalizedDye`, `DyeDatabase`. All remain accessible via subpath imports
+- **core**: `ResolvedPreset` interface now defined and exported from `PresetService` (migrated from `@xivdyetools/types`)
 
 ---
 

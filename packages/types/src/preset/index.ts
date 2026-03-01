@@ -13,7 +13,6 @@ export type {
   PresetSortOption,
   CategoryMeta,
   PresetPalette,
-  ResolvedPreset,
   PresetData,
 } from './core.js';
 
@@ -22,7 +21,6 @@ export type {
   PresetPreviousValues,
   CommunityPreset,
   PresetSubmission,
-  AuthenticatedPresetSubmission,
 } from './community.js';
 
 // Request types

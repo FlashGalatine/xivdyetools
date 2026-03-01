@@ -27,6 +27,7 @@ export type VisionType =
  *
  * Used for RGB to RGB transformation using matrix multiplication.
  * [row][column] indexing: result[r] = matrix[0] * input, etc.
+ * @internal Used by core's colorblind simulation — not needed by app consumers
  */
 export type Matrix3x3 = [
   [number, number, number],

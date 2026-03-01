@@ -26,6 +26,8 @@
  * Prevents accidental use of arbitrary strings as Discord IDs.
  * Use `isValidSnowflake()` to validate and `createSnowflake()` to create validated instances.
  *
+ * @internal Not yet adopted by consumers — use `isValidSnowflake()` for validation instead
+ *
  * @example
  * ```typescript
  * const userId: DiscordSnowflake = createSnowflake('123456789012345678');
@@ -65,6 +67,8 @@ export function isValidSnowflake(id: string): boolean {
 
 /**
  * Create a validated Discord Snowflake branded type.
+ *
+ * @internal Not yet adopted by consumers
  *
  * @param id - The snowflake string to validate
  * @returns The validated DiscordSnowflake

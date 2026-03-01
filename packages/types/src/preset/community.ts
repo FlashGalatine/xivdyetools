@@ -104,13 +104,4 @@ export interface PresetSubmission {
   tags: string[];
 }
 
-/**
- * Extended submission with author info (for authenticated submissions)
- */
-export interface AuthenticatedPresetSubmission extends PresetSubmission {
-  /** Submitter's Discord user ID */
-  author_discord_id: string;
 
-  /** Submitter's display name */
-  author_name: string;
-}
