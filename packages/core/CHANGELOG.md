@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+
+- Legacy omnibus `core.test.ts` — coverage duplicated by per-service unit tests (DEAD-043)
+- Legacy `logger.test.ts` — tests deprecated re-exports; logger package has its own test suite (DEAD-044)
+- Deprecated `characterColorData` barrel export — use `CharacterColorService` or individual data exports instead (DEAD-049)
+- 3 orphaned `add-type-flags` one-time migration scripts (DEAD-050)
+- Orphaned `compare-scrapes.js` script (DEAD-051)
+- Stale `response.json` debug artifact (DEAD-052)
+- Tracked `dye_names.csv` output file (already in `.gitignore`) (DEAD-053)
+
 ## [1.17.3] - 2026-02-27
 
 ### Fixed

@@ -45,6 +45,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **discord-worker**: Dead code cleanup — Wave 6 (DEAD-024–027, 029, 035): `InteractionContext`/deadline infrastructure, 4 unused component builders, legacy KV preference functions, dead exports, unused re-exports
 - **bot-i18n**: 3 unused function exports (`translate`, `getAvailableLocales`, `isLocaleSupported`) and 5 unused locale key sections (`buttons`, `status`, `pagination`, `components`, `matching`) from all 6 language files (DEAD-032, DEAD-034)
 - **bot-logic**: `resolveCssColorName` from barrel export — internal helper not part of public API (DEAD-036)
+- **core**: Dead code cleanup — Wave 7 (DEAD-043, 044, 049–053): legacy omnibus test files (`core.test.ts`, `logger.test.ts`), deprecated `characterColorData` barrel export, 3 orphaned `add-type-flags` scripts, `compare-scrapes.js`, stale `response.json` debug artifact, tracked `dye_names.csv`
 
 ---
 

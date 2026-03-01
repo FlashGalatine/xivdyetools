@@ -159,11 +159,5 @@ export { default as facePaintLightData } from './data/character_colors/shared/fa
 export { default as hairColorsData } from './data/character_colors/race_specific/hair_colors.json' with { type: 'json' };
 export { default as skinColorsData } from './data/character_colors/race_specific/skin_colors.json' with { type: 'json' };
 
-/**
- * @deprecated Use the CharacterColorService instead, or import individual
- * color data exports (eyeColorsData, hairColorsData, etc.) for tree-shaking.
- */
-export { default as characterColorData } from './data/character_colors.json' with { type: 'json' };
-
 // Version (auto-generated from package.json during build)
 export { VERSION } from './version.js';
