@@ -10,15 +10,12 @@
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { resolveUserLocale } from './i18n.js';
 
-// Re-export everything from the shared package
+// Re-export from the shared package
 export {
   Translator,
   createTranslator,
-  translate,
-  getAvailableLocales,
-  isLocaleSupported,
 } from '@xivdyetools/bot-i18n';
-export type { LocaleCode, LocaleData } from '@xivdyetools/bot-i18n';
+export type { LocaleCode } from '@xivdyetools/bot-i18n';
 
 import { Translator } from '@xivdyetools/bot-i18n';
 

@@ -6,10 +6,12 @@ import {
     Translator,
     createTranslator,
     createUserTranslator,
+} from './bot-i18n.js';
+import {
     translate,
     getAvailableLocales,
     isLocaleSupported,
-} from './bot-i18n.js';
+} from '@xivdyetools/bot-i18n';
 
 // Mock the i18n.js module for resolveUserLocale
 vi.mock('./i18n.js', () => ({

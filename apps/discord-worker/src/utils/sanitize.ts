@@ -34,7 +34,7 @@ export const MAX_COLLECTION_DESCRIPTION_LENGTH = 200;
  * sanitizeDisplayText("Very long text...", 10)  // "Very lon…"
  * ```
  */
-export function sanitizeDisplayText(text: string, maxLength?: number): string {
+function sanitizeDisplayText(text: string, maxLength?: number): string {
   if (typeof text !== 'string') {
     return '';
   }
@@ -98,32 +98,3 @@ export function sanitizeCollectionDescription(description: string): string {
   return sanitizeDisplayText(description, MAX_COLLECTION_DESCRIPTION_LENGTH);
 }
 
-/**
- * Sanitize an error message for display to users.
- * Provides a safe, generic error message based on status codes.
- *
- * @param statusCode - HTTP status code
- * @param fallbackMessage - Optional fallback message for unknown errors
- * @returns A safe, user-friendly error message
- */
-export function sanitizeErrorMessage(statusCode: number, fallbackMessage?: string): string {
-  switch (statusCode) {
-    case 400:
-      return 'Invalid request. Please check your input and try again.';
-    case 401:
-    case 403:
-      return 'Permission denied.';
-    case 404:
-      return 'Not found.';
-    case 409:
-      return 'This already exists or conflicts with another resource.';
-    case 429:
-      return 'Too many requests. Please wait a moment and try again.';
-    case 500:
-    case 502:
-    case 503:
-      return 'A server error occurred. Please try again later.';
-    default:
-      return fallbackMessage || 'An error occurred. Please try again.';
-  }
-}

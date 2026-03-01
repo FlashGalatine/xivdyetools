@@ -23,7 +23,6 @@ import {
   renderError,
   adminOnlyError,
   guildOnlyError,
-  ERROR_CODE_DESCRIPTIONS,
 } from './error-response.js';
 import { MessageFlags } from './response.js';
 
@@ -342,36 +341,4 @@ describe('Error Response Utilities', () => {
     });
   });
 
-  describe('ERROR_CODE_DESCRIPTIONS', () => {
-    it('has descriptions for all used error codes', () => {
-      // Validation errors
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-V001']).toBeDefined();
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-V002']).toBeDefined();
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-V003']).toBeDefined();
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-V004']).toBeDefined();
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-V005']).toBeDefined();
-
-      // Not Found errors
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-N001']).toBeDefined();
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-N002']).toBeDefined();
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-N003']).toBeDefined();
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-N004']).toBeDefined();
-
-      // Rate Limit errors
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-R001']).toBeDefined();
-
-      // External errors
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-E001']).toBeDefined();
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-E002']).toBeDefined();
-
-      // Internal errors
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-I001']).toBeDefined();
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-I002']).toBeDefined();
-
-      // Permission errors
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-P001']).toBeDefined();
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-P002']).toBeDefined();
-      expect(ERROR_CODE_DESCRIPTIONS['ERR-P003']).toBeDefined();
-    });
-  });
 });

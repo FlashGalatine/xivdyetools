@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - 6 orphaned locale JSON files duplicating `@xivdyetools/bot-i18n` data (DEAD-021)
   - Legacy `handleMixerCommand` handler, replaced by `handleGradientCommand` (DEAD-022)
   - Unused `discord-interactions` devDependency (DEAD-023)
+- **discord-worker**: Dead code cleanup — Wave 6 (DEAD-024–027, 029, 035): `InteractionContext`/deadline infrastructure, 4 unused component builders, legacy KV preference functions, dead exports, unused re-exports
 
 ---
 

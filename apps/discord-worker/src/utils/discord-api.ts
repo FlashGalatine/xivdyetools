@@ -4,12 +4,9 @@
  * Helpers for sending follow-up messages with attachments,
  * editing deferred responses, and other Discord API operations.
  *
- * DISCORD-PERF-001: Added deadline tracking to prevent failed interactions
- * when processing takes longer than Discord's 3-second timeout.
  */
 
 import type { DiscordEmbed, DiscordActionRow } from './response.js';
-import type { ExtendedLogger } from '@xivdyetools/logger';
 
 const DISCORD_API_BASE = 'https://discord.com/api/v10';
 
@@ -24,76 +21,6 @@ const DISCORD_WEBHOOK_TIMEOUT = 5000;
  * Multipart form data with PNG attachments needs more time to transmit.
  */
 const DISCORD_WEBHOOK_FILE_TIMEOUT = 10000;
-
-/**
- * Discord's deadline for initial interaction response is 3 seconds.
- * We use 2800ms as our deadline with a 200ms safety buffer.
- */
-const DISCORD_DEADLINE_MS = 2800;
-
-/**
- * Interaction context that tracks timing for deadline enforcement.
- * DISCORD-PERF-001: Prevents "This interaction failed" errors.
- */
-export class InteractionContext {
-  private readonly startTime: number;
-  private readonly deadlineMs: number;
-  public readonly applicationId: string;
-  public readonly interactionToken: string;
-
-  constructor(applicationId: string, interactionToken: string, deadlineMs = DISCORD_DEADLINE_MS) {
-    this.startTime = Date.now();
-    this.deadlineMs = deadlineMs;
-    this.applicationId = applicationId;
-    this.interactionToken = interactionToken;
-  }
-
-  /**
-   * Returns the elapsed time since this context was created.
-   */
-  get elapsedMs(): number {
-    return Date.now() - this.startTime;
-  }
-
-  /**
-   * Returns the remaining time before the deadline.
-   */
-  get remainingMs(): number {
-    return Math.max(0, this.deadlineMs - this.elapsedMs);
-  }
-
-  /**
-   * Returns true if the deadline has passed.
-   */
-  get isDeadlineExceeded(): boolean {
-    return this.elapsedMs > this.deadlineMs;
-  }
-
-  /**
-   * Logs a warning if the deadline was exceeded.
-   *
-   * @param operation - Description of the operation for the log message
-   * @param logger - Optional logger for structured logging
-   */
-  logDeadlineStatus(operation: string, logger?: ExtendedLogger): void {
-    if (this.isDeadlineExceeded) {
-      const message = `DISCORD-PERF-001: ${operation} - Deadline exceeded by ${this.elapsedMs - this.deadlineMs}ms`;
-      if (logger) {
-        logger.warn(message);
-      }
-    }
-  }
-}
-
-/**
- * Creates an interaction context for deadline tracking.
- */
-export function createInteractionContext(
-  applicationId: string,
-  interactionToken: string
-): InteractionContext {
-  return new InteractionContext(applicationId, interactionToken);
-}
 
 export interface FollowUpOptions {
   content?: string;
@@ -380,94 +307,3 @@ export async function editMessage(
   });
 }
 
-// ============================================
-// DEADLINE-AWARE HELPERS (DISCORD-PERF-001)
-// ============================================
-
-/**
- * Result of a deadline-aware operation.
- */
-export interface DeadlineResult {
-  /** Whether the operation was sent (deadline not exceeded) */
-  sent: boolean;
-  /** The response from Discord if sent, undefined otherwise */
-  response?: Response;
-  /** The elapsed time in milliseconds */
-  elapsedMs: number;
-  /** Whether the deadline was exceeded */
-  deadlineExceeded: boolean;
-}
-
-/**
- * Sends a follow-up message with deadline checking.
- * DISCORD-PERF-001: Returns early if deadline is exceeded to avoid "interaction failed".
- *
- * @param context - The interaction context with deadline tracking
- * @param options - Follow-up message options
- * @returns Result indicating whether the message was sent
- */
-export async function sendFollowUpWithDeadline(
-  context: InteractionContext,
-  options: FollowUpOptions
-): Promise<DeadlineResult> {
-  context.logDeadlineStatus('sendFollowUp');
-
-  // If deadline is exceeded, don't even try - Discord will reject it
-  if (context.isDeadlineExceeded) {
-    return {
-      sent: false,
-      elapsedMs: context.elapsedMs,
-      deadlineExceeded: true,
-    };
-  }
-
-  const response = await sendFollowUp(
-    context.applicationId,
-    context.interactionToken,
-    options
-  );
-
-  return {
-    sent: true,
-    response,
-    elapsedMs: context.elapsedMs,
-    deadlineExceeded: false,
-  };
-}
-
-/**
- * Edits the original response with deadline checking.
- * DISCORD-PERF-001: Returns early if deadline is exceeded to avoid "interaction failed".
- *
- * @param context - The interaction context with deadline tracking
- * @param options - Edit message options
- * @returns Result indicating whether the edit was sent
- */
-export async function editOriginalResponseWithDeadline(
-  context: InteractionContext,
-  options: FollowUpOptions
-): Promise<DeadlineResult> {
-  context.logDeadlineStatus('editOriginalResponse');
-
-  // If deadline is exceeded, don't even try - Discord will reject it
-  if (context.isDeadlineExceeded) {
-    return {
-      sent: false,
-      elapsedMs: context.elapsedMs,
-      deadlineExceeded: true,
-    };
-  }
-
-  const response = await editOriginalResponse(
-    context.applicationId,
-    context.interactionToken,
-    options
-  );
-
-  return {
-    sent: true,
-    response,
-    elapsedMs: context.elapsedMs,
-    deadlineExceeded: false,
-  };
-}

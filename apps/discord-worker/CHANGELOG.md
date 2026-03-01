@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 6 orphaned locale JSON files in `src/locales/` — duplicates of `@xivdyetools/bot-i18n` package data (DEAD-021)
   - Legacy `handleMixerCommand` handler replaced by `handleGradientCommand` in v4 — removed `mixer.ts`, `mixer.test.ts`, barrel re-export, and test mocks (DEAD-022)
   - Unused `discord-interactions` devDependency — signature verification uses native Web Crypto API (DEAD-023)
+- **Dead code cleanup — Wave 6** (DEAD-024 through DEAD-031 from 2026-02-28 audit)
+  - `InteractionContext` class, deadline helpers, and `DeadlineResult` interface — speculative DISCORD-PERF-001 code never integrated into handlers (DEAD-024)
+  - 4 unused component builders in `component-context.ts`: `buildBlendingModeSelect`, `buildMatchingMethodSelect`, `buildMarketToggleButton`, `buildRefreshButton` + `SelectMenuOption` interface (DEAD-025)
+  - Un-exported `sanitizeDisplayText` (internal-only), removed `sanitizeErrorMessage` and `ERROR_CODE_DESCRIPTIONS` (DEAD-026)
+  - Legacy KV preference functions `setUserLanguagePreference` and `clearUserLanguagePreference` from `i18n.ts` — replaced by unified preferences system; `getUserLanguagePreference` kept as internal-only (DEAD-029)
+  - 3 unused re-exports (`translate`, `getAvailableLocales`, `isLocaleSupported`) and `LocaleData` type from `bot-i18n.ts` (DEAD-035)
+  - Prefixed 4 unused handler `ctx` params with `_` for interface conformance (DEAD-027 partial)
+  - DEAD-030 (`test-utils.integration.ts`) skipped — still imported by budget-pipeline integration tests
 
 ## [4.1.0] - 2026-02-27
 

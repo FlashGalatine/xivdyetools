@@ -33,7 +33,7 @@ import type { Env, DiscordInteraction } from '../../types/env.js';
 export async function handleMixerV4Command(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext,
+  _ctx: ExecutionContext,
   logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';

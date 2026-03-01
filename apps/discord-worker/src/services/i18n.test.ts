@@ -6,9 +6,6 @@ import {
     isValidLocale,
     getLocaleInfo,
     discordLocaleToLocaleCode,
-    getUserLanguagePreference,
-    setUserLanguagePreference,
-    clearUserLanguagePreference,
     resolveUserLocale,
     initializeLocale,
     formatLocaleDisplay,
@@ -181,73 +178,6 @@ describe('i18n.ts', () => {
         });
     });
 
-    describe('getUserLanguagePreference', () => {
-        it('should return null when no preference is set', async () => {
-            const result = await getUserLanguagePreference(mockKV, mockUserId);
-            expect(result).toBeNull();
-        });
-
-        it('should return the stored locale code', async () => {
-            mockKV._store.set(`i18n:user:${mockUserId}`, 'ja');
-
-            const result = await getUserLanguagePreference(mockKV, mockUserId);
-
-            expect(result).toBe('ja');
-        });
-
-        it('should return null for invalid stored values', async () => {
-            mockKV._store.set(`i18n:user:${mockUserId}`, 'invalid');
-
-            const result = await getUserLanguagePreference(mockKV, mockUserId);
-
-            expect(result).toBeNull();
-        });
-
-        it('should return null on KV error', async () => {
-            mockKV.get = vi.fn().mockRejectedValue(new Error('KV error'));
-
-            const result = await getUserLanguagePreference(mockKV, mockUserId);
-
-            expect(result).toBeNull();
-        });
-    });
-
-    describe('setUserLanguagePreference', () => {
-        it('should store the language preference', async () => {
-            const result = await setUserLanguagePreference(mockKV, mockUserId, 'de');
-
-            expect(result).toBe(true);
-            expect(mockKV._store.get(`i18n:user:${mockUserId}`)).toBe('de');
-        });
-
-        it('should return false on KV error', async () => {
-            mockKV.put = vi.fn().mockRejectedValue(new Error('KV error'));
-
-            const result = await setUserLanguagePreference(mockKV, mockUserId, 'fr');
-
-            expect(result).toBe(false);
-        });
-    });
-
-    describe('clearUserLanguagePreference', () => {
-        it('should delete the language preference', async () => {
-            mockKV._store.set(`i18n:user:${mockUserId}`, 'ja');
-
-            const result = await clearUserLanguagePreference(mockKV, mockUserId);
-
-            expect(result).toBe(true);
-            expect(mockKV.delete).toHaveBeenCalled();
-        });
-
-        it('should return false on KV error', async () => {
-            mockKV.delete = vi.fn().mockRejectedValue(new Error('KV error'));
-
-            const result = await clearUserLanguagePreference(mockKV, mockUserId);
-
-            expect(result).toBe(false);
-        });
-    });
-
     describe('resolveUserLocale', () => {
         it('should prefer user preference over Discord locale', async () => {
             mockKV._store.set(`i18n:user:${mockUserId}`, 'ja');
@@ -363,87 +293,4 @@ describe('i18n.ts', () => {
     // Logger Coverage Tests
     // ==========================================================================
 
-    describe('Logger coverage - error logging', () => {
-        const mockLogger = {
-            error: vi.fn(),
-            warn: vi.fn(),
-            info: vi.fn(),
-            debug: vi.fn(),
-        } as never;
-
-        beforeEach(() => {
-            vi.clearAllMocks();
-        });
-
-        it('should log error when getUserLanguagePreference fails with logger', async () => {
-            mockKV.get = vi.fn().mockRejectedValue(new Error('KV error'));
-
-            const result = await getUserLanguagePreference(mockKV, mockUserId, mockLogger);
-
-            expect(result).toBeNull();
-        });
-
-        it('should log error when setUserLanguagePreference fails with logger', async () => {
-            mockKV.put = vi.fn().mockRejectedValue(new Error('KV error'));
-
-            const result = await setUserLanguagePreference(mockKV, mockUserId, 'de', mockLogger);
-
-            expect(result).toBe(false);
-        });
-
-        it('should log error when clearUserLanguagePreference fails with logger', async () => {
-            mockKV.delete = vi.fn().mockRejectedValue(new Error('KV error'));
-
-            const result = await clearUserLanguagePreference(mockKV, mockUserId, mockLogger);
-
-            expect(result).toBe(false);
-        });
-
-        // Tests for non-Error exceptions (covers the `error instanceof Error ? error : undefined` branches)
-        it('should pass Error to logger in getUserLanguagePreference', async () => {
-            const testError = new Error('Test error');
-            mockKV.get = vi.fn().mockRejectedValue(testError);
-
-            await getUserLanguagePreference(mockKV, mockUserId, mockLogger);
-
-            expect((mockLogger as { error: typeof vi.fn }).error).toHaveBeenCalledWith(
-                'Failed to get user language preference',
-                testError
-            );
-        });
-
-        it('should pass undefined to logger for non-Error in getUserLanguagePreference', async () => {
-            mockKV.get = vi.fn().mockRejectedValue('string error');
-
-            await getUserLanguagePreference(mockKV, mockUserId, mockLogger);
-
-            expect((mockLogger as { error: typeof vi.fn }).error).toHaveBeenCalledWith(
-                'Failed to get user language preference',
-                undefined
-            );
-        });
-
-        it('should pass undefined to logger for non-Error in setUserLanguagePreference', async () => {
-            mockKV.put = vi.fn().mockRejectedValue({ custom: 'error' });
-
-            await setUserLanguagePreference(mockKV, mockUserId, 'de', mockLogger);
-
-            expect((mockLogger as { error: typeof vi.fn }).error).toHaveBeenCalledWith(
-                'Failed to set user language preference',
-                undefined
-            );
-        });
-
-        it('should pass undefined to logger for non-Error in clearUserLanguagePreference', async () => {
-            mockKV.delete = vi.fn().mockRejectedValue(null);
-
-            await clearUserLanguagePreference(mockKV, mockUserId, mockLogger);
-
-            expect((mockLogger as { error: typeof vi.fn }).error).toHaveBeenCalledWith(
-                'Failed to clear user language preference',
-                undefined
-            );
-        });
-
-    });
 });

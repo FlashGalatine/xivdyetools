@@ -52,7 +52,7 @@ interface ButtonInteraction {
 export async function handleButtonInteraction(
   interaction: ButtonInteraction,
   env: Env,
-  ctx: ExecutionContext,
+  _ctx: ExecutionContext,
   logger?: ExtendedLogger
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';

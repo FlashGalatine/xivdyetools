@@ -11,10 +11,6 @@ import {
   deleteContext,
   updateContext,
   isAuthorized,
-  buildBlendingModeSelect,
-  buildMatchingMethodSelect,
-  buildMarketToggleButton,
-  buildRefreshButton,
   CONTEXT_TTL,
 } from './component-context.js';
 import type { ComponentContext } from './component-context.js';
@@ -292,75 +288,4 @@ describe('Component Context Service', () => {
     });
   });
 
-  describe('Component Builders', () => {
-    describe('buildBlendingModeSelect', () => {
-      it('builds select menu with correct structure', () => {
-        const select = buildBlendingModeSelect('hash123', 'spectral');
-
-        expect(select.type).toBe(3); // Select menu
-        expect(select.custom_id).toBe('algo_blending_hash123');
-        expect(select.options).toHaveLength(6);
-        expect(select.placeholder).toBe('Select blending mode');
-      });
-
-      it('marks current mode as default', () => {
-        const select = buildBlendingModeSelect('hash', 'oklab');
-
-        const oklabOption = select.options.find((o) => o.value === 'oklab');
-        expect(oklabOption?.default).toBe(true);
-
-        const rgbOption = select.options.find((o) => o.value === 'rgb');
-        expect(rgbOption?.default).toBe(false);
-      });
-    });
-
-    describe('buildMatchingMethodSelect', () => {
-      it('builds select menu with correct structure', () => {
-        const select = buildMatchingMethodSelect('hash456', 'ciede2000');
-
-        expect(select.type).toBe(3);
-        expect(select.custom_id).toBe('algo_matching_hash456');
-        expect(select.options).toHaveLength(6);
-      });
-
-      it('marks current method as default', () => {
-        const select = buildMatchingMethodSelect('hash', 'hyab');
-
-        const hyabOption = select.options.find((o) => o.value === 'hyab');
-        expect(hyabOption?.default).toBe(true);
-      });
-    });
-
-    describe('buildMarketToggleButton', () => {
-      it('builds button to hide prices when showing', () => {
-        const button = buildMarketToggleButton('hash', true);
-
-        expect(button.type).toBe(2);
-        expect(button.style).toBe(1); // Primary when active
-        expect(button.label).toBe('Hide Prices');
-        expect(button.custom_id).toContain('off');
-      });
-
-      it('builds button to show prices when hidden', () => {
-        const button = buildMarketToggleButton('hash', false);
-
-        expect(button.type).toBe(2);
-        expect(button.style).toBe(2); // Secondary when inactive
-        expect(button.label).toBe('Show Prices');
-        expect(button.custom_id).toContain('on');
-      });
-    });
-
-    describe('buildRefreshButton', () => {
-      it('builds refresh button', () => {
-        const button = buildRefreshButton('hash789');
-
-        expect(button.type).toBe(2);
-        expect(button.style).toBe(2); // Secondary
-        expect(button.label).toBe('Refresh');
-        expect(button.custom_id).toBe('refresh_result_hash789');
-        expect(button.emoji.name).toBe('🔄');
-      });
-    });
-  });
 });

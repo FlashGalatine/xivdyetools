@@ -18,8 +18,6 @@
  * @module services/i18n
  */
 
-import type { ExtendedLogger } from '@xivdyetools/logger';
-
 // Note: getPreference import is lazy to avoid circular dependency
 // We use dynamic import within resolveUserLocale
 
@@ -93,17 +91,12 @@ export function discordLocaleToLocaleCode(discordLocale: string): LocaleCode | n
 }
 
 /**
- * Get a user's language preference from KV
- *
- * @param kv - KV namespace binding
- * @param userId - Discord user ID
- * @param logger - Optional logger for structured logging
- * @returns Locale code or null if not set
+ * Get a user's legacy language preference from KV.
+ * Used internally by resolveUserLocale as a fallback.
  */
-export async function getUserLanguagePreference(
+async function getUserLanguagePreference(
   kv: KVNamespace,
-  userId: string,
-  logger?: ExtendedLogger
+  userId: string
 ): Promise<LocaleCode | null> {
   try {
     const value = await kv.get(`${KEY_PREFIX}${userId}`);
@@ -111,59 +104,8 @@ export async function getUserLanguagePreference(
       return value;
     }
     return null;
-  } catch (error) {
-    if (logger) {
-      logger.error('Failed to get user language preference', error instanceof Error ? error : undefined);
-    }
+  } catch {
     return null;
-  }
-}
-
-/**
- * Set a user's language preference in KV
- *
- * @param kv - KV namespace binding
- * @param userId - Discord user ID
- * @param locale - Locale code to set
- * @param logger - Optional logger for structured logging
- */
-export async function setUserLanguagePreference(
-  kv: KVNamespace,
-  userId: string,
-  locale: LocaleCode,
-  logger?: ExtendedLogger
-): Promise<boolean> {
-  try {
-    await kv.put(`${KEY_PREFIX}${userId}`, locale);
-    return true;
-  } catch (error) {
-    if (logger) {
-      logger.error('Failed to set user language preference', error instanceof Error ? error : undefined);
-    }
-    return false;
-  }
-}
-
-/**
- * Clear a user's language preference from KV
- *
- * @param kv - KV namespace binding
- * @param userId - Discord user ID
- * @param logger - Optional logger for structured logging
- */
-export async function clearUserLanguagePreference(
-  kv: KVNamespace,
-  userId: string,
-  logger?: ExtendedLogger
-): Promise<boolean> {
-  try {
-    await kv.delete(`${KEY_PREFIX}${userId}`);
-    return true;
-  } catch (error) {
-    if (logger) {
-      logger.error('Failed to clear user language preference', error instanceof Error ? error : undefined);
-    }
-    return false;
   }
 }
 

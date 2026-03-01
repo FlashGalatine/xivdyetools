@@ -75,7 +75,7 @@ const PREFERENCE_EMOJIS: Record<PreferenceKey, string> = {
 export async function handlePreferencesCommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext,
+  _ctx: ExecutionContext,
   logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';

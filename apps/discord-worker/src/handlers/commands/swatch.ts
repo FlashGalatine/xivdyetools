@@ -151,7 +151,7 @@ const characterColorService = new CharacterColorService();
 export async function handleSwatchCommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext,
+  _ctx: ExecutionContext,
   logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
