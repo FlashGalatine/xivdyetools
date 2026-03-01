@@ -1,0 +1,37 @@
+# discord-worker TSC Unused Locals/Parameters Report
+
+Generated via: `npx tsc --noEmit --noUnusedLocals --noUnusedParameters`
+Date: 2026-02-28
+
+## Non-Test Warnings (9)
+
+These warnings appear in production source files:
+
+1. `src/handlers/commands/dye.ts` — unused parameter `t` (Translator)
+2. `src/handlers/commands/preferences.ts` — unused parameter `key`
+3. `src/handlers/commands/preferences.ts` — unused parameter `ctx`
+4. `src/handlers/commands/preset.ts` — unused parameter `userId` (createPreset)
+5. `src/handlers/commands/preset.ts` — unused parameter `userId` (deletePreset)
+6. `src/handlers/buttons/*.ts` — unused parameter `env` (multiple button handlers, interface-required)
+7. `src/handlers/commands/mixer-v4.ts` — unused parameter `ctx` (interface-required)
+8. `src/handlers/commands/swatch.ts` — unused parameter `ctx` (interface-required)
+9. `src/utils/discord-api.ts` — unused local `DeadlineResult` (dead type, see DEAD-024)
+
+## Test-Only Warnings (~20)
+
+These appear in test files and are typically import-related:
+
+- `src/services/color-blending.test.ts` — imports from dead service file (DEAD-020)
+- `src/services/image-cache.test.ts` — imports from dead service file (DEAD-020)
+- `src/services/pagination.test.ts` — imports from dead service file (DEAD-020)
+- `src/services/progress.test.ts` — imports from dead service file (DEAD-020)
+- `src/services/user-preferences.test.ts` — imports from dead service file (DEAD-020)
+- `src/utils/error-response.test.ts` — imports from dead utility file (DEAD-020)
+- `src/test-utils.integration.ts` — 3 unused imports (DEAD-030)
+- Various other test files with minor unused variables
+
+## bot-i18n TSC Result
+**CLEAN** — zero warnings with --noUnusedLocals --noUnusedParameters
+
+## bot-logic TSC Result
+**CLEAN** — zero warnings with --noUnusedLocals --noUnusedParameters

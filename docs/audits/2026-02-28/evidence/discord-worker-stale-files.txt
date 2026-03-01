@@ -1,0 +1,42 @@
+# discord-worker / bot-i18n / bot-logic Stale Files Report
+
+Files not modified in 6+ months (based on git log analysis).
+Date: 2026-02-28
+
+## discord-worker Stale Files (26)
+
+These files have not been modified since the monorepo migration or earlier:
+
+### Dead Production Files (confirmed dead — see findings)
+- src/utils/css-colors.ts (DEAD-020)
+- src/utils/error-response.ts (DEAD-020)
+- src/services/color-blending.ts (DEAD-020)
+- src/services/image-cache.ts (DEAD-020)
+- src/services/pagination.ts (DEAD-020)
+- src/services/progress.ts (DEAD-020)
+- src/services/user-preferences.ts (DEAD-020)
+- src/locales/*.json × 6 (DEAD-021)
+- src/handlers/commands/mixer.ts (DEAD-022)
+
+### Stale but Active Files (not dead)
+- src/handlers/commands/budget.ts — functional, just infrequently modified
+- src/handlers/commands/random.ts — functional
+- src/handlers/buttons/stats-*.ts — functional
+- src/types/budget.ts — functional (contains some dead exports, see DEAD-026)
+- src/utils/verify.ts — functional (contains dead VerificationResult type, see DEAD-026)
+
+## bot-i18n Stale Files (2)
+- src/types.ts — contains unused exports (DEAD-033)
+- src/locales/*.json — contain unused key sections (DEAD-034)
+
+## bot-logic Stale Files (7)
+- src/css-colors.ts — internal-only export (DEAD-036)
+- src/color-utils.ts — internal-only exports (DEAD-036)
+- src/constants.ts — unused constant exports (DEAD-037)
+- src/types.ts — over-exported types (DEAD-038, 039, 040)
+- Various execute-*.ts — stable, not dead
+
+## Notes
+Staleness alone does not indicate dead code. Many stable utility files are
+infrequently modified because they work correctly. Cross-reference with
+import analysis in individual DEAD-* findings for actual dead code determination.

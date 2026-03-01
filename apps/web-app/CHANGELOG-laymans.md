@@ -4,6 +4,23 @@
 
 ---
 
+## 🔬 Pixel Sampling & Canvas Panning (Unreleased)
+
+**Palette Extractor**
+- **Shift+Click** on a zoomed image to sample a single pixel (or a configurable area up to 16×16) and instantly find the closest matching dyes
+- **Ctrl+Drag** (or Cmd+Drag on Mac) to pan around zoomed-in images — a grab cursor shows when panning is active
+- A new **Pixel Sample Area** size option has been added to the Extractor sidebar so you can choose how large of an area to sample
+- Your pan position is remembered when you change zoom levels
+
+---
+
+## 🧹 Under-the-Hood Cleanup (Unreleased)
+
+- Removed a large amount of leftover code from the v3 → v4 migration, reducing the codebase by ~1,200 lines
+- Cleaned up internal imports to use the shared type library directly — no user-visible changes
+
+---
+
 ## 🎨 No More Duplicate Results
 
 **Harmony Explorer & Palette Extractor**

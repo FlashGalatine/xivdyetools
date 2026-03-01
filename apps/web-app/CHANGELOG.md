@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Pixel Sampling**: Shift+Click on zoomed images in the Extractor tool to sample a pixel (or configurable NxN area) and find the closest matching dyes using v4 unified result cards
+- **Canvas Panning**: Ctrl/Cmd+Drag to pan zoomed images with grab cursor feedback
+- Pixel Sample Area size setting (1×1 to 16×16) in the Extractor sidebar under OPTIONS
+- Pan offset persistence across zoom level changes
+- New locale keys for pixel sampling and panning features in all 6 languages (`extractor.shiftClickHint`, `extractor.pixelSampleSize`, `extractor.panHint`)
+
+### Changed
+
+- Migrate 46 files from deprecated `@shared/types` re-exports to direct `@xivdyetools/types` imports; deprecated re-export blocks removed from `shared/types.ts` (local types `Theme`, `AppState`, `DataCenter`, `World` remain)
+- Matched results in Extractor now render using `v4-result-card` components instead of legacy v3 imperative DOM cards
+
+### Removed
+
+- 5 orphaned v3 components: `tool-header`, `dye-comparison-chart`, `dye-preview-overlay`, `featured-presets-section`, `mobile-bottom-nav` (DEAD-002 – DEAD-005, DEAD-007)
+- Dead v3 components `AppLayout` and `SavedPalettesModal` plus their tests (DEAD-001, DEAD-006)
+- Components barrel files `components/index.ts` and `v4/index.ts`; `main.ts` updated to import `offlineBanner` directly (DEAD-008, DEAD-009)
+- Deprecated `fetchPrice()` and `getWorldName()` from MarketBoard component (DEAD-010)
+- `LocalStorageCacheBackend` class and all associated tests (DEAD-011)
+- ~30 unused constants from `shared/constants.ts` — API config, FFXIV stats, chart/zoom/sampling/color-wheel config, `SUCCESS_MESSAGES`, `ANIMATION_DURATIONS` (DEAD-012)
+- Unused empty-state icon exports and lookup functions from `empty-state-icons.ts` (DEAD-013)
+- Unused UI icon exports and lookup functions from `ui-icons.ts` (DEAD-014)
+- 26 unused local variables across 16 component/service files (DEAD-015)
+- `initErrorTracking()`, `errorTrackerInstance`, dead production error-tracking branches, `isProd()` (DEAD-017)
+- Deprecated `@shared/types` re-export blocks for types now in `@xivdyetools/types` (DEAD-018)
+
+---
+
 ## [4.2.0] - 2026-02-27
 
 ### Fixed

@@ -1,0 +1,24 @@
+# discord-worker depcheck Report
+
+Generated via: `npx depcheck --json`
+Date: 2026-02-28
+
+## Unused devDependencies (flagged)
+
+1. `discord-interactions` — CONFIRMED UNUSED (see DEAD-023)
+   - Zero imports anywhere in src/ or scripts/
+   - Replaced by @xivdyetools/auth for Ed25519 verification
+
+2. `@vitest/coverage-v8` — FALSE POSITIVE
+   - Used by vitest.config.ts coverage provider configuration
+   - Not directly imported but required at runtime by vitest
+
+3. `@xivdyetools/test-utils` — FALSE POSITIVE
+   - Used in test files for mock factories (createMockKV, createMockD1, etc.)
+   - depcheck doesn't trace workspace: protocol imports
+
+## Unused dependencies (flagged)
+None.
+
+## Missing dependencies (flagged)
+None.
