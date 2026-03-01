@@ -2,6 +2,8 @@
 
 > XIV Dye Tools bot for [Stoat](https://revolt.chat) — a persistent Node.js process using revolt.js WebSocket client with prefix commands.
 
+# WARNING: This project is in early development and subject to breaking changes. The command interface, features, and architecture may change significantly before the 1.0 release.
+
 ## Features
 
 🎨 **Dye Lookup** — Look up any FFXIV dye by name, ItemID, or hex color
