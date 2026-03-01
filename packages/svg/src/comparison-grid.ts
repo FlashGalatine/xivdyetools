@@ -31,6 +31,8 @@ import {
   escapeXml,
   getContrastTextColor,
   hexToRgb,
+  rgbToHsv,
+  truncateText,
 } from './base.js';
 import { rgbToLab } from '@xivdyetools/color-blending';
 
@@ -38,20 +40,9 @@ import { rgbToLab } from '@xivdyetools/color-blending';
 // Types
 // ============================================================================
 
-/**
- * A dye entry for comparison
+/**\n * Pairwise distance between two dyes
  */
-export interface ComparisonDye {
-  /** Dye information */
-  dye: Dye;
-  /** Index in comparison (1-4) */
-  index: number;
-}
-
-/**
- * Pairwise distance between two dyes
- */
-export interface DyePair {
+interface DyePair {
   /** First dye index */
   index1: number;
   /** Second dye index */
@@ -92,72 +83,11 @@ const MATRIX_SECTION_HEIGHT = 120;
 // ============================================================================
 
 /**
- * Convert RGB to HSV
- */
-function rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v: number } {
-  r /= 255;
-  g /= 255;
-  b /= 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const d = max - min;
-
-  let h = 0;
-  const s = max === 0 ? 0 : d / max;
-  const v = max;
-
-  if (max !== min) {
-    switch (max) {
-      case r:
-        h = (g - b) / d + (g < b ? 6 : 0);
-        break;
-      case g:
-        h = (b - r) / d + 2;
-        break;
-      case b:
-        h = (r - g) / d + 4;
-        break;
-    }
-    h /= 6;
-  }
-
-  return {
-    h: Math.round(h * 360),
-    s: Math.round(s * 100),
-    v: Math.round(v * 100),
-  };
-}
-
-/**
  * Calculate Euclidean color distance in RGB space.
  * Delegates to ColorService to avoid duplication (REFACTOR-001).
  */
 function getColorDistance(hex1: string, hex2: string): number {
   return ColorService.getColorDistance(hex1, hex2);
-}
-
-/**
- * Calculate relative luminance for WCAG contrast
- */
-function getRelativeLuminance(hex: string): number {
-  const { r, g, b } = hexToRgb(hex);
-  const [rs, gs, bs] = [r, g, b].map((c) => {
-    const s = c / 255;
-    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-  });
-  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
-}
-
-/**
- * Calculate WCAG contrast ratio
- */
-function getContrastRatio(hex1: string, hex2: string): number {
-  const l1 = getRelativeLuminance(hex1);
-  const l2 = getRelativeLuminance(hex2);
-  const lighter = Math.max(l1, l2);
-  const darker = Math.min(l1, l2);
-  return (lighter + 0.05) / (darker + 0.05);
 }
 
 /**
@@ -202,7 +132,7 @@ export function generateComparisonGrid(options: ComparisonGridOptions): string {
         index1: i + 1,
         index2: j + 1,
         distance: getColorDistance(dyes[i].hex, dyes[j].hex),
-        contrastRatio: getContrastRatio(dyes[i].hex, dyes[j].hex),
+        contrastRatio: ColorService.getContrastRatio(dyes[i].hex, dyes[j].hex),
       });
     }
   }
@@ -237,7 +167,7 @@ export function generateComparisonGrid(options: ComparisonGridOptions): string {
 
   dyes.forEach((dye, index) => {
     const columnX = PADDING + index * columnWidth + columnWidth / 2;
-    elements.push(generateDyeColumn(dye, index + 1, columnX, dyeStartY, columnWidth, showHsv, showLab));
+    elements.push(generateDyeColumn(dye, index + 1, columnX, dyeStartY, showHsv, showLab));
   });
 
   // Separator line
@@ -245,7 +175,7 @@ export function generateComparisonGrid(options: ComparisonGridOptions): string {
   elements.push(line(PADDING, matrixY, width - PADDING, matrixY, THEME.border, 1));
 
   // Analysis section
-  elements.push(generateAnalysisSection(pairs, mostSimilar, leastSimilar, dyes, PADDING, matrixY + 10, width - PADDING * 2));
+  elements.push(generateAnalysisSection(mostSimilar, leastSimilar, PADDING, matrixY + 10, width - PADDING * 2));
 
   return createSvgDocument(width, height, elements.join('\n'));
 }
@@ -258,7 +188,6 @@ function generateDyeColumn(
   index: number,
   centerX: number,
   startY: number,
-  columnWidth: number,
   showHsv: boolean,
   showLab: boolean
 ): string {
@@ -295,10 +224,7 @@ function generateDyeColumn(
 
   // Dye name on swatch
   const textColor = getContrastTextColor(dye.hex);
-  const maxNameLength = 12;
-  const displayName = dye.name.length > maxNameLength
-    ? dye.name.substring(0, maxNameLength - 1) + '...'
-    : dye.name;
+  const displayName = truncateText(dye.name, 12);
   elements.push(
     text(centerX, swatchY + SWATCH_SIZE / 2 + 4, displayName, {
       fill: textColor,
@@ -388,10 +314,8 @@ function generateDyeColumn(
  * Generate the analysis section showing pairwise comparisons
  */
 function generateAnalysisSection(
-  pairs: DyePair[],
   mostSimilar: DyePair,
   leastSimilar: DyePair,
-  dyes: Dye[],
   x: number,
   y: number,
   width: number

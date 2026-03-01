@@ -45,7 +45,6 @@ describe('SVG Pipeline: Harmony Wheel', () => {
   it('generates valid SVG for triadic harmony', () => {
     const svg = generateHarmonyWheel({
       baseColor: '#FF6B6B',
-      baseName: 'Salmon Pink',
       harmonyType: 'triadic',
       dyes: [
         { id: 1, name: 'Dalamud Red', hex: '#C24D4D', category: 'Red' },

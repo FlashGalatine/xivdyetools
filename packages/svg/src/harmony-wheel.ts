@@ -29,8 +29,6 @@ export interface HarmonyDye {
 export interface HarmonyWheelOptions {
   /** Base color hex */
   baseColor: string;
-  /** Name of the base color/dye */
-  baseName?: string;
   /** Type of harmony (triadic, complementary, etc.) */
   harmonyType: string;
   /** Matched dyes for the harmony */

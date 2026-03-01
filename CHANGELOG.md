@@ -35,6 +35,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Removed
 
+- **svg**: Dead code cleanup — Wave 13 (DEAD-077–082, DEAD-085 from 2026-02-28 audit)
+  - Phase 1: Remove unused params/interfaces in `comparison-grid.ts` (DEAD-079, DEAD-080); remove unused `baseName` from `HarmonyWheelOptions` (DEAD-081); remove dead `export * from '@xivdyetools/svg'` re-export in discord-worker (DEAD-082)
+  - Phase 2: Extract `rgbToHsv()` to shared `base.ts` utility (DEAD-077); replace local luminance/contrast with `ColorService` (DEAD-078); standardize truncation with `truncateText()` (DEAD-085)
+- **bot-logic**: Remove `baseName` from `generateHarmonyWheel()` call — follows svg DEAD-081
 - **web-app**: 5 orphaned v3 components — `tool-header`, `dye-comparison-chart`, `dye-preview-overlay`, `featured-presets-section`, `mobile-bottom-nav` (DEAD-002 – DEAD-005, DEAD-007)
 - **web-app**: Dead v3 components `AppLayout` and `SavedPalettesModal` plus their tests (DEAD-001, DEAD-006)
 - **web-app**: Components barrel files `components/index.ts` and `v4/index.ts`; `main.ts` updated to import `offlineBanner` directly (DEAD-008, DEAD-009)

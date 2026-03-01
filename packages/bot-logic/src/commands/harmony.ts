@@ -135,7 +135,6 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
 
     const svgString = generateHarmonyWheel({
       baseColor: baseHex,
-      baseName: baseName || baseHex.toUpperCase(),
       harmonyType,
       dyes: dyesForWheel,
       width: 600,

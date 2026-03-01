@@ -24,6 +24,7 @@ export {
   group,
   truncateText,
   estimateTextWidth,
+  rgbToHsv,
   THEME,
   FONTS,
 } from './base.js';

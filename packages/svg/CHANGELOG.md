@@ -7,9 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `rgbToHsv()` shared utility in `base.ts` — consolidated from duplicate implementations in `comparison-grid.ts` and `dye-info-card.ts` (DEAD-077)
+
 ### Changed
 
 - Migrate `Dye` and `RGB` type imports across 7 files from `@xivdyetools/core` to `@xivdyetools/types` (DEAD-047 Phase 2)
+- **Dead code cleanup — Wave 13 Phase 2** (2026-02-28 audit)
+  - Replace duplicate `rgbToHsv()` in `comparison-grid.ts` and `dye-info-card.ts` with shared `base.ts` utility (DEAD-077)
+  - Replace local `getRelativeLuminance()`/`getContrastRatio()` in `comparison-grid.ts` with `ColorService.getContrastRatio()` from core (DEAD-078)
+  - Replace inline substring truncation in `comparison-grid.ts` with shared `truncateText()` utility (DEAD-085)
+
+### Removed
+
+- **Dead code cleanup — Wave 13 Phase 1** (2026-02-28 audit)
+  - Remove 3 unused parameters: `columnWidth` from `generateDyeColumn`, `pairs` and `dyes` from `generateAnalysisSection` in `comparison-grid.ts` (DEAD-080)
+  - Remove unused `ComparisonDye` interface and un-export `DyePair` interface in `comparison-grid.ts` (DEAD-079)
+  - Remove unused `baseName` option from `HarmonyWheelOptions` interface — accepted but never rendered (DEAD-081)
 
 ## [1.1.1] - 2026-02-27
 

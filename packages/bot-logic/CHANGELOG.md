@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Migrate `Dye` type imports across 8 files from `@xivdyetools/core` to `@xivdyetools/types`; `HarmonyOptions` and `HarmonyColorSpace` remain on core (DEAD-047 Phase 2)
+- Remove `baseName` from `generateHarmonyWheel()` call — option removed from `@xivdyetools/svg` (DEAD-081)
 
 ## [1.1.1] - 2026-03-01
 

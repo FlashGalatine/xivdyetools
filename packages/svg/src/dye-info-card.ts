@@ -27,6 +27,7 @@ import {
   getContrastTextColor,
   hexToRgb,
   estimateTextWidth,
+  rgbToHsv,
 } from './base.js';
 import { rgbToLab } from '@xivdyetools/color-blending';
 
@@ -53,48 +54,6 @@ const DEFAULT_WIDTH = 500;
 const PADDING = 20;
 const SWATCH_HEIGHT = 160;
 const INFO_SECTION_HEIGHT = 100;
-
-// ============================================================================
-// Color Utilities
-// ============================================================================
-
-/**
- * Convert RGB to HSV
- */
-function rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v: number } {
-  r /= 255;
-  g /= 255;
-  b /= 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const d = max - min;
-
-  let h = 0;
-  const s = max === 0 ? 0 : d / max;
-  const v = max;
-
-  if (max !== min) {
-    switch (max) {
-      case r:
-        h = (g - b) / d + (g < b ? 6 : 0);
-        break;
-      case g:
-        h = (b - r) / d + 2;
-        break;
-      case b:
-        h = (r - g) / d + 4;
-        break;
-    }
-    h /= 6;
-  }
-
-  return {
-    h: Math.round(h * 360),
-    s: Math.round(s * 100),
-    v: Math.round(v * 100),
-  };
-}
 
 // ============================================================================
 // SVG Generation

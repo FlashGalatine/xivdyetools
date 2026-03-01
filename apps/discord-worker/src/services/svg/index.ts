@@ -5,5 +5,4 @@
  * Only the WASM renderer (resvg-wasm) remains in this worker.
  */
 
-export * from '@xivdyetools/svg';
 export * from './renderer.js';

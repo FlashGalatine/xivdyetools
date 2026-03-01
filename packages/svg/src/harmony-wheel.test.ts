@@ -14,7 +14,6 @@ describe('svg/harmony-wheel.ts', () => {
 
             const svg = generateHarmonyWheel({
                 baseColor: '#ff0000',
-                baseName: 'Red',
                 harmonyType: 'triadic',
                 dyes,
             });

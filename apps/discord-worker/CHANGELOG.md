@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Remove dead `export * from '@xivdyetools/svg'` re-export from `services/svg/index.ts` — no discord-worker file imports via this path (DEAD-082)
 - **Dead code cleanup — Wave 5** (DEAD-020 through DEAD-023 from 2026-02-28 audit)
   - 6 dead service/util files never imported in production: `pagination.ts`, `progress.ts`, `image-cache.ts`, `color-blending.ts`, `user-preferences.ts`, `css-colors.ts` — plus their test files (DEAD-020)
   - 6 orphaned locale JSON files in `src/locales/` — duplicates of `@xivdyetools/bot-i18n` package data (DEAD-021)
