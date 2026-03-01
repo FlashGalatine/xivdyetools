@@ -1,0 +1,149 @@
+﻿[93m[4mUnused files[24m[39m (16)
+assets/css/shared-styles.css
+assets/css/tailwind.css
+assets/js/shared-components.js
+eslint-rules/no-i18n-fallback.js
+eslint.config.js
+functions/_middleware.ts
+public/js/load-css.js
+public/js/load-fonts.js
+public/js/sw-register.js
+scripts/analyze-unused-keys.js
+scripts/convert-icons-to-webp.js
+scripts/generate-icons.mjs
+service-worker.js
+src/components/tool-header.ts
+src/components/v4/index.ts
+src/styles/globals.css
+[93m[4mUnused dependencies[24m[39m (1)
+package.json: @xivdyetools/core, @xivdyetools/logger, @xivdyetools/types, spectral.js
+[93m[4mUnused devDependencies[24m[39m (1)
+package.json: @testing-library/dom, @testing-library/user-event, @xivdyetools/test-utils, eslint-config-prettier, eslint-plugin-prettier, sharp
+[93m[4mUnlisted binaries[24m[39m (1)
+package.json: tsc, eslint, prettier, cross-env, tailwindcss
+[93m[4mUnused exports[24m[39m (44)
+src/__tests__/component-utils.ts: createPanelContainers, waitForFrames, wait, waitFor, flushMicrotasks, doubleClick, change, keyboard, pressEnter, pressEscape, focus, blur, hover, unhover, dispatchCustomEvent, setupComponent, cleanupComponent, queryByText, queryByData, queryByRole, isVisible
+src/__tests__/mocks/handlers.ts: errorHandlers
+src/__tests__/mocks/server.ts: resetHandlers, useHandler
+src/__tests__/mocks/services.ts: createMockDyeService, createMockStorageService, createMockCollectionService, createMockMarketBoardService, createMockToastService, createMockModalService, createMockRouterService, createMockColorService, createAllMockServices
+src/components/about-modal.ts: closeAboutModal
+src/components/add-to-collection-menu.ts: closeAddToCollectionMenu, isAddToCollectionMenuOpen
+src/components/dye-comparison-chart.ts: DyeComparisonChart
+src/components/dye-preview-overlay.ts: DyePreviewOverlay
+src/components/featured-presets-section.ts: FeaturedPresetsSection
+src/components/index.ts: BaseComponent, AppLayout, ThemeSwitcher, LanguageSelector, DyeSelector, ColorDisplay, HarmonyType, ColorDistanceMatrix, DyeComparisonChart, ColorInterpolationDisplay, ColorblindnessDisplay, ImageUploadDisplay, ColorPickerDisplay, ColorWheelDisplay, MobileBottomNav, ToolsDropdown, MarketBoard, PaletteExporter, ModalContainer, WelcomeModal, showWelcomeIfFirstVisit, ChangelogModal, showChangelogIfUpdated, AboutModal, showAboutModal, createInfoIcon, createLabelWithInfo, addInfoIconTo, TOOLTIP_CONTENT, DyePreviewOverlay, createDyeActionDropdown, TutorialSpotlight, initializeTutorialSpotlight, showCollectionManagerModal, showCreateCollectionDialog, showAddToCollectionMenu, closeAddToCollectionMenu, isAddToCollectionMenuOpen, AuthButton, showPresetSubmissionForm, showPresetEditForm, MySubmissionsPanel, PresetCard, PresetDetailView, FeaturedPresetsSection, CollapsiblePanel, HarmonyTool, ExtractorTool, AccessibilityTool, ComparisonTool, GradientTool, PresetTool, BudgetTool, SwatchTool, MixerTool
+src/components/mobile-bottom-nav.ts: MobileBottomNav
+src/components/my-submissions-panel.ts: MySubmissionsPanel
+src/components/preset-card.ts: PresetCard
+src/components/preset-tool.ts: PresetTool
+src/components/saved-palettes-modal.ts: showSavePaletteDialog
+src/components/tools-dropdown.ts: ToolsDropdown
+src/components/tutorial-spotlight.ts: TutorialSpotlight
+src/components/v4-layout.ts: destroyV4Layout
+src/components/v4/display-options-v4.ts: DisplayOptionsV4
+src/components/v4/dye-palette-drawer.ts: DyePaletteDrawer
+src/components/v4/language-modal.ts: LanguageModal, closeLanguageModal
+src/components/v4/preset-card.ts: PresetCard
+src/components/v4/preset-detail.ts: PresetDetail
+src/components/v4/preset-tool.ts: PresetTool
+src/components/v4/result-card.ts: generateMarketErrorCode
+src/components/v4/theme-modal.ts: ThemeModal, closeThemeModal
+src/components/v4/tool-banner.ts: ToolBanner
+src/components/v4/v4-app-header.ts: V4AppHeader
+src/mockups/IconRail.ts: IconRail
+src/mockups/MockupNav.ts: MockupNav
+src/mockups/index.ts: MockupShell, MockupNav, getLocalizedMockupTools, IconRail, MobileDrawer, CollapsiblePanel
+src/services/auth-service.ts: AuthService
+src/services/harmony-generator.ts: generateHarmonyPanelData
+src/services/hybrid-preset-service.ts: HybridPresetService
+src/services/index.ts: appStorage, NamespacedStorage, SecureStorage, ROUTES, apiService, TooltipService, CameraService, IndexedDBService, indexedDBService, STORES, DyeSelectionContext, CommunityPresetService, HybridPresetService, AuthService, consumeReturnTool, PresetSubmissionService, getConfigController, ShareService, SHARE_URL_VERSION, BASE_URL, getMarketBoardService, formatPrice, blendTwoColors, calculateMixerColorDistance, HARMONY_TYPE_IDS, calculateHarmonyColorDistance, generateHarmonyPanelData, getDyePriceDisplay, getPriceInfo, preparePriceCardData, preparePriceCardDataFromMap, getItemIdsForPriceFetch, hasCachedPrices, DEFAULT_DISPLAY_OPTIONS, hasDisplayOptionsChanges, getCardDisplayOptions, mergeWithDefaults, ErrorHandler, withErrorHandling, withAsyncErrorHandling
+src/services/preset-submission-service.ts: PresetSubmissionService
+src/services/share-service.ts: SHARE_URL_VERSION, BASE_URL
+src/services/storage-service.ts: NamespacedStorage
+src/shared/category-icons.ts: ICON_CATEGORY_JOBS, ICON_CATEGORY_GRAND_COMPANIES, ICON_CATEGORY_SEASONS, ICON_CATEGORY_EVENTS, ICON_CATEGORY_AESTHETICS, ICON_CATEGORY_COMMUNITY, ICON_CATEGORY_DEFAULT, CATEGORY_ICONS
+src/shared/constants.ts: APP_DESCRIPTION, FFXIV_DYES_COUNT, FFXIV_DATA_CENTER_COUNT, FFXIV_SERVERS_PER_DATA_CENTER, THEME_COUNT, THEME_DISPLAY_NAMES, VISION_TYPES, VISION_TYPE_LABELS, BRETTEL_MATRICES, UNIVERSALIS_API_BASE, UNIVERSALIS_API_TIMEOUT, UNIVERSALIS_API_RETRY_COUNT, UNIVERSALIS_API_RETRY_DELAY, API_CACHE_TTL, API_DEBOUNCE_DELAY, API_CACHE_VERSION, API_MAX_RESPONSE_SIZE, API_RATE_LIMIT_DELAY, COLOR_DISTANCE_MAX, CARD_CLASSES, SAMPLE_SIZE_MIN, SAMPLE_SIZE_MAX, SAMPLE_SIZE_DEFAULT, ZOOM_MIN, ZOOM_MAX, ZOOM_DEFAULT, ZOOM_STEP, CHART_WIDTH, CHART_HEIGHT, CHART_RESOLUTION_REDUCTION, COLOR_WHEEL_RADIUS, COLOR_WHEEL_CENTER_X, COLOR_WHEEL_CENTER_Y, MAX_DYES_COMPARISON, MAX_DYES_ACCESSIBILITY, KEYBOARD_SHORTCUTS, SUCCESS_MESSAGES, DEBOUNCE_DELAYS, ANIMATION_DURATIONS
+src/shared/empty-state-icons.ts: EMPTY_STATE_ICONS, getEmptyStateIcon
+src/shared/logger.ts: createBrowserLogger
+src/shared/tool-config-types.ts: isToolId
+src/shared/ui-icons.ts: ICON_TEST_TUBE, ICON_BEAKER_PIPE, ICON_INFO, ICON_LOGO, ICON_ZAP, ICON_CHART, ICON_KEYBOARD
+[93m[4mUnused exported types[24m[39m (80)
+src/__tests__/mocks/services.ts: MockDyeService, MockStorageService, MockCollectionService, MockMarketBoardService, MockToastService, MockModalService, MockRouterService, MockColorService, AllMockServices
+src/components/accessibility-tool.ts: AccessibilityToolOptions
+src/components/add-to-collection-menu.ts: AddToCollectionMenuOptions
+src/components/base-component.ts: ElementOptions, EventHandler, ComponentLifecycle, ComponentErrorState
+src/components/budget-tool.ts: BudgetToolOptions
+src/components/camera-preview-modal.ts: OnCaptureCallback
+src/components/collapsible-panel.ts: CollapsiblePanelOptions
+src/components/color-display.ts: ColorDisplayOptions
+src/components/colorblindness-display.ts: VisionTypeInfo
+src/components/comparison-tool.ts: ComparisonToolOptions
+src/components/dye-action-dropdown.ts: DyeActionCallback
+src/components/dye-card-renderer.ts: DyeCardOptions
+src/components/dye-comparison-chart.ts: ChartType
+src/components/dye-filters.ts: DyeFiltersOptions
+src/components/dye-grid.ts: DyeGridOptions
+src/components/dye-search-box.ts: DyeSearchBoxOptions
+src/components/dye-selector.ts: DyeSelectorOptions
+src/components/empty-state.ts: EmptyStateOptions
+src/components/extractor-tool.ts: ExtractorToolOptions
+src/components/featured-presets-section.ts: FeaturedPresetCallback
+src/components/gradient-tool.ts: GradientToolOptions
+src/components/harmony-tool.ts: HarmonyToolOptions
+src/components/image-zoom-controller.ts: ImageZoomControllerOptions
+src/components/index.ts: ElementOptions, EventHandler, ComponentLifecycle, ComponentErrorState, DyeSelectorOptions, ColorDisplayOptions, HarmonyTypeInfo, ChartType, InterpolationStep, VisionTypeInfo, MobileToolDef, ToolDef, PaletteData, PaletteExporterOptions, InfoTooltipOptions, DyeAction, DyeActionCallback, AddToCollectionMenuOptions, PresetCardCallback, PresetDetailViewCallbacks, FeaturedPresetCallback, CollapsiblePanelOptions, HarmonyToolOptions, ExtractorToolOptions, AccessibilityToolOptions, ComparisonToolOptions, GradientToolOptions, PresetToolOptions, BudgetToolOptions, SwatchToolOptions, MixerToolOptions
+src/components/info-tooltip.ts: InfoTooltipOptions
+src/components/loading-spinner.ts: SpinnerSize, LoadingSpinnerOptions
+src/components/market-board.ts: PriceCategorySettings
+src/components/mixer-tool.ts: MixerToolOptions
+src/components/mobile-bottom-nav.ts: MobileToolDef
+src/components/palette-exporter.ts: PaletteExporterOptions
+src/components/preset-card.ts: PresetCardCallback
+src/components/preset-detail-view.ts: PresetDetailViewCallbacks
+src/components/preset-tool.ts: PresetToolOptions
+src/components/recent-colors-panel.ts: RecentColor, RecentColorsPanelOptions
+src/components/saved-palettes-modal.ts: OnPaletteLoadCallback
+src/components/swatch-tool.ts: SwatchToolOptions
+src/components/tools-dropdown.ts: ToolDef
+src/components/v4/display-options-v4.ts: OptionGroup
+src/components/v4/glass-panel.ts: GlassPanelVariant, GlassPanelPadding
+src/components/v4/v4-color-wheel.ts: HarmonyType
+src/mockups/CollapsiblePanel.ts: CollapsiblePanelOptions
+src/mockups/IconRail.ts: IconRailTool, IconRailOptions
+src/mockups/MockupNav.ts: MockupNavTool, MockupNavOptions
+src/mockups/MockupShell.ts: MockupShellOptions
+src/mockups/index.ts: MockupToolId
+src/mockups/tools/AccessibilityMockup.ts: AccessibilityMockupOptions
+src/mockups/tools/BudgetMockup.ts: BudgetMockupOptions
+src/mockups/tools/ComparisonMockup.ts: ComparisonMockupOptions
+src/mockups/tools/HarmonyMockup.ts: HarmonyMockupOptions
+src/mockups/tools/MatcherMockup.ts: MatcherMockupOptions
+src/mockups/tools/MixerMockup.ts: MixerMockupOptions
+src/mockups/tools/PresetsMockup.ts: PresetsMockupOptions
+src/services/announcer-service.ts: AnnouncementPriority
+src/services/api-service-wrapper.ts: PriceData
+src/services/auth-service.ts: AuthStateListener
+src/services/camera-service.ts: CameraDevice
+src/services/collection-service.ts: FavoritesData, CollectionsData, CollectionExport, ImportResult
+src/services/community-preset-service.ts: PresetListResponse, CategoryWithCount, VoteResponse, VoteCheckResponse
+src/services/config-controller.ts: ConfigChangeEvent
+src/services/display-options-helper.ts: DisplayOptionsChangeCallback, ApplyDisplayOptionsConfig, ApplyDisplayOptionsResult
+src/services/harmony-generator.ts: HarmonyTypeInfo
+src/services/hybrid-preset-service.ts: UnifiedCategory, GetPresetsOptions
+src/services/index.ts: ToolId, RouteDefinition, RouteState, Toast, ToastType, ToastOptions, Modal, ModalType, ModalConfig, TooltipConfig, TooltipPosition, AnnouncementPriority, SavedPalette, PaletteExportData, CameraDevice, CaptureResult, StoreName, TutorialTool, TutorialStep, Tutorial, DyeId, Collection, FavoritesData, CollectionsData, CollectionExport, ImportResult, CommunityPreset, PresetStatus, PresetListResponse, CategoryWithCount, PresetFilters, VoteResponse, VoteCheckResponse, UnifiedCategory, PresetSortOption, GetPresetsOptions, AuthUser, AuthState, AuthStateListener, PresetSubmission, SubmissionResult, ValidationError, MySubmissionsResponse, PresetEditRequest, EditResult, ConfigChangeEvent, ShareParams, ShareResult, ParsedShareUrl, ShareAnalyticsEvent, HarmonyShareParams, GradientShareParams, MixerShareParams, SwatchShareParams, ComparisonShareParams, AccessibilityShareParams, PriceCategorySettings, MarketBoardEventType, PricesUpdatedEvent, ServerChangedEvent, SettingsChangedEvent, FetchErrorEvent, BlendingConfig, HarmonyTypeInfo, FiltersPanelRefs, MarketPanelRefs, FiltersPanelConfig, MarketPanelConfig, PriceCardData, DyePriceDisplayOptions, DisplayOptionsChangeCallback, ApplyDisplayOptionsConfig, ApplyDisplayOptionsResult, Dye, VisionType, ThemeName, PriceData
+src/services/indexeddb-service.ts: StoreName, GetResult
+src/services/market-board-service.ts: MarketBoardEventType, PricesUpdatedEvent, ServerChangedEvent, SettingsChangedEvent, FetchErrorEvent
+src/services/mixer-blending-engine.ts: BlendingConfig
+src/services/preset-submission-service.ts: ValidationError, MySubmissionsResponse
+src/services/price-utilities.ts: PriceCardData, DyePriceDisplayOptions
+src/services/pricing-mixin.ts: PricingState, MarketBoardListenerOptions
+src/services/router-service.ts: RouteDefinition
+src/services/share-service.ts: ShareResult, ParsedShareUrl, ShareAnalyticsEvent
+src/services/toast-service.ts: ToastOptions
+src/services/tool-panel-builders.ts: FiltersPanelRefs, MarketPanelRefs, FiltersPanelConfig, MarketPanelConfig
+src/services/tooltip-service.ts: TooltipPosition, TooltipConfig
+src/services/tutorial-service.ts: Tutorial
+src/shared/browser-api-types.ts: EyeDropper, EyeDropperConstructor
+src/shared/i18n-types.ts: WebAppTranslations
+src/shared/subscription-manager.ts: Unsubscribe
+src/shared/types.ts: RGB, HSV, Matrix3x3, DyeDatabase, APIResponse, CachedData, RateLimitResult, Result, AsyncResult, Nullable, Optional, AppState, HarmonyState, MatcherState, ComparisonState
+src/shared/utils.ts: DebouncedFunction
