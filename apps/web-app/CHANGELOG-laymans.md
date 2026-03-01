@@ -1,10 +1,10 @@
-# What's New in Version 4.2.0
+# What's New in Version 4.3.0
 
-*Released: February 27, 2026*
+*Released: March 1, 2026*
 
 ---
 
-## 🔬 Pixel Sampling & Canvas Panning (Unreleased)
+## 🔬 Pixel Sampling & Canvas Panning
 
 **Palette Extractor**
 - **Shift+Click** on a zoomed image to sample a single pixel (or a configurable area up to 16×16) and instantly find the closest matching dyes
@@ -14,10 +14,12 @@
 
 ---
 
-## 🧹 Under-the-Hood Cleanup (Unreleased)
+## 🧹 Under-the-Hood Cleanup
 
 - Removed a large amount of leftover code from the v3 → v4 migration, reducing the codebase by ~1,200 lines
 - Cleaned up internal imports to use the shared type library directly — no user-visible changes
+- Completed a comprehensive dead code audit across the entire project, removing unused components, deprecated functions, orphaned files, and stale constants
+- Migrated all type imports to use the shared `@xivdyetools/types` library directly, improving build reliability
 
 ---
 
@@ -43,6 +45,9 @@
 **Code Quality**
 - Upgraded to ESLint v10 and resolved all new lint warnings across the entire codebase
 - Improved TypeScript strictness — better error handling and type safety throughout
+- The shared dye library (`@xivdyetools/core`) has been updated to v2.0.0 with cleaner internal organization
+- SVG generation code has been refactored with shared utilities, reducing duplication
+- Test infrastructure now uses random IDs for better parallel test support
 - No visible changes to users — just cleaner, more maintainable code
 
 ---

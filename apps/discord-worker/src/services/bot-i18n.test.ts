@@ -7,11 +7,6 @@ import {
     createTranslator,
     createUserTranslator,
 } from './bot-i18n.js';
-import {
-    translate,
-    getAvailableLocales,
-    isLocaleSupported,
-} from '@xivdyetools/bot-i18n';
 
 // Mock the i18n.js module for resolveUserLocale
 vi.mock('./i18n.js', () => ({
@@ -256,65 +251,6 @@ describe('bot-i18n.ts', () => {
             const translator = await createUserTranslator(mockKV, 'user-456', 'de');
 
             expect(translator.getLocale()).toBe('de');
-        });
-    });
-
-    describe('translate', () => {
-        it('should translate without creating a reusable translator', () => {
-            const result = translate('en', 'meta.name');
-            expect(result).toBe('English');
-        });
-
-        it('should interpolate variables', () => {
-            // Test with a key that might not exist to verify the fallback behavior
-            const result = translate('en', 'missing.{value}', { value: 'test' });
-            expect(result).toBe('missing.{value}'); // Returns key as-is since it doesn't exist
-        });
-    });
-
-    describe('getAvailableLocales', () => {
-        it('should return metadata for all available locales', () => {
-            const locales = getAvailableLocales();
-
-            expect(locales).toHaveLength(6);
-
-            const codes = locales.map(l => l.locale);
-            expect(codes).toContain('en');
-            expect(codes).toContain('ja');
-            expect(codes).toContain('de');
-            expect(codes).toContain('fr');
-            expect(codes).toContain('ko');
-            expect(codes).toContain('zh');
-        });
-
-        it('should return proper metadata structure', () => {
-            const locales = getAvailableLocales();
-
-            for (const locale of locales) {
-                expect(locale).toHaveProperty('locale');
-                expect(locale).toHaveProperty('name');
-                expect(locale).toHaveProperty('nativeName');
-                expect(locale).toHaveProperty('flag');
-            }
-        });
-    });
-
-    describe('isLocaleSupported', () => {
-        it('should return true for supported locales', () => {
-            expect(isLocaleSupported('en')).toBe(true);
-            expect(isLocaleSupported('ja')).toBe(true);
-            expect(isLocaleSupported('de')).toBe(true);
-            expect(isLocaleSupported('fr')).toBe(true);
-            expect(isLocaleSupported('ko')).toBe(true);
-            expect(isLocaleSupported('zh')).toBe(true);
-        });
-
-        it('should return false for unsupported locales', () => {
-            expect(isLocaleSupported('es')).toBe(false);
-            expect(isLocaleSupported('pt')).toBe(false);
-            expect(isLocaleSupported('ru')).toBe(false);
-            expect(isLocaleSupported('')).toBe(false);
-            expect(isLocaleSupported('EN')).toBe(false); // Case-sensitive
         });
     });
 });
