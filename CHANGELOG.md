@@ -64,6 +64,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **core**: `ResolvedPreset` interface now defined and exported from `PresetService` (migrated from `@xivdyetools/types`)
 - **logger**: Dead code cleanup — Wave 11 (DEAD-066–070): removed `getRequestId` from barrel exports (deprecated, superseded by app-local Hono Context versions); marked 10 implementation-detail symbols `@internal` (`BaseLogger`, `ConsoleAdapter`, `JsonAdapter`, `NoopAdapter`, `createSimpleLogger`, `createWorkerLogger`, `LogEntry`); updated README and `@packageDocumentation` examples to use `createRequestLogger`
 - **rate-limiter**: Dead code cleanup — Wave 12 (DEAD-073, DEAD-074): deleted orphaned `src/backends/index.ts` barrel file; removed duplicate `UpstashRateLimiterOptions` interface from `src/backends/upstash.ts` (now imports canonical definition from `types.ts`)
+- **test-utils**: Dead code cleanup — Wave 14 (DEAD-083, DEAD-084): removed deprecated `nextId()` and legacy counter infrastructure (`counters` Map, `resetCounters()`, `resetCounter()`, `getCounterValue()`); factories now use `randomId()`/`randomStringId()` for parallel-safe ID generation
+- **presets-api**: Removed `resetCounters()` imports and `beforeEach` calls from 7 test files (no longer needed with random IDs)
 
 ---
 

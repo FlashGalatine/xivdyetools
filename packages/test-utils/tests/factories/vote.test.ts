@@ -1,8 +1,7 @@
 /**
  * Tests for vote factory functions
  */
-import { describe, it, expect, beforeEach } from 'vitest';
-import { resetCounters } from '../../src/utils/counters.js';
+import { describe, it, expect } from 'vitest';
 import {
   createMockVoteRow,
   createMockVote,
@@ -10,10 +9,6 @@ import {
   createVotesForPreset,
   createVotesFromUser,
 } from '../../src/factories/vote.js';
-
-beforeEach(() => {
-  resetCounters();
-});
 
 describe('createMockVoteRow', () => {
   it('creates a vote row with defaults', () => {

@@ -1,8 +1,7 @@
 /**
  * Tests for preset factory functions
  */
-import { describe, it, expect, beforeEach } from 'vitest';
-import { resetCounters } from '../../src/utils/counters.js';
+import { describe, it, expect } from 'vitest';
 import {
   createMockSubmission,
   createMockPresetRow,
@@ -13,10 +12,6 @@ import {
   presetToRow,
   rowToPreset,
 } from '../../src/factories/preset.js';
-
-beforeEach(() => {
-  resetCounters();
-});
 
 describe('createMockSubmission', () => {
   it('creates a submission with defaults', () => {

@@ -12,7 +12,7 @@ import {
     _resetPatternsForTesting,
     _setTestPatterns,
 } from '../../src/services/moderation-service';
-import { createMockEnv, resetCounters } from '../test-utils';
+import { createMockEnv } from '../test-utils';
 import type { Env } from '../../src/types';
 
 // Mock fetch for external API calls
@@ -21,7 +21,6 @@ let fetchMock: ReturnType<typeof vi.fn>;
 
 describe('ModerationService', () => {
     beforeEach(() => {
-        resetCounters();
         fetchMock = vi.fn();
         globalThis.fetch = fetchMock;
         // Reset patterns before each test

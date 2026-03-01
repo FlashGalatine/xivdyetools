@@ -10,7 +10,7 @@
  * ```
  */
 
-import { nextStringId, nextId } from '../utils/counters.js';
+import { randomStringId, randomId } from '../utils/counters.js';
 
 /**
  * Category database row type (as stored in D1)
@@ -43,8 +43,8 @@ export interface Category {
  * @returns A CategoryRow object
  */
 export function createMockCategoryRow(overrides: Partial<CategoryRow> = {}): CategoryRow {
-  const id = overrides.id ?? nextStringId('category');
-  const displayOrder = overrides.display_order ?? nextId('category-order');
+  const id = overrides.id ?? randomStringId('category');
+  const displayOrder = overrides.display_order ?? randomId();
 
   return {
     id,
@@ -64,8 +64,8 @@ export function createMockCategoryRow(overrides: Partial<CategoryRow> = {}): Cat
  * @returns A Category object
  */
 export function createMockCategory(overrides: Partial<Category> = {}): Category {
-  const id = overrides.id ?? nextStringId('category');
-  const displayOrder = overrides.display_order ?? nextId('category-order');
+  const id = overrides.id ?? randomStringId('category');
+  const displayOrder = overrides.display_order ?? randomId();
 
   return {
     id,

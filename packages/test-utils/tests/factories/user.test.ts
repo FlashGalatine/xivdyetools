@@ -1,8 +1,7 @@
 /**
  * Tests for user factory functions
  */
-import { describe, it, expect, beforeEach } from 'vitest';
-import { resetCounters } from '../../src/utils/counters.js';
+import { describe, it, expect } from 'vitest';
 import {
   createMockUserRow,
   createMockUser,
@@ -11,10 +10,6 @@ import {
   createXIVAuthUser,
   userToRow,
 } from '../../src/factories/user.js';
-
-beforeEach(() => {
-  resetCounters();
-});
 
 describe('createMockUserRow', () => {
   it('creates a user row with defaults', () => {

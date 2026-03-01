@@ -1,8 +1,7 @@
 /**
  * Tests for category factory functions
  */
-import { describe, it, expect, beforeEach } from 'vitest';
-import { resetCounters } from '../../src/utils/counters.js';
+import { describe, it, expect } from 'vitest';
 import {
   createMockCategoryRow,
   createMockCategory,
@@ -11,10 +10,6 @@ import {
   DEFAULT_CATEGORIES,
   categoryToRow,
 } from '../../src/factories/category.js';
-
-beforeEach(() => {
-  resetCounters();
-});
 
 describe('createMockCategoryRow', () => {
   it('creates a category row with defaults', () => {
@@ -26,7 +21,7 @@ describe('createMockCategoryRow', () => {
     expect(row.description).toBe('A test category description');
     expect(row.icon).toBeNull();
     expect(row.is_curated).toBe(0);
-    expect(row.display_order).toBe(1);
+    expect(row.display_order).toBeGreaterThan(0);
   });
 
   it('accepts overrides', () => {
@@ -66,7 +61,7 @@ describe('createMockCategory', () => {
     expect(category.description).toBe('A test category description');
     expect(category.icon).toBeNull();
     expect(category.is_curated).toBe(false);
-    expect(category.display_order).toBe(1);
+    expect(category.display_order).toBeGreaterThan(0);
   });
 
   it('accepts overrides', () => {

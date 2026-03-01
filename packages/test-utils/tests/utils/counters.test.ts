@@ -1,46 +1,14 @@
 /**
- * Tests for counter utility functions
+ * Tests for ID generation utility functions
  *
- * TEST-DESIGN-001: nextStringId now uses random IDs for parallel test safety.
- * The legacy nextId function still uses sequential counters.
+ * TEST-DESIGN-001: All ID generation uses random IDs for parallel test safety.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
-  nextId,
   nextStringId,
   randomId,
   randomStringId,
-  resetCounters,
-  resetCounter,
-  getCounterValue,
 } from '../../src/utils/counters.js';
-
-beforeEach(() => {
-  resetCounters();
-});
-
-describe('nextId (legacy sequential)', () => {
-  it('returns sequential numbers starting at 1', () => {
-    expect(nextId('test')).toBe(1);
-    expect(nextId('test')).toBe(2);
-    expect(nextId('test')).toBe(3);
-  });
-
-  it('maintains separate counters for different keys', () => {
-    expect(nextId('users')).toBe(1);
-    expect(nextId('presets')).toBe(1);
-    expect(nextId('users')).toBe(2);
-    expect(nextId('votes')).toBe(1);
-    expect(nextId('presets')).toBe(2);
-  });
-
-  it('handles many increments', () => {
-    for (let i = 0; i < 100; i++) {
-      nextId('counter');
-    }
-    expect(nextId('counter')).toBe(101);
-  });
-});
 
 // TEST-DESIGN-001: randomId generates unique numeric IDs
 describe('randomId', () => {
@@ -111,72 +79,5 @@ describe('nextStringId (now uses random)', () => {
     expect(nextStringId('discord')).toMatch(/^discord-[a-z0-9]{8}$/);
     expect(nextStringId('xivauth')).toMatch(/^xivauth-[a-z0-9]{8}$/);
     expect(nextStringId('test-item')).toMatch(/^test-item-[a-z0-9]{8}$/);
-  });
-});
-
-describe('resetCounters', () => {
-  it('resets all counters', () => {
-    nextId('a');
-    nextId('a');
-    nextId('b');
-
-    resetCounters();
-
-    expect(nextId('a')).toBe(1);
-    expect(nextId('b')).toBe(1);
-  });
-
-  it('allows fresh counting after reset', () => {
-    for (let i = 0; i < 10; i++) {
-      nextId('test');
-    }
-
-    resetCounters();
-
-    expect(nextId('test')).toBe(1);
-  });
-});
-
-describe('resetCounter', () => {
-  it('resets a specific counter', () => {
-    nextId('keep');
-    nextId('keep');
-    nextId('reset');
-    nextId('reset');
-
-    resetCounter('reset');
-
-    expect(nextId('reset')).toBe(1);
-    expect(nextId('keep')).toBe(3);
-  });
-
-  it('handles non-existent counter', () => {
-    expect(() => resetCounter('nonexistent')).not.toThrow();
-    expect(nextId('nonexistent')).toBe(1);
-  });
-});
-
-describe('getCounterValue', () => {
-  it('returns current counter value', () => {
-    nextId('test');
-    nextId('test');
-    nextId('test');
-
-    expect(getCounterValue('test')).toBe(3);
-  });
-
-  it('returns 0 for uninitialized counter', () => {
-    expect(getCounterValue('never-used')).toBe(0);
-  });
-
-  it('does not increment the counter', () => {
-    nextId('check');
-    nextId('check');
-
-    getCounterValue('check');
-    getCounterValue('check');
-    getCounterValue('check');
-
-    expect(getCounterValue('check')).toBe(2);
   });
 });

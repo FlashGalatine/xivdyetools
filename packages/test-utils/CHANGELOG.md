@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+
+- **DEAD-083**: Remove deprecated `nextId()` function — factories now use `randomId()` for parallel-safe test ID generation
+  - `dye.ts`: `createMockDye()` now uses `randomId()` instead of `nextId('dye')`
+  - `category.ts`: `createMockCategoryRow()`/`createMockCategory()` now use `randomStringId()`/`randomId()` instead of `nextStringId()`/`nextId()`
+- **DEAD-084**: Remove legacy counter infrastructure from `counters.ts` — `counters` Map, `resetCounters()`, `resetCounter()`, `getCounterValue()`
+  - Removed from barrel re-exports in `factories/index.ts`
+  - Consumers no longer need `resetCounters()` in `beforeEach()` — IDs are fully random
+
+### Changed
+
+- Updated all factory test files to remove `resetCounters()` `beforeEach` calls (no longer needed with random IDs)
+- Updated `dye.test.ts` and `category.test.ts` assertions from sequential ID expectations to random ID expectations
+
+---
+
 ## [1.1.3] - 2026-02-21
 
 ### Fixed

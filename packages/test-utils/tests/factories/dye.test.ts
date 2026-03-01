@@ -1,8 +1,7 @@
 /**
  * Tests for dye factory functions
  */
-import { describe, it, expect, beforeEach } from 'vitest';
-import { resetCounters } from '../../src/utils/counters.js';
+import { describe, it, expect } from 'vitest';
 import {
   mockDyes,
   createMockDye,
@@ -13,10 +12,6 @@ import {
   getMockDyeById,
   getMockDyesByIds,
 } from '../../src/factories/dye.js';
-
-beforeEach(() => {
-  resetCounters();
-});
 
 describe('mockDyes', () => {
   it('is an array of dyes', () => {
@@ -77,9 +72,9 @@ describe('createMockDye', () => {
   it('creates a dye with defaults', () => {
     const dye = createMockDye();
 
-    expect(dye.id).toBe(1);
-    expect(dye.itemID).toBe(5701);
-    expect(dye.name).toBe('Test Dye 1');
+    expect(dye.id).toBeGreaterThan(0);
+    expect(dye.itemID).toBe(5700 + dye.id);
+    expect(dye.name).toBe(`Test Dye ${dye.id}`);
     expect(dye.hex).toBe('#888888');
     expect(dye.category).toBe('Grey');
     expect(dye.acquisition).toBe('Vendor');

@@ -17,7 +17,7 @@
  */
 
 import type { Dye } from '@xivdyetools/types/dye';
-import { nextId } from '../utils/counters.js';
+import { randomId } from '../utils/counters.js';
 
 // Re-export type for convenience
 export type { Dye };
@@ -133,7 +133,7 @@ export const mockDyes: Dye[] = [
  * @returns A Dye object
  */
 export function createMockDye(overrides: Partial<Dye> = {}): Dye {
-  const id = overrides.id ?? nextId('dye');
+  const id = overrides.id ?? randomId();
   const itemID = overrides.itemID ?? 5700 + id;
 
   return {

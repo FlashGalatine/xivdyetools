@@ -23,12 +23,10 @@ import {
     createMockD1Database,
     createMockPresetRow,
     createMockSubmission,
-    resetCounters,
 } from '../test-utils';
 
 describe('PresetService', () => {
     beforeEach(() => {
-        resetCounters();
         vi.clearAllMocks();
     });
 

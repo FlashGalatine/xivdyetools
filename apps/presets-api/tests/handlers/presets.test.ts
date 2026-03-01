@@ -12,7 +12,6 @@ import {
     createMockD1Database,
     createMockPresetRow,
     createMockSubmission,
-    resetCounters,
 } from '../test-utils';
 
 type Variables = {
@@ -25,7 +24,6 @@ describe('PresetsHandler', () => {
     let mockDb: ReturnType<typeof createMockD1Database>;
 
     beforeEach(() => {
-        resetCounters();
         resetCategoryCache(); // Reset category cache to prevent cross-test pollution
         mockDb = createMockD1Database();
         env = createMockEnv({ DB: mockDb as unknown as D1Database });

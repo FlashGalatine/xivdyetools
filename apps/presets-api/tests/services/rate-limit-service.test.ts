@@ -9,11 +9,10 @@ import {
     checkPublicRateLimit,
     getClientIp,
 } from '../../src/services/rate-limit-service';
-import { createMockD1Database, resetCounters } from '../test-utils';
+import { createMockD1Database } from '../test-utils';
 
 describe('RateLimitService', () => {
     beforeEach(() => {
-        resetCounters();
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2025-06-15T12:00:00Z'));
     });

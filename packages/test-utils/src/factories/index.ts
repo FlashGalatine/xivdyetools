@@ -16,7 +16,4 @@ export * from './dye.js';
 export {
   randomId,
   randomStringId,
-  resetCounters,
-  resetCounter,
-  getCounterValue,
 } from '../utils/counters.js';

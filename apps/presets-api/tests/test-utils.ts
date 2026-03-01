@@ -28,8 +28,6 @@ export {
   createMockVoteRow,
   // Assertions
   assertJsonResponse,
-  // Counters
-  resetCounters,
   // Constants
   TEST_SIGNING_SECRET,
 } from '@xivdyetools/test-utils';

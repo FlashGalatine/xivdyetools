@@ -11,7 +11,6 @@ import {
     createMockEnv,
     createMockD1Database,
     createMockCategoryRow,
-    resetCounters,
 } from '../test-utils';
 
 type Variables = {
@@ -24,7 +23,6 @@ describe('CategoriesHandler', () => {
     let mockDb: ReturnType<typeof createMockD1Database>;
 
     beforeEach(() => {
-        resetCounters();
         mockDb = createMockD1Database();
         env = createMockEnv({ DB: mockDb as unknown as D1Database });
 
