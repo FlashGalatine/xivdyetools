@@ -7,8 +7,8 @@
  * @module services/APIService
  */
 
-import type { PriceData, CachedData } from '../types/index.js';
-import { ErrorCode, AppError } from '../types/index.js';
+import type { PriceData, CachedData } from '@xivdyetools/types';
+import { ErrorCode, AppError } from '@xivdyetools/types';
 import type { Logger } from '@xivdyetools/logger/library';
 import { NoOpLogger } from '@xivdyetools/logger/library';
 import {

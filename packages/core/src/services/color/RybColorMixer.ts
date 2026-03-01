@@ -17,7 +17,7 @@
  * @module services/color/RybColorMixer
  */
 
-import type { RGB, HexColor } from '../../types/index.js';
+import type { RGB, HexColor } from '@xivdyetools/types';
 import { clamp } from '../../utils/index.js';
 import { ColorConverter } from './ColorConverter.js';
 

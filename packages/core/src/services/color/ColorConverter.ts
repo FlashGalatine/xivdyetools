@@ -4,9 +4,8 @@
  * Handles conversions between hex, RGB, and HSV color formats
  */
 
-import type { RGB, HSV, HexColor, LAB, OKLAB, OKLCH, LCH, HSL } from '../../types/index.js';
-import { createHexColor } from '../../types/index.js';
-import { ErrorCode, AppError } from '../../types/index.js';
+import type { RGB, HSV, HexColor, LAB, OKLAB, OKLCH, LCH, HSL } from '@xivdyetools/types';
+import { createHexColor, ErrorCode, AppError } from '@xivdyetools/types';
 
 /**
  * DeltaE formula for color difference calculations

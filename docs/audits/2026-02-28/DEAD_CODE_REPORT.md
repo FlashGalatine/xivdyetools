@@ -2,10 +2,10 @@
 
 ## Executive Summary
 
-- **Analysis Date:** 2026-02-28
-- **Analysis Depth:** Exhaustive (automated tools + manual analysis + git history)
-- **Total Findings:** 41
-- **Projects:** web-app (v4.2.0), discord-worker (v4.1.0), bot-i18n (v1.0.1), bot-logic (v1.1.0)
+- **Analysis Date:** 2026-02-28 (core addendum: 2026-03-01, types+logger addendum: 2026-03-01)
+- **Analysis Depth:** Exhaustive (automated tools + manual analysis + git history + cross-consumer mapping)
+- **Total Findings:** 70
+- **Projects:** web-app (v4.2.0), discord-worker (v4.1.0), bot-i18n (v1.0.1), bot-logic (v1.1.0), **core (v1.17.3)**, **types (v1.8.0)**, **logger (v1.2.1)**
 
 | Project | Findings | Recommended Removals | Estimated Dead Lines |
 |---------|----------|---------------------|---------------------|
@@ -13,7 +13,10 @@
 | discord-worker | DEAD-020 – 031 | 9 (3 keep/monitor) | ~6,800 |
 | bot-i18n | DEAD-032 – 035 | 2 (2 keep) | ~200 |
 | bot-logic | DEAD-036 – 041 | 0 (all keep/mark @internal) | ~0 |
-| **Total** | **41** | **27** | **~10,600** |
+| @xivdyetools/core | DEAD-042 – 056 | 7 now (5 keep, 3 v2.0.0) | ~1,140 |
+| **@xivdyetools/types** | **DEAD-057 – 065** | **5 remove (4 keep/mark)** | **~210** |
+| **@xivdyetools/logger** | **DEAD-066 – 070** | **1 remove (4 mark @internal)** | **~15** |
+| **Total** | **70** | **40** | **~11,965** |
 
 ---
 
@@ -319,6 +322,139 @@ bot-logic has zero "dead code" in the traditional sense. All findings are about 
 
 ---
 
+# Part 5: @xivdyetools/core (DEAD-042 – DEAD-056)
+
+## Core Executive Summary
+
+- **Package:** @xivdyetools/core v1.17.3
+- **Total Findings:** 15
+- **Recommended Removals:** 7 now, 3 deferred to v2.0.0, 5 keep
+- **Estimated Dead Lines:** ~1,140 (source + tests + scripts)
+- **Estimated Dead Files:** 7 (scripts + tests)
+
+## Core Health Score
+
+**Code Freshness: B+**
+- ~4% dead source code by line count
+- Active development (index.ts, APIService, DyeDatabase, utils all modified within 6 months)
+- The main dead weight is deprecated compatibility re-exports (~163 lines) and stale scripts (~365 lines)
+- 77% of barrel exports (~99 of ~129) have zero external monorepo consumers — most are used internally or exist for npm API surface
+- No unused production dependencies; all 3 deps (`@xivdyetools/types`, `@xivdyetools/logger`, `spectral.js`) are actively used
+
+---
+
+## Core — Consumer Map
+
+8 monorepo projects depend on `@xivdyetools/core`. Of the ~129 barrel exports, only **30 unique symbols** are imported by consumers:
+
+| Consumer | Symbols Imported | Key Imports |
+|----------|-----------------|-------------|
+| web-app | 23 | ColorService, DyeService, APIService, PresetService, PaletteService, CharacterColorService, ColorConverter |
+| discord-worker | 12 | ColorService, DyeService, PaletteService, CharacterColorService, Dye, HarmonyOptions |
+| og-worker | 8 | DyeService, ColorConverter, CharacterColorService, ColorService, Dye |
+| bot-logic | 8 | ColorService, DyeService, LocalizationService, Dye, MatchingMethod |
+| svg | 3 | ColorService, RGB, Dye |
+| maintainer | 2 | ColorService, isValidHexColor |
+| color-blending | 1 | ColorService |
+| stoat-worker | 1 | Dye |
+
+---
+
+## Core — Summary by Category
+
+| Category | Findings | Remove Now | Keep/Defer | Est. Lines |
+|----------|----------|-----------|------------|------------|
+| Legacy/Deprecated | DEAD-042, 047, 049 | 2 | 1 (phased) | ~185 now + ~100 Phase 1 |
+| Stale Test Code | DEAD-043, 044 | 2 | 0 | 539 |
+| Orphaned Files | DEAD-050, 051, 052, 053 | 4 | 0 | ~365 |
+| Unused Exports | DEAD-045, 046, 048, 055, 056 | 0 | 5 (v2.0.0 or keep) | ~0 now |
+| Dead Code Paths | DEAD-054 | 0 | 1 (adopt or remove) | ~40 |
+| **Total** | **15** | **8** | **7** | **~1,140** |
+
+---
+
+## Core — Quick Wins (High Confidence, Safe to Remove)
+
+| ID | Description | File(s) | Lines Saved |
+|----|-------------|---------|-------------|
+| DEAD-043 | Legacy omnibus `core.test.ts` (duplicates coverage) | `src/__tests__/core.test.ts` | 324 |
+| DEAD-044 | `logger.test.ts` tests deprecated re-exports | `src/__tests__/logger.test.ts` | 215 |
+| DEAD-049 | Deprecated `characterColorData` export + monolithic JSON | `src/index.ts`, `src/data/character_colors.json` | ~5 |
+| DEAD-050 | 3 orphaned `add-type-flags` scripts | `scripts/add-type-flags.{js,mjs,ts}` | 154 |
+| DEAD-051 | Orphaned `compare-scrapes.js` | `scripts/compare-scrapes.js` | 171 |
+| DEAD-052 | Stale `response.json` debug artifact | `scripts/response.json` | 1 |
+| DEAD-053 | Tracked CSV despite gitignore | `scripts/output/dye_names.csv` | 137 |
+
+**Total Quick Wins: ~1,007 lines across 7 files**
+
+---
+
+## Core — Recommended Removals (Medium Effort)
+
+| ID | Description | File(s) | Verify Before Removing |
+|----|-------------|---------|------------------------|
+| DEAD-042 | Deprecated `types/logger.ts` wrapper | `src/types/logger.ts` | Migrate web-app `NoOpLogger` import first |
+| DEAD-047 Phase 1 | ~68 zero-consumer deprecated type re-exports | `src/types/index.ts` | Run monorepo-wide type-check after |
+
+---
+
+## Core — Deferred / Keep / Monitor
+
+| ID | Description | Reason to Defer |
+|----|-------------|----------------|
+| DEAD-045 | 13 unused utility exports | Published npm API — mark `@internal`, remove v2.0.0 |
+| DEAD-046 | 4 unused constant exports | Published npm API — mark `@internal`, remove v2.0.0 |
+| DEAD-047 Phase 2 | 12 actively consumed deprecated re-exports (`Dye`, `RGB`, etc.) | Requires migration of ~40 files across 6 projects |
+| DEAD-048 | 11 character color data exports | Published npm API — mark `@internal`, remove v2.0.0 |
+| DEAD-054 | `isAbortError` — untested, unused | Either adopt internally + add tests, or deprecate |
+| DEAD-055 | `MemoryCacheBackend` — zero external consumers | Legitimate public API for APIService users |
+| DEAD-056 | `VERSION` — zero external consumers | Standard npm pattern, keep |
+
+---
+
+## Core — Dependency Cleanup
+
+| Package | Status | Recommendation |
+|---------|--------|----------------|
+| `@xivdyetools/types` | Used | **Keep** |
+| `@xivdyetools/logger` | Used (+ deprecated re-exports) | **Keep** |
+| `spectral.js` | Used by SpectralMixer | **Keep** |
+| `@vitest/coverage-v8` (dev) | Used via CLI, not imports | **Keep** — depcheck false positive |
+| `typedoc-plugin-markdown` (dev) | Used via typedoc config | **Keep** — depcheck false positive |
+
+**No dependency removals recommended.**
+
+---
+
+## Core — Cleanup Execution Plan
+
+### Wave 7: Core Quick Wins (~1,007 lines)
+1. Delete `src/__tests__/core.test.ts` (DEAD-043)
+2. Delete `src/__tests__/logger.test.ts` (DEAD-044)
+3. Remove `characterColorData` export from `src/index.ts` and delete `src/data/character_colors.json` (DEAD-049)
+4. Delete `scripts/add-type-flags.{js,mjs,ts}` (DEAD-050)
+5. Delete `scripts/compare-scrapes.js` (DEAD-051)
+6. Delete `scripts/response.json` (DEAD-052)
+7. `git rm --cached scripts/output/dye_names.csv` (DEAD-053)
+8. **Run `npm test -- --run` and `npm run type-check` to verify**
+
+### Wave 8: Core Deprecated Code Cleanup (~120 lines + 1 consumer migration)
+1. Update web-app `api-service-wrapper.ts` to import `NoOpLogger` from `@xivdyetools/logger/library`
+2. Delete `src/types/logger.ts` (DEAD-042)
+3. Remove zero-consumer deprecated re-exports from `src/types/index.ts` (DEAD-047 Phase 1)
+4. Update `src/index.ts` to remove corresponding barrel re-exports
+5. **Run monorepo-wide `npm run type-check` across all consumers**
+
+### Wave 9: Core v2.0.0 Preparation (Deferred)
+1. Mark unused utility exports with `@internal` (DEAD-045)
+2. Mark unused constant exports with `@internal` (DEAD-046)
+3. Mark character color data exports with `@internal` (DEAD-048)
+4. Add test coverage for `isAbortError` or deprecate it (DEAD-054)
+5. Migrate 12 actively consumed deprecated type re-exports to `@xivdyetools/types` across ~40 files (DEAD-047 Phase 2)
+6. **Plan as v2.0.0 breaking change release**
+
+---
+
 # Cross-Project Analysis
 
 ## Root Causes of Dead Code
@@ -326,11 +462,18 @@ bot-logic has zero "dead code" in the traditional sense. All findings are about 
 | Root Cause | Projects Affected | Findings |
 |------------|-------------------|----------|
 | V3→V4 migration residue | web-app, discord-worker | DEAD-001–007, DEAD-022, DEAD-029 |
-| Speculative scaffolding never integrated | discord-worker | DEAD-020 (pagination, progress, image-cache) |
-| Package extraction left duplicates | discord-worker, bot-i18n | DEAD-021, DEAD-035 |
-| Over-exported published API surface | bot-i18n, bot-logic | DEAD-032–034, DEAD-036–041 |
+| Speculative scaffolding never integrated | discord-worker, types | DEAD-020, DEAD-061, DEAD-063 |
+| Package extraction left duplicates | discord-worker, bot-i18n, core | DEAD-021, DEAD-035, DEAD-042, DEAD-047 |
+| Over-exported published API surface | bot-i18n, bot-logic, core, types, logger | DEAD-032–034, DEAD-036–041, DEAD-045–048, DEAD-055–058, DEAD-066–068 |
 | Abandoned integration test approach | discord-worker | DEAD-030 |
 | Replaced dependencies not cleaned up | discord-worker | DEAD-023 |
+| Stale development scripts/artifacts | core | DEAD-050–053 |
+| Legacy omnibus test files | core | DEAD-043–044 |
+| Untested utility code | core | DEAD-054 |
+| Union-vs-subtypes pattern (consumers use unions, not sub-types) | types | DEAD-057, DEAD-058 |
+| Unadopted branded-type pattern | types | DEAD-059 |
+| Superseded by app-local implementations | logger | DEAD-070 |
+| Implementation details in public barrel | logger | DEAD-066, DEAD-069 |
 
 ## Prevention Recommendations
 
@@ -354,3 +497,190 @@ After completing all cleanup waves:
 - [ ] web-app: `npm run dev` starts without errors
 - [ ] bot-i18n: Publish new patch version if public API changed
 - [ ] bot-logic: No changes needed (all kept)
+- [ ] core: Publish new patch version after Wave 7; minor version after Wave 8
+- [ ] core: Run monorepo-wide type-check after any type-related removal
+- [ ] types: Publish new minor version after removing utility module/API types
+- [ ] types: Run monorepo-wide type-check after any barrel changes
+- [ ] logger: Publish new patch version after `@internal` markings (no API change)
+
+---
+
+# Part 6: @xivdyetools/types (DEAD-057 – DEAD-065)
+
+## Types Package Executive Summary
+
+- **Package:** @xivdyetools/types v1.8.0
+- **Source:** 2,576 lines across 30 source files (+ 1,143 test lines across 4 test files)
+- **Total Exported Symbols:** 88 (47 interfaces, 28 types, 8 functions, 3 consts, 1 enum, 1 class)
+- **Consumed by Apps:** 40 symbols (45.5%)
+- **Consumed Only by Core:** 15 symbols (17.0%)
+- **Truly Dead:** 25 symbols (28.4%)
+- **Subpath Exports:** 8 defined, 3 actively used, 5 with zero consumers
+- **Total Findings:** 9 (DEAD-057 – DEAD-065)
+- **Health Score:** B (significant dead surface, but much is intentional contract definition)
+
+### Consumer Landscape
+
+| Consumer | # Symbols Used | Notes |
+|----------|:---:|-------|
+| packages/core | 88 (all) | Re-exports entire surface (deprecated barrel) |
+| apps/web-app | ~20 | Dye, PriceData, color types, error types |
+| apps/discord-worker | ~20 | Preset types, Dye, character types, isValidSnowflake |
+| apps/moderation-worker | ~17 | Preset types, isValidSnowflake |
+| apps/presets-api | ~18 | Preset types, auth types, moderation types |
+| apps/oauth | ~14 | Auth types, XIVAuth types |
+| packages/test-utils | ~8 | Dye, preset, auth types (via subpath imports) |
+| packages/svg | 1 | PresetCategory only |
+
+### Finding Details
+
+| ID | Title | Symbols | Rec. |
+|----|-------|:---:|------|
+| DEAD-057 | 11 unused preset response sub-types | 11 | Mark @internal |
+| DEAD-058 | 7 unused auth response sub-types | 7 | Mark @internal |
+| DEAD-059 | DiscordSnowflake + createSnowflake | 2 | Mark @internal |
+| DEAD-060 | Orphaned preset/character types | 3 | Remove 2, mark 1 |
+| DEAD-061 | Entire utility module | 6 | **Remove** |
+| DEAD-062 | All localization types (zero direct consumers) | 9 | Keep (core uses) |
+| DEAD-063 | API generic response types | 3 | **Remove** |
+| DEAD-064 | Character/dye core-only types | 6 | Keep, mark @internal |
+| DEAD-065 | 5 unused subpath exports | — | Keep (low cost) |
+
+### Key Insight: The Union-vs-Subtypes Pattern
+
+The single largest source of dead code in types (18 symbols across DEAD-057 and DEAD-058) follows a consistent pattern: discriminated union types that define sub-types for each variant. Consumers universally import the union type and narrow via property checks — they never import the constituent sub-types.
+
+```typescript
+// How the types are defined (types package)
+export interface PresetSubmitCreatedResponse { ... }  // ← DEAD (DEAD-057)
+export interface PresetSubmitDuplicateResponse { ... } // ← DEAD
+export interface PresetSubmitErrorResponse { ... }     // ← DEAD
+export type PresetSubmitResponse = ...;                // ← CONSUMED ✓
+
+// How consumers actually use them (all apps)
+import type { PresetSubmitResponse } from '@xivdyetools/types';
+if (response.status === 'created') { ... } // Type narrowing via discriminant
+```
+
+**Recommendation:** Mark all sub-types `@internal`. Keep definitions in source files where they compose the unions. Remove from barrel exports.
+
+### Cleanup Execution Plan — Wave 10
+
+**Phase 1: Quick removals (patch version bump)**
+1. Delete `src/utility/index.ts` + `src/utility/index.test.ts` (DEAD-061) — 6 dead symbols
+2. Remove `APISuccessResponse`, `APIErrorResponse`, `APIResponse` from `src/api/response.ts` (DEAD-063) — 3 dead symbols
+3. Remove `ResolvedPreset` from `src/preset/core.ts` (DEAD-060) — 1 dead symbol
+4. Remove `AuthenticatedPresetSubmission` from `src/preset/community.ts` (DEAD-060) — 1 dead symbol
+5. Update all barrel files and `src/index.ts`
+6. Update core's deprecated re-exports to drop removed symbols
+7. Run monorepo-wide `type-check` and tests
+
+**Phase 2: @internal markings (no version bump needed)**
+1. Add `@internal` to 18 response sub-types (DEAD-057, DEAD-058)
+2. Add `@internal` to `DiscordSnowflake`, `createSnowflake` (DEAD-059)
+3. Add `@internal` to `CharacterColorCategory` (DEAD-060)
+4. Add `@internal` to 6 core-only types (DEAD-064)
+
+---
+
+# Part 7: @xivdyetools/logger (DEAD-066 – DEAD-070)
+
+## Logger Package Executive Summary
+
+- **Package:** @xivdyetools/logger v1.2.1
+- **Source:** 1,491 lines across 13 source files (+ 2,901 test lines across 8 test files)
+- **Total Exported Symbols:** 23 (9 types, 4 classes, 6 functions, 4 const instances)
+- **Consumed Externally:** 9 symbols (39.1%)
+- **Dead:** 14 symbols (60.9%)
+- **Subpath Exports:** 3 defined, all 3 actively used
+- **Total Findings:** 5 (DEAD-066 – DEAD-070)
+- **Health Score:** A- (dead exports are implementation details, not speculative code)
+
+### Two-Layer Architecture
+
+Logger's exports form a clear two-layer architecture:
+
+| Layer | Symbols | Consumed | Dead | Description |
+|-------|:---:|:---:|:---:|---|
+| **Public API** | 9 | 9 | 0 | Factory functions, pre-configured instances, key types |
+| **Implementation** | 14 | 0 | 14 | Base classes, adapters, config types, low-level factories |
+
+This is **healthy architecture** — the "dead" exports are implementation details that happen to be exposed. The fix is `@internal` markers, not deletion.
+
+### Consumer Landscape
+
+| Consumer | Symbols Used | Primary Import Path |
+|----------|---|---|
+| discord-worker | `ExtendedLogger`, `createRequestLogger` | Main barrel + `./worker` |
+| moderation-worker | `ExtendedLogger`, `createRequestLogger` | Main barrel + `./worker` |
+| presets-api | `ExtendedLogger`, `createRequestLogger` | Main barrel + `./worker` |
+| oauth | `ExtendedLogger`, `createRequestLogger` | Main barrel + `./worker` |
+| stoat-worker | `createLibraryLogger` | Main barrel |
+| web-app | `createBrowserLogger`, `browserLogger`, `perf` | `./browser` |
+| core | `Logger`, `NoOpLogger`, `ConsoleLogger` | `./library` |
+
+### Finding Details
+
+| ID | Title | Dead Symbols | Rec. |
+|----|-------|:---:|------|
+| DEAD-066 | Internal implementation classes in barrel | 4 | Mark @internal |
+| DEAD-067 | Type exports with zero consumers | 7 | Keep (good DX practice) |
+| DEAD-068 | `createSimpleLogger` | 1 | Mark @internal |
+| DEAD-069 | `createWorkerLogger` (no direct consumers) | 1 | Mark @internal |
+| DEAD-070 | `getRequestId` (superseded) | 1 | Remove from barrel |
+
+### The `getRequestId` Mismatch (DEAD-070)
+
+The only genuinely unnecessary export. All 4 worker apps define their own `getRequestId(c: Context)` that takes a Hono `Context` parameter. Logger's version takes a raw `Request` object — a signature mismatch that prevents adoption.
+
+```typescript
+// Logger's version (unused)
+export function getRequestId(request: Request): string { ... }
+
+// What every app defines locally
+export function getRequestId(c: Context): string { ... }
+```
+
+### Cleanup Execution Plan — Wave 11
+
+**Phase 1: Barrel cleanup (patch version bump)**
+1. Remove `getRequestId` from `src/presets/index.ts` and `src/index.ts` (DEAD-070)
+2. Keep function in `worker.ts` (called internally by `createRequestLogger`)
+
+**Phase 2: @internal markings (no version bump needed)**
+1. Add `@internal` to `BaseLogger`, `ConsoleAdapter`, `JsonAdapter`, `NoopAdapter` (DEAD-066)
+2. Add `@internal` to `createSimpleLogger` (DEAD-068)
+3. Add `@internal` to `createWorkerLogger` (DEAD-069)
+4. Add `@internal` to `LogEntry` (only truly internal type from DEAD-067)
+
+---
+
+# Updated Cross-Project Analysis
+
+## Ecosystem-Wide Dead Code Summary
+
+| Package | Exports | Consumed | Dead | Dead % | Health |
+|---------|:---:|:---:|:---:|:---:|:---:|
+| @xivdyetools/types | 88 | 40 | 48* | 54.5% | B |
+| @xivdyetools/core | ~129 | ~30 | ~99* | 76.7% | B+ |
+| @xivdyetools/logger | 23 | 9 | 14 | 60.9% | A- |
+
+\* For types and core, "dead" includes symbols consumed only through deprecated re-exports and core-internal-only symbols. Truly actionable dead code is lower.
+
+## Shared Root Cause: Over-exported API Surface
+
+The dominant pattern across all 3 packages is **over-broad barrel exports**. Each package exports its full internal symbol set, but consumers only need a fraction:
+
+- **Types:** 40 of 88 symbols consumed (45.5%)
+- **Core:** ~30 of ~129 symbols consumed (23.3%)
+- **Logger:** 9 of 23 symbols consumed (39.1%)
+
+**Combined:** ~79 of ~240 symbols consumed across the 3 foundation packages (**32.9%**).
+
+### Recommendation: Adopt `@internal` + Minimal Public API
+
+For the next major version of each package:
+1. Mark all implementation details `@internal`
+2. Document the intended public API surface (types: ~40 symbols, core: ~30, logger: ~9)
+3. Consider separate `/internal` subpath exports for extensibility
+4. Run API surface audits at each major version bump

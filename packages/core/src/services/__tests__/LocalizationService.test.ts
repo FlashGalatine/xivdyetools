@@ -10,7 +10,7 @@ import {
   resolveLocaleFromPreference,
   SUPPORTED_LOCALES,
 } from '../LocalizationService.js';
-import type { LocaleCode, LocalePreference } from '../../types/index.js';
+import type { LocaleCode, LocalePreference } from '@xivdyetools/types';
 import { LocaleLoader } from '../localization/LocaleLoader.js';
 import { LocaleRegistry } from '../localization/LocaleRegistry.js';
 import { TranslationProvider } from '../localization/TranslationProvider.js';
@@ -331,7 +331,7 @@ class MockLocaleLoader extends LocaleLoader {
       metallicDyeIds: (data.metallicDyeIds as number[]) ?? [],
       harmonyTypes: data.harmonyTypes ?? {},
       visionTypes: data.visionTypes ?? {},
-    } as import('../../types/index.js').LocaleData;
+    } as import('@xivdyetools/types').LocaleData;
   }
 }
 

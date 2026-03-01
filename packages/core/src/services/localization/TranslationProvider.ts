@@ -16,7 +16,7 @@ import type {
   GrandCompanyKey,
   RaceKey,
   ClanKey,
-} from '../../types/index.js';
+} from '@xivdyetools/types';
 import type { LocaleRegistry } from './LocaleRegistry.js';
 
 /**

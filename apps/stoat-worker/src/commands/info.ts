@@ -7,7 +7,7 @@
  */
 
 import { executeDyeInfo } from '@xivdyetools/bot-logic';
-import type { Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import type { LocaleCode } from '@xivdyetools/bot-i18n';
 import type { CommandContext } from '../router.js';
 import { parseSingleDyeArgs } from './parser.js';

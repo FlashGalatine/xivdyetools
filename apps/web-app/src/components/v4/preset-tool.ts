@@ -38,7 +38,7 @@ import type {
   PresetSortOption,
 } from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
-import type { PresetCategory } from '@xivdyetools/core';
+import type { PresetCategory } from '@xivdyetools/types';
 import { ICON_LOCKED, ICON_DOCUMENT, ICON_WARNING } from '@shared/ui-icons';
 import { ICON_EMPTY_INBOX } from '@shared/empty-state-icons';
 

@@ -13,7 +13,7 @@
  * @module svg/palette-grid
  */
 
-import type { RGB, Dye } from '@xivdyetools/core';
+import type { RGB, Dye } from '@xivdyetools/types';
 import {
   createSvgDocument,
   rect,

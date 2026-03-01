@@ -15,9 +15,9 @@
 import {
   ColorService,
   PaletteService,
-  type Dye,
   type PaletteMatch,
 } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import {
   messageResponse,

@@ -8,7 +8,7 @@
  * @module handlers/commands/collection
  */
 
-import type { Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import { messageResponse, errorEmbed } from '../../utils/response.js';
 import {
   getCollections,

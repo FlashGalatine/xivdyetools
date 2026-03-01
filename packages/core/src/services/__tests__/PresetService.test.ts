@@ -8,7 +8,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PresetService } from '../PresetService.js';
-import type { PresetData, Dye } from '../../types/index.js';
+import type { PresetData, Dye } from '@xivdyetools/types';
 
 // Mock preset data for testing
 const mockPresetData: PresetData = {

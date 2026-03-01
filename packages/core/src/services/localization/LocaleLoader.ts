@@ -7,8 +7,8 @@
  * @module services/localization
  */
 
-import type { LocaleCode, LocaleData } from '../../types/index.js';
-import { AppError, ErrorCode } from '../../types/index.js';
+import type { LocaleCode, LocaleData } from '@xivdyetools/types';
+import { AppError, ErrorCode } from '@xivdyetools/types';
 
 // Static imports for all locale files (bundler-compatible)
 import enLocale from '../../data/locales/en.json' with { type: 'json' };

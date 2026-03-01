@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { DyeService } from '../DyeService.js';
 import { LocalizationService } from '../LocalizationService.js';
-import type { Dye } from '../../types/index.js';
+import type { Dye } from '@xivdyetools/types';
 
 // Sample dye data for testing (matches Dye interface)
 const sampleDyes: Dye[] = [

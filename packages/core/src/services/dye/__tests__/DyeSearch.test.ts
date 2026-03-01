@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DyeSearch } from '../DyeSearch.js';
 import { DyeDatabase } from '../DyeDatabase.js';
-import type { Dye } from '../../../types/index.js';
+import type { Dye } from '@xivdyetools/types';
 
 describe('DyeSearch', () => {
   let database: DyeDatabase;

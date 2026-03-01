@@ -38,7 +38,7 @@ import {
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import type { UnifiedPreset, PresetSortOption } from '@services/hybrid-preset-service';
-import type { PresetCategory } from '@xivdyetools/core';
+import type { PresetCategory } from '@xivdyetools/types';
 import type { AuthState } from '@services/auth-service';
 import type { CommunityPreset } from '@services/community-preset-service';
 import type { PresetsConfig } from '@shared/tool-config-types';

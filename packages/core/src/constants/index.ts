@@ -6,7 +6,7 @@
  * @module constants
  */
 
-import type { VisionType, ColorblindMatrices } from '../types/index.js';
+import type { VisionType, ColorblindMatrices } from '@xivdyetools/types';
 
 // ============================================================================
 // Color Conversion Constraints
@@ -29,6 +29,7 @@ export const VALUE_MIN = 0;
 export const VALUE_MAX = 100;
 
 /**
+ * @internal
  * Color distance calculation mode
  */
 export const COLOR_DISTANCE_MAX = Math.sqrt(255 ** 2 + 255 ** 2 + 255 ** 2); // ~441.67
@@ -37,6 +38,7 @@ export const COLOR_DISTANCE_MAX = Math.sqrt(255 ** 2 + 255 ** 2 + 255 ** 2); // 
 // Vision Type Configuration
 // ============================================================================
 
+/** @internal */
 export const VISION_TYPES: readonly VisionType[] = [
     'normal',
     'deuteranopia',
@@ -45,6 +47,7 @@ export const VISION_TYPES: readonly VisionType[] = [
     'achromatopsia',
 ] as const;
 
+/** @internal */
 export const VISION_TYPE_LABELS: Record<VisionType, string> = {
     normal: 'Normal Vision',
     deuteranopia: 'Deuteranopia (Red-Green Colorblindness)',
@@ -112,6 +115,7 @@ export const UNIVERSALIS_API_RETRY_DELAY = 1000; // milliseconds
  * API caching and rate limiting
  */
 export const API_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+/** @internal */
 export const API_DEBOUNCE_DELAY = 500; // milliseconds
 export const API_CACHE_VERSION = '1.0.0'; // Increment to invalidate all cached data
 export const API_MAX_RESPONSE_SIZE = 1024 * 1024; // 1 MB maximum response size

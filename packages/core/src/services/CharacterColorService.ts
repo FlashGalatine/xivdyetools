@@ -34,7 +34,8 @@ import type {
   SubRace,
   Gender,
 } from '@xivdyetools/types';
-import type { RGB, MatchingMethod, OklchWeights } from '../types/index.js';
+import type { RGB } from '@xivdyetools/types';
+import type { MatchingMethod, OklchWeights } from '../types/index.js';
 import type { DyeService } from './DyeService.js';
 import { ColorConverter } from './color/ColorConverter.js';
 

@@ -8,7 +8,8 @@
  * @module og-data-generator
  */
 
-import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
+import { DyeService, dyeDatabase } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import type {
   OGData,
   ToolId,

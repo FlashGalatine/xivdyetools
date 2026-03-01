@@ -7,10 +7,9 @@
 import {
   APIService as CoreAPIService,
   type ICacheBackend,
-  type PriceData,
-  type CachedData,
   UNIVERSALIS_API_BASE,
 } from '@xivdyetools/core';
+import type { PriceData, CachedData } from '@xivdyetools/types';
 import { NoOpLogger } from '@xivdyetools/logger/library';
 import { indexedDBService, STORES } from './indexeddb-service';
 import { logger } from '@shared/logger';

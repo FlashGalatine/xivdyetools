@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { CharacterColorService } from '../CharacterColorService.js';
-import type { CharacterColor, SubRace, Gender } from '../../types/index.js';
+import type { CharacterColor, SubRace, Gender } from '@xivdyetools/types';
 import type { DyeService } from '../DyeService.js';
 
 describe('CharacterColorService', () => {

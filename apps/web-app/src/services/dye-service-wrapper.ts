@@ -4,7 +4,8 @@
  * Wraps xivdyetools-core DyeService with singleton pattern for web app compatibility
  */
 
-import { DyeService as CoreDyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
+import { DyeService as CoreDyeService, dyeDatabase } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import { logger } from '@shared/logger';
 
 /**

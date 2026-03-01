@@ -25,7 +25,7 @@
  * ```
  */
 
-import type { Dye, LocalizedDye } from '../types/index.js';
+import type { Dye, LocalizedDye } from '@xivdyetools/types';
 import type { Logger } from '@xivdyetools/logger/library';
 import { NoOpLogger } from '@xivdyetools/logger/library';
 import { DyeDatabase } from './dye/DyeDatabase.js';

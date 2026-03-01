@@ -271,6 +271,7 @@ export class AsyncLRUCache<K, V> {
 // ============================================================================
 
 /**
+ * @internal
  * Clamp a number between min and max values
  *
  * @param value - The value to clamp
@@ -298,6 +299,7 @@ export function clamp(value: number, min: number, max: number): number {
 }
 
 /**
+ * @internal
  * Linear interpolation between two values
  *
  * @param a - Start value
@@ -326,6 +328,7 @@ export function lerp(a: number, b: number, t: number): number {
 }
 
 /**
+ * @internal
  * Round a number to a specific decimal place
  *
  * @param value - The number to round
@@ -357,6 +360,7 @@ export function round(value: number, decimals: number = 0): number {
 }
 
 /**
+ * @internal
  * Calculate Euclidean distance between two points in 2D space
  *
  * @param x1 - X coordinate of first point
@@ -391,6 +395,7 @@ export function distance(x1: number, y1: number, x2: number, y2: number): number
 // ============================================================================
 
 /**
+ * @internal
  * Get unique values from an array
  *
  * @param array - Input array (may contain duplicates)
@@ -413,6 +418,7 @@ export function unique<T>(array: T[]): T[] {
 }
 
 /**
+ * @internal
  * Group array items by a key function
  *
  * @param array - Input array to group
@@ -452,6 +458,7 @@ export function groupBy<T, K extends string | number>(
 }
 
 /**
+ * @internal
  * Sort array by property value
  *
  * @param array - Input array to sort
@@ -485,6 +492,7 @@ export function sortByProperty<T>(
 }
 
 /**
+ * @internal
  * Filter array items, removing null and undefined values
  *
  * @param array - Input array with possibly null/undefined items
@@ -544,6 +552,7 @@ export function isValidHexColor(hex: string): boolean {
 }
 
 /**
+ * @internal
  * Validate RGB color values
  *
  * @param r - Red value
@@ -578,6 +587,7 @@ export function isValidRGB(r: number, g: number, b: number): boolean {
 }
 
 /**
+ * @internal
  * Validate HSV color values
  *
  * @param h - Hue value (0-360)
@@ -619,6 +629,7 @@ export function isValidHSV(h: number, s: number, v: number): boolean {
 // ============================================================================
 
 /**
+ * @internal
  * Type guard: Check if a value is a string
  *
  * @param value - Value to check
@@ -637,6 +648,7 @@ export function isString(value: unknown): value is string {
 }
 
 /**
+ * @internal
  * Type guard: Check if a value is a finite number (excludes NaN and Infinity)
  *
  * @param value - Value to check
@@ -660,6 +672,7 @@ export function isNumber(value: unknown): value is number {
 }
 
 /**
+ * @internal
  * Type guard: Check if a value is an array
  *
  * @param value - Value to check
@@ -748,6 +761,7 @@ export function sleep(ms: number): Promise<void> {
 }
 
 /**
+ * @internal
  * Check if an error is an AbortError (from AbortController timeout)
  *
  * @param error - Error to check

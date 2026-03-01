@@ -9,7 +9,8 @@
  * @module commands/gradient
  */
 
-import { ColorService, type Dye, type MatchingMethod } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
+import { ColorService, type MatchingMethod } from '@xivdyetools/core';
 import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
 import { generateGradientBar, type GradientStep } from '@xivdyetools/svg';
 import { dyeService, type ResolvedColor } from '../input-resolution.js';

@@ -10,10 +10,8 @@ import {
   dyeDatabase,
   ColorConverter,
   CharacterColorService,
-  type Dye,
-  type SubRace,
-  type Gender,
 } from '@xivdyetools/core';
+import type { Dye, SubRace, Gender } from '@xivdyetools/types';
 
 // Shared service instances
 export const dyeService = new DyeService(dyeDatabase);

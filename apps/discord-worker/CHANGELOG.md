@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Migrate type imports (`Dye`, `RGB`, `CharacterColorMatch`) across 8 files from `@xivdyetools/core` to `@xivdyetools/types` (DEAD-047 Phase 2)
+
 ### Removed
 
 - **Dead code cleanup — Wave 5** (DEAD-020 through DEAD-023 from 2026-02-28 audit)

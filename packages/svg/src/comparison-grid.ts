@@ -19,7 +19,7 @@
  * @module services/svg/comparison-grid
  */
 
-import type { Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import { ColorService } from '@xivdyetools/core';
 import {
   createSvgDocument,

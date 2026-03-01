@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { ColorService } from '../../services/ColorService.js';
-import type { RGB, HSV, HexColor } from '../../types/index.js';
+import type { RGB, HSV, HexColor } from '@xivdyetools/types';
 
 describe('Color Conversion Pipeline - Integration Tests', () => {
   describe('Hex → RGB → HSV → RGB → Hex Round Trip', () => {

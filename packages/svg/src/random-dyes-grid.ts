@@ -20,7 +20,7 @@
  * @module services/svg/random-dyes-grid
  */
 
-import type { Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import {
   createSvgDocument,
   rect,

@@ -8,7 +8,7 @@
  * @module commands/comparison
  */
 
-import { type Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
 import { generateComparisonGrid } from '@xivdyetools/svg';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';

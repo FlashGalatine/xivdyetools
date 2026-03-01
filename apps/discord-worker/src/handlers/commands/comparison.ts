@@ -5,7 +5,7 @@
  * renders the PNG, and formats the Discord response with emojis.
  */
 
-import type { Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
 import { resolveColorInput as resolveColor } from '../../utils/color.js';

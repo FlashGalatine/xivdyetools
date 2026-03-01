@@ -4,7 +4,7 @@
  * Handles triadic, analogous, complementary, and other harmony schemes
  */
 
-import type { Dye } from '../../types/index.js';
+import type { Dye } from '@xivdyetools/types';
 import { ColorManipulator } from '../color/ColorManipulator.js';
 import { ColorConverter, type DeltaEFormula } from '../color/ColorConverter.js';
 import type { DyeDatabase } from './DyeDatabase.js';

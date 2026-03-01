@@ -6,7 +6,7 @@
 
 import { logger } from '@shared/logger';
 import { authService } from './auth-service';
-import type { PresetCategory } from '@xivdyetools/core';
+import type { PresetCategory } from '@xivdyetools/types';
 
 // ============================================
 // Types

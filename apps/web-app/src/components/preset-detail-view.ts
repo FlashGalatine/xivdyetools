@@ -25,7 +25,7 @@ import {
 import { getCategoryIcon, ICON_ARROW_BACK } from '@shared/category-icons';
 import { ICON_LINK } from '@shared/ui-icons';
 import { ICON_CRYSTAL } from '@shared/ui-icons';
-import type { Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 
 /**
  * Event callbacks for preset detail view actions

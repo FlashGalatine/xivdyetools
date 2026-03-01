@@ -25,6 +25,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **web-app**: Migrate `NoOpLogger` import from `@xivdyetools/core` to `@xivdyetools/logger/library` in `api-service-wrapper.ts`
 - **bot-i18n**: Marked `LocaleData` and `TranslatorLogger` type exports as `@internal` (DEAD-033)
 - **bot-logic**: Marked `HARMONY_TYPES`, `VISION_TYPES`, `EmbedData`, `EmbedField`, `ResolveColorOptions` as `@internal` (DEAD-037–040); cleaned up stale REFACTOR comment markers (DEAD-041)
+- **core**: Wave 9 — `@xivdyetools/core` v2.0.0: marked 28 symbols `@internal` (DEAD-045, DEAD-046, DEAD-048, DEAD-054); added `isAbortError` tests (DEAD-054); removed all deprecated type re-exports — import `Dye`, `RGB`, `PresetCategory`, etc. from `@xivdyetools/types` (DEAD-047 Phase 2)
+- **bot-logic**: Added `@xivdyetools/types` as explicit dependency; migrated `Dye` type imports across 8 files from `@xivdyetools/core` to `@xivdyetools/types` (DEAD-047 Phase 2)
+- **svg**: Migrated `Dye`/`RGB` type imports across 7 files from `@xivdyetools/core` to `@xivdyetools/types` (DEAD-047 Phase 2)
+- **discord-worker**: Migrated type imports (`Dye`, `RGB`, `CharacterColorMatch`) across 8 files from `@xivdyetools/core` to `@xivdyetools/types` (DEAD-047 Phase 2)
+- **og-worker**: Migrated type imports (`Dye`, `SubRace`, `Gender`) across 8 files from `@xivdyetools/core` to `@xivdyetools/types` (DEAD-047 Phase 2)
+- **stoat-worker**: Migrated `Dye` type import from `@xivdyetools/core` to `@xivdyetools/types` (DEAD-047 Phase 2)
+- **web-app**: Migrated type imports (`Dye`, `PresetCategory`, `PresetPalette`, `PresetData`, `CategoryMeta`, `PriceData`, `CachedData`) across 10 files from `@xivdyetools/core` to `@xivdyetools/types` (DEAD-047 Phase 2)
 
 ### Removed
 

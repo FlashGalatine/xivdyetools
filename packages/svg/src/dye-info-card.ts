@@ -17,7 +17,7 @@
  * @module svg/dye-info-card
  */
 
-import type { Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import {
   createSvgDocument,
   rect,

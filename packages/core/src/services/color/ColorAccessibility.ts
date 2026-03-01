@@ -4,8 +4,8 @@
  * Handles WCAG contrast, luminance, and text color optimization
  */
 
-import type { HexColor } from '../../types/index.js';
-import { createHexColor } from '../../types/index.js';
+import type { HexColor } from '@xivdyetools/types';
+import { createHexColor } from '@xivdyetools/types';
 import { ColorConverter } from './ColorConverter.js';
 
 /**

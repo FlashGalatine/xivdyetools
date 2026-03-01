@@ -8,7 +8,8 @@
  * @module input-resolution
  */
 
-import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
+import { DyeService, dyeDatabase } from '@xivdyetools/core';
 import { resolveCssColorName } from './css-colors.js';
 
 // Initialize DyeService singleton for color resolution

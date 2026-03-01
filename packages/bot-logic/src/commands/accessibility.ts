@@ -9,7 +9,7 @@
  * @module commands/accessibility
  */
 
-import { type Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
 import {
   generateAccessibilityComparison,

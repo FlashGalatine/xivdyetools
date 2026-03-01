@@ -24,6 +24,7 @@ import {
   isNullish,
   sleep,
   retry,
+  isAbortError,
   generateChecksum,
   LRUCache,
   AsyncLRUCache,
@@ -604,6 +605,40 @@ describe('Utils', () => {
 
       const result = await promise;
       expect(result).toBe('success');
+    });
+  });
+
+  // ============================================================================
+  // Abort Error Detection
+  // ============================================================================
+
+  describe('isAbortError', () => {
+    it('should return true for AbortError', () => {
+      const error = new Error('aborted');
+      error.name = 'AbortError';
+      expect(isAbortError(error)).toBe(true);
+    });
+
+    it('should return true for TimeoutError', () => {
+      const error = new Error('timed out');
+      error.name = 'TimeoutError';
+      expect(isAbortError(error)).toBe(true);
+    });
+
+    it('should return true for DOMException with ABORT_ERR code', () => {
+      const error = new DOMException('The operation was aborted', 'AbortError');
+      expect(isAbortError(error)).toBe(true);
+    });
+
+    it('should return false for regular Error', () => {
+      expect(isAbortError(new Error('something went wrong'))).toBe(false);
+    });
+
+    it('should return false for non-Error values', () => {
+      expect(isAbortError('AbortError')).toBe(false);
+      expect(isAbortError(null)).toBe(false);
+      expect(isAbortError(undefined)).toBe(false);
+      expect(isAbortError(42)).toBe(false);
     });
   });
 

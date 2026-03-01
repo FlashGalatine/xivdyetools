@@ -12,8 +12,11 @@
 | discord-worker | v4.1.0 | `apps/discord-worker/src/` | DEAD-020 – DEAD-031 |
 | @xivdyetools/bot-i18n | v1.0.1 | `packages/bot-i18n/src/` | DEAD-032 – DEAD-035 |
 | @xivdyetools/bot-logic | v1.1.0 | `packages/bot-logic/src/` | DEAD-036 – DEAD-041 |
+| @xivdyetools/core | v1.17.3 | `packages/core/src/` + `packages/core/scripts/` | DEAD-042 – DEAD-056 |
+| @xivdyetools/types | v1.8.0 | `packages/types/src/` | DEAD-057 – DEAD-065 |
+| @xivdyetools/logger | v1.2.1 | `packages/logger/src/` | DEAD-066 – DEAD-070 |
 
-**Total Findings:** 41
+**Total Findings:** 70
 
 ## Tools Used
 
@@ -21,10 +24,10 @@
 |------|---------|----------|
 | Knip v5.85.0 | Unused files, exports, dependencies, types | web-app |
 | TypeScript `--noUnusedLocals --noUnusedParameters` | Unused local variables and parameters | All projects |
-| depcheck | Unused npm dependencies | web-app, discord-worker |
+| depcheck | Unused npm dependencies | web-app, discord-worker, core |
 | Git log archaeology | Files not modified in 6+ months | All projects |
 | Manual import tracing | Cross-referenced every flagged item against actual consumers | All projects |
-| Monorepo-wide grep | Cross-package consumer analysis | discord-worker, bot-i18n, bot-logic |
+| Monorepo-wide grep | Cross-package consumer analysis | discord-worker, bot-i18n, bot-logic, core |
 
 ## Source Metrics
 
@@ -59,3 +62,45 @@
 |--------|-------|
 | Production source lines | ~2,500 |
 | Total source files | ~20 |
+
+### @xivdyetools/core (DEAD-042 – DEAD-056)
+
+| Metric | Value |
+|--------|-------|
+| Production source lines (excl. tests) | 8,984 |
+| Total source files | 25 |
+| Test files | 32 |
+| Test lines | 13,554 |
+| Script files (non-build) | 7 |
+| External consumers (monorepo) | 8 projects |
+| Exported symbols (barrel) | ~129 |
+| Symbols consumed externally | ~30 |
+
+### @xivdyetools/types (DEAD-057 – DEAD-065)
+
+| Metric | Value |
+|--------|-------|
+| Production source lines (excl. tests) | 2,576 |
+| Total source files | 30 |
+| Test files | 4 |
+| Test lines | 1,143 |
+| Sub-module entry points | 9 (8 subpaths + main barrel) |
+| External consumers (monorepo) | 9 projects (core, svg, test-utils, discord-worker, moderation-worker, presets-api, oauth, web-app, + stoat-worker via core) |
+| Exported symbols (barrel) | 88 |
+| Symbols consumed by apps | 40 |
+| Symbols consumed only by core | 15 |
+| Truly dead symbols | 25 |
+
+### @xivdyetools/logger (DEAD-066 – DEAD-070)
+
+| Metric | Value |
+|--------|-------|
+| Production source lines (excl. tests) | 1,491 |
+| Total source files | 13 |
+| Test files | 8 |
+| Test lines | 2,901 |
+| Subpath exports | 3 (./browser, ./worker, ./library) |
+| External consumers (monorepo) | 7 projects (core, discord-worker, moderation-worker, presets-api, oauth, stoat-worker, web-app) |
+| Exported symbols (barrel) | 23 |
+| Symbols consumed externally | 9 |
+| Dead symbols (zero consumers) | 14 |

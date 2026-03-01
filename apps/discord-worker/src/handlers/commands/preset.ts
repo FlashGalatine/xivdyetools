@@ -16,7 +16,7 @@
  * by xivdyetools-moderation-worker.
  */
 
-import type { Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import { dyeService } from '../../utils/color.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import {

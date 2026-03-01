@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { LocaleRegistry } from '../LocaleRegistry.js';
-import type { LocaleData, LocaleCode } from '../../../types/index.js';
+import type { LocaleData, LocaleCode } from '@xivdyetools/types';
 
 describe('LocaleRegistry', () => {
   let registry: LocaleRegistry;

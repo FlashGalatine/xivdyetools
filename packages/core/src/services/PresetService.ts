@@ -27,7 +27,7 @@ import type {
   CategoryMeta,
   ResolvedPreset,
   Dye,
-} from '../types/index.js';
+} from '@xivdyetools/types';
 
 /**
  * Interface for DyeService to resolve dye IDs to Dye objects

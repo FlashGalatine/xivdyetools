@@ -20,7 +20,7 @@
  * ```
  */
 
-import type { RGB, Dye } from '../types/index.js';
+import type { RGB, Dye } from '@xivdyetools/types';
 import type { Logger } from '@xivdyetools/logger/library';
 import { NoOpLogger } from '@xivdyetools/logger/library';
 import { ColorService } from './ColorService.js';

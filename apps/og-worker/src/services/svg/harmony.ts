@@ -25,7 +25,8 @@
  * └──────────────────────────────────────────────────────┘
  */
 
-import { ColorService, ColorConverter, type Dye } from '@xivdyetools/core';
+import { ColorService, ColorConverter } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import {
   rect,
   text,

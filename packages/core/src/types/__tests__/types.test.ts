@@ -15,7 +15,7 @@ import {
   type DyeId,
   type Hue,
   type Saturation,
-} from '../index.js';
+} from '@xivdyetools/types';
 
 // ============================================================================
 // createHexColor Tests

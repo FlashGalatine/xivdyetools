@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { LocaleLoader } from '../LocaleLoader.js';
-import type { LocaleCode } from '../../../types/index.js';
-import { AppError, ErrorCode } from '../../../types/index.js';
+import type { LocaleCode } from '@xivdyetools/types';
+import { AppError, ErrorCode } from '@xivdyetools/types';
 
 describe('LocaleLoader', () => {
   let loader: LocaleLoader;

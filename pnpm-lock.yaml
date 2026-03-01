@@ -513,6 +513,9 @@ importers:
       '@xivdyetools/svg':
         specifier: workspace:*
         version: link:../svg
+      '@xivdyetools/types':
+        specifier: workspace:*
+        version: link:../types
     devDependencies:
       '@vitest/coverage-v8':
         specifier: ^4.0.18

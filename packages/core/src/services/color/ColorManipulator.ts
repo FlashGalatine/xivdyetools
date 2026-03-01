@@ -4,7 +4,7 @@
  * Handles brightness, saturation, hue rotation, inversion, and desaturation
  */
 
-import type { HexColor } from '../../types/index.js';
+import type { HexColor } from '@xivdyetools/types';
 import { clamp } from '../../utils/index.js';
 import { ColorConverter } from './ColorConverter.js';
 

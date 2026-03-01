@@ -15,8 +15,7 @@ import {
   presetSubmissionService,
 } from '@services/index';
 import { getCategoryIcon } from '@shared/category-icons';
-import type { Dye } from '@xivdyetools/types';
-import type { PresetCategory } from '@xivdyetools/core';
+import type { Dye, PresetCategory } from '@xivdyetools/types';
 import type { CommunityPreset } from '@services/community-preset-service';
 import type { EditResult, PresetEditRequest } from '@services/preset-submission-service';
 

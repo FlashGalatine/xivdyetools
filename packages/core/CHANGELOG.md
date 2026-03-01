@@ -7,13 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `isAbortError` unit tests — covers AbortError, TimeoutError, and DOMException.ABORT_ERR detection (DEAD-054)
+
 ### Changed
 
 - Internal `Logger`/`NoOpLogger` imports now sourced directly from `@xivdyetools/logger/library` instead of deprecated `types/logger.ts` wrapper
+- Marked 14 utility functions as `@internal` — `clamp`, `lerp`, `round`, `distance`, `unique`, `groupBy`, `sortByProperty`, `filterNulls`, `isValidRGB`, `isValidHSV`, `isString`, `isNumber`, `isArray`, `isAbortError` (DEAD-045, DEAD-054)
+- Marked 4 constants as `@internal` — `COLOR_DISTANCE_MAX`, `VISION_TYPES`, `VISION_TYPE_LABELS`, `API_DEBOUNCE_DELAY` (DEAD-046)
+- Marked 10 character color data exports as `@internal` — `characterColorMeta`, `eyeColorsData`, `highlightColorsData`, `lipColorsDarkData`, `lipColorsLightData`, `tattooColorsData`, `facePaintDarkData`, `facePaintLightData`, `hairColorsData`, `skinColorsData` (DEAD-048)
+- Version bump to 2.0.0 — breaking change release
 
 ### Removed
 
 - Deprecated `types/logger.ts` wrapper file — import `Logger`, `NoOpLogger`, `ConsoleLogger` directly from `@xivdyetools/logger/library` instead (DEAD-042)
+- **BREAKING**: All deprecated type re-exports removed from barrel — `Dye`, `RGB`, `PresetCategory`, `PresetPalette`, `PresetData`, `CategoryMeta`, `SubRace`, `Gender`, `CharacterColorMatch`, `PriceData`, `CachedData`, and all remaining `@xivdyetools/types` re-exports. Import directly from `@xivdyetools/types` instead (DEAD-047 Phase 2)
 - ~35 zero-consumer deprecated re-exports from barrel: `LocalizedDye`, `HSV`, `LAB`, `HexColor`, `VisionType`, `Matrix3x3`, `ColorblindMatrices`, `ErrorSeverity`, `Logger`, `NoOpLogger`, `ConsoleLogger`, `AppError`, `ErrorCode`, `createHexColor`, all auth types, most preset types, all character types/constants, all localization types, all API response types (DEAD-047 Phase 1)
 - Legacy omnibus `core.test.ts` — coverage duplicated by per-service unit tests (DEAD-043)
 - Legacy `logger.test.ts` — tests deprecated re-exports; logger package has its own test suite (DEAD-044)

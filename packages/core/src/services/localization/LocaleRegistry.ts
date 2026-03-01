@@ -7,7 +7,7 @@
  * @module services/localization
  */
 
-import type { LocaleCode, LocaleData } from '../../types/index.js';
+import type { LocaleCode, LocaleData } from '@xivdyetools/types';
 
 /**
  * Registry for loaded locale data with caching

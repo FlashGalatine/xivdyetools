@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ColorConverter } from '../ColorConverter.js';
-import { AppError } from '../../../types/index.js';
+import { AppError } from '@xivdyetools/types';
 
 describe('ColorConverter', () => {
   // ============================================================================

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { HarmonyGenerator } from '../HarmonyGenerator.js';
 import { DyeDatabase } from '../DyeDatabase.js';
 import { DyeSearch } from '../DyeSearch.js';
-import type { Dye } from '../../../types/index.js';
+import type { Dye } from '@xivdyetools/types';
 
 describe('HarmonyGenerator', () => {
   let database: DyeDatabase;

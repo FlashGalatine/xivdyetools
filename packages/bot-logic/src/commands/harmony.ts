@@ -7,7 +7,8 @@
  * @module commands/harmony
  */
 
-import { type Dye, type HarmonyOptions, type HarmonyColorSpace } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
+import { type HarmonyOptions, type HarmonyColorSpace } from '@xivdyetools/core';
 import { createTranslator, type Translator, type LocaleCode } from '@xivdyetools/bot-i18n';
 import { generateHarmonyWheel, type HarmonyDye } from '@xivdyetools/svg';
 import { dyeService } from '../input-resolution.js';

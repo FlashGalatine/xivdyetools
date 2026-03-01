@@ -4,8 +4,8 @@
  * Uses Brettel 1997 transformation matrices
  */
 
-import type { RGB, HexColor, VisionType } from '../../types/index.js';
-import { ErrorCode, AppError } from '../../types/index.js';
+import type { RGB, HexColor, VisionType } from '@xivdyetools/types';
+import { ErrorCode, AppError } from '@xivdyetools/types';
 import { BRETTEL_MATRICES } from '../../constants/index.js';
 import { clamp, round, isValidRGB, LRUCache } from '../../utils/index.js';
 import { ColorConverter } from './ColorConverter.js';

@@ -4,7 +4,8 @@
  * Handles finding dyes by name, category, color distance, etc.
  */
 
-import type { Dye, MatchingMethod, OklchWeights } from '../../types/index.js';
+import type { Dye } from '@xivdyetools/types';
+import type { MatchingMethod, OklchWeights } from '../../types/index.js';
 import { ColorConverter } from '../color/ColorConverter.js';
 import type { Point3D } from '../../utils/kd-tree.js';
 import type { DyeDatabase } from './DyeDatabase.js';

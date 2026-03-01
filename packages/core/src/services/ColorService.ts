@@ -36,7 +36,7 @@ import type {
   OKLCH,
   LCH,
   HSL,
-} from '../types/index.js';
+} from '@xivdyetools/types';
 import { ColorConverter, type DeltaEFormula } from './color/ColorConverter.js';
 import { ColorblindnessSimulator } from './color/ColorblindnessSimulator.js';
 import { ColorAccessibility } from './color/ColorAccessibility.js';

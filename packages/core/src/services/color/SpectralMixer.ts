@@ -16,7 +16,7 @@
 
 import * as spectral from 'spectral.js';
 
-import type { HexColor } from '../../types/index.js';
+import type { HexColor } from '@xivdyetools/types';
 import { ColorConverter } from './ColorConverter.js';
 
 /**

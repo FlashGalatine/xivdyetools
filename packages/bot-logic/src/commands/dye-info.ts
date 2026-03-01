@@ -9,7 +9,7 @@
  * @module commands/dye-info
  */
 
-import { type Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
 import { generateDyeInfoCard, generateRandomDyesGrid, type RandomDyeInfo } from '@xivdyetools/svg';
 import { dyeService } from '../input-resolution.js';

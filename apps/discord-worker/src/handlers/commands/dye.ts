@@ -11,7 +11,7 @@
  * info and random delegate to executeDyeInfo() and executeRandom().
  */
 
-import type { Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import { dyeService } from '../../utils/color.js';
 import { messageResponse, deferredResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';

@@ -15,7 +15,7 @@ import type {
   RateLimiter,
   ICacheBackend,
 } from '../APIService.js';
-import type { PriceData, CachedData } from '../../types/index.js';
+import type { PriceData, CachedData } from '@xivdyetools/types';
 import { API_CACHE_VERSION, API_CACHE_TTL } from '../../constants/index.js';
 
 // ============================================================================

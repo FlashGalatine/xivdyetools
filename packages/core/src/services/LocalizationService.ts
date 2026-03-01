@@ -17,7 +17,7 @@ import type {
   RaceKey,
   ClanKey,
   LocalePreference,
-} from '../types/index.js';
+} from '@xivdyetools/types';
 import { LocaleLoader } from './localization/LocaleLoader.js';
 import { LocaleRegistry } from './localization/LocaleRegistry.js';
 import { TranslationProvider } from './localization/TranslationProvider.js';

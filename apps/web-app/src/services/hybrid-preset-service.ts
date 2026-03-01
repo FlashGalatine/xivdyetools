@@ -4,15 +4,8 @@
  * Falls back to local presets when API is unavailable
  */
 /* istanbul ignore file */
-import {
-  PresetService,
-  presetData,
-  type PresetPalette,
-  type PresetCategory,
-  type PresetData,
-  type CategoryMeta,
-  type Dye,
-} from '@xivdyetools/core';
+import { PresetService, presetData } from '@xivdyetools/core';
+import type { PresetPalette, PresetCategory, PresetData, CategoryMeta, Dye } from '@xivdyetools/types';
 import { dyeService as sharedDyeService } from './dye-service-wrapper';
 import {
   CommunityPresetService,

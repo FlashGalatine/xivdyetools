@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PaletteService } from '../PaletteService.js';
-import type { RGB } from '../../types/index.js';
+import type { RGB } from '@xivdyetools/types';
 
 // Mock DyeService for testing extractAndMatchPalette
 const createMockDyeService = () => ({

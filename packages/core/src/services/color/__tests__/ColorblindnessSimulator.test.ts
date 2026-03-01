@@ -5,8 +5,8 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ColorblindnessSimulator } from '../ColorblindnessSimulator.js';
-import { AppError } from '../../../types/index.js';
-import type { VisionType, RGB } from '../../../types/index.js';
+import { AppError } from '@xivdyetools/types';
+import type { VisionType, RGB } from '@xivdyetools/types';
 import { BRETTEL_MATRICES } from '../../../constants/index.js';
 
 describe('ColorblindnessSimulator', () => {

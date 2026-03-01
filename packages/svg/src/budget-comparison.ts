@@ -19,7 +19,7 @@
  * @module svg/budget-comparison
  */
 
-import type { Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import {
   createSvgDocument,
   rect,

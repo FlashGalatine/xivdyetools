@@ -10,7 +10,8 @@
  * @module commands/match
  */
 
-import { ColorService, type Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
+import { ColorService } from '@xivdyetools/core';
 import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
 import { dyeService, resolveColorInput } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';

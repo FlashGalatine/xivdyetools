@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Migrate 46 files from deprecated `@shared/types` re-exports to direct `@xivdyetools/types` imports; deprecated re-export blocks removed from `shared/types.ts` (local types `Theme`, `AppState`, `DataCenter`, `World` remain)
 - Matched results in Extractor now render using `v4-result-card` components instead of legacy v3 imperative DOM cards
+- Migrate type imports (`Dye`, `PresetCategory`, `PresetPalette`, `PresetData`, `CategoryMeta`, `PriceData`, `CachedData`) across 10 files from `@xivdyetools/core` to `@xivdyetools/types` (DEAD-047 Phase 2)
 
 ### Removed
 

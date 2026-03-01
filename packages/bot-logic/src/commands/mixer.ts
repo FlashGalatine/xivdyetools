@@ -9,7 +9,7 @@
  * @module commands/mixer
  */
 
-import { type Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
 import { blendColors, type BlendingMode } from '@xivdyetools/color-blending';
 import { dyeService, type ResolvedColor } from '../input-resolution.js';

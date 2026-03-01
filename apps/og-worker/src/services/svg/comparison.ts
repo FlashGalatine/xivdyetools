@@ -22,7 +22,7 @@
  * └──────────────────────────────────────────────────────────────────┘
  */
 
-import { type Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import { rect, text, getContrastTextColor, THEME, FONTS, OG_DIMENSIONS } from './base';
 import { generateOGCard, LAYOUT } from './og-card';
 import { getDyeByItemId } from './dye-helpers';

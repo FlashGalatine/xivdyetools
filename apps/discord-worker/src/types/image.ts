@@ -6,7 +6,7 @@
  * @module types/image
  */
 
-import type { Dye, RGB } from '@xivdyetools/core';
+import type { Dye, RGB } from '@xivdyetools/types';
 
 // ============================================================================
 // Validation Types
