@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Budget quick picks**: Replace Metallic Silver, Metallic Gold, and Pastel Pink with all 16 Cosmic Exploration dyes and 4 Cosmic Fortunes dyes (22 total quick picks)
 - Migrate type imports (`Dye`, `RGB`, `CharacterColorMatch`) across 8 files from `@xivdyetools/core` to `@xivdyetools/types` (DEAD-047 Phase 2)
 
 ### Removed

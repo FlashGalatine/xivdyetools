@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **discord-worker**: Budget quick picks updated — replaced Metallic Silver, Metallic Gold, and Pastel Pink with all 16 Cosmic Exploration dyes and 4 Cosmic Fortunes dyes (22 total quick picks)
 - **web-app**: Migrate `@shared/types` re-exports to direct `@xivdyetools/types` imports across 46 files; deprecated re-export blocks removed from `shared/types.ts` (local types `Theme`, `AppState`, `DataCenter`, `World` remain)
 - **web-app**: Migrate `NoOpLogger` import from `@xivdyetools/core` to `@xivdyetools/logger/library` in `api-service-wrapper.ts`
 - **bot-i18n**: Marked `LocaleData` and `TranslatorLogger` type exports as `@internal` (DEAD-033)
