@@ -6,8 +6,8 @@ import { QUICK_PICKS, getQuickPickById, getQuickPickChoices } from './quick-pick
 
 describe('quick-picks.ts', () => {
   describe('QUICK_PICKS', () => {
-    it('should have 5 presets', () => {
-      expect(QUICK_PICKS.length).toBe(5);
+    it('should have 22 presets', () => {
+      expect(QUICK_PICKS.length).toBe(22);
     });
 
     it('should have required properties for each preset', () => {
@@ -49,11 +49,10 @@ describe('quick-picks.ts', () => {
     });
 
     it('should work for all preset IDs', () => {
-      const ids = ['pure_white', 'jet_black', 'metallic_silver', 'metallic_gold', 'pastel_pink'];
-      ids.forEach((id) => {
-        const preset = getQuickPickById(id);
+      QUICK_PICKS.forEach((pick) => {
+        const preset = getQuickPickById(pick.id);
         expect(preset).toBeDefined();
-        expect(preset?.id).toBe(id);
+        expect(preset?.id).toBe(pick.id);
       });
     });
   });
@@ -62,7 +61,7 @@ describe('quick-picks.ts', () => {
     it('should return array of Discord choices', () => {
       const choices = getQuickPickChoices();
       expect(Array.isArray(choices)).toBe(true);
-      expect(choices.length).toBe(5);
+      expect(choices.length).toBe(QUICK_PICKS.length);
     });
 
     it('should have correct format for Discord autocomplete', () => {
