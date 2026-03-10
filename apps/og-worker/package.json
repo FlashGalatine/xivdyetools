@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-og-worker",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "private": true,
   "description": "XIV Dye Tools OpenGraph Worker - Dynamic social media previews for shared dye tool links",
   "type": "module",
@@ -23,10 +23,10 @@
     "hono": "^4.12.5"
   },
   "devDependencies": {
-    "@types/node": "^25.3.3",
+    "@types/node": "^25.3.5",
     "@vitest/coverage-v8": "^4.0.18",
     "vitest": "^4.0.18",
-    "wrangler": "^4.69.0"
+    "wrangler": "^4.71.0"
   },
   "engines": {
     "node": ">=18.0.0"

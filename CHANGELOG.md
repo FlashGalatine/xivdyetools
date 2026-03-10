@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.5.1] - 2026-03-09
+
+### Changed
+
+- **Dependencies (production)**: Updated `hono` from 4.12.3 to 4.12.5 (security fixes: SSE Control Field Injection, Cookie Attribute Injection, Middleware Bypass in Serve Static), `@cloudflare/workers-types` 4.20260305.0 → 4.20260307.1, `@upstash/redis` 1.36.3 → 1.36.4, `vue` 3.5.29 → 3.5.30
+- **Dependencies (development)**: Updated `turbo` 2.8.12 → 2.8.14, `eslint` 10.0.2 → 10.0.3, `wrangler` 4.69.0 → 4.71.0, `@cloudflare/vitest-pool-workers` 0.12.18 → 0.12.20, `express-rate-limit` 8.2.1 → 8.3.1, `@types/node` 25.3.3 → 25.3.5
+- Patch version bumps across all 13 packages and apps
+
 ## [1.5.0] - 2026-03-01
 
 ### Added

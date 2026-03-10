@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.3.1] - 2026-03-09
+
+### Changed
+
+- Updated `@types/node` from 25.3.3 to 25.3.5
+
 ## [4.3.0] - 2026-03-01
 
 ### Added

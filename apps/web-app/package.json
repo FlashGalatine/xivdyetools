@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-web-app",
-  "version": "4.3.0",
+  "version": "4.3.1",
   "private": true,
   "description": "A comprehensive web-based toolset for Final Fantasy XIV players",
   "main": "index.html",
@@ -34,7 +34,7 @@
   "license": "MIT",
   "devDependencies": {
     "@playwright/test": "^1.57.0",
-    "@types/node": "^25.3.3",
+    "@types/node": "^25.3.5",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/user-event": "^14.6.1",
     "@vitest/coverage-v8": "^4.0.18",

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.3] - 2026-03-09
+
+### Changed
+
+- Updated `@upstash/redis` from 1.36.3 to 1.36.4 (fix: prevent multiple script init)
+- Updated `@types/node` from 25.3.3 to 25.3.5
+
 ## [1.4.2] - 2026-03-01
 
 ### Removed

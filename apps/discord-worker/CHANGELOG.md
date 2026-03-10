@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.2] - 2026-03-09
+
+### Changed
+
+- Updated `hono` from 4.12.3 to 4.12.5 (security: SSE injection, cookie injection, middleware bypass fixes)
+- Updated `@cloudflare/workers-types` from 4.20260305.0 to 4.20260307.1
+- Updated `wrangler` from 4.69.0 to 4.71.0
+- Updated `@types/node` from 25.3.3 to 25.3.5
+
 ## [4.1.1] - 2026-03-01
 
 ### Changed
