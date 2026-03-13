@@ -1,45 +1,34 @@
 # Discord Worker Overview
 
-**xivdyetools-discord-worker** v2.3.1 - Serverless Discord bot for FFXIV dye tools
+**xivdyetools-discord-worker** v4.1.2 - Serverless Discord bot for FFXIV dye tools
 
 ---
 
 ## What is the Discord Worker?
 
-A Cloudflare Worker that brings XIV Dye Tools to Discord via 21 slash commands. Uses HTTP Interactions (not Gateway WebSocket) for serverless, globally distributed operation.
+A Cloudflare Worker that brings XIV Dye Tools to Discord via slash commands. Uses HTTP Interactions (not Gateway WebSocket) for serverless, globally distributed operation.
 
-### Recent Features (v2.3.x)
+### Recent Features (v4.x)
 
-- **User Ban System** - `/preset ban_user` and `/preset unban_user` for content moderation
-- **KV Schema Versioning** - Version-based key prefixes for future migrations
-- **Analytics Fix** - Now tracks actual command success status
-- **Webhook Auth Security** - Fixed timing-safe comparison for webhook authentication
+- **v4.1.x** - Budget quick picks updated with 20 Cosmic dyes, prevent duplicate results for extractor, type imports migrated from core to `@xivdyetools/types`
+- **v4.0.x** - Command renaming (`match` to `extractor`, `mixer` to `gradient`), new `mixer` and `swatch` commands, 7 bug fixes (LocalizationService race condition, broken budget embed, collection rename sanitization, Discord API timeout handling)
 
 ---
 
 ## Quick Start (Development)
 
 ```bash
-cd xivdyetools-discord-worker
-
-# Install dependencies
-npm install
-
-# Set secrets (one time)
-wrangler secret put DISCORD_TOKEN
-wrangler secret put DISCORD_PUBLIC_KEY
+# From monorepo root
+pnpm install
 
 # Start local dev server
-npm run dev
+pnpm --filter xivdyetools-discord-worker run dev
 
 # Register slash commands
-npm run register-commands
+pnpm --filter xivdyetools-discord-worker run register-commands
 
-# Deploy to staging
-npm run deploy
-
-# Deploy to production
-npm run deploy:production
+# Deploy
+pnpm --filter xivdyetools-discord-worker run deploy:production
 ```
 
 ---
@@ -65,50 +54,46 @@ src/
 ├── handlers/
 │   ├── commands/         # Slash command handlers
 │   │   ├── harmony.ts
-│   │   ├── match.ts
+│   │   ├── extractor.ts     # v4: was match.ts
+│   │   ├── gradient.ts      # v4: was mixer.ts
+│   │   ├── mixer.ts         # v4 NEW: RGB blending
+│   │   ├── swatch.ts        # v4 NEW: character colors
+│   │   ├── budget.ts        # v4 NEW: market board prices
 │   │   ├── dye.ts
-│   │   ├── preset-ban.ts    # NEW: User ban system
+│   │   ├── comparison.ts
+│   │   ├── accessibility.ts
+│   │   ├── preferences.ts   # v4 NEW: user preferences
 │   │   └── ...
 │   ├── buttons/          # Button interaction handlers
-│   │   ├── ban-confirmation.ts  # NEW: Ban confirm/cancel
-│   │   └── ...
 │   └── modals/           # Modal submission handlers
-│       ├── ban-reason.ts     # NEW: Ban reason input
-│       └── ...
 ├── services/
-│   ├── svg/              # SVG generation
-│   ├── image/            # Image processing (Photon WASM)
 │   ├── analytics.ts      # Usage tracking
 │   ├── rate-limiter.ts   # Per-user rate limiting
 │   ├── user-storage.ts   # Favorites & collections (versioned keys)
-│   ├── preset-api.ts     # Presets API client
-│   └── ban-service.ts    # NEW: User ban operations
+│   └── preset-api.ts     # Presets API client
 └── utils/
     ├── verify.ts         # Ed25519 verification
     └── response.ts       # Discord response builders
 ```
 
+Note: SVG generation, bot command logic, and i18n are now in shared packages:
+- `@xivdyetools/svg` — SVG card generation
+- `@xivdyetools/bot-logic` — Platform-agnostic command logic
+- `@xivdyetools/bot-i18n` — Bot-specific localization
+
 ---
 
 ## Available Commands
-
-> **Web App v4 Terminology Note**
->
-> The Discord worker retains original command names for backwards compatibility. Here's how they map to web app v4 tool names:
->
-> | Discord Command | Web App v4 Tool | Route |
-> |-----------------|-----------------|-------|
-> | `/match`, `/match_image` | Palette Extractor | `/extractor` |
-> | `/mixer` | Gradient Builder | `/gradient` |
-> | `/preset *` | Community Presets | `/presets` |
 
 ### Color Tools
 | Command | Description |
 |---------|-------------|
 | `/harmony` | Generate harmonious dye combinations |
-| `/match` | Find closest dye to a hex color |
-| `/match_image` | Extract colors from image and match to dyes |
-| `/mixer` | Create color gradient between two colors |
+| `/extractor` | Extract colors from image and match to dyes |
+| `/gradient` | Create color gradient between two dyes |
+| `/mixer` | Blend two dyes together (RGB averaging) |
+| `/swatch` | Match character customization colors to dyes |
+| `/budget` | Find affordable dye alternatives via market board |
 
 ### Dye Database
 | Command | Description |
@@ -135,15 +120,15 @@ src/
 |---------|-------------|
 | `/preset list` | Browse community presets |
 | `/preset show` | View preset details |
+| `/preset random` | Get a random approved preset |
 | `/preset submit` | Submit new preset |
 | `/preset vote` | Vote on presets |
-| `/preset ban_user` | Ban user from preset system (moderators) |
-| `/preset unban_user` | Unban user and restore presets (moderators) |
 
 ### Utility
 | Command | Description |
 |---------|-------------|
 | `/language` | Set preferred language |
+| `/preferences` | Set world/datacenter and clan preferences |
 | `/manual` | Show help guide |
 | `/about` | Bot information |
 | `/stats` | Usage statistics (moderators only) |
@@ -172,7 +157,7 @@ await sendFollowup(interaction, env, {
 
 ### Rate Limiting
 
-Per-user sliding window rate limiting:
+Per-user sliding window rate limiting via `@xivdyetools/rate-limiter`:
 - Image commands: 5/minute
 - Standard commands: 15/minute
 - Stored in Cloudflare KV

@@ -1,6 +1,6 @@
 # Moderation Worker Overview
 
-**xivdyetools-moderation-worker** v1.0.1 - Serverless Discord bot for preset moderation
+**xivdyetools-moderation-worker** v1.1.8 - Serverless Discord bot for preset moderation
 
 ---
 
@@ -12,6 +12,12 @@ A separate Cloudflare Worker Discord bot dedicated to preset moderation commands
 2. **Moderation commands** can be restricted to specific servers/channels
 3. **Each bot has independent** rate limits and permissions
 4. **Reduced attack surface** - moderation capabilities isolated from public bot
+
+### Recent Changes
+
+- **v1.1.8** — Dependency updates
+- **v1.1.6** — Fixed `safeParseJSON` prototype pollution vulnerability; fixed rate limit responses returning HTTP 500 instead of 429
+- **v1.1.5** — Added startup environment validation (fails fast if required secrets are missing)
 
 ### Why Two Bots?
 
@@ -204,7 +210,7 @@ Uses the same `BOT_API_SECRET` as the main discord-worker to authenticate with t
 | Aspect | discord-worker | moderation-worker |
 |--------|----------------|-------------------|
 | **Purpose** | Public user commands | Moderator-only commands |
-| **Commands** | 17 slash commands | 3 subcommands |
+| **Commands** | 20 slash commands | 3 subcommands |
 | **Installation** | Any server | Admin servers only |
 | **Channel** | Any channel | Designated moderation channel |
 | **Image rendering** | SVG/PNG via resvg-wasm | None (text only) |

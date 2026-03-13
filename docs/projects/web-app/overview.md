@@ -1,6 +1,6 @@
 # Web App Overview
 
-**xivdyetools-web-app** v4.0.0 - Interactive browser-based toolkit for FFXIV dye colors
+**xivdyetools-web-app** v4.3.1 - Interactive browser-based toolkit for FFXIV dye colors
 
 ---
 
@@ -19,6 +19,18 @@ A fully-featured web application built with Lit and Vite, offering 9 interactive
 | **Accessibility Checker** | Colorblindness simulation |
 | **Community Presets** | Browse community dye palettes |
 | **Budget Suggestions** | Find affordable dye alternatives using market data |
+
+### New in v4.3.0
+
+- **Pixel Sampling** - Shift+Click to sample a pixel (or configurable NxN area) from images in the Extractor tool
+- **Canvas Panning** - Ctrl/Cmd+Drag to pan zoomed images with grab cursor feedback
+- **Sample Area Config** - Configurable 1×1 to 16×16 pixel sample area in the Extractor sidebar
+- **Pan Offset Persistence** - Pan position preserved across zoom level changes
+
+### New in v4.2.0
+
+- **Prevent Duplicate Results** - Toggle for Harmony Explorer and Palette Extractor that deduplicates dyes across result slots
+- **Paste from Clipboard** - Visible "Paste" button (Chromium) and Ctrl+V keyboard paste in Extractor tool
 
 ### New in v4.0.0
 

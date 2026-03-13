@@ -18,82 +18,94 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Monorepo Quick Reference
 
-**12 Active Projects** - see [versions.md](versions.md) for current versions
+**20 Active Projects** (11 packages + 9 applications) — see [versions.md](versions.md) for current versions
+
+### Applications
 
 | Project | Type | Quick Link |
 |---------|------|------------|
-| `xivdyetools-core` | npm library | [Overview](projects/core/overview.md) |
+| `@xivdyetools/core` | npm library | [Overview](projects/core/overview.md) |
 | `xivdyetools-web-app` | Vite + Lit | [Overview](projects/web-app/overview.md) |
 | `xivdyetools-discord-worker` | CF Worker | [Overview](projects/discord-worker/overview.md) |
+| `xivdyetools-moderation-worker` | CF Worker | [Overview](projects/moderation-worker/overview.md) |
 | `xivdyetools-oauth` | CF Worker | [Overview](projects/oauth/overview.md) |
 | `xivdyetools-presets-api` | CF Worker + D1 | [Overview](projects/presets-api/overview.md) |
 | `xivdyetools-universalis-proxy` | CF Worker | [Overview](projects/universalis-proxy/overview.md) |
+| `xivdyetools-og-worker` | CF Worker | [Overview](projects/og-worker/overview.md) |
+| `xivdyetools-stoat-worker` | Node.js | — |
+| `xivdyetools-maintainer` | Vue 3 + Vite | — |
 
-Changes to core require publishing to npm before consumers can use them.
+### Shared Packages
+
+| Package | Quick Link |
+|---------|------------|
+| `@xivdyetools/types` | [Overview](projects/types/overview.md) |
+| `@xivdyetools/crypto` | — |
+| `@xivdyetools/logger` | [Overview](projects/logger/overview.md) |
+| `@xivdyetools/auth` | — |
+| `@xivdyetools/rate-limiter` | — |
+| `@xivdyetools/svg` | — |
+| `@xivdyetools/bot-logic` | — |
+| `@xivdyetools/bot-i18n` | — |
+| `@xivdyetools/color-blending` | — |
+| `@xivdyetools/test-utils` | [Overview](projects/test-utils/overview.md) |
+
+Changes to packages require publishing to npm before consumers can use them (or use `workspace:*` protocol for monorepo-local resolution).
 
 ---
 
 ## Commands
 
-### xivdyetools-core (Library)
+All commands run from the **monorepo root** (`xivdyetools/`):
+
+### Building & Testing
+
 ```bash
-cd xivdyetools-core
-npm run build              # Compile TypeScript + build locales
-npm test                   # Run vitest
-npm run test:coverage      # Test with coverage (90% threshold)
-npm run test:integration   # Integration tests only
-npm run lint               # ESLint check
-npm run type-check         # TypeScript check only
-npm run docs               # Generate TypeDoc
+pnpm install                          # Install all workspace dependencies
+pnpm turbo run build                  # Build all packages
+pnpm turbo run test                   # Test all packages
+pnpm turbo run type-check             # Type-check all packages
+pnpm turbo run lint                   # Lint all packages
 ```
 
-### xivdyetools-web-app (Web App)
+### Filtering to Specific Projects
+
 ```bash
-cd xivdyetools-web-app
-npm run dev                # Start dev server (localhost:5173)
-npm run build              # Production build
-npm run test               # Run vitest
-npm run preview            # Preview production build
-npm run build:css          # Rebuild Tailwind CSS
+# By package name
+pnpm turbo run build --filter=@xivdyetools/core
+pnpm turbo run test --filter=xivdyetools-discord-worker
+
+# By directory
+pnpm turbo run build --filter='./packages/*'
+pnpm turbo run test --filter='./apps/*'
+
+# Single test file
+pnpm --filter @xivdyetools/core exec vitest run src/path/to/file.test.ts
 ```
 
-### xivdyetools-discord-worker (Discord Bot)
+### Dev Servers
+
 ```bash
-cd xivdyetools-discord-worker
-npm run dev                # Wrangler local dev server
-npm run deploy             # Deploy to Cloudflare (staging)
-npm run deploy:production  # Deploy to production
-npm run test               # Run vitest
-npm run register-commands  # Register slash commands
-npm run upload-emojis      # Upload emoji mappings
+pnpm --filter xivdyetools-web-app run dev          # localhost:5173
+pnpm --filter xivdyetools-discord-worker run dev    # Wrangler local
+pnpm --filter xivdyetools-oauth run dev             # localhost:8788
+pnpm --filter xivdyetools-presets-api run dev       # localhost:8787
 ```
 
-### xivdyetools-oauth (Auth Worker)
+### Worker Deployment
+
 ```bash
-cd xivdyetools-oauth
-npm run dev                # Local dev server (port 8788)
-npm run deploy             # Deploy to Cloudflare
-npm run type-check         # TypeScript validation
+pnpm --filter xivdyetools-discord-worker run deploy              # Staging
+pnpm --filter xivdyetools-discord-worker run deploy:production   # Production
+pnpm --filter xivdyetools-discord-worker run register-commands   # Register slash commands
 ```
 
-### xivdyetools-presets-api (Presets Worker)
-```bash
-cd xivdyetools-presets-api
-npm run dev                # Local dev server (port 8787)
-npm run deploy             # Deploy to staging
-npm run deploy:production  # Deploy to production
-npm run db:migrate:local   # Apply schema to local D1
-npm run db:migrate         # Apply schema to production D1
-```
+### Publishing Libraries
 
-### xivdyetools-universalis-proxy (Market Data Proxy)
 ```bash
-cd xivdyetools-universalis-proxy
-npm run dev                # Local dev server
-npm run deploy             # Deploy to staging
-npm run deploy:production  # Deploy to production
-npm run test               # Run vitest
-npm run type-check         # TypeScript validation
+pnpm turbo run build test --filter=@xivdyetools/<name>
+# Bump version in packages/<name>/package.json
+pnpm --filter @xivdyetools/<name> publish --provenance --access public --no-git-checks
 ```
 
 ---
@@ -113,7 +125,11 @@ For detailed architecture documentation, see:
 
 ### Service Usage (Core)
 ```typescript
-import { ColorService, DyeService, dyeDatabase } from 'xivdyetools-core';
+// Types from @xivdyetools/types (since core v2.0.0)
+import { Dye, RGB, HexColor } from '@xivdyetools/types';
+
+// Services from @xivdyetools/core
+import { ColorService, DyeService, dyeDatabase } from '@xivdyetools/core';
 
 const rgb = ColorService.hexToRgb('#FF6B6B');  // Static
 const dyeService = new DyeService(dyeDatabase); // Instance

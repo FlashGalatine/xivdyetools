@@ -8,6 +8,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Docs
+
+- **versions.md**: Update all 20 project versions to current (source of truth for version matrix)
+- **index.md**: Rewrite ecosystem diagram with all 20 projects and current versions; update Recent Updates to March 2026
+- **README.md**: Update all version numbers in Applications and Shared Libraries tables
+- **architecture/overview.md**: Rewrite Mermaid diagram with all 11 packages and 9 apps; add new package nodes and dependency edges
+- **architecture/dependency-graph.md**: Full rewrite — 11 packages, 9 consumers, complete dependency matrix and version sync docs
+- **projects/core/overview.md**: Update to v2.0.1; add v2.0.0 Migration section documenting breaking type re-export removal
+- **projects/discord-worker/overview.md**: Full rewrite to v4.1.2 — v4 command names, 20 commands, shared packages architecture
+- **projects/web-app/overview.md**: Update to v4.3.1; add v4.3.0 (pixel sampling, canvas panning) and v4.2.0 (prevent duplicates, clipboard paste) sections
+- **projects/moderation-worker/overview.md**: Update to v1.1.8; add Recent Changes (env validation, safeParseJSON fix, rate limit 429 fix)
+- **projects/og-worker/overview.md**: Update to v1.0.6; add Recent Changes (NaN validation, escapeHtml, bounds validation); add comparison and accessibility routes
+- **projects/index.md**: Expand comparison matrix from 11 to 20 rows; rewrite architecture layers diagram; split version tables
+- **CLAUDE.md** (docs): Full rewrite — 20 projects, pnpm monorepo commands, v2.0.0 import patterns
+- **developer-guides/local-setup.md**: Full rewrite — Node 22+, pnpm 10+, monorepo workflow commands
+- **New**: 16 missing documentation files drafted from source code research:
+  - `projects/web-app/tools.md` — All 9 interactive tools with routes, features, and v4.x changes
+  - `projects/web-app/components.md` — Lit component architecture, BaseComponent, layout shell, service layer, ConfigController
+  - `projects/web-app/theming.md` — 12 themes, CSS custom properties, glassmorphism, ThemeService API
+  - `projects/web-app/deployment.md` — Cloudflare Pages, Vite build, code splitting, CI/CD, bundle size
+  - `projects/discord-worker/commands.md` — Full 20-command reference with options, rate limits, deferred response pattern
+  - `projects/discord-worker/interactions.md` — HTTP Interactions model, button/modal/autocomplete handlers, webhook endpoints
+  - `projects/discord-worker/rendering.md` — SVG→PNG pipeline, @xivdyetools/svg templates, CJK fonts, resvg-wasm, bundle constraints
+  - `projects/discord-worker/deployment.md` — Wrangler config, environment bindings, secrets, slash command registration
+  - `projects/oauth/endpoints.md` — 11 endpoints (Discord OAuth, XIVAuth, token management, health), rate limits, CORS, security headers
+  - `projects/oauth/pkce-flow.md` — 5-step OAuth 2.0 + PKCE flow, state parameter security, redirect URI validation
+  - `projects/oauth/jwt.md` — Token structure, HS256 signing, claims, lifecycle (creation, verification, refresh, revocation)
+  - `projects/presets-api/endpoints.md` — Full REST API reference (health, categories, presets, votes, moderation), auth methods
+  - `projects/presets-api/moderation.md` — Two-tier content filtering, moderation states, ban system, Discord notifications
+  - `projects/presets-api/database.md` — D1 schema (6 tables), composite indexes, migrations, design decisions
+  - `projects/presets-api/rate-limiting.md` — Two-tier rate limiting (IP 100/min + user 10/day), failure modes, CORS headers
+  - `developer-guides/testing.md` — Vitest setup, @xivdyetools/test-utils, patterns, E2E with Playwright, CI config
+
+---
+
 ## [1.5.1] - 2026-03-09
 
 ### Changed

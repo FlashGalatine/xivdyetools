@@ -1,12 +1,18 @@
 # OpenGraph Worker Overview
 
-**xivdyetools-og-worker** v1.0.0 - Dynamic OpenGraph metadata for social media previews
+**xivdyetools-og-worker** v1.0.6 - Dynamic OpenGraph metadata for social media previews
 
 ---
 
 ## What is the OG Worker?
 
 A Cloudflare Worker that generates dynamic OpenGraph metadata and preview images when XIV Dye Tools links are shared on social media platforms. When you share a link like `https://xivdyetools.com/harmony/1` on Discord, Twitter, or Facebook, this worker intercepts the request and returns rich preview content.
+
+### Recent Changes
+
+- **v1.0.6** — Dependency updates
+- **v1.0.4** — Added NaN validation for dye ID parameters; added `escapeHtml` for theme color output (XSS prevention)
+- **v1.0.3** — Added parameter bounds validation (step count, hex length)
 
 ### Why a Separate Worker?
 
@@ -90,6 +96,8 @@ These routes intercept normal web app URLs when accessed by crawlers:
 | `/gradient/:startId/:endId/:steps` | Gradient with custom step count |
 | `/mixer/:dye1Id/:dye2Id` | Dye mixing result |
 | `/swatch/:hexColor` | Color swatch with matching dyes |
+| `/comparison/:dye1Id/:dye2Id` | Side-by-side dye comparison |
+| `/accessibility/:dyeId` | Accessibility analysis preview |
 
 ### Image Routes
 
@@ -102,6 +110,8 @@ These return the actual preview images:
 | `/og/gradient/:startId/:endId/:steps.png` | Gradient preview image |
 | `/og/mixer/:dye1Id/:dye2Id.png` | Mixer preview image |
 | `/og/swatch/:hexColor.png` | Swatch preview image |
+| `/og/comparison/:dye1Id/:dye2Id.png` | Comparison preview image |
+| `/og/accessibility/:dyeId.png` | Accessibility preview image |
 
 ### Query Parameters
 

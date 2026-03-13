@@ -1,6 +1,6 @@
 # Core Library Overview
 
-**@xivdyetools/core** v1.5.4 - The foundation of the XIV Dye Tools ecosystem
+**@xivdyetools/core** v2.0.1 - The foundation of the XIV Dye Tools ecosystem
 
 ---
 
@@ -68,6 +68,45 @@ const simulated = ColorService.simulateColorblindness('#FF6B6B', 'protanopia');
 // Extract palette from image data
 const palette = await PaletteService.extractPalette(imageData, { numColors: 5 });
 ```
+
+---
+
+## v2.0.0 Migration Guide
+
+**Breaking change in v2.0.0**: All type re-exports have been removed from `@xivdyetools/core`. Import types from `@xivdyetools/types` directly.
+
+### Before (v1.x)
+
+```typescript
+import { Dye, RGB, HexColor, DyeId, PresetCategory } from '@xivdyetools/core';
+```
+
+### After (v2.0.0+)
+
+```typescript
+// Types come from @xivdyetools/types
+import { Dye, RGB, HexColor, DyeId, PresetCategory } from '@xivdyetools/types';
+
+// Services still come from @xivdyetools/core
+import { ColorService, DyeService, dyeDatabase } from '@xivdyetools/core';
+```
+
+### What was removed
+
+The following categories of re-exports were removed from the core barrel:
+
+- **Color space types**: `RGB`, `HSV`, `HSL`, `LAB`, `HexColor`, `OKLCH`, `OklchWeights`
+- **Dye types**: `Dye`, `DyeId`, `DyeCategory`, `DyeMatch`
+- **Character types**: `CharacterColorMatch`, `SubRace`, `Gender`, `Race`
+- **Preset types**: `PresetCategory`, `PresetPalette`, `PresetData`, `CachedData`, `PriceData`
+- **Auth types**: Various JWT and API response sub-types
+- **Logger classes**: `Logger`, `NoOpLogger`, `ConsoleLogger` (use `@xivdyetools/logger`)
+
+### New in v2.0.0
+
+- **`ResolvedPreset`** — now exported from core's `PresetService` (migrated from types)
+- **28 symbols marked `@internal`** — still accessible via subpath imports but excluded from the public barrel export
+- **LRU cache for `rgbToOklab()`** — performance improvement for the recommended matching method
 
 ---
 
@@ -228,6 +267,11 @@ Built for speed with algorithmic optimizations:
 | k-nearest neighbors | O(k log n) | <0.5ms |
 | Color harmony generation | O(1) | <0.1ms |
 | Color conversion | O(1) | <0.01ms |
+| rgbToOklab (cached) | O(1) amortized | <0.01ms |
+
+**v2.0.0 Performance Improvements**:
+- **LRU cache for `rgbToOklab()`** — OKLAB is the recommended matching method; caching eliminates redundant conversions on the hot path (OPT-001)
+- **APIService cache metrics** — hit/miss/eviction tracking for observability (OPT-002)
 
 See [Algorithms](algorithms.md) for implementation details.
 
@@ -238,7 +282,7 @@ See [Algorithms](algorithms.md) for implementation details.
 The library uses TypeScript branded types for compile-time safety:
 
 ```typescript
-import { createHexColor, createDyeId, HexColor, DyeId } from '@xivdyetools/core';
+import { createHexColor, createDyeId, HexColor, DyeId } from '@xivdyetools/types';
 
 // Validated at runtime, typed at compile time
 const hex: HexColor = createHexColor('#FF6B6B');  // ✅
