@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-03-14
+
+### Added
+
+- `consolidated-ids.ts` config module with `CONSOLIDATED_IDS`, `isConsolidationActive()`, and `getMarketItemID()` for Patch 7.5 dye consolidation
+- Exported `getMarketItemID`, `isConsolidationActive`, `CONSOLIDATED_IDS` from package index
+- `consolidationType` and `isIshgardian` fields to all 136 dye entries in `colors_xiv.json`
+- `isIshgardian` column to `colors_xiv.csv`
+
+### Changed
+
+- `DyeDatabase.initialize()` defaults `consolidationType` to `null` and `isIshgardian` to `false` for backward compatibility
+- Synced acquisition, price, and currency data for 47 dyes from CSV to `colors_xiv.json`; corrected 3 Firmament dyes (30122–30124) from Cosmic Exploration to The Firmament / Skybuilders Scrips
+
+---
+
 ## [2.0.1] - 2026-03-09
 
 ### Changed

@@ -1,137 +1,137 @@
-itemID,itemID_consolidated,category,name,hex,acquisition,price,currency,rgb_r,rgb_g,rgb_b,hsv_h,hsv_s,hsv_v,isMetallic,isPastel,isDark,isCosmic,stainID
-5729,ARR-PLACEHOLDER,Neutral,Snow White,#e4dfd0,Ixali Vendor,216,Gil,228,223,208,45,8.77,89.41,false,false,false,false,1
-5730,ARR-PLACEHOLDER,Neutral,Ash Grey,#aca8a2,Dye Vendor,40,Gil,172,168,162,36,5.81,67.45,false,false,false,false,2
-5731,ARR-PLACEHOLDER,Neutral,Goobbue Grey,#898784,Dye Vendor,40,Gil,137,135,132,36,3.65,53.73,false,false,false,false,3
-5732,ARR-PLACEHOLDER,Neutral,Slate Grey,#656565,Dye Vendor,216,Gil,101,101,101,0,0,39.61,false,false,false,false,4
-5733,ARR-PLACEHOLDER,Neutral,Charcoal Grey,#484742,Dye Vendor,216,Gil,72,71,66,50,8.33,28.24,false,false,false,false,5
-5734,ARR-PLACEHOLDER,Neutral,Soot Black,#2b2923,Ixali Vendor,216,Gil,43,41,35,45,18.6,16.86,false,false,false,false,6
-5735,ARR-PLACEHOLDER,Reds,Rose Pink,#e69f96,Dye Vendor,40,Gil,230,159,150,6.75,34.78,90.2,false,false,false,false,7
-5736,ARR-PLACEHOLDER,Reds,Lilac Purple,#836969,Sahagin Vendor,216,Gil,131,105,105,0,19.85,51.37,false,false,false,false,8
-5737,ARR-PLACEHOLDER,Reds,Rolanberry Red,#5b1729,Dye Vendor,216,Gil,91,23,41,344.12,74.73,35.69,false,false,false,false,9
-5738,ARR-PLACEHOLDER,Reds,Dalamud Red,#781a1a,Crafting,1,Red Pigment,120,26,26,0,78.33,47.06,false,false,false,false,10
-5739,ARR-PLACEHOLDER,Reds,Rust Red,#622207,Dye Vendor,216,Gil,98,34,7,17.8,92.86,38.43,false,false,false,false,11
-5740,ARR-PLACEHOLDER,Reds,Wine Red,#451511,Crafting,1,Red Pigment,69,21,17,4.62,75.36,27.06,false,false,false,false,12
-5741,ARR-PLACEHOLDER,Reds,Coral Pink,#cc6c5e,Sahagin Vendor,334,Gil,204,108,94,7.64,53.92,80,false,false,false,false,13
-5742,ARR-PLACEHOLDER,Reds,Blood Red,#913b27,Dye Vendor,40,Gil,145,59,39,11.32,73.1,56.86,false,false,false,false,14
-5743,ARR-PLACEHOLDER,Reds,Salmon Pink,#e4aa8a,Dye Vendor,40,Gil,228,170,138,21.33,39.47,89.41,false,false,false,false,15
-5744,ARR-PLACEHOLDER,Browns,Sunset Orange,#b75c2d,Crafting,1,Brown Pigment,183,92,45,20.43,75.41,71.76,false,false,false,false,16
-5745,ARR-PLACEHOLDER,Browns,Mesa Red,#7d3906,Dye Vendor,216,Gil,125,57,6,25.71,95.2,49.02,false,false,false,false,17
-5746,ARR-PLACEHOLDER,Browns,Bark Brown,#6a4b37,Dye Vendor,40,Gil,106,75,55,23.53,48.11,41.57,false,false,false,false,18
-5747,ARR-PLACEHOLDER,Browns,Chocolate Brown,#6e3d24,Dye Vendor,216,Gil,110,61,36,20.27,67.27,43.14,false,false,false,false,19
-5748,ARR-PLACEHOLDER,Browns,Russet Brown,#4f2d1f,Dye Vendor,216,Gil,79,45,31,17.5,60.76,30.98,false,false,false,false,20
-5749,ARR-PLACEHOLDER,Browns,Kobold Brown,#30211b,Crafting,1,Brown Pigment,48,33,27,17.14,43.75,18.82,false,false,false,false,21
-5750,ARR-PLACEHOLDER,Browns,Cork Brown,#c99156,Kobold Vendor,334,Gil,201,145,86,30.78,57.21,78.82,false,false,false,false,22
-5751,ARR-PLACEHOLDER,Browns,Qiqirn Brown,#996e3f,Sylphic Vendor,334,Gil,153,110,63,31.33,58.82,60,false,false,false,false,23
-5752,ARR-PLACEHOLDER,Browns,Opo-Opo Brown,#7b5c2d,Dye Vendor,40,Gil,123,92,45,36.15,63.41,48.24,false,false,false,false,24
-5753,ARR-PLACEHOLDER,Browns,Aldgoat Brown,#a2875c,Sylphic Vendor,216,Gil,162,135,92,36.86,43.21,63.53,false,false,false,false,25
-5754,ARR-PLACEHOLDER,Browns,Pumpkin Orange,#c57424,Crafting,1,Brown Pigment,197,116,36,29.81,81.73,77.25,false,false,false,false,26
-5755,ARR-PLACEHOLDER,Browns,Acorn Brown,#8e581b,Sylphic Vendor,334,Gil,142,88,27,31.83,80.99,55.69,false,false,false,false,27
-5756,ARR-PLACEHOLDER,Browns,Orchard Brown,#644216,Dye Vendor,40,Gil,100,66,22,33.85,78,39.22,false,false,false,false,28
-5757,ARR-PLACEHOLDER,Browns,Chestnut Brown,#3d290d,Dye Vendor,216,Gil,61,41,13,35,78.69,23.92,false,false,false,false,29
-5758,ARR-PLACEHOLDER,Browns,Gobbiebag Brown,#b9a489,Kobold Vendor,334,Gil,185,164,137,33.75,25.95,72.55,false,false,false,false,30
-5759,ARR-PLACEHOLDER,Browns,Shale Brown,#92816c,Sylphic Vendor,216,Gil,146,129,108,33.16,26.03,57.25,false,false,false,false,31
-5760,ARR-PLACEHOLDER,Browns,Mole Brown,#615245,Dye Vendor,40,Gil,97,82,69,27.86,28.87,38.04,false,false,false,false,32
-5761,ARR-PLACEHOLDER,Browns,Loam Brown,#3f3329,Crafting,1,Brown Pigment,63,51,41,27.27,34.92,24.71,false,false,false,false,33
-5762,ARR-PLACEHOLDER,Yellows,Bone White,#ebd3a0,Dye Vendor,40,Gil,235,211,160,40.8,31.91,92.16,false,false,false,false,34
-5763,ARR-PLACEHOLDER,Yellows,Ul Brown,#b7a370,Kobold Vendor,216,Gil,183,163,112,43.1,38.8,71.76,false,false,false,false,35
-5764,ARR-PLACEHOLDER,Yellows,Desert Yellow,#dbb457,Dye Vendor,216,Gil,219,180,87,42.27,60.27,85.88,false,false,false,false,36
-5765,ARR-PLACEHOLDER,Yellows,Honey Yellow,#fac62b,Crafting,1,Yellow Pigment,250,198,43,44.93,82.8,98.04,false,false,false,false,37
-5766,ARR-PLACEHOLDER,Yellows,Millioncorn Yellow,#e49e34,Crafting,1,Yellow Pigment,228,158,52,36.14,77.19,89.41,false,false,false,false,38
-5767,ARR-PLACEHOLDER,Yellows,Coeurl Yellow,#bc8804,Amalj'aa Vendor,216,Gil,188,136,4,43.04,97.87,73.73,false,false,false,false,39
-5768,ARR-PLACEHOLDER,Yellows,Cream Yellow,#f2d770,Dye Vendor,216,Gil,242,215,112,47.54,53.72,94.9,false,false,false,false,40
-5769,ARR-PLACEHOLDER,Yellows,Halatali Yellow,#a58430,Dye Vendor,40,Gil,165,132,48,43.08,70.91,64.71,false,false,false,false,41
-5770,ARR-PLACEHOLDER,Yellows,Raisin Brown,#403311,Amalj'aa Vendor,334,Gil,64,51,17,43.4,73.44,25.1,false,false,false,false,42
-5771,ARR-PLACEHOLDER,Greens,Mud Green,#585230,Dye Vendor,40,Gil,88,82,48,51,45.45,34.51,false,false,false,false,43
-5772,ARR-PLACEHOLDER,Greens,Sylph Green,#bbbb8a,Kobold Vendor,216,Gil,187,187,138,60,26.2,73.33,false,false,false,false,44
-5773,ARR-PLACEHOLDER,Greens,Lime Green,#abb054,Sylphic Vendor,216,Gil,171,176,84,63.26,52.27,69.02,false,false,false,false,45
-5774,ARR-PLACEHOLDER,Greens,Moss Green,#707326,Dye Vendor,40,Gil,112,115,38,62.34,66.96,45.1,false,false,false,false,46
-5775,ARR-PLACEHOLDER,Greens,Meadow Green,#8b9c63,Kobold Vendor,216,Gil,139,156,99,77.89,36.54,61.18,false,false,false,false,47
-5776,ARR-PLACEHOLDER,Greens,Olive Green,#4b5232,Dye Vendor,216,Gil,75,82,50,73.12,39.02,32.16,false,false,false,false,48
-5777,ARR-PLACEHOLDER,Greens,Marsh Green,#323621,Sylphic Vendor,216,Gil,50,54,33,71.43,38.89,21.18,false,false,false,false,49
-5778,ARR-PLACEHOLDER,Greens,Apple Green,#9bb363,Kobold Vendor,334,Gil,155,179,99,78,44.69,70.2,false,false,false,false,50
-5779,ARR-PLACEHOLDER,Greens,Cactuar Green,#658241,Sylphic Vendor,334,Gil,101,130,65,86.77,50,50.98,false,false,false,false,51
-5780,ARR-PLACEHOLDER,Greens,Hunter Green,#284b2c,Ixali Vendor,216,Gil,40,75,44,126.86,46.67,29.41,false,false,false,false,52
-5781,ARR-PLACEHOLDER,Greens,Ochu Green,#406339,Crafting,1,Green Pigment,64,99,57,110,42.42,38.82,false,false,false,false,53
-5782,ARR-PLACEHOLDER,Greens,Adamantoise Green,#5f7558,Kobold Vendor,334,Gil,95,117,88,105.52,24.79,45.88,false,false,false,false,54
-5783,ARR-PLACEHOLDER,Greens,Nophica Green,#3b4d3c,Dye Vendor,216,Gil,59,77,60,123.33,23.38,30.2,false,false,false,false,55
-5784,ARR-PLACEHOLDER,Greens,Deepwood Green,#1e2a21,Crafting,1,Green Pigment,30,42,33,135,28.57,16.47,false,false,false,false,56
-5785,ARR-PLACEHOLDER,Greens,Celeste Green,#96bdb9,Crafting,1,Green Pigment,150,189,185,173.85,20.63,74.12,false,false,false,false,57
-5786,ARR-PLACEHOLDER,Greens,Turquoise Green,#437272,Sylphic Vendor,334,Gil,67,114,114,180,41.23,44.71,false,false,false,false,58
-5787,ARR-PLACEHOLDER,Greens,Morbol Green,#1f4646,Ixali Vendor,216,Gil,31,70,70,180,55.71,27.45,false,false,false,false,59
-5788,ARR-PLACEHOLDER,Blues,Ice Blue,#b2c4ce,Dye Vendor,40,Gil,178,196,206,201.43,13.59,80.78,false,false,false,false,60
-5789,ARR-PLACEHOLDER,Blues,Sky Blue,#83b0d2,Dye Vendor,40,Gil,131,176,210,205.82,37.62,82.35,false,false,false,false,61
-5790,ARR-PLACEHOLDER,Blues,Seafog Blue,#6481a0,Amalj'aa Vendor,216,Gil,100,129,160,211,37.5,62.75,false,false,false,false,62
-5791,ARR-PLACEHOLDER,Blues,Peacock Blue,#3b6886,Amalj'aa Vendor,334,Gil,59,104,134,204,55.97,52.55,false,false,false,false,63
-5792,ARR-PLACEHOLDER,Blues,Rhotano Blue,#1c3d54,Sahagin Vendor,334,Gil,28,61,84,204.64,66.67,32.94,false,false,false,false,64
-5793,ARR-PLACEHOLDER,Blues,Corpse Blue,#8e9bac,Sahagin Vendor,216,Gil,142,155,172,214,17.44,67.45,false,false,false,false,65
-5794,ARR-PLACEHOLDER,Blues,Ceruleum Blue,#4f5766,Dye Vendor,40,Gil,79,87,102,219.13,22.55,40,false,false,false,false,66
-5795,ARR-PLACEHOLDER,Blues,Woad Blue,#2f3851,Crafting,1,Blue Pigment,47,56,81,224.12,41.98,31.76,false,false,false,false,67
-5796,ARR-PLACEHOLDER,Blues,Ink Blue,#1a1f27,Dye Vendor,216,Gil,26,31,39,216.92,33.33,15.29,false,false,false,false,68
-5797,ARR-PLACEHOLDER,Blues,Raptor Blue,#5b7fc0,Amalj'aa Vendor,216,Gil,91,127,192,218.61,52.6,75.29,false,false,false,false,69
-5798,ARR-PLACEHOLDER,Blues,Othard Blue,#2f5889,Crafting,1,Blue Pigment,47,88,137,212.67,65.69,53.73,false,false,false,false,70
-5799,ARR-PLACEHOLDER,Blues,Storm Blue,#234172,Crafting,1,Blue Pigment,35,65,114,217.22,69.3,44.71,false,false,false,false,71
-5800,ARR-PLACEHOLDER,Blues,Void Blue,#112944,Crafting,1,Blue Pigment,17,41,68,211.76,75,26.67,false,false,false,false,72
-5801,ARR-PLACEHOLDER,Blues,Royal Blue,#273067,Ixali Vendor,216,Gil,39,48,103,231.56,62.14,40.39,false,false,false,false,73
-5802,ARR-PLACEHOLDER,Blues,Midnight Blue,#181937,Dye Vendor,216,Gil,24,25,55,238.06,56.36,21.57,false,false,false,false,74
-5803,ARR-PLACEHOLDER,Blues,Shadow Blue,#373747,Sahagin Vendor,334,Gil,55,55,71,240,22.54,27.84,false,false,false,false,75
-5804,ARR-PLACEHOLDER,Blues,Abyssal Blue,#312d57,Crafting,1,Blue Pigment,49,45,87,245.71,48.28,34.12,false,false,false,false,76
-5805,ARR-PLACEHOLDER,Purples,Lavender Purple,#877fae,Sahagin Vendor,216,Gil,135,127,174,250.21,27.01,68.24,false,false,false,false,77
-5806,ARR-PLACEHOLDER,Purples,Gloom Purple,#514560,Dye Vendor,40,Gil,81,69,96,266.67,28.13,37.65,false,false,false,false,78
-5807,ARR-PLACEHOLDER,Purples,Currant Purple,#322c3b,Amalj'aa Vendor,334,Gil,50,44,59,264,25.42,23.14,false,false,false,false,79
-5808,ARR-PLACEHOLDER,Purples,Iris Purple,#b79ebc,Sahagin Vendor,334,Gil,183,158,188,290,15.96,73.73,false,false,false,false,80
-5809,ARR-PLACEHOLDER,Purples,Grape Purple,#3b2a3d,Dye Vendor,216,Gil,59,42,61,293.68,31.15,23.92,false,false,false,false,81
-5810,ARR-PLACEHOLDER,Purples,Lotus Pink,#fecef5,Crafting,1,Purple Pigment,254,206,245,311.25,18.9,99.61,false,false,false,false,82
-5811,ARR-PLACEHOLDER,Purples,Colibri Pink,#dc9bca,Crafting,1,Purple Pigment,220,155,202,316.62,29.55,86.27,false,false,false,false,83
-5812,ARR-PLACEHOLDER,Purples,Plum Purple,#79526c,Crafting,1,Purple Pigment,121,82,108,320,32.23,47.45,false,false,false,false,84
-5813,ARR-PLACEHOLDER,Purples,Regal Purple,#66304e,Crafting,1,Purple Pigment,102,48,78,326.67,52.94,40,false,false,false,false,85
-13114,null,Special,Pure White,#f9f8f4,Venture Coffers,1,Venture Coffer,249,248,244,48,2.01,97.65,false,false,false,false,101
-13115,null,Special,Jet Black,#1e1e1e,Venture Coffers,1,Venture Coffer,30,30,30,0,0,11.76,false,false,false,false,102
-13116,null,Special,Metallic Silver,#a7a7a7,Venture Coffers,1,Venture Coffer,167,167,167,0,0,65.49,true,false,false,false,112
-13117,null,Special,Metallic Gold,#ede63d,Venture Coffers,1,Venture Coffer,237,230,61,57.61,74.26,92.94,true,false,false,false,113
-13708,null,Special,Pastel Pink,#fdc8c6,Venture Coffers,1,Venture Coffer,253,200,198,2.18,21.74,99.22,false,true,false,false,103
-13709,null,Special,Dark Red,#321919,Venture Coffers,1,Venture Coffer,50,25,25,0,50,19.61,false,false,true,false,104
-13710,null,Special,Dark Brown,#28211c,Venture Coffers,1,Venture Coffer,40,33,28,25,30,15.69,false,false,true,false,105
-13711,null,Special,Pastel Green,#bacfaa,Venture Coffers,1,Venture Coffer,186,207,170,94.05,17.87,81.18,false,true,false,false,106
-13712,null,Special,Dark Green,#152c2c,Venture Coffers,1,Venture Coffer,21,44,44,180,52.27,17.25,false,false,true,false,107
-13713,null,Special,Pastel Blue,#96a4d9,Venture Coffers,1,Venture Coffer,150,164,217,227.46,30.88,85.1,false,true,false,false,108
-13714,null,Special,Dark Blue,#121f2d,Venture Coffers,1,Venture Coffer,18,31,45,211.11,60,17.65,false,false,true,false,109
-13715,null,Special,Pastel Purple,#bbb5da,Venture Coffers,1,Venture Coffer,187,181,218,249.73,16.97,85.49,false,true,false,false,110
-13716,null,Special,Dark Purple,#232026,Venture Coffers,1,Venture Coffer,35,32,38,270,15.79,14.9,false,false,true,false,111
-13717,null,Special,Metallic Red,#b61d4b,Venture Coffers,1,Venture Coffer,182,29,75,341.96,84.07,71.37,true,false,false,false,114
-13718,null,Special,Metallic Orange,#e48c2f,Venture Coffers,1,Venture Coffer,228,140,47,30.83,79.39,89.41,true,false,false,false,115
-13719,null,Special,Metallic Yellow,#f4da46,Venture Coffers,1,Venture Coffer,244,218,70,51.03,71.31,95.69,true,false,false,false,116
-13720,null,Special,Metallic Green,#22a757,Venture Coffers,1,Venture Coffer,34,167,87,143.91,79.64,65.49,true,false,false,false,117
-13721,null,Special,Metallic Sky Blue,#49f8fd,Venture Coffers,1,Venture Coffer,73,248,253,181.67,71.15,99.22,true,false,false,false,118
-13722,null,Special,Metallic Blue,#5052d9,Venture Coffers,1,Venture Coffer,80,82,217,239.12,63.13,85.1,true,false,false,false,119
-13723,null,Special,Metallic Purple,#d361ff,Venture Coffers,1,Venture Coffer,211,97,255,283.29,61.96,100,true,false,false,false,120
-30116,ISHGARD-PLACEHOLDER,Reds,Ruby Red,#e2000e,Cosmic Exploration,600,Cosmocredits,226,0,14,356.28,100,88.63,false,false,false,true,86
-30117,ISHGARD-PLACEHOLDER,Reds,Cherry Pink,#f43195,Cosmic Exploration,600,Cosmocredits,244,49,149,329.23,79.92,95.69,false,false,false,true,87
-30118,ISHGARD-PLACEHOLDER,Yellows,Canary Yellow,#fef75d,Cosmic Exploration,600,Cosmocredits,254,247,93,57.39,63.39,99.61,false,false,false,true,88
-30119,ISHGARD-PLACEHOLDER,Yellows,Vanilla Yellow,#fbf0af,Cosmic Exploration,600,Cosmocredits,251,240,175,51.32,30.28,98.43,false,false,false,true,89
-30120,ISHGARD-PLACEHOLDER,Blues,Dragoon Blue,#000b9d,Cosmic Exploration,600,Cosmocredits,0,11,157,235.8,100,61.57,false,false,false,true,90
-30121,ISHGARD-PLACEHOLDER,Blues,Turquoise Blue,#03aaca,Cosmic Exploration,600,Cosmocredits,3,170,202,189.65,98.51,79.22,false,false,false,true,91
-30122,ISHGARD-PLACEHOLDER,Special,Gunmetal Black,#181820,The Firmament,500,Skybuilders Scrips,24,24,32,240,25,12.55,false,false,false,true,92
-30123,ISHGARD-PLACEHOLDER,Special,Pearl White,#bfb4a3,The Firmament,500,Skybuilders Scrips,191,180,163,36.43,14.66,74.9,false,false,false,true,93
-30124,ISHGARD-PLACEHOLDER,Special,Metallic Brass,#e9c06f,The Firmament,500,Skybuilders Scrips,233,192,111,39.84,52.36,91.37,true,false,false,true,94
-48163,COSMIC-PLACEHOLDER,Reds,Neon Pink,#f61296,Cosmic Exploration,600,Cosmocredits,246,18,150,325.26,92.68,96.47,false,false,false,true,96
-48164,COSMIC-PLACEHOLDER,Browns,Bright Orange,#f95513,Cosmic Exploration,600,Cosmocredits,249,85,19,17.22,92.37,97.65,false,false,false,true,97
-48165,COSMIC-PLACEHOLDER,Greens,Neon Green,#baf913,Cosmic Exploration,600,Cosmocredits,186,249,19,76.43,92.37,97.65,false,false,false,true,99
-48166,COSMIC-PLACEHOLDER,Yellows,Neon Yellow,#e0e90b,Cosmic Exploration,600,Cosmocredits,224,233,11,62.43,95.28,91.37,false,false,false,true,98
-48167,COSMIC-PLACEHOLDER,Purples,Violet Purple,#6f5aa2,Cosmic Exploration,600,Cosmocredits,111,90,162,257.5,44.44,63.53,false,false,false,true,121
-48168,COSMIC-PLACEHOLDER,Blues,Azure Blue,#4056a4,Cosmic Exploration,600,Cosmocredits,64,86,164,226.8,60.98,64.31,false,false,false,true,100
-48169,null,Special,Metallic Pink,#ffa1c2,Cosmic Fortunes,1000,Planet-specific Credit,255,161,194,338.94,36.86,100,true,false,false,true,122
-48170,null,Special,Metallic Ruby Red,#470103,Cosmic Fortunes,1000,Planet-specific Credit,71,1,3,358.29,98.59,27.84,true,false,false,true,123
-48171,null,Special,Metallic Cobalt Green,#28847f,Cosmic Fortunes,1000,Planet-specific Credit,40,132,127,176.74,69.7,51.76,true,false,false,true,124
-48172,null,Special,Metallic Dark Blue,#120445,Cosmic Fortunes,1000,Planet-specific Credit,18,4,69,252.92,94.2,27.06,true,false,false,true,125
-48227,COSMIC,Reds,Carmine Red,#e50b18,Cosmic Exploration,600,Cosmocredits,229,11,24,356.42,95.2,89.8,false,false,false,true,95
-null,FACEWEAR,Facewear,Black,#000000,Facewear Collection,null,null,0,0,0,0,0,0,false,false,false,false,
-null,FACEWEAR,Facewear,Blue,#0000FF,Facewear Collection,null,null,0,0,255,240,100,100,false,false,false,false,
-null,FACEWEAR,Facewear,Brass,#E1C16E,Facewear Collection,null,null,225,193,110,42.43,51.11,88.24,false,false,false,false,
-null,FACEWEAR,Facewear,Brown,#A52A2A,Facewear Collection,null,null,165,42,42,0,74.55,64.71,false,false,false,false,
-null,FACEWEAR,Facewear,Gold,#FFD700,Facewear Collection,null,null,255,215,0,50.59,100,100,false,false,false,false,
-null,FACEWEAR,Facewear,Green,#008000,Facewear Collection,null,null,0,128,0,120,100,50.2,false,false,false,false,
-null,FACEWEAR,Facewear,Grey,#808080,Facewear Collection,null,null,128,128,128,0,0,50.2,false,false,false,false,
-null,FACEWEAR,Facewear,Purple,#800080,Facewear Collection,null,null,128,0,128,300,100,50.2,false,false,false,false,
-null,FACEWEAR,Facewear,Red,#FF0000,Facewear Collection,null,null,255,0,0,0,100,100,false,false,false,false,
-null,FACEWEAR,Facewear,Silver,#C0C0C0,Facewear Collection,null,null,192,192,192,0,0,75.29,false,false,false,false,
-null,FACEWEAR,Facewear,White,#FFFFFF,Facewear Collection,null,null,255,255,255,0,0,100,false,false,false,false,
+itemID,itemID_consolidated,category,name,hex,acquisition,price,currency,rgb_r,rgb_g,rgb_b,hsv_h,hsv_s,hsv_v,isMetallic,isPastel,isDark,isIshgardian,isCosmic,stainID
+5729,ARR-PLACEHOLDER,Neutral,Snow White,#e4dfd0,Ixali Vendor,216,Gil,228,223,208,45,8.77,89.41,false,false,false,false,false,1
+5730,ARR-PLACEHOLDER,Neutral,Ash Grey,#aca8a2,Dye Vendor,40,Gil,172,168,162,36,5.81,67.45,false,false,false,false,false,2
+5731,ARR-PLACEHOLDER,Neutral,Goobbue Grey,#898784,Dye Vendor,40,Gil,137,135,132,36,3.65,53.73,false,false,false,false,false,3
+5732,ARR-PLACEHOLDER,Neutral,Slate Grey,#656565,Dye Vendor,216,Gil,101,101,101,0,0,39.61,false,false,false,false,false,4
+5733,ARR-PLACEHOLDER,Neutral,Charcoal Grey,#484742,Dye Vendor,216,Gil,72,71,66,50,8.33,28.24,false,false,false,false,false,5
+5734,ARR-PLACEHOLDER,Neutral,Soot Black,#2b2923,Ixali Vendor,216,Gil,43,41,35,45,18.6,16.86,false,false,false,false,false,6
+5735,ARR-PLACEHOLDER,Reds,Rose Pink,#e69f96,Dye Vendor,40,Gil,230,159,150,6.75,34.78,90.2,false,false,false,false,false,7
+5736,ARR-PLACEHOLDER,Reds,Lilac Purple,#836969,Sahagin Vendor,216,Gil,131,105,105,0,19.85,51.37,false,false,false,false,false,8
+5737,ARR-PLACEHOLDER,Reds,Rolanberry Red,#5b1729,Dye Vendor,216,Gil,91,23,41,344.12,74.73,35.69,false,false,false,false,false,9
+5738,ARR-PLACEHOLDER,Reds,Dalamud Red,#781a1a,Crafting,1,Red Pigment,120,26,26,0,78.33,47.06,false,false,false,false,false,10
+5739,ARR-PLACEHOLDER,Reds,Rust Red,#622207,Dye Vendor,216,Gil,98,34,7,17.8,92.86,38.43,false,false,false,false,false,11
+5740,ARR-PLACEHOLDER,Reds,Wine Red,#451511,Crafting,1,Red Pigment,69,21,17,4.62,75.36,27.06,false,false,false,false,false,12
+5741,ARR-PLACEHOLDER,Reds,Coral Pink,#cc6c5e,Sahagin Vendor,334,Gil,204,108,94,7.64,53.92,80,false,false,false,false,false,13
+5742,ARR-PLACEHOLDER,Reds,Blood Red,#913b27,Dye Vendor,40,Gil,145,59,39,11.32,73.1,56.86,false,false,false,false,false,14
+5743,ARR-PLACEHOLDER,Reds,Salmon Pink,#e4aa8a,Dye Vendor,40,Gil,228,170,138,21.33,39.47,89.41,false,false,false,false,false,15
+5744,ARR-PLACEHOLDER,Browns,Sunset Orange,#b75c2d,Crafting,1,Brown Pigment,183,92,45,20.43,75.41,71.76,false,false,false,false,false,16
+5745,ARR-PLACEHOLDER,Browns,Mesa Red,#7d3906,Dye Vendor,216,Gil,125,57,6,25.71,95.2,49.02,false,false,false,false,false,17
+5746,ARR-PLACEHOLDER,Browns,Bark Brown,#6a4b37,Dye Vendor,40,Gil,106,75,55,23.53,48.11,41.57,false,false,false,false,false,18
+5747,ARR-PLACEHOLDER,Browns,Chocolate Brown,#6e3d24,Dye Vendor,216,Gil,110,61,36,20.27,67.27,43.14,false,false,false,false,false,19
+5748,ARR-PLACEHOLDER,Browns,Russet Brown,#4f2d1f,Dye Vendor,216,Gil,79,45,31,17.5,60.76,30.98,false,false,false,false,false,20
+5749,ARR-PLACEHOLDER,Browns,Kobold Brown,#30211b,Crafting,1,Brown Pigment,48,33,27,17.14,43.75,18.82,false,false,false,false,false,21
+5750,ARR-PLACEHOLDER,Browns,Cork Brown,#c99156,Kobold Vendor,334,Gil,201,145,86,30.78,57.21,78.82,false,false,false,false,false,22
+5751,ARR-PLACEHOLDER,Browns,Qiqirn Brown,#996e3f,Sylphic Vendor,334,Gil,153,110,63,31.33,58.82,60,false,false,false,false,false,23
+5752,ARR-PLACEHOLDER,Browns,Opo-Opo Brown,#7b5c2d,Dye Vendor,40,Gil,123,92,45,36.15,63.41,48.24,false,false,false,false,false,24
+5753,ARR-PLACEHOLDER,Browns,Aldgoat Brown,#a2875c,Sylphic Vendor,216,Gil,162,135,92,36.86,43.21,63.53,false,false,false,false,false,25
+5754,ARR-PLACEHOLDER,Browns,Pumpkin Orange,#c57424,Crafting,1,Brown Pigment,197,116,36,29.81,81.73,77.25,false,false,false,false,false,26
+5755,ARR-PLACEHOLDER,Browns,Acorn Brown,#8e581b,Sylphic Vendor,334,Gil,142,88,27,31.83,80.99,55.69,false,false,false,false,false,27
+5756,ARR-PLACEHOLDER,Browns,Orchard Brown,#644216,Dye Vendor,40,Gil,100,66,22,33.85,78,39.22,false,false,false,false,false,28
+5757,ARR-PLACEHOLDER,Browns,Chestnut Brown,#3d290d,Dye Vendor,216,Gil,61,41,13,35,78.69,23.92,false,false,false,false,false,29
+5758,ARR-PLACEHOLDER,Browns,Gobbiebag Brown,#b9a489,Kobold Vendor,334,Gil,185,164,137,33.75,25.95,72.55,false,false,false,false,false,30
+5759,ARR-PLACEHOLDER,Browns,Shale Brown,#92816c,Sylphic Vendor,216,Gil,146,129,108,33.16,26.03,57.25,false,false,false,false,false,31
+5760,ARR-PLACEHOLDER,Browns,Mole Brown,#615245,Dye Vendor,40,Gil,97,82,69,27.86,28.87,38.04,false,false,false,false,false,32
+5761,ARR-PLACEHOLDER,Browns,Loam Brown,#3f3329,Crafting,1,Brown Pigment,63,51,41,27.27,34.92,24.71,false,false,false,false,false,33
+5762,ARR-PLACEHOLDER,Yellows,Bone White,#ebd3a0,Dye Vendor,40,Gil,235,211,160,40.8,31.91,92.16,false,false,false,false,false,34
+5763,ARR-PLACEHOLDER,Yellows,Ul Brown,#b7a370,Kobold Vendor,216,Gil,183,163,112,43.1,38.8,71.76,false,false,false,false,false,35
+5764,ARR-PLACEHOLDER,Yellows,Desert Yellow,#dbb457,Dye Vendor,216,Gil,219,180,87,42.27,60.27,85.88,false,false,false,false,false,36
+5765,ARR-PLACEHOLDER,Yellows,Honey Yellow,#fac62b,Crafting,1,Yellow Pigment,250,198,43,44.93,82.8,98.04,false,false,false,false,false,37
+5766,ARR-PLACEHOLDER,Yellows,Millioncorn Yellow,#e49e34,Crafting,1,Yellow Pigment,228,158,52,36.14,77.19,89.41,false,false,false,false,false,38
+5767,ARR-PLACEHOLDER,Yellows,Coeurl Yellow,#bc8804,Amalj'aa Vendor,216,Gil,188,136,4,43.04,97.87,73.73,false,false,false,false,false,39
+5768,ARR-PLACEHOLDER,Yellows,Cream Yellow,#f2d770,Dye Vendor,216,Gil,242,215,112,47.54,53.72,94.9,false,false,false,false,false,40
+5769,ARR-PLACEHOLDER,Yellows,Halatali Yellow,#a58430,Dye Vendor,40,Gil,165,132,48,43.08,70.91,64.71,false,false,false,false,false,41
+5770,ARR-PLACEHOLDER,Yellows,Raisin Brown,#403311,Amalj'aa Vendor,334,Gil,64,51,17,43.4,73.44,25.1,false,false,false,false,false,42
+5771,ARR-PLACEHOLDER,Greens,Mud Green,#585230,Dye Vendor,40,Gil,88,82,48,51,45.45,34.51,false,false,false,false,false,43
+5772,ARR-PLACEHOLDER,Greens,Sylph Green,#bbbb8a,Kobold Vendor,216,Gil,187,187,138,60,26.2,73.33,false,false,false,false,false,44
+5773,ARR-PLACEHOLDER,Greens,Lime Green,#abb054,Sylphic Vendor,216,Gil,171,176,84,63.26,52.27,69.02,false,false,false,false,false,45
+5774,ARR-PLACEHOLDER,Greens,Moss Green,#707326,Dye Vendor,40,Gil,112,115,38,62.34,66.96,45.1,false,false,false,false,false,46
+5775,ARR-PLACEHOLDER,Greens,Meadow Green,#8b9c63,Kobold Vendor,216,Gil,139,156,99,77.89,36.54,61.18,false,false,false,false,false,47
+5776,ARR-PLACEHOLDER,Greens,Olive Green,#4b5232,Dye Vendor,216,Gil,75,82,50,73.12,39.02,32.16,false,false,false,false,false,48
+5777,ARR-PLACEHOLDER,Greens,Marsh Green,#323621,Sylphic Vendor,216,Gil,50,54,33,71.43,38.89,21.18,false,false,false,false,false,49
+5778,ARR-PLACEHOLDER,Greens,Apple Green,#9bb363,Kobold Vendor,334,Gil,155,179,99,78,44.69,70.2,false,false,false,false,false,50
+5779,ARR-PLACEHOLDER,Greens,Cactuar Green,#658241,Sylphic Vendor,334,Gil,101,130,65,86.77,50,50.98,false,false,false,false,false,51
+5780,ARR-PLACEHOLDER,Greens,Hunter Green,#284b2c,Ixali Vendor,216,Gil,40,75,44,126.86,46.67,29.41,false,false,false,false,false,52
+5781,ARR-PLACEHOLDER,Greens,Ochu Green,#406339,Crafting,1,Green Pigment,64,99,57,110,42.42,38.82,false,false,false,false,false,53
+5782,ARR-PLACEHOLDER,Greens,Adamantoise Green,#5f7558,Kobold Vendor,334,Gil,95,117,88,105.52,24.79,45.88,false,false,false,false,false,54
+5783,ARR-PLACEHOLDER,Greens,Nophica Green,#3b4d3c,Dye Vendor,216,Gil,59,77,60,123.33,23.38,30.2,false,false,false,false,false,55
+5784,ARR-PLACEHOLDER,Greens,Deepwood Green,#1e2a21,Crafting,1,Green Pigment,30,42,33,135,28.57,16.47,false,false,false,false,false,56
+5785,ARR-PLACEHOLDER,Greens,Celeste Green,#96bdb9,Crafting,1,Green Pigment,150,189,185,173.85,20.63,74.12,false,false,false,false,false,57
+5786,ARR-PLACEHOLDER,Greens,Turquoise Green,#437272,Sylphic Vendor,334,Gil,67,114,114,180,41.23,44.71,false,false,false,false,false,58
+5787,ARR-PLACEHOLDER,Greens,Morbol Green,#1f4646,Ixali Vendor,216,Gil,31,70,70,180,55.71,27.45,false,false,false,false,false,59
+5788,ARR-PLACEHOLDER,Blues,Ice Blue,#b2c4ce,Dye Vendor,40,Gil,178,196,206,201.43,13.59,80.78,false,false,false,false,false,60
+5789,ARR-PLACEHOLDER,Blues,Sky Blue,#83b0d2,Dye Vendor,40,Gil,131,176,210,205.82,37.62,82.35,false,false,false,false,false,61
+5790,ARR-PLACEHOLDER,Blues,Seafog Blue,#6481a0,Amalj'aa Vendor,216,Gil,100,129,160,211,37.5,62.75,false,false,false,false,false,62
+5791,ARR-PLACEHOLDER,Blues,Peacock Blue,#3b6886,Amalj'aa Vendor,334,Gil,59,104,134,204,55.97,52.55,false,false,false,false,false,63
+5792,ARR-PLACEHOLDER,Blues,Rhotano Blue,#1c3d54,Sahagin Vendor,334,Gil,28,61,84,204.64,66.67,32.94,false,false,false,false,false,64
+5793,ARR-PLACEHOLDER,Blues,Corpse Blue,#8e9bac,Sahagin Vendor,216,Gil,142,155,172,214,17.44,67.45,false,false,false,false,false,65
+5794,ARR-PLACEHOLDER,Blues,Ceruleum Blue,#4f5766,Dye Vendor,40,Gil,79,87,102,219.13,22.55,40,false,false,false,false,false,66
+5795,ARR-PLACEHOLDER,Blues,Woad Blue,#2f3851,Crafting,1,Blue Pigment,47,56,81,224.12,41.98,31.76,false,false,false,false,false,67
+5796,ARR-PLACEHOLDER,Blues,Ink Blue,#1a1f27,Dye Vendor,216,Gil,26,31,39,216.92,33.33,15.29,false,false,false,false,false,68
+5797,ARR-PLACEHOLDER,Blues,Raptor Blue,#5b7fc0,Amalj'aa Vendor,216,Gil,91,127,192,218.61,52.6,75.29,false,false,false,false,false,69
+5798,ARR-PLACEHOLDER,Blues,Othard Blue,#2f5889,Crafting,1,Blue Pigment,47,88,137,212.67,65.69,53.73,false,false,false,false,false,70
+5799,ARR-PLACEHOLDER,Blues,Storm Blue,#234172,Crafting,1,Blue Pigment,35,65,114,217.22,69.3,44.71,false,false,false,false,false,71
+5800,ARR-PLACEHOLDER,Blues,Void Blue,#112944,Crafting,1,Blue Pigment,17,41,68,211.76,75,26.67,false,false,false,false,false,72
+5801,ARR-PLACEHOLDER,Blues,Royal Blue,#273067,Ixali Vendor,216,Gil,39,48,103,231.56,62.14,40.39,false,false,false,false,false,73
+5802,ARR-PLACEHOLDER,Blues,Midnight Blue,#181937,Dye Vendor,216,Gil,24,25,55,238.06,56.36,21.57,false,false,false,false,false,74
+5803,ARR-PLACEHOLDER,Blues,Shadow Blue,#373747,Sahagin Vendor,334,Gil,55,55,71,240,22.54,27.84,false,false,false,false,false,75
+5804,ARR-PLACEHOLDER,Blues,Abyssal Blue,#312d57,Crafting,1,Blue Pigment,49,45,87,245.71,48.28,34.12,false,false,false,false,false,76
+5805,ARR-PLACEHOLDER,Purples,Lavender Purple,#877fae,Sahagin Vendor,216,Gil,135,127,174,250.21,27.01,68.24,false,false,false,false,false,77
+5806,ARR-PLACEHOLDER,Purples,Gloom Purple,#514560,Dye Vendor,40,Gil,81,69,96,266.67,28.13,37.65,false,false,false,false,false,78
+5807,ARR-PLACEHOLDER,Purples,Currant Purple,#322c3b,Amalj'aa Vendor,334,Gil,50,44,59,264,25.42,23.14,false,false,false,false,false,79
+5808,ARR-PLACEHOLDER,Purples,Iris Purple,#b79ebc,Sahagin Vendor,334,Gil,183,158,188,290,15.96,73.73,false,false,false,false,false,80
+5809,ARR-PLACEHOLDER,Purples,Grape Purple,#3b2a3d,Dye Vendor,216,Gil,59,42,61,293.68,31.15,23.92,false,false,false,false,false,81
+5810,ARR-PLACEHOLDER,Purples,Lotus Pink,#fecef5,Crafting,1,Purple Pigment,254,206,245,311.25,18.9,99.61,false,false,false,false,false,82
+5811,ARR-PLACEHOLDER,Purples,Colibri Pink,#dc9bca,Crafting,1,Purple Pigment,220,155,202,316.62,29.55,86.27,false,false,false,false,false,83
+5812,ARR-PLACEHOLDER,Purples,Plum Purple,#79526c,Crafting,1,Purple Pigment,121,82,108,320,32.23,47.45,false,false,false,false,false,84
+5813,ARR-PLACEHOLDER,Purples,Regal Purple,#66304e,Crafting,1,Purple Pigment,102,48,78,326.67,52.94,40,false,false,false,false,false,85
+13114,null,Special,Pure White,#f9f8f4,Venture Coffers,1,Venture Coffer,249,248,244,48,2.01,97.65,false,false,false,false,false,101
+13115,null,Special,Jet Black,#1e1e1e,Venture Coffers,1,Venture Coffer,30,30,30,0,0,11.76,false,false,false,false,false,102
+13116,null,Special,Metallic Silver,#a7a7a7,Venture Coffers,1,Venture Coffer,167,167,167,0,0,65.49,true,false,false,false,false,112
+13117,null,Special,Metallic Gold,#ede63d,Venture Coffers,1,Venture Coffer,237,230,61,57.61,74.26,92.94,true,false,false,false,false,113
+13708,null,Special,Pastel Pink,#fdc8c6,Venture Coffers,1,Venture Coffer,253,200,198,2.18,21.74,99.22,false,true,false,false,false,103
+13709,null,Special,Dark Red,#321919,Venture Coffers,1,Venture Coffer,50,25,25,0,50,19.61,false,false,true,false,false,104
+13710,null,Special,Dark Brown,#28211c,Venture Coffers,1,Venture Coffer,40,33,28,25,30,15.69,false,false,true,false,false,105
+13711,null,Special,Pastel Green,#bacfaa,Venture Coffers,1,Venture Coffer,186,207,170,94.05,17.87,81.18,false,true,false,false,false,106
+13712,null,Special,Dark Green,#152c2c,Venture Coffers,1,Venture Coffer,21,44,44,180,52.27,17.25,false,false,true,false,false,107
+13713,null,Special,Pastel Blue,#96a4d9,Venture Coffers,1,Venture Coffer,150,164,217,227.46,30.88,85.1,false,true,false,false,false,108
+13714,null,Special,Dark Blue,#121f2d,Venture Coffers,1,Venture Coffer,18,31,45,211.11,60,17.65,false,false,true,false,false,109
+13715,null,Special,Pastel Purple,#bbb5da,Venture Coffers,1,Venture Coffer,187,181,218,249.73,16.97,85.49,false,true,false,false,false,110
+13716,null,Special,Dark Purple,#232026,Venture Coffers,1,Venture Coffer,35,32,38,270,15.79,14.9,false,false,true,false,false,111
+13717,null,Special,Metallic Red,#b61d4b,Venture Coffers,1,Venture Coffer,182,29,75,341.96,84.07,71.37,true,false,false,false,false,114
+13718,null,Special,Metallic Orange,#e48c2f,Venture Coffers,1,Venture Coffer,228,140,47,30.83,79.39,89.41,true,false,false,false,false,115
+13719,null,Special,Metallic Yellow,#f4da46,Venture Coffers,1,Venture Coffer,244,218,70,51.03,71.31,95.69,true,false,false,false,false,116
+13720,null,Special,Metallic Green,#22a757,Venture Coffers,1,Venture Coffer,34,167,87,143.91,79.64,65.49,true,false,false,false,false,117
+13721,null,Special,Metallic Sky Blue,#49f8fd,Venture Coffers,1,Venture Coffer,73,248,253,181.67,71.15,99.22,true,false,false,false,false,118
+13722,null,Special,Metallic Blue,#5052d9,Venture Coffers,1,Venture Coffer,80,82,217,239.12,63.13,85.1,true,false,false,false,false,119
+13723,null,Special,Metallic Purple,#d361ff,Venture Coffers,1,Venture Coffer,211,97,255,283.29,61.96,100,true,false,false,false,false,120
+30116,ISHGARD-PLACEHOLDER,Reds,Ruby Red,#e2000e,Cosmic Exploration,600,Cosmocredits,226,0,14,356.28,100,88.63,false,false,false,true,true,86
+30117,ISHGARD-PLACEHOLDER,Reds,Cherry Pink,#f43195,Cosmic Exploration,600,Cosmocredits,244,49,149,329.23,79.92,95.69,false,false,false,true,true,87
+30118,ISHGARD-PLACEHOLDER,Yellows,Canary Yellow,#fef75d,Cosmic Exploration,600,Cosmocredits,254,247,93,57.39,63.39,99.61,false,false,false,true,true,88
+30119,ISHGARD-PLACEHOLDER,Yellows,Vanilla Yellow,#fbf0af,Cosmic Exploration,600,Cosmocredits,251,240,175,51.32,30.28,98.43,false,false,false,true,true,89
+30120,ISHGARD-PLACEHOLDER,Blues,Dragoon Blue,#000b9d,Cosmic Exploration,600,Cosmocredits,0,11,157,235.8,100,61.57,false,false,false,true,true,90
+30121,ISHGARD-PLACEHOLDER,Blues,Turquoise Blue,#03aaca,Cosmic Exploration,600,Cosmocredits,3,170,202,189.65,98.51,79.22,false,false,false,true,true,91
+30122,ISHGARD-PLACEHOLDER,Special,Gunmetal Black,#181820,The Firmament,500,Skybuilders Scrips,24,24,32,240,25,12.55,false,false,false,true,true,92
+30123,ISHGARD-PLACEHOLDER,Special,Pearl White,#bfb4a3,The Firmament,500,Skybuilders Scrips,191,180,163,36.43,14.66,74.9,false,false,false,true,true,93
+30124,ISHGARD-PLACEHOLDER,Special,Metallic Brass,#e9c06f,The Firmament,500,Skybuilders Scrips,233,192,111,39.84,52.36,91.37,true,false,false,true,true,94
+48163,COSMIC-PLACEHOLDER,Reds,Neon Pink,#f61296,Cosmic Exploration,600,Cosmocredits,246,18,150,325.26,92.68,96.47,false,false,false,false,true,96
+48164,COSMIC-PLACEHOLDER,Browns,Bright Orange,#f95513,Cosmic Exploration,600,Cosmocredits,249,85,19,17.22,92.37,97.65,false,false,false,false,true,97
+48165,COSMIC-PLACEHOLDER,Greens,Neon Green,#baf913,Cosmic Exploration,600,Cosmocredits,186,249,19,76.43,92.37,97.65,false,false,false,false,true,99
+48166,COSMIC-PLACEHOLDER,Yellows,Neon Yellow,#e0e90b,Cosmic Exploration,600,Cosmocredits,224,233,11,62.43,95.28,91.37,false,false,false,false,true,98
+48167,COSMIC-PLACEHOLDER,Purples,Violet Purple,#6f5aa2,Cosmic Exploration,600,Cosmocredits,111,90,162,257.5,44.44,63.53,false,false,false,false,true,121
+48168,COSMIC-PLACEHOLDER,Blues,Azure Blue,#4056a4,Cosmic Exploration,600,Cosmocredits,64,86,164,226.8,60.98,64.31,false,false,false,false,true,100
+48169,COSMIC-PLACEHOLDER,Special,Metallic Pink,#ffa1c2,Cosmic Fortunes,1000,Planet-specific Credit,255,161,194,338.94,36.86,100,true,false,false,false,true,122
+48170,COSMIC-PLACEHOLDER,Special,Metallic Ruby Red,#470103,Cosmic Fortunes,1000,Planet-specific Credit,71,1,3,358.29,98.59,27.84,true,false,false,false,true,123
+48171,COSMIC-PLACEHOLDER,Special,Metallic Cobalt Green,#28847f,Cosmic Fortunes,1000,Planet-specific Credit,40,132,127,176.74,69.7,51.76,true,false,false,false,true,124
+48172,COSMIC-PLACEHOLDER,Special,Metallic Dark Blue,#120445,Cosmic Fortunes,1000,Planet-specific Credit,18,4,69,252.92,94.2,27.06,true,false,false,false,true,125
+48227,COSMIC-PLACEHOLDER,Reds,Carmine Red,#e50b18,Cosmic Exploration,600,Cosmocredits,229,11,24,356.42,95.2,89.8,false,false,false,false,true,95
+null,FACEWEAR,Facewear,Black,#000000,Facewear Collection,null,null,0,0,0,0,0,0,false,false,false,false,false,
+null,FACEWEAR,Facewear,Blue,#0000FF,Facewear Collection,null,null,0,0,255,240,100,100,false,false,false,false,false,
+null,FACEWEAR,Facewear,Brass,#E1C16E,Facewear Collection,null,null,225,193,110,42.43,51.11,88.24,false,false,false,false,false,
+null,FACEWEAR,Facewear,Brown,#A52A2A,Facewear Collection,null,null,165,42,42,0,74.55,64.71,false,false,false,false,false,
+null,FACEWEAR,Facewear,Gold,#FFD700,Facewear Collection,null,null,255,215,0,50.59,100,100,false,false,false,false,false,
+null,FACEWEAR,Facewear,Green,#008000,Facewear Collection,null,null,0,128,0,120,100,50.2,false,false,false,false,false,
+null,FACEWEAR,Facewear,Grey,#808080,Facewear Collection,null,null,128,128,128,0,0,50.2,false,false,false,false,false,
+null,FACEWEAR,Facewear,Purple,#800080,Facewear Collection,null,null,128,0,128,300,100,50.2,false,false,false,false,false,
+null,FACEWEAR,Facewear,Red,#FF0000,Facewear Collection,null,null,255,0,0,0,100,100,false,false,false,false,false,
+null,FACEWEAR,Facewear,Silver,#C0C0C0,Facewear Collection,null,null,192,192,192,0,0,75.29,false,false,false,false,false,
+null,FACEWEAR,Facewear,White,#FFFFFF,Facewear Collection,null,null,255,255,255,0,0,100,false,false,false,false,false,

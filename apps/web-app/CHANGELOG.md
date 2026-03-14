@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.4.0] - 2026-03-14
+
+### Changed
+
+- Market board service uses `getMarketItemID()` from `@xivdyetools/core` to fan out consolidated prices to individual dye cache entries
+- Updated mock dye objects in test suites for new `consolidationType` and `isIshgardian` fields
+
+---
+
 ## [4.3.1] - 2026-03-09
 
 ### Changed

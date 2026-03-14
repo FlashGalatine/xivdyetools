@@ -2,7 +2,7 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: March 13, 2026*
+*Last Updated: March 14, 2026*
 
 ---
 
@@ -12,9 +12,9 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core Library** | v2.0.1 | `@xivdyetools/core` | npm | Active |
-| **Web Application** | v4.3.1 | — | Cloudflare Pages | Active |
-| **Discord Bot** | v4.1.2 | — | Cloudflare Workers | Active |
+| **Core Library** | v2.1.0 | `@xivdyetools/core` | npm | Active |
+| **Web Application** | v4.4.0 | — | Cloudflare Pages | Active |
+| **Discord Bot** | v4.2.0 | — | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.1.8 | — | Cloudflare Workers | Active |
 | **OAuth Worker** | v2.3.8 | — | Cloudflare Workers | Active |
 | **Presets API** | v1.4.15 | — | Cloudflare Workers | Active |
@@ -32,17 +32,17 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Types** | v1.9.0 | `@xivdyetools/types` | npm | Active |
+| **Types** | v1.10.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** | v1.1.1 | `@xivdyetools/auth` | npm | Active |
 | **Crypto** | v1.1.0 | `@xivdyetools/crypto` | npm | Active |
 | **Logger** | v1.2.2 | `@xivdyetools/logger` | npm | Active |
 | **Rate Limiter** | v1.4.3 | `@xivdyetools/rate-limiter` | npm | Active |
-| **Core** | v2.0.1 | `@xivdyetools/core` | npm | Active |
+| **Core** | v2.1.0 | `@xivdyetools/core` | npm | Active |
 | **SVG** | v1.1.2 | `@xivdyetools/svg` | npm | Active |
 | **Bot Logic** | v1.1.2 | `@xivdyetools/bot-logic` | npm | Active |
 | **Bot i18n** | v1.1.0 | `@xivdyetools/bot-i18n` | npm | Active |
 | **Color Blending** | v1.0.1 | `@xivdyetools/color-blending` | npm | Active |
-| **Test Utils** | v1.1.5 | `@xivdyetools/test-utils` | npm | Active |
+| **Test Utils** | v1.1.6 | `@xivdyetools/test-utils` | npm | Active |
 
 ### Deprecated
 
@@ -58,6 +58,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.1.0** | **Mar 2026** | **Patch 7.5 dye consolidation framework — `consolidated-ids.ts`, `getMarketItemID()`, `isConsolidationActive()`, data field additions** |
 | v2.0.1 | Mar 2026 | Dependency updates (hono 4.12.5, workers-types) |
 | **v2.0.0** | **Mar 2026** | **BREAKING: Removed ~35 deprecated type re-exports — import `Dye`, `RGB`, etc. from `@xivdyetools/types` directly. 28 symbols marked `@internal`. `ResolvedPreset` migrated to core's PresetService** |
 | v1.17.2 | Feb 2026 | LRU cache for rgbToOklab(), spectral-js.d.ts type declarations |

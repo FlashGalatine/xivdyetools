@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+---
+
+## [1.6.0] - 2026-03-14
+
 ### Added
 
 - **@xivdyetools/types**: `consolidationType` (`'A' | 'B' | 'C' | null`) and `isIshgardian` (`boolean`) fields on the `Dye` interface for Patch 7.5 dye consolidation
@@ -363,6 +367,8 @@ Initial release of the XIV Dye Tools monorepo, consolidating 15 previously indep
 
 ---
 
+[1.6.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.5.1...v1.6.0
+[1.5.1]: https://github.com/FlashGalatine/xivdyetools/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.2.0...v1.3.0
