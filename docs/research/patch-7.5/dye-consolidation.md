@@ -75,6 +75,11 @@ This reduces Universalis API calls from ~105 individual lookups to ~20 (3 consol
 
 ## Open Questions
 
-- Will the old individual itemIDs still exist in the game data (for inventory/glamour plate references)?
-- Will Universalis track the consolidated items as new itemIDs?
-- Will stainIDs change or remain stable?
+- **Will the old individual itemIDs still exist in the game data (for inventory/glamour plate references)?**
+  Yes. Individual itemIDs remain in the game data for inventory, glamour plates, and other references. However, dyes categorized under Type A/B/C will no longer be individually tradeable on the Market Board.
+
+- **Will Universalis track the consolidated items as new itemIDs?**
+  This is the projected behavior — Universalis is expected to track the 3 new consolidated itemIDs as standard market items.
+
+- **Will stainIDs change or remain stable?**
+  To be determined when Patch 7.5 arrives.
