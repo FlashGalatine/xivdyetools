@@ -27,6 +27,10 @@ describe('HarmonyGenerator', () => {
       isPastel: false,
       isDark: true,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     // Orange (H=30)
     {
@@ -44,6 +48,10 @@ describe('HarmonyGenerator', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     // Green (H=120)
     {
@@ -61,6 +69,10 @@ describe('HarmonyGenerator', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     // Cyan (H=180)
     {
@@ -78,6 +90,10 @@ describe('HarmonyGenerator', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     // Blue (H=240)
     {
@@ -95,6 +111,10 @@ describe('HarmonyGenerator', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     // Purple (H=270)
     {
@@ -112,6 +132,10 @@ describe('HarmonyGenerator', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     // Another Red (monochromatic variant)
     {
@@ -129,6 +153,10 @@ describe('HarmonyGenerator', () => {
       isPastel: true,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     // Facewear (should be excluded) - Note: Facewear dyes have null stainID
     {
@@ -146,6 +174,10 @@ describe('HarmonyGenerator', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
   ];
 

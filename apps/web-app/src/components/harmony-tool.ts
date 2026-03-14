@@ -1930,6 +1930,10 @@ export class HarmonyTool extends BaseComponent {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     };
 
     this.selectedDye = virtualDye;

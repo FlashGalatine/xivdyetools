@@ -24,6 +24,10 @@ describe('DyeDatabase', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     {
       itemID: 5740,
@@ -40,6 +44,10 @@ describe('DyeDatabase', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     {
       itemID: 13116,
@@ -56,6 +64,10 @@ describe('DyeDatabase', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     {
       itemID: 6001,
@@ -72,6 +84,10 @@ describe('DyeDatabase', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     {
       itemID: 6002,
@@ -88,6 +104,10 @@ describe('DyeDatabase', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
   ];
 
@@ -389,6 +409,10 @@ describe('DyeDatabase', () => {
         isPastel: false,
         isDark: false,
         isCosmic: false,
+
+        isIshgardian: false,
+
+        consolidationType: null,
       };
 
       database.initialize([...mockDyes, facewearDye]);
@@ -1090,6 +1114,49 @@ describe('DyeDatabase', () => {
       database.initialize([dyeWithoutCategory]);
       const dye = database.getDyeById(8005);
       expect(dye).toBeDefined();
+    });
+  });
+
+  describe('consolidationType and isIshgardian defaults', () => {
+    it('should default consolidationType to null when missing from data', () => {
+      database.initialize(mockDyes);
+      const dye = database.getDyeById(5729);
+      expect(dye).toBeDefined();
+      expect(dye!.consolidationType).toBeNull();
+    });
+
+    it('should default isIshgardian to false when missing from data', () => {
+      database.initialize(mockDyes);
+      const dye = database.getDyeById(5729);
+      expect(dye).toBeDefined();
+      expect(dye!.isIshgardian).toBe(false);
+    });
+
+    it('should preserve consolidationType when present in data', () => {
+      const dyeWithConsolidation = {
+        ...mockDyes[0],
+        consolidationType: 'A' as const,
+        isIshgardian: false,
+      };
+      database.initialize([dyeWithConsolidation]);
+      const dye = database.getDyeById(5729);
+      expect(dye).toBeDefined();
+      expect(dye!.consolidationType).toBe('A');
+    });
+
+    it('should preserve isIshgardian when present in data', () => {
+      const ishgardianDye = {
+        ...mockDyes[0],
+        itemID: 30116,
+        id: 30116,
+        consolidationType: 'B' as const,
+        isIshgardian: true,
+      };
+      database.initialize([ishgardianDye]);
+      const dye = database.getDyeById(30116);
+      expect(dye).toBeDefined();
+      expect(dye!.isIshgardian).toBe(true);
+      expect(dye!.consolidationType).toBe('B');
     });
   });
 

@@ -23,6 +23,10 @@ describe('DyeSearch', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     {
       itemID: 5740,
@@ -39,6 +43,10 @@ describe('DyeSearch', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     {
       itemID: 5741,
@@ -55,6 +63,10 @@ describe('DyeSearch', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     {
       itemID: 5742,
@@ -71,6 +83,10 @@ describe('DyeSearch', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     {
       itemID: 5743,
@@ -87,6 +103,10 @@ describe('DyeSearch', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     {
       itemID: 13116,
@@ -103,6 +123,10 @@ describe('DyeSearch', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
     {
       itemID: 9999,
@@ -119,6 +143,10 @@ describe('DyeSearch', () => {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     },
   ];
 

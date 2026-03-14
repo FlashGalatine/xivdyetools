@@ -27,6 +27,10 @@ const sampleDyes: Dye[] = [
     isPastel: false,
     isDark: false,
     isCosmic: false,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   },
   {
     itemID: 5730,
@@ -43,6 +47,10 @@ const sampleDyes: Dye[] = [
     isPastel: false,
     isDark: false,
     isCosmic: false,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   },
   {
     itemID: 5731,
@@ -59,6 +67,10 @@ const sampleDyes: Dye[] = [
     isPastel: false,
     isDark: false,
     isCosmic: false,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   },
   {
     itemID: 5732,
@@ -75,6 +87,10 @@ const sampleDyes: Dye[] = [
     isPastel: false,
     isDark: false,
     isCosmic: false,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   },
   {
     itemID: 5733,
@@ -91,6 +107,10 @@ const sampleDyes: Dye[] = [
     isPastel: false,
     isDark: false,
     isCosmic: false,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   },
   {
     itemID: 5734,
@@ -107,6 +127,10 @@ const sampleDyes: Dye[] = [
     isPastel: false,
     isDark: false,
     isCosmic: false,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   },
 ];
 

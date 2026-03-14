@@ -19,6 +19,7 @@ import { ConfigController } from '@services/config-controller';
 import { appStorage } from '@services/storage-service';
 import { PRICE_CATEGORIES } from '@shared/constants';
 import { logger } from '@shared/logger';
+import { getMarketItemID } from '@xivdyetools/core';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import type { MarketConfig } from '@shared/tool-config-types';
 
@@ -416,8 +417,18 @@ export class MarketBoardService extends EventTarget {
     onProgress?.(0, total);
 
     try {
-      // Extract item IDs for batch fetch
-      const itemIDs = dyesToFetch.map((dye) => dye.itemID);
+      // Build mapping: marketItemID -> original itemIDs (for consolidated dye fan-out)
+      const marketIdToOriginals = new Map<number, number[]>();
+      for (const dye of dyesToFetch) {
+        const marketId = getMarketItemID(dye);
+        if (!marketIdToOriginals.has(marketId)) {
+          marketIdToOriginals.set(marketId, []);
+        }
+        marketIdToOriginals.get(marketId)!.push(dye.itemID);
+      }
+
+      // Fetch deduplicated market item IDs
+      const itemIDs = Array.from(marketIdToOriginals.keys());
 
       // Use batch API to fetch all prices in a single request
       const batchResults = await this.apiService.getPricesForDataCenter(
@@ -433,9 +444,12 @@ export class MarketBoardService extends EventTarget {
         return new Map();
       }
 
-      // Update shared cache with new prices
-      for (const [itemID, priceData] of batchResults) {
-        this.priceData.set(itemID, priceData);
+      // Update shared cache: fan out consolidated prices to each original dye's itemID
+      for (const [marketId, priceData] of batchResults) {
+        const originalIds = marketIdToOriginals.get(marketId) ?? [marketId];
+        for (const originalId of originalIds) {
+          this.priceData.set(originalId, priceData);
+        }
       }
 
       // Report completion

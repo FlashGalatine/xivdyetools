@@ -66,6 +66,10 @@ const createMockDye = (overrides: Partial<Dye> = {}): Dye => ({
   isPastel: false,
   isDark: false,
   isCosmic: false,
+
+  isIshgardian: false,
+
+  consolidationType: null,
   ...overrides,
 });
 

@@ -7,7 +7,7 @@
  * @module services/budget/budget-calculator
  */
 
-import { ColorService } from '@xivdyetools/core';
+import { ColorService, getMarketItemID } from '@xivdyetools/core';
 import { dyeService } from '../../utils/color.js';
 import type { Dye } from '@xivdyetools/types';
 import type { ExtendedLogger } from '@xivdyetools/logger';
@@ -104,8 +104,13 @@ export async function findCheaperAlternatives(
     }
   }
 
-  // Build item IDs to fetch: candidates + target dye (for target price)
-  const itemIdsToFetch = [targetDyeId, ...candidatesWithDistance.map((c) => c.dye.itemID)];
+  // Build market item IDs to fetch (deduplicated for consolidated dyes)
+  const targetMarketId = getMarketItemID(targetDye);
+  const marketIdSet = new Set<number>([targetMarketId]);
+  for (const { dye } of candidatesWithDistance) {
+    marketIdSet.add(getMarketItemID(dye));
+  }
+  const itemIdsToFetch = Array.from(marketIdSet);
 
   if (logger) {
     logger.info('Budget: pre-filtered candidates by color distance', {
@@ -127,15 +132,15 @@ export async function findCheaperAlternatives(
     logger.info('Price fetch complete', { fromCache, fromApi, total: itemIdsToFetch.length });
   }
 
-  // Get target price
-  const targetPrice = prices.get(targetDyeId) ?? null;
+  // Get target price (use market ID for consolidated dye lookup)
+  const targetPrice = prices.get(targetMarketId) ?? null;
 
   // 4. Calculate alternatives (color distance already computed)
   const alternatives: BudgetSuggestion[] = [];
 
   for (const { dye, colorDistance } of candidatesWithDistance) {
-    // Get price for this dye
-    const dyePrice = prices.get(dye.itemID);
+    // Get price for this dye (use market ID for consolidated dye lookup)
+    const dyePrice = prices.get(getMarketItemID(dye));
 
     // Skip if no price data
     if (!dyePrice) {

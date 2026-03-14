@@ -2538,6 +2538,10 @@ export class GradientTool extends BaseComponent {
       isPastel: false,
       isDark: false,
       isCosmic: false,
+
+      isIshgardian: false,
+
+      consolidationType: null,
     };
 
     // Use the existing selectDye logic to add to gradient

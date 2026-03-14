@@ -269,6 +269,14 @@ export class DyeDatabase {
             normalizedDye.cost = 0;
           }
 
+          // Default consolidationType and isIshgardian for backward compatibility
+          if (normalizedDye.consolidationType === undefined) {
+            normalizedDye.consolidationType = null;
+          }
+          if (normalizedDye.isIshgardian === undefined) {
+            normalizedDye.isIshgardian = false;
+          }
+
           // Per MEM-001: Pre-compute lowercase name and category for search optimization
           normalizedDye.nameLower = String(normalizedDye.name).toLowerCase();
           normalizedDye.categoryLower = (typeof normalizedDye.category === 'string' ? normalizedDye.category : '').toLowerCase();

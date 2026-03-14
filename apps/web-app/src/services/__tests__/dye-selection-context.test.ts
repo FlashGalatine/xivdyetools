@@ -20,6 +20,10 @@ describe('DyeSelectionContext', () => {
     isPastel: false,
     isDark: false,
     isCosmic: false,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   };
 
   beforeEach(() => {

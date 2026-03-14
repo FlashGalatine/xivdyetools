@@ -83,6 +83,21 @@ export interface Dye {
 
   /** True if this is a cosmic (starlight/glittery) dye */
   isCosmic: boolean;
+
+  /** True if this dye originates from Ishgardian Restoration content */
+  isIshgardian: boolean;
+
+  /**
+   * Dye consolidation group for Patch 7.5 market board lookups.
+   *
+   * - `'A'`: ARR dyes (itemIDs 5729-5813) — 85 dyes consolidated into one item
+   * - `'B'`: Ishgardian Restoration dyes (itemIDs 30116-30124) — 9 dyes consolidated
+   * - `'C'`: Cosmic Exploration dyes (itemIDs 48163-48172, 48227) — 11 dyes consolidated
+   * - `null`: Special dyes and Facewear — remain individual items
+   *
+   * @since TBD (Patch 7.5)
+   */
+  consolidationType: 'A' | 'B' | 'C' | null;
 }
 
 /**

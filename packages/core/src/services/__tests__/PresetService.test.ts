@@ -149,6 +149,8 @@ const createMockDyeService = () => ({
         isPastel: false,
         isDark: false,
         isCosmic: false,
+        isIshgardian: false,
+        consolidationType: null,
         stainID: 1,
       },
       5738: {
@@ -165,6 +167,8 @@ const createMockDyeService = () => ({
         isPastel: false,
         isDark: false,
         isCosmic: false,
+        isIshgardian: false,
+        consolidationType: null,
         stainID: 10,
       },
       13115: {
@@ -181,6 +185,8 @@ const createMockDyeService = () => ({
         isPastel: false,
         isDark: false,
         isCosmic: false,
+        isIshgardian: false,
+        consolidationType: null,
         stainID: 101,
       },
       13117: {
@@ -197,6 +203,8 @@ const createMockDyeService = () => ({
         isPastel: false,
         isDark: false,
         isCosmic: false,
+        isIshgardian: false,
+        consolidationType: null,
         stainID: 103,
       },
     };

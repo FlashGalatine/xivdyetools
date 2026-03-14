@@ -44,6 +44,13 @@ export {
   MATCHING_PRESETS,
 } from './types/index.js';
 
+// Dye consolidation (Patch 7.5)
+export {
+  CONSOLIDATED_IDS,
+  isConsolidationActive,
+  getMarketItemID,
+} from './config/consolidated-ids.js';
+
 // Constants
 export {
   RGB_MIN,

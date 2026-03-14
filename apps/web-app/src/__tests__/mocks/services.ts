@@ -33,6 +33,10 @@ export const mockDyes: Dye[] = [
     isPastel: false,
     isDark: false,
     isCosmic: false,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   },
   {
     id: 2,
@@ -49,6 +53,10 @@ export const mockDyes: Dye[] = [
     isPastel: false,
     isDark: true,
     isCosmic: false,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   },
   {
     id: 3,
@@ -65,6 +73,10 @@ export const mockDyes: Dye[] = [
     isPastel: false,
     isDark: true,
     isCosmic: false,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   },
   {
     id: 4,
@@ -81,6 +93,10 @@ export const mockDyes: Dye[] = [
     isPastel: true,
     isDark: false,
     isCosmic: false,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   },
   {
     id: 5,
@@ -97,6 +113,10 @@ export const mockDyes: Dye[] = [
     isPastel: false,
     isDark: true,
     isCosmic: false,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   },
   {
     id: 6,
@@ -113,6 +133,10 @@ export const mockDyes: Dye[] = [
     isPastel: true,
     isDark: false,
     isCosmic: false,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   },
   {
     id: 7,
@@ -129,6 +153,10 @@ export const mockDyes: Dye[] = [
     isPastel: false,
     isDark: true,
     isCosmic: false,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   },
   {
     id: 8,
@@ -145,6 +173,10 @@ export const mockDyes: Dye[] = [
     isPastel: false,
     isDark: false,
     isCosmic: false,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   },
   {
     id: 9,
@@ -161,6 +193,10 @@ export const mockDyes: Dye[] = [
     isPastel: false,
     isDark: true,
     isCosmic: true,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   },
   {
     id: 10,
@@ -177,6 +213,10 @@ export const mockDyes: Dye[] = [
     isPastel: false,
     isDark: false,
     isCosmic: false,
+
+    isIshgardian: false,
+
+    consolidationType: null,
   },
 ];
 

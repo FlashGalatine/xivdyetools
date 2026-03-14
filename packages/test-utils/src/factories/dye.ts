@@ -43,6 +43,8 @@ export const mockDyes: Dye[] = [
     isPastel: false,
     isDark: false,
     isCosmic: false,
+    isIshgardian: false,
+    consolidationType: 'A',
   },
   {
     itemID: 5730,
@@ -59,6 +61,8 @@ export const mockDyes: Dye[] = [
     isPastel: false,
     isDark: true,
     isCosmic: false,
+    isIshgardian: false,
+    consolidationType: 'A',
   },
   {
     itemID: 5731,
@@ -75,6 +79,8 @@ export const mockDyes: Dye[] = [
     isPastel: false,
     isDark: false,
     isCosmic: false,
+    isIshgardian: false,
+    consolidationType: 'A',
   },
   {
     itemID: 5732,
@@ -91,6 +97,8 @@ export const mockDyes: Dye[] = [
     isPastel: false,
     isDark: false,
     isCosmic: false,
+    isIshgardian: false,
+    consolidationType: 'A',
   },
   {
     itemID: 5733,
@@ -107,6 +115,8 @@ export const mockDyes: Dye[] = [
     isPastel: false,
     isDark: false,
     isCosmic: false,
+    isIshgardian: false,
+    consolidationType: 'A',
   },
   {
     itemID: 5734,
@@ -123,6 +133,8 @@ export const mockDyes: Dye[] = [
     isPastel: true,
     isDark: false,
     isCosmic: false,
+    isIshgardian: false,
+    consolidationType: 'A',
   },
 ];
 
@@ -151,6 +163,8 @@ export function createMockDye(overrides: Partial<Dye> = {}): Dye {
     isPastel: false,
     isDark: false,
     isCosmic: false,
+    isIshgardian: false,
+    consolidationType: null,
     ...overrides,
   };
 }
