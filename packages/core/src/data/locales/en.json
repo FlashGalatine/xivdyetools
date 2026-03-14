@@ -2,7 +2,7 @@
   "locale": "en",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-03-14T13:15:37.977Z",
+    "generated": "2026-03-14T23:12:43.295Z",
     "dyeCount": 125
   },
   "labels": {
@@ -164,6 +164,19 @@
     "Cosmic Fortunes": "Cosmic Fortunes",
     "Venture Coffers": "Venture Coffers",
     "Facewear Collection": "Facewear Collection"
+  },
+  "currencies": {
+    "Gil": "Gil",
+    "Skybuilders Scrips": "Scrips",
+    "Cosmocredits": "CC",
+    "Venture Coffer": "Coffer",
+    "Red Pigment": "Red Pigment",
+    "Blue Pigment": "Blue Pigment",
+    "Yellow Pigment": "Yellow Pigment",
+    "Green Pigment": "Green Pigment",
+    "Brown Pigment": "Brown Pigment",
+    "Purple Pigment": "Purple Pigment",
+    "Planet-specific Credit": "Credit"
   },
   "metallicDyeIds": [
     13116,

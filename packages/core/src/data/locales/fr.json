@@ -2,7 +2,7 @@
   "locale": "fr",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-03-14T13:15:37.982Z",
+    "generated": "2026-03-14T23:12:43.301Z",
     "dyeCount": 125
   },
   "labels": {
@@ -164,6 +164,19 @@
     "Cosmic Fortunes": "Roue de la fortune cosmique",
     "Venture Coffers": "Trouvaille de servant",
     "Facewear Collection": "Collection accessoires faciaux"
+  },
+  "currencies": {
+    "Gil": "Gil",
+    "Skybuilders Scrips": "Assignats",
+    "Cosmocredits": "CC",
+    "Venture Coffer": "Trouvaille",
+    "Red Pigment": "Pigment rouge",
+    "Blue Pigment": "Pigment bleu",
+    "Yellow Pigment": "Pigment jaune",
+    "Green Pigment": "Pigment vert",
+    "Brown Pigment": "Pigment brun",
+    "Purple Pigment": "Pigment violet",
+    "Planet-specific Credit": "Crédit"
   },
   "metallicDyeIds": [
     13116,

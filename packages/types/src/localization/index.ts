@@ -135,6 +135,9 @@ export interface LocaleData {
   /** Acquisition method translations */
   acquisitions: Record<string, string>;
 
+  /** Currency display label translations */
+  currencies?: Record<string, string>;
+
   /** IDs of metallic dyes */
   metallicDyeIds: number[];
 

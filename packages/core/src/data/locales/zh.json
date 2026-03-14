@@ -2,7 +2,7 @@
   "locale": "zh",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-03-14T13:15:37.986Z",
+    "generated": "2026-03-14T23:12:43.303Z",
     "dyeCount": 125
   },
   "labels": {
@@ -164,6 +164,19 @@
     "Cosmic Fortunes": "宇宙幸运",
     "Venture Coffers": "雇员宝箱",
     "Facewear Collection": "脸部配饰收藏"
+  },
+  "currencies": {
+    "Gil": "金币",
+    "Skybuilders Scrips": "振兴票",
+    "Cosmocredits": "CC",
+    "Venture Coffer": "宝箱",
+    "Red Pigment": "红色色素",
+    "Blue Pigment": "蓝色色素",
+    "Yellow Pigment": "黄色色素",
+    "Green Pigment": "绿色色素",
+    "Brown Pigment": "棕色色素",
+    "Purple Pigment": "紫色色素",
+    "Planet-specific Credit": "信用点"
   },
   "metallicDyeIds": [
     13116,

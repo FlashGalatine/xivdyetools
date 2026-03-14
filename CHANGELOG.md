@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **@xivdyetools/types**: `currency` (`string | null`) field on the `Dye` interface for localized vendor cost display
 - **@xivdyetools/types**: `consolidationType` (`'A' | 'B' | 'C' | null`) and `isIshgardian` (`boolean`) fields on the `Dye` interface for Patch 7.5 dye consolidation
 - **@xivdyetools/core**: `consolidated-ids.ts` config module with `CONSOLIDATED_IDS`, `isConsolidationActive()`, and `getMarketItemID()` — patch-day activation requires updating only 3 null values in one file
 - **@xivdyetools/core**: Exported `getMarketItemID`, `isConsolidationActive`, `CONSOLIDATED_IDS` from package index
@@ -23,10 +24,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **@xivdyetools/core**: `DyeDatabase.initialize()` defaults `currency` to `null`, `consolidationType` to `null`, and `isIshgardian` to `false` for backward compatibility
+- **@xivdyetools/core**: Added `currencies` section to all 6 locale files with localized display labels for 11 currency types (Gil, Skybuilders Scrips, Cosmocredits, pigments, etc.)
+- **@xivdyetools/core**: Added `getCurrency()` to `TranslationProvider` and `LocalizationService` for localized currency name retrieval
 - **@xivdyetools/core**: `DyeDatabase.initialize()` defaults `consolidationType` to `null` and `isIshgardian` to `false` for backward compatibility
 - **@xivdyetools/core**: Synced acquisition, price, and currency data for 47 dyes from CSV to `colors_xiv.json`; corrected 3 Firmament dyes (30122–30124) from Cosmic Exploration to The Firmament / Skybuilders Scrips
 - **@xivdyetools/core**: Added `consolidationType` and `isIshgardian` to all 136 dye entries in `colors_xiv.json`
 - **discord-worker**: Budget calculator uses `getMarketItemID()` for market board price lookups with deduplication (105 → ~20 API calls post-consolidation)
+- **web-app**: Result card `formatVendorCost()` displays correct localized currency instead of hardcoded "G"
 - **web-app**: Market board service fans out consolidated prices to individual dye cache entries via `getMarketItemID()`
 - **@xivdyetools/test-utils**: Updated all mock dye factories and fixtures with `consolidationType` and `isIshgardian` fields
 - **Tests**: Updated mock dye objects across core, discord-worker, and web-app test suites for new fields

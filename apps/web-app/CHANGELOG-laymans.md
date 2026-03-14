@@ -4,6 +4,12 @@
 
 ---
 
+## Correct Currency Display on Dye Cards
+
+Previously, every dye's vendor cost showed "G" (Gil) as the currency — even for dyes that cost Skybuilders' Scrips, Cosmocredits, pigments, or other currencies. Now the result cards display the correct currency name for each dye, fully translated into all 6 supported languages.
+
+---
+
 ## Patch 7.5 Dye Consolidation — Ready When You Are
 
 This release prepares XIV Dye Tools for an upcoming change in FFXIV Patch 7.5, where Square Enix is expected to consolidate 105 individual dye items into just 3 items on the market board.

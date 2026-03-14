@@ -158,6 +158,39 @@ export class TranslationProvider {
   }
 
   /**
+   * Get localized currency display label
+   *
+   * @param currency - Currency key (e.g., "Gil", "Cosmocredits")
+   * @param locale - Requested locale
+   * @returns Localized currency label
+   *
+   * @example
+   * ```typescript
+   * const cur = provider.getCurrency('Skybuilders Scrips', 'ja');
+   * // Returns "振興券" (ja) or "Scrips" (en fallback)
+   * ```
+   */
+  getCurrency(currency: string, locale: LocaleCode): string {
+    const localeData = this.registry.getLocale(locale);
+
+    // Try requested locale
+    if (localeData?.currencies?.[currency]) {
+      return localeData.currencies[currency];
+    }
+
+    // Fallback to English
+    if (locale !== 'en') {
+      const englishData = this.registry.getLocale('en');
+      if (englishData?.currencies?.[currency]) {
+        return englishData.currencies[currency];
+      }
+    }
+
+    // Final fallback: return original currency
+    return currency;
+  }
+
+  /**
    * Get metallic dye IDs (locale-independent)
    *
    * @param locale - Current locale (for consistency)

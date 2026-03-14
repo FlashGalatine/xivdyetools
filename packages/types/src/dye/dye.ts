@@ -64,8 +64,19 @@ export interface Dye {
   /** How to obtain the dye (e.g., 'NPC', 'Crafted', 'Achievement') */
   acquisition: string;
 
-  /** Gil cost (0 if not purchasable) */
+  /** Vendor cost (0 if not purchasable) */
   cost: number;
+
+  /**
+   * Currency used for vendor purchase.
+   *
+   * Common values: `"Gil"`, `"Skybuilders Scrips"`, `"Cosmocredits"`,
+   * `"Venture Coffer"`, `"Red Pigment"` (and other pigments),
+   * `"Planet-specific Credit"`.
+   *
+   * `null` for Facewear dyes (not purchasable).
+   */
+  currency: string | null;
 
   /**
    * Type flags for locale-independent filtering

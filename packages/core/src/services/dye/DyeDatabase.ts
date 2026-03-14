@@ -276,6 +276,9 @@ export class DyeDatabase {
           if (normalizedDye.isIshgardian === undefined) {
             normalizedDye.isIshgardian = false;
           }
+          if (normalizedDye.currency === undefined) {
+            normalizedDye.currency = null;
+          }
 
           // Per MEM-001: Pre-compute lowercase name and category for search optimization
           normalizedDye.nameLower = String(normalizedDye.name).toLowerCase();

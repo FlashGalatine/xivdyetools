@@ -370,6 +370,23 @@ export class LocalizationService {
   }
 
   /**
+   * Get localized currency display label
+   *
+   * @param currency - Currency key (e.g., "Gil", "Cosmocredits")
+   * @returns Localized currency label
+   */
+  getCurrency(currency: string): string {
+    return this.translator.getCurrency(currency, this.currentLocale);
+  }
+
+  /**
+   * Static method: Get localized currency using default instance
+   */
+  static getCurrency(currency: string): string {
+    return this.getDefault().getCurrency(currency);
+  }
+
+  /**
    * Get all metallic dye IDs (for exclusion filtering)
    *
    * @returns Array of metallic dye item IDs

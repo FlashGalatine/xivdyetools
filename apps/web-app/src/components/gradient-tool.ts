@@ -2534,6 +2534,7 @@ export class GradientTool extends BaseComponent {
       category: 'Custom',
       acquisition: 'Custom',
       cost: 0,
+      currency: null,
       isMetallic: false,
       isPastel: false,
       isDark: false,

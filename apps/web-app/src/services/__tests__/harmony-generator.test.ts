@@ -71,6 +71,7 @@ const createMockDye = (overrides: Partial<Dye> = {}): Dye => ({
   category: 'General-purpose',
   acquisition: 'NPC',
   cost: 0,
+  currency: 'Gil',
   isMetallic: false,
   isPastel: false,
   isDark: false,

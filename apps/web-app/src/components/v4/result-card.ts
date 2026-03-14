@@ -851,11 +851,12 @@ export class ResultCard extends BaseLitComponent {
   }
 
   /**
-   * Format vendor cost with "G" suffix
+   * Format vendor cost with localized currency label
    */
-  private formatVendorCost(cost?: number): string {
-    if (cost === undefined || cost === null) return '—';
-    return `${cost.toLocaleString()} G`;
+  private formatVendorCost(cost?: number, currency?: string | null): string {
+    if (cost === undefined || cost === null || !currency) return '—';
+    const label = LanguageService.getCurrency(currency);
+    return `${cost.toLocaleString()} ${label}`;
   }
 
   /**
@@ -1349,7 +1350,7 @@ export class ResultCard extends BaseLitComponent {
                         </div>
                         <div class="detail-row">
                           <span class="detail-label">${LanguageService.t('common.cost')}</span>
-                          <span class="detail-value">${this.formatVendorCost(vendorCost)}</span>
+                          <span class="detail-value">${this.formatVendorCost(vendorCost, dye.currency)}</span>
                         </div>
                       `
                     : nothing}

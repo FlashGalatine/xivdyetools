@@ -2,7 +2,7 @@
   "locale": "de",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-03-14T13:15:37.981Z",
+    "generated": "2026-03-14T23:12:43.299Z",
     "dyeCount": 125
   },
   "labels": {
@@ -164,6 +164,19 @@
     "Cosmic Fortunes": "Kosmo-Glück",
     "Venture Coffers": "Gehilfen-Schatzkiste",
     "Facewear Collection": "Gesichtsschmuck-Sammlung"
+  },
+  "currencies": {
+    "Gil": "Gil",
+    "Skybuilders Scrips": "Scheine",
+    "Cosmocredits": "CC",
+    "Venture Coffer": "Schatzkiste",
+    "Red Pigment": "Rote Farbpigmente",
+    "Blue Pigment": "Blaue Farbpigmente",
+    "Yellow Pigment": "Gelbe Farbpigmente",
+    "Green Pigment": "Grüne Farbpigmente",
+    "Brown Pigment": "Braune Farbpigmente",
+    "Purple Pigment": "Violette Farbpigmente",
+    "Planet-specific Credit": "Kredit"
   },
   "metallicDyeIds": [
     13116,

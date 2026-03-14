@@ -16,6 +16,7 @@ describe('DyeSelectionContext', () => {
     category: 'Neutral',
     acquisition: 'Shop',
     cost: 216,
+    currency: 'Gil',
     isMetallic: false,
     isPastel: false,
     isDark: false,

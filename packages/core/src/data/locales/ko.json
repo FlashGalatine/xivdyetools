@@ -2,7 +2,7 @@
   "locale": "ko",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-03-14T13:15:37.985Z",
+    "generated": "2026-03-14T23:12:43.302Z",
     "dyeCount": 125
   },
   "labels": {
@@ -164,6 +164,19 @@
     "Cosmic Fortunes": "코스모 행운",
     "Venture Coffers": "집사의 보물상자",
     "Facewear Collection": "페이스웨어 컬렉션"
+  },
+  "currencies": {
+    "Gil": "길",
+    "Skybuilders Scrips": "진흥권",
+    "Cosmocredits": "CC",
+    "Venture Coffer": "보물상자",
+    "Red Pigment": "빨간색 안료",
+    "Blue Pigment": "파란색 안료",
+    "Yellow Pigment": "노란색 안료",
+    "Green Pigment": "초록색 안료",
+    "Brown Pigment": "갈색 안료",
+    "Purple Pigment": "보라색 안료",
+    "Planet-specific Credit": "크레딧"
   },
   "metallicDyeIds": [
     13116,

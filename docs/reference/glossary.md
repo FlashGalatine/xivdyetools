@@ -2,6 +2,8 @@
 
 **Terms and concepts used throughout XIV Dye Tools**
 
+**See also:** [FFXIV Terminology Reference](ffxiv-terminology.md) for official in-game terms (dye names, races, jobs, currencies) across all 6 supported languages.
+
 ---
 
 ## Color Theory

@@ -1,8 +1,12 @@
 # i18n Audit: FFXIV Terminology Compliance
 
+> **Moved:** The FFXIV terminology reference tables have been consolidated into
+> [`docs/reference/ffxiv-terminology.md`](../../reference/ffxiv-terminology.md).
+> This audit document is preserved for historical context.
+
 **Project:** xivdyetools-web-app
 **Date:** January 17, 2026
-**Reference:** `xivdyetools-core/docs/LOCALIZATION_REFERENCE.md`
+**Reference:** [`docs/reference/ffxiv-terminology.md`](../../reference/ffxiv-terminology.md) (formerly `LOCALIZATION_REFERENCE.md`)
 **Focus:** Verification of official FFXIV terminology usage
 
 ---

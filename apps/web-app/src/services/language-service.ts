@@ -217,6 +217,13 @@ export class LanguageService {
   }
 
   /**
+   * Get localized currency display label from core library
+   */
+  static getCurrency(currency: string): string {
+    return LocalizationService.getCurrency(currency);
+  }
+
+  /**
    * Get localized harmony type from core library
    */
   static getHarmonyType(key: string): string {

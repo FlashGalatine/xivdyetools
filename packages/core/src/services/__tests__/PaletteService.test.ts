@@ -18,6 +18,7 @@ const createMockDyeService = () => ({
     category: 'Red',
     acquisition: 'Marketboard',
     cost: 0,
+    currency: 'Gil',
     isMetallic: false,
     isPastel: false,
     isDark: false,

@@ -2,7 +2,7 @@
   "locale": "ja",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-03-14T13:15:37.980Z",
+    "generated": "2026-03-14T23:12:43.298Z",
     "dyeCount": 125
   },
   "labels": {
@@ -164,6 +164,19 @@
     "Cosmic Fortunes": "コスモフォーチュン",
     "Venture Coffers": "リテイナーの宝箱",
     "Facewear Collection": "フェイスウェアコレクション"
+  },
+  "currencies": {
+    "Gil": "ギル",
+    "Skybuilders Scrips": "振興券",
+    "Cosmocredits": "CC",
+    "Venture Coffer": "宝箱",
+    "Red Pigment": "レッドピグメント",
+    "Blue Pigment": "ブルーピグメント",
+    "Yellow Pigment": "イエローピグメント",
+    "Green Pigment": "グリーンピグメント",
+    "Brown Pigment": "ブラウンピグメント",
+    "Purple Pigment": "パープルピグメント",
+    "Planet-specific Credit": "クレジット"
   },
   "metallicDyeIds": [
     13116,
