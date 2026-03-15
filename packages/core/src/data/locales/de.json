@@ -2,7 +2,7 @@
   "locale": "de",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-03-14T23:12:43.299Z",
+    "generated": "2026-03-15T04:16:19.912Z",
     "dyeCount": 125
   },
   "labels": {
@@ -162,6 +162,7 @@
     "Kobold Vendor": "Kobold-Händler",
     "Cosmic Exploration": "Kosmo-Erkundung",
     "Cosmic Fortunes": "Kosmo-Glück",
+    "The Firmament": "Himmelsstadt",
     "Venture Coffers": "Gehilfen-Schatzkiste",
     "Facewear Collection": "Gesichtsschmuck-Sammlung"
   },

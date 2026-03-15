@@ -71,6 +71,7 @@ Names match official FFXIV Lodestone and in-game item names. The core library st
 | Amalj'aa Vendor | アマルジャ族のよろず屋 | Amalj'aa-Händler | Vendeur amalj'aa | 아말쟈 상인 | 阿马尔贾商人 |
 | Sahagin Vendor | サハギン族のよろず屋 | Sahagin-Händler | Vendeur sahuagin | 사하긴 상인 | 鱼人商人 |
 | Kobold Vendor | コボルド族のよろず屋 | Kobold-Händler | Vendeur kobold | 코볼드 상인 | 钴铁商人 |
+| The Firmament | 蒼天街 | Himmelsstadt | Azurée | 창천 거리 | 天穹街 |
 | Cosmic Exploration | コスモエクスプローラー | Kosmo-Erkundung | l'exploration cosmique | 코스모 탐사 | 宇宙探索 |
 | Cosmic Fortunes | コスモフォーチュン | Kosmo-Glück | Roue de la fortune cosmique | 코스모 행운 | 宇宙幸运 |
 | Venture Coffers | リテイナーの宝箱 | Gehilfen-Schatzkiste | Trouvaille de servant | 집사의 보물상자 | 雇员宝箱 |
@@ -97,6 +98,16 @@ Display labels used in the result card for vendor costs. These are abbreviated f
 | Brown Pigment | Brown Pigment | ブラウンピグメント | Braune Farbpigmente | Pigment brun | 갈색 안료 | 棕色色素 |
 | Purple Pigment | Purple Pigment | パープルピグメント | Violette Farbpigmente | Pigment violet | 보라색 안료 | 紫色色素 |
 | Planet-specific Credit | Credit | クレジット | Kredit | Crédit | 크레딧 | 信用点 |
+
+---
+
+## Locations
+
+Key in-game locations referenced by the dye acquisition system.
+
+| EN | JA | DE | FR | KO | ZH |
+|----|----|----|----|----|-----|
+| The Firmament | 蒼天街 | Himmelsstadt | Azurée | 창천 거리 | 天穹街 |
 
 ---
 

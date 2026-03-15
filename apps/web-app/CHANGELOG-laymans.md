@@ -8,6 +8,10 @@
 
 Previously, every dye's vendor cost showed "G" (Gil) as the currency — even for dyes that cost Skybuilders' Scrips, Cosmocredits, pigments, or other currencies. Now the result cards display the correct currency name for each dye, fully translated into all 6 supported languages.
 
+## "The Firmament" Now Translated
+
+Dyes acquired from The Firmament previously showed "The Firmament" in English regardless of your language setting. Now it correctly displays in all 6 languages (e.g., "蒼天街" in Japanese, "창천 거리" in Korean).
+
 ---
 
 ## Patch 7.5 Dye Consolidation — Ready When You Are

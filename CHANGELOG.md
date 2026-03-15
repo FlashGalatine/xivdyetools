@@ -10,6 +10,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **@xivdyetools/core**: Added "The Firmament" to acquisition translation maps in all 6 locales — previously displayed untranslated in non-English UIs
+
+### Docs
+
+- **docs/reference/ffxiv-terminology.md**: Added Locations section with localized names for The Firmament
+
 ---
 
 ## [1.6.0] - 2026-03-14

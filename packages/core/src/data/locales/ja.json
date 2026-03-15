@@ -2,7 +2,7 @@
   "locale": "ja",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-03-14T23:12:43.298Z",
+    "generated": "2026-03-15T04:16:19.911Z",
     "dyeCount": 125
   },
   "labels": {
@@ -162,6 +162,7 @@
     "Kobold Vendor": "コボルド族のよろず屋",
     "Cosmic Exploration": "コスモエクスプローラー",
     "Cosmic Fortunes": "コスモフォーチュン",
+    "The Firmament": "蒼天街",
     "Venture Coffers": "リテイナーの宝箱",
     "Facewear Collection": "フェイスウェアコレクション"
   },

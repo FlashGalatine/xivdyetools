@@ -2,7 +2,7 @@
   "locale": "fr",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-03-14T23:12:43.301Z",
+    "generated": "2026-03-15T04:16:19.913Z",
     "dyeCount": 125
   },
   "labels": {
@@ -162,6 +162,7 @@
     "Kobold Vendor": "Vendeur kobold",
     "Cosmic Exploration": "l'exploration cosmique",
     "Cosmic Fortunes": "Roue de la fortune cosmique",
+    "The Firmament": "Azurée",
     "Venture Coffers": "Trouvaille de servant",
     "Facewear Collection": "Collection accessoires faciaux"
   },

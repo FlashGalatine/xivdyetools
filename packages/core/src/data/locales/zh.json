@@ -2,7 +2,7 @@
   "locale": "zh",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-03-14T23:12:43.303Z",
+    "generated": "2026-03-15T04:16:19.916Z",
     "dyeCount": 125
   },
   "labels": {
@@ -162,6 +162,7 @@
     "Kobold Vendor": "钴铁商人",
     "Cosmic Exploration": "宇宙探索",
     "Cosmic Fortunes": "宇宙幸运",
+    "The Firmament": "天穹街",
     "Venture Coffers": "雇员宝箱",
     "Facewear Collection": "脸部配饰收藏"
   },

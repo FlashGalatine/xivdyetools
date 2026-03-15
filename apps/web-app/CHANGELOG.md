@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Result card vendor cost now displays the correct localized currency (e.g., "500 Scrips", "600 CC") instead of hardcoding "G" for all dyes
 - Added `getCurrency()` proxy to `LanguageService` for localized currency display labels
+- "The Firmament" acquisition now displays in the user's language instead of always showing English
 
 ### Changed
 
