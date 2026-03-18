@@ -41,6 +41,10 @@ CREATE TABLE IF NOT EXISTS presets (
   is_curated INTEGER DEFAULT 0,           -- 1 for official presets (SQLite boolean)
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now')),
+  -- PRESETS-CRITICAL-001: Duplicate detection signature (sorted dye IDs as JSON)
+  dye_signature TEXT,
+  -- Store pre-edit values for moderation revert capability
+  previous_values TEXT,
 
   FOREIGN KEY (category_id) REFERENCES categories(id)
 );
@@ -72,17 +76,9 @@ CREATE INDEX IF NOT EXISTS idx_presets_author_created ON presets(author_discord_
 -- For: Full-text search optimization (name lookups)
 CREATE INDEX IF NOT EXISTS idx_presets_name ON presets(name);
 
--- Note: D1 doesn't support generated columns, so we'll compute dye_signature in application code
--- The signature is computed by sorting dye IDs and JSON stringifying: [1,12,40] -> "[1,12,40]"
--- We store it in a separate column for indexing
 -- PRESETS-CRITICAL-001: UNIQUE constraint prevents duplicate dye combinations at DB level
-ALTER TABLE presets ADD COLUMN dye_signature TEXT;
+-- dye_signature is computed by sorting dye IDs and JSON stringifying: [1,12,40] -> "[1,12,40]"
 CREATE UNIQUE INDEX IF NOT EXISTS idx_presets_dye_signature ON presets(dye_signature);
-
--- Store pre-edit values for moderation revert capability
--- JSON: {"name": "...", "description": "...", "tags": [...], "dyes": [...]}
--- Only populated when an edit is flagged by content moderation
-ALTER TABLE presets ADD COLUMN previous_values TEXT;
 
 -- ============================================
 -- VOTES TABLE
@@ -130,3 +126,53 @@ CREATE TABLE IF NOT EXISTS rate_limits (
 
 -- Index for cleanup queries
 CREATE INDEX IF NOT EXISTS idx_rate_limits_expires ON rate_limits(expires_at);
+
+-- ============================================
+-- BANNED USERS TABLE (Migration 0003)
+-- Tracks banned users with audit information
+-- ============================================
+CREATE TABLE IF NOT EXISTS banned_users (
+  id TEXT PRIMARY KEY,                        -- UUID v4
+  discord_id TEXT,                            -- Discord snowflake (nullable)
+  xivauth_id TEXT,                            -- XIVAuth UUID (nullable)
+  username TEXT NOT NULL,                     -- Username at time of ban
+  moderator_discord_id TEXT NOT NULL,         -- Discord ID of moderator who issued ban
+  reason TEXT NOT NULL,                       -- Reason for ban (10-500 chars)
+  banned_at TEXT DEFAULT (datetime('now')),   -- Timestamp of ban
+  unbanned_at TEXT,                           -- Timestamp of unban (NULL if still banned)
+  unban_moderator_discord_id TEXT,            -- Discord ID of moderator who unbanned
+
+  CHECK (discord_id IS NOT NULL OR xivauth_id IS NOT NULL)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_banned_users_discord_active
+  ON banned_users(discord_id)
+  WHERE discord_id IS NOT NULL AND unbanned_at IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_banned_users_xivauth_active
+  ON banned_users(xivauth_id)
+  WHERE xivauth_id IS NOT NULL AND unbanned_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_banned_users_active
+  ON banned_users(banned_at DESC)
+  WHERE unbanned_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_banned_users_moderator
+  ON banned_users(moderator_discord_id);
+
+-- ============================================
+-- FAILED NOTIFICATIONS TABLE (Migration 0005 / BUG-015)
+-- Dead-letter queue for Discord notifications that fail after all retries
+-- ============================================
+CREATE TABLE IF NOT EXISTS failed_notifications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  payload TEXT NOT NULL,
+  error TEXT NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  resolved_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_failed_notifications_unresolved
+  ON failed_notifications(resolved_at)
+  WHERE resolved_at IS NULL;
