@@ -53,12 +53,15 @@ export async function getOrCreateHmacKey(
   const cacheKey = `${secret}:${usage}`;
   const cached = cryptoKeyCache.get(cacheKey);
   if (cached) {
+    // BUG-005: Refresh LRU position on cache hit (delete + re-set moves to end of Map)
+    cryptoKeyCache.delete(cacheKey);
+    cryptoKeyCache.set(cacheKey, cached);
     return cached;
   }
 
   const key = await createHmacKey(secret, usage);
 
-  // Evict oldest entries if cache is full (simple FIFO)
+  // Evict least recently used entry if cache is full (first Map entry = oldest access)
   if (cryptoKeyCache.size >= CRYPTO_KEY_CACHE_MAX) {
     const firstKey = cryptoKeyCache.keys().next().value;
     if (firstKey !== undefined) {

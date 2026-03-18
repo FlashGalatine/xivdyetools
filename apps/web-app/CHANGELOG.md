@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Swatch Matcher**: Fixed color grid showing 0 colors when returning to the tool with a saved race-specific category (Skin Colors or Hair Colors) — async color data now properly updates the grid after loading
+- **OPT-004**: Fixed potential event handler leak in add-to-collection menu when menu is rapidly opened/closed during the listener setup timeout
 
 ### Added
 

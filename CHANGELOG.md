@@ -17,6 +17,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **ARCH-002**: Added post-deploy health check smoke tests to 6 deployment workflows (discord-worker, presets-api, oauth, universalis-proxy, moderation-worker, web-app)
+- **ARCH-003**: Added `pnpm audit --prod` step to CI pipeline for production dependency vulnerability scanning
+- **ARCH-004**: Added bundle size check step to web-app deploy workflow
 - **web-app**: Swatch Matcher reverse matching — select a dye or custom hex from the Color Palette drawer to find and highlight the closest character color swatches
 - **web-app**: Result card "Inspect Dye in..." context menu now includes Swatch Matcher for cross-tool reverse matching
 

@@ -20,6 +20,15 @@ export async function publicRateLimitMiddleware(
   const clientIp = getClientIp(c.req.raw);
   const result = await checkPublicRateLimit(clientIp);
 
+  // BUG-016: Log warning when rate limiter backend had an error (fail-open behavior)
+  if (result.kvError) {
+    console.warn('Rate limiter backend error (failing open)', {
+      ip: clientIp,
+      path: c.req.path,
+      method: c.req.method,
+    });
+  }
+
   // Set rate limit headers on all responses
   c.header('X-RateLimit-Limit', '100');
   c.header('X-RateLimit-Remaining', result.remaining.toString());

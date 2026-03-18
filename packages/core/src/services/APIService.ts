@@ -432,14 +432,16 @@ export class APIService {
     // Check cache version
     if (cached.version && cached.version !== API_CACHE_VERSION) {
       this.metrics.evictions++;
-      await this.cache.delete(cacheKey);
+      // OPT-003: Fire-and-forget — cache cleanup is best-effort, don't block request path
+      void this.cache.delete(cacheKey);
       return null;
     }
 
     // Check if cache has expired
     if (Date.now() - cached.timestamp > cached.ttl) {
       this.metrics.evictions++;
-      await this.cache.delete(cacheKey);
+      // OPT-003: Fire-and-forget — cache cleanup is best-effort, don't block request path
+      void this.cache.delete(cacheKey);
       return null;
     }
 
@@ -449,7 +451,8 @@ export class APIService {
       if (computedChecksum !== cached.checksum) {
         this.metrics.evictions++;
         this.logger.warn(`Cache corruption detected for key: ${cacheKey}`);
-        await this.cache.delete(cacheKey);
+        // OPT-003: Fire-and-forget — cache cleanup is best-effort, don't block request path
+        void this.cache.delete(cacheKey);
         return null;
       }
     }

@@ -21,6 +21,15 @@ import type { LocaleRegistry } from './LocaleRegistry.js';
 
 /**
  * Provides translations with automatic fallback to English
+ *
+ * Fallback chain: requested locale → English → formatted key / original value
+ *
+ * BUG-007: All lookup methods use truthiness checks (e.g., `if (localeData?.labels[key])`)
+ * which treats empty strings ("") as missing translations, falling back to English.
+ * This is intentional — empty strings in locale files indicate untranslated entries.
+ * Korean and Chinese locales are manually sourced and may have incomplete coverage;
+ * the truthiness check ensures seamless fallback for any missing or empty entries.
+ * For detecting incomplete locale files at build time, see `build-locales.ts`.
  */
 export class TranslationProvider {
   constructor(private registry: LocaleRegistry) {}

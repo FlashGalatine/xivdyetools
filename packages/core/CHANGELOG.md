@@ -9,7 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BUG-006**: Extracted `moveToEnd` helper in `LRUCache` and `AsyncLRUCache` for clarity; added documentation explaining thread-safety of synchronous Map operations within a single microtask
+- **BUG-007**: Added documentation to `TranslationProvider` clarifying the intentional truthiness-based fallback strategy for locale lookups
 - **REFACTOR-005**: Changed `getDyesInternal()` return type from `DyeInternal[]` to `readonly DyeInternal[]` for compile-time safety; no runtime impact, all callers already spread or use read-only operations
+- **REFACTOR-006**: Added stability warnings to `@internal` character color data exports — consumers should use `CharacterColorService` for stable API access
+
+### Performance
+
+- **OPT-003**: Cache eviction deletes in `APIService.getCachedPrice()` are now fire-and-forget, eliminating unnecessary request-path blocking
 
 ---
 

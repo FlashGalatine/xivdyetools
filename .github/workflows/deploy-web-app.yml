@@ -42,6 +42,10 @@ jobs:
       - name: Build web app
         run: pnpm --filter xivdyetools-web-app run build
 
+      # ARCH-004: Verify bundle sizes stay within acceptable limits
+      - name: Check bundle sizes
+        run: pnpm --filter xivdyetools-web-app exec node scripts/check-bundle-size.js
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
@@ -50,3 +54,12 @@ jobs:
           workingDirectory: apps/web-app
           command: pages deploy dist --project-name=xivdyetools
           packageManager: pnpm
+
+      # ARCH-002: Verify deployed site responds after deployment
+      - name: Smoke test
+        run: |
+          sleep 5
+          curl --fail --retry 3 --retry-delay 5 --retry-all-errors \
+            -o /dev/null -w "%{http_code}" \
+            -H "User-Agent: xivdyetools-ci" \
+            https://xivdyetools.app/

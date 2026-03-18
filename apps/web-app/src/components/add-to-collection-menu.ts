@@ -28,6 +28,8 @@ export interface AddToCollectionMenuOptions {
  */
 let activeMenu: HTMLElement | null = null;
 let cleanupListener: (() => void) | null = null;
+// OPT-004: Track pending timeout to prevent event handler leak on rapid open/close
+let pendingSetupTimeout: ReturnType<typeof setTimeout> | null = null;
 
 /**
  * Show the add to collection menu
@@ -157,7 +159,9 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
   };
 
   // Delay adding listeners to prevent immediate close
-  setTimeout(() => {
+  // OPT-004: Store timeout ID so closeAddToCollectionMenu() can clear it
+  pendingSetupTimeout = setTimeout(() => {
+    pendingSetupTimeout = null;
     document.addEventListener('click', handleClickOutside);
     document.addEventListener('keydown', handleKeydown);
     cleanupListener = () => {
@@ -251,6 +255,11 @@ function createCollectionMenuItem(
  * Close the add to collection menu
  */
 export function closeAddToCollectionMenu(): void {
+  // OPT-004: Clear any pending listener setup to prevent leak
+  if (pendingSetupTimeout !== null) {
+    clearTimeout(pendingSetupTimeout);
+    pendingSetupTimeout = null;
+  }
   if (cleanupListener) {
     cleanupListener();
     cleanupListener = null;

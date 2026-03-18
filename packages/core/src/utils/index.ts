@@ -65,20 +65,28 @@ export class LRUCache<K, V> {
   }
 
   /**
+   * Move an entry to the end of the Map (most recently used position).
+   *
+   * BUG-006: Extracted for clarity. In JavaScript's single-threaded event loop,
+   * synchronous Map.delete() + Map.set() within a single microtask cannot be
+   * interrupted — no interleaving is possible between the two operations.
+   * This makes the pattern safe in synchronous contexts.
+   */
+  private moveToEnd(key: K, value: V): void {
+    this.cache.delete(key);
+    this.cache.set(key, value);
+  }
+
+  /**
    * Get a value from the cache
    *
    * @param key - The key to look up
    * @returns The cached value or undefined if not found
    */
   get(key: K): V | undefined {
-    // Use has() check first to properly handle undefined values
-    // and ensure atomic move-to-end operation for LRU ordering
     if (!this.cache.has(key)) return undefined;
     const value = this.cache.get(key)!;
-    // Move to end (most recently used)
-    // Note: Atomic in synchronous contexts, but see concurrency warning above
-    this.cache.delete(key);
-    this.cache.set(key, value);
+    this.moveToEnd(key, value);
     return value;
   }
 
@@ -90,7 +98,6 @@ export class LRUCache<K, V> {
    */
   set(key: K, value: V): void {
     if (this.cache.has(key)) {
-      // Update existing - move to end
       this.cache.delete(key);
     } else if (this.cache.size >= this.maxSize) {
       // Remove least recently used (first item)
@@ -157,6 +164,18 @@ export class AsyncLRUCache<K, V> {
   }
 
   /**
+   * Move an entry to the end of the Map (most recently used position).
+   *
+   * BUG-006: Extracted for clarity. These synchronous Map operations within
+   * a single microtask are atomic in JavaScript's event loop — no interleaving
+   * can occur between delete and set.
+   */
+  private moveToEnd(key: K, value: V): void {
+    this.cache.delete(key);
+    this.cache.set(key, value);
+  }
+
+  /**
    * Get a value from cache, or compute it if not present
    *
    * This method handles request deduplication: if a computation for the same
@@ -179,9 +198,7 @@ export class AsyncLRUCache<K, V> {
     // Check cache first (fast path)
     if (this.cache.has(key)) {
       const value = this.cache.get(key)!;
-      // Move to end for LRU ordering
-      this.cache.delete(key);
-      this.cache.set(key, value);
+      this.moveToEnd(key, value);
       return value;
     }
 
@@ -217,9 +234,7 @@ export class AsyncLRUCache<K, V> {
   get(key: K): V | undefined {
     if (!this.cache.has(key)) return undefined;
     const value = this.cache.get(key)!;
-    // Move to end (most recently used)
-    this.cache.delete(key);
-    this.cache.set(key, value);
+    this.moveToEnd(key, value);
     return value;
   }
 
@@ -231,7 +246,6 @@ export class AsyncLRUCache<K, V> {
    */
   set(key: K, value: V): void {
     if (this.cache.has(key)) {
-      // Update existing - move to end
       this.cache.delete(key);
     } else if (this.cache.size >= this.maxSize) {
       // Remove least recently used (first item)

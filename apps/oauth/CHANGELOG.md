@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+
+- **BUG-013**: Removed `STATE_TRANSITION_PERIOD` feature flag — all OAuth states must now be HMAC-signed in production; unsigned states are only accepted in the development environment
+
+---
+
 ## [2.3.8] - 2026-03-09
 
 ### Changed

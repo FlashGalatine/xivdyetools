@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Performance
+
+- **OPT-002**: Added `listings=5&entries=5` query parameters to upstream Universalis requests to bound per-item response size and prevent excessive data transfer
+
+---
+
 ## [1.4.3] - 2026-03-09
 
 ### Changed

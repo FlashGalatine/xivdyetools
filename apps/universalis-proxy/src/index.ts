@@ -179,7 +179,8 @@ app.get('/api/v2/aggregated/:datacenter/:itemIds', async (c) => {
     const result = await cachedFetch({
       cacheKey,
       config,
-      upstreamUrl: `${c.env.UNIVERSALIS_API_BASE}/aggregated/${datacenter}/${itemIds}`,
+      // OPT-002: Limit per-item listings and history entries to bound response size
+      upstreamUrl: `${c.env.UNIVERSALIS_API_BASE}/aggregated/${datacenter}/${itemIds}?listings=5&entries=5`,
       ctx: c.executionCtx,
       baseUrl: new URL(c.req.url).origin,
     });

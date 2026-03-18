@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **BUG-005**: HMAC CryptoKey cache now uses true LRU ordering — cache hits refresh entry position to prevent premature eviction of frequently-used keys
+
 ### Security
 
 - **BUG-010**: Require `sub` claim in `verifyJWT()` and `verifyJWTSignatureOnly()` — reject tokens without a subject identity to prevent authorization bypass if JWT secret is compromised or tokens come from multiple issuers

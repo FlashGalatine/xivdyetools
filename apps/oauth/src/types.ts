@@ -62,7 +62,6 @@ export interface Env {
   JWT_EXPIRY: string;
 
   // Feature flags
-  STATE_TRANSITION_PERIOD?: string; // "true" to allow unsigned states (temporary migration flag)
   USE_DO_RATE_LIMITING?: string; // "true" to use Durable Objects for rate limiting
 
   // Secrets

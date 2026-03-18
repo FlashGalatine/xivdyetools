@@ -58,10 +58,9 @@ callbackRouter.get('/callback', async (c) => {
   };
 
   // SECURITY: Verify state signature to prevent tampering
-  // Allow unsigned states during transition period
+  // BUG-013: Only allow unsigned states in development (STATE_TRANSITION_PERIOD removed)
   try {
-    const allowUnsigned =
-      c.env.ENVIRONMENT === 'development' || c.env.STATE_TRANSITION_PERIOD === 'true';
+    const allowUnsigned = c.env.ENVIRONMENT === 'development';
 
     stateData = await verifyState(state, c.env.JWT_SECRET, allowUnsigned);
   } catch (err) {
