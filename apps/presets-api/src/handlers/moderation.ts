@@ -197,6 +197,60 @@ moderationRouter.get('/stats', async (c) => {
 });
 
 // ============================================
+// FAILED NOTIFICATIONS (BUG-015)
+// ============================================
+
+/**
+ * GET /api/v1/moderation/failed-notifications
+ * List unresolved failed Discord notifications
+ */
+moderationRouter.get('/failed-notifications', async (c) => {
+  const modError = requireModerator(c);
+  if (modError) return modError;
+
+  const includeResolved = c.req.query('include_resolved') === 'true';
+
+  const query = includeResolved
+    ? 'SELECT * FROM failed_notifications ORDER BY created_at DESC LIMIT 50'
+    : 'SELECT * FROM failed_notifications WHERE resolved_at IS NULL ORDER BY created_at DESC LIMIT 50';
+
+  try {
+    const result = await c.env.DB.prepare(query).all();
+    return c.json({ notifications: result.results || [], total: result.results?.length ?? 0 });
+  } catch {
+    // Table may not exist yet if migration hasn't run
+    return c.json({ notifications: [], total: 0 });
+  }
+});
+
+/**
+ * PATCH /api/v1/moderation/failed-notifications/:id/resolve
+ * Mark a failed notification as resolved
+ */
+moderationRouter.patch('/failed-notifications/:id/resolve', async (c) => {
+  const modError = requireModerator(c);
+  if (modError) return modError;
+
+  const id = c.req.param('id');
+
+  try {
+    const result = await c.env.DB.prepare(
+      "UPDATE failed_notifications SET resolved_at = datetime('now') WHERE id = ? AND resolved_at IS NULL"
+    )
+      .bind(id)
+      .run();
+
+    if (!result.meta.changes) {
+      return notFoundResponse(c, 'Failed notification');
+    }
+
+    return c.json({ success: true });
+  } catch {
+    return internalErrorResponse(c, 'Failed to resolve notification');
+  }
+});
+
+// ============================================
 // HELPER FUNCTIONS
 // ============================================
 

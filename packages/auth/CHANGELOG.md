@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+
+- **BUG-010**: Require `sub` claim in `verifyJWT()` and `verifyJWTSignatureOnly()` — reject tokens without a subject identity to prevent authorization bypass if JWT secret is compromised or tokens come from multiple issuers
+
+---
+
 ## [1.1.1] - 2026-03-09
 
 ### Changed

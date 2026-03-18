@@ -9,6 +9,8 @@ on:
       - 'packages/logger/**'
       - 'packages/auth/**'
       - 'packages/rate-limiter/**'
+      # ARCH-001: Add transitive dependency (auth → crypto)
+      - 'packages/crypto/**'
   workflow_dispatch:
 
 concurrency:

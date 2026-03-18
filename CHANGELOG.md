@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - **web-app**: Swatch Matcher color grid showed 0 colors when returning with a saved race-specific category (Skin/Hair Colors) due to async race condition in constructor
+- **ARCH-001**: Fixed incomplete deploy triggers in CI/CD workflows — discord-worker now triggers on bot-i18n, bot-logic, color-blending, svg changes; moderation-worker triggers on crypto (transitive via auth); og-worker triggers on logger (transitive via core)
 
 ### Added
 

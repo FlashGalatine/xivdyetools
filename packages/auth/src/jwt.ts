@@ -164,6 +164,11 @@ export async function verifyJWT(
       return null;
     }
 
+    // BUG-010: Require sub claim — tokens without subject identity are rejected
+    if (!payload.sub) {
+      return null;
+    }
+
     return payload;
   } catch {
     return null;
@@ -199,6 +204,11 @@ export async function verifyJWTSignatureOnly(
   try {
     const payload = await verifyJWTSignature(token, secret);
     if (!payload) return null;
+
+    // BUG-010: Require sub claim — tokens without subject identity are rejected
+    if (!payload.sub) {
+      return null;
+    }
 
     // Check max age if specified
     if (maxAgeMs !== undefined && payload.iat) {

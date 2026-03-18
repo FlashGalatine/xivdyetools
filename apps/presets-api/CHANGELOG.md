@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **BUG-012**: Wrapped `JSON.parse()` calls in `rowToPreset()` in try-catch to prevent a single corrupted D1 row from crashing preset listing endpoints; list endpoints now skip corrupted rows with a console error, while single-row lookups propagate the error for a proper 500 response
+- **BUG-015**: Failed Discord notifications are now persisted to a `failed_notifications` dead-letter table after all retries are exhausted; moderators can view unresolved failures via `GET /moderation/failed-notifications` and mark them resolved via `PATCH /moderation/failed-notifications/:id/resolve`
+
+### Performance
+
+- **OPT-001**: Category cache now uses promise deduplication to prevent thundering herd — concurrent cache misses share a single in-flight D1 query instead of each spawning their own
 
 ---
 

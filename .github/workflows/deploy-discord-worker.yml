@@ -11,6 +11,11 @@ on:
       - 'packages/auth/**'
       - 'packages/rate-limiter/**'
       - 'packages/crypto/**'
+      # ARCH-001: Add missing direct dependencies
+      - 'packages/bot-i18n/**'
+      - 'packages/bot-logic/**'
+      - 'packages/color-blending/**'
+      - 'packages/svg/**'
   workflow_dispatch:
 
 concurrency:

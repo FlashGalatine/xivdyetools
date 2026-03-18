@@ -329,20 +329,22 @@ presetsRouter.patch('/:id', async (c) => {
   // PRESETS-REF-002: Fire-and-forget notification - errors don't fail the request
   // but are logged with preset context for debugging
   if (moderationStatus === 'pending') {
+    const editPayload: PresetNotificationPayload = {
+      type: 'submission',
+      preset: {
+        ...updatedPreset,
+        author_name: preset.author_name || 'Unknown User',
+        author_discord_id: preset.author_discord_id,
+        status: 'pending',
+        moderation_status: 'flagged',
+        source: auth.authSource,
+      },
+    };
     c.executionCtx.waitUntil(
-      notifyDiscordBot(c.env, {
-        type: 'submission',
-        preset: {
-          ...updatedPreset,
-          author_name: preset.author_name || 'Unknown User',
-          author_discord_id: preset.author_discord_id,
-          status: 'pending',
-          moderation_status: 'flagged',
-          source: auth.authSource,
-        },
-      }).catch((err) => {
-        // Log with context for easier debugging
+      notifyDiscordBot(c.env, editPayload).catch(async (err) => {
         console.error(`[PRESETS-REF-002] Discord notification failed for preset edit: id=${updatedPreset.id}, name="${updatedPreset.name}"`, err);
+        // BUG-015: Persist failed notification for moderator review
+        await storeFailedNotification(c.env.DB, editPayload, err);
       })
     );
   }
@@ -479,20 +481,22 @@ presetsRouter.post('/', async (c) => {
   // Send notification to Discord worker (non-blocking)
   // PRESETS-REF-002: Fire-and-forget notification - errors don't fail the request
   // Use waitUntil to keep the worker alive while notification completes
+  const submissionPayload: PresetNotificationPayload = {
+    type: 'submission',
+    preset: {
+      ...preset,
+      author_name: auth.userName?.trim() || 'Unknown User', // PRESETS-HIGH-002
+      author_discord_id: auth.userDiscordId!,
+      status,
+      moderation_status: moderationResult.passed ? 'clean' : 'flagged',
+      source: auth.authSource,
+    },
+  };
   c.executionCtx.waitUntil(
-    notifyDiscordBot(c.env, {
-      type: 'submission',
-      preset: {
-        ...preset,
-        author_name: auth.userName?.trim() || 'Unknown User', // PRESETS-HIGH-002
-        author_discord_id: auth.userDiscordId!,
-        status,
-        moderation_status: moderationResult.passed ? 'clean' : 'flagged',
-        source: auth.authSource,
-      },
-    }).catch((err) => {
-      // Log with context for easier debugging
+    notifyDiscordBot(c.env, submissionPayload).catch(async (err) => {
       console.error(`[PRESETS-REF-002] Discord notification failed for new preset: id=${preset.id}, name="${preset.name}"`, err);
+      // BUG-015: Persist failed notification for moderator review
+      await storeFailedNotification(c.env.DB, submissionPayload, err);
     })
   );
 
@@ -518,6 +522,8 @@ presetsRouter.post('/', async (c) => {
 // Categories are cached at module level and refreshed periodically
 let cachedCategories: string[] | null = null;
 let categoryCacheTime = 0;
+// OPT-001: Pending promise for deduplication — prevents thundering herd on cache miss
+let categoriesFetchPromise: Promise<string[]> | null = null;
 const CATEGORY_CACHE_TTL = 60000; // 1 minute
 
 /**
@@ -526,11 +532,15 @@ const CATEGORY_CACHE_TTL = 60000; // 1 minute
 export function resetCategoryCache(): void {
   cachedCategories = null;
   categoryCacheTime = 0;
+  categoriesFetchPromise = null;
 }
 
 /**
  * Get valid category IDs from database with caching
  * This replaces the hardcoded VALID_CATEGORIES array
+ *
+ * OPT-001: Uses promise deduplication to prevent thundering herd —
+ * concurrent cache misses share a single in-flight database query
  */
 async function getValidCategories(db: D1Database): Promise<string[]> {
   const now = Date.now();
@@ -540,12 +550,25 @@ async function getValidCategories(db: D1Database): Promise<string[]> {
     return cachedCategories;
   }
 
-  // Query database for valid category IDs
-  const result = await db.prepare('SELECT id FROM categories').all<{ id: string }>();
-  cachedCategories = (result.results || []).map(row => row.id);
-  categoryCacheTime = now;
+  // OPT-001: If a fetch is already in progress, await it instead of starting a new one
+  if (categoriesFetchPromise) {
+    return categoriesFetchPromise;
+  }
 
-  return cachedCategories;
+  // Start the fetch and cache the promise for deduplication
+  categoriesFetchPromise = db
+    .prepare('SELECT id FROM categories')
+    .all<{ id: string }>()
+    .then((result) => {
+      cachedCategories = (result.results || []).map(row => row.id);
+      categoryCacheTime = Date.now();
+      return cachedCategories;
+    })
+    .finally(() => {
+      categoriesFetchPromise = null;
+    });
+
+  return categoriesFetchPromise;
 }
 
 /**
@@ -721,4 +744,32 @@ async function notifyDiscordBot(env: Env, payload: PresetNotificationPayload): P
 
   // All retries exhausted
   throw lastError || new Error('Discord notification failed after all retries');
+}
+
+/**
+ * BUG-015: Store failed notification in dead-letter table for later review.
+ * Called from .catch() blocks when notifyDiscordBot() fails after all retries.
+ * Insert is best-effort — failures here are logged but do not propagate.
+ */
+async function storeFailedNotification(
+  db: D1Database,
+  payload: PresetNotificationPayload,
+  error: unknown,
+  retries: number = NOTIFICATION_RETRY_CONFIG.maxRetries
+): Promise<void> {
+  try {
+    await db
+      .prepare(
+        'INSERT INTO failed_notifications (payload, error, attempts) VALUES (?, ?, ?)'
+      )
+      .bind(
+        JSON.stringify(payload),
+        error instanceof Error ? error.message : String(error),
+        retries + 1
+      )
+      .run();
+  } catch (insertErr) {
+    // Best-effort — if the table doesn't exist yet or insert fails, log and move on
+    console.error('[BUG-015] Failed to store notification in dead-letter table:', insertErr);
+  }
 }

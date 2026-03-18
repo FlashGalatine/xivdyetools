@@ -195,6 +195,32 @@ describe('jwt.ts', () => {
       // FINDING-003: No exp means token is rejected
       expect(verified).toBeNull();
     });
+
+    it('should reject token without sub claim (BUG-010)', async () => {
+      // BUG-010: Tokens without sub claim must be rejected
+      const header = { alg: 'HS256', typ: 'JWT' };
+      const payload = {
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        type: 'access',
+      };
+      const headerB64 = base64UrlEncode(JSON.stringify(header));
+      const payloadB64 = base64UrlEncode(JSON.stringify(payload));
+      const signatureInput = `${headerB64}.${payloadB64}`;
+      const key = await createHmacKey(secret, 'sign');
+      const signature = await crypto.subtle.sign(
+        'HMAC',
+        key,
+        new TextEncoder().encode(signatureInput)
+      );
+      const signatureB64 = base64UrlEncodeBytes(new Uint8Array(signature));
+      const token = `${headerB64}.${payloadB64}.${signatureB64}`;
+
+      const verified = await verifyJWT(token, secret);
+
+      // BUG-010: No sub means token is rejected
+      expect(verified).toBeNull();
+    });
   });
 
   describe('verifyJWTSignatureOnly', () => {
@@ -269,6 +295,32 @@ describe('jwt.ts', () => {
       const verified = await verifyJWTSignatureOnly(token, secret, 3600 * 1000);
 
       expect(verified).not.toBeNull();
+    });
+
+    it('should reject token without sub claim (BUG-010)', async () => {
+      // BUG-010: Tokens without sub claim must be rejected even in signature-only mode
+      const header = { alg: 'HS256', typ: 'JWT' };
+      const payload = {
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        type: 'refresh',
+      };
+      const headerB64 = base64UrlEncode(JSON.stringify(header));
+      const payloadB64 = base64UrlEncode(JSON.stringify(payload));
+      const signatureInput = `${headerB64}.${payloadB64}`;
+      const key = await createHmacKey(secret, 'sign');
+      const signature = await crypto.subtle.sign(
+        'HMAC',
+        key,
+        new TextEncoder().encode(signatureInput)
+      );
+      const signatureB64 = base64UrlEncodeBytes(new Uint8Array(signature));
+      const token = `${headerB64}.${payloadB64}.${signatureB64}`;
+
+      const verified = await verifyJWTSignatureOnly(token, secret);
+
+      // BUG-010: No sub means token is rejected
+      expect(verified).toBeNull();
     });
   });
 
