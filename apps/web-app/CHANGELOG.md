@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Swatch Matcher**: Reverse matching — select a dye from the Color Palette drawer or enter a custom hex to highlight the closest matching swatch(es) in the character color grid
 - **Swatch Matcher**: Enabled Color Palette drawer and custom hex input for the Swatch Matcher tool
 - **Swatch Matcher**: Top 3 closest swatches highlighted with ranked blue glow; clicking a result triggers forward matching
+- **Result Card**: Added "Swatch Matcher" option to the "Inspect Dye in..." context menu — sends the dye to the Swatch Matcher for reverse matching against the current character color palette
 
 ---
 

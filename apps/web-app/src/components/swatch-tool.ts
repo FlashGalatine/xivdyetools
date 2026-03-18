@@ -79,6 +79,7 @@ const STORAGE_KEYS = {
   colorCategory: 'v3_character_category',
   selectedColorIndex: 'v3_character_color_index',
   maxResults: 'v3_character_max_results',
+  incomingDye: 'v4_swatch_target_dye',
 } as const;
 
 /**
@@ -254,6 +255,9 @@ export class SwatchTool extends BaseComponent {
   onMount(): void {
     // Load state from share URL first (async, runs after colors loaded)
     void this.loadFromShareUrl();
+
+    // Check for incoming dye from cross-tool navigation (e.g., result card context menu)
+    this.handleIncomingDye();
 
     this.languageUnsubscribe = LanguageService.subscribe(() => {
       this.update();
@@ -459,6 +463,33 @@ export class SwatchTool extends BaseComponent {
   // ============================================================================
   // Reverse Matching (Dye/Hex → Closest Swatch)
   // ============================================================================
+
+  /**
+   * Handle incoming dye from cross-tool navigation (e.g., result card context menu).
+   * Reads a dye ID from localStorage, resolves to a Dye object, calls selectDye(),
+   * then clears the storage key (one-shot consumption).
+   */
+  private handleIncomingDye(): void {
+    const dyeId = StorageService.getItem<number>(STORAGE_KEYS.incomingDye);
+    if (dyeId == null) return;
+
+    // Clear immediately to prevent re-triggering on next mount
+    StorageService.removeItem(STORAGE_KEYS.incomingDye);
+
+    const dye = dyeService.getDyeById(dyeId);
+    if (!dye) {
+      logger.warn(`[SwatchTool] Incoming dye not found: id=${dyeId}`);
+      return;
+    }
+
+    // Ensure colors are loaded before performing reverse match
+    void this.loadColors().then(() => {
+      if (!this.isDestroyed) {
+        this.selectDye(dye);
+        logger.info(`[SwatchTool] Incoming dye from navigation: "${dye.name}" (id=${dyeId})`);
+      }
+    });
+  }
 
   /**
    * Handle dye selection from the palette drawer (reverse matching).

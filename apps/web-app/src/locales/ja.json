@@ -1175,6 +1175,7 @@
     "transformDyeIn": "染料を変換...",
     "openInBrowser": "ブラウザで開く...",
     "sentToBudget": "予算提案に送信しました",
+    "sentToSwatch": "スウォッチマッチャーに送信しました",
     "dyeAlreadyIn": "染料は既に追加されています",
     "addedTo": "追加しました",
     "slotsFull": "すべてのスロットが使用中です。置き換えるスロットを選択してください：",
@@ -1187,7 +1188,8 @@
       "accessibility": "アクセシビリティチェッカー",
       "comparison": "染料比較",
       "gradient": "グラデーションビルダー",
-      "mixer": "染料ミキサー"
+      "mixer": "染料ミキサー",
+      "swatch": "スウォッチマッチャー"
     }
   },
   "share": {

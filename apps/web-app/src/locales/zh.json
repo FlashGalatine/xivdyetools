@@ -171,6 +171,7 @@
     "transformDyeIn": "在以下工具中变换...",
     "openInBrowser": "在浏览器中打开...",
     "sentToBudget": "已发送至预算建议",
+    "sentToSwatch": "已发送到色板匹配器",
     "dyeAlreadyIn": "染剂已添加",
     "addedTo": "添加成功",
     "slotsFull": "所有槽位已满。请选择要替换的槽位：",
@@ -183,7 +184,8 @@
       "accessibility": "无障碍检查器",
       "comparison": "染剂比较",
       "gradient": "渐变生成器",
-      "mixer": "染剂混合器"
+      "mixer": "染剂混合器",
+      "swatch": "色板匹配器"
     }
   },
   "config": {

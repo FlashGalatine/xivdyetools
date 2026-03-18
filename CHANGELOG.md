@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - **web-app**: Swatch Matcher reverse matching — select a dye or custom hex from the Color Palette drawer to find and highlight the closest character color swatches
+- **web-app**: Result card "Inspect Dye in..." context menu now includes Swatch Matcher for cross-tool reverse matching
 
 ### Fixed
 

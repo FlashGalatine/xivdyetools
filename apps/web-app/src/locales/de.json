@@ -1175,6 +1175,7 @@
     "transformDyeIn": "Farbstoff umwandeln in...",
     "openInBrowser": "Im Browser öffnen...",
     "sentToBudget": "An Budget-Vorschläge gesendet",
+    "sentToSwatch": "An Farbmuster-Zuordnung gesendet",
     "dyeAlreadyIn": "Farbstoff bereits hinzugefügt",
     "addedTo": "Erfolgreich hinzugefügt",
     "slotsFull": "Alle Plätze belegt. Wählen Sie einen zum Ersetzen:",
@@ -1187,7 +1188,8 @@
       "accessibility": "Barrierefreiheits-Prüfer",
       "comparison": "Farbstoff-Vergleich",
       "gradient": "Farbverlauf-Ersteller",
-      "mixer": "Farbstoff-Mischer"
+      "mixer": "Farbstoff-Mischer",
+      "swatch": "Farbmuster-Zuordnung"
     }
   },
   "share": {

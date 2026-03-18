@@ -116,6 +116,7 @@ export type ContextAction =
   | 'inspect-budget'
   | 'inspect-accessibility'
   | 'inspect-comparison'
+  | 'inspect-swatch'
   // Transform Dye in...
   | 'transform-gradient'
   | 'transform-mixer'
@@ -150,6 +151,8 @@ const STORAGE_KEYS = {
   harmony: 'v3_harmony_target',
   // Dye Mixer v4 uses a different key AND format (tuple, not array)
   mixerV4: 'v4_mixer_selected_dyes',
+  // Swatch Matcher incoming dye (one-shot, cleared after consumption)
+  swatch: 'v4_swatch_target_dye',
 } as const;
 
 /**
@@ -934,6 +937,9 @@ export class ResultCard extends BaseLitComponent {
       case 'inspect-comparison':
         this.addToTool('comparison', dye);
         break;
+      case 'inspect-swatch':
+        this.sendToSwatch(dye);
+        break;
 
       // Transform actions - navigate to tool
       case 'transform-gradient':
@@ -989,6 +995,16 @@ export class ResultCard extends BaseLitComponent {
     StorageService.setItem(STORAGE_KEYS.budget, dye.id);
     ToastService.success(LanguageService.t('resultCard.sentToBudget'));
     RouterService.navigateTo('budget');
+  }
+
+  /**
+   * Send dye to Swatch Matcher for reverse matching
+   * Stores dye ID in localStorage for one-shot consumption
+   */
+  private sendToSwatch(dye: Dye): void {
+    StorageService.setItem(STORAGE_KEYS.swatch, dye.id);
+    ToastService.success(LanguageService.t('resultCard.sentToSwatch'));
+    RouterService.navigateTo('swatch');
   }
 
   /**
@@ -1474,6 +1490,13 @@ export class ResultCard extends BaseLitComponent {
                             @click=${() => this.handleMenuAction('inspect-comparison')}
                           >
                             ${LanguageService.t('resultCard.tools.comparison')}
+                          </button>
+                          <button
+                            class="menu-item"
+                            role="menuitem"
+                            @click=${() => this.handleMenuAction('inspect-swatch')}
+                          >
+                            ${LanguageService.t('resultCard.tools.swatch')}
                           </button>
                         </div>
                       </div>

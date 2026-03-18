@@ -1175,6 +1175,7 @@
     "transformDyeIn": "Transform Dye in...",
     "openInBrowser": "Open in browser...",
     "sentToBudget": "Sent to Budget Suggestions",
+    "sentToSwatch": "Sent to Swatch Matcher",
     "dyeAlreadyIn": "Dye already added",
     "addedTo": "Added successfully",
     "slotsFull": "All slots are full. Select one to replace:",
@@ -1187,7 +1188,8 @@
       "accessibility": "Accessibility Checker",
       "comparison": "Dye Comparison",
       "gradient": "Gradient Builder",
-      "mixer": "Dye Mixer"
+      "mixer": "Dye Mixer",
+      "swatch": "Swatch Matcher"
     }
   },
   "share": {

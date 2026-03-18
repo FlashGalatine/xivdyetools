@@ -1175,6 +1175,7 @@
     "transformDyeIn": "염료 변환...",
     "openInBrowser": "브라우저에서 열기...",
     "sentToBudget": "예산 제안으로 전송됨",
+    "sentToSwatch": "색상 매칭으로 전송했습니다",
     "dyeAlreadyIn": "염료가 이미 추가되었습니다",
     "addedTo": "추가됨",
     "slotsFull": "모든 슬롯이 꽉 찼습니다. 교체할 슬롯을 선택하세요:",
@@ -1187,7 +1188,8 @@
       "accessibility": "접근성 검사기",
       "comparison": "염료 비교",
       "gradient": "그라디언트 빌더",
-      "mixer": "염료 믹서"
+      "mixer": "염료 믹서",
+      "swatch": "색상 매칭"
     }
   },
   "share": {

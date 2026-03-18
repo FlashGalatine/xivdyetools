@@ -1175,6 +1175,7 @@
     "transformDyeIn": "Transformer la teinture dans...",
     "openInBrowser": "Ouvrir dans le navigateur...",
     "sentToBudget": "Envoyé aux Suggestions de Budget",
+    "sentToSwatch": "Envoyé au Nuancier",
     "dyeAlreadyIn": "Teinture déjà ajoutée",
     "addedTo": "Ajouté avec succès",
     "slotsFull": "Tous les emplacements sont pleins. Sélectionnez-en un à remplacer :",
@@ -1187,7 +1188,8 @@
       "accessibility": "Vérificateur d'Accessibilité",
       "comparison": "Comparaison de Teintures",
       "gradient": "Créateur de Dégradé",
-      "mixer": "Mélangeur de Teintures"
+      "mixer": "Mélangeur de Teintures",
+      "swatch": "Nuancier"
     }
   },
   "share": {
