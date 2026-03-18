@@ -224,8 +224,12 @@ export class SwatchTool extends BaseComponent {
     this.maxResults =
       StorageService.getItem<number>(STORAGE_KEYS.maxResults) ?? DEFAULTS.matchCount;
 
-    // Load initial colors
-    void this.loadColors();
+    // Load initial colors (async for race-specific categories like skin/hair)
+    void this.loadColors().then(() => {
+      if (!this.isDestroyed && this.colorGridContainer) {
+        this.updateColorGrid();
+      }
+    });
   }
 
   // ============================================================================

@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **web-app**: Swatch Matcher color grid showed 0 colors when returning with a saved race-specific category (Skin/Hair Colors) due to async race condition in constructor
+
 ### Added
 
 - **web-app**: Swatch Matcher reverse matching — select a dye or custom hex from the Color Palette drawer to find and highlight the closest character color swatches

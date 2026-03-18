@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Swatch Matcher**: Fixed color grid showing 0 colors when returning to the tool with a saved race-specific category (Skin Colors or Hair Colors) — async color data now properly updates the grid after loading
+
 ### Added
 
 - **Swatch Matcher**: Reverse matching — select a dye from the Color Palette drawer or enter a custom hex to highlight the closest matching swatch(es) in the character color grid
