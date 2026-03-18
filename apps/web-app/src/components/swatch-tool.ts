@@ -24,7 +24,7 @@ import {
   ToastService,
 } from '@services/index';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
-import { CharacterColorService } from '@xivdyetools/core';
+import { CharacterColorService, ColorConverter } from '@xivdyetools/core';
 import type { CharacterColor, CharacterColorMatch, SubRace, Gender } from '@xivdyetools/types';
 import { ICON_TOOL_CHARACTER } from '@shared/tool-icons';
 import { ICON_PALETTE, ICON_MARKET } from '@shared/ui-icons';
@@ -162,6 +162,15 @@ export class SwatchTool extends BaseComponent {
   private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
   private matchingMethod: MatchingMethod = 'oklab';
 
+  // Reverse matching state (dye/hex → closest swatch)
+  private reverseDyeHex: string | null = null;
+  private reverseDyeName: string | null = null;
+  private reverseMatchedSwatches: Array<{
+    color: CharacterColor;
+    distance: number;
+    rank: number; // 1 = closest
+  }> = [];
+
   // Child components
   private marketBoard: MarketBoard | null = null;
   private marketPanel: CollapsiblePanel | null = null;
@@ -180,6 +189,8 @@ export class SwatchTool extends BaseComponent {
   private selectedColorDisplay: HTMLElement | null = null;
   private emptyStateContainer: HTMLElement | null = null;
   private shareButton: ShareButton | null = null;
+  private reverseResultsContainer: HTMLElement | null = null;
+  private reverseSection: HTMLElement | null = null;
   private subraceSelect: HTMLSelectElement | null = null;
   private genderSelect: HTMLSelectElement | null = null;
   private categorySelect: HTMLSelectElement | null = null;
@@ -294,6 +305,9 @@ export class SwatchTool extends BaseComponent {
     this.matchedDyes = [];
     this.colors = [];
     this.priceData.clear();
+    this.reverseDyeHex = null;
+    this.reverseDyeName = null;
+    this.reverseMatchedSwatches = [];
 
     super.destroy();
     logger.info('[CharacterTool] Destroyed');
@@ -376,10 +390,15 @@ export class SwatchTool extends BaseComponent {
       void this.loadColors().then(() => {
         // Update the grid header title
         this.updateColorGrid();
+        // Re-run reverse match against the new palette
+        if (this.reverseDyeHex) {
+          this.performReverseMatch();
+        }
       });
-    } else if (needsRematch && this.selectedColor) {
-      // Just re-match if only maxResults changed
-      this.findMatchingDyes();
+    } else if (needsRematch) {
+      // Re-match if maxResults or matchingMethod changed
+      if (this.selectedColor) this.findMatchingDyes();
+      if (this.reverseDyeHex) this.performReverseMatch();
     } else if (needsRedraw && this.matchedDyes.length > 0) {
       // Just redraw results if only display options changed
       this.updateMatchResults();
@@ -431,6 +450,354 @@ export class SwatchTool extends BaseComponent {
         void this.fetchPrices(this.matchedDyes.map((m) => m.dye));
       }
     }
+  }
+
+  // ============================================================================
+  // Reverse Matching (Dye/Hex → Closest Swatch)
+  // ============================================================================
+
+  /**
+   * Handle dye selection from the palette drawer (reverse matching).
+   * Finds the closest swatches in the current palette grid.
+   */
+  public selectDye(dye: Dye): void {
+    if (!dye) return;
+    this.reverseDyeHex = dye.hex;
+    this.reverseDyeName = LanguageService.getDyeName(dye.itemID) || dye.name;
+    logger.info(`[SwatchTool] Reverse match: dye "${this.reverseDyeName}" (${dye.hex})`);
+    this.performReverseMatch();
+  }
+
+  /**
+   * Handle custom color selection from the palette drawer (reverse matching).
+   */
+  public selectCustomColor(hex: string): void {
+    if (!hex) return;
+    this.reverseDyeHex = hex.startsWith('#') ? hex : `#${hex}`;
+    this.reverseDyeName = `Custom (${this.reverseDyeHex.toUpperCase()})`;
+    logger.info(`[SwatchTool] Reverse match: custom color ${this.reverseDyeHex}`);
+    this.performReverseMatch();
+  }
+
+  /**
+   * Find the closest swatch colors to the selected dye/hex.
+   * Scans all colors in the current palette and ranks by distance.
+   */
+  private performReverseMatch(): void {
+    if (!this.reverseDyeHex || this.colors.length === 0) {
+      this.reverseMatchedSwatches = [];
+      this.updateReverseHighlights();
+      this.updateReverseResults();
+      return;
+    }
+
+    const TOP_N = 3;
+    const scored: Array<{ color: CharacterColor; distance: number }> = [];
+
+    for (const color of this.colors) {
+      const distance = this.calculateColorDistance(this.reverseDyeHex, color.hex);
+      scored.push({ color, distance });
+    }
+    scored.sort((a, b) => a.distance - b.distance);
+
+    this.reverseMatchedSwatches = scored.slice(0, TOP_N).map((s, i) => ({
+      color: s.color,
+      distance: s.distance,
+      rank: i + 1,
+    }));
+
+    logger.info(
+      `[SwatchTool] Reverse match found ${this.reverseMatchedSwatches.length} closest swatches`
+    );
+
+    this.updateReverseHighlights();
+    this.updateReverseResults();
+  }
+
+  /**
+   * Calculate color distance using the current matching method.
+   * Mirrors CharacterColorService.calculateDistanceWithMethod.
+   */
+  private calculateColorDistance(hex1: string, hex2: string): number {
+    switch (this.matchingMethod) {
+      case 'rgb': {
+        const r1 = ColorService.hexToRgb(hex1);
+        const r2 = ColorService.hexToRgb(hex2);
+        const dr = r1.r - r2.r;
+        const dg = r1.g - r2.g;
+        const db = r1.b - r2.b;
+        return Math.sqrt(dr * dr + dg * dg + db * db);
+      }
+      case 'cie76':
+        return ColorConverter.getDeltaE(hex1, hex2, 'cie76');
+      case 'ciede2000':
+        return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
+      case 'hyab':
+        return ColorConverter.getDeltaE_HyAB(hex1, hex2);
+      case 'oklab':
+      default:
+        return ColorConverter.getDeltaE_Oklab(hex1, hex2);
+    }
+  }
+
+  /**
+   * Apply blue glow highlights to reverse-matched swatches.
+   * Uses box-shadow (distinct from forward selection's outline).
+   */
+  private updateReverseHighlights(): void {
+    if (!this.colorGridContainer) return;
+
+    const reverseMap = new Map(
+      this.reverseMatchedSwatches.map((m) => [m.color.index, m.rank])
+    );
+
+    this.colorGridContainer.querySelectorAll('button').forEach((swatch) => {
+      const el = swatch as HTMLElement;
+      const index = parseInt(el.getAttribute('data-index') || '-1', 10);
+      const rank = reverseMap.get(index);
+
+      // Clear previous reverse highlights
+      el.style.boxShadow = '';
+
+      if (rank === 1) {
+        el.style.boxShadow =
+          '0 0 0 3px rgba(59, 130, 246, 0.9), 0 0 12px rgba(59, 130, 246, 0.5)';
+        if (index !== this.selectedColor?.index) el.style.zIndex = '9';
+      } else if (rank === 2) {
+        el.style.boxShadow =
+          '0 0 0 2px rgba(59, 130, 246, 0.6), 0 0 8px rgba(59, 130, 246, 0.3)';
+        if (index !== this.selectedColor?.index) el.style.zIndex = '8';
+      } else if (rank === 3) {
+        el.style.boxShadow =
+          '0 0 0 2px rgba(59, 130, 246, 0.3), 0 0 4px rgba(59, 130, 246, 0.15)';
+        if (index !== this.selectedColor?.index) el.style.zIndex = '7';
+      } else if (index !== this.selectedColor?.index) {
+        el.style.zIndex = 'auto';
+      }
+    });
+  }
+
+  /**
+   * Update reverse match results display.
+   * Shows source dye info and matched swatch positions.
+   */
+  private updateReverseResults(): void {
+    if (!this.reverseResultsContainer || !this.reverseSection) return;
+    clearContainer(this.reverseResultsContainer);
+
+    if (this.reverseMatchedSwatches.length === 0 || !this.reverseDyeHex) {
+      this.reverseSection.style.display = 'none';
+      return;
+    }
+
+    this.reverseSection.style.display = 'flex';
+
+    // Source dye card
+    const sourceCard = this.createElement('div', {
+      attributes: {
+        style: `
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 16px;
+          background: var(--theme-card-background, #2a2a2a);
+          border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
+          border-radius: 8px;
+        `,
+      },
+    });
+
+    const sourceSwatch = this.createElement('div', {
+      attributes: {
+        style: `
+          width: 40px;
+          height: 40px;
+          border-radius: 6px;
+          border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.2));
+          background-color: ${this.reverseDyeHex};
+          flex-shrink: 0;
+        `,
+      },
+    });
+    sourceCard.appendChild(sourceSwatch);
+
+    const sourceInfo = this.createElement('div', {
+      attributes: {
+        style: `
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          min-width: 0;
+        `,
+      },
+    });
+    const sourceName = this.createElement('span', {
+      textContent: this.reverseDyeName || '',
+      attributes: {
+        style: `
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--theme-text, #e0e0e0);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        `,
+      },
+    });
+    sourceInfo.appendChild(sourceName);
+    const sourceHex = this.createElement('span', {
+      className: 'number',
+      textContent: this.reverseDyeHex.toUpperCase(),
+      attributes: {
+        style: `
+          font-size: 12px;
+          color: var(--theme-text-muted, #a0a0a0);
+        `,
+      },
+    });
+    sourceInfo.appendChild(sourceHex);
+    sourceCard.appendChild(sourceInfo);
+
+    this.reverseResultsContainer.appendChild(sourceCard);
+
+    // Matched swatch rows
+    for (const match of this.reverseMatchedSwatches) {
+      const gridRow = Math.floor(match.color.index / 8) + 1;
+      const gridCol = (match.color.index % 8) + 1;
+
+      const row = this.createElement('div', {
+        attributes: {
+          style: `
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            background: var(--theme-card-background, #2a2a2a);
+            border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+          `,
+        },
+      });
+
+      // Hover effect
+      row.addEventListener('mouseenter', () => {
+        row.style.background = 'var(--theme-card-hover, #333333)';
+      });
+      row.addEventListener('mouseleave', () => {
+        row.style.background = 'var(--theme-card-background, #2a2a2a)';
+      });
+
+      // Click to select this swatch for forward matching
+      row.addEventListener('click', () => {
+        this.selectColor(match.color);
+      });
+
+      // Rank badge
+      const rankBadge = this.createElement('span', {
+        textContent: `#${match.rank}`,
+        attributes: {
+          style: `
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: ${match.rank === 1 ? 'rgba(59, 130, 246, 0.3)' : 'rgba(255, 255, 255, 0.08)'};
+            color: ${match.rank === 1 ? 'rgb(147, 197, 253)' : 'var(--theme-text-muted, #a0a0a0)'};
+            font-size: 11px;
+            font-weight: 700;
+            flex-shrink: 0;
+          `,
+        },
+      });
+      row.appendChild(rankBadge);
+
+      // Color swatch
+      const matchSwatch = this.createElement('div', {
+        attributes: {
+          style: `
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.2));
+            background-color: ${match.color.hex};
+            flex-shrink: 0;
+          `,
+        },
+      });
+      row.appendChild(matchSwatch);
+
+      // Info column
+      const info = this.createElement('div', {
+        attributes: {
+          style: `
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            min-width: 0;
+          `,
+        },
+      });
+
+      const posLabel = this.createElement('span', {
+        textContent: `Row ${gridRow}, Column ${gridCol}`,
+        attributes: {
+          style: `
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--theme-text, #e0e0e0);
+          `,
+        },
+      });
+      info.appendChild(posLabel);
+
+      const hexLabel = this.createElement('span', {
+        className: 'number',
+        textContent: match.color.hex.toUpperCase(),
+        attributes: {
+          style: `
+            font-size: 11px;
+            color: var(--theme-text-muted, #a0a0a0);
+          `,
+        },
+      });
+      info.appendChild(hexLabel);
+      row.appendChild(info);
+
+      // Distance badge
+      const distBadge = this.createElement('span', {
+        className: 'number',
+        textContent: `Δ ${match.distance.toFixed(2)}`,
+        attributes: {
+          style: `
+            font-size: 11px;
+            color: var(--theme-text-muted, #a0a0a0);
+            background: rgba(255, 255, 255, 0.06);
+            padding: 4px 8px;
+            border-radius: 4px;
+            flex-shrink: 0;
+          `,
+        },
+      });
+      row.appendChild(distBadge);
+
+      this.reverseResultsContainer.appendChild(row);
+    }
+  }
+
+  /**
+   * Clear reverse matching state and visuals.
+   */
+  private clearReverseMatch(): void {
+    this.reverseDyeHex = null;
+    this.reverseDyeName = null;
+    this.reverseMatchedSwatches = [];
+    this.updateReverseHighlights();
+    this.updateReverseResults();
   }
 
   // ============================================================================
@@ -842,6 +1209,42 @@ export class SwatchTool extends BaseComponent {
       },
     });
 
+    // Reverse Match Section (shown when a dye is selected from palette drawer)
+    this.reverseSection = this.createElement('div', {
+      attributes: {
+        style: `
+          width: 100%;
+          display: none;
+          flex-direction: column;
+          gap: 12px;
+        `,
+      },
+    });
+
+    const reverseHeader = this.createElement('div', {
+      className: 'section-header',
+      attributes: { style: 'width: 100%;' },
+    });
+    const reverseTitle = this.createElement('span', {
+      className: 'section-title',
+      textContent: 'Closest Swatches',
+    });
+    reverseHeader.appendChild(reverseTitle);
+    this.reverseSection.appendChild(reverseHeader);
+
+    this.reverseResultsContainer = this.createElement('div', {
+      attributes: {
+        style: `
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          width: 100%;
+        `,
+      },
+    });
+    this.reverseSection.appendChild(this.reverseResultsContainer);
+    resultsArea.appendChild(this.reverseSection);
+
     // Selected Color Section (shows technical info of selected swatch)
     const selectedSection = this.createElement('div', {
       attributes: {
@@ -1119,6 +1522,10 @@ export class SwatchTool extends BaseComponent {
 
     // Apply responsive sizing to newly created swatches
     this.updateSwatchLayout();
+    // Re-run reverse match against potentially new palette, then highlight
+    if (this.reverseDyeHex) {
+      this.performReverseMatch();
+    }
   }
 
   /**
@@ -1857,6 +2264,7 @@ export class SwatchTool extends BaseComponent {
    */
   public clearDyes(): void {
     this.clearSelection();
+    this.clearReverseMatch();
     logger.info('[SwatchTool] All selections cleared');
   }
 

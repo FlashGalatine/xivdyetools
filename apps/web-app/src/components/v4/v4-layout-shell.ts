@@ -78,7 +78,7 @@ export class V4LayoutShell extends BaseLitComponent {
   /**
    * Tools that should NOT show the Color Palette drawer
    */
-  private static readonly TOOLS_WITHOUT_PALETTE: ToolId[] = ['extractor', 'swatch', 'presets'];
+  private static readonly TOOLS_WITHOUT_PALETTE: ToolId[] = ['extractor', 'presets'];
 
   /**
    * Check if the palette should be visible for the current tool

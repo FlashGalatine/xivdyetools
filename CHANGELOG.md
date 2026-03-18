@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **web-app**: Swatch Matcher reverse matching — select a dye or custom hex from the Color Palette drawer to find and highlight the closest character color swatches
+
 ### Fixed
 
 - **@xivdyetools/core**: Added "The Firmament" to acquisition translation maps in all 6 locales — previously displayed untranslated in non-English UIs
