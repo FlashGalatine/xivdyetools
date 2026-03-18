@@ -99,6 +99,7 @@ export function createMockDye(overrides: Partial<Dye> = {}): Dye {
     category: 'Grey',
     acquisition: 'Vendor',
     cost: 216,
+    currency: null,
     isMetallic: false,
     isPastel: false,
     isDark: false,

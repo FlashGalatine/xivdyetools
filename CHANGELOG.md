@@ -8,12 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased]
+## [1.7.0] - 2026-03-18
 
 ### Fixed
 
 - **web-app**: Swatch Matcher color grid showed 0 colors when returning with a saved race-specific category (Skin/Hair Colors) due to async race condition in constructor
 - **ARCH-001**: Fixed incomplete deploy triggers in CI/CD workflows — discord-worker now triggers on bot-i18n, bot-logic, color-blending, svg changes; moderation-worker triggers on crypto (transitive via auth); og-worker triggers on logger (transitive via core)
+- **@xivdyetools/core**: Added "The Firmament" to acquisition translation maps in all 6 locales — previously displayed untranslated in non-English UIs
 
 ### Added
 
@@ -22,10 +23,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **ARCH-004**: Added bundle size check step to web-app deploy workflow
 - **web-app**: Swatch Matcher reverse matching — select a dye or custom hex from the Color Palette drawer to find and highlight the closest character color swatches
 - **web-app**: Result card "Inspect Dye in..." context menu now includes Swatch Matcher for cross-tool reverse matching
-
-### Fixed
-
-- **@xivdyetools/core**: Added "The Firmament" to acquisition translation maps in all 6 locales — previously displayed untranslated in non-English UIs
 
 ### Docs
 

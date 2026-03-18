@@ -1,3 +1,27 @@
+# What's New in Version 1.7.0
+
+*Released: March 18, 2026*
+
+---
+
+## Swatch Matcher: Reverse Matching
+
+You can now go backwards with the Swatch Matcher! Select any dye from the Color Palette drawer or enter a custom hex code, and the tool will highlight the 3 closest matching character color swatches in the grid. This makes it easy to answer the question: "which character colors does this dye look like?" Click any highlighted swatch to jump straight into the regular forward matching flow.
+
+## "Inspect Dye in..." Now Includes Swatch Matcher
+
+When viewing a dye result card from any tool, the right-click context menu "Inspect Dye in..." now includes **Swatch Matcher** as a destination. This lets you quickly check what character colors a dye resembles without leaving your current workflow.
+
+## Bug Fix: Empty Color Grid
+
+Fixed an issue where the Swatch Matcher's color grid would appear empty when returning to the tool with a previously saved race-specific category (like Skin Colors or Hair Colors). The grid now properly loads color data in all cases.
+
+---
+
+*For technical details, see [CHANGELOG.md](./CHANGELOG.md)*
+
+---
+
 # What's New in Version 1.6.0
 
 *Released: March 14, 2026*
