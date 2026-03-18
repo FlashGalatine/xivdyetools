@@ -203,6 +203,16 @@ describe('DyeSearch', () => {
       expect(results.length).toBeGreaterThanOrEqual(1);
       expect(results.some((d) => d.name === 'Metallic Silver')).toBe(true);
     });
+
+    it('should return empty array for null query', () => {
+      const results = search.searchByName(null as unknown as string);
+      expect(results).toHaveLength(0);
+    });
+
+    it('should return empty array for undefined query', () => {
+      const results = search.searchByName(undefined as unknown as string);
+      expect(results).toHaveLength(0);
+    });
   });
 
   describe('searchByCategory', () => {

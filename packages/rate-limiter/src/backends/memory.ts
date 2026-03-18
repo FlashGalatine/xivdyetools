@@ -165,11 +165,15 @@ export class MemoryRateLimiter implements RateLimiter {
     const cutoff = Date.now() - maxAge;
 
     this.requestLog.forEach((timestamps, key) => {
-      const filtered = timestamps.filter((ts) => ts > cutoff);
-      if (filtered.length === 0) {
+      // Timestamps are appended chronologically — scan from front to find first valid
+      let firstValid = 0;
+      while (firstValid < timestamps.length && timestamps[firstValid] <= cutoff) {
+        firstValid++;
+      }
+      if (firstValid === timestamps.length) {
         this.requestLog.delete(key);
-      } else {
-        this.requestLog.set(key, filtered);
+      } else if (firstValid > 0) {
+        timestamps.splice(0, firstValid);
       }
     });
   }
@@ -188,7 +192,7 @@ export class MemoryRateLimiter implements RateLimiter {
     const entries: Array<{ key: string; lastActivity: number }> = [];
     this.requestLog.forEach((timestamps, key) => {
       const lastActivity =
-        timestamps.length > 0 ? Math.max(...timestamps) : 0;
+        timestamps.length > 0 ? timestamps[timestamps.length - 1] : 0;
       entries.push({ key, lastActivity });
     });
 

@@ -87,6 +87,7 @@ export class DyeSearch {
    * Per MEM-001: Uses pre-computed nameLower to avoid repeated toLowerCase() calls
    */
   searchByName(query: string): Dye[] {
+    if (!query || typeof query !== 'string') return [];
     this.database.ensureLoaded();
     const lowerQuery = query.toLowerCase().trim();
 

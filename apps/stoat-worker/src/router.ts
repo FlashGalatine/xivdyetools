@@ -81,15 +81,4 @@ const COMMAND_ROUTES: Record<string, CommandHandler> = {
 
   // Dye lookup commands
   'dye.info': handleInfoCommand,
-
-  // TODO: Phase 2 commands
-  // 'dye.search': handleSearchCommand,
-  // 'dye.list': handleListCommand,
-  // 'dye.random': handleRandomCommand,
-  // harmony: handleHarmonyCommand,
-  // gradient: handleGradientCommand,
-  // mixer: handleMixerCommand,
-  // comparison: handleComparisonCommand,
-  // match: handleMatchCommand,
-  // a11y: handleAccessibilityCommand,
 };

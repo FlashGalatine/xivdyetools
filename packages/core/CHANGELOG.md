@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BUG-007**: Added documentation to `TranslationProvider` clarifying the intentional truthiness-based fallback strategy for locale lookups
 - **REFACTOR-005**: Changed `getDyesInternal()` return type from `DyeInternal[]` to `readonly DyeInternal[]` for compile-time safety; no runtime impact, all callers already spread or use read-only operations
 - **REFACTOR-006**: Added stability warnings to `@internal` character color data exports — consumers should use `CharacterColorService` for stable API access
+- **BUG-003**: Replaced non-null assertion (`!`) in `DyeDatabase.initialize()` hue bucket accumulation with local variable pattern; no behavior change
+- **BUG-011**: Added null/undefined guard to `DyeSearch.searchByName()` for defensive handling of untyped callers
 
 ### Performance
 

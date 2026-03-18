@@ -338,10 +338,12 @@ export class DyeDatabase {
 
         // Per P-2: Index by hue bucket (10° buckets)
         const hueBucket = this.getHueBucket(dye.hsv.h);
-        if (!this.dyesByHueBucket.has(hueBucket)) {
-          this.dyesByHueBucket.set(hueBucket, []);
+        let bucket = this.dyesByHueBucket.get(hueBucket);
+        if (!bucket) {
+          bucket = [];
+          this.dyesByHueBucket.set(hueBucket, bucket);
         }
-        this.dyesByHueBucket.get(hueBucket)!.push(dye);
+        bucket.push(dye);
 
         // Per P-7: Add to k-d tree (exclude Facewear dyes from tree)
         if (dye.category !== 'Facewear') {
