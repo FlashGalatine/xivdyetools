@@ -582,9 +582,7 @@ export class SwatchTool extends BaseComponent {
   private updateReverseHighlights(): void {
     if (!this.colorGridContainer) return;
 
-    const reverseMap = new Map(
-      this.reverseMatchedSwatches.map((m) => [m.color.index, m.rank])
-    );
+    const reverseMap = new Map(this.reverseMatchedSwatches.map((m) => [m.color.index, m.rank]));
 
     this.colorGridContainer.querySelectorAll('button').forEach((swatch) => {
       const el = swatch as HTMLElement;
@@ -595,16 +593,13 @@ export class SwatchTool extends BaseComponent {
       el.style.boxShadow = '';
 
       if (rank === 1) {
-        el.style.boxShadow =
-          '0 0 0 3px rgba(59, 130, 246, 0.9), 0 0 12px rgba(59, 130, 246, 0.5)';
+        el.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.9), 0 0 12px rgba(59, 130, 246, 0.5)';
         if (index !== this.selectedColor?.index) el.style.zIndex = '9';
       } else if (rank === 2) {
-        el.style.boxShadow =
-          '0 0 0 2px rgba(59, 130, 246, 0.6), 0 0 8px rgba(59, 130, 246, 0.3)';
+        el.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.6), 0 0 8px rgba(59, 130, 246, 0.3)';
         if (index !== this.selectedColor?.index) el.style.zIndex = '8';
       } else if (rank === 3) {
-        el.style.boxShadow =
-          '0 0 0 2px rgba(59, 130, 246, 0.3), 0 0 4px rgba(59, 130, 246, 0.15)';
+        el.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.3), 0 0 4px rgba(59, 130, 246, 0.15)';
         if (index !== this.selectedColor?.index) el.style.zIndex = '7';
       } else if (index !== this.selectedColor?.index) {
         el.style.zIndex = 'auto';

@@ -1366,7 +1366,9 @@ export class ResultCard extends BaseLitComponent {
                         </div>
                         <div class="detail-row">
                           <span class="detail-label">${LanguageService.t('common.cost')}</span>
-                          <span class="detail-value">${this.formatVendorCost(vendorCost, dye.currency)}</span>
+                          <span class="detail-value"
+                            >${this.formatVendorCost(vendorCost, dye.currency)}</span
+                          >
                         </div>
                       `
                     : nothing}

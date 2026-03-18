@@ -95,7 +95,12 @@ export class DyePaletteDrawer extends BaseLitComponent {
   /**
    * Tools that support the Custom Color feature
    */
-  private static readonly TOOLS_WITH_CUSTOM_COLOR: ToolId[] = ['harmony', 'gradient', 'mixer', 'swatch'];
+  private static readonly TOOLS_WITH_CUSTOM_COLOR: ToolId[] = [
+    'harmony',
+    'gradient',
+    'mixer',
+    'swatch',
+  ];
 
   /**
    * Check if custom color section should be shown for current tool
