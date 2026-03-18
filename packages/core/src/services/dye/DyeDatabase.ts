@@ -547,7 +547,7 @@ export class DyeDatabase {
    * }
    * ```
    */
-  getDyesInternal(): DyeInternal[] {
+  getDyesInternal(): readonly DyeInternal[] {
     this.ensureLoaded();
     return this.dyes;
   }

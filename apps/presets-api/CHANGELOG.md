@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **BUG-012**: Wrapped `JSON.parse()` calls in `rowToPreset()` in try-catch to prevent a single corrupted D1 row from crashing preset listing endpoints; list endpoints now skip corrupted rows with a console error, while single-row lookups propagate the error for a proper 500 response
+
+---
+
 ## [1.4.15] - 2026-03-09
 
 ### Changed

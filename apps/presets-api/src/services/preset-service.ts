@@ -32,15 +32,44 @@ export function generateDyeSignature(dyes: number[]): string {
 
 /**
  * Convert database row to CommunityPreset
+ *
+ * BUG-012 FIX: Each JSON.parse is wrapped in try-catch. 'dyes' and 'tags'
+ * throw on corruption (callers must handle). 'previous_values' degrades to
+ * null since it is audit trail data, not core preset content.
  */
 export function rowToPreset(row: PresetRow): CommunityPreset {
+  let dyes: CommunityPreset['dyes'];
+  let tags: CommunityPreset['tags'];
+
+  try {
+    dyes = JSON.parse(row.dyes) as CommunityPreset['dyes'];
+  } catch {
+    throw new Error(`[BUG-012] Preset ${row.id}: invalid JSON in 'dyes' column`);
+  }
+
+  try {
+    tags = JSON.parse(row.tags) as CommunityPreset['tags'];
+  } catch {
+    throw new Error(`[BUG-012] Preset ${row.id}: invalid JSON in 'tags' column`);
+  }
+
+  let previous_values: CommunityPreset['previous_values'] = null;
+  if (row.previous_values) {
+    try {
+      previous_values = JSON.parse(row.previous_values) as CommunityPreset['previous_values'];
+    } catch {
+      // previous_values is audit trail data — safe to default to null on corruption
+      console.error(`[BUG-012] Preset ${row.id}: invalid JSON in 'previous_values', defaulting to null`);
+    }
+  }
+
   return {
     id: row.id,
     name: row.name,
     description: row.description,
     category_id: row.category_id as CommunityPreset['category_id'],
-    dyes: JSON.parse(row.dyes) as CommunityPreset['dyes'],
-    tags: JSON.parse(row.tags) as CommunityPreset['tags'],
+    dyes,
+    tags,
     author_discord_id: row.author_discord_id,
     author_name: row.author_name,
     vote_count: row.vote_count,
@@ -49,7 +78,7 @@ export function rowToPreset(row: PresetRow): CommunityPreset {
     created_at: row.created_at,
     updated_at: row.updated_at,
     dye_signature: row.dye_signature || undefined,
-    previous_values: row.previous_values ? (JSON.parse(row.previous_values) as CommunityPreset['previous_values']) : null,
+    previous_values,
   };
 }
 
@@ -136,7 +165,14 @@ export async function getPresets(
   const rows = result.results || [];
   // Extract total from first row (all rows have same total via window function)
   const total = rows.length > 0 ? rows[0]._total : 0;
-  const presets = rows.map(rowToPreset);
+  const presets = rows.flatMap((row) => {
+    try {
+      return [rowToPreset(row)];
+    } catch (error) {
+      console.error(`[BUG-012] Skipping corrupted preset row id=${row.id}:`, error);
+      return [];
+    }
+  });
 
   return {
     presets,
@@ -161,7 +197,14 @@ export async function getFeaturedPresets(db: D1Database): Promise<CommunityPrese
     LIMIT 10
   `;
   const result = await db.prepare(query).all<PresetRow>();
-  return (result.results || []).map(rowToPreset);
+  return (result.results || []).flatMap((row) => {
+    try {
+      return [rowToPreset(row)];
+    } catch (error) {
+      console.error(`[BUG-012] Skipping corrupted preset row id=${row.id}:`, error);
+      return [];
+    }
+  });
 }
 
 /**
@@ -279,7 +322,14 @@ export async function getPendingPresets(db: D1Database): Promise<CommunityPreset
     ORDER BY created_at ASC
   `;
   const result = await db.prepare(query).all<PresetRow>();
-  return (result.results || []).map(rowToPreset);
+  return (result.results || []).flatMap((row) => {
+    try {
+      return [rowToPreset(row)];
+    } catch (error) {
+      console.error(`[BUG-012] Skipping corrupted preset row id=${row.id}:`, error);
+      return [];
+    }
+  });
 }
 
 /**
@@ -297,7 +347,14 @@ export async function getPresetsByUser(
     ORDER BY created_at DESC
   `;
   const result = await db.prepare(query).bind(authorDiscordId).all<PresetRow>();
-  return (result.results || []).map(rowToPreset);
+  return (result.results || []).flatMap((row) => {
+    try {
+      return [rowToPreset(row)];
+    } catch (error) {
+      console.error(`[BUG-012] Skipping corrupted preset row id=${row.id}:`, error);
+      return [];
+    }
+  });
 }
 
 /**
