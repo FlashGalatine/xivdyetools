@@ -23,9 +23,12 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          // Handle @xivdyetools/core via npm path OR pnpm workspace real path
+          if (id.includes('@xivdyetools/core') || id.includes('/packages/core/')) {
+            return 'vendor-core';
+          }
           if (id.includes('node_modules')) {
             if (id.includes('lit') || id.includes('@lit')) return 'vendor-lit';
-            if (id.includes('@xivdyetools/core')) return 'vendor-core';
             if (id.includes('spectral.js')) return 'vendor-spectral';
             return 'vendor';
           }

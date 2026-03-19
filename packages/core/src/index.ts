@@ -105,34 +105,5 @@ export {
 export { default as dyeDatabase } from './data/colors_xiv.json' with { type: 'json' };
 export { default as presetData } from './data/presets.json' with { type: 'json' };
 
-// ============================================================================
-// Character Color Data Exports (Semi-Internal)
-//
-// REFACTOR-006: These exports provide raw character color JSON data consumed
-// by discord-worker for SVG rendering. They are NOT part of the stable public
-// API and may change without notice between minor versions. For stable color
-// operations, use CharacterColorService instead.
-// ============================================================================
-/** @internal — Raw character color metadata. Unstable API. */
-export { default as characterColorMeta } from './data/character_colors/index.json' with { type: 'json' };
-/** @internal — Unstable API. Use CharacterColorService for stable access. */
-export { default as eyeColorsData } from './data/character_colors/shared/eye_colors.json' with { type: 'json' };
-/** @internal — Unstable API. Use CharacterColorService for stable access. */
-export { default as highlightColorsData } from './data/character_colors/shared/highlight_colors.json' with { type: 'json' };
-/** @internal — Unstable API. Use CharacterColorService for stable access. */
-export { default as lipColorsDarkData } from './data/character_colors/shared/lip_colors_dark.json' with { type: 'json' };
-/** @internal — Unstable API. Use CharacterColorService for stable access. */
-export { default as lipColorsLightData } from './data/character_colors/shared/lip_colors_light.json' with { type: 'json' };
-/** @internal — Unstable API. Use CharacterColorService for stable access. */
-export { default as tattooColorsData } from './data/character_colors/shared/tattoo_colors.json' with { type: 'json' };
-/** @internal — Unstable API. Use CharacterColorService for stable access. */
-export { default as facePaintDarkData } from './data/character_colors/shared/face_paint_dark.json' with { type: 'json' };
-/** @internal — Unstable API. Use CharacterColorService for stable access. */
-export { default as facePaintLightData } from './data/character_colors/shared/face_paint_light.json' with { type: 'json' };
-/** @internal — Unstable API. Use CharacterColorService for stable access. */
-export { default as hairColorsData } from './data/character_colors/race_specific/hair_colors.json' with { type: 'json' };
-/** @internal — Unstable API. Use CharacterColorService for stable access. */
-export { default as skinColorsData } from './data/character_colors/race_specific/skin_colors.json' with { type: 'json' };
-
 // Version (auto-generated from package.json during build)
 export { VERSION } from './version.js';
