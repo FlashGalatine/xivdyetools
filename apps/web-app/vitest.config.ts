@@ -8,8 +8,8 @@ export default defineConfig({
     setupFiles: ['./src/__tests__/setup.ts'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html', 'lcov'],
-      reportsDirectory: './node_modules/.cache/vitest-coverage',
+      reporter: ['text', 'json', 'html', 'lcov', 'json-summary'],
+      reportsDirectory: './coverage',
       clean: true,
       exclude: [
         'node_modules/',

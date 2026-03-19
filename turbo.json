@@ -27,6 +27,12 @@
       "inputs": ["src/**", "tests/**", "vitest.config.*"],
       "outputs": ["coverage/**"]
     },
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "inputs": ["src/**", "tests/**", "vitest.config.*"],
+      "outputs": ["coverage/**"]
+    },
     "clean": {
       "cache": false
     },
