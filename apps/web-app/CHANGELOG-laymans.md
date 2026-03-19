@@ -60,3 +60,4 @@ This release prepares XIV Dye Tools for an upcoming change in FFXIV Patch 7.5, w
 ---
 
 *For technical details, see [CHANGELOG.md](./CHANGELOG.md)*
+ 
