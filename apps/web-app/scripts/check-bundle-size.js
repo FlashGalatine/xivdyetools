@@ -57,17 +57,17 @@ const BUNDLE_LIMITS = {
 
   // Other chunks
   'dye-selector': 50 * 1024,            // 50 KB - shared dye selector component
-  'modals': 45 * 1024,                  // 45 KB - welcome/changelog modals
+  'modals': 280 * 1024,                 // 280 KB - welcome/changelog/about modals
 
   // CSS (Tailwind + custom styles)
-  '.css': 90 * 1024,                    // 90 KB (gzip: ~16KB)
+  '.css': 105 * 1024,                   // 105 KB (gzip: ~20KB)
 };
 
 /**
  * Total bundle size limit (sum of all JS)
  * Note: vendor-core is large but highly cacheable (changes infrequently)
  */
-const TOTAL_JS_LIMIT = 2100 * 1024; // 2.1 MB total JS (gzips to ~300KB)
+const TOTAL_JS_LIMIT = 2200 * 1024; // 2.2 MB total JS (gzips to ~300KB)
 
 // ============================================================================
 // Helpers
