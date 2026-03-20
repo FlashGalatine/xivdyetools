@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.5.1] - 2026-03-20
+
+### Changed
+
+- Updated bundle size limits in CI: modals chunk 45→280 KB, CSS 90→105 KB, total JS 2.1→2.2 MB to reflect current build output
+
+---
+
 ## [4.5.0] - 2026-03-18
 
 ### Fixed
