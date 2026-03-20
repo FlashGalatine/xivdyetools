@@ -77,7 +77,7 @@ pnpm --filter xivdyetools-discord-worker run deploy:production   # Deploy to pro
 - **pnpm 10** with `workspace:*` protocol for internal dependencies
 - **Turborepo** for task orchestration with dependency-aware caching
 - **TypeScript 5.9** with shared `tsconfig.base.json` (strict, ES2022, bundler resolution)
-- **Vitest 4** for most packages; oauth and presets-api use **Vitest 3.2** (required by `@cloudflare/vitest-pool-workers`)
+- **Vitest 4** for all packages and apps
 - **ESLint 9** flat config with typescript-eslint
 - **Prettier 3** for formatting
 

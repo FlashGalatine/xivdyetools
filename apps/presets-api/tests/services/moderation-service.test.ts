@@ -22,7 +22,7 @@ let fetchMock: ReturnType<typeof vi.fn>;
 describe('ModerationService', () => {
     beforeEach(() => {
         fetchMock = vi.fn();
-        globalThis.fetch = fetchMock;
+        globalThis.fetch = fetchMock as typeof globalThis.fetch;
         // Reset patterns before each test
         _resetPatternsForTesting();
     });
