@@ -16,18 +16,6 @@ When viewing a dye result card from any tool, the right-click context menu "Insp
 
 Fixed an issue where the Swatch Matcher's color grid would appear empty when returning to the tool with a previously saved race-specific category (like Skin Colors or Hair Colors). The grid now properly loads color data in all cases.
 
----
-
-*For technical details, see [CHANGELOG.md](./CHANGELOG.md)*
-
----
-
-# What's New in Version 1.6.0
-
-*Released: March 14, 2026*
-
----
-
 ## Correct Currency Display on Dye Cards
 
 Previously, every dye's vendor cost showed "G" (Gil) as the currency — even for dyes that cost Skybuilders' Scrips, Cosmocredits, pigments, or other currencies. Now the result cards display the correct currency name for each dye, fully translated into all 6 supported languages.
