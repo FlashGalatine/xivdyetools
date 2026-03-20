@@ -6,44 +6,46 @@
 
 ## Swatch Matcher: Reverse Matching
 
-You can now go backwards with the Swatch Matcher! Select any dye from the Color Palette drawer or enter a custom hex code, and the tool will highlight the 3 closest matching character color swatches in the grid. This makes it easy to answer the question: "which character colors does this dye look like?" Click any highlighted swatch to jump straight into the regular forward matching flow.
+- **Match dyes back to character colors** — select any dye from the Color Palette drawer or enter a custom hex code, and the tool highlights the 3 closest matching swatches in the grid
+- **Answer "which character colors does this dye look like?"** without trial and error
+- **Seamless forward-matching flow** — click any highlighted swatch to jump straight into regular matching
 
 ## "Inspect Dye in..." Now Includes Swatch Matcher
 
-When viewing a dye result card from any tool, the right-click context menu "Inspect Dye in..." now includes **Swatch Matcher** as a destination. This lets you quickly check what character colors a dye resembles without leaving your current workflow.
+- **New context menu destination** — right-click any dye result card and choose "Inspect Dye in... Swatch Matcher"
+- **Stay in your workflow** — quickly check what character colors a dye resembles without switching tools manually
 
 ## Bug Fix: Empty Color Grid
 
-Fixed an issue where the Swatch Matcher's color grid would appear empty when returning to the tool with a previously saved race-specific category (like Skin Colors or Hair Colors). The grid now properly loads color data in all cases.
+- **Fixed empty grid on return visits** — the Swatch Matcher's color grid no longer appears blank when returning to the tool with a previously saved race-specific category (Skin Colors, Hair Colors, etc.)
+- **Reliable data loading** — the grid now properly loads color data in all cases
 
 ## Correct Currency Display on Dye Cards
 
-Previously, every dye's vendor cost showed "G" (Gil) as the currency — even for dyes that cost Skybuilders' Scrips, Cosmocredits, pigments, or other currencies. Now the result cards display the correct currency name for each dye, fully translated into all 6 supported languages.
+- **Accurate currency names** — dye result cards now show the correct currency (Skybuilders' Scrips, Cosmocredits, pigments, etc.) instead of always displaying "G" (Gil)
+- **Fully translated** — currency names appear in all 6 supported languages
 
 ## "The Firmament" Now Translated
 
-Dyes acquired from The Firmament previously showed "The Firmament" in English regardless of your language setting. Now it correctly displays in all 6 languages (e.g., "蒼天街" in Japanese, "창천 거리" in Korean).
+- **Localized acquisition source** — "The Firmament" now displays in your selected language instead of always showing English
+- **All 6 languages supported** — e.g., "蒼天街" in Japanese, "창천 거리" in Korean
 
 ---
 
 ## Patch 7.5 Dye Consolidation — Ready When You Are
 
-This release prepares XIV Dye Tools for an upcoming change in FFXIV Patch 7.5, where Square Enix is expected to consolidate 105 individual dye items into just 3 items on the market board.
-
-**What this means for you:**
-
-- When Patch 7.5 launches, our tools will automatically handle the new consolidated dye items — no action needed on your end
-- The Discord bot's `/budget` command will make significantly fewer market board API calls (~80% reduction), meaning faster responses
-- The web app's market board prices will correctly map the new consolidated items back to individual dyes
-
-**Nothing changes right now** — this update is purely forward-looking. All existing tools and features continue to work exactly as before.
+- **Forward-looking preparation** — this release gets XIV Dye Tools ready for FFXIV Patch 7.5, where Square Enix is expected to consolidate 105 individual dye items into just 3 on the market board
+- **Automatic handling** — when Patch 7.5 launches, our tools will handle the new consolidated items with no action needed on your end
+- **Faster Discord bot responses** — the `/budget` command will make ~80% fewer market board API calls
+- **Correct price mapping** — the web app will correctly map new consolidated items back to individual dyes
+- **Nothing changes right now** — all existing tools and features continue to work exactly as before
 
 ---
 
 ## Documentation Overhaul
 
-- 16 new documentation files covering web app tools, Discord bot commands, OAuth flows, API endpoints, database schema, deployment guides, and more
-- Updated architecture diagrams and version references across the project
+- **16 new documentation files** — covering web app tools, Discord bot commands, OAuth flows, API endpoints, database schema, deployment guides, and more
+- **Updated diagrams and references** — architecture diagrams and version references refreshed across the project
 
 ---
 
