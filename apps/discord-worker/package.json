@@ -38,12 +38,12 @@
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
-    "@vitest/coverage-v8": "^4.1.0",
+    "@vitest/coverage-v8": "^4.1.2",
     "@xivdyetools/test-utils": "workspace:*",
     "dotenv": "^17.2.3",
     "tsx": "^4.21.0",
-    "vitest": "^4.1.0",
-    "wrangler": "^4.75.0"
+    "vitest": "^4.1.2",
+    "wrangler": "^4.78.0"
   },
   "engines": {
     "node": ">=18.0.0"
