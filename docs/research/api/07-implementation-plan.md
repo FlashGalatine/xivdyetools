@@ -19,10 +19,11 @@ Each phase builds on the previous and delivers a usable increment.
 
 2. **Dye endpoints:**
    - `GET /v1/dyes` — List/filter/sort all dyes (includes `consolidationType`, `isIshgardian`, `marketItemID` fields)
-   - `GET /v1/dyes/:id` — Single dye lookup
+   - `GET /v1/dyes/:id` — Single dye lookup (auto-detects itemID vs stainID vs Facewear ID via range detection)
+   - `GET /v1/dyes/stain/:stainId` — Explicit stainID-only lookup (for plugin interop and post-7.5 dyes)
    - `GET /v1/dyes/search` — Name search
    - `GET /v1/dyes/categories` — Category list
-   - `GET /v1/dyes/batch` — Multi-ID lookup
+   - `GET /v1/dyes/batch` — Multi-ID lookup (supports mixed itemID/stainID via `idType` param)
    - `GET /v1/dyes/consolidation-groups` — Patch 7.5 consolidation group metadata
 
 3. **Matching endpoints:**
@@ -51,7 +52,7 @@ apps/api-worker/
 │   │   ├── dyes.ts           # /v1/dyes/* routes
 │   │   └── match.ts          # /v1/match/* routes
 │   ├── lib/
-│   │   ├── validation.ts     # Input validation helpers
+│   │   ├── validation.ts     # Input validation helpers + resolveIdType() for stainID/itemID auto-detection
 │   │   ├── api-error.ts      # ApiError class
 │   │   └── response.ts       # Response envelope helpers
 │   └── types.ts              # Env bindings, context types
@@ -254,7 +255,7 @@ Moderate-to-heavy — API key management is new infrastructure. XML serializatio
 
 1. **OpenAPI 3.1 specification:**
    - Auto-generated from Hono route definitions (using `@hono/zod-openapi` or manual spec)
-   - Covers all 40 endpoints with request/response schemas
+   - Covers all 43 endpoints with request/response schemas
    - Published at `api.xivdyetools.com/openapi.json`
 
 2. **Interactive documentation:**
@@ -283,7 +284,7 @@ Moderate — OpenAPI spec is the core work. UI can use off-the-shelf documentati
 
 | Phase | Endpoints | Key Feature | Depends On |
 |-------|-----------|-------------|------------|
-| 1 | 8 | Dye lookup + color matching + consolidation groups | — |
+| 1 | 9 | Dye lookup (itemID + stainID auto-detection) + color matching + consolidation groups | — |
 | 2 | 11 | Color tools (convert, mix, simulate) | Phase 1 |
 | 3 | 16 | Harmony + character + presets + locales | Phase 1 |
 | 4 | 2 + infrastructure | API keys, XML, consolidation-aware market prices | Phase 1–3 |

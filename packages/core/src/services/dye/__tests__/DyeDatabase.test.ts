@@ -280,6 +280,46 @@ describe('DyeDatabase', () => {
     });
   });
 
+  describe('getDyesByStainIds', () => {
+    beforeEach(() => {
+      database.initialize(mockDyes);
+    });
+
+    it('should retrieve multiple dyes by stainIDs', () => {
+      const dyes = database.getDyesByStainIds([1, 12, 112]);
+      expect(dyes).toHaveLength(3);
+      expect(dyes[0].name).toBe('Snow White');
+      expect(dyes[1].name).toBe('Wine Red');
+      expect(dyes[2].name).toBe('Metallic Silver');
+    });
+
+    it('should skip non-existent stainIDs', () => {
+      const dyes = database.getDyesByStainIds([1, 999, 12]);
+      expect(dyes).toHaveLength(2);
+    });
+
+    it('should return empty array for all non-existent stainIDs', () => {
+      const dyes = database.getDyesByStainIds([999, 888]);
+      expect(dyes).toHaveLength(0);
+    });
+
+    it('should handle empty stainID array', () => {
+      const dyes = database.getDyesByStainIds([]);
+      expect(dyes).toHaveLength(0);
+    });
+
+    it('should not find Facewear dyes (null stainID)', () => {
+      // Forest Green in mockDyes has stainID: null
+      const dyes = database.getDyesByStainIds([0]);
+      expect(dyes).toHaveLength(0);
+    });
+
+    it('should throw if not loaded', () => {
+      const emptyDB = new DyeDatabase();
+      expect(() => emptyDB.getDyesByStainIds([1])).toThrow(AppError);
+    });
+  });
+
   describe('getDyesByIds', () => {
     beforeEach(() => {
       database.initialize(mockDyes);

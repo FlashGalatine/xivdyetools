@@ -151,6 +151,31 @@ export default {
 };
 ```
 
+## Decision 8: stainID as First-Class Identifier
+
+**Choice:** Accept `stainID` alongside `itemID` in all dye lookup endpoints, using range-based auto-detection on `GET /dyes/:id` combined with an explicit `GET /dyes/stain/:stainId` endpoint.
+
+**Rationale:**
+
+Post-Patch 7.5, new dyes may be added to the game's stain table without receiving individual inventory item IDs, since consolidated dye items replace individual ones for market purposes. The `stainID` is already the identifier used by Dalamud plugins (Glamourer, Mare Synchronos) and datamined content. Supporting it as a first-class API input future-proofs the API and reduces friction for plugin developers.
+
+**Auto-detection is safe because ID ranges are fully disjoint:**
+
+| Range | ID Type | Lookup Method |
+|-------|---------|---------------|
+| Negative | Facewear synthetic ID | `DyeDatabase.getDyeById()` |
+| 1–125 | stainID | `DyeDatabase.getByStainId()` |
+| 5729+ | itemID | `DyeDatabase.getDyeById()` |
+
+No FFXIV item ID has ever fallen in the 1–125 range (the lowest inventory item IDs start in the thousands), making collision between stainID and itemID extremely unlikely. The explicit `/dyes/stain/:stainId` endpoint provides an unambiguous fallback should this ever change.
+
+**Implementation:** A `resolveIdType(id: number)` helper function determines the lookup strategy. Batch endpoints (`/dyes/batch`) support an optional `idType` query parameter (`auto`, `item`, `stain`) for explicit control.
+
+**Alternatives considered:**
+
+1. **Query parameter `?idType=stain`** — Rejected: adds friction to every request, clutters URLs, and creates combinatorial testing burden across all endpoints.
+2. **Separate endpoint only, no auto-detection** — Rejected: forces consumers to pre-classify their IDs before making a request, which is poor DX when the classification can be done automatically and deterministically.
+
 ## Architecture Diagram
 
 ```

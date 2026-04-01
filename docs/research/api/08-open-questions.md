@@ -230,6 +230,42 @@ locale: en
 
 ---
 
+## Q12: stainID as API Identifier
+
+**Question:** How should the API handle `stainID` as a dye identifier, and what role should it play post-Patch 7.5?
+
+**Context:** The game's stain table ID (`stainID`, range 1–125 for current dyes) is the internal identifier used by Dalamud plugins (Glamourer, Mare Synchronos), character save data, and datamined content. Post-Patch 7.5, dye consolidation means **new dyes may be added via the stain table without individual inventory itemIDs**, making `stainID` the only universal identifier for those dyes. The codebase already has `DyeDatabase.getByStainId()` with O(1) Map-based lookup.
+
+**Key observation — disjoint ID ranges:**
+
+| Range | ID Type | Example |
+|-------|---------|---------|
+| Negative | Facewear synthetic ID | `-1` (Black Facewear) |
+| 1–125 | stainID | `1` (Snow White) |
+| 126–5728 | Unused (no dye in either system) | — |
+| 5729+ | itemID | `5729` (Snow White) |
+
+Because these ranges never overlap, `GET /dyes/:id` can **auto-detect** the ID type from the numeric value alone — no query parameter needed.
+
+**Sub-questions:**
+
+1. **Should stainID become the recommended identifier for post-7.5 consumers?** If new dyes lack individual itemIDs, stainID becomes the only universal identifier. However, stainIDs could theoretically shift when new stain rows are inserted (though this has never happened in FFXIV's history — existing stainIDs have been stable since 2.0).
+
+2. **Should the batch endpoint support mixed ID types?** An `idType` query parameter (`auto`, `item`, `stain`) on `GET /dyes/batch` lets consumers force interpretation. `auto` (default) applies range-based detection per-ID, allowing mixed lists like `?ids=1,5729,-1`. Alternatively, require all IDs in a batch to be the same type — simpler but less flexible.
+
+3. **Should `excludeIds` accept stainIDs?** The `excludeIds` parameter on `GET /dyes` and `GET /match/closest` currently expects itemIDs. Adding auto-detection is consistent with the `/dyes/:id` behavior but adds implementation complexity.
+
+4. **Should there be an explicit `/dyes/stain/:stainId` endpoint?** Even with auto-detection on `/dyes/:id`, a dedicated endpoint provides unambiguous stainID-only semantics. This future-proofs against the unlikely scenario where FFXIV introduces itemIDs in the 1–125 range.
+
+**Recommendation:**
+- Auto-detect on `GET /dyes/:id` using range-based resolution (safe due to disjoint ranges)
+- Provide `GET /dyes/stain/:stainId` as an explicit alternative for consumers who want unambiguous stainID semantics
+- Batch endpoint supports auto-detection by default with optional `idType` override
+- `excludeIds` supports auto-detection (consistent behavior across all ID parameters)
+- Post-7.5, if new dyes lack itemIDs, update documentation to recommend stainID for those dyes specifically, while keeping itemID as the default for dyes that have them
+
+---
+
 ## Decision Tracker
 
 | # | Question | Status | Decision |
@@ -245,3 +281,4 @@ locale: en
 | Q9 | WebSocket/SSE | Closed | Not in scope |
 | Q10 | Rate limit units | Leaning | Equal weighting |
 | Q11 | Patch 7.5 consolidation transition | Leaning | Expose fields from day one; fan out prices; `consolidationActive` in meta |
+| Q12 | stainID as API identifier | Leaning | Auto-detect on `/dyes/:id`; explicit `/dyes/stain/:stainId`; `idType` on batch |

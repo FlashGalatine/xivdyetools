@@ -205,6 +205,31 @@ describe('DyeService', () => {
       expect(dyes).toHaveLength(2);
     });
 
+    it('should get dye by stainID', () => {
+      const dye = dyeService.getByStainId(1);
+      expect(dye).toBeDefined();
+      expect(dye?.name).toBe('Snow White');
+      expect(dye?.itemID).toBe(5729);
+    });
+
+    it('should return null for non-existent stainID', () => {
+      const dye = dyeService.getByStainId(999);
+      expect(dye).toBeNull();
+    });
+
+    it('should get multiple dyes by stainIDs', () => {
+      const dyes = dyeService.getDyesByStainIds([1, 2, 3]);
+      expect(dyes).toHaveLength(3);
+      expect(dyes[0].name).toBe('Snow White');
+      expect(dyes[1].name).toBe('Ash Grey');
+      expect(dyes[2].name).toBe('Goobbue Grey');
+    });
+
+    it('should filter out non-existent stainIDs', () => {
+      const dyes = dyeService.getDyesByStainIds([1, 999, 2]);
+      expect(dyes).toHaveLength(2);
+    });
+
     it('should check loaded status', () => {
       expect(dyeService.isLoadedStatus()).toBe(true);
       const emptyService = new DyeService();
@@ -447,6 +472,38 @@ describe('DyeService', () => {
         vi.spyOn(LocalizationService, 'getDyeName').mockReturnValue(null);
 
         const dye = dyeService.getLocalizedDyeById(5729);
+        expect(dye).toBeDefined();
+        expect(dye?.localizedName).toBeUndefined();
+      });
+    });
+
+    describe('getLocalizedDyeByStainId', () => {
+      it('should return dye without localized name when no locale loaded', () => {
+        const dye = dyeService.getLocalizedDyeByStainId(1);
+        expect(dye).toBeDefined();
+        expect(dye?.name).toBe('Snow White');
+        expect(dye?.localizedName).toBeUndefined();
+      });
+
+      it('should return null for non-existent stainID', () => {
+        const dye = dyeService.getLocalizedDyeByStainId(999);
+        expect(dye).toBeNull();
+      });
+
+      it('should include localized name when locale loaded', () => {
+        vi.spyOn(LocalizationService, 'isLocaleLoaded').mockReturnValue(true);
+        vi.spyOn(LocalizationService, 'getDyeName').mockReturnValue('スノウホワイト');
+
+        const dye = dyeService.getLocalizedDyeByStainId(1);
+        expect(dye).toBeDefined();
+        expect(dye?.localizedName).toBe('スノウホワイト');
+      });
+
+      it('should handle null localized name', () => {
+        vi.spyOn(LocalizationService, 'isLocaleLoaded').mockReturnValue(true);
+        vi.spyOn(LocalizationService, 'getDyeName').mockReturnValue(null);
+
+        const dye = dyeService.getLocalizedDyeByStainId(1);
         expect(dye).toBeDefined();
         expect(dye?.localizedName).toBeUndefined();
       });

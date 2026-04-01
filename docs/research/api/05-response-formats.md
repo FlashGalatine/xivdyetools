@@ -137,6 +137,7 @@ XML responses mirror the JSON structure with these conversion rules:
   "data": {
     "dye": {
       "itemID": 5729,
+      "stainID": 1,
       "name": "Snow White",
       "hex": "#EFEFEF",
       "rgb": { "r": 239, "g": 239, "b": 239 },
@@ -155,6 +156,7 @@ XML responses mirror the JSON structure with these conversion rules:
   <data>
     <dye>
       <itemID>5729</itemID>
+      <stainID>1</stainID>
       <name>Snow White</name>
       <hex>#EFEFEF</hex>
       <rgb>
@@ -181,8 +183,8 @@ XML responses mirror the JSON structure with these conversion rules:
 {
   "success": true,
   "data": [
-    { "itemID": 5729, "name": "Snow White" },
-    { "itemID": 5730, "name": "Ash Grey" }
+    { "itemID": 5729, "stainID": 1, "name": "Snow White" },
+    { "itemID": 5730, "stainID": 2, "name": "Ash Grey" }
   ]
 }
 ```
@@ -194,10 +196,12 @@ XML responses mirror the JSON structure with these conversion rules:
   <data>
     <dye>
       <itemID>5729</itemID>
+      <stainID>1</stainID>
       <name>Snow White</name>
     </dye>
     <dye>
       <itemID>5730</itemID>
+      <stainID>2</stainID>
       <name>Ash Grey</name>
     </dye>
   </data>

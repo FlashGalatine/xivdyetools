@@ -112,6 +112,36 @@ export class DyeService {
   }
 
   /**
+   * Get dye by stainID (game's internal stain table ID)
+   *
+   * Use this method when interfacing with plugins like Glamourer or Mare Synchronos
+   * that expose stainID rather than itemID. Post-Patch 7.5, new dyes may only have
+   * stainIDs without individual itemIDs.
+   *
+   * @param stainId - The game's stain table ID (1-125, may expand post-7.5)
+   * @returns The matching dye or null if not found
+   *
+   * @since 2.2.0
+   */
+  getByStainId(stainId: number): Dye | null {
+    return this.database.getByStainId(stainId);
+  }
+
+  /**
+   * Get multiple dyes by stainIDs
+   *
+   * Batch equivalent of `getByStainId()`. Unknown stainIDs are silently skipped.
+   *
+   * @param stainIds - Array of stain table IDs
+   * @returns Array of matching dyes
+   *
+   * @since 2.2.0
+   */
+  getDyesByStainIds(stainIds: number[]): Dye[] {
+    return this.database.getDyesByStainIds(stainIds);
+  }
+
+  /**
    * Check if database is loaded
    */
   isLoadedStatus(): boolean {
@@ -371,6 +401,29 @@ export class DyeService {
    */
   getLocalizedDyeById(id: number): LocalizedDye | null {
     const dye = this.getDyeById(id);
+    if (!dye) return null;
+
+    if (!LocalizationService.isLocaleLoaded()) {
+      return dye;
+    }
+
+    return {
+      ...dye,
+      localizedName: LocalizationService.getDyeName(dye.itemID) || undefined,
+    };
+  }
+
+  /**
+   * Get dye by stainID with localized name
+   * Returns Dye with localizedName property if locale loaded
+   *
+   * @param stainId - Stain table ID
+   * @returns Localized dye or null if not found
+   *
+   * @since 2.2.0
+   */
+  getLocalizedDyeByStainId(stainId: number): LocalizedDye | null {
+    const dye = this.getByStainId(stainId);
     if (!dye) return null;
 
     if (!LocalizationService.isLocaleLoaded()) {

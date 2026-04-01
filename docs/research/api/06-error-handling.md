@@ -43,7 +43,8 @@ All errors follow a consistent JSON structure (see [05-response-formats.md](./05
 | `INVALID_API_KEY` | 401 | API key not recognized | Key hash not found in D1 |
 | `KEY_REVOKED` | 401 | API key has been deactivated | `is_active = false` in D1 |
 | `FORBIDDEN` | 403 | Access denied | Banned IP or key |
-| `NOT_FOUND` | 404 | Resource not found | Unknown dye ID, preset ID |
+| `INVALID_STAIN_ID` | 400 | Invalid stain ID | `stainId` is not a positive integer, or is 0 |
+| `NOT_FOUND` | 404 | Resource not found | Unknown dye ID, stain ID, preset ID |
 | `RATE_LIMITED` | 429 | Rate limit exceeded | Too many requests in window |
 
 ### Server Errors (5xx)
@@ -77,6 +78,7 @@ All errors follow a consistent JSON structure (see [05-response-formats.md](./05
 
 | Parameter | Type | Range | Default |
 |-----------|------|-------|---------|
+| `stainId` (path) | integer | >= 1 | — |
 | `ratio` | float | 0.0 – 1.0 | 0.5 |
 | `angle` | float | 0 – 360 | 30 |
 | `maxDistance` | float | > 0 | — |
@@ -109,6 +111,7 @@ All errors follow a consistent JSON structure (see [05-response-formats.md](./05
 | `colorSpace` (harmony) | `hsv`, `oklch`, `lch`, `hsl` |
 | `type` (vision) | `deuteranopia`, `protanopia`, `tritanopia`, `achromatopsia` |
 | `from`, `to` (conversion) | `hex`, `rgb`, `hsv`, `hsl`, `lab`, `lch`, `oklab`, `oklch`, `ryb` |
+| `idType` (dye batch) | `auto`, `item`, `stain` |
 | `consolidationType` (dyes) | `A`, `B`, `C`, `none` |
 | `sort` (dyes) | `name`, `brightness`, `saturation`, `hue`, `cost` |
 | `order` | `asc`, `desc` |
@@ -122,9 +125,9 @@ All errors follow a consistent JSON structure (see [05-response-formats.md](./05
 
 | Parameter | Max Items | Item Validation |
 |-----------|----------|----------------|
-| `ids` (dye batch) | 50 | Positive integers |
-| `excludeIds` | 50 | Positive integers |
-| `itemIds` (prices) | 100 | Positive integers (Universalis limit) |
+| `ids` (dye batch) | 50 | Integers — itemIDs, stainIDs (1–125), or negative Facewear IDs when `idType=auto`; positive integers only when `idType=item`; positive integers when `idType=stain` |
+| `excludeIds` | 50 | Integers — supports auto-detection (itemIDs, stainIDs, negative Facewear IDs) |
+| `itemIds` (prices) | 100 | Positive integers (Universalis limit) — itemIDs only, no stainID support |
 
 ---
 

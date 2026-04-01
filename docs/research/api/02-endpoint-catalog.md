@@ -8,6 +8,22 @@ Complete endpoint design for the XIV Dye Tools Public API. All endpoints are rea
 
 Wraps `DyeService` — the 136-dye FFXIV database with category, color, and acquisition metadata.
 
+### Dye ID Resolution
+
+Dyes can be identified by three different ID types. Because their numeric ranges are **fully disjoint**, the API auto-detects which type was provided:
+
+| Numeric Range | ID Type | Description | Lookup Method |
+|---------------|---------|-------------|---------------|
+| Negative | Facewear synthetic ID | 11 Facewear dyes with no real item ID (e.g., `-1`) | `DyeDatabase.getDyeById()` |
+| 1–125 | stainID | Game's internal stain table ID, used by plugins and datamined content | `DyeDatabase.getByStainId()` |
+| 5729+ | itemID | FFXIV inventory item ID, used for market board and crafting | `DyeDatabase.getDyeById()` |
+
+IDs in the 126–5728 range do not match any dye in either system and return 404.
+
+**Auto-detection** applies to: `GET /dyes/:id`, `GET /dyes/batch` (with `idType=auto`), `excludeIds` parameters, and `GET /locales/:locale/dye/:id`.
+
+**Why stainID matters:** Post-Patch 7.5 (April 28, 2026), new dyes may be added to the stain table without individual inventory item IDs, since consolidated items replace individual dye items for market purposes. The `stainID` is the identifier used by Dalamud plugins (Glamourer, Mare Synchronos) and character save data. For explicit stainID-only resolution, use `GET /dyes/stain/:stainId`.
+
 ### GET `/dyes`
 
 List all dyes with optional filtering and sorting.
@@ -26,7 +42,7 @@ List all dyes with optional filtering and sorting.
 | `ishgardian` | boolean | — | Filter Ishgardian Restoration dyes |
 | `minPrice` | number | — | Minimum NPC cost |
 | `maxPrice` | number | — | Maximum NPC cost |
-| `excludeIds` | string | — | Comma-separated item IDs to exclude |
+| `excludeIds` | string | — | Comma-separated dye IDs to exclude (supports auto-detection — see [Dye ID Resolution](#dye-id-resolution)) |
 | `sort` | string | `name` | Sort field: `name`, `brightness`, `saturation`, `hue`, `cost` |
 | `order` | string | `asc` | Sort direction: `asc`, `desc` |
 | `page` | number | `1` | Page number |
@@ -76,13 +92,13 @@ List all dyes with optional filtering and sorting.
 
 ### GET `/dyes/:id`
 
-Get a single dye by item ID.
+Get a single dye by ID. The API **auto-detects** the ID type based on the numeric range (see [Dye ID Resolution](#dye-id-resolution)).
 
 **Path Parameters:**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `id` | number | Dye item ID (positive for tradeable, negative for Facewear) |
+| `id` | number | Dye identifier — accepts itemID (5729+), stainID (1–125), or negative Facewear ID. Resolved automatically via range detection. |
 
 **Query Parameters:**
 
@@ -90,7 +106,32 @@ Get a single dye by item ID.
 |-----------|------|---------|-------------|
 | `locale` | string | `en` | Localize dye name |
 
-**Maps to:** `DyeService.getDyeById()`, `DyeService.getLocalizedDyeById()`
+**Maps to:** `DyeDatabase.getDyeById()` (for itemID/Facewear) or `DyeDatabase.getByStainId()` (for stainID), then `DyeService.getLocalizedDyeById()`
+
+> **Tip:** For explicit stainID-only resolution, use `GET /dyes/stain/:stainId` instead.
+
+### GET `/dyes/stain/:stainId`
+
+Get a single dye by its stain table ID. This endpoint provides **explicit stainID-only resolution**, useful when the caller knows they have a stainID and wants to avoid any ambiguity with auto-detection on `GET /dyes/:id`.
+
+**Path Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `stainId` | number | Game stain table ID (positive integer; currently 1–125, may expand post-Patch 7.5) |
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `locale` | string | `en` | Localize dye name |
+
+**Maps to:** `DyeDatabase.getByStainId()`
+
+**Notes:**
+- Returns the same dye object format as `GET /dyes/:id`
+- Returns 404 for Facewear dyes (they have no stainID — `stainID: null`)
+- Returns 404 for stainIDs that do not match any dye in the database
 
 ### GET `/dyes/search`
 
@@ -128,10 +169,11 @@ Get multiple dyes by ID in a single request.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `ids` | string | *required* — Comma-separated item IDs (max 50) |
+| `ids` | string | *required* — Comma-separated dye IDs (max 50). Supports itemIDs, stainIDs, and negative Facewear IDs when `idType=auto`. |
+| `idType` | string | ID interpretation mode: `auto` (default — range-based detection per-ID, see [Dye ID Resolution](#dye-id-resolution)), `item` (all IDs treated as itemIDs), `stain` (all IDs treated as stainIDs) |
 | `locale` | string | Localize dye names |
 
-**Maps to:** `DyeService.getDyesByIds()`
+**Maps to:** `DyeService.getDyesByIds()` (when `idType=item`), `DyeDatabase.getByStainId()` per-ID (when `idType=stain`), or auto-resolved per-ID (when `idType=auto`)
 
 ### GET `/dyes/consolidation-groups`
 
@@ -222,7 +264,7 @@ Find the closest dye to a given hex color.
 |-----------|------|---------|-------------|
 | `hex` | string | *required* | Target color (e.g., `#FF5733` or `FF5733`) |
 | `method` | string | `oklab` | Matching algorithm: `rgb`, `cie76`, `ciede2000`, `oklab`, `hyab`, `oklch-weighted` |
-| `excludeIds` | string | — | Comma-separated item IDs to exclude |
+| `excludeIds` | string | — | Comma-separated dye IDs to exclude (supports auto-detection — see [Dye ID Resolution](#dye-id-resolution)) |
 | `kL` | number | `1.0` | OKLCH lightness weight (only with `oklch-weighted`) |
 | `kC` | number | `1.0` | OKLCH chroma weight |
 | `kH` | number | `1.0` | OKLCH hue weight |
@@ -863,17 +905,17 @@ Get all dye names in a specific locale.
 {
   "success": true,
   "data": [
-    { "itemID": 5729, "name": "Snow White", "localizedName": "スノウホワイト" },
-    { "itemID": 5730, "name": "Ash Grey", "localizedName": "アッシュグレイ" }
+    { "itemID": 5729, "stainID": 1, "name": "Snow White", "localizedName": "スノウホワイト" },
+    { "itemID": 5730, "stainID": 2, "name": "Ash Grey", "localizedName": "アッシュグレイ" }
   ]
 }
 ```
 
 ### GET `/locales/:locale/dye/:id`
 
-Get a single localized dye name.
+Get a single localized dye name. The `:id` parameter supports the same **auto-detection** as `GET /dyes/:id` (see [Dye ID Resolution](#dye-id-resolution)) — accepts itemID, stainID, or negative Facewear ID.
 
-**Maps to:** `LocalizationService.getDyeName(itemID)`
+**Maps to:** ID resolution via `resolveIdType()`, then `LocalizationService.getDyeName(itemID)`
 
 ---
 
@@ -952,7 +994,7 @@ Get market prices for all tradeable dyes, with automatic consolidation handling.
 
 | Domain | Endpoints | Methods |
 |--------|-----------|---------|
-| Dyes | 6 | GET |
+| Dyes | 7 | GET |
 | Matching | 2 | GET |
 | Harmony | 9 | GET |
 | Conversion | 2 | GET |
@@ -964,4 +1006,4 @@ Get market prices for all tradeable dyes, with automatic consolidation handling.
 | Presets | 4 | GET |
 | Localization | 3 | GET |
 | Market Prices | 2 | GET |
-| **Total** | **42** | |
+| **Total** | **43** | |

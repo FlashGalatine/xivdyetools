@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-04-01
+
+### Added
+
+- `DyeService.getByStainId(stainId)` — facade method for single dye lookup by stainID, delegating to `DyeDatabase.getByStainId()`
+- `DyeService.getDyesByStainIds(stainIds)` — batch stainID lookup, mirrors existing `getDyesByIds()` pattern
+- `DyeService.getLocalizedDyeByStainId(stainId)` — stainID lookup with localized name resolution
+- `DyeDatabase.getDyesByStainIds(stainIds)` — batch O(1) Map-based stainID lookup, skips unknown IDs
+
+### Why
+
+Post-Patch 7.5 (April 28, 2026), new dyes may only have stainIDs without individual itemIDs due to dye consolidation. These methods ensure apps built on `@xivdyetools/core` can look up dyes by stainID through the public `DyeService` facade, rather than bypassing it to access `DyeDatabase` directly. Supports plugin interop (Glamourer, Mare Synchronos) and future-proofs the API.
+
+---
+
 ## [2.2.0] - 2026-03-18
 
 ### Changed

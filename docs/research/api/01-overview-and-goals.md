@@ -10,7 +10,7 @@ A read-only REST API deployed as a Cloudflare Worker at `api.xivdyetools.com` th
 
 - **FFXIV community developers** building glamour planners, gear set managers, outfit sharing tools, or housing decoration apps that need programmatic access to dye data
 - **Discord bot authors** (non-JS) who want to add dye lookup, color matching, or harmony generation to their bots without embedding the npm library
-- **Dalamud plugin developers** (C#) who need server-side dye data, color matching, or localized dye names for in-game plugins
+- **Dalamud plugin developers** (C#) who need server-side dye data, color matching, or localized dye names for in-game plugins — the API accepts stainIDs directly, enabling seamless integration with plugins that use the game's internal stain table
 
 ### Secondary
 
@@ -24,7 +24,7 @@ The API is organized into 10 endpoint domains, each mapping to an existing servi
 
 | Domain | Service | Key Capabilities |
 |--------|---------|-----------------|
-| **Dyes** | `DyeService` | List, search, filter, sort all 136 dyes; Patch 7.5 consolidation group metadata |
+| **Dyes** | `DyeService` | List, search, filter, sort all 136 dyes; lookup by itemID or stainID (auto-detected); Patch 7.5 consolidation group metadata |
 | **Color Matching** | `DyeService` (k-d tree) | Find closest dye to any hex color; range queries |
 | **Color Harmony** | `DyeService` → `HarmonyGenerator` | 9 harmony types: complementary, triadic, analogous, square, tetradic, split-complementary, monochromatic, compound, shades |
 | **Color Conversion** | `ColorService` | Convert between 8 color spaces: Hex, RGB, HSV, HSL, LAB, LCH, OKLAB, OKLCH |

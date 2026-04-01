@@ -436,6 +436,24 @@ export class DyeDatabase {
   }
 
   /**
+   * Get multiple dyes by stainIDs
+   *
+   * Batch equivalent of `getByStainId()`. Returns only the dyes that match;
+   * unknown stainIDs are silently skipped (consistent with `getDyesByIds()`).
+   *
+   * @param stainIds - Array of stain table IDs
+   * @returns Array of matching dyes (order matches input, gaps removed)
+   *
+   * @since 2.2.0
+   */
+  getDyesByStainIds(stainIds: number[]): Dye[] {
+    this.ensureLoaded();
+    return stainIds
+      .map((id) => this.dyesByStainIdMap.get(id))
+      .filter((dye): dye is DyeInternal => dye !== undefined);
+  }
+
+  /**
    * Check if database is loaded
    */
   isLoadedStatus(): boolean {
