@@ -1,28 +1,100 @@
-name: Publish Package to npm
+name: Publish Packages to npm
 
 on:
   workflow_dispatch:
     inputs:
       package:
-        description: 'Package to publish'
+        description: 'Package to publish (or "all-modified" to detect & publish all)'
         required: true
         type: choice
         options:
+          - all-modified
           - '@xivdyetools/types'
           - '@xivdyetools/crypto'
           - '@xivdyetools/logger'
-          - '@xivdyetools/auth'
+          - '@xivdyetools/bot-i18n'
           - '@xivdyetools/rate-limiter'
+          - '@xivdyetools/auth'
           - '@xivdyetools/core'
+          - '@xivdyetools/test-utils'
           - '@xivdyetools/color-blending'
           - '@xivdyetools/svg'
-          - '@xivdyetools/bot-i18n'
           - '@xivdyetools/bot-logic'
-          - '@xivdyetools/test-utils'
 
 jobs:
+  detect:
+    name: Detect packages to publish
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.detect.outputs.packages }}
+      count: ${{ steps.detect.outputs.count }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Detect unpublished packages
+        id: detect
+        run: |
+          if [ "${{ inputs.package }}" != "all-modified" ]; then
+            echo 'packages=["${{ inputs.package }}"]' >> "$GITHUB_OUTPUT"
+            echo "count=1" >> "$GITHUB_OUTPUT"
+            echo "Selected single package: ${{ inputs.package }}"
+            exit 0
+          fi
+
+          echo "Scanning all packages for unpublished versions..."
+          echo ""
+
+          # Tier-ordered list — dependencies are always published before dependents
+          TIER_ORDER=(
+            "@xivdyetools/types"
+            "@xivdyetools/crypto"
+            "@xivdyetools/logger"
+            "@xivdyetools/bot-i18n"
+            "@xivdyetools/rate-limiter"
+            "@xivdyetools/auth"
+            "@xivdyetools/core"
+            "@xivdyetools/test-utils"
+            "@xivdyetools/color-blending"
+            "@xivdyetools/svg"
+            "@xivdyetools/bot-logic"
+          )
+
+          TO_PUBLISH=()
+          for pkg in "${TIER_ORDER[@]}"; do
+            dir_name="${pkg#@xivdyetools/}"
+            local_version=$(jq -r .version "packages/${dir_name}/package.json")
+            npm_version=$(npm view "$pkg" version 2>/dev/null || echo "NOT_FOUND")
+
+            if [ "$local_version" != "$npm_version" ]; then
+              echo "  ✚ $pkg — $npm_version → $local_version"
+              TO_PUBLISH+=("\"$pkg\"")
+            else
+              echo "  ✓ $pkg — already at $local_version"
+            fi
+          done
+
+          echo ""
+
+          if [ ${#TO_PUBLISH[@]} -eq 0 ]; then
+            echo "No packages need publishing."
+            echo 'packages=[]' >> "$GITHUB_OUTPUT"
+            echo "count=0" >> "$GITHUB_OUTPUT"
+          else
+            json_list="[$(IFS=,; echo "${TO_PUBLISH[*]}")]"
+            echo "Will publish ${#TO_PUBLISH[@]} package(s): $json_list"
+            echo "packages=$json_list" >> "$GITHUB_OUTPUT"
+            echo "count=${#TO_PUBLISH[@]}" >> "$GITHUB_OUTPUT"
+          fi
+
   publish:
-    name: Publish ${{ inputs.package }}
+    name: Build, Test & Publish
+    needs: detect
+    if: needs.detect.outputs.count != '0'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -40,13 +112,48 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm turbo run build --filter=${{ inputs.package }}...
+      - name: Build (with dependencies)
+        run: |
+          PACKAGES='${{ needs.detect.outputs.packages }}'
+          FILTER_ARGS=""
+          for pkg in $(echo "$PACKAGES" | jq -r '.[]'); do
+            FILTER_ARGS="$FILTER_ARGS --filter=${pkg}..."
+          done
+          echo "Running: pnpm turbo run build $FILTER_ARGS"
+          pnpm turbo run build $FILTER_ARGS
 
       - name: Test
-        run: pnpm turbo run test --filter=${{ inputs.package }}
+        run: |
+          PACKAGES='${{ needs.detect.outputs.packages }}'
+          FILTER_ARGS=""
+          for pkg in $(echo "$PACKAGES" | jq -r '.[]'); do
+            FILTER_ARGS="$FILTER_ARGS --filter=${pkg}"
+          done
+          echo "Running: pnpm turbo run test $FILTER_ARGS"
+          pnpm turbo run test $FILTER_ARGS
 
       - name: Publish
-        run: pnpm --filter ${{ inputs.package }} publish --provenance --access public --no-git-checks
+        run: |
+          PACKAGES='${{ needs.detect.outputs.packages }}'
+          FAILED=()
+          for pkg in $(echo "$PACKAGES" | jq -r '.[]'); do
+            echo "::group::Publishing $pkg"
+            if pnpm --filter "$pkg" publish --provenance --access public --no-git-checks; then
+              echo "✓ Successfully published $pkg"
+            else
+              echo "::error::Failed to publish $pkg"
+              FAILED+=("$pkg")
+            fi
+            echo "::endgroup::"
+          done
+
+          if [ ${#FAILED[@]} -gt 0 ]; then
+            echo ""
+            echo "::error::Failed to publish ${#FAILED[@]} package(s): ${FAILED[*]}"
+            exit 1
+          fi
+
+          echo ""
+          echo "All packages published successfully."
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
