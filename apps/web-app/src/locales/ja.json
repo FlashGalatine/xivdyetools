@@ -23,7 +23,9 @@
   "about": {
     "title": "XIV 染色ツールについて",
     "connect": "つながる",
-    "builtWith": "TypeScript、Vite、Tailwind CSSで構築"
+    "builtWith": "TypeScript、Vite、Tailwind CSSで構築",
+    "developerApi": "開発者API",
+    "developerApiDesc": "XIV 染色ツールの公開APIで独自のツールを構築 — 染料データベース、カラーマッチングなど。"
   },
   "footer": {
     "version": "バージョン",

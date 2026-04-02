@@ -23,7 +23,9 @@
   "about": {
     "title": "XIV 염색 도구 정보",
     "connect": "연결",
-    "builtWith": "TypeScript, Vite, Tailwind CSS로 구축됨"
+    "builtWith": "TypeScript, Vite, Tailwind CSS로 구축됨",
+    "developerApi": "개발자 API",
+    "developerApiDesc": "XIV 염색 도구 공개 API로 나만의 도구를 만드세요 — 염료 데이터베이스, 색상 매칭 등."
   },
   "footer": {
     "version": "버전",

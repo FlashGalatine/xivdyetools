@@ -23,7 +23,9 @@
   "about": {
     "title": "Über XIV Farbwerkzeuge",
     "connect": "Verbinden",
-    "builtWith": "Erstellt mit TypeScript, Vite und Tailwind CSS"
+    "builtWith": "Erstellt mit TypeScript, Vite und Tailwind CSS",
+    "developerApi": "Entwickler-API",
+    "developerApiDesc": "Erstelle eigene Tools mit der öffentlichen XIV Farbwerkzeuge API — Farbdatenbank, Farbabgleich und mehr."
   },
   "footer": {
     "version": "Version",

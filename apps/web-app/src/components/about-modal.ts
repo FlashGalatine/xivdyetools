@@ -19,7 +19,7 @@ import {
   ICON_PATREON,
   ICON_KOFI,
 } from '@shared/social-icons';
-import { ICON_CRYSTAL } from '@shared/ui-icons';
+import { ICON_CRYSTAL, ICON_NETWORK } from '@shared/ui-icons';
 import { LOGO_SPARKLES } from '@shared/app-logo';
 
 // ============================================================================
@@ -201,6 +201,51 @@ export class AboutModal {
     creditsSection.appendChild(spectralText);
 
     container.appendChild(creditsSection);
+
+    // Developer API section
+    const apiSection = document.createElement('div');
+    apiSection.className = 'text-center mb-6 pb-6 border-b';
+    apiSection.style.borderColor = 'var(--theme-border)';
+
+    const apiTitle = document.createElement('h3');
+    apiTitle.className = 'text-sm font-semibold mb-2 text-center';
+    apiTitle.style.color = 'var(--theme-text)';
+    apiTitle.textContent = LanguageService.t('about.developerApi');
+    apiSection.appendChild(apiTitle);
+
+    const apiDesc = document.createElement('p');
+    apiDesc.className = 'text-xs mb-3';
+    apiDesc.style.color = 'var(--theme-text-muted)';
+    apiDesc.textContent = LanguageService.t('about.developerApiDesc');
+    apiSection.appendChild(apiDesc);
+
+    const apiLink = document.createElement('a');
+    apiLink.className = 'inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm transition-colors';
+    apiLink.style.backgroundColor = 'var(--theme-card-background)';
+    apiLink.style.color = 'var(--theme-text)';
+    apiLink.href = 'https://data.xivdyetools.app';
+    apiLink.target = '_blank';
+    apiLink.rel = 'noopener noreferrer';
+
+    apiLink.addEventListener('mouseenter', () => {
+      apiLink.style.backgroundColor = 'var(--theme-card-hover)';
+    });
+    apiLink.addEventListener('mouseleave', () => {
+      apiLink.style.backgroundColor = 'var(--theme-card-background)';
+    });
+
+    const apiIcon = document.createElement('span');
+    apiIcon.className = 'inline-block w-4 h-4';
+    apiIcon.setAttribute('aria-hidden', 'true');
+    apiIcon.innerHTML = ICON_NETWORK;
+    apiLink.appendChild(apiIcon);
+
+    const apiLinkText = document.createElement('span');
+    apiLinkText.textContent = 'data.xivdyetools.app';
+    apiLink.appendChild(apiLinkText);
+
+    apiSection.appendChild(apiLink);
+    container.appendChild(apiSection);
 
     // Square Enix disclaimer section
     const disclaimerSection = document.createElement('div');

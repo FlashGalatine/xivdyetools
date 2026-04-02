@@ -23,7 +23,9 @@
   "about": {
     "title": "关于 XIV 染色工具",
     "connect": "连接",
-    "builtWith": "使用TypeScript、Vite和Tailwind CSS构建"
+    "builtWith": "使用TypeScript、Vite和Tailwind CSS构建",
+    "developerApi": "开发者API",
+    "developerApiDesc": "使用 XIV 染色工具公共API构建您自己的工具 — 染料数据库、颜色匹配等。"
   },
   "footer": {
     "version": "版本",

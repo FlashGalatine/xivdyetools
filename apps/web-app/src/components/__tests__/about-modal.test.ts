@@ -43,6 +43,7 @@ vi.mock('@shared/social-icons', () => ({
 
 vi.mock('@shared/ui-icons', () => ({
   ICON_CRYSTAL: '<svg></svg>',
+  ICON_NETWORK: '<svg></svg>',
 }));
 
 vi.mock('@shared/app-logo', () => ({

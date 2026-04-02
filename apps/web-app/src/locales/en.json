@@ -23,7 +23,9 @@
   "about": {
     "title": "About XIV Dye Tools",
     "connect": "Connect",
-    "builtWith": "Built with TypeScript, Vite, and Tailwind CSS"
+    "builtWith": "Built with TypeScript, Vite, and Tailwind CSS",
+    "developerApi": "Developer API",
+    "developerApiDesc": "Build your own tools with the XIV Dye Tools public API — dye database, color matching, and more."
   },
   "footer": {
     "version": "Version",

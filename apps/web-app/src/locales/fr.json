@@ -23,7 +23,9 @@
   "about": {
     "title": "À propos de Outils de Teinture XIV",
     "connect": "Connecter",
-    "builtWith": "Construit avec TypeScript, Vite et Tailwind CSS"
+    "builtWith": "Construit avec TypeScript, Vite et Tailwind CSS",
+    "developerApi": "API Développeur",
+    "developerApiDesc": "Créez vos propres outils avec l'API publique XIV Outils de Teinture — base de données de teintures, correspondance de couleurs et plus."
   },
   "footer": {
     "version": "Version",
