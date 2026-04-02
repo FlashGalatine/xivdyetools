@@ -13,6 +13,7 @@
 | [xivdyetools-discord-worker](discord-worker/overview.md) | Discord bot | Cloudflare Workers | Hono, HTTP Interactions, resvg-wasm | 20 slash commands |
 | [xivdyetools-moderation-worker](moderation-worker/overview.md) | Discord bot | Cloudflare Workers | Hono, HTTP Interactions | Preset moderation commands |
 | [xivdyetools-oauth](oauth/overview.md) | OAuth provider | Cloudflare Workers | Hono, PKCE, JWT | Discord authentication |
+| [xivdyetools-api-worker](api-worker/overview.md) | Public API | Cloudflare Workers | Hono, KV | Dye database & color matching |
 | [xivdyetools-presets-api](presets-api/overview.md) | REST API | Cloudflare Workers | Hono, D1 SQLite | Community presets |
 | [xivdyetools-universalis-proxy](universalis-proxy/overview.md) | CORS Proxy | Cloudflare Workers | Hono, KV | Market data caching |
 | [xivdyetools-og-worker](og-worker/overview.md) | OpenGraph | Cloudflare Workers | Hono, resvg-wasm | Social media previews |

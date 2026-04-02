@@ -29,6 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `xivdyetools-discord-worker` | CF Worker | [Overview](projects/discord-worker/overview.md) |
 | `xivdyetools-moderation-worker` | CF Worker | [Overview](projects/moderation-worker/overview.md) |
 | `xivdyetools-oauth` | CF Worker | [Overview](projects/oauth/overview.md) |
+| `xivdyetools-api-worker` | CF Worker + KV | [Overview](projects/api-worker/overview.md) |
 | `xivdyetools-presets-api` | CF Worker + D1 | [Overview](projects/presets-api/overview.md) |
 | `xivdyetools-universalis-proxy` | CF Worker | [Overview](projects/universalis-proxy/overview.md) |
 | `xivdyetools-og-worker` | CF Worker | [Overview](projects/og-worker/overview.md) |

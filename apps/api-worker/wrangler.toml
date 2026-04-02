@@ -13,7 +13,7 @@ local_protocol = "http"
 
 [[kv_namespaces]]
 binding = "RATE_LIMIT"
-id = "placeholder-dev"
+id = "8f2028935b544902bf468a9055d765ef"
 
 [vars]
 ENVIRONMENT = "development"
@@ -25,4 +25,4 @@ vars = { ENVIRONMENT = "production", API_VERSION = "v1" }
 
 [[env.production.kv_namespaces]]
 binding = "RATE_LIMIT"
-id = "placeholder-production"
+id = "a57d958973884b578889e827311f9ee2"

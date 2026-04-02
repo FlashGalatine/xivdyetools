@@ -74,6 +74,16 @@ Whether you're using the web app or Discord bot, these guides will help you make
 
 ---
 
+## Public API
+
+| Topic | Guide |
+|-------|-------|
+| **Getting Started** | [Public API Guide](public-api.md) |
+
+Build your own tools with the XIV Dye Tools API — no authentication required. Look up dyes, search by name, match colors, and more.
+
+---
+
 ## Related Documentation
 
 - [Architecture Overview](../architecture/overview.md) - How the tools work
