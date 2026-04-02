@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.8.0] - 2026-04-02
+
+### Added
+
+- **api-worker**: New public REST API worker (`xivdyetools-api-worker`) deployed to `data.xivdyetools.app` — Phase 1 MVP with 9 endpoints for dye database access and color matching
+- **api-worker**: 7 dye endpoints — list with filtering/sorting/pagination, single lookup with auto-detection of itemID/stainID/facewear ID, explicit stainID lookup, name search with localization, category listing, batch lookup (max 50), and Patch 7.5 consolidation group metadata
+- **api-worker**: 2 color matching endpoints — closest dye match and within-distance search supporting 6 distance algorithms (rgb, cie76, ciede2000, oklab, hyab, oklch-weighted)
+- **api-worker**: KV-backed rate limiting (60 req/min per IP), request ID tracing, security headers, permissive CORS (`*`), and deterministic Cache-Control headers
+- **api-worker**: Full test suite — 88 tests across 6 files covering unit tests (validation, response envelopes, dye serialization), route integration tests, and middleware tests
+
+---
+
 ## [1.7.0] - 2026-03-18
 
 ### Fixed
