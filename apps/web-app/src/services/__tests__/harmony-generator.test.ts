@@ -46,18 +46,22 @@ vi.mock('@services/index', () => ({
   },
 }));
 
-vi.mock('@xivdyetools/core', () => ({
-  ColorConverter: {
-    getDeltaE: vi.fn((hex1: string, hex2: string, algorithm: string) => {
-      if (algorithm === 'cie76') return 50;
-      if (algorithm === 'cie2000') return 25;
-      return 30;
-    }),
-    getDeltaE_Oklab: vi.fn(() => 15),
-    getDeltaE_HyAB: vi.fn(() => 20),
-    getDeltaE_OklchWeighted: vi.fn(() => 18),
-  },
-}));
+vi.mock('@xivdyetools/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@xivdyetools/core')>();
+  return {
+    ...actual,
+    ColorConverter: {
+      getDeltaE: vi.fn((hex1: string, hex2: string, algorithm: string) => {
+        if (algorithm === 'cie76') return 50;
+        if (algorithm === 'cie2000') return 25;
+        return 30;
+      }),
+      getDeltaE_Oklab: vi.fn(() => 15),
+      getDeltaE_HyAB: vi.fn(() => 20),
+      getDeltaE_OklchWeighted: vi.fn(() => 18),
+    },
+  };
+});
 
 // Mock dye factory
 const createMockDye = (overrides: Partial<Dye> = {}): Dye => ({

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import app from '../../src/index.js';
 import { createMockEnv } from '../test-utils.js';
+import { VENDOR_ACQUISITIONS, CRAFT_ACQUISITIONS, EXPENSIVE_DYE_IDS } from '@xivdyetools/core';
 
 const env = createMockEnv();
 
@@ -56,6 +57,44 @@ describe('GET /v1/dyes', () => {
     expect(body.data.length).toBeGreaterThan(0);
     for (const dye of body.data) {
       expect(dye.isMetallic).toBe(true);
+    }
+  });
+
+  it('filters by vendor acquisition', async () => {
+    const { body } = await getJson('/v1/dyes?vendor=true&perPage=200');
+
+    expect(body.success).toBe(true);
+    expect(body.data.length).toBeGreaterThan(0);
+    for (const dye of body.data) {
+      expect(VENDOR_ACQUISITIONS).toContain(dye.acquisition);
+    }
+  });
+
+  it('excludes vendor dyes', async () => {
+    const { body } = await getJson('/v1/dyes?vendor=false&perPage=200');
+
+    expect(body.success).toBe(true);
+    for (const dye of body.data) {
+      expect(VENDOR_ACQUISITIONS).not.toContain(dye.acquisition);
+    }
+  });
+
+  it('filters by craft acquisition', async () => {
+    const { body } = await getJson('/v1/dyes?craft=true&perPage=200');
+
+    expect(body.success).toBe(true);
+    expect(body.data.length).toBeGreaterThan(0);
+    for (const dye of body.data) {
+      expect(CRAFT_ACQUISITIONS).toContain(dye.acquisition);
+    }
+  });
+
+  it('excludes expensive dyes', async () => {
+    const { body } = await getJson('/v1/dyes?expensive=false&perPage=200');
+
+    expect(body.success).toBe(true);
+    for (const dye of body.data) {
+      expect(EXPENSIVE_DYE_IDS).not.toContain(dye.itemID);
     }
   });
 

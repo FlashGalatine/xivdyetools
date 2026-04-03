@@ -20,6 +20,9 @@ import {
   parseMatchingMethod,
   parseLocale,
   resolveExcludeIds,
+  parseDyeFilters,
+  buildFilterExcludeIds,
+  applyDyeFilters,
 } from '../lib/validation.js';
 import { successResponse } from '../lib/response.js';
 
@@ -40,8 +43,14 @@ matchRouter.get('/closest', async (c) => {
   const kC = parseFloatParam(c.req.query('kC'), 'kC', { min: 0, defaultValue: 1.0 });
   const kH = parseFloatParam(c.req.query('kH'), 'kH', { min: 0, defaultValue: 1.0 });
 
+  // Dye type/acquisition filters
+  const filters = parseDyeFilters(c.req.query.bind(c.req));
+  const filterExcludeIds = buildFilterExcludeIds(filters);
+  const userExcludeIds = excludeIdsRaw ? resolveExcludeIds(excludeIdsRaw) : [];
+  const combinedExcludeIds = [...userExcludeIds, ...filterExcludeIds];
+
   const options: FindClosestOptions = {
-    excludeIds: excludeIdsRaw ? resolveExcludeIds(excludeIdsRaw) : undefined,
+    excludeIds: combinedExcludeIds.length > 0 ? combinedExcludeIds : undefined,
     matchingMethod: method,
     weights: method === 'oklch-weighted' ? { kL, kC, kH } : undefined,
   };
@@ -99,6 +108,9 @@ matchRouter.get('/within-distance', async (c) => {
 
   const weights = method === 'oklch-weighted' ? { kL, kC, kH } : undefined;
 
+  // Dye type/acquisition filters
+  const filters = parseDyeFilters(c.req.query.bind(c.req));
+
   const options: FindWithinDistanceOptions = {
     maxDistance,
     limit,
@@ -115,6 +127,9 @@ matchRouter.get('/within-distance', async (c) => {
     const excludeInternalIds = new Set(resolveExcludeIds(excludeIdsRaw));
     dyes = dyes.filter((d) => !excludeInternalIds.has(d.id));
   }
+
+  // Apply dye type/acquisition filters
+  dyes = applyDyeFilters(dyes, filters);
 
   if (locale !== 'en') {
     await LocalizationService.setLocale(locale);

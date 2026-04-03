@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import app from '../../src/index.js';
 import { createMockEnv } from '../test-utils.js';
+import { VENDOR_ACQUISITIONS, CRAFT_ACQUISITIONS, ALLIED_SOCIETY_ACQUISITIONS, EXPENSIVE_DYE_IDS } from '@xivdyetools/core';
 
 const env = createMockEnv();
 
@@ -124,5 +125,63 @@ describe('GET /v1/match/within-distance', () => {
 
     expect(body.success).toBe(true);
     expect(body.data.results.length).toBe(0);
+  });
+});
+
+describe('Match route dye filters', () => {
+  it('/closest excludes metallic dyes when metallic=false', async () => {
+    const { body } = await getJson('/v1/match/closest?hex=CCCCCC&metallic=false');
+
+    expect(body.success).toBe(true);
+    expect(body.data.dye.isMetallic).toBe(false);
+  });
+
+  it('/closest returns only metallic when metallic=true', async () => {
+    const { body } = await getJson('/v1/match/closest?hex=CCCCCC&metallic=true');
+
+    expect(body.success).toBe(true);
+    expect(body.data.dye.isMetallic).toBe(true);
+  });
+
+  it('/closest excludes vendor dyes when vendor=false', async () => {
+    const { body } = await getJson('/v1/match/closest?hex=FF0000&vendor=false');
+
+    expect(body.success).toBe(true);
+    expect(VENDOR_ACQUISITIONS).not.toContain(body.data.dye.acquisition);
+  });
+
+  it('/within-distance excludes metallic dyes', async () => {
+    const { body } = await getJson('/v1/match/within-distance?hex=CCCCCC&maxDistance=500&metallic=false&limit=136');
+
+    expect(body.success).toBe(true);
+    for (const result of body.data.results) {
+      expect(result.dye.isMetallic).toBe(false);
+    }
+  });
+
+  it('/within-distance filters by acquisition', async () => {
+    const { body } = await getJson('/v1/match/within-distance?hex=FF0000&maxDistance=500&vendor=true&limit=136');
+
+    expect(body.success).toBe(true);
+    expect(body.data.results.length).toBeGreaterThan(0);
+    for (const result of body.data.results) {
+      expect(VENDOR_ACQUISITIONS).toContain(result.dye.acquisition);
+    }
+  });
+
+  it('/within-distance excludes expensive dyes', async () => {
+    const { body } = await getJson('/v1/match/within-distance?hex=FFFFFF&maxDistance=500&expensive=false&limit=136');
+
+    expect(body.success).toBe(true);
+    for (const result of body.data.results) {
+      expect(EXPENSIVE_DYE_IDS).not.toContain(result.dye.itemID);
+    }
+  });
+
+  it('no filters returns normal results', async () => {
+    const { body } = await getJson('/v1/match/closest?hex=FF0000');
+
+    expect(body.success).toBe(true);
+    expect(body.data.dye).toBeDefined();
   });
 });

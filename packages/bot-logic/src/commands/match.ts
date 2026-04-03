@@ -10,8 +10,8 @@
  * @module commands/match
  */
 
-import type { Dye } from '@xivdyetools/types';
-import { ColorService } from '@xivdyetools/core';
+import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
+import { ColorService, isDyeExcluded } from '@xivdyetools/core';
 import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
 import { dyeService, resolveColorInput } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
@@ -28,6 +28,8 @@ export interface MatchInput {
   /** Number of closest dyes to find (1-10, default: 1) */
   count?: number;
   locale: LocaleCode;
+  /** Optional dye type filters (e.g., exclude metallic, pastel, etc.) */
+  dyeFilters?: DyeTypeFilters;
 }
 
 export interface MatchEntry {
@@ -79,7 +81,7 @@ function formatHsv(hex: string): string {
  * The adapter adds Discord copy buttons using match[0].dye's hex/rgb/hsv.
  */
 export async function executeMatch(input: MatchInput): Promise<MatchResult> {
-  const { colorInput, locale } = input;
+  const { colorInput, locale, dyeFilters } = input;
   const matchCount = Math.min(Math.max(input.count ?? 1, 1), 10);
   const t = createTranslator(locale);
 
@@ -104,7 +106,7 @@ export async function executeMatch(input: MatchInput): Promise<MatchResult> {
     for (let attempt = 0; attempt < 20; attempt++) {
       const candidate = dyeService.findClosestDye(targetHex, excludeIds);
       if (!candidate) break;
-      if (candidate.category !== 'Facewear') {
+      if (candidate.category !== 'Facewear' && (!dyeFilters || !isDyeExcluded(dyeFilters, candidate))) {
         closestDye = candidate;
         break;
       }

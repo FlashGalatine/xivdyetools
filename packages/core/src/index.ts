@@ -39,6 +39,18 @@ export type { RYB } from './services/ColorService.js';
 
 // Dye search types
 export type { FindClosestOptions, FindWithinDistanceOptions } from './services/dye/DyeSearch.js';
+
+// Dye filtering
+export {
+  isDyeExcluded,
+  filterDyes,
+  hasActiveFilters,
+  EXPENSIVE_DYE_IDS,
+  VENDOR_ACQUISITIONS,
+  CRAFT_ACQUISITIONS,
+  ALLIED_SOCIETY_ACQUISITIONS,
+} from './services/dye/DyeFilter.js';
+
 export {
   // Color matching presets (core-specific, not deprecated)
   MATCHING_PRESETS,

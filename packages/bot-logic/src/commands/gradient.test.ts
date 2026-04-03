@@ -167,4 +167,40 @@ describe('executeGradient', () => {
 
     expect(result.ok).toBe(true);
   });
+
+  describe('dyeFilters', () => {
+    it('excludes metallic dyes when excludeMetallic is set', async () => {
+      const result = await executeGradient({
+        startColor,
+        endColor,
+        stepCount: 6,
+        locale: 'en',
+        dyeFilters: { excludeMetallic: true },
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      for (const step of result.gradientSteps) {
+        if (step.dye) {
+          expect(step.dye.isMetallic).toBe(false);
+        }
+      }
+    });
+
+    it('returns dyes when dyeFilters is empty', async () => {
+      const result = await executeGradient({
+        startColor,
+        endColor,
+        stepCount: 4,
+        locale: 'en',
+        dyeFilters: {},
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.gradientSteps.length).toBe(4);
+    });
+  });
 });

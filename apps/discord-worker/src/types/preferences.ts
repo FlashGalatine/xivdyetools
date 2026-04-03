@@ -8,6 +8,7 @@
  */
 
 import type { LocaleCode } from '../services/i18n.js';
+import type { DyeTypeFilters } from '@xivdyetools/types';
 export type { BlendingMode } from '@xivdyetools/color-blending';
 export { BLENDING_MODES, isValidBlendingMode } from '@xivdyetools/color-blending';
 import type { BlendingMode } from '@xivdyetools/color-blending';
@@ -67,6 +68,9 @@ export interface UserPreferences {
 
   /** Whether to show Market Board pricing on Result Cards by default */
   market?: boolean;
+
+  /** Dye type filters for excluding categories from results */
+  dyeFilters?: DyeTypeFilters;
 
   /** ISO timestamp of last update */
   updatedAt?: string;

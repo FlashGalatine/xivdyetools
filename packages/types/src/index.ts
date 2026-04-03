@@ -25,6 +25,7 @@ export type { VisionType, ColorblindMatrices } from './color/index.js';
 // Dye Types
 // ============================================================================
 export type { Dye, LocalizedDye, DyeWithDistance } from './dye/index.js';
+export type { DyeTypeFilters } from './dye/index.js';
 
 // ============================================================================
 // Character Color Types

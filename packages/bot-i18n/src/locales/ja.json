@@ -565,7 +565,8 @@
       "clan": "キャラクター部族",
       "gender": "キャラクター性別",
       "world": "マーケットワールド",
-      "market": "マーケット価格表示"
+      "market": "マーケット価格表示",
+      "filters": "カララントフィルター"
     },
     "descriptions": {
       "language": "カララント名とボットメッセージの言語",
@@ -599,6 +600,17 @@
       "invalidWorld": "無効なワールドです。有効なFFXIVワールドまたはデータセンター名を入力してください。",
       "invalidMarket": "無効な値です。`on`/`off` または `true`/`false` を使用してください。",
       "error": "設定の保存中にエラーが発生しました。もう一度お試しください。"
+    },
+    "filters": {
+      "noOptions": "少なくとも1つのフィルターオプションを指定してください。",
+      "excluded": "除外",
+      "included": "含む",
+      "updated": "フィルター更新完了",
+      "affectsHint": "影響するコマンド: /match, /harmony, /gradient, /mixer",
+      "title": "カララントフィルター",
+      "setHint": "/preferences filters set でカスタマイズ",
+      "resetSuccess": "フィルターリセット完了",
+      "resetDescription": "すべてのカララントフィルターがデフォルトにリセットされました（すべてのカララント種類が含まれます）。"
     }
   },
   "stats": {

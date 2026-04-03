@@ -565,7 +565,8 @@
       "clan": "Character Clan",
       "gender": "Character Gender",
       "world": "Market World",
-      "market": "Show Market Prices"
+      "market": "Show Market Prices",
+      "filters": "Dye Filters"
     },
     "descriptions": {
       "language": "Language for dye names and bot messages",
@@ -599,6 +600,17 @@
       "invalidKey": "Unknown preference key: {key}",
       "invalidValue": "Invalid value for {key}. Valid options: {options}",
       "noSubcommand": "No subcommand provided"
+    },
+    "filters": {
+      "noOptions": "Please provide at least one filter option to set.",
+      "excluded": "Excluded",
+      "included": "Included",
+      "updated": "Filters Updated",
+      "affectsHint": "Affects: /match, /harmony, /gradient, /mixer",
+      "title": "Dye Filters",
+      "setHint": "Use /preferences filters set to customize",
+      "resetSuccess": "Filters Reset",
+      "resetDescription": "All dye filters have been reset to defaults (all dye types included)."
     }
   },
   "stats": {

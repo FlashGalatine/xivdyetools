@@ -173,4 +173,39 @@ describe('executeMixer', () => {
 
     expect(result.ok).toBe(true);
   });
+
+  describe('dyeFilters', () => {
+    it('excludes metallic dyes when excludeMetallic is set', async () => {
+      const result = await executeMixer({
+        dye1,
+        dye2,
+        blendingMode: 'rgb',
+        count: 5,
+        locale: 'en',
+        dyeFilters: { excludeMetallic: true },
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      for (const match of result.matches) {
+        expect(match.dye.isMetallic).toBe(false);
+      }
+    });
+
+    it('returns matches when dyeFilters is empty', async () => {
+      const result = await executeMixer({
+        dye1,
+        dye2,
+        blendingMode: 'rgb',
+        locale: 'en',
+        dyeFilters: {},
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.matches.length).toBeGreaterThanOrEqual(1);
+    });
+  });
 });

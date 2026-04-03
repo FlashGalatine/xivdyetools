@@ -565,7 +565,8 @@
       "clan": "Charakter-Stamm",
       "gender": "Charakter-Geschlecht",
       "world": "Markt-Welt",
-      "market": "Marktpreise anzeigen"
+      "market": "Marktpreise anzeigen",
+      "filters": "Farbstoff-Filter"
     },
     "descriptions": {
       "language": "Sprache für Farbstoffnamen und Bot-Nachrichten",
@@ -599,6 +600,17 @@
       "invalidWorld": "Ungültige Welt. Bitte gib einen gültigen FFXIV Welt- oder Datenzentrum-Namen ein.",
       "invalidMarket": "Ungültiger Wert. Verwende `on`/`off` oder `true`/`false`.",
       "error": "Beim Speichern der Einstellung ist ein Fehler aufgetreten. Bitte versuche es erneut."
+    },
+    "filters": {
+      "noOptions": "Bitte gib mindestens eine Filteroption an.",
+      "excluded": "Ausgeschlossen",
+      "included": "Eingeschlossen",
+      "updated": "Filter aktualisiert",
+      "affectsHint": "Betrifft: /match, /harmony, /gradient, /mixer",
+      "title": "Farbstoff-Filter",
+      "setHint": "Verwende /preferences filters set zum Anpassen",
+      "resetSuccess": "Filter zurückgesetzt",
+      "resetDescription": "Alle Farbstoff-Filter wurden auf Standardwerte zurückgesetzt (alle Farbstofftypen eingeschlossen)."
     }
   },
   "stats": {

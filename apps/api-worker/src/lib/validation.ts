@@ -7,6 +7,12 @@
 
 import type { Dye } from '@xivdyetools/types';
 import type { MatchingMethod } from '@xivdyetools/core';
+import {
+  EXPENSIVE_DYE_IDS,
+  VENDOR_ACQUISITIONS,
+  CRAFT_ACQUISITIONS,
+  ALLIED_SOCIETY_ACQUISITIONS,
+} from '@xivdyetools/core';
 import { ApiError, ErrorCode } from './api-error.js';
 import { dyeService } from './services.js';
 
@@ -293,4 +299,82 @@ export function parseMatchingMethod(value: string | undefined): MatchingMethod {
     });
   }
   return value as MatchingMethod;
+}
+
+// ============================================================================
+// Dye Query Filters
+// ============================================================================
+
+export interface DyeQueryFilters {
+  metallic?: boolean;
+  pastel?: boolean;
+  dark?: boolean;
+  cosmic?: boolean;
+  ishgardian?: boolean;
+  vendor?: boolean;
+  craft?: boolean;
+  alliedSociety?: boolean;
+  expensive?: boolean;
+}
+
+/** Parse all dye boolean filter query params from a request. */
+export function parseDyeFilters(query: (name: string) => string | undefined): DyeQueryFilters {
+  return {
+    metallic: parseBooleanParam(query('metallic')),
+    pastel: parseBooleanParam(query('pastel')),
+    dark: parseBooleanParam(query('dark')),
+    cosmic: parseBooleanParam(query('cosmic')),
+    ishgardian: parseBooleanParam(query('ishgardian')),
+    vendor: parseBooleanParam(query('vendor')),
+    craft: parseBooleanParam(query('craft')),
+    alliedSociety: parseBooleanParam(query('alliedSociety')),
+    expensive: parseBooleanParam(query('expensive')),
+  };
+}
+
+/** Check if any dye filter is active. */
+export function hasActiveDyeFilters(f: DyeQueryFilters): boolean {
+  return Object.values(f).some((v) => v !== undefined);
+}
+
+/** Test if a single dye matches all active filters. */
+function dyeMatchesFilters(dye: Dye, f: DyeQueryFilters): boolean {
+  if (f.metallic !== undefined && dye.isMetallic !== f.metallic) return false;
+  if (f.pastel !== undefined && dye.isPastel !== f.pastel) return false;
+  if (f.dark !== undefined && dye.isDark !== f.dark) return false;
+  if (f.cosmic !== undefined && dye.isCosmic !== f.cosmic) return false;
+  if (f.ishgardian !== undefined && dye.isIshgardian !== f.ishgardian) return false;
+  if (f.vendor !== undefined) {
+    const isVendor = VENDOR_ACQUISITIONS.includes(dye.acquisition);
+    if (isVendor !== f.vendor) return false;
+  }
+  if (f.craft !== undefined) {
+    const isCraft = CRAFT_ACQUISITIONS.includes(dye.acquisition);
+    if (isCraft !== f.craft) return false;
+  }
+  if (f.alliedSociety !== undefined) {
+    const isAllied = ALLIED_SOCIETY_ACQUISITIONS.includes(dye.acquisition);
+    if (isAllied !== f.alliedSociety) return false;
+  }
+  if (f.expensive !== undefined) {
+    const isExpensive = EXPENSIVE_DYE_IDS.includes(dye.itemID);
+    if (isExpensive !== f.expensive) return false;
+  }
+  return true;
+}
+
+/** Filter a dye array by query filters (in-memory). */
+export function applyDyeFilters(dyes: Dye[], filters: DyeQueryFilters): Dye[] {
+  if (!hasActiveDyeFilters(filters)) return dyes;
+  return dyes.filter((d) => dyeMatchesFilters(d, filters));
+}
+
+/**
+ * Build a list of internal dye IDs that should be excluded based on query filters.
+ * Used for match routes where excludeIds must be passed to core search functions.
+ */
+export function buildFilterExcludeIds(filters: DyeQueryFilters): number[] {
+  if (!hasActiveDyeFilters(filters)) return [];
+  const allDyes = dyeService.getAllDyes();
+  return allDyes.filter((d) => !dyeMatchesFilters(d, filters)).map((d) => d.id);
 }

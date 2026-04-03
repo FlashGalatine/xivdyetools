@@ -7,6 +7,7 @@
 
 import type { HarmonyColorSpace, HarmonyOptions } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
+import type { DyeTypeFilters } from '@xivdyetools/types';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
 import { resolveColorInput } from '../../utils/color.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
@@ -15,6 +16,7 @@ import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, createTranslator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import { executeHarmony, getHarmonyTypeChoices, type HarmonyType } from '@xivdyetools/bot-logic';
+import { getUserPreferences } from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 export async function handleHarmonyCommand(
@@ -56,12 +58,13 @@ export async function handleHarmonyCommand(
   const locale = t.getLocale();
   const harmonyOptions = colorSpace ? { colorSpace } : undefined;
   const deferResponse = deferredResponse();
+  const prefs = await getUserPreferences(env.KV, userId, logger);
 
   ctx.waitUntil(
     processHarmonyCommand(
       interaction, env,
       resolved.hex, resolved.name, resolved.id, resolved.itemID ?? undefined,
-      harmonyType, locale, logger, harmonyOptions
+      harmonyType, locale, logger, harmonyOptions, prefs.dyeFilters
     )
   );
   return deferResponse;
@@ -77,7 +80,8 @@ async function processHarmonyCommand(
   harmonyType: HarmonyType,
   locale: LocaleCode,
   logger?: ExtendedLogger,
-  harmonyOptions?: { colorSpace?: HarmonyColorSpace }
+  harmonyOptions?: { colorSpace?: HarmonyColorSpace },
+  dyeFilters?: DyeTypeFilters
 ): Promise<void> {
   const t = createTranslator(locale);
   await initializeLocale(locale);
@@ -85,6 +89,7 @@ async function processHarmonyCommand(
   const result = await executeHarmony({
     baseHex, baseName, baseId, baseItemID, harmonyType, locale,
     harmonyOptions: harmonyOptions as HarmonyOptions | undefined,
+    dyeFilters,
   });
 
   if (!result.ok) {

@@ -29,6 +29,8 @@ import {
   CLANS_BY_RACE,
   type PreferenceKey,
 } from '../../types/preferences.js';
+import type { DyeTypeFilters } from '@xivdyetools/types';
+import { hasActiveFilters } from '@xivdyetools/core';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
@@ -62,6 +64,19 @@ const PREFERENCE_EMOJIS: Record<PreferenceKey, string> = {
   world: '🌍',
   market: '💰',
 };
+
+/** Maps Discord option names to DyeTypeFilters keys and display labels */
+const FILTER_OPTION_KEYS: Array<{ option: string; key: keyof DyeTypeFilters; label: string }> = [
+  { option: 'metallic', key: 'excludeMetallic', label: 'Metallic' },
+  { option: 'pastel', key: 'excludePastel', label: 'Pastel' },
+  { option: 'dark', key: 'excludeDark', label: 'Dark' },
+  { option: 'cosmic', key: 'excludeCosmic', label: 'Cosmic' },
+  { option: 'ishgardian', key: 'excludeIshgardian', label: 'Ishgardian' },
+  { option: 'expensive', key: 'excludeExpensive', label: 'Expensive (Pure White / Jet Black)' },
+  { option: 'vendor', key: 'excludeVendorDyes', label: 'Vendor' },
+  { option: 'craft', key: 'excludeCraftDyes', label: 'Crafted' },
+  { option: 'allied_society', key: 'excludeAlliedSocietyDyes', label: 'Allied Society' },
+];
 
 // ============================================================================
 // Main Handler
@@ -103,6 +118,30 @@ export async function handlePreferencesCommand(
 
     case 'reset':
       return handleResetSubcommand(env, userId, subcommandOption.options || [], t, logger);
+
+    case 'filters': {
+      // Subcommand group — filters set/show/reset
+      const filterSubcommand = subcommandOption.options?.[0];
+      if (!filterSubcommand) {
+        return messageResponse({
+          embeds: [errorEmbed(t.t('common.error'), t.t('preferences.errors.noSubcommand'))],
+          flags: 64,
+        });
+      }
+      switch (filterSubcommand.name) {
+        case 'set':
+          return handleFiltersSetSubcommand(env, userId, filterSubcommand.options || [], t, logger);
+        case 'show':
+          return handleFiltersShowSubcommand(env, userId, t, logger);
+        case 'reset':
+          return handleFiltersResetSubcommand(env, userId, t, logger);
+        default:
+          return messageResponse({
+            embeds: [errorEmbed(t.t('common.error'), t.t('preferences.errors.noSubcommand'))],
+            flags: 64,
+          });
+      }
+    }
 
     default:
       return messageResponse({
@@ -152,6 +191,25 @@ async function handleShowSubcommand(
       inline: true,
     };
   });
+
+  // Add dye filters summary field
+  const dyeFilters = prefs.dyeFilters;
+  if (dyeFilters && hasActiveFilters(dyeFilters)) {
+    const activeFilters = FILTER_OPTION_KEYS
+      .filter(({ key }) => dyeFilters[key])
+      .map(({ label }) => label);
+    fields.push({
+      name: `🚫 ${t.t('preferences.keys.filters')}`,
+      value: activeFilters.join(', '),
+      inline: false,
+    });
+  } else {
+    fields.push({
+      name: `🚫 ${t.t('preferences.keys.filters')}`,
+      value: `*${t.t('preferences.show.notSet')}*`,
+      inline: false,
+    });
+  }
 
   // Add last updated timestamp if available
   const footer = prefs.updatedAt
@@ -325,10 +383,15 @@ async function handleResetSubcommand(
   logger?: ExtendedLogger
 ): Promise<Response> {
   const keyOption = options.find((opt) => opt.name === 'key');
-  const key = keyOption?.value as PreferenceKey | undefined;
+  const key = keyOption?.value as PreferenceKey | 'filters' | undefined;
+
+  // Handle 'filters' reset specially (it's not a PreferenceKey)
+  if (key === 'filters') {
+    return handleFiltersResetSubcommand(env, userId, t, logger);
+  }
 
   // Validate key if provided
-  if (key && !PREFERENCE_ORDER.includes(key)) {
+  if (key && !PREFERENCE_ORDER.includes(key as PreferenceKey)) {
     return messageResponse({
       embeds: [
         errorEmbed(
@@ -487,4 +550,133 @@ function getValidationErrorMessage(t: Translator, key: PreferenceKey, reason?: s
     default:
       return t.t('preferences.validation.error');
   }
+}
+
+// ============================================================================
+// Filters Subcommand Group
+// ============================================================================
+
+/**
+ * Handles /preferences filters set [options...]
+ *
+ * Sets dye type filter preferences. Each filter is an optional boolean.
+ */
+async function handleFiltersSetSubcommand(
+  env: Env,
+  userId: string,
+  options: Array<{ name: string; value?: string | number | boolean }>,
+  t: Translator,
+  logger?: ExtendedLogger
+): Promise<Response> {
+  if (options.length === 0) {
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('preferences.filters.noOptions'))],
+      flags: 64,
+    });
+  }
+
+  const prefs = await getUserPreferences(env.KV, userId, logger);
+  const filters: DyeTypeFilters = prefs.dyeFilters ?? {};
+
+  // Apply each provided filter option
+  const changes: string[] = [];
+  for (const opt of options) {
+    const mapping = FILTER_OPTION_KEYS.find((f) => f.option === opt.name);
+    if (!mapping || typeof opt.value !== 'boolean') continue;
+
+    filters[mapping.key] = opt.value;
+    const status = opt.value ? '🚫' : '✅';
+    changes.push(`${status} **${mapping.label}**: ${opt.value ? t.t('preferences.filters.excluded') : t.t('preferences.filters.included')}`);
+  }
+
+  if (changes.length === 0) {
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('preferences.filters.noOptions'))],
+      flags: 64,
+    });
+  }
+
+  // Save updated filters
+  prefs.dyeFilters = filters;
+  prefs.updatedAt = new Date().toISOString();
+  const key = `prefs:v1:${userId}`;
+  await env.KV.put(key, JSON.stringify(prefs));
+
+  return messageResponse({
+    embeds: [
+      {
+        title: `✅ ${t.t('preferences.filters.updated')}`,
+        description: changes.join('\n'),
+        color: 0x57f287,
+        footer: { text: t.t('preferences.filters.affectsHint') },
+      },
+    ],
+  });
+}
+
+/**
+ * Handles /preferences filters show
+ *
+ * Displays current dye filter settings.
+ */
+async function handleFiltersShowSubcommand(
+  env: Env,
+  userId: string,
+  t: Translator,
+  logger?: ExtendedLogger
+): Promise<Response> {
+  const prefs = await getUserPreferences(env.KV, userId, logger);
+  const filters = prefs.dyeFilters ?? {};
+
+  const lines = FILTER_OPTION_KEYS.map(({ key, label }) => {
+    const isExcluded = filters[key] === true;
+    const emoji = isExcluded ? '🚫' : '✅';
+    const status = isExcluded ? t.t('preferences.filters.excluded') : t.t('preferences.filters.included');
+    return `${emoji} **${label}**: ${status}`;
+  });
+
+  return messageResponse({
+    embeds: [
+      {
+        title: `🔍 ${t.t('preferences.filters.title')}`,
+        description: lines.join('\n'),
+        color: PREFS_COLOR,
+        footer: { text: t.t('preferences.filters.setHint') },
+      },
+    ],
+  });
+}
+
+/**
+ * Handles /preferences filters reset
+ *
+ * Clears all dye filters.
+ */
+async function handleFiltersResetSubcommand(
+  env: Env,
+  userId: string,
+  t: Translator,
+  logger?: ExtendedLogger
+): Promise<Response> {
+  const prefs = await getUserPreferences(env.KV, userId, logger);
+  delete prefs.dyeFilters;
+  prefs.updatedAt = new Date().toISOString();
+
+  const hasPrefs = Object.keys(prefs).some((k) => !k.startsWith('_') && k !== 'updatedAt');
+  const key = `prefs:v1:${userId}`;
+  if (hasPrefs) {
+    await env.KV.put(key, JSON.stringify(prefs));
+  } else {
+    await env.KV.delete(key);
+  }
+
+  return messageResponse({
+    embeds: [
+      {
+        title: `🔄 ${t.t('preferences.filters.resetSuccess')}`,
+        description: t.t('preferences.filters.resetDescription'),
+        color: 0xfee75c,
+      },
+    ],
+  });
 }

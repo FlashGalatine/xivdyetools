@@ -7,6 +7,7 @@
 
 import type { MatchingMethod } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
+import type { DyeTypeFilters } from '@xivdyetools/types';
 import { deferredResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
 import { resolveColorInput } from '../../utils/color.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
@@ -15,6 +16,7 @@ import { getDyeEmoji } from '../../services/emoji.js';
 import { createTranslator, createUserTranslator } from '../../services/bot-i18n.js';
 import { discordLocaleToLocaleCode, initializeLocale, type LocaleCode } from '../../services/i18n.js';
 import { executeGradient, type InterpolationMode } from '@xivdyetools/bot-logic';
+import { getUserPreferences } from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 export async function handleGradientCommand(
@@ -67,9 +69,10 @@ export async function handleGradientCommand(
 
   const locale = t.getLocale();
   const deferResponse = deferredResponse();
+  const prefs = userId ? await getUserPreferences(env.KV, userId) : {};
   ctx.waitUntil(
     processGradientCommand(
-      interaction, env, startResolved, endResolved, stepCount, colorSpace, matchingMethod, locale, logger
+      interaction, env, startResolved, endResolved, stepCount, colorSpace, matchingMethod, locale, logger, prefs.dyeFilters
     )
   );
   return deferResponse;
@@ -84,7 +87,8 @@ async function processGradientCommand(
   colorSpace: InterpolationMode,
   matchingMethod: MatchingMethod,
   locale: LocaleCode,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
+  dyeFilters?: DyeTypeFilters
 ): Promise<void> {
   const t = createTranslator(locale);
   await initializeLocale(locale);
@@ -96,6 +100,7 @@ async function processGradientCommand(
     colorSpace,
     matchingMethod,
     locale,
+    dyeFilters,
   });
 
   if (!result.ok) {

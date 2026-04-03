@@ -9,8 +9,8 @@
  * @module commands/gradient
  */
 
-import type { Dye } from '@xivdyetools/types';
-import { ColorService, type MatchingMethod } from '@xivdyetools/core';
+import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
+import { ColorService, type MatchingMethod, isDyeExcluded } from '@xivdyetools/core';
 import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
 import { generateGradientBar, type GradientStep } from '@xivdyetools/svg';
 import { dyeService, type ResolvedColor } from '../input-resolution.js';
@@ -32,6 +32,8 @@ export interface GradientInput {
   colorSpace?: InterpolationMode;
   matchingMethod?: MatchingMethod;
   locale: LocaleCode;
+  /** Optional dye type filters (e.g., exclude metallic, pastel, etc.) */
+  dyeFilters?: DyeTypeFilters;
 }
 
 export interface GradientStepResult extends GradientStep {
@@ -169,6 +171,7 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
     stepCount = 6,
     colorSpace = 'hsv',
     matchingMethod = 'oklab',
+    dyeFilters,
   } = input;
   const t = createTranslator(locale);
 
@@ -192,7 +195,7 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
       for (let attempt = 0; attempt < 10; attempt++) {
         const candidate = dyeService.findClosestDye(hex, { excludeIds, matchingMethod });
         if (!candidate) break;
-        if (candidate.category !== 'Facewear') {
+        if (candidate.category !== 'Facewear' && (!dyeFilters || !isDyeExcluded(dyeFilters, candidate))) {
           closestDye = candidate;
           break;
         }

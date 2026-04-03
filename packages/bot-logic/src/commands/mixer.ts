@@ -9,7 +9,8 @@
  * @module commands/mixer
  */
 
-import type { Dye } from '@xivdyetools/types';
+import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
+import { isDyeExcluded } from '@xivdyetools/core';
 import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
 import { blendColors, type BlendingMode } from '@xivdyetools/color-blending';
 import { dyeService, type ResolvedColor } from '../input-resolution.js';
@@ -28,6 +29,8 @@ export interface MixerInput {
   /** Number of closest dyes to return (default: 1) */
   count?: number;
   locale: LocaleCode;
+  /** Optional dye type filters (e.g., exclude metallic, pastel, etc.) */
+  dyeFilters?: DyeTypeFilters;
 }
 
 export interface MixerMatch {
@@ -53,12 +56,13 @@ export type MixerResult =
 function findClosestDyeExcludingFacewear(
   targetHex: string,
   excludeIds: number[] = [],
-  maxAttempts = 20
+  maxAttempts = 20,
+  dyeFilters?: DyeTypeFilters
 ): Dye | null {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const candidate = dyeService.findClosestDye(targetHex, excludeIds);
     if (!candidate) break;
-    if (candidate.category !== 'Facewear') return candidate;
+    if (candidate.category !== 'Facewear' && (!dyeFilters || !isDyeExcluded(dyeFilters, candidate))) return candidate;
     excludeIds.push(candidate.id);
   }
   return null;
@@ -82,7 +86,7 @@ function getMatchQualityLabel(distance: number, t: ReturnType<typeof createTrans
  * - Building copy buttons (Discord-specific)
  */
 export async function executeMixer(input: MixerInput): Promise<MixerResult> {
-  const { dye1, dye2, blendingMode, locale } = input;
+  const { dye1, dye2, blendingMode, locale, dyeFilters } = input;
   const count = Math.max(1, input.count ?? 1);
   const t = createTranslator(locale);
 
@@ -95,7 +99,7 @@ export async function executeMixer(input: MixerInput): Promise<MixerResult> {
     const excludeIds: number[] = [];
 
     for (let i = 0; i < count; i++) {
-      const closestDye = findClosestDyeExcludingFacewear(blendResult.hex, [...excludeIds]);
+      const closestDye = findClosestDyeExcludingFacewear(blendResult.hex, [...excludeIds], 20, dyeFilters);
       if (closestDye) {
         const distance = getColorDistance(blendResult.hex, closestDye.hex);
         matches.push({ dye: closestDye, distance });

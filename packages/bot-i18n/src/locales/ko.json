@@ -565,7 +565,8 @@
       "clan": "캐릭터 부족",
       "gender": "캐릭터 성별",
       "world": "마켓 월드",
-      "market": "마켓 가격 표시"
+      "market": "마켓 가격 표시",
+      "filters": "염료 필터"
     },
     "descriptions": {
       "language": "염료 이름과 봇 메시지 언어",
@@ -599,6 +600,17 @@
       "invalidKey": "알 수 없는 설정 키: {key}",
       "invalidValue": "{key}의 값이 유효하지 않습니다. 유효한 옵션: {options}",
       "noSubcommand": "하위 명령어가 지정되지 않았습니다"
+    },
+    "filters": {
+      "noOptions": "최소 하나의 필터 옵션을 지정해 주세요.",
+      "excluded": "제외",
+      "included": "포함",
+      "updated": "필터 업데이트 완료",
+      "affectsHint": "적용 대상: /match, /harmony, /gradient, /mixer",
+      "title": "염료 필터",
+      "setHint": "/preferences filters set으로 사용자 지정",
+      "resetSuccess": "필터 초기화 완료",
+      "resetDescription": "모든 염료 필터가 기본값으로 초기화되었습니다 (모든 염료 유형 포함)."
     }
   },
   "stats": {

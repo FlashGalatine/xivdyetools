@@ -8,6 +8,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.9.0] - 2026-04-03
+
+### Added
+
+- **@xivdyetools/types**: `DyeTypeFilters` interface with 9 optional boolean flags for dye filtering (metallic, pastel, dark, cosmic, ishgardian, expensive, vendor, craft, alliedSociety)
+- **@xivdyetools/core**: Shared dye filter functions (`isDyeExcluded`, `filterDyes`, `hasActiveFilters`) with acquisition constants (`VENDOR_ACQUISITIONS`, `CRAFT_ACQUISITIONS`, `ALLIED_SOCIETY_ACQUISITIONS`, `EXPENSIVE_DYE_IDS`)
+- **@xivdyetools/bot-logic**: `dyeFilters?: DyeTypeFilters` parameter on all 4 execute functions (match, harmony, gradient, mixer) — filters applied during candidate selection
+- **discord-worker**: `/preferences filters` subcommand group with `set` (9 boolean options), `show`, and `reset` subcommands for persistent per-user dye filtering
+- **discord-worker**: All 4 command handlers (match, harmony, gradient, mixer) now apply user's saved dye filters from preferences
+- **@xivdyetools/bot-i18n**: Filter-related translation keys added to all 6 locales (en, ja, de, fr, ko, zh)
+- **api-worker**: Dye type/acquisition boolean filters (`metallic`, `pastel`, `dark`, `cosmic`, `ishgardian`, `vendor`, `craft`, `alliedSociety`, `expensive`) on both match routes (`/closest`, `/within-distance`)
+- **api-worker**: Acquisition and expensive filters added to GET `/v1/dyes` listing endpoint
+
+### Changed
+
+- **web-app**: `DyeFiltersConfig` now extends `Required<DyeTypeFilters>` from core; filter utilities re-export from `@xivdyetools/core`
+
+---
+
 ## [1.8.0] - 2026-04-02
 
 ### Added

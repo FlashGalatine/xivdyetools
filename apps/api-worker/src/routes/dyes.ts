@@ -22,6 +22,8 @@ import {
   resolveIdType,
   lookupDyeByResolvedId,
   resolveExcludeIds,
+  parseDyeFilters,
+  applyDyeFilters,
   VALID_SORT_FIELDS,
   VALID_ORDERS,
   VALID_CONSOLIDATION_TYPES,
@@ -255,6 +257,9 @@ dyesRouter.get('/', async (c) => {
   const ishgardian = parseBooleanParam(c.req.query('ishgardian'));
   const consolidationType = c.req.query('consolidationType') as 'A' | 'B' | 'C' | undefined;
 
+  // Acquisition/expense filters
+  const dyeFilters = parseDyeFilters(c.req.query.bind(c.req));
+
   if (consolidationType && !VALID_CONSOLIDATION_TYPES.includes(consolidationType as 'A' | 'B' | 'C')) {
     throw new ApiError(ErrorCode.VALIDATION_ERROR, `Invalid consolidationType "${consolidationType}". Must be A, B, or C.`, 400, {
       parameter: 'consolidationType',
@@ -279,6 +284,9 @@ dyesRouter.get('/', async (c) => {
   if (cosmic !== undefined) results = results.filter((d) => d.isCosmic === cosmic);
   if (ishgardian !== undefined) results = results.filter((d) => d.isIshgardian === ishgardian);
   if (consolidationType) results = results.filter((d) => d.consolidationType === consolidationType);
+
+  // Acquisition/expense filters (vendor, craft, alliedSociety, expensive)
+  results = applyDyeFilters(results, dyeFilters);
 
   // Sorting
   if (sort) {

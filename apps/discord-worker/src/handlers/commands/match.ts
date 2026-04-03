@@ -12,6 +12,7 @@ import { createCopyButtons } from '../buttons/index.js';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName } from '../../services/i18n.js';
 import { executeMatch } from '@xivdyetools/bot-logic';
+import { getUserPreferences } from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 export async function handleMatchCommand(
@@ -35,7 +36,12 @@ export async function handleMatchCommand(
     });
   }
 
-  const result = await executeMatch({ colorInput, count: matchCount, locale });
+  const result = await executeMatch({
+    colorInput,
+    count: matchCount,
+    locale,
+    dyeFilters: (await getUserPreferences(env.KV, userId)).dyeFilters,
+  });
 
   if (!result.ok) {
     const msg = result.error === 'INVALID_INPUT'

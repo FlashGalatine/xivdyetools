@@ -9,6 +9,7 @@
 
 import type { ToolId } from '@services/router-service';
 import type { MatchingMethod } from '@xivdyetools/core';
+import type { DyeTypeFilters } from '@xivdyetools/types';
 
 // Re-export MatchingMethod for convenience
 export type { MatchingMethod } from '@xivdyetools/core';
@@ -278,29 +279,11 @@ export interface AdvancedConfig {
 /**
  * Shared dye filter configuration for excluding dye categories from results.
  * Controls which dye types and acquisition sources are filtered out.
+ *
+ * Extends the shared DyeTypeFilters from @xivdyetools/types with all fields required,
+ * since the web-app UI always tracks the full set of filter toggles.
  */
-export interface DyeFiltersConfig {
-  // Type-based exclusions
-  /** Exclude dyes with "Metallic" in the name */
-  excludeMetallic: boolean;
-  /** Exclude dyes with "Pastel" in the name */
-  excludePastel: boolean;
-  /** Exclude dyes that begin with "Dark" */
-  excludeDark: boolean;
-  /** Exclude dyes from Cosmic Exploration & Cosmic Fortunes */
-  excludeCosmic: boolean;
-  /** Exclude dyes from Ishgardian Restoration content */
-  excludeIshgardian: boolean;
-  /** Exclude Jet Black & Pure White */
-  excludeExpensive: boolean;
-  // Acquisition-based exclusions
-  /** Exclude dyes purchasable from the Dye Vendor */
-  excludeVendorDyes: boolean;
-  /** Exclude dyes obtained through Crafting */
-  excludeCraftDyes: boolean;
-  /** Exclude dyes from Beast Tribe vendors */
-  excludeAlliedSocietyDyes: boolean;
-}
+export interface DyeFiltersConfig extends Required<DyeTypeFilters> {}
 
 /**
  * Default dye filter configuration (all filters disabled)

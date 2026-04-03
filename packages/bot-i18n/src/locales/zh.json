@@ -565,7 +565,8 @@
       "clan": "角色部族",
       "gender": "角色性别",
       "world": "市场服务器",
-      "market": "显示市场价格"
+      "market": "显示市场价格",
+      "filters": "染剂过滤"
     },
     "descriptions": {
       "language": "染剂名称和机器人消息的语言",
@@ -599,6 +600,17 @@
       "invalidWorld": "无效的服务器。请输入有效的FFXIV服务器或数据中心名称。",
       "invalidMarket": "无效的值。请使用 `on`/`off` 或 `true`/`false`。",
       "error": "保存设置时发生错误，请重试。"
+    },
+    "filters": {
+      "noOptions": "请至少提供一个过滤选项。",
+      "excluded": "已排除",
+      "included": "已包含",
+      "updated": "过滤器已更新",
+      "affectsHint": "影响命令: /match, /harmony, /gradient, /mixer",
+      "title": "染剂过滤",
+      "setHint": "使用 /preferences filters set 进行自定义",
+      "resetSuccess": "过滤器已重置",
+      "resetDescription": "所有染剂过滤器已重置为默认值（包含所有染剂类型）。"
     }
   },
   "stats": {

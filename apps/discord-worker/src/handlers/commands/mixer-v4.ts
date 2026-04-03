@@ -81,6 +81,7 @@ export async function handleMixerV4Command(
     blendingMode,
     count,
     locale,
+    dyeFilters: prefs.dyeFilters,
   });
 
   if (!result.ok) {

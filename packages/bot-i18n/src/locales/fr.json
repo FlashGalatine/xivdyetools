@@ -565,7 +565,8 @@
       "clan": "Clan du personnage",
       "gender": "Genre du personnage",
       "world": "Monde du marché",
-      "market": "Afficher les prix du marché"
+      "market": "Afficher les prix du marché",
+      "filters": "Filtres de teinture"
     },
     "descriptions": {
       "language": "Langue pour les noms de teinture et les messages du bot",
@@ -599,6 +600,17 @@
       "invalidKey": "Clé de préférence inconnue : {key}",
       "invalidValue": "Valeur invalide pour {key}. Options valides : {options}",
       "noSubcommand": "Aucune sous-commande fournie"
+    },
+    "filters": {
+      "noOptions": "Veuillez fournir au moins une option de filtre.",
+      "excluded": "Exclu",
+      "included": "Inclus",
+      "updated": "Filtres mis à jour",
+      "affectsHint": "Affecte : /match, /harmony, /gradient, /mixer",
+      "title": "Filtres de teinture",
+      "setHint": "Utilisez /preferences filters set pour personnaliser",
+      "resetSuccess": "Filtres réinitialisés",
+      "resetDescription": "Tous les filtres de teinture ont été réinitialisés aux valeurs par défaut (tous les types de teinture inclus)."
     }
   },
   "stats": {

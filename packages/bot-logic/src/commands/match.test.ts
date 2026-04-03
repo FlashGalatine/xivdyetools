@@ -158,4 +158,40 @@ describe('executeMatch', () => {
       }
     });
   });
+
+  describe('dyeFilters', () => {
+    it('excludes metallic dyes when excludeMetallic is set', async () => {
+      const result = await executeMatch({
+        colorInput: '#FFFFFF',
+        count: 10,
+        locale: 'en',
+        dyeFilters: { excludeMetallic: true },
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      for (const match of result.matches) {
+        expect(match.dye.isMetallic).toBe(false);
+      }
+    });
+
+    it('returns all dyes when dyeFilters is undefined', async () => {
+      const result = await executeMatch({ colorInput: '#FF0000', count: 5, locale: 'en' });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.matches.length).toBe(5);
+    });
+
+    it('returns all dyes when dyeFilters is empty', async () => {
+      const result = await executeMatch({ colorInput: '#FF0000', count: 5, locale: 'en', dyeFilters: {} });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.matches.length).toBe(5);
+    });
+  });
 });

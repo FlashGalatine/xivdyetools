@@ -7,8 +7,9 @@
  * @module commands/harmony
  */
 
-import type { Dye } from '@xivdyetools/types';
+import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
 import { type HarmonyOptions, type HarmonyColorSpace } from '@xivdyetools/core';
+import { filterDyes } from '@xivdyetools/core';
 import { createTranslator, type Translator, type LocaleCode } from '@xivdyetools/bot-i18n';
 import { generateHarmonyWheel, type HarmonyDye } from '@xivdyetools/svg';
 import { dyeService } from '../input-resolution.js';
@@ -44,6 +45,8 @@ export interface HarmonyInput {
   harmonyType: HarmonyType;
   locale: LocaleCode;
   harmonyOptions?: HarmonyOptions;
+  /** Optional dye type filters (e.g., exclude metallic, pastel, etc.) */
+  dyeFilters?: DyeTypeFilters;
 }
 
 export type HarmonyResult =
@@ -113,13 +116,15 @@ function getLocalizedHarmonyType(type: string, t: Translator): string {
  * Generates a harmony wheel SVG and embed data for the given color.
  */
 export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult> {
-  const { baseHex, baseName, baseItemID, harmonyType, locale, harmonyOptions } = input;
+  const { baseHex, baseName, baseItemID, harmonyType, locale, harmonyOptions, dyeFilters } = input;
   const t = createTranslator(locale);
 
   await initializeLocale(locale);
 
   try {
-    const harmonyDyes = getHarmonyDyes(baseHex, harmonyType, harmonyOptions);
+    const harmonyDyes = dyeFilters
+      ? filterDyes(dyeFilters, getHarmonyDyes(baseHex, harmonyType, harmonyOptions))
+      : getHarmonyDyes(baseHex, harmonyType, harmonyOptions);
 
     if (harmonyDyes.length === 0) {
       return { ok: false, error: 'NO_MATCHES', errorMessage: 'No harmony dyes found.' };

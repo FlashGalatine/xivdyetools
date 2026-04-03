@@ -178,4 +178,49 @@ describe('executeHarmony', () => {
       expect(triadic.harmonyDyes.length).toBeGreaterThan(comp.harmonyDyes.length);
     }
   });
+
+  describe('dyeFilters', () => {
+    it('excludes metallic dyes when excludeMetallic is set', async () => {
+      const result = await executeHarmony({
+        baseHex: BASE_HEX,
+        harmonyType: 'triadic',
+        locale: 'en',
+        dyeFilters: { excludeMetallic: true },
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      for (const dye of result.harmonyDyes) {
+        expect(dye.isMetallic).toBe(false);
+      }
+    });
+
+    it('returns all dyes when dyeFilters is undefined', async () => {
+      const result = await executeHarmony({
+        baseHex: BASE_HEX,
+        harmonyType: 'triadic',
+        locale: 'en',
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.harmonyDyes.length).toBeGreaterThan(0);
+    });
+
+    it('returns all dyes when dyeFilters is empty', async () => {
+      const result = await executeHarmony({
+        baseHex: BASE_HEX,
+        harmonyType: 'triadic',
+        locale: 'en',
+        dyeFilters: {},
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.harmonyDyes.length).toBeGreaterThan(0);
+    });
+  });
 });
