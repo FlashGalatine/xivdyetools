@@ -41,7 +41,7 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'discord', link: 'https://discord.gg/xivdyetools' },
+      { icon: 'discord', link: 'https://discord.gg/5VUSKTZCe5' },
     ],
 
     footer: {
