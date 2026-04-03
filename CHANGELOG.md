@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.10.0] - 2026-04-03
+
+### Added
+
+- **api-docs**: New VitePress documentation site (`xivdyetools-api-docs`) deployed to `developers.xivdyetools.app` via Cloudflare Pages — covers all 9 Phase 1 API endpoints with a hero landing page, Quick Start guide, Responses/Errors/Rate Limits guides, and full API reference for the Dyes and Color Matching endpoint groups
+- **api-docs**: Inline "Try It" panels on every reference endpoint — fires live requests to `data.xivdyetools.app` directly from the browser, shows response body, HTTP status badge, and rate limit headers (`X-RateLimit-Remaining`, `Cache-Control`), with a one-click "Copy as cURL" button
+- **CI/CD**: `deploy-api-docs.yml` GitHub Actions workflow — path-filtered to `apps/api-docs/**`, builds with `pnpm turbo run build --filter=xivdyetools-api-docs`, and deploys to Cloudflare Pages via `cloudflare/wrangler-action@v3`
+
+---
+
 ## [1.9.0] - 2026-04-03
 
 ### Added
