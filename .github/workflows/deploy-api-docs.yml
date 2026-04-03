@@ -39,4 +39,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy apps/api-docs/.vitepress/dist --project-name=xivdyetools-api-docs
+          workingDirectory: apps/api-docs
+          command: pages deploy .vitepress/dist --project-name=xivdyetools-api-docs
+          packageManager: pnpm
+          wranglerVersion: 4.78.0
