@@ -32,7 +32,6 @@ import { WorldService } from '@services/world-service';
 // Note: setupMarketBoardListeners still used by drawer code until Phase 2 refactor
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import {
-  ICON_FILTER,
   ICON_MARKET,
   ICON_IMAGE,
   ICON_PALETTE,

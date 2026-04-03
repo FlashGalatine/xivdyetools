@@ -13,7 +13,6 @@ import { dyeService } from '../lib/services.js';
 import { serializeDye } from '../lib/dye-serializer.js';
 import { ApiError, ErrorCode } from '../lib/api-error.js';
 import {
-  parseHex,
   parseIntParam,
   parseEnumParam,
   parseBooleanParam,
@@ -32,7 +31,6 @@ import {
 import {
   successResponse,
   paginatedResponse,
-  errorResponse,
   buildPagination,
 } from '../lib/response.js';
 import type { Dye } from '@xivdyetools/types';
@@ -105,7 +103,7 @@ dyesRouter.get('/batch', async (c) => {
   const notFound: number[] = [];
 
   for (const id of ids) {
-    let dye: Dye | null = null;
+    let dye: Dye | null;
 
     if (idType === 'auto') {
       dye = lookupDyeByResolvedId(resolveIdType(id));
@@ -260,7 +258,7 @@ dyesRouter.get('/', async (c) => {
   // Acquisition/expense filters
   const dyeFilters = parseDyeFilters(c.req.query.bind(c.req));
 
-  if (consolidationType && !VALID_CONSOLIDATION_TYPES.includes(consolidationType as 'A' | 'B' | 'C')) {
+  if (consolidationType && !VALID_CONSOLIDATION_TYPES.includes(consolidationType)) {
     throw new ApiError(ErrorCode.VALIDATION_ERROR, `Invalid consolidationType "${consolidationType}". Must be A, B, or C.`, 400, {
       parameter: 'consolidationType',
       received: consolidationType,

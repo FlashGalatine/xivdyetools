@@ -102,6 +102,17 @@ describe('executeMatch', () => {
       expect(uniqueIds.size).toBe(ids.length);
     });
 
+    it('multi-match with dye name input includes fromDye in description', async () => {
+      const result = await executeMatch({ colorInput: 'Snow White', count: 3, locale: 'en' });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.fromDye).toBeDefined();
+      expect(result.matches.length).toBe(3);
+      expect(result.embed.description).toBeDefined();
+    });
+
     it('clamps count to max 10', async () => {
       const result = await executeMatch({ colorInput: '#FFFFFF', count: 15, locale: 'en' });
 

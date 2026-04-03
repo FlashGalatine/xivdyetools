@@ -11,7 +11,7 @@ async function get(path: string) {
 
 async function getJson(path: string) {
   const res = await get(path);
-  const body = await res.json();
+  const body = await res.json() as any;
   return { res, body };
 }
 

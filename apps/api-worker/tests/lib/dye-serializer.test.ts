@@ -31,13 +31,13 @@ describe('serializeDye', () => {
   });
 
   it('strips internal fields', () => {
-    const dye = createMockDye() as Record<string, unknown>;
+    const dye = createMockDye() as unknown as Record<string, unknown>;
     // Manually add internal fields that DyeDatabase would have
     dye.nameLower = 'snow white';
     dye.categoryLower = 'neutral';
     dye.lab = { l: 50, a: 0, b: 0 };
 
-    const result = serializeDye(dye as any) as Record<string, unknown>;
+    const result = serializeDye(dye as any) as unknown as Record<string, unknown>;
     expect(result.nameLower).toBeUndefined();
     expect(result.categoryLower).toBeUndefined();
     expect(result.lab).toBeUndefined();

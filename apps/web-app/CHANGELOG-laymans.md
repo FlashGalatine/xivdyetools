@@ -1,34 +1,24 @@
-# What's New in Version 1.7.0
+# What's New in Version 1.9.0
 
-*Released: March 18, 2026*
+*Released: April 3, 2026*
 
 ---
 
-## Swatch Matcher: Reverse Matching
+## Filter Out Dyes You Don't Want
 
-- **Match dyes back to character colors** — select any dye from the Color Palette drawer or enter a custom hex code, and the tool highlights the 3 closest matching swatches in the grid
-- **Answer "which character colors does this dye look like?"** without trial and error
-- **Seamless forward-matching flow** — click any highlighted swatch to jump straight into regular matching
+- **New filter panel in every tool** — A collapsible "Filters" sidebar section now appears in all six tools: Harmony Explorer, Palette Extractor, Gradient Builder, Dye Mixer, Budget Suggestions, and Swatch Matcher
+- **9 toggles, two groups** — Hide dyes by type or where you get them:
+  - *Dye Types*: Metallic, Pastel, Dark, Cosmic
+  - *Acquisition Source*: Ishgardian (Firmament), Vendor, Crafted, Allied Society, Expensive
+- **Swatch Matcher stays accurate** — When filters are active, the tool automatically fetches extra candidates and post-filters so you still get a full set of the best matches
 
-## "Inspect Dye in..." Now Includes Swatch Matcher
+## Discord Bot: Save Your Filter Preferences
 
-- **New context menu destination** — right-click any dye result card and choose "Inspect Dye in... Swatch Matcher"
-- **Stay in your workflow** — quickly check what character colors a dye resembles without switching tools manually
-
-## Bug Fix: Empty Color Grid
-
-- **Fixed empty grid on return visits** — the Swatch Matcher's color grid no longer appears blank when returning to the tool with a previously saved race-specific category (Skin Colors, Hair Colors, etc.)
-- **Reliable data loading** — the grid now properly loads color data in all cases
-
-## Correct Currency Display on Dye Cards
-
-- **Accurate currency names** — dye result cards now show the correct currency (Skybuilders' Scrips, Cosmocredits, pigments, etc.) instead of always displaying "G" (Gil)
-- **Fully translated** — currency names appear in all 6 supported languages
-
-## "The Firmament" Now Translated
-
-- **Localized acquisition source** — "The Firmament" now displays in your selected language instead of always showing English
-- **All 6 languages supported** — e.g., "蒼天街" in Japanese, "창천 거리" in Korean
+- **New `/preferences filters` commands** — Set your dye type preferences once and have them automatically apply to every command you run
+  - `/preferences filters set` — Toggle any of the 9 filters on or off per your preference
+  - `/preferences filters show` — See your current saved filter settings at a glance
+  - `/preferences filters reset` — Clear all filters and return to defaults
+- **Applied automatically** — Your saved preferences are picked up by `/match`, `/harmony`, `/mixer`, and `/gradient` without any extra steps on your end
 
 ---
 
@@ -42,12 +32,4 @@
 
 ---
 
-## Documentation Overhaul
-
-- **16 new documentation files** — covering web app tools, Discord bot commands, OAuth flows, API endpoints, database schema, deployment guides, and more
-- **Updated diagrams and references** — architecture diagrams and version references refreshed across the project
-
----
-
 *For technical details, see [CHANGELOG.md](./CHANGELOG.md)*
- 

@@ -391,7 +391,7 @@ async function handleResetSubcommand(
   }
 
   // Validate key if provided
-  if (key && !PREFERENCE_ORDER.includes(key as PreferenceKey)) {
+  if (key && !PREFERENCE_ORDER.includes(key)) {
     return messageResponse({
       embeds: [
         errorEmbed(

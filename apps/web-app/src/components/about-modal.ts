@@ -220,7 +220,8 @@ export class AboutModal {
     apiSection.appendChild(apiDesc);
 
     const apiLink = document.createElement('a');
-    apiLink.className = 'inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm transition-colors';
+    apiLink.className =
+      'inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm transition-colors';
     apiLink.style.backgroundColor = 'var(--theme-card-background)';
     apiLink.style.color = 'var(--theme-text)';
     apiLink.href = 'https://data.xivdyetools.app';

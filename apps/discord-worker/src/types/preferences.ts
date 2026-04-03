@@ -88,6 +88,7 @@ export const PREFERENCE_DEFAULTS: Required<Omit<UserPreferences, 'clan' | 'gende
   matching: 'oklab',
   count: 5,
   market: false,
+  dyeFilters: {},
 };
 
 /**

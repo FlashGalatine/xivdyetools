@@ -143,6 +143,12 @@ export interface DiscordInteraction {
         type?: number;
         value?: string | number | boolean;
         focused?: boolean;
+        options?: Array<{
+          name: string;
+          type?: number;
+          value?: string | number | boolean;
+          focused?: boolean;
+        }>;
       }>;
     }>;
     components?: Array<{

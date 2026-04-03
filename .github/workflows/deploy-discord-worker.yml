@@ -56,6 +56,13 @@ jobs:
           command: deploy --env production
           packageManager: pnpm
 
+      - name: Register Discord commands
+        working-directory: apps/discord-worker
+        run: pnpm run register-commands
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          DISCORD_CLIENT_ID: "1447108133020369048"
+
       # ARCH-002: Verify deployed worker responds after deployment
       - name: Smoke test (health check)
         run: |

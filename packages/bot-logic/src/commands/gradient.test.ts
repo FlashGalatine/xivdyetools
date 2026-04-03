@@ -168,6 +168,104 @@ describe('executeGradient', () => {
     expect(result.ok).toBe(true);
   });
 
+  describe('hueDiff < -180 branches (blue to red)', () => {
+    const blueStart = { hex: '#0000FF' };
+    const redEnd = { hex: '#FF0000' };
+
+    it('handles hueDiff < -180 in hsv', async () => {
+      const result = await executeGradient({
+        startColor: blueStart,
+        endColor: redEnd,
+        colorSpace: 'hsv',
+        stepCount: 3,
+        locale: 'en',
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.gradientSteps.length).toBe(3);
+    });
+
+    it('handles hueDiff < -180 in oklch', async () => {
+      const result = await executeGradient({
+        startColor: blueStart,
+        endColor: redEnd,
+        colorSpace: 'oklch',
+        stepCount: 3,
+        locale: 'en',
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.gradientSteps.length).toBe(3);
+    });
+
+    it('handles hueDiff < -180 in lch', async () => {
+      const result = await executeGradient({
+        startColor: blueStart,
+        endColor: redEnd,
+        colorSpace: 'lch',
+        stepCount: 3,
+        locale: 'en',
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.gradientSteps.length).toBe(3);
+    });
+  });
+
+  describe('default colorSpace fallback', () => {
+    it('falls back to hsv for unrecognized colorSpace (red to blue, hueDiff > 180)', async () => {
+      const result = await executeGradient({
+        startColor,
+        endColor,
+        colorSpace: 'unknown' as InterpolationMode,
+        stepCount: 3,
+        locale: 'en',
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.gradientSteps.length).toBe(3);
+    });
+
+    it('falls back to hsv for unrecognized colorSpace (blue to red, hueDiff < -180)', async () => {
+      const result = await executeGradient({
+        startColor: { hex: '#0000FF' },
+        endColor: { hex: '#FF0000' },
+        colorSpace: 'unknown' as InterpolationMode,
+        stepCount: 3,
+        locale: 'en',
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.gradientSteps.length).toBe(3);
+    });
+  });
+
+  describe('matchingMethod label', () => {
+    it('uses ciede2000 matching method', async () => {
+      const result = await executeGradient({
+        startColor,
+        endColor,
+        matchingMethod: 'ciede2000',
+        locale: 'en',
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.embed.description).toContain('CIEDE2000');
+    });
+
+    it('uses cie76 matching method', async () => {
+      const result = await executeGradient({
+        startColor,
+        endColor,
+        matchingMethod: 'cie76',
+        locale: 'en',
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.embed.description).toContain('CIE76');
+    });
+  });
+
   describe('dyeFilters', () => {
     it('excludes metallic dyes when excludeMetallic is set', async () => {
       const result = await executeGradient({

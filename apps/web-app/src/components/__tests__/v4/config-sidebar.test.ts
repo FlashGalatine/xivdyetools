@@ -56,8 +56,20 @@ vi.mock('@shared/tool-config-types', () => {
     showPrice: false,
     showAcquisition: false,
   };
+  const DEFAULT_DYE_FILTERS = {
+    excludeMetallic: false,
+    excludePastel: false,
+    excludeDark: false,
+    excludeCosmic: false,
+    excludeIshgardian: false,
+    excludeExpensive: false,
+    excludeVendorDyes: false,
+    excludeCraftDyes: false,
+    excludeAlliedSocietyDyes: false,
+  };
   return {
     DEFAULT_DISPLAY_OPTIONS,
+    DEFAULT_DYE_FILTERS,
     DEFAULT_CONFIGS: {
       global: { theme: '', displayOptions: DEFAULT_DISPLAY_OPTIONS },
       market: { selectedServer: 'Crystal', showPrices: false },

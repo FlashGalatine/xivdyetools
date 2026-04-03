@@ -40,7 +40,11 @@ import type {
   PresetCategoryFilter,
   MatchingMethod,
 } from '@shared/tool-config-types';
-import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS, DEFAULT_CONFIGS } from '@shared/tool-config-types';
+import {
+  DEFAULT_DISPLAY_OPTIONS,
+  DEFAULT_DYE_FILTERS,
+  DEFAULT_CONFIGS,
+} from '@shared/tool-config-types';
 import { STORAGE_KEYS } from '@shared/constants';
 import {
   ICON_REFRESH,

@@ -5,6 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+import type { LocaleCode } from '@xivdyetools/bot-i18n';
 import { initializeLocale, getLocalizedDyeName, getLocalizedCategory } from './localization.js';
 
 describe('localization', () => {
@@ -22,6 +23,11 @@ describe('localization', () => {
       for (const locale of locales) {
         await expect(initializeLocale(locale)).resolves.toBeUndefined();
       }
+    });
+
+    it('falls back to English when locale initialization fails (invalid locale)', async () => {
+      // Passing an unsupported locale causes loadLocale to throw, triggering the catch fallback
+      await expect(initializeLocale('xx' as LocaleCode)).resolves.toBeUndefined();
     });
   });
 

@@ -249,9 +249,7 @@ export class DyeFiltersV4 extends BaseLitComponent {
         }}
       >
         <div class="option-group-label">${label}</div>
-        <span class="collapse-icon ${collapsed ? 'collapsed' : ''}"
-          >${collapsed ? '▼' : '▲'}</span
-        >
+        <span class="collapse-icon ${collapsed ? 'collapsed' : ''}">${collapsed ? '▼' : '▲'}</span>
       </div>
     `;
   }
@@ -364,9 +362,7 @@ export class DyeFiltersV4 extends BaseLitComponent {
 
   protected override render(): TemplateResult {
     return html`
-      <div class="dye-filters">
-        ${this.renderDyeTypesGroup()} ${this.renderAcquisitionGroup()}
-      </div>
+      <div class="dye-filters">${this.renderDyeTypesGroup()} ${this.renderAcquisitionGroup()}</div>
     `;
   }
 }

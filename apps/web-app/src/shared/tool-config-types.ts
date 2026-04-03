@@ -280,10 +280,10 @@ export interface AdvancedConfig {
  * Shared dye filter configuration for excluding dye categories from results.
  * Controls which dye types and acquisition sources are filtered out.
  *
- * Extends the shared DyeTypeFilters from @xivdyetools/types with all fields required,
- * since the web-app UI always tracks the full set of filter toggles.
+ * All fields from DyeTypeFilters are required since the web-app UI
+ * always tracks the full set of filter toggles.
  */
-export interface DyeFiltersConfig extends Required<DyeTypeFilters> {}
+export type DyeFiltersConfig = Required<DyeTypeFilters>;
 
 /**
  * Default dye filter configuration (all filters disabled)

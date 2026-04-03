@@ -199,8 +199,8 @@ describe('hasActiveFilters', () => {
   });
 
   it('returns true when multiple filters are on', () => {
-    expect(
-      hasActiveFilters(filtersWith({ excludeMetallic: true, excludeExpensive: true }))
-    ).toBe(true);
+    expect(hasActiveFilters(filtersWith({ excludeMetallic: true, excludeExpensive: true }))).toBe(
+      true
+    );
   });
 });

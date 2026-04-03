@@ -47,10 +47,9 @@ import {
   type DyeFiltersConfig,
   DEFAULT_DYE_FILTERS,
 } from '@shared/tool-config-types';
-import { isDyeExcluded, hasActiveFilters } from '@shared/dye-filter-utils';
 // WEB-REF-003 FIX: ColorConverter usage moved to harmony-generator.ts
 import { HARMONY_ICONS } from '@shared/harmony-icons';
-import { ICON_FILTER, ICON_MARKET, ICON_BEAKER, ICON_MUSIC } from '@shared/ui-icons';
+import { ICON_MARKET, ICON_BEAKER, ICON_MUSIC } from '@shared/ui-icons';
 import { ICON_TOOL_HARMONY } from '@shared/tool-icons';
 import { COMPANION_DYES_MIN, COMPANION_DYES_MAX, COMPANION_DYES_DEFAULT } from '@shared/constants';
 import { SubscriptionManager } from '@shared/subscription-manager';
@@ -345,7 +344,8 @@ export class HarmonyTool extends BaseComponent {
 
         // Perceptual matching, matching method, dedup, or dye filter changes require regenerating harmonies
         const newDyeFilters = config.dyeFilters ?? { ...DEFAULT_DYE_FILTERS };
-        const filtersChanged = JSON.stringify(this.dyeFiltersConfig) !== JSON.stringify(newDyeFilters);
+        const filtersChanged =
+          JSON.stringify(this.dyeFiltersConfig) !== JSON.stringify(newDyeFilters);
 
         const algorithmChanged =
           this.usePerceptualMatching !== config.strictMatching ||

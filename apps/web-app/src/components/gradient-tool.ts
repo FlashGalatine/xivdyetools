@@ -34,8 +34,8 @@ import {
 // Note: setupMarketBoardListeners still used by drawer code until Phase 2 refactor
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { ICON_TOOL_MIXER } from '@shared/tool-icons';
-// Note: ICON_FILTER and ICON_MARKET still used by drawer code until Phase 2 refactor
-import { ICON_FILTER, ICON_MARKET, ICON_EXPORT, ICON_STAIRS, ICON_PALETTE } from '@shared/ui-icons';
+// Note: ICON_MARKET still used by drawer code until Phase 2 refactor
+import { ICON_MARKET, ICON_EXPORT, ICON_STAIRS, ICON_PALETTE } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import type { Dye, PriceData } from '@xivdyetools/types';
@@ -1485,8 +1485,9 @@ export class GradientTool extends BaseComponent {
       if (matchedDye && isDyeExcluded(this.dyeFiltersConfig, matchedDye)) {
         // Find next closest non-excluded dye
         const allDyes = dyeService.getAllDyes();
-        const filteredDyes = filterDyes(this.dyeFiltersConfig, allDyes)
-          .filter((dye) => !excludeIds.includes(dye.id) && dye.category !== 'Facewear');
+        const filteredDyes = filterDyes(this.dyeFiltersConfig, allDyes).filter(
+          (dye) => !excludeIds.includes(dye.id) && dye.category !== 'Facewear'
+        );
         matchedDye =
           filteredDyes.length > 0
             ? filteredDyes.reduce((best, dye) => {

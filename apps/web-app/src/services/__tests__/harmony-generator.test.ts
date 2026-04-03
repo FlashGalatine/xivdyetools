@@ -496,12 +496,7 @@ describe('harmony-generator', () => {
         excludeMetallic: true,
       };
 
-      const result = findHarmonyDyes(
-        baseDye,
-        'complementary',
-        config,
-        filtersConfig
-      );
+      const result = findHarmonyDyes(baseDye, 'complementary', config, filtersConfig);
 
       // Dye with itemID 1 (metallic) should be filtered out
       const ids = result.map((r) => r.dye.itemID);

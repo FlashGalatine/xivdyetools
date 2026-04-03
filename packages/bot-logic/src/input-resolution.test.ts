@@ -208,6 +208,16 @@ describe('resolveColorInput', () => {
         }
       }
     });
+
+    it('includes Facewear dyes when excludeFacewear is false', () => {
+      const allDyes = dyeService.getAllDyes();
+      const facewearDye = allDyes.find((d) => d.category === 'Facewear');
+      if (facewearDye) {
+        const result = resolveColorInput(facewearDye.name, { excludeFacewear: false });
+        // With excludeFacewear: false, the Facewear dye should be included in candidates
+        expect(result).not.toBeNull();
+      }
+    });
   });
 
   describe('CSS color name input', () => {

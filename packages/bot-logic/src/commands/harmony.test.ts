@@ -112,6 +112,21 @@ describe('executeHarmony', () => {
     expect(result.baseName).toBeDefined();
   });
 
+  it('uses localized name when both baseName and baseItemID are provided', async () => {
+    const result = await executeHarmony({
+      baseHex: BASE_HEX,
+      baseName: 'Dalamud Red',
+      baseItemID: 5790,
+      harmonyType: 'triadic',
+      locale: 'en',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.baseName).toBeDefined();
+  });
+
   it('uses hex as baseName when name not provided', async () => {
     const result = await executeHarmony({
       baseHex: BASE_HEX,
@@ -164,6 +179,21 @@ describe('executeHarmony', () => {
     if (!result.ok) return;
 
     expect(result.svgString).toContain('<svg');
+  });
+
+  it('handles unrecognized harmony type via default fallback', async () => {
+    // Covers: getHarmonyDyes default case + getLocalizedHarmonyType fallback branch
+    const result = await executeHarmony({
+      baseHex: BASE_HEX,
+      harmonyType: 'unknown' as unknown as HarmonyType,
+      locale: 'en',
+    });
+
+    // The default case falls back to triadic dyes, so ok should still be true
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.embed.title).toBeDefined();
   });
 
   it('returns dyes for each harmony type', async () => {
