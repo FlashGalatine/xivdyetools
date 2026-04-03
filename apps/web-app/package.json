@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-web-app",
-  "version": "4.5.1",
+  "version": "4.6.0",
   "private": true,
   "description": "A comprehensive web-based toolset for Final Fantasy XIV players",
   "main": "index.html",

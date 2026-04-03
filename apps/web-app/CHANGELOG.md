@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Harmony Explorer**: Migrated from v2 `DyeFilters` class to `DyeFiltersConfig` + pure functions; updated `harmony-generator.ts` signatures (`replaceExcludedDyes` 4→3 args, `findHarmonyDyes` 5→4 args)
 - **Palette Extractor**: Migrated from v2 `DyeFilters` class to `DyeFiltersConfig` + pure functions
+- Filter utilities (`isDyeExcluded`, `filterDyes`, `hasActiveFilters`) now imported from `@xivdyetools/core` instead of local implementations
+- `DyeFiltersConfig` now extends `Required<DyeTypeFilters>` from `@xivdyetools/types`
 - **Gradient Builder**: Migrated from v2 `DyeFilters` class to `DyeFiltersConfig` + pure functions; removed inline filter panel from left panel and mobile drawer
 - **Dye Mixer**: Migrated from v2 `DyeFilters` class to `DyeFiltersConfig` + pure functions; removed local `buildFiltersPanel()` method and inline filter panels; updated `mixer-blending-engine.ts` to accept `DyeFiltersConfig`
 - **Budget Suggestions**: Migrated from v2 `DyeFilters` class to `DyeFiltersConfig` + pure functions; removed inline filter panels from left panel and mobile drawer

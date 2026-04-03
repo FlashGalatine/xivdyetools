@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `/preferences filters set` subcommand — set dye type filter preferences (9 boolean toggles)
+- `/preferences filters show` subcommand — display current filter settings
+- `/preferences filters reset` subcommand — reset all filters to defaults
+- `dyeFilters` field on `UserPreferences` interface
+- All 4 command handlers (match, harmony, gradient, mixer) now pass user filter preferences to bot-logic
+
+---
+
 ## [4.2.1] - 2026-03-18
 
 ### Fixed
