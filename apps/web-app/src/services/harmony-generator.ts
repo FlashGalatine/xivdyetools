@@ -14,8 +14,8 @@
 import { ColorService, dyeService, LanguageService } from '@services/index';
 import { ColorConverter } from '@xivdyetools/core';
 import type { Dye } from '@xivdyetools/types';
-import type { MatchingMethod } from '@shared/tool-config-types';
-import type { DyeFilters, DyeFilterConfig } from '@components/dye-filters';
+import type { MatchingMethod, DyeFiltersConfig } from '@shared/tool-config-types';
+import { isDyeExcluded, hasActiveFilters } from '@shared/dye-filter-utils';
 
 // ============================================================================
 // Types
@@ -215,17 +215,15 @@ export function findClosestDyesToHue(
  *
  * @param dyes Array of scored dye matches to filter
  * @param targetHue Target hue for finding alternatives
- * @param dyeFilters DyeFilters instance with exclusion rules
- * @param filterConfig Current filter configuration (optional check)
+ * @param dyeFiltersConfig Dye filter configuration with exclusion rules
  * @returns Filtered array with excluded dyes replaced by alternatives
  */
 export function replaceExcludedDyes(
   dyes: ScoredDyeMatch[],
   targetHue: number,
-  dyeFilters: DyeFilters | null,
-  filterConfig: DyeFilterConfig | null
+  dyeFiltersConfig: DyeFiltersConfig | null
 ): ScoredDyeMatch[] {
-  if (!filterConfig || !dyeFilters) {
+  if (!dyeFiltersConfig || !hasActiveFilters(dyeFiltersConfig)) {
     return dyes; // No filters active
   }
 
@@ -235,7 +233,7 @@ export function replaceExcludedDyes(
 
   for (const item of dyes) {
     // If dye is not excluded, keep it
-    if (!dyeFilters.isDyeExcluded(item.dye)) {
+    if (!isDyeExcluded(dyeFiltersConfig, item.dye)) {
       result.push(item);
       usedDyeIds.add(item.dye.itemID);
       continue;
@@ -250,7 +248,7 @@ export function replaceExcludedDyes(
       if (
         usedDyeIds.has(dye.itemID) ||
         dye.category === 'Facewear' ||
-        dyeFilters.isDyeExcluded(dye)
+        isDyeExcluded(dyeFiltersConfig, dye)
       ) {
         continue;
       }
@@ -278,16 +276,14 @@ export function replaceExcludedDyes(
  * @param baseDye The base dye to generate harmonies from
  * @param harmonyType The harmony type ID (e.g., 'complementary', 'triadic')
  * @param config Harmony configuration
- * @param dyeFilters Optional DyeFilters for exclusion rules
- * @param filterConfig Current filter configuration
+ * @param dyeFiltersConfig Optional dye filter configuration for exclusion rules
  * @returns Array of scored dye matches
  */
 export function findHarmonyDyes(
   baseDye: Dye,
   harmonyType: string,
   config: HarmonyConfig,
-  dyeFilters?: DyeFilters | null,
-  filterConfig?: DyeFilterConfig | null
+  dyeFiltersConfig?: DyeFiltersConfig | null
 ): ScoredDyeMatch[] {
   const offsets = HARMONY_OFFSETS[harmonyType] || [];
   const baseHsv = ColorService.hexToHsv(baseDye.hex);
@@ -310,7 +306,7 @@ export function findHarmonyDyes(
 
     for (const match of matches) {
       // Apply filters if configured
-      if (filterConfig && dyeFilters?.isDyeExcluded(match.dye)) {
+      if (dyeFiltersConfig && isDyeExcluded(dyeFiltersConfig, match.dye)) {
         continue;
       }
       results.push(match);
@@ -326,8 +322,7 @@ export function findHarmonyDyes(
  * @param baseDye The base dye
  * @param offset Hue offset in degrees
  * @param config Harmony configuration
- * @param dyeFilters Optional DyeFilters for exclusion rules
- * @param filterConfig Current filter configuration
+ * @param dyeFiltersConfig Optional dye filter configuration for exclusion rules
  * @param swappedDye Optional user-swapped dye to use instead of best match
  * @returns Object with displayDye, targetColor, deviance, and closestDyes
  */
@@ -335,8 +330,7 @@ export function generateHarmonyPanelData(
   baseDye: Dye,
   offset: number,
   config: HarmonyConfig,
-  dyeFilters?: DyeFilters | null,
-  filterConfig?: DyeFilterConfig | null,
+  dyeFiltersConfig?: DyeFiltersConfig | null,
   swappedDye?: Dye | null
 ): {
   displayDye: Dye;
@@ -358,7 +352,7 @@ export function generateHarmonyPanelData(
     config,
     baseDye
   );
-  matches = replaceExcludedDyes(matches, targetHue, dyeFilters ?? null, filterConfig ?? null);
+  matches = replaceExcludedDyes(matches, targetHue, dyeFiltersConfig ?? null);
 
   // Use swapped dye if user has selected one, otherwise use best match
   const displayDye = swappedDye || matches[0]?.dye || baseDye;

@@ -19,7 +19,6 @@
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
-import { DyeFilters } from '@components/dye-filters';
 import { MarketBoard } from '@components/market-board';
 import {
   ColorService,
@@ -37,7 +36,7 @@ import type { MixedColorResult } from '@services/index';
 import { ConfigController } from '@services/config-controller';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { ICON_TOOL_DYE_MIXER } from '@shared/tool-icons';
-import { ICON_FILTER, ICON_MARKET, ICON_PALETTE, ICON_SLIDERS } from '@shared/ui-icons';
+import { ICON_MARKET, ICON_PALETTE, ICON_SLIDERS } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import type { Dye, PriceData } from '@xivdyetools/types';
@@ -46,9 +45,10 @@ import type {
   DisplayOptionsConfig,
   MixingMode,
   MatchingMethod,
+  DyeFiltersConfig,
 } from '@shared/tool-config-types';
 // WEB-REF-003 FIX: ColorConverter usage moved to mixer-blending-engine.ts
-import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
+import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
 import '@components/v4/result-card';
 import type { ResultCardData, ContextAction } from '@components/v4/result-card';
 import '@components/v4/share-button';
@@ -76,11 +76,6 @@ interface DyeSelectorPanelRefs {
 interface SettingsSliderRefs {
   slider: HTMLInputElement;
   valueDisplay: HTMLElement;
-}
-
-interface FiltersPanelRefs {
-  panel: CollapsiblePanel;
-  filters: DyeFilters;
 }
 
 interface MarketPanelRefs {
@@ -136,20 +131,17 @@ export class MixerTool extends BaseComponent {
 
   // Child components (desktop)
   private dyeSelector: DyeSelector | null = null;
-  private dyeFilters: DyeFilters | null = null;
+  private dyeFiltersConfig: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
   private marketBoard: MarketBoard | null = null;
   private dyeSelectionPanel: CollapsiblePanel | null = null;
   private settingsPanel: CollapsiblePanel | null = null;
-  private filtersPanel: CollapsiblePanel | null = null;
   private marketPanel: CollapsiblePanel | null = null;
 
   // Child components (mobile drawer - separate instances for independent panel states)
   private mobileDyeSelectionPanel: CollapsiblePanel | null = null;
   private mobileSettingsPanel: CollapsiblePanel | null = null;
-  private mobileFiltersPanel: CollapsiblePanel | null = null;
   private mobileMarketPanel: CollapsiblePanel | null = null;
   private mobileDyeSelector: DyeSelector | null = null;
-  private mobileDyeFilters: DyeFilters | null = null;
   private mobileMarketBoard: MarketBoard | null = null;
   private mobileMaxResultsDisplay: HTMLElement | null = null;
 
@@ -263,7 +255,7 @@ export class MixerTool extends BaseComponent {
       this.blendedColor,
       { matchingMethod: this.matchingMethod, maxResults: this.maxResults },
       excludeIds,
-      this.dyeFilters
+      this.dyeFiltersConfig
     );
   }
 
@@ -506,40 +498,6 @@ export class MixerTool extends BaseComponent {
   }
 
   /**
-   * Build filters panel (shared by desktop and drawer)
-   * @param container Container to render into
-   * @param storageKey Storage key for panel collapse state
-   * @returns References to created panel and filters
-   */
-  private buildFiltersPanel(container: HTMLElement, storageKey: string): FiltersPanelRefs {
-    const panel = new CollapsiblePanel(container, {
-      title: LanguageService.t('filters.advancedFilters'),
-      storageKey,
-      defaultOpen: false,
-      icon: ICON_FILTER,
-    });
-    panel.init();
-
-    const filtersContent = this.createElement('div');
-    const filters = new DyeFilters(filtersContent, {
-      storageKeyPrefix: storageKey.replace('_filters', ''),
-      hideHeader: true,
-      onFilterChange: () => {
-        this.findMatchingDyesInternal();
-        this.renderResultsGrid();
-        if (this.showPrices) {
-          void this.fetchPricesForDisplayedDyes();
-        }
-      },
-    });
-    filters.render();
-    filters.bindEvents();
-    panel.setContent(filtersContent);
-
-    return { panel, filters };
-  }
-
-  /**
    * Build market board panel (shared by desktop and drawer)
    * @param container Container to render into
    * @param storageKey Storage key for panel collapse state
@@ -719,20 +677,16 @@ export class MixerTool extends BaseComponent {
 
     // Destroy desktop components
     this.dyeSelector?.destroy();
-    this.dyeFilters?.destroy();
     this.marketBoard?.destroy();
     this.dyeSelectionPanel?.destroy();
     this.settingsPanel?.destroy();
-    this.filtersPanel?.destroy();
     this.marketPanel?.destroy();
 
     // Destroy mobile drawer components
     this.mobileDyeSelector?.destroy();
-    this.mobileDyeFilters?.destroy();
     this.mobileMarketBoard?.destroy();
     this.mobileDyeSelectionPanel?.destroy();
     this.mobileSettingsPanel?.destroy();
-    this.mobileFiltersPanel?.destroy();
     this.mobileMarketPanel?.destroy();
 
     this.selectedDyes = [null, null, null];
@@ -958,6 +912,17 @@ export class MixerTool extends BaseComponent {
       }
     }
 
+    // Handle dyeFilters changes
+    if (config.dyeFilters) {
+      const newFilters = { ...this.dyeFiltersConfig, ...config.dyeFilters };
+      const filtersChanged = JSON.stringify(newFilters) !== JSON.stringify(this.dyeFiltersConfig);
+      if (filtersChanged) {
+        this.dyeFiltersConfig = newFilters;
+        needsUpdate = true;
+        logger.info('[MixerTool] setConfig: dyeFilters updated');
+      }
+    }
+
     // Apply updates
     if (needsUpdate && this.blendedColor) {
       this.findMatchingDyesInternal();
@@ -1012,15 +977,7 @@ export class MixerTool extends BaseComponent {
     this.renderSettings(settingsContent);
     this.settingsPanel.setContent(settingsContent);
 
-    // Section 3: Dye Filters (collapsible)
-    // WEB-REF-003 Phase 2: Refactored to use shared builder
-    const filtersContainer = this.createElement('div');
-    left.appendChild(filtersContainer);
-    const filtersRefs = this.buildFiltersPanel(filtersContainer, 'v4_mixer_filters');
-    this.filtersPanel = filtersRefs.panel;
-    this.dyeFilters = filtersRefs.filters;
-
-    // Section 4: Market Board (collapsible)
+    // Section 3: Market Board (collapsible)
     // WEB-REF-003 Phase 2: Refactored to use shared builder
     const marketContainer = this.createElement('div');
     left.appendChild(marketContainer);
@@ -1847,14 +1804,7 @@ export class MixerTool extends BaseComponent {
     this.bindSettingsSliderEvents(settingsRefs.slider, settingsRefs.valueDisplay);
     this.mobileSettingsPanel.setContent(mobileSettingsContent);
 
-    // Section 3: Filters - uses shared builder
-    const filtersContainer = this.createElement('div');
-    drawer.appendChild(filtersContainer);
-    const filtersRefs = this.buildFiltersPanel(filtersContainer, 'v4_mixer_mobile_filters');
-    this.mobileFiltersPanel = filtersRefs.panel;
-    this.mobileDyeFilters = filtersRefs.filters;
-
-    // Section 4: Market Board - uses shared builder
+    // Section 3: Market Board - uses shared builder
     const marketContainer = this.createElement('div');
     drawer.appendChild(marketContainer);
     const marketRefs = this.buildMarketPanel(marketContainer, 'v4_mixer_mobile_market');

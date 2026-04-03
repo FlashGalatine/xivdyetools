@@ -36,8 +36,10 @@ import type {
   DisplayOptionsConfig,
   MarketConfig,
   MatchingMethod,
+  DyeFiltersConfig,
 } from '@shared/tool-config-types';
-import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
+import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
+import { isDyeExcluded, hasActiveFilters } from '@shared/dye-filter-utils';
 import type { ResultCardData, ContextAction } from '@components/v4/result-card';
 // Import v4-result-card custom element to ensure it's registered
 import '@components/v4/result-card';
@@ -162,6 +164,7 @@ export class SwatchTool extends BaseComponent {
   // Display options (from ConfigController) - for v4-result-card
   private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
   private matchingMethod: MatchingMethod = 'oklab';
+  private dyeFiltersConfig: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
 
   // Reverse matching state (dye/hex → closest swatch)
   private reverseDyeHex: string | null = null;
@@ -378,6 +381,17 @@ export class SwatchTool extends BaseComponent {
       this.matchingMethod = config.matchingMethod;
       needsRematch = true;
       logger.info(`[SwatchTool] setConfig: matchingMethod -> ${config.matchingMethod}`);
+    }
+
+    // Handle dyeFilters changes
+    if (config.dyeFilters) {
+      const newFilters = { ...this.dyeFiltersConfig, ...config.dyeFilters };
+      const filtersChanged = JSON.stringify(newFilters) !== JSON.stringify(this.dyeFiltersConfig);
+      if (filtersChanged) {
+        this.dyeFiltersConfig = newFilters;
+        needsRematch = true;
+        logger.info('[SwatchTool] setConfig: dyeFilters updated');
+      }
     }
 
     // Sync UI selectors (both desktop and mobile)
@@ -2244,10 +2258,23 @@ export class SwatchTool extends BaseComponent {
       return;
     }
 
-    this.matchedDyes = this.characterColorService.findClosestDyes(this.selectedColor, dyeService, {
-      count: this.maxResults,
+    // Request extra results if filters are active, then filter and trim
+    const requestCount = hasActiveFilters(this.dyeFiltersConfig)
+      ? Math.min(this.maxResults * 3, 136)
+      : this.maxResults;
+
+    let matches = this.characterColorService.findClosestDyes(this.selectedColor, dyeService, {
+      count: requestCount,
       matchingMethod: this.matchingMethod,
     });
+
+    // Apply dye filters
+    if (hasActiveFilters(this.dyeFiltersConfig)) {
+      matches = matches.filter((m) => !isDyeExcluded(this.dyeFiltersConfig, m.dye));
+      matches = matches.slice(0, this.maxResults);
+    }
+
+    this.matchedDyes = matches;
 
     logger.info(`[CharacterTool] Found ${this.matchedDyes.length} matching dyes`);
     this.updateMatchResults();

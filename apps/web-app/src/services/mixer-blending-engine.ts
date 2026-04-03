@@ -14,7 +14,8 @@ import { ColorService, dyeService } from '@services/index';
 import { ColorConverter } from '@xivdyetools/core';
 import type { Dye } from '@xivdyetools/types';
 import type { MixingMode, MatchingMethod } from '@shared/tool-config-types';
-import type { DyeFilters } from '@components/dye-filters';
+import type { DyeFiltersConfig } from '@shared/tool-config-types';
+import { isDyeExcluded } from '@shared/dye-filter-utils';
 
 // ============================================================================
 // Types
@@ -152,14 +153,14 @@ export function calculateColorDistance(
  * @param blendedColor The target color to match (hex)
  * @param config Blending configuration (matchingMethod, maxResults)
  * @param excludeIds Array of dye IDs to exclude from results (e.g., input dyes)
- * @param dyeFilters Optional DyeFilters instance to apply user filter preferences
+ * @param dyeFiltersConfig Optional dye filter configuration to apply user filter preferences
  * @returns Array of matched dye results sorted by distance
  */
 export function findMatchingDyes(
   blendedColor: string,
   config: Pick<BlendingConfig, 'matchingMethod' | 'maxResults'>,
   excludeIds: number[] = [],
-  dyeFilters?: DyeFilters | null
+  dyeFiltersConfig?: DyeFiltersConfig | null
 ): MixedColorResult[] {
   const allDyes = dyeService.getAllDyes();
   const results: MixedColorResult[] = [];
@@ -171,7 +172,7 @@ export function findMatchingDyes(
     }
 
     // Apply user filters if available
-    if (dyeFilters?.isDyeExcluded(dye)) {
+    if (dyeFiltersConfig && isDyeExcluded(dyeFiltersConfig, dye)) {
       continue;
     }
 

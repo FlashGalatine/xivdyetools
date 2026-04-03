@@ -13,7 +13,6 @@
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
-import { DyeFilters } from '@components/dye-filters';
 import { MarketBoard } from '@components/market-board';
 import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
 import '@components/v4/share-button';
@@ -30,7 +29,6 @@ import {
   ToastService,
   WorldService,
   // WEB-REF-003 Phase 3: Shared panel builders
-  buildFiltersPanel,
   buildMarketPanel,
 } from '@services/index';
 // Note: setupMarketBoardListeners still used by drawer code until Phase 2 refactor
@@ -47,8 +45,10 @@ import type {
   MarketConfig,
   InterpolationMode,
   MatchingMethod,
+  DyeFiltersConfig,
 } from '@shared/tool-config-types';
-import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
+import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
+import { isDyeExcluded, filterDyes } from '@shared/dye-filter-utils';
 
 // ============================================================================
 // Types and Constants
@@ -132,20 +132,17 @@ export class GradientTool extends BaseComponent {
 
   // Child components (desktop)
   private dyeSelector: DyeSelector | null = null;
-  private dyeFilters: DyeFilters | null = null;
+  private dyeFiltersConfig: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
   private marketBoard: MarketBoard | null = null;
   private dyeSelectionPanel: CollapsiblePanel | null = null;
   private settingsPanel: CollapsiblePanel | null = null;
-  private filtersPanel: CollapsiblePanel | null = null;
   private marketPanel: CollapsiblePanel | null = null;
 
   // Child components (mobile drawer - separate instances for independent panel states)
   private mobileDyeSelectionPanel: CollapsiblePanel | null = null;
   private mobileSettingsPanel: CollapsiblePanel | null = null;
-  private mobileFiltersPanel: CollapsiblePanel | null = null;
   private mobileMarketPanel: CollapsiblePanel | null = null;
   private mobileDyeSelector: DyeSelector | null = null;
-  private mobileDyeFilters: DyeFilters | null = null;
   private mobileMarketBoard: MarketBoard | null = null;
   private mobileStepValueDisplay: HTMLElement | null = null;
 
@@ -397,20 +394,16 @@ export class GradientTool extends BaseComponent {
 
     // Destroy desktop components
     this.dyeSelector?.destroy();
-    this.dyeFilters?.destroy();
     this.marketBoard?.destroy();
     this.dyeSelectionPanel?.destroy();
     this.settingsPanel?.destroy();
-    this.filtersPanel?.destroy();
     this.marketPanel?.destroy();
 
     // Destroy mobile drawer components
     this.mobileDyeSelector?.destroy();
-    this.mobileDyeFilters?.destroy();
     this.mobileMarketBoard?.destroy();
     this.mobileDyeSelectionPanel?.destroy();
     this.mobileSettingsPanel?.destroy();
-    this.mobileFiltersPanel?.destroy();
     this.mobileMarketPanel?.destroy();
 
     this.selectedDyes = [];
@@ -525,6 +518,17 @@ export class GradientTool extends BaseComponent {
       }
     }
 
+    // Handle dyeFilters changes
+    if (config.dyeFilters) {
+      const newFilters = { ...this.dyeFiltersConfig, ...config.dyeFilters };
+      const filtersChanged = JSON.stringify(newFilters) !== JSON.stringify(this.dyeFiltersConfig);
+      if (filtersChanged) {
+        this.dyeFiltersConfig = newFilters;
+        needsUpdate = true;
+        logger.info('[GradientTool] setConfig: dyeFilters updated');
+      }
+    }
+
     // Re-interpolate if any config changed and we have data
     if (needsUpdate && this.startDye && this.endDye) {
       void this.updateInterpolation();
@@ -568,21 +572,7 @@ export class GradientTool extends BaseComponent {
     this.renderSettings(settingsContent);
     this.settingsPanel.setContent(settingsContent);
 
-    // Section 3: Dye Filters (collapsible)
-    // WEB-REF-003 Phase 3: Refactored to use shared builder
-    const filtersContainer = this.createElement('div');
-    left.appendChild(filtersContainer);
-    const filtersRefs = buildFiltersPanel(this, filtersContainer, {
-      storageKey: 'v3_mixer_filters',
-      storageKeyPrefix: 'v3_mixer',
-      onFilterChange: () => {
-        this.updateInterpolation();
-      },
-    });
-    this.filtersPanel = filtersRefs.panel;
-    this.dyeFilters = filtersRefs.filters;
-
-    // Section 4: Market Board (collapsible)
+    // Section 3: Market Board (collapsible)
     // WEB-REF-003 Phase 3: Refactored to use shared builder
     const marketContainer = this.createElement('div');
     left.appendChild(marketContainer);
@@ -1492,11 +1482,10 @@ export class GradientTool extends BaseComponent {
       });
 
       // Apply filters if available
-      if (this.dyeFilters && matchedDye && this.dyeFilters.isDyeExcluded(matchedDye)) {
+      if (matchedDye && isDyeExcluded(this.dyeFiltersConfig, matchedDye)) {
         // Find next closest non-excluded dye
         const allDyes = dyeService.getAllDyes();
-        const filteredDyes = this.dyeFilters
-          .filterDyes(allDyes)
+        const filteredDyes = filterDyes(this.dyeFiltersConfig, allDyes)
           .filter((dye) => !excludeIds.includes(dye.id) && dye.category !== 'Facewear');
         matchedDye =
           filteredDyes.length > 0
@@ -1979,30 +1968,7 @@ export class GradientTool extends BaseComponent {
     this.renderMobileSettings(mobileSettingsContent);
     this.mobileSettingsPanel.setContent(mobileSettingsContent);
 
-    // Section 3: Dye Filters (collapsible)
-    const filtersContainer = this.createElement('div');
-    drawer.appendChild(filtersContainer);
-    this.mobileFiltersPanel = new CollapsiblePanel(filtersContainer, {
-      title: LanguageService.t('filters.advancedFilters'),
-      storageKey: 'v3_mixer_mobile_filters',
-      defaultOpen: false,
-      icon: ICON_FILTER,
-    });
-    this.mobileFiltersPanel.init();
-
-    const mobileFiltersContent = this.createElement('div');
-    this.mobileDyeFilters = new DyeFilters(mobileFiltersContent, {
-      storageKeyPrefix: 'v3_mixer', // Share filter state with desktop
-      hideHeader: true,
-      onFilterChange: () => {
-        this.updateInterpolation();
-      },
-    });
-    this.mobileDyeFilters.render();
-    this.mobileDyeFilters.bindEvents();
-    this.mobileFiltersPanel.setContent(mobileFiltersContent);
-
-    // Section 4: Market Board (collapsible)
+    // Section 3: Market Board (collapsible)
     const marketContainer = this.createElement('div');
     drawer.appendChild(marketContainer);
     this.mobileMarketPanel = new CollapsiblePanel(marketContainer, {

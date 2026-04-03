@@ -80,6 +80,11 @@ export interface MarketPanelConfig {
 /**
  * Build a filters panel with CollapsiblePanel + DyeFilters.
  *
+ * @deprecated Use `<v4-dye-filters>` in ConfigSidebar instead. Filter state is
+ * now managed centrally via `DyeFiltersConfig` in `@shared/tool-config-types`
+ * and pure functions in `@shared/dye-filter-utils`. This function will be
+ * removed in a future version.
+ *
  * Usage:
  * ```typescript
  * const filtersContainer = this.createElement('div');

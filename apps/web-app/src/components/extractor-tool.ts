@@ -16,7 +16,6 @@ import { ImageUploadDisplay } from '@components/image-upload-display';
 import { ColorPickerDisplay } from '@components/color-picker-display';
 import { ImageZoomController } from '@components/image-zoom-controller';
 import { RecentColorsPanel } from '@components/recent-colors-panel';
-import { DyeFilters } from '@components/dye-filters';
 import { MarketBoard } from '@components/market-board';
 import {
   ColorService,
@@ -27,7 +26,6 @@ import {
   StorageService,
   ToastService,
   // WEB-REF-003 Phase 3: Shared panel builders
-  buildFiltersPanel,
   buildMarketPanel,
 } from '@services/index';
 import { WorldService } from '@services/world-service';
@@ -48,8 +46,10 @@ import type {
   ExtractorConfig,
   DisplayOptionsConfig,
   MatchingMethod,
+  DyeFiltersConfig,
 } from '@shared/tool-config-types';
-import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
+import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
+import { isDyeExcluded, filterDyes } from '@shared/dye-filter-utils';
 import { PaletteService, type PaletteMatch } from '@xivdyetools/core';
 import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
 import '@components/v4/result-card';
@@ -122,9 +122,8 @@ export class ExtractorTool extends BaseComponent {
   private colorPicker: ColorPickerDisplay | null = null;
   private imageZoom: ImageZoomController | null = null;
   private recentColors: RecentColorsPanel | null = null;
-  private dyeFilters: DyeFilters | null = null;
+  private dyeFiltersConfig: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
   private marketBoard: MarketBoard | null = null;
-  private filtersPanel: CollapsiblePanel | null = null;
   private marketPanel: CollapsiblePanel | null = null;
   private paletteService: PaletteService;
 
@@ -160,14 +159,12 @@ export class ExtractorTool extends BaseComponent {
   private mobileColorCountSlider: HTMLInputElement | null = null;
   private mobileColorCountDisplay: HTMLElement | null = null;
   private mobileExtractPaletteBtn: HTMLButtonElement | null = null;
-  private mobileDyeFilters: DyeFilters | null = null;
   private mobileImageUpload: ImageUploadDisplay | null = null;
   private mobileColorPicker: ColorPickerDisplay | null = null;
   private mobileMarketBoard: MarketBoard | null = null;
   private mobileImageSourceExpanded: boolean = true;
   private mobileColorSelectionExpanded: boolean = true;
   private mobileOptionsExpanded: boolean = false;
-  private mobileFiltersExpanded: boolean = false;
   private mobileMarketExpanded: boolean = false;
 
   // Palette extraction state
@@ -445,9 +442,7 @@ export class ExtractorTool extends BaseComponent {
     this.colorPicker?.destroy();
     this.imageZoom?.destroy();
     this.recentColors?.destroy();
-    this.dyeFilters?.destroy();
     this.marketBoard?.destroy();
-    this.filtersPanel?.destroy();
     this.marketPanel?.destroy();
 
     // Cleanup collapsible section panels
@@ -456,7 +451,6 @@ export class ExtractorTool extends BaseComponent {
     this.optionsPanel?.destroy();
 
     // Cleanup mobile components
-    this.mobileDyeFilters?.destroy();
     this.mobileImageUpload?.destroy();
     this.mobileColorPicker?.destroy();
     this.mobileMarketBoard?.destroy();
@@ -543,6 +537,16 @@ export class ExtractorTool extends BaseComponent {
       logger.info(`[ExtractorTool] setConfig: preventDuplicates -> ${config.preventDuplicates}`);
     }
 
+    // Handle dyeFilters - re-match when filters change
+    if (config.dyeFilters) {
+      const newFilters = config.dyeFilters;
+      if (JSON.stringify(this.dyeFiltersConfig) !== JSON.stringify(newFilters)) {
+        this.dyeFiltersConfig = { ...newFilters };
+        needsReextract = true;
+        logger.info(`[ExtractorTool] setConfig: dyeFilters updated`);
+      }
+    }
+
     // Re-extract palette if config changed and we're in palette mode with an image
     if (needsReextract && this.paletteMode && this.currentImage) {
       void this.extractPalette();
@@ -601,11 +605,6 @@ export class ExtractorTool extends BaseComponent {
     const optionsContent = this.createElement('div');
     this.renderOptions(optionsContent);
     this.optionsPanel.setContent(optionsContent);
-
-    // Collapsible: Dye Filters
-    const filtersContainer = this.createElement('div');
-    left.appendChild(filtersContainer);
-    this.renderFiltersPanel(filtersContainer);
 
     // Collapsible: Market Board
     const marketContainer = this.createElement('div');
@@ -795,24 +794,6 @@ export class ExtractorTool extends BaseComponent {
         this.extractorLayoutElement.style.gap = '32px';
       }
     }
-  }
-
-  /**
-   * Render dye filters collapsible panel
-   * WEB-REF-003 Phase 3: Refactored to use shared builder
-   */
-  private renderFiltersPanel(container: HTMLElement): void {
-    const refs = buildFiltersPanel(this, container, {
-      storageKey: 'matcher_filters',
-      storageKeyPrefix: 'v3_matcher',
-      onFilterChange: (_filters) => {
-        if (this.selectedColor) {
-          this.matchColor(this.selectedColor);
-        }
-      },
-    });
-    this.filtersPanel = refs.panel;
-    this.dyeFilters = refs.filters;
   }
 
   /**
@@ -1557,8 +1538,6 @@ export class ExtractorTool extends BaseComponent {
     clearContainer(drawer);
 
     // Destroy previous mobile components if they exist (clean slate)
-    this.mobileDyeFilters?.destroy();
-    this.mobileDyeFilters = null;
     this.mobileImageUpload?.destroy();
     this.mobileImageUpload = null;
     this.mobileColorPicker?.destroy();
@@ -1579,10 +1558,6 @@ export class ExtractorTool extends BaseComponent {
     // === Options Accordion Section ===
     const optionsSection = this.renderMobileOptionsAccordion();
     content.appendChild(optionsSection);
-
-    // === Dye Filters Accordion Section ===
-    const filtersSection = this.renderMobileFiltersAccordion();
-    content.appendChild(filtersSection);
 
     // === Market Board Accordion Section ===
     const marketSection = this.renderMobileMarketAccordion();
@@ -1792,101 +1767,6 @@ export class ExtractorTool extends BaseComponent {
       chevron.style.transform = this.mobileOptionsExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
       contentWrapper.style.maxHeight = this.mobileOptionsExpanded ? '500px' : '0';
       contentWrapper.style.opacity = this.mobileOptionsExpanded ? '1' : '0';
-    });
-
-    return section;
-  }
-
-  /**
-   * Render mobile dye filters accordion section
-   */
-  private renderMobileFiltersAccordion(): HTMLElement {
-    const section = this.createElement('div', {
-      className: 'border-b',
-      attributes: { style: 'border-color: var(--theme-border);' },
-    });
-
-    // Accordion header
-    const header = this.createElement('button', {
-      className: 'w-full flex items-center justify-between px-4 py-3 text-left transition-colors',
-      attributes: {
-        style: 'background: var(--theme-background-secondary); color: var(--theme-text);',
-        type: 'button',
-        'aria-expanded': String(this.mobileFiltersExpanded),
-      },
-    });
-
-    const titleContainer = this.createElement('span', {
-      className: 'flex items-center gap-2 font-medium text-sm',
-    });
-    const iconSpan = this.createElement('span', {
-      className: 'w-4 h-4 flex-shrink-0',
-      innerHTML: ICON_FILTER,
-    });
-    const titleText = this.createElement('span', {
-      textContent: LanguageService.t('filters.advancedFilters'),
-    });
-    titleContainer.appendChild(iconSpan);
-    titleContainer.appendChild(titleText);
-    header.appendChild(titleContainer);
-
-    // Chevron
-    const chevron = this.createElement('span', {
-      className: 'w-5 h-5 transition-transform duration-200',
-      innerHTML: `<svg viewBox="0 0 20 20" fill="currentColor" class="w-full h-full">
-        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-      </svg>`,
-      attributes: {
-        style: this.mobileFiltersExpanded
-          ? 'transform: rotate(0deg);'
-          : 'transform: rotate(-90deg);',
-      },
-    });
-    header.appendChild(chevron);
-    section.appendChild(header);
-
-    // Content area
-    const contentWrapper = this.createElement('div', {
-      className: 'overflow-hidden transition-all duration-200',
-      attributes: {
-        style: this.mobileFiltersExpanded
-          ? 'max-height: 500px; opacity: 1;'
-          : 'max-height: 0; opacity: 0;',
-      },
-    });
-
-    const contentInner = this.createElement('div', {
-      className: 'px-4 py-3',
-      attributes: { style: 'background: var(--theme-card-background);' },
-    });
-
-    // Create mobile DyeFilters instance
-    const filtersContainer = this.createElement('div', {
-      attributes: { id: 'mobile-dye-filters' },
-    });
-    contentInner.appendChild(filtersContainer);
-
-    this.mobileDyeFilters = new DyeFilters(filtersContainer, {
-      storageKeyPrefix: 'v3_matcher',
-      hideHeader: true, // We have our own accordion header
-      onFilterChange: (_filters) => {
-        if (this.selectedColor) {
-          this.matchColor(this.selectedColor);
-        }
-      },
-    });
-    this.mobileDyeFilters.init();
-
-    contentWrapper.appendChild(contentInner);
-    section.appendChild(contentWrapper);
-
-    // Toggle event
-    this.on(header, 'click', () => {
-      this.mobileFiltersExpanded = !this.mobileFiltersExpanded;
-      header.setAttribute('aria-expanded', String(this.mobileFiltersExpanded));
-      chevron.style.transform = this.mobileFiltersExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
-      contentWrapper.style.maxHeight = this.mobileFiltersExpanded ? '500px' : '0';
-      contentWrapper.style.opacity = this.mobileFiltersExpanded ? '1' : '0';
     });
 
     return section;
@@ -2258,25 +2138,22 @@ export class ExtractorTool extends BaseComponent {
       matchingMethod: this.matchingMethod,
     });
 
-    // Apply filters if available
-    if (this.dyeFilters) {
-      // Filter closest dye
-      if (closestDye && this.dyeFilters.isDyeExcluded(closestDye)) {
-        const allDyes = dyeService.getAllDyes();
-        const filteredDyes = this.dyeFilters.filterDyes(allDyes);
-        closestDye =
-          filteredDyes.length > 0
-            ? filteredDyes.reduce((best, dye) => {
-                const bestDist = ColorService.getColorDistance(hex, best.hex);
-                const dyeDist = ColorService.getColorDistance(hex, dye.hex);
-                return dyeDist < bestDist ? dye : best;
-              })
-            : null;
-      }
-
-      // Filter within distance results
-      withinDistance = this.dyeFilters.filterDyes(withinDistance);
+    // Apply dye filters from centralized config
+    if (closestDye && isDyeExcluded(this.dyeFiltersConfig, closestDye)) {
+      const allDyes = dyeService.getAllDyes();
+      const filteredDyes = filterDyes(this.dyeFiltersConfig, allDyes);
+      closestDye =
+        filteredDyes.length > 0
+          ? filteredDyes.reduce((best, dye) => {
+              const bestDist = ColorService.getColorDistance(hex, best.hex);
+              const dyeDist = ColorService.getColorDistance(hex, dye.hex);
+              return dyeDist < bestDist ? dye : best;
+            })
+          : null;
     }
+
+    // Filter within distance results
+    withinDistance = filterDyes(this.dyeFiltersConfig, withinDistance);
 
     if (!closestDye) {
       this.matchedDyes = [];

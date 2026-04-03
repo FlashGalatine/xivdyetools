@@ -699,6 +699,7 @@
   "filters": {
     "title": "カララントフィルター",
     "advancedFilters": "高度なカララントフィルター",
+    "dyeTypes": "カララントの種類",
     "category": "カテゴリ",
     "allCategories": "すべてのカテゴリ",
     "excludeMetallic": "メタリックカララントを除外",
@@ -709,11 +710,16 @@
     "excludeDarkDesc": "「ダーク」で始まるカララントを非表示",
     "excludeCosmic": "コスモカララントを除外",
     "excludeCosmicDesc": "コスモエクスプローラー＆コスモフォーチュンのカララントを非表示",
+    "excludeIshgardian": "イシュガルドカララントを除外",
     "excludeExpensive": "高価なカララントを除外",
     "excludeExpensiveDesc": "ジェットブラック＆ピュアホワイトを非表示",
     "excludeSpecial": "特殊カララントを除外",
     "showOnlyMetallic": "メタリックのみ表示",
-    "resetFilters": "フィルターをリセット"
+    "resetFilters": "フィルターをリセット",
+    "acquisitionSource": "入手方法",
+    "excludeVendorDyes": "ショップ販売カララントを除外",
+    "excludeCraftDyes": "クラフトカララントを除外",
+    "excludeAlliedSocietyDyes": "蛮族カララントを除外"
   },
   "marketBoard": {
     "title": "マーケットボード",

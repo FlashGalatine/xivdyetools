@@ -699,6 +699,7 @@
   "filters": {
     "title": "Filtres de Teintures",
     "advancedFilters": "Filtres Avancés de Teintures",
+    "dyeTypes": "Types de Teintures",
     "category": "Catégorie",
     "allCategories": "Toutes les Catégories",
     "excludeMetallic": "Exclure les Teintures Métalliques",
@@ -709,11 +710,16 @@
     "excludeDarkDesc": "Masquer les teintures commençant par \"foncé\"",
     "excludeCosmic": "Exclure les Teintures Cosmiques",
     "excludeCosmicDesc": "Masquer les teintures d'Exploration Cosmique & Roue de la fortune cosmique",
+    "excludeIshgardian": "Exclure les Teintures Ishgardaises",
     "excludeExpensive": "Exclure les Teintures Chères",
     "excludeExpensiveDesc": "Masquer Noir de Jais & Blanc Pur",
     "excludeSpecial": "Exclure les Teintures Spéciales",
     "showOnlyMetallic": "Afficher Uniquement les Métalliques",
-    "resetFilters": "Réinitialiser les Filtres"
+    "resetFilters": "Réinitialiser les Filtres",
+    "acquisitionSource": "Source d'Acquisition",
+    "excludeVendorDyes": "Exclure les Teintures de Vendeur",
+    "excludeCraftDyes": "Exclure les Teintures Artisanales",
+    "excludeAlliedSocietyDyes": "Exclure les Teintures des Tribus"
   },
   "marketBoard": {
     "title": "Tableau des ventes",

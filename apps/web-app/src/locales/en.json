@@ -699,6 +699,7 @@
   "filters": {
     "title": "Dye Filters",
     "advancedFilters": "Advanced Dye Filters",
+    "dyeTypes": "Dye Types",
     "category": "Category",
     "allCategories": "All Categories",
     "excludeMetallic": "Exclude Metallic Dyes",
@@ -709,11 +710,16 @@
     "excludeDarkDesc": "Hide dyes that begin with \"Dark\"",
     "excludeCosmic": "Exclude Cosmic Dyes",
     "excludeCosmicDesc": "Hide dyes from Cosmic Exploration & Cosmic Fortunes",
+    "excludeIshgardian": "Exclude Ishgardian Dyes",
     "excludeExpensive": "Exclude Expensive Dyes",
     "excludeExpensiveDesc": "Hide Jet Black & Pure White",
     "excludeSpecial": "Exclude Special Dyes",
     "showOnlyMetallic": "Show Only Metallic",
-    "resetFilters": "Reset Filters"
+    "resetFilters": "Reset Filters",
+    "acquisitionSource": "Acquisition Source",
+    "excludeVendorDyes": "Exclude Vendor Dyes",
+    "excludeCraftDyes": "Exclude Crafted Dyes",
+    "excludeAlliedSocietyDyes": "Exclude Allied Society Dyes"
   },
   "marketBoard": {
     "title": "Market Board",

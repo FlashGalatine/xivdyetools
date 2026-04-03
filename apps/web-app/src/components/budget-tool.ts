@@ -13,7 +13,6 @@
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
-import { DyeFilters } from '@components/dye-filters';
 import { MarketBoard } from '@components/market-board';
 import '@components/v4/result-card';
 import { ResultCard, type ResultCardData, type ContextAction } from '@components/v4/result-card';
@@ -28,12 +27,11 @@ import {
   applyDisplayOptions,
   formatPriceWithSuffix,
 } from '@services/index';
-import type { DisplayOptionsConfig } from '@shared/tool-config-types';
+import type { DisplayOptionsConfig, DyeFiltersConfig } from '@shared/tool-config-types';
 import { RouterService } from '@services/router-service';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { ICON_TOOL_BUDGET } from '@shared/tool-icons';
 import {
-  ICON_FILTER,
   ICON_MARKET,
   ICON_TARGET,
   ICON_SPARKLES,
@@ -46,6 +44,8 @@ import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import type { BudgetConfig } from '@shared/tool-config-types';
+import { DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
+import { filterDyes } from '@shared/dye-filter-utils';
 
 // ============================================================================
 // Types and Constants
@@ -144,10 +144,9 @@ export class BudgetTool extends BaseComponent {
 
   // Child components
   private dyeSelector: DyeSelector | null = null;
-  private dyeFilters: DyeFilters | null = null;
+  private dyeFiltersConfig: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
   private marketBoard: MarketBoard | null = null;
   private marketBoardService: MarketBoardService;
-  private filtersPanel: CollapsiblePanel | null = null;
   private marketPanel: CollapsiblePanel | null = null;
   private targetDyePanel: CollapsiblePanel | null = null;
   private quickPicksPanel: CollapsiblePanel | null = null;
@@ -170,7 +169,6 @@ export class BudgetTool extends BaseComponent {
 
   // Mobile drawer components (separate from desktop)
   private mobileDyeSelector: DyeSelector | null = null;
-  private mobileDyeFilters: DyeFilters | null = null;
   private mobileMarketBoard: MarketBoard | null = null;
   private mobileTargetDyePanel: CollapsiblePanel | null = null;
   private mobileQuickPicksPanel: CollapsiblePanel | null = null;
@@ -178,7 +176,6 @@ export class BudgetTool extends BaseComponent {
   private mobileSortByPanel: CollapsiblePanel | null = null;
   private mobileColorDistancePanel: CollapsiblePanel | null = null;
   private mobileColorFormatsPanel: CollapsiblePanel | null = null;
-  private mobileFiltersPanel: CollapsiblePanel | null = null;
   private mobileMarketPanel: CollapsiblePanel | null = null;
   private mobileTargetDyeContainer: HTMLElement | null = null;
   private mobileBudgetValueDisplay: HTMLElement | null = null;
@@ -273,9 +270,7 @@ export class BudgetTool extends BaseComponent {
 
     // Desktop components
     this.dyeSelector?.destroy();
-    this.dyeFilters?.destroy();
     this.marketBoard?.destroy();
-    this.filtersPanel?.destroy();
     this.marketPanel?.destroy();
     this.targetDyePanel?.destroy();
     this.quickPicksPanel?.destroy();
@@ -286,7 +281,6 @@ export class BudgetTool extends BaseComponent {
 
     // Mobile components
     this.mobileDyeSelector?.destroy();
-    this.mobileDyeFilters?.destroy();
     this.mobileMarketBoard?.destroy();
     this.mobileTargetDyePanel?.destroy();
     this.mobileQuickPicksPanel?.destroy();
@@ -294,7 +288,6 @@ export class BudgetTool extends BaseComponent {
     this.mobileSortByPanel?.destroy();
     this.mobileColorDistancePanel?.destroy();
     this.mobileColorFormatsPanel?.destroy();
-    this.mobileFiltersPanel?.destroy();
     this.mobileMarketPanel?.destroy();
 
     this.targetDye = null;
@@ -403,6 +396,17 @@ export class BudgetTool extends BaseComponent {
         this.showDeltaE = result.options.showDeltaE;
         this.showAcquisition = result.options.showAcquisition;
         needsRerender = true;
+      }
+    }
+
+    // Handle dyeFilters changes
+    if (config.dyeFilters) {
+      const newFilters = { ...this.dyeFiltersConfig, ...config.dyeFilters };
+      const filtersChanged = JSON.stringify(newFilters) !== JSON.stringify(this.dyeFiltersConfig);
+      if (filtersChanged) {
+        this.dyeFiltersConfig = newFilters;
+        needsRefilter = true;
+        logger.info('[BudgetTool] setConfig: dyeFilters updated');
       }
     }
 
@@ -528,30 +532,7 @@ export class BudgetTool extends BaseComponent {
     this.renderSortSection(sortContent);
     this.sortByPanel.setContent(sortContent);
 
-    // Section 6: Dye Filters (collapsible)
-    const filtersContainer = this.createElement('div');
-    left.appendChild(filtersContainer);
-    this.filtersPanel = new CollapsiblePanel(filtersContainer, {
-      title: LanguageService.t('filters.title'),
-      storageKey: 'v3_budget_filters',
-      defaultOpen: false,
-      icon: ICON_FILTER,
-    });
-    this.filtersPanel.init();
-
-    const filtersContent = this.createElement('div');
-    this.dyeFilters = new DyeFilters(filtersContent, {
-      storageKeyPrefix: 'v3_budget',
-      onFilterChange: () => {
-        void this.findAlternatives();
-      },
-      hideHeader: true, // Prevent double-nesting with external CollapsiblePanel
-    });
-    this.dyeFilters.render();
-    this.dyeFilters.bindEvents();
-    this.filtersPanel.setContent(filtersContent);
-
-    // Section 7: Color Formats (collapsible)
+    // Section 6: Color Formats (collapsible)
     const colorFormatsContainer = this.createElement('div');
     left.appendChild(colorFormatsContainer);
     this.colorFormatsPanel = new CollapsiblePanel(colorFormatsContainer, {
@@ -1484,9 +1465,7 @@ export class BudgetTool extends BaseComponent {
 
       // 2. Apply filters
       let filtered = candidates.filter((dye) => dye.id !== this.targetDye?.id);
-      if (this.dyeFilters) {
-        filtered = this.dyeFilters.filterDyes(filtered);
-      }
+      filtered = filterDyes(this.dyeFiltersConfig, filtered);
 
       // 3. Fetch prices
       await this.fetchPrices([this.targetDye, ...filtered]);
@@ -1664,30 +1643,7 @@ export class BudgetTool extends BaseComponent {
     this.renderMobileSortSection(sortContent);
     this.mobileSortByPanel.setContent(sortContent);
 
-    // Section 6: Dye Filters (collapsible)
-    const filtersContainer = this.createElement('div');
-    drawer.appendChild(filtersContainer);
-    this.mobileFiltersPanel = new CollapsiblePanel(filtersContainer, {
-      title: LanguageService.t('filters.title'),
-      storageKey: 'v3_budget_mobile_filters',
-      defaultOpen: false,
-      icon: ICON_FILTER,
-    });
-    this.mobileFiltersPanel.init();
-
-    const filtersContent = this.createElement('div');
-    this.mobileDyeFilters = new DyeFilters(filtersContent, {
-      storageKeyPrefix: 'v3_budget', // Share filter state with desktop
-      onFilterChange: () => {
-        void this.findAlternatives();
-      },
-      hideHeader: true,
-    });
-    this.mobileDyeFilters.render();
-    this.mobileDyeFilters.bindEvents();
-    this.mobileFiltersPanel.setContent(filtersContent);
-
-    // Section 7: Color Formats (collapsible)
+    // Section 6: Color Formats (collapsible)
     const colorFormatsContainer = this.createElement('div');
     drawer.appendChild(colorFormatsContainer);
     this.mobileColorFormatsPanel = new CollapsiblePanel(colorFormatsContainer, {

@@ -699,6 +699,7 @@
   "filters": {
     "title": "Farbstofffilter",
     "advancedFilters": "Erweiterte Farbstofffilter",
+    "dyeTypes": "Farbstofftypen",
     "category": "Kategorie",
     "allCategories": "Alle Kategorien",
     "excludeMetallic": "Metallische Farbstoffe ausschließen",
@@ -709,11 +710,16 @@
     "excludeDarkDesc": "Farbstoffe die mit \"Dunkel\" beginnen ausblenden",
     "excludeCosmic": "Kosmische Farbstoffe ausschließen",
     "excludeCosmicDesc": "Farbstoffe von Kosmo-Erkundung & Kosmo-Glück ausblenden",
+    "excludeIshgardian": "Ishgard-Farbstoffe ausschließen",
     "excludeExpensive": "Teure Farbstoffe ausschließen",
     "excludeExpensiveDesc": "Rabenschwarz & Wolkenweiß ausblenden",
     "excludeSpecial": "Spezielle Farbstoffe ausschließen",
     "showOnlyMetallic": "Nur metallische anzeigen",
-    "resetFilters": "Filter zurücksetzen"
+    "resetFilters": "Filter zurücksetzen",
+    "acquisitionSource": "Beschaffungsquelle",
+    "excludeVendorDyes": "Händler-Farbstoffe ausschließen",
+    "excludeCraftDyes": "Handwerks-Farbstoffe ausschließen",
+    "excludeAlliedSocietyDyes": "Stämme-Farbstoffe ausschließen"
   },
   "marketBoard": {
     "title": "Marktbrett",

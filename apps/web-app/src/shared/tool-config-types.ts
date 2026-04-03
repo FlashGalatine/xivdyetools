@@ -28,6 +28,8 @@ export interface GlobalConfig {
   theme: string;
   /** Global display options shared across all tools */
   displayOptions: DisplayOptionsConfig;
+  /** Global dye filter configuration shared across all tools */
+  dyeFilters: DyeFiltersConfig;
 }
 
 // ============================================================================
@@ -48,6 +50,8 @@ export interface HarmonyConfig {
   preventDuplicates: boolean;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
+  /** Dye filter configuration */
+  dyeFilters: DyeFiltersConfig;
   // Legacy fields (deprecated, for migration)
   /** @deprecated Use displayOptions.showHex */
   showHex?: boolean;
@@ -77,6 +81,8 @@ export interface ExtractorConfig {
   preventDuplicates: boolean;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
+  /** Dye filter configuration */
+  dyeFilters: DyeFiltersConfig;
 }
 
 /**
@@ -134,6 +140,8 @@ export interface GradientConfig {
   matchingMethod: MatchingMethod;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
+  /** Dye filter configuration */
+  dyeFilters: DyeFiltersConfig;
 }
 
 /**
@@ -159,6 +167,8 @@ export interface MixerConfig {
   matchingMethod: MatchingMethod;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
+  /** Dye filter configuration */
+  dyeFilters: DyeFiltersConfig;
 }
 
 /**
@@ -206,6 +216,8 @@ export interface BudgetConfig {
   maxDeltaE: number;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
+  /** Dye filter configuration */
+  dyeFilters: DyeFiltersConfig;
 }
 
 /**
@@ -235,6 +247,8 @@ export interface SwatchConfig {
   matchingMethod: MatchingMethod;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
+  /** Dye filter configuration */
+  dyeFilters: DyeFiltersConfig;
 }
 
 /**
@@ -256,6 +270,52 @@ export interface AdvancedConfig {
   /** Enable performance mode (reduce animations, disable blur effects) */
   performanceMode: boolean;
 }
+
+// ============================================================================
+// Shared Dye Filters
+// ============================================================================
+
+/**
+ * Shared dye filter configuration for excluding dye categories from results.
+ * Controls which dye types and acquisition sources are filtered out.
+ */
+export interface DyeFiltersConfig {
+  // Type-based exclusions
+  /** Exclude dyes with "Metallic" in the name */
+  excludeMetallic: boolean;
+  /** Exclude dyes with "Pastel" in the name */
+  excludePastel: boolean;
+  /** Exclude dyes that begin with "Dark" */
+  excludeDark: boolean;
+  /** Exclude dyes from Cosmic Exploration & Cosmic Fortunes */
+  excludeCosmic: boolean;
+  /** Exclude dyes from Ishgardian Restoration content */
+  excludeIshgardian: boolean;
+  /** Exclude Jet Black & Pure White */
+  excludeExpensive: boolean;
+  // Acquisition-based exclusions
+  /** Exclude dyes purchasable from the Dye Vendor */
+  excludeVendorDyes: boolean;
+  /** Exclude dyes obtained through Crafting */
+  excludeCraftDyes: boolean;
+  /** Exclude dyes from Beast Tribe vendors */
+  excludeAlliedSocietyDyes: boolean;
+}
+
+/**
+ * Default dye filter configuration (all filters disabled)
+ */
+export const DEFAULT_DYE_FILTERS: DyeFiltersConfig = {
+  excludeMetallic: false,
+  excludePastel: false,
+  excludeDark: false,
+  excludeCosmic: false,
+  excludeIshgardian: false,
+  excludeExpensive: false,
+  excludeVendorDyes: false,
+  excludeCraftDyes: false,
+  excludeAlliedSocietyDyes: false,
+};
 
 // ============================================================================
 // Shared Display Options
@@ -341,6 +401,7 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
   global: {
     theme: '',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
+    dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },
   market: {
     selectedServer: 'Crystal',
@@ -356,6 +417,7 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     matchingMethod: 'oklab',
     preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
+    dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },
   extractor: {
     vibrancyBoost: true,
@@ -365,6 +427,7 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     matchingMethod: 'oklab',
     preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
+    dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },
   accessibility: {
     normalVision: true,
@@ -390,12 +453,14 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     interpolation: 'hsv',
     matchingMethod: 'oklab',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
+    dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },
   mixer: {
     maxResults: 4,
     mixingMode: 'ryb',
     matchingMethod: 'oklab',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
+    dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },
   presets: {
     showMyPresetsOnly: false,
@@ -409,6 +474,7 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     maxResults: 8,
     maxDeltaE: 50,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
+    dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },
   swatch: {
     colorSheet: 'hairColors',
@@ -417,6 +483,7 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     maxResults: 3,
     matchingMethod: 'oklab',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
+    dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },
 };
 

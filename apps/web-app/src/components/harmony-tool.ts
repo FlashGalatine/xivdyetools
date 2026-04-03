@@ -13,7 +13,6 @@
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
-import { DyeFilters, type DyeFilterConfig } from '@components/dye-filters';
 import { MarketBoard } from '@components/market-board';
 import { HarmonyType } from '@components/harmony-type';
 import { HarmonyResultPanel } from '@components/harmony-result-panel';
@@ -45,7 +44,10 @@ import {
   DisplayOptionsConfig,
   DEFAULT_DISPLAY_OPTIONS,
   type MatchingMethod,
+  type DyeFiltersConfig,
+  DEFAULT_DYE_FILTERS,
 } from '@shared/tool-config-types';
+import { isDyeExcluded, hasActiveFilters } from '@shared/dye-filter-utils';
 // WEB-REF-003 FIX: ColorConverter usage moved to harmony-generator.ts
 import { HARMONY_ICONS } from '@shared/harmony-icons';
 import { ICON_FILTER, ICON_MARKET, ICON_BEAKER, ICON_MUSIC } from '@shared/ui-icons';
@@ -86,11 +88,6 @@ interface HarmonyTypeSelectorRefs {
   container: HTMLElement;
 }
 
-interface FiltersPanelRefs {
-  panel: CollapsiblePanel;
-  filters: DyeFilters;
-}
-
 interface MarketPanelRefs {
   panel: CollapsiblePanel;
   marketBoard: MarketBoard;
@@ -127,7 +124,7 @@ export class HarmonyTool extends BaseComponent {
   private selectedDye: Dye | null = null;
   private selectedHarmonyType: string;
   private companionDyesCount: number;
-  private filterConfig: DyeFilterConfig | null = null;
+  private dyeFiltersConfig: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
   /** Tracks user-swapped dyes per harmony slot (harmonyIndex -> swapped dye) */
   private swappedDyes: Map<number, Dye> = new Map();
   /** V4 result card elements for updating prices after fetch */
@@ -152,9 +149,7 @@ export class HarmonyTool extends BaseComponent {
 
   // Child components (desktop left panel)
   private dyeSelector: DyeSelector | null = null;
-  private dyeFilters: DyeFilters | null = null;
   private marketBoard: MarketBoard | null = null;
-  private filtersPanel: CollapsiblePanel | null = null;
   private marketPanel: CollapsiblePanel | null = null;
   private colorWheel: ColorWheelDisplay | null = null;
   private harmonyDisplays: Map<string, HarmonyType> = new Map();
@@ -163,9 +158,7 @@ export class HarmonyTool extends BaseComponent {
 
   // Child components (mobile drawer) - separate instances for mobile config
   private drawerDyeSelector: DyeSelector | null = null;
-  private drawerDyeFilters: DyeFilters | null = null;
   private drawerMarketBoard: MarketBoard | null = null;
-  private drawerFiltersPanel: CollapsiblePanel | null = null;
   private drawerMarketPanel: CollapsiblePanel | null = null;
   private drawerHarmonyTypesContainer: HTMLElement | null = null;
   private drawerCompanionSlider: HTMLInputElement | null = null;
@@ -261,14 +254,8 @@ export class HarmonyTool extends BaseComponent {
     this.dyeSelector?.destroy();
     this.dyeSelector = null;
 
-    this.dyeFilters?.destroy();
-    this.dyeFilters = null;
-
     this.marketBoard?.destroy();
     this.marketBoard = null;
-
-    this.filtersPanel?.destroy();
-    this.filtersPanel = null;
 
     this.marketPanel?.destroy();
     this.marketPanel = null;
@@ -295,14 +282,8 @@ export class HarmonyTool extends BaseComponent {
     this.drawerDyeSelector?.destroy();
     this.drawerDyeSelector = null;
 
-    this.drawerDyeFilters?.destroy();
-    this.drawerDyeFilters = null;
-
     this.drawerMarketBoard?.destroy();
     this.drawerMarketBoard = null;
-
-    this.drawerFiltersPanel?.destroy();
-    this.drawerFiltersPanel = null;
 
     this.drawerMarketPanel?.destroy();
     this.drawerMarketPanel = null;
@@ -336,13 +317,14 @@ export class HarmonyTool extends BaseComponent {
     // Handle deep link (e.g., ?dyeId=5729 from context menu)
     this.handleDeepLink();
 
-    // Load display options from ConfigController
+    // Load display options and dye filters from ConfigController
     const configController = ConfigController.getInstance();
     const harmonyConfig = configController.getConfig('harmony');
     this.displayOptions = harmonyConfig.displayOptions ?? { ...DEFAULT_DISPLAY_OPTIONS };
     this.usePerceptualMatching = harmonyConfig.strictMatching;
     this.matchingMethod = harmonyConfig.matchingMethod ?? 'oklab';
     this.preventDuplicates = harmonyConfig.preventDuplicates ?? true;
+    this.dyeFiltersConfig = harmonyConfig.dyeFilters ?? { ...DEFAULT_DYE_FILTERS };
 
     // Note: Market config (showPrices, server) is now managed by MarketBoardService
     // which subscribes to ConfigController automatically. MarketBoard components
@@ -361,7 +343,10 @@ export class HarmonyTool extends BaseComponent {
           this.displayOptions.showDeltaE !== newDisplayOptions.showDeltaE ||
           this.displayOptions.showAcquisition !== newDisplayOptions.showAcquisition;
 
-        // Perceptual matching, matching method, or dedup changes require regenerating harmonies
+        // Perceptual matching, matching method, dedup, or dye filter changes require regenerating harmonies
+        const newDyeFilters = config.dyeFilters ?? { ...DEFAULT_DYE_FILTERS };
+        const filtersChanged = JSON.stringify(this.dyeFiltersConfig) !== JSON.stringify(newDyeFilters);
+
         const algorithmChanged =
           this.usePerceptualMatching !== config.strictMatching ||
           (config.matchingMethod !== undefined && this.matchingMethod !== config.matchingMethod) ||
@@ -373,8 +358,9 @@ export class HarmonyTool extends BaseComponent {
           this.matchingMethod = config.matchingMethod;
         }
         this.preventDuplicates = config.preventDuplicates ?? true;
+        this.dyeFiltersConfig = newDyeFilters;
 
-        if ((needsRerender || algorithmChanged) && this.selectedDye) {
+        if ((needsRerender || algorithmChanged || filtersChanged) && this.selectedDye) {
           this.generateHarmonies();
         }
       })
@@ -775,36 +761,6 @@ export class HarmonyTool extends BaseComponent {
   }
 
   /**
-   * Build filters panel (shared by desktop and drawer)
-   * @param container Container to render into
-   * @param storageKey Storage key for panel collapse state
-   * @returns References to created panel and filters
-   */
-  private buildFiltersPanel(container: HTMLElement, storageKey: string): FiltersPanelRefs {
-    const panel = new CollapsiblePanel(container, {
-      title: LanguageService.t('filters.advancedFilters'),
-      storageKey,
-      defaultOpen: false,
-      icon: ICON_FILTER,
-    });
-    panel.init();
-
-    const filtersContent = this.createElement('div');
-    const filters = new DyeFilters(filtersContent, {
-      storageKeyPrefix: 'v3_harmony',
-      hideHeader: true,
-      onFilterChange: (filterConfig) => {
-        this.filterConfig = filterConfig;
-        this.generateHarmonies();
-      },
-    });
-    filters.init();
-
-    panel.setContent(filtersContent);
-    return { panel, filters };
-  }
-
-  /**
    * Build market board panel (shared by desktop and drawer)
    * @param container Container to render into
    * @param storageKey Storage key for panel collapse state
@@ -859,11 +815,6 @@ export class HarmonyTool extends BaseComponent {
     const harmonyContainer = this.createElement('div');
     left.appendChild(harmonyContainer);
     this.renderHarmonyTypePanel(harmonyContainer);
-
-    // Collapsible: Dye Filters
-    const filtersContainer = this.createElement('div');
-    left.appendChild(filtersContainer);
-    this.renderFiltersPanel(filtersContainer);
 
     // Collapsible: Market Board
     const marketContainer = this.createElement('div');
@@ -1009,16 +960,6 @@ export class HarmonyTool extends BaseComponent {
     this.companionSlider = refs.slider;
     this.companionDisplay = refs.valueDisplay;
     this.bindCompanionSliderEvents(refs.slider, refs.valueDisplay);
-  }
-
-  /**
-   * Render dye filters collapsible panel
-   * WEB-REF-003 Phase 2: Refactored to use shared builder
-   */
-  private renderFiltersPanel(container: HTMLElement): void {
-    const refs = this.buildFiltersPanel(container, 'harmony_filters');
-    this.filtersPanel = refs.panel;
-    this.dyeFilters = refs.filters;
   }
 
   /**
@@ -1279,13 +1220,6 @@ export class HarmonyTool extends BaseComponent {
       this.bindCompanionSliderEvents(sliderRefs.slider, sliderRefs.valueDisplay);
       harmonyContent.appendChild(companionSection);
     }
-
-    // Collapsible: Dye Filters - uses shared builder
-    const filtersContainer = this.createElement('div');
-    drawer.appendChild(filtersContainer);
-    const filtersRefs = this.buildFiltersPanel(filtersContainer, 'harmony_filters_drawer');
-    this.drawerFiltersPanel = filtersRefs.panel;
-    this.drawerDyeFilters = filtersRefs.filters;
 
     // Collapsible: Market Board - uses shared builder
     const marketContainer = this.createElement('div');
@@ -1584,7 +1518,7 @@ export class HarmonyTool extends BaseComponent {
    * Replace excluded dyes with alternatives (delegated to harmony-generator)
    */
   private replaceExcludedDyesInternal(dyes: ScoredDyeMatch[], targetHue: number): ScoredDyeMatch[] {
-    return replaceExcludedDyes(dyes, targetHue, this.dyeFilters, this.filterConfig);
+    return replaceExcludedDyes(dyes, targetHue, this.dyeFiltersConfig);
   }
 
   /**
@@ -1596,8 +1530,7 @@ export class HarmonyTool extends BaseComponent {
       this.selectedDye,
       typeId,
       this.getHarmonyConfig(),
-      this.dyeFilters,
-      this.filterConfig
+      this.dyeFiltersConfig
     );
   }
 

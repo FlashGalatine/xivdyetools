@@ -36,10 +36,11 @@ import type {
   AdvancedConfig,
   ConfigKey,
   DisplayOptionsConfig,
+  DyeFiltersConfig,
   PresetCategoryFilter,
   MatchingMethod,
 } from '@shared/tool-config-types';
-import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_CONFIGS } from '@shared/tool-config-types';
+import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS, DEFAULT_CONFIGS } from '@shared/tool-config-types';
 import { STORAGE_KEYS } from '@shared/constants';
 import {
   ICON_REFRESH,
@@ -58,7 +59,9 @@ import { logger } from '@shared/logger';
 import './toggle-switch-v4';
 import './range-slider-v4';
 import './display-options-v4';
+import './dye-filters-v4';
 import type { DisplayOptionsChangeDetail } from './display-options-v4';
+import type { DyeFiltersChangeDetail } from './dye-filters-v4';
 import type { SubRace } from '@xivdyetools/types';
 
 /**
@@ -141,6 +144,7 @@ export class ConfigSidebar extends BaseLitComponent {
     matchingMethod: 'oklab',
     preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
+    dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
   @state() private extractorConfig: ExtractorConfig = {
     vibrancyBoost: true,
@@ -150,6 +154,7 @@ export class ConfigSidebar extends BaseLitComponent {
     matchingMethod: 'oklab',
     preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
+    dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
   @state() private accessibilityConfig: AccessibilityConfig = {
     normalVision: true,
@@ -175,12 +180,14 @@ export class ConfigSidebar extends BaseLitComponent {
     interpolation: 'hsv',
     matchingMethod: 'oklab',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
+    dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
   @state() private mixerConfig: MixerConfig = {
     maxResults: 3,
     mixingMode: 'ryb',
     matchingMethod: 'oklab',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
+    dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
   @state() private presetsConfig: PresetsConfig = {
     showMyPresetsOnly: false,
@@ -194,6 +201,7 @@ export class ConfigSidebar extends BaseLitComponent {
     maxResults: 8,
     maxDeltaE: 75,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
+    dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
   @state() private swatchConfig: SwatchConfig = {
     colorSheet: 'eyeColors',
@@ -202,10 +210,14 @@ export class ConfigSidebar extends BaseLitComponent {
     maxResults: 3,
     matchingMethod: 'oklab',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
+    dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
 
   // Global display options shared across all tools
   @state() private globalDisplayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
+
+  // Global dye filters shared across all tools
+  @state() private globalDyeFilters: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
 
   @state() private marketConfig: MarketConfig = {
     selectedServer: 'Crystal',
@@ -758,6 +770,7 @@ export class ConfigSidebar extends BaseLitComponent {
     // Load global display options first
     const globalConfig = this.configController.getConfig('global');
     this.globalDisplayOptions = globalConfig.displayOptions || { ...DEFAULT_DISPLAY_OPTIONS };
+    this.globalDyeFilters = globalConfig.dyeFilters || { ...DEFAULT_DYE_FILTERS };
 
     this.harmonyConfig = this.configController.getConfig('harmony');
     this.extractorConfig = this.configController.getConfig('extractor');
@@ -1031,6 +1044,40 @@ export class ConfigSidebar extends BaseLitComponent {
   }
 
   /**
+   * Handle dye filters change from v4-dye-filters component.
+   * Updates global dye filters that are shared across applicable tools.
+   */
+  private handleDyeFiltersChange(e: CustomEvent<DyeFiltersChangeDetail>): void {
+    const { filter, value, allFilters } = e.detail;
+
+    // Update global dye filters (shared across applicable tools)
+    this.globalDyeFilters = allFilters;
+
+    // Save to global config via ConfigController
+    if (this.configController) {
+      (this.configController as ConfigController).setConfig('global', {
+        dyeFilters: allFilters,
+      });
+
+      // Broadcast to all tools that support dye filters
+      const toolsWithDyeFilters = [
+        'harmony',
+        'mixer',
+        'gradient',
+        'swatch',
+        'budget',
+        'extractor',
+      ] as const;
+      for (const tool of toolsWithDyeFilters) {
+        (this.configController as ConfigController).setConfig(tool, { dyeFilters: allFilters });
+      }
+    }
+
+    // Emit event for parent components
+    this.emit('config-change', { tool: 'global', key: `dyeFilters.${filter}`, value });
+  }
+
+  /**
    * Render Harmony Explorer config
    */
   private renderHarmonyConfig(): TemplateResult {
@@ -1105,6 +1152,20 @@ export class ConfigSidebar extends BaseLitComponent {
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('harmony', e)}
         ></v4-display-options>
+
+        <v4-dye-filters
+          .excludeMetallic=${this.globalDyeFilters.excludeMetallic}
+          .excludePastel=${this.globalDyeFilters.excludePastel}
+          .excludeDark=${this.globalDyeFilters.excludeDark}
+          .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
+          .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
+          .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
+          .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
+          .excludeAlliedSocietyDyes=${this.globalDyeFilters.excludeAlliedSocietyDyes}
+          @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
+            this.handleDyeFiltersChange(e)}
+        ></v4-dye-filters>
       </div>
     `;
   }
@@ -1200,6 +1261,20 @@ export class ConfigSidebar extends BaseLitComponent {
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('extractor', e)}
         ></v4-display-options>
+
+        <v4-dye-filters
+          .excludeMetallic=${this.globalDyeFilters.excludeMetallic}
+          .excludePastel=${this.globalDyeFilters.excludePastel}
+          .excludeDark=${this.globalDyeFilters.excludeDark}
+          .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
+          .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
+          .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
+          .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
+          .excludeAlliedSocietyDyes=${this.globalDyeFilters.excludeAlliedSocietyDyes}
+          @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
+            this.handleDyeFiltersChange(e)}
+        ></v4-dye-filters>
       </div>
     `;
   }
@@ -1365,6 +1440,20 @@ export class ConfigSidebar extends BaseLitComponent {
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('gradient', e)}
         ></v4-display-options>
+
+        <v4-dye-filters
+          .excludeMetallic=${this.globalDyeFilters.excludeMetallic}
+          .excludePastel=${this.globalDyeFilters.excludePastel}
+          .excludeDark=${this.globalDyeFilters.excludeDark}
+          .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
+          .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
+          .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
+          .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
+          .excludeAlliedSocietyDyes=${this.globalDyeFilters.excludeAlliedSocietyDyes}
+          @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
+            this.handleDyeFiltersChange(e)}
+        ></v4-dye-filters>
       </div>
     `;
   }
@@ -1423,6 +1512,20 @@ export class ConfigSidebar extends BaseLitComponent {
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('mixer', e)}
         ></v4-display-options>
+
+        <v4-dye-filters
+          .excludeMetallic=${this.globalDyeFilters.excludeMetallic}
+          .excludePastel=${this.globalDyeFilters.excludePastel}
+          .excludeDark=${this.globalDyeFilters.excludeDark}
+          .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
+          .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
+          .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
+          .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
+          .excludeAlliedSocietyDyes=${this.globalDyeFilters.excludeAlliedSocietyDyes}
+          @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
+            this.handleDyeFiltersChange(e)}
+        ></v4-dye-filters>
       </div>
     `;
   }
@@ -1751,6 +1854,20 @@ export class ConfigSidebar extends BaseLitComponent {
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('budget', e)}
         ></v4-display-options>
+
+        <v4-dye-filters
+          .excludeMetallic=${this.globalDyeFilters.excludeMetallic}
+          .excludePastel=${this.globalDyeFilters.excludePastel}
+          .excludeDark=${this.globalDyeFilters.excludeDark}
+          .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
+          .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
+          .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
+          .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
+          .excludeAlliedSocietyDyes=${this.globalDyeFilters.excludeAlliedSocietyDyes}
+          @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
+            this.handleDyeFiltersChange(e)}
+        ></v4-dye-filters>
       </div>
     `;
   }
@@ -1870,6 +1987,20 @@ export class ConfigSidebar extends BaseLitComponent {
               this.handleDisplayOptionsChange('swatch', e)}
           ></v4-display-options>
         </div>
+
+        <v4-dye-filters
+          .excludeMetallic=${this.globalDyeFilters.excludeMetallic}
+          .excludePastel=${this.globalDyeFilters.excludePastel}
+          .excludeDark=${this.globalDyeFilters.excludeDark}
+          .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
+          .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
+          .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
+          .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
+          .excludeAlliedSocietyDyes=${this.globalDyeFilters.excludeAlliedSocietyDyes}
+          @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
+            this.handleDyeFiltersChange(e)}
+        ></v4-dye-filters>
       </div>
     `;
   }

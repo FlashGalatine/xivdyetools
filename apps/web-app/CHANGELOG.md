@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Dye Filters v4**: New `<v4-dye-filters>` Lit web component with 9 filter toggles organized in two collapsible sections (Dye Types and Acquisition Source)
+- **Dye Filters v4**: Centralized `DyeFiltersConfig` interface and `DEFAULT_DYE_FILTERS` constant in `tool-config-types.ts`
+- **Dye Filters v4**: Pure utility functions `isDyeExcluded()`, `filterDyes()`, and `hasActiveFilters()` in new `dye-filter-utils.ts` module
+- **Dye Filters v4**: Integrated `<v4-dye-filters>` panel into ConfigSidebar for all 6 tools (Harmony, Extractor, Gradient, Mixer, Budget, Swatch) with global filter state broadcasting
+- **Swatch Matcher**: Added dye filtering support — when filters are active, requests extra results and post-filters to maintain result count
+- **Localization**: 6 new i18n keys in all 6 languages: `filters.dyeTypes`, `filters.excludeIshgardian`, `filters.acquisitionSource`, `filters.excludeVendorDyes`, `filters.excludeCraftDyes`, `filters.excludeAlliedSocietyDyes`
+- **Tests**: 19 unit tests for `dye-filter-utils` covering `isDyeExcluded`, `filterDyes`, and `hasActiveFilters`
+
+### Changed
+
+- **Harmony Explorer**: Migrated from v2 `DyeFilters` class to `DyeFiltersConfig` + pure functions; updated `harmony-generator.ts` signatures (`replaceExcludedDyes` 4→3 args, `findHarmonyDyes` 5→4 args)
+- **Palette Extractor**: Migrated from v2 `DyeFilters` class to `DyeFiltersConfig` + pure functions
+- **Gradient Builder**: Migrated from v2 `DyeFilters` class to `DyeFiltersConfig` + pure functions; removed inline filter panel from left panel and mobile drawer
+- **Dye Mixer**: Migrated from v2 `DyeFilters` class to `DyeFiltersConfig` + pure functions; removed local `buildFiltersPanel()` method and inline filter panels; updated `mixer-blending-engine.ts` to accept `DyeFiltersConfig`
+- **Budget Suggestions**: Migrated from v2 `DyeFilters` class to `DyeFiltersConfig` + pure functions; removed inline filter panels from left panel and mobile drawer
+- Updated `harmony-generator.test.ts` to use new function signatures and `DyeFiltersConfig` mocks
+
+### Deprecated
+
+- `DyeFilters` class in `dye-filters.ts` — use `<v4-dye-filters>` component and `DyeFiltersConfig` interface instead
+- `buildFiltersPanel()` in `tool-panel-builders.ts` — filter panels now rendered by `<v4-dye-filters>` in ConfigSidebar
+
+---
+
 ## [4.5.1] - 2026-03-20
 
 ### Changed

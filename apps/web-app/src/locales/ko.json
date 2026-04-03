@@ -699,6 +699,7 @@
   "filters": {
     "title": "염료 필터",
     "advancedFilters": "고급 염료 필터",
+    "dyeTypes": "염료 종류",
     "category": "카테고리",
     "allCategories": "모든 카테고리",
     "excludeMetallic": "금속질 염료 제외",
@@ -709,11 +710,16 @@
     "excludeDarkDesc": "\"짙은\"으로 시작하는 염료 숨기기",
     "excludeCosmic": "코스모 염료 제외",
     "excludeCosmicDesc": "코스모 탐사 & 코스모 행운 염료 숨기기",
+    "excludeIshgardian": "이슈가르드 염료 제외",
     "excludeExpensive": "고가 염료 제외",
     "excludeExpensiveDesc": "젯 블랙 & 퓨어 화이트 숨기기",
     "excludeSpecial": "특수 염료 제외",
     "showOnlyMetallic": "금속질만 표시",
-    "resetFilters": "필터 초기화"
+    "resetFilters": "필터 초기화",
+    "acquisitionSource": "입수 방법",
+    "excludeVendorDyes": "상점 염료 제외",
+    "excludeCraftDyes": "제작 염료 제외",
+    "excludeAlliedSocietyDyes": "우호 부족 염료 제외"
   },
   "marketBoard": {
     "title": "마켓보드",

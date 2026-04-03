@@ -48,6 +48,10 @@ export interface DyeFiltersOptions {
 /**
  * Dye Filters Component
  * Provides collapsible UI for excluding dyes by type
+ *
+ * @deprecated Use `<v4-dye-filters>` (dye-filters-v4.ts) and `DyeFiltersConfig` from
+ * `@shared/tool-config-types` with pure functions from `@shared/dye-filter-utils` instead.
+ * This class will be removed in a future version.
  */
 export class DyeFilters extends BaseComponent {
   private filters: DyeFilterConfig = {

@@ -20,8 +20,8 @@ import {
   type ScoredDyeMatch,
 } from '../harmony-generator';
 import type { Dye } from '@xivdyetools/types';
-import type { MatchingMethod } from '@shared/tool-config-types';
-import type { DyeFilters, DyeFilterConfig } from '@components/dye-filters';
+import type { MatchingMethod, DyeFiltersConfig } from '@shared/tool-config-types';
+import { DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
 
 // Mock the services
 vi.mock('@services/index', () => ({
@@ -403,37 +403,32 @@ describe('harmony-generator', () => {
     it('should return dyes unchanged when no filters', () => {
       const dyes: ScoredDyeMatch[] = [{ dye: createMockDye(), deviance: 10 }];
 
-      const result = replaceExcludedDyes(dyes, 180, null, null);
+      const result = replaceExcludedDyes(dyes, 180, null);
 
       expect(result).toEqual(dyes);
     });
 
-    it('should return dyes unchanged when filterConfig is null', () => {
-      const dyeFilters = { isDyeExcluded: vi.fn().mockReturnValue(false) };
+    it('should return dyes unchanged when dyeFiltersConfig has no active filters', () => {
       const dyes: ScoredDyeMatch[] = [{ dye: createMockDye(), deviance: 10 }];
 
-      const result = replaceExcludedDyes(dyes, 180, dyeFilters as unknown as DyeFilters, null);
+      const result = replaceExcludedDyes(dyes, 180, { ...DEFAULT_DYE_FILTERS });
 
       expect(result).toEqual(dyes);
     });
 
     it('should keep non-excluded dyes', () => {
-      const dyeFilters = { isDyeExcluded: vi.fn().mockReturnValue(false) };
-      const filterConfig = { someFilter: true };
+      const filtersConfig: DyeFiltersConfig = {
+        ...DEFAULT_DYE_FILTERS,
+        excludeMetallic: true,
+      };
       const dyes: ScoredDyeMatch[] = [
-        { dye: createMockDye({ itemID: 1 }), deviance: 10 },
-        { dye: createMockDye({ itemID: 2 }), deviance: 20 },
+        { dye: createMockDye({ itemID: 1, isMetallic: false }), deviance: 10 },
+        { dye: createMockDye({ itemID: 2, isMetallic: false }), deviance: 20 },
       ];
 
-      const result = replaceExcludedDyes(
-        dyes,
-        180,
-        dyeFilters as unknown as DyeFilters,
-        filterConfig as unknown as DyeFilterConfig
-      );
+      const result = replaceExcludedDyes(dyes, 180, filtersConfig);
 
       expect(result.length).toBe(2);
-      expect(dyeFilters.isDyeExcluded).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -482,8 +477,8 @@ describe('harmony-generator', () => {
       const { dyeService, ColorService } = await import('@services/index');
       vi.mocked(ColorService.hexToHsv).mockReturnValue({ h: 0, s: 100, v: 100 });
       vi.mocked(dyeService.getAllDyes).mockReturnValue([
-        createMockDye({ id: 1, itemID: 1 }),
-        createMockDye({ id: 2, itemID: 2 }),
+        createMockDye({ id: 1, itemID: 1, isMetallic: true }),
+        createMockDye({ id: 2, itemID: 2, isMetallic: false }),
       ]);
 
       const baseDye = createMockDye();
@@ -492,20 +487,19 @@ describe('harmony-generator', () => {
         matchingMethod: 'oklab',
         companionDyesCount: 3,
       };
-      const dyeFilters = {
-        isDyeExcluded: vi.fn((dye: Dye) => dye.itemID === 1),
+      const filtersConfig: DyeFiltersConfig = {
+        ...DEFAULT_DYE_FILTERS,
+        excludeMetallic: true,
       };
-      const filterConfig = { someFilter: true };
 
       const result = findHarmonyDyes(
         baseDye,
         'complementary',
         config,
-        dyeFilters as unknown as DyeFilters,
-        filterConfig as unknown as DyeFilterConfig
+        filtersConfig
       );
 
-      // Dye with itemID 1 should be filtered out
+      // Dye with itemID 1 (metallic) should be filtered out
       const ids = result.map((r) => r.dye.itemID);
       expect(ids).not.toContain(1);
     });

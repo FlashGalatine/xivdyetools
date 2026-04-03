@@ -721,6 +721,7 @@
   "filters": {
     "title": "染剂筛选",
     "advancedFilters": "高级染剂筛选",
+    "dyeTypes": "染剂类型",
     "category": "分类",
     "allCategories": "所有分类",
     "excludeMetallic": "排除金属染剂",
@@ -731,11 +732,16 @@
     "excludeDarkDesc": "隐藏以「黑暗」开头的染剂",
     "excludeCosmic": "排除宇宙染剂",
     "excludeCosmicDesc": "隐藏宇宙探索和宇宙幸运的染剂",
+    "excludeIshgardian": "排除伊修加德染剂",
     "excludeExpensive": "排除昂贵染剂",
     "excludeExpensiveDesc": "隐藏煤烟黑和无瑕白",
     "excludeSpecial": "排除特殊染剂",
     "showOnlyMetallic": "仅显示金属染剂",
-    "resetFilters": "重置筛选"
+    "resetFilters": "重置筛选",
+    "acquisitionSource": "获取途径",
+    "excludeVendorDyes": "排除商店染剂",
+    "excludeCraftDyes": "排除制作染剂",
+    "excludeAlliedSocietyDyes": "排除友好部族染剂"
   },
   "marketBoard": {
     "title": "市场布告板",
