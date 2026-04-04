@@ -54,7 +54,7 @@ List all dyes with filtering, sorting, and pagination. Returns 136 total dyes ac
 <TryIt
   endpoint="/v1/dyes"
   :params="[
-    { name: 'category', in: 'query', required: false, description: 'e.g. Red, Neutral, Blue, Facewear' },
+    { name: 'category', in: 'query', required: false, description: 'Filter by category', options: ['Blues', 'Browns', 'Facewear', 'Greens', 'Neutral', 'Purples', 'Reds', 'Special', 'Yellows'] },
     { name: 'sort', in: 'query', required: false, description: 'name, brightness, saturation, hue, cost', options: ['name', 'brightness', 'saturation', 'hue', 'cost'] },
     { name: 'order', in: 'query', required: false, default: 'asc', description: 'asc or desc', options: ['asc', 'desc'] },
     { name: 'perPage', in: 'query', required: false, default: '10', description: 'Items per page (1–200)' },
