@@ -45,7 +45,7 @@ export default defineConfig({
     ],
 
     footer: {
-      message: 'Not affiliated with Square Enix.',
+      message: 'FINAL FANTASY XIV © 2010-2026 SQUARE ENIX CO., LTD. All Rights Reserved.<br>XIV Dye Tools is a fan-made application and is not affiliated with or endorsed by Square Enix.',
       copyright: 'Copyright © 2024-present XIV Dye Tools',
     },
 
