@@ -39,3 +39,10 @@ if (!isValidSnowflake(env.DISCORD_CLIENT_ID)) { ... }
 ## Effort
 
 LOW — Find-and-replace inline regex with function call; publish updated `@xivdyetools/types`.
+
+## Resolution
+
+**Status:** RESOLVED  
+**Date:** 2026-04-07
+
+Removed `@internal` annotations from `DiscordSnowflake` type and `createSnowflake` function in `@xivdyetools/types`. Now exported as part of public API.

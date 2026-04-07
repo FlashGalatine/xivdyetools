@@ -53,13 +53,11 @@ interface RateLimitCheckResponse {
  */
 export class RateLimiter {
   private state: DurableObjectState;
-  private env: Env;
   private requestLog: Map<string, number[]>;
   private initialized: boolean = false;
 
-  constructor(state: DurableObjectState, env: Env) {
+  constructor(state: DurableObjectState, _env: Env) {
     this.state = state;
-    this.env = env;
     this.requestLog = new Map();
 
     // Block concurrent requests until initialization is complete

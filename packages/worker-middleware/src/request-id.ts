@@ -89,8 +89,9 @@ export function requestIdMiddleware(options?: RequestIdOptions): MiddlewareHandl
  * });
  * ```
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getRequestId(c: Context<any>): string {
+// BUG-003 FIX: ContextVariableMap augmentation (in types.ts) makes this type-safe
+// without needing Context<any>. 'requestId' key is globally registered.
+export function getRequestId(c: Context): string {
   try {
     return (c.get('requestId') as string | undefined) || 'unknown';
   } catch {

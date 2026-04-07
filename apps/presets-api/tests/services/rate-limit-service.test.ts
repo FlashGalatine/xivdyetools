@@ -206,7 +206,7 @@ describe('RateLimitService', () => {
             const db = createMockD1Database();
             db._setupMock(() => ({ count: 5 }));
 
-            const result = await checkSubmissionRateLimit(db, 'user-123');
+            await checkSubmissionRateLimit(db, 'user-123');
 
             // Should still use UTC day (June 15)
             expect(db._bindings[0]).toContain('2025-06-15T00:00:00.000Z');
@@ -216,7 +216,7 @@ describe('RateLimitService', () => {
             const db = createMockD1Database();
 
             // First user has 5 submissions
-            db._setupMock((query, bindings) => {
+            db._setupMock((_query, bindings) => {
                 if (bindings[0] === 'user-1') return { count: 5 };
                 if (bindings[0] === 'user-2') return { count: 2 };
                 return { count: 0 };

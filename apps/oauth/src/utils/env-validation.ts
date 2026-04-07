@@ -6,6 +6,7 @@
  */
 
 import type { Env } from '../types.js';
+import { isValidSnowflake } from '@xivdyetools/types';
 
 export interface EnvValidationResult {
   valid: boolean;
@@ -83,6 +84,11 @@ export function validateEnv(env: Env): EnvValidationResult {
   // Check D1 database binding
   if (!env.DB) {
     errors.push('Missing required D1 database binding: DB');
+  }
+
+  // REFACTOR-003: Validate Discord snowflake format via shared utility
+  if (env.DISCORD_CLIENT_ID && typeof env.DISCORD_CLIENT_ID === 'string' && !isValidSnowflake(env.DISCORD_CLIENT_ID)) {
+    errors.push(`DISCORD_CLIENT_ID is not a valid Discord snowflake: ${env.DISCORD_CLIENT_ID}`);
   }
 
   return {

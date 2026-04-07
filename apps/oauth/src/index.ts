@@ -49,13 +49,13 @@ app.use('*', async (c, next) => {
         return c.json({ error: 'Service misconfigured' }, 500);
       }
       // In development, log warnings but continue
-      const logger = getLogger(c as Parameters<typeof getLogger>[0]);
+      const logger = getLogger(c);
       if (logger) {
         logger.warn('Continuing with invalid env configuration (development mode)');
       }
     }
   }
-  await next();
+  return next();
 });
 
 // CORS configuration
@@ -164,7 +164,7 @@ app.use('/auth/*', async (c, next) => {
     );
   }
 
-  await next();
+  return next();
 });
 
 // ============================================

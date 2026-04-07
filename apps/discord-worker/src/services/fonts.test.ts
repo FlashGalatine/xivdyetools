@@ -1,7 +1,7 @@
 /**
  * Tests for Fonts Service
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // Mock the font file imports before importing the module
 vi.mock('../fonts/SpaceGrotesk-VariableFont_wght.ttf', () => ({

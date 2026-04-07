@@ -283,7 +283,7 @@ function handleRandomSubcommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  t: Translator,
+  _t: Translator,
   locale: LocaleCode,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Response {

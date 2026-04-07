@@ -10,7 +10,7 @@ import type { Env } from '../types.js';
 // Create a valid mock environment for testing
 const createValidEnv = (): Env => ({
     ENVIRONMENT: 'development',
-    DISCORD_CLIENT_ID: 'test-client-id',
+    DISCORD_CLIENT_ID: '12345678901234567',
     DISCORD_CLIENT_SECRET: 'test-client-secret',
     XIVAUTH_CLIENT_ID: 'test-xivauth-client-id',
     JWT_SECRET: 'test-jwt-secret-key-for-testing-32chars',
@@ -148,6 +148,17 @@ describe('Environment Validation', () => {
 
             expect(result.valid).toBe(false);
             expect(result.errors.some(e => e.includes('JWT_SECRET'))).toBe(true);
+        });
+
+        // REFACTOR-003: Validate DISCORD_CLIENT_ID as a snowflake
+        it('should fail when DISCORD_CLIENT_ID is not a valid snowflake', () => {
+            const env = createValidEnv();
+            env.DISCORD_CLIENT_ID = 'not-a-snowflake';
+
+            const result = validateEnv(env);
+
+            expect(result.valid).toBe(false);
+            expect(result.errors.some(e => e.includes('DISCORD_CLIENT_ID') && e.includes('snowflake'))).toBe(true);
         });
     });
 

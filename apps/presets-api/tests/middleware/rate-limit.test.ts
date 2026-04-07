@@ -167,14 +167,12 @@ describe('PublicRateLimitMiddleware', () => {
 
     it('should log warning when rate limiter backend has error (fail-open)', async () => {
         // Mock checkPublicRateLimit to simulate a backend error
-        const { checkPublicRateLimit } = await import('../../src/services/rate-limit-service');
         const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         // Create a special app that injects kvError
         const errorApp = new Hono<{ Bindings: Env }>();
         errorApp.use('*', async (c, next) => {
             // Patch the rate limit service to return kvError
-            const origFetch = globalThis.fetch;
             vi.spyOn(await import('../../src/services/rate-limit-service'), 'checkPublicRateLimit')
               .mockResolvedValueOnce({
                 allowed: true,

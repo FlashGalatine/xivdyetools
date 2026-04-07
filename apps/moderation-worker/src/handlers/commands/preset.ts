@@ -386,7 +386,7 @@ async function processModerateCommand(
 async function handleBanUserSubcommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext,
+  _ctx: ExecutionContext,
   t: Translator,
   userId: string,
   options?: Array<{ name: string; value?: string | number | boolean }>,

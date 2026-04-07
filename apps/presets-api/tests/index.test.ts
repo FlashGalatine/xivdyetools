@@ -227,7 +227,7 @@ describe('Index/App', () => {
             // We can't easily trigger an unhandled error from outside,
             // but we can test the error handler behavior by checking
             // that the error handler is registered
-            const devEnv = createMockEnv({ ENVIRONMENT: 'development' });
+            createMockEnv({ ENVIRONMENT: 'development' });
 
             // This would need a route that throws - for now just verify the app loads
             expect(app).toBeDefined();

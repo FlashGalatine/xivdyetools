@@ -39,6 +39,9 @@ export interface Env {
   // Variables (from wrangler.toml [vars])
   // =========================================================================
 
+  /** Runtime environment for conditional behavior */
+  ENVIRONMENT?: string;
+
   /** Discord Application ID */
   DISCORD_CLIENT_ID: string;
 

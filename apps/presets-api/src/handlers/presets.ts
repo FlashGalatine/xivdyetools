@@ -63,7 +63,7 @@ presetsRouter.get('/', async (c) => {
     is_curated: is_curated === 'true' ? true : is_curated === 'false' ? false : undefined,
   };
 
-  const response = await getPresets(c.env.DB, filters);
+  const response = await getPresets(c.env.DB, filters, c.get('logger'));
   return c.json(response);
 });
 
@@ -72,7 +72,7 @@ presetsRouter.get('/', async (c) => {
  * Get top-voted presets for homepage display
  */
 presetsRouter.get('/featured', async (c) => {
-  const presets = await getFeaturedPresets(c.env.DB);
+  const presets = await getFeaturedPresets(c.env.DB, c.get('logger'));
   return c.json({ presets });
 });
 
@@ -95,7 +95,7 @@ presetsRouter.get('/mine', async (c) => {
 
   const auth = c.get('auth');
 
-  const presets = await getPresetsByUser(c.env.DB, auth.userDiscordId!);
+  const presets = await getPresetsByUser(c.env.DB, auth.userDiscordId!, c.get('logger'));
 
   return c.json({
     presets,

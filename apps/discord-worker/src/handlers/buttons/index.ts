@@ -51,7 +51,7 @@ interface ButtonInteraction {
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function handleButtonInteraction(
   interaction: ButtonInteraction,
-  env: Env,
+  _env: Env,
   _ctx: ExecutionContext,
   logger?: ExtendedLogger
 ): Promise<Response> {

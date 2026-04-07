@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { validateEnv, logValidationErrors, type EnvValidationResult } from '../../src/utils/env-validation';
+import { validateEnv, logValidationErrors } from '../../src/utils/env-validation';
 import type { Env } from '../../src/types';
 import { createMockD1Database } from '@xivdyetools/test-utils';
 

@@ -130,7 +130,6 @@ describe('rate-limit', () => {
         await incrementRateLimit(mockKV, 'user123', 'command');
       }
 
-      const now = Date.now();
       const result = await checkRateLimit(mockKV, 'user123', 'command', testConfig);
 
       // retryAfter should be roughly 60 seconds (the window)

@@ -145,7 +145,7 @@ describe('ban-service', () => {
 
     it('should fallback to simpler query on error', async () => {
       let callCount = 0;
-      db._setupMock((query) => {
+      db._setupMock((_query) => {
         callCount++;
         if (callCount === 1) {
           throw new Error('banned_users table error');
@@ -300,7 +300,7 @@ describe('ban-service', () => {
 
     it('should handle user with fewer than 3 presets', async () => {
       let queryCount = 0;
-      db._setupMock((query) => {
+      db._setupMock((_query) => {
         queryCount++;
         if (queryCount === 1) {
           return { discord_id: 'user-1', username: 'User', preset_count: 2 };
@@ -319,7 +319,7 @@ describe('ban-service', () => {
 
     it('should construct correct share URLs', async () => {
       let queryCount = 0;
-      db._setupMock((query) => {
+      db._setupMock((_query) => {
         queryCount++;
         if (queryCount === 1) {
           return { discord_id: 'user-1', username: 'User', preset_count: 1 };
@@ -383,7 +383,7 @@ describe('ban-service', () => {
 
     it('should insert ban record with correct data', async () => {
       let queryCount = 0;
-      db._setupMock((query) => {
+      db._setupMock((_query) => {
         queryCount++;
         if (queryCount === 1) return null; // Not banned
         if (queryCount === 2) return { meta: { changes: 1 } }; // INSERT
@@ -417,7 +417,7 @@ describe('ban-service', () => {
 
     it('should generate UUID for ban record', async () => {
       let queryCount = 0;
-      db._setupMock((query) => {
+      db._setupMock((_query) => {
         queryCount++;
         if (queryCount === 1) return null;
         if (queryCount === 2) return { meta: { changes: 1 } };
@@ -473,7 +473,7 @@ describe('ban-service', () => {
 
     it('should hide user presets after banning', async () => {
       let queryCount = 0;
-      db._setupMock((query) => {
+      db._setupMock((_query) => {
         queryCount++;
         if (queryCount === 1) return null;
         if (queryCount === 2) return { meta: { changes: 1 } };

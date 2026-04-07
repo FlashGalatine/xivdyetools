@@ -26,7 +26,7 @@
  * Prevents accidental use of arbitrary strings as Discord IDs.
  * Use `isValidSnowflake()` to validate and `createSnowflake()` to create validated instances.
  *
- * @internal Not yet adopted by consumers — use `isValidSnowflake()` for validation instead
+ * REFACTOR-004: Removed @internal — ready for adoption by consumers.
  *
  * @example
  * ```typescript
@@ -68,7 +68,7 @@ export function isValidSnowflake(id: string): boolean {
 /**
  * Create a validated Discord Snowflake branded type.
  *
- * @internal Not yet adopted by consumers
+ * REFACTOR-004: Removed @internal — ready for adoption by consumers.
  *
  * @param id - The snowflake string to validate
  * @returns The validated DiscordSnowflake

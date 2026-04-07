@@ -46,7 +46,6 @@ function createMockLogger() {
 }
 import {
   getUserPreferences,
-  getPreference,
   setPreference,
   resetPreference,
   resolveBlendingMode,

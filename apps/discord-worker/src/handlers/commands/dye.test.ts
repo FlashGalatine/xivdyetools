@@ -127,7 +127,7 @@ vi.mock('../../services/bot-i18n.js', () => {
 
 vi.mock('../../services/i18n.js', () => ({
   initializeLocale: vi.fn(),
-  getLocalizedDyeName: vi.fn((itemId: number, name: string) => name),
+  getLocalizedDyeName: vi.fn((_itemId: number, name: string) => name),
   getLocalizedCategory: vi.fn((category: string) => category),
 }));
 

@@ -34,7 +34,7 @@ moderationRouter.get('/pending', async (c) => {
   const modError = requireModerator(c);
   if (modError) return modError;
 
-  const presets = await getPendingPresets(c.env.DB);
+  const presets = await getPendingPresets(c.env.DB, c.get('logger'));
   return c.json({ presets, total: presets.length });
 });
 

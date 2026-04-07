@@ -33,7 +33,7 @@ describe('API Response Utilities', () => {
       const res = await app.request('/test');
 
       expect(res.status).toBe(400);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body).toEqual({
         success: false,
         error: 'TEST_ERROR',
@@ -54,7 +54,7 @@ describe('API Response Utilities', () => {
       const res = await app.request('/test');
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body).toEqual({ success: true, count: 5 });
       expect(body.message).toBeUndefined();
     });
@@ -64,7 +64,7 @@ describe('API Response Utilities', () => {
       const res = await app.request('/test');
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body).toEqual({
         success: true,
         deleted: true,
@@ -85,7 +85,7 @@ describe('API Response Utilities', () => {
       const res = await app.request('/test');
 
       expect(res.status).toBe(400);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.error).toBe(ErrorCode.INVALID_JSON);
     });
 
@@ -94,7 +94,7 @@ describe('API Response Utilities', () => {
       const res = await app.request('/test');
 
       expect(res.status).toBe(400);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.error).toBe(ErrorCode.VALIDATION_ERROR);
       expect(body.message).toBe('Name too long');
     });
@@ -104,7 +104,7 @@ describe('API Response Utilities', () => {
       const res = await app.request('/test');
 
       expect(res.status).toBe(401);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.error).toBe(ErrorCode.UNAUTHORIZED);
       expect(body.message).toBe('Authentication required');
     });
@@ -114,7 +114,7 @@ describe('API Response Utilities', () => {
       const res = await app.request('/test');
 
       expect(res.status).toBe(403);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.error).toBe(ErrorCode.FORBIDDEN);
     });
 
@@ -123,7 +123,7 @@ describe('API Response Utilities', () => {
       const res = await app.request('/test');
 
       expect(res.status).toBe(404);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.error).toBe(ErrorCode.NOT_FOUND);
       expect(body.message).toBe('Preset not found');
     });
@@ -133,7 +133,7 @@ describe('API Response Utilities', () => {
       const res = await app.request('/test');
 
       expect(res.status).toBe(409);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.error).toBe(ErrorCode.DUPLICATE_RESOURCE);
       expect(body.message).toBe('Already exists');
     });
@@ -143,7 +143,7 @@ describe('API Response Utilities', () => {
       const res = await app.request('/test');
 
       expect(res.status).toBe(500);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.error).toBe(ErrorCode.INTERNAL_ERROR);
       expect(body.message).toBe('An unexpected error occurred');
     });
@@ -153,7 +153,7 @@ describe('API Response Utilities', () => {
       const res = await app.request('/test');
 
       expect(res.status).toBe(500);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.message).toBe('DB down');
     });
   });

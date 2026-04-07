@@ -322,7 +322,7 @@ describe('handlePresetCommand', () => {
         },
       };
 
-      const response = await handlePresetCommand(interaction, env, ctx, t);
+      await handlePresetCommand(interaction, env, ctx, t);
 
       // Wait for ctx.waitUntil to execute
       // Wait for waitUntil callback

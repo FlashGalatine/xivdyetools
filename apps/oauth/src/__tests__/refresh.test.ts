@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { SELF, env, fetchWithEnv, createEnvWithKV, createMockKV } from './mocks/cloudflare-test.js';
+import { SELF, env, fetchWithEnv, createEnvWithKV } from './mocks/cloudflare-test.js';
 import { createJWT, revokeToken, isTokenRevoked } from '../services/jwt-service.js';
 import { resetRateLimiter } from '../services/rate-limit.js';
 import type { DiscordUser, Env } from '../types.js';

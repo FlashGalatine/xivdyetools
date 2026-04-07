@@ -131,7 +131,7 @@ export async function handleBanReasonModal(
 }
 
 async function processBan(
-  interaction: ModalInteraction,
+  _interaction: ModalInteraction,
   env: Env,
   targetUserId: string,
   targetUsername: string,

@@ -38,6 +38,7 @@ import * as presetApi from './services/preset-api.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { createUserTranslator } from './services/bot-i18n.js';
 import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-middleware';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
 import { sanitizeUrl } from './utils/url-sanitizer.js';
 

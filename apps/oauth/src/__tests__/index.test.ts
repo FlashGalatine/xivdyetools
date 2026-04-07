@@ -3,7 +3,7 @@
  * Tests for the Hono app, middleware, health checks, and error handling
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SELF, fetchWithEnv, createProductionEnv, env, VALID_CODE_CHALLENGE } from './mocks/cloudflare-test.js';
 import { resetRateLimiter, checkRateLimit } from '../services/rate-limit.js';
 
@@ -267,13 +267,6 @@ describe('OAuth Worker App', () => {
             // One way is to cause an error during middleware processing
 
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-            // Create a broken environment that will cause errors in middleware
-            const brokenEnv = {
-                ...env,
-                // This will cause issues when rate limit middleware tries to set headers
-                ENVIRONMENT: 'development',
-            };
 
             // We need to intercept the rate limiter to throw an error
             // For this test, we'll trigger the global handler by causing an error

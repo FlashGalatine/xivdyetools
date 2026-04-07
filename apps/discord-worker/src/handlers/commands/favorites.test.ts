@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleFavoritesCommand } from './favorites.js';
 import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
-import { DyeService } from '@xivdyetools/core';
+
 
 // Mock dependencies
 vi.mock('@xivdyetools/core', async () => {
@@ -50,13 +50,11 @@ vi.mock('../../services/bot-i18n.js');
 vi.mock('../../services/i18n.js');
 
 // Import modules (response helpers are NOT mocked)
-import { ephemeralResponse } from '../../utils/response.js';
 import {
   getFavorites,
   addFavorite,
   removeFavorite,
   clearFavorites,
-  MAX_FAVORITES,
 } from '../../services/user-storage.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator } from '../../services/bot-i18n.js';

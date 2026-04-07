@@ -3,7 +3,7 @@
  * Tests for SEC-003 (JSON depth limiting) and SEC-004 (body size limits)
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { Hono } from 'hono';
 import { bodySizeLimit, jsonDepthLimit } from '../middleware/body-validation.js';
 import type { Env } from '../types.js';

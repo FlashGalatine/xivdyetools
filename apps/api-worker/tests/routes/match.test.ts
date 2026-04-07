@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import app from '../../src/index.js';
 import { createMockEnv } from '../test-utils.js';
-import { VENDOR_ACQUISITIONS, CRAFT_ACQUISITIONS, ALLIED_SOCIETY_ACQUISITIONS, EXPENSIVE_DYE_IDS } from '@xivdyetools/core';
+import { VENDOR_ACQUISITIONS, EXPENSIVE_DYE_IDS } from '@xivdyetools/core';
 
 const env = createMockEnv();
 

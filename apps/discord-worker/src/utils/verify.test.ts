@@ -28,9 +28,6 @@ vi.mock('@xivdyetools/auth', async (importOriginal) => {
     };
 });
 
-// Re-import after mocking to get the mocked version
-import { verifyDiscordRequest as mockedVerifyDiscordRequest } from '@xivdyetools/auth';
-
 describe('verify.ts', () => {
     beforeEach(() => {
         vi.clearAllMocks();

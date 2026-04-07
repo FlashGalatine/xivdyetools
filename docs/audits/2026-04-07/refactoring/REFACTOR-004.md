@@ -34,3 +34,10 @@ This is a progressive improvement — don't change everything at once.
 ## Effort
 
 LOW — Incremental adoption; no runtime changes needed.
+
+## Resolution
+
+**Status:** RESOLVED  
+**Date:** 2026-04-07
+
+Added `isValidSnowflake` validation for `DISCORD_CLIENT_ID` in OAuth worker's env-validation. Uses the snowflake validator from `@xivdyetools/types`.

@@ -6,7 +6,7 @@
  */
 
 import { vi, expect } from 'vitest';
-import { createMockEnv, createMockKV, createMockD1, createMockAnalytics } from './test-utils.js';
+import { createMockEnv } from './test-utils.js';
 import type { Env } from './types/env.js';
 
 /**

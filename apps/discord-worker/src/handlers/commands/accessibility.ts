@@ -115,7 +115,7 @@ async function processAccessibilityCommand(
     } else if (result.mode === 'contrast') {
       // Add emojis to the dye list lines in contrast mode
       const lines = description.split('\n');
-      description = lines.map((line) => {
+      description = lines.map((line: string) => {
         const dyeMatch = dyes.find((d) => d.dye && line.includes(d.name));
         if (dyeMatch?.dye) {
           const emoji = getDyeEmoji(dyeMatch.dye.id);

@@ -14,7 +14,6 @@ import {
     _setTestPatterns,
 } from '../../src/services/moderation-service';
 import { createMockEnv } from '../test-utils';
-import type { Env } from '../../src/types';
 
 // Mock fetch for external API calls
 const originalFetch = globalThis.fetch;

@@ -514,7 +514,7 @@ function getLanguageDisplay(code: string): string {
  * (blending modes, clans), the options are formatted in code and passed
  * via the {options} placeholder.
  */
-function getValidationErrorMessage(t: Translator, key: PreferenceKey, reason?: string): string {
+function getValidationErrorMessage(t: Translator, _key: PreferenceKey, reason?: string): string {
   switch (reason) {
     case 'invalidLanguage':
       return t.t('preferences.validation.invalidLanguage');

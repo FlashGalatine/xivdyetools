@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { SELF, fetchWithEnv, createProductionEnv, env, createMockDB, VALID_CODE_VERIFIER, VALID_CODE_CHALLENGE } from './mocks/cloudflare-test.js';
+import { SELF, fetchWithEnv, createProductionEnv, env, VALID_CODE_VERIFIER, VALID_CODE_CHALLENGE } from './mocks/cloudflare-test.js';
 import { resetRateLimiter } from '../services/rate-limit.js';
 import { signState, type StateData } from '../utils/state-signing.js';
 import type { Env } from '../types.js';

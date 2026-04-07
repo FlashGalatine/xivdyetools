@@ -71,7 +71,7 @@ vi.mock('./utils/discord-api.js', () => ({
 }));
 
 vi.mock('./services/i18n.js', () => ({
-  getLocalizedDyeName: vi.fn((itemId: number, name: string) => name),
+  getLocalizedDyeName: vi.fn((_itemId: number, name: string) => name),
 }));
 
 // Mock DyeService
@@ -85,7 +85,7 @@ vi.mock('@xivdyetools/core', () => {
         itemID: id,
       };
     }
-    searchByName(query: string) {
+    searchByName(_query: string) {
       return [
         { id: 1, name: 'Snow White', hex: '#FFFFFF', category: 'Standard' },
         { id: 2, name: 'Ash Grey', hex: '#CCCCCC', category: 'Standard' },
@@ -612,7 +612,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = (await res.json()) as InteractionResponseBody;
+        await res.json();
         expect(searchPresetsForAutocomplete).toHaveBeenCalledWith(
           mockEnv,
           'test',
@@ -667,7 +667,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = (await res.json()) as InteractionResponseBody;
+        await res.json();
         expect(getMyPresets).toHaveBeenCalledWith(mockEnv, 'user-123');
       });
 

@@ -114,13 +114,13 @@ export function loggerMiddleware(options: LoggerMiddlewareOptions): MiddlewareHa
     const requestId = c.get('requestId') as string;
 
     // Build logger config from options + env
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const env = c.env as Record<string, any>;
+    // BUG-003 FIX: Use Record<string, unknown> instead of any
+    const env = c.env as Record<string, unknown>;
     const environment = readEnvironmentFromEnv
-      ? (env?.ENVIRONMENT as string | undefined) ?? 'production'
+      ? (String(env?.ENVIRONMENT ?? '') || 'production')
       : 'production';
     const apiVersion = readApiVersionFromEnv
-      ? (env?.API_VERSION as string | undefined)
+      ? (typeof env?.API_VERSION === 'string' ? env.API_VERSION : undefined)
       : undefined;
 
     const logger = createRequestLogger(
@@ -172,10 +172,9 @@ export function loggerMiddleware(options: LoggerMiddlewareOptions): MiddlewareHa
  * });
  * ```
  */
-// Context<any> is intentional: this helper is called from global onError handlers
-// where the exact Env/Variables binding shape is unknown.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getLogger(c: Context<any>): ExtendedLogger | undefined {
+// BUG-003 FIX: ContextVariableMap augmentation (in types.ts) makes this type-safe
+// without needing Context<any>. 'logger' key is globally registered.
+export function getLogger(c: Context): ExtendedLogger | undefined {
   try {
     return c.get('logger') as ExtendedLogger | undefined;
   } catch {

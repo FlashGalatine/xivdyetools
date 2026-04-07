@@ -100,7 +100,7 @@ app.use('*', async (c, next) => {
       }
     }
   }
-  await next();
+  return next();
 });
 
 // Security headers middleware

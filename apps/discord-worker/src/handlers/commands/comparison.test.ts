@@ -96,7 +96,7 @@ vi.mock('../../services/bot-i18n.js', () => ({
     getLocale: () => 'en',
   }),
   createTranslator: vi.fn((locale: string) => ({
-    t: (key: string, vars?: Record<string, unknown>) => {
+    t: (key: string, _vars?: Record<string, unknown>) => {
       const translations: Record<string, string> = {
         'common.error': 'Error',
         'errors.generationFailed': 'Failed to generate comparison image',
@@ -111,7 +111,7 @@ vi.mock('../../services/bot-i18n.js', () => ({
 
 vi.mock('../../services/i18n.js', () => ({
   initializeLocale: vi.fn(),
-  getLocalizedDyeName: vi.fn((itemId: number, name: string) => name),
+  getLocalizedDyeName: vi.fn((_itemId: number, name: string) => name),
 }));
 
 vi.mock('@xivdyetools/svg', () => ({

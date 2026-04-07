@@ -10,7 +10,6 @@ import type { Env, AuthContext } from '../../src/types';
 import {
     createMockEnv,
     createMockD1Database,
-    createMockPresetRow,
 } from '../test-utils';
 
 type Variables = {

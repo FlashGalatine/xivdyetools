@@ -18,7 +18,6 @@ import {
     updatePreset,
     revertPreset,
 } from '../../src/services/preset-service';
-import type { PresetRow, CommunityPreset } from '../../src/types';
 import {
     createMockD1Database,
     createMockPresetRow,

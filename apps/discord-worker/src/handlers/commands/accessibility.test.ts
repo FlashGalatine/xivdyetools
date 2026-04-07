@@ -144,9 +144,9 @@ vi.mock('../../services/bot-i18n.js', () => ({
 }));
 
 vi.mock('../../services/i18n.js', () => ({
-  discordLocaleToLocaleCode: vi.fn((locale: string) => 'en'),
+  discordLocaleToLocaleCode: vi.fn((_locale: string) => 'en'),
   initializeLocale: vi.fn(),
-  getLocalizedDyeName: vi.fn((itemId: number, name: string) => name),
+  getLocalizedDyeName: vi.fn((_itemId: number, name: string) => name),
 }));
 
 vi.mock('@xivdyetools/svg', () => ({

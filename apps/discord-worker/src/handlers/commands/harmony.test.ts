@@ -379,7 +379,6 @@ describe('handleHarmonyCommand', () => {
   it('handles case when no harmony dyes are found', async () => {
     // Override the mock to return null for complementary
     const { DyeService } = await import('@xivdyetools/core');
-    const originalFindComplementaryPair = DyeService.prototype.findComplementaryPair;
     vi.spyOn(DyeService.prototype, 'findComplementaryPair').mockReturnValueOnce(null);
 
     const { ctx, waitUntilCalls } = createContext();

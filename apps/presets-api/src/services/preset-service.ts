@@ -14,6 +14,14 @@ import type {
 } from '../types.js';
 
 /**
+ * BUG-002 FIX: Minimal logger interface for structured corruption logging.
+ * Accepts the request-scoped logger from @xivdyetools/worker-middleware.
+ */
+export interface PresetServiceLogger {
+  error(message: string, ...args: unknown[]): void;
+}
+
+/**
  * Escape special LIKE pattern characters in user input
  * Prevents SQL injection via wildcard characters (%, _, \)
  */
@@ -37,7 +45,7 @@ export function generateDyeSignature(dyes: number[]): string {
  * throw on corruption (callers must handle). 'previous_values' degrades to
  * null since it is audit trail data, not core preset content.
  */
-export function rowToPreset(row: PresetRow): CommunityPreset {
+export function rowToPreset(row: PresetRow, logger?: PresetServiceLogger): CommunityPreset {
   let dyes: CommunityPreset['dyes'];
   let tags: CommunityPreset['tags'];
 
@@ -59,7 +67,8 @@ export function rowToPreset(row: PresetRow): CommunityPreset {
       previous_values = JSON.parse(row.previous_values) as CommunityPreset['previous_values'];
     } catch {
       // previous_values is audit trail data — safe to default to null on corruption
-      console.error(`[BUG-012] Preset ${row.id}: invalid JSON in 'previous_values', defaulting to null`);
+      // BUG-002 FIX: Use structured logger when available for request ID correlation
+      (logger ?? console).error(`[BUG-012] Preset ${row.id}: invalid JSON in 'previous_values', defaulting to null`);
     }
   }
 
@@ -83,6 +92,21 @@ export function rowToPreset(row: PresetRow): CommunityPreset {
 }
 
 /**
+ * BUG-002 FIX: Safely convert database rows to presets, skipping corrupted rows.
+ * Uses structured logger when available for request ID correlation.
+ */
+function rowsToPresets(rows: PresetRow[], logger?: PresetServiceLogger): CommunityPreset[] {
+  return rows.flatMap((row) => {
+    try {
+      return [rowToPreset(row, logger)];
+    } catch (error) {
+      (logger ?? console).error(`[BUG-012] Skipping corrupted preset row id=${row.id}:`, error);
+      return [];
+    }
+  });
+}
+
+/**
  * Get presets with filtering and pagination
  *
  * SECURITY NOTE: Hidden presets are always excluded from public listings,
@@ -91,7 +115,8 @@ export function rowToPreset(row: PresetRow): CommunityPreset {
  */
 export async function getPresets(
   db: D1Database,
-  filters: PresetFilters
+  filters: PresetFilters,
+  logger?: PresetServiceLogger,
 ): Promise<PresetListResponse> {
   const {
     category,
@@ -165,14 +190,7 @@ export async function getPresets(
   const rows = result.results || [];
   // Extract total from first row (all rows have same total via window function)
   const total = rows.length > 0 ? rows[0]._total : 0;
-  const presets = rows.flatMap((row) => {
-    try {
-      return [rowToPreset(row)];
-    } catch (error) {
-      console.error(`[BUG-012] Skipping corrupted preset row id=${row.id}:`, error);
-      return [];
-    }
-  });
+  const presets = rowsToPresets(rows, logger);
 
   return {
     presets,
@@ -189,7 +207,7 @@ export async function getPresets(
  * SECURITY NOTE: Explicitly excludes hidden presets for defense-in-depth,
  * even though we already filter for 'approved' status.
  */
-export async function getFeaturedPresets(db: D1Database): Promise<CommunityPreset[]> {
+export async function getFeaturedPresets(db: D1Database, logger?: PresetServiceLogger): Promise<CommunityPreset[]> {
   const query = `
     SELECT * FROM presets
     WHERE status = 'approved' AND status != 'hidden'
@@ -197,14 +215,7 @@ export async function getFeaturedPresets(db: D1Database): Promise<CommunityPrese
     LIMIT 10
   `;
   const result = await db.prepare(query).all<PresetRow>();
-  return (result.results || []).flatMap((row) => {
-    try {
-      return [rowToPreset(row)];
-    } catch (error) {
-      console.error(`[BUG-012] Skipping corrupted preset row id=${row.id}:`, error);
-      return [];
-    }
-  });
+  return rowsToPresets(result.results || [], logger);
 }
 
 /**
@@ -315,21 +326,14 @@ export async function updatePresetStatus(
 /**
  * Get pending presets for moderation
  */
-export async function getPendingPresets(db: D1Database): Promise<CommunityPreset[]> {
+export async function getPendingPresets(db: D1Database, logger?: PresetServiceLogger): Promise<CommunityPreset[]> {
   const query = `
     SELECT * FROM presets
     WHERE status = 'pending'
     ORDER BY created_at ASC
   `;
   const result = await db.prepare(query).all<PresetRow>();
-  return (result.results || []).flatMap((row) => {
-    try {
-      return [rowToPreset(row)];
-    } catch (error) {
-      console.error(`[BUG-012] Skipping corrupted preset row id=${row.id}:`, error);
-      return [];
-    }
-  });
+  return rowsToPresets(result.results || [], logger);
 }
 
 /**
@@ -339,7 +343,8 @@ export async function getPendingPresets(db: D1Database): Promise<CommunityPreset
  */
 export async function getPresetsByUser(
   db: D1Database,
-  authorDiscordId: string
+  authorDiscordId: string,
+  logger?: PresetServiceLogger,
 ): Promise<CommunityPreset[]> {
   const query = `
     SELECT * FROM presets
@@ -347,14 +352,7 @@ export async function getPresetsByUser(
     ORDER BY created_at DESC
   `;
   const result = await db.prepare(query).bind(authorDiscordId).all<PresetRow>();
-  return (result.results || []).flatMap((row) => {
-    try {
-      return [rowToPreset(row)];
-    } catch (error) {
-      console.error(`[BUG-012] Skipping corrupted preset row id=${row.id}:`, error);
-      return [];
-    }
-  });
+  return rowsToPresets(result.results || [], logger);
 }
 
 /**

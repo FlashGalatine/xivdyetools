@@ -4,9 +4,9 @@
     "noEmit": true,
     "declaration": false,
     "declarationMap": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noImplicitReturns": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
     "types": ["@cloudflare/workers-types", "node"],
     "baseUrl": ".",
     "paths": {
