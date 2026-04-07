@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-04-07
+
+### Security
+
+- **SEC-003**: Added `jsonDepthLimit` middleware (maxDepth 10, 100 KB body; prototype pollution keys rejected) to prevent deeply nested payloads and prototype injection
+- **SEC-004**: Added Hono `bodyLimit` middleware (100 KB) on all `/api/*` routes
+
+### Added
+
+- Migrated to `rateLimitMiddleware()` from `@xivdyetools/worker-middleware` — standardized `X-RateLimit-*` headers and `Retry-After` on 429 responses
+- 12 new tests for JSON depth limiting; 11 additional tests for body size limits
+
+### Changed
+
+- Migrated request-ID and logger middleware to `@xivdyetools/worker-middleware`; deleted local middleware files
+- **ARCH-001**: Removed `nodejs_compat` compatibility flag from `wrangler.toml`
+- **BUG-001**: Re-enabled strict TypeScript checks; cleaned up unused variables and implicit returns
+- **BUG-002**: Replaced `console.error` with structured logger in `preset-service.ts`; added optional `logger` parameter to service functions
+- **CORS**: Reduced preflight `maxAge` from 86400 s to 3600 s — allows CORS policy changes to propagate within one hour
+- Extended test coverage for rate limiting (KV error branch), preset notifications (Discord mock with `executionCtx`), category cache, dead-letter storage, moderation edge cases
+
+---
+
 ## [1.4.16] - 2026-03-18
 
 ### Fixed

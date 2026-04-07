@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-04-07
+
+### Security
+
+- **SEC-003**: Added `jsonDepthLimit` middleware (maxDepth 10, 10 KB body; prototype pollution keys rejected) on all `/auth/*` routes
+- **SEC-004**: Added Hono `bodyLimit` middleware (10 KB) on all `/auth/*` routes
+- **REFACTOR-004**: Added `isValidSnowflake` validation for `DISCORD_CLIENT_ID` in env-validation startup check
+
+### Changed
+
+- Migrated request-ID, logger, and rate-limit middleware to `@xivdyetools/worker-middleware`; deleted local middleware files
+- **ARCH-001**: Removed `nodejs_compat` compatibility flag from `wrangler.toml`
+- **BUG-001**: Re-enabled strict TypeScript checks; cleaned up unused variables and implicit returns
+- **CORS**: Reduced preflight `maxAge` from 86400 s to 3600 s
+- 11 new tests for JSON depth limiting and body size limits
+
+---
+
 ## [2.3.10] - 2026-03-20
 
 ### Changed

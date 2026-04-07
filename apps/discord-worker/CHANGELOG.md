@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.0] - 2026-04-07
+
+### Security
+
+- **BUG-001**: Re-enabled strict TypeScript checks (`noUnusedLocals`, `noUnusedParameters`, `noImplicitReturns`); cleaned up ~80 unused variables, imports, and implicit return warnings
+
+### Changed
+
+- Migrated request-ID and logger middleware to `@xivdyetools/worker-middleware` shared package; deleted local `src/middleware/request-id.ts` and `src/middleware/logger.ts`
+- **ARCH-001**: Removed `nodejs_compat` compatibility flag from `wrangler.toml` — worker uses only Web APIs
+
+---
+
 ## [4.3.0] - 2026-04-03
 
 ### Added

@@ -1,24 +1,17 @@
-# What's New in Version 1.9.0
+# What's New in Version 1.11.0
 
-*Released: April 3, 2026*
+*Released: April 7, 2026*
 
 ---
 
-## Filter Out Dyes You Don't Want
+## Under the Hood: Security & Stability
 
-- **New filter panel in every tool** — A collapsible "Filters" sidebar section now appears in all six tools: Harmony Explorer, Palette Extractor, Gradient Builder, Dye Mixer, Budget Suggestions, and Swatch Matcher
-- **9 toggles, two groups** — Hide dyes by type or where you get them:
-  - *Dye Types*: Metallic, Pastel, Dark, Cosmic
-  - *Acquisition Source*: Ishgardian (Firmament), Vendor, Crafted, Allied Society, Expensive
-- **Swatch Matcher stays accurate** — When filters are active, the tool automatically fetches extra candidates and post-filters so you still get a full set of the best matches
+This release is a maintenance update — nothing changes from your perspective in how the tools look or work, but a lot happened behind the scenes to make XIV Dye Tools more secure and reliable.
 
-## Discord Bot: Save Your Filter Preferences
-
-- **New `/preferences filters` commands** — Set your dye type preferences once and have them automatically apply to every command you run
-  - `/preferences filters set` — Toggle any of the 9 filters on or off per your preference
-  - `/preferences filters show` — See your current saved filter settings at a glance
-  - `/preferences filters reset` — Clear all filters and return to defaults
-- **Applied automatically** — Your saved preferences are picked up by `/match`, `/harmony`, `/mixer`, and `/gradient` without any extra steps on your end
+- **More secure modals** — Internal popups and dialogs now use a safer construction method that eliminates a class of potential web security vulnerabilities. You won't notice any difference in how they work.
+- **Request validation** — The servers behind the Discord bot and community presets now enforce stricter limits on incoming data (size limits, depth limits), making them more resilient to malformed or malicious requests.
+- **Cleaner error handling** — Error responses from the bot and API servers no longer expose internal details, even if something unexpected goes wrong.
+- **Shared infrastructure** — Request tracking and rate-limit reporting are now handled by a single tested shared library across all backend services, reducing the chance of inconsistencies.
 
 ---
 

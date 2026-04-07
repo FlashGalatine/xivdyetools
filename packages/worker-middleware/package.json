@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/worker-middleware",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Shared Hono middleware for xivdyetools Cloudflare Workers (request ID, logger, rate limiting)",
   "author": "XIV Dye Tools",
   "license": "MIT",

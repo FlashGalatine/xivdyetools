@@ -5,6 +5,20 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-04-07
+
+### Added
+
+- **TEST-003**: 50 route-level integration tests covering all OG image endpoints — parameter validation (NaN, out-of-bounds), boundary values, crawler vs. non-crawler routing, health check, and fallback routes; total test count: 338
+
+### Changed
+
+- Migrated request-ID and logger middleware to `@xivdyetools/worker-middleware`; deleted local middleware files
+- **ARCH-001**: Removed `nodejs_compat` compatibility flag from `wrangler.toml`
+- **BUG-001**: Re-enabled strict TypeScript checks; cleaned up unused variables and implicit returns
+
+---
+
 ## [1.0.7] - 2026-03-18
 
 ### Fixed

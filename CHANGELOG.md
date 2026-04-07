@@ -8,6 +8,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.11.0] - 2026-04-07
+
+### Security
+
+- **SEC-001**: Added global `onError` handler to `moderation-worker` to prevent stack trace leakage in production error responses
+- **SEC-002**: Eliminated `innerHTML` XSS vector in `web-app` modal system — `ModalConfig.content` now requires `HTMLElement` only; all callers migrated to DOM construction
+- **SEC-003**: Added JSON depth-limiting middleware to `presets-api` and `oauth` (maxDepth 10; prototype pollution keys rejected)
+- **SEC-004**: Added Hono `bodyLimit` middleware to `presets-api` (100 KB on `/api/*`) and `oauth` (10 KB on `/auth/*`)
+- **SEC-005**: Fixed placeholder `DISCORD_CLIENT_ID` in `moderation-worker` `wrangler.toml`; added startup detection in env-validation
+- **SEC-006**: Updated `rollup` via pnpm override to ≥ 4.59.0 (CVE fix); updated `tsup` (8.5.1) and `vitepress` (1.6.4) in affected apps
+
+### Added
+
+- **@xivdyetools/worker-middleware** `1.1.0`: New `rateLimitMiddleware()` factory — standardized `X-RateLimit-*` response headers, `Retry-After`, fail-open error handling, and 429 responses; adopted by `presets-api` and `api-worker`
+- **og-worker**: 50 route-level integration tests covering all OG image endpoints, parameter validation, boundary values, crawler routing, and health check (resolves TEST-003)
+- **CI/CD** (ARCH-002): Post-deploy smoke tests added to `deploy-og-worker.yml` and `deploy-api-docs.yml` (all 8 deployment workflows now have smoke tests)
+- **CI/CD** (ARCH-004): Bundle size reporting step added to CI pipeline with a > 5 MiB warning threshold
+
+### Changed
+
+- **@xivdyetools/worker-middleware** (REFACTOR-001/002): Extracted shared request-ID and logger middleware from 5 workers into `@xivdyetools/worker-middleware`; all workers migrated, 14 local middleware files deleted
+- **All CF Workers** (ARCH-001): Removed `nodejs_compat` compatibility flag from all 7 Cloudflare Workers — confirmed no worker uses Node.js APIs; all use Web APIs only
+- **Coverage thresholds** (REFACTOR-003): Standardized Vitest coverage thresholds across all 17 configs (Libraries: 90/90/85/90; Workers: 85/85/75/85; Frontend: 80/80/75/80)
+- **CORS** preflight `maxAge` reduced from 86400 s (24 h) to 3600 s (1 h) in `presets-api` and `oauth` — allows policy changes to propagate within one hour
+- **@xivdyetools/types** `1.13.0`: `DiscordSnowflake` type and `createSnowflake` function promoted from `@internal` to public API
+- **All packages** (REFACTOR-006): Added `stripInternal: true` to all 11 `tsconfig.build.json` files — enforces `@internal` API boundaries in published `.d.ts` declarations
+
+### Fixed
+
+- **BUG-001**: Re-enabled strict TypeScript checks (`noUnusedLocals`, `noUnusedParameters`, `noImplicitReturns`) across all 5 worker apps; ~80 unused variables and implicit returns cleaned up
+- **BUG-002**: Replaced `console.error` with structured logger in `preset-service.ts`
+- **BUG-003**: Eliminated all `any` types in `@xivdyetools/worker-middleware` via Hono `ContextVariableMap` module augmentation
+- **OPT-001** (`api-worker`): Added pending-promise deduplication to `GET /api/v1/categories` to prevent D1 thundering herd during CDN cache misses
+
+### Documentation
+
+- Updated 2026-04-07 deep-dive and security audit report with all resolution statuses (23 audit files added under `docs/audits/2026-04-07/`)
+- Added MIT `LICENSE` files to 18 apps/packages that were missing them; standardized SE disclaimer across all existing `LICENSE` files
+
+---
+
 ## [1.10.0] - 2026-04-03
 
 ### Added

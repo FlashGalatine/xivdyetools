@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.7.0] - 2026-04-07
+
+### Security
+
+- **SEC-002**: Eliminated `innerHTML` XSS vector in the modal system — `ModalConfig.content` no longer accepts a `string`; all callers (`dye-action-dropdown.ts`, `result-card.ts`, `preset-tool.ts`) migrated to DOM element construction; removes the fragile `setTimeout + querySelectorAll` pattern
+
+### Changed
+
+- Updated `modal-container.ts` and `modal-service.ts` tests to reflect DOM-element-only content model
+
+---
+
 ## [4.6.0] - 2026-04-03
 
 ### Added

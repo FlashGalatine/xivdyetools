@@ -2,6 +2,19 @@
 
 All notable changes to `@xivdyetools/worker-middleware` will be documented in this file.
 
+## [1.1.0] — 2026-04-07
+
+### Added
+
+- `rateLimitMiddleware()` — Configurable Hono middleware factory for rate limiting with standardized `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset` response headers, `Retry-After` on 429 responses, and fail-open error handling. Adopted by `presets-api` and `api-worker` (resolves REFACTOR-002).
+- 15 tests for `rateLimitMiddleware` covering header propagation, 429 format, fail-open, and configuration variants.
+
+### Fixed
+
+- **BUG-003**: Eliminated all `any` types — replaced `Context<any>` with Hono `ContextVariableMap` module augmentation; replaced `Record<string, any>` with `Record<string, unknown>` throughout.
+
+---
+
 ## [1.0.0] — 2026-04-07
 
 ### Added
