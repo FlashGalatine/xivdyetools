@@ -771,4 +771,165 @@ describe('ModerationHandler', () => {
             expect(mockDb._bindings.some((b) => b.includes('flag'))).toBe(true);
         });
     });
+
+    // ============================================
+    // Failed Notifications (BUG-015)
+    // ============================================
+
+    describe('GET /api/v1/moderation/failed-notifications', () => {
+        it('should require moderator privileges', async () => {
+            const res = await app.request(
+                '/api/v1/moderation/failed-notifications',
+                {
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': 'not-a-moderator',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(403);
+        });
+
+        it('should return unresolved failed notifications', async () => {
+            const mockNotifications = [
+                { id: '1', payload: '{}', error: 'timeout', attempts: 3, resolved_at: null, created_at: '2026-01-01' },
+                { id: '2', payload: '{}', error: 'network', attempts: 2, resolved_at: null, created_at: '2026-01-02' },
+            ];
+            mockDb._setupMock(() => mockNotifications);
+
+            const res = await app.request(
+                '/api/v1/moderation/failed-notifications',
+                {
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { notifications: unknown[]; total: number };
+            expect(body.notifications).toHaveLength(2);
+            expect(body.total).toBe(2);
+        });
+
+        it('should support include_resolved parameter', async () => {
+            const mockNotifications = [
+                { id: '1', payload: '{}', error: 'timeout', attempts: 3, resolved_at: '2026-01-05', created_at: '2026-01-01' },
+            ];
+            mockDb._setupMock(() => mockNotifications);
+
+            const res = await app.request(
+                '/api/v1/moderation/failed-notifications?include_resolved=true',
+                {
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { notifications: unknown[]; total: number };
+            expect(body.notifications).toHaveLength(1);
+        });
+
+        it('should return empty array if table does not exist', async () => {
+            mockDb._setupMock(() => { throw new Error('no such table: failed_notifications'); });
+
+            const res = await app.request(
+                '/api/v1/moderation/failed-notifications',
+                {
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { notifications: unknown[]; total: number };
+            expect(body.notifications).toEqual([]);
+            expect(body.total).toBe(0);
+        });
+    });
+
+    describe('PATCH /api/v1/moderation/failed-notifications/:id/resolve', () => {
+        it('should require moderator privileges', async () => {
+            const res = await app.request(
+                '/api/v1/moderation/failed-notifications/1/resolve',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': 'not-a-moderator',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(403);
+        });
+
+        it('should resolve a failed notification', async () => {
+            mockDb._setupMock(() => ({ meta: { changes: 1 } }));
+
+            const res = await app.request(
+                '/api/v1/moderation/failed-notifications/1/resolve',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { success: boolean };
+            expect(body.success).toBe(true);
+        });
+
+        it('should return 404 for already resolved or nonexistent notification', async () => {
+            mockDb._setupMock(() => ({ meta: { changes: 0 } }));
+
+            const res = await app.request(
+                '/api/v1/moderation/failed-notifications/999/resolve',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(404);
+        });
+
+        it('should return 500 on database error', async () => {
+            mockDb._setupMock(() => { throw new Error('Database failure'); });
+
+            const res = await app.request(
+                '/api/v1/moderation/failed-notifications/1/resolve',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(500);
+        });
+    });
 });

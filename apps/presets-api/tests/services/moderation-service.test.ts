@@ -9,6 +9,7 @@ import {
     checkLocalFilter,
     escapeRegex,
     compileProfanityPatterns,
+    truncateUnicodeSafe,
     _resetPatternsForTesting,
     _setTestPatterns,
 } from '../../src/services/moderation-service';
@@ -95,6 +96,49 @@ describe('ModerationService', () => {
             const compiled = compileProfanityPatterns({});
             expect(compiled.wordSet.size).toBe(0);
             expect(compiled.combinedPattern).toBeNull();
+        });
+    });
+
+    // ============================================
+    // truncateUnicodeSafe
+    // ============================================
+
+    describe('truncateUnicodeSafe', () => {
+        it('should return string unchanged if within limit', () => {
+            expect(truncateUnicodeSafe('hello', 10)).toBe('hello');
+        });
+
+        it('should truncate long strings with ellipsis', () => {
+            const result = truncateUnicodeSafe('hello world', 8);
+            expect(result.length).toBeLessThanOrEqual(8);
+            expect(result).toContain('…');
+        });
+
+        it('should handle emoji/surrogate pairs correctly', () => {
+            const emoji = '🌸🌸🌸🌸🌸'; // 5 emoji characters
+            const result = truncateUnicodeSafe(emoji, 3);
+            // Should not split a surrogate pair
+            expect(result).toContain('…');
+            // Array.from correctly counts code points
+            expect(Array.from(result).length).toBeLessThanOrEqual(3);
+        });
+
+        it('should use custom suffix', () => {
+            const result = truncateUnicodeSafe('hello world', 8, '...');
+            expect(result).toContain('...');
+        });
+
+        it('should handle exact length strings', () => {
+            expect(truncateUnicodeSafe('hello', 5)).toBe('hello');
+        });
+
+        it('should handle empty string', () => {
+            expect(truncateUnicodeSafe('', 10)).toBe('');
+        });
+
+        it('should handle maxLength of 1 with suffix', () => {
+            const result = truncateUnicodeSafe('hello', 1);
+            expect(Array.from(result).length).toBeLessThanOrEqual(1);
         });
     });
 
@@ -450,6 +494,34 @@ describe('ModerationService', () => {
             // Should still pass if local filter passed and API failed
             expect(result.passed).toBe(true);
             expect(result.method).toBe('local');
+        });
+
+        it('should handle missing score attributes from Perspective API', async () => {
+            const env = createMockEnv({ PERSPECTIVE_API_KEY: 'test-api-key' });
+
+            // Response with missing/undefined attributes
+            fetchMock.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    attributeScores: {
+                        TOXICITY: { summaryScore: { value: 0.1 } },
+                        // Missing SEVERE_TOXICITY, IDENTITY_ATTACK, INSULT, PROFANITY
+                    },
+                }),
+            });
+
+            const result = await moderateContent(
+                'Test Palette',
+                'Normal description',
+                env
+            );
+
+            expect(result.passed).toBe(true);
+            expect(result.method).toBe('all');
+            expect(result.scores).toBeDefined();
+            // Missing scores should default to 0
+            expect(result.scores!.severeToxicity).toBe(0);
+            expect(result.scores!.identityAttack).toBe(0);
         });
 
         it('should gracefully handle network errors', async () => {

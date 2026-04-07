@@ -119,6 +119,104 @@ describe('GET /v1/dyes', () => {
     const res = await get('/v1/dyes');
     expect(res.headers.get('Cache-Control')).toContain('max-age=3600');
   });
+
+  it('sorts by name ascending', async () => {
+    const { body } = await getJson('/v1/dyes?sort=name&order=asc&perPage=200');
+
+    expect(body.success).toBe(true);
+    expect(body.data.length).toBeGreaterThan(1);
+    for (let i = 1; i < body.data.length; i++) {
+      expect(body.data[i - 1].name.localeCompare(body.data[i].name)).toBeLessThanOrEqual(0);
+    }
+  });
+
+  it('sorts by cost ascending', async () => {
+    const { body } = await getJson('/v1/dyes?sort=cost&order=asc&perPage=200');
+
+    expect(body.success).toBe(true);
+    expect(body.data.length).toBeGreaterThan(1);
+    for (let i = 1; i < body.data.length; i++) {
+      expect(body.data[i - 1].cost).toBeLessThanOrEqual(body.data[i].cost);
+    }
+  });
+
+  it('sorts by hue descending', async () => {
+    const { body } = await getJson('/v1/dyes?sort=hue&order=desc&perPage=200');
+
+    expect(body.success).toBe(true);
+    for (let i = 1; i < body.data.length; i++) {
+      expect(body.data[i - 1].hsv.h).toBeGreaterThanOrEqual(body.data[i].hsv.h);
+    }
+  });
+
+  it('sorts by saturation ascending', async () => {
+    const { body } = await getJson('/v1/dyes?sort=saturation&order=asc&perPage=200');
+
+    expect(body.success).toBe(true);
+    for (let i = 1; i < body.data.length; i++) {
+      expect(body.data[i - 1].hsv.s).toBeLessThanOrEqual(body.data[i].hsv.s);
+    }
+  });
+
+  it('filters by minPrice', async () => {
+    const { body } = await getJson('/v1/dyes?minPrice=100&perPage=200');
+
+    expect(body.success).toBe(true);
+    for (const dye of body.data) {
+      expect(dye.cost).toBeGreaterThanOrEqual(100);
+    }
+  });
+
+  it('filters by maxPrice', async () => {
+    const { body } = await getJson('/v1/dyes?maxPrice=500&perPage=200');
+
+    expect(body.success).toBe(true);
+    for (const dye of body.data) {
+      expect(dye.cost).toBeLessThanOrEqual(500);
+    }
+  });
+
+  it('supports excludeIds parameter', async () => {
+    const { body: allBody } = await getJson('/v1/dyes?perPage=200');
+    const first = allBody.data[0];
+
+    const { body } = await getJson(`/v1/dyes?excludeIds=${first.itemID}&perPage=200`);
+
+    expect(body.success).toBe(true);
+    expect(body.data.every((d: any) => d.itemID !== first.itemID)).toBe(true);
+  });
+
+  it('rejects invalid consolidationType', async () => {
+    const { res, body } = await getJson('/v1/dyes?consolidationType=Z');
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBe('VALIDATION_ERROR');
+  });
+
+  it('filters by consolidationType', async () => {
+    const { body } = await getJson('/v1/dyes?consolidationType=A&perPage=200');
+
+    expect(body.success).toBe(true);
+    for (const dye of body.data) {
+      expect(dye.consolidationType).toBe('A');
+    }
+  });
+
+  it('filters by pastel boolean', async () => {
+    const { body } = await getJson('/v1/dyes?pastel=true&perPage=200');
+
+    expect(body.success).toBe(true);
+    for (const dye of body.data) {
+      expect(dye.isPastel).toBe(true);
+    }
+  });
+
+  it('supports locale parameter for localized names', async () => {
+    const { body } = await getJson('/v1/dyes?locale=ja&perPage=5');
+
+    expect(body.success).toBe(true);
+    expect(body.meta.locale).toBe('ja');
+  });
 });
 
 describe('GET /v1/dyes/:id', () => {
@@ -153,6 +251,13 @@ describe('GET /v1/dyes/:id', () => {
     expect(res.status).toBe(400);
     expect(body.success).toBe(false);
   });
+
+  it('supports locale parameter on single dye', async () => {
+    const { res, body } = await getJson('/v1/dyes/5729?locale=ja');
+
+    expect(res.status).toBe(200);
+    expect(body.meta.locale).toBe('ja');
+  });
 });
 
 describe('GET /v1/dyes/stain/:stainId', () => {
@@ -176,6 +281,13 @@ describe('GET /v1/dyes/stain/:stainId', () => {
 
     expect(res.status).toBe(404);
     expect(body.error).toBe('NOT_FOUND');
+  });
+
+  it('supports locale parameter on stain lookup', async () => {
+    const { res, body } = await getJson('/v1/dyes/stain/1?locale=de');
+
+    expect(res.status).toBe(200);
+    expect(body.meta.locale).toBe('de');
   });
 });
 
@@ -201,6 +313,14 @@ describe('GET /v1/dyes/search', () => {
 
     expect(body.success).toBe(true);
     expect(body.data).toEqual([]);
+  });
+
+  it('supports localized name search', async () => {
+    const { res, body } = await getJson('/v1/dyes/search?q=snow&locale=ja');
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.meta.locale).toBe('ja');
   });
 });
 
@@ -253,6 +373,21 @@ describe('GET /v1/dyes/batch', () => {
 
     expect(res.status).toBe(400);
     expect(body.error).toBe('MISSING_PARAMETER');
+  });
+
+  it('supports idType=item', async () => {
+    const { body } = await getJson('/v1/dyes/batch?ids=5729&idType=item');
+
+    expect(body.success).toBe(true);
+    expect(body.data.dyes.length).toBe(1);
+    expect(body.data.dyes[0].itemID).toBe(5729);
+  });
+
+  it('supports locale parameter on batch', async () => {
+    const { body } = await getJson('/v1/dyes/batch?ids=5729,1&locale=fr');
+
+    expect(body.success).toBe(true);
+    expect(body.meta.locale).toBe('fr');
   });
 });
 

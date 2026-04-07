@@ -74,6 +74,44 @@ describe('GET /v1/match/closest', () => {
     const res = await get('/v1/match/closest?hex=FF0000');
     expect(res.headers.get('Cache-Control')).toContain('max-age=3600');
   });
+
+  it('supports locale parameter', async () => {
+    const { body } = await getJson('/v1/match/closest?hex=FF0000&locale=ja');
+
+    expect(body.success).toBe(true);
+    expect(body.data.dye).toBeDefined();
+  });
+
+  it('supports rgb matching method', async () => {
+    const { body } = await getJson('/v1/match/closest?hex=FF0000&method=rgb');
+
+    expect(body.success).toBe(true);
+    expect(body.data.method).toBe('rgb');
+  });
+
+  it('supports cie76 matching method', async () => {
+    const { body } = await getJson('/v1/match/closest?hex=FF0000&method=cie76');
+
+    expect(body.success).toBe(true);
+    expect(body.data.method).toBe('cie76');
+  });
+
+  it('supports hyab matching method', async () => {
+    const { body } = await getJson('/v1/match/closest?hex=FF0000&method=hyab');
+
+    expect(body.success).toBe(true);
+    expect(body.data.method).toBe('hyab');
+  });
+
+  it('supports excludeIds parameter', async () => {
+    const { body: base } = await getJson('/v1/match/closest?hex=FF0000');
+    const baseItemId = base.data.dye.itemID;
+
+    const { body } = await getJson(`/v1/match/closest?hex=FF0000&excludeIds=${baseItemId}`);
+
+    expect(body.success).toBe(true);
+    expect(body.data.dye.itemID).not.toBe(baseItemId);
+  });
 });
 
 describe('GET /v1/match/within-distance', () => {
@@ -125,6 +163,32 @@ describe('GET /v1/match/within-distance', () => {
 
     expect(body.success).toBe(true);
     expect(body.data.results.length).toBe(0);
+  });
+
+  it('supports locale parameter', async () => {
+    const { body } = await getJson('/v1/match/within-distance?hex=FF0000&maxDistance=50&locale=ko');
+
+    expect(body.success).toBe(true);
+    expect(body.data.results).toBeDefined();
+  });
+
+  it('supports excludeIds parameter', async () => {
+    const { body: base } = await getJson('/v1/match/within-distance?hex=FF0000&maxDistance=500&limit=10');
+
+    if (base.data.results.length > 0) {
+      const excludeId = base.data.results[0].dye.itemID;
+      const { body } = await getJson(`/v1/match/within-distance?hex=FF0000&maxDistance=500&limit=10&excludeIds=${excludeId}`);
+
+      expect(body.success).toBe(true);
+      expect(body.data.results.every((r: any) => r.dye.itemID !== excludeId)).toBe(true);
+    }
+  });
+
+  it('supports different matching method', async () => {
+    const { body } = await getJson('/v1/match/within-distance?hex=FF0000&maxDistance=100&method=cie76');
+
+    expect(body.success).toBe(true);
+    expect(body.data.method).toBe('cie76');
   });
 });
 

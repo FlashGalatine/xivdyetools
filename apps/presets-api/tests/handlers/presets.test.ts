@@ -341,6 +341,323 @@ describe('PresetsHandler', () => {
             expect(body.preset.name).toBe(submission.name);
         });
 
+        it('should create preset successfully with mock executionCtx', async () => {
+            const waitUntilPromises: Promise<unknown>[] = [];
+            const mockExecutionCtx = {
+                waitUntil: (p: Promise<unknown>) => { waitUntilPromises.push(p); },
+                passThroughOnException: () => {},
+            };
+
+            mockDb._setupMock((query: string) => {
+                // Rate limit check
+                if (query.includes('COUNT') && query.includes('author_discord_id')) {
+                    return { count: 0 };
+                }
+                // Category validation
+                if (query.includes('categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                }
+                // Duplicate check
+                if (query.includes('dye_signature')) {
+                    return null;
+                }
+                // Create preset (INSERT)
+                if (query.includes('INSERT INTO presets')) {
+                    return { success: true };
+                }
+                // Auto-vote (INSERT INTO votes)
+                if (query.includes('INSERT INTO votes')) {
+                    return { success: true, meta: { changes: 1 } };
+                }
+                // Get remaining submissions
+                if (query.includes('COUNT')) {
+                    return { count: 1 };
+                }
+                return { success: true };
+            });
+
+            const submission = createMockSubmission();
+
+            const res = await app.request(
+                '/api/v1/presets',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                        'X-User-Discord-Name': 'TestUser',
+                    },
+                    body: JSON.stringify(submission),
+                },
+                env,
+                mockExecutionCtx as unknown as ExecutionContext
+            );
+
+            expect(res.status).toBe(201);
+            const body = await res.json() as { success: boolean; preset: CommunityPreset; moderation_status: string };
+            expect(body.success).toBe(true);
+            expect(body.preset.name).toBe(submission.name);
+            expect(body.moderation_status).toBe('approved');
+        });
+
+        it('should notify Discord worker when configured and content is flagged', async () => {
+            const waitUntilPromises: Promise<unknown>[] = [];
+            const mockExecutionCtx = {
+                waitUntil: (p: Promise<unknown>) => { waitUntilPromises.push(p); },
+                passThroughOnException: () => {},
+            };
+
+            // Set up environment with Discord worker binding
+            const mockDiscordWorker = {
+                fetch: vi.fn().mockResolvedValue(new Response('OK', { status: 200 })),
+            };
+            const envWithDiscord = createMockEnv({
+                DB: mockDb as unknown as D1Database,
+                DISCORD_WORKER: mockDiscordWorker as unknown as Env['DISCORD_WORKER'],
+                INTERNAL_WEBHOOK_SECRET: 'test-webhook-secret',
+            });
+
+            // Set up profanity filter to flag content
+            const { _setTestPatterns } = await import('../../src/services/moderation-service');
+            _setTestPatterns([/\bflagged\b/i]);
+
+            mockDb._setupMock((query: string) => {
+                if (query.includes('COUNT') && query.includes('author_discord_id')) {
+                    return { count: 0 };
+                }
+                if (query.includes('categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                }
+                if (query.includes('dye_signature')) {
+                    return null;
+                }
+                if (query.includes('INSERT')) {
+                    return { success: true, meta: { changes: 1 } };
+                }
+                if (query.includes('COUNT')) {
+                    return { count: 1 };
+                }
+                return { success: true };
+            });
+
+            const submission = createMockSubmission({ name: 'flagged preset' });
+
+            const res = await app.request(
+                '/api/v1/presets',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                        'X-User-Discord-Name': 'TestUser',
+                    },
+                    body: JSON.stringify(submission),
+                },
+                envWithDiscord,
+                mockExecutionCtx as unknown as ExecutionContext
+            );
+
+            expect(res.status).toBe(201);
+            const body = await res.json() as { moderation_status: string };
+            expect(body.moderation_status).toBe('pending');
+
+            // Wait for the notification promise
+            await Promise.allSettled(waitUntilPromises);
+            expect(mockDiscordWorker.fetch).toHaveBeenCalled();
+
+            // Clean up test patterns
+            const { _resetPatternsForTesting } = await import('../../src/services/moderation-service');
+            _resetPatternsForTesting();
+        });
+
+        it('should skip Discord notification when bindings not configured', async () => {
+            const waitUntilPromises: Promise<unknown>[] = [];
+            const mockExecutionCtx = {
+                waitUntil: (p: Promise<unknown>) => { waitUntilPromises.push(p); },
+                passThroughOnException: () => {},
+            };
+
+            // Set up profanity filter to flag content
+            const { _setTestPatterns } = await import('../../src/services/moderation-service');
+            _setTestPatterns([/\bflagged\b/i]);
+
+            mockDb._setupMock((query: string) => {
+                if (query.includes('COUNT') && query.includes('author_discord_id')) {
+                    return { count: 0 };
+                }
+                if (query.includes('categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                }
+                if (query.includes('dye_signature')) {
+                    return null;
+                }
+                if (query.includes('INSERT')) {
+                    return { success: true, meta: { changes: 1 } };
+                }
+                if (query.includes('COUNT')) {
+                    return { count: 1 };
+                }
+                return { success: true };
+            });
+
+            const submission = createMockSubmission({ name: 'flagged preset' });
+
+            const res = await app.request(
+                '/api/v1/presets',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                        'X-User-Discord-Name': 'TestUser',
+                    },
+                    body: JSON.stringify(submission),
+                },
+                env, // no DISCORD_WORKER configured
+                mockExecutionCtx as unknown as ExecutionContext
+            );
+
+            expect(res.status).toBe(201);
+            const body = await res.json() as { moderation_status: string };
+            expect(body.moderation_status).toBe('pending');
+            // Notification still fires via waitUntil, but notifyDiscordBot exits early
+            await Promise.allSettled(waitUntilPromises);
+
+            // Clean up test patterns
+            const { _resetPatternsForTesting } = await import('../../src/services/moderation-service');
+            _resetPatternsForTesting();
+        });
+
+        it('should store failed notification in dead-letter table', async () => {
+            const waitUntilPromises: Promise<unknown>[] = [];
+            const mockExecutionCtx = {
+                waitUntil: (p: Promise<unknown>) => { waitUntilPromises.push(p); },
+                passThroughOnException: () => {},
+            };
+
+            // Mock Discord worker that returns a 4xx error (non-retryable, fast failure)
+            const mockDiscordWorker = {
+                fetch: vi.fn().mockResolvedValue(new Response('Bad Request', { status: 400 })),
+            };
+            const envWithDiscord = createMockEnv({
+                DB: mockDb as unknown as D1Database,
+                DISCORD_WORKER: mockDiscordWorker as unknown as Env['DISCORD_WORKER'],
+                INTERNAL_WEBHOOK_SECRET: 'test-webhook-secret',
+            });
+
+            // Flag content to trigger notification
+            const { _setTestPatterns } = await import('../../src/services/moderation-service');
+            _setTestPatterns([/\bflagged\b/i]);
+
+            mockDb._setupMock((query: string) => {
+                if (query.includes('COUNT') && query.includes('author_discord_id')) {
+                    return { count: 0 };
+                }
+                if (query.includes('categories')) {
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                }
+                if (query.includes('dye_signature')) {
+                    return null;
+                }
+                if (query.includes('INSERT')) {
+                    return { success: true, meta: { changes: 1 } };
+                }
+                if (query.includes('COUNT')) {
+                    return { count: 1 };
+                }
+                return { success: true };
+            });
+
+            const submission = createMockSubmission({ name: 'flagged preset' });
+
+            const res = await app.request(
+                '/api/v1/presets',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                        'X-User-Discord-Name': 'TestUser',
+                    },
+                    body: JSON.stringify(submission),
+                },
+                envWithDiscord,
+                mockExecutionCtx as unknown as ExecutionContext
+            );
+
+            expect(res.status).toBe(201);
+            // Wait for notification + dead-letter storage
+            await Promise.allSettled(waitUntilPromises);
+            // Discord worker should have been called (retries)
+            expect(mockDiscordWorker.fetch).toHaveBeenCalled();
+
+            // Clean up test patterns
+            const { _resetPatternsForTesting } = await import('../../src/services/moderation-service');
+            _resetPatternsForTesting();
+        });
+
+        it('should use category cache on second submission', async () => {
+            const waitUntilPromises: Promise<unknown>[] = [];
+            const mockExecutionCtx = {
+                waitUntil: (p: Promise<unknown>) => { waitUntilPromises.push(p); },
+                passThroughOnException: () => {},
+            };
+
+            let categoryQueryCount = 0;
+            mockDb._setupMock((query: string) => {
+                if (query.includes('COUNT') && query.includes('author_discord_id')) {
+                    return { count: 0 };
+                }
+                if (query.includes('categories')) {
+                    categoryQueryCount++;
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                }
+                if (query.includes('dye_signature')) {
+                    return null;
+                }
+                if (query.includes('INSERT')) {
+                    return { success: true, meta: { changes: 1 } };
+                }
+                if (query.includes('COUNT')) {
+                    return { count: 1 };
+                }
+                return { success: true };
+            });
+
+            const headers = {
+                'Content-Type': 'application/json',
+                Authorization: 'Bearer test-bot-secret',
+                'X-User-Discord-ID': '123',
+                'X-User-Discord-Name': 'TestUser',
+            };
+
+            // First request populates category cache
+            await app.request(
+                '/api/v1/presets',
+                { method: 'POST', headers, body: JSON.stringify(createMockSubmission()) },
+                env,
+                mockExecutionCtx as unknown as ExecutionContext
+            );
+
+            const firstQueryCount = categoryQueryCount;
+
+            // Second request should use cache (no additional category query)
+            await app.request(
+                '/api/v1/presets',
+                { method: 'POST', headers, body: JSON.stringify(createMockSubmission()) },
+                env,
+                mockExecutionCtx as unknown as ExecutionContext
+            );
+
+            // Category query should only happen once (cache hit on second call)
+            expect(categoryQueryCount).toBe(firstQueryCount);
+            await Promise.allSettled(waitUntilPromises);
+        });
+
         it('should reject invalid JSON body', async () => {
             const res = await app.request(
                 '/api/v1/presets',

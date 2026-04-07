@@ -53,3 +53,51 @@ describe('Request ID middleware', () => {
     expect(requestId).toMatch(/^[a-f0-9-]{36}$/i);
   });
 });
+
+describe('App-level error handling', () => {
+  it('returns 404 for unknown routes', async () => {
+    const res = await app.request('/v1/nonexistent', { method: 'GET' }, env);
+
+    expect(res.status).toBe(404);
+    const body = await res.json() as any;
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('NOT_FOUND');
+    expect(body.message).toContain('/v1/nonexistent');
+    expect(body.meta.requestId).toBeDefined();
+  });
+
+  it('returns 404 for completely unknown paths', async () => {
+    const res = await app.request('/unknown/path', { method: 'GET' }, env);
+
+    expect(res.status).toBe(404);
+    const body = await res.json() as any;
+    expect(body.error).toBe('NOT_FOUND');
+  });
+
+  it('sets HSTS header in production', async () => {
+    const prodEnv = createMockEnv({ ENVIRONMENT: 'production' });
+    const res = await app.request('/health', { method: 'GET' }, prodEnv);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Strict-Transport-Security')).toContain('max-age=');
+  });
+
+  it('does not set HSTS in development', async () => {
+    const res = await app.request('/health', { method: 'GET' }, env);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Strict-Transport-Security')).toBeNull();
+  });
+
+  it('sets X-Content-Type-Options header', async () => {
+    const res = await app.request('/health', { method: 'GET' }, env);
+
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+  });
+
+  it('sets X-API-Version header', async () => {
+    const res = await app.request('/health', { method: 'GET' }, env);
+
+    expect(res.headers.get('X-API-Version')).toBe('v1');
+  });
+});
