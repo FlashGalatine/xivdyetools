@@ -505,5 +505,25 @@ interface DiscordInteraction {
   };
 }
 
+// SEC-001: Global error handler — prevents stack trace leakage in production.
+// Without this, Hono's default error response may include internal file paths and
+// stack traces that aid attackers in crafting targeted exploits.
+app.onError((err, c) => {
+  const isDev = c.env.ENVIRONMENT === 'development';
+  const logger = c.get('logger');
+  if (logger) {
+    logger.error('Unhandled error', err instanceof Error ? err : undefined);
+  } else {
+    console.error('Unhandled error:', isDev ? err.stack : err.message);
+  }
+  return c.json(
+    {
+      error: 'Internal Server Error',
+      ...(isDev && { message: err.message, stack: err.stack }),
+    },
+    500
+  );
+});
+
 // Export the Hono app as the default export for Cloudflare Workers
 export default app;

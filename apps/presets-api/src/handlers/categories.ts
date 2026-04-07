@@ -13,15 +13,16 @@ type Variables = {
 
 export const categoriesRouter = new Hono<{ Bindings: Env; Variables: Variables }>();
 
+// OPT-001: Module-level pending promise to deduplicate concurrent D1 queries during CDN
+// cache misses. CF Workers share module state within an isolate — concurrent requests to
+// the same isolate share one D1 roundtrip instead of firing duplicate queries.
+let pendingCategoryListFetch: Promise<CategoryMeta[]> | null = null;
+
 /**
- * GET /api/v1/categories
- * List all categories with preset counts
- *
- * PERFORMANCE: Categories change infrequently, so we cache the response
- * at the edge (Cloudflare CDN) and in browsers for 60 seconds.
+ * Execute D1 query for the full category list.
+ * Extracted so it can be deduplicated via pendingCategoryListFetch.
  */
-categoriesRouter.get('/', async (c) => {
-  // Get categories with preset counts
+async function fetchAllCategories(db: D1Database): Promise<CategoryMeta[]> {
   const query = `
     SELECT
       c.id,
@@ -37,11 +38,9 @@ categoriesRouter.get('/', async (c) => {
     ORDER BY c.display_order ASC
   `;
 
-  const result = await c.env.DB.prepare(query).all<
-    CategoryRow & { preset_count: number }
-  >();
+  const result = await db.prepare(query).all<CategoryRow & { preset_count: number }>();
 
-  const categories: CategoryMeta[] = (result.results || []).map((row) => ({
+  return (result.results || []).map((row) => ({
     id: row.id,
     name: row.name,
     description: row.description,
@@ -50,6 +49,22 @@ categoriesRouter.get('/', async (c) => {
     display_order: row.display_order,
     preset_count: row.preset_count || 0,
   }));
+}
+
+/**
+ * GET /api/v1/categories
+ * List all categories with preset counts
+ *
+ * PERFORMANCE: Categories change infrequently, so we cache the response
+ * at the edge (Cloudflare CDN) and in browsers for 60 seconds.
+ */
+categoriesRouter.get('/', async (c) => {
+  // OPT-001: Deduplicate concurrent D1 queries — reuse an in-flight fetch if one exists.
+  pendingCategoryListFetch ??= fetchAllCategories(c.env.DB).finally(() => {
+    pendingCategoryListFetch = null;
+  });
+
+  const categories = await pendingCategoryListFetch;
 
   // Set cache headers - cache for 60 seconds at edge and browser
   // s-maxage = CDN cache time, max-age = browser cache time
