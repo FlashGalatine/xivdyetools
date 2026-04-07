@@ -728,6 +728,9 @@ importers:
       '@xivdyetools/logger':
         specifier: workspace:*
         version: link:../logger
+      '@xivdyetools/rate-limiter':
+        specifier: workspace:*
+        version: link:../rate-limiter
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20260405.1

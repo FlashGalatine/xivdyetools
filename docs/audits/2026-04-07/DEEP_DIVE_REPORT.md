@@ -12,7 +12,7 @@
 
 This is the second full monorepo deep-dive, following the 2026-03-18 audit. The primary focus is tracking remediation of prior findings and identifying new issues introduced since.
 
-**Key finding:** The P0 items from the prior audit (BUG-010, BUG-012, BUG-013, BUG-017) have all been fixed with clear code comments referencing the finding IDs — excellent audit-fix traceability. ARCH-001 and ARCH-003 were also fully resolved (deploy triggers and CI audit step). All 15 new findings from this audit have been resolved: middleware extracted to `@xivdyetools/worker-middleware`, 340+ new tests added, strict TypeScript re-enabled in all workers, and coverage thresholds standardized.
+**Key finding:** The P0 items from the prior audit (BUG-010, BUG-012, BUG-013, BUG-017) have all been fixed with clear code comments referencing the finding IDs — excellent audit-fix traceability. ARCH-001 and ARCH-003 were also fully resolved (deploy triggers and CI audit step). All 15 new findings from this audit have been resolved: middleware extracted to `@xivdyetools/worker-middleware` (including rate limiting factory), 340+ new tests added, strict TypeScript re-enabled in all workers, coverage thresholds standardized, `nodejs_compat` flag removed from all 7 workers, and rate limiting middleware consolidated into shared factory.
 
 ---
 
@@ -94,7 +94,7 @@ This is the second full monorepo deep-dive, following the 2026-03-18 audit. The 
 | ID | Title | Priority | Effort | Package/App |
 |----|-------|----------|--------|-------------|
 | ~~[REFACTOR-001](refactoring/REFACTOR-001.md)~~ | ~~Request ID & logger middleware duplicated across 4 workers~~ | **FIXED** | Extracted to `@xivdyetools/worker-middleware` package |
-| [REFACTOR-002](refactoring/REFACTOR-002.md) | Rate limiting middleware inconsistent across workers | MEDIUM | MEDIUM | cross-cutting |
+| ~~[REFACTOR-002](refactoring/REFACTOR-002.md)~~ | ~~Rate limiting middleware inconsistent across workers~~ | **FIXED** | Shared `rateLimitMiddleware` factory added to `@xivdyetools/worker-middleware`; presets-api and api-worker refactored to use it |
 | ~~[REFACTOR-003](refactoring/REFACTOR-003.md)~~ | ~~Environment validation duplication; snowflake regex not centralized~~ | **FIXED** | All workers use shared `isValidSnowflake()` |
 | ~~[REFACTOR-004](refactoring/REFACTOR-004.md)~~ | ~~`DiscordSnowflake` branded type not adopted by callers~~ | **FIXED** | Adopted across all consumers |
 
@@ -110,7 +110,7 @@ This is the second full monorepo deep-dive, following the 2026-03-18 audit. The 
 
 | ID | Title | Priority |
 |----|-------|----------|
-| ARCH-001 | `nodejs_compat` flag on all 7 workers — verify per-worker necessity | LOW |
+| ~~ARCH-001~~ | ~~`nodejs_compat` flag on all 7 workers — verify per-worker necessity~~ | **FIXED** | Removed from all 7 wrangler.toml — no Node.js APIs used; all workers use Web APIs only |
 | ~~ARCH-002~~ | ~~CORS preflight `maxAge: 86400`~~ | **FIXED** | Reduced to `maxAge: 3600` in presets-api and oauth (2026-04-07) |
 
 ### Testing Gaps (3)
@@ -132,12 +132,12 @@ This is the second full monorepo deep-dive, following the 2026-03-18 audit. The 
 ### P1: Fix Next Sprint (Medium Effort)
 3. ~~**REFACTOR-001**: Extract shared request ID + logger middleware~~ — **DONE** (`@xivdyetools/worker-middleware`)
 4. ~~**TEST-001**: Add handler-level tests for presets-api~~ — **DONE** (153 tests)
-5. **REFACTOR-002**: Standardize rate limiting middleware pattern across workers
+5. ~~**REFACTOR-002**: Standardize rate limiting middleware pattern across workers~~ — **DONE** (`rateLimitMiddleware` factory in `@xivdyetools/worker-middleware`)
 
 ### P2: Plan for Next Quarter
 6. ~~**BUG-001** (new): Re-enable strict TypeScript checks in worker apps~~ — **DONE**
 7. ~~**REFACTOR-004** (new): Adopt `DiscordSnowflake` branded type across consumers~~ — **DONE**
-8. **ARCH-001**: Audit `nodejs_compat` flag necessity per worker — may reduce bundle size
+8. ~~**ARCH-001**: Audit `nodejs_compat` flag necessity per worker — may reduce bundle size~~ — **DONE** (removed from all 7 workers)
 9. ~~From prior audit: **BUG-008** (LocalizationService singleton race), smoke tests for og-worker/api-docs~~ — **DONE** (both verified)
 
 ### P3: Backlog
@@ -156,7 +156,7 @@ This is the second full monorepo deep-dive, following the 2026-03-18 audit. The 
 | Error Handling | A- | ↑ (improved) | All workers now use shared middleware, structured logging throughout |
 | Type Safety | A | ↑ (improved) | Strict TS re-enabled in all workers; branded types adopted everywhere |
 | Testing | A | ↑ (improved) | 340+ new tests added (presets-api, api-worker, og-worker); 2800+ total |
-| Code Duplication | B+ | ↑ (improved) | Request ID + logger middleware extracted to shared package |
+| Code Duplication | A- | ↑ (improved) | Request ID + logger + rate limiting middleware extracted to shared package |
 | Performance | A- | → (unchanged) | Efficient DB queries, no N+1 patterns |
 | Dead Code | A | → (unchanged) | Clean exports, no obvious unused code |
 | Configuration | A- | ↑ (improved) | Coverage thresholds standardized; bundle size reporting added |
@@ -173,22 +173,20 @@ This is the second full monorepo deep-dive, following the 2026-03-18 audit. The 
 - **CI/CD:** All 8 deploy workflows have smoke tests; bundle size reporting; dependency audit
 
 ### Areas for Improvement
-- **Rate Limiting Middleware:** Still inconsistent across workers (REFACTOR-002 new)
 - **Test Organization:** Mixed colocated vs `__tests__` pattern (REFACTOR-002 prior) — deferred
-- **`nodejs_compat` Flag:** May not be needed on all 7 workers (ARCH-001 new)
 
 ---
 
 ## Recommendations
 
-1. **Address REFACTOR-002 (new)** — rate limiting middleware is the last cross-cutting inconsistency
-2. **Audit `nodejs_compat` (ARCH-001 new)** — may reduce bundle sizes for workers that don't need Node.js APIs
+1. ~~**Address REFACTOR-002 (new)** — rate limiting middleware is the last cross-cutting inconsistency~~ — **DONE**
+2. ~~**Audit `nodejs_compat` (ARCH-001 new)** — may reduce bundle sizes for workers that don't need Node.js APIs~~ — **DONE**
 3. **Continue monitoring** BUG-006 (LRU cache) and REFACTOR-002 (prior, test file locations) — deferred with documented rationale
 4. **Next audit recommended:** 2026-07 (quarterly cadence)
 
 ## Next Steps
-1. Standardize rate limiting middleware (REFACTOR-002 new)
-2. Audit nodejs_compat flag per worker (ARCH-001 new)
+1. ~~Standardize rate limiting middleware (REFACTOR-002 new)~~ — **DONE**
+2. ~~Audit nodejs_compat flag per worker (ARCH-001 new)~~ — **DONE**
 3. Schedule quarterly audit for 2026-07
 
 ---

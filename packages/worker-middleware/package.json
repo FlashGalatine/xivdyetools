@@ -29,7 +29,8 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
-    "@xivdyetools/logger": "workspace:*"
+    "@xivdyetools/logger": "workspace:*",
+    "@xivdyetools/rate-limiter": "workspace:*"
   },
   "peerDependencies": {
     "hono": "^4.0.0"

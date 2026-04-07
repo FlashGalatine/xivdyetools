@@ -2,63 +2,45 @@
  * Rate Limit Middleware
  *
  * KV-backed distributed rate limiting at 60 requests/min per IP.
- * Uses lazy singleton for the KVRateLimiter since env is only
- * available at request time (not module scope).
+ *
+ * REFACTOR-002: Now uses shared rateLimitMiddleware factory from
+ * @xivdyetools/worker-middleware for consistent header formatting
+ * and error handling. Uses lazy backend factory since KV binding
+ * is only available at request time.
  */
 
-import type { Context, Next } from 'hono';
+import type { Context } from 'hono';
 import type { Env, Variables } from '../types.js';
-import { KVRateLimiter, getClientIp, getRateLimitHeaders } from '@xivdyetools/rate-limiter';
-import type { RateLimitConfig, RateLimitResult } from '@xivdyetools/rate-limiter';
+import { rateLimitMiddleware as createRateLimitMiddleware } from '@xivdyetools/worker-middleware';
+import { KVRateLimiter, getClientIp } from '@xivdyetools/rate-limiter';
 import { ErrorCode } from '../lib/api-error.js';
 
-const ANONYMOUS_CONFIG: RateLimitConfig = {
-  maxRequests: 60,
-  windowMs: 60_000,
-  burstAllowance: 5,
-  failOpen: true,
-};
+let kvLimiter: KVRateLimiter | null = null;
 
-let rateLimiter: KVRateLimiter | null = null;
-
-function getRateLimiter(kv: KVNamespace): KVRateLimiter {
-  if (!rateLimiter) {
-    rateLimiter = new KVRateLimiter({ kv, keyPrefix: 'api:ip:' });
+function getKVLimiter(kv: KVNamespace): KVRateLimiter {
+  if (!kvLimiter) {
+    kvLimiter = new KVRateLimiter({ kv, keyPrefix: 'api:ip:' });
   }
-  return rateLimiter;
+  return kvLimiter;
 }
 
-export async function rateLimitMiddleware(
-  c: Context<{ Bindings: Env; Variables: Variables }>,
-  next: Next,
-): Promise<Response | void> {
-  const clientIp = getClientIp(c.req.raw);
-  const limiter = getRateLimiter(c.env.RATE_LIMIT);
-  let result: RateLimitResult;
-
-  try {
-    result = await limiter.check(clientIp, ANONYMOUS_CONFIG);
-  } catch {
-    // Fail open — allow request if rate limiter errors
-    await next();
-    return;
-  }
-
-  // Set rate limit headers on all responses
-  const headers = getRateLimitHeaders(result);
-  for (const [key, value] of Object.entries(headers)) {
-    c.header(key, value);
-  }
-
-  if (!result.allowed) {
-    const retryAfter = result.retryAfter ?? Math.ceil((result.resetAt.getTime() - Date.now()) / 1000);
-    c.header('Retry-After', retryAfter.toString());
-
-    return c.json(
+export const rateLimitMiddleware = createRateLimitMiddleware({
+  backend: (c: Context<{ Bindings: Env }>) => getKVLimiter(c.env.RATE_LIMIT),
+  keyExtractor: (c) => getClientIp(c.req.raw),
+  config: {
+    maxRequests: 60,
+    windowMs: 60_000,
+    burstAllowance: 5,
+    failOpen: true,
+  },
+  onError: 'fail-open',
+  formatError: (c: Context<{ Bindings: Env; Variables: Variables }>, retryAfter) =>
+    c.json(
       {
         success: false,
         error: ErrorCode.RATE_LIMITED,
-        message: 'Rate limit exceeded. 60 requests per minute allowed for anonymous access. Register for an API key to get 300 requests per minute.',
+        message:
+          'Rate limit exceeded. 60 requests per minute allowed for anonymous access. Register for an API key to get 300 requests per minute.',
         retryAfter,
         meta: {
           requestId: c.get('requestId') || 'unknown',
@@ -66,8 +48,5 @@ export async function rateLimitMiddleware(
         },
       },
       429,
-    );
-  }
-
-  await next();
-}
+    ),
+});

@@ -166,33 +166,45 @@ describe('PublicRateLimitMiddleware', () => {
     });
 
     it('should log warning when rate limiter backend has error (fail-open)', async () => {
-        // Mock checkPublicRateLimit to simulate a backend error
-        const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-        // Create a special app that injects kvError
+        // REFACTOR-002: The shared rateLimitMiddleware now logs via structured
+        // logger (c.get('logger').warn) instead of console.warn. We verify
+        // the fail-open behavior here; logger integration is tested in
+        // @xivdyetools/worker-middleware's own test suite.
+        const warnFn = vi.fn();
         const errorApp = new Hono<{ Bindings: Env }>();
+
+        // Set up a mock logger so the shared middleware can log the warning
         errorApp.use('*', async (c, next) => {
-            // Patch the rate limit service to return kvError
-            vi.spyOn(await import('../../src/services/rate-limit-service'), 'checkPublicRateLimit')
-              .mockResolvedValueOnce({
-                allowed: true,
-                remaining: 99,
-                resetAt: new Date(Date.now() + 60000),
-                kvError: true,
-              });
-            await publicRateLimitMiddleware(c, next);
+            c.set('logger', {
+                info: vi.fn(),
+                warn: warnFn,
+                error: vi.fn(),
+                debug: vi.fn(),
+            } as never);
+            await next();
         });
+        errorApp.use('*', publicRateLimitMiddleware);
         errorApp.get('/test', (c) => c.json({ success: true }));
+
+        // Mock the MemoryRateLimiter to return backendError
+        const rateLimiterModule = await import('@xivdyetools/rate-limiter');
+        vi.spyOn(rateLimiterModule.MemoryRateLimiter.prototype, 'check')
+          .mockResolvedValueOnce({
+            allowed: true,
+            remaining: 99,
+            resetAt: new Date(Date.now() + 60000),
+            limit: 100,
+            backendError: true,
+          });
 
         const res = await errorApp.request('/test', {
             headers: { 'CF-Connecting-IP': '10.0.0.99' },
         }, env);
 
         expect(res.status).toBe(200);
-        expect(spy).toHaveBeenCalledWith(
+        expect(warnFn).toHaveBeenCalledWith(
             'Rate limiter backend error (failing open)',
-            expect.objectContaining({ ip: expect.any(String) })
+            expect.objectContaining({ key: expect.any(String) })
         );
-        spy.mockRestore();
     });
 });

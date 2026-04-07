@@ -1,7 +1,7 @@
 name = "xivdyetools-moderation-worker"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
-compatibility_flags = ["nodejs_compat"]
+# ARCH-001: nodejs_compat removed — no Node.js APIs used
 
 routes = [
   { pattern = "moderation-bot.xivdyetools.app", custom_domain = true },

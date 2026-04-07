@@ -3,50 +3,30 @@
 - **Priority:** MEDIUM
 - **Effort:** MEDIUM
 - **Category:** Code Duplication / Inconsistency
+- **Status:** **FIXED**
 - **Files:**
   - `apps/discord-worker/src/services/rate-limiter.ts` — Custom per-command rate limits
   - `apps/presets-api/src/middleware/rate-limit.ts` — KV-backed public rate limiting
   - `apps/presets-api/src/services/rate-limit-service.ts` — Per-user submission rate limiting
   - `apps/oauth/src/services/rate-limit.ts` — Path-specific IP rate limiting
 
-## Description
+## Resolution
 
-Each worker implements rate limiting differently:
+Created `rateLimitMiddleware()` factory in `@xivdyetools/worker-middleware` that standardizes:
+- X-RateLimit-* header formatting (via shared `getRateLimitHeaders()`)
+- Retry-After calculation
+- Fail-open/fail-closed error handling with structured logging
+- 429 response format
 
-| Worker | Backend | Key Format | Behavior on Error |
-|--------|---------|------------|-------------------|
-| discord-worker | Memory/KV | `cmd:{userId}:{command}` | Block |
-| presets-api | KV | `{ip}` | Fail-open (logged) |
-| oauth | Memory/KV | `{ip}:{path}` | Fail-open |
+Supports both pre-created backends and lazy factory functions (for KV bindings only available at request time).
 
-While different workers have legitimately different rate limiting needs, the middleware patterns for:
-- Extracting rate limit results
-- Setting `X-RateLimit-*` response headers
-- Handling `Retry-After` timing
-- Logging rate limit events
+Refactored:
+- **presets-api** (`middleware/rate-limit.ts`): Now uses shared factory with MemoryRateLimiter + PUBLIC_API_LIMITS
+- **api-worker** (`middleware/rate-limit.ts`): Now uses shared factory with lazy KVRateLimiter + custom `formatError`
 
-...are duplicated and inconsistent.
-
-## Impact
-
-- Rate limit header formats may differ between workers
-- Error handling behavior varies (fail-open vs block)
-- New workers must re-derive the rate limiting integration pattern
-
-## Recommendation
-
-Create a shared rate limiting middleware factory in `@xivdyetools/worker-middleware`:
-
-```typescript
-export function rateLimitMiddleware(options: {
-  backend: RateLimiter;
-  keyExtractor: (c: Context) => string;
-  onError?: 'fail-open' | 'fail-closed';
-}): MiddlewareHandler;
-```
-
-Individual workers would configure their specific backends and key strategies while sharing header formatting and error handling.
-
-## Effort
+Not refactored (intentionally — unique patterns):
+- **discord-worker**: Per-user, per-command with Upstash/KV fallback chain
+- **oauth**: Durable Object-based per-endpoint limits
+- **universalis-proxy**: Inline route-level with seconds-based adapter
 
 MEDIUM — Requires abstracting common patterns while preserving per-worker configuration.

@@ -34,4 +34,7 @@ export type { RequestIdOptions } from './request-id.js';
 export { loggerMiddleware, getLogger } from './logger.js';
 export type { LoggerMiddlewareOptions } from './logger.js';
 
+export { rateLimitMiddleware } from './rate-limit.js';
+export type { RateLimitMiddlewareOptions } from './rate-limit.js';
+
 export type { MiddlewareVariables } from './types.js';
