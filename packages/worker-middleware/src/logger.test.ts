@@ -113,6 +113,43 @@ describe('loggerMiddleware', () => {
       const callArgs = vi.mocked(createRequestLogger).mock.calls[0]?.[0];
       expect(callArgs).not.toHaveProperty('API_VERSION');
     });
+
+    it('should include API_VERSION when readApiVersionFromEnv is true and env has string value', async () => {
+      const app = new Hono<{ Bindings: { API_VERSION: string } }>();
+      app.use('*', requestIdMiddleware());
+      app.use('*', loggerMiddleware({
+        serviceName: 'test-service',
+        readApiVersionFromEnv: true,
+      }));
+      app.get('/test', (c) => c.text('ok'));
+
+      // Provide API_VERSION binding via fetch override
+      const req = new Request('http://localhost/test');
+      const res = await app.fetch(req, { API_VERSION: 'v2.1.0' });
+      expect(res.status).toBe(200);
+
+      expect(createRequestLogger).toHaveBeenCalledWith(
+        expect.objectContaining({ API_VERSION: 'v2.1.0' }),
+        expect.any(String),
+      );
+    });
+
+    it('should omit API_VERSION when readApiVersionFromEnv is true but value is not a string', async () => {
+      const app = new Hono<{ Bindings: { API_VERSION: number } }>();
+      app.use('*', requestIdMiddleware());
+      app.use('*', loggerMiddleware({
+        serviceName: 'test-service',
+        readApiVersionFromEnv: true,
+      }));
+      app.get('/test', (c) => c.text('ok'));
+
+      const req = new Request('http://localhost/test');
+      const res = await app.fetch(req, { API_VERSION: 42 as never });
+      expect(res.status).toBe(200);
+
+      const callArgs = vi.mocked(createRequestLogger).mock.calls[0]?.[0];
+      expect(callArgs).not.toHaveProperty('API_VERSION');
+    });
   });
 
   describe('request logging', () => {

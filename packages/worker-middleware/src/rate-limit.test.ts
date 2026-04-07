@@ -289,6 +289,24 @@ describe('rateLimitMiddleware', () => {
       );
     });
 
+    it('should use custom formatError when fail-closed and formatError is provided', async () => {
+      const backend = createMockBackend({
+        check: vi.fn().mockRejectedValue(new Error('KV unavailable')),
+      });
+      const app = buildApp({
+        backend,
+        keyExtractor: () => '10.0.0.1',
+        config: DEFAULT_CONFIG,
+        onError: 'fail-closed',
+        formatError: (c, retryAfter) =>
+          c.json({ customError: true, retry: retryAfter }, 503),
+      });
+
+      const res = await app.request('/test');
+      expect(res.status).toBe(503);
+      expect(await res.json()).toEqual({ customError: true, retry: 60 });
+    });
+
     it('should handle missing logger gracefully on error', async () => {
       const backend = createMockBackend({
         check: vi.fn().mockRejectedValue(new Error('boom')),
