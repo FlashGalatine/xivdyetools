@@ -30,7 +30,7 @@ export type ModalId = string & { readonly __brand: 'ModalId' };
 export interface ModalConfig {
   type: ModalType;
   title: string;
-  content?: string | HTMLElement;
+  content?: HTMLElement;
   size?: 'sm' | 'md' | 'lg';
   closable?: boolean;
   closeOnBackdrop?: boolean;

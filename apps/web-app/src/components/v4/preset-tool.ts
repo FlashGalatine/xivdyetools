@@ -591,12 +591,13 @@ export class PresetTool extends BaseLitComponent {
     }
 
     // Show confirmation modal
-    const confirmMessage = LanguageService.t('preset.confirmDelete');
+    const confirmEl = document.createElement('p');
+    confirmEl.textContent = LanguageService.t('preset.confirmDelete');
 
     // Use ModalService for a custom confirmation dialog
     ModalService.showConfirm({
       title: LanguageService.t('preset.deleteTitle'),
-      content: confirmMessage,
+      content: confirmEl,
       confirmText: LanguageService.t('common.delete'),
       cancelText: LanguageService.t('common.cancel'),
       onConfirm: async () => {

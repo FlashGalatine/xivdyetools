@@ -6,11 +6,11 @@
 - **Audit Date:** 2026-04-07
 - **Auditor:** Claude Opus 4.6 (1M context)
 - **Overall Posture:** **STRONG**
-- **New Findings:** 6 (0 critical, 1 high, 1 medium, 4 low) — **5 fixed, 1 partially fixed**
+- **New Findings:** 6 (0 critical, 1 high, 1 medium, 4 low) — **6 fixed/resolved** (1 partial)
 - **Critical Issues:** 0
 - **Recommendation:** APPROVED FOR PRODUCTION USE
 
-The xivdyetools monorepo demonstrates excellent security practices across all layers: authentication, input validation, rate limiting, CORS, secret management, and content moderation. The codebase shows evidence of continuous security improvement with documented fixes for multiple prior audit findings (BUG-010, BUG-012, BUG-013, BUG-017). The only high-severity finding is a dependency vulnerability in `rollup` (dev dependency, not shipped to production workers).
+The xivdyetools monorepo demonstrates excellent security practices across all layers: authentication, input validation, rate limiting, CORS, secret management, and content moderation. The codebase shows evidence of continuous security improvement with documented fixes for multiple prior audit findings (BUG-010, BUG-012, BUG-013, BUG-017). All 6 findings from this audit have been resolved — the only remaining item is a partial fix for dependency vulnerabilities in development-only packages (esbuild/vite), blocked by VitePress not yet having a v2 release.
 
 ---
 
@@ -19,7 +19,7 @@ The xivdyetools monorepo demonstrates excellent security practices across all la
 | ID | Title | Severity | Status |
 |----|-------|----------|--------|
 | ~~SEC-001~~ | ~~moderation-worker missing global `onError` handler~~ | MEDIUM | **FIXED** (2026-04-07) |
-| [SEC-002](security/SEC-002.md) | `innerHTML` usage in modal-container.ts | LOW | Open — controlled input + CSP mitigates |
+| [SEC-002](security/SEC-002.md) | `innerHTML` usage in modal-container.ts | LOW | **FIXED** (2026-04-07) |
 | ~~SEC-003~~ | ~~JSON depth limiting inconsistent across workers~~ | LOW | **FIXED** (2026-04-07) |
 | ~~SEC-004~~ | ~~Missing request body size limits on some endpoints~~ | LOW | **FIXED** (2026-04-07) |
 | ~~SEC-005~~ | ~~Placeholder env var in moderation-worker wrangler.toml~~ | LOW | **FIXED** (2026-04-07) |

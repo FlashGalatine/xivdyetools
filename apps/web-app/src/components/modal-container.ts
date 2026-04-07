@@ -239,12 +239,7 @@ export class ModalContainer extends BaseComponent {
     });
 
     if (modal.content) {
-      if (typeof modal.content === 'string') {
-        // Render trusted modal string content as HTML (callers control input)
-        content.innerHTML = modal.content;
-      } else {
-        content.appendChild(modal.content);
-      }
+      content.appendChild(modal.content);
     }
 
     dialog.appendChild(content);

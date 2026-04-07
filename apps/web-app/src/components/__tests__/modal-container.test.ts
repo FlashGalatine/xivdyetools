@@ -89,18 +89,21 @@ describe('ModalContainer', () => {
       expect(getText(title)).toBe('My Modal Title');
     });
 
-    it('should render modal content as string', () => {
+    it('should render modal content as HTMLElement', () => {
       modalContainer = new ModalContainer(container);
       modalContainer.init();
+
+      const el = document.createElement('p');
+      el.textContent = 'Modal content here';
 
       ModalService.show({
         type: 'custom',
         title: 'Test',
-        content: '<p>Modal content here</p>',
+        content: el,
       });
 
       const content = query(container, '[id^="modal-content-"]');
-      expect(content?.innerHTML).toContain('Modal content here');
+      expect(content?.textContent).toContain('Modal content here');
     });
 
     it('should render modal content as HTMLElement', () => {
@@ -447,10 +450,13 @@ describe('ModalContainer', () => {
       modalContainer = new ModalContainer(container);
       modalContainer.init();
 
+      const descEl = document.createElement('p');
+      descEl.textContent = 'Modal description';
+
       ModalService.show({
         type: 'custom',
         title: 'Test',
-        content: 'Modal description',
+        content: descEl,
       });
 
       const dialog = query(container, '.modal-dialog');

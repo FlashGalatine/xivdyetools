@@ -380,17 +380,20 @@ describe('ModalService', () => {
   // ============================================================================
 
   describe('Modal Content', () => {
-    it('should support string content', () => {
+    it('should support HTMLElement content', () => {
+      const el = document.createElement('p');
+      el.textContent = 'This is the content';
+
       const id = ModalService.show({
         type: 'custom',
         title: 'Test',
-        content: 'This is the content',
+        content: el,
       });
 
       const modals = ModalService.getModals();
       const modal = modals.find((m) => m.id === id);
 
-      expect(modal?.content).toBe('This is the content');
+      expect(modal?.content).toBe(el);
     });
 
     it('should support HTMLElement content', () => {

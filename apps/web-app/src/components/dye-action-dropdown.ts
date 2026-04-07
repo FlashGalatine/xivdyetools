@@ -461,80 +461,119 @@ function showSlotSelectionModal(
       ? [LanguageService.t('mixer.startDye'), LanguageService.t('mixer.endDye')]
       : currentDyeIds.map((_, i) => `${LanguageService.t('common.slot')} ${i + 1}`);
 
-  // Build slot buttons HTML
-  const slotsHtml = currentDyeIds
-    .map((dyeId, index) => {
-      const existingDye = dyeService.getDyeById(dyeId);
-      const dyeName = existingDye
-        ? LanguageService.getDyeName(existingDye.itemID) || existingDye.name
-        : 'Unknown';
-      const dyeHex = existingDye?.hex ?? '#888888';
+  // Build content as DOM elements (SEC-002: avoid innerHTML for defense-in-depth)
+  const contentEl = document.createElement('div');
 
-      return `
-      <button type="button" class="slot-select-btn flex items-center gap-3 w-full p-3 rounded-lg border transition-colors"
-        style="background: var(--theme-card-background); border-color: var(--theme-border);"
-        data-slot="${index}">
-        <div class="w-8 h-8 rounded" style="background: ${dyeHex}; border: 1px solid var(--theme-border);"></div>
-        <div class="flex-1 text-left">
-          <p class="font-medium text-sm" style="color: var(--theme-text);">${slotLabels[index]}</p>
-          <p class="text-xs" style="color: var(--theme-text-muted);">${dyeName}</p>
-        </div>
-        <span class="text-xs" style="color: var(--theme-text-muted);">${LanguageService.t('common.replace')}</span>
-      </button>
-    `;
-    })
-    .join('');
+  const description = document.createElement('p');
+  description.className = 'mb-4';
+  description.style.color = 'var(--theme-text)';
+  description.textContent = LanguageService.t('harmony.slotsFull');
+  contentEl.appendChild(description);
 
+  const slotsContainer = document.createElement('div');
+  slotsContainer.className = 'space-y-2';
+
+  // Store modalId so slot buttons can dismiss it
+  let modalId: ReturnType<typeof ModalService.show>;
+
+  currentDyeIds.forEach((dyeId, index) => {
+    const existingDye = dyeService.getDyeById(dyeId);
+    const dyeName = existingDye
+      ? LanguageService.getDyeName(existingDye.itemID) || existingDye.name
+      : 'Unknown';
+    const dyeHex = existingDye?.hex ?? '#888888';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'flex items-center gap-3 w-full p-3 rounded-lg border transition-colors';
+    btn.style.background = 'var(--theme-card-background)';
+    btn.style.borderColor = 'var(--theme-border)';
+
+    const swatch = document.createElement('div');
+    swatch.className = 'w-8 h-8 rounded';
+    swatch.style.background = dyeHex;
+    swatch.style.border = '1px solid var(--theme-border)';
+    btn.appendChild(swatch);
+
+    const info = document.createElement('div');
+    info.className = 'flex-1 text-left';
+    const labelP = document.createElement('p');
+    labelP.className = 'font-medium text-sm';
+    labelP.style.color = 'var(--theme-text)';
+    labelP.textContent = slotLabels[index];
+    info.appendChild(labelP);
+    const nameP = document.createElement('p');
+    nameP.className = 'text-xs';
+    nameP.style.color = 'var(--theme-text-muted)';
+    nameP.textContent = dyeName;
+    info.appendChild(nameP);
+    btn.appendChild(info);
+
+    const replaceLabel = document.createElement('span');
+    replaceLabel.className = 'text-xs';
+    replaceLabel.style.color = 'var(--theme-text-muted)';
+    replaceLabel.textContent = LanguageService.t('common.replace');
+    btn.appendChild(replaceLabel);
+
+    // Click handler — directly attached, no setTimeout needed
+    btn.addEventListener('click', () => {
+      const storageKey = STORAGE_KEYS[tool];
+      currentDyeIds[index] = newDye.id;
+      StorageService.setItem(storageKey, currentDyeIds);
+
+      ModalService.dismiss(modalId);
+      ToastService.success(LanguageService.t('harmony.replacedInTool'));
+      RouterService.navigateTo(tool);
+    });
+
+    // Hover effects
+    btn.addEventListener('mouseenter', () => {
+      btn.style.backgroundColor = 'var(--theme-card-hover)';
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.backgroundColor = 'var(--theme-card-background)';
+    });
+
+    slotsContainer.appendChild(btn);
+  });
+
+  contentEl.appendChild(slotsContainer);
+
+  // "Adding dye" preview
   const newDyeName = LanguageService.getDyeName(newDye.itemID) || newDye.name;
 
-  const content = `
-    <p class="mb-4" style="color: var(--theme-text);">
-      ${LanguageService.t('harmony.slotsFull')}
-    </p>
-    <div class="space-y-2">${slotsHtml}</div>
-    <div class="mt-4 p-3 rounded-lg flex items-center gap-3" style="background: var(--theme-background-secondary);">
-      <div class="w-8 h-8 rounded" style="background: ${newDye.hex}; border: 1px solid var(--theme-border);"></div>
-      <div>
-        <p class="text-xs" style="color: var(--theme-text-muted);">${LanguageService.t('harmony.addingDye')}:</p>
-        <p class="font-medium text-sm" style="color: var(--theme-text);">${newDyeName}</p>
-      </div>
-    </div>
-  `;
+  const preview = document.createElement('div');
+  preview.className = 'mt-4 p-3 rounded-lg flex items-center gap-3';
+  preview.style.background = 'var(--theme-background-secondary)';
 
-  const modalId = ModalService.show({
+  const previewSwatch = document.createElement('div');
+  previewSwatch.className = 'w-8 h-8 rounded';
+  previewSwatch.style.background = newDye.hex;
+  previewSwatch.style.border = '1px solid var(--theme-border)';
+  preview.appendChild(previewSwatch);
+
+  const previewInfo = document.createElement('div');
+  const addingLabel = document.createElement('p');
+  addingLabel.className = 'text-xs';
+  addingLabel.style.color = 'var(--theme-text-muted)';
+  addingLabel.textContent = LanguageService.t('harmony.addingDye') + ':';
+  previewInfo.appendChild(addingLabel);
+  const addingName = document.createElement('p');
+  addingName.className = 'font-medium text-sm';
+  addingName.style.color = 'var(--theme-text)';
+  addingName.textContent = newDyeName;
+  previewInfo.appendChild(addingName);
+  preview.appendChild(previewInfo);
+
+  contentEl.appendChild(preview);
+
+  modalId = ModalService.show({
     type: 'custom',
     title: LanguageService.t('harmony.selectSlotToReplace'),
-    content: content,
+    content: contentEl,
     size: 'sm',
     closable: true,
     closeOnBackdrop: true,
     cancelText: LanguageService.t('common.cancel'),
   });
-
-  // Attach click handlers after modal renders
-  setTimeout(() => {
-    const buttons = document.querySelectorAll('.slot-select-btn');
-    buttons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const slotIndex = parseInt(btn.getAttribute('data-slot') || '0', 10);
-        const storageKey = STORAGE_KEYS[tool];
-
-        // Replace the dye at the selected slot
-        currentDyeIds[slotIndex] = newDye.id;
-        StorageService.setItem(storageKey, currentDyeIds);
-
-        ModalService.dismiss(modalId);
-        ToastService.success(LanguageService.t('harmony.replacedInTool'));
-        RouterService.navigateTo(tool);
-      });
-
-      // Hover effects
-      btn.addEventListener('mouseenter', () => {
-        (btn as HTMLElement).style.backgroundColor = 'var(--theme-card-hover)';
-      });
-      btn.addEventListener('mouseleave', () => {
-        (btn as HTMLElement).style.backgroundColor = 'var(--theme-card-background)';
-      });
-    });
-  }, 50);
 }
