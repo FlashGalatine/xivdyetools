@@ -120,7 +120,8 @@ app.use(
     allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization', 'X-User-Discord-ID', 'X-User-Discord-Name'],
     exposeHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset', 'Retry-After'],
-    maxAge: 86400,
+    // ARCH-002: 1-hour maxAge (was 24h) so CORS policy changes propagate within an hour
+    maxAge: 3600,
     credentials: true,
   })
 );

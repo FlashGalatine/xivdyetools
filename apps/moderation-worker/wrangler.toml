@@ -33,7 +33,7 @@ PRESETS_API_URL = "https://api.xivdyetools.app"
 name = "xivdyetools-moderation-worker"
 
 [env.production.vars]
-DISCORD_CLIENT_ID = "YOUR_MODERATION_BOT_CLIENT_ID"
+DISCORD_CLIENT_ID = "1453806659708129374"
 PRESETS_API_URL = "https://api.xivdyetools.app"
 
 [[env.production.kv_namespaces]]

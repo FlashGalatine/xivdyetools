@@ -116,7 +116,7 @@
 - **Architecture:** 2 (ARCH-001, ARCH-002)
 
 ### Prior Findings Status (2026-03-18)
-- **Fixed:** 13 (BUG-005, BUG-007, BUG-010, BUG-012, BUG-013, BUG-015, BUG-017, OPT-003, OPT-004, REFACTOR-001/mod-worker, REFACTOR-005, ARCH-001, ARCH-003)
+- **Fixed:** 26 (BUG-001–007, BUG-009–015, BUG-017–018, OPT-003–006, REFACTOR-001/mod-worker, REFACTOR-004/core, REFACTOR-005–010, ARCH-001, ARCH-003)
 - **Won't Fix / Accepted Risk:** 1 (BUG-016 — fail-open rate limiting is intentional)
-- **Mostly Fixed:** 1 (ARCH-002 — smoke tests added to 6/8 deploy workflows; og-worker and api-docs remain)
-- **Still Open:** 24
+- **Mostly Fixed:** 1 (ARCH-002/smoke-tests — 6/8 deploy workflows done; og-worker and api-docs remain)
+- **Still Open:** 11 (BUG-008, REFACTOR-002, REFACTOR-003/thresholds, OPT-001/KV, OPT-002/proxy, ARCH-004, ARCH-005, plus new: BUG-001-new, BUG-002-new, REFACTOR-001-new, REFACTOR-002-new)

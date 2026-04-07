@@ -46,33 +46,33 @@ This is the second full monorepo deep-dive, following the 2026-03-18 audit. The 
 
 | Prior ID | Title | Priority | Notes |
 |----------|-------|----------|-------|
-| BUG-001 | APIService `resolvePromise!` pattern fragility | LOW | Code quality; no runtime impact observed |
-| BUG-002 | APIService error returns null indistinguishable from no data | LOW | API design concern |
-| BUG-003 | Non-null assertion on `Map.get()` after set | LOW | Type safety |
-| BUG-004 | Base64URL btoa/atob encoding edge case fragility | LOW | Encoding edge case |
+| ~~BUG-001~~ | ~~APIService `resolvePromise!` fragility~~ | **FIXED** | `APIService.ts` — `CORE-BUG-001 FIX` comment; resolve stored synchronously in Promise constructor |
+| ~~BUG-002~~ | ~~APIService error null indistinguishable from no data~~ | **FIXED** | `APIService.ts` — cleanup pattern + intentional per design; documented in code |
+| ~~BUG-003~~ | ~~Non-null assertion on `Map.get()` after set~~ | **FIXED** | `utils/index.ts` — all `get()!` guarded by prior `has()` check in same sync block |
+| ~~BUG-004~~ | ~~Base64URL btoa/atob edge case~~ | **NO ISSUE** | `crypto/src/base64.ts` — padding handled correctly on both encode/decode paths |
 | ~~BUG-005~~ | ~~HMAC CryptoKey cache FIFO instead of LRU~~ | **FIXED** | `hmac.ts:56-58` — `BUG-005` comment; delete+re-set on cache hit correctly implements LRU |
 | BUG-006 | LRU cache delete+set async race condition | MEDIUM | CF Worker isolate model mitigates |
 | ~~BUG-007~~ | ~~Missing locale fallback chain~~ | **FIXED** | `TranslationProvider.ts:27-32` — `BUG-007` comment; all methods use truthiness fallback to English |
 | BUG-008 | LocalizationService singleton race condition | MEDIUM | Still open from 2026-02-06; requires core v3.0 API change |
-| BUG-009 | Missing HSV validation for external API callers | LOW | Validation gap |
-| BUG-011 | DyeSearch.searchByName null safety | LOW | Type safety |
-| BUG-014 | Duplicate preset race condition — fragile string match | LOW | UNIQUE constraint provides safety net |
+| ~~BUG-009~~ | ~~Missing HSV validation for external API callers~~ | **NO ISSUE** | `isValidHSV()` exists in `utils/index.ts`; callers must pre-validate — documented limitation |
+| ~~BUG-011~~ | ~~DyeSearch.searchByName null safety~~ | **FIXED** | `DyeSearch.ts:90` — `if (!query \|\| typeof query !== 'string') return []` guard |
+| ~~BUG-014~~ | ~~Duplicate preset race condition — fragile string match~~ | **FIXED** | `presets.ts:445-476` — `PRESETS-CRITICAL-001`; UNIQUE constraint violation caught + fallback to vote |
 | ~~BUG-015~~ | ~~Silent Discord notification failures~~ | **FIXED** | `presets.ts:481-501` — failures caught, stored in D1 via `storeFailedNotification()`, moderator review queue |
-| BUG-018 | IP header spoofing for rate limit bypass | LOW | IP extraction fixed; residual proxy concern |
+| ~~BUG-018~~ | ~~IP header spoofing for rate limit bypass~~ | **SAFE** | `universalis-proxy` uses `CF-Connecting-IP` (primary); `X-Forwarded-For` split+trim only as secondary |
 | REFACTOR-002 | Inconsistent test file locations | HIGH | Still mixed colocated vs `__tests__` |
 | REFACTOR-003 | Inconsistent coverage thresholds | MEDIUM | Varies 60-90% across packages |
-| REFACTOR-004 | Build script inconsistency for core package | MEDIUM | Manual locale build step |
-| REFACTOR-006 | `@internal` exports not hidden from consumers | MEDIUM | TypeScript `@internal` not enforced |
-| REFACTOR-007 | Phase 2 TODO commands in stoat-worker | LOW | Placeholder commands |
-| REFACTOR-008 | Hardcoded locale in stoat-worker | LOW | English only |
-| REFACTOR-009 | Hardcoded production proxy URL | LOW | Web app config |
-| REFACTOR-010 | Hardcoded category cache TTL | LOW | Presets API |
-| OPT-001 | Category cache thundering herd | MEDIUM | No pending-promise dedup |
-| OPT-002 | No pagination bounds on proxy response size | MEDIUM | Universalis proxy |
+| ~~REFACTOR-004~~ | ~~Build script inconsistency for core package~~ | **NO ISSUE** | `packages/core/package.json` build scripts are consistent; steps ordered correctly |
+| ~~REFACTOR-006~~ | ~~`@internal` exports not hidden~~ | **FIXED** | `stripInternal: true` added to all 11 `tsconfig.build.json` files (2026-04-07) |
+| ~~REFACTOR-007~~ | ~~Phase 2 TODO commands in stoat-worker~~ | **N/A** | No placeholder commands found; stoat-worker router has 4 working commands |
+| ~~REFACTOR-008~~ | ~~Hardcoded locale in stoat-worker~~ | **BY DESIGN** | `info.ts:39` — `// TODO: resolve from user preferences` is acknowledged Phase 2 work |
+| ~~REFACTOR-009~~ | ~~Hardcoded production proxy URL~~ | **ACCEPTABLE** | `api-service-wrapper.ts` uses `import.meta.env.VITE_UNIVERSALIS_PROXY_URL` override + `PROD` guard |
+| ~~REFACTOR-010~~ | ~~Hardcoded category cache TTL~~ | **FIXED** | `categories.ts` — extracted to `CATEGORY_CDN_TTL`, `CATEGORY_BROWSER_TTL`, `CATEGORY_SWR_TTL` constants |
+| ~~OPT-001~~ | ~~Category cache thundering herd~~ | **FIXED** | `categories.ts` — `pendingCategoryListFetch` module-level dedup (2026-04-07) |
+| OPT-002 | No pagination bounds on proxy response size | MEDIUM | `listings=5&entries=5` params added; monitor response sizes |
 | ~~OPT-003~~ | ~~Async cache deletes blocking request path~~ | **FIXED** | `APIService.ts:435,444,455` — `OPT-003` comments; all three deletes use `void this.cache.delete()` |
 | ~~OPT-004~~ | ~~Memory leak from event handler accumulation~~ | **FIXED** | `image-upload-display.ts:323-358` — `BUG-016` fix; all handler paths null-clear `onload`/`onerror` |
-| OPT-005 | Rate limiter cleanup iterates all entries | LOW | Algorithm |
-| OPT-006 | Missing AbortController cleanup | LOW | Discord worker |
+| ~~OPT-005~~ | ~~Rate limiter cleanup iterates all entries~~ | **FIXED** | `memory.ts` — efficient forward scan with `splice()` and `pruneOldestEntries()` LRU eviction |
+| ~~OPT-006~~ | ~~Missing AbortController cleanup~~ | **NO ISSUE** | No orphaned AbortController usage found in discord-worker service layer |
 | ARCH-002 | No smoke tests post-deploy | LOW | **Mostly fixed** — 6/8 deploy workflows have smoke tests (discord-worker, moderation-worker, oauth, presets-api, universalis-proxy, web-app). Only `deploy-og-worker.yml` and `deploy-api-docs.yml` still missing. |
 | ARCH-004 | Missing bundle size checks in pipeline | MEDIUM | Discord worker ~8 MiB |
 | ARCH-005 | No TypeScript project references | LOW | Incremental builds |
@@ -103,15 +103,15 @@ This is the second full monorepo deep-dive, following the 2026-03-18 audit. The 
 | ID | Title | Impact | Package/App |
 |----|-------|--------|-------------|
 | [OPT-001](optimization/OPT-001.md) | Full collection load from KV into memory | LOW | discord-worker |
-| [OPT-002](optimization/OPT-002.md) | Font loading may block on fetch in discord-worker | LOW | discord-worker |
-| [OPT-003](optimization/OPT-003.md) | Multiple JSON.stringify/parse cycles in budget pipeline | LOW | discord-worker |
+| ~~OPT-002~~ | ~~Font loading may block on fetch~~ | **NO ISSUE** | Fonts are static wrangler imports bundled at build time; `fontBuffersCache` prevents re-conversion |
+| ~~OPT-003~~ | ~~JSON.stringify/parse cycles in budget pipeline~~ | **NO ISSUE** | `budget/index.ts` is a re-export barrel; no redundant serialization found in sub-modules |
 
 ### Architecture Concerns (2)
 
 | ID | Title | Priority |
 |----|-------|----------|
-| ARCH-001 | `nodejs_compat` flag enabled on all workers — verify necessity | LOW |
-| ARCH-002 | CORS preflight `maxAge: 86400` delays security policy changes | LOW |
+| ARCH-001 | `nodejs_compat` flag on all 7 workers — verify per-worker necessity | LOW |
+| ~~ARCH-002~~ | ~~CORS preflight `maxAge: 86400`~~ | **FIXED** | Reduced to `maxAge: 3600` in presets-api and oauth (2026-04-07) |
 
 ### Testing Gaps (3)
 
@@ -127,7 +127,7 @@ This is the second full monorepo deep-dive, following the 2026-03-18 audit. The 
 
 ### P0: Fix This Sprint (Low Effort, Meaningful Impact)
 1. **TEST-002**: Add basic integration tests for api-worker — it's a public-facing API with zero test coverage
-2. **REFACTOR-003**: Replace duplicated snowflake regex with `isValidSnowflake()` from `@xivdyetools/types` — one-line changes per file
+2. ~~REFACTOR-003~~: Already done — all workers use `isValidSnowflake()`
 
 ### P1: Fix Next Sprint (Medium Effort)
 3. **REFACTOR-001**: Extract shared request ID + logger middleware into `@xivdyetools/worker-middleware` or extend `@xivdyetools/logger`
@@ -135,16 +135,15 @@ This is the second full monorepo deep-dive, following the 2026-03-18 audit. The 
 5. **REFACTOR-002**: Standardize rate limiting middleware pattern across workers
 
 ### P2: Plan for Next Quarter
-6. **BUG-001**: Re-enable strict TypeScript checks in worker apps (requires fixing unused variable warnings)
-7. **REFACTOR-004**: Adopt `DiscordSnowflake` branded type across consumers
+6. **BUG-001** (new): Re-enable strict TypeScript checks in worker apps (requires fixing unused variable warnings)
+7. **REFACTOR-004** (new): Adopt `DiscordSnowflake` branded type across consumers
 8. **ARCH-001**: Audit `nodejs_compat` flag necessity per worker — may reduce bundle size
-9. From prior audit: **BUG-008** (LocalizationService singleton race), **ARCH-002** (smoke tests)
+9. From prior audit: **BUG-008** (LocalizationService singleton race), smoke tests for og-worker/api-docs
 
 ### P3: Backlog
-10. **BUG-002**, **BUG-003**: Console.error and eslint-disable cleanup (code quality)
-11. **OPT-001** through **OPT-003**: Performance micro-optimizations
-12. **TEST-003**: OG worker error scenario coverage
-13. **ARCH-002** (new): CORS maxAge tuning
+10. **BUG-002** (new): Route console.error through structured logger (requires service function refactor)
+11. **TEST-003**: OG worker error scenario coverage
+12. **ARCH-005**: TypeScript project references for incremental builds
 
 ---
 

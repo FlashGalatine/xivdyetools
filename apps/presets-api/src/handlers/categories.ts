@@ -13,6 +13,12 @@ type Variables = {
 
 export const categoriesRouter = new Hono<{ Bindings: Env; Variables: Variables }>();
 
+// REFACTOR-010: Named constants for cache TTL values so they can be updated in one place.
+const CATEGORY_CDN_TTL = 60;          // s-maxage: Cloudflare edge cache (seconds)
+const CATEGORY_BROWSER_TTL = 30;      // max-age: browser cache (seconds)
+const CATEGORY_SWR_TTL = 120;         // stale-while-revalidate window (seconds)
+const CATEGORY_CACHE_CONTROL = `public, s-maxage=${CATEGORY_CDN_TTL}, max-age=${CATEGORY_BROWSER_TTL}, stale-while-revalidate=${CATEGORY_SWR_TTL}`;
+
 // OPT-001: Module-level pending promise to deduplicate concurrent D1 queries during CDN
 // cache misses. CF Workers share module state within an isolate — concurrent requests to
 // the same isolate share one D1 roundtrip instead of firing duplicate queries.
@@ -73,7 +79,7 @@ categoriesRouter.get('/', async (c) => {
     { categories },
     200,
     {
-      'Cache-Control': 'public, s-maxage=60, max-age=30, stale-while-revalidate=120',
+      'Cache-Control': CATEGORY_CACHE_CONTROL,
     }
   );
 });
@@ -124,7 +130,7 @@ categoriesRouter.get('/:id', async (c) => {
     category,
     200,
     {
-      'Cache-Control': 'public, s-maxage=60, max-age=30, stale-while-revalidate=120',
+      'Cache-Control': CATEGORY_CACHE_CONTROL,
     }
   );
 });

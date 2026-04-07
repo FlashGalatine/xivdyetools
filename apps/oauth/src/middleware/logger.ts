@@ -83,6 +83,9 @@ export async function loggerMiddleware(
  * Helper to get logger from context with fallback.
  * Useful in error handlers where the middleware may not have run.
  */
+// Context<any> is intentional: this helper is called from the global onError handler
+// where the exact Env/Variables binding shape is unknown. A constrained generic would
+// require callers to pass a type argument, defeating the purpose of a fallback helper.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getLogger(c: Context<any>): ExtendedLogger | undefined {
   try {

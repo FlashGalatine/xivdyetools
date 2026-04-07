@@ -102,7 +102,7 @@ app.use(
     allowMethods: ['GET', 'POST', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
     exposeHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset', 'Retry-After'],
-    maxAge: 86400, // 24 hours
+    maxAge: 3600, // ARCH-002: 1 hour (was 24h) — allows CORS policy changes to propagate within an hour
     credentials: true,
   })
 );

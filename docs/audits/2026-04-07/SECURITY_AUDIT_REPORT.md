@@ -18,12 +18,12 @@ The xivdyetools monorepo demonstrates excellent security practices across all la
 
 | ID | Title | Severity | Status |
 |----|-------|----------|--------|
-| [SEC-001](security/SEC-001.md) | moderation-worker missing global `onError` handler | MEDIUM | NEW |
-| [SEC-002](security/SEC-002.md) | `innerHTML` usage in modal-container.ts | LOW | NEW |
-| [SEC-003](security/SEC-003.md) | JSON depth limiting inconsistent across workers | LOW | NEW |
-| [SEC-004](security/SEC-004.md) | Missing request body size limits on some endpoints | LOW | NEW |
-| [SEC-005](security/SEC-005.md) | Placeholder env var in moderation-worker wrangler.toml | LOW | NEW |
-| [SEC-006](security/SEC-006.md) | Dependency vulnerabilities (rollup, esbuild, vite) | HIGH (dev) | NEW |
+| ~~SEC-001~~ | ~~moderation-worker missing global `onError` handler~~ | MEDIUM | **FIXED** (2026-04-07) |
+| [SEC-002](security/SEC-002.md) | `innerHTML` usage in modal-container.ts | LOW | Open — controlled input + CSP mitigates |
+| [SEC-003](security/SEC-003.md) | JSON depth limiting inconsistent across workers | LOW | Won't Fix — CF limits + Discord trusted source |
+| [SEC-004](security/SEC-004.md) | Missing request body size limits on some endpoints | LOW | Won't Fix — CF 100MB platform limit applies |
+| ~~SEC-005~~ | ~~Placeholder env var in moderation-worker wrangler.toml~~ | LOW | **FIXED** (2026-04-07) |
+| [SEC-006](security/SEC-006.md) | Dependency vulnerabilities (rollup, esbuild, vite) | HIGH (dev) | Open — dev-only deps; update tsup/vitepress |
 
 ---
 

@@ -62,6 +62,12 @@ export function validateEnv(env: Env): EnvValidationResult {
     }
   }
 
+  // SEC-005: Detect placeholder values that indicate wrangler.toml was not properly configured.
+  // Placeholder values satisfy non-empty checks but will cause authentication failures at runtime.
+  if (env.DISCORD_CLIENT_ID?.startsWith('YOUR_')) {
+    errors.push('DISCORD_CLIENT_ID contains a placeholder value — update wrangler.toml [env.production.vars]');
+  }
+
   // Validate PRESETS_API_URL is a valid URL
   if (env.PRESETS_API_URL) {
     try {
