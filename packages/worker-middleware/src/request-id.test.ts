@@ -242,7 +242,6 @@ describe('getRequestId', () => {
   it('should work with any context type', async () => {
     const app = new Hono();
     app.use('*', async (c, next) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (c as any).set('requestId', 'test-id');
       await next();
     });

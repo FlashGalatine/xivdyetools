@@ -111,13 +111,13 @@ export function loggerMiddleware(options: LoggerMiddlewareOptions): MiddlewareHa
   } = options;
 
   return async (c, next) => {
-    const requestId = c.get('requestId') as string;
+    const requestId = c.get('requestId');
 
     // Build logger config from options + env
     // BUG-003 FIX: Use Record<string, unknown> instead of any
     const env = c.env as Record<string, unknown>;
     const environment = readEnvironmentFromEnv
-      ? (String(env?.ENVIRONMENT ?? '') || 'production')
+      ? (typeof env?.ENVIRONMENT === 'string' ? env.ENVIRONMENT : '') || 'production'
       : 'production';
     const apiVersion = readApiVersionFromEnv
       ? (typeof env?.API_VERSION === 'string' ? env.API_VERSION : undefined)

@@ -402,7 +402,6 @@ describe('getLogger', () => {
     const mockLogger = { info: vi.fn(), error: vi.fn() };
 
     app.use('*', async (c, next) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (c as any).set('logger', mockLogger);
       await next();
     });

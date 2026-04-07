@@ -113,7 +113,7 @@ export function rateLimitMiddleware(
 
     try {
       result = await backend.check(key, config);
-    } catch (error) {
+    } catch {
       // REFACTOR-002: Consistent error handling across workers
       const logger = c.get('logger');
       if (logger) {
