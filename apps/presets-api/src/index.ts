@@ -5,7 +5,6 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { Env, AuthContext } from './types.js';
 
 // Import route handlers
@@ -17,17 +16,15 @@ import { moderationRouter } from './handlers/moderation.js';
 // Import middleware
 import { authMiddleware } from './middleware/auth.js';
 import { publicRateLimitMiddleware } from './middleware/rate-limit.js';
-import { requestIdMiddleware, getRequestId } from './middleware/request-id.js';
-import { loggerMiddleware, getLogger } from './middleware/logger.js';
+import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-middleware';
+import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
 import { bodySizeLimit, jsonDepthLimit } from './middleware/body-validation.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { ErrorCode } from './utils/api-response.js';
 
 // Extend Hono context with our custom variables
-type Variables = {
+type Variables = MiddlewareVariables & {
   auth: AuthContext;
-  requestId: string;
-  logger: ExtendedLogger;
 };
 
 // Create Hono app with typed bindings
@@ -40,11 +37,13 @@ let envValidated = false;
 // GLOBAL MIDDLEWARE
 // ============================================
 
-// Request ID middleware (must be early for tracing)
-app.use('*', requestIdMiddleware);
-
-// Structured request logger (after request ID for correlation)
-app.use('*', loggerMiddleware);
+// REFACTOR-001: Shared middleware from @xivdyetools/worker-middleware
+app.use('*', requestIdMiddleware());
+app.use('*', loggerMiddleware({
+  serviceName: 'xivdyetools-presets-api',
+  readApiVersionFromEnv: true,
+  logUserAgent: true,
+}));
 
 // Environment validation middleware
 // Validates required env vars once per isolate and caches result

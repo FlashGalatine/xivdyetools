@@ -19,6 +19,7 @@
     "@xivdyetools/types": "workspace:*",
     "@xivdyetools/logger": "workspace:*",
     "@xivdyetools/rate-limiter": "workspace:*",
+    "@xivdyetools/worker-middleware": "workspace:*",
     "hono": "^4.12.11",
     "spectral.js": "^3.0.0"
   },

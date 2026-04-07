@@ -49,8 +49,8 @@ import { STATUS_DISPLAY, type PresetNotificationPayload } from './types/preset.j
 import { getLocalizedDyeName } from './services/i18n.js';
 import { createTranslator } from './services/bot-i18n.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
-import { requestIdMiddleware, type RequestIdVariables } from './middleware/request-id.js';
-import { loggerMiddleware } from './middleware/logger.js';
+import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-middleware';
+import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
 import { sanitizePresetName, sanitizePresetDescription } from './utils/sanitize.js';
 import { CLANS_BY_RACE } from './types/preferences.js';
 import { getWorldAutocomplete } from './services/budget/index.js';
@@ -66,9 +66,7 @@ function formatDyesForEmbed(dyeIds: number[]): string {
 }
 
 // Define context variables type
-type Variables = RequestIdVariables & {
-  logger: ExtendedLogger;
-};
+type Variables = MiddlewareVariables;
 
 // Create Hono app with environment type
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -79,11 +77,12 @@ let envValidated = false;
 // Enable CORS for development
 app.use('*', cors());
 
-// Request ID middleware (must be early for tracing)
-app.use('*', requestIdMiddleware);
-
-// Structured request logger (after request ID for correlation)
-app.use('*', loggerMiddleware);
+// REFACTOR-001: Shared middleware from @xivdyetools/worker-middleware
+app.use('*', requestIdMiddleware());
+app.use('*', loggerMiddleware({
+  serviceName: 'xivdyetools-discord-worker',
+  readEnvironmentFromEnv: false,
+}));
 
 // Environment validation middleware
 // Validates required env vars once per isolate and caches result

@@ -11,7 +11,7 @@ import { cors } from 'hono/cors';
 import type { Env, Variables } from './types.js';
 
 // Middleware
-import { requestIdMiddleware, getRequestId } from './middleware/request-id.js';
+import { requestIdMiddleware, getRequestId } from '@xivdyetools/worker-middleware';
 import { rateLimitMiddleware } from './middleware/rate-limit.js';
 
 // Routes
@@ -28,7 +28,7 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 // ============================================
 
 // 1. Request ID (must be first for tracing)
-app.use('*', requestIdMiddleware);
+app.use('*', requestIdMiddleware());
 
 // 2. Security headers
 app.use('*', async (c, next) => {

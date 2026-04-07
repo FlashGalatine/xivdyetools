@@ -5,15 +5,15 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Hono } from 'hono';
-import { getRequestId, requestIdMiddleware, type RequestIdVariables } from '../middleware/request-id.js';
-import { getLogger, loggerMiddleware, type LoggerVariables } from '../middleware/logger.js';
+import { getRequestId, requestIdMiddleware, getLogger, loggerMiddleware } from '@xivdyetools/worker-middleware';
+import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
 import type { Env } from '../types.js';
 
 describe('Request ID Middleware', () => {
     describe('requestIdMiddleware', () => {
         it('should generate a new request ID when not provided', async () => {
-            const app = new Hono<{ Bindings: Env; Variables: RequestIdVariables }>();
-            app.use('*', requestIdMiddleware);
+            const app = new Hono<{ Bindings: Env; Variables: MiddlewareVariables }>();
+            app.use('*', requestIdMiddleware());
             app.get('/', (c) => {
                 const requestId = c.get('requestId');
                 return c.json({ requestId });
@@ -28,28 +28,29 @@ describe('Request ID Middleware', () => {
             expect(json.requestId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
         });
 
-        it('should preserve existing X-Request-ID header', async () => {
-            const app = new Hono<{ Bindings: Env; Variables: RequestIdVariables }>();
-            app.use('*', requestIdMiddleware);
+        it('should preserve existing X-Request-ID header when valid UUID', async () => {
+            const app = new Hono<{ Bindings: Env; Variables: MiddlewareVariables }>();
+            app.use('*', requestIdMiddleware());
             app.get('/', (c) => {
                 const requestId = c.get('requestId');
                 return c.json({ requestId });
             });
 
+            const validUuid = '550e8400-e29b-41d4-a716-446655440000';
             const response = await app.fetch(
                 new Request('http://localhost/', {
-                    headers: { 'X-Request-ID': 'custom-request-id-123' },
+                    headers: { 'X-Request-ID': validUuid },
                 }),
                 { ENVIRONMENT: 'development' } as Env
             );
 
             const json = await response.json() as { requestId: string };
-            expect(json.requestId).toBe('custom-request-id-123');
+            expect(json.requestId).toBe(validUuid);
         });
 
         it('should add request ID to response headers', async () => {
-            const app = new Hono<{ Bindings: Env; Variables: RequestIdVariables }>();
-            app.use('*', requestIdMiddleware);
+            const app = new Hono<{ Bindings: Env; Variables: MiddlewareVariables }>();
+            app.use('*', requestIdMiddleware());
             app.get('/', (c) => c.json({ ok: true }));
 
             const response = await app.fetch(new Request('http://localhost/'), {
@@ -62,8 +63,8 @@ describe('Request ID Middleware', () => {
 
     describe('getRequestId', () => {
         it('should return request ID from context', async () => {
-            const app = new Hono<{ Bindings: Env; Variables: RequestIdVariables }>();
-            app.use('*', requestIdMiddleware);
+            const app = new Hono<{ Bindings: Env; Variables: MiddlewareVariables }>();
+            app.use('*', requestIdMiddleware());
             app.get('/', (c) => {
                 const requestId = getRequestId(c);
                 return c.json({ requestId });
@@ -109,9 +110,9 @@ describe('Logger Middleware', () => {
 
     describe('loggerMiddleware', () => {
         it('should create logger and add to context', async () => {
-            const app = new Hono<{ Bindings: Env; Variables: LoggerVariables }>();
-            app.use('*', requestIdMiddleware);
-            app.use('*', loggerMiddleware);
+            const app = new Hono<{ Bindings: Env; Variables: MiddlewareVariables }>();
+            app.use('*', requestIdMiddleware());
+            app.use('*', loggerMiddleware({ serviceName: 'test' }));
             app.get('/', (c) => {
                 const logger = c.get('logger');
                 return c.json({ hasLogger: !!logger });
@@ -127,9 +128,9 @@ describe('Logger Middleware', () => {
         });
 
         it('should log request start and completion', async () => {
-            const app = new Hono<{ Bindings: Env; Variables: LoggerVariables }>();
-            app.use('*', requestIdMiddleware);
-            app.use('*', loggerMiddleware);
+            const app = new Hono<{ Bindings: Env; Variables: MiddlewareVariables }>();
+            app.use('*', requestIdMiddleware());
+            app.use('*', loggerMiddleware({ serviceName: 'test' }));
             app.get('/test-path', (c) => c.json({ ok: true }));
 
             await app.fetch(
@@ -144,9 +145,9 @@ describe('Logger Middleware', () => {
 
     describe('getLogger', () => {
         it('should return logger from context', async () => {
-            const app = new Hono<{ Bindings: Env; Variables: LoggerVariables }>();
-            app.use('*', requestIdMiddleware);
-            app.use('*', loggerMiddleware);
+            const app = new Hono<{ Bindings: Env; Variables: MiddlewareVariables }>();
+            app.use('*', requestIdMiddleware());
+            app.use('*', loggerMiddleware({ serviceName: 'test' }));
             app.get('/', (c) => {
                 const logger = getLogger(c);
                 return c.json({ hasLogger: !!logger });

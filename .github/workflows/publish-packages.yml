@@ -20,6 +20,7 @@ on:
           - '@xivdyetools/color-blending'
           - '@xivdyetools/svg'
           - '@xivdyetools/bot-logic'
+          - '@xivdyetools/worker-middleware'
 
 jobs:
   detect:
@@ -58,6 +59,7 @@ jobs:
             "@xivdyetools/rate-limiter"
             "@xivdyetools/auth"
             "@xivdyetools/core"
+            "@xivdyetools/worker-middleware"
             "@xivdyetools/test-utils"
             "@xivdyetools/color-blending"
             "@xivdyetools/svg"

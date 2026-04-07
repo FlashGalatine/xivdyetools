@@ -5,7 +5,6 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { Env } from './types.js';
 import { authorizeRouter } from './handlers/authorize.js';
 import { callbackRouter } from './handlers/callback.js';
@@ -14,14 +13,12 @@ import { xivauthRouter } from './handlers/xivauth.js';
 import { checkRateLimit, getClientIp } from './services/rate-limit.js';
 import { checkRateLimitDO } from './services/rate-limit-do.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
-import { requestIdMiddleware, getRequestId, type RequestIdVariables } from './middleware/request-id.js';
-import { loggerMiddleware, getLogger } from './middleware/logger.js';
+import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-middleware';
+import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
 import { bodySizeLimit, jsonDepthLimit } from './middleware/body-validation.js';
 
 // Define context variables type
-type Variables = RequestIdVariables & {
-  logger: ExtendedLogger;
-};
+type Variables = MiddlewareVariables;
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -32,11 +29,12 @@ let envValidated = false;
 // MIDDLEWARE
 // ============================================
 
-// Request ID middleware (must be early for tracing)
-app.use('*', requestIdMiddleware);
-
-// Structured request logger (after request ID for correlation)
-app.use('*', loggerMiddleware);
+// REFACTOR-001: Shared middleware from @xivdyetools/worker-middleware
+app.use('*', requestIdMiddleware());
+app.use('*', loggerMiddleware({
+  serviceName: 'xivdyetools-oauth',
+  logUserAgent: true,
+}));
 
 // Environment validation middleware
 // Validates required env vars once per isolate and caches result

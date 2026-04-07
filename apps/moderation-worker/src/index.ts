@@ -13,7 +13,6 @@
  */
 
 import { Hono } from 'hono';
-import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { Env } from './types/env.js';
 import { InteractionType, InteractionResponseType } from './types/env.js';
 import { verifyDiscordRequest, unauthorizedResponse, badRequestResponse } from './utils/verify.js';
@@ -38,13 +37,12 @@ import * as banService from './services/ban-service.js';
 import * as presetApi from './services/preset-api.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { createUserTranslator } from './services/bot-i18n.js';
-import { requestIdMiddleware, type RequestIdVariables } from './middleware/request-id.js';
-import { loggerMiddleware } from './middleware/logger.js';
+import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-middleware';
+import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
+import { sanitizeUrl } from './utils/url-sanitizer.js';
 
 // Define context variables type
-type Variables = RequestIdVariables & {
-  logger: ExtendedLogger;
-};
+type Variables = MiddlewareVariables;
 
 // Create Hono app with environment type
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -78,11 +76,13 @@ app.use('*', (c, next) => {
   return next();
 });
 
-// Request ID middleware (must be early for tracing)
-app.use('*', requestIdMiddleware);
-
-// Structured request logger (after request ID for correlation)
-app.use('*', loggerMiddleware);
+// REFACTOR-001: Shared middleware from @xivdyetools/worker-middleware
+app.use('*', requestIdMiddleware());
+app.use('*', loggerMiddleware({
+  serviceName: 'xivdyetools-moderation-worker',
+  readEnvironmentFromEnv: false,
+  sanitizePath: sanitizeUrl,
+}));
 
 // Security headers middleware
 app.use('*', async (c, next) => {

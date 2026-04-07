@@ -57,6 +57,9 @@ importers:
       '@xivdyetools/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@xivdyetools/worker-middleware':
+        specifier: workspace:*
+        version: link:../../packages/worker-middleware
       hono:
         specifier: ^4.12.11
         version: 4.12.11
@@ -121,6 +124,9 @@ importers:
       '@xivdyetools/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@xivdyetools/worker-middleware':
+        specifier: workspace:*
+        version: link:../../packages/worker-middleware
       hono:
         specifier: ^4.12.11
         version: 4.12.11
@@ -225,6 +231,9 @@ importers:
       '@xivdyetools/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@xivdyetools/worker-middleware':
+        specifier: workspace:*
+        version: link:../../packages/worker-middleware
       hono:
         specifier: ^4.12.11
         version: 4.12.11
@@ -268,6 +277,9 @@ importers:
       '@xivdyetools/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@xivdyetools/worker-middleware':
+        specifier: workspace:*
+        version: link:../../packages/worker-middleware
       hono:
         specifier: ^4.12.11
         version: 4.12.11
@@ -342,6 +354,9 @@ importers:
       '@xivdyetools/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@xivdyetools/worker-middleware':
+        specifier: workspace:*
+        version: link:../../packages/worker-middleware
       hono:
         specifier: ^4.12.11
         version: 4.12.11
@@ -704,6 +719,25 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.1.2
         version: 4.1.2(vitest@4.1.2)
+      vitest:
+        specifier: ^4.1.2
+        version: 4.1.2(@types/node@25.5.2)(@vitest/ui@4.1.2)(jsdom@29.0.1)(msw@2.13.0(@types/node@25.5.2)(typescript@5.9.3))(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.8.1)(@types/node@25.5.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  packages/worker-middleware:
+    dependencies:
+      '@xivdyetools/logger':
+        specifier: workspace:*
+        version: link:../logger
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20260405.1
+        version: 4.20260405.1
+      '@vitest/coverage-v8':
+        specifier: ^4.1.2
+        version: 4.1.2(vitest@4.1.2)
+      hono:
+        specifier: ^4.12.11
+        version: 4.12.11
       vitest:
         specifier: ^4.1.2
         version: 4.1.2(@types/node@25.5.2)(@vitest/ui@4.1.2)(jsdom@29.0.1)(msw@2.13.0(@types/node@25.5.2)(typescript@5.9.3))(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.8.1)(@types/node@25.5.2)(esbuild@0.27.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))
