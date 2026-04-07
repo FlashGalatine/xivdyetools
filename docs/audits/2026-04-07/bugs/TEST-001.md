@@ -38,3 +38,9 @@ describe('POST /presets', () => {
 ## Effort
 
 MEDIUM — Test infrastructure exists; need to write test cases for each handler flow.
+
+## Resolution
+
+**Status:** RESOLVED (2026-04-07)
+
+Handler-level tests already exist with 153 tests across 4 files (presets.test.ts: 70, moderation.test.ts: 39, votes.test.ts: 23, categories.test.ts: 21). Handler coverage is 91.56% statements. The audit finding was written before these tests were added.

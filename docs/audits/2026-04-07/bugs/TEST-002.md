@@ -40,3 +40,9 @@ describe('GET /v1/match', () => {
 ## Effort
 
 MEDIUM — Requires setting up test harness for the worker (Vitest + miniflare or similar).
+
+## Resolution
+
+**Status:** RESOLVED (2026-04-07)
+
+The api-worker has 137 tests across 7 test files covering all route handlers, middleware, validation, serialization, and services. Coverage is 93.96% statements. The audit finding was written before these tests were added.

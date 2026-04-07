@@ -32,3 +32,9 @@ describe('error scenarios', () => {
 ## Effort
 
 LOW — Straightforward test additions using existing test infrastructure.
+
+## Resolution
+
+**Status:** RESOLVED (2026-04-07)
+
+Added 50 route-level integration tests in `src/index.test.ts` covering all OG image routes with parameter validation (NaN, out-of-bounds), boundary values, crawler vs non-crawler routing, health endpoint, fallback routes, and .png extension stripping. Total og-worker tests now 338 (up from 288). Renderer is mocked via `vi.mock` since resvg-wasm requires WASM runtime.
