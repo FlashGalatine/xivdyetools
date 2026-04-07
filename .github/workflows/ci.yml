@@ -44,3 +44,25 @@ jobs:
 
       - name: Build (affected)
         run: pnpm turbo run build --filter='...[HEAD^]'
+
+      # ARCH-004: Report bundle sizes for built packages
+      - name: Report bundle sizes
+        if: always()
+        run: |
+          echo "## 📦 Bundle Sizes" >> $GITHUB_STEP_SUMMARY
+          echo "| Package | JS Output | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          for dir in apps/*/dist packages/*/dist; do
+            if [ -d "$dir" ]; then
+              name=$(echo "$dir" | sed 's|/dist||')
+              js_bytes=$(find "$dir" \( -name '*.js' -o -name '*.mjs' \) -exec cat {} + 2>/dev/null | wc -c)
+              if [ "$js_bytes" -gt 0 ]; then
+                js_human=$(numfmt --to=iec "$js_bytes")
+                if [ "$js_bytes" -gt 5242880 ]; then
+                  echo "| $name | $js_human | ⚠️ >5 MiB |" >> $GITHUB_STEP_SUMMARY
+                else
+                  echo "| $name | $js_human | ✅ |" >> $GITHUB_STEP_SUMMARY
+                fi
+              fi
+            fi
+          done

@@ -43,3 +43,11 @@ jobs:
           command: pages deploy .vitepress/dist --project-name=xivdyetools-api-docs
           packageManager: pnpm
           wranglerVersion: 4.78.0
+
+      # ARCH-002: Verify deployed Pages site responds after deployment
+      - name: Smoke test (page load)
+        run: |
+          sleep 10
+          curl --fail --retry 3 --retry-delay 10 --retry-all-errors \
+            -H "User-Agent: xivdyetools-ci" \
+            https://xivdyetools-api-docs.pages.dev/
