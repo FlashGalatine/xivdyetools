@@ -15,7 +15,13 @@
     "lint": "eslint src/",
     "clean": "rimraf dist coverage"
   },
-  "keywords": ["stoat", "revolt", "bot", "ffxiv", "dye"],
+  "keywords": [
+    "stoat",
+    "revolt",
+    "bot",
+    "ffxiv",
+    "dye"
+  ],
   "author": "Flash Galatine",
   "license": "ISC",
   "dependencies": {
@@ -33,7 +39,7 @@
     "@types/node": "^25.5.2",
     "@vitest/coverage-v8": "^4.1.2",
     "@xivdyetools/test-utils": "workspace:*",
-    "tsup": "^8.5.0",
+    "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "vitest": "^4.1.2"
   },

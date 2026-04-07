@@ -16,6 +16,7 @@ import { checkRateLimitDO } from './services/rate-limit-do.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { requestIdMiddleware, getRequestId, type RequestIdVariables } from './middleware/request-id.js';
 import { loggerMiddleware, getLogger } from './middleware/logger.js';
+import { bodySizeLimit, jsonDepthLimit } from './middleware/body-validation.js';
 
 // Define context variables type
 type Variables = RequestIdVariables & {
@@ -120,6 +121,12 @@ app.use('*', async (c, next) => {
     c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
 });
+
+// SEC-004: Reject oversized request bodies (10KB limit — OAuth payloads are small)
+app.use('/auth/*', bodySizeLimit);
+
+// SEC-003: Validate JSON depth and structure on mutation requests
+app.use('/auth/*', jsonDepthLimit);
 
 // Rate limiting middleware for auth endpoints
 // Protects against brute force and credential stuffing attacks

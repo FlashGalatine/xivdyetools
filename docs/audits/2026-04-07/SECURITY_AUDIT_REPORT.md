@@ -6,9 +6,9 @@
 - **Audit Date:** 2026-04-07
 - **Auditor:** Claude Opus 4.6 (1M context)
 - **Overall Posture:** **STRONG**
-- **New Findings:** 6 (0 critical, 1 high, 1 medium, 4 low)
+- **New Findings:** 6 (0 critical, 1 high, 1 medium, 4 low) — **5 fixed, 1 partially fixed**
 - **Critical Issues:** 0
-- **Recommendation:** APPROVED FOR PRODUCTION USE with minor remediations
+- **Recommendation:** APPROVED FOR PRODUCTION USE
 
 The xivdyetools monorepo demonstrates excellent security practices across all layers: authentication, input validation, rate limiting, CORS, secret management, and content moderation. The codebase shows evidence of continuous security improvement with documented fixes for multiple prior audit findings (BUG-010, BUG-012, BUG-013, BUG-017). The only high-severity finding is a dependency vulnerability in `rollup` (dev dependency, not shipped to production workers).
 
@@ -20,10 +20,10 @@ The xivdyetools monorepo demonstrates excellent security practices across all la
 |----|-------|----------|--------|
 | ~~SEC-001~~ | ~~moderation-worker missing global `onError` handler~~ | MEDIUM | **FIXED** (2026-04-07) |
 | [SEC-002](security/SEC-002.md) | `innerHTML` usage in modal-container.ts | LOW | Open — controlled input + CSP mitigates |
-| [SEC-003](security/SEC-003.md) | JSON depth limiting inconsistent across workers | LOW | Won't Fix — CF limits + Discord trusted source |
-| [SEC-004](security/SEC-004.md) | Missing request body size limits on some endpoints | LOW | Won't Fix — CF 100MB platform limit applies |
+| ~~SEC-003~~ | ~~JSON depth limiting inconsistent across workers~~ | LOW | **FIXED** (2026-04-07) |
+| ~~SEC-004~~ | ~~Missing request body size limits on some endpoints~~ | LOW | **FIXED** (2026-04-07) |
 | ~~SEC-005~~ | ~~Placeholder env var in moderation-worker wrangler.toml~~ | LOW | **FIXED** (2026-04-07) |
-| [SEC-006](security/SEC-006.md) | Dependency vulnerabilities (rollup, esbuild, vite) | HIGH (dev) | Open — dev-only deps; update tsup/vitepress |
+| [SEC-006](security/SEC-006.md) | Dependency vulnerabilities (esbuild, vite) | MODERATE (dev) | Partial — rollup fixed; esbuild/vite await VitePress 2.x |
 
 ---
 
@@ -312,13 +312,13 @@ Production dependencies are minimal across all workers:
 
 ## 12. Recommendations
 
-### Immediate (This Sprint)
-1. **SEC-001:** Add global `onError` handler to moderation-worker (prevents stack trace leaks)
-2. **SEC-006:** Update `tsup` in stoat-worker for rollup fix
+### Immediate (This Sprint) — ALL RESOLVED
+1. ~~**SEC-001:** Add global `onError` handler to moderation-worker~~ **FIXED** (2026-04-07)
+2. ~~**SEC-006:** Update `tsup` in stoat-worker for rollup fix~~ **FIXED** (2026-04-07) — rollup override ≥4.59.0; esbuild/vite await VitePress 2.x
 
-### Short-Term (Next Release)
-3. **SEC-003:** Add JSON depth limiting to presets-api and discord-worker (moderation-worker already has it)
-4. **SEC-004:** Add request body size middleware to workers that parse JSON
+### Short-Term (Next Release) — ALL RESOLVED
+3. ~~**SEC-003:** Add JSON depth limiting to presets-api and oauth~~ **FIXED** (2026-04-07) — body-validation middleware
+4. ~~**SEC-004:** Add request body size middleware to presets-api and oauth~~ **FIXED** (2026-04-07) — Hono bodyLimit middleware
 
 ### Long-Term (Quarterly Review)
 5. **SEC-002:** Migrate `innerHTML` to DOM methods in modal-container.ts

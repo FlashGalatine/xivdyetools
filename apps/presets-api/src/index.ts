@@ -19,6 +19,7 @@ import { authMiddleware } from './middleware/auth.js';
 import { publicRateLimitMiddleware } from './middleware/rate-limit.js';
 import { requestIdMiddleware, getRequestId } from './middleware/request-id.js';
 import { loggerMiddleware, getLogger } from './middleware/logger.js';
+import { bodySizeLimit, jsonDepthLimit } from './middleware/body-validation.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { ErrorCode } from './utils/api-response.js';
 
@@ -129,6 +130,12 @@ app.use(
 // Public rate limiting middleware (100 req/min per IP)
 // Applied before auth to protect against unauthenticated abuse
 app.use('/api/*', publicRateLimitMiddleware);
+
+// SEC-004: Reject oversized request bodies (100KB limit)
+app.use('/api/*', bodySizeLimit);
+
+// SEC-003: Validate JSON depth and structure on mutation requests
+app.use('/api/*', jsonDepthLimit);
 
 // Authentication middleware (sets auth context)
 app.use('*', authMiddleware);
