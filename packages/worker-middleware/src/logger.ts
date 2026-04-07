@@ -174,7 +174,8 @@ export function loggerMiddleware(options: LoggerMiddlewareOptions): MiddlewareHa
  */
 // BUG-003 FIX: ContextVariableMap augmentation (in types.ts) makes this type-safe
 // without needing Context<any>. 'logger' key is globally registered.
-export function getLogger(c: Context): ExtendedLogger | undefined {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getLogger(c: Context<any, any, any>): ExtendedLogger | undefined {
   try {
     return c.get('logger') as ExtendedLogger | undefined;
   } catch {
