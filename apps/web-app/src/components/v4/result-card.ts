@@ -1117,7 +1117,8 @@ export class ResultCard extends BaseLitComponent {
     const slotsContainer = document.createElement('div');
     slotsContainer.className = 'space-y-2';
 
-    // Store modalId so slot buttons can dismiss it
+    // Store modalId so slot buttons can dismiss it (must be let — assigned after closures capture it)
+    // eslint-disable-next-line prefer-const
     let modalId: ReturnType<typeof ModalService.show>;
 
     currentDyeIds.forEach((dyeId, index) => {
