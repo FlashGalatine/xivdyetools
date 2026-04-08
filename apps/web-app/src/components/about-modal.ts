@@ -246,6 +246,35 @@ export class AboutModal {
     apiLink.appendChild(apiLinkText);
 
     apiSection.appendChild(apiLink);
+
+    const apiDocsLink = document.createElement('a');
+    apiDocsLink.className =
+      'mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors';
+    apiDocsLink.style.backgroundColor = 'var(--theme-card-background)';
+    apiDocsLink.style.color = 'var(--theme-text)';
+    apiDocsLink.href =
+      'https://github.com/FlashGalatine/xivdyetools/blob/main/docs/projects/api-worker/overview.md';
+    apiDocsLink.target = '_blank';
+    apiDocsLink.rel = 'noopener noreferrer';
+
+    apiDocsLink.addEventListener('mouseenter', () => {
+      apiDocsLink.style.backgroundColor = 'var(--theme-card-hover)';
+    });
+    apiDocsLink.addEventListener('mouseleave', () => {
+      apiDocsLink.style.backgroundColor = 'var(--theme-card-background)';
+    });
+
+    const apiDocsIcon = document.createElement('span');
+    apiDocsIcon.className = 'inline-block w-4 h-4';
+    apiDocsIcon.setAttribute('aria-hidden', 'true');
+    apiDocsIcon.innerHTML = ICON_GITHUB;
+    apiDocsLink.appendChild(apiDocsIcon);
+
+    const apiDocsLinkText = document.createElement('span');
+    apiDocsLinkText.textContent = 'API Worker Docs';
+    apiDocsLink.appendChild(apiDocsLinkText);
+
+    apiSection.appendChild(apiDocsLink);
     container.appendChild(apiSection);
 
     // Square Enix disclaimer section
