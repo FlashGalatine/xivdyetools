@@ -474,7 +474,7 @@ async function processSubmitCommand(
       color: isApproved ? 0x57f287 : 0xfee75c,
       fields: [
         { name: 'Name', value: preset.name, inline: true },
-        { name: 'Category', value: CATEGORY_DISPLAY[preset.category_id as PresetCategory]?.name || preset.category_id, inline: true },
+        { name: 'Category', value: CATEGORY_DISPLAY[preset.category_id]?.name || preset.category_id, inline: true },
         { name: 'Dyes', value: `${preset.dyes.length} colors`, inline: true },
       ],
       footer: { text: t.t('common.footer') },
@@ -782,7 +782,7 @@ async function processEditCommand(
       color: isPending ? 0xfee75c : 0x57f287,
       fields: [
         { name: 'Name', value: updatedPreset.name, inline: true },
-        { name: 'Category', value: CATEGORY_DISPLAY[updatedPreset.category_id as PresetCategory]?.name || updatedPreset.category_id, inline: true },
+        { name: 'Category', value: CATEGORY_DISPLAY[updatedPreset.category_id]?.name || updatedPreset.category_id, inline: true },
         { name: 'Dyes', value: `${updatedPreset.dyes.length} colors`, inline: true },
       ],
       footer: { text: isPending ? 'A moderator will review your changes shortly.' : t.t('common.footer') },
