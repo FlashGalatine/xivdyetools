@@ -37,6 +37,7 @@ import {
   ICON_PALETTE,
   ICON_SETTINGS,
   ICON_CLIPBOARD,
+  ICON_EYEDROPPER,
 } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
@@ -73,6 +74,7 @@ const STORAGE_KEYS = {
   vibrancyBoost: 'v3_matcher_vibrancy_boost',
   imageDataUrl: 'v3_matcher_image',
   selectedColor: 'v3_matcher_color',
+  extractedColors: 'v3_matcher_extracted_colors',
 } as const;
 
 // Maximum image size to store in localStorage (2MB to be safe)
@@ -131,6 +133,15 @@ export class ExtractorTool extends BaseComponent {
   private colorSelectionPanel: CollapsiblePanel | null = null;
   private optionsPanel: CollapsiblePanel | null = null;
 
+  // Extracted colors history (pixel samples only)
+  private extractedColorsHistory: Array<{ hex: string; timestamp: number }> = [];
+  private readonly maxExtractedColors: number = 20;
+  private extractedColorsContainer: HTMLElement | null = null;
+  private lastPixelSampleHex: string | null = null;
+
+  // Color info card (right panel, above results)
+  private colorInfoCardContainer: HTMLElement | null = null;
+
   // DOM References
   private sampleSlider: HTMLInputElement | null = null;
   private sampleDisplay: HTMLElement | null = null;
@@ -163,6 +174,7 @@ export class ExtractorTool extends BaseComponent {
   private mobileMarketBoard: MarketBoard | null = null;
   private mobileImageSourceExpanded: boolean = true;
   private mobileColorSelectionExpanded: boolean = true;
+  private mobileExtractedColorsExpanded: boolean = false;
   private mobileOptionsExpanded: boolean = false;
   private mobileMarketExpanded: boolean = false;
 
@@ -353,6 +365,16 @@ export class ExtractorTool extends BaseComponent {
     const savedImageDataUrl = StorageService.getItem<string>(STORAGE_KEYS.imageDataUrl);
     if (savedImageDataUrl) {
       this.restoreSavedImage(savedImageDataUrl);
+    }
+
+    // Restore extracted colors history from storage
+    const savedExtractedColors = StorageService.getItem<Array<{ hex: string; timestamp: number }>>(
+      STORAGE_KEYS.extractedColors
+    );
+    if (savedExtractedColors && savedExtractedColors.length > 0) {
+      this.extractedColorsHistory = savedExtractedColors;
+      this.lastPixelSampleHex = savedExtractedColors[0].hex;
+      this.renderExtractedColorsList();
     }
 
     // Restore saved color from storage
@@ -1059,6 +1081,11 @@ export class ExtractorTool extends BaseComponent {
     imageSection.appendChild(this.dropZone);
     extractorLayout.appendChild(imageSection);
 
+    // === Extracted Colors History (inline — CollapsiblePanel uses Tailwind which doesn't work in shadow DOM) ===
+    this.extractedColorsContainer = this.createElement('div');
+    this.renderExtractedColorsList();
+    extractorLayout.appendChild(this.extractedColorsContainer);
+
     // === Right Section: Results ===
     const resultsSection = this.createElement('div', {
       className: 'extractor-results-section',
@@ -1145,6 +1172,15 @@ export class ExtractorTool extends BaseComponent {
     sectionHeader.appendChild(actions);
 
     resultsSection.appendChild(sectionHeader);
+
+    // Color info card container (hidden until pixel sample)
+    this.colorInfoCardContainer = this.createElement('div', {
+      className: 'color-info-card-wrapper',
+      attributes: {
+        style: 'display: none; justify-content: center; margin-bottom: 8px;',
+      },
+    });
+    resultsSection.appendChild(this.colorInfoCardContainer);
 
     // Results grid container
     this.resultsContainer = this.createElement('div', {
@@ -1463,7 +1499,7 @@ export class ExtractorTool extends BaseComponent {
         void this.extractPaletteFromRegion(x, y, width, height);
       } else if (isPixelSample && hex) {
         // Shift+Click pixel sample - match single color to closest dyes
-        this.matchColor(hex);
+        this.matchColor(hex, true);
       }
     });
 
@@ -1554,6 +1590,10 @@ export class ExtractorTool extends BaseComponent {
     const colorSelectionSection = this.renderMobileColorSelectionAccordion();
     content.appendChild(colorSelectionSection);
 
+    // === Extracted Colors Accordion Section ===
+    const extractedColorsSection = this.renderMobileExtractedColorsAccordion();
+    content.appendChild(extractedColorsSection);
+
     // === Options Accordion Section ===
     const optionsSection = this.renderMobileOptionsAccordion();
     content.appendChild(optionsSection);
@@ -1563,6 +1603,161 @@ export class ExtractorTool extends BaseComponent {
     content.appendChild(marketSection);
 
     drawer.appendChild(content);
+  }
+
+  /**
+   * Render mobile extracted colors accordion section
+   */
+  private renderMobileExtractedColorsAccordion(): HTMLElement {
+    const section = this.createElement('div', {
+      className: 'border-b',
+      attributes: { style: 'border-color: var(--theme-border);' },
+    });
+
+    // Accordion header
+    const header = this.createElement('button', {
+      className: 'w-full flex items-center justify-between px-4 py-3 text-left transition-colors',
+      attributes: {
+        style: 'background: var(--theme-background-secondary); color: var(--theme-text);',
+        type: 'button',
+        'aria-expanded': String(this.mobileExtractedColorsExpanded),
+      },
+    });
+
+    const titleContainer = this.createElement('span', {
+      className: 'flex items-center gap-2 font-medium text-sm',
+    });
+    const iconSpan = this.createElement('span', {
+      className: 'w-4 h-4 flex-shrink-0',
+      innerHTML: ICON_EYEDROPPER,
+    });
+    const titleText = this.createElement('span', {
+      textContent: `Extracted Colors${this.extractedColorsHistory.length > 0 ? ` (${this.extractedColorsHistory.length})` : ''}`,
+    });
+    titleContainer.appendChild(iconSpan);
+    titleContainer.appendChild(titleText);
+    header.appendChild(titleContainer);
+
+    // Chevron
+    const chevron = this.createElement('span', {
+      className: 'w-5 h-5 transition-transform duration-200',
+      innerHTML: `<svg viewBox="0 0 20 20" fill="currentColor" class="w-full h-full">
+        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+      </svg>`,
+      attributes: {
+        style: this.mobileExtractedColorsExpanded
+          ? 'transform: rotate(0deg);'
+          : 'transform: rotate(-90deg);',
+      },
+    });
+    header.appendChild(chevron);
+    section.appendChild(header);
+
+    // Content area
+    const contentWrapper = this.createElement('div', {
+      className: 'overflow-hidden transition-all duration-200',
+      attributes: {
+        style: this.mobileExtractedColorsExpanded
+          ? 'max-height: 500px; opacity: 1;'
+          : 'max-height: 0; opacity: 0;',
+      },
+    });
+
+    const contentInner = this.createElement('div', {
+      className: 'px-4 py-3',
+      attributes: { style: 'background: var(--theme-card-background);' },
+    });
+
+    // Reuse the same list rendering
+    const mobileListContainer = this.createElement('div');
+    // Build list content inline (same structure as desktop)
+    if (this.extractedColorsHistory.length === 0) {
+      const hint = this.createElement('p', {
+        textContent: 'Shift+Click on the image to sample colors',
+        attributes: {
+          style: 'font-size: 12px; color: var(--theme-text-muted, #a0a0a0); text-align: center; padding: 8px; margin: 0;',
+        },
+      });
+      mobileListContainer.appendChild(hint);
+    } else {
+      for (let i = 0; i < this.extractedColorsHistory.length; i++) {
+        const entry = this.extractedColorsHistory[i];
+        const isActive = entry.hex.toLowerCase() === this.lastPixelSampleHex?.toLowerCase();
+
+        const row = this.createElement('div', {
+          attributes: {
+            style: `
+              display: flex; align-items: center; gap: 8px; padding: 6px 4px;
+              border-radius: 8px; cursor: pointer;
+              border: 1px solid ${isActive ? 'var(--theme-primary, #d4af37)' : 'transparent'};
+              background: ${isActive ? 'rgba(212, 175, 55, 0.08)' : 'transparent'};
+            `
+              .replace(/\s+/g, ' ')
+              .trim(),
+          },
+        });
+
+        const badge = this.createElement('span', {
+          textContent: `#${i + 1}`,
+          attributes: {
+            style: `
+              width: 24px; height: 24px; border-radius: 50%;
+              display: flex; align-items: center; justify-content: center;
+              font-size: 9px; font-weight: 700; flex-shrink: 0;
+              background: ${isActive ? 'var(--theme-primary, #d4af37)' : 'rgba(255, 255, 255, 0.1)'};
+              color: ${isActive ? 'var(--theme-primary-text, #1a1a1a)' : 'var(--theme-text-muted, #a0a0a0)'};
+            `
+              .replace(/\s+/g, ' ')
+              .trim(),
+          },
+        });
+        row.appendChild(badge);
+
+        const swatch = this.createElement('div', {
+          attributes: {
+            style: `
+              width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
+              background-color: ${entry.hex};
+              border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
+            `
+              .replace(/\s+/g, ' ')
+              .trim(),
+          },
+        });
+        row.appendChild(swatch);
+
+        row.appendChild(
+          this.createElement('span', {
+            className: 'number',
+            textContent: entry.hex.toUpperCase(),
+            attributes: { style: 'font-size: 12px; color: var(--theme-text, #e0e0e0); flex: 1;' },
+          })
+        );
+
+        this.on(row, 'click', () => {
+          this.lastPixelSampleHex = entry.hex;
+          this.renderColorInfoCard(entry.hex);
+          this.matchColor(entry.hex);
+        });
+
+        mobileListContainer.appendChild(row);
+      }
+    }
+
+    contentInner.appendChild(mobileListContainer);
+    contentWrapper.appendChild(contentInner);
+    section.appendChild(contentWrapper);
+
+    // Toggle event
+    this.on(header, 'click', () => {
+      this.mobileExtractedColorsExpanded = !this.mobileExtractedColorsExpanded;
+      header.setAttribute('aria-expanded', String(this.mobileExtractedColorsExpanded));
+      chevron.style.transform = this.mobileExtractedColorsExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
+      contentWrapper.style.maxHeight = this.mobileExtractedColorsExpanded ? '500px' : '0';
+      contentWrapper.style.opacity = this.mobileExtractedColorsExpanded ? '1' : '0';
+    });
+
+    return section;
   }
 
   /**
@@ -2108,18 +2303,387 @@ export class ExtractorTool extends BaseComponent {
   }
 
   // ============================================================================
+  // Extracted Colors History & Color Info Card
+  // ============================================================================
+
+  /**
+   * Render the color info card showing HEX, RGB, HSV, LAB for a sampled color.
+   * Follows the swatch tool's "Selected Color" card pattern.
+   */
+  private renderColorInfoCard(hex: string): void {
+    if (!this.colorInfoCardContainer) return;
+    clearContainer(this.colorInfoCardContainer);
+
+    const rgb = ColorService.hexToRgb(hex);
+    const hsv = ColorService.rgbToHsv(rgb.r, rgb.g, rgb.b);
+    const lab = ColorService.rgbToLab(rgb.r, rgb.g, rgb.b);
+
+    // Card container
+    const card = this.createElement('div', {
+      attributes: {
+        style: `
+          max-width: 320px;
+          width: 100%;
+          border-radius: 12px;
+          border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
+          overflow: hidden;
+          background: var(--theme-card-background, #2a2a2a);
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
+      },
+    });
+
+    // Title bar
+    const titleBar = this.createElement('div', {
+      attributes: {
+        style: `
+          padding: 12px 16px;
+          background: var(--theme-card-header, rgba(0, 0, 0, 0.2));
+          border-bottom: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
+          text-align: center;
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
+      },
+    });
+    const title = this.createElement('span', {
+      textContent: 'Sampled Color',
+      attributes: {
+        style: 'font-size: 14px; font-weight: 600; color: var(--theme-text, #e0e0e0);',
+      },
+    });
+    titleBar.appendChild(title);
+    card.appendChild(titleBar);
+
+    // Large color swatch preview
+    const swatchPreview = this.createElement('div', {
+      attributes: {
+        style: `width: 100%; height: 80px; background-color: ${hex};`,
+      },
+    });
+    card.appendChild(swatchPreview);
+
+    // Technical data section
+    const dataSection = this.createElement('div', {
+      attributes: {
+        style: 'padding: 16px; display: flex; flex-direction: column; gap: 8px;',
+      },
+    });
+
+    // Two-column data grid
+    const dataGrid = this.createElement('div', {
+      attributes: {
+        style: 'display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; font-size: 12px;',
+      },
+    });
+
+    const createDataRow = (label: string, value: string): HTMLElement => {
+      const row = this.createElement('div', {
+        attributes: { style: 'display: flex; justify-content: space-between; align-items: center;' },
+      });
+      row.appendChild(
+        this.createElement('span', {
+          textContent: label,
+          attributes: { style: 'color: var(--theme-text-muted, #a0a0a0);' },
+        })
+      );
+      row.appendChild(
+        this.createElement('span', {
+          className: 'number',
+          textContent: value,
+          attributes: { style: 'color: var(--theme-text, #e0e0e0); font-weight: 500;' },
+        })
+      );
+      return row;
+    };
+
+    dataGrid.appendChild(createDataRow('HEX', hex.toUpperCase()));
+    dataGrid.appendChild(
+      createDataRow('RGB', `${rgb.r},${rgb.g},${rgb.b}`)
+    );
+    dataGrid.appendChild(
+      createDataRow('HSV', `${Math.round(hsv.h)},${Math.round(hsv.s)},${Math.round(hsv.v)}`)
+    );
+    dataGrid.appendChild(
+      createDataRow('LAB', `${Math.round(lab.L)},${Math.round(lab.a)},${Math.round(lab.b)}`)
+    );
+
+    dataSection.appendChild(dataGrid);
+    card.appendChild(dataSection);
+
+    // Copy button
+    const copyBtn = this.createElement('button', {
+      textContent: 'Copy Color Info',
+      attributes: {
+        style: `
+          width: 100%;
+          padding: 10px 16px;
+          background: var(--theme-primary, #d4a857);
+          color: var(--theme-primary-text, #1a1a1a);
+          border: none;
+          border-radius: 0 0 11px 11px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: opacity 0.2s;
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
+      },
+    });
+    copyBtn.addEventListener('mouseenter', () => {
+      copyBtn.style.opacity = '0.9';
+    });
+    copyBtn.addEventListener('mouseleave', () => {
+      copyBtn.style.opacity = '1';
+    });
+    this.on(copyBtn, 'click', () => {
+      const text = [
+        `HEX: ${hex.toUpperCase()}`,
+        `RGB: ${rgb.r}, ${rgb.g}, ${rgb.b}`,
+        `HSV: ${Math.round(hsv.h)}, ${Math.round(hsv.s)}, ${Math.round(hsv.v)}`,
+        `LAB: ${Math.round(lab.L)}, ${Math.round(lab.a)}, ${Math.round(lab.b)}`,
+      ].join('\n');
+      void navigator.clipboard.writeText(text).then(() => {
+        ToastService.success('Color info copied to clipboard');
+      });
+    });
+    card.appendChild(copyBtn);
+
+    this.colorInfoCardContainer.appendChild(card);
+    this.colorInfoCardContainer.style.display = 'flex';
+  }
+
+  /**
+   * Hide the color info card
+   */
+  private hideColorInfoCard(): void {
+    if (this.colorInfoCardContainer) {
+      this.colorInfoCardContainer.style.display = 'none';
+    }
+  }
+
+  /**
+   * Render the extracted colors history list in the left panel.
+   * Shows all pixel-sampled colors with swatches and hex codes.
+   */
+  private renderExtractedColorsList(): void {
+    if (!this.extractedColorsContainer) return;
+    clearContainer(this.extractedColorsContainer);
+
+    // Don't render anything when empty — keep the section invisible
+    if (this.extractedColorsHistory.length === 0) {
+      return;
+    }
+
+    // Section header: "EXTRACTED COLORS (N)" + Clear button — matches results section header style
+    const headerRow = this.createElement('div', {
+      attributes: {
+        style: `
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-bottom: 8px;
+          border-bottom: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
+          margin-bottom: 12px;
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
+      },
+    });
+
+    headerRow.appendChild(
+      this.createElement('span', {
+        textContent: `Extracted Colors (${this.extractedColorsHistory.length})`,
+        attributes: {
+          style: `
+            font-size: 14px;
+            text-transform: uppercase;
+            color: var(--theme-text-muted, #a0a0a0);
+            font-weight: 600;
+            letter-spacing: 1px;
+          `
+            .replace(/\s+/g, ' ')
+            .trim(),
+        },
+      })
+    );
+
+    const clearBtn = this.createElement('button', {
+      textContent: 'Clear',
+      attributes: {
+        style: `
+          background: none;
+          border: none;
+          color: var(--theme-primary, #d4af37);
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          padding: 2px 4px;
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
+      },
+    });
+    this.on(clearBtn, 'click', () => {
+      this.clearExtractedColorsHistory();
+    });
+    headerRow.appendChild(clearBtn);
+    this.extractedColorsContainer.appendChild(headerRow);
+
+    // Multi-column grid of color swatches
+    const grid = this.createElement('div', {
+      attributes: {
+        style: `
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+          gap: 6px;
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
+      },
+    });
+
+    for (let i = 0; i < this.extractedColorsHistory.length; i++) {
+      const entry = this.extractedColorsHistory[i];
+      const isActive = entry.hex.toLowerCase() === this.lastPixelSampleHex?.toLowerCase();
+
+      const row = this.createElement('div', {
+        attributes: {
+          style: `
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+            border: 1px solid ${isActive ? 'var(--theme-primary, #d4af37)' : 'var(--theme-border, rgba(255, 255, 255, 0.06))'};
+            background: ${isActive ? 'rgba(212, 175, 55, 0.08)' : 'rgba(255, 255, 255, 0.02)'};
+          `
+            .replace(/\s+/g, ' ')
+            .trim(),
+        },
+      });
+
+      // Hover effect
+      row.addEventListener('mouseenter', () => {
+        if (!isActive) row.style.background = 'var(--theme-card-background, #333333)';
+      });
+      row.addEventListener('mouseleave', () => {
+        if (!isActive) row.style.background = isActive ? 'rgba(212, 175, 55, 0.08)' : 'rgba(255, 255, 255, 0.02)';
+      });
+
+      // Color swatch
+      const swatch = this.createElement('div', {
+        attributes: {
+          style: `
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            flex-shrink: 0;
+            background-color: ${entry.hex};
+            border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
+          `
+            .replace(/\s+/g, ' ')
+            .trim(),
+        },
+      });
+      row.appendChild(swatch);
+
+      // Hex code
+      row.appendChild(
+        this.createElement('span', {
+          className: 'number',
+          textContent: entry.hex.toUpperCase(),
+          attributes: {
+            style: `
+              font-size: 12px;
+              font-weight: 500;
+              color: ${isActive ? 'var(--theme-text, #e0e0e0)' : 'var(--theme-text-muted, #a0a0a0)'};
+            `
+              .replace(/\s+/g, ' ')
+              .trim(),
+          },
+        })
+      );
+
+      // Click handler — re-select this color (don't add to history again)
+      this.on(row, 'click', () => {
+        this.lastPixelSampleHex = entry.hex;
+        this.renderColorInfoCard(entry.hex);
+        this.matchColor(entry.hex);
+        this.renderExtractedColorsList();
+      });
+
+      grid.appendChild(row);
+    }
+
+    this.extractedColorsContainer.appendChild(grid);
+  }
+
+  /**
+   * Clear the extracted colors history
+   */
+  private clearExtractedColorsHistory(): void {
+    this.extractedColorsHistory = [];
+    this.lastPixelSampleHex = null;
+    StorageService.removeItem(STORAGE_KEYS.extractedColors);
+    this.renderExtractedColorsList();
+    this.hideColorInfoCard();
+  }
+
+  /**
+   * Populate the extracted colors history from palette extraction results.
+   * Replaces the current history with the palette's extracted colors.
+   */
+  private populateHistoryFromPalette(matches: PaletteMatch[]): void {
+    const now = Date.now();
+    this.extractedColorsHistory = matches.map((match) => {
+      const hex = `#${match.extracted.r.toString(16).padStart(2, '0')}${match.extracted.g.toString(16).padStart(2, '0')}${match.extracted.b.toString(16).padStart(2, '0')}`;
+      return { hex, timestamp: now };
+    });
+    this.lastPixelSampleHex = null;
+    StorageService.setItem(STORAGE_KEYS.extractedColors, this.extractedColorsHistory);
+    this.renderExtractedColorsList();
+  }
+
+  // ============================================================================
   // Color Matching Logic
   // ============================================================================
 
   /**
    * Match a color to the closest dyes
    */
-  private matchColor(hex: string): void {
+  private matchColor(hex: string, isPixelSample: boolean = false): void {
     this.selectedColor = hex;
     this.showEmptyState(false);
 
     // Clear palette results when doing single color match
     this.lastPaletteResults = [];
+
+    // Track pixel sample in extracted colors history
+    if (isPixelSample) {
+      this.lastPixelSampleHex = hex;
+      // Remove duplicate if already in history, then prepend
+      this.extractedColorsHistory = this.extractedColorsHistory.filter(
+        (e) => e.hex.toLowerCase() !== hex.toLowerCase()
+      );
+      this.extractedColorsHistory.unshift({ hex, timestamp: Date.now() });
+      // Cap at max
+      if (this.extractedColorsHistory.length > this.maxExtractedColors) {
+        this.extractedColorsHistory = this.extractedColorsHistory.slice(0, this.maxExtractedColors);
+      }
+      StorageService.setItem(STORAGE_KEYS.extractedColors, this.extractedColorsHistory);
+      this.renderExtractedColorsList();
+      this.renderColorInfoCard(hex);
+    } else if (this.lastPixelSampleHex?.toLowerCase() === hex.toLowerCase()) {
+      // Re-selecting from history — show the info card
+      this.renderColorInfoCard(hex);
+    }
 
     // Persist selected color to storage
     StorageService.setItem(STORAGE_KEYS.selectedColor, hex);
@@ -2472,6 +3036,9 @@ export class ExtractorTool extends BaseComponent {
 
       this.lastPaletteResults = matches;
 
+      // Populate extracted colors history from palette results
+      this.populateHistoryFromPalette(matches);
+
       // Draw indicators on the original canvas to show the selected region
       ctx.strokeStyle = '#3B82F6';
       ctx.lineWidth = 2;
@@ -2547,6 +3114,9 @@ export class ExtractorTool extends BaseComponent {
       });
 
       this.lastPaletteResults = matches;
+
+      // Populate extracted colors history from palette results
+      this.populateHistoryFromPalette(matches);
 
       // Find representative positions for each extracted color and draw indicators
       const positions = this.findColorPositions(imageData, matches);
@@ -2754,6 +3324,9 @@ export class ExtractorTool extends BaseComponent {
     // Clear existing results
     clearContainer(this.resultsContainer);
     this.v4ResultCards = []; // Clear card references for price updates
+
+    // Hide color info card (palette mode doesn't use single-color info)
+    this.hideColorInfoCard();
 
     // Hide empty state
     this.showEmptyState(false);

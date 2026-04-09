@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Palette Extractor**: New "Extracted Colors" history section in the results panel — accumulates all pixel-sampled colors (Shift+Click) with color swatch previews and hex codes in a responsive multi-column grid
+- **Palette Extractor**: New "Sampled Color" info card displaying HEX, RGB, HSV, and LAB technical data for the raw extracted color, with a "Copy Color Info" button
+- **Palette Extractor**: Palette extraction (Max Colors slider and region selection) now populates the Extracted Colors history with all extracted colors
+- **Palette Extractor**: Extracted colors history persists across page reloads via localStorage
+
+---
+
 ## [4.7.0] - 2026-04-07
 
 ### Security
