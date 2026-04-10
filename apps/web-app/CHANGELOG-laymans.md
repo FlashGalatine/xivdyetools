@@ -2,7 +2,7 @@
 
 ---
 
-## Version 4.8.0 — April 10, 2026
+## Web-App Version 4.8.0 — April 10, 2026
 
 ### Palette Extractor: Color History & Info Card
 
@@ -15,7 +15,7 @@ The Palette Extractor tool now keeps track of every color you sample or extract,
 
 ---
 
-## Version 1.11.0 — April 7, 2026
+## Suite Version 1.11.0 — April 7, 2026
 
 ### Under the Hood: Security & Stability
 
