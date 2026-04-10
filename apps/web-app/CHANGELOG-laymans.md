@@ -1,12 +1,25 @@
-# What's New in Version 1.11.0
-
-*Released: April 7, 2026*
+# What's New
 
 ---
 
-## Under the Hood: Security & Stability
+## Version 4.8.0 — April 10, 2026
 
-This release is a maintenance update — nothing changes from your perspective in how the tools look or work, but a lot happened behind the scenes to make XIV Dye Tools more secure and reliable.
+### Palette Extractor: Color History & Info Card
+
+The Palette Extractor tool now keeps track of every color you sample or extract, and gives you more technical detail on each one.
+
+- **Extracted Colors history** — every time you Shift+Click to sample a pixel, or run a palette extraction (Max Colors slider or region selection), those colors are saved into a scrollable history grid with color swatches and hex codes
+- **Colors persist across sessions** — your extracted color history is saved in your browser, so it's still there if you reload the page or come back later
+- **Sampled Color info card** — when you sample a single color, a new info card shows you the HEX, RGB, HSV, and LAB values at a glance
+- **Copy color data** — a "Copy Color Info" button lets you quickly copy all the technical color data to your clipboard
+
+---
+
+## Version 1.11.0 — April 7, 2026
+
+### Under the Hood: Security & Stability
+
+This release was a maintenance update — nothing changed from your perspective in how the tools look or work, but a lot happened behind the scenes to make XIV Dye Tools more secure and reliable.
 
 - **More secure modals** — Internal popups and dialogs now use a safer construction method that eliminates a class of potential web security vulnerabilities. You won't notice any difference in how they work.
 - **Request validation** — The servers behind the Discord bot and community presets now enforce stricter limits on incoming data (size limits, depth limits), making them more resilient to malformed or malicious requests.
