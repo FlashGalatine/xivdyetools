@@ -65,7 +65,7 @@
     "@xivdyetools/types": "workspace:*"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260405.1",
+    "@cloudflare/workers-types": "^4.20260413.1",
     "@testing-library/dom": "^10.0.0",
     "@vitest/coverage-v8": "^4.1.2",
     "vitest": "^4.1.2"
