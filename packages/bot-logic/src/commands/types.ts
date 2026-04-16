@@ -7,7 +7,7 @@
  * @module commands/types
  */
 
-/** @internal Platform-neutral embed field. */
+/** Platform-neutral embed field. */
 export interface EmbedField {
   name: string;
   value: string;
@@ -17,7 +17,6 @@ export interface EmbedField {
 /**
  * Platform-neutral embed data returned by execute functions.
  * Discord adapters map this to Discord APIEmbed; other platforms use their own format.
- * @internal
  */
 export interface EmbedData {
   title: string;

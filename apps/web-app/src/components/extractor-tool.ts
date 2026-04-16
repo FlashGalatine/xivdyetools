@@ -1675,7 +1675,8 @@ export class ExtractorTool extends BaseComponent {
       const hint = this.createElement('p', {
         textContent: 'Shift+Click on the image to sample colors',
         attributes: {
-          style: 'font-size: 12px; color: var(--theme-text-muted, #a0a0a0); text-align: center; padding: 8px; margin: 0;',
+          style:
+            'font-size: 12px; color: var(--theme-text-muted, #a0a0a0); text-align: center; padding: 8px; margin: 0;',
         },
       });
       mobileListContainer.appendChild(hint);
@@ -1752,7 +1753,9 @@ export class ExtractorTool extends BaseComponent {
     this.on(header, 'click', () => {
       this.mobileExtractedColorsExpanded = !this.mobileExtractedColorsExpanded;
       header.setAttribute('aria-expanded', String(this.mobileExtractedColorsExpanded));
-      chevron.style.transform = this.mobileExtractedColorsExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
+      chevron.style.transform = this.mobileExtractedColorsExpanded
+        ? 'rotate(0deg)'
+        : 'rotate(-90deg)';
       contentWrapper.style.maxHeight = this.mobileExtractedColorsExpanded ? '500px' : '0';
       contentWrapper.style.opacity = this.mobileExtractedColorsExpanded ? '1' : '0';
     });
@@ -2380,7 +2383,9 @@ export class ExtractorTool extends BaseComponent {
 
     const createDataRow = (label: string, value: string): HTMLElement => {
       const row = this.createElement('div', {
-        attributes: { style: 'display: flex; justify-content: space-between; align-items: center;' },
+        attributes: {
+          style: 'display: flex; justify-content: space-between; align-items: center;',
+        },
       });
       row.appendChild(
         this.createElement('span', {
@@ -2399,9 +2404,7 @@ export class ExtractorTool extends BaseComponent {
     };
 
     dataGrid.appendChild(createDataRow('HEX', hex.toUpperCase()));
-    dataGrid.appendChild(
-      createDataRow('RGB', `${rgb.r},${rgb.g},${rgb.b}`)
-    );
+    dataGrid.appendChild(createDataRow('RGB', `${rgb.r},${rgb.g},${rgb.b}`));
     dataGrid.appendChild(
       createDataRow('HSV', `${Math.round(hsv.h)},${Math.round(hsv.s)},${Math.round(hsv.v)}`)
     );
@@ -2574,7 +2577,10 @@ export class ExtractorTool extends BaseComponent {
         if (!isActive) row.style.background = 'var(--theme-card-background, #333333)';
       });
       row.addEventListener('mouseleave', () => {
-        if (!isActive) row.style.background = isActive ? 'rgba(212, 175, 55, 0.08)' : 'rgba(255, 255, 255, 0.02)';
+        if (!isActive)
+          row.style.background = isActive
+            ? 'rgba(212, 175, 55, 0.08)'
+            : 'rgba(255, 255, 255, 0.02)';
       });
 
       // Color swatch

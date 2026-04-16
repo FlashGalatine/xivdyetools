@@ -15,14 +15,14 @@ import { rateLimitMiddleware } from './rate-limit.js';
 
 function createMockBackend(overrides: Partial<RateLimiter> = {}): RateLimiter {
   return {
-    check: vi.fn<[string, RateLimitConfig], Promise<RateLimitResult>>().mockResolvedValue({
+    check: vi.fn<(key: string, config: RateLimitConfig) => Promise<RateLimitResult>>().mockResolvedValue({
       allowed: true,
       remaining: 99,
       resetAt: new Date(Date.now() + 60_000),
       limit: 100,
     }),
-    reset: vi.fn<[string], Promise<void>>().mockResolvedValue(undefined),
-    resetAll: vi.fn<[], Promise<void>>().mockResolvedValue(undefined),
+    reset: vi.fn<(key: string) => Promise<void>>().mockResolvedValue(undefined),
+    resetAll: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
     ...overrides,
   };
 }
