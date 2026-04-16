@@ -7,7 +7,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Hono } from 'hono';
 import { loggerMiddleware, getLogger } from './logger.js';
 import { requestIdMiddleware } from './request-id.js';
-import type { ExtendedLogger } from '@xivdyetools/logger';
 
 // Mock the logger module
 vi.mock('@xivdyetools/logger/worker', () => ({
