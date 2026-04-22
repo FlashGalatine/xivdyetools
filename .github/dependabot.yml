@@ -34,3 +34,10 @@ updates:
     open-pull-requests-limit: 5
     reviewers:
       - FlashGalatine
+    ignore:
+      # pnpm/action-setup v6 bootstraps pnpm v11 release candidates, which
+      # cannot parse v10-format lockfiles. Re-enable once pnpm v11 stable
+      # ships and this repo's packageManager field is bumped accordingly.
+      - dependency-name: pnpm/action-setup
+        update-types:
+          - version-update:semver-major
