@@ -132,7 +132,7 @@ export class UpstashRateLimiter implements RateLimiter {
         match: pattern,
         count: 100,
       });
-      const [nextCursor, keys] = result as [string, string[]];
+      const [nextCursor, keys] = result;
       cursor = nextCursor;
 
       if (keys.length > 0) {
