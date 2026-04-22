@@ -45,8 +45,7 @@ async function verifyJWT(token: string, secret: string): Promise<ExtendedJWTPayl
 
   if (!payload) return null;
 
-  // Cast to extended type - the JSON payload may have additional fields
-  return payload as unknown as ExtendedJWTPayload;
+  return payload;
 }
 
 // ============================================
