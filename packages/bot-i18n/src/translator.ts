@@ -9,12 +9,12 @@ import koLocale from './locales/ko.json';
 import zhLocale from './locales/zh.json';
 
 const locales: Record<LocaleCode, LocaleData> = {
-  en: enLocale as LocaleData,
-  ja: jaLocale as LocaleData,
-  de: deLocale as LocaleData,
-  fr: frLocale as LocaleData,
-  ko: koLocale as LocaleData,
-  zh: zhLocale as LocaleData,
+  en: enLocale,
+  ja: jaLocale,
+  de: deLocale,
+  fr: frLocale,
+  ko: koLocale,
+  zh: zhLocale,
 };
 
 // ============================================================================
@@ -71,10 +71,10 @@ export class Translator {
    * // → 'Could not find a dye named "Snow White".'
    */
   t(key: string, variables?: Record<string, string | number>): string {
-    let value = getNestedValue(this.data as Record<string, unknown>, key);
+    let value = getNestedValue(this.data, key);
 
     if (value === undefined && this.locale !== 'en') {
-      value = getNestedValue(this.fallbackData as Record<string, unknown>, key);
+      value = getNestedValue(this.fallbackData, key);
     }
 
     if (value === undefined || typeof value !== 'string') {
