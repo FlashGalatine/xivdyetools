@@ -94,7 +94,7 @@ export function requestIdMiddleware(options?: RequestIdOptions): MiddlewareHandl
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getRequestId(c: Context<any, any, any>): string {
   try {
-    return (c.get('requestId') as string | undefined) || 'unknown';
+    return c.get('requestId') || 'unknown';
   } catch {
     return 'unknown';
   }

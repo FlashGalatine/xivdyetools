@@ -177,7 +177,7 @@ export function loggerMiddleware(options: LoggerMiddlewareOptions): MiddlewareHa
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getLogger(c: Context<any, any, any>): ExtendedLogger | undefined {
   try {
-    return c.get('logger') as ExtendedLogger | undefined;
+    return c.get('logger');
   } catch {
     return undefined;
   }
