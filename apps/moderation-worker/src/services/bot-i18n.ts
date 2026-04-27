@@ -157,10 +157,10 @@ export class Translator {
    * Get a translated string
    */
   t(key: string, variables?: Record<string, string | number>): string {
-    let value = getNestedValue(this.data as Record<string, unknown>, key);
+    let value = getNestedValue(this.data, key);
 
     if (value === undefined && this.locale !== 'en') {
-      value = getNestedValue(this.fallbackData as Record<string, unknown>, key);
+      value = getNestedValue(this.fallbackData, key);
     }
 
     if (value === undefined || typeof value !== 'string') {

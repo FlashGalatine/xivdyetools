@@ -147,7 +147,7 @@ app.post('/', async (c) => {
 
   const interaction = parseResult.data!
 
-  const interactionType = interaction.type as InteractionType;
+  const interactionType = interaction.type;
 
   // Handle PING (required for Discord endpoint verification)
   if (interactionType === InteractionType.PING) {
