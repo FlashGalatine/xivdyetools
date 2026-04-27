@@ -153,7 +153,7 @@ async function request<T>(
       throw new UniversalisError(response.status, message);
     }
 
-    return (await response.json()) as T;
+    return await response.json<T>();
   } catch (error) {
     if (error instanceof UniversalisError) {
       throw error;

@@ -77,13 +77,13 @@ type RaceColorData = Record<string, Record<string, CharacterColor[]>>;
 export class CharacterColorService {
   // Shared data loaded eagerly (sync access)
   private sharedData: Record<string, CharacterColor[]> = {
-    eyeColors: eyeColorsData as CharacterColor[],
-    highlightColors: highlightColorsData as CharacterColor[],
-    lipColorsDark: lipColorsDarkData as CharacterColor[],
-    lipColorsLight: lipColorsLightData as CharacterColor[],
-    tattooColors: tattooColorsData as CharacterColor[],
-    facePaintColorsDark: facePaintDarkData as CharacterColor[],
-    facePaintColorsLight: facePaintLightData as CharacterColor[],
+    eyeColors: eyeColorsData,
+    highlightColors: highlightColorsData,
+    lipColorsDark: lipColorsDarkData,
+    lipColorsLight: lipColorsLightData,
+    tattooColors: tattooColorsData,
+    facePaintColorsDark: facePaintDarkData,
+    facePaintColorsLight: facePaintLightData,
   };
 
   // Race-specific data loaded lazily (async access)
@@ -175,7 +175,7 @@ export class CharacterColorService {
       this.hairColorsLoading = import(
         '../data/character_colors/race_specific/hair_colors.json'
       ).then((module) => {
-        this.hairColorsData = module.default as RaceColorData;
+        this.hairColorsData = module.default;
         this.hairColorsLoading = null;
         return this.hairColorsData;
       });
@@ -197,7 +197,7 @@ export class CharacterColorService {
       this.skinColorsLoading = import(
         '../data/character_colors/race_specific/skin_colors.json'
       ).then((module) => {
-        this.skinColorsData = module.default as RaceColorData;
+        this.skinColorsData = module.default;
         this.skinColorsLoading = null;
         return this.skinColorsData;
       });
