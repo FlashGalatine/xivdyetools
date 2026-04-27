@@ -147,7 +147,7 @@ app.post('/', async (c) => {
 
   const interaction = parseResult.data!
 
-  const interactionType = interaction.type as InteractionType;
+  const interactionType = interaction.type;
 
   // Handle PING (required for Discord endpoint verification)
   if (interactionType === InteractionType.PING) {
@@ -445,7 +445,7 @@ async function handleModal(
  */
 interface DiscordInteraction {
   id: string;
-  type: number;
+  type: InteractionType;
   application_id: string;
   token: string;
   locale?: string;
