@@ -230,7 +230,7 @@ export class DyeDatabase {
       }
 
       // Support both array and object formats
-      const loadedDyes = Array.isArray(dyeData) ? dyeData : Object.values(dyeData as object);
+      const loadedDyes = Array.isArray(dyeData) ? dyeData : Object.values(dyeData);
 
       if (!Array.isArray(loadedDyes) || loadedDyes.length === 0) {
         throw new Error('Invalid dye database format: empty or not an array');
