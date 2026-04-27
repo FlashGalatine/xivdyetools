@@ -88,7 +88,7 @@ async function processHarmonyCommand(
 
   const result = await executeHarmony({
     baseHex, baseName, baseId, baseItemID, harmonyType, locale,
-    harmonyOptions: harmonyOptions as HarmonyOptions | undefined,
+    harmonyOptions,
     dyeFilters,
   });
 

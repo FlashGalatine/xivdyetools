@@ -482,7 +482,7 @@ async function processSwatchMatch(
     // Find closest dye matches
     const matches: CharacterColorMatch[] = characterColorService.findClosestDyes(characterColor, dyeService, {
       count,
-      matchingMethod: matchingMethod as CoreMatchingMethod,
+      matchingMethod,
     });
 
     if (matches.length === 0) {

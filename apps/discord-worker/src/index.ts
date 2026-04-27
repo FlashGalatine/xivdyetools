@@ -398,7 +398,7 @@ app.post('/', async (c) => {
     return badRequestResponse('Invalid JSON body');
   }
 
-  const interactionType = interaction.type as InteractionType;
+  const interactionType = interaction.type;
 
   // Handle PING (required for Discord endpoint verification)
   if (interactionType === InteractionType.PING) {
@@ -866,7 +866,7 @@ async function handleModal(
  */
 interface DiscordInteraction {
   id: string;
-  type: number;
+  type: InteractionType;
   application_id: string;
   token: string;
   locale?: string; // User's locale (e.g., "en-US", "ja")
