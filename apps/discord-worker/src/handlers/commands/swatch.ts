@@ -15,7 +15,7 @@
  * @module handlers/commands/swatch
  */
 
-import { CharacterColorService, type MatchingMethod as CoreMatchingMethod } from '@xivdyetools/core';
+import { CharacterColorService } from '@xivdyetools/core';
 import { dyeService } from '../../utils/color.js';
 import type { CharacterColor, CharacterColorMatch, SubRace, Gender as CoreGender } from '@xivdyetools/types';
 import type { ExtendedLogger } from '@xivdyetools/logger';
