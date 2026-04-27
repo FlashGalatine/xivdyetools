@@ -445,7 +445,7 @@ async function handleModal(
  */
 interface DiscordInteraction {
   id: string;
-  type: number;
+  type: InteractionType;
   application_id: string;
   token: string;
   locale?: string;
