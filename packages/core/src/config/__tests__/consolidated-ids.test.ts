@@ -121,16 +121,19 @@ describe('consolidated-ids', () => {
 
     it('exposes procurement metadata for all three types', () => {
       expect(CONSOLIDATED_DYES.A).toMatchObject({
+        itemID: 52254,
         acquisition: 'Dye Vendor',
         price: 216,
         currency: 'Gil',
       });
       expect(CONSOLIDATED_DYES.B).toMatchObject({
+        itemID: 52255,
         acquisition: 'The Firmament',
         price: 1000,
         currency: "Sky Builders' Scrips",
       });
       expect(CONSOLIDATED_DYES.C).toMatchObject({
+        itemID: 52256,
         acquisition: 'Cosmic Exploration',
         price: 600,
         currency: 'Cosmocredits',

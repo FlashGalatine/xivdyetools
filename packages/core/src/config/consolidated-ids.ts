@@ -32,9 +32,9 @@ export interface ConsolidatedDye {
 }
 
 export const CONSOLIDATED_IDS: Record<ConsolidationType, number | null> = {
-  A: null, // ARR dyes (85 dyes, itemIDs 5729-5813)
-  B: null, // Ishgardian Restoration dyes (9 dyes, itemIDs 30116-30124)
-  C: null, // Cosmic Exploration dyes (11 dyes, itemIDs 48163-48172, 48227)
+  A: 52254, // Standard Spectrum Dye — covers the 85 ARR dyes (itemIDs 5729-5813)
+  B: 52255, // Wide Spectrum #1 Dye — covers the 9 Ishgardian Restoration dyes (itemIDs 30116-30124)
+  C: 52256, // Wide Spectrum #2 Dye — covers the 11 Cosmic Exploration dyes (itemIDs 48163-48172, 48227)
 };
 
 /**
