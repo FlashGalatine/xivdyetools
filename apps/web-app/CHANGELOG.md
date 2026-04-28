@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Localization**: `themes.sugarRiot` corrected against official Square Enix client strings (verified via Garland Tools BNpcName 1053586) — German `Sugar Riot` → `Zuckerschock`, Korean spelling `슈가 라이엇` → `슈거 라이엇`. Japanese (`シュガーライオット`) and French (`Sugar Riot`, kept English per official FR client) were already correct; Chinese kept as `Sugar Riot` since patch 7.2 has not yet shipped to the CN client
+
+### Documentation
+
+- Added i18n audit report under `docs/audits/2026-04-28/` covering locale-file parity (100% structural match across all 6 locales × 3 stores), CJK font-subset coverage and a stale-path bug in `apps/discord-worker/scripts/subset-cjk-fonts.py`, and hardcoded English strings in `apps/og-worker/src/og-data-generator.ts`
+
+---
+
 ## [4.9.0] - 2026-04-28
 
 ### Added
