@@ -23,49 +23,6 @@ export const APP_DESCRIPTION =
   'A comprehensive web-based toolset for Final Fantasy XIV players to explore dye colors';
 
 // ============================================================================
-// FFXIV Constants
-// ============================================================================
-
-/**
- * Market Board price category definitions
- * Defines which dye acquisitions belong to which category
- * Used for filtering which dyes should have prices fetched
- */
-export const PRICE_CATEGORIES = {
-  baseDyes: {
-    name: 'Base Dyes',
-    acquisitions: ['Dye Vendor'],
-    default: false,
-  },
-  craftDyes: {
-    name: 'Craft Dyes',
-    acquisitions: ['Crafting', 'Treasure Chest'],
-    default: false,
-  },
-  alliedSocietyDyes: {
-    name: 'Allied Society Dyes',
-    acquisitions: [
-      "Amalj'aa Vendor",
-      'Ixali Vendor',
-      'Sahagin Vendor',
-      'Kobold Vendor',
-      'Sylphic Vendor',
-    ],
-    default: true,
-  },
-  cosmicDyes: {
-    name: 'Cosmic Dyes',
-    acquisitions: ['Cosmic Exploration', 'Cosmic Fortunes'],
-    default: true,
-  },
-  specialDyes: {
-    name: 'Special Dyes',
-    category: 'Special',
-    default: true,
-  },
-} as const;
-
-// ============================================================================
 // Theme Configuration
 // ============================================================================
 

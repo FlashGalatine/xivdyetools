@@ -1,13 +1,89 @@
 /**
- * Consolidated dye item IDs for Patch 7.5.
+ * Consolidated dye configuration for Patch 7.5.
  *
- * PATCH DAY (2026-04-28): Replace null values with real item IDs from datamining.
- * This is the ONLY file that needs updating on patch day.
+ * PATCH DAY (2026-04-28): Replace null itemIDs with real values from datamining.
+ * Korean and Chinese localized names should be filled in alongside as they're sourced.
  */
-export const CONSOLIDATED_IDS: Record<'A' | 'B' | 'C', number | null> = {
+
+import type { LocaleCode } from '@xivdyetools/types';
+
+export type ConsolidationType = 'A' | 'B' | 'C';
+
+/**
+ * Localized name for a consolidated dye.
+ * `ko` and `zh` start as `null` until translations are sourced — `getConsolidatedDyeName`
+ * falls back to English in that case.
+ */
+export interface LocalizedDyeName {
+  en: string;
+  ja: string;
+  de: string;
+  fr: string;
+  ko: string | null;
+  zh: string | null;
+}
+
+export interface ConsolidatedDye {
+  itemID: number | null;
+  names: LocalizedDyeName;
+  acquisition: string;
+  price: number;
+  currency: string;
+}
+
+export const CONSOLIDATED_IDS: Record<ConsolidationType, number | null> = {
   A: null, // ARR dyes (85 dyes, itemIDs 5729-5813)
   B: null, // Ishgardian Restoration dyes (9 dyes, itemIDs 30116-30124)
   C: null, // Cosmic Exploration dyes (11 dyes, itemIDs 48163-48172, 48227)
+};
+
+/**
+ * Full metadata for the three consolidated dye items shipped in Patch 7.5.
+ * `itemID` mirrors `CONSOLIDATED_IDS` and is filled on patch day.
+ */
+export const CONSOLIDATED_DYES: Record<ConsolidationType, ConsolidatedDye> = {
+  A: {
+    itemID: CONSOLIDATED_IDS.A,
+    names: {
+      en: 'Standard Spectrum Dye',
+      ja: 'カララント:ノーマルカラー',
+      de: 'Einfacher Farbstoff',
+      fr: 'Teinture standard',
+      ko: null,
+      zh: null,
+    },
+    acquisition: 'Dye Vendor',
+    price: 216,
+    currency: 'Gil',
+  },
+  B: {
+    itemID: CONSOLIDATED_IDS.B,
+    names: {
+      en: 'Wide Spectrum #1 Dye',
+      ja: 'カララント:アディショナルカラー1',
+      de: 'Zusatzfarbstoff 1',
+      fr: 'Teinture additionnelle n°1',
+      ko: null,
+      zh: null,
+    },
+    acquisition: 'The Firmament',
+    price: 1000,
+    currency: "Sky Builders' Scrips",
+  },
+  C: {
+    itemID: CONSOLIDATED_IDS.C,
+    names: {
+      en: 'Wide Spectrum #2 Dye',
+      ja: 'カララント:アディショナルカラー2',
+      de: 'Zusatzfarbstoff 2',
+      fr: 'Teinture additionnelle n°2',
+      ko: null,
+      zh: null,
+    },
+    acquisition: 'Cosmic Exploration',
+    price: 600,
+    currency: 'Cosmocredits',
+  },
 };
 
 /**
@@ -31,10 +107,20 @@ export function isConsolidationActive(): boolean {
  */
 export function getMarketItemID(dye: {
   itemID: number;
-  consolidationType: 'A' | 'B' | 'C' | null;
+  consolidationType: ConsolidationType | null;
 }): number {
   if (dye.itemID < 0) return dye.itemID; // Facewear
   if (!dye.consolidationType) return dye.itemID; // Special/uncategorized
   if (!isConsolidationActive()) return dye.itemID; // Pre-patch fallback
   return CONSOLIDATED_IDS[dye.consolidationType]!;
+}
+
+/**
+ * Get the localized display name for a consolidated dye.
+ * Falls back to English when the requested locale's translation is `null`
+ * (currently the case for `ko` and `zh` until names are sourced).
+ */
+export function getConsolidatedDyeName(type: ConsolidationType, locale: LocaleCode): string {
+  const names = CONSOLIDATED_DYES[type].names;
+  return names[locale] ?? names.en;
 }

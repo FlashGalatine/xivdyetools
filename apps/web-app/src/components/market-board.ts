@@ -18,15 +18,11 @@ import { LanguageService, WorldService } from '@services/index';
 import {
   MarketBoardService,
   formatPrice as serviceFormatPrice,
-  type PriceCategorySettings,
 } from '@services/market-board-service';
 import { ToastService } from '@services/toast-service';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
-
-// Re-export PriceCategorySettings for backward compatibility
-export type { PriceCategorySettings } from '@services/market-board-service';
 
 /**
  * Market Board component - displays FFXIV market prices for dyes
@@ -46,9 +42,6 @@ export class MarketBoard extends BaseComponent {
   }
   private get showPrices(): boolean {
     return this.service.getShowPrices();
-  }
-  private get priceCategories(): PriceCategorySettings {
-    return this.service.getPriceCategories();
   }
 
   constructor(container: HTMLElement) {
@@ -181,7 +174,8 @@ export class MarketBoard extends BaseComponent {
     toggleRow.appendChild(toggleWrapper);
     pricePanel.appendChild(toggleRow);
 
-    // Price Category Checkboxes
+    // Refresh controls — visibility tracks the showPrices toggle. The wrapper id
+    // (`mb-price-settings`) is preserved so existing show/hide handlers keep working.
     const priceSettings = this.createElement('div', {
       className: `space-y-2 ${this.showPrices ? '' : 'hidden'}`,
       attributes: {
@@ -189,76 +183,11 @@ export class MarketBoard extends BaseComponent {
       },
     });
 
-    const categoryCheckboxes = this.createElement('div', {
-      className: 'text-xs space-y-2',
-    });
-
-    // Add each price category checkbox
-    const categories = [
-      {
-        id: 'baseDyes',
-        label: LanguageService.t('marketBoard.baseDyes'),
-        key: 'baseDyes' as keyof PriceCategorySettings,
-      },
-      {
-        id: 'craftDyes',
-        label: LanguageService.t('marketBoard.craftDyes'),
-        key: 'craftDyes' as keyof PriceCategorySettings,
-      },
-      {
-        id: 'alliedSocietyDyes',
-        label: LanguageService.t('marketBoard.alliedSocietyDyes'),
-        key: 'alliedSocietyDyes' as keyof PriceCategorySettings,
-      },
-      {
-        id: 'cosmicDyes',
-        label: LanguageService.t('marketBoard.cosmicDyes'),
-        key: 'cosmicDyes' as keyof PriceCategorySettings,
-      },
-      {
-        id: 'specialDyes',
-        label: LanguageService.t('marketBoard.specialDyes'),
-        key: 'specialDyes' as keyof PriceCategorySettings,
-      },
-    ];
-
-    for (const category of categories) {
-      const checkboxRow = this.createElement('div', {
-        className: 'flex items-center',
-      });
-
-      const checkbox = this.createElement('input', {
-        className:
-          'h-3 w-3 border-gray-300 dark:border-gray-600 rounded mb-price-checkbox focus:ring-2',
-        attributes: {
-          type: 'checkbox',
-          id: `mb-price-${category.id}`,
-          'data-category': category.key,
-          style: 'accent-color: var(--theme-primary);',
-          ...(this.priceCategories[category.key] ? { checked: 'true' } : {}),
-        },
-      });
-      checkboxRow.appendChild(checkbox);
-
-      const checkboxLabel = this.createElement('label', {
-        textContent: category.label,
-        className: 'ml-2 text-gray-600 dark:text-gray-400',
-        attributes: {
-          for: `mb-price-${category.id}`,
-        },
-      });
-      checkboxRow.appendChild(checkboxLabel);
-
-      categoryCheckboxes.appendChild(checkboxRow);
-    }
-
-    priceSettings.appendChild(categoryCheckboxes);
-
     // Refresh Button
     const refreshBtn = this.createElement('button', {
       textContent: LanguageService.t('marketBoard.refresh'),
       className:
-        'w-full px-3 py-2 text-xs disabled:bg-gray-400 disabled:cursor-not-allowed rounded-lg transition-all duration-200 font-medium mt-3',
+        'w-full px-3 py-2 text-xs disabled:bg-gray-400 disabled:cursor-not-allowed rounded-lg transition-all duration-200 font-medium',
       attributes: {
         id: 'mb-refresh-btn',
         style: 'background-color: var(--theme-primary); color: var(--theme-text-header);',
@@ -381,20 +310,6 @@ export class MarketBoard extends BaseComponent {
         // Emit for backward compatibility with existing tool listeners
         console.info('📣 [MarketBoard] Emitting showPricesChanged, checked=', toggleInput.checked);
         this.emit('showPricesChanged', { showPrices: toggleInput.checked });
-      });
-    }
-
-    // Price category checkboxes
-    const checkboxes = this.querySelectorAll<HTMLInputElement>('.mb-price-checkbox');
-    for (const checkbox of checkboxes) {
-      this.on(checkbox, 'change', () => {
-        const category = checkbox.getAttribute('data-category') as keyof PriceCategorySettings;
-        if (category) {
-          // Update service (which persists to localStorage)
-          this.service.setCategories({ [category]: checkbox.checked });
-          // Emit for backward compatibility with existing tool listeners
-          this.emit('categories-changed', { categories: this.service.getPriceCategories() });
-        }
       });
     }
 
@@ -596,7 +511,6 @@ export class MarketBoard extends BaseComponent {
     return {
       selectedServer: this.service.getSelectedServer(),
       showPrices: this.service.getShowPrices(),
-      priceCategories: this.service.getPriceCategories(),
     };
   }
 
@@ -610,9 +524,6 @@ export class MarketBoard extends BaseComponent {
     }
     if (typeof newState.showPrices === 'boolean') {
       this.service.setShowPrices(newState.showPrices);
-    }
-    if (typeof newState.priceCategories === 'object' && newState.priceCategories !== null) {
-      this.service.setCategories(newState.priceCategories as Partial<PriceCategorySettings>);
     }
   }
 
@@ -667,12 +578,5 @@ export class MarketBoard extends BaseComponent {
    */
   getShowPrices(): boolean {
     return this.service.getShowPrices();
-  }
-
-  /**
-   * Get price category settings
-   */
-  getPriceCategories(): PriceCategorySettings {
-    return this.service.getPriceCategories();
   }
 }

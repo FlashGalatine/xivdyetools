@@ -16,27 +16,14 @@
 
 import { APIService, WorldService } from '@services/index';
 import { ConfigController } from '@services/config-controller';
-import { appStorage } from '@services/storage-service';
-import { PRICE_CATEGORIES } from '@shared/constants';
 import { logger } from '@shared/logger';
-import { getMarketItemID } from '@xivdyetools/core';
+import { getMarketItemID, isConsolidationActive } from '@xivdyetools/core';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import type { MarketConfig } from '@shared/tool-config-types';
 
 // ============================================================================
 // Types
 // ============================================================================
-
-/**
- * Price category filter settings
- */
-export interface PriceCategorySettings {
-  baseDyes: boolean;
-  craftDyes: boolean;
-  alliedSocietyDyes: boolean;
-  cosmicDyes: boolean;
-  specialDyes: boolean;
-}
 
 /**
  * Event types emitted by MarketBoardService
@@ -70,7 +57,6 @@ export interface ServerChangedEvent {
  */
 export interface SettingsChangedEvent {
   showPrices: boolean;
-  categories: PriceCategorySettings;
 }
 
 /**
@@ -80,20 +66,6 @@ export interface FetchErrorEvent {
   error: Error;
   dyeCount: number;
 }
-
-// ============================================================================
-// Constants
-// ============================================================================
-
-const STORAGE_KEY_CATEGORIES = 'market_board_categories';
-
-const DEFAULT_CATEGORIES: PriceCategorySettings = {
-  baseDyes: PRICE_CATEGORIES.baseDyes.default,
-  craftDyes: PRICE_CATEGORIES.craftDyes.default,
-  alliedSocietyDyes: PRICE_CATEGORIES.alliedSocietyDyes.default,
-  cosmicDyes: PRICE_CATEGORIES.cosmicDyes.default,
-  specialDyes: PRICE_CATEGORIES.specialDyes.default,
-};
 
 // ============================================================================
 // MarketBoardService Class
@@ -134,7 +106,6 @@ export class MarketBoardService extends EventTarget {
   private requestVersion: number = 0;
   private selectedServer: string = 'Crystal';
   private showPrices: boolean = false;
-  private priceCategories: PriceCategorySettings;
   private isFetching: boolean = false;
 
   // Config controller subscription
@@ -146,11 +117,6 @@ export class MarketBoardService extends EventTarget {
   private constructor() {
     super();
     this.apiService = APIService.getInstance();
-
-    // Load saved categories from localStorage
-    this.priceCategories = appStorage.getItem(STORAGE_KEY_CATEGORIES, DEFAULT_CATEGORIES) ?? {
-      ...DEFAULT_CATEGORIES,
-    };
 
     // Subscribe to ConfigController for market config changes
     this.subscribeToConfigController();
@@ -220,7 +186,6 @@ export class MarketBoardService extends EventTarget {
 
         this.emitEvent('settings-changed', {
           showPrices: this.showPrices,
-          categories: this.priceCategories,
         });
       }
     });
@@ -242,13 +207,6 @@ export class MarketBoardService extends EventTarget {
    */
   getShowPrices(): boolean {
     return this.showPrices;
-  }
-
-  /**
-   * Get current price categories
-   */
-  getPriceCategories(): PriceCategorySettings {
-    return { ...this.priceCategories };
   }
 
   /**
@@ -291,32 +249,6 @@ export class MarketBoardService extends EventTarget {
     // ConfigController subscription will handle the state update
   }
 
-  /**
-   * Set price categories
-   */
-  setCategories(categories: Partial<PriceCategorySettings>): void {
-    const newCategories = { ...this.priceCategories, ...categories };
-
-    // Check if anything actually changed
-    const hasChanges = Object.keys(categories).some(
-      (key) =>
-        this.priceCategories[key as keyof PriceCategorySettings] !==
-        categories[key as keyof PriceCategorySettings]
-    );
-
-    if (!hasChanges) return;
-
-    this.priceCategories = newCategories;
-    appStorage.setItem(STORAGE_KEY_CATEGORIES, this.priceCategories);
-
-    this.emitEvent('settings-changed', {
-      showPrices: this.showPrices,
-      categories: this.priceCategories,
-    });
-
-    logger.debug('[MarketBoardService] Categories updated:', this.priceCategories);
-  }
-
   // ============================================================================
   // Price Data Methods
   // ============================================================================
@@ -340,49 +272,25 @@ export class MarketBoardService extends EventTarget {
   }
 
   /**
-   * Check if a dye should have its price fetched based on category settings
+   * Check if a dye is currently tradeable on the FFXIV Market Board.
+   *
+   * After Patch 7.5 (2026-04-28), individual dyes that belong to a consolidation
+   * bucket (consolidationType A/B/C) are no longer tradeable as standalone items —
+   * only the three consolidated dye items can be bought. Unconsolidated dyes
+   * (Pure White, Jet Black, Special-category, etc.) remain individually tradeable.
+   *
+   * - Returns false when prices are toggled off entirely.
+   * - Returns false for Facewear (synthetic negative itemIDs) — never on the market.
+   * - Returns false for consolidated dyes when consolidated itemIDs are not yet
+   *   datamined (pre-`isConsolidationActive`) to avoid 404ing on retired itemIDs.
+   * - Otherwise returns true; `getMarketItemID` collapses consolidated dyes to the
+   *   3 shared market IDs inside `fetchPricesForDyes`.
    */
   shouldFetchPrice(dye: Dye): boolean {
-    // Check Base Dyes (Dye Vendor)
-    if (
-      this.priceCategories.baseDyes &&
-      (PRICE_CATEGORIES.baseDyes.acquisitions as readonly string[]).includes(dye.acquisition)
-    ) {
-      return true;
-    }
-
-    // Check Craft Dyes
-    if (
-      this.priceCategories.craftDyes &&
-      (PRICE_CATEGORIES.craftDyes.acquisitions as readonly string[]).includes(dye.acquisition)
-    ) {
-      return true;
-    }
-
-    // Check Allied Society Dyes
-    if (
-      this.priceCategories.alliedSocietyDyes &&
-      (PRICE_CATEGORIES.alliedSocietyDyes.acquisitions as readonly string[]).includes(
-        dye.acquisition
-      )
-    ) {
-      return true;
-    }
-
-    // Check Cosmic Dyes
-    if (
-      this.priceCategories.cosmicDyes &&
-      (PRICE_CATEGORIES.cosmicDyes.acquisitions as readonly string[]).includes(dye.acquisition)
-    ) {
-      return true;
-    }
-
-    // Check Special Dyes
-    if (this.priceCategories.specialDyes && dye.category === 'Special') {
-      return true;
-    }
-
-    return false;
+    if (!this.showPrices) return false;
+    if (dye.itemID <= 0) return false;
+    if (dye.consolidationType !== null && !isConsolidationActive()) return false;
+    return true;
   }
 
   /**
@@ -403,7 +311,7 @@ export class MarketBoardService extends EventTarget {
     const requestVersion = this.requestVersion;
 
     // Filter dyes that should have prices fetched
-    const dyesToFetch = dyes.filter((dye) => this.showPrices && this.shouldFetchPrice(dye));
+    const dyesToFetch = dyes.filter((dye) => this.shouldFetchPrice(dye));
     const total = dyesToFetch.length;
 
     if (total === 0) {

@@ -59,8 +59,15 @@ export {
 // Dye consolidation (Patch 7.5)
 export {
   CONSOLIDATED_IDS,
+  CONSOLIDATED_DYES,
   isConsolidationActive,
   getMarketItemID,
+  getConsolidatedDyeName,
+} from './config/consolidated-ids.js';
+export type {
+  ConsolidationType,
+  ConsolidatedDye,
+  LocalizedDyeName,
 } from './config/consolidated-ids.js';
 
 // Constants

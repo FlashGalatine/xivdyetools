@@ -107,7 +107,6 @@ export type {
 // V4 Market Board Service
 export { MarketBoardService, getMarketBoardService, formatPrice } from './market-board-service';
 export type {
-  PriceCategorySettings,
   MarketBoardEventType,
   PricesUpdatedEvent,
   ServerChangedEvent,

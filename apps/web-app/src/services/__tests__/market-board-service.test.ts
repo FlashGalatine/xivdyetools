@@ -13,7 +13,7 @@ import { MarketBoardService } from '../market-board-service';
 import { APIService } from '../api-service-wrapper';
 import { ConfigController } from '../config-controller';
 import { WorldService } from '../world-service';
-import { appStorage } from '../storage-service';
+import { CONSOLIDATED_IDS } from '@xivdyetools/core';
 import type { Dye, PriceData } from '@xivdyetools/types';
 
 // Mock dependencies
@@ -40,13 +40,6 @@ vi.mock('../config-controller', () => ({
 vi.mock('../world-service', () => ({
   WorldService: {
     getWorldName: vi.fn(),
-  },
-}));
-
-vi.mock('../storage-service', () => ({
-  appStorage: {
-    getItem: vi.fn(),
-    setItem: vi.fn(),
   },
 }));
 
@@ -121,9 +114,6 @@ describe('MarketBoardService', () => {
     };
     (APIService.getInstance as Mock).mockReturnValue(mockApiService);
 
-    // Set up storage mock
-    (appStorage.getItem as Mock).mockReturnValue(null);
-
     // Get service instance
     service = MarketBoardService.getInstance();
   });
@@ -161,13 +151,6 @@ describe('MarketBoardService', () => {
       expect(service.getIsFetching()).toBe(false);
     });
 
-    it('should return price categories', () => {
-      const categories = service.getPriceCategories();
-      expect(categories).toBeDefined();
-      expect(typeof categories.baseDyes).toBe('boolean');
-      expect(typeof categories.craftDyes).toBe('boolean');
-    });
-
     it('should return all prices as a new Map', () => {
       const prices1 = service.getAllPrices();
       const prices2 = service.getAllPrices();
@@ -198,34 +181,6 @@ describe('MarketBoardService', () => {
     it('should not update showPrices if same value', () => {
       service.setShowPrices(false);
       expect(mockConfigController.setConfig).not.toHaveBeenCalled();
-    });
-
-    it('should update categories and persist to storage', () => {
-      service.setCategories({ baseDyes: true, craftDyes: false });
-      expect(appStorage.setItem).toHaveBeenCalled();
-    });
-
-    it('should emit settings-changed event when categories change', () => {
-      const eventHandler = vi.fn();
-      service.addEventListener('settings-changed', eventHandler);
-
-      service.setCategories({ baseDyes: true });
-
-      expect(eventHandler).toHaveBeenCalled();
-    });
-
-    it('should not emit event if categories unchanged', () => {
-      // First set categories to known state
-      service.setCategories({ baseDyes: true });
-      vi.clearAllMocks();
-
-      const eventHandler = vi.fn();
-      service.addEventListener('settings-changed', eventHandler);
-
-      // Set same value again
-      service.setCategories({ baseDyes: true });
-
-      expect(eventHandler).not.toHaveBeenCalled();
     });
   });
 
@@ -307,56 +262,66 @@ describe('MarketBoardService', () => {
     });
   });
 
-  describe('shouldFetchPrice', () => {
+  describe('shouldFetchPrice (Patch 7.5 tradeability policy)', () => {
+    // Save and restore CONSOLIDATED_IDS so tests can simulate pre/post-datamine states.
+    let originalA: number | null;
+    let originalB: number | null;
+    let originalC: number | null;
+
     beforeEach(() => {
-      service.setCategories({
-        baseDyes: true,
-        craftDyes: true,
-        alliedSocietyDyes: true,
-        cosmicDyes: true,
-        specialDyes: true,
-      });
+      originalA = CONSOLIDATED_IDS.A;
+      originalB = CONSOLIDATED_IDS.B;
+      originalC = CONSOLIDATED_IDS.C;
+      CONSOLIDATED_IDS.A = null;
+      CONSOLIDATED_IDS.B = null;
+      CONSOLIDATED_IDS.C = null;
+
+      // Enable showPrices for the policy to fire
+      if (configSubscriber) {
+        configSubscriber({ selectedServer: 'Crystal', showPrices: true });
+      }
     });
 
-    it('should return true for base dye when baseDyes enabled', () => {
-      const dye = createMockDye({ acquisition: 'Dye Vendor' });
-      expect(service.shouldFetchPrice(dye)).toBe(true);
+    afterEach(() => {
+      CONSOLIDATED_IDS.A = originalA;
+      CONSOLIDATED_IDS.B = originalB;
+      CONSOLIDATED_IDS.C = originalC;
     });
 
-    it('should return true for craft dye when craftDyes enabled', () => {
-      // V4: craftDyes uses 'Crafting' acquisition (not 'Crafted')
-      const dye = createMockDye({ acquisition: 'Crafting' });
-      expect(service.shouldFetchPrice(dye)).toBe(true);
-    });
-
-    it('should return true for special dye when specialDyes enabled', () => {
-      const dye = createMockDye({ category: 'Special', acquisition: 'Event' });
-      expect(service.shouldFetchPrice(dye)).toBe(true);
-    });
-
-    it('should return false when all categories disabled', () => {
-      service.setCategories({
-        baseDyes: false,
-        craftDyes: false,
-        alliedSocietyDyes: false,
-        cosmicDyes: false,
-        specialDyes: false,
-      });
-
-      const dye = createMockDye({ acquisition: 'Dye Vendor' });
+    it('returns false when showPrices is disabled', () => {
+      if (configSubscriber) {
+        configSubscriber({ selectedServer: 'Crystal', showPrices: false });
+      }
+      const dye = createMockDye({ consolidationType: null });
       expect(service.shouldFetchPrice(dye)).toBe(false);
     });
 
-    it('should return false for non-matching acquisition', () => {
-      service.setCategories({
-        baseDyes: false,
-        craftDyes: false,
-        alliedSocietyDyes: false,
-        cosmicDyes: false,
-        specialDyes: false,
-      });
+    it('returns true for unconsolidated dyes (Pure White, Jet Black, Special)', () => {
+      const dye = createMockDye({ consolidationType: null, itemID: 13114 });
+      expect(service.shouldFetchPrice(dye)).toBe(true);
+    });
 
-      const dye = createMockDye({ acquisition: 'Quest', category: 'Red' });
+    it('returns false for consolidated Type-A dyes when itemIDs are not yet datamined', () => {
+      const dye = createMockDye({ consolidationType: 'A', itemID: 5729 });
+      expect(service.shouldFetchPrice(dye)).toBe(false);
+    });
+
+    it('returns true for consolidated dyes once consolidation is active', () => {
+      CONSOLIDATED_IDS.A = 99999;
+      CONSOLIDATED_IDS.B = 99998;
+      CONSOLIDATED_IDS.C = 99997;
+
+      const typeA = createMockDye({ consolidationType: 'A', itemID: 5729 });
+      const typeB = createMockDye({ consolidationType: 'B', itemID: 30116 });
+      const typeC = createMockDye({ consolidationType: 'C', itemID: 48163 });
+
+      expect(service.shouldFetchPrice(typeA)).toBe(true);
+      expect(service.shouldFetchPrice(typeB)).toBe(true);
+      expect(service.shouldFetchPrice(typeC)).toBe(true);
+    });
+
+    it('returns false for Facewear dyes (synthetic negative itemIDs)', () => {
+      const dye = createMockDye({ consolidationType: null, itemID: -1 });
       expect(service.shouldFetchPrice(dye)).toBe(false);
     });
   });
@@ -367,13 +332,6 @@ describe('MarketBoardService', () => {
       if (configSubscriber) {
         configSubscriber({ selectedServer: 'Crystal', showPrices: true });
       }
-      service.setCategories({
-        baseDyes: true,
-        craftDyes: true,
-        alliedSocietyDyes: true,
-        cosmicDyes: true,
-        specialDyes: true,
-      });
     });
 
     it('should return empty Map for empty dye array', async () => {
@@ -436,16 +394,9 @@ describe('MarketBoardService', () => {
       expect(fetchError).toHaveBeenCalled();
     });
 
-    it('should filter out dyes based on category settings', async () => {
-      service.setCategories({
-        baseDyes: false,
-        craftDyes: false,
-        alliedSocietyDyes: false,
-        cosmicDyes: false,
-        specialDyes: false,
-      });
-
-      const dyes = [createMockDye({ acquisition: 'Dye Vendor' })];
+    it('should filter out consolidated dyes when consolidation IDs are not datamined', async () => {
+      // Pre-patch state: CONSOLIDATED_IDS are null, so consolidated dyes are not tradeable
+      const dyes = [createMockDye({ consolidationType: 'A', itemID: 5729 })];
       await service.fetchPricesForDyes(dyes);
 
       expect(mockApiService.getPricesForDataCenter).not.toHaveBeenCalled();
@@ -469,7 +420,6 @@ describe('MarketBoardService', () => {
       if (configSubscriber) {
         configSubscriber({ selectedServer: 'Crystal', showPrices: true });
       }
-      service.setCategories({ baseDyes: true });
     });
 
     it('should discard stale responses', async () => {

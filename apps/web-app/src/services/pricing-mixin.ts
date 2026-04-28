@@ -26,12 +26,6 @@ export interface MarketBoardListenerOptions {
   onServerChanged?: () => void;
 
   /**
-   * Called when price categories change
-   * If not provided, defaults to fetching prices if showPrices is true
-   */
-  onCategoriesChanged?: () => void;
-
-  /**
    * Called when user requests a refresh
    * If not provided, defaults to fetching prices if showPrices is true
    */
@@ -88,15 +82,6 @@ export function setupMarketBoardListeners(
     console.info('📡 [setupMarketBoardListeners] server-changed event received');
     if (options.onServerChanged) {
       options.onServerChanged();
-    } else if (shouldFetchPrices()) {
-      void fetchPrices();
-    }
-  }) as EventListener);
-
-  // Categories changed
-  container.addEventListener('categories-changed', (() => {
-    if (options.onCategoriesChanged) {
-      options.onCategoriesChanged();
     } else if (shouldFetchPrices()) {
       void fetchPrices();
     }

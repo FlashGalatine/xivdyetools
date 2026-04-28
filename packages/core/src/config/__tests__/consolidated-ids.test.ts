@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   CONSOLIDATED_IDS,
+  CONSOLIDATED_DYES,
   isConsolidationActive,
   getMarketItemID,
+  getConsolidatedDyeName,
 } from '../consolidated-ids.js';
 
 describe('consolidated-ids', () => {
@@ -107,6 +109,62 @@ describe('consolidated-ids', () => {
 
       const dye = { itemID: 13114, consolidationType: null };
       expect(getMarketItemID(dye)).toBe(13114);
+    });
+  });
+
+  describe('CONSOLIDATED_DYES', () => {
+    it('exposes the official Patch 7.5 names for all three types', () => {
+      expect(CONSOLIDATED_DYES.A.names.en).toBe('Standard Spectrum Dye');
+      expect(CONSOLIDATED_DYES.B.names.en).toBe('Wide Spectrum #1 Dye');
+      expect(CONSOLIDATED_DYES.C.names.en).toBe('Wide Spectrum #2 Dye');
+    });
+
+    it('exposes procurement metadata for all three types', () => {
+      expect(CONSOLIDATED_DYES.A).toMatchObject({
+        acquisition: 'Dye Vendor',
+        price: 216,
+        currency: 'Gil',
+      });
+      expect(CONSOLIDATED_DYES.B).toMatchObject({
+        acquisition: 'The Firmament',
+        price: 1000,
+        currency: "Sky Builders' Scrips",
+      });
+      expect(CONSOLIDATED_DYES.C).toMatchObject({
+        acquisition: 'Cosmic Exploration',
+        price: 600,
+        currency: 'Cosmocredits',
+      });
+    });
+
+    it('leaves ko/zh names null until translations are sourced', () => {
+      expect(CONSOLIDATED_DYES.A.names.ko).toBeNull();
+      expect(CONSOLIDATED_DYES.A.names.zh).toBeNull();
+      expect(CONSOLIDATED_DYES.B.names.ko).toBeNull();
+      expect(CONSOLIDATED_DYES.B.names.zh).toBeNull();
+      expect(CONSOLIDATED_DYES.C.names.ko).toBeNull();
+      expect(CONSOLIDATED_DYES.C.names.zh).toBeNull();
+    });
+  });
+
+  describe('getConsolidatedDyeName', () => {
+    it('returns the requested locale when available', () => {
+      expect(getConsolidatedDyeName('A', 'en')).toBe('Standard Spectrum Dye');
+      expect(getConsolidatedDyeName('A', 'ja')).toBe('カララント:ノーマルカラー');
+      expect(getConsolidatedDyeName('A', 'de')).toBe('Einfacher Farbstoff');
+      expect(getConsolidatedDyeName('A', 'fr')).toBe('Teinture standard');
+    });
+
+    it('falls back to English when the requested locale is null (ko/zh today)', () => {
+      expect(getConsolidatedDyeName('A', 'ko')).toBe('Standard Spectrum Dye');
+      expect(getConsolidatedDyeName('B', 'zh')).toBe('Wide Spectrum #1 Dye');
+      expect(getConsolidatedDyeName('C', 'ko')).toBe('Wide Spectrum #2 Dye');
+    });
+
+    it('handles all three consolidation types', () => {
+      expect(getConsolidatedDyeName('A', 'fr')).toBe('Teinture standard');
+      expect(getConsolidatedDyeName('B', 'fr')).toBe('Teinture additionnelle n°1');
+      expect(getConsolidatedDyeName('C', 'fr')).toBe('Teinture additionnelle n°2');
     });
   });
 });

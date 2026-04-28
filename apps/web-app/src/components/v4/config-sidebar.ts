@@ -11,13 +11,12 @@
  * @module components/v4/config-sidebar
  */
 
-import { html, css, CSSResultGroup, TemplateResult, nothing } from 'lit';
+import { html, css, CSSResultGroup, TemplateResult } from 'lit';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { customElement, property, state } from 'lit/decorators.js';
 import { BaseLitComponent } from './base-lit-component';
 import { ConfigController } from '@services/config-controller';
 import { authService, LanguageService, CollectionService } from '@services/index';
-import { MarketBoardService, type PriceCategorySettings } from '@services/market-board-service';
 import { StorageService } from '@services/storage-service';
 import { TutorialService } from '@services/tutorial-service';
 import type { ToolId } from '@services/router-service';
@@ -235,15 +234,6 @@ export class ConfigSidebar extends BaseLitComponent {
   // Collapsible section state
   @state() private marketBoardCollapsed: boolean = false;
   @state() private advancedSettingsCollapsed: boolean = true; // Collapsed by default
-
-  // Price category filter settings (from MarketBoardService)
-  @state() private priceCategories: PriceCategorySettings = {
-    baseDyes: false,
-    craftDyes: false,
-    alliedSocietyDyes: true,
-    cosmicDyes: true,
-    specialDyes: true,
-  };
 
   // Advanced settings config
   @state() private advancedConfig: AdvancedConfig = { ...DEFAULT_CONFIGS.advanced };
@@ -787,10 +777,6 @@ export class ConfigSidebar extends BaseLitComponent {
     this.swatchConfig = this.configController.getConfig('swatch');
     this.marketConfig = this.configController.getConfig('market');
     this.advancedConfig = this.configController.getConfig('advanced');
-
-    // Load price categories from MarketBoardService
-    const marketBoardService = MarketBoardService.getInstance();
-    this.priceCategories = marketBoardService.getPriceCategories();
   }
 
   /**
@@ -983,21 +969,6 @@ export class ConfigSidebar extends BaseLitComponent {
       this.configController.setConfig('advanced', { [key]: value });
     }
     this.emit('config-change', { tool: 'advanced', key, value });
-  }
-
-  /**
-   * Handle price category toggle changes
-   * Updates MarketBoardService and triggers re-fetch of prices
-   */
-  private handlePriceCategoryChange(key: keyof PriceCategorySettings, value: boolean): void {
-    // Update local state
-    this.priceCategories = { ...this.priceCategories, [key]: value };
-
-    // Update MarketBoardService (which persists to localStorage and emits events)
-    const marketBoardService = MarketBoardService.getInstance();
-    marketBoardService.setCategories({ [key]: value });
-
-    logger.info(`[ConfigSidebar] Price category ${key} set to ${value}`);
   }
 
   /**
@@ -2106,53 +2077,6 @@ export class ConfigSidebar extends BaseLitComponent {
                     `
                   )}
             </select>
-            ${this.marketConfig.showPrices
-              ? html`
-                  <div class="config-label" style="margin-top: 16px; margin-bottom: 8px;">
-                    ${LanguageService.t('marketBoard.priceCategories')}
-                  </div>
-                  <div class="config-row">
-                    <v4-toggle-switch
-                      label=${LanguageService.t('marketBoard.baseDyes')}
-                      .checked=${this.priceCategories.baseDyes}
-                      @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                        this.handlePriceCategoryChange('baseDyes', e.detail.checked)}
-                    ></v4-toggle-switch>
-                  </div>
-                  <div class="config-row">
-                    <v4-toggle-switch
-                      label=${LanguageService.t('marketBoard.craftDyes')}
-                      .checked=${this.priceCategories.craftDyes}
-                      @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                        this.handlePriceCategoryChange('craftDyes', e.detail.checked)}
-                    ></v4-toggle-switch>
-                  </div>
-                  <div class="config-row">
-                    <v4-toggle-switch
-                      label=${LanguageService.t('marketBoard.alliedSocietyDyes')}
-                      .checked=${this.priceCategories.alliedSocietyDyes}
-                      @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                        this.handlePriceCategoryChange('alliedSocietyDyes', e.detail.checked)}
-                    ></v4-toggle-switch>
-                  </div>
-                  <div class="config-row">
-                    <v4-toggle-switch
-                      label=${LanguageService.t('marketBoard.cosmicDyes')}
-                      .checked=${this.priceCategories.cosmicDyes}
-                      @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                        this.handlePriceCategoryChange('cosmicDyes', e.detail.checked)}
-                    ></v4-toggle-switch>
-                  </div>
-                  <div class="config-row">
-                    <v4-toggle-switch
-                      label=${LanguageService.t('marketBoard.specialDyes')}
-                      .checked=${this.priceCategories.specialDyes}
-                      @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                        this.handlePriceCategoryChange('specialDyes', e.detail.checked)}
-                    ></v4-toggle-switch>
-                  </div>
-                `
-              : nothing}
             <div class="config-description">
               ${LanguageService.tInterpolate('config.pricesFetchedFrom', {
                 server: this.marketConfig.selectedServer,

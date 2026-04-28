@@ -23,16 +23,8 @@ const { mockMarketBoardService } = vi.hoisted(() => ({
   mockMarketBoardService: {
     getSelectedServer: vi.fn().mockReturnValue('Aether'),
     getShowPrices: vi.fn().mockReturnValue(true),
-    getPriceCategories: vi.fn().mockReturnValue({
-      baseDyes: true,
-      craftDyes: true,
-      alliedSocietyDyes: false,
-      cosmicDyes: false,
-      specialDyes: false,
-    }),
     setServer: vi.fn(),
     setShowPrices: vi.fn(),
-    setCategories: vi.fn(),
     shouldFetchPrice: vi.fn().mockReturnValue(true),
     fetchPricesForDyes: vi.fn().mockResolvedValue(new Map()),
     refreshPrices: vi.fn().mockResolvedValue(undefined),
@@ -130,12 +122,12 @@ describe('MarketBoard', () => {
       expect(refreshBtn).not.toBeNull();
     });
 
-    it('should render price category checkboxes', () => {
+    it('should not render any price category checkboxes (removed in Patch 7.5)', () => {
       marketBoard = new MarketBoard(container);
       marketBoard.init();
 
       const checkboxes = queryAll(container, '.mb-price-checkbox');
-      expect(checkboxes.length).toBe(5);
+      expect(checkboxes.length).toBe(0);
     });
   });
 
@@ -247,65 +239,6 @@ describe('MarketBoard', () => {
 
       const priceSettings = query(container, '#mb-price-settings');
       expect(priceSettings?.classList.contains('hidden')).toBe(true);
-    });
-  });
-
-  // ============================================================================
-  // Price Categories Tests
-  // ============================================================================
-
-  describe('Price Categories', () => {
-    it('should render baseDyes checkbox', () => {
-      marketBoard = new MarketBoard(container);
-      marketBoard.init();
-
-      const checkbox = query(container, '#mb-price-baseDyes');
-      expect(checkbox).not.toBeNull();
-    });
-
-    it('should render craftDyes checkbox', () => {
-      marketBoard = new MarketBoard(container);
-      marketBoard.init();
-
-      const checkbox = query(container, '#mb-price-craftDyes');
-      expect(checkbox).not.toBeNull();
-    });
-
-    it('should render alliedSocietyDyes checkbox', () => {
-      marketBoard = new MarketBoard(container);
-      marketBoard.init();
-
-      const checkbox = query(container, '#mb-price-alliedSocietyDyes');
-      expect(checkbox).not.toBeNull();
-    });
-
-    it('should call service setCategories on checkbox change', () => {
-      marketBoard = new MarketBoard(container);
-      marketBoard.init();
-
-      const checkbox = query<HTMLInputElement>(container, '#mb-price-baseDyes');
-      if (checkbox) {
-        checkbox.checked = false;
-        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-
-      expect(mockMarketBoardService.setCategories).toHaveBeenCalledWith({ baseDyes: false });
-    });
-
-    it('should emit categories-changed event', () => {
-      marketBoard = new MarketBoard(container);
-      marketBoard.init();
-
-      const eventSpy = vi.fn();
-      container.addEventListener('categories-changed', eventSpy);
-
-      const checkbox = query<HTMLInputElement>(container, '#mb-price-baseDyes');
-      if (checkbox) {
-        checkbox.checked = false;
-        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-
-      expect(eventSpy).toHaveBeenCalled();
     });
   });
 
@@ -436,14 +369,6 @@ describe('MarketBoard', () => {
       expect(marketBoard.getShowPrices()).toBe(true);
     });
 
-    it('should return price categories', () => {
-      marketBoard = new MarketBoard(container);
-      marketBoard.init();
-
-      const categories = marketBoard.getPriceCategories();
-      expect(categories.baseDyes).toBe(true);
-    });
-
     it('should set server programmatically', () => {
       marketBoard = new MarketBoard(container);
       marketBoard.init();
@@ -474,17 +399,6 @@ describe('MarketBoard', () => {
 
       const label = query(container, 'label[for="mb-server-select"]');
       expect(label).not.toBeNull();
-    });
-
-    it('should have labels for category checkboxes', () => {
-      marketBoard = new MarketBoard(container);
-      marketBoard.init();
-
-      const checkboxes = queryAll<HTMLInputElement>(container, '.mb-price-checkbox');
-      checkboxes.forEach((checkbox) => {
-        const label = query(container, `label[for="${checkbox.id}"]`);
-        expect(label).not.toBeNull();
-      });
     });
   });
 
