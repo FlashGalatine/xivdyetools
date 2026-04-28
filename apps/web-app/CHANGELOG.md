@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.9.0] - 2026-04-28
+
+### Added
+
+- **Market Board**: Patch 7.5 dye consolidation is now active end-to-end — every Type A/B/C dye fetches a single shared price (Standard Spectrum / Wide Spectrum #1 / Wide Spectrum #2) and the existing `getMarketItemID` deduplication fans the 3 consolidated prices back out to all 105 affected dyes
+- **Localization**: 3 new i18n keys translated in all 6 languages: `marketBoard.standardSpectrumDye`, `marketBoard.wideSpectrum1Dye`, `marketBoard.wideSpectrum2Dye` — Korean and Chinese names now match the in-game Patch 7.5 strings
+
+### Changed
+
+- **Market Board**: `MarketBoardService.shouldFetchPrice` policy replaced — was acquisition-category gated, now gates on tradeability: `showPrices && itemID > 0 && (consolidationType === null || isConsolidationActive())`. Pure White, Jet Black, Special-category, and unconsolidated dyes still fetch individually; consolidated dyes pass through `getMarketItemID` deduplication
+- **Market Board**: Refresh button moved out of the (deleted) categories panel and into the price panel directly; the `mb-price-settings` wrapper id is preserved for show/hide toggling
+- Updated `market-board.test.ts` and `market-board-service.test.ts` to cover the new tradeability policy (pre-/post-datamine, Facewear, unconsolidated dyes) and remove category-related expectations
+
+### Removed
+
+- **Market Board**: Entire "Price Categories" UI section (5 acquisition checkboxes for `baseDyes` / `craftDyes` / `alliedSocietyDyes` / `cosmicDyes` / `specialDyes`) — categories are no longer meaningful now that consolidated dyes share market IDs
+- **Market Board**: `PriceCategorySettings` type, `getPriceCategories()` / `setCategories()` methods on `MarketBoardService`, `categories-changed` DOM event, `categories` field on `SettingsChangedEvent`, `pricing-mixin.onCategoriesChanged` callback, and `handlePriceCategoryChange` handler in v4 ConfigSidebar
+- **Constants**: `PRICE_CATEGORIES` export from `shared/constants.ts` (consumed only by the deleted code paths)
+- **Localization**: Dead i18n keys removed from all 6 locale files: `marketBoard.priceCategories`, `marketBoard.baseDyes`, `marketBoard.craftDyes`, `marketBoard.alliedSocietyDyes`, `marketBoard.cosmicDyes`, `marketBoard.specialDyes`
+- Stale `market_board_categories` localStorage key (no longer read or written; will sit harmlessly until the user clears site data)
+
+---
+
 ## [4.8.0] - 2026-04-10
 
 ### Added

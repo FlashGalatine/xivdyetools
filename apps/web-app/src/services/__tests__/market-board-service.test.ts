@@ -395,11 +395,23 @@ describe('MarketBoardService', () => {
     });
 
     it('should filter out consolidated dyes when consolidation IDs are not datamined', async () => {
-      // Pre-patch state: CONSOLIDATED_IDS are null, so consolidated dyes are not tradeable
-      const dyes = [createMockDye({ consolidationType: 'A', itemID: 5729 })];
-      await service.fetchPricesForDyes(dyes);
+      // Pre-patch fallback path: when CONSOLIDATED_IDS are still null, consolidated
+      // dyes have no marketable target and `isConsolidationActive()` returns false,
+      // so MarketBoardService should skip them entirely.
+      const saved = { A: CONSOLIDATED_IDS.A, B: CONSOLIDATED_IDS.B, C: CONSOLIDATED_IDS.C };
+      CONSOLIDATED_IDS.A = null;
+      CONSOLIDATED_IDS.B = null;
+      CONSOLIDATED_IDS.C = null;
+      try {
+        const dyes = [createMockDye({ consolidationType: 'A', itemID: 5729 })];
+        await service.fetchPricesForDyes(dyes);
 
-      expect(mockApiService.getPricesForDataCenter).not.toHaveBeenCalled();
+        expect(mockApiService.getPricesForDataCenter).not.toHaveBeenCalled();
+      } finally {
+        CONSOLIDATED_IDS.A = saved.A;
+        CONSOLIDATED_IDS.B = saved.B;
+        CONSOLIDATED_IDS.C = saved.C;
+      }
     });
 
     it('should return empty Map when showPrices is false', async () => {

@@ -140,13 +140,13 @@ describe('consolidated-ids', () => {
       });
     });
 
-    it('leaves ko/zh names null until translations are sourced', () => {
-      expect(CONSOLIDATED_DYES.A.names.ko).toBeNull();
-      expect(CONSOLIDATED_DYES.A.names.zh).toBeNull();
-      expect(CONSOLIDATED_DYES.B.names.ko).toBeNull();
-      expect(CONSOLIDATED_DYES.B.names.zh).toBeNull();
-      expect(CONSOLIDATED_DYES.C.names.ko).toBeNull();
-      expect(CONSOLIDATED_DYES.C.names.zh).toBeNull();
+    it('exposes ko/zh names for all three consolidated types', () => {
+      expect(CONSOLIDATED_DYES.A.names.ko).toBe('염료: 기본 색상');
+      expect(CONSOLIDATED_DYES.A.names.zh).toBe('通用染剂');
+      expect(CONSOLIDATED_DYES.B.names.ko).toBe('염료: 추가 색상 1');
+      expect(CONSOLIDATED_DYES.B.names.zh).toBe('追加染剂1');
+      expect(CONSOLIDATED_DYES.C.names.ko).toBe('염료: 추가 색상 2');
+      expect(CONSOLIDATED_DYES.C.names.zh).toBe('追加染剂2');
     });
   });
 
@@ -158,10 +158,25 @@ describe('consolidated-ids', () => {
       expect(getConsolidatedDyeName('A', 'fr')).toBe('Teinture standard');
     });
 
-    it('falls back to English when the requested locale is null (ko/zh today)', () => {
-      expect(getConsolidatedDyeName('A', 'ko')).toBe('Standard Spectrum Dye');
-      expect(getConsolidatedDyeName('B', 'zh')).toBe('Wide Spectrum #1 Dye');
-      expect(getConsolidatedDyeName('C', 'ko')).toBe('Wide Spectrum #2 Dye');
+    it('returns localized ko/zh names', () => {
+      expect(getConsolidatedDyeName('A', 'ko')).toBe('염료: 기본 색상');
+      expect(getConsolidatedDyeName('A', 'zh')).toBe('通用染剂');
+      expect(getConsolidatedDyeName('B', 'ko')).toBe('염료: 추가 색상 1');
+      expect(getConsolidatedDyeName('B', 'zh')).toBe('追加染剂1');
+      expect(getConsolidatedDyeName('C', 'ko')).toBe('염료: 추가 색상 2');
+      expect(getConsolidatedDyeName('C', 'zh')).toBe('追加染剂2');
+    });
+
+    it('falls back to English when a locale entry is null', () => {
+      // Safety-hatch coverage: future consolidation patches may ship with
+      // unsourced ko/zh, so the `?? names.en` branch must keep working.
+      const originalKo = CONSOLIDATED_DYES.A.names.ko;
+      CONSOLIDATED_DYES.A.names.ko = null;
+      try {
+        expect(getConsolidatedDyeName('A', 'ko')).toBe('Standard Spectrum Dye');
+      } finally {
+        CONSOLIDATED_DYES.A.names.ko = originalKo;
+      }
     });
 
     it('handles all three consolidation types', () => {

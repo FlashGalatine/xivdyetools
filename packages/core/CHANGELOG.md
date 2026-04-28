@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-04-28
+
+### Added
+
+- `CONSOLIDATED_DYES` config — full metadata for the three Patch 7.5 consolidated dye items: itemID, localized names in all 6 languages, acquisition source, price, currency
+- `getConsolidatedDyeName(type, locale)` helper — returns the localized name; the `?? names.en` fallback is retained as a safety hatch for any future unsourced locale strings
+- New types `ConsolidationType`, `ConsolidatedDye`, `LocalizedDyeName` exported from package index
+- Korean and Chinese names for all three consolidated dyes (Standard Spectrum Dye / Wide Spectrum #1 Dye / Wide Spectrum #2 Dye)
+- 6 unit tests covering `CONSOLIDATED_DYES` shape (en + ko/zh), localized name lookup, mocked-null fallback coverage, and itemID propagation from `CONSOLIDATED_IDS`
+
+### Changed
+
+- **Patch 7.5 dye consolidation is now active**: `CONSOLIDATED_IDS` populated with real itemIDs (A=52254 Standard Spectrum Dye, B=52255 Wide Spectrum #1 Dye, C=52256 Wide Spectrum #2 Dye). `isConsolidationActive()` now returns `true`, and `getMarketItemID()` collapses every consolidated dye to its 1-of-3 market ID
+
+---
+
 ## [2.4.0] - 2026-04-03
 
 ### Added

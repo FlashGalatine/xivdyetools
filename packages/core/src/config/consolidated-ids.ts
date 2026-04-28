@@ -1,8 +1,9 @@
 /**
- * Consolidated dye configuration for Patch 7.5.
+ * Consolidated dye configuration for Patch 7.5 (TRAIL TO THE HEAVENS, 2026-04-28).
  *
- * PATCH DAY (2026-04-28): Replace null itemIDs with real values from datamining.
- * Korean and Chinese localized names should be filled in alongside as they're sourced.
+ * itemIDs (52254 / 52255 / 52256) and all six localized names are populated.
+ * The `ko: string | null` / `zh: string | null` types are kept as a safety hatch
+ * for future consolidation patches that may ship before localized names are sourced.
  */
 
 import type { LocaleCode } from '@xivdyetools/types';
@@ -11,8 +12,8 @@ export type ConsolidationType = 'A' | 'B' | 'C';
 
 /**
  * Localized name for a consolidated dye.
- * `ko` and `zh` start as `null` until translations are sourced — `getConsolidatedDyeName`
- * falls back to English in that case.
+ * `ko` and `zh` are typed as nullable so future unsourced patches can ship with
+ * `null` placeholders; `getConsolidatedDyeName` falls back to English in that case.
  */
 export interface LocalizedDyeName {
   en: string;
@@ -49,8 +50,8 @@ export const CONSOLIDATED_DYES: Record<ConsolidationType, ConsolidatedDye> = {
       ja: 'カララント:ノーマルカラー',
       de: 'Einfacher Farbstoff',
       fr: 'Teinture standard',
-      ko: null,
-      zh: null,
+      ko: '염료: 기본 색상',
+      zh: '通用染剂',
     },
     acquisition: 'Dye Vendor',
     price: 216,
@@ -63,8 +64,8 @@ export const CONSOLIDATED_DYES: Record<ConsolidationType, ConsolidatedDye> = {
       ja: 'カララント:アディショナルカラー1',
       de: 'Zusatzfarbstoff 1',
       fr: 'Teinture additionnelle n°1',
-      ko: null,
-      zh: null,
+      ko: '염료: 추가 색상 1',
+      zh: '追加染剂1',
     },
     acquisition: 'The Firmament',
     price: 1000,
@@ -77,8 +78,8 @@ export const CONSOLIDATED_DYES: Record<ConsolidationType, ConsolidatedDye> = {
       ja: 'カララント:アディショナルカラー2',
       de: 'Zusatzfarbstoff 2',
       fr: 'Teinture additionnelle n°2',
-      ko: null,
-      zh: null,
+      ko: '염료: 추가 색상 2',
+      zh: '追加染剂2',
     },
     acquisition: 'Cosmic Exploration',
     price: 600,
@@ -118,7 +119,7 @@ export function getMarketItemID(dye: {
 /**
  * Get the localized display name for a consolidated dye.
  * Falls back to English when the requested locale's translation is `null`
- * (currently the case for `ko` and `zh` until names are sourced).
+ * (a safety hatch for any future unsourced ko/zh strings; not exercised today).
  */
 export function getConsolidatedDyeName(type: ConsolidationType, locale: LocaleCode): string {
   const names = CONSOLIDATED_DYES[type].names;
