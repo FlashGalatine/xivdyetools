@@ -20,7 +20,7 @@ export const EXPENSIVE_DYE_IDS: readonly number[] = [13114, 13115];
 export const VENDOR_ACQUISITIONS: readonly string[] = ['Dye Vendor'];
 
 /** Acquisition strings for crafted dyes */
-export const CRAFT_ACQUISITIONS: readonly string[] = ['Crafting', 'Treasure Chest'];
+export const CRAFT_ACQUISITIONS: readonly string[] = ['The Firmament', 'Venture Coffers'];
 
 /** Acquisition strings for allied society dyes */
 export const ALLIED_SOCIETY_ACQUISITIONS: readonly string[] = [

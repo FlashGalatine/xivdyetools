@@ -54,9 +54,9 @@ describe('DyeFilter constants', () => {
     expect(VENDOR_ACQUISITIONS).toContain('Dye Vendor');
   });
 
-  it('CRAFT_ACQUISITIONS contains Crafting and Treasure Chest', () => {
-    expect(CRAFT_ACQUISITIONS).toContain('Crafting');
-    expect(CRAFT_ACQUISITIONS).toContain('Treasure Chest');
+  it('CRAFT_ACQUISITIONS contains The Firmament and Venture Coffers', () => {
+    expect(CRAFT_ACQUISITIONS).toContain('The Firmament');
+    expect(CRAFT_ACQUISITIONS).toContain('Venture Coffers');
   });
 
   it('ALLIED_SOCIETY_ACQUISITIONS contains all 5 vendors', () => {
@@ -135,13 +135,13 @@ describe('isDyeExcluded', () => {
   it('excludes vendor dyes', () => {
     const filters: DyeTypeFilters = { excludeVendorDyes: true };
     expect(isDyeExcluded(filters, makeDye({ acquisition: 'Dye Vendor' }))).toBe(true);
-    expect(isDyeExcluded(filters, makeDye({ acquisition: 'Crafting' }))).toBe(false);
+    expect(isDyeExcluded(filters, makeDye({ acquisition: 'The Firmament' }))).toBe(false);
   });
 
   it('excludes craft dyes', () => {
     const filters: DyeTypeFilters = { excludeCraftDyes: true };
-    expect(isDyeExcluded(filters, makeDye({ acquisition: 'Crafting' }))).toBe(true);
-    expect(isDyeExcluded(filters, makeDye({ acquisition: 'Treasure Chest' }))).toBe(true);
+    expect(isDyeExcluded(filters, makeDye({ acquisition: 'The Firmament' }))).toBe(true);
+    expect(isDyeExcluded(filters, makeDye({ acquisition: 'Venture Coffers' }))).toBe(true);
     expect(isDyeExcluded(filters, makeDye({ acquisition: 'Dye Vendor' }))).toBe(false);
   });
 
