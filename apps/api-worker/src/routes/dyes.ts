@@ -41,7 +41,7 @@ const dyesRouter = new Hono<{ Bindings: Env; Variables: Variables }>();
 // GET /search — Name search
 // ============================================================================
 
-dyesRouter.get('/search', async (c) => {
+dyesRouter.get('/search', (c) => {
   const q = c.req.query('q');
   if (!q || q.trim() === '') {
     throw new ApiError(ErrorCode.MISSING_PARAMETER, 'Missing required parameter: q', 400, {
@@ -87,7 +87,7 @@ dyesRouter.get('/categories', (c) => {
 // GET /batch — Multi-ID lookup (max 50, mixed types)
 // ============================================================================
 
-dyesRouter.get('/batch', async (c) => {
+dyesRouter.get('/batch', (c) => {
   const ids = parseCommaSeparatedIds(c.req.query('ids'), 'ids', 50);
   const idType = parseEnumParam(c.req.query('idType'), 'idType', ['auto', 'item', 'stain'] as const, 'auto');
   const locale = parseLocale(c.req.query('locale'));
@@ -158,7 +158,7 @@ dyesRouter.get('/consolidation-groups', (c) => {
 // GET /stain/:stainId — Explicit stainID lookup
 // ============================================================================
 
-dyesRouter.get('/stain/:stainId', async (c) => {
+dyesRouter.get('/stain/:stainId', (c) => {
   const raw = c.req.param('stainId');
   const stainId = parseInt(raw, 10);
 
@@ -189,7 +189,7 @@ dyesRouter.get('/stain/:stainId', async (c) => {
 // GET /:id — Single dye lookup (auto-detect ID type)
 // ============================================================================
 
-dyesRouter.get('/:id', async (c) => {
+dyesRouter.get('/:id', (c) => {
   const raw = c.req.param('id');
   const id = parseInt(raw, 10);
 
@@ -225,7 +225,7 @@ dyesRouter.get('/:id', async (c) => {
 // GET / — List all dyes with filtering, sorting, and pagination
 // ============================================================================
 
-dyesRouter.get('/', async (c) => {
+dyesRouter.get('/', (c) => {
   const locale = parseLocale(c.req.query('locale'));
   const category = c.req.query('category');
   const excludeIdsRaw = c.req.query('excludeIds');

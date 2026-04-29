@@ -2,6 +2,14 @@
 
 All notable changes to `@xivdyetools/worker-middleware` will be documented in this file.
 
+## [1.1.2] — 2026-04-29
+
+### Fixed
+
+- **LINT-FIX** (REFACTOR-003 follow-up): Made `getLogger` and `getRequestId` generic over Hono's `Context<E, P, I>`, with constraint-type defaults (`E extends Env = Env`, `P extends string = string`, `I extends Input = Input`). The 1.1.1 refactor to a bare `Context` parameter caused `@typescript-eslint/no-unsafe-argument` to fire on `presets-api/src/index.ts:61` because that worker extends `MiddlewareVariables` with `& { auth: AuthContext }`, and the resulting intersection prevents TS from reducing the third generic position cleanly. Forwarding generics preserves the caller's exact context shape end-to-end. Defaults use the constraint types themselves (rather than `any`/`{}`) so the helpers comply with `no-explicit-any` and `no-empty-object-type` without disable comments. No behavioral change for any real call site (defaults only matter when a caller explicitly omits inference). Resolves CI run #66700292576 lint failure.
+
+---
+
 ## [1.1.1] — 2026-04-29
 
 ### Changed

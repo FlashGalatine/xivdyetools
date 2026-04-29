@@ -32,7 +32,7 @@ const matchRouter = new Hono<{ Bindings: Env; Variables: Variables }>();
 // GET /closest — Find the single closest dye to a hex color
 // ============================================================================
 
-matchRouter.get('/closest', async (c) => {
+matchRouter.get('/closest', (c) => {
   const hex = parseHex(c.req.query('hex'));
   const method = parseMatchingMethod(c.req.query('method'));
   const locale = parseLocale(c.req.query('locale'));
@@ -93,7 +93,7 @@ matchRouter.get('/closest', async (c) => {
 // GET /within-distance — Find all dyes within a distance threshold
 // ============================================================================
 
-matchRouter.get('/within-distance', async (c) => {
+matchRouter.get('/within-distance', (c) => {
   const hex = parseHex(c.req.query('hex'));
   const maxDistance = parseFloatParam(c.req.query('maxDistance'), 'maxDistance', { min: 0.01 });
   const method = parseMatchingMethod(c.req.query('method'));

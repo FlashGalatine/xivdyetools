@@ -15,7 +15,7 @@
  * @module request-id
  */
 
-import type { Context, MiddlewareHandler } from 'hono';
+import type { Context, Env, Input, MiddlewareHandler } from 'hono';
 
 /**
  * UUID v4 regex pattern for validating request IDs.
@@ -89,10 +89,16 @@ export function requestIdMiddleware(options?: RequestIdOptions): MiddlewareHandl
  * });
  * ```
  */
-// REFACTOR-003 (2026-04-28 audit): Use Hono's standard Context type and let
-// the ContextVariableMap augmentation in types.ts resolve the 'requestId' key.
-// Callers retain their narrow Bindings/Variables typing through this helper.
-export function getRequestId(c: Context): string {
+// REFACTOR-003 + LINT-FIX (2026-04-29): see logger.ts for rationale.
+// Forwarding generics with constraint-type defaults (Env / string / Input)
+// preserve the caller's Context shape so @typescript-eslint/no-unsafe-argument
+// doesn't fire on narrowly-typed callers. ContextVariableMap augmentation
+// resolves the 'requestId' key independently of these generics.
+export function getRequestId<
+  E extends Env = Env,
+  P extends string = string,
+  I extends Input = Input,
+>(c: Context<E, P, I>): string {
   try {
     return c.get('requestId') || 'unknown';
   } catch {

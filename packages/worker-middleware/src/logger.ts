@@ -12,7 +12,7 @@
  * @module logger
  */
 
-import type { Context, MiddlewareHandler } from 'hono';
+import type { Context, Env, Input, MiddlewareHandler } from 'hono';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { createRequestLogger } from '@xivdyetools/logger/worker';
 
@@ -172,10 +172,20 @@ export function loggerMiddleware(options: LoggerMiddlewareOptions): MiddlewareHa
  * });
  * ```
  */
-// REFACTOR-003 (2026-04-28 audit): Use Hono's standard Context type and let
-// the ContextVariableMap augmentation in types.ts resolve the 'logger' key.
-// Callers retain their narrow Bindings/Variables typing through this helper.
-export function getLogger(c: Context): ExtendedLogger | undefined {
+// REFACTOR-003 + LINT-FIX (2026-04-29): Forwarding generics over Hono's
+// `Context<E, P, I>` preserves the caller's exact context shape end-to-end
+// instead of widening to a bare `Context`. This avoids
+// @typescript-eslint/no-unsafe-argument on narrowly-typed callers (e.g.
+// presets-api's `MiddlewareVariables & { auth: AuthContext }`) without
+// resorting to `Context<any, any, any>`. Defaults use Hono's constraint
+// types (Env / string / Input) so we don't introduce explicit `any` or
+// `{}` for our defaults to trip on. The ContextVariableMap augmentation
+// in types.ts resolves the 'logger' key independently of these generics.
+export function getLogger<
+  E extends Env = Env,
+  P extends string = string,
+  I extends Input = Input,
+>(c: Context<E, P, I>): ExtendedLogger | undefined {
   try {
     return c.get('logger');
   } catch {
