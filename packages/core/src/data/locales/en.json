@@ -2,7 +2,7 @@
   "locale": "en",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-04-29T02:31:08.069Z",
+    "generated": "2026-04-29T04:47:06.359Z",
     "dyeCount": 125
   },
   "labels": {
@@ -155,11 +155,6 @@
   "acquisitions": {
     "Dye Vendor": "Dye Vendor",
     "Crafting": "Crafting",
-    "Ixali Vendor": "Ixali Vendor",
-    "Sylphic Vendor": "Sylphic Vendor",
-    "Amalj'aa Vendor": "Amalj'aa Vendor",
-    "Sahagin Vendor": "Sahagin Vendor",
-    "Kobold Vendor": "Kobold Vendor",
     "Cosmic Exploration": "Cosmic Exploration",
     "Cosmic Fortunes": "Cosmic Fortunes",
     "The Firmament": "The Firmament",

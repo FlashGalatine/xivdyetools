@@ -34,8 +34,6 @@ export interface DyeTypeFilters {
   excludeExpensive?: boolean;
   /** Exclude vendor-sold dyes (Dye Vendor) */
   excludeVendorDyes?: boolean;
-  /** Exclude crafted dyes (Crafting, Treasure Chest) */
+  /** Exclude crafted dyes (The Firmament, Venture Coffers) */
   excludeCraftDyes?: boolean;
-  /** Exclude allied society dyes */
-  excludeAlliedSocietyDyes?: boolean;
 }

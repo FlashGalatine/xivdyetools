@@ -2,7 +2,7 @@
   "locale": "fr",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-04-29T02:31:08.077Z",
+    "generated": "2026-04-29T04:47:06.368Z",
     "dyeCount": 125
   },
   "labels": {
@@ -155,11 +155,6 @@
   "acquisitions": {
     "Dye Vendor": "Vendeur de teinture",
     "Crafting": "Artisanat",
-    "Ixali Vendor": "Vendeur ixal",
-    "Sylphic Vendor": "Vendeur sylphe",
-    "Amalj'aa Vendor": "Vendeur amalj'aa",
-    "Sahagin Vendor": "Vendeur sahuagin",
-    "Kobold Vendor": "Vendeur kobold",
     "Cosmic Exploration": "l'exploration cosmique",
     "Cosmic Fortunes": "Roue de la fortune cosmique",
     "The Firmament": "Azurée",

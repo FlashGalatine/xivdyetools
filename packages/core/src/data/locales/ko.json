@@ -2,7 +2,7 @@
   "locale": "ko",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-04-29T02:31:08.080Z",
+    "generated": "2026-04-29T04:47:06.369Z",
     "dyeCount": 125
   },
   "labels": {
@@ -155,11 +155,6 @@
   "acquisitions": {
     "Dye Vendor": "염료 판매상",
     "Crafting": "제작",
-    "Ixali Vendor": "익살 상인",
-    "Sylphic Vendor": "실프 상인",
-    "Amalj'aa Vendor": "아말쟈 상인",
-    "Sahagin Vendor": "사하긴 상인",
-    "Kobold Vendor": "코볼드 상인",
     "Cosmic Exploration": "코스모 탐사",
     "Cosmic Fortunes": "코스모 행운",
     "The Firmament": "창천 거리",

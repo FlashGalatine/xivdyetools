@@ -1234,11 +1234,6 @@ const PRICE_CATEGORIES = {
         acquisitions: ['Crafting', 'Treasure Chest'],
         default: true
     },
-    'alliedSocietyDyes': {
-        name: 'Allied Society Dyes',
-        acquisitions: ['Amalj\'aa Vendor', 'Ixali Vendor', 'Sahagin Vendor', 'Kobold Vendor', 'Sylphic Vendor'],
-        default: false
-    },
     'cosmicDyes': {
         name: 'Cosmic Dyes',
         acquisitions: ['Cosmic Exploration', 'Cosmic Fortunes'],
@@ -1282,13 +1277,6 @@ function shouldFetchPrice(dye) {
     const craftCheckbox = document.getElementById('mb-price-craft');
     if (craftCheckbox && craftCheckbox.checked &&
         PRICE_CATEGORIES.craftDyes.acquisitions.includes(dye.acquisition)) {
-        return true;
-    }
-
-    // Check Allied Society Dyes (formerly "Beast Tribe Dyes")
-    const alliedCheckbox = document.getElementById('mb-price-allied');
-    if (alliedCheckbox && alliedCheckbox.checked &&
-        PRICE_CATEGORIES.alliedSocietyDyes.acquisitions.includes(dye.acquisition)) {
         return true;
     }
 

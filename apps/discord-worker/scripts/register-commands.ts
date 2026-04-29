@@ -597,12 +597,6 @@ const commands = [
                 type: OptionType.BOOLEAN,
                 required: false,
               },
-              {
-                name: 'allied_society',
-                description: 'Exclude allied society dyes',
-                type: OptionType.BOOLEAN,
-                required: false,
-              },
             ],
           },
           {

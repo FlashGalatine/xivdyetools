@@ -718,8 +718,7 @@
     "resetFilters": "Reset Filters",
     "acquisitionSource": "Acquisition Source",
     "excludeVendorDyes": "Exclude Vendor Dyes",
-    "excludeCraftDyes": "Exclude Crafted Dyes",
-    "excludeAlliedSocietyDyes": "Exclude Allied Society Dyes"
+    "excludeCraftDyes": "Exclude Crafted Dyes"
   },
   "marketBoard": {
     "title": "Market Board",

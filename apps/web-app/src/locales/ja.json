@@ -718,8 +718,7 @@
     "resetFilters": "フィルターをリセット",
     "acquisitionSource": "入手方法",
     "excludeVendorDyes": "ショップ販売カララントを除外",
-    "excludeCraftDyes": "クラフトカララントを除外",
-    "excludeAlliedSocietyDyes": "蛮族カララントを除外"
+    "excludeCraftDyes": "クラフトカララントを除外"
   },
   "marketBoard": {
     "title": "マーケットボード",

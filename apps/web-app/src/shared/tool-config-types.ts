@@ -297,7 +297,6 @@ export const DEFAULT_DYE_FILTERS: DyeFiltersConfig = {
   excludeExpensive: false,
   excludeVendorDyes: false,
   excludeCraftDyes: false,
-  excludeAlliedSocietyDyes: false,
 };
 
 // ============================================================================

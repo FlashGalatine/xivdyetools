@@ -105,16 +105,6 @@ describe('isDyeExcluded', () => {
     expect(isDyeExcluded(config, makeDye({ acquisition: 'Dye Vendor' }))).toBe(false);
   });
 
-  it('excludes allied society dyes when excludeAlliedSocietyDyes is true', () => {
-    const config = filtersWith({ excludeAlliedSocietyDyes: true });
-    expect(isDyeExcluded(config, makeDye({ acquisition: "Amalj'aa Vendor" }))).toBe(true);
-    expect(isDyeExcluded(config, makeDye({ acquisition: 'Ixali Vendor' }))).toBe(true);
-    expect(isDyeExcluded(config, makeDye({ acquisition: 'Sahagin Vendor' }))).toBe(true);
-    expect(isDyeExcluded(config, makeDye({ acquisition: 'Kobold Vendor' }))).toBe(true);
-    expect(isDyeExcluded(config, makeDye({ acquisition: 'Sylphic Vendor' }))).toBe(true);
-    expect(isDyeExcluded(config, makeDye({ acquisition: 'Dye Vendor' }))).toBe(false);
-  });
-
   it('applies multiple filters simultaneously', () => {
     const config = filtersWith({ excludeMetallic: true, excludeDark: true });
     // Metallic → excluded
@@ -195,7 +185,6 @@ describe('hasActiveFilters', () => {
     expect(hasActiveFilters(filtersWith({ excludeExpensive: true }))).toBe(true);
     expect(hasActiveFilters(filtersWith({ excludeVendorDyes: true }))).toBe(true);
     expect(hasActiveFilters(filtersWith({ excludeCraftDyes: true }))).toBe(true);
-    expect(hasActiveFilters(filtersWith({ excludeAlliedSocietyDyes: true }))).toBe(true);
   });
 
   it('returns true when multiple filters are on', () => {

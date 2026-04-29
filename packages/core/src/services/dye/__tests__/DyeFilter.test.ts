@@ -6,7 +6,6 @@ import {
   EXPENSIVE_DYE_IDS,
   VENDOR_ACQUISITIONS,
   CRAFT_ACQUISITIONS,
-  ALLIED_SOCIETY_ACQUISITIONS,
 } from '../DyeFilter.js';
 import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
 
@@ -58,15 +57,6 @@ describe('DyeFilter constants', () => {
     expect(CRAFT_ACQUISITIONS).toContain('The Firmament');
     expect(CRAFT_ACQUISITIONS).toContain('Venture Coffers');
   });
-
-  it('ALLIED_SOCIETY_ACQUISITIONS contains all 5 vendors', () => {
-    expect(ALLIED_SOCIETY_ACQUISITIONS).toHaveLength(5);
-    expect(ALLIED_SOCIETY_ACQUISITIONS).toContain("Amalj'aa Vendor");
-    expect(ALLIED_SOCIETY_ACQUISITIONS).toContain('Ixali Vendor');
-    expect(ALLIED_SOCIETY_ACQUISITIONS).toContain('Sahagin Vendor');
-    expect(ALLIED_SOCIETY_ACQUISITIONS).toContain('Kobold Vendor');
-    expect(ALLIED_SOCIETY_ACQUISITIONS).toContain('Sylphic Vendor');
-  });
 });
 
 // ---------------------------------------------------------------------------
@@ -88,7 +78,6 @@ describe('isDyeExcluded', () => {
       excludeExpensive: false,
       excludeVendorDyes: false,
       excludeCraftDyes: false,
-      excludeAlliedSocietyDyes: false,
     };
     expect(isDyeExcluded(filters, makeDye())).toBe(false);
   });
@@ -142,16 +131,6 @@ describe('isDyeExcluded', () => {
     const filters: DyeTypeFilters = { excludeCraftDyes: true };
     expect(isDyeExcluded(filters, makeDye({ acquisition: 'The Firmament' }))).toBe(true);
     expect(isDyeExcluded(filters, makeDye({ acquisition: 'Venture Coffers' }))).toBe(true);
-    expect(isDyeExcluded(filters, makeDye({ acquisition: 'Dye Vendor' }))).toBe(false);
-  });
-
-  it('excludes allied society dyes', () => {
-    const filters: DyeTypeFilters = { excludeAlliedSocietyDyes: true };
-    expect(isDyeExcluded(filters, makeDye({ acquisition: "Amalj'aa Vendor" }))).toBe(true);
-    expect(isDyeExcluded(filters, makeDye({ acquisition: 'Ixali Vendor' }))).toBe(true);
-    expect(isDyeExcluded(filters, makeDye({ acquisition: 'Sahagin Vendor' }))).toBe(true);
-    expect(isDyeExcluded(filters, makeDye({ acquisition: 'Kobold Vendor' }))).toBe(true);
-    expect(isDyeExcluded(filters, makeDye({ acquisition: 'Sylphic Vendor' }))).toBe(true);
     expect(isDyeExcluded(filters, makeDye({ acquisition: 'Dye Vendor' }))).toBe(false);
   });
 
@@ -239,7 +218,6 @@ describe('hasActiveFilters', () => {
     expect(hasActiveFilters({ excludeExpensive: true })).toBe(true);
     expect(hasActiveFilters({ excludeVendorDyes: true })).toBe(true);
     expect(hasActiveFilters({ excludeCraftDyes: true })).toBe(true);
-    expect(hasActiveFilters({ excludeAlliedSocietyDyes: true })).toBe(true);
   });
 
   it('returns true when mix of true and false', () => {

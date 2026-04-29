@@ -2,7 +2,7 @@
   "locale": "de",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-04-29T02:31:08.075Z",
+    "generated": "2026-04-29T04:47:06.366Z",
     "dyeCount": 125
   },
   "labels": {
@@ -155,11 +155,6 @@
   "acquisitions": {
     "Dye Vendor": "Farbstoffverkäufer",
     "Crafting": "Handwerker",
-    "Ixali Vendor": "Ixal-Händler",
-    "Sylphic Vendor": "Sylphen-Händlerin",
-    "Amalj'aa Vendor": "Amalj'aa-Händler",
-    "Sahagin Vendor": "Sahagin-Händler",
-    "Kobold Vendor": "Kobold-Händler",
     "Cosmic Exploration": "Kosmo-Erkundung",
     "Cosmic Fortunes": "Kosmo-Glück",
     "The Firmament": "Himmelsstadt",

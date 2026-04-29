@@ -1137,7 +1137,6 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
-          .excludeAlliedSocietyDyes=${this.globalDyeFilters.excludeAlliedSocietyDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
             this.handleDyeFiltersChange(e)}
         ></v4-dye-filters>
@@ -1246,7 +1245,6 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
-          .excludeAlliedSocietyDyes=${this.globalDyeFilters.excludeAlliedSocietyDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
             this.handleDyeFiltersChange(e)}
         ></v4-dye-filters>
@@ -1425,7 +1423,6 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
-          .excludeAlliedSocietyDyes=${this.globalDyeFilters.excludeAlliedSocietyDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
             this.handleDyeFiltersChange(e)}
         ></v4-dye-filters>
@@ -1497,7 +1494,6 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
-          .excludeAlliedSocietyDyes=${this.globalDyeFilters.excludeAlliedSocietyDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
             this.handleDyeFiltersChange(e)}
         ></v4-dye-filters>
@@ -1839,7 +1835,6 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
-          .excludeAlliedSocietyDyes=${this.globalDyeFilters.excludeAlliedSocietyDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
             this.handleDyeFiltersChange(e)}
         ></v4-dye-filters>
@@ -1972,7 +1967,6 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
-          .excludeAlliedSocietyDyes=${this.globalDyeFilters.excludeAlliedSocietyDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
             this.handleDyeFiltersChange(e)}
         ></v4-dye-filters>

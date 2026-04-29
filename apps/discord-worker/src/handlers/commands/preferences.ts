@@ -75,7 +75,6 @@ const FILTER_OPTION_KEYS: Array<{ option: string; key: keyof DyeTypeFilters; lab
   { option: 'expensive', key: 'excludeExpensive', label: 'Expensive (Pure White / Jet Black)' },
   { option: 'vendor', key: 'excludeVendorDyes', label: 'Vendor' },
   { option: 'craft', key: 'excludeCraftDyes', label: 'Crafted' },
-  { option: 'allied_society', key: 'excludeAlliedSocietyDyes', label: 'Allied Society' },
 ];
 
 // ============================================================================

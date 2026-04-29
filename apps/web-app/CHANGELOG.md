@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **"Exclude Allied Society Dyes" filter toggle** — the toggle in the v4 config sidebar's Acquisition Source section, the `excludeAlliedSocietyDyes` property on `DyeFiltersV4`, the 6 prop-passing sites in `config-sidebar.ts`, the default-value entry in `tool-config-types.ts`, the corresponding `filters.excludeAlliedSocietyDyes` translation key in all 6 locale JSONs (en/ja/de/fr/ko/zh), and the dead `alliedSocietyDyes` block in `assets/js/shared-components.js`'s `PRICE_CATEGORIES` map. Patch 7.5 dye consolidation collapsed the Allied Society vendor categories out of the dye database; the toggle was already a no-op. Stored localStorage tool configurations referencing this key are silently ignored. Co-removed with `@xivdyetools/types@1.14.0` and `@xivdyetools/core@2.6.0`.
+
 ### Security
 
 - **SEC-001** (2026-04-28 audit): Replaced an `innerHTML` template at [`src/components/auth-button.ts:222`](src/components/auth-button.ts#L222) that interpolated `user.primary_character.name` and `user.primary_character.server` (XIVAuth OAuth response data) into markup. Now built with `createElement` + `textContent` so any HTML-significant characters in those fields are rendered as text. Aligns with the project's documented XSS-prevention rule in `apps/web-app/CLAUDE.md` § Security Patterns; matches the pattern used by the prior fix in `modal-container.ts` (2026-04-07/SEC-002). CSP `script-src 'self'` already mitigates the worst case; this is defense in depth.

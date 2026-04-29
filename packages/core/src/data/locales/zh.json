@@ -2,7 +2,7 @@
   "locale": "zh",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-04-29T02:31:08.081Z",
+    "generated": "2026-04-29T04:47:06.370Z",
     "dyeCount": 125
   },
   "labels": {
@@ -155,11 +155,6 @@
   "acquisitions": {
     "Dye Vendor": "染剂商人",
     "Crafting": "制作",
-    "Ixali Vendor": "鸟人商人",
-    "Sylphic Vendor": "妖精商人",
-    "Amalj'aa Vendor": "阿马尔贾商人",
-    "Sahagin Vendor": "鱼人商人",
-    "Kobold Vendor": "钴铁商人",
     "Cosmic Exploration": "宇宙探索",
     "Cosmic Fortunes": "宇宙幸运",
     "The Firmament": "天穹街",

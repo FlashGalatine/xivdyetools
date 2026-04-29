@@ -65,7 +65,6 @@ vi.mock('@shared/tool-config-types', () => {
     excludeExpensive: false,
     excludeVendorDyes: false,
     excludeCraftDyes: false,
-    excludeAlliedSocietyDyes: false,
   };
   return {
     DEFAULT_DISPLAY_OPTIONS,

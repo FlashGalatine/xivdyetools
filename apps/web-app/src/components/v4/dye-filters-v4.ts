@@ -35,7 +35,7 @@ export interface DyeFiltersChangeDetail {
  * Controls which dye types and acquisition sources are filtered out
  * from tool results. Organized into two collapsible sections:
  * - Dye Types: Metallic, Pastel, Dark, Cosmic, Ishgardian, Expensive
- * - Acquisition Source: Vendor, Craft, Allied Society
+ * - Acquisition Source: Vendor, Craft
  *
  * @fires dye-filters-change - Emits when any filter changes
  *   - `detail.filter`: The filter key that changed
@@ -80,9 +80,6 @@ export class DyeFiltersV4 extends BaseLitComponent {
 
   @property({ type: Boolean, attribute: 'exclude-craft-dyes' })
   excludeCraftDyes: boolean = DEFAULT_DYE_FILTERS.excludeCraftDyes;
-
-  @property({ type: Boolean, attribute: 'exclude-allied-society-dyes' })
-  excludeAlliedSocietyDyes: boolean = DEFAULT_DYE_FILTERS.excludeAlliedSocietyDyes;
 
   // ========== Collapsed State ==========
 
@@ -198,7 +195,6 @@ export class DyeFiltersV4 extends BaseLitComponent {
       excludeExpensive: this.excludeExpensive,
       excludeVendorDyes: this.excludeVendorDyes,
       excludeCraftDyes: this.excludeCraftDyes,
-      excludeAlliedSocietyDyes: this.excludeAlliedSocietyDyes,
     };
   }
 
@@ -345,14 +341,6 @@ export class DyeFiltersV4 extends BaseLitComponent {
               .checked=${this.excludeCraftDyes}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
                 this.handleFilterChange('excludeCraftDyes', e.detail.checked)}
-            ></v4-toggle-switch>
-          </div>
-          <div class="option-row">
-            <v4-toggle-switch
-              label=${LanguageService.t('filters.excludeAlliedSocietyDyes')}
-              .checked=${this.excludeAlliedSocietyDyes}
-              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                this.handleFilterChange('excludeAlliedSocietyDyes', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
         </div>

@@ -740,8 +740,7 @@
     "resetFilters": "重置筛选",
     "acquisitionSource": "获取途径",
     "excludeVendorDyes": "排除商店染剂",
-    "excludeCraftDyes": "排除制作染剂",
-    "excludeAlliedSocietyDyes": "排除友好部族染剂"
+    "excludeCraftDyes": "排除制作染剂"
   },
   "marketBoard": {
     "title": "市场布告板",

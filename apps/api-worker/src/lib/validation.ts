@@ -11,7 +11,6 @@ import {
   EXPENSIVE_DYE_IDS,
   VENDOR_ACQUISITIONS,
   CRAFT_ACQUISITIONS,
-  ALLIED_SOCIETY_ACQUISITIONS,
 } from '@xivdyetools/core';
 import { ApiError, ErrorCode } from './api-error.js';
 import { dyeService } from './services.js';
@@ -313,7 +312,6 @@ export interface DyeQueryFilters {
   ishgardian?: boolean;
   vendor?: boolean;
   craft?: boolean;
-  alliedSociety?: boolean;
   expensive?: boolean;
 }
 
@@ -327,7 +325,6 @@ export function parseDyeFilters(query: (name: string) => string | undefined): Dy
     ishgardian: parseBooleanParam(query('ishgardian')),
     vendor: parseBooleanParam(query('vendor')),
     craft: parseBooleanParam(query('craft')),
-    alliedSociety: parseBooleanParam(query('alliedSociety')),
     expensive: parseBooleanParam(query('expensive')),
   };
 }
@@ -351,10 +348,6 @@ function dyeMatchesFilters(dye: Dye, f: DyeQueryFilters): boolean {
   if (f.craft !== undefined) {
     const isCraft = CRAFT_ACQUISITIONS.includes(dye.acquisition);
     if (isCraft !== f.craft) return false;
-  }
-  if (f.alliedSociety !== undefined) {
-    const isAllied = ALLIED_SOCIETY_ACQUISITIONS.includes(dye.acquisition);
-    if (isAllied !== f.alliedSociety) return false;
   }
   if (f.expensive !== undefined) {
     const isExpensive = EXPENSIVE_DYE_IDS.includes(dye.itemID);

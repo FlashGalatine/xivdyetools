@@ -58,7 +58,6 @@ export {
   EXPENSIVE_DYE_IDS,
   VENDOR_ACQUISITIONS,
   CRAFT_ACQUISITIONS,
-  ALLIED_SOCIETY_ACQUISITIONS,
 } from './services/dye/DyeFilter.js';
 
 export {

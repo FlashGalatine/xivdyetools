@@ -718,8 +718,7 @@
     "resetFilters": "필터 초기화",
     "acquisitionSource": "입수 방법",
     "excludeVendorDyes": "상점 염료 제외",
-    "excludeCraftDyes": "제작 염료 제외",
-    "excludeAlliedSocietyDyes": "우호 부족 염료 제외"
+    "excludeCraftDyes": "제작 염료 제외"
   },
   "marketBoard": {
     "title": "마켓보드",

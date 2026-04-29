@@ -275,7 +275,7 @@ dyesRouter.get('/', async (c) => {
   if (ishgardian !== undefined) results = results.filter((d) => d.isIshgardian === ishgardian);
   if (consolidationType) results = results.filter((d) => d.consolidationType === consolidationType);
 
-  // Acquisition/expense filters (vendor, craft, alliedSociety, expensive)
+  // Acquisition/expense filters (vendor, craft, expensive)
   results = applyDyeFilters(results, dyeFilters);
 
   // Sorting

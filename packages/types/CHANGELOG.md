@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.14.0] — 2026-04-29
+
+### Removed
+
+- **DyeTypeFilters.excludeAlliedSocietyDyes**: The Allied Society dye filter has been removed. All dyes flagged by this filter (Amalj'aa / Ixali / Sahagin / Kobold / Sylphic vendors) no longer exist as distinct acquisition rows in `colors_xiv.json` — the Patch 7.5 dye consolidation collapsed them into the standard Dye Vendor / Firmament / Cosmic Exploration sources. The filter was already a no-op against current data; removing the field eliminates the dead surface. Stored preferences referencing this key are silently ignored.
 
 ### Added
 

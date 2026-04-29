@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **`?alliedSociety=` query parameter** on `/v1/dyes` and `/v1/match` filter inputs, plus the `alliedSociety?: boolean` field on `DyeQueryFilters`. The Allied Society dye category was collapsed out of `colors_xiv.json` by the Patch 7.5 dye consolidation; the filter was already a no-op against current data. Requests that still send `?alliedSociety=true` simply ignore the parameter going forward (no error, just no-op). Co-removed with `@xivdyetools/types@1.14.0` and `@xivdyetools/core@2.6.0`.
+
 ### Added
 
 - **OPT-001** (2026-04-28 audit): New `localeMiddleware` at [`src/middleware/locale.ts`](src/middleware/locale.ts) reads `?locale=` once per request, validates via `parseLocale`, calls `LocalizationService.setLocale(locale)`, and stores the resolved code at `c.var.locale`. Wired into the global chain on `/v1/*`. Eliminates the 7 ad-hoc `await LocalizationService.setLocale(locale)` calls that previously appeared inside route handlers (5 in `routes/dyes.ts`, 2 in `routes/match.ts`) — a single-call-per-request pattern that's cleaner DRY and prevents any new localized route from forgetting to set the locale.

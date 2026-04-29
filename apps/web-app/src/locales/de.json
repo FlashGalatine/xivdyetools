@@ -718,8 +718,7 @@
     "resetFilters": "Filter zurücksetzen",
     "acquisitionSource": "Beschaffungsquelle",
     "excludeVendorDyes": "Händler-Farbstoffe ausschließen",
-    "excludeCraftDyes": "Handwerks-Farbstoffe ausschließen",
-    "excludeAlliedSocietyDyes": "Stämme-Farbstoffe ausschließen"
+    "excludeCraftDyes": "Handwerks-Farbstoffe ausschließen"
   },
   "marketBoard": {
     "title": "Marktbrett",

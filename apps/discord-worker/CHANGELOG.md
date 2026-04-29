@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **`/preferences set allied_society` slash-command option** + the corresponding `excludeAlliedSocietyDyes` mapping row in `preferences.ts`'s `FILTER_OPTIONS` table. Patch 7.5 dye consolidation collapsed the Allied Society vendor categories out of the dye database; the option was a no-op against current data. **Deployment requirement:** `pnpm --filter xivdyetools-discord-worker run register-commands` must be re-run after deploy so the Discord slash-command schema drops the `allied_society` choice. Existing user preferences referencing the removed key are silently ignored. Co-removed with `@xivdyetools/types@1.14.0` and `@xivdyetools/core@2.6.0`.
+
 ### Added
 
 - **ARCH-002 consolidation fan-out integration test** (2026-04-28 audit): New `src/services/budget/consolidation-fanout.test.ts` (3 cases) closes the gap between unit-level coverage of `getMarketItemID` (in `@xivdyetools/core`) and the live budget pipeline:

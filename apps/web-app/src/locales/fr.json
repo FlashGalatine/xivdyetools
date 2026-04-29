@@ -718,8 +718,7 @@
     "resetFilters": "Réinitialiser les Filtres",
     "acquisitionSource": "Source d'Acquisition",
     "excludeVendorDyes": "Exclure les Teintures de Vendeur",
-    "excludeCraftDyes": "Exclure les Teintures Artisanales",
-    "excludeAlliedSocietyDyes": "Exclure les Teintures des Tribus"
+    "excludeCraftDyes": "Exclure les Teintures Artisanales"
   },
   "marketBoard": {
     "title": "Tableau des ventes",

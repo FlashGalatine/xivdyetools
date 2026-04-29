@@ -22,15 +22,6 @@ export const VENDOR_ACQUISITIONS: readonly string[] = ['Dye Vendor'];
 /** Acquisition strings for crafted dyes */
 export const CRAFT_ACQUISITIONS: readonly string[] = ['The Firmament', 'Venture Coffers'];
 
-/** Acquisition strings for allied society dyes */
-export const ALLIED_SOCIETY_ACQUISITIONS: readonly string[] = [
-  "Amalj'aa Vendor",
-  'Ixali Vendor',
-  'Sahagin Vendor',
-  'Kobold Vendor',
-  'Sylphic Vendor',
-];
-
 // ============================================================================
 // Functions
 // ============================================================================
@@ -54,7 +45,6 @@ export function isDyeExcluded(filters: DyeTypeFilters, dye: Dye): boolean {
   // Acquisition-based exclusions
   if (filters.excludeVendorDyes && VENDOR_ACQUISITIONS.includes(dye.acquisition)) return true;
   if (filters.excludeCraftDyes && CRAFT_ACQUISITIONS.includes(dye.acquisition)) return true;
-  if (filters.excludeAlliedSocietyDyes && ALLIED_SOCIETY_ACQUISITIONS.includes(dye.acquisition)) return true;
 
   return false;
 }
@@ -85,7 +75,6 @@ export function hasActiveFilters(filters: DyeTypeFilters): boolean {
     filters.excludeIshgardian ||
     filters.excludeExpensive ||
     filters.excludeVendorDyes ||
-    filters.excludeCraftDyes ||
-    filters.excludeAlliedSocietyDyes
+    filters.excludeCraftDyes
   );
 }
