@@ -38,6 +38,15 @@ export interface RateLimitMiddlewareOptions {
   /**
    * Extract the rate limit key from the Hono context.
    *
+   * **SECURITY (SEC-002, 2026-04-28 audit):** Do NOT derive keys from
+   * client-controlled headers like `X-Forwarded-For`. They can be trivially
+   * spoofed (`X-Forwarded-For: <random>` per request → unlimited quota) and
+   * will silently re-introduce the spoofing class fixed by `BUG-018` /
+   * 2026-04-07/FINDING-006. Use `getClientIp(c.req.raw)` from
+   * `@xivdyetools/rate-limiter` — it prefers Cloudflare's `CF-Connecting-IP`
+   * header (set by the edge, not spoofable) and ignores `X-Forwarded-For`
+   * by default.
+   *
    * Common patterns:
    * - IP-based: `(c) => getClientIp(c.req.raw)`
    * - User-based: `(c) => c.get('userId')`

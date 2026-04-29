@@ -9,8 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **SEC-001** (2026-04-28 audit): Replaced an `innerHTML` template at [`src/components/auth-button.ts:222`](src/components/auth-button.ts#L222) that interpolated `user.primary_character.name` and `user.primary_character.server` (XIVAuth OAuth response data) into markup. Now built with `createElement` + `textContent` so any HTML-significant characters in those fields are rendered as text. Aligns with the project's documented XSS-prevention rule in `apps/web-app/CLAUDE.md` § Security Patterns; matches the pattern used by the prior fix in `modal-container.ts` (2026-04-07/SEC-002). CSP `script-src 'self'` already mitigates the worst case; this is defense in depth.
+
 ### Fixed
 
+- **Test fixture drift (BUG-003 follow-up)**: Updated `src/shared/__tests__/dye-filter-utils.test.ts` to use the post-rename acquisition strings (`'The Firmament'` instead of `'Crafting'`, `'Venture Coffers'` instead of `'Treasure Chest'`). The audit's BUG-003 sweep only covered core fixtures; this web-app test was missed and had been failing locally since `CRAFT_ACQUISITIONS` was updated.
 - **Localization**: `themes.sugarRiot` corrected against official Square Enix client strings (verified via Garland Tools BNpcName 1053586) — German `Sugar Riot` → `Zuckerschock`, Korean spelling `슈가 라이엇` → `슈거 라이엇`. Japanese (`シュガーライオット`) and French (`Sugar Riot`, kept English per official FR client) were already correct; Chinese kept as `Sugar Riot` since patch 7.2 has not yet shipped to the CN client
 
 ### Documentation

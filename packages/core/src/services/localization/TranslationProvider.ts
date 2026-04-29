@@ -19,6 +19,11 @@ import type {
   RaceKey,
   ClanKey,
 } from '@xivdyetools/types';
+import {
+  CONSOLIDATED_DYES,
+  CONSOLIDATED_IDS,
+  type ConsolidationType,
+} from '../../config/consolidated-ids.js';
 import type { LocaleRegistry } from './LocaleRegistry.js';
 
 /**
@@ -96,6 +101,17 @@ export class TranslationProvider {
       const englishData = this.registry.getLocale('en');
       if (englishData?.dyeNames[idStr]) {
         return englishData.dyeNames[idStr];
+      }
+    }
+
+    // BUG-002 (2026-04-28 audit): Patch 7.5 consolidated dye items live in
+    // CONSOLIDATED_DYES, not in the CSV-driven locale registry. Fall back
+    // to that source so a caller asking for "what's the name of itemID
+    // 52254 in ja?" gets "カララント:ノーマルカラー" instead of null.
+    for (const type of ['A', 'B', 'C'] as const satisfies readonly ConsolidationType[]) {
+      if (CONSOLIDATED_IDS[type] === itemID) {
+        const names = CONSOLIDATED_DYES[type].names;
+        return names[locale] ?? names.en;
       }
     }
 

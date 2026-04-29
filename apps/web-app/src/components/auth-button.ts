@@ -212,6 +212,10 @@ export class AuthButton extends BaseComponent {
     header.appendChild(headerUsername);
 
     // Show character info for XIVAuth users
+    // SEC-001 (2026-04-28 audit): build via createElement + textContent so
+    // primary_character.{name,server} from the OAuth response cannot inject
+    // markup. Aligns with the project's documented XSS-prevention rule
+    // (apps/web-app/CLAUDE.md § Security Patterns).
     if (user.auth_provider === 'xivauth' && user.primary_character) {
       const characterInfo = this.createElement('div', {
         className: 'text-xs mt-1 flex items-center gap-1',
@@ -219,7 +223,31 @@ export class AuthButton extends BaseComponent {
           style: 'color: var(--theme-text); opacity: 0.7;',
         },
       });
-      characterInfo.innerHTML = `<span>${user.primary_character.name}</span><span class="opacity-50">@</span><span>${user.primary_character.server}</span>${user.primary_character.verified ? `<span class="text-green-500 ml-1" title="${LanguageService.t('auth.verified')}">✓</span>` : ''}`;
+      const nameSpan = this.createElement('span', {
+        textContent: user.primary_character.name,
+      });
+      const sepSpan = this.createElement('span', {
+        className: 'opacity-50',
+        textContent: '@',
+      });
+      const serverSpan = this.createElement('span', {
+        textContent: user.primary_character.server,
+      });
+      characterInfo.appendChild(nameSpan);
+      characterInfo.appendChild(sepSpan);
+      characterInfo.appendChild(serverSpan);
+
+      if (user.primary_character.verified) {
+        const verifiedSpan = this.createElement('span', {
+          className: 'text-green-500 ml-1',
+          textContent: '✓',
+          attributes: {
+            title: LanguageService.t('auth.verified'),
+          },
+        });
+        characterInfo.appendChild(verifiedSpan);
+      }
+
       header.appendChild(characterInfo);
     }
 

@@ -2,6 +2,15 @@
 
 All notable changes to `@xivdyetools/worker-middleware` will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- **REFACTOR-003** (2026-04-28 audit): Replaced `Context<any, any, any>` in `getLogger` and `getRequestId` with Hono's standard `Context` type. The `ContextVariableMap` augmentation in `types.ts` already registers `requestId` and `logger` globally, so the `any` triple was never needed. Callers now retain their narrow `Bindings` / `Variables` typing through both helpers (a typo'd `c.get('reqIdTypo')` will be caught by tsc rather than silently typed `any`).
+- **SEC-002** (2026-04-28 audit): Strengthened the `keyExtractor` JSDoc on `RateLimitMiddlewareOptions` with an explicit security warning against deriving keys from client-controlled headers like `X-Forwarded-For`. Cross-references `BUG-018` / 2026-04-07/FINDING-006 (the prior library-layer fix). Pure documentation hardening; no API change.
+
+---
+
 ## [1.1.0] — 2026-04-07
 
 ### Added

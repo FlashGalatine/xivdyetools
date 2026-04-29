@@ -13,6 +13,7 @@ import type { Env, Variables } from './types.js';
 // Middleware
 import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-middleware';
 import { rateLimitMiddleware } from './middleware/rate-limit.js';
+import { localeMiddleware } from './middleware/locale.js';
 
 // Routes
 import { dyesRouter } from './routes/dyes.js';
@@ -73,7 +74,12 @@ app.use(
 // 5. Rate limiting on API routes
 app.use('/v1/*', rateLimitMiddleware);
 
-// 6. API version header
+// 6. Locale resolution on API routes (OPT-001 — 2026-04-28 audit)
+//    Reads ?locale= once per request and sets the LocalizationService state
+//    so handlers can call getDyeName() without per-call setLocale().
+app.use('/v1/*', localeMiddleware);
+
+// 7. API version header
 app.use('*', async (c, next) => {
   await next();
   c.header('X-API-Version', c.env.API_VERSION || 'v1');

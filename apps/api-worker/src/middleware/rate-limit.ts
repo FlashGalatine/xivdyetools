@@ -15,17 +15,15 @@ import { rateLimitMiddleware as createRateLimitMiddleware } from '@xivdyetools/w
 import { KVRateLimiter, getClientIp } from '@xivdyetools/rate-limiter';
 import { ErrorCode } from '../lib/api-error.js';
 
-let kvLimiter: KVRateLimiter | null = null;
-
-function getKVLimiter(kv: KVNamespace): KVRateLimiter {
-  if (!kvLimiter) {
-    kvLimiter = new KVRateLimiter({ kv, keyPrefix: 'api:ip:' });
-  }
-  return kvLimiter;
-}
-
+// BUG-004 (2026-04-28 audit): No module-scope singleton — KVRateLimiter
+// construction is cheap (no I/O, just stores the binding reference) and
+// the per-request factory matches the presets-api / oauth pattern. If
+// api-worker ever adds a second KV namespace (multi-tenant rate limits,
+// staging-vs-prod tags), this avoids silently binding to whichever
+// namespace was used first.
 export const rateLimitMiddleware = createRateLimitMiddleware({
-  backend: (c: Context<{ Bindings: Env }>) => getKVLimiter(c.env.RATE_LIMIT),
+  backend: (c: Context<{ Bindings: Env }>) =>
+    new KVRateLimiter({ kv: c.env.RATE_LIMIT, keyPrefix: 'api:ip:' }),
   keyExtractor: (c) => getClientIp(c.req.raw),
   config: {
     maxRequests: 60,

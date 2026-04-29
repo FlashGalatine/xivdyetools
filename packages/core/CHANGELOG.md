@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **BUG-002** (2026-04-28 audit): `TranslationProvider.getDyeName(itemID, locale)` now returns localized names for the three Patch 7.5 consolidated itemIDs (52254 / 52255 / 52256). The CSV-driven locale registry doesn't contain these items (their metadata lives in `CONSOLIDATED_DYES`), so the lookup previously fell off the end and returned `null`. After the locale + English fallbacks, the method now consults `CONSOLIDATED_IDS` / `CONSOLIDATED_DYES` as a last resort. 4 new test cases in `TranslationProvider.test.ts` cover all three Type-A/B/C IDs across multiple locales.
 - **BUG-003** (2026-04-28 audit): Replaced 8 stale `acquisition: 'Crafting'` instances with `'The Firmament'` across four dye test fixture files (`DyeDatabase.test.ts`, `DyeService.test.ts`, `DyeSearch.test.ts`, `HarmonyGenerator.test.ts`). Tests passed today only because no fixture exercised the `excludeCraftDyes` path; a future test that did would have silently false-passed against `'Crafting' !== 'The Firmament'`.
 
 ---

@@ -268,6 +268,32 @@ describe('TranslationProvider', () => {
       expect(name).toBeNull();
     });
 
+    // BUG-002 (2026-04-28 audit): consolidated dye items live in CONSOLIDATED_DYES,
+    // not in the CSV-driven locale registry. The fallback path is exercised here.
+    describe('Patch 7.5 consolidated dye fallback', () => {
+      it('returns localized name for itemID 52254 (Type-A) in ja', () => {
+        registry.registerLocale(mockEnglishData);
+        const name = provider.getDyeName(52254, 'ja');
+        expect(name).toBe('カララント:ノーマルカラー');
+      });
+
+      it('returns localized name for itemID 52255 (Type-B) in de', () => {
+        const name = provider.getDyeName(52255, 'de');
+        expect(name).toBe('Zusatzfarbstoff 1');
+      });
+
+      it('returns localized name for itemID 52256 (Type-C) in fr', () => {
+        const name = provider.getDyeName(52256, 'fr');
+        expect(name).toBe('Teinture additionnelle n°2');
+      });
+
+      it('returns English name for consolidated ID without registry data', () => {
+        // No locale registered — falls straight to CONSOLIDATED_DYES
+        const name = provider.getDyeName(52254, 'en');
+        expect(name).toBe('Standard Spectrum Dye');
+      });
+    });
+
     it('should handle multiple dye IDs correctly', () => {
       registry.registerLocale(mockEnglishData);
 

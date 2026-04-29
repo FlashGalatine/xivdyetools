@@ -7,10 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **OPT-001** (2026-04-28 audit): New `localeMiddleware` at [`src/middleware/locale.ts`](src/middleware/locale.ts) reads `?locale=` once per request, validates via `parseLocale`, calls `LocalizationService.setLocale(locale)`, and stores the resolved code at `c.var.locale`. Wired into the global chain on `/v1/*`. Eliminates the 7 ad-hoc `await LocalizationService.setLocale(locale)` calls that previously appeared inside route handlers (5 in `routes/dyes.ts`, 2 in `routes/match.ts`) — a single-call-per-request pattern that's cleaner DRY and prevents any new localized route from forgetting to set the locale.
+
 ### Changed
 
 - **BUG-001** (2026-04-28 audit): Replaced bare `console.error` in the global error handler with the structured logger from `@xivdyetools/worker-middleware`; added `loggerMiddleware` to the global middleware chain so all unhandled errors carry request ID, service name, and JSON structure.
 - **ARCH-001** (2026-04-28 audit): Reduced CORS `maxAge` from `86400` (24 h) to `3600` (1 h) to match the `presets-api` / `oauth` precedent and tighten the cache window for an evolving public API.
+- **BUG-004** (2026-04-28 audit): Dropped the module-scope `kvLimiter` singleton in `middleware/rate-limit.ts`; `KVRateLimiter` is now constructed per-request inside the `backend` factory (matches the `presets-api` / `oauth` pattern). Construction is cheap (no I/O), and removing the singleton avoids silently binding to whichever KV namespace was used first if api-worker ever adds a second tier.
 
 ---
 

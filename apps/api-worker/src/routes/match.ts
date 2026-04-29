@@ -76,11 +76,10 @@ matchRouter.get('/closest', async (c) => {
   const distance = calculateDistance(hex, dye.hex, method,
     method === 'oklch-weighted' ? { kL, kC, kH } : undefined);
 
-  let localizedName: string | undefined;
-  if (locale !== 'en') {
-    await LocalizationService.setLocale(locale);
-    localizedName = LocalizationService.getDyeName(dye.itemID) || undefined;
-  }
+  // OPT-001: locale already set by localeMiddleware
+  const localizedName = locale !== 'en'
+    ? (LocalizationService.getDyeName(dye.itemID) || undefined)
+    : undefined;
 
   c.header('Cache-Control', 'public, max-age=3600, s-maxage=86400');
   return successResponse(c, {
@@ -131,9 +130,7 @@ matchRouter.get('/within-distance', async (c) => {
   // Apply dye type/acquisition filters
   dyes = applyDyeFilters(dyes, filters);
 
-  if (locale !== 'en') {
-    await LocalizationService.setLocale(locale);
-  }
+  // OPT-001: locale already set by localeMiddleware
 
   // Recalculate distances for the response
   const results = dyes.map((dye) => {

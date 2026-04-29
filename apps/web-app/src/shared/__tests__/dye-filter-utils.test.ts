@@ -95,13 +95,13 @@ describe('isDyeExcluded', () => {
   it('excludes vendor dyes when excludeVendorDyes is true', () => {
     const config = filtersWith({ excludeVendorDyes: true });
     expect(isDyeExcluded(config, makeDye({ acquisition: 'Dye Vendor' }))).toBe(true);
-    expect(isDyeExcluded(config, makeDye({ acquisition: 'Crafting' }))).toBe(false);
+    expect(isDyeExcluded(config, makeDye({ acquisition: 'The Firmament' }))).toBe(false);
   });
 
   it('excludes craft dyes when excludeCraftDyes is true', () => {
     const config = filtersWith({ excludeCraftDyes: true });
-    expect(isDyeExcluded(config, makeDye({ acquisition: 'Crafting' }))).toBe(true);
-    expect(isDyeExcluded(config, makeDye({ acquisition: 'Treasure Chest' }))).toBe(true);
+    expect(isDyeExcluded(config, makeDye({ acquisition: 'The Firmament' }))).toBe(true);
+    expect(isDyeExcluded(config, makeDye({ acquisition: 'Venture Coffers' }))).toBe(true);
     expect(isDyeExcluded(config, makeDye({ acquisition: 'Dye Vendor' }))).toBe(false);
   });
 

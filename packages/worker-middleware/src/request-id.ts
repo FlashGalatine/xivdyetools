@@ -89,10 +89,10 @@ export function requestIdMiddleware(options?: RequestIdOptions): MiddlewareHandl
  * });
  * ```
  */
-// BUG-003 FIX: ContextVariableMap augmentation (in types.ts) makes this type-safe
-// without needing Context<any>. 'requestId' key is globally registered.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getRequestId(c: Context<any, any, any>): string {
+// REFACTOR-003 (2026-04-28 audit): Use Hono's standard Context type and let
+// the ContextVariableMap augmentation in types.ts resolve the 'requestId' key.
+// Callers retain their narrow Bindings/Variables typing through this helper.
+export function getRequestId(c: Context): string {
   try {
     return c.get('requestId') || 'unknown';
   } catch {

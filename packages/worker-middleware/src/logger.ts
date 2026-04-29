@@ -172,10 +172,10 @@ export function loggerMiddleware(options: LoggerMiddlewareOptions): MiddlewareHa
  * });
  * ```
  */
-// BUG-003 FIX: ContextVariableMap augmentation (in types.ts) makes this type-safe
-// without needing Context<any>. 'logger' key is globally registered.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getLogger(c: Context<any, any, any>): ExtendedLogger | undefined {
+// REFACTOR-003 (2026-04-28 audit): Use Hono's standard Context type and let
+// the ContextVariableMap augmentation in types.ts resolve the 'logger' key.
+// Callers retain their narrow Bindings/Variables typing through this helper.
+export function getLogger(c: Context): ExtendedLogger | undefined {
   try {
     return c.get('logger');
   } catch {

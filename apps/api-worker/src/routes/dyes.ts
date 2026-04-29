@@ -52,13 +52,10 @@ dyesRouter.get('/search', async (c) => {
 
   const locale = parseLocale(c.req.query('locale'));
 
-  let results: Dye[];
-  if (locale !== 'en') {
-    await LocalizationService.setLocale(locale);
-    results = dyeService.searchByLocalizedName(q);
-  } else {
-    results = dyeService.searchByName(q);
-  }
+  // OPT-001: locale already set by localeMiddleware; just dispatch on it.
+  const results: Dye[] = locale !== 'en'
+    ? dyeService.searchByLocalizedName(q)
+    : dyeService.searchByName(q);
 
   const serialized = results.map((dye) => {
     const localizedName = locale !== 'en'
@@ -94,10 +91,7 @@ dyesRouter.get('/batch', async (c) => {
   const ids = parseCommaSeparatedIds(c.req.query('ids'), 'ids', 50);
   const idType = parseEnumParam(c.req.query('idType'), 'idType', ['auto', 'item', 'stain'] as const, 'auto');
   const locale = parseLocale(c.req.query('locale'));
-
-  if (locale !== 'en') {
-    await LocalizationService.setLocale(locale);
-  }
+  // OPT-001: locale already set by localeMiddleware
 
   const found: ReturnType<typeof serializeDye>[] = [];
   const notFound: number[] = [];
@@ -182,11 +176,10 @@ dyesRouter.get('/stain/:stainId', async (c) => {
     throw new ApiError(ErrorCode.NOT_FOUND, `No dye found with stain ID ${stainId}.`, 404);
   }
 
-  let localizedName: string | undefined;
-  if (locale !== 'en') {
-    await LocalizationService.setLocale(locale);
-    localizedName = LocalizationService.getDyeName(dye.itemID) || undefined;
-  }
+  // OPT-001: locale already set by localeMiddleware
+  const localizedName = locale !== 'en'
+    ? (LocalizationService.getDyeName(dye.itemID) || undefined)
+    : undefined;
 
   c.header('Cache-Control', 'public, max-age=3600, s-maxage=86400');
   return successResponse(c, serializeDye(dye, localizedName), locale);
@@ -219,11 +212,10 @@ dyesRouter.get('/:id', async (c) => {
   }
 
   const locale = parseLocale(c.req.query('locale'));
-  let localizedName: string | undefined;
-  if (locale !== 'en') {
-    await LocalizationService.setLocale(locale);
-    localizedName = LocalizationService.getDyeName(dye.itemID) || undefined;
-  }
+  // OPT-001: locale already set by localeMiddleware
+  const localizedName = locale !== 'en'
+    ? (LocalizationService.getDyeName(dye.itemID) || undefined)
+    : undefined;
 
   c.header('Cache-Control', 'public, max-age=3600, s-maxage=86400');
   return successResponse(c, serializeDye(dye, localizedName), locale);
@@ -298,10 +290,7 @@ dyesRouter.get('/', async (c) => {
   const start = (page - 1) * perPage;
   const paged = results.slice(start, start + perPage);
 
-  // Localization
-  if (locale !== 'en') {
-    await LocalizationService.setLocale(locale);
-  }
+  // OPT-001: locale already set by localeMiddleware
 
   const serialized = paged.map((dye) => {
     const localizedName = locale !== 'en'
