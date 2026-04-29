@@ -2,7 +2,7 @@
   "locale": "de",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-04-03T22:25:34.785Z",
+    "generated": "2026-04-29T02:31:08.075Z",
     "dyeCount": 125
   },
   "labels": {
@@ -214,6 +214,32 @@
     "protanopia": "Protanopie (Rot-Grün-Farbenblindheit)",
     "tritanopia": "Tritanopie (Blau-Gelb-Farbenblindheit)",
     "achromatopsia": "Achromatopsie (Totale Farbenblindheit)"
+  },
+  "visions": {
+    "normal": "Normales Sehen",
+    "protanopia": "Protanopie",
+    "deuteranopia": "Deuteranopie",
+    "tritanopia": "Tritanopie",
+    "achromatopsia": "Achromatopsie"
+  },
+  "tools": {
+    "harmony": "Harmonie-Explorer",
+    "gradient": "Verlaufs-Generator",
+    "mixer": "Farbstoff-Mixer",
+    "swatch": "Farbabgleich",
+    "comparison": "Farbstoff-Vergleich",
+    "accessibility": "Barrierefreiheits-Check"
+  },
+  "sheets": {
+    "eyeColors": "Augenfarben",
+    "highlightColors": "Strähnchen",
+    "lipColorsDark": "Lippenfarben (dunkel)",
+    "lipColorsLight": "Lippenfarben (hell)",
+    "tattooColors": "Tätowierung/Limbus",
+    "facePaintColorsDark": "Gesichtsbemalung (dunkel)",
+    "facePaintColorsLight": "Gesichtsbemalung (hell)",
+    "hairColors": "Haarfarben",
+    "skinColors": "Hautfarben"
   },
   "jobNames": {
     "paladin": "Paladin",

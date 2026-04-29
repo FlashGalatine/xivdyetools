@@ -125,6 +125,9 @@ function buildLocaleData(
     metallicDyeIds,
     harmonyTypes: buildHarmonyTypes(locale),
     visionTypes: buildVisionTypes(locale),
+    visions: buildVisionsShort(locale),
+    tools: buildTools(locale),
+    sheets: buildSheets(locale),
     jobNames: buildJobNames(locale),
     grandCompanyNames: buildGrandCompanyNames(locale),
     races: buildRaces(locale),
@@ -593,6 +596,191 @@ function buildVisionTypes(locale: LocaleCode): Record<string, string> {
       protanopia: '红色盲（红绿色盲）',
       tritanopia: '蓝色盲（蓝黄色盲）',
       achromatopsia: '全色盲',
+    },
+  };
+
+  return translations[locale];
+}
+
+function buildVisionsShort(locale: LocaleCode): Record<string, string> {
+  // Compact vision-name forms (no parenthetical explanation) — used by
+  // og-worker for OG embed titles where the full visionTypes string is too
+  // long. These mirror the medical-term root used in visionTypes.
+  const translations: Record<LocaleCode, Record<string, string>> = {
+    en: {
+      normal: 'Normal Vision',
+      protanopia: 'Protanopia',
+      deuteranopia: 'Deuteranopia',
+      tritanopia: 'Tritanopia',
+      achromatopsia: 'Achromatopsia',
+    },
+    ja: {
+      normal: '正常視覚',
+      protanopia: '1型色覚',
+      deuteranopia: '2型色覚',
+      tritanopia: '3型色覚',
+      achromatopsia: '全色盲',
+    },
+    de: {
+      normal: 'Normales Sehen',
+      protanopia: 'Protanopie',
+      deuteranopia: 'Deuteranopie',
+      tritanopia: 'Tritanopie',
+      achromatopsia: 'Achromatopsie',
+    },
+    fr: {
+      normal: 'Vision normale',
+      protanopia: 'Protanopie',
+      deuteranopia: 'Deutéranopie',
+      tritanopia: 'Tritanopie',
+      achromatopsia: 'Achromatopsie',
+    },
+    ko: {
+      normal: '정상 시력',
+      protanopia: '제1색맹',
+      deuteranopia: '제2색맹',
+      tritanopia: '제3색맹',
+      achromatopsia: '전색맹',
+    },
+    zh: {
+      normal: '正常视觉',
+      protanopia: '红色盲',
+      deuteranopia: '绿色盲',
+      tritanopia: '蓝色盲',
+      achromatopsia: '全色盲',
+    },
+  };
+
+  return translations[locale];
+}
+
+function buildTools(locale: LocaleCode): Record<string, string> {
+  // Display names for the six web-app tools. Used by og-worker for shareable
+  // link previews and any UI that lists available tools.
+  const translations: Record<LocaleCode, Record<string, string>> = {
+    en: {
+      harmony: 'Harmony Explorer',
+      gradient: 'Gradient Builder',
+      mixer: 'Dye Mixer',
+      swatch: 'Swatch Matcher',
+      comparison: 'Dye Comparison',
+      accessibility: 'Accessibility Checker',
+    },
+    ja: {
+      harmony: 'ハーモニーエクスプローラー',
+      gradient: 'グラデーションビルダー',
+      mixer: 'カララントミキサー',
+      swatch: 'スウォッチマッチャー',
+      comparison: 'カララント比較',
+      accessibility: 'アクセシビリティチェッカー',
+    },
+    de: {
+      harmony: 'Harmonie-Explorer',
+      gradient: 'Verlaufs-Generator',
+      mixer: 'Farbstoff-Mixer',
+      swatch: 'Farbabgleich',
+      comparison: 'Farbstoff-Vergleich',
+      accessibility: 'Barrierefreiheits-Check',
+    },
+    fr: {
+      harmony: "Explorateur d'harmonies",
+      gradient: 'Créateur de dégradés',
+      mixer: 'Mélangeur de teintures',
+      swatch: 'Comparateur de nuances',
+      comparison: 'Comparaison de teintures',
+      accessibility: "Vérificateur d'accessibilité",
+    },
+    ko: {
+      harmony: '하모니 익스플로러',
+      gradient: '그라데이션 빌더',
+      mixer: '염료 믹서',
+      swatch: '스와치 매처',
+      comparison: '염료 비교',
+      accessibility: '접근성 검사기',
+    },
+    zh: {
+      harmony: '配色探索器',
+      gradient: '渐变生成器',
+      mixer: '染剂调色器',
+      swatch: '色板匹配器',
+      comparison: '染剂对比',
+      accessibility: '色彩辅助检测',
+    },
+  };
+
+  return translations[locale];
+}
+
+function buildSheets(locale: LocaleCode): Record<string, string> {
+  // Color-sheet category labels — FFXIV character-creator color groups
+  // exposed by the Swatch Matcher tool. The "(Dark)" / "(Light)" suffixes
+  // are the dye lightness bands.
+  const translations: Record<LocaleCode, Record<string, string>> = {
+    en: {
+      eyeColors: 'Eye Colors',
+      highlightColors: 'Highlights',
+      lipColorsDark: 'Lip Colors (Dark)',
+      lipColorsLight: 'Lip Colors (Light)',
+      tattooColors: 'Tattoo/Limbal',
+      facePaintColorsDark: 'Face Paint (Dark)',
+      facePaintColorsLight: 'Face Paint (Light)',
+      hairColors: 'Hair Colors',
+      skinColors: 'Skin Colors',
+    },
+    ja: {
+      eyeColors: '目の色',
+      highlightColors: 'ハイライト',
+      lipColorsDark: '唇の色（ダーク）',
+      lipColorsLight: '唇の色（ライト）',
+      tattooColors: 'タトゥー／角膜',
+      facePaintColorsDark: 'フェイスペイント（ダーク）',
+      facePaintColorsLight: 'フェイスペイント（ライト）',
+      hairColors: '髪の色',
+      skinColors: '肌の色',
+    },
+    de: {
+      eyeColors: 'Augenfarben',
+      highlightColors: 'Strähnchen',
+      lipColorsDark: 'Lippenfarben (dunkel)',
+      lipColorsLight: 'Lippenfarben (hell)',
+      tattooColors: 'Tätowierung/Limbus',
+      facePaintColorsDark: 'Gesichtsbemalung (dunkel)',
+      facePaintColorsLight: 'Gesichtsbemalung (hell)',
+      hairColors: 'Haarfarben',
+      skinColors: 'Hautfarben',
+    },
+    fr: {
+      eyeColors: 'Couleurs des yeux',
+      highlightColors: 'Mèches',
+      lipColorsDark: 'Couleurs des lèvres (foncées)',
+      lipColorsLight: 'Couleurs des lèvres (claires)',
+      tattooColors: 'Tatouage/Limbe',
+      facePaintColorsDark: 'Peinture faciale (foncée)',
+      facePaintColorsLight: 'Peinture faciale (claire)',
+      hairColors: 'Couleurs des cheveux',
+      skinColors: 'Couleurs de peau',
+    },
+    ko: {
+      eyeColors: '눈동자 색',
+      highlightColors: '하이라이트',
+      lipColorsDark: '입술 색 (어두운)',
+      lipColorsLight: '입술 색 (밝은)',
+      tattooColors: '문신/홍채',
+      facePaintColorsDark: '얼굴 페인트 (어두운)',
+      facePaintColorsLight: '얼굴 페인트 (밝은)',
+      hairColors: '머리 색',
+      skinColors: '피부 색',
+    },
+    zh: {
+      eyeColors: '眼睛颜色',
+      highlightColors: '挑染',
+      lipColorsDark: '唇色（深）',
+      lipColorsLight: '唇色（浅）',
+      tattooColors: '纹身/虹膜',
+      facePaintColorsDark: '面部彩绘（深）',
+      facePaintColorsLight: '面部彩绘（浅）',
+      hairColors: '发色',
+      skinColors: '肤色',
     },
   };
 

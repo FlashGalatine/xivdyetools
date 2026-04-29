@@ -482,4 +482,53 @@ describe('og-data-generator', () => {
       expect(result.url).toContain('dyes=5771,5772');
     });
   });
+
+  // REFACTOR-001 (2026-04-28 audit): the four hardcoded display-name maps
+  // (TOOL_NAMES, HARMONY_NAMES, VISION_NAMES, SHEET_NAMES) were replaced with
+  // calls to TranslationProvider methods. These tests exercise the localized
+  // path that the rest of the suite (which only uses default 'en') doesn't.
+  describe('localization (REFACTOR-001)', () => {
+    it('uses Japanese harmony name when locale is ja', () => {
+      const params = new URLSearchParams('dye=5771&harmony=complementary');
+      const en = generateOGDataForTool('harmony', params, mockEnv, 'en');
+      const ja = generateOGDataForTool('harmony', params, mockEnv, 'ja');
+
+      expect(en.title).toContain('Complementary');
+      expect(ja.title).toContain('補色');
+      expect(ja.title).not.toContain('Complementary');
+    });
+
+    it('localizes split-complementary across the kebab/camel boundary', () => {
+      const params = new URLSearchParams('dye=5771&harmony=split-complementary');
+      const ja = generateOGDataForTool('harmony', params, mockEnv, 'ja');
+      // splitComplementary key in core's harmonyTypes: ja value is "分裂補色"
+      expect(ja.title).toContain('分裂補色');
+    });
+
+    it('uses German tool fallback name when no dyes provided', () => {
+      const params = new URLSearchParams('start=999999&end=999999&steps=5');
+      const de = generateOGDataForTool('gradient', params, mockEnv, 'de');
+      // Tool name "Verlaufs-Generator" from buildTools(de)
+      expect(de.title).toContain('Verlaufs-Generator');
+    });
+
+    it('uses Korean sheet name in swatch description', () => {
+      const params = new URLSearchParams('color=ABCDEF&sheet=eyeColors&limit=5');
+      const ko = generateOGDataForTool('swatch', params, mockEnv, 'ko');
+      // Sheet name "눈동자 색" lower-cased — Hangul has no case so it stays as-is
+      expect(ko.description).toContain('눈동자 색');
+    });
+
+    it('uses French short vision name in accessibility title', () => {
+      const params = new URLSearchParams('dyes=5771,5772&vision=deuteranopia');
+      const fr = generateOGDataForTool('accessibility', params, mockEnv, 'fr');
+      expect(fr.title).toContain('Deutéranopie');
+    });
+
+    it('falls back to en when locale arg is omitted', () => {
+      const params = new URLSearchParams('dye=5771&harmony=triadic');
+      const result = generateOGDataForTool('harmony', params, mockEnv);
+      expect(result.title).toContain('Triadic');
+    });
+  });
 });

@@ -121,6 +121,8 @@ export type {
   LocaleCode,
   TranslationKey,
   HarmonyTypeKey,
+  ToolKey,
+  SheetKey,
   JobKey,
   GrandCompanyKey,
   RaceKey,

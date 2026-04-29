@@ -20,6 +20,8 @@ import {
   loggerMiddleware,
   getLogger,
 } from '@xivdyetools/worker-middleware';
+import { extractLocaleCode } from '@xivdyetools/core';
+import type { LocaleCode } from '@xivdyetools/types';
 import { detectCrawlerFromRequest, getCrawlerName } from './crawler-detector';
 import { generateOGDataForTool, generateOGHTML } from './og-data-generator';
 import { renderOGImage } from './services/renderer';
@@ -125,12 +127,25 @@ app.get('/health', (c) => {
  * Tool route handler factory
  * Creates a route handler for each supported tool
  */
+/**
+ * Resolve the locale for an OG request.
+ *
+ * Priority: ?lang= query param → 'en' fallback. The query value is validated
+ * against SUPPORTED_LOCALES (via extractLocaleCode) before being trusted.
+ */
+function resolveLocale(searchParams: URLSearchParams): LocaleCode {
+  const raw = searchParams.get('lang');
+  if (!raw) return 'en';
+  return extractLocaleCode(raw) ?? 'en';
+}
+
 function createToolHandler(tool: ToolId) {
   return async (c: Context<{ Bindings: Env }>) => {
     const request = c.req.raw;
     const env = c.env;
     const url = new URL(request.url);
     const crawlerInfo = detectCrawlerFromRequest(request);
+    const locale = resolveLocale(url.searchParams);
 
     // Track analytics
     trackAnalytics(env, {
@@ -148,12 +163,13 @@ function createToolHandler(tool: ToolId) {
       return fetch(request);
     }
 
-    // Generate OG data for this tool
-    const ogData = generateOGDataForTool(tool, url.searchParams, env);
+    // Generate OG data for this tool (locale-aware display names)
+    const ogData = generateOGDataForTool(tool, url.searchParams, env, locale);
 
     // Structured request log (replaces ad-hoc console.log)
     getLogger(c)?.info('Serving OG metadata', {
       tool,
+      locale,
       crawler: getCrawlerName(crawlerInfo.type),
       url: url.toString(),
       title: ogData.title,

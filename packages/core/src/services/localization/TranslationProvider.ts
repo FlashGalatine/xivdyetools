@@ -12,6 +12,8 @@ import type {
   TranslationKey,
   HarmonyTypeKey,
   VisionType,
+  ToolKey,
+  SheetKey,
   JobKey,
   GrandCompanyKey,
   RaceKey,
@@ -286,6 +288,106 @@ export class TranslationProvider {
     }
 
     // Final fallback: format key
+    return this.formatKey(key);
+  }
+
+  /**
+   * Get short vision-name with fallback
+   *
+   * Use this for compact UI surfaces like OG embed titles where the verbose
+   * `getVisionType()` form ("Deuteranopia (Red-Green Colorblindness)") is
+   * too long. Returns just the medical term, e.g. "Deuteranopia".
+   *
+   * @param key - Vision type key
+   * @param locale - Requested locale
+   * @returns Localized short vision name
+   *
+   * @example
+   * ```typescript
+   * const v = provider.getVisionShort('deuteranopia', 'ja');
+   * // Returns "2型色覚" (ja) or "Deuteranopia" (en fallback)
+   * ```
+   */
+  getVisionShort(key: VisionType, locale: LocaleCode): string {
+    const localeData = this.registry.getLocale(locale);
+
+    if (localeData?.visions?.[key]) {
+      return localeData.visions[key];
+    }
+
+    if (locale !== 'en') {
+      const englishData = this.registry.getLocale('en');
+      if (englishData?.visions?.[key]) {
+        return englishData.visions[key];
+      }
+    }
+
+    return this.formatKey(key);
+  }
+
+  /**
+   * Get tool display name with fallback
+   *
+   * Used by og-worker for shareable link previews and any UI that lists
+   * the available web-app tools by name.
+   *
+   * @param key - Tool key
+   * @param locale - Requested locale
+   * @returns Localized tool display name
+   *
+   * @example
+   * ```typescript
+   * const t = provider.getToolName('harmony', 'ja');
+   * // Returns "ハーモニーエクスプローラー" (ja) or "Harmony Explorer" (en fallback)
+   * ```
+   */
+  getToolName(key: ToolKey, locale: LocaleCode): string {
+    const localeData = this.registry.getLocale(locale);
+
+    if (localeData?.tools?.[key]) {
+      return localeData.tools[key];
+    }
+
+    if (locale !== 'en') {
+      const englishData = this.registry.getLocale('en');
+      if (englishData?.tools?.[key]) {
+        return englishData.tools[key];
+      }
+    }
+
+    return this.formatKey(key);
+  }
+
+  /**
+   * Get color-sheet category name with fallback
+   *
+   * Color sheets are FFXIV character-creator color groups exposed by the
+   * Swatch Matcher tool (eye colors, lip colors, hair colors, etc.).
+   *
+   * @param key - Sheet key
+   * @param locale - Requested locale
+   * @returns Localized sheet name
+   *
+   * @example
+   * ```typescript
+   * const s = provider.getSheetName('eyeColors', 'ja');
+   * // Returns "目の色" (ja) or "Eye Colors" (en fallback)
+   * ```
+   */
+  getSheetName(key: SheetKey, locale: LocaleCode): string {
+    const localeData = this.registry.getLocale(locale);
+
+    if (localeData?.sheets?.[key]) {
+      return localeData.sheets[key];
+    }
+
+    if (locale !== 'en') {
+      const englishData = this.registry.getLocale('en');
+      if (englishData?.sheets?.[key]) {
+        return englishData.sheets[key];
+      }
+    }
+
     return this.formatKey(key);
   }
 

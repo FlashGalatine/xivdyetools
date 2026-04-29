@@ -4,7 +4,17 @@ export { ColorConverter } from './services/color/ColorConverter.js';
 export { DyeService } from './services/DyeService.js';
 export { APIService, MemoryCacheBackend } from './services/APIService.js';
 export type { ICacheBackend, APIServiceOptions, CacheMetrics } from './services/APIService.js';
-export { LocalizationService } from './services/LocalizationService.js';
+export {
+  LocalizationService,
+  SUPPORTED_LOCALES,
+  extractLocaleCode,
+  resolveLocaleFromPreference,
+} from './services/LocalizationService.js';
+// Localization internals — exported for stateless callers (e.g., og-worker)
+// that prefer explicit-locale APIs over the singleton + setLocale pattern.
+export { LocaleLoader } from './services/localization/LocaleLoader.js';
+export { LocaleRegistry } from './services/localization/LocaleRegistry.js';
+export { TranslationProvider } from './services/localization/TranslationProvider.js';
 export { PresetService } from './services/PresetService.js';
 export type { ResolvedPreset } from './services/PresetService.js';
 export { PaletteService } from './services/PaletteService.js';

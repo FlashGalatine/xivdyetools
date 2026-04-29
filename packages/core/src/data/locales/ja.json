@@ -2,7 +2,7 @@
   "locale": "ja",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-04-03T22:25:34.784Z",
+    "generated": "2026-04-29T02:31:08.073Z",
     "dyeCount": 125
   },
   "labels": {
@@ -214,6 +214,32 @@
     "protanopia": "1型色覚（赤緑色盲）",
     "tritanopia": "3型色覚（青黄色盲）",
     "achromatopsia": "全色盲"
+  },
+  "visions": {
+    "normal": "正常視覚",
+    "protanopia": "1型色覚",
+    "deuteranopia": "2型色覚",
+    "tritanopia": "3型色覚",
+    "achromatopsia": "全色盲"
+  },
+  "tools": {
+    "harmony": "ハーモニーエクスプローラー",
+    "gradient": "グラデーションビルダー",
+    "mixer": "カララントミキサー",
+    "swatch": "スウォッチマッチャー",
+    "comparison": "カララント比較",
+    "accessibility": "アクセシビリティチェッカー"
+  },
+  "sheets": {
+    "eyeColors": "目の色",
+    "highlightColors": "ハイライト",
+    "lipColorsDark": "唇の色（ダーク）",
+    "lipColorsLight": "唇の色（ライト）",
+    "tattooColors": "タトゥー／角膜",
+    "facePaintColorsDark": "フェイスペイント（ダーク）",
+    "facePaintColorsLight": "フェイスペイント（ライト）",
+    "hairColors": "髪の色",
+    "skinColors": "肌の色"
   },
   "jobNames": {
     "paladin": "ナイト",

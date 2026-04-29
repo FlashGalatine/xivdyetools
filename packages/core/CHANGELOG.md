@@ -9,8 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **REFACTOR-001** (2026-04-28 audit): Three new translation surfaces to support og-worker localization:
+  - `tools` — 6 web-app tool display names (Harmony Explorer / Gradient Builder / Dye Mixer / Swatch Matcher / Dye Comparison / Accessibility Checker), translated for all 6 locales
+  - `visions` — compact vision-name forms (e.g. just "Deuteranopia" / "2型色覚") for OG embed titles, sibling to the existing verbose `visionTypes`
+  - `sheets` — 9 Swatch Matcher color-sheet categories (Eye Colors, Highlights, Lip Colors Dark/Light, Tattoo/Limbal, Face Paint Dark/Light, Hair Colors, Skin Colors)
+- New `TranslationProvider` methods `getToolName(key, locale)`, `getVisionShort(key, locale)`, `getSheetName(key, locale)` plus mirrored static + instance methods on `LocalizationService`.
+- New top-level exports for stateless callers: `LocaleLoader`, `LocaleRegistry`, `TranslationProvider`, `SUPPORTED_LOCALES`, `extractLocaleCode`, `resolveLocaleFromPreference`. Lets workers like og-worker preload all 6 locales and make explicit-locale translation calls without relying on the `LocalizationService.setLocale()` mutable-singleton pattern (which is racy under concurrent requests with different locales).
+
 - **BUG-003 contract test** (2026-04-28 audit): New `src/services/dye/__tests__/DyeFilter.contract.test.ts` validates that every value in `VENDOR_ACQUISITIONS` and `CRAFT_ACQUISITIONS` exists in the live `colors_xiv.json` acquisition set. Auto-detects future renames the same way the 2026-04 `'Crafting'` → `'The Firmament'` drift went unnoticed in tests.
   - The 5 `ALLIED_SOCIETY_ACQUISITIONS` assertions are deliberately `it.skip.each` with an inline TODO comment because the contract test discovered that none of those vendor names appear in current `colors_xiv.json` — `excludeAlliedSocietyDyes` is currently a no-op against live data, awaiting a separate cleanup pass.
+
+### Changed
+
+- **REFACTOR-001 locale rebuild** (2026-04-28 audit): Re-ran `pnpm build:locales` after extending `build-locales.ts` with the three new translation builders; all 6 locale JSONs now contain `tools`, `visions`, and `sheets` keys.
 
 ### Fixed
 

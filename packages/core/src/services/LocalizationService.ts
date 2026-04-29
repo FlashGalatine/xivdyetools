@@ -12,6 +12,8 @@ import type {
   TranslationKey,
   HarmonyTypeKey,
   VisionType,
+  ToolKey,
+  SheetKey,
   JobKey,
   GrandCompanyKey,
   RaceKey,
@@ -434,6 +436,57 @@ export class LocalizationService {
    */
   static getVisionType(key: VisionType): string {
     return this.getDefault().getVisionType(key);
+  }
+
+  /**
+   * Get localized short vision-name (compact form, no parenthetical)
+   *
+   * @param key - Vision type key
+   * @returns Localized short vision name
+   */
+  getVisionShort(key: VisionType): string {
+    return this.translator.getVisionShort(key, this.currentLocale);
+  }
+
+  /**
+   * Static method: Get localized short vision-name using default instance
+   */
+  static getVisionShort(key: VisionType): string {
+    return this.getDefault().getVisionShort(key);
+  }
+
+  /**
+   * Get localized tool display name
+   *
+   * @param key - Tool key
+   * @returns Localized tool display name
+   */
+  getToolName(key: ToolKey): string {
+    return this.translator.getToolName(key, this.currentLocale);
+  }
+
+  /**
+   * Static method: Get localized tool display name using default instance
+   */
+  static getToolName(key: ToolKey): string {
+    return this.getDefault().getToolName(key);
+  }
+
+  /**
+   * Get localized color-sheet category name
+   *
+   * @param key - Sheet key
+   * @returns Localized sheet name
+   */
+  getSheetName(key: SheetKey): string {
+    return this.translator.getSheetName(key, this.currentLocale);
+  }
+
+  /**
+   * Static method: Get localized sheet name using default instance
+   */
+  static getSheetName(key: SheetKey): string {
+    return this.getDefault().getSheetName(key);
   }
 
   /**

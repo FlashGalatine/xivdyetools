@@ -40,6 +40,32 @@ export type HarmonyTypeKey =
   | 'shades';
 
 /**
+ * Tool keys for og-worker / web-app display name localization
+ */
+export type ToolKey =
+  | 'harmony'
+  | 'gradient'
+  | 'mixer'
+  | 'swatch'
+  | 'comparison'
+  | 'accessibility';
+
+/**
+ * Color-sheet category keys (FFXIV character-creator color groups exposed by
+ * the Swatch Matcher tool)
+ */
+export type SheetKey =
+  | 'eyeColors'
+  | 'highlightColors'
+  | 'lipColorsDark'
+  | 'lipColorsLight'
+  | 'tattooColors'
+  | 'facePaintColorsDark'
+  | 'facePaintColorsLight'
+  | 'hairColors'
+  | 'skinColors';
+
+/**
  * FFXIV Job keys for localization
  */
 export type JobKey =
@@ -144,8 +170,20 @@ export interface LocaleData {
   /** Harmony type translations */
   harmonyTypes: Record<HarmonyTypeKey, string>;
 
-  /** Vision type translations */
+  /** Vision type translations (verbose, for educational UI like the
+   *  Accessibility Checker, e.g. "Deuteranopia (Red-Green Colorblindness)") */
   visionTypes: Record<VisionType, string>;
+
+  /** Short vision-name translations (compact, for OG embed titles where the
+   *  parenthetical explanation in `visionTypes` is too long) */
+  visions?: Record<VisionType, string>;
+
+  /** Tool display-name translations (for og-worker link previews and any
+   *  surface that lists available tools by name) */
+  tools?: Record<ToolKey, string>;
+
+  /** Color-sheet category translations (Swatch Matcher / og-worker surfaces) */
+  sheets?: Record<SheetKey, string>;
 
   /** Job name translations */
   jobNames: Record<JobKey, string>;

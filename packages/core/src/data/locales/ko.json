@@ -2,7 +2,7 @@
   "locale": "ko",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-04-03T22:25:34.788Z",
+    "generated": "2026-04-29T02:31:08.080Z",
     "dyeCount": 125
   },
   "labels": {
@@ -214,6 +214,32 @@
     "protanopia": "제1색맹 (적록색맹)",
     "tritanopia": "제3색맹 (청황색맹)",
     "achromatopsia": "전색맹"
+  },
+  "visions": {
+    "normal": "정상 시력",
+    "protanopia": "제1색맹",
+    "deuteranopia": "제2색맹",
+    "tritanopia": "제3색맹",
+    "achromatopsia": "전색맹"
+  },
+  "tools": {
+    "harmony": "하모니 익스플로러",
+    "gradient": "그라데이션 빌더",
+    "mixer": "염료 믹서",
+    "swatch": "스와치 매처",
+    "comparison": "염료 비교",
+    "accessibility": "접근성 검사기"
+  },
+  "sheets": {
+    "eyeColors": "눈동자 색",
+    "highlightColors": "하이라이트",
+    "lipColorsDark": "입술 색 (어두운)",
+    "lipColorsLight": "입술 색 (밝은)",
+    "tattooColors": "문신/홍채",
+    "facePaintColorsDark": "얼굴 페인트 (어두운)",
+    "facePaintColorsLight": "얼굴 페인트 (밝은)",
+    "hairColors": "머리 색",
+    "skinColors": "피부 색"
   },
   "jobNames": {
     "paladin": "나이트",

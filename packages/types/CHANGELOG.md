@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **REFACTOR-001** (2026-04-28 audit): New key types `ToolKey` and `SheetKey` for og-worker / web-app display-name localization, alongside three new optional fields on `LocaleData`:
+  - `tools?: Record<ToolKey, string>` — six web-app tool display names (e.g. "Harmony Explorer" / "ハーモニーエクスプローラー")
+  - `visions?: Record<VisionType, string>` — compact vision-name forms for OG embed titles, sibling to the existing verbose `visionTypes`
+  - `sheets?: Record<SheetKey, string>` — Swatch Matcher color-sheet category labels (eye colors, lip colors, etc.)
+
+  All three fields are optional so older locale JSONs without them remain valid; `TranslationProvider` falls back to `formatKey()` when the field is absent.
+
+---
+
 ## [1.13.0] - 2026-04-07
 
 ### Changed

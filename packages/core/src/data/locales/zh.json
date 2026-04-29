@@ -2,7 +2,7 @@
   "locale": "zh",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-04-03T22:25:34.789Z",
+    "generated": "2026-04-29T02:31:08.081Z",
     "dyeCount": 125
   },
   "labels": {
@@ -214,6 +214,32 @@
     "protanopia": "红色盲（红绿色盲）",
     "tritanopia": "蓝色盲（蓝黄色盲）",
     "achromatopsia": "全色盲"
+  },
+  "visions": {
+    "normal": "正常视觉",
+    "protanopia": "红色盲",
+    "deuteranopia": "绿色盲",
+    "tritanopia": "蓝色盲",
+    "achromatopsia": "全色盲"
+  },
+  "tools": {
+    "harmony": "配色探索器",
+    "gradient": "渐变生成器",
+    "mixer": "染剂调色器",
+    "swatch": "色板匹配器",
+    "comparison": "染剂对比",
+    "accessibility": "色彩辅助检测"
+  },
+  "sheets": {
+    "eyeColors": "眼睛颜色",
+    "highlightColors": "挑染",
+    "lipColorsDark": "唇色（深）",
+    "lipColorsLight": "唇色（浅）",
+    "tattooColors": "纹身/虹膜",
+    "facePaintColorsDark": "面部彩绘（深）",
+    "facePaintColorsLight": "面部彩绘（浅）",
+    "hairColors": "发色",
+    "skinColors": "肤色"
   },
   "jobNames": {
     "paladin": "骑士",

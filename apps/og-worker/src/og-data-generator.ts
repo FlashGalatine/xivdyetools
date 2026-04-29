@@ -8,8 +8,21 @@
  * @module og-data-generator
  */
 
-import { DyeService, dyeDatabase } from '@xivdyetools/core';
-import type { Dye } from '@xivdyetools/types';
+import {
+  DyeService,
+  dyeDatabase,
+  LocaleLoader,
+  LocaleRegistry,
+  TranslationProvider,
+} from '@xivdyetools/core';
+import type {
+  Dye,
+  HarmonyTypeKey,
+  LocaleCode,
+  SheetKey,
+  ToolKey,
+  VisionType as CoreVisionType,
+} from '@xivdyetools/types';
 import type {
   OGData,
   ToolId,
@@ -27,49 +40,49 @@ import type {
 } from './types';
 
 // ============================================================================
-// Tool Display Names
+// Localization (REFACTOR-001, 2026-04-28 audit)
 // ============================================================================
 
-const TOOL_NAMES: Record<ToolId, string> = {
-  harmony: 'Harmony Explorer',
-  gradient: 'Gradient Builder',
-  mixer: 'Dye Mixer',
-  swatch: 'Swatch Matcher',
-  comparison: 'Dye Comparison',
-  accessibility: 'Accessibility Checker',
-};
+/**
+ * Module-scoped translator with all 6 locales eagerly preloaded.
+ *
+ * Stateless: each call passes locale explicitly, so concurrent requests with
+ * different `?lang=` values cannot trample one another's state. This
+ * intentionally diverges from the `LocalizationService.setLocale()` singleton
+ * pattern used by api-worker — see audit OPT-001 for the perf/race tradeoffs.
+ */
+const ogTranslator: TranslationProvider = (() => {
+  const loader = new LocaleLoader();
+  const registry = new LocaleRegistry();
+  for (const lc of ['en', 'ja', 'de', 'fr', 'ko', 'zh'] as const) {
+    registry.registerLocale(loader.loadLocale(lc));
+  }
+  return new TranslationProvider(registry);
+})();
 
-const HARMONY_NAMES: Record<HarmonyType, string> = {
-  complementary: 'Complementary',
-  analogous: 'Analogous',
-  triadic: 'Triadic',
-  'split-complementary': 'Split-Complementary',
-  tetradic: 'Tetradic',
-  square: 'Square',
-  monochromatic: 'Monochromatic',
-  compound: 'Compound',
-  shades: 'Shades',
-};
+/**
+ * Map og-worker's kebab-case `HarmonyType` to core's camelCase `HarmonyTypeKey`
+ * (only `split-complementary` differs).
+ */
+function harmonyToKey(h: HarmonyType): HarmonyTypeKey {
+  return h === 'split-complementary' ? 'splitComplementary' : h;
+}
 
-const VISION_NAMES: Record<VisionType, string> = {
-  normal: 'Normal Vision',
-  protanopia: 'Protanopia',
-  deuteranopia: 'Deuteranopia',
-  tritanopia: 'Tritanopia',
-  achromatopsia: 'Achromatopsia',
-};
+function getToolName(tool: ToolId, locale: LocaleCode): string {
+  return ogTranslator.getToolName(tool as ToolKey, locale);
+}
 
-const SHEET_NAMES: Record<ColorSheetCategory, string> = {
-  eyeColors: 'Eye Colors',
-  highlightColors: 'Highlights',
-  lipColorsDark: 'Lip Colors (Dark)',
-  lipColorsLight: 'Lip Colors (Light)',
-  tattooColors: 'Tattoo/Limbal',
-  facePaintColorsDark: 'Face Paint (Dark)',
-  facePaintColorsLight: 'Face Paint (Light)',
-  hairColors: 'Hair Colors',
-  skinColors: 'Skin Colors',
-};
+function getHarmonyName(harmony: HarmonyType, locale: LocaleCode): string {
+  return ogTranslator.getHarmonyType(harmonyToKey(harmony), locale);
+}
+
+function getVisionName(vision: VisionType, locale: LocaleCode): string {
+  return ogTranslator.getVisionShort(vision as CoreVisionType, locale);
+}
+
+function getSheetName(sheet: ColorSheetCategory, locale: LocaleCode): string {
+  return ogTranslator.getSheetName(sheet as SheetKey, locale);
+}
 
 // ============================================================================
 // DyeService Instance
@@ -116,9 +129,13 @@ function formatHex(hex: string): string {
 /**
  * Generate OG data for Harmony Explorer
  */
-export function generateHarmonyOGData(params: HarmonyParams, env: Env): OGData {
+export function generateHarmonyOGData(
+  params: HarmonyParams,
+  env: Env,
+  locale: LocaleCode = 'en',
+): OGData {
   const dyeInfo = getDyeInfo(params.dye);
-  const harmonyName = HARMONY_NAMES[params.harmony] || params.harmony;
+  const harmonyName = getHarmonyName(params.harmony, locale);
 
   if (!dyeInfo) {
     return {
@@ -143,13 +160,17 @@ export function generateHarmonyOGData(params: HarmonyParams, env: Env): OGData {
 /**
  * Generate OG data for Gradient Builder
  */
-export function generateGradientOGData(params: GradientParams, env: Env): OGData {
+export function generateGradientOGData(
+  params: GradientParams,
+  env: Env,
+  locale: LocaleCode = 'en',
+): OGData {
   const startDye = getDyeInfo(params.start);
   const endDye = getDyeInfo(params.end);
 
   if (!startDye || !endDye) {
     return {
-      title: 'Gradient Builder | XIV Dye Tools',
+      title: `${getToolName('gradient', locale)} | XIV Dye Tools`,
       description: 'Create smooth color gradients between FFXIV dyes.',
       url: `${env.APP_BASE_URL}/gradient/`,
       imageUrl: `${env.OG_IMAGE_BASE_URL}/gradient/default.png`,
@@ -170,14 +191,18 @@ export function generateGradientOGData(params: GradientParams, env: Env): OGData
 /**
  * Generate OG data for Dye Mixer
  */
-export function generateMixerOGData(params: MixerParams, env: Env): OGData {
+export function generateMixerOGData(
+  params: MixerParams,
+  env: Env,
+  locale: LocaleCode = 'en',
+): OGData {
   const dyeA = getDyeInfo(params.dyeA);
   const dyeB = getDyeInfo(params.dyeB);
   const dyeC = params.dyeC ? getDyeInfo(params.dyeC) : null;
 
   if (!dyeA || !dyeB) {
     return {
-      title: 'Dye Mixer | XIV Dye Tools',
+      title: `${getToolName('mixer', locale)} | XIV Dye Tools`,
       description: 'Mix FFXIV dyes and find the closest matching result.',
       url: `${env.APP_BASE_URL}/mixer/`,
       imageUrl: `${env.OG_IMAGE_BASE_URL}/mixer/default.png`,
@@ -211,7 +236,11 @@ export function generateMixerOGData(params: MixerParams, env: Env): OGData {
 /**
  * Generate OG data for Swatch Matcher
  */
-export function generateSwatchOGData(params: SwatchParams, env: Env): OGData {
+export function generateSwatchOGData(
+  params: SwatchParams,
+  env: Env,
+  locale: LocaleCode = 'en',
+): OGData {
   const hexColor = formatHex(params.color);
   const limit = params.limit || 5;
   const { sheet, race, gender } = params;
@@ -221,10 +250,11 @@ export function generateSwatchOGData(params: SwatchParams, env: Env): OGData {
 
   if (sheet) {
     const isRaceSpecific = sheet === 'hairColors' || sheet === 'skinColors';
+    const sheetName = getSheetName(sheet, locale).toLowerCase();
     if (isRaceSpecific && race && gender) {
-      description = `Find FFXIV dyes matching this ${gender} ${race} ${SHEET_NAMES[sheet].toLowerCase()} (${hexColor}).`;
+      description = `Find FFXIV dyes matching this ${gender} ${race} ${sheetName} (${hexColor}).`;
     } else {
-      description = `Find FFXIV dyes matching this ${SHEET_NAMES[sheet].toLowerCase()} (${hexColor}).`;
+      description = `Find FFXIV dyes matching this ${sheetName} (${hexColor}).`;
     }
   } else {
     description += ' Perfect for matching character colors or custom palettes!';
@@ -262,12 +292,16 @@ export function generateSwatchOGData(params: SwatchParams, env: Env): OGData {
 /**
  * Generate OG data for Dye Comparison
  */
-export function generateComparisonOGData(params: ComparisonParams, env: Env): OGData {
+export function generateComparisonOGData(
+  params: ComparisonParams,
+  env: Env,
+  locale: LocaleCode = 'en',
+): OGData {
   const dyes = params.dyes.slice(0, 4).map(getDyeInfo).filter(Boolean);
 
   if (dyes.length === 0) {
     return {
-      title: 'Dye Comparison | XIV Dye Tools',
+      title: `${getToolName('comparison', locale)} | XIV Dye Tools`,
       description: 'Compare up to 4 FFXIV dyes side by side.',
       url: `${env.APP_BASE_URL}/comparison/`,
       imageUrl: `${env.OG_IMAGE_BASE_URL}/comparison/default.png`,
@@ -290,13 +324,17 @@ export function generateComparisonOGData(params: ComparisonParams, env: Env): OG
 /**
  * Generate OG data for Accessibility Checker
  */
-export function generateAccessibilityOGData(params: AccessibilityParams, env: Env): OGData {
+export function generateAccessibilityOGData(
+  params: AccessibilityParams,
+  env: Env,
+  locale: LocaleCode = 'en',
+): OGData {
   const dyes = params.dyes.slice(0, 4).map(getDyeInfo).filter(Boolean);
-  const visionName = params.vision ? VISION_NAMES[params.vision] : 'Color Vision';
+  const visionName = params.vision ? getVisionName(params.vision, locale) : 'Color Vision';
 
   if (dyes.length === 0) {
     return {
-      title: 'Accessibility Checker | XIV Dye Tools',
+      title: `${getToolName('accessibility', locale)} | XIV Dye Tools`,
       description: 'Check how FFXIV dyes appear to players with color vision differences.',
       url: `${env.APP_BASE_URL}/accessibility/`,
       imageUrl: `${env.OG_IMAGE_BASE_URL}/accessibility/default.png`,
@@ -426,12 +464,16 @@ function escapeHtml(str: string): string {
  * @param tool - The tool ID from the URL path
  * @param searchParams - URL search parameters
  * @param env - Environment bindings
+ * @param locale - Optional locale for display-name localization (defaults to 'en').
+ *                 Pass the value parsed from the request's `?lang=` query param
+ *                 in `createToolHandler`.
  * @returns OGData for the requested tool and parameters
  */
 export function generateOGDataForTool(
   tool: ToolId,
   searchParams: URLSearchParams,
-  env: Env
+  env: Env,
+  locale: LocaleCode = 'en',
 ): OGData {
   switch (tool) {
     case 'harmony': {
@@ -441,7 +483,7 @@ export function generateOGDataForTool(
         algo: searchParams.get('algo') as HarmonyParams['algo'],
         perceptual: searchParams.get('perceptual') === '1',
       };
-      return generateHarmonyOGData(params, env);
+      return generateHarmonyOGData(params, env, locale);
     }
 
     case 'gradient': {
@@ -451,7 +493,7 @@ export function generateOGDataForTool(
         steps: parseInt(searchParams.get('steps') || '5', 10),
         algo: searchParams.get('algo') as GradientParams['algo'],
       };
-      return generateGradientOGData(params, env);
+      return generateGradientOGData(params, env, locale);
     }
 
     case 'mixer': {
@@ -463,7 +505,7 @@ export function generateOGDataForTool(
         ratio: parseInt(searchParams.get('ratio') || '50', 10),
         algo: searchParams.get('algo') as MixerParams['algo'],
       };
-      return generateMixerOGData(params, env);
+      return generateMixerOGData(params, env, locale);
     }
 
     case 'swatch': {
@@ -475,7 +517,7 @@ export function generateOGDataForTool(
         race: searchParams.get('race') || undefined,
         gender: searchParams.get('gender') as CharacterGender | undefined,
       };
-      return generateSwatchOGData(params, env);
+      return generateSwatchOGData(params, env, locale);
     }
 
     case 'comparison': {
@@ -486,7 +528,7 @@ export function generateOGDataForTool(
           .map((id) => parseInt(id, 10))
           .filter((id) => !isNaN(id)),
       };
-      return generateComparisonOGData(params, env);
+      return generateComparisonOGData(params, env, locale);
     }
 
     case 'accessibility': {
@@ -498,7 +540,7 @@ export function generateOGDataForTool(
           .filter((id) => !isNaN(id)),
         vision: searchParams.get('vision') as VisionType | undefined,
       };
-      return generateAccessibilityOGData(params, env);
+      return generateAccessibilityOGData(params, env, locale);
     }
 
     default: {

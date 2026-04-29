@@ -9,13 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **REFACTOR-001** (2026-04-28 audit): OG embed metadata is now **localized via `?lang=` query param**. The four hardcoded English display-name maps (`TOOL_NAMES`, `HARMONY_NAMES`, `VISION_NAMES`, `SHEET_NAMES`) were removed and replaced with calls to the new `TranslationProvider` methods on `@xivdyetools/core`. Every social media link preview now respects the sharer's locale (en / ja / de / fr / ko / zh) — Discord, Twitter, Facebook crawlers will see localized titles and descriptions when the shared link includes `?lang=<code>`.
+  - Module-scoped `TranslationProvider` is bootstrapped once at module init with all 6 locales preloaded, so per-request lookups are synchronous and stateless (no race risk between concurrent requests with different locales).
+  - The kebab→camel conversion `'split-complementary'` → `'splitComplementary'` is handled by a thin `harmonyToKey()` shim — only that one harmony name differs in case style between og-worker's domain types and core's localization keys.
+  - Six new vitest cases exercise the localized path (Japanese harmony names, German tool fallback, Korean sheet names in swatch descriptions, French short vision name in accessibility titles, plus the kebab/camel boundary). Total test count: 344.
 - **REFACTOR-002** (2026-04-28 audit): Wired the shared `@xivdyetools/worker-middleware` stack — `requestIdMiddleware()` and `loggerMiddleware({ serviceName: 'xivdyetools-og-worker' })` — so og-worker now emits structured JSON logs with cross-worker request IDs, matching the discord-worker / presets-api / api-worker observability pattern.
 - Global `app.onError` handler with structured logging (og-worker previously had none, so unhandled errors fell through to Hono's default 500 with no log signal).
 
 ### Changed
 
 - `createToolHandler` now types its handler argument as `Context<{ Bindings: Env }>` (replacing a hand-rolled inline subset). No behavior change — enables `getLogger(c)` to type-check.
-- Replaced an ad-hoc `console.log` in the crawler-tool handler with a structured `getLogger(c)?.info('Serving OG metadata', …)` call carrying tool, crawler, URL, and OG title fields.
+- Replaced an ad-hoc `console.log` in the crawler-tool handler with a structured `getLogger(c)?.info('Serving OG metadata', …)` call carrying tool, locale, crawler, URL, and OG title fields.
+- All six per-tool generators (`generateHarmonyOGData`, `generateGradientOGData`, etc.) and the `generateOGDataForTool` dispatcher gained an optional trailing `locale: LocaleCode = 'en'` parameter. Backwards-compatible default; existing callers keep working without changes.
 
 ---
 
