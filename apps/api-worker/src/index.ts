@@ -11,7 +11,7 @@ import { cors } from 'hono/cors';
 import type { Env, Variables } from './types.js';
 
 // Middleware
-import { requestIdMiddleware, getRequestId } from '@xivdyetools/worker-middleware';
+import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-middleware';
 import { rateLimitMiddleware } from './middleware/rate-limit.js';
 
 // Routes
@@ -30,7 +30,17 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 // 1. Request ID (must be first for tracing)
 app.use('*', requestIdMiddleware());
 
-// 2. Security headers
+// 2. Structured logger (mirrors presets-api / discord-worker)
+app.use(
+  '*',
+  loggerMiddleware({
+    serviceName: 'xivdyetools-api-worker',
+    readApiVersionFromEnv: true,
+    logUserAgent: true,
+  }),
+);
+
+// 3. Security headers
 app.use('*', async (c, next) => {
   await next();
   c.header('X-Content-Type-Options', 'nosniff');
@@ -40,7 +50,7 @@ app.use('*', async (c, next) => {
   }
 });
 
-// 3. CORS — permissive for public read-only API
+// 4. CORS — permissive for public read-only API
 app.use(
   '*',
   cors({
@@ -55,15 +65,15 @@ app.use(
       'X-API-Version',
       'Retry-After',
     ],
-    maxAge: 86400,
+    maxAge: 3600,
     credentials: false,
   }),
 );
 
-// 4. Rate limiting on API routes
+// 5. Rate limiting on API routes
 app.use('/v1/*', rateLimitMiddleware);
 
-// 5. API version header
+// 6. API version header
 app.use('*', async (c, next) => {
   await next();
   c.header('X-API-Version', c.env.API_VERSION || 'v1');
@@ -114,6 +124,7 @@ app.notFound((c) => {
 
 app.onError((err, c) => {
   const requestId = getRequestId(c);
+  const logger = getLogger(c);
   const isDev = c.env.ENVIRONMENT === 'development';
 
   // Structured ApiError — return its code and status
@@ -131,7 +142,13 @@ app.onError((err, c) => {
   }
 
   // Unexpected error — log and return generic message
-  console.error(`[${requestId}] Unhandled error:`, isDev ? err : { name: err.name, message: err.message });
+  if (logger) {
+    logger.error('Unhandled error', err, { operation: 'globalErrorHandler' });
+  } else {
+    // Fallback if logger middleware is not active
+    const logMessage = isDev ? err : { name: err.name, message: err.message };
+    console.error(`[${requestId}] Unhandled error:`, logMessage);
+  }
 
   return c.json(
     {

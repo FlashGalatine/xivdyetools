@@ -5,6 +5,20 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **REFACTOR-002** (2026-04-28 audit): Wired the shared `@xivdyetools/worker-middleware` stack — `requestIdMiddleware()` and `loggerMiddleware({ serviceName: 'xivdyetools-og-worker' })` — so og-worker now emits structured JSON logs with cross-worker request IDs, matching the discord-worker / presets-api / api-worker observability pattern.
+- Global `app.onError` handler with structured logging (og-worker previously had none, so unhandled errors fell through to Hono's default 500 with no log signal).
+
+### Changed
+
+- `createToolHandler` now types its handler argument as `Context<{ Bindings: Env }>` (replacing a hand-rolled inline subset). No behavior change — enables `getLogger(c)` to type-check.
+- Replaced an ad-hoc `console.log` in the crawler-tool handler with a structured `getLogger(c)?.info('Serving OG metadata', …)` call carrying tool, crawler, URL, and OG title fields.
+
+---
+
 ## [1.1.0] - 2026-04-07
 
 ### Added

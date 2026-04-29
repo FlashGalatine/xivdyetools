@@ -19,7 +19,8 @@
  * 3. Place it in src/fonts/NotoSansSC-Regular.ttf
  * 4. Uncomment the CJK import below and rebuild
  *
- * Note: The CJK font is subsetted to only include dye name characters (~222 KiB).
+ * Note: The CJK fonts are subsetted to only the codepoints present in the
+ * core + bot-i18n locale JSON files (~474 KiB SC + ~801 KiB KR).
  */
 
 // Static font imports - wrangler bundles these as ArrayBuffer at build time
@@ -30,11 +31,11 @@ import onestData from '../fonts/Onest-VariableFont_wght.ttf';
 // @ts-expect-error - Binary imports are handled by wrangler bundler
 import habibiData from '../fonts/Habibi-Regular.ttf';
 
-// CJK font imports - subsetted to dye name glyphs only
-// Noto Sans SC: Chinese ideographs + Japanese katakana (~222 KiB)
+// CJK font imports - subsetted via apps/discord-worker/scripts/subset-cjk-fonts.py
+// Noto Sans SC: Chinese ideographs + Japanese kana (~474 KiB)
 // @ts-expect-error - Binary imports are handled by wrangler bundler
 import notoSansCjkData from '../fonts/NotoSansSC-Subset.ttf';
-// Noto Sans KR: Korean Hangul syllables (~155 KiB)
+// Noto Sans KR: Korean Hangul syllables (~801 KiB)
 // @ts-expect-error - Binary imports are handled by wrangler bundler
 import notoSansKrData from '../fonts/NotoSansKR-Subset.ttf';
 

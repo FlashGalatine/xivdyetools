@@ -13,8 +13,8 @@ Usage:
   python scripts/subset-cjk-fonts.py
 
 The script reads all locale JSON files from:
-  - xivdyetools-core/src/data/locales/ (dye names, categories, labels, etc.)
-  - src/locales/ (bot UI strings, titles, quality labels, etc.)
+  - packages/core/src/data/locales/ (dye names, categories, labels, etc.)
+  - packages/bot-i18n/src/locales/ (bot UI strings, titles, quality labels, etc.)
 
 And produces:
   - src/fonts/NotoSansSC-Subset.ttf (Chinese ideographs + Japanese kana)
@@ -40,11 +40,12 @@ from fontTools.subset import Subsetter, Options
 
 # Resolve paths relative to this script's location
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-WORKER_ROOT = os.path.dirname(SCRIPT_DIR)
-PROJECT_ROOT = os.path.dirname(WORKER_ROOT)
+WORKER_ROOT = os.path.dirname(SCRIPT_DIR)                      # apps/discord-worker
+APPS_DIR = os.path.dirname(WORKER_ROOT)                        # apps
+MONOREPO_ROOT = os.path.dirname(APPS_DIR)                      # repo root
 
-CORE_LOCALES_DIR = os.path.join(PROJECT_ROOT, "xivdyetools-core", "src", "data", "locales")
-BOT_LOCALES_DIR = os.path.join(WORKER_ROOT, "src", "locales")
+CORE_LOCALES_DIR = os.path.join(MONOREPO_ROOT, "packages", "core", "src", "data", "locales")
+BOT_LOCALES_DIR = os.path.join(MONOREPO_ROOT, "packages", "bot-i18n", "src", "locales")
 FONTS_DIR = os.path.join(WORKER_ROOT, "src", "fonts")
 
 SC_INPUT = os.path.join(FONTS_DIR, "NotoSansSC-Regular.ttf")
@@ -78,22 +79,26 @@ def collect_all_characters():
     # Core locale files
     for lang in LOCALE_LANGUAGES:
         path = os.path.join(CORE_LOCALES_DIR, f"{lang}.json")
-        if os.path.exists(path):
-            with open(path, "r", encoding="utf-8") as f:
-                add_strings(json.load(f))
-            print(f"  Core {lang}.json: loaded")
-        else:
-            print(f"  Core {lang}.json: not found (skipped)")
+        if not os.path.exists(path):
+            raise FileNotFoundError(
+                f"Core locale file not found: {path}\n"
+                "Did the monorepo layout change? Update CORE_LOCALES_DIR."
+            )
+        with open(path, "r", encoding="utf-8") as f:
+            add_strings(json.load(f))
+        print(f"  Core {lang}.json: loaded")
 
     # Bot UI locale files
     for lang in LOCALE_LANGUAGES:
         path = os.path.join(BOT_LOCALES_DIR, f"{lang}.json")
-        if os.path.exists(path):
-            with open(path, "r", encoding="utf-8") as f:
-                add_strings(json.load(f))
-            print(f"  Bot  {lang}.json: loaded")
-        else:
-            print(f"  Bot  {lang}.json: not found (skipped)")
+        if not os.path.exists(path):
+            raise FileNotFoundError(
+                f"Bot UI locale file not found: {path}\n"
+                "Did the discord-worker locale folder move? Update BOT_LOCALES_DIR."
+            )
+        with open(path, "r", encoding="utf-8") as f:
+            add_strings(json.load(f))
+        print(f"  Bot  {lang}.json: loaded")
 
     return codepoints
 

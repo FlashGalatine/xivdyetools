@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **i18n FONT_SUBSET_AUDIT (HIGH)** (2026-04-28 audit): `scripts/subset-cjk-fonts.py` had two stale path resolutions left over from the monorepo restructure — `CORE_LOCALES_DIR` resolved to a non-existent `apps/xivdyetools-core/...` and `BOT_LOCALES_DIR` to `apps/discord-worker/src/locales/`, but bot UI strings now live in `packages/bot-i18n/src/locales/`. Both `if (os.path.exists(path))` silent skips made the script "succeed" while emitting subsets containing only ASCII; on the next re-run after CSV updates this would have produced tofu glyphs for all dye names. Both paths were corrected to the new package layout, and both silent skips were converted into `FileNotFoundError` so future restructures fail loudly.
+- Stale doc comments in `src/services/fonts.ts` claiming subset sizes of "~222 KiB / ~155 KiB" replaced with the actual post-rerun sizes (~474 KiB SC / ~801 KiB KR) plus a pointer to `scripts/subset-cjk-fonts.py`.
+
+### Changed
+
+- Refreshed `src/fonts/NotoSansSC-Subset.ttf` (484 KiB, 1,179 glyphs) and `src/fonts/NotoSansKR-Subset.ttf` (820 KiB, 1,400 glyphs) from the corrected subsetter run covering all current core dye-name and bot-i18n locale strings.
+
+---
+
 ## [4.4.0] - 2026-04-07
 
 ### Security

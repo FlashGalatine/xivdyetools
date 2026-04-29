@@ -320,6 +320,9 @@ importers:
       '@xivdyetools/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@xivdyetools/worker-middleware':
+        specifier: workspace:*
+        version: link:../../packages/worker-middleware
       hono:
         specifier: ^4.12.15
         version: 4.12.15
@@ -437,6 +440,9 @@ importers:
       '@xivdyetools/rate-limiter':
         specifier: workspace:*
         version: link:../../packages/rate-limiter
+      '@xivdyetools/worker-middleware':
+        specifier: workspace:*
+        version: link:../../packages/worker-middleware
       hono:
         specifier: ^4.12.15
         version: 4.12.15

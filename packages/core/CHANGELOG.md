@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **BUG-003 contract test** (2026-04-28 audit): New `src/services/dye/__tests__/DyeFilter.contract.test.ts` validates that every value in `VENDOR_ACQUISITIONS` and `CRAFT_ACQUISITIONS` exists in the live `colors_xiv.json` acquisition set. Auto-detects future renames the same way the 2026-04 `'Crafting'` → `'The Firmament'` drift went unnoticed in tests.
+  - The 5 `ALLIED_SOCIETY_ACQUISITIONS` assertions are deliberately `it.skip.each` with an inline TODO comment because the contract test discovered that none of those vendor names appear in current `colors_xiv.json` — `excludeAlliedSocietyDyes` is currently a no-op against live data, awaiting a separate cleanup pass.
+
+### Fixed
+
+- **BUG-003** (2026-04-28 audit): Replaced 8 stale `acquisition: 'Crafting'` instances with `'The Firmament'` across four dye test fixture files (`DyeDatabase.test.ts`, `DyeService.test.ts`, `DyeSearch.test.ts`, `HarmonyGenerator.test.ts`). Tests passed today only because no fixture exercised the `excludeCraftDyes` path; a future test that did would have silently false-passed against `'Crafting' !== 'The Firmament'`.
+
+---
+
 ## [2.5.0] - 2026-04-28
 
 ### Added

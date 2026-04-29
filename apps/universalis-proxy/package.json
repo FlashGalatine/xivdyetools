@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@xivdyetools/rate-limiter": "workspace:*",
+    "@xivdyetools/worker-middleware": "workspace:*",
     "hono": "^4.12.15"
   }
 }

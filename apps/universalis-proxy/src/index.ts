@@ -11,6 +11,11 @@
  */
 
 import { Hono } from 'hono';
+import {
+  requestIdMiddleware,
+  loggerMiddleware,
+  getLogger,
+} from '@xivdyetools/worker-middleware';
 import type { Env } from './types/cache';
 import { CACHE_CONFIGS } from './config/cache';
 import { isValidDatacenterOrWorld } from './config/datacenters';
@@ -23,6 +28,22 @@ import { checkRateLimit, getRateLimitHeaders, type RateLimitConfig } from './ser
 const RATE_LIMIT_RETRY_AFTER = 60;
 
 const app = new Hono<{ Bindings: Env }>();
+
+// =============================================================================
+// Observability Middleware (REFACTOR-002, 2026-04-28 audit)
+// Aligns universalis-proxy with the shared @xivdyetools/worker-middleware
+// stack used by presets-api / discord-worker so request IDs are consistent
+// across the cross-worker tracing surface.
+// =============================================================================
+
+app.use('*', requestIdMiddleware());
+app.use(
+  '*',
+  loggerMiddleware({
+    serviceName: 'xivdyetools-universalis-proxy',
+    logUserAgent: true,
+  }),
+);
 
 // =============================================================================
 // CORS Middleware - Applied to ALL responses including errors
@@ -213,7 +234,10 @@ app.get('/api/v2/aggregated/:datacenter/:itemIds', async (c) => {
       );
     }
 
-    console.error('Error proxying to Universalis:', error);
+    getLogger(c)?.error('Error proxying to Universalis', error as Error, {
+      operation: 'aggregated.proxy',
+      datacenter,
+    });
     return c.json(
       {
         error: 'Failed to fetch from upstream API',
@@ -254,7 +278,9 @@ app.get('/api/v2/data-centers', async (c) => {
       );
     }
 
-    console.error('Error fetching data centers:', error);
+    getLogger(c)?.error('Error fetching data centers', error as Error, {
+      operation: 'dataCenters.proxy',
+    });
     return c.json({ error: 'Failed to fetch data centers' }, 502);
   }
 });
@@ -289,7 +315,9 @@ app.get('/api/v2/worlds', async (c) => {
       );
     }
 
-    console.error('Error fetching worlds:', error);
+    getLogger(c)?.error('Error fetching worlds', error as Error, {
+      operation: 'worlds.proxy',
+    });
     return c.json({ error: 'Failed to fetch worlds' }, 502);
   }
 });
@@ -318,7 +346,12 @@ app.notFound((c) => {
 // =============================================================================
 
 app.onError((err, c) => {
-  console.error('Unhandled error:', err);
+  const logger = getLogger(c);
+  if (logger) {
+    logger.error('Unhandled error', err, { operation: 'globalErrorHandler' });
+  } else {
+    console.error('[universalis-proxy] Unhandled error:', err);
+  }
   return c.json(
     {
       error: 'Internal Server Error',

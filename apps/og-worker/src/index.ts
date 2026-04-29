@@ -14,7 +14,12 @@
  * @module index
  */
 
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
+import {
+  requestIdMiddleware,
+  loggerMiddleware,
+  getLogger,
+} from '@xivdyetools/worker-middleware';
 import { detectCrawlerFromRequest, getCrawlerName } from './crawler-detector';
 import { generateOGDataForTool, generateOGHTML } from './og-data-generator';
 import { renderOGImage } from './services/renderer';
@@ -63,6 +68,21 @@ const OG_MAX_COMPARISON_DYES = 16;
 const app = new Hono<{ Bindings: Env }>();
 
 // ============================================================================
+// Middleware: Observability (request ID + structured logger)
+// REFACTOR-002 (2026-04-28 audit): aligns og-worker with the shared
+// @xivdyetools/worker-middleware stack used by presets-api / discord-worker.
+// ============================================================================
+
+app.use('*', requestIdMiddleware());
+app.use(
+  '*',
+  loggerMiddleware({
+    serviceName: 'xivdyetools-og-worker',
+    logUserAgent: true,
+  }),
+);
+
+// ============================================================================
 // Middleware: Analytics Tracking
 // ============================================================================
 
@@ -106,7 +126,7 @@ app.get('/health', (c) => {
  * Creates a route handler for each supported tool
  */
 function createToolHandler(tool: ToolId) {
-  return async (c: { req: { raw: Request }; env: Env; text: (html: string, status?: number, headers?: Record<string, string>) => Response }) => {
+  return async (c: Context<{ Bindings: Env }>) => {
     const request = c.req.raw;
     const env = c.env;
     const url = new URL(request.url);
@@ -131,14 +151,13 @@ function createToolHandler(tool: ToolId) {
     // Generate OG data for this tool
     const ogData = generateOGDataForTool(tool, url.searchParams, env);
 
-    // Log for debugging
-    console.log(
-      `[OG Worker] Serving OG metadata for ${tool} to ${getCrawlerName(crawlerInfo.type)}`,
-      {
-        url: url.toString(),
-        title: ogData.title,
-      }
-    );
+    // Structured request log (replaces ad-hoc console.log)
+    getLogger(c)?.info('Serving OG metadata', {
+      tool,
+      crawler: getCrawlerName(crawlerInfo.type),
+      url: url.toString(),
+      title: ogData.title,
+    });
 
     // Generate and return HTML with OG tags
     const html = generateOGHTML(ogData);
@@ -510,6 +529,26 @@ app.all('*', (c) => {
 
   // Pass through to origin for regular users
   return fetch(c.req.raw);
+});
+
+// ============================================================================
+// Global Error Handler
+// ============================================================================
+
+app.onError((err, c) => {
+  const logger = getLogger(c);
+  if (logger) {
+    logger.error('Unhandled error', err, { operation: 'globalErrorHandler' });
+  } else {
+    console.error('[OG Worker] Unhandled error:', err);
+  }
+  return c.json(
+    {
+      error: 'Internal Server Error',
+      message: 'An unexpected error occurred',
+    },
+    500,
+  );
 });
 
 // ============================================================================

@@ -63,7 +63,7 @@ const sampleDyes: Dye[] = [
     rgb: { r: 106, g: 110, b: 110 },
     hsv: { h: 180, s: 4, v: 43 },
     category: 'Grays',
-    acquisition: 'Crafting',
+    acquisition: 'The Firmament',
     cost: 0,
     currency: 'Gil',
     isMetallic: false,

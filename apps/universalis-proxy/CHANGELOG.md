@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **REFACTOR-002** (2026-04-28 audit): Wired the shared `@xivdyetools/worker-middleware` stack — `requestIdMiddleware()` and `loggerMiddleware({ serviceName: 'xivdyetools-universalis-proxy' })` — bringing this worker into the same cross-worker request-ID and structured-log pattern used by the other workers.
+
+### Changed
+
+- Replaced four `console.error` call sites (three route handlers + the global `app.onError`) with structured `getLogger(c)?.error(...)` calls carrying operation tags so log shippers can distinguish proxy-route failures from data-center / worlds endpoint failures.
+
+---
+
 ## [1.4.4] - 2026-03-18
 
 ### Performance
