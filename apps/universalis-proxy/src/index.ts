@@ -234,7 +234,7 @@ app.get('/api/v2/aggregated/:datacenter/:itemIds', async (c) => {
       );
     }
 
-    getLogger(c)?.error('Error proxying to Universalis', error as Error, {
+    getLogger(c)?.error('Error proxying to Universalis', error, {
       operation: 'aggregated.proxy',
       datacenter,
     });
@@ -278,7 +278,7 @@ app.get('/api/v2/data-centers', async (c) => {
       );
     }
 
-    getLogger(c)?.error('Error fetching data centers', error as Error, {
+    getLogger(c)?.error('Error fetching data centers', error, {
       operation: 'dataCenters.proxy',
     });
     return c.json({ error: 'Failed to fetch data centers' }, 502);
@@ -315,7 +315,7 @@ app.get('/api/v2/worlds', async (c) => {
       );
     }
 
-    getLogger(c)?.error('Error fetching worlds', error as Error, {
+    getLogger(c)?.error('Error fetching worlds', error, {
       operation: 'worlds.proxy',
     });
     return c.json({ error: 'Failed to fetch worlds' }, 502);
