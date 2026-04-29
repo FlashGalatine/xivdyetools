@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **ARCH-002 consolidation fan-out integration test** (2026-04-28 audit): New `src/services/budget/consolidation-fanout.test.ts` (3 cases) closes the gap between unit-level coverage of `getMarketItemID` (in `@xivdyetools/core`) and the live budget pipeline:
+  - With consolidation **active** (live state), three real Type-A consolidated dyes from `dyeDatabase` deduplicate to a single market query for itemID 52254 (proxy `vi.fn` mock asserts `toHaveBeenCalledTimes(1)`); the returned price fans back out so each original itemID resolves via `getMarketItemID` to the same `DyePriceData`.
+  - With consolidation **inactive** (pre-patch state via `CONSOLIDATED_IDS.A/B/C = null` in a beforeEach/restore), the same three dyes produce three distinct market queries and each gets its own price.
+  - Pinned regression for the 2026-02-05 Bug 3: the `itemID > 0` filter must strip Facewear synthetic-negative IDs before they reach the upstream proxy regex `^[\d,]+$`.
+
 ### Fixed
 
 - **i18n FONT_SUBSET_AUDIT (HIGH)** (2026-04-28 audit): `scripts/subset-cjk-fonts.py` had two stale path resolutions left over from the monorepo restructure — `CORE_LOCALES_DIR` resolved to a non-existent `apps/xivdyetools-core/...` and `BOT_LOCALES_DIR` to `apps/discord-worker/src/locales/`, but bot UI strings now live in `packages/bot-i18n/src/locales/`. Both `if (os.path.exists(path))` silent skips made the script "succeed" while emitting subsets containing only ASCII; on the next re-run after CSV updates this would have produced tofu glyphs for all dye names. Both paths were corrected to the new package layout, and both silent skips were converted into `FileNotFoundError` so future restructures fail loudly.

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **ARCH-002 Facewear invariants test** (2026-04-28 audit): New `src/services/dye/__tests__/Facewear.invariants.test.ts` (5 cases) pins the synthetic-ID contract end-to-end against the live `colors_xiv.json` data:
+  - Every Facewear dye carries a negative synthetic itemID (raw `null` is rewritten on `DyeDatabase.initialize`).
+  - The Facewear count remains 11 (matches CLAUDE.md / project memory).
+  - No two synthetic IDs collide.
+  - All non-Facewear dyes keep positive itemIDs.
+  - The canonical `dye.itemID > 0` filter (per the 2026-02-05 budget bug fix) cleanly partitions the tradeable set from Facewear.
 - **REFACTOR-001** (2026-04-28 audit): Three new translation surfaces to support og-worker localization:
   - `tools` — 6 web-app tool display names (Harmony Explorer / Gradient Builder / Dye Mixer / Swatch Matcher / Dye Comparison / Accessibility Checker), translated for all 6 locales
   - `visions` — compact vision-name forms (e.g. just "Deuteranopia" / "2型色覚") for OG embed titles, sibling to the existing verbose `visionTypes`
