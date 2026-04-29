@@ -8,6 +8,79 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.13.0] - 2026-04-29
+
+Post-consolidation cleanup, og-worker / api-worker localization, Allied Society dye filter removal, and SEC-001 XSS hardening from the 2026-04-28 audit.
+
+### Added
+
+- **@xivdyetools/core** `2.6.0`: New localization surfaces for `og-worker` — `tools` (6 web-app tool display names), `visions` (compact vision names for OG titles), `sheets` (9 Swatch Matcher color categories); new `TranslationProvider` methods `getToolName()`, `getVisionShort()`, `getSheetName()`
+- **@xivdyetools/core** `2.6.0`: Top-level exports `LocaleLoader`, `LocaleRegistry`, `TranslationProvider`, `SUPPORTED_LOCALES`, `extractLocaleCode`, `resolveLocaleFromPreference` for stateless concurrent-locale access
+- **@xivdyetools/types** `1.14.0`: `ToolKey`, `SheetKey` types; optional `tools` / `visions` / `sheets` fields on `LocaleData`
+- **og-worker** `1.2.0`: OG embed metadata localization via `?lang=` query parameter — all 6 locales preloaded at module init; `harmonyToKey()` kebab-to-camel converter; global `onError` handler with structured logging
+- **og-worker** `1.2.0`: Integrated `@xivdyetools/worker-middleware` (`requestIdMiddleware` + `loggerMiddleware`) for structured JSON observability — matches `discord-worker` / `presets-api` / `api-worker` pattern
+- **api-worker** `0.4.0`: `localeMiddleware` validates `?locale=` once per request and stores it in context (REFACTOR-001 / OPT-001) — eliminates 7 ad-hoc `setLocale` calls in handlers
+- **web-app** `4.10.0`: Result Card v4 "Spectrum" row showing the consolidated dye spectrum (Standard / Wide #1 / Wide #2) via `showConsolidation` (default `true`) across all 5 tools (Harmony, Gradient, Budget, Swatch, Extractor); new `common.spectrum` i18n key in all 6 locales
+- **@xivdyetools/core** `2.6.0`: ARCH-002 Facewear-invariants contract test (`Facewear.invariants.test.ts`) — 5 cases pinning the negative synthetic-itemID contract and ruling out collisions
+- **@xivdyetools/core** `2.6.0`: BUG-003 contract test (`DyeFilter.contract.test.ts`) validating all acquisition constants exist in live `colors_xiv.json` data — auto-detects future renames like the recent `'Crafting'` → `'The Firmament'` drift
+- **discord-worker** `4.5.0`: ARCH-002 consolidation fan-out integration test (`consolidation-fanout.test.ts`) — 3 cases verifying budget deduplication for active consolidation and regression-pinning the Facewear synthetic-ID filter
+
+### Changed
+
+- **@xivdyetools/core** `2.6.0`: All 6 locale JSONs rebuilt with new `tools`, `visions`, `sheets` keys
+- **api-worker** `0.4.0`: CORS `maxAge` reduced 86400 s → 3600 s (matches `presets-api` / `oauth` precedent); `KVRateLimiter` construction moved per-request to eliminate the singleton footgun (BUG-004)
+- **og-worker** `1.2.0`: All per-tool OG generators gained an optional trailing `locale: LocaleCode = 'en'` parameter (backwards-compatible); `createToolHandler` typed `Context<{ Bindings: Env }>`; ad-hoc `console.log` replaced with structured logger
+- **universalis-proxy** `1.4.5`: REFACTOR-002 — wired `@xivdyetools/worker-middleware` (`requestIdMiddleware` + `loggerMiddleware`); 4 `console.error` call sites (3 route handlers + global `app.onError`) replaced with structured `getLogger(c)?.error(...)` calls carrying operation tags
+- **@xivdyetools/worker-middleware** `1.1.1`: REFACTOR-003 — replaced `Context<any, any, any>` in `getLogger` / `getRequestId` with Hono's standard `Context`; SEC-002 — strengthened `keyExtractor` JSDoc with explicit warning against deriving rate-limit keys from client-controlled headers
+- **@xivdyetools/worker-middleware** `1.1.2`: LINT-FIX — made `getLogger` / `getRequestId` generic over `Context<E, P, I>` so callers (e.g. `presets-api` with `& { auth: AuthContext }`) preserve narrow typing through the helpers; resolves the CI `no-unsafe-argument` lint cascade from the 1.1.1 refactor
+- **discord-worker** `4.5.0`: CJK font subsets regenerated (484 KiB SC / 820 KiB KR) after `subset-cjk-fonts.py` path corrections
+- **web-app** `4.10.0`: Market Board refresh button moved out of the deleted Price Categories panel into the price panel directly
+
+### Fixed
+
+- **@xivdyetools/core** `2.6.0`: BUG-002 — `TranslationProvider.getDyeName()` now consults `CONSOLIDATED_IDS` / `CONSOLIDATED_DYES` as a fallback for items absent from the CSV locale registry (52254 / 52255 / 52256). 4 new test cases cover all three Type-A/B/C IDs across locales
+- **@xivdyetools/core** `2.6.0`: BUG-003 — 8 stale `acquisition: 'Crafting'` instances replaced with `'The Firmament'` across 4 dye test fixtures (`DyeDatabase.test.ts`, `DyeService.test.ts`, `DyeSearch.test.ts`, `HarmonyGenerator.test.ts`)
+- **api-worker** `0.4.0`: BUG-001 — bare `console.error` replaced with structured logger; `loggerMiddleware` wired globally
+- **discord-worker** `4.5.0`: FONT_SUBSET_AUDIT (HIGH) — `subset-cjk-fonts.py` had stale path resolutions (`apps/xivdyetools-core/...`, `apps/discord-worker/src/locales/`) corrected to `packages/*/src/locales/`; silent skips converted to `FileNotFoundError` for loudness on future restructures
+- **web-app** `4.10.0`: Test-fixture drift (BUG-003 follow-up) — `dye-filter-utils.test.ts` updated to post-rename acquisition strings (`'The Firmament'`, `'Venture Coffers'`)
+- **web-app** `4.10.0`: Localization — `themes.sugarRiot` corrected against official SE client strings (German `Zuckerschock`, Korean `슈거 라이엇`); Chinese unchanged pending patch 7.2 client release
+
+### Security
+
+- **SEC-001** (web-app `4.10.0`, 2026-04-28 audit): Replaced `innerHTML` interpolation in `auth-button.ts` (user character name / server from OAuth response) with `createElement` + `textContent` to prevent HTML-entity XSS. CSP `script-src 'self'` provides defense-in-depth.
+
+### Removed
+
+- **@xivdyetools/core** `2.6.0`: `ALLIED_SOCIETY_ACQUISITIONS` constant, filter branches in `isDyeExcluded` / `hasActiveFilters`, vendor entries from all 6 locale `acquisitions` maps
+- **@xivdyetools/types** `1.14.0`: `DyeTypeFilters.excludeAlliedSocietyDyes` field
+- **api-worker** `0.4.0`: `?alliedSociety=` query parameter on `/v1/dyes` and `/v1/match`; `alliedSociety?: boolean` field on `DyeQueryFilters` (parameter ignored, forward-compatible — no error)
+- **discord-worker** `4.5.0`: `/preferences set allied_society` slash-command option and `preferences.ts` `FILTER_OPTIONS` row. **Deployment note**: `pnpm --filter xivdyetools-discord-worker run register-commands` must re-run post-deploy to drop the schema
+- **web-app** `4.10.0`: Entire "Price Categories" UI section (5 acquisition checkboxes), `PriceCategorySettings` type, `getPriceCategories()` / `setCategories()` methods on `MarketBoardService`, `categories-changed` DOM event, `categories` field on `SettingsChangedEvent`, pricing-mixin callback, ConfigSidebar handler, `PRICE_CATEGORIES` constant, stale i18n keys (`marketBoard.priceCategories`, `marketBoard.baseDyes`, etc.), stale `localStorage` `market_board_categories` key
+- **web-app** `4.10.0`: "Exclude Allied Society Dyes" toggle from the v4 Acquisition Source filter panel, `excludeAlliedSocietyDyes` property on `DyeFiltersV4`, 6 prop-passing sites, dead `alliedSocietyDyes` block in `shared-components.js` `PRICE_CATEGORIES` map, 6 locale translation keys
+
+### Documentation
+
+- **@xivdyetools/core** / **web-app**: i18n audit report at `docs/audits/2026-04-28/` covering locale-file parity (100% structural match across 6 locales × 3 stores), CJK font-subset coverage, the stale-path subset-script bug, and hardcoded English strings in `og-worker` / `discord-worker`
+
+---
+
+## [1.12.0] - 2026-04-28
+
+Patch 7.5 ("Trail to the Heavens") goes live in FFXIV. The dye consolidation framework that landed in `core@2.1.0` (2026-03-14) is **activated**: `CONSOLIDATED_IDS` is filled with real market itemIDs, and the `~105 → 3` market-board call collapse is now in effect for everyone.
+
+### Changed
+
+- **@xivdyetools/core** `2.5.0`: Patch 7.5 dye consolidation **activated** — `CONSOLIDATED_IDS` populated with real market itemIDs (Type-A = `52254`, Type-B = `52255`, Type-C = `52256`); `isConsolidationActive()` now returns `true`; `getMarketItemID()` collapses 105 consolidated dyes down to 3 market lookups
+- **web-app** `4.9.0`: Market Board service fans out the 3 consolidated prices to all 105 individual dye cache entries via `getMarketItemID()` — refresh now issues ~20 API calls instead of 105
+
+### Added
+
+- **@xivdyetools/core** `2.5.0`: `CONSOLIDATED_DYES` config with full Patch 7.5 metadata (itemID, localized names en/ja/de/fr/ko/zh, acquisition, price, currency); new `getConsolidatedDyeName(type, locale)` helper
+- **@xivdyetools/core** `2.5.0`: `DyeService.getByStainId()`, `getDyesByStainIds()`, `getLocalizedDyeByStainId()` for post-consolidation stainID-only lookups
+- **web-app** `4.9.0`: User-facing release notes documenting Patch 7.5 go-live (`apps/web-app/CHANGELOG-laymans.md`)
+
+---
+
 ## [1.11.0] - 2026-04-07
 
 ### Security
@@ -472,6 +545,13 @@ Initial release of the XIV Dye Tools monorepo, consolidating 15 previously indep
 
 ---
 
+[1.13.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.12.0...v1.13.0
+[1.12.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.11.0...v1.12.0
+[1.11.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.10.0...v1.11.0
+[1.10.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.9.0...v1.10.0
+[1.9.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.8.0...v1.9.0
+[1.8.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.7.0...v1.8.0
+[1.7.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.5.1...v1.6.0
 [1.5.1]: https://github.com/FlashGalatine/xivdyetools/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/FlashGalatine/xivdyetools/compare/v1.4.0...v1.5.0
