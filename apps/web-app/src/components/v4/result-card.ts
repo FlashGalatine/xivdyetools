@@ -23,7 +23,7 @@ import { BaseLitComponent } from './base-lit-component';
 import { ICON_CONTEXT_MENU } from '@shared/ui-icons';
 import type { Dye, DyeWithDistance } from '@xivdyetools/types';
 import type { MatchingMethod } from '@shared/tool-config-types';
-import { ColorService } from '@xivdyetools/core';
+import { ColorService, getConsolidatedDyeName } from '@xivdyetools/core';
 import { LanguageService, StorageService, RouterService } from '@services/index';
 import { ToastService } from '@services/toast-service';
 import { ModalService } from '@services/modal-service';
@@ -341,6 +341,12 @@ export class ResultCard extends BaseLitComponent {
    */
   @property({ type: Boolean, attribute: 'show-acquisition' })
   showAcquisition: boolean = true;
+
+  /**
+   * Show consolidated dye spectrum membership in acquisition column
+   */
+  @property({ type: Boolean, attribute: 'show-consolidation' })
+  showConsolidation: boolean = true;
 
   /**
    * Context menu open state
@@ -872,6 +878,17 @@ export class ResultCard extends BaseLitComponent {
   }
 
   /**
+   * Format consolidated dye spectrum name for display.
+   * Returns the localized spectrum name (Standard / Wide #1 / Wide #2)
+   * or em-dash for non-consolidated dyes (Special, Facewear).
+   */
+  private formatConsolidation(): string {
+    const type = this.data?.dye.consolidationType;
+    if (!type) return '—';
+    return getConsolidatedDyeName(type, LanguageService.getCurrentLocale());
+  }
+
+  /**
    * Handle primary action (Select Dye) click
    * - If showSlotPicker is true, opens slot picker menu
    * - Else if primaryOpensMenu is true, opens context menu
@@ -1390,11 +1407,19 @@ export class ResultCard extends BaseLitComponent {
               : nothing}
           </div>
 
-          <!-- Acquisition Column - only show if acquisition or price enabled -->
-          ${this.showAcquisition || this.showPrice
+          <!-- Acquisition Column - only show if acquisition, price, or consolidation enabled -->
+          ${this.showAcquisition || this.showPrice || this.showConsolidation
             ? html`
                 <div class="detail-column">
                   <div class="column-header">${LanguageService.t('common.acquisition')}</div>
+                  ${this.showConsolidation
+                    ? html`
+                        <div class="detail-row">
+                          <span class="detail-label">${LanguageService.t('common.spectrum')}</span>
+                          <span class="detail-value">${this.formatConsolidation()}</span>
+                        </div>
+                      `
+                    : nothing}
                   ${this.showAcquisition
                     ? html`
                         <div class="detail-row">

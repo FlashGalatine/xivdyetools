@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Result Card v4**: New "Spectrum" row in the Acquisition column showing which Consolidated Dye Spectrum (Standard / Wide #1 / Wide #2) a dye belongs to, with em-dash placeholder for non-consolidated Special and Facewear dyes. Visible across all five tools that render result cards (Harmony, Gradient, Budget, Swatch, Extractor) via a new `showConsolidation` property defaulting to `true`. Spectrum names are returned by the existing `getConsolidatedDyeName(type, locale)` helper from `@xivdyetools/core`, which provides Square Enix's official localized strings
+- **Localization**: New `common.spectrum` i18n key in all 6 languages — `Spectrum` (en), `スペクトラム` (ja), `Spektrum` (de), `Spectre` (fr), `스펙트럼` (ko), `光谱` (zh)
+
 ### Removed
 
 - **"Exclude Allied Society Dyes" filter toggle** — the toggle in the v4 config sidebar's Acquisition Source section, the `excludeAlliedSocietyDyes` property on `DyeFiltersV4`, the 6 prop-passing sites in `config-sidebar.ts`, the default-value entry in `tool-config-types.ts`, the corresponding `filters.excludeAlliedSocietyDyes` translation key in all 6 locale JSONs (en/ja/de/fr/ko/zh), and the dead `alliedSocietyDyes` block in `assets/js/shared-components.js`'s `PRICE_CATEGORIES` map. Patch 7.5 dye consolidation collapsed the Allied Society vendor categories out of the dye database; the toggle was already a no-op. Stored localStorage tool configurations referencing this key are silently ignored. Co-removed with `@xivdyetools/types@1.14.0` and `@xivdyetools/core@2.6.0`.
