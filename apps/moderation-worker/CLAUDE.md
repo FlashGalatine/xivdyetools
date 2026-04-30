@@ -4,140 +4,181 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Discord moderation bot for XIV Dye Tools Community Presets, running on Cloudflare Workers using HTTP Interactions (not WebSocket). This is a separate bot from the main xivdyetools-discord-worker and handles moderation commands only.
+A separate Discord bot dedicated to moderation actions on Community Presets. Runs on Cloudflare Workers via Discord HTTP Interactions and shares D1 + KV with `xivdyetools-discord-worker`, but has its own Discord application (different `DISCORD_CLIENT_ID`) so moderators can interact with a dedicated UI without polluting the main bot's command surface.
+
+This split keeps the privileged moderation surface (ban/unban, approve/reject, revert edits) isolated from the user-facing bot. The only slash command exposed is `/preset` with moderation subcommands; everything else returns "not supported".
 
 ## Commands
 
 ```bash
-npm run dev                    # Start local development server (wrangler dev)
-npm run deploy                 # Deploy to Cloudflare Workers
-npm run deploy:production      # Deploy to production environment
-npm run test                   # Run tests (vitest)
-npm run type-check             # TypeScript type checking
-npm run register-commands      # Register slash commands with Discord API
+npm run dev                  # wrangler dev
+npm run deploy               # Deploy to staging
+npm run deploy:production    # Deploy to production env
+npm run test                 # vitest unit tests
+npm run test:coverage        # Coverage via @vitest/coverage-v8
+npm run type-check           # tsc --noEmit
+npm run lint                 # eslint src/
+npm run register-commands    # tsx scripts/register-commands.ts (publish slash commands)
 ```
 
-### Registering Commands (PowerShell)
+### Registering Commands
+
 ```powershell
-$env:DISCORD_TOKEN = "your-bot-token"
-$env:DISCORD_CLIENT_ID = "your-client-id"
-$env:DISCORD_GUILD_ID = "guild-id"  # Optional - for faster testing
+$env:DISCORD_TOKEN = "..."
+$env:DISCORD_CLIENT_ID = "1453806659708129374"
+$env:DISCORD_GUILD_ID = "<test-guild>"   # Optional
 npm run register-commands
 ```
 
 ### Setting Secrets
+
 ```bash
 wrangler secret put DISCORD_TOKEN
 wrangler secret put DISCORD_PUBLIC_KEY
 wrangler secret put BOT_API_SECRET
-wrangler secret put MODERATOR_IDS         # Comma-separated Discord user IDs
+wrangler secret put BOT_SIGNING_SECRET
+wrangler secret put MODERATOR_IDS            # CSV of Discord IDs
 wrangler secret put MODERATION_CHANNEL_ID
+wrangler secret put SUBMISSION_LOG_CHANNEL_ID
 ```
 
 ### Pre-commit Checklist
+
 ```bash
-npm run test -- --run && npm run type-check
+npm run lint && npm run test -- --run && npm run type-check
 ```
 
 ## Architecture
 
-### Entry Point
-[src/index.ts](src/index.ts) - Hono app that handles Discord HTTP Interactions:
-1. Ed25519 signature verification
-2. Routes by interaction type: commands, autocomplete, buttons, modals
-3. All responses are ephemeral by default
+### Request Flow
 
-### Handler Organization
-- `handlers/commands/` - Slash command handlers (currently only `/preset`)
-- `handlers/buttons/` - Button interaction handlers (preset moderation actions, ban confirmations)
-- `handlers/modals/` - Modal submission handlers (rejection reasons, ban reasons, revert reasons)
-
-### Services
-- `services/ban-service.ts` - User ban/unban operations via D1 database
-- `services/preset-api.ts` - Communication with xivdyetools-presets-api worker
-- `services/i18n.ts` - Locale resolution (user preference → Discord locale → 'en')
-- `services/bot-i18n.ts` - Translation functions for bot responses
-
-### Cloudflare Bindings
-Defined in [src/types/env.ts](src/types/env.ts):
-- `DB` (D1Database) - Preset and moderation data storage
-- `KV` (KVNamespace) - User preferences (shared with main discord-worker)
-- `PRESETS_API` (Fetcher) - Service binding for Worker-to-Worker communication
-
-### Interaction Flow
 ```
-Discord → POST / → verifyDiscordRequest → route by type → handler → Response.json()
+Discord ──POST /──► Ed25519 verify ──► safeParseJSON (depth ≤ 10, frozen)
+                                            │
+                                            ▼
+                                     interaction.type
+                                            │
+        ┌────────────────┬────────────┬─────┴─────────┬──────────────┐
+        ▼                ▼            ▼               ▼              ▼
+       PING            COMMAND     AUTOCOMPLETE   COMPONENT       MODAL_SUBMIT
+       PONG               │            │              │               │
+                          ▼            ▼              ▼               ▼
+                    rate-limit  rate-limit    handleButton   handlePresetRejection /
+                    handlePreset preset autocomplete         handlePresetRevert /
+                                                              handleBanReason
 ```
 
-For long operations, handlers use `ctx.waitUntil()` with deferred responses.
+Outbound writes hit `presets-api` via Service Binding (`PRESETS_API.fetch(...)`) signed with `BOT_SIGNING_SECRET` (HMAC-SHA256). Ban/unban operations also write to D1 directly (`ban-service.ts`).
+
+### Key Directories
+
+```
+src/
+├── index.ts                            # Hono app, Ed25519, routing, error handler
+├── handlers/
+│   ├── commands/
+│   │   ├── index.ts                    # Re-exports handlePresetCommand
+│   │   └── preset.ts                   # /preset moderate | ban_user | unban_user
+│   ├── buttons/
+│   │   ├── index.ts                    # Dispatcher (custom_id prefix routing)
+│   │   ├── preset-moderation.ts        # Approve/Reject/Revert buttons from embeds
+│   │   └── ban-confirmation.ts         # Confirm/cancel destructive ban actions
+│   └── modals/
+│       ├── index.ts                    # Modal dispatcher + isXModal helpers
+│       ├── preset-rejection.ts         # Rejection reason modal
+│       └── ban-reason.ts               # Ban reason modal
+├── middleware/
+│   └── rate-limit.ts                   # KV sliding window with command/autocomplete configs
+├── services/
+│   ├── ban-service.ts                  # Ban/unban + searchPresetAuthors / searchBannedUsers
+│   ├── preset-api.ts                   # Service Binding client + validateSecurityConfig
+│   ├── i18n.ts                         # Locale resolution (KV → discord locale → 'en')
+│   └── bot-i18n.ts                     # createUserTranslator wrapper
+├── utils/
+│   ├── verify.ts                       # Ed25519 + Content-Length guard (100KB)
+│   ├── safe-json.ts                    # safeParseJSON with depth/freeze checks
+│   ├── url-sanitizer.ts                # Strip sensitive query params from logs
+│   ├── response.ts                     # pong/ephemeral/deferred/rateLimited
+│   ├── discord-api.ts                  # REST helpers
+│   └── env-validation.ts               # Required-env check on first request
+└── types/
+    ├── env.ts                          # Env interface + Interaction enums
+    ├── preset.ts                       # Local preset shape for D1 reads
+    ├── ban.ts                          # Ban service types
+    └── modal.ts                        # Modal payload types
+```
+
+### Environment Bindings (wrangler.toml)
+
+| Binding | Type | Purpose |
+|---------|------|---------|
+| `KV` | KV Namespace (shared with discord-worker) | User preferences + rate-limit counters |
+| `DB` | D1 (`xivdyetools-presets`, shared) | Preset rows + `banned_users` table |
+| `PRESETS_API` | Service Binding → `xivdyetools-presets-api` | Worker-to-Worker preset moderation calls |
+
+Vars: `DISCORD_CLIENT_ID = 1453806659708129374` (separate Discord app), `PRESETS_API_URL`. Custom domains: `moderation-bot.xivdyetools.app`, `moderation-bot.xivdyetools.projectgalatine.com`.
+
+### Required Secrets
+
+| Secret | Purpose |
+|--------|---------|
+| `DISCORD_TOKEN` | Bot token for follow-ups |
+| `DISCORD_PUBLIC_KEY` | Ed25519 public key |
+| `MODERATOR_IDS` | CSV of Discord IDs allowed to use moderation subcommands |
+| `MODERATION_CHANNEL_ID` | Channel where pending preset embeds are posted |
+
+### Optional Secrets
+
+| Secret | Purpose |
+|--------|---------|
+| `BOT_API_SECRET` | Bearer token for outbound calls to presets-api |
+| `BOT_SIGNING_SECRET` | HMAC-SHA256 key for bot request signing (required in prod) |
+| `SUBMISSION_LOG_CHANNEL_ID` | Audit channel for approved submissions |
 
 ## Key Patterns
 
-### Response Helpers
-Use functions from `utils/response.ts`:
-- `ephemeralResponse(content)` - Ephemeral text response
-- `deferredResponse()` - Deferred response for long operations
-- `pongResponse()` - Discord PING acknowledgment
+### Single Command Surface
 
-### Moderation Authorization
-Moderator IDs are stored in `MODERATOR_IDS` secret (comma-separated). Check authorization before any moderation action.
+`handleCommand()` only routes `commandName === 'preset'`; all other commands return "not supported by this moderation bot." This keeps Discord's command tree minimal and prevents the moderation bot from accidentally exposing user-facing commands.
 
-### Localization
-Supports: en, ja, de, fr, ko, zh. Locale resolution order:
-1. User preference (stored in KV)
-2. Discord client locale
-3. Default to 'en'
+### Safe JSON Parsing
 
-## Testing
+`safeParseJSON()` (`utils/safe-json.ts`) wraps `JSON.parse` with:
+- Max depth 10 (Discord interactions are shallow).
+- Structural validation.
+- `Object.freeze()` on the result so handlers can't accidentally mutate the request payload.
+- Returns parse warnings (e.g., trailing whitespace) for logging without rejecting the request.
 
-Tests use Vitest with `@xivdyetools/test-utils` for Cloudflare Workers mocks.
+### Rate Limiting
 
-```bash
-npm run test                 # Run all tests
-npx vitest run src/handlers/commands/preset.test.ts  # Single file
-```
+`middleware/rate-limit.ts` uses KV with sliding-window counters under two configs:
 
-Test files are co-located with source (`*.test.ts`).
+| Config | Limit | Burst | TTL |
+|--------|-------|-------|-----|
+| `command` | 20/min | +5 | 120s |
+| `autocomplete` | 60/min | +10 | 120s |
 
-## Related Projects
-- xivdyetools-discord-worker - Main Discord bot (user-facing commands)
-- xivdyetools-presets-api - Community presets REST API
-- @xivdyetools/types - Shared type definitions
-- @xivdyetools/logger - Structured request logging
+Both fail open (allow on KV error) and use `ctx.waitUntil()` for the increment so the user response is not delayed.
+
+### Moderator Authorization
+
+`MODERATOR_IDS` is parsed by splitting on `[\s,]+` and filtering empties — accepts comma-separated, whitespace-separated, or newline-separated lists. Every moderation action verifies the invoking user is in this list before mutating D1 or calling presets-api.
+
+### Modal Routing
+
+`handleModal()` uses prefix-based detection helpers (`isPresetRejectionModal`, `isPresetRevertModal`, `isBanReasonModal`) so each modal handler only needs to expose its `custom_id` prefix.
+
+### URL Sanitization in Logs
+
+`sanitizeUrl()` is passed to `loggerMiddleware` so query parameters that might contain user IDs or tokens never end up in structured logs.
 
 ## Security Patterns
 
 ### Ed25519 Signature Verification
 
-All Discord requests verified before processing:
-- Headers: `X-Signature-Ed25519`, `X-Signature-Timestamp`
-- Max body size: 100KB
-- Content-Length validation before body read
-- Uses `discord-interactions` library
+Every request hitting `POST /` verifies `X-Signature-Ed25519` against `DISCORD_PUBLIC_KEY` before any parsing. Body limit is 100KB, validated via Content-Length first.
 
-### Rate Limiting
-
-Per-user sliding window (KV-backed):
-- Commands: 20 req/min + 5 burst allowance
-- Autocomplete: 60 req/min + 10 burst allowance
-- TTL: 120 seconds
-- Fail-open: allows request if KV check fails
-
-### Moderator Authorization
-
-- IDs stored in `MODERATOR_IDS` secret (comma-separated)
-- Verified before any moderation action
-- Subcommands restricted: moderate, ban_user, unban_user
-
-### Safe JSON Parsing
-
-Custom `safeParseJSON()` with protections:
-- Max depth: 10 levels
-- Structure validation
-- Result freezing via `Object.freeze()`
-- Returns detailed parse warnings
-
-### Security Headers
+### Hardened Security Headers
 
 ```
 X-Content-Type-Options: nosniff
@@ -148,17 +189,78 @@ Content-Security-Policy: default-src 'none'
 Referrer-Policy: no-referrer
 ```
 
+These are stricter than the main discord-worker because all responses contain potentially sensitive moderation context.
+
+### Global Error Handler
+
+`app.onError()` returns generic `Internal Server Error` in production and only includes the message + stack in development. Stack traces never leak to Discord.
+
+### Environment Validation
+
+On the first request per isolate, `validateEnv()` + `presetApi.validateSecurityConfig()` log errors/warnings for missing or misconfigured secrets. Critical missing secrets are logged but the worker continues so partial functionality (e.g., autocomplete) still works.
+
+### Bot → Presets API Signing
+
+When calling `presets-api`, `preset-api.ts` HMACs `timestamp:method:path:body` with `BOT_SIGNING_SECRET` and sends:
+- `Authorization: Bearer <BOT_API_SECRET>`
+- `X-Request-Signature: <hex>`
+- `X-Request-Timestamp: <unix>`
+- `X-User-Discord-ID: <moderator id>`
+- `X-User-Discord-Name: <moderator name>`
+
+Without `BOT_SIGNING_SECRET` in production, bot auth is rejected on the API side (see presets-api `auth.ts`).
+
+## Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `/preset moderate` | Browse pending presets, approve/reject via buttons |
+| `/preset ban_user` | Ban a user (autocomplete searches preset authors) |
+| `/preset unban_user` | Unban a user (autocomplete searches `banned_users`) |
+
+## Dependencies
+
+| Package | Purpose |
+|---------|---------|
+| `hono` | HTTP framework |
+| `@xivdyetools/auth` | JWT/HMAC/Ed25519 helpers |
+| `@xivdyetools/rate-limiter` | KV sliding window backend |
+| `@xivdyetools/types` | Shared interfaces |
+| `@xivdyetools/logger` | Structured logging |
+| `@xivdyetools/worker-middleware` | Shared Hono middleware |
+| `discord-interactions` (dev) | Used by `scripts/register-commands.ts` |
+
+## Localization
+
+6 languages: `en`, `ja`, `de`, `fr`, `ko`, `zh`. Translator created per request via `createUserTranslator(env.KV, userId, interaction.locale, logger)`. Locale order:
+1. User preference stored in KV.
+2. `interaction.locale` (Discord client locale).
+3. Default `en`.
+
+## Testing
+
+Vitest + `@xivdyetools/test-utils`. Test files co-located with source as `*.test.ts`.
+
+```bash
+npm run test                                              # All tests
+npx vitest run src/handlers/commands/preset.test.ts       # Single file
+npx vitest run -t "ban"                                   # Pattern match
+```
+
+## Related Projects
+
+**Dependencies:** `@xivdyetools/auth`, `@xivdyetools/rate-limiter`, `@xivdyetools/types`, `@xivdyetools/logger`, `@xivdyetools/worker-middleware`
+
+**Service Bindings (outbound):** `xivdyetools-presets-api`
+
+**Sibling:** `xivdyetools-discord-worker` (main bot — same KV/D1, different Discord app)
+
 ## Deployment Checklist
 
-1. Ensure all secrets are set: `wrangler secret list`
-2. Run tests: `npm run test -- --run`
-3. Deploy to staging: `npm run deploy`
-4. Test moderation commands in staging Discord server
-5. Deploy to production: `npm run deploy:production`
-6. Verify bot responds to `/preset moderate`
-
-## Documentation
-
-| Document | Purpose |
-|----------|---------|
-| [docs/HMAC_SIGNATURE_SPEC.md](docs/HMAC_SIGNATURE_SPEC.md) | Bot API HMAC signature specification |
+1. `wrangler secret list` — verify all required secrets are present (especially `BOT_SIGNING_SECRET` for production).
+2. `npm run lint && npm run test -- --run && npm run type-check`.
+3. `npm run deploy` — push to staging.
+4. Run `/preset moderate` in the test guild — confirm pending list loads via Service Binding.
+5. `npm run deploy:production`.
+6. If slash command schemas changed: `npm run register-commands` (with prod `DISCORD_CLIENT_ID = 1453806659708129374`).
+7. Confirm `https://moderation-bot.xivdyetools.app/health` returns `{ status: 'ok' }`.
