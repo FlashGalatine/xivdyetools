@@ -4,6 +4,7 @@ export default defineConfig({
   title: 'XIV Dye Tools API',
   description: 'Public REST API for FFXIV dye data and color matching.',
   cleanUrls: true,
+  srcExclude: ['**/CLAUDE.md', '**/README.md'],
 
   head: [
     ['meta', { name: 'theme-color', content: '#c0a060' }],
