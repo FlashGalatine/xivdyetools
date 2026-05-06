@@ -62,7 +62,7 @@
     "typedoc": "^0.28.19",
     "typedoc-plugin-markdown": "^4.11.0",
     "vitest": "^4.1.5",
-    "yaml": "^2.8.3"
+    "yaml": "^2.8.4"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -12,11 +12,11 @@
     "clean": "turbo run clean"
   },
   "devDependencies": {
-    "turbo": "^2.9.6",
+    "turbo": "^2.9.8",
     "typescript": "^5.9.3",
-    "eslint": "^10.2.1",
+    "eslint": "^10.3.0",
     "@eslint/js": "^10.0.1",
-    "typescript-eslint": "^8.59.1",
+    "typescript-eslint": "^8.59.2",
     "prettier": "^3.8.3",
     "rimraf": "^6.1.2"
   },
