@@ -8,7 +8,11 @@
  */
 
 import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
-import { type HarmonyOptions, type HarmonyColorSpace } from '@xivdyetools/core';
+import {
+  type HarmonyOptions,
+  type HarmonyColorSpace,
+  type MatchingMethod,
+} from '@xivdyetools/core';
 import { filterDyes } from '@xivdyetools/core';
 import { createTranslator, type Translator, type LocaleCode } from '@xivdyetools/bot-i18n';
 import { generateHarmonyWheel, type HarmonyDye } from '@xivdyetools/svg';
@@ -47,6 +51,14 @@ export interface HarmonyInput {
   harmonyOptions?: HarmonyOptions;
   /** Optional dye type filters (e.g., exclude metallic, pastel, etc.) */
   dyeFilters?: DyeTypeFilters;
+  /** Companion dyes per harmony slot (1-3, default 1). Each base hue is expanded to N closest matches. */
+  companionCount?: number;
+  /** Algorithm used to find closest dye for companion expansion (default: 'oklab'). */
+  matchingMethod?: MatchingMethod;
+  /** When true, applies a tighter distance threshold via deltaE matching (default: false). */
+  strictMatching?: boolean;
+  /** When true, deduplicates dyes by id across all output slots (default: false). */
+  preventDuplicates?: boolean;
 }
 
 export type HarmonyResult =
@@ -116,19 +128,76 @@ function getLocalizedHarmonyType(type: string, t: Translator): string {
  * Generates a harmony wheel SVG and embed data for the given color.
  */
 export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult> {
-  const { baseHex, baseName, baseItemID, harmonyType, locale, harmonyOptions, dyeFilters } = input;
+  const {
+    baseHex,
+    baseName,
+    baseId,
+    baseItemID,
+    harmonyType,
+    locale,
+    harmonyOptions,
+    dyeFilters,
+    companionCount = 1,
+    matchingMethod = 'oklab',
+    strictMatching = false,
+    preventDuplicates = false,
+  } = input;
   const t = createTranslator(locale);
 
   await initializeLocale(locale);
 
   try {
-    const harmonyDyes = dyeFilters
-      ? filterDyes(dyeFilters, getHarmonyDyes(baseHex, harmonyType, harmonyOptions))
-      : getHarmonyDyes(baseHex, harmonyType, harmonyOptions);
+    // Apply strict-matching by tightening deltaE tolerance via harmonyOptions
+    const effectiveHarmonyOptions: HarmonyOptions | undefined = strictMatching
+      ? {
+          ...(harmonyOptions ?? {}),
+          algorithm: 'deltaE',
+          deltaEFormula: harmonyOptions?.deltaEFormula ?? 'cie2000',
+          deltaETolerance: harmonyOptions?.deltaETolerance ?? 15,
+        }
+      : harmonyOptions;
 
-    if (harmonyDyes.length === 0) {
+    const baseHarmonyDyes = dyeFilters
+      ? filterDyes(dyeFilters, getHarmonyDyes(baseHex, harmonyType, effectiveHarmonyOptions))
+      : getHarmonyDyes(baseHex, harmonyType, effectiveHarmonyOptions);
+
+    if (baseHarmonyDyes.length === 0) {
       return { ok: false, error: 'NO_MATCHES', errorMessage: 'No harmony dyes found.' };
     }
+
+    // Companion expansion: for each base harmony dye, find N-1 additional close matches
+    const harmonyDyes: Dye[] = [];
+    const seenIds = new Set<number>();
+    if (baseId !== undefined) seenIds.add(baseId);
+    const clampedCompanionCount = Math.max(1, Math.min(3, Math.floor(companionCount)));
+
+    for (const baseDye of baseHarmonyDyes) {
+      const slotDyes: Dye[] = [];
+      const excludeIds: number[] = preventDuplicates ? Array.from(seenIds) : [];
+      // Always include the base harmony dye first
+      slotDyes.push(baseDye);
+      if (preventDuplicates) seenIds.add(baseDye.id);
+      excludeIds.push(baseDye.id);
+      // Find (companionCount - 1) additional close matches around this base hue
+      for (let i = 1; i < clampedCompanionCount; i++) {
+        const candidate = dyeService.findClosestDye(baseDye.hex, {
+          excludeIds: [...excludeIds],
+          matchingMethod,
+        });
+        if (!candidate) break;
+        if (candidate.category === 'Facewear') break;
+        if (dyeFilters && filterDyes(dyeFilters, [candidate]).length === 0) {
+          excludeIds.push(candidate.id);
+          i--;
+          continue;
+        }
+        slotDyes.push(candidate);
+        excludeIds.push(candidate.id);
+        if (preventDuplicates) seenIds.add(candidate.id);
+      }
+      harmonyDyes.push(...slotDyes);
+    }
+
 
     // Convert to HarmonyDye[] with localized names for the SVG
     const dyesForWheel: HarmonyDye[] = harmonyDyes.map((dye) => ({

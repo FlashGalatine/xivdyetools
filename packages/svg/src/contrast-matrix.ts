@@ -44,7 +44,7 @@ export interface ContrastDye {
  * Options for generating the contrast matrix
  */
 export interface ContrastMatrixOptions {
-  /** Array of dyes to compare (2-4) */
+  /** Array of dyes to compare (2-6 — outfit-slot range) */
   dyes: ContrastDye[];
   /** Title text (optional) */
   title?: string;
@@ -144,8 +144,8 @@ export function generateContrastMatrix(options: ContrastMatrixOptions): string {
     return generateErrorMatrix('Need at least 2 dyes for contrast comparison');
   }
 
-  if (dyes.length > 4) {
-    return generateErrorMatrix('Maximum 4 dyes for contrast comparison');
+  if (dyes.length > 6) {
+    return generateErrorMatrix('Maximum 6 dyes for contrast comparison');
   }
 
   // Calculate dimensions

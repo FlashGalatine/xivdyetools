@@ -27,7 +27,9 @@ export {
   rgbToHsv,
   THEME,
   FONTS,
+  DEFAULT_DISPLAY_OPTIONS,
 } from './base.js';
+export type { DisplayOptions } from './base.js';
 
 // Harmony Wheel
 export { generateHarmonyWheel } from './harmony-wheel.js';

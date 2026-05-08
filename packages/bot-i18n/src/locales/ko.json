@@ -566,6 +566,12 @@
       "gender": "캐릭터 성별",
       "world": "마켓 월드",
       "market": "마켓 가격 표시",
+      "showHex": "16진수 코드 표시",
+      "showRgb": "RGB 값 표시",
+      "showHsv": "HSV 값 표시",
+      "showLab": "LAB 값 표시",
+      "showDeltaE": "Delta-E 표시",
+      "showAcquisition": "획득 출처 표시",
       "filters": "염료 필터"
     },
     "descriptions": {
@@ -576,7 +582,13 @@
       "clan": "/swatch의 기본 부족",
       "gender": "/swatch의 기본 성별",
       "world": "마켓 가격의 기본 월드/데이터센터",
-      "market": "기본으로 마켓 가격 표시 여부"
+      "market": "기본으로 마켓 가격 표시 여부",
+      "showHex": "결과 카드에 16진수 색상 코드 표시",
+      "showRgb": "결과 카드에 RGB 값 표시",
+      "showHsv": "결과 카드에 HSV 값 표시",
+      "showLab": "결과 카드에 LAB 값 표시",
+      "showDeltaE": "결과 카드에 Delta-E 색상 거리 표시",
+      "showAcquisition": "결과 카드에 염료 획득 출처 표시"
     },
     "values": {
       "results": "{count}개 결과",

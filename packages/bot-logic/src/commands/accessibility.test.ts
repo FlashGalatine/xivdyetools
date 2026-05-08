@@ -19,14 +19,15 @@ const hexOnly: AccessibilityDye = { hex: '#FF8800', name: '#FF8800' };
 // ============================================================================
 
 describe('VISION_TYPES', () => {
-  it('contains 3 vision types', () => {
-    expect(VISION_TYPES).toHaveLength(3);
+  it('contains 4 vision types (protan/deuter/trit/achromatopsia)', () => {
+    expect(VISION_TYPES).toHaveLength(4);
   });
 
-  it('includes protanopia, deuteranopia, and tritanopia', () => {
+  it('includes protanopia, deuteranopia, tritanopia, and achromatopsia', () => {
     expect(VISION_TYPES).toContain('protanopia');
     expect(VISION_TYPES).toContain('deuteranopia');
     expect(VISION_TYPES).toContain('tritanopia');
+    expect(VISION_TYPES).toContain('achromatopsia');
   });
 });
 

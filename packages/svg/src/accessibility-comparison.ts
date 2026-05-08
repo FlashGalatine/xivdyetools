@@ -37,7 +37,7 @@ import {
 /**
  * Vision types for colorblind simulation
  */
-export type VisionType = 'protanopia' | 'deuteranopia' | 'tritanopia';
+export type VisionType = 'protanopia' | 'deuteranopia' | 'tritanopia' | 'achromatopsia';
 
 /**
  * All vision types including normal
@@ -99,6 +99,10 @@ const VISION_LABELS: Record<AllVisionTypes, { label: string; description: string
   tritanopia: {
     label: 'Tritanopia',
     description: 'Blue-blind (rare)',
+  },
+  achromatopsia: {
+    label: 'Achromatopsia',
+    description: 'Total colorblindness (very rare)',
   },
 };
 

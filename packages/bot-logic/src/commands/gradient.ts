@@ -11,6 +11,7 @@
 
 import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
 import { ColorService, type MatchingMethod, isDyeExcluded } from '@xivdyetools/core';
+import { blendColors } from '@xivdyetools/color-blending';
 import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
 import { generateGradientBar, type GradientStep } from '@xivdyetools/svg';
 import { dyeService, type ResolvedColor } from '../input-resolution.js';
@@ -22,7 +23,16 @@ import type { EmbedData } from './types.js';
 // Types
 // ============================================================================
 
-export type InterpolationMode = 'rgb' | 'hsv' | 'lab' | 'oklch' | 'lch';
+export type InterpolationMode =
+  | 'rgb'
+  | 'hsv'
+  | 'lab'
+  | 'oklch'
+  | 'lch'
+  | 'oklab'
+  | 'ryb'
+  | 'hsl'
+  | 'spectral';
 
 export interface GradientInput {
   startColor: ResolvedColor;
@@ -133,6 +143,14 @@ function generateGradientColorsMultiSpace(
         const C = startLch.C + (endLch.C - startLch.C) * t;
         const h = (startLch.h + hueDiff * t + 360) % 360;
         interpolatedColor = ColorService.lchToHex(L, C, h);
+        break;
+      }
+
+      case 'oklab':
+      case 'ryb':
+      case 'hsl':
+      case 'spectral': {
+        interpolatedColor = blendColors(startColor, endColor, mode, t).hex;
         break;
       }
 

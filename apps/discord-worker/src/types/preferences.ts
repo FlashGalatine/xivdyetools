@@ -36,7 +36,13 @@ export type PreferenceKey =
   | 'clan'
   | 'gender'
   | 'world'
-  | 'market';
+  | 'market'
+  | 'showHex'
+  | 'showRgb'
+  | 'showHsv'
+  | 'showLab'
+  | 'showDeltaE'
+  | 'showAcquisition';
 
 /**
  * User preferences object stored in KV
@@ -69,6 +75,24 @@ export interface UserPreferences {
   /** Whether to show Market Board pricing on Result Cards by default */
   market?: boolean;
 
+  /** Show hex color codes on result cards (default: true) */
+  showHex?: boolean;
+
+  /** Show RGB values on result cards (default: true) */
+  showRgb?: boolean;
+
+  /** Show HSV values on result cards (default: true) */
+  showHsv?: boolean;
+
+  /** Show LAB values on result cards (default: true) */
+  showLab?: boolean;
+
+  /** Show Delta-E color distance on result cards (default: true) */
+  showDeltaE?: boolean;
+
+  /** Show dye acquisition source on result cards (default: true) */
+  showAcquisition?: boolean;
+
   /** Dye type filters for excluding categories from results */
   dyeFilters?: DyeTypeFilters;
 
@@ -88,6 +112,12 @@ export const PREFERENCE_DEFAULTS: Required<Omit<UserPreferences, 'clan' | 'gende
   matching: 'oklab',
   count: 5,
   market: false,
+  showHex: true,
+  showRgb: true,
+  showHsv: true,
+  showLab: true,
+  showDeltaE: true,
+  showAcquisition: true,
   dyeFilters: {},
 };
 

@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added — Web-app feature parity (2026-05-08)
+
+This release closes the option-level gap between `/discord-worker` and the `web-app`. Where the web app exposed configurability that the bot didn't, the bot now mirrors it (within Discord's slash-command UX). Web-only UI affordances (live eyedropper, drag-drop, color-wheel widget, theme picker, share URLs) remain out of scope as they don't translate to slash commands.
+
+- **`/harmony` — companion expansion + algorithm controls**: Added `companions` (1–3, default 1), `matching` (6 algorithm choices, including `oklch-weighted`), `strict_matching` (BOOLEAN), and `prevent_duplicates` (BOOLEAN). Companion expansion runs N closest-match lookups per harmony hue; `prevent_duplicates` dedupes globally across all output slots; `strict_matching` tightens the ΔE tolerance via `algorithm: 'deltaE', deltaEFormula: 'cie2000'`.
+- **`/extractor color` and `/extractor image` — matching/dedupe/vibrancy**: Both subcommands gain `matching` (6 algorithm choices) and `prevent_duplicates` (BOOLEAN). The `image` subcommand additionally gains `vibrancy_boost` (BOOLEAN) and bumps `colors` from 1–5 to **3–10** (matching the web `ExtractorConfig`).
+- **`/gradient` — wider step range + 4 new interpolation modes + 6th matching algorithm**: `steps` extended from 2–10 to **2–12** (web cap is 12). `color_space` now supports the 4 mixer-style modes in addition to the 5 hue-based ones — total 9 choices (`hsv|oklch|lab|lch|rgb|oklab|ryb|hsl|spectral`). `oklab|ryb|hsl|spectral` interpolation evaluates `blendColors()` from `@xivdyetools/color-blending` at N evenly-spaced ratios. `matching` adds `oklch-weighted` for parity with `/preferences set matching`.
+- **`/mixer` — matching algorithm**: Added `matching` STRING option (6 choices) — the bot used a hardcoded match before; users can now pin a matcher per call.
+- **`/accessibility` — 6 outfit slots + 5 vision modes**: Added `dye5` and `dye6` STRING options to mirror the web's 6-slot outfit comparison. Added `normal` and `achromatopsia` to the `vision` choice list (all 5 web vision modes now exposed). The contrast-matrix renderer in `@xivdyetools/svg` was updated to accept up to 6 dyes (was 4).
+- **`/swatch color` and `/swatch grid` — OKLCH-Weighted matcher**: Added `oklch-weighted` choice to both subcommands' `matching` lists.
+- **`/budget find` — explicit result count**: Added `max_results` INTEGER (1–20) — previously hardcoded to 5. Mirrors the web `BudgetConfig.maxResults`.
+- **`/preset favorite` — preset favoriting (NEW subcommand group)**: Mirrors the web's preset-favorites system. Three subcommands: `add` (preset_name STRING, autocomplete from approved presets), `remove` (autocomplete from user's currently-favorited presets), `list` (renders the user's favorited presets in a compact embed). Storage: KV key `xivdye:preset_favorites:v1:{userId}` → JSON `string[]` of preset IDs. Cap: 50 favorites/user. Distinct from the existing dye-favorites namespace (`xivdye:favorites:v1:`) — no key collision.
+- **`/preferences set` — display-option toggles**: Added 6 BOOLEAN options — `show_hex`, `show_rgb`, `show_hsv`, `show_lab`, `show_deltae`, `show_acquisition` — matching the web's `DisplayOptionsConfig`. The `/preferences reset` choice list also grew by 6 corresponding entries (final total: 15 choices, well under Discord's 25-choice limit). All 6 new flags default to `true`. Honored by the `/dye info` SVG card today; other renderers (palette grid, comparison grid, harmony wheel, gradient bar) read the same `DisplayOptions` shape and can be wired in a follow-up.
+
+### Changed
+
+- `@xivdyetools/bot-logic@1.2.0` → bumped to support 4 additional gradient interpolation modes, harmony-companion expansion, accessibility 6-dye support + achromatopsia, and `MixerInput.matchingMethod`.
+- `@xivdyetools/svg@1.1.2` → `VisionType` widened to include `achromatopsia` (Brettel matrix already lived in `@xivdyetools/core`); `ContrastMatrixOptions.dyes` cap raised from 4 to 6; `dye-info-card.ts` now accepts an optional `displayOptions` flag set and conditionally emits HEX/RGB/HSV/LAB rows; new exported type `DisplayOptions` and constant `DEFAULT_DISPLAY_OPTIONS`.
+- `@xivdyetools/bot-i18n@1.2.0` → 6 new locale keys per language (`preferences.keys.show*` and `preferences.descriptions.show*`) for the display-option labels in en/ja/de/fr/ko/zh.
+- `getPresetFavorites` autocomplete walks 3 levels of option nesting (was 2) — required for `SUB_COMMAND_GROUP > SUB_COMMAND > option` introduced by `/preset favorite`.
+
+### Deployment requirement
+
+`pnpm --filter xivdyetools-discord-worker run register-commands` **must** be re-run after deploy so Discord's slash-command schema picks up the new options, choices, and the `/preset favorite` subcommand group. Existing `/preferences set` and `/preferences reset` invocations using the old key set continue to work — the additions are additive.
+
+---
+
 ## [4.5.0] - 2026-04-29
 
 ### Removed

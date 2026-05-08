@@ -68,11 +68,34 @@ describe('svg/contrast-matrix.ts', () => {
             expect(svg).toContain('at least 2 dyes');
         });
 
-        it('should show error for more than 4 dyes', () => {
-            const dyes = [dye1, dye2, dye3, { name: 'D4', hex: '#444' }, { name: 'D5', hex: '#555' }];
+        it('should show error for more than 6 dyes', () => {
+            const dyes = [
+                dye1,
+                dye2,
+                dye3,
+                { name: 'D4', hex: '#444' },
+                { name: 'D5', hex: '#555' },
+                { name: 'D6', hex: '#666' },
+                { name: 'D7', hex: '#777' },
+            ];
             const svg = generateContrastMatrix({ dyes });
 
-            expect(svg).toContain('Maximum 4 dyes');
+            expect(svg).toContain('Maximum 6 dyes');
+        });
+
+        it('should accept up to 6 dyes (outfit-slot range)', () => {
+            const dyes = [
+                dye1,
+                dye2,
+                dye3,
+                { name: 'D4', hex: '#444' },
+                { name: 'D5', hex: '#555' },
+                { name: 'D6', hex: '#666' },
+            ];
+            const svg = generateContrastMatrix({ dyes });
+
+            expect(svg).not.toContain('Maximum 6 dyes');
+            expect(svg).toContain('<svg xmlns="http://www.w3.org/2000/svg"');
         });
 
         it('should include title when provided', () => {

@@ -566,6 +566,12 @@
       "gender": "Character Gender",
       "world": "Market World",
       "market": "Show Market Prices",
+      "showHex": "Show Hex Codes",
+      "showRgb": "Show RGB Values",
+      "showHsv": "Show HSV Values",
+      "showLab": "Show LAB Values",
+      "showDeltaE": "Show Delta-E",
+      "showAcquisition": "Show Acquisition Source",
       "filters": "Dye Filters"
     },
     "descriptions": {
@@ -576,7 +582,13 @@
       "clan": "Default clan for /swatch",
       "gender": "Default gender for /swatch",
       "world": "Default world/datacenter for market prices",
-      "market": "Whether to show market prices by default"
+      "market": "Whether to show market prices by default",
+      "showHex": "Show hex color codes on result cards",
+      "showRgb": "Show RGB values on result cards",
+      "showHsv": "Show HSV values on result cards",
+      "showLab": "Show LAB values on result cards",
+      "showDeltaE": "Show Delta-E color distance on result cards",
+      "showAcquisition": "Show dye acquisition source on result cards"
     },
     "values": {
       "results": "{count} results",

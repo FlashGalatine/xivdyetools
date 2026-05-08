@@ -18,6 +18,7 @@ import {
   getUserPreferences,
   resolveBlendingMode,
   resolveCount,
+  resolveMatchingMethod,
 } from '../../services/preferences.js';
 import {
   createUserTranslator,
@@ -43,6 +44,7 @@ export async function handleMixerV4Command(
   const dye1Input = options.find((opt) => opt.name === 'dye1')?.value as string | undefined;
   const dye2Input = options.find((opt) => opt.name === 'dye2')?.value as string | undefined;
   const explicitMode = options.find((opt) => opt.name === 'mode')?.value as string | undefined;
+  const explicitMatching = options.find((opt) => opt.name === 'matching')?.value as string | undefined;
   const explicitCount = options.find((opt) => opt.name === 'count')?.value as number | undefined;
 
   if (!dye1Input || !dye2Input) {
@@ -71,6 +73,7 @@ export async function handleMixerV4Command(
   const prefs = await getUserPreferences(env.KV, userId, logger);
   const blendingMode = resolveBlendingMode(explicitMode, prefs);
   const count = resolveCount(explicitCount, prefs);
+  const matchingMethod = resolveMatchingMethod(explicitMatching, prefs);
   const locale = t.getLocale();
 
   await initializeLocale(locale);
@@ -80,6 +83,7 @@ export async function handleMixerV4Command(
     dye2: dye2Resolved,
     blendingMode,
     count,
+    matchingMethod,
     locale,
     dyeFilters: prefs.dyeFilters,
   });

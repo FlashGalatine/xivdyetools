@@ -566,6 +566,12 @@
       "gender": "Charakter-Geschlecht",
       "world": "Markt-Welt",
       "market": "Marktpreise anzeigen",
+      "showHex": "Hex-Codes anzeigen",
+      "showRgb": "RGB-Werte anzeigen",
+      "showHsv": "HSV-Werte anzeigen",
+      "showLab": "LAB-Werte anzeigen",
+      "showDeltaE": "Delta-E anzeigen",
+      "showAcquisition": "Bezugsquelle anzeigen",
       "filters": "Farbstoff-Filter"
     },
     "descriptions": {
@@ -576,7 +582,13 @@
       "clan": "Standard-Stamm für /swatch",
       "gender": "Standard-Geschlecht für /swatch",
       "world": "Standard-Welt/Datenzentrum für Marktpreise",
-      "market": "Ob Marktpreise standardmäßig angezeigt werden"
+      "market": "Ob Marktpreise standardmäßig angezeigt werden",
+      "showHex": "Hex-Farbcodes auf Ergebniskarten anzeigen",
+      "showRgb": "RGB-Werte auf Ergebniskarten anzeigen",
+      "showHsv": "HSV-Werte auf Ergebniskarten anzeigen",
+      "showLab": "LAB-Werte auf Ergebniskarten anzeigen",
+      "showDeltaE": "Delta-E-Farbabstand auf Ergebniskarten anzeigen",
+      "showAcquisition": "Bezugsquelle des Farbstoffs auf Ergebniskarten anzeigen"
     },
     "errors": {
       "invalidKey": "Unbekannter Einstellungsschlüssel: {key}",

@@ -168,6 +168,24 @@ export async function setPreference(
       case 'market':
         prefs.market = value === true || value === 'on' || value === 'true';
         break;
+      case 'showHex':
+        prefs.showHex = value === true || value === 'on' || value === 'true';
+        break;
+      case 'showRgb':
+        prefs.showRgb = value === true || value === 'on' || value === 'true';
+        break;
+      case 'showHsv':
+        prefs.showHsv = value === true || value === 'on' || value === 'true';
+        break;
+      case 'showLab':
+        prefs.showLab = value === true || value === 'on' || value === 'true';
+        break;
+      case 'showDeltaE':
+        prefs.showDeltaE = value === true || value === 'on' || value === 'true';
+        break;
+      case 'showAcquisition':
+        prefs.showAcquisition = value === true || value === 'on' || value === 'true';
+        break;
     }
 
     // Update metadata
@@ -391,15 +409,21 @@ export function validatePreferenceValue(
       break;
 
     case 'market':
+    case 'showHex':
+    case 'showRgb':
+    case 'showHsv':
+    case 'showLab':
+    case 'showDeltaE':
+    case 'showAcquisition':
       // Accept boolean, "on"/"off", "true"/"false"
       if (typeof value === 'boolean') break;
       if (typeof value === 'string') {
         const lower = value.toLowerCase();
         if (!['on', 'off', 'true', 'false'].includes(lower)) {
-          return { valid: false, reason: 'invalidMarket' };
+          return { valid: false, reason: 'invalidBoolean' };
         }
       } else {
-        return { valid: false, reason: 'invalidMarket' };
+        return { valid: false, reason: 'invalidBoolean' };
       }
       break;
   }
@@ -488,6 +512,18 @@ export function getDefaultValue(key: PreferenceKey): string | number | boolean |
       return PREFERENCE_DEFAULTS.count;
     case 'market':
       return PREFERENCE_DEFAULTS.market;
+    case 'showHex':
+      return PREFERENCE_DEFAULTS.showHex;
+    case 'showRgb':
+      return PREFERENCE_DEFAULTS.showRgb;
+    case 'showHsv':
+      return PREFERENCE_DEFAULTS.showHsv;
+    case 'showLab':
+      return PREFERENCE_DEFAULTS.showLab;
+    case 'showDeltaE':
+      return PREFERENCE_DEFAULTS.showDeltaE;
+    case 'showAcquisition':
+      return PREFERENCE_DEFAULTS.showAcquisition;
     case 'clan':
     case 'gender':
     case 'world':
@@ -514,6 +550,12 @@ export function getAffectedCommands(key: PreferenceKey): string[] {
     case 'world':
       return ['/budget', 'market data on Result Cards'];
     case 'market':
+    case 'showHex':
+    case 'showRgb':
+    case 'showHsv':
+    case 'showLab':
+    case 'showDeltaE':
+    case 'showAcquisition':
       return ['all commands with Result Cards'];
   }
 }

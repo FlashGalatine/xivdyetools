@@ -56,14 +56,14 @@ const paletteService = new PaletteService();
 // Constants
 // ============================================================================
 
-/** Minimum colors to extract from image */
-const MIN_COLORS = 1;
+/** Minimum colors to extract from image (matches web-app ExtractorConfig) */
+const MIN_COLORS = 3;
 
-/** Maximum colors to extract from image */
-const MAX_COLORS = 5;
+/** Maximum colors to extract from image (matches web-app ExtractorConfig) */
+const MAX_COLORS = 10;
 
-/** Default number of colors for image extraction */
-const DEFAULT_IMAGE_COLORS = 1;
+/** Default number of colors for image extraction (matches web-app default) */
+const DEFAULT_IMAGE_COLORS = 4;
 
 /** Minimum match count for color subcommand */
 const MIN_MATCH_COUNT = 1;

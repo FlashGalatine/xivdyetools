@@ -5,7 +5,7 @@
  * renders the PNG, and formats the Discord response with emojis.
  */
 
-import type { HarmonyColorSpace } from '@xivdyetools/core';
+import type { HarmonyColorSpace, MatchingMethod } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { DyeTypeFilters } from '@xivdyetools/types';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
@@ -32,10 +32,18 @@ export async function handleHarmonyCommand(
   const colorOption = options.find((opt) => opt.name === 'color');
   const typeOption = options.find((opt) => opt.name === 'type');
   const colorSpaceOption = options.find((opt) => opt.name === 'color_space');
+  const companionsOption = options.find((opt) => opt.name === 'companions');
+  const matchingOption = options.find((opt) => opt.name === 'matching');
+  const strictOption = options.find((opt) => opt.name === 'strict_matching');
+  const preventDupOption = options.find((opt) => opt.name === 'prevent_duplicates');
 
   const colorInput = colorOption?.value as string | undefined;
   const harmonyType = (typeOption?.value as HarmonyType) || 'triadic';
   const colorSpace = (colorSpaceOption?.value as HarmonyColorSpace) || undefined;
+  const companionCount = (companionsOption?.value as number) ?? undefined;
+  const matchingMethod = (matchingOption?.value as MatchingMethod) ?? undefined;
+  const strictMatching = (strictOption?.value as boolean) ?? undefined;
+  const preventDuplicates = (preventDupOption?.value as boolean) ?? undefined;
 
   if (!colorInput) {
     return Response.json({
@@ -60,11 +68,15 @@ export async function handleHarmonyCommand(
   const deferResponse = deferredResponse();
   const prefs = await getUserPreferences(env.KV, userId, logger);
 
+  // Resolve matching method: explicit option > pref > undefined (let executeHarmony default).
+  const effectiveMatching: MatchingMethod | undefined = matchingMethod ?? prefs.matching;
+
   ctx.waitUntil(
     processHarmonyCommand(
       interaction, env,
       resolved.hex, resolved.name, resolved.id, resolved.itemID ?? undefined,
-      harmonyType, locale, logger, harmonyOptions, prefs.dyeFilters
+      harmonyType, locale, logger, harmonyOptions, prefs.dyeFilters,
+      companionCount, effectiveMatching, strictMatching, preventDuplicates
     )
   );
   return deferResponse;
@@ -81,7 +93,11 @@ async function processHarmonyCommand(
   locale: LocaleCode,
   logger?: ExtendedLogger,
   harmonyOptions?: { colorSpace?: HarmonyColorSpace },
-  dyeFilters?: DyeTypeFilters
+  dyeFilters?: DyeTypeFilters,
+  companionCount?: number,
+  matchingMethod?: MatchingMethod,
+  strictMatching?: boolean,
+  preventDuplicates?: boolean
 ): Promise<void> {
   const t = createTranslator(locale);
   await initializeLocale(locale);
@@ -90,6 +106,10 @@ async function processHarmonyCommand(
     baseHex, baseName, baseId, baseItemID, harmonyType, locale,
     harmonyOptions,
     dyeFilters,
+    companionCount,
+    matchingMethod,
+    strictMatching,
+    preventDuplicates,
   });
 
   if (!result.ok) {

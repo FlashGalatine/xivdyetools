@@ -51,6 +51,12 @@ const PREFERENCE_ORDER: PreferenceKey[] = [
   'gender',
   'world',
   'market',
+  'showHex',
+  'showRgb',
+  'showHsv',
+  'showLab',
+  'showDeltaE',
+  'showAcquisition',
 ];
 
 /** Emojis for preference categories */
@@ -63,7 +69,31 @@ const PREFERENCE_EMOJIS: Record<PreferenceKey, string> = {
   gender: '⚧️',
   world: '🌍',
   market: '💰',
+  showHex: '#️⃣',
+  showRgb: '🔴',
+  showHsv: '🌈',
+  showLab: '🧪',
+  showDeltaE: '📐',
+  showAcquisition: '🛒',
 };
+
+/**
+ * Map snake_case Discord option names to camelCase PreferenceKey values.
+ * Discord requires option names to be all lowercase, so display-option flags
+ * are exposed as `show_hex` etc., but the underlying preference keys are camelCase.
+ */
+const OPTION_NAME_TO_KEY: Record<string, PreferenceKey> = {
+  show_hex: 'showHex',
+  show_rgb: 'showRgb',
+  show_hsv: 'showHsv',
+  show_lab: 'showLab',
+  show_deltae: 'showDeltaE',
+  show_acquisition: 'showAcquisition',
+};
+
+function resolveOptionKey(name: string): PreferenceKey {
+  return OPTION_NAME_TO_KEY[name] ?? (name as PreferenceKey);
+}
 
 /** Maps Discord option names to DyeTypeFilters keys and display labels */
 const FILTER_OPTION_KEYS: Array<{ option: string; key: keyof DyeTypeFilters; label: string }> = [
@@ -261,7 +291,7 @@ async function handleSetSubcommand(
   const affectedCommandsSet = new Set<string>();
 
   for (const opt of options) {
-    const key = opt.name as PreferenceKey;
+    const key = resolveOptionKey(opt.name);
     const value = opt.value;
 
     // Skip if no value provided
@@ -382,12 +412,15 @@ async function handleResetSubcommand(
   logger?: ExtendedLogger
 ): Promise<Response> {
   const keyOption = options.find((opt) => opt.name === 'key');
-  const key = keyOption?.value as PreferenceKey | 'filters' | undefined;
+  const rawKeyValue = keyOption?.value as string | undefined;
 
   // Handle 'filters' reset specially (it's not a PreferenceKey)
-  if (key === 'filters') {
+  if (rawKeyValue === 'filters') {
     return handleFiltersResetSubcommand(env, userId, t, logger);
   }
+
+  // Map snake_case reset choice values (e.g. 'show_hex') to camelCase PreferenceKey
+  const key = rawKeyValue ? resolveOptionKey(rawKeyValue) : undefined;
 
   // Validate key if provided
   if (key && !PREFERENCE_ORDER.includes(key)) {
@@ -479,6 +512,12 @@ function formatPreferenceValue(key: PreferenceKey, value: unknown, t: Translator
       return String(value);
 
     case 'market':
+    case 'showHex':
+    case 'showRgb':
+    case 'showHsv':
+    case 'showLab':
+    case 'showDeltaE':
+    case 'showAcquisition':
       return value === true || value === 'on' || value === 'true'
         ? t.t('preferences.values.yes')
         : t.t('preferences.values.no');
@@ -543,6 +582,7 @@ function getValidationErrorMessage(t: Translator, _key: PreferenceKey, reason?: 
       return t.t('preferences.validation.invalidWorld');
 
     case 'invalidMarket':
+    case 'invalidBoolean':
       return t.t('preferences.validation.invalidMarket');
 
     case 'error':

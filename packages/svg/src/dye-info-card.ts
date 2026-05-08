@@ -28,6 +28,7 @@ import {
   hexToRgb,
   estimateTextWidth,
   rgbToHsv,
+  type DisplayOptions,
 } from './base.js';
 import { rgbToLab } from '@xivdyetools/color-blending';
 
@@ -44,6 +45,8 @@ export interface DyeInfoCardOptions {
   localizedCategory?: string;
   /** Card width in pixels (default: 500) */
   width?: number;
+  /** Optional display flags (default: show everything) */
+  displayOptions?: DisplayOptions;
 }
 
 // ============================================================================
@@ -68,7 +71,14 @@ export function generateDyeInfoCard(options: DyeInfoCardOptions): string {
     localizedName,
     localizedCategory,
     width = DEFAULT_WIDTH,
+    displayOptions,
   } = options;
+
+  // Default to showing everything (preserves prior behavior)
+  const showHex = displayOptions?.showHex ?? true;
+  const showRgb = displayOptions?.showRgb ?? true;
+  const showHsv = displayOptions?.showHsv ?? true;
+  const showLab = displayOptions?.showLab ?? true;
 
   const height = SWATCH_HEIGHT + INFO_SECTION_HEIGHT + PADDING * 2;
   const elements: string[] = [];
@@ -136,131 +146,66 @@ export function generateDyeInfoCard(options: DyeInfoCardOptions): string {
     })
   );
 
-  // Info section (bottom)
+  // Info section (bottom). Each color-format block is wrapped in a flag check
+  // and the y-cursor only advances when a block emits, so hidden blocks
+  // collapse cleanly without leaving gaps.
   const infoY = SWATCH_HEIGHT + PADDING;
+  const ROW_HEIGHT = 22;
+
+  const emitRow = (x: number, y: number, label: string, value: string): void => {
+    elements.push(
+      text(x, y, label, {
+        fill: THEME.textMuted,
+        fontSize: 11,
+        fontFamily: FONTS.primary,
+        fontWeight: 500,
+      })
+    );
+    elements.push(
+      text(x + 40, y, value, {
+        fill: THEME.text,
+        fontSize: 13,
+        fontFamily: FONTS.mono,
+        fontWeight: 500,
+      })
+    );
+  };
 
   // Left column - Technical values
   let leftY = infoY;
+  if (showHex) {
+    emitRow(PADDING, leftY, 'HEX', dye.hex.toUpperCase());
+    leftY += ROW_HEIGHT;
+  }
+  if (showRgb) {
+    emitRow(PADDING, leftY, 'RGB', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+    leftY += ROW_HEIGHT;
+  }
+  if (showHsv) {
+    emitRow(PADDING, leftY, 'HSV', `${hsv.h}°, ${hsv.s}%, ${hsv.v}%`);
+    // No further left-column rows below HSV — leftY intentionally not advanced.
+  }
 
-  // HEX
-  elements.push(
-    text(PADDING, leftY, 'HEX', {
-      fill: THEME.textMuted,
-      fontSize: 11,
-      fontFamily: FONTS.primary,
-      fontWeight: 500,
-    })
-  );
-  elements.push(
-    text(PADDING + 40, leftY, dye.hex.toUpperCase(), {
-      fill: THEME.text,
-      fontSize: 13,
-      fontFamily: FONTS.mono,
-      fontWeight: 500,
-    })
-  );
-
-  leftY += 22;
-
-  // RGB
-  elements.push(
-    text(PADDING, leftY, 'RGB', {
-      fill: THEME.textMuted,
-      fontSize: 11,
-      fontFamily: FONTS.primary,
-      fontWeight: 500,
-    })
-  );
-  elements.push(
-    text(PADDING + 40, leftY, `${rgb.r}, ${rgb.g}, ${rgb.b}`, {
-      fill: THEME.text,
-      fontSize: 13,
-      fontFamily: FONTS.mono,
-      fontWeight: 500,
-    })
-  );
-
-  leftY += 22;
-
-  // HSV
-  elements.push(
-    text(PADDING, leftY, 'HSV', {
-      fill: THEME.textMuted,
-      fontSize: 11,
-      fontFamily: FONTS.primary,
-      fontWeight: 500,
-    })
-  );
-  elements.push(
-    text(PADDING + 40, leftY, `${hsv.h}°, ${hsv.s}%, ${hsv.v}%`, {
-      fill: THEME.text,
-      fontSize: 13,
-      fontFamily: FONTS.mono,
-      fontWeight: 500,
-    })
-  );
-
-  // Right column - LAB and ID
+  // Right column - LAB and IDs
   const rightX = width / 2 + 20;
   let rightY = infoY;
 
-  // LAB
-  elements.push(
-    text(rightX, rightY, 'LAB', {
-      fill: THEME.textMuted,
-      fontSize: 11,
-      fontFamily: FONTS.primary,
-      fontWeight: 500,
-    })
-  );
-  elements.push(
-    text(rightX + 40, rightY, `${lab.l.toFixed(1)}, ${lab.a.toFixed(1)}, ${lab.b.toFixed(1)}`, {
-      fill: THEME.text,
-      fontSize: 13,
-      fontFamily: FONTS.mono,
-      fontWeight: 500,
-    })
-  );
+  if (showLab) {
+    emitRow(
+      rightX,
+      rightY,
+      'LAB',
+      `${lab.l.toFixed(1)}, ${lab.a.toFixed(1)}, ${lab.b.toFixed(1)}`
+    );
+    rightY += ROW_HEIGHT;
+  }
 
-  rightY += 22;
+  // Dye ID always shown — identifies the entry
+  emitRow(rightX, rightY, 'ID', dye.id.toString());
+  rightY += ROW_HEIGHT;
 
-  // Dye ID
-  elements.push(
-    text(rightX, rightY, 'ID', {
-      fill: THEME.textMuted,
-      fontSize: 11,
-      fontFamily: FONTS.primary,
-      fontWeight: 500,
-    })
-  );
-  elements.push(
-    text(rightX + 40, rightY, dye.id.toString(), {
-      fill: THEME.text,
-      fontSize: 13,
-      fontFamily: FONTS.mono,
-      fontWeight: 500,
-    })
-  );
-
-  rightY += 22;
-
-  // Item ID (FFXIV item database ID)
-  elements.push(
-    text(rightX, rightY, 'Item', {
-      fill: THEME.textMuted,
-      fontSize: 11,
-      fontFamily: FONTS.primary,
-      fontWeight: 500,
-    })
-  );
-  elements.push(
-    text(rightX + 40, rightY, dye.itemID.toString(), {
-      fill: THEME.text,
-      fontSize: 13,
-      fontFamily: FONTS.mono,
-      fontWeight: 500,
-    })
-  );
+  // Item ID (FFXIV item database ID) always shown
+  emitRow(rightX, rightY, 'Item', dye.itemID.toString());
 
   // Footer
   elements.push(

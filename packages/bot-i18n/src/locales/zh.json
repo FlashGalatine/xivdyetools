@@ -566,6 +566,12 @@
       "gender": "角色性别",
       "world": "市场服务器",
       "market": "显示市场价格",
+      "showHex": "显示十六进制代码",
+      "showRgb": "显示 RGB 值",
+      "showHsv": "显示 HSV 值",
+      "showLab": "显示 LAB 值",
+      "showDeltaE": "显示色差 Delta-E",
+      "showAcquisition": "显示获取来源",
       "filters": "染剂过滤"
     },
     "descriptions": {
@@ -576,7 +582,13 @@
       "clan": "/swatch 的默认部族",
       "gender": "/swatch 的默认性别",
       "world": "市场价格的默认服务器/数据中心",
-      "market": "是否默认显示市场价格"
+      "market": "是否默认显示市场价格",
+      "showHex": "在结果卡上显示十六进制颜色代码",
+      "showRgb": "在结果卡上显示 RGB 值",
+      "showHsv": "在结果卡上显示 HSV 值",
+      "showLab": "在结果卡上显示 LAB 值",
+      "showDeltaE": "在结果卡上显示色差 Delta-E",
+      "showAcquisition": "在结果卡上显示染剂获取来源"
     },
     "errors": {
       "invalidKey": "未知偏好设置键：{key}",

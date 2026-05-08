@@ -106,6 +106,11 @@ async function handleFindSubcommand(
   const maxDistance = options.find((opt) => opt.name === 'max_distance')?.value as number | undefined;
   const sortBy = (options.find((opt) => opt.name === 'sort_by')?.value as BudgetSortOption) || 'value_score';
   const worldOverride = options.find((opt) => opt.name === 'world')?.value as string | undefined;
+  const maxResultsRaw = options.find((opt) => opt.name === 'max_results')?.value as number | undefined;
+  // Web app caps at 20; default of 5 preserves prior bot behavior.
+  const maxResults = typeof maxResultsRaw === 'number'
+    ? Math.max(1, Math.min(20, Math.floor(maxResultsRaw)))
+    : 5;
 
   // Validate target dye
   if (!targetDyeInput) {
@@ -145,7 +150,7 @@ async function handleFindSubcommand(
       env,
       targetDye.itemID,
       world,
-      { maxPrice, maxDistance, sortBy, limit: 5 },
+      { maxPrice, maxDistance, sortBy, limit: maxResults },
       t,
       logger
     )

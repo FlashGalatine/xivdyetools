@@ -566,6 +566,12 @@
       "gender": "Genre du personnage",
       "world": "Monde du marché",
       "market": "Afficher les prix du marché",
+      "showHex": "Afficher les codes hex",
+      "showRgb": "Afficher les valeurs RGB",
+      "showHsv": "Afficher les valeurs HSV",
+      "showLab": "Afficher les valeurs LAB",
+      "showDeltaE": "Afficher Delta-E",
+      "showAcquisition": "Afficher la source d'acquisition",
       "filters": "Filtres de teinture"
     },
     "descriptions": {
@@ -576,7 +582,13 @@
       "clan": "Clan par défaut pour /swatch",
       "gender": "Genre par défaut pour /swatch",
       "world": "Monde/centre de données par défaut pour les prix",
-      "market": "Afficher les prix du marché par défaut"
+      "market": "Afficher les prix du marché par défaut",
+      "showHex": "Afficher les codes hex sur les cartes de résultats",
+      "showRgb": "Afficher les valeurs RGB sur les cartes de résultats",
+      "showHsv": "Afficher les valeurs HSV sur les cartes de résultats",
+      "showLab": "Afficher les valeurs LAB sur les cartes de résultats",
+      "showDeltaE": "Afficher la distance Delta-E sur les cartes de résultats",
+      "showAcquisition": "Afficher la source d'acquisition de la teinture sur les cartes"
     },
     "values": {
       "results": "{count} résultats",

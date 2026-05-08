@@ -7,6 +7,40 @@
  */
 
 /**
+ * Per-card display flags controlling which color formats and metadata appear
+ * on result cards. Mirrors the web app's `DisplayOptionsConfig`. Renderers
+ * that read this object should treat omitted flags as `true` (preserve
+ * current emit-everything behavior for backward compat).
+ */
+export interface DisplayOptions {
+  /** Show HEX color codes */
+  showHex?: boolean;
+  /** Show RGB values */
+  showRgb?: boolean;
+  /** Show HSV values */
+  showHsv?: boolean;
+  /** Show LAB values */
+  showLab?: boolean;
+  /** Show market-board prices */
+  showPrice?: boolean;
+  /** Show Delta-E color distance */
+  showDeltaE?: boolean;
+  /** Show acquisition source information */
+  showAcquisition?: boolean;
+}
+
+/** Default display options (everything visible) — matches the web app's DEFAULT_DISPLAY_OPTIONS. */
+export const DEFAULT_DISPLAY_OPTIONS: Required<DisplayOptions> = {
+  showHex: true,
+  showRgb: true,
+  showHsv: true,
+  showLab: true,
+  showPrice: true,
+  showDeltaE: true,
+  showAcquisition: true,
+};
+
+/**
  * XML-escapes a string for safe SVG inclusion
  */
 export function escapeXml(str: string): string {

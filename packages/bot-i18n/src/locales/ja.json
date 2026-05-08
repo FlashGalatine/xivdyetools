@@ -566,6 +566,12 @@
       "gender": "キャラクター性別",
       "world": "マーケットワールド",
       "market": "マーケット価格表示",
+      "showHex": "16進カラーコード表示",
+      "showRgb": "RGB値表示",
+      "showHsv": "HSV値表示",
+      "showLab": "LAB値表示",
+      "showDeltaE": "色差ΔE表示",
+      "showAcquisition": "入手方法表示",
       "filters": "カララントフィルター"
     },
     "descriptions": {
@@ -576,7 +582,13 @@
       "clan": "/swatchのデフォルト部族",
       "gender": "/swatchのデフォルト性別",
       "world": "マーケット価格のデフォルトワールド/データセンター",
-      "market": "デフォルトでマーケット価格を表示するかどうか"
+      "market": "デフォルトでマーケット価格を表示するかどうか",
+      "showHex": "結果カードに16進カラーコードを表示",
+      "showRgb": "結果カードにRGB値を表示",
+      "showHsv": "結果カードにHSV値を表示",
+      "showLab": "結果カードにLAB値を表示",
+      "showDeltaE": "結果カードに色差ΔEを表示",
+      "showAcquisition": "結果カードにカララント入手方法を表示"
     },
     "errors": {
       "invalidKey": "不明な設定キー：{key}",

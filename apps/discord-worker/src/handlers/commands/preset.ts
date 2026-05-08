@@ -42,6 +42,12 @@ import {
   PresetAPIError,
 } from '../../types/preset.js';
 import * as presetApi from '../../services/preset-api.js';
+import {
+  getPresetFavorites,
+  addPresetFavorite,
+  removePresetFavorite,
+  MAX_PRESET_FAVORITES,
+} from '../../services/preset-favorites.js';
 import type { DiscordInteraction } from '../../types/env.js';
 
 // ============================================================================
@@ -74,9 +80,9 @@ export async function handlePresetCommand(
     });
   }
 
-  // Find the subcommand (type 1 = SUB_COMMAND)
+  // Find the first SUB_COMMAND (type 1) or SUB_COMMAND_GROUP (type 2)
   const options = interaction.data?.options || [];
-  const subcommand = options.find((opt) => opt.type === 1);
+  const subcommand = options.find((opt) => opt.type === 1 || opt.type === 2);
 
   if (!subcommand) {
     return ephemeralResponse('Invalid command structure');
@@ -101,6 +107,22 @@ export async function handlePresetCommand(
 
     case 'edit':
       return handleEditSubcommand(interaction, env, ctx, t, userId, userName, subcommand.options, logger);
+
+    case 'favorite': {
+      // Subcommand group — favorite add/remove/list
+      const inner = subcommand.options?.[0];
+      if (!inner) return ephemeralResponse('Invalid command structure');
+      switch (inner.name) {
+        case 'add':
+          return handleFavoriteAddSubcommand(interaction, env, ctx, t, userId, inner.options, logger);
+        case 'remove':
+          return handleFavoriteRemoveSubcommand(interaction, env, ctx, t, userId, inner.options, logger);
+        case 'list':
+          return handleFavoriteListSubcommand(interaction, env, ctx, t, userId, logger);
+        default:
+          return ephemeralResponse(`Unknown favorite subcommand: ${inner.name}`);
+      }
+    }
 
     default:
       return ephemeralResponse(`Unknown subcommand: ${subcommand.name}`);
@@ -1066,5 +1088,241 @@ async function notifyEditModerationChannel(
     if (logger) {
       logger.error('Failed to notify moderation channel about edit', error instanceof Error ? error : undefined);
     }
+  }
+}
+
+// ============================================================================
+// Favorite Subcommand Group Handlers
+// ============================================================================
+
+/**
+ * Resolve a preset by either UUID or name, returning null on miss.
+ *
+ * Autocomplete sends the preset ID as the option value when the user picks
+ * a suggestion, but a manually-typed value will be the name string —
+ * this helper handles both shapes.
+ */
+async function resolvePresetByIdOrName(
+  env: Env,
+  idOrName: string,
+  _logger?: ExtendedLogger
+): Promise<CommunityPreset | null> {
+  // Try ID lookup first (UUID format from autocomplete)
+  const byId = await presetApi.getPreset(env, idOrName).catch(() => null);
+  if (byId) return byId;
+  // Fall back to name lookup for manually-typed values
+  return presetApi.getPresetByName(env, idOrName).catch(() => null);
+}
+
+/**
+ * /preset favorite add <preset_name>
+ */
+// eslint-disable-next-line @typescript-eslint/require-await
+async function handleFavoriteAddSubcommand(
+  interaction: DiscordInteraction,
+  env: Env,
+  ctx: ExecutionContext,
+  t: Translator,
+  userId: string,
+  options?: Array<{ name: string; value?: string | number | boolean }>,
+  logger?: ExtendedLogger
+): Promise<Response> {
+  const presetInput = options?.find((o) => o.name === 'preset_name')?.value as string | undefined;
+  if (!presetInput) {
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), 'preset_name is required')],
+      flags: 64,
+    });
+  }
+  const deferResponse = deferredResponse(true);
+  ctx.waitUntil(processFavoriteAdd(interaction, env, t, userId, presetInput, logger));
+  return deferResponse;
+}
+
+async function processFavoriteAdd(
+  interaction: DiscordInteraction,
+  env: Env,
+  t: Translator,
+  userId: string,
+  presetInput: string,
+  logger?: ExtendedLogger
+): Promise<void> {
+  try {
+    const preset = await resolvePresetByIdOrName(env, presetInput, logger);
+    if (!preset) {
+      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [errorEmbed(t.t('common.error'), t.t('preset.errors.notFound', { name: presetInput }))],
+      });
+      return;
+    }
+    const result = await addPresetFavorite(env.KV, userId, preset.id, logger);
+    if (!result.success) {
+      const reasonMsg =
+        result.reason === 'alreadyExists'
+          ? `**${preset.name}** is already in your favorites.`
+          : result.reason === 'limitReached'
+            ? `You've reached the limit of ${MAX_PRESET_FAVORITES} favorited presets.`
+            : 'Failed to add favorite — please try again.';
+      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [errorEmbed(t.t('common.error'), reasonMsg)],
+      });
+      return;
+    }
+    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      embeds: [successEmbed('⭐ Favorite added', `**${preset.name}** is now in your favorited presets.`)],
+    });
+  } catch (error) {
+    if (logger) {
+      logger.error('preset favorite add failed', error instanceof Error ? error : undefined);
+    }
+    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      embeds: [errorEmbed(t.t('common.error'), t.t('common.unknownError'))],
+    });
+  }
+}
+
+/**
+ * /preset favorite remove <preset_name>
+ */
+// eslint-disable-next-line @typescript-eslint/require-await
+async function handleFavoriteRemoveSubcommand(
+  interaction: DiscordInteraction,
+  env: Env,
+  ctx: ExecutionContext,
+  t: Translator,
+  userId: string,
+  options?: Array<{ name: string; value?: string | number | boolean }>,
+  logger?: ExtendedLogger
+): Promise<Response> {
+  const presetInput = options?.find((o) => o.name === 'preset_name')?.value as string | undefined;
+  if (!presetInput) {
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), 'preset_name is required')],
+      flags: 64,
+    });
+  }
+  const deferResponse = deferredResponse(true);
+  ctx.waitUntil(processFavoriteRemove(interaction, env, t, userId, presetInput, logger));
+  return deferResponse;
+}
+
+async function processFavoriteRemove(
+  interaction: DiscordInteraction,
+  env: Env,
+  t: Translator,
+  userId: string,
+  presetInput: string,
+  logger?: ExtendedLogger
+): Promise<void> {
+  try {
+    // Try to resolve to ID first; if input already looks like an ID, use it directly.
+    let presetId = presetInput;
+    let presetName = presetInput;
+    const preset = await resolvePresetByIdOrName(env, presetInput, logger);
+    if (preset) {
+      presetId = preset.id;
+      presetName = preset.name;
+    }
+    const result = await removePresetFavorite(env.KV, userId, presetId, logger);
+    if (!result.success) {
+      const reasonMsg =
+        result.reason === 'notFound'
+          ? `**${presetName}** is not in your favorites.`
+          : 'Failed to remove favorite — please try again.';
+      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [errorEmbed(t.t('common.error'), reasonMsg)],
+      });
+      return;
+    }
+    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      embeds: [successEmbed('🗑️ Favorite removed', `**${presetName}** has been removed from your favorites.`)],
+    });
+  } catch (error) {
+    if (logger) {
+      logger.error('preset favorite remove failed', error instanceof Error ? error : undefined);
+    }
+    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      embeds: [errorEmbed(t.t('common.error'), t.t('common.unknownError'))],
+    });
+  }
+}
+
+/**
+ * /preset favorite list — show user's favorited presets
+ */
+// eslint-disable-next-line @typescript-eslint/require-await
+async function handleFavoriteListSubcommand(
+  interaction: DiscordInteraction,
+  env: Env,
+  ctx: ExecutionContext,
+  t: Translator,
+  userId: string,
+  logger?: ExtendedLogger
+): Promise<Response> {
+  const deferResponse = deferredResponse(true);
+  ctx.waitUntil(processFavoriteList(interaction, env, t, userId, logger));
+  return deferResponse;
+}
+
+async function processFavoriteList(
+  interaction: DiscordInteraction,
+  env: Env,
+  t: Translator,
+  userId: string,
+  logger?: ExtendedLogger
+): Promise<void> {
+  try {
+    const ids = await getPresetFavorites(env.KV, userId, logger);
+    if (ids.length === 0) {
+      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [
+          infoEmbed(
+            '⭐ Your favorite presets',
+            'You haven\'t favorited any presets yet. Use `/preset favorite add` to add one.'
+          ),
+        ],
+      });
+      return;
+    }
+    const resolved = await Promise.all(
+      ids.map((id) => presetApi.getPreset(env, id).catch(() => null))
+    );
+    const presets = resolved.filter((p): p is CommunityPreset => p !== null);
+
+    if (presets.length === 0) {
+      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [
+          infoEmbed(
+            '⭐ Your favorite presets',
+            'All of your favorited presets appear to have been removed. Use `/preset favorite remove` to clean up entries.'
+          ),
+        ],
+      });
+      return;
+    }
+
+    const lines = presets.map((p, i) => {
+      const catEntry = CATEGORY_DISPLAY[p.category_id];
+      const cat = catEntry?.name ?? p.category_id;
+      return `**${i + 1}.** ${p.name} — *${cat}*`;
+    });
+
+    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      embeds: [
+        {
+          title: `⭐ Your favorite presets (${presets.length}/${MAX_PRESET_FAVORITES})`,
+          description: lines.join('\n'),
+          color: 0xfee75c,
+          footer: { text: t.t('common.footer') },
+        },
+      ],
+    });
+  } catch (error) {
+    if (logger) {
+      logger.error('preset favorite list failed', error instanceof Error ? error : undefined);
+    }
+    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      embeds: [errorEmbed(t.t('common.error'), t.t('common.unknownError'))],
+    });
   }
 }

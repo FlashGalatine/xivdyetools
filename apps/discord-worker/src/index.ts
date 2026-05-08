@@ -41,6 +41,7 @@ import {
 import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.js';
 import { trackCommandWithKV } from './services/analytics.js';
 import { getCollections } from './services/user-storage.js';
+import { getPresetFavorites } from './services/preset-favorites.js';
 import { handleButtonInteraction } from './handlers/buttons/index.js';
 import { dyeService } from './utils/color.js';
 import * as presetApi from './services/preset-api.js';
@@ -598,17 +599,43 @@ async function handleAutocomplete(
   // Find the focused option (the one the user is currently typing in)
   let focusedOption: { name: string; value?: string | number | boolean; focused?: boolean } | undefined;
   let subcommandName: string | undefined;
+  let subcommandGroupName: string | undefined;
 
   // Check top-level options first
   focusedOption = options.find((opt) => opt.focused);
 
-  // If not found, check nested options (for subcommands)
+  // If not found, check nested options (for subcommands and subcommand groups).
+  // Discord nesting goes up to 3 levels: SUB_COMMAND_GROUP > SUB_COMMAND > option.
+  // The Env type narrows leaf shapes to drop `options`, so we walk via a relaxed shape.
+  type AnyOpt = {
+    name: string;
+    type?: number;
+    value?: string | number | boolean;
+    focused?: boolean;
+    options?: AnyOpt[];
+  };
   if (!focusedOption) {
-    for (const opt of options) {
-      if (opt.options) {
+    const outerOpts = options as AnyOpt[];
+    outer: for (const opt of outerOpts) {
+      if (!opt.options) continue;
+      // Try direct sub_command match
+      const direct = opt.options.find((subOpt) => subOpt.focused);
+      if (direct) {
         subcommandName = opt.name;
-        focusedOption = opt.options.find((subOpt) => subOpt.focused);
-        if (focusedOption) break;
+        focusedOption = direct;
+        break;
+      }
+      // Otherwise, this might be a sub_command_group — descend one more level
+      for (const inner of opt.options) {
+        if (inner.options) {
+          const deep = inner.options.find((subOpt) => subOpt.focused);
+          if (deep) {
+            subcommandGroupName = opt.name;
+            subcommandName = inner.name;
+            focusedOption = deep;
+            break outer;
+          }
+        }
       }
     }
   }
@@ -633,8 +660,13 @@ async function handleAutocomplete(
   else if (commandName === 'preset') {
     const focusedName = focusedOption?.name;
 
-    // Preset name autocomplete (for show, vote, moderate, edit subcommands)
-    if (focusedName === 'name' || focusedName === 'preset' || focusedName === 'preset_id') {
+    // Preset name autocomplete (for show, vote, moderate, edit, favorite subcommands)
+    if (
+      focusedName === 'name' ||
+      focusedName === 'preset' ||
+      focusedName === 'preset_id' ||
+      focusedName === 'preset_name'
+    ) {
       // For edit subcommand, show only user's own presets
       if (subcommandName === 'edit') {
         const userId = interaction.member?.user?.id ?? interaction.user?.id;
@@ -642,7 +674,14 @@ async function handleAutocomplete(
           choices = await getMyPresetsAutocompleteChoices(env, userId, query, logger);
         }
       }
-      // For other subcommands (show, vote), search approved presets
+      // For favorite remove, show only the user's currently favorited presets
+      else if (subcommandGroupName === 'favorite' && subcommandName === 'remove') {
+        const userId = interaction.member?.user?.id ?? interaction.user?.id;
+        if (userId) {
+          choices = await getFavoritedPresetsAutocompleteChoices(env, userId, query, logger);
+        }
+      }
+      // For other subcommands (show, vote, favorite add), search approved presets
       else {
         choices = await presetApi.searchPresetsForAutocomplete(env, query, { status: 'approved' });
       }
@@ -815,6 +854,37 @@ async function getMyPresetsAutocompleteChoices(
     }));
   } catch (error) {
     logger.error('Failed to get user presets for autocomplete', error instanceof Error ? error : undefined);
+    return [];
+  }
+}
+
+/**
+ * Get user's favorited presets for autocomplete (used by /preset favorite remove).
+ * Returns a list of preset { name, value: id } pairs the user has favorited.
+ */
+async function getFavoritedPresetsAutocompleteChoices(
+  env: Env,
+  userId: string,
+  query: string,
+  logger: ExtendedLogger
+): Promise<Array<{ name: string; value: string }>> {
+  try {
+    const ids = await getPresetFavorites(env.KV, userId, logger);
+    if (ids.length === 0) return [];
+
+    const resolved = await Promise.all(
+      ids.map((id) => presetApi.getPreset(env, id).catch(() => null))
+    );
+    const presets = resolved.filter((p): p is NonNullable<typeof p> => p !== null);
+
+    const lowerQuery = query.toLowerCase();
+    const filtered = query.length > 0
+      ? presets.filter((p) => p.name.toLowerCase().includes(lowerQuery))
+      : presets;
+
+    return filtered.slice(0, 25).map((p) => ({ name: p.name, value: p.id }));
+  } catch (error) {
+    logger.error('Failed to get favorited presets autocomplete', error instanceof Error ? error : undefined);
     return [];
   }
 }
