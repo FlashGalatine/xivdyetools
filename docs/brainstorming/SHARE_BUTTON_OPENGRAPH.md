@@ -239,7 +239,7 @@ Share URLs reference pre-generated images
 - Zero infrastructure
 
 **Cons**:
-- Cannot handle dynamic combinations (136 dyes × 9 harmonies = 1,224 images just for Harmony tool)
+- Cannot handle dynamic combinations (136 entries — 125 standard dyes + 11 Facewear — × 9 harmonies = 1,224 images just for Harmony tool)
 - Disk space concerns
 - Stale images if data changes
 

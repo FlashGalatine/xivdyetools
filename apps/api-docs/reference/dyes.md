@@ -1,6 +1,6 @@
 # Dyes
 
-7 endpoints covering the full 136-dye database.
+7 endpoints covering the full dye database — **125 standard dyes plus 11 Facewear color entries** (with synthetic negative IDs assigned at runtime). 136 entries total.
 
 ## Dye Object
 
@@ -8,7 +8,7 @@ Every dye response includes these fields:
 
 | Field | Type | Description |
 |---|---|---|
-| `itemID` | integer | Game item ID (negative for Facewear dyes) |
+| `itemID` | integer | Game item ID (negative synthetic ID for Facewear color entries) |
 | `stainID` | integer \| null | Stain table ID (1–125; null for Facewear) |
 | `id` | integer | Same as `itemID` |
 | `name` | string | English dye name |
@@ -17,7 +17,7 @@ Every dye response includes these fields:
 | `rgb` | object | `{ r, g, b }` — 0–255 |
 | `hsv` | object | `{ h, s, v }` — hue 0–360, sat/val 0–100 |
 | `category` | string | e.g. `Red`, `Neutral`, `Facewear` |
-| `acquisition` | string | e.g. `Ixali Vendor`, `Cosmic Exploration` |
+| `acquisition` | string | e.g. `Crafting`, `Cosmic Exploration`, `The Firmament`, `Vendor` |
 | `cost` | integer | Vendor price |
 | `currency` | string \| null | e.g. `Gil`, `Cosmocredits`, `Skybuilders Scrips` |
 | `isMetallic` | boolean | Metallic sheen |
@@ -32,7 +32,7 @@ Every dye response includes these fields:
 
 ## GET /v1/dyes
 
-List all dyes with filtering, sorting, and pagination. Returns 136 total dyes across ~3 pages at the default `perPage` of 50.
+List all dyes with filtering, sorting, and pagination. Returns 136 total entries (125 standard dyes + 11 Facewear color entries) across ~3 pages at the default `perPage` of 50.
 
 ### Parameters
 
@@ -46,6 +46,9 @@ List all dyes with filtering, sorting, and pagination. Returns 136 total dyes ac
 | `dark` | query | — | `true`/`false` — filter dark dyes |
 | `cosmic` | query | — | `true`/`false` — filter Cosmic Exploration dyes |
 | `ishgardian` | query | — | `true`/`false` — filter Ishgardian dyes |
+| `vendor` | query | — | `true`/`false` — filter dyes acquired from vendors |
+| `craft` | query | — | `true`/`false` — filter dyes acquired by crafting |
+| `expensive` | query | — | `true`/`false` — filter premium-cost dyes (curated by `EXPENSIVE_DYE_IDS`) |
 | `consolidationType` | query | — | Filter by Patch 7.5 group: `A`, `B`, `C`, or `none` |
 | `sort` | query | — | `name`, `brightness`, `saturation`, `hue`, or `cost` |
 | `order` | query | `asc` | `asc` or `desc` |
@@ -189,7 +192,9 @@ Example response:
 
 ## GET /v1/dyes/consolidation-groups
 
-Returns Patch 7.5 consolidation metadata. In Patch 7.5, 105 individual dyes were reorganized into three consolidated dye items (groups A, B, C). This endpoint exposes which dyes belong to which group and whether consolidation is currently active in the game.
+Returns Patch 7.5 consolidation metadata. In Patch 7.5, 105 individual dyes were reorganized into three consolidated dye items (Type-A, Type-B, Type-C). This endpoint exposes which dyes belong to which group and whether consolidation is currently active in the game.
+
+As of Patch 7.5 going live (April 2026), consolidation is **active** — all three consolidated itemIDs (`52254`, `52255`, `52256`) are populated, and the `marketItemID` field on individual consolidated dyes points to the consolidated item rather than the legacy per-dye itemID. Use this endpoint to discover which legacy itemIDs map to which consolidated parent, e.g. when caching market-board prices.
 
 <TryIt endpoint="/v1/dyes/consolidation-groups" />
 
@@ -199,25 +204,24 @@ Example response:
 {
   "success": true,
   "data": {
-    "consolidationActive": false,
+    "consolidationActive": true,
     "groups": [
       {
         "type": "A",
-        "consolidatedItemID": null,
-        "dyeCount": 35,
+        "consolidatedItemID": 52254,
+        "dyeCount": 85,
         "dyes": [
-          { "itemID": 5729, "stainID": 1, "name": "Snow White" },
-          ...
+          { "itemID": 5729, "stainID": 1, "name": "Snow White" }
         ]
       },
-      { "type": "B", "dyeCount": 35, "dyes": [ ... ] },
-      { "type": "C", "dyeCount": 35, "dyes": [ ... ] }
+      { "type": "B", "consolidatedItemID": 52255, "dyeCount": 9, "dyes": [] },
+      { "type": "C", "consolidatedItemID": 52256, "dyeCount": 11, "dyes": [] }
     ],
     "unconsolidated": {
       "count": 31,
-      "dyes": [ ... ]
+      "dyes": []
     }
   },
-  "meta": { ... }
+  "meta": {}
 }
 ```

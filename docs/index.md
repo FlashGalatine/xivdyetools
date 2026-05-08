@@ -28,49 +28,57 @@ This wiki-style documentation serves developers, end users, and maintainers with
 ```
               ┌────────────────────────────────────────────────────┐
               │                 Shared Foundation                  │
-              │  @xivdyetools/types (v1.9.0)                      │
+              │  @xivdyetools/types (v1.14.0)                     │
               │  @xivdyetools/logger (v1.2.2)                     │
-              │  @xivdyetools/auth (v1.1.1)                       │
+              │  @xivdyetools/auth (v1.1.2)                       │
               │  @xivdyetools/crypto (v1.1.0)                     │
-              │  @xivdyetools/rate-limiter (v1.4.3)               │
-              │  @xivdyetools/test-utils (v1.1.5)                 │
+              │  @xivdyetools/rate-limiter (v1.4.4)               │
+              │  @xivdyetools/worker-middleware (v1.1.2)          │
+              │  @xivdyetools/test-utils (v1.1.7)                 │
               └───────────────────────┬────────────────────────────┘
                                       │
               ┌───────────────────────▼────────────────────────────┐
-              │              @xivdyetools/core (v2.0.1)           │
-              │  136 dyes, color algorithms, Universalis API,     │
-              │  6 languages, k-d tree matching                   │
+              │              @xivdyetools/core (v2.6.0)           │
+              │  125 standard dyes plus 11 Facewear color entries │
+              │  (synthetic negative IDs), color algorithms,      │
+              │  Universalis API, 6 languages, k-d tree matching  │
               ├───────────────────────────────────────────────────-┤
               │  @xivdyetools/color-blending (v1.0.1)             │
               │  @xivdyetools/svg (v1.1.2)                        │
-              │  @xivdyetools/bot-logic (v1.1.2)                  │
-              │  @xivdyetools/bot-i18n (v1.1.0)                   │
+              │  @xivdyetools/bot-logic (v1.2.0)                  │
+              │  @xivdyetools/bot-i18n (v1.2.0)                   │
               └──┬──────────────┬─────────────────┬───────────────┘
                  │              │                 │
    ┌─────────────▼──┐   ┌──────▼──────┐   ┌──────▼──────────┐
    │   Web App      │   │  Discord    │   │  Stoat Bot      │
-   │   (v4.3.1)     │   │  Worker     │   │  (v0.1.3)       │
-   │   9 tools,     │   │  (v4.1.2)   │   │  Revolt.js      │
-   │   12 themes    │   │  19 cmds    │   └─────────────────┘
+   │   (v4.10.0)    │   │  Worker     │   │  (v0.1.4)       │
+   │   9 tools,     │   │  (v4.5.0)   │   │  Revolt.js      │
+   │   12 themes    │   │  20 cmds    │   └─────────────────┘
    └───────┬────────┘   └──────┬──────┘
            │                   │
    ┌───────▼────────┐         │   ┌────────────────────┐
    │  OAuth Worker  │         │   │  Presets API       │
-   │   (v2.3.8)     │◄────────┴───│   (v1.4.15)        │
+   │   (v2.4.0)     │◄────────┴───│   (v1.5.0)         │
    │  PKCE + JWT    │             │  D1 + Moderation   │
    └────────────────┘             └──────┬─────────────┘
            │                             │
    ┌───────▼──────────────┐   ┌──────────▼───────────┐
    │  Universalis Proxy   │   │  Moderation Worker   │
-   │   (v1.4.3)           │   │   (v1.1.8)           │
+   │   (v1.4.5)           │   │   (v1.2.0)           │
    │  CORS + Dual Caching │   └──────────────────────┘
    └──────────────────────┘
-           │
-   ┌───────▼──────────────┐
-   │  OpenGraph Worker    │
-   │   (v1.0.6)           │
-   │  Social media cards  │
-   └──────────────────────┘
+
+   ┌──────────────────────┐   ┌──────────────────────┐
+   │  OpenGraph Worker    │   │  Public REST API     │
+   │   (v1.2.0)           │   │  (api-worker v0.4.0) │
+   │  Social media cards  │   │  data.xivdyetools…   │
+   └──────────────────────┘   └──────────┬───────────┘
+                                         │
+                              ┌──────────▼───────────┐
+                              │  API Docs (VitePress)│
+                              │  (api-docs v0.1.0)   │
+                              │  developers.xivdye…  │
+                              └──────────────────────┘
 ```
 
 ---
@@ -116,30 +124,33 @@ This wiki-style documentation serves developers, end users, and maintainers with
 
 | Project | Type | Version | Purpose |
 |---------|------|---------|---------|
-| [@xivdyetools/core](projects/core/overview.md) | npm library | v2.0.1 | Core color algorithms, 136-dye database, Universalis API |
-| [xivdyetools-web-app](projects/web-app/overview.md) | Vite + Lit | v4.3.1 | Interactive web toolkit with 9 color tools |
-| [xivdyetools-discord-worker](projects/discord-worker/overview.md) | CF Worker | v4.1.2 | Discord bot with 19 slash commands |
-| [xivdyetools-moderation-worker](projects/moderation-worker/overview.md) | CF Worker | v1.1.8 | Community preset moderation bot |
-| [xivdyetools-oauth](projects/oauth/overview.md) | CF Worker | v2.3.8 | Discord OAuth + JWT issuance |
-| [xivdyetools-presets-api](projects/presets-api/overview.md) | CF Worker + D1 | v1.4.15 | Community presets with moderation |
-| [xivdyetools-universalis-proxy](projects/universalis-proxy/overview.md) | CF Worker | v1.4.3 | CORS proxy for Universalis API with dual-layer caching |
-| [xivdyetools-og-worker](projects/og-worker/overview.md) | CF Worker | v1.0.6 | Dynamic OpenGraph metadata for social media previews |
-| xivdyetools-stoat-worker | Node.js | v0.1.3 | Revolt (Stoat) bot with shared bot-logic |
+| [@xivdyetools/core](projects/core/overview.md) | npm library | v2.6.0 | Core color algorithms, 125 standard dyes plus 11 Facewear color entries (synthetic negative IDs), Universalis API |
+| [xivdyetools-web-app](projects/web-app/overview.md) | Vite + Lit | v4.10.0 | Interactive web toolkit with 9 color tools |
+| [xivdyetools-discord-worker](projects/discord-worker/overview.md) | CF Worker | v4.5.0 | Discord bot with 20 slash commands |
+| [xivdyetools-moderation-worker](projects/moderation-worker/overview.md) | CF Worker | v1.2.0 | Community preset moderation bot |
+| [xivdyetools-oauth](projects/oauth/overview.md) | CF Worker | v2.4.0 | Discord OAuth + JWT issuance |
+| [xivdyetools-presets-api](projects/presets-api/overview.md) | CF Worker + D1 | v1.5.0 | Community presets with moderation |
+| [xivdyetools-universalis-proxy](projects/universalis-proxy/overview.md) | CF Worker | v1.4.5 | CORS proxy for Universalis API with dual-layer caching |
+| [xivdyetools-og-worker](projects/og-worker/overview.md) | CF Worker | v1.2.0 | Dynamic OpenGraph metadata for social media previews |
+| [xivdyetools-api-worker](projects/api-worker/overview.md) | CF Worker + KV | v0.4.0 | Public REST API at `data.xivdyetools.app` (9 endpoints) |
+| xivdyetools-api-docs | VitePress (CF Pages) | v0.1.0 | Developer-facing API reference at `developers.xivdyetools.app` |
+| xivdyetools-stoat-worker | Node.js | v0.1.4 | Revolt (Stoat) bot with shared bot-logic |
 
 ### Shared Libraries
 
 | Project | Type | Version | Purpose |
 |---------|------|---------|---------|
-| [@xivdyetools/types](projects/types/overview.md) | npm library | v1.9.0 | Shared TypeScript types with Facewear support |
-| [@xivdyetools/auth](projects/auth/overview.md) | npm library | v1.1.1 | JWT verification, HMAC signing, Discord Ed25519 |
+| [@xivdyetools/types](projects/types/overview.md) | npm library | v1.14.0 | Shared TypeScript types with Facewear support |
+| [@xivdyetools/auth](projects/auth/overview.md) | npm library | v1.1.2 | JWT verification, HMAC signing, Discord Ed25519 |
 | [@xivdyetools/crypto](projects/crypto/overview.md) | npm library | v1.1.0 | Base64URL encoding and hex utilities |
 | [@xivdyetools/logger](projects/logger/overview.md) | npm library | v1.2.2 | Unified logging across environments |
-| [@xivdyetools/rate-limiter](projects/rate-limiter/overview.md) | npm library | v1.4.3 | Sliding window rate limiting (Memory, KV, Upstash) |
+| [@xivdyetools/rate-limiter](projects/rate-limiter/overview.md) | npm library | v1.4.4 | Sliding window rate limiting (Memory, KV, Upstash) |
+| [@xivdyetools/worker-middleware](projects/worker-middleware/overview.md) | npm library | v1.1.2 | Shared Hono middleware (request ID, logger, rate limit) |
 | [@xivdyetools/svg](projects/svg/overview.md) | npm library | v1.1.2 | Platform-agnostic SVG card generators |
-| [@xivdyetools/bot-logic](projects/bot-logic/overview.md) | npm library | v1.1.2 | Platform-agnostic bot command logic |
-| [@xivdyetools/bot-i18n](projects/bot-i18n/overview.md) | npm library | v1.1.0 | Bot internationalization |
+| [@xivdyetools/bot-logic](projects/bot-logic/overview.md) | npm library | v1.2.0 | Platform-agnostic bot command logic |
+| [@xivdyetools/bot-i18n](projects/bot-i18n/overview.md) | npm library | v1.2.0 | Bot internationalization |
 | [@xivdyetools/color-blending](projects/color-blending/overview.md) | npm library | v1.0.1 | Color blending modes (RGB, LAB, OKLAB, Spectral) |
-| [@xivdyetools/test-utils](projects/test-utils/overview.md) | npm library | v1.1.5 | Shared testing utilities |
+| [@xivdyetools/test-utils](projects/test-utils/overview.md) | npm library | v1.1.7 | Shared testing utilities |
 
 ### Developer Tools
 
@@ -151,26 +162,29 @@ This wiki-style documentation serves developers, end users, and maintainers with
 
 ## Recent Updates
 
-*Last updated: March 13, 2026*
+*Last updated: May 7, 2026*
+
+### April 2026 Highlights
+
+- **Patch 7.5 dye consolidation activated end-to-end** (core v2.5.0, web-app v4.9.0) — `CONSOLIDATED_IDS` populated with real itemIDs (A=52254, B=52255, C=52256); Market Board fans 3 consolidated prices to 105 dyes; ~105 → 3 market call collapse in effect
+- **Allied Society dye filter retired** (core v2.6.0, types v1.14.0, web-app v4.10.0, discord-worker v4.5.0, api-worker v0.4.0) — `ALLIED_SOCIETY_ACQUISITIONS`, `excludeAlliedSocietyDyes`, `?alliedSociety=` query param all removed since Patch 7.5 consolidated those vendor categories out of the dye database
+- **SEC-001 XSS hardening** (web-app v4.10.0) — `auth-button.ts` `innerHTML` interpolation of OAuth response strings replaced with `createElement` + `textContent`
+- **`@xivdyetools/worker-middleware` extracted** (v1.0.0 → v1.1.2) — request-ID, logger, and rate-limit middleware consolidated from 5 workers into one shared package; ~185 lines of duplicated code eliminated
+- **api-worker v0.4.0** at `data.xivdyetools.app` — Phase 1 with 9 public endpoints (filtering, sorting, pagination, color matching); KV-backed sliding-window rate limiting; OPT-001 `localeMiddleware`
+- **api-docs v0.1.0 site** at `developers.xivdyetools.app` — VitePress with inline "Try It" panels firing live requests + one-click "Copy as cURL"
+- **og-worker v1.2.0 localization** (`?lang=` query param) — OG embed metadata localized in all 6 languages
 
 ### March 2026 Highlights
 
-- **@xivdyetools/core v2.0.0** — **BREAKING**: Removed ~35 deprecated type re-exports. Import `Dye`, `RGB`, etc. from `@xivdyetools/types` instead of core. 28 symbols marked `@internal`
+- **@xivdyetools/core v2.0.0** — **BREAKING**: Removed ~35 deprecated type re-exports. Import `Dye`, `RGB`, etc. from `@xivdyetools/types` instead of core
 - **Web App v4.3.0** — Pixel sampling (Shift+Click), canvas panning (Ctrl/Cmd+Drag), configurable 1×1 to 16×16 sample area
-- **Discord Worker v4.1.x** — Budget quick picks updated with 20 Cosmic dyes, prevent duplicate results for extractor
-- **Dead Code Cleanup** — Waves 5–14 across all packages, removing ~100+ unused symbols, files, and legacy code
-- **Dependency Updates** — hono 4.12.5 (security fixes), wrangler 4.71.0, Vitest 4.0.18, TypeScript 5.9.3
+- **Patch 7.5 framework landed** (core v2.1.0) — `consolidated-ids.ts`, `getMarketItemID()`, `isConsolidationActive()` ready for activation
 
 ### February 2026 Highlights
 
 - **Web App v4.2.0** — Prevent Duplicate Results toggle for Harmony and Extractor, Paste from Clipboard
-- **Discord Worker v4.0.1** — 7 bug fixes including LocalizationService race condition, broken budget embeds, input sanitization
 - **Security Audit** — 14 findings resolved: CSRF fail-open, Upstash race condition, JWT expiration enforcement, hex validation, IP spoofing defaults
-- **ESLint v10 Migration** — Upgraded across entire monorepo, 200+ lint errors fixed
-- **Bot Logic Test Suite** — 193 comprehensive tests across 10 files
-- **Performance** — LRU cache for `rgbToOklab()` (OPT-001), CryptoKey caching (OPT-002)
 - **New Packages** — @xivdyetools/svg, bot-logic, bot-i18n, color-blending extracted as shared libraries
-- **Stoat Worker** — Initial Revolt.js bot release
 
 ### January 2026 Highlights
 

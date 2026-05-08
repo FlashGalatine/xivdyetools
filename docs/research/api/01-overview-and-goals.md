@@ -24,7 +24,7 @@ The API is organized into 10 endpoint domains, each mapping to an existing servi
 
 | Domain | Service | Key Capabilities |
 |--------|---------|-----------------|
-| **Dyes** | `DyeService` | List, search, filter, sort all 136 dyes; lookup by itemID or stainID (auto-detected); Patch 7.5 consolidation group metadata |
+| **Dyes** | `DyeService` | List, search, filter, sort all 136 entries (125 standard dyes + 11 Facewear); lookup by itemID or stainID (auto-detected); Patch 7.5 consolidation group metadata |
 | **Color Matching** | `DyeService` (k-d tree) | Find closest dye to any hex color; range queries |
 | **Color Harmony** | `DyeService` → `HarmonyGenerator` | 9 harmony types: complementary, triadic, analogous, square, tetradic, split-complementary, monochromatic, compound, shades |
 | **Color Conversion** | `ColorService` | Convert between 8 color spaces: Hex, RGB, HSV, HSL, LAB, LCH, OKLAB, OKLCH |

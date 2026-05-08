@@ -29,7 +29,7 @@ curl https://data.xivdyetools.app/v1/dyes/1
     "rgb": { "r": 228, "g": 223, "b": 208 },
     "hsv": { "h": 45, "s": 8.77, "v": 89.41 },
     "category": "Neutral",
-    "acquisition": "Ixali Vendor",
+    "acquisition": "Vendor",
     "cost": 216,
     "currency": "Gil",
     "isMetallic": false,

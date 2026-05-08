@@ -6,7 +6,7 @@ Research and planning documents for a public, documented REST API that exposes X
 
 ### Current Limitations
 
-1. **No HTTP access to core logic** — The `@xivdyetools/core` npm library contains 136-dye database, color matching, harmony generation, color conversion, and colorblind simulation, but it's only usable from JavaScript/TypeScript applications.
+1. **No HTTP access to core logic** — The `@xivdyetools/core` npm library contains the dye database (125 standard dyes plus 11 Facewear color entries with synthetic negative IDs), color matching, harmony generation, color conversion, and colorblind simulation, but it's only usable from JavaScript/TypeScript applications.
 2. **Platform lock-in** — Developers building native mobile apps, Dalamud plugins (C#), Python scripts, or non-JS Discord bots cannot leverage any of this functionality.
 3. **Duplicated effort** — Community developers who need dye data must scrape it themselves or maintain their own databases.
 4. **No discoverability** — There is no programmatic way for third-party tools to search dyes, match colors, or generate palettes without embedding the npm library.

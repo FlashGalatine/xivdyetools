@@ -33,6 +33,19 @@ Find the single closest FFXIV dye to a given hex color.
 | `kC` | query | No | Chroma weight for `oklch-weighted` (default: `1.0`) |
 | `kH` | query | No | Hue weight for `oklch-weighted` (default: `1.0`) |
 
+**Type / acquisition filters** (also supported, all optional booleans) — when set to `true`/`false`, the matcher narrows the candidate set to dyes that match the filter. See [GET /v1/dyes](dyes#get-v1dyes) for full descriptions.
+
+| Name | Description |
+|---|---|
+| `metallic` | Filter to/from metallic dyes |
+| `pastel` | Filter to/from pastel dyes |
+| `dark` | Filter to/from dark dyes |
+| `cosmic` | Filter to/from Cosmic Exploration dyes |
+| `ishgardian` | Filter to/from Ishgardian dyes |
+| `vendor` | Filter to/from vendor-acquired dyes |
+| `craft` | Filter to/from crafted dyes |
+| `expensive` | Filter to/from premium-cost dyes |
+
 <TryIt
   endpoint="/v1/match/closest"
   :params="[
@@ -80,12 +93,14 @@ Find all dyes within a color distance threshold. Results are sorted closest-firs
 | `hex` | query | Yes | Hex color (`#RRGGBB` or `RRGGBB`) |
 | `maxDistance` | query | Yes | Maximum distance threshold (min `0.01`) |
 | `method` | query | No | Distance algorithm (default: `oklab`) |
-| `limit` | query | No | Max results (1–136, default `20`) |
+| `limit` | query | No | Max results (1–136 — covering all 125 standard dyes + 11 Facewear color entries; default `20`) |
 | `excludeIds` | query | No | Comma-separated IDs to exclude |
 | `locale` | query | No | Locale for `localizedName` |
 | `kL` | query | No | Lightness weight for `oklch-weighted` |
 | `kC` | query | No | Chroma weight for `oklch-weighted` |
 | `kH` | query | No | Hue weight for `oklch-weighted` |
+
+**Type / acquisition filters** (`metallic`, `pastel`, `dark`, `cosmic`, `ishgardian`, `vendor`, `craft`, `expensive`) are also supported here — see the [closest endpoint](#get-v1matchclosest) above.
 
 <TryIt
   endpoint="/v1/match/within-distance"
@@ -93,7 +108,7 @@ Find all dyes within a color distance threshold. Results are sorted closest-firs
     { name: 'hex', in: 'query', required: true, default: 'FF6B6B', description: 'Hex color — #RRGGBB or RRGGBB' },
     { name: 'maxDistance', in: 'query', required: true, default: '0.15', description: 'Maximum Oklab distance (try 0.05–0.30)' },
     { name: 'method', in: 'query', required: false, default: 'oklab', description: 'Distance algorithm', options: ['rgb', 'cie76', 'ciede2000', 'oklab', 'hyab', 'oklch-weighted'] },
-    { name: 'limit', in: 'query', required: false, default: '10', description: 'Max results (1–136)' },
+    { name: 'limit', in: 'query', required: false, default: '10', description: 'Max results (1–136 — all 125 standard dyes + 11 Facewear)' },
     { name: 'locale', in: 'query', required: false, default: 'en', description: 'en, ja, de, fr, ko, zh', options: ['en', 'ja', 'de', 'fr', 'ko', 'zh'] }
   ]"
 />

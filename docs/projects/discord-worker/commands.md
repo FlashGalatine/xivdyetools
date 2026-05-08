@@ -30,7 +30,7 @@ Generate harmonious dye combinations based on color theory.
 | `type` | String (choice) | Yes | Harmony type: `complementary`, `analogous`, `triadic`, `split-complementary`, `tetradic`, `monochromatic` |
 | `count` | Integer (1-10) | No | Number of results to return. Default: `5` |
 
-Returns an embed with color swatches showing the base dye and its harmonious matches from the 136-dye database.
+Returns an embed with color swatches showing the base dye and its harmonious matches from the full dye database (125 standard dyes plus 11 Facewear color entries).
 
 **Example usage:**
 ```
@@ -146,7 +146,7 @@ Find affordable dye alternatives via the Universalis market board API. New in v4
 | `max_price` | Integer | No | Maximum gil price filter |
 | `count` | Integer | No | Number of alternatives to show |
 
-v4.1.x additions: Cosmic dye quick picks featuring 20 new Dawntrail dyes. Uses `fetchPricesBatched` to handle all 136 dyes (Universalis max 100 items per request). Filters out Facewear dyes (`itemID > 0`) since they have no market board listings.
+v4.1.x additions: Cosmic dye quick picks featuring 20 new Dawntrail dyes. Uses `fetchPricesBatched` to handle all 136 entries (125 standard dyes + 11 Facewear; Universalis max 100 items per request). Filters out Facewear dyes (`itemID > 0`) since they have no market board listings. Post-Patch 7.5 (v4.2.0+) the budget calculator uses `getMarketItemID()` so the 105 consolidated dyes share three real itemIDs (Type-A=52254, Type-B=52255, Type-C=52256) — `~105 → 3` market lookups.
 
 **Example usage:**
 ```

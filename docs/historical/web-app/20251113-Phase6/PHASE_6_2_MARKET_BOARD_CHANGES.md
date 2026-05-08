@@ -1,5 +1,7 @@
 # Phase 6.2: Market Prices Component - Implementation Guide
 
+> **[Deprecated 2026-04-28]** This document describes the original "Beast Tribe Dyes" → "Allied Society Dyes" rename and the now-retired Price Categories panel. Patch 7.5 dye consolidation collapsed those vendor categories out of the dye database, and `xivdyetools-web-app@4.10.0` removed both the Allied Society filter toggle and the Price Categories panel entirely. This file remains for historical reference but the features it describes no longer exist. See monorepo CHANGELOG `1.13.0` (2026-04-29) and `1.12.0` (2026-04-28).
+
 ## Summary
 
 This phase extracts market board functionality into reusable components and centralized utilities, eliminating ~675 lines of duplicate code across the 3 market-enabled tools (Color Harmony Explorer, Color Matcher, Dye Comparison).

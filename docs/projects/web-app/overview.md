@@ -1,6 +1,8 @@
 # Web App Overview
 
-**xivdyetools-web-app** v4.3.1 - Interactive browser-based toolkit for FFXIV dye colors
+**xivdyetools-web-app** v4.10.0 - Interactive browser-based toolkit for FFXIV dye colors
+
+The dye database backing the app is **125 standard dyes plus 11 Facewear color entries** (the Facewear entries get synthetic negative IDs at runtime so they share the `Dye.itemID: number` shape but never collide with real game item IDs).
 
 ---
 
@@ -19,6 +21,21 @@ A fully-featured web application built with Lit and Vite, offering 9 interactive
 | **Accessibility Checker** | Colorblindness simulation |
 | **Community Presets** | Browse community dye palettes |
 | **Budget Suggestions** | Find affordable dye alternatives using market data |
+
+### New in v4.10.0
+
+- **Result Card v4 "Spectrum" row** — Shows the consolidated dye spectrum (Standard / Wide #1 / Wide #2) on every match across Harmony, Gradient, Budget, Swatch, and Extractor; new `common.spectrum` i18n key in all 6 locales
+- **SEC-001 XSS hardening** — `auth-button.ts` `innerHTML` interpolation of OAuth user character name / server replaced with `createElement` + `textContent`; CSP `script-src 'self'` provides defense-in-depth
+- **"Exclude Allied Society Dyes" filter retired** — Patch 7.5 collapsed the old vendor categories out of the dye database, so the toggle had nothing left to exclude
+
+### New in v4.9.0
+
+- **Patch 7.5 dye consolidation active end-to-end** — Market Board service fans out the 3 consolidated prices (Type-A=52254, Type-B=52255, Type-C=52256) to all 105 individual dye cache entries; refresh now issues ~20 API calls instead of 105
+- **Price Categories panel removed** — categories stopped being meaningful once consolidated dyes started sharing market IDs; refresh button now lives directly above the price panel
+
+### New in v4.6.0
+
+- **Dye Filters v4 web component** — 9 toggles across 2 collapsible sections; `dye-filter-utils.ts` with `isDyeExcluded` / `filterDyes` / `hasActiveFilters`; integrated across all 6 tools
 
 ### New in v4.3.0
 

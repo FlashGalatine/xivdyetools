@@ -187,7 +187,7 @@ sequenceDiagram
 
 | Operation | Time Complexity | Typical Time |
 |-----------|-----------------|--------------|
-| Build tree (startup) | O(n log n) | ~2ms for 136 dyes |
+| Build tree (startup) | O(n log n) | ~2ms for 136 entries (125 standard dyes + 11 Facewear color entries) |
 | Nearest neighbor query | O(log n) | <0.1ms |
 | k-nearest neighbors | O(k log n) | <0.5ms for k=5 |
 

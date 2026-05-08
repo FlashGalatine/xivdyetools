@@ -6,7 +6,7 @@ Complete endpoint design for the XIV Dye Tools Public API. All endpoints are rea
 
 ## 1. Dye Database
 
-Wraps `DyeService` — the 136-dye FFXIV database with category, color, and acquisition metadata.
+Wraps `DyeService` — the FFXIV dye database (125 standard dyes plus 11 Facewear color entries with synthetic negative IDs) with category, color, and acquisition metadata.
 
 ### Dye ID Resolution
 

@@ -165,7 +165,7 @@ const tetradic = dyeService.findTetradicDyes('#FF6B6B');
 
 ```typescript
 // Get all dyes
-const allDyes = dyeService.getAllDyes();  // 136 dyes
+const allDyes = dyeService.getAllDyes();  // 136 entries: 125 standard dyes + 11 Facewear color entries
 
 // Get categories
 const categories = dyeService.getCategories();

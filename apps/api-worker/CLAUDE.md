@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`xivdyetools-api-worker` is the **public REST API** for the XIV Dye Tools ecosystem — Phase 1 surfaces the 136-dye database and color-matching algorithms over a Cloudflare Worker on Hono. Deployed to **`data.xivdyetools.app`**.
+`xivdyetools-api-worker` is the **public REST API** for the XIV Dye Tools ecosystem — Phase 1 surfaces the dye database (125 standard dyes plus 11 Facewear color entries with synthetic negative IDs) and color-matching algorithms over a Cloudflare Worker on Hono. Deployed to **`data.xivdyetools.app`**.
 
 The API is anonymous (no auth, no API key) with permissive CORS so it can be called from browsers, Dalamud plugins, Discord bots, and mobile apps. Sliding-window rate limiting (60 req/min/IP, +5 burst) is enforced via KV. Locale resolution is handled once per request by middleware so handlers can call `LocalizationService.getDyeName()` directly without per-call `setLocale()`.
 
@@ -126,7 +126,7 @@ Composes the shared `rateLimitMiddleware` factory from `@xivdyetools/worker-midd
 
 ### Service Singleton
 
-`DyeService` is instantiated once per Worker isolate at module scope (`lib/services.ts`). The k-d tree (~1–2ms build for 136 dyes) is reused across all requests handled by the isolate. `calculateDistance()` dispatches to `ColorConverter` static methods because `findClosestDye`/`findDyesWithinDistance` return `Dye[]` without distances — match handlers recompute distance for the response.
+`DyeService` is instantiated once per Worker isolate at module scope (`lib/services.ts`). The k-d tree (~1–2ms build for 136 entries — 125 standard dyes + 11 Facewear; the 11 Facewear entries are excluded from the k-d tree itself since they're not market-tradeable) is reused across all requests handled by the isolate. `calculateDistance()` dispatches to `ColorConverter` static methods because `findClosestDye`/`findDyesWithinDistance` return `Dye[]` without distances — match handlers recompute distance for the response.
 
 ## Dependencies
 

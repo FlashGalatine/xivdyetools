@@ -3,6 +3,12 @@
 > **Moved:** The FFXIV terminology reference tables have been consolidated into
 > [`docs/reference/ffxiv-terminology.md`](../../reference/ffxiv-terminology.md).
 > This audit document is preserved for historical context.
+>
+> **Updated 2026-05-07** — Patch 7.5 dye consolidation collapsed the Allied Society
+> (formerly Beast Tribe) vendor categories out of `colors_xiv.json`. The
+> `ALLIED_SOCIETY_ACQUISITIONS` constant was removed in `@xivdyetools/core@2.6.0`,
+> and the Allied Society / Beast Tribe terminology rows were removed from this
+> audit's tables and checklist. See monorepo CHANGELOG `1.13.0` (2026-04-29).
 
 **Project:** xivdyetools-web-app
 **Date:** January 17, 2026
@@ -142,11 +148,7 @@ static getClan(key: string): string {
 |----|----|----|
 | Dye Vendor | 染色師 | Basic dyes |
 | Crafting | 制作 | Craftable dyes |
-| Ixali Vendor | イクサル族のよろず屋 | Allied Society |
-| Sylphic Vendor | シルフ族のよろず屋 | Allied Society |
-| Kobold Vendor | コボルド族のよろず屋 | Allied Society |
-| Amalj'aa Vendor | アマルジャ族のよろず屋 | Allied Society |
-| Sahagin Vendor | サハギン族のよろず屋 | Allied Society |
+| The Firmament | 蒼天街 | Skybuilders' Scrips (formerly listed as `Crafting`) |
 | Cosmic Exploration | コスモエクスプローラー | Island Sanctuary |
 | Cosmic Fortunes | コスモフォーチュン | Gold Saucer |
 | Venture Coffers | リテイナーの宝箱 | Retainer ventures |
@@ -154,7 +156,10 @@ static getClan(key: string): string {
 | Event | イベント | Seasonal events |
 | Mogstation | モグステーション | Cash shop |
 
-**Cross-Reference:** Verified against `LOCALIZATION_REFERENCE.md` Allied Society Vendors section.
+**Note:** Five tribal-vendor rows (Ixali / Sylphic / Kobold / Amalj'aa / Sahagin)
+that previously appeared here were removed on 2026-05-07. Those vendors no
+longer carry dyes after Patch 7.5 consolidation collapsed those categories out
+of the dye database. See `@xivdyetools/core@2.6.0` and monorepo CHANGELOG `1.13.0`.
 
 ---
 
@@ -291,7 +296,7 @@ Potential additions for future features:
 - [x] Acquisition methods match official FFXIV terminology
 - [x] Race names match LOCALIZATION_REFERENCE.md
 - [x] Clan names match LOCALIZATION_REFERENCE.md
-- [x] Allied Society vendor names match LOCALIZATION_REFERENCE.md
+- [x] ~~Allied Society vendor names match LOCALIZATION_REFERENCE.md~~ (item retired 2026-05-07 — Patch 7.5 collapsed those vendor categories out of the dye database)
 - [x] Harmony types are consistently translated
 - [x] Vision types are consistently translated
 - [x] No hardcoded game terms in web app code

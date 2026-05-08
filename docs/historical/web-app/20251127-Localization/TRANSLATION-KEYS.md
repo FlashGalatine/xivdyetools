@@ -1,5 +1,7 @@
 # Translation Key Reference
 
+> **[Deprecated 2026-04-28]** Some keys catalogued here (e.g. `marketBoard.alliedSocietyDyes`, `marketBoard.priceCategories`, `marketBoard.baseDyes`, `marketBoard.craftDyes`, `marketBoard.cosmicDyes`, `marketBoard.specialDyes`) were removed in `xivdyetools-web-app@4.10.0` after Patch 7.5 collapsed the Allied Society vendor categories and the Price Categories panel was retired. This document is preserved as a historical snapshot of the v2.0.0-era localization surface — see monorepo CHANGELOG `1.13.0` (2026-04-29).
+
 This document details all translation keys needed for the web app localization.
 
 **Note:** Dye names, categories, acquisitions, harmony types, and vision types are provided by the core library (`xivdyetools-core`). This document covers web-app-specific UI strings only.

@@ -8,22 +8,24 @@
 
 | Project | Type | Platform | Key Technologies | Primary Purpose |
 |---------|------|----------|------------------|-----------------|
-| [@xivdyetools/core](core/overview.md) | npm library | Node.js / Browser | TypeScript, k-d tree, K-means++ | Color algorithms, 136-dye database |
+| [@xivdyetools/core](core/overview.md) | npm library | Node.js / Browser | TypeScript, k-d tree, K-means++ | Color algorithms; 125 standard dyes plus 11 Facewear color entries (synthetic negative IDs) |
 | [xivdyetools-web-app](web-app/overview.md) | Web app | Cloudflare Pages | Lit, Vite, Tailwind CSS | 9 interactive color tools |
 | [xivdyetools-discord-worker](discord-worker/overview.md) | Discord bot | Cloudflare Workers | Hono, HTTP Interactions, resvg-wasm | 20 slash commands |
 | [xivdyetools-moderation-worker](moderation-worker/overview.md) | Discord bot | Cloudflare Workers | Hono, HTTP Interactions | Preset moderation commands |
 | [xivdyetools-oauth](oauth/overview.md) | OAuth provider | Cloudflare Workers | Hono, PKCE, JWT | Discord authentication |
-| [xivdyetools-api-worker](api-worker/overview.md) | Public API | Cloudflare Workers | Hono, KV | Dye database & color matching |
+| [xivdyetools-api-worker](api-worker/overview.md) | Public API | Cloudflare Workers | Hono, KV | Public dye database & color matching at `data.xivdyetools.app` |
+| xivdyetools-api-docs | Docs site | Cloudflare Pages | VitePress | Developer-facing API reference at `developers.xivdyetools.app` |
 | [xivdyetools-presets-api](presets-api/overview.md) | REST API | Cloudflare Workers | Hono, D1 SQLite | Community presets |
 | [xivdyetools-universalis-proxy](universalis-proxy/overview.md) | CORS Proxy | Cloudflare Workers | Hono, KV | Market data caching |
-| [xivdyetools-og-worker](og-worker/overview.md) | OpenGraph | Cloudflare Workers | Hono, resvg-wasm | Social media previews |
-| xivdyetools-stoat-worker | Node.js bot | Node.js | discord.js | Private Discord Stoat bot |
+| [xivdyetools-og-worker](og-worker/overview.md) | OpenGraph | Cloudflare Workers | Hono, resvg-wasm | Localized social media previews |
+| xivdyetools-stoat-worker | Node.js bot | Node.js | revolt.js | Revolt (Stoat) bot |
 | xivdyetools-maintainer | Dev tool | Local | Vue 3, Vite | Dye database editor |
 | [@xivdyetools/types](types/overview.md) | npm library | Universal | TypeScript | Shared type definitions |
 | [@xivdyetools/auth](auth/overview.md) | npm library | Universal | TypeScript | JWT, HMAC, Ed25519 verification |
 | [@xivdyetools/crypto](crypto/overview.md) | npm library | Universal | TypeScript | Base64URL encoding |
 | [@xivdyetools/logger](logger/overview.md) | npm library | Universal | TypeScript | Multi-environment logging |
 | [@xivdyetools/rate-limiter](rate-limiter/overview.md) | npm library | Universal | TypeScript | Sliding window rate limiting |
+| [@xivdyetools/worker-middleware](worker-middleware/overview.md) | npm library | Cloudflare Workers | TypeScript, Hono | Shared request-ID, logger, and rate-limit middleware |
 | [@xivdyetools/svg](svg/overview.md) | npm library | Universal | TypeScript | SVG template rendering |
 | [@xivdyetools/bot-logic](bot-logic/overview.md) | npm library | Universal | TypeScript | Shared Discord bot business logic |
 | [@xivdyetools/bot-i18n](bot-i18n/overview.md) | npm library | Universal | TypeScript | Bot localization strings |
@@ -63,7 +65,7 @@
 │  ┌─────────────────────┐ ┌──────────────────┐ ┌───────────────────┐ ┌─────────────────┐ │
 │  │  @xivdyetools/core  │ │ @xivdyetools/svg │ │@xivdyetools/      │ │@xivdyetools/    │ │
 │  │  ─────────────────  │ │ ──────────────── │ │  bot-logic         │ │  bot-i18n       │ │
-│  │  136-dye database   │ │ SVG templates    │ │───────────────────│ │─────────────────│ │
+│  │ Dye DB (125 + 11)   │ │ SVG templates    │ │───────────────────│ │─────────────────│ │
 │  │  Color algorithms   │ │ PNG rendering    │ │ Bot business logic│ │ Bot localization │ │
 │  │  6-language i18n    │ │                  │ │                   │ │                 │ │
 │  └─────────────────────┘ └──────────────────┘ └───────────────────┘ └─────────────────┘ │
@@ -158,31 +160,34 @@ If you want to integrate XIV Dye Tools into your own project:
 
 | Project | Version | Last Updated |
 |---------|---------|--------------|
-| @xivdyetools/core | v2.0.1 | March 2026 |
-| xivdyetools-web-app | v4.3.1 | March 2026 |
-| xivdyetools-discord-worker | v4.1.2 | March 2026 |
-| xivdyetools-moderation-worker | v1.1.8 | March 2026 |
-| xivdyetools-oauth | v2.3.8 | March 2026 |
-| xivdyetools-presets-api | v1.4.15 | March 2026 |
-| xivdyetools-universalis-proxy | v1.4.3 | March 2026 |
-| xivdyetools-og-worker | v1.0.6 | March 2026 |
-| xivdyetools-stoat-worker | v0.1.3 | March 2026 |
+| @xivdyetools/core | v2.6.0 | April 2026 |
+| xivdyetools-web-app | v4.10.0 | April 2026 |
+| xivdyetools-discord-worker | v4.5.0 | April 2026 |
+| xivdyetools-moderation-worker | v1.2.0 | April 2026 |
+| xivdyetools-oauth | v2.4.0 | April 2026 |
+| xivdyetools-presets-api | v1.5.0 | April 2026 |
+| xivdyetools-universalis-proxy | v1.4.5 | April 2026 |
+| xivdyetools-og-worker | v1.2.0 | April 2026 |
+| xivdyetools-api-worker | v0.4.0 | April 2026 |
+| xivdyetools-api-docs | v0.1.0 | April 2026 |
+| xivdyetools-stoat-worker | v0.1.4 | March 2026 |
 | xivdyetools-maintainer | v1.0.2 | March 2026 |
 
 ### Shared Libraries
 
 | Package | Version | Last Updated |
 |---------|---------|--------------|
-| @xivdyetools/types | v1.9.0 | March 2026 |
+| @xivdyetools/types | v1.14.0 | April 2026 |
 | @xivdyetools/crypto | v1.1.0 | February 2026 |
 | @xivdyetools/logger | v1.2.2 | March 2026 |
-| @xivdyetools/auth | v1.1.1 | March 2026 |
-| @xivdyetools/rate-limiter | v1.4.3 | March 2026 |
+| @xivdyetools/auth | v1.1.2 | March 2026 |
+| @xivdyetools/rate-limiter | v1.4.4 | March 2026 |
+| @xivdyetools/worker-middleware | v1.1.2 | April 2026 |
 | @xivdyetools/svg | v1.1.2 | March 2026 |
-| @xivdyetools/bot-logic | v1.1.2 | March 2026 |
-| @xivdyetools/bot-i18n | v1.1.0 | March 2026 |
+| @xivdyetools/bot-logic | v1.2.0 | April 2026 |
+| @xivdyetools/bot-i18n | v1.2.0 | April 2026 |
 | @xivdyetools/color-blending | v1.0.1 | February 2026 |
-| @xivdyetools/test-utils | v1.1.5 | March 2026 |
+| @xivdyetools/test-utils | v1.1.7 | March 2026 |
 
 See [Version Matrix](../versions.md) for detailed version history.
 

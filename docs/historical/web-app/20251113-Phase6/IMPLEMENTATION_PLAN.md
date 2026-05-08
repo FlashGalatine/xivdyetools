@@ -2,6 +2,8 @@
 **Date**: 2025-11-12
 **Status**: Planning Phase - Ready for Implementation
 
+> **[Deprecated 2026-04-28]** The "Allied Society Dyes" filter, `alliedSocietyDyes` price-category, and Ixali-Vendor reclassification described in this plan were retired by Patch 7.5 dye consolidation in `@xivdyetools/core@2.6.0` and `xivdyetools-web-app@4.10.0`. Sections referencing those features are historical only — see monorepo CHANGELOG `1.13.0` (2026-04-29).
+
 ## Decision Summary
 
 Based on feedback discussion, we've decided on:

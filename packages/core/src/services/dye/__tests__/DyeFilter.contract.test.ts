@@ -7,10 +7,11 @@ import colorsData from '../../../data/colors_xiv.json' with { type: 'json' };
 // updates the JSON but not the constants (or vice-versa), this test fails loudly
 // instead of silently producing an unmatched filter.
 //
-// History: An earlier revision of this file also validated ALLIED_SOCIETY_ACQUISITIONS,
-// which was removed from DyeFilter.ts on 2026-04-29 — those vendor names had no
-// corresponding rows in colors_xiv.json and the entire Allied Society filter was
-// a no-op. See @xivdyetools/core CHANGELOG entry for the removal rationale.
+// History: An earlier revision of this file also validated a third vendor-tribe
+// acquisition constant, which was removed from DyeFilter.ts on 2026-04-29 — those
+// vendor names had no corresponding rows in colors_xiv.json after Patch 7.5
+// consolidation, and the filter was a no-op. See @xivdyetools/core CHANGELOG entry
+// for the removal rationale.
 
 describe('DyeFilter acquisition-string contract', () => {
   const acquisitions = new Set(

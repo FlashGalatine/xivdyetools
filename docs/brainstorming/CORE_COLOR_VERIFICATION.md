@@ -14,7 +14,7 @@
 | Core Package | `colors_xiv.json` | 136 dyes |
 | Datamined | `DyeColors.csv` | 125 dyes |
 
-**Note**: The Core package has 136 entries while datamined shows 125. This is expected as the Core package may include special/limited/event dyes or may have some deprecated entries.
+**Note**: The Core package has 136 entries while datamined shows 125. The 11 extra entries are **Facewear color entries** — face-paint colors that are not real dyes (no item ID, not market-tradeable). They get synthetic negative IDs (≤ -1000, name-hash derived) at runtime by `DyeDatabase.initialize()` so they share the `Dye.itemID: number` shape but never collide with real game item IDs. Filter market-board operations with `dye.itemID > 0` rather than null-checks.
 
 ---
 

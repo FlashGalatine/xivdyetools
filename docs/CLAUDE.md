@@ -18,7 +18,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Monorepo Quick Reference
 
-**20 Active Projects** (11 packages + 9 applications) — see [versions.md](versions.md) for current versions
+**22 Active Projects** (12 packages + 10 applications, including the api-docs site) — see [versions.md](versions.md) for current versions.
+
+The dye database is **125 standard dyes plus 11 Facewear color entries** (synthetic negative IDs assigned at runtime by `DyeDatabase.initialize()` — `Dye.itemID` is always `number`).
 
 ### Applications
 
@@ -30,6 +32,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `xivdyetools-moderation-worker` | CF Worker | [Overview](projects/moderation-worker/overview.md) |
 | `xivdyetools-oauth` | CF Worker | [Overview](projects/oauth/overview.md) |
 | `xivdyetools-api-worker` | CF Worker + KV | [Overview](projects/api-worker/overview.md) |
+| `xivdyetools-api-docs` | VitePress (CF Pages) | — |
 | `xivdyetools-presets-api` | CF Worker + D1 | [Overview](projects/presets-api/overview.md) |
 | `xivdyetools-universalis-proxy` | CF Worker | [Overview](projects/universalis-proxy/overview.md) |
 | `xivdyetools-og-worker` | CF Worker | [Overview](projects/og-worker/overview.md) |
@@ -45,6 +48,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `@xivdyetools/logger` | [Overview](projects/logger/overview.md) |
 | `@xivdyetools/auth` | — |
 | `@xivdyetools/rate-limiter` | — |
+| `@xivdyetools/worker-middleware` | — |
 | `@xivdyetools/svg` | — |
 | `@xivdyetools/bot-logic` | — |
 | `@xivdyetools/bot-i18n` | — |

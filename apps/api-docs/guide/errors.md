@@ -83,7 +83,7 @@ For multiple validation errors in the same request:
 | `perPage` | 1 – 200 | `50` |
 | `stainId` (path) | ≥ 1 | — |
 | `maxDistance` | > 0 | — |
-| `limit` (within-distance) | 1 – 136 | `20` |
+| `limit` (within-distance) | 1 – 136 (covers all 125 standard dyes + 11 Facewear color entries) | `20` |
 | `kL`, `kC`, `kH` | > 0 | `1.0` |
 
 ## Enum Values (Phase 1)

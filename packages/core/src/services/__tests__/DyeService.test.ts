@@ -126,7 +126,7 @@ const sampleDyes: Dye[] = [
     rgb: { r: 173, g: 173, b: 173 },
     hsv: { h: 0, s: 0, v: 68 },
     category: 'Metallics',
-    acquisition: 'Beast Tribes',
+    acquisition: 'Venture Coffers',
     cost: 0,
     currency: 'Gil',
     isMetallic: true,

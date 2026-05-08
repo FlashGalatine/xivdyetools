@@ -71,7 +71,7 @@ Web Content Accessibility Guidelines contrast ratio requirements:
 ## FFXIV Terms
 
 ### Dye
-In-game consumable item that changes equipment color. XIV Dye Tools covers all 136 dyes.
+In-game consumable item that changes equipment color. XIV Dye Tools covers 125 standard dyes plus 11 Facewear color entries (synthetic negative IDs assigned at runtime — see [Facewear Dye](#facewear-dye)) for a total of 136 entries.
 
 ### General-Purpose Dye
 Dyes that can be purchased from NPC vendors for gil. Cheaper and more accessible.

@@ -17,7 +17,7 @@ xivdyetools/
 │   ├── auth/                # JWT verification, HMAC signing, Discord Ed25519
 │   ├── rate-limiter/        # Sliding window rate limiting (Memory, KV, Upstash)
 │   ├── worker-middleware/   # Shared Hono middleware (request ID, logger, rate limit)
-│   ├── core/                # Color algorithms, 136-dye database, k-d tree, 6-language i18n
+│   ├── core/                # Color algorithms, dye database (125 standard + 11 Facewear), k-d tree, 6-language i18n
 │   ├── color-blending/      # Six blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral)
 │   ├── svg/                 # Pure SVG card generators (data → SVG string)
 │   ├── bot-logic/           # Platform-agnostic Discord/Revolt command business logic
@@ -119,8 +119,10 @@ All Cloudflare Workers use **Hono** as the HTTP framework. Persistence is **D1**
 - Locale pipeline: `fetch_dye_names.py` → `dyenames.csv` → `build-locales.ts` → JSON
 - CJK rendering needs subset fonts (Noto Sans SC + Noto Sans KR) in SVG generation
 
-### Facewear Dyes
-11 Facewear dyes have synthetic negative IDs (`-1`, `-2`, ...) assigned at runtime by `DyeDatabase.initialize()`. `Dye.itemID` is always a number — never null. For market board filtering use `dye.itemID > 0`, never a null-check.
+### Dye Database Composition
+The dye database is **125 standard dyes plus 11 Facewear color entries** = 136 total entries in `colors_xiv.json`.
+
+The 11 Facewear color entries have `itemID: null` in the JSON; `DyeDatabase.initialize()` assigns synthetic **hash-based negative IDs** (e.g. `-1127`, derived from the name's char codes — **not** sequential `-1, -2, ...`). `Dye.itemID` is therefore always a `number` at runtime — never null. For market-board filtering use `dye.itemID > 0`, never a null-check. Facewear entries are excluded from the k-d tree (not market-tradeable).
 
 ## Publishing Libraries to npm
 

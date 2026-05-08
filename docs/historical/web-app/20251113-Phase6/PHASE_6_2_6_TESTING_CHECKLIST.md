@@ -1,5 +1,7 @@
 # Phase 6.2.6: Market Board Testing Checklist
 
+> **[Deprecated 2026-04-28]** This testing checklist exercises the "Allied Society Dyes" filter / Ixali-Vendor reclassification work, which was retired by Patch 7.5 dye consolidation in `xivdyetools-web-app@4.10.0`. Most checklist items now describe behavior that no longer exists. Preserved for historical reference only — see monorepo CHANGELOG `1.13.0`.
+
 ## Overview
 
 This document provides a comprehensive testing guide for Phase 6.2 changes:

@@ -11,7 +11,7 @@ The XIV Dye Tools web app provides 9 interactive tools for working with FFXIV dy
 Generate harmonious dye combinations using color theory algorithms.
 
 - **Harmony modes:** Complementary, Analogous, Triadic, Split-Complementary, Tetradic, Monochromatic
-- Uses `HarmonyGenerator` service to compute color relationships against the 136-dye database
+- Uses `HarmonyGenerator` service to compute color relationships against the full dye database (125 standard dyes plus 11 Facewear color entries)
 - Select a base dye, choose a harmony mode, and view matching dyes with color swatches
 
 **What's new in v4.x:**
@@ -103,7 +103,7 @@ Find affordable dye alternatives using Universalis market board data. New in v4.
 
 - Search for cheap alternatives to a target dye color, ranked by price and color distance
 - Fetches real-time market board prices via the `universalis-proxy` worker
-- **Dye categories:** Base, Craft, Allied Society, Cosmic, Special
+- **Dye categories:** Base, Craft, Cosmic, Special (the Allied Society category was retired post-Patch 7.5; vendor dyes were collapsed into the Base / Craft buckets)
 - Filter by category, set a max price, and sort by price or color accuracy
 - Facewear dyes (synthetic negative IDs) are excluded since they are not tradeable
 
