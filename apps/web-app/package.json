@@ -52,7 +52,7 @@
     "vitest": "^4.1.6"
   },
   "dependencies": {
-    "@tailwindcss/postcss": "^4.2.4",
+    "@tailwindcss/postcss": "^4.3.0",
     "@xivdyetools/core": "workspace:*",
     "@xivdyetools/logger": "workspace:*",
     "@xivdyetools/types": "workspace:*",
