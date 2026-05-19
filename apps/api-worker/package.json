@@ -25,11 +25,11 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260518.1",
-    "@types/node": "^25.7.0",
+    "@types/node": "^25.9.0",
     "@vitest/coverage-v8": "^4.1.6",
     "@xivdyetools/test-utils": "workspace:*",
     "vitest": "^4.1.6",
-    "wrangler": "^4.90.0"
+    "wrangler": "^4.92.0"
   },
   "engines": {
     "node": ">=18.0.0"

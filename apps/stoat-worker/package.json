@@ -36,11 +36,11 @@
     "revolt.js": "^7.1.1"
   },
   "devDependencies": {
-    "@types/node": "^25.7.0",
+    "@types/node": "^25.9.0",
     "@vitest/coverage-v8": "^4.1.6",
     "@xivdyetools/test-utils": "workspace:*",
     "tsup": "^8.5.1",
-    "tsx": "^4.21.0",
+    "tsx": "^4.22.2",
     "vitest": "^4.1.6"
   },
   "engines": {
