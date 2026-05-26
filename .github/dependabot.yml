@@ -5,8 +5,8 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
+      day: 15
     groups:
       # Group minor/patch updates together to reduce PR noise
       production-deps:
@@ -29,8 +29,8 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
+      day: 15
     open-pull-requests-limit: 5
     reviewers:
       - FlashGalatine
