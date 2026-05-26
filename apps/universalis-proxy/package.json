@@ -15,15 +15,21 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
-  "keywords": ["xivdyetools", "universalis", "cors", "proxy", "cloudflare-workers"],
+  "keywords": [
+    "xivdyetools",
+    "universalis",
+    "cors",
+    "proxy",
+    "cloudflare-workers"
+  ],
   "author": "FlashGalatine",
   "license": "MIT",
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260525.1",
-    "@types/node": "^25.9.0",
-    "@vitest/coverage-v8": "^4.1.6",
-    "vitest": "^4.1.6",
-    "wrangler": "^4.92.0"
+    "@types/node": "^25.9.1",
+    "@vitest/coverage-v8": "^4.1.7",
+    "vitest": "^4.1.7",
+    "wrangler": "^4.94.0"
   },
   "dependencies": {
     "@xivdyetools/rate-limiter": "workspace:*",
