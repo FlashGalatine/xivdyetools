@@ -75,8 +75,11 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 // Track if we've validated env in this isolate
 let envValidated = false;
 
-// Enable CORS for development
-app.use('*', cors());
+// FINDING-004: Restrict CORS to known web app origins instead of wildcard.
+// Discord interactions and webhooks are server-to-server; only /health is browser-hit.
+app.use('*', cors({
+  origin: ['https://xivdyetools.app', 'https://www.xivdyetools.app'],
+}));
 
 // REFACTOR-001: Shared middleware from @xivdyetools/worker-middleware
 app.use('*', requestIdMiddleware());
