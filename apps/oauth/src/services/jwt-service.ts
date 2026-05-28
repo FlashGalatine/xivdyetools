@@ -342,6 +342,11 @@ export function getAvatarUrl(
 /**
  * Check if a token has been revoked
  * Uses KV to store revoked token JTIs
+ *
+ * Intentionally fail-open: a KV error returns `false` (token not revoked) rather than
+ * throwing or blocking the request. This keeps auth functional during KV outages at the
+ * cost of briefly allowing a revoked token through — an acceptable trade-off for this
+ * application. Callers that require strict revocation must handle KV unavailability separately.
  */
 export async function isTokenRevoked(
   jti: string,
@@ -353,7 +358,6 @@ export async function isTokenRevoked(
     const revoked = await kv.get(`revoked:${jti}`);
     return revoked !== null;
   } catch {
-    // If KV lookup fails, allow token (fail-open for availability)
     return false;
   }
 }
