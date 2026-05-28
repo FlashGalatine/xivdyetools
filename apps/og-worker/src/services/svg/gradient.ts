@@ -21,10 +21,11 @@
  * └──────────────────────────────────────────────────────┘
  */
 
-import type { Dye } from '@xivdyetools/types';
+import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { rect, text, line, THEME, FONTS, OG_DIMENSIONS } from './base';
 import { generateOGCard, LAYOUT } from './og-card';
 import { dyeService, findClosestDyesWithDistance, getDyeByItemId } from './dye-helpers';
+import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm } from '../../types';
 
 export interface GradientOGOptions {
@@ -36,6 +37,8 @@ export interface GradientOGOptions {
   steps: number;
   /** Matching algorithm */
   algorithm?: MatchingAlgorithm;
+  /** Locale for dye name display */
+  locale?: LocaleCode;
 }
 
 /**
@@ -92,7 +95,7 @@ function generateGradientSteps(
  * Generates the Gradient tool OG image SVG
  */
 export function generateGradientOG(options: GradientOGOptions): string {
-  const { startDyeId, endDyeId, steps: stepCount, algorithm = 'oklab' } = options;
+  const { startDyeId, endDyeId, steps: stepCount, algorithm = 'oklab', locale = 'en' } = options;
 
   // Look up the dyes
   const startDye = getDyeByItemId(startDyeId);
@@ -180,10 +183,9 @@ export function generateGradientOG(options: GradientOGOptions): string {
 
     // Dye name (or "Step N")
     const labelY = barY + barHeight + 30;
-    const dyeName = step.matchedDye
-      ? step.matchedDye.name.length > 10
-        ? step.matchedDye.name.slice(0, 9) + '..'
-        : step.matchedDye.name
+    const matchName = step.matchedDye ? getLocalizedDyeName(step.matchedDye, locale) : null;
+    const dyeName = matchName
+      ? matchName.length > 10 ? matchName.slice(0, 9) + '..' : matchName
       : `Step ${i + 1}`;
 
     contentElements.push(
@@ -213,7 +215,7 @@ export function generateGradientOG(options: GradientOGOptions): string {
     text(
       OG_DIMENSIONS.width / 2,
       summaryY,
-      `${startDye.name} → ${endDye.name}`,
+      `${getLocalizedDyeName(startDye, locale)} → ${getLocalizedDyeName(endDye, locale)}`,
       {
         fill: THEME.text,
         fontSize: 20,

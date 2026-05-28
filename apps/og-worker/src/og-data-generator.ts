@@ -11,10 +11,8 @@
 import {
   DyeService,
   dyeDatabase,
-  LocaleLoader,
-  LocaleRegistry,
-  TranslationProvider,
 } from '@xivdyetools/core';
+import { ogTranslator } from './services/translator';
 import type {
   Dye,
   HarmonyTypeKey,
@@ -43,22 +41,8 @@ import type {
 // Localization (REFACTOR-001, 2026-04-28 audit)
 // ============================================================================
 
-/**
- * Module-scoped translator with all 6 locales eagerly preloaded.
- *
- * Stateless: each call passes locale explicitly, so concurrent requests with
- * different `?lang=` values cannot trample one another's state. This
- * intentionally diverges from the `LocalizationService.setLocale()` singleton
- * pattern used by api-worker — see audit OPT-001 for the perf/race tradeoffs.
- */
-const ogTranslator: TranslationProvider = (() => {
-  const loader = new LocaleLoader();
-  const registry = new LocaleRegistry();
-  for (const lc of ['en', 'ja', 'de', 'fr', 'ko', 'zh'] as const) {
-    registry.registerLocale(loader.loadLocale(lc));
-  }
-  return new TranslationProvider(registry);
-})();
+// ogTranslator is now shared from ./services/translator so SVG generators can
+// reuse the same preloaded instance without duplicating locale-loading work.
 
 /**
  * Map og-worker's kebab-case `HarmonyType` to core's camelCase `HarmonyTypeKey`

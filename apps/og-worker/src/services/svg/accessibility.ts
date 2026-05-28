@@ -21,10 +21,11 @@
  * └──────────────────────────────────────────────────────────────────┘
  */
 
-import type { Dye } from '@xivdyetools/types';
+import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { rect, text, hexToRgb, rgbToHex, THEME, FONTS, OG_DIMENSIONS } from './base';
 import { generateOGCard, LAYOUT } from './og-card';
 import { getDyeByItemId } from './dye-helpers';
+import { getLocalizedDyeName } from '../translator';
 import type { VisionType } from '../../types';
 
 export interface AccessibilityOGOptions {
@@ -32,6 +33,8 @@ export interface AccessibilityOGOptions {
   dyeIds: number[];
   /** Vision type to simulate */
   visionType?: VisionType;
+  /** Locale for dye name display */
+  locale?: LocaleCode;
 }
 
 /**
@@ -115,7 +118,7 @@ function simulateColorVision(hex: string, visionType: VisionType): string {
  * Generates the Accessibility tool OG image SVG
  */
 export function generateAccessibilityOG(options: AccessibilityOGOptions): string {
-  const { dyeIds, visionType = 'protanopia' } = options;
+  const { dyeIds, visionType = 'protanopia', locale = 'en' } = options;
 
   // Look up all dyes
   const dyes: Dye[] = dyeIds
@@ -197,7 +200,8 @@ export function generateAccessibilityOG(options: AccessibilityOGOptions): string
     );
 
     // Dye name
-    const truncatedName = dye.name.length > 10 ? dye.name.slice(0, 8) + '..' : dye.name;
+    const dyeDisplayName = getLocalizedDyeName(dye, locale);
+    const truncatedName = dyeDisplayName.length > 10 ? dyeDisplayName.slice(0, 8) + '..' : dyeDisplayName;
     contentElements.push(
       text(x + swatchSize / 2, swatchY + swatchSize + 18, truncatedName, {
         fill: THEME.text,
