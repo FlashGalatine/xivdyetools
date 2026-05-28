@@ -206,7 +206,7 @@ export function generateAccessibilityOG(options: AccessibilityOGOptions): string
       text(x + swatchSize / 2, swatchY + swatchSize + 18, truncatedName, {
         fill: THEME.text,
         fontSize: numDyes <= 2 ? 13 : 11,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         fontWeight: 500,
         textAnchor: 'middle',
       })

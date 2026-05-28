@@ -265,7 +265,7 @@ export async function generateSwatchOG(options: SwatchOGOptions): Promise<string
       text(x + matchSwatchSize / 2, y + matchSwatchSize + 18, truncatedName, {
         fill: THEME.text,
         fontSize: 12,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         fontWeight: index === 0 ? 600 : 400,
         textAnchor: 'middle',
       })

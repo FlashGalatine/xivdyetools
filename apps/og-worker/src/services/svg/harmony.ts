@@ -213,7 +213,7 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
     text(leftCardX + leftCardWidth / 2, swatchY + swatchSize + 40, getLocalizedDyeName(dye, locale), {
       fill: THEME.text,
       fontSize: 24,
-      fontFamily: FONTS.header,
+      fontFamily: FONTS.headerCjk,
       fontWeight: 600,
       textAnchor: 'middle',
     })
@@ -298,7 +298,7 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
       text(x + matchSwatchSize / 2, y + matchSwatchSize + 25, truncatedName, {
         fill: THEME.text,
         fontSize: 14,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         fontWeight: 500,
         textAnchor: 'middle',
       })

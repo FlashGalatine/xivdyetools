@@ -20,16 +20,10 @@ export const ogTranslator: TranslationProvider = (() => {
   return new TranslationProvider(registry);
 })();
 
-// CJK fonts (Noto Sans SC / KR) are not bundled in og-worker. Rendering CJK
-// glyphs with the Latin-only bundle produces blank boxes, which is worse than
-// English. Fall back to the English dye.name for these locales.
-const CJK_LOCALES = new Set<LocaleCode>(['ja', 'ko', 'zh']);
-
 /**
  * Return the localized display name for a dye, falling back to the English
- * `dye.name` when the locale is CJK (font not bundled) or the name is missing.
+ * `dye.name` when the locale lookup returns nothing.
  */
 export function getLocalizedDyeName(dye: Dye, locale: LocaleCode): string {
-  if (CJK_LOCALES.has(locale)) return dye.name;
   return ogTranslator.getDyeName(dye.itemID, locale) ?? dye.name;
 }

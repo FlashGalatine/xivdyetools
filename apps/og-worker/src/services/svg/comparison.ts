@@ -104,7 +104,7 @@ export function generateComparisonOG(options: ComparisonOGOptions): string {
       text(centerX, startY + swatchSize + 28, truncatedName, {
         fill: THEME.text,
         fontSize: numDyes <= 2 ? 20 : numDyes === 3 ? 17 : 15,
-        fontFamily: FONTS.header,
+        fontFamily: FONTS.headerCjk,
         fontWeight: 600,
         textAnchor: 'middle',
       })

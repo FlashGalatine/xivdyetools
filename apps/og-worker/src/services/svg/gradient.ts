@@ -192,7 +192,7 @@ export function generateGradientOG(options: GradientOGOptions): string {
       text(x + swatchSize / 2, labelY, dyeName, {
         fill: THEME.text,
         fontSize: 12,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         fontWeight: isEndpoint ? 600 : 400,
         textAnchor: 'middle',
       })
@@ -219,7 +219,7 @@ export function generateGradientOG(options: GradientOGOptions): string {
       {
         fill: THEME.text,
         fontSize: 20,
-        fontFamily: FONTS.header,
+        fontFamily: FONTS.headerCjk,
         fontWeight: 500,
         textAnchor: 'middle',
       }

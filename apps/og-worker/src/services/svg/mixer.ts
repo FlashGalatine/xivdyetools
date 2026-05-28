@@ -191,7 +191,7 @@ function generateTwoDyeMixerOG(
     text(dyeAX + swatchSize / 2, swatchY + swatchSize + 22, dyeAName, {
       fill: THEME.text,
       fontSize: 13,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 500,
       textAnchor: 'middle',
     })
@@ -245,7 +245,7 @@ function generateTwoDyeMixerOG(
     text(dyeBX + swatchSize / 2, swatchY + swatchSize + 22, dyeBName, {
       fill: THEME.text,
       fontSize: 13,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 500,
       textAnchor: 'middle',
     })
@@ -309,7 +309,7 @@ function generateTwoDyeMixerOG(
       text(resultX + swatchSize / 2, swatchY + swatchSize + 42, `≈ ${getLocalizedDyeName(closestMatch.dye, locale)}`, {
         fill: THEME.textMuted,
         fontSize: 11,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         textAnchor: 'middle',
       })
     );
@@ -420,7 +420,7 @@ function generateThreeDyeMixerOG(
     text(dyeAX + inputSwatchSize / 2, inputSwatchY + inputSwatchSize + 18, dyeAName, {
       fill: THEME.text,
       fontSize: 12,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 500,
       textAnchor: 'middle',
     })
@@ -452,7 +452,7 @@ function generateThreeDyeMixerOG(
     text(dyeBX + inputSwatchSize / 2, inputSwatchY + inputSwatchSize + 18, dyeBName, {
       fill: THEME.text,
       fontSize: 12,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 500,
       textAnchor: 'middle',
     })
@@ -484,7 +484,7 @@ function generateThreeDyeMixerOG(
     text(dyeCX + inputSwatchSize / 2, inputSwatchY + inputSwatchSize + 18, dyeCName, {
       fill: THEME.text,
       fontSize: 12,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 500,
       textAnchor: 'middle',
     })
@@ -533,7 +533,7 @@ function generateThreeDyeMixerOG(
       text(centerX, resultY + resultSwatchSize + 42, `≈ ${matchName}`, {
         fill: THEME.textMuted,
         fontSize: 12,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         textAnchor: 'middle',
       })
     );
