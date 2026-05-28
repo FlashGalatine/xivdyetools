@@ -59,10 +59,11 @@ export async function signJwtData(data: string, secret: string): Promise<string>
 }
 
 /**
- * Verify HMAC-SHA256 signature
- * REFACTOR-001: Uses @xivdyetools/crypto for base64url decoding
+ * Verify HMAC-SHA256 signature using crypto.subtle.verify (constant-time).
+ * REFACTOR-001: Uses @xivdyetools/crypto for base64url decoding.
+ * Exported so state-signing.ts can use it instead of a non-constant-time string compare.
  */
-async function verify(
+export async function verifyJwtData(
   data: string,
   signature: string,
   secret: string
@@ -75,6 +76,9 @@ async function verify(
 
   return crypto.subtle.verify('HMAC', key, sigBytes, encoder.encode(data));
 }
+
+// Internal alias kept for JWT verification paths below
+const verify = verifyJwtData;
 
 /**
  * Create a JWT for a Discord user (legacy function, kept for backwards compatibility)

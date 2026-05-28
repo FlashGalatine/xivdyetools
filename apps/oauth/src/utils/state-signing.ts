@@ -9,7 +9,7 @@
  */
 
 // OAUTH-REF-003: Import base64UrlDecode from jwt-service to avoid duplication
-import { base64UrlEncode, base64UrlDecode, signJwtData } from '../services/jwt-service.js';
+import { base64UrlEncode, base64UrlDecode, signJwtData, verifyJwtData } from '../services/jwt-service.js';
 
 /**
  * OAuth state data structure
@@ -61,10 +61,10 @@ export async function verifyState(
   if (parts.length === 2) {
     const [encodedState, providedSignature] = parts;
 
-    // Verify signature by recreating it
-    const expectedSignature = await signJwtData(encodedState, secret);
+    // FINDING-001: Use crypto.subtle.verify (constant-time) instead of string !=
+    const isValid = await verifyJwtData(encodedState, providedSignature, secret);
 
-    if (providedSignature !== expectedSignature) {
+    if (!isValid) {
       throw new Error('Invalid state signature');
     }
 

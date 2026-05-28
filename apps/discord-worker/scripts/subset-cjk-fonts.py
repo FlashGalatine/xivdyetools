@@ -188,9 +188,21 @@ def main():
         urllib.request.urlretrieve(NOTO_KR_URL, kr_input)
         print(f"Downloaded: {os.path.getsize(kr_input) / 1024:.1f} KiB")
 
+    # OPT-001: Scope KR to Hangul + ASCII only.
+    # Noto Sans KR ships Hanja, so passing the full codepoint set (which includes all
+    # ja/zh CJK ideographs) caused it to retain ~821 unused Han glyphs (~595 KiB of dead
+    # weight). Korean locale text uses zero CJK ideographs — the runtime font stack routes
+    # CJK to Noto Sans SC — so this subset only needs Hangul syllables, Hangul Jamo, and
+    # basic ASCII.
+    kr_codepoints = {
+        c for c in codepoints
+        if c < 0x80 or 0xAC00 <= c <= 0xD7AF or 0x1100 <= c <= 0x11FF
+    }
+
     print(f"\n--- Noto Sans KR ---")
     print(f"Input: {os.path.getsize(kr_input) / 1024:.1f} KiB")
-    kr_size, kr_glyphs = subset_font(kr_input, KR_OUTPUT, codepoints, fix_names={
+    print(f"KR codepoints (Hangul+ASCII): {len(kr_codepoints)} (vs {len(codepoints)} full set)")
+    kr_size, kr_glyphs = subset_font(kr_input, KR_OUTPUT, kr_codepoints, fix_names={
         1: "Noto Sans KR",
         2: "Regular",
         4: "Noto Sans KR Regular",

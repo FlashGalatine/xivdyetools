@@ -63,6 +63,17 @@ const OG_MIN_MIXER_RATIO = 1;
 const OG_MAX_SWATCH_LIMIT = 20;
 const OG_MAX_COMPARISON_DYES = 16;
 
+// BUG-002: Valid enum values for string route/query params.
+// Using readonly string[] so .includes() accepts any string without type casts.
+const VALID_HARMONY_TYPES: readonly string[] = [
+  'complementary', 'analogous', 'triadic', 'split-complementary',
+  'tetradic', 'square', 'monochromatic', 'compound', 'shades',
+];
+const VALID_ALGORITHMS: readonly string[] = ['oklab', 'ciede2000', 'euclidean'];
+const VALID_VISION_TYPES: readonly string[] = [
+  'normal', 'protanopia', 'deuteranopia', 'tritanopia', 'achromatopsia',
+];
+
 // ============================================================================
 // Hono App Setup
 // ============================================================================
@@ -215,6 +226,14 @@ app.get('/og/harmony/:dyeId/:harmonyType', async (c) => {
     return c.json({ error: 'Invalid dye ID' }, 400);
   }
 
+  // BUG-002: Validate string enum params
+  if (!VALID_HARMONY_TYPES.includes(harmonyTypeRaw)) {
+    return c.json({ error: `Invalid harmony type: ${harmonyTypeRaw}` }, 400);
+  }
+  if (!VALID_ALGORITHMS.includes(algorithm)) {
+    return c.json({ error: `Invalid algorithm: ${algorithm}` }, 400);
+  }
+
   // Track analytics
   trackAnalytics(c.env, {
     event: 'og_image_request',
@@ -246,6 +265,11 @@ app.get('/og/gradient/:startId/:endId/:steps', async (c) => {
   // FINDING-011: Validate dye IDs to prevent NaN propagation
   if (isNaN(startDyeId) || isNaN(endDyeId)) {
     return c.json({ error: 'Invalid dye ID' }, 400);
+  }
+
+  // BUG-002: Validate algorithm param
+  if (!VALID_ALGORITHMS.includes(algorithm)) {
+    return c.json({ error: `Invalid algorithm: ${algorithm}` }, 400);
   }
 
   trackAnalytics(c.env, {
@@ -283,6 +307,11 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:ratio', async (c) => {
   // FINDING-011: Validate dye IDs to prevent NaN propagation
   if (isNaN(dyeAId) || isNaN(dyeBId)) {
     return c.json({ error: 'Invalid dye ID' }, 400);
+  }
+
+  // BUG-002: Validate algorithm param
+  if (!VALID_ALGORITHMS.includes(algorithm)) {
+    return c.json({ error: `Invalid algorithm: ${algorithm}` }, 400);
   }
 
   trackAnalytics(c.env, {
@@ -323,6 +352,11 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio', async (c) => {
     return c.json({ error: 'Invalid dye ID' }, 400);
   }
 
+  // BUG-002: Validate algorithm param
+  if (!VALID_ALGORITHMS.includes(algorithm)) {
+    return c.json({ error: `Invalid algorithm: ${algorithm}` }, 400);
+  }
+
   trackAnalytics(c.env, {
     event: 'og_image_request',
     tool: 'mixer',
@@ -359,6 +393,11 @@ app.get('/og/swatch/:color/:limit', async (c) => {
   const sheet = c.req.query('sheet') as import('./types').ColorSheetCategory | undefined;
   const race = c.req.query('race') || undefined;
   const gender = c.req.query('gender') as import('./types').CharacterGender | undefined;
+
+  // BUG-002: Validate algorithm param
+  if (!VALID_ALGORITHMS.includes(algorithm)) {
+    return c.json({ error: `Invalid algorithm: ${algorithm}` }, 400);
+  }
 
   trackAnalytics(c.env, {
     event: 'og_image_request',
@@ -422,6 +461,11 @@ app.get('/og/accessibility/:dyes/:visionType', async (c) => {
 
   if (dyeIds.length === 0 || dyeIds.length > OG_MAX_COMPARISON_DYES) {
     return c.json({ error: `accessibility requires 1–${OG_MAX_COMPARISON_DYES} valid dye IDs` }, 400);
+  }
+
+  // BUG-002: Validate visionType param
+  if (!VALID_VISION_TYPES.includes(visionTypeRaw)) {
+    return c.json({ error: `Invalid vision type: ${visionTypeRaw}` }, 400);
   }
 
   trackAnalytics(c.env, {
