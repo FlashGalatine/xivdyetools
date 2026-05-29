@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.1] - 2026-05-29
+
+### Documentation
+
+- **FINDING-006**: Added inline comment to the `[[d1_databases]]` binding in `wrangler.toml`'s dev environment documenting that `database_id = "TODO_RUN_WRANGLER_D1_CREATE"` is a placeholder — it must be replaced with a real D1 instance ID (created via `wrangler d1 create`) before `wrangler dev` can perform local D1 operations against the users database
+- **FINDING-003**: Added JSDoc note to `verifyJWT()` in `src/services/jwt-service.ts` clarifying that this function validates signature and expiry but does **not** check the `TOKEN_BLACKLIST` KV store. Callers that need to honour token revocation must use `verifyJWTWithRevocationCheck()` instead — which is already used by `GET /auth/me` and `POST /auth/refresh`
+
+---
+
 ## [2.4.0] - 2026-04-07
 
 ### Security
