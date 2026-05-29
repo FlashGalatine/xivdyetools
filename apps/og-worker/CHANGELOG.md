@@ -5,6 +5,29 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-05-29
+
+### Added
+
+- **CJK font support**: Noto Sans SC and Noto Sans KR subset fonts bundled into the worker (289.6 KiB + 176.5 KiB = 466.1 KiB total) — OG preview cards now render actual Japanese, Korean, and Chinese dye names when `?lang=ja`, `?lang=ko`, or `?lang=zh` is requested, instead of falling back to English.
+  - `src/fonts/NotoSansSC-Subset.ttf` (289.6 KiB) — covers Chinese ideographs + Japanese kana for all dye names present in `packages/core/src/data/locales/`
+  - `src/fonts/NotoSansKR-Subset.ttf` (176.5 KiB) — Korean Hangul syllables only (OPT-001: scope restricted to Hangul U+AC00–U+D7AF + U+1100–U+11FF + ASCII < 0x80, excluding the CJK Han block unused by the Korean locale; saves ~595 KiB vs full Noto Sans KR)
+  - New subsetting script at `scripts/subset-cjk-fonts.py` — reads dye-name characters from `packages/core/src/data/locales/` only (narrower than `discord-worker`'s scope, which also covers bot-i18n UI strings). Re-run when new dyes are added whose names contain characters outside the current subset
+- **`FONTS.primaryCjk` / `FONTS.headerCjk`** exported from `services/svg/base.ts` — CJK-aware fallback chains (`'Onest, Noto Sans SC, Noto Sans KR'` and `'Space Grotesk, Noto Sans SC, Noto Sans KR'`). Static English labels (tool names, section headers, hex codes, delta values) continue to use `FONTS.primary` / `FONTS.header` — only text elements that render a localized dye name use the CJK chain
+
+### Fixed
+
+- **CJK locale fallback removed** (`services/translator.ts`): `getLocalizedDyeName()` had a `CJK_LOCALES` guard (`new Set<LocaleCode>(['ja', 'ko', 'zh'])`) that short-circuited to `dye.name` (the English name) for those three locales, bypassing `TranslationProvider` entirely. This was a temporary stub added when CJK rendering was blocked by missing fonts. Guard removed — all 6 locales now route through `ogTranslator.getDyeName()` uniformly, falling back to `dye.name` only when the locale data itself is missing
+- **All six SVG generators** updated to apply `FONTS.primaryCjk` / `FONTS.headerCjk` on every text element that outputs a localized dye name:
+  - `harmony.ts`: input dye name (large card label), harmony match names below swatches
+  - `comparison.ts`: dye name below each swatch
+  - `gradient.ts`: step dye-name labels, `startDye → endDye` summary line
+  - `swatch.ts`: match dye name
+  - `accessibility.ts`: original-color dye name in the left column
+  - `mixer.ts` (7 call sites): dyeA name, dyeB name, dyeC name (3-dye variant), `≈ closestMatch` line for both 2-dye and 3-dye layouts
+
+---
+
 ## [1.2.0] - 2026-04-29
 
 ### Added

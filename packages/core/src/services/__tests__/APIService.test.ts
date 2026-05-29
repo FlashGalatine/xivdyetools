@@ -1217,6 +1217,45 @@ describe('APIService', () => {
       expect(results.get(5729)?.currentAverage).toBe(50000); // From cache
       expect(results.get(5730)?.currentAverage).toBe(60000); // Freshly fetched
     });
+
+    it('should chunk requests when more than 100 items are requested (BUG-001)', async () => {
+      // Simulate a cold-cache call with 110 item IDs — previously threw uncaught AppError
+      const itemIDs = Array.from({ length: 110 }, (_, i) => 5001 + i);
+      const chunk1 = itemIDs.slice(0, 100);
+      const chunk2 = itemIDs.slice(100);
+
+      const url1 = `https://universalis.app/api/v2/aggregated/universal/${chunk1.join(',')}`;
+      const url2 = `https://universalis.app/api/v2/aggregated/universal/${chunk2.join(',')}`;
+
+      mockFetch.setResponse(url1, {
+        status: 200,
+        body: {
+          results: chunk1.map((id) => ({
+            itemId: id,
+            nq: { minListing: { dc: { price: id * 10 } } },
+          })),
+          failedItems: [],
+        },
+      });
+      mockFetch.setResponse(url2, {
+        status: 200,
+        body: {
+          results: chunk2.map((id) => ({
+            itemId: id,
+            nq: { minListing: { dc: { price: id * 10 } } },
+          })),
+          failedItems: [],
+        },
+      });
+
+      const results = await apiService.getPricesForItems(itemIDs);
+
+      expect(results.size).toBe(110);
+      expect(results.get(5001)?.currentAverage).toBe(50010);
+      expect(results.get(5110)?.currentAverage).toBe(51100);
+      // Two separate batch HTTP requests should have been made
+      expect(mockFetch.callHistory.length).toBe(2);
+    });
   });
 
   // ==========================================================================

@@ -24,10 +24,11 @@
  * └──────────────────────────────────────────────────────┘
  */
 
-import type { Dye } from '@xivdyetools/types';
+import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { rect, text, getContrastTextColor, THEME, FONTS, OG_DIMENSIONS } from './base';
 import { generateOGCard, LAYOUT } from './og-card';
 import { findClosestDyesWithDistance, findCharacterColorByHex, getCharacterColorFromSheet, type CharacterColorContext } from './dye-helpers';
+import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm, ColorSheetCategory, CharacterGender } from '../../types';
 
 export interface SwatchOGOptions {
@@ -43,13 +44,15 @@ export interface SwatchOGOptions {
   race?: string;
   /** Gender for race-specific sheets */
   gender?: CharacterGender;
+  /** Locale for dye name display */
+  locale?: LocaleCode;
 }
 
 /**
  * Generates the Swatch tool OG image SVG
  */
 export async function generateSwatchOG(options: SwatchOGOptions): Promise<string> {
-  const { color, limit = 5, algorithm = 'oklab', sheet, race, gender } = options;
+  const { color, limit = 5, algorithm = 'oklab', sheet, race, gender, locale = 'en' } = options;
 
   // Ensure hex has # prefix
   const hexColor = color.startsWith('#') ? color : `#${color}`;
@@ -255,13 +258,14 @@ export async function generateSwatchOG(options: SwatchOGOptions): Promise<string
     }
 
     // Match name (truncated)
+    const matchDisplayName = getLocalizedDyeName(match.dye, locale);
     const truncatedName =
-      match.dye.name.length > 10 ? match.dye.name.slice(0, 8) + '..' : match.dye.name;
+      matchDisplayName.length > 10 ? matchDisplayName.slice(0, 8) + '..' : matchDisplayName;
     contentElements.push(
       text(x + matchSwatchSize / 2, y + matchSwatchSize + 18, truncatedName, {
         fill: THEME.text,
         fontSize: 12,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         fontWeight: index === 0 ? 600 : 400,
         textAnchor: 'middle',
       })

@@ -44,6 +44,43 @@ const createMockUser = (): DiscordUser => ({
     avatar: 'abc123hash',
 });
 
+/** Build a signed HS256 JWT from explicit header + payload objects.
+ *  headerOverrides allows crafting tokens with non-standard alg values for security tests. */
+const buildToken = async (
+    payload: object,
+    secret: string,
+    headerOverrides: Partial<{ alg: string; typ: string }> = {},
+    signatureOverride?: string,
+): Promise<string> => {
+    const encode = (data: string): string => {
+        const bytes = new TextEncoder().encode(data);
+        const base64 = btoa(String.fromCharCode(...bytes));
+        return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    };
+
+    const header = { alg: 'HS256', typ: 'JWT', ...headerOverrides };
+    const encodedHeader = encode(JSON.stringify(header));
+    const encodedPayload = encode(JSON.stringify(payload));
+    const signatureInput = `${encodedHeader}.${encodedPayload}`;
+
+    if (signatureOverride !== undefined) {
+        return `${signatureInput}.${signatureOverride}`;
+    }
+
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(secret),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign'],
+    );
+    const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(signatureInput));
+    const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig)));
+    const encodedSig = sigB64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return `${signatureInput}.${encodedSig}`;
+};
+
 describe('JWT Service', () => {
     let mockEnv: Env;
     let mockUser: DiscordUser;
@@ -158,6 +195,26 @@ describe('JWT Service', () => {
 
             const payload = await verifyJWT(token, mockEnv.JWT_SECRET);
             expect(payload.sub).toBe(mockUser.id);
+        });
+
+        it('should throw for non-HS256 algorithm (REFACTOR-001)', async () => {
+            const now = Math.floor(Date.now() / 1000);
+            const token = await buildToken(
+                { sub: mockUser.id, iat: now, exp: now + 3600, iss: mockEnv.WORKER_URL, username: 'testuser', global_name: null, avatar: null, auth_provider: 'discord' },
+                mockEnv.JWT_SECRET,
+                { alg: 'none' },
+                '',
+            );
+            await expect(verifyJWT(token, mockEnv.JWT_SECRET)).rejects.toThrow('JWT algorithm not supported');
+        });
+
+        it('should throw for token without sub claim (REFACTOR-001)', async () => {
+            const now = Math.floor(Date.now() / 1000);
+            const token = await buildToken(
+                { iat: now, exp: now + 3600, iss: mockEnv.WORKER_URL, username: 'testuser', global_name: null, avatar: null, auth_provider: 'discord' },
+                mockEnv.JWT_SECRET,
+            );
+            await expect(verifyJWT(token, mockEnv.JWT_SECRET)).rejects.toThrow('JWT missing required claims');
         });
     });
 
@@ -275,6 +332,26 @@ describe('JWT Service', () => {
                 mockEnv.JWT_SECRET
             );
             expect(result).toBeNull();
+        });
+
+        it('should return null for non-HS256 algorithm (REFACTOR-001)', async () => {
+            const now = Math.floor(Date.now() / 1000);
+            const token = await buildToken(
+                { sub: mockUser.id, iat: now, exp: now + 3600, iss: mockEnv.WORKER_URL, username: 'testuser', global_name: null, avatar: null, auth_provider: 'discord' },
+                mockEnv.JWT_SECRET,
+                { alg: 'none' },
+                '',
+            );
+            expect(await verifyJWTSignatureOnly(token, mockEnv.JWT_SECRET)).toBeNull();
+        });
+
+        it('should return null for token without sub claim (REFACTOR-001)', async () => {
+            const now = Math.floor(Date.now() / 1000);
+            const token = await buildToken(
+                { iat: now, exp: now + 3600, iss: mockEnv.WORKER_URL, username: 'testuser', global_name: null, avatar: null, auth_provider: 'discord' },
+                mockEnv.JWT_SECRET,
+            );
+            expect(await verifyJWTSignatureOnly(token, mockEnv.JWT_SECRET)).toBeNull();
         });
     });
 

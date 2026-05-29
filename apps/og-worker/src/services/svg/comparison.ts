@@ -22,21 +22,24 @@
  * └──────────────────────────────────────────────────────────────────┘
  */
 
-import type { Dye } from '@xivdyetools/types';
+import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { rect, text, getContrastTextColor, THEME, FONTS, OG_DIMENSIONS } from './base';
 import { generateOGCard, LAYOUT } from './og-card';
 import { getDyeByItemId } from './dye-helpers';
+import { getLocalizedDyeName } from '../translator';
 
 export interface ComparisonOGOptions {
   /** Array of dye itemIDs (1-4) */
   dyeIds: number[];
+  /** Locale for dye name display */
+  locale?: LocaleCode;
 }
 
 /**
  * Generates the Comparison tool OG image SVG
  */
 export function generateComparisonOG(options: ComparisonOGOptions): string {
-  const { dyeIds } = options;
+  const { dyeIds, locale = 'en' } = options;
 
   // Look up all dyes
   const dyes: Dye[] = dyeIds
@@ -94,13 +97,14 @@ export function generateComparisonOG(options: ComparisonOGOptions): string {
     }
 
     // Dye name below swatch
+    const displayName = getLocalizedDyeName(dye, locale);
     const truncatedName =
-      dye.name.length > 14 ? dye.name.slice(0, 12) + '..' : dye.name;
+      displayName.length > 14 ? displayName.slice(0, 12) + '..' : displayName;
     contentElements.push(
       text(centerX, startY + swatchSize + 28, truncatedName, {
         fill: THEME.text,
         fontSize: numDyes <= 2 ? 20 : numDyes === 3 ? 17 : 15,
-        fontFamily: FONTS.header,
+        fontFamily: FONTS.headerCjk,
         fontWeight: 600,
         textAnchor: 'middle',
       })

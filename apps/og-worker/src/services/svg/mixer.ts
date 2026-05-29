@@ -22,10 +22,11 @@
  * └──────────────────────────────────────────────────────┘
  */
 
-import type { Dye } from '@xivdyetools/types';
+import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { rect, text, line, THEME, FONTS, OG_DIMENSIONS } from './base';
 import { generateOGCard, LAYOUT } from './og-card';
 import { findClosestDyesWithDistance, getDyeByItemId } from './dye-helpers';
+import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm } from '../../types';
 
 export interface MixerOGOptions {
@@ -39,6 +40,8 @@ export interface MixerOGOptions {
   ratio: number;
   /** Matching algorithm */
   algorithm?: MatchingAlgorithm;
+  /** Locale for dye name display */
+  locale?: LocaleCode;
 }
 
 /**
@@ -94,7 +97,7 @@ function mixThreeColors(color1: string, color2: string, color3: string): string 
  * Generates the Mixer tool OG image SVG
  */
 export function generateMixerOG(options: MixerOGOptions): string {
-  const { dyeAId, dyeBId, dyeCId, ratio, algorithm = 'oklab' } = options;
+  const { dyeAId, dyeBId, dyeCId, ratio, algorithm = 'oklab', locale = 'en' } = options;
 
   // Look up the dyes
   const dyeA = getDyeByItemId(dyeAId);
@@ -107,15 +110,15 @@ export function generateMixerOG(options: MixerOGOptions): string {
 
   // If dyeC was requested but not found, proceed with 2-dye mix
   if (dyeCId && !dyeC) {
-    return generateTwoDyeMixerOG(dyeA, dyeB, ratio, algorithm);
+    return generateTwoDyeMixerOG(dyeA, dyeB, ratio, algorithm, locale);
   }
 
   // Route to appropriate generator
   if (dyeC) {
-    return generateThreeDyeMixerOG(dyeA, dyeB, dyeC, algorithm);
+    return generateThreeDyeMixerOG(dyeA, dyeB, dyeC, algorithm, locale);
   }
 
-  return generateTwoDyeMixerOG(dyeA, dyeB, ratio, algorithm);
+  return generateTwoDyeMixerOG(dyeA, dyeB, ratio, algorithm, locale);
 }
 
 /**
@@ -125,7 +128,8 @@ function generateTwoDyeMixerOG(
   dyeA: ReturnType<typeof getDyeByItemId>,
   dyeB: ReturnType<typeof getDyeByItemId>,
   ratio: number,
-  algorithm: MatchingAlgorithm
+  algorithm: MatchingAlgorithm,
+  locale: LocaleCode = 'en'
 ): string {
   if (!dyeA || !dyeB) return generateFallbackMixerOG(ratio, algorithm, false);
 
@@ -181,12 +185,13 @@ function generateTwoDyeMixerOG(
   );
 
   // Dye A name (below)
-  const dyeAName = dyeA.name.length > 12 ? dyeA.name.slice(0, 10) + '..' : dyeA.name;
+  const dyeADisplayName = getLocalizedDyeName(dyeA, locale);
+  const dyeAName = dyeADisplayName.length > 12 ? dyeADisplayName.slice(0, 10) + '..' : dyeADisplayName;
   contentElements.push(
     text(dyeAX + swatchSize / 2, swatchY + swatchSize + 22, dyeAName, {
       fill: THEME.text,
       fontSize: 13,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 500,
       textAnchor: 'middle',
     })
@@ -234,12 +239,13 @@ function generateTwoDyeMixerOG(
   );
 
   // Dye B name (below)
-  const dyeBName = dyeB.name.length > 12 ? dyeB.name.slice(0, 10) + '..' : dyeB.name;
+  const dyeBDisplayName = getLocalizedDyeName(dyeB, locale);
+  const dyeBName = dyeBDisplayName.length > 12 ? dyeBDisplayName.slice(0, 10) + '..' : dyeBDisplayName;
   contentElements.push(
     text(dyeBX + swatchSize / 2, swatchY + swatchSize + 22, dyeBName, {
       fill: THEME.text,
       fontSize: 13,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 500,
       textAnchor: 'middle',
     })
@@ -300,10 +306,10 @@ function generateTwoDyeMixerOG(
   // Closest match info (below result)
   if (closestMatch) {
     contentElements.push(
-      text(resultX + swatchSize / 2, swatchY + swatchSize + 42, `≈ ${closestMatch.dye.name}`, {
+      text(resultX + swatchSize / 2, swatchY + swatchSize + 42, `≈ ${getLocalizedDyeName(closestMatch.dye, locale)}`, {
         fill: THEME.textMuted,
         fontSize: 11,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         textAnchor: 'middle',
       })
     );
@@ -354,7 +360,8 @@ function generateThreeDyeMixerOG(
   dyeA: NonNullable<ReturnType<typeof getDyeByItemId>>,
   dyeB: NonNullable<ReturnType<typeof getDyeByItemId>>,
   dyeC: NonNullable<ReturnType<typeof getDyeByItemId>>,
-  algorithm: MatchingAlgorithm
+  algorithm: MatchingAlgorithm,
+  locale: LocaleCode = 'en'
 ): string {
   // Calculate mixed color (equal parts)
   const mixedHex = mixThreeColors(dyeA.hex, dyeB.hex, dyeC.hex);
@@ -407,12 +414,13 @@ function generateThreeDyeMixerOG(
     })
   );
 
-  const dyeAName = dyeA.name.length > 10 ? dyeA.name.slice(0, 8) + '..' : dyeA.name;
+  const dyeADisplayName3 = getLocalizedDyeName(dyeA, locale);
+  const dyeAName = dyeADisplayName3.length > 10 ? dyeADisplayName3.slice(0, 8) + '..' : dyeADisplayName3;
   contentElements.push(
     text(dyeAX + inputSwatchSize / 2, inputSwatchY + inputSwatchSize + 18, dyeAName, {
       fill: THEME.text,
       fontSize: 12,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 500,
       textAnchor: 'middle',
     })
@@ -438,12 +446,13 @@ function generateThreeDyeMixerOG(
     })
   );
 
-  const dyeBName = dyeB.name.length > 10 ? dyeB.name.slice(0, 8) + '..' : dyeB.name;
+  const dyeBDisplayName3 = getLocalizedDyeName(dyeB, locale);
+  const dyeBName = dyeBDisplayName3.length > 10 ? dyeBDisplayName3.slice(0, 8) + '..' : dyeBDisplayName3;
   contentElements.push(
     text(dyeBX + inputSwatchSize / 2, inputSwatchY + inputSwatchSize + 18, dyeBName, {
       fill: THEME.text,
       fontSize: 12,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 500,
       textAnchor: 'middle',
     })
@@ -469,12 +478,13 @@ function generateThreeDyeMixerOG(
     })
   );
 
-  const dyeCName = dyeC.name.length > 10 ? dyeC.name.slice(0, 8) + '..' : dyeC.name;
+  const dyeCDisplayName3 = getLocalizedDyeName(dyeC, locale);
+  const dyeCName = dyeCDisplayName3.length > 10 ? dyeCDisplayName3.slice(0, 8) + '..' : dyeCDisplayName3;
   contentElements.push(
     text(dyeCX + inputSwatchSize / 2, inputSwatchY + inputSwatchSize + 18, dyeCName, {
       fill: THEME.text,
       fontSize: 12,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 500,
       textAnchor: 'middle',
     })
@@ -513,16 +523,17 @@ function generateThreeDyeMixerOG(
 
   // Closest match info
   if (closestMatch) {
+    const closestDisplayName = getLocalizedDyeName(closestMatch.dye, locale);
     const matchName =
-      closestMatch.dye.name.length > 18
-        ? closestMatch.dye.name.slice(0, 16) + '..'
-        : closestMatch.dye.name;
+      closestDisplayName.length > 18
+        ? closestDisplayName.slice(0, 16) + '..'
+        : closestDisplayName;
 
     contentElements.push(
       text(centerX, resultY + resultSwatchSize + 42, `≈ ${matchName}`, {
         fill: THEME.textMuted,
         fontSize: 12,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         textAnchor: 'middle',
       })
     );

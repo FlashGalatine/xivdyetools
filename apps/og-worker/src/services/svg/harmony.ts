@@ -26,7 +26,7 @@
  */
 
 import { ColorService, ColorConverter } from '@xivdyetools/core';
-import type { Dye } from '@xivdyetools/types';
+import type { Dye, LocaleCode } from '@xivdyetools/types';
 import {
   rect,
   text,
@@ -38,6 +38,7 @@ import {
 } from './base';
 import { generateOGCard, LAYOUT } from './og-card';
 import { dyeService, findClosestDyesWithDistance, getDyeByItemId } from './dye-helpers';
+import { getLocalizedDyeName } from '../translator';
 import type { HarmonyType, MatchingAlgorithm } from '../../types';
 
 export interface HarmonyOGOptions {
@@ -47,6 +48,8 @@ export interface HarmonyOGOptions {
   harmonyType: HarmonyType;
   /** Matching algorithm */
   algorithm?: MatchingAlgorithm;
+  /** Locale for dye name display */
+  locale?: LocaleCode;
 }
 
 /**
@@ -151,7 +154,7 @@ function getHarmonyMatches(
  * Generates the Harmony tool OG image SVG
  */
 export function generateHarmonyOG(options: HarmonyOGOptions): string {
-  const { dyeId, harmonyType, algorithm = 'oklab' } = options;
+  const { dyeId, harmonyType, algorithm = 'oklab', locale = 'en' } = options;
 
   // Look up the dye
   const dye = getDyeByItemId(dyeId);
@@ -207,10 +210,10 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
 
   // Dye name
   contentElements.push(
-    text(leftCardX + leftCardWidth / 2, swatchY + swatchSize + 40, dye.name, {
+    text(leftCardX + leftCardWidth / 2, swatchY + swatchSize + 40, getLocalizedDyeName(dye, locale), {
       fill: THEME.text,
       fontSize: 24,
-      fontFamily: FONTS.header,
+      fontFamily: FONTS.headerCjk,
       fontWeight: 600,
       textAnchor: 'middle',
     })
@@ -288,13 +291,14 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
     );
 
     // Match name (truncated)
+    const matchDisplayName = getLocalizedDyeName(match.dye, locale);
     const truncatedName =
-      match.dye.name.length > 14 ? match.dye.name.slice(0, 12) + '..' : match.dye.name;
+      matchDisplayName.length > 14 ? matchDisplayName.slice(0, 12) + '..' : matchDisplayName;
     contentElements.push(
       text(x + matchSwatchSize / 2, y + matchSwatchSize + 25, truncatedName, {
         fill: THEME.text,
         fontSize: 14,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         fontWeight: 500,
         textAnchor: 'middle',
       })

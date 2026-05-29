@@ -8,6 +8,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.15.0] - 2026-05-29
+
+Security hardening from the 2026-05-28 quick-wins audit pass, plus CJK font support in `og-worker` so shared link embeds render localized dye names in Japanese, Korean, and Chinese.
+
+### Added
+
+- **og-worker** `1.3.0`: Noto Sans SC (289.6 KiB) and Noto Sans KR (176.5 KiB) subset fonts bundled — OG preview cards now render actual CJK dye names for `?lang=ja`, `?lang=ko`, `?lang=zh` instead of English fallback. Subset characters scoped to dye names in `packages/core/src/data/locales/` (narrower than discord-worker which also includes bot-i18n UI strings). New `scripts/subset-cjk-fonts.py` script; re-run when new dyes add out-of-subset characters
+- **og-worker** `1.3.0`: `FONTS.primaryCjk` / `FONTS.headerCjk` constants in `services/svg/base.ts` — CJK-aware font-family fallback chains applied to all localized dye-name text elements across all 6 SVG generators (`harmony`, `comparison`, `gradient`, `swatch`, `accessibility`, `mixer`)
+
+### Fixed
+
+- **og-worker** `1.3.0`: `getLocalizedDyeName()` in `services/translator.ts` — removed `CJK_LOCALES` early-return guard that was serving English dye names for `ja`/`ko`/`zh` locales. All 6 locales now served uniformly through `TranslationProvider`
+
+### Security
+
+- **FINDING-005** (monorepo): `qs >= 6.15.2` pinned via `pnpm.overrides` in root `package.json` and applied to lockfile — resolves advisory **GHSA-q8mj-m7cp-5q26** (prototype pollution in qs ≤ 6.15.1). `pnpm audit` now shows 2 remaining advisories, both in the `apps/api-docs → vitepress → vite / esbuild` chain (`GHSA-4w7w-66w2-5vf9`, `GHSA-67mh-4wv8-2f99`); VitePress 1.6.4 hard-pins `"vite": "^5.4.14"` — unfixable without a VitePress major upgrade
+
+### Documentation
+
+- **oauth** `2.4.1`: `FINDING-006` — inline TODO comment added to the dev `[[d1_databases]]` binding in `wrangler.toml` documenting the `"TODO_RUN_WRANGLER_D1_CREATE"` placeholder that must be replaced before local D1 operations are possible
+- **oauth** `2.4.1`: `FINDING-003` — JSDoc note added to `verifyJWT()` in `jwt-service.ts` clarifying that it does not check the token blacklist; callers requiring revocation enforcement must use `verifyJWTWithRevocationCheck()`
+
+---
+
 ## [1.14.0] - 2026-05-12
 
 ### Documentation

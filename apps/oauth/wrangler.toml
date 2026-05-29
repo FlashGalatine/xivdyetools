@@ -63,6 +63,8 @@ database_id = "6e97b759-70dd-49a8-a93c-0541c7fe6c67"
 [[env.development.d1_databases]]
 binding = "DB"
 database_name = "xivdyetools-users-dev"
+# To populate: run `wrangler d1 create xivdyetools-users-dev` and paste the returned UUID here.
+# Local `wrangler dev` works without this (uses .wrangler/state/ SQLite); only needed for --remote ops.
 database_id = "TODO_RUN_WRANGLER_D1_CREATE"
 
 # Secrets: DISCORD_CLIENT_SECRET, JWT_SECRET, XIVAUTH_CLIENT_SECRET

@@ -240,11 +240,14 @@ export const THEME = {
 /**
  * Font families for consistent typography.
  * These names match the bundled font files loaded by the renderer.
+ * CJK variants include Noto Sans SC/KR as fallbacks for ja/zh/ko dye names.
  */
 export const FONTS = {
   header: 'Space Grotesk',
   primary: 'Onest',
   mono: 'Habibi',
+  primaryCjk: 'Onest, Noto Sans SC, Noto Sans KR',
+  headerCjk: 'Space Grotesk, Noto Sans SC, Noto Sans KR',
 } as const;
 
 /**

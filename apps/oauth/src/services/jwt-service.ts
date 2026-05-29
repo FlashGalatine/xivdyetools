@@ -59,10 +59,11 @@ export async function signJwtData(data: string, secret: string): Promise<string>
 }
 
 /**
- * Verify HMAC-SHA256 signature
- * REFACTOR-001: Uses @xivdyetools/crypto for base64url decoding
+ * Verify HMAC-SHA256 signature using crypto.subtle.verify (constant-time).
+ * REFACTOR-001: Uses @xivdyetools/crypto for base64url decoding.
+ * Exported so state-signing.ts can use it instead of a non-constant-time string compare.
  */
-async function verify(
+export async function verifyJwtData(
   data: string,
   signature: string,
   secret: string
@@ -75,6 +76,9 @@ async function verify(
 
   return crypto.subtle.verify('HMAC', key, sigBytes, encoder.encode(data));
 }
+
+// Internal alias kept for JWT verification paths below
+const verify = verifyJwtData;
 
 /**
  * Create a JWT for a Discord user (legacy function, kept for backwards compatibility)
@@ -209,6 +213,17 @@ export async function verifyJWT(
 
   const [encodedHeader, encodedPayload, signature] = parts;
 
+  // REFACTOR-001: Reject non-HS256 algorithms (prevents alg:none and RS-vs-HS swap attacks)
+  let header: { alg?: string };
+  try {
+    header = JSON.parse(base64UrlDecode(encodedHeader)) as { alg?: string };
+  } catch {
+    throw new Error('Invalid JWT format');
+  }
+  if (header.alg !== 'HS256') {
+    throw new Error('JWT algorithm not supported');
+  }
+
   // Verify signature
   const signatureInput = `${encodedHeader}.${encodedPayload}`;
   const isValid = await verify(signatureInput, signature, secret);
@@ -220,10 +235,15 @@ export async function verifyJWT(
   // Decode payload
   const payload: JWTPayload = JSON.parse(base64UrlDecode(encodedPayload)) as JWTPayload;
 
-  // Check expiration
+  // Check expiration — also guards missing exp claim (undefined < now is false in JS)
   const now = Math.floor(Date.now() / 1000);
-  if (payload.exp < now) {
+  if (!payload.exp || payload.exp < now) {
     throw new Error('JWT has expired');
+  }
+
+  // REFACTOR-001: Require sub claim — matches @xivdyetools/auth verifyJWT
+  if (!payload.sub) {
+    throw new Error('JWT missing required claims');
   }
 
   return payload;
@@ -267,6 +287,12 @@ export async function verifyJWTSignatureOnly(
 
     const [encodedHeader, encodedPayload, signature] = parts;
 
+    // REFACTOR-001: Reject non-HS256 algorithms (prevents alg:none and RS-vs-HS swap attacks)
+    const header = JSON.parse(base64UrlDecode(encodedHeader)) as { alg?: string };
+    if (header.alg !== 'HS256') {
+      return null;
+    }
+
     // Verify signature
     const signatureInput = `${encodedHeader}.${encodedPayload}`;
     const isValid = await verify(signatureInput, signature, secret);
@@ -277,6 +303,12 @@ export async function verifyJWTSignatureOnly(
 
     // Signature verified - decode and return payload
     const payload: JWTPayload = JSON.parse(base64UrlDecode(encodedPayload)) as JWTPayload;
+
+    // REFACTOR-001: Require sub claim — matches @xivdyetools/auth verifyJWTSignatureOnly
+    if (!payload.sub) {
+      return null;
+    }
+
     return payload;
   } catch {
     return null;
@@ -310,6 +342,11 @@ export function getAvatarUrl(
 /**
  * Check if a token has been revoked
  * Uses KV to store revoked token JTIs
+ *
+ * Intentionally fail-open: a KV error returns `false` (token not revoked) rather than
+ * throwing or blocking the request. This keeps auth functional during KV outages at the
+ * cost of briefly allowing a revoked token through — an acceptable trade-off for this
+ * application. Callers that require strict revocation must handle KV unavailability separately.
  */
 export async function isTokenRevoked(
   jti: string,
@@ -321,7 +358,6 @@ export async function isTokenRevoked(
     const revoked = await kv.get(`revoked:${jti}`);
     return revoked !== null;
   } catch {
-    // If KV lookup fails, allow token (fail-open for availability)
     return false;
   }
 }

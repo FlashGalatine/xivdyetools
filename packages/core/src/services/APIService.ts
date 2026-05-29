@@ -643,11 +643,27 @@ export class APIService {
       return new Map();
     }
 
+    // BUG-001: Universalis caps batches at 100 items. buildBatchApiUrl throws for larger
+    // arrays, and the call below was outside the try/catch — uncaught on cold cache with
+    // the full dye set (125+ tradeable). Chunk here so callers never need to know the limit.
+    const CHUNK_SIZE = 100;
+    if (itemIDs.length > CHUNK_SIZE) {
+      const merged = new Map<number, PriceData>();
+      for (let offset = 0; offset < itemIDs.length; offset += CHUNK_SIZE) {
+        const chunk = itemIDs.slice(offset, offset + CHUNK_SIZE);
+        const chunkResults = await this.fetchBatchPriceData(chunk, dataCenterID);
+        for (const [id, data] of chunkResults) {
+          merged.set(id, data);
+        }
+      }
+      return merged;
+    }
+
     // Rate limiting: single request for the batch
     await this.rateLimiter.waitIfNeeded();
     this.rateLimiter.recordRequest();
 
-    // Build batch API URL
+    // Build batch API URL — safe: itemIDs.length ≤ 100 guaranteed above
     const url = this.buildBatchApiUrl(itemIDs, dataCenterID);
 
     try {
