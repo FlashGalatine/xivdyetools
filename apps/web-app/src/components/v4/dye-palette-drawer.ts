@@ -8,11 +8,13 @@
  * @module components/v4/dye-palette-drawer
  */
 
-import { html, css, CSSResultGroup, TemplateResult, nothing } from 'lit';
+import { html, css, CSSResultGroup, TemplateResult, nothing, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { BaseLitComponent } from './base-lit-component';
 import { DyeService, type Dye } from '@services/dye-service-wrapper';
+import { filterDyesBySpectra, ALL_SPECTRA } from '@shared/spectrum-filter-utils';
+import type { SpectrumKey } from '@shared/spectrum-filter-utils';
 import { CollectionService } from '@services/collection-service';
 import { ToastService } from '@services/toast-service';
 import { logger } from '@shared/logger';
@@ -58,6 +60,16 @@ const CATEGORY_TRANSLATION_KEYS: Record<string, string> = {
   Purple: 'colorPalette.purples',
   Pink: 'colorPalette.pinks',
 };
+
+/**
+ * Consolidation spectrum chips (multi-select). Labels come from colorPalette.* keys.
+ */
+const SPECTRUM_FILTERS: { key: SpectrumKey; labelKey: string }[] = [
+  { key: 'A', labelKey: 'colorPalette.spectrumStandard' },
+  { key: 'B', labelKey: 'colorPalette.spectrumWide1' },
+  { key: 'C', labelKey: 'colorPalette.spectrumWide2' },
+  { key: 'unconsolidated', labelKey: 'colorPalette.spectrumUnconsolidated' },
+];
 
 /**
  * V4 Dye Palette Drawer - Right-side color selection panel
@@ -109,12 +121,27 @@ export class DyePaletteDrawer extends BaseLitComponent {
     return DyePaletteDrawer.TOOLS_WITH_CUSTOM_COLOR.includes(this.activeTool);
   }
 
+  /**
+   * Tools whose consolidation-spectrum filter defaults to "unconsolidated only".
+   * Budget belongs here because consolidated dyes share three market itemIDs
+   * post-Patch 7.5 and can't be priced individually on the market board.
+   */
+  private static readonly TOOLS_DEFAULT_UNCONSOLIDATED: ToolId[] = ['budget'];
+
+  /** Spectra to show on (re)entering a tool. */
+  private defaultSpectraForTool(tool: ToolId): SpectrumKey[] {
+    return DyePaletteDrawer.TOOLS_DEFAULT_UNCONSOLIDATED.includes(tool)
+      ? ['unconsolidated']
+      : [...ALL_SPECTRA];
+  }
+
   // =========================================================================
   // Internal State
   // =========================================================================
 
   @state() private searchQuery = '';
   @state() private activeFilter: DyeFilter = 'all';
+  @state() private selectedSpectra: Set<SpectrumKey> = new Set(ALL_SPECTRA);
   @state() private favoriteDyes: Dye[] = [];
   @state() private favoriteIds: Set<number> = new Set();
   @state() private allDyes: Dye[] = [];
@@ -338,6 +365,24 @@ export class DyePaletteDrawer extends BaseLitComponent {
         background: var(--theme-primary, #d4af37);
         border-color: var(--theme-primary, #d4af37);
         color: var(--theme-text-on-primary, #000);
+      }
+
+      /* Consolidation spectrum filter */
+      .spectrum-filter {
+        margin-bottom: 16px;
+      }
+
+      .spectrum-label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--v4-text-secondary, #a0a0a0);
+      }
+
+      .spectrum-bar {
+        margin-bottom: 0;
       }
 
       /* Favorites Section */
@@ -691,6 +736,16 @@ export class DyePaletteDrawer extends BaseLitComponent {
     this.languageUnsubscribe = null;
   }
 
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate(changed);
+    // When the active tool changes, reset the spectrum filter to that tool's
+    // default (Budget → unconsolidated only; everything else → all spectra).
+    if (changed.has('activeTool')) {
+      this.selectedSpectra = new Set(this.defaultSpectraForTool(this.activeTool));
+      this.applyFilters();
+    }
+  }
+
   // =========================================================================
   // Data Loading
   // =========================================================================
@@ -744,6 +799,9 @@ export class DyePaletteDrawer extends BaseLitComponent {
       dyes = this.filterByType(dyes, this.activeFilter);
     }
 
+    // Apply consolidation spectrum filter (short-circuits when all are selected)
+    dyes = filterDyesBySpectra(dyes, this.selectedSpectra);
+
     this.filteredDyes = dyes;
   }
 
@@ -796,6 +854,18 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
   private handleFilterClick(filter: DyeFilter): void {
     this.activeFilter = filter;
+    this.applyFilters();
+  }
+
+  private handleSpectrumToggle(key: SpectrumKey): void {
+    const next = new Set(this.selectedSpectra);
+    if (next.has(key)) {
+      // Keep at least one spectrum active so the grid never goes empty.
+      if (next.size > 1) next.delete(key);
+    } else {
+      next.add(key);
+    }
+    this.selectedSpectra = next; // reassign so Lit detects the change
     this.applyFilters();
   }
 
@@ -973,7 +1043,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
         </div>
 
         <div class="drawer-content">
-          ${this.renderSearch()} ${this.renderFilters()}
+          ${this.renderSearch()} ${this.renderFilters()} ${this.renderSpectrumFilters()}
           ${this.shouldShowCustomColor ? this.renderCustomColor() : nothing}
           ${this.renderFavorites()} ${this.renderDyeGrid(groupedDyes)}
         </div>
@@ -1026,6 +1096,30 @@ export class DyePaletteDrawer extends BaseLitComponent {
             </button>
           `
         )}
+      </div>
+    `;
+  }
+
+  /**
+   * Render the consolidation-spectrum filter chips (multi-select).
+   */
+  private renderSpectrumFilters(): TemplateResult {
+    return html`
+      <div class="spectrum-filter">
+        <span class="spectrum-label">${LanguageService.t('colorPalette.spectrumFilterLabel')}</span>
+        <div class="filter-bar spectrum-bar">
+          ${SPECTRUM_FILTERS.map(
+            (s) => html`
+              <button
+                class="filter-chip ${this.selectedSpectra.has(s.key) ? 'active' : ''}"
+                aria-pressed=${this.selectedSpectra.has(s.key)}
+                @click=${() => this.handleSpectrumToggle(s.key)}
+              >
+                ${LanguageService.t(s.labelKey)}
+              </button>
+            `
+          )}
+        </div>
       </div>
     `;
   }
