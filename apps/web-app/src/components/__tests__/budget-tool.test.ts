@@ -13,10 +13,11 @@ import { createTestContainer, cleanupTestContainer } from '../../__tests__/compo
 import { mockDyes } from '../../__tests__/mocks/services';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
-const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes } = vi.hoisted(() => ({
+const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes, mockFindDyesWithinDistance } = vi.hoisted(() => ({
   mockGetAllDyes: vi.fn(),
   mockGetDyeById: vi.fn(),
   mockFindClosestDyes: vi.fn(),
+  mockFindDyesWithinDistance: vi.fn(),
 }));
 
 vi.mock('@services/dye-service-wrapper', () => ({
@@ -25,6 +26,7 @@ vi.mock('@services/dye-service-wrapper', () => ({
       getAllDyes: mockGetAllDyes,
       getDyeById: mockGetDyeById,
       findClosestDyes: mockFindClosestDyes,
+      findDyesWithinDistance: mockFindDyesWithinDistance,
       getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
     }),
   },
@@ -36,6 +38,7 @@ vi.mock('@services/index', () => ({
       getAllDyes: mockGetAllDyes,
       getDyeById: mockGetDyeById,
       findClosestDyes: mockFindClosestDyes,
+      findDyesWithinDistance: mockFindDyesWithinDistance,
       getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
     }),
   },
@@ -43,6 +46,7 @@ vi.mock('@services/index', () => ({
     getAllDyes: mockGetAllDyes,
     getDyeById: mockGetDyeById,
     findClosestDyes: mockFindClosestDyes,
+    findDyesWithinDistance: mockFindDyesWithinDistance,
     getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
   },
   LanguageService: {
@@ -243,6 +247,7 @@ describe('BudgetTool', () => {
     mockGetAllDyes.mockReturnValue(mockDyes);
     mockGetDyeById.mockImplementation((id: number) => mockDyes.find((d) => d.id === id));
     mockFindClosestDyes.mockReturnValue(mockDyes.slice(0, 5));
+    mockFindDyesWithinDistance.mockReturnValue(mockDyes.slice(0, 20));
     // Mock scrollIntoView
     Element.prototype.scrollIntoView = vi.fn();
   });
@@ -366,6 +371,18 @@ describe('BudgetTool', () => {
 
       // Tool should render budget-related content
       expect(leftPanel).not.toBeNull();
+    });
+
+    it('should query alternatives without a fixed candidate cap', async () => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+
+      tool.selectDye(mockDyes[0]);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(mockFindDyesWithinDistance).toHaveBeenCalled();
+      expect(mockFindDyesWithinDistance).toHaveBeenCalledWith(mockDyes[0].hex, 50);
     });
   });
 

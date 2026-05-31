@@ -1457,11 +1457,7 @@ export class BudgetTool extends BaseComponent {
 
     try {
       // 1. Get all dyes within user-configurable color distance threshold
-      const candidates = dyeService.findDyesWithinDistance(
-        this.targetDye.hex,
-        this.colorDistance,
-        50
-      );
+      const candidates = dyeService.findDyesWithinDistance(this.targetDye.hex, this.colorDistance);
 
       // 2. Apply filters
       let filtered = candidates.filter((dye) => dye.id !== this.targetDye?.id);

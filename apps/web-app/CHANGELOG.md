@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Color Palette — Consolidation Spectrum filter**: New multi-select "Spectrum" chip row in the dye palette drawer ([`src/components/v4/dye-palette-drawer.ts`](src/components/v4/dye-palette-drawer.ts)) that narrows the browsable dyes by Patch 7.5 consolidation group — Standard Spectrum (Type-A), Wide Spectrum #1 (Type-B), Wide Spectrum #2 (Type-C), and Unconsolidated (premium Special dyes like Pure White / Jet Black). All four chips are selected by default in every tool, so existing behavior is unchanged. The **Budget** tool defaults to **Unconsolidated only**, because consolidated dyes share three market itemIDs post-7.5 and can't be priced individually; the default re-applies per tool via the drawer's `willUpdate` (`activeTool`) hook. At least one spectrum always stays active so the grid never empties. Filtering is a pure, unit-tested helper ([`src/shared/spectrum-filter-utils.ts`](src/shared/spectrum-filter-utils.ts)) keyed on each dye's existing `consolidationType` field
 - **Localization**: 5 new `colorPalette.spectrum*` i18n keys in all 6 languages (`spectrumFilterLabel`, `spectrumStandard`, `spectrumWide1`, `spectrumWide2`, `spectrumUnconsolidated`); the A/B/C chip labels reuse Square Enix's official localized spectrum names
 
+### Fixed
+
+- **Budget Suggestions — alternatives candidate pooling**: Removed the hard 50-dye candidate cap from `BudgetTool.findAlternatives()` so alternatives are computed from the full in-distance dye pool (all 125 standard dyes) before existing budget, sort, and result-limit filtering is applied. The Budget palette drawer's Unconsolidated default behavior is unchanged.
+
 ---
 
 ## [4.10.0] - 2026-04-29
