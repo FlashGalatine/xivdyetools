@@ -382,7 +382,10 @@ describe('BudgetTool', () => {
       await Promise.resolve();
 
       expect(mockFindDyesWithinDistance).toHaveBeenCalled();
-      expect(mockFindDyesWithinDistance).toHaveBeenCalledWith(mockDyes[0].hex, 50);
+      expect(mockFindDyesWithinDistance).toHaveBeenCalledWith(mockDyes[0].hex, {
+        maxDistance: 50,
+        matchingMethod: 'oklab',
+      });
     });
 
     it('should fall back to dye cost when market price is unavailable', () => {

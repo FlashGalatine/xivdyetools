@@ -203,6 +203,7 @@ export class ConfigSidebar extends BaseLitComponent {
     maxPrice: 200000,
     maxResults: 8,
     maxDeltaE: 75,
+    matchingMethod: 'oklab',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
@@ -1527,7 +1528,7 @@ export class ConfigSidebar extends BaseLitComponent {
    * Render matching method dropdown for a tool
    */
   private renderMatchingMethodSection(
-    toolKey: 'harmony' | 'extractor' | 'gradient' | 'mixer' | 'swatch',
+    toolKey: 'harmony' | 'extractor' | 'gradient' | 'mixer' | 'budget' | 'swatch',
     currentMethod: MatchingMethod
   ): TemplateResult {
     return html`
@@ -1812,6 +1813,8 @@ export class ConfigSidebar extends BaseLitComponent {
             ></v4-range-slider>
           </div>
         </div>
+
+        ${this.renderMatchingMethodSection('budget', this.budgetConfig.matchingMethod)}
 
         <v4-display-options
           .showHex=${this.globalDisplayOptions.showHex}

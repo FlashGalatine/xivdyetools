@@ -27,9 +27,10 @@ import {
   applyDisplayOptions,
   formatPriceWithSuffix,
 } from '@services/index';
-import type { DisplayOptionsConfig, DyeFiltersConfig } from '@shared/tool-config-types';
+import type { DisplayOptionsConfig, DyeFiltersConfig, MatchingMethod } from '@shared/tool-config-types';
 import { RouterService } from '@services/router-service';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
+import { calculateColorDistance } from '@services/harmony-generator';
 import { ICON_TOOL_BUDGET } from '@shared/tool-icons';
 import {
   ICON_MARKET,
@@ -76,6 +77,7 @@ const STORAGE_KEYS = {
   budgetLimit: 'v3_budget_limit',
   sortBy: 'v3_budget_sort',
   colorDistance: 'v3_budget_distance',
+  matchingMethod: 'v3_budget_matching_method',
   resultLimit: 'v3_budget_result_limit',
   showHex: 'v3_budget_show_hex',
   showRgb: 'v3_budget_show_rgb',
@@ -125,6 +127,7 @@ export class BudgetTool extends BaseComponent {
   private budgetLimit: number;
   private sortBy: 'match' | 'price' | 'value';
   private colorDistance: number;
+  private matchingMethod: MatchingMethod;
   private resultLimit: number;
   private alternatives: AlternativeDye[] = [];
   private totalAffordableCount: number = 0; // Track total before limit applied
@@ -201,6 +204,8 @@ export class BudgetTool extends BaseComponent {
       StorageService.getItem<'match' | 'price' | 'value'>(STORAGE_KEYS.sortBy) ?? DEFAULTS.sortBy;
     this.colorDistance =
       StorageService.getItem<number>(STORAGE_KEYS.colorDistance) ?? DEFAULTS.colorDistance;
+    this.matchingMethod =
+      StorageService.getItem<MatchingMethod>(STORAGE_KEYS.matchingMethod) ?? 'oklab';
     this.resultLimit =
       StorageService.getItem<number>(STORAGE_KEYS.resultLimit) ?? DEFAULTS.resultLimit;
 
@@ -361,6 +366,14 @@ export class BudgetTool extends BaseComponent {
       }
     }
 
+    // Handle matchingMethod
+    if (config.matchingMethod !== undefined && config.matchingMethod !== this.matchingMethod) {
+      this.matchingMethod = config.matchingMethod;
+      StorageService.setItem(STORAGE_KEYS.matchingMethod, config.matchingMethod);
+      needsRefilter = true;
+      logger.info(`[BudgetTool] setConfig: matchingMethod -> ${config.matchingMethod}`);
+    }
+
     // Handle displayOptions from v4-display-options component
     // WEB-REF-003: Using shared applyDisplayOptions helper
     let needsRerender = false;
@@ -413,7 +426,7 @@ export class BudgetTool extends BaseComponent {
     // Re-filter and re-render if any config changed and we have data
     if (needsRefilter && this.targetDye) {
       // For maxDeltaE changes, we need to re-fetch alternatives since the distance threshold changed
-      if (config.maxDeltaE !== undefined) {
+      if (config.maxDeltaE !== undefined || config.matchingMethod !== undefined) {
         void this.findAlternatives();
       } else {
         // For budget/result limit changes, just re-filter existing data
@@ -1389,6 +1402,7 @@ export class BudgetTool extends BaseComponent {
         originalColor: this.targetDye!.hex, // Target dye (original)
         matchedColor: alt.dye.hex, // Alternative dye (match)
         deltaE: alt.distance,
+        matchingMethod: this.matchingMethod,
         marketServer: marketServer,
         price: priceInfo?.currentMinPrice,
         vendorCost: alt.dye.cost,
@@ -1457,7 +1471,10 @@ export class BudgetTool extends BaseComponent {
 
     try {
       // 1. Get all dyes within user-configurable color distance threshold
-      const candidates = dyeService.findDyesWithinDistance(this.targetDye.hex, this.colorDistance);
+      const candidates = dyeService.findDyesWithinDistance(this.targetDye.hex, {
+        maxDistance: this.colorDistance,
+        matchingMethod: this.matchingMethod,
+      });
 
       // 2. Apply filters
       let filtered = candidates.filter((dye) => dye.id !== this.targetDye?.id);
@@ -1475,7 +1492,7 @@ export class BudgetTool extends BaseComponent {
       this.alternatives = filtered.map((dye) => {
         const priceData = this.priceData.get(dye.itemID);
         const price = this.getBudgetComparablePrice(dye, priceData);
-        const distance = ColorService.getColorDistance(this.targetDye!.hex, dye.hex);
+        const distance = calculateColorDistance(this.targetDye!.hex, dye.hex, this.matchingMethod);
         const savings = Math.max(0, this.targetPrice - price);
         const valueScore = this.calculateValueScore(distance, price);
 

@@ -215,6 +215,8 @@ export interface BudgetConfig {
   maxResults: number;
   /** Maximum Delta-E color distance (0-100) */
   maxDeltaE: number;
+  /** Color matching algorithm for finding closest dyes */
+  matchingMethod: MatchingMethod;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
   /** Dye filter configuration */
@@ -455,6 +457,7 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     maxPrice: 100000,
     maxResults: 8,
     maxDeltaE: 50,
+    matchingMethod: 'oklab',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },
