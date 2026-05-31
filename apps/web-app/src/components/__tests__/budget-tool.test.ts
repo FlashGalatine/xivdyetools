@@ -384,6 +384,17 @@ describe('BudgetTool', () => {
       expect(mockFindDyesWithinDistance).toHaveBeenCalled();
       expect(mockFindDyesWithinDistance).toHaveBeenCalledWith(mockDyes[0].hex, 50);
     });
+
+    it('should fall back to dye cost when market price is unavailable', () => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+
+      const price = (tool as unknown as {
+        getBudgetComparablePrice: (dye: (typeof mockDyes)[number], priceData?: { currentMinPrice?: number }) => number;
+      }).getBudgetComparablePrice(mockDyes[0], undefined);
+
+      expect(price).toBe(mockDyes[0].cost);
+    });
   });
 
   // ============================================================================

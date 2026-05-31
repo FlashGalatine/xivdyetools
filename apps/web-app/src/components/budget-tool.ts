@@ -1466,14 +1466,15 @@ export class BudgetTool extends BaseComponent {
       // 3. Fetch prices
       await this.fetchPrices([this.targetDye, ...filtered]);
 
-      // 4. Get target price
+      // 4. Get target price (market first, fallback to vendor/currency cost)
       const targetPriceData = this.priceData.get(this.targetDye.itemID);
-      this.targetPrice = targetPriceData?.currentMinPrice ?? 0;
+      const targetPrice = this.getBudgetComparablePrice(this.targetDye, targetPriceData);
+      this.targetPrice = Number.isFinite(targetPrice) ? targetPrice : 0;
 
       // 5. Build alternatives with price data
       this.alternatives = filtered.map((dye) => {
         const priceData = this.priceData.get(dye.itemID);
-        const price = priceData?.currentMinPrice ?? Infinity;
+        const price = this.getBudgetComparablePrice(dye, priceData);
         const distance = ColorService.getColorDistance(this.targetDye!.hex, dye.hex);
         const savings = Math.max(0, this.targetPrice - price);
         const valueScore = this.calculateValueScore(distance, price);
@@ -1535,6 +1536,23 @@ export class BudgetTool extends BaseComponent {
     const normalizedDistance = (distance / maxDistance) * 100;
     const normalizedPrice = (price / maxPrice) * 100;
     return normalizedDistance * 0.7 + normalizedPrice * 0.3;
+  }
+
+  /**
+   * Price used for Budget comparisons.
+   * Prefers live market data, then falls back to deterministic vendor/currency cost.
+   */
+  private getBudgetComparablePrice(dye: Dye, priceData?: PriceData): number {
+    const marketPrice = priceData?.currentMinPrice;
+    if (typeof marketPrice === 'number' && Number.isFinite(marketPrice) && marketPrice > 0) {
+      return marketPrice;
+    }
+
+    if (typeof dye.cost === 'number' && Number.isFinite(dye.cost) && dye.cost > 0) {
+      return dye.cost;
+    }
+
+    return Infinity;
   }
 
   /**

@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Budget Suggestions — alternatives candidate pooling**: Removed the hard 50-dye candidate cap from `BudgetTool.findAlternatives()` so alternatives are computed from the full in-distance dye pool (all 125 standard dyes) before existing budget, sort, and result-limit filtering is applied. The Budget palette drawer's Unconsolidated default behavior is unchanged.
+- **Budget Suggestions — alternatives candidate pooling**: Removed the hard 50-dye candidate cap from `BudgetTool.findAlternatives()` so alternatives are computed from the full in-distance dye pool (all 125 standard dyes) before existing budget, sort, and result-limit filtering is applied. Also added a vendor-cost fallback when market data is unavailable so dyes are not dropped from results solely due to missing Market Board prices. The Budget palette drawer's Unconsolidated default behavior is unchanged.
 
 ---
 
