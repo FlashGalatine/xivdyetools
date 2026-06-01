@@ -18,6 +18,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Budget Suggestions — alternatives candidate pooling**: Removed the hard 50-dye candidate cap from `BudgetTool.findAlternatives()` so alternatives are computed from the full in-distance dye pool (all 125 standard dyes) before existing budget, sort, and result-limit filtering is applied. Also added a vendor-cost fallback when market data is unavailable so dyes are not dropped from results solely due to missing Market Board prices. The Budget palette drawer's Unconsolidated default behavior is unchanged.
+- **Collection Manager E2E coverage (DEAD-110)**: Re-enabled and stabilized `e2e/collection-manager.spec.ts` for the v4 UI contract (tool selectors, overlay handling, deterministic setup, and advanced-settings flows). The chromium project now runs this spec with all tests passing.
+- **Favorites header semantics**: Updated `src/components/dye-selector.ts` to remove invalid nested interactive-control behavior in the favorites header/manage-controls area and keep keyboard + ARIA toggle behavior intact.
+
+### Changed
+
+- **Module surface tightening (DEAD-106/DEAD-107)**: Reduced over-exported internals from `src/services/index.ts` and `src/shared/category-icons.ts` to better align with actual consumption.
+- **Dependency hygiene (DEAD-109)**: Moved `@tailwindcss/postcss` to `devDependencies` and explicitly declared `cross-env` to avoid hoist-dependent script resolution.
+
+### Removed
+
+- **Dead v3/orphaned UI code (DEAD-086..DEAD-091)**: Removed the orphaned preset-era component stack and related unused UI modules, including `preset-tool.ts`, `preset-detail-view.ts`, `preset-card.ts`, `my-submissions-panel.ts`, `tools-dropdown.ts`, and `auth-button.ts`.
+- **Test-only dead components (DEAD-092..DEAD-099, DEAD-101)**: Removed unreachable/test-only component files and aligned stale test scaffolding/mocks.
+- **Deprecated filter chain (DEAD-100)**: Removed deprecated `dye-filters.ts` and the obsolete `buildFiltersPanel` chain, including stale tests and references.
+- **Unused shared exports (DEAD-102/DEAD-103/DEAD-104)**: Removed dead utility/error-handler exports and unused constants in `src/shared/*` and updated dependent tests.
+- **Unused dev dependencies (DEAD-108)**: Removed unused devDependencies `@testing-library/dom`, `@testing-library/user-event`, and `@xivdyetools/test-utils`.
+- **Dev mockups relocated (DEAD-112)**: Moved `src/mockups/**` to `docs/historical/web-app/20260531-Mockups/` and removed the corresponding dev loader/alias wiring from app runtime config.
 
 ---
 
