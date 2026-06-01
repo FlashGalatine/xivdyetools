@@ -146,4 +146,3 @@ export const FEATURE_FLAGS = {
   ENABLE_KEYBOARD_SHORTCUTS: true,
   DEBUG_MODE: false,
 } as const;
-

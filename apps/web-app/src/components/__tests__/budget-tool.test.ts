@@ -13,12 +13,13 @@ import { createTestContainer, cleanupTestContainer } from '../../__tests__/compo
 import { mockDyes } from '../../__tests__/mocks/services';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
-const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes, mockFindDyesWithinDistance } = vi.hoisted(() => ({
-  mockGetAllDyes: vi.fn(),
-  mockGetDyeById: vi.fn(),
-  mockFindClosestDyes: vi.fn(),
-  mockFindDyesWithinDistance: vi.fn(),
-}));
+const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes, mockFindDyesWithinDistance } =
+  vi.hoisted(() => ({
+    mockGetAllDyes: vi.fn(),
+    mockGetDyeById: vi.fn(),
+    mockFindClosestDyes: vi.fn(),
+    mockFindDyesWithinDistance: vi.fn(),
+  }));
 
 vi.mock('@services/dye-service-wrapper', () => ({
   DyeService: {
@@ -392,9 +393,14 @@ describe('BudgetTool', () => {
       tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
       tool.init();
 
-      const price = (tool as unknown as {
-        getBudgetComparablePrice: (dye: (typeof mockDyes)[number], priceData?: { currentMinPrice?: number }) => number;
-      }).getBudgetComparablePrice(mockDyes[0], undefined);
+      const price = (
+        tool as unknown as {
+          getBudgetComparablePrice: (
+            dye: (typeof mockDyes)[number],
+            priceData?: { currentMinPrice?: number }
+          ) => number;
+        }
+      ).getBudgetComparablePrice(mockDyes[0], undefined);
 
       expect(price).toBe(mockDyes[0].cost);
     });

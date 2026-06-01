@@ -118,4 +118,3 @@ export class ErrorHandler {
     // Can be extended to clear UI error messages, etc.
   }
 }
-

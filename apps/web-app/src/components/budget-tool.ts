@@ -17,7 +17,6 @@ import { MarketBoard } from '@components/market-board';
 import '@components/v4/result-card';
 import { ResultCard, type ResultCardData, type ContextAction } from '@components/v4/result-card';
 import {
-  ColorService,
   ConfigController,
   dyeService,
   LanguageService,
@@ -27,7 +26,11 @@ import {
   applyDisplayOptions,
   formatPriceWithSuffix,
 } from '@services/index';
-import type { DisplayOptionsConfig, DyeFiltersConfig, MatchingMethod } from '@shared/tool-config-types';
+import type {
+  DisplayOptionsConfig,
+  DyeFiltersConfig,
+  MatchingMethod,
+} from '@shared/tool-config-types';
 import { RouterService } from '@services/router-service';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { calculateColorDistance } from '@services/harmony-generator';

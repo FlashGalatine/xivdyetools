@@ -40,23 +40,11 @@ export type { TutorialTool, TutorialStep, Tutorial } from './tutorial-service';
 export { KeyboardService } from './keyboard-service';
 export { DyeSelectionContext } from './dye-selection-context';
 export { CollectionService } from './collection-service';
-export type {
-  DyeId,
-  Collection,
-  FavoritesData,
-  CollectionsData,
-} from './collection-service';
+export type { DyeId, Collection, FavoritesData, CollectionsData } from './collection-service';
 export { CommunityPresetService, communityPresetService } from './community-preset-service';
-export type {
-  CommunityPreset,
-  PresetStatus,
-  PresetFilters,
-} from './community-preset-service';
+export type { CommunityPreset, PresetStatus, PresetFilters } from './community-preset-service';
 export { HybridPresetService, hybridPresetService } from './hybrid-preset-service';
-export type {
-  UnifiedPreset,
-  PresetSortOption,
-} from './hybrid-preset-service';
+export type { UnifiedPreset, PresetSortOption } from './hybrid-preset-service';
 export { AuthService, authService, consumeReturnTool } from './auth-service';
 export type { AuthUser, AuthState } from './auth-service';
 export {
