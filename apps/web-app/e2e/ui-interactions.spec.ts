@@ -1,5 +1,40 @@
 import { test, expect } from '@playwright/test';
 
+async function seedStartupStorage(page: Parameters<typeof test>[0]['page']): Promise<void> {
+  await page.addInitScript(() => {
+    localStorage.setItem('xivdyetools_welcome_seen', 'true');
+    localStorage.setItem('xivdyetools_last_version_viewed', '4.10.0');
+    localStorage.setItem('xivdyetools_tutorials_disabled', 'true');
+  });
+}
+
+async function dismissBlockingOverlays(page: Parameters<typeof test>[0]['page']): Promise<void> {
+  for (let i = 0; i < 5; i++) {
+    const backdropCount = await page.locator('.modal-backdrop').count();
+    if (backdropCount === 0) break;
+
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(250);
+  }
+
+  await page.evaluate(() => {
+    document.querySelectorAll('.modal-backdrop').forEach((el) => el.remove());
+  });
+}
+
+async function waitForAppReady(page: Parameters<typeof test>[0]['page']): Promise<void> {
+  await page.waitForLoadState('networkidle');
+  await page.waitForFunction(
+    () => {
+      const app = document.getElementById('app');
+      return app && app.children.length > 0;
+    },
+    { timeout: 15000 }
+  );
+  await dismissBlockingOverlays(page);
+  await page.waitForTimeout(500);
+}
+
 /**
  * E2E Tests for UI Interaction Branches
  *
@@ -13,21 +48,10 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Theme Switcher Interactions', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '2.6.0');
-    });
+    await seedStartupStorage(page);
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    await page.waitForFunction(
-      () => {
-        const app = document.getElementById('app');
-        return app && app.children.length > 0;
-      },
-      { timeout: 15000 }
-    );
-    await page.waitForTimeout(1000);
+    await waitForAppReady(page);
   });
 
   test('should open theme dropdown when clicking theme button', async ({ page }) => {
@@ -167,10 +191,8 @@ test.describe('Theme Switcher Interactions', () => {
 
 test.describe('Saved Palettes Modal Interactions', () => {
   test.beforeEach(async ({ page }) => {
+    await seedStartupStorage(page);
     await page.addInitScript(() => {
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '2.6.0');
-
       // Add some test palettes
       const palettes = [
         {
@@ -194,20 +216,12 @@ test.describe('Saved Palettes Modal Interactions', () => {
     });
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    await page.waitForFunction(
-      () => {
-        const app = document.getElementById('app');
-        return app && app.children.length > 0;
-      },
-      { timeout: 15000 }
-    );
-    await page.waitForTimeout(1000);
+    await waitForAppReady(page);
   });
 
   test('should open saved palettes modal', async ({ page }) => {
     // Look for saved palettes button with various possible selectors
-    const savedPalettesBtn = page.locator('.saved-palettes-btn, button:has-text("Saved"), button:has-text("Palettes"), [aria-label*="palette" i]').first();
+    const savedPalettesBtn = page.locator('.saved-palettes-btn').first();
 
     if ((await savedPalettesBtn.count()) === 0) {
       test.skip();
@@ -224,7 +238,7 @@ test.describe('Saved Palettes Modal Interactions', () => {
   });
 
   test('should display saved palettes in the modal', async ({ page }) => {
-    const savedPalettesBtn = page.locator('.saved-palettes-btn, button:has-text("Saved"), button:has-text("Palettes")').first();
+    const savedPalettesBtn = page.locator('.saved-palettes-btn').first();
 
     if ((await savedPalettesBtn.count()) === 0) {
       test.skip();
@@ -241,7 +255,7 @@ test.describe('Saved Palettes Modal Interactions', () => {
   });
 
   test('should close modal when clicking backdrop', async ({ page }) => {
-    const savedPalettesBtn = page.locator('.saved-palettes-btn, button:has-text("Saved")').first();
+    const savedPalettesBtn = page.locator('.saved-palettes-btn').first();
 
     if ((await savedPalettesBtn.count()) === 0) {
       test.skip();
@@ -269,7 +283,7 @@ test.describe('Saved Palettes Modal Interactions', () => {
   });
 
   test('should close modal when pressing Escape', async ({ page }) => {
-    const savedPalettesBtn = page.locator('.saved-palettes-btn, button:has-text("Saved")').first();
+    const savedPalettesBtn = page.locator('.saved-palettes-btn').first();
 
     if ((await savedPalettesBtn.count()) === 0) {
       test.skip();
@@ -298,10 +312,8 @@ test.describe('Saved Palettes Modal Interactions', () => {
 
 test.describe('Dye Selector Favorites Panel', () => {
   test.beforeEach(async ({ page }) => {
+    await seedStartupStorage(page);
     await page.addInitScript(() => {
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '2.6.0');
-
       // Add some favorites
       const favorites = {
         version: '1.0.0',
@@ -312,15 +324,7 @@ test.describe('Dye Selector Favorites Panel', () => {
     });
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    await page.waitForFunction(
-      () => {
-        const app = document.getElementById('app');
-        return app && app.children.length > 0;
-      },
-      { timeout: 15000 }
-    );
-    await page.waitForTimeout(1000);
+    await waitForAppReady(page);
   });
 
   test('should show favorites panel in dye selector', async ({ page }) => {
@@ -412,21 +416,10 @@ test.describe('Dye Selector Favorites Panel', () => {
 
 test.describe('Dye Grid Interactions', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '2.6.0');
-    });
+    await seedStartupStorage(page);
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    await page.waitForFunction(
-      () => {
-        const app = document.getElementById('app');
-        return app && app.children.length > 0;
-      },
-      { timeout: 15000 }
-    );
-    await page.waitForTimeout(1000);
+    await waitForAppReady(page);
   });
 
   test('should show dye grid container', async ({ page }) => {
@@ -490,21 +483,10 @@ test.describe('Dye Grid Interactions', () => {
 
 test.describe('Search and Filter Interactions', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '2.6.0');
-    });
+    await seedStartupStorage(page);
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    await page.waitForFunction(
-      () => {
-        const app = document.getElementById('app');
-        return app && app.children.length > 0;
-      },
-      { timeout: 15000 }
-    );
-    await page.waitForTimeout(1000);
+    await waitForAppReady(page);
   });
 
   test('should filter dyes when typing in search box', async ({ page }) => {
@@ -567,21 +549,10 @@ test.describe('Search and Filter Interactions', () => {
 
 test.describe('Random Dye Selection', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '2.6.0');
-    });
+    await seedStartupStorage(page);
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    await page.waitForFunction(
-      () => {
-        const app = document.getElementById('app');
-        return app && app.children.length > 0;
-      },
-      { timeout: 15000 }
-    );
-    await page.waitForTimeout(1000);
+    await waitForAppReady(page);
   });
 
   test('should have random dye button', async ({ page }) => {
@@ -611,21 +582,10 @@ test.describe('Random Dye Selection', () => {
 
 test.describe('Modal Container Interactions', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '2.6.0');
-    });
+    await seedStartupStorage(page);
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    await page.waitForFunction(
-      () => {
-        const app = document.getElementById('app');
-        return app && app.children.length > 0;
-      },
-      { timeout: 15000 }
-    );
-    await page.waitForTimeout(1000);
+    await waitForAppReady(page);
   });
 
   test('should have modal root container', async ({ page }) => {
@@ -642,7 +602,7 @@ test.describe('Modal Container Interactions', () => {
 
   test('should show stacked modals correctly', async ({ page }) => {
     // Find any button that opens a modal
-    const modalTrigger = page.locator('.saved-palettes-btn, button:has-text("Saved"), button:has-text("Settings")').first();
+    const modalTrigger = page.locator('.saved-palettes-btn').first();
 
     if ((await modalTrigger.count()) === 0) {
       test.skip();
@@ -663,10 +623,8 @@ test.describe('Modal Container Interactions', () => {
 
 test.describe('Collection Manager Interactions', () => {
   test.beforeEach(async ({ page }) => {
+    await seedStartupStorage(page);
     await page.addInitScript(() => {
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '2.6.0');
-
       // Add some collections
       const collections = {
         version: '1.0.0',
@@ -693,15 +651,7 @@ test.describe('Collection Manager Interactions', () => {
     });
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    await page.waitForFunction(
-      () => {
-        const app = document.getElementById('app');
-        return app && app.children.length > 0;
-      },
-      { timeout: 15000 }
-    );
-    await page.waitForTimeout(1000);
+    await waitForAppReady(page);
   });
 
   test('should open collection manager when clicking manage button', async ({ page }) => {
@@ -721,21 +671,10 @@ test.describe('Collection Manager Interactions', () => {
 
 test.describe('Accessibility Interactions', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '2.6.0');
-    });
+    await seedStartupStorage(page);
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    await page.waitForFunction(
-      () => {
-        const app = document.getElementById('app');
-        return app && app.children.length > 0;
-      },
-      { timeout: 15000 }
-    );
-    await page.waitForTimeout(1000);
+    await waitForAppReady(page);
   });
 
   test('should be able to navigate with keyboard', async ({ page }) => {

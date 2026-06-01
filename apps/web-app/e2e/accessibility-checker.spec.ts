@@ -1,5 +1,27 @@
 import { test, expect, Page } from '@playwright/test';
 
+async function seedStartupStorage(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    localStorage.setItem('xivdyetools_welcome_seen', 'true');
+    localStorage.setItem('xivdyetools_last_version_viewed', '4.10.0');
+    localStorage.setItem('xivdyetools_tutorials_disabled', 'true');
+  });
+}
+
+async function dismissBlockingOverlays(page: Page): Promise<void> {
+  for (let i = 0; i < 5; i++) {
+    const backdropCount = await page.locator('.modal-backdrop').count();
+    if (backdropCount === 0) break;
+
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(250);
+  }
+
+  await page.evaluate(() => {
+    document.querySelectorAll('.modal-backdrop').forEach((el) => el.remove());
+  });
+}
+
 /**
  * E2E Tests for Accessibility Checker Tool (Vision)
  *
@@ -26,24 +48,20 @@ async function navigateToAccessibilityTool(page: Page): Promise<void> {
     { timeout: 15000 }
   );
 
-  // Wait for navigation bar to appear (look for tool buttons by their visible text)
-  await page.waitForSelector('nav button', { state: 'attached', timeout: 15000 });
-  await page.waitForTimeout(500);
+  await page.waitForSelector('[data-tool]', { state: 'attached', timeout: 15000 });
+  await dismissBlockingOverlays(page);
+  await page.waitForTimeout(300);
 
-  // Find and click the Vision (Accessibility Checker) tool button
-  // The button contains text "Vision" and has aria-label "Simulate colorblindness"
-  const visionButton = page.getByRole('button', { name: /simulate colorblindness/i }).first();
+  // Navigate by stable v4 tool id
+  const visionButton = page.locator('[data-tool="accessibility"]:visible').first();
   await visionButton.click();
-  await page.waitForTimeout(1000);
+  await dismissBlockingOverlays(page);
+  await page.waitForTimeout(800);
 }
 
 test.describe('Accessibility Checker Tool', () => {
   test.beforeEach(async ({ page }) => {
-    // Mark welcome/changelog modals as seen
-    await page.addInitScript(() => {
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '4.0.0');
-    });
+    await seedStartupStorage(page);
 
     await page.goto('/');
     await navigateToAccessibilityTool(page);
@@ -229,10 +247,7 @@ test.describe('Accessibility Checker Tool', () => {
  */
 test.describe('Accessibility Checker - Color Palette', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '4.0.0');
-    });
+    await seedStartupStorage(page);
 
     await page.goto('/');
     await navigateToAccessibilityTool(page);
@@ -275,10 +290,7 @@ test.describe('Accessibility Checker - Mobile Drawer', () => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
 
-    await page.addInitScript(() => {
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '4.0.0');
-    });
+    await seedStartupStorage(page);
 
     await page.goto('/');
     await navigateToAccessibilityTool(page);

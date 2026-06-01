@@ -1,5 +1,27 @@
 import { test, expect } from '@playwright/test';
 
+async function seedStartupStorage(page: Parameters<typeof test>[0]['page']): Promise<void> {
+  await page.addInitScript(() => {
+    localStorage.setItem('xivdyetools_welcome_seen', 'true');
+    localStorage.setItem('xivdyetools_last_version_viewed', '4.10.0');
+    localStorage.setItem('xivdyetools_tutorials_disabled', 'true');
+  });
+}
+
+async function dismissBlockingOverlays(page: Parameters<typeof test>[0]['page']): Promise<void> {
+  for (let i = 0; i < 5; i++) {
+    const backdropCount = await page.locator('.modal-backdrop').count();
+    if (backdropCount === 0) break;
+
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(250);
+  }
+
+  await page.evaluate(() => {
+    document.querySelectorAll('.modal-backdrop').forEach((el) => el.remove());
+  });
+}
+
 /**
  * E2E Tests for Budget Tool
  *
@@ -18,11 +40,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Budget Tool', () => {
   test.beforeEach(async ({ page }) => {
-    // Mark welcome/changelog modals as seen to prevent them from auto-opening
-    await page.addInitScript(() => {
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '4.0.0');
-    });
+    await seedStartupStorage(page);
 
     // Navigate directly to the budget tool
     await page.goto('/budget');
@@ -39,8 +57,8 @@ test.describe('Budget Tool', () => {
       { timeout: 15000 }
     );
 
-    // Wait for the budget tool to load and initialize
-    await page.waitForTimeout(1000);
+    await dismissBlockingOverlays(page);
+    await page.waitForTimeout(500);
   });
 
   test.describe('Tool Loading', () => {
@@ -382,10 +400,7 @@ test.describe('Budget Tool - Mobile Drawer', () => {
 
 test.describe('Budget Tool - Cross-Tool Navigation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '4.0.0');
-    });
+    await seedStartupStorage(page);
 
     await page.goto('/budget');
     await page.waitForLoadState('networkidle');
@@ -396,7 +411,8 @@ test.describe('Budget Tool - Cross-Tool Navigation', () => {
       },
       { timeout: 15000 }
     );
-    await page.waitForTimeout(1000);
+    await dismissBlockingOverlays(page);
+    await page.waitForTimeout(500);
   });
 
   test('should navigate from harmony tool to budget', async ({ page }) => {
@@ -406,7 +422,7 @@ test.describe('Budget Tool - Cross-Tool Navigation', () => {
     await page.waitForTimeout(500);
 
     // Click on budget tool button
-    const budgetToolBtn = page.locator('[data-tool-id="budget"]');
+    const budgetToolBtn = page.locator('[data-tool="budget"]');
 
     if ((await budgetToolBtn.count()) > 0) {
       await budgetToolBtn.click();
@@ -425,13 +441,13 @@ test.describe('Budget Tool - Cross-Tool Navigation', () => {
       await page.waitForTimeout(500);
 
       // Navigate to another tool
-      const harmonyBtn = page.locator('[data-tool-id="harmony"]');
+      const harmonyBtn = page.locator('[data-tool="harmony"]');
       if ((await harmonyBtn.count()) > 0) {
         await harmonyBtn.click();
         await page.waitForTimeout(500);
 
         // Navigate back to budget
-        const budgetBtn = page.locator('[data-tool-id="budget"]');
+        const budgetBtn = page.locator('[data-tool="budget"]');
         await budgetBtn.click();
         await page.waitForTimeout(500);
 
