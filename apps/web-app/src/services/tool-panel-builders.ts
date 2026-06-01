@@ -3,7 +3,6 @@
  * WEB-REF-003 Phase 3: Shared panel building utilities for tool components.
  *
  * Provides reusable builder functions that create common UI patterns:
- * - Filters panel (CollapsiblePanel + DyeFilters)
  * - Market board panel (CollapsiblePanel + MarketBoard)
  *
  * These builders eliminate ~30-40 lines of duplicated code per tool.
@@ -13,23 +12,14 @@
 
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
-import { DyeFilters, type DyeFilterConfig } from '@components/dye-filters';
 import { MarketBoard } from '@components/market-board';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { LanguageService } from '@services/index';
-import { ICON_FILTER, ICON_MARKET } from '@shared/ui-icons';
+import { ICON_MARKET } from '@shared/ui-icons';
 
 // ============================================================================
 // Shared Types (exported for use in tool components)
 // ============================================================================
-
-/**
- * References returned by filters panel builder
- */
-export interface FiltersPanelRefs {
-  panel: CollapsiblePanel;
-  filters: DyeFilters;
-}
 
 /**
  * References returned by market board panel builder
@@ -37,20 +27,6 @@ export interface FiltersPanelRefs {
 export interface MarketPanelRefs {
   panel: CollapsiblePanel;
   marketBoard: MarketBoard;
-}
-
-/**
- * Configuration for filters panel builder
- */
-export interface FiltersPanelConfig {
-  /** Storage key for panel collapse state */
-  storageKey: string;
-  /** Storage key prefix for filter settings */
-  storageKeyPrefix: string;
-  /** Callback when filters change */
-  onFilterChange: (config: DyeFilterConfig) => void;
-  /** Whether panel should be open by default (default: false) */
-  defaultOpen?: boolean;
 }
 
 /**
@@ -76,57 +52,6 @@ export interface MarketPanelConfig {
 // ============================================================================
 // Builder Functions
 // ============================================================================
-
-/**
- * Build a filters panel with CollapsiblePanel + DyeFilters.
- *
- * @deprecated Use `<v4-dye-filters>` in ConfigSidebar instead. Filter state is
- * now managed centrally via `DyeFiltersConfig` in `@shared/tool-config-types`
- * and pure functions in `@shared/dye-filter-utils`. This function will be
- * removed in a future version.
- *
- * Usage:
- * ```typescript
- * const filtersContainer = this.createElement('div');
- * container.appendChild(filtersContainer);
- * const refs = buildFiltersPanel(this, filtersContainer, {
- *   storageKey: 'my_tool_filters',
- *   storageKeyPrefix: 'my_tool',
- *   onFilterChange: (config) => this.handleFilterChange(config),
- * });
- * this.filtersPanel = refs.panel;
- * this.dyeFilters = refs.filters;
- * ```
- *
- * @param host The host component (for createElement access)
- * @param container Container element to render into
- * @param config Panel configuration
- * @returns References to created panel and filters
- */
-export function buildFiltersPanel(
-  host: BaseComponent,
-  container: HTMLElement,
-  config: FiltersPanelConfig
-): FiltersPanelRefs {
-  const panel = new CollapsiblePanel(container, {
-    title: LanguageService.t('filters.advancedFilters'),
-    storageKey: config.storageKey,
-    defaultOpen: config.defaultOpen ?? false,
-    icon: ICON_FILTER,
-  });
-  panel.init();
-
-  const filtersContent = host.createElement('div');
-  const filters = new DyeFilters(filtersContent, {
-    storageKeyPrefix: config.storageKeyPrefix,
-    hideHeader: true,
-    onFilterChange: config.onFilterChange,
-  });
-  filters.init(); // Use init() to properly initialize lifecycle (render + bindEvents + onMount)
-  panel.setContent(filtersContent);
-
-  return { panel, filters };
-}
 
 /**
  * Build a market board panel with CollapsiblePanel + MarketBoard.

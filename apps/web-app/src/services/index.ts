@@ -142,13 +142,8 @@ export {
 export type { HarmonyTypeInfo, ScoredDyeMatch, HarmonyConfig } from './harmony-generator';
 
 // WEB-REF-003 Phase 3: Shared panel builders for tool components
-export { buildFiltersPanel, buildMarketPanel } from './tool-panel-builders';
-export type {
-  FiltersPanelRefs,
-  MarketPanelRefs,
-  FiltersPanelConfig,
-  MarketPanelConfig,
-} from './tool-panel-builders';
+export { buildMarketPanel } from './tool-panel-builders';
+export type { MarketPanelRefs, MarketPanelConfig } from './tool-panel-builders';
 
 // WEB-REF-003 Phase 4: Shared price utilities and display options helpers
 export {
