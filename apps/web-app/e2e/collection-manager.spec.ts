@@ -108,11 +108,7 @@ test.describe('Collection Manager Modal', () => {
     }
   });
 
-  // FIXME: This test is skipped because the "Manage Collections" button is nested inside
-  // another button element (invalid HTML), which prevents reliable click handling.
-  // See dye-selector.ts:450-492 - the header is a <button> containing another <button>.
-  // Fix: Change the favorites-header from <button> to <div> with role="button".
-  test.skip('should open collection manager modal when Manage Collections button exists', async ({
+  test('should open collection manager modal when Manage Collections button exists', async ({
     page,
   }) => {
     const manageBtn = page.locator('#manage-collections-btn');
@@ -122,8 +118,7 @@ test.describe('Collection Manager Modal', () => {
     await expect(page.locator('#modal-root .collection-manager-modal')).toBeVisible();
   });
 
-  // FIXME: Skipped due to nested button issue - see above
-  test.skip('should close modal with Escape key', async ({ page }) => {
+  test('should close modal with Escape key', async ({ page }) => {
     const manageBtn = page.locator('#manage-collections-btn');
     await manageBtn.waitFor({ state: 'visible', timeout: 5000 });
     await manageBtn.click();
@@ -134,8 +129,7 @@ test.describe('Collection Manager Modal', () => {
     expect(modalCount).toBe(0);
   });
 
-  // FIXME: Skipped due to nested button issue - see above
-  test.skip('should create a new collection', async ({ page }) => {
+  test('should create a new collection', async ({ page }) => {
     await page.evaluate(() => {
       localStorage.removeItem('xivdye-collections');
       localStorage.removeItem('xivdye-favorites');
@@ -155,8 +149,7 @@ test.describe('Collection Manager Modal', () => {
     await expect(page.locator('text=E2E Test Collection')).toBeVisible();
   });
 
-  // FIXME: Skipped due to nested button issue - see above
-  test.skip('should export collections as JSON', async ({ page }) => {
+  test('should export collections as JSON', async ({ page }) => {
     await page.evaluate(() => {
       const collections = [
         { id: 'e2e-test-1', name: 'E2E Export Test', dyes: [1, 2, 3] },

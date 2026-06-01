@@ -215,6 +215,13 @@ export class DyeSelector extends BaseComponent {
         this.on(favoritesHeader, 'click', () => {
           this.toggleFavoritesPanel();
         });
+
+        this.on(favoritesHeader, 'keydown', (event: KeyboardEvent) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            this.toggleFavoritesPanel();
+          }
+        });
       }
 
       // Click on favorite dye cards
@@ -464,11 +471,16 @@ export class DyeSelector extends BaseComponent {
     });
 
     // Header (clickable to toggle)
-    const header = this.createElement('button', {
+    const header = this.createElement('div', {
       id: 'favorites-header',
       className:
         'w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors',
-      attributes: { type: 'button' },
+      attributes: {
+        role: 'button',
+        tabindex: '0',
+        'aria-expanded': this.favoritesExpanded ? 'true' : 'false',
+        'aria-controls': 'favorites-content',
+      },
     });
 
     const headerLeft = this.createElement('div', {
@@ -656,12 +668,16 @@ export class DyeSelector extends BaseComponent {
 
     const content = this.element?.querySelector('#favorites-content');
     const chevron = this.element?.querySelector('#favorites-chevron');
+    const header = this.element?.querySelector<HTMLElement>('#favorites-header');
 
     if (content) {
       content.classList.toggle('hidden', !this.favoritesExpanded);
     }
     if (chevron) {
       chevron.textContent = this.favoritesExpanded ? '▼' : '▶';
+    }
+    if (header) {
+      header.setAttribute('aria-expanded', this.favoritesExpanded ? 'true' : 'false');
     }
   }
 

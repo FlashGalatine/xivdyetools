@@ -123,8 +123,11 @@ Playwright is configured in `playwright.config.ts`:
    - Navigate between different tools (harmony, matcher, accessibility, etc.)
    - Tool state persistence across page interactions
 
-3. **Collection Manager Modal** (partially skipped - see Known Issues)
+3. **Collection Manager Modal**
    - Shows Manage Collections button in favorites panel
+   - Opens and closes modal interactions
+   - Collection creation flow
+   - Export collections flow
 
 4. **Harmony Generator Tool** (28 tests)
    - Tool loading and UI elements
@@ -197,10 +200,7 @@ Playwright is configured in `playwright.config.ts`:
 
 ### Known E2E Issues
 
-**Nested Button Problem**: Some collection manager tests are skipped because the "Manage Collections" button is nested inside another `<button>` element (the favorites panel header). This is invalid HTML and prevents reliable click handling in Playwright.
-
-**Location**: `src/components/dye-selector.ts:450-492`
-**Fix Required**: Change the favorites-header from `<button>` to `<div role="button">` with proper keyboard handling.
+No collection-manager specific skips are currently expected. Use targeted runtime guards (`test.skip()` based on missing optional UI) only when the absence is environment-dependent and intentional.
 
 ### Running E2E Tests
 
