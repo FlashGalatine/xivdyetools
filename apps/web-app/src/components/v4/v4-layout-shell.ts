@@ -36,6 +36,7 @@ import type { Dye } from '@services/dye-service-wrapper';
  * @fires dye-selected - When a dye is selected from the palette drawer, with detail: { dye: Dye }
  * @fires custom-color-selected - When a custom color is applied from the palette drawer, with detail: { hex: string }
  * @fires clear-all-dyes - When clear all dyes button is clicked in palette drawer
+ * @fires changelog-click - Bubbled from V4AppHeader
  * @fires theme-click - Bubbled from V4AppHeader
  * @fires language-click - Bubbled from V4AppHeader
  * @fires about-click - Bubbled from V4AppHeader
@@ -873,6 +874,14 @@ export class V4LayoutShell extends BaseLitComponent {
   }
 
   /**
+   * Handle "What's New" (changelog) button click from header
+   * Bubbles up to v4-layout.ts
+   */
+  private handleChangelogClick(): void {
+    this.emit('changelog-click');
+  }
+
+  /**
    * Handle about button click from header
    * Bubbles up to v4-layout.ts
    */
@@ -892,6 +901,7 @@ export class V4LayoutShell extends BaseLitComponent {
     return html`
       <!-- App Header -->
       <v4-app-header
+        @changelog-click=${this.handleChangelogClick}
         @theme-click=${this.handleThemeClick}
         @about-click=${this.handleAboutClick}
         @language-click=${this.handleLanguageClick}

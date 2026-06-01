@@ -348,6 +348,15 @@ export const ICON_DOCUMENT = `<svg viewBox="0 0 24 24" fill="none" stroke="curre
 </svg>`;
 
 /**
+ * Scroll / parchment icon - For the "What's New" release-notes button
+ * Curled top and bottom rollers evoke an unfurled scroll
+ */
+export const ICON_SCROLL = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M19 17V5a2 2 0 00-2-2H4"/>
+  <path d="M8 21h12a2 2 0 002-2v-1a1 1 0 00-1-1H11a1 1 0 00-1 1v1a2 2 0 11-4 0V5a2 2 0 10-4 0v2a1 1 0 001 1h3"/>
+</svg>`;
+
+/**
  * Locked icon - Padlock for auth required states
  * Replaces: 🔐 emoji
  */

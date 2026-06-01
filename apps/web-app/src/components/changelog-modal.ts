@@ -75,10 +75,16 @@ export class ChangelogModal {
   }
 
   /**
-   * Get the entries to display (current version + recent history)
+   * Get the entries to display.
+   * - Default: current version + up to 2 previous (the "version changed" popup).
+   * - Full: the entire parsed history (the manually-opened "What's New" modal).
    * Uses dynamically parsed changelog data from CHANGELOG-laymans.md
    */
-  private getRelevantEntries(): ChangelogEntry[] {
+  private getRelevantEntries(full = false): ChangelogEntry[] {
+    if (full) {
+      return changelogEntries;
+    }
+
     // Find current version entry from parsed changelog
     const currentEntry = changelogEntries.find((e) => e.version === APP_VERSION);
 
@@ -97,11 +103,16 @@ export class ChangelogModal {
 
   /**
    * Show the changelog modal
+   *
+   * @param opts.full - When true, render the entire release history (used by the
+   *   header "What's New" button). When omitted, shows current + recent versions
+   *   (used by the automatic "version changed" popup).
    */
-  show(): void {
+  show(opts: { full?: boolean } = {}): void {
     if (this.modalId) return; // Already showing
 
-    const content = this.createContent();
+    const full = opts.full ?? false;
+    const content = this.createContent(full);
 
     this.modalId = ModalService.showChangelog({
       title: LanguageService.t('changelog.title'),
@@ -129,19 +140,45 @@ export class ChangelogModal {
 
   /**
    * Create modal content
+   *
+   * @param full - When true, render every parsed release with its own version
+   *   heading and full sections. When false, render the current version in full
+   *   plus a collapsed summary of recent previous versions.
    */
-  private createContent(): HTMLElement {
+  private createContent(full = false): HTMLElement {
     const container = document.createElement('div');
     container.className = 'changelog-modal-content';
 
-    const entries = this.getRelevantEntries();
+    const entries = this.getRelevantEntries(full);
 
     if (entries.length === 0) {
-      // Fallback if no changelog data for current version
+      // Fallback if no changelog data is available
       const fallback = document.createElement('p');
       fallback.className = 'text-gray-600 dark:text-gray-300';
       fallback.textContent = LanguageService.t('changelog.noChanges');
       container.appendChild(fallback);
+    } else if (full) {
+      // Full history — render each release with a version heading + full sections
+      const list = document.createElement('div');
+      list.className = 'space-y-8';
+
+      entries.forEach((entry) => {
+        const entryWrapper = document.createElement('div');
+
+        const versionHeading = document.createElement('h3');
+        versionHeading.className =
+          'text-lg font-bold text-gray-800 dark:text-gray-100 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700';
+        // SECURITY: Use DOM construction instead of innerHTML for text content
+        versionHeading.textContent = entry.date
+          ? `v${entry.version} — ${entry.date}`
+          : `v${entry.version}`;
+        entryWrapper.appendChild(versionHeading);
+
+        entryWrapper.appendChild(this.createCurrentVersionContent(entry));
+        list.appendChild(entryWrapper);
+      });
+
+      container.appendChild(list);
     } else {
       // Current version — render full sections
       const currentEntry = entries[0];
@@ -319,5 +356,32 @@ export function showChangelogIfUpdated(): void {
       const modal = new ChangelogModal();
       modal.show();
     }, 1000);
+  }
+}
+
+// Singleton instance for the manually-triggered "What's New" modal (header button).
+// Kept separate from the auto-popup path (showChangelogIfUpdated) which uses its
+// own short-lived instance.
+let changelogModalInstance: ChangelogModal | null = null;
+
+/**
+ * Show the full release-history changelog modal.
+ * Triggered by the "What's New" button in the v4 header.
+ * Uses a singleton to prevent multiple instances, matching the About/Theme/Language modals.
+ */
+export function showChangelogModal(): void {
+  if (!changelogModalInstance) {
+    changelogModalInstance = new ChangelogModal();
+  }
+  changelogModalInstance.show({ full: true });
+}
+
+/**
+ * Close the changelog modal if open
+ */
+export function closeChangelogModal(): void {
+  if (changelogModalInstance) {
+    changelogModalInstance.close();
+    changelogModalInstance = null;
   }
 }

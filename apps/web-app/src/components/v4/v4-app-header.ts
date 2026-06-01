@@ -10,7 +10,7 @@
 import { html, css, CSSResultGroup, TemplateResult } from 'lit';
 import { customElement } from 'lit/decorators.js';
 import { BaseLitComponent } from './base-lit-component';
-import { ICON_GLOBE, ICON_ABOUT, ICON_THEME } from '@shared/ui-icons';
+import { ICON_GLOBE, ICON_ABOUT, ICON_THEME, ICON_SCROLL } from '@shared/ui-icons';
 import { LOGO_SPARKLES } from '@shared/app-logo';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { LanguageService } from '@services/index';
@@ -18,6 +18,7 @@ import { LanguageService } from '@services/index';
 /**
  * V4 App Header - Branded header with navigation controls
  *
+ * @fires changelog-click - When the "What's New" button is clicked
  * @fires theme-click - When theme button is clicked
  * @fires language-click - When language button is clicked
  * @fires about-click - When about button is clicked
@@ -25,6 +26,7 @@ import { LanguageService } from '@services/index';
  * @example
  * ```html
  * <v4-app-header
+ *   @changelog-click=${this.handleChangelogClick}
  *   @theme-click=${this.handleThemeClick}
  *   @language-click=${this.handleLanguageClick}
  *   @about-click=${this.handleAboutClick}
@@ -140,6 +142,13 @@ export class V4AppHeader extends BaseLitComponent {
   ];
 
   /**
+   * Handle "What's New" (changelog) button click
+   */
+  private handleChangelogClick(): void {
+    this.emit('changelog-click');
+  }
+
+  /**
    * Handle about button click
    */
   private handleAboutClick(): void {
@@ -171,6 +180,16 @@ export class V4AppHeader extends BaseLitComponent {
 
         <!-- Navigation Controls -->
         <nav class="v4-header-nav" aria-label="${LanguageService.t('aria.headerNavigation')}">
+          <button
+            class="v4-header-nav-btn"
+            type="button"
+            title="${LanguageService.t('changelog.title')}"
+            aria-label="${LanguageService.t('changelog.title')}"
+            @click=${this.handleChangelogClick}
+          >
+            ${unsafeHTML(ICON_SCROLL)}
+          </button>
+
           <button
             class="v4-header-nav-btn"
             type="button"

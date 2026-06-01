@@ -9,6 +9,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { initializeV4Layout } from '../v4-layout';
+import { showChangelogModal } from '../changelog-modal';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
@@ -95,6 +96,12 @@ vi.mock('../toast-container', () => ({
 
 vi.mock('../about-modal', () => ({
   showAboutModal: vi.fn(),
+}));
+
+// Mock the changelog modal so the real module's `virtual:changelog` import
+// (a build-time Vite virtual module) does not need to resolve under Vitest.
+vi.mock('../changelog-modal', () => ({
+  showChangelogModal: vi.fn(),
 }));
 
 vi.mock('../v4/theme-modal', () => ({
@@ -248,6 +255,15 @@ describe('V4Layout', () => {
       );
 
       expect(container.children.length).toBeGreaterThan(0);
+    });
+
+    it('should open the changelog modal on changelog-click event', async () => {
+      await initializeV4Layout(container);
+
+      const layoutShell = container.querySelector('v4-layout-shell');
+      layoutShell?.dispatchEvent(new CustomEvent('changelog-click'));
+
+      expect(showChangelogModal).toHaveBeenCalledTimes(1);
     });
   });
 

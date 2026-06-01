@@ -8,6 +8,19 @@
  * Usage in code:
  *   import { changelogEntries } from 'virtual:changelog'
  *
+ * Expected CHANGELOG-laymans.md format (one block per release, newest first):
+ *
+ *   # What's New
+ *   ## Web-App Version 4.11.0 — May 31, 2026
+ *   ### A plain-language section heading
+ *   Optional intro paragraph.
+ *   - **Bold lead-in** then more text
+ *   - Another bullet
+ *   ### What you need to do
+ *   Nothing. …
+ *   ---
+ *   *For technical details, see CHANGELOG.md*
+ *
  * @module vite-plugin-changelog-parser
  */
 import type { Plugin } from 'vite';
@@ -36,62 +49,80 @@ interface ChangelogEntry {
 // ============================================================================
 
 const MAX_HIGHLIGHTS_PER_VERSION = 6;
-const MAX_VERSIONS_TO_INCLUDE = 6;
+const MAX_VERSIONS_TO_INCLUDE = 50; // Show the full release history; bounded to keep the bundle sane
 const MAX_HIGHLIGHT_LENGTH = 100; // Truncate very long highlights
+const MAX_BULLET_LENGTH = 200; // Truncate very long bullet descriptions
 
 // ============================================================================
 // Changelog Parser
 // ============================================================================
 
 /**
- * Parse CHANGELOG-laymans.md and extract version entries
- *
- * Format:
- *   # What's New in Version X.Y.Z
- *   *Released: Month Day, Year*
- *   ## 🐛 Section Header
- *   **Bold Highlight Title**
- *   - Explanation bullet points
+ * Strip inline markdown that the modal renders as plain text (it uses
+ * `textContent`, so `**` / `*` / `[label](url)` would otherwise show literally).
  */
-function parseChangelog(content: string): ChangelogEntry[] {
+function stripInlineMarkdown(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1') // bold
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // links → label
+    .replace(/`([^`]+)`/g, '$1') // inline code
+    .trim();
+}
+
+/**
+ * Parse CHANGELOG-laymans.md and extract version entries.
+ *
+ * Format (newest release first):
+ *   ## Web-App Version 4.11.0 — May 31, 2026
+ *   ### A plain-language section heading
+ *   - bullet text
+ *
+ * Exported for unit testing.
+ */
+export function parseChangelog(content: string): ChangelogEntry[] {
   const entries: ChangelogEntry[] = [];
 
-  // Regex to match version headers: # What's New in Version 4.1.1
-  const versionHeaderRegex = /^# What's New in Version (\d+\.\d+\.\d+)/gm;
+  // Match release headers like: "## Web-App Version 4.11.0 — May 31, 2026".
+  // The leading "Web-App" is optional and the date (after an em/en dash or hyphen)
+  // is optional. The single-"#" page title and "###" sub-headings never match.
+  const versionHeaderRegex =
+    /^##\s+[^\n]*?Version\s+(\d+\.\d+\.\d+)\s*(?:[—–-]\s*(.+?))?\s*$/gm;
 
-  // Find all version headers with their positions
-  const headers: Array<{ version: string; startIndex: number }> = [];
+  // Find all version headers with their positions and dates
+  const headers: Array<{ version: string; date: string; startIndex: number }> = [];
   let match;
 
   while ((match = versionHeaderRegex.exec(content)) !== null) {
     headers.push({
       version: match[1],
+      date: match[2] ? match[2].trim() : '',
       startIndex: match.index,
     });
   }
 
-  // Extract highlights for each version section
   for (let i = 0; i < Math.min(headers.length, MAX_VERSIONS_TO_INCLUDE); i++) {
     const header = headers[i];
     const nextHeader = headers[i + 1];
 
-    // Get the section content between this header and the next (or end of file)
+    // Content between this header and the next (or end of file)
     const sectionStart = header.startIndex;
     const sectionEnd = nextHeader ? nextHeader.startIndex : content.length;
-    const sectionContent = content.slice(sectionStart, sectionEnd);
+    let block = content.slice(sectionStart, sectionEnd);
 
-    // Extract date from section: *Released: Month Day, Year*
-    const dateMatch = sectionContent.match(/\*Released: ([^*]+)\*/);
-    const date = dateMatch ? dateMatch[1].trim() : '';
+    // Trim at the first horizontal rule so a trailing footer
+    // (e.g. "*For technical details, see CHANGELOG.md*") never leaks into a section.
+    const ruleIndex = block.search(/^\s*---\s*$/m);
+    if (ruleIndex !== -1) {
+      block = block.slice(0, ruleIndex);
+    }
 
-    // Extract bold headings (for backward compat) and full sections
-    const highlights = extractHighlights(sectionContent);
-    const sections = extractSections(sectionContent);
+    const sections = extractSections(block);
+    const highlights = extractHighlights(sections);
 
-    if (highlights.length > 0 || sections.length > 0) {
+    if (sections.length > 0) {
       entries.push({
         version: header.version,
-        date,
+        date: header.date,
         highlights,
         sections,
       });
@@ -102,35 +133,24 @@ function parseChangelog(content: string): ChangelogEntry[] {
 }
 
 /**
- * Extract highlight titles from a version section
+ * Derive highlight titles from the parsed sections.
  *
- * Strategy for CHANGELOG-laymans.md:
- * 1. Find all bold headings: **Title Text**
- * 2. These are user-friendly feature/fix titles
- * 3. Truncate overly long highlights
+ * In the current format each "###" heading is a user-friendly title, so the
+ * section headers double as highlights (used by the auto-popup's
+ * "previous updates" summary and as a backward-compatible fallback).
  */
-function extractHighlights(sectionContent: string): string[] {
+function extractHighlights(sections: ChangelogSection[]): string[] {
   const highlights: string[] = [];
 
-  // Match bold headings: **Title Text**
-  // These appear at the start of a line (possibly with whitespace)
-  const boldHeadingRegex = /^\s*\*\*([^*]+)\*\*/gm;
+  for (const section of sections) {
+    let highlight = section.header.trim();
+    if (highlight.length < 3) continue;
 
-  let match;
-  while ((match = boldHeadingRegex.exec(sectionContent)) !== null) {
-    let highlight = match[1].trim();
-
-    // Skip empty or very short headings
-    if (highlight.length < 5) continue;
-
-    // Truncate if too long
     if (highlight.length > MAX_HIGHLIGHT_LENGTH) {
       highlight = highlight.slice(0, MAX_HIGHLIGHT_LENGTH - 3) + '...';
     }
 
     highlights.push(highlight);
-
-    // Stop once we have enough
     if (highlights.length >= MAX_HIGHLIGHTS_PER_VERSION) break;
   }
 
@@ -138,50 +158,53 @@ function extractHighlights(sectionContent: string): string[] {
 }
 
 /**
- * Extract full sections from a version block
+ * Extract full sections from a version block.
  *
- * Each section is delimited by a ## heading. Within each section, we capture:
- * - header: the ## heading text (e.g., "🎨 No More Duplicate Results")
- * - title: the first bold heading (e.g., "Harmony Explorer & Palette Extractor")
- * - bullets: the dash-prefixed description lines
+ * Each section is delimited by a "### " heading. Within each section we capture:
+ * - header: the "###" heading text (e.g., "New Spectrum Filters in the Color Palette")
+ * - title: "" — this format has no standalone bold title line, so the modal renders no badge
+ * - bullets: the dash-prefixed description lines (inline markdown stripped). If a section
+ *   has no dash bullets (e.g., "What you need to do"), its paragraph text is folded in as
+ *   a single bullet so the content is not dropped.
  */
-function extractSections(sectionContent: string): ChangelogSection[] {
+function extractSections(block: string): ChangelogSection[] {
   const sections: ChangelogSection[] = [];
 
-  // Split by ## headings (level 2). The first chunk is the version header area.
-  const sectionBlocks = sectionContent.split(/^## /gm);
+  // Split on "### " headings (level 3). The first chunk is the release-header area.
+  const sectionBlocks = block.split(/^### /gm);
 
-  // Skip the first block (it's the version header / date area)
   for (let i = 1; i < sectionBlocks.length; i++) {
-    const block = sectionBlocks[i];
+    const lines = sectionBlocks[i].split('\n');
+    const header = stripInlineMarkdown(lines[0]);
+    if (!header) continue;
 
-    // First line of the block is the heading text (after the ## we split on)
-    const lines = block.split('\n');
-    const header = lines[0].trim();
-
-    // Find the bold title: **Title**
-    const titleMatch = block.match(/^\s*\*\*([^*]+)\*\*/m);
-    const title = titleMatch ? titleMatch[1].trim() : '';
-
-    // Extract bullet points: lines starting with -
     const bullets: string[] = [];
-    for (const line of lines) {
+    const paragraphs: string[] = [];
+
+    for (const line of lines.slice(1)) {
       const bulletMatch = line.match(/^\s*-\s+(.+)/);
       if (bulletMatch) {
-        let bullet = bulletMatch[1].trim();
-        if (bullet.length > 200) {
-          bullet = bullet.slice(0, 197) + '...';
-        }
-        bullets.push(bullet);
+        bullets.push(truncate(stripInlineMarkdown(bulletMatch[1])));
+        continue;
       }
+      const trimmed = stripInlineMarkdown(line);
+      if (trimmed) paragraphs.push(trimmed);
     }
 
-    if (header) {
-      sections.push({ header, title, bullets });
+    // Bullet-less sections (e.g. "What you need to do") keep their prose as one bullet.
+    if (bullets.length === 0 && paragraphs.length > 0) {
+      bullets.push(truncate(paragraphs.join(' ')));
     }
+
+    sections.push({ header, title: '', bullets });
   }
 
   return sections;
+}
+
+/** Truncate an overly long bullet for display. */
+function truncate(text: string): string {
+  return text.length > MAX_BULLET_LENGTH ? text.slice(0, MAX_BULLET_LENGTH - 3) + '...' : text;
 }
 
 // ============================================================================

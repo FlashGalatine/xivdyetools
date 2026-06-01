@@ -46,8 +46,18 @@ vi.mock('virtual:changelog', () => ({
   changelogEntries: [
     {
       version: '4.0.0',
-      date: '2024-01-15',
+      date: 'January 17, 2026',
       highlights: ['New feature 1', 'New feature 2'],
+      sections: [
+        { header: 'New feature 1', title: '', bullets: ['Does a thing', 'Does another thing'] },
+        { header: 'New feature 2', title: '', bullets: ['Even more things'] },
+      ],
+    },
+    {
+      version: '3.3.0',
+      date: 'January 8, 2026',
+      highlights: ['Older feature'],
+      sections: [{ header: 'Older feature', title: '', bullets: ['Legacy behavior'] }],
     },
   ],
 }));
@@ -162,6 +172,42 @@ describe('ChangelogModal', () => {
       // Should not throw
       expect(() => modal.close()).not.toThrow();
       expect(mockDismiss).not.toHaveBeenCalled();
+    });
+  });
+
+  // ============================================================================
+  // Full History (header "What's New" button)
+  // ============================================================================
+
+  describe('Full history (showChangelogModal)', () => {
+    it('should render every changelog entry with a version heading', async () => {
+      const { showChangelogModal, closeChangelogModal } = await import('../changelog-modal');
+      closeChangelogModal(); // ensure a clean singleton before asserting
+      vi.clearAllMocks();
+
+      showChangelogModal();
+
+      expect(mockShowChangelog).toHaveBeenCalledTimes(1);
+      const config = mockShowChangelog.mock.calls[0][0] as { content: HTMLElement };
+      // Full mode renders a "v<version> — <date>" heading for each parsed entry
+      expect(config.content.textContent).toContain('v4.0.0');
+      expect(config.content.textContent).toContain('v3.3.0');
+
+      closeChangelogModal();
+    });
+
+    it('should reuse a single instance (singleton)', async () => {
+      const { showChangelogModal, closeChangelogModal } = await import('../changelog-modal');
+      closeChangelogModal();
+      vi.clearAllMocks();
+
+      showChangelogModal();
+      showChangelogModal();
+
+      // Second call is a no-op while the modal is already open
+      expect(mockShowChangelog).toHaveBeenCalledTimes(1);
+
+      closeChangelogModal();
     });
   });
 });
