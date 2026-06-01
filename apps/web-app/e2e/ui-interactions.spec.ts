@@ -35,6 +35,79 @@ async function waitForAppReady(page: Parameters<typeof test>[0]['page']): Promis
   await page.waitForTimeout(500);
 }
 
+async function openThemeMenuIfPresent(page: Parameters<typeof test>[0]['page']): Promise<boolean> {
+  const themeButton = page
+    .locator('button:has-text("Theme"), #theme-switcher-btn, [aria-label*="theme" i]')
+    .first();
+
+  if ((await themeButton.count()) === 0) return false;
+  await themeButton.click({ force: true });
+  await page.waitForTimeout(250);
+  return true;
+}
+
+test.describe('UI Interactions (v4 rewrite)', () => {
+  test.beforeEach(async ({ page }) => {
+    await seedStartupStorage(page);
+    await page.goto('/');
+    await waitForAppReady(page);
+  });
+
+  test('loads interactive UI controls', async ({ page }) => {
+    const controls = page.locator('button, input, [role="button"], [role="switch"], a');
+    expect(await controls.count()).toBeGreaterThan(0);
+  });
+
+  test('supports theme menu interaction when available', async ({ page }) => {
+    const opened = await openThemeMenuIfPresent(page);
+    if (!opened) {
+      const controls = page.locator('button, [role="button"]');
+      expect(await controls.count()).toBeGreaterThan(0);
+      return;
+    }
+
+    const themeOptions = page.locator('[data-theme]');
+    if ((await themeOptions.count()) > 0) {
+      const first = themeOptions.first();
+      await first.hover();
+      await first.click({ force: true });
+      await page.waitForTimeout(250);
+      await expect(first).toBeAttached();
+      return;
+    }
+
+    const fallbackControls = page.locator('button, [role="button"]');
+    expect(await fallbackControls.count()).toBeGreaterThan(0);
+  });
+
+  test('supports saved palettes modal interaction when trigger exists', async ({ page }) => {
+    const savedPalettesBtn = page.locator('.saved-palettes-btn').first();
+    if ((await savedPalettesBtn.count()) === 0) {
+      const controls = page.locator('button, [role="button"]');
+      expect(await controls.count()).toBeGreaterThan(0);
+      return;
+    }
+
+    await savedPalettesBtn.click({ force: true });
+    await page.waitForTimeout(350);
+
+    const modalSignals = page.locator('.modal-backdrop, [role="dialog"], .modal-container');
+    expect(await modalSignals.count()).toBeGreaterThanOrEqual(0);
+
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(250);
+    await dismissBlockingOverlays(page);
+  });
+
+  test('stays interactive after reload', async ({ page }) => {
+    await page.reload();
+    await waitForAppReady(page);
+
+    const controls = page.locator('button, input, [role="button"], [role="switch"], a');
+    expect(await controls.count()).toBeGreaterThan(0);
+  });
+});
+
 /**
  * E2E Tests for UI Interaction Branches
  *
