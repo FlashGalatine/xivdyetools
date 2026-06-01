@@ -8,6 +8,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.16.0] - 2026-05-31
+
+Web-app release rollup for the consolidation-spectrum filter work, budget matching improvements, and v4 E2E stabilization tracked on `feat/consolidation-spectrum-filter` ahead of merge to `main`.
+
+### Added
+
+- **web-app** `4.11.0`: New Consolidation Spectrum filter chips in the color palette drawer (Standard, Wide #1, Wide #2, Unconsolidated) with all 6 locales updated for the new `colorPalette.spectrum*` keys
+- **web-app** `4.11.0`: Budget Suggestions now exposes matching-algorithm selection in v4 config and uses that algorithm for candidate matching and Delta-E sorting
+
+### Fixed
+
+- **web-app** `4.11.0`: Budget alternatives are now generated from the full in-distance dye pool instead of a hard 50-candidate cap, with vendor-cost fallback when market prices are unavailable
+- **web-app** `4.11.0`: Re-enabled and stabilized Collection Manager E2E coverage for v4 flows (tool selection, overlays, advanced settings)
+- **web-app** `4.11.0`: Updated favorites header semantics in `dye-selector.ts` to avoid invalid nested interactive controls while preserving keyboard and ARIA behavior
+
+### Changed
+
+- **web-app** `4.11.0`: Landed v4 Playwright rewrite blocks for dye comparison, dye mixer, harmony generator, and UI interactions using resilient selectors and startup hardening
+- **web-app** `4.11.0`: Tightened module surfaces and dependency hygiene via dead-code cleanup waves (DEAD-086..112)
+
+### Removed
+
+- **web-app** `4.11.0`: Removed orphaned/dead v3 and test-only UI modules, deprecated filter-chain code, unused shared exports, and obsolete dev dependencies
+
+---
+
 ## [1.15.0] - 2026-05-29
 
 Security hardening from the 2026-05-28 quick-wins audit pass, plus CJK font support in `og-worker` so shared link embeds render localized dye names in Japanese, Korean, and Chinese.

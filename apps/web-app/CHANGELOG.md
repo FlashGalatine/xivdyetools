@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [4.11.0] - 2026-05-31
 
 ### Added
 
@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Module surface tightening (DEAD-106/DEAD-107)**: Reduced over-exported internals from `src/services/index.ts` and `src/shared/category-icons.ts` to better align with actual consumption.
 - **Dependency hygiene (DEAD-109)**: Moved `@tailwindcss/postcss` to `devDependencies` and explicitly declared `cross-env` to avoid hoist-dependent script resolution.
+- **E2E v4 rewrite wave (Playwright)**: Added new active v4 rewrite blocks for `e2e/dye-comparison.spec.ts`, `e2e/dye-mixer.spec.ts`, `e2e/harmony-generator.spec.ts`, and `e2e/ui-interactions.spec.ts` using resilient selectors and startup/overlay hardening to match the v4 tool contract.
+- **E2E stabilization strategy**: Kept legacy DOM-ID-based suites quarantined (`test.describe.skip(...)`) while landing incremental v4 coverage, and revalidated each rewritten spec in Chromium before committing.
+
+### Documentation
+
+- **Test status snapshot (2026-05-31)**: Full Chromium Playwright run after the rewrite increments completed at **134 passed / 121 skipped / 0 failed**; targeted rewrite-spec runs for comparison, mixer, harmony, and UI interactions were all passing.
 
 ### Removed
 
