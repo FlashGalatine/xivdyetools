@@ -26,6 +26,7 @@ import { ToastContainer } from './toast-container';
 import { showThemeModal } from './v4/theme-modal';
 import { showLanguageModal } from './v4/language-modal';
 import { showAboutModal } from './about-modal';
+import { showChangelogModal } from './changelog-modal';
 import { WelcomeModal } from './welcome-modal';
 
 // Import V4 layout shell (registers custom element)
@@ -213,6 +214,12 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
         `[V4 Layout] Tool ${RouterService.getCurrentToolId()} does not support custom color selection`
       );
     }
+  }) as EventListener);
+
+  // Listen for "What's New" (changelog) button click from header
+  layoutElement.addEventListener('changelog-click', (() => {
+    logger.debug('[V4 Layout] Changelog button clicked');
+    showChangelogModal();
   }) as EventListener);
 
   // Listen for theme button click from header
