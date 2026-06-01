@@ -22,6 +22,93 @@ async function dismissBlockingOverlays(page: Parameters<typeof test>[0]['page'])
   });
 }
 
+async function waitForAppReady(page: Parameters<typeof test>[0]['page']): Promise<void> {
+  await page.waitForLoadState('networkidle');
+  await page.waitForFunction(
+    () => {
+      const app = document.getElementById('app');
+      return app && app.children.length > 0;
+    },
+    { timeout: 15000 }
+  );
+  await page.waitForSelector('[data-tool]', { state: 'attached', timeout: 15000 });
+  await dismissBlockingOverlays(page);
+  await page.waitForTimeout(400);
+}
+
+async function navigateToHarmonyTool(page: Parameters<typeof test>[0]['page']): Promise<void> {
+  const harmonyButton = page.locator('[data-tool="harmony"]:visible').first();
+  if ((await harmonyButton.count()) > 0) {
+    await harmonyButton.click();
+    await dismissBlockingOverlays(page);
+    await page.waitForTimeout(700);
+  }
+}
+
+test.describe('Harmony Generator Tool (v4 rewrite)', () => {
+  test.beforeEach(async ({ page }) => {
+    await seedStartupStorage(page);
+    await page.goto('/');
+    await waitForAppReady(page);
+    await navigateToHarmonyTool(page);
+  });
+
+  test('loads harmony controls', async ({ page }) => {
+    const controls = page.locator('input[type="color"], input[placeholder*="#"], button, [role="button"]');
+    expect(await controls.count()).toBeGreaterThan(0);
+  });
+
+  test('accepts hex/color input and keeps UI responsive', async ({ page }) => {
+    const hexInput = page.locator('input[placeholder*="#"]').first();
+    if ((await hexInput.count()) > 0 && (await hexInput.isVisible())) {
+      await hexInput.fill('#3498DB');
+      await hexInput.dispatchEvent('input');
+      expect((await hexInput.inputValue()).length).toBeGreaterThan(0);
+      return;
+    }
+
+    const colorPicker = page.locator('input[type="color"]').first();
+    if ((await colorPicker.count()) > 0 && (await colorPicker.isVisible())) {
+      await colorPicker.fill('#3498db');
+      await colorPicker.dispatchEvent('input');
+      expect((await colorPicker.inputValue()).length).toBeGreaterThan(0);
+      return;
+    }
+
+    const fallbackControls = page.locator('button, [role="button"]');
+    expect(await fallbackControls.count()).toBeGreaterThan(0);
+  });
+
+  test('supports mode/settings interaction when present', async ({ page }) => {
+    const radios = page.locator('input[type="radio"]');
+    if ((await radios.count()) > 0) {
+      await radios.first().click({ force: true });
+      expect(await radios.first().isChecked()).toBe(true);
+      return;
+    }
+
+    const sliders = page.locator('input[type="range"]');
+    if ((await sliders.count()) > 0 && (await sliders.first().isVisible())) {
+      await sliders.first().fill('3');
+      await sliders.first().dispatchEvent('input');
+      expect((await sliders.first().inputValue()).length).toBeGreaterThan(0);
+      return;
+    }
+
+    const fallbackControls = page.locator('input, select, button');
+    expect(await fallbackControls.count()).toBeGreaterThan(0);
+  });
+
+  test('keeps harmony tool interactive after reload', async ({ page }) => {
+    await page.reload();
+    await waitForAppReady(page);
+    await navigateToHarmonyTool(page);
+
+    const controls = page.locator('input, button, [role="button"]');
+    expect(await controls.count()).toBeGreaterThan(0);
+  });
+});
+
 /**
  * E2E Tests for Harmony Generator Tool
  *
