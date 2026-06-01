@@ -1,2 +1,8 @@
+# Normalize all text files to LF in the repository and working tree.
+# Keeps line endings deterministic across platforms (avoids autocrlf churn on
+# Windows/OneDrive, where files can otherwise show as "modified" with no real diff).
+# Binary files are auto-detected by `text=auto` and left untouched.
+* text=auto eol=lf
+
 # Ensure lockfile always uses LF line endings (pnpm YAML parser requires it)
 pnpm-lock.yaml text eol=lf
