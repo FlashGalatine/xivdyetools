@@ -1,0 +1,58 @@
+LINE COUNTS — dead/stale code impact (2026-05-31)
+=================================================
+Counted with PowerShell `(Get-Content | Measure-Object -Line).Lines`.
+
+== Category A — fully orphaned sources (no tests exist for these) ==
+  preset-tool.ts                 1524
+  preset-detail-view.ts           453
+  auth-button.ts                  357
+  my-submissions-panel.ts         443
+  tools-dropdown.ts               282
+  preset-card.ts                  162
+  -------------------------------------
+  subtotal                       3221
+
+== Category B — test-only sources ==
+  color-interpolation-display.ts  616
+  color-display.ts                475
+  theme-switcher.ts               278
+  language-selector.ts            267
+  colorblindness-display.ts       232
+  color-distance-matrix.ts        220
+  v4/glass-panel.ts               203
+  loading-spinner.ts              149
+  -------------------------------------
+  subtotal (source)              2440
+
+== Category B — their (now-pointless) test files ==
+  color-display.test.ts           346
+  color-interpolation-display.test.ts 296
+  theme-switcher.test.ts          261
+  loading-spinner.test.ts         246
+  language-selector.test.ts       271
+  color-distance-matrix.test.ts   204
+  colorblindness-display.test.ts  198
+  v4/glass-panel.test.ts           95
+  -------------------------------------
+  subtotal (test)                1917
+
+== Category C — deprecated dye-filters chain ==
+  dye-filters.ts                  385
+  dye-filters.test.ts             357
+  (+ buildFiltersPanel export in tool-panel-builders.ts ~50)
+  -------------------------------------
+  subtotal                        742 (+~50)
+
+== Rollups ==
+  Production-source dead lines (A + B-source + dye-filters.ts)   = 3221 + 2440 + 385 = 6046
+  Stale test lines (B-tests + dye-filters.test.ts)               = 1917 + 357        = 2274
+  Symbol-level unused exports (utils/error-handler/constants/…)  = +several hundred (confirm via tsc)
+  ----------------------------------------------------------------------------------------------
+  TOTAL dead/stale (excl. mockups)                               ≈ 8,320 lines
+
+== Dev-only mockups (relocation target, not dead) ==
+  src/mockups/** (14 .ts + 1 .css)                               ≈ 4,443 lines
+
+== Denominator for health grade ==
+  ~6,046 production-source dead lines of an estimated ~73k production lines ≈ 8%
+  (the 2026-02-28 audit measured ~3,600 / 71,503 ≈ 5%, grade B).

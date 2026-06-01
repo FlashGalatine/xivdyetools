@@ -1,0 +1,40 @@
+GIT STALENESS — last-touched dates & supersession (2026-05-31)
+==============================================================
+Repo: xivdyetools/ (git available). Dates from `git log -1 --date=short`.
+Audit reference date: 2026-05-31.
+
+== Fully orphaned (Category A) — last meaningful commit ==
+  components/preset-tool.ts          2026-03-01   (1524 lines)
+  components/preset-detail-view.ts   2026-03-01   ( 453 lines)
+  components/preset-card.ts          2026-02-18   ( 162 lines)
+  components/my-submissions-panel.ts 2026-02-28   ( 443 lines)
+  components/tools-dropdown.ts       2026-02-18   ( 282 lines)
+  components/auth-button.ts          2026-04-29   ( 357 lines)
+
+== Test-only (Category B) — last meaningful commit ==
+  components/color-interpolation-display.ts  2026-02-28   (616 lines)
+  components/color-display.ts                2026-02-28   (475 lines)
+  components/theme-switcher.ts               2026-02-18   (278 lines)
+  components/language-selector.ts            2026-02-18   (267 lines)
+  components/colorblindness-display.ts       2026-02-28   (232 lines)
+  components/color-distance-matrix.ts        2026-02-28   (220 lines)
+  components/loading-spinner.ts              2026-02-18   (149 lines)
+  components/v4/glass-panel.ts               2026-02-18   (203 lines)
+
+== Deprecated chain (Category C) ==
+  components/dye-filters.ts          2026-04-02   (385 lines; @deprecated)
+
+== Supersession (when the live v4 replacements first landed; `git log --diff-filter=A`) ==
+  v4/preset-tool.ts     first added 2026-02-18   -> supersedes preset-tool.ts (v3)
+  v4/preset-card.ts     first added 2026-02-18   -> supersedes preset-card.ts (v3)
+  v4/preset-detail.ts   first added 2026-02-18   -> supersedes preset-detail-view.ts (v3)
+  v4/result-card.ts     first added 2026-02-18   -> supersedes color-display / colorblindness-display /
+                                                    color-distance-matrix / color-interpolation-display
+  v4/dye-filters-v4.ts  first added 2026-04-02   -> same day dye-filters.ts (v3) marked @deprecated
+
+== Interpretation ==
+The v4 UI landed 2026-02-18. The v3 twins were frozen at/just after that date
+(last touched 2026-02-18 → 2026-03-01) and never deleted. The 2026-02-28
+ecosystem audit (DEAD-001–019) snapshot was taken DURING this transition — its
+DEAD-004 still describes preset-tool.ts (v3) as live — which is why the orphaned
+v3 preset stack was not captured then. It is captured here as DEAD-086–091.

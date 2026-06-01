@@ -206,24 +206,6 @@ vi.mock('../dye-selector', () => ({
   },
 }));
 
-vi.mock('../colorblindness-display', () => ({
-  ColorblindnessDisplay: class MockColorblindnessDisplay {
-    container: HTMLElement;
-    constructor(container: HTMLElement) {
-      this.container = container;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'colorblindness-display';
-      this.container.appendChild(div);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-    }
-    updateColor() {}
-  },
-}));
-
 vi.mock('../dye-action-dropdown', () => ({
   createDyeActionDropdown: vi.fn().mockImplementation(() => {
     const div = document.createElement('div');

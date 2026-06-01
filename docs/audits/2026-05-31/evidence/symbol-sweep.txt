@@ -1,0 +1,73 @@
+SYMBOL-LEVEL UNUSED-EXPORT SWEEP — services/ + shared/ (2026-05-31)
+===================================================================
+Method: extracted every `export {const|function|class|interface|enum|type} NAME`
+in services/ and shared/ (non-test). For each NAME, counted whole-word references
+in OTHER non-test source files. Flags:
+  NO-PROD-REF  = appears in no other production file (may be used internally only,
+                 or genuinely dead). tested:True means a *.test.ts references it.
+  BARREL-ONLY  = the only production reference is services/index.ts (re-exported
+                 but never imported-by-name anywhere) => over-exported.
+
+*** HEURISTIC. Confirm each removal with `tsc --noEmit`. Type-only usages,
+    internal-only consumption, and re-exports cause false positives. ***
+*** Two manual corrections already applied:
+      - shared/types.ts AppState/HarmonyState/MatcherState/ComparisonState:
+        prior audit DEAD-018 adjudicated KEEP ("needed"). Do NOT remove. (DEAD-105)
+      - shared/category-icons.ts ICON_CATEGORY_* / CATEGORY_ICONS: consumed
+        INTERNALLY by the live getCategoryIcon(); over-export, file is LIVE. (DEAD-106)
+
+TOTAL candidates: 146
+
+--- shared/utils.ts (DEAD-102) — exported + unit-tested, no prod call-site ---
+  isEven isOdd isNumber isString isObject isNullish toRadians toDegrees lerp
+  formatNumber repeatString slugify camelToTitle sleep withTimeout deepClone
+  mergeObjects groupBy chunk flatten intersection filterNulls sortByProperty
+  isValidEmail isValidURL isValidHexColor isValidHSV isValidRGB escapeHTML
+  (DebouncedFunction type)  [all NO-PROD-REF; most tested:True]
+  NOTE: utils.ts ALSO exports live helpers (e.g. clearContainer, debounce, the
+  used escaping path) — remove only the unused subset above.
+
+--- shared/error-handler.ts (DEAD-103) — tested, no prod call-site ---
+  validateRange validateNotNull validateNotEmpty validateCondition
+  handleError handleAsyncError createResult createAsyncResult
+  withAsyncErrorHandling withErrorHandling (BARREL-ONLY)
+  NOTE: ErrorHandler.log / createUserMessage ARE used by main.ts — keep those.
+
+--- shared/constants.ts (DEAD-104; CONTINUATION of DEAD-012, still un-actioned) ---
+  APP_DESCRIPTION BRETTEL_MATRICES CARD_CLASSES DEBOUNCE_DELAYS KEYBOARD_SHORTCUTS
+  MAX_DYES_ACCESSIBILITY MAX_DYES_COMPARISON THEME_COUNT THEME_DISPLAY_NAMES
+  VISION_TYPE_LABELS  [all NO-PROD-REF]  (DEAD-012 listed ~30; this is the remainder)
+
+--- shared/types.ts (DEAD-105; CROSS-REF DEAD-018 = KEEP) ---
+  AppState ComparisonState HarmonyState MatcherState  [NO-PROD-REF, but KEEP per DEAD-018 — MONITOR only]
+
+--- shared/category-icons.ts (DEAD-106; over-export, file LIVE) ---
+  CATEGORY_ICONS ICON_CATEGORY_AESTHETICS ICON_CATEGORY_COMMUNITY ICON_CATEGORY_DEFAULT
+  ICON_CATEGORY_EVENTS ICON_CATEGORY_GRAND_COMPANIES ICON_CATEGORY_JOBS ICON_CATEGORY_SEASONS
+  -> used internally by getCategoryIcon() (line 112); recommend dropping `export`, keep file.
+
+--- shared/ other ---
+  browser-api-types.ts: EyeDropperConstructor (NO-PROD-REF)
+  social-icons.ts: SOCIAL_ICONS, getSocialIcon (NO-PROD-REF, tested) — verify (used by about/footer?)
+  spectrum-filter-utils.ts: spectrumKeyForDye (NO-PROD-REF, tested — but filterDyesBySpectra IS used)
+  tool-config-types.ts: isToolId (NO-PROD-REF)
+  tool-icons.ts: getToolIcon (NO-PROD-REF, tested)
+  logger.ts: __setTestEnvironment (NO-PROD-REF, test-only helper — keep or mark @internal)
+
+--- services/index.ts BARREL-ONLY over-exports (DEAD-107; CONTINUATION of DEAD-016) ---
+  Types used only inside their own file but re-exported for absent consumers:
+  AnnouncementPriority AuthStateListener CameraDevice CollectionExport ImportResult
+  CategoryWithCount PresetListResponse VoteCheckResponse VoteResponse ConfigChangeEvent
+  StoreName FetchErrorEvent MarketBoardEventType PricesUpdatedEvent ServerChangedEvent
+  SettingsChangedEvent BlendingConfig ModalType GetPresetsOptions UnifiedCategory
+  MySubmissionsResponse ValidationError DyePriceDisplayOptions PriceCardData
+  RouteDefinition AccessibilityShareParams BudgetShareParams ComparisonShareParams
+  ExtractorShareParams GradientShareParams HarmonyShareParams MixerShareParams
+  ParsedShareUrl ShareAnalyticsEvent ShareResult ToastOptions TooltipConfig
+  TooltipPosition FiltersPanelConfig FiltersPanelRefs MarketPanelConfig
+  BASE_URL SHARE_URL_VERSION
+  -> Recommendation: drop `export` (make local) rather than delete. Low value.
+
+--- services/tool-panel-builders.ts ---
+  buildFiltersPanel (BARREL-ONLY, no prod call-site) -> DEAD-100 (drives dye-filters.ts deadness)
+  buildMarketPanel  -> LIVE (extractor-tool.ts:826, gradient-tool.ts:579) — KEEP

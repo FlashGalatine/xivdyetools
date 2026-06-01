@@ -62,15 +62,6 @@ async function initializeApp(): Promise<void> {
       'API Service': status.api.available ? `Available (${status.api.latency}ms)` : 'Unavailable',
     });
 
-    // DEV ONLY: Load mockup system if ?mockup=true is in URL (for testing mockups directly)
-    if (import.meta.env.DEV && window.location.search.includes('mockup=true')) {
-      logger.info('🎨 Loading mockup system (dev mode)...');
-      const { loadMockupSystem } = await import('@mockups/index');
-      loadMockupSystem(appContainer);
-      logger.info('✅ Mockup system loaded. Access at: http://localhost:5173/?mockup=true');
-      return;
-    }
-
     // Initialize v4 glassmorphism layout directly on app container
     // (Removed v3 AppLayout wrapper to eliminate double-header issue)
     logger.info('🎨 Initializing v4 layout shell...');

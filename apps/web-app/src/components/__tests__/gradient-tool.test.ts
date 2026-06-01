@@ -231,27 +231,6 @@ vi.mock('../dye-filters', () => ({
   },
 }));
 
-vi.mock('../color-interpolation-display', () => ({
-  ColorInterpolationDisplay: class MockColorInterpolationDisplay {
-    container: HTMLElement;
-    constructor(container: HTMLElement) {
-      this.container = container;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'color-interpolation-display';
-      this.container.appendChild(div);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-    }
-    update() {}
-    setColors() {}
-    setStepCount() {}
-    setColorSpace() {}
-  },
-}));
-
 vi.mock('../dye-action-dropdown', () => ({
   createDyeActionDropdown: vi.fn().mockImplementation(() => {
     const div = document.createElement('div');

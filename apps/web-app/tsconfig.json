@@ -21,7 +21,6 @@
       "@shared/*": ["./src/shared/*"],
       "@apps/*": ["./src/apps/*"],
       "@data/*": ["./src/data/*"],
-      "@mockups/*": ["./src/mockups/*"],
       "@v4/*": ["./src/components/v4/*"]
     },
     "types": ["vitest/globals", "node"]

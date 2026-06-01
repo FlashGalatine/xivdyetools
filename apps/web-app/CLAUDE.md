@@ -140,8 +140,8 @@ src/
 │   └── subscription-manager.ts      # Pub/sub helpers for service events
 ├── styles/                          # themes.css (12 themes), v4-utilities.css, v4-layout.css, tailwind.css
 ├── locales/                         # Per-language UI strings (en, ja, de, fr, ko, zh)
-├── mockups/                         # Dev-only design mockups (loaded with ?mockup=true)
 └── public/                          # robots.txt, manifest.json, _headers (CSP)
+# (dev-only mockups relocated 2026-05-31 → docs/historical/web-app/20260531-Mockups/ — see docs/audits/2026-05-31/findings/DEAD-112.md)
 ```
 
 ### Path Aliases (vite.config.ts + tsconfig)
@@ -151,7 +151,7 @@ import { ColorService } from '@services/index';
 import { BaseComponent } from '@components/base-component';
 import { escapeHtml } from '@shared/utils';
 import { THEMES } from '@v4/theme-modal';
-// Also: @, @apps, @data, @assets, @mockups
+// Also: @, @apps, @data, @assets
 ```
 
 ## Key Patterns

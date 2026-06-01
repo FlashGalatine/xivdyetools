@@ -203,25 +203,6 @@ vi.mock('../dye-selector', () => ({
   },
 }));
 
-vi.mock('../color-distance-matrix', () => ({
-  ColorDistanceMatrix: class MockColorDistanceMatrix {
-    container: HTMLElement;
-    constructor(container: HTMLElement) {
-      this.container = container;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'color-distance-matrix';
-      this.container.appendChild(div);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-    }
-    update() {}
-    setDyes() {}
-  },
-}));
-
 vi.mock('../dye-action-dropdown', () => ({
   createDyeActionDropdown: vi.fn().mockImplementation(() => {
     const div = document.createElement('div');

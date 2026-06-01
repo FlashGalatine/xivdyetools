@@ -1,0 +1,46 @@
+DEPENDENCY SCAN — web-app (2026-05-31)
+======================================
+Corpus: src/**, e2e/**, scripts/**, and root config files read directly
+(postcss.config.js, eslint.config.js, vite.config.ts, tailwind.config.js,
+playwright.config.ts). NOTE: an earlier automated pass used
+`Get-ChildItem -Include` WITHOUT `-Recurse`, which silently skips root-level
+files — so the build-tool deps below were re-verified by reading the configs.
+
+== dependencies ==
+  @xivdyetools/core      USED (23+ refs)
+  @xivdyetools/types     USED (60+ refs)
+  @xivdyetools/logger    USED (shared/logger.ts)
+  lit                    USED (v4 components, 180+ refs)
+  spectral.js            USED (services/mixer-blending-engine.ts — Mixer "Spectral" mode)
+  @tailwindcss/postcss   USED (postcss.config.js) — but build-only; should live in devDependencies (DEAD-109)
+
+== devDependencies ==
+  @playwright/test            USED (e2e/ + playwright.config.ts)
+  vite                        USED (vite.config.ts + plugins)
+  vitest                      USED (test runner)
+  @vitest/coverage-v8         USED via CLI flag --coverage (not imported — DO NOT flag)
+  @vitest/ui                  USED via CLI flag --ui (not imported — DO NOT flag)
+  jsdom                       USED (vitest environment)
+  msw                         USED (src/__tests__/mocks/*)
+  sharp                       USED (scripts/convert-icons-to-webp.js)
+  autoprefixer                USED (postcss.config.js)
+  postcss                     USED (transitive/peer of @tailwindcss/postcss + vite) — keep
+  @types/node                 USED (ambient types — DO NOT flag)
+  eslint-config-prettier      USED (eslint.config.js: `import prettier from 'eslint-config-prettier'`)
+  eslint-plugin-prettier      USED (eslint.config.js: `eslint-plugin-prettier/recommended`)
+  tailwindcss                 USED (build:css script + tailwind.config.js)
+
+  @testing-library/dom        *** ZERO imports in src/ or e2e/ — CANDIDATE UNUSED (DEAD-108) ***
+  @testing-library/user-event *** ZERO imports in src/ or e2e/ — CANDIDATE UNUSED (DEAD-108) ***
+  @xivdyetools/test-utils     *** ZERO imports anywhere — CANDIDATE UNUSED (DEAD-108) ***
+
+== Phantom dependency (DEAD-109) ==
+  cross-env  — used in package.json script `test:e2e:coverage`
+               (`cross-env PLAYWRIGHT_PROJECT_NAME=...`) but NOT declared in
+               package.json. Currently resolved via pnpm root hoisting; should be
+               declared as an explicit devDependency.
+
+== Caveat ==
+@testing-library/* and @xivdyetools/test-utils being unreferenced is a STRONG
+signal but confirm with `pnpm --filter xivdyetools-web-app why <pkg>` and a build
+before removing — a setup file or transitive re-export could still pull them.

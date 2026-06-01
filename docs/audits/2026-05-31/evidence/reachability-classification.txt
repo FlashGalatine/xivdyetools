@@ -1,0 +1,58 @@
+IMPORT-GRAPH REACHABILITY CLASSIFICATION — web-app (2026-05-31)
+================================================================
+Method: PowerShell import-graph traversal. Roots = src/main.ts (production,
+mockups branch excluded as it is behind `import.meta.env.DEV`), all *.test.ts /
+*.spec.ts (tests), src/mockups/index.ts (dev). Specifiers resolved through the
+Vite aliases (@, @components, @services, @shared, @v4, @mockups) and relative
+paths; static + dynamic import() + `export ... from` edges followed.
+
+Totals across 137 non-test .ts files:
+  production-reachable : 110
+  dev/mockup-only      :  13
+  test-only            :   8
+  fully orphaned       :   6
+
+== FULLY ORPHANED (no prod, no test, no mockup import) — 6 ==
+  components/auth-button.ts            (imported only by orphaned preset-tool.ts:14 — cascade)
+  components/my-submissions-panel.ts
+  components/preset-card.ts            (v3 twin of v4/preset-card.ts)
+  components/preset-detail-view.ts     (v3 twin of v4/preset-detail.ts)
+  components/preset-tool.ts            (v3 twin of v4/preset-tool.ts)
+  components/tools-dropdown.ts
+
+== TEST-ONLY (prod-unreachable, but a *.test.ts imports the source) — 8 ==
+  components/colorblindness-display.ts
+  components/color-display.ts
+  components/color-distance-matrix.ts
+  components/color-interpolation-display.ts
+  components/language-selector.ts
+  components/loading-spinner.ts
+  components/theme-switcher.ts
+  components/v4/glass-panel.ts
+
+== DEV/MOCKUP-ONLY (never in the production bundle; reached only from
+   mockups/index.ts, itself behind DEV && ?mockup=true) — 13 ==
+  mockups/index.ts
+  mockups/CollapsiblePanel.ts
+  mockups/IconRail.ts
+  mockups/MobileDrawer.ts
+  mockups/MockupNav.ts
+  mockups/MockupShell.ts
+  mockups/tools/AccessibilityMockup.ts
+  mockups/tools/BudgetMockup.ts
+  mockups/tools/ComparisonMockup.ts
+  mockups/tools/HarmonyMockup.ts
+  mockups/tools/MatcherMockup.ts
+  mockups/tools/MixerMockup.ts
+  mockups/tools/PresetsMockup.ts
+  (+ mockups/mockup-gradient-themes.css)
+
+== VERIFICATION NOTES ==
+- accessibility-tool.ts (live) imports `@components/v4/result-card` (line 16),
+  NOT colorblindness-display — confirming the latter is dead-in-prod.
+- comparison-tool.ts / gradient-tool.ts likewise route through v4/result-card,
+  not the standalone color-distance-matrix / color-interpolation-display.
+- <v4-glass-panel> custom element appears in NO production template; only its own
+  test dynamically imports the module.
+- No `import.meta.glob` / side-effect-registration patterns were found that would
+  rescue any orphan.
