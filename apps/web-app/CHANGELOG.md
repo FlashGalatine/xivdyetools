@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **"What's New" changelog modal**: New scroll-icon button in the v4 header ([`src/components/v4/v4-app-header.ts`](src/components/v4/v4-app-header.ts)), grouped with About/Language/Theme, that opens the layman's changelog as a full release-history modal. A new `changelog-click` event bubbles through [`v4-layout-shell.ts`](src/components/v4/v4-layout-shell.ts) to [`v4-layout.ts`](src/components/v4-layout.ts), which calls the new `showChangelogModal()` singleton. New `ICON_SCROLL` (scroll/parchment) in [`src/shared/ui-icons.ts`](src/shared/ui-icons.ts); the button tooltip reuses the existing `changelog.title` locale key, so no new locale keys were added
+- **Full-history mode for `ChangelogModal`**: `show({ full: true })` plus exported `showChangelogModal()` / `closeChangelogModal()` in [`src/components/changelog-modal.ts`](src/components/changelog-modal.ts) render every parsed release with its own version heading. The automatic "version changed" popup keeps its existing current-plus-recent behavior
+- **Layman's changelog backfill**: Plain-language entries for user-facing releases v4.0.0 through v4.10.0 added to [`CHANGELOG-laymans.md`](CHANGELOG-laymans.md) so the modal shows the full v4 history; dependency bumps, lint passes, and security/maintenance-only patches were intentionally folded out
+- **Tests**: New `src/__tests__/changelog-parser.test.ts` regression guard; the changelog-modal and v4-layout suites now cover the full-history modal and the `changelog-click` event
+
+### Fixed
+
+- **Automatic "What's New" popup was silently empty**: [`vite-plugin-changelog-parser.ts`](vite-plugin-changelog-parser.ts) now parses the current `CHANGELOG-laymans.md` format (`## Web-App Version X.Y.Z — Date` headers and `###` sections, with `**bold**` stripped from bullets and the trailing footer trimmed at the `---` rule). The previous regex expected `# What's New in Version X.Y.Z` and matched nothing, leaving `virtual:changelog` empty so the popup fell back to `changelog.noChanges`. `parseChangelog` is now exported for testing
+
+---
+
 ## [4.11.0] - 2026-05-31
 
 ### Added
