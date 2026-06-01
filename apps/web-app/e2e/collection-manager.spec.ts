@@ -1,5 +1,71 @@
 import { test, expect } from '@playwright/test';
 
+async function dismissBlockingOverlays(page: Parameters<typeof test>[0]['page']): Promise<void> {
+  // Dismiss offline banner if present
+  await page.evaluate(() => {
+    const dismissBtn = document.querySelector(
+      'button[aria-label*="dismiss" i], [role="alert"] button'
+    );
+    if (dismissBtn instanceof HTMLButtonElement) {
+      dismissBtn.click();
+    }
+  });
+
+  // Dismiss any leftover modal backdrops that block interactions
+  for (let i = 0; i < 5; i++) {
+    const backdropCount = await page.locator('.modal-backdrop').count();
+    if (backdropCount === 0) break;
+
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(250);
+  }
+
+  // Last-resort cleanup for layered/stuck modal DOM nodes
+  await page.evaluate(() => {
+    document.querySelectorAll('.modal-backdrop').forEach((el) => el.remove());
+  });
+}
+
+async function seedStartupStorage(page: Parameters<typeof test>[0]['page']): Promise<void> {
+  await page.addInitScript(() => {
+    localStorage.setItem('xivdyetools_welcome_seen', 'true');
+    localStorage.setItem('xivdyetools_last_version_viewed', '4.10.0');
+    localStorage.setItem('xivdyetools_tutorials_disabled', 'true');
+  });
+}
+
+async function waitForAppReady(page: Parameters<typeof test>[0]['page']): Promise<void> {
+  await page.waitForLoadState('networkidle');
+  await page.waitForFunction(
+    () => {
+      const app = document.getElementById('app');
+      return app && app.children.length > 0;
+    },
+    { timeout: 15000 }
+  );
+  await page.waitForSelector('[data-tool]', { state: 'attached', timeout: 15000 });
+  await dismissBlockingOverlays(page);
+  await page.waitForTimeout(500);
+}
+
+async function switchToTool(
+  page: Parameters<typeof test>[0]['page'],
+  toolId: string
+): Promise<void> {
+  const toolButton = page.locator(`[data-tool="${toolId}"]:visible`).first();
+  await toolButton.click();
+  await page.waitForTimeout(900);
+  await dismissBlockingOverlays(page);
+}
+
+async function expandAdvancedSettings(page: Parameters<typeof test>[0]['page']): Promise<void> {
+  await switchToTool(page, 'budget');
+
+  const advancedSettingsToggle = page.getByRole('button', { name: /Advanced Settings/i }).first();
+  await advancedSettingsToggle.click();
+  await expect(page.getByRole('button', { name: /^Clear Favorites$/i }).first()).toBeVisible();
+}
+
 /**
  * E2E Tests for Collection Manager Modal
  *
@@ -19,32 +85,12 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Collection Manager Modal', () => {
   test.beforeEach(async ({ page }) => {
-    // Mark welcome/changelog modals as seen to prevent them from auto-opening
-    await page.addInitScript(() => {
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '2.6.0');
-    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await seedStartupStorage(page);
 
     // Navigate to the app
     await page.goto('/');
-
-    // Wait for the app layout to be ready
-    await page.waitForLoadState('networkidle');
-
-    // Wait for the #app container to have content (app initialized)
-    await page.waitForFunction(
-      () => {
-        const app = document.getElementById('app');
-        return app && app.children.length > 0;
-      },
-      { timeout: 15000 }
-    );
-
-    // Wait for tool buttons to exist in DOM (may be hidden on mobile)
-    await page.waitForSelector('[data-tool-id]', { state: 'attached', timeout: 15000 });
-
-    // Wait for the default tool to load
-    await page.waitForTimeout(1000);
+    await waitForAppReady(page);
   });
 
   test('should load the application successfully', async ({ page }) => {
@@ -52,158 +98,147 @@ test.describe('Collection Manager Modal', () => {
     await expect(page).toHaveTitle(/XIV Dye Tools/);
 
     // Verify tool buttons exist (app is initialized) - use first() for multiple matches
-    const toolButtons = page.locator('[data-tool-id]').first();
+    const toolButtons = page.locator('[data-tool]').first();
     await expect(toolButtons).toBeAttached();
 
     // Verify multiple tool button instances exist (desktop, mobile, dropdown)
-    const allToolButtons = page.locator('[data-tool-id]');
+    const allToolButtons = page.locator('[data-tool]');
     const count = await allToolButtons.count();
     expect(count).toBeGreaterThan(0);
   });
 
   test('should show tool navigation buttons', async ({ page }) => {
     // Check that tool navigation buttons exist (they appear in multiple places)
-    // Use getByRole to find visible buttons with accessible names
-    const harmonyButton = page.getByRole('button', { name: /Color Harmony|Harmony/i }).first();
+    // Verify the primary tool button exists
+    const harmonyButton = page.locator('[data-tool="harmony"]').first();
     await expect(harmonyButton).toBeAttached();
 
-    // Check other tool buttons exist by data-tool-id attribute
-    const matcherButtons = page.locator('[data-tool-id="matcher"]');
-    const comparisonButtons = page.locator('[data-tool-id="comparison"]');
+    // Check other tool buttons exist by data-tool attribute
+    const extractorButtons = page.locator('[data-tool="extractor"]');
+    const comparisonButtons = page.locator('[data-tool="comparison"]');
 
     // Each tool appears multiple times (desktop nav, mobile nav, dropdown)
-    expect(await matcherButtons.count()).toBeGreaterThan(0);
+    expect(await extractorButtons.count()).toBeGreaterThan(0);
     expect(await comparisonButtons.count()).toBeGreaterThan(0);
   });
 
   test('should be able to switch between tools', async ({ page }) => {
-    // Click on a visible matcher tool button
-    const matcherButton = page.locator('[data-tool-id="matcher"]:visible').first();
-    await matcherButton.click();
+    // Click on a visible extractor tool button
+    const extractorButton = page.locator('[data-tool="extractor"]:visible').first();
+    await extractorButton.click();
 
     // Wait for the tool to load
     await page.waitForTimeout(1000);
 
     // Verify the button is still attached (tool loaded)
-    await expect(matcherButton).toBeAttached();
+    await expect(extractorButton).toBeAttached();
   });
 
-  test('should show Manage Collections button when dye selector has favorites', async ({
+  test('should show favorites section in the v4 color palette', async ({
     page,
   }) => {
-    // Wait for any dye-selector to appear (inside the loaded tool)
-    const dyeSelector = page.locator('dye-selector').first();
-
-    // Check if dye-selector exists
-    if ((await dyeSelector.count()) > 0) {
-      // Look for the manage collections button within the page
-      const manageBtn = page.locator('#manage-collections-btn');
-
-      // The button might be visible or hidden depending on UI state
-      const btnCount = await manageBtn.count();
-      expect(btnCount).toBeGreaterThanOrEqual(0);
-    } else {
-      // Tool doesn't have dye-selector, which is fine
-      test.skip();
-    }
+    await expect(page.getByText(/Favorites \(\d+\)/)).toBeVisible();
   });
 
-  test('should open collection manager modal when Manage Collections button exists', async ({
-    page,
-  }) => {
-    const manageBtn = page.locator('#manage-collections-btn');
-    await manageBtn.waitFor({ state: 'visible', timeout: 5000 });
-    await manageBtn.click();
-    await page.waitForSelector('.modal-backdrop', { timeout: 5000 });
-    await expect(page.locator('#modal-root .collection-manager-modal')).toBeVisible();
+  test('should add a dye to favorites', async ({ page }) => {
+    const addToFavoritesButton = page
+      .locator('button[aria-label*="Add to favorites" i]')
+      .first();
+    await addToFavoritesButton.click();
+
+    await expect(page.getByText(/Favorites \(1\)/)).toBeVisible();
   });
 
-  test('should close modal with Escape key', async ({ page }) => {
-    const manageBtn = page.locator('#manage-collections-btn');
-    await manageBtn.waitFor({ state: 'visible', timeout: 5000 });
-    await manageBtn.click();
-    await page.waitForSelector('.modal-backdrop', { timeout: 5000 });
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
-    const modalCount = await page.locator('.modal-backdrop').count();
-    expect(modalCount).toBe(0);
+  test('should collapse and expand favorites section', async ({ page }) => {
+    const favoritesHeader = page.getByText(/Favorites \(\d+\)/).first();
+
+    await favoritesHeader.click();
+    await expect(page.getByText(/Click the ★ on any dye to add it to your favorites/i)).toBeHidden();
+
+    await favoritesHeader.click();
+    await expect(page.getByText(/Click the ★ on any dye to add it to your favorites/i)).toBeVisible();
   });
 
-  test('should create a new collection', async ({ page }) => {
+  test('should clear favorites from advanced settings', async ({ page }) => {
+    const addToFavoritesButton = page
+      .locator('button[aria-label*="Add to favorites" i]')
+      .first();
+    await addToFavoritesButton.click();
+    await expect(page.getByText(/Favorites \(1\)/)).toBeVisible();
+
+    await expandAdvancedSettings(page);
+
+    const clearFavoritesButton = page.getByRole('button', { name: /^Clear Favorites$/i }).first();
+    await clearFavoritesButton.click();
+
+    await expect
+      .poll(async () => {
+        return page.evaluate(() => {
+          const raw = localStorage.getItem('xivdye-favorites');
+          if (!raw) return 0;
+
+          try {
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed.length : -1;
+          } catch {
+            return -1;
+          }
+        });
+      })
+      .toBe(0);
+  });
+
+  test('should export app data as JSON from advanced settings', async ({ page }) => {
     await page.evaluate(() => {
       localStorage.removeItem('xivdye-collections');
       localStorage.removeItem('xivdye-favorites');
       localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '2.6.0');
+      localStorage.setItem('xivdyetools_last_version_viewed', '4.10.0');
+      localStorage.setItem('xivdyetools_tutorials_disabled', 'true');
     });
     await page.reload();
-    const manageBtn = page.locator('#manage-collections-btn');
-    await manageBtn.click();
-    await page.waitForSelector('.modal-backdrop', { timeout: 5000 });
-    const newCollectionBtn = page.locator('button').filter({ hasText: /New Collection/i }).first();
-    await newCollectionBtn.click();
-    const nameInput = page.locator('input[type="text"]').first();
-    await nameInput.fill('E2E Test Collection');
-    const createBtn = page.locator('button').filter({ hasText: /Create|Save/i }).last();
-    await createBtn.click();
-    await expect(page.locator('text=E2E Test Collection')).toBeVisible();
-  });
+    await waitForAppReady(page);
 
-  test('should export collections as JSON', async ({ page }) => {
-    await page.evaluate(() => {
-      const collections = [
-        { id: 'e2e-test-1', name: 'E2E Export Test', dyes: [1, 2, 3] },
-      ];
-      localStorage.setItem('xivdye-collections', JSON.stringify(collections));
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '2.6.0');
-    });
-    await page.reload();
-    const manageBtn = page.locator('#manage-collections-btn');
-    await manageBtn.click();
-    await page.waitForSelector('.modal-backdrop', { timeout: 5000 });
-    const exportBtn = page.locator('button').filter({ hasText: /Export All/i }).first();
+    await expandAdvancedSettings(page);
+
+    const exportBtn = page.getByRole('button', { name: /^Export$/i }).first();
     const [download] = await Promise.all([
       page.waitForEvent('download', { timeout: 5000 }).catch(() => null),
       exportBtn.click(),
     ]);
     if (download) {
-      expect(download.suggestedFilename()).toContain('xivdyetools');
+      expect(download.suggestedFilename().toLowerCase()).toContain('.json');
     }
   });
 });
 
 test.describe('App Navigation', () => {
   test.beforeEach(async ({ page }) => {
-    // Mark welcome/changelog modals as seen to prevent them from auto-opening
-    await page.addInitScript(() => {
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '2.6.0');
-    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await seedStartupStorage(page);
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-
-    // Wait for the #app container to have content (app initialized)
-    await page.waitForFunction(
-      () => {
-        const app = document.getElementById('app');
-        return app && app.children.length > 0;
-      },
-      { timeout: 15000 }
-    );
-
-    await page.waitForSelector('[data-tool-id]', { state: 'attached', timeout: 15000 });
-    await page.waitForTimeout(1000);
+    await waitForAppReady(page);
+    await page.waitForTimeout(500);
   });
 
   test('should navigate to different tools', async ({ page }) => {
     // Navigate to each tool and verify it loads
-    const tools = ['harmony', 'matcher', 'accessibility', 'comparison', 'mixer', 'presets'];
+    const tools = [
+      'harmony',
+      'extractor',
+      'accessibility',
+      'comparison',
+      'gradient',
+      'mixer',
+      'presets',
+      'budget',
+      'swatch',
+    ];
 
     for (const toolId of tools) {
       // Use :visible to target the visible button (desktop or mobile)
-      const button = page.locator(`[data-tool-id="${toolId}"]:visible`).first();
+      const button = page.locator(`[data-tool="${toolId}"]:visible`).first();
 
       if ((await button.count()) > 0) {
         await button.click();
@@ -216,13 +251,13 @@ test.describe('App Navigation', () => {
   });
 
   test('should persist tool state across page interactions', async ({ page }) => {
-    // Click on a visible matcher tool button
-    const matcherButton = page.locator('[data-tool-id="matcher"]:visible').first();
-    await matcherButton.click();
+    // Click on a visible extractor tool button
+    const extractorButton = page.locator('[data-tool="extractor"]:visible').first();
+    await extractorButton.click();
     await page.waitForTimeout(1000);
 
     // The matcher tool should be "selected" (active state)
     // Verify by checking it's still attached
-    await expect(matcherButton).toBeAttached();
+    await expect(extractorButton).toBeAttached();
   });
 });
