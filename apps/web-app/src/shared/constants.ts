@@ -7,7 +7,6 @@
  * @module shared/constants
  */
 
-import type { VisionType, ColorblindMatrices } from '@xivdyetools/types';
 import type { ThemeName } from './types';
 import type { LocaleCode, LocaleDisplay } from './i18n-types';
 
@@ -19,9 +18,6 @@ export const APP_NAME = 'XIV Dye Tools';
 // Version injected from package.json by Vite at build time
 declare const __APP_VERSION__: string;
 export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
-export const APP_DESCRIPTION =
-  'A comprehensive web-based toolset for Final Fantasy XIV players to explore dye colors';
-
 // ============================================================================
 // Theme Configuration
 // ============================================================================
@@ -41,27 +37,7 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'high-contrast-dark',
 ] as const;
 
-export const THEME_COUNT = THEME_NAMES.length;
-
 export const DEFAULT_THEME: ThemeName = 'premium-dark';
-
-/**
- * Theme display names for UI
- */
-export const THEME_DISPLAY_NAMES: Record<ThemeName, string> = {
-  'standard-light': 'Standard (Light)',
-  'standard-dark': 'Standard (Dark)',
-  'premium-dark': 'Premium Dark',
-  'hydaelyn-light': 'Hydaelyn',
-  'og-classic-dark': 'OG Classic',
-  'parchment-light': 'Parchment',
-  'cotton-candy': 'Cotton Candy',
-  'sugar-riot': 'Sugar Riot',
-  'grayscale-light': 'Grayscale (Light)',
-  'grayscale-dark': 'Grayscale (Dark)',
-  'high-contrast-light': 'High Contrast (Light)',
-  'high-contrast-dark': 'High Contrast (Dark)',
-};
 
 // ============================================================================
 // Localization Configuration
@@ -95,57 +71,6 @@ export const LOCALE_DISPLAY_INFO: readonly LocaleDisplay[] = [
 ] as const;
 
 // ============================================================================
-// Vision Type Configuration
-// ============================================================================
-
-export const VISION_TYPES: readonly VisionType[] = [
-  'normal',
-  'deuteranopia',
-  'protanopia',
-  'tritanopia',
-  'achromatopsia',
-] as const;
-
-export const VISION_TYPE_LABELS: Record<VisionType, string> = {
-  normal: 'Normal Vision',
-  deuteranopia: 'Deuteranopia (Red-Green Colorblindness)',
-  protanopia: 'Protanopia (Red-Green Colorblindness)',
-  tritanopia: 'Tritanopia (Blue-Yellow Colorblindness)',
-  achromatopsia: 'Achromatopsia (Total Colorblindness)',
-};
-
-// ============================================================================
-// Colorblindness Transformation Matrices (Brettel 1997)
-// ============================================================================
-
-/**
- * Brettel 1997 transformation matrices for colorblindness simulation
- * These matrices transform RGB values to simulate different types of colorblindness
- */
-export const BRETTEL_MATRICES: ColorblindMatrices = {
-  deuteranopia: [
-    [0.625, 0.375, 0.0],
-    [0.7, 0.3, 0.0],
-    [0.0, 0.3, 0.7],
-  ],
-  protanopia: [
-    [0.567, 0.433, 0.0],
-    [0.558, 0.442, 0.0],
-    [0.0, 0.242, 0.758],
-  ],
-  tritanopia: [
-    [0.95, 0.05, 0.0],
-    [0.0, 0.433, 0.567],
-    [0.0, 0.475, 0.525],
-  ],
-  achromatopsia: [
-    [0.299, 0.587, 0.114],
-    [0.299, 0.587, 0.114],
-    [0.299, 0.587, 0.114],
-  ],
-};
-
-// ============================================================================
 // localStorage Configuration
 // ============================================================================
 
@@ -174,47 +99,11 @@ export const STORAGE_KEYS = {
 } as const;
 
 // ============================================================================
-// Color Conversion Constraints
-// ============================================================================
-
-/**
- * RGB value constraints
- */
-export const RGB_MIN = 0;
-export const RGB_MAX = 255;
-
-/**
- * HSV value constraints
- */
-export const HUE_MIN = 0;
-export const HUE_MAX = 360;
-export const SATURATION_MIN = 0;
-export const SATURATION_MAX = 100;
-export const VALUE_MIN = 0;
-export const VALUE_MAX = 100;
-
-// ============================================================================
 // UI Configuration
 // ============================================================================
 
-/**
- * Common card styling classes
- */
-export const CARD_CLASSES =
-  'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6';
-
 export const CARD_CLASSES_COMPACT =
   'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4';
-
-/**
- * Maximum dyes selectable in comparisons
- */
-export const MAX_DYES_COMPARISON = 4;
-
-/**
- * Maximum dyes selectable in accessibility checker
- */
-export const MAX_DYES_ACCESSIBILITY = 6; // 6 outfit slots
 
 /**
  * Companion dyes configuration for Expanded Suggestions mode
@@ -222,22 +111,6 @@ export const MAX_DYES_ACCESSIBILITY = 6; // 6 outfit slots
 export const COMPANION_DYES_MIN = 1;
 export const COMPANION_DYES_MAX = 3;
 export const COMPANION_DYES_DEFAULT = 1;
-
-/**
- * Expensive dye IDs for filtering
- */
-export const EXPENSIVE_DYE_IDS = [13114, 13115]; // Pure White, Jet Black
-
-// ============================================================================
-// Keyboard Shortcuts
-// ============================================================================
-
-export const KEYBOARD_SHORTCUTS = {
-  TOGGLE_THEME: 'Shift+T',
-  RESET_FILTERS: 'Ctrl+R',
-  COPY_COLOR: 'Ctrl+C',
-  EXPORT_DATA: 'Ctrl+E',
-} as const;
 
 // ============================================================================
 // Error Messages
@@ -274,28 +147,3 @@ export const FEATURE_FLAGS = {
   DEBUG_MODE: false,
 } as const;
 
-// ============================================================================
-// Regular Expressions
-// ============================================================================
-
-/**
- * Regex patterns for validation
- */
-export const PATTERNS = {
-  HEX_COLOR: /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
-  RGB_COLOR: /^rgb\(\d+,\s*\d+,\s*\d+\)$/,
-  URL: /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/,
-  EMAIL: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  ALPHANUMERIC: /^[a-zA-Z0-9]*$/,
-} as const;
-
-// ============================================================================
-// Debounce/Throttle Delays
-// ============================================================================
-
-export const DEBOUNCE_DELAYS = {
-  SEARCH: 300,
-  API_CALL: 500,
-  RESIZE: 200,
-  SCROLL: 150,
-} as const;

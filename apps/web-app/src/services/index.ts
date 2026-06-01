@@ -175,7 +175,7 @@ export type { Dye, VisionType, PriceData } from '@xivdyetools/types';
 export type { ThemeName } from '@shared/types';
 
 // Re-export commonly used utilities
-export { ErrorHandler, withErrorHandling, withAsyncErrorHandling } from '@shared/error-handler';
+export { ErrorHandler } from '@shared/error-handler';
 import { logger } from '@shared/logger';
 
 /**
