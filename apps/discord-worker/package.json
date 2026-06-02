@@ -22,8 +22,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@cf-wasm/photon": "^0.3.5",
-    "@cloudflare/workers-types": "^4.20260525.1",
+    "@cf-wasm/photon": "^0.3.6",
+    "@cloudflare/workers-types": "^4.20260602.1",
     "@resvg/resvg-wasm": "^2.6.2",
     "@xivdyetools/auth": "workspace:*",
     "@xivdyetools/bot-i18n": "workspace:*",
