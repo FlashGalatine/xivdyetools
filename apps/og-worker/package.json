@@ -17,7 +17,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@cloudflare/workers-types": "^4.20260525.1",
+    "@cloudflare/workers-types": "^4.20260602.1",
     "@resvg/resvg-wasm": "^2.6.2",
     "@xivdyetools/core": "workspace:*",
     "@xivdyetools/types": "workspace:*",
@@ -26,9 +26,9 @@
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
-    "@vitest/coverage-v8": "^4.1.7",
-    "vitest": "^4.1.7",
-    "wrangler": "^4.94.0"
+    "@vitest/coverage-v8": "^4.1.8",
+    "vitest": "^4.1.8",
+    "wrangler": "^4.97.0"
   },
   "engines": {
     "node": ">=18.0.0"
