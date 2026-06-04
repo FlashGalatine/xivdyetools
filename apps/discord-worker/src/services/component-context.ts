@@ -268,31 +268,6 @@ export async function getContext(
 }
 
 /**
- * Delete context data from the Cache API
- *
- * @param hash - Context hash
- * @param logger - Optional logger
- */
-export async function deleteContext(
-  hash: string,
-  logger?: ExtendedLogger
-): Promise<void> {
-  try {
-    const url = buildContextCacheUrl(hash);
-    const cache = caches.default;
-    await cache.delete(url);
-
-    if (logger) {
-      logger.debug('Deleted component context', { hash });
-    }
-  } catch (error) {
-    if (logger) {
-      logger.error('Failed to delete component context', error instanceof Error ? error : undefined, { hash });
-    }
-  }
-}
-
-/**
  * Update context data in the Cache API (extends TTL)
  *
  * @param hash - Context hash
@@ -344,33 +319,4 @@ export async function updateContext(
   }
 }
 
-// ============================================================================
-// Authorization
-// ============================================================================
 
-/**
- * Check if a user is authorized to interact with a component
- *
- * Only the original user who triggered the command should be able
- * to interact with the components (except for public actions like voting).
- *
- * @param context - Component context
- * @param userId - User attempting the interaction
- * @param action - Action being attempted
- * @returns Whether the user is authorized
- */
-export function isAuthorized(
-  context: ComponentContext,
-  userId: string,
-  action: ComponentAction
-): boolean {
-  // Public actions anyone can use
-  const publicActions: ComponentAction[] = ['vote'];
-
-  if (publicActions.includes(action)) {
-    return true;
-  }
-
-  // All other actions require being the original user
-  return context.userId === userId;
-}

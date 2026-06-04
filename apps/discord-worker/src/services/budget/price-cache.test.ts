@@ -7,8 +7,6 @@ import {
   setCachedPrice,
   getCachedPrices,
   setCachedPrices,
-  getCachedPriceWithStale,
-  invalidateCachedPrice,
   CACHE_TTL_SECONDS,
 } from './price-cache.js';
 import type { DyePriceData } from '../../types/budget.js';
@@ -113,27 +111,6 @@ describe('price-cache.ts', () => {
     });
   });
 
-  describe('getCachedPriceWithStale', () => {
-    it('should return fresh data when within TTL', async () => {
-      seedCache(mockCache, 'Crystal', 5729, samplePrice, Date.now());
-
-      const result = await getCachedPriceWithStale('Crystal', 5729);
-      expect(result).toEqual({ data: samplePrice, isStale: false });
-    });
-
-    it('should return stale data when expired', async () => {
-      seedCache(mockCache, 'Crystal', 5729, samplePrice, Date.now() - (CACHE_TTL_SECONDS + 1) * 1000);
-
-      const result = await getCachedPriceWithStale('Crystal', 5729);
-      expect(result).toEqual({ data: samplePrice, isStale: true });
-    });
-
-    it('should return data:null for cache miss', async () => {
-      const result = await getCachedPriceWithStale('Crystal', 5729);
-      expect(result).toEqual({ data: null, isStale: false });
-    });
-  });
-
   describe('setCachedPrice', () => {
     it('should store price data in cache', async () => {
       await setCachedPrice('Crystal', 5729, samplePrice);
@@ -195,15 +172,5 @@ describe('price-cache.ts', () => {
     });
   });
 
-  describe('invalidateCachedPrice', () => {
-    it('should delete cached entry', async () => {
-      seedCache(mockCache, 'Crystal', 5729, samplePrice, Date.now());
-
-      await invalidateCachedPrice('Crystal', 5729);
-
-      expect(mockCache.delete).toHaveBeenCalledWith(
-        'https://cache.xivdyetools.internal/prices/v1/crystal/5729'
-      );
-    });
-  });
 });
+

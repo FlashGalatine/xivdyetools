@@ -188,14 +188,3 @@ export function normalizeClan(clan: string): string | null {
   return match ?? null;
 }
 
-/**
- * Get the race for a given clan
- */
-export function getRaceForClan(clan: string): string | null {
-  for (const [race, clans] of Object.entries(CLANS_BY_RACE)) {
-    if (clans.some((c) => c.toLowerCase() === clan.toLowerCase())) {
-      return race;
-    }
-  }
-  return null;
-}

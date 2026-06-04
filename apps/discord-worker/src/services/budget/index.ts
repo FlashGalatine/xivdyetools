@@ -23,12 +23,10 @@ export type { UniversalisWorld, UniversalisDataCenter } from './universalis-clie
 export {
   CACHE_TTL_SECONDS,
   getCachedPrice,
-  getCachedPriceWithStale,
   setCachedPrice,
   getCachedPrices,
   setCachedPrices,
   fetchWithCache,
-  invalidateCachedPrice,
 } from './price-cache.js';
 
 // Budget calculator

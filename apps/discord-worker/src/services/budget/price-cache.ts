@@ -26,14 +26,7 @@ const CACHE_BASE_URL = 'https://cache.xivdyetools.internal/prices';
 /** Cache TTL in seconds (5 minutes) - freshness window */
 export const CACHE_TTL_SECONDS = 300;
 
-/** Stale threshold - allow stale data up to 15 minutes old */
-const STALE_THRESHOLD_MS = 15 * 60 * 1000;
-
-/**
- * Cache-Control max-age in seconds.
- * Set to 15 minutes (the stale threshold) so the Cache API retains data
- * for the full stale window. We check `cachedAt` in code for fresh vs stale.
- */
+/** Cache-Control max-age in seconds — retain entries for 15 minutes to cover burst reads. */
 const CACHE_MAX_AGE_SECONDS = 900;
 
 // ============================================================================
@@ -78,7 +71,7 @@ export async function getCachedPrice(
     // Check if cache is still fresh
     const age = Date.now() - entry.cachedAt;
     if (age > CACHE_TTL_SECONDS * 1000) {
-      return null; // Expired (stale) — caller should use getCachedPriceWithStale for fallback
+      return null; // Expired
     }
 
     return entry.data;
@@ -87,46 +80,6 @@ export async function getCachedPrice(
       logger.error('Failed to get cached price', error instanceof Error ? error : undefined);
     }
     return null;
-  }
-}
-
-/**
- * Get a cached price entry, allowing stale data
- *
- * Returns stale data (up to 15 minutes old) if available.
- * Useful for fallback when API is unavailable.
- *
- * @returns Object with data and isStale flag
- */
-export async function getCachedPriceWithStale(
-  world: string,
-  itemId: number,
-  logger?: ExtendedLogger
-): Promise<{ data: DyePriceData | null; isStale: boolean }> {
-  try {
-    const url = buildPriceCacheUrl(world, itemId);
-    const cache = caches.default;
-    const response = await cache.match(url);
-
-    if (!response) {
-      return { data: null, isStale: false };
-    }
-
-    const entry: CachedPriceEntry = await response.json();
-    const age = Date.now() - entry.cachedAt;
-
-    // Check if too old even for stale
-    if (age > STALE_THRESHOLD_MS) {
-      return { data: null, isStale: false };
-    }
-
-    const isStale = age > CACHE_TTL_SECONDS * 1000;
-    return { data: entry.data, isStale };
-  } catch (error) {
-    if (logger) {
-      logger.error('Failed to get cached price with stale', error instanceof Error ? error : undefined);
-    }
-    return { data: null, isStale: false };
   }
 }
 
@@ -273,27 +226,4 @@ export async function fetchWithCache(
   };
 }
 
-// ============================================================================
-// Cache Invalidation
-// ============================================================================
 
-/**
- * Invalidate a specific price cache entry
- *
- * Use sparingly - cache expiry is the primary mechanism.
- */
-export async function invalidateCachedPrice(
-  world: string,
-  itemId: number,
-  logger?: ExtendedLogger
-): Promise<void> {
-  try {
-    const url = buildPriceCacheUrl(world, itemId);
-    const cache = caches.default;
-    await cache.delete(url);
-  } catch (error) {
-    if (logger) {
-      logger.error('Failed to invalidate cache', error instanceof Error ? error : undefined);
-    }
-  }
-}

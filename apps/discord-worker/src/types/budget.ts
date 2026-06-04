@@ -182,39 +182,6 @@ export class UniversalisError extends Error {
   }
 }
 
-// ============================================================================
-// UI CONSTANTS
-// ============================================================================
-
-/**
- * Sort option display metadata
- */
-export const SORT_DISPLAY: Record<BudgetSortOption, { label: string; description: string }> = {
-  price: {
-    label: 'Lowest Price',
-    description: 'Cheapest alternatives first',
-  },
-  color_match: {
-    label: 'Best Color Match',
-    description: 'Most similar colors first',
-  },
-  value_score: {
-    label: 'Best Value',
-    description: 'Balance of price and color match',
-  },
-};
-
-/**
- * Color distance quality labels
- */
-export function getDistanceQuality(distance: number): { label: string; emoji: string } {
-  if (distance === 0) return { label: 'Perfect', emoji: '🎯' };
-  if (distance < 10) return { label: 'Excellent', emoji: '✨' };
-  if (distance < 25) return { label: 'Good', emoji: '👍' };
-  if (distance < 50) return { label: 'Fair', emoji: '👌' };
-  return { label: 'Approximate', emoji: '🔍' };
-}
-
 /**
  * Format gil amount with commas
  */

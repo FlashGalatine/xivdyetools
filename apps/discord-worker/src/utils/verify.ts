@@ -16,5 +16,3 @@ export {
   type DiscordVerifyOptions,
 } from '@xivdyetools/auth';
 
-// For backwards compatibility, also export VerificationResult as an alias
-export type { DiscordVerificationResult as VerificationResult } from '@xivdyetools/auth';

@@ -2,12 +2,7 @@
  * Tests for Emoji Service
  */
 import { describe, it, expect, vi } from 'vitest';
-import {
-    getDyeEmoji,
-    getDyeEmojiOrFallback,
-    hasDyeEmoji,
-    getEmojiCount,
-} from './emoji.js';
+import { getDyeEmoji } from './emoji.js';
 
 // Mock the emoji mapping JSON
 vi.mock('../data/emoji-mapping.json', () => ({
@@ -31,33 +26,5 @@ describe('emoji.ts', () => {
         });
     });
 
-    describe('getDyeEmojiOrFallback', () => {
-        it('should return emoji string for known dye', () => {
-            expect(getDyeEmojiOrFallback(5729)).toBe('<:snow_white:123456789>');
-        });
 
-        it('should return fallback emoji for unknown dye', () => {
-            expect(getDyeEmojiOrFallback(9999)).toBe('🎨');
-            expect(getDyeEmojiOrFallback(9999, '#ff0000')).toBe('🎨');
-        });
-    });
-
-    describe('hasDyeEmoji', () => {
-        it('should return true for dyes with emoji', () => {
-            expect(hasDyeEmoji(5729)).toBe(true);
-            expect(hasDyeEmoji(5730)).toBe(true);
-            expect(hasDyeEmoji(5731)).toBe(true);
-        });
-
-        it('should return false for dyes without emoji', () => {
-            expect(hasDyeEmoji(9999)).toBe(false);
-            expect(hasDyeEmoji(0)).toBe(false);
-        });
-    });
-
-    describe('getEmojiCount', () => {
-        it('should return the count of available emoji mappings', () => {
-            expect(getEmojiCount()).toBe(3);
-        });
-    });
 });

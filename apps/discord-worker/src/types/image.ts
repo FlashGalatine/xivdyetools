@@ -6,7 +6,6 @@
  * @module types/image
  */
 
-import type { Dye, RGB } from '@xivdyetools/types';
 
 // ============================================================================
 // Validation Types
@@ -40,51 +39,6 @@ export interface FormatValidationResult {
  * Supported image formats
  */
 export type ImageFormat = 'png' | 'jpeg' | 'gif' | 'webp' | 'bmp';
-
-// ============================================================================
-// Discord Attachment Types
-// ============================================================================
-
-/**
- * Discord attachment data from interaction
- * @see https://discord.com/developers/docs/resources/channel#attachment-object
- */
-export interface DiscordAttachment {
-  /** Attachment ID */
-  id: string;
-  /** Name of file attached */
-  filename: string;
-  /** Size of file in bytes */
-  size: number;
-  /** Source URL of file */
-  url: string;
-  /** Proxied URL of file */
-  proxy_url: string;
-  /** MIME type of file */
-  content_type?: string;
-  /** Width of image (if image) */
-  width?: number;
-  /** Height of image (if image) */
-  height?: number;
-}
-
-// ============================================================================
-// Extraction Types
-// ============================================================================
-
-/**
- * A color extracted from an image matched to an FFXIV dye
- */
-export interface ExtractedPaletteEntry {
-  /** The extracted RGB color */
-  extracted: RGB;
-  /** The closest matching FFXIV dye */
-  matchedDye: Dye;
-  /** Color distance (Euclidean in RGB space) */
-  distance: number;
-  /** Percentage of pixels in this cluster (0-100) */
-  dominance: number;
-}
 
 /**
  * Match quality based on color distance

@@ -6,9 +6,7 @@ import {
     pongResponse,
     messageResponse,
     ephemeralResponse,
-    embedResponse,
     deferredResponse,
-    autocompleteResponse,
     errorEmbed,
     successEmbed,
     infoEmbed,
@@ -133,36 +131,6 @@ describe('response.ts', () => {
         });
     });
 
-    describe('embedResponse', () => {
-        it('should return a response with embed only', async () => {
-            const embed: DiscordEmbed = {
-                title: 'Embed Title',
-                description: 'Embed Description',
-            };
-
-            const response = embedResponse(embed);
-            const body = (await response.json()) as InteractionResponseBody;
-
-            expect(body.data!.embeds).toHaveLength(1);
-            expect(body.data!.embeds![0]).toEqual(embed);
-            expect(body.data!.components).toBeUndefined();
-        });
-
-        it('should return a response with embed and components', async () => {
-            const embed: DiscordEmbed = { title: 'Title' };
-            const actionRow: DiscordActionRow = {
-                type: 1,
-                components: [{ type: 2, style: 1, label: 'Button', custom_id: 'btn' }],
-            };
-
-            const response = embedResponse(embed, [actionRow]);
-            const body = (await response.json()) as InteractionResponseBody;
-
-            expect(body.data!.embeds).toHaveLength(1);
-            expect(body.data!.components).toHaveLength(1);
-        });
-    });
-
     describe('deferredResponse', () => {
         it('should return a non-ephemeral deferred response by default', async () => {
             const response = deferredResponse();
@@ -178,28 +146,6 @@ describe('response.ts', () => {
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE);
             expect(body.data!.flags).toBe(MessageFlags.EPHEMERAL);
-        });
-    });
-
-    describe('autocompleteResponse', () => {
-        it('should return autocomplete choices', async () => {
-            const choices = [
-                { name: 'Option 1', value: 'opt1' },
-                { name: 'Option 2', value: 'opt2' },
-            ];
-
-            const response = autocompleteResponse(choices);
-            const body = (await response.json()) as InteractionResponseBody;
-
-            expect(body.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
-            expect(body.data!.choices).toEqual(choices);
-        });
-
-        it('should handle empty choices', async () => {
-            const response = autocompleteResponse([]);
-            const body = (await response.json()) as InteractionResponseBody;
-
-            expect(body.data!.choices).toEqual([]);
         });
     });
 
