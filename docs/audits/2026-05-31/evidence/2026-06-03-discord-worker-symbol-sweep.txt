@@ -1,0 +1,61 @@
+================================================================================
+NEW-FINDING SYMBOL SWEEP — discord-worker, 2026-06-03
+Each symbol grepped across apps/discord-worker/src (and monorepo where relevant).
+"test-only" = referenced solely by *.test.ts.
+================================================================================
+
+DEAD-115  services/emoji.ts  [test-only]
+  getDyeEmojiOrFallback  -> emoji.ts:26 (def) ; emoji.test.ts:7,34-41          (no prod)
+  hasDyeEmoji            -> emoji.ts:38 (def) ; emoji.test.ts:8,45-54          (no prod)
+  getEmojiCount         -> emoji.ts:45 (def) ; emoji.test.ts:9,58-60          (no prod)
+  (LIVE sibling: getDyeEmoji emoji.ts:18 -> ~16 prod callers incl. handlers/commands/preset.ts:33)
+
+DEAD-116  utils/response.ts  [test-only]
+  embedResponse        -> response.ts:116 (def) ; response.test.ts:9,136-158   (no prod) [= Feb DEAD-026]
+  autocompleteResponse -> response.ts:137 (def) ; response.test.ts:11,184-199  (no prod) [NEW]
+  (index.ts builds autocomplete inline: Response.json({ type: APPLICATION_COMMAND_AUTOCOMPLETE_RESULT, data:{choices} }))
+
+DEAD-117  services/budget/price-cache.ts  [test-only, barrel re-exported]
+  getCachedPriceWithStale -> price-cache.ts:101 (def) ; budget/index.ts:26 (re-export) ; price-cache.test.ts:10,116-132
+  invalidateCachedPrice   -> price-cache.ts:285 (def) ; budget/index.ts:31 (re-export) ; price-cache.test.ts:11,198-202
+  CAUTION: getCachedPrices (budget/index.ts:28) is USED internally by fetchWithCache -> KEEP.
+  Note: only mention of getCachedPriceWithStale outside def is a COMMENT (price-cache.ts:81).
+
+DEAD-118  7 dead exports (cont. DEAD-026) — each appears ONLY at definition:
+  types/image.ts:52  DiscordAttachment
+  types/image.ts:78  ExtractedPaletteEntry
+  types/budget.ts:192  SORT_DISPLAY
+  types/budget.ts:210  getDistanceQuality
+  types/preferences.ts:194  getRaceForClan
+  types/preset.ts:24  PresetPreviousValues   (inside deprecated block; 0 importers)
+  utils/verify.ts:20  VerificationResult      (alias "for backwards compatibility")
+
+DEAD-121  types/preset.ts deprecated re-export blocks  [DEPRECATED-BUT-USED -> migration debt]
+  preset.ts:14-25,27-35,37-46,48-52  4x  /** @deprecated ... removed in the next major version */
+  Consumers via the deprecated path:
+    handlers/commands/preset.ts:37-43  imports CommunityPreset, PresetCategory
+    services/preset-api.ts:18-28       imports PresetSubmitResponse, PresetSubmission, PresetEditRequest,
+                                              PresetEditResponse, VoteResponse, ModerationStats, ModerationLogEntry,
+                                              PresetFilters, CategoryMeta
+  (PresetPreviousValues is the lone 0-consumer member -> handled in DEAD-118.)
+
+DEAD-122  services/preferences.ts legacy migration  [LIVE]
+  47  const LEGACY_I18N_PREFIX = 'i18n:user:';
+  48  const LEGACY_WORLD_PREFIX = 'budget:world:v1:';
+  87  const migrated = await migrateLegacyPreferences(kv, userId, logger);   <- called on read path
+  451 async function migrateLegacyPreferences(...)
+  461 kv.get(`${LEGACY_I18N_PREFIX}${userId}`) ; 468 kv.get(`${LEGACY_WORLD_PREFIX}${userId}`)
+
+DEAD-124  handlers/commands/extractor.ts:263
+  // TODO: matching and market options for v4 enhancements
+  (only `color` + `count` options are read/registered; matching/market options not present.)
+
+DEAD-125  handlers/modals/index.ts  -> entire file is `export {};` (+ comment)
+  index.ts:430  return handleModal(...)        <- dispatch
+  index.ts:922  async function handleModal(...) <- no branches
+  index.ts:933  return ephemeralResponse('Unknown modal submission.');  <- always-fallback
+
+================================================================================
+TOOLING NOTE: knip/ts-prune/depcheck not installed (same as Part 1). Detection is
+hand-built Grep + tsc reasoning. Confirm each REMOVE with `tsc --noEmit` before deleting.
+================================================================================

@@ -1,0 +1,91 @@
+================================================================================
+CARRY-FORWARD STATUS — 2026-02-28 findings re-verified on 2026-06-03
+Projects: discord-worker (DEAD-020-031), bot-i18n (DEAD-032-035), bot-logic (DEAD-036-041)
+Method: directory listing + monorepo-wide Grep of each prior symbol/file.
+================================================================================
+
+LEGEND: [EXECUTED]=removed since Feb  [OPEN]=still present  [KEEP]=standing keep
+
+--- discord-worker ---------------------------------------------------------------
+
+DEAD-020 (7 dead files)  -> 6/7 [EXECUTED], 1 [OPEN]
+  glob apps/discord-worker/src/services/*.ts , src/utils/*.ts :
+    css-colors.ts ............... ABSENT  [EXECUTED]
+    services/color-blending.ts .. ABSENT  [EXECUTED]
+    services/image-cache.ts ..... ABSENT  [EXECUTED]
+    services/pagination.ts ...... ABSENT  [EXECUTED]
+    services/progress.ts ........ ABSENT  [EXECUTED]
+    services/user-preferences.ts  ABSENT  [EXECUTED]
+    utils/error-response.ts ..... PRESENT [OPEN] -> DEAD-113
+  grep "error-response" (non-test) -> only self JSDoc (utils/error-response.ts:15). No prod importer.
+
+DEAD-021 (src/locales/)  -> [EXECUTED]
+  glob apps/discord-worker/src/locales/** -> No files found.
+
+DEAD-022 (legacy mixer.ts) -> [EXECUTED]
+  glob handlers/commands/*.ts -> mixer-v4.ts present, mixer.ts ABSENT.
+
+DEAD-023 (discord-interactions devDep) -> [EXECUTED]
+  package.json devDependencies: @types/node, @vitest/coverage-v8, @xivdyetools/test-utils, dotenv, tsx, vitest, wrangler.
+  "discord-interactions" ABSENT.
+
+DEAD-024 (InteractionContext + deadline) -> [OPEN] -> DEAD-119
+  grep InteractionContext|createInteractionContext|sendFollowUpWithDeadline|editOriginalResponseWithDeadline|DeadlineResult|FollowUpOptions
+    -> utils/discord-api.ts (defs), utils/discord-api.test.ts (tests), CHANGELOG.md (doc). No prod consumer.
+
+DEAD-025 (component-context builders) -> [OPEN] -> DEAD-120
+  grep buildBlendingModeSelect|buildMatchingMethodSelect|buildMarketToggleButton|buildRefreshButton|deleteContext|SelectMenuOption
+    -> services/component-context.ts (defs), component-context.test.ts (tests), CHANGELOG.md (doc). No prod consumer.
+
+DEAD-026 (8 dead exports) -> [OPEN] all 8 present -> DEAD-118 (7) + DEAD-116 (embedResponse)
+  grep -> each symbol appears ONLY at its definition:
+    types/image.ts:52 DiscordAttachment ; :78 ExtractedPaletteEntry
+    types/budget.ts:192 SORT_DISPLAY ; :210 getDistanceQuality
+    types/preferences.ts:194 getRaceForClan
+    types/preset.ts:24 PresetPreviousValues (re-export, 0 importers)
+    utils/verify.ts:20 VerificationResult (alias, 0 importers)
+    utils/response.ts:116 embedResponse (only response.test.ts) -> moved to DEAD-116
+
+DEAD-027 (unused params) -> [KEEP] (cross-ref; unchanged)
+DEAD-028 (test-only exports) -> [KEEP] (cross-ref; unchanged)
+
+DEAD-029 (legacy KV lang setters) -> [EXECUTED]
+  grep setUserLanguagePreference|clearUserLanguagePreference -> 0 hits anywhere. Gone.
+  (Superseded by preferences.ts migrateLegacyPreferences — see DEAD-122.)
+
+DEAD-030 (test-utils.integration.ts) -> [OPEN] -> DEAD-114
+  file present; grep createFullMockEnv / assertDiscordJsonResponse -> 0 consumers outside the file.
+
+DEAD-031 (legacy commands) -> [OPEN], now @deprecated -> DEAD-123
+  index.ts:516 "Legacy commands (kept for backward compatibility during migration)"; cases match/match_image/language/favorites/collection.
+  @deprecated JSDoc: favorites.ts:7,43 ; collection.ts:7,48 ; language.ts:9,45.
+
+--- bot-i18n ---------------------------------------------------------------------
+
+DEAD-032 (translate/getAvailableLocales/isLocaleSupported) -> [EXECUTED in code]; README stale -> DEAD-126
+  packages/bot-i18n/src/index.ts exports ONLY: { Translator, createTranslator } + types { LocaleCode, LocaleData, TranslatorLogger }.
+  packages/bot-i18n/README.md still documents translate (L45,69), getAvailableLocales/isLocaleSupported (L54,70-71).
+
+DEAD-033 (LocaleData / TranslatorLogger) -> [KEEP] (still exported; published API)
+
+DEAD-034 (unused locale sections) -> [EXECUTED]
+  read src/locales/en.json (693 lines): NO top-level buttons/pagination/components/status/matching sections.
+  (Only nested webhook.buttons + preset.status remain, both USED.)
+
+DEAD-035 (5 unused re-exports in discord-worker bot-i18n.ts) -> [EXECUTED]
+  apps/discord-worker/src/services/bot-i18n.ts re-exports ONLY { Translator, createTranslator } + type LocaleCode.
+
+--- bot-logic --------------------------------------------------------------------
+
+DEAD-036 (resolveCssColorName etc.) -> [KEEP] — not in public barrel (src/index.ts), internal-only as recommended.
+DEAD-037 (HARMONY_TYPES, VISION_TYPES) -> [KEEP] — exported from barrel (index.ts:39,83); public API.
+DEAD-038/039/040 (Input/Result/EmbedData types) -> [KEEP] — published SDK contract.
+DEAD-041 (REFACTOR markers) -> [EXECUTED]
+  grep REFACTOR|HACK|FIXME|@deprecated|OBSOLETE|TODO|LEGACY in packages/bot-logic/src -> 0 matches.
+
+================================================================================
+TALLY (22 prior findings): 9 EXECUTED | 6 OPEN | 7 standing KEEP
+  EXECUTED: 021, 022, 023, 029, 034, 035, 041, + 6/7 of 020, + code-half of 032
+  OPEN -> new IDs: 020(rem)->113, 030->114, 026->116/118, 024->119, 025->120, 031->123, 032(docs)->126
+  KEEP : 027, 028, 033, 036, 037, 038, 039, 040
+================================================================================
