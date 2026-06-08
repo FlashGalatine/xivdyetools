@@ -38,13 +38,13 @@
     "hono": "^4.12.23"
   },
   "devDependencies": {
-    "@types/node": "^25.9.1",
+    "@types/node": "^25.9.2",
     "@vitest/coverage-v8": "^4.1.8",
     "@xivdyetools/test-utils": "workspace:*",
     "dotenv": "^17.4.2",
     "tsx": "^4.22.4",
     "vitest": "^4.1.8",
-    "wrangler": "^4.97.0"
+    "wrangler": "^4.98.0"
   },
   "engines": {
     "node": ">=18.0.0"
