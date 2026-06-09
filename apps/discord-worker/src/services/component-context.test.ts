@@ -8,9 +8,7 @@ import {
   parseCustomId,
   storeContext,
   getContext,
-  deleteContext,
   updateContext,
-  isAuthorized,
   CONTEXT_TTL,
 } from './component-context.js';
 import type { ComponentContext } from './component-context.js';
@@ -207,24 +205,6 @@ describe('Component Context Service', () => {
     });
   });
 
-  describe('deleteContext', () => {
-    it('deletes context from cache', async () => {
-      const context = {
-        command: 'test',
-        userId: 'user',
-        interactionToken: 'token',
-        applicationId: 'app',
-        data: {},
-      };
-
-      const hash = await storeContext(context, CONTEXT_TTL.STANDARD, mockLogger);
-      await deleteContext(hash, mockLogger);
-
-      const result = await getContext(hash, mockLogger);
-      expect(result).toBeNull();
-    });
-  });
-
   describe('updateContext', () => {
     it('updates context data', async () => {
       const context = {
@@ -260,32 +240,5 @@ describe('Component Context Service', () => {
     });
   });
 
-  describe('isAuthorized', () => {
-    const context: ComponentContext = {
-      command: 'mixer',
-      userId: 'owner123',
-      interactionToken: 'token',
-      applicationId: 'app',
-      data: {},
-      expiresAt: Date.now() + 3600000,
-    };
-
-    it('allows original user for any action', () => {
-      expect(isAuthorized(context, 'owner123', 'algo')).toBe(true);
-      expect(isAuthorized(context, 'owner123', 'market')).toBe(true);
-      expect(isAuthorized(context, 'owner123', 'page')).toBe(true);
-      expect(isAuthorized(context, 'owner123', 'refresh')).toBe(true);
-    });
-
-    it('denies other users for protected actions', () => {
-      expect(isAuthorized(context, 'other456', 'algo')).toBe(false);
-      expect(isAuthorized(context, 'other456', 'market')).toBe(false);
-      expect(isAuthorized(context, 'other456', 'refresh')).toBe(false);
-    });
-
-    it('allows any user for public actions (vote)', () => {
-      expect(isAuthorized(context, 'other456', 'vote')).toBe(true);
-    });
-  });
-
 });
+

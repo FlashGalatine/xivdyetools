@@ -39,36 +39,12 @@ t.t('some.key.only.in.english');
 // → English value (with a warning if logger is provided)
 ```
 
-### Stateless Translation
-
-```typescript
-import { translate } from '@xivdyetools/bot-i18n';
-
-// One-off translation without creating an instance
-const text = translate('en', 'dye.info.detailedInfo', { category: 'Red' });
-```
-
-### Locale Utilities
-
-```typescript
-import { getAvailableLocales, isLocaleSupported } from '@xivdyetools/bot-i18n';
-
-getAvailableLocales();
-// → ['en', 'ja', 'de', 'fr', 'ko', 'zh']
-
-isLocaleSupported('ja');  // → true
-isLocaleSupported('es');  // → false
-```
-
 ## API
 
 | Export | Kind | Description |
 |--------|------|-------------|
 | `Translator` | class | Locale-bound translator with fallback to English |
 | `createTranslator(locale)` | function | Factory for `Translator` instances |
-| `translate(locale, key, vars?)` | function | Stateless one-off translation |
-| `getAvailableLocales()` | function | Returns array of supported locale codes |
-| `isLocaleSupported(code)` | function | Type guard for locale validation |
 
 ### Types
 

@@ -2,12 +2,10 @@
  * Integration test utilities for xivdyetools-discord-worker
  *
  * Provides helpers for testing multi-module pipelines with realistic
- * mock Service Bindings, environment, and response assertions.
+ * mock Service Bindings and environment.
  */
 
-import { vi, expect } from 'vitest';
-import { createMockEnv } from './test-utils.js';
-import type { Env } from './types/env.js';
+import { vi } from 'vitest';
 
 /**
  * Route handler for mock Service Bindings.
@@ -94,69 +92,4 @@ export function createMockUniversalisProxy(priceMap?: Map<number, number>): Fetc
       ]);
     },
   });
-}
-
-/**
- * Creates a fully-configured mock Env with Service Binding stubs.
- * Extends the base `createMockEnv()` with optional Service Bindings.
- */
-export function createFullMockEnv(overrides?: Partial<Env>): Env {
-  return createMockEnv({
-    UNIVERSALIS_PROXY: createMockUniversalisProxy(),
-    UNIVERSALIS_PROXY_URL: 'https://mock-universalis.example.com',
-    PRESETS_API: createMockServiceBinding(),
-    ANNOUNCEMENT_CHANNEL_ID: 'test-announcement-channel',
-    MODERATION_CHANNEL_ID: 'test-moderation-channel',
-    SUBMISSION_LOG_CHANNEL_ID: 'test-submission-log-channel',
-    MODERATOR_IDS: 'user-mod-1,user-mod-2',
-    STATS_AUTHORIZED_USERS: 'user-stats-1',
-    ...overrides,
-  });
-}
-
-/**
- * Asserts that a Response contains valid Discord interaction JSON.
- */
-export async function assertDiscordJsonResponse(
-  response: Response,
-  checks: {
-    status?: number;
-    type?: number;
-    contentContains?: string;
-    flags?: number;
-    hasEmbeds?: boolean;
-    hasChoices?: boolean;
-  }
-): Promise<Record<string, unknown>> {
-  if (checks.status !== undefined) {
-    expect(response.status).toBe(checks.status);
-  }
-
-  const data = await response.json() as Record<string, unknown>;
-
-  if (checks.type !== undefined) {
-    expect(data.type).toBe(checks.type);
-  }
-
-  const responseData = data.data as Record<string, unknown> | undefined;
-
-  if (checks.contentContains !== undefined && responseData) {
-    expect(responseData.content).toContain(checks.contentContains);
-  }
-
-  if (checks.flags !== undefined && responseData) {
-    expect(responseData.flags).toBe(checks.flags);
-  }
-
-  if (checks.hasEmbeds && responseData) {
-    expect(responseData.embeds).toBeDefined();
-    expect(Array.isArray(responseData.embeds)).toBe(true);
-  }
-
-  if (checks.hasChoices && responseData) {
-    expect(responseData.choices).toBeDefined();
-    expect(Array.isArray(responseData.choices)).toBe(true);
-  }
-
-  return data;
 }

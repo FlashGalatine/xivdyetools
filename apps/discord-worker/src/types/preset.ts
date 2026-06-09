@@ -21,7 +21,6 @@ export type {
   PresetSortOption,
   CategoryMeta,
   CommunityPreset,
-  PresetPreviousValues,
 } from '@xivdyetools/types';
 
 /**

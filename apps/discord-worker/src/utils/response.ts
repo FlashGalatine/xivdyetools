@@ -111,16 +111,6 @@ export function ephemeralResponse(content: string | InteractionResponseData): Re
 }
 
 /**
- * Creates an embed message response.
- */
-export function embedResponse(embed: DiscordEmbed, components?: DiscordActionRow[]): Response {
-  return messageResponse({
-    embeds: [embed],
-    components,
-  });
-}
-
-/**
  * Creates a deferred response (shows "thinking..." state).
  * Use this when your response will take more than 3 seconds.
  */
@@ -128,18 +118,6 @@ export function deferredResponse(ephemeral = false): Response {
   return Response.json({
     type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
     data: ephemeral ? { flags: MessageFlags.EPHEMERAL } : undefined,
-  });
-}
-
-/**
- * Creates an autocomplete response with choices.
- */
-export function autocompleteResponse(
-  choices: Array<{ name: string; value: string }>
-): Response {
-  return Response.json({
-    type: InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
-    data: { choices },
   });
 }
 

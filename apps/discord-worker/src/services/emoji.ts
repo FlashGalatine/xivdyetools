@@ -19,29 +19,4 @@ export function getDyeEmoji(itemId: number): string | undefined {
   return mapping[String(itemId)];
 }
 
-/**
- * Get Discord emoji string for a dye, with fallback to a colored square
- * @returns Emoji string or fallback
- */
-export function getDyeEmojiOrFallback(itemId: number, _hex?: string): string {
-  const emoji = getDyeEmoji(itemId);
-  if (emoji) return emoji;
 
-  // Fallback: use a colored circle emoji based on hue (rough approximation)
-  // This shouldn't happen for normal dyes, but handles edge cases
-  return '🎨';
-}
-
-/**
- * Check if emoji mapping is available for a dye
- */
-export function hasDyeEmoji(itemId: number): boolean {
-  return String(itemId) in mapping;
-}
-
-/**
- * Get total count of available emoji mappings
- */
-export function getEmojiCount(): number {
-  return Object.keys(mapping).length;
-}
