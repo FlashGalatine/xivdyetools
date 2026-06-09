@@ -8,6 +8,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.17.0] - 2026-06-09
+
+Module-surface cleanup and CI hygiene fixes from the dead-code audit (DEAD-113 through DEAD-126), merged alongside routine dependabot dependency-bump PRs (`@cloudflare/workers-types`, `hono`, `@types/node`, `wrangler`, and other dev/production dependencies across 15 `package.json` files — version-string bumps only, no behavioral changes).
+
+### Removed
+
+- **discord-worker** `4.6.1`: Dead-code cleanup (DEAD-113..120) — deleted the unused `utils/error-response.ts` "Error UX Standard V4" module (21 exports, zero consumers) and its 344-line test suite, plus unused exports across `utils/response.ts`, `utils/verify.ts`, `services/budget/price-cache.ts` (+ `services/budget/index.ts` re-export), `services/component-context.ts`, `services/emoji.ts`, `types/budget.ts`, `types/image.ts`, `types/preferences.ts`, `types/preset.ts`, and `test-utils.integration.ts` — roughly 1,300 lines removed with no change to the worker's public command surface
+
+### Added
+
+- **discord-worker** `4.6.1`: New `services/preset-favorites.test.ts` (22 tests) covering the `/preset favorite` KV-backed service introduced in `4.6.0`, which previously had zero test coverage
+
+### Fixed
+
+- **discord-worker** `4.6.1`: `vitest.config.ts` coverage thresholds used the Vitest 1/2-era `{ global: { statements, branches, functions, lines } }` shape, which Vitest 4 silently ignores — `test:coverage` exited 0 even though statements coverage had drifted to 84.89%, below the documented 85% floor. Flattened to the shape Vitest 4 actually reads; coverage now sits at 86.39% / 76.73% / 88.69% / 86.66% (statements / branches / functions / lines), all above the 85/75/85/85 thresholds
+
+### Documentation
+
+- **bot-i18n** `1.2.1`: README corrected to remove documentation for `translate()`, `getAvailableLocales()`, `isLocaleSupported()` (DEAD-126) — these were removed from the package's exports in `1.1.0` (DEAD-032), but the README kept describing them as part of the public API for two subsequent releases
+
+---
+
 ## [1.16.0] - 2026-05-31
 
 Web-app release rollup for the consolidation-spectrum filter work, budget matching improvements, and v4 E2E stabilization tracked on `feat/consolidation-spectrum-filter` ahead of merge to `main`.

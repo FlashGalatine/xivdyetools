@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-06-09
+
+### Documentation
+
+- **README API surface correction (DEAD-126)**: removed the "Stateless Translation" and "Locale Utilities" sections (and their 3 corresponding API table rows for `translate()`, `getAvailableLocales()`, `isLocaleSupported()`). These functions were removed from the package in `1.1.0` (DEAD-032, see below), but the README continued to document and recommend them — meaning the published npm README has described a non-existent API surface for two releases. The README now matches the actual exports: `Translator`, `createTranslator()`, and the `LocaleCode` type.
+
+---
+
 ## [1.2.0] - 2026-04-03
 
 ### Added

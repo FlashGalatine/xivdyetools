@@ -42,12 +42,10 @@ export default defineConfig({
         'src/services/svg/index.ts',
       ],
       thresholds: {
-        global: {
-          statements: 85,
-          branches: 75,
-          functions: 85,
-          lines: 85,
-        },
+        statements: 85,
+        branches: 75,
+        functions: 85,
+        lines: 85,
       },
     },
   },

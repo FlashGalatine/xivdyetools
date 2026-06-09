@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.6.1] - 2026-06-09
+
+### Removed
+
+Dead-code cleanup (DEAD-113 through DEAD-120) — removed unused exports with zero consumers, trimming roughly 1,300 lines from the module surface:
+
+- **`src/utils/error-response.ts`**: deleted the entire file and its 344-line test suite. This was an unused "Error UX Standard V4" module — `ErrorCategory`, `ErrorCode`, `ErrorResponseOptions`, `createErrorEmbed`, `createErrorResponse`, `validationError`, `notFoundError`, `rateLimitError`, `externalError`, `internalError`, `permissionError`, `invalidHexError`, `invalidDyeError`, `invalidCountError`, `collectionNotFoundError`, `collectionLimitError`, `dyeAlreadyInCollectionError`, `presetNotFoundError`, `universalisError`, `renderError`, `adminOnlyError`, `guildOnlyError` — none had any callers; live handlers build error responses inline via `utils/response.ts`.
+- **`src/utils/response.ts`**: removed unused `embedResponse()` and `autocompleteResponse()` builders.
+- **`src/utils/verify.ts`**: removed the `VerificationResult` backwards-compatibility alias for `@xivdyetools/auth`'s `DiscordVerificationResult` — no remaining call sites referenced the old name.
+- **`src/services/budget/price-cache.ts`** (+ re-export in `src/services/budget/index.ts`): removed `getCachedPriceWithStale()` and `invalidateCachedPrice()`, plus the now-unused `STALE_THRESHOLD_MS` constant — the stale-while-revalidate fallback was never wired into `/budget`'s call sites.
+- **`src/services/component-context.ts`**: removed `deleteContext()` and `isAuthorized()` — context entries expire via Cache API TTL, and authorization is checked inline in button/modal handlers.
+- **`src/services/emoji.ts`**: removed `getDyeEmojiOrFallback()`, `hasDyeEmoji()`, and `getEmojiCount()` — only `getDyeEmoji()` is used by SVG renderers.
+- **`src/types/budget.ts`**: removed `SORT_DISPLAY` and `getDistanceQuality()` — superseded by the SVG budget-comparison card's own labeling.
+- **`src/types/image.ts`**: removed `DiscordAttachment` and `ExtractedPaletteEntry` interfaces and the now-unused `Dye`/`RGB` type imports from `@xivdyetools/types` — extraction flows through `@xivdyetools/core`'s shared types instead.
+- **`src/types/preferences.ts`**: removed `getRaceForClan()` — clan validation only needs `normalizeClan()`.
+- **`src/types/preset.ts`**: removed the re-export of `PresetPreviousValues` from `@xivdyetools/types` — unused outside `presets-api`.
+- **`src/test-utils.integration.ts`**: removed `createFullMockEnv()` and `assertDiscordJsonResponse()` — integration tests construct envs and assertions directly.
+
+### Added
+
+- **`src/services/preset-favorites.test.ts`** (22 tests, new file): full coverage for the `/preset favorite` KV-backed service introduced in 4.6.0 — `getPresetFavorites`, `addPresetFavorite`, `removePresetFavorite`, `isPresetFavorited`, including the `alreadyExists` / `limitReached` / `notFound` / `error` result branches and malformed-JSON / KV-failure recovery paths (with and without an injected logger).
+
+### Fixed
+
+- **Coverage threshold enforcement (Vitest 4)**: `vitest.config.ts`'s `coverage.thresholds` used the Vitest 1/2-era `{ global: { statements, branches, functions, lines } }` shape, which Vitest 4 silently ignores — `test:coverage` exited 0 even after statements coverage drifted to 84.89%, just under the documented 85% floor. Flattened to `coverage.thresholds.{statements,branches,functions,lines}` (the shape Vitest 4 actually reads) and closed the gap with the new `preset-favorites.test.ts` above. Coverage is now **86.39% statements / 76.73% branches / 88.69% functions / 86.66% lines**, all above the 85/75/85/85 thresholds.
+
+---
+
 ## [4.6.0] - 2026-05-12
 
 ### Added — Web-app feature parity (2026-05-08)
