@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@xivdyetools/core": "workspace:*",
-    "vue": "^3.5.35",
+    "vue": "^3.5.38",
     "zod": "^4.4.3"
   },
   "devDependencies": {
