@@ -17,12 +17,12 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@cloudflare/workers-types": "^4.20260608.1",
+    "@cloudflare/workers-types": "^4.20260615.1",
     "@resvg/resvg-wasm": "^2.6.2",
     "@xivdyetools/core": "workspace:*",
     "@xivdyetools/types": "workspace:*",
     "@xivdyetools/worker-middleware": "workspace:*",
-    "hono": "^4.12.24"
+    "hono": "^4.12.25"
   },
   "devDependencies": {
     "@types/node": "^25.9.2",
