@@ -25,10 +25,10 @@
     "hono": "^4.12.25"
   },
   "devDependencies": {
-    "@types/node": "^25.9.2",
-    "@vitest/coverage-v8": "^4.1.8",
-    "vitest": "^4.1.8",
-    "wrangler": "^4.98.0"
+    "@types/node": "^25.9.3",
+    "@vitest/coverage-v8": "^4.1.9",
+    "vitest": "^4.1.9",
+    "wrangler": "^4.100.0"
   },
   "engines": {
     "node": ">=18.0.0"

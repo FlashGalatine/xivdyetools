@@ -55,13 +55,13 @@
     "spectral.js": "^3.0.0"
   },
   "devDependencies": {
-    "@types/node": "^25.9.2",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@types/node": "^25.9.3",
+    "@vitest/coverage-v8": "^4.1.9",
     "csv-parse": "^7.0.0",
     "tsx": "^4.22.4",
     "typedoc": "^0.28.19",
     "typedoc-plugin-markdown": "^4.12.0",
-    "vitest": "^4.1.8",
+    "vitest": "^4.1.9",
     "yaml": "^2.9.0"
   },
   "engines": {
