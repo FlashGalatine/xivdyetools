@@ -169,6 +169,8 @@ DEAD-112: `src/mockups/**` → `docs/historical/web-app/20260531-Mockups/`; remo
 
 # Part 2 — Discord Worker (DEAD-113–125)
 
+> **RESOLUTION UPDATE — 2026-06-15.** The cleanup waves in this report were executed on 2026-06-04 (`106e94f`, merged to `main` via `fbc065f`) and re-verified against `main` on 2026-06-15. Outcome: **8 RESOLVED** (DEAD-113, 115, 116, 117, 118, 119, 120, 126), **1 PARTIAL** (DEAD-114 — dead exports removed; file retained for the live `createMockServiceBinding`/`createMockUniversalisProxy` helpers), **5 standing KEEP/MONITOR** (DEAD-121–125, unchanged by design). Every finding below carries a per-finding `STATUS` banner. The "NOT executed — audit only" framing of the Cleanup Plan section is **superseded** by this update.
+
 ## Discord Worker — Summary by Category
 
 | Category | Findings | Remove | Keep/Monitor | Lines (approx) |
@@ -259,9 +261,11 @@ Status of every February finding for these three projects (see also `evidence/20
 
 **Net:** of the 22 February findings for these projects, **9 were executed**, **6 remain open** (re-filed as DEAD-113/114/116/118/119/120/123 + the DEAD-126 doc follow-up), and **7 were standing KEEPs** (DEAD-027/028/033/036–040).
 
-## Extension Cleanup Plan (documented; NOT executed — audit only)
+> **Update 2026-06-15:** the 2026-06-04 cleanup (`106e94f` / `0100c40`) closed most of the re-filed items — February DEAD-020/024/025/026 (→ DEAD-113/119/120/118/116) are now **executed**, DEAD-030 (→ DEAD-114) is **partial**, and DEAD-032's stale-README half (→ DEAD-126) is **fixed**. Only DEAD-031 (→ DEAD-123, the `@deprecated` user-facing commands) stays a deliberate standing KEEP. Revised tally of the 22 February findings: **13 executed / 1 partial / 8 standing KEEP**.
 
-> Per the engagement, nothing is deleted this pass. Waves below are for a later cleanup PR.
+## Extension Cleanup Plan (Waves A–B executed 2026-06-04; Wave C partial)
+
+> **Superseded 2026-06-15.** When written (2026-06-03) this was audit-only. Waves A and B were subsequently executed in `106e94f` (merged via `fbc065f`); Wave C is partial — DEAD-126 done in `0100c40`, while the DEAD-121/122/123/124 deprecation-hygiene items remain pending. Per-finding status is in each finding's `STATUS` banner. (DEAD-114 in Wave A was trimmed, not fully deleted — see its banner.)
 
 ### Wave A — Safe deletes (no cascade)
 `utils/error-response.ts` + test (DEAD-113); `test-utils.integration.ts` (DEAD-114); emoji 3 fns + tests (DEAD-115);

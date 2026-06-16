@@ -1,5 +1,7 @@
 # DEAD-126: bot-i18n README documents three removed functions (follow-up to DEAD-032)
 
+> **STATUS: RESOLVED** (verified 2026-06-15) — executed in `0100c40` (2026-06-04), merged via `fbc065f`; the bot-i18n README no longer references the three removed functions.
+
 ## Category
 Documentation Drift
 

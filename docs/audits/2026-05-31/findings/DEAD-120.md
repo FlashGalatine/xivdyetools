@@ -1,5 +1,7 @@
 # DEAD-120: Unused component-context.ts UI builders still present (continuation of DEAD-025)
 
+> **STATUS: RESOLVED** (verified 2026-06-15) — all 7 flagged builders removed in `106e94f` (2026-06-04); `component-context.ts` retained for its live core (`createContext`/`buildCustomId`). Merged via `fbc065f`.
+
 ## Category
 Unused Export
 

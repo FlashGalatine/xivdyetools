@@ -1,5 +1,7 @@
 # DEAD-114: test-utils.integration.ts still present (continuation of DEAD-030)
 
+> **STATUS: PARTIALLY RESOLVED** (verified 2026-06-15) — `106e94f` (2026-06-04) removed the dead exports `createFullMockEnv`/`assertDiscordJsonResponse`; `test-utils.integration.ts` was retained because `createMockServiceBinding`/`createMockUniversalisProxy` are live. Whole-file REMOVE revised to a trim.
+
 ## Category
 Stale Test Code
 

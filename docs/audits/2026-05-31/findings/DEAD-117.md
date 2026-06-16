@@ -1,5 +1,7 @@
 # DEAD-117: price-cache.ts test-only exports (getCachedPriceWithStale, invalidateCachedPrice)
 
+> **STATUS: RESOLVED** (verified 2026-06-15) — `getCachedPriceWithStale`/`invalidateCachedPrice` removed in `106e94f` (2026-06-04); `getCachedPrices` retained (live internal caller). Merged via `fbc065f`.
+
 ## Category
 Unused Export
 

@@ -1,5 +1,7 @@
 # DEAD-118: 7 dead type/function exports still present (continuation of DEAD-026)
 
+> **STATUS: RESOLVED** (verified 2026-06-15) — executed in `106e94f` (2026-06-04), merged to main via `fbc065f`; the flagged files/symbols are no longer in the tree.
+
 ## Category
 Unused Type / Unused Export
 
