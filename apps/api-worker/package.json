@@ -29,7 +29,7 @@
     "@vitest/coverage-v8": "^4.1.9",
     "@xivdyetools/test-utils": "workspace:*",
     "vitest": "^4.1.9",
-    "wrangler": "^4.100.0"
+    "wrangler": "^4.103.0"
   },
   "engines": {
     "node": ">=18.0.0"
