@@ -28,7 +28,7 @@
     "hono": "^4.12.25"
   },
   "devDependencies": {
-    "@types/node": "^25.9.3",
+    "@types/node": "^26.0.0",
     "@vitest/coverage-v8": "^4.1.9",
     "@xivdyetools/test-utils": "workspace:*",
     "discord-interactions": "^4.4.0",
