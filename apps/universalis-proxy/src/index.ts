@@ -202,7 +202,10 @@ app.get('/api/v2/aggregated/:datacenter/:itemIds', async (c) => {
       config,
       // OPT-002: Limit per-item listings and history entries to bound response size
       upstreamUrl: `${c.env.UNIVERSALIS_API_BASE}/aggregated/${datacenter}/${itemIds}?listings=5&entries=5`,
-      ctx: c.executionCtx,
+      // Hono types c.executionCtx with its own ExecutionContext interface, which lacks the
+      // `tracing` field added in @cloudflare/workers-types 4.20260621. The runtime value is the
+      // full Workers ExecutionContext, so assert it to satisfy cachedFetch's ctx parameter.
+      ctx: c.executionCtx as ExecutionContext,
       baseUrl: new URL(c.req.url).origin,
     });
 
@@ -265,7 +268,7 @@ app.get('/api/v2/data-centers', async (c) => {
       cacheKey,
       config,
       upstreamUrl: `${c.env.UNIVERSALIS_API_BASE}/data-centers`,
-      ctx: c.executionCtx,
+      ctx: c.executionCtx as ExecutionContext,
       baseUrl: new URL(c.req.url).origin,
     });
 
@@ -302,7 +305,7 @@ app.get('/api/v2/worlds', async (c) => {
       cacheKey,
       config,
       upstreamUrl: `${c.env.UNIVERSALIS_API_BASE}/worlds`,
-      ctx: c.executionCtx,
+      ctx: c.executionCtx as ExecutionContext,
       baseUrl: new URL(c.req.url).origin,
     });
 

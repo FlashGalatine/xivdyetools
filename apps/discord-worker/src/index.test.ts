@@ -136,7 +136,7 @@ describe('index.ts', () => {
       waitUntil: vi.fn(),
       passThroughOnException: vi.fn(),
       props: {},
-    };
+    } as unknown as ExecutionContext;
 
     vi.clearAllMocks();
   });
