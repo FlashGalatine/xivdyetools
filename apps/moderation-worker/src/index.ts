@@ -155,9 +155,12 @@ app.post('/', async (c) => {
     return pongResponse();
   }
 
+  // Hono types c.executionCtx with its own ExecutionContext interface, which lacks the
+  // `tracing` field added in @cloudflare/workers-types 4.20260621. The runtime value is the
+  // full Workers ExecutionContext, so assert it for the handler signatures below.
   // Handle Application Commands (slash commands)
   if (interactionType === InteractionType.APPLICATION_COMMAND) {
-    return handleCommand(interaction, env, c.executionCtx, logger);
+    return handleCommand(interaction, env, c.executionCtx as ExecutionContext, logger);
   }
 
   // Handle Autocomplete
@@ -167,12 +170,12 @@ app.post('/', async (c) => {
 
   // Handle Message Components (buttons, select menus)
   if (interactionType === InteractionType.MESSAGE_COMPONENT) {
-    return handleComponent(interaction, env, c.executionCtx, logger);
+    return handleComponent(interaction, env, c.executionCtx as ExecutionContext, logger);
   }
 
   // Handle Modal Submissions
   if (interactionType === InteractionType.MODAL_SUBMIT) {
-    return handleModal(interaction, env, c.executionCtx, logger);
+    return handleModal(interaction, env, c.executionCtx as ExecutionContext, logger);
   }
 
   // Unknown interaction type
