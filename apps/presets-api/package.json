@@ -29,12 +29,12 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260629.1",
-    "@types/node": "^26.0.0",
+    "@types/node": "^26.0.1",
     "@vitest/coverage-v8": "^4.1.9",
     "@xivdyetools/test-utils": "workspace:*",
     "tsx": "^4.22.4",
     "vitest": "^4.1.9",
-    "wrangler": "^4.103.0"
+    "wrangler": "^4.105.0"
   },
   "engines": {
     "node": ">=18.0.0"
