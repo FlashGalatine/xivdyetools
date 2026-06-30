@@ -20,11 +20,11 @@
     "@xivdyetools/logger": "workspace:*",
     "@xivdyetools/rate-limiter": "workspace:*",
     "@xivdyetools/worker-middleware": "workspace:*",
-    "hono": "^4.12.26",
+    "hono": "^4.12.27",
     "spectral.js": "^3.0.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260621.1",
+    "@cloudflare/workers-types": "^4.20260629.1",
     "@types/node": "^26.0.0",
     "@vitest/coverage-v8": "^4.1.9",
     "@xivdyetools/test-utils": "workspace:*",
