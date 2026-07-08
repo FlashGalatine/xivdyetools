@@ -62,15 +62,15 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-middleware
       hono:
-        specifier: ^4.12.27
-        version: 4.12.27
+        specifier: ^4.12.28
+        version: 4.12.28
       spectral.js:
         specifier: ^3.0.0
         version: 3.0.0
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260706.1
-        version: 5.20260706.1
+        specifier: ^5.20260708.1
+        version: 5.20260708.1
       '@types/node':
         specifier: ^26.0.1
         version: 26.0.1
@@ -85,7 +85,7 @@ importers:
         version: 4.1.9(@types/node@26.0.1)(@vitest/coverage-v8@4.1.9)(@vitest/ui@4.1.9)(jsdom@29.1.1)(msw@2.14.6(@types/node@26.0.1)(typescript@5.9.3))(vite@8.1.1(@types/node@26.0.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       wrangler:
         specifier: ^4.105.0
-        version: 4.105.0(@cloudflare/workers-types@5.20260706.1)
+        version: 4.105.0(@cloudflare/workers-types@5.20260708.1)
 
   apps/discord-worker:
     dependencies:
@@ -93,8 +93,8 @@ importers:
         specifier: ^0.3.6
         version: 0.3.6
       '@cloudflare/workers-types':
-        specifier: ^5.20260706.1
-        version: 5.20260706.1
+        specifier: ^5.20260708.1
+        version: 5.20260708.1
       '@resvg/resvg-wasm':
         specifier: ^2.6.2
         version: 2.6.2
@@ -129,8 +129,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-middleware
       hono:
-        specifier: ^4.12.27
-        version: 4.12.27
+        specifier: ^4.12.28
+        version: 4.12.28
     devDependencies:
       '@types/node':
         specifier: ^26.0.1
@@ -152,7 +152,7 @@ importers:
         version: 4.1.9(@types/node@26.0.1)(@vitest/coverage-v8@4.1.9)(@vitest/ui@4.1.9)(jsdom@29.1.1)(msw@2.14.6(@types/node@26.0.1)(typescript@5.9.3))(vite@8.1.1(@types/node@26.0.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       wrangler:
         specifier: ^4.105.0
-        version: 4.105.0(@cloudflare/workers-types@5.20260706.1)
+        version: 4.105.0(@cloudflare/workers-types@5.20260708.1)
 
   apps/maintainer:
     dependencies:
@@ -218,8 +218,8 @@ importers:
   apps/moderation-worker:
     dependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260706.1
-        version: 5.20260706.1
+        specifier: ^5.20260708.1
+        version: 5.20260708.1
       '@xivdyetools/auth':
         specifier: workspace:*
         version: link:../../packages/auth
@@ -236,8 +236,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-middleware
       hono:
-        specifier: ^4.12.27
-        version: 4.12.27
+        specifier: ^4.12.28
+        version: 4.12.28
     devDependencies:
       '@types/node':
         specifier: ^26.0.1
@@ -262,7 +262,7 @@ importers:
         version: 4.1.9(@types/node@26.0.1)(@vitest/coverage-v8@4.1.9)(@vitest/ui@4.1.9)(jsdom@29.1.1)(msw@2.14.6(@types/node@26.0.1)(typescript@5.9.3))(vite@8.1.1(@types/node@26.0.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       wrangler:
         specifier: ^4.105.0
-        version: 4.105.0(@cloudflare/workers-types@5.20260706.1)
+        version: 4.105.0(@cloudflare/workers-types@5.20260708.1)
 
   apps/oauth:
     dependencies:
@@ -282,12 +282,12 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-middleware
       hono:
-        specifier: ^4.12.27
-        version: 4.12.27
+        specifier: ^4.12.28
+        version: 4.12.28
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260706.1
-        version: 5.20260706.1
+        specifier: ^5.20260708.1
+        version: 5.20260708.1
       '@types/node':
         specifier: ^26.0.1
         version: 26.0.1
@@ -305,13 +305,13 @@ importers:
         version: 4.1.9(@types/node@26.0.1)(@vitest/coverage-v8@4.1.9)(@vitest/ui@4.1.9)(jsdom@29.1.1)(msw@2.14.6(@types/node@26.0.1)(typescript@5.9.3))(vite@8.1.1(@types/node@26.0.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       wrangler:
         specifier: ^4.105.0
-        version: 4.105.0(@cloudflare/workers-types@5.20260706.1)
+        version: 4.105.0(@cloudflare/workers-types@5.20260708.1)
 
   apps/og-worker:
     dependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260706.1
-        version: 5.20260706.1
+        specifier: ^5.20260708.1
+        version: 5.20260708.1
       '@resvg/resvg-wasm':
         specifier: ^2.6.2
         version: 2.6.2
@@ -325,8 +325,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-middleware
       hono:
-        specifier: ^4.12.27
-        version: 4.12.27
+        specifier: ^4.12.28
+        version: 4.12.28
     devDependencies:
       '@types/node':
         specifier: ^26.0.1
@@ -339,7 +339,7 @@ importers:
         version: 4.1.9(@types/node@26.0.1)(@vitest/coverage-v8@4.1.9)(@vitest/ui@4.1.9)(jsdom@29.1.1)(msw@2.14.6(@types/node@26.0.1)(typescript@5.9.3))(vite@8.1.1(@types/node@26.0.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       wrangler:
         specifier: ^4.105.0
-        version: 4.105.0(@cloudflare/workers-types@5.20260706.1)
+        version: 4.105.0(@cloudflare/workers-types@5.20260708.1)
 
   apps/presets-api:
     dependencies:
@@ -362,12 +362,12 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-middleware
       hono:
-        specifier: ^4.12.27
-        version: 4.12.27
+        specifier: ^4.12.28
+        version: 4.12.28
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260706.1
-        version: 5.20260706.1
+        specifier: ^5.20260708.1
+        version: 5.20260708.1
       '@types/node':
         specifier: ^26.0.1
         version: 26.0.1
@@ -385,7 +385,7 @@ importers:
         version: 4.1.9(@types/node@26.0.1)(@vitest/coverage-v8@4.1.9)(@vitest/ui@4.1.9)(jsdom@29.1.1)(msw@2.14.6(@types/node@26.0.1)(typescript@5.9.3))(vite@8.1.1(@types/node@26.0.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       wrangler:
         specifier: ^4.105.0
-        version: 4.105.0(@cloudflare/workers-types@5.20260706.1)
+        version: 4.105.0(@cloudflare/workers-types@5.20260708.1)
 
   apps/stoat-worker:
     dependencies:
@@ -445,12 +445,12 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-middleware
       hono:
-        specifier: ^4.12.27
-        version: 4.12.27
+        specifier: ^4.12.28
+        version: 4.12.28
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260706.1
-        version: 5.20260706.1
+        specifier: ^5.20260708.1
+        version: 5.20260708.1
       '@types/node':
         specifier: ^26.0.1
         version: 26.0.1
@@ -462,7 +462,7 @@ importers:
         version: 4.1.9(@types/node@26.0.1)(@vitest/coverage-v8@4.1.9)(@vitest/ui@4.1.9)(jsdom@29.1.1)(msw@2.14.6(@types/node@26.0.1)(typescript@5.9.3))(vite@8.1.1(@types/node@26.0.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
       wrangler:
         specifier: ^4.105.0
-        version: 4.105.0(@cloudflare/workers-types@5.20260706.1)
+        version: 4.105.0(@cloudflare/workers-types@5.20260708.1)
 
   apps/web-app:
     dependencies:
@@ -541,8 +541,8 @@ importers:
         version: 4.4.0
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260706.1
-        version: 5.20260706.1
+        specifier: ^5.20260708.1
+        version: 5.20260708.1
       '@vitest/coverage-v8':
         specifier: ^4.1.9
         version: 4.1.9(vitest@4.1.9)
@@ -662,8 +662,8 @@ importers:
         version: 1.38.0
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260706.1
-        version: 5.20260706.1
+        specifier: ^5.20260708.1
+        version: 5.20260708.1
       '@vitest/coverage-v8':
         specifier: ^4.1.9
         version: 4.1.9(vitest@4.1.9)
@@ -703,8 +703,8 @@ importers:
         version: link:../types
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260706.1
-        version: 5.20260706.1
+        specifier: ^5.20260708.1
+        version: 5.20260708.1
       '@testing-library/dom':
         specifier: ^10.0.0
         version: 10.4.1
@@ -734,14 +734,14 @@ importers:
         version: link:../rate-limiter
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260706.1
-        version: 5.20260706.1
+        specifier: ^5.20260708.1
+        version: 5.20260708.1
       '@vitest/coverage-v8':
         specifier: ^4.1.9
         version: 4.1.9(vitest@4.1.9)
       hono:
-        specifier: ^4.12.27
-        version: 4.12.27
+        specifier: ^4.12.28
+        version: 4.12.28
       vitest:
         specifier: ^4.1.9
         version: 4.1.9(@types/node@26.0.1)(@vitest/coverage-v8@4.1.9)(@vitest/ui@4.1.9)(jsdom@29.1.1)(msw@2.14.6(@types/node@26.0.1)(typescript@5.9.3))(vite@8.1.1(@types/node@26.0.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
@@ -929,8 +929,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@cloudflare/workers-types@5.20260706.1':
-    resolution: {integrity: sha512-PdGrKyJMmKjrZs6xPN/LYN2zpKo9bgn8Iq3JLYho1/76t0HEfUYnssgUljqFxQYPzH4SZ8wsIThaGHmW5GZkLg==}
+  '@cloudflare/workers-types@5.20260708.1':
+    resolution: {integrity: sha512-FSRyCsxALKmmNnk/2HMkTiX9Iz9yqTiTWX/BJZdffGznMSunXmQgb3mKy9wGBX2BCTLOuRYWL36uh7/3Gm05Eg==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -3394,8 +3394,8 @@ packages:
   headers-polyfill@5.0.1:
     resolution: {integrity: sha512-1TJ6Fih/b8h5TIcv+1+Hw0PDQWJTKDKzFZzcKOiW1wJza3XoAQlkCuXLbymPYB8+ZQyw8mHvdw560e8zVFIWyA==}
 
-  hono@4.12.27:
-    resolution: {integrity: sha512-1yrb/+w6HWQJrUCLkJ2IF5jNIPvvFkblV5RNOYl6bV+OA6p9GLcMpHFFGTosSvHvcAUibuUukRqhlYI4z32C7Q==}
+  hono@4.12.28:
+    resolution: {integrity: sha512-YwUvVpSF7m1yOblFPrU3Hbo8XhPheBoiyfGuII6z19LnOr6JpDnyyp7LFNrfV56wS8tpvtBFGRISHN02pDdLOA==}
     engines: {node: '>=16.9.0'}
 
   hookable@5.5.3:
@@ -4834,7 +4834,7 @@ snapshots:
   '@cloudflare/workerd-windows-64@1.20260625.1':
     optional: true
 
-  '@cloudflare/workers-types@5.20260706.1': {}
+  '@cloudflare/workers-types@5.20260708.1': {}
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
@@ -6988,7 +6988,7 @@ snapshots:
       '@types/set-cookie-parser': 2.4.10
       set-cookie-parser: 3.1.0
 
-  hono@4.12.27: {}
+  hono@4.12.28: {}
 
   hookable@5.5.3: {}
 
@@ -8246,7 +8246,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20260625.1
       '@cloudflare/workerd-windows-64': 1.20260625.1
 
-  wrangler@4.105.0(@cloudflare/workers-types@5.20260706.1):
+  wrangler@4.105.0(@cloudflare/workers-types@5.20260708.1):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
       '@cloudflare/unenv-preset': 2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260625.1)
@@ -8257,7 +8257,7 @@ snapshots:
       unenv: 2.0.0-rc.24
       workerd: 1.20260625.1
     optionalDependencies:
-      '@cloudflare/workers-types': 5.20260706.1
+      '@cloudflare/workers-types': 5.20260708.1
       fsevents: 2.3.3
     transitivePeerDependencies:
       - bufferutil

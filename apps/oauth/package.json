@@ -19,10 +19,10 @@
     "@xivdyetools/rate-limiter": "workspace:*",
     "@xivdyetools/types": "workspace:*",
     "@xivdyetools/worker-middleware": "workspace:*",
-    "hono": "^4.12.27"
+    "hono": "^4.12.28"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260706.1",
+    "@cloudflare/workers-types": "^5.20260708.1",
     "@types/node": "^26.0.1",
     "@vitest/coverage-v8": "^4.1.9",
     "@xivdyetools/test-utils": "workspace:*",

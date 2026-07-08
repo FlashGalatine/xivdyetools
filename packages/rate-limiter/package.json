@@ -48,7 +48,7 @@
     "@upstash/redis": "^1.38.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260706.1",
+    "@cloudflare/workers-types": "^5.20260708.1",
     "@vitest/coverage-v8": "^4.1.9",
     "vitest": "^4.1.9"
   },
