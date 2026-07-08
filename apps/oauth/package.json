@@ -23,12 +23,12 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260706.1",
-    "@types/node": "^26.0.1",
-    "@vitest/coverage-v8": "^4.1.9",
+    "@types/node": "^26.1.0",
+    "@vitest/coverage-v8": "^4.1.10",
     "@xivdyetools/test-utils": "workspace:*",
-    "miniflare": "^4.20260625.0",
-    "vitest": "^4.1.9",
-    "wrangler": "^4.105.0"
+    "miniflare": "^4.20260701.0",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.107.0"
   },
   "engines": {
     "node": ">=18.0.0"
