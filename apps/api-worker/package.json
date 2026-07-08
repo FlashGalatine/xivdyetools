@@ -24,7 +24,7 @@
     "spectral.js": "^3.0.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260629.1",
+    "@cloudflare/workers-types": "^5.20260706.1",
     "@types/node": "^26.0.1",
     "@vitest/coverage-v8": "^4.1.9",
     "@xivdyetools/test-utils": "workspace:*",
