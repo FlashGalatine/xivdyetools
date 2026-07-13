@@ -14,10 +14,10 @@
   "devDependencies": {
     "turbo": "^2.10.3",
     "typescript": "^5.9.3",
-    "eslint": "^10.6.0",
+    "eslint": "^10.7.0",
     "@eslint/js": "^10.0.1",
     "typescript-eslint": "^8.63.0",
-    "prettier": "^3.9.4",
+    "prettier": "^3.9.5",
     "rimraf": "^6.1.2"
   },
   "pnpm": {
