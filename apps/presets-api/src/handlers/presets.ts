@@ -276,10 +276,19 @@ presetsRouter.patch('/:id', async (c) => {
     }
   }
 
+  // BUG-001 (2026-07-18 audit): an owner edit must never lift a moderator-set
+  // status. Hidden presets cannot be resurfaced by editing at all; a preset
+  // that is pending/rejected/flagged stays in (or returns to) the moderation
+  // queue. Only a currently-approved preset may remain approved after an edit.
+  if (preset.status === 'hidden') {
+    return forbiddenResponse(c, 'This preset cannot be edited');
+  }
+
   // Determine if content moderation is needed (name or description changed)
   // PRESETS-BUG-003: Vote counts are preserved during edits - this is intentional
   // as users voted on the dye combination, not just the name/description.
-  let moderationStatus: 'approved' | 'pending' = 'approved';
+  let moderationStatus: 'approved' | 'pending' =
+    preset.status === 'approved' ? 'approved' : 'pending';
   let previousValues: PresetPreviousValues | null | undefined;
 
   if (body.name || body.description) {

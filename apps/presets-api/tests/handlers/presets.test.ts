@@ -1258,6 +1258,94 @@ describe('PresetsHandler', () => {
             expect(body.success).toBe(true);
         });
 
+        // BUG-001 (2026-07-18 audit): owner edits must not lift moderator-set statuses
+        it('should keep an approved preset approved on a clean edit', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: '123',
+                status: 'approved',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: JSON.stringify({ tags: ['updated'] }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { moderation_status: string };
+            expect(body.moderation_status).toBe('approved');
+        });
+
+        it.each(['rejected', 'flagged', 'pending'] as const)(
+            'should not self-approve a %s preset via edit',
+            async (status) => {
+                const mockRow = createMockPresetRow({
+                    id: 'preset-123',
+                    author_discord_id: '123',
+                    status,
+                });
+                mockDb._setupMock(() => mockRow);
+                const mockExecutionCtx = {
+                    waitUntil: () => {},
+                    passThroughOnException: () => {},
+                };
+
+                const res = await app.request(
+                    '/api/v1/presets/preset-123',
+                    {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: 'Bearer test-bot-secret',
+                            'X-User-Discord-ID': '123',
+                        },
+                        body: JSON.stringify({ tags: ['updated'] }),
+                    },
+                    env,
+                    mockExecutionCtx as never
+                );
+
+                expect(res.status).toBe(200);
+                const body = await res.json() as { moderation_status: string };
+                expect(body.moderation_status).toBe('pending');
+            }
+        );
+
+        it('should refuse to edit a hidden preset', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: '123',
+                status: 'hidden' as never,
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: JSON.stringify({ tags: ['updated'] }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(403);
+        });
+
         it('should reject empty update', async () => {
             const mockRow = createMockPresetRow({
                 id: 'preset-123',
