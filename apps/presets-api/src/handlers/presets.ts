@@ -79,8 +79,10 @@ presetsRouter.get('/', async (c) => {
     search,
     status: status as PresetFilters['status'],
     sort: sort as PresetFilters['sort'],
-    page: page ? parseInt(page, 10) : undefined,
-    limit: limit ? Math.min(parseInt(limit, 10), 50) : undefined, // Cap at 50 for performance
+    // BUG-016 (2026-07-18 audit): clamp pagination — a NaN bind is rejected by
+    // D1 as a 500, and SQLite treats LIMIT -1 as "no limit", bypassing the cap.
+    page: Math.max(1, Number.parseInt(page ?? '', 10) || 1),
+    limit: Math.min(Math.max(1, Number.parseInt(limit ?? '', 10) || 20), 50), // Cap at 50 for performance
     is_curated: is_curated === 'true' ? true : is_curated === 'false' ? false : undefined,
   };
 

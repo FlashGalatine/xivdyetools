@@ -192,9 +192,26 @@ describe('Index/App', () => {
     // Error Handler
     // ============================================
 
+    describe('Environment Validation', () => {
+        // BUG-017 (2026-07-18 audit): a misconfigured production isolate must
+        // fail EVERY request, not just the first one
+        it('should 500 on every request when production env is misconfigured', async () => {
+            const badProdEnv = createMockEnv({
+                ENVIRONMENT: 'production',
+                BOT_SIGNING_SECRET: undefined, // required in production
+            });
+
+            const first = await app.request('/health', {}, badProdEnv);
+            const second = await app.request('/health', {}, badProdEnv);
+
+            expect(first.status).toBe(500);
+            expect(second.status).toBe(500);
+        });
+    });
+
     describe('Error Handler', () => {
         it('should add HSTS header in production', async () => {
-            const prodEnv = createMockEnv({ ENVIRONMENT: 'production' });
+            const prodEnv = createMockEnv({ ENVIRONMENT: 'production', BOT_SIGNING_SECRET: 'test-signing-secret', MODERATOR_IDS: '123456789012345678' });
 
             const res = await app.request('/', {}, prodEnv);
 
@@ -234,14 +251,14 @@ describe('Index/App', () => {
         });
 
         it('should hide error details in production', async () => {
-            const prodEnv = createMockEnv({ ENVIRONMENT: 'production' });
+            const prodEnv = createMockEnv({ ENVIRONMENT: 'production', BOT_SIGNING_SECRET: 'test-signing-secret', MODERATOR_IDS: '123456789012345678' });
 
             // Verify production env is set correctly
             expect(prodEnv.ENVIRONMENT).toBe('production');
         });
 
         it('should return 404 for force-error route in production', async () => {
-            const prodEnv = createMockEnv({ ENVIRONMENT: 'production' });
+            const prodEnv = createMockEnv({ ENVIRONMENT: 'production', BOT_SIGNING_SECRET: 'test-signing-secret', MODERATOR_IDS: '123456789012345678' });
             const res = await app.request('/__force-error', {}, prodEnv);
 
             // In production, the force-error route returns 404 instead of throwing

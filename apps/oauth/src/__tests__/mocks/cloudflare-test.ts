@@ -135,9 +135,15 @@ export const env: Env = {
 };
 
 // Create production environment for testing production-specific code paths
+// BUG-017 (2026-07-18 audit): must pass validateEnv — production requires
+// HTTPS URLs and a real Discord snowflake, and env validation now runs on
+// every request instead of only the first one per isolate.
 export const createProductionEnv = (): Env => ({
     ...env,
     ENVIRONMENT: 'production',
+    FRONTEND_URL: 'https://xivdyetools.app',
+    WORKER_URL: 'https://auth.xivdyetools.app',
+    DISCORD_CLIENT_ID: '123456789012345678',
 });
 
 // Create broken production environment for testing env validation failure

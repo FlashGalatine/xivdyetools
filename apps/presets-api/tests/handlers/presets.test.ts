@@ -113,6 +113,31 @@ describe('PresetsHandler', () => {
             expect(body.limit).toBe(50);
         });
 
+        // BUG-016 (2026-07-18 audit): pagination clamps
+        it('should default non-numeric page/limit instead of 500ing', async () => {
+            mockDb._setupMock(() => []);
+
+            const res = await app.request('/api/v1/presets?page=abc&limit=xyz', {}, env);
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { page: number; limit: number };
+            expect(body.page).toBe(1);
+            expect(body.limit).toBe(20);
+        });
+
+        it('should clamp negative and zero pagination values', async () => {
+            mockDb._setupMock(() => []);
+
+            const res = await app.request('/api/v1/presets?page=-3&limit=-1', {}, env);
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { page: number; limit: number };
+            expect(body.page).toBe(1);
+            // LIMIT -1 would mean "no limit" in SQLite — must be clamped positive
+            expect(body.limit).toBeGreaterThanOrEqual(1);
+            expect(body.limit).toBeLessThanOrEqual(50);
+        });
+
         // BUG-015 (2026-07-18 audit): moderation queue must not be publicly listable
         it.each(['pending', 'rejected', 'flagged'] as const)(
             'should reject anonymous ?status=%s with 403',

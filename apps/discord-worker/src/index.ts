@@ -72,8 +72,10 @@ type Variables = MiddlewareVariables;
 // Create Hono app with environment type
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// Track if we've validated env in this isolate
-let envValidated = false;
+// BUG-017 (2026-07-18 audit): validation runs on every request (it's cheap
+// string checks) so the critical-secret check applies to every request. Only
+// the error logging is once-per-isolate.
+let envErrorsLogged = false;
 
 // FINDING-004: Restrict CORS to known web app origins instead of wildcard.
 // Discord interactions and webhooks are server-to-server; only /health is browser-hit.
@@ -92,16 +94,19 @@ app.use('*', loggerMiddleware({
 // Validates required env vars once per isolate and caches result
 // Note: Discord worker doesn't have an ENVIRONMENT var, so validation always logs warnings
 app.use('*', async (c, next) => {
-  if (!envValidated) {
-    const result = validateEnv(c.env);
-    envValidated = true;
-    if (!result.valid) {
+  const result = validateEnv(c.env);
+  if (!result.valid) {
+    if (!envErrorsLogged) {
+      envErrorsLogged = true;
       logValidationErrors(result.errors);
-      // Discord worker should still try to handle requests even with missing optional vars
-      // Only fail hard if critical secrets (DISCORD_TOKEN, DISCORD_PUBLIC_KEY) are missing
-      if (result.errors.some(e => e.includes('DISCORD_TOKEN') || e.includes('DISCORD_PUBLIC_KEY'))) {
-        return c.json({ error: 'Service misconfigured' }, 500);
-      }
+    }
+    // Discord worker should still try to handle requests even with missing optional vars
+    // Only fail hard if critical secrets (DISCORD_TOKEN, DISCORD_PUBLIC_KEY) are missing.
+    // BUG-017 (2026-07-18 audit): checked on every request, not just the first
+    // one in the isolate, so a misconfigured worker can't serve one 500 and
+    // then silently process later traffic.
+    if (result.errors.some(e => e.includes('DISCORD_TOKEN') || e.includes('DISCORD_PUBLIC_KEY'))) {
+      return c.json({ error: 'Service misconfigured' }, 500);
     }
   }
   return next();

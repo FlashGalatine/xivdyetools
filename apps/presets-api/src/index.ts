@@ -30,8 +30,10 @@ type Variables = MiddlewareVariables & {
 // Create Hono app with typed bindings
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// Track if we've validated env in this isolate
-let envValidated = false;
+// BUG-017 (2026-07-18 audit): validation runs on every request (it's cheap
+// string checks) so a misconfigured production isolate fails every request,
+// not just the first one. Only the error logging is once-per-isolate.
+let envErrorsLogged = false;
 
 // ============================================
 // GLOBAL MIDDLEWARE
@@ -48,20 +50,23 @@ app.use('*', loggerMiddleware({
 // Environment validation middleware
 // Validates required env vars once per isolate and caches result
 app.use('*', async (c, next) => {
-  if (!envValidated) {
-    const result = validateEnv(c.env);
-    envValidated = true;
-    if (!result.valid) {
+  const result = validateEnv(c.env);
+  if (!result.valid) {
+    if (!envErrorsLogged) {
+      envErrorsLogged = true;
       logValidationErrors(result.errors);
-      // In production, fail fast on misconfiguration
-      if (c.env.ENVIRONMENT === 'production') {
-        return c.json({ success: false, error: ErrorCode.SERVICE_UNAVAILABLE, message: 'Service misconfigured' }, 500);
+      if (c.env.ENVIRONMENT !== 'production') {
+        // In development, log warnings but continue
+        const logger = getLogger(c);
+        if (logger) {
+          logger.warn('Continuing with invalid env configuration (development mode)');
+        }
       }
-      // In development, log warnings but continue
-      const logger = getLogger(c);
-      if (logger) {
-        logger.warn('Continuing with invalid env configuration (development mode)');
-      }
+    }
+    // In production, fail fast on misconfiguration — on every request, not
+    // just the first one in the isolate (BUG-017)
+    if (c.env.ENVIRONMENT === 'production') {
+      return c.json({ success: false, error: ErrorCode.SERVICE_UNAVAILABLE, message: 'Service misconfigured' }, 500);
     }
   }
   return next();
