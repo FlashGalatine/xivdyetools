@@ -42,6 +42,16 @@ type Variables = {
 
 export const presetsRouter = new Hono<{ Bindings: Env; Variables: Variables }>();
 
+// BUG-014/015 (2026-07-18 audit): statuses anonymous callers may list, and the
+// helper that keeps the previous_values audit snapshot out of public responses.
+const MODERATOR_STATUSES: readonly string[] = ['pending', 'approved', 'rejected', 'flagged'];
+
+function stripAuditData<T extends { previous_values?: unknown }>(preset: T): Omit<T, 'previous_values'> {
+  const publicPreset = { ...preset };
+  delete publicPreset.previous_values;
+  return publicPreset;
+}
+
 // ============================================
 // PUBLIC ENDPOINTS
 // ============================================
@@ -52,6 +62,17 @@ export const presetsRouter = new Hono<{ Bindings: Env; Variables: Variables }>()
  */
 presetsRouter.get('/', async (c) => {
   const { category, search, status, sort, page, limit, is_curated } = c.req.query();
+  const auth = c.get('auth');
+
+  // BUG-015 (2026-07-18 audit): the moderation queue must not be publicly
+  // listable. Only moderators may filter by non-approved statuses; unknown
+  // values are rejected instead of silently returning an empty list.
+  if (status && !MODERATOR_STATUSES.includes(status)) {
+    return validationErrorResponse(c, 'Invalid status filter');
+  }
+  if (status && status !== 'approved' && !auth.isModerator) {
+    return forbiddenResponse(c, 'Only moderators can filter by non-approved status');
+  }
 
   const filters: PresetFilters = {
     category: category as PresetFilters['category'],
@@ -64,6 +85,9 @@ presetsRouter.get('/', async (c) => {
   };
 
   const response = await getPresets(c.env.DB, filters, c.get('logger'));
+  if (!auth.isModerator) {
+    return c.json({ ...response, presets: response.presets.map(stripAuditData) });
+  }
   return c.json(response);
 });
 
@@ -73,7 +97,8 @@ presetsRouter.get('/', async (c) => {
  */
 presetsRouter.get('/featured', async (c) => {
   const presets = await getFeaturedPresets(c.env.DB, c.get('logger'));
-  return c.json({ presets });
+  // BUG-014 (2026-07-18 audit): keep audit snapshots out of public responses
+  return c.json({ presets: presets.map(stripAuditData) });
 });
 
 // ============================================
@@ -377,7 +402,19 @@ presetsRouter.get('/:id', async (c) => {
     return notFoundResponse(c, 'Preset');
   }
 
-  return c.json(preset);
+  // BUG-014 (2026-07-18 audit): non-approved presets (hidden/pending/rejected/
+  // flagged) are only visible to their owner or a moderator; everyone else gets
+  // the same 404 as a nonexistent ID so hidden content can't be probed. The
+  // previous_values audit snapshot is likewise privileged-only.
+  const auth = c.get('auth');
+  const isPrivileged =
+    auth.isModerator ||
+    (auth.userDiscordId !== undefined && preset.author_discord_id === auth.userDiscordId);
+  if (preset.status !== 'approved' && !isPrivileged) {
+    return notFoundResponse(c, 'Preset');
+  }
+
+  return c.json(isPrivileged ? preset : stripAuditData(preset));
 });
 
 /**

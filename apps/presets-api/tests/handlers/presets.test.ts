@@ -112,6 +112,57 @@ describe('PresetsHandler', () => {
             // Limit is capped at 50 for performance
             expect(body.limit).toBe(50);
         });
+
+        // BUG-015 (2026-07-18 audit): moderation queue must not be publicly listable
+        it.each(['pending', 'rejected', 'flagged'] as const)(
+            'should reject anonymous ?status=%s with 403',
+            async (status) => {
+                mockDb._setupMock(() => []);
+
+                const res = await app.request(`/api/v1/presets?status=${status}`, {}, env);
+
+                expect(res.status).toBe(403);
+            }
+        );
+
+        it('should reject unknown status values with 400', async () => {
+            mockDb._setupMock(() => []);
+
+            const res = await app.request('/api/v1/presets?status=banana', {}, env);
+
+            expect(res.status).toBe(400);
+        });
+
+        it('should allow moderators to list pending presets', async () => {
+            mockDb._setupMock(() => [{ ...createMockPresetRow({ status: 'pending' }), _total: 1 }]);
+
+            const res = await app.request(
+                '/api/v1/presets?status=pending',
+                {
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789', // In MODERATOR_IDS
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+        });
+
+        // BUG-014 (2026-07-18 audit): audit snapshots stay out of public responses
+        it('should strip previous_values from public listings', async () => {
+            const row = createMockPresetRow({
+                previous_values: JSON.stringify({ name: 'Old Name' }),
+            });
+            mockDb._setupMock(() => [{ ...row, _total: 1 }]);
+
+            const res = await app.request('/api/v1/presets', {}, env);
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { presets: Record<string, unknown>[] };
+            expect(body.presets[0]).not.toHaveProperty('previous_values');
+        });
     });
 
     // ============================================
@@ -276,6 +327,80 @@ describe('PresetsHandler', () => {
             const res = await app.request('/api/v1/presets/nonexistent', {}, env);
 
             expect(res.status).toBe(404);
+        });
+
+        // BUG-014 (2026-07-18 audit): non-approved presets are invisible to the public
+        it.each(['pending', 'rejected', 'flagged', 'hidden'] as const)(
+            'should return 404 for anonymous access to a %s preset',
+            async (status) => {
+                const mockRow = createMockPresetRow({
+                    id: 'preset-123',
+                    status: status as never,
+                });
+                mockDb._setupMock(() => mockRow);
+
+                const res = await app.request('/api/v1/presets/preset-123', {}, env);
+
+                expect(res.status).toBe(404);
+            }
+        );
+
+        it('should let the owner view their own non-approved preset', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: '123',
+                status: 'rejected',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                {
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+        });
+
+        it('should let a moderator view a non-approved preset', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: 'someone-else',
+                status: 'pending',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123',
+                {
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789', // In MODERATOR_IDS
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+        });
+
+        it('should strip previous_values for anonymous access to an approved preset', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                previous_values: JSON.stringify({ name: 'Old Name' }),
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request('/api/v1/presets/preset-123', {}, env);
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as Record<string, unknown>;
+            expect(body).not.toHaveProperty('previous_values');
         });
     });
 
