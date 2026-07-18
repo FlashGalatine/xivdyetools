@@ -1,11 +1,12 @@
-name = "xivdyetools-api-worker"
+# BUG-008 (2026-07-18 audit): the default (top-level) env is a separate dev
+# worker with its own name and NO routes, so a plain `wrangler deploy` can
+# never overwrite the production worker on data.xivdyetools.app with dev vars
+# or the dev KV namespace. Production config lives exclusively under
+# [env.production] and is deployed via `wrangler deploy --env production`.
+name = "xivdyetools-api-worker-dev"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 # ARCH-001: nodejs_compat removed — no Node.js APIs used
-
-routes = [
-  { pattern = "data.xivdyetools.app", custom_domain = true }
-]
 
 [dev]
 port = 8790
@@ -21,6 +22,9 @@ API_VERSION = "v1"
 
 [env.production]
 name = "xivdyetools-api-worker"
+routes = [
+  { pattern = "data.xivdyetools.app", custom_domain = true }
+]
 vars = { ENVIRONMENT = "production", API_VERSION = "v1" }
 
 [[env.production.kv_namespaces]]

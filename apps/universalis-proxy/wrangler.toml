@@ -1,12 +1,12 @@
-name = "xivdyetools-universalis-proxy"
+# BUG-008 (2026-07-18 audit): the default (top-level) env is a separate dev
+# worker with its own name and NO routes, so a plain `wrangler deploy` can
+# never overwrite the production worker or its custom domains with dev vars.
+# Production config (name, routes, vars) lives exclusively under
+# [env.production] and is deployed via `wrangler deploy --env production`.
+name = "xivdyetools-universalis-proxy-dev"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 # ARCH-001: nodejs_compat removed — no Node.js APIs used
-
-routes = [
-  { pattern = "proxy.xivdyetools.app", custom_domain = true },
-  { pattern = "proxy.xivdyetools.projectgalatine.com", custom_domain = true }
-]
 
 [vars]
 ENVIRONMENT = "development"
@@ -17,6 +17,10 @@ RATE_LIMIT_WINDOW_SECONDS = "60"
 
 [env.production]
 name = "xivdyetools-universalis-proxy"
+routes = [
+  { pattern = "proxy.xivdyetools.app", custom_domain = true },
+  { pattern = "proxy.xivdyetools.projectgalatine.com", custom_domain = true }
+]
 
 [env.production.vars]
 ENVIRONMENT = "production"

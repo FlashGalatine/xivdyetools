@@ -1,16 +1,12 @@
-name = "xivdyetools-og-worker"
+# BUG-008 (2026-07-18 audit): the default (top-level) env is a separate dev
+# worker with its own name and NO routes, so a plain `wrangler deploy` can
+# never overwrite the production worker or its xivdyetools.app zone routes.
+# Production config lives exclusively under [env.production] and is deployed
+# via `wrangler deploy --env production`.
+name = "xivdyetools-og-worker-dev"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 # ARCH-001: nodejs_compat removed — no Node.js APIs used
-
-routes = [
-  { pattern = "xivdyetools.app/harmony/*", zone_name = "xivdyetools.app" },
-  { pattern = "xivdyetools.app/gradient/*", zone_name = "xivdyetools.app" },
-  { pattern = "xivdyetools.app/mixer/*", zone_name = "xivdyetools.app" },
-  { pattern = "xivdyetools.app/swatch/*", zone_name = "xivdyetools.app" },
-  { pattern = "xivdyetools.app/comparison/*", zone_name = "xivdyetools.app" },
-  { pattern = "xivdyetools.app/accessibility/*", zone_name = "xivdyetools.app" }
-]
 
 [[analytics_engine_datasets]]
 binding = "ANALYTICS"
@@ -27,6 +23,14 @@ fallthrough = true
 
 [env.production]
 name = "xivdyetools-og-worker"
+routes = [
+  { pattern = "xivdyetools.app/harmony/*", zone_name = "xivdyetools.app" },
+  { pattern = "xivdyetools.app/gradient/*", zone_name = "xivdyetools.app" },
+  { pattern = "xivdyetools.app/mixer/*", zone_name = "xivdyetools.app" },
+  { pattern = "xivdyetools.app/swatch/*", zone_name = "xivdyetools.app" },
+  { pattern = "xivdyetools.app/comparison/*", zone_name = "xivdyetools.app" },
+  { pattern = "xivdyetools.app/accessibility/*", zone_name = "xivdyetools.app" }
+]
 
 [env.production.vars]
 APP_BASE_URL = "https://xivdyetools.app"
