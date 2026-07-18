@@ -174,11 +174,18 @@ export class CharacterColorService {
     if (!this.hairColorsLoading) {
       this.hairColorsLoading = import(
         '../data/character_colors/race_specific/hair_colors.json'
-      ).then((module) => {
-        this.hairColorsData = module.default;
-        this.hairColorsLoading = null;
-        return this.hairColorsData;
-      });
+      )
+        .then((module) => {
+          this.hairColorsData = module.default;
+          this.hairColorsLoading = null;
+          return this.hairColorsData;
+        })
+        .catch((err: unknown) => {
+          // BUG-013 (2026-07-18 audit): reset on failure so a later call can
+          // retry instead of rethrowing the cached rejection forever
+          this.hairColorsLoading = null;
+          throw err;
+        });
     }
 
     return this.hairColorsLoading;
@@ -196,11 +203,18 @@ export class CharacterColorService {
     if (!this.skinColorsLoading) {
       this.skinColorsLoading = import(
         '../data/character_colors/race_specific/skin_colors.json'
-      ).then((module) => {
-        this.skinColorsData = module.default;
-        this.skinColorsLoading = null;
-        return this.skinColorsData;
-      });
+      )
+        .then((module) => {
+          this.skinColorsData = module.default;
+          this.skinColorsLoading = null;
+          return this.skinColorsData;
+        })
+        .catch((err: unknown) => {
+          // BUG-013 (2026-07-18 audit): reset on failure so a later call can
+          // retry instead of rethrowing the cached rejection forever
+          this.skinColorsLoading = null;
+          throw err;
+        });
     }
 
     return this.skinColorsLoading;

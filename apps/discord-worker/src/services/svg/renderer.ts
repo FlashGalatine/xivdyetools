@@ -57,6 +57,13 @@ export async function initRenderer(logger?: ExtendedLogger): Promise<void> {
     }
   })();
 
+  // BUG-013 (2026-07-18 audit): reset the cached promise on failure so the
+  // next request retries init instead of re-awaiting the same rejected
+  // promise for the rest of the isolate's lifetime.
+  wasmInitPromise.catch(() => {
+    wasmInitPromise = null;
+  });
+
   await wasmInitPromise;
 }
 

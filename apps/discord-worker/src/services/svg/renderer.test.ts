@@ -32,6 +32,20 @@ describe('SVG renderer', () => {
             expect(initRenderer).toBeDefined();
             expect(typeof initRenderer).toBe('function');
         });
+
+        // BUG-013 (2026-07-18 audit): a failed init must not poison the isolate —
+        // the cached promise is reset so the next call retries
+        it('retries init after a failed first attempt', async () => {
+            const { initWasm } = await import('@resvg/resvg-wasm');
+            const { initRenderer } = await import('./renderer.js');
+
+            vi.mocked(initWasm).mockRejectedValueOnce(new Error('transient wasm failure'));
+
+            await expect(initRenderer()).rejects.toThrow('Failed to initialize SVG renderer');
+            // Second call must retry (and succeed with the default resolved mock),
+            // not re-await the first call's cached rejection
+            await expect(initRenderer()).resolves.toBeUndefined();
+        });
     });
 
     describe('renderSvgToPng', () => {
