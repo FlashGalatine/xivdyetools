@@ -51,10 +51,12 @@ describe('getOAuthLimit', () => {
     expect(limit).toEqual(OAUTH_LIMITS['/auth/xivauth']);
   });
 
-  it('returns xivauth limit for /auth/xivauth/callback due to iteration order (startsWith)', () => {
+  // BUG-007 (2026-07-18 audit): longest prefix must win — previously
+  // '/auth/xivauth' shadowed this and returned the stricter 10/min limit
+  it('returns the callback limit for /auth/xivauth/callback (longest prefix wins)', () => {
     const limit = getOAuthLimit('/auth/xivauth/callback');
-    // /auth/xivauth/callback starts with /auth/xivauth, which is iterated first
-    expect(limit).toEqual(OAUTH_LIMITS['/auth/xivauth']);
+    expect(limit).toEqual(OAUTH_LIMITS['/auth/xivauth/callback']);
+    expect(limit.maxRequests).toBe(20);
   });
 
   it('returns default for unknown paths', () => {

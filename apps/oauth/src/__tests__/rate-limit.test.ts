@@ -55,6 +55,16 @@ describe('Rate Limiter Service', () => {
             expect(refreshResult.limit).toBe(30);
         });
 
+        // BUG-007 (2026-07-18 audit): '/auth/xivauth' must not shadow the
+        // callback path — longest prefix wins
+        it('should give /auth/xivauth/callback the callback limit, not the login limit', async () => {
+            const initResult = await checkRateLimit('192.168.1.9', '/auth/xivauth');
+            expect(initResult.limit).toBe(10);
+
+            const callbackResult = await checkRateLimit('192.168.1.9', '/auth/xivauth/callback');
+            expect(callbackResult.limit).toBe(20);
+        });
+
         it('should use default limit for unknown auth endpoints', async () => {
             const result = await checkRateLimit('192.168.1.4', '/auth/unknown');
             expect(result.limit).toBe(30); // default

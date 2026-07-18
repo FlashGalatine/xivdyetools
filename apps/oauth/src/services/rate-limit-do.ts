@@ -7,7 +7,7 @@
  * consistency across edge locations.
  */
 
-import type { RateLimitConfig } from '../durable-objects/rate-limiter.js';
+import { getOAuthLimit } from '@xivdyetools/rate-limiter';
 
 /**
  * Rate limit check result
@@ -18,36 +18,6 @@ export interface RateLimitResult {
   remaining: number;
   resetAt: Date;
   limit: number;
-}
-
-/**
- * Rate limit configuration per endpoint
- * Same configs as in-memory implementation
- */
-const RATE_LIMITS: Record<string, RateLimitConfig> = {
-  // Login initiation - stricter limit (10 per minute)
-  '/auth/discord': { maxRequests: 10, windowMs: 60_000 },
-  '/auth/xivauth': { maxRequests: 10, windowMs: 60_000 },
-  // Token exchange - moderate limit (20 per minute)
-  '/auth/callback': { maxRequests: 20, windowMs: 60_000 },
-  '/auth/xivauth/callback': { maxRequests: 20, windowMs: 60_000 },
-  // Token refresh - more lenient (30 per minute)
-  '/auth/refresh': { maxRequests: 30, windowMs: 60_000 },
-  // Default for other auth endpoints
-  default: { maxRequests: 30, windowMs: 60_000 },
-};
-
-/**
- * Get rate limit configuration for a path
- */
-function getConfigForPath(path: string): RateLimitConfig {
-  // Match the most specific path
-  for (const [key, config] of Object.entries(RATE_LIMITS)) {
-    if (key !== 'default' && path.startsWith(key)) {
-      return config;
-    }
-  }
-  return RATE_LIMITS.default;
 }
 
 /**
@@ -63,8 +33,9 @@ export async function checkRateLimitDO(
   path: string,
   rateLimiterNamespace: DurableObjectNamespace
 ): Promise<RateLimitResult> {
-  // Get config for this path
-  const config = getConfigForPath(path);
+  // BUG-007 (2026-07-18 audit): shared longest-prefix routing instead of a
+  // local copy with '/auth/xivauth' shadowing '/auth/xivauth/callback'
+  const config = getOAuthLimit(path);
 
   try {
     // Get DO instance for this IP

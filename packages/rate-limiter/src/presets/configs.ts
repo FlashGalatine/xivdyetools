@@ -32,13 +32,20 @@ export const OAUTH_LIMITS: Record<string, RateLimitConfig> = {
   default: { maxRequests: 30, windowMs: 60_000 },
 };
 
+// BUG-007 (2026-07-18 audit): prefix matching must prefer the LONGEST key —
+// insertion order made '/auth/xivauth' shadow '/auth/xivauth/callback', giving
+// callbacks the stricter login-initiation limit. Sorted once at module load.
+const OAUTH_LIMIT_KEYS_BY_LENGTH = Object.keys(OAUTH_LIMITS)
+  .filter((key) => key !== 'default')
+  .sort((a, b) => b.length - a.length);
+
 /**
- * Get OAuth rate limit config for a path
+ * Get OAuth rate limit config for a path (longest matching prefix wins)
  */
 export function getOAuthLimit(path: string): RateLimitConfig {
-  for (const [key, config] of Object.entries(OAUTH_LIMITS)) {
-    if (key !== 'default' && path.startsWith(key)) {
-      return config;
+  for (const key of OAUTH_LIMIT_KEYS_BY_LENGTH) {
+    if (path.startsWith(key)) {
+      return OAUTH_LIMITS[key];
     }
   }
   return OAUTH_LIMITS.default;

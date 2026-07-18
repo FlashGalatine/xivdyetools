@@ -15,8 +15,7 @@
 import {
   MemoryRateLimiter,
   getClientIp as sharedGetClientIp,
-  OAUTH_LIMITS,
-  type RateLimitConfig as SharedConfig,
+  getOAuthLimit,
 } from '@xivdyetools/rate-limiter';
 
 /**
@@ -45,31 +44,18 @@ export function getClientIp(request: Request): string {
 }
 
 /**
- * Get rate limit config for a given path
- */
-function getConfigForPath(path: string): SharedConfig {
-  // Use preset configs from shared package
-  if (path.startsWith('/auth/discord') || path.startsWith('/auth/xivauth')) {
-    return OAUTH_LIMITS['/auth/discord'];
-  }
-  if (path.startsWith('/auth/callback') || path.startsWith('/auth/xivauth/callback')) {
-    return OAUTH_LIMITS['/auth/callback'];
-  }
-  if (path.startsWith('/auth/refresh')) {
-    return OAUTH_LIMITS['/auth/refresh'];
-  }
-  return OAUTH_LIMITS.default;
-}
-
-/**
  * Check if a request is within rate limits
+ *
+ * BUG-007 (2026-07-18 audit): path→config routing now comes from the shared
+ * package's getOAuthLimit (longest prefix wins) instead of a local copy that
+ * let '/auth/xivauth' shadow '/auth/xivauth/callback'.
  *
  * @param ip - Client IP address
  * @param path - Request path (e.g., "/auth/discord")
  * @returns Rate limit result
  */
 export async function checkRateLimit(ip: string, path: string): Promise<RateLimitResult> {
-  const config = getConfigForPath(path);
+  const config = getOAuthLimit(path);
   // Use compound key for path-specific rate limiting
   const key = `${ip}:${path}`;
 
