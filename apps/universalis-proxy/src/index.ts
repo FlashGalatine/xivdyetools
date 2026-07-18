@@ -18,7 +18,7 @@ import {
 } from '@xivdyetools/worker-middleware';
 import type { Env } from './types/cache';
 import { CACHE_CONFIGS } from './config/cache';
-import { isValidDatacenterOrWorld } from './config/datacenters';
+import { isValidDatacenterOrWorld, isNameInUpstreamLists } from './config/datacenters';
 import { cachedFetch, buildCacheHeaders, UpstreamError } from './services/cached-fetch';
 import { checkRateLimit, getRateLimitHeaders, type RateLimitConfig } from './services/rate-limiter';
 
@@ -160,7 +160,39 @@ app.get('/api/v2/aggregated/:datacenter/:itemIds', async (c) => {
   // SECURITY: Validate datacenter against whitelist of known FFXIV datacenters/worlds
   // This prevents cache pollution and reduces attack surface
   if (!isValidDatacenterOrWorld(datacenter)) {
-    return c.json({ error: 'Invalid datacenter or world name' }, 400);
+    // BUG-029 (2026-07-18 audit): the static whitelist is only a fast path.
+    // On a miss, verify against the live /data-centers and /worlds payloads
+    // (shared 24 h cache with the proxy routes below) so worlds added to the
+    // game after the whitelist was written are accepted without a code
+    // change. Names unknown upstream are still rejected, and abuse is
+    // bounded: invalid names cost at most one upstream list fetch per 24 h.
+    let knownUpstream = false;
+    try {
+      const validationBaseUrl = new URL(c.req.url).origin;
+      const validationCtx = c.executionCtx as ExecutionContext;
+      const [dcResult, worldResult] = await Promise.all([
+        cachedFetch({
+          cacheKey: 'data-centers:all',
+          config: CACHE_CONFIGS.dataCenters,
+          upstreamUrl: `${c.env.UNIVERSALIS_API_BASE}/data-centers`,
+          ctx: validationCtx,
+          baseUrl: validationBaseUrl,
+        }),
+        cachedFetch({
+          cacheKey: 'worlds:all',
+          config: CACHE_CONFIGS.worlds,
+          upstreamUrl: `${c.env.UNIVERSALIS_API_BASE}/worlds`,
+          ctx: validationCtx,
+          baseUrl: validationBaseUrl,
+        }),
+      ]);
+      knownUpstream = isNameInUpstreamLists(datacenter, dcResult.data, worldResult.data);
+    } catch {
+      // Upstream lists unavailable — fall back to the static whitelist verdict
+    }
+    if (!knownUpstream) {
+      return c.json({ error: 'Invalid datacenter or world name' }, 400);
+    }
   }
 
   // Validate itemIds (comma-separated numbers only)

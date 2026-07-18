@@ -202,6 +202,34 @@ describe('Universalis Proxy App', () => {
       expect(data.error).toContain('Invalid datacenter');
     });
 
+    // BUG-029 (2026-07-18 audit): a whitelist miss falls back to the live
+    // (cached) /data-centers and /worlds lists so newly added worlds work
+    // without a code change
+    it('should accept a datacenter missing from the static whitelist but present upstream', async () => {
+      mockCachedFetch.mockImplementation((options: unknown) => {
+        const { cacheKey } = options as { cacheKey: string };
+        if (cacheKey === 'data-centers:all') {
+          return Promise.resolve({ data: [{ name: 'BrandNewDC' }], source: 'upstream', isStale: false });
+        }
+        if (cacheKey === 'worlds:all') {
+          return Promise.resolve({ data: [{ name: 'Brandnewworld' }], source: 'upstream', isStale: false });
+        }
+        return Promise.resolve({ data: { results: [] }, source: 'upstream', isStale: false });
+      });
+
+      const dcResponse = await app.fetch(createRequest('/api/v2/aggregated/BrandNewDC/12345'), mockEnv, mockCtx);
+      expect(dcResponse.status).toBe(200);
+
+      const worldResponse = await app.fetch(createRequest('/api/v2/aggregated/Brandnewworld/12345'), mockEnv, mockCtx);
+      expect(worldResponse.status).toBe(200);
+
+      // A name unknown to both the whitelist AND upstream is still rejected
+      const badResponse = await app.fetch(createRequest('/api/v2/aggregated/StillFake/12345'), mockEnv, mockCtx);
+      expect(badResponse.status).toBe(400);
+
+      mockCachedFetch.mockReset();
+    });
+
     it('should reject invalid itemIds parameter', async () => {
       const request = createRequest('/api/v2/aggregated/Crystal/abc123');
       const response = await app.fetch(request, mockEnv, mockCtx);

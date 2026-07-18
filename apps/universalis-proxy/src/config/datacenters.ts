@@ -149,3 +149,28 @@ export function isValidDatacenterOrWorld(name: string): boolean {
   const lower = name.toLowerCase();
   return VALID_DATACENTERS.has(lower) || VALID_WORLDS.has(lower);
 }
+
+/**
+ * Check a name against the live /data-centers and /worlds payloads.
+ *
+ * BUG-029 (2026-07-18 audit): the static whitelist above is only a fast path
+ * and inevitably goes stale when Square Enix adds datacenters/worlds. When it
+ * misses, the aggregated route falls back to this check against the upstream
+ * lists (which this proxy already caches for 24 h), so new worlds work
+ * without a code change. Names unknown to both layers are still rejected.
+ *
+ * @param name - Datacenter or world name (case-insensitive)
+ * @param dataCenters - Parsed /data-centers payload (array of { name })
+ * @param worlds - Parsed /worlds payload (array of { name })
+ */
+export function isNameInUpstreamLists(name: string, dataCenters: unknown, worlds: unknown): boolean {
+  const lower = name.toLowerCase();
+  const matches = (entry: unknown): boolean => {
+    const entryName = (entry as { name?: unknown } | null)?.name;
+    return typeof entryName === 'string' && entryName.toLowerCase() === lower;
+  };
+  return (
+    (Array.isArray(dataCenters) && dataCenters.some(matches)) ||
+    (Array.isArray(worlds) && worlds.some(matches))
+  );
+}
