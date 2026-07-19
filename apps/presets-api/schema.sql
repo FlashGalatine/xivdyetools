@@ -78,7 +78,12 @@ CREATE INDEX IF NOT EXISTS idx_presets_name ON presets(name);
 
 -- PRESETS-CRITICAL-001: UNIQUE constraint prevents duplicate dye combinations at DB level
 -- dye_signature is computed by sorting dye IDs and JSON stringifying: [1,12,40] -> "[1,12,40]"
-CREATE UNIQUE INDEX IF NOT EXISTS idx_presets_dye_signature ON presets(dye_signature);
+-- BUG-003 (2026-07-18 audit): partial index so rejected/hidden presets don't
+-- permanently block their dye combination — matches the status filter used by
+-- findDuplicatePreset / findDuplicatePresetExcluding
+CREATE UNIQUE INDEX IF NOT EXISTS idx_presets_dye_signature
+  ON presets(dye_signature)
+  WHERE status IN ('approved', 'pending');
 
 -- ============================================
 -- VOTES TABLE
@@ -114,18 +119,8 @@ CREATE INDEX IF NOT EXISTS idx_moderation_log_preset ON moderation_log(preset_id
 CREATE INDEX IF NOT EXISTS idx_moderation_log_moderator ON moderation_log(moderator_discord_id);
 CREATE INDEX IF NOT EXISTS idx_moderation_log_created ON moderation_log(created_at DESC);
 
--- ============================================
--- RATE LIMITING TABLE (optional, for persistent rate limits)
--- ============================================
-CREATE TABLE IF NOT EXISTS rate_limits (
-  key TEXT PRIMARY KEY,                   -- e.g., "submit:123456789" or "ip:1.2.3.4"
-  count INTEGER DEFAULT 1,
-  window_start TEXT DEFAULT (datetime('now')),
-  expires_at TEXT NOT NULL
-);
-
--- Index for cleanup queries
-CREATE INDEX IF NOT EXISTS idx_rate_limits_expires ON rate_limits(expires_at);
+-- REFACTOR-018 (2026-07-18 audit): the unused rate_limits table was dropped in
+-- migration 0006 — IP limits are in-memory, submission limits count presets rows.
 
 -- ============================================
 -- BANNED USERS TABLE (Migration 0003)

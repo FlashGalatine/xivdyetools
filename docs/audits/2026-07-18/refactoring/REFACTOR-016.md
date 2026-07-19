@@ -32,3 +32,7 @@ LOW
 LOW. Verify first that no test file imports `checkPublicRateLimit` (tests/services/rate-limit-service.test.ts may exercise it — migrate or delete those cases alongside).
 
 > Source: evidence/d1-workers-analysis.md (2026-07-18 deep-dive, d1-workers area)
+
+## Status
+
+**DONE 2026-07-19** — `ipRateLimiter`, `checkPublicRateLimit`, and the `getClientIp` re-export were deleted from rate-limit-service.ts (their tests migrated/removed); the module now owns submission limits only.

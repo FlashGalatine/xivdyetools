@@ -232,16 +232,25 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
         queries.push(query);
         bindings.push(boundValues);
         enforceMaxHistory();
+        const mutationMeta = { ...createDefaultMeta(), changes: 1, rows_written: 1, last_row_id: 1, changed_db: true };
         if (mockFn) {
           const result = mockFn(query, boundValues);
           if (result && typeof result === 'object' && 'meta' in result) {
             return result as D1Result<T>;
           }
+          // Real D1 run() returns rows for RETURNING statements — surface
+          // mock results the same way .all() does, with mutation meta
+          if (Array.isArray(result)) {
+            return { results: result as T[], success: true as const, meta: mutationMeta };
+          }
+          if (result && typeof result === 'object') {
+            return { results: [result] as T[], success: true as const, meta: mutationMeta };
+          }
         }
         return {
           results: [] as T[],
           success: true as const,
-          meta: { ...createDefaultMeta(), changes: 1, rows_written: 1, last_row_id: 1, changed_db: true },
+          meta: mutationMeta,
         };
       },
 
@@ -273,9 +282,11 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
     prepare: createStatement,
 
     batch: async <T = unknown>(statements: MockD1PreparedStatement[]): Promise<D1Result<T>[]> => {
+      // Real D1 batch() behaves like run() per statement (honors RETURNING
+      // rows and mutation meta), so route through run(), not all()
       const results: D1Result<T>[] = [];
       for (const stmt of statements) {
-        const result = await stmt.all<T>();
+        const result = await stmt.run<T>();
         results.push(result);
       }
       return results;

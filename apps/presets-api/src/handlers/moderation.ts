@@ -4,10 +4,17 @@
  */
 
 import { Hono } from 'hono';
-import type { Env, AuthContext, PresetStatus } from '../types.js';
+import type { Env, AuthContext, PresetStatus, PresetRow } from '../types.js';
 import { requireModerator } from '../middleware/auth.js';
-import { getPresetById, getPendingPresets, updatePresetStatus, revertPreset } from '../services/preset-service.js';
 import {
+  getPresetById,
+  getPendingPresets,
+  prepareStatusUpdate,
+  prepareRevert,
+  rowToPreset,
+} from '../services/preset-service.js';
+import {
+  ErrorCode,
   invalidJsonResponse,
   validationErrorResponse,
   notFoundResponse,
@@ -18,6 +25,10 @@ import {
   validateModerationStatus,
   validateModerationReason,
 } from '../services/validation-service.js';
+import {
+  listFailedNotifications,
+  resolveFailedNotification,
+} from '../services/notification-service.js';
 
 type Variables = {
   auth: AuthContext;
@@ -70,24 +81,42 @@ moderationRouter.patch('/:presetId/status', async (c) => {
     return notFoundResponse(c, 'Preset');
   }
 
-  // Log moderation action
+  // BUG-020 (2026-07-18 audit): status update + audit log run in one atomic
+  // batch, and the update is conditional on the status this moderator observed
+  // — a concurrent moderator's write makes the update match zero rows, so the
+  // stale action is rejected as a 409 instead of mislabeling the audit trail
+  // or logging an action that never happened.
   const logId = crypto.randomUUID();
   const now = new Date().toISOString();
   const action = getActionFromStatusChange(preset.status, body.status);
 
-  await c.env.DB.prepare(
-    `INSERT INTO moderation_log (id, preset_id, moderator_discord_id, action, reason, created_at)
-     VALUES (?, ?, ?, ?, ?, ?)`
-  )
-    .bind(logId, presetId, auth.userDiscordId!, action, body.reason || null, now)
-    .run();
+  const [updateResult] = await c.env.DB.batch<PresetRow>([
+    prepareStatusUpdate(c.env.DB, presetId, body.status, preset.status, now),
+    // changes() sees the preceding UPDATE in this batch's transaction, so the
+    // log row is only written when the status transition actually happened
+    c.env.DB
+      .prepare(
+        `INSERT INTO moderation_log (id, preset_id, moderator_discord_id, action, reason, created_at)
+         SELECT ?, ?, ?, ?, ?, ? WHERE changes() > 0`
+      )
+      .bind(logId, presetId, auth.userDiscordId!, action, body.reason || null, now),
+  ]);
 
-  // Update preset status
-  const updatedPreset = await updatePresetStatus(c.env.DB, presetId, body.status);
+  const updatedRow = updateResult.results?.[0];
+  if (!updatedRow) {
+    return c.json(
+      {
+        success: false,
+        error: ErrorCode.DUPLICATE_RESOURCE,
+        message: 'Preset status changed concurrently — reload and retry',
+      },
+      409
+    );
+  }
 
   return c.json({
     success: true,
-    preset: updatedPreset,
+    preset: rowToPreset(updatedRow, c.get('logger')),
   });
 });
 
@@ -128,26 +157,30 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
     return validationErrorResponse(c, 'This preset has no previous values to revert to');
   }
 
-  // Perform the revert
-  const revertedPreset = await revertPreset(c.env.DB, presetId);
-  if (!revertedPreset) {
-    return internalErrorResponse(c, 'Failed to revert preset');
-  }
-
-  // Log moderation action
+  // BUG-020 (2026-07-18 audit): revert + audit log in one atomic batch — the
+  // old ordering (revert first, log after) could lose the audit trail for a
+  // revert that did happen. changes() gates the log on the revert applying.
   const logId = crypto.randomUUID();
   const now = new Date().toISOString();
 
-  await c.env.DB.prepare(
-    `INSERT INTO moderation_log (id, preset_id, moderator_discord_id, action, reason, created_at)
-     VALUES (?, ?, ?, ?, ?, ?)`
-  )
-    .bind(logId, presetId, auth.userDiscordId!, 'revert', body.reason, now)
-    .run();
+  const [revertResult] = await c.env.DB.batch<PresetRow>([
+    prepareRevert(c.env.DB, presetId, preset.previous_values, now),
+    c.env.DB
+      .prepare(
+        `INSERT INTO moderation_log (id, preset_id, moderator_discord_id, action, reason, created_at)
+         SELECT ?, ?, ?, ?, ?, ? WHERE changes() > 0`
+      )
+      .bind(logId, presetId, auth.userDiscordId!, 'revert', body.reason, now),
+  ]);
+
+  const revertedRow = revertResult.results?.[0];
+  if (!revertedRow) {
+    return internalErrorResponse(c, 'Failed to revert preset');
+  }
 
   return c.json({
     success: true,
-    preset: revertedPreset,
+    preset: rowToPreset(revertedRow, c.get('logger')),
     message: 'Preset reverted to previous values',
   });
 });
@@ -183,13 +216,17 @@ moderationRouter.get('/stats', async (c) => {
   const modError = requireModerator(c);
   if (modError) return modError;
 
+  // BUG-050 (2026-07-18 audit): rows are written with JS ISO timestamps
+  // ("...T...Z"); the cutoff must use the same format — datetime('now') renders
+  // with a space separator and TEXT comparison is lexicographic, which
+  // over-counted the boundary day.
   const query = `
     SELECT
       (SELECT COUNT(*) FROM presets WHERE status = 'pending') as pending,
       (SELECT COUNT(*) FROM presets WHERE status = 'approved') as approved,
       (SELECT COUNT(*) FROM presets WHERE status = 'rejected') as rejected,
       (SELECT COUNT(*) FROM presets WHERE status = 'flagged') as flagged,
-      (SELECT COUNT(*) FROM moderation_log WHERE created_at > datetime('now', '-7 days')) as actions_last_week
+      (SELECT COUNT(*) FROM moderation_log WHERE created_at > strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-7 days')) as actions_last_week
   `;
 
   const stats = await c.env.DB.prepare(query).first();
@@ -210,17 +247,9 @@ moderationRouter.get('/failed-notifications', async (c) => {
 
   const includeResolved = c.req.query('include_resolved') === 'true';
 
-  const query = includeResolved
-    ? 'SELECT * FROM failed_notifications ORDER BY created_at DESC LIMIT 50'
-    : 'SELECT * FROM failed_notifications WHERE resolved_at IS NULL ORDER BY created_at DESC LIMIT 50';
-
-  try {
-    const result = await c.env.DB.prepare(query).all();
-    return c.json({ notifications: result.results || [], total: result.results?.length ?? 0 });
-  } catch {
-    // Table may not exist yet if migration hasn't run
-    return c.json({ notifications: [], total: 0 });
-  }
+  // REFACTOR-017: dead-letter read path lives in notification-service
+  const notifications = await listFailedNotifications(c.env.DB, includeResolved);
+  return c.json({ notifications, total: notifications.length });
 });
 
 /**
@@ -234,13 +263,8 @@ moderationRouter.patch('/failed-notifications/:id/resolve', async (c) => {
   const id = c.req.param('id');
 
   try {
-    const result = await c.env.DB.prepare(
-      "UPDATE failed_notifications SET resolved_at = datetime('now') WHERE id = ? AND resolved_at IS NULL"
-    )
-      .bind(id)
-      .run();
-
-    if (!result.meta.changes) {
+    const resolved = await resolveFailedNotification(c.env.DB, id);
+    if (!resolved) {
       return notFoundResponse(c, 'Failed notification');
     }
 

@@ -31,41 +31,42 @@ export async function addVote(
   const now = new Date().toISOString();
 
   try {
-    // Atomically attempt to insert vote - ON CONFLICT prevents duplicates
-    // The PRIMARY KEY (preset_id, user_discord_id) ensures uniqueness
-    const insertResult = await db
-      .prepare(
-        'INSERT INTO votes (preset_id, user_discord_id, created_at) VALUES (?, ?, ?) ON CONFLICT DO NOTHING'
-      )
-      .bind(presetId, userDiscordId, now)
-      .run();
+    // BUG-019 (2026-07-18 audit): insert + counter update run in one atomic
+    // batch so a partial failure can never leave a vote row whose increment
+    // didn't land. The counter is recomputed from the votes table instead of
+    // incremented, which also self-heals any drift accumulated previously.
+    // The PRIMARY KEY (preset_id, user_discord_id) still prevents duplicates
+    // via ON CONFLICT DO NOTHING.
+    const [insertResult, updateResult] = await db.batch([
+      db
+        .prepare(
+          'INSERT INTO votes (preset_id, user_discord_id, created_at) VALUES (?, ?, ?) ON CONFLICT DO NOTHING'
+        )
+        .bind(presetId, userDiscordId, now),
+      db
+        .prepare(
+          `UPDATE presets
+           SET vote_count = (SELECT COUNT(*) FROM votes WHERE preset_id = ?), updated_at = ?
+           WHERE id = ? RETURNING vote_count`
+        )
+        .bind(presetId, now, presetId),
+    ]);
 
-    // Check if insert actually added a row (changes = 0 means duplicate)
+    const newCount =
+      (updateResult.results as { vote_count: number }[] | undefined)?.[0]?.vote_count ?? 0;
+
+    // changes = 0 on the insert means the user had already voted
     if (insertResult.meta.changes === 0) {
-      // Already voted - get current count
-      const preset = await db
-        .prepare('SELECT vote_count FROM presets WHERE id = ?')
-        .bind(presetId)
-        .first<{ vote_count: number }>();
-
       return {
         success: true,
         already_voted: true,
-        new_vote_count: preset?.vote_count || 0,
+        new_vote_count: newCount,
       };
     }
 
-    // Vote was inserted - increment count and get new total
-    const updateResult = await db
-      .prepare(
-        'UPDATE presets SET vote_count = vote_count + 1, updated_at = ? WHERE id = ? RETURNING vote_count'
-      )
-      .bind(now, presetId)
-      .first<{ vote_count: number }>();
-
     return {
       success: true,
-      new_vote_count: updateResult?.vote_count || 1,
+      new_vote_count: newCount,
     };
   } catch (error) {
     console.error('Failed to add vote:', error);
@@ -89,38 +90,36 @@ export async function removeVote(
   const now = new Date().toISOString();
 
   try {
-    // Atomically attempt to delete the vote
-    const deleteResult = await db
-      .prepare('DELETE FROM votes WHERE preset_id = ? AND user_discord_id = ?')
-      .bind(presetId, userDiscordId)
-      .run();
+    // BUG-019 (2026-07-18 audit): delete + counter update in one atomic batch,
+    // recomputing the counter from the votes table (see addVote)
+    const [deleteResult, updateResult] = await db.batch([
+      db
+        .prepare('DELETE FROM votes WHERE preset_id = ? AND user_discord_id = ?')
+        .bind(presetId, userDiscordId),
+      db
+        .prepare(
+          `UPDATE presets
+           SET vote_count = (SELECT COUNT(*) FROM votes WHERE preset_id = ?), updated_at = ?
+           WHERE id = ? RETURNING vote_count`
+        )
+        .bind(presetId, now, presetId),
+    ]);
 
-    // Check if delete actually removed a row (changes = 0 means no vote existed)
+    const newCount =
+      (updateResult.results as { vote_count: number }[] | undefined)?.[0]?.vote_count ?? 0;
+
+    // changes = 0 on the delete means no vote existed to remove
     if (deleteResult.meta.changes === 0) {
-      // No vote to remove - get current count
-      const preset = await db
-        .prepare('SELECT vote_count FROM presets WHERE id = ?')
-        .bind(presetId)
-        .first<{ vote_count: number }>();
-
       return {
         success: true,
         already_voted: false,
-        new_vote_count: preset?.vote_count || 0,
+        new_vote_count: newCount,
       };
     }
 
-    // Vote was deleted - decrement count and get new total
-    const updateResult = await db
-      .prepare(
-        'UPDATE presets SET vote_count = MAX(0, vote_count - 1), updated_at = ? WHERE id = ? RETURNING vote_count'
-      )
-      .bind(now, presetId)
-      .first<{ vote_count: number }>();
-
     return {
       success: true,
-      new_vote_count: updateResult?.vote_count || 0,
+      new_vote_count: newCount,
     };
   } catch (error) {
     console.error('Failed to remove vote:', error);

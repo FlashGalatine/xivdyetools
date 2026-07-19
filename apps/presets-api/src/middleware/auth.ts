@@ -66,6 +66,25 @@ function checkModerator(userDiscordId: string | undefined, moderatorIds: string)
   return ids.includes(userDiscordId);
 }
 
+/**
+ * BUG-053 (2026-07-18 audit): constant-time string comparison for the bot API
+ * secret. Comparing SHA-256 digests keeps the comparison fixed-length and
+ * fixed-time regardless of where the strings first differ, matching the
+ * constant-time treatment already used for HMAC/JWT verification elsewhere.
+ */
+async function timingSafeEqualStr(a: string, b: string): Promise<boolean> {
+  const enc = new TextEncoder();
+  const [da, db] = await Promise.all([
+    crypto.subtle.digest('SHA-256', enc.encode(a)),
+    crypto.subtle.digest('SHA-256', enc.encode(b)),
+  ]);
+  const ua = new Uint8Array(da);
+  const ub = new Uint8Array(db);
+  let diff = 0;
+  for (let i = 0; i < ua.length; i++) diff |= ua[i] ^ ub[i];
+  return diff === 0;
+}
+
 // ============================================
 // MIDDLEWARE
 // ============================================
@@ -96,7 +115,8 @@ export async function authMiddleware(
     const token = authHeader.slice(7);
 
     // Method 1: Bot authentication (BOT_API_SECRET)
-    if (token === c.env.BOT_API_SECRET) {
+    // BUG-053: constant-time comparison (timing side-channel hardening)
+    if (c.env.BOT_API_SECRET && (await timingSafeEqualStr(token, c.env.BOT_API_SECRET))) {
       // SECURITY: Require HMAC signature for bot authentication in production
       // This prevents header spoofing attacks where an attacker with the API secret
       // could set arbitrary X-User-Discord-ID headers to impersonate users

@@ -150,9 +150,11 @@ app.use('/api/*', async (c, next) => {
   const method = c.req.method;
   if (['POST', 'PATCH', 'PUT'].includes(method)) {
     const contentType = c.req.header('content-type');
-    // Allow requests with empty body (some deletions) or valid JSON content-type
-    const contentLength = c.req.header('content-length');
-    const hasBody = contentLength && parseInt(contentLength) > 0;
+    // BUG-054 (2026-07-18 audit): detect a body from the request stream, not
+    // the Content-Length header — chunked requests carry no Content-Length and
+    // previously skipped both this gate and the JSON depth limit downstream.
+    // Empty-body mutations (e.g. PATCH /refresh-author) remain exempt.
+    const hasBody = c.req.raw.body !== null;
 
     if (hasBody && (!contentType || !contentType.includes('application/json'))) {
       return c.json(

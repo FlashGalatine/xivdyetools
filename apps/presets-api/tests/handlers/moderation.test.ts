@@ -425,7 +425,12 @@ describe('ModerationHandler', () => {
         it('should return 500 if revert operation fails', async () => {
             const mockRow = createMockPresetRow({
                 id: 'preset-123',
-                previous_values: JSON.stringify({ name: 'Original' }),
+                previous_values: JSON.stringify({
+                    name: 'Original',
+                    description: 'Original description',
+                    tags: ['original'],
+                    dyes: [1, 2],
+                }),
             });
 
             let callCount = 0;
@@ -433,9 +438,11 @@ describe('ModerationHandler', () => {
                 callCount++;
                 // First call: getPresetById (returns preset with previous_values)
                 if (callCount === 1) return mockRow;
-                // Second call: revertPreset UPDATE
-                if (query.includes('UPDATE')) return { success: true };
-                // Third call: fetch reverted preset returns null (simulating failure)
+                // BUG-020: revert now runs as a batch whose UPDATE uses
+                // RETURNING — an empty result set simulates the write failing
+                if (query.includes('UPDATE')) {
+                    return { results: [], success: true, meta: { changes: 0 } };
+                }
                 return null;
             });
 

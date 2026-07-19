@@ -64,9 +64,10 @@ describe('VotesHandler', () => {
                 if (query.includes('INSERT INTO votes')) {
                     return { success: true, meta: { changes: 0 } };
                 }
-                // Get vote count
-                if (query.includes('vote_count FROM presets')) {
-                    return { vote_count: 5 };
+                // BUG-019: counter update runs in the same batch and RETURNING
+                // reports the recomputed count
+                if (query.includes('UPDATE presets')) {
+                    return [{ vote_count: 5 }];
                 }
                 return null;
             });
@@ -126,9 +127,9 @@ describe('VotesHandler', () => {
                 if (query.includes('DELETE FROM votes')) {
                     return { success: true, meta: { changes: 0 } };
                 }
-                // Get current vote count
-                if (query.includes('vote_count FROM presets')) {
-                    return { vote_count: 5 };
+                // BUG-019: batched counter update returns the recomputed count
+                if (query.includes('UPDATE presets')) {
+                    return [{ vote_count: 5 }];
                 }
                 return null;
             });
@@ -478,55 +479,38 @@ describe('VotesHandler', () => {
 
     describe('Vote Count Consistency', () => {
         it('should use batch operations for vote add', async () => {
-            mockDb._setupMock((query) => {
-                if (query.includes('SELECT 1 FROM votes')) {
-                    return null;
-                }
-                if (query.includes('vote_count FROM presets')) {
-                    return { vote_count: 1 };
-                }
-                return { success: true };
-            });
+            mockDb._setupMock(() => ({ success: true }));
 
             await addVote(mockDb, 'preset-123', 'user-456');
 
-            // Should have INSERT vote and UPDATE preset with vote_count + 1
+            // BUG-019: insert + recompute-from-truth counter update in one batch
             expect(mockDb._queries.some((q) => q.includes('INSERT INTO votes'))).toBe(true);
-            expect(mockDb._queries.some((q) => q.includes('vote_count + 1'))).toBe(true);
+            expect(mockDb._queries.some((q) => q.includes('SELECT COUNT(*) FROM votes'))).toBe(true);
         });
 
         it('should use batch operations for vote remove', async () => {
-            mockDb._setupMock((query) => {
-                if (query.includes('SELECT 1 FROM votes')) {
-                    return { 1: 1 };
-                }
-                if (query.includes('vote_count FROM presets')) {
-                    return { vote_count: 4 };
-                }
-                return { success: true };
-            });
+            mockDb._setupMock(() => ({ success: true }));
 
             await removeVote(mockDb, 'preset-123', 'user-456');
 
-            // Should have DELETE vote and UPDATE preset with vote_count - 1
+            // BUG-019: delete + recompute-from-truth counter update in one batch
             expect(mockDb._queries.some((q) => q.includes('DELETE FROM votes'))).toBe(true);
-            expect(mockDb._queries.some((q) => q.includes('vote_count - 1'))).toBe(true);
+            expect(mockDb._queries.some((q) => q.includes('SELECT COUNT(*) FROM votes'))).toBe(true);
         });
 
-        it('should use MAX(0, vote_count - 1) to prevent negative votes', async () => {
+        it('should recompute the counter from the votes table (cannot go negative)', async () => {
             mockDb._setupMock((query) => {
-                if (query.includes('SELECT 1 FROM votes')) {
-                    return { 1: 1 };
-                }
-                if (query.includes('vote_count FROM presets')) {
-                    return { vote_count: 0 };
+                if (query.includes('UPDATE presets')) {
+                    return [{ vote_count: 0 }];
                 }
                 return { success: true };
             });
 
-            await removeVote(mockDb, 'preset-123', 'user-456');
+            const result = await removeVote(mockDb, 'preset-123', 'user-456');
 
-            expect(mockDb._queries.some((q) => q.includes('MAX(0, vote_count - 1)'))).toBe(true);
+            expect(result.success).toBe(true);
+            if (!result.success) return;
+            expect(result.new_vote_count).toBe(0);
         });
     });
 });

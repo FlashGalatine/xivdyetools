@@ -38,3 +38,7 @@ LOW-MEDIUM
 LOW. Pure extraction; existing tests (`tests/handlers/presets.test.ts`) continue to cover the routes, and the moved functions keep their signatures. Watch the module-level cache state during the move — `resetCategoryCache` is exported for tests and must keep pointing at the same state the validator uses.
 
 > Source: evidence/d1-workers-analysis.md (2026-07-18 deep-dive, d1-workers area)
+
+## Status
+
+**DONE 2026-07-19** — Notification subsystem (payload types, retry/backoff, dead-letter write + new list/resolve read helpers) extracted to `services/notification-service.ts`; category cache extracted to `services/category-service.ts` (re-exported from presets.ts for compatibility). moderation.ts consumes the shared dead-letter helpers.

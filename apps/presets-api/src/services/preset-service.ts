@@ -189,7 +189,19 @@ export async function getPresets(
 
   const rows = result.results || [];
   // Extract total from first row (all rows have same total via window function)
-  const total = rows.length > 0 ? rows[0]._total : 0;
+  let total = rows.length > 0 ? rows[0]._total : 0;
+
+  // OPT-017 (2026-07-18 audit): the window function has no row to ride on for
+  // out-of-range pages, so fall back to a real COUNT there — otherwise clients
+  // paginating past the end see the collection "shrink" to zero
+  if (rows.length === 0 && page > 1) {
+    const countRow = await db
+      .prepare(`SELECT COUNT(*) as total FROM presets WHERE ${whereClause}`)
+      .bind(...params)
+      .first<{ total: number }>();
+    total = countRow?.total ?? 0;
+  }
+
   const presets = rowsToPresets(rows, logger);
 
   return {
@@ -306,21 +318,59 @@ export async function createPreset(
 }
 
 /**
- * Update preset status
+ * Build the conditional status-update statement used by the moderation handler.
+ *
+ * BUG-020/OPT-013 (2026-07-18 audit): the update is conditional on the status
+ * the moderator observed (concurrent moderation is detectable as "no row
+ * returned") and uses RETURNING * so the caller gets exactly this write's
+ * result without a re-read. Batched with the moderation_log insert by the
+ * caller so the pair is atomic.
  */
-export async function updatePresetStatus(
+export function prepareStatusUpdate(
   db: D1Database,
   id: string,
-  status: CommunityPreset['status']
-): Promise<CommunityPreset | null> {
-  const now = new Date().toISOString();
+  status: CommunityPreset['status'],
+  expectedStatus: CommunityPreset['status'],
+  now: string
+): D1PreparedStatement {
   const query = `
     UPDATE presets
     SET status = ?, updated_at = ?
-    WHERE id = ?
+    WHERE id = ? AND status = ?
+    RETURNING *
   `;
-  await db.prepare(query).bind(status, now, id).run();
-  return getPresetById(db, id);
+  return db.prepare(query).bind(status, now, id, expectedStatus);
+}
+
+/**
+ * Build the revert statement used by the moderation handler.
+ * Restores previous_values content and clears the snapshot column.
+ * Batched with the moderation_log insert by the caller (BUG-020).
+ */
+export function prepareRevert(
+  db: D1Database,
+  id: string,
+  previous: PresetPreviousValues,
+  now: string
+): D1PreparedStatement {
+  const query = `
+    UPDATE presets
+    SET name = ?, description = ?, dyes = ?, tags = ?, dye_signature = ?,
+        status = 'approved', previous_values = NULL, updated_at = ?
+    WHERE id = ?
+    RETURNING *
+  `;
+  return db
+    .prepare(query)
+    .bind(
+      previous.name,
+      previous.description,
+      JSON.stringify(previous.dyes),
+      JSON.stringify(previous.tags),
+      generateDyeSignature(previous.dyes),
+      now,
+      id
+    );
 }
 
 /**
@@ -427,53 +477,16 @@ export async function updatePreset(
   // Add WHERE clause
   params.push(id);
 
+  // OPT-013 (2026-07-18 audit): RETURNING * instead of a re-read — halves the
+  // D1 round trips and guarantees the returned entity reflects exactly this
+  // request's write rather than a concurrent writer's
   const query = `
     UPDATE presets
     SET ${setClauses.join(', ')}
     WHERE id = ?
+    RETURNING *
   `;
 
-  await db.prepare(query).bind(...params).run();
-  return getPresetById(db, id);
-}
-
-/**
- * Revert a preset to its previous values
- * Restores from previous_values and clears that column
- */
-export async function revertPreset(
-  db: D1Database,
-  id: string
-): Promise<CommunityPreset | null> {
-  // First get the current preset to retrieve previous_values
-  const current = await getPresetById(db, id);
-  if (!current || !current.previous_values) {
-    return null;
-  }
-
-  const previous = current.previous_values;
-  const now = new Date().toISOString();
-  const dyeSignature = generateDyeSignature(previous.dyes);
-
-  const query = `
-    UPDATE presets
-    SET name = ?, description = ?, dyes = ?, tags = ?, dye_signature = ?,
-        status = 'approved', previous_values = NULL, updated_at = ?
-    WHERE id = ?
-  `;
-
-  await db
-    .prepare(query)
-    .bind(
-      previous.name,
-      previous.description,
-      JSON.stringify(previous.dyes),
-      JSON.stringify(previous.tags),
-      dyeSignature,
-      now,
-      id
-    )
-    .run();
-
-  return getPresetById(db, id);
+  const row = await db.prepare(query).bind(...params).first<PresetRow>();
+  return row ? rowToPreset(row) : null;
 }

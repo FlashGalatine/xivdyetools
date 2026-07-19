@@ -34,7 +34,23 @@ import {
   validatePresetTags,
 } from '../services/validation-service.js';
 import { addVote } from './votes.js';
-import { checkSubmissionRateLimit, getRemainingSubmissions } from '../services/rate-limit-service.js';
+import {
+  checkSubmissionRateLimit,
+  getRemainingSubmissions,
+  getSubmissionCountToday,
+  getNextResetUTC,
+  DAILY_SUBMISSION_LIMIT,
+} from '../services/rate-limit-service.js';
+import {
+  notifyDiscordBot,
+  storeFailedNotification,
+  type PresetNotificationPayload,
+} from '../services/notification-service.js';
+import { getValidCategories } from '../services/category-service.js';
+
+// REFACTOR-017: category cache moved to category-service; re-exported because
+// tests (and any external callers) reach it through this module
+export { resetCategoryCache } from '../services/category-service.js';
 
 type Variables = {
   auth: AuthContext;
@@ -330,32 +346,64 @@ presetsRouter.patch('/:id', async (c) => {
     );
 
     if (!moderationResult.passed) {
-      // Store previous values for potential revert
-      previousValues = {
-        name: preset.name,
-        description: preset.description,
-        tags: preset.tags,
-        dyes: preset.dyes,
-      };
+      // BUG-052 (2026-07-18 audit): write-once snapshot — only capture
+      // previous_values when none exists yet, so successive flagged edits
+      // can't overwrite the oldest known-good state (the revert target).
+      if (!preset.previous_values) {
+        previousValues = {
+          name: preset.name,
+          description: preset.description,
+          tags: preset.tags,
+          dyes: preset.dyes,
+        };
+      }
       moderationStatus = 'pending';
     }
-    // PRESETS-CRITICAL-004: Do NOT clear previous_values when moderation passes
-    // Keep the audit trail of previously-flagged content for compliance and pattern detection
-    // The previous_values field now serves as an append-only audit log
-    // If moderationResult.passed is true, we simply don't update previousValues,
-    // preserving any existing audit history
+    // PRESETS-CRITICAL-004: Do NOT clear previous_values when moderation passes.
+    // previous_values holds the oldest clean snapshot (last-known-good for
+    // moderator revert), not an append-only history — leaving previousValues
+    // undefined here preserves whatever snapshot already exists.
   }
 
   // Update the preset
   // PRESETS-BUG-002: Always pass moderation status so that presets
   // previously flagged can be un-flagged when the user fixes the content
-  const updatedPreset = await updatePreset(
-    c.env.DB,
-    id,
-    body,
-    previousValues,
-    moderationStatus
-  );
+  let updatedPreset;
+  try {
+    updatedPreset = await updatePreset(
+      c.env.DB,
+      id,
+      body,
+      previousValues,
+      moderationStatus
+    );
+  } catch (error) {
+    // BUG-003 (2026-07-18 audit): the duplicate pre-check races with concurrent
+    // writers — recover from the UNIQUE dye_signature violation as a 409
+    // instead of an unhandled 500
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes('UNIQUE constraint failed') && errorMessage.includes('dye_signature')) {
+      const duplicate = body.dyes
+        ? await findDuplicatePresetExcluding(c.env.DB, body.dyes, id)
+        : null;
+      return c.json(
+        {
+          success: false,
+          error: ErrorCode.DUPLICATE_RESOURCE,
+          message: 'This dye combination already exists',
+          ...(duplicate && {
+            duplicate: {
+              id: duplicate.id,
+              name: duplicate.name,
+              author_name: duplicate.author_name,
+            },
+          }),
+        },
+        409
+      );
+    }
+    throw error;
+  }
 
   if (!updatedPreset) {
     return internalErrorResponse(c, 'Failed to update preset');
@@ -526,6 +574,30 @@ presetsRouter.post('/', async (c) => {
   // Auto-vote for own preset
   await addVote(c.env.DB, preset.id, auth.userDiscordId!);
 
+  // BUG-049 (2026-07-18 audit): the pre-check above is check-then-insert, so N
+  // concurrent submissions at 9/10 quota could all pass. Re-count now that our
+  // INSERT landed — the count includes it, so anything over the limit means
+  // concurrent requests overshot and this one rolls itself back.
+  // OPT-016: this same count replaces the old getRemainingSubmissions re-query,
+  // so the happy path still issues one post-create COUNT, now load-bearing.
+  const submissionsToday = await getSubmissionCountToday(c.env.DB, auth.userDiscordId!);
+  if (submissionsToday > DAILY_SUBMISSION_LIMIT) {
+    await c.env.DB.batch([
+      c.env.DB.prepare('DELETE FROM votes WHERE preset_id = ?').bind(preset.id),
+      c.env.DB.prepare('DELETE FROM presets WHERE id = ?').bind(preset.id),
+    ]);
+    return c.json(
+      {
+        success: false,
+        error: ErrorCode.RATE_LIMITED,
+        message: `You've reached your daily submission limit (10 per day). Try again tomorrow.`,
+        remaining: 0,
+        reset_at: getNextResetUTC().toISOString(),
+      },
+      429
+    );
+  }
+
   // Send notification to Discord worker (non-blocking)
   // PRESETS-REF-002: Fire-and-forget notification - errors don't fail the request
   // Use waitUntil to keep the worker alive while notification completes
@@ -548,15 +620,13 @@ presetsRouter.post('/', async (c) => {
     })
   );
 
-  // Get updated rate limit info
-  const { remaining } = await getRemainingSubmissions(c.env.DB, auth.userDiscordId!);
-
   return c.json(
     {
       success: true,
       preset,
       moderation_status: status,
-      remaining_submissions: remaining,
+      // OPT-016: derived from the enforcement count above — no extra query
+      remaining_submissions: Math.max(0, DAILY_SUBMISSION_LIMIT - submissionsToday),
     },
     201
   );
@@ -565,59 +635,6 @@ presetsRouter.post('/', async (c) => {
 // ============================================
 // VALIDATION HELPERS
 // ============================================
-
-// PRESETS-CRITICAL-002: Cache valid categories from database
-// Categories are cached at module level and refreshed periodically
-let cachedCategories: string[] | null = null;
-let categoryCacheTime = 0;
-// OPT-001: Pending promise for deduplication — prevents thundering herd on cache miss
-let categoriesFetchPromise: Promise<string[]> | null = null;
-const CATEGORY_CACHE_TTL = 60000; // 1 minute
-
-/**
- * Reset the category cache (exported for testing)
- */
-export function resetCategoryCache(): void {
-  cachedCategories = null;
-  categoryCacheTime = 0;
-  categoriesFetchPromise = null;
-}
-
-/**
- * Get valid category IDs from database with caching
- * This replaces the hardcoded VALID_CATEGORIES array
- *
- * OPT-001: Uses promise deduplication to prevent thundering herd —
- * concurrent cache misses share a single in-flight database query
- */
-async function getValidCategories(db: D1Database): Promise<string[]> {
-  const now = Date.now();
-
-  // Return cached categories if still valid
-  if (cachedCategories && now - categoryCacheTime < CATEGORY_CACHE_TTL) {
-    return cachedCategories;
-  }
-
-  // OPT-001: If a fetch is already in progress, await it instead of starting a new one
-  if (categoriesFetchPromise) {
-    return categoriesFetchPromise;
-  }
-
-  // Start the fetch and cache the promise for deduplication
-  categoriesFetchPromise = db
-    .prepare('SELECT id FROM categories')
-    .all<{ id: string }>()
-    .then((result) => {
-      cachedCategories = (result.results || []).map(row => row.id);
-      categoryCacheTime = Date.now();
-      return cachedCategories;
-    })
-    .finally(() => {
-      categoriesFetchPromise = null;
-    });
-
-  return categoriesFetchPromise;
-}
 
 /**
  * Validate preset submission (all fields required)
@@ -678,146 +695,7 @@ function validateEditRequest(body: PresetEditRequest): string | null {
   return null;
 }
 
-// ============================================
-// DISCORD BOT NOTIFICATION
-// ============================================
-
-interface PresetNotificationPayload {
-  type: 'submission';
-  preset: {
-    id: string;
-    name: string;
-    description: string;
-    category_id: string;
-    dyes: number[];
-    tags: string[];
-    author_name: string;
-    author_discord_id: string;
-    status: 'pending' | 'approved' | 'rejected';
-    moderation_status: 'clean' | 'flagged' | 'auto_approved';
-    source: 'bot' | 'web' | 'none';
-    created_at: string;
-  };
-}
-
-/**
- * PRESETS-CRITICAL-003: Retry configuration for Discord notifications
- */
-const NOTIFICATION_RETRY_CONFIG = {
-  maxRetries: 3,
-  baseDelayMs: 1000, // 1 second
-  maxDelayMs: 10000, // 10 seconds
-};
-
-/**
- * Sleep for a specified duration
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- * Calculate exponential backoff delay with jitter
- */
-function getBackoffDelay(attempt: number): number {
-  const delay = Math.min(
-    NOTIFICATION_RETRY_CONFIG.baseDelayMs * Math.pow(2, attempt),
-    NOTIFICATION_RETRY_CONFIG.maxDelayMs
-  );
-  // Add jitter (±25%) to prevent thundering herd
-  return delay * (0.75 + Math.random() * 0.5);
-}
-
-/**
- * Notify the Discord worker about a new preset submission
- * Uses Cloudflare Service Binding for Worker-to-Worker communication (avoids error 1042)
- *
- * PRESETS-CRITICAL-003: Now includes retry with exponential backoff
- * Retries up to 3 times on transient failures
- */
-async function notifyDiscordBot(env: Env, payload: PresetNotificationPayload): Promise<void> {
-  // Check if service binding is configured
-  if (!env.DISCORD_WORKER || !env.INTERNAL_WEBHOOK_SECRET) {
-    console.log('Discord worker binding not configured, skipping notification');
-    return;
-  }
-
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt <= NOTIFICATION_RETRY_CONFIG.maxRetries; attempt++) {
-    try {
-      // Use service binding for direct Worker-to-Worker communication
-      // The hostname is ignored - only the path matters
-      const response = await env.DISCORD_WORKER.fetch(
-        new Request('https://internal/webhooks/preset-submission', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${env.INTERNAL_WEBHOOK_SECRET}`,
-          },
-          body: JSON.stringify(payload),
-        })
-      );
-
-      if (response.ok) {
-        if (attempt > 0) {
-          console.log(`Discord notification succeeded on retry ${attempt}`);
-        }
-        return; // Success!
-      }
-
-      // Non-retryable errors (4xx client errors)
-      if (response.status >= 400 && response.status < 500) {
-        throw new Error(`Discord worker returned ${response.status}: ${await response.text()}`);
-      }
-
-      // Server error - will retry
-      lastError = new Error(`Discord worker returned ${response.status}`);
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-
-      // Don't retry on non-network errors
-      if (lastError.message.includes('returned 4')) {
-        throw lastError;
-      }
-    }
-
-    // If we have more retries, wait before trying again
-    if (attempt < NOTIFICATION_RETRY_CONFIG.maxRetries) {
-      const delay = getBackoffDelay(attempt);
-      console.log(`Discord notification failed, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${NOTIFICATION_RETRY_CONFIG.maxRetries})`);
-      await sleep(delay);
-    }
-  }
-
-  // All retries exhausted
-  throw lastError || new Error('Discord notification failed after all retries');
-}
-
-/**
- * BUG-015: Store failed notification in dead-letter table for later review.
- * Called from .catch() blocks when notifyDiscordBot() fails after all retries.
- * Insert is best-effort — failures here are logged but do not propagate.
- */
-async function storeFailedNotification(
-  db: D1Database,
-  payload: PresetNotificationPayload,
-  error: unknown,
-  retries: number = NOTIFICATION_RETRY_CONFIG.maxRetries
-): Promise<void> {
-  try {
-    await db
-      .prepare(
-        'INSERT INTO failed_notifications (payload, error, attempts) VALUES (?, ?, ?)'
-      )
-      .bind(
-        JSON.stringify(payload),
-        error instanceof Error ? error.message : String(error),
-        retries + 1
-      )
-      .run();
-  } catch (insertErr) {
-    // Best-effort — if the table doesn't exist yet or insert fails, log and move on
-    console.error('[BUG-015] Failed to store notification in dead-letter table:', insertErr);
-  }
-}
+// REFACTOR-017 (2026-07-18 audit): the Discord notification subsystem
+// (payload types, retry/backoff, dead-letter writes) moved to
+// services/notification-service.ts; the category cache moved to
+// services/category-service.ts.

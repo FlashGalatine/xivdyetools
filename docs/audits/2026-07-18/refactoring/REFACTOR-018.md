@@ -35,3 +35,7 @@ LOW
 LOW. The table is empty and unreferenced; dropping it cannot affect runtime. If choosing option 2, the new counter path needs a TTL/cleanup strategy (the `expires_at` column and index already anticipate this).
 
 > Source: evidence/d1-workers-analysis.md (2026-07-18 deep-dive, d1-workers area)
+
+## Status
+
+**DONE 2026-07-19** — Migration 0006 drops the unused `rate_limits` table and its index; schema.sql updated. BUG-049 was closed with a post-insert re-check instead of the table-as-counter option.

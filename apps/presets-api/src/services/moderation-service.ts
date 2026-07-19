@@ -51,9 +51,15 @@ export function truncateUnicodeSafe(str: string, maxLength: number, suffix = '�
 interface CompiledProfanity {
   // Set for O(1) substring lookup (fast path)
   wordSet: Set<string>;
-  // Combined regex with all words for word boundary matching
+  // Combined regex with all ASCII-ish words for word boundary matching
   // Using a single regex with alternation is safer than many individual patterns
   combinedPattern: RegExp | null;
+  // BUG-002 (2026-07-18 audit): \b is defined via \w = [A-Za-z0-9_], so word
+  // boundaries never exist next to CJK characters — entries from the ja/ko/zh
+  // lists could never match through the \b-anchored pattern. Words containing
+  // characters outside [\w\s'-] are matched boundary-less instead (CJK scripts
+  // don't delimit words with spaces, so substring matching is correct there).
+  cjkPattern: RegExp | null;
 }
 
 /**
@@ -75,17 +81,25 @@ export function compileProfanityPatterns(
   // Create word set for fast substring lookup
   const wordSet = new Set(allWords);
 
-  // Create combined regex with all words using alternation
+  // BUG-002: split words by script — \b-anchored matching only works for
+  // words made of \w characters; everything else matches boundary-less
+  const asciiWords = allWords.filter((w) => /^[\w\s'-]+$/.test(w));
+  const cjkWords = allWords.filter((w) => !/^[\w\s'-]+$/.test(w));
+
+  // Create combined regexes using alternation
   // This is safer than individual patterns as it's a single, predictable regex
+  // (all words are escaped, and the flat alternation cannot backtrack catastrophically)
   let combinedPattern: RegExp | null = null;
-  if (allWords.length > 0) {
-    const escapedWords = allWords.map(escapeRegex);
-    // Limit pattern complexity - split into chunks if too many words
-    // This prevents catastrophic backtracking in alternation groups
-    combinedPattern = new RegExp(`\\b(${escapedWords.join('|')})\\b`, 'i');
+  if (asciiWords.length > 0) {
+    combinedPattern = new RegExp(`\\b(${asciiWords.map(escapeRegex).join('|')})\\b`, 'i');
   }
 
-  return { wordSet, combinedPattern };
+  let cjkPattern: RegExp | null = null;
+  if (cjkWords.length > 0) {
+    cjkPattern = new RegExp(cjkWords.map(escapeRegex).join('|'), 'i');
+  }
+
+  return { wordSet, combinedPattern, cjkPattern };
 }
 
 /**
@@ -132,6 +146,7 @@ export function _setTestPatterns(patterns: RegExp[]): void {
     combinedPattern: patterns.length > 0
       ? new RegExp(`\\b(${words.map(escapeRegex).join('|')})\\b`, 'i')
       : null,
+    cjkPattern: null,
   };
 }
 
@@ -156,16 +171,19 @@ export function checkLocalFilter(
   const textToCheck = `${name} ${description}`.toLowerCase();
   const nameLower = name.toLowerCase();
 
-  // Fast path: check if the combined pattern exists and matches
-  if (profanity.combinedPattern && profanity.combinedPattern.test(textToCheck)) {
-    // Determine which field was flagged by testing name specifically
-    const flaggedField = profanity.combinedPattern.test(nameLower) ? 'name' : 'description';
-    return {
-      passed: false,
-      flaggedField,
-      flaggedReason: 'Contains prohibited content',
-      method: 'local',
-    };
+  // BUG-002: two matchers — \b-anchored for ASCII words, boundary-less for CJK
+  const patterns = [profanity.combinedPattern, profanity.cjkPattern];
+  for (const pattern of patterns) {
+    if (pattern && pattern.test(textToCheck)) {
+      // Determine which field was flagged by testing name specifically
+      const flaggedField = pattern.test(nameLower) ? 'name' : 'description';
+      return {
+        passed: false,
+        flaggedField,
+        flaggedReason: 'Contains prohibited content',
+        method: 'local',
+      };
+    }
   }
 
   return null;

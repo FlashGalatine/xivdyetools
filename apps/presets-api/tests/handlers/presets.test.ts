@@ -2029,7 +2029,7 @@ describe('PresetsHandler', () => {
             mockDb._setupMock((query) => {
                 callCount++;
                 if (callCount === 1) return mockRow; // First call: getPresetById
-                if (query.includes('UPDATE')) return { success: true }; // UPDATE succeeds but returns nothing
+                if (query.includes('UPDATE')) return null; // OPT-013: UPDATE ... RETURNING yields no row
                 return null; // Subsequent queries return null
             });
 

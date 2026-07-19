@@ -11,12 +11,12 @@ import {
     getPresetById,
     findDuplicatePreset,
     createPreset,
-    updatePresetStatus,
+    prepareStatusUpdate,
+    prepareRevert,
     getPendingPresets,
     getPresetsByUser,
     findDuplicatePresetExcluding,
     updatePreset,
-    revertPreset,
 } from '../../src/services/preset-service';
 import {
     createMockD1Database,
@@ -449,20 +449,23 @@ describe('PresetService', () => {
     });
 
     // ============================================
-    // updatePresetStatus
+    // prepareStatusUpdate (BUG-020/OPT-013)
     // ============================================
 
-    describe('updatePresetStatus', () => {
-        it('should update preset status', async () => {
+    describe('prepareStatusUpdate', () => {
+        it('should build a conditional UPDATE with RETURNING', async () => {
             const db = createMockD1Database();
-            const mockRow = createMockPresetRow({ status: 'approved' });
+            db._setupMock(() => createMockPresetRow({ status: 'rejected' }));
 
-            db._setupMock(() => mockRow);
+            const stmt = prepareStatusUpdate(db, 'preset-1', 'rejected', 'pending', '2026-07-18T00:00:00.000Z');
+            await stmt.run();
 
-            await updatePresetStatus(db, 'preset-1', 'rejected');
-
-            expect(db._queries.some((q) => q.includes('UPDATE presets'))).toBe(true);
-            expect(db._bindings.some((b) => b.includes('rejected'))).toBe(true);
+            const query = db._queries[0];
+            expect(query).toContain('UPDATE presets');
+            expect(query).toContain('AND status = ?');
+            expect(query).toContain('RETURNING *');
+            expect(db._bindings[0]).toContain('rejected');
+            expect(db._bindings[0]).toContain('pending');
         });
     });
 
@@ -650,73 +653,40 @@ describe('PresetService', () => {
     });
 
     // ============================================
-    // revertPreset
+    // prepareRevert (BUG-020)
     // ============================================
 
-    describe('revertPreset', () => {
-        it('should return null if preset not found', async () => {
-            const db = createMockD1Database();
-            db._setupMock(() => null);
-
-            const result = await revertPreset(db, 'nonexistent');
-
-            expect(result).toBeNull();
-        });
-
-        it('should return null if no previous_values', async () => {
-            const db = createMockD1Database();
-            const mockRow = createMockPresetRow({ previous_values: null });
-
-            let callCount = 0;
-            db._setupMock(() => {
-                callCount++;
-                if (callCount === 1) return mockRow; // getPresetById call
-                return null;
-            });
-
-            const result = await revertPreset(db, 'preset-1');
-
-            expect(result).toBeNull();
-        });
+    describe('prepareRevert', () => {
+        const previousValues = {
+            name: 'Original Name',
+            description: 'Original Description',
+            tags: ['original'],
+            dyes: [20, 10],
+        };
 
         it('should restore previous values and clear previous_values column', async () => {
             const db = createMockD1Database();
-            const previousValues = {
-                name: 'Original Name',
-                description: 'Original Description',
-                tags: ['original'],
-                dyes: [10, 20],
-            };
-            const mockRow = createMockPresetRow({
-                previous_values: JSON.stringify(previousValues),
-            });
+            db._setupMock(() => createMockPresetRow());
 
-            db._setupMock(() => mockRow);
+            const stmt = prepareRevert(db, 'preset-1', previousValues, '2026-07-18T00:00:00.000Z');
+            await stmt.run();
 
-            await revertPreset(db, 'preset-1');
-
-            const updateQuery = db._queries.find((q) => q.includes('UPDATE presets') && q.includes('previous_values = NULL'));
-            expect(updateQuery).toBeDefined();
+            const query = db._queries[0];
+            expect(query).toContain('UPDATE presets');
+            expect(query).toContain('previous_values = NULL');
+            expect(query).toContain("status = 'approved'");
+            expect(query).toContain('RETURNING *');
+            expect(db._bindings[0]).toContain('Original Name');
         });
 
-        it('should set status to approved after revert', async () => {
+        it('should regenerate the dye signature from sorted previous dyes', async () => {
             const db = createMockD1Database();
-            const previousValues = {
-                name: 'Original Name',
-                description: 'Original Description',
-                tags: ['original'],
-                dyes: [10, 20],
-            };
-            const mockRow = createMockPresetRow({
-                previous_values: JSON.stringify(previousValues),
-            });
+            db._setupMock(() => createMockPresetRow());
 
-            db._setupMock(() => mockRow);
+            const stmt = prepareRevert(db, 'preset-1', previousValues, '2026-07-18T00:00:00.000Z');
+            await stmt.run();
 
-            await revertPreset(db, 'preset-1');
-
-            const updateQuery = db._queries.find((q) => q.includes("status = 'approved'"));
-            expect(updateQuery).toBeDefined();
+            expect(db._bindings[0]).toContain('[10,20]');
         });
     });
 });

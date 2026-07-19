@@ -6,8 +6,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import {
     checkSubmissionRateLimit,
     getRemainingSubmissions,
-    checkPublicRateLimit,
-    getClientIp,
+    getSubmissionCountToday,
 } from '../../src/services/rate-limit-service';
 import { createMockD1Database } from '../test-utils';
 
@@ -257,163 +256,26 @@ describe('RateLimitService', () => {
     });
 
     // ============================================
-    // checkPublicRateLimit (IP-based)
+    // getSubmissionCountToday (BUG-049)
     // ============================================
 
-    describe('checkPublicRateLimit', () => {
-        it('should allow first request from new IP', async () => {
-            const result = await checkPublicRateLimit('192.168.1.1');
+    describe('getSubmissionCountToday', () => {
+        it('should return the raw count for the current UTC day', async () => {
+            const db = createMockD1Database();
+            db._setupMock(() => ({ count: 11 }));
 
-            expect(result.allowed).toBe(true);
-            // Shared package starts at maxRequests - 1 after first check
-            expect(result.remaining).toBe(99);
-            expect(result.resetAt).toBeInstanceOf(Date);
+            const count = await getSubmissionCountToday(db, 'user-123');
+
+            expect(count).toBe(11);
         });
 
-        it('should track multiple requests from same IP', async () => {
-            const ip = '192.168.1.2';
+        it('should return 0 when the query yields no row', async () => {
+            const db = createMockD1Database();
+            db._setupMock(() => null);
 
-            // First request - remaining is decremented after check
-            let result = await checkPublicRateLimit(ip);
-            expect(result.remaining).toBe(99);
+            const count = await getSubmissionCountToday(db, 'user-123');
 
-            // Second request
-            result = await checkPublicRateLimit(ip);
-            expect(result.remaining).toBe(98);
-
-            // Third request
-            result = await checkPublicRateLimit(ip);
-            expect(result.remaining).toBe(97);
-        });
-
-        it('should deny requests when limit is reached', async () => {
-            const ip = '192.168.1.3';
-
-            // Exhaust the limit (100 requests)
-            for (let i = 0; i < 100; i++) {
-                await checkPublicRateLimit(ip);
-            }
-
-            // 101st request should be denied
-            const result = await checkPublicRateLimit(ip);
-            expect(result.allowed).toBe(false);
-            expect(result.remaining).toBe(0);
-        });
-
-        it('should track different IPs independently', async () => {
-            const ip1 = '192.168.1.4';
-            const ip2 = '192.168.1.5';
-
-            // Use some of IP1's quota
-            for (let i = 0; i < 50; i++) {
-                await checkPublicRateLimit(ip1);
-            }
-
-            // IP2 should still have full quota (99 after first request)
-            const result = await checkPublicRateLimit(ip2);
-            expect(result.remaining).toBe(99);
-        });
-
-        it('should calculate resetAt correctly based on oldest request in window', async () => {
-            const ip = '192.168.1.6';
-
-            const result = await checkPublicRateLimit(ip);
-
-            // Reset should be approximately 1 minute from the oldest request
-            const now = Date.now();
-            const resetTime = result.resetAt.getTime();
-
-            // Should be within 60 seconds (+/- some tolerance) from now
-            expect(resetTime).toBeGreaterThan(now);
-            expect(resetTime).toBeLessThanOrEqual(now + 61000);
-        });
-
-        it('should not add request to log when denied', async () => {
-            const ip = '192.168.1.7';
-
-            // Exhaust the limit
-            for (let i = 0; i < 100; i++) {
-                await checkPublicRateLimit(ip);
-            }
-
-            // Try one more - should be denied
-            const deniedResult = await checkPublicRateLimit(ip);
-            expect(deniedResult.allowed).toBe(false);
-
-            // Try again - remaining should still be 0 (not negative)
-            const secondDeniedResult = await checkPublicRateLimit(ip);
-            expect(secondDeniedResult.remaining).toBe(0);
-        });
-    });
-
-    // ============================================
-    // getClientIp
-    // ============================================
-
-    describe('getClientIp', () => {
-        it('should extract IP from CF-Connecting-IP header', () => {
-            const request = new Request('https://example.com', {
-                headers: {
-                    'CF-Connecting-IP': '203.0.113.1',
-                },
-            });
-
-            const ip = getClientIp(request);
-            expect(ip).toBe('203.0.113.1');
-        });
-
-        it('should ignore X-Forwarded-For when trustXForwardedFor is false (default)', () => {
-            // FINDING-006: X-Forwarded-For is client-controlled and spoofable.
-            // Default behavior now ignores it, returning 'unknown' instead.
-            const request = new Request('https://example.com', {
-                headers: {
-                    'X-Forwarded-For': '198.51.100.1, 10.0.0.1, 10.0.0.2',
-                },
-            });
-
-            const ip = getClientIp(request);
-            expect(ip).toBe('unknown');
-        });
-
-        it('should return unknown for X-Forwarded-For chain without CF-Connecting-IP', () => {
-            const request = new Request('https://example.com', {
-                headers: {
-                    'X-Forwarded-For': '192.0.2.1, 192.0.2.2, 192.0.2.3',
-                },
-            });
-
-            const ip = getClientIp(request);
-            expect(ip).toBe('unknown');
-        });
-
-        it('should return unknown for X-Forwarded-For with whitespace without CF-Connecting-IP', () => {
-            const request = new Request('https://example.com', {
-                headers: {
-                    'X-Forwarded-For': '  192.0.2.50  , 10.0.0.1',
-                },
-            });
-
-            const ip = getClientIp(request);
-            expect(ip).toBe('unknown');
-        });
-
-        it('should return "unknown" if no IP headers present', () => {
-            const request = new Request('https://example.com');
-
-            const ip = getClientIp(request);
-            expect(ip).toBe('unknown');
-        });
-
-        it('should prefer CF-Connecting-IP over X-Forwarded-For', () => {
-            const request = new Request('https://example.com', {
-                headers: {
-                    'CF-Connecting-IP': '203.0.113.100',
-                    'X-Forwarded-For': '198.51.100.200',
-                },
-            });
-
-            const ip = getClientIp(request);
-            expect(ip).toBe('203.0.113.100');
+            expect(count).toBe(0);
         });
     });
 });
