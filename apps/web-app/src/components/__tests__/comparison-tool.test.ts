@@ -293,6 +293,36 @@ describe('ComparisonTool', () => {
   });
 
   // ============================================================================
+  // Persisted Dye Restore (BUG-042)
+  // ============================================================================
+
+  describe('Persisted Dye Restore', () => {
+    // BUG-042 (2026-07-18 audit): getDyeById returns null (not undefined) for
+    // unknown IDs; stale persisted IDs must be dropped, not crash the tool on
+    // every load
+    it('should drop stale persisted IDs that no longer resolve and self-heal storage', async () => {
+      const { StorageService } = await import('@services/index');
+      const staleId = 999999;
+      vi.mocked(StorageService.getItem).mockImplementation((key: string) =>
+        key === 'v3_comparison_selected_dyes' ? [mockDyes[0].id, staleId] : null
+      );
+      // Match the real DyeService contract: null (not undefined) for misses
+      mockGetDyeById.mockImplementation((id: number) => mockDyes.find((d) => d.id === id) ?? null);
+
+      tool = new ComparisonTool(container, { leftPanel, rightPanel, drawerContent });
+      expect(() => tool!.init()).not.toThrow();
+
+      expect(vi.mocked(StorageService.getItem)).toHaveBeenCalledWith('v3_comparison_selected_dyes');
+
+      // The stale ID is pruned from storage so it can't break future loads
+      expect(vi.mocked(StorageService.setItem)).toHaveBeenCalledWith(
+        'v3_comparison_selected_dyes',
+        [mockDyes[0].id]
+      );
+    });
+  });
+
+  // ============================================================================
   // Configuration Tests
   // ============================================================================
 

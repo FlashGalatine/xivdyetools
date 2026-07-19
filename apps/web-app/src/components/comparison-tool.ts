@@ -248,13 +248,25 @@ export class ComparisonTool extends BaseComponent {
    */
   private loadPersistedDyes(): void {
     const savedIds = StorageService.getItem<number[]>(STORAGE_KEYS.selectedDyes);
-    if (savedIds && savedIds.length > 0 && this.dyeSelector) {
+    if (savedIds && savedIds.length > 0) {
       const dyeService = DyeService.getInstance();
+      // BUG-042 (2026-07-18 audit): getDyeById returns null (not undefined)
+      // for unknown IDs — the old `!== undefined` filter let nulls through as
+      // "Dye" and crashed the tool on every load while the stale IDs stayed
+      // persisted. Filter with != null and self-heal the stored list (even
+      // when the selector isn't mounted, so bad IDs never linger).
       const dyes = savedIds
         .map((id) => dyeService.getDyeById(id))
-        .filter((d): d is Dye => d !== undefined);
+        .filter((d): d is Dye => d != null);
 
-      if (dyes.length > 0) {
+      if (dyes.length !== savedIds.length) {
+        StorageService.setItem(
+          STORAGE_KEYS.selectedDyes,
+          dyes.map((d) => d.id)
+        );
+      }
+
+      if (dyes.length > 0 && this.dyeSelector) {
         this.dyeSelector.setSelectedDyes(dyes);
         this.selectedDyes = dyes;
         this.calculateHSVValues();
