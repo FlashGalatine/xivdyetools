@@ -162,9 +162,12 @@ vi.mock('../../services/emoji.js', () => ({
   getDyeEmoji: vi.fn((id: number) => (id === 1 ? '⚪' : id === 2 ? '⬛' : null)),
 }));
 
-vi.mock('../../utils/discord-api.js', () => ({
-  editOriginalResponse: vi.fn().mockResolvedValue({ ok: true }),
-}));
+vi.mock('../../utils/discord-api.js', () => {
+  const editOriginalResponse = vi.fn().mockResolvedValue({ ok: true });
+  // BUG-035: handlers call the safe wrapper; alias it to the same mock so
+  // existing assertions on editOriginalResponse keep working
+  return { editOriginalResponse, safeEditOriginalResponse: editOriginalResponse };
+});
 
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import { generateAccessibilityComparison, generateContrastMatrix } from '@xivdyetools/svg';

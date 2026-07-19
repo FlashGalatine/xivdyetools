@@ -15,12 +15,19 @@
     "lint": "eslint src/",
     "register-commands": "npx tsx scripts/register-commands.ts"
   },
-  "keywords": ["discord", "bot", "ffxiv", "cloudflare-workers", "moderation"],
+  "keywords": [
+    "discord",
+    "bot",
+    "ffxiv",
+    "cloudflare-workers",
+    "moderation"
+  ],
   "author": "Flash Galatine",
   "license": "MIT",
   "dependencies": {
     "@cloudflare/workers-types": "^5.20260713.1",
     "@xivdyetools/auth": "workspace:*",
+    "@xivdyetools/bot-logic": "workspace:*",
     "@xivdyetools/logger": "workspace:*",
     "@xivdyetools/rate-limiter": "workspace:*",
     "@xivdyetools/types": "workspace:*",

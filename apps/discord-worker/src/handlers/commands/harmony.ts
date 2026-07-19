@@ -10,7 +10,7 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { DyeTypeFilters } from '@xivdyetools/types';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
 import { resolveColorInput } from '../../utils/color.js';
-import { editOriginalResponse } from '../../utils/discord-api.js';
+import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, createTranslator } from '../../services/bot-i18n.js';
@@ -114,12 +114,12 @@ async function processHarmonyCommand(
 
   if (!result.ok) {
     if (result.error === 'NO_MATCHES') {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), t.t('errors.noMatchFound'))],
       });
     } else {
       if (logger) logger.error('Harmony command error');
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
       });
     }
@@ -143,7 +143,7 @@ async function processHarmonyCommand(
     const baseEmojiPrefix = baseEmoji ? `${baseEmoji} ` : '';
     const baseColorText = `${t.t('harmony.baseColor')}: ${baseEmojiPrefix}**${result.baseName}** (\`${baseHex.toUpperCase()}\`)`;
 
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [{
         title: result.embed.title,
         description: `${baseColorText}\n\n${dyeList}`,
@@ -155,7 +155,7 @@ async function processHarmonyCommand(
     });
   } catch (error) {
     if (logger) logger.error('Harmony render error', error instanceof Error ? error : undefined);
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
     });
   }

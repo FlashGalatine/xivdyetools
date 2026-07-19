@@ -50,6 +50,14 @@ export interface Env {
 
   /** Discord channel ID for moderation queue (pending presets) */
   MODERATION_CHANNEL_ID?: string;
+  /**
+   * BUG-009 (2026-07-18 audit): bot token of the MODERATION Discord
+   * application. When set, moderation-channel embeds are posted with this
+   * token so their approve/reject buttons route to moderation-worker (the
+   * application that owns the button handlers). When unset, embeds are
+   * posted without buttons plus a "/preset moderate" hint.
+   */
+  MODERATION_BOT_TOKEN?: string;
 
   /** Discord channel ID for submission logs (all presets) */
   SUBMISSION_LOG_CHANNEL_ID?: string;

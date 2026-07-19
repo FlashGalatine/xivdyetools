@@ -40,3 +40,7 @@ Medium but mechanical — half a day to a day including splitting `preset.test.t
 Low. Pure code motion; routing behavior pinned by the existing test suite. Do it *before* the functional fixes above to keep those diffs small, or immediately after if fixes are urgent.
 
 > Source: evidence/bot-workers-analysis.md (2026-07-18 deep-dive, bot-workers area)
+
+## Status
+
+**PARTIAL 2026-07-19** — the notification builders (the concern that produced BUG-009/072 and REFACTOR-025) were extracted to preset-notifications.ts, shrinking preset.ts by ~170 lines. The full six-way subcommand split remains open.

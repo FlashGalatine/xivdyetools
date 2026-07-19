@@ -14,10 +14,12 @@ import * as discordApi from '../../utils/discord-api.js';
 const VALID_PRESET_ID = '12345678-1234-4123-8123-123456789abc';
 
 // Mock modules
-vi.mock('../../utils/discord-api.js', () => ({
-  editMessage: vi.fn(),
-  sendMessage: vi.fn(),
-}));
+vi.mock('../../utils/discord-api.js', () => {
+  const editMessage = vi.fn();
+  const sendMessage = vi.fn();
+  // BUG-035: handlers call the safe wrappers; alias to the same mocks
+  return { editMessage, sendMessage, safeEditMessage: editMessage, safeSendMessage: sendMessage };
+});
 
 vi.mock('../../services/preset-api.js', async () => {
   const actual = await vi.importActual('../../services/preset-api.js');

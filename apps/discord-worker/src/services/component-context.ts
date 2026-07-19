@@ -12,6 +12,17 @@
  * TTL: 1 hour (15 minutes for pagination)
  *
  * @module services/component-context
+ 
+ *
+ * ⚠️ BUG-075 (2026-07-18 audit) — read before wiring this module into
+ * production paths (it currently has no production callers):
+ *  - `caches.default` is PER-DATACENTER, not global storage. A component
+ *    interaction routed via a different CF colo cannot find the context.
+ *    Back this with KV (+ expirationTtl) or a Durable Object first.
+ *  - Prefer NOT storing `interactionToken` at all — every component
+ *    interaction arrives with its own fresh token.
+ *  - Consumers of getContext must verify `context.userId` against the
+ *    interacting user (the 32-bit key hash can collide).
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
@@ -28,8 +39,13 @@ const CACHE_SCHEMA_VERSION = 'v1';
 
 /** TTL in seconds */
 export const CONTEXT_TTL = {
-  /** Standard interactions: 1 hour */
-  STANDARD: 3600,
+  /**
+   * Standard interactions.
+   * BUG-075 (2026-07-18 audit): capped at 15 minutes — Discord interaction
+   * tokens die after 15 minutes, so a longer TTL guaranteed that contexts
+   * retrieved in minutes 15-60 carried a token that 404s on edit.
+   */
+  STANDARD: 900,
   /** Pagination contexts: 15 minutes */
   PAGINATION: 900,
 } as const;

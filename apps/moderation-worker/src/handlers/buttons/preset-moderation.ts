@@ -13,7 +13,7 @@ import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
 import { ephemeralResponse, isValidUuid, sanitizeErrorMessage } from '../../utils/response.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { editMessage, sendMessage } from '../../utils/discord-api.js';
+import { safeEditMessage, safeSendMessage } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import { STATUS_DISPLAY } from '../../types/preset.js';
 
@@ -105,7 +105,7 @@ async function processApproval(
     if (interaction.channel_id && interaction.message?.id) {
       const originalEmbed = interaction.message.embeds?.[0] || {};
 
-      await editMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
+      await safeEditMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
         embeds: [
           {
             title: `\u2705 Preset Approved`,
@@ -124,7 +124,7 @@ async function processApproval(
     }
 
     if (env.SUBMISSION_LOG_CHANNEL_ID) {
-      await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
+      await safeSendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
         embeds: [
           {
             title: `\u2705 ${preset.name} - Approved`,
@@ -143,7 +143,7 @@ async function processApproval(
     if (interaction.channel_id && interaction.message?.id) {
       const originalEmbed = interaction.message.embeds?.[0] || {};
 
-      await editMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
+      await safeEditMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
         embeds: [
           {
             title: originalEmbed.title,

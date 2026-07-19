@@ -29,20 +29,27 @@ interface UniversalisAggregatedResponse {
   failedItems: number[];
 }
 
+// BUG-033 (2026-07-18 audit): the aggregated response nests statistics under
+// world/dc/region keys — `world` is populated for single-world query scopes
+// and was previously missing from this typing entirely, forcing DC-scope
+// reads for world queries.
+interface AggregatedScopes<T> {
+  world?: T;
+  dc?: T;
+  region?: T;
+}
+
+interface UniversalisAggregatedQuality {
+  minListing: AggregatedScopes<{ price: number; worldId?: number }>;
+  recentPurchase: AggregatedScopes<{ price: number; timestamp: number; worldId?: number }>;
+  averageSalePrice: AggregatedScopes<{ price: number }>;
+  dailySaleVelocity: AggregatedScopes<{ quantity: number }>;
+}
+
 interface UniversalisAggregatedItem {
   itemId: number;
-  nq: {
-    minListing: { dc?: { price: number; worldId: number }; region?: { price: number; worldId: number } };
-    recentPurchase: { dc?: { price: number; timestamp: number; worldId: number }; region?: { price: number; timestamp: number; worldId: number } };
-    averageSalePrice: { dc?: { price: number }; region?: { price: number } };
-    dailySaleVelocity: { dc?: { quantity: number }; region?: { quantity: number } };
-  };
-  hq: {
-    minListing: { dc?: { price: number; worldId: number }; region?: { price: number; worldId: number } };
-    recentPurchase: { dc?: { price: number; timestamp: number; worldId: number }; region?: { price: number; timestamp: number; worldId: number } };
-    averageSalePrice: { dc?: { price: number }; region?: { price: number } };
-    dailySaleVelocity: { dc?: { quantity: number }; region?: { quantity: number } };
-  };
+  nq: UniversalisAggregatedQuality;
+  hq: UniversalisAggregatedQuality;
   worldUploadTimes: Array<{ worldId: number; timestamp: number }>;
 }
 
@@ -222,15 +229,22 @@ export async function fetchPrices(
   for (const item of response.results) {
     const itemId = item.itemId;
 
-    // Skip items with no NQ listing data (empty dc object = no listings)
-    const minListingPrice = item.nq?.minListing?.dc?.price;
+    // BUG-033 (2026-07-18 audit): prefer the queried scope. For world-scoped
+    // queries the stats live under `.world`; reading only `.dc` attributed
+    // datacenter-minimum prices to the user's world. Cascade world → dc →
+    // region so both scopes work.
+    const listing = item.nq?.minListing;
+    const minListingPrice = listing?.world?.price ?? listing?.dc?.price ?? listing?.region?.price;
     if (minListingPrice == null) {
       continue;
     }
 
-    const averagePrice = item.nq.averageSalePrice?.dc?.price ?? minListingPrice;
+    const avgScopes = item.nq.averageSalePrice;
+    const averagePrice =
+      avgScopes?.world?.price ?? avgScopes?.dc?.price ?? avgScopes?.region?.price ?? minListingPrice;
     const lastUpload = item.worldUploadTimes?.[0]?.timestamp ?? Date.now();
-    const velocity = item.nq.dailySaleVelocity?.dc?.quantity ?? 0;
+    const velScopes = item.nq.dailySaleVelocity;
+    const velocity = velScopes?.world?.quantity ?? velScopes?.dc?.quantity ?? velScopes?.region?.quantity ?? 0;
 
     priceMap.set(itemId, {
       itemID: itemId,

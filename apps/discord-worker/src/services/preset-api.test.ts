@@ -97,23 +97,23 @@ describe('preset-api.ts', () => {
 
     describe('isModerator', () => {
         it('should return true for moderator IDs', () => {
-            const env = createMockEnv({ moderatorIds: '123,456,789' });
-            expect(isModerator(env, '456')).toBe(true);
+            const env = createMockEnv({ moderatorIds: '11111111111111111,22222222222222222,33333333333333333' });
+            expect(isModerator(env, '22222222222222222')).toBe(true);
         });
 
         it('should return false for non-moderator IDs', () => {
-            const env = createMockEnv({ moderatorIds: '123,456,789' });
-            expect(isModerator(env, '999')).toBe(false);
+            const env = createMockEnv({ moderatorIds: '11111111111111111,22222222222222222,33333333333333333' });
+            expect(isModerator(env, '99999999999999999')).toBe(false);
         });
 
         it('should return false when MODERATOR_IDS is not set', () => {
             const env = createMockEnv();
-            expect(isModerator(env, '123')).toBe(false);
+            expect(isModerator(env, '11111111111111111')).toBe(false);
         });
 
         it('should handle whitespace in moderator IDs', () => {
-            const env = createMockEnv({ moderatorIds: '123, 456 , 789' });
-            expect(isModerator(env, '456')).toBe(true);
+            const env = createMockEnv({ moderatorIds: '11111111111111111, 22222222222222222 , 33333333333333333' });
+            expect(isModerator(env, '22222222222222222')).toBe(true);
         });
     });
 

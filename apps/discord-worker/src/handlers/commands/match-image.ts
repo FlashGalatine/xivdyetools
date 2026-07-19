@@ -18,7 +18,7 @@ import {
 import { dyeService } from '../../utils/color.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
-import { editOriginalResponse } from '../../utils/discord-api.js';
+import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { generatePaletteGrid, type PaletteEntry, type PaletteGridLabels } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
@@ -149,7 +149,7 @@ async function processMatchImageCommand(
     );
 
     if (rgbPixels.length === 0) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           errorEmbed(t.t('common.error'), t.t('matchImage.noColors')),
         ],
@@ -165,7 +165,7 @@ async function processMatchImageCommand(
     });
 
     if (matches.length === 0) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           errorEmbed(t.t('common.error'), t.t('matchImage.extractionFailed')),
         ],
@@ -213,7 +213,7 @@ async function processMatchImageCommand(
     const description = buildMatchDescription(matches, t);
 
     // Step 10: Send response
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
           title: colorCount === 1 ? t.t('matchImage.closestMatch') : t.t('matchImage.topMatches', { count: matches.length }),
@@ -251,7 +251,7 @@ async function processMatchImageCommand(
       }
     }
 
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), errorMessage)],
     });
   }

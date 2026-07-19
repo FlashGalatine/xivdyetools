@@ -9,6 +9,9 @@
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { resolveUserLocale } from './i18n.js';
+import { isValidLocale } from './i18n.js';
+import { getUserPreferences } from './preferences.js';
+import type { UserPreferences } from '../types/preferences.js';
 
 // Re-export from the shared package
 export {
@@ -35,4 +38,28 @@ export async function createUserTranslator(
 ): Promise<Translator> {
   const locale = await resolveUserLocale(kv, userId, discordLocale);
   return new Translator(locale, logger);
+}
+
+/**
+ * OPT-026 (2026-07-18 audit): create the translator AND return the user's
+ * preferences from a single KV read. The classic pairing of
+ * createUserTranslator + a later getUserPreferences parsed the same
+ * `prefs:v1:{userId}` blob twice with two serial KV round-trips inside the
+ * pre-defer window. Fallback order preserved: unified prefs language →
+ * legacy i18n preference → Discord locale → 'en' (resolveUserLocale still
+ * performs the legacy/Discord fallbacks when the unified blob has no
+ * language).
+ */
+export async function createUserTranslatorWithPrefs(
+  kv: KVNamespace,
+  userId: string,
+  discordLocale?: string,
+  logger?: ExtendedLogger
+): Promise<{ t: Translator; prefs: UserPreferences }> {
+  const prefs = await getUserPreferences(kv, userId, logger);
+  if (prefs.language && isValidLocale(prefs.language)) {
+    return { t: new Translator(prefs.language, logger), prefs };
+  }
+  const locale = await resolveUserLocale(kv, userId, discordLocale);
+  return { t: new Translator(locale, logger), prefs };
 }

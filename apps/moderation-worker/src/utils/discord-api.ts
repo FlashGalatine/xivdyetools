@@ -184,3 +184,49 @@ export async function editMessage(
     throw error;
   }
 }
+
+/**
+ * BUG-035 (2026-07-18 audit): throw-safe, outcome-checked wrappers. All
+ * handler call sites previously discarded the fetch Response (silent 4xx)
+ * and catch-path edits could themselves throw (5s AbortSignal timeout),
+ * rejecting the surrounding waitUntil promise unhandled.
+ *
+ * @returns true when Discord accepted the request
+ */
+export async function safeSendMessage(
+  botToken: string,
+  channelId: string,
+  options: SendMessageOptions
+): Promise<boolean> {
+  try {
+    const res = await sendMessage(botToken, channelId, options);
+    if (!res.ok) {
+      console.error('Discord sendMessage failed', res.status, await res.text().catch(() => ''));
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Discord sendMessage threw', sanitizeErrorMessage(error));
+    return false;
+  }
+}
+
+/** BUG-035: throw-safe, outcome-checked editMessage */
+export async function safeEditMessage(
+  botToken: string,
+  channelId: string,
+  messageId: string,
+  options: SendMessageOptions
+): Promise<boolean> {
+  try {
+    const res = await editMessage(botToken, channelId, messageId, options);
+    if (!res.ok) {
+      console.error('Discord editMessage failed', res.status, await res.text().catch(() => ''));
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Discord editMessage threw', sanitizeErrorMessage(error));
+    return false;
+  }
+}

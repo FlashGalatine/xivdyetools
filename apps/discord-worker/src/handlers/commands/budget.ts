@@ -12,12 +12,13 @@
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed, ephemeralResponse } from '../../utils/response.js';
-import { editOriginalResponse } from '../../utils/discord-api.js';
+import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { generateBudgetComparison, type BudgetSvgLabels } from '@xivdyetools/svg';
-import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
+import { createUserTranslatorWithPrefs, type Translator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, getLocalizedCategory } from '../../services/i18n.js';
-import { getUserPreferences, setPreference } from '../../services/preferences.js';
+import { setPreference } from '../../services/preferences.js';
+import type { UserPreferences } from '../../types/preferences.js';
 import {
   findCheaperAlternatives,
   getDyeById,
@@ -54,7 +55,8 @@ export async function handleBudgetCommand(
   logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
-  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+  // OPT-026 (2026-07-18 audit): one KV read yields both translator and prefs
+  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale, logger);
 
   // Get subcommand
   const options = interaction.data?.options || [];
@@ -66,13 +68,13 @@ export async function handleBudgetCommand(
 
   switch (subcommand.name) {
     case 'find':
-      return handleFindSubcommand(interaction, env, ctx, subcommand.options || [], t, userId, logger);
+      return handleFindSubcommand(interaction, env, ctx, subcommand.options || [], t, userId, prefs, logger);
 
     case 'set_world':
       return handleSetWorldSubcommand(env, subcommand.options || [], t, userId, logger);
 
     case 'quick':
-      return handleQuickSubcommand(interaction, env, ctx, subcommand.options || [], t, userId, logger);
+      return handleQuickSubcommand(interaction, env, ctx, subcommand.options || [], t, userId, prefs, logger);
 
     default:
       return ephemeralResponse(t.t('common.error'));
@@ -86,13 +88,15 @@ export async function handleBudgetCommand(
 /**
  * Handles /budget find <target_dye>
  */
+// eslint-disable-next-line @typescript-eslint/require-await -- handler interface requires async
 async function handleFindSubcommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
   options: Array<{ name: string; value?: string | number | boolean }>,
   t: Translator,
-  userId: string,
+  _userId: string,
+  prefs: UserPreferences,
   logger?: ExtendedLogger
 ): Promise<Response> {
   // Check if Universalis is configured
@@ -136,7 +140,7 @@ async function handleFindSubcommand(
   // Get world preference from unified preferences system
   let world = worldOverride;
   if (!world) {
-    const prefs = await getUserPreferences(env.KV, userId, logger);
+    // OPT-026: prefs already read once in handleBudgetCommand
     world = prefs.world;
   }
 
@@ -260,7 +264,7 @@ async function processFindCommand(
 
     // Send response
     if (logger) logger.info('Budget: sending Discord response');
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
           title: `${emojiPrefix}${t.t('budget.findTitle', { dyeName: localizedTargetName })}`,
@@ -296,7 +300,7 @@ async function processFindCommand(
       }
     }
 
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), errorMessage)],
     });
   }
@@ -346,13 +350,15 @@ async function handleSetWorldSubcommand(
 /**
  * Handles /budget quick <preset>
  */
+// eslint-disable-next-line @typescript-eslint/require-await -- handler interface requires async
 async function handleQuickSubcommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
   options: Array<{ name: string; value?: string | number | boolean }>,
   t: Translator,
-  userId: string,
+  _userId: string,
+  prefs: UserPreferences,
   logger?: ExtendedLogger
 ): Promise<Response> {
   const presetId = options.find((opt) => opt.name === 'preset')?.value as string | undefined;
@@ -371,7 +377,7 @@ async function handleQuickSubcommand(
   // Get world preference from unified preferences system
   let world = worldOverride;
   if (!world) {
-    const prefs = await getUserPreferences(env.KV, userId, logger);
+    // OPT-026: prefs already read once in handleBudgetCommand
     world = prefs.world;
   }
 

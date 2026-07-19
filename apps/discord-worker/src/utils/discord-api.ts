@@ -218,6 +218,82 @@ async function editResponseWithFile(
 }
 
 /**
+ * Minimal structural logger accepted by the safe helpers below
+ */
+interface SafeCallLogger {
+  error(message: string, error?: Error, context?: Record<string, unknown>): void;
+}
+
+/**
+ * BUG-035 (2026-07-18 audit): throw-safe, outcome-checked wrapper around
+ * editOriginalResponse. Every deferred flow previously discarded the fetch
+ * Response (silent 4xx from embed limits / expired tokens / 429 left users
+ * on "thinking…" forever), and catch-path edits could themselves throw
+ * (5s AbortSignal timeout) and reject the waitUntil promise unhandled.
+ * Use this for BOTH success and error-path edits in background processors.
+ *
+ * @returns true when Discord accepted the edit
+ */
+export async function safeEditOriginalResponse(
+  applicationId: string,
+  interactionToken: string,
+  options: FollowUpOptions,
+  logger?: SafeCallLogger
+): Promise<boolean> {
+  try {
+    const res = await editOriginalResponse(applicationId, interactionToken, options);
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      if (logger) {
+        logger.error('Discord follow-up edit failed', undefined, { status: res.status, body });
+      } else {
+        console.error('Discord follow-up edit failed', res.status, body);
+      }
+      return false;
+    }
+    return true;
+  } catch (e) {
+    if (logger) {
+      logger.error('Discord follow-up edit threw', e instanceof Error ? e : undefined);
+    } else {
+      console.error('Discord follow-up edit threw', e);
+    }
+    return false;
+  }
+}
+
+/**
+ * BUG-035: throw-safe, outcome-checked wrapper around sendFollowUp
+ */
+export async function safeSendFollowUp(
+  applicationId: string,
+  interactionToken: string,
+  options: FollowUpOptions,
+  logger?: SafeCallLogger
+): Promise<boolean> {
+  try {
+    const res = await sendFollowUp(applicationId, interactionToken, options);
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      if (logger) {
+        logger.error('Discord follow-up send failed', undefined, { status: res.status, body });
+      } else {
+        console.error('Discord follow-up send failed', res.status, body);
+      }
+      return false;
+    }
+    return true;
+  } catch (e) {
+    if (logger) {
+      logger.error('Discord follow-up send threw', e instanceof Error ? e : undefined);
+    } else {
+      console.error('Discord follow-up send threw', e);
+    }
+    return false;
+  }
+}
+
+/**
  * Deletes the original interaction response.
  */
 export async function deleteOriginalResponse(

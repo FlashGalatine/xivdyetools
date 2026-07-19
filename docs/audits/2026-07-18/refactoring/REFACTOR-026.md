@@ -35,3 +35,7 @@ Small-medium — half a day; the moves are mechanical, plus one shared utility w
 Low. Autocomplete is fail-soft (an error path already returns empty choices), so a routing mistake degrades to "no suggestions" rather than a broken command. Existing behavior pinned by keeping the dispatcher's command-name cases 1:1.
 
 > Source: evidence/bot-workers-analysis.md (2026-07-18 deep-dive, bot-workers area)
+
+## Status
+
+**PARTIAL 2026-07-19** — the missing autocomplete rate limit was added to the dispatcher (fail-soft, 60/min + burst via a new shared `autocomplete` preset), and the OPT-007 fan-out inside the preset helper is gone. The full relocation of per-command autocomplete helpers out of index.ts and the shared option-tree walker remain open.

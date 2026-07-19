@@ -10,6 +10,7 @@
  * @module services/preset-api
  */
 
+import { isModeratorId } from '@xivdyetools/bot-logic';
 import type { Env } from '../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import {
@@ -205,9 +206,10 @@ export function isApiEnabled(env: Env): boolean {
  * Check if a user is a moderator based on MODERATOR_IDS environment variable
  */
 export function isModerator(env: Env, userId: string): boolean {
-  if (!env.MODERATOR_IDS) return false;
-  const moderatorIds = env.MODERATOR_IDS.split(',').map((id) => id.trim());
-  return moderatorIds.includes(userId);
+  // BUG-073 (2026-07-18 audit): shared grammar (whitespace/comma separators +
+  // snowflake validation) — the old comma-only split silently failed closed
+  // for newline-separated secrets that moderation-worker accepts
+  return isModeratorId(env.MODERATOR_IDS, userId);
 }
 
 // ============================================================================
@@ -271,10 +273,13 @@ export async function getPresetByName(
   env: Env,
   name: string
 ): Promise<CommunityPreset | null> {
+  // BUG-034 (2026-07-18 audit): fetch a full page — limit 1 returned only the
+  // search-RANKED top hit, making an exact-named preset unreachable whenever
+  // a partial match ranked higher
   const response = await getPresets(env, {
     search: name,
     status: 'approved',
-    limit: 1,
+    limit: 25,
   });
 
   // Find exact match first, then partial match

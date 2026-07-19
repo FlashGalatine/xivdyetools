@@ -10,7 +10,7 @@ import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
 import { errorEmbed, decodeBase64Url, sanitizeErrorMessage } from '../../utils/response.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { sendMessage } from '../../utils/discord-api.js';
+import { safeSendMessage } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
 // MOD-REF-002 FIX: Use shared modal types and helpers
@@ -145,7 +145,7 @@ async function processBan(
 
     if (!result.success) {
       if (env.MODERATION_CHANNEL_ID) {
-        await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
+        await safeSendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
           embeds: [
             errorEmbed('Ban Failed', result.error || 'Unknown error occurred.'),
           ],
@@ -155,7 +155,7 @@ async function processBan(
     }
 
     if (env.MODERATION_CHANNEL_ID) {
-      await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
+      await safeSendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
         embeds: [
           {
             title: '\uD83D\uDD28 User Banned',
@@ -189,7 +189,7 @@ async function processBan(
     }
 
     if (env.MODERATION_CHANNEL_ID) {
-      await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
+      await safeSendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
         embeds: [
           errorEmbed(
             'Ban Failed',

@@ -14,7 +14,7 @@
 import type { Dye } from '@xivdyetools/types';
 import { dyeService } from '../../utils/color.js';
 import { messageResponse, deferredResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
-import { editOriginalResponse } from '../../utils/discord-api.js';
+import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createCopyButtons } from '../buttons/index.js';
 import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
@@ -170,7 +170,7 @@ async function processInfoCard(
       h: Math.round(hsv.h), s: Math.round(hsv.s), v: Math.round(hsv.v),
     });
 
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [{
         title: `${emojiPrefix}${result.localizedName}`,
         description: result.embed.description,
@@ -208,7 +208,7 @@ async function sendDyeInfoFallback(
     h: Math.round(hsv.h), s: Math.round(hsv.s), v: Math.round(hsv.v),
   });
 
-  await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+  await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
     embeds: [{
       title: `${emojiPrefix}${localizedName}`,
       description: t.t('dye.info.detailedInfo', { category: localizedCategory }),
@@ -304,7 +304,7 @@ async function processRandomGrid(
 
   if (!result.ok) {
     if (result.error === 'NO_DYES') {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), t.t('errors.noDyesAvailable'))],
       });
     } else {
@@ -326,7 +326,7 @@ async function processRandomGrid(
       })
       .join('\n');
 
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [{
         title: result.title,
         description: dyeList,
@@ -350,7 +350,7 @@ async function sendRandomFallback(
   // Re-run a text-only random selection on fallback
   const result = await executeRandom({ locale, count: 5 });
   if (!result.ok) {
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
     });
     return;
@@ -366,7 +366,7 @@ async function sendRandomFallback(
     })
     .join('\n');
 
-  await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+  await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
     embeds: [{
       title: result.title,
       description: `${t.t('dye.random.description', { count: result.dyes.length })}\n\n${dyeList}`,

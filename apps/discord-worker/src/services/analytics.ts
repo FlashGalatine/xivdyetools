@@ -124,50 +124,32 @@ interface CounterMetadata {
  * @param key - Counter key (without prefix)
  * @param maxRetries - Maximum retry attempts for contention (default: 3)
  */
-export async function incrementCounter(
-  kv: KVNamespace,
-  key: string,
-  maxRetries: number = 3
-): Promise<void> {
+export async function incrementCounter(kv: KVNamespace, key: string): Promise<void> {
   const fullKey = `${STATS_PREFIX}${key}`;
 
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    // Read current value with metadata
-    const result = await kv.getWithMetadata<CounterMetadata>(fullKey);
-    const current = parseInt(result.value || '0', 10);
-    const currentVersion = result.metadata?.version ?? 0;
+  // Read current value with metadata
+  const result = await kv.getWithMetadata<CounterMetadata>(fullKey);
+  const current = parseInt(result.value || '0', 10);
+  const currentVersion = result.metadata?.version ?? 0;
 
-    // Calculate new value
-    const newValue = current + 1;
-    const newVersion = currentVersion + 1;
+  // Calculate new value
+  const newValue = current + 1;
+  const newVersion = currentVersion + 1;
 
-    // Write with new version and count in metadata (OPT-002)
-    // Note: This isn't true CAS, but the version helps detect concurrent modifications
-    // when debugging. For accurate stats, rely on Analytics Engine.
-    await kv.put(fullKey, String(newValue), {
-      expirationTtl: STATS_TTL,
-      metadata: { version: newVersion, count: newValue },
-    });
-
-    // Read back to verify (simple optimistic check)
-    // If another write happened between our read and write, the value might be different
-    const verification = await kv.get(fullKey);
-    const verifiedValue = parseInt(verification || '0', 10);
-
-    // If our write succeeded (value is at least what we wrote), we're done
-    // Note: Value could be higher if another concurrent increment also succeeded
-    if (verifiedValue >= newValue) {
-      return;
-    }
-
-    // If verification failed, small delay before retry to reduce contention
-    if (attempt < maxRetries - 1) {
-      await new Promise((resolve) => setTimeout(resolve, 10 * (attempt + 1)));
-    }
-  }
-
-  // If all retries failed, log but don't throw - analytics shouldn't break functionality
-  // The write still happened, just might have lost an increment due to race condition
+  // Write with new version and count in metadata (OPT-002)
+  // Note: This isn't true CAS, but the version helps detect concurrent modifications
+  // when debugging. For accurate stats, rely on Analytics Engine.
+  //
+  // OPT-008 (2026-07-18 audit): the former "verification read + retry loop"
+  // was a no-op — a kv.get immediately after your own kv.put from the same
+  // isolate always observes your own write, so the check virtually always
+  // passed on the first attempt. Deleting it saves one KV read per counter
+  // (3 per command) with zero behavior change; cross-colo lost increments
+  // remain accepted for these approximate counters.
+  await kv.put(fullKey, String(newValue), {
+    expirationTtl: STATS_TTL,
+    metadata: { version: newVersion, count: newValue },
+  });
 }
 
 /**
@@ -279,8 +261,15 @@ export async function getStats(kv: KVNamespace): Promise<{
   }
 
   // BUG-007: Count unique users from individual keys under USER_TRACK_PREFIX
-  const userListResult = await kv.list({ prefix: `${USER_TRACK_PREFIX}${today}:` });
-  const uniqueUsersToday = userListResult.keys.length;
+  // BUG-037 (2026-07-18 audit): kv.list() returns at most 1000 keys per page —
+  // follow the cursor so the count doesn't silently cap at 1000 DAU
+  let uniqueUsersToday = 0;
+  let userCursor: string | undefined;
+  do {
+    const page = await kv.list({ prefix: `${USER_TRACK_PREFIX}${today}:`, cursor: userCursor });
+    uniqueUsersToday += page.keys.length;
+    userCursor = page.list_complete ? undefined : page.cursor;
+  } while (userCursor);
 
   // Fallback: If metadata doesn't have counts (old data), fetch individually
   // This provides backward compatibility during migration

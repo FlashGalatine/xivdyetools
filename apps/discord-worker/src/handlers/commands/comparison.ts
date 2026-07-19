@@ -9,7 +9,7 @@ import type { Dye } from '@xivdyetools/types';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
 import { resolveColorInput as resolveColor } from '../../utils/color.js';
-import { editOriginalResponse } from '../../utils/discord-api.js';
+import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, createTranslator } from '../../services/bot-i18n.js';
@@ -84,7 +84,7 @@ async function processComparisonCommand(
 
   if (!result.ok) {
     if (logger) logger.error('Comparison command failed');
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
     });
     return;
@@ -103,7 +103,7 @@ async function processComparisonCommand(
       })
       .join('\n');
 
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [{
         title: result.embed.title,
         description: dyeList,
@@ -115,7 +115,7 @@ async function processComparisonCommand(
     });
   } catch (error) {
     if (logger) logger.error('Comparison render error', error instanceof Error ? error : undefined);
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
     });
   }

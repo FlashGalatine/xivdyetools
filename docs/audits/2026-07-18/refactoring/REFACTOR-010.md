@@ -37,3 +37,7 @@ Medium — 1-2 days: create package, move code + co-located tests, publish, two 
 Low. Pure code motion with behavior pinned by existing tests in both workers; the HMAC format must not change during the move (byte-for-byte identical message string). Deploy both workers after the bump; no presets-api change required.
 
 > Source: evidence/bot-workers-analysis.md (2026-07-18 deep-dive, bot-workers area)
+
+## Status
+
+**PARTIAL 2026-07-19** — the highest-drift piece (moderator-ID parsing, BUG-073) is extracted to `@xivdyetools/bot-logic` and both workers consume it; the BUG-035 `.ok`-checking enabler is fixed via per-worker safe wrappers. The full signer/request-core/REST-helper package extraction remains open (large, riskier move; the HMAC format must stay byte-identical).

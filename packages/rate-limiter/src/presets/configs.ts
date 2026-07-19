@@ -62,6 +62,10 @@ export function getOAuthLimit(path: string): RateLimitConfig {
  * Higher limits for utility commands, lower for expensive operations.
  */
 export const DISCORD_COMMAND_LIMITS: Record<string, RateLimitConfig> = {
+  // OPT-007 (2026-07-18 audit): autocomplete fires on nearly every keystroke
+  // — generous limit, fail-soft (limited requests return empty choices)
+  autocomplete: { maxRequests: 60, windowMs: 60_000, burstAllowance: 10 },
+
   // Image processing - expensive (5 per minute)
   match_image: { maxRequests: 5, windowMs: 60_000 },
 

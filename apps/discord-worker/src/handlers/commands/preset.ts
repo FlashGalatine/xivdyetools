@@ -27,11 +27,12 @@ import {
   messageResponse,
   ephemeralResponse,
 } from '../../utils/response.js';
-import { editOriginalResponse, sendMessage } from '../../utils/discord-api.js';
+import { sendMessage, safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { generatePresetSwatch } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
+import { sendModerationNotification } from './preset-notifications.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env } from '../../types/env.js';
 import {
@@ -175,7 +176,7 @@ async function processListCommand(
     });
 
     if (response.presets.length === 0) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           infoEmbed(
             t.t('preset.title'),
@@ -211,7 +212,7 @@ async function processListCommand(
       t.t('preset.useShowTip'),
     ].join('\n');
 
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
           title,
@@ -225,7 +226,7 @@ async function processListCommand(
     if (logger) {
       logger.error('List presets error', error instanceof Error ? error : undefined);
     }
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), 'Failed to load presets.')],
     });
   }
@@ -278,7 +279,7 @@ async function processShowCommand(
     const preset = await presetApi.getPreset(env, presetId);
 
     if (!preset) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), t.t('preset.notFound'))],
       });
       return;
@@ -289,7 +290,7 @@ async function processShowCommand(
     if (logger) {
       logger.error('Show preset error', error instanceof Error ? error : undefined);
     }
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), 'Failed to load preset.')],
     });
   }
@@ -334,7 +335,7 @@ async function processRandomCommand(
     const preset = await presetApi.getRandomPreset(env, category);
 
     if (!preset) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           infoEmbed(
             t.t('preset.randomTitle'),
@@ -350,7 +351,7 @@ async function processRandomCommand(
     if (logger) {
       logger.error('Random preset error', error instanceof Error ? error : undefined);
     }
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), 'Failed to load random preset.')],
     });
   }
@@ -456,7 +457,7 @@ async function processSubmitCommand(
 
     // Handle duplicate
     if ('duplicate' in response) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           {
             title: `⚠️ ${t.t('preset.duplicateExists')}`,
@@ -476,7 +477,7 @@ async function processSubmitCommand(
 
     // Handle error
     if (!response.success) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), response.error)],
       });
       return;
@@ -502,7 +503,7 @@ async function processSubmitCommand(
       footer: { text: t.t('common.footer') },
     };
 
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [embed],
     });
 
@@ -524,7 +525,7 @@ async function processSubmitCommand(
       ? error.getSafeMessage()
       : 'Failed to submit preset.';
 
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), message)],
     });
   }
@@ -586,13 +587,13 @@ async function processVoteCommand(
     }
 
     if (!response.success) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), response.error)],
       });
       return;
     }
 
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         successEmbed(
           actionMessage,
@@ -604,7 +605,7 @@ async function processVoteCommand(
     if (logger) {
       logger.error('Vote error', error instanceof Error ? error : undefined);
     }
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), 'Failed to process vote.')],
     });
   }
@@ -688,14 +689,14 @@ async function processEditCommand(
     // First, verify the preset exists and user owns it
     const existingPreset = await presetApi.getPreset(env, presetId);
     if (!existingPreset) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), t.t('preset.notFound'))],
       });
       return;
     }
 
     if (existingPreset.author_discord_id !== userId) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), 'You can only edit your own presets.')],
       });
       return;
@@ -743,7 +744,7 @@ async function processEditCommand(
               newDyeIds.push(dyes[0].id);
             }
           } else {
-            await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+            await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
               embeds: [errorEmbed(t.t('common.error'), `Invalid dye: ${dyeName}`)],
             });
             return;
@@ -753,7 +754,7 @@ async function processEditCommand(
 
       // Validate dye count (2-5)
       if (newDyeIds.length < 2 || newDyeIds.length > 5) {
-        await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
           embeds: [errorEmbed(t.t('common.error'), 'Preset must have 2-5 dyes.')],
         });
         return;
@@ -767,7 +768,7 @@ async function processEditCommand(
 
     // Handle duplicate dyes error
     if (!response.success && 'duplicate' in response) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           {
             title: '⚠️ Duplicate Dye Combination',
@@ -786,7 +787,7 @@ async function processEditCommand(
 
     // Handle other errors
     if (!response.success) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), response.error)],
       });
       return;
@@ -810,7 +811,7 @@ async function processEditCommand(
       footer: { text: isPending ? 'A moderator will review your changes shortly.' : t.t('common.footer') },
     };
 
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [embed],
     });
 
@@ -824,7 +825,7 @@ async function processEditCommand(
     }
     // SECURITY: Use getSafeMessage() to prevent exposing internal API details
     const message = error instanceof PresetAPIError ? error.getSafeMessage() : 'Failed to edit preset.';
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), message)],
     });
   }
@@ -876,7 +877,7 @@ async function sendPresetEmbed(
   const categoryDisplay = CATEGORY_DISPLAY[preset.category_id];
   const author = preset.author_name ? `by ${preset.author_name}` : 'Official';
 
-  await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+  await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
     embeds: [
       {
         title: `${categoryDisplay?.icon || '🎨'} ${preset.name}`,
@@ -946,63 +947,23 @@ async function notifySubmissionChannel(
 }
 
 /**
- * Notify moderation channel about a pending preset
+ * Notify moderation channel about a pending preset.
+ * REFACTOR-025/BUG-009/BUG-072: delegates to the shared sanitized builder.
  */
 async function notifyModerationChannel(
   env: Env,
   preset: CommunityPreset,
   logger?: ExtendedLogger
 ): Promise<void> {
-  if (!env.MODERATION_CHANNEL_ID) return;
-
-  const categoryDisplay = CATEGORY_DISPLAY[preset.category_id];
-  // Use English translator for admin notifications (no user context)
-  const adminT = createTranslator('en');
-
-  try {
-    await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
-      embeds: [
-        {
-          title: `🟡 ${adminT.t('webhook.newPresetPending')}`,
-          description: [
-            `**Name:** ${preset.name}`,
-            `**Description:** ${preset.description}`,
-            `**Author:** ${preset.author_name} (<@${preset.author_discord_id}>)`,
-            `**${adminT.t('webhook.fields.category')}:** ${categoryDisplay?.name || preset.category_id}`,
-            `**${adminT.t('webhook.fields.dyes')}:** ${preset.dyes.length} colors`,
-          ].join('\n'),
-          color: 0xfee75c,
-          footer: { text: `ID: ${preset.id}` },
-          timestamp: new Date().toISOString(),
-        },
-      ],
-      components: [
-        {
-          type: 1, // Action Row
-          components: [
-            {
-              type: 2, // Button
-              style: 3, // Success (green)
-              label: adminT.t('webhook.buttons.approve'),
-              custom_id: `preset_approve_${preset.id}`,
-              emoji: { name: '✅' },
-            },
-            {
-              type: 2, // Button
-              style: 4, // Danger (red)
-              label: adminT.t('webhook.buttons.reject'),
-              custom_id: `preset_reject_${preset.id}`,
-              emoji: { name: '❌' },
-            },
-          ],
-        },
-      ],
-    });
-  } catch (error) {
-    if (logger) {
-      logger.error('Failed to notify moderation channel', error instanceof Error ? error : undefined);
-    }
-  }
+  await sendModerationNotification(
+    env,
+    {
+      kind: 'new',
+      preset,
+      categoryName: CATEGORY_DISPLAY[preset.category_id]?.name,
+    },
+    logger
+  );
 }
 
 /**
@@ -1014,81 +975,17 @@ async function notifyEditModerationChannel(
   originalPreset: CommunityPreset,
   logger?: ExtendedLogger
 ): Promise<void> {
-  if (!env.MODERATION_CHANNEL_ID) return;
-
-  const categoryDisplay = CATEGORY_DISPLAY[updatedPreset.category_id];
-  // Use English translator for admin notifications (no user context)
-  const adminT = createTranslator('en');
-
-  // Build a diff summary
-  const changes: string[] = [];
-  if (updatedPreset.name !== originalPreset.name) {
-    changes.push(`**Name:** "${originalPreset.name}" → "${updatedPreset.name}"`);
-  }
-  if (updatedPreset.description !== originalPreset.description) {
-    changes.push(`**Description:** Changed`);
-  }
-  if (JSON.stringify(updatedPreset.dyes) !== JSON.stringify(originalPreset.dyes)) {
-    changes.push(`**${adminT.t('webhook.fields.dyes')}:** ${originalPreset.dyes.length} → ${updatedPreset.dyes.length} colors`);
-  }
-  if (JSON.stringify(updatedPreset.tags) !== JSON.stringify(originalPreset.tags)) {
-    changes.push(`**${adminT.t('webhook.fields.tags')}:** Updated`);
-  }
-
-  try {
-    await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
-      embeds: [
-        {
-          title: `✏️ ${adminT.t('webhook.editPending')}`,
-          description: [
-            `**Preset:** ${updatedPreset.name}`,
-            `**${adminT.t('webhook.fields.author')}:** ${updatedPreset.author_name} (<@${updatedPreset.author_discord_id}>)`,
-            `**${adminT.t('webhook.fields.category')}:** ${categoryDisplay?.name || updatedPreset.category_id}`,
-            '',
-            '**Changes:**',
-            changes.join('\n') || 'No visible changes',
-            '',
-            `**New Description:** ${updatedPreset.description}`,
-          ].join('\n'),
-          color: 0xfee75c,
-          footer: { text: `ID: ${updatedPreset.id}` },
-          timestamp: new Date().toISOString(),
-        },
-      ],
-      components: [
-        {
-          type: 1, // Action Row
-          components: [
-            {
-              type: 2, // Button
-              style: 3, // Success (green)
-              label: adminT.t('webhook.buttons.approve'),
-              custom_id: `preset_approve_${updatedPreset.id}`,
-              emoji: { name: '✅' },
-            },
-            {
-              type: 2, // Button
-              style: 4, // Danger (red)
-              label: adminT.t('webhook.buttons.reject'),
-              custom_id: `preset_reject_${updatedPreset.id}`,
-              emoji: { name: '❌' },
-            },
-            {
-              type: 2, // Button
-              style: 4, // Danger (red)
-              label: adminT.t('webhook.buttons.revert'),
-              custom_id: `preset_revert_${updatedPreset.id}`,
-              emoji: { name: '↩️' },
-            },
-          ],
-        },
-      ],
-    });
-  } catch (error) {
-    if (logger) {
-      logger.error('Failed to notify moderation channel about edit', error instanceof Error ? error : undefined);
-    }
-  }
+  // REFACTOR-025/BUG-009/BUG-072: shared sanitized builder
+  await sendModerationNotification(
+    env,
+    {
+      kind: 'edit',
+      preset: updatedPreset,
+      original: originalPreset,
+      categoryName: CATEGORY_DISPLAY[updatedPreset.category_id]?.name,
+    },
+    logger
+  );
 }
 
 // ============================================================================
@@ -1150,12 +1047,12 @@ async function processFavoriteAdd(
   try {
     const preset = await resolvePresetByIdOrName(env, presetInput, logger);
     if (!preset) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), t.t('preset.errors.notFound', { name: presetInput }))],
       });
       return;
     }
-    const result = await addPresetFavorite(env.KV, userId, preset.id, logger);
+    const result = await addPresetFavorite(env.KV, userId, preset.id, preset.name, logger);
     if (!result.success) {
       const reasonMsg =
         result.reason === 'alreadyExists'
@@ -1163,19 +1060,19 @@ async function processFavoriteAdd(
           : result.reason === 'limitReached'
             ? `You've reached the limit of ${MAX_PRESET_FAVORITES} favorited presets.`
             : 'Failed to add favorite — please try again.';
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), reasonMsg)],
       });
       return;
     }
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [successEmbed('⭐ Favorite added', `**${preset.name}** is now in your favorited presets.`)],
     });
   } catch (error) {
     if (logger) {
       logger.error('preset favorite add failed', error instanceof Error ? error : undefined);
     }
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('common.unknownError'))],
     });
   }
@@ -1229,19 +1126,19 @@ async function processFavoriteRemove(
         result.reason === 'notFound'
           ? `**${presetName}** is not in your favorites.`
           : 'Failed to remove favorite — please try again.';
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), reasonMsg)],
       });
       return;
     }
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [successEmbed('🗑️ Favorite removed', `**${presetName}** has been removed from your favorites.`)],
     });
   } catch (error) {
     if (logger) {
       logger.error('preset favorite remove failed', error instanceof Error ? error : undefined);
     }
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('common.unknownError'))],
     });
   }
@@ -1274,7 +1171,7 @@ async function processFavoriteList(
   try {
     const ids = await getPresetFavorites(env.KV, userId, logger);
     if (ids.length === 0) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           infoEmbed(
             '⭐ Your favorite presets',
@@ -1290,7 +1187,7 @@ async function processFavoriteList(
     const presets = resolved.filter((p): p is CommunityPreset => p !== null);
 
     if (presets.length === 0) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           infoEmbed(
             '⭐ Your favorite presets',
@@ -1307,7 +1204,7 @@ async function processFavoriteList(
       return `**${i + 1}.** ${p.name} — *${cat}*`;
     });
 
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
           title: `⭐ Your favorite presets (${presets.length}/${MAX_PRESET_FAVORITES})`,
@@ -1321,7 +1218,7 @@ async function processFavoriteList(
     if (logger) {
       logger.error('preset favorite list failed', error instanceof Error ? error : undefined);
     }
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('common.unknownError'))],
     });
   }

@@ -10,10 +10,12 @@ import * as discordApi from '../../utils/discord-api.js';
 import { encodeBase64Url } from '../../utils/response.js';
 
 // Mock modules
-vi.mock('../../utils/discord-api.js', () => ({
-  editOriginalResponse: vi.fn(),
-  sendMessage: vi.fn(),
-}));
+vi.mock('../../utils/discord-api.js', () => {
+  const editOriginalResponse = vi.fn();
+  const sendMessage = vi.fn();
+  // BUG-035: handlers call the safe wrappers; alias to the same mocks
+  return { editOriginalResponse, sendMessage, safeSendMessage: sendMessage };
+});
 
 vi.mock('../../services/preset-api.js', async () => {
   const actual = await vi.importActual('../../services/preset-api.js');

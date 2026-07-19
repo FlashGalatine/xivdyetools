@@ -12,7 +12,7 @@ import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
 import { errorEmbed, sanitizeErrorMessage } from '../../utils/response.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { editMessage, sendMessage } from '../../utils/discord-api.js';
+import { safeEditMessage, safeSendMessage } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import { STATUS_DISPLAY } from '../../types/preset.js';
 // MOD-REF-002 FIX: Use shared modal types and helpers
@@ -92,7 +92,7 @@ async function processRejection(
     if (interaction.channel_id && interaction.message?.id) {
       const originalEmbed = interaction.message.embeds?.[0] || {};
 
-      await editMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
+      await safeEditMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
         embeds: [
           {
             title: `\u274C Preset Rejected`,
@@ -112,7 +112,7 @@ async function processRejection(
     }
 
     if (env.SUBMISSION_LOG_CHANNEL_ID) {
-      await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
+      await safeSendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
         embeds: [
           {
             title: `\u274C ${preset.name} - Rejected`,
@@ -132,7 +132,7 @@ async function processRejection(
     if (interaction.channel_id && interaction.message?.id) {
       const originalEmbed = interaction.message.embeds?.[0] || {};
 
-      await editMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
+      await safeEditMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
         embeds: [
           {
             title: originalEmbed.title,
@@ -222,7 +222,7 @@ async function processRevert(
     const preset = await presetApi.revertPreset(env, presetId, reason, userId);
 
     if (interaction.channel_id && interaction.message?.id) {
-      await editMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
+      await safeEditMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
         embeds: [
           {
             title: `\u21A9\uFE0F Preset Edit Reverted`,
@@ -242,7 +242,7 @@ async function processRevert(
     }
 
     if (env.SUBMISSION_LOG_CHANNEL_ID) {
-      await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
+      await safeSendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
         embeds: [
           {
             title: `\u21A9\uFE0F ${preset.name} - Edit Reverted`,
@@ -262,7 +262,7 @@ async function processRevert(
     if (interaction.channel_id && interaction.message?.id) {
       const originalEmbed = interaction.message.embeds?.[0] || {};
 
-      await editMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
+      await safeEditMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
         embeds: [
           {
             title: originalEmbed.title,

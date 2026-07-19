@@ -78,12 +78,14 @@ describe('preset-favorites.ts', () => {
       expect(favorites).toEqual([]);
     });
 
-    it('should return empty array when stored array contains non-string entries', async () => {
+    it('should keep valid string entries and drop non-string ones (v1 fallback)', async () => {
+      // OPT-007: the lenient v1 fallback salvages valid IDs instead of
+      // discarding the whole blob
       mockKV._store.set(KEY, JSON.stringify(['preset-a', 42]));
 
       const favorites = await getPresetFavorites(mockKV, mockUserId);
 
-      expect(favorites).toEqual([]);
+      expect(favorites).toEqual(['preset-a']);
     });
 
     it('should return empty array and log on invalid JSON', async () => {
@@ -93,7 +95,7 @@ describe('preset-favorites.ts', () => {
 
       expect(favorites).toEqual([]);
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Failed to get preset favorites',
+        'Failed to get preset favorite entries',
         expect.any(Error),
         { userId: mockUserId }
       );
@@ -145,7 +147,7 @@ describe('preset-favorites.ts', () => {
     it('should return error and log on KV failure', async () => {
       mockKV.put = vi.fn().mockRejectedValue(new Error('KV error'));
 
-      const result = await addPresetFavorite(mockKV, mockUserId, 'preset-a', mockLogger);
+      const result = await addPresetFavorite(mockKV, mockUserId, 'preset-a', 'Preset A', mockLogger);
 
       expect(result).toEqual({ success: false, reason: 'error' });
       expect(mockLogger.error).toHaveBeenCalledWith(

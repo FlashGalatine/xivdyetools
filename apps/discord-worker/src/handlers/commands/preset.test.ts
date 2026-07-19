@@ -61,9 +61,10 @@ vi.mock('../../services/i18n.js', () => ({
 }));
 
 const mockEditOriginalResponse = vi.fn().mockResolvedValue(undefined);
-const mockSendMessage = vi.fn().mockResolvedValue(undefined);
+const mockSendMessage = vi.fn().mockResolvedValue({ ok: true, status: 200, text: async () => '' });
 vi.mock('../../utils/discord-api.js', () => ({
     editOriginalResponse: (...args: unknown[]) => mockEditOriginalResponse(...args),
+    safeEditOriginalResponse: (...args: unknown[]) => mockEditOriginalResponse(...args),
     sendMessage: (...args: unknown[]) => mockSendMessage(...args),
 }));
 

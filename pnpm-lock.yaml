@@ -223,6 +223,9 @@ importers:
       '@xivdyetools/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@xivdyetools/bot-logic':
+        specifier: workspace:*
+        version: link:../../packages/bot-logic
       '@xivdyetools/logger':
         specifier: workspace:*
         version: link:../../packages/logger

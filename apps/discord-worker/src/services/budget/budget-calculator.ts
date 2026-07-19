@@ -121,7 +121,7 @@ export async function findCheaperAlternatives(
   }
 
   // 3. Fetch prices only for pre-filtered candidates (with caching)
-  const { prices, fromCache, fromApi } = await fetchWithCache(
+  const { prices, fromCache, fromApi, stale } = await fetchWithCache(
     world,
     itemIdsToFetch,
     (ids) => fetchPricesBatched(env, world, ids, logger),
@@ -214,6 +214,7 @@ export async function findCheaperAlternatives(
     world,
     searchOptions: { maxPrice, maxDistance, sortBy, limit },
     pricesAsOf,
+    pricesStale: stale,
   };
 }
 

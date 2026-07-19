@@ -22,7 +22,7 @@ import {
   isValidUuid,
   encodeBase64Url,
 } from '../../utils/response.js';
-import { editOriginalResponse, sendMessage } from '../../utils/discord-api.js';
+import { editOriginalResponse, safeSendMessage } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
 import { PresetAPIError, STATUS_DISPLAY } from '../../types/preset.js';
@@ -207,7 +207,7 @@ async function handleApproveAction(
 
   // Notify submission log channel
   if (ctx.env.SUBMISSION_LOG_CHANNEL_ID) {
-    await sendMessage(ctx.env.DISCORD_TOKEN, ctx.env.SUBMISSION_LOG_CHANNEL_ID, {
+    await safeSendMessage(ctx.env.DISCORD_TOKEN, ctx.env.SUBMISSION_LOG_CHANNEL_ID, {
       embeds: [
         {
           title: `\u2705 ${preset.name} - Approved`,

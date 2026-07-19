@@ -66,6 +66,7 @@ vi.mock('../../services/i18n.js', () => ({
 const mockEditOriginalResponse = vi.fn().mockResolvedValue(undefined);
 vi.mock('../../utils/discord-api.js', () => ({
     editOriginalResponse: (...args: unknown[]) => mockEditOriginalResponse(...args),
+    safeEditOriginalResponse: (...args: unknown[]) => mockEditOriginalResponse(...args),
 }));
 
 const mockRenderSvgToPng = vi.fn().mockResolvedValue(new Uint8Array([0x89, 0x50, 0x4E, 0x47]));

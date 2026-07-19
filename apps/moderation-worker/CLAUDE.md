@@ -201,7 +201,9 @@ On the first request per isolate, `validateEnv()` + `presetApi.validateSecurityC
 
 ### Bot → Presets API Signing
 
-When calling `presets-api`, `preset-api.ts` HMACs `timestamp:method:path:body` with `BOT_SIGNING_SECRET` and sends:
+When calling `presets-api`, `preset-api.ts` HMACs `timestamp:userId:userName` with `BOT_SIGNING_SECRET` and sends:
+
+> **REFACTOR-027 (2026-07-18 audit):** the signature covers ONLY timestamp + user identity — the HTTP method, path, and body are **not** bound to it. A captured request's headers are reusable for any endpoint within the 5-minute window (relevant only on the `PRESETS_API_URL` fallback path; the Service Binding never leaves Cloudflare). A v2 scheme binding `method:path:sha256(body)` is planned once the signer is extracted into a shared package (REFACTOR-010).
 - `Authorization: Bearer <BOT_API_SECRET>`
 - `X-Request-Signature: <hex>`
 - `X-Request-Timestamp: <unix>`

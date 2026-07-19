@@ -119,6 +119,9 @@ export interface BudgetFindResult {
 
   /** When prices were last updated (ISO timestamp) */
   pricesAsOf: string;
+
+  /** OPT-006: true when prices were served from stale cache (Universalis down) */
+  pricesStale?: boolean;
 }
 
 // ============================================================================

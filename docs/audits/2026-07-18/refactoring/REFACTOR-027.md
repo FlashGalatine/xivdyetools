@@ -35,3 +35,7 @@ Small once REFACTOR-010 lands — one signer change, one verifier change, versio
 Moderate-care, low-probability: a mismatched rollout order breaks all bot→presets-api calls. Mitigated by the version header (verify both formats until both bots are confirmed on v2). No user-visible behavior change.
 
 > Source: evidence/bot-workers-analysis.md (2026-07-18 deep-dive, bot-workers area)
+
+## Status
+
+**PARTIAL (docs corrected) 2026-07-19** — moderation-worker's CLAUDE.md now states what is actually signed (`timestamp:userId:userName`) with an explicit note on the replay scope. Signature v2 (binding method/path/body-hash) deliberately waits for the shared signer extraction (REFACTOR-010).

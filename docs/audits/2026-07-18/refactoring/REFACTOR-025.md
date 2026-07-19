@@ -41,3 +41,7 @@ Small — a few hours including test updates (existing tests assert embed shape;
 Minimal. Embed content changes are cosmetic to Discord; the only care point is keeping `custom_id` formats byte-identical until BUG-009 decides their fate.
 
 > Source: evidence/bot-workers-analysis.md (2026-07-18 deep-dive, bot-workers area)
+
+## Status
+
+**DONE 2026-07-19** — single `buildModerationNotification`/`sendModerationNotification` in preset-notifications.ts; all three call sites collapsed onto it (sanitization + button policy live in exactly one place).

@@ -17,7 +17,6 @@ import {
   formatDisambiguationList,
   formatNoMatchReply,
   colorToHex,
-  DYE_INFO_REACTIONS,
 } from '../services/response-formatter.js';
 
 /**
@@ -103,24 +102,30 @@ async function sendDyeInfoResponse(
     colour: colorToHex(result.embed.color),
   };
 
-  await ctx.message.channel?.sendMessage({
+  // BUG-038 (2026-07-18 audit): reactions were removed from the reply — no
+  // reaction listener is registered yet, so they were dead affordances
+  // inviting clicks that did nothing. Re-add `interactions.reactions` (with
+  // DYE_INFO_REACTIONS) together with a `messageReactionAdd` handler.
+  const sent = await ctx.message.channel?.sendMessage({
     embeds: [embed],
     replies: [{ id: ctx.message.id, mention: false }],
     masquerade: {
       name: result.dye.name,
       colour: result.dye.hex,
     },
-    interactions: {
-      reactions: DYE_INFO_REACTIONS,
-      restrict_reactions: true,
-    },
   });
 
-  // Track message context for reaction handling
-  ctx.messageContextStore.set(ctx.message.id, {
-    command: 'dye-info',
-    dyeId: result.dye.id,
-    dyeHex: result.dye.hex,
-    createdAt: Date.now(),
-  });
+  // Track message context for future reaction handling.
+  // BUG-038: keyed by the BOT REPLY's message ID — reactions live on the
+  // reply, so a reaction handler receives the reply's ID. The old code keyed
+  // by the user's message ID (a key no handler would ever look up) and
+  // overwrote the same entry for every dye in the multi-match loop.
+  if (sent) {
+    ctx.messageContextStore.set(sent.id, {
+      command: 'dye-info',
+      dyeId: result.dye.id,
+      dyeHex: result.dye.hex,
+      createdAt: Date.now(),
+    });
+  }
 }

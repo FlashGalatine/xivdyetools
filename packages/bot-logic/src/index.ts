@@ -87,3 +87,6 @@ export type {
   AccessibilityDye,
   VisionType,
 } from './commands/accessibility.js';
+
+// BUG-073/REFACTOR-010 (2026-07-18 audit): single MODERATOR_IDS grammar for both bot workers
+export { parseModeratorIds, isModeratorId, isValidDiscordSnowflake } from './moderators.js';

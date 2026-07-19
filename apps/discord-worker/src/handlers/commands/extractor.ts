@@ -26,7 +26,7 @@ import {
   hexToDiscordColor,
 } from '../../utils/response.js';
 import { resolveColorInput as resolveColor, dyeService } from '../../utils/color.js';
-import { editOriginalResponse } from '../../utils/discord-api.js';
+import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createCopyButtons } from '../buttons/index.js';
 import {
@@ -537,7 +537,7 @@ async function processImageExtraction(
     );
 
     if (rgbPixels.length === 0) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           errorEmbed(t.t('common.error'), t.t('matchImage.noColors')),
         ],
@@ -556,7 +556,7 @@ async function processImageExtraction(
     const matches = deduplicatePaletteResults(rawMatches);
 
     if (matches.length === 0) {
-      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           errorEmbed(t.t('common.error'), t.t('matchImage.extractionFailed')),
         ],
@@ -606,7 +606,7 @@ async function processImageExtraction(
     const description = buildImageMatchDescription(matches, t);
 
     // Step 10: Send response
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
           title: colorCount === 1
@@ -645,7 +645,7 @@ async function processImageExtraction(
       }
     }
 
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), errorMessage)],
     });
   }

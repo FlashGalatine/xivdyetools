@@ -235,9 +235,17 @@ describe('index.ts', () => {
               title: '🟡 New Preset Awaiting Review',
             }),
           ]),
-          components: expect.any(Array),
         })
       );
+      // BUG-009: without MODERATION_BOT_TOKEN the buttons would route to the
+      // wrong Discord application — the shared builder omits them and adds a
+      // "/preset moderate" hint instead
+      const call = vi.mocked(sendMessage).mock.calls.at(-1)?.[2] as {
+        components?: unknown[];
+        embeds: Array<{ description?: string }>;
+      };
+      expect(call.components).toBeUndefined();
+      expect(call.embeds[0].description).toContain('/preset moderate');
     });
 
     it('should handle approved preset submission', async () => {

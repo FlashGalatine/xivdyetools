@@ -2,7 +2,8 @@
  * Price Cache Service
  *
  * Cache API-backed caching for Universalis market prices.
- * Uses a 5-minute freshness window with 15-minute stale fallback.
+ * 5-minute freshness window; entries up to 15 minutes old are served only
+ * on the stale-if-error path when Universalis is unavailable (OPT-006).
  *
  * Migrated from KV to Cache API to avoid the 1,000 writes/day
  * free-tier limit. The Cache API has no write limits.
@@ -55,7 +56,8 @@ function buildPriceCacheUrl(world: string, itemId: number): string {
 export async function getCachedPrice(
   world: string,
   itemId: number,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
+  options?: { acceptStale?: boolean }
 ): Promise<DyePriceData | null> {
   try {
     const url = buildPriceCacheUrl(world, itemId);
@@ -69,8 +71,12 @@ export async function getCachedPrice(
     const entry: CachedPriceEntry = await response.json();
 
     // Check if cache is still fresh
+    // OPT-006 (2026-07-18 audit): with acceptStale, entries in the 5-15 min
+    // band are served (stale-if-error path) — previously the 300-900s
+    // retention window was dead weight that no code path ever read
     const age = Date.now() - entry.cachedAt;
-    if (age > CACHE_TTL_SECONDS * 1000) {
+    const maxAge = options?.acceptStale ? CACHE_MAX_AGE_SECONDS : CACHE_TTL_SECONDS;
+    if (age > maxAge * 1000) {
       return null; // Expired
     }
 
@@ -135,13 +141,14 @@ export async function setCachedPrice(
 export async function getCachedPrices(
   world: string,
   itemIds: number[],
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
+  options?: { acceptStale?: boolean }
 ): Promise<Map<number, DyePriceData>> {
   const results = new Map<number, DyePriceData>();
 
   // Fetch all in parallel
   const promises = itemIds.map(async (itemId) => {
-    const data = await getCachedPrice(world, itemId, logger);
+    const data = await getCachedPrice(world, itemId, logger, options);
     if (data) {
       results.set(itemId, data);
     }
@@ -192,7 +199,7 @@ export async function fetchWithCache(
   itemIds: number[],
   fetchFn: (ids: number[]) => Promise<Map<number, DyePriceData>>,
   logger?: ExtendedLogger
-): Promise<{ prices: Map<number, DyePriceData>; fromCache: number; fromApi: number }> {
+): Promise<{ prices: Map<number, DyePriceData>; fromCache: number; fromApi: number; stale: boolean }> {
   // Check cache first
   const cached = await getCachedPrices(world, itemIds, logger);
 
@@ -201,11 +208,34 @@ export async function fetchWithCache(
 
   if (uncachedIds.length === 0) {
     // All items were cached
-    return { prices: cached, fromCache: cached.size, fromApi: 0 };
+    return { prices: cached, fromCache: cached.size, fromApi: 0, stale: false };
   }
 
   // Fetch missing items from API
-  const fetched = await fetchFn(uncachedIds);
+  // OPT-006 (2026-07-18 audit): stale-if-error — when Universalis fails,
+  // re-read the cache accepting entries up to 15 minutes old and serve them
+  // as a degraded (but working) response instead of a hard failure. The
+  // caller surfaces `stale: true` in the embed.
+  let fetched: Map<number, DyePriceData>;
+  try {
+    fetched = await fetchFn(uncachedIds);
+  } catch (error) {
+    const staleEntries = await getCachedPrices(world, uncachedIds, logger, { acceptStale: true });
+    if (staleEntries.size > 0) {
+      logger?.warn?.('Universalis fetch failed; serving stale cached prices', {
+        staleCount: staleEntries.size,
+        missing: uncachedIds.length - staleEntries.size,
+      });
+      const combinedStale = new Map<number, DyePriceData>([...cached, ...staleEntries]);
+      return {
+        prices: combinedStale,
+        fromCache: combinedStale.size,
+        fromApi: 0,
+        stale: true,
+      };
+    }
+    throw error; // No stale data either — propagate the original failure
+  }
 
   // Cache the new results
   await setCachedPrices(world, fetched, logger);
@@ -223,6 +253,7 @@ export async function fetchWithCache(
     prices: combined,
     fromCache: cached.size,
     fromApi: fetched.size,
+    stale: false,
   };
 }
 

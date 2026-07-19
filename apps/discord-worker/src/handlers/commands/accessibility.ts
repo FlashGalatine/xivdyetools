@@ -11,7 +11,7 @@
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
 import { resolveColorInput } from '../../utils/color.js';
-import { editOriginalResponse } from '../../utils/discord-api.js';
+import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createTranslator, createUserTranslator } from '../../services/bot-i18n.js';
@@ -97,7 +97,7 @@ async function processAccessibilityCommand(
 
   if (!result.ok) {
     if (logger) logger.error('Accessibility command failed');
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
     });
     return;
@@ -125,7 +125,7 @@ async function processAccessibilityCommand(
       }).join('\n');
     }
 
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [{
         title: result.embed.title,
         description,
@@ -137,7 +137,7 @@ async function processAccessibilityCommand(
     });
   } catch (error) {
     if (logger) logger.error('Accessibility render error', error instanceof Error ? error : undefined);
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
     });
   }

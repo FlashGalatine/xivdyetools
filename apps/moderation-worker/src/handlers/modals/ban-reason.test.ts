@@ -9,9 +9,11 @@ import * as banService from '../../services/ban-service.js';
 import * as discordApi from '../../utils/discord-api.js';
 
 // Mock modules
-vi.mock('../../utils/discord-api.js', () => ({
-  sendMessage: vi.fn(),
-}));
+vi.mock('../../utils/discord-api.js', () => {
+  const sendMessage = vi.fn();
+  // BUG-035: handlers call the safe wrappers; alias to the same mocks
+  return { sendMessage, safeSendMessage: sendMessage };
+});
 
 vi.mock('../../services/preset-api.js', async () => {
   const actual = await vi.importActual('../../services/preset-api.js');

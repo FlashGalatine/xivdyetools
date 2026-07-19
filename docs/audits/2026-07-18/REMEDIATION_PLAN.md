@@ -115,6 +115,8 @@ BUG-006 is an API-shape change (explicit locale instead of singleton `setLocale`
 
 ## Sprint 5 — Discord/stoat bots: reliability & bundle headroom
 
+**✅ COMPLETED 2026-07-19** (4 items partial/deferred with rationale in their Status sections: REFACTOR-010/026/027/028 partial; BUG-036 deferred-documented; OPT-009 photon-split deferred). Deploy needs: publish `@xivdyetools/bot-logic` 1.3.0 + `@xivdyetools/rate-limiter` 1.5.0 with the batch, deploy discord-worker + moderation-worker + stoat, and set the new `MODERATION_BOT_TOKEN` secret on discord-worker to make approve/reject buttons live (BUG-009).
+
 BUG-009 needs a design decision first (register the moderation button handlers in the main worker vs. re-route). Ends with discord-worker + moderation-worker + stoat deploys.
 
 | ID | Sev/Pri | Item |

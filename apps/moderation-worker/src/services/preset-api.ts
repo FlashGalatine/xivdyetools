@@ -9,6 +9,7 @@
  * @module services/preset-api
  */
 
+import { parseModeratorIds } from '@xivdyetools/bot-logic';
 import type { Env } from '../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { isValidSnowflake } from '@xivdyetools/types';
@@ -270,23 +271,10 @@ function getModerators(env: Env): Set<string> {
     return moderatorIdsCache;
   }
 
-  // Parse and validate moderator IDs
-  const moderatorIds = new Set<string>();
-
-  if (env.MODERATOR_IDS) {
-    const ids = env.MODERATOR_IDS.split(',')
-      .map((id) => id.trim())
-      .filter((id) => id.length > 0);
-
-    for (const id of ids) {
-      if (isValidDiscordSnowflake(id)) {
-        moderatorIds.add(id);
-      } else {
-        // Log invalid IDs but don't fail - this could be logged if logger is available
-        console.warn(`Invalid moderator ID format (not a Discord snowflake): ${id}`);
-      }
-    }
-  }
+  // BUG-073 (2026-07-18 audit): shared grammar with discord-worker —
+  // whitespace/comma separators + snowflake validation (the old comma-only
+  // split here contradicted this worker's own documentation)
+  const moderatorIds = parseModeratorIds(env.MODERATOR_IDS);
 
   // Cache the result
   moderatorIdsCache = moderatorIds;

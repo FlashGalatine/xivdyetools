@@ -47,6 +47,7 @@ wrangler secret put UPSTASH_REDIS_REST_TOKEN
 wrangler secret put STATS_AUTHORIZED_USERS   # CSV of Discord IDs for /stats
 wrangler secret put MODERATOR_IDS            # CSV of Discord IDs
 wrangler secret put MODERATION_CHANNEL_ID
+wrangler secret put MODERATION_BOT_TOKEN     # BUG-009: moderation app's token — makes approve/reject buttons routable
 wrangler secret put SUBMISSION_LOG_CHANNEL_ID
 ```
 
@@ -156,6 +157,7 @@ Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom 
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Primary rate-limit backend (KV is fallback) |
 | `MODERATOR_IDS` | CSV of Discord IDs allowed to moderate presets |
 | `MODERATION_CHANNEL_ID` | Channel for pending presets posted from web app |
+| `MODERATION_BOT_TOKEN` | BUG-009: bot token of the MODERATION Discord application. When set, moderation embeds are posted with it so approve/reject buttons route to moderation-worker; when unset, embeds omit buttons and hint at `/preset moderate` |
 | `SUBMISSION_LOG_CHANNEL_ID` | Channel for auto-approved preset audit log |
 | `STATS_AUTHORIZED_USERS` | CSV of Discord IDs allowed to use `/stats` |
 

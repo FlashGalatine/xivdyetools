@@ -10,7 +10,7 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { DyeTypeFilters } from '@xivdyetools/types';
 import { deferredResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
 import { resolveColorInput } from '../../utils/color.js';
-import { editOriginalResponse } from '../../utils/discord-api.js';
+import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createTranslator, createUserTranslator } from '../../services/bot-i18n.js';
@@ -105,7 +105,7 @@ async function processGradientCommand(
 
   if (!result.ok) {
     if (logger) logger.error('Gradient command error');
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
     });
     return;
@@ -143,7 +143,7 @@ async function processGradientCommand(
     const matchingLabel = matchingMethod === 'ciede2000' ? 'CIEDE2000' :
       matchingMethod === 'cie76' ? 'CIE76' : matchingMethod.toUpperCase();
 
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [{
         title: result.embed.title,
         description: [
@@ -162,7 +162,7 @@ async function processGradientCommand(
     });
   } catch (error) {
     if (logger) logger.error('Gradient render error', error instanceof Error ? error : undefined);
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
     });
   }

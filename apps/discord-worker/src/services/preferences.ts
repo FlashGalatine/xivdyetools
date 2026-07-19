@@ -11,6 +11,16 @@
  * - `budget:world:v1:{userId}` → preferences.world
  *
  * @module services/preferences
+  *
+ * ⚠️ BUG-036 (2026-07-18 audit) — KNOWN LIMITATION (fix deferred): all of a
+ * user's data here lives in ONE JSON blob updated get → mutate → put with no
+ * concurrency control. Cloudflare KV is last-write-wins and eventually
+ * consistent (~60s cross-colo), so two in-flight mutations for the same user
+ * (rapid successive commands, two devices, different colos) can silently drop
+ * one write. The durable fix is per-item keys (one key per favorite /
+ * membership, mirroring analytics' usertrack: pattern) or a per-user Durable
+ * Object — deferred because it requires a data migration of existing user
+ * blobs. Until then, treat rare "my item vanished" reports as this race.
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';

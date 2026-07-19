@@ -41,7 +41,7 @@ import {
 import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.js';
 import { trackCommandWithKV } from './services/analytics.js';
 import { getCollections } from './services/user-storage.js';
-import { getPresetFavorites } from './services/preset-favorites.js';
+import { getPresetFavoriteEntries, savePresetFavoriteEntries } from './services/preset-favorites.js';
 import { handleButtonInteraction } from './handlers/buttons/index.js';
 import { dyeService } from './utils/color.js';
 import * as presetApi from './services/preset-api.js';
@@ -49,6 +49,7 @@ import { sendMessage } from './utils/discord-api.js';
 import { STATUS_DISPLAY, type PresetNotificationPayload } from './types/preset.js';
 import { getLocalizedDyeName } from './services/i18n.js';
 import { createTranslator } from './services/bot-i18n.js';
+import { sendModerationNotification } from './handlers/commands/preset-notifications.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-middleware';
 import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
@@ -187,52 +188,28 @@ app.post('/webhooks/preset-submission', async (c) => {
   const { preset } = payload;
   logger.info('Received preset webhook', { presetName: preset.name, presetId: preset.id, source: preset.source });
 
-  // Pending presets go to moderation channel with approve/reject buttons
+  // Pending presets go to the moderation channel via the shared sanitized
+  // builder (REFACTOR-025/BUG-009/BUG-072); Discord outcome checked (BUG-074)
   if (preset.status === 'pending' && env.MODERATION_CHANNEL_ID) {
-    // SECURITY: Sanitize user-provided content before display
-    const safeName = sanitizePresetName(preset.name);
-    const safeDescription = sanitizePresetDescription(preset.description);
-    // Use English translator for admin notifications (no user context)
     const adminT = createTranslator('en');
-    await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
-      embeds: [
-        {
-          title: `🟡 ${adminT.t('webhook.newPresetPending')}`,
-          description: `**${safeName}**\n\n${safeDescription}`,
-          color: STATUS_DISPLAY.pending.color,
-          fields: [
-            { name: adminT.t('webhook.fields.category'), value: preset.category_id, inline: true },
-            { name: adminT.t('webhook.fields.author'), value: preset.author_name || 'Unknown', inline: true },
-            { name: adminT.t('webhook.fields.source'), value: preset.source === 'web' ? adminT.t('webhook.sources.web') : adminT.t('webhook.sources.discord'), inline: true },
-            { name: adminT.t('webhook.fields.dyes'), value: formatDyesForEmbed(preset.dyes), inline: false },
-            ...(preset.tags.length > 0 ? [{ name: adminT.t('webhook.fields.tags'), value: preset.tags.join(', '), inline: false }] : []),
-          ],
-          footer: { text: `ID: ${preset.id}` },
-          timestamp: preset.created_at,
-        },
-      ],
-      components: [
-        {
-          type: 1, // Action Row
-          components: [
-            {
-              type: 2, // Button
-              style: 3, // Success (green)
-              label: adminT.t('webhook.buttons.approve'),
-              emoji: { name: '✅' },
-              custom_id: `preset_approve_${preset.id}`,
-            },
-            {
-              type: 2, // Button
-              style: 4, // Danger (red)
-              label: adminT.t('webhook.buttons.reject'),
-              emoji: { name: '❌' },
-              custom_id: `preset_reject_${preset.id}`,
-            },
-          ],
-        },
-      ],
-    });
+    const sent = await sendModerationNotification(
+      env,
+      {
+        kind: 'new',
+        preset,
+        extraFields: [
+          { name: adminT.t('webhook.fields.source'), value: preset.source === 'web' ? adminT.t('webhook.sources.web') : adminT.t('webhook.sources.discord'), inline: true },
+          { name: adminT.t('webhook.fields.dyes'), value: formatDyesForEmbed(preset.dyes), inline: false },
+          ...(preset.tags.length > 0 ? [{ name: adminT.t('webhook.fields.tags'), value: preset.tags.join(', '), inline: false }] : []),
+        ],
+      },
+      logger
+    );
+    if (!sent) {
+      // BUG-074: surface the failure so presets-api's retry/dead-letter
+      // machinery can take over instead of silently losing the notification
+      return c.json({ error: 'Failed to deliver moderation notification' }, 502);
+    }
   }
 
   // Auto-approved presets go directly to submission log channel
@@ -242,7 +219,7 @@ app.post('/webhooks/preset-submission', async (c) => {
     const safeDescription = sanitizePresetDescription(preset.description);
     // Use English translator for admin notifications (no user context)
     const adminT = createTranslator('en');
-    await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
+    const logRes = await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
       embeds: [
         {
           title: `🟢 ${adminT.t('webhook.newPresetPublished')}`,
@@ -260,6 +237,13 @@ app.post('/webhooks/preset-submission', async (c) => {
         },
       ],
     });
+    if (!logRes.ok) {
+      // BUG-074: log-only (the submission log is informational) but no longer silent
+      logger.error('Submission-log notification rejected by Discord', undefined, {
+        status: logRes.status,
+        body: await logRes.text().catch(() => ''),
+      });
+    }
   }
 
   return c.json({ success: true });
@@ -343,7 +327,8 @@ app.post('/webhooks/github', async (c) => {
 
   // Fetch the raw changelog from GitHub
   const changelogUrl = `https://raw.githubusercontent.com/${payload.repository.full_name}/main/CHANGELOG-laymans.md`;
-  const changelogResponse = await fetch(changelogUrl);
+  // BUG-074: bounded — a hung GitHub response must not hold the request open
+  const changelogResponse = await fetch(changelogUrl, { signal: AbortSignal.timeout(10_000) });
 
   if (!changelogResponse.ok) {
     logger.error('Failed to fetch changelog', { status: changelogResponse.status });
@@ -606,6 +591,28 @@ async function handleAutocomplete(
 ): Promise<Response> {
   const commandName = interaction.data?.name;
   const options = interaction.data?.options || [];
+
+  // OPT-007 (2026-07-18 audit): rate-limit autocomplete (60/min + burst),
+  // mirroring moderation-worker. Fail-soft — a limited user just gets no
+  // suggestions, never a broken command.
+  const acUserId = interaction.member?.user?.id ?? interaction.user?.id;
+  if (acUserId) {
+    const acLimit = await checkRateLimit(
+      {
+        upstashUrl: env.UPSTASH_REDIS_REST_URL,
+        upstashToken: env.UPSTASH_REDIS_REST_TOKEN,
+        kv: env.KV,
+      },
+      acUserId,
+      'autocomplete'
+    );
+    if (!acLimit.allowed) {
+      return Response.json({
+        type: InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
+        data: { choices: [] },
+      });
+    }
+  }
 
   // Find the focused option (the one the user is currently typing in)
   let focusedOption: { name: string; value?: string | number | boolean; focused?: boolean } | undefined;
@@ -880,20 +887,30 @@ async function getFavoritedPresetsAutocompleteChoices(
   logger: ExtendedLogger
 ): Promise<Array<{ name: string; value: string }>> {
   try {
-    const ids = await getPresetFavorites(env.KV, userId, logger);
-    if (ids.length === 0) return [];
+    const entries = await getPresetFavoriteEntries(env.KV, userId, logger);
+    if (entries.length === 0) return [];
 
-    const resolved = await Promise.all(
-      ids.map((id) => presetApi.getPreset(env, id).catch(() => null))
-    );
-    const presets = resolved.filter((p): p is NonNullable<typeof p> => p !== null);
+    // OPT-007 (2026-07-18 audit): names are denormalized into the favorites
+    // entries, so the former per-keystroke fan-out (up to 50 service-binding
+    // fetches) is gone. Legacy v1 entries without names are resolved once and
+    // written back (one-time lazy migration per user).
+    const missing = entries.filter((e) => !e.name);
+    if (missing.length > 0) {
+      const resolved = await Promise.all(
+        missing.map((e) => presetApi.getPreset(env, e.id).catch(() => null))
+      );
+      for (let i = 0; i < missing.length; i++) {
+        missing[i].name = resolved[i]?.name ?? missing[i].id;
+      }
+      await savePresetFavoriteEntries(env.KV, userId, entries, logger);
+    }
 
     const lowerQuery = query.toLowerCase();
     const filtered = query.length > 0
-      ? presets.filter((p) => p.name.toLowerCase().includes(lowerQuery))
-      : presets;
+      ? entries.filter((e) => e.name.toLowerCase().includes(lowerQuery))
+      : entries;
 
-    return filtered.slice(0, 25).map((p) => ({ name: p.name, value: p.id }));
+    return filtered.slice(0, 25).map((e) => ({ name: e.name, value: e.id }));
   } catch (error) {
     logger.error('Failed to get favorited presets autocomplete', error instanceof Error ? error : undefined);
     return [];
@@ -1010,4 +1027,28 @@ interface DiscordInteraction {
 }
 
 // Export the Hono app as the default export for Cloudflare Workers
+/**
+ * BUG-074 (2026-07-18 audit): shaped global error handler — previously a
+ * thrown error (e.g. a Discord API timeout on a webhook route) fell through
+ * to Hono's default unshaped 500, unlike moderation-worker's hardened
+ * sibling. Interaction routes still shape their own errors; this is the
+ * backstop.
+ */
+app.onError((err, c) => {
+  const logger = c.get('logger');
+  if (logger) {
+    logger.error('Unhandled error', err, { path: c.req.path });
+  } else {
+    console.error('Unhandled error', err);
+  }
+  const isDev = (c.env as { ENVIRONMENT?: string }).ENVIRONMENT === 'development';
+  return c.json(
+    {
+      error: 'Internal Server Error',
+      ...(isDev ? { message: err.message } : {}),
+    },
+    500
+  );
+});
+
 export default app;

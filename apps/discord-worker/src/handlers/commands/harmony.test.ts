@@ -40,6 +40,7 @@ vi.mock('../../services/svg/renderer.js', () => ({
 
 vi.mock('../../utils/discord-api.js', () => ({
   editOriginalResponse: editOriginalResponseMock,
+  safeEditOriginalResponse: editOriginalResponseMock,
 }));
 
 vi.mock('../../utils/response.js', () => ({
