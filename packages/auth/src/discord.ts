@@ -87,8 +87,11 @@ export async function verifyDiscordRequest(
   // Get the raw body
   const body = await request.text();
 
-  // Verify actual body size (Content-Length can be spoofed)
-  if (body.length > maxBodySize) {
+  // Verify actual body size (Content-Length can be spoofed).
+  // BUG-059: measure BYTES — String.length counts UTF-16 code units, so CJK
+  // (3 bytes/char) and emoji (4 bytes) payloads could exceed the intended
+  // byte cap by up to ~4× before this check fired.
+  if (new TextEncoder().encode(body).byteLength > maxBodySize) {
     return {
       isValid: false,
       body: '',

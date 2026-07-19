@@ -203,6 +203,11 @@ export function generateGradientColors(
   endColor: string,
   stepCount: number
 ): string[] {
+  // BUG-063: stepCount=1 made ratio 0/0 → NaN → '#NaNNaNNaN' in SVG fills.
+  if (stepCount < 2) {
+    return stepCount === 1 ? [startColor] : [];
+  }
+
   const colors: string[] = [];
 
   for (let i = 0; i < stepCount; i++) {

@@ -276,6 +276,31 @@ export function ksToReflectance(ks: number): number {
 // Utility
 // ============================================================================
 
+/**
+ * Parse a hex color string into RGB channels.
+ *
+ * REFACTOR-005 (2026-07-18 audit): local implementation replacing the sole use
+ * of `@xivdyetools/core`'s ColorService — the entire core package (dye
+ * database, k-d tree, i18n) was a dependency for these ~10 lines. Matches
+ * core's strict behavior: throws on malformed input; accepts #RGB and #RRGGBB
+ * (leading # optional).
+ */
+export function hexToRgb(hex: string): RGB {
+  const clean = hex.startsWith('#') ? hex.slice(1) : hex;
+  if (!/^(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(clean)) {
+    throw new Error(`Invalid hex color: ${hex}. Use format #RRGGBB or #RGB`);
+  }
+  const full =
+    clean.length === 3
+      ? clean.split('').map((c) => c + c).join('')
+      : clean;
+  return {
+    r: parseInt(full.substring(0, 2), 16),
+    g: parseInt(full.substring(2, 4), 16),
+    b: parseInt(full.substring(4, 6), 16),
+  };
+}
+
 export function rgbToHex(rgb: RGB): string {
   const toHex = (n: number): string => n.toString(16).padStart(2, '0');
   return `#${toHex(rgb.r)}${toHex(rgb.g)}${toHex(rgb.b)}`;

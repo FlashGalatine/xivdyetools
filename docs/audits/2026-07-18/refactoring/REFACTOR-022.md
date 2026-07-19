@@ -62,3 +62,7 @@ Small — ~1 hour in the svg package; plus the usual locale-file additions (6 la
 Very low for the package change (additive option, defaulted). The only operational caution is font-subset coverage for the new translated strings — a known, documented pipeline in this workspace.
 
 > Source: evidence/shared-packages-analysis.md (2026-07-18 deep-dive, shared-packages area)
+
+## Status
+
+**DONE (package half) 2026-07-19** — `AccessibilityComparisonOptions.labels?: Partial<VisionLabels>` added (merged over the English defaults, mirroring the other generators' labels-object convention); `VisionLabels` exported from the package root. The bot-i18n locale keys + discord-worker wiring (and the font-subset check for new CJK strings) remain as the consumer-side follow-up.

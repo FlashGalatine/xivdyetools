@@ -15,3 +15,7 @@ export { createHexColor, createDyeId, createHue, createSaturation } from './bran
 
 // Colorblindness types
 export type { VisionType, Matrix3x3, ColorblindMatrices } from './colorblind.js';
+
+// Match-quality tiers (REFACTOR-004: shared distance classification)
+export type { MatchQualityKey } from './match-quality.js';
+export { MATCH_QUALITY_TIERS, classifyMatchDistance } from './match-quality.js';

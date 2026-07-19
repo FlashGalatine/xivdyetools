@@ -69,24 +69,30 @@ export class UpstashRateLimiter implements RateLimiter {
     const ttlSeconds = Math.ceil(config.windowMs / 1000);
 
     try {
-      // Pipeline: INCR + EXPIRE NX in single round-trip (atomic, no orphan keys)
+      // Pipeline: INCR + EXPIRE NX + TTL in single round-trip (atomic, no orphan keys)
       const pipeline = this.redis.pipeline();
       pipeline.incr(redisKey);
       pipeline.expire(redisKey, ttlSeconds, 'NX');
-      const results = await pipeline.exec<[number, number]>();
+      pipeline.ttl(redisKey);
+      const results = await pipeline.exec<[number, number, number]>();
 
       const count = results[0];
+      const ttlLeft = results[2];
 
       const allowed = count <= effectiveLimit;
       const remaining = Math.max(0, effectiveLimit - count);
-      const resetAt = new Date(Date.now() + ttlSeconds * 1000);
+      // BUG-055: the window is anchored at the FIRST request (EXPIRE NX), so
+      // report the key's actual remaining TTL — not a full window from now,
+      // which overstated Retry-After/X-RateLimit-Reset by up to windowMs.
+      const remainingTtl = ttlLeft > 0 ? ttlLeft : ttlSeconds;
+      const resetAt = new Date(Date.now() + remainingTtl * 1000);
 
       return {
         allowed,
         remaining,
         resetAt,
         limit: effectiveLimit,
-        retryAfter: allowed ? undefined : ttlSeconds,
+        retryAfter: allowed ? undefined : remainingTtl,
       };
     } catch (error) {
       // Fail-open on Redis errors (availability over strict limiting)

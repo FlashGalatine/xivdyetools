@@ -51,9 +51,14 @@ const DEFAULT_CLEANUP_INTERVAL = 100;
  */
 export class MemoryRateLimiter implements RateLimiter {
   /**
-   * Map of key -> array of request timestamps
+   * Map of key -> per-key window plus request timestamps.
+   *
+   * BUG-023: each entry remembers the largest windowMs it has been checked
+   * with, so periodic cleanup can use a per-key cutoff instead of applying the
+   * CURRENT request's window to every key — a short-window request must not
+   * purge history belonging to a long-window config on a shared instance.
    */
-  private requestLog = new Map<string, number[]>();
+  private requestLog = new Map<string, { windowMs: number; timestamps: number[] }>();
 
   /**
    * Request counter for deterministic cleanup
@@ -85,11 +90,12 @@ export class MemoryRateLimiter implements RateLimiter {
     const effectiveLimit =
       config.maxRequests + (config.burstAllowance ?? 0);
 
-    // Get existing timestamps for this key
-    const timestamps = this.requestLog.get(key) ?? [];
+    // Get existing entry for this key (BUG-023: track its largest window)
+    const entry = this.requestLog.get(key);
+    const entryWindowMs = Math.max(entry?.windowMs ?? 0, config.windowMs);
 
     // Filter to only include requests within the current window
-    const recentTimestamps = timestamps.filter((ts) => ts > windowStart);
+    const recentTimestamps = (entry?.timestamps ?? []).filter((ts) => ts > windowStart);
 
     // Check if within limit
     const allowed = recentTimestamps.length < effectiveLimit;
@@ -104,18 +110,18 @@ export class MemoryRateLimiter implements RateLimiter {
     // Record this request if allowed
     if (allowed) {
       recentTimestamps.push(now);
-      this.requestLog.set(key, recentTimestamps);
     }
+    this.requestLog.set(key, { windowMs: entryWindowMs, timestamps: recentTimestamps });
 
     // Deterministic cleanup: every CLEANUP_INTERVAL requests
     this.requestCount++;
     if (this.requestCount % this.cleanupInterval === 0) {
-      this.cleanupOldEntries(config.windowMs * 2);
+      this.cleanupOldEntries();
     }
 
     // Emergency LRU eviction if map grows too large (PRESETS-BUG-001 fix)
     if (this.requestLog.size > this.maxEntries) {
-      this.cleanupOldEntries(config.windowMs * 2);
+      this.cleanupOldEntries();
 
       // If still too large after cleanup, prune oldest entries
       if (this.requestLog.size > this.maxEntries) {
@@ -159,12 +165,16 @@ export class MemoryRateLimiter implements RateLimiter {
   }
 
   /**
-   * Clean up entries older than maxAge
+   * Clean up stale timestamps using each key's OWN window (BUG-023) —
+   * cutoff = now - 2 * entry.windowMs, so heterogeneous-window configs on a
+   * shared instance never purge each other's history.
    */
-  private cleanupOldEntries(maxAge: number): void {
-    const cutoff = Date.now() - maxAge;
+  private cleanupOldEntries(): void {
+    const now = Date.now();
 
-    this.requestLog.forEach((timestamps, key) => {
+    this.requestLog.forEach((entry, key) => {
+      const cutoff = now - entry.windowMs * 2;
+      const { timestamps } = entry;
       // Timestamps are appended chronologically — scan from front to find first valid
       let firstValid = 0;
       while (firstValid < timestamps.length && timestamps[firstValid] <= cutoff) {
@@ -190,7 +200,7 @@ export class MemoryRateLimiter implements RateLimiter {
 
     // Find entries with oldest last-activity
     const entries: Array<{ key: string; lastActivity: number }> = [];
-    this.requestLog.forEach((timestamps, key) => {
+    this.requestLog.forEach(({ timestamps }, key) => {
       const lastActivity =
         timestamps.length > 0 ? timestamps[timestamps.length - 1] : 0;
       entries.push({ key, lastActivity });

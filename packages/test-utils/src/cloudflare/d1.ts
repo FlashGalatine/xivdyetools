@@ -294,6 +294,10 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
 
     exec: async (query: string) => {
       queries.push(query);
+      // BUG-062: keep _queries/_bindings index-aligned — exec takes no
+      // bindings, but skipping the push shifted every later statement's
+      // bindings one slot relative to its query.
+      bindings.push([]);
       enforceMaxHistory();
       return { count: 1, duration: 0 };
     },
@@ -318,6 +322,7 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
         },
         exec: async (query: string) => {
           queries.push(query);
+          bindings.push([]); // BUG-062: keep parallel arrays aligned
           enforceMaxHistory();
           return { count: 1, duration: 0 };
         },

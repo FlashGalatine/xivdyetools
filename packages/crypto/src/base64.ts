@@ -37,11 +37,20 @@ export function base64UrlEncode(str: string): string {
  * ```
  */
 export function base64UrlEncodeBytes(bytes: Uint8Array): string {
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
+  // OPT-019: chunked String.fromCharCode.apply instead of one string append
+  // per byte — ~10-50× faster for KB+ payloads. 32k chunks stay safely under
+  // engine argument-count limits (a single spread would overflow ~64-128k).
+  const CHUNK = 0x8000;
+  const parts: string[] = [];
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    parts.push(
+      String.fromCharCode.apply(
+        null,
+        bytes.subarray(i, i + CHUNK) as unknown as number[]
+      )
+    );
   }
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return btoa(parts.join('')).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /**

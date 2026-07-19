@@ -139,6 +139,8 @@ BUG-009 needs a design decision first (register the moderation button handlers i
 
 ## Sprint 6 — Shared packages: logger redaction, rate-limiter, svg
 
+**✅ COMPLETED 2026-07-19** (REFACTOR-022 package half done; bot-i18n locale keys + discord-worker wiring remain as consumer follow-up). Deploy needs: batch npm publish of the touched packages — types 1.15.0, crypto 1.1.1, logger 1.3.0, auth 1.2.0, rate-limiter 1.5.0, color-blending 1.1.0, svg 1.2.0, bot-logic 1.3.0, worker-middleware 1.2.0, test-utils 1.1.8 — then redeploy consumers (all CF workers + web-app release + stoat).
+
 Cross-cutting library hardening; ends with a batch npm publish (logger, rate-limiter, svg, auth, crypto, color-blending, worker-middleware, test-utils as touched).
 
 | ID | Sev/Pri | Item |

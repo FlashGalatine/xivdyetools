@@ -10,7 +10,6 @@
  * - Spectral: Kubelka-Munk physics simulation
  */
 
-import { ColorService } from '@xivdyetools/core';
 import type { RGB, LAB, HSL, BlendResult, BlendingMode } from './types.js';
 import {
   rgbToLab,
@@ -26,6 +25,7 @@ import {
   reflectanceToKS,
   ksToReflectance,
   rgbToHex,
+  hexToRgb,
 } from './conversions.js';
 
 // ============================================================================
@@ -50,8 +50,9 @@ export function blendColors(
   const h2 = hex2.startsWith('#') ? hex2 : `#${hex2}`;
   const t = Math.max(0, Math.min(1, ratio));
 
-  const rgb1 = ColorService.hexToRgb(h1);
-  const rgb2 = ColorService.hexToRgb(h2);
+  // REFACTOR-005: local parser — no more dependency on all of core
+  const rgb1 = hexToRgb(h1);
+  const rgb2 = hexToRgb(h2);
 
   let blendedRgb: RGB;
 

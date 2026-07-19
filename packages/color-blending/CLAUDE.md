@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `@xivdyetools/color-blending` is a focused library that exposes **six color-blending algorithms** (RGB, LAB, OKLAB, RYB, HSL, Spectral/Kubelka-Munk) behind a single unified entry point: `blendColors(hex1, hex2, mode, ratio)`. It exists as its own package so consumers that only need pairwise blending (the Discord `mixer` command, the Revolt bot, future tools) don't have to pull in `@xivdyetools/core`'s full dye database, k-d tree, and Universalis client.
 
-The package is intentionally tiny — one public function, one helper, six algorithm implementations, and a handful of conversion utilities. It depends on `@xivdyetools/core` only for `ColorService.hexToRgb` (used to parse the user input).
+The package is intentionally tiny — one public function, one helper, six algorithm implementations, and a handful of conversion utilities. It has **zero internal dependencies** (REFACTOR-005, 2026-07-19): hex parsing is a local strict `hexToRgb` in `conversions.ts` that throws on malformed input.
 
 ## Commands
 
@@ -91,7 +91,7 @@ function rgbToLab(rgb: RGB): LAB;   // Re-exported from conversions
 
 ## Internal Dependencies
 
-- `@xivdyetools/core` (for `ColorService.hexToRgb` only).
+None (REFACTOR-005, 2026-07-19 — the former `@xivdyetools/core` dependency for `ColorService.hexToRgb` was replaced with a local parser).
 
 This package intentionally does **not** depend on `@xivdyetools/types` — its interface types (`RGB`, `LAB`, `HSL`, `BlendResult`) are local and lowercase-channel (`l`, not `L`), distinct from the branded types in `@xivdyetools/types`.
 

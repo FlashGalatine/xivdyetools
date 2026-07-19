@@ -82,8 +82,7 @@ function defaultIsDev(): boolean {
  */
 export function createBrowserLogger(options: BrowserLoggerOptions = {}): ExtendedLogger {
   const {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    devOnly: _devOnly = true, // Reserved for future use
+    devOnly = true,
     isDev = defaultIsDev,
     errorTracker,
     prefix = 'xivdyetools',
@@ -91,9 +90,10 @@ export function createBrowserLogger(options: BrowserLoggerOptions = {}): Extende
 
   const isDevMode = isDev();
 
-  // In production with devOnly, use a minimal logger
+  // REFACTOR-021: devOnly=false keeps verbose logging in production builds
+  // (previously accepted and documented but never read).
   const config: Partial<LoggerConfig> = {
-    level: isDevMode ? 'debug' : 'warn',
+    level: isDevMode || !devOnly ? 'debug' : 'warn',
     format: 'pretty',
     timestamps: true,
     prefix,
@@ -109,13 +109,26 @@ export function createBrowserLogger(options: BrowserLoggerOptions = {}): Extende
       // Still log to console
       originalError(message, error, context);
 
+      // BUG-026: run the tracker path through the same redaction pipeline as
+      // the console path — previously the raw context and raw error message
+      // left the origin unredacted.
+      const safeContext = context ? logger.redactContext(context) : undefined;
+
       // Send to error tracker
       if (error instanceof Error) {
-        errorTracker.captureException(error, context);
+        const safeError = new Error(logger.sanitizeMessage(error.message));
+        safeError.name = error.name;
+        safeError.stack = error.stack; // stack is desirable for trackers; kept deliberately
+        errorTracker.captureException(safeError, safeContext);
       } else if (error) {
-        errorTracker.captureMessage(`${message}: ${error instanceof Error ? error.message : typeof error === 'string' ? error : JSON.stringify(error)}`, 'error');
+        errorTracker.captureMessage(
+          logger.sanitizeMessage(
+            `${message}: ${typeof error === 'string' ? error : JSON.stringify(error)}`
+          ),
+          'error'
+        );
       } else {
-        errorTracker.captureMessage(message, 'error');
+        errorTracker.captureMessage(logger.sanitizeMessage(message), 'error');
       }
     };
 
@@ -123,7 +136,7 @@ export function createBrowserLogger(options: BrowserLoggerOptions = {}): Extende
     const originalWarn = logger.warn.bind(logger);
     logger.warn = (message: string, context?: LogContext): void => {
       originalWarn(message, context);
-      errorTracker.captureMessage(message, 'warning');
+      errorTracker.captureMessage(logger.sanitizeMessage(message), 'warning');
     };
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/color-blending",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Six color blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral/Kubelka-Munk) for the XIV Dye Tools ecosystem",
   "author": "XIV Dye Tools",
   "license": "MIT",
@@ -27,9 +27,6 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "prepublishOnly": "npm run clean && npm run build"
-  },
-  "dependencies": {
-    "@xivdyetools/core": "workspace:*"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.10",

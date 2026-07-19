@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Package Overview
 
-`@xivdyetools/rate-limiter` is a sliding-window rate limiter with three pluggable backends — `MemoryRateLimiter` (per-isolate LRU), `KVRateLimiter` (Cloudflare KV with optimistic concurrency), and `UpstashRateLimiter` (Redis REST). It also ships pre-tuned configurations for OAuth endpoints, Discord bot commands, the moderation bot, the public API, and the Universalis proxy.
+`@xivdyetools/rate-limiter` is a sliding-window rate limiter with three pluggable backends — `MemoryRateLimiter` (per-isolate LRU), `KVRateLimiter` (Cloudflare KV, best-effort fixed window), and `UpstashRateLimiter` (Redis REST, truly atomic). It also ships pre-tuned configurations for OAuth endpoints, Discord bot commands, the moderation bot, the public API, and the Universalis proxy.
 
 The split-backend design lets each Worker pick the right tradeoff: in-memory is free but per-isolate, KV survives isolate restarts but is eventually consistent, and Upstash gives true atomic counters at the cost of an external service. All three implement the same `RateLimiter` interface, so swapping backends is a single-line change.
 
@@ -138,7 +138,7 @@ This is a true sliding window — not a fixed-bucket counter — so a burst at t
 | `KVRateLimiter`      | Distributed across isolates, can tolerate ~eventual consistency, no extra services |
 | `UpstashRateLimiter` | Need true atomic increments (high-contention endpoints, multi-region writes) |
 
-The `KVRateLimiter` uses optimistic concurrency: read with metadata version, modify locally, write back checking the version, retry on conflict (default 3 retries via `maxRetries`). After exhausted retries it fails open — the request is allowed and `result.backendError = true` so middleware can warn.
+The `KVRateLimiter` is **best-effort** (BUG-022/OPT-002, 2026-07-19): KV cannot do atomic read-modify-write, so `increment()` is a plain read→compute→put and concurrent increments can lose updates (limit exceeded by ~concurrency factor). `maxRetries` (default 3) applies only to *thrown* KV errors. After exhausted retries it fails open — the request is allowed and `result.backendError = true` so middleware can warn. For strict limits use Upstash INCR or a Durable Object.
 
 ### Key namespacing
 

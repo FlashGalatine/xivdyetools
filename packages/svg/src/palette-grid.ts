@@ -14,6 +14,7 @@
  */
 
 import type { RGB, Dye } from '@xivdyetools/types';
+import { classifyMatchDistance } from '@xivdyetools/types';
 import {
   createSvgDocument,
   rect,
@@ -59,12 +60,9 @@ export const MATCH_QUALITIES: MatchQuality[] = [
  * Get the quality rating for a color distance
  */
 export function getMatchQuality(distance: number): MatchQuality {
-  for (const quality of MATCH_QUALITIES) {
-    if (distance <= quality.maxDistance) {
-      return quality;
-    }
-  }
-  return MATCH_QUALITIES[MATCH_QUALITIES.length - 1];
+  // REFACTOR-004: thresholds live in the shared classifier (inclusive bounds).
+  const key = classifyMatchDistance(distance);
+  return MATCH_QUALITIES.find((q) => q.key === key) ?? MATCH_QUALITIES[MATCH_QUALITIES.length - 1];
 }
 
 // ============================================================================
@@ -386,21 +384,29 @@ function generateQualityBadge(
   let bgColor: string;
   let textColor: string;
 
-  if (distance === 0) {
-    bgColor = THEME.success;
-    textColor = '#000000';
-  } else if (distance < 10) {
-    bgColor = '#3b82f6'; // Blue
-    textColor = '#ffffff';
-  } else if (distance < 25) {
-    bgColor = '#22c55e'; // Green
-    textColor = '#ffffff';
-  } else if (distance < 50) {
-    bgColor = THEME.warning;
-    textColor = '#000000';
-  } else {
-    bgColor = THEME.textDim;
-    textColor = '#ffffff';
+  // REFACTOR-004: classify via the shared tiers (inclusive bounds) — this
+  // inline copy previously used exclusive `<`, so a distance of exactly 10
+  // got a different badge here than the exported getMatchQuality gave it.
+  switch (classifyMatchDistance(distance)) {
+    case 'perfect':
+      bgColor = THEME.success;
+      textColor = '#000000';
+      break;
+    case 'excellent':
+      bgColor = '#3b82f6'; // Blue
+      textColor = '#ffffff';
+      break;
+    case 'good':
+      bgColor = '#22c55e'; // Green
+      textColor = '#ffffff';
+      break;
+    case 'fair':
+      bgColor = THEME.warning;
+      textColor = '#000000';
+      break;
+    default:
+      bgColor = THEME.textDim;
+      textColor = '#ffffff';
   }
 
   return `<g>

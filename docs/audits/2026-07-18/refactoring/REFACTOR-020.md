@@ -55,3 +55,7 @@ Trivial — minutes, plus a couple of unit cases (`'色：赤'`, `'（テスト�
 Very low. Widths only grow for the added ranges → badges get slightly wider, never clipping-inducing narrower. Pure-ASCII and existing-CJK measurements are unchanged.
 
 > Source: evidence/shared-packages-analysis.md (2026-07-18 deep-dive, shared-packages area)
+
+## Status
+
+**DONE 2026-07-19** — the width classifier (renamed `isWide`) now includes Hangul Jamo (U+1100-11FF), Fullwidth Forms (U+FF00-FF60, halfwidth katakana excluded), and Fullwidth Signs (U+FFE0-FFE6), so localized category badges size correctly for ja/zh/ko strings with fullwidth punctuation.

@@ -207,6 +207,8 @@ export function generateContrastMatrix(options: ContrastMatrixOptions): string {
   });
 
   // Row headers and cells
+  const contrastCache = new Map<string, ContrastResult>();
+
   dyes.forEach((rowDye, rowIndex) => {
     const rowY = gridStartY + rowIndex * CELL_SIZE;
 
@@ -245,8 +247,15 @@ export function generateContrastMatrix(options: ContrastMatrixOptions): string {
         // Diagonal - same dye
         elements.push(generateDiagonalCell(cellX, cellY, CELL_SIZE));
       } else {
-        // Calculate contrast
-        const contrast = calculateContrast(rowDye.hex, colDye.hex);
+        // OPT-018: WCAG contrast is symmetric — compute each unordered pair
+        // once and reuse for the mirrored cell.
+        const cacheKey =
+          rowIndex < colIndex ? `${rowIndex}:${colIndex}` : `${colIndex}:${rowIndex}`;
+        let contrast = contrastCache.get(cacheKey);
+        if (!contrast) {
+          contrast = calculateContrast(rowDye.hex, colDye.hex);
+          contrastCache.set(cacheKey, contrast);
+        }
         elements.push(generateContrastCell(cellX, cellY, CELL_SIZE, contrast));
       }
     });

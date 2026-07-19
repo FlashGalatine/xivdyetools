@@ -273,10 +273,8 @@ describe('KVRateLimiter', () => {
         maxRetries: 2, // Reduce retries for faster test
       });
 
-      // Make KV operations fail
-      vi.mocked(mockKV.getWithMetadata).mockRejectedValue(
-        new Error('KV write failed')
-      );
+      // Make KV operations fail (BUG-022/OPT-002: increment reads via get)
+      vi.mocked(mockKV.get).mockRejectedValue(new Error('KV write failed'));
 
       await loggedLimiter.increment('user1', defaultConfig);
 
@@ -297,9 +295,7 @@ describe('KVRateLimiter', () => {
       // Use limiter without logger (default behavior)
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-      vi.mocked(mockKV.getWithMetadata).mockRejectedValue(
-        new Error('KV write failed')
-      );
+      vi.mocked(mockKV.get).mockRejectedValue(new Error('KV write failed'));
 
       await limiter.increment('user1', defaultConfig);
 

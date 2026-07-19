@@ -109,7 +109,6 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
   const {
     name,
     description,
-    category,
     dyes,
     authorName,
     voteCount,
@@ -133,12 +132,11 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
   // Background
   elements.push(rect(0, 0, width, height, THEME.background, { rx: 12, ry: 12 }));
 
-  // Header section
-  const categoryDisplay = CATEGORY_DISPLAY[category] || { icon: '🎨', name: 'Preset' };
-
-  // Category icon and title
+  // Title — BUG-056: no category emoji in SVG text; the bundled resvg fonts
+  // have no emoji glyphs, so the icon rendered as a tofu box in the PNG.
+  // CATEGORY_DISPLAY icons remain for Discord *message* text, where they work.
   elements.push(
-    text(width / 2, PADDING + 24, `${categoryDisplay.icon} ${name}`, {
+    text(width / 2, PADDING + 24, name, {
       fill: THEME.text,
       fontSize: 22,
       fontFamily: FONTS.headerCjk,

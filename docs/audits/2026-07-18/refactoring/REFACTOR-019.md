@@ -61,3 +61,7 @@ Small — ~1 hour: wrap ~10 interpolation sites, add a handful of unit tests ass
 Very low. `escapeXml` on legitimate values (`#AABBCC`, `rgba(0,0,0,0.3)`, `none`, font names) is an identity transform except for `'` in font names — and `Noto Sans SC` etc. contain none. Snapshot tests over existing generators would confirm byte-identical output for current inputs.
 
 > Source: evidence/shared-packages-analysis.md (2026-07-18 deep-dive, shared-packages area)
+
+## Status
+
+**DONE 2026-07-19** — every string attribute in the SVG primitives (rect/circle fill+stroke, line stroke+dashArray, text fill+fontFamily, group transform) is now escaped with the existing `escapeXml`; numeric params are typed `number` and unchanged. Hostile strings can no longer close an attribute and inject sibling elements.

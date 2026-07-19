@@ -156,10 +156,39 @@ describe('Browser Preset', () => {
         const error = new Error('Test error');
         logger.error('Something failed', error, { userId: '123' });
 
-        expect(errorTracker.captureException).toHaveBeenCalledWith(
-          error,
-          { userId: '123' }
-        );
+        // BUG-026: the tracker receives a sanitized clone, not the raw error
+        expect(errorTracker.captureException).toHaveBeenCalledTimes(1);
+        const [sentError, sentContext] = (errorTracker.captureException as ReturnType<typeof vi.fn>)
+          .mock.calls[0] as [Error, Record<string, unknown>];
+        expect(sentError).toBeInstanceOf(Error);
+        expect(sentError.message).toBe('Test error');
+        expect(sentError.name).toBe('Error');
+        expect(sentContext).toEqual({ userId: '123' });
+      });
+
+      it('BUG-026: redacts context and sanitizes messages before forwarding to the tracker', () => {
+        const errorTracker: ErrorTracker = {
+          captureException: vi.fn(),
+          captureMessage: vi.fn(),
+          setTag: vi.fn(),
+          setUser: vi.fn(),
+        };
+
+        const logger = createBrowserLogger({
+          isDev: () => false,
+          errorTracker,
+        });
+
+        logger.error('auth failed', new Error('token=abc123 rejected'), {
+          token: 'secret-jwt',
+          userId: '123',
+        });
+
+        const [sentError, sentContext] = (errorTracker.captureException as ReturnType<typeof vi.fn>)
+          .mock.calls[0] as [Error, Record<string, unknown>];
+        expect(sentError.message).not.toContain('abc123');
+        expect(sentContext.token).toBe('[REDACTED]');
+        expect(sentContext.userId).toBe('123');
       });
 
       it('should call errorTracker.captureMessage for non-Error errors', () => {

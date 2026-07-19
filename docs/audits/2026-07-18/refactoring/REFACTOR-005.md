@@ -49,3 +49,7 @@ Trivial-to-small — under 1 hour including tests (existing blending tests alrea
 Low. The single behavioral consideration is error handling for invalid hex input: core's `hexToRgb` throws `AppError(INVALID_*)`; a lenient local parser would return NaN channels instead. Matching core's throw-on-invalid keeps observable behavior identical for all current callers.
 
 > Source: evidence/shared-packages-analysis.md (2026-07-18 deep-dive, shared-packages area)
+
+## Status
+
+**DONE 2026-07-19** — color-blending gained a local strict `hexToRgb` in conversions.ts (throws on malformed input, accepts #RGB/#RRGGBB) and the `@xivdyetools/core` dependency was deleted from package.json; the package now has zero internal runtime deps, matching the documented graph. Lockfile updated.

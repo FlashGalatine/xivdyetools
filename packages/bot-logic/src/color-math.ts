@@ -8,6 +8,8 @@
  */
 
 import { ColorService } from '@xivdyetools/core';
+import { classifyMatchDistance } from '@xivdyetools/types';
+import type { MatchQualityKey } from '@xivdyetools/types';
 
 // ============================================================================
 // Color Distance
@@ -35,30 +37,23 @@ export function getColorDistance(hex1: string, hex2: string): number {
  */
 export interface MatchQualityInfo {
   /** Translation key suffix — use with `t.t('quality.<key>')` */
-  key: 'perfect' | 'excellent' | 'good' | 'fair' | 'approximate';
+  key: MatchQualityKey;
   /** Emoji for this quality tier */
   emoji: string;
 }
 
 /**
- * Distance thresholds for match quality tiers.
- * Shared across all commands for consistent behavior.
- *
- * Thresholds based on Euclidean distance in RGB space:
- * - 0: Perfect match
- * - <10: Excellent (imperceptible difference)
- * - <25: Good (barely noticeable)
- * - <50: Fair (noticeable but similar)
- * - ≥50: Approximate
+ * Emoji display metadata per quality tier. Thresholds live in the shared
+ * classifier (`classifyMatchDistance` in `@xivdyetools/types`, REFACTOR-004)
+ * so embed text and generated images always agree on quality labels.
  */
-const QUALITY_TIERS: readonly { readonly maxDistance: number; readonly info: MatchQualityInfo }[] = [
-  { maxDistance: 0, info: { key: 'perfect', emoji: '🎯' } },
-  { maxDistance: 10, info: { key: 'excellent', emoji: '✨' } },
-  { maxDistance: 25, info: { key: 'good', emoji: '👍' } },
-  { maxDistance: 50, info: { key: 'fair', emoji: '⚠️' } },
-];
-
-const APPROXIMATE_QUALITY: MatchQualityInfo = { key: 'approximate', emoji: '🔍' };
+const QUALITY_EMOJI: Record<MatchQualityKey, string> = {
+  perfect: '🎯',
+  excellent: '✨',
+  good: '👍',
+  fair: '⚠️',
+  approximate: '🔍',
+};
 
 /**
  * Get match quality metadata for a given color distance.
@@ -72,10 +67,6 @@ const APPROXIMATE_QUALITY: MatchQualityInfo = { key: 'approximate', emoji: '🔍
  * const label = t.t(`quality.${qi.key}`);
  */
 export function getMatchQualityInfo(distance: number): MatchQualityInfo {
-  for (const { maxDistance, info } of QUALITY_TIERS) {
-    if (distance <= maxDistance) {
-      return info;
-    }
-  }
-  return APPROXIMATE_QUALITY;
+  const key = classifyMatchDistance(distance);
+  return { key, emoji: QUALITY_EMOJI[key] };
 }

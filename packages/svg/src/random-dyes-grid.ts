@@ -76,7 +76,9 @@ const CARD_GAP = 20;
 export function generateRandomDyesGrid(options: RandomDyesGridOptions): string {
   const {
     dyes,
-    title = '🎲 Random Dyes',
+    // BUG-056: emoji-free default — the bundled resvg fonts have no emoji
+    // glyphs, so '🎲' rendered as a tofu box; callers pass localized titles.
+    title = 'Random Dyes',
     width = DEFAULT_WIDTH,
     uniqueCategories = false,
   } = options;

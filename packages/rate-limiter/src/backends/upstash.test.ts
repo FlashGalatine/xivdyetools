@@ -17,6 +17,7 @@ import type { RateLimitConfig, RateLimiterLogger } from '../types.js';
 const mockPipeline = {
   incr: vi.fn().mockReturnThis(),
   expire: vi.fn().mockReturnThis(),
+  ttl: vi.fn().mockReturnThis(),
   exec: vi.fn(),
 };
 
@@ -61,14 +62,16 @@ describe('UpstashRateLimiter', () => {
     // Re-apply mock implementations after reset
     mockPipeline.incr.mockReturnThis();
     mockPipeline.expire.mockReturnThis();
+    mockPipeline.ttl.mockReturnThis();
     mockRedis.pipeline.mockReturnValue(mockPipeline);
     mockRedis.del.mockResolvedValue(1);
     limiter = new UpstashRateLimiter({
       url: 'https://test.upstash.io',
       token: 'test-token',
     });
-    // Default: count=1 (first request), expire NX succeeded
-    mockPipeline.exec.mockResolvedValue([1, 1]);
+    // Default: count=1 (first request), expire NX succeeded, 60s TTL left
+    // (BUG-055: pipeline now also queries TTL for accurate reset headers)
+    mockPipeline.exec.mockResolvedValue([1, 1, 60]);
   });
 
   describe('constructor', () => {
@@ -102,7 +105,7 @@ describe('UpstashRateLimiter', () => {
 
   describe('check()', () => {
     it('allows requests under the limit', async () => {
-      mockPipeline.exec.mockResolvedValue([1, 1]);
+      mockPipeline.exec.mockResolvedValue([1, 1, 60]);
 
       const result = await limiter.check('user1', defaultConfig);
 
@@ -113,7 +116,7 @@ describe('UpstashRateLimiter', () => {
     });
 
     it('denies requests over the limit', async () => {
-      mockPipeline.exec.mockResolvedValue([6, 0]);
+      mockPipeline.exec.mockResolvedValue([6, 0, 60]);
 
       const result = await limiter.check('user1', defaultConfig);
 
@@ -123,7 +126,7 @@ describe('UpstashRateLimiter', () => {
     });
 
     it('allows requests at the exact limit', async () => {
-      mockPipeline.exec.mockResolvedValue([5, 0]);
+      mockPipeline.exec.mockResolvedValue([5, 0, 60]);
 
       const result = await limiter.check('user1', defaultConfig);
 
@@ -132,7 +135,7 @@ describe('UpstashRateLimiter', () => {
     });
 
     it('includes burst allowance in effective limit', async () => {
-      mockPipeline.exec.mockResolvedValue([6, 0]);
+      mockPipeline.exec.mockResolvedValue([6, 0, 60]);
       const config: RateLimitConfig = {
         maxRequests: 5,
         windowMs: 60_000,
@@ -147,7 +150,7 @@ describe('UpstashRateLimiter', () => {
     });
 
     it('provides a resetAt in the future', async () => {
-      mockPipeline.exec.mockResolvedValue([1, 1]);
+      mockPipeline.exec.mockResolvedValue([1, 1, 60]);
       const before = Date.now();
 
       const result = await limiter.check('user1', defaultConfig);
@@ -156,7 +159,7 @@ describe('UpstashRateLimiter', () => {
     });
 
     it('uses piplined INCR + EXPIRE NX', async () => {
-      mockPipeline.exec.mockResolvedValue([1, 1]);
+      mockPipeline.exec.mockResolvedValue([1, 1, 60]);
 
       await limiter.check('user1', defaultConfig);
 
@@ -171,7 +174,7 @@ describe('UpstashRateLimiter', () => {
         token: 'test-token',
         keyPrefix: 'custom:',
       });
-      mockPipeline.exec.mockResolvedValue([1, 1]);
+      mockPipeline.exec.mockResolvedValue([1, 1, 60]);
 
       await customLimiter.check('user1', defaultConfig);
 

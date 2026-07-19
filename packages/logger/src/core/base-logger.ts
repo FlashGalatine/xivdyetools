@@ -146,27 +146,40 @@ export abstract class BaseLogger implements ExtendedLogger {
     // Reusable value pattern: matches quoted strings or unquoted values until delimiter
     const V = `(?:["']([^"']*?)["']|[^\\s,;]+)`;
 
+    // BUG-024/BUG-025: key may itself be quoted (JSON bodies echoed into error
+    // messages) and whitespace is allowed on BOTH sides of the separator
+    // ("token = abc"). Previously the separator had to immediately follow the
+    // key name, so `{"token":"abc"}` and `token = abc` bypassed sanitization.
+    const K = (name: string): string => `["']?${name}["']?\\s*[=:]\\s*`;
+
     return message
       // Bearer tokens - typically single tokens without spaces
       .replace(/Bearer\s+\S+/gi, 'Bearer [REDACTED]')
+      // BUG-025: JSON-shaped pass — catches every "…token"/"…secret"/"…password"/
+      // "…key"-suffixed quoted key in one sweep, including compound names
+      // (sessionToken, webhook_secret) that the per-key patterns below miss.
+      .replace(
+        /"([a-z0-9_-]*(?:token|secret|password|key))"\s*:\s*"[^"]*"/gi,
+        '"$1":"[REDACTED]"'
+      )
       // Key=value patterns - handle quoted and unquoted values
       // Matches: key="value with spaces" or key='value' or key=value until delimiter
-      .replace(new RegExp(`token[=:]\\s*${V}`, 'gi'), 'token=[REDACTED]')
-      .replace(new RegExp(`secret[=:]\\s*${V}`, 'gi'), 'secret=[REDACTED]')
-      .replace(new RegExp(`password[=:]\\s*${V}`, 'gi'), 'password=[REDACTED]')
-      .replace(new RegExp(`api[_-]?key[=:]\\s*${V}`, 'gi'), 'api_key=[REDACTED]')
+      .replace(new RegExp(`${K('token')}${V}`, 'gi'), 'token=[REDACTED]')
+      .replace(new RegExp(`${K('secret')}${V}`, 'gi'), 'secret=[REDACTED]')
+      .replace(new RegExp(`${K('password')}${V}`, 'gi'), 'password=[REDACTED]')
+      .replace(new RegExp(`${K('api[_-]?key')}${V}`, 'gi'), 'api_key=[REDACTED]')
       // Additional common sensitive patterns
       // Use negative lookahead to skip "Authorization: Bearer ..." which is handled by Bearer pattern
-      .replace(new RegExp(`authorization[=:]\\s*(?!Bearer\\s)${V}`, 'gi'), 'authorization=[REDACTED]')
-      .replace(new RegExp(`access[_-]?token[=:]\\s*${V}`, 'gi'), 'access_token=[REDACTED]')
-      .replace(new RegExp(`refresh[_-]?token[=:]\\s*${V}`, 'gi'), 'refresh_token=[REDACTED]')
+      .replace(new RegExp(`["']?authorization["']?\\s*[=:]\\s*(?!Bearer\\s)${V}`, 'gi'), 'authorization=[REDACTED]')
+      .replace(new RegExp(`${K('access[_-]?token')}${V}`, 'gi'), 'access_token=[REDACTED]')
+      .replace(new RegExp(`${K('refresh[_-]?token')}${V}`, 'gi'), 'refresh_token=[REDACTED]')
       // FINDING-005: Additional patterns for OAuth, crypto keys, and webhook secrets
-      .replace(new RegExp(`client[_-]?secret[=:]\\s*${V}`, 'gi'), 'client_secret=[REDACTED]')
-      .replace(new RegExp(`private[_-]?key[=:]\\s*${V}`, 'gi'), 'private_key=[REDACTED]')
-      .replace(new RegExp(`signing[_-]?(?:key|secret)[=:]\\s*${V}`, 'gi'), 'signing_key=[REDACTED]')
-      .replace(new RegExp(`webhook[_-]?secret[=:]\\s*${V}`, 'gi'), 'webhook_secret=[REDACTED]')
-      .replace(new RegExp(`auth[_-]?token[=:]\\s*${V}`, 'gi'), 'auth_token=[REDACTED]')
-      .replace(new RegExp(`credential[s]?[=:]\\s*${V}`, 'gi'), 'credentials=[REDACTED]');
+      .replace(new RegExp(`${K('client[_-]?secret')}${V}`, 'gi'), 'client_secret=[REDACTED]')
+      .replace(new RegExp(`${K('private[_-]?key')}${V}`, 'gi'), 'private_key=[REDACTED]')
+      .replace(new RegExp(`${K('signing[_-]?(?:key|secret)')}${V}`, 'gi'), 'signing_key=[REDACTED]')
+      .replace(new RegExp(`${K('webhook[_-]?secret')}${V}`, 'gi'), 'webhook_secret=[REDACTED]')
+      .replace(new RegExp(`${K('auth[_-]?token')}${V}`, 'gi'), 'auth_token=[REDACTED]')
+      .replace(new RegExp(`${K('credential[s]?')}${V}`, 'gi'), 'credentials=[REDACTED]');
   }
 
   /**
@@ -175,39 +188,64 @@ export abstract class BaseLogger implements ExtendedLogger {
    * FINDING-008: Recursively walks nested objects (up to MAX_REDACT_DEPTH)
    * to redact sensitive fields at any nesting level, not just top-level.
    */
-  protected redactSensitiveFields(context: LogContext, depth: number = 0): LogContext {
-    const MAX_REDACT_DEPTH = 3;
+  protected redactSensitiveFields(context: LogContext, seen?: WeakSet<object>): LogContext {
+    // BUG-024: cycle guard replaces the old fixed depth cap (MAX_REDACT_DEPTH=3),
+    // which let exact-match secrets nested 4+ levels deep through verbatim.
+    const visited = seen ?? new WeakSet<object>();
+    visited.add(context);
+
     const redacted = { ...context };
     const fieldsToRedact = this.config.redactFields || DEFAULT_REDACT_FIELDS;
 
-    for (const field of fieldsToRedact) {
-      if (field in redacted) {
-        redacted[field] = '[REDACTED]';
+    // BUG-024: match case-insensitively with separators collapsed, so
+    // Token/TOKEN/Authorization/jwtSecret hit the same list entries as
+    // token/authorization/jwt_secret; plus a suffix heuristic that catches
+    // compound keys like sessionToken/webhookSecret/userPassword.
+    const normalize = (k: string): string => k.toLowerCase().replace(/[_-]/g, '');
+    const redactSet = new Set(fieldsToRedact.map(normalize));
+    const SENSITIVE_SUFFIX = /(token|secret|password|apikey)$/;
+
+    for (const key of Object.keys(redacted)) {
+      const n = normalize(key);
+      if (redactSet.has(n) || SENSITIVE_SUFFIX.test(n)) {
+        redacted[key] = '[REDACTED]';
       }
     }
 
     // Recursively redact nested plain objects and array elements (FINDING-007)
-    if (depth < MAX_REDACT_DEPTH) {
-      for (const [key, value] of Object.entries(redacted)) {
-        if (redacted[key] === '[REDACTED]' || value === null || typeof value !== 'object') {
-          continue;
-        }
-        if (Array.isArray(value)) {
-          redacted[key] = value.map((item: unknown) =>
-            typeof item === 'object' && item !== null
-              ? this.redactSensitiveFields(item as LogContext, depth + 1)
-              : item
-          );
-        } else {
-          redacted[key] = this.redactSensitiveFields(
-            value as LogContext,
-            depth + 1
-          );
-        }
+    for (const [key, value] of Object.entries(redacted)) {
+      if (redacted[key] === '[REDACTED]' || value === null || typeof value !== 'object') {
+        continue;
+      }
+      if (visited.has(value)) {
+        continue;
+      }
+      if (Array.isArray(value)) {
+        visited.add(value);
+        redacted[key] = value.map((item: unknown) =>
+          typeof item === 'object' && item !== null && !visited.has(item)
+            ? this.redactSensitiveFields(item as LogContext, visited)
+            : item
+        );
+      } else {
+        redacted[key] = this.redactSensitiveFields(value as LogContext, visited);
       }
     }
 
     return redacted;
+  }
+
+  /**
+   * Public redaction entry points (BUG-026): let wrappers that forward data to
+   * third parties (e.g. the browser preset's errorTracker path) run the same
+   * redaction pipeline the console/JSON paths get.
+   */
+  redactContext(context: LogContext): LogContext {
+    return this.redactSensitiveFields(context);
+  }
+
+  sanitizeMessage(message: string): string {
+    return this.sanitizeErrorMessage(message);
   }
 
   // =========================================================================
@@ -314,12 +352,27 @@ class DelegatingLogger implements ExtendedLogger {
     Object.assign(this.childContext, context);
   }
 
+  // OPT-020: implement timing locally so the emitted entry goes through THIS
+  // logger's debug() and carries the child context (requestId etc.) —
+  // delegating to the parent lost it, producing uncorrelatable timing lines.
   time(label: string): () => number {
-    return this.parent.time(label);
+    const start = typeof performance !== 'undefined' ? performance.now() : Date.now();
+
+    return () => {
+      const end = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const duration = end - start;
+      this.debug(`${label}: ${duration.toFixed(2)}ms`, { duration, label });
+      return duration;
+    };
   }
 
   async timeAsync<T>(label: string, fn: () => Promise<T>): Promise<T> {
-    return this.parent.timeAsync(label, fn);
+    const end = this.time(label);
+    try {
+      return await fn();
+    } finally {
+      end();
+    }
   }
 
   private mergeContext(context?: LogContext): LogContext {

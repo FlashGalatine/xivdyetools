@@ -32,6 +32,13 @@ export interface RateLimitMiddlewareOptions {
    * Rate limiter backend instance, or a factory that creates one
    * from the Hono context (for lazy initialization when the backend
    * needs request-time bindings like KV namespaces).
+   *
+   * **BUG-061:** the factory's result is cached after the first request and
+   * reused for the isolate's lifetime — it must be safe to reuse across
+   * requests. Never construct a `MemoryRateLimiter` inside the factory: a
+   * fresh per-request instance would have an empty map and silently disable
+   * rate limiting (the caching also defends against that mistake, since only
+   * the first request's instance is kept).
    */
   backend: RateLimiter | ((c: Context) => RateLimiter);
 
@@ -111,19 +118,27 @@ export function rateLimitMiddleware(
 ): MiddlewareHandler {
   const { keyExtractor, onError = 'fail-open', formatError } = options;
 
+  // BUG-061: memoize the factory result per isolate so stateful backends
+  // survive across requests (see the `backend` option's JSDoc).
+  let cachedBackend: RateLimiter | undefined;
+
   return async (c, next): Promise<Response | void> => {
     const key = keyExtractor(c);
     const config =
       typeof options.config === 'function' ? options.config(c) : options.config;
     const backend =
-      typeof options.backend === 'function' ? options.backend(c) : options.backend;
+      typeof options.backend === 'function'
+        ? (cachedBackend ??= options.backend(c))
+        : options.backend;
 
     let result: RateLimitResult;
 
     try {
       result = await backend.check(key, config);
-    } catch {
+    } catch (err) {
       // REFACTOR-002: Consistent error handling across workers
+      // BUG-061: include the actual failure — a swallowed cause made backend
+      // outages/misconfigurations undiagnosable from logs.
       const logger = c.get('logger');
       if (logger) {
         logger.warn('Rate limiter backend error', {
@@ -131,6 +146,7 @@ export function rateLimitMiddleware(
           key,
           path: c.req.path,
           method: c.req.method,
+          error: err instanceof Error ? err.message : String(err),
         });
       }
 

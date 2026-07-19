@@ -1,19 +1,24 @@
 /**
  * KV-based Rate Limiter
  *
- * Cloudflare KV-backed rate limiter with optimistic concurrency.
+ * Cloudflare KV-backed rate limiter — best-effort fixed window.
  * Suitable for distributed rate limiting across Workers isolates.
  *
  * Key features:
  * - Persistent storage across isolates and restarts
- * - Optimistic concurrency with retries (MOD-BUG-001 fix)
- * - Version metadata for conflict detection
  * - Fail-open on KV errors for availability
  * - Separate checkOnly/increment for non-atomic backends
  *
- * Note: KV does not support atomic increment operations. This implementation
- * uses optimistic concurrency control with retries to minimize race conditions.
- * For truly atomic operations, consider using Durable Objects.
+ * BUG-022/OPT-002 (2026-07-18 audit): KV cannot do atomic read-modify-write,
+ * so this limiter is honestly BEST-EFFORT: under concurrency the effective
+ * limit may be exceeded by roughly the concurrency factor (concurrent
+ * increments can lose updates). The previous "optimistic concurrency" version
+ * metadata and post-put verification read were removed — the version was
+ * written but never compared (not OCC), and the verification read both cost a
+ * billed KV read per request and could DOUBLE-count a request when a
+ * concurrent window reset landed between put and verify. Retries now apply
+ * only to thrown KV errors. For strict atomic limits use UpstashRateLimiter
+ * (Redis INCR) or a Durable Object counter.
  *
  * @example
  * ```typescript
@@ -48,7 +53,7 @@ import type {
 const DEFAULT_KEY_PREFIX = 'ratelimit:';
 
 /**
- * Default maximum retries for optimistic concurrency
+ * Default maximum retries for thrown KV errors during increment
  */
 const DEFAULT_MAX_RETRIES = 3;
 
@@ -66,14 +71,7 @@ interface KVEntry {
 }
 
 /**
- * KV metadata structure for version tracking
- */
-interface KVMetadata {
-  version: number;
-}
-
-/**
- * KV-based rate limiter with optimistic concurrency control
+ * KV-based rate limiter (best-effort fixed window; see module docblock)
  */
 export class KVRateLimiter implements ExtendedRateLimiter {
   private readonly kv: KVNamespace;
@@ -104,18 +102,17 @@ export class KVRateLimiter implements ExtendedRateLimiter {
    * before either increment is written. Under high concurrency, the actual
    * request count may briefly exceed `maxRequests` by a small margin.
    *
-   * Mitigations already in place:
-   * - Optimistic concurrency with retries in `increment()`
-   * - Version metadata for conflict detection
-   * - Fail-open design (availability over strict accuracy)
-   *
    * For strict atomic rate limiting, use {@link UpstashRateLimiter} (Redis
-   * MULTI/EXEC) or Cloudflare Durable Objects.
+   * INCR) or Cloudflare Durable Objects.
    */
   async check(key: string, config: RateLimitConfig): Promise<RateLimitResult> {
-    const result = await this.checkOnly(key, config);
+    // BUG-064: capture `now` once so checkOnly and increment address the SAME
+    // fixed-window KV key — separate Date.now() calls could straddle a window
+    // boundary and charge the request to the next window.
+    const now = Date.now();
+    const result = await this.checkOnly(key, config, now);
     if (result.allowed && !result.backendError) {
-      await this.increment(key, config);
+      await this.increment(key, config, now);
       // BUG-004: Adjust remaining to reflect consumed request
       result.remaining = Math.max(0, result.remaining - 1);
     }
@@ -127,9 +124,9 @@ export class KVRateLimiter implements ExtendedRateLimiter {
    */
   async checkOnly(
     key: string,
-    config: RateLimitConfig
+    config: RateLimitConfig,
+    now: number = Date.now()
   ): Promise<RateLimitResult> {
-    const now = Date.now();
     const kvKey = this.buildKey(key, now, config.windowMs);
     const effectiveLimit =
       config.maxRequests + (config.burstAllowance ?? 0);
@@ -187,23 +184,26 @@ export class KVRateLimiter implements ExtendedRateLimiter {
   /**
    * Increment the counter after request processing
    *
-   * Uses optimistic concurrency with retries (MOD-BUG-001 fix).
-   * KV doesn't support atomic increments, so concurrent calls can race.
-   * This implementation minimizes but doesn't eliminate the race window.
+   * BUG-022/OPT-002: plain read-modify-write, honestly best-effort. KV cannot
+   * do atomic increments; concurrent increments can lose updates (limit
+   * exceeded by ~concurrency factor). The retry loop exists ONLY for thrown
+   * KV errors — the former version metadata and post-put verification read
+   * were removed (they detected nothing and could double-count).
    */
-  async increment(key: string, config: RateLimitConfig): Promise<void> {
-    const now = Date.now();
+  async increment(
+    key: string,
+    config: RateLimitConfig,
+    now: number = Date.now()
+  ): Promise<void> {
     const kvKey = this.buildKey(key, now, config.windowMs);
     const ttl = Math.ceil(config.windowMs / 1000) + this.ttlBuffer;
 
     for (let attempt = 0; attempt < this.maxRetries; attempt++) {
       try {
-        // Read current value with metadata for version tracking
-        const result = await this.kv.getWithMetadata<KVMetadata>(kvKey);
-        const currentData: KVEntry | null = result.value
-          ? (JSON.parse(result.value) as KVEntry)
+        const result = await this.kv.get(kvKey);
+        const currentData: KVEntry | null = result
+          ? (JSON.parse(result) as KVEntry)
           : null;
-        const currentVersion = result.metadata?.version ?? 0;
 
         // Calculate new entry
         let entry: KVEntry;
@@ -218,28 +218,10 @@ export class KVRateLimiter implements ExtendedRateLimiter {
           };
         }
 
-        // Write with new version metadata
         await this.kv.put(kvKey, JSON.stringify(entry), {
           expirationTtl: ttl,
-          metadata: { version: currentVersion + 1 },
         });
-
-        // Verify write succeeded (simple optimistic check)
-        const verification = await this.kv.get(kvKey);
-        if (verification) {
-          const verified: KVEntry = JSON.parse(verification) as KVEntry;
-          // If our write succeeded (count is at least what we wrote), done
-          if (verified.count >= entry.count) {
-            return;
-          }
-        }
-
-        // Small delay before retry to reduce contention
-        if (attempt < this.maxRetries - 1) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, 10 * (attempt + 1))
-          );
-        }
+        return;
       } catch (error) {
         // Log error on last attempt (structured logging if logger provided)
         if (attempt === this.maxRetries - 1) {

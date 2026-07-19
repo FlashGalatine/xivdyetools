@@ -65,6 +65,7 @@ export type {
   AccessibilityComparisonOptions,
   VisionType,
   AllVisionTypes,
+  VisionLabels,
 } from './accessibility-comparison.js';
 
 // WCAG Contrast Matrix

@@ -127,12 +127,12 @@ export function rect(
     `y="${y}"`,
     `width="${width}"`,
     `height="${height}"`,
-    `fill="${fill}"`,
+    `fill="${escapeXml(fill)}"`,
   ];
 
   if (options.rx) attrs.push(`rx="${options.rx}"`);
   if (options.ry) attrs.push(`ry="${options.ry}"`);
-  if (options.stroke) attrs.push(`stroke="${options.stroke}"`);
+  if (options.stroke) attrs.push(`stroke="${escapeXml(options.stroke)}"`);
   if (options.strokeWidth) attrs.push(`stroke-width="${options.strokeWidth}"`);
   if (options.opacity !== undefined) attrs.push(`opacity="${options.opacity}"`);
 
@@ -157,10 +157,10 @@ export function circle(
     `cx="${cx}"`,
     `cy="${cy}"`,
     `r="${r}"`,
-    `fill="${fill}"`,
+    `fill="${escapeXml(fill)}"`,
   ];
 
-  if (options.stroke) attrs.push(`stroke="${options.stroke}"`);
+  if (options.stroke) attrs.push(`stroke="${escapeXml(options.stroke)}"`);
   if (options.strokeWidth) attrs.push(`stroke-width="${options.strokeWidth}"`);
   if (options.opacity !== undefined) attrs.push(`opacity="${options.opacity}"`);
 
@@ -187,12 +187,12 @@ export function line(
     `y1="${y1}"`,
     `x2="${x2}"`,
     `y2="${y2}"`,
-    `stroke="${stroke}"`,
+    `stroke="${escapeXml(stroke)}"`,
     `stroke-width="${strokeWidth}"`,
   ];
 
   if (options.opacity !== undefined) attrs.push(`opacity="${options.opacity}"`);
-  if (options.dashArray) attrs.push(`stroke-dasharray="${options.dashArray}"`);
+  if (options.dashArray) attrs.push(`stroke-dasharray="${escapeXml(options.dashArray)}"`);
 
   return `<line ${attrs.join(' ')}/>`;
 }
@@ -218,9 +218,9 @@ export function text(
     `y="${y}"`,
   ];
 
-  if (options.fill) attrs.push(`fill="${options.fill}"`);
+  if (options.fill) attrs.push(`fill="${escapeXml(options.fill)}"`);
   if (options.fontSize) attrs.push(`font-size="${options.fontSize}"`);
-  if (options.fontFamily) attrs.push(`font-family="${options.fontFamily}"`);
+  if (options.fontFamily) attrs.push(`font-family="${escapeXml(options.fontFamily)}"`);
   if (options.fontWeight) attrs.push(`font-weight="${options.fontWeight}"`);
   if (options.textAnchor) attrs.push(`text-anchor="${options.textAnchor}"`);
   if (options.dominantBaseline) attrs.push(`dominant-baseline="${options.dominantBaseline}"`);
@@ -256,7 +256,7 @@ export function arcPath(
  */
 export function group(content: string, transform?: string): string {
   if (transform) {
-    return `<g transform="${transform}">${content}</g>`;
+    return `<g transform="${escapeXml(transform)}">${content}</g>`;
   }
   return `<g>${content}</g>`;
 }
@@ -307,8 +307,12 @@ export const FONTS = {
  * @returns The original text if within limits, or truncated text with '…'
  */
 export function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength - 1) + '…';
+  // BUG-060: slice by code points, not UTF-16 units — a unit slice can bisect
+  // a surrogate pair (emoji in preset names) and render � in the PNG.
+  // Also aligns length semantics with estimateTextWidth's code-point loop.
+  const chars = [...text];
+  if (chars.length <= maxLength) return text;
+  return chars.slice(0, maxLength - 1).join('') + '…';
 }
 
 /**
@@ -323,12 +327,17 @@ export function estimateTextWidth(text: string, charWidth: number): number {
   let width = 0;
   for (const char of text) {
     const code = char.codePointAt(0) ?? 0;
-    // CJK Unified Ideographs, Hiragana, Katakana, Hangul, CJK symbols
-    const isCJK =
-      (code >= 0x3000 && code <= 0x9fff) ||
-      (code >= 0xac00 && code <= 0xd7af) ||
-      (code >= 0xf900 && code <= 0xfaff);
-    width += isCJK ? charWidth * 2 : charWidth;
+    // REFACTOR-020: width class, not a script test — includes Hangul Jamo and
+    // fullwidth forms/signs (： etc.), which render full-width in the
+    // bundled Noto subsets; halfwidth katakana (U+FF61-FF9F) stays narrow.
+    const isWide =
+      (code >= 0x1100 && code <= 0x11ff) || // Hangul Jamo
+      (code >= 0x3000 && code <= 0x9fff) || // CJK symbols, kana, ideographs
+      (code >= 0xac00 && code <= 0xd7af) || // Hangul syllables
+      (code >= 0xf900 && code <= 0xfaff) || // CJK Compatibility Ideographs
+      (code >= 0xff00 && code <= 0xff60) || // Fullwidth forms (excl. halfwidth kana)
+      (code >= 0xffe0 && code <= 0xffe6);   // Fullwidth signs
+    width += isWide ? charWidth * 2 : charWidth;
   }
   return width;
 }

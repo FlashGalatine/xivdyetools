@@ -68,3 +68,7 @@ Small — ~1-2 hours: add shared constant + classifier, swap four call sites, bo
 Low. The only behavior change is at exact boundary values (10/25/50) for the three call sites currently using `<` — a one-tier label shift on knife-edge distances, invisible to users except as *increased* consistency. No API signatures change if the existing exported names are kept as thin wrappers.
 
 > Source: evidence/shared-packages-analysis.md (2026-07-18 deep-dive, shared-packages area)
+
+## Status
+
+**DONE 2026-07-19** — `MATCH_QUALITY_TIERS` + `classifyMatchDistance` added to `@xivdyetools/types` (color module) with inclusive `<=` semantics; all four copies (bot-logic QUALITY_TIERS, palette-grid's exported helper AND its inline badge copy, budget-comparison's getDistanceQualityKey) now delegate to it. Boundary distances (exactly 10/25/50) are classified identically everywhere; per-package display metadata (emoji, labels) stays local.

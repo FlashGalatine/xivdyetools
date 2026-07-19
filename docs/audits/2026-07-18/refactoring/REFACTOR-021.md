@@ -56,3 +56,7 @@ Trivial — under 30 minutes including a unit test for `devOnly: false` in produ
 Very low. Option A changes behavior only for callers already passing `devOnly: false` — who demonstrably wanted the new behavior and are currently not getting it. Default path (`devOnly` omitted or `true`) is byte-identical.
 
 > Source: evidence/shared-packages-analysis.md (2026-07-18 deep-dive, shared-packages area)
+
+## Status
+
+**DONE 2026-07-19** — Option A implemented: `devOnly: false` now yields `level: 'debug'` in production builds as documented; default path byte-identical; the lint suppression and 'reserved for future use' placeholder are gone.

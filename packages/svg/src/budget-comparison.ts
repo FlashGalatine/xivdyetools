@@ -20,6 +20,7 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
+import { classifyMatchDistance } from '@xivdyetools/types';
 import {
   createSvgDocument,
   rect,
@@ -161,11 +162,9 @@ function fillTemplate(template: string, vars: Record<string, string | number>): 
  * Map a color distance value to a quality tier key
  */
 function getDistanceQualityKey(distance: number): keyof BudgetSvgLabels['distanceQuality'] {
-  if (distance === 0) return 'perfect';
-  if (distance < 10) return 'excellent';
-  if (distance < 25) return 'good';
-  if (distance < 50) return 'fair';
-  return 'approximate';
+  // REFACTOR-004: shared classifier (inclusive bounds — exactly 10 is
+  // 'excellent', matching bot-logic's embed labels).
+  return classifyMatchDistance(distance);
 }
 
 // ============================================================================

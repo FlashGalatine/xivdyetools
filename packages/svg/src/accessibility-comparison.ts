@@ -45,6 +45,11 @@ export type VisionType = 'protanopia' | 'deuteranopia' | 'tritanopia' | 'achroma
 export type AllVisionTypes = 'normal' | VisionType;
 
 /**
+ * Translated vision-type labels (REFACTOR-022)
+ */
+export type VisionLabels = Record<AllVisionTypes, { label: string; description: string }>;
+
+/**
  * Options for generating the accessibility comparison
  */
 export interface AccessibilityComparisonOptions {
@@ -56,6 +61,8 @@ export interface AccessibilityComparisonOptions {
   visionTypes?: VisionType[];
   /** Canvas width (default: 500) */
   width?: number;
+  /** Translated vision-type labels; defaults to English (REFACTOR-022) */
+  labels?: Partial<VisionLabels>;
 }
 
 /**
@@ -81,7 +88,7 @@ const SWATCH_GAP = 20;
 const LABEL_HEIGHT = 60;
 
 /**
- * Vision type metadata
+ * Vision type metadata (default English labels; override via options.labels)
  */
 const VISION_LABELS: Record<AllVisionTypes, { label: string; description: string }> = {
   normal: {
@@ -137,8 +144,12 @@ export function generateAccessibilityComparison(
     width = DEFAULT_WIDTH,
   } = options;
 
+  // REFACTOR-022: caller-supplied translations merged over English defaults,
+  // mirroring the labels-object convention of the other generators.
+  const labels: VisionLabels = { ...VISION_LABELS, ...options.labels };
+
   // Simulate colors for all vision types
-  const simulations = simulateAllVisions(dyeHex, visionTypes);
+  const simulations = simulateAllVisions(dyeHex, visionTypes, labels);
 
   // Calculate dimensions for 2x2 grid
   const gridCols = 2;
@@ -190,14 +201,18 @@ export function generateAccessibilityComparison(
 /**
  * Simulate a color for all requested vision types (plus normal)
  */
-function simulateAllVisions(hex: string, visionTypes: VisionType[]): SimulatedColor[] {
+function simulateAllVisions(
+  hex: string,
+  visionTypes: VisionType[],
+  labels: VisionLabels = VISION_LABELS
+): SimulatedColor[] {
   const results: SimulatedColor[] = [];
   const rgb = hexToRgb(hex);
 
   // Always include normal vision first
   results.push({
     type: 'normal',
-    ...VISION_LABELS.normal,
+    ...labels.normal,
     hex,
     rgb,
   });
@@ -209,7 +224,7 @@ function simulateAllVisions(hex: string, visionTypes: VisionType[]): SimulatedCo
 
     results.push({
       type: visionType,
-      ...VISION_LABELS[visionType],
+      ...labels[visionType],
       hex: simHex,
       rgb: simulated,
     });

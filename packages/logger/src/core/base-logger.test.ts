@@ -402,22 +402,23 @@ describe('BaseLogger', () => {
         });
       });
 
-      it('should stop recursion at max depth (3)', () => {
+      it('redacts at any depth (BUG-024: no fixed depth cap)', () => {
         const result = logger.testRedactSensitiveFields({
           l1: {
             l2: {
               l3: {
-                // depth=3: should NOT recurse further
                 l4: {
-                  token: 'should-remain',
+                  token: 'must-be-redacted',
                 },
               },
             },
           },
         });
-        // At depth=3, the l4 object is not recursed into
+        // BUG-024: the old MAX_REDACT_DEPTH=3 cap let secrets nested 4+
+        // levels deep through verbatim; recursion is now cycle-guarded, not
+        // depth-capped.
         const l4 = (result.l1 as Record<string, unknown> as { l2: { l3: { l4: { token: string } } } }).l2.l3.l4;
-        expect(l4.token).toBe('should-remain');
+        expect(l4.token).toBe('[REDACTED]');
       });
 
       it('should recurse into arrays and redact sensitive fields (FINDING-007)', () => {
