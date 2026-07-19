@@ -47,3 +47,7 @@ Trivial (≤30 minutes including test run): mechanical substitution at 7 sites.
 Minimal. Middleware is registered on `/v1/*` before both routers, so `c.var.locale` is always populated for these handlers. Verify the two `parseLocale` unit-test suites still cover the middleware path.
 
 > Source: evidence/edge-workers-analysis.md (2026-07-18 deep-dive, edge-workers area)
+
+## Status
+
+**DONE 2026-07-19** — all seven handler call sites read `c.get('locale')`; `parseLocale` runs once in the middleware (folded into the BUG-006 pass as suggested).

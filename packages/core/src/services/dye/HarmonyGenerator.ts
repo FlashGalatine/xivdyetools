@@ -86,23 +86,30 @@ export class HarmonyGenerator {
     this.database.ensureLoaded();
 
     try {
+      // BUG-047 (2026-07-18 audit): exclude the base dye — mirroring
+      // findHarmonyDyesByOffsets. For near-neutral inputs the inverse of a
+      // mid-gray is essentially the same color, so without the exclusion the
+      // "complement" was the base dye itself.
+      const baseDye = this.search.findClosestDye(hex);
+      const exclude = baseDye ? [baseDye.id] : [];
+
       const colorSpace = options?.colorSpace;
 
       // Non-HSV color spaces: use 180° hue rotation instead of RGB invert
       if (colorSpace && colorSpace !== 'hsv') {
         const complementaryHex = this.rotateHueInSpace(hex, 180, colorSpace);
-        return this.findClosestNonFacewearDye(complementaryHex);
+        return this.findClosestNonFacewearDye(complementaryHex, exclude);
       }
 
       const complementaryHex = ColorManipulator.invert(hex);
 
       // Use DeltaE matching if requested
       if (options?.algorithm === 'deltaE') {
-        return this.findClosestByDeltaE(complementaryHex, new Set(), options);
+        return this.findClosestByDeltaE(complementaryHex, new Set(exclude), options);
       }
 
       // Find closest dye, excluding Facewear
-      return this.findClosestNonFacewearDye(complementaryHex);
+      return this.findClosestNonFacewearDye(complementaryHex, exclude);
     } catch {
       // Invalid hex color
       return null;

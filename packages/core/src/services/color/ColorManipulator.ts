@@ -18,9 +18,10 @@ export class ColorManipulator {
    * @param amount -100 to 100 (negative = darker, positive = lighter)
    */
   static adjustBrightness(hex: string, amount: number): HexColor {
-    const hsv = ColorConverter.hexToHsv(hex);
-    hsv.v = clamp(hsv.v + amount, 0, 100);
-    return ColorConverter.hsvToHex(hsv.h, hsv.s, hsv.v);
+    // BUG-005 (2026-07-18 audit): never mutate the conversion result — the
+    // converter caches these objects, and in-place edits poisoned the cache
+    const { h, s, v } = ColorConverter.hexToHsv(hex);
+    return ColorConverter.hsvToHex(h, s, clamp(v + amount, 0, 100));
   }
 
   /**
@@ -28,9 +29,9 @@ export class ColorManipulator {
    * @param amount -100 to 100 (negative = less saturated, positive = more saturated)
    */
   static adjustSaturation(hex: string, amount: number): HexColor {
-    const hsv = ColorConverter.hexToHsv(hex);
-    hsv.s = clamp(hsv.s + amount, 0, 100);
-    return ColorConverter.hsvToHex(hsv.h, hsv.s, hsv.v);
+    // BUG-005: build new values instead of mutating the cached object
+    const { h, s, v } = ColorConverter.hexToHsv(hex);
+    return ColorConverter.hsvToHex(h, clamp(s + amount, 0, 100), v);
   }
 
   /**
@@ -38,10 +39,10 @@ export class ColorManipulator {
    * @param degrees Amount to rotate hue (can be negative or positive)
    */
   static rotateHue(hex: string, degrees: number): HexColor {
-    const hsv = ColorConverter.hexToHsv(hex);
+    // BUG-005: build new values instead of mutating the cached object
+    const { h, s, v } = ColorConverter.hexToHsv(hex);
     // Normalize to 0-360 to handle negative values properly
-    hsv.h = (((hsv.h + degrees) % 360) + 360) % 360;
-    return ColorConverter.hsvToHex(hsv.h, hsv.s, hsv.v);
+    return ColorConverter.hsvToHex((((h + degrees) % 360) + 360) % 360, s, v);
   }
 
   /**

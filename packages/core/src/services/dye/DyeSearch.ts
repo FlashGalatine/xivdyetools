@@ -201,59 +201,15 @@ export class DyeSearch {
           if (nearest && nearest.data) {
             return nearest.data as Dye;
           }
-        } else {
-          // For perceptual methods: get candidates from k-d tree, then re-rank
-          // Use RGB distance threshold to find candidates (generous to catch perceptual matches)
-          // 100 RGB units covers most cases where perceptual distance might differ from RGB
-          const rgbCandidateThreshold = 100;
-          const candidateResults = kdTree.pointsWithinDistance(
-            targetPoint,
-            rgbCandidateThreshold,
-            (data) => {
-              const dye = data as Dye;
-              return excludeSet.has(dye.id) || dye.category === 'Facewear';
-            }
-          );
-
-          // If we got candidates, re-rank using perceptual distance
-          if (candidateResults.length > 0) {
-            let bestDye: Dye | null = null;
-            let bestDistance = Infinity;
-
-            for (const result of candidateResults) {
-              if (!result.point.data) continue;
-              const dye = result.point.data as Dye;
-
-              try {
-                const distance = this.calculateDistance(hex, dye.hex, matchingMethod, weights);
-                if (distance < bestDistance) {
-                  bestDistance = distance;
-                  bestDye = dye;
-                }
-              } catch {
-                // CORE-REF-001: Silently skip individual dyes with invalid color data
-                // This is intentional - logging per-dye errors would be too noisy for large datasets
-                // The dye data is pre-validated at load time, so this rarely occurs
-                continue;
-              }
-            }
-
-            if (bestDye) {
-              return bestDye;
-            }
-          }
-
-          // If no candidates within threshold, fall back to nearest neighbor
-          // and use that as our only candidate
-          const nearest = kdTree.nearestNeighbor(targetPoint, (data) => {
-            const dye = data as Dye;
-            return excludeSet.has(dye.id) || dye.category === 'Facewear';
-          });
-
-          if (nearest && nearest.data) {
-            return nearest.data as Dye;
-          }
         }
+        // REFACTOR-003 (2026-07-18 audit): for perceptual methods, fall
+        // through to the exact linear scan below. The previous k-d tree
+        // pre-filter capped candidates at a magic RGB radius (100 units) —
+        // but perceptual metrics can rank a dye "closest" that sits far away
+        // in RGB space, and the parity regression test proved real cases
+        // (e.g. #00FF55/oklab: the true winner sat outside the radius while a
+        // 2.5×-worse in-radius dye was returned). At n≈125 the exact scan is
+        // trivially cheap; the k-d tree remains the fast path for 'rgb'.
       }
 
       // Fallback to linear search (shouldn't happen if k-d tree is built)
@@ -340,37 +296,12 @@ export class DyeSearch {
           return dyes;
         }
 
-        // For perceptual methods: get candidates from k-d tree using generous RGB threshold,
-        // then filter and re-rank using the specified perceptual distance
-        // Use a generous RGB threshold to capture candidates that might be perceptually close
-        const rgbCandidateThreshold = Math.max(maxDistance * 2, 150);
-        const kdResults = kdTree.pointsWithinDistance(targetPoint, rgbCandidateThreshold);
-
-        // Re-calculate distances using perceptual method and filter
-        const results: Array<{ dye: Dye; distance: number }> = [];
-        for (const item of kdResults) {
-          const dye = item.point.data as Dye;
-          if (dye.category === 'Facewear') continue;
-
-          try {
-            const distance = this.calculateDistance(hex, dye.hex, matchingMethod, weights);
-            if (distance <= maxDistance) {
-              results.push({ dye, distance });
-            }
-          } catch {
-            // CORE-REF-001: Silently skip individual dyes with invalid color data
-            // Logging per-dye errors would be too noisy for large datasets
-            continue;
-          }
-        }
-
-        // Sort by perceptual distance
-        results.sort((a, b) => a.distance - b.distance);
-
-        if (resultLimit && resultLimit > 0) {
-          return results.slice(0, resultLimit).map((item) => item.dye);
-        }
-        return results.map((item) => item.dye);
+        // REFACTOR-003 (2026-07-18 audit): for perceptual methods, fall
+        // through to the exact linear scan below. The previous RGB pre-filter
+        // (`Math.max(maxDistance * 2, 150)`) multiplied a PERCEPTUAL distance
+        // (DeltaE / OKLAB units) by 2 to derive an RGB radius — the scales
+        // have no principled relationship, so qualifying dyes could be
+        // silently dropped. At n≈125 the exact scan is trivially cheap.
       }
 
       // Fallback to linear search

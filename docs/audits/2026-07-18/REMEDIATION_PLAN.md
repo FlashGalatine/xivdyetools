@@ -90,6 +90,8 @@ BUG-010 is the last open HIGH with direct user impact (105 dyes lose prices in t
 
 ## Sprint 4 — core: locale race, color correctness, api-worker
 
+**✅ COMPLETED 2026-07-19** — all items fixed (see each finding's Status section). Deploy needs: publish `@xivdyetools/core` 2.7.0 + `@xivdyetools/bot-logic` 1.2.1 with the batch, then deploy api-worker (and redeploy core consumers as their CI picks up the bump). Notable: the REFACTOR-003 parity test CONFIRMED real wrong-winner matches — perceptual methods now use an exact scan. All 8 core-consumer test suites re-verified green.
+
 BUG-006 is an API-shape change (explicit locale instead of singleton `setLocale`) — the largest-blast-radius item, so it gets a dedicated sprint with a coordinated core publish and api-worker/og-worker/bot updates. api-worker items ride along because they consume the new API.
 
 | ID | Sev/Pri | Item |

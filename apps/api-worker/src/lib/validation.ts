@@ -227,12 +227,22 @@ export function parseEnumParam<T extends string>(
   return value as T;
 }
 
-/** Parse a boolean query param. Accepts true/false/1/0. */
-export function parseBooleanParam(value: string | undefined): boolean | undefined {
+/**
+ * Parse a boolean query param. Accepts true/false/1/0.
+ * BUG-070 (2026-07-18 audit): invalid values now throw a structured 400 like
+ * every other parser — previously they returned undefined, silently dropping
+ * the filter and serving confidently-wrong unfiltered data.
+ */
+export function parseBooleanParam(value: string | undefined, name?: string): boolean | undefined {
   if (value === undefined || value === '') return undefined;
   if (value === 'true' || value === '1') return true;
   if (value === 'false' || value === '0') return false;
-  return undefined;
+  throw new ApiError(
+    ErrorCode.VALIDATION_ERROR,
+    `Parameter "${name ?? 'boolean'}" must be one of: true, false, 1, 0.`,
+    400,
+    { parameter: name, received: value, expected: ['true', 'false', '1', '0'] },
+  );
 }
 
 /** Parse a comma-separated list of integers. */
@@ -318,14 +328,14 @@ export interface DyeQueryFilters {
 /** Parse all dye boolean filter query params from a request. */
 export function parseDyeFilters(query: (name: string) => string | undefined): DyeQueryFilters {
   return {
-    metallic: parseBooleanParam(query('metallic')),
-    pastel: parseBooleanParam(query('pastel')),
-    dark: parseBooleanParam(query('dark')),
-    cosmic: parseBooleanParam(query('cosmic')),
-    ishgardian: parseBooleanParam(query('ishgardian')),
-    vendor: parseBooleanParam(query('vendor')),
-    craft: parseBooleanParam(query('craft')),
-    expensive: parseBooleanParam(query('expensive')),
+    metallic: parseBooleanParam(query('metallic'), 'metallic'),
+    pastel: parseBooleanParam(query('pastel'), 'pastel'),
+    dark: parseBooleanParam(query('dark'), 'dark'),
+    cosmic: parseBooleanParam(query('cosmic'), 'cosmic'),
+    ishgardian: parseBooleanParam(query('ishgardian'), 'ishgardian'),
+    vendor: parseBooleanParam(query('vendor'), 'vendor'),
+    craft: parseBooleanParam(query('craft'), 'craft'),
+    expensive: parseBooleanParam(query('expensive'), 'expensive'),
   };
 }
 
@@ -366,8 +376,18 @@ export function applyDyeFilters(dyes: Dye[], filters: DyeQueryFilters): Dye[] {
  * Build a list of internal dye IDs that should be excluded based on query filters.
  * Used for match routes where excludeIds must be passed to core search functions.
  */
+// OPT-025 (2026-07-18 audit): memoized by filter tuple — the dye database is
+// immutable, and the filter space is tiny (8 tristate flags). Cached arrays
+// are treated as immutable by callers (spread/Set construction only).
+const filterExcludeCache = new Map<string, number[]>();
+
 export function buildFilterExcludeIds(filters: DyeQueryFilters): number[] {
   if (!hasActiveDyeFilters(filters)) return [];
-  const allDyes = dyeService.getAllDyes();
-  return allDyes.filter((d) => !dyeMatchesFilters(d, filters)).map((d) => d.id);
+  const key = JSON.stringify(filters);
+  let ids = filterExcludeCache.get(key);
+  if (!ids) {
+    ids = dyeService.getAllDyes().filter((d) => !dyeMatchesFilters(d, filters)).map((d) => d.id);
+    filterExcludeCache.set(key, ids);
+  }
+  return ids;
 }

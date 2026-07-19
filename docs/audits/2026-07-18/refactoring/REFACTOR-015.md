@@ -38,3 +38,7 @@ HIGH (public API touched across all consumers: web-app, discord-worker, svg, bot
 MEDIUM — any tier removal is breaking and must ride a major version with a migration note. Step 1 (type fix) is zero-risk and should be done immediately.
 
 > Source: evidence/core-analysis.md (2026-07-18 deep-dive, core area)
+
+## Status
+
+**DONE (step 1) 2026-07-19** — `ColorService.getCacheStats` declared type now includes rgbToLab/rgbToOklab. Steps 2/3 (facade freeze, tier collapse) remain deliberately deferred to a future minor/major per the staged plan.

@@ -124,6 +124,12 @@ export async function executeMatch(input: MatchInput): Promise<MatchResult> {
     return { ok: false, error: 'NO_MATCHES', errorMessage: 'No matching dyes found.' };
   }
 
+  // Selection above iterates by perceptual closeness, but the displayed Δ is
+  // RGB distance — sort by the displayed metric so the ranked list is
+  // monotonic for users. (Core's REFACTOR-003 exact perceptual scan surfaced
+  // the mismatch; previously an RGB pre-filter made the orders coincide.)
+  matches.sort((a, b) => a.distance - b.distance);
+
   let embed: EmbedData;
 
   if (matchCount === 1) {

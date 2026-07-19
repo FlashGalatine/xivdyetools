@@ -252,13 +252,24 @@ describe('DefaultRateLimiter', () => {
     expect(elapsed).toBeLessThan(50); // Should be nearly instant
   });
 
-  it('should wait after recording a request', async () => {
+  // BUG-046 (2026-07-18 audit): waitIfNeeded reserves the next slot
+  // synchronously — recordRequest is a compatibility no-op
+  it('should wait on the second consecutive request', async () => {
     const limiter = new DefaultRateLimiter(100);
-    limiter.recordRequest();
+    await limiter.waitIfNeeded(); // first call: instant, reserves the next slot
     const start = Date.now();
     await limiter.waitIfNeeded();
     const elapsed = Date.now() - start;
     expect(elapsed).toBeGreaterThanOrEqual(50); // Should wait at least some time
+  });
+
+  it('should space out concurrent callers instead of bursting (BUG-046)', async () => {
+    const limiter = new DefaultRateLimiter(50);
+    const start = Date.now();
+    await Promise.all([limiter.waitIfNeeded(), limiter.waitIfNeeded(), limiter.waitIfNeeded()]);
+    const elapsed = Date.now() - start;
+    // 3 concurrent callers → slots at 0/50/100ms; previously all fired at 0ms
+    expect(elapsed).toBeGreaterThanOrEqual(80);
   });
 
   it('should not wait if enough time has passed', async () => {

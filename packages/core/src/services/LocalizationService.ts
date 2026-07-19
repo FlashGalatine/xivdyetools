@@ -195,6 +195,16 @@ export class LocalizationService {
   /**
    * Set active locale (loads locale file if not cached)
    *
+   * ⚠️ CONCURRENCY (BUG-006, 2026-07-18 audit): `currentLocale` is shared
+   * mutable state on this instance (and on the process-wide singleton for the
+   * static API). In concurrent multi-locale servers (Cloudflare Workers,
+   * Node servers), a per-request `setLocale` races with other requests —
+   * request A can read another request's locale after any `await`. Such
+   * servers must NOT call `setLocale` per request; instead call
+   * `ensureLocaleLoaded(locale)` once and pass the request's locale
+   * explicitly to every getter (`getDyeName(id, locale)`), or use the
+   * stateless `LocaleLoader`/`LocaleRegistry`/`TranslationProvider` trio.
+   *
    * @param locale - Locale code ('en', 'ja', 'de', 'fr')
    * @throws {AppError} If locale file fails to load
    *
@@ -225,6 +235,28 @@ export class LocalizationService {
    */
   static async setLocale(locale: LocaleCode): Promise<void> {
     return this.getDefault().setLocale(locale);
+  }
+
+  /**
+   * Ensure a locale's data is loaded/registered WITHOUT mutating the current
+   * locale. BUG-006 (2026-07-18 audit): the race-safe alternative to a
+   * per-request `setLocale` — combine with explicit-locale getters
+   * (`getDyeName(id, locale)`).
+   */
+  async ensureLocaleLoaded(locale: LocaleCode): Promise<void> {
+    if (this.registry.hasLocale(locale)) {
+      return;
+    }
+    // Load locale data (synchronous as of v1.1.3, async signature kept for API compatibility)
+    await Promise.resolve();
+    this.registry.registerLocale(this.loader.loadLocale(locale));
+  }
+
+  /**
+   * Static method: Ensure a locale is loaded in the default instance
+   */
+  static async ensureLocaleLoaded(locale: LocaleCode): Promise<void> {
+    return this.getDefault().ensureLocaleLoaded(locale);
   }
 
   /**
@@ -292,15 +324,20 @@ export class LocalizationService {
    * }
    * ```
    */
-  isLocaleLoaded(): boolean {
+  isLocaleLoaded(locale?: LocaleCode): boolean {
+    // BUG-006: with an explicit locale, report on that locale's data instead
+    // of the shared initialization flag
+    if (locale !== undefined) {
+      return this.registry.hasLocale(locale);
+    }
     return this.isInitialized;
   }
 
   /**
    * Static method: Check if locale is loaded in default instance
    */
-  static isLocaleLoaded(): boolean {
-    return this.getDefault().isLocaleLoaded();
+  static isLocaleLoaded(locale?: LocaleCode): boolean {
+    return this.getDefault().isLocaleLoaded(locale);
   }
 
   /**
@@ -309,15 +346,15 @@ export class LocalizationService {
    * @param key - Translation key
    * @returns Localized label
    */
-  getLabel(key: TranslationKey): string {
-    return this.translator.getLabel(key, this.currentLocale);
+  getLabel(key: TranslationKey, locale?: LocaleCode): string {
+    return this.translator.getLabel(key, locale ?? this.currentLocale);
   }
 
   /**
    * Static method: Get localized label using default instance
    */
-  static getLabel(key: TranslationKey): string {
-    return this.getDefault().getLabel(key);
+  static getLabel(key: TranslationKey, locale?: LocaleCode): string {
+    return this.getDefault().getLabel(key, locale);
   }
 
   /**
@@ -326,15 +363,15 @@ export class LocalizationService {
    * @param itemID - Dye item ID (5729-48227)
    * @returns Localized name or null if not found
    */
-  getDyeName(itemID: number): string | null {
-    return this.translator.getDyeName(itemID, this.currentLocale);
+  getDyeName(itemID: number, locale?: LocaleCode): string | null {
+    return this.translator.getDyeName(itemID, locale ?? this.currentLocale);
   }
 
   /**
    * Static method: Get localized dye name using default instance
    */
-  static getDyeName(itemID: number): string | null {
-    return this.getDefault().getDyeName(itemID);
+  static getDyeName(itemID: number, locale?: LocaleCode): string | null {
+    return this.getDefault().getDyeName(itemID, locale);
   }
 
   /**
@@ -343,15 +380,15 @@ export class LocalizationService {
    * @param category - Category key (e.g., "Reds", "Blues")
    * @returns Localized category name
    */
-  getCategory(category: string): string {
-    return this.translator.getCategory(category, this.currentLocale);
+  getCategory(category: string, locale?: LocaleCode): string {
+    return this.translator.getCategory(category, locale ?? this.currentLocale);
   }
 
   /**
    * Static method: Get localized category using default instance
    */
-  static getCategory(category: string): string {
-    return this.getDefault().getCategory(category);
+  static getCategory(category: string, locale?: LocaleCode): string {
+    return this.getDefault().getCategory(category, locale);
   }
 
   /**
@@ -360,15 +397,15 @@ export class LocalizationService {
    * @param acquisition - Acquisition key (e.g., "Dye Vendor", "Crafting")
    * @returns Localized acquisition method
    */
-  getAcquisition(acquisition: string): string {
-    return this.translator.getAcquisition(acquisition, this.currentLocale);
+  getAcquisition(acquisition: string, locale?: LocaleCode): string {
+    return this.translator.getAcquisition(acquisition, locale ?? this.currentLocale);
   }
 
   /**
    * Static method: Get localized acquisition using default instance
    */
-  static getAcquisition(acquisition: string): string {
-    return this.getDefault().getAcquisition(acquisition);
+  static getAcquisition(acquisition: string, locale?: LocaleCode): string {
+    return this.getDefault().getAcquisition(acquisition, locale);
   }
 
   /**
@@ -377,15 +414,15 @@ export class LocalizationService {
    * @param currency - Currency key (e.g., "Gil", "Cosmocredits")
    * @returns Localized currency label
    */
-  getCurrency(currency: string): string {
-    return this.translator.getCurrency(currency, this.currentLocale);
+  getCurrency(currency: string, locale?: LocaleCode): string {
+    return this.translator.getCurrency(currency, locale ?? this.currentLocale);
   }
 
   /**
    * Static method: Get localized currency using default instance
    */
-  static getCurrency(currency: string): string {
-    return this.getDefault().getCurrency(currency);
+  static getCurrency(currency: string, locale?: LocaleCode): string {
+    return this.getDefault().getCurrency(currency, locale);
   }
 
   /**
@@ -393,15 +430,15 @@ export class LocalizationService {
    *
    * @returns Array of metallic dye item IDs
    */
-  getMetallicDyeIds(): number[] {
-    return this.translator.getMetallicDyeIds(this.currentLocale);
+  getMetallicDyeIds(locale?: LocaleCode): number[] {
+    return this.translator.getMetallicDyeIds(locale ?? this.currentLocale);
   }
 
   /**
    * Static method: Get metallic dye IDs using default instance
    */
-  static getMetallicDyeIds(): number[] {
-    return this.getDefault().getMetallicDyeIds();
+  static getMetallicDyeIds(locale?: LocaleCode): number[] {
+    return this.getDefault().getMetallicDyeIds(locale);
   }
 
   /**
@@ -410,15 +447,15 @@ export class LocalizationService {
    * @param key - Harmony type key
    * @returns Localized harmony type
    */
-  getHarmonyType(key: HarmonyTypeKey): string {
-    return this.translator.getHarmonyType(key, this.currentLocale);
+  getHarmonyType(key: HarmonyTypeKey, locale?: LocaleCode): string {
+    return this.translator.getHarmonyType(key, locale ?? this.currentLocale);
   }
 
   /**
    * Static method: Get localized harmony type using default instance
    */
-  static getHarmonyType(key: HarmonyTypeKey): string {
-    return this.getDefault().getHarmonyType(key);
+  static getHarmonyType(key: HarmonyTypeKey, locale?: LocaleCode): string {
+    return this.getDefault().getHarmonyType(key, locale);
   }
 
   /**
@@ -427,15 +464,15 @@ export class LocalizationService {
    * @param key - Vision type key
    * @returns Localized vision type
    */
-  getVisionType(key: VisionType): string {
-    return this.translator.getVisionType(key, this.currentLocale);
+  getVisionType(key: VisionType, locale?: LocaleCode): string {
+    return this.translator.getVisionType(key, locale ?? this.currentLocale);
   }
 
   /**
    * Static method: Get localized vision type using default instance
    */
-  static getVisionType(key: VisionType): string {
-    return this.getDefault().getVisionType(key);
+  static getVisionType(key: VisionType, locale?: LocaleCode): string {
+    return this.getDefault().getVisionType(key, locale);
   }
 
   /**
@@ -444,15 +481,15 @@ export class LocalizationService {
    * @param key - Vision type key
    * @returns Localized short vision name
    */
-  getVisionShort(key: VisionType): string {
-    return this.translator.getVisionShort(key, this.currentLocale);
+  getVisionShort(key: VisionType, locale?: LocaleCode): string {
+    return this.translator.getVisionShort(key, locale ?? this.currentLocale);
   }
 
   /**
    * Static method: Get localized short vision-name using default instance
    */
-  static getVisionShort(key: VisionType): string {
-    return this.getDefault().getVisionShort(key);
+  static getVisionShort(key: VisionType, locale?: LocaleCode): string {
+    return this.getDefault().getVisionShort(key, locale);
   }
 
   /**
@@ -461,15 +498,15 @@ export class LocalizationService {
    * @param key - Tool key
    * @returns Localized tool display name
    */
-  getToolName(key: ToolKey): string {
-    return this.translator.getToolName(key, this.currentLocale);
+  getToolName(key: ToolKey, locale?: LocaleCode): string {
+    return this.translator.getToolName(key, locale ?? this.currentLocale);
   }
 
   /**
    * Static method: Get localized tool display name using default instance
    */
-  static getToolName(key: ToolKey): string {
-    return this.getDefault().getToolName(key);
+  static getToolName(key: ToolKey, locale?: LocaleCode): string {
+    return this.getDefault().getToolName(key, locale);
   }
 
   /**
@@ -478,15 +515,15 @@ export class LocalizationService {
    * @param key - Sheet key
    * @returns Localized sheet name
    */
-  getSheetName(key: SheetKey): string {
-    return this.translator.getSheetName(key, this.currentLocale);
+  getSheetName(key: SheetKey, locale?: LocaleCode): string {
+    return this.translator.getSheetName(key, locale ?? this.currentLocale);
   }
 
   /**
    * Static method: Get localized sheet name using default instance
    */
-  static getSheetName(key: SheetKey): string {
-    return this.getDefault().getSheetName(key);
+  static getSheetName(key: SheetKey, locale?: LocaleCode): string {
+    return this.getDefault().getSheetName(key, locale);
   }
 
   /**
@@ -495,15 +532,15 @@ export class LocalizationService {
    * @param key - Job key
    * @returns Localized job name
    */
-  getJobName(key: JobKey): string {
-    return this.translator.getJobName(key, this.currentLocale);
+  getJobName(key: JobKey, locale?: LocaleCode): string {
+    return this.translator.getJobName(key, locale ?? this.currentLocale);
   }
 
   /**
    * Static method: Get localized job name using default instance
    */
-  static getJobName(key: JobKey): string {
-    return this.getDefault().getJobName(key);
+  static getJobName(key: JobKey, locale?: LocaleCode): string {
+    return this.getDefault().getJobName(key, locale);
   }
 
   /**
@@ -512,15 +549,15 @@ export class LocalizationService {
    * @param key - Grand Company key
    * @returns Localized Grand Company name
    */
-  getGrandCompanyName(key: GrandCompanyKey): string {
-    return this.translator.getGrandCompanyName(key, this.currentLocale);
+  getGrandCompanyName(key: GrandCompanyKey, locale?: LocaleCode): string {
+    return this.translator.getGrandCompanyName(key, locale ?? this.currentLocale);
   }
 
   /**
    * Static method: Get localized Grand Company name using default instance
    */
-  static getGrandCompanyName(key: GrandCompanyKey): string {
-    return this.getDefault().getGrandCompanyName(key);
+  static getGrandCompanyName(key: GrandCompanyKey, locale?: LocaleCode): string {
+    return this.getDefault().getGrandCompanyName(key, locale);
   }
 
   /**
@@ -529,15 +566,15 @@ export class LocalizationService {
    * @param key - Race key
    * @returns Localized race name
    */
-  getRace(key: RaceKey): string {
-    return this.translator.getRace(key, this.currentLocale);
+  getRace(key: RaceKey, locale?: LocaleCode): string {
+    return this.translator.getRace(key, locale ?? this.currentLocale);
   }
 
   /**
    * Static method: Get localized race name using default instance
    */
-  static getRace(key: RaceKey): string {
-    return this.getDefault().getRace(key);
+  static getRace(key: RaceKey, locale?: LocaleCode): string {
+    return this.getDefault().getRace(key, locale);
   }
 
   /**
@@ -546,15 +583,15 @@ export class LocalizationService {
    * @param key - Clan key
    * @returns Localized clan name
    */
-  getClan(key: ClanKey): string {
-    return this.translator.getClan(key, this.currentLocale);
+  getClan(key: ClanKey, locale?: LocaleCode): string {
+    return this.translator.getClan(key, locale ?? this.currentLocale);
   }
 
   /**
    * Static method: Get localized clan name using default instance
    */
-  static getClan(key: ClanKey): string {
-    return this.getDefault().getClan(key);
+  static getClan(key: ClanKey, locale?: LocaleCode): string {
+    return this.getDefault().getClan(key, locale);
   }
 
   /**

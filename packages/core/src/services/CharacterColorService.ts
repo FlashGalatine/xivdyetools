@@ -348,7 +348,13 @@ export class CharacterColorService {
     const { count = 3, matchingMethod = 'oklab', weights } = options;
 
     const allDyes = dyeService.getAllDyes();
-    const results: CharacterColorMatch[] = [];
+
+    // OPT-015 (2026-07-18 audit): single-pass bounded top-k selection instead
+    // of allocating a match object for all ~130 dyes and full-sorting to take
+    // the top 3 — this method runs per color across whole 192-color sheets,
+    // so the score-all + sort-all pattern multiplied into ~25k transient
+    // allocations per sheet.
+    const best: Array<{ dye: (typeof allDyes)[number]; distance: number }> = [];
 
     for (const dye of allDyes) {
       // Skip Facewear dyes (not usable for regular glamour)
@@ -362,16 +368,27 @@ export class CharacterColorService {
         matchingMethod,
         weights
       );
-      results.push({
-        characterColor: color,
-        dye,
-        distance,
-      });
+
+      if (best.length < count) {
+        best.push({ dye, distance });
+        best.sort((a, b) => a.distance - b.distance);
+      } else if (distance < best[best.length - 1].distance) {
+        best[best.length - 1] = { dye, distance };
+        // Bubble the new entry into place (k is tiny, typically 3)
+        for (let i = best.length - 1; i > 0 && best[i].distance < best[i - 1].distance; i--) {
+          const tmp = best[i];
+          best[i] = best[i - 1];
+          best[i - 1] = tmp;
+        }
+      }
     }
 
-    // Sort by distance and return top N
-    results.sort((a, b) => a.distance - b.distance);
-    return results.slice(0, count);
+    // Allocate result objects only for the winners
+    return best.map(({ dye, distance }) => ({
+      characterColor: color,
+      dye,
+      distance,
+    }));
   }
 
   /**

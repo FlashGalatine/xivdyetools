@@ -375,10 +375,20 @@ export class PaletteService {
       return [];
     }
 
+    // BUG-044 (2026-07-18 audit): clamp maxSamples like the sibling options —
+    // maxSamples 1 hit a 0/0 = NaN in the sampling interpolation (TypeError
+    // deep in k-means); ≤ 0 silently produced an empty sample set
+    if (opts.maxSamples < 2) {
+      this.logger.warn(
+        `PaletteService.extractPalette: maxSamples ${opts.maxSamples} clamped to minimum 2`
+      );
+    }
+    const maxSamples = Math.max(2, opts.maxSamples);
+
     this.logger.info(`Extracting ${colorCount} colors from ${pixels.length} pixels`);
 
     // Sample pixels if too many
-    const sampledPixels = this.samplePixels(pixels, opts.maxSamples);
+    const sampledPixels = this.samplePixels(pixels, maxSamples);
 
     // Run K-means clustering
     const { centroids, clusterSizes } = kMeansClustering(

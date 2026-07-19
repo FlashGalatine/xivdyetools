@@ -8,17 +8,15 @@
 
 import { Hono } from 'hono';
 import type { Env, Variables } from '../types.js';
-import { LocalizationService } from '@xivdyetools/core';
 import type { FindClosestOptions, FindWithinDistanceOptions } from '@xivdyetools/core';
 import { dyeService, calculateDistance } from '../lib/services.js';
-import { serializeDyeWithDistance } from '../lib/dye-serializer.js';
+import { serializeDyeWithDistance, localizedNameFor } from '../lib/dye-serializer.js';
 import { ErrorCode } from '../lib/api-error.js';
 import {
   parseHex,
   parseFloatParam,
   parseIntParam,
   parseMatchingMethod,
-  parseLocale,
   resolveExcludeIds,
   parseDyeFilters,
   buildFilterExcludeIds,
@@ -35,7 +33,7 @@ const matchRouter = new Hono<{ Bindings: Env; Variables: Variables }>();
 matchRouter.get('/closest', (c) => {
   const hex = parseHex(c.req.query('hex'));
   const method = parseMatchingMethod(c.req.query('method'));
-  const locale = parseLocale(c.req.query('locale'));
+  const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
   const excludeIdsRaw = c.req.query('excludeIds');
 
   // OKLCH weights (only meaningful for oklch-weighted method)
@@ -76,10 +74,7 @@ matchRouter.get('/closest', (c) => {
   const distance = calculateDistance(hex, dye.hex, method,
     method === 'oklch-weighted' ? { kL, kC, kH } : undefined);
 
-  // OPT-001: locale already set by localeMiddleware
-  const localizedName = locale !== 'en'
-    ? (LocalizationService.getDyeName(dye.itemID) || undefined)
-    : undefined;
+  const localizedName = localizedNameFor(dye, locale);
 
   c.header('Cache-Control', 'public, max-age=3600, s-maxage=86400');
   return successResponse(c, {
@@ -98,7 +93,7 @@ matchRouter.get('/within-distance', (c) => {
   const maxDistance = parseFloatParam(c.req.query('maxDistance'), 'maxDistance', { min: 0.01 });
   const method = parseMatchingMethod(c.req.query('method'));
   const limit = parseIntParam(c.req.query('limit'), 'limit', { min: 1, max: 136, defaultValue: 20 });
-  const locale = parseLocale(c.req.query('locale'));
+  const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
   const excludeIdsRaw = c.req.query('excludeIds');
 
   const kL = parseFloatParam(c.req.query('kL'), 'kL', { min: 0, defaultValue: 1.0 });
@@ -110,9 +105,12 @@ matchRouter.get('/within-distance', (c) => {
   // Dye type/acquisition filters
   const filters = parseDyeFilters(c.req.query.bind(c.req));
 
+  // BUG-030 (2026-07-18 audit): fetch UNBOUNDED (the database is only 136
+  // entries), filter, then truncate — passing the client limit into core
+  // let excluded/filtered dyes consume result slots, silently dropping
+  // qualifying dyes that ranked past the truncation point
   const options: FindWithinDistanceOptions = {
     maxDistance,
-    limit,
     matchingMethod: method,
     weights,
   };
@@ -130,15 +128,13 @@ matchRouter.get('/within-distance', (c) => {
   // Apply dye type/acquisition filters
   dyes = applyDyeFilters(dyes, filters);
 
-  // OPT-001: locale already set by localeMiddleware
+  // Apply the client limit AFTER exclusions/filters (BUG-030)
+  dyes = dyes.slice(0, limit);
 
   // Recalculate distances for the response
   const results = dyes.map((dye) => {
     const dist = calculateDistance(hex, dye.hex, method, weights);
-    const localizedName = locale !== 'en'
-      ? (LocalizationService.getDyeName(dye.itemID) || undefined)
-      : undefined;
-    return serializeDyeWithDistance(dye, dist, localizedName);
+    return serializeDyeWithDistance(dye, dist, localizedNameFor(dye, locale));
   });
 
   // Sort by distance (should already be sorted from core, but ensure it)

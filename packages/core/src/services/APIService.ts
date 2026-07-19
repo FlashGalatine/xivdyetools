@@ -72,10 +72,40 @@ export interface RateLimiter {
 }
 
 /**
+ * HTTP error carrying the response status.
+ * OPT-014 (2026-07-18 audit): lets retry policies distinguish deterministic
+ * 4xx failures (fail fast) from transient 429/5xx/network errors (retry).
+ */
+export class HttpError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string
+  ) {
+    super(message);
+    this.name = 'HttpError';
+  }
+}
+
+/**
+ * OPT-014: retry predicate — 4xx (except 429) is deterministic, don't retry.
+ * Non-HttpError failures (network, timeout, parse) stay retryable.
+ */
+export function isRetryableHttpError(error: unknown): boolean {
+  if (error instanceof HttpError) {
+    return error.status === 429 || error.status >= 500;
+  }
+  return true;
+}
+
+/**
  * Default rate limiter with configurable minimum delay between requests
+ *
+ * BUG-046 (2026-07-18 audit): reserves the next slot SYNCHRONOUSLY before any
+ * await, so N concurrent callers space out by minDelay instead of all reading
+ * the same lastRequestTime and bursting through together.
  */
 export class DefaultRateLimiter implements RateLimiter {
-  private lastRequestTime: number = 0;
+  private nextAvailable: number = 0;
 
   /**
    * Constructor with optional minimum delay
@@ -84,14 +114,18 @@ export class DefaultRateLimiter implements RateLimiter {
   constructor(private minDelay: number = API_RATE_LIMIT_DELAY) {}
 
   async waitIfNeeded(): Promise<void> {
-    const timeSinceLastRequest = Date.now() - this.lastRequestTime;
-    if (timeSinceLastRequest < this.minDelay) {
-      await sleep(this.minDelay - timeSinceLastRequest);
+    const now = Date.now();
+    const slot = Math.max(now, this.nextAvailable);
+    // Reserve before awaiting — synchronous update means no interleaving
+    this.nextAvailable = slot + this.minDelay;
+    if (slot > now) {
+      await sleep(slot - now);
     }
   }
 
   recordRequest(): void {
-    this.lastRequestTime = Date.now();
+    // No-op: slot reservation is folded into waitIfNeeded (BUG-046).
+    // Kept for RateLimiter interface compatibility.
   }
 }
 
@@ -342,6 +376,12 @@ export class APIService {
   private fetchClient: FetchClient;
   private rateLimiter: RateLimiter;
   private pendingRequests: Map<string, Promise<PriceData | null>> = new Map();
+  /**
+   * OPT-001 (2026-07-18 audit): in-flight batch coalescing — identical
+   * concurrent batch fetches share one upstream request (cold-cache stampede
+   * protection, mirroring pendingRequests for the single-item path).
+   */
+  private pendingBatchRequests: Map<string, Promise<Map<number, PriceData>>> = new Map();
   private readonly logger: Logger;
   private readonly baseUrl: string;
 
@@ -476,6 +516,23 @@ export class APIService {
   }
 
   /**
+   * Best-effort cache write.
+   * BUG-011 (2026-07-18 audit): symmetric with ERROR-001's failure-tolerant
+   * reads — a failed cache write (quota exceeded, KV error) must never
+   * discard successfully fetched price data.
+   */
+  private async trySetCachedPrice(cacheKey: string, data: PriceData): Promise<void> {
+    try {
+      await this.setCachedPrice(cacheKey, data);
+    } catch (error) {
+      this.metrics.errors++;
+      this.logger.error(
+        `Cache write failed for ${cacheKey}: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
    * Clear cache
    */
   async clearCache(): Promise<void> {
@@ -567,7 +624,9 @@ export class APIService {
       this.pendingRequests.delete(cacheKey);
 
       if (data) {
-        await this.setCachedPrice(cacheKey, data);
+        // BUG-011 (2026-07-18 audit): a cache-write failure must not discard
+        // successfully fetched data
+        await this.trySetCachedPrice(cacheKey, data);
       }
 
       resolvePromise!(data);
@@ -604,7 +663,8 @@ export class APIService {
         () => this.fetchWithTimeout(url, UNIVERSALIS_API_TIMEOUT),
         UNIVERSALIS_API_RETRY_COUNT,
         UNIVERSALIS_API_RETRY_DELAY,
-        this.logger
+        this.logger,
+        isRetryableHttpError // OPT-014: 4xx (except 429) fails fast
       );
 
       if (!data) {
@@ -659,19 +719,34 @@ export class APIService {
       return merged;
     }
 
+    // BUG-012 (2026-07-18 audit): buildBatchApiUrl throws for non-positive-
+    // integer IDs (e.g. Facewear synthetic negatives leaking past a caller's
+    // filter) and sat outside the try below — turning "no price for that
+    // item" into an uncaught AppError. Filter and warn instead.
+    const validItemIDs = itemIDs.filter((id) => Number.isInteger(id) && id > 0);
+    if (validItemIDs.length < itemIDs.length) {
+      this.logger.warn(
+        `Skipping ${itemIDs.length - validItemIDs.length} invalid item IDs in batch fetch`
+      );
+    }
+    if (validItemIDs.length === 0) {
+      return new Map();
+    }
+
     // Rate limiting: single request for the batch
     await this.rateLimiter.waitIfNeeded();
     this.rateLimiter.recordRequest();
 
-    // Build batch API URL — safe: itemIDs.length ≤ 100 guaranteed above
-    const url = this.buildBatchApiUrl(itemIDs, dataCenterID);
+    // Build batch API URL — safe: length ≤ 100 and IDs validated above
+    const url = this.buildBatchApiUrl(validItemIDs, dataCenterID);
 
     try {
       const data = await retry(
         () => this.fetchWithTimeout(url, UNIVERSALIS_API_TIMEOUT),
         UNIVERSALIS_API_RETRY_COUNT,
         UNIVERSALIS_API_RETRY_DELAY,
-        this.logger
+        this.logger,
+        isRetryableHttpError // OPT-014: 4xx (except 429) fails fast
       );
 
       if (!data) {
@@ -704,7 +779,8 @@ export class APIService {
       const response = await this.fetchClient.fetch(url, { signal: controller.signal });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        // OPT-014: typed error so the retry predicate can skip deterministic 4xx
+        throw new HttpError(response.status, `HTTP ${response.status}: ${response.statusText}`);
       }
 
       const contentType = response.headers.get('content-type');
@@ -985,17 +1061,34 @@ export class APIService {
 
     this.logger.debug(`Fetching ${uncachedItemIDs.length} uncached items (${results.size} cached)`);
 
-    // Step 3: Fetch uncached items in a single batched request
-    const batchResults = await this.fetchBatchPriceData(uncachedItemIDs);
+    // Step 3+4: Fetch uncached items and write them to cache.
+    // OPT-001 (2026-07-18 audit): identical in-flight batches are coalesced so
+    // N concurrent cold-cache callers produce one upstream request, mirroring
+    // the single-item pendingRequests dedupe. The entry is removed on settle.
+    // BUG-011: cache writes are best-effort — one failed write must not throw
+    // away the whole fetched batch.
+    const batchKey = [...uncachedItemIDs].sort((a, b) => a - b).join(',') + ':universal';
+    let batchPromise = this.pendingBatchRequests.get(batchKey);
+    if (!batchPromise) {
+      batchPromise = (async (): Promise<Map<number, PriceData>> => {
+        const batchResults = await this.fetchBatchPriceData(uncachedItemIDs);
+        const cacheWrites: Promise<void>[] = [];
+        for (const [itemID, priceData] of batchResults) {
+          const cacheKey = this.buildCacheKey(itemID);
+          cacheWrites.push(this.trySetCachedPrice(cacheKey, priceData));
+        }
+        await Promise.all(cacheWrites);
+        return batchResults;
+      })().finally((): void => {
+        this.pendingBatchRequests.delete(batchKey);
+      });
+      this.pendingBatchRequests.set(batchKey, batchPromise);
+    }
 
-    // Step 4: Store fetched items in cache and add to results
-    const cacheWrites: Promise<void>[] = [];
+    const batchResults = await batchPromise;
     for (const [itemID, priceData] of batchResults) {
-      const cacheKey = this.buildCacheKey(itemID);
-      cacheWrites.push(this.setCachedPrice(cacheKey, priceData));
       results.set(itemID, priceData);
     }
-    await Promise.all(cacheWrites);
 
     return results;
   }
@@ -1044,17 +1137,34 @@ export class APIService {
       `Fetching ${uncachedItemIDs.length} uncached items (${results.size} cached) for ${dataCenterID}`
     );
 
-    // Step 3: Fetch uncached items in a single batched request
-    const batchResults = await this.fetchBatchPriceData(uncachedItemIDs, dataCenterID);
+    // Step 3+4: Fetch uncached items and write them to cache.
+    // OPT-001 (2026-07-18 audit): identical in-flight batches are coalesced so
+    // N concurrent cold-cache callers produce one upstream request, mirroring
+    // the single-item pendingRequests dedupe. The entry is removed on settle.
+    // BUG-011: cache writes are best-effort — one failed write must not throw
+    // away the whole fetched batch.
+    const batchKey = `${[...uncachedItemIDs].sort((a, b) => a - b).join(',')}:${dataCenterID}`;
+    let batchPromise = this.pendingBatchRequests.get(batchKey);
+    if (!batchPromise) {
+      batchPromise = (async (): Promise<Map<number, PriceData>> => {
+        const batchResults = await this.fetchBatchPriceData(uncachedItemIDs, dataCenterID);
+        const cacheWrites: Promise<void>[] = [];
+        for (const [itemID, priceData] of batchResults) {
+          const cacheKey = this.buildCacheKey(itemID, undefined, dataCenterID);
+          cacheWrites.push(this.trySetCachedPrice(cacheKey, priceData));
+        }
+        await Promise.all(cacheWrites);
+        return batchResults;
+      })().finally((): void => {
+        this.pendingBatchRequests.delete(batchKey);
+      });
+      this.pendingBatchRequests.set(batchKey, batchPromise);
+    }
 
-    // Step 4: Store fetched items in cache and add to results
-    const cacheWrites: Promise<void>[] = [];
+    const batchResults = await batchPromise;
     for (const [itemID, priceData] of batchResults) {
-      const cacheKey = this.buildCacheKey(itemID, undefined, dataCenterID);
-      cacheWrites.push(this.setCachedPrice(cacheKey, priceData));
       results.set(itemID, priceData);
     }
-    await Promise.all(cacheWrites);
 
     return results;
   }

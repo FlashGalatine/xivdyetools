@@ -138,6 +138,21 @@ export class ColorConverter {
    * Per P-1: Cached for performance
    * @example hexToRgb("#FF0000") -> { r: 255, g: 0, b: 0 }
    */
+  /**
+   * REFACTOR-014 (2026-07-18 audit): uppercased, #-stripped, shorthand-expanded
+   * hex — the single source of truth used as cache key AND parse source.
+   */
+  private static normalizeHexKey(hex: string): string {
+    let h = hex.toUpperCase().replace('#', '');
+    if (h.length === 3) {
+      h = h
+        .split('')
+        .map((c) => c + c)
+        .join('');
+    }
+    return h;
+  }
+
   hexToRgb(hex: string): RGB {
     if (!isValidHexColor(hex)) {
       throw new AppError(
@@ -147,39 +162,26 @@ export class ColorConverter {
       );
     }
 
-    // Normalize hex for cache key
-    let hexForCache = hex.toUpperCase().replace('#', '');
-    if (hexForCache.length === 3) {
-      hexForCache = hexForCache
-        .split('')
-        .map((c) => c + c)
-        .join('');
-    }
-    const cacheKey = hexForCache;
+    // REFACTOR-014 (2026-07-18 audit): one normalization pass serves as both
+    // cache key and parse source (previously computed twice, asymmetrically)
+    const cacheKey = ColorConverter.normalizeHexKey(hex);
 
     // Check cache
     const cached = this.hexToRgbCache.get(cacheKey);
     if (cached) {
-      return cached;
+      // BUG-005 (2026-07-18 audit): defensive copy — callers mutating the
+      // returned object must not poison the process-wide cache
+      return { ...cached };
     }
 
-    // Remove # and expand shorthand (#RGB -> #RRGGBB)
-    let normalizedHex = hex.replace('#', '');
-    if (normalizedHex.length === 3) {
-      normalizedHex = normalizedHex
-        .split('')
-        .map((char) => char + char)
-        .join('');
-    }
-
-    const r = parseInt(normalizedHex.substring(0, 2), 16);
-    const g = parseInt(normalizedHex.substring(2, 4), 16);
-    const b = parseInt(normalizedHex.substring(4, 6), 16);
+    const r = parseInt(cacheKey.substring(0, 2), 16);
+    const g = parseInt(cacheKey.substring(2, 4), 16);
+    const b = parseInt(cacheKey.substring(4, 6), 16);
 
     const result = { r, g, b };
     // Cache result
     this.hexToRgbCache.set(cacheKey, result);
-    return result;
+    return { ...result };
   }
 
   /**
@@ -250,7 +252,9 @@ export class ColorConverter {
     // Check cache
     const cached = this.rgbToHsvCache.get(cacheKey);
     if (cached) {
-      return cached;
+      // BUG-005 (2026-07-18 audit): defensive copy — callers mutating the
+      // returned object must not poison the process-wide cache
+      return { ...cached };
     }
 
     // Per P-1: Optimized single-pass min/max calculation
@@ -285,7 +289,7 @@ export class ColorConverter {
     const result = { h: round(h, 2), s: round(s, 2), v: round(v, 2) };
     // Cache result
     this.rgbToHsvCache.set(cacheKey, result);
-    return result;
+    return { ...result };
   }
 
   /**
@@ -331,7 +335,9 @@ export class ColorConverter {
     // Check cache
     const cached = this.hsvToRgbCache.get(cacheKey);
     if (cached) {
-      return cached;
+      // BUG-005 (2026-07-18 audit): defensive copy — callers mutating the
+      // returned object must not poison the process-wide cache
+      return { ...cached };
     }
 
     // Normalize HSV (use already normalized hue)
@@ -372,7 +378,7 @@ export class ColorConverter {
     };
     // Cache result
     this.hsvToRgbCache.set(cacheKey, result);
-    return result;
+    return { ...result };
   }
 
   /**
@@ -387,27 +393,22 @@ export class ColorConverter {
    * Per P-1: Cached for performance
    */
   hexToHsv(hex: string): HSV {
-    // Normalize hex for cache key
-    let hexForCache = hex.toUpperCase().replace('#', '');
-    if (hexForCache.length === 3) {
-      hexForCache = hexForCache
-        .split('')
-        .map((c) => c + c)
-        .join('');
-    }
-    const cacheKey = hexForCache;
+    // REFACTOR-014: shared normalization (cache keys can't drift from parsing)
+    const cacheKey = ColorConverter.normalizeHexKey(hex);
 
     // Check cache
     const cached = this.hexToHsvCache.get(cacheKey);
     if (cached) {
-      return cached;
+      // BUG-005 (2026-07-18 audit): defensive copy — callers mutating the
+      // returned object must not poison the process-wide cache
+      return { ...cached };
     }
 
     const rgb = this.hexToRgb(hex);
     const result = this.rgbToHsv(rgb.r, rgb.g, rgb.b);
     // Cache result
     this.hexToHsvCache.set(cacheKey, result);
-    return result;
+    return { ...result };
   }
 
   /**
@@ -514,7 +515,9 @@ export class ColorConverter {
     const cacheKey = `${r},${g},${b}`;
     const cached = this.rgbToLabCache.get(cacheKey);
     if (cached) {
-      return cached;
+      // BUG-005 (2026-07-18 audit): defensive copy — callers mutating the
+      // returned object must not poison the process-wide cache
+      return { ...cached };
     }
 
     // D65 reference white point
@@ -544,7 +547,7 @@ export class ColorConverter {
     };
 
     this.rgbToLabCache.set(cacheKey, result);
-    return result;
+    return { ...result };
   }
 
   /**
@@ -1014,7 +1017,9 @@ export class ColorConverter {
     const cacheKey = `${r},${g},${b}`;
     const cached = this.rgbToOklabCache.get(cacheKey);
     if (cached) {
-      return cached;
+      // BUG-005 (2026-07-18 audit): defensive copy — callers mutating the
+      // returned object must not poison the process-wide cache
+      return { ...cached };
     }
 
     // Convert sRGB to linear RGB
@@ -1040,7 +1045,7 @@ export class ColorConverter {
     };
 
     this.rgbToOklabCache.set(cacheKey, result);
-    return result;
+    return { ...result };
   }
 
   /**

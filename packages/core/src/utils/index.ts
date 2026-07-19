@@ -489,7 +489,7 @@ export function groupBy<T, K extends string | number>(
  *
  * Edge cases:
  * - Returns shallow copy of array
- * - Handles undefined properties (sorted to end)
+ * - Handles undefined properties (sorted to end regardless of `order`)
  * - Stable sort (preserves relative order of equal elements)
  */
 export function sortByProperty<T>(
@@ -500,6 +500,14 @@ export function sortByProperty<T>(
   return [...array].sort((a, b) => {
     const aVal = a[property];
     const bVal = b[property];
+    // BUG-048 (2026-07-18 audit): implement the documented "undefined sorted
+    // to end" — comparisons against undefined used to yield 0 ("equal"),
+    // leaving undefined-valued items interleaved in place. null gets the same
+    // treatment (comparisons against it are equally meaningless).
+    const aMissing = aVal === undefined || aVal === null;
+    const bMissing = bVal === undefined || bVal === null;
+    if (aMissing) return bMissing ? 0 : 1;
+    if (bMissing) return -1;
     const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
     return order === 'asc' ? comparison : -comparison;
   });
@@ -849,7 +857,11 @@ export async function retry<T>(
   fn: () => Promise<T>,
   maxAttempts: number = 3,
   delayMs: number = 1000,
-  logger?: Logger
+  logger?: Logger,
+  // OPT-014 (2026-07-18 audit): optional predicate so callers can skip
+  // retrying deterministic failures (e.g. HTTP 4xx). Default preserves the
+  // historical retry-everything behavior.
+  shouldRetry: (error: unknown) => boolean = () => true
 ): Promise<T> {
   const attempts = Math.max(1, Math.floor(maxAttempts)); // Ensure at least 1 attempt
   let lastError: Error | null = null;
@@ -863,6 +875,11 @@ export async function retry<T>(
       // Log timeout errors specifically for debugging
       if (isAbortError(error)) {
         logger?.warn(`Request timed out (attempt ${i + 1}/${attempts})`);
+      }
+
+      // OPT-014: deterministic failures fail fast instead of burning backoff
+      if (!shouldRetry(error)) {
+        throw lastError;
       }
 
       if (i < attempts - 1) {

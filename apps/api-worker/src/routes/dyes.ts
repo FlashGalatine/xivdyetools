@@ -8,16 +8,15 @@
 
 import { Hono } from 'hono';
 import type { Env, Variables } from '../types.js';
-import { CONSOLIDATED_IDS, isConsolidationActive, LocalizationService } from '@xivdyetools/core';
+import { CONSOLIDATED_IDS, isConsolidationActive } from '@xivdyetools/core';
 import { dyeService } from '../lib/services.js';
-import { serializeDye } from '../lib/dye-serializer.js';
+import { serializeDye, localizedNameFor } from '../lib/dye-serializer.js';
 import { ApiError, ErrorCode } from '../lib/api-error.js';
 import {
   parseIntParam,
   parseEnumParam,
   parseBooleanParam,
   parseCommaSeparatedIds,
-  parseLocale,
   resolveIdType,
   lookupDyeByResolvedId,
   resolveExcludeIds,
@@ -50,19 +49,14 @@ dyesRouter.get('/search', (c) => {
     });
   }
 
-  const locale = parseLocale(c.req.query('locale'));
+  const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
 
-  // OPT-001: locale already set by localeMiddleware; just dispatch on it.
+  // BUG-006: explicit locale — no singleton state involved
   const results: Dye[] = locale !== 'en'
-    ? dyeService.searchByLocalizedName(q)
+    ? dyeService.searchByLocalizedName(q, locale)
     : dyeService.searchByName(q);
 
-  const serialized = results.map((dye) => {
-    const localizedName = locale !== 'en'
-      ? (LocalizationService.getDyeName(dye.itemID) || undefined)
-      : undefined;
-    return serializeDye(dye, localizedName);
-  });
+  const serialized = results.map((dye) => serializeDye(dye, localizedNameFor(dye, locale)));
 
   c.header('Cache-Control', 'public, max-age=3600, s-maxage=86400');
   return successResponse(c, serialized, locale);
@@ -72,15 +66,20 @@ dyesRouter.get('/search', (c) => {
 // GET /categories — Category list with counts
 // ============================================================================
 
+// OPT-025 (2026-07-18 audit): pure function of the immutable dye database —
+// compute once per isolate
+let categoriesPayload: Array<{ name: string; count: number }> | null = null;
+
 dyesRouter.get('/categories', (c) => {
-  const categories = dyeService.getCategories();
-  const data = categories.map((category) => ({
-    name: category,
-    count: dyeService.searchByCategory(category).length,
-  }));
+  if (!categoriesPayload) {
+    categoriesPayload = dyeService.getCategories().map((category) => ({
+      name: category,
+      count: dyeService.searchByCategory(category).length,
+    }));
+  }
 
   c.header('Cache-Control', 'public, max-age=3600, s-maxage=86400');
-  return successResponse(c, data);
+  return successResponse(c, categoriesPayload);
 });
 
 // ============================================================================
@@ -90,8 +89,7 @@ dyesRouter.get('/categories', (c) => {
 dyesRouter.get('/batch', (c) => {
   const ids = parseCommaSeparatedIds(c.req.query('ids'), 'ids', 50);
   const idType = parseEnumParam(c.req.query('idType'), 'idType', ['auto', 'item', 'stain'] as const, 'auto');
-  const locale = parseLocale(c.req.query('locale'));
-  // OPT-001: locale already set by localeMiddleware
+  const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
 
   const found: ReturnType<typeof serializeDye>[] = [];
   const notFound: number[] = [];
@@ -108,10 +106,7 @@ dyesRouter.get('/batch', (c) => {
     }
 
     if (dye) {
-      const localizedName = locale !== 'en'
-        ? (LocalizationService.getDyeName(dye.itemID) || undefined)
-        : undefined;
-      found.push(serializeDye(dye, localizedName));
+      found.push(serializeDye(dye, localizedNameFor(dye, locale)));
     } else {
       notFound.push(id);
     }
@@ -125,9 +120,19 @@ dyesRouter.get('/batch', (c) => {
 // GET /consolidation-groups — Patch 7.5 consolidation metadata
 // ============================================================================
 
+// OPT-025: memoized per consolidation-active state so the payload flips
+// correctly at the activation-date boundary
+const consolidationPayloadCache = new Map<boolean, unknown>();
+
 dyesRouter.get('/consolidation-groups', (c) => {
-  const allDyes = dyeService.getAllDyes();
   const consolidationActive = isConsolidationActive();
+  const cached = consolidationPayloadCache.get(consolidationActive);
+  if (cached) {
+    c.header('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+    return successResponse(c, cached);
+  }
+
+  const allDyes = dyeService.getAllDyes();
 
   const groups = (['A', 'B', 'C'] as const).map((type) => {
     const dyes = allDyes.filter((d) => d.consolidationType === type);
@@ -143,15 +148,18 @@ dyesRouter.get('/consolidation-groups', (c) => {
     (d) => d.consolidationType === null && d.category !== 'Facewear',
   );
 
-  c.header('Cache-Control', 'public, max-age=3600, s-maxage=86400');
-  return successResponse(c, {
+  const payload = {
     consolidationActive,
     groups,
     unconsolidated: {
       count: unconsolidated.length,
       dyes: unconsolidated.map((d) => ({ itemID: d.itemID, stainID: d.stainID, name: d.name })),
     },
-  });
+  };
+  consolidationPayloadCache.set(consolidationActive, payload);
+
+  c.header('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+  return successResponse(c, payload);
 });
 
 // ============================================================================
@@ -170,19 +178,14 @@ dyesRouter.get('/stain/:stainId', (c) => {
     });
   }
 
-  const locale = parseLocale(c.req.query('locale'));
+  const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
   const dye = dyeService.getByStainId(stainId);
   if (!dye) {
     throw new ApiError(ErrorCode.NOT_FOUND, `No dye found with stain ID ${stainId}.`, 404);
   }
 
-  // OPT-001: locale already set by localeMiddleware
-  const localizedName = locale !== 'en'
-    ? (LocalizationService.getDyeName(dye.itemID) || undefined)
-    : undefined;
-
   c.header('Cache-Control', 'public, max-age=3600, s-maxage=86400');
-  return successResponse(c, serializeDye(dye, localizedName), locale);
+  return successResponse(c, serializeDye(dye, localizedNameFor(dye, locale)), locale);
 });
 
 // ============================================================================
@@ -205,20 +208,32 @@ dyesRouter.get('/:id', (c) => {
   const dye = lookupDyeByResolvedId(resolution);
 
   if (!dye) {
+    // BUG-071 (2026-07-18 audit): the API itself emits these consolidated
+    // market itemIDs in `marketItemID`; round-tripping one must explain
+    // itself instead of a bare 404
+    const consolidatedType = Object.entries(CONSOLIDATED_IDS).find(([, cid]) => cid === id)?.[0] as
+      | 'A'
+      | 'B'
+      | 'C'
+      | undefined;
+    if (consolidatedType) {
+      throw new ApiError(
+        ErrorCode.NOT_FOUND,
+        `ID ${id} is the consolidated market itemID for Type-${consolidatedType} dyes, not a dye entry; see /v1/dyes/consolidation-groups for its members.`,
+        404,
+        { consolidatedType },
+      );
+    }
     const hint = resolution.type === 'invalid'
       ? ` ID ${id} falls in the unassigned range (126-5728).`
       : '';
     throw new ApiError(ErrorCode.NOT_FOUND, `No dye found with ID ${id}.${hint}`, 404);
   }
 
-  const locale = parseLocale(c.req.query('locale'));
-  // OPT-001: locale already set by localeMiddleware
-  const localizedName = locale !== 'en'
-    ? (LocalizationService.getDyeName(dye.itemID) || undefined)
-    : undefined;
+  const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
 
   c.header('Cache-Control', 'public, max-age=3600, s-maxage=86400');
-  return successResponse(c, serializeDye(dye, localizedName), locale);
+  return successResponse(c, serializeDye(dye, localizedNameFor(dye, locale)), locale);
 });
 
 // ============================================================================
@@ -226,13 +241,15 @@ dyesRouter.get('/:id', (c) => {
 // ============================================================================
 
 dyesRouter.get('/', (c) => {
-  const locale = parseLocale(c.req.query('locale'));
+  const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
   const category = c.req.query('category');
   const excludeIdsRaw = c.req.query('excludeIds');
   const minPriceRaw = c.req.query('minPrice');
   const maxPriceRaw = c.req.query('maxPrice');
-  const minPrice = minPriceRaw !== undefined ? parseIntParam(minPriceRaw, 'minPrice', { min: 0 }) : undefined;
-  const maxPrice = maxPriceRaw !== undefined ? parseIntParam(maxPriceRaw, 'maxPrice', { min: 0 }) : undefined;
+  // BUG-070 (related): empty-but-present numeric params are treated as "not
+  // provided" instead of surfacing a misleading MISSING_PARAMETER error
+  const minPrice = minPriceRaw ? parseIntParam(minPriceRaw, 'minPrice', { min: 0 }) : undefined;
+  const maxPrice = maxPriceRaw ? parseIntParam(maxPriceRaw, 'maxPrice', { min: 0 }) : undefined;
   const sortRaw = c.req.query('sort');
   const sort = sortRaw !== undefined ? parseEnumParam(sortRaw, 'sort', VALID_SORT_FIELDS) : undefined;
   const order = parseEnumParam(c.req.query('order'), 'order', VALID_ORDERS, 'asc');
@@ -240,11 +257,11 @@ dyesRouter.get('/', (c) => {
   const perPage = parseIntParam(c.req.query('perPage'), 'perPage', { min: 1, max: 200, defaultValue: 50 });
 
   // Boolean filters
-  const metallic = parseBooleanParam(c.req.query('metallic'));
-  const pastel = parseBooleanParam(c.req.query('pastel'));
-  const dark = parseBooleanParam(c.req.query('dark'));
-  const cosmic = parseBooleanParam(c.req.query('cosmic'));
-  const ishgardian = parseBooleanParam(c.req.query('ishgardian'));
+  const metallic = parseBooleanParam(c.req.query('metallic'), 'metallic');
+  const pastel = parseBooleanParam(c.req.query('pastel'), 'pastel');
+  const dark = parseBooleanParam(c.req.query('dark'), 'dark');
+  const cosmic = parseBooleanParam(c.req.query('cosmic'), 'cosmic');
+  const ishgardian = parseBooleanParam(c.req.query('ishgardian'), 'ishgardian');
   const consolidationType = c.req.query('consolidationType') as 'A' | 'B' | 'C' | undefined;
 
   // Acquisition/expense filters
@@ -290,14 +307,7 @@ dyesRouter.get('/', (c) => {
   const start = (page - 1) * perPage;
   const paged = results.slice(start, start + perPage);
 
-  // OPT-001: locale already set by localeMiddleware
-
-  const serialized = paged.map((dye) => {
-    const localizedName = locale !== 'en'
-      ? (LocalizationService.getDyeName(dye.itemID) || undefined)
-      : undefined;
-    return serializeDye(dye, localizedName);
-  });
+  const serialized = paged.map((dye) => serializeDye(dye, localizedNameFor(dye, locale)));
 
   c.header('Cache-Control', 'public, max-age=3600, s-maxage=86400');
   return paginatedResponse(c, serialized, pagination, locale);

@@ -99,6 +99,16 @@ export class DyeDatabase {
    * @param dye - Object to validate as a Dye
    * @returns true if valid, false otherwise
    */
+  /**
+   * REFACTOR-013 (2026-07-18 audit): shared log-identifier derivation —
+   * previously copy-pasted (with drift) six times inside isValidDye.
+   */
+  private dyeIdForLog(dye: Record<string, unknown>): string {
+    if (typeof dye.id === 'number') return String(dye.id);
+    if (typeof dye.itemID === 'number') return String(dye.itemID);
+    return typeof dye.name === 'string' ? dye.name : 'unknown';
+  }
+
   private isValidDye(dye: Record<string, unknown>): boolean {
     // Required: id or itemID (can be null for Facewear dyes, which will get generated id)
     const hasValidId = typeof dye.id === 'number' || typeof dye.itemID === 'number';
@@ -111,12 +121,7 @@ export class DyeDatabase {
 
     // Required: name must be a non-empty string
     if (typeof dye.name !== 'string' || dye.name.length === 0) {
-      const idForLog =
-        typeof dye.id === 'number'
-          ? String(dye.id)
-          : typeof dye.itemID === 'number'
-            ? String(dye.itemID)
-            : 'unknown';
+      const idForLog = this.dyeIdForLog(dye);
       this.logger.warn(`Dye ${idForLog} has invalid name`);
       return false;
     }
@@ -124,12 +129,7 @@ export class DyeDatabase {
     // Validate hex format if present
     if (dye.hex !== undefined && dye.hex !== null) {
       if (typeof dye.hex !== 'string' || !/^#[A-Fa-f0-9]{6}$/.test(dye.hex)) {
-        const idForLog =
-          typeof dye.id === 'number'
-            ? String(dye.id)
-            : typeof dye.itemID === 'number'
-              ? String(dye.itemID)
-              : String(dye.name ?? 'unknown');
+        const idForLog = this.dyeIdForLog(dye);
         const hexForLog = typeof dye.hex === 'string' ? dye.hex : JSON.stringify(dye.hex);
         this.logger.warn(`Dye ${idForLog} has invalid hex format: ${hexForLog}`);
         return false;
@@ -150,12 +150,7 @@ export class DyeDatabase {
         rgb.b < 0 ||
         rgb.b > 255
       ) {
-        const idForLog =
-          typeof dye.id === 'number'
-            ? String(dye.id)
-            : typeof dye.itemID === 'number'
-              ? String(dye.itemID)
-              : String(dye.name ?? 'unknown');
+        const idForLog = this.dyeIdForLog(dye);
         this.logger.warn(`Dye ${idForLog} has invalid RGB values`);
         return false;
       }
@@ -164,12 +159,7 @@ export class DyeDatabase {
     // CORE-BUG-004 FIX: HSV is required per Dye interface (used for hue bucket indexing)
     // Must validate HSV is present and has valid values
     if (dye.hsv === undefined || dye.hsv === null) {
-      const idForLog =
-        typeof dye.id === 'number'
-          ? String(dye.id)
-          : typeof dye.itemID === 'number'
-            ? String(dye.itemID)
-            : String(dye.name ?? 'unknown');
+      const idForLog = this.dyeIdForLog(dye);
       this.logger.warn(`Dye ${idForLog} missing required HSV values`);
       return false;
     }
@@ -186,24 +176,14 @@ export class DyeDatabase {
       hsv.v < 0 ||
       hsv.v > 100
     ) {
-      const idForLog =
-        typeof dye.id === 'number'
-          ? String(dye.id)
-          : typeof dye.itemID === 'number'
-            ? String(dye.itemID)
-            : String(dye.name ?? 'unknown');
+      const idForLog = this.dyeIdForLog(dye);
       this.logger.warn(`Dye ${idForLog} has invalid HSV values`);
       return false;
     }
 
     // Validate category if present
     if (dye.category !== undefined && dye.category !== null && typeof dye.category !== 'string') {
-      const idForLog =
-        typeof dye.id === 'number'
-          ? String(dye.id)
-          : typeof dye.itemID === 'number'
-            ? String(dye.itemID)
-            : String(dye.name ?? 'unknown');
+      const idForLog = this.dyeIdForLog(dye);
       this.logger.warn(`Dye ${idForLog} has invalid category type`);
       return false;
     }
@@ -322,6 +302,14 @@ export class DyeDatabase {
       const kdTreePoints: Point3D[] = [];
 
       for (const dye of this.dyes) {
+        // REFACTOR-012 (2026-07-18 audit): the Facewear synthetic-ID hash is a
+        // plain char-code sum (collision-prone for future names); a silent
+        // map overwrite would make one dye unreachable by ID. Fail loudly.
+        if (this.dyesByIdMap.has(dye.id)) {
+          this.logger.error(
+            `Duplicate dye ID detected during initialization: ${dye.id} (${dye.name}) collides with ${this.dyesByIdMap.get(dye.id)?.name}`
+          );
+        }
         // Map by id (which equals itemID after normalization)
         this.dyesByIdMap.set(dye.id, dye);
         // Per Issue #5: Only map itemID separately if it differs from id

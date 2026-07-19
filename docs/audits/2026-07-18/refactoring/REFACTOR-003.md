@@ -46,3 +46,7 @@ LOW–MEDIUM (constants + fallback are small; the brute-force comparison test is
 LOW — n=125 makes even full linear scans cheap, so the fallback cannot regress performance meaningfully; behavior can only become more correct. Slight risk of changed match results where the current threshold was truncating candidates (which is precisely the fix).
 
 > Source: evidence/core-analysis.md (2026-07-18 deep-dive, core area)
+
+## Status
+
+**DONE 2026-07-19** — new brute-force parity regression test (DyeSearch.parity.test.ts) immediately CONFIRMED real wrong-winner cases (e.g. #00FF55/oklab returned a 2.5×-worse dye). Resolution: perceptual methods now use the exact linear scan (n≈125, trivially cheap) in both findClosestDye and findDyesWithinDistance; the k-d tree remains the fast path for 'rgb'. The magic radii are gone entirely.

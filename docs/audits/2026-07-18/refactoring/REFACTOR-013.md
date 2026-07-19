@@ -57,3 +57,7 @@ LOW (mechanical extraction; existing tests cover the warn paths)
 Minimal — log-string derivation only; no behavioral logic touched.
 
 > Source: evidence/core-analysis.md (2026-07-18 deep-dive, core area)
+
+## Status
+
+**DONE 2026-07-19** — six inline idForLog derivations (already drifted) replaced by one `dyeIdForLog` helper.

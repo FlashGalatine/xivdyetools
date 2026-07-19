@@ -532,19 +532,20 @@ describe('DyeService', () => {
     });
 
     describe('getNonMetallicDyes', () => {
-      it('should exclude metallic dyes based on locale data', () => {
-        vi.spyOn(LocalizationService, 'getMetallicDyeIds').mockReturnValue([5734]);
-
+      // BUG-045 (2026-07-18 audit): exclusion now comes from the dye data's
+      // own isMetallic flag, not locale-derived ID lists
+      it('should exclude dyes flagged isMetallic', () => {
         const nonMetallic = dyeService.getNonMetallicDyes();
         expect(nonMetallic).toHaveLength(5);
         expect(nonMetallic.find((d) => d.itemID === 5734)).toBeUndefined();
       });
 
-      it('should return all dyes when no metallic IDs', () => {
-        vi.spyOn(LocalizationService, 'getMetallicDyeIds').mockReturnValue([]);
+      it('should exclude metallic dyes even when no locale was ever loaded (BUG-045)', () => {
+        LocalizationService.resetInstance();
 
         const nonMetallic = dyeService.getNonMetallicDyes();
-        expect(nonMetallic).toHaveLength(6);
+        expect(nonMetallic).toHaveLength(5);
+        expect(nonMetallic.every((d) => !d.isMetallic)).toBe(true);
       });
     });
   });

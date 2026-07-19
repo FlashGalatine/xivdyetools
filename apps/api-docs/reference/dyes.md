@@ -12,7 +12,7 @@ Every dye response includes these fields:
 | `stainID` | integer \| null | Stain table ID (1–125; null for Facewear) |
 | `id` | integer | Same as `itemID` |
 | `name` | string | English dye name |
-| `localizedName` | string? | Present only when `locale` ≠ `en` |
+| `localizedName` | string? | Present only when `locale` ≠ `en`. Intentionally absent for Facewear entries (`itemID` < 0) — no localized names exist for them |
 | `hex` | string | Hex color (`#RRGGBB`) |
 | `rgb` | object | `{ r, g, b }` — 0–255 |
 | `hsv` | object | `{ h, s, v }` — hue 0–360, sat/val 0–100 |
@@ -26,7 +26,7 @@ Every dye response includes these fields:
 | `isCosmic` | boolean | From Cosmic Exploration |
 | `isIshgardian` | boolean | From Ishgardian Restoration |
 | `consolidationType` | string \| null | Patch 7.5 group: `A`, `B`, `C`, or `null` |
-| `marketItemID` | integer | Item ID for market board lookups |
+| `marketItemID` | integer | Item ID for **market board** lookups only — not a dye lookup key. For the 105 consolidated dyes this is one of the shared Patch 7.5 itemIDs (52254/52255/52256), which `GET /v1/dyes/:id` intentionally rejects with a hint pointing at `/v1/dyes/consolidation-groups` |
 
 ---
 

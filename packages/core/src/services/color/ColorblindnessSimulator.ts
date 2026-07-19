@@ -59,7 +59,9 @@ export class ColorblindnessSimulator {
     // Check cache
     const cached = this.colorblindCache.get(cacheKey);
     if (cached) {
-      return cached;
+      // BUG-005 (2026-07-18 audit): defensive copy — protects the cache from
+      // caller mutation
+      return { ...cached };
     }
 
     // Per P-1: BRETTEL_MATRICES are already pre-computed constants (no recalculation needed)
@@ -84,7 +86,7 @@ export class ColorblindnessSimulator {
     const result = { r: transformedR, g: transformedG, b: transformedB };
     // Cache result
     this.colorblindCache.set(cacheKey, result);
-    return result;
+    return { ...result };
   }
 
   /**

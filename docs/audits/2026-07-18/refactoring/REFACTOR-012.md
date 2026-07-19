@@ -51,3 +51,7 @@ LOW (a few lines in `initialize()` plus one test with two colliding names)
 LOW for detection-only. MEDIUM for changing the hash function (breaking for any consumer that persisted synthetic IDs) — defer that to a major version.
 
 > Source: evidence/core-analysis.md (2026-07-18 deep-dive, core area)
+
+## Status
+
+**DONE 2026-07-19** — `initialize()` logs an error on any duplicate dye ID before overwriting the map entry (detection-only; the hash function is unchanged to avoid breaking persisted synthetic IDs).

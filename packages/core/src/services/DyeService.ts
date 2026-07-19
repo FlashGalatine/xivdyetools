@@ -25,7 +25,7 @@
  * ```
  */
 
-import type { Dye, LocalizedDye } from '@xivdyetools/types';
+import type { Dye, LocalizedDye, LocaleCode } from '@xivdyetools/types';
 import type { Logger } from '@xivdyetools/logger/library';
 import { NoOpLogger } from '@xivdyetools/logger/library';
 import { DyeDatabase } from './dye/DyeDatabase.js';
@@ -361,8 +361,11 @@ export class DyeService {
    * // Finds "Snow White" (スノウホワイト)
    * ```
    */
-  searchByLocalizedName(query: string): Dye[] {
-    if (!LocalizationService.isLocaleLoaded()) {
+  searchByLocalizedName(query: string, locale?: LocaleCode): Dye[] {
+    // BUG-006 (2026-07-18 audit): pass an explicit locale in concurrent
+    // multi-locale servers — reading the singleton's current locale races
+    // across requests
+    if (!LocalizationService.isLocaleLoaded(locale)) {
       return this.searchByName(query); // Fallback to English-only
     }
 
@@ -376,7 +379,7 @@ export class DyeService {
       }
 
       // Search localized name (not pre-computed as it's dynamically loaded)
-      const localizedName = LocalizationService.getDyeName(dye.itemID);
+      const localizedName = LocalizationService.getDyeName(dye.itemID, locale);
       if (localizedName?.toLowerCase().includes(lowerQuery)) {
         return true;
       }
@@ -399,17 +402,17 @@ export class DyeService {
    * // "スノウホワイト" (ja) or "Snow White" (en)
    * ```
    */
-  getLocalizedDyeById(id: number): LocalizedDye | null {
+  getLocalizedDyeById(id: number, locale?: LocaleCode): LocalizedDye | null {
     const dye = this.getDyeById(id);
     if (!dye) return null;
 
-    if (!LocalizationService.isLocaleLoaded()) {
+    if (!LocalizationService.isLocaleLoaded(locale)) {
       return dye;
     }
 
     return {
       ...dye,
-      localizedName: LocalizationService.getDyeName(dye.itemID) || undefined,
+      localizedName: LocalizationService.getDyeName(dye.itemID, locale) || undefined,
     };
   }
 
@@ -422,17 +425,17 @@ export class DyeService {
    *
    * @since 2.2.0
    */
-  getLocalizedDyeByStainId(stainId: number): LocalizedDye | null {
+  getLocalizedDyeByStainId(stainId: number, locale?: LocaleCode): LocalizedDye | null {
     const dye = this.getByStainId(stainId);
     if (!dye) return null;
 
-    if (!LocalizationService.isLocaleLoaded()) {
+    if (!LocalizationService.isLocaleLoaded(locale)) {
       return dye;
     }
 
     return {
       ...dye,
-      localizedName: LocalizationService.getDyeName(dye.itemID) || undefined,
+      localizedName: LocalizationService.getDyeName(dye.itemID, locale) || undefined,
     };
   }
 
@@ -451,16 +454,16 @@ export class DyeService {
    * });
    * ```
    */
-  getAllLocalizedDyes(): LocalizedDye[] {
+  getAllLocalizedDyes(locale?: LocaleCode): LocalizedDye[] {
     const dyes = this.getAllDyes();
 
-    if (!LocalizationService.isLocaleLoaded()) {
+    if (!LocalizationService.isLocaleLoaded(locale)) {
       return dyes;
     }
 
     return dyes.map((dye) => ({
       ...dye,
-      localizedName: LocalizationService.getDyeName(dye.itemID) || undefined,
+      localizedName: LocalizationService.getDyeName(dye.itemID, locale) || undefined,
     }));
   }
 
@@ -478,7 +481,9 @@ export class DyeService {
    * ```
    */
   getNonMetallicDyes(): Dye[] {
-    const metallicIds = new Set(LocalizationService.getMetallicDyeIds());
-    return this.getAllDyes().filter((dye) => !metallicIds.has(dye.itemID));
+    // BUG-045 (2026-07-18 audit): source the exclusion from the dye data's own
+    // isMetallic flag — the previous locale-derived ID list silently returned
+    // ALL dyes (metallics included) when no locale had ever been loaded
+    return this.getAllDyes().filter((dye) => !dye.isMetallic);
   }
 }

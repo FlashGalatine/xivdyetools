@@ -3,6 +3,8 @@
  * Strips internal fields (nameLower, categoryLower, lab) and adds marketItemID.
  */
 
+import { LocalizationService } from '@xivdyetools/core';
+import type { LocaleCode } from '@xivdyetools/types';
 import type { Dye } from '@xivdyetools/types';
 import { getMarketItemID } from '@xivdyetools/core';
 
@@ -62,4 +64,19 @@ export function serializeDyeWithDistance(
     dye: serializeDye(dye, localizedName),
     distance: Math.round(distance * 10000) / 10000,
   };
+}
+
+/**
+ * Resolve a dye's localized name for the given request locale.
+ *
+ * BUG-067 (2026-07-18 audit): Facewear entries carry synthetic negative
+ * itemIDs which are not keys in the locale dye-name maps — no localized names
+ * exist for them, so the lookup is skipped (documented in api-docs). English
+ * requests skip the lookup entirely (the canonical name is on Dye.name).
+ * BUG-006: the locale is passed explicitly — never read from singleton state.
+ */
+export function localizedNameFor(dye: Dye, locale: string): string | undefined {
+  if (locale === 'en') return undefined;
+  if (dye.itemID < 0) return undefined; // Facewear — see BUG-067
+  return LocalizationService.getDyeName(dye.itemID, locale as LocaleCode) || undefined;
 }

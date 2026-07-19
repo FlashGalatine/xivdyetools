@@ -71,6 +71,10 @@ export class ColorService {
     rgbToHsv: number;
     hsvToRgb: number;
     hexToHsv: number;
+    // REFACTOR-015 (2026-07-18 audit): these two were returned at runtime but
+    // omitted from the declared type, hiding them from TypeScript consumers
+    rgbToLab: number;
+    rgbToOklab: number;
     colorblind: number;
   } {
     const converterStats = ColorConverter.getCacheStats();

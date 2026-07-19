@@ -54,3 +54,7 @@ LOW (mechanical; conversion tests already cover shorthand and case variants)
 None meaningful — pure refactor of already-validated input (`isValidHexColor` gate precedes it).
 
 > Source: evidence/core-analysis.md (2026-07-18 deep-dive, core area)
+
+## Status
+
+**DONE 2026-07-19** — `normalizeHexKey` is the single normalization used as both cache key and parse source in hexToRgb/hexToHsv.
