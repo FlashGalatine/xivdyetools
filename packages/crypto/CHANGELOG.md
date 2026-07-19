@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-07-19
+
+### Changed
+
+- **OPT-019** (2026-07-18 audit): `base64UrlEncodeBytes` builds its intermediate string with chunked `String.fromCharCode.apply` (32k chunks) instead of one append per byte — identical output, ~10-50× faster for KB+ payloads.
+
 ## [1.1.0] - 2026-02-21
 
 ### Security

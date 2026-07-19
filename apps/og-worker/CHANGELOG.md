@@ -5,6 +5,23 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-07-19
+
+2026-07-18 audit remediation (Sprint 7) — OG image fidelity.
+
+### Fixed
+
+- **BUG-031**: the validated `?algo=` and 3-dye `ratio` parameters are finally used — harmony match deltas, gradient interpolation space (OKLAB / CIELAB / RGB via core's mixers), and blend/step matching all honor the requested algorithm, and the 3-dye mixer applies the ratio (A = ratio%, B/C split the remainder). The "Algorithm:" footer on shared images no longer advertises math that didn't run.
+- **BUG-068**: `renderOGImage` takes explicit `{ browser, edge }` TTLs — the old single parameter was silently multiplied by 7 for the edge, giving `/og/default.png` a 49-day edge TTL against a "cache for 7 days" comment.
+- **BUG-069**: pass-throughs guard against fetching the worker's own `og.` custom domain — stray non-crawler hits get a 302/404 instead of a Cloudflare 1042 self-fetch error page.
+
+### Changed
+
+- **REFACTOR-009**: the local fork of the SVG primitives is replaced by `@xivdyetools/svg` re-exports (~230 duplicated lines gone) — inheriting the package's attribute escaping and CJK-aware truncation, which fixes ja/ko/zh dye names overflowing their OG swatch columns.
+- **REFACTOR-024**: CLAUDE.md font documentation matches reality (five bundled fonts incl. CJK subsets + regeneration trigger); one shared `DyeService` instance instead of two per isolate; locale resolution deduplicated across all seven image routes.
+- **OPT-005**: character-color-by-hex lookup uses a lazily built reverse index — one `Map.get` instead of up to 64 sequential sheet scans per swatch request.
+- **OPT-023**: O(1) itemID lookups via a precomputed map; the harmony scan computes ΔE only for winning candidates (~99% fewer computations).
+
 ## [1.3.0] - 2026-05-29
 
 ### Added

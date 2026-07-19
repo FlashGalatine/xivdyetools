@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-07-19
+
+2026-07-18 audit remediation (Sprint 5).
+
+### Fixed
+
+- **BUG-038**: message context is keyed by the bot reply's message ID (reactions arrive on the reply, so handlers can actually find the context; multi-match responses no longer overwrite one another), and the dead reaction affordances were removed until a reaction listener ships.
+
 ## [0.1.4] - 2026-03-18
 
 ### Removed

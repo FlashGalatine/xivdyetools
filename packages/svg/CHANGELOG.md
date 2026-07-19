@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-07-19
+
+2026-07-18 audit remediation (Sprint 6).
+
+### Fixed
+
+- **BUG-056**: emoji removed from SVG text (preset-swatch category icon, random-dyes default title) — the bundled resvg fonts have no emoji glyphs, so they rendered as tofu boxes in generated PNGs. `CATEGORY_DISPLAY` icons remain exported for Discord message text.
+- **BUG-060**: `truncateText` slices by code points, so truncation can no longer bisect a surrogate pair (emoji in preset names) and render U+FFFD before the ellipsis.
+- **BUG-063**: `generateGradientColors(start, end, 1)` returns `[start]` instead of `['#NaNNaNNaN']` (0/0 division guard).
+- **OPT-018**: the contrast matrix computes each symmetric pair once (30 → 15 calls at 6 dyes) via an unordered-pair cache.
+
+### Changed
+
+- **REFACTOR-019**: every string attribute in the SVG primitives (fill, stroke, dashArray, fontFamily, transform) is escaped with `escapeXml` — hostile or malformed values can no longer close an attribute and inject sibling elements.
+- **REFACTOR-020**: `estimateTextWidth` counts Fullwidth Forms, Fullwidth Signs, and Hangul Jamo as wide, so localized badges size correctly for ja/zh/ko punctuation.
+- **REFACTOR-004**: match-quality classification delegates to `classifyMatchDistance` from `@xivdyetools/types` (inclusive boundaries) — `palette-grid`'s exported helper and its formerly self-contradicting inline badge copy, plus `budget-comparison`, now agree with bot-logic at boundary distances.
+
+### Added
+
+- **REFACTOR-022**: `AccessibilityComparisonOptions.labels?: Partial<VisionLabels>` — caller-supplied translated vision-type labels merged over the English defaults (new `VisionLabels` export), mirroring the labels-object convention of the other generators.
+
 ## [1.1.2] - 2026-03-01
 
 ### Added

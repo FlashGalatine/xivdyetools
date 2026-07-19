@@ -2,6 +2,31 @@
 
 ---
 
+## Web-App Version 4.12.0 — July 19, 2026
+
+### Full release history in the "What's New" window
+
+A new scroll-icon button in the header opens this changelog as a browsable release history, so you can catch up on everything that changed — not just the latest version. (The automatic "What's New" popup after updates was also fixed; it had been showing up empty.)
+
+### Palette Extractor feels much faster
+
+- **The "Extracting…" state now actually appears** when you extract a palette. Before, the app froze for the whole extraction without any feedback.
+- **Big images extract much faster.** A 4K screenshot now takes a fraction of the time it used to, with no visible loss in palette quality.
+
+### Your settings can no longer silently stop saving
+
+Uploaded images used to be stored in the same small storage space as your settings, favorites, and collections — and a large image could fill it completely, making everything else quietly fail to save. Images now live in their own, much larger storage area, and anything stuck in the old location is moved over automatically.
+
+### Under-the-hood reliability
+
+This release also includes a broad batch of behind-the-scenes fixes from a full code audit — more accurate Market Board price handling, sturdier tool cleanup when switching between tools, and general hardening across the app.
+
+### What you need to do
+
+Nothing. These changes are automatic and available immediately after deployment.
+
+---
+
 ## Web-App Version 4.11.0 — May 31, 2026
 
 ### New Spectrum Filters in the Color Palette

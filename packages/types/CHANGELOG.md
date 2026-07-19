@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0] - 2026-07-19
+
+2026-07-18 audit remediation (Sprints 4 & 6).
+
+### Added
+
+- **Shared match-quality tiers (REFACTOR-004)**: `MATCH_QUALITY_TIERS`, `classifyMatchDistance()`, and `MatchQualityKey` in the color module — the single source of truth for the RGB-distance quality thresholds previously duplicated four times across `@xivdyetools/bot-logic` and `@xivdyetools/svg` with inconsistent boundary operators (a distance of exactly 10 was "excellent" in one copy and "good" in another). Semantics standardized on inclusive `<=` boundaries.
+
 ## [1.14.0] — 2026-04-29
 
 ### Removed

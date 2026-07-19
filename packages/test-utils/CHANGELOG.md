@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.8] - 2026-07-19
+
+2026-07-18 audit remediation (Sprints 1 & 6).
+
+### Fixed
+
+- **BUG-062**: MockD1's `exec()` (db and session objects) pushes an empty bindings entry, keeping `_queries`/`_bindings` index-aligned for positional assertions and history eviction.
+- MockD1 `batch()` routes through `run()` semantics (honors RETURNING rows and mutation meta), matching real D1 behavior (Sprint 1).
+
 ## [1.1.6] - 2026-03-14
 
 ### Changed

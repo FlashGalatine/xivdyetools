@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-07-18
+
+2026-07-18 audit remediation (Sprint 1) — deployed to production 2026-07-18.
+
+### Fixed
+
+- **CRITICAL — moderation self-approval**: closed the state-machine gap that allowed a submitter to approve their own preset; moderation transitions are now validated server-side.
+- Moderation state-machine hardening across approve/reject/revert transitions, with D1 `batch()` used as a single transaction and `changes()`-gated updates so concurrent moderation actions cannot double-apply.
+- **Migration 0006**: unique index on preset signatures (applied to production after verifying zero duplicate signatures; also surfaced and corrected the fact that migration 0004's index had never been applied as UNIQUE in production).
+
 ## [1.5.0] - 2026-04-07
 
 ### Security

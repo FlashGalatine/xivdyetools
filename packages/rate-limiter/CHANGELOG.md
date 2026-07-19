@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-07-19
+
+2026-07-18 audit remediation (Sprints 5 & 6).
+
+### Fixed
+
+- **BUG-022 / OPT-002**: `KVRateLimiter`'s fake optimistic concurrency removed — the version metadata was written but never compared, and the post-put verification read could **double-count** a request while costing a billed KV read on every allowed request. `increment()` is now an honest best-effort read→put (3 → 2 reads per admitted request); retries apply only to thrown KV errors; class docs describe the best-effort fixed-window semantics and point strict use-cases at Upstash INCR / Durable Objects.
+- **BUG-023**: `MemoryRateLimiter` cleanup uses each key's own (largest-seen) window instead of the current request's — heterogeneous-window configs on a shared instance no longer purge each other's history.
+- **BUG-055**: `UpstashRateLimiter` reports the key's actual remaining TTL (pipelined `TTL` command, same round-trip) — `Retry-After`/`X-RateLimit-Reset` no longer overstate the wait by up to a full window.
+- **BUG-064**: `KVRateLimiter.check()` threads one `Date.now()` through `checkOnly` + `increment` so both operations address the same fixed-window key across a window boundary.
+
+### Added
+
+- `autocomplete` preset in `DISCORD_COMMAND_LIMITS` (60/min + burst 10) for Discord autocomplete interactions (Sprint 5).
+
 ## [1.4.4] - 2026-03-18
 
 ### Performance

@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-19
+
+2026-07-18 audit remediation (Sprint 6) — redaction hardening.
+
+### Fixed
+
+- **BUG-024**: context redaction now matches case-insensitively with separators collapsed (`Token`, `Authorization`, `jwtSecret` all redact), adds a sensitive-suffix heuristic (`…token/…secret/…password/…apikey` catches `sessionToken`, `webhookSecret`, …), and replaces the fixed depth-3 recursion cap with a WeakSet cycle guard so deeply nested secrets are redacted too.
+- **BUG-025**: `sanitizeErrorMessage` catches JSON-quoted keys and spaced separators (`{"access_token":"…"}`, `token = …`) plus a JSON-shaped sweep over all sensitive-suffixed quoted keys — the shapes third-party API clients actually emit in error messages.
+- **BUG-026**: the browser preset's `errorTracker` path (e.g. Sentry) now redacts context and sanitizes error/warn messages before forwarding; previously the one path where data left the origin bypassed the entire redaction pipeline.
+- **OPT-020**: `child()` loggers implement `time()`/`timeAsync()` locally so timing entries carry the child context (`requestId` etc.) and are joinable per request.
+
+### Added
+
+- Public `redactContext(context)` / `sanitizeMessage(message)` on `BaseLogger` for wrappers that forward data to third parties.
+
+### Changed
+
+- **REFACTOR-021**: `BrowserLoggerOptions.devOnly` is actually wired — `devOnly: false` keeps `debug`-level logging in production builds as documented (previously accepted and silently ignored).
+
 ## [1.2.2] - 2026-03-01
 
 ### Changed

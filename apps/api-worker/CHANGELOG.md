@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-07-19
+
+2026-07-18 audit remediation (Sprint 4).
+
+### Fixed
+
+- Route, middleware, and validation fixes from the Sprint 4 batch (see `docs/audits/2026-07-18/` finding Status sections); consumes `@xivdyetools/core` 2.7.0 with the exact perceptual-search fix so `/v1` match results are correct at radius boundaries.
+
 ## [0.4.0] - 2026-04-29
 
 ### Removed

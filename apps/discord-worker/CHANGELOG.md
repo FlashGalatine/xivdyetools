@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.7.0] - 2026-07-19
+
+2026-07-18 audit remediation (Sprint 5) — bot reliability & bundle headroom.
+
+### Fixed
+
+- **BUG-009 (HIGH)**: moderation approve/reject buttons finally work — Discord routes component clicks to the application that owns the message, so embeds posted with the main bot's token could never reach moderation-worker's handlers. All three moderation-embed paths now go through one shared sanitized builder (`preset-notifications.ts`); when the new `MODERATION_BOT_TOKEN` secret is set, embeds post via the moderation application (buttons work); when unset, buttons are omitted with a `/preset moderate` hint instead of dead UI.
+- **BUG-035**: throw-safe, outcome-checked Discord API wrappers (`safeEditOriginalResponse` / `safeSendFollowUp`) at every deferred call site — silent 4xx failures no longer strand users on an eternal "Bot is thinking…" with no log trail.
+- **BUG-033**: Universalis aggregated responses use the world → DC → region scope cascade, so world-scoped `/budget` queries no longer report datacenter-minimum prices as the user's world price.
+- **BUG-034**: `/preset` exact-name lookup fetches a full page (limit 25) so the exact match is actually reachable.
+- **BUG-037**: `/stats` unique-user count follows KV list cursors (no 1,000-user cap).
+- **BUG-072/074**: sanitization applied unconditionally in moderation embeds; webhook Discord-send failures return 502 so presets-api's retry/dead-letter engages; changelog fetch has a 10 s timeout; shaped `app.onError`.
+- **BUG-073**: MODERATOR_IDS parsed via the shared `@xivdyetools/bot-logic` grammar (whitespace/comma + snowflake validation).
+- **BUG-075**: component-context TTL capped at Discord's 15-minute interaction-token lifetime.
+
+### Changed
+
+- **OPT-006**: `/budget` serves stale-if-error prices (≤15 min old, flagged `pricesStale`) instead of failing during Universalis outages.
+- **OPT-007**: preset favorites store denormalized `{id, name}` entries (v2 schema, lazy migration) — favorites autocomplete dropped from up to 50 service-binding subrequests per keystroke to zero; new fail-soft 60/min autocomplete rate limit.
+- **OPT-008**: analytics no-op verification read deleted (3 fewer KV reads per command).
+- **OPT-009**: ~21 MiB of unused full-size CJK source fonts moved out of wrangler's bundling reach (`fonts-src/`).
+- **OPT-026**: `/budget` reads user preferences once per interaction via `createUserTranslatorWithPrefs`.
+- **BUG-036** documented as a known limitation (single-blob KV read-modify-write race; durable fix needs a data migration).
+
 ## [4.6.1] - 2026-06-09
 
 ### Removed

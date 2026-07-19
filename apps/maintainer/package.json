@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-maintainer",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "description": "Developer tool for adding new dyes to xivdyetools-core",
   "type": "module",

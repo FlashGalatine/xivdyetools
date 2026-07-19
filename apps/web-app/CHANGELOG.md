@@ -7,10 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [4.12.0] - 2026-07-19
 
 ### Added
 
+- **BaseComponent subscription management (REFACTOR-002 step 1, 2026-07-18 audit)**: `BaseComponent` now owns a `protected subs: SubscriptionManager` and calls `unsubscribeAll()` automatically in `destroy()` — service-subscription cleanup is guaranteed by the base class. All seven hand-rolled tools (accessibility, budget, comparison, extractor, gradient, swatch, mixer) converted from per-service `xyzUnsubscribe` fields to `this.subs.add(...)`; harmony's private shadowing instance removed. Steps 2-4 (price mixin, shared result-card renderer, drawer builder) remain as documented follow-ups
 - **"What's New" changelog modal**: New scroll-icon button in the v4 header ([`src/components/v4/v4-app-header.ts`](src/components/v4/v4-app-header.ts)), grouped with About/Language/Theme, that opens the layman's changelog as a full release-history modal. A new `changelog-click` event bubbles through [`v4-layout-shell.ts`](src/components/v4/v4-layout-shell.ts) to [`v4-layout.ts`](src/components/v4-layout.ts), which calls the new `showChangelogModal()` singleton. New `ICON_SCROLL` (scroll/parchment) in [`src/shared/ui-icons.ts`](src/shared/ui-icons.ts); the button tooltip reuses the existing `changelog.title` locale key, so no new locale keys were added
 - **Full-history mode for `ChangelogModal`**: `show({ full: true })` plus exported `showChangelogModal()` / `closeChangelogModal()` in [`src/components/changelog-modal.ts`](src/components/changelog-modal.ts) render every parsed release with its own version heading. The automatic "version changed" popup keeps its existing current-plus-recent behavior
 - **Layman's changelog backfill**: Plain-language entries for user-facing releases v4.0.0 through v4.10.0 added to [`CHANGELOG-laymans.md`](CHANGELOG-laymans.md) so the modal shows the full v4 history; dependency bumps, lint passes, and security/maintenance-only patches were intentionally folded out
@@ -18,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Palette Extractor responsiveness (OPT-011, 2026-07-18 audit)**: a frame yield before extraction makes the "Extracting…" button state actually paint (previously the synchronous K-means work started before the browser could render it), and the K-means input is grid-sampled to ~100k pixels — a 4K screenshot does ~80× less blocking work with negligible palette-quality loss
+- **Palette Extractor storage (OPT-012, 2026-07-18 audit)**: uploaded images persist to a new `image_cache` IndexedDB store (DB v2) instead of a multi-MB data-URL in localStorage, which could consume ~80% of the shared ~5 MB quota and make every later settings/favorites/collection write silently fail with `QuotaExceededError`. One-time migration of the legacy `v3_matcher_image` key; async writes off the image-load path; size cap raised 2 MB → 8 MB
+- **Audit Sprint 3 fixes (2026-07-18 audit)**: market-board pricing, storage-service, and v4-layout corrections from the web-app sprint — see `docs/audits/2026-07-18/` finding Status sections for the itemized list
 - **Automatic "What's New" popup was silently empty**: [`vite-plugin-changelog-parser.ts`](vite-plugin-changelog-parser.ts) now parses the current `CHANGELOG-laymans.md` format (`## Web-App Version X.Y.Z — Date` headers and `###` sections, with `**bold**` stripped from bullets and the trailing footer trimmed at the `---` rule). The previous regex expected `# What's New in Version X.Y.Z` and matched nothing, leaving `virtual:changelog` empty so the popup fell back to `changelog.noChanges`. `parseChangelog` is now exported for testing
 
 ---

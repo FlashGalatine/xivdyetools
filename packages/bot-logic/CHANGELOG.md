@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-19
+
+2026-07-18 audit remediation (Sprints 4 & 5).
+
+### Added
+
+- **`moderators` module** (BUG-073 / REFACTOR-010 partial): `parseModeratorIds` (whitespace/comma separators + Discord snowflake validation), `isModeratorId`, `isValidDiscordSnowflake` — one shared MODERATOR_IDS grammar consumed by both discord-worker and moderation-worker, ending the parser drift that could silently lock all moderators out.
+
+### Changed
+
+- **REFACTOR-004**: `getMatchQualityInfo` delegates to the shared `classifyMatchDistance` from `@xivdyetools/types`; emoji display metadata stays local.
+- Match results are sorted by the displayed metric (Sprint 4) so the ordering shown in embeds matches the deltas printed on them.
+
 ## [1.2.0] - 2026-04-03
 
 ### Added

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-07-19
+
+2026-07-18 audit remediation (Sprint 2).
+
+### Fixed
+
+- JWT issuance/refresh hardening: refresh rotation with `jti`-based revocation (KV-backed) and an `orig_iat` absolute session anchor so refresh chains cannot extend a session indefinitely.
+- OAuth `state` signing and verification hardening; consolidated the dual JWT verifier paths flagged by the 2026-05-28 audit.
+- Uses `@xivdyetools/auth` 1.2.0 primitives throughout (single verifier implementation).
+
 ## [2.4.1] - 2026-05-29
 
 ### Documentation

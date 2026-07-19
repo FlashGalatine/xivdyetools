@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-07-19
+
+2026-07-18 audit remediation (Sprint 8).
+
+### Fixed
+
+- **BUG-081**: `stripDyePrefix` genuinely tries the U+FF1A full-width colon variant — the previous "full-width colon" entry was the same ASCII `:` twice (visually near-identical), so a configured prefix without a colon never stripped `カララント：…` from Japanese names.
+
+### Changed
+
+- **OPT-029**: the four XIVAPI locale fetches run concurrently via `Promise.allSettled` (per-language errors preserved in deterministic order) — ~4× faster on the happy path; worst case with XIVAPI unreachable drops from 40 s of stacked timeouts to 10 s.
+
 ## [1.0.2] - 2026-03-09
 
 ### Changed

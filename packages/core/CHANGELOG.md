@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] — 2026-07-19
+
+2026-07-18 audit remediation (Sprint 4).
+
+### Fixed
+
+- **REFACTOR-003**: perceptual dye search (`DyeSearch`) uses an exact linear scan for perceptual distance methods — the previous k-d-radius approach could return an in-radius worse dye while the true nearest sat outside the radius (proven by the new `DyeSearch.parity.test.ts`).
+- **BUG-005**: `ColorConverter`'s LRU caches return defensive copies, so callers mutating a returned RGB/HSV/LAB object can no longer poison the process-wide cache.
+- **REFACTOR-014**: `hexToRgb` uses one normalization pass as both cache key and parse source (was computed twice, asymmetrically).
+- `APIService` batches Universalis requests above the 100-item API limit (previously a latent failure for >100-item queries).
+
+### Changed
+
+- Assorted `ColorManipulator`, `LocalizationService`, `DyeService`, and `DyeDatabase` audit fixes from the Sprint 4 batch (see `docs/audits/2026-07-18/` finding Status sections for details).
+
 ## [2.6.0] — 2026-04-29
 
 ### Removed

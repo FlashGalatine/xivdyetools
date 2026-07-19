@@ -2,6 +2,12 @@
 
 All notable changes to `@xivdyetools/worker-middleware` will be documented in this file.
 
+## [1.2.0] - 2026-07-19
+
+### Fixed
+
+- **BUG-061** (2026-07-18 audit): the `backend` factory result is memoized per isolate — passing `(c) => new MemoryRateLimiter()` can no longer construct a fresh empty limiter per request and silently disable rate limiting (constraint documented on the option). The backend-error catch now logs the actual error message instead of swallowing it, making KV outages/misconfigurations diagnosable from logs.
+
 ## [1.1.2] — 2026-04-29
 
 ### Fixed

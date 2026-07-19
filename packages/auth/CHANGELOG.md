@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-07-19
+
+2026-07-18 audit remediation (Sprints 2 & 6).
+
+### Added
+
+- JWT/session hardening from Sprint 2: `jti`-based revocation support and `orig_iat` absolute session anchoring used by the oauth worker's refresh rotation.
+
+### Fixed
+
+- **BUG-059**: `verifyDiscordRequest`'s authoritative body-size check measures UTF-8 **bytes** (`TextEncoder`) instead of UTF-16 code units — CJK/emoji payloads could previously exceed the intended byte cap by up to ~4× before the check fired.
+
 ## [1.1.2] - 2026-03-18
 
 ### Fixed

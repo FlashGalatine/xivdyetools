@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-07-19
+
+2026-07-18 audit remediation (Sprint 7) — cache semantics.
+
+### Fixed
+
+- **BUG-027**: `Vary: Origin` on all responses — shared HTTP caches can no longer replay one allowed origin's `Access-Control-Allow-Origin` to the other, causing spurious CORS blocks (the exact failure class this proxy exists to eliminate).
+- **BUG-028**: stale SWR responses carry `Cache-Control: public, max-age=0, must-revalidate` (and `X-Cache: HIT-STALE`) instead of a full fresh `max-age` — browsers no longer treat up-to-7-minute-old prices as fresh for another 5 minutes. Fresh responses advertise `stale-while-revalidate=<swrWindow>`.
+- **BUG-065**: the 5 MB upstream response cap is enforced by a streamed byte budget, closing the bypass for chunked responses without `Content-Length`; oversized bodies get a dedicated 502 message.
+- **BUG-066**: client-IP extraction uses the shared `getClientIp()` (spoofable `X-Forwarded-For` fallback removed); the per-isolate memory limiter is explicitly documented as best-effort.
+
+### Changed
+
+- **OPT-021**: the cache write happens inside the coalesced fetch — one `cache.put` per burst instead of one per waiting request.
+- **OPT-022**: item IDs are deduplicated (not just sorted) and the upstream URL is canonicalized (sorted + deduped IDs, lowercased datacenter), collapsing duplicate-bearing queries onto one cache entry and one upstream URL.
+
 ## [1.4.5] - 2026-04-29
 
 ### Added

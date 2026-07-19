@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-19
+
+2026-07-18 audit remediation (Sprint 5).
+
+### Fixed
+
+- **BUG-035**: throw-safe, outcome-checked Discord API wrappers (`safeSendMessage` / `safeEditMessage`) at every call site — API failures are logged instead of silently dropped.
+- **BUG-073**: MODERATOR_IDS parsed via the shared `@xivdyetools/bot-logic` grammar (whitespace/comma separators + snowflake validation) — the code now matches its documentation.
+- **REFACTOR-027 (docs)**: CLAUDE.md corrected to state what the inter-worker HMAC actually signs (`timestamp:userId:userName`); signature v2 (binding method/path/body) deferred to the shared-signer extraction.
+
 ## [1.2.0] - 2026-04-07
 
 ### Security
