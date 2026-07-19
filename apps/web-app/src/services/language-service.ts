@@ -107,6 +107,14 @@ export class LanguageService {
         await this.loadWebAppTranslations(locale);
       }
 
+      // BUG-041 (2026-07-18 audit): t()'s documented English fallback needs
+      // the en bundle in the cache — previously it was only ever loaded when
+      // the locale WAS en (or its file failed), so non-English users saw raw
+      // dot-path keys for any string not yet translated in their locale
+      if (locale !== 'en' && !webAppTranslations.has('en')) {
+        await this.loadWebAppTranslations('en');
+      }
+
       this.currentLocale = locale;
 
       // Save preference

@@ -136,8 +136,10 @@ export class HarmonyTool extends BaseComponent {
   private get showPrices(): boolean {
     return this.marketBoardService.getShowPrices();
   }
-  private get priceData(): Map<number, PriceData> {
-    return this.marketBoardService.getAllPrices();
+  // OPT-027 (2026-07-18 audit): read-only view, no per-access map clone —
+  // this getter is hit inside per-card render loops
+  private get priceData(): ReadonlyMap<number, PriceData> {
+    return this.marketBoardService.getPricesView();
   }
 
   // Display options (from ConfigController)

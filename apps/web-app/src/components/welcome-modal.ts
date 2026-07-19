@@ -142,9 +142,12 @@ export class WelcomeModal {
       closeOnBackdrop: true,
       closeOnEscape: true,
       onClose: () => {
-        if (this.dontShowAgain) {
-          WelcomeModal.markAsSeen();
-        }
+        // BUG-077 (2026-07-18 audit): any close counts as "seen" — matching
+        // the documented "shows only once" behavior. Previously X/backdrop/
+        // Escape left WELCOME_SEEN unset, so the modal nagged on every visit
+        // AND (because markAsSeen is the first writer of LAST_VERSION_VIEWED)
+        // permanently suppressed the changelog auto-popup for those users.
+        WelcomeModal.markAsSeen();
         this.modalId = null;
       },
     });

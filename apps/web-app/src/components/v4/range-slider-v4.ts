@@ -303,16 +303,20 @@ export class RangeSliderV4 extends BaseLitComponent {
   protected override render(): TemplateResult {
     return html`
       <div class="slider-wrapper">
-        ${this.label || this.showValue
-          ? html`
-              <div class="slider-header">
-                ${this.label ? html`<span class="slider-label">${this.label}</span>` : nothing}
-                ${this.showValue
-                  ? html`<span class="slider-value">${this.formattedValue}</span>`
-                  : nothing}
-              </div>
-            `
-          : nothing}
+        ${
+          this.label || this.showValue
+            ? html`
+                <div class="slider-header">
+                  ${this.label ? html`<span class="slider-label">${this.label}</span>` : nothing}
+                  ${
+                    this.showValue
+                      ? html`<span class="slider-value">${this.formattedValue}</span>`
+                      : nothing
+                  }
+                </div>
+              `
+            : nothing
+        }
         <div class="slider-track-wrapper">
           <div class="slider-fill" style="width: ${this.fillPercentage}%"></div>
           <input

@@ -66,6 +66,8 @@ REFACTOR-001 is the anchor: extend `@xivdyetools/auth` (jti/iss/revocation), mig
 
 ## Sprint 3 — web-app: pricing correctness & UX bugs
 
+**✅ COMPLETED 2026-07-19** — all 15 items fixed (see each finding's Status section). Deploy needs: one web-app release (version bump + `npm run build:check` + Pages deploy).
+
 BUG-010 is the last open HIGH with direct user impact (105 dyes lose prices in two tools). Ends with one web-app release.
 
 | ID | Sev/Pri | Item |

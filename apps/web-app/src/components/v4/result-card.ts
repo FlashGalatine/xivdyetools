@@ -1345,293 +1345,327 @@ export class ResultCard extends BaseLitComponent {
           <!-- Technical Column -->
           <div class="detail-column">
             <div class="column-header">${LanguageService.t('common.technical')}</div>
-            ${this.showDeltaE
-              ? html`
-                  <div class="detail-row">
-                    <span
-                      class="detail-label"
-                      title="${this.data?.matchingMethod
-                        ? `Distance calculated using ${this.getMatchingMethodLabel(this.data.matchingMethod)} algorithm`
-                        : 'Color distance'}"
-                      >${this.getMatchingMethodLabel(this.data?.matchingMethod)}</span
-                    >
-                    <span
-                      class="detail-value ${this.getDeltaEClass(deltaE, this.data?.matchingMethod)}"
-                    >
-                      ${deltaE !== undefined ? deltaE.toFixed(2) : '—'}
-                    </span>
-                  </div>
-                `
-              : nothing}
-            ${this.showDeltaE && hueDeviance !== undefined
-              ? html`
-                  <div class="detail-row">
-                    <span class="detail-label">Hue°</span>
-                    <span class="detail-value">${hueDeviance.toFixed(1)}°</span>
-                  </div>
-                `
-              : nothing}
-            ${this.showHex
-              ? html`
-                  <div class="detail-row">
-                    <span class="detail-label">HEX</span>
-                    <span class="detail-value">${matchedColor.toUpperCase()}</span>
-                  </div>
-                `
-              : nothing}
-            ${this.showRgb
-              ? html`
-                  <div class="detail-row">
-                    <span class="detail-label">RGB</span>
-                    <span class="detail-value">${dye.rgb.r}, ${dye.rgb.g}, ${dye.rgb.b}</span>
-                  </div>
-                `
-              : nothing}
-            ${this.showHsv && hsv
-              ? html`
-                  <div class="detail-row">
-                    <span class="detail-label">HSV</span>
-                    <span class="detail-value"
-                      >${Math.round(hsv.h)}°, ${Math.round(hsv.s)}%, ${Math.round(hsv.v)}%</span
-                    >
-                  </div>
-                `
-              : nothing}
-            ${this.showLab
-              ? html`
-                  <div class="detail-row">
-                    <span class="detail-label">LAB</span>
-                    <span class="detail-value">${this.formatLabValues()}</span>
-                  </div>
-                `
-              : nothing}
+            ${
+              this.showDeltaE
+                ? html`
+                    <div class="detail-row">
+                      <span
+                        class="detail-label"
+                        title="${
+                          this.data?.matchingMethod
+                            ? `Distance calculated using ${this.getMatchingMethodLabel(this.data.matchingMethod)} algorithm`
+                            : 'Color distance'
+                        }"
+                        >${this.getMatchingMethodLabel(this.data?.matchingMethod)}</span
+                      >
+                      <span
+                        class="detail-value ${this.getDeltaEClass(deltaE, this.data?.matchingMethod)}"
+                      >
+                        ${deltaE !== undefined ? deltaE.toFixed(2) : '—'}
+                      </span>
+                    </div>
+                  `
+                : nothing
+            }
+            ${
+              this.showDeltaE && hueDeviance !== undefined
+                ? html`
+                    <div class="detail-row">
+                      <span class="detail-label">Hue°</span>
+                      <span class="detail-value">${hueDeviance.toFixed(1)}°</span>
+                    </div>
+                  `
+                : nothing
+            }
+            ${
+              this.showHex
+                ? html`
+                    <div class="detail-row">
+                      <span class="detail-label">HEX</span>
+                      <span class="detail-value">${matchedColor.toUpperCase()}</span>
+                    </div>
+                  `
+                : nothing
+            }
+            ${
+              this.showRgb
+                ? html`
+                    <div class="detail-row">
+                      <span class="detail-label">RGB</span>
+                      <span class="detail-value">${dye.rgb.r}, ${dye.rgb.g}, ${dye.rgb.b}</span>
+                    </div>
+                  `
+                : nothing
+            }
+            ${
+              this.showHsv && hsv
+                ? html`
+                    <div class="detail-row">
+                      <span class="detail-label">HSV</span>
+                      <span class="detail-value"
+                        >${Math.round(hsv.h)}°, ${Math.round(hsv.s)}%, ${Math.round(hsv.v)}%</span
+                      >
+                    </div>
+                  `
+                : nothing
+            }
+            ${
+              this.showLab
+                ? html`
+                    <div class="detail-row">
+                      <span class="detail-label">LAB</span>
+                      <span class="detail-value">${this.formatLabValues()}</span>
+                    </div>
+                  `
+                : nothing
+            }
           </div>
 
           <!-- Acquisition Column - only show if acquisition, price, or consolidation enabled -->
-          ${this.showAcquisition || this.showPrice || this.showConsolidation
-            ? html`
-                <div class="detail-column">
-                  <div class="column-header">${LanguageService.t('common.acquisition')}</div>
-                  ${this.showConsolidation
-                    ? html`
-                        <div class="detail-row">
-                          <span class="detail-label">${LanguageService.t('common.spectrum')}</span>
-                          <span class="detail-value">${this.formatConsolidation()}</span>
-                        </div>
-                      `
-                    : nothing}
-                  ${this.showAcquisition
-                    ? html`
-                        <div class="detail-row">
-                          <span class="detail-label">${LanguageService.t('common.source')}</span>
-                          <span class="detail-value"
-                            >${dye.acquisition
-                              ? LanguageService.getAcquisition(dye.acquisition)
-                              : '—'}</span
-                          >
-                        </div>
-                        <div class="detail-row">
-                          <span class="detail-label">${LanguageService.t('common.cost')}</span>
-                          <span class="detail-value"
-                            >${this.formatVendorCost(vendorCost, dye.currency)}</span
-                          >
-                        </div>
-                      `
-                    : nothing}
-                  ${this.showPrice
-                    ? html`
-                        <div class="detail-row">
-                          <span class="detail-label">${LanguageService.t('common.market')}</span>
-                          <span class="detail-value">${marketServer ?? 'N/A'}</span>
-                        </div>
-                        <div class="detail-row">
-                          <span
-                            class="detail-value large ${this.data?.marketError
-                              ? 'market-error'
-                              : ''}"
-                            >${this.formatPrice(price, this.data?.marketError)}</span
-                          >
-                        </div>
-                      `
-                    : nothing}
-                </div>
-              `
-            : nothing}
+          ${
+            this.showAcquisition || this.showPrice || this.showConsolidation
+              ? html`
+                  <div class="detail-column">
+                    <div class="column-header">${LanguageService.t('common.acquisition')}</div>
+                    ${
+                      this.showConsolidation
+                        ? html`
+                            <div class="detail-row">
+                              <span class="detail-label"
+                                >${LanguageService.t('common.spectrum')}</span
+                              >
+                              <span class="detail-value">${this.formatConsolidation()}</span>
+                            </div>
+                          `
+                        : nothing
+                    }
+                    ${
+                      this.showAcquisition
+                        ? html`
+                            <div class="detail-row">
+                              <span class="detail-label"
+                                >${LanguageService.t('common.source')}</span
+                              >
+                              <span class="detail-value"
+                                >${
+                                  dye.acquisition
+                                    ? LanguageService.getAcquisition(dye.acquisition)
+                                    : '—'
+                                }</span
+                              >
+                            </div>
+                            <div class="detail-row">
+                              <span class="detail-label">${LanguageService.t('common.cost')}</span>
+                              <span class="detail-value"
+                                >${this.formatVendorCost(vendorCost, dye.currency)}</span
+                              >
+                            </div>
+                          `
+                        : nothing
+                    }
+                    ${
+                      this.showPrice
+                        ? html`
+                            <div class="detail-row">
+                              <span class="detail-label"
+                                >${LanguageService.t('common.market')}</span
+                              >
+                              <span class="detail-value">${marketServer ?? 'N/A'}</span>
+                            </div>
+                            <div class="detail-row">
+                              <span
+                                class="detail-value large ${
+                                  this.data?.marketError ? 'market-error' : ''
+                                }"
+                                >${this.formatPrice(price, this.data?.marketError)}</span
+                              >
+                            </div>
+                          `
+                        : nothing
+                    }
+                  </div>
+                `
+              : nothing
+          }
         </div>
 
         <!-- Action Bar at Bottom -->
-        ${this.showActions
-          ? html`
-              <div class="card-actions">
-                <div class="action-row">
-                  ${this.showSlotPicker
-                    ? html`
-                        <div class="slot-picker-container">
-                          <button
-                            class="primary-action-btn"
-                            type="button"
-                            aria-haspopup="true"
-                            aria-expanded=${this.slotMenuOpen}
-                            @click=${this.handleSelectClick}
-                          >
-                            ${this.primaryActionLabel}
-                          </button>
-                          <!-- Slot Picker Menu - Pops UP -->
-                          <div
-                            class="slot-picker-menu ${this.slotMenuOpen ? 'open' : ''}"
-                            role="menu"
-                            aria-hidden=${!this.slotMenuOpen}
-                          >
+        ${
+          this.showActions
+            ? html`
+                <div class="card-actions">
+                  <div class="action-row">
+                    ${
+                      this.showSlotPicker
+                        ? html`
+                            <div class="slot-picker-container">
+                              <button
+                                class="primary-action-btn"
+                                type="button"
+                                aria-haspopup="true"
+                                aria-expanded=${this.slotMenuOpen}
+                                @click=${this.handleSelectClick}
+                              >
+                                ${this.primaryActionLabel}
+                              </button>
+                              <!-- Slot Picker Menu - Pops UP -->
+                              <div
+                                class="slot-picker-menu ${this.slotMenuOpen ? 'open' : ''}"
+                                role="menu"
+                                aria-hidden=${!this.slotMenuOpen}
+                              >
+                                <button
+                                  class="slot-picker-item"
+                                  role="menuitem"
+                                  @click=${() => this.handleSlotAction(1)}
+                                >
+                                  ${LanguageService.t('common.replace')}
+                                  ${LanguageService.t('common.slot')} 1
+                                </button>
+                                <button
+                                  class="slot-picker-item"
+                                  role="menuitem"
+                                  @click=${() => this.handleSlotAction(2)}
+                                >
+                                  ${LanguageService.t('common.replace')}
+                                  ${LanguageService.t('common.slot')} 2
+                                </button>
+                              </div>
+                            </div>
+                          `
+                        : html`
                             <button
-                              class="slot-picker-item"
-                              role="menuitem"
-                              @click=${() => this.handleSlotAction(1)}
+                              class="primary-action-btn"
+                              type="button"
+                              @click=${this.handleSelectClick}
                             >
-                              ${LanguageService.t('common.replace')}
-                              ${LanguageService.t('common.slot')} 1
+                              ${this.primaryActionLabel}
+                            </button>
+                          `
+                    }
+                    <div class="context-menu-container">
+                      <button
+                        class="menu-btn ${this.menuOpen ? 'active' : ''}"
+                        type="button"
+                        aria-label="${LanguageService.t('aria.moreActions')}"
+                        aria-haspopup="true"
+                        aria-expanded=${this.menuOpen}
+                        @click=${this.handleMenuClick}
+                      >
+                        ${unsafeHTML(ICON_CONTEXT_MENU)}
+                      </button>
+                      <!-- Context Menu - Pops UP with nested submenus -->
+                      <div
+                        class="context-menu ${this.menuOpen ? 'open' : ''}"
+                        role="menu"
+                        aria-hidden=${!this.menuOpen}
+                      >
+                        <!-- Inspect Dye in... -->
+                        <div class="menu-item has-submenu" role="menuitem" tabindex="0">
+                          ${LanguageService.t('resultCard.inspectDyeIn')}
+                          <div class="submenu" role="menu">
+                            <button
+                              class="menu-item"
+                              role="menuitem"
+                              @click=${() => this.handleMenuAction('inspect-harmony')}
+                            >
+                              ${LanguageService.t('resultCard.tools.harmony')}
                             </button>
                             <button
-                              class="slot-picker-item"
+                              class="menu-item"
                               role="menuitem"
-                              @click=${() => this.handleSlotAction(2)}
+                              @click=${() => this.handleMenuAction('inspect-budget')}
                             >
-                              ${LanguageService.t('common.replace')}
-                              ${LanguageService.t('common.slot')} 2
+                              ${LanguageService.t('resultCard.tools.budget')}
+                            </button>
+                            <button
+                              class="menu-item"
+                              role="menuitem"
+                              @click=${() => this.handleMenuAction('inspect-accessibility')}
+                            >
+                              ${LanguageService.t('resultCard.tools.accessibility')}
+                            </button>
+                            <button
+                              class="menu-item"
+                              role="menuitem"
+                              @click=${() => this.handleMenuAction('inspect-comparison')}
+                            >
+                              ${LanguageService.t('resultCard.tools.comparison')}
+                            </button>
+                            <button
+                              class="menu-item"
+                              role="menuitem"
+                              @click=${() => this.handleMenuAction('inspect-swatch')}
+                            >
+                              ${LanguageService.t('resultCard.tools.swatch')}
                             </button>
                           </div>
                         </div>
-                      `
-                    : html`
-                        <button
-                          class="primary-action-btn"
-                          type="button"
-                          @click=${this.handleSelectClick}
-                        >
-                          ${this.primaryActionLabel}
-                        </button>
-                      `}
-                  <div class="context-menu-container">
-                    <button
-                      class="menu-btn ${this.menuOpen ? 'active' : ''}"
-                      type="button"
-                      aria-label="${LanguageService.t('aria.moreActions')}"
-                      aria-haspopup="true"
-                      aria-expanded=${this.menuOpen}
-                      @click=${this.handleMenuClick}
-                    >
-                      ${unsafeHTML(ICON_CONTEXT_MENU)}
-                    </button>
-                    <!-- Context Menu - Pops UP with nested submenus -->
-                    <div
-                      class="context-menu ${this.menuOpen ? 'open' : ''}"
-                      role="menu"
-                      aria-hidden=${!this.menuOpen}
-                    >
-                      <!-- Inspect Dye in... -->
-                      <div class="menu-item has-submenu" role="menuitem" tabindex="0">
-                        ${LanguageService.t('resultCard.inspectDyeIn')}
-                        <div class="submenu" role="menu">
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('inspect-harmony')}
-                          >
-                            ${LanguageService.t('resultCard.tools.harmony')}
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('inspect-budget')}
-                          >
-                            ${LanguageService.t('resultCard.tools.budget')}
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('inspect-accessibility')}
-                          >
-                            ${LanguageService.t('resultCard.tools.accessibility')}
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('inspect-comparison')}
-                          >
-                            ${LanguageService.t('resultCard.tools.comparison')}
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('inspect-swatch')}
-                          >
-                            ${LanguageService.t('resultCard.tools.swatch')}
-                          </button>
+
+                        <!-- Transform Dye in... -->
+                        <div class="menu-item has-submenu" role="menuitem" tabindex="0">
+                          ${LanguageService.t('resultCard.transformDyeIn')}
+                          <div class="submenu" role="menu">
+                            <button
+                              class="menu-item"
+                              role="menuitem"
+                              @click=${() => this.handleMenuAction('transform-gradient')}
+                            >
+                              ${LanguageService.t('resultCard.tools.gradient')}
+                            </button>
+                            <button
+                              class="menu-item"
+                              role="menuitem"
+                              @click=${() => this.handleMenuAction('transform-mixer')}
+                            >
+                              ${LanguageService.t('resultCard.tools.mixer')}
+                            </button>
+                          </div>
                         </div>
-                      </div>
 
-                      <!-- Transform Dye in... -->
-                      <div class="menu-item has-submenu" role="menuitem" tabindex="0">
-                        ${LanguageService.t('resultCard.transformDyeIn')}
-                        <div class="submenu" role="menu">
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('transform-gradient')}
-                          >
-                            ${LanguageService.t('resultCard.tools.gradient')}
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('transform-mixer')}
-                          >
-                            ${LanguageService.t('resultCard.tools.mixer')}
-                          </button>
-                        </div>
-                      </div>
+                        <div class="menu-divider"></div>
 
-                      <div class="menu-divider"></div>
-
-                      <!-- Open in browser... -->
-                      <div class="menu-item has-submenu" role="menuitem" tabindex="0">
-                        ${LanguageService.t('resultCard.openInBrowser')}
-                        <div class="submenu" role="menu">
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('external-universalis')}
-                          >
-                            Universalis
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('external-garlandtools')}
-                          >
-                            GarlandTools
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('external-teamcraft')}
-                          >
-                            TeamCraft
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('external-saddlebag')}
-                          >
-                            Saddlebag Exchange
-                          </button>
+                        <!-- Open in browser... -->
+                        <div class="menu-item has-submenu" role="menuitem" tabindex="0">
+                          ${LanguageService.t('resultCard.openInBrowser')}
+                          <div class="submenu" role="menu">
+                            <button
+                              class="menu-item"
+                              role="menuitem"
+                              @click=${() => this.handleMenuAction('external-universalis')}
+                            >
+                              Universalis
+                            </button>
+                            <button
+                              class="menu-item"
+                              role="menuitem"
+                              @click=${() => this.handleMenuAction('external-garlandtools')}
+                            >
+                              GarlandTools
+                            </button>
+                            <button
+                              class="menu-item"
+                              role="menuitem"
+                              @click=${() => this.handleMenuAction('external-teamcraft')}
+                            >
+                              TeamCraft
+                            </button>
+                            <button
+                              class="menu-item"
+                              role="menuitem"
+                              @click=${() => this.handleMenuAction('external-saddlebag')}
+                            >
+                              Saddlebag Exchange
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            `
-          : nothing}
+              `
+            : nothing
+        }
       </article>
     `;
   }

@@ -36,6 +36,15 @@ import '@components/v4/v4-layout-shell';
 let activeTool: BaseComponent | null = null;
 let layoutElement: V4LayoutShell | null = null;
 let _configController: ConfigController | null = null;
+
+// BUG-040 (2026-07-18 audit): monotonically increasing navigation sequence —
+// a loadToolContent invocation that discovers it was superseded after an
+// await must not instantiate its tool (orphaned instance with live
+// subscriptions) or clobber the newer navigation's DOM.
+let navigationSeq = 0;
+
+// BUG-078: pending first-visit tutorial prompt timer (cleared on navigation)
+let tutorialPromptTimer: ReturnType<typeof setTimeout> | null = null;
 let languageUnsubscribe: (() => void) | null = null;
 let configUnsubscribe: (() => void) | null = null;
 let modalContainer: ModalContainer | null = null;
@@ -108,11 +117,22 @@ function promptTutorialIfFirstVisit(tool: TutorialTool): void {
     return;
   }
 
-  // Mark as offered before prompting (prevents race conditions)
-  markTutorialOffered(tool);
+  // BUG-078 (2026-07-18 audit): managed timer, cleared on navigation; the
+  // route is re-validated and the one-time offer is only burned when the
+  // prompt actually fires — a raw uncancelled timer could pop the previous
+  // tool's tutorial over the current tool and permanently consume its offer.
+  if (tutorialPromptTimer !== null) {
+    clearTimeout(tutorialPromptTimer);
+  }
 
   // Small delay to let tool render completely before showing tutorial prompt
-  setTimeout(() => {
+  tutorialPromptTimer = setTimeout(() => {
+    tutorialPromptTimer = null;
+    // Route changed during the delay — this prompt belongs to the old tool
+    if (TOOL_TO_TUTORIAL[RouterService.getCurrentToolId()] !== tool) {
+      return;
+    }
+    markTutorialOffered(tool);
     TutorialService.promptStart(tool);
   }, 800);
 }
@@ -308,6 +328,18 @@ function getContentContainer(): HTMLElement | null {
  * Load tool content into the V4 layout content area
  */
 async function loadToolContent(toolId: ToolId): Promise<void> {
+  // BUG-040: rapid navigation overlaps invocations across the dynamic-import
+  // awaits; only the latest sequence may instantiate its tool
+  const seq = ++navigationSeq;
+  const superseded = (): boolean => seq !== navigationSeq;
+
+  // BUG-078: a tutorial prompt scheduled by the previous tool must not fire
+  // over this one
+  if (tutorialPromptTimer !== null) {
+    clearTimeout(tutorialPromptTimer);
+    tutorialPromptTimer = null;
+  }
+
   const contentContainer = getContentContainer();
 
   if (!contentContainer) {
@@ -352,6 +384,7 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
     switch (toolId) {
       case 'harmony': {
         const { HarmonyTool } = await import('@components/harmony-tool');
+        if (superseded()) return; // BUG-040: a newer navigation took over
         // In V4, tools render into the main content area
         // The ConfigSidebar handles configuration controls separately
         activeTool = new HarmonyTool(toolContainer, {
@@ -365,6 +398,7 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
       }
       case 'extractor': {
         const { ExtractorTool } = await import('@components/extractor-tool');
+        if (superseded()) return; // BUG-040: a newer navigation took over
         activeTool = new ExtractorTool(toolContainer, {
           leftPanel: mainPanel,
           rightPanel: mainPanel,
@@ -376,6 +410,7 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
       }
       case 'accessibility': {
         const { AccessibilityTool } = await import('@components/accessibility-tool');
+        if (superseded()) return; // BUG-040: a newer navigation took over
         activeTool = new AccessibilityTool(toolContainer, {
           leftPanel: mainPanel,
           rightPanel: mainPanel,
@@ -387,6 +422,7 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
       }
       case 'comparison': {
         const { ComparisonTool } = await import('@components/comparison-tool');
+        if (superseded()) return; // BUG-040: a newer navigation took over
         activeTool = new ComparisonTool(toolContainer, {
           leftPanel: mainPanel,
           rightPanel: mainPanel,
@@ -398,6 +434,7 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
       }
       case 'gradient': {
         const { GradientTool } = await import('@components/gradient-tool');
+        if (superseded()) return; // BUG-040: a newer navigation took over
         activeTool = new GradientTool(toolContainer, {
           leftPanel: mainPanel,
           rightPanel: mainPanel,
@@ -409,6 +446,7 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
       }
       case 'mixer': {
         const { MixerTool } = await import('@components/mixer-tool');
+        if (superseded()) return; // BUG-040: a newer navigation took over
         activeTool = new MixerTool(toolContainer, {
           leftPanel: mainPanel,
           rightPanel: mainPanel,
@@ -421,6 +459,7 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
       case 'presets': {
         // Load v4 Lit-based preset tool
         await import('./v4/preset-tool');
+        if (superseded()) return; // BUG-040
         clearContainer(contentContainer);
         const presetTool = document.createElement('v4-preset-tool');
         contentContainer.appendChild(presetTool);
@@ -429,6 +468,7 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
       }
       case 'budget': {
         const { BudgetTool } = await import('@components/budget-tool');
+        if (superseded()) return; // BUG-040: a newer navigation took over
         activeTool = new BudgetTool(toolContainer, {
           leftPanel: mainPanel,
           rightPanel: mainPanel,
@@ -440,6 +480,7 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
       }
       case 'swatch': {
         const { SwatchTool } = await import('@components/swatch-tool');
+        if (superseded()) return; // BUG-040: a newer navigation took over
         activeTool = new SwatchTool(toolContainer, {
           leftPanel: mainPanel,
           rightPanel: mainPanel,

@@ -86,19 +86,18 @@ export class ChangelogModal {
     }
 
     // Find current version entry from parsed changelog
-    const currentEntry = changelogEntries.find((e) => e.version === APP_VERSION);
-
-    // Get up to 2 previous versions for context
     const currentIndex = changelogEntries.findIndex((e) => e.version === APP_VERSION);
-    const previousEntries = changelogEntries.slice(currentIndex + 1, currentIndex + 3);
 
-    const entries: ChangelogEntry[] = [];
-    if (currentEntry) {
-      entries.push(currentEntry);
+    // BUG-043 (2026-07-18 audit): if APP_VERSION is missing from the parsed
+    // changelog (entry forgotten or header typo), findIndex is -1 and the old
+    // slice(0, 2) presented the newest OLD release unlabeled as "what's new".
+    // Fall through to the changelog.noChanges fallback instead.
+    if (currentIndex === -1) {
+      return [];
     }
-    entries.push(...previousEntries);
 
-    return entries;
+    // Current version + up to 2 previous versions for context
+    return changelogEntries.slice(currentIndex, currentIndex + 3);
   }
 
   /**
@@ -208,7 +207,12 @@ export class ChangelogModal {
           versionSpan.className = 'font-medium';
           versionSpan.textContent = `v${entry.version}`;
           item.appendChild(versionSpan);
-          item.appendChild(document.createTextNode(` — ${entry.highlights[0]}`));
+          // BUG-043: highlights can be empty (parser skips short headers) —
+          // never render a literal "— undefined"
+          const summary = entry.highlights[0] ?? entry.sections[0]?.header ?? '';
+          if (summary) {
+            item.appendChild(document.createTextNode(` — ${summary}`));
+          }
           previousList.appendChild(item);
         });
 

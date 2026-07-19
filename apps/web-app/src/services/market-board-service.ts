@@ -170,6 +170,12 @@ export class MarketBoardService extends EventTarget {
         const previousServer = this.selectedServer;
         this.selectedServer = config.selectedServer;
 
+        // BUG-039 (2026-07-18 audit): invalidate any in-flight fetch for the
+        // old server — otherwise its late response passes the version check
+        // and repopulates the just-cleared cache with old-server prices
+        this.requestVersion++;
+        this.isFetching = false;
+
         // Clear prices on server change (prices are server-specific)
         this.priceData.clear();
 
@@ -221,6 +227,16 @@ export class MarketBoardService extends EventTarget {
    */
   getAllPrices(): Map<number, PriceData> {
     return new Map(this.priceData);
+  }
+
+  /**
+   * Read-only view of the internal price cache — no copy.
+   * OPT-027 (2026-07-18 audit): tools exposing a `priceData` getter were
+   * cloning the full map on every property access inside per-card render
+   * loops; this view eliminates the clones (type-level protection only).
+   */
+  getPricesView(): ReadonlyMap<number, PriceData> {
+    return this.priceData;
   }
 
   // ============================================================================
@@ -315,6 +331,9 @@ export class MarketBoardService extends EventTarget {
     const total = dyesToFetch.length;
 
     if (total === 0) {
+      // BUG-039: a superseding call with nothing to fetch must not leave a
+      // previous call's isFetching flag stuck true
+      this.isFetching = false;
       onProgress?.(0, 0);
       return new Map();
     }
@@ -352,11 +371,18 @@ export class MarketBoardService extends EventTarget {
         return new Map();
       }
 
-      // Update shared cache: fan out consolidated prices to each original dye's itemID
+      // BUG-010/REFACTOR-011 (2026-07-18 audit): fan out consolidated prices
+      // to each original dye's itemID in BOTH the shared cache and the
+      // returned map. The raw batchResults are keyed by the 3 consolidated
+      // market itemIDs (52254/52255/52256 for 105 dyes) — returning them
+      // directly made callers that look up by original dye itemID (Budget,
+      // Swatch) silently miss most prices.
+      const result = new Map<number, PriceData>();
       for (const [marketId, priceData] of batchResults) {
         const originalIds = marketIdToOriginals.get(marketId) ?? [marketId];
         for (const originalId of originalIds) {
           this.priceData.set(originalId, priceData);
+          result.set(originalId, priceData);
         }
       }
 
@@ -364,16 +390,16 @@ export class MarketBoardService extends EventTarget {
       onProgress?.(total, total);
       this.isFetching = false;
 
-      // Emit prices updated event
+      // Emit prices updated event (counts are per-dye, not per-market-item)
       this.emitEvent('prices-updated', {
         prices: new Map(this.priceData),
-        fetchedCount: batchResults.size,
+        fetchedCount: result.size,
       });
 
-      this.emitEvent('fetch-completed', { dyeCount: batchResults.size });
-      logger.info(`[MarketBoardService] Fetched prices for ${batchResults.size} dyes`);
+      this.emitEvent('fetch-completed', { dyeCount: result.size });
+      logger.info(`[MarketBoardService] Fetched prices for ${result.size} dyes`);
 
-      return batchResults;
+      return result;
     } catch (error) {
       // Only log/emit error if this was the current request
       if (requestVersion === this.requestVersion) {

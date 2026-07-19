@@ -54,3 +54,7 @@ Small: ~15 lines in the service, plus optional cleanup at 3 call sites. Half a d
 Low. No current caller depends on market-ID keys (the only key-consumers are the buggy ones); only log-line semantics change (`prices.size` becomes dye-count, arguably more accurate). Existing market-board-service unit tests need their return-shape expectations updated for consolidated fixtures.
 
 > Source: evidence/web-frontends-analysis.md (2026-07-18 deep-dive, web-frontends area)
+
+## Status
+
+**DONE 2026-07-19** — the return value and the `prices-updated`/`fetch-completed` event counts are built from the fanned-out map; the API can no longer be misused by keying on market itemIDs. Call sites unchanged (their copies are now correct).

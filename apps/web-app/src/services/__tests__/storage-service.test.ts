@@ -7,6 +7,9 @@ import { StorageService } from '../storage-service';
 
 describe('StorageService', () => {
   beforeEach(() => {
+    // OPT-010: the availability probe is memoized — reset it so a test that
+    // simulated an unavailable backend doesn't leak `false` into later tests
+    StorageService.resetAvailabilityCache();
     // Clear localStorage before each test
     if (StorageService.isAvailable()) {
       StorageService.clear();
@@ -14,6 +17,7 @@ describe('StorageService', () => {
   });
 
   afterEach(() => {
+    StorageService.resetAvailabilityCache();
     // Clean up after each test
     if (StorageService.isAvailable()) {
       StorageService.clear();
@@ -652,6 +656,9 @@ describe('StorageService', () => {
       const originalLocalStorage = window.localStorage;
       // @ts-expect-error - Testing error case
       window.localStorage = null;
+      // OPT-010: drop the memoized probe result from beforeEach so the
+      // nulled backend is re-detected
+      StorageService.resetAvailabilityCache();
 
       expect(StorageService.isAvailable()).toBe(false);
       expect(StorageService.getItem('test', 'default')).toBe('default');

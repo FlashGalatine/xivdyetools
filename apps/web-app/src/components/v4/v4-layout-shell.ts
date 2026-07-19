@@ -940,11 +940,9 @@ export class V4LayoutShell extends BaseLitComponent {
 
         <!-- Mobile Drawer Overlay (tap outside to close palette) -->
         <div
-          class="v4-drawer-overlay ${this.paletteDrawerOpen &&
-          this.isMobile &&
-          this.shouldShowPalette
-            ? 'visible'
-            : ''}"
+          class="v4-drawer-overlay ${
+            this.paletteDrawerOpen && this.isMobile && this.shouldShowPalette ? 'visible' : ''
+          }"
           @click=${this.handleDrawerOverlayClick}
           role="button"
           tabindex="-1"
@@ -959,18 +957,20 @@ export class V4LayoutShell extends BaseLitComponent {
         </main>
 
         <!-- Right Palette Drawer (hidden for extractor, swatch, presets) -->
-        ${this.shouldShowPalette
-          ? html`
-              <dye-palette-drawer
-                ?is-open=${this.paletteDrawerOpen}
-                active-tool=${this.activeTool}
-                @drawer-toggle=${this.handlePaletteDrawerToggle}
-                @dye-selected=${this.handleDyeSelected}
-                @custom-color-selected=${this.handleCustomColorSelected}
-                @clear-all-dyes=${this.handleClearAllDyes}
-              ></dye-palette-drawer>
-            `
-          : ''}
+        ${
+          this.shouldShowPalette
+            ? html`
+                <dye-palette-drawer
+                  ?is-open=${this.paletteDrawerOpen}
+                  active-tool=${this.activeTool}
+                  @drawer-toggle=${this.handlePaletteDrawerToggle}
+                  @dye-selected=${this.handleDyeSelected}
+                  @custom-color-selected=${this.handleCustomColorSelected}
+                  @clear-all-dyes=${this.handleClearAllDyes}
+                ></dye-palette-drawer>
+              `
+            : ''
+        }
       </div>
 
       <!-- Mobile Sidebar Toggle FAB -->
@@ -1011,10 +1011,9 @@ export class V4LayoutShell extends BaseLitComponent {
 
       <!-- Palette Drawer Toggle FAB (hidden when drawer is open or tool doesn't use palette) -->
       <button
-        class="v4-palette-toggle ${this.paletteDrawerOpen ? 'drawer-open' : ''} ${!this
-          .shouldShowPalette
-          ? 'no-palette'
-          : ''}"
+        class="v4-palette-toggle ${this.paletteDrawerOpen ? 'drawer-open' : ''} ${
+          !this.shouldShowPalette ? 'no-palette' : ''
+        }"
         type="button"
         title="${LanguageService.t('aria.showColorPalette')}"
         aria-label="${LanguageService.t('aria.showColorPalette')}"

@@ -658,20 +658,26 @@ export class PresetDetail extends BaseLitComponent {
           <span class="badge badge-category">
             ${unsafeHTML(getCategoryIcon(this.preset.category))} ${this.preset.category}
           </span>
-          ${this.preset.isCurated
-            ? html`<span class="badge badge-curated">Official</span>`
-            : html`<span class="badge badge-community">Community</span>`}
-          ${this.currentVoteCount > 0
-            ? html`<span class="badge badge-votes">★ ${this.currentVoteCount} votes</span>`
-            : nothing}
+          ${
+            this.preset.isCurated
+              ? html`<span class="badge badge-curated">Official</span>`
+              : html`<span class="badge badge-community">Community</span>`
+          }
+          ${
+            this.currentVoteCount > 0
+              ? html`<span class="badge badge-votes">★ ${this.currentVoteCount} votes</span>`
+              : nothing
+          }
         </div>
 
         <!-- Title & description -->
         <h2 class="preset-title">${this.preset.name}</h2>
         <p class="preset-description">${this.preset.description}</p>
-        ${this.preset.author
-          ? html`<p class="preset-author">Created by ${this.preset.author}</p>`
-          : nothing}
+        ${
+          this.preset.author
+            ? html`<p class="preset-author">Created by ${this.preset.author}</p>`
+            : nothing
+        }
 
         <!-- Dyes grid using v4-result-card -->
         <div class="dyes-section">
@@ -714,49 +720,61 @@ export class PresetDetail extends BaseLitComponent {
         </div>
 
         <!-- Tags -->
-        ${this.preset.tags && this.preset.tags.length > 0
-          ? html`
-              <div class="tags-section">
-                <h4 class="section-title">Tags</h4>
-                <div class="tags-list">
-                  ${this.preset.tags.map((tag) => html`<span class="tag">${tag}</span>`)}
+        ${
+          this.preset.tags && this.preset.tags.length > 0
+            ? html`
+                <div class="tags-section">
+                  <h4 class="section-title">Tags</h4>
+                  <div class="tags-list">
+                    ${this.preset.tags.map((tag) => html`<span class="tag">${tag}</span>`)}
+                  </div>
                 </div>
-              </div>
-            `
-          : nothing}
+              `
+            : nothing
+        }
 
         <!-- Actions -->
         <div class="actions">
           <button class="action-btn share-btn" @click=${this.handleShare}>
             <span class="icon">${unsafeHTML(ICON_LINK)}</span> Copy Link
           </button>
-          ${isVoteable
-            ? html`
-                <button
-                  class="action-btn vote-btn ${this.hasVoted ? 'voted' : ''}"
-                  ?disabled=${this.isVoting}
-                  @click=${this.handleVote}
-                >
-                  ${this.hasVoted
-                    ? html`✓ Voted (${this.currentVoteCount})`
-                    : html`${unsafeHTML(ICON_CRYSTAL)} Vote (${this.currentVoteCount})`}
-                </button>
-              `
-            : nothing}
-          ${this.isOwnPreset && this.preset.isFromAPI && this.preset.apiPresetId
-            ? html`
-                <button class="action-btn edit-btn" @click=${this.handleEdit}>✏️ Edit</button>
-                <button class="action-btn delete-btn" @click=${this.handleDelete}>🗑️ Delete</button>
-              `
-            : nothing}
+          ${
+            isVoteable
+              ? html`
+                  <button
+                    class="action-btn vote-btn ${this.hasVoted ? 'voted' : ''}"
+                    ?disabled=${this.isVoting}
+                    @click=${this.handleVote}
+                  >
+                    ${
+                      this.hasVoted
+                        ? html`✓ Voted (${this.currentVoteCount})`
+                        : html`${unsafeHTML(ICON_CRYSTAL)} Vote (${this.currentVoteCount})`
+                    }
+                  </button>
+                `
+              : nothing
+          }
+          ${
+            this.isOwnPreset && this.preset.isFromAPI && this.preset.apiPresetId
+              ? html`
+                  <button class="action-btn edit-btn" @click=${this.handleEdit}>✏️ Edit</button>
+                  <button class="action-btn delete-btn" @click=${this.handleDelete}>
+                    🗑️ Delete
+                  </button>
+                `
+              : nothing
+          }
         </div>
 
         <!-- Login CTA for non-authenticated users viewing voteable presets -->
-        ${isVoteable && !isAuthenticated
-          ? html`
-              <div class="login-cta">Login with Discord or XIVAuth to vote for this preset</div>
-            `
-          : nothing}
+        ${
+          isVoteable && !isAuthenticated
+            ? html`
+                <div class="login-cta">Login with Discord or XIVAuth to vote for this preset</div>
+              `
+            : nothing
+        }
       </div>
     `;
   }

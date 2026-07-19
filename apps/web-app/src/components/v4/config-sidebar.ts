@@ -1094,15 +1094,19 @@ export class ConfigSidebar extends BaseLitComponent {
             ></v4-toggle-switch>
           </div>
           <div class="config-description">
-            ${this.harmonyConfig.strictMatching
-              ? LanguageService.t('config.perceptualMatchingDesc')
-              : LanguageService.t('config.hueMatchingDesc')}
+            ${
+              this.harmonyConfig.strictMatching
+                ? LanguageService.t('config.perceptualMatchingDesc')
+                : LanguageService.t('config.hueMatchingDesc')
+            }
           </div>
         </div>
 
-        ${this.harmonyConfig.strictMatching
-          ? this.renderMatchingMethodSection('harmony', this.harmonyConfig.matchingMethod)
-          : ''}
+        ${
+          this.harmonyConfig.strictMatching
+            ? this.renderMatchingMethodSection('harmony', this.harmonyConfig.matchingMethod)
+            : ''
+        }
 
         <div class="config-group">
           <div class="config-row">
@@ -1200,9 +1204,9 @@ export class ConfigSidebar extends BaseLitComponent {
                   value=${size}
                   ?selected=${(this.extractorConfig.sampleAreaSize ?? 1) === size}
                 >
-                  ${size}×${size}${size === 1
-                    ? ` (${LanguageService.t('config.singlePixel')})`
-                    : ''}
+                  ${size}×${size}${
+                    size === 1 ? ` (${LanguageService.t('config.singlePixel')})` : ''
+                  }
                 </option>
               `
             )}
@@ -2044,35 +2048,37 @@ export class ConfigSidebar extends BaseLitComponent {
                 this.handleConfigChange('market', 'selectedServer', value);
               }}
             >
-              ${this.dataCenters.length === 0
-                ? html`<option value="Crystal">
-                    ${LanguageService.t('config.loadingServers')}
-                  </option>`
-                : sortedDataCenters.map(
-                    (dc) => html`
-                      <optgroup label="${dc.name} (${dc.region})">
-                        <option
-                          value="${dc.name}"
-                          ?selected=${this.marketConfig.selectedServer === dc.name}
-                        >
-                          ${dc.name} - ${LanguageService.t('config.allWorlds')}
-                        </option>
-                        ${this.worlds
-                          .filter((w) => dc.worlds.includes(w.id))
-                          .sort((a, b) => a.name.localeCompare(b.name))
-                          .map(
-                            (world) => html`
-                              <option
-                                value="${world.name}"
-                                ?selected=${this.marketConfig.selectedServer === world.name}
-                              >
-                                &nbsp;&nbsp;${world.name}
-                              </option>
-                            `
-                          )}
-                      </optgroup>
-                    `
-                  )}
+              ${
+                this.dataCenters.length === 0
+                  ? html`<option value="Crystal">
+                      ${LanguageService.t('config.loadingServers')}
+                    </option>`
+                  : sortedDataCenters.map(
+                      (dc) => html`
+                        <optgroup label="${dc.name} (${dc.region})">
+                          <option
+                            value="${dc.name}"
+                            ?selected=${this.marketConfig.selectedServer === dc.name}
+                          >
+                            ${dc.name} - ${LanguageService.t('config.allWorlds')}
+                          </option>
+                          ${this.worlds
+                            .filter((w) => dc.worlds.includes(w.id))
+                            .sort((a, b) => a.name.localeCompare(b.name))
+                            .map(
+                              (world) => html`
+                                <option
+                                  value="${world.name}"
+                                  ?selected=${this.marketConfig.selectedServer === world.name}
+                                >
+                                  &nbsp;&nbsp;${world.name}
+                                </option>
+                              `
+                            )}
+                        </optgroup>
+                      `
+                    )
+              }
             </select>
             <div class="config-description">
               ${LanguageService.tInterpolate('config.pricesFetchedFrom', {

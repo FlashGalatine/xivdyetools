@@ -26,12 +26,7 @@ import type { Dye } from '@xivdyetools/types';
  * Supported harmony types
  */
 export type HarmonyType =
-  | 'complementary'
-  | 'analogous'
-  | 'triadic'
-  | 'split-complementary'
-  | 'tetradic'
-  | 'square';
+  'complementary' | 'analogous' | 'triadic' | 'split-complementary' | 'tetradic' | 'square';
 
 /**
  * V4 Color Wheel - Modern CSS-based harmony visualization
@@ -425,18 +420,20 @@ export class V4ColorWheel extends BaseLitComponent {
         <div
           class="main-swatch-display ${this.empty ? 'empty' : ''}"
           style="${swatchStyle}"
-          title="${this.empty
-            ? LanguageService.t('harmony.selectColorPrompt')
-            : `Base: ${this.baseColor}`}"
+          title="${
+            this.empty ? LanguageService.t('harmony.selectColorPrompt') : `Base: ${this.baseColor}`
+          }"
         >
           ${this.empty ? html`<span class="empty-placeholder">?</span>` : nothing}
         </div>
 
         <!-- Harmony type label -->
         <span class="harmony-label ${this.empty ? 'empty' : ''}">
-          ${this.empty
-            ? LanguageService.t('harmony.selectColorPrompt')
-            : this.getHarmonyDisplayName()}
+          ${
+            this.empty
+              ? LanguageService.t('harmony.selectColorPrompt')
+              : this.getHarmonyDisplayName()
+          }
         </span>
       </div>
     `;

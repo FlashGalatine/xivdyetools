@@ -32,6 +32,35 @@ import {
  */
 const CONFIG_STORAGE_PREFIX = 'xivdyetools_v4_config_';
 
+/**
+ * REFACTOR-029 (2026-07-18 audit): single source of truth for the valid
+ * config keys — previously copied verbatim in resetAllConfigs, importConfigs,
+ * isValidConfigKey, and enumerated a fourth time in getAllConfigs, so adding
+ * a tool required four coordinated edits with no compile error when one was
+ * missed. `satisfies` makes the compiler flag this list when ConfigKey gains
+ * a member it lacks.
+ */
+const CONFIG_KEYS = [
+  'global',
+  'market',
+  'advanced',
+  'harmony',
+  'extractor',
+  'accessibility',
+  'comparison',
+  'gradient',
+  'mixer',
+  'presets',
+  'budget',
+  'swatch',
+] as const satisfies readonly ConfigKey[];
+
+// Bidirectional completeness check: errors when ConfigKey has a member that
+// CONFIG_KEYS lacks (satisfies above covers the other direction)
+type AssertAllConfigKeysListed = ConfigKey extends (typeof CONFIG_KEYS)[number] ? true : never;
+const _assertAllConfigKeysListed: AssertAllConfigKeysListed = true;
+void _assertAllConfigKeysListed;
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -218,22 +247,7 @@ export class ConfigController {
    * Reset all configs to defaults
    */
   resetAllConfigs(): void {
-    const keys: ConfigKey[] = [
-      'global',
-      'market',
-      'advanced',
-      'harmony',
-      'extractor',
-      'accessibility',
-      'comparison',
-      'gradient',
-      'mixer',
-      'presets',
-      'budget',
-      'swatch',
-    ];
-
-    for (const key of keys) {
+    for (const key of CONFIG_KEYS) {
       this.resetConfig(key);
     }
   }
@@ -242,20 +256,9 @@ export class ConfigController {
    * Get all configs (for debugging/export)
    */
   getAllConfigs(): ToolConfigMap {
-    return {
-      global: this.getConfig('global'),
-      market: this.getConfig('market'),
-      advanced: this.getConfig('advanced'),
-      harmony: this.getConfig('harmony'),
-      extractor: this.getConfig('extractor'),
-      accessibility: this.getConfig('accessibility'),
-      comparison: this.getConfig('comparison'),
-      gradient: this.getConfig('gradient'),
-      mixer: this.getConfig('mixer'),
-      presets: this.getConfig('presets'),
-      budget: this.getConfig('budget'),
-      swatch: this.getConfig('swatch'),
-    };
+    return Object.fromEntries(
+      CONFIG_KEYS.map((key) => [key, this.getConfig(key)])
+    ) as unknown as ToolConfigMap;
   }
 
   /**
@@ -272,22 +275,7 @@ export class ConfigController {
    * @param configs - Partial config object to import
    */
   importConfigs(configs: Partial<ToolConfigMap>): void {
-    const validKeys: ConfigKey[] = [
-      'global',
-      'market',
-      'advanced',
-      'harmony',
-      'extractor',
-      'accessibility',
-      'comparison',
-      'gradient',
-      'mixer',
-      'presets',
-      'budget',
-      'swatch',
-    ];
-
-    for (const key of validKeys) {
+    for (const key of CONFIG_KEYS) {
       if (key in configs && configs[key]) {
         this.setConfig(key, configs[key] as Partial<ToolConfigMap[typeof key]>);
       }
@@ -300,21 +288,7 @@ export class ConfigController {
    * Check if a string is a valid config key
    */
   isValidConfigKey(key: string): key is ConfigKey {
-    const validKeys = [
-      'global',
-      'market',
-      'advanced',
-      'harmony',
-      'extractor',
-      'accessibility',
-      'comparison',
-      'gradient',
-      'mixer',
-      'presets',
-      'budget',
-      'swatch',
-    ];
-    return validKeys.includes(key);
+    return (CONFIG_KEYS as readonly string[]).includes(key);
   }
 
   // =========================================================================

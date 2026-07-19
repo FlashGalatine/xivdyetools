@@ -19,17 +19,37 @@ import { logger } from '@shared/logger';
  */
 export class StorageService {
   /**
+   * OPT-010 (2026-07-18 audit): memoized availability probe. The un-memoized
+   * version performed two synchronous localStorage WRITES per storage access
+   * (hundreds per tool navigation) and pinged every other open tab's
+   * 'storage' listener. A backend that becomes unavailable mid-session is
+   * caught by the try/catch in the actual operation instead.
+   */
+  private static available: boolean | null = null;
+
+  /**
+   * Reset the memoized availability probe (tests and recovery paths)
+   */
+  static resetAvailabilityCache(): void {
+    this.available = null;
+  }
+
+  /**
    * Check if localStorage is available
    */
   static isAvailable(): boolean {
+    if (this.available !== null) {
+      return this.available;
+    }
     try {
       const test = `${STORAGE_PREFIX}_test`;
       localStorage.setItem(test, 'test');
       localStorage.removeItem(test);
-      return true;
+      this.available = true;
     } catch {
-      return false;
+      this.available = false;
     }
+    return this.available;
   }
 
   /**
@@ -38,13 +58,13 @@ export class StorageService {
   static getItem<T>(key: string, defaultValue?: T): T | null {
     try {
       if (!this.isAvailable()) {
-        return defaultValue || null;
+        return defaultValue ?? null;
       }
 
       const item = localStorage.getItem(key);
 
       if (item === null) {
-        return defaultValue || null;
+        return defaultValue ?? null;
       }
 
       // Always try JSON.parse first for proper type restoration
@@ -57,7 +77,7 @@ export class StorageService {
       }
     } catch (error) {
       logger.warn(`Failed to get item from localStorage: ${key}`, error);
-      return defaultValue || null;
+      return defaultValue ?? null;
     }
   }
 
@@ -287,18 +307,18 @@ export class StorageService {
       const data = this.getItem<{ value: T; expiresAt: number }>(key);
 
       if (!data) {
-        return defaultValue || null;
+        return defaultValue ?? null;
       }
 
       if (data.expiresAt && Date.now() > data.expiresAt) {
         this.removeItem(key);
-        return defaultValue || null;
+        return defaultValue ?? null;
       }
 
-      return data.value || defaultValue || null;
+      return data.value ?? defaultValue ?? null;
     } catch (error) {
       logger.warn(`Failed to get item with TTL: ${key}`, error);
-      return defaultValue || null;
+      return defaultValue ?? null;
     }
   }
 
@@ -496,12 +516,17 @@ export class SecureStorage {
 
   /**
    * Remove a key from the size index
+   * BUG-079 (2026-07-18 audit): must run on the same mutex chain as
+   * updateSizeIndex — a synchronous delete racing a queued update could be
+   * resurrected by that update, leaving phantom bytes in the index
    */
   private static removeFromSizeIndex(key: string): void {
-    const index = this.loadSizeIndex();
-    delete index[key];
-    this.sizeIndexCache = index;
-    this.saveSizeIndex();
+    this.sizeIndexMutex = this.sizeIndexMutex.then(() => {
+      const index = this.loadSizeIndex();
+      delete index[key];
+      this.sizeIndexCache = index;
+      this.saveSizeIndex();
+    });
   }
 
   /**
@@ -557,7 +582,7 @@ export class SecureStorage {
       const entry = StorageService.getItem<SecureStorageEntry<T>>(key);
 
       if (!entry) {
-        return defaultValue || null;
+        return defaultValue ?? null;
       }
 
       // Verify integrity
@@ -568,7 +593,7 @@ export class SecureStorage {
       if (!isValid) {
         logger.warn(`Integrity check failed for key: ${key}. Removing corrupted entry.`);
         StorageService.removeItem(key);
-        return defaultValue || null;
+        return defaultValue ?? null;
       }
 
       return entry.value;
@@ -576,7 +601,7 @@ export class SecureStorage {
       logger.warn(`Failed to get secure item: ${key}`, error);
       // If entry structure is invalid, remove it
       StorageService.removeItem(key);
-      return defaultValue || null;
+      return defaultValue ?? null;
     }
   }
 
@@ -606,48 +631,54 @@ export class SecureStorage {
    * Enforce maximum cache size using LRU eviction (optimized with size index)
    */
   private static async enforceSizeLimit(): Promise<void> {
-    try {
-      // Use cached size from index for fast check
-      const currentSize = this.getCachedTotalSize();
+    // BUG-079: the whole read-evict-write cycle runs as a mutex continuation
+    // so it can't interleave with queued updateSizeIndex/removeFromSizeIndex
+    // closures (lost updates on the shared index)
+    this.sizeIndexMutex = this.sizeIndexMutex.then(() => {
+      try {
+        // Use cached size from index for fast check
+        const currentSize = this.getCachedTotalSize();
 
-      if (currentSize < MAX_CACHE_SIZE) {
-        return; // Within limits
-      }
-
-      // Use the size index for LRU eviction (no need to read all entries)
-      const index = this.loadSizeIndex();
-      const entries = Object.entries(index)
-        .filter(([key]) => key !== SIZE_INDEX_KEY) // Don't evict the index itself
-        .map(([key, data]) => ({
-          key,
-          timestamp: data.timestamp,
-          size: data.size,
-        }));
-
-      // Sort by timestamp (oldest first)
-      entries.sort((a, b) => a.timestamp - b.timestamp);
-
-      // Remove oldest entries until under limit
-      let freed = 0;
-      const totalSize = currentSize;
-      for (const entry of entries) {
-        if (totalSize - freed < MAX_CACHE_SIZE) {
-          break;
+        if (currentSize < MAX_CACHE_SIZE) {
+          return; // Within limits
         }
-        StorageService.removeItem(entry.key);
-        delete index[entry.key];
-        freed += entry.size;
-      }
 
-      // Update the index cache and persist
-      if (freed > 0) {
-        this.sizeIndexCache = index;
-        this.saveSizeIndex();
-        logger.info(`LRU eviction: Freed ${freed} bytes from cache`);
+        // Use the size index for LRU eviction (no need to read all entries)
+        const index = this.loadSizeIndex();
+        const entries = Object.entries(index)
+          .filter(([key]) => key !== SIZE_INDEX_KEY) // Don't evict the index itself
+          .map(([key, data]) => ({
+            key,
+            timestamp: data.timestamp,
+            size: data.size,
+          }));
+
+        // Sort by timestamp (oldest first)
+        entries.sort((a, b) => a.timestamp - b.timestamp);
+
+        // Remove oldest entries until under limit
+        let freed = 0;
+        const totalSize = currentSize;
+        for (const entry of entries) {
+          if (totalSize - freed < MAX_CACHE_SIZE) {
+            break;
+          }
+          StorageService.removeItem(entry.key);
+          delete index[entry.key];
+          freed += entry.size;
+        }
+
+        // Update the index cache and persist
+        if (freed > 0) {
+          this.sizeIndexCache = index;
+          this.saveSizeIndex();
+          logger.info(`LRU eviction: Freed ${freed} bytes from cache`);
+        }
+      } catch (error) {
+        logger.warn('Failed to enforce size limit', error);
       }
-    } catch (error) {
-      logger.warn('Failed to enforce size limit', error);
-    }
+    });
+    return this.sizeIndexMutex;
   }
 
   /**

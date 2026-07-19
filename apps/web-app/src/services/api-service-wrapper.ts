@@ -201,8 +201,7 @@ export class APIService {
       void APIService.cacheBackend.initialize().then(() => {
         APIService.initialized = true;
         const dbg = (logger as unknown as Record<string, unknown>).debug as
-          | ((...args: unknown[]) => void)
-          | undefined;
+          ((...args: unknown[]) => void) | undefined;
         if (typeof dbg === 'function') {
           dbg('IndexedDB cache backend initialized');
         } else {

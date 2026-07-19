@@ -715,9 +715,11 @@ export class PresetTool extends BaseLitComponent {
       <div class="empty-container">
         <span class="empty-icon">${unsafeHTML(ICON_EMPTY_INBOX)}</span>
         <p class="empty-message">
-          ${this.searchQuery
-            ? `No presets found matching "${this.searchQuery}"`
-            : 'No presets found in this category'}
+          ${
+            this.searchQuery
+              ? `No presets found matching "${this.searchQuery}"`
+              : 'No presets found in this category'
+          }
         </p>
       </div>
     `;
@@ -744,9 +746,11 @@ export class PresetTool extends BaseLitComponent {
         <span class="results-count"
           >${this.presets.length} preset${this.presets.length !== 1 ? 's' : ''}</span
         >
-        ${this.config.category !== 'all'
-          ? html`<span class="category-badge">${this.getCategoryDisplayName()}</span>`
-          : nothing}
+        ${
+          this.config.category !== 'all'
+            ? html`<span class="category-badge">${this.getCategoryDisplayName()}</span>`
+            : nothing
+        }
       </div>
 
       <div class="preset-grid">

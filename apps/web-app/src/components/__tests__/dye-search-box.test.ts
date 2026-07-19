@@ -109,17 +109,25 @@ describe('DyeSearchBox', () => {
   // ============================================================================
 
   describe('Search Input', () => {
-    it('should emit search-changed on input', () => {
-      searchBox = new DyeSearchBox(container);
-      searchBox.init();
+    it('should emit search-changed on input (debounced)', () => {
+      // OPT-028: search-changed is debounced 150 ms
+      vi.useFakeTimers();
+      try {
+        searchBox = new DyeSearchBox(container);
+        searchBox.init();
 
-      const eventSpy = vi.fn();
-      container.addEventListener('search-changed', eventSpy);
+        const eventSpy = vi.fn();
+        container.addEventListener('search-changed', eventSpy);
 
-      const searchInput = query<HTMLInputElement>(container, 'input[type="text"]');
-      input(searchInput!, 'test search');
+        const searchInput = query<HTMLInputElement>(container, 'input[type="text"]');
+        input(searchInput!, 'test search');
 
-      expect(eventSpy).toHaveBeenCalled();
+        expect(eventSpy).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(150);
+        expect(eventSpy).toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it('should update internal search query on input', () => {

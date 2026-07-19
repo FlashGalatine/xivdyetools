@@ -57,3 +57,7 @@ Trivial — under an hour including test run.
 None meaningful; behavior-preserving mechanical change. Existing config-controller tests cover reset/import/validation paths.
 
 > Source: evidence/web-frontends-analysis.md (2026-07-18 deep-dive, web-frontends area)
+
+## Status
+
+**DONE 2026-07-19** — single `CONFIG_KEYS` constant (`as const satisfies readonly ConfigKey[]` plus a bidirectional completeness assertion) drives resetAllConfigs/importConfigs/isValidConfigKey/getAllConfigs.

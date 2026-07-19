@@ -200,18 +200,20 @@ export class ToggleSwitchV4 extends BaseLitComponent {
         >
           <div class="toggle-thumb"></div>
         </div>
-        ${this.name
-          ? html`
-              <input
-                type="checkbox"
-                class="hidden-input"
-                name=${this.name}
-                .checked=${this.checked}
-                ?disabled=${this.disabled}
-                tabindex="-1"
-              />
-            `
-          : nothing}
+        ${
+          this.name
+            ? html`
+                <input
+                  type="checkbox"
+                  class="hidden-input"
+                  name=${this.name}
+                  .checked=${this.checked}
+                  ?disabled=${this.disabled}
+                  tabindex="-1"
+                />
+              `
+            : nothing
+        }
       </div>
     `;
   }

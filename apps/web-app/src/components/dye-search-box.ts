@@ -3,12 +3,7 @@ import { LanguageService, DyeService } from '@services/index';
 import { ICON_DICE, ICON_BROOM } from '@shared/ui-icons';
 
 export type SortOption =
-  | 'alphabetical'
-  | 'brightness-asc'
-  | 'brightness-desc'
-  | 'hue'
-  | 'saturation'
-  | 'category';
+  'alphabetical' | 'brightness-asc' | 'brightness-desc' | 'hue' | 'saturation' | 'category';
 
 export interface DyeSearchBoxOptions {
   showCategories?: boolean;
@@ -23,6 +18,8 @@ export class DyeSearchBox extends BaseComponent {
   private sortOption: SortOption = 'alphabetical';
   private currentCategory: string | null = null;
   private options: DyeSearchBoxOptions;
+  // OPT-028: pending debounced search-changed emit
+  private searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
   constructor(container: HTMLElement, options: DyeSearchBoxOptions = {}) {
     super(container);
@@ -167,7 +164,11 @@ export class DyeSearchBox extends BaseComponent {
           attributes: { 'data-category': cat },
         });
 
-        const isActive = cat === 'all' || cat === this.currentCategory;
+        // BUG-080 (2026-07-18 audit): "All" is only active when NO category
+        // filter is set — the old unconditional `cat === 'all'` highlighted
+        // both chips when restoring a persisted category filter
+        const isActive =
+          this.currentCategory === null ? cat === 'all' : cat === this.currentCategory;
 
         if (isActive) {
           btn.classList.remove(
@@ -212,10 +213,18 @@ export class DyeSearchBox extends BaseComponent {
     const catBtns = this.querySelectorAll<HTMLButtonElement>('[data-category]');
 
     // Search Input
+    // OPT-028 (2026-07-18 audit): debounce the emit — consumers rebuild the
+    // full dye grid per event, so per-keystroke emits caused visible jank
     if (searchInput) {
       this.on(searchInput, 'input', () => {
         this.searchQuery = searchInput.value;
-        this.emit('search-changed', this.searchQuery);
+        if (this.searchDebounce !== null) {
+          this.clearSafeTimeout(this.searchDebounce);
+        }
+        this.searchDebounce = this.safeTimeout(() => {
+          this.searchDebounce = null;
+          this.emit('search-changed', this.searchQuery);
+        }, 150);
       });
     }
 

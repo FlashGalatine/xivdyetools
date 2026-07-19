@@ -260,14 +260,16 @@ export class PresetCard extends BaseLitComponent {
           <div class="preset-header">
             <span class="category-icon"> ${unsafeHTML(getCategoryIcon(preset.category))} </span>
             <span class="preset-name">${preset.name}</span>
-            ${preset.voteCount > 0
-              ? html`
-                  <span class="vote-badge">
-                    ${unsafeHTML(ICON_STAR)}
-                    <span>${preset.voteCount}</span>
-                  </span>
-                `
-              : nothing}
+            ${
+              preset.voteCount > 0
+                ? html`
+                    <span class="vote-badge">
+                      ${unsafeHTML(ICON_STAR)}
+                      <span>${preset.voteCount}</span>
+                    </span>
+                  `
+                : nothing
+            }
           </div>
 
           <!-- Description -->

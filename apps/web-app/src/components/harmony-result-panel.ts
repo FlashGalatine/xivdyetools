@@ -31,7 +31,7 @@ export interface HarmonyResultPanelOptions {
   /** Whether to show prices */
   showPrices: boolean;
   /** Price data map */
-  priceData: Map<number, PriceData>;
+  priceData: ReadonlyMap<number, PriceData>;
   /** True for Base panel (no closest dyes section) */
   isBase: boolean;
   /** Harmony slot index (for non-base panels) */
@@ -296,7 +296,7 @@ export class HarmonyResultPanel extends BaseComponent {
   /**
    * Update price data and re-render if needed
    */
-  setPriceData(priceData: Map<number, PriceData>): void {
+  setPriceData(priceData: ReadonlyMap<number, PriceData>): void {
     this.options.priceData = priceData;
     if (this.options.showPrices) {
       this.update();

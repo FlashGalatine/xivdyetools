@@ -36,7 +36,7 @@ export class HarmonyType extends BaseComponent {
   private baseColor: string;
   private matchedDyes: Array<{ dye: Dye; deviance: number }> = [];
   private showPrices: boolean = false;
-  private priceData: Map<number, PriceData> = new Map();
+  private priceData: ReadonlyMap<number, PriceData> = new Map();
 
   constructor(
     container: HTMLElement,
@@ -322,7 +322,7 @@ export class HarmonyType extends BaseComponent {
   /**
    * Set price data for matched dyes
    */
-  setPriceData(priceData: Map<number, PriceData>): void {
+  setPriceData(priceData: ReadonlyMap<number, PriceData>): void {
     this.priceData = priceData;
     this.update();
   }
@@ -358,8 +358,9 @@ export class HarmonyType extends BaseComponent {
    * Cleanup component resources
    */
   destroy(): void {
-    // Clear Maps and arrays to release references
-    this.priceData.clear();
+    // Release references (OPT-027: priceData may be the shared service view —
+    // never mutate it, just drop the reference)
+    this.priceData = new Map();
     this.matchedDyes = [];
 
     // Call parent destroy for BaseComponent cleanup
