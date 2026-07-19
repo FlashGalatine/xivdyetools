@@ -34,8 +34,14 @@ export interface RateLimitResult {
 }
 
 /**
- * Shared rate limiter instance
- * Persists within a Worker isolate
+ * Shared rate limiter instance.
+ *
+ * BUG-066 (2026-07-18 audit): this is PER-ISOLATE and therefore best-effort —
+ * a client routed across N isolates/PoPs gets N × the configured limit, and
+ * isolate recycling resets counters. That is an accepted tradeoff here: the
+ * Cache API + request coalescer are what actually protect upstream; this
+ * limiter is a soft brake on single-isolate abuse. If a genuinely distributed
+ * limit is ever needed, switch to KVRateLimiter (the api-worker pattern).
  */
 const limiter = new MemoryRateLimiter();
 

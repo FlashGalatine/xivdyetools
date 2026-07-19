@@ -58,3 +58,7 @@ Small-Medium (half a day): dependency add, mechanical import swap, truncation ca
 Low. Function signatures are identical; visual output changes only where truncation behavior improves (verify via existing SVG snapshot tests + a manual render of a ja/ko/zh swatch card). Bundle size unchanged (same code, one copy).
 
 > Source: evidence/edge-workers-analysis.md (2026-07-18 deep-dive, edge-workers area)
+
+## Status
+
+**DONE 2026-07-19** — og-worker depends on `@xivdyetools/svg`; the local base.ts is now a thin shim re-exporting the package primitives (escapeXml, color helpers, rect/circle/line/text/group, createSvgDocument, truncateText/estimateTextWidth, FONTS) and keeping only og-specific pieces (indigo THEME, linearGradient, OG_DIMENSIONS). All naive `.length` truncations across harmony/gradient/mixer/comparison/accessibility/swatch replaced with the package's CJK-aware `truncateText` (fixes the ja/ko/zh overflow drift), and mixer's third private hexToRgb/rgbToHex copy was deleted in favor of core's mixers. FONT_FAMILIES in fonts.ts retained (distinct key names, one consumer).

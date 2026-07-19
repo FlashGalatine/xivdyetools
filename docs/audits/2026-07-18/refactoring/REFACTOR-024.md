@@ -47,3 +47,7 @@ Trivial-Small (≤1 hour total, mostly the CLAUDE.md rewrite).
 Minimal. The two DyeService instances are constructed identically, so unifying them cannot change behavior; locale helper substitution is mechanical. CLAUDE.md changes are documentation-only.
 
 > Source: evidence/edge-workers-analysis.md (2026-07-18 deep-dive, edge-workers area)
+
+## Status
+
+**DONE 2026-07-19** — CLAUDE.md rewritten for the five-font reality (CJK subsets + regeneration trigger); og-data-generator reuses the shared dyeService from dye-helpers (one DyeService init per isolate instead of two); the seven inline locale expressions now call `resolveLocale()`.

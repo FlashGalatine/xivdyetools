@@ -217,7 +217,7 @@ describe('buildCacheHeaders', () => {
     expect(headers['X-Cache']).toBe('MISS');
     expect(headers['X-Cache-Source']).toBe('upstream');
     expect(headers['X-Cache-Stale']).toBe('false');
-    expect(headers['Cache-Control']).toBe('public, max-age=300');
+    expect(headers['Cache-Control']).toBe('public, max-age=300, stale-while-revalidate=120');
   });
 
   it('should return HIT for cache-api source', () => {
@@ -231,8 +231,11 @@ describe('buildCacheHeaders', () => {
   it('should mark stale data correctly', () => {
     const headers = buildCacheHeaders('cache-api', true, testConfig);
 
-    expect(headers['X-Cache']).toBe('HIT');
+    // BUG-028: stale responses are labeled HIT-STALE and must not export a
+    // full max-age downstream
+    expect(headers['X-Cache']).toBe('HIT-STALE');
     expect(headers['X-Cache-Stale']).toBe('true');
+    expect(headers['Cache-Control']).toBe('public, max-age=0, must-revalidate');
   });
 
   it('should use config cacheTtl for Cache-Control', () => {
@@ -242,7 +245,7 @@ describe('buildCacheHeaders', () => {
     };
 
     const headers = buildCacheHeaders('cache-api', false, customConfig);
-    expect(headers['Cache-Control']).toBe('public, max-age=86400');
+    expect(headers['Cache-Control']).toBe('public, max-age=86400, stale-while-revalidate=120');
   });
 
   it('should handle all cache sources', () => {

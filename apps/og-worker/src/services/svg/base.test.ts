@@ -278,10 +278,8 @@ describe('base SVG utilities', () => {
       expect(result).toContain('dominant-baseline="middle"');
     });
 
-    it('should set opacity', () => {
-      const result = text(0, 0, 'Test', { opacity: 0.7 });
-      expect(result).toContain('opacity="0.7"');
-    });
+    // REFACTOR-009: text() now comes from @xivdyetools/svg, which has no
+    // opacity option (no production caller used it here either)
   });
 
   describe('group', () => {

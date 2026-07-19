@@ -25,7 +25,7 @@
  */
 
 import type { Dye, LocaleCode } from '@xivdyetools/types';
-import { rect, text, getContrastTextColor, THEME, FONTS, OG_DIMENSIONS } from './base';
+import { rect, text, getContrastTextColor, THEME, FONTS, OG_DIMENSIONS, truncateText } from './base';
 import { generateOGCard, LAYOUT } from './og-card';
 import { findClosestDyesWithDistance, findCharacterColorByHex, getCharacterColorFromSheet, type CharacterColorContext } from './dye-helpers';
 import { getLocalizedDyeName } from '../translator';
@@ -260,7 +260,7 @@ export async function generateSwatchOG(options: SwatchOGOptions): Promise<string
     // Match name (truncated)
     const matchDisplayName = getLocalizedDyeName(match.dye, locale);
     const truncatedName =
-      matchDisplayName.length > 10 ? matchDisplayName.slice(0, 8) + '..' : matchDisplayName;
+      truncateText(matchDisplayName, 10);
     contentElements.push(
       text(x + matchSwatchSize / 2, y + matchSwatchSize + 18, truncatedName, {
         fill: THEME.text,

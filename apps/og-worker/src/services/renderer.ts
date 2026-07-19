@@ -110,12 +110,14 @@ export async function renderSvgToPng(
  * Renders an OG image SVG to a PNG response
  *
  * @param svgString - SVG content (should be 1200x630)
- * @param cacheMaxAge - Cache duration in seconds (default: 24 hours)
+ * @param ttl - Explicit browser/edge cache TTLs in seconds (BUG-068: the old
+ *   single seconds param was silently multiplied by 7 for the edge TTL,
+ *   turning a "7 days" call site into 49 days at the edge)
  * @returns Response with PNG image and appropriate headers
  */
 export async function renderOGImage(
   svgString: string,
-  cacheMaxAge: number = 86400
+  ttl: { browser: number; edge: number } = { browser: 86400, edge: 604800 }
 ): Promise<Response> {
   try {
     const pngBuffer = await renderSvgToPng(svgString, {
@@ -127,8 +129,8 @@ export async function renderOGImage(
       status: 200,
       headers: {
         'Content-Type': 'image/png',
-        'Cache-Control': `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge * 7}`,
-        'CDN-Cache-Control': `max-age=${cacheMaxAge * 7}`,
+        'Cache-Control': `public, max-age=${ttl.browser}, s-maxage=${ttl.edge}`,
+        'CDN-Cache-Control': `max-age=${ttl.edge}`,
       },
     });
   } catch (error) {

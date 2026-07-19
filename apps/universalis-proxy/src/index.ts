@@ -19,8 +19,9 @@ import {
 import type { Env } from './types/cache';
 import { CACHE_CONFIGS } from './config/cache';
 import { isValidDatacenterOrWorld, isNameInUpstreamLists } from './config/datacenters';
-import { cachedFetch, buildCacheHeaders, UpstreamError } from './services/cached-fetch';
+import { cachedFetch, buildCacheHeaders, UpstreamError, ResponseTooLargeError } from './services/cached-fetch';
 import { checkRateLimit, getRateLimitHeaders, type RateLimitConfig } from './services/rate-limiter';
+import { getClientIp } from '@xivdyetools/rate-limiter';
 
 /**
  * Retry-After header value when rate limited (seconds)
@@ -73,6 +74,10 @@ app.use('*', async (c, next) => {
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Accept',
         'Access-Control-Max-Age': '86400', // Cache preflight for 24 hours
+        // BUG-027: ACAO varies by request Origin — without Vary, a shared
+        // cache may replay one origin's response (and its ACAO) to the other
+        // allowed origin, causing a spurious CORS block.
+        Vary: 'Origin',
       },
     });
   }
@@ -83,6 +88,7 @@ app.use('*', async (c, next) => {
   // Set CORS headers on all responses
   c.header('Access-Control-Allow-Origin', corsOrigin);
   c.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  c.header('Vary', 'Origin'); // BUG-027: response varies by request Origin
   return;
 });
 
@@ -112,10 +118,17 @@ app.get('/health', (c) => {
  * Sorts IDs numerically to ensure same items in different order hit same cache
  */
 function normalizeItemIds(itemIds: string): string {
-  return itemIds
-    .split(',')
-    .map(Number)
-    .filter((n) => !isNaN(n) && n > 0)
+  // OPT-022: dedupe as well as sort, so "5729,5729" and "5729" share one
+  // cache entry (Universalis keys results by itemID, so removing duplicates
+  // never changes what a client can consume).
+  return [
+    ...new Set(
+      itemIds
+        .split(',')
+        .map(Number)
+        .filter((n) => !isNaN(n) && n > 0)
+    ),
+  ]
     .sort((a, b) => a - b)
     .join(',');
 }
@@ -135,7 +148,10 @@ app.get('/api/v2/aggregated/:datacenter/:itemIds', async (c) => {
   const { datacenter, itemIds } = c.req.param();
 
   // SECURITY: Rate limit by IP address to prevent abuse
-  const clientIP = c.req.header('CF-Connecting-IP') || c.req.header('X-Forwarded-For')?.split(',')[0]?.trim() || 'unknown';
+  // BUG-066: use the shared getClientIp — it prefers the unspoofable
+  // CF-Connecting-IP and deliberately ignores X-Forwarded-For (SEC-002);
+  // the old hand-rolled fallback trusted attacker-controllable XFF.
+  const clientIP = getClientIp(c.req.raw);
   const rateLimitConfig: RateLimitConfig = {
     maxRequests: parseInt(c.env.RATE_LIMIT_REQUESTS, 10) || 60,
     windowSeconds: parseInt(c.env.RATE_LIMIT_WINDOW_SECONDS, 10) || 60,
@@ -233,7 +249,9 @@ app.get('/api/v2/aggregated/:datacenter/:itemIds', async (c) => {
       cacheKey,
       config,
       // OPT-002: Limit per-item listings and history entries to bound response size
-      upstreamUrl: `${c.env.UNIVERSALIS_API_BASE}/aggregated/${datacenter}/${itemIds}?listings=5&entries=5`,
+      // OPT-022: use the NORMALIZED ids upstream too — one canonical upstream
+      // URL per logical query (better upstream cacheability, no forwarded dups)
+      upstreamUrl: `${c.env.UNIVERSALIS_API_BASE}/aggregated/${datacenter.toLowerCase()}/${normalizedIds}?listings=5&entries=5`,
       // Hono types c.executionCtx with its own ExecutionContext interface, which lacks the
       // `tracing` field added in @cloudflare/workers-types 4.20260621. The runtime value is the
       // full Workers ExecutionContext, so assert it to satisfy cachedFetch's ctx parameter.
@@ -266,6 +284,22 @@ app.get('/api/v2/aggregated/:datacenter/:itemIds', async (c) => {
           message: error.statusText,
         },
         error.status as 400 | 404 | 500 | 502 | 503
+      );
+    }
+
+    // BUG-065: dedicated message for oversized upstream bodies (previously
+    // fell into the generic 502 with no hint at the cause)
+    if (error instanceof ResponseTooLargeError) {
+      getLogger(c)?.error('Upstream response exceeded size limit', error, {
+        operation: 'aggregated.proxy',
+        datacenter,
+      });
+      return c.json(
+        {
+          error: 'Upstream response too large',
+          message: 'The upstream API returned a response exceeding the size limit',
+        },
+        502
       );
     }
 

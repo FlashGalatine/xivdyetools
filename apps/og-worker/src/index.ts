@@ -144,6 +144,18 @@ app.get('/health', (c) => {
  * Priority: ?lang= query param → 'en' fallback. The query value is validated
  * against SUPPORTED_LOCALES (via extractLocaleCode) before being trusted.
  */
+/**
+ * BUG-069: is this request addressed to the worker's own image custom domain?
+ * (On that host the worker is the origin, so pass-through fetch would 1042.)
+ */
+function isOgImageHost(url: URL, env: Env): boolean {
+  try {
+    return url.hostname === new URL(env.OG_IMAGE_BASE_URL).hostname;
+  } catch {
+    return false;
+  }
+}
+
 function resolveLocale(searchParams: URLSearchParams): LocaleCode {
   const raw = searchParams.get('lang');
   if (!raw) return 'en';
@@ -169,6 +181,11 @@ function createToolHandler(tool: ToolId) {
 
     // If not a crawler, let the request pass through to the origin (SPA)
     if (!crawlerInfo.isCrawler) {
+      // BUG-069: on the og. custom domain this worker IS the origin —
+      // fetch(request) would self-fetch and surface CF error 1042 as a 5xx.
+      if (isOgImageHost(url, env)) {
+        return Response.redirect(env.APP_BASE_URL, 302);
+      }
       // Pass through to origin - the SPA will handle it
       // In production, this would be proxied to the static site
       return fetch(request);
@@ -220,7 +237,7 @@ app.get('/og/harmony/:dyeId/:harmonyType', async (c) => {
   const harmonyTypeRaw = c.req.param('harmonyType').replace('.png', '');
   const harmonyType = harmonyTypeRaw.toLowerCase() as HarmonyType;
   const algorithm = (c.req.query('algo') || 'oklab') as MatchingAlgorithm;
-  const locale = extractLocaleCode(c.req.query('lang') ?? '') ?? 'en';
+  const locale = resolveLocale(new URL(c.req.url).searchParams);
 
   // FINDING-011: Validate dyeId to prevent NaN propagation
   if (isNaN(dyeId)) {
@@ -263,7 +280,7 @@ app.get('/og/gradient/:startId/:endId/:steps', async (c) => {
   const endDyeId = parseInt(c.req.param('endId'), 10);
   const steps = parseInt(c.req.param('steps').replace('.png', ''), 10);
   const algorithm = (c.req.query('algo') || 'oklab') as MatchingAlgorithm;
-  const locale = extractLocaleCode(c.req.query('lang') ?? '') ?? 'en';
+  const locale = resolveLocale(new URL(c.req.url).searchParams);
 
   // FINDING-011: Validate dye IDs to prevent NaN propagation
   if (isNaN(startDyeId) || isNaN(endDyeId)) {
@@ -307,7 +324,7 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:ratio', async (c) => {
   const dyeBId = parseInt(c.req.param('dyeBId'), 10);
   const ratio = parseInt(c.req.param('ratio').replace('.png', ''), 10);
   const algorithm = (c.req.query('algo') || 'oklab') as MatchingAlgorithm;
-  const locale = extractLocaleCode(c.req.query('lang') ?? '') ?? 'en';
+  const locale = resolveLocale(new URL(c.req.url).searchParams);
 
   // FINDING-011: Validate dye IDs to prevent NaN propagation
   if (isNaN(dyeAId) || isNaN(dyeBId)) {
@@ -352,7 +369,7 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio', async (c) => {
   const dyeCId = parseInt(c.req.param('dyeCId'), 10);
   const ratio = parseInt(c.req.param('ratio').replace('.png', ''), 10);
   const algorithm = (c.req.query('algo') || 'oklab') as MatchingAlgorithm;
-  const locale = extractLocaleCode(c.req.query('lang') ?? '') ?? 'en';
+  const locale = resolveLocale(new URL(c.req.url).searchParams);
 
   // FINDING-011: Validate dye IDs to prevent NaN propagation
   if (isNaN(dyeAId) || isNaN(dyeBId) || isNaN(dyeCId)) {
@@ -396,7 +413,7 @@ app.get('/og/swatch/:color/:limit', async (c) => {
   const color = c.req.param('color');
   const limit = parseInt(c.req.param('limit').replace('.png', ''), 10);
   const algorithm = (c.req.query('algo') || 'oklab') as MatchingAlgorithm;
-  const locale = extractLocaleCode(c.req.query('lang') ?? '') ?? 'en';
+  const locale = resolveLocale(new URL(c.req.url).searchParams);
 
   // Parse optional sheet context params
   const sheet = c.req.query('sheet') as import('./types').ColorSheetCategory | undefined;
@@ -441,7 +458,7 @@ app.get('/og/swatch/:color/:limit', async (c) => {
 app.get('/og/comparison/:dyes', async (c) => {
   const dyesParam = c.req.param('dyes').replace('.png', '');
   const dyeIds = dyesParam.split(',').map((id) => parseInt(id, 10)).filter((id) => !isNaN(id));
-  const locale = extractLocaleCode(c.req.query('lang') ?? '') ?? 'en';
+  const locale = resolveLocale(new URL(c.req.url).searchParams);
 
   if (dyeIds.length === 0 || dyeIds.length > OG_MAX_COMPARISON_DYES) {
     return c.json({ error: `comparison requires 1–${OG_MAX_COMPARISON_DYES} valid dye IDs` }, 400);
@@ -469,7 +486,7 @@ app.get('/og/accessibility/:dyes/:visionType', async (c) => {
   const visionTypeRaw = c.req.param('visionType').replace('.png', '');
   const visionType = visionTypeRaw.toLowerCase() as VisionType;
   const dyeIds = dyesParam.split(',').map((id) => parseInt(id, 10)).filter((id) => !isNaN(id));
-  const locale = extractLocaleCode(c.req.query('lang') ?? '') ?? 'en';
+  const locale = resolveLocale(new URL(c.req.url).searchParams);
 
   if (dyeIds.length === 0 || dyeIds.length > OG_MAX_COMPARISON_DYES) {
     return c.json({ error: `accessibility requires 1–${OG_MAX_COMPARISON_DYES} valid dye IDs` }, 400);
@@ -542,7 +559,9 @@ app.get('/og/default.png', async (c) => {
     content: contentElements.join('\n'),
   });
 
-  return renderOGImage(svg, 604800); // Cache for 7 days
+  // BUG-068: explicit TTLs — 24h browser / 7d edge (the old param was
+  // multiplied by 7 internally, yielding a 49-day edge TTL)
+  return renderOGImage(svg, { browser: 86400, edge: 604800 });
 });
 
 // ============================================================================
@@ -598,6 +617,13 @@ app.all('*', (c) => {
     return c.text(html, 200, {
       'Content-Type': 'text/html; charset=utf-8',
     });
+  }
+
+  // BUG-069: never fetch(our own og. custom domain) — CF blocks worker
+  // self-fetch (error 1042), so stray human/unknown-UA hits became 5xx.
+  const url = new URL(c.req.url);
+  if (isOgImageHost(url, c.env)) {
+    return c.json({ error: 'Not found' }, 404);
   }
 
   // Pass through to origin for regular users

@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 `xivdyetools-og-worker` is a Cloudflare Worker that generates **dynamic OpenGraph previews** for shared XIV Dye Tools links. It serves two distinct surfaces:
 
 1. **Crawler interception** — when Discord, Twitter, Facebook, Slack, etc. fetch a tool URL like `xivdyetools.app/harmony/?dye=5771&harmony=tetradic`, the worker detects the bot by `User-Agent` and returns HTML stuffed with locale-aware `og:*` meta tags. Real users get passed through to the SPA.
-2. **OG image rendering** — direct PNG endpoints under `/og/*` produce 1200×630 social cards by composing tool-specific SVGs and rasterizing through `resvg-wasm`. Three brand fonts (Space Grotesk, Onest, Habibi) are bundled as `*.ttf` data imports at build time.
+2. **OG image rendering** — direct PNG endpoints under `/og/*` produce 1200×630 social cards by composing tool-specific SVGs and rasterizing through `resvg-wasm`. Five fonts are bundled as `*.ttf` data imports at build time: Space Grotesk, Onest, Habibi, plus the CJK subsets `NotoSansSC-Subset.ttf` (~290 KiB) and `NotoSansKR-Subset.ttf` (~176 KiB) for ja/zh/ko dye names (regenerate via `scripts/subset-cjk-fonts.py` whenever dyes or locale strings change).
 
 Six tools are supported: harmony, gradient, mixer, swatch, comparison, accessibility. Each has its own SVG generator under `src/services/svg/`. Localization is handled via a stateless `TranslationProvider` with all 6 locales eagerly preloaded — concurrent requests with different `?lang=` cannot trample state (see REFACTOR-001).
 
@@ -93,7 +93,7 @@ src/
 | `GET /og/default.png` | Generic fallback card; cached 7 days |
 | `GET *` | Fallthrough — minimal OG for crawlers, `fetch(req)` to origin for humans |
 
-All image responses set `Cache-Control: public, max-age=86400, s-maxage=604800` (24h browser, 7d edge), plus a duplicated `CDN-Cache-Control`. Crawler HTML is `max-age=3600, s-maxage=86400`.
+All image responses set `Cache-Control: public, max-age=86400, s-maxage=604800` (24h browser, 7d edge — BUG-068: `renderOGImage` now takes explicit `{ browser, edge }` TTLs instead of an implicit ×7 multiplier), plus a duplicated `CDN-Cache-Control`. Crawler HTML is `max-age=3600, s-maxage=86400`.
 
 ### Environment Bindings (wrangler.toml)
 
@@ -122,7 +122,7 @@ Cloudflare Workers disallow dynamic `WebAssembly.instantiate()`, so `services/re
 
 ### Font Bundling
 
-`services/fonts.ts` does static `import` of all three TTFs and caches `Uint8Array` views in module scope. `getFontBuffers()` is passed to `Resvg`'s `font.fontBuffers`; `defaultFontFamily: 'Onest'`. Fonts are referenced in SVG via the `font-family` strings exposed in `FONTS` (in `base.ts`) and `FONT_FAMILIES` (in `fonts.ts`). **Note:** these fonts are Latin-only — CJK rendering for `?lang=ja|ko|zh` would require subset font additions (see monorepo memory on Noto Sans SC + Noto Sans KR).
+`services/fonts.ts` does static `import` of all five TTFs (three brand fonts + Noto Sans SC/KR subsets) and caches `Uint8Array` views in module scope. `getFontBuffers()` is passed to `Resvg`'s `font.fontBuffers`; `defaultFontFamily: 'Onest'`. Fonts are referenced in SVG via the `font-family` strings exposed in `FONTS` (re-exported from `@xivdyetools/svg` since REFACTOR-009) and `FONT_FAMILIES` (in `fonts.ts`). CJK rendering for `?lang=ja|ko|zh` works via the bundled subsets — if new dye names introduce unseen glyphs, re-run `scripts/subset-cjk-fonts.py`.
 
 ### Crawler Detection
 
@@ -163,7 +163,7 @@ Image route parameters are bounded to prevent resource exhaustion: `OG_MAX_GRADI
 
 1. `pnpm type-check && pnpm test` — must be green.
 2. If a new tool was added: register the route in `wrangler.toml` AND in the `SUPPORTED_TOOLS` array in `index.ts` AND add a `services/svg/<tool>.ts` generator.
-3. If fonts changed: re-verify Latin-only coverage; CJK still requires the subset workflow documented in the monorepo CLAUDE.md.
+3. If fonts changed: re-run `scripts/subset-cjk-fonts.py` if dye/locale strings changed (CJK subsets must cover every rendered glyph or resvg falls back to tofu).
 4. Bump `version` in `package.json` if behavior changed.
 5. `pnpm deploy` to staging; spot-check a Discord embed via `https://og.xivdyetools.app/og/harmony/5771/tetradic.png`.
 6. `pnpm deploy:production`. Validate a real shared link in Discord — the embed should render the new SVG within ~5s of cache expiry.

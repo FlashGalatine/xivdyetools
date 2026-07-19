@@ -563,9 +563,10 @@ describe('normalizeItemIds helper', () => {
 
     expect(request1.status).toBe(200);
 
-    // The fetch URL should have items in original order (normalization is for cache key only)
+    // OPT-022: the upstream URL is now canonicalized too (sorted + deduped +
+    // lowercased datacenter), not just the cache key
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('3,1,2'),
+      expect.stringContaining('/aggregated/crystal/1,2,3'),
       expect.any(Object)
     );
   });

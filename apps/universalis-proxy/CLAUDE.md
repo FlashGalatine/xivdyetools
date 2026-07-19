@@ -126,7 +126,7 @@ const cacheKey = `aggregated:${datacenter.toLowerCase()}:${normalizedIds}`;
 
 ### Stale-While-Revalidate
 
-Each `CacheConfig` has both `cacheTtl` (TTL) and `swrWindow` (extra grace period). Once an entry is older than `cacheTtl` but still inside the SWR window, `cachedFetch` returns the stale data immediately and kicks off a background refresh via `ctx.waitUntil`. The response includes a `buildCacheHeaders(...)` block (e.g. `X-Cache: HIT-STALE`) so callers can see what happened.
+Each `CacheConfig` has both `cacheTtl` (TTL) and `swrWindow` (extra grace period). Once an entry is older than `cacheTtl` but still inside the SWR window, `cachedFetch` returns the stale data immediately and kicks off a background refresh via `ctx.waitUntil`. The response includes a `buildCacheHeaders(...)` block (`X-Cache: HIT-STALE`), and — BUG-028 — stale responses carry `Cache-Control: public, max-age=0, must-revalidate` so downstream caches don't re-serve already-stale data for another full TTL; fresh responses advertise `stale-while-revalidate=<swrWindow>`.
 
 | Endpoint | TTL | SWR window |
 |----------|-----|------------|
@@ -141,7 +141,7 @@ Each `CacheConfig` has both `cacheTtl` (TTL) and `swrWindow` (extra grace period
 
 Inputs are validated in this order — the cheapest checks first:
 
-1. Rate-limit by `CF-Connecting-IP` (or `X-Forwarded-For` fallback). 429 with `Retry-After`.
+1. Rate-limit by client IP via `getClientIp()` from `@xivdyetools/rate-limiter` (prefers unspoofable `CF-Connecting-IP`; deliberately ignores `X-Forwarded-For` — BUG-066). 429 with `Retry-After`. The `MemoryRateLimiter` is per-isolate and best-effort; the Cache API + coalescer are the real upstream protection.
 2. Datacenter against `isValidDatacenterOrWorld()` whitelist. 400 if unknown.
 3. `itemIds` matches `^[\d,]+$`. 400 otherwise.
 4. ID count between 1 and 100 (Universalis's documented max). 400 otherwise.

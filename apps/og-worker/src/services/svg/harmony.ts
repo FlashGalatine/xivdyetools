@@ -25,19 +25,20 @@
  * └──────────────────────────────────────────────────────┘
  */
 
-import { ColorService, ColorConverter } from '@xivdyetools/core';
+import { ColorService } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import {
   rect,
   text,
   circle,
   getContrastTextColor,
+  truncateText,
   THEME,
   FONTS,
   OG_DIMENSIONS,
 } from './base';
 import { generateOGCard, LAYOUT } from './og-card';
-import { dyeService, findClosestDyesWithDistance, getDyeByItemId } from './dye-helpers';
+import { dyeService, findClosestDyesWithDistance, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
 import { getLocalizedDyeName } from '../translator';
 import type { HarmonyType, MatchingAlgorithm } from '../../types';
 
@@ -58,7 +59,7 @@ export interface HarmonyOGOptions {
 function getHarmonyMatches(
   dye: Dye,
   harmonyType: HarmonyType,
-  _algorithm: MatchingAlgorithm = 'oklab'
+  algorithm: MatchingAlgorithm = 'oklab'
 ): Array<{ dye: Dye; delta: number }> {
   // Generate harmony colors using ColorService (static methods)
   const baseColor = ColorService.hexToLab(dye.hex);
@@ -88,23 +89,27 @@ function getHarmonyMatches(
       break;
     case 'monochromatic':
       // For monochromatic, find similar dyes with different lightness
-      return findClosestDyesWithDistance(dye.hex, { limit: 4, excludeIds: [dye.id] }).map(
-        (match) => ({
-          dye: match.dye,
-          delta: match.distance,
-        })
-      );
+      return findClosestDyesWithDistance(dye.hex, {
+        limit: 4,
+        excludeIds: [dye.id],
+        algorithm,
+      }).map((match) => ({
+        dye: match.dye,
+        delta: match.distance,
+      }));
     case 'compound':
       targetHues = [baseHue + 30, baseHue + 150, baseHue - 150, baseHue - 30];
       break;
     case 'shades':
       // Similar to monochromatic
-      return findClosestDyesWithDistance(dye.hex, { limit: 4, excludeIds: [dye.id] }).map(
-        (match) => ({
-          dye: match.dye,
-          delta: match.distance,
-        })
-      );
+      return findClosestDyesWithDistance(dye.hex, {
+        limit: 4,
+        excludeIds: [dye.id],
+        algorithm,
+      }).map((match) => ({
+        dye: match.dye,
+        delta: match.distance,
+      }));
     default:
       targetHues = [baseHue + 180]; // Default to complementary
   }
@@ -118,13 +123,16 @@ function getHarmonyMatches(
     const normalizedHue = ((targetHue % 360) + 360) % 360;
 
     // Find the dye with closest hue
-    let bestMatch: { dye: Dye; delta: number } | null = null;
+    let bestDye: Dye | null = null;
     let bestHueDiff = Infinity;
 
     for (const candidateDye of allDyes) {
       if (candidateDye.id === dye.id) continue;
       if (matches.some((m) => m.dye.id === candidateDye.id)) continue;
 
+      // OPT-023: hexToLab hits ColorConverter's LRU cache after the first
+      // pass over the database (the typed Dye interface doesn't expose the
+      // precomputed runtime lab field)
       const candidateLab = ColorService.hexToLab(candidateDye.hex);
       const candidateHue = Math.atan2(candidateLab.b, candidateLab.a) * (180 / Math.PI);
       const normalizedCandidateHue = ((candidateHue % 360) + 360) % 360;
@@ -133,17 +141,17 @@ function getHarmonyMatches(
       let hueDiff = Math.abs(normalizedHue - normalizedCandidateHue);
       if (hueDiff > 180) hueDiff = 360 - hueDiff;
 
-      // Calculate color distance for delta display
-      const delta = ColorConverter.getDeltaE_Oklab(dye.hex, candidateDye.hex);
-
       if (hueDiff < bestHueDiff) {
         bestHueDiff = hueDiff;
-        bestMatch = { dye: candidateDye, delta };
+        bestDye = candidateDye;
       }
     }
 
-    if (bestMatch) {
-      matches.push(bestMatch);
+    if (bestDye) {
+      // BUG-031 + OPT-023: compute the displayed delta ONCE, for the winner,
+      // with the REQUESTED algorithm (previously every candidate got an OKLAB
+      // delta regardless of the ?algo= the footer advertised)
+      matches.push({ dye: bestDye, delta: deltaForAlgorithm(dye.hex, bestDye.hex, algorithm) });
     }
   }
 
@@ -292,8 +300,8 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
 
     // Match name (truncated)
     const matchDisplayName = getLocalizedDyeName(match.dye, locale);
-    const truncatedName =
-      matchDisplayName.length > 14 ? matchDisplayName.slice(0, 12) + '..' : matchDisplayName;
+    // REFACTOR-009: CJK-aware, surrogate-safe truncation from the package
+    const truncatedName = truncateText(matchDisplayName, 14);
     contentElements.push(
       text(x + matchSwatchSize / 2, y + matchSwatchSize + 25, truncatedName, {
         fill: THEME.text,

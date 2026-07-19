@@ -9,13 +9,44 @@ import {
   DyeService,
   dyeDatabase,
   ColorConverter,
+  ColorService,
   CharacterColorService,
 } from '@xivdyetools/core';
 import type { Dye, SubRace, Gender } from '@xivdyetools/types';
+import type { MatchingAlgorithm } from '../../types';
 
-// Shared service instances
+// Shared service instances (REFACTOR-024: THE instances -- og-data-generator
+// imports dyeService from here instead of constructing its own duplicate)
 export const dyeService = new DyeService(dyeDatabase);
 export const characterColorService = new CharacterColorService();
+
+/**
+ * OPT-023: O(1) itemID lookup -- getAllDyes() returns a fresh array copy per
+ * call and the comparison route did up to 16 copy+linear-scans per request.
+ */
+const dyeByItemId = new Map<number, Dye>(
+  dyeService.getAllDyes().map((d) => [d.itemID, d])
+);
+
+/**
+ * BUG-031: compute a color distance with the REQUESTED algorithm, so the
+ * "Algorithm: X" footer on OG cards describes what was actually used.
+ */
+export function deltaForAlgorithm(
+  hex1: string,
+  hex2: string,
+  algorithm: MatchingAlgorithm
+): number {
+  switch (algorithm) {
+    case 'ciede2000':
+      return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
+    case 'euclidean':
+      return ColorService.getColorDistance(hex1, hex2);
+    case 'oklab':
+    default:
+      return ColorConverter.getDeltaE_Oklab(hex1, hex2);
+  }
+}
 
 /**
  * Result of looking up a character color by hex
@@ -70,8 +101,39 @@ const GENDERS: Gender[] = ['Male', 'Female'];
 export async function findCharacterColorByHex(hex: string): Promise<CharacterColorLookup | null> {
   // Normalize hex to uppercase with #
   const normalizedHex = hex.startsWith('#') ? hex.toUpperCase() : `#${hex.toUpperCase()}`;
+  return (await getHexIndex()).get(normalizedHex) ?? null;
+}
 
-  // Search all shared categories first (sync)
+/**
+ * OPT-005: lazily built reverse index (hex -> lookup), replacing a per-request
+ * scan of 7 shared categories + 64 sequential awaited race/gender sheets
+ * (~12k string comparisons on every swatch OG without ?sheet=, paid in FULL
+ * on the common miss case). Insertion order mirrors the old scan precedence
+ * (shared categories, then hair before skin per subrace/gender) and entries
+ * are only set when absent, so first-match semantics are preserved.
+ */
+let hexIndexPromise: Promise<Map<string, CharacterColorLookup>> | null = null;
+
+function getHexIndex(): Promise<Map<string, CharacterColorLookup>> {
+  hexIndexPromise ??= buildHexIndex();
+  return hexIndexPromise;
+}
+
+async function buildHexIndex(): Promise<Map<string, CharacterColorLookup>> {
+  const idx = new Map<string, CharacterColorLookup>();
+  const put = (hexValue: string, categoryName: string, index: number): void => {
+    const key = hexValue.toUpperCase();
+    if (!idx.has(key)) {
+      // Character color sheets use 8 columns
+      idx.set(key, {
+        categoryName,
+        index,
+        row: Math.floor(index / 8) + 1,
+        col: (index % 8) + 1,
+      });
+    }
+  };
+
   const sharedCategories = [
     'eyeColors',
     'highlightColors',
@@ -83,57 +145,23 @@ export async function findCharacterColorByHex(hex: string): Promise<CharacterCol
   ] as const;
 
   for (const category of sharedCategories) {
-    const colors = characterColorService.getSharedColors(category);
-    const found = colors.find((c) => c.hex.toUpperCase() === normalizedHex);
-
-    if (found) {
-      // Character color sheets use 8 columns
-      const col = (found.index % 8) + 1;
-      const row = Math.floor(found.index / 8) + 1;
-
-      return {
-        categoryName: SHARED_CATEGORY_NAMES[category] || category,
-        index: found.index,
-        row,
-        col,
-      };
+    for (const c of characterColorService.getSharedColors(category)) {
+      put(c.hex, SHARED_CATEGORY_NAMES[category] || category, c.index);
     }
   }
 
-  // Search race-specific categories (hair and skin colors) - async
   for (const subrace of ALL_SUBRACES) {
     for (const gender of GENDERS) {
-      // Search hair colors
-      const hairColors = await characterColorService.getHairColors(subrace, gender);
-      const foundHair = hairColors.find((c) => c.hex.toUpperCase() === normalizedHex);
-      if (foundHair) {
-        const col = (foundHair.index % 8) + 1;
-        const row = Math.floor(foundHair.index / 8) + 1;
-        return {
-          categoryName: `Hair Colors`,
-          index: foundHair.index,
-          row,
-          col,
-        };
+      for (const c of await characterColorService.getHairColors(subrace, gender)) {
+        put(c.hex, 'Hair Colors', c.index);
       }
-
-      // Search skin colors
-      const skinColors = await characterColorService.getSkinColors(subrace, gender);
-      const foundSkin = skinColors.find((c) => c.hex.toUpperCase() === normalizedHex);
-      if (foundSkin) {
-        const col = (foundSkin.index % 8) + 1;
-        const row = Math.floor(foundSkin.index / 8) + 1;
-        return {
-          categoryName: `Skin Colors`,
-          index: foundSkin.index,
-          row,
-          col,
-        };
+      for (const c of await characterColorService.getSkinColors(subrace, gender)) {
+        put(c.hex, 'Skin Colors', c.index);
       }
     }
   }
 
-  return null;
+  return idx;
 }
 
 /**
@@ -159,19 +187,21 @@ export function findClosestDyesWithDistance(
   options: {
     limit?: number;
     excludeIds?: number[];
+    /** BUG-031: distance metric to match with (default OKLAB) */
+    algorithm?: MatchingAlgorithm;
   } = {}
 ): DyeMatch[] {
-  const { limit = 5, excludeIds = [] } = options;
+  const { limit = 5, excludeIds = [], algorithm = 'oklab' } = options;
   const excludeSet = new Set(excludeIds);
 
   // Get all dyes and filter
   const allDyes = dyeService.getAllDyes();
   const candidates = allDyes.filter((dye) => !excludeSet.has(dye.id));
 
-  // Calculate distances using OKLAB (perceptually uniform)
+  // BUG-031: rank with the requested algorithm, not hardcoded OKLAB
   const withDistances = candidates.map((dye) => ({
     dye,
-    distance: ColorConverter.getDeltaE_Oklab(hex, dye.hex),
+    distance: deltaForAlgorithm(hex, dye.hex, algorithm),
   }));
 
   // Sort by distance and return top matches
@@ -182,8 +212,8 @@ export function findClosestDyesWithDistance(
  * Get a single dye by its itemID
  */
 export function getDyeByItemId(itemId: number): Dye | undefined {
-  const allDyes = dyeService.getAllDyes();
-  return allDyes.find((d) => d.itemID === itemId);
+  // OPT-023: precomputed map instead of a fresh array copy + linear scan
+  return dyeByItemId.get(itemId);
 }
 
 /**

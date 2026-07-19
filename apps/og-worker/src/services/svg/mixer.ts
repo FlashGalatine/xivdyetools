@@ -22,8 +22,9 @@
  * └──────────────────────────────────────────────────────┘
  */
 
+import { ColorService } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
-import { rect, text, line, THEME, FONTS, OG_DIMENSIONS } from './base';
+import { rect, text, line, THEME, FONTS, OG_DIMENSIONS, truncateText } from './base';
 import { generateOGCard, LAYOUT } from './og-card';
 import { findClosestDyesWithDistance, getDyeByItemId } from './dye-helpers';
 import { getLocalizedDyeName } from '../translator';
@@ -45,52 +46,50 @@ export interface MixerOGOptions {
 }
 
 /**
- * Parses hex color to RGB components
+ * Mix two hex colors in the space implied by the requested algorithm
+ * (BUG-031: previously always raw RGB, while the footer printed the
+ * requested algorithm name; REFACTOR-009: private hexToRgb/rgbToHex copies
+ * removed in favor of core's mixers).
+ *
+ * @param ratio - percentage of color1 (1-99)
  */
-function hexToRgb(hex: string): { r: number; g: number; b: number } {
-  const cleanHex = hex.replace('#', '');
-  return {
-    r: parseInt(cleanHex.slice(0, 2), 16),
-    g: parseInt(cleanHex.slice(2, 4), 16),
-    b: parseInt(cleanHex.slice(4, 6), 16),
-  };
+function mixColors(
+  color1: string,
+  color2: string,
+  ratio: number,
+  algorithm: MatchingAlgorithm
+): string {
+  // core mixers use ratio = weight of the SECOND color
+  const t = 1 - ratio / 100;
+  switch (algorithm) {
+    case 'ciede2000':
+      return ColorService.mixColorsLab(color1, color2, t);
+    case 'euclidean':
+      return ColorService.mixColorsRgb(color1, color2, t);
+    case 'oklab':
+    default:
+      return ColorService.mixColorsOklab(color1, color2, t);
+  }
 }
 
 /**
- * Converts RGB to hex string
+ * Mixes three hex colors with the validated ratio applied (BUG-031: the
+ * range-validated ratio path parameter was previously ignored — equal
+ * thirds regardless of the shared URL).
+ *
+ * Weighting: color1 gets ratio%, colors 2+3 split the remainder evenly.
+ * Computed as pair-mix(2,3 @ 50%) then mix with color1 — equivalent to a
+ * weighted average in the linear mixing spaces used above.
  */
-function rgbToHex(r: number, g: number, b: number): string {
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-}
-
-/**
- * Mixes two hex colors at a given ratio
- */
-function mixColors(color1: string, color2: string, ratio: number): string {
-  const rgb1 = hexToRgb(color1);
-  const rgb2 = hexToRgb(color2);
-
-  const mixRatio = ratio / 100;
-  const r = Math.round(rgb1.r * mixRatio + rgb2.r * (1 - mixRatio));
-  const g = Math.round(rgb1.g * mixRatio + rgb2.g * (1 - mixRatio));
-  const b = Math.round(rgb1.b * mixRatio + rgb2.b * (1 - mixRatio));
-
-  return rgbToHex(r, g, b);
-}
-
-/**
- * Mixes three hex colors in equal parts
- */
-function mixThreeColors(color1: string, color2: string, color3: string): string {
-  const rgb1 = hexToRgb(color1);
-  const rgb2 = hexToRgb(color2);
-  const rgb3 = hexToRgb(color3);
-
-  const r = Math.round((rgb1.r + rgb2.r + rgb3.r) / 3);
-  const g = Math.round((rgb1.g + rgb2.g + rgb3.g) / 3);
-  const b = Math.round((rgb1.b + rgb2.b + rgb3.b) / 3);
-
-  return rgbToHex(r, g, b);
+function mixThreeColors(
+  color1: string,
+  color2: string,
+  color3: string,
+  ratio: number,
+  algorithm: MatchingAlgorithm
+): string {
+  const bc = mixColors(color2, color3, 50, algorithm);
+  return mixColors(color1, bc, ratio, algorithm);
 }
 
 /**
@@ -115,7 +114,7 @@ export function generateMixerOG(options: MixerOGOptions): string {
 
   // Route to appropriate generator
   if (dyeC) {
-    return generateThreeDyeMixerOG(dyeA, dyeB, dyeC, algorithm, locale);
+    return generateThreeDyeMixerOG(dyeA, dyeB, dyeC, ratio, algorithm, locale);
   }
 
   return generateTwoDyeMixerOG(dyeA, dyeB, ratio, algorithm, locale);
@@ -134,10 +133,10 @@ function generateTwoDyeMixerOG(
   if (!dyeA || !dyeB) return generateFallbackMixerOG(ratio, algorithm, false);
 
   // Calculate mixed color
-  const mixedHex = mixColors(dyeA.hex, dyeB.hex, ratio);
+  const mixedHex = mixColors(dyeA.hex, dyeB.hex, ratio, algorithm);
 
   // Find closest matching dye
-  const matches = findClosestDyesWithDistance(mixedHex, { limit: 1 });
+  const matches = findClosestDyesWithDistance(mixedHex, { limit: 1, algorithm });
   const closestMatch = matches[0];
 
   // Build content elements
@@ -186,7 +185,7 @@ function generateTwoDyeMixerOG(
 
   // Dye A name (below)
   const dyeADisplayName = getLocalizedDyeName(dyeA, locale);
-  const dyeAName = dyeADisplayName.length > 12 ? dyeADisplayName.slice(0, 10) + '..' : dyeADisplayName;
+  const dyeAName = truncateText(dyeADisplayName, 12);
   contentElements.push(
     text(dyeAX + swatchSize / 2, swatchY + swatchSize + 22, dyeAName, {
       fill: THEME.text,
@@ -240,7 +239,7 @@ function generateTwoDyeMixerOG(
 
   // Dye B name (below)
   const dyeBDisplayName = getLocalizedDyeName(dyeB, locale);
-  const dyeBName = dyeBDisplayName.length > 12 ? dyeBDisplayName.slice(0, 10) + '..' : dyeBDisplayName;
+  const dyeBName = truncateText(dyeBDisplayName, 12);
   contentElements.push(
     text(dyeBX + swatchSize / 2, swatchY + swatchSize + 22, dyeBName, {
       fill: THEME.text,
@@ -360,14 +359,15 @@ function generateThreeDyeMixerOG(
   dyeA: NonNullable<ReturnType<typeof getDyeByItemId>>,
   dyeB: NonNullable<ReturnType<typeof getDyeByItemId>>,
   dyeC: NonNullable<ReturnType<typeof getDyeByItemId>>,
+  ratio: number,
   algorithm: MatchingAlgorithm,
   locale: LocaleCode = 'en'
 ): string {
   // Calculate mixed color (equal parts)
-  const mixedHex = mixThreeColors(dyeA.hex, dyeB.hex, dyeC.hex);
+  const mixedHex = mixThreeColors(dyeA.hex, dyeB.hex, dyeC.hex, ratio, algorithm);
 
   // Find closest matching dye
-  const matches = findClosestDyesWithDistance(mixedHex, { limit: 1 });
+  const matches = findClosestDyesWithDistance(mixedHex, { limit: 1, algorithm });
   const closestMatch = matches[0];
 
   // Build content elements
@@ -415,7 +415,7 @@ function generateThreeDyeMixerOG(
   );
 
   const dyeADisplayName3 = getLocalizedDyeName(dyeA, locale);
-  const dyeAName = dyeADisplayName3.length > 10 ? dyeADisplayName3.slice(0, 8) + '..' : dyeADisplayName3;
+  const dyeAName = truncateText(dyeADisplayName3, 10);
   contentElements.push(
     text(dyeAX + inputSwatchSize / 2, inputSwatchY + inputSwatchSize + 18, dyeAName, {
       fill: THEME.text,
@@ -447,7 +447,7 @@ function generateThreeDyeMixerOG(
   );
 
   const dyeBDisplayName3 = getLocalizedDyeName(dyeB, locale);
-  const dyeBName = dyeBDisplayName3.length > 10 ? dyeBDisplayName3.slice(0, 8) + '..' : dyeBDisplayName3;
+  const dyeBName = truncateText(dyeBDisplayName3, 10);
   contentElements.push(
     text(dyeBX + inputSwatchSize / 2, inputSwatchY + inputSwatchSize + 18, dyeBName, {
       fill: THEME.text,
@@ -479,7 +479,7 @@ function generateThreeDyeMixerOG(
   );
 
   const dyeCDisplayName3 = getLocalizedDyeName(dyeC, locale);
-  const dyeCName = dyeCDisplayName3.length > 10 ? dyeCDisplayName3.slice(0, 8) + '..' : dyeCDisplayName3;
+  const dyeCName = truncateText(dyeCDisplayName3, 10);
   contentElements.push(
     text(dyeCX + inputSwatchSize / 2, inputSwatchY + inputSwatchSize + 18, dyeCName, {
       fill: THEME.text,

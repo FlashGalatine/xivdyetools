@@ -96,12 +96,13 @@ export async function cachedFetch<T = unknown>(
       throw new UpstreamError(response.status, response.statusText);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    return response.json() as Promise<T>;
+    const parsed = JSON.parse(await readBounded(response)) as T;
+    // OPT-021: store INSIDE the coalesced function so only the winning fetch
+    // writes — previously every waiter in a burst re-serialized and re-put
+    // the identical entry (N puts + N waitUntil slots per burst).
+    cacheService.storeAsync(cacheKey, parsed, config);
+    return parsed;
   });
-
-  // Store to cache (async, non-blocking)
-  cacheService.storeAsync(cacheKey, data, config);
 
   return {
     data,
@@ -126,6 +127,8 @@ async function fetchFromUpstream(url: string): Promise<Response> {
   });
 
   // PROXY-HIGH-002: Check Content-Length to prevent OOM from huge responses
+  // (cheap fast-fail; the authoritative guard is readBounded, since chunked
+  // responses carry no Content-Length — BUG-065)
   const contentLength = response.headers.get('Content-Length');
   if (contentLength) {
     const size = parseInt(contentLength, 10);
@@ -135,6 +138,34 @@ async function fetchFromUpstream(url: string): Promise<Response> {
   }
 
   return response;
+}
+
+/**
+ * BUG-065: read the response body with a hard byte budget. Content-Length can
+ * be absent (Transfer-Encoding: chunked), so counting streamed bytes is the
+ * only reliable enforcement of MAX_RESPONSE_SIZE_BYTES.
+ */
+async function readBounded(response: Response): Promise<string> {
+  if (!response.body) {
+    return '';
+  }
+  // workers-types leaves ReadableStream chunks untyped; body bytes are Uint8Array
+  const reader = response.body.getReader() as ReadableStreamDefaultReader<Uint8Array>;
+  const decoder = new TextDecoder();
+  let text = '';
+  let bytes = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) {
+      return text + decoder.decode();
+    }
+    bytes += value.byteLength;
+    if (bytes > MAX_RESPONSE_SIZE_BYTES) {
+      await reader.cancel();
+      throw new ResponseTooLargeError(bytes);
+    }
+    text += decoder.decode(value, { stream: true });
+  }
 }
 
 /**
@@ -152,18 +183,18 @@ async function revalidateInBackground(
 
   try {
     // Use coalescing to prevent multiple simultaneous revalidations
-    const data = await coalescer.coalesce(revalidateKey, async () => {
+    await coalescer.coalesce(revalidateKey, async () => {
       const response = await fetchFromUpstream(upstreamUrl);
 
       if (!response.ok) {
         throw new Error(`Revalidation failed: ${response.status}`);
       }
 
-      return response.json();
+      const parsed: unknown = JSON.parse(await readBounded(response));
+      // OPT-021: store once per fetch, not once per coalesced waiter
+      cacheService.storeAsync(cacheKey, parsed, config);
+      return parsed;
     });
-
-    // Update cache with fresh data
-    cacheService.storeAsync(cacheKey, data, config);
   } catch {
     // Revalidation failed silently - stale data will continue to be served
     // until it expires beyond the SWR window
@@ -209,9 +240,17 @@ export function buildCacheHeaders(
   config: CacheConfig
 ): Record<string, string> {
   return {
-    'X-Cache': source === 'upstream' ? 'MISS' : 'HIT',
+    'X-Cache': source === 'upstream' ? 'MISS' : isStale ? 'HIT-STALE' : 'HIT',
     'X-Cache-Source': source,
     'X-Cache-Stale': isStale ? 'true' : 'false',
-    'Cache-Control': `public, max-age=${config.cacheTtl}`,
+    // BUG-028: a stale SWR response is already up to cacheTtl+swrWindow old —
+    // re-serving it with a full max-age let downstream caches treat it as
+    // fresh for ANOTHER full TTL. Stale responses now demand revalidation
+    // (the edge refreshes in the background, so the next request is fresh);
+    // fresh responses advertise the SWR window so downstream caches can
+    // implement stale-while-revalidate natively.
+    'Cache-Control': isStale
+      ? 'public, max-age=0, must-revalidate'
+      : `public, max-age=${config.cacheTtl}, stale-while-revalidate=${config.swrWindow}`,
   };
 }

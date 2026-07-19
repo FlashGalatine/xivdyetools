@@ -22,7 +22,7 @@
  */
 
 import type { Dye, LocaleCode } from '@xivdyetools/types';
-import { rect, text, hexToRgb, rgbToHex, THEME, FONTS, OG_DIMENSIONS } from './base';
+import { rect, text, hexToRgb, rgbToHex, THEME, FONTS, OG_DIMENSIONS, truncateText } from './base';
 import { generateOGCard, LAYOUT } from './og-card';
 import { getDyeByItemId } from './dye-helpers';
 import { getLocalizedDyeName } from '../translator';
@@ -201,7 +201,7 @@ export function generateAccessibilityOG(options: AccessibilityOGOptions): string
 
     // Dye name
     const dyeDisplayName = getLocalizedDyeName(dye, locale);
-    const truncatedName = dyeDisplayName.length > 10 ? dyeDisplayName.slice(0, 8) + '..' : dyeDisplayName;
+    const truncatedName = truncateText(dyeDisplayName, 10);
     contentElements.push(
       text(x + swatchSize / 2, swatchY + swatchSize + 18, truncatedName, {
         fill: THEME.text,

@@ -8,13 +8,9 @@
  * @module og-data-generator
  */
 
-import {
-  DyeService,
-  dyeDatabase,
-} from '@xivdyetools/core';
+import { getDyeByItemId } from './services/svg/dye-helpers';
 import { ogTranslator } from './services/translator';
 import type {
-  Dye,
   HarmonyTypeKey,
   LocaleCode,
   SheetKey,
@@ -72,11 +68,9 @@ function getSheetName(sheet: ColorSheetCategory, locale: LocaleCode): string {
 // DyeService Instance
 // ============================================================================
 
-/**
- * Initialize DyeService with the embedded dye database.
- * This runs once when the module is loaded.
- */
-const dyeService = new DyeService(dyeDatabase);
+// REFACTOR-024: reuse the shared instance from dye-helpers instead of
+// constructing a second DyeService (each init validates 136 entries and
+// builds three indexes + a k-d tree — pure duplicated cold-start work).
 
 // ============================================================================
 // Helper Functions
@@ -86,8 +80,8 @@ const dyeService = new DyeService(dyeDatabase);
  * Get dye name and hex color by itemID
  */
 function getDyeInfo(itemID: number): { name: string; hex: string } | null {
-  const allDyes = dyeService.getAllDyes();
-  const dye = allDyes.find((d: Dye) => d.itemID === itemID);
+  // OPT-023: O(1) map lookup via the shared helper
+  const dye = getDyeByItemId(itemID);
 
   if (!dye) {
     return null;

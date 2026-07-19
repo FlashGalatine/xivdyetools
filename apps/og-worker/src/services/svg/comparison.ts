@@ -23,7 +23,7 @@
  */
 
 import type { Dye, LocaleCode } from '@xivdyetools/types';
-import { rect, text, getContrastTextColor, THEME, FONTS, OG_DIMENSIONS } from './base';
+import { rect, text, getContrastTextColor, THEME, FONTS, OG_DIMENSIONS, truncateText } from './base';
 import { generateOGCard, LAYOUT } from './og-card';
 import { getDyeByItemId } from './dye-helpers';
 import { getLocalizedDyeName } from '../translator';
@@ -99,7 +99,7 @@ export function generateComparisonOG(options: ComparisonOGOptions): string {
     // Dye name below swatch
     const displayName = getLocalizedDyeName(dye, locale);
     const truncatedName =
-      displayName.length > 14 ? displayName.slice(0, 12) + '..' : displayName;
+      truncateText(displayName, 14);
     contentElements.push(
       text(centerX, startY + swatchSize + 28, truncatedName, {
         fill: THEME.text,

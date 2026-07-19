@@ -21,8 +21,9 @@
  * └──────────────────────────────────────────────────────┘
  */
 
+import { ColorService } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
-import { rect, text, line, THEME, FONTS, OG_DIMENSIONS } from './base';
+import { rect, text, line, truncateText, THEME, FONTS, OG_DIMENSIONS } from './base';
 import { generateOGCard, LAYOUT } from './og-card';
 import { dyeService, findClosestDyesWithDistance, getDyeByItemId } from './dye-helpers';
 import { getLocalizedDyeName } from '../translator';
@@ -42,25 +43,28 @@ export interface GradientOGOptions {
 }
 
 /**
- * Interpolates between two hex colors
+ * Interpolates between two hex colors in the space implied by the requested
+ * algorithm (BUG-031: previously always raw RGB regardless of ?algo=, while
+ * the footer printed the algorithm name).
+ * - oklab → OKLAB interpolation
+ * - ciede2000 → CIELAB interpolation (the space the metric is defined over)
+ * - euclidean → RGB interpolation
  */
-function interpolateColor(color1: string, color2: string, ratio: number): string {
-  const hex1 = color1.replace('#', '');
-  const hex2 = color2.replace('#', '');
-
-  const r1 = parseInt(hex1.slice(0, 2), 16);
-  const g1 = parseInt(hex1.slice(2, 4), 16);
-  const b1 = parseInt(hex1.slice(4, 6), 16);
-
-  const r2 = parseInt(hex2.slice(0, 2), 16);
-  const g2 = parseInt(hex2.slice(2, 4), 16);
-  const b2 = parseInt(hex2.slice(4, 6), 16);
-
-  const r = Math.round(r1 + (r2 - r1) * ratio);
-  const g = Math.round(g1 + (g2 - g1) * ratio);
-  const b = Math.round(b1 + (b2 - b1) * ratio);
-
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+function interpolateColor(
+  color1: string,
+  color2: string,
+  ratio: number,
+  algorithm: MatchingAlgorithm
+): string {
+  switch (algorithm) {
+    case 'ciede2000':
+      return ColorService.mixColorsLab(color1, color2, ratio);
+    case 'euclidean':
+      return ColorService.mixColorsRgb(color1, color2, ratio);
+    case 'oklab':
+    default:
+      return ColorService.mixColorsOklab(color1, color2, ratio);
+  }
 }
 
 /**
@@ -69,16 +73,17 @@ function interpolateColor(color1: string, color2: string, ratio: number): string
 function generateGradientSteps(
   startHex: string,
   endHex: string,
-  stepCount: number
+  stepCount: number,
+  algorithm: MatchingAlgorithm
 ): Array<{ hex: string; matchedDye?: Dye; delta?: number }> {
   const steps: Array<{ hex: string; matchedDye?: Dye; delta?: number }> = [];
 
   for (let i = 0; i < stepCount; i++) {
     const ratio = i / (stepCount - 1);
-    const hex = interpolateColor(startHex, endHex, ratio);
+    const hex = interpolateColor(startHex, endHex, ratio, algorithm);
 
-    // Find closest matching dye
-    const matches = findClosestDyesWithDistance(hex, { limit: 1 });
+    // Find closest matching dye with the requested metric (BUG-031)
+    const matches = findClosestDyesWithDistance(hex, { limit: 1, algorithm });
     const match = matches[0];
 
     steps.push({
@@ -106,7 +111,7 @@ export function generateGradientOG(options: GradientOGOptions): string {
   }
 
   // Generate gradient steps
-  const gradientSteps = generateGradientSteps(startDye.hex, endDye.hex, stepCount);
+  const gradientSteps = generateGradientSteps(startDye.hex, endDye.hex, stepCount, algorithm);
 
   // Build content elements
   const contentElements: string[] = [];
@@ -185,7 +190,7 @@ export function generateGradientOG(options: GradientOGOptions): string {
     const labelY = barY + barHeight + 30;
     const matchName = step.matchedDye ? getLocalizedDyeName(step.matchedDye, locale) : null;
     const dyeName = matchName
-      ? matchName.length > 10 ? matchName.slice(0, 9) + '..' : matchName
+      ? truncateText(matchName, 10)
       : `Step ${i + 1}`;
 
     contentElements.push(

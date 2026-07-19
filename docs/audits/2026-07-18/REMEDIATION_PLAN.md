@@ -166,6 +166,9 @@ Cross-cutting library hardening; ends with a batch npm publish (logger, rate-lim
 
 ## Sprint 7 — Edge workers: cache semantics & og-worker fidelity
 
+**✅ COMPLETED 2026-07-19** (BUG-031 note: harmony target selection stays hue-scan-based, matching the web-app's own approach; metric/interpolation/ratio now honor `?algo=`/`ratio`). Deploy needs: deploy universalis-proxy 1.5.0 and og-worker (new `@xivdyetools/svg` workspace dep — publish the Sprint 6 package batch first or deploy from the workspace).
+
+
 | ID | Sev/Pri | Item |
 |----|---------|------|
 | BUG-027 | MED | CORS responses cached `public` without `Vary: Origin` |

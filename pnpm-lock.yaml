@@ -324,6 +324,9 @@ importers:
       '@xivdyetools/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@xivdyetools/svg':
+        specifier: workspace:*
+        version: link:../../packages/svg
       '@xivdyetools/types':
         specifier: workspace:*
         version: link:../../packages/types
