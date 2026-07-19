@@ -8,6 +8,60 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.18.0] - 2026-07-19
+
+Full remediation of the 2026-07-18 deep-dive audit (139 findings; 128 scheduled across 8 deploy-unit sprints in `docs/audits/2026-07-18/REMEDIATION_PLAN.md`) — every sprint implemented, verified, and documented, with per-finding Status sections recording what shipped and what was deliberately deferred. Sprint 1 (presets-api) deployed to production 2026-07-18; everything else awaits the coordinated npm publish + worker deploy + web-app release sequence recorded in the plan.
+
+### Security
+
+- **presets-api** `1.6.0` (Sprint 1): **CRITICAL** — closed the moderation state-machine gap that allowed submitter self-approval; transitions validated server-side, D1 `batch()` used as a single transaction with `changes()`-gated updates; migration 0006 adds a unique preset-signature index (production applied; also surfaced that migration 0004's index had never landed as UNIQUE)
+- **oauth** `2.5.0` / **@xivdyetools/auth** `1.2.0` (Sprint 2): refresh rotation with `jti`-based revocation (KV) and `orig_iat` absolute session anchoring; OAuth state-signing hardening; dual JWT verifier paths consolidated
+- **@xivdyetools/logger** `1.3.0` (Sprint 6): redaction bypasses closed — case/separator-normalized key matching with a sensitive-suffix heuristic and a cycle guard instead of the depth-3 cap (BUG-024); JSON-quoted keys and spaced separators sanitized in error messages (BUG-025); the browser preset's errorTracker path now redacts before forwarding to third parties (BUG-026)
+- **@xivdyetools/auth** `1.2.0` (Sprint 6): Discord request body limit measured in UTF-8 bytes, closing the ~4× permissive gap for CJK/emoji payloads (BUG-059)
+- **@xivdyetools/svg** `1.2.0` (Sprint 6): all string attributes in SVG primitives XML-escaped — injection-proof regardless of caller hygiene (REFACTOR-019)
+- **universalis-proxy** `1.5.0` (Sprint 7): spoofable `X-Forwarded-For` fallback removed in favor of the shared `getClientIp()` (BUG-066); 5 MB upstream cap enforced by a streamed byte budget, closing the chunked-response bypass (BUG-065)
+
+### Fixed
+
+- **web-app** `4.12.0` (Sprint 3): market-board pricing, storage-service, and v4-layout corrections from the web-frontends findings batch
+- **@xivdyetools/core** `2.7.0` (Sprint 4): perceptual dye search uses an exact scan — the k-d-radius approach could return a worse in-radius dye while the true nearest sat outside (REFACTOR-003, proven by the new parity test); LRU caches return defensive copies (BUG-005); `APIService` batches >100-item Universalis requests; **api-worker** `0.5.0` route/middleware/validation fixes ride the same sprint
+- **discord-worker** `4.7.0` (Sprint 5): moderation approve/reject buttons finally routable via the new `MODERATION_BOT_TOKEN` secret — Discord routes component clicks to the message-owning application, so buttons posted by the main bot could never reach moderation-worker (BUG-009 HIGH); outcome-checked Discord API wrappers end silent "Bot is thinking…" hangs (BUG-035, also **moderation-worker** `1.3.0`); Universalis world→DC→region scope cascade (BUG-033); `/stats` follows KV cursors (BUG-037); shared MODERATOR_IDS grammar in **@xivdyetools/bot-logic** `1.3.0` (BUG-073); **stoat-worker** `0.2.0` reaction context keyed by the bot reply's ID (BUG-038)
+- **@xivdyetools/rate-limiter** `1.5.0` (Sprint 6): fake KV optimistic concurrency removed — version metadata was never compared and the verification read could double-count while costing a billed read per request (BUG-022/OPT-002); per-key cleanup windows (BUG-023); Upstash reports actual remaining TTL (BUG-055); window-boundary straddle fixed (BUG-064); **@xivdyetools/worker-middleware** `1.2.0` memoizes backend factories so a per-request `MemoryRateLimiter` can no longer silently disable limiting (BUG-061)
+- **@xivdyetools/types** `1.15.0` + **@xivdyetools/svg** `1.2.0` + **@xivdyetools/bot-logic** `1.3.0` (Sprint 6): match-quality thresholds unified in one shared classifier — four divergent copies (two comparison operators) meant an embed and its attached image could disagree about the same match at boundary distances (REFACTOR-004); plus emoji-tofu removal (BUG-056), surrogate-safe truncation (BUG-060), `#NaNNaNNaN` gradient guard (BUG-063), fullwidth-forms width estimation (REFACTOR-020), localizable accessibility labels (REFACTOR-022)
+- **universalis-proxy** `1.5.0` (Sprint 7): `Vary: Origin` on cacheable CORS responses — shared caches could replay one allowed origin's ACAO to the other (BUG-027); stale SWR responses no longer export a full fresh `max-age` downstream (BUG-028)
+- **og-worker** `1.4.0` (Sprint 7): the validated `?algo=` and 3-dye `ratio` are actually used — harmony deltas, gradient interpolation space, and blend matching honor the requested algorithm, so the "Algorithm:" footer on shared images no longer lies (BUG-031); explicit browser/edge TTLs replace the hidden ×7 multiplier that turned "7 days" into 49 at the edge (BUG-068); self-fetch guard on the `og.` custom domain (BUG-069)
+- **maintainer** `1.0.3` (Sprint 8): `stripDyePrefix` finally contains a real U+FF1A full-width colon — the old "full-width" variant was the same ASCII `:` twice (BUG-081)
+
+### Changed
+
+- **web-app** `4.12.0` (Sprint 8 / REFACTOR-002 step 1): `BaseComponent` owns a shared `SubscriptionManager` with automatic cleanup in `destroy()`; all seven hand-rolled tools converted — subscription hygiene is now guaranteed by the base class instead of re-audited per 2,000-3,500-line component. Steps 2-4 (price mixin, shared result-card renderer, drawer builder) remain as documented, independently shippable follow-ups
+- **@xivdyetools/color-blending** `1.1.0`: dropped its `@xivdyetools/core` dependency (one hexToRgb call pulled in the entire dye DB/k-d tree/i18n) — now a true zero-internal-dependency leaf matching the documented graph (REFACTOR-005)
+- **og-worker** `1.4.0`: local ~260-line fork of the SVG primitives replaced by `@xivdyetools/svg` re-exports — retroactively inheriting Sprint 6's attribute escaping and CJK-aware truncation (fixes ja/ko/zh names overflowing OG swatch columns) (REFACTOR-009); CLAUDE.md font documentation corrected, single `DyeService` per isolate (REFACTOR-024)
+- **discord-worker** `4.7.0`: shared sanitized moderation-embed builder replaces three divergent copies (REFACTOR-025/BUG-072); component-context TTL capped at Discord's 15-minute token lifetime (BUG-075)
+
+### Performance
+
+- **web-app** `4.12.0` (Sprint 8): Palette Extractor yields a frame so the "Extracting…" state paints, and grid-samples the K-means input (~80× less blocking work on 4K images) (OPT-011); images persist to a new IndexedDB `image_cache` store instead of a multi-MB localStorage data-URL that could consume ~80% of the shared quota and silently break all later settings/favorites writes (OPT-012, with one-time migration)
+- **discord-worker** `4.7.0` (Sprint 5): favorites autocomplete drops from up to 50 service-binding subrequests per keystroke to zero via denormalized entries (OPT-007); stale-if-error price cache keeps `/budget` alive through Universalis outages (OPT-006); no-op analytics verification read deleted (OPT-008); ~21 MiB unused CJK source fonts moved out of bundling reach (OPT-009); one prefs read per interaction (OPT-026)
+- **universalis-proxy** `1.5.0` (Sprint 7): one cache write per burst instead of one per coalesced waiter (OPT-021); item IDs deduplicated and the upstream URL canonicalized (OPT-022)
+- **og-worker** `1.4.0` (Sprint 7): character-color-by-hex is a lazy reverse index — one `Map.get` instead of 64 sequential sheet scans per swatch request (OPT-005); O(1) itemID lookups and winner-only ΔE in the harmony scan (OPT-023)
+- **@xivdyetools/crypto** `1.1.1`: chunked base64 encoding, ~10-50× faster for KB+ payloads (OPT-019); **@xivdyetools/logger** `1.3.0`: child-logger timing entries carry `requestId` (OPT-020); **maintainer** `1.0.3`: XIVAPI locale fetches fan out concurrently — worst case 40 s → 10 s (OPT-029)
+
+### Documentation
+
+- Per-finding `## Status` sections added to all 128 scheduled finding docs under `docs/audits/2026-07-18/`; each sprint header in `REMEDIATION_PLAN.md` marked ✅ with its deploy needs
+- All 22 package/app changelogs updated with the sprint work; lagging app versions bumped (oauth 2.5.0, presets-api 1.6.0, discord-worker 4.7.0, moderation-worker 1.3.0, stoat-worker 0.2.0, api-worker 0.5.0, maintainer 1.0.3, web-app 4.12.0, og-worker 1.4.0 — 1.3.0 had already shipped 2026-05-29 while `package.json` lagged); web-app `CHANGELOG-laymans.md` gained a plain-language 4.12.0 entry
+- CLAUDE.md corrections where the audit invalidated documented claims: rate-limiter (best-effort KV semantics), color-blending (zero internal deps), moderation-worker (actual HMAC scope), og-worker (five bundled fonts incl. CJK subsets), universalis-proxy (stale-response cache headers, `getClientIp`)
+- **@xivdyetools/test-utils** `1.1.8`: MockD1 `exec()` keeps `_queries`/`_bindings` index-aligned (BUG-062); `batch()` honors `run()` semantics
+
+### Deploy sequence (pending)
+
+1. Batch npm publish: types 1.15.0, crypto 1.1.1, logger 1.3.0, auth 1.2.0, rate-limiter 1.5.0, color-blending 1.1.0, svg 1.2.0, bot-logic 1.3.0, worker-middleware 1.2.0, test-utils 1.1.8, core 2.7.0 (`--ignore-scripts` if locale files were hand-edited)
+2. Worker deploys: discord-worker (+ set `MODERATION_BOT_TOKEN` secret), moderation-worker, oauth, api-worker, universalis-proxy, og-worker (needs the svg publish), stoat-worker restart
+3. web-app 4.12.0 release
+
+---
+
 ## [1.17.0] - 2026-06-09
 
 Module-surface cleanup and CI hygiene fixes from the dead-code audit (DEAD-113 through DEAD-126), merged alongside routine dependabot dependency-bump PRs (`@cloudflare/workers-types`, `hono`, `@types/node`, `wrangler`, and other dev/production dependencies across 15 `package.json` files — version-string bumps only, no behavioral changes).
