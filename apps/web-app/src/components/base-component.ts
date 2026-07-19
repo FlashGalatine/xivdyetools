@@ -9,6 +9,7 @@
 
 import { ErrorHandler } from '@shared/error-handler';
 import { logger } from '@shared/logger';
+import { SubscriptionManager } from '@shared/subscription-manager';
 import { clearContainer } from '@shared/utils';
 import { LanguageService } from '@services/index';
 
@@ -67,6 +68,13 @@ export abstract class BaseComponent implements ComponentLifecycle {
   > = new Map();
   protected isInitialized: boolean = false;
   protected isDestroyed: boolean = false;
+  /**
+   * REFACTOR-002 (2026-07-18 audit): shared subscription bag. Register every
+   * service subscription via `this.subs.add(Service.subscribe(...))` —
+   * `destroy()` calls `unsubscribeAll()` automatically, so tools no longer
+   * need per-service `xyzUnsubscribe` fields with hand-written cleanup.
+   */
+  protected subs: SubscriptionManager = new SubscriptionManager();
   // Track pending timers for cleanup to prevent memory leaks
   private pendingTimeouts: Set<ReturnType<typeof setTimeout>> = new Set();
   // WEB-PERF-003: Use counter instead of Math.random() to prevent key collision
@@ -165,6 +173,9 @@ export abstract class BaseComponent implements ComponentLifecycle {
     try {
       this.unbindAllEvents();
       this.clearAllTimeouts();
+      // REFACTOR-002: subscriptions registered via this.subs are cleaned up
+      // for every component, guaranteed by the base class
+      this.subs.unsubscribeAll();
       this.onUnmount?.();
       this.isDestroyed = true;
       this.element?.remove();

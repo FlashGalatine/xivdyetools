@@ -164,9 +164,6 @@ export class GradientTool extends BaseComponent {
   private v4ResultCards: ResultCard[] = [];
 
   // Subscriptions
-  private languageUnsubscribe: (() => void) | null = null;
-  private configUnsubscribe: (() => void) | null = null;
-  private marketConfigUnsubscribe: (() => void) | null = null;
 
   // Display options (from ConfigController) - for future v4-result-card migration
   private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
@@ -346,20 +343,26 @@ export class GradientTool extends BaseComponent {
     }
 
     // Subscribe to language changes (only in onMount, NOT bindEvents - avoids infinite loop)
-    this.languageUnsubscribe = LanguageService.subscribe(() => {
-      this.update();
-    });
+    this.subs.add(
+      LanguageService.subscribe(() => {
+        this.update();
+      })
+    );
 
     // Subscribe to config changes from V4 ConfigSidebar
     const configController = ConfigController.getInstance();
-    this.configUnsubscribe = configController.subscribe('gradient', (config) => {
-      this.setConfig(config);
-    });
+    this.subs.add(
+      configController.subscribe('gradient', (config) => {
+        this.setConfig(config);
+      })
+    );
 
     // Subscribe to market config changes
-    this.marketConfigUnsubscribe = configController.subscribe('market', (config) => {
-      this.setConfig(config);
-    });
+    this.subs.add(
+      configController.subscribe('market', (config) => {
+        this.setConfig(config);
+      })
+    );
 
     // Sync MarketBoard components with ConfigController on initial load
     const marketConfig = configController.getConfig('market');
@@ -390,10 +393,6 @@ export class GradientTool extends BaseComponent {
   }
 
   destroy(): void {
-    this.languageUnsubscribe?.();
-    this.configUnsubscribe?.();
-    this.marketConfigUnsubscribe?.();
-
     // Destroy desktop components
     this.dyeSelector?.destroy();
     this.marketBoard?.destroy();

@@ -40,8 +40,9 @@ import {
   ICON_EYEDROPPER,
 } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
+import { indexedDBService, STORES } from '@services/indexeddb-service';
 import { clearContainer } from '@shared/utils';
-import type { Dye, DyeWithDistance, PriceData } from '@xivdyetools/types';
+import type { Dye, DyeWithDistance, PriceData, RGB } from '@xivdyetools/types';
 import type {
   ExtractorConfig,
   DisplayOptionsConfig,
@@ -77,8 +78,12 @@ const STORAGE_KEYS = {
   extractedColors: 'v3_matcher_extracted_colors',
 } as const;
 
-// Maximum image size to store in localStorage (2MB to be safe)
-const MAX_IMAGE_STORAGE_SIZE = 2 * 1024 * 1024;
+// OPT-012: images persist to IndexedDB (image_cache store) instead of
+// localStorage — a 2 MB data-URL string consumed up to ~80% of the shared
+// ~5 MB localStorage budget and made every later setItem silently fail on
+// QuotaExceededError. IndexedDB has no such practical constraint, so the cap
+// only bounds memory/extraction cost.
+const MAX_IMAGE_STORAGE_SIZE = 8 * 1024 * 1024;
 
 // Alias for backward compatibility
 const ICON_UPLOAD = ICON_IMAGE;
@@ -188,9 +193,6 @@ export class ExtractorTool extends BaseComponent {
   private lastMarketError: string | undefined = undefined;
 
   // Subscriptions
-  private languageUnsubscribe: (() => void) | null = null;
-  private configUnsubscribe: (() => void) | null = null;
-  private marketConfigUnsubscribe: (() => void) | null = null;
 
   constructor(container: HTMLElement, options: ExtractorToolOptions) {
     super(container);
@@ -234,14 +236,9 @@ export class ExtractorTool extends BaseComponent {
       const { image, dataUrl } = event.detail;
       this.currentImage = image;
 
-      // Persist image to storage if it's small enough
-      if (dataUrl && dataUrl.length < MAX_IMAGE_STORAGE_SIZE) {
-        StorageService.setItem(STORAGE_KEYS.imageDataUrl, dataUrl);
-        logger.info('[MatcherTool] Image saved to storage');
-      } else if (dataUrl) {
-        // Clear any previously stored image if new one is too large
-        StorageService.removeItem(STORAGE_KEYS.imageDataUrl);
-        logger.info('[MatcherTool] Image too large to persist, cleared storage');
+      // OPT-012: persist to IndexedDB (async, off the image-load critical path)
+      if (dataUrl) {
+        void this.persistImage(dataUrl);
       }
 
       ToastService.success(LanguageService.t('matcher.imageLoaded'));
@@ -338,36 +335,40 @@ export class ExtractorTool extends BaseComponent {
 
   onMount(): void {
     // Subscribe to language changes (only in onMount, NOT bindEvents - avoids infinite loop)
-    this.languageUnsubscribe = LanguageService.subscribe(() => {
-      this.update();
-    });
+    this.subs.add(
+      LanguageService.subscribe(() => {
+        this.update();
+      })
+    );
 
     // Subscribe to config changes from V4 ConfigSidebar
-    this.configUnsubscribe = ConfigController.getInstance().subscribe('extractor', (config) => {
-      this.setConfig(config);
-    });
+    this.subs.add(
+      ConfigController.getInstance().subscribe('extractor', (config) => {
+        this.setConfig(config);
+      })
+    );
 
     // Subscribe to market config changes (from ConfigSidebar)
     // Re-render results and fetch prices when server changes
-    this.marketConfigUnsubscribe = ConfigController.getInstance().subscribe('market', (config) => {
-      if (this.lastPaletteResults.length > 0) {
-        this.renderPaletteResults(this.lastPaletteResults);
-        if (config.showPrices) {
-          void this.fetchPricesForMatches();
+    this.subs.add(
+      ConfigController.getInstance().subscribe('market', (config) => {
+        if (this.lastPaletteResults.length > 0) {
+          this.renderPaletteResults(this.lastPaletteResults);
+          if (config.showPrices) {
+            void this.fetchPricesForMatches();
+          }
+        } else if (this.matchedDyes.length > 0) {
+          this.renderMatchedResults();
+          if (config.showPrices) {
+            void this.fetchPricesForMatches();
+          }
         }
-      } else if (this.matchedDyes.length > 0) {
-        this.renderMatchedResults();
-        if (config.showPrices) {
-          void this.fetchPricesForMatches();
-        }
-      }
-    });
+      })
+    );
 
-    // Restore saved image from storage
-    const savedImageDataUrl = StorageService.getItem<string>(STORAGE_KEYS.imageDataUrl);
-    if (savedImageDataUrl) {
-      this.restoreSavedImage(savedImageDataUrl);
-    }
+    // Restore saved image (OPT-012: IndexedDB, with one-time localStorage
+    // migration for the legacy v3_matcher_image key)
+    void this.restoreImageFromStorage();
 
     // Restore extracted colors history from storage
     const savedExtractedColors = StorageService.getItem<Array<{ hex: string; timestamp: number }>>(
@@ -398,6 +399,44 @@ export class ExtractorTool extends BaseComponent {
     });
 
     logger.info('[MatcherTool] Mounted');
+  }
+
+  /**
+   * OPT-012: persist the current image data-URL to IndexedDB. Oversized
+   * images clear any previous entry instead (matching the old behavior).
+   */
+  private async persistImage(dataUrl: string): Promise<void> {
+    if (dataUrl.length < MAX_IMAGE_STORAGE_SIZE) {
+      const ok = await indexedDBService.set(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl, dataUrl);
+      if (ok) {
+        logger.info('[ExtractorTool] Image saved to IndexedDB');
+      }
+    } else {
+      await indexedDBService.delete(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl);
+      logger.info('[ExtractorTool] Image too large to persist, cleared storage');
+    }
+  }
+
+  /**
+   * OPT-012: load the saved image from IndexedDB; if absent, migrate any
+   * legacy localStorage entry (freeing up to ~4 MB of the shared quota).
+   */
+  private async restoreImageFromStorage(): Promise<void> {
+    let dataUrl = await indexedDBService.get<string>(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl);
+
+    if (!dataUrl) {
+      const legacy = StorageService.getItem<string>(STORAGE_KEYS.imageDataUrl);
+      if (legacy) {
+        dataUrl = legacy;
+        await indexedDBService.set(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl, legacy);
+        StorageService.removeItem(STORAGE_KEYS.imageDataUrl);
+        logger.info('[ExtractorTool] Migrated saved image from localStorage to IndexedDB');
+      }
+    }
+
+    if (dataUrl && !this.isDestroyed) {
+      this.restoreSavedImage(dataUrl);
+    }
   }
 
   /**
@@ -445,6 +484,7 @@ export class ExtractorTool extends BaseComponent {
 
     img.onerror = () => {
       // Failed to load saved image, clear it from storage
+      void indexedDBService.delete(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl);
       StorageService.removeItem(STORAGE_KEYS.imageDataUrl);
       logger.warn('[MatcherTool] Failed to restore saved image, cleared storage');
       img.onload = null;
@@ -456,9 +496,6 @@ export class ExtractorTool extends BaseComponent {
 
   destroy(): void {
     // Cleanup subscriptions
-    this.languageUnsubscribe?.();
-    this.configUnsubscribe?.();
-    this.marketConfigUnsubscribe?.();
 
     // Cleanup child components
     this.imageUpload?.destroy();
@@ -1327,13 +1364,9 @@ export class ExtractorTool extends BaseComponent {
         this.currentImage = img;
 
         // Persist image to storage if it's small enough
-        if (dataUrl && dataUrl.length < MAX_IMAGE_STORAGE_SIZE) {
-          StorageService.setItem(STORAGE_KEYS.imageDataUrl, dataUrl);
-          logger.info('[ExtractorTool] Image saved to storage (drop zone)');
-        } else if (dataUrl) {
-          // Clear any previously stored image if new one is too large
-          StorageService.removeItem(STORAGE_KEYS.imageDataUrl);
-          logger.info('[ExtractorTool] Image too large to persist, cleared storage');
+        // OPT-012: persist to IndexedDB (async, off the image-load critical path)
+        if (dataUrl) {
+          void this.persistImage(dataUrl);
         }
 
         // Hide drop content, show canvas
@@ -3106,10 +3139,18 @@ export class ExtractorTool extends BaseComponent {
       this.extractPaletteBtn.style.opacity = '0.7';
     }
 
+    // OPT-011: yield a frame so the "Extracting…" button state actually
+    // paints — the work below is synchronous and previously started before
+    // the browser could render the DOM writes above.
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
     try {
       // Get pixel data from canvas
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const pixels = PaletteService.pixelDataToRGBFiltered(imageData.data);
+      // OPT-011: downsample the K-means input on large images (same grid
+      // heuristic as findColorPositions) — ~10× less blocking work on a 4K
+      // screenshot with negligible palette-quality loss.
+      const pixels = this.samplePixelsForPalette(imageData);
 
       if (pixels.length === 0) {
         ToastService.error(LanguageService.t('errors.noPixelsToAnalyze'));
@@ -3164,6 +3205,31 @@ export class ExtractorTool extends BaseComponent {
         this.extractPaletteBtn.style.opacity = '1';
       }
     }
+  }
+
+  /**
+   * OPT-011: build the K-means input from a sampled pixel grid instead of
+   * every pixel. Targets ~100k samples — small images are used in full,
+   * a 4K screenshot (~8.3M pixels) is reduced ~80×. Skips near-transparent
+   * pixels like PaletteService.pixelDataToRGBFiltered did.
+   */
+  private samplePixelsForPalette(imageData: ImageData): RGB[] {
+    const { data, width, height } = imageData;
+    const step = Math.max(1, Math.floor(Math.sqrt((width * height) / 100_000)));
+
+    if (step === 1) {
+      return PaletteService.pixelDataToRGBFiltered(data);
+    }
+
+    const pixels: RGB[] = [];
+    for (let y = 0; y < height; y += step) {
+      for (let x = 0; x < width; x += step) {
+        const idx = (y * width + x) * 4;
+        if (data[idx + 3] < 128) continue; // skip transparent
+        pixels.push({ r: data[idx], g: data[idx + 1], b: data[idx + 2] });
+      }
+    }
+    return pixels;
   }
 
   /**

@@ -44,3 +44,7 @@ Medium-high: touches all nine tools, but each step is mechanical and independent
 Contained. Existing per-tool unit tests plus E2E cover the extracted behavior; steps 1 and 4 are pure mechanics. Step 2 changes budget/swatch behavior — intentionally, as it fixes BUG-010; verify against the consolidation-active price path. Recommend landing one tool per PR for steps 2-3.
 
 > Source: evidence/web-frontends-analysis.md (2026-07-18 deep-dive, web-frontends area)
+
+## Status
+
+**PARTIAL (step 1 complete) 2026-07-19** — `BaseComponent` now owns a `protected subs: SubscriptionManager` and calls `unsubscribeAll()` in `destroy()`, guaranteeing subscription cleanup for every component. All seven hand-rolled tools (accessibility, budget, comparison, extractor, gradient, swatch, mixer) converted from per-service `xyzUnsubscribe` fields to `this.subs.add(...)`; harmony's private shadowing instance removed in favor of the base one. preset-tool is Lit-based (connectedCallback/disconnectedCallback) and out of step-1 scope — its cleanup was already correct. Steps 2-4 (PricedResultsMixin unifying the two price patterns, shared renderResultCards, drawer-panel builder) remain open — each is independently shippable and recommended one tool per PR per the original plan.

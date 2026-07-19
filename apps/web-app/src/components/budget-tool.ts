@@ -190,8 +190,6 @@ export class BudgetTool extends BaseComponent {
   private mobileQuickPickButtons: HTMLButtonElement[] = [];
 
   // Subscriptions
-  private languageUnsubscribe: (() => void) | null = null;
-  private configUnsubscribe: (() => void) | null = null;
 
   constructor(container: HTMLElement, options: BudgetToolOptions) {
     super(container);
@@ -249,14 +247,18 @@ export class BudgetTool extends BaseComponent {
 
   onMount(): void {
     // Subscribe to language changes (only in onMount, NOT bindEvents - avoids infinite loop)
-    this.languageUnsubscribe = LanguageService.subscribe(() => {
-      this.update();
-    });
+    this.subs.add(
+      LanguageService.subscribe(() => {
+        this.update();
+      })
+    );
 
     // Subscribe to config changes from V4 ConfigSidebar
-    this.configUnsubscribe = ConfigController.getInstance().subscribe('budget', (config) => {
-      this.setConfig(config);
-    });
+    this.subs.add(
+      ConfigController.getInstance().subscribe('budget', (config) => {
+        this.setConfig(config);
+      })
+    );
 
     // Enable market board by default for Budget Tool (prices are core to this tool)
     this.marketBoardService.setShowPrices(true);
@@ -273,9 +275,6 @@ export class BudgetTool extends BaseComponent {
   }
 
   destroy(): void {
-    this.languageUnsubscribe?.();
-    this.configUnsubscribe?.();
-
     // Desktop components
     this.dyeSelector?.destroy();
     this.marketBoard?.destroy();

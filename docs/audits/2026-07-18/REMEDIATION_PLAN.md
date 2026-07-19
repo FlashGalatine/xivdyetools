@@ -188,6 +188,8 @@ Cross-cutting library hardening; ends with a batch npm publish (logger, rate-lim
 
 ## Sprint 8 — Structural: tool scaffolding extraction & heavy web perf
 
+**✅ COMPLETED 2026-07-19** (REFACTOR-002 step 1 of 4 landed — base-class SubscriptionManager with guaranteed cleanup, all seven hand-rolled tools converted; steps 2-4 (price mixin / renderResultCards / drawer builder) remain open as independently shippable follow-ups, one tool per PR. OPT-011 tiers 1+2 landed, Web Worker tier deferred.) Deploy needs: web-app release (its normal release flow); maintainer is local-only, no deploy.
+
 REFACTOR-002 rewrites the nine tool components' shared skeleton — deliberately last so it doesn't conflict with Sprint 3's targeted fixes, and it's the prevention layer for the BUG-010 class. The two heavy extractor optimizations belong inside that rewrite.
 
 | ID | Sev/Pri | Item |

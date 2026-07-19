@@ -222,8 +222,6 @@ export class AccessibilityTool extends BaseComponent {
   private v4ResultCards: ResultCard[] = [];
 
   // Subscriptions
-  private languageUnsubscribe: (() => void) | null = null;
-  private configUnsubscribe: (() => void) | null = null;
 
   constructor(container: HTMLElement, options: AccessibilityToolOptions) {
     super(container);
@@ -269,14 +267,18 @@ export class AccessibilityTool extends BaseComponent {
 
   onMount(): void {
     // Subscribe to language changes (only in onMount, NOT bindEvents - avoids infinite loop)
-    this.languageUnsubscribe = LanguageService.subscribe(() => {
-      this.update();
-    });
+    this.subs.add(
+      LanguageService.subscribe(() => {
+        this.update();
+      })
+    );
 
     // Subscribe to config changes from V4 ConfigSidebar
-    this.configUnsubscribe = ConfigController.getInstance().subscribe('accessibility', (config) => {
-      this.setConfig(config);
-    });
+    this.subs.add(
+      ConfigController.getInstance().subscribe('accessibility', (config) => {
+        this.setConfig(config);
+      })
+    );
 
     // Try to load from share URL first
     const loadedFromUrl = this.loadFromShareUrl();
@@ -294,9 +296,6 @@ export class AccessibilityTool extends BaseComponent {
   }
 
   destroy(): void {
-    this.languageUnsubscribe?.();
-    this.configUnsubscribe?.();
-
     // Destroy desktop components
     this.dyeSelector?.destroy();
     this.dyePanel?.destroy();

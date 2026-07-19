@@ -164,8 +164,6 @@ export class MixerTool extends BaseComponent {
   private shareButton: ShareButton | null = null;
 
   // Subscriptions
-  private languageUnsubscribe: (() => void) | null = null;
-  private configUnsubscribe: (() => void) | null = null;
 
   // Display options (from ConfigController)
   private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
@@ -572,14 +570,18 @@ export class MixerTool extends BaseComponent {
 
   onMount(): void {
     // Subscribe to language changes
-    this.languageUnsubscribe = LanguageService.subscribe(() => {
-      this.update();
-    });
+    this.subs.add(
+      LanguageService.subscribe(() => {
+        this.update();
+      })
+    );
 
     // Subscribe to config changes from v4 sidebar
-    this.configUnsubscribe = ConfigController.getInstance().subscribe('mixer', (config) => {
-      this.setConfig(config);
-    });
+    this.subs.add(
+      ConfigController.getInstance().subscribe('mixer', (config) => {
+        this.setConfig(config);
+      })
+    );
 
     // Check for share URL parameters (takes priority over localStorage)
     this.loadFromShareUrl();
@@ -674,9 +676,6 @@ export class MixerTool extends BaseComponent {
   }
 
   destroy(): void {
-    this.languageUnsubscribe?.();
-    this.configUnsubscribe?.();
-
     // Destroy desktop components
     this.dyeSelector?.destroy();
     this.marketBoard?.destroy();

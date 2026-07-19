@@ -13,7 +13,7 @@ import { logger } from '@shared/logger';
  * Database configuration
  */
 const DB_NAME = 'xivdyetools';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // v2: + image_cache (OPT-012)
 
 /**
  * Store names in the database
@@ -22,6 +22,8 @@ export const STORES = {
   PRICE_CACHE: 'price_cache',
   PALETTES: 'palettes',
   SETTINGS: 'settings',
+  /** OPT-012: extractor images (formerly multi-MB data-URLs in localStorage) */
+  IMAGE_CACHE: 'image_cache',
 } as const;
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
@@ -118,6 +120,11 @@ export class IndexedDBService {
           if (!db.objectStoreNames.contains(STORES.SETTINGS)) {
             db.createObjectStore(STORES.SETTINGS, { keyPath: 'key' });
             logger.debug('Created settings store');
+          }
+
+          if (!db.objectStoreNames.contains(STORES.IMAGE_CACHE)) {
+            db.createObjectStore(STORES.IMAGE_CACHE, { keyPath: 'key' });
+            logger.debug('Created image_cache store');
           }
 
           logger.info('📦 IndexedDB schema upgraded');

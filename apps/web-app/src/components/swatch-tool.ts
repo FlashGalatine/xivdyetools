@@ -209,9 +209,6 @@ export class SwatchTool extends BaseComponent {
   private mobileCategorySelect: HTMLSelectElement | null = null;
 
   // Subscriptions
-  private languageUnsubscribe: (() => void) | null = null;
-  private configUnsubscribe: (() => void) | null = null;
-  private marketConfigUnsubscribe: (() => void) | null = null;
   private resultsPanelMediaQueryCleanup: (() => void) | null = null;
 
   constructor(container: HTMLElement, options: SwatchToolOptions) {
@@ -262,20 +259,26 @@ export class SwatchTool extends BaseComponent {
     // Check for incoming dye from cross-tool navigation (e.g., result card context menu)
     this.handleIncomingDye();
 
-    this.languageUnsubscribe = LanguageService.subscribe(() => {
-      this.update();
-    });
+    this.subs.add(
+      LanguageService.subscribe(() => {
+        this.update();
+      })
+    );
 
     // Subscribe to config changes from V4 ConfigSidebar
     const configController = ConfigController.getInstance();
-    this.configUnsubscribe = configController.subscribe('swatch', (config) => {
-      this.setConfig(config);
-    });
+    this.subs.add(
+      configController.subscribe('swatch', (config) => {
+        this.setConfig(config);
+      })
+    );
 
     // Subscribe to market config changes
-    this.marketConfigUnsubscribe = configController.subscribe('market', (config) => {
-      this.setMarketConfig(config);
-    });
+    this.subs.add(
+      configController.subscribe('market', (config) => {
+        this.setMarketConfig(config);
+      })
+    );
 
     // Sync MarketBoard components with ConfigController on initial load
     const marketConfig = configController.getConfig('market');
@@ -297,9 +300,6 @@ export class SwatchTool extends BaseComponent {
   }
 
   destroy(): void {
-    this.languageUnsubscribe?.();
-    this.configUnsubscribe?.();
-    this.marketConfigUnsubscribe?.();
     this.resultsPanelMediaQueryCleanup?.();
 
     this.marketBoard?.destroy();

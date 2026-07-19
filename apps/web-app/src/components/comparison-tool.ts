@@ -154,8 +154,6 @@ export class ComparisonTool extends BaseComponent {
   private matrixSection: HTMLElement | null = null;
 
   // Subscriptions
-  private languageUnsubscribe: (() => void) | null = null;
-  private configUnsubscribe: (() => void) | null = null;
   private marketBoardEventCleanup: (() => void) | null = null;
 
   constructor(container: HTMLElement, options: ComparisonToolOptions) {
@@ -201,14 +199,18 @@ export class ComparisonTool extends BaseComponent {
 
   onMount(): void {
     // Subscribe to language changes (only in onMount, NOT bindEvents - avoids infinite loop)
-    this.languageUnsubscribe = LanguageService.subscribe(() => {
-      this.update();
-    });
+    this.subs.add(
+      LanguageService.subscribe(() => {
+        this.update();
+      })
+    );
 
     // Subscribe to config changes from V4 ConfigSidebar
-    this.configUnsubscribe = ConfigController.getInstance().subscribe('comparison', (config) => {
-      this.setConfig(config);
-    });
+    this.subs.add(
+      ConfigController.getInstance().subscribe('comparison', (config) => {
+        this.setConfig(config);
+      })
+    );
 
     // Load from share URL first, then fall back to persisted dyes
     const loadedFromUrl = this.loadFromShareUrl();
@@ -292,8 +294,6 @@ export class ComparisonTool extends BaseComponent {
   }
 
   destroy(): void {
-    this.languageUnsubscribe?.();
-    this.configUnsubscribe?.();
     this.marketBoardEventCleanup?.();
     this.dyeSelector?.destroy();
     this.dyeSelectorPanel?.destroy();

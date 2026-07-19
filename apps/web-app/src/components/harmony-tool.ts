@@ -52,7 +52,6 @@ import { HARMONY_ICONS } from '@shared/harmony-icons';
 import { ICON_MARKET, ICON_BEAKER, ICON_MUSIC } from '@shared/ui-icons';
 import { ICON_TOOL_HARMONY } from '@shared/tool-icons';
 import { COMPANION_DYES_MIN, COMPANION_DYES_MAX, COMPANION_DYES_DEFAULT } from '@shared/constants';
-import { SubscriptionManager } from '@shared/subscription-manager';
 
 // V4 Components - Import to register custom elements
 import '@components/v4/v4-color-wheel';
@@ -176,7 +175,7 @@ export class HarmonyTool extends BaseComponent {
   private shareButton: ShareButton | null = null;
 
   // Subscriptions
-  private subs = new SubscriptionManager();
+  // REFACTOR-002: subscriptions now use the shared `subs` bag from BaseComponent
 
   constructor(container: HTMLElement, options: HarmonyToolOptions) {
     super(container);
@@ -400,7 +399,6 @@ export class HarmonyTool extends BaseComponent {
 
   destroy(): void {
     // Cleanup subscriptions
-    this.subs.unsubscribeAll();
 
     // Cleanup child components
     this.destroyChildComponents();
