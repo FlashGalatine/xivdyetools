@@ -5,10 +5,9 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
-    createJWT,
+    createJWTForUser,
     verifyJWT,
     decodeJWT,
-    isJWTExpired,
     getAvatarUrl,
     isTokenRevoked,
     revokeToken,
@@ -16,7 +15,7 @@ import {
     verifyJWTSignatureOnly,
 } from '../services/jwt-service.js';
 import { createMockKV, createMockDB } from './mocks/cloudflare-test.js';
-import type { DiscordUser, Env } from '../types.js';
+import type { DiscordUser, Env, UserRow } from '../types.js';
 
 /** MockKVNamespace cast to also satisfy KVNamespace for function calls */
 type TestKV = KVNamespace & ReturnType<typeof createMockKV>;
@@ -43,6 +42,26 @@ const createMockUser = (): DiscordUser => ({
     global_name: 'Test User',
     avatar: 'abc123hash',
 });
+
+// Mock database user row (REFACTOR-001: createJWT was removed; tokens are
+// minted from UserRow via createJWTForUser)
+const createMockUserRow = (): UserRow => ({
+    id: '123456789',
+    discord_id: '123456789',
+    xivauth_id: null,
+    auth_provider: 'discord',
+    username: 'testuser',
+    avatar_url: null,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+});
+
+/** Mint a token the way the callback handlers do */
+const mintToken = (
+    env: Env,
+    options: { global_name?: string | null; avatar?: string | null } = { global_name: 'Test User', avatar: 'abc123hash' },
+): Promise<{ token: string; expires_at: number; jti: string }> =>
+    createJWTForUser(createMockUserRow(), env, { auth_provider: 'discord', ...options });
 
 /** Build a signed HS256 JWT from explicit header + payload objects.
  *  headerOverrides allows crafting tokens with non-standard alg values for security tests. */
@@ -96,9 +115,9 @@ describe('JWT Service', () => {
         vi.useRealTimers();
     });
 
-    describe('createJWT', () => {
+    describe('createJWTForUser', () => {
         it('should create a valid JWT token', async () => {
-            const result = await createJWT(mockUser, mockEnv);
+            const result = await mintToken(mockEnv);
 
             expect(result).toHaveProperty('token');
             expect(result).toHaveProperty('expires_at');
@@ -107,7 +126,7 @@ describe('JWT Service', () => {
         });
 
         it('should set correct expiration time based on JWT_EXPIRY', async () => {
-            const result = await createJWT(mockUser, mockEnv);
+            const result = await mintToken(mockEnv);
             const expectedExp = Math.floor(new Date('2024-01-01T00:00:00Z').getTime() / 1000) + 3600;
 
             expect(result.expires_at).toBe(expectedExp);
@@ -115,14 +134,14 @@ describe('JWT Service', () => {
 
         it('should use default expiry when JWT_EXPIRY is invalid', async () => {
             mockEnv.JWT_EXPIRY = 'invalid';
-            const result = await createJWT(mockUser, mockEnv);
+            const result = await mintToken(mockEnv);
             const expectedExp = Math.floor(new Date('2024-01-01T00:00:00Z').getTime() / 1000) + 3600;
 
             expect(result.expires_at).toBe(expectedExp);
         });
 
         it('should include user information in payload', async () => {
-            const result = await createJWT(mockUser, mockEnv);
+            const result = await mintToken(mockEnv);
             const decoded = decodeJWT(result.token);
 
             expect(decoded).not.toBeNull();
@@ -133,23 +152,21 @@ describe('JWT Service', () => {
         });
 
         it('should set issuer to WORKER_URL', async () => {
-            const result = await createJWT(mockUser, mockEnv);
+            const result = await mintToken(mockEnv);
             const decoded = decodeJWT(result.token);
 
             expect(decoded!.iss).toBe(mockEnv.WORKER_URL);
         });
 
         it('should handle null global_name', async () => {
-            mockUser.global_name = null;
-            const result = await createJWT(mockUser, mockEnv);
+            const result = await mintToken(mockEnv, { global_name: null, avatar: 'abc123hash' });
             const decoded = decodeJWT(result.token);
 
             expect(decoded!.global_name).toBeNull();
         });
 
         it('should handle null avatar', async () => {
-            mockUser.avatar = null;
-            const result = await createJWT(mockUser, mockEnv);
+            const result = await mintToken(mockEnv, { global_name: 'Test User', avatar: null });
             const decoded = decodeJWT(result.token);
 
             expect(decoded!.avatar).toBeNull();
@@ -158,7 +175,7 @@ describe('JWT Service', () => {
 
     describe('verifyJWT', () => {
         it('should verify a valid JWT', async () => {
-            const { token } = await createJWT(mockUser, mockEnv);
+            const { token } = await mintToken(mockEnv);
             const payload = await verifyJWT(token, mockEnv.JWT_SECRET);
 
             expect(payload.sub).toBe(mockUser.id);
@@ -166,20 +183,20 @@ describe('JWT Service', () => {
         });
 
         it('should throw for invalid signature', async () => {
-            const { token } = await createJWT(mockUser, mockEnv);
+            const { token } = await mintToken(mockEnv);
             const wrongSecret = 'wrong-secret-key-for-testing-32chars';
 
-            await expect(verifyJWT(token, wrongSecret)).rejects.toThrow('Invalid JWT signature');
+            await expect(verifyJWT(token, wrongSecret)).rejects.toThrow('Invalid JWT');
         });
 
         it('should throw for malformed token (wrong number of parts)', async () => {
-            await expect(verifyJWT('invalid', mockEnv.JWT_SECRET)).rejects.toThrow('Invalid JWT format');
-            await expect(verifyJWT('part1.part2', mockEnv.JWT_SECRET)).rejects.toThrow('Invalid JWT format');
-            await expect(verifyJWT('a.b.c.d', mockEnv.JWT_SECRET)).rejects.toThrow('Invalid JWT format');
+            await expect(verifyJWT('invalid', mockEnv.JWT_SECRET)).rejects.toThrow('Invalid JWT');
+            await expect(verifyJWT('part1.part2', mockEnv.JWT_SECRET)).rejects.toThrow('Invalid JWT');
+            await expect(verifyJWT('a.b.c.d', mockEnv.JWT_SECRET)).rejects.toThrow('Invalid JWT');
         });
 
         it('should throw for expired token', async () => {
-            const { token } = await createJWT(mockUser, mockEnv);
+            const { token } = await mintToken(mockEnv);
 
             // Advance time beyond expiry
             vi.advanceTimersByTime(3601 * 1000);
@@ -188,7 +205,7 @@ describe('JWT Service', () => {
         });
 
         it('should verify token just before expiration', async () => {
-            const { token } = await createJWT(mockUser, mockEnv);
+            const { token } = await mintToken(mockEnv);
 
             // Advance time to just before expiry
             vi.advanceTimersByTime(3599 * 1000);
@@ -205,7 +222,7 @@ describe('JWT Service', () => {
                 { alg: 'none' },
                 '',
             );
-            await expect(verifyJWT(token, mockEnv.JWT_SECRET)).rejects.toThrow('JWT algorithm not supported');
+            await expect(verifyJWT(token, mockEnv.JWT_SECRET)).rejects.toThrow('Invalid JWT');
         });
 
         it('should throw for token without sub claim (REFACTOR-001)', async () => {
@@ -214,13 +231,13 @@ describe('JWT Service', () => {
                 { iat: now, exp: now + 3600, iss: mockEnv.WORKER_URL, username: 'testuser', global_name: null, avatar: null, auth_provider: 'discord' },
                 mockEnv.JWT_SECRET,
             );
-            await expect(verifyJWT(token, mockEnv.JWT_SECRET)).rejects.toThrow('JWT missing required claims');
+            await expect(verifyJWT(token, mockEnv.JWT_SECRET)).rejects.toThrow('Invalid JWT');
         });
     });
 
     describe('decodeJWT', () => {
         it('should decode a valid JWT payload', async () => {
-            const { token } = await createJWT(mockUser, mockEnv);
+            const { token } = await mintToken(mockEnv);
             const decoded = decodeJWT(token);
 
             expect(decoded).not.toBeNull();
@@ -239,7 +256,7 @@ describe('JWT Service', () => {
         });
 
         it('should decode expired token without error', async () => {
-            const { token } = await createJWT(mockUser, mockEnv);
+            const { token } = await mintToken(mockEnv);
 
             // Advance time beyond expiry
             vi.advanceTimersByTime(3601 * 1000);
@@ -247,27 +264,6 @@ describe('JWT Service', () => {
             const decoded = decodeJWT(token);
             expect(decoded).not.toBeNull();
             expect(decoded!.sub).toBe(mockUser.id);
-        });
-    });
-
-    describe('isJWTExpired', () => {
-        it('should return false for valid non-expired token', async () => {
-            const { token } = await createJWT(mockUser, mockEnv);
-
-            expect(isJWTExpired(token)).toBe(false);
-        });
-
-        it('should return true for expired token', async () => {
-            const { token } = await createJWT(mockUser, mockEnv);
-
-            vi.advanceTimersByTime(3601 * 1000);
-
-            expect(isJWTExpired(token)).toBe(true);
-        });
-
-        it('should return true for invalid token', () => {
-            expect(isJWTExpired('invalid')).toBe(true);
-            expect(isJWTExpired('')).toBe(true);
         });
     });
 
@@ -299,7 +295,7 @@ describe('JWT Service', () => {
 
     describe('verifyJWTSignatureOnly', () => {
         it('should return payload for valid signature (even if expired)', async () => {
-            const { token } = await createJWT(mockUser, mockEnv);
+            const { token } = await mintToken(mockEnv);
 
             // Advance time past expiry
             vi.advanceTimersByTime(3601 * 1000);
@@ -312,7 +308,7 @@ describe('JWT Service', () => {
         });
 
         it('should return null for invalid signature', async () => {
-            const { token } = await createJWT(mockUser, mockEnv);
+            const { token } = await mintToken(mockEnv);
             const wrongSecret = 'wrong-secret-key-for-testing-32chars';
 
             const payload = await verifyJWTSignatureOnly(token, wrongSecret);
@@ -451,7 +447,7 @@ describe('JWT Service', () => {
     describe('verifyJWTWithRevocationCheck', () => {
         it('should verify valid non-revoked token', async () => {
             const kv = testKV();
-            const { token } = await createJWT(mockUser, mockEnv);
+            const { token } = await mintToken(mockEnv);
 
             const payload = await verifyJWTWithRevocationCheck(token, mockEnv.JWT_SECRET, kv);
 
@@ -460,7 +456,7 @@ describe('JWT Service', () => {
 
         it('should throw for revoked token', async () => {
             const kv = testKV();
-            const { token, jti, expires_at } = await createJWT(mockUser, mockEnv);
+            const { token, jti, expires_at } = await mintToken(mockEnv);
 
             // Revoke the token
             await revokeToken(jti, expires_at, kv);
@@ -471,7 +467,7 @@ describe('JWT Service', () => {
         });
 
         it('should work without KV (skip revocation check)', async () => {
-            const { token } = await createJWT(mockUser, mockEnv);
+            const { token } = await mintToken(mockEnv);
 
             const payload = await verifyJWTWithRevocationCheck(token, mockEnv.JWT_SECRET, undefined);
 
@@ -480,7 +476,7 @@ describe('JWT Service', () => {
 
         it('should throw for expired token (regardless of revocation)', async () => {
             const kv = testKV();
-            const { token } = await createJWT(mockUser, mockEnv);
+            const { token } = await mintToken(mockEnv);
 
             // Advance time past expiry
             vi.advanceTimersByTime(3601 * 1000);
@@ -492,12 +488,12 @@ describe('JWT Service', () => {
 
         it('should throw for invalid signature', async () => {
             const kv = testKV();
-            const { token } = await createJWT(mockUser, mockEnv);
+            const { token } = await mintToken(mockEnv);
             const wrongSecret = 'wrong-secret-key-for-testing-32chars';
 
             await expect(
                 verifyJWTWithRevocationCheck(token, wrongSecret, kv)
-            ).rejects.toThrow('Invalid JWT signature');
+            ).rejects.toThrow('Invalid JWT');
         });
 
         it('should handle token without JTI gracefully', async () => {

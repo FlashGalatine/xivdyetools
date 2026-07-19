@@ -41,3 +41,7 @@ MEDIUM (the code moves are small; test migration across 40+ `createJWT` call sit
 LOW-MEDIUM. Token format is unchanged (HS256, same claims), so no invalidation of live sessions. Main risk is subtle behavioral differences between the shared and local verifiers (error types vs null returns) — the refresh handler's try/catch flow depends on `verifyJWT` throwing; verify the shared API's contract before swapping.
 
 > Source: evidence/d1-workers-analysis.md (2026-07-18 deep-dive, d1-workers area)
+
+## Status
+
+**DONE 2026-07-19** — oauth now depends on `@xivdyetools/auth` (v1.2.0): `verifyJWT`/`verifyJWTSignatureOnly` delegate to the shared implementations (thin throwing wrapper preserved for handler flow); minting collapsed to `createJWTForUser` + one `signPayload` primitive; `createJWT`, `createJWTFromPayload`, and `isJWTExpired` deleted (tests migrated); KV revocation helpers moved into the shared package's new `revocation` module.

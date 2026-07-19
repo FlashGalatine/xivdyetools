@@ -55,6 +55,32 @@ export async function findOrCreateUser(
   }
 
   if (existingUser) {
+    // BUG-004 (2026-07-18 audit): if we're about to stamp a Discord ID onto
+    // this row but a *different* row already owns it (Discord-first login,
+    // then XIVAuth login, then the accounts got linked), the UPDATE would hit
+    // the partial UNIQUE(discord_id) index and 500 every subsequent login.
+    // Merge explicitly: keep this row (it has the provider ID we looked up
+    // by), move the other row's characters over, delete it, then claim the
+    // Discord ID — all in one atomic batch.
+    if (!existingUser.discord_id && discord_id) {
+      const owner = await db
+        .prepare('SELECT id FROM users WHERE discord_id = ? AND id != ?')
+        .bind(discord_id, existingUser.id)
+        .first<{ id: string }>();
+
+      if (owner) {
+        await db.batch([
+          db
+            .prepare('UPDATE xivauth_characters SET user_id = ? WHERE user_id = ?')
+            .bind(existingUser.id, owner.id),
+          db.prepare('DELETE FROM users WHERE id = ?').bind(owner.id),
+          db
+            .prepare("UPDATE users SET discord_id = ?, updated_at = datetime('now') WHERE id = ?")
+            .bind(discord_id, existingUser.id),
+        ]);
+      }
+    }
+
     // Update existing user with potentially new info and merge provider IDs
     return await updateUser(db, existingUser.id, {
       // If logging in via XIVAuth and we have a new discord_id from social link, add it
@@ -197,19 +223,20 @@ export async function storeCharacters(
   userId: string,
   characters: XIVAuthCharacter[]
 ): Promise<void> {
-  // Clear existing characters
-  await db.prepare('DELETE FROM xivauth_characters WHERE user_id = ?').bind(userId).run();
-
-  // Insert new characters
-  for (const char of characters) {
-    await db
-      .prepare(
-        `INSERT INTO xivauth_characters (user_id, lodestone_id, name, server, verified)
-         VALUES (?, ?, ?, ?, ?)`
-      )
-      .bind(userId, char.id, char.name, char.home_world, char.verified ? 1 : 0)
-      .run();
-  }
+  // OPT-003 (2026-07-18 audit): one atomic batch instead of 1 + N sequential
+  // round trips on the login critical path — also closes the partial-write
+  // window the non-atomic delete-then-insert loop left open
+  await db.batch([
+    db.prepare('DELETE FROM xivauth_characters WHERE user_id = ?').bind(userId),
+    ...characters.map((char) =>
+      db
+        .prepare(
+          `INSERT INTO xivauth_characters (user_id, lodestone_id, name, server, verified)
+           VALUES (?, ?, ?, ?, ?)`
+        )
+        .bind(userId, char.id, char.name, char.home_world, char.verified ? 1 : 0)
+    ),
+  ]);
 }
 
 /**

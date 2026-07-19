@@ -28,7 +28,15 @@ export {
   isJWTExpired,
   getJWTTimeToExpiry,
   type JWTPayload,
+  type VerifyJWTOptions,
 } from './jwt.js';
+
+// Revocation utilities (KV-backed jti blacklist)
+export {
+  isTokenRevoked,
+  revokeToken,
+  type RevocationStore,
+} from './revocation.js';
 
 // HMAC utilities
 export {

@@ -11,7 +11,6 @@ import { callbackRouter } from './handlers/callback.js';
 import { tokenRouter } from './handlers/refresh.js';
 import { xivauthRouter } from './handlers/xivauth.js';
 import { checkRateLimit, getClientIp } from './services/rate-limit.js';
-import { checkRateLimitDO } from './services/rate-limit-do.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-middleware';
 import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
@@ -134,22 +133,14 @@ app.use('/auth/*', jsonDepthLimit);
 
 // Rate limiting middleware for auth endpoints
 // Protects against brute force and credential stuffing attacks
-// Supports both in-memory (legacy) and Durable Objects (persistent) rate limiting
+// REFACTOR-006/OPT-004 (2026-07-18 audit): the dead Durable Object path was
+// deleted; limits are KV-backed (globally consistent) when TOKEN_BLACKLIST
+// is bound, per-isolate memory otherwise.
 app.use('/auth/*', async (c, next) => {
   const clientIp = getClientIp(c.req.raw);
   const path = new URL(c.req.url).pathname;
 
-  // Feature flag: use DO or in-memory rate limiting
-  const useDO = c.env.USE_DO_RATE_LIMITING === 'true' && c.env.RATE_LIMITER;
-
-  let result;
-  if (useDO) {
-    // Use Durable Objects rate limiting (persistent, distributed)
-    result = await checkRateLimitDO(clientIp, path, c.env.RATE_LIMITER!);
-  } else {
-    // Use in-memory rate limiting (legacy, per-isolate)
-    result = await checkRateLimit(clientIp, path);
-  }
+  const result = await checkRateLimit(clientIp, path, c.env.TOKEN_BLACKLIST);
 
   // Set rate limit headers on all responses
   c.header('X-RateLimit-Limit', result.limit.toString());

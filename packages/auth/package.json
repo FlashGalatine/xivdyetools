@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/auth",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Shared authentication utilities for xivdyetools ecosystem",
   "type": "module",
   "main": "./dist/index.js",
@@ -25,6 +25,10 @@
     "./discord": {
       "types": "./dist/discord.d.ts",
       "import": "./dist/discord.js"
+    },
+    "./revocation": {
+      "types": "./dist/revocation.d.ts",
+      "import": "./dist/revocation.js"
     }
   },
   "files": [

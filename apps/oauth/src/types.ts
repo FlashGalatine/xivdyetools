@@ -61,19 +61,14 @@ export interface Env {
   WORKER_URL: string;
   JWT_EXPIRY: string;
 
-  // Feature flags
-  USE_DO_RATE_LIMITING?: string; // "true" to use Durable Objects for rate limiting
-
   // Secrets
   DISCORD_CLIENT_SECRET: string;
   XIVAUTH_CLIENT_SECRET?: string; // Optional - only needed for confidential client mode
   JWT_SECRET: string;
 
   // KV Namespaces (optional for backward compatibility)
+  // Also backs the /auth/* rate limiter under the 'rl:' prefix (OPT-004)
   TOKEN_BLACKLIST?: KVNamespace;
-
-  // Durable Objects
-  RATE_LIMITER?: DurableObjectNamespace; // Rate limiter DO (optional during migration)
 
   // D1 Database for user management
   DB: D1Database;

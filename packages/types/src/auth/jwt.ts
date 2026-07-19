@@ -48,6 +48,13 @@ export interface JWTPayload {
   /** JWT ID for revocation (optional for backward compat) */
   jti?: string;
 
+  /**
+   * Original-issuance timestamp, carried unchanged across token refreshes.
+   * BUG-021 (2026-07-18 audit): anchors the absolute session lifetime — the
+   * refresh endpoint rejects chains older than the maximum session age.
+   */
+  orig_iat?: number;
+
   // Custom claims
   /** Display username */
   username: string;

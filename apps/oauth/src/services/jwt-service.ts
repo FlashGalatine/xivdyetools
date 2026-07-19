@@ -1,26 +1,35 @@
 /**
  * JWT Service
- * Handles creation and validation of JSON Web Tokens using Web Crypto API
+ * Mints JSON Web Tokens (HS256 via Web Crypto) and wraps the shared
+ * verification primitives from @xivdyetools/auth.
  *
- * Uses HMAC-SHA256 for signing (HS256 algorithm)
- * Compatible with Cloudflare Workers (no Node.js crypto required)
+ * REFACTOR-001 (2026-07-18 audit): verification is now fully delegated to
+ * @xivdyetools/auth — this worker only keeps token *creation* (which the
+ * shared package intentionally does not provide) plus thin wrappers that
+ * preserve this worker's throwing error contract. The hand-rolled verifier,
+ * the legacy createJWT/createJWTFromPayload mint paths, and isJWTExpired
+ * were deleted; revocation helpers moved into the shared package.
  */
 
-import type { JWTPayload, DiscordUser, Env, UserRow, AuthProvider, PrimaryCharacter } from '../types.js';
+import type { JWTPayload, Env, UserRow, AuthProvider, PrimaryCharacter } from '../types.js';
 import {
   base64UrlEncode as base64UrlEncodeString,
   base64UrlEncodeBytes,
-  base64UrlDecode,
   base64UrlDecodeBytes,
 } from '@xivdyetools/crypto';
+import {
+  verifyJWTSignatureOnly as sharedVerifyJWTSignatureOnly,
+  decodeJWT as sharedDecodeJWT,
+  isTokenRevoked as sharedIsTokenRevoked,
+  revokeToken as sharedRevokeToken,
+} from '@xivdyetools/auth';
 
 // REFACTOR-001: Re-export from @xivdyetools/crypto for backwards compatibility
 export { base64UrlDecode } from '@xivdyetools/crypto';
 
 /**
  * Base64URL encode a string or ArrayBuffer
- * OAUTH-REF-002: Exported for reuse in refresh.ts to avoid duplication
- * REFACTOR-001: Wrapper around @xivdyetools/crypto functions to support both types
+ * OAUTH-REF-002: Exported for reuse in state-signing.ts
  */
 export function base64UrlEncode(data: string | ArrayBuffer): string {
   if (typeof data === 'string') {
@@ -49,7 +58,7 @@ async function getSigningKey(secret: string): Promise<CryptoKey> {
 
 /**
  * Sign data with HMAC-SHA256
- * OAUTH-REF-002: Exported for reuse in refresh.ts to avoid duplication
+ * OAUTH-REF-002: Exported for reuse in state-signing.ts
  */
 export async function signJwtData(data: string, secret: string): Promise<string> {
   const key = await getSigningKey(secret);
@@ -60,7 +69,6 @@ export async function signJwtData(data: string, secret: string): Promise<string>
 
 /**
  * Verify HMAC-SHA256 signature using crypto.subtle.verify (constant-time).
- * REFACTOR-001: Uses @xivdyetools/crypto for base64url decoding.
  * Exported so state-signing.ts can use it instead of a non-constant-time string compare.
  */
 export async function verifyJwtData(
@@ -77,56 +85,25 @@ export async function verifyJwtData(
   return crypto.subtle.verify('HMAC', key, sigBytes, encoder.encode(data));
 }
 
-// Internal alias kept for JWT verification paths below
-const verify = verifyJwtData;
-
 /**
- * Create a JWT for a Discord user (legacy function, kept for backwards compatibility)
- * Includes jti (JWT ID) claim for token revocation support
- * @deprecated Use createJWTForUser instead for multi-provider support
+ * Sign an arbitrary payload as an HS256 JWT.
+ * REFACTOR-001: the single mint primitive — used by createJWTForUser and the
+ * refresh handler (replacing the former createJWTFromPayload duplicate).
  */
-export async function createJWT(
-  user: DiscordUser,
-  env: Env
-): Promise<{ token: string; expires_at: number; jti: string }> {
-  const now = Math.floor(Date.now() / 1000);
-  const expirySeconds = parseInt(env.JWT_EXPIRY, 10) || 3600;
-  const expiresAt = now + expirySeconds;
-
-  // Generate unique token ID for revocation tracking
-  const jti = crypto.randomUUID();
-
-  const payload: JWTPayload = {
-    sub: user.id,
-    iat: now,
-    exp: expiresAt,
-    iss: env.WORKER_URL,
-    jti,
-    username: user.username,
-    global_name: user.global_name,
-    avatar: user.avatar,
-    auth_provider: 'discord',
-    discord_id: user.id,
-  };
-
-  // JWT Header
-  const header = {
-    alg: 'HS256',
-    typ: 'JWT',
-  };
-
-  // Encode header and payload
+export async function signPayload(
+  payload: JWTPayload,
+  secret: string
+): Promise<{ token: string; expires_at: number }> {
+  const header = { alg: 'HS256', typ: 'JWT' };
   const encodedHeader = base64UrlEncode(JSON.stringify(header));
   const encodedPayload = base64UrlEncode(JSON.stringify(payload));
-
-  // Create signature
   const signatureInput = `${encodedHeader}.${encodedPayload}`;
-  const signature = await signJwtData(signatureInput, env.JWT_SECRET);
+  const signature = await signJwtData(signatureInput, secret);
 
-  // Combine into JWT
-  const token = `${signatureInput}.${signature}`;
-
-  return { token, expires_at: expiresAt, jti };
+  return {
+    token: `${signatureInput}.${signature}`,
+    expires_at: payload.exp,
+  };
 }
 
 /**
@@ -141,7 +118,6 @@ export interface CreateJWTForUserOptions {
 
 /**
  * Create a JWT for a database user (supports both Discord and XIVAuth)
- * This is the preferred method for multi-provider authentication
  */
 export async function createJWTForUser(
   user: UserRow,
@@ -163,6 +139,10 @@ export async function createJWTForUser(
     iss: env.WORKER_URL,
     jti,
 
+    // BUG-021: anchor for the absolute session lifetime — refreshes carry
+    // this forward unchanged so a chain can't outlive the maximum session age
+    orig_iat: now,
+
     // User info
     username: user.username,
     global_name: options?.global_name ?? null,
@@ -177,76 +157,33 @@ export async function createJWTForUser(
     primary_character: options?.primary_character,
   };
 
-  // JWT Header
-  const header = {
-    alg: 'HS256',
-    typ: 'JWT',
-  };
-
-  // Encode header and payload
-  const encodedHeader = base64UrlEncode(JSON.stringify(header));
-  const encodedPayload = base64UrlEncode(JSON.stringify(payload));
-
-  // Create signature
-  const signatureInput = `${encodedHeader}.${encodedPayload}`;
-  const signature = await signJwtData(signatureInput, env.JWT_SECRET);
-
-  // Combine into JWT
-  const token = `${signatureInput}.${signature}`;
-
-  return { token, expires_at: expiresAt, jti };
+  const { token, expires_at } = await signPayload(payload, env.JWT_SECRET);
+  return { token, expires_at, jti };
 }
 
 /**
- * Verify and decode a JWT
- * Returns the payload if valid, throws if invalid
+ * Verify and decode a JWT.
+ * Returns the payload if valid, throws if invalid.
+ *
+ * REFACTOR-001: delegates to @xivdyetools/auth; this wrapper only preserves
+ * the throwing contract this worker's handlers rely on.
  */
 export async function verifyJWT(
   token: string,
   secret: string
 ): Promise<JWTPayload> {
-  const parts = token.split('.');
-
-  if (parts.length !== 3) {
-    throw new Error('Invalid JWT format');
+  // Signature/alg/structure + sub/exp presence via the shared verifier
+  const payload = await sharedVerifyJWTSignatureOnly(token, secret);
+  if (!payload) {
+    throw new Error('Invalid JWT');
   }
 
-  const [encodedHeader, encodedPayload, signature] = parts;
-
-  // REFACTOR-001: Reject non-HS256 algorithms (prevents alg:none and RS-vs-HS swap attacks)
-  let header: { alg?: string };
-  try {
-    header = JSON.parse(base64UrlDecode(encodedHeader)) as { alg?: string };
-  } catch {
-    throw new Error('Invalid JWT format');
-  }
-  if (header.alg !== 'HS256') {
-    throw new Error('JWT algorithm not supported');
-  }
-
-  // Verify signature
-  const signatureInput = `${encodedHeader}.${encodedPayload}`;
-  const isValid = await verify(signatureInput, signature, secret);
-
-  if (!isValid) {
-    throw new Error('Invalid JWT signature');
-  }
-
-  // Decode payload
-  const payload: JWTPayload = JSON.parse(base64UrlDecode(encodedPayload)) as JWTPayload;
-
-  // Check expiration — also guards missing exp claim (undefined < now is false in JS)
   const now = Math.floor(Date.now() / 1000);
-  if (!payload.exp || payload.exp < now) {
+  if (payload.exp < now) {
     throw new Error('JWT has expired');
   }
 
-  // REFACTOR-001: Require sub claim — matches @xivdyetools/auth verifyJWT
-  if (!payload.sub) {
-    throw new Error('JWT missing required claims');
-  }
-
-  return payload;
+  return payload as unknown as JWTPayload;
 }
 
 /**
@@ -254,76 +191,22 @@ export async function verifyJWT(
  * WARNING: Do not trust the contents without calling verifyJWT
  */
 export function decodeJWT(token: string): JWTPayload | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-
-    const payload = JSON.parse(base64UrlDecode(parts[1])) as JWTPayload;
-    return payload;
-  } catch {
-    return null;
-  }
+  return sharedDecodeJWT(token) as unknown as JWTPayload | null;
 }
 
 /**
  * Verify JWT signature ONLY (ignores expiration)
- * Used for token refresh where we allow recently expired tokens
+ * Used for token refresh where we allow recently expired tokens.
  *
- * SECURITY: This verifies the token was signed with our secret,
- * preventing attackers from forging tokens with arbitrary user IDs.
- *
- * @returns payload if signature is valid, null if invalid
+ * REFACTOR-001: delegates to @xivdyetools/auth (which requires sub AND exp —
+ * BUG-051: an exp-less token can no longer NaN-pass the refresh grace check).
  */
 export async function verifyJWTSignatureOnly(
   token: string,
   secret: string
 ): Promise<JWTPayload | null> {
-  try {
-    const parts = token.split('.');
-
-    if (parts.length !== 3) {
-      return null;
-    }
-
-    const [encodedHeader, encodedPayload, signature] = parts;
-
-    // REFACTOR-001: Reject non-HS256 algorithms (prevents alg:none and RS-vs-HS swap attacks)
-    const header = JSON.parse(base64UrlDecode(encodedHeader)) as { alg?: string };
-    if (header.alg !== 'HS256') {
-      return null;
-    }
-
-    // Verify signature
-    const signatureInput = `${encodedHeader}.${encodedPayload}`;
-    const isValid = await verify(signatureInput, signature, secret);
-
-    if (!isValid) {
-      return null; // Signature invalid - do not trust payload
-    }
-
-    // Signature verified - decode and return payload
-    const payload: JWTPayload = JSON.parse(base64UrlDecode(encodedPayload)) as JWTPayload;
-
-    // REFACTOR-001: Require sub claim — matches @xivdyetools/auth verifyJWTSignatureOnly
-    if (!payload.sub) {
-      return null;
-    }
-
-    return payload;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Check if a JWT is expired without full verification
- */
-export function isJWTExpired(token: string): boolean {
-  const payload = decodeJWT(token);
-  if (!payload) return true;
-
-  const now = Math.floor(Date.now() / 1000);
-  return payload.exp < now;
+  const payload = await sharedVerifyJWTSignatureOnly(token, secret);
+  return payload as unknown as JWTPayload | null;
 }
 
 /**
@@ -340,50 +223,12 @@ export function getAvatarUrl(
 }
 
 /**
- * Check if a token has been revoked
- * Uses KV to store revoked token JTIs
- *
- * Intentionally fail-open: a KV error returns `false` (token not revoked) rather than
- * throwing or blocking the request. This keeps auth functional during KV outages at the
- * cost of briefly allowing a revoked token through — an acceptable trade-off for this
- * application. Callers that require strict revocation must handle KV unavailability separately.
+ * Revocation helpers.
+ * REFACTOR-001: implementation moved to @xivdyetools/auth; re-exported here
+ * for existing callers (fail-open semantics unchanged).
  */
-export async function isTokenRevoked(
-  jti: string,
-  kv: KVNamespace | undefined
-): Promise<boolean> {
-  if (!kv || !jti) return false;
-
-  try {
-    const revoked = await kv.get(`revoked:${jti}`);
-    return revoked !== null;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Revoke a token by adding its JTI to the blacklist
- * TTL matches token expiry to auto-cleanup expired entries
- */
-export async function revokeToken(
-  jti: string,
-  expiresAt: number,
-  kv: KVNamespace | undefined
-): Promise<boolean> {
-  if (!kv || !jti) return false;
-
-  try {
-    // Calculate TTL - how long until token would expire naturally
-    const now = Math.floor(Date.now() / 1000);
-    const ttl = Math.max(expiresAt - now, 60); // Minimum 60 seconds
-
-    await kv.put(`revoked:${jti}`, '1', { expirationTtl: ttl });
-    return true;
-  } catch {
-    return false;
-  }
-}
+export const isTokenRevoked = sharedIsTokenRevoked;
+export const revokeToken = sharedRevokeToken;
 
 /**
  * Verify JWT with revocation check

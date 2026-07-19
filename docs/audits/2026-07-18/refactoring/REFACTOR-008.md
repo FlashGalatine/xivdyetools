@@ -52,3 +52,7 @@ MEDIUM-HIGH
 MEDIUM. This touches the live auth path end-to-end; behavior must be preserved exactly (redirect error formats, `provider=` query markers, logging levels). Mitigate by porting the existing `authorize/callback/xivauth` test suites first and diffing responses against the current handlers before switching routes over.
 
 > Source: evidence/d1-workers-analysis.md (2026-07-18 deep-dive, d1-workers area)
+
+## Status
+
+**DONE 2026-07-19** — `handlers/oauth-flow.ts` implements the authorize + GET-callback pipeline once (`buildAuthorizeHandler`/`buildGetCallbackHandler`); Discord and XIVAuth provider files shrink to config objects. The POST token-exchange handlers stay provider-specific (their user mapping/persistence differ substantially) — a scoped version of the full factory proposal that still makes the allowlist/expiry drift structurally impossible.

@@ -7,7 +7,8 @@ import { Hono } from 'hono';
 import type { Env, DiscordTokenResponse, DiscordUser, AuthResponse } from '../types.js';
 import { createJWTForUser, getAvatarUrl } from '../services/jwt-service.js';
 import { findOrCreateUser } from '../services/user-service.js';
-import { verifyState } from '../utils/state-signing.js';
+import { buildGetCallbackHandler } from './oauth-flow.js';
+import { DISCORD_FLOW_CONFIG } from './authorize.js';
 
 export const callbackRouter = new Hono<{ Bindings: Env }>();
 
@@ -28,96 +29,9 @@ export const callbackRouter = new Hono<{ Bindings: Env }>();
  * - error: Error code
  * - error_description: Human-readable error
  */
-callbackRouter.get('/callback', async (c) => {
-  const { code, state, error, error_description } = c.req.query();
-
-  // Handle Discord errors
-  if (error) {
-    const errorMessage = error_description || error;
-    const redirectUrl = new URL(`${c.env.FRONTEND_URL}/auth/callback`);
-    redirectUrl.searchParams.set('error', errorMessage);
-    return c.redirect(redirectUrl.toString());
-  }
-
-  // Validate required parameters
-  if (!code || !state) {
-    const redirectUrl = new URL(`${c.env.FRONTEND_URL}/auth/callback`);
-    redirectUrl.searchParams.set('error', 'Missing code or state parameter');
-    return c.redirect(redirectUrl.toString());
-  }
-
-  // Decode and verify state signature
-  let stateData: {
-    csrf: string;
-    code_challenge?: string;
-    redirect_uri: string;
-    return_path: string;
-    provider?: string;
-    iat: number;
-    exp: number;
-  };
-
-  // SECURITY: Verify state signature to prevent tampering
-  // BUG-013: Only allow unsigned states in development (STATE_TRANSITION_PERIOD removed)
-  try {
-    const allowUnsigned = c.env.ENVIRONMENT === 'development';
-
-    stateData = await verifyState(state, c.env.JWT_SECRET, allowUnsigned);
-  } catch (err) {
-    const redirectUrl = new URL(`${c.env.FRONTEND_URL}/auth/callback`);
-    const errorMsg = err instanceof Error ? err.message : 'Invalid state';
-    redirectUrl.searchParams.set('error', errorMsg);
-    return c.redirect(redirectUrl.toString());
-  }
-
-  // SECURITY: Validate state expiration to prevent replay attacks
-  const now = Math.floor(Date.now() / 1000);
-  if (stateData.exp && stateData.exp < now) {
-    const redirectUrl = new URL(`${c.env.FRONTEND_URL}/auth/callback`);
-    redirectUrl.searchParams.set('error', 'OAuth state expired. Please try logging in again.');
-    return c.redirect(redirectUrl.toString());
-  }
-
-  // OAUTH-CRITICAL-002: Validate redirect URI to prevent open redirect attacks
-  // Only allow redirects to trusted origins
-  const allowedOrigins = [
-    new URL(c.env.FRONTEND_URL).origin,
-  ];
-
-  // Allow localhost in development for testing
-  if (c.env.ENVIRONMENT === 'development') {
-    allowedOrigins.push('http://localhost:5173');
-    allowedOrigins.push('http://localhost:3000');
-    allowedOrigins.push('http://127.0.0.1:5173');
-    allowedOrigins.push('http://127.0.0.1:3000');
-  }
-
-  let redirectUrl: URL;
-  try {
-    redirectUrl = new URL(stateData.redirect_uri);
-  } catch {
-    const errorRedirect = new URL(`${c.env.FRONTEND_URL}/auth/callback`);
-    errorRedirect.searchParams.set('error', 'Invalid redirect URI');
-    return c.redirect(errorRedirect.toString());
-  }
-
-  if (!allowedOrigins.includes(redirectUrl.origin)) {
-    console.error('Blocked redirect to untrusted origin:', redirectUrl.origin);
-    const errorRedirect = new URL(`${c.env.FRONTEND_URL}/auth/callback`);
-    errorRedirect.searchParams.set('error', 'Untrusted redirect origin');
-    return c.redirect(errorRedirect.toString());
-  }
-
-  // Redirect back to frontend with the auth code
-  // The frontend will then call POST /auth/callback with code + code_verifier
-  redirectUrl.searchParams.set('code', code);
-  redirectUrl.searchParams.set('csrf', stateData.csrf);
-  if (stateData.return_path && stateData.return_path !== '/') {
-    redirectUrl.searchParams.set('return_path', stateData.return_path);
-  }
-
-  return c.redirect(redirectUrl.toString());
-});
+// REFACTOR-008: shared pipeline (state verify incl. expiry, allowlisted
+// redirect, code bounce to frontend) — see oauth-flow.ts
+callbackRouter.get('/callback', buildGetCallbackHandler(DISCORD_FLOW_CONFIG));
 
 /**
  * POST /auth/callback

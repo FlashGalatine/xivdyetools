@@ -17,6 +17,22 @@ export const ALLOWED_REDIRECT_ORIGINS = [
 ];
 
 /**
+ * BUG-018 (2026-07-18 audit): the single redirect-URI allowlist used by every
+ * authorize handler AND every GET callback. Three divergent inline lists
+ * previously let a login start on the transition domain and then bounce at
+ * the callback. Localhost entries are only honored in development.
+ */
+export function getAllowedRedirectOrigins(env: {
+  FRONTEND_URL: string;
+  ENVIRONMENT: string;
+}): string[] {
+  const origins = [...ALLOWED_REDIRECT_ORIGINS, env.FRONTEND_URL];
+  return env.ENVIRONMENT === 'development'
+    ? origins
+    : origins.filter((o) => !o.includes('localhost') && !o.includes('127.0.0.1'));
+}
+
+/**
  * State parameter expiration time (seconds)
  * OAuth state tokens expire after this duration
  */

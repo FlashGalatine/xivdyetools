@@ -45,6 +45,8 @@ The remaining moderation state-machine gaps plus the D1 atomicity cluster; ends 
 
 ## Sprint 2 — oauth: JWT consolidation & session security
 
+**✅ COMPLETED 2026-07-19** — all 12 items fixed (see each finding's Status section). Deploy needs: publish `@xivdyetools/auth` 1.2.0 (+ `@xivdyetools/types` bump for `orig_iat`) with the next batch, then deploy oauth. REFACTOR-006 resolved by deleting the DO limiter; OPT-004 via KV-backed limits on TOKEN_BLACKLIST (`rl:` prefix). REFACTOR-008 scoped to authorize + GET-callback factories (POST exchanges stay provider-specific).
+
 REFACTOR-001 is the anchor: extend `@xivdyetools/auth` (jti/iss/revocation), migrate oauth onto it, and fix the session bugs in the same pass. Ends with an auth-package publish + oauth deploy.
 
 | ID | Sev/Pri | Item |

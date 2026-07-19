@@ -70,26 +70,48 @@ export async function verifyState(
 
     // Signature verified - decode state
     const json = base64UrlDecode(encodedState);
-    return JSON.parse(json) as StateData;
+    const state = JSON.parse(json) as StateData;
+
+    // REFACTOR-007 (2026-07-18 audit): the replay-window invariant is enforced
+    // here at the primitive, not by per-caller discipline — the two callbacks
+    // had already diverged on missing-exp semantics. Signed states have always
+    // carried exp, so requiring it cannot reject legitimate states.
+    const now = Math.floor(Date.now() / 1000);
+    if (!state.exp) {
+      throw new Error('State missing expiration timestamp');
+    }
+    if (state.exp < now) {
+      throw new Error('OAuth state expired. Please try logging in again.');
+    }
+
+    return state;
   }
 
   // No signature - check if unsigned states are allowed
   if (allowUnsigned && parts.length === 1) {
     // Legacy unsigned state (base64 only)
+    let state: StateData;
     try {
       const json = atob(signedState);
-      const state = JSON.parse(json) as StateData;
-
-      // Log warning in production
-      console.warn('Accepted unsigned state (transition period):', {
-        provider: state.provider,
-        iat: state.iat,
-      });
-
-      return state;
+      state = JSON.parse(json) as StateData;
     } catch {
       throw new Error('Invalid state format');
     }
+
+    // Log warning in production
+    console.warn('Accepted unsigned state (transition period):', {
+      provider: state.provider,
+      iat: state.iat,
+    });
+
+    // REFACTOR-007: legacy unsigned states may lack exp (stay lenient),
+    // but one that carries a past exp is still rejected
+    const now = Math.floor(Date.now() / 1000);
+    if (state.exp && state.exp < now) {
+      throw new Error('OAuth state expired. Please try logging in again.');
+    }
+
+    return state;
   }
 
   throw new Error('Invalid state format or signature required');

@@ -146,9 +146,16 @@ const createTestDB = () => {
     return {
         _users: users,
         _characters: characters,
+        // OPT-003: storeCharacters now uses db.batch — execute each statement
+        batch: async (stmts: { run: () => Promise<unknown> }[]) => {
+            const results = [];
+            for (const stmt of stmts) {
+                results.push(await stmt.run());
+            }
+            return results;
+        },
         prepare: (sql: string) => createStatement(sql),
         exec: async () => ({ count: 0, duration: 0 }),
-        batch: async () => [],
         dump: async () => new ArrayBuffer(0),
     } as unknown as D1Database & {
         _users: Map<string, UserRow>;

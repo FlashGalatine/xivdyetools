@@ -46,3 +46,7 @@ LOW
 LOW. Signed states have always carried `exp` (both authorize handlers set it), so tightening to "exp required" cannot reject legitimate production states. Only dev-mode unsigned states could lack it, and those are already gated behind `ENVIRONMENT === 'development'`.
 
 > Source: evidence/d1-workers-analysis.md (2026-07-18 deep-dive, d1-workers area)
+
+## Status
+
+**DONE 2026-07-19** — `verifyState` enforces exp (missing or past → throw) for signed states; the divergent per-handler checks and `validateStateExpiration` were deleted. Dev-only unsigned states stay lenient.

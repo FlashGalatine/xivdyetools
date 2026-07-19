@@ -33,24 +33,9 @@ export function validateCodeVerifier(verifier: string): boolean {
   return regex.test(verifier);
 }
 
-/**
- * Validate state expiration timestamp
- * Checks that state parameter has not expired
- *
- * @param state - State object with optional exp field
- * @throws Error if state is expired or missing expiration
- */
-export function validateStateExpiration(state: { exp?: number; iat?: number }): void {
-  const now = Math.floor(Date.now() / 1000);
-
-  if (!state.exp) {
-    throw new Error('State missing expiration timestamp');
-  }
-
-  if (state.exp < now) {
-    throw new Error('OAuth state expired. Please try logging in again.');
-  }
-}
+// REFACTOR-007 (2026-07-18 audit): validateStateExpiration was removed —
+// expiry is now enforced inside verifyState (utils/state-signing.ts) so the
+// replay-window invariant can't depend on caller discipline.
 
 /**
  * Validate redirect URI against allowlist

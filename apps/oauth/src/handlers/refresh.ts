@@ -11,12 +11,19 @@ import {
   verifyJWTWithRevocationCheck,
   revokeToken,
   isTokenRevoked,
-  // OAUTH-REF-002: Import shared JWT utilities to avoid duplication
-  base64UrlEncode,
-  signJwtData,
+  // REFACTOR-001: single shared mint primitive (replaces createJWTFromPayload)
+  signPayload,
 } from '../services/jwt-service.js';
+import { findUserById } from '../services/user-service.js';
 
 export const tokenRouter = new Hono<{ Bindings: Env }>();
+
+/**
+ * BUG-021 (2026-07-18 audit): absolute session lifetime. A refresh chain is
+ * anchored by orig_iat (carried unchanged across refreshes); once the chain
+ * is older than this, the user must log in again.
+ */
+const MAX_SESSION_SECONDS = 30 * 24 * 60 * 60; // 30 days
 
 /**
  * POST /auth/refresh
@@ -107,9 +114,37 @@ tokenRouter.post('/refresh', async (c) => {
       }
     }
 
+    const now = Math.floor(Date.now() / 1000);
+
+    // BUG-021: enforce an absolute session lifetime. orig_iat anchors the
+    // chain to the original login; tokens minted before orig_iat existed
+    // fall back to their own iat.
+    const origIat = payload.orig_iat ?? payload.iat;
+    if (now - origIat > MAX_SESSION_SECONDS) {
+      return c.json<RefreshResponse>(
+        {
+          success: false,
+          error: 'Session expired, please log in again',
+        },
+        401
+      );
+    }
+
+    // BUG-021: re-validate the user still exists — a deleted user's token
+    // must not refresh indefinitely
+    const user = await findUserById(c.env.DB, payload.sub);
+    if (!user) {
+      return c.json<RefreshResponse>(
+        {
+          success: false,
+          error: 'Unknown user',
+        },
+        401
+      );
+    }
+
     // Create new JWT with same user info and new JTI
     const expirySeconds = parseInt(c.env.JWT_EXPIRY, 10) || 3600;
-    const now = Math.floor(Date.now() / 1000);
     const newExpiry = now + expirySeconds;
     const newJti = crypto.randomUUID();
 
@@ -119,6 +154,7 @@ tokenRouter.post('/refresh', async (c) => {
       exp: newExpiry,
       iss: c.env.WORKER_URL,
       jti: newJti,
+      orig_iat: origIat,
       username: payload.username,
       global_name: payload.global_name,
       avatar: payload.avatar,
@@ -128,8 +164,13 @@ tokenRouter.post('/refresh', async (c) => {
       primary_character: payload.primary_character,
     };
 
-    // Create new token manually (simplified since we already have payload)
-    const { token: newToken, expires_at } = await createJWTFromPayload(newPayload, c.env);
+    const { token: newToken, expires_at } = await signPayload(newPayload, c.env.JWT_SECRET);
+
+    // BUG-021: rotation must invalidate — best-effort revoke the old token so
+    // old and new are not simultaneously valid until natural expiry
+    if (payload.jti && c.env.TOKEN_BLACKLIST) {
+      await revokeToken(payload.jti, payload.exp, c.env.TOKEN_BLACKLIST);
+    }
 
     return c.json<RefreshResponse>({
       success: true,
@@ -279,23 +320,3 @@ tokenRouter.post('/revoke', async (c) => {
     );
   }
 });
-
-/**
- * Helper to create JWT from existing payload
- * OAUTH-REF-002: Now uses shared utilities from jwt-service.ts instead of duplicating
- */
-async function createJWTFromPayload(
-  payload: JWTPayload,
-  env: Env
-): Promise<{ token: string; expires_at: number }> {
-  const header = { alg: 'HS256', typ: 'JWT' };
-  const encodedHeader = base64UrlEncode(JSON.stringify(header));
-  const encodedPayload = base64UrlEncode(JSON.stringify(payload));
-  const signatureInput = `${encodedHeader}.${encodedPayload}`;
-  const signature = await signJwtData(signatureInput, env.JWT_SECRET);
-
-  return {
-    token: `${signatureInput}.${signature}`,
-    expires_at: payload.exp,
-  };
-}

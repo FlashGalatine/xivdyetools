@@ -14,20 +14,16 @@ import type {
 import { createJWTForUser } from '../services/jwt-service.js';
 import { findOrCreateUser, storeCharacters } from '../services/user-service.js';
 import {
-  STATE_EXPIRY_SECONDS,
   REQUEST_TIMEOUT_MS,
   USER_INFO_TIMEOUT_MS,
   XIVAUTH_REQUIRED_SCOPES,
-  ALLOWED_REDIRECT_ORIGINS,
 } from '../constants/oauth.js';
+import { validateCodeVerifier, validateScopes } from '../utils/oauth-validation.js';
 import {
-  validateStateExpiration,
-  validateRedirectUri,
-  validateCodeVerifier,
-  validateCodeChallenge,
-  validateScopes,
-} from '../utils/oauth-validation.js';
-import { signState, verifyState } from '../utils/state-signing.js';
+  buildAuthorizeHandler,
+  buildGetCallbackHandler,
+  type OAuthFlowConfig,
+} from './oauth-flow.js';
 
 export const xivauthRouter = new Hono<{ Bindings: Env }>();
 
@@ -42,200 +38,22 @@ const XIVAUTH_CHARACTERS_URL = 'https://xivauth.net/api/v1/characters';
 // - user:social: Discord ID for moderation compatibility
 // - character: FFXIV character info
 // - refresh: Refresh token support
-const XIVAUTH_SCOPES = 'user user:social character refresh';
+const XIVAUTH_FLOW_CONFIG: OAuthFlowConfig = {
+  provider: 'xivauth',
+  authUrl: XIVAUTH_AUTH_URL,
+  scopes: 'user user:social character refresh',
+  clientId: (env) => env.XIVAUTH_CLIENT_ID,
+  workerCallbackPath: '/auth/xivauth/callback',
+  markProviderOnRedirect: true,
+};
 
 /**
- * GET /auth/xivauth
- * Initiates the XIVAuth OAuth flow by redirecting to XIVAuth
- *
- * Query parameters:
- * - code_challenge: PKCE code challenge (required for security)
- * - code_challenge_method: Must be 'S256' (SHA-256)
- * - state: Random state for CSRF protection (optional, generated if not provided)
- * - redirect_uri: Where to redirect after auth (must be whitelisted)
- * - return_path: Path in frontend to return to after auth (optional)
+ * GET /auth/xivauth — initiate the flow
+ * GET /auth/xivauth/callback — bounce the auth code to the frontend
+ * REFACTOR-008: both use the shared pipeline in oauth-flow.ts
  */
-xivauthRouter.get('/xivauth', async (c) => {
-  const { code_challenge, code_challenge_method, state, redirect_uri, return_path } = c.req.query();
-
-  // Validate PKCE parameters
-  if (!code_challenge) {
-    return c.json(
-      {
-        error: 'Missing code_challenge',
-        message: 'PKCE code_challenge is required for security',
-      },
-      400
-    );
-  }
-
-  // OAUTH-REF-002: Use shared validation utility for code_challenge format
-  if (!validateCodeChallenge(code_challenge)) {
-    return c.json(
-      {
-        error: 'Invalid code_challenge format',
-        message: 'code_challenge must be a valid base64url-encoded value',
-      },
-      400
-    );
-  }
-
-  if (code_challenge_method && code_challenge_method !== 'S256') {
-    return c.json(
-      {
-        error: 'Invalid code_challenge_method',
-        message: 'Only S256 is supported',
-      },
-      400
-    );
-  }
-
-  // OAUTH-REF-002: Build allowlist from shared constants + env-specific frontend URL
-  const allowedOrigins = [
-    ...ALLOWED_REDIRECT_ORIGINS,
-    c.env.FRONTEND_URL,
-    `${c.env.FRONTEND_URL}/auth/callback`,
-  ];
-
-  const finalRedirectUri = redirect_uri || `${c.env.FRONTEND_URL}/auth/callback`;
-
-  // OAUTH-REF-002: Use shared validation utility for redirect URI
-  try {
-    validateRedirectUri(finalRedirectUri, allowedOrigins);
-  } catch {
-    return c.json(
-      {
-        error: 'Invalid redirect_uri',
-        message: 'Redirect URI is not whitelisted',
-      },
-      400
-    );
-  }
-
-  // Generate state with provider marker and expiration
-  const now = Math.floor(Date.now() / 1000);
-  const stateData = {
-    csrf: state || crypto.randomUUID(),
-    code_challenge,
-    redirect_uri: finalRedirectUri,
-    return_path: return_path || '/',
-    provider: 'xivauth', // Mark this as XIVAuth flow
-    iat: now, // Issued at timestamp
-    exp: now + STATE_EXPIRY_SECONDS, // 10 minute expiration
-  };
-
-  // SECURITY: Sign state to prevent tampering
-  const encodedState = await signState(stateData, c.env.JWT_SECRET);
-
-  // Build XIVAuth authorization URL
-  const xivauthUrl = new URL(XIVAUTH_AUTH_URL);
-  xivauthUrl.searchParams.set('client_id', c.env.XIVAUTH_CLIENT_ID);
-  xivauthUrl.searchParams.set('redirect_uri', `${c.env.WORKER_URL}/auth/xivauth/callback`);
-  xivauthUrl.searchParams.set('response_type', 'code');
-  xivauthUrl.searchParams.set('scope', XIVAUTH_SCOPES);
-  xivauthUrl.searchParams.set('state', encodedState);
-
-  // Add PKCE challenge
-  xivauthUrl.searchParams.set('code_challenge', code_challenge);
-  xivauthUrl.searchParams.set('code_challenge_method', 'S256');
-
-  return c.redirect(xivauthUrl.toString());
-});
-
-/**
- * GET /auth/xivauth/callback
- * XIVAuth redirects here after user authorizes
- * Passes the code to the frontend for PKCE exchange
- */
-xivauthRouter.get('/xivauth/callback', async (c) => {
-  const { code, state, error, error_description } = c.req.query();
-
-  // Handle XIVAuth errors
-  if (error) {
-    const errorMessage = error_description || error;
-    const redirectUrl = new URL(`${c.env.FRONTEND_URL}/auth/callback`);
-    redirectUrl.searchParams.set('error', errorMessage);
-    redirectUrl.searchParams.set('provider', 'xivauth');
-    return c.redirect(redirectUrl.toString());
-  }
-
-  // Validate required parameters
-  if (!code || !state) {
-    const redirectUrl = new URL(`${c.env.FRONTEND_URL}/auth/callback`);
-    redirectUrl.searchParams.set('error', 'Missing code or state parameter');
-    redirectUrl.searchParams.set('provider', 'xivauth');
-    return c.redirect(redirectUrl.toString());
-  }
-
-  // Decode and verify state signature
-  let stateData: {
-    csrf: string;
-    code_challenge?: string;
-    redirect_uri: string;
-    return_path: string;
-    provider?: string;
-    iat: number;
-    exp: number;
-  };
-
-  // SECURITY: Verify state signature to prevent tampering
-  // BUG-013: Only allow unsigned states in development (STATE_TRANSITION_PERIOD removed)
-  try {
-    const allowUnsigned = c.env.ENVIRONMENT === 'development';
-
-    stateData = await verifyState(state, c.env.JWT_SECRET, allowUnsigned);
-  } catch (err) {
-    const redirectUrl = new URL(`${c.env.FRONTEND_URL}/auth/callback`);
-    const errorMsg = err instanceof Error ? err.message : 'Invalid state';
-    redirectUrl.searchParams.set('error', errorMsg);
-    redirectUrl.searchParams.set('provider', 'xivauth');
-    return c.redirect(redirectUrl.toString());
-  }
-
-  // SECURITY: Validate state expiration to prevent replay attacks
-  try {
-    validateStateExpiration(stateData);
-  } catch (err) {
-    const redirectUrl = new URL(`${c.env.FRONTEND_URL}/auth/callback`);
-    const errorMsg = err instanceof Error ? err.message : 'Invalid state';
-    redirectUrl.searchParams.set('error', errorMsg);
-    redirectUrl.searchParams.set('provider', 'xivauth');
-    return c.redirect(redirectUrl.toString());
-  }
-
-  // SECURITY: Validate redirect URI to prevent open redirect attacks
-  try {
-    // Build allowlist based on environment
-    const allowedOrigins = [...ALLOWED_REDIRECT_ORIGINS];
-    if (c.env.ENVIRONMENT !== 'development') {
-      // In production, filter out localhost
-      const prodOrigins = allowedOrigins.filter(
-        (origin) => !origin.includes('localhost') && !origin.includes('127.0.0.1')
-      );
-      validateRedirectUri(stateData.redirect_uri, prodOrigins);
-    } else {
-      // In development, allow all origins including localhost
-      validateRedirectUri(stateData.redirect_uri, allowedOrigins);
-    }
-  } catch {
-    console.error('Blocked redirect to untrusted origin:', stateData.redirect_uri);
-    const errorRedirect = new URL(`${c.env.FRONTEND_URL}/auth/callback`);
-    errorRedirect.searchParams.set('error', 'Untrusted redirect origin');
-    errorRedirect.searchParams.set('provider', 'xivauth');
-    return c.redirect(errorRedirect.toString());
-  }
-
-  // Redirect back to frontend with the auth code and provider marker
-  const redirectUrl = new URL(stateData.redirect_uri);
-  redirectUrl.searchParams.set('code', code);
-  redirectUrl.searchParams.set('csrf', stateData.csrf);
-  redirectUrl.searchParams.set('provider', 'xivauth');
-  if (stateData.return_path && stateData.return_path !== '/') {
-    redirectUrl.searchParams.set('return_path', stateData.return_path);
-  }
-
-  return c.redirect(redirectUrl.toString());
-});
+xivauthRouter.get('/xivauth', buildAuthorizeHandler(XIVAUTH_FLOW_CONFIG));
+xivauthRouter.get('/xivauth/callback', buildGetCallbackHandler(XIVAUTH_FLOW_CONFIG));
 
 /**
  * POST /auth/xivauth/callback

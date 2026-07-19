@@ -5,9 +5,9 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { SELF, env, fetchWithEnv, createEnvWithKV } from './mocks/cloudflare-test.js';
-import { createJWT, revokeToken, isTokenRevoked } from '../services/jwt-service.js';
+import { createJWTForUser, revokeToken, isTokenRevoked } from '../services/jwt-service.js';
 import { resetRateLimiter } from '../services/rate-limit.js';
-import type { DiscordUser, Env } from '../types.js';
+import type { DiscordUser, Env, UserRow } from '../types.js';
 
 // Get environment from test context
 const getEnv = (): Env => env;
@@ -20,6 +20,27 @@ const createMockUser = (): DiscordUser => ({
     avatar: 'abc123',
 });
 
+// REFACTOR-001: createJWT was removed from jwt-service; mint via
+// createJWTForUser the same way the callback handlers do
+const createJWT = (
+    user: DiscordUser,
+    tokenEnv: Env,
+): Promise<{ token: string; expires_at: number; jti: string }> =>
+    createJWTForUser(
+        {
+            id: user.id,
+            discord_id: user.id,
+            xivauth_id: null,
+            auth_provider: 'discord',
+            username: user.username,
+            avatar_url: null,
+            created_at: '2024-01-01T00:00:00Z',
+            updated_at: '2024-01-01T00:00:00Z',
+        },
+        tokenEnv,
+        { auth_provider: 'discord', global_name: user.global_name, avatar: user.avatar },
+    );
+
 describe('Refresh Handler', () => {
     let mockEnv: Env;
     let mockUser: DiscordUser;
@@ -30,6 +51,20 @@ describe('Refresh Handler', () => {
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2024-01-01T12:00:00Z'));
         resetRateLimiter();
+
+        // BUG-021: /auth/refresh re-validates the user exists in D1 — seed the
+        // shared mock user store with the token's subject
+        const users = (mockEnv.DB as unknown as { _users: Map<string, UserRow> })._users;
+        users.set(mockUser.id, {
+            id: mockUser.id,
+            discord_id: mockUser.id,
+            xivauth_id: null,
+            auth_provider: 'discord',
+            username: mockUser.username,
+            avatar_url: null,
+            created_at: '2024-01-01T00:00:00Z',
+            updated_at: '2024-01-01T00:00:00Z',
+        });
     });
 
     afterEach(() => {

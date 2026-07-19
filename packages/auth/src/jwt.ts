@@ -31,12 +31,38 @@ export interface JWTPayload {
   iat: number;
   /** Expiration timestamp (seconds) */
   exp: number;
-  /** Token type: 'access' or 'refresh' */
-  type: 'access' | 'refresh';
+  /**
+   * Token type discriminator.
+   * BUG-057 (2026-07-18 audit): optional — current issuers do not emit it.
+   * When refresh JWTs are introduced, issuers must set it and verifiers must
+   * pass `expectedType` to verifyJWT so refresh tokens can't be used as
+   * access tokens.
+   */
+  type?: 'access' | 'refresh';
+  /** JWT ID for revocation tracking */
+  jti?: string;
+  /** Issuer (worker URL) */
+  iss?: string;
+  /** Original-issuance anchor carried across refreshes (absolute session age) */
+  orig_iat?: number;
   /** Discord username */
   username?: string;
+  /** Discord global display name */
+  global_name?: string | null;
   /** Discord avatar hash */
   avatar?: string | null;
+}
+
+/**
+ * Options for verifyJWT
+ */
+export interface VerifyJWTOptions {
+  /**
+   * BUG-057: When set, the token's `type` claim must equal this value.
+   * Guards against token confusion (e.g. a refresh token presented as an
+   * access token) once typed tokens exist.
+   */
+  expectedType?: 'access' | 'refresh';
 }
 
 /**
@@ -152,7 +178,8 @@ async function verifyJWTSignature(
  */
 export async function verifyJWT(
   token: string,
-  secret: string
+  secret: string,
+  options?: VerifyJWTOptions
 ): Promise<JWTPayload | null> {
   try {
     const payload = await verifyJWTSignature(token, secret);
@@ -166,6 +193,11 @@ export async function verifyJWT(
 
     // BUG-010: Require sub claim — tokens without subject identity are rejected
     if (!payload.sub) {
+      return null;
+    }
+
+    // BUG-057: Enforce token-type discriminator when the caller expects one
+    if (options?.expectedType && payload.type !== options.expectedType) {
       return null;
     }
 
@@ -206,14 +238,21 @@ export async function verifyJWTSignatureOnly(
     if (!payload) return null;
 
     // BUG-010: Require sub claim — tokens without subject identity are rejected
-    if (!payload.sub) {
+    // BUG-051: Require exp claim — matches verifyJWT so a mis-minted eternal
+    // token can't slip through the refresh path (its absence made the grace
+    // arithmetic NaN-pass downstream)
+    if (!payload.sub || !payload.exp) {
       return null;
     }
 
-    // Check max age if specified
-    if (maxAgeMs !== undefined && payload.iat) {
-      const now = Date.now();
-      const tokenAge = now - payload.iat * 1000;
+    // BUG-058: When the caller requests an age cap, a missing or non-numeric
+    // iat must fail closed — previously it skipped the check entirely (and
+    // iat: 0, the epoch, is falsy but valid)
+    if (maxAgeMs !== undefined) {
+      if (typeof payload.iat !== 'number') {
+        return null;
+      }
+      const tokenAge = Date.now() - payload.iat * 1000;
       if (tokenAge > maxAgeMs) {
         return null;
       }

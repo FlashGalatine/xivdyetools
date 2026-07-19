@@ -37,3 +37,7 @@ LOW (delete) / MEDIUM (enable: bindings + migration + two fixes + a smoke test a
 LOW. Enabling is behind fail-open error handling (`checkRateLimitDO` returns `allowed: true` on DO errors), so a botched rollout degrades to current behavior rather than blocking logins. Deleting is risk-free at runtime (code is unreachable today).
 
 > Source: evidence/d1-workers-analysis.md (2026-07-18 deep-dive, d1-workers area)
+
+## Status
+
+**DONE 2026-07-19** — decided (b) delete: `durable-objects/rate-limiter.ts`, `services/rate-limit-do.ts`, the index.ts feature-flag branch, and the `RATE_LIMITER`/`USE_DO_RATE_LIMITING` Env fields are gone (~360 dead lines). Distributed limiting was achieved via KV instead (see OPT-004).
