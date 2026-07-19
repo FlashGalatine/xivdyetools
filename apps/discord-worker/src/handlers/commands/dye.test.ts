@@ -24,7 +24,7 @@ vi.mock('../../services/svg/random-dyes-grid.js', () => ({
 // Mock Discord API (for deferred response follow-ups)
 vi.mock('../../utils/discord-api.js', () => ({
   editOriginalResponse: vi.fn().mockResolvedValue(undefined),
-  safeEditOriginalResponse: vi,
+  safeEditOriginalResponse: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock dependencies
