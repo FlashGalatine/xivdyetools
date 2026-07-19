@@ -99,10 +99,12 @@ export function stripDyePrefix(name: string, prefix: string): string {
   // was the same ASCII character, visually near-identical in most editors),
   // so a configured prefix without a colon never matched Japanese names like
   // 'カララント：スートブラック' (U+FF1A full-width colon).
+  // Longest variants first — the bare prefix would otherwise match before the
+  // colon variants and leave the colon attached to the returned name.
   const prefixVariants = [
-    prefix,
     prefix + ':', // ASCII colon
     prefix + '：', // full-width colon ：
+    prefix,
   ]
 
   for (const variant of prefixVariants) {

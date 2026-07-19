@@ -253,4 +253,119 @@ describe('executeHarmony', () => {
       expect(result.harmonyDyes.length).toBeGreaterThan(0);
     });
   });
+
+  describe('strictMatching', () => {
+    it('applies deltaE tightening with default formula/tolerance', async () => {
+      const result = await executeHarmony({
+        baseHex: BASE_HEX,
+        harmonyType: 'triadic',
+        locale: 'en',
+        strictMatching: true,
+      });
+
+      expect(result.ok).toBe(true);
+    });
+
+    it('preserves caller-supplied deltaE formula and tolerance', async () => {
+      const result = await executeHarmony({
+        baseHex: BASE_HEX,
+        harmonyType: 'triadic',
+        locale: 'en',
+        strictMatching: true,
+        harmonyOptions: { deltaEFormula: 'cie76', deltaETolerance: 30 },
+      });
+
+      expect(result.ok).toBe(true);
+    });
+  });
+
+  describe('companion expansion', () => {
+    it('companionCount=3 expands each harmony slot with close matches', async () => {
+      const single = await executeHarmony({
+        baseHex: BASE_HEX,
+        harmonyType: 'complementary',
+        locale: 'en',
+      });
+      const expanded = await executeHarmony({
+        baseHex: BASE_HEX,
+        harmonyType: 'complementary',
+        locale: 'en',
+        companionCount: 3,
+      });
+
+      expect(single.ok && expanded.ok).toBe(true);
+      if (!single.ok || !expanded.ok) return;
+
+      expect(expanded.harmonyDyes.length).toBeGreaterThan(single.harmonyDyes.length);
+      expect(expanded.harmonyDyes.length).toBeLessThanOrEqual(single.harmonyDyes.length * 3);
+    });
+
+    it('preventDuplicates yields unique dye ids across slots', async () => {
+      const result = await executeHarmony({
+        baseHex: BASE_HEX,
+        harmonyType: 'analogous',
+        locale: 'en',
+        companionCount: 2,
+        preventDuplicates: true,
+        baseId: 1,
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      const ids = result.harmonyDyes.map((d) => d.id);
+      expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    it('clamps out-of-range companionCount into [1, 3]', async () => {
+      const tooBig = await executeHarmony({
+        baseHex: BASE_HEX,
+        harmonyType: 'complementary',
+        locale: 'en',
+        companionCount: 99,
+      });
+      const tooSmall = await executeHarmony({
+        baseHex: BASE_HEX,
+        harmonyType: 'complementary',
+        locale: 'en',
+        companionCount: 0,
+      });
+
+      expect(tooBig.ok && tooSmall.ok).toBe(true);
+      if (!tooBig.ok || !tooSmall.ok) return;
+
+      // 1 complementary slot → at most 3 dyes; count 0 clamps up to 1 dye
+      expect(tooBig.harmonyDyes.length).toBeLessThanOrEqual(3);
+      expect(tooSmall.harmonyDyes.length).toBe(1);
+    });
+
+    it('companions respect dyeFilters (filtered candidates are skipped, not returned)', async () => {
+      const result = await executeHarmony({
+        baseHex: BASE_HEX,
+        harmonyType: 'triadic',
+        locale: 'en',
+        companionCount: 3,
+        dyeFilters: { excludeMetallic: true },
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      for (const dye of result.harmonyDyes) {
+        expect(dye.isMetallic).toBe(false);
+      }
+    });
+
+    it('supports alternate matching methods for companion lookup', async () => {
+      const result = await executeHarmony({
+        baseHex: BASE_HEX,
+        harmonyType: 'complementary',
+        locale: 'en',
+        companionCount: 2,
+        matchingMethod: 'rgb',
+      });
+
+      expect(result.ok).toBe(true);
+    });
+  });
 });

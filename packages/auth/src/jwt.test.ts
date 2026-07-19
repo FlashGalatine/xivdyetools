@@ -386,4 +386,45 @@ describe('jwt.ts', () => {
       expect(getJWTTimeToExpiry('not-a-jwt')).toBe(0);
     });
   });
+
+  describe('type discriminator and iat edge cases', () => {
+    it('verifyJWT rejects a token whose type does not match expectedType (BUG-057)', async () => {
+      const payload: JWTPayload = {
+        sub: '123456789',
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        type: 'refresh',
+      };
+      const token = await createTestJWT(payload, secret);
+
+      expect(await verifyJWT(token, secret, { expectedType: 'access' })).toBeNull();
+      expect(await verifyJWT(token, secret, { expectedType: 'refresh' })).not.toBeNull();
+    });
+
+    it('verifyJWTSignatureOnly fails closed on missing iat when maxAgeMs is set (BUG-058)', async () => {
+      const payload = {
+        sub: '123456789',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        type: 'refresh',
+      } as JWTPayload;
+      const token = await createTestJWT(payload, secret);
+
+      expect(await verifyJWTSignatureOnly(token, secret, 60_000)).toBeNull();
+    });
+
+    it('verifyJWTSignatureOnly accepts iat: 0 (epoch) as a valid numeric iat', async () => {
+      const payload: JWTPayload = {
+        sub: '123456789',
+        iat: 0,
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        type: 'refresh',
+      };
+      const token = await createTestJWT(payload, secret);
+
+      // Numeric iat passes the type check; age cap then rejects the ancient token
+      expect(await verifyJWTSignatureOnly(token, secret, 60_000)).toBeNull();
+      // Without an age cap, iat is not consulted at all
+      expect(await verifyJWTSignatureOnly(token, secret)).not.toBeNull();
+    });
+  });
 });

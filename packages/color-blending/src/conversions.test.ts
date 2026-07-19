@@ -22,6 +22,7 @@ import {
   reflectanceToKS,
   ksToReflectance,
   rgbToHex,
+  hexToRgb,
 } from './conversions.js';
 import type { RGB } from './types.js';
 
@@ -359,5 +360,37 @@ describe('rgbToHex', () => {
     const result = rgbToHex({ r: 170, g: 187, b: 204 });
     expect(result).toMatch(/^#[0-9a-f]{6}$/);
     expect(result).toBe('#aabbcc');
+  });
+});
+
+// ============================================================================
+// hexToRgb
+// ============================================================================
+
+describe('hexToRgb', () => {
+  it('parses #RRGGBB', () => {
+    expect(hexToRgb('#8b4513')).toEqual({ r: 139, g: 69, b: 19 });
+  });
+
+  it('leading # is optional', () => {
+    expect(hexToRgb('ff0000')).toEqual({ r: 255, g: 0, b: 0 });
+  });
+
+  it('expands #RGB shorthand by doubling each digit', () => {
+    expect(hexToRgb('#f80')).toEqual({ r: 255, g: 136, b: 0 });
+  });
+
+  it('accepts uppercase digits', () => {
+    expect(hexToRgb('#AABBCC')).toEqual({ r: 170, g: 187, b: 204 });
+  });
+
+  it('round-trips with rgbToHex', () => {
+    expect(rgbToHex(hexToRgb('#6495ed'))).toBe('#6495ed');
+  });
+
+  it('throws on malformed input', () => {
+    expect(() => hexToRgb('#12345')).toThrow(/Invalid hex color/);
+    expect(() => hexToRgb('nothex')).toThrow(/Invalid hex color/);
+    expect(() => hexToRgb('')).toThrow(/Invalid hex color/);
   });
 });
