@@ -117,13 +117,19 @@ async function handleFindSubcommand(
     return ephemeralResponse(t.t('budget.errors.missingDye'));
   }
 
-  // Resolve target dye (could be ID or name)
-  const targetDyeId = parseInt(targetDyeInput, 10);
-  const targetDye = !isNaN(targetDyeId)
-    ? getDyeById(targetDyeId)
+  // Resolve target dye (could be ID or name).
+  // BUG-032 (2026-07-18 audit): only treat the input as an ID when it's
+  // entirely numeric — parseInt('255 Brown') would otherwise parse as 255.
+  const isNumericInput = /^\s*\d+\s*$/.test(targetDyeInput);
+  const targetDye = isNumericInput
+    ? getDyeById(parseInt(targetDyeInput, 10))
     : getDyeByName(targetDyeInput);
 
-  if (!targetDye) {
+  // BUG-032 (2026-07-18 audit): reject Facewear entries (synthetic negative
+  // itemIDs) — they aren't market-tradeable, and seeding their ID into the
+  // Universalis fetch would fail the whole price batch. target_dye is
+  // free-text, so this can arrive despite the filtered autocomplete.
+  if (!targetDye || targetDye.itemID <= 0) {
     return ephemeralResponse(t.t('budget.errors.dyeNotFound', { name: targetDyeInput }));
   }
 

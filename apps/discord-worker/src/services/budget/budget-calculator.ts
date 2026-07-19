@@ -240,11 +240,17 @@ export function getDyeById(id: number): Dye | null {
 
 /**
  * Get a dye by name (exact match, case-insensitive)
+ *
+ * BUG-032 (2026-07-18 audit): Facewear entries (synthetic negative itemIDs)
+ * are excluded — budget lookups feed Universalis price fetches, and a
+ * negative ID in the batch makes the proxy reject the whole request.
  */
 export function getDyeByName(name: string): Dye | null {
   const normalizedName = name.toLowerCase().trim();
   const allDyes = dyeService.getAllDyes();
-  return allDyes.find((dye) => dye.name.toLowerCase() === normalizedName) ?? null;
+  return (
+    allDyes.find((dye) => dye.itemID > 0 && dye.name.toLowerCase() === normalizedName) ?? null
+  );
 }
 
 /**
