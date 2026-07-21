@@ -39,10 +39,10 @@ importers:
     devDependencies:
       vitepress:
         specifier: ^1.6.4
-        version: 1.6.4(@algolia/client-search@5.50.1)(@types/node@26.1.1)(lightningcss@1.32.0)(postcss@8.5.19)(search-insights@2.17.3)(typescript@5.9.3)
+        version: 1.6.4(@algolia/client-search@5.50.1)(@types/node@26.1.1)(lightningcss@1.32.0)(postcss@8.5.20)(search-insights@2.17.3)(typescript@5.9.3)
       vue:
-        specifier: ^3.5.39
-        version: 3.5.39(typescript@5.9.3)
+        specifier: ^3.5.40
+        version: 3.5.40(typescript@5.9.3)
 
   apps/api-worker:
     dependencies:
@@ -62,15 +62,15 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-middleware
       hono:
-        specifier: ^4.12.30
-        version: 4.12.30
+        specifier: ^4.12.31
+        version: 4.12.31
       spectral.js:
         specifier: ^3.0.0
         version: 3.0.0
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260713.1
-        version: 5.20260713.1
+        specifier: ^5.20260719.1
+        version: 5.20260719.1
       '@types/node':
         specifier: ^26.1.1
         version: 26.1.1
@@ -85,7 +85,7 @@ importers:
         version: 4.1.10(@types/node@26.1.1)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
       wrangler:
         specifier: ^4.110.0
-        version: 4.110.0(@cloudflare/workers-types@5.20260713.1)
+        version: 4.110.0(@cloudflare/workers-types@5.20260719.1)
 
   apps/discord-worker:
     dependencies:
@@ -93,8 +93,8 @@ importers:
         specifier: ^0.3.7
         version: 0.3.7
       '@cloudflare/workers-types':
-        specifier: ^5.20260713.1
-        version: 5.20260713.1
+        specifier: ^5.20260719.1
+        version: 5.20260719.1
       '@resvg/resvg-wasm':
         specifier: ^2.6.2
         version: 2.6.2
@@ -129,8 +129,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-middleware
       hono:
-        specifier: ^4.12.30
-        version: 4.12.30
+        specifier: ^4.12.31
+        version: 4.12.31
     devDependencies:
       '@types/node':
         specifier: ^26.1.1
@@ -152,7 +152,7 @@ importers:
         version: 4.1.10(@types/node@26.1.1)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
       wrangler:
         specifier: ^4.110.0
-        version: 4.110.0(@cloudflare/workers-types@5.20260713.1)
+        version: 4.110.0(@cloudflare/workers-types@5.20260719.1)
 
   apps/maintainer:
     dependencies:
@@ -160,8 +160,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/core
       vue:
-        specifier: ^3.5.39
-        version: 3.5.39(typescript@5.9.3)
+        specifier: ^3.5.40
+        version: 3.5.40(typescript@5.9.3)
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -183,7 +183,7 @@ importers:
         version: 26.1.1
       '@vitejs/plugin-vue':
         specifier: ^6.0.7
-        version: 6.0.7(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3))
+        version: 6.0.7(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(vue@3.5.40(typescript@5.9.3))
       '@vitest/coverage-v8':
         specifier: ^4.1.10
         version: 4.1.10(vitest@4.1.10)
@@ -224,8 +224,8 @@ importers:
   apps/moderation-worker:
     dependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260713.1
-        version: 5.20260713.1
+        specifier: ^5.20260719.1
+        version: 5.20260719.1
       '@xivdyetools/auth':
         specifier: workspace:*
         version: link:../../packages/auth
@@ -245,8 +245,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-middleware
       hono:
-        specifier: ^4.12.30
-        version: 4.12.30
+        specifier: ^4.12.31
+        version: 4.12.31
     devDependencies:
       '@types/node':
         specifier: ^26.1.1
@@ -271,7 +271,7 @@ importers:
         version: 4.1.10(@types/node@26.1.1)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
       wrangler:
         specifier: ^4.110.0
-        version: 4.110.0(@cloudflare/workers-types@5.20260713.1)
+        version: 4.110.0(@cloudflare/workers-types@5.20260719.1)
 
   apps/oauth:
     dependencies:
@@ -294,12 +294,12 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-middleware
       hono:
-        specifier: ^4.12.30
-        version: 4.12.30
+        specifier: ^4.12.31
+        version: 4.12.31
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260713.1
-        version: 5.20260713.1
+        specifier: ^5.20260719.1
+        version: 5.20260719.1
       '@types/node':
         specifier: ^26.1.1
         version: 26.1.1
@@ -317,13 +317,13 @@ importers:
         version: 4.1.10(@types/node@26.1.1)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
       wrangler:
         specifier: ^4.110.0
-        version: 4.110.0(@cloudflare/workers-types@5.20260713.1)
+        version: 4.110.0(@cloudflare/workers-types@5.20260719.1)
 
   apps/og-worker:
     dependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260713.1
-        version: 5.20260713.1
+        specifier: ^5.20260719.1
+        version: 5.20260719.1
       '@resvg/resvg-wasm':
         specifier: ^2.6.2
         version: 2.6.2
@@ -340,8 +340,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-middleware
       hono:
-        specifier: ^4.12.30
-        version: 4.12.30
+        specifier: ^4.12.31
+        version: 4.12.31
     devDependencies:
       '@types/node':
         specifier: ^26.1.1
@@ -354,7 +354,7 @@ importers:
         version: 4.1.10(@types/node@26.1.1)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
       wrangler:
         specifier: ^4.110.0
-        version: 4.110.0(@cloudflare/workers-types@5.20260713.1)
+        version: 4.110.0(@cloudflare/workers-types@5.20260719.1)
 
   apps/presets-api:
     dependencies:
@@ -377,12 +377,12 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-middleware
       hono:
-        specifier: ^4.12.30
-        version: 4.12.30
+        specifier: ^4.12.31
+        version: 4.12.31
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260713.1
-        version: 5.20260713.1
+        specifier: ^5.20260719.1
+        version: 5.20260719.1
       '@types/node':
         specifier: ^26.1.1
         version: 26.1.1
@@ -400,7 +400,7 @@ importers:
         version: 4.1.10(@types/node@26.1.1)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
       wrangler:
         specifier: ^4.110.0
-        version: 4.110.0(@cloudflare/workers-types@5.20260713.1)
+        version: 4.110.0(@cloudflare/workers-types@5.20260719.1)
 
   apps/stoat-worker:
     dependencies:
@@ -443,7 +443,7 @@ importers:
         version: link:../../packages/test-utils
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.19)(tsx@4.23.1)(typescript@5.9.3)(yaml@2.9.0)
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.20)(tsx@4.23.1)(typescript@5.9.3)(yaml@2.9.0)
       tsx:
         specifier: ^4.23.1
         version: 4.23.1
@@ -460,12 +460,12 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-middleware
       hono:
-        specifier: ^4.12.30
-        version: 4.12.30
+        specifier: ^4.12.31
+        version: 4.12.31
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260713.1
-        version: 5.20260713.1
+        specifier: ^5.20260719.1
+        version: 5.20260719.1
       '@types/node':
         specifier: ^26.1.1
         version: 26.1.1
@@ -477,7 +477,7 @@ importers:
         version: 4.1.10(@types/node@26.1.1)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
       wrangler:
         specifier: ^4.110.0
-        version: 4.110.0(@cloudflare/workers-types@5.20260713.1)
+        version: 4.110.0(@cloudflare/workers-types@5.20260719.1)
 
   apps/web-app:
     dependencies:
@@ -556,8 +556,8 @@ importers:
         version: 4.4.0
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260713.1
-        version: 5.20260713.1
+        specifier: ^5.20260719.1
+        version: 5.20260719.1
       '@vitest/coverage-v8':
         specifier: ^4.1.10
         version: 4.1.10(vitest@4.1.10)
@@ -673,8 +673,8 @@ importers:
         version: 1.38.0
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260713.1
-        version: 5.20260713.1
+        specifier: ^5.20260719.1
+        version: 5.20260719.1
       '@vitest/coverage-v8':
         specifier: ^4.1.10
         version: 4.1.10(vitest@4.1.10)
@@ -714,8 +714,8 @@ importers:
         version: link:../types
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260713.1
-        version: 5.20260713.1
+        specifier: ^5.20260719.1
+        version: 5.20260719.1
       '@testing-library/dom':
         specifier: ^10.0.0
         version: 10.4.1
@@ -745,14 +745,14 @@ importers:
         version: link:../rate-limiter
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20260713.1
-        version: 5.20260713.1
+        specifier: ^5.20260719.1
+        version: 5.20260719.1
       '@vitest/coverage-v8':
         specifier: ^4.1.10
         version: 4.1.10(vitest@4.1.10)
       hono:
-        specifier: ^4.12.30
-        version: 4.12.30
+        specifier: ^4.12.31
+        version: 4.12.31
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.1.1)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
@@ -940,8 +940,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@cloudflare/workers-types@5.20260713.1':
-    resolution: {integrity: sha512-4YZE9YIzr3iP9eRUV4ekZozLLsYQFFKxmMJfAcsteCuzKJ7RJrLqcCxm1aMzTE9uFcy+D6A89WE+cjJadF2c9g==}
+  '@cloudflare/workers-types@5.20260719.1':
+    resolution: {integrity: sha512-DcGasbfUuczQilc80vhL2MPPdWcaxWkx0hN5IW9UdNDBdrRvWcal3akSJ6Ccm7e8+/OGeR+8tYrqkykA3YGSZw==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -2569,17 +2569,17 @@ packages:
   '@volar/typescript@2.4.28':
     resolution: {integrity: sha512-Ja6yvWrbis2QtN4ClAKreeUZPVYMARDYZl9LMEv1iQ1QdepB6wn0jTRxA9MftYmYa4DQ4k/DaSZpFPUfxl8giw==}
 
-  '@vue/compiler-core@3.5.39':
-    resolution: {integrity: sha512-16KBTEXAJCpDr0mwlw+AZyhu8iyC7R3S2vBwsI7QnWJU6X3WKc9VKeNEZpiMdZ569qWhz9574L3vV55qRL0Vtw==}
+  '@vue/compiler-core@3.5.40':
+    resolution: {integrity: sha512-39E8IgOhTbVDnoJFMKc2DvYnypcZwUqgUhQkccva/0m6FUwtIKSGV7n1hpVmYcFaoRAwf9pBcwnKlCEsN63ZEQ==}
 
-  '@vue/compiler-dom@3.5.39':
-    resolution: {integrity: sha512-oQPigALqYbNxTNPvNgSOe+czwVExfbVF02lz8jP0S3AXJiu3jxYDygNUiqSep4ezzW8XgnubqH63My2A7JR/vg==}
+  '@vue/compiler-dom@3.5.40':
+    resolution: {integrity: sha512-pwkx4vqlqOspFstrcmzwkKLePVMD3PT65imRzLhanU2V1Fj4K13g6OXjanOyzw3aTAuRk84BOmY8f3rEHqPaVA==}
 
-  '@vue/compiler-sfc@3.5.39':
-    resolution: {integrity: sha512-d0ki86iOyN8LoZPBmk5SJWNwHP19CnDDCfuo//+2WJa2g5Ke0Jay983PIBIcSSzldC68I8DrD5GrHV3OSDfodg==}
+  '@vue/compiler-sfc@3.5.40':
+    resolution: {integrity: sha512-gIf497P4kpuALcvs5n3AEg1Vdn0pSY4XbjASIfHNYF1/MP3T2Mf2STERTubysBxCRxzJGJYtF/O7vwJrxFB3Vw==}
 
-  '@vue/compiler-ssr@3.5.39':
-    resolution: {integrity: sha512-Ce7/wvwMHai74bdszfXExdazFigYnlF9zgCmEQUcM1j0fOymlouZ7XilTYNo8oUjhlnjYOZbGrcYKuqjz89Ucw==}
+  '@vue/compiler-ssr@3.5.40':
+    resolution: {integrity: sha512-rrE5xiXG663+vHCHa3J9p2z5OcBRjXmoqenprJxAFQxg5pSshzeBiCE6pu46axapRJ2Adk0YDA2BRZVjiHXnhg==}
 
   '@vue/devtools-api@7.7.9':
     resolution: {integrity: sha512-kIE8wvwlcZ6TJTbNeU2HQNtaxLx3a84aotTITUuL/4bzfPxzajGBOoqjMhwZJ8L9qFYDU/lAYMEEm11dnZOD6g==}
@@ -2593,25 +2593,23 @@ packages:
   '@vue/language-core@3.3.7':
     resolution: {integrity: sha512-LzmkKinXAMMoh8Jfi/jMUSDUjuPdv8mynH5WJGKfXyZtDw3hQ6GBaoI6Bcnl/Xqlu32q/0Z6i/trp4VXykzyLw==}
 
-  '@vue/reactivity@3.5.39':
-    resolution: {integrity: sha512-TpsuBJ9gGlZa5d23XcM2y8EXanz9dZeVDQBXRwzy46ItgvM+rWpzs+UVM0wcRLxGvcav0HE5jz2gNL53xlRAog==}
+  '@vue/reactivity@3.5.40':
+    resolution: {integrity: sha512-B7ot9UlUZOi1zbq61/LvE88ZLTV8IlajTdiZTAEiDQgrnIMIZoPr9kGw0Zw46ObW62O9+H/Be3kMbfb7kYPQZA==}
 
-  '@vue/runtime-core@3.5.39':
-    resolution: {integrity: sha512-9GLtNyRvPAUMbX+7ono0RC2j0guo2LXVi8LvcmAooImACUKm0oFf0jjwbX8/H0AE/t1nxhAkn8RSl9PMCzzxZw==}
+  '@vue/runtime-core@3.5.40':
+    resolution: {integrity: sha512-KAZLweuZ6uUJPK1PMSQPgBU5gCjgrrfjUhSglmU9NhH+Zjepa8cnwSydPWDWHDwOgY4g3VcZ+PljbiHlURNCbw==}
 
-  '@vue/runtime-dom@3.5.39':
-    resolution: {integrity: sha512-7Y6aAGboKcXAZ3ECuUy7RrS5yy2r47dhTp2SKaJmYxjopImaVFaNa5Ne66NwGovsrxVAl5S5rwc7m22UG7Lmww==}
+  '@vue/runtime-dom@3.5.40':
+    resolution: {integrity: sha512-ZfrX8ssZQds900L9pr8AuK05ddnMsR4MPMZr8cPN9GoqoPWcXLhjvvbIA2SMv+7a97sJ1vv9pj/zxK0Cq/eEFQ==}
 
-  '@vue/server-renderer@3.5.39':
-    resolution: {integrity: sha512-yZSakiAGw85rZfG7UM8akMnIF+FmeiNk47uvHf2nVBBSe+dIKUhZuZq9+XgJhbV3nS5Z4ALH23/MpXofW+mbcw==}
-    peerDependencies:
-      vue: 3.5.39
+  '@vue/server-renderer@3.5.40':
+    resolution: {integrity: sha512-XNJym9WpevhTVt1HuwOrCRJ5Q+9z4BjTMrDtjTrvx74SmUll8spNTw6whWJa9mEkO4PKn5TihI/bm/8ds2QVJw==}
 
   '@vue/shared@3.5.31':
     resolution: {integrity: sha512-nBxuiuS9Lj5bPkPbWogPUnjxxWpkRniX7e5UBQDWl6Fsf4roq9wwV+cR7ezQ4zXswNvPIlsdj1slcLB7XCsRAw==}
 
-  '@vue/shared@3.5.39':
-    resolution: {integrity: sha512-l1rrBtBfTnmxvtsvdQDXltUUy8S1Y+ZaqdfUzmAnJkTd8Z8rv5v/ytW+TKiqEOWyHPoqtPlNFSs0lhRmYVSHVA==}
+  '@vue/shared@3.5.40':
+    resolution: {integrity: sha512-WxnBtruIqOoV3rA4jeKDWzrYI5h7Cp4+pjwDi8kWGHz+IslhiN+wguLVVhtv2l8VoU02rzDCVfDjgCl1lNpZVg==}
 
   '@vueuse/core@12.8.2':
     resolution: {integrity: sha512-HbvCmZdzAu3VGi/pWYm5Ut+Kd9mn1ZHnn4L5G8kOQTPs/IwIAmJoBrmYk2ckLArgMXZj0AW3n5CAejLUO+PhdQ==}
@@ -3247,8 +3245,8 @@ packages:
   headers-polyfill@5.0.1:
     resolution: {integrity: sha512-1TJ6Fih/b8h5TIcv+1+Hw0PDQWJTKDKzFZzcKOiW1wJza3XoAQlkCuXLbymPYB8+ZQyw8mHvdw560e8zVFIWyA==}
 
-  hono@4.12.30:
-    resolution: {integrity: sha512-emn+JoJjrN9YTpRDS5it/UI2SO9BAE37T6I3d963RxcZ81G9A4pr2SZTEiiaiKbzx+NKRg5BZ89fCL7gCJCUog==}
+  hono@4.12.31:
+    resolution: {integrity: sha512-zJIHFrl6bq3RDd2YusFNCDlM8qUprxKswyi/OPzPyzKDdyBXDqWx8bZlZ7R+saTdSTatUmb3O7K4SspGPaEOQg==}
     engines: {node: '>=16.9.0'}
 
   hookable@5.5.3:
@@ -3733,6 +3731,10 @@ packages:
 
   postcss@8.5.19:
     resolution: {integrity: sha512-Mz8SaolMd8nB+G13WkORcxQKHZ/NE4xXevtkJHVuG+guo9/wYKlIMTKAqGdEmYOXR2ijPjTYNHssizdaVSUNdQ==}
+    engines: {node: ^10 || ^12 || >=14}
+
+  postcss@8.5.20:
+    resolution: {integrity: sha512-lW616l85ucIQL+FocMmL7pQFPqBmwejrCMg+iPxyImlrANNJG9NHq/RkyCZopDhd8C3LA03PHRJDjkbGu8vvug==}
     engines: {node: ^10 || ^12 || >=14}
 
   preact@10.29.1:
@@ -4380,8 +4382,8 @@ packages:
     peerDependencies:
       typescript: ^5.9.3
 
-  vue@3.5.39:
-    resolution: {integrity: sha512-xmZCYabFGcirU8r0fTuvl/LICc1OU620rnqepaJDL/a141ZigkG7AyaxQLdqJ02ZRYzWe6YPaDHeQx7MfknQfA==}
+  vue@3.5.40:
+    resolution: {integrity: sha512-+8PJ4SJXdn/cHGImF4CKdxlWHIN5Dkt7DoufRREM6h6uVCx2m7QxgcEQmmzyOK8A9mcafg7sFbJFYsdFVubTig==}
     peerDependencies:
       typescript: ^5.9.3
     peerDependenciesMeta:
@@ -4698,7 +4700,7 @@ snapshots:
   '@cloudflare/workerd-windows-64@1.20260708.1':
     optional: true
 
-  '@cloudflare/workers-types@5.20260713.1': {}
+  '@cloudflare/workers-types@5.20260719.1': {}
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
@@ -5880,16 +5882,16 @@ snapshots:
     dependencies:
       uncrypto: 0.1.3
 
-  '@vitejs/plugin-vue@5.2.4(vite@5.4.21(@types/node@26.1.1)(lightningcss@1.32.0))(vue@3.5.39(typescript@5.9.3))':
+  '@vitejs/plugin-vue@5.2.4(vite@5.4.21(@types/node@26.1.1)(lightningcss@1.32.0))(vue@3.5.40(typescript@5.9.3))':
     dependencies:
       vite: 5.4.21(@types/node@26.1.1)(lightningcss@1.32.0)
-      vue: 3.5.39(typescript@5.9.3)
+      vue: 3.5.40(typescript@5.9.3)
 
-  '@vitejs/plugin-vue@6.0.7(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3))':
+  '@vitejs/plugin-vue@6.0.7(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))(vue@3.5.40(typescript@5.9.3))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
       vite: 8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0)
-      vue: 3.5.39(typescript@5.9.3)
+      vue: 3.5.40(typescript@5.9.3)
 
   '@vitest/coverage-v8@4.1.10(vitest@4.1.10)':
     dependencies:
@@ -5981,35 +5983,35 @@ snapshots:
       path-browserify: 1.0.1
       vscode-uri: 3.1.0
 
-  '@vue/compiler-core@3.5.39':
+  '@vue/compiler-core@3.5.40':
     dependencies:
       '@babel/parser': 7.29.7
-      '@vue/shared': 3.5.39
+      '@vue/shared': 3.5.40
       entities: 7.0.1
       estree-walker: 2.0.2
       source-map-js: 1.2.1
 
-  '@vue/compiler-dom@3.5.39':
+  '@vue/compiler-dom@3.5.40':
     dependencies:
-      '@vue/compiler-core': 3.5.39
-      '@vue/shared': 3.5.39
+      '@vue/compiler-core': 3.5.40
+      '@vue/shared': 3.5.40
 
-  '@vue/compiler-sfc@3.5.39':
+  '@vue/compiler-sfc@3.5.40':
     dependencies:
       '@babel/parser': 7.29.7
-      '@vue/compiler-core': 3.5.39
-      '@vue/compiler-dom': 3.5.39
-      '@vue/compiler-ssr': 3.5.39
-      '@vue/shared': 3.5.39
+      '@vue/compiler-core': 3.5.40
+      '@vue/compiler-dom': 3.5.40
+      '@vue/compiler-ssr': 3.5.40
+      '@vue/shared': 3.5.40
       estree-walker: 2.0.2
       magic-string: 0.30.21
-      postcss: 8.5.19
+      postcss: 8.5.20
       source-map-js: 1.2.1
 
-  '@vue/compiler-ssr@3.5.39':
+  '@vue/compiler-ssr@3.5.40':
     dependencies:
-      '@vue/compiler-dom': 3.5.39
-      '@vue/shared': 3.5.39
+      '@vue/compiler-dom': 3.5.40
+      '@vue/shared': 3.5.40
 
   '@vue/devtools-api@7.7.9':
     dependencies:
@@ -6032,45 +6034,45 @@ snapshots:
   '@vue/language-core@3.3.7':
     dependencies:
       '@volar/language-core': 2.4.28
-      '@vue/compiler-dom': 3.5.39
-      '@vue/shared': 3.5.39
+      '@vue/compiler-dom': 3.5.40
+      '@vue/shared': 3.5.40
       alien-signals: 3.2.1
       muggle-string: 0.4.1
       path-browserify: 1.0.1
       picomatch: 4.0.5
 
-  '@vue/reactivity@3.5.39':
+  '@vue/reactivity@3.5.40':
     dependencies:
-      '@vue/shared': 3.5.39
+      '@vue/shared': 3.5.40
 
-  '@vue/runtime-core@3.5.39':
+  '@vue/runtime-core@3.5.40':
     dependencies:
-      '@vue/reactivity': 3.5.39
-      '@vue/shared': 3.5.39
+      '@vue/reactivity': 3.5.40
+      '@vue/shared': 3.5.40
 
-  '@vue/runtime-dom@3.5.39':
+  '@vue/runtime-dom@3.5.40':
     dependencies:
-      '@vue/reactivity': 3.5.39
-      '@vue/runtime-core': 3.5.39
-      '@vue/shared': 3.5.39
+      '@vue/reactivity': 3.5.40
+      '@vue/runtime-core': 3.5.40
+      '@vue/shared': 3.5.40
       csstype: 3.2.3
 
-  '@vue/server-renderer@3.5.39(vue@3.5.39(typescript@5.9.3))':
+  '@vue/server-renderer@3.5.40':
     dependencies:
-      '@vue/compiler-ssr': 3.5.39
-      '@vue/shared': 3.5.39
-      vue: 3.5.39(typescript@5.9.3)
+      '@vue/compiler-ssr': 3.5.40
+      '@vue/runtime-dom': 3.5.40
+      '@vue/shared': 3.5.40
 
   '@vue/shared@3.5.31': {}
 
-  '@vue/shared@3.5.39': {}
+  '@vue/shared@3.5.40': {}
 
   '@vueuse/core@12.8.2(typescript@5.9.3)':
     dependencies:
       '@types/web-bluetooth': 0.0.21
       '@vueuse/metadata': 12.8.2
       '@vueuse/shared': 12.8.2(typescript@5.9.3)
-      vue: 3.5.39(typescript@5.9.3)
+      vue: 3.5.40(typescript@5.9.3)
     transitivePeerDependencies:
       - typescript
 
@@ -6078,7 +6080,7 @@ snapshots:
     dependencies:
       '@vueuse/core': 12.8.2(typescript@5.9.3)
       '@vueuse/shared': 12.8.2(typescript@5.9.3)
-      vue: 3.5.39(typescript@5.9.3)
+      vue: 3.5.40(typescript@5.9.3)
     optionalDependencies:
       focus-trap: 7.8.0
     transitivePeerDependencies:
@@ -6088,7 +6090,7 @@ snapshots:
 
   '@vueuse/shared@12.8.2(typescript@5.9.3)':
     dependencies:
-      vue: 3.5.39(typescript@5.9.3)
+      vue: 3.5.40(typescript@5.9.3)
     transitivePeerDependencies:
       - typescript
 
@@ -6750,7 +6752,7 @@ snapshots:
       '@types/set-cookie-parser': 2.4.10
       set-cookie-parser: 3.1.1
 
-  hono@4.12.30: {}
+  hono@4.12.31: {}
 
   hookable@5.5.3: {}
 
@@ -7187,18 +7189,24 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.2
 
-  postcss-load-config@6.0.1(jiti@2.7.0)(postcss@8.5.19)(tsx@4.23.1)(yaml@2.9.0):
+  postcss-load-config@6.0.1(jiti@2.7.0)(postcss@8.5.20)(tsx@4.23.1)(yaml@2.9.0):
     dependencies:
       lilconfig: 3.1.3
     optionalDependencies:
       jiti: 2.7.0
-      postcss: 8.5.19
+      postcss: 8.5.20
       tsx: 4.23.1
       yaml: 2.9.0
 
   postcss-value-parser@4.2.0: {}
 
   postcss@8.5.19:
+    dependencies:
+      nanoid: 3.3.16
+      picocolors: 1.1.1
+      source-map-js: 1.2.1
+
+  postcss@8.5.20:
     dependencies:
       nanoid: 3.3.16
       picocolors: 1.1.1
@@ -7665,7 +7673,7 @@ snapshots:
 
   tslib@2.8.1: {}
 
-  tsup@8.5.1(jiti@2.7.0)(postcss@8.5.19)(tsx@4.23.1)(typescript@5.9.3)(yaml@2.9.0):
+  tsup@8.5.1(jiti@2.7.0)(postcss@8.5.20)(tsx@4.23.1)(typescript@5.9.3)(yaml@2.9.0):
     dependencies:
       bundle-require: 5.1.0(esbuild@0.27.3)
       cac: 6.7.14
@@ -7676,7 +7684,7 @@ snapshots:
       fix-dts-default-cjs-exports: 1.0.1
       joycon: 3.1.1
       picocolors: 1.1.1
-      postcss-load-config: 6.0.1(jiti@2.7.0)(postcss@8.5.19)(tsx@4.23.1)(yaml@2.9.0)
+      postcss-load-config: 6.0.1(jiti@2.7.0)(postcss@8.5.20)(tsx@4.23.1)(yaml@2.9.0)
       resolve-from: 5.0.0
       rollup: 4.59.0
       source-map: 0.7.6
@@ -7685,7 +7693,7 @@ snapshots:
       tinyglobby: 0.2.15
       tree-kill: 1.2.2
     optionalDependencies:
-      postcss: 8.5.19
+      postcss: 8.5.20
       typescript: 5.9.3
     transitivePeerDependencies:
       - jiti
@@ -7855,7 +7863,7 @@ snapshots:
       tsx: 4.23.1
       yaml: 2.9.0
 
-  vitepress@1.6.4(@algolia/client-search@5.50.1)(@types/node@26.1.1)(lightningcss@1.32.0)(postcss@8.5.19)(search-insights@2.17.3)(typescript@5.9.3):
+  vitepress@1.6.4(@algolia/client-search@5.50.1)(@types/node@26.1.1)(lightningcss@1.32.0)(postcss@8.5.20)(search-insights@2.17.3)(typescript@5.9.3):
     dependencies:
       '@docsearch/css': 3.8.2
       '@docsearch/js': 3.8.2(@algolia/client-search@5.50.1)(search-insights@2.17.3)
@@ -7864,7 +7872,7 @@ snapshots:
       '@shikijs/transformers': 2.5.0
       '@shikijs/types': 2.5.0
       '@types/markdown-it': 14.1.2
-      '@vitejs/plugin-vue': 5.2.4(vite@5.4.21(@types/node@26.1.1)(lightningcss@1.32.0))(vue@3.5.39(typescript@5.9.3))
+      '@vitejs/plugin-vue': 5.2.4(vite@5.4.21(@types/node@26.1.1)(lightningcss@1.32.0))(vue@3.5.40(typescript@5.9.3))
       '@vue/devtools-api': 7.7.9
       '@vue/shared': 3.5.31
       '@vueuse/core': 12.8.2(typescript@5.9.3)
@@ -7874,9 +7882,9 @@ snapshots:
       minisearch: 7.2.0
       shiki: 2.5.0
       vite: 5.4.21(@types/node@26.1.1)(lightningcss@1.32.0)
-      vue: 3.5.39(typescript@5.9.3)
+      vue: 3.5.40(typescript@5.9.3)
     optionalDependencies:
-      postcss: 8.5.19
+      postcss: 8.5.20
     transitivePeerDependencies:
       - '@algolia/client-search'
       - '@types/node'
@@ -7972,13 +7980,13 @@ snapshots:
       '@vue/language-core': 3.3.7
       typescript: 5.9.3
 
-  vue@3.5.39(typescript@5.9.3):
+  vue@3.5.40(typescript@5.9.3):
     dependencies:
-      '@vue/compiler-dom': 3.5.39
-      '@vue/compiler-sfc': 3.5.39
-      '@vue/runtime-dom': 3.5.39
-      '@vue/server-renderer': 3.5.39(vue@3.5.39(typescript@5.9.3))
-      '@vue/shared': 3.5.39
+      '@vue/compiler-dom': 3.5.40
+      '@vue/compiler-sfc': 3.5.40
+      '@vue/runtime-dom': 3.5.40
+      '@vue/server-renderer': 3.5.40
+      '@vue/shared': 3.5.40
     optionalDependencies:
       typescript: 5.9.3
 
@@ -8017,7 +8025,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20260708.1
       '@cloudflare/workerd-windows-64': 1.20260708.1
 
-  wrangler@4.110.0(@cloudflare/workers-types@5.20260713.1):
+  wrangler@4.110.0(@cloudflare/workers-types@5.20260719.1):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
       '@cloudflare/unenv-preset': 2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260708.1)
@@ -8028,7 +8036,7 @@ snapshots:
       unenv: 2.0.0-rc.24
       workerd: 1.20260708.1
     optionalDependencies:
-      '@cloudflare/workers-types': 5.20260713.1
+      '@cloudflare/workers-types': 5.20260719.1
       fsevents: 2.3.3
     transitivePeerDependencies:
       - bufferutil
