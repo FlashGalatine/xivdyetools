@@ -27,9 +27,9 @@
     "@types/node": "^26.1.1",
     "@vitest/coverage-v8": "^4.1.10",
     "@xivdyetools/test-utils": "workspace:*",
-    "miniflare": "^4.20260708.1",
+    "miniflare": "^4.20260721.0",
     "vitest": "^4.1.10",
-    "wrangler": "^4.110.0"
+    "wrangler": "^4.113.0"
   },
   "engines": {
     "node": ">=18.0.0"
