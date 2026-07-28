@@ -86,17 +86,90 @@ async function main() {
   // Ensure output directory exists
   fs.mkdirSync(outputDir, { recursive: true });
 
+  let updatedCount = 0;
+
   for (const locale of locales) {
     console.log(`Building ${LOCALE_NAMES[locale]} (${locale})...`);
 
     const localeData = buildLocaleData(locale, yamlData, csvRows, colorsData);
     const outputPath = path.join(outputDir, `${locale}.json`);
+    const existing = readExistingLocale(outputPath);
+
+    // Rebuilding from unchanged sources must be a no-op: if the only thing that
+    // would differ is the `meta.generated` timestamp, keep the file exactly as
+    // it is. Otherwise every build dirties all six locale JSONs and buries real
+    // changes in timestamp churn.
+    if (existing && isContentEqual(existing, localeData)) {
+      console.log(`  = Unchanged, kept ${outputPath} (${localeData.meta.dyeCount} dyes)\n`);
+      continue;
+    }
 
     fs.writeFileSync(outputPath, JSON.stringify(localeData, null, 2), 'utf-8');
+    updatedCount++;
     console.log(`  ✓ Wrote ${outputPath} (${localeData.meta.dyeCount} dyes)\n`);
   }
 
-  console.log('✅ Locale files built successfully!');
+  console.log(
+    updatedCount === 0
+      ? '✅ Locale files already up to date (nothing written).'
+      : `✅ Locale files built successfully! (${updatedCount} of ${locales.length} updated)`
+  );
+}
+
+type LocaleFile = ReturnType<typeof buildLocaleData>;
+
+/**
+ * Reads a previously generated locale file, or null if it is absent or
+ * unparseable — either way the caller should regenerate it.
+ */
+function readExistingLocale(outputPath: string): LocaleFile | null {
+  if (!fs.existsSync(outputPath)) return null;
+
+  try {
+    return JSON.parse(fs.readFileSync(outputPath, 'utf-8')) as LocaleFile;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Compares two locale payloads ignoring `meta.generated`, so a rebuild that
+ * produces identical data is recognised as a no-op.
+ */
+function isContentEqual(a: LocaleFile, b: LocaleFile): boolean {
+  return deepEqual(withoutGenerated(a), withoutGenerated(b));
+}
+
+function withoutGenerated(data: LocaleFile) {
+  return {
+    ...data,
+    meta: { version: data.meta.version, dyeCount: data.meta.dyeCount },
+  };
+}
+
+/**
+ * Key-order-insensitive structural equality. Object key order is not stable
+ * between JSON.parse of an existing file and a freshly built payload, so a
+ * serialize-and-compare shortcut would report spurious differences.
+ */
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return a.length === b.length && a.every((item, index) => deepEqual(item, b[index]));
+  }
+
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+
+  return aKeys.every(
+    (key) =>
+      Object.prototype.hasOwnProperty.call(b, key) &&
+      deepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])
+  );
 }
 
 function buildLocaleData(
@@ -114,6 +187,9 @@ function buildLocaleData(
     locale,
     meta: {
       version: '1.0.0',
+      // Only reaches disk when the surrounding content actually changed — see
+      // the unchanged-file check in main(). So this marks when the locale data
+      // last changed, not when the build last ran.
       generated: new Date().toISOString(),
       dyeCount: Object.keys(dyeNames).length,
     },

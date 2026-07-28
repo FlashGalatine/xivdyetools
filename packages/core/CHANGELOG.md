@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **`scripts/build-locales.ts` is now idempotent.** Before writing each locale, it compares the freshly built payload against the file already on disk, ignoring `meta.generated`. When nothing else differs the existing file is left untouched — same bytes, same mtime — so rebuilding from unchanged sources no longer dirties all six locale JSONs. Previously every build re-stamped the timestamp, which meant a full `pnpm turbo run build` always produced six spurious modifications and buried real locale changes in churn. `meta.generated` now marks when the locale data last *changed* rather than when the build last ran; the field remains a required ISO string on `LocaleData`, so there is no API or consumer impact. Comparison is key-order-insensitive because `JSON.parse` of an existing file and a freshly built payload do not agree on key ordering for non-integer keys (e.g. synthetic negative Facewear IDs).
+
 ## [2.7.0] — 2026-07-19
 
 2026-07-18 audit remediation (Sprint 4).
