@@ -106,11 +106,16 @@ jobs:
 
       - uses: pnpm/action-setup@v5
 
+      # `registry-url` is deliberately omitted here. It makes setup-node write an
+      # .npmrc containing `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`,
+      # and under trusted publishing there is no NODE_AUTH_TOKEN to expand it.
+      # Older pnpm then sent the literal placeholder as a credential, failing with
+      # a misleading 404 (pnpm/pnpm#11513). Publishing authenticates via OIDC —
+      # see `id-token: write` above — so no .npmrc credential line is needed.
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
-          registry-url: https://registry.npmjs.org
 
       - run: pnpm install --frozen-lockfile
 
@@ -157,5 +162,3 @@ jobs:
 
           echo ""
           echo "All packages published successfully."
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
