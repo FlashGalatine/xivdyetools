@@ -198,7 +198,7 @@ import { dyeDatabase, presetData, VERSION } from '@xivdyetools/core';
 3. `tsc -p tsconfig.build.json` compiles to `dist/`.
 4. `scripts/copy-locales.ts` copies the generated JSON into `dist/`.
 
-`build-locales.ts` re-stamps `meta.generated` (an ISO timestamp) on every run, so locale files have a noisy diff after every build. Stage release commits explicitly to skip the timestamp churn.
+`build-locales.ts` is **idempotent**: before writing, it compares the freshly built payload against the file already on disk, ignoring `meta.generated`. If nothing else differs it keeps the existing file untouched — same bytes, same mtime. Rebuilding from unchanged sources therefore leaves a clean working tree, and `meta.generated` marks when the locale data last *changed* rather than when the build last ran.
 
 ## Consumers
 
