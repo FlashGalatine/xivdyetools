@@ -108,10 +108,12 @@ jobs:
 
       # `registry-url` is deliberately omitted here. It makes setup-node write an
       # .npmrc containing `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`,
-      # and under trusted publishing there is no NODE_AUTH_TOKEN to expand it.
-      # Older pnpm then sent the literal placeholder as a credential, failing with
-      # a misleading 404 (pnpm/pnpm#11513). Publishing authenticates via OIDC —
-      # see `id-token: write` above — so no .npmrc credential line is needed.
+      # which under trusted publishing has nothing to expand to. Not emitting it
+      # keeps the auth path unambiguous: publishing authenticates via OIDC, see
+      # `id-token: write` above. Some pnpm versions passed the unexpanded
+      # placeholder through as a credential and failed with a misleading 404
+      # (pnpm/pnpm#11513); npm expands it itself, so the symptom varies by which
+      # client performs the publish.
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -138,6 +140,19 @@ jobs:
           done
           echo "Running: pnpm turbo run test $FILTER_ARGS"
           pnpm turbo run test $FILTER_ARGS
+
+      # pnpm 10 delegates the actual `publish` to the npm CLI, and npm only
+      # learned trusted publishing (OIDC) in 11.5.1. The npm bundled with Node 22
+      # is 10.x, which does not attempt the OIDC exchange at all and fails with
+      # ENEEDAUTH. `packageManager` pins pnpm but nothing pins npm, so the tool
+      # performing the publish is the one link in the chain without a version
+      # pin -- hence this step. Version is echoed so the run log records which
+      # npm published. (pnpm 11 replaced this delegation with a native OIDC
+      # implementation; if/when we upgrade, this step can go.)
+      - name: Upgrade npm for trusted publishing
+        run: |
+          npm install -g npm@^11.5.1
+          npm --version
 
       - name: Publish
         run: |
