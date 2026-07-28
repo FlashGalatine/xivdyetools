@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2026-07-28
+
+Release-infrastructure validation. **No functional changes** — the published contents are identical to 1.1.1.
+
+### Changed
+
+- Published via npm **trusted publishing (OIDC)** rather than a long-lived `NPM_TOKEN`. `@xivdyetools/crypto` is the pilot for this migration because it has no workspace dependencies, which isolates the authentication change from `pnpm publish`'s `workspace:*` rewriting. See `.github/workflows/publish-packages.yml`. Prompted by npm's deprecation of 2FA-bypass granular access tokens, which stop being able to publish directly around January 2027.
+
 ## [1.1.1] - 2026-07-19
 
 ### Changed
