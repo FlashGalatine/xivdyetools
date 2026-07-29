@@ -9,18 +9,18 @@
 ```mermaid
 graph TD
     subgraph "npm Registry — Shared Packages"
-        TYPES["@xivdyetools/types<br/>v1.14.0"]
-        CRYPTO["@xivdyetools/crypto<br/>v1.1.0"]
-        LOGGER["@xivdyetools/logger<br/>v1.2.2"]
-        AUTH["@xivdyetools/auth<br/>v1.1.2"]
-        RATELIMIT["@xivdyetools/rate-limiter<br/>v1.4.4"]
-        WMW["@xivdyetools/worker-middleware<br/>v1.1.2"]
-        TEST["@xivdyetools/test-utils<br/>v1.1.7"]
-        CORE["@xivdyetools/core<br/>v2.6.0"]
-        SVG["@xivdyetools/svg<br/>v1.1.2"]
-        BLEND["@xivdyetools/color-blending<br/>v1.0.1"]
-        BOTLOGIC["@xivdyetools/bot-logic<br/>v1.2.0"]
-        BOTI18N["@xivdyetools/bot-i18n<br/>v1.2.0"]
+        TYPES["@xivdyetools/types<br/>v1.15.0"]
+        CRYPTO["@xivdyetools/crypto<br/>v1.1.2"]
+        LOGGER["@xivdyetools/logger<br/>v1.3.0"]
+        AUTH["@xivdyetools/auth<br/>v1.2.0"]
+        RATELIMIT["@xivdyetools/rate-limiter<br/>v1.5.0"]
+        WMW["@xivdyetools/worker-middleware<br/>v1.2.0"]
+        TEST["@xivdyetools/test-utils<br/>v1.1.8"]
+        CORE["@xivdyetools/core<br/>v2.7.0"]
+        SVG["@xivdyetools/svg<br/>v1.2.1"]
+        BLEND["@xivdyetools/color-blending<br/>v1.1.0"]
+        BOTLOGIC["@xivdyetools/bot-logic<br/>v1.3.0"]
+        BOTI18N["@xivdyetools/bot-i18n<br/>v1.2.1"]
     end
 
     subgraph "Consumer Applications"
@@ -39,9 +39,8 @@ graph TD
 
     %% Foundation dependencies
     TYPES --> CORE
-    TYPES --> LOGGER
-    TYPES --> AUTH
     TYPES --> TEST
+    CRYPTO --> TEST
     CRYPTO --> AUTH
     LOGGER --> CORE
     LOGGER --> WMW
@@ -49,7 +48,7 @@ graph TD
 
     %% Feature package dependencies
     CORE --> SVG
-    CORE --> BLEND
+    BLEND --> SVG
     CORE --> BOTLOGIC
     SVG --> BOTLOGIC
     BLEND --> BOTLOGIC
@@ -166,7 +165,7 @@ graph TD
 ## Core Library Internal Structure
 
 ```
-@xivdyetools/core (v2.6.0)
+@xivdyetools/core (v2.7.0)
 ├── services/
 │   ├── ColorService.ts      ← ColorConverter, ColorAccessibility, ColorManipulator
 │   ├── DyeService.ts        ← DyeDatabase (k-d tree), DyeSearch, HarmonyGenerator

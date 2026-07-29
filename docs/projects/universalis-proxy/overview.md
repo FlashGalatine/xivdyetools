@@ -10,7 +10,7 @@ The Universalis Proxy provides a caching layer between XIV Dye Tools application
 
 | Property | Value |
 |----------|-------|
-| **Version** | v1.2.2 |
+| **Version** | v1.5.0 |
 | **Type** | Cloudflare Worker |
 | **Framework** | Hono |
 | **Storage** | Cloudflare KV |
