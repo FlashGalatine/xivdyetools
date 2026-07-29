@@ -141,19 +141,12 @@ jobs:
           echo "Running: pnpm turbo run test $FILTER_ARGS"
           pnpm turbo run test $FILTER_ARGS
 
-      # pnpm 10 delegates the actual `publish` to the npm CLI, and npm only
-      # learned trusted publishing (OIDC) in 11.5.1. The npm bundled with Node 22
-      # is 10.x, which does not attempt the OIDC exchange at all and fails with
-      # ENEEDAUTH. `packageManager` pins pnpm but nothing pins npm, so the tool
-      # performing the publish is the one link in the chain without a version
-      # pin -- hence this step. Version is echoed so the run log records which
-      # npm published. (pnpm 11 replaced this delegation with a native OIDC
-      # implementation; if/when we upgrade, this step can go.)
-      - name: Upgrade npm for trusted publishing
-        run: |
-          npm install -g npm@^11.5.1
-          npm --version
-
+      # pnpm 11 publishes natively (no npm CLI delegation) and implements the
+      # OIDC trusted-publishing exchange itself, so the npm-upgrade step that
+      # pnpm 10 needed (npm >= 11.5.1 for OIDC; Node 22 bundles npm 10.x, which
+      # fails with ENEEDAUTH) is gone. If publishing ever regresses to
+      # ENEEDAUTH/404, check which pnpm version action-setup resolved from
+      # `packageManager` before suspecting the trusted-publisher config.
       - name: Publish
         run: |
           PACKAGES='${{ needs.detect.outputs.packages }}'

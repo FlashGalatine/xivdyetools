@@ -239,10 +239,8 @@ jobs:
     steps:
       # ... checkout, pnpm, setup-node (no registry-url), install, build, test
 
-      # pnpm 10 delegates publishing to the npm CLI, and npm only supports
-      # trusted publishing from 11.5.1. Node 22 ships npm 10.x.
-      - run: npm install -g npm@^11.5.1
-
+      # pnpm 11 publishes natively and performs the OIDC exchange itself —
+      # no npm CLI involvement (pnpm 10 delegated to npm and needed npm >= 11.5.1)
       - run: pnpm --filter "$pkg" publish --provenance --access public --no-git-checks
         # no `env:` block -- no token exists
 ```
