@@ -139,7 +139,7 @@ graph TD
 | **@xivdyetools/worker-middleware** | logger, rate-limiter | discord-worker, moderation-worker, oauth, presets-api, universalis-proxy, og-worker, api-worker |
 | **@xivdyetools/test-utils** | types, crypto | All projects (devDependency) |
 | **@xivdyetools/core** | types, logger | web-app, discord-worker, og-worker, api-worker, maintainer |
-| **@xivdyetools/color-blending** | core | discord-worker, stoat-worker |
+| **@xivdyetools/color-blending** | — (zero deps since 1.1.0, REFACTOR-005) | discord-worker, stoat-worker, svg, bot-logic |
 | **@xivdyetools/svg** | core, color-blending, types | discord-worker, og-worker |
 | **@xivdyetools/bot-logic** | core, bot-i18n, color-blending, svg, types | discord-worker, stoat-worker |
 | **@xivdyetools/bot-i18n** | — | discord-worker, stoat-worker |
