@@ -2,7 +2,7 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: April 29, 2026*
+*Last Updated: July 28, 2026*
 
 ---
 
@@ -12,40 +12,40 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core Library** | v2.6.0 | `@xivdyetools/core` | npm | Active |
-| **Web Application** | v4.10.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v4.5.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.2.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
-| **OAuth Worker** | v2.4.0 | `xivdyetools-oauth-worker` | Cloudflare Workers | Active |
-| **Presets API** | v1.5.0 | `xivdyetools-presets-api` | Cloudflare Workers | Active |
-| **Universalis Proxy** | v1.4.5 | `xivdyetools-universalis-proxy` | Cloudflare Workers | Active |
-| **OpenGraph Worker** | v1.2.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
-| **Public REST API** | v0.4.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Core Library** | v2.7.0 | `@xivdyetools/core` | npm | Active |
+| **Web Application** | v4.12.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v4.7.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.3.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **OAuth Worker** | v2.5.0 | `xivdyetools-oauth-worker` | Cloudflare Workers | Active |
+| **Presets API** | v1.6.0 | `xivdyetools-presets-api` | Cloudflare Workers | Active |
+| **Universalis Proxy** | v1.5.0 | `xivdyetools-universalis-proxy` | Cloudflare Workers | Active |
+| **OpenGraph Worker** | v1.4.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **Public REST API** | v0.5.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **API Documentation** | v0.1.0 | `xivdyetools-api-docs` | Cloudflare Pages (VitePress) | Active |
-| **Stoat Bot** | v0.1.4 | `xivdyetools-stoat-worker` | Node.js | Active |
+| **Stoat Bot** | v0.2.0 | `xivdyetools-stoat-worker` | Node.js | Active |
 
 ### Developer Tools
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Dye Maintainer** | v1.0.2 | `xivdyetools-maintainer` | Local (Vite + Express) | Active |
+| **Dye Maintainer** | v1.0.3 | `xivdyetools-maintainer` | Local (Vite + Express) | Active |
 
 ### Shared Packages
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Types** | v1.14.0 | `@xivdyetools/types` | npm | Active |
-| **Auth** | v1.1.2 | `@xivdyetools/auth` | npm | Active |
-| **Crypto** | v1.1.0 | `@xivdyetools/crypto` | npm | Active |
-| **Logger** | v1.2.2 | `@xivdyetools/logger` | npm | Active |
-| **Rate Limiter** | v1.4.4 | `@xivdyetools/rate-limiter` | npm | Active |
-| **Core** | v2.6.0 | `@xivdyetools/core` | npm | Active |
-| **SVG** | v1.1.2 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** | v1.2.0 | `@xivdyetools/bot-logic` | npm | Active |
-| **Bot i18n** | v1.2.0 | `@xivdyetools/bot-i18n` | npm | Active |
-| **Color Blending** | v1.0.1 | `@xivdyetools/color-blending` | npm | Active |
-| **Worker Middleware** | v1.1.2 | `@xivdyetools/worker-middleware` | npm | Active |
-| **Test Utils** | v1.1.7 | `@xivdyetools/test-utils` | npm | Active |
+| **Types** | v1.15.0 | `@xivdyetools/types` | npm | Active |
+| **Auth** | v1.2.0 | `@xivdyetools/auth` | npm | Active |
+| **Crypto** | v1.1.2 | `@xivdyetools/crypto` | npm | Active |
+| **Logger** | v1.3.0 | `@xivdyetools/logger` | npm | Active |
+| **Rate Limiter** | v1.5.0 | `@xivdyetools/rate-limiter` | npm | Active |
+| **Core** | v2.7.0 | `@xivdyetools/core` | npm | Active |
+| **SVG** | v1.2.1 | `@xivdyetools/svg` | npm | Active |
+| **Bot Logic** | v1.3.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **Bot i18n** | v1.2.1 | `@xivdyetools/bot-i18n` | npm | Active |
+| **Color Blending** | v1.1.0 | `@xivdyetools/color-blending` | npm | Active |
+| **Worker Middleware** | v1.2.0 | `@xivdyetools/worker-middleware` | npm | Active |
+| **Test Utils** | v1.1.8 | `@xivdyetools/test-utils` | npm | Active |
 
 ### Deprecated
 
@@ -61,6 +61,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.7.0** | **Jul 2026** | **2026-07-18 audit (Sprint 4) — REFACTOR-003 exact linear scan for perceptual dye search (the k-d-radius approach could miss the true nearest), BUG-005 LRU caches return defensive copies, `APIService` batches Universalis requests above the 100-item limit** |
 | **v2.6.0** | **Apr 2026** | **REFACTOR-001 og-worker localization (`tools` / `visions` / `sheets`), BUG-002 consolidated dye name fallback (52254/52255/52256), BUG-003 acquisition contract test, ARCH-002 Facewear invariants test, removed `ALLIED_SOCIETY_ACQUISITIONS`** |
 | **v2.5.0** | **Apr 2026** | **Patch 7.5 dye consolidation activated — `CONSOLIDATED_IDS` populated with real itemIDs (A=52254, B=52255, C=52256); `CONSOLIDATED_DYES` config + `getConsolidatedDyeName()` helper; new `DyeService.getByStainId()` family** |
 | v2.4.0 | Apr 2026 | Dye type filter functions (`isDyeExcluded`, `filterDyes`, `hasActiveFilters`) + acquisition constants (`VENDOR_ACQUISITIONS`, `CRAFT_ACQUISITIONS`, `ALLIED_SOCIETY_ACQUISITIONS`, `EXPENSIVE_DYE_IDS`) |
@@ -86,6 +87,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v4.12.0** | **Jul 2026** | **REFACTOR-002 step 1 — `BaseComponent` owns a `SubscriptionManager` with automatic cleanup in `destroy()` (7 tools converted); "What's New" full-history changelog modal in the v4 header; layman's changelog backfilled v4.0.0–v4.10.0** |
+| v4.11.0 | May 2026 | Consolidation Spectrum filter chips in the dye palette drawer (Budget defaults to Unconsolidated); Budget matching-algorithm control; alternatives computed from the full in-distance pool; collection-manager E2E re-enabled (DEAD-110) |
 | **v4.10.0** | **Apr 2026** | **Result Card v4 "Spectrum" row (Standard / Wide #1 / Wide #2), `common.spectrum` i18n, SEC-001 `auth-button.ts` XSS hardening, "Exclude Allied Society Dyes" filter removed, BUG-003 test fixture drift fix, sugarRiot localization fix (DE/KO)** |
 | **v4.9.0** | **Apr 2026** | **Patch 7.5 dye consolidation active end-to-end — Market Board fans 3 consolidated prices to 105 dyes; tradeability-gated price fetch; refresh button relocated; deleted Price Categories panel + 6 dead i18n keys** |
 | v4.8.0 | Apr 2026 | Palette Extractor "Extracted Colors" history with localStorage persistence; "Sampled Color" info card with HEX/RGB/HSV/LAB |
@@ -117,6 +120,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v4.7.0** | **Jul 2026** | **2026-07-18 audit (Sprint 5) — BUG-009 moderation approve/reject buttons finally routable (embeds post via `MODERATION_BOT_TOKEN` so clicks reach moderation-worker), BUG-035 throw-safe outcome-checked Discord API wrappers, BUG-033 world → DC → region price-scope cascade in `/budget`** |
+| v4.6.1 | Jun 2026 | Dead-code cleanup (DEAD-113–120) — unused "Error UX Standard V4" module and ~1,300 lines of orphaned exports removed |
+| v4.6.0 | May 2026 | Web-parity option expansion — `/harmony` companions + matching algorithms, `/extractor` vibrancy boost + 3–10 colors, `/gradient` 2–12 steps with 9 interpolation modes, `/mixer` matching option |
 | **v4.5.0** | **Apr 2026** | **Patch 7.5 cleanup — `/preferences set allied_society` slash-command option removed (requires `register-commands` re-run), ARCH-002 consolidation fan-out integration test, FONT_SUBSET_AUDIT fix in `subset-cjk-fonts.py`, CJK font subsets regenerated (484 KiB SC / 820 KiB KR)** |
 | **v4.4.0** | **Apr 2026** | **REFACTOR-001/002 — migrated request-ID + logger middleware to `@xivdyetools/worker-middleware`; ARCH-001 removed `nodejs_compat` flag; BUG-001 strict TypeScript checks re-enabled** |
 | **v4.3.0** | **Apr 2026** | **`/preferences filters` subcommand group (set/show/reset) with 9 boolean filter options; all 4 command handlers apply user filter preferences from bot-logic** |
@@ -140,6 +146,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.5.0** | **Jul 2026** | **2026-07-18 audit (Sprint 2) — refresh rotation with `jti`-based revocation + `orig_iat` absolute session anchor (refresh chains can no longer extend a session indefinitely), state-signing hardening, single JWT verifier via `@xivdyetools/auth` 1.2.0** |
+| v2.4.1 | May 2026 | FINDING-003/006 documentation — `verifyJWT()` revocation caveat (use `verifyJWTWithRevocationCheck()`), dev-env D1 placeholder note in `wrangler.toml` |
 | **v2.4.0** | **Apr 2026** | **SEC-003 `jsonDepthLimit` middleware (maxDepth 10, 10 KB body, prototype pollution rejection); SEC-004 Hono `bodyLimit` (10 KB) on all `/auth/*`; REFACTOR-004 `isValidSnowflake` validation for `DISCORD_CLIENT_ID`; CORS `maxAge` 24h → 1h; migrated middleware to `@xivdyetools/worker-middleware`** |
 | v2.3.10 | Mar 2026 | Lowered branch coverage threshold 90% → 88% — uncovered branches are defensive paths (Durable Objects rate limiting, error handler logger fallback, legacy unsigned state) |
 | **v2.3.9** | **Mar 2026** | **BUG-013 removed STATE_TRANSITION_PERIOD — production requires HMAC-signed OAuth states** |
@@ -157,6 +165,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.6.0** | **Jul 2026** | **2026-07-18 audit (Sprint 1) — CRITICAL: moderation self-approval gap closed (submitters could approve their own presets); state-machine transitions validated server-side with D1 `batch()` transactions and `changes()`-gated updates; migration 0006 unique preset-signature index applied to production** |
 | **v1.5.0** | **Apr 2026** | **SEC-003 `jsonDepthLimit` middleware (maxDepth 10, 100 KB body, prototype pollution rejection); SEC-004 Hono `bodyLimit` (100 KB) on `/api/*`; migrated to `rateLimitMiddleware()` from `@xivdyetools/worker-middleware` (standardized `X-RateLimit-*` + `Retry-After`); CORS `maxAge` 24h → 1h; BUG-002 structured logger in `preset-service.ts`** |
 | **v1.4.16** | **Mar 2026** | **BUG-012 corrupted D1 row resilience, BUG-015 dead-letter table for failed Discord notifications, BUG-016 rate limiter fail-open logging, OPT-001 category cache promise deduplication** |
 | v1.4.15 | Mar 2026 | Dependency updates |
@@ -176,6 +185,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.5.0** | **Jul 2026** | **2026-07-18 audit (Sprint 7) — BUG-027 `Vary: Origin` on all responses (shared caches can't replay the wrong CORS origin), BUG-028 honest SWR cache headers (`HIT-STALE` no longer advertised as fresh), BUG-065 streamed 5 MB byte budget closes the chunked-response bypass, BUG-066 shared `getClientIp()`** |
 | **v1.4.5** | **Apr 2026** | **REFACTOR-002 — wired `@xivdyetools/worker-middleware` (`requestIdMiddleware` + `loggerMiddleware`); 4 `console.error` call sites replaced with structured `getLogger(c)?.error(...)` carrying operation tags** |
 | **v1.4.4** | **Mar 2026** | **OPT-002 bound upstream response size with `listings=5&entries=5` query parameters** |
 | v1.4.3 | Mar 2026 | Dependency updates |
@@ -191,6 +201,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.15.0** | **Jul 2026** | **REFACTOR-004 shared match-quality tiers — `MATCH_QUALITY_TIERS`, `classifyMatchDistance()`, `MatchQualityKey`: single source of truth for thresholds previously duplicated 4× across bot-logic/svg with inconsistent boundary operators; standardized on inclusive `<=`** |
 | **v1.14.0** | **Apr 2026** | **Removed `DyeTypeFilters.excludeAlliedSocietyDyes` (post-Patch 7.5 consolidation); REFACTOR-001 added `ToolKey` / `SheetKey` types + optional `tools` / `visions` / `sheets` fields on `LocaleData` for og-worker localization** |
 | v1.13.0 | Apr 2026 | REFACTOR-003 promoted `DiscordSnowflake` type and `createSnowflake` function from `@internal` to public API; REFACTOR-006 enabled `stripInternal: true` in `tsconfig.build.json` |
 | v1.12.0 | Apr 2026 | `DyeTypeFilters` interface with 9 optional boolean fields for dye type and acquisition source filtering |
@@ -207,6 +218,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.3.0** | **Jul 2026** | **2026-07-18 audit (Sprint 6) — BUG-024 case-insensitive redaction with sensitive-suffix heuristic + WeakSet cycle guard (depth cap removed), BUG-025 JSON-shaped error-message sanitization, BUG-026 `errorTracker` path redacts before forwarding, OPT-020 child loggers time with their own context** |
 | v1.2.2 | Mar 2026 | Dependency updates |
 | v1.2.1 | Feb 2026 | Dead code cleanup wave 11: removed `getRequestId` from barrel, 10 symbols marked `@internal` |
 | v1.2.0 | Feb 2026 | Array recursion for redaction, merge custom redactFields with defaults |
@@ -220,6 +232,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.3.0** | **Jul 2026** | **2026-07-18 audit (Sprint 5) — BUG-035 throw-safe outcome-checked Discord API wrappers (failures logged, not silently dropped), BUG-073 `MODERATOR_IDS` parsed via the shared `@xivdyetools/bot-logic` grammar** |
 | **v1.2.0** | **Apr 2026** | **SEC-001 global `onError` handler prevents stack-trace leakage; SEC-005 placeholder `DISCORD_CLIENT_ID` detection at startup; migrated request-ID/logger/rate-limit middleware to `@xivdyetools/worker-middleware`; ARCH-001 removed `nodejs_compat`; BUG-001 strict TypeScript checks** |
 | v1.1.9 | Mar 2026 | ARCH-001 deploy trigger fix for crypto transitive dependency |
 | v1.1.8 | Mar 2026 | Dependency updates |
@@ -233,6 +246,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.4.0** | **Jul 2026** | **2026-07-18 audit (Sprint 7) — BUG-031 validated `?algo=` and 3-dye `ratio` parameters are finally honored (the "Algorithm:" footer no longer advertises math that didn't run), BUG-068 explicit `{ browser, edge }` cache TTLs, BUG-069 self-fetch guard on pass-throughs, REFACTOR-009 local SVG fork replaced by `@xivdyetools/svg` re-exports (~230 lines)** |
+| v1.3.0 | May 2026 | CJK font subsets bundled (Noto Sans SC + KR, 466 KiB total) — ja/ko/zh dye names render on OG cards instead of falling back to English; new `scripts/subset-cjk-fonts.py` |
 | **v1.2.0** | **Apr 2026** | **REFACTOR-001 OG embed metadata localized via `?lang=` query param — all 6 locales preloaded at module init; `harmonyToKey()` kebab-to-camel converter; REFACTOR-002 wired `@xivdyetools/worker-middleware`; global `app.onError` handler with structured logging; 6 new vitest cases (total: 344)** |
 | **v1.1.0** | **Apr 2026** | **TEST-003 added 50 route-level integration tests (parameter validation, boundary values, crawler routing, health check, fallback routes); migrated middleware to `@xivdyetools/worker-middleware`; ARCH-001 removed `nodejs_compat`; BUG-001 strict TypeScript checks** |
 | v1.0.7 | Mar 2026 | ARCH-001 deploy trigger fix for logger transitive dependency |
@@ -246,6 +261,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.1.8 | Jul 2026 | 2026-07-18 audit (Sprints 1 & 6) — BUG-062 MockD1 `exec()` keeps `_queries`/`_bindings` index-aligned; `batch()` routes through `run()` semantics (honors RETURNING + mutation meta) |
 | v1.1.7 | Mar 2026 | Mock dye factories updated with `currency`, `consolidationType`, `isIshgardian` fields |
 | v1.1.6 | Mar 2026 | Dependency updates |
 | v1.1.5 | Mar 2026 | Dependency updates |
@@ -260,6 +276,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.2.0** | **Jul 2026** | **2026-07-18 audit (Sprints 2 & 6) — `jti`-based revocation + `orig_iat` absolute session anchoring primitives (consumed by oauth's refresh rotation); BUG-059 `verifyDiscordRequest` body-size check measures UTF-8 bytes, not UTF-16 code units** |
 | **v1.1.2** | **Mar 2026** | **BUG-005 LRU cache true ordering fix, BUG-010 require `sub` claim in JWT verification (security hardening)** |
 | v1.1.1 | Mar 2026 | Dependency updates |
 | v1.1.0 | Feb 2026 | Require exp claim, 32-byte min key, deduplicate JWT verification, CryptoKey caching |
@@ -271,6 +288,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.1.2 | Jul 2026 | Release-infrastructure validation — first publish via npm trusted publishing (OIDC); contents identical to 1.1.1 |
+| v1.1.1 | Jul 2026 | OPT-019 chunked `String.fromCharCode.apply` in `base64UrlEncodeBytes` — identical output, ~10-50× faster for KB+ payloads |
 | v1.1.0 | Feb 2026 | Validate hex input in hexToBytes |
 | v1.0.0 | Nov 2025 | Initial release |
 
@@ -278,6 +297,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.5.0** | **Jul 2026** | **2026-07-18 audit (Sprints 5 & 6) — BUG-022 fake optimistic concurrency removed from `KVRateLimiter` (honest best-effort fixed window, 3 → 2 KV reads per admitted request), BUG-023 per-key window cleanup, BUG-055 real Upstash TTL in `Retry-After`, BUG-064 consistent window key across `checkOnly`/`increment`** |
 | **v1.4.4** | **Mar 2026** | **OPT-005 in-place `splice()` for `cleanupOldEntries()`, direct array access for `pruneOldestEntries()` (performance)** |
 | v1.4.3 | Mar 2026 | Dependency updates |
 | v1.4.2 | Mar 2026 | Dead code cleanup wave 12: deleted orphaned barrel file, removed duplicate interface |
@@ -291,6 +311,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.2.1 | Jul 2026 | Release-infrastructure validation — publish via npm trusted publishing (OIDC), confirming `workspace:*` rewriting under npm 11; contents identical to 1.2.0 |
+| **v1.2.0** | **Jul 2026** | **2026-07-18 audit (Sprint 6) — BUG-056 emoji removed from SVG text (bundled fonts have no emoji glyphs), BUG-060 code-point-safe truncation (no bisected surrogate pairs), BUG-063 single-step gradient NaN guard, REFACTOR-019 `escapeXml` on every string attribute** |
 | v1.1.2 | Mar 2026 | Dependency updates, type imports migrated from core → @xivdyetools/types |
 | v1.1.1 | Mar 2026 | Dead code cleanup wave 13: extracted rgbToHsv(), standardized truncation, cleaned unused params |
 | v1.1.0 | Feb 2026 | Shared truncateText/estimateTextWidth, fix double XML escaping, fix CJK badge width |
@@ -301,6 +323,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.3.0** | **Jul 2026** | **2026-07-18 audit (Sprints 4 & 5) — shared `moderators` module (`parseModeratorIds` + snowflake validation) ends the discord-worker/moderation-worker parser drift; REFACTOR-004 match quality delegates to types' `classifyMatchDistance`; match results sorted by the displayed metric** |
 | **v1.2.0** | **Apr 2026** | **`dyeFilters?: DyeTypeFilters` parameter on all 4 execute functions (match, harmony, gradient, mixer) — filters applied during candidate selection for cross-bot DyeTypeFilters integration** |
 | v1.1.2 | Mar 2026 | Dependency updates, type imports migrated from core → @xivdyetools/types |
 | v1.1.1 | Mar 2026 | Marked internal helpers `@internal` (DEAD-037–041) |
@@ -311,6 +334,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.2.1 | Jun 2026 | DEAD-126 README correction — removed docs for `translate()` / `getAvailableLocales()` / `isLocaleSupported()`, deleted from the package in 1.1.0 but still documented on npm for two releases |
 | **v1.2.0** | **Apr 2026** | **Filter-related translation keys added to all 6 locales (en, ja, de, fr, ko, zh) for the `DyeTypeFilters` integration** |
 | v1.1.0 | Mar 2026 | Marked `LocaleData` and `TranslatorLogger` as `@internal`, removed 3 unused function exports and 5 unused locale key sections |
 | v1.0.1 | Feb 2026 | Lint fixes |
@@ -320,6 +344,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.1.0** | **Jul 2026** | **REFACTOR-005 — `@xivdyetools/core` dependency removed (local strict `hexToRgb` in `conversions.ts`); zero internal dependencies, so blending-only consumers no longer pull in the dye database / k-d tree / i18n** |
 | v1.0.1 | Feb 2026 | Lint fixes |
 | v1.0.0 | Feb 2026 | Initial release |
 
@@ -327,6 +352,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v0.2.0** | **Jul 2026** | **2026-07-18 audit (Sprint 5) — BUG-038 message context keyed by the bot reply's message ID (reaction handlers can actually find it; multi-match responses no longer overwrite each other); dead reaction affordances removed** |
 | v0.1.4 | Mar 2026 | REFACTOR-007 removed Phase 2 TODO comments from command routing |
 | v0.1.3 | Mar 2026 | Dependency updates |
 | v0.1.2 | Mar 2026 | Type imports migrated from core → @xivdyetools/types |
@@ -337,6 +363,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v0.5.0** | **Jul 2026** | **2026-07-18 audit (Sprint 4) — route/middleware/validation fixes; consumes `@xivdyetools/core` 2.7.0's exact perceptual-search fix so `/v1` match results are correct at radius boundaries** |
 | **v0.4.0** | **Apr 2026** | **Removed `?alliedSociety=` filter (post-Patch 7.5); OPT-001 `localeMiddleware` validates `?locale=` once per request; BUG-001 structured logger; ARCH-001 CORS `maxAge` 24h → 1h; BUG-004 per-request `KVRateLimiter` construction (eliminates singleton footgun)** |
 | v0.3.0 | Apr 2026 | OPT-001 promise deduplication on `GET /api/v1/categories` (thundering-herd prevention); REFACTOR-010 named TTL constants; migrated rate-limit/request-ID/logger middleware to `@xivdyetools/worker-middleware`; ARCH-001 removed `nodejs_compat`; BUG-001 strict TypeScript checks |
 | v0.2.0 | Apr 2026 | `DyeQueryFilters` interface and `parseDyeFilters()` for query-string filter parsing; dye type filtering on `GET /v1/dyes`; filter exclusion on `/closest` and `/within-distance`; 11 unit tests |
@@ -352,6 +379,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.2.0** | **Jul 2026** | **BUG-061 (2026-07-18 audit) — rate-limit `backend` factory result memoized per isolate (a `(c) => new MemoryRateLimiter()` factory can no longer construct a fresh empty limiter per request and silently disable rate limiting); backend errors logged with the real message** |
 | **v1.1.2** | **Apr 2026** | **LINT-FIX — made `getLogger` / `getRequestId` generic over `Context<E, P, I>` so callers (e.g. `presets-api` with `& { auth: AuthContext }`) preserve narrow typing; resolves CI `no-unsafe-argument` lint cascade from 1.1.1** |
 | **v1.1.1** | **Apr 2026** | **REFACTOR-003 — replaced `Context<any, any, any>` in helpers with Hono's standard `Context` (relies on the existing `ContextVariableMap` augmentation); SEC-002 — strengthened `keyExtractor` JSDoc warning against deriving keys from `X-Forwarded-For`** |
 | v1.1.0 | Apr 2026 | `rateLimitMiddleware()` factory with standardized `X-RateLimit-*` headers, `Retry-After` on 429, fail-open error handling; adopted by `presets-api` and `api-worker`; BUG-003 eliminated all `any` types via `ContextVariableMap` augmentation |

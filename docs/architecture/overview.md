@@ -11,36 +11,36 @@ This document provides a high-level view of how all projects in the XIV Dye Tool
 ```mermaid
 graph TB
     subgraph "Shared Foundation"
-        TYPES["@xivdyetools/types<br/>v1.14.0<br/>─────────────<br/>Type definitions,<br/>branded types,<br/>Facewear support"]
-        LOGGER["@xivdyetools/logger<br/>v1.2.2<br/>─────────────<br/>Multi-environment<br/>logging, secret redaction"]
-        AUTH["@xivdyetools/auth<br/>v1.1.2<br/>─────────────<br/>JWT, HMAC,<br/>Discord Ed25519"]
-        CRYPTO["@xivdyetools/crypto<br/>v1.1.0<br/>─────────────<br/>Base64URL,<br/>hex utilities"]
-        RATELIMIT["@xivdyetools/rate-limiter<br/>v1.4.4<br/>─────────────<br/>Sliding window,<br/>Memory/KV/Upstash"]
-        WMW["@xivdyetools/worker-middleware<br/>v1.1.2<br/>─────────────<br/>Shared Hono middleware<br/>(request-ID, logger,<br/>rate-limit)"]
-        TEST["@xivdyetools/test-utils<br/>v1.1.7<br/>─────────────<br/>Mocks, factories,<br/>helpers"]
+        TYPES["@xivdyetools/types<br/>v1.15.0<br/>─────────────<br/>Type definitions,<br/>branded types,<br/>Facewear support"]
+        LOGGER["@xivdyetools/logger<br/>v1.3.0<br/>─────────────<br/>Multi-environment<br/>logging, secret redaction"]
+        AUTH["@xivdyetools/auth<br/>v1.2.0<br/>─────────────<br/>JWT, HMAC,<br/>Discord Ed25519"]
+        CRYPTO["@xivdyetools/crypto<br/>v1.1.2<br/>─────────────<br/>Base64URL,<br/>hex utilities"]
+        RATELIMIT["@xivdyetools/rate-limiter<br/>v1.5.0<br/>─────────────<br/>Sliding window,<br/>Memory/KV/Upstash"]
+        WMW["@xivdyetools/worker-middleware<br/>v1.2.0<br/>─────────────<br/>Shared Hono middleware<br/>(request-ID, logger,<br/>rate-limit)"]
+        TEST["@xivdyetools/test-utils<br/>v1.1.8<br/>─────────────<br/>Mocks, factories,<br/>helpers"]
     end
 
     subgraph "Core + Feature Libraries"
-        CORE["@xivdyetools/core<br/>v2.6.0<br/>─────────────<br/>125 standard dyes plus<br/>11 Facewear color entries<br/>(synthetic negative IDs);<br/>color algorithms, Universalis API,<br/>6 languages, K-means++"]
-        SVG["@xivdyetools/svg<br/>v1.1.2"]
-        BLEND["@xivdyetools/color-blending<br/>v1.0.1"]
-        BOTLOGIC["@xivdyetools/bot-logic<br/>v1.2.0"]
-        BOTI18N["@xivdyetools/bot-i18n<br/>v1.2.0"]
+        CORE["@xivdyetools/core<br/>v2.7.0<br/>─────────────<br/>125 standard dyes plus<br/>11 Facewear color entries<br/>(synthetic negative IDs);<br/>color algorithms, Universalis API,<br/>6 languages, K-means++"]
+        SVG["@xivdyetools/svg<br/>v1.2.1"]
+        BLEND["@xivdyetools/color-blending<br/>v1.1.0"]
+        BOTLOGIC["@xivdyetools/bot-logic<br/>v1.3.0"]
+        BOTI18N["@xivdyetools/bot-i18n<br/>v1.2.1"]
     end
 
     subgraph "Consumer Applications"
-        WEB["xivdyetools-web-app<br/>v4.10.0<br/>─────────────<br/>9 interactive tools,<br/>12 themes, PWA,<br/>Vite + Lit"]
-        DISCORD["xivdyetools-discord-worker<br/>v4.5.0<br/>─────────────<br/>20 slash commands,<br/>SVG/PNG rendering,<br/>HTTP Interactions"]
-        STOAT["xivdyetools-stoat-worker<br/>v0.1.4<br/>─────────────<br/>Revolt.js bot,<br/>shared bot-logic"]
+        WEB["xivdyetools-web-app<br/>v4.12.0<br/>─────────────<br/>9 interactive tools,<br/>12 themes, PWA,<br/>Vite + Lit"]
+        DISCORD["xivdyetools-discord-worker<br/>v4.7.0<br/>─────────────<br/>20 slash commands,<br/>SVG/PNG rendering,<br/>HTTP Interactions"]
+        STOAT["xivdyetools-stoat-worker<br/>v0.2.0<br/>─────────────<br/>Revolt.js bot,<br/>shared bot-logic"]
     end
 
     subgraph "Backend Services"
-        OAUTH["xivdyetools-oauth<br/>v2.4.0<br/>─────────────<br/>Discord OAuth, PKCE,<br/>JWT issuance,<br/>timeout protection"]
-        PRESETS["xivdyetools-presets-api<br/>v1.5.0<br/>─────────────<br/>Community presets,<br/>D1 database,<br/>Moderation pipeline"]
-        PROXY["xivdyetools-universalis-proxy<br/>v1.4.5<br/>─────────────<br/>CORS proxy,<br/>Dual-layer caching,<br/>Request coalescing"]
-        MODBOT["xivdyetools-moderation-worker<br/>v1.2.0<br/>─────────────<br/>Moderation bot,<br/>Preset review"]
-        OG["xivdyetools-og-worker<br/>v1.2.0<br/>─────────────<br/>Localized OpenGraph<br/>metadata, Social previews"]
-        APIWORKER["xivdyetools-api-worker<br/>v0.4.0<br/>─────────────<br/>Public REST API,<br/>data.xivdyetools.app,<br/>9 endpoints"]
+        OAUTH["xivdyetools-oauth<br/>v2.5.0<br/>─────────────<br/>Discord OAuth, PKCE,<br/>JWT issuance,<br/>timeout protection"]
+        PRESETS["xivdyetools-presets-api<br/>v1.6.0<br/>─────────────<br/>Community presets,<br/>D1 database,<br/>Moderation pipeline"]
+        PROXY["xivdyetools-universalis-proxy<br/>v1.5.0<br/>─────────────<br/>CORS proxy,<br/>Dual-layer caching,<br/>Request coalescing"]
+        MODBOT["xivdyetools-moderation-worker<br/>v1.3.0<br/>─────────────<br/>Moderation bot,<br/>Preset review"]
+        OG["xivdyetools-og-worker<br/>v1.4.0<br/>─────────────<br/>Localized OpenGraph<br/>metadata, Social previews"]
+        APIWORKER["xivdyetools-api-worker<br/>v0.5.0<br/>─────────────<br/>Public REST API,<br/>data.xivdyetools.app,<br/>9 endpoints"]
         APIDOCS["xivdyetools-api-docs<br/>v0.1.0<br/>─────────────<br/>VitePress docs site,<br/>developers.xivdyetools.app"]
     end
 
@@ -57,7 +57,7 @@ graph TB
     LOGGER --> WMW
     RATELIMIT --> WMW
     CORE --> SVG
-    CORE --> BLEND
+    BLEND --> SVG
     CORE --> BOTLOGIC
     SVG --> BOTLOGIC
     BLEND --> BOTLOGIC

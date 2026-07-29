@@ -42,12 +42,13 @@ xivdyetools/
 ## Dependency Flow
 
 ```
-types, crypto, logger ─────────────────────────────────────────┐ (Level 0: no internal deps)
-auth (→ crypto), rate-limiter, bot-i18n (→ types) ─────────────┤ (Level 1)
-color-blending (→ types) ──────────────────────────────────────┤
-core (→ types, logger), test-utils (→ types, logger) ──────────┤ (Level 2)
-svg (→ core), bot-logic (→ core, types) ───────────────────────┤ (Level 3)
+types, crypto, logger, rate-limiter, ──────────────────────────┐ (Level 0: no internal deps)
+bot-i18n, color-blending ──────────────────────────────────────┤
+auth (→ crypto), test-utils (→ crypto, types) ─────────────────┤ (Level 1)
+core (→ types, logger) ────────────────────────────────────────┤ (Level 2)
 worker-middleware (→ logger, rate-limiter) ────────────────────┤
+svg (→ core, color-blending, types) ───────────────────────────┤ (Level 3)
+bot-logic (→ core, svg, color-blending, bot-i18n, types) ──────┤ (Level 4)
                                                                 │
                             Applications ◄─────────────────────┘
 ```
