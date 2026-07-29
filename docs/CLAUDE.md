@@ -18,7 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Monorepo Quick Reference
 
-**22 Active Projects** (12 packages + 10 applications, including the api-docs site) — see [versions.md](versions.md) for current versions.
+**23 Active Projects** (12 packages + 11 applications, including the api-docs site) — see [versions.md](versions.md) for current versions.
 
 The dye database is **125 standard dyes plus 11 Facewear color entries** (synthetic negative IDs assigned at runtime by `DyeDatabase.initialize()` — `Dye.itemID` is always `number`).
 
@@ -26,7 +26,6 @@ The dye database is **125 standard dyes plus 11 Facewear color entries** (synthe
 
 | Project | Type | Quick Link |
 |---------|------|------------|
-| `@xivdyetools/core` | npm library | [Overview](projects/core/overview.md) |
 | `xivdyetools-web-app` | Vite + Lit | [Overview](projects/web-app/overview.md) |
 | `xivdyetools-discord-worker` | CF Worker | [Overview](projects/discord-worker/overview.md) |
 | `xivdyetools-moderation-worker` | CF Worker | [Overview](projects/moderation-worker/overview.md) |
@@ -43,6 +42,7 @@ The dye database is **125 standard dyes plus 11 Facewear color entries** (synthe
 
 | Package | Quick Link |
 |---------|------------|
+| `@xivdyetools/core` | [Overview](projects/core/overview.md) |
 | `@xivdyetools/types` | [Overview](projects/types/overview.md) |
 | `@xivdyetools/crypto` | — |
 | `@xivdyetools/logger` | [Overview](projects/logger/overview.md) |
@@ -93,7 +93,7 @@ pnpm --filter @xivdyetools/core exec vitest run src/path/to/file.test.ts
 ```bash
 pnpm --filter xivdyetools-web-app run dev          # localhost:5173
 pnpm --filter xivdyetools-discord-worker run dev    # Wrangler local
-pnpm --filter xivdyetools-oauth run dev             # localhost:8788
+pnpm --filter xivdyetools-oauth-worker run dev      # localhost:8788
 pnpm --filter xivdyetools-presets-api run dev       # localhost:8787
 ```
 

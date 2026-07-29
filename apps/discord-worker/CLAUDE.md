@@ -91,7 +91,9 @@ src/
 ├── handlers/
 │   ├── commands/                  # One file per slash command (about, harmony, dye, match, match-image,
 │   │                              # accessibility, comparison, mixer-v4, gradient, swatch, extractor,
-│   │                              # favorites, collection, preset, language, stats, budget, manual)
+│   │                              # favorites, collection, preset, preferences, language, stats, budget,
+│   │                              # manual) — preset-notifications.ts is NOT a command; it builds/sends
+│   │                              # the moderation-channel embeds for incoming preset submissions
 │   ├── buttons/                   # Component handlers (copy.ts, index.ts dispatcher)
 │   └── modals/                    # Modal submission handlers (currently unused in this worker)
 ├── services/

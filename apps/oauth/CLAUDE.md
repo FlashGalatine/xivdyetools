@@ -86,7 +86,7 @@ src/
 │   ├── authorize.ts                  # GET /auth/discord (PKCE entry point)
 │   ├── callback.ts                   # GET + POST /auth/callback (token exchange + JWT mint)
 │   ├── xivauth.ts                    # XIVAuth GET /auth/xivauth + /auth/xivauth/cb
-│   └── refresh.ts                    # POST /auth/refresh, POST /auth/revoke (also /auth/me historically)
+│   └── refresh.ts                    # POST /auth/refresh, POST /auth/revoke, GET /auth/me
 ├── middleware/
 │   └── body-validation.ts            # bodySizeLimit (10KB), jsonDepthLimit
 ├── services/
@@ -151,6 +151,7 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 | `/auth/xivauth/cb` | GET / POST | XIVAuth redirect handler |
 | `/auth/refresh` | POST | Refresh JWT (24h grace window after expiry) |
 | `/auth/revoke` | POST | Revoke a token (writes JTI to `TOKEN_BLACKLIST`) |
+| `/auth/me` | GET | User info for a valid Bearer JWT (revocation-checked via `TOKEN_BLACKLIST`) |
 
 ## Key Patterns
 
