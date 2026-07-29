@@ -20,15 +20,8 @@
     "prettier": "^3.9.6",
     "rimraf": "^6.1.2"
   },
-  "pnpm": {
-    "overrides": {
-      "typescript": "^5.9.3",
-      "rollup": ">=4.59.0",
-      "qs": ">=6.15.2"
-    }
-  },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.13.0"
   },
-  "packageManager": "pnpm@10.27.0"
+  "packageManager": "pnpm@11.17.0"
 }

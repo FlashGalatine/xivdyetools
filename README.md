@@ -48,7 +48,7 @@ Architecture overviews, API contracts, deployment guides, specifications, and re
 ## Quick Start
 
 ```bash
-# Prerequisites: Node.js 22+, pnpm 10+
+# Prerequisites: Node.js 22.13+, pnpm 11+
 pnpm install           # Install all workspace dependencies
 pnpm turbo run build   # Build all packages
 pnpm turbo run test    # Run all tests (~7,800 tests)
@@ -118,7 +118,7 @@ The publish workflow needs **no secret**. It authenticates to npm with [trusted 
 ## Tech Stack
 
 - **Runtime:** Node.js 22, Cloudflare Workers
-- **Package management:** pnpm 10 with `workspace:*` protocol
+- **Package management:** pnpm 11 with `workspace:*` protocol
 - **Build orchestration:** Turborepo with dependency-aware caching
 - **Language:** TypeScript 5.9 (strict, ES2022, bundler module resolution)
 - **Testing:** Vitest 4 (Vitest 3.2 for `@cloudflare/vitest-pool-workers` apps)

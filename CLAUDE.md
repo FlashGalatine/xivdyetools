@@ -92,7 +92,7 @@ pnpm --filter xivdyetools-discord-worker run deploy:production   # Production
 ## Key Technical Details
 
 ### Tooling
-- **pnpm 10.27** with `workspace:*` protocol for internal dependencies
+- **pnpm 11.17** with `workspace:*` protocol for internal dependencies; workspace-level settings (overrides, `allowBuilds` script policy, `minimumReleaseAge` supply-chain window) live in `pnpm-workspace.yaml`
 - **Turborepo 2.10** for task orchestration with dependency-aware caching
 - **TypeScript 5.9** with shared `tsconfig.base.json` (strict, ES2022, bundler resolution, `verbatimModuleSyntax`)
 - **Vitest 4** for all packages and apps; **Playwright** for `web-app` E2E
@@ -149,7 +149,7 @@ pnpm --filter @xivdyetools/<name> publish --provenance --access public --no-git-
 
 **Trusted publisher config** (npmjs.com → package → Settings): GitHub Actions, `FlashGalatine/xivdyetools`, workflow `publish-packages.yml`, permission `npm publish`. A new package needs this configured before it can publish, and its *first* version must be published by a 2FA-authenticated human — OIDC cannot create a package that doesn't exist yet.
 
-The publish job upgrades npm to `^11.5.1` before publishing. pnpm 10 delegates the actual publish to the npm CLI, and npm only gained trusted-publishing support in 11.5.1 — the npm bundled with Node 22 is 10.x and fails with `ENEEDAUTH`.
+pnpm 11 publishes natively and performs the OIDC exchange itself — no npm CLI involvement. (Under pnpm 10 the publish was delegated to npm, which needed an explicit upgrade to ≥ 11.5.1 for OIDC support; that workflow step was removed with the pnpm 11 migration.)
 
 `@xivdyetools/core`'s `build` script runs `build:version` → `build:locales` → `tsc` → `copy:locales`. `build:locales` regenerates from `dyenames.csv` / `localize.yaml`, so hand-edits to the generated locale JSON are overwritten — fold corrections into the source files instead.
 

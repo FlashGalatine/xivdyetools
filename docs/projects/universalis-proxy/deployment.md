@@ -6,8 +6,8 @@
 
 ## Prerequisites
 
-- Node.js 22+
-- pnpm 10+ (the repo pins the exact version via `packageManager`)
+- Node.js 22.13+
+- pnpm 11+ (the repo pins the exact version via `packageManager`)
 - Wrangler CLI (ships as a devDependency — no global install needed)
 - Authenticated with Cloudflare (`npx wrangler login`)
 

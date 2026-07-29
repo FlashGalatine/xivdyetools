@@ -2,15 +2,35 @@ packages:
   - 'packages/*'
   - 'apps/*'
 
-# Explicit build-script policy: no dependency is approved to run install
-# scripts. The three below are deliberately rejected (the whole workspace
-# builds and tests green with their postinstalls skipped — esbuild ships
-# platform binaries via optionalDependencies, msw's script is only its
-# sponsorship notice, and nothing spawns workerd at install time). A future
-# dependency that adds an install script is NOT silently covered: pnpm
-# warns about it, so new postinstalls surface loudly for review.
-onlyBuiltDependencies: []
-ignoredBuiltDependencies:
-  - esbuild
-  - msw
-  - workerd
+# Dependency overrides (moved from package.json#pnpm.overrides — pnpm 11 no
+# longer reads that field). typescript keeps the workspace on one compiler;
+# rollup and qs are security floors.
+overrides:
+  typescript: ^5.9.3
+  rollup: '>=4.59.0'
+  qs: '>=6.15.2'
+
+# Explicit build-script policy (pnpm 11 `allowBuilds` map — replaces the
+# pnpm 10 onlyBuiltDependencies/ignoredBuiltDependencies pair): no dependency
+# is approved to run install scripts. The three below are deliberately
+# rejected (the whole workspace builds and tests green with their postinstalls
+# skipped — esbuild ships platform binaries via optionalDependencies, msw's
+# script is only its sponsorship notice, and nothing spawns workerd at install
+# time). A future dependency that adds an install script is NOT silently
+# covered: pnpm surfaces it for review.
+allowBuilds:
+  esbuild: false
+  msw: false
+  workerd: false
+
+# Supply-chain policy: pnpm 11 enables minimumReleaseAge by default; pin it
+# explicitly (minutes) so the policy is visible in the repo. New releases must
+# be at least 24 h old before install — a window in which compromised releases
+# are typically detected and yanked.
+minimumReleaseAge: 1440
+# postcss@8.5.24 entered the lockfile via the #112 dev-deps bump before this
+# policy existed and was published 2026-07-28T09:40Z. The exclusion is only
+# needed until that release is 24 h old — safe to remove any time after
+# 2026-07-29T09:40Z.
+minimumReleaseAgeExclude:
+  - postcss
