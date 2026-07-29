@@ -1,3 +1,16 @@
 packages:
   - 'packages/*'
   - 'apps/*'
+
+# Explicit build-script policy: no dependency is approved to run install
+# scripts. The three below are deliberately rejected (the whole workspace
+# builds and tests green with their postinstalls skipped — esbuild ships
+# platform binaries via optionalDependencies, msw's script is only its
+# sponsorship notice, and nothing spawns workerd at install time). A future
+# dependency that adds an install script is NOT silently covered: pnpm
+# warns about it, so new postinstalls surface loudly for review.
+onlyBuiltDependencies: []
+ignoredBuiltDependencies:
+  - esbuild
+  - msw
+  - workerd
