@@ -1,6 +1,6 @@
 # Web App Overview
 
-**xivdyetools-web-app** v4.10.0 - Interactive browser-based toolkit for FFXIV dye colors
+**xivdyetools-web-app** v4.12.0 - Interactive browser-based toolkit for FFXIV dye colors
 
 The dye database backing the app is **125 standard dyes plus 11 Facewear color entries** (the Facewear entries get synthetic negative IDs at runtime so they share the `Dye.itemID: number` shape but never collide with real game item IDs).
 

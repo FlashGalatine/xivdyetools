@@ -160,34 +160,34 @@ If you want to integrate XIV Dye Tools into your own project:
 
 | Project | Version | Last Updated |
 |---------|---------|--------------|
-| @xivdyetools/core | v2.6.0 | April 2026 |
-| xivdyetools-web-app | v4.10.0 | April 2026 |
-| xivdyetools-discord-worker | v4.5.0 | April 2026 |
-| xivdyetools-moderation-worker | v1.2.0 | April 2026 |
-| xivdyetools-oauth | v2.4.0 | April 2026 |
-| xivdyetools-presets-api | v1.5.0 | April 2026 |
-| xivdyetools-universalis-proxy | v1.4.5 | April 2026 |
-| xivdyetools-og-worker | v1.2.0 | April 2026 |
-| xivdyetools-api-worker | v0.4.0 | April 2026 |
+| @xivdyetools/core | v2.7.0 | July 2026 |
+| xivdyetools-web-app | v4.12.0 | July 2026 |
+| xivdyetools-discord-worker | v4.7.0 | July 2026 |
+| xivdyetools-moderation-worker | v1.3.0 | July 2026 |
+| xivdyetools-oauth | v2.5.0 | July 2026 |
+| xivdyetools-presets-api | v1.6.0 | July 2026 |
+| xivdyetools-universalis-proxy | v1.5.0 | July 2026 |
+| xivdyetools-og-worker | v1.4.0 | July 2026 |
+| xivdyetools-api-worker | v0.5.0 | July 2026 |
 | xivdyetools-api-docs | v0.1.0 | April 2026 |
-| xivdyetools-stoat-worker | v0.1.4 | March 2026 |
-| xivdyetools-maintainer | v1.0.2 | March 2026 |
+| xivdyetools-stoat-worker | v0.2.0 | July 2026 |
+| xivdyetools-maintainer | v1.0.3 | July 2026 |
 
 ### Shared Libraries
 
 | Package | Version | Last Updated |
 |---------|---------|--------------|
-| @xivdyetools/types | v1.14.0 | April 2026 |
-| @xivdyetools/crypto | v1.1.0 | February 2026 |
-| @xivdyetools/logger | v1.2.2 | March 2026 |
-| @xivdyetools/auth | v1.1.2 | March 2026 |
-| @xivdyetools/rate-limiter | v1.4.4 | March 2026 |
-| @xivdyetools/worker-middleware | v1.1.2 | April 2026 |
-| @xivdyetools/svg | v1.1.2 | March 2026 |
-| @xivdyetools/bot-logic | v1.2.0 | April 2026 |
-| @xivdyetools/bot-i18n | v1.2.0 | April 2026 |
-| @xivdyetools/color-blending | v1.0.1 | February 2026 |
-| @xivdyetools/test-utils | v1.1.7 | March 2026 |
+| @xivdyetools/types | v1.15.0 | July 2026 |
+| @xivdyetools/crypto | v1.1.2 | July 2026 |
+| @xivdyetools/logger | v1.3.0 | July 2026 |
+| @xivdyetools/auth | v1.2.0 | July 2026 |
+| @xivdyetools/rate-limiter | v1.5.0 | July 2026 |
+| @xivdyetools/worker-middleware | v1.2.0 | July 2026 |
+| @xivdyetools/svg | v1.2.1 | July 2026 |
+| @xivdyetools/bot-logic | v1.3.0 | July 2026 |
+| @xivdyetools/bot-i18n | v1.2.1 | June 2026 |
+| @xivdyetools/color-blending | v1.1.0 | July 2026 |
+| @xivdyetools/test-utils | v1.1.8 | July 2026 |
 
 See [Version Matrix](../versions.md) for detailed version history.
 

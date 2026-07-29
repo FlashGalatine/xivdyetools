@@ -96,14 +96,15 @@ None. This package is Level 0 in the dependency graph.
 
 ## Publishing
 
+Publishing goes through the **Publish Packages to npm** GitHub Actions workflow, which authenticates via npm trusted publishing (OIDC). There is no npm token — see the root `CLAUDE.md` for the full flow and the break-glass local path.
+
 ```bash
 # 1. Make changes in packages/crypto/
 # 2. Build and test
 pnpm turbo run build test --filter=@xivdyetools/crypto
 
-# 3. Bump version in packages/crypto/package.json
-# 4. Publish
-pnpm --filter @xivdyetools/crypto publish --provenance --access public --no-git-checks
+# 3. Bump version in packages/crypto/package.json and merge to main
+# 4. Actions → "Publish Packages to npm" → package: @xivdyetools/crypto
 ```
 
 `prepublishOnly` runs `clean` then `build` automatically. The package surface is tiny and stable — most version bumps will be patches.

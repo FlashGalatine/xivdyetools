@@ -42,39 +42,39 @@ This documentation covers the following projects:
 
 | Project | Version | Description |
 |---------|---------|-------------|
-| **xivdyetools-core** | v2.6.0 | Core color algorithms and dye database — 125 standard dyes plus 11 Facewear color entries (synthetic negative IDs); npm library |
-| **xivdyetools-web-app** | v4.10.0 | Interactive web-based color tools (9 tools) |
-| **xivdyetools-discord-worker** | v4.5.0 | Serverless Discord bot (Cloudflare Workers, 20 commands) |
-| **xivdyetools-moderation-worker** | v1.2.0 | Moderation bot for community presets (Cloudflare Workers) |
-| **xivdyetools-oauth** | v2.4.0 | Discord OAuth authentication worker |
-| **xivdyetools-presets-api** | v1.5.0 | Community presets REST API |
-| **xivdyetools-universalis-proxy** | v1.4.5 | CORS proxy for Universalis market data |
-| **xivdyetools-og-worker** | v1.2.0 | Dynamic OpenGraph image generation (localized via `?lang=`) |
-| **xivdyetools-api-worker** | v0.4.0 | Public REST API at `data.xivdyetools.app` (9 endpoints) |
+| **xivdyetools-core** | v2.7.0 | Core color algorithms and dye database — 125 standard dyes plus 11 Facewear color entries (synthetic negative IDs); npm library |
+| **xivdyetools-web-app** | v4.12.0 | Interactive web-based color tools (9 tools) |
+| **xivdyetools-discord-worker** | v4.7.0 | Serverless Discord bot (Cloudflare Workers, 20 commands) |
+| **xivdyetools-moderation-worker** | v1.3.0 | Moderation bot for community presets (Cloudflare Workers) |
+| **xivdyetools-oauth** | v2.5.0 | Discord OAuth authentication worker |
+| **xivdyetools-presets-api** | v1.6.0 | Community presets REST API |
+| **xivdyetools-universalis-proxy** | v1.5.0 | CORS proxy for Universalis market data |
+| **xivdyetools-og-worker** | v1.4.0 | Dynamic OpenGraph image generation (localized via `?lang=`) |
+| **xivdyetools-api-worker** | v0.5.0 | Public REST API at `data.xivdyetools.app` (9 endpoints) |
 | **xivdyetools-api-docs** | v0.1.0 | Developer-facing API documentation site (VitePress) |
-| **xivdyetools-stoat-worker** | v0.1.4 | Revolt bot (Stoat) |
+| **xivdyetools-stoat-worker** | v0.2.0 | Revolt bot (Stoat) |
 
 ### Shared Libraries
 
 | Project | Version | Description |
 |---------|---------|-------------|
-| **@xivdyetools/types** | v1.14.0 | Shared TypeScript type definitions |
-| **@xivdyetools/auth** | v1.1.2 | JWT verification, HMAC signing, Discord Ed25519 |
-| **@xivdyetools/crypto** | v1.1.0 | Base64URL encoding and hex utilities |
-| **@xivdyetools/logger** | v1.2.2 | Unified logging across environments |
-| **@xivdyetools/rate-limiter** | v1.4.4 | Sliding window rate limiting |
-| **@xivdyetools/worker-middleware** | v1.1.2 | Shared Hono middleware (request ID, logger, rate limit) |
-| **@xivdyetools/svg** | v1.1.2 | Platform-agnostic SVG card generators |
-| **@xivdyetools/bot-logic** | v1.2.0 | Platform-agnostic bot command logic |
-| **@xivdyetools/bot-i18n** | v1.2.0 | Bot internationalization |
-| **@xivdyetools/color-blending** | v1.0.1 | Color blending modes |
-| **@xivdyetools/test-utils** | v1.1.7 | Shared testing utilities |
+| **@xivdyetools/types** | v1.15.0 | Shared TypeScript type definitions |
+| **@xivdyetools/auth** | v1.2.0 | JWT verification, HMAC signing, Discord Ed25519 |
+| **@xivdyetools/crypto** | v1.1.2 | Base64URL encoding and hex utilities |
+| **@xivdyetools/logger** | v1.3.0 | Unified logging across environments |
+| **@xivdyetools/rate-limiter** | v1.5.0 | Sliding window rate limiting |
+| **@xivdyetools/worker-middleware** | v1.2.0 | Shared Hono middleware (request ID, logger, rate limit) |
+| **@xivdyetools/svg** | v1.2.1 | Platform-agnostic SVG card generators |
+| **@xivdyetools/bot-logic** | v1.3.0 | Platform-agnostic bot command logic |
+| **@xivdyetools/bot-i18n** | v1.2.1 | Bot internationalization |
+| **@xivdyetools/color-blending** | v1.1.0 | Color blending modes |
+| **@xivdyetools/test-utils** | v1.1.8 | Shared testing utilities |
 
 ### Developer Tools
 
 | Project | Version | Description |
 |---------|---------|-------------|
-| **xivdyetools-maintainer** | v1.0.2 | GUI for adding new dyes (Vue 3 + Express) |
+| **xivdyetools-maintainer** | v1.0.3 | GUI for adding new dyes (Vue 3 + Express) |
 
 > **Note**: The original `xivdyetools-discord-bot` (Discord.js + Gateway) has been deprecated and replaced by `xivdyetools-discord-worker`.
 

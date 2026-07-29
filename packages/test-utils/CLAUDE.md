@@ -200,13 +200,14 @@ Peer: `vitest >= 2.0.0`.
 
 ## Publishing
 
+Publishing goes through the **Publish Packages to npm** GitHub Actions workflow, which authenticates via npm trusted publishing (OIDC). There is no npm token — see the root `CLAUDE.md` for the full flow and the break-glass local path.
+
 ```bash
-# 1. Bump version in packages/test-utils/package.json
+# 1. Bump version in packages/test-utils/package.json and merge to main
 # 2. Build + test
 pnpm turbo run build test --filter=@xivdyetools/test-utils
 
-# 3. Publish
-pnpm --filter @xivdyetools/test-utils publish --provenance --access public --no-git-checks
+# 3. Actions → "Publish Packages to npm" → package: @xivdyetools/test-utils
 ```
 
 Note the `package.json#exports` map — if you add a new submodule (e.g., `src/perf/`), add a corresponding `./perf` entry there or it won't be importable by name.

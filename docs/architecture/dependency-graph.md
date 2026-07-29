@@ -9,18 +9,18 @@
 ```mermaid
 graph TD
     subgraph "npm Registry — Shared Packages"
-        TYPES["@xivdyetools/types<br/>v1.14.0"]
-        CRYPTO["@xivdyetools/crypto<br/>v1.1.0"]
-        LOGGER["@xivdyetools/logger<br/>v1.2.2"]
-        AUTH["@xivdyetools/auth<br/>v1.1.2"]
-        RATELIMIT["@xivdyetools/rate-limiter<br/>v1.4.4"]
-        WMW["@xivdyetools/worker-middleware<br/>v1.1.2"]
-        TEST["@xivdyetools/test-utils<br/>v1.1.7"]
-        CORE["@xivdyetools/core<br/>v2.6.0"]
-        SVG["@xivdyetools/svg<br/>v1.1.2"]
-        BLEND["@xivdyetools/color-blending<br/>v1.0.1"]
-        BOTLOGIC["@xivdyetools/bot-logic<br/>v1.2.0"]
-        BOTI18N["@xivdyetools/bot-i18n<br/>v1.2.0"]
+        TYPES["@xivdyetools/types<br/>v1.15.0"]
+        CRYPTO["@xivdyetools/crypto<br/>v1.1.2"]
+        LOGGER["@xivdyetools/logger<br/>v1.3.0"]
+        AUTH["@xivdyetools/auth<br/>v1.2.0"]
+        RATELIMIT["@xivdyetools/rate-limiter<br/>v1.5.0"]
+        WMW["@xivdyetools/worker-middleware<br/>v1.2.0"]
+        TEST["@xivdyetools/test-utils<br/>v1.1.8"]
+        CORE["@xivdyetools/core<br/>v2.7.0"]
+        SVG["@xivdyetools/svg<br/>v1.2.1"]
+        BLEND["@xivdyetools/color-blending<br/>v1.1.0"]
+        BOTLOGIC["@xivdyetools/bot-logic<br/>v1.3.0"]
+        BOTI18N["@xivdyetools/bot-i18n<br/>v1.2.1"]
     end
 
     subgraph "Consumer Applications"
@@ -39,9 +39,8 @@ graph TD
 
     %% Foundation dependencies
     TYPES --> CORE
-    TYPES --> LOGGER
-    TYPES --> AUTH
     TYPES --> TEST
+    CRYPTO --> TEST
     CRYPTO --> AUTH
     LOGGER --> CORE
     LOGGER --> WMW
@@ -49,7 +48,7 @@ graph TD
 
     %% Feature package dependencies
     CORE --> SVG
-    CORE --> BLEND
+    BLEND --> SVG
     CORE --> BOTLOGIC
     SVG --> BOTLOGIC
     BLEND --> BOTLOGIC
@@ -140,7 +139,7 @@ graph TD
 | **@xivdyetools/worker-middleware** | logger, rate-limiter | discord-worker, moderation-worker, oauth, presets-api, universalis-proxy, og-worker, api-worker |
 | **@xivdyetools/test-utils** | types, crypto | All projects (devDependency) |
 | **@xivdyetools/core** | types, logger | web-app, discord-worker, og-worker, api-worker, maintainer |
-| **@xivdyetools/color-blending** | core | discord-worker, stoat-worker |
+| **@xivdyetools/color-blending** | — (zero deps since 1.1.0, REFACTOR-005) | discord-worker, stoat-worker, svg, bot-logic |
 | **@xivdyetools/svg** | core, color-blending, types | discord-worker, og-worker |
 | **@xivdyetools/bot-logic** | core, bot-i18n, color-blending, svg, types | discord-worker, stoat-worker |
 | **@xivdyetools/bot-i18n** | — | discord-worker, stoat-worker |
@@ -166,7 +165,7 @@ graph TD
 ## Core Library Internal Structure
 
 ```
-@xivdyetools/core (v2.6.0)
+@xivdyetools/core (v2.7.0)
 ├── services/
 │   ├── ColorService.ts      ← ColorConverter, ColorAccessibility, ColorManipulator
 │   ├── DyeService.ts        ← DyeDatabase (k-d tree), DyeSearch, HarmonyGenerator
@@ -244,11 +243,10 @@ When updating a **shared package** (e.g., `@xivdyetools/core`):
    ```bash
    pnpm turbo run build test --filter=@xivdyetools/core
    ```
-3. Bump version in `packages/core/package.json`
-4. Publish:
-   ```bash
-   pnpm --filter @xivdyetools/core publish --provenance --access public --no-git-checks
-   ```
+3. Bump version in `packages/core/package.json` and merge to `main`
+4. Publish via the **Publish Packages to npm** workflow (Actions → run with
+   package `@xivdyetools/core`). It authenticates using trusted publishing
+   (OIDC); there is no npm token. See the root `CLAUDE.md` for the full flow.
 5. Consumer apps automatically use the latest workspace version in development. For production deploys, rebuild and redeploy affected consumers.
 
 ### Breaking Change Protocol

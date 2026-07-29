@@ -11,36 +11,36 @@ This document provides a high-level view of how all projects in the XIV Dye Tool
 ```mermaid
 graph TB
     subgraph "Shared Foundation"
-        TYPES["@xivdyetools/types<br/>v1.14.0<br/>─────────────<br/>Type definitions,<br/>branded types,<br/>Facewear support"]
-        LOGGER["@xivdyetools/logger<br/>v1.2.2<br/>─────────────<br/>Multi-environment<br/>logging, secret redaction"]
-        AUTH["@xivdyetools/auth<br/>v1.1.2<br/>─────────────<br/>JWT, HMAC,<br/>Discord Ed25519"]
-        CRYPTO["@xivdyetools/crypto<br/>v1.1.0<br/>─────────────<br/>Base64URL,<br/>hex utilities"]
-        RATELIMIT["@xivdyetools/rate-limiter<br/>v1.4.4<br/>─────────────<br/>Sliding window,<br/>Memory/KV/Upstash"]
-        WMW["@xivdyetools/worker-middleware<br/>v1.1.2<br/>─────────────<br/>Shared Hono middleware<br/>(request-ID, logger,<br/>rate-limit)"]
-        TEST["@xivdyetools/test-utils<br/>v1.1.7<br/>─────────────<br/>Mocks, factories,<br/>helpers"]
+        TYPES["@xivdyetools/types<br/>v1.15.0<br/>─────────────<br/>Type definitions,<br/>branded types,<br/>Facewear support"]
+        LOGGER["@xivdyetools/logger<br/>v1.3.0<br/>─────────────<br/>Multi-environment<br/>logging, secret redaction"]
+        AUTH["@xivdyetools/auth<br/>v1.2.0<br/>─────────────<br/>JWT, HMAC,<br/>Discord Ed25519"]
+        CRYPTO["@xivdyetools/crypto<br/>v1.1.2<br/>─────────────<br/>Base64URL,<br/>hex utilities"]
+        RATELIMIT["@xivdyetools/rate-limiter<br/>v1.5.0<br/>─────────────<br/>Sliding window,<br/>Memory/KV/Upstash"]
+        WMW["@xivdyetools/worker-middleware<br/>v1.2.0<br/>─────────────<br/>Shared Hono middleware<br/>(request-ID, logger,<br/>rate-limit)"]
+        TEST["@xivdyetools/test-utils<br/>v1.1.8<br/>─────────────<br/>Mocks, factories,<br/>helpers"]
     end
 
     subgraph "Core + Feature Libraries"
-        CORE["@xivdyetools/core<br/>v2.6.0<br/>─────────────<br/>125 standard dyes plus<br/>11 Facewear color entries<br/>(synthetic negative IDs);<br/>color algorithms, Universalis API,<br/>6 languages, K-means++"]
-        SVG["@xivdyetools/svg<br/>v1.1.2"]
-        BLEND["@xivdyetools/color-blending<br/>v1.0.1"]
-        BOTLOGIC["@xivdyetools/bot-logic<br/>v1.2.0"]
-        BOTI18N["@xivdyetools/bot-i18n<br/>v1.2.0"]
+        CORE["@xivdyetools/core<br/>v2.7.0<br/>─────────────<br/>125 standard dyes plus<br/>11 Facewear color entries<br/>(synthetic negative IDs);<br/>color algorithms, Universalis API,<br/>6 languages, K-means++"]
+        SVG["@xivdyetools/svg<br/>v1.2.1"]
+        BLEND["@xivdyetools/color-blending<br/>v1.1.0"]
+        BOTLOGIC["@xivdyetools/bot-logic<br/>v1.3.0"]
+        BOTI18N["@xivdyetools/bot-i18n<br/>v1.2.1"]
     end
 
     subgraph "Consumer Applications"
-        WEB["xivdyetools-web-app<br/>v4.10.0<br/>─────────────<br/>9 interactive tools,<br/>12 themes, PWA,<br/>Vite + Lit"]
-        DISCORD["xivdyetools-discord-worker<br/>v4.5.0<br/>─────────────<br/>20 slash commands,<br/>SVG/PNG rendering,<br/>HTTP Interactions"]
-        STOAT["xivdyetools-stoat-worker<br/>v0.1.4<br/>─────────────<br/>Revolt.js bot,<br/>shared bot-logic"]
+        WEB["xivdyetools-web-app<br/>v4.12.0<br/>─────────────<br/>9 interactive tools,<br/>12 themes, PWA,<br/>Vite + Lit"]
+        DISCORD["xivdyetools-discord-worker<br/>v4.7.0<br/>─────────────<br/>20 slash commands,<br/>SVG/PNG rendering,<br/>HTTP Interactions"]
+        STOAT["xivdyetools-stoat-worker<br/>v0.2.0<br/>─────────────<br/>Revolt.js bot,<br/>shared bot-logic"]
     end
 
     subgraph "Backend Services"
-        OAUTH["xivdyetools-oauth<br/>v2.4.0<br/>─────────────<br/>Discord OAuth, PKCE,<br/>JWT issuance,<br/>timeout protection"]
-        PRESETS["xivdyetools-presets-api<br/>v1.5.0<br/>─────────────<br/>Community presets,<br/>D1 database,<br/>Moderation pipeline"]
-        PROXY["xivdyetools-universalis-proxy<br/>v1.4.5<br/>─────────────<br/>CORS proxy,<br/>Dual-layer caching,<br/>Request coalescing"]
-        MODBOT["xivdyetools-moderation-worker<br/>v1.2.0<br/>─────────────<br/>Moderation bot,<br/>Preset review"]
-        OG["xivdyetools-og-worker<br/>v1.2.0<br/>─────────────<br/>Localized OpenGraph<br/>metadata, Social previews"]
-        APIWORKER["xivdyetools-api-worker<br/>v0.4.0<br/>─────────────<br/>Public REST API,<br/>data.xivdyetools.app,<br/>9 endpoints"]
+        OAUTH["xivdyetools-oauth<br/>v2.5.0<br/>─────────────<br/>Discord OAuth, PKCE,<br/>JWT issuance,<br/>timeout protection"]
+        PRESETS["xivdyetools-presets-api<br/>v1.6.0<br/>─────────────<br/>Community presets,<br/>D1 database,<br/>Moderation pipeline"]
+        PROXY["xivdyetools-universalis-proxy<br/>v1.5.0<br/>─────────────<br/>CORS proxy,<br/>Dual-layer caching,<br/>Request coalescing"]
+        MODBOT["xivdyetools-moderation-worker<br/>v1.3.0<br/>─────────────<br/>Moderation bot,<br/>Preset review"]
+        OG["xivdyetools-og-worker<br/>v1.4.0<br/>─────────────<br/>Localized OpenGraph<br/>metadata, Social previews"]
+        APIWORKER["xivdyetools-api-worker<br/>v0.5.0<br/>─────────────<br/>Public REST API,<br/>data.xivdyetools.app,<br/>9 endpoints"]
         APIDOCS["xivdyetools-api-docs<br/>v0.1.0<br/>─────────────<br/>VitePress docs site,<br/>developers.xivdyetools.app"]
     end
 
@@ -57,7 +57,7 @@ graph TB
     LOGGER --> WMW
     RATELIMIT --> WMW
     CORE --> SVG
-    CORE --> BLEND
+    BLEND --> SVG
     CORE --> BOTLOGIC
     SVG --> BOTLOGIC
     BLEND --> BOTLOGIC
@@ -117,11 +117,6 @@ Layer 4: External Services
 ├── Universalis API (FFXIV market prices)
 └── Perspective API (ML content moderation)
 
-Layer 4: External Services
-├── Discord API (authentication, interactions)
-├── Universalis API (FFXIV market prices)
-└── Perspective API (ML content moderation)
-
 Layer 3: Backend Services (Cloudflare Workers)
 ├── xivdyetools-oauth → JWT issuance
 ├── xivdyetools-presets-api → Community presets
@@ -168,7 +163,7 @@ Layer 0: Shared Foundation
 
 ## Project Summaries
 
-### @xivdyetools/core (v2.6.0)
+### @xivdyetools/core (v2.7.0)
 
 **Purpose**: Core TypeScript library providing color algorithms and the FFXIV dye database (125 standard dyes plus 11 Facewear color entries with synthetic negative IDs — 136 total entries).
 
@@ -192,7 +187,7 @@ Layer 0: Shared Foundation
 
 ---
 
-### xivdyetools-web-app (v4.10.0)
+### xivdyetools-web-app (v4.12.0)
 
 **Purpose**: Browser-based interactive toolkit for exploring FFXIV dye colors.
 
@@ -218,7 +213,7 @@ Layer 0: Shared Foundation
 
 ---
 
-### xivdyetools-discord-worker (v4.5.0)
+### xivdyetools-discord-worker (v4.7.0)
 
 **Purpose**: Discord bot bringing dye tools to servers via slash commands.
 
@@ -244,7 +239,7 @@ Layer 0: Shared Foundation
 
 ---
 
-### xivdyetools-oauth (v2.4.0)
+### xivdyetools-oauth (v2.5.0)
 
 **Purpose**: OAuth2 authentication provider for the ecosystem.
 
@@ -262,7 +257,7 @@ Layer 0: Shared Foundation
 
 ---
 
-### xivdyetools-presets-api (v1.5.0)
+### xivdyetools-presets-api (v1.6.0)
 
 **Purpose**: REST API for community dye preset management.
 
@@ -287,7 +282,7 @@ Layer 0: Shared Foundation
 
 ---
 
-### xivdyetools-universalis-proxy (v1.4.5)
+### xivdyetools-universalis-proxy (v1.5.0)
 
 **Purpose**: CORS proxy for Universalis API with intelligent caching.
 
@@ -308,7 +303,7 @@ Layer 0: Shared Foundation
 
 ---
 
-### xivdyetools-moderation-worker (v1.2.0)
+### xivdyetools-moderation-worker (v1.3.0)
 
 **Purpose**: Separate Discord bot for community preset moderation.
 
@@ -328,7 +323,7 @@ Layer 0: Shared Foundation
 
 ---
 
-### xivdyetools-og-worker (v1.2.0)
+### xivdyetools-og-worker (v1.4.0)
 
 **Purpose**: Dynamic OpenGraph metadata for social media previews.
 
@@ -347,7 +342,7 @@ Layer 0: Shared Foundation
 
 ---
 
-### xivdyetools-api-worker (v0.4.0)
+### xivdyetools-api-worker (v0.5.0)
 
 **Purpose**: Public REST API for the XIV Dye Tools dye database and color matching, deployed to `data.xivdyetools.app`.
 
@@ -388,7 +383,7 @@ Layer 0: Shared Foundation
 
 ---
 
-### xivdyetools-stoat-worker (v0.1.4)
+### xivdyetools-stoat-worker (v0.2.0)
 
 **Purpose**: Revolt.js bot bringing dye tools to the Revolt platform.
 
@@ -406,17 +401,17 @@ Layer 0: Shared Foundation
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| **@xivdyetools/types** | v1.14.0 | Branded types (HexColor, DyeId), Facewear ID support |
-| **@xivdyetools/crypto** | v1.1.0 | Base64URL encoding, hex utilities |
-| **@xivdyetools/logger** | v1.2.2 | Unified logging, secret redaction patterns |
-| **@xivdyetools/auth** | v1.1.2 | JWT verification, HMAC signing, Discord Ed25519 |
-| **@xivdyetools/rate-limiter** | v1.4.4 | Sliding window rate limiting (Memory, KV, Upstash) |
-| **@xivdyetools/worker-middleware** | v1.1.2 | Shared Hono middleware (request-ID, logger, rate-limit) |
-| **@xivdyetools/svg** | v1.1.2 | Platform-agnostic SVG card generators |
-| **@xivdyetools/bot-logic** | v1.2.0 | Platform-agnostic bot command logic (193 tests) |
-| **@xivdyetools/bot-i18n** | v1.2.0 | Bot-specific internationalization |
-| **@xivdyetools/color-blending** | v1.0.1 | Color blending modes (RGB, LAB, OKLAB, Spectral) |
-| **@xivdyetools/test-utils** | v1.1.7 | Cloudflare bindings mocks, domain factories, test helpers |
+| **@xivdyetools/types** | v1.15.0 | Branded types (HexColor, DyeId), Facewear ID support |
+| **@xivdyetools/crypto** | v1.1.2 | Base64URL encoding, hex utilities |
+| **@xivdyetools/logger** | v1.3.0 | Unified logging, secret redaction patterns |
+| **@xivdyetools/auth** | v1.2.0 | JWT verification, HMAC signing, Discord Ed25519 |
+| **@xivdyetools/rate-limiter** | v1.5.0 | Sliding window rate limiting (Memory, KV, Upstash) |
+| **@xivdyetools/worker-middleware** | v1.2.0 | Shared Hono middleware (request-ID, logger, rate-limit) |
+| **@xivdyetools/svg** | v1.2.1 | Platform-agnostic SVG card generators |
+| **@xivdyetools/bot-logic** | v1.3.0 | Platform-agnostic bot command logic |
+| **@xivdyetools/bot-i18n** | v1.2.1 | Bot-specific internationalization |
+| **@xivdyetools/color-blending** | v1.1.0 | Color blending modes (RGB, LAB, OKLAB, Spectral) |
+| **@xivdyetools/test-utils** | v1.1.8 | Cloudflare bindings mocks, domain factories, test helpers |
 
 ---
 

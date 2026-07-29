@@ -28,49 +28,49 @@ This wiki-style documentation serves developers, end users, and maintainers with
 ```
               ┌────────────────────────────────────────────────────┐
               │                 Shared Foundation                  │
-              │  @xivdyetools/types (v1.14.0)                     │
-              │  @xivdyetools/logger (v1.2.2)                     │
-              │  @xivdyetools/auth (v1.1.2)                       │
-              │  @xivdyetools/crypto (v1.1.0)                     │
-              │  @xivdyetools/rate-limiter (v1.4.4)               │
-              │  @xivdyetools/worker-middleware (v1.1.2)          │
-              │  @xivdyetools/test-utils (v1.1.7)                 │
+              │  @xivdyetools/types (v1.15.0)                     │
+              │  @xivdyetools/logger (v1.3.0)                     │
+              │  @xivdyetools/auth (v1.2.0)                       │
+              │  @xivdyetools/crypto (v1.1.2)                     │
+              │  @xivdyetools/rate-limiter (v1.5.0)               │
+              │  @xivdyetools/worker-middleware (v1.2.0)          │
+              │  @xivdyetools/test-utils (v1.1.8)                 │
               └───────────────────────┬────────────────────────────┘
                                       │
               ┌───────────────────────▼────────────────────────────┐
-              │              @xivdyetools/core (v2.6.0)           │
+              │              @xivdyetools/core (v2.7.0)           │
               │  125 standard dyes plus 11 Facewear color entries │
               │  (synthetic negative IDs), color algorithms,      │
               │  Universalis API, 6 languages, k-d tree matching  │
               ├───────────────────────────────────────────────────-┤
-              │  @xivdyetools/color-blending (v1.0.1)             │
-              │  @xivdyetools/svg (v1.1.2)                        │
-              │  @xivdyetools/bot-logic (v1.2.0)                  │
-              │  @xivdyetools/bot-i18n (v1.2.0)                   │
+              │  @xivdyetools/color-blending (v1.1.0)             │
+              │  @xivdyetools/svg (v1.2.1)                        │
+              │  @xivdyetools/bot-logic (v1.3.0)                  │
+              │  @xivdyetools/bot-i18n (v1.2.1)                   │
               └──┬──────────────┬─────────────────┬───────────────┘
                  │              │                 │
    ┌─────────────▼──┐   ┌──────▼──────┐   ┌──────▼──────────┐
    │   Web App      │   │  Discord    │   │  Stoat Bot      │
-   │   (v4.10.0)    │   │  Worker     │   │  (v0.1.4)       │
-   │   9 tools,     │   │  (v4.5.0)   │   │  Revolt.js      │
+   │   (v4.12.0)    │   │  Worker     │   │  (v0.2.0)       │
+   │   9 tools,     │   │  (v4.7.0)   │   │  Revolt.js      │
    │   12 themes    │   │  20 cmds    │   └─────────────────┘
    └───────┬────────┘   └──────┬──────┘
            │                   │
    ┌───────▼────────┐         │   ┌────────────────────┐
    │  OAuth Worker  │         │   │  Presets API       │
-   │   (v2.4.0)     │◄────────┴───│   (v1.5.0)         │
+   │   (v2.5.0)     │◄────────┴───│   (v1.6.0)         │
    │  PKCE + JWT    │             │  D1 + Moderation   │
    └────────────────┘             └──────┬─────────────┘
            │                             │
    ┌───────▼──────────────┐   ┌──────────▼───────────┐
    │  Universalis Proxy   │   │  Moderation Worker   │
-   │   (v1.4.5)           │   │   (v1.2.0)           │
+   │   (v1.5.0)           │   │   (v1.3.0)           │
    │  CORS + Dual Caching │   └──────────────────────┘
    └──────────────────────┘
 
    ┌──────────────────────┐   ┌──────────────────────┐
    │  OpenGraph Worker    │   │  Public REST API     │
-   │   (v1.2.0)           │   │  (api-worker v0.4.0) │
+   │   (v1.4.0)           │   │  (api-worker v0.5.0) │
    │  Social media cards  │   │  data.xivdyetools…   │
    └──────────────────────┘   └──────────┬───────────┘
                                          │
@@ -124,45 +124,51 @@ This wiki-style documentation serves developers, end users, and maintainers with
 
 | Project | Type | Version | Purpose |
 |---------|------|---------|---------|
-| [@xivdyetools/core](projects/core/overview.md) | npm library | v2.6.0 | Core color algorithms, 125 standard dyes plus 11 Facewear color entries (synthetic negative IDs), Universalis API |
-| [xivdyetools-web-app](projects/web-app/overview.md) | Vite + Lit | v4.10.0 | Interactive web toolkit with 9 color tools |
-| [xivdyetools-discord-worker](projects/discord-worker/overview.md) | CF Worker | v4.5.0 | Discord bot with 20 slash commands |
-| [xivdyetools-moderation-worker](projects/moderation-worker/overview.md) | CF Worker | v1.2.0 | Community preset moderation bot |
-| [xivdyetools-oauth](projects/oauth/overview.md) | CF Worker | v2.4.0 | Discord OAuth + JWT issuance |
-| [xivdyetools-presets-api](projects/presets-api/overview.md) | CF Worker + D1 | v1.5.0 | Community presets with moderation |
-| [xivdyetools-universalis-proxy](projects/universalis-proxy/overview.md) | CF Worker | v1.4.5 | CORS proxy for Universalis API with dual-layer caching |
-| [xivdyetools-og-worker](projects/og-worker/overview.md) | CF Worker | v1.2.0 | Dynamic OpenGraph metadata for social media previews |
-| [xivdyetools-api-worker](projects/api-worker/overview.md) | CF Worker + KV | v0.4.0 | Public REST API at `data.xivdyetools.app` (9 endpoints) |
+| [xivdyetools-web-app](projects/web-app/overview.md) | Vite + Lit | v4.12.0 | Interactive web toolkit with 9 color tools |
+| [xivdyetools-discord-worker](projects/discord-worker/overview.md) | CF Worker | v4.7.0 | Discord bot with 20 slash commands |
+| [xivdyetools-moderation-worker](projects/moderation-worker/overview.md) | CF Worker | v1.3.0 | Community preset moderation bot |
+| [xivdyetools-oauth](projects/oauth/overview.md) | CF Worker | v2.5.0 | Discord OAuth + JWT issuance |
+| [xivdyetools-presets-api](projects/presets-api/overview.md) | CF Worker + D1 | v1.6.0 | Community presets with moderation |
+| [xivdyetools-universalis-proxy](projects/universalis-proxy/overview.md) | CF Worker | v1.5.0 | CORS proxy for Universalis API with dual-layer caching |
+| [xivdyetools-og-worker](projects/og-worker/overview.md) | CF Worker | v1.4.0 | Dynamic OpenGraph metadata for social media previews |
+| [xivdyetools-api-worker](projects/api-worker/overview.md) | CF Worker + KV | v0.5.0 | Public REST API at `data.xivdyetools.app` (9 endpoints) |
 | xivdyetools-api-docs | VitePress (CF Pages) | v0.1.0 | Developer-facing API reference at `developers.xivdyetools.app` |
-| xivdyetools-stoat-worker | Node.js | v0.1.4 | Revolt (Stoat) bot with shared bot-logic |
+| xivdyetools-stoat-worker | Node.js | v0.2.0 | Revolt (Stoat) bot with shared bot-logic |
 
 ### Shared Libraries
 
 | Project | Type | Version | Purpose |
 |---------|------|---------|---------|
-| [@xivdyetools/types](projects/types/overview.md) | npm library | v1.14.0 | Shared TypeScript types with Facewear support |
-| [@xivdyetools/auth](projects/auth/overview.md) | npm library | v1.1.2 | JWT verification, HMAC signing, Discord Ed25519 |
-| [@xivdyetools/crypto](projects/crypto/overview.md) | npm library | v1.1.0 | Base64URL encoding and hex utilities |
-| [@xivdyetools/logger](projects/logger/overview.md) | npm library | v1.2.2 | Unified logging across environments |
-| [@xivdyetools/rate-limiter](projects/rate-limiter/overview.md) | npm library | v1.4.4 | Sliding window rate limiting (Memory, KV, Upstash) |
-| [@xivdyetools/worker-middleware](projects/worker-middleware/overview.md) | npm library | v1.1.2 | Shared Hono middleware (request ID, logger, rate limit) |
-| [@xivdyetools/svg](projects/svg/overview.md) | npm library | v1.1.2 | Platform-agnostic SVG card generators |
-| [@xivdyetools/bot-logic](projects/bot-logic/overview.md) | npm library | v1.2.0 | Platform-agnostic bot command logic |
-| [@xivdyetools/bot-i18n](projects/bot-i18n/overview.md) | npm library | v1.2.0 | Bot internationalization |
-| [@xivdyetools/color-blending](projects/color-blending/overview.md) | npm library | v1.0.1 | Color blending modes (RGB, LAB, OKLAB, Spectral) |
-| [@xivdyetools/test-utils](projects/test-utils/overview.md) | npm library | v1.1.7 | Shared testing utilities |
+| [@xivdyetools/core](projects/core/overview.md) | npm library | v2.7.0 | Core color algorithms, 125 standard dyes plus 11 Facewear color entries (synthetic negative IDs), Universalis API |
+| [@xivdyetools/types](projects/types/overview.md) | npm library | v1.15.0 | Shared TypeScript types with Facewear support |
+| [@xivdyetools/auth](projects/auth/overview.md) | npm library | v1.2.0 | JWT verification, HMAC signing, Discord Ed25519 |
+| [@xivdyetools/crypto](projects/crypto/overview.md) | npm library | v1.1.2 | Base64URL encoding and hex utilities |
+| [@xivdyetools/logger](projects/logger/overview.md) | npm library | v1.3.0 | Unified logging across environments |
+| [@xivdyetools/rate-limiter](projects/rate-limiter/overview.md) | npm library | v1.5.0 | Sliding window rate limiting (Memory, KV, Upstash) |
+| [@xivdyetools/worker-middleware](projects/worker-middleware/overview.md) | npm library | v1.2.0 | Shared Hono middleware (request ID, logger, rate limit) |
+| [@xivdyetools/svg](projects/svg/overview.md) | npm library | v1.2.1 | Platform-agnostic SVG card generators |
+| [@xivdyetools/bot-logic](projects/bot-logic/overview.md) | npm library | v1.3.0 | Platform-agnostic bot command logic |
+| [@xivdyetools/bot-i18n](projects/bot-i18n/overview.md) | npm library | v1.2.1 | Bot internationalization |
+| [@xivdyetools/color-blending](projects/color-blending/overview.md) | npm library | v1.1.0 | Color blending modes (RGB, LAB, OKLAB, Spectral) |
+| [@xivdyetools/test-utils](projects/test-utils/overview.md) | npm library | v1.1.8 | Shared testing utilities |
 
 ### Developer Tools
 
 | Project | Type | Version | Purpose |
 |---------|------|---------|---------|
-| [xivdyetools-maintainer](maintainer/dye-maintainer-tool.md) | Vue 3 + Express | v1.0.2 | GUI for adding new dyes to the core library |
+| [xivdyetools-maintainer](maintainer/dye-maintainer-tool.md) | Vue 3 + Express | v1.0.3 | GUI for adding new dyes to the core library |
 
 ---
 
 ## Recent Updates
 
-*Last updated: May 7, 2026*
+*Last updated: July 28, 2026*
+
+### July 2026 Highlights
+
+- **2026-07-18 audit remediation shipped across the whole monorepo** (8 sprints, monorepo changelog rollup 1.18.0) — every package and app released: core v2.7.0 (exact perceptual dye search), presets-api v1.6.0 (CRITICAL moderation self-approval closed), discord-worker v4.7.0 (moderation buttons finally routable), logger v1.3.0 (redaction hardening), rate-limiter v1.5.0 (honest KV window semantics), and coordinated releases of every other workspace project — see [versions.md](versions.md)
+- **npm publishing migrated to trusted publishing (OIDC)** — the `NPM_TOKEN` secret is gone; the publish workflow authenticates via its GitHub Actions identity (`crypto` v1.1.2 and `svg` v1.2.1 were the validation releases). Prompted by npm's deprecation of 2FA-bypass tokens (publish restriction lands ~Jan 2027)
+- **`build:locales` made idempotent** (unreleased, on `main`) — rebuilding from unchanged sources no longer dirties the six locale JSONs; `meta.generated` now marks when locale data last changed
 
 ### April 2026 Highlights
 

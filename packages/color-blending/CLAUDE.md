@@ -97,11 +97,12 @@ This package intentionally does **not** depend on `@xivdyetools/types` — its i
 
 ## Publishing
 
+Publishing goes through the **Publish Packages to npm** GitHub Actions workflow, which authenticates via npm trusted publishing (OIDC). There is no npm token — see the root `CLAUDE.md` for the full flow and the break-glass local path.
+
 ```bash
-# 1. Bump version in packages/color-blending/package.json
+# 1. Bump version in packages/color-blending/package.json and merge to main
 # 2. Build + test
 pnpm turbo run build test --filter=@xivdyetools/color-blending
 
-# 3. Publish
-pnpm --filter @xivdyetools/color-blending publish --provenance --access public --no-git-checks
+# 3. Actions → "Publish Packages to npm" → package: @xivdyetools/color-blending
 ```

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The main XIV Dye Tools web application — a static SPA that runs entirely in the browser. It is the primary consumer of `@xivdyetools/core` and exposes nine standalone tools backed by the 136-dye database.
 
-**Stack:** Vite 8 + Lit 3 (web components) + Tailwind CSS 4 + TypeScript (strict). Test stack is Vitest 4 (jsdom) + Playwright 1.59 with multi-project E2E. Deployed as a static bundle (Cloudflare Pages / Netlify) with a service worker for offline support.
+**Stack:** Vite 8 + Lit 3 (web components) + Tailwind CSS 4 + TypeScript (strict). Test stack is Vitest 4 (jsdom) + Playwright 1.62 with multi-project E2E. Deployed as a static bundle (Cloudflare Pages / Netlify) with a service worker for offline support.
 
 ### The Nine Tools (`ToolId` from `services/router-service.ts`)
 

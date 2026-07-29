@@ -25,14 +25,17 @@ npm run dev:server           # tsx server/api.ts, http://127.0.0.1:3001
 npm run build                # vue-tsc --noEmit && vite build
 npm run preview              # serve the built dist/
 npm run type-check           # vue-tsc --noEmit
+npm run test                 # vitest run
+npm run test:watch           # vitest in watch mode
+npm run test:coverage        # vitest run --coverage
 ```
 
-There is no test or lint script in this app; type-check is the only static gate.
+There is no lint script in this app; type-check and the vitest suite are the static gates.
 
 ### Pre-commit Checklist
 
 ```bash
-npm run type-check && npm run build
+npm run type-check && npm run test -- --run && npm run build
 ```
 
 ## Architecture

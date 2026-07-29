@@ -173,14 +173,15 @@ The `oauth` worker uses these primitives indirectly — it generates tokens loca
 
 ## Publishing
 
+Publishing goes through the **Publish Packages to npm** GitHub Actions workflow, which authenticates via npm trusted publishing (OIDC). There is no npm token — see the root `CLAUDE.md` for the full flow and the break-glass local path.
+
 ```bash
 # 1. Make changes in packages/auth/
 # 2. Build and test
 pnpm turbo run build test --filter=@xivdyetools/auth
 
-# 3. Bump version in packages/auth/package.json
-# 4. Publish
-pnpm --filter @xivdyetools/auth publish --provenance --access public --no-git-checks
+# 3. Bump version in packages/auth/package.json and merge to main
+# 4. Actions → "Publish Packages to npm" → package: @xivdyetools/auth
 ```
 
 Security-sensitive changes here cascade to every secured worker — coordinate consumer bumps in the same PR and prefer additive changes over breaking signature shifts.

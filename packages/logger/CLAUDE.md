@@ -181,14 +181,15 @@ None. The package depends only on Web Platform globals (`console`, `crypto.rando
 
 ## Publishing
 
+Publishing goes through the **Publish Packages to npm** GitHub Actions workflow, which authenticates via npm trusted publishing (OIDC). There is no npm token — see the root `CLAUDE.md` for the full flow and the break-glass local path.
+
 ```bash
 # 1. Make changes in packages/logger/
 # 2. Build and test
 pnpm turbo run build test --filter=@xivdyetools/logger
 
-# 3. Bump version in packages/logger/package.json
-# 4. Publish
-pnpm --filter @xivdyetools/logger publish --provenance --access public --no-git-checks
+# 3. Bump version in packages/logger/package.json and merge to main
+# 4. Actions → "Publish Packages to npm" → package: @xivdyetools/logger
 ```
 
 `prepublishOnly` runs `clean` then `build` automatically.

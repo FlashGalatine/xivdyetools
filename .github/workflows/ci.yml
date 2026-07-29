@@ -39,8 +39,16 @@ jobs:
       - name: Type-check (affected)
         run: pnpm turbo run type-check --filter='...[HEAD^]'
 
+      # --concurrency=3: when a change touches every package (docs sweeps,
+      # formatting passes), the affected filter selects all ~34 test tasks and
+      # turbo's default concurrency of 10 runs that many vitest processes --
+      # each with its own worker pool -- on a 2-core runner. Under that load a
+      # vitest child gets silently killed and the task fails with exit 1 and no
+      # assertion failure (observed on the 2026-07-28 docs sweep, three runs in
+      # a row, @xivdyetools/core#test dying mid-run). Narrow diffs are
+      # unaffected; wide sweeps get bounded parallelism instead of an OOM.
       - name: Test (affected)
-        run: pnpm turbo run test --filter='...[HEAD^]' --continue
+        run: pnpm turbo run test --filter='...[HEAD^]' --continue --concurrency=3
 
       - name: Build (affected)
         run: pnpm turbo run build --filter='...[HEAD^]'

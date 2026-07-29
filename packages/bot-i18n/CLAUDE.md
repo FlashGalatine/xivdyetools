@@ -120,11 +120,12 @@ None. (devDependencies only: `vitest`, `@vitest/coverage-v8`.)
 
 ## Publishing
 
+Publishing goes through the **Publish Packages to npm** GitHub Actions workflow, which authenticates via npm trusted publishing (OIDC). There is no npm token — see the root `CLAUDE.md` for the full flow and the break-glass local path.
+
 ```bash
-# 1. Bump version in packages/bot-i18n/package.json
+# 1. Bump version in packages/bot-i18n/package.json and merge to main
 # 2. Build + test (the locale-completeness test runs here)
 pnpm turbo run build test --filter=@xivdyetools/bot-i18n
 
-# 3. Publish
-pnpm --filter @xivdyetools/bot-i18n publish --provenance --access public --no-git-checks
+# 3. Actions → "Publish Packages to npm" → package: @xivdyetools/bot-i18n
 ```
