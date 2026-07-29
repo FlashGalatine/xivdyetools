@@ -244,11 +244,10 @@ When updating a **shared package** (e.g., `@xivdyetools/core`):
    ```bash
    pnpm turbo run build test --filter=@xivdyetools/core
    ```
-3. Bump version in `packages/core/package.json`
-4. Publish:
-   ```bash
-   pnpm --filter @xivdyetools/core publish --provenance --access public --no-git-checks
-   ```
+3. Bump version in `packages/core/package.json` and merge to `main`
+4. Publish via the **Publish Packages to npm** workflow (Actions → run with
+   package `@xivdyetools/core`). It authenticates using trusted publishing
+   (OIDC); there is no npm token. See the root `CLAUDE.md` for the full flow.
 5. Consumer apps automatically use the latest workspace version in development. For production deploys, rebuild and redeploy affected consumers.
 
 ### Breaking Change Protocol

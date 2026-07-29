@@ -112,7 +112,8 @@ All CI/CD is handled via GitHub Actions:
 |--------|---------|
 | `CLOUDFLARE_API_TOKEN` | All deploy workflows |
 | `CLOUDFLARE_ACCOUNT_ID` | All deploy workflows |
-| `NPM_TOKEN` | Publish workflow |
+
+The publish workflow needs **no secret**. It authenticates to npm with [trusted publishing (OIDC)](https://docs.npmjs.com/trusted-publishers) using its own GitHub Actions identity via the `id-token: write` permission, which also signs the provenance attestation.
 
 ## Tech Stack
 

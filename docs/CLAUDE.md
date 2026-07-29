@@ -107,10 +107,12 @@ pnpm --filter xivdyetools-discord-worker run register-commands   # Register slas
 
 ### Publishing Libraries
 
+Publishing runs through the **Publish Packages to npm** workflow, authenticated via trusted publishing (OIDC). There is no npm token — see the root `CLAUDE.md` for the full flow.
+
 ```bash
 pnpm turbo run build test --filter=@xivdyetools/<name>
-# Bump version in packages/<name>/package.json
-pnpm --filter @xivdyetools/<name> publish --provenance --access public --no-git-checks
+# Bump version in packages/<name>/package.json and merge to main
+# Actions → "Publish Packages to npm" → package: @xivdyetools/<name>
 ```
 
 ---

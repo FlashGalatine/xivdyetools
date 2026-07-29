@@ -164,16 +164,25 @@ npm test -- --grep "failing test name"
 
 ### Publish Fails
 
-```bash
-# Check npm login
-npm whoami
+Publishing normally runs in the **Publish Packages to npm** workflow via trusted
+publishing (OIDC), so most failures are read from the run log rather than locally:
 
-# Check package.json is valid
+| Error | Meaning |
+|-------|---------|
+| `ENEEDAUTH` | No credential attempted — the npm CLI is older than 11.5.1 and doesn't support OIDC |
+| `404` | A credential was sent and rejected — check the trusted-publisher config |
+| `403` | Authenticated, but not authorized to publish that package |
+
+```bash
+# Validate the package locally (no auth needed)
 npm pack --dry-run
 
-# Check for authentication issues
-npm login
+# Confirm the published dependency ranges resolved (no literal workspace:*)
+npm view @xivdyetools/core dependencies --json
 ```
+
+Local publishing is break-glass only and requires `npm login` plus a 2FA
+one-time code — packages are configured to disallow tokens.
 
 ### Version Conflict
 
@@ -210,33 +219,37 @@ npm unpublish @xivdyetools/core@1.4.1
 
 ---
 
-## Automated CI/CD (Future)
+## Automated CI/CD
 
-Planned GitHub Actions workflow:
+Implemented in `.github/workflows/publish-packages.yml` — a `workflow_dispatch`
+workflow that builds, tests, and publishes a selected package (or every package
+whose local version differs from npm).
+
+Authentication is **npm trusted publishing (OIDC)**: the job's `id-token: write`
+permission mints a short-lived credential from its own GitHub Actions identity,
+which also signs the provenance attestation. There is **no `NPM_TOKEN` secret** —
+it was removed and the token revoked when the migration completed.
 
 ```yaml
-name: Publish
-
-on:
-  push:
-    tags:
-      - 'v*'
-
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write        # mints the OIDC credential; also signs provenance
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-      - run: npm ci
-      - run: npm test
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # ... checkout, pnpm, setup-node (no registry-url), install, build, test
+
+      # pnpm 10 delegates publishing to the npm CLI, and npm only supports
+      # trusted publishing from 11.5.1. Node 22 ships npm 10.x.
+      - run: npm install -g npm@^11.5.1
+
+      - run: pnpm --filter "$pkg" publish --provenance --access public --no-git-checks
+        # no `env:` block -- no token exists
 ```
+
+Each package needs a trusted publisher registered on npmjs.com (GitHub Actions,
+`FlashGalatine/xivdyetools`, workflow `publish-packages.yml`, permission
+`npm publish`) before it can publish this way.
 
 ---
 

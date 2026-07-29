@@ -166,14 +166,15 @@ None. This package is at Level 0 of the dependency flow and intentionally has ze
 
 ## Publishing
 
+Publishing goes through the **Publish Packages to npm** GitHub Actions workflow, which authenticates via npm trusted publishing (OIDC). There is no npm token — see the root `CLAUDE.md` for the full flow and the break-glass local path.
+
 ```bash
 # 1. Make changes in packages/types/
 # 2. Build and test
 pnpm turbo run build test --filter=@xivdyetools/types
 
-# 3. Bump version in packages/types/package.json
-# 4. Publish
-pnpm --filter @xivdyetools/types publish --provenance --access public --no-git-checks
+# 3. Bump version in packages/types/package.json and merge to main
+# 4. Actions → "Publish Packages to npm" → package: @xivdyetools/types
 ```
 
 `prepublishOnly` runs `clean` then `build` automatically. Because so many other packages depend on this one, a breaking change here cascades — bump majors deliberately and update the dependent `workspace:*` consumers in the same PR.

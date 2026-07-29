@@ -126,24 +126,38 @@ The 11 Facewear color entries have `itemID: null` in the JSON; `DyeDatabase.init
 
 ## Publishing Libraries to npm
 
+All 12 packages publish through the **Publish Packages to npm** GitHub Actions workflow (`workflow_dispatch`), which authenticates with npm via **trusted publishing (OIDC)**. There is no npm token anywhere in CI — the workflow's `id-token: write` permission mints a short-lived credential from its own GitHub identity, which also signs the provenance attestation.
+
 ```bash
 # 1. Make changes in packages/<name>/
 # 2. Build and test
 pnpm turbo run build test --filter=@xivdyetools/<name>
 
-# 3. Bump version in packages/<name>/package.json
-# 4. Publish (or use the GitHub Actions workflow_dispatch)
-pnpm --filter @xivdyetools/<name> publish --provenance --access public --no-git-checks
+# 3. Bump version in packages/<name>/package.json and merge to main
+# 4. Actions → "Publish Packages to npm" → package: @xivdyetools/<name>
+#    (or "all-modified" to publish everything whose version differs from npm)
 ```
 
-`@xivdyetools/core`'s `build` script runs `build:version` → `build:locales` → `tsc` → `copy:locales`. If you've made manual locale fixes, use `--ignore-scripts` when publishing so `build:locales` doesn't overwrite them.
+**A version bump is required.** The workflow's `detect` job only publishes a package when its local version differs from the published one; with versions at parity it does nothing.
+
+**Local publishing is deliberately not a normal path.** Every package is set to *"Require two-factor authentication and disallow tokens"*, so an unattended local publish is impossible by design. Break-glass only, after `npm login`, supplying a 2FA one-time code:
+
+```bash
+pnpm --filter @xivdyetools/<name> publish --provenance --access public --no-git-checks --otp=<code>
+```
+
+**Trusted publisher config** (npmjs.com → package → Settings): GitHub Actions, `FlashGalatine/xivdyetools`, workflow `publish-packages.yml`, permission `npm publish`. A new package needs this configured before it can publish, and its *first* version must be published by a 2FA-authenticated human — OIDC cannot create a package that doesn't exist yet.
+
+The publish job upgrades npm to `^11.5.1` before publishing. pnpm 10 delegates the actual publish to the npm CLI, and npm only gained trusted-publishing support in 11.5.1 — the npm bundled with Node 22 is 10.x and fails with `ENEEDAUTH`.
+
+`@xivdyetools/core`'s `build` script runs `build:version` → `build:locales` → `tsc` → `copy:locales`. `build:locales` regenerates from `dyenames.csv` / `localize.yaml`, so hand-edits to the generated locale JSON are overwritten — fold corrections into the source files instead.
 
 ## CI/CD
 
 - **CI**: lint, type-check, test, build on affected packages (push/PR)
 - **Deploy**: path-filtered workflows per worker (push to main + manual dispatch)
-- **Publish**: manual `workflow_dispatch` to publish a selected npm package
-- **Secrets**: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `NPM_TOKEN`
+- **Publish**: manual `workflow_dispatch` to publish a selected npm package, authenticated via OIDC trusted publishing (no token)
+- **Secrets**: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
 
 ## Documentation Hub
 

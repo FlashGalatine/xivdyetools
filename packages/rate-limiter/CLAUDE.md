@@ -183,14 +183,15 @@ Most workers consume this *through* `@xivdyetools/worker-middleware`'s `rateLimi
 
 ## Publishing
 
+Publishing goes through the **Publish Packages to npm** GitHub Actions workflow, which authenticates via npm trusted publishing (OIDC). There is no npm token — see the root `CLAUDE.md` for the full flow and the break-glass local path.
+
 ```bash
 # 1. Make changes in packages/rate-limiter/
 # 2. Build and test
 pnpm turbo run build test --filter=@xivdyetools/rate-limiter
 
-# 3. Bump version in packages/rate-limiter/package.json
-# 4. Publish
-pnpm --filter @xivdyetools/rate-limiter publish --provenance --access public --no-git-checks
+# 3. Bump version in packages/rate-limiter/package.json and merge to main
+# 4. Actions → "Publish Packages to npm" → package: @xivdyetools/rate-limiter
 ```
 
 `prepublishOnly` runs `clean` then `build` automatically.

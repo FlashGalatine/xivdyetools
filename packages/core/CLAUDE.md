@@ -224,17 +224,16 @@ External: `spectral.js` (Kubelka-Munk).
 
 ## Publishing
 
+Publishing goes through the **Publish Packages to npm** GitHub Actions workflow, which authenticates via npm trusted publishing (OIDC). There is no npm token — see the root `CLAUDE.md` for the full flow and the break-glass local path.
+
 ```bash
-# 1. Bump version in packages/core/package.json
+# 1. Bump version in packages/core/package.json and merge to main
 # 2. Build + test
 pnpm turbo run build test --filter=@xivdyetools/core
 
-# 3. Publish (or use the GitHub Actions workflow_dispatch).
-#    If you've made manual locale fixes (e.g., Korean/Chinese name corrections),
-#    add --ignore-scripts so build:locales doesn't regenerate over them.
-pnpm --filter @xivdyetools/core publish --provenance --access public --no-git-checks
-# or, after manual locale edits:
-pnpm --filter @xivdyetools/core publish --provenance --access public --no-git-checks --ignore-scripts
+# 3. Actions → "Publish Packages to npm" → package: @xivdyetools/core
 ```
+
+If you've made **manual locale fixes** (e.g., Korean/Chinese name corrections) that aren't reproducible from `dyenames.csv` / `localize.yaml`, `build:locales` will detect the difference and regenerate over them during the publish build. Fold such corrections back into the source CSV/YAML rather than editing the generated JSON, or use `--ignore-scripts` on a break-glass local publish.
 
 `build:version` runs first and stamps `src/version.ts` from `package.json` — keep `version.ts` in source control but treat it as auto-generated.

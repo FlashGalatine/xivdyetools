@@ -205,14 +205,15 @@ Every Cloudflare Worker in the monorepo uses this — it's effectively the stand
 
 ## Publishing
 
+Publishing goes through the **Publish Packages to npm** GitHub Actions workflow, which authenticates via npm trusted publishing (OIDC). There is no npm token — see the root `CLAUDE.md` for the full flow and the break-glass local path.
+
 ```bash
 # 1. Make changes in packages/worker-middleware/
 # 2. Build and test
 pnpm turbo run build test --filter=@xivdyetools/worker-middleware
 
-# 3. Bump version in packages/worker-middleware/package.json
-# 4. Publish
-pnpm --filter @xivdyetools/worker-middleware publish --provenance --access public --no-git-checks
+# 3. Bump version in packages/worker-middleware/package.json and merge to main
+# 4. Actions → "Publish Packages to npm" → package: @xivdyetools/worker-middleware
 ```
 
 `prepublishOnly` runs `clean` then `build` automatically. Because every Worker depends on this, breaking changes here require coordinated bumps across all consumers — prefer additive options on the existing factories where possible.

@@ -382,14 +382,15 @@
 
 This is a **pnpm monorepo** with Turborepo. When releasing a new version:
 
-1. **Shared Library** (e.g., `@xivdyetools/core`):
+1. **Shared Library** (e.g., `@xivdyetools/core`) — published by the
+   **Publish Packages to npm** workflow via trusted publishing (OIDC); no npm
+   token is involved. See the root `CLAUDE.md` for the full flow.
    ```bash
    # Build and test the package
    pnpm turbo run build test --filter=@xivdyetools/core
 
-   # Bump version in packages/core/package.json
-   # Publish to npm
-   pnpm --filter @xivdyetools/core publish --provenance --access public --no-git-checks
+   # Bump version in packages/core/package.json and merge to main
+   # Actions → "Publish Packages to npm" → package: @xivdyetools/core
    ```
 
 2. **Workers** (e.g., `xivdyetools-discord-worker`):

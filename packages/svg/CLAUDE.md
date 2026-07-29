@@ -169,11 +169,18 @@ If a new dye introduces a glyph outside the current Noto subset, the rasterizer 
 
 ## Publishing
 
+Publishing goes through the **Publish Packages to npm** GitHub Actions workflow, which authenticates via npm trusted publishing (OIDC). There is no npm token — see the root `CLAUDE.md` for the full flow and the break-glass local path.
+
 ```bash
-# 1. Bump version in packages/svg/package.json
+# 1. Bump version in packages/svg/package.json and merge to main
 # 2. Build + test
 pnpm turbo run build test --filter=@xivdyetools/svg
 
-# 3. Publish
-pnpm --filter @xivdyetools/svg publish --provenance --access public --no-git-checks
+# 3. Actions → "Publish Packages to npm" → package: @xivdyetools/svg
+```
+
+This package declares three `workspace:*` dependencies, which `pnpm publish` rewrites to exact versions at pack time. After a release, confirm the published ranges resolved — a literal `workspace:*` reaching the registry makes the package uninstallable:
+
+```bash
+npm view @xivdyetools/svg dependencies --json
 ```
