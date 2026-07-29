@@ -1,6 +1,6 @@
 /**
  * Express server for file operations
- * Handles reading/writing to xivdyetools-core data files
+ * Handles reading/writing to @xivdyetools/core data files (packages/core)
  *
  * SECURITY: This is a development-only tool. Do NOT deploy to production.
  */
@@ -82,8 +82,9 @@ app.use(express.json({ limit: '10mb' }))
 // (Mutation operations require valid session token or API key)
 app.use('/api', requireAuth)
 
-// Path to xivdyetools-core (sibling directory)
-const CORE_PATH = path.resolve(__dirname, '../../xivdyetools-core')
+// Path to @xivdyetools/core (monorepo sibling: <repo>/packages/core).
+// __dirname is apps/maintainer/server, so three levels up is the repo root.
+const CORE_PATH = path.resolve(__dirname, '../../../packages/core')
 const COLORS_PATH = path.join(CORE_PATH, 'src/data/colors_xiv.json')
 const LOCALES_PATH = path.join(CORE_PATH, 'src/data/locales')
 

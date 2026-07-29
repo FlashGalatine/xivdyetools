@@ -5,13 +5,13 @@ import fs from 'fs/promises'
  * Validate base paths at server startup
  *
  * Ensures that:
- * 1. Core path resolves to the expected xivdyetools-core directory
+ * 1. Core path resolves to the expected packages/core directory
  * 2. Colors file exists and is accessible
  * 3. Locales directory exists and is accessible
  *
  * This is a fail-fast check that catches configuration errors before the server starts.
  *
- * @param corePath - Path to the xivdyetools-core directory
+ * @param corePath - Path to the @xivdyetools/core package directory
  * @param colorsPath - Path to the colors_xiv.json file
  * @param localesPath - Path to the locales directory
  * @throws Error if validation fails
@@ -27,10 +27,11 @@ export async function validateBasePaths(
   const resolvedCore = path.resolve(corePath)
   const normalizedCore = path.normalize(resolvedCore)
 
-  // Verify the path ends with 'xivdyetools-core' (platform-independent)
-  if (!normalizedCore.endsWith(path.join('xivdyetools-core'))) {
+  // Verify the path ends with 'packages/core' (platform-independent) — the
+  // monorepo location of @xivdyetools/core
+  if (!normalizedCore.endsWith(path.join('packages', 'core'))) {
     throw new Error(
-      `Core path validation failed: Expected path ending with 'xivdyetools-core', got '${normalizedCore}'`
+      `Core path validation failed: Expected path ending with '${path.join('packages', 'core')}', got '${normalizedCore}'`
     )
   }
 
