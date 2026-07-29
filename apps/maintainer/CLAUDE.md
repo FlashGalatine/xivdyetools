@@ -136,7 +136,7 @@ server/                                   (Express 5 API)
 | `NODE_ENV` | — | If `production`, the server **refuses to start** |
 | `MAINTAINER_API_KEY` | — | Optional alternate auth header (`X-API-Key`) for scripted callers |
 
-The server resolves `CORE_PATH = path.resolve(__dirname, '../../xivdyetools-core')` — the imported sibling layout still uses the old `xivdyetools-core` directory name. If the workspace path changes, fix this constant.
+The server resolves `CORE_PATH = path.resolve(__dirname, '../../../packages/core')` — the monorepo location of `@xivdyetools/core`. `validateBasePaths()` fail-fast-checks this at startup, so a wrong path refuses to boot rather than writing files somewhere unexpected. If the workspace layout changes, update both the constant and the `packages/core` suffix check in `server/utils/pathValidation.ts`.
 
 ## Workflow: Adding a New Dye End-to-End
 
