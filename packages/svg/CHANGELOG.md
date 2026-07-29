@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-07-28
+
+Release-infrastructure validation. **No functional changes** — the published contents are identical to 1.2.0.
+
+### Changed
+
+- Published via npm **trusted publishing (OIDC)** rather than a long-lived `NPM_TOKEN`. `@xivdyetools/svg` is the second pilot of that migration (after `@xivdyetools/crypto@1.1.2`), chosen because it declares three `workspace:*` dependencies — `@xivdyetools/core`, `@xivdyetools/color-blending`, `@xivdyetools/types`. `pnpm publish` rewrites those to exact versions at pack time, and the migration also moved the publish job from npm 10 to npm 11, so this release exists to confirm that rewriting still happens correctly under the new client. `crypto` could not test it: having no dependencies, its `package.json` has nothing to rewrite.
+
 ## [1.2.0] - 2026-07-19
 
 2026-07-18 audit remediation (Sprint 6).
