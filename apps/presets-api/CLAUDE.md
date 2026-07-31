@@ -284,7 +284,6 @@ Production hides `err.message` and stack — only the request ID is returned. De
 |---------|---------|
 | `hono` | HTTP framework |
 | `@xivdyetools/auth` | JWT + HMAC bot signature verification |
-| `@xivdyetools/crypto` | Base64URL helpers |
 | `@xivdyetools/types` | Shared interfaces (preset shapes, AuthContext, etc.) |
 | `@xivdyetools/rate-limiter` | `MemoryRateLimiter`, `getClientIp`, `PUBLIC_API_LIMITS` |
 | `@xivdyetools/logger` | Structured logging with secret redaction |
@@ -300,7 +299,7 @@ Production hides `err.message` and stack — only the request ID is returned. De
 
 ## Related Projects
 
-**Dependencies:** `@xivdyetools/auth`, `@xivdyetools/crypto`, `@xivdyetools/types`, `@xivdyetools/rate-limiter`, `@xivdyetools/logger`, `@xivdyetools/worker-middleware`
+**Dependencies:** `@xivdyetools/auth`, `@xivdyetools/types`, `@xivdyetools/rate-limiter`, `@xivdyetools/logger`, `@xivdyetools/worker-middleware`
 
 **Service Bindings (outbound):** `xivdyetools-discord-worker` (notifications)
 
