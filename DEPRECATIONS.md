@@ -7,6 +7,36 @@ Each entry includes a target removal date and migration guide.
 
 ## Active Deprecations
 
+### `apps/maintainer` (Dye Maintainer GUI)
+
+| Field       | Value |
+|-------------|-------|
+| Deprecated  | 2026-07-30 (decision) |
+| Removed     | 2026-07-31 |
+| Severity    | Low — local-only dev tool, never deployed |
+
+**What it was:** A Vue 3 SPA + Express sidecar for appending dyes to `colors_xiv.json` with XIVAPI name
+fetching. Never deployed; refused to boot in production.
+
+**Why removed:** Monorepo 2.0 (docs/research/monorepo-2.0/03). Its scope was narrower than assumed
+(append-only, one dye at a time), its vocabularies had drifted from the data, and — decisively — its save
+path was **verifiably destructive**: the server's Zod schemas silently stripped `stainID`, `isIshgardian`,
+and `consolidationType` from all 136 dyes on any save, and dropped 8 translation groups per locale file.
+
+**Replacement:**
+- Canonical workflow: `docs/maintainer/adding-dyes.md` (manual / Claude-assisted, game-data-first).
+- Vocabularies + validation: `@xivdyetools/core` `src/config/dye-vocabulary.ts` (`DYE_CATEGORIES`,
+  `DYE_ACQUISITIONS`, `ACQUISITION_META`) enforced by `dye-vocabulary.test.ts` in CI — including the
+  stainID-uniqueness check the GUI never had.
+
+**Removal checklist:**
+- [x] Port corrected vocabularies + invariant tests into core (2026-07-31)
+- [x] Amend `adding-dyes.md` into the canonical procedure (2026-07-31)
+- [x] Delete `apps/maintainer`; remove `scripts/coverage-report.ts` skip-list; docs cleanup (2026-07-31)
+- [x] Lockfile regenerated — drops the express/cors/express-rate-limit/concurrently/vue/vue-tsc family
+
+---
+
 ### `@xivdyetools/crypto` (npm package)
 
 | Field       | Value |

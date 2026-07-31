@@ -35,7 +35,6 @@ Published to npm under the `@xivdyetools` scope:
 | [`universalis-proxy`](apps/universalis-proxy/) | 1.5.0 | CORS proxy for Universalis market data (CF Worker) |
 | [`og-worker`](apps/og-worker/) | 1.4.0 | Dynamic OpenGraph image generation (CF Worker + WASM) |
 | [`web-app`](apps/web-app/) | 4.12.0 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
-| [`maintainer`](apps/maintainer/) | 1.0.3 | Local dev tool for editing the dye database (Vite + Vue) |
 
 ### Documentation (`docs/`)
 

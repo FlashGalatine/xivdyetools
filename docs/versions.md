@@ -28,7 +28,6 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Dye Maintainer** | v1.0.3 | `xivdyetools-maintainer` | Local (Vite + Express) | Active |
 
 ### Shared Packages
 

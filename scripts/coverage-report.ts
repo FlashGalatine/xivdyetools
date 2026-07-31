@@ -233,16 +233,11 @@ const allResults = [...packageResults, ...appResults];
 const passing = allResults.filter((r) => r.status === 'PASS').length;
 const warning = allResults.filter((r) => r.status === 'WARN').length;
 const failing = allResults.filter((r) => r.status === 'FAIL').length;
-const skippedApps = ['maintainer'];
-
 console.log('\n' + '\u2500'.repeat(85));
 console.log('  \x1b[1mSUMMARY\x1b[0m');
 console.log(
   `  ${colorize(`${passing} PASS`, 'PASS')}  ${warning > 0 ? colorize(`${warning} WARN`, 'WARN') : '0 WARN'}  ${failing > 0 ? colorize(`${failing} FAIL`, 'FAIL') : '0 FAIL'}  (${allResults.length} projects total)`
 );
-if (skippedApps.length > 0) {
-  console.log(`  Skipped: ${skippedApps.join(', ')} (no tests)`);
-}
 console.log('\u2500'.repeat(85) + '\n');
 
 if (failing > 0) {

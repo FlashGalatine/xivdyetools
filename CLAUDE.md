@@ -29,8 +29,7 @@ xivdyetools/
 │   ├── universalis-proxy/     # CORS proxy for Universalis market data (CF Worker)
 │   ├── og-worker/             # Dynamic OpenGraph image generation (CF Worker)
 │   ├── stoat-worker/          # Revolt chat bot (Node.js + revolt.js, NOT a CF Worker)
-│   ├── web-app/               # Main web app with 9 color tools (Vite + Lit + Tailwind)
-│   └── maintainer/            # Local dev tool for editing the dye database (Vite + Vue 3)
+│   └── web-app/               # Main web app with 9 color tools (Vite + Lit + Tailwind)
 ├── docs/                    # Architecture, specs, deployment guides, research
 └── scripts/                 # Repo-level utility scripts
 ```

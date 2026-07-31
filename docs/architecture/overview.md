@@ -183,7 +183,7 @@ Layer 0: Shared Foundation
 
 **v2.5.0–2.6.0 Patch 7.5 Activation**: `CONSOLIDATED_IDS` populated with real itemIDs (Type-A=52254, Type-B=52255, Type-C=52256); `isConsolidationActive()` returns `true`; `ALLIED_SOCIETY_ACQUISITIONS` removed (vendor categories collapsed by Patch 7.5).
 
-**Consumed By**: Web app, Discord worker, OG worker, API worker, Maintainer
+**Consumed By**: Web app, Discord worker, OG worker, API worker
 
 ---
 
