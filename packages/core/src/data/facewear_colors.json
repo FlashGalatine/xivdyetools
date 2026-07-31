@@ -1,0 +1,57 @@
+[
+  {
+    "id": "silver",
+    "name": "Silver",
+    "hex": "#c0c0c0"
+  },
+  {
+    "id": "gold",
+    "name": "Gold",
+    "hex": "#ffd700"
+  },
+  {
+    "id": "black",
+    "name": "Black",
+    "hex": "#000000"
+  },
+  {
+    "id": "white",
+    "name": "White",
+    "hex": "#ffffff"
+  },
+  {
+    "id": "grey",
+    "name": "Grey",
+    "hex": "#808080"
+  },
+  {
+    "id": "red",
+    "name": "Red",
+    "hex": "#ff0000"
+  },
+  {
+    "id": "blue",
+    "name": "Blue",
+    "hex": "#0000ff"
+  },
+  {
+    "id": "green",
+    "name": "Green",
+    "hex": "#008000"
+  },
+  {
+    "id": "brass",
+    "name": "Brass",
+    "hex": "#e1c16e"
+  },
+  {
+    "id": "purple",
+    "name": "Purple",
+    "hex": "#800080"
+  },
+  {
+    "id": "brown",
+    "name": "Brown",
+    "hex": "#a52a2a"
+  }
+]

@@ -11,7 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import { DyeService } from '../DyeService.js';
 import { ColorConverter } from '../color/ColorConverter.js';
-import dyeDatabase from '../../data/colors_xiv.json';
+import dyeDatabase from '../../data/dyes.json';
 import type { MatchingMethod, OklchWeights } from '../../types/index.js';
 import type { Dye } from '@xivdyetools/types';
 

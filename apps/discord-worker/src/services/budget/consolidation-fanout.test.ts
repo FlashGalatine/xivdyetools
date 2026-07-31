@@ -165,18 +165,13 @@ describe('Patch 7.5 consolidation fan-out (ARCH-002)', () => {
     });
   });
 
-  describe('Facewear filter (regression for 2026-02-05 Bug 3)', () => {
-    it('filtering itemID > 0 strips Facewear before fetch (proxy regex `^[\\d,]+$` would reject negatives)', () => {
-      const facewear = allDyes.filter((d) => d.category === 'Facewear');
-      expect(facewear.length).toBeGreaterThan(0);
-
-      // The canonical filter from CLAUDE.md / project memory.
-      const tradeable = allDyes.filter((d) => d.itemID > 0);
-      const stripped = allDyes.filter((d) => !(d.itemID > 0));
-
-      expect(stripped).toEqual(facewear);
-      // None of the surviving IDs would be rejected by the proxy regex.
-      for (const dye of tradeable) {
+  describe('Facewear filter (regression for 2026-02-05 Bug 3; schema v2 update)', () => {
+    it('no Facewear entries remain, and every itemID passes the proxy regex `^[\\d,]+$`', () => {
+      // Schema v2 (2026-07-31): Facewear colors moved out of the dye DB
+      // entirely, so the itemID > 0 pre-fetch filter is vacuous — assert the
+      // stronger invariant directly.
+      expect(allDyes.filter((d) => d.category === 'Facewear')).toHaveLength(0);
+      for (const dye of allDyes) {
         expect(String(dye.itemID)).toMatch(/^\d+$/);
       }
     });

@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "XIV Dye Tools API"
   text: "FFXIV dye data, served from the edge."
-  tagline: "125 standard dyes plus 11 Facewear color entries, color matching, and localization in 6 languages. No auth required."
+  tagline: "125 standard dyes, color matching, and localization in 6 languages. No auth required."
   actions:
     - theme: brand
       text: Quick Start
@@ -15,7 +15,7 @@ hero:
 
 features:
   - title: Full Dye Database
-    details: 125 standard dyes plus 11 Facewear color entries (synthetic negative IDs). Hex, RGB, HSV, categories, acquisition methods, vendor costs, and Patch 7.5 consolidation groups.
+    details: 125 standard dyes (schema v2, stainID-keyed). Hex, RGB, HSV, categories, acquisition methods, vendor costs, and Patch 7.5 consolidation groups.
   - title: Color Matching
     details: Find the closest FFXIV dye to any hex color using six distance algorithms — RGB, CIE76, CIEDE2000, Oklab, HyAB, and OKLCh-weighted.
   - title: No Auth Required

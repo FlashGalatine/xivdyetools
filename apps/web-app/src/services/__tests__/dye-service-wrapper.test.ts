@@ -186,10 +186,10 @@ describe('DyeService integration', () => {
     expect(dyes.length).toBeGreaterThan(0);
   });
 
-  it('should return 136 dyes total', () => {
+  it('should return 125 dyes total (schema v2: Facewear moved out)', () => {
     const instance = DyeService.getInstance();
     const dyes = instance.getAllDyes();
 
-    expect(dyes.length).toBe(136);
+    expect(dyes.length).toBe(125);
   });
 });

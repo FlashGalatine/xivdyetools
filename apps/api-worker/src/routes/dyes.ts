@@ -8,7 +8,7 @@
 
 import { Hono } from 'hono';
 import type { Env, Variables } from '../types.js';
-import { CONSOLIDATED_IDS, isConsolidationActive } from '@xivdyetools/core';
+import { CONSOLIDATED_IDS, isConsolidationActive, getFacewearColorByLegacyItemID } from '@xivdyetools/core';
 import { dyeService } from '../lib/services.js';
 import { serializeDye, localizedNameFor } from '../lib/dye-serializer.js';
 import { ApiError, ErrorCode } from '../lib/api-error.js';
@@ -224,8 +224,21 @@ dyesRouter.get('/:id', (c) => {
         { consolidatedType },
       );
     }
+    // Schema v2 (2026-07-31): legacy Facewear synthetic IDs are no longer
+    // dyes — explain instead of a bare 404.
+    if (resolution.type === 'facewear') {
+      const facewear = getFacewearColorByLegacyItemID(id);
+      throw new ApiError(
+        ErrorCode.NOT_FOUND,
+        facewear
+          ? `ID ${id} was the legacy synthetic ID for the Facewear color "${facewear.name}". Facewear colors are no longer served as dyes.`
+          : `Negative IDs (legacy Facewear synthetic IDs) are no longer served as dyes.`,
+        404,
+        facewear ? { facewearId: facewear.id, hex: facewear.hex } : undefined,
+      );
+    }
     const hint = resolution.type === 'invalid'
-      ? ` ID ${id} falls in the unassigned range (126-5728).`
+      ? ` ID ${id} falls in the unassigned range (255-5728).`
       : '';
     throw new ApiError(ErrorCode.NOT_FOUND, `No dye found with ID ${id}.${hint}`, 404);
   }

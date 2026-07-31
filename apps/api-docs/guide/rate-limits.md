@@ -54,7 +54,7 @@ When you receive a `429`:
 ## Tips for Staying Under Limits
 
 - **Cache on your end.** Dye data is stable between FFXIV patches. Cache responses with `Cache-Control: max-age=3600`.
-- **Use `/v1/dyes`** to paginate through all 136 entries (125 standard dyes + 11 Facewear color entries) in a few requests rather than fetching individually.
+- **Use `/v1/dyes`** to paginate through all 125 entries in a few requests rather than fetching individually.
 - **Use `/v1/dyes/batch`** for up to 50 dye lookups in a single request.
 
 ## CORS Preflight

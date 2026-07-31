@@ -12,11 +12,11 @@ Published to npm under the `@xivdyetools` scope:
 
 | Package | Version | Description |
 |---------|---------|-------------|
-| [`@xivdyetools/types`](packages/types/) | 1.15.0 | Branded types (`HexColor`, `DyeId`, etc.) and shared interfaces |
+| [`@xivdyetools/types`](packages/types/) | 1.16.0 | Branded types (`HexColor`, `DyeId`, etc.) and shared interfaces |
 | [`@xivdyetools/logger`](packages/logger/) | 1.3.0 | Multi-runtime logging (browser, Node, CF Workers) with secret redaction |
 | [`@xivdyetools/auth`](packages/auth/) | 1.3.0 | JWT verification, HMAC signing, Discord Ed25519 verification, Base64URL/hex encoding |
 | [`@xivdyetools/worker-kit`](packages/worker-kit/) | 1.0.0 | Worker toolkit: Hono middleware (request ID, logger, rate limit) + rate limiting backends |
-| [`@xivdyetools/core`](packages/core/) | 2.8.0 | Color algorithms, 136-dye database, k-d tree matching, 6-language i18n, blending (`/blending`) |
+| [`@xivdyetools/core`](packages/core/) | 3.0.0 | Color algorithms, 125-dye database (schema v2) + facewear colors, k-d tree matching, 6-language i18n, blending (`/blending`) |
 | [`@xivdyetools/svg`](packages/svg/) | 1.2.1 | Platform-agnostic SVG card generators (pure functions: data in → SVG out) |
 | [`@xivdyetools/bot-logic`](packages/bot-logic/) | 1.4.0 | Platform-agnostic command business logic + bot i18n engine (shared by Discord + Stoat bots) |
 | [`@xivdyetools/test-utils`](packages/test-utils/) | 1.1.8 | Cloudflare Workers mocks (D1, KV, R2) and test factories |

@@ -93,7 +93,7 @@ Find all dyes within a color distance threshold. Results are sorted closest-firs
 | `hex` | query | Yes | Hex color (`#RRGGBB` or `RRGGBB`) |
 | `maxDistance` | query | Yes | Maximum distance threshold (min `0.01`) |
 | `method` | query | No | Distance algorithm (default: `oklab`) |
-| `limit` | query | No | Max results (1–136 — covering all 125 standard dyes + 11 Facewear color entries; default `20`) |
+| `limit` | query | No | Max results (1–125; default `20`) |
 | `excludeIds` | query | No | Comma-separated IDs to exclude |
 | `locale` | query | No | Locale for `localizedName` |
 | `kL` | query | No | Lightness weight for `oklch-weighted` |
@@ -108,7 +108,7 @@ Find all dyes within a color distance threshold. Results are sorted closest-firs
     { name: 'hex', in: 'query', required: true, default: 'FF6B6B', description: 'Hex color — #RRGGBB or RRGGBB' },
     { name: 'maxDistance', in: 'query', required: true, default: '0.15', description: 'Maximum Oklab distance (try 0.05–0.30)' },
     { name: 'method', in: 'query', required: false, default: 'oklab', description: 'Distance algorithm', options: ['rgb', 'cie76', 'ciede2000', 'oklab', 'hyab', 'oklch-weighted'] },
-    { name: 'limit', in: 'query', required: false, default: '10', description: 'Max results (1–136 — all 125 standard dyes + 11 Facewear)' },
+    { name: 'limit', in: 'query', required: false, default: '10', description: 'Max results (1–125)' },
     { name: 'locale', in: 'query', required: false, default: 'en', description: 'en, ja, de, fr, ko, zh', options: ['en', 'ja', 'de', 'fr', 'ko', 'zh'] }
   ]"
 />

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] — 2026-07-31
+
+**Schema v2** (Monorepo 2.0; spec: docs/research/monorepo-2.0/01-dye-data-format.md).
+
+### Changed — BREAKING
+
+- **`colors_xiv.json` (136 entries × 16 fields) → `dyes.json` (125 entries × 7 fields, stainID-keyed)**: `stainID, name, hex, category, acquisition, consolidationType, legacyItemID`. `rgb`/`hsv`/`lab`/`cost`/`currency` and all five flags are now derived at `DyeDatabase.initialize()` — the **runtime `Dye` object keeps its full 16-field shape**, so consumers of dye objects are unaffected. Legacy runtime-shaped input (test fixtures) still initializes, with explicit field values respected.
+- **The 11 Facewear entries left the dye database** → new `facewearColors` export (`FacewearColor` type in @xivdyetools/types 1.16.0), with `LEGACY_FACEWEAR_ITEM_IDS` (frozen pre-v2 synthetic-ID map) and `getFacewearColorByLegacyItemID()` for compatibility. `getAllDyes()` now returns 125; the synthetic negative-ID mechanism is deleted.
+- **`isMetallic` is now the Stain sheet's gloss set** (`METALLIC_STAIN_IDS`, 16 dyes — adds Gunmetal Black + Pearl White vs the old name-prefix 14). `getNonMetallicDyes()` returns 120 (was 122).
+- **`isCosmic` ≡ `consolidationType === 'C'`** (11 dyes, was 20 — the 9 Firmament dyes are no longer mislabeled cosmic); `isIshgardian` ≡ `'B'` (unchanged membership).
+- `hex` is now required and is the single color source of truth; the Brass stored-HSV drift bug is fixed by construction. Data-file hex is lowercase-mandated (enforced by the invariant tests).
+- `DYE_CATEGORIES` (8, `Facewear` removed) / `DYE_ACQUISITIONS` (4) / non-nullable `ACQUISITION_META`.
+- `build-locales.ts` metallic set now derives from `METALLIC_STAIN_IDS` (emits byte-identical `metallicDyeIds`); `fetch_dye_names.py` and the emoji upload script re-pointed at `dyes.json` (both had pre-monorepo broken paths).
+
 ## [2.8.0] — 2026-07-31
 
 Monorepo 2.0 Tier 1 package consolidation.

@@ -396,7 +396,10 @@ describe('DyeSearchBox', () => {
       expect(facewearBtn).toBeNull();
     });
 
-    it('should include Facewear when excludeFacewear is false', () => {
+    it('shows no Facewear chip even with excludeFacewear false (schema v2: not in the dye DB)', () => {
+      // Facewear colors moved to core's facewearColors collection; the dye
+      // database (and therefore the category chips) no longer contains them,
+      // so the excludeFacewear option is a no-op retained for API stability.
       searchBox = new DyeSearchBox(container, {
         showCategories: true,
         excludeFacewear: false,
@@ -404,7 +407,7 @@ describe('DyeSearchBox', () => {
       searchBox.init();
 
       const facewearBtn = query(container, '[data-category="Facewear"]');
-      expect(facewearBtn).not.toBeNull();
+      expect(facewearBtn).toBeNull();
     });
   });
 

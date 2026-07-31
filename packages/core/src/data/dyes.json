@@ -1,0 +1,1127 @@
+[
+  {
+    "stainID": 1,
+    "name": "Snow White",
+    "hex": "#e4dfd0",
+    "category": "Neutral",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5729
+  },
+  {
+    "stainID": 2,
+    "name": "Ash Grey",
+    "hex": "#aca8a2",
+    "category": "Neutral",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5730
+  },
+  {
+    "stainID": 3,
+    "name": "Goobbue Grey",
+    "hex": "#898784",
+    "category": "Neutral",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5731
+  },
+  {
+    "stainID": 4,
+    "name": "Slate Grey",
+    "hex": "#656565",
+    "category": "Neutral",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5732
+  },
+  {
+    "stainID": 5,
+    "name": "Charcoal Grey",
+    "hex": "#484742",
+    "category": "Neutral",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5733
+  },
+  {
+    "stainID": 6,
+    "name": "Soot Black",
+    "hex": "#2b2923",
+    "category": "Neutral",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5734
+  },
+  {
+    "stainID": 7,
+    "name": "Rose Pink",
+    "hex": "#e69f96",
+    "category": "Reds",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5735
+  },
+  {
+    "stainID": 8,
+    "name": "Lilac Purple",
+    "hex": "#836969",
+    "category": "Reds",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5736
+  },
+  {
+    "stainID": 9,
+    "name": "Rolanberry Red",
+    "hex": "#5b1729",
+    "category": "Reds",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5737
+  },
+  {
+    "stainID": 10,
+    "name": "Dalamud Red",
+    "hex": "#781a1a",
+    "category": "Reds",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5738
+  },
+  {
+    "stainID": 11,
+    "name": "Rust Red",
+    "hex": "#622207",
+    "category": "Reds",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5739
+  },
+  {
+    "stainID": 12,
+    "name": "Wine Red",
+    "hex": "#451511",
+    "category": "Reds",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5740
+  },
+  {
+    "stainID": 13,
+    "name": "Coral Pink",
+    "hex": "#cc6c5e",
+    "category": "Reds",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5741
+  },
+  {
+    "stainID": 14,
+    "name": "Blood Red",
+    "hex": "#913b27",
+    "category": "Reds",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5742
+  },
+  {
+    "stainID": 15,
+    "name": "Salmon Pink",
+    "hex": "#e4aa8a",
+    "category": "Reds",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5743
+  },
+  {
+    "stainID": 16,
+    "name": "Sunset Orange",
+    "hex": "#b75c2d",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5744
+  },
+  {
+    "stainID": 17,
+    "name": "Mesa Red",
+    "hex": "#7d3906",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5745
+  },
+  {
+    "stainID": 18,
+    "name": "Bark Brown",
+    "hex": "#6a4b37",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5746
+  },
+  {
+    "stainID": 19,
+    "name": "Chocolate Brown",
+    "hex": "#6e3d24",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5747
+  },
+  {
+    "stainID": 20,
+    "name": "Russet Brown",
+    "hex": "#4f2d1f",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5748
+  },
+  {
+    "stainID": 21,
+    "name": "Kobold Brown",
+    "hex": "#30211b",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5749
+  },
+  {
+    "stainID": 22,
+    "name": "Cork Brown",
+    "hex": "#c99156",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5750
+  },
+  {
+    "stainID": 23,
+    "name": "Qiqirn Brown",
+    "hex": "#996e3f",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5751
+  },
+  {
+    "stainID": 24,
+    "name": "Opo-Opo Brown",
+    "hex": "#7b5c2d",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5752
+  },
+  {
+    "stainID": 25,
+    "name": "Aldgoat Brown",
+    "hex": "#a2875c",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5753
+  },
+  {
+    "stainID": 26,
+    "name": "Pumpkin Orange",
+    "hex": "#c57424",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5754
+  },
+  {
+    "stainID": 27,
+    "name": "Acorn Brown",
+    "hex": "#8e581b",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5755
+  },
+  {
+    "stainID": 28,
+    "name": "Orchard Brown",
+    "hex": "#644216",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5756
+  },
+  {
+    "stainID": 29,
+    "name": "Chestnut Brown",
+    "hex": "#3d290d",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5757
+  },
+  {
+    "stainID": 30,
+    "name": "Gobbiebag Brown",
+    "hex": "#b9a489",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5758
+  },
+  {
+    "stainID": 31,
+    "name": "Shale Brown",
+    "hex": "#92816c",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5759
+  },
+  {
+    "stainID": 32,
+    "name": "Mole Brown",
+    "hex": "#615245",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5760
+  },
+  {
+    "stainID": 33,
+    "name": "Loam Brown",
+    "hex": "#3f3329",
+    "category": "Browns",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5761
+  },
+  {
+    "stainID": 34,
+    "name": "Bone White",
+    "hex": "#ebd3a0",
+    "category": "Yellows",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5762
+  },
+  {
+    "stainID": 35,
+    "name": "Ul Brown",
+    "hex": "#b7a370",
+    "category": "Yellows",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5763
+  },
+  {
+    "stainID": 36,
+    "name": "Desert Yellow",
+    "hex": "#dbb457",
+    "category": "Yellows",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5764
+  },
+  {
+    "stainID": 37,
+    "name": "Honey Yellow",
+    "hex": "#fac62b",
+    "category": "Yellows",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5765
+  },
+  {
+    "stainID": 38,
+    "name": "Millioncorn Yellow",
+    "hex": "#e49e34",
+    "category": "Yellows",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5766
+  },
+  {
+    "stainID": 39,
+    "name": "Coeurl Yellow",
+    "hex": "#bc8804",
+    "category": "Yellows",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5767
+  },
+  {
+    "stainID": 40,
+    "name": "Cream Yellow",
+    "hex": "#f2d770",
+    "category": "Yellows",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5768
+  },
+  {
+    "stainID": 41,
+    "name": "Halatali Yellow",
+    "hex": "#a58430",
+    "category": "Yellows",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5769
+  },
+  {
+    "stainID": 42,
+    "name": "Raisin Brown",
+    "hex": "#403311",
+    "category": "Yellows",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5770
+  },
+  {
+    "stainID": 43,
+    "name": "Mud Green",
+    "hex": "#585230",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5771
+  },
+  {
+    "stainID": 44,
+    "name": "Sylph Green",
+    "hex": "#bbbb8a",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5772
+  },
+  {
+    "stainID": 45,
+    "name": "Lime Green",
+    "hex": "#abb054",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5773
+  },
+  {
+    "stainID": 46,
+    "name": "Moss Green",
+    "hex": "#707326",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5774
+  },
+  {
+    "stainID": 47,
+    "name": "Meadow Green",
+    "hex": "#8b9c63",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5775
+  },
+  {
+    "stainID": 48,
+    "name": "Olive Green",
+    "hex": "#4b5232",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5776
+  },
+  {
+    "stainID": 49,
+    "name": "Marsh Green",
+    "hex": "#323621",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5777
+  },
+  {
+    "stainID": 50,
+    "name": "Apple Green",
+    "hex": "#9bb363",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5778
+  },
+  {
+    "stainID": 51,
+    "name": "Cactuar Green",
+    "hex": "#658241",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5779
+  },
+  {
+    "stainID": 52,
+    "name": "Hunter Green",
+    "hex": "#284b2c",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5780
+  },
+  {
+    "stainID": 53,
+    "name": "Ochu Green",
+    "hex": "#406339",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5781
+  },
+  {
+    "stainID": 54,
+    "name": "Adamantoise Green",
+    "hex": "#5f7558",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5782
+  },
+  {
+    "stainID": 55,
+    "name": "Nophica Green",
+    "hex": "#3b4d3c",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5783
+  },
+  {
+    "stainID": 56,
+    "name": "Deepwood Green",
+    "hex": "#1e2a21",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5784
+  },
+  {
+    "stainID": 57,
+    "name": "Celeste Green",
+    "hex": "#96bdb9",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5785
+  },
+  {
+    "stainID": 58,
+    "name": "Turquoise Green",
+    "hex": "#437272",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5786
+  },
+  {
+    "stainID": 59,
+    "name": "Morbol Green",
+    "hex": "#1f4646",
+    "category": "Greens",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5787
+  },
+  {
+    "stainID": 60,
+    "name": "Ice Blue",
+    "hex": "#b2c4ce",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5788
+  },
+  {
+    "stainID": 61,
+    "name": "Sky Blue",
+    "hex": "#83b0d2",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5789
+  },
+  {
+    "stainID": 62,
+    "name": "Seafog Blue",
+    "hex": "#6481a0",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5790
+  },
+  {
+    "stainID": 63,
+    "name": "Peacock Blue",
+    "hex": "#3b6886",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5791
+  },
+  {
+    "stainID": 64,
+    "name": "Rhotano Blue",
+    "hex": "#1c3d54",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5792
+  },
+  {
+    "stainID": 65,
+    "name": "Corpse Blue",
+    "hex": "#8e9bac",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5793
+  },
+  {
+    "stainID": 66,
+    "name": "Ceruleum Blue",
+    "hex": "#4f5766",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5794
+  },
+  {
+    "stainID": 67,
+    "name": "Woad Blue",
+    "hex": "#2f3851",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5795
+  },
+  {
+    "stainID": 68,
+    "name": "Ink Blue",
+    "hex": "#1a1f27",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5796
+  },
+  {
+    "stainID": 69,
+    "name": "Raptor Blue",
+    "hex": "#5b7fc0",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5797
+  },
+  {
+    "stainID": 70,
+    "name": "Othard Blue",
+    "hex": "#2f5889",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5798
+  },
+  {
+    "stainID": 71,
+    "name": "Storm Blue",
+    "hex": "#234172",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5799
+  },
+  {
+    "stainID": 72,
+    "name": "Void Blue",
+    "hex": "#112944",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5800
+  },
+  {
+    "stainID": 73,
+    "name": "Royal Blue",
+    "hex": "#273067",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5801
+  },
+  {
+    "stainID": 74,
+    "name": "Midnight Blue",
+    "hex": "#181937",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5802
+  },
+  {
+    "stainID": 75,
+    "name": "Shadow Blue",
+    "hex": "#373747",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5803
+  },
+  {
+    "stainID": 76,
+    "name": "Abyssal Blue",
+    "hex": "#312d57",
+    "category": "Blues",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5804
+  },
+  {
+    "stainID": 77,
+    "name": "Lavender Purple",
+    "hex": "#877fae",
+    "category": "Purples",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5805
+  },
+  {
+    "stainID": 78,
+    "name": "Gloom Purple",
+    "hex": "#514560",
+    "category": "Purples",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5806
+  },
+  {
+    "stainID": 79,
+    "name": "Currant Purple",
+    "hex": "#322c3b",
+    "category": "Purples",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5807
+  },
+  {
+    "stainID": 80,
+    "name": "Iris Purple",
+    "hex": "#b79ebc",
+    "category": "Purples",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5808
+  },
+  {
+    "stainID": 81,
+    "name": "Grape Purple",
+    "hex": "#3b2a3d",
+    "category": "Purples",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5809
+  },
+  {
+    "stainID": 82,
+    "name": "Lotus Pink",
+    "hex": "#fecef5",
+    "category": "Purples",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5810
+  },
+  {
+    "stainID": 83,
+    "name": "Colibri Pink",
+    "hex": "#dc9bca",
+    "category": "Purples",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5811
+  },
+  {
+    "stainID": 84,
+    "name": "Plum Purple",
+    "hex": "#79526c",
+    "category": "Purples",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5812
+  },
+  {
+    "stainID": 85,
+    "name": "Regal Purple",
+    "hex": "#66304e",
+    "category": "Purples",
+    "acquisition": "Dye Vendor",
+    "consolidationType": "A",
+    "legacyItemID": 5813
+  },
+  {
+    "stainID": 86,
+    "name": "Ruby Red",
+    "hex": "#e2000e",
+    "category": "Reds",
+    "acquisition": "The Firmament",
+    "consolidationType": "B",
+    "legacyItemID": 30116
+  },
+  {
+    "stainID": 87,
+    "name": "Cherry Pink",
+    "hex": "#f43195",
+    "category": "Reds",
+    "acquisition": "The Firmament",
+    "consolidationType": "B",
+    "legacyItemID": 30117
+  },
+  {
+    "stainID": 88,
+    "name": "Canary Yellow",
+    "hex": "#fef75d",
+    "category": "Yellows",
+    "acquisition": "The Firmament",
+    "consolidationType": "B",
+    "legacyItemID": 30118
+  },
+  {
+    "stainID": 89,
+    "name": "Vanilla Yellow",
+    "hex": "#fbf0af",
+    "category": "Yellows",
+    "acquisition": "The Firmament",
+    "consolidationType": "B",
+    "legacyItemID": 30119
+  },
+  {
+    "stainID": 90,
+    "name": "Dragoon Blue",
+    "hex": "#000b9d",
+    "category": "Blues",
+    "acquisition": "The Firmament",
+    "consolidationType": "B",
+    "legacyItemID": 30120
+  },
+  {
+    "stainID": 91,
+    "name": "Turquoise Blue",
+    "hex": "#03aaca",
+    "category": "Blues",
+    "acquisition": "The Firmament",
+    "consolidationType": "B",
+    "legacyItemID": 30121
+  },
+  {
+    "stainID": 92,
+    "name": "Gunmetal Black",
+    "hex": "#181820",
+    "category": "Special",
+    "acquisition": "The Firmament",
+    "consolidationType": "B",
+    "legacyItemID": 30122
+  },
+  {
+    "stainID": 93,
+    "name": "Pearl White",
+    "hex": "#bfb4a3",
+    "category": "Special",
+    "acquisition": "The Firmament",
+    "consolidationType": "B",
+    "legacyItemID": 30123
+  },
+  {
+    "stainID": 94,
+    "name": "Metallic Brass",
+    "hex": "#e9c06f",
+    "category": "Special",
+    "acquisition": "The Firmament",
+    "consolidationType": "B",
+    "legacyItemID": 30124
+  },
+  {
+    "stainID": 95,
+    "name": "Carmine Red",
+    "hex": "#e50b18",
+    "category": "Reds",
+    "acquisition": "Cosmic Exploration",
+    "consolidationType": "C",
+    "legacyItemID": 48227
+  },
+  {
+    "stainID": 96,
+    "name": "Neon Pink",
+    "hex": "#f61296",
+    "category": "Reds",
+    "acquisition": "Cosmic Exploration",
+    "consolidationType": "C",
+    "legacyItemID": 48163
+  },
+  {
+    "stainID": 97,
+    "name": "Bright Orange",
+    "hex": "#f95513",
+    "category": "Browns",
+    "acquisition": "Cosmic Exploration",
+    "consolidationType": "C",
+    "legacyItemID": 48164
+  },
+  {
+    "stainID": 98,
+    "name": "Neon Yellow",
+    "hex": "#e0e90b",
+    "category": "Yellows",
+    "acquisition": "Cosmic Exploration",
+    "consolidationType": "C",
+    "legacyItemID": 48166
+  },
+  {
+    "stainID": 99,
+    "name": "Neon Green",
+    "hex": "#baf913",
+    "category": "Greens",
+    "acquisition": "Cosmic Exploration",
+    "consolidationType": "C",
+    "legacyItemID": 48165
+  },
+  {
+    "stainID": 100,
+    "name": "Azure Blue",
+    "hex": "#4056a4",
+    "category": "Blues",
+    "acquisition": "Cosmic Exploration",
+    "consolidationType": "C",
+    "legacyItemID": 48168
+  },
+  {
+    "stainID": 101,
+    "name": "Pure White",
+    "hex": "#f9f8f4",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13114
+  },
+  {
+    "stainID": 102,
+    "name": "Jet Black",
+    "hex": "#1e1e1e",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13115
+  },
+  {
+    "stainID": 103,
+    "name": "Pastel Pink",
+    "hex": "#fdc8c6",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13708
+  },
+  {
+    "stainID": 104,
+    "name": "Dark Red",
+    "hex": "#321919",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13709
+  },
+  {
+    "stainID": 105,
+    "name": "Dark Brown",
+    "hex": "#28211c",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13710
+  },
+  {
+    "stainID": 106,
+    "name": "Pastel Green",
+    "hex": "#bacfaa",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13711
+  },
+  {
+    "stainID": 107,
+    "name": "Dark Green",
+    "hex": "#152c2c",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13712
+  },
+  {
+    "stainID": 108,
+    "name": "Pastel Blue",
+    "hex": "#96a4d9",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13713
+  },
+  {
+    "stainID": 109,
+    "name": "Dark Blue",
+    "hex": "#121f2d",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13714
+  },
+  {
+    "stainID": 110,
+    "name": "Pastel Purple",
+    "hex": "#bbb5da",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13715
+  },
+  {
+    "stainID": 111,
+    "name": "Dark Purple",
+    "hex": "#232026",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13716
+  },
+  {
+    "stainID": 112,
+    "name": "Metallic Silver",
+    "hex": "#a7a7a7",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13116
+  },
+  {
+    "stainID": 113,
+    "name": "Metallic Gold",
+    "hex": "#ede63d",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13117
+  },
+  {
+    "stainID": 114,
+    "name": "Metallic Red",
+    "hex": "#b61d4b",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13717
+  },
+  {
+    "stainID": 115,
+    "name": "Metallic Orange",
+    "hex": "#e48c2f",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13718
+  },
+  {
+    "stainID": 116,
+    "name": "Metallic Yellow",
+    "hex": "#f4da46",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13719
+  },
+  {
+    "stainID": 117,
+    "name": "Metallic Green",
+    "hex": "#22a757",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13720
+  },
+  {
+    "stainID": 118,
+    "name": "Metallic Sky Blue",
+    "hex": "#49f8fd",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13721
+  },
+  {
+    "stainID": 119,
+    "name": "Metallic Blue",
+    "hex": "#5052d9",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13722
+  },
+  {
+    "stainID": 120,
+    "name": "Metallic Purple",
+    "hex": "#d361ff",
+    "category": "Special",
+    "acquisition": "Venture Coffers",
+    "consolidationType": null,
+    "legacyItemID": 13723
+  },
+  {
+    "stainID": 121,
+    "name": "Violet Purple",
+    "hex": "#6f5aa2",
+    "category": "Purples",
+    "acquisition": "Cosmic Exploration",
+    "consolidationType": "C",
+    "legacyItemID": 48167
+  },
+  {
+    "stainID": 122,
+    "name": "Metallic Pink",
+    "hex": "#ffa1c2",
+    "category": "Special",
+    "acquisition": "Cosmic Exploration",
+    "consolidationType": "C",
+    "legacyItemID": 48169
+  },
+  {
+    "stainID": 123,
+    "name": "Metallic Ruby Red",
+    "hex": "#470103",
+    "category": "Special",
+    "acquisition": "Cosmic Exploration",
+    "consolidationType": "C",
+    "legacyItemID": 48170
+  },
+  {
+    "stainID": 124,
+    "name": "Metallic Cobalt Green",
+    "hex": "#28847f",
+    "category": "Special",
+    "acquisition": "Cosmic Exploration",
+    "consolidationType": "C",
+    "legacyItemID": 48171
+  },
+  {
+    "stainID": 125,
+    "name": "Metallic Dark Blue",
+    "hex": "#120445",
+    "category": "Special",
+    "acquisition": "Cosmic Exploration",
+    "consolidationType": "C",
+    "legacyItemID": 48172
+  }
+]

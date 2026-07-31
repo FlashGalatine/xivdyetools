@@ -1,6 +1,6 @@
 # Dyes
 
-7 endpoints covering the full dye database — **125 standard dyes plus 11 Facewear color entries** (with synthetic negative IDs assigned at runtime). 136 entries total.
+7 endpoints covering the full dye database — **125 standard dyes** (schema v2, stainID-keyed). Facewear colors are no longer served as dyes; legacy negative IDs return an explanatory 404.
 
 ## Dye Object
 
@@ -8,15 +8,15 @@ Every dye response includes these fields:
 
 | Field | Type | Description |
 |---|---|---|
-| `itemID` | integer | Game item ID (negative synthetic ID for Facewear color entries) |
-| `stainID` | integer \| null | Stain table ID (1–125; null for Facewear) |
+| `itemID` | integer | Legacy game item ID (equals stainID for future consolidated-only dyes) |
+| `stainID` | integer | Stain table ID (1–254) |
 | `id` | integer | Same as `itemID` |
 | `name` | string | English dye name |
-| `localizedName` | string? | Present only when `locale` ≠ `en`. Intentionally absent for Facewear entries (`itemID` < 0) — no localized names exist for them |
+| `localizedName` | string? | Present only when `locale` ≠ `en` |
 | `hex` | string | Hex color (`#RRGGBB`) |
 | `rgb` | object | `{ r, g, b }` — 0–255 |
 | `hsv` | object | `{ h, s, v }` — hue 0–360, sat/val 0–100 |
-| `category` | string | e.g. `Red`, `Neutral`, `Facewear` |
+| `category` | string | e.g. `Reds`, `Neutral`, `Special` |
 | `acquisition` | string | e.g. `Crafting`, `Cosmic Exploration`, `The Firmament`, `Vendor` |
 | `cost` | integer | Vendor price |
 | `currency` | string \| null | e.g. `Gil`, `Cosmocredits`, `Skybuilders Scrips` |
@@ -32,7 +32,7 @@ Every dye response includes these fields:
 
 ## GET /v1/dyes
 
-List all dyes with filtering, sorting, and pagination. Returns 136 total entries (125 standard dyes + 11 Facewear color entries) across ~3 pages at the default `perPage` of 50.
+List all dyes with filtering, sorting, and pagination. Returns 125 entries across ~3 pages at the default `perPage` of 50.
 
 ### Parameters
 
@@ -57,7 +57,7 @@ List all dyes with filtering, sorting, and pagination. Returns 136 total entries
 <TryIt
   endpoint="/v1/dyes"
   :params="[
-    { name: 'category', in: 'query', required: false, description: 'Filter by category', options: ['Blues', 'Browns', 'Facewear', 'Greens', 'Neutral', 'Purples', 'Reds', 'Special', 'Yellows'] },
+    { name: 'category', in: 'query', required: false, description: 'Filter by category', options: ['Blues', 'Browns', 'Greens', 'Neutral', 'Purples', 'Reds', 'Special', 'Yellows'] },
     { name: 'sort', in: 'query', required: false, description: 'name, brightness, saturation, hue, cost', options: ['name', 'brightness', 'saturation', 'hue', 'cost'] },
     { name: 'order', in: 'query', required: false, default: 'asc', description: 'asc or desc', options: ['asc', 'desc'] },
     { name: 'perPage', in: 'query', required: false, default: '10', description: 'Items per page (1–200)' },
@@ -75,13 +75,13 @@ Look up a single dye. The ID type is inferred by numeric range — see [ID auto-
 
 | Name | In | Description |
 |---|---|---|
-| `id` | path | itemID, stainID (1–125), or Facewear ID (negative) |
+| `id` | path | itemID, stainID (1–254), or a legacy Facewear ID (negative → explanatory 404) |
 | `locale` | query | Locale for `localizedName` |
 
 <TryIt
   endpoint="/v1/dyes/:id"
   :params="[
-    { name: 'id', in: 'path', required: true, default: '5729', description: 'itemID (≥5729), stainID (1–125), or Facewear ID (<0)' },
+    { name: 'id', in: 'path', required: true, default: '5729', description: 'itemID (≥5729) or stainID (1–254)' },
     { name: 'locale', in: 'query', required: false, default: 'en', description: 'en, ja, de, fr, ko, zh', options: ['en', 'ja', 'de', 'fr', 'ko', 'zh'] }
   ]"
 />
@@ -96,13 +96,13 @@ Explicit stainID lookup — bypasses range-based auto-detection. Use this when y
 
 | Name | In | Description |
 |---|---|---|
-| `stainId` | path | stainID (positive integer, 1–125) |
+| `stainId` | path | stainID (positive integer, 1–254) |
 | `locale` | query | Locale for `localizedName` |
 
 <TryIt
   endpoint="/v1/dyes/stain/:stainId"
   :params="[
-    { name: 'stainId', in: 'path', required: true, default: '1', description: 'stainID (1–125)' },
+    { name: 'stainId', in: 'path', required: true, default: '1', description: 'stainID (1–254)' },
     { name: 'locale', in: 'query', required: false, default: 'en', description: 'en, ja, de, fr, ko, zh', options: ['en', 'ja', 'de', 'fr', 'ko', 'zh'] }
   ]"
 />

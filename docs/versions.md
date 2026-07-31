@@ -12,7 +12,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core Library** | v2.7.0 | `@xivdyetools/core` | npm | Active |
+| **Core Library** | v3.0.0 | `@xivdyetools/core` | npm | Active |
 | **Web Application** | v4.12.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v4.7.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.3.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -33,11 +33,11 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Types** | v1.15.0 | `@xivdyetools/types` | npm | Active |
+| **Types** | v1.16.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v1.3.0 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v1.3.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.0.0 | `@xivdyetools/worker-kit` | npm | Active (first publish pending) |
-| **Core** (incl. `/blending`) | v2.8.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v3.0.0 | `@xivdyetools/core` | npm | Active |
 | **SVG** | v1.2.1 | `@xivdyetools/svg` | npm | Active |
 | **Bot Logic** (incl. `/i18n`) | v1.4.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v1.1.8 | `@xivdyetools/test-utils` | workspace-private | Active (unpublished) |

@@ -84,12 +84,21 @@ export {
   DYE_CATEGORIES,
   DYE_ACQUISITIONS,
   ACQUISITION_META,
+  METALLIC_STAIN_IDS,
 } from './config/dye-vocabulary.js';
 export type {
   DyeCategory,
   DyeAcquisition,
   AcquisitionMeta,
 } from './config/dye-vocabulary.js';
+
+// Facewear colors (split out of the dye database in schema v2)
+export {
+  facewearColors,
+  LEGACY_FACEWEAR_ITEM_IDS,
+  getFacewearColor,
+  getFacewearColorByLegacyItemID,
+} from './config/facewear.js';
 
 // Constants
 export {
@@ -142,7 +151,7 @@ export {
 } from './utils/index.js';
 
 // Data (for browser environments - to be injected)
-export { default as dyeDatabase } from './data/colors_xiv.json' with { type: 'json' };
+export { default as dyeDatabase } from './data/dyes.json' with { type: 'json' };
 export { default as presetData } from './data/presets.json' with { type: 'json' };
 
 // Version (auto-generated from package.json during build)

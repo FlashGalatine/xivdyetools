@@ -56,10 +56,10 @@ Most ID endpoints accept any of three numeric ID types. The type is inferred by 
 
 | Range | Type | Example |
 |-------|------|---------|
-| `< 0` | Facewear (synthetic) | `-1` |
-| `1 – 125` | stainID (game stain table) | `1` = Snow White |
+| `< 0` | Legacy Facewear ID — explanatory 404 (no longer served as dyes) | `-1629` |
+| `1 – 254` | stainID (game stain table; 126+ reserved for future dyes) | `1` = Snow White |
 | `≥ 5729` | itemID (game item database) | `5729` = Snow White |
-| `126 – 5728` | *(invalid gap)* | Returns `404` |
+| `255 – 5728` | *(invalid gap)* | Returns `404` |
 
 ```bash
 # All three resolve to Snow White

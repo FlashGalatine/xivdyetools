@@ -26,7 +26,7 @@ export { MATCH_QUALITY_TIERS, classifyMatchDistance } from './color/index.js';
 // ============================================================================
 // Dye Types
 // ============================================================================
-export type { Dye, LocalizedDye, DyeWithDistance } from './dye/index.js';
+export type { Dye, LocalizedDye, DyeWithDistance, FacewearColor } from './dye/index.js';
 export type { DyeTypeFilters } from './dye/index.js';
 
 // ============================================================================
