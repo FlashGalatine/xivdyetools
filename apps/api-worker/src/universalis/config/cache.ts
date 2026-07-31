@@ -2,7 +2,7 @@
  * Cache configuration constants for different endpoint types
  */
 
-import type { CacheConfig } from '../types/cache';
+import type { CacheConfig } from '../types';
 
 /**
  * Cache configurations by endpoint type

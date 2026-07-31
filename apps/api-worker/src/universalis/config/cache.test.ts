@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { CACHE_CONFIGS, type CacheConfigKey } from './cache';
-import type { CacheConfig } from '../types/cache';
+import type { CacheConfig } from '../types';
 
 describe('CACHE_CONFIGS', () => {
   describe('structure validation', () => {

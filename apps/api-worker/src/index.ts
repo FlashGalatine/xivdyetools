@@ -18,6 +18,7 @@ import { localeMiddleware } from './middleware/locale.js';
 // Routes
 import { dyesRouter } from './routes/dyes.js';
 import { matchRouter } from './routes/match.js';
+import { universalisRouter } from './universalis/router.js';
 
 // Lib
 import { ApiError, ErrorCode } from './lib/api-error.js';
@@ -108,6 +109,14 @@ app.get('/health', (c) => {
 
 app.route('/v1/dyes', dyesRouter);
 app.route('/v1/match', matchRouter);
+
+// Universalis market-board proxy (absorbed from apps/universalis-proxy).
+// Canonical mount + /api/v2 compatibility mount for the proxy.xivdyetools.app
+// custom domain and discord-worker's UNIVERSALIS_PROXY service binding.
+// Deliberately outside /v1/* (no KV rate limit / locale middleware) and
+// un-enveloped — see universalis/router.ts.
+app.route('/universalis', universalisRouter);
+app.route('/api/v2', universalisRouter);
 
 // ============================================
 // ERROR HANDLING

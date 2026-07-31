@@ -25,7 +25,6 @@ graph TD
         MODBOT["xivdyetools-moderation-worker"]
         OAUTH["xivdyetools-oauth"]
         PRESETS["xivdyetools-presets-api"]
-        PROXY["xivdyetools-universalis-proxy"]
         OG["xivdyetools-og-worker"]
         APIWORKER["xivdyetools-api-worker"]
         APIDOCS["xivdyetools-api-docs"]
@@ -66,7 +65,6 @@ graph TD
     WKIT --> MODBOT
     WKIT --> OAUTH
     WKIT --> PRESETS
-    WKIT --> PROXY
     WKIT --> OG
     WKIT --> APIWORKER
     WKIT --> STOAT
@@ -102,7 +100,7 @@ graph TD
     classDef consumer fill:#e8f5e9,stroke:#2e7d32
 
     class TYPES,LOGGER,AUTH,WKIT,TEST,CORE,SVG,BOTLOGIC npm
-    class WEB,DISCORD,MODBOT,OAUTH,PRESETS,PROXY,OG,APIWORKER,APIDOCS,STOAT consumer
+    class WEB,DISCORD,MODBOT,OAUTH,PRESETS,OG,APIWORKER,APIDOCS,STOAT consumer
 ```
 
 ---
@@ -116,7 +114,7 @@ graph TD
 | **@xivdyetools/types** | — | All projects |
 | **@xivdyetools/logger** | — | All projects |
 | **@xivdyetools/auth** (incl. `/encoding`) | — | oauth, discord-worker, moderation-worker, presets-api, test-utils |
-| **@xivdyetools/worker-kit** (middleware + `/rate-limiter`) | logger | discord-worker, moderation-worker, oauth, presets-api, universalis-proxy, og-worker, api-worker, stoat-worker |
+| **@xivdyetools/worker-kit** (middleware + `/rate-limiter`) | logger | discord-worker, moderation-worker, oauth, presets-api, og-worker, api-worker, stoat-worker |
 | **@xivdyetools/test-utils** (workspace-private) | auth, types | All projects (devDependency) |
 | **@xivdyetools/core** (incl. `/blending`) | types, logger | web-app, discord-worker, og-worker, api-worker, stoat-worker, svg, bot-logic |
 | **@xivdyetools/svg** | core, types | discord-worker, og-worker, stoat-worker, bot-logic |
@@ -131,7 +129,6 @@ graph TD
 | **moderation-worker** | types, logger, auth, worker-kit, bot-logic, hono | test-utils, vitest |
 | **oauth** | types, logger, auth, worker-kit, hono | test-utils, vitest |
 | **presets-api** | types, logger, auth, worker-kit, hono | test-utils, vitest |
-| **universalis-proxy** | worker-kit, hono | vitest |
 | **og-worker** | core, types, svg, logger, worker-kit, hono, @resvg/resvg-wasm | vitest |
 | **api-worker** | core, types, logger, worker-kit, hono | test-utils, vitest |
 | **api-docs** | (none — VitePress static site documenting api-worker) | — |
@@ -189,7 +186,7 @@ Notes:
 | `@resvg/resvg-wasm` | ^2.6 | SVG to PNG rendering |
 | `@cf-wasm/photon` | ^0.3 | Image processing (dominant color) |
 
-### xivdyetools-oauth / presets-api / moderation-worker / universalis-proxy
+### xivdyetools-oauth / presets-api / moderation-worker
 
 | Package | Version | Purpose |
 |---------|---------|---------|

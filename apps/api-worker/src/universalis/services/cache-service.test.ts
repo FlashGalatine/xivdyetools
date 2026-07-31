@@ -8,7 +8,7 @@ import {
   createMockExecutionContext,
   resetAllMocks,
 } from '../test-setup';
-import type { CacheConfig } from '../types/cache';
+import type { CacheConfig } from '../types';
 
 describe('CacheService', () => {
   let mockCtx: ReturnType<typeof createMockExecutionContext>;

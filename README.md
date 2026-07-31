@@ -32,7 +32,6 @@ Published to npm under the `@xivdyetools` scope:
 | [`oauth`](apps/oauth/) | 2.5.0 | Discord OAuth + JWT issuance (CF Worker + D1) |
 | [`api-worker`](apps/api-worker/) | 0.5.0 | Public REST API for dyes & color matching at [data.xivdyetools.app](https://data.xivdyetools.app) (CF Worker + KV) |
 | [`api-docs`](apps/api-docs/) | 0.1.0 | API reference site at [developers.xivdyetools.app](https://developers.xivdyetools.app) (VitePress) |
-| [`universalis-proxy`](apps/universalis-proxy/) | 1.5.0 | CORS proxy for Universalis market data (CF Worker) |
 | [`og-worker`](apps/og-worker/) | 1.4.0 | Dynamic OpenGraph image generation (CF Worker + WASM) |
 | [`web-app`](apps/web-app/) | 4.12.0 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
 

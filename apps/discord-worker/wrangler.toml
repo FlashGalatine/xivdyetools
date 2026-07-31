@@ -27,7 +27,7 @@ service = "xivdyetools-presets-api"
 
 [[services]]
 binding = "UNIVERSALIS_PROXY"
-service = "xivdyetools-universalis-proxy"
+service = "xivdyetools-api-worker"
 
 [vars]
 DISCORD_CLIENT_ID = "1447108133020369048"
@@ -64,7 +64,7 @@ service = "xivdyetools-presets-api"
 
 [[env.production.services]]
 binding = "UNIVERSALIS_PROXY"
-service = "xivdyetools-universalis-proxy"
+service = "xivdyetools-api-worker"
 
 [[env.production.analytics_engine_datasets]]
 binding = "ANALYTICS"

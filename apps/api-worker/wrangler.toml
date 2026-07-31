@@ -19,13 +19,22 @@ id = "8f2028935b544902bf468a9055d765ef"
 [vars]
 ENVIRONMENT = "development"
 API_VERSION = "v1"
+UNIVERSALIS_API_BASE = "https://universalis.app/api/v2"
+RATE_LIMIT_REQUESTS = "60"
+RATE_LIMIT_WINDOW_SECONDS = "60"
 
 [env.production]
 name = "xivdyetools-api-worker"
+# proxy.* domains absorbed from the retired universalis-proxy worker (Tier 2).
+# CUTOVER: the old xivdyetools-universalis-proxy worker must release these
+# custom domains (delete the worker or its domains in the CF dashboard) BEFORE
+# the first production deploy of this config — see DEPRECATIONS.md.
 routes = [
-  { pattern = "data.xivdyetools.app", custom_domain = true }
+  { pattern = "data.xivdyetools.app", custom_domain = true },
+  { pattern = "proxy.xivdyetools.app", custom_domain = true },
+  { pattern = "proxy.xivdyetools.projectgalatine.com", custom_domain = true }
 ]
-vars = { ENVIRONMENT = "production", API_VERSION = "v1" }
+vars = { ENVIRONMENT = "production", API_VERSION = "v1", UNIVERSALIS_API_BASE = "https://universalis.app/api/v2", RATE_LIMIT_REQUESTS = "30", RATE_LIMIT_WINDOW_SECONDS = "60" }
 
 [[env.production.kv_namespaces]]
 binding = "RATE_LIMIT"

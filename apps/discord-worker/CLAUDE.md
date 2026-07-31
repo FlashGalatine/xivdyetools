@@ -137,7 +137,7 @@ src/
 | `DB` | D1 (`xivdyetools-presets`) | Shared with presets-api / moderation-worker |
 | `ANALYTICS` | Analytics Engine (`xivdyetools_bot_analytics`) | Long-term command usage telemetry |
 | `PRESETS_API` | Service Binding → `xivdyetools-presets-api` | Worker-to-Worker preset CRUD |
-| `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-universalis-proxy` | Market board prices for `/budget` |
+| `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-api-worker` | Market board prices for `/budget` (via the absorbed `/api/v2/*` proxy routes) |
 
 Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom domains: `bot.xivdyetools.app`, `bot.xivdyetools.projectgalatine.com`. `[[rules]]` includes `**/*.ttf` as `Data` (CJK subset fonts bundled into the Worker).
 
@@ -302,7 +302,7 @@ npm run test:integration                                  # Integration suite
 
 **Dependencies:** `@xivdyetools/core`, `@xivdyetools/types`, `@xivdyetools/auth`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/svg`, `@xivdyetools/bot-logic` (incl. `/i18n`), `@xivdyetools/color-blending`, `@xivdyetools/logger`, `@xivdyetools/worker-kit`
 
-**Service Bindings (outbound):** `xivdyetools-presets-api`, `xivdyetools-universalis-proxy`
+**Service Bindings (outbound):** `xivdyetools-presets-api`, `xivdyetools-api-worker` (Universalis proxy routes)
 
 **Service Bindings (inbound):** `xivdyetools-presets-api` calls back via `DISCORD_WORKER` for notifications
 

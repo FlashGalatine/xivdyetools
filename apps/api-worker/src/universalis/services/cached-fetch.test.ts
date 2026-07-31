@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { cachedFetch, buildCacheHeaders, UpstreamError } from './cached-fetch';
 import { createMockExecutionContext, resetAllMocks } from '../test-setup';
-import type { CacheConfig, CacheSource } from '../types/cache';
+import type { CacheConfig, CacheSource } from '../types';
 
 // Mock global fetch
 const mockFetch = vi.fn();

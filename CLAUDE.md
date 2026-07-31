@@ -26,7 +26,6 @@ xivdyetools/
 │   ├── oauth/                 # Discord OAuth + JWT issuance (CF Worker + D1)
 │   ├── api-worker/            # Public dye/color-matching API (CF Worker)
 │   ├── api-docs/              # VitePress docs site for the public API
-│   ├── universalis-proxy/     # CORS proxy for Universalis market data (CF Worker)
 │   ├── og-worker/             # Dynamic OpenGraph image generation (CF Worker)
 │   ├── stoat-worker/          # Revolt chat bot (Node.js + revolt.js, NOT a CF Worker)
 │   └── web-app/               # Main web app with 9 color tools (Vite + Lit + Tailwind)

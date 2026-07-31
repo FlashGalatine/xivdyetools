@@ -42,7 +42,7 @@ pnpm --filter @xivdyetools/worker-kit run test
 
 ## Consumers
 
-All eight backend apps: discord-worker, moderation-worker, presets-api, oauth, api-worker, og-worker, universalis-proxy (middleware + rate-limiter) and stoat-worker (rate-limiter only). web-app does not consume it.
+All seven backend apps: discord-worker, moderation-worker, presets-api, oauth, api-worker (incl. its absorbed universalis routes), og-worker (middleware + rate-limiter) and stoat-worker (rate-limiter only). web-app does not consume it.
 
 ## Internal Dependencies
 

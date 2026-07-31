@@ -6,7 +6,7 @@
  * KV write limits on the free tier.
  */
 
-import type { CacheConfig } from '../types/cache';
+import type { CacheConfig } from '../types';
 
 /**
  * Result from Cache API lookup

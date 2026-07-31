@@ -11,7 +11,7 @@
 
 import { CacheService } from './cache-service';
 import { RequestCoalescer } from './request-coalescer';
-import type { CacheConfig, CacheResult, CacheSource } from '../types/cache';
+import type { CacheConfig, CacheResult, CacheSource } from '../types';
 
 /**
  * Options for cached fetch

@@ -7,6 +7,44 @@ Each entry includes a target removal date and migration guide.
 
 ## Active Deprecations
 
+### `apps/universalis-proxy` (standalone worker)
+
+| Field       | Value |
+|-------------|-------|
+| Deprecated  | 2026-07-31 |
+| Removed     | Merged into `apps/api-worker` 2026-07-31 (Monorepo 2.0 Tier 2) |
+| Severity    | Medium — live production domain cutover required |
+
+**What it was:** A standalone CF Worker proxying three Universalis endpoints with always-on CORS,
+Cache-API caching, SWR, and request coalescing, on `proxy.xivdyetools.app`.
+
+**Where it went:** `apps/api-worker/src/universalis/` — code moved verbatim; routes mounted at
+`/universalis/*` (canonical) **and** `/api/v2/*` (compatibility: preserves the exact path shape used by
+already-deployed web-app bundles via the proxy domain, and by discord-worker's `UNIVERSALIS_PROXY`
+service binding, which now targets `xivdyetools-api-worker`). Responses stay un-enveloped. api-worker's
+global `cors({ origin: '*' })` replaces the proxy's allowlist CORS (strictly more permissive).
+
+**⚠️ Production cutover sequence (manual, do in this order):**
+1. In the Cloudflare dashboard, remove the custom domains `proxy.xivdyetools.app` and
+   `proxy.xivdyetools.projectgalatine.com` from the old `xivdyetools-universalis-proxy` worker
+   (or delete the worker).
+2. Deploy api-worker (`deploy --env production`) — its wrangler.toml now claims both proxy domains
+   alongside `data.xivdyetools.app`.
+3. Smoke-test: `curl https://proxy.xivdyetools.app/api/v2/data-centers` and
+   `curl https://data.xivdyetools.app/universalis/data-centers`.
+4. Deploy web-app (its production fallback now points at `data.xivdyetools.app/universalis`).
+5. Deploy discord-worker (service binding retarget); verify `/budget`.
+6. Expect a one-time cold Universalis cache (cache keys embed the request origin).
+
+**Removal checklist:**
+- [x] Code + unit tests moved into api-worker; router remounted; new route tests (2026-07-31)
+- [x] discord-worker binding + web-app fallback URL + preconnect hints flipped (2026-07-31)
+- [x] deploy-universalis-proxy.yml deleted (api-worker's workflow covers the moved code)
+- [ ] Production domain cutover (steps above) — **manual, at merge/deploy time**
+- [ ] Delete the old `xivdyetools-universalis-proxy` worker after the cutover window
+
+---
+
 ### `apps/maintainer` (Dye Maintainer GUI)
 
 | Field       | Value |

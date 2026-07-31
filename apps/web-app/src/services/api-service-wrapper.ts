@@ -31,10 +31,11 @@ function getUniversalisBaseUrl(): string {
     return envUrl;
   }
 
-  // In production, use the deployed proxy worker
-  // This ensures CORS headers are always present, even on error responses (like 429)
+  // In production, use api-worker's absorbed Universalis routes (Monorepo 2.0
+  // Tier 2 — formerly the standalone proxy.xivdyetools.app worker). CORS
+  // headers are always present, even on error responses (like 429).
   if (import.meta.env.PROD) {
-    const proxyUrl = 'https://proxy.xivdyetools.app/api/v2';
+    const proxyUrl = 'https://data.xivdyetools.app/universalis';
     logger.info(`Using production Universalis proxy: ${proxyUrl}`);
     return proxyUrl;
   }
