@@ -6,6 +6,32 @@
 
 ---
 
+## ⚠️ 2026-07-31 Update — This Is Now the Canonical Procedure
+
+The **Dye Maintainer GUI (`apps/maintainer`) has been removed** (Monorepo 2.0; see `DEPRECATIONS.md` and `docs/research/monorepo-2.0/03-maintainer-deprecation.md`). Dyes are added by editing `packages/core/src/data/colors_xiv.json` directly — typically in a Claude Code session working from game data. Everything the tool enforced (and several things it didn't) now lives in CI:
+
+- **Closed vocabularies** — categories, acquisitions, and the acquisition → (price, currency) coupling are defined once in `packages/core/src/config/dye-vocabulary.ts` (`DYE_CATEGORIES`, `DYE_ACQUISITIONS`, `ACQUISITION_META`).
+- **Data invariants** — `packages/core/src/config/__tests__/dye-vocabulary.test.ts` asserts vocabulary membership, price/currency coupling, **unique itemIDs and stainIDs** (the GUI never checked stainID at all), hex validity, and Facewear consistency. `pnpm turbo run test --filter=@xivdyetools/core` is the new "did I get it right?".
+
+### Required fields per entry (the GUI omitted the last three!)
+
+`itemID`, `category`, `name`, `hex` (lowercase 6-digit `#rrggbb`), `acquisition`, `price`/`currency` (must match `ACQUISITION_META`), `rgb`/`hsv` (derive from hex via `ColorService.hexToRgb` / `hexToHsv` — 2-dp rounding, never hand-typed), the five `is*` booleans, **`stainID`** (the game's Stain sheet row — Glamourer/Mare interop breaks silently without it), **`isIshgardian`**, and **`consolidationType`** (`'A' | 'B' | 'C' | null` — drives Patch 7.5 market resolution).
+
+### Game-data sources (preferred over scraping)
+
+- **`Stain` sheet** (XIVAPI v2 `sheet/Stain`, or a Dalamud/Lumina export): new rows give stainID, name (no "Dye" prefix — no stripping needed), packed **BGR** color, and the gloss/metallic flag.
+- **`StainTransient` sheet**: stainID → purchasable item(s) — determines `itemID` and whether the dye resolves to a consolidated Spectrum item (`consolidationType`).
+- **Item sheet fallback:** if you must fetch Item names (en/ja/de/fr), strip the localized "Dye" prefix — try `prefix + ":"`, then `prefix + "："` (full-width colon U+FF1A), then the bare prefix, longest first (this was BUG-081's fix in the old GUI).
+- ko/zh names remain manually sourced into `dyenames.csv`.
+
+### After editing the JSON
+
+`pnpm --filter @xivdyetools/core run build:locales` (regenerates locale JSONs; also update `dyenames.csv` first for names) → `pnpm turbo run build test --filter=@xivdyetools/core` → version bump → publish per the standard flow.
+
+The sections below cover item-ID discovery and data formats in more detail; where they mention the GUI, substitute direct JSON editing.
+
+---
+
 ## Overview
 
 When Square Enix releases a new FFXIV patch that includes new dyes, the `xivdyetools-core` library needs to be updated with:

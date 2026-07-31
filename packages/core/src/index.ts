@@ -79,6 +79,18 @@ export type {
   LocalizedDyeName,
 } from './config/consolidated-ids.js';
 
+// Dye vocabulary (closed value sets + acquisition → price/currency coupling)
+export {
+  DYE_CATEGORIES,
+  DYE_ACQUISITIONS,
+  ACQUISITION_META,
+} from './config/dye-vocabulary.js';
+export type {
+  DyeCategory,
+  DyeAcquisition,
+  AcquisitionMeta,
+} from './config/dye-vocabulary.js';
+
 // Constants
 export {
   RGB_MIN,
