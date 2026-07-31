@@ -126,7 +126,7 @@ The 11 Facewear color entries have `itemID: null` in the JSON; `DyeDatabase.init
 
 ## Publishing Libraries to npm
 
-All 12 packages publish through the **Publish Packages to npm** GitHub Actions workflow (`workflow_dispatch`), which authenticates with npm via **trusted publishing (OIDC)**. There is no npm token anywhere in CI — the workflow's `id-token: write` permission mints a short-lived credential from its own GitHub identity, which also signs the provenance attestation.
+All 10 publishable packages publish through the **Publish Packages to npm** GitHub Actions workflow (`workflow_dispatch`), which authenticates with npm via **trusted publishing (OIDC)**. (`@xivdyetools/test-utils` is workspace-private and not published.) There is no npm token anywhere in CI — the workflow's `id-token: write` permission mints a short-lived credential from its own GitHub identity, which also signs the provenance attestation.
 
 ```bash
 # 1. Make changes in packages/<name>/
