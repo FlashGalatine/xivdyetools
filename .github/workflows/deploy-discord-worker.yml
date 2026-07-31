@@ -16,6 +16,8 @@ on:
       - 'packages/bot-logic/**'
       - 'packages/color-blending/**'
       - 'packages/svg/**'
+      # MONO2: worker-middleware appeared in no deploy filter (research/monorepo-2.0/05 §5)
+      - 'packages/worker-middleware/**'
   workflow_dispatch:
 
 concurrency:

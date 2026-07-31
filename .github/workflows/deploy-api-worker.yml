@@ -1,26 +1,27 @@
-name: Deploy OAuth Worker
+name: Deploy API Worker
 
+# MONO2: api-worker was live on data.xivdyetools.app with no deploy workflow
+# (research/monorepo-2.0/05 §5). Modeled on deploy-universalis-proxy.yml.
 on:
   push:
     branches: [main, master]
     paths:
-      - 'apps/oauth/**'
+      - 'apps/api-worker/**'
+      - 'packages/core/**'
       - 'packages/types/**'
       - 'packages/logger/**'
       - 'packages/rate-limiter/**'
-      - 'packages/crypto/**'
-      # MONO2: auth itself was missing (only its transitive crypto was listed); plus worker-middleware (research/monorepo-2.0/05 §5)
-      - 'packages/auth/**'
       - 'packages/worker-middleware/**'
+      - '.github/workflows/deploy-api-worker.yml'
   workflow_dispatch:
 
 concurrency:
-  group: deploy-oauth
+  group: deploy-api-worker
   cancel-in-progress: false
 
 jobs:
   deploy:
-    name: Deploy OAuth Worker
+    name: Deploy API Worker
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -35,27 +36,27 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build dependencies
-        run: pnpm turbo run build --filter=xivdyetools-oauth-worker...
+        run: pnpm turbo run build --filter=xivdyetools-api-worker...
 
       - name: Type-check
-        run: pnpm turbo run type-check --filter=xivdyetools-oauth-worker
+        run: pnpm turbo run type-check --filter=xivdyetools-api-worker
 
       - name: Test
-        run: pnpm turbo run test --filter=xivdyetools-oauth-worker
+        run: pnpm turbo run test --filter=xivdyetools-api-worker
 
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: apps/oauth
-          command: deploy
+          workingDirectory: apps/api-worker
+          command: deploy --env production
           packageManager: pnpm
 
-      # ARCH-002: Verify deployed worker responds after deployment
+      # ARCH-002 convention: verify the deployed worker responds
       - name: Smoke test (health check)
         run: |
           sleep 5
           curl --fail --retry 3 --retry-delay 5 --retry-all-errors \
             -H "User-Agent: xivdyetools-ci" \
-            https://auth.xivdyetools.app/health
+            https://data.xivdyetools.app/health

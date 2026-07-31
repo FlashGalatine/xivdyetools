@@ -6,6 +6,9 @@ on:
     paths:
       - 'apps/universalis-proxy/**'
       - 'packages/rate-limiter/**'
+      # MONO2: missing direct dep worker-middleware and its transitive logger (research/monorepo-2.0/05 §5)
+      - 'packages/worker-middleware/**'
+      - 'packages/logger/**'
   workflow_dispatch:
 
 concurrency:
