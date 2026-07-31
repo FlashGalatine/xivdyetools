@@ -17,7 +17,6 @@ xivdyetools/
 │   ├── rate-limiter/        # Sliding window rate limiting (Memory, KV, Upstash)
 │   ├── worker-middleware/   # Shared Hono middleware (request ID, logger, rate limit)
 │   ├── core/                # Color algorithms, dye database (125 standard + 11 Facewear), k-d tree, 6-language i18n
-│   ├── color-blending/      # Six blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral)
 │   ├── svg/                 # Pure SVG card generators (data → SVG string)
 │   ├── bot-logic/           # Platform-agnostic Discord/Revolt command business logic
 │   └── test-utils/          # CF Workers mocks (D1, KV, R2) and test factories
@@ -41,12 +40,11 @@ xivdyetools/
 
 ```
 types, logger, rate-limiter, auth, ────────────────────────────┐ (Level 0: no internal deps)
-color-blending ────────────────────────────────────────────────┤
 test-utils (→ auth, types) ────────────────────────────────────┤ (Level 1)
 core (→ types, logger) ────────────────────────────────────────┤ (Level 2)
 worker-middleware (→ logger, rate-limiter) ────────────────────┤
-svg (→ core, color-blending, types) ───────────────────────────┤ (Level 3)
-bot-logic (→ core, svg, color-blending, types; incl. /i18n) ───┤ (Level 4)
+svg (→ core, types) ───────────────────────────────────────────┤ (Level 3)
+bot-logic (→ core, svg, types; incl. /i18n) ───────────────────┤ (Level 4)
                                                                 │
                             Applications ◄─────────────────────┘
 ```

@@ -104,9 +104,6 @@ importers:
       '@xivdyetools/bot-logic':
         specifier: workspace:*
         version: link:../../packages/bot-logic
-      '@xivdyetools/color-blending':
-        specifier: workspace:*
-        version: link:../../packages/color-blending
       '@xivdyetools/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -398,9 +395,6 @@ importers:
       '@xivdyetools/bot-logic':
         specifier: workspace:*
         version: link:../../packages/bot-logic
-      '@xivdyetools/color-blending':
-        specifier: workspace:*
-        version: link:../../packages/color-blending
       '@xivdyetools/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -552,9 +546,6 @@ importers:
 
   packages/bot-logic:
     dependencies:
-      '@xivdyetools/color-blending':
-        specifier: workspace:*
-        version: link:../color-blending
       '@xivdyetools/core':
         specifier: workspace:*
         version: link:../core
@@ -571,15 +562,6 @@ importers:
       '@xivdyetools/test-utils':
         specifier: workspace:*
         version: link:../test-utils
-      vitest:
-        specifier: ^4.1.10
-        version: 4.1.10(@types/node@26.1.2)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@30.0.0)(msw@2.15.0(@types/node@26.1.2)(typescript@5.9.3))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
-
-  packages/color-blending:
-    devDependencies:
-      '@vitest/coverage-v8':
-        specifier: ^4.1.10
-        version: 4.1.10(vitest@4.1.10)
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.1.2)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@30.0.0)(msw@2.15.0(@types/node@26.1.2)(typescript@5.9.3))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
@@ -648,9 +630,6 @@ importers:
 
   packages/svg:
     dependencies:
-      '@xivdyetools/color-blending':
-        specifier: workspace:*
-        version: link:../color-blending
       '@xivdyetools/core':
         specifier: workspace:*
         version: link:../core

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.0] — 2026-07-31
+
+Monorepo 2.0 Tier 1 package consolidation.
+
+### Added
+
+- Absorbed `@xivdyetools/color-blending` v1.1.0: the self-contained blending module (`blendColors`, `BLENDING_MODES`, `BlendingMode`, `rgbToLab`, six algorithms incl. Kubelka-Munk spectral) now lives at `src/blending/` and is published as the `@xivdyetools/core/blending` subpath export. The standalone package is retired — the API is identical, only the import specifier changes. Follow-up: unify its deliberately-duplicated conversions with `ColorService` (REFACTOR-005 context; see docs/research/monorepo-2.0/05 §2).
+- `package.json#exports` map (`.`, `./blending`, `./package.json`). No consumer deep-imports core paths (verified repo-wide), so this is non-breaking.
+
 ### Changed
 
 - **`scripts/build-locales.ts` is now idempotent.** Before writing each locale, it compares the freshly built payload against the file already on disk, ignoring `meta.generated`. When nothing else differs the existing file is left untouched — same bytes, same mtime — so rebuilding from unchanged sources no longer dirties all six locale JSONs. Previously every build re-stamped the timestamp, which meant a full `pnpm turbo run build` always produced six spurious modifications and buried real locale changes in churn. `meta.generated` now marks when the locale data last *changed* rather than when the build last ran; the field remains a required ISO string on `LocaleData`, so there is no API or consumer impact. Comparison is key-order-insensitive because `JSON.parse` of an existing file and a freshly built payload do not agree on key ordering for non-integer keys (e.g. synthetic negative Facewear IDs).

@@ -9,9 +9,9 @@
 
 import type { LocaleCode } from '../services/i18n.js';
 import type { DyeTypeFilters } from '@xivdyetools/types';
-export type { BlendingMode } from '@xivdyetools/color-blending';
-export { BLENDING_MODES, isValidBlendingMode } from '@xivdyetools/color-blending';
-import type { BlendingMode } from '@xivdyetools/color-blending';
+export type { BlendingMode } from '@xivdyetools/core/blending';
+export { BLENDING_MODES, isValidBlendingMode } from '@xivdyetools/core/blending';
+import type { BlendingMode } from '@xivdyetools/core/blending';
 
 /**
  * Color matching methods for finding closest dyes

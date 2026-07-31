@@ -26,7 +26,6 @@
   "license": "ISC",
   "dependencies": {
     "@xivdyetools/bot-logic": "workspace:*",
-    "@xivdyetools/color-blending": "workspace:*",
     "@xivdyetools/core": "workspace:*",
     "@xivdyetools/logger": "workspace:*",
     "@xivdyetools/rate-limiter": "workspace:*",

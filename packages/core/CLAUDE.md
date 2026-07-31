@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `@xivdyetools/core` is the heart of the XIV Dye Tools ecosystem: a Node + browser-compatible TypeScript library that bundles the FFXIV dye database (136 entries), color-science algorithms (RGB/HSV/HSL/LAB/OKLAB/OKLCH/LCH/RYB conversions, DeltaE variants, Kubelka-Munk spectral mixing), color-vision-deficiency simulation, k-d tree dye matching, harmony generation, palette extraction, character-color matching, the Universalis market-board API client, and a 6-language localization service.
 
-It is consumed by every downstream library and app — `@xivdyetools/color-blending`, `@xivdyetools/svg`, `@xivdyetools/bot-logic`, the Vite web app, the public API worker, the Discord bot, the Revolt (stoat) bot, the OG image worker, and the maintainer tool. Because so much depends on it, refactors here ripple everywhere — be conservative and run the full workspace test suite (`pnpm turbo run test`) for any non-trivial change.
+It is consumed by every downstream library and app — `@xivdyetools/svg`, `@xivdyetools/bot-logic`, the Vite web app, the public API worker, the Discord bot, the Revolt (stoat) bot, the OG image worker, and the maintainer tool. Because so much depends on it, refactors here ripple everywhere — be conservative and run the full workspace test suite (`pnpm turbo run test`) for any non-trivial change.
 
 ## Commands
 
@@ -43,6 +43,7 @@ src/
 ├── version.ts                     # Auto-generated from package.json on build
 ├── constants/                     # RGB/HSV ranges, Universalis API config, Brettel matrices
 ├── types/                         # MatchingMethod, OklchWeights, MatchingConfig, MATCHING_PRESETS
+├── blending/                      # Self-contained blending algorithms + conversions — subpath export @xivdyetools/core/blending (absorbed from color-blending)
 ├── config/consolidated-ids.ts     # Patch 7.5 dye consolidation (A=52254, B=52255, C=52256)
 ├── data/
 │   ├── colors_xiv.json            # 136 dyes (raw)
@@ -210,7 +211,7 @@ Internal apps:
 - `apps/maintainer` — Vue tool that reads/writes `colors_xiv.json` and rebuilds locales.
 
 Internal packages:
-- `@xivdyetools/color-blending` — wraps `ColorService` mixing.
+- (formerly `@xivdyetools/color-blending`) — the self-contained blending module now lives at `src/blending/`, exported as `@xivdyetools/core/blending`.
 - `@xivdyetools/svg` — uses `ColorService`, `DyeService`.
 - `@xivdyetools/bot-logic` — uses `DyeService`, `LocalizationService`, `filterDyes`, harmony types.
 

@@ -11,7 +11,7 @@
 
 import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
 import { ColorService, type MatchingMethod, isDyeExcluded } from '@xivdyetools/core';
-import { blendColors } from '@xivdyetools/color-blending';
+import { blendColors } from '@xivdyetools/core/blending';
 import { createTranslator, type LocaleCode } from '../i18n/index.js';
 import { generateGradientBar, type GradientStep } from '@xivdyetools/svg';
 import { dyeService, type ResolvedColor } from '../input-resolution.js';

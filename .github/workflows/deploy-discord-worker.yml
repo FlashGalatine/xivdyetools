@@ -12,7 +12,6 @@ on:
       - 'packages/rate-limiter/**'
       # ARCH-001: Add missing direct dependencies
       - 'packages/bot-logic/**'
-      - 'packages/color-blending/**'
       - 'packages/svg/**'
       # MONO2: worker-middleware appeared in no deploy filter (research/monorepo-2.0/05 §5)
       - 'packages/worker-middleware/**'

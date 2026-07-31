@@ -59,6 +59,34 @@ bot-logic. The source moved verbatim to `packages/bot-logic/src/i18n/` and ships
 
 ---
 
+### `@xivdyetools/color-blending` (npm package)
+
+| Field       | Value |
+|-------------|-------|
+| Deprecated  | 2026-07-31 |
+| Remove by   | Removed from the monorepo 2026-07-31; npm registry deprecation pending |
+| Severity    | Low |
+
+**What it is:** Six self-contained color blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral/Kubelka-Munk)
+with their own conversion helpers, split from core for tree-shaking (REFACTOR-005).
+
+**Why deprecated:** Monorepo 2.0 Tier 1 consolidation (docs/research/monorepo-2.0/05 §6) — the tree-shaking
+win is preserved by a per-entry `exports` map on core instead of a whole separate package. The source moved
+verbatim to `packages/core/src/blending/` and ships as `@xivdyetools/core/blending` since
+`@xivdyetools/core@2.8.0`.
+
+**Migration:** Replace `import { … } from '@xivdyetools/color-blending'` with
+`import { … } from '@xivdyetools/core/blending'`. The API is identical.
+
+**Removal checklist:**
+- [x] Move source + tests into `packages/core/src/blending/` (2026-07-31)
+- [x] Flip all workspace consumers: svg, bot-logic, discord-worker; drop unused dep from stoat-worker (2026-07-31)
+- [x] Remove from publish-packages.yml and deploy path filters (2026-07-31)
+- [ ] `npm deprecate @xivdyetools/color-blending "Merged into @xivdyetools/core (import from @xivdyetools/core/blending)"` — requires npm 2FA, manual step
+- [ ] Follow-up refactor: unify duplicated conversions with ColorService inside core
+
+---
+
 ### `STATE_TRANSITION_PERIOD` (oauth worker)
 
 | Field       | Value |
