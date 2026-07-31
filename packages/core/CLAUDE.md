@@ -46,7 +46,6 @@ src/
 ├── config/consolidated-ids.ts     # Patch 7.5 dye consolidation (A=52254, B=52255, C=52256)
 ├── data/
 │   ├── colors_xiv.json            # 136 dyes (raw)
-│   ├── colors_xiv.csv             # CSV mirror
 │   ├── presets.json               # Curated palette/harmony presets
 │   ├── character_colors.json      # FFXIV skin/hair color tables
 │   ├── character_colors/          # Per-race split files
