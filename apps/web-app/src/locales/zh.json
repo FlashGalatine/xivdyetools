@@ -117,7 +117,9 @@
       "colorIndex": "索引",
       "clickToSelect": "点击下方的颜色",
       "male": "男性",
-      "female": "女性"
+      "female": "女性",
+      "evercoldNoticeTitle": "Evercold（2027年1月）：预设调色板即将停用",
+      "evercoldNotice": "在资料片 Evercold 中，瞳色、发色和肤色将可通过取色器自由选择。届时，这里的预设色板将被取色器取代。"
     }
   },
   "common": {

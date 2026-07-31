@@ -117,7 +117,9 @@
       "colorIndex": "Index",
       "clickToSelect": "Click a color below",
       "male": "Male",
-      "female": "Female"
+      "female": "Female",
+      "evercoldNoticeTitle": "Evercold (January 2027): preset palettes are being retired",
+      "evercoldNotice": "Eye, hair, and skin colors are switching to a free color picker in the Evercold expansion. These preset swatches will be replaced by a color picker here when it launches."
     }
   },
   "common": {

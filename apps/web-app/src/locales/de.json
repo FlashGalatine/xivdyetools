@@ -117,7 +117,9 @@
       "colorIndex": "Index",
       "clickToSelect": "Klicke unten auf eine Farbe",
       "male": "Männlich",
-      "female": "Weiblich"
+      "female": "Weiblich",
+      "evercoldNoticeTitle": "Evercold (Januar 2027): Voreingestellte Paletten werden eingestellt",
+      "evercoldNotice": "Mit der Erweiterung Evercold lassen sich Augen-, Haar- und Hautfarben frei über einen Farbwähler auswählen. Diese Voreinstellungs-Farbfelder werden dann hier durch einen Farbwähler ersetzt."
     }
   },
   "common": {

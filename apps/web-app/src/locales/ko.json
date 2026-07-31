@@ -117,7 +117,9 @@
       "colorIndex": "인덱스",
       "clickToSelect": "아래 색상을 클릭하세요",
       "male": "남성",
-      "female": "여성"
+      "female": "여성",
+      "evercoldNoticeTitle": "Evercold(2027년 1월): 프리셋 팔레트 지원 종료 예정",
+      "evercoldNotice": "확장팩 Evercold에서는 눈, 머리카락, 피부 색상을 컬러 피커로 자유롭게 선택할 수 있게 됩니다. 출시 후 이 프리셋 견본은 컬러 피커로 대체될 예정입니다."
     }
   },
   "common": {

@@ -117,7 +117,9 @@
       "colorIndex": "インデックス",
       "clickToSelect": "下の色をクリック",
       "male": "男性",
-      "female": "女性"
+      "female": "女性",
+      "evercoldNoticeTitle": "Evercold（2027年1月）：プリセットパレットは廃止予定です",
+      "evercoldNotice": "拡張パッケージ「Evercold」では、瞳・髪・肌の色をカラーピッカーで自由に選択できるようになります。発売後、このプリセットスウォッチはカラーピッカーに置き換えられる予定です。"
     }
   },
   "common": {
