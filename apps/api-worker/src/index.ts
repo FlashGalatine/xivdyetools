@@ -26,6 +26,19 @@ import { ApiError, ErrorCode } from './lib/api-error.js';
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 // ============================================
+// DOCS SITE (developers.xivdyetools.app)
+// ============================================
+// Absorbed apps/api-docs (Monorepo 2.0 Tier 2): the VitePress build ships as
+// Workers Static Assets (production env only). Runs BEFORE all API middleware
+// so docs requests skip rate limiting, locale handling, and API headers.
+app.use('*', async (c, next) => {
+  if (c.env.ASSETS && new URL(c.req.url).hostname === 'developers.xivdyetools.app') {
+    return c.env.ASSETS.fetch(c.req.raw);
+  }
+  return next();
+});
+
+// ============================================
 // GLOBAL MIDDLEWARE
 // ============================================
 

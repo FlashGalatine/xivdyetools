@@ -36,3 +36,6 @@ vitest.config.ts.timestamp*
 # Playwright
 test-results/
 playwright-report/
+
+# VitePress build cache (api-worker docs)
+.vitepress/cache/

@@ -32,9 +32,24 @@ name = "xivdyetools-api-worker"
 routes = [
   { pattern = "data.xivdyetools.app", custom_domain = true },
   { pattern = "proxy.xivdyetools.app", custom_domain = true },
-  { pattern = "proxy.xivdyetools.projectgalatine.com", custom_domain = true }
+  { pattern = "proxy.xivdyetools.projectgalatine.com", custom_domain = true },
+  { pattern = "developers.xivdyetools.app", custom_domain = true }
 ]
 vars = { ENVIRONMENT = "production", API_VERSION = "v1", UNIVERSALIS_API_BASE = "https://universalis.app/api/v2", RATE_LIMIT_REQUESTS = "30", RATE_LIMIT_WINDOW_SECONDS = "60" }
+
+# API docs site (absorbed apps/api-docs, Tier 2). Production-only so plain
+# `wrangler dev` needs no docs build; run `pnpm build:docs` before deploying.
+# run_worker_first: the worker's host check routes developers.* to assets and
+# keeps docs pages from shadowing API paths on data.* (asset matching is
+# path-based, not host-based).
+# CUTOVER: the developers.xivdyetools.app custom domain must be released by
+# the old xivdyetools-api-docs Pages project before the first deploy of this
+# config — see DEPRECATIONS.md.
+[env.production.assets]
+directory = "./docs/.vitepress/dist"
+binding = "ASSETS"
+run_worker_first = true
+not_found_handling = "404-page"
 
 [[env.production.kv_namespaces]]
 binding = "RATE_LIMIT"

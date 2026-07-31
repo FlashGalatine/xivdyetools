@@ -7,6 +7,36 @@ Each entry includes a target removal date and migration guide.
 
 ## Active Deprecations
 
+### `apps/api-docs` (standalone CF Pages site)
+
+| Field       | Value |
+|-------------|-------|
+| Deprecated  | 2026-07-31 |
+| Removed     | Merged into `apps/api-worker` 2026-07-31 (Monorepo 2.0 Tier 2) |
+| Severity    | Low — static docs site domain cutover |
+
+**What it was:** The VitePress site documenting api-worker's public API, deployed to its own
+Cloudflare Pages project (`xivdyetools-api-docs`) on `developers.xivdyetools.app` — a full deploy
+workflow + Pages project for ~1k lines of markdown.
+
+**Where it went:** `apps/api-worker/docs/` — built by `pnpm --filter xivdyetools-api-worker run build:docs`
+and served as **Workers Static Assets** (production env only, `run_worker_first` + a host check so docs
+never shadow API paths on data.*). The docs now deploy atomically with the API they document.
+
+**⚠️ Production cutover (manual):**
+1. In the Cloudflare dashboard, remove the `developers.xivdyetools.app` custom domain from the
+   `xivdyetools-api-docs` Pages project.
+2. Deploy api-worker (`deploy --env production`) — its wrangler.toml claims the domain.
+3. Smoke-test `https://developers.xivdyetools.app/`.
+4. Delete the Pages project after the cutover window.
+
+**Removal checklist:**
+- [x] Content moved to `apps/api-worker/docs/`; vitepress build wired into the api-worker deploy (2026-07-31)
+- [x] `deploy-api-docs.yml` deleted (2026-07-31)
+- [ ] Pages-project domain cutover (steps above) — **manual, at merge/deploy time**
+
+---
+
 ### `apps/universalis-proxy` (standalone worker)
 
 | Field       | Value |

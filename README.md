@@ -30,8 +30,7 @@ Published to npm under the `@xivdyetools` scope:
 | [`moderation-worker`](apps/moderation-worker/) | 1.3.0 | Moderation bot for community presets (CF Worker) |
 | [`presets-api`](apps/presets-api/) | 1.6.0 | Community presets REST API (CF Worker + D1) |
 | [`oauth`](apps/oauth/) | 2.5.0 | Discord OAuth + JWT issuance (CF Worker + D1) |
-| [`api-worker`](apps/api-worker/) | 0.5.0 | Public REST API for dyes & color matching at [data.xivdyetools.app](https://data.xivdyetools.app) (CF Worker + KV) |
-| [`api-docs`](apps/api-docs/) | 0.1.0 | API reference site at [developers.xivdyetools.app](https://developers.xivdyetools.app) (VitePress) |
+| [`api-worker`](apps/api-worker/) | 0.5.0 | Public REST API at [data.xivdyetools.app](https://data.xivdyetools.app) + Universalis proxy routes + docs site at [developers.xivdyetools.app](https://developers.xivdyetools.app) (CF Worker + KV) |
 | [`og-worker`](apps/og-worker/) | 1.4.0 | Dynamic OpenGraph image generation (CF Worker + WASM) |
 | [`web-app`](apps/web-app/) | 4.12.0 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
 

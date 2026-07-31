@@ -21,7 +21,7 @@
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **OpenGraph Worker** | v1.4.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Public REST API** | v0.5.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **API Documentation** | v0.1.0 | `xivdyetools-api-docs` | Cloudflare Pages (VitePress) | Active |
+| **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
 | **Stoat Bot** | v0.2.0 | `xivdyetools-stoat-worker` | Node.js | Active |
 
 ### Developer Tools
@@ -371,7 +371,7 @@
 | v0.2.0 | Apr 2026 | `DyeQueryFilters` interface and `parseDyeFilters()` for query-string filter parsing; dye type filtering on `GET /v1/dyes`; filter exclusion on `/closest` and `/within-distance`; 11 unit tests |
 | v0.1.0 | Apr 2026 | Initial release — public REST API for XIV Dye Tools dye database and color matching at `data.xivdyetools.app` |
 
-### xivdyetools-api-docs
+### xivdyetools-api-docs (merged into api-worker 2026-07-31)
 
 | Version | Date | Highlights |
 |---------|------|------------|

@@ -25,7 +25,6 @@ xivdyetools/
 │   ├── presets-api/           # Community presets REST API (CF Worker + D1)
 │   ├── oauth/                 # Discord OAuth + JWT issuance (CF Worker + D1)
 │   ├── api-worker/            # Public dye/color-matching API (CF Worker)
-│   ├── api-docs/              # VitePress docs site for the public API
 │   ├── og-worker/             # Dynamic OpenGraph image generation (CF Worker)
 │   ├── stoat-worker/          # Revolt chat bot (Node.js + revolt.js, NOT a CF Worker)
 │   └── web-app/               # Main web app with 9 color tools (Vite + Lit + Tailwind)
@@ -71,7 +70,7 @@ pnpm --filter @xivdyetools/core exec vitest run src/path/to/file.test.ts
 # Dev servers
 pnpm --filter xivdyetools-web-app run dev          # Vite, localhost:5173
 pnpm --filter xivdyetools-discord-worker run dev   # Wrangler local
-pnpm --filter xivdyetools-api-docs run dev         # VitePress docs site
+pnpm --filter xivdyetools-api-worker run docs:dev  # VitePress docs site (absorbed into api-worker)
 pnpm --filter xivdyetools-stoat-worker run dev     # tsx watch (Node.js)
 ```
 
@@ -155,4 +154,4 @@ pnpm 11 publishes natively and performs the OIDC exchange itself — no npm CLI 
 
 ## Documentation Hub
 
-`docs/` contains architecture overviews, API contracts, deployment guides, and specs — its `CLAUDE.md` indexes all major topics. The public-facing API documentation lives in `apps/api-docs/` (VitePress) and ships separately.
+`docs/` contains architecture overviews, API contracts, deployment guides, and specs — its `CLAUDE.md` indexes all major topics. The public-facing API documentation lives in `apps/api-worker/docs/` (VitePress) and deploys with api-worker as Workers Static Assets on developers.xivdyetools.app.

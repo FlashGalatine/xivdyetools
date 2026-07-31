@@ -18,7 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Monorepo Quick Reference
 
-**17 Active Projects** (8 packages + 9 applications, including the api-docs site) — see [versions.md](versions.md) for current versions.
+**16 Active Projects** (8 packages + 8 applications) — see [versions.md](versions.md) for current versions.
 
 The dye database is **125 standard dyes** (`dyes.json`, schema v2: 7 fields, stainID-keyed; derived fields computed at `initialize()`). The 11 Facewear colors live separately in `facewearColors` (they are not dyes).
 
@@ -31,7 +31,6 @@ The dye database is **125 standard dyes** (`dyes.json`, schema v2: 7 fields, sta
 | `xivdyetools-moderation-worker` | CF Worker | [Overview](projects/moderation-worker/overview.md) |
 | `xivdyetools-oauth` | CF Worker | [Overview](projects/oauth/overview.md) |
 | `xivdyetools-api-worker` | CF Worker + KV | [Overview](projects/api-worker/overview.md) |
-| `xivdyetools-api-docs` | VitePress (CF Pages) | — |
 | `xivdyetools-presets-api` | CF Worker + D1 | [Overview](projects/presets-api/overview.md) |
 | `xivdyetools-og-worker` | CF Worker | [Overview](projects/og-worker/overview.md) |
 | `xivdyetools-stoat-worker` | Node.js | — |

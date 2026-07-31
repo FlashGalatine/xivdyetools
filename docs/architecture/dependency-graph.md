@@ -9,12 +9,12 @@
 ```mermaid
 graph TD
     subgraph "Shared Packages (Monorepo 2.0 — 8 packages)"
-        TYPES["@xivdyetools/types<br/>v1.15.0"]
+        TYPES["@xivdyetools/types<br/>v1.16.0"]
         LOGGER["@xivdyetools/logger<br/>v1.3.0"]
         AUTH["@xivdyetools/auth<br/>v1.3.0 (incl. /encoding)"]
         WKIT["@xivdyetools/worker-kit<br/>v1.0.0 (middleware + /rate-limiter)"]
         TEST["@xivdyetools/test-utils<br/>v1.1.8 (workspace-private)"]
-        CORE["@xivdyetools/core<br/>v2.8.0 (incl. /blending)"]
+        CORE["@xivdyetools/core<br/>v3.0.0 (incl. /blending, schema-v2 data)"]
         SVG["@xivdyetools/svg<br/>v1.2.1"]
         BOTLOGIC["@xivdyetools/bot-logic<br/>v1.4.0 (incl. /i18n)"]
     end
@@ -27,7 +27,6 @@ graph TD
         PRESETS["xivdyetools-presets-api"]
         OG["xivdyetools-og-worker"]
         APIWORKER["xivdyetools-api-worker"]
-        APIDOCS["xivdyetools-api-docs"]
         STOAT["xivdyetools-stoat-worker"]
     end
 
@@ -94,13 +93,12 @@ graph TD
     TEST -.-> APIWORKER
 
     %% API docs documents the API worker
-    APIDOCS -.->|"documents"| APIWORKER
 
     classDef npm fill:#fff3e0,stroke:#e65100
     classDef consumer fill:#e8f5e9,stroke:#2e7d32
 
     class TYPES,LOGGER,AUTH,WKIT,TEST,CORE,SVG,BOTLOGIC npm
-    class WEB,DISCORD,MODBOT,OAUTH,PRESETS,OG,APIWORKER,APIDOCS,STOAT consumer
+    class WEB,DISCORD,MODBOT,OAUTH,PRESETS,OG,APIWORKER,STOAT consumer
 ```
 
 ---
@@ -131,7 +129,6 @@ graph TD
 | **presets-api** | types, logger, auth, worker-kit, hono | test-utils, vitest |
 | **og-worker** | core, types, svg, logger, worker-kit, hono, @resvg/resvg-wasm | vitest |
 | **api-worker** | core, types, logger, worker-kit, hono | test-utils, vitest |
-| **api-docs** | (none — VitePress static site documenting api-worker) | — |
 | **stoat-worker** | core, types, logger, worker-kit, bot-logic, svg, revolt.js | test-utils, vitest |
 
 ---
@@ -139,7 +136,7 @@ graph TD
 ## Core Library Internal Structure
 
 ```
-@xivdyetools/core (v2.8.0)
+@xivdyetools/core (v3.0.0)
 ├── blending/                ← self-contained blending algorithms (subpath @xivdyetools/core/blending)
 ├── services/
 │   ├── ColorService.ts      ← ColorConverter, ColorAccessibility, ColorManipulator
@@ -152,8 +149,8 @@ graph TD
 │   ├── consolidated-ids.ts  ← Patch 7.5 dye consolidation (Type-A=52254, B=52255, C=52256)
 │   └── dye-vocabulary.ts    ← Closed vocabularies + acquisition → (price, currency) coupling
 ├── data/
-│   └── colors_xiv.json      ← 136 entries: 125 standard FFXIV dyes + 11 Facewear color entries
-│                              (Facewear entries get synthetic negative IDs at runtime)
+│   ├── dyes.json            ← 125 standard dyes (schema v2: 7 fields, stainID-keyed; rgb/hsv/cost/flags derived at initialize())
+│   └── facewear_colors.json ← 11 Facewear colors (NOT dyes — facewearColors export)
 └── locales/
     └── {en,ja,de,fr,ko,zh}.json
 

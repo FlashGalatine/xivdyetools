@@ -147,7 +147,7 @@ Composes the shared `rateLimitMiddleware` factory from `@xivdyetools/worker-kit`
 
 **Service Bindings:** None. `api-worker` is standalone and public-facing — it does not call other workers. Other workers do not currently bind to it (clients hit `data.xivdyetools.app` over HTTPS).
 
-**Documentation:** [`apps/api-docs/`](../api-docs/) is the VitePress site documenting this worker's public API surface, deployed to Cloudflare Pages.
+**Documentation:** `docs/` (in this app) is the VitePress site documenting this worker's public API surface — built by `pnpm run build:docs` and served as Workers Static Assets on developers.xivdyetools.app (absorbed from apps/api-docs).
 
 ## Deployment Checklist
 
@@ -155,5 +155,5 @@ Composes the shared `rateLimitMiddleware` factory from `@xivdyetools/worker-kit`
 2. Bump `version` in `package.json` if behavior changed.
 3. `pnpm deploy` to staging; smoke-test the staging URL.
 4. `pnpm deploy:production` to ship to `data.xivdyetools.app`.
-5. If any new endpoints/parameters were added, update **both** `apps/api-docs/reference/dyes.md` (or `matching.md`) and the `index.md` quick-start examples — the docs site is the public contract.
+5. If any new endpoints/parameters were added, update **both** `docs/reference/dyes.md` (or `matching.md`) and the `index.md` quick-start examples — the docs site is the public contract.
 6. Verify `X-RateLimit-*` headers appear on a `/v1/*` response and `X-Request-Id` is unique per call.
