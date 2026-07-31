@@ -9,7 +9,7 @@
  * @module services/rate-limiter
  */
 
-import { MemoryRateLimiter } from '@xivdyetools/rate-limiter';
+import { MemoryRateLimiter } from '@xivdyetools/worker-kit/rate-limiter';
 
 /**
  * Rate limit configuration (seconds-based interface)

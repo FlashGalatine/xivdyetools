@@ -1,6 +1,18 @@
 # Changelog
 
-All notable changes to `@xivdyetools/worker-middleware` will be documented in this file.
+All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-middleware`) will be documented in this file.
+
+## [1.0.0] - 2026-07-31
+
+Monorepo 2.0 Tier 1 package consolidation: `@xivdyetools/worker-middleware` v1.2.0 and `@xivdyetools/rate-limiter` v1.5.0 merged into this new package.
+
+### Added
+
+- `src/middleware/` — the Hono middleware stack (formerly worker-middleware; API unchanged), at the package root and `./middleware`.
+- `src/rate-limiter/` — the rate limiting engine (formerly rate-limiter; API unchanged), at `./rate-limiter` with backend subpaths `./rate-limiter/{memory,kv,upstash,presets}`.
+- `hono` and `@cloudflare/workers-types` are both optional peers, so rate-limiter-only consumers (e.g. stoat-worker) don't need hono.
+
+Entries below this point are `@xivdyetools/worker-middleware` history; `@xivdyetools/rate-limiter`'s changelog lives in git history (`packages/rate-limiter/CHANGELOG.md` before 2026-07-31).
 
 ## [1.2.0] - 2026-07-19
 

@@ -11,8 +11,7 @@ on:
       - 'packages/logger/**'
       # MONO2: missing direct deps svg + worker-middleware, and their transitive rate-limiter (research/monorepo-2.0/05 §5)
       - 'packages/svg/**'
-      - 'packages/worker-middleware/**'
-      - 'packages/rate-limiter/**'
+      - 'packages/worker-kit/**'
   workflow_dispatch:
 
 concurrency:

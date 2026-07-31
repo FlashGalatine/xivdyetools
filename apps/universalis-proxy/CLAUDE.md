@@ -9,7 +9,7 @@ A Cloudflare Worker that proxies a small subset of the [Universalis](https://uni
 1. **CORS reliability** — Universalis returns error responses (notably 429s) without CORS headers, breaking browser callers. This proxy stamps `Access-Control-*` headers onto **every** response, including errors.
 2. **Edge caching + coalescing** — Cloudflare's Cache API + an in-isolate request coalescer absorb traffic spikes and reduce upstream pressure. Aggregated price queries cache for 5 minutes; data-center / world lists cache for 24 hours.
 
-The Worker only exposes three GET endpoints (`/api/v2/aggregated/:dc/:itemIds`, `/api/v2/data-centers`, `/api/v2/worlds`) plus health checks. It runs without any KV / D1 / R2 bindings — caching is purely Cache API + the in-memory `MemoryRateLimiter` from `@xivdyetools/rate-limiter`.
+The Worker only exposes three GET endpoints (`/api/v2/aggregated/:dc/:itemIds`, `/api/v2/data-centers`, `/api/v2/worlds`) plus health checks. It runs without any KV / D1 / R2 bindings — caching is purely Cache API + the in-memory `MemoryRateLimiter` from `@xivdyetools/worker-kit/rate-limiter`.
 
 ## Commands
 
@@ -69,7 +69,7 @@ src/
 │   ├── cache-service.ts           # Cache API wrapper (synthetic URL keys)
 │   ├── cached-fetch.ts            # Orchestrator: lookup → coalesce → upstream → store
 │   ├── request-coalescer.ts       # In-flight request dedup keyed by cacheKey
-│   └── rate-limiter.ts            # Adapter over @xivdyetools/rate-limiter
+│   └── rate-limiter.ts            # Adapter over @xivdyetools/worker-kit/rate-limiter
 ├── types/
 │   └── cache.ts                   # Env, CacheConfig, CacheResult, CacheSource types
 └── index.test.ts                  # Top-level integration test
@@ -141,7 +141,7 @@ Each `CacheConfig` has both `cacheTtl` (TTL) and `swrWindow` (extra grace period
 
 Inputs are validated in this order — the cheapest checks first:
 
-1. Rate-limit by client IP via `getClientIp()` from `@xivdyetools/rate-limiter` (prefers unspoofable `CF-Connecting-IP`; deliberately ignores `X-Forwarded-For` — BUG-066). 429 with `Retry-After`. The `MemoryRateLimiter` is per-isolate and best-effort; the Cache API + coalescer are the real upstream protection.
+1. Rate-limit by client IP via `getClientIp()` from `@xivdyetools/worker-kit/rate-limiter` (prefers unspoofable `CF-Connecting-IP`; deliberately ignores `X-Forwarded-For` — BUG-066). 429 with `Retry-After`. The `MemoryRateLimiter` is per-isolate and best-effort; the Cache API + coalescer are the real upstream protection.
 2. Datacenter against `isValidDatacenterOrWorld()` whitelist. 400 if unknown.
 3. `itemIds` matches `^[\d,]+$`. 400 otherwise.
 4. ID count between 1 and 100 (Universalis's documented max). 400 otherwise.
@@ -157,14 +157,14 @@ Inputs are validated in this order — the cheapest checks first:
 | Package | Purpose |
 |---------|---------|
 | `hono` | HTTP framework / routing |
-| `@xivdyetools/rate-limiter` | `MemoryRateLimiter` for per-IP throttling |
-| `@xivdyetools/worker-middleware` | `requestIdMiddleware`, `loggerMiddleware`, `getLogger` for cross-worker tracing parity |
+| `@xivdyetools/worker-kit/rate-limiter` | `MemoryRateLimiter` for per-IP throttling |
+| `@xivdyetools/worker-kit` | `requestIdMiddleware`, `loggerMiddleware`, `getLogger` for cross-worker tracing parity |
 
 ## Related Projects
 
 **Dependencies:**
-- `@xivdyetools/rate-limiter` — sliding-window limiter (Memory backend)
-- `@xivdyetools/worker-middleware` — shared Hono middleware
+- `@xivdyetools/worker-kit/rate-limiter` — sliding-window limiter (Memory backend)
+- `@xivdyetools/worker-kit` — shared Hono middleware
 
 **Consumed by:**
 - `xivdyetools-web-app` — the budget / market-board / pricing tools fetch this proxy from the browser

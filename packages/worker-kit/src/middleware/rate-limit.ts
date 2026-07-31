@@ -18,8 +18,8 @@ import type {
   RateLimiter,
   RateLimitConfig,
   RateLimitResult,
-} from '@xivdyetools/rate-limiter';
-import { getRateLimitHeaders } from '@xivdyetools/rate-limiter';
+} from '../rate-limiter/index.js';
+import { getRateLimitHeaders } from '../rate-limiter/index.js';
 
 /**
  * Options for the rate limit middleware factory.
@@ -50,7 +50,7 @@ export interface RateLimitMiddlewareOptions {
    * spoofed (`X-Forwarded-For: <random>` per request → unlimited quota) and
    * will silently re-introduce the spoofing class fixed by `BUG-018` /
    * 2026-04-07/FINDING-006. Use `getClientIp(c.req.raw)` from
-   * `@xivdyetools/rate-limiter` — it prefers Cloudflare's `CF-Connecting-IP`
+   * `@xivdyetools/worker-kit/rate-limiter` — it prefers Cloudflare's `CF-Connecting-IP`
    * header (set by the edge, not spoofable) and ignores `X-Forwarded-For`
    * by default.
    *
@@ -89,8 +89,8 @@ export interface RateLimitMiddlewareOptions {
  *
  * @example IP-based rate limiting (presets-api style)
  * ```typescript
- * import { rateLimitMiddleware } from '@xivdyetools/worker-middleware';
- * import { MemoryRateLimiter, getClientIp, PUBLIC_API_LIMITS } from '@xivdyetools/rate-limiter';
+ * import { rateLimitMiddleware } from '@xivdyetools/worker-kit';
+ * import { MemoryRateLimiter, getClientIp, PUBLIC_API_LIMITS } from '@xivdyetools/worker-kit/rate-limiter';
  *
  * const limiter = new MemoryRateLimiter();
  *
@@ -103,8 +103,8 @@ export interface RateLimitMiddlewareOptions {
  *
  * @example KV-backed rate limiting (api-worker style)
  * ```typescript
- * import { rateLimitMiddleware } from '@xivdyetools/worker-middleware';
- * import { KVRateLimiter, getClientIp } from '@xivdyetools/rate-limiter';
+ * import { rateLimitMiddleware } from '@xivdyetools/worker-kit';
+ * import { KVRateLimiter, getClientIp } from '@xivdyetools/worker-kit/rate-limiter';
  *
  * app.use('*', rateLimitMiddleware({
  *   backend: new KVRateLimiter({ kv: env.RATE_LIMIT, keyPrefix: 'api:ip:' }),

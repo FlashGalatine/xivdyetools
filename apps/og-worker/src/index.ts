@@ -19,7 +19,7 @@ import {
   requestIdMiddleware,
   loggerMiddleware,
   getLogger,
-} from '@xivdyetools/worker-middleware';
+} from '@xivdyetools/worker-kit';
 import { extractLocaleCode } from '@xivdyetools/core';
 import type { LocaleCode } from '@xivdyetools/types';
 import { detectCrawlerFromRequest, getCrawlerName } from './crawler-detector';

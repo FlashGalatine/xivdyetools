@@ -6,7 +6,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Hono } from 'hono';
-import type { RateLimiter, RateLimitConfig, RateLimitResult } from '@xivdyetools/rate-limiter';
+import type { RateLimiter, RateLimitConfig, RateLimitResult } from '../rate-limiter/index.js';
 import { rateLimitMiddleware } from './rate-limit.js';
 
 // ---------------------------------------------------------------------------

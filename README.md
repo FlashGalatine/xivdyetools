@@ -15,11 +15,10 @@ Published to npm under the `@xivdyetools` scope:
 | [`@xivdyetools/types`](packages/types/) | 1.15.0 | Branded types (`HexColor`, `DyeId`, etc.) and shared interfaces |
 | [`@xivdyetools/logger`](packages/logger/) | 1.3.0 | Multi-runtime logging (browser, Node, CF Workers) with secret redaction |
 | [`@xivdyetools/auth`](packages/auth/) | 1.3.0 | JWT verification, HMAC signing, Discord Ed25519 verification, Base64URL/hex encoding |
-| [`@xivdyetools/rate-limiter`](packages/rate-limiter/) | 1.5.0 | Sliding window rate limiting (Memory, KV, Upstash backends) |
+| [`@xivdyetools/worker-kit`](packages/worker-kit/) | 1.0.0 | Worker toolkit: Hono middleware (request ID, logger, rate limit) + rate limiting backends |
 | [`@xivdyetools/core`](packages/core/) | 2.8.0 | Color algorithms, 136-dye database, k-d tree matching, 6-language i18n, blending (`/blending`) |
 | [`@xivdyetools/svg`](packages/svg/) | 1.2.1 | Platform-agnostic SVG card generators (pure functions: data in → SVG out) |
 | [`@xivdyetools/bot-logic`](packages/bot-logic/) | 1.4.0 | Platform-agnostic command business logic + bot i18n engine (shared by Discord + Stoat bots) |
-| [`@xivdyetools/worker-middleware`](packages/worker-middleware/) | 1.2.0 | Shared Hono middleware: request-ID tracing, structured logger, rate limiting |
 | [`@xivdyetools/test-utils`](packages/test-utils/) | 1.1.8 | Cloudflare Workers mocks (D1, KV, R2) and test factories |
 
 ### Applications (`apps/`)
@@ -72,11 +71,11 @@ pnpm --filter xivdyetools-discord-worker run dev
 
 ```
 types, crypto, logger ──────────────────────────────────┐ (no internal deps)
-auth (→ crypto), rate-limiter ──────────────────────────┤
+auth ───────────────────────────────────────────────────┤
 core (→ types, logger), test-utils (→ types, logger) ──┤
 svg (→ core, types) ────────────────────────────────────┤
 bot-logic (→ core, svg) ────────────────────────────────┤
-worker-middleware (→ logger, rate-limiter) ─────────────┤
+worker-kit (→ logger) ──────────────────────────────────┤
                                                         │
                     Applications ◄──────────────────────┘
 ```

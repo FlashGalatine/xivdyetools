@@ -10,8 +10,7 @@ on:
       - 'packages/core/**'
       - 'packages/types/**'
       - 'packages/logger/**'
-      - 'packages/rate-limiter/**'
-      - 'packages/worker-middleware/**'
+      - 'packages/worker-kit/**'
       - '.github/workflows/deploy-api-worker.yml'
   workflow_dispatch:
 

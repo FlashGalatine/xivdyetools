@@ -235,9 +235,9 @@ JWT revocation is enforced on `/auth/me` and during refresh by checking `TOKEN_B
 | `hono` | HTTP framework |
 | `@xivdyetools/types` | Shared interfaces (JWTPayload, AuthProvider, XIVAuthUser, etc.) |
 | `@xivdyetools/auth` | JWT verification/revocation primitives + Base64URL helpers (`/encoding`) |
-| `@xivdyetools/rate-limiter` | Backend-agnostic rate limiter primitives |
+| `@xivdyetools/worker-kit/rate-limiter` | Backend-agnostic rate limiter primitives |
 | `@xivdyetools/logger` | Structured logging |
-| `@xivdyetools/worker-middleware` | Shared Hono middleware (request ID, logger) |
+| `@xivdyetools/worker-kit` | Shared Hono middleware (request ID, logger) |
 | `miniflare` (dev) | Local DO + KV emulation for tests |
 
 ## Testing
@@ -252,7 +252,7 @@ npx vitest run -t "PKCE"                              # Pattern match
 
 ## Related Projects
 
-**Dependencies:** `@xivdyetools/types`, `@xivdyetools/auth`, `@xivdyetools/rate-limiter`, `@xivdyetools/logger`, `@xivdyetools/worker-middleware`
+**Dependencies:** `@xivdyetools/types`, `@xivdyetools/auth`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/logger`, `@xivdyetools/worker-kit`
 
 **Shares `JWT_SECRET` with:** `xivdyetools-presets-api` (which verifies these JWTs on web auth)
 

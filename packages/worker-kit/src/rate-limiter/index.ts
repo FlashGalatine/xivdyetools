@@ -1,5 +1,5 @@
 /**
- * @xivdyetools/rate-limiter
+ * @xivdyetools/worker-kit/rate-limiter
  *
  * Shared rate limiting utilities for the xivdyetools ecosystem.
  *
@@ -9,7 +9,7 @@
  *
  * @example
  * ```typescript
- * import { MemoryRateLimiter, getClientIp, getRateLimitHeaders } from '@xivdyetools/rate-limiter';
+ * import { MemoryRateLimiter, getClientIp, getRateLimitHeaders } from '@xivdyetools/worker-kit/rate-limiter';
  *
  * const limiter = new MemoryRateLimiter();
  *

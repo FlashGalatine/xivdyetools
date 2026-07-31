@@ -15,13 +15,13 @@ import {
   requestIdMiddleware,
   loggerMiddleware,
   getLogger,
-} from '@xivdyetools/worker-middleware';
+} from '@xivdyetools/worker-kit';
 import type { Env } from './types/cache';
 import { CACHE_CONFIGS } from './config/cache';
 import { isValidDatacenterOrWorld, isNameInUpstreamLists } from './config/datacenters';
 import { cachedFetch, buildCacheHeaders, UpstreamError, ResponseTooLargeError } from './services/cached-fetch';
 import { checkRateLimit, getRateLimitHeaders, type RateLimitConfig } from './services/rate-limiter';
-import { getClientIp } from '@xivdyetools/rate-limiter';
+import { getClientIp } from '@xivdyetools/worker-kit/rate-limiter';
 
 /**
  * Retry-After header value when rate limited (seconds)

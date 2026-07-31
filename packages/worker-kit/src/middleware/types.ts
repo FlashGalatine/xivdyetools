@@ -1,5 +1,5 @@
 /**
- * @xivdyetools/worker-middleware - Type Definitions
+ * @xivdyetools/worker-kit - Type Definitions
  *
  * Shared types for Hono context variables set by the middleware stack.
  *
@@ -32,7 +32,7 @@ declare module 'hono' {
  *
  * @example
  * ```typescript
- * import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
+ * import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
  *
  * type Variables = MiddlewareVariables & {
  *   auth: AuthContext;

@@ -11,12 +11,11 @@ on:
           - all-modified
           - '@xivdyetools/types'
           - '@xivdyetools/logger'
-          - '@xivdyetools/rate-limiter'
           - '@xivdyetools/auth'
           - '@xivdyetools/core'
           - '@xivdyetools/svg'
           - '@xivdyetools/bot-logic'
-          - '@xivdyetools/worker-middleware'
+          - '@xivdyetools/worker-kit'
 
 jobs:
   detect:
@@ -50,10 +49,9 @@ jobs:
           TIER_ORDER=(
             "@xivdyetools/types"
             "@xivdyetools/logger"
-            "@xivdyetools/rate-limiter"
             "@xivdyetools/auth"
             "@xivdyetools/core"
-            "@xivdyetools/worker-middleware"
+            "@xivdyetools/worker-kit"
             "@xivdyetools/svg"
             "@xivdyetools/bot-logic"
           )

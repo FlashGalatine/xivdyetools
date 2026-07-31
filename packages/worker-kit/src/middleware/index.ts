@@ -1,5 +1,5 @@
 /**
- * @xivdyetools/worker-middleware
+ * @xivdyetools/worker-kit
  *
  * Shared Hono middleware for xivdyetools Cloudflare Workers.
  *
@@ -17,8 +17,8 @@
  *   loggerMiddleware,
  *   getRequestId,
  *   getLogger,
- * } from '@xivdyetools/worker-middleware';
- * import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
+ * } from '@xivdyetools/worker-kit';
+ * import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
  *
  * type Variables = MiddlewareVariables & { auth: AuthContext };
  * const app = new Hono<{ Bindings: Env; Variables: Variables }>();

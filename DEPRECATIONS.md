@@ -87,6 +87,38 @@ verbatim to `packages/core/src/blending/` and ships as `@xivdyetools/core/blendi
 
 ---
 
+### `@xivdyetools/worker-middleware` + `@xivdyetools/rate-limiter` (npm packages)
+
+| Field       | Value |
+|-------------|-------|
+| Deprecated  | 2026-07-31 |
+| Remove by   | Removed from the monorepo 2026-07-31; npm registry deprecation pending |
+| Severity    | Low |
+
+**What they are:** The shared Hono middleware stack (request ID, logger, rate-limit factory) and the
+sliding-window rate limiting engine (Memory/KV/Upstash backends) it wraps, published as two npm packages.
+
+**Why deprecated:** Monorepo 2.0 Tier 1 consolidation (docs/research/monorepo-2.0/05 §6) — worker-middleware
+was rate-limiter's top consumer and mostly wraps it; the pair also had the worst deploy-filter coverage in CI.
+Both moved verbatim into `packages/worker-kit/` (`src/middleware/`, `src/rate-limiter/`) and ship as
+`@xivdyetools/worker-kit` since v1.0.0.
+
+**Migration:**
+- `import { … } from '@xivdyetools/worker-middleware'` → `import { … } from '@xivdyetools/worker-kit'` (or `/middleware`)
+- `import { … } from '@xivdyetools/rate-limiter'` → `import { … } from '@xivdyetools/worker-kit/rate-limiter'`
+- Backend subpaths preserved: `/rate-limiter/{memory,kv,upstash,presets}`
+
+Both APIs are unchanged.
+
+**Removal checklist:**
+- [x] Assemble `packages/worker-kit` (worker-middleware shell renamed, rate-limiter absorbed) (2026-07-31)
+- [x] Flip all 8 consuming apps (package.json + imports) (2026-07-31)
+- [x] Replace both packages in publish-packages.yml and all deploy path filters (2026-07-31)
+- [ ] **npm trusted-publisher setup for `@xivdyetools/worker-kit`** (npmjs.com → package → Settings) + first version must be published manually by a 2FA-authenticated human — OIDC cannot create a new package
+- [ ] `npm deprecate` both old packages pointing at `@xivdyetools/worker-kit` — requires npm 2FA, manual step
+
+---
+
 ### `STATE_TRANSITION_PERIOD` (oauth worker)
 
 | Field       | Value |

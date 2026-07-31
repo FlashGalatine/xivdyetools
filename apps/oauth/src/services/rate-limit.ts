@@ -25,7 +25,7 @@ import {
   getClientIp as sharedGetClientIp,
   getOAuthLimit,
   type RateLimiter,
-} from '@xivdyetools/rate-limiter';
+} from '@xivdyetools/worker-kit/rate-limiter';
 
 /**
  * Rate limit check result

@@ -28,7 +28,7 @@
     "@xivdyetools/bot-logic": "workspace:*",
     "@xivdyetools/core": "workspace:*",
     "@xivdyetools/logger": "workspace:*",
-    "@xivdyetools/rate-limiter": "workspace:*",
+    "@xivdyetools/worker-kit": "workspace:*",
     "@xivdyetools/svg": "workspace:*",
     "@xivdyetools/types": "workspace:*",
     "revolt.js": "^7.1.1"

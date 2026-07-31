@@ -18,7 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Monorepo Quick Reference
 
-**20 Active Projects** (9 packages + 11 applications, including the api-docs site) — see [versions.md](versions.md) for current versions.
+**19 Active Projects** (8 packages + 11 applications, including the api-docs site) — see [versions.md](versions.md) for current versions.
 
 The dye database is **125 standard dyes plus 11 Facewear color entries** (synthetic negative IDs assigned at runtime by `DyeDatabase.initialize()` — `Dye.itemID` is always `number`).
 
@@ -46,8 +46,7 @@ The dye database is **125 standard dyes plus 11 Facewear color entries** (synthe
 | `@xivdyetools/types` | [Overview](projects/types/overview.md) |
 | `@xivdyetools/logger` | [Overview](projects/logger/overview.md) |
 | `@xivdyetools/auth` | — |
-| `@xivdyetools/rate-limiter` | — |
-| `@xivdyetools/worker-middleware` | — |
+| `@xivdyetools/worker-kit` | — |
 | `@xivdyetools/svg` | — |
 | `@xivdyetools/bot-logic` | — |
 | `@xivdyetools/test-utils` | [Overview](projects/test-utils/overview.md) |

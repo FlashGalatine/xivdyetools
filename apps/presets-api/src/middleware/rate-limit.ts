@@ -7,8 +7,8 @@
  * and error handling across workers.
  */
 
-import { rateLimitMiddleware } from '@xivdyetools/worker-middleware';
-import { MemoryRateLimiter, getClientIp, PUBLIC_API_LIMITS } from '@xivdyetools/rate-limiter';
+import { rateLimitMiddleware } from '@xivdyetools/worker-kit';
+import { MemoryRateLimiter, getClientIp, PUBLIC_API_LIMITS } from '@xivdyetools/worker-kit/rate-limiter';
 
 /**
  * Singleton rate limiter instance for IP-based limiting

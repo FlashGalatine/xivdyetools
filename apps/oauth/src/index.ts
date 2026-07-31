@@ -12,8 +12,8 @@ import { tokenRouter } from './handlers/refresh.js';
 import { xivauthRouter } from './handlers/xivauth.js';
 import { checkRateLimit, getClientIp } from './services/rate-limit.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
-import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-middleware';
-import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
+import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-kit';
+import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
 import { bodySizeLimit, jsonDepthLimit } from './middleware/body-validation.js';
 
 // Define context variables type

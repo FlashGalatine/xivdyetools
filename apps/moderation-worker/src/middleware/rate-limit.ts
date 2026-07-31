@@ -25,7 +25,7 @@
 
 import type { Context, Next } from 'hono';
 import type { Env } from '../types/env.js';
-import { KVRateLimiter } from '@xivdyetools/rate-limiter';
+import { KVRateLimiter } from '@xivdyetools/worker-kit/rate-limiter';
 
 /**
  * Rate limit configuration

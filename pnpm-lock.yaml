@@ -52,15 +52,12 @@ importers:
       '@xivdyetools/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@xivdyetools/rate-limiter':
-        specifier: workspace:*
-        version: link:../../packages/rate-limiter
       '@xivdyetools/types':
         specifier: workspace:*
         version: link:../../packages/types
-      '@xivdyetools/worker-middleware':
+      '@xivdyetools/worker-kit':
         specifier: workspace:*
-        version: link:../../packages/worker-middleware
+        version: link:../../packages/worker-kit
       hono:
         specifier: ^4.12.32
         version: 4.12.32
@@ -110,18 +107,15 @@ importers:
       '@xivdyetools/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@xivdyetools/rate-limiter':
-        specifier: workspace:*
-        version: link:../../packages/rate-limiter
       '@xivdyetools/svg':
         specifier: workspace:*
         version: link:../../packages/svg
       '@xivdyetools/types':
         specifier: workspace:*
         version: link:../../packages/types
-      '@xivdyetools/worker-middleware':
+      '@xivdyetools/worker-kit':
         specifier: workspace:*
-        version: link:../../packages/worker-middleware
+        version: link:../../packages/worker-kit
       hono:
         specifier: ^4.12.32
         version: 4.12.32
@@ -229,15 +223,12 @@ importers:
       '@xivdyetools/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@xivdyetools/rate-limiter':
-        specifier: workspace:*
-        version: link:../../packages/rate-limiter
       '@xivdyetools/types':
         specifier: workspace:*
         version: link:../../packages/types
-      '@xivdyetools/worker-middleware':
+      '@xivdyetools/worker-kit':
         specifier: workspace:*
-        version: link:../../packages/worker-middleware
+        version: link:../../packages/worker-kit
       hono:
         specifier: ^4.12.32
         version: 4.12.32
@@ -275,15 +266,12 @@ importers:
       '@xivdyetools/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@xivdyetools/rate-limiter':
-        specifier: workspace:*
-        version: link:../../packages/rate-limiter
       '@xivdyetools/types':
         specifier: workspace:*
         version: link:../../packages/types
-      '@xivdyetools/worker-middleware':
+      '@xivdyetools/worker-kit':
         specifier: workspace:*
-        version: link:../../packages/worker-middleware
+        version: link:../../packages/worker-kit
       hono:
         specifier: ^4.12.32
         version: 4.12.32
@@ -327,9 +315,9 @@ importers:
       '@xivdyetools/types':
         specifier: workspace:*
         version: link:../../packages/types
-      '@xivdyetools/worker-middleware':
+      '@xivdyetools/worker-kit':
         specifier: workspace:*
-        version: link:../../packages/worker-middleware
+        version: link:../../packages/worker-kit
       hono:
         specifier: ^4.12.32
         version: 4.12.32
@@ -355,15 +343,12 @@ importers:
       '@xivdyetools/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@xivdyetools/rate-limiter':
-        specifier: workspace:*
-        version: link:../../packages/rate-limiter
       '@xivdyetools/types':
         specifier: workspace:*
         version: link:../../packages/types
-      '@xivdyetools/worker-middleware':
+      '@xivdyetools/worker-kit':
         specifier: workspace:*
-        version: link:../../packages/worker-middleware
+        version: link:../../packages/worker-kit
       hono:
         specifier: ^4.12.32
         version: 4.12.32
@@ -401,15 +386,15 @@ importers:
       '@xivdyetools/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@xivdyetools/rate-limiter':
-        specifier: workspace:*
-        version: link:../../packages/rate-limiter
       '@xivdyetools/svg':
         specifier: workspace:*
         version: link:../../packages/svg
       '@xivdyetools/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@xivdyetools/worker-kit':
+        specifier: workspace:*
+        version: link:../../packages/worker-kit
       revolt.js:
         specifier: ^7.1.1
         version: 7.2.0
@@ -435,12 +420,9 @@ importers:
 
   apps/universalis-proxy:
     dependencies:
-      '@xivdyetools/rate-limiter':
+      '@xivdyetools/worker-kit':
         specifier: workspace:*
-        version: link:../../packages/rate-limiter
-      '@xivdyetools/worker-middleware':
-        specifier: workspace:*
-        version: link:../../packages/worker-middleware
+        version: link:../../packages/worker-kit
       hono:
         specifier: ^4.12.32
         version: 4.12.32
@@ -612,22 +594,6 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.1.2)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@30.0.0)(msw@2.15.0(@types/node@26.1.2)(typescript@5.9.3))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
 
-  packages/rate-limiter:
-    dependencies:
-      '@upstash/redis':
-        specifier: ^1.38.0
-        version: 1.38.0
-    devDependencies:
-      '@cloudflare/workers-types':
-        specifier: ^5.20260727.1
-        version: 5.20260727.1
-      '@vitest/coverage-v8':
-        specifier: ^4.1.10
-        version: 4.1.10(vitest@4.1.10)
-      vitest:
-        specifier: ^4.1.10
-        version: 4.1.10(@types/node@26.1.2)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@30.0.0)(msw@2.15.0(@types/node@26.1.2)(typescript@5.9.3))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
-
   packages/svg:
     dependencies:
       '@xivdyetools/core':
@@ -678,14 +644,14 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.1.2)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@30.0.0)(msw@2.15.0(@types/node@26.1.2)(typescript@5.9.3))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
 
-  packages/worker-middleware:
+  packages/worker-kit:
     dependencies:
+      '@upstash/redis':
+        specifier: ^1.38.0
+        version: 1.38.0
       '@xivdyetools/logger':
         specifier: workspace:*
         version: link:../logger
-      '@xivdyetools/rate-limiter':
-        specifier: workspace:*
-        version: link:../rate-limiter
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^5.20260727.1

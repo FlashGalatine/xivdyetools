@@ -11,7 +11,7 @@ import { cors } from 'hono/cors';
 import type { Env, Variables } from './types.js';
 
 // Middleware
-import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-middleware';
+import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-kit';
 import { rateLimitMiddleware } from './middleware/rate-limit.js';
 import { localeMiddleware } from './middleware/locale.js';
 

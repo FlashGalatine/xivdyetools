@@ -87,7 +87,7 @@ function getRequestInfo(
  *
  * @example
  * ```typescript
- * import { loggerMiddleware } from '@xivdyetools/worker-middleware';
+ * import { loggerMiddleware } from '@xivdyetools/worker-kit';
  *
  * // Basic usage
  * app.use('*', loggerMiddleware({ serviceName: 'my-worker' }));

@@ -29,9 +29,8 @@
     "@xivdyetools/auth": "workspace:*",
     "@xivdyetools/bot-logic": "workspace:*",
     "@xivdyetools/logger": "workspace:*",
-    "@xivdyetools/rate-limiter": "workspace:*",
     "@xivdyetools/types": "workspace:*",
-    "@xivdyetools/worker-middleware": "workspace:*",
+    "@xivdyetools/worker-kit": "workspace:*",
     "hono": "^4.12.32"
   },
   "devDependencies": {

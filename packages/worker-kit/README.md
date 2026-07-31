@@ -1,8 +1,8 @@
-# @xivdyetools/worker-middleware
+# @xivdyetools/worker-kit
 
-Shared [Hono](https://hono.dev/) middleware for xivdyetools Cloudflare Workers.
+Shared Cloudflare Worker toolkit for xivdyetools: [Hono](https://hono.dev/) middleware (request ID, structured logger, rate limiting) plus the sliding-window rate limiting engine and backends (Memory, KV, Upstash) it wraps.
 
-Eliminates duplicated middleware across workers by providing a consistent, configurable stack for request ID management and structured logging.
+Formed by merging `@xivdyetools/worker-middleware` and `@xivdyetools/rate-limiter` (Monorepo 2.0 Tier 1). Import the middleware from the package root (or `./middleware`) and the rate limiter from `./rate-limiter` (backends: `./rate-limiter/{memory,kv,upstash,presets}`). Both APIs are unchanged from the predecessor packages.
 
 ## Installation
 

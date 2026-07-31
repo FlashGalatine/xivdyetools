@@ -1,0 +1,96 @@
+{
+  "name": "@xivdyetools/worker-kit",
+  "version": "1.0.0",
+  "description": "Shared Cloudflare Worker toolkit for xivdyetools: Hono middleware (request ID, logger, rate limit) + rate limiting backends (Memory, KV, Upstash)",
+  "author": "XIV Dye Tools",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./middleware": {
+      "types": "./dist/middleware/index.d.ts",
+      "import": "./dist/middleware/index.js"
+    },
+    "./rate-limiter": {
+      "types": "./dist/rate-limiter/index.d.ts",
+      "import": "./dist/rate-limiter/index.js"
+    },
+    "./rate-limiter/memory": {
+      "types": "./dist/rate-limiter/backends/memory.d.ts",
+      "import": "./dist/rate-limiter/backends/memory.js"
+    },
+    "./rate-limiter/kv": {
+      "types": "./dist/rate-limiter/backends/kv.d.ts",
+      "import": "./dist/rate-limiter/backends/kv.js"
+    },
+    "./rate-limiter/upstash": {
+      "types": "./dist/rate-limiter/backends/upstash.d.ts",
+      "import": "./dist/rate-limiter/backends/upstash.js"
+    },
+    "./rate-limiter/presets": {
+      "types": "./dist/rate-limiter/presets/index.d.ts",
+      "import": "./dist/rate-limiter/presets/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "type-check": "tsc --noEmit",
+    "clean": "rimraf dist coverage",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.38.0",
+    "@xivdyetools/logger": "workspace:*"
+  },
+  "peerDependencies": {
+    "@cloudflare/workers-types": "^4.0.0",
+    "hono": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@cloudflare/workers-types": {
+      "optional": true
+    },
+    "hono": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260727.1",
+    "hono": "^4.12.32",
+    "@vitest/coverage-v8": "^4.1.10",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "xivdyetools",
+    "middleware",
+    "hono",
+    "cloudflare-workers",
+    "rate-limiting",
+    "request-id",
+    "logger",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FlashGalatine/xivdyetools.git",
+    "directory": "packages/worker-kit"
+  }
+}

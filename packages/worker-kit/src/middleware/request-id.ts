@@ -42,7 +42,7 @@ export interface RequestIdOptions {
  *
  * @example
  * ```typescript
- * import { requestIdMiddleware } from '@xivdyetools/worker-middleware';
+ * import { requestIdMiddleware } from '@xivdyetools/worker-kit';
  *
  * // Default: validates UUID format (recommended)
  * app.use('*', requestIdMiddleware());

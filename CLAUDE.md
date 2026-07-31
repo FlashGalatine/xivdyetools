@@ -14,8 +14,7 @@ xivdyetools/
 │   ├── types/               # Branded types (HexColor, DyeId, etc.) and shared interfaces
 │   ├── logger/              # Multi-runtime logging with secret redaction
 │   ├── auth/                # JWT verification, HMAC signing, Discord Ed25519
-│   ├── rate-limiter/        # Sliding window rate limiting (Memory, KV, Upstash)
-│   ├── worker-middleware/   # Shared Hono middleware (request ID, logger, rate limit)
+│   ├── worker-kit/          # Worker toolkit: Hono middleware + sliding-window rate limiting (Memory, KV, Upstash)
 │   ├── core/                # Color algorithms, dye database (125 standard + 11 Facewear), k-d tree, 6-language i18n
 │   ├── svg/                 # Pure SVG card generators (data → SVG string)
 │   ├── bot-logic/           # Platform-agnostic Discord/Revolt command business logic
@@ -39,10 +38,10 @@ xivdyetools/
 ## Dependency Flow
 
 ```
-types, logger, rate-limiter, auth, ────────────────────────────┐ (Level 0: no internal deps)
+types, logger, auth ───────────────────────────────────────────┐ (Level 0: no internal deps)
 test-utils (→ auth, types) ────────────────────────────────────┤ (Level 1)
 core (→ types, logger) ────────────────────────────────────────┤ (Level 2)
-worker-middleware (→ logger, rate-limiter) ────────────────────┤
+worker-kit (→ logger) ─────────────────────────────────────────┤
 svg (→ core, types) ───────────────────────────────────────────┤ (Level 3)
 bot-logic (→ core, svg, types; incl. /i18n) ───────────────────┤ (Level 4)
                                                                 │

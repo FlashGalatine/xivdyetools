@@ -12,7 +12,7 @@
  *
  * @example
  * ```typescript
- * import { UpstashRateLimiter } from '@xivdyetools/rate-limiter/upstash';
+ * import { UpstashRateLimiter } from '@xivdyetools/worker-kit/rate-limiter/upstash';
  *
  * const limiter = new UpstashRateLimiter({
  *   url: env.UPSTASH_REDIS_REST_URL,

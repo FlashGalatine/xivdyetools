@@ -87,7 +87,7 @@ The bot reads everything from `process.env` at startup via `config.ts`. Use a lo
 |----------|----------|-------------|
 | `BOT_TOKEN` | Yes | Stoat / Revolt bot token. Without it, `loadConfig()` throws and the process exits. |
 | `STATS_AUTHORIZED_USERS` | No | Comma-separated Stoat ULIDs allowed to run admin/stats commands. ULIDs are validated at startup against Crockford Base32; an invalid ID throws. |
-| `UPSTASH_REDIS_REST_URL` | No | Planned: Upstash Redis URL for rate limiting via `@xivdyetools/rate-limiter` Upstash backend. |
+| `UPSTASH_REDIS_REST_URL` | No | Planned: Upstash Redis URL for rate limiting via `@xivdyetools/worker-kit/rate-limiter` Upstash backend. |
 | `UPSTASH_REDIS_REST_TOKEN` | No | Planned: Upstash Redis token. |
 
 There is no `wrangler.toml` and no Cloudflare secrets — this runs on a regular Node host (Fly.io is the planned target).
@@ -104,7 +104,7 @@ This is the most important section. `stoat-worker` and `discord-worker` look sup
 | **Image rendering** | `@resvg/resvg-wasm` (WASM in worker) | Planned: `@resvg/resvg-js` (Node native) |
 | **Image processing** | `@cf-wasm/photon` | Planned: `sharp` |
 | **Storage** | KV (rate-limit, prefs, analytics), D1 via service binding | Planned: SQLite (better-sqlite3) for prefs/analytics |
-| **Rate limit backend** | KV-backed `@xivdyetools/rate-limiter` | Planned: Upstash Redis backend |
+| **Rate limit backend** | KV-backed `@xivdyetools/worker-kit/rate-limiter` | Planned: Upstash Redis backend |
 | **Signature verification** | Ed25519 on every request | None — WebSocket session is implicitly authenticated by `BOT_TOKEN` |
 | **Embed shape** | Discord rich embeds w/ fields, footer, author | Stoat `SendableEmbed`: title/description/icon_url/colour/media (no fields) |
 | **Interactive buttons** | Discord MessageComponent buttons + modals | Stoat reactions with `restrict_reactions: true`; `MessageContextStore` maps message IDs to dye context |
@@ -170,7 +170,7 @@ The top-level `messageCreate` handler wraps `routeCommand()` in try/catch. If a 
 | `@xivdyetools/color-blending` | Color blending algorithms for the planned mixer command |
 | `@xivdyetools/types` | `Dye`, `LocaleCode`, branded color types |
 | `@xivdyetools/logger` | Structured logging |
-| `@xivdyetools/rate-limiter` | Sliding-window limiter (Upstash backend planned) |
+| `@xivdyetools/worker-kit/rate-limiter` | Sliding-window limiter (Upstash backend planned) |
 | `@xivdyetools/test-utils` | Test factories (devDependency) |
 | `tsup` / `tsx` | Build / dev runtime (devDependencies) |
 | `vitest` / `@vitest/coverage-v8` | Tests |
