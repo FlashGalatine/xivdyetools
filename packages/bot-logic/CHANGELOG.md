@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-07-30
+
+Monorepo 2.0 Tier 1 package consolidation.
+
+### Added
+
+- Absorbed `@xivdyetools/bot-i18n` v1.2.1: the `Translator` engine, `LocaleCode` types, and the six bot-UI locale files now live at `@xivdyetools/bot-logic/i18n`. The standalone `@xivdyetools/bot-i18n` package is retired — the API is identical, only the import specifier changes.
+
 ## [1.3.0] - 2026-07-19
 
 2026-07-18 audit remediation (Sprints 4 & 5).

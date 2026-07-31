@@ -1,8 +1,9 @@
 /**
  * Bot UI Translation Service — Discord Worker thin wrapper
  *
- * Re-exports the platform-agnostic @xivdyetools/bot-i18n package and adds
- * the Discord-specific createUserTranslator (which resolves locale from KV).
+ * Re-exports the platform-agnostic bot i18n engine (@xivdyetools/bot-logic/i18n,
+ * formerly @xivdyetools/bot-i18n) and adds the Discord-specific
+ * createUserTranslator (which resolves locale from KV).
  *
  * @module services/bot-i18n
  */
@@ -17,10 +18,10 @@ import type { UserPreferences } from '../types/preferences.js';
 export {
   Translator,
   createTranslator,
-} from '@xivdyetools/bot-i18n';
-export type { LocaleCode } from '@xivdyetools/bot-i18n';
+} from '@xivdyetools/bot-logic/i18n';
+export type { LocaleCode } from '@xivdyetools/bot-logic/i18n';
 
-import { Translator } from '@xivdyetools/bot-i18n';
+import { Translator } from '@xivdyetools/bot-logic/i18n';
 
 /**
  * Create a translator for a user, resolving their locale from KV preferences.

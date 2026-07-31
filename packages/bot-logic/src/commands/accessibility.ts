@@ -10,7 +10,7 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
-import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
+import { createTranslator, type LocaleCode } from '../i18n/index.js';
 import {
   generateAccessibilityComparison,
   generateContrastMatrix,

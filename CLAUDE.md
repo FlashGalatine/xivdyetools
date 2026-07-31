@@ -20,7 +20,6 @@ xivdyetools/
 │   ├── color-blending/      # Six blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral)
 │   ├── svg/                 # Pure SVG card generators (data → SVG string)
 │   ├── bot-logic/           # Platform-agnostic Discord/Revolt command business logic
-│   ├── bot-i18n/            # Bot-facing translation engine (errors, help, status text)
 │   └── test-utils/          # CF Workers mocks (D1, KV, R2) and test factories
 ├── apps/                    # Applications
 │   ├── discord-worker/        # Primary Discord bot (CF Worker + Hono, 20 commands)
@@ -42,17 +41,17 @@ xivdyetools/
 
 ```
 types, logger, rate-limiter, auth, ────────────────────────────┐ (Level 0: no internal deps)
-bot-i18n, color-blending ──────────────────────────────────────┤
+color-blending ────────────────────────────────────────────────┤
 test-utils (→ auth, types) ────────────────────────────────────┤ (Level 1)
 core (→ types, logger) ────────────────────────────────────────┤ (Level 2)
 worker-middleware (→ logger, rate-limiter) ────────────────────┤
 svg (→ core, color-blending, types) ───────────────────────────┤ (Level 3)
-bot-logic (→ core, svg, color-blending, bot-i18n, types) ──────┤ (Level 4)
+bot-logic (→ core, svg, color-blending, types; incl. /i18n) ───┤ (Level 4)
                                                                 │
                             Applications ◄─────────────────────┘
 ```
 
-`stoat-worker` consumes `bot-logic` + `bot-i18n` + `svg` so it shares command logic with `discord-worker` despite running on Node.js + Revolt instead of Cloudflare + Discord.
+`stoat-worker` consumes `bot-logic` (incl. its `/i18n` engine) + `svg` so it shares command logic with `discord-worker` despite running on Node.js + Revolt instead of Cloudflare + Discord.
 
 ## Common Commands
 

@@ -25,7 +25,6 @@
   "author": "Flash Galatine",
   "license": "ISC",
   "dependencies": {
-    "@xivdyetools/bot-i18n": "workspace:*",
     "@xivdyetools/bot-logic": "workspace:*",
     "@xivdyetools/color-blending": "workspace:*",
     "@xivdyetools/core": "workspace:*",

@@ -11,7 +11,6 @@ on:
       - 'packages/auth/**'
       - 'packages/rate-limiter/**'
       # ARCH-001: Add missing direct dependencies
-      - 'packages/bot-i18n/**'
       - 'packages/bot-logic/**'
       - 'packages/color-blending/**'
       - 'packages/svg/**'

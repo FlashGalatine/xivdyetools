@@ -32,6 +32,33 @@ consumers were the auth/JWT path. The source moved verbatim to `packages/auth/sr
 
 ---
 
+### `@xivdyetools/bot-i18n` (npm package)
+
+| Field       | Value |
+|-------------|-------|
+| Deprecated  | 2026-07-30 |
+| Remove by   | Removed from the monorepo 2026-07-30; npm registry deprecation pending |
+| Severity    | Low |
+
+**What it is:** The bot-facing translation engine (`Translator`, `createTranslator`, `LocaleCode`) plus six
+bot-UI locale JSON files, published as a standalone npm package.
+
+**Why deprecated:** Monorepo 2.0 Tier 1 consolidation (docs/research/monorepo-2.0/05 §6) — bot-logic accounted
+for 11 of its 21 import sites and both other consumers (discord-worker, stoat-worker) already depend on
+bot-logic. The source moved verbatim to `packages/bot-logic/src/i18n/` and ships as
+`@xivdyetools/bot-logic/i18n` since `@xivdyetools/bot-logic@1.4.0`.
+
+**Migration:** Replace `import { … } from '@xivdyetools/bot-i18n'` with
+`import { … } from '@xivdyetools/bot-logic/i18n'`. The API is identical.
+
+**Removal checklist:**
+- [x] Move source + tests + locale JSON into `packages/bot-logic/src/i18n/` (2026-07-30)
+- [x] Flip all workspace consumers: bot-logic, discord-worker, stoat-worker (2026-07-30)
+- [x] Remove from publish-packages.yml and deploy path filters (2026-07-30)
+- [ ] `npm deprecate @xivdyetools/bot-i18n "Merged into @xivdyetools/bot-logic (import from @xivdyetools/bot-logic/i18n)"` — requires npm 2FA, manual step
+
+---
+
 ### `STATE_TRANSITION_PERIOD` (oauth worker)
 
 | Field       | Value |

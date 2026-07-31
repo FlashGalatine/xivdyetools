@@ -262,7 +262,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 | `@xivdyetools/rate-limiter` | Sliding window backends (Memory/KV/Upstash) |
 | `@xivdyetools/svg` | Pure SVG card generators |
 | `@xivdyetools/bot-logic` | Platform-agnostic command business logic |
-| `@xivdyetools/bot-i18n` | Bot localization strings |
+| `@xivdyetools/bot-logic/i18n` | Bot localization strings (absorbed from bot-i18n) |
 | `@xivdyetools/color-blending` | Six blending algorithms |
 | `@xivdyetools/logger` | Structured logging with secret redaction |
 | `@xivdyetools/worker-middleware` | Shared Hono middleware (request ID, logger, rate limit) |
@@ -276,7 +276,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 2. `interaction.locale` (Discord client locale)
 3. Default `en`
 
-Dye names come from `@xivdyetools/core`; bot UI strings come from `@xivdyetools/bot-i18n` via `createTranslator(locale)` / `createUserTranslator(env.KV, userId, locale, logger)`.
+Dye names come from `@xivdyetools/core`; bot UI strings come from `@xivdyetools/bot-logic/i18n` via `createTranslator(locale)` / `createUserTranslator(env.KV, userId, locale, logger)`.
 
 ## Webhook Endpoints
 
@@ -300,7 +300,7 @@ npm run test:integration                                  # Integration suite
 
 ## Related Projects
 
-**Dependencies:** `@xivdyetools/core`, `@xivdyetools/types`, `@xivdyetools/auth`, `@xivdyetools/rate-limiter`, `@xivdyetools/svg`, `@xivdyetools/bot-logic`, `@xivdyetools/bot-i18n`, `@xivdyetools/color-blending`, `@xivdyetools/logger`, `@xivdyetools/worker-middleware`
+**Dependencies:** `@xivdyetools/core`, `@xivdyetools/types`, `@xivdyetools/auth`, `@xivdyetools/rate-limiter`, `@xivdyetools/svg`, `@xivdyetools/bot-logic` (incl. `/i18n`), `@xivdyetools/color-blending`, `@xivdyetools/logger`, `@xivdyetools/worker-middleware`
 
 **Service Bindings (outbound):** `xivdyetools-presets-api`, `xivdyetools-universalis-proxy`
 

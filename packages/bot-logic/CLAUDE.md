@@ -77,7 +77,7 @@ type ResolveColorOptions = { excludeFacewear?; findClosestForHex? };
 async function initializeLocale(locale: LocaleCode): Promise<void>;
 function getLocalizedDyeName(itemID: number, fallbackName: string, locale?: LocaleCode): string;
 function getLocalizedCategory(category: string, locale?: LocaleCode): string;
-type LocaleCode;  // re-exported from @xivdyetools/bot-i18n: 'en'|'ja'|'de'|'fr'|'ko'|'zh'
+type LocaleCode;  // re-exported from ./i18n (formerly @xivdyetools/bot-i18n): 'en'|'ja'|'de'|'fr'|'ko'|'zh'
 ```
 
 ### Shared types & helpers
@@ -152,7 +152,7 @@ Discord adapters map `EmbedData` onto `APIEmbed` (`title → title`, `color → 
 - `@xivdyetools/core` — `DyeService`, `dyeDatabase`, `LocalizationService`, harmony types, `filterDyes`.
 - `@xivdyetools/color-blending` — `blendColors`, `BlendingMode`.
 - `@xivdyetools/svg` — every `generate*` SVG used by command results.
-- `@xivdyetools/bot-i18n` — `Translator`, `createTranslator`, `LocaleCode`.
+- Built-in `src/i18n/` — `Translator`, `createTranslator`, `LocaleCode` + six bot-UI locale JSONs, exported as `@xivdyetools/bot-logic/i18n` (absorbed from the retired `@xivdyetools/bot-i18n`).
 
 ## Publishing
 

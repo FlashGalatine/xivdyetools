@@ -12,11 +12,10 @@ on:
       # MONO2: missing direct deps (research/monorepo-2.0/05 §5)
       - 'packages/worker-middleware/**'
       - 'packages/bot-logic/**'
-      # MONO2: transitive via bot-logic (→ core, svg, color-blending, bot-i18n)
+      # MONO2: transitive via bot-logic (→ core, svg, color-blending)
       - 'packages/core/**'
       - 'packages/svg/**'
       - 'packages/color-blending/**'
-      - 'packages/bot-i18n/**'
   workflow_dispatch:
 
 concurrency:

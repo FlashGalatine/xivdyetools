@@ -29,8 +29,8 @@ export {
   getLocalizedCategory,
 } from '@xivdyetools/bot-logic';
 
-export type { LocaleCode } from '@xivdyetools/bot-i18n';
-import type { LocaleCode } from '@xivdyetools/bot-i18n';
+export type { LocaleCode } from '@xivdyetools/bot-logic/i18n';
+import type { LocaleCode } from '@xivdyetools/bot-logic/i18n';
 
 /**
  * Locale display information

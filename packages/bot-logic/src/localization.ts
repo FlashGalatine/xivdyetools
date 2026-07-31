@@ -14,8 +14,8 @@
  */
 
 import { LocalizationService } from '@xivdyetools/core';
-export type { LocaleCode } from '@xivdyetools/bot-i18n';
-import type { LocaleCode } from '@xivdyetools/bot-i18n';
+export type { LocaleCode } from './i18n/index.js';
+import type { LocaleCode } from './i18n/index.js';
 
 // ============================================================================
 // Per-Locale Instance Cache (avoids singleton race condition in CF Workers)

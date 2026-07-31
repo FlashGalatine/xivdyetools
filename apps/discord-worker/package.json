@@ -26,7 +26,6 @@
     "@cloudflare/workers-types": "^5.20260727.1",
     "@resvg/resvg-wasm": "^2.6.2",
     "@xivdyetools/auth": "workspace:*",
-    "@xivdyetools/bot-i18n": "workspace:*",
     "@xivdyetools/bot-logic": "workspace:*",
     "@xivdyetools/color-blending": "workspace:*",
     "@xivdyetools/svg": "workspace:*",

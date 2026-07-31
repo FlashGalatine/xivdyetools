@@ -14,7 +14,7 @@ import {
   type MatchingMethod,
 } from '@xivdyetools/core';
 import { filterDyes } from '@xivdyetools/core';
-import { createTranslator, type Translator, type LocaleCode } from '@xivdyetools/bot-i18n';
+import { createTranslator, type Translator, type LocaleCode } from '../i18n/index.js';
 import { generateHarmonyWheel, type HarmonyDye } from '@xivdyetools/svg';
 import { dyeService } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';

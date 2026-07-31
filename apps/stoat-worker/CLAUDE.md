@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The XIV Dye Tools bot for [Stoat / Revolt](https://revolt.chat). Despite living under `apps/` alongside the Cloudflare Workers, **this is a Node.js process, not a CF Worker.** It runs `revolt.js` as a long-lived WebSocket client, listens for `messageCreate` events, and dispatches prefix commands (`!xivdye <cmd>` or the shortcut `!xd <cmd>`).
 
-The bot reuses as much logic from `discord-worker` as it can by depending on the platform-agnostic shared packages — `@xivdyetools/core`, `@xivdyetools/bot-logic`, `@xivdyetools/bot-i18n`, `@xivdyetools/svg`, `@xivdyetools/color-blending`. Only the I/O surface (Stoat embed shape, prefix parsing, reactions-as-buttons, masquerade) is platform-specific.
+The bot reuses as much logic from `discord-worker` as it can by depending on the platform-agnostic shared packages — `@xivdyetools/core`, `@xivdyetools/bot-logic` (incl. its `/i18n` engine), `@xivdyetools/svg`, `@xivdyetools/color-blending`. Only the I/O surface (Stoat embed shape, prefix parsing, reactions-as-buttons, masquerade) is platform-specific.
 
 The project is in early development; only `ping`, `help`, `about`, and `dye info` are implemented end-to-end. Most other commands documented in `README.md` are tagged "planned".
 
@@ -164,7 +164,7 @@ The top-level `messageCreate` handler wraps `routeCommand()` in try/catch. If a 
 |---------|---------|
 | `revolt.js` | Stoat WebSocket client (login, events, sendMessage, react, masquerade) |
 | `@xivdyetools/bot-logic` | Platform-agnostic command execution (`executeDyeInfo`, etc.) |
-| `@xivdyetools/bot-i18n` | Six-language localized error/help/status strings |
+| `@xivdyetools/bot-logic/i18n` | Six-language localized error/help/status strings (absorbed from bot-i18n) |
 | `@xivdyetools/core` | Dye database, color algorithms, `DyeDatabase` |
 | `@xivdyetools/svg` | SVG dye-card generators (used by future image-rendering commands) |
 | `@xivdyetools/color-blending` | Color blending algorithms for the planned mixer command |
@@ -196,7 +196,7 @@ The top-level `messageCreate` handler wraps `routeCommand()` in try/catch. If a 
 ## Related Projects
 
 **Shared packages (logic ≅ discord-worker):**
-- `@xivdyetools/bot-logic`, `@xivdyetools/bot-i18n`, `@xivdyetools/svg`, `@xivdyetools/color-blending`, `@xivdyetools/core`, `@xivdyetools/types`
+- `@xivdyetools/bot-logic` (incl. `/i18n`), `@xivdyetools/svg`, `@xivdyetools/color-blending`, `@xivdyetools/core`, `@xivdyetools/types`
 
 **Sibling app:**
 - `xivdyetools-discord-worker` — same business logic, different platform glue. When changing `bot-logic` or `svg`, verify both bots still build and tests pass.

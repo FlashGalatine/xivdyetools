@@ -19,8 +19,7 @@ Published to npm under the `@xivdyetools` scope:
 | [`@xivdyetools/core`](packages/core/) | 2.7.0 | Color algorithms, 136-dye database, k-d tree matching, 6-language i18n |
 | [`@xivdyetools/color-blending`](packages/color-blending/) | 1.1.0 | Six color blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral) |
 | [`@xivdyetools/svg`](packages/svg/) | 1.2.1 | Platform-agnostic SVG card generators (pure functions: data in → SVG out) |
-| [`@xivdyetools/bot-i18n`](packages/bot-i18n/) | 1.2.1 | Bot UI string translations for 6 languages |
-| [`@xivdyetools/bot-logic`](packages/bot-logic/) | 1.3.0 | Platform-agnostic command business logic (shared by Discord + Stoat bots) |
+| [`@xivdyetools/bot-logic`](packages/bot-logic/) | 1.4.0 | Platform-agnostic command business logic + bot i18n engine (shared by Discord + Stoat bots) |
 | [`@xivdyetools/worker-middleware`](packages/worker-middleware/) | 1.2.0 | Shared Hono middleware: request-ID tracing, structured logger, rate limiting |
 | [`@xivdyetools/test-utils`](packages/test-utils/) | 1.1.8 | Cloudflare Workers mocks (D1, KV, R2) and test factories |
 
@@ -78,8 +77,7 @@ auth (→ crypto), rate-limiter ────────────────
 core (→ types, logger), test-utils (→ types, logger) ──┤
 color-blending (→ core) ────────────────────────────────┤
 svg (→ core, types, color-blending) ────────────────────┤
-bot-i18n ───────────────────────────────────────────────┤
-bot-logic (→ core, svg, bot-i18n, color-blending) ──────┤
+bot-logic (→ core, svg, color-blending) ────────────────┤
 worker-middleware (→ logger, rate-limiter) ─────────────┤
                                                         │
                     Applications ◄──────────────────────┘

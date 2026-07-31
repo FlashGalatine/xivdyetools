@@ -12,7 +12,7 @@
 import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
 import { ColorService, type MatchingMethod, isDyeExcluded } from '@xivdyetools/core';
 import { blendColors } from '@xivdyetools/color-blending';
-import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
+import { createTranslator, type LocaleCode } from '../i18n/index.js';
 import { generateGradientBar, type GradientStep } from '@xivdyetools/svg';
 import { dyeService, type ResolvedColor } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
