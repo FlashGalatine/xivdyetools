@@ -194,7 +194,7 @@ A web-app test that only needs DOM polyfills should `import from '@xivdyetools/t
 ## Internal Dependencies
 
 - `@xivdyetools/types` — `Dye`, `Preset`, `User`, etc. for factory return types.
-- `@xivdyetools/crypto` — Base64URL helpers for JWT/PKCE.
+- `@xivdyetools/auth` — Base64URL helpers for JWT/PKCE (imported via `@xivdyetools/auth/encoding`).
 
 Peer: `vitest >= 2.0.0`.
 

@@ -10,7 +10,6 @@ on:
       - 'packages/logger/**'
       - 'packages/auth/**'
       - 'packages/rate-limiter/**'
-      - 'packages/crypto/**'
       # ARCH-001: Add missing direct dependencies
       - 'packages/bot-i18n/**'
       - 'packages/bot-logic/**'

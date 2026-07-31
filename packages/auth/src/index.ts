@@ -60,3 +60,14 @@ export {
   type DiscordVerificationResult,
   type DiscordVerifyOptions,
 } from './discord.js';
+
+// Encoding primitives (Base64URL RFC 4648 + hex)
+// Absorbed from @xivdyetools/crypto — also available via '@xivdyetools/auth/encoding'
+export {
+  base64UrlEncode,
+  base64UrlEncodeBytes,
+  base64UrlDecode,
+  base64UrlDecodeBytes,
+  hexToBytes,
+  bytesToHex,
+} from './encoding/index.js';

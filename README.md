@@ -13,9 +13,8 @@ Published to npm under the `@xivdyetools` scope:
 | Package | Version | Description |
 |---------|---------|-------------|
 | [`@xivdyetools/types`](packages/types/) | 1.15.0 | Branded types (`HexColor`, `DyeId`, etc.) and shared interfaces |
-| [`@xivdyetools/crypto`](packages/crypto/) | 1.1.2 | Base64URL encoding utilities |
 | [`@xivdyetools/logger`](packages/logger/) | 1.3.0 | Multi-runtime logging (browser, Node, CF Workers) with secret redaction |
-| [`@xivdyetools/auth`](packages/auth/) | 1.2.0 | JWT verification, HMAC signing, Discord Ed25519 verification |
+| [`@xivdyetools/auth`](packages/auth/) | 1.3.0 | JWT verification, HMAC signing, Discord Ed25519 verification, Base64URL/hex encoding |
 | [`@xivdyetools/rate-limiter`](packages/rate-limiter/) | 1.5.0 | Sliding window rate limiting (Memory, KV, Upstash backends) |
 | [`@xivdyetools/core`](packages/core/) | 2.7.0 | Color algorithms, 136-dye database, k-d tree matching, 6-language i18n |
 | [`@xivdyetools/color-blending`](packages/color-blending/) | 1.1.0 | Six color blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral) |

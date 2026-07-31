@@ -12,7 +12,6 @@ This is the **XIV Dye Tools** monorepo: a pnpm workspace using Turborepo contain
 xivdyetools/
 ├── packages/                # Shared libraries (@xivdyetools scope, published to npm)
 │   ├── types/               # Branded types (HexColor, DyeId, etc.) and shared interfaces
-│   ├── crypto/              # Base64URL encoding utilities
 │   ├── logger/              # Multi-runtime logging with secret redaction
 │   ├── auth/                # JWT verification, HMAC signing, Discord Ed25519
 │   ├── rate-limiter/        # Sliding window rate limiting (Memory, KV, Upstash)
@@ -42,9 +41,9 @@ xivdyetools/
 ## Dependency Flow
 
 ```
-types, crypto, logger, rate-limiter, ──────────────────────────┐ (Level 0: no internal deps)
+types, logger, rate-limiter, auth, ────────────────────────────┐ (Level 0: no internal deps)
 bot-i18n, color-blending ──────────────────────────────────────┤
-auth (→ crypto), test-utils (→ crypto, types) ─────────────────┤ (Level 1)
+test-utils (→ auth, types) ────────────────────────────────────┤ (Level 1)
 core (→ types, logger) ────────────────────────────────────────┤ (Level 2)
 worker-middleware (→ logger, rate-limiter) ────────────────────┤
 svg (→ core, color-blending, types) ───────────────────────────┤ (Level 3)

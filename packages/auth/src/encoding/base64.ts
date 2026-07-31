@@ -4,7 +4,7 @@
  * RFC 4648 compliant Base64URL encoding for JWT and other cryptographic operations.
  * These functions use the URL-safe alphabet (+ → -, / → _) and omit padding.
  *
- * @module @xivdyetools/crypto/base64
+ * @module @xivdyetools/auth/encoding/base64
  */
 
 /**

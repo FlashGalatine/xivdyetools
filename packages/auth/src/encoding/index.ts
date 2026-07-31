@@ -1,14 +1,14 @@
 /**
- * @xivdyetools/crypto
+ * Encoding utilities (Base64URL + hex)
  *
- * Shared cryptographic utilities for the xivdyetools ecosystem.
- * Provides encoding/decoding functions for JWT, HMAC, and other crypto operations.
+ * Shared encoding/decoding primitives for JWT, HMAC, and other crypto operations.
+ * Absorbed verbatim from `@xivdyetools/crypto` v1.1.2 (Monorepo 2.0 Tier 1 merge).
  *
- * @module @xivdyetools/crypto
+ * @module @xivdyetools/auth/encoding
  *
  * @example
  * ```typescript
- * import { base64UrlEncode, base64UrlDecode } from '@xivdyetools/crypto';
+ * import { base64UrlEncode, base64UrlDecode } from '@xivdyetools/auth/encoding';
  *
  * // Encode a JWT payload
  * const payload = base64UrlEncode(JSON.stringify({ sub: '12345' }));

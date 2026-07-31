@@ -1,7 +1,7 @@
 /**
  * Hexadecimal Encoding/Decoding Utilities
  *
- * @module @xivdyetools/crypto/hex
+ * @module @xivdyetools/auth/encoding/hex
  */
 
 /**

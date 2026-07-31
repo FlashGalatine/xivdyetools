@@ -15,7 +15,7 @@
 import {
   base64UrlDecode,
   base64UrlDecodeBytes,
-} from '@xivdyetools/crypto';
+} from './encoding/index.js';
 import { getOrCreateHmacKey } from './hmac.js';
 
 /**

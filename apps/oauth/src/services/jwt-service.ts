@@ -16,7 +16,7 @@ import {
   base64UrlEncode as base64UrlEncodeString,
   base64UrlEncodeBytes,
   base64UrlDecodeBytes,
-} from '@xivdyetools/crypto';
+} from '@xivdyetools/auth/encoding';
 import {
   verifyJWTSignatureOnly as sharedVerifyJWTSignatureOnly,
   decodeJWT as sharedDecodeJWT,
@@ -24,8 +24,8 @@ import {
   revokeToken as sharedRevokeToken,
 } from '@xivdyetools/auth';
 
-// REFACTOR-001: Re-export from @xivdyetools/crypto for backwards compatibility
-export { base64UrlDecode } from '@xivdyetools/crypto';
+// REFACTOR-001: Re-export for backwards compatibility (encoding absorbed into @xivdyetools/auth)
+export { base64UrlDecode } from '@xivdyetools/auth/encoding';
 
 /**
  * Base64URL encode a string or ArrayBuffer

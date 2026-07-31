@@ -41,10 +41,12 @@ Four single-responsibility modules under `src/`, plus a barrel `index.ts`. Each 
 
 ```
 src/
-├── jwt.ts       # verifyJWT, verifyJWTSignatureOnly, decodeJWT, isJWTExpired, getJWTTimeToExpiry
-├── hmac.ts      # createHmacKey, hmacSign(Hex), hmacVerify(Hex), verifyBotSignature, getOrCreateHmacKey (internal LRU)
-├── timing.ts    # timingSafeEqual, timingSafeEqualBytes
-└── discord.ts   # verifyDiscordRequest, unauthorizedResponse, badRequestResponse
+├── jwt.ts        # verifyJWT, verifyJWTSignatureOnly, decodeJWT, isJWTExpired, getJWTTimeToExpiry
+├── hmac.ts       # createHmacKey, hmacSign(Hex), hmacVerify(Hex), verifyBotSignature, getOrCreateHmacKey (internal LRU)
+├── timing.ts     # timingSafeEqual, timingSafeEqualBytes
+├── discord.ts    # verifyDiscordRequest, unauthorizedResponse, badRequestResponse
+├── revocation.ts # isTokenRevoked, revokeToken (KV-backed jti blacklist)
+└── encoding/     # base64.ts + hex.ts — Base64URL/hex primitives (absorbed from @xivdyetools/crypto)
 ```
 
 ## Public API
@@ -167,7 +169,7 @@ The `oauth` worker uses these primitives indirectly — it generates tokens loca
 
 ## Internal Dependencies
 
-- `@xivdyetools/crypto` — `base64UrlEncode/Decode/Bytes`, `bytesToHex`, `hexToBytes`
+- None — the encoding primitives (`base64UrlEncode/Decode/Bytes`, `bytesToHex`, `hexToBytes`) live in `src/encoding/`, absorbed from the retired `@xivdyetools/crypto` (v1.3.0). Import via `@xivdyetools/auth/encoding` to avoid pulling the Discord verification module.
 - External: `discord-interactions` (Ed25519 verification)
 - Optional peer: `@cloudflare/workers-types` (only for the `KVNamespace`/`Request` types when used in worker contexts)
 

@@ -1,7 +1,8 @@
 /**
  * Cryptographic utilities for test helpers
  *
- * REFACTOR-001: Re-exports from @xivdyetools/crypto to consolidate implementations
+ * REFACTOR-001: Re-exports the consolidated implementations
+ * (moved from @xivdyetools/crypto into @xivdyetools/auth/encoding — Monorepo 2.0 Tier 1)
  */
 
 export {
@@ -11,4 +12,4 @@ export {
   base64UrlDecodeBytes,
   hexToBytes,
   bytesToHex,
-} from '@xivdyetools/crypto';
+} from '@xivdyetools/auth/encoding';

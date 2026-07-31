@@ -61,7 +61,7 @@
     }
   },
   "dependencies": {
-    "@xivdyetools/crypto": "workspace:*",
+    "@xivdyetools/auth": "workspace:*",
     "@xivdyetools/types": "workspace:*"
   },
   "devDependencies": {

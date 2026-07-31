@@ -7,6 +7,31 @@ Each entry includes a target removal date and migration guide.
 
 ## Active Deprecations
 
+### `@xivdyetools/crypto` (npm package)
+
+| Field       | Value |
+|-------------|-------|
+| Deprecated  | 2026-07-30 |
+| Remove by   | Removed from the monorepo 2026-07-30; npm registry deprecation pending |
+| Severity    | Low |
+
+**What it is:** A ~180-LOC standalone encoding package (Base64URL RFC 4648 + hex helpers), published to npm.
+
+**Why deprecated:** Monorepo 2.0 Tier 1 consolidation (docs/research/monorepo-2.0/05 §6) — two of its three
+consumers were the auth/JWT path. The source moved verbatim to `packages/auth/src/encoding/` and ships as
+`@xivdyetools/auth/encoding` (also re-exported from the auth package root) since `@xivdyetools/auth@1.3.0`.
+
+**Migration:** Replace `import { … } from '@xivdyetools/crypto'` with
+`import { … } from '@xivdyetools/auth/encoding'`. The API is byte-for-byte identical.
+
+**Removal checklist:**
+- [x] Move source + tests into `packages/auth/src/encoding/` (2026-07-30)
+- [x] Flip all workspace consumers: auth, oauth, test-utils (2026-07-30)
+- [x] Remove from publish-packages.yml and deploy path filters (2026-07-30)
+- [ ] `npm deprecate @xivdyetools/crypto "Merged into @xivdyetools/auth (import from @xivdyetools/auth/encoding)"` — requires npm 2FA, manual step
+
+---
+
 ### `STATE_TRANSITION_PERIOD` (oauth worker)
 
 | Field       | Value |

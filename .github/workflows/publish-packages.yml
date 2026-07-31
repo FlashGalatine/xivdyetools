@@ -10,7 +10,6 @@ on:
         options:
           - all-modified
           - '@xivdyetools/types'
-          - '@xivdyetools/crypto'
           - '@xivdyetools/logger'
           - '@xivdyetools/bot-i18n'
           - '@xivdyetools/rate-limiter'
@@ -53,7 +52,6 @@ jobs:
           # Tier-ordered list — dependencies are always published before dependents
           TIER_ORDER=(
             "@xivdyetools/types"
-            "@xivdyetools/crypto"
             "@xivdyetools/logger"
             "@xivdyetools/bot-i18n"
             "@xivdyetools/rate-limiter"

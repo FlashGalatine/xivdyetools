@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@xivdyetools/auth": "workspace:*",
-    "@xivdyetools/crypto": "workspace:*",
     "@xivdyetools/logger": "workspace:*",
     "@xivdyetools/rate-limiter": "workspace:*",
     "@xivdyetools/types": "workspace:*",
