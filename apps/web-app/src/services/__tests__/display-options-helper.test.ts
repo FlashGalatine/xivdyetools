@@ -48,6 +48,7 @@ describe('display-options-helper', () => {
         showRgb: false,
         showHsv: false,
         showLab: false,
+        showCmyk: false,
         showPrice: true,
         showDeltaE: true,
         showAcquisition: false,
@@ -200,6 +201,7 @@ describe('display-options-helper', () => {
         showRgb: false,
         showHsv: false,
         showLab: false,
+        showCmyk: false,
         showPrice: true,
         showDeltaE: true,
         showAcquisition: false,
@@ -210,6 +212,7 @@ describe('display-options-helper', () => {
         showRgb: true,
         showHsv: true,
         showLab: true,
+        showCmyk: true,
         showPrice: false,
         showDeltaE: false,
         showAcquisition: true,
@@ -223,7 +226,7 @@ describe('display-options-helper', () => {
       });
 
       expect(result.hasChanges).toBe(true);
-      expect(result.changedKeys).toHaveLength(7);
+      expect(result.changedKeys).toHaveLength(8);
       expect(result.options).toEqual(incoming);
     });
   });
@@ -281,6 +284,7 @@ describe('display-options-helper', () => {
         showRgb: false,
         showHsv: false,
         showLab: false,
+        showCmyk: false,
         showPrice: true,
         showDeltaE: true,
         showAcquisition: false,
@@ -309,6 +313,7 @@ describe('display-options-helper', () => {
         showRgb: true,
         showHsv: true,
         showLab: true,
+        showCmyk: false,
         showPrice: true,
         showDeltaE: false,
         showAcquisition: true,

@@ -312,7 +312,8 @@
     "analyticsDesc": "익명 사용 데이터를 공유하여 XIV 염색 도구 개선에 도움을 주세요",
     "exportSettings": "내보내기",
     "importSettings": "가져오기",
-    "importError": "설정을 가져오지 못했습니다. 파일 형식을 확인해 주세요."
+    "importError": "설정을 가져오지 못했습니다. 파일 형식을 확인해 주세요.",
+    "cmykValues": "CMYK 값"
   },
   "colorPalette": {
     "title": "색상 팔레트",

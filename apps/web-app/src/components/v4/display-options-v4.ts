@@ -95,6 +95,12 @@ export class DisplayOptionsV4 extends BaseLitComponent {
   @property({ type: Boolean, attribute: 'show-lab' })
   showLab: boolean = DEFAULT_DISPLAY_OPTIONS.showLab;
 
+  /**
+   * Show CMYK values in results
+   */
+  @property({ type: Boolean, attribute: 'show-cmyk' })
+  showCmyk: boolean = DEFAULT_DISPLAY_OPTIONS.showCmyk;
+
   // ========== Result Metadata Options ==========
 
   /**
@@ -266,6 +272,7 @@ export class DisplayOptionsV4 extends BaseLitComponent {
       showRgb: this.showRgb,
       showHsv: this.showHsv,
       showLab: this.showLab,
+      showCmyk: this.showCmyk,
       showPrice: this.showPrice,
       showDeltaE: this.showDeltaE,
       showAcquisition: this.showAcquisition,
@@ -385,6 +392,14 @@ export class DisplayOptionsV4 extends BaseLitComponent {
               .checked=${this.showLab}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
                 this.handleOptionChange('showLab', e.detail.checked)}
+            ></v4-toggle-switch>
+          </div>
+          <div class="option-row">
+            <v4-toggle-switch
+              label=${LanguageService.t('config.cmykValues')}
+              .checked=${this.showCmyk}
+              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                this.handleOptionChange('showCmyk', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
         </div>

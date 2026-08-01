@@ -334,7 +334,8 @@
     "analyticsDesc": "通过分享匿名使用数据来帮助改进 XIV 染色工具",
     "exportSettings": "导出",
     "importSettings": "导入",
-    "importError": "导入设置失败。请检查文件格式。"
+    "importError": "导入设置失败。请检查文件格式。",
+    "cmykValues": "CMYK值"
   },
   "colorPalette": {
     "title": "调色板",

@@ -325,6 +325,12 @@ export class ResultCard extends BaseLitComponent {
   showLab: boolean = false;
 
   /**
+   * Show CMYK values in technical details
+   */
+  @property({ type: Boolean, attribute: 'show-cmyk' })
+  showCmyk: boolean = false;
+
+  /**
    * Show Delta-E color distance in technical details
    */
   @property({ type: Boolean, attribute: 'show-delta-e' })
@@ -878,6 +884,15 @@ export class ResultCard extends BaseLitComponent {
   }
 
   /**
+   * Format CMYK values for display (rounded to integer percentages)
+   */
+  private formatCmykValues(): string {
+    if (!this.data) return '—';
+    const cmyk = ColorService.hexToCmyk(this.data.matchedColor);
+    return `${Math.round(cmyk.c)}, ${Math.round(cmyk.m)}, ${Math.round(cmyk.y)}, ${Math.round(cmyk.k)}`;
+  }
+
+  /**
    * Format consolidated dye spectrum name for display.
    * Returns the localized spectrum name (Standard / Wide #1 / Wide #2)
    * or em-dash for non-consolidated dyes (Special, Facewear).
@@ -1419,6 +1434,16 @@ export class ResultCard extends BaseLitComponent {
                     <div class="detail-row">
                       <span class="detail-label">LAB</span>
                       <span class="detail-value">${this.formatLabValues()}</span>
+                    </div>
+                  `
+                : nothing
+            }
+            ${
+              this.showCmyk
+                ? html`
+                    <div class="detail-row">
+                      <span class="detail-label">CMYK</span>
+                      <span class="detail-value">${this.formatCmykValues()}</span>
                     </div>
                   `
                 : nothing

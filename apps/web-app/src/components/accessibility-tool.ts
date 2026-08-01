@@ -1160,6 +1160,7 @@ export class AccessibilityTool extends BaseComponent {
       card.showRgb = this.cardDisplayOptions.showRgb;
       card.showHsv = this.cardDisplayOptions.showHsv;
       card.showLab = this.cardDisplayOptions.showLab;
+      card.showCmyk = this.cardDisplayOptions.showCmyk;
       card.showDeltaE = false; // Not applicable for accessibility checker
       card.showPrice = false; // Keep prices hidden for accessibility tool
       card.showAcquisition = false; // Keep it simple, focus on colors

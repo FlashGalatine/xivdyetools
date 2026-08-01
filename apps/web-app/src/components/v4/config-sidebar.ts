@@ -1125,6 +1125,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .showRgb=${this.globalDisplayOptions.showRgb}
           .showHsv=${this.globalDisplayOptions.showHsv}
           .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
@@ -1233,6 +1234,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .showRgb=${this.globalDisplayOptions.showRgb}
           .showHsv=${this.globalDisplayOptions.showHsv}
           .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
@@ -1332,6 +1334,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .showRgb=${this.globalDisplayOptions.showRgb}
           .showHsv=${this.globalDisplayOptions.showHsv}
           .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
@@ -1354,6 +1357,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .showRgb=${this.globalDisplayOptions.showRgb}
           .showHsv=${this.globalDisplayOptions.showHsv}
           .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
@@ -1411,6 +1415,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .showRgb=${this.globalDisplayOptions.showRgb}
           .showHsv=${this.globalDisplayOptions.showHsv}
           .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
@@ -1482,6 +1487,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .showRgb=${this.globalDisplayOptions.showRgb}
           .showHsv=${this.globalDisplayOptions.showHsv}
           .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
@@ -1668,6 +1674,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .showRgb=${this.globalDisplayOptions.showRgb}
           .showHsv=${this.globalDisplayOptions.showHsv}
           .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
@@ -1825,6 +1832,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .showRgb=${this.globalDisplayOptions.showRgb}
           .showHsv=${this.globalDisplayOptions.showHsv}
           .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
@@ -1956,6 +1964,7 @@ export class ConfigSidebar extends BaseLitComponent {
             .showRgb=${this.globalDisplayOptions.showRgb}
             .showHsv=${this.globalDisplayOptions.showHsv}
             .showLab=${this.globalDisplayOptions.showLab}
+          .showCmyk=${this.globalDisplayOptions.showCmyk}
             .showPrice=${this.globalDisplayOptions.showPrice}
             .showDeltaE=${this.globalDisplayOptions.showDeltaE}
             .showAcquisition=${this.globalDisplayOptions.showAcquisition}

@@ -1653,6 +1653,7 @@ export class MixerTool extends BaseComponent {
       (card as unknown as { showRgb: boolean }).showRgb = this.displayOptions.showRgb;
       (card as unknown as { showHsv: boolean }).showHsv = this.displayOptions.showHsv;
       (card as unknown as { showLab: boolean }).showLab = this.displayOptions.showLab;
+      (card as unknown as { showCmyk: boolean }).showCmyk = this.displayOptions.showCmyk;
       (card as unknown as { showDeltaE: boolean }).showDeltaE = this.displayOptions.showDeltaE;
       (card as unknown as { showPrice: boolean }).showPrice = this.displayOptions.showPrice;
       (card as unknown as { showAcquisition: boolean }).showAcquisition =

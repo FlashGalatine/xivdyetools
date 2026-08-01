@@ -312,7 +312,8 @@
     "analyticsDesc": "Aidez à améliorer XIV Dye Tools en partageant des données d'utilisation anonymes",
     "exportSettings": "Exporter",
     "importSettings": "Importer",
-    "importError": "Échec de l'importation des paramètres. Veuillez vérifier le format du fichier."
+    "importError": "Échec de l'importation des paramètres. Veuillez vérifier le format du fichier.",
+    "cmykValues": "Valeurs CMYK"
   },
   "colorPalette": {
     "title": "Palette de couleurs",

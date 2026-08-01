@@ -312,7 +312,8 @@
     "analyticsDesc": "匿名の使用データを共有してXIV Dye Toolsの改善にご協力ください",
     "exportSettings": "エクスポート",
     "importSettings": "インポート",
-    "importError": "設定のインポートに失敗しました。ファイル形式を確認してください。"
+    "importError": "設定のインポートに失敗しました。ファイル形式を確認してください。",
+    "cmykValues": "CMYK値"
   },
   "colorPalette": {
     "title": "カラーパレット",
