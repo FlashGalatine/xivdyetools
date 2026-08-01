@@ -23,7 +23,7 @@ import { BaseLitComponent } from './base-lit-component';
 import { ICON_CONTEXT_MENU } from '@shared/ui-icons';
 import type { Dye, DyeWithDistance } from '@xivdyetools/types';
 import type { MatchingMethod } from '@shared/tool-config-types';
-import { ColorService, getConsolidatedDyeName } from '@xivdyetools/core';
+import { ColorService, getConsolidatedDyeName, getMarketItemID } from '@xivdyetools/core';
 import { LanguageService, StorageService, RouterService } from '@services/index';
 import { ToastService } from '@services/toast-service';
 import { ModalService } from '@services/modal-service';
@@ -966,18 +966,22 @@ export class ResultCard extends BaseLitComponent {
         this.addToMixer(dye);
         break;
 
-      // External links - open in new tab
+      // External links - open in new tab.
+      // Post-7.5 consolidation: the legacy per-color items are no longer
+      // tradeable, so external sites must resolve to the purchasable
+      // Spectrum (consolidated) itemID via getMarketItemID(). Unconsolidated
+      // dyes (Venture Coffer specials) keep their own itemID.
       case 'external-universalis':
-        this.openExternalUrl('universalis', dye.itemID);
+        this.openExternalUrl('universalis', getMarketItemID(dye));
         break;
       case 'external-garlandtools':
-        this.openExternalUrl('garlandtools', dye.itemID);
+        this.openExternalUrl('garlandtools', getMarketItemID(dye));
         break;
       case 'external-teamcraft':
-        this.openExternalUrl('teamcraft', dye.itemID);
+        this.openExternalUrl('teamcraft', getMarketItemID(dye));
         break;
       case 'external-saddlebag':
-        this.openExternalUrl('saddlebag', dye.itemID);
+        this.openExternalUrl('saddlebag', getMarketItemID(dye));
         break;
 
       // Legacy slot picker actions
