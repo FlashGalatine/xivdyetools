@@ -237,7 +237,9 @@ export class V4ColorWheel extends BaseLitComponent {
       case 'split-complementary':
         return [0, 150, 210];
       case 'tetradic':
-        return [0, 90, 180, 270];
+        // Rectangle: two complementary pairs 60° apart — matches core's
+        // findTetradicDyes offsets [60, 180, 240] (NOT the square's 90° steps)
+        return [0, 60, 180, 240];
       case 'square':
         return [0, 90, 180, 270];
       default:
