@@ -1391,3 +1391,50 @@ describe('ColorConverter', () => {
     });
   });
 });
+
+describe('CMYK conversions (schema v2 follow-up: derived formats from hex)', () => {
+  it('converts primary and achromatic colors to CMYK', () => {
+    expect(ColorConverter.rgbToCmyk(255, 0, 0)).toEqual({ c: 0, m: 100, y: 100, k: 0 });
+    expect(ColorConverter.rgbToCmyk(0, 255, 0)).toEqual({ c: 100, m: 0, y: 100, k: 0 });
+    expect(ColorConverter.rgbToCmyk(0, 0, 255)).toEqual({ c: 100, m: 100, y: 0, k: 0 });
+    expect(ColorConverter.rgbToCmyk(255, 255, 255)).toEqual({ c: 0, m: 0, y: 0, k: 0 });
+    expect(ColorConverter.rgbToCmyk(0, 0, 0)).toEqual({ c: 0, m: 0, y: 0, k: 100 });
+  });
+
+  it('converts a real dye color (Snow White #e4dfd0)', () => {
+    const cmyk = ColorConverter.hexToCmyk('#e4dfd0');
+    expect(cmyk.c).toBe(0);
+    expect(cmyk.m).toBeCloseTo(2.19, 1);
+    expect(cmyk.y).toBeCloseTo(8.77, 1);
+    expect(cmyk.k).toBeCloseTo(10.59, 1);
+  });
+
+  it('round-trips RGB → CMYK → RGB exactly', () => {
+    const samples: Array<[number, number, number]> = [
+      [255, 0, 0],
+      [228, 223, 208], // Snow White
+      [24, 24, 32], // Gunmetal Black
+      [127, 64, 200],
+      [0, 0, 0],
+      [255, 255, 255],
+    ];
+    for (const [r, g, b] of samples) {
+      const cmyk = ColorConverter.rgbToCmyk(r, g, b);
+      expect(ColorConverter.cmykToRgb(cmyk.c, cmyk.m, cmyk.y, cmyk.k)).toEqual({ r, g, b });
+    }
+  });
+
+  it('round-trips hex → CMYK → hex', () => {
+    for (const hex of ['#e4dfd0', '#1e1e1e', '#f61296', '#000000', '#ffffff']) {
+      const cmyk = ColorConverter.hexToCmyk(hex);
+      expect(ColorConverter.cmykToHex(cmyk.c, cmyk.m, cmyk.y, cmyk.k).toLowerCase()).toBe(hex);
+    }
+  });
+
+  it('clamps out-of-range CMYK inputs and rejects invalid RGB', () => {
+    expect(ColorConverter.cmykToRgb(-10, 150, 50, 0)).toEqual(
+      ColorConverter.cmykToRgb(0, 100, 50, 0)
+    );
+    expect(() => ColorConverter.rgbToCmyk(300, 0, 0)).toThrow();
+  });
+});

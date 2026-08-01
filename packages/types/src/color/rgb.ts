@@ -119,3 +119,23 @@ export interface HSL {
   /** Lightness (0-100 percent) */
   l: number;
 }
+
+/**
+ * CMYK color representation (Cyan, Magenta, Yellow, Key/Black)
+ *
+ * Subtractive color model used in print. Naive device-independent
+ * conversion (no ICC profile) — suitable for display/reference values,
+ * not print production.
+ *
+ * @example { c: 0, m: 100, y: 100, k: 0 } // Bright red
+ */
+export interface CMYK {
+  /** Cyan (0-100 percent) */
+  c: number;
+  /** Magenta (0-100 percent) */
+  m: number;
+  /** Yellow (0-100 percent) */
+  y: number;
+  /** Key / Black (0-100 percent) */
+  k: number;
+}

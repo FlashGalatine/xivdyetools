@@ -36,6 +36,7 @@ import type {
   OKLCH,
   LCH,
   HSL,
+  CMYK,
 } from '@xivdyetools/types';
 import { ColorConverter, type DeltaEFormula } from './color/ColorConverter.js';
 import { ColorblindnessSimulator } from './color/ColorblindnessSimulator.js';
@@ -452,6 +453,35 @@ export class ColorService {
    */
   static hslToHex(h: number, s: number, l: number): HexColor {
     return ColorConverter.hslToHex(h, s, l);
+  }
+
+  /**
+   * Convert RGB to CMYK (naive device-independent conversion)
+   * @example rgbToCmyk(255, 0, 0) -> { c: 0, m: 100, y: 100, k: 0 }
+   */
+  static rgbToCmyk(r: number, g: number, b: number): CMYK {
+    return ColorConverter.rgbToCmyk(r, g, b);
+  }
+
+  /**
+   * Convert CMYK to RGB
+   */
+  static cmykToRgb(c: number, m: number, y: number, k: number): RGB {
+    return ColorConverter.cmykToRgb(c, m, y, k);
+  }
+
+  /**
+   * Convert hex color to CMYK
+   */
+  static hexToCmyk(hex: string): CMYK {
+    return ColorConverter.hexToCmyk(hex);
+  }
+
+  /**
+   * Convert CMYK to hex color
+   */
+  static cmykToHex(c: number, m: number, y: number, k: number): HexColor {
+    return ColorConverter.cmykToHex(c, m, y, k);
   }
 
   // ============================================================================

@@ -4,7 +4,7 @@
  * Handles conversions between hex, RGB, and HSV color formats
  */
 
-import type { RGB, HSV, HexColor, LAB, OKLAB, OKLCH, LCH, HSL } from '@xivdyetools/types';
+import type { RGB, HSV, HexColor, LAB, OKLAB, OKLCH, LCH, HSL, CMYK } from '@xivdyetools/types';
 import { createHexColor, ErrorCode, AppError } from '@xivdyetools/types';
 
 /**
@@ -1487,5 +1487,119 @@ export class ColorConverter {
    */
   static hslToHex(h: number, s: number, l: number): HexColor {
     return this.getDefault().hslToHex(h, s, l);
+  }
+
+  /**
+   * Convert RGB to CMYK (Cyan, Magenta, Yellow, Key/Black)
+   *
+   * Naive device-independent conversion (no ICC profile) — suitable for
+   * display/reference values shown alongside HEX/RGB/HSV, not for print
+   * production.
+   *
+   * @param r Red component (0-255)
+   * @param g Green component (0-255)
+   * @param b Blue component (0-255)
+   * @returns CMYK color with c/m/y/k as 0-100 percentages
+   *
+   * @example rgbToCmyk(255, 0, 0) -> { c: 0, m: 100, y: 100, k: 0 }
+   */
+  rgbToCmyk(r: number, g: number, b: number): CMYK {
+    if (!isValidRGB(r, g, b)) {
+      throw new AppError(
+        ErrorCode.INVALID_RGB_VALUE,
+        `Invalid RGB values: r=${r}, g=${g}, b=${b}. Values must be 0-255`,
+        'error'
+      );
+    }
+
+    const rNorm = r / 255;
+    const gNorm = g / 255;
+    const bNorm = b / 255;
+
+    const k = 1 - Math.max(rNorm, gNorm, bNorm);
+
+    // Pure black: avoid division by zero
+    if (k === 1) {
+      return { c: 0, m: 0, y: 0, k: 100 };
+    }
+
+    const c = (1 - rNorm - k) / (1 - k);
+    const m = (1 - gNorm - k) / (1 - k);
+    const y = (1 - bNorm - k) / (1 - k);
+
+    return {
+      c: round(c * 100, 2),
+      m: round(m * 100, 2),
+      y: round(y * 100, 2),
+      k: round(k * 100, 2),
+    };
+  }
+
+  /**
+   * Static method: Convert RGB to CMYK using default instance
+   */
+  static rgbToCmyk(r: number, g: number, b: number): CMYK {
+    return this.getDefault().rgbToCmyk(r, g, b);
+  }
+
+  /**
+   * Convert CMYK to RGB
+   *
+   * @param c Cyan (0-100 percent)
+   * @param m Magenta (0-100 percent)
+   * @param y Yellow (0-100 percent)
+   * @param k Key/Black (0-100 percent)
+   * @returns RGB color with values 0-255
+   *
+   * @example cmykToRgb(0, 100, 100, 0) -> { r: 255, g: 0, b: 0 }
+   */
+  cmykToRgb(c: number, m: number, y: number, k: number): RGB {
+    const cNorm = clamp(c, 0, 100) / 100;
+    const mNorm = clamp(m, 0, 100) / 100;
+    const yNorm = clamp(y, 0, 100) / 100;
+    const kNorm = clamp(k, 0, 100) / 100;
+
+    return {
+      r: clamp(Math.round(255 * (1 - cNorm) * (1 - kNorm)), RGB_MIN, RGB_MAX),
+      g: clamp(Math.round(255 * (1 - mNorm) * (1 - kNorm)), RGB_MIN, RGB_MAX),
+      b: clamp(Math.round(255 * (1 - yNorm) * (1 - kNorm)), RGB_MIN, RGB_MAX),
+    };
+  }
+
+  /**
+   * Static method: Convert CMYK to RGB using default instance
+   */
+  static cmykToRgb(c: number, m: number, y: number, k: number): RGB {
+    return this.getDefault().cmykToRgb(c, m, y, k);
+  }
+
+  /**
+   * Convert hex color to CMYK
+   */
+  hexToCmyk(hex: string): CMYK {
+    const rgb = this.hexToRgb(hex);
+    return this.rgbToCmyk(rgb.r, rgb.g, rgb.b);
+  }
+
+  /**
+   * Static method: Convert hex to CMYK using default instance
+   */
+  static hexToCmyk(hex: string): CMYK {
+    return this.getDefault().hexToCmyk(hex);
+  }
+
+  /**
+   * Convert CMYK to hex color
+   */
+  cmykToHex(c: number, m: number, y: number, k: number): HexColor {
+    const rgb = this.cmykToRgb(c, m, y, k);
+    return this.rgbToHex(rgb.r, rgb.g, rgb.b);
+  }
+
+  /**
+   * Static method: Convert CMYK to hex using default instance
+   */
+  static cmykToHex(c: number, m: number, y: number, k: number): HexColor {
+    return this.getDefault().cmykToHex(c, m, y, k);
   }
 }

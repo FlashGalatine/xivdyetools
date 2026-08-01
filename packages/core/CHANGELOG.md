@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Schema v2** (Monorepo 2.0; spec: docs/research/monorepo-2.0/01-dye-data-format.md).
 
+### Added
+
+- **CMYK conversions** — `rgbToCmyk` / `cmykToRgb` / `hexToCmyk` / `cmykToHex` on `ColorConverter` and the `ColorService` facade, with a `CMYK` interface in `@xivdyetools/types` 1.16.0. Naive device-independent formula (display/reference values, not print production). Completes the derived-format set now that the data file stores only `hex` (RGB, HSV [= HSB], HSL, and Lab already existed).
+
 ### Changed — BREAKING
 
 - **`colors_xiv.json` (136 entries × 16 fields) → `dyes.json` (125 entries × 7 fields, stainID-keyed)**: `stainID, name, hex, category, acquisition, consolidationType, legacyItemID`. `rgb`/`hsv`/`lab`/`cost`/`currency` and all five flags are now derived at `DyeDatabase.initialize()` — the **runtime `Dye` object keeps its full 16-field shape**, so consumers of dye objects are unaffected. Legacy runtime-shaped input (test fixtures) still initializes, with explicit field values respected.
