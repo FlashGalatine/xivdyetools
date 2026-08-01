@@ -451,6 +451,7 @@ export class HarmonyTool extends BaseComponent {
         'triadic',
         'split-complementary',
         'tetradic',
+        'inverted-tetradic',
         'square',
         'monochromatic',
         'compound',

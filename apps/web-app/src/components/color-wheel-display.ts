@@ -298,6 +298,8 @@ export class ColorWheelDisplay extends BaseComponent {
         return [baseHue, (baseHue + 150) % 360, (baseHue + 210) % 360];
       case 'tetradic':
         return [baseHue, (baseHue + 60) % 360, (baseHue + 180) % 360, (baseHue + 240) % 360];
+      case 'inverted-tetradic':
+        return [baseHue, (baseHue + 120) % 360, (baseHue + 180) % 360, (baseHue + 300) % 360];
       case 'square':
         return [baseHue, (baseHue + 90) % 360, (baseHue + 180) % 360, (baseHue + 270) % 360];
       case 'monochromatic':
@@ -321,6 +323,7 @@ export class ColorWheelDisplay extends BaseComponent {
       triadic: 'TRIAD',
       'split-complementary': 'SPLIT',
       tetradic: 'TETRA',
+      'inverted-tetradic': 'INV-TET',
       square: 'SQUARE',
       monochromatic: 'MONO',
       compound: 'COMPND',

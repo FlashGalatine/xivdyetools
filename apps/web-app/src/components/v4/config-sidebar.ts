@@ -1076,6 +1076,9 @@ export class ConfigSidebar extends BaseLitComponent {
               ${LanguageService.t('config.splitComplementary')}
             </option>
             <option value="tetradic">${LanguageService.t('config.tetradic')}</option>
+            <option value="inverted-tetradic">
+              ${LanguageService.t('config.invertedTetradic')}
+            </option>
             <option value="square">${LanguageService.t('config.square')}</option>
             <option value="monochromatic">${LanguageService.t('config.monochromatic')}</option>
             <option value="compound">${LanguageService.t('config.compound')}</option>

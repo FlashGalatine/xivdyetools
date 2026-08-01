@@ -27,7 +27,7 @@ Generate harmonious dye combinations based on color theory.
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
 | `dye` | String (autocomplete) | Yes | Base dye to generate harmonies from |
-| `type` | String (choice) | Yes | Harmony type: `complementary`, `analogous`, `triadic`, `split-complementary`, `tetradic`, `monochromatic` |
+| `type` | String (choice) | Yes | Harmony type: `complementary`, `analogous`, `triadic`, `split-complementary`, `tetradic`, `inverted-tetradic`, `square`, `monochromatic` |
 | `count` | Integer (1-10) | No | Number of results to return. Default: `5` |
 
 Returns an embed with color swatches showing the base dye and its harmonious matches from the full dye database (125 standard dyes plus 11 Facewear color entries).

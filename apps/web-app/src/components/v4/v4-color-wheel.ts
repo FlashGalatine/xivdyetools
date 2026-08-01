@@ -26,7 +26,13 @@ import type { Dye } from '@xivdyetools/types';
  * Supported harmony types
  */
 export type HarmonyType =
-  'complementary' | 'analogous' | 'triadic' | 'split-complementary' | 'tetradic' | 'square';
+  | 'complementary'
+  | 'analogous'
+  | 'triadic'
+  | 'split-complementary'
+  | 'tetradic'
+  | 'inverted-tetradic'
+  | 'square';
 
 /**
  * V4 Color Wheel - Modern CSS-based harmony visualization
@@ -240,6 +246,10 @@ export class V4ColorWheel extends BaseLitComponent {
         // Rectangle: two complementary pairs 60° apart — matches core's
         // findTetradicDyes offsets [60, 180, 240] (NOT the square's 90° steps)
         return [0, 60, 180, 240];
+      case 'inverted-tetradic':
+        // Mirror rectangle: second pair at −60° (300°) — matches core's
+        // findInvertedTetradicDyes offsets [120, 180, 300]
+        return [0, 120, 180, 300];
       case 'square':
         return [0, 90, 180, 270];
       default:
@@ -306,8 +316,12 @@ export class V4ColorWheel extends BaseLitComponent {
    * Get display name for harmony type (localized)
    */
   private getHarmonyDisplayName(): string {
-    // Use core library localization for harmony types
-    return LanguageService.getHarmonyType(this.harmonyType);
+    // Use core library localization for harmony types.
+    // HarmonyTypeKey is camelCase while this.harmonyType is the kebab id —
+    // convert (previously 'split-complementary' silently fell back to the
+    // raw key; same would have happened for 'inverted-tetradic').
+    const camelKey = this.harmonyType.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+    return LanguageService.getHarmonyType(camelKey);
   }
 
   /**

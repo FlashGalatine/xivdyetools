@@ -31,6 +31,7 @@ export const HARMONY_TYPES = [
   'analogous',
   'split-complementary',
   'tetradic',
+  'inverted-tetradic',
   'square',
   'monochromatic',
 ] as const;
@@ -90,6 +91,8 @@ function getHarmonyDyes(hex: string, type: HarmonyType, options?: HarmonyOptions
       return dyeService.findSplitComplementaryDyes(hex, options);
     case 'tetradic':
       return dyeService.findTetradicDyes(hex, options);
+    case 'inverted-tetradic':
+      return dyeService.findInvertedTetradicDyes(hex, options);
     case 'square':
       return dyeService.findSquareDyes(hex, options);
     case 'monochromatic':
@@ -106,6 +109,7 @@ function getLocalizedHarmonyType(type: string, t: Translator): string {
     triadic: 'harmony.triadic',
     'split-complementary': 'harmony.splitComplementary',
     tetradic: 'harmony.tetradic',
+    'inverted-tetradic': 'harmony.invertedTetradic',
     square: 'harmony.square',
     monochromatic: 'harmony.monochromatic',
   };
@@ -115,6 +119,7 @@ function getLocalizedHarmonyType(type: string, t: Translator): string {
   const formats: Record<string, string> = {
     complementary: 'Complementary', analogous: 'Analogous', triadic: 'Triadic',
     'split-complementary': 'Split-Complementary', tetradic: 'Tetradic',
+    'inverted-tetradic': 'Inverted Tetradic',
     square: 'Square', monochromatic: 'Monochromatic',
   };
   return formats[type] || type.charAt(0).toUpperCase() + type.slice(1);
@@ -258,6 +263,7 @@ export function getHarmonyTypeChoices(): Array<{ name: string; value: string }> 
   const formats: Record<string, string> = {
     complementary: 'Complementary', analogous: 'Analogous', triadic: 'Triadic',
     'split-complementary': 'Split-Complementary', tetradic: 'Tetradic',
+    'inverted-tetradic': 'Inverted Tetradic',
     square: 'Square', monochromatic: 'Monochromatic',
   };
   return HARMONY_TYPES.map((type) => ({ name: formats[type] || type, value: type }));

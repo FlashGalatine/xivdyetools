@@ -313,7 +313,8 @@
     "exportSettings": "Export",
     "importSettings": "Import",
     "importError": "Failed to import settings. Please check the file format.",
-    "cmykValues": "CMYK Values"
+    "cmykValues": "CMYK Values",
+    "invertedTetradic": "Inverted Tetradic"
   },
   "colorPalette": {
     "title": "Color Palette",
@@ -411,7 +412,8 @@
       "squareDesc": "Four colors evenly spaced at 90° for dynamic variety",
       "monochromaticDesc": "Variations of a single hue for subtle, cohesive looks",
       "compoundDesc": "A mix of complementary and analogous colors",
-      "shadesDesc": "Different shades and tints of the base color"
+      "shadesDesc": "Different shades and tints of the base color",
+      "invertedTetradicDesc": "Four colors in a mirrored rectangular pattern, leaning to the opposite side of the wheel"
     }
   },
   "matcher": {

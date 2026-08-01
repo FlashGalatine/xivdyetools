@@ -2,7 +2,7 @@
   "locale": "ja",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-04-29T04:47:06.363Z",
+    "generated": "2026-08-01T23:19:30.472Z",
     "dyeCount": 125
   },
   "labels": {
@@ -198,6 +198,7 @@
     "triadic": "三色配色",
     "splitComplementary": "分裂補色",
     "tetradic": "四色配色",
+    "invertedTetradic": "逆四色配色",
     "square": "正方形配色",
     "monochromatic": "単色",
     "compound": "複合",

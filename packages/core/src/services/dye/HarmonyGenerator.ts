@@ -187,6 +187,23 @@ export class HarmonyGenerator {
   }
 
   /**
+   * Find inverted tetradic color scheme (two complementary pairs, mirrored)
+   *
+   * The mirror rectangle of tetradic: the second pair sits at −60° (300°)
+   * instead of +60°, biasing the palette to the opposite side of the wheel.
+   *
+   * @param hex Base hex color
+   * @param options Matching algorithm options
+   *
+   * @remarks
+   * May return fewer than 3 dyes if suitable matches are not found.
+   */
+  findInvertedTetradicDyes(hex: string, options?: HarmonyOptions): Dye[] {
+    // Two complementary pairs: base↔base+180 and base+120↔base+300 (−60)
+    return this.findHarmonyDyesByOffsets(hex, [120, 180, 300], {}, options);
+  }
+
+  /**
    * Find monochromatic dyes (same hue, varying saturation/brightness)
    * Excludes Facewear dyes (generic names like "Red", "Blue")
    *

@@ -437,13 +437,14 @@ describe('getHarmonyTypeChoices', () => {
   it('returns all harmony type choices', () => {
     const choices = getHarmonyTypeChoices();
 
-    expect(choices).toHaveLength(7);
+    expect(choices).toHaveLength(8);
     expect(choices.map(c => c.value)).toEqual([
       'triadic',
       'complementary',
       'analogous',
       'split-complementary',
       'tetradic',
+      'inverted-tetradic',
       'square',
       'monochromatic',
     ]);

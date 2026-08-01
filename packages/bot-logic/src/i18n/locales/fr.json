@@ -182,7 +182,8 @@
     "splitComplementary": "Complémentaire divisé",
     "tetradic": "Tétradique",
     "square": "Carré",
-    "monochromatic": "Monochromatique"
+    "monochromatic": "Monochromatique",
+    "invertedTetradic": "Tétradique inversé"
   },
   "mixer": {
     "title": "Mélangeur de teintures",

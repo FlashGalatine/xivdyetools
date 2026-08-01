@@ -182,7 +182,8 @@
     "splitComplementary": "Split-Complementary",
     "tetradic": "Tetradic",
     "square": "Square",
-    "monochromatic": "Monochromatic"
+    "monochromatic": "Monochromatic",
+    "invertedTetradic": "Inverted Tetradic"
   },
   "mixer": {
     "title": "Dye Blender",

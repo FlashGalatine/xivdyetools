@@ -2,7 +2,7 @@
   "locale": "en",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-04-29T04:47:06.359Z",
+    "generated": "2026-08-01T23:19:30.468Z",
     "dyeCount": 125
   },
   "labels": {
@@ -198,6 +198,7 @@
     "triadic": "Triadic",
     "splitComplementary": "Split-Complementary",
     "tetradic": "Tetradic",
+    "invertedTetradic": "Inverted Tetradic",
     "square": "Square",
     "monochromatic": "Monochromatic",
     "compound": "Compound",

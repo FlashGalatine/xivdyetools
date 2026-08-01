@@ -48,7 +48,7 @@ src/
 ├── css-colors.ts                  # CSS named-color → hex (BlueViolet, coral, ...)
 └── commands/
     ├── types.ts                   # EmbedData, EmbedField (platform-neutral)
-    ├── harmony.ts                 # /harmony — triadic / complementary / analogous / split / tetradic / square / mono
+    ├── harmony.ts                 # /harmony — triadic / complementary / analogous / split / tetradic / inverted-tetradic / square / mono
     ├── dye-info.ts                # /dye-info AND /random (shared module)
     ├── mixer.ts                   # /mixer — 6-mode color blending + closest-dye match
     ├── gradient.ts                # /gradient — N-step gradient + dye matches per stop
@@ -99,7 +99,7 @@ executeHarmony(input: HarmonyInput): Promise<HarmonyResult>
   type HarmonyInput = { baseHex; baseName?; baseId?; baseItemID?; harmonyType; locale; harmonyOptions?; dyeFilters? };
   type HarmonyResult = { ok: true; svgString; baseHex; baseName; harmonyDyes: Dye[]; embed }
                      | { ok: false; error: 'NO_MATCHES'|'GENERATION_FAILED'; errorMessage };
-  type HarmonyType = 'triadic'|'complementary'|'analogous'|'split-complementary'|'tetradic'|'square'|'monochromatic';
+  type HarmonyType = 'triadic'|'complementary'|'analogous'|'split-complementary'|'tetradic'|'inverted-tetradic'|'square'|'monochromatic';
   const HARMONY_TYPES: readonly HarmonyType[];
   function getHarmonyTypeChoices(): {name; value}[];
   type HarmonyColorSpace;  // re-exported from @xivdyetools/core

@@ -182,7 +182,8 @@
     "splitComplementary": "Geteilt-Komplementär",
     "tetradic": "Tetradisch",
     "square": "Quadratisch",
-    "monochromatic": "Monochromatisch"
+    "monochromatic": "Monochromatisch",
+    "invertedTetradic": "Invertiert-Tetradisch"
   },
   "mixer": {
     "title": "Farbstoff-Mixer",

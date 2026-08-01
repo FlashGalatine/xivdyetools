@@ -182,7 +182,8 @@
     "splitComplementary": "スプリット補色",
     "tetradic": "テトラード",
     "square": "スクエア",
-    "monochromatic": "モノクロマティック"
+    "monochromatic": "モノクロマティック",
+    "invertedTetradic": "逆テトラード"
   },
   "mixer": {
     "title": "カララントブレンダー",

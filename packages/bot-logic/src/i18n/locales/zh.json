@@ -182,7 +182,8 @@
     "splitComplementary": "分裂互补",
     "tetradic": "四色",
     "square": "正方形",
-    "monochromatic": "单色"
+    "monochromatic": "单色",
+    "invertedTetradic": "逆四色"
   },
   "mixer": {
     "title": "染剂混合器",

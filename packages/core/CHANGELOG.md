@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Inverted Tetradic harmony** — `findInvertedTetradicDyes` on `HarmonyGenerator`/`DyeService` (offsets `[120, 180, 300]`, the mirror rectangle of tetradic) + `invertedTetradic` in `HarmonyTypeKey` and all six locale `harmonyTypes` blocks.
 - **CMYK conversions** — `rgbToCmyk` / `cmykToRgb` / `hexToCmyk` / `cmykToHex` on `ColorConverter` and the `ColorService` facade, with a `CMYK` interface in `@xivdyetools/types` 1.16.0. Naive device-independent formula (display/reference values, not print production). Completes the derived-format set now that the data file stores only `hex` (RGB, HSV [= HSB], HSL, and Lab already existed).
 
 ### Changed — BREAKING

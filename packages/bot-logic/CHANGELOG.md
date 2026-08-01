@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-08-01
+
+### Added
+
+- `inverted-tetradic` harmony type on the `/harmony` command (mirror rectangle of tetradic, via core's new `findInvertedTetradicDyes`) with localized labels in all six bot locales. Requires re-running the slash-command registration to publish the new choice.
+
 ## [1.4.0] - 2026-07-30
 
 Monorepo 2.0 Tier 1 package consolidation.

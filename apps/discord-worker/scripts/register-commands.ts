@@ -76,6 +76,7 @@ const commands = [
           { name: 'Triadic (3 evenly spaced)', value: 'triadic' },
           { name: 'Split-Complementary', value: 'split-complementary' },
           { name: 'Tetradic (4 colors)', value: 'tetradic' },
+          { name: 'Inverted Tetradic (4 colors, mirrored)', value: 'inverted-tetradic' },
           { name: 'Square (4 evenly spaced)', value: 'square' },
           { name: 'Monochromatic (shades)', value: 'monochromatic' },
         ],

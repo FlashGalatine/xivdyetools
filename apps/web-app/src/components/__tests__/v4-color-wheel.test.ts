@@ -26,8 +26,14 @@ describe('V4ColorWheel harmony angles', () => {
     expect(anglesFor('square')).toEqual([0, 90, 180, 270]);
   });
 
-  it('tetradic and square are visually distinct formations', () => {
+  it('inverted-tetradic is the mirror rectangle, matching core offsets [120, 180, 300]', () => {
+    expect(anglesFor('inverted-tetradic')).toEqual([0, 120, 180, 300]);
+  });
+
+  it('tetradic, inverted-tetradic, and square are visually distinct formations', () => {
     expect(anglesFor('tetradic')).not.toEqual(anglesFor('square'));
+    expect(anglesFor('inverted-tetradic')).not.toEqual(anglesFor('tetradic'));
+    expect(anglesFor('inverted-tetradic')).not.toEqual(anglesFor('square'));
   });
 
   it('remaining harmony types match core HarmonyGenerator offsets', () => {

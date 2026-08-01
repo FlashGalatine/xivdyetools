@@ -88,6 +88,7 @@ describe('Harmony Generation Workflow - Integration Tests', () => {
                 triadic: dyeService.findTriadicDyes(baseColor),
                 square: dyeService.findSquareDyes(baseColor),
                 tetradic: dyeService.findTetradicDyes(baseColor),
+                invertedTetradic: dyeService.findInvertedTetradicDyes(baseColor),
                 analogous: dyeService.findAnalogousDyes(baseColor),
                 splitComplementary: dyeService.findSplitComplementaryDyes(baseColor),
                 compound: dyeService.findCompoundDyes(baseColor),
@@ -98,6 +99,7 @@ describe('Harmony Generation Workflow - Integration Tests', () => {
             expect(harmonies.complementary !== undefined).toBe(true);
             expect(harmonies.triadic.length).toBeGreaterThan(0);
             expect(harmonies.square.length).toBeGreaterThan(0);
+            expect(harmonies.invertedTetradic.length).toBeGreaterThan(0);
             expect(harmonies.tetradic.length).toBeGreaterThan(0);
             expect(harmonies.analogous.length).toBeGreaterThan(0);
             expect(harmonies.splitComplementary.length).toBeGreaterThan(0);

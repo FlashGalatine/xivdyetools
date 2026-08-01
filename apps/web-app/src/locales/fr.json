@@ -313,7 +313,8 @@
     "exportSettings": "Exporter",
     "importSettings": "Importer",
     "importError": "Échec de l'importation des paramètres. Veuillez vérifier le format du fichier.",
-    "cmykValues": "Valeurs CMYK"
+    "cmykValues": "Valeurs CMYK",
+    "invertedTetradic": "Tétradique inversé"
   },
   "colorPalette": {
     "title": "Palette de couleurs",
@@ -411,7 +412,8 @@
       "squareDesc": "Quatre couleurs espacées de 90° pour une variété dynamique",
       "monochromaticDesc": "Variations d'une seule teinte pour des looks subtils et cohérents",
       "compoundDesc": "Un mélange de couleurs complémentaires et analogues",
-      "shadesDesc": "Différentes nuances et teintes de la couleur de base"
+      "shadesDesc": "Différentes nuances et teintes de la couleur de base",
+      "invertedTetradicDesc": "Quatre couleurs en motif rectangulaire inversé, orienté vers l'autre côté de la roue"
     }
   },
   "matcher": {

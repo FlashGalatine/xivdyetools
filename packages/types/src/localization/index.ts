@@ -34,6 +34,7 @@ export type HarmonyTypeKey =
   | 'triadic'
   | 'splitComplementary'
   | 'tetradic'
+  | 'invertedTetradic'
   | 'square'
   | 'monochromatic'
   | 'compound'

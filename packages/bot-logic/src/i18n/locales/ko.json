@@ -182,7 +182,8 @@
     "splitComplementary": "분할보색",
     "tetradic": "사각배색",
     "square": "정방형",
-    "monochromatic": "단색"
+    "monochromatic": "단색",
+    "invertedTetradic": "반전 사각배색"
   },
   "mixer": {
     "title": "염료 블렌더",

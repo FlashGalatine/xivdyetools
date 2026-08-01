@@ -307,6 +307,15 @@ export class DyeService {
   }
 
   /**
+   * Find inverted tetradic color scheme (two complementary pairs, mirrored from tetradic)
+   * @param hex Base hex color
+   * @param options Matching algorithm options (optional)
+   */
+  findInvertedTetradicDyes(hex: string, options?: HarmonyOptions): Dye[] {
+    return this.harmony.findInvertedTetradicDyes(hex, options);
+  }
+
+  /**
    * Find monochromatic dyes (same hue, varying saturation/brightness)
    * @param hex Base hex color
    * @param limit Maximum number of dyes to return (default: 6)
