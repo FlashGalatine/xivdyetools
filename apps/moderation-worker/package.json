@@ -25,14 +25,14 @@
   "author": "Flash Galatine",
   "license": "MIT",
   "dependencies": {
-    "@cloudflare/workers-types": "^5.20260727.1",
+    "@cloudflare/workers-types": "^5.20260731.1",
     "@xivdyetools/auth": "workspace:*",
     "@xivdyetools/bot-logic": "workspace:*",
     "@xivdyetools/logger": "workspace:*",
     "@xivdyetools/rate-limiter": "workspace:*",
     "@xivdyetools/types": "workspace:*",
     "@xivdyetools/worker-middleware": "workspace:*",
-    "hono": "^4.12.32"
+    "hono": "^4.12.33"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",
