@@ -19,7 +19,7 @@ import {
   requestIdMiddleware,
   loggerMiddleware,
   getLogger,
-} from '@xivdyetools/worker-middleware';
+} from '@xivdyetools/worker-kit';
 import { extractLocaleCode } from '@xivdyetools/core';
 import type { LocaleCode } from '@xivdyetools/types';
 import { detectCrawlerFromRequest, getCrawlerName } from './crawler-detector';
@@ -67,7 +67,7 @@ const OG_MAX_COMPARISON_DYES = 16;
 // Using readonly string[] so .includes() accepts any string without type casts.
 const VALID_HARMONY_TYPES: readonly string[] = [
   'complementary', 'analogous', 'triadic', 'split-complementary',
-  'tetradic', 'square', 'monochromatic', 'compound', 'shades',
+  'tetradic', 'inverted-tetradic', 'square', 'monochromatic', 'compound', 'shades',
 ];
 const VALID_ALGORITHMS: readonly string[] = ['oklab', 'ciede2000', 'euclidean'];
 const VALID_VISION_TYPES: readonly string[] = [

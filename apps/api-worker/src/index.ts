@@ -11,18 +11,32 @@ import { cors } from 'hono/cors';
 import type { Env, Variables } from './types.js';
 
 // Middleware
-import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-middleware';
+import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-kit';
 import { rateLimitMiddleware } from './middleware/rate-limit.js';
 import { localeMiddleware } from './middleware/locale.js';
 
 // Routes
 import { dyesRouter } from './routes/dyes.js';
 import { matchRouter } from './routes/match.js';
+import { universalisRouter } from './universalis/router.js';
 
 // Lib
 import { ApiError, ErrorCode } from './lib/api-error.js';
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
+
+// ============================================
+// DOCS SITE (developers.xivdyetools.app)
+// ============================================
+// Absorbed apps/api-docs (Monorepo 2.0 Tier 2): the VitePress build ships as
+// Workers Static Assets (production env only). Runs BEFORE all API middleware
+// so docs requests skip rate limiting, locale handling, and API headers.
+app.use('*', async (c, next) => {
+  if (c.env.ASSETS && new URL(c.req.url).hostname === 'developers.xivdyetools.app') {
+    return c.env.ASSETS.fetch(c.req.raw);
+  }
+  return next();
+});
 
 // ============================================
 // GLOBAL MIDDLEWARE
@@ -108,6 +122,14 @@ app.get('/health', (c) => {
 
 app.route('/v1/dyes', dyesRouter);
 app.route('/v1/match', matchRouter);
+
+// Universalis market-board proxy (absorbed from apps/universalis-proxy).
+// Canonical mount + /api/v2 compatibility mount for the proxy.xivdyetools.app
+// custom domain and discord-worker's UNIVERSALIS_PROXY service binding.
+// Deliberately outside /v1/* (no KV rate limit / locale middleware) and
+// un-enveloped — see universalis/router.ts.
+app.route('/universalis', universalisRouter);
+app.route('/api/v2', universalisRouter);
 
 // ============================================
 // ERROR HANDLING

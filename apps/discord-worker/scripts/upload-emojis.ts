@@ -26,10 +26,12 @@ const __dirname = path.dirname(__filename);
 const EMOJI_DIR = path.resolve(__dirname, '../../xivdyetools-discord-bot/emoji');
 
 // Path to dye database (in the core project)
-const DYE_DATA_PATH = path.resolve(__dirname, '../../xivdyetools-core/src/data/colors_xiv.json');
+const DYE_DATA_PATH = path.resolve(__dirname, '../../../packages/core/src/data/dyes.json');
 
+/** Schema-v2 dye entry (dyes.json). */
 interface Dye {
-  itemID: number | null;
+  stainID: number;
+  legacyItemID: number | null;
   name: string;
   category: string;
 }
@@ -146,14 +148,15 @@ async function main() {
   console.log('Loading dye database...');
   const dyeData: Dye[] = JSON.parse(fs.readFileSync(DYE_DATA_PATH, 'utf-8'));
 
-  // Create itemID -> dye name map (skip Facewear dyes with null itemID)
+  // Create legacy-itemID -> dye name map (the emoji files are keyed by the
+  // market-era item IDs; schema v2 calls these legacyItemID)
   const dyeMap = new Map<number, string>();
   for (const dye of dyeData) {
-    if (dye.itemID !== null && dye.category !== 'Facewear') {
-      dyeMap.set(dye.itemID, dye.name);
+    if (dye.legacyItemID !== null) {
+      dyeMap.set(dye.legacyItemID, dye.name);
     }
   }
-  console.log(`Loaded ${dyeMap.size} dyes (excluding Facewear)`);
+  console.log(`Loaded ${dyeMap.size} dyes`);
 
   // Get list of emoji files
   const emojiFiles = fs.readdirSync(EMOJI_DIR)

@@ -117,7 +117,9 @@
       "colorIndex": "Index",
       "clickToSelect": "Klicke unten auf eine Farbe",
       "male": "Männlich",
-      "female": "Weiblich"
+      "female": "Weiblich",
+      "evercoldNoticeTitle": "Evercold (Januar 2027): Voreingestellte Paletten werden eingestellt",
+      "evercoldNotice": "Mit der Erweiterung Evercold lassen sich Augen-, Haar- und Hautfarben frei über einen Farbwähler auswählen. Diese Voreinstellungs-Farbfelder werden dann hier durch einen Farbwähler ersetzt."
     }
   },
   "common": {
@@ -310,7 +312,9 @@
     "analyticsDesc": "Helfen Sie, XIV Dye Tools zu verbessern, indem Sie anonyme Nutzungsdaten teilen",
     "exportSettings": "Exportieren",
     "importSettings": "Importieren",
-    "importError": "Einstellungen konnten nicht importiert werden. Bitte überprüfen Sie das Dateiformat."
+    "importError": "Einstellungen konnten nicht importiert werden. Bitte überprüfen Sie das Dateiformat.",
+    "cmykValues": "CMYK-Werte",
+    "invertedTetradic": "Invertiert-Tetradisch"
   },
   "colorPalette": {
     "title": "Farbpalette",
@@ -408,7 +412,8 @@
       "squareDesc": "Vier Farben, gleichmäßig um 90° verteilt, für dynamische Vielfalt",
       "monochromaticDesc": "Variationen eines einzelnen Farbtons für subtile, zusammenhängende Looks",
       "compoundDesc": "Eine Mischung aus Komplementär- und Analogfarben",
-      "shadesDesc": "Verschiedene Schattierungen und Tönungen der Grundfarbe"
+      "shadesDesc": "Verschiedene Schattierungen und Tönungen der Grundfarbe",
+      "invertedTetradicDesc": "Vier Farben in einem gespiegelten rechteckigen Muster zur anderen Seite des Farbkreises"
     }
   },
   "matcher": {

@@ -32,7 +32,7 @@ pnpm lint && pnpm type-check && pnpm test
 ```
 Request
   ├─► requestIdMiddleware           (every route — adds X-Request-Id)
-  ├─► loggerMiddleware              (structured logger via @xivdyetools/worker-middleware)
+  ├─► loggerMiddleware              (structured logger via @xivdyetools/worker-kit)
   ├─► Security headers              (X-Content-Type-Options, X-Frame-Options, HSTS in prod)
   ├─► CORS (origin: *, GET/OPTIONS) (exposes RateLimit + Request-Id headers)
   ├─► rateLimitMiddleware           (only on /v1/*, KV-backed, fail-open)
@@ -122,7 +122,7 @@ Use `lookupDyeByResolvedId()` to dispatch to the correct `DyeService` method. Fo
 
 ### Rate Limiting
 
-Composes the shared `rateLimitMiddleware` factory from `@xivdyetools/worker-middleware` with `KVRateLimiter` (key prefix `api:ip:`, 60 req/60s, +5 burst, fail-open). The KV backend is constructed per-request — see BUG-004 comment in `middleware/rate-limit.ts` for why a module-scope singleton would be wrong.
+Composes the shared `rateLimitMiddleware` factory from `@xivdyetools/worker-kit` with `KVRateLimiter` (key prefix `api:ip:`, 60 req/60s, +5 burst, fail-open). The KV backend is constructed per-request — see BUG-004 comment in `middleware/rate-limit.ts` for why a module-scope singleton would be wrong.
 
 ### Service Singleton
 
@@ -137,17 +137,17 @@ Composes the shared `rateLimitMiddleware` factory from `@xivdyetools/worker-midd
 | `@xivdyetools/core` | DyeService, dyeDatabase, ColorConverter, LocalizationService |
 | `@xivdyetools/types` | `Dye` interface |
 | `@xivdyetools/logger` | Structured logger (consumed via worker-middleware) |
-| `@xivdyetools/rate-limiter` | `KVRateLimiter`, `getClientIp` |
-| `@xivdyetools/worker-middleware` | Shared `requestIdMiddleware`, `loggerMiddleware`, `rateLimitMiddleware` factory |
+| `@xivdyetools/worker-kit/rate-limiter` | `KVRateLimiter`, `getClientIp` |
+| `@xivdyetools/worker-kit` | Shared `requestIdMiddleware`, `loggerMiddleware`, `rateLimitMiddleware` factory |
 | `@xivdyetools/test-utils` (dev) | KV mock for vitest |
 
 ## Related Projects
 
-**Dependencies (internal):** `@xivdyetools/core`, `@xivdyetools/types`, `@xivdyetools/logger`, `@xivdyetools/rate-limiter`, `@xivdyetools/worker-middleware`.
+**Dependencies (internal):** `@xivdyetools/core`, `@xivdyetools/types`, `@xivdyetools/logger`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/worker-kit`.
 
 **Service Bindings:** None. `api-worker` is standalone and public-facing — it does not call other workers. Other workers do not currently bind to it (clients hit `data.xivdyetools.app` over HTTPS).
 
-**Documentation:** [`apps/api-docs/`](../api-docs/) is the VitePress site documenting this worker's public API surface, deployed to Cloudflare Pages.
+**Documentation:** `docs/` (in this app) is the VitePress site documenting this worker's public API surface — built by `pnpm run build:docs` and served as Workers Static Assets on developers.xivdyetools.app (absorbed from apps/api-docs).
 
 ## Deployment Checklist
 
@@ -155,5 +155,5 @@ Composes the shared `rateLimitMiddleware` factory from `@xivdyetools/worker-midd
 2. Bump `version` in `package.json` if behavior changed.
 3. `pnpm deploy` to staging; smoke-test the staging URL.
 4. `pnpm deploy:production` to ship to `data.xivdyetools.app`.
-5. If any new endpoints/parameters were added, update **both** `apps/api-docs/reference/dyes.md` (or `matching.md`) and the `index.md` quick-start examples — the docs site is the public contract.
+5. If any new endpoints/parameters were added, update **both** `docs/reference/dyes.md` (or `matching.md`) and the `index.md` quick-start examples — the docs site is the public contract.
 6. Verify `X-RateLimit-*` headers appear on a `/v1/*` response and `X-Request-Id` is unique per call.

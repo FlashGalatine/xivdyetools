@@ -16,7 +16,6 @@ const PRECACHE_URLS = [
   '/dye-mixer_stable.html',
   '/assets/css/shared-styles.css',
   '/assets/js/shared-components.js',
-  '/assets/json/colors_xiv.json',
   '/assets/json/data-centers.json',
   '/assets/json/worlds.json',
   '/components/nav.html',

@@ -710,6 +710,7 @@ export class PresetDetail extends BaseLitComponent {
                   ?show-rgb=${this.displayOptions.showRgb}
                   ?show-hsv=${this.displayOptions.showHsv}
                   ?show-lab=${this.displayOptions.showLab}
+                  ?show-cmyk=${this.displayOptions.showCmyk}
                   ?show-delta-e=${this.displayOptions.showDeltaE}
                   ?show-price=${this.displayOptions.showPrice && this.marketConfig.showPrices}
                   ?show-acquisition=${this.displayOptions.showAcquisition}

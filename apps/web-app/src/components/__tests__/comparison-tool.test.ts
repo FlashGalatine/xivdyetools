@@ -345,6 +345,7 @@ describe('ComparisonTool', () => {
           showRgb: false,
           showHsv: false,
           showLab: false,
+          showCmyk: false,
           showPrice: false,
           showDeltaE: false,
           showAcquisition: false,

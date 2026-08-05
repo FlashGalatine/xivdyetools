@@ -29,7 +29,6 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
-    "@xivdyetools/color-blending": "workspace:*",
     "@xivdyetools/core": "workspace:*",
     "@xivdyetools/types": "workspace:*"
   },

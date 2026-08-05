@@ -7,7 +7,7 @@
  */
 
 // Core color types
-export type { RGB, HSV, LAB, OKLAB, OKLCH, LCH, HSL } from './rgb.js';
+export type { RGB, HSV, LAB, OKLAB, OKLCH, LCH, HSL, CMYK } from './rgb.js';
 
 // Branded types for type safety
 export type { HexColor, DyeId, Hue, Saturation } from './branded.js';

@@ -12,46 +12,48 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core Library** | v2.7.0 | `@xivdyetools/core` | npm | Active |
+| **Core Library** | v3.0.0 | `@xivdyetools/core` | npm | Active |
 | **Web Application** | v4.12.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v4.7.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.3.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v2.5.0 | `xivdyetools-oauth-worker` | Cloudflare Workers | Active |
 | **Presets API** | v1.6.0 | `xivdyetools-presets-api` | Cloudflare Workers | Active |
-| **Universalis Proxy** | v1.5.0 | `xivdyetools-universalis-proxy` | Cloudflare Workers | Active |
+| **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **OpenGraph Worker** | v1.4.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Public REST API** | v0.5.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **API Documentation** | v0.1.0 | `xivdyetools-api-docs` | Cloudflare Pages (VitePress) | Active |
+| **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
 | **Stoat Bot** | v0.2.0 | `xivdyetools-stoat-worker` | Node.js | Active |
 
 ### Developer Tools
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Dye Maintainer** | v1.0.3 | `xivdyetools-maintainer` | Local (Vite + Express) | Active |
 
 ### Shared Packages
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Types** | v1.15.0 | `@xivdyetools/types` | npm | Active |
-| **Auth** | v1.2.0 | `@xivdyetools/auth` | npm | Active |
-| **Crypto** | v1.1.2 | `@xivdyetools/crypto` | npm | Active |
+| **Types** | v1.16.0 | `@xivdyetools/types` | npm | Active |
+| **Auth** (incl. `/encoding`) | v1.3.0 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v1.3.0 | `@xivdyetools/logger` | npm | Active |
-| **Rate Limiter** | v1.5.0 | `@xivdyetools/rate-limiter` | npm | Active |
-| **Core** | v2.7.0 | `@xivdyetools/core` | npm | Active |
+| **Worker Kit** (middleware + `/rate-limiter`) | v1.0.0 | `@xivdyetools/worker-kit` | npm | Active (first publish pending) |
+| **Core** (incl. `/blending` + schema-v2 data) | v3.0.0 | `@xivdyetools/core` | npm | Active |
 | **SVG** | v1.2.1 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** | v1.3.0 | `@xivdyetools/bot-logic` | npm | Active |
-| **Bot i18n** | v1.2.1 | `@xivdyetools/bot-i18n` | npm | Active |
-| **Color Blending** | v1.1.0 | `@xivdyetools/color-blending` | npm | Active |
-| **Worker Middleware** | v1.2.0 | `@xivdyetools/worker-middleware` | npm | Active |
-| **Test Utils** | v1.1.8 | `@xivdyetools/test-utils` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v1.4.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **Test Utils** | v1.1.8 | `@xivdyetools/test-utils` | workspace-private | Active (unpublished) |
 
 ### Deprecated
 
 | Project | Last Version | Replacement |
 |---------|--------------|-------------|
 | xivdyetools-discord-bot | Archived | xivdyetools-discord-worker |
+| @xivdyetools/crypto | v1.1.2 | `@xivdyetools/auth/encoding` (2026-07-30) |
+| @xivdyetools/bot-i18n | v1.2.1 | `@xivdyetools/bot-logic/i18n` (2026-07-30) |
+| @xivdyetools/color-blending | v1.1.0 | `@xivdyetools/core/blending` (2026-07-31) |
+| @xivdyetools/rate-limiter | v1.5.0 | `@xivdyetools/worker-kit/rate-limiter` (2026-07-31) |
+| @xivdyetools/worker-middleware | v1.2.0 | `@xivdyetools/worker-kit` (2026-07-31) |
+| xivdyetools-maintainer | v1.0.3 | Manual workflow — `docs/maintainer/adding-dyes.md` (2026-07-31) |
+| xivdyetools-universalis-proxy | v1.5.0 | `xivdyetools-api-worker` `/universalis` routes (2026-07-31) |
 
 ---
 
@@ -181,7 +183,7 @@
 | v1.1.0 | Dec 2025 | Initial moderation pipeline |
 | v1.0.0 | Nov 2025 | Initial release |
 
-### xivdyetools-universalis-proxy
+### xivdyetools-universalis-proxy (merged into api-worker 2026-07-31)
 
 | Version | Date | Highlights |
 |---------|------|------------|
@@ -369,7 +371,7 @@
 | v0.2.0 | Apr 2026 | `DyeQueryFilters` interface and `parseDyeFilters()` for query-string filter parsing; dye type filtering on `GET /v1/dyes`; filter exclusion on `/closest` and `/within-distance`; 11 unit tests |
 | v0.1.0 | Apr 2026 | Initial release — public REST API for XIV Dye Tools dye database and color matching at `data.xivdyetools.app` |
 
-### xivdyetools-api-docs
+### xivdyetools-api-docs (merged into api-worker 2026-07-31)
 
 | Version | Date | Highlights |
 |---------|------|------------|

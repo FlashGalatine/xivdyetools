@@ -25,12 +25,10 @@
   "author": "Flash Galatine",
   "license": "ISC",
   "dependencies": {
-    "@xivdyetools/bot-i18n": "workspace:*",
     "@xivdyetools/bot-logic": "workspace:*",
-    "@xivdyetools/color-blending": "workspace:*",
     "@xivdyetools/core": "workspace:*",
     "@xivdyetools/logger": "workspace:*",
-    "@xivdyetools/rate-limiter": "workspace:*",
+    "@xivdyetools/worker-kit": "workspace:*",
     "@xivdyetools/svg": "workspace:*",
     "@xivdyetools/types": "workspace:*",
     "revolt.js": "^7.1.1"

@@ -5,8 +5,8 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Hono } from 'hono';
-import { getRequestId, requestIdMiddleware, getLogger, loggerMiddleware } from '@xivdyetools/worker-middleware';
-import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
+import { getRequestId, requestIdMiddleware, getLogger, loggerMiddleware } from '@xivdyetools/worker-kit';
+import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
 import type { Env } from '../types.js';
 
 describe('Request ID Middleware', () => {

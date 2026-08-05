@@ -117,7 +117,9 @@
       "colorIndex": "索引",
       "clickToSelect": "点击下方的颜色",
       "male": "男性",
-      "female": "女性"
+      "female": "女性",
+      "evercoldNoticeTitle": "Evercold（2027年1月）：预设调色板即将停用",
+      "evercoldNotice": "在资料片 Evercold 中，瞳色、发色和肤色将可通过取色器自由选择。届时，这里的预设色板将被取色器取代。"
     }
   },
   "common": {
@@ -332,7 +334,9 @@
     "analyticsDesc": "通过分享匿名使用数据来帮助改进 XIV 染色工具",
     "exportSettings": "导出",
     "importSettings": "导入",
-    "importError": "导入设置失败。请检查文件格式。"
+    "importError": "导入设置失败。请检查文件格式。",
+    "cmykValues": "CMYK值",
+    "invertedTetradic": "逆四色"
   },
   "colorPalette": {
     "title": "调色板",
@@ -430,7 +434,8 @@
       "squareDesc": "90°等间距的四种颜色，动态多样",
       "monochromaticDesc": "单一色调的变化，营造细腻统一的外观",
       "compoundDesc": "补色和类似色的混合",
-      "shadesDesc": "基础色的不同明暗色调"
+      "shadesDesc": "基础色的不同明暗色调",
+      "invertedTetradicDesc": "镜像矩形图案的四种颜色，偏向色轮另一侧"
     }
   },
   "matcher": {

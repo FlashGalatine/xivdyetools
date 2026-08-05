@@ -226,10 +226,10 @@ Without `BOT_SIGNING_SECRET` in production, bot auth is rejected on the API side
 |---------|---------|
 | `hono` | HTTP framework |
 | `@xivdyetools/auth` | JWT/HMAC/Ed25519 helpers |
-| `@xivdyetools/rate-limiter` | KV sliding window backend |
+| `@xivdyetools/worker-kit/rate-limiter` | KV sliding window backend |
 | `@xivdyetools/types` | Shared interfaces |
 | `@xivdyetools/logger` | Structured logging |
-| `@xivdyetools/worker-middleware` | Shared Hono middleware |
+| `@xivdyetools/worker-kit` | Shared Hono middleware |
 | `discord-interactions` (dev) | Used by `scripts/register-commands.ts` |
 
 ## Localization
@@ -251,7 +251,7 @@ npx vitest run -t "ban"                                   # Pattern match
 
 ## Related Projects
 
-**Dependencies:** `@xivdyetools/auth`, `@xivdyetools/rate-limiter`, `@xivdyetools/types`, `@xivdyetools/logger`, `@xivdyetools/worker-middleware`
+**Dependencies:** `@xivdyetools/auth`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/types`, `@xivdyetools/logger`, `@xivdyetools/worker-kit`
 
 **Service Bindings (outbound):** `xivdyetools-presets-api`
 

@@ -26,15 +26,12 @@
     "@cloudflare/workers-types": "^5.20260727.1",
     "@resvg/resvg-wasm": "^2.6.2",
     "@xivdyetools/auth": "workspace:*",
-    "@xivdyetools/bot-i18n": "workspace:*",
     "@xivdyetools/bot-logic": "workspace:*",
-    "@xivdyetools/color-blending": "workspace:*",
     "@xivdyetools/svg": "workspace:*",
     "@xivdyetools/core": "workspace:*",
     "@xivdyetools/logger": "workspace:*",
-    "@xivdyetools/rate-limiter": "workspace:*",
     "@xivdyetools/types": "workspace:*",
-    "@xivdyetools/worker-middleware": "workspace:*",
+    "@xivdyetools/worker-kit": "workspace:*",
     "hono": "^4.12.32"
   },
   "devDependencies": {

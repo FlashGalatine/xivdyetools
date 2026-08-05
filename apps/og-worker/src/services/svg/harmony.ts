@@ -84,6 +84,9 @@ function getHarmonyMatches(
     case 'tetradic':
       targetHues = [baseHue + 60, baseHue + 180, baseHue + 240];
       break;
+    case 'inverted-tetradic':
+      targetHues = [baseHue + 120, baseHue + 180, baseHue + 300];
+      break;
     case 'square':
       targetHues = [baseHue + 90, baseHue + 180, baseHue + 270];
       break;
@@ -348,6 +351,7 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
     triadic: 'Triadic',
     'split-complementary': 'Split-Complementary',
     tetradic: 'Tetradic',
+    'inverted-tetradic': 'Inverted Tetradic',
     square: 'Square',
     monochromatic: 'Monochromatic',
     compound: 'Compound',
@@ -375,6 +379,7 @@ function generateFallbackHarmonyOG(
     triadic: 'Triadic',
     'split-complementary': 'Split-Complementary',
     tetradic: 'Tetradic',
+    'inverted-tetradic': 'Inverted Tetradic',
     square: 'Square',
     monochromatic: 'Monochromatic',
     compound: 'Compound',

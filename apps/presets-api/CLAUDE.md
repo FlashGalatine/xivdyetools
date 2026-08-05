@@ -231,7 +231,7 @@ Allowlist comes from `CORS_ORIGIN` + `ADDITIONAL_CORS_ORIGINS`. In dev mode only
 
 ### Public Rate Limiting
 
-100 req/min per IP via `MemoryRateLimiter` from `@xivdyetools/rate-limiter` (per-isolate; not distributed). Returns 429 with `Retry-After` and emits `X-RateLimit-*` headers.
+100 req/min per IP via `MemoryRateLimiter` from `@xivdyetools/worker-kit/rate-limiter` (per-isolate; not distributed). Returns 429 with `Retry-After` and emits `X-RateLimit-*` headers.
 
 ## Security Patterns
 
@@ -284,11 +284,10 @@ Production hides `err.message` and stack — only the request ID is returned. De
 |---------|---------|
 | `hono` | HTTP framework |
 | `@xivdyetools/auth` | JWT + HMAC bot signature verification |
-| `@xivdyetools/crypto` | Base64URL helpers |
 | `@xivdyetools/types` | Shared interfaces (preset shapes, AuthContext, etc.) |
-| `@xivdyetools/rate-limiter` | `MemoryRateLimiter`, `getClientIp`, `PUBLIC_API_LIMITS` |
+| `@xivdyetools/worker-kit/rate-limiter` | `MemoryRateLimiter`, `getClientIp`, `PUBLIC_API_LIMITS` |
 | `@xivdyetools/logger` | Structured logging with secret redaction |
-| `@xivdyetools/worker-middleware` | Request ID, logger, rate-limit middleware factories |
+| `@xivdyetools/worker-kit` | Request ID, logger, rate-limit middleware factories |
 
 ## Development Notes
 
@@ -300,7 +299,7 @@ Production hides `err.message` and stack — only the request ID is returned. De
 
 ## Related Projects
 
-**Dependencies:** `@xivdyetools/auth`, `@xivdyetools/crypto`, `@xivdyetools/types`, `@xivdyetools/rate-limiter`, `@xivdyetools/logger`, `@xivdyetools/worker-middleware`
+**Dependencies:** `@xivdyetools/auth`, `@xivdyetools/types`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/logger`, `@xivdyetools/worker-kit`
 
 **Service Bindings (outbound):** `xivdyetools-discord-worker` (notifications)
 

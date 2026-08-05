@@ -50,14 +50,14 @@ describe('budget-calculator.ts', () => {
       expect(dye?.name).toBe(testDye.name);
     });
 
-    // BUG-032 (2026-07-18 audit): Facewear entries (synthetic negative itemIDs)
-    // must not resolve as budget targets — their IDs fail the whole
-    // Universalis price batch
-    it('should return null for Facewear color names', () => {
-      const facewear = getAllDyes().find((d) => d.itemID < 0);
-      expect(facewear).toBeDefined();
+    // BUG-032 (2026-07-18 audit) → schema v2 (2026-07-31): Facewear entries
+    // no longer exist in the dye database at all (they moved to core's
+    // facewearColors), so the negative-itemID hazard for Universalis price
+    // batches is gone by construction.
+    it('has no Facewear entries / negative itemIDs in the database (schema v2)', () => {
+      expect(getAllDyes().every((d) => d.itemID > 0)).toBe(true);
 
-      const dye = getDyeByName(facewear!.name);
+      const dye = getDyeByName('Silver'); // a Facewear color name
       expect(dye).toBeNull();
     });
 

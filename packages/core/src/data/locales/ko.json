@@ -2,7 +2,7 @@
   "locale": "ko",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-04-29T04:47:06.369Z",
+    "generated": "2026-08-01T23:19:30.476Z",
     "dyeCount": 125
   },
   "labels": {
@@ -198,6 +198,7 @@
     "triadic": "삼원색",
     "splitComplementary": "분리보색",
     "tetradic": "사색",
+    "invertedTetradic": "반전 사색",
     "square": "정사각형",
     "monochromatic": "단색",
     "compound": "복합",

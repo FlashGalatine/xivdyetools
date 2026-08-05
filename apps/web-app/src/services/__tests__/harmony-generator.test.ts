@@ -109,6 +109,7 @@ describe('harmony-generator', () => {
       expect(ids).toContain('triadic');
       expect(ids).toContain('split-complementary');
       expect(ids).toContain('tetradic');
+      expect(ids).toContain('inverted-tetradic');
       expect(ids).toContain('square');
       expect(ids).toContain('monochromatic');
       expect(ids).toContain('compound');
@@ -146,6 +147,10 @@ describe('harmony-generator', () => {
 
     it('should have tetradic at 60, 180, and 240 degrees', () => {
       expect(HARMONY_OFFSETS.tetradic).toEqual([60, 180, 240]);
+    });
+
+    it('should have inverted-tetradic at 120, 180, and 300 degrees (mirror of tetradic)', () => {
+      expect(HARMONY_OFFSETS['inverted-tetradic']).toEqual([120, 180, 300]);
     });
 
     it('should have square at 90, 180, and 270 degrees', () => {

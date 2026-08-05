@@ -215,7 +215,7 @@ describe('Match route dye filters', () => {
   });
 
   it('/within-distance excludes metallic dyes', async () => {
-    const { body } = await getJson('/v1/match/within-distance?hex=CCCCCC&maxDistance=500&metallic=false&limit=136');
+    const { body } = await getJson('/v1/match/within-distance?hex=CCCCCC&maxDistance=500&metallic=false&limit=125');
 
     expect(body.success).toBe(true);
     for (const result of body.data.results) {
@@ -224,7 +224,7 @@ describe('Match route dye filters', () => {
   });
 
   it('/within-distance filters by acquisition', async () => {
-    const { body } = await getJson('/v1/match/within-distance?hex=FF0000&maxDistance=500&vendor=true&limit=136');
+    const { body } = await getJson('/v1/match/within-distance?hex=FF0000&maxDistance=500&vendor=true&limit=125');
 
     expect(body.success).toBe(true);
     expect(body.data.results.length).toBeGreaterThan(0);
@@ -234,7 +234,7 @@ describe('Match route dye filters', () => {
   });
 
   it('/within-distance excludes expensive dyes', async () => {
-    const { body } = await getJson('/v1/match/within-distance?hex=FFFFFF&maxDistance=500&expensive=false&limit=136');
+    const { body } = await getJson('/v1/match/within-distance?hex=FFFFFF&maxDistance=500&expensive=false&limit=125');
 
     expect(body.success).toBe(true);
     for (const result of body.data.results) {

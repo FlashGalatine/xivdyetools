@@ -92,7 +92,7 @@ matchRouter.get('/within-distance', (c) => {
   const hex = parseHex(c.req.query('hex'));
   const maxDistance = parseFloatParam(c.req.query('maxDistance'), 'maxDistance', { min: 0.01 });
   const method = parseMatchingMethod(c.req.query('method'));
-  const limit = parseIntParam(c.req.query('limit'), 'limit', { min: 1, max: 136, defaultValue: 20 });
+  const limit = parseIntParam(c.req.query('limit'), 'limit', { min: 1, max: 125, defaultValue: 20 });
   const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
   const excludeIdsRaw = c.req.query('excludeIds');
 
@@ -105,7 +105,7 @@ matchRouter.get('/within-distance', (c) => {
   // Dye type/acquisition filters
   const filters = parseDyeFilters(c.req.query.bind(c.req));
 
-  // BUG-030 (2026-07-18 audit): fetch UNBOUNDED (the database is only 136
+  // BUG-030 (2026-07-18 audit): fetch UNBOUNDED (the database is only 125
   // entries), filter, then truncate — passing the client limit into core
   // let excluded/filtered dyes consume result slots, silently dropping
   // qualifying dyes that ranked past the truncation point

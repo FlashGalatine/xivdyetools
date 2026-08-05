@@ -8,19 +8,15 @@
 
 ```mermaid
 graph TD
-    subgraph "npm Registry — Shared Packages"
-        TYPES["@xivdyetools/types<br/>v1.15.0"]
-        CRYPTO["@xivdyetools/crypto<br/>v1.1.2"]
+    subgraph "Shared Packages (Monorepo 2.0 — 8 packages)"
+        TYPES["@xivdyetools/types<br/>v1.16.0"]
         LOGGER["@xivdyetools/logger<br/>v1.3.0"]
-        AUTH["@xivdyetools/auth<br/>v1.2.0"]
-        RATELIMIT["@xivdyetools/rate-limiter<br/>v1.5.0"]
-        WMW["@xivdyetools/worker-middleware<br/>v1.2.0"]
-        TEST["@xivdyetools/test-utils<br/>v1.1.8"]
-        CORE["@xivdyetools/core<br/>v2.7.0"]
+        AUTH["@xivdyetools/auth<br/>v1.3.0 (incl. /encoding)"]
+        WKIT["@xivdyetools/worker-kit<br/>v1.0.0 (middleware + /rate-limiter)"]
+        TEST["@xivdyetools/test-utils<br/>v1.1.8 (workspace-private)"]
+        CORE["@xivdyetools/core<br/>v3.0.0 (incl. /blending, schema-v2 data)"]
         SVG["@xivdyetools/svg<br/>v1.2.1"]
-        BLEND["@xivdyetools/color-blending<br/>v1.1.0"]
-        BOTLOGIC["@xivdyetools/bot-logic<br/>v1.3.0"]
-        BOTI18N["@xivdyetools/bot-i18n<br/>v1.2.1"]
+        BOTLOGIC["@xivdyetools/bot-logic<br/>v1.4.0 (incl. /i18n)"]
     end
 
     subgraph "Consumer Applications"
@@ -29,30 +25,22 @@ graph TD
         MODBOT["xivdyetools-moderation-worker"]
         OAUTH["xivdyetools-oauth"]
         PRESETS["xivdyetools-presets-api"]
-        PROXY["xivdyetools-universalis-proxy"]
         OG["xivdyetools-og-worker"]
         APIWORKER["xivdyetools-api-worker"]
-        APIDOCS["xivdyetools-api-docs"]
         STOAT["xivdyetools-stoat-worker"]
-        MAINT["xivdyetools-maintainer"]
     end
 
     %% Foundation dependencies
     TYPES --> CORE
     TYPES --> TEST
-    CRYPTO --> TEST
-    CRYPTO --> AUTH
+    AUTH --> TEST
     LOGGER --> CORE
-    LOGGER --> WMW
-    RATELIMIT --> WMW
+    LOGGER --> WKIT
 
     %% Feature package dependencies
     CORE --> SVG
-    BLEND --> SVG
     CORE --> BOTLOGIC
     SVG --> BOTLOGIC
-    BLEND --> BOTLOGIC
-    BOTI18N --> BOTLOGIC
     TYPES --> SVG
     TYPES --> BOTLOGIC
 
@@ -61,38 +49,29 @@ graph TD
     CORE --> DISCORD
     CORE --> OG
     CORE --> APIWORKER
-    CORE --> MAINT
+    CORE --> STOAT
     BOTLOGIC --> DISCORD
+    BOTLOGIC --> MODBOT
     BOTLOGIC --> STOAT
     SVG --> DISCORD
     SVG --> OG
-    BOTI18N --> DISCORD
-    BOTI18N --> STOAT
-    BLEND --> DISCORD
-    BLEND --> STOAT
+    SVG --> STOAT
     AUTH --> DISCORD
     AUTH --> MODBOT
+    AUTH --> OAUTH
     AUTH --> PRESETS
-    RATELIMIT --> DISCORD
-    RATELIMIT --> MODBOT
-    RATELIMIT --> OAUTH
-    RATELIMIT --> PRESETS
-    RATELIMIT --> PROXY
-    RATELIMIT --> APIWORKER
-    RATELIMIT --> STOAT
-    WMW --> DISCORD
-    WMW --> MODBOT
-    WMW --> OAUTH
-    WMW --> PRESETS
-    WMW --> PROXY
-    WMW --> OG
-    WMW --> APIWORKER
+    WKIT --> DISCORD
+    WKIT --> MODBOT
+    WKIT --> OAUTH
+    WKIT --> PRESETS
+    WKIT --> OG
+    WKIT --> APIWORKER
+    WKIT --> STOAT
     LOGGER --> WEB
     LOGGER --> DISCORD
     LOGGER --> MODBOT
     LOGGER --> OAUTH
     LOGGER --> PRESETS
-    LOGGER --> PROXY
     LOGGER --> OG
     LOGGER --> APIWORKER
     LOGGER --> STOAT
@@ -114,13 +93,12 @@ graph TD
     TEST -.-> APIWORKER
 
     %% API docs documents the API worker
-    APIDOCS -.->|"documents"| APIWORKER
 
     classDef npm fill:#fff3e0,stroke:#e65100
     classDef consumer fill:#e8f5e9,stroke:#2e7d32
 
-    class TYPES,CRYPTO,LOGGER,AUTH,RATELIMIT,WMW,TEST,CORE,SVG,BLEND,BOTLOGIC,BOTI18N npm
-    class WEB,DISCORD,MODBOT,OAUTH,PRESETS,PROXY,OG,APIWORKER,APIDOCS,STOAT,MAINT consumer
+    class TYPES,LOGGER,AUTH,WKIT,TEST,CORE,SVG,BOTLOGIC npm
+    class WEB,DISCORD,MODBOT,OAUTH,PRESETS,OG,APIWORKER,STOAT consumer
 ```
 
 ---
@@ -132,40 +110,34 @@ graph TD
 | Package | Depends On | Used By |
 |---------|------------|---------|
 | **@xivdyetools/types** | — | All projects |
-| **@xivdyetools/crypto** | — | @xivdyetools/auth |
-| **@xivdyetools/logger** | — | All projects except crypto, maintainer |
-| **@xivdyetools/auth** | crypto | discord-worker, moderation-worker, presets-api |
-| **@xivdyetools/rate-limiter** | — | discord-worker, moderation-worker, oauth, presets-api, universalis-proxy, api-worker, stoat-worker, worker-middleware |
-| **@xivdyetools/worker-middleware** | logger, rate-limiter | discord-worker, moderation-worker, oauth, presets-api, universalis-proxy, og-worker, api-worker |
-| **@xivdyetools/test-utils** | types, crypto | All projects (devDependency) |
-| **@xivdyetools/core** | types, logger | web-app, discord-worker, og-worker, api-worker, maintainer |
-| **@xivdyetools/color-blending** | — (zero deps since 1.1.0, REFACTOR-005) | discord-worker, stoat-worker, svg, bot-logic |
-| **@xivdyetools/svg** | core, color-blending, types | discord-worker, og-worker |
-| **@xivdyetools/bot-logic** | core, bot-i18n, color-blending, svg, types | discord-worker, stoat-worker |
-| **@xivdyetools/bot-i18n** | — | discord-worker, stoat-worker |
+| **@xivdyetools/logger** | — | All projects |
+| **@xivdyetools/auth** (incl. `/encoding`) | — | oauth, discord-worker, moderation-worker, presets-api, test-utils |
+| **@xivdyetools/worker-kit** (middleware + `/rate-limiter`) | logger | discord-worker, moderation-worker, oauth, presets-api, og-worker, api-worker, stoat-worker |
+| **@xivdyetools/test-utils** (workspace-private) | auth, types | All projects (devDependency) |
+| **@xivdyetools/core** (incl. `/blending`) | types, logger | web-app, discord-worker, og-worker, api-worker, stoat-worker, svg, bot-logic |
+| **@xivdyetools/svg** | core, types | discord-worker, og-worker, stoat-worker, bot-logic |
+| **@xivdyetools/bot-logic** (incl. `/i18n`) | core, svg, types | discord-worker, moderation-worker, stoat-worker |
 
 ### Consumer Applications
 
 | Project | Runtime Dependencies | Test Dependencies |
 |---------|----------------------|-------------------|
 | **web-app** | core, types, logger, lit, vite | test-utils, vitest, playwright |
-| **discord-worker** | core, types, logger, auth, rate-limiter, worker-middleware, svg, bot-logic, bot-i18n, color-blending, hono, @resvg/resvg-wasm, @cf-wasm/photon | test-utils, vitest |
-| **moderation-worker** | types, logger, auth, rate-limiter, worker-middleware, hono | test-utils, vitest |
-| **oauth** | types, logger, crypto, rate-limiter, worker-middleware, hono | test-utils, vitest |
-| **presets-api** | types, logger, auth, crypto, rate-limiter, worker-middleware, hono | test-utils, vitest |
-| **universalis-proxy** | logger, rate-limiter, worker-middleware, hono | vitest |
-| **og-worker** | core, types, svg, logger, worker-middleware, hono, @resvg/resvg-wasm | vitest |
-| **api-worker** | core, types, logger, rate-limiter, worker-middleware, hono | test-utils, vitest |
-| **api-docs** | (none — VitePress static site documenting api-worker) | — |
-| **stoat-worker** | core, types, logger, rate-limiter, bot-logic, bot-i18n, color-blending, svg, revolt.js | vitest |
-| **maintainer** | core, vue, express, zod | vitest |
+| **discord-worker** | core, types, logger, auth, worker-kit, svg, bot-logic, hono, @resvg/resvg-wasm, @cf-wasm/photon | test-utils, vitest |
+| **moderation-worker** | types, logger, auth, worker-kit, bot-logic, hono | test-utils, vitest |
+| **oauth** | types, logger, auth, worker-kit, hono | test-utils, vitest |
+| **presets-api** | types, logger, auth, worker-kit, hono | test-utils, vitest |
+| **og-worker** | core, types, svg, logger, worker-kit, hono, @resvg/resvg-wasm | vitest |
+| **api-worker** | core, types, logger, worker-kit, hono | test-utils, vitest |
+| **stoat-worker** | core, types, logger, worker-kit, bot-logic, svg, revolt.js | test-utils, vitest |
 
 ---
 
 ## Core Library Internal Structure
 
 ```
-@xivdyetools/core (v2.7.0)
+@xivdyetools/core (v3.0.0)
+├── blending/                ← self-contained blending algorithms (subpath @xivdyetools/core/blending)
 ├── services/
 │   ├── ColorService.ts      ← ColorConverter, ColorAccessibility, ColorManipulator
 │   ├── DyeService.ts        ← DyeDatabase (k-d tree), DyeSearch, HarmonyGenerator
@@ -174,10 +146,11 @@ graph TD
 │   ├── PresetService.ts     ← Curated preset palettes, ResolvedPreset
 │   └── LocalizationService.ts
 ├── config/
-│   └── consolidated-ids.ts  ← Patch 7.5 dye consolidation (Type-A=52254, B=52255, C=52256)
+│   ├── consolidated-ids.ts  ← Patch 7.5 dye consolidation (Type-A=52254, B=52255, C=52256)
+│   └── dye-vocabulary.ts    ← Closed vocabularies + acquisition → (price, currency) coupling
 ├── data/
-│   └── colors_xiv.json      ← 136 entries: 125 standard FFXIV dyes + 11 Facewear color entries
-│                              (Facewear entries get synthetic negative IDs at runtime)
+│   ├── dyes.json            ← 125 standard dyes (schema v2: 7 fields, stainID-keyed; rgb/hsv/cost/flags derived at initialize())
+│   └── facewear_colors.json ← 11 Facewear colors (NOT dyes — facewearColors export)
 └── locales/
     └── {en,ja,de,fr,ko,zh}.json
 
@@ -210,7 +183,7 @@ Notes:
 | `@resvg/resvg-wasm` | ^2.6 | SVG to PNG rendering |
 | `@cf-wasm/photon` | ^0.3 | Image processing (dominant color) |
 
-### xivdyetools-oauth / presets-api / moderation-worker / universalis-proxy
+### xivdyetools-oauth / presets-api / moderation-worker
 
 | Package | Version | Purpose |
 |---------|---------|---------|
@@ -221,14 +194,6 @@ Notes:
 | Package | Version | Purpose |
 |---------|---------|---------|
 | `revolt.js` | ^7.1 | Revolt API client |
-
-### xivdyetools-maintainer
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `vue` | ^3.5 | Frontend framework |
-| `express` | ^5.2 | Backend HTTP server |
-| `zod` | ^4.3 | Schema validation |
 
 ---
 

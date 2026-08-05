@@ -116,6 +116,8 @@ export const TOOLTIP_CONTENT = {
   harmonySplitComplementary:
     'Split-Complementary: Base color plus two colors adjacent to its complement. Balanced contrast.',
   harmonyTetradic: 'Tetradic: Four colors forming a rectangle on the wheel. Rich and complex.',
+  harmonyInvertedTetradic:
+    'Inverted Tetradic: The mirror rectangle of Tetradic — two complementary pairs leaning to the opposite side of the wheel.',
   harmonySquare: 'Square: Four colors equally spaced (90° apart). Offers variety with balance.',
   harmonyMonochromatic:
     'Monochromatic: Variations of a single hue with different saturations and values.',

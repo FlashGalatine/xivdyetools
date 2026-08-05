@@ -28,7 +28,7 @@ This repository contains planning documents, feature specifications, and design 
 
 | Folder | Description |
 |--------|-------------|
-| [maintainer/](./maintainer/) | Maintainer guides including the Dye Maintainer Tool |
+| [maintainer/](./maintainer/) | Maintainer guides — canonical dye-addition workflow (`adding-dyes.md`) |
 | [operations/](./operations/) | Operational guides (moderation, secret rotation) |
 | [20251207-DiscordBotMigration/](./20251207-DiscordBotMigration/) | Discord bot migration from Gateway to HTTP Interactions |
 | [20251207-PresetRefinements/](./20251207-PresetRefinements/) | Preset system refinements and improvements |
@@ -74,7 +74,6 @@ This documentation covers the following projects:
 
 | Project | Version | Description |
 |---------|---------|-------------|
-| **xivdyetools-maintainer** | v1.0.3 | GUI for adding new dyes (Vue 3 + Express) |
 
 > **Note**: The original `xivdyetools-discord-bot` (Discord.js + Gateway) has been deprecated and replaced by `xivdyetools-discord-worker`.
 

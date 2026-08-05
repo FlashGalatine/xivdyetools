@@ -42,10 +42,11 @@ import type {
 
 /**
  * Map og-worker's kebab-case `HarmonyType` to core's camelCase `HarmonyTypeKey`
- * (only `split-complementary` differs).
+ * (general kebab→camel: 'split-complementary' → 'splitComplementary',
+ * 'inverted-tetradic' → 'invertedTetradic').
  */
 function harmonyToKey(h: HarmonyType): HarmonyTypeKey {
-  return h === 'split-complementary' ? 'splitComplementary' : h;
+  return h.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase()) as HarmonyTypeKey;
 }
 
 function getToolName(tool: ToolId, locale: LocaleCode): string {

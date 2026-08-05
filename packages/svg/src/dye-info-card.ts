@@ -30,7 +30,7 @@ import {
   rgbToHsv,
   type DisplayOptions,
 } from './base.js';
-import { rgbToLab } from '@xivdyetools/color-blending';
+import { rgbToLab } from '@xivdyetools/core/blending';
 
 // ============================================================================
 // Types

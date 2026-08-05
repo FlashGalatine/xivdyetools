@@ -7,5 +7,6 @@
  */
 
 export type { Dye, LocalizedDye, DyeWithDistance } from './dye.js';
+export type { FacewearColor } from './facewear.js';
 export type { DyeDatabase } from './database.js';
 export type { DyeTypeFilters } from './dye-filters.js';

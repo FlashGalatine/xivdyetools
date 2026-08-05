@@ -117,7 +117,9 @@
       "colorIndex": "インデックス",
       "clickToSelect": "下の色をクリック",
       "male": "男性",
-      "female": "女性"
+      "female": "女性",
+      "evercoldNoticeTitle": "Evercold（2027年1月）：プリセットパレットは廃止予定です",
+      "evercoldNotice": "拡張パッケージ「Evercold」では、瞳・髪・肌の色をカラーピッカーで自由に選択できるようになります。発売後、このプリセットスウォッチはカラーピッカーに置き換えられる予定です。"
     }
   },
   "common": {
@@ -310,7 +312,9 @@
     "analyticsDesc": "匿名の使用データを共有してXIV Dye Toolsの改善にご協力ください",
     "exportSettings": "エクスポート",
     "importSettings": "インポート",
-    "importError": "設定のインポートに失敗しました。ファイル形式を確認してください。"
+    "importError": "設定のインポートに失敗しました。ファイル形式を確認してください。",
+    "cmykValues": "CMYK値",
+    "invertedTetradic": "逆テトラード"
   },
   "colorPalette": {
     "title": "カラーパレット",
@@ -408,7 +412,8 @@
       "squareDesc": "90°間隔で均等に配置された4色、ダイナミックな多様性",
       "monochromaticDesc": "単一の色相のバリエーション、繊細で統一感のある外観",
       "compoundDesc": "補色と類似色の組み合わせ",
-      "shadesDesc": "ベースカラーの異なるシェードとティント"
+      "shadesDesc": "ベースカラーの異なるシェードとティント",
+      "invertedTetradicDesc": "反転した長方形パターンの4色、ホイールの反対側寄り"
     }
   },
   "matcher": {

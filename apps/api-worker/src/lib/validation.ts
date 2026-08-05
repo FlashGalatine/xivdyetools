@@ -46,10 +46,15 @@ export type IdResolution =
 /**
  * Auto-detect dye identifier type by numeric range.
  * Ranges are fully disjoint — no overlap between facewear, stainID, and itemID.
+ *
+ * Schema v2 (2026-07-31): the stain window covers the full Stain-sheet byte
+ * range (1-254, was 1-125) so future dyes resolve without an API change; the
+ * negative range is retained only to emit a helpful 404 for legacy Facewear
+ * synthetic IDs, which are no longer served as dyes.
  */
 export function resolveIdType(id: number): IdResolution {
   if (id < 0) return { type: 'facewear', id };
-  if (id >= 1 && id <= 125) return { type: 'stain', stainId: id };
+  if (id >= 1 && id <= 254) return { type: 'stain', stainId: id };
   if (id >= 5729) return { type: 'item', itemId: id };
   return { type: 'invalid', id };
 }
@@ -61,7 +66,9 @@ export function resolveIdType(id: number): IdResolution {
 export function lookupDyeByResolvedId(resolution: IdResolution): Dye | null {
   switch (resolution.type) {
     case 'facewear':
-      return dyeService.getDyeById(resolution.id);
+      // Schema v2: facewear colors left the dye database (facewearColors in
+      // core); the /:id route emits an explanatory 404 for these IDs.
+      return null;
     case 'item':
       return dyeService.getDyeById(resolution.itemId);
     case 'stain':

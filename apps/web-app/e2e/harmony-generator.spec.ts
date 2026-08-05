@@ -232,7 +232,7 @@ test.describe.skip('Harmony Generator Tool (legacy DOM IDs pending v4 rewrite)',
       await expect(harmoniesGrid).toBeVisible();
     });
 
-    test('should display all 9 harmony types', async ({ page }) => {
+    test('should display all 10 harmony types', async ({ page }) => {
       // Enter a color and generate
       const hexInput = page.locator('input[placeholder="#FF0000"]');
       await hexInput.fill('#9B59B6');
@@ -247,13 +247,14 @@ test.describe.skip('Harmony Generator Tool (legacy DOM IDs pending v4 rewrite)',
 
       await page.waitForTimeout(500);
 
-      // Check for all 9 harmony type containers
+      // Check for all 10 harmony type containers
       const harmonyTypes = [
         'complementary',
         'analogous',
         'triadic',
         'split-complementary',
         'tetradic',
+        'inverted-tetradic',
         'square',
         'monochromatic',
         'compound',

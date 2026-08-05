@@ -10,7 +10,7 @@ import {
   getJWTTimeToExpiry,
   type JWTPayload,
 } from './jwt.js';
-import { base64UrlEncode, base64UrlEncodeBytes } from '@xivdyetools/crypto';
+import { base64UrlEncode, base64UrlEncodeBytes } from './encoding/index.js';
 import { createHmacKey } from './hmac.js';
 
 // Helper to create a valid JWT for testing

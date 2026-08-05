@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Package Overview
 
-`@xivdyetools/core` is the heart of the XIV Dye Tools ecosystem: a Node + browser-compatible TypeScript library that bundles the FFXIV dye database (136 entries), color-science algorithms (RGB/HSV/HSL/LAB/OKLAB/OKLCH/LCH/RYB conversions, DeltaE variants, Kubelka-Munk spectral mixing), color-vision-deficiency simulation, k-d tree dye matching, harmony generation, palette extraction, character-color matching, the Universalis market-board API client, and a 6-language localization service.
+`@xivdyetools/core` is the heart of the XIV Dye Tools ecosystem: a Node + browser-compatible TypeScript library that bundles the FFXIV dye database (125 dyes, schema v2: stainID-keyed with derived fields) plus the separate facewear color collection, color-science algorithms (RGB/HSV/HSL/CMYK/LAB/OKLAB/OKLCH/LCH/RYB conversions, DeltaE variants, Kubelka-Munk spectral mixing), color-vision-deficiency simulation, k-d tree dye matching, harmony generation, palette extraction, character-color matching, the Universalis market-board API client, and a 6-language localization service.
 
-It is consumed by every downstream library and app — `@xivdyetools/color-blending`, `@xivdyetools/svg`, `@xivdyetools/bot-logic`, the Vite web app, the public API worker, the Discord bot, the Revolt (stoat) bot, the OG image worker, and the maintainer tool. Because so much depends on it, refactors here ripple everywhere — be conservative and run the full workspace test suite (`pnpm turbo run test`) for any non-trivial change.
+It is consumed by every downstream library and app — `@xivdyetools/svg`, `@xivdyetools/bot-logic`, the Vite web app, the public API worker, the Discord bot, the Revolt (stoat) bot, and the OG image worker. Because so much depends on it, refactors here ripple everywhere — be conservative and run the full workspace test suite (`pnpm turbo run test`) for any non-trivial change.
 
 ## Commands
 
@@ -43,10 +43,11 @@ src/
 ├── version.ts                     # Auto-generated from package.json on build
 ├── constants/                     # RGB/HSV ranges, Universalis API config, Brettel matrices
 ├── types/                         # MatchingMethod, OklchWeights, MatchingConfig, MATCHING_PRESETS
+├── blending/                      # Self-contained blending algorithms + conversions — subpath export @xivdyetools/core/blending (absorbed from color-blending)
 ├── config/consolidated-ids.ts     # Patch 7.5 dye consolidation (A=52254, B=52255, C=52256)
 ├── data/
-│   ├── colors_xiv.json            # 136 dyes (raw)
-│   ├── colors_xiv.csv             # CSV mirror
+│   ├── dyes.json                  # 125 dyes (schema v2: 7 fields, stainID-keyed)
+│   ├── facewear_colors.json       # 11 facewear colors (not dyes)
 │   ├── presets.json               # Curated palette/harmony presets
 │   ├── character_colors.json      # FFXIV skin/hair color tables
 │   ├── character_colors/          # Per-race split files
@@ -70,7 +71,7 @@ src/
 └── __tests__/integration/         # End-to-end workflow + perf benchmarks
 scripts/
 ├── fetch_dye_names.py             # Pulls XIVAPI v2 names → dyenames.csv (en/ja/de/fr only)
-├── build-locales.ts               # YAML + CSV + colors_xiv.json → src/data/locales/*.json
+├── build-locales.ts               # YAML + CSV + dyes.json → src/data/locales/*.json
 ├── copy-locales.ts                # Copies generated locales into dist/
 └── generate-version.ts            # Stamps package.json version into src/version.ts
 ```
@@ -96,7 +97,7 @@ class TranslationProvider       // Stateless — performs translations from a re
 
 ### `ColorService` (static methods)
 
-Conversion: `hexToRgb`, `rgbToHex`, `rgbToHsv`, `hsvToRgb`, `hexToHsv`, `hsvToHex`, `normalizeHex`, `rgbToLab`, `hexToLab`, `labToRgb`, `labToHex`, `rgbToOklab`, `hexToOklab`, `oklabToRgb`, `oklabToHex`, `rgbToOklch`, `hexToOklch`, `oklchToRgb`, `oklchToHex`, `labToLch`, `lchToLab`, `rgbToLch`, `hexToLch`, `lchToRgb`, `lchToHex`, `rgbToHsl`, `hexToHsl`, `hslToRgb`, `hslToHex`, `rybToRgb`, `rgbToRyb`, `hexToRyb`, `rybToHex`.
+Conversion: `hexToRgb`, `rgbToHex`, `rgbToHsv`, `hsvToRgb`, `hexToHsv`, `hsvToHex`, `normalizeHex`, `rgbToLab`, `hexToLab`, `labToRgb`, `labToHex`, `rgbToOklab`, `hexToOklab`, `oklabToRgb`, `oklabToHex`, `rgbToOklch`, `hexToOklch`, `oklchToRgb`, `oklchToHex`, `labToLch`, `lchToLab`, `rgbToLch`, `hexToLch`, `lchToRgb`, `lchToHex`, `rgbToHsl`, `hexToHsl`, `hslToRgb`, `hslToHex`, `rgbToCmyk`, `cmykToRgb`, `hexToCmyk`, `cmykToHex`, `rybToRgb`, `rgbToRyb`, `hexToRyb`, `rybToHex`.
 
 Distance: `getColorDistance` (Euclidean RGB), `getDeltaE` (CIE76 / CIE2000).
 
@@ -112,7 +113,7 @@ Cache: `clearCaches`, `getCacheStats`.
 
 ### `DyeService` (instance methods, constructor `new DyeService(dyeData?, options?)`)
 
-`getAllDyes`, `getDyeById`, `getByStainId`, `getDyesByIds`, `getDyesByStainIds`, `getDyeCount`, `getCategories`, `findClosestDye`, `findDyesWithinDistance`, `searchByName`, `findTriadicDyes`, `findComplementaryPair`, `findAnalogousDyes`, `findSplitComplementaryDyes`, `findTetradicDyes`, `findSquareDyes`, `findMonochromaticDyes`, plus types `FindClosestOptions`, `FindWithinDistanceOptions`, `HarmonyOptions`, `HarmonyMatchingAlgorithm`, `HarmonyColorSpace`.
+`getAllDyes`, `getDyeById`, `getByStainId`, `getDyesByIds`, `getDyesByStainIds`, `getDyeCount`, `getCategories`, `findClosestDye`, `findDyesWithinDistance`, `searchByName`, `findTriadicDyes`, `findComplementaryPair`, `findAnalogousDyes`, `findSplitComplementaryDyes`, `findTetradicDyes`, `findInvertedTetradicDyes`, `findSquareDyes`, `findMonochromaticDyes`, plus types `FindClosestOptions`, `FindWithinDistanceOptions`, `HarmonyOptions`, `HarmonyMatchingAlgorithm`, `HarmonyColorSpace`.
 
 ### `LocalizationService` + helpers
 
@@ -194,7 +195,7 @@ import { dyeDatabase, presetData, VERSION } from '@xivdyetools/core';
 
 ### Locale build pipeline
 1. `scripts/fetch_dye_names.py` (Python, run **manually**) hits XIVAPI v2 → `dyenames.csv`. XIVAPI only serves en/ja/de/fr — **Korean and Chinese names are sourced manually** from market-board HTML and pasted into the CSV.
-2. `scripts/build-locales.ts` reads `localize.yaml` (label structure), `dyenames.csv` (per-language names), and `src/data/colors_xiv.json` (metallic flags, categories) → emits `src/data/locales/{en,ja,de,fr,ko,zh}.json`.
+2. `scripts/build-locales.ts` reads `localize.yaml` (label structure), `dyenames.csv` (per-language names), and `src/data/dyes.json` (categories) → emits `src/data/locales/{en,ja,de,fr,ko,zh}.json`.
 3. `tsc -p tsconfig.build.json` compiles to `dist/`.
 4. `scripts/copy-locales.ts` copies the generated JSON into `dist/`.
 
@@ -208,10 +209,9 @@ Internal apps:
 - `apps/api-worker` — public dye/color-matching API.
 - `apps/og-worker` — uses the stateless `LocaleLoader/Registry/TranslationProvider` trio.
 - `apps/stoat-worker` — Revolt bot.
-- `apps/maintainer` — Vue tool that reads/writes `colors_xiv.json` and rebuilds locales.
 
 Internal packages:
-- `@xivdyetools/color-blending` — wraps `ColorService` mixing.
+- (formerly `@xivdyetools/color-blending`) — the self-contained blending module now lives at `src/blending/`, exported as `@xivdyetools/core/blending`.
 - `@xivdyetools/svg` — uses `ColorService`, `DyeService`.
 - `@xivdyetools/bot-logic` — uses `DyeService`, `LocalizationService`, `filterDyes`, harmony types.
 

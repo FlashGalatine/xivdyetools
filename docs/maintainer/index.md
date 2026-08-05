@@ -10,7 +10,6 @@
 
 | Document | Description |
 |----------|-------------|
-| [Dye Maintainer Tool](dye-maintainer-tool.md) | GUI application for adding new dyes |
 | [Adding New Dyes (Manual)](adding-dyes.md) | Manual process and data format reference |
 | [Moderation Guide](../operations/MODERATION.md) | Managing bans and community presets |
 | [Architecture Decisions](#architecture-decisions) | Why we built things this way |

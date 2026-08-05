@@ -54,6 +54,7 @@ interface ComparisonOptions {
   showRgb: boolean;
   showHsv: boolean;
   showLab: boolean;
+  showCmyk: boolean;
   showMarketPrices: boolean;
 }
 
@@ -88,6 +89,7 @@ const STORAGE_KEYS = {
   showRgb: 'v3_comparison_show_rgb',
   showHsv: 'v3_comparison_show_hsv',
   showLab: 'v3_comparison_show_lab',
+  showCmyk: 'v3_comparison_show_cmyk',
   showMarketPrices: 'v3_comparison_show_prices',
 } as const;
 
@@ -101,6 +103,7 @@ const DEFAULT_OPTIONS: ComparisonOptions = {
   showRgb: true,
   showHsv: false,
   showLab: false,
+  showCmyk: false,
   showMarketPrices: true,
 };
 
@@ -172,6 +175,7 @@ export class ComparisonTool extends BaseComponent {
       showRgb: StorageService.getItem<boolean>(STORAGE_KEYS.showRgb) ?? DEFAULT_OPTIONS.showRgb,
       showHsv: StorageService.getItem<boolean>(STORAGE_KEYS.showHsv) ?? DEFAULT_OPTIONS.showHsv,
       showLab: StorageService.getItem<boolean>(STORAGE_KEYS.showLab) ?? DEFAULT_OPTIONS.showLab,
+      showCmyk: StorageService.getItem<boolean>(STORAGE_KEYS.showCmyk) ?? DEFAULT_OPTIONS.showCmyk,
       showMarketPrices:
         StorageService.getItem<boolean>(STORAGE_KEYS.showMarketPrices) ??
         DEFAULT_OPTIONS.showMarketPrices,
@@ -357,6 +361,12 @@ export class ComparisonTool extends BaseComponent {
         StorageService.setItem(STORAGE_KEYS.showLab, opts.showLab);
         needsRerender = true;
         logger.info(`[ComparisonTool] setConfig: displayOptions.showLab -> ${opts.showLab}`);
+      }
+      if (opts.showCmyk !== undefined && opts.showCmyk !== this.comparisonOptions.showCmyk) {
+        this.comparisonOptions.showCmyk = opts.showCmyk;
+        StorageService.setItem(STORAGE_KEYS.showCmyk, opts.showCmyk);
+        needsRerender = true;
+        logger.info(`[ComparisonTool] setConfig: displayOptions.showCmyk -> ${opts.showCmyk}`);
       }
 
       // Map showDeltaE to internal showDistanceValues
@@ -1146,6 +1156,7 @@ export class ComparisonTool extends BaseComponent {
       card.showRgb = this.comparisonOptions.showRgb;
       card.showHsv = this.comparisonOptions.showHsv;
       card.showLab = this.comparisonOptions.showLab;
+      card.showCmyk = this.comparisonOptions.showCmyk;
       card.showDeltaE = false; // No Delta-E in comparison context
       card.showPrice = this.comparisonOptions.showMarketPrices;
       card.showAcquisition = true;

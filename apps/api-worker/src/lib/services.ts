@@ -2,7 +2,7 @@
  * Module-scope service singletons.
  *
  * Initialized once per Worker isolate. The DyeService constructor
- * builds the k-d tree (~1-2ms for 136 dyes), which is then reused
+ * builds the k-d tree (~1-2ms for 125 dyes), which is then reused
  * for all requests handled by this isolate.
  */
 

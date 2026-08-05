@@ -386,6 +386,12 @@ describe('DyeService', () => {
       expect(tetradic.length).toBeLessThanOrEqual(3);
     });
 
+    it('should find inverted tetradic dyes', () => {
+      const inverted = dyeService.findInvertedTetradicDyes('#FF0000');
+      expect(Array.isArray(inverted)).toBe(true);
+      expect(inverted.length).toBeLessThanOrEqual(3);
+    });
+
     it('should find monochromatic dyes with default limit', () => {
       const mono = dyeService.findMonochromaticDyes('#FF0000');
       expect(mono.length).toBeLessThanOrEqual(6);

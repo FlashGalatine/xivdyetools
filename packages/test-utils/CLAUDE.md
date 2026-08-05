@@ -194,20 +194,12 @@ A web-app test that only needs DOM polyfills should `import from '@xivdyetools/t
 ## Internal Dependencies
 
 - `@xivdyetools/types` — `Dye`, `Preset`, `User`, etc. for factory return types.
-- `@xivdyetools/crypto` — Base64URL helpers for JWT/PKCE.
+- `@xivdyetools/auth` — Base64URL helpers for JWT/PKCE (imported via `@xivdyetools/auth/encoding`).
 
 Peer: `vitest >= 2.0.0`.
 
 ## Publishing
 
-Publishing goes through the **Publish Packages to npm** GitHub Actions workflow, which authenticates via npm trusted publishing (OIDC). There is no npm token — see the root `CLAUDE.md` for the full flow and the break-glass local path.
-
-```bash
-# 1. Bump version in packages/test-utils/package.json and merge to main
-# 2. Build + test
-pnpm turbo run build test --filter=@xivdyetools/test-utils
-
-# 3. Actions → "Publish Packages to npm" → package: @xivdyetools/test-utils
-```
+**Not published.** Since 2026-07-30 (Monorepo 2.0 Tier 1) this package is `"private": true` — it is consumed only via `workspace:*` devDependencies and has no external audience. It was removed from the Publish Packages workflow; versions up to 1.1.8 remain on npm as history.
 
 Note the `package.json#exports` map — if you add a new submodule (e.g., `src/perf/`), add a corresponding `./perf` entry there or it won't be importable by name.

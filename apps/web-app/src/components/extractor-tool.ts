@@ -2868,6 +2868,7 @@ export class ExtractorTool extends BaseComponent {
       card.showRgb = this.displayOptions.showRgb;
       card.showHsv = this.displayOptions.showHsv;
       card.showLab = this.displayOptions.showLab;
+      card.showCmyk = this.displayOptions.showCmyk;
       card.showDeltaE = this.displayOptions.showDeltaE;
       card.showPrice = this.displayOptions.showPrice && this.showPrices;
       card.showAcquisition = this.displayOptions.showAcquisition;
@@ -3476,6 +3477,7 @@ export class ExtractorTool extends BaseComponent {
       card.showRgb = this.displayOptions.showRgb;
       card.showHsv = this.displayOptions.showHsv;
       card.showLab = this.displayOptions.showLab;
+      card.showCmyk = this.displayOptions.showCmyk;
       card.showDeltaE = this.displayOptions.showDeltaE;
       card.showPrice = this.displayOptions.showPrice && this.showPrices;
       card.showAcquisition = this.displayOptions.showAcquisition;

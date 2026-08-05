@@ -117,7 +117,9 @@
       "colorIndex": "Index",
       "clickToSelect": "Click a color below",
       "male": "Male",
-      "female": "Female"
+      "female": "Female",
+      "evercoldNoticeTitle": "Evercold (January 2027): preset palettes are being retired",
+      "evercoldNotice": "Eye, hair, and skin colors are switching to a free color picker in the Evercold expansion. These preset swatches will be replaced by a color picker here when it launches."
     }
   },
   "common": {
@@ -310,7 +312,9 @@
     "analyticsDesc": "Help improve XIV Dye Tools by sharing anonymous usage data",
     "exportSettings": "Export",
     "importSettings": "Import",
-    "importError": "Failed to import settings. Please check the file format."
+    "importError": "Failed to import settings. Please check the file format.",
+    "cmykValues": "CMYK Values",
+    "invertedTetradic": "Inverted Tetradic"
   },
   "colorPalette": {
     "title": "Color Palette",
@@ -408,7 +412,8 @@
       "squareDesc": "Four colors evenly spaced at 90° for dynamic variety",
       "monochromaticDesc": "Variations of a single hue for subtle, cohesive looks",
       "compoundDesc": "A mix of complementary and analogous colors",
-      "shadesDesc": "Different shades and tints of the base color"
+      "shadesDesc": "Different shades and tints of the base color",
+      "invertedTetradicDesc": "Four colors in a mirrored rectangular pattern, leaning to the opposite side of the wheel"
     }
   },
   "matcher": {

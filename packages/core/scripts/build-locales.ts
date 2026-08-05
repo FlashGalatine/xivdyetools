@@ -10,6 +10,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'yaml';
 import { parse as parseCsv } from 'csv-parse/sync';
+import { METALLIC_STAIN_IDS } from '../src/config/dye-vocabulary.js';
 
 interface YamlLabels {
   Dye: string | null;
@@ -32,16 +33,15 @@ interface CsvRow {
   'Chinese Name': string;
 }
 
+/** Schema-v2 dye entry (dyes.json) — 7 fields, stainID-keyed. */
 interface Dye {
-  itemID: number;
+  stainID: number;
   name: string;
-  category: string;
   hex: string;
-  rgb: { r: number; g: number; b: number };
-  hsv: { h: number; s: number; v: number };
+  category: string;
   acquisition: string;
-  price: number | null;
-  currency: string | null;
+  consolidationType: 'A' | 'B' | 'C' | null;
+  legacyItemID: number | null;
 }
 
 type LocaleCode = 'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh';
@@ -75,8 +75,8 @@ async function main() {
     trim: true,
   });
 
-  // Read colors_xiv.json for metallic dye IDs and categories
-  const colorsPath = path.join(workingDir, 'src', 'data', 'colors_xiv.json');
+  // Read dyes.json (schema v2) for metallic dye IDs
+  const colorsPath = path.join(workingDir, 'src', 'data', 'dyes.json');
   const colorsData: Dye[] = JSON.parse(fs.readFileSync(colorsPath, 'utf-8'));
 
   // Build each locale
@@ -509,19 +509,17 @@ function buildCurrencies(locale: LocaleCode): Record<string, string> {
 }
 
 function identifyMetallicDyes(colorsData: Dye[]): number[] {
-  // Metallic dyes that don't have "Metallic" prefix but are metallic
-  // Gunmetal Black (30122) and Pearl White (30123) are metallic Special dyes
-  const additionalMetallicIds = [30122, 30123];
+  // Schema v2: the authoritative metallic set is the Stain sheet's gloss rows
+  // (METALLIC_STAIN_IDS in src/config/dye-vocabulary.ts) — this replaces the
+  // old name-prefix inference + hardcoded [30122, 30123] patch list, and by
+  // construction emits the same 16 itemIDs. The locale payload stays keyed by
+  // (legacy) itemID for LocaleData compatibility.
+  const metallicIds = colorsData
+    .filter((dye) => METALLIC_STAIN_IDS.has(dye.stainID))
+    .map((dye) => dye.legacyItemID)
+    .filter((id): id is number => id !== null);
 
-  // Identify all metallic dyes based on name prefix "Metallic"
-  const metallicDyes = colorsData.filter((dye) => dye.name.startsWith('Metallic'));
-
-  const metallicIds = metallicDyes.map((dye) => dye.itemID).filter((id) => id !== null);
-
-  // Combine with additional metallic dyes
-  const allMetallicIds = [...new Set([...metallicIds, ...additionalMetallicIds])];
-
-  return allMetallicIds.sort((a, b) => a - b);
+  return [...new Set(metallicIds)].sort((a, b) => a - b);
 }
 
 function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
@@ -533,6 +531,7 @@ function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
       triadic: 'Triadic',
       splitComplementary: 'Split-Complementary',
       tetradic: 'Tetradic',
+      invertedTetradic: 'Inverted Tetradic',
       square: 'Square',
       monochromatic: 'Monochromatic',
       compound: 'Compound',
@@ -544,6 +543,7 @@ function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
       triadic: '三色配色',
       splitComplementary: '分裂補色',
       tetradic: '四色配色',
+      invertedTetradic: '逆四色配色',
       square: '正方形配色',
       monochromatic: '単色',
       compound: '複合',
@@ -555,6 +555,7 @@ function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
       triadic: 'Triadisch',
       splitComplementary: 'Geteiltes Komplement',
       tetradic: 'Tetradisch',
+      invertedTetradic: 'Invertiert-Tetradisch',
       square: 'Quadrat',
       monochromatic: 'Monochromatisch',
       compound: 'Zusammengesetzt',
@@ -566,6 +567,7 @@ function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
       triadic: 'Triadique',
       splitComplementary: 'Complémentaire divisé',
       tetradic: 'Tétradique',
+      invertedTetradic: 'Tétradique inversé',
       square: 'Carré',
       monochromatic: 'Monochromatique',
       compound: 'Composé',
@@ -577,6 +579,7 @@ function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
       triadic: '삼원색',
       splitComplementary: '분리보색',
       tetradic: '사색',
+      invertedTetradic: '반전 사색',
       square: '정사각형',
       monochromatic: '단색',
       compound: '복합',
@@ -588,6 +591,7 @@ function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
       triadic: '三角配色',
       splitComplementary: '分裂互补',
       tetradic: '四色配色',
+      invertedTetradic: '逆四色配色',
       square: '正方形配色',
       monochromatic: '单色',
       compound: '复合',

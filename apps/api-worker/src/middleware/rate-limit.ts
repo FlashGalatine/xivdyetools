@@ -11,8 +11,8 @@
 
 import type { Context } from 'hono';
 import type { Env, Variables } from '../types.js';
-import { rateLimitMiddleware as createRateLimitMiddleware } from '@xivdyetools/worker-middleware';
-import { KVRateLimiter, getClientIp } from '@xivdyetools/rate-limiter';
+import { rateLimitMiddleware as createRateLimitMiddleware } from '@xivdyetools/worker-kit';
+import { KVRateLimiter, getClientIp } from '@xivdyetools/worker-kit/rate-limiter';
 import { ErrorCode } from '../lib/api-error.js';
 
 // BUG-004 (2026-04-28 audit): No module-scope singleton — KVRateLimiter

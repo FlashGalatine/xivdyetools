@@ -24,6 +24,7 @@ Enter your starting color using:
 | **Analogous** | Adjacent colors | Subtle, cohesive themes |
 | **Split-Complementary** | Base + two near-opposites | Softer contrast |
 | **Tetradic** | Four colors (rectangle) | Complex, multi-piece sets |
+| **Inverted Tetradic** | Four colors (mirrored rectangle) | Tetradic balance, opposite lean |
 
 ### 3. Explore Results
 
@@ -56,6 +57,9 @@ Base color + two colors adjacent to its complement. Less tension than complement
 
 ### Tetradic (Rectangle)
 Four colors forming a rectangle. Rich possibilities but harder to balance.
+
+### Inverted Tetradic (Mirrored Rectangle)
+The same two-complementary-pairs structure as Tetradic, mirrored to the opposite side of the wheel (0°, 120°, 180°, 300°). Try it when Tetradic's palette leans the wrong way for your base color.
 
 ---
 

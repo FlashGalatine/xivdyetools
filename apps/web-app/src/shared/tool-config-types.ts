@@ -313,6 +313,8 @@ export interface DisplayOptionsConfig {
   showHsv: boolean;
   /** Show LAB values */
   showLab: boolean;
+  /** Show CMYK values */
+  showCmyk: boolean;
 
   // Result metadata visibility
   /** Show market prices */
@@ -331,6 +333,7 @@ export const DEFAULT_DISPLAY_OPTIONS: DisplayOptionsConfig = {
   showRgb: true,
   showHsv: true,
   showLab: true,
+  showCmyk: false,
   showPrice: true,
   showDeltaE: true,
   showAcquisition: true,

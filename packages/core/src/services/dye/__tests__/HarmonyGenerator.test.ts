@@ -274,6 +274,31 @@ describe('HarmonyGenerator', () => {
     });
   });
 
+  describe('findInvertedTetradicDyes', () => {
+    it('should find up to three dyes (mirror rectangle of tetradic)', () => {
+      const inverted = harmony.findInvertedTetradicDyes('#FF0000');
+      expect(inverted.length).toBeGreaterThan(0);
+      expect(inverted.length).toBeLessThanOrEqual(3); // 120°, 180°, 300°
+    });
+
+    it('should target hues near 120/180/300 from the base', () => {
+      const inverted = harmony.findInvertedTetradicDyes('#FF0000'); // base hue 0
+      const targets = [120, 180, 300];
+      for (const dye of inverted) {
+        const nearTarget = targets.some((t) => {
+          const diff = Math.abs(dye.hsv.h - t);
+          return Math.min(diff, 360 - diff) <= 46; // default tolerance 45 + rounding
+        });
+        expect(nearTarget, `${dye.name} (h=${dye.hsv.h})`).toBe(true);
+      }
+    });
+
+    it('should exclude Facewear dyes', () => {
+      const inverted = harmony.findInvertedTetradicDyes('#FF0000');
+      expect(inverted.every((d) => d.category !== 'Facewear')).toBe(true);
+    });
+  });
+
   describe('findSquareDyes', () => {
     it('should find up to three dyes at 90° intervals', () => {
       const square = harmony.findSquareDyes('#FF0000');
@@ -404,6 +429,7 @@ describe('HarmonyGenerator', () => {
         harmony.findTriadicDyes('#FF0000'),
         harmony.findSquareDyes('#FF0000'),
         harmony.findTetradicDyes('#FF0000'),
+        harmony.findInvertedTetradicDyes('#FF0000'),
         harmony.findCompoundDyes('#FF0000'),
         harmony.findSplitComplementaryDyes('#FF0000'),
         harmony.findShadesDyes('#FF0000'),
@@ -418,6 +444,7 @@ describe('HarmonyGenerator', () => {
       expect(Array.isArray(harmony.findAnalogousDyes('#FF0000'))).toBe(true);
       expect(Array.isArray(harmony.findTriadicDyes('#FF0000'))).toBe(true);
       expect(Array.isArray(harmony.findSquareDyes('#FF0000'))).toBe(true);
+      expect(Array.isArray(harmony.findInvertedTetradicDyes('#FF0000'))).toBe(true);
       expect(Array.isArray(harmony.findMonochromaticDyes('#FF0000'))).toBe(true);
     });
   });
@@ -574,6 +601,15 @@ describe('HarmonyGenerator', () => {
           algorithm: 'deltaE',
         });
         expect(Array.isArray(tetradic)).toBe(true);
+      });
+    });
+
+    describe('findInvertedTetradicDyes with DeltaE', () => {
+      it('should find inverted tetradic dyes using deltaE algorithm', () => {
+        const inverted = harmony.findInvertedTetradicDyes('#FF0000', {
+          algorithm: 'deltaE',
+        });
+        expect(Array.isArray(inverted)).toBe(true);
       });
     });
 

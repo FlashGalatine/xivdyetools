@@ -15,8 +15,8 @@ const BASE_HEX = '#D69C6D'; // A warm brown (Rust Red-ish)
 // ============================================================================
 
 describe('HARMONY_TYPES', () => {
-  it('contains all 7 harmony types', () => {
-    expect(HARMONY_TYPES).toHaveLength(7);
+  it('contains all 8 harmony types', () => {
+    expect(HARMONY_TYPES).toHaveLength(8);
   });
 
   it('includes triadic', () => {
@@ -28,7 +28,7 @@ describe('HARMONY_TYPES', () => {
   });
 
   it('includes all expected types', () => {
-    const expected = ['triadic', 'complementary', 'analogous', 'split-complementary', 'tetradic', 'square', 'monochromatic'];
+    const expected = ['triadic', 'complementary', 'analogous', 'split-complementary', 'tetradic', 'inverted-tetradic', 'square', 'monochromatic'];
     for (const type of expected) {
       expect(HARMONY_TYPES).toContain(type);
     }

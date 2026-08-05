@@ -12,7 +12,7 @@
 
 import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
 import { ColorService, isDyeExcluded } from '@xivdyetools/core';
-import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
+import { createTranslator, type LocaleCode } from '../i18n/index.js';
 import { dyeService, resolveColorInput } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
 import { getColorDistance, getMatchQualityInfo } from '../color-math.js';

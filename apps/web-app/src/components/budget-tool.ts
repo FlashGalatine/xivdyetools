@@ -86,6 +86,7 @@ const STORAGE_KEYS = {
   showRgb: 'v3_budget_show_rgb',
   showHsv: 'v3_budget_show_hsv',
   showLab: 'v3_budget_show_lab',
+  showCmyk: 'v3_budget_show_cmyk',
   showPrice: 'v3_budget_show_price',
   showDeltaE: 'v3_budget_show_delta_e',
   showAcquisition: 'v3_budget_show_acquisition',
@@ -144,6 +145,7 @@ export class BudgetTool extends BaseComponent {
   private showRgb: boolean = false;
   private showHsv: boolean = false;
   private showLab: boolean = false;
+  private showCmyk: boolean = false;
   private showPrice: boolean = true;
   private showDeltaE: boolean = true;
   private showAcquisition: boolean = true;
@@ -215,6 +217,7 @@ export class BudgetTool extends BaseComponent {
     this.showRgb = StorageService.getItem<boolean>(STORAGE_KEYS.showRgb) ?? false;
     this.showHsv = StorageService.getItem<boolean>(STORAGE_KEYS.showHsv) ?? false;
     this.showLab = StorageService.getItem<boolean>(STORAGE_KEYS.showLab) ?? false;
+    this.showCmyk = StorageService.getItem<boolean>(STORAGE_KEYS.showCmyk) ?? false;
     this.showPrice = StorageService.getItem<boolean>(STORAGE_KEYS.showPrice) ?? true;
     this.showDeltaE = StorageService.getItem<boolean>(STORAGE_KEYS.showDeltaE) ?? true;
     this.showAcquisition = StorageService.getItem<boolean>(STORAGE_KEYS.showAcquisition) ?? true;
@@ -386,6 +389,7 @@ export class BudgetTool extends BaseComponent {
         showRgb: this.showRgb,
         showHsv: this.showHsv,
         showLab: this.showLab,
+        showCmyk: this.showCmyk,
         showPrice: this.showPrice,
         showDeltaE: this.showDeltaE,
         showAcquisition: this.showAcquisition,
@@ -407,6 +411,7 @@ export class BudgetTool extends BaseComponent {
         this.showRgb = result.options.showRgb;
         this.showHsv = result.options.showHsv;
         this.showLab = result.options.showLab;
+        this.showCmyk = result.options.showCmyk;
         this.showPrice = result.options.showPrice;
         this.showDeltaE = result.options.showDeltaE;
         this.showAcquisition = result.options.showAcquisition;
@@ -601,6 +606,7 @@ export class BudgetTool extends BaseComponent {
       { key: 'showRgb' as const, label: LanguageService.t('config.rgbValues') },
       { key: 'showHsv' as const, label: LanguageService.t('config.hsvValues') },
       { key: 'showLab' as const, label: LanguageService.t('config.labValues') },
+      { key: 'showCmyk' as const, label: LanguageService.t('config.cmykValues') },
     ];
 
     for (const option of options) {
@@ -1272,6 +1278,7 @@ export class BudgetTool extends BaseComponent {
     card.showRgb = this.showRgb;
     card.showHsv = this.showHsv;
     card.showLab = this.showLab;
+    card.showCmyk = this.showCmyk;
     card.showPrice = this.showPrice;
     card.showAcquisition = this.showAcquisition;
 
@@ -1418,6 +1425,8 @@ export class BudgetTool extends BaseComponent {
       card.showRgb = this.showRgb;
       card.showHsv = this.showHsv;
       card.showLab = this.showLab;
+      card.showCmyk = this.showCmyk;
+    card.showCmyk = this.showCmyk;
       card.showDeltaE = this.showDeltaE;
       card.showPrice = this.showPrice;
       card.showAcquisition = this.showAcquisition;

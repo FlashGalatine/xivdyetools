@@ -163,7 +163,7 @@ If a new dye introduces a glyph outside the current Noto subset, the rasterizer 
 ## Internal Dependencies
 
 - `@xivdyetools/core` — color algorithms, dye database (read-only).
-- `@xivdyetools/color-blending` — in-card color mixing.
+- `@xivdyetools/core/blending` — in-card color mixing (absorbed from the retired color-blending package).
 - `@xivdyetools/types` — shared `Dye`, `HexColor`, etc.
 - `@xivdyetools/test-utils` (devDependency) — fixtures for snapshot tests.
 

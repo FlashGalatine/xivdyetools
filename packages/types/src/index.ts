@@ -16,7 +16,7 @@
 // ============================================================================
 // Color Types
 // ============================================================================
-export type { RGB, HSV, LAB, OKLAB, OKLCH, LCH, HSL } from './color/index.js';
+export type { RGB, HSV, LAB, OKLAB, OKLCH, LCH, HSL, CMYK } from './color/index.js';
 export type { HexColor, DyeId, Hue, Saturation } from './color/index.js';
 export { createHexColor, createDyeId, createHue, createSaturation } from './color/index.js';
 export type { VisionType, ColorblindMatrices } from './color/index.js';
@@ -26,7 +26,7 @@ export { MATCH_QUALITY_TIERS, classifyMatchDistance } from './color/index.js';
 // ============================================================================
 // Dye Types
 // ============================================================================
-export type { Dye, LocalizedDye, DyeWithDistance } from './dye/index.js';
+export type { Dye, LocalizedDye, DyeWithDistance, FacewearColor } from './dye/index.js';
 export type { DyeTypeFilters } from './dye/index.js';
 
 // ============================================================================

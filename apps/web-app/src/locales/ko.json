@@ -117,7 +117,9 @@
       "colorIndex": "인덱스",
       "clickToSelect": "아래 색상을 클릭하세요",
       "male": "남성",
-      "female": "여성"
+      "female": "여성",
+      "evercoldNoticeTitle": "Evercold(2027년 1월): 프리셋 팔레트 지원 종료 예정",
+      "evercoldNotice": "확장팩 Evercold에서는 눈, 머리카락, 피부 색상을 컬러 피커로 자유롭게 선택할 수 있게 됩니다. 출시 후 이 프리셋 견본은 컬러 피커로 대체될 예정입니다."
     }
   },
   "common": {
@@ -310,7 +312,9 @@
     "analyticsDesc": "익명 사용 데이터를 공유하여 XIV 염색 도구 개선에 도움을 주세요",
     "exportSettings": "내보내기",
     "importSettings": "가져오기",
-    "importError": "설정을 가져오지 못했습니다. 파일 형식을 확인해 주세요."
+    "importError": "설정을 가져오지 못했습니다. 파일 형식을 확인해 주세요.",
+    "cmykValues": "CMYK 값",
+    "invertedTetradic": "반전 사원색"
   },
   "colorPalette": {
     "title": "색상 팔레트",
@@ -408,7 +412,8 @@
       "squareDesc": "90° 간격으로 배치된 4가지 색상으로 역동적인 다양성",
       "monochromaticDesc": "단일 색조의 변형으로 섬세하고 응집력 있는 룩",
       "compoundDesc": "보색과 유사색의 조합",
-      "shadesDesc": "기본 색상의 다양한 명도와 채도 변형"
+      "shadesDesc": "기본 색상의 다양한 명도와 채도 변형",
+      "invertedTetradicDesc": "반전된 직사각형 패턴의 4가지 색상, 색상환 반대쪽 기준"
     }
   },
   "matcher": {

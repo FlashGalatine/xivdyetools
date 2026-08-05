@@ -10,7 +10,7 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
-import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
+import { createTranslator, type LocaleCode } from '../i18n/index.js';
 import { generateDyeInfoCard, generateRandomDyesGrid, type RandomDyeInfo } from '@xivdyetools/svg';
 import { dyeService } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName, getLocalizedCategory } from '../localization.js';

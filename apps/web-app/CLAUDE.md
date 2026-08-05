@@ -204,7 +204,7 @@ All `StorageService` keys are prefixed with `xivdyetools_`. Tutorial-offered fla
 
 ### Universalis Pricing
 
-`MarketBoardService` calls Universalis through `proxy.xivdyetools.app` (the universalis-proxy worker), never the upstream directly — this is the only way the browser gets reliable CORS. Synthetic-ID Facewear dyes (`itemID < 0`) are filtered out before any market call.
+`MarketBoardService` calls Universalis through `data.xivdyetools.app/universalis` (api-worker's absorbed proxy routes — formerly the standalone universalis-proxy worker), never the upstream directly — this is the only way the browser gets reliable CORS. Synthetic-ID Facewear dyes (`itemID < 0`) are filtered out before any market call.
 
 ### Service Worker
 
@@ -268,7 +268,7 @@ npx playwright test --project=mobile-chrome
 **Sibling apps it talks to:**
 - `xivdyetools-presets-api` — community presets (HTTPS)
 - `xivdyetools-oauth` — Discord login + JWT issuance
-- `xivdyetools-universalis-proxy` — market-board pricing (CORS proxy)
+- `xivdyetools-api-worker` — market-board pricing via its `/universalis` routes (absorbed CORS proxy)
 - `xivdyetools-og-worker` — dynamic OpenGraph images for share links
 
 ## Documentation

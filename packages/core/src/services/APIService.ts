@@ -315,7 +315,7 @@ export interface APIServiceOptions {
    * baseUrl: 'https://universalis.app/api/v2'
    *
    * // Through CORS proxy (browser clients)
-   * baseUrl: 'https://universalis-proxy.xivdyetools.workers.dev/api/v2'
+   * baseUrl: 'https://data.xivdyetools.app/universalis'
    */
   baseUrl?: string;
 }
@@ -351,7 +351,7 @@ export interface APIServiceOptions {
  *
  * // With custom base URL (e.g., CORS proxy for browser clients)
  * const apiService = new APIService({
- *   baseUrl: 'https://universalis-proxy.xivdyetools.workers.dev/api/v2'
+ *   baseUrl: 'https://data.xivdyetools.app/universalis'
  * });
  */
 /**

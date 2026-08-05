@@ -12,17 +12,13 @@ Published to npm under the `@xivdyetools` scope:
 
 | Package | Version | Description |
 |---------|---------|-------------|
-| [`@xivdyetools/types`](packages/types/) | 1.15.0 | Branded types (`HexColor`, `DyeId`, etc.) and shared interfaces |
-| [`@xivdyetools/crypto`](packages/crypto/) | 1.1.2 | Base64URL encoding utilities |
+| [`@xivdyetools/types`](packages/types/) | 1.16.0 | Branded types (`HexColor`, `DyeId`, etc.) and shared interfaces |
 | [`@xivdyetools/logger`](packages/logger/) | 1.3.0 | Multi-runtime logging (browser, Node, CF Workers) with secret redaction |
-| [`@xivdyetools/auth`](packages/auth/) | 1.2.0 | JWT verification, HMAC signing, Discord Ed25519 verification |
-| [`@xivdyetools/rate-limiter`](packages/rate-limiter/) | 1.5.0 | Sliding window rate limiting (Memory, KV, Upstash backends) |
-| [`@xivdyetools/core`](packages/core/) | 2.7.0 | Color algorithms, 136-dye database, k-d tree matching, 6-language i18n |
-| [`@xivdyetools/color-blending`](packages/color-blending/) | 1.1.0 | Six color blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral) |
+| [`@xivdyetools/auth`](packages/auth/) | 1.3.0 | JWT verification, HMAC signing, Discord Ed25519 verification, Base64URL/hex encoding |
+| [`@xivdyetools/worker-kit`](packages/worker-kit/) | 1.0.0 | Worker toolkit: Hono middleware (request ID, logger, rate limit) + rate limiting backends |
+| [`@xivdyetools/core`](packages/core/) | 3.0.0 | Color algorithms, 125-dye database (schema v2) + facewear colors, k-d tree matching, 6-language i18n, blending (`/blending`) |
 | [`@xivdyetools/svg`](packages/svg/) | 1.2.1 | Platform-agnostic SVG card generators (pure functions: data in → SVG out) |
-| [`@xivdyetools/bot-i18n`](packages/bot-i18n/) | 1.2.1 | Bot UI string translations for 6 languages |
-| [`@xivdyetools/bot-logic`](packages/bot-logic/) | 1.3.0 | Platform-agnostic command business logic (shared by Discord + Stoat bots) |
-| [`@xivdyetools/worker-middleware`](packages/worker-middleware/) | 1.2.0 | Shared Hono middleware: request-ID tracing, structured logger, rate limiting |
+| [`@xivdyetools/bot-logic`](packages/bot-logic/) | 1.4.0 | Platform-agnostic command business logic + bot i18n engine (shared by Discord + Stoat bots) |
 | [`@xivdyetools/test-utils`](packages/test-utils/) | 1.1.8 | Cloudflare Workers mocks (D1, KV, R2) and test factories |
 
 ### Applications (`apps/`)
@@ -34,12 +30,9 @@ Published to npm under the `@xivdyetools` scope:
 | [`moderation-worker`](apps/moderation-worker/) | 1.3.0 | Moderation bot for community presets (CF Worker) |
 | [`presets-api`](apps/presets-api/) | 1.6.0 | Community presets REST API (CF Worker + D1) |
 | [`oauth`](apps/oauth/) | 2.5.0 | Discord OAuth + JWT issuance (CF Worker + D1) |
-| [`api-worker`](apps/api-worker/) | 0.5.0 | Public REST API for dyes & color matching at [data.xivdyetools.app](https://data.xivdyetools.app) (CF Worker + KV) |
-| [`api-docs`](apps/api-docs/) | 0.1.0 | API reference site at [developers.xivdyetools.app](https://developers.xivdyetools.app) (VitePress) |
-| [`universalis-proxy`](apps/universalis-proxy/) | 1.5.0 | CORS proxy for Universalis market data (CF Worker) |
+| [`api-worker`](apps/api-worker/) | 0.5.0 | Public REST API at [data.xivdyetools.app](https://data.xivdyetools.app) + Universalis proxy routes + docs site at [developers.xivdyetools.app](https://developers.xivdyetools.app) (CF Worker + KV) |
 | [`og-worker`](apps/og-worker/) | 1.4.0 | Dynamic OpenGraph image generation (CF Worker + WASM) |
 | [`web-app`](apps/web-app/) | 4.12.0 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
-| [`maintainer`](apps/maintainer/) | 1.0.3 | Local dev tool for editing the dye database (Vite + Vue) |
 
 ### Documentation (`docs/`)
 
@@ -75,13 +68,11 @@ pnpm --filter xivdyetools-discord-worker run dev
 
 ```
 types, crypto, logger ──────────────────────────────────┐ (no internal deps)
-auth (→ crypto), rate-limiter ──────────────────────────┤
+auth ───────────────────────────────────────────────────┤
 core (→ types, logger), test-utils (→ types, logger) ──┤
-color-blending (→ core) ────────────────────────────────┤
-svg (→ core, types, color-blending) ────────────────────┤
-bot-i18n ───────────────────────────────────────────────┤
-bot-logic (→ core, svg, bot-i18n, color-blending) ──────┤
-worker-middleware (→ logger, rate-limiter) ─────────────┤
+svg (→ core, types) ────────────────────────────────────┤
+bot-logic (→ core, svg) ────────────────────────────────┤
+worker-kit (→ logger) ──────────────────────────────────┤
                                                         │
                     Applications ◄──────────────────────┘
 ```

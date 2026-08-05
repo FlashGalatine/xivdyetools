@@ -150,7 +150,7 @@ import { verifyDiscordRequest } from '@xivdyetools/auth/discord';
 
 ## Dependencies
 
-- `@xivdyetools/crypto` - Base64URL and hex encoding utilities
+- None — Base64URL and hex encoding utilities are built in under `@xivdyetools/auth/encoding` (absorbed from the retired `@xivdyetools/crypto`)
 - `discord-interactions` - Discord Ed25519 signature verification
 
 ## Connect With Me

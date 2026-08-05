@@ -127,6 +127,20 @@ const RACE_GROUPS: Array<{ raceKey: string; subraces: SubRace[] }> = [
 const RACE_SPECIFIC_CATEGORIES: ColorCategory[] = ['hairColors', 'skinColors'];
 
 /**
+ * Categories whose preset palettes are retired by the Evercold expansion
+ * (January 2027): eye, hair, and skin colors switch to a free color picker
+ * in the character creator, so these preset grids will be replaced by a
+ * color-picker input. A notice banner is shown while they remain.
+ * (highlightColors may join this set if hair highlights are confirmed to use
+ * the free picker too.)
+ */
+const EVERCOLD_DEPRECATED_CATEGORIES: ColorCategory[] = [
+  'eyeColors',
+  'hairColors',
+  'skinColors',
+];
+
+/**
  * Default values
  */
 const DEFAULTS = {
@@ -1526,8 +1540,60 @@ export class SwatchTool extends BaseComponent {
   /**
    * Update the color grid
    */
+  /**
+   * Show or remove the Evercold deprecation notice above the swatch grid,
+   * depending on whether the active category's preset palette is being
+   * retired (eye/hair/skin → free color picker in the Evercold expansion,
+   * January 2027).
+   */
+  private updateEvercoldNotice(): void {
+    const parent = this.colorGridContainer?.parentElement;
+    if (!parent) return;
+
+    const existing = parent.querySelector('.evercold-notice');
+    const show = EVERCOLD_DEPRECATED_CATEGORIES.includes(this.colorCategory);
+
+    if (show && !existing && this.colorGridContainer) {
+      parent.insertBefore(this.createEvercoldNotice(), this.colorGridContainer);
+    } else if (!show && existing) {
+      existing.remove();
+    }
+  }
+
+  private createEvercoldNotice(): HTMLElement {
+    const notice = this.createElement('div', {
+      className: 'evercold-notice',
+      attributes: {
+        role: 'note',
+        style: `
+          margin-bottom: 12px;
+          padding: 10px 14px;
+          border-left: 3px solid var(--theme-primary);
+          border-radius: 4px;
+          background: var(--theme-background-secondary);
+          font-size: 0.85rem;
+          line-height: 1.5;
+        `,
+      },
+    });
+
+    const title = this.createElement('strong', {
+      textContent: LanguageService.t('tools.character.evercoldNoticeTitle'),
+      attributes: { style: 'display: block; margin-bottom: 2px; color: var(--theme-text);' },
+    });
+    const body = this.createElement('span', {
+      textContent: LanguageService.t('tools.character.evercoldNotice'),
+      attributes: { style: 'color: var(--theme-text-muted);' },
+    });
+
+    notice.appendChild(title);
+    notice.appendChild(body);
+    return notice;
+  }
+
   private updateColorGrid(): void {
     if (!this.colorGridContainer) return;
+    this.updateEvercoldNotice();
     clearContainer(this.colorGridContainer);
 
     // Update the header label with category name and color count

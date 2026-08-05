@@ -17,7 +17,7 @@ import {
   KVRateLimiter,
   getDiscordCommandLimit,
   type RateLimiter,
-} from '@xivdyetools/rate-limiter';
+} from '@xivdyetools/worker-kit/rate-limiter';
 
 /**
  * Rate limit check result

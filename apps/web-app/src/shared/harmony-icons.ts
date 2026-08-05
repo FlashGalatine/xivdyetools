@@ -59,6 +59,16 @@ export const HARMONY_ICONS: Record<string, string> = {
   <circle cx="5" cy="19" r="2" fill="currentColor" stroke="none" />
 </svg>`,
 
+  'inverted-tetradic': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+  <title>Inverted Tetradic Harmony</title>
+  <circle cx="12" cy="12" r="10" opacity="0.3" />
+  <polygon points="12,2 20.7,17 12,22 3.3,7" fill="none" />
+  <circle cx="12" cy="2" r="2" fill="currentColor" stroke="none" />
+  <circle cx="20.7" cy="17" r="2" fill="currentColor" stroke="none" />
+  <circle cx="12" cy="22" r="2" fill="currentColor" stroke="none" />
+  <circle cx="3.3" cy="7" r="2" fill="currentColor" stroke="none" />
+</svg>`,
+
   square: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
   <title>Square Harmony</title>
   <circle cx="12" cy="12" r="10" opacity="0.3" />

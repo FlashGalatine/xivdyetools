@@ -12,7 +12,7 @@ import {
   base64UrlDecodeBytes,
   bytesToHex,
   hexToBytes,
-} from '@xivdyetools/crypto';
+} from './encoding/index.js';
 
 /**
  * Options for bot signature verification

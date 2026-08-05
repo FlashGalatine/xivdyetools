@@ -111,7 +111,13 @@ export interface AppState {
  */
 export interface HarmonyState extends AppState {
   harmonyType:
-    'complementary' | 'analogous' | 'triadic' | 'split-complementary' | 'tetradic' | 'square';
+    | 'complementary'
+    | 'analogous'
+    | 'triadic'
+    | 'split-complementary'
+    | 'tetradic'
+    | 'inverted-tetradic'
+    | 'square';
   baseColor: HexColor;
   selectedDyes: number[];
 }

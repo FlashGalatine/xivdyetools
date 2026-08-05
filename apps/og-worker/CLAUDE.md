@@ -149,11 +149,11 @@ Image route parameters are bounded to prevent resource exhaustion: `OG_MAX_GRADI
 | `@cloudflare/workers-types` | Type defs for Analytics Engine, KV, etc. |
 | `@xivdyetools/core` | `DyeService`, `dyeDatabase`, `LocaleLoader`/`LocaleRegistry`/`TranslationProvider`, `extractLocaleCode` |
 | `@xivdyetools/types` | `Dye`, `LocaleCode`, `HarmonyTypeKey`, `SheetKey`, `ToolKey`, `VisionType` |
-| `@xivdyetools/worker-middleware` | `requestIdMiddleware`, `loggerMiddleware`, `getLogger` |
+| `@xivdyetools/worker-kit` | `requestIdMiddleware`, `loggerMiddleware`, `getLogger` |
 
 ## Related Projects
 
-**Dependencies (internal):** `@xivdyetools/core`, `@xivdyetools/types`, `@xivdyetools/worker-middleware`.
+**Dependencies (internal):** `@xivdyetools/core`, `@xivdyetools/types`, `@xivdyetools/worker-kit`.
 
 **Service Bindings:** None. `og-worker` does not call other workers and is not called by other workers.
 

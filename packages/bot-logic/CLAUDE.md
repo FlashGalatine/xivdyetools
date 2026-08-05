@@ -48,7 +48,7 @@ src/
 ├── css-colors.ts                  # CSS named-color → hex (BlueViolet, coral, ...)
 └── commands/
     ├── types.ts                   # EmbedData, EmbedField (platform-neutral)
-    ├── harmony.ts                 # /harmony — triadic / complementary / analogous / split / tetradic / square / mono
+    ├── harmony.ts                 # /harmony — triadic / complementary / analogous / split / tetradic / inverted-tetradic / square / mono
     ├── dye-info.ts                # /dye-info AND /random (shared module)
     ├── mixer.ts                   # /mixer — 6-mode color blending + closest-dye match
     ├── gradient.ts                # /gradient — N-step gradient + dye matches per stop
@@ -77,7 +77,7 @@ type ResolveColorOptions = { excludeFacewear?; findClosestForHex? };
 async function initializeLocale(locale: LocaleCode): Promise<void>;
 function getLocalizedDyeName(itemID: number, fallbackName: string, locale?: LocaleCode): string;
 function getLocalizedCategory(category: string, locale?: LocaleCode): string;
-type LocaleCode;  // re-exported from @xivdyetools/bot-i18n: 'en'|'ja'|'de'|'fr'|'ko'|'zh'
+type LocaleCode;  // re-exported from ./i18n (formerly @xivdyetools/bot-i18n): 'en'|'ja'|'de'|'fr'|'ko'|'zh'
 ```
 
 ### Shared types & helpers
@@ -99,7 +99,7 @@ executeHarmony(input: HarmonyInput): Promise<HarmonyResult>
   type HarmonyInput = { baseHex; baseName?; baseId?; baseItemID?; harmonyType; locale; harmonyOptions?; dyeFilters? };
   type HarmonyResult = { ok: true; svgString; baseHex; baseName; harmonyDyes: Dye[]; embed }
                      | { ok: false; error: 'NO_MATCHES'|'GENERATION_FAILED'; errorMessage };
-  type HarmonyType = 'triadic'|'complementary'|'analogous'|'split-complementary'|'tetradic'|'square'|'monochromatic';
+  type HarmonyType = 'triadic'|'complementary'|'analogous'|'split-complementary'|'tetradic'|'inverted-tetradic'|'square'|'monochromatic';
   const HARMONY_TYPES: readonly HarmonyType[];
   function getHarmonyTypeChoices(): {name; value}[];
   type HarmonyColorSpace;  // re-exported from @xivdyetools/core
@@ -152,7 +152,7 @@ Discord adapters map `EmbedData` onto `APIEmbed` (`title → title`, `color → 
 - `@xivdyetools/core` — `DyeService`, `dyeDatabase`, `LocalizationService`, harmony types, `filterDyes`.
 - `@xivdyetools/color-blending` — `blendColors`, `BlendingMode`.
 - `@xivdyetools/svg` — every `generate*` SVG used by command results.
-- `@xivdyetools/bot-i18n` — `Translator`, `createTranslator`, `LocaleCode`.
+- Built-in `src/i18n/` — `Translator`, `createTranslator`, `LocaleCode` + six bot-UI locale JSONs, exported as `@xivdyetools/bot-logic/i18n` (absorbed from the retired `@xivdyetools/bot-i18n`).
 
 ## Publishing
 

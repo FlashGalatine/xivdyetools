@@ -2,7 +2,7 @@
 """
 Fetch localized dye names from XIVAPI and generate a CSV file.
 
-This script reads the colors_xiv.json file containing FFXIV dye data,
+This script reads the dyes.json file (schema v2) containing FFXIV dye data,
 queries the XIVAPI v2 for each dye's name in multiple languages,
 and outputs a CSV file with multilingual name data.
 
@@ -45,7 +45,7 @@ REQUEST_TIMEOUT = 10  # seconds
 # Paths
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_ROOT = SCRIPT_DIR.parent
-COLORS_JSON_PATH = PROJECT_ROOT.parent / "XIVDyeTools" / "assets" / "json" / "colors_xiv.json"
+COLORS_JSON_PATH = PROJECT_ROOT / "src" / "data" / "dyes.json"
 OUTPUT_DIR = SCRIPT_DIR / "output"
 OUTPUT_CSV_PATH = OUTPUT_DIR / "dye_names.csv"
 
@@ -162,7 +162,7 @@ class DyeNameFetcher:
 
 def load_dye_data() -> List[int]:
     """
-    Load dye data from colors_xiv.json and extract item IDs.
+    Load dye data from dyes.json and extract legacy item IDs.
 
     Returns:
         List of item IDs
@@ -191,10 +191,10 @@ def load_dye_data() -> List[int]:
     # Extract item IDs
     item_ids = []
     for dye in dyes:
-        if "itemID" not in dye:
-            print(f"Warning: Dye entry missing 'itemID': {dye}")
+        if dye.get("legacyItemID") is None:
+            print(f"Warning: Dye entry missing legacyItemID: {dye.get('name', dye)}")
             continue
-        item_ids.append(dye["itemID"])
+        item_ids.append(dye["legacyItemID"])
 
     return item_ids
 

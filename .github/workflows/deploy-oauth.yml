@@ -7,8 +7,9 @@ on:
       - 'apps/oauth/**'
       - 'packages/types/**'
       - 'packages/logger/**'
-      - 'packages/rate-limiter/**'
-      - 'packages/crypto/**'
+      # MONO2: auth itself was missing; plus worker-middleware (research/monorepo-2.0/05 §5)
+      - 'packages/auth/**'
+      - 'packages/worker-kit/**'
   workflow_dispatch:
 
 concurrency:

@@ -11,8 +11,8 @@
 
 import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
 import { isDyeExcluded, type MatchingMethod } from '@xivdyetools/core';
-import { createTranslator, type LocaleCode } from '@xivdyetools/bot-i18n';
-import { blendColors, type BlendingMode } from '@xivdyetools/color-blending';
+import { createTranslator, type LocaleCode } from '../i18n/index.js';
+import { blendColors, type BlendingMode } from '@xivdyetools/core/blending';
 import { dyeService, type ResolvedColor } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
 import { getColorDistance, getMatchQualityInfo } from '../color-math.js';

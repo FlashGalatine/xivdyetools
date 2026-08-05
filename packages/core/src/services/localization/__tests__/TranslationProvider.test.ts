@@ -57,6 +57,7 @@ describe('TranslationProvider', () => {
       triadic: 'Triadic',
       splitComplementary: 'Split-Complementary',
       tetradic: 'Tetradic',
+      invertedTetradic: 'Inverted Tetradic',
       square: 'Square',
       monochromatic: 'Monochromatic',
       compound: 'Compound',

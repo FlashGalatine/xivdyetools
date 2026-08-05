@@ -40,6 +40,7 @@ export type HarmonyType =
   | 'triadic'
   | 'split-complementary'
   | 'tetradic'
+  | 'inverted-tetradic'
   | 'square'
   | 'monochromatic'
   | 'compound'

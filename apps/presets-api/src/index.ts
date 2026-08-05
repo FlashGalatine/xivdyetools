@@ -16,8 +16,8 @@ import { moderationRouter } from './handlers/moderation.js';
 // Import middleware
 import { authMiddleware } from './middleware/auth.js';
 import { publicRateLimitMiddleware } from './middleware/rate-limit.js';
-import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-middleware';
-import type { MiddlewareVariables } from '@xivdyetools/worker-middleware';
+import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-kit';
+import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
 import { bodySizeLimit, jsonDepthLimit } from './middleware/body-validation.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { ErrorCode } from './utils/api-response.js';
