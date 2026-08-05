@@ -15,6 +15,7 @@ These were decided at the start of this effort and are treated as fixed inputs b
 | Web-app themes | **Light + Dark only** | Novelty themes are removed. The two remaining themes are being redesigned in Claude Design (in progress, outside this research). |
 | Dye identity | **stainID-first** | Future dyes may ship without individual itemIDs — only a `consolidationType` resolving to a consolidated "Spectrum" dye item. `stainID` (the game's Stain sheet row ID) becomes the canonical identifier; itemIDs become a market-board resolution concern. |
 | Web-app UI | Mobile-friendly redesign | In progress by the maintainer (Claude Design); out of scope for these documents except where backend/API shape is affected. |
+| Discord bot + OG images | Upgrade planned | `discord-worker`, `og-worker`, and their supporting packages (`bot-logic`, `svg`) will also get an upgrade. Details live in the maintainer's Claude Design project (not yet imported into the repo); scope lands here once it is. |
 | Backend | Leaner and more efficient | Candidate worker/package consolidation is researched here. |
 
 ## Decisions Resolved During Research (2026-07-30)
