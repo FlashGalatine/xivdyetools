@@ -1,0 +1,129 @@
+{
+  "ModelType": 0,
+  "Race": "Hrothgar",
+  "Gender": "Feminine",
+  "Age": "Normal",
+  "Tribe": "Helions",
+  "Height": 73,
+  "Head": 2,
+  "Hair": 22,
+  "EnableHighlights": false,
+  "Skintone": 104,
+  "REyeColor": 165,
+  "HairTone": 152,
+  "Highlights": 1,
+  "FacialFeatures": "Fourth",
+  "LimbalEyes": 60,
+  "Eyebrows": 4,
+  "LEyeColor": 165,
+  "Eyes": 3,
+  "Nose": 3,
+  "Jaw": 1,
+  "Mouth": 131,
+  "LipsToneFurPattern": 35,
+  "EarMuscleTailSize": 44,
+  "TailEarsType": 3,
+  "Bust": 56,
+  "FacePaint": 106,
+  "FacePaintColor": 171,
+  "MainHand": {
+    "Color": "0, 0, 0",
+    "Scale": "0, 0, 0",
+    "ModelSet": 301,
+    "ModelBase": 31,
+    "ModelVariant": 1,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "OffHand": {
+    "Color": "0, 0, 0",
+    "Scale": "0, 0, 0",
+    "ModelSet": 351,
+    "ModelBase": 31,
+    "ModelVariant": 1,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "HeadGear": {
+    "ModelBase": 6229,
+    "ModelVariant": 1,
+    "DyeId": 33,
+    "DyeId2": 0
+  },
+  "Body": {
+    "ModelBase": 436,
+    "ModelVariant": 1,
+    "DyeId": 105,
+    "DyeId2": 0
+  },
+  "Hands": {
+    "ModelBase": 0,
+    "ModelVariant": 0,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "Legs": {
+    "ModelBase": 6223,
+    "ModelVariant": 2,
+    "DyeId": 72,
+    "DyeId2": 0
+  },
+  "Feet": {
+    "ModelBase": 6221,
+    "ModelVariant": 2,
+    "DyeId": 33,
+    "DyeId2": 0
+  },
+  "Ears": {
+    "ModelBase": 0,
+    "ModelVariant": 0,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "Neck": {
+    "ModelBase": 0,
+    "ModelVariant": 0,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "Wrists": {
+    "ModelBase": 0,
+    "ModelVariant": 0,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "LeftRing": {
+    "ModelBase": 0,
+    "ModelVariant": 0,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "RightRing": {
+    "ModelBase": 0,
+    "ModelVariant": 0,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "Glasses": {
+    "GlassesId": 0
+  },
+  "Transparency": 1,
+  "HeightMultiplier": 1.0444,
+  "MuscleTone": 1,
+  "SkinColor": "0.2069358, 0.10851212, 0.0865052",
+  "SkinGloss": "0.0625, 0.0625, 0.0625",
+  "LeftEyeColor": "0.014778932, 0.095978476, 0.06903499",
+  "RightEyeColor": "0.014778932, 0.095978476, 0.06903499",
+  "LimbalRingColor": "0.27203387, 0.10340639, 0.012056901",
+  "HairColor": "0.53204155, 0.35530952, 0.3839139",
+  "HairGloss": "0.65261054, 0.5206613, 0.5435448",
+  "HairHighlight": "0.53204155, 0.35530952, 0.3839139",
+  "MouthColor": "0, 0, 0, 0",
+  "BustScale": null,
+  "IsExtendedAppearanceValid": true,
+  "Author": null,
+  "Description": null,
+  "Version": null,
+  "Base64Image": null,
+  "Tags": null
+}

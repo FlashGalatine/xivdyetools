@@ -39,6 +39,7 @@ export type {
   RaceSpecificColorCategory,
   SubRace,
   Gender,
+  Race,
 } from './character/index.js';
 export {
   RACE_SUBRACES,

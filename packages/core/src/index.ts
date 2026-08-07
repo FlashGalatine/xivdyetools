@@ -121,6 +121,29 @@ export type {
   RatioCalibration,
 } from './config/band-calibration.js';
 
+// .chara character-file import (5.0 Swatch Matcher; parse rules live in core)
+export { parseCharaFile } from './services/chara/chara-parser.js';
+export type {
+  ParsedCharaFile,
+  CharaColorSlotRaw,
+  CharaGearDye,
+  CharaSlotId,
+  CharaGearSlotId,
+  CharaSlotInertReason,
+} from './services/chara/chara-parser.js';
+export {
+  resolveCharaColors,
+  OFF_GRID_DELTA_E2000,
+} from './services/chara/chara-resolver.js';
+export type {
+  ResolvedCharaCharacter,
+  ResolvedCharaSlot,
+  ResolvedGearDye,
+  CharaSlotVerdict,
+  CharaSlotErrorCode,
+  StainIdLookup,
+} from './services/chara/chara-resolver.js';
+
 // /manual topics + learn-more links (shared data for web, bot, og-worker)
 export {
   MANUAL_TOPICS,
