@@ -187,6 +187,21 @@ export class ColorService {
     return ColorblindnessSimulator.simulateColorblindnessHex(hex, visionType);
   }
 
+  /**
+   * Simulate colorblindness using the Machado (2009) severity-1.0 model
+   * (linear-RGB pipeline). The 5.0 SEPARATION band calibration uses this path.
+   */
+  static simulateColorblindnessMachado(rgb: RGB, visionType: VisionType): RGB {
+    return ColorblindnessSimulator.simulateColorblindnessMachado(rgb, visionType);
+  }
+
+  /**
+   * Simulate colorblindness on a hex color via the Machado (2009) model
+   */
+  static simulateColorblindnessMachadoHex(hex: string, visionType: VisionType): HexColor {
+    return ColorblindnessSimulator.simulateColorblindnessMachadoHex(hex, visionType);
+  }
+
   // ============================================================================
   // Color Accessibility (delegated to ColorAccessibility)
   // ============================================================================

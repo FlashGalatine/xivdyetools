@@ -5,6 +5,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ColorblindnessSimulator } from '../ColorblindnessSimulator.js';
+import { ColorConverter } from '../ColorConverter.js';
 import { AppError } from '@xivdyetools/types';
 import type { VisionType, RGB } from '@xivdyetools/types';
 import { BRETTEL_MATRICES } from '../../../constants/index.js';
@@ -573,5 +574,62 @@ describe('ColorblindnessSimulator', () => {
       expect(result.g).toBeGreaterThanOrEqual(0);
       expect(result.b).toBeGreaterThanOrEqual(0);
     });
+  });
+});
+
+describe('simulateColorblindnessMachado (Machado 2009, severity 1.0, linear RGB)', () => {
+  it('returns a copy for normal vision', () => {
+    const input = { r: 120, g: 80, b: 200 };
+    const result = ColorblindnessSimulator.simulateColorblindnessMachado(input, 'normal');
+    expect(result).toEqual(input);
+    expect(result).not.toBe(input);
+  });
+
+  it('maps white to white and black to black (rows sum to ~1)', () => {
+    for (const vision of ['protanopia', 'deuteranopia', 'tritanopia', 'achromatopsia'] as const) {
+      expect(
+        ColorblindnessSimulator.simulateColorblindnessMachado({ r: 255, g: 255, b: 255 }, vision)
+      ).toEqual({ r: 255, g: 255, b: 255 });
+      expect(
+        ColorblindnessSimulator.simulateColorblindnessMachado({ r: 0, g: 0, b: 0 }, vision)
+      ).toEqual({ r: 0, g: 0, b: 0 });
+    }
+  });
+
+  it('achromatopsia yields a neutral (r=g=b) color', () => {
+    const result = ColorblindnessSimulator.simulateColorblindnessMachado(
+      { r: 200, g: 60, b: 30 },
+      'achromatopsia'
+    );
+    expect(result.r).toBe(result.g);
+    expect(result.g).toBe(result.b);
+  });
+
+  it('collapses red-green separation under protanopia and deuteranopia', () => {
+    const red = '#FF0000';
+    const green = '#00A000';
+    const before = ColorConverter.getColorDistance(red, green);
+    for (const vision of ['protanopia', 'deuteranopia'] as const) {
+      const simRed = ColorblindnessSimulator.simulateColorblindnessMachadoHex(red, vision);
+      const simGreen = ColorblindnessSimulator.simulateColorblindnessMachadoHex(green, vision);
+      const after = ColorConverter.getColorDistance(simRed, simGreen);
+      expect(after).toBeLessThan(before * 0.5);
+    }
+  });
+
+  it('differs from the Brettel gamma-domain path (separate models)', () => {
+    const brettel = ColorblindnessSimulator.simulateColorblindnessHex('#FF6B1A', 'deuteranopia');
+    const machado = ColorblindnessSimulator.simulateColorblindnessMachadoHex(
+      '#FF6B1A',
+      'deuteranopia'
+    );
+    expect(machado).not.toBe(brettel);
+    expect(machado).not.toEqual(brettel);
+  });
+
+  it('throws on invalid RGB values', () => {
+    expect(() =>
+      ColorblindnessSimulator.simulateColorblindnessMachado({ r: 300, g: 0, b: 0 }, 'protanopia')
+    ).toThrow();
   });
 });

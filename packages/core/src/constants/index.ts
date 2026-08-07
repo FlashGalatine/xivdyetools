@@ -88,6 +88,46 @@ export const BRETTEL_MATRICES: ColorblindMatrices = {
 };
 
 // ============================================================================
+// Colorblindness Transformation Matrices (Machado et al. 2009, severity 1.0)
+// ============================================================================
+
+/**
+ * Machado, Oliveira & Fernandes (2009) transformation matrices at severity 1.0.
+ *
+ * Unlike {@link BRETTEL_MATRICES} (applied to gamma-encoded sRGB by the legacy
+ * simulator), these matrices are defined over **linear RGB** — use them only
+ * through `ColorblindnessSimulator.simulateColorblindnessMachado`, which
+ * linearizes, transforms, and re-encodes.
+ *
+ * The 5.0 band calibration (SEPARATION cuts) was computed against this set, so
+ * any recomputation of those bands must use the Machado path, not Brettel.
+ * Achromatopsia is not part of the Machado dichromacy model; it is represented
+ * here as Rec. 709 luminance grayscale in linear light.
+ */
+export const MACHADO_MATRICES: ColorblindMatrices = {
+    protanopia: [
+        [0.152286, 1.052583, -0.204868],
+        [0.114503, 0.786281, 0.099216],
+        [-0.003882, -0.048116, 1.051998],
+    ],
+    deuteranopia: [
+        [0.367322, 0.860646, -0.227968],
+        [0.280085, 0.672501, 0.047413],
+        [-0.01182, 0.04294, 0.968881],
+    ],
+    tritanopia: [
+        [1.255528, -0.076749, -0.178779],
+        [-0.078411, 0.930809, 0.147602],
+        [0.004733, 0.691367, 0.3039],
+    ],
+    achromatopsia: [
+        [0.2126, 0.7152, 0.0722],
+        [0.2126, 0.7152, 0.0722],
+        [0.2126, 0.7152, 0.0722],
+    ],
+};
+
+// ============================================================================
 // Regular Expressions
 // ============================================================================
 

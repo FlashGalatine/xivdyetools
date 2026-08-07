@@ -6,7 +6,7 @@
 
 import type { RGB, HexColor, VisionType } from '@xivdyetools/types';
 import { ErrorCode, AppError } from '@xivdyetools/types';
-import { BRETTEL_MATRICES } from '../../constants/index.js';
+import { BRETTEL_MATRICES, MACHADO_MATRICES } from '../../constants/index.js';
 import { clamp, round, isValidRGB, LRUCache } from '../../utils/index.js';
 import { ColorConverter } from './ColorConverter.js';
 
@@ -95,6 +95,72 @@ export class ColorblindnessSimulator {
   static simulateColorblindnessHex(hex: string, visionType: VisionType): HexColor {
     const rgb = ColorConverter.hexToRgb(hex);
     const simulated = this.simulateColorblindness(rgb, visionType);
+    return ColorConverter.rgbToHex(simulated.r, simulated.g, simulated.b);
+  }
+
+  /** sRGB electro-optical transfer (gamma expansion), 0-1 domain */
+  private static srgbToLinear(c: number): number {
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  }
+
+  /** Inverse sRGB transfer (gamma compression), 0-1 domain */
+  private static linearToSrgb(c: number): number {
+    return c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+  }
+
+  /**
+   * Simulate colorblindness using the Machado et al. (2009) severity-1.0
+   * matrices, applied in **linear RGB** as the model requires.
+   *
+   * This is the simulation path the 5.0 band calibration (SEPARATION cuts)
+   * was computed against; the legacy Brettel path operates on gamma-encoded
+   * values and produces different (less physiologically grounded) results.
+   */
+  static simulateColorblindnessMachado(rgb: RGB, visionType: VisionType): RGB {
+    if (visionType === 'normal') {
+      return { ...rgb };
+    }
+
+    if (!isValidRGB(rgb.r, rgb.g, rgb.b)) {
+      throw new AppError(
+        ErrorCode.INVALID_RGB_VALUE,
+        'Invalid RGB values for colorblindness simulation',
+        'error'
+      );
+    }
+
+    const cacheKey = `m:${rgb.r},${rgb.g},${rgb.b}_${visionType}`;
+    const cached = this.colorblindCache.get(cacheKey);
+    if (cached) {
+      return { ...cached };
+    }
+
+    const matrix = MACHADO_MATRICES[visionType];
+
+    const rLin = this.srgbToLinear(rgb.r / 255);
+    const gLin = this.srgbToLinear(rgb.g / 255);
+    const bLin = this.srgbToLinear(rgb.b / 255);
+
+    const toChannel = (row: readonly [number, number, number]): number => {
+      const lin = clamp(row[0] * rLin + row[1] * gLin + row[2] * bLin, 0, 1);
+      return round(clamp(this.linearToSrgb(lin) * 255, 0, 255));
+    };
+
+    const result = {
+      r: toChannel(matrix[0]),
+      g: toChannel(matrix[1]),
+      b: toChannel(matrix[2]),
+    };
+    this.colorblindCache.set(cacheKey, result);
+    return { ...result };
+  }
+
+  /**
+   * Simulate colorblindness on a hex color via the Machado (2009) model
+   */
+  static simulateColorblindnessMachadoHex(hex: string, visionType: VisionType): HexColor {
+    const rgb = ColorConverter.hexToRgb(hex);
+    const simulated = this.simulateColorblindnessMachado(rgb, visionType);
     return ColorConverter.rgbToHex(simulated.r, simulated.g, simulated.b);
   }
 }
