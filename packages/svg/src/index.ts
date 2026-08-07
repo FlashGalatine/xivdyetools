@@ -111,3 +111,23 @@ export type {
   BudgetSvgLabels,
   BudgetComparisonOptions,
 } from './budget-comparison.js';
+
+// 5.0 icon system (single geometry home — web apps consume via shims)
+export {
+  toolGlyph,
+  harmonyGlyph,
+  chromeGlyph,
+  panelGlyph,
+  categoryGlyph,
+  GLYPH_SETS,
+  GLYPH_ACCENT_DARK,
+  GLYPH_ACCENT_LIGHT,
+} from './icons/tool-icons.js';
+export type {
+  ToolGlyphName,
+  HarmonyGlyphName,
+  ChromeGlyphName,
+  PanelGlyphName,
+  CategoryGlyphName,
+  GlyphRenderOptions,
+} from './icons/tool-icons.js';
