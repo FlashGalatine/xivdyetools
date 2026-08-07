@@ -45,6 +45,17 @@ import type {
  * (general kebab→camel: 'split-complementary' → 'splitComplementary',
  * 'inverted-tetradic' → 'invertedTetradic').
  */
+
+/**
+ * Append the locale to an emitted image URL — the picture never localises
+ * itself, so the `?lang=` must travel with every og:image URL. English is
+ * the default and stays unparameterised (stable cache keys).
+ */
+function withLang(url: string, locale: LocaleCode): string {
+  if (locale === 'en') return url;
+  return `${url}${url.includes('?') ? '&' : '?'}lang=${locale}`;
+}
+
 function harmonyToKey(h: HarmonyType): HarmonyTypeKey {
   return h.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase()) as HarmonyTypeKey;
 }
@@ -121,7 +132,7 @@ export function generateHarmonyOGData(
       title: `${harmonyName} Harmony | XIV Dye Tools`,
       description: `Explore ${harmonyName.toLowerCase()} color harmonies for FFXIV dyes.`,
       url: `${env.APP_BASE_URL}/harmony/`,
-      imageUrl: `${env.OG_IMAGE_BASE_URL}/harmony/default.png`,
+      imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/harmony/default.png`, locale),
       siteName: 'XIV Dye Tools',
     };
   }
@@ -130,7 +141,7 @@ export function generateHarmonyOGData(
     title: `${dyeInfo.name} - ${harmonyName} Harmony | XIV Dye Tools`,
     description: `Explore ${harmonyName.toLowerCase()} color harmonies for ${dyeInfo.name} (${dyeInfo.hex}) in FFXIV. Find matching dyes for your glamour!`,
     url: `${env.APP_BASE_URL}/harmony/?dye=${params.dye}&harmony=${params.harmony}&v=1`,
-    imageUrl: `${env.OG_IMAGE_BASE_URL}/harmony/${params.dye}/${params.harmony}.png`,
+    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/harmony/${params.dye}/${params.harmony}.png`, locale),
     siteName: 'XIV Dye Tools',
     themeColor: dyeInfo.hex,
   };
@@ -152,7 +163,7 @@ export function generateGradientOGData(
       title: `${getToolName('gradient', locale)} | XIV Dye Tools`,
       description: 'Create smooth color gradients between FFXIV dyes.',
       url: `${env.APP_BASE_URL}/gradient/`,
-      imageUrl: `${env.OG_IMAGE_BASE_URL}/gradient/default.png`,
+      imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/gradient/default.png`, locale),
       siteName: 'XIV Dye Tools',
     };
   }
@@ -161,7 +172,7 @@ export function generateGradientOGData(
     title: `${startDye.name} to ${endDye.name} Gradient | XIV Dye Tools`,
     description: `${params.steps}-step gradient from ${startDye.name} (${startDye.hex}) to ${endDye.name} (${endDye.hex}). Find the perfect dye progression for your FFXIV glamour!`,
     url: `${env.APP_BASE_URL}/gradient/?start=${params.start}&end=${params.end}&steps=${params.steps}&v=1`,
-    imageUrl: `${env.OG_IMAGE_BASE_URL}/gradient/${params.start}/${params.end}/${params.steps}.png`,
+    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/gradient/${params.start}/${params.end}/${params.steps}.png`, locale),
     siteName: 'XIV Dye Tools',
     themeColor: startDye.hex,
   };
@@ -184,7 +195,7 @@ export function generateMixerOGData(
       title: `${getToolName('mixer', locale)} | XIV Dye Tools`,
       description: 'Mix FFXIV dyes and find the closest matching result.',
       url: `${env.APP_BASE_URL}/mixer/`,
-      imageUrl: `${env.OG_IMAGE_BASE_URL}/mixer/default.png`,
+      imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/mixer/default.png`, locale),
       siteName: 'XIV Dye Tools',
     };
   }
@@ -195,7 +206,7 @@ export function generateMixerOGData(
       title: `${dyeA.name} + ${dyeB.name} + ${dyeC.name} | XIV Dye Tools`,
       description: `Mix ${dyeA.name}, ${dyeB.name}, and ${dyeC.name} to find matching FFXIV dyes for your perfect blend!`,
       url: `${env.APP_BASE_URL}/mixer/?dyeA=${params.dyeA}&dyeB=${params.dyeB}&dyeC=${params.dyeC}&v=1`,
-      imageUrl: `${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.dyeC}/${params.ratio}.png`,
+      imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.dyeC}/${params.ratio}.png`, locale),
       siteName: 'XIV Dye Tools',
       themeColor: dyeA.hex,
     };
@@ -206,7 +217,7 @@ export function generateMixerOGData(
     title: `${params.ratio}% ${dyeA.name} + ${100 - params.ratio}% ${dyeB.name} | XIV Dye Tools`,
     description: `Mix ${params.ratio}% ${dyeA.name} with ${100 - params.ratio}% ${dyeB.name} to find matching FFXIV dyes for your perfect blend!`,
     url: `${env.APP_BASE_URL}/mixer/?dyeA=${params.dyeA}&dyeB=${params.dyeB}&ratio=${params.ratio}&v=1`,
-    imageUrl: `${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.ratio}.png`,
+    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.ratio}.png`, locale),
     siteName: 'XIV Dye Tools',
     themeColor: dyeA.hex,
   };
@@ -256,7 +267,7 @@ export function generateSwatchOGData(
   if (gender) imageUrlParams.set('gender', gender);
   if (params.algo) imageUrlParams.set('algo', params.algo);
   const imageQueryString = imageUrlParams.toString();
-  const imageUrl = `${env.OG_IMAGE_BASE_URL}/swatch/${params.color}/${limit}.png${imageQueryString ? `?${imageQueryString}` : ''}`;
+  const imageUrl = withLang(`${env.OG_IMAGE_BASE_URL}/swatch/${params.color}/${limit}.png${imageQueryString ? `?${imageQueryString}` : ''}`, locale);
 
   return {
     title: `Match ${hexColor} | XIV Dye Tools`,
@@ -283,7 +294,7 @@ export function generateComparisonOGData(
       title: `${getToolName('comparison', locale)} | XIV Dye Tools`,
       description: 'Compare up to 4 FFXIV dyes side by side.',
       url: `${env.APP_BASE_URL}/comparison/`,
-      imageUrl: `${env.OG_IMAGE_BASE_URL}/comparison/default.png`,
+      imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/comparison/default.png`, locale),
       siteName: 'XIV Dye Tools',
     };
   }
@@ -294,7 +305,7 @@ export function generateComparisonOGData(
     title: `Compare: ${dyeNames} | XIV Dye Tools`,
     description: `Side-by-side comparison of ${dyes.length} FFXIV dyes: ${dyeNames}. See how they look together!`,
     url: `${env.APP_BASE_URL}/comparison/?dyes=${params.dyes.join(',')}&v=1`,
-    imageUrl: `${env.OG_IMAGE_BASE_URL}/comparison/${params.dyes.join(',')}.png`,
+    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/comparison/${params.dyes.join(',')}.png`, locale),
     siteName: 'XIV Dye Tools',
     themeColor: dyes[0]!.hex,
   };
@@ -316,7 +327,7 @@ export function generateAccessibilityOGData(
       title: `${getToolName('accessibility', locale)} | XIV Dye Tools`,
       description: 'Check how FFXIV dyes appear to players with color vision differences.',
       url: `${env.APP_BASE_URL}/accessibility/`,
-      imageUrl: `${env.OG_IMAGE_BASE_URL}/accessibility/default.png`,
+      imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/accessibility/default.png`, locale),
       siteName: 'XIV Dye Tools',
     };
   }
@@ -327,7 +338,7 @@ export function generateAccessibilityOGData(
     title: `${visionName}: ${dyeNames} | XIV Dye Tools`,
     description: `See how ${dyeNames} appear with ${visionName.toLowerCase()}. Design inclusive glamours!`,
     url: `${env.APP_BASE_URL}/accessibility/?dyes=${params.dyes.join(',')}&vision=${params.vision || 'normal'}&v=1`,
-    imageUrl: `${env.OG_IMAGE_BASE_URL}/accessibility/${params.dyes.join(',')}/${params.vision || 'normal'}.png`,
+    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/accessibility/${params.dyes.join(',')}/${params.vision || 'normal'}.png`, locale),
     siteName: 'XIV Dye Tools',
     themeColor: dyes[0]!.hex,
   };
@@ -528,7 +539,7 @@ export function generateOGDataForTool(
         title: 'XIV Dye Tools',
         description: 'Explore FFXIV dye colors, create harmonious palettes, and find your perfect glamour combinations.',
         url: env.APP_BASE_URL,
-        imageUrl: `${env.OG_IMAGE_BASE_URL}/default.png`,
+        imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/default.png`, locale),
         siteName: 'XIV Dye Tools',
       };
     }

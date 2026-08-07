@@ -32,7 +32,10 @@ export type ToolId =
   | 'mixer'
   | 'swatch'
   | 'comparison'
-  | 'accessibility';
+  | 'accessibility'
+  | 'extractor'
+  | 'presets'
+  | 'budget';
 
 export type HarmonyType =
   | 'complementary'

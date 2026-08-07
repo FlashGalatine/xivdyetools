@@ -394,3 +394,78 @@ describe('Catch-all route', () => {
     expect(html).toContain('XIV Dye Tools');
   });
 });
+
+// ============================================================================
+// 5.0 blocker fixes: per-tool defaults, new tool routes, ?lang= propagation
+// ============================================================================
+
+describe('per-tool default OG images', () => {
+  it('serves /og/{tool}/default.png for every supported tool', async () => {
+    for (const tool of [
+      'harmony',
+      'gradient',
+      'mixer',
+      'swatch',
+      'comparison',
+      'accessibility',
+      'extractor',
+      'presets',
+      'budget',
+    ]) {
+      const res = await app.request(`/og/${tool}/default.png`, {}, TEST_ENV);
+      expect(res.status, tool).toBe(200);
+      expect(res.headers.get('Content-Type')).toBe('image/png');
+    }
+  });
+
+  it('404s an unknown tool default', async () => {
+    const res = await app.request('/og/nonsense/default.png', {}, TEST_ENV);
+    expect(res.status).toBe(404);
+  });
+
+  it('does not let comparison parse default.png as a dye list', async () => {
+    const res = await app.request('/og/comparison/default.png', {}, TEST_ENV);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('image/png');
+  });
+});
+
+describe('extractor/presets/budget crawler routes', () => {
+  it('serves crawler HTML with og:image meta for the new tools', async () => {
+    for (const tool of ['extractor', 'presets', 'budget']) {
+      const res = await app.request(
+        `/${tool}/`,
+        { headers: { 'User-Agent': CRAWLER_UA } },
+        TEST_ENV
+      );
+      expect(res.status, tool).toBe(200);
+      const html = await res.text();
+      expect(html).toContain('og:image');
+      expect(html).toContain('https://og.xivdyetools.app/og/default.png');
+    }
+  });
+});
+
+describe('?lang= travels with emitted og:image URLs', () => {
+  it('appends lang for non-English crawler requests', async () => {
+    const res = await app.request(
+      '/harmony/?dye=5771&harmony=tetradic&lang=ja',
+      { headers: { 'User-Agent': CRAWLER_UA } },
+      TEST_ENV
+    );
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    expect(html).toContain('/og/harmony/5771/tetradic.png?lang=ja');
+  });
+
+  it('keeps English URLs unparameterised (stable cache keys)', async () => {
+    const res = await app.request(
+      '/harmony/?dye=5771&harmony=tetradic',
+      { headers: { 'User-Agent': CRAWLER_UA } },
+      TEST_ENV
+    );
+    const html = await res.text();
+    expect(html).toContain('/og/harmony/5771/tetradic.png');
+    expect(html).not.toContain('.png?lang=');
+  });
+});

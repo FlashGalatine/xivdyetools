@@ -14,7 +14,7 @@ dataset = "xivdyetools_og_analytics"
 
 [vars]
 APP_BASE_URL = "https://xivdyetools.app"
-OG_IMAGE_BASE_URL = "https://og.xivdyetools.app"
+OG_IMAGE_BASE_URL = "https://og.xivdyetools.app/og"
 
 [[rules]]
 type = "Data"
@@ -29,12 +29,17 @@ routes = [
   { pattern = "xivdyetools.app/mixer/*", zone_name = "xivdyetools.app" },
   { pattern = "xivdyetools.app/swatch/*", zone_name = "xivdyetools.app" },
   { pattern = "xivdyetools.app/comparison/*", zone_name = "xivdyetools.app" },
-  { pattern = "xivdyetools.app/accessibility/*", zone_name = "xivdyetools.app" }
+  { pattern = "xivdyetools.app/accessibility/*", zone_name = "xivdyetools.app" },
+  { pattern = "xivdyetools.app/extractor/*", zone_name = "xivdyetools.app" },
+  { pattern = "xivdyetools.app/presets/*", zone_name = "xivdyetools.app" },
+  { pattern = "xivdyetools.app/budget/*", zone_name = "xivdyetools.app" },
+  # BUG-069 closure: the og image host is IaC-declared, not dashboard-only
+  { pattern = "og.xivdyetools.app", custom_domain = true }
 ]
 
 [env.production.vars]
 APP_BASE_URL = "https://xivdyetools.app"
-OG_IMAGE_BASE_URL = "https://og.xivdyetools.app"
+OG_IMAGE_BASE_URL = "https://og.xivdyetools.app/og"
 
 [[env.production.analytics_engine_datasets]]
 binding = "ANALYTICS"

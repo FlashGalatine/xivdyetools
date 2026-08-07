@@ -53,6 +53,9 @@ const SUPPORTED_TOOLS: ToolId[] = [
   'swatch',
   'comparison',
   'accessibility',
+  'extractor',
+  'presets',
+  'budget',
 ];
 
 // FINDING-003: Parameter bounds for OG image generation routes
@@ -227,6 +230,65 @@ for (const tool of SUPPORTED_TOOLS) {
 // ============================================================================
 // OG Image Generation Routes
 // ============================================================================
+
+/**
+ * Shared default-card SVG (root and per-tool fallbacks).
+ *
+ * Every emitted `{tool}/default.png` fallback URL resolves here, so crawler
+ * previews for parameterless tool pages stop 404ing. The 15E glyph-tile
+ * artwork (per-tool banner glyph over the stripe field) replaces this
+ * generic card in the OG redesign phase.
+ */
+function buildDefaultCardSvg(): string {
+  const contentElements: string[] = [];
+  const centerX = OG_DIMENSIONS.width / 2;
+  const centerY = OG_DIMENSIONS.height / 2;
+
+  contentElements.push(
+    text(centerX, centerY - 60, 'XIV DYE TOOLS', {
+      fill: THEME.text,
+      fontSize: 48,
+      fontFamily: FONTS.header,
+      fontWeight: 700,
+      textAnchor: 'middle',
+    })
+  );
+
+  contentElements.push(
+    text(centerX, centerY, 'FFXIV Color & Dye Companion', {
+      fill: THEME.textMuted,
+      fontSize: 24,
+      fontFamily: FONTS.primary,
+      textAnchor: 'middle',
+    })
+  );
+
+  const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'];
+  const circleY = centerY + 80;
+  const circleSpacing = 70;
+  const startX = centerX - ((colors.length - 1) * circleSpacing) / 2;
+  colors.forEach((color, i) => {
+    contentElements.push(circle(startX + i * circleSpacing, circleY, 22, color));
+  });
+
+  return generateOGCard({
+    toolName: 'XIV Dye Tools',
+    content: contentElements.join('\n'),
+  });
+}
+
+/**
+ * Per-tool default OG image — the fallback the meta tags emit when a tool
+ * URL carries no parameters. Registered before the parameterised tool routes
+ * so /og/comparison/default.png never parses "default.png" as a dye list.
+ */
+app.get('/og/:tool/default.png', async (c) => {
+  const tool = c.req.param('tool') as ToolId;
+  if (!SUPPORTED_TOOLS.includes(tool)) {
+    return c.json({ error: 'Unknown tool' }, 404);
+  }
+  return renderOGImage(buildDefaultCardSvg(), { browser: 86400, edge: 604800 });
+});
 
 /**
  * Harmony tool OG image
@@ -518,50 +580,9 @@ app.get('/og/accessibility/:dyes/:visionType', async (c) => {
  * Default/fallback OG image
  */
 app.get('/og/default.png', async (c) => {
-  // Generate a simple default image
-  const contentElements: string[] = [];
-  const centerX = OG_DIMENSIONS.width / 2;
-  const centerY = OG_DIMENSIONS.height / 2;
-
-  // Main title
-  contentElements.push(
-    text(centerX, centerY - 60, 'XIV DYE TOOLS', {
-      fill: THEME.text,
-      fontSize: 48,
-      fontFamily: FONTS.header,
-      fontWeight: 700,
-      textAnchor: 'middle',
-    })
-  );
-
-  // Subtitle
-  contentElements.push(
-    text(centerX, centerY, 'FFXIV Color & Dye Companion', {
-      fill: THEME.textMuted,
-      fontSize: 24,
-      fontFamily: FONTS.primary,
-      textAnchor: 'middle',
-    })
-  );
-
-  // Decorative color circles
-  const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'];
-  const circleY = centerY + 80;
-  const circleSpacing = 70;
-  const startX = centerX - ((colors.length - 1) * circleSpacing) / 2;
-
-  colors.forEach((color, i) => {
-    contentElements.push(circle(startX + i * circleSpacing, circleY, 22, color));
-  });
-
-  const svg = generateOGCard({
-    toolName: 'XIV Dye Tools',
-    content: contentElements.join('\n'),
-  });
-
   // BUG-068: explicit TTLs — 24h browser / 7d edge (the old param was
   // multiplied by 7 internally, yielding a 49-day edge TTL)
-  return renderOGImage(svg, { browser: 86400, edge: 604800 });
+  return renderOGImage(buildDefaultCardSvg(), { browser: 86400, edge: 604800 });
 });
 
 // ============================================================================
