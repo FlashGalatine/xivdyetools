@@ -121,6 +121,21 @@ export type {
   RatioCalibration,
 } from './config/band-calibration.js';
 
+// /manual topics + learn-more links (shared data for web, bot, og-worker)
+export {
+  MANUAL_TOPICS,
+  LODESTONE_BY_REGION,
+  XIVDYETOOLS_DOCS_URL,
+  getLearnLink,
+  getLodestoneLink,
+} from './config/learn-links.js';
+export type {
+  ManualTopicId,
+  LodestoneRegion,
+  LearnLink,
+  ManualTopic,
+} from './config/learn-links.js';
+
 // Facewear colors (split out of the dye database in schema v2)
 export {
   facewearColors,
