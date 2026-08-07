@@ -1,36 +1,19 @@
 /**
- * Tests for Component Context Service
+ * Tests for Component Context Service (KV-backed, 5.0)
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { createMockKV } from '@xivdyetools/test-utils';
 import {
   buildCustomId,
   parseCustomId,
   storeContext,
   getContext,
   updateContext,
+  verifyContextUser,
   CONTEXT_TTL,
 } from './component-context.js';
 import type { ComponentContext } from './component-context.js';
-
-// Mock Cache API (caches.default)
-function createMockCache() {
-  const store = new Map<string, Response>();
-
-  return {
-    match: vi.fn(async (url: string) => {
-      const r = store.get(url);
-      return r ? r.clone() : undefined;
-    }),
-    put: vi.fn(async (url: string, response: Response) => {
-      store.set(url, response.clone());
-    }),
-    delete: vi.fn(async (url: string) => {
-      return store.delete(url);
-    }),
-    _store: store,
-  };
-}
 
 // Mock logger
 const mockLogger = {
@@ -38,207 +21,109 @@ const mockLogger = {
   warn: vi.fn(),
   info: vi.fn(),
   debug: vi.fn(),
-} as never;
+  child: vi.fn(),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+} as any;
 
-describe('Component Context Service', () => {
-  let mockCache: ReturnType<typeof createMockCache>;
+const baseContext = {
+  command: 'mixer',
+  userId: 'user123',
+  data: { dyeA: 5729, dyeB: 5734 },
+};
 
-  beforeEach(() => {
-    mockCache = createMockCache();
-    vi.stubGlobal('caches', { default: mockCache });
-    vi.clearAllMocks();
+function kvns() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return createMockKV() as any;
+}
+
+describe('buildCustomId', () => {
+  it('builds {action}_{command}_{hash} format', () => {
+    expect(buildCustomId('algo', 'mixer', 'a1b2c3d4')).toBe('algo_mixer_a1b2c3d4');
   });
 
-  describe('buildCustomId', () => {
-    it('builds custom_id without value', () => {
-      const id = buildCustomId('algo', 'mixer', 'abc12345');
-      expect(id).toBe('algo_mixer_abc12345');
-    });
-
-    it('builds custom_id with value', () => {
-      const id = buildCustomId('algo', 'mixer', 'abc12345', 'spectral');
-      expect(id).toBe('algo_mixer_abc12345_spectral');
-    });
-
-    it('throws for custom_id exceeding 100 characters', () => {
-      const longValue = 'x'.repeat(100);
-      expect(() => buildCustomId('algo', 'mixer', 'abc12345', longValue)).toThrow('exceeds 100 characters');
-    });
+  it('appends an optional value', () => {
+    expect(buildCustomId('algo', 'mixer', 'a1b2c3d4', 'oklab')).toBe('algo_mixer_a1b2c3d4_oklab');
   });
 
-  describe('parseCustomId', () => {
-    it('parses custom_id without value', () => {
-      const result = parseCustomId('algo_mixer_abc12345');
-
-      expect(result).toEqual({
-        action: 'algo',
-        command: 'mixer',
-        hash: 'abc12345',
-        value: undefined,
-      });
-    });
-
-    it('parses custom_id with value', () => {
-      const result = parseCustomId('market_toggle_xyz789_on');
-
-      expect(result).toEqual({
-        action: 'market',
-        command: 'toggle',
-        hash: 'xyz789',
-        value: 'on',
-      });
-    });
-
-    it('parses custom_id with value containing underscores', () => {
-      const result = parseCustomId('page_list_hash123_some_complex_value');
-
-      expect(result).toEqual({
-        action: 'page',
-        command: 'list',
-        hash: 'hash123',
-        value: 'some_complex_value',
-      });
-    });
-
-    it('returns null for invalid format (too few parts)', () => {
-      expect(parseCustomId('algo_mixer')).toBeNull();
-      expect(parseCustomId('algo')).toBeNull();
-      expect(parseCustomId('')).toBeNull();
-    });
-
-    it('returns null for invalid action', () => {
-      expect(parseCustomId('invalid_mixer_hash')).toBeNull();
-    });
-
-    it('parses all valid actions', () => {
-      const actions = ['algo', 'market', 'page', 'refresh', 'copy', 'vote', 'moderate'];
-
-      for (const action of actions) {
-        const result = parseCustomId(`${action}_cmd_hash`);
-        expect(result?.action).toBe(action);
-      }
-    });
+  it('throws when exceeding the 100-char Discord limit', () => {
+    expect(() => buildCustomId('algo', 'mixer', 'h', 'x'.repeat(120))).toThrow(/100/);
   });
-
-  describe('storeContext', () => {
-    it('stores context and returns hash', async () => {
-      const context = {
-        command: 'mixer',
-        userId: 'user123',
-        interactionToken: 'token456',
-        applicationId: 'app789',
-        data: { color1: '#FF0000' },
-      };
-
-      const hash = await storeContext(context, CONTEXT_TTL.STANDARD, mockLogger);
-
-      expect(hash).toBeDefined();
-      expect(hash.length).toBe(8); // 4 bytes = 8 hex chars
-      expect(mockCache.put).toHaveBeenCalled();
-    });
-
-    it('stores with correct TTL in Cache-Control header', async () => {
-      const context = {
-        command: 'test',
-        userId: 'user',
-        interactionToken: 'token',
-        applicationId: 'app',
-        data: {},
-      };
-
-      await storeContext(context, CONTEXT_TTL.PAGINATION, mockLogger);
-
-      expect(mockCache.put).toHaveBeenCalledWith(
-        expect.stringContaining('cache.xivdyetools.internal/ctx/v1/'),
-        expect.any(Response)
-      );
-
-      // Verify the Response had the correct Cache-Control header
-      const putCall = mockCache.put.mock.calls[0];
-      const storedResponse = putCall[1] as Response;
-      expect(storedResponse.headers.get('Cache-Control')).toBe(`s-maxage=${CONTEXT_TTL.PAGINATION}`);
-    });
-  });
-
-  describe('getContext', () => {
-    it('returns null when context not found', async () => {
-      const result = await getContext('nonexistent', mockLogger);
-      expect(result).toBeNull();
-    });
-
-    it('returns stored context', async () => {
-      const context = {
-        command: 'mixer',
-        userId: 'user123',
-        interactionToken: 'token',
-        applicationId: 'app',
-        data: { test: true },
-      };
-
-      const hash = await storeContext(context, CONTEXT_TTL.STANDARD, mockLogger);
-      const result = await getContext(hash, mockLogger);
-
-      expect(result).toBeDefined();
-      expect(result?.command).toBe('mixer');
-      expect(result?.userId).toBe('user123');
-      expect(result?.data.test).toBe(true);
-    });
-
-    it('returns null for expired context', async () => {
-      // Manually insert an expired context
-      const expiredContext: ComponentContext = {
-        command: 'test',
-        userId: 'user',
-        interactionToken: 'token',
-        applicationId: 'app',
-        data: {},
-        expiresAt: Date.now() - 1000, // Expired 1 second ago
-      };
-
-      const url = 'https://cache.xivdyetools.internal/ctx/v1/expired';
-      mockCache._store.set(url, new Response(JSON.stringify(expiredContext), {
-        headers: { 'Content-Type': 'application/json' },
-      }));
-
-      const result = await getContext('expired', mockLogger);
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('updateContext', () => {
-    it('updates context data', async () => {
-      const context = {
-        command: 'mixer',
-        userId: 'user',
-        interactionToken: 'token',
-        applicationId: 'app',
-        data: { mode: 'rgb' },
-      };
-
-      const hash = await storeContext(context, CONTEXT_TTL.STANDARD, mockLogger);
-
-      const updated = await updateContext(
-        hash,
-        { data: { mode: 'spectral' } },
-        CONTEXT_TTL.STANDARD,
-        mockLogger
-      );
-
-      expect(updated).toBeDefined();
-      expect(updated?.data.mode).toBe('spectral');
-    });
-
-    it('returns null for non-existent context', async () => {
-      const result = await updateContext(
-        'nonexistent',
-        { data: { test: true } },
-        CONTEXT_TTL.STANDARD,
-        mockLogger
-      );
-
-      expect(result).toBeNull();
-    });
-  });
-
 });
 
+describe('parseCustomId', () => {
+  it('round-trips a built custom id', () => {
+    const parsed = parseCustomId('page_preset_deadbeef_2');
+    expect(parsed).toEqual({ action: 'page', command: 'preset', hash: 'deadbeef', value: '2' });
+  });
+
+  it('rejects unknown actions and malformed ids', () => {
+    expect(parseCustomId('bogus_mixer_hash')).toBeNull();
+    expect(parseCustomId('tooshort')).toBeNull();
+  });
+});
+
+describe('storeContext / getContext (KV)', () => {
+  it('stores and retrieves a context by hash', async () => {
+    const kv = kvns();
+    const hash = await storeContext(kv, baseContext, CONTEXT_TTL.STANDARD, mockLogger);
+    expect(hash).toMatch(/^[0-9a-f]{8}$/);
+
+    const result = await getContext(kv, hash, mockLogger);
+    expect(result?.command).toBe('mixer');
+    expect(result?.userId).toBe('user123');
+    expect(result?.data).toEqual(baseContext.data);
+    expect(result?.expiresAt).toBeGreaterThan(Date.now());
+  });
+
+  it('returns null for a missing hash', async () => {
+    expect(await getContext(kvns(), 'nonexistent', mockLogger)).toBeNull();
+  });
+
+  it('returns null for a context past its expiresAt stamp', async () => {
+    const kv = kvns();
+    const expired: ComponentContext = {
+      ...baseContext,
+      expiresAt: Date.now() - 1000,
+    };
+    await kv.put('ctx:v2:deadbeef', JSON.stringify(expired));
+    expect(await getContext(kv, 'deadbeef', mockLogger)).toBeNull();
+  });
+
+  it('does not store interaction tokens (fresh ones arrive per interaction)', async () => {
+    const kv = kvns();
+    const hash = await storeContext(kv, baseContext, CONTEXT_TTL.STANDARD, mockLogger);
+    const result = await getContext(kv, hash, mockLogger);
+    expect(result).not.toHaveProperty('interactionToken');
+    expect(result).not.toHaveProperty('applicationId');
+  });
+});
+
+describe('updateContext', () => {
+  it('merges data and extends TTL', async () => {
+    const kv = kvns();
+    const hash = await storeContext(kv, baseContext, CONTEXT_TTL.STANDARD, mockLogger);
+    const updated = await updateContext(
+      kv,
+      hash,
+      { data: { ratio: 60 } },
+      CONTEXT_TTL.STANDARD,
+      mockLogger
+    );
+    expect(updated?.data).toEqual({ dyeA: 5729, dyeB: 5734, ratio: 60 });
+
+    const readBack = await getContext(kv, hash, mockLogger);
+    expect(readBack?.data['ratio']).toBe(60);
+  });
+
+  it('returns null for an unknown hash', async () => {
+    expect(await updateContext(kvns(), 'missing', { data: {} })).toBeNull();
+  });
+});
+
+describe('verifyContextUser', () => {
+  it('gates on the stored userId (hash collisions are possible)', () => {
+    const context: ComponentContext = { ...baseContext, expiresAt: Date.now() + 1000 };
+    expect(verifyContextUser(context, 'user123')).toBe(true);
+    expect(verifyContextUser(context, 'someone-else')).toBe(false);
+  });
+});

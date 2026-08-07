@@ -1,15 +1,18 @@
 /**
  * Changelog Parser
  *
- * Parses CHANGELOG-laymans.md to extract the latest version entry
- * for Discord announcement formatting.
+ * Parses the root CHANGELOG-laymans.md (product-level, both surfaces) for
+ * Discord announcement formatting and the /changelog command.
  *
- * Expected format:
+ * Strict format contract (parse failures are silent by design — keep to it):
  * ```
  * ## [x.y.z] - YYYY-MM-DD
- * ### Section Title
- * - Item description
+ * ### Section Title            (emoji in section titles is welcome)
+ * - Item description           (short, self-contained bullets)
  * ```
+ * Newest entry first. Entries say which surface changed (web app / Discord
+ * bot). The file lives at the repository root — the GitHub webhook's raw
+ * fetch and its path trigger both assume exactly that.
  *
  * @module services/changelog-parser
  */
@@ -26,43 +29,47 @@ export interface ChangelogEntry {
 }
 
 /**
- * Extracts the latest (first) version entry from a changelog markdown string.
- *
- * @param markdown - Raw markdown content of CHANGELOG-laymans.md
- * @returns The parsed latest version entry, or null if none found
+ * Parse every version entry from a changelog markdown string, newest first
+ * (file order). The /changelog command renders the whole parsed history;
+ * the webhook announcement takes `[0]`.
  */
-export function parseLatestVersion(markdown: string): ChangelogEntry | null {
+export function parseAll(markdown: string): ChangelogEntry[] {
   const lines = markdown.split('\n');
+  const entries: ChangelogEntry[] = [];
 
-  let version: string | null = null;
-  let date: string | null = null;
-  const sections: ChangelogSection[] = [];
+  let current: ChangelogEntry | null = null;
   let currentSection: ChangelogSection | null = null;
-  let foundFirst = false;
+
+  const closeSection = (): void => {
+    if (current && currentSection && currentSection.items.length > 0) {
+      current.sections.push(currentSection);
+    }
+    currentSection = null;
+  };
+
+  const closeEntry = (): void => {
+    closeSection();
+    if (current) {
+      entries.push(current);
+    }
+    current = null;
+  };
 
   for (const line of lines) {
     // Match version header: ## [x.y.z] - YYYY-MM-DD
     const versionMatch = line.match(/^## \[([^\]]+)\]\s*-\s*(.+)$/);
     if (versionMatch) {
-      if (foundFirst) {
-        // We've hit the second version header — stop
-        break;
-      }
-      version = versionMatch[1];
-      date = versionMatch[2].trim();
-      foundFirst = true;
+      closeEntry();
+      current = { version: versionMatch[1], date: versionMatch[2].trim(), sections: [] };
       continue;
     }
 
-    // Skip lines until we've found a version header
-    if (!foundFirst) continue;
+    if (!current) continue;
 
     // Match section header: ### Section Title
     const sectionMatch = line.match(/^### (.+)$/);
     if (sectionMatch) {
-      if (currentSection && currentSection.items.length > 0) {
-        sections.push(currentSection);
-      }
+      closeSection();
       currentSection = { title: sectionMatch[1].trim(), items: [] };
       continue;
     }
@@ -74,14 +81,16 @@ export function parseLatestVersion(markdown: string): ChangelogEntry | null {
     }
   }
 
-  // Push the last section
-  if (currentSection && currentSection.items.length > 0) {
-    sections.push(currentSection);
-  }
+  closeEntry();
+  return entries;
+}
 
-  if (!version || !date) {
-    return null;
-  }
-
-  return { version, date, sections };
+/**
+ * Extracts the latest (first) version entry from a changelog markdown string.
+ *
+ * @param markdown - Raw markdown content of CHANGELOG-laymans.md
+ * @returns The parsed latest version entry, or null if none found
+ */
+export function parseLatestVersion(markdown: string): ChangelogEntry | null {
+  return parseAll(markdown)[0] ?? null;
 }

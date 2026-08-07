@@ -1,28 +1,30 @@
 /**
- * Component Context Storage (V4)
+ * Component Context Storage (5.0 — KV-backed)
  *
- * Stores interaction context via the Cache API for Discord message components.
- * Since Discord custom_id is limited to 100 characters, we store
- * full context data in the Cache API and reference it via a short hash.
+ * Stores interaction context in KV for Discord message components.
+ * Since Discord custom_id is limited to 100 characters, full context data is
+ * stored under a short hash referenced from the custom_id.
  *
  * Custom ID Format: {action}_{command}_{shortHash}
  * Example: algo_mixer_a1b2c3d4
  *
- * Cache Key: https://cache.xivdyetools.internal/ctx/v1/{hash}
- * TTL: 1 hour (15 minutes for pagination)
+ * KV key: ctx:v2:{hash} · TTL 15 minutes (Discord interaction tokens die at
+ * 15 minutes, so anything longer guaranteed dead tokens on edit).
+ *
+ * This replaces the BUG-075 Cache API design: `caches.default` is
+ * per-datacenter, so a component interaction routed via a different CF colo
+ * could never find its context. KV with `expirationTtl` is globally visible
+ * (eventual consistency ~60s is fine — the first interaction on a fresh
+ * message is always slower than that).
+ *
+ * Notes carried from the audit:
+ *  - interaction tokens are NOT stored — every component interaction arrives
+ *    with its own fresh token.
+ *  - Consumers of getContext MUST verify `context.userId` against the
+ *    interacting user (the 32-bit hash can collide, and contexts are not
+ *    per-user secrets) — use `verifyContextUser`.
  *
  * @module services/component-context
- 
- *
- * ⚠️ BUG-075 (2026-07-18 audit) — read before wiring this module into
- * production paths (it currently has no production callers):
- *  - `caches.default` is PER-DATACENTER, not global storage. A component
- *    interaction routed via a different CF colo cannot find the context.
- *    Back this with KV (+ expirationTtl) or a Durable Object first.
- *  - Prefer NOT storing `interactionToken` at all — every component
- *    interaction arrives with its own fresh token.
- *  - Consumers of getContext must verify `context.userId` against the
- *    interacting user (the 32-bit key hash can collide).
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
@@ -31,11 +33,8 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 // Constants
 // ============================================================================
 
-/** Base URL for synthetic cache keys (not actually fetched) */
-const CACHE_BASE_URL = 'https://cache.xivdyetools.internal/ctx';
-
-/** Cache schema version - bump to invalidate all cached contexts */
-const CACHE_SCHEMA_VERSION = 'v1';
+/** KV key prefix — bump the version segment to invalidate all contexts */
+const KV_PREFIX = 'ctx:v2:';
 
 /** TTL in seconds */
 export const CONTEXT_TTL = {
@@ -77,10 +76,6 @@ export interface ComponentContext {
   command: string;
   /** Original user ID (to verify authorization) */
   userId: string;
-  /** Original interaction token (for edits) */
-  interactionToken: string;
-  /** Application ID for webhook URL */
-  applicationId: string;
   /** Command-specific data */
   data: Record<string, unknown>;
   /** When this context expires */
@@ -102,14 +97,11 @@ export interface ParsedCustomId {
 }
 
 // ============================================================================
-// Cache Key Utilities
+// KV Key Utilities
 // ============================================================================
 
-/**
- * Build a synthetic URL cache key for a context entry
- */
-function buildContextCacheUrl(hash: string): string {
-  return `${CACHE_BASE_URL}/${CACHE_SCHEMA_VERSION}/${hash}`;
+function buildContextKey(hash: string): string {
+  return `${KV_PREFIX}${hash}`;
 }
 
 // ============================================================================
@@ -193,14 +185,16 @@ export function parseCustomId(customId: string): ParsedCustomId | null {
 // ============================================================================
 
 /**
- * Store context data in the Cache API and return the hash
+ * Store context data in KV and return the hash
  *
+ * @param kv - The worker's KV namespace binding
  * @param context - Context data to store
  * @param ttlSeconds - TTL in seconds (default: STANDARD)
  * @param logger - Optional logger
  * @returns Short hash for the stored context
  */
 export async function storeContext(
+  kv: KVNamespace,
   context: Omit<ComponentContext, 'expiresAt'>,
   ttlSeconds: number = CONTEXT_TTL.STANDARD,
   logger?: ExtendedLogger
@@ -210,23 +204,15 @@ export async function storeContext(
     const hashInput = `${context.userId}:${context.command}:${Date.now()}:${Math.random()}`;
     const hash = await generateShortHash(hashInput);
 
-    // Add expiration timestamp
     const fullContext: ComponentContext = {
       ...context,
       expiresAt: Date.now() + ttlSeconds * 1000,
     };
 
-    // Store in Cache API with TTL
-    const url = buildContextCacheUrl(hash);
-    const cache = caches.default;
-    const response = new Response(JSON.stringify(fullContext), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': `s-maxage=${ttlSeconds}`,
-      },
+    // KV enforces a 60s minimum expirationTtl
+    await kv.put(buildContextKey(hash), JSON.stringify(fullContext), {
+      expirationTtl: Math.max(60, ttlSeconds),
     });
-
-    await cache.put(url, response);
 
     if (logger) {
       logger.debug('Stored component context', { hash, command: context.command, ttl: ttlSeconds });
@@ -242,31 +228,31 @@ export async function storeContext(
 }
 
 /**
- * Retrieve context data from the Cache API
+ * Retrieve context data from KV
  *
+ * @param kv - The worker's KV namespace binding
  * @param hash - Context hash
  * @param logger - Optional logger
  * @returns Context data or null if not found/expired
  */
 export async function getContext(
+  kv: KVNamespace,
   hash: string,
   logger?: ExtendedLogger
 ): Promise<ComponentContext | null> {
   try {
-    const url = buildContextCacheUrl(hash);
-    const cache = caches.default;
-    const response = await cache.match(url);
+    const raw = await kv.get(buildContextKey(hash));
 
-    if (!response) {
+    if (!raw) {
       if (logger) {
         logger.debug('Component context not found', { hash });
       }
       return null;
     }
 
-    const context: ComponentContext = await response.json();
+    const context: ComponentContext = JSON.parse(raw);
 
-    // Double-check expiration (Cache-Control should handle this, but be safe)
+    // Double-check expiration (expirationTtl should handle this, but be safe)
     if (context.expiresAt < Date.now()) {
       if (logger) {
         logger.debug('Component context expired', { hash });
@@ -284,7 +270,15 @@ export async function getContext(
 }
 
 /**
- * Update context data in the Cache API (extends TTL)
+ * Verify a retrieved context belongs to the interacting user. The 32-bit
+ * hash can collide, so every consumer must gate on this before acting.
+ */
+export function verifyContextUser(context: ComponentContext, userId: string): boolean {
+  return context.userId === userId;
+}
+
+/**
+ * Update context data in KV (extends TTL)
  *
  * @param hash - Context hash
  * @param updates - Partial updates to apply
@@ -293,13 +287,14 @@ export async function getContext(
  * @returns Updated context or null if not found
  */
 export async function updateContext(
+  kv: KVNamespace,
   hash: string,
   updates: Partial<Pick<ComponentContext, 'data'>>,
   ttlSeconds: number = CONTEXT_TTL.STANDARD,
   logger?: ExtendedLogger
 ): Promise<ComponentContext | null> {
   try {
-    const existing = await getContext(hash, logger);
+    const existing = await getContext(kv, hash, logger);
 
     if (!existing) {
       return null;
@@ -311,16 +306,9 @@ export async function updateContext(
       expiresAt: Date.now() + ttlSeconds * 1000,
     };
 
-    const url = buildContextCacheUrl(hash);
-    const cache = caches.default;
-    const response = new Response(JSON.stringify(updated), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': `s-maxage=${ttlSeconds}`,
-      },
+    await kv.put(buildContextKey(hash), JSON.stringify(updated), {
+      expirationTtl: Math.max(60, ttlSeconds),
     });
-
-    await cache.put(url, response);
 
     if (logger) {
       logger.debug('Updated component context', { hash });
