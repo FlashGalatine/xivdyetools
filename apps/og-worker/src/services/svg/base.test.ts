@@ -354,7 +354,7 @@ describe('base SVG utilities', () => {
       it('should have all required font families', () => {
         expect(FONTS.header).toBe('Space Grotesk');
         expect(FONTS.primary).toBe('Onest');
-        expect(FONTS.mono).toBe('Habibi');
+        expect(FONTS.mono).toBe('Fragment Mono');
       });
     });
 

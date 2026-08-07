@@ -7,7 +7,8 @@
  * Brand fonts:
  * - Space Grotesk: Headers (variable weight 300-700)
  * - Onest: Body text, labels (variable weight 100-900)
- * - Habibi: Hex codes (static, regular weight only)
+ * - Fragment Mono: Hex codes and numeric columns (5.0 — replaced Habibi,
+ *   which was a proportional serif and never aligned numbers)
  *
  * CJK fonts (for Japanese/Korean/Chinese support):
  * - Noto Sans CJK SC: Pan-CJK font supporting Japanese, Korean, and Chinese
@@ -29,15 +30,19 @@ import spaceGroteskData from '../fonts/SpaceGrotesk-VariableFont_wght.ttf';
 // @ts-expect-error - Binary imports are handled by wrangler bundler
 import onestData from '../fonts/Onest-VariableFont_wght.ttf';
 // @ts-expect-error - Binary imports are handled by wrangler bundler
-import habibiData from '../fonts/Habibi-Regular.ttf';
+import fragmentMonoData from '../fonts/FragmentMono-Regular.ttf';
 
 // CJK font imports - subsetted via apps/discord-worker/scripts/subset-cjk-fonts.py
 // Noto Sans SC: Chinese ideographs + Japanese kana (~474 KiB)
 // @ts-expect-error - Binary imports are handled by wrangler bundler
 import notoSansCjkData from '../fonts/NotoSansSC-Subset.ttf';
-// Noto Sans KR: Korean Hangul syllables (~801 KiB)
+// Noto Sans KR: Korean Hangul syllables
 // @ts-expect-error - Binary imports are handled by wrangler bundler
 import notoSansKrData from '../fonts/NotoSansKR-Subset.ttf';
+// Noto Sans JP: Japanese kana + kanji in Japanese letterforms (5.0 — before
+// this subset, ja rendered out of the SC subset in Chinese letterforms)
+// @ts-expect-error - Binary imports are handled by wrangler bundler
+import notoSansJpData from '../fonts/NotoSansJP-Subset.ttf';
 
 // Cache font buffers to avoid repeated conversions
 let fontBuffersCache: Uint8Array[] | null = null;
@@ -71,7 +76,7 @@ export function getFontBuffers(): Uint8Array[] {
   const buffers: Uint8Array[] = [
     new Uint8Array(spaceGroteskData as ArrayBuffer),
     new Uint8Array(onestData as ArrayBuffer),
-    new Uint8Array(habibiData as ArrayBuffer),
+    new Uint8Array(fragmentMonoData as ArrayBuffer),
   ];
 
   // Add CJK fonts if available
@@ -80,6 +85,9 @@ export function getFontBuffers(): Uint8Array[] {
   }
   if (notoSansKrData) {
     buffers.push(new Uint8Array(notoSansKrData as ArrayBuffer));
+  }
+  if (notoSansJpData) {
+    buffers.push(new Uint8Array(notoSansJpData as ArrayBuffer));
   }
 
   fontBuffersCache = buffers;
@@ -95,8 +103,8 @@ export const FONT_FAMILIES = {
   header: 'Space Grotesk',
   /** Onest - for body text and labels */
   body: 'Onest',
-  /** Habibi - for hex codes and monospace-like text */
-  mono: 'Habibi',
+  /** Fragment Mono - for hex codes and numeric columns (no CJK glyphs) */
+  mono: 'Fragment Mono',
   /** Noto Sans SC - for CJK (Chinese/Japanese) text */
   cjk: 'Noto Sans SC',
   /** Noto Sans KR - for Korean text */
@@ -110,9 +118,14 @@ export const FONT_FAMILIES = {
  * @param primaryFont - The primary font to use (e.g., 'Onest')
  * @returns A font-family string with CJK fallback if available
  */
-export function getFontWithCjkFallback(primaryFont: string): string {
+export function getFontWithCjkFallback(primaryFont: string, locale?: string): string {
   if (!hasCjkFont()) {
     return primaryFont;
+  }
+  // JP-first belongs only to ja — zh must never pick up Japanese letterforms
+  // for shared ideographs.
+  if (locale === 'ja') {
+    return `${primaryFont}, Noto Sans JP, ${FONT_FAMILIES.cjk}, ${FONT_FAMILIES.kr}`;
   }
   return `${primaryFont}, ${FONT_FAMILIES.cjk}, ${FONT_FAMILIES.kr}`;
 }

@@ -29,7 +29,7 @@ describe('fonts.ts', () => {
         it('should have correct font family names', () => {
             expect(FONT_FAMILIES.header).toBe('Space Grotesk');
             expect(FONT_FAMILIES.body).toBe('Onest');
-            expect(FONT_FAMILIES.mono).toBe('Habibi');
+            expect(FONT_FAMILIES.mono).toBe('Fragment Mono');
         });
     });
 
@@ -38,7 +38,7 @@ describe('fonts.ts', () => {
             const buffers = getFontBuffers();
 
             expect(Array.isArray(buffers)).toBe(true);
-            expect(buffers).toHaveLength(5);
+            expect(buffers).toHaveLength(6);
 
             for (const buffer of buffers) {
                 expect(buffer).toBeInstanceOf(Uint8Array);

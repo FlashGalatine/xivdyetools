@@ -45,14 +45,26 @@ APPS_DIR = os.path.dirname(WORKER_ROOT)                        # apps
 MONOREPO_ROOT = os.path.dirname(APPS_DIR)                      # repo root
 
 CORE_LOCALES_DIR = os.path.join(MONOREPO_ROOT, "packages", "core", "src", "data", "locales")
-BOT_LOCALES_DIR = os.path.join(MONOREPO_ROOT, "packages", "bot-i18n", "src", "locales")
+# bot-i18n was absorbed into bot-logic (Monorepo 2.0 Tier 1)
+BOT_LOCALES_DIR = os.path.join(MONOREPO_ROOT, "packages", "bot-logic", "src", "i18n", "locales")
 FONTS_DIR = os.path.join(WORKER_ROOT, "src", "fonts")
 
-SC_INPUT = os.path.join(FONTS_DIR, "NotoSansSC-Regular.ttf")
+# Downloaded full sources live OUTSIDE src/fonts — wrangler bundles **/*.ttf,
+# and a 10 MiB variable source in src/fonts would ship inside the Worker.
+SOURCES_DIR = os.path.join(SCRIPT_DIR, ".font-sources")
+
+SC_INPUT_CANDIDATES = [
+    os.path.join(SOURCES_DIR, "NotoSansSC-Variable.ttf"),
+    os.path.join(FONTS_DIR, "NotoSansSC-Regular.ttf"),
+    os.path.join(APPS_DIR, "og-worker", "scripts", ".font-sources", "NotoSansSC-Variable.ttf"),
+]
 SC_OUTPUT = os.path.join(FONTS_DIR, "NotoSansSC-Subset.ttf")
 KR_OUTPUT = os.path.join(FONTS_DIR, "NotoSansKR-Subset.ttf")
+JP_OUTPUT = os.path.join(FONTS_DIR, "NotoSansJP-Subset.ttf")
 
 NOTO_KR_URL = "https://github.com/google/fonts/raw/main/ofl/notosanskr/NotoSansKR%5Bwght%5D.ttf"
+NOTO_SC_URL = "https://github.com/google/fonts/raw/main/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf"
+NOTO_JP_URL = "https://github.com/google/fonts/raw/main/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf"
 
 LOCALE_LANGUAGES = ["ja", "ko", "zh", "de", "fr"]
 
@@ -61,8 +73,8 @@ LOCALE_LANGUAGES = ["ja", "ko", "zh", "de", "fr"]
 # Character collection
 # ============================================================================
 
-def collect_all_characters():
-    """Collect all unique characters from all locale sources."""
+def collect_characters(languages):
+    """Collect all unique characters from core + bot locale files for languages."""
     codepoints = set(range(0x20, 0x7F))  # Basic ASCII
 
     def add_strings(obj):
@@ -77,7 +89,7 @@ def collect_all_characters():
                 add_strings(item)
 
     # Core locale files
-    for lang in LOCALE_LANGUAGES:
+    for lang in languages:
         path = os.path.join(CORE_LOCALES_DIR, f"{lang}.json")
         if not os.path.exists(path):
             raise FileNotFoundError(
@@ -89,7 +101,7 @@ def collect_all_characters():
         print(f"  Core {lang}.json: loaded")
 
     # Bot UI locale files
-    for lang in LOCALE_LANGUAGES:
+    for lang in languages:
         path = os.path.join(BOT_LOCALES_DIR, f"{lang}.json")
         if not os.path.exists(path):
             raise FileNotFoundError(
@@ -101,6 +113,21 @@ def collect_all_characters():
         print(f"  Bot  {lang}.json: loaded")
 
     return codepoints
+
+
+def collect_all_characters():
+    """Collect all unique characters from all locale sources."""
+    return collect_characters(LOCALE_LANGUAGES)
+
+
+def download_font(url, dest):
+    """Download a source font (google/fonts raw), returning the local path."""
+    import urllib.request
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    print(f"Downloading {url} ...")
+    urllib.request.urlretrieve(url, dest)
+    print(f"Downloaded: {os.path.getsize(dest) / 1024:.1f} KiB -> {dest}")
+    return dest
 
 
 def print_stats(codepoints):
@@ -162,31 +189,30 @@ def main():
     print_stats(codepoints)
 
     # Subset Noto Sans SC
-    if not os.path.exists(SC_INPUT):
-        print(f"\nError: {SC_INPUT} not found.")
-        print("Download Noto Sans SC Regular from: https://fonts.google.com/noto/specimen/Noto+Sans+SC")
-        sys.exit(1)
+    sc_input = next((p for p in SC_INPUT_CANDIDATES if os.path.exists(p)), None)
+    if not sc_input:
+        print("\nNoto Sans SC source not found. Downloading...")
+        sc_input = download_font(NOTO_SC_URL, os.path.join(SOURCES_DIR, "NotoSansSC-Variable.ttf"))
 
     print(f"\n--- Noto Sans SC ---")
-    print(f"Input: {os.path.getsize(SC_INPUT) / 1024:.1f} KiB")
-    sc_size, sc_glyphs = subset_font(SC_INPUT, SC_OUTPUT, codepoints)
+    print(f"Input: {os.path.getsize(sc_input) / 1024:.1f} KiB")
+    sc_size, sc_glyphs = subset_font(sc_input, SC_OUTPUT, codepoints)
     print(f"Output: {sc_size / 1024:.1f} KiB ({sc_glyphs} glyphs)")
 
     # Subset Noto Sans KR
     # Look for the KR source font in several locations
     kr_candidates = [
+        os.path.join(SOURCES_DIR, "NotoSansKR-Variable.ttf"),
         os.path.join(FONTS_DIR, "NotoSansKR-Variable.ttf"),
         os.path.join(FONTS_DIR, "NotoSansKR[wght].ttf"),
         os.path.join(FONTS_DIR, "NotoSansKR-Regular.ttf"),
+        os.path.join(APPS_DIR, "og-worker", "scripts", ".font-sources", "NotoSansKR-Variable.ttf"),
     ]
     kr_input = next((p for p in kr_candidates if os.path.exists(p)), None)
 
     if not kr_input:
         print(f"\nNoto Sans KR source not found. Downloading...")
-        import urllib.request
-        kr_input = os.path.join(FONTS_DIR, "NotoSansKR-Variable.ttf")
-        urllib.request.urlretrieve(NOTO_KR_URL, kr_input)
-        print(f"Downloaded: {os.path.getsize(kr_input) / 1024:.1f} KiB")
+        kr_input = download_font(NOTO_KR_URL, os.path.join(SOURCES_DIR, "NotoSansKR-Variable.ttf"))
 
     # OPT-001: Scope KR to Hangul + ASCII only.
     # Noto Sans KR ships Hanja, so passing the full codepoint set (which includes all
@@ -210,7 +236,35 @@ def main():
     })
     print(f"Output: {kr_size / 1024:.1f} KiB ({kr_glyphs} glyphs)")
 
-    print(f"\nTotal CJK font overhead: {(sc_size + kr_size) / 1024:.1f} KiB")
+    # Subset Noto Sans JP — Japanese letterforms for ja locales (5.0).
+    # Scoped to the characters ja text actually uses (+ASCII); SC remains the
+    # fallback, so the ja chain 'Noto Sans JP, Noto Sans SC' renders Japanese
+    # letterforms without growing the SC subset.
+    jp_candidates = [
+        os.path.join(SOURCES_DIR, "NotoSansJP-Variable.ttf"),
+        os.path.join(APPS_DIR, "og-worker", "scripts", ".font-sources", "NotoSansJP-Variable.ttf"),
+    ]
+    jp_input = next((p for p in jp_candidates if os.path.exists(p)), None)
+    if not jp_input:
+        print("\nNoto Sans JP source not found. Downloading...")
+        jp_input = download_font(NOTO_JP_URL, os.path.join(SOURCES_DIR, "NotoSansJP-Variable.ttf"))
+
+    print("\nCollecting Japanese characters (core + bot ja.json)...")
+    jp_codepoints = collect_characters(["ja"])
+
+    print(f"\n--- Noto Sans JP ---")
+    print(f"Input: {os.path.getsize(jp_input) / 1024:.1f} KiB")
+    print(f"JP codepoints: {len(jp_codepoints)}")
+    jp_size, jp_glyphs = subset_font(jp_input, JP_OUTPUT, jp_codepoints, fix_names={
+        1: "Noto Sans JP",
+        2: "Regular",
+        4: "Noto Sans JP Regular",
+        6: "NotoSansJP-Regular",
+    })
+    print(f"Output: {jp_size / 1024:.1f} KiB ({jp_glyphs} glyphs)")
+
+    total = sc_size + kr_size + jp_size
+    print(f"\nTotal CJK font overhead: {total / 1024:.1f} KiB (budget ~1.3 MiB)")
     print("Done! Commit the updated subset files to the repository.")
 
 
