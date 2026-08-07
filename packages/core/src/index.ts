@@ -92,6 +92,35 @@ export type {
   AcquisitionMeta,
 } from './config/dye-vocabulary.js';
 
+// Band vocabulary (5.0 calibrated per-method tier boundaries)
+export {
+  BAND_VOCABULARY,
+  BAND_METHOD_DP,
+  RATIO_BANDS,
+  SEPARATION_TIER_KEYS,
+  classifyBandTier,
+  classifyBandTierWithCuts,
+  deriveDistinguishCuts,
+  roundToBandDisplay,
+} from './config/band-vocabulary.js';
+export type {
+  BandContext,
+  BandMethod,
+  BandTier,
+  MethodBandSet,
+} from './config/band-vocabulary.js';
+export {
+  calibrateBandVocabulary,
+  DE2000_GROUND_TRUTH,
+  METHOD_DISPLAY_DP,
+} from './config/band-calibration.js';
+export type {
+  BandCalibrationResult,
+  CalibratedMethodId,
+  CalibratedMethodBands,
+  RatioCalibration,
+} from './config/band-calibration.js';
+
 // Facewear colors (split out of the dye database in schema v2)
 export {
   facewearColors,
