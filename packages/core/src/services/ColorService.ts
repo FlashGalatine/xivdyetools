@@ -151,6 +151,23 @@ export class ColorService {
     return ColorConverter.getColorDistance(hex1, hex2);
   }
 
+  /**
+   * Calculate "redmean" weighted RGB distance between two colors.
+   * Low-cost perceptual approximation; 0 identical, ~765 white vs black.
+   */
+  static getRedmeanDistance(hex1: string, hex2: string): number {
+    return ColorConverter.getRedmeanDistance(hex1, hex2);
+  }
+
+  /**
+   * Distinguishability percentage: RGB distance rescaled to 0-100
+   * (`round(distance / 441.67 × 100)`). Identical ranks to RGB distance —
+   * a display unit, not a separate metric, and not a WCAG standard.
+   */
+  static getDistinguishabilityPercent(hex1: string, hex2: string): number {
+    return ColorConverter.getDistinguishabilityPercent(hex1, hex2);
+  }
+
   // ============================================================================
   // Colorblindness Simulation (delegated to ColorblindnessSimulator)
   // ============================================================================
@@ -244,6 +261,15 @@ export class ColorService {
    */
   static rotateHue(hex: string, degrees: number): HexColor {
     return ColorManipulator.rotateHue(hex, degrees);
+  }
+
+  /**
+   * Rotate hue of a color in CIE LCh space (perceptual hue rotation).
+   * Preserves perceived lightness/chroma; use for harmony "ideal hue" math.
+   * @param degrees Amount to rotate hue (can be negative or positive)
+   */
+  static rotateHueLch(hex: string, degrees: number): HexColor {
+    return ColorManipulator.rotateHueLch(hex, degrees);
   }
 
   /**

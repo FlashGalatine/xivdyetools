@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ColorManipulator } from '../ColorManipulator.js';
+import { ColorConverter } from '../ColorConverter.js';
 
 describe('ColorManipulator', () => {
   describe('adjustBrightness', () => {
@@ -275,5 +276,41 @@ describe('ColorManipulator', () => {
       expect(() => ColorManipulator.adjustSaturation('#FF6B6B', 1000)).not.toThrow();
       expect(() => ColorManipulator.adjustSaturation('#FF6B6B', -1000)).not.toThrow();
     });
+  });
+});
+
+describe('rotateHueLch', () => {
+  it('returns a valid hex color', () => {
+    expect(ColorManipulator.rotateHueLch('#FF0000', 90)).toMatch(/^#[0-9A-Fa-f]{6}$/);
+  });
+
+  it('rotating by 0 or 360 degrees round-trips to (approximately) the same color', () => {
+    for (const hex of ['#e4dfd0', '#f61296', '#3f6d9a']) {
+      const same = ColorManipulator.rotateHueLch(hex, 0);
+      const full = ColorManipulator.rotateHueLch(hex, 360);
+      // LCh→RGB round-trip may drift by a step; compare loosely via RGB distance
+      expect(ColorConverter.getColorDistance(hex, same)).toBeLessThan(2);
+      expect(ColorConverter.getColorDistance(hex, full)).toBeLessThan(2);
+    }
+  });
+
+  it('negative rotation equals the equivalent positive rotation', () => {
+    expect(ColorManipulator.rotateHueLch('#8a4fbe', -90)).toBe(
+      ColorManipulator.rotateHueLch('#8a4fbe', 270)
+    );
+  });
+
+  it('approximately preserves perceived lightness (unlike HSV rotation)', () => {
+    const original = ColorConverter.hexToLch('#2c6e31');
+    const rotated = ColorConverter.hexToLch(ColorManipulator.rotateHueLch('#2c6e31', 120));
+    // Gamut clamping allows some drift, but L should stay in the neighbourhood
+    expect(Math.abs(rotated.L - original.L)).toBeLessThan(6);
+  });
+
+  it('actually changes the hue', () => {
+    const original = ColorConverter.hexToLch('#FF0000');
+    const rotated = ColorConverter.hexToLch(ColorManipulator.rotateHueLch('#FF0000', 180));
+    const diff = Math.abs(rotated.h - original.h);
+    expect(Math.min(diff, 360 - diff)).toBeGreaterThan(90);
   });
 });

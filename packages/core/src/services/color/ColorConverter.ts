@@ -15,7 +15,7 @@ import { createHexColor, ErrorCode, AppError } from '@xivdyetools/types';
  * - hyab: HyAB hybrid distance (best for large color differences/palette matching)
  */
 export type DeltaEFormula = 'cie76' | 'cie2000' | 'oklab' | 'hyab';
-import { RGB_MIN, RGB_MAX, HUE_MAX } from '../../constants/index.js';
+import { RGB_MIN, RGB_MAX, HUE_MAX, COLOR_DISTANCE_MAX } from '../../constants/index.js';
 import {
   clamp,
   round,
@@ -468,6 +468,58 @@ export class ColorConverter {
    */
   static getColorDistance(hex1: string, hex2: string): number {
     return this.getDefault().getColorDistance(hex1, hex2);
+  }
+
+  /**
+   * Calculate "redmean" weighted RGB distance between two colors.
+   *
+   * A low-cost approximation of perceptual distance that weights the RGB
+   * channels by the mean red level (https://en.wikipedia.org/wiki/Color_difference#sRGB):
+   *   r̄ = (R1 + R2) / 2
+   *   ΔC = √((2 + r̄/256)·ΔR² + 4·ΔG² + (2 + (255 − r̄)/256)·ΔB²)
+   *
+   * Range: 0 for identical colors, ~765 for white vs black.
+   */
+  getRedmeanDistance(hex1: string, hex2: string): number {
+    const rgb1 = this.hexToRgb(hex1);
+    const rgb2 = this.hexToRgb(hex2);
+
+    const rMean = (rgb1.r + rgb2.r) / 2;
+    const dr = rgb1.r - rgb2.r;
+    const dg = rgb1.g - rgb2.g;
+    const db = rgb1.b - rgb2.b;
+
+    return Math.sqrt(
+      (2 + rMean / 256) * dr * dr + 4 * dg * dg + (2 + (255 - rMean) / 256) * db * db
+    );
+  }
+
+  /**
+   * Static method: Calculate redmean distance using default instance
+   */
+  static getRedmeanDistance(hex1: string, hex2: string): number {
+    return this.getDefault().getRedmeanDistance(hex1, hex2);
+  }
+
+  /**
+   * Distinguishability percentage between two colors.
+   *
+   * This is RGB Euclidean distance rescaled to 0-100:
+   * `round(distance / 441.67 × 100)`. It is NOT a separate metric — ranks are
+   * always identical to RGB distance, and integer rounding creates ties, so any
+   * ordering driven by this value needs a sort fallback (and ties should be
+   * badged as ties, never presented as a single answer). Kept for continuity
+   * with the Accessibility readout. Not a WCAG standard.
+   */
+  getDistinguishabilityPercent(hex1: string, hex2: string): number {
+    return Math.round((this.getColorDistance(hex1, hex2) / COLOR_DISTANCE_MAX) * 100);
+  }
+
+  /**
+   * Static method: Distinguishability percentage using default instance
+   */
+  static getDistinguishabilityPercent(hex1: string, hex2: string): number {
+    return this.getDefault().getDistinguishabilityPercent(hex1, hex2);
   }
 
   // ============================================================================

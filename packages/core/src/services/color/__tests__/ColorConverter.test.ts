@@ -1438,3 +1438,51 @@ describe('CMYK conversions (schema v2 follow-up: derived formats from hex)', () 
     expect(() => ColorConverter.rgbToCmyk(300, 0, 0)).toThrow();
   });
 });
+
+describe('redmean distance and distinguishability', () => {
+  it('returns 0 for identical colors', () => {
+    expect(ColorConverter.getRedmeanDistance('#FF0000', '#FF0000')).toBe(0);
+    expect(ColorConverter.getDistinguishabilityPercent('#3f6d9a', '#3f6d9a')).toBe(0);
+  });
+
+  it('is symmetric', () => {
+    const a = '#e4dfd0';
+    const b = '#1e1e1e';
+    expect(ColorConverter.getRedmeanDistance(a, b)).toBeCloseTo(
+      ColorConverter.getRedmeanDistance(b, a),
+      10
+    );
+  });
+
+  it('white vs black redmean distance is ~764.83', () => {
+    // r̄ = 127.5 → ΔC = 255·√(2.498 + 4 + 2.498)
+    expect(ColorConverter.getRedmeanDistance('#FFFFFF', '#000000')).toBeCloseTo(764.834, 2);
+  });
+
+  it('weights red channel by mean red level', () => {
+    // Same ΔR, but higher mean red → larger red weight
+    const low = ColorConverter.getRedmeanDistance('#000000', '#400000');
+    const high = ColorConverter.getRedmeanDistance('#BF0000', '#FF0000');
+    expect(high).toBeGreaterThan(low);
+  });
+
+  it('distinguishability is RGB distance rescaled to 0-100 with identical ranks', () => {
+    expect(ColorConverter.getDistinguishabilityPercent('#FFFFFF', '#000000')).toBe(100);
+    // red vs green: √2·255 / 441.67 ≈ 81.65% → rounds to 82
+    expect(ColorConverter.getDistinguishabilityPercent('#FF0000', '#00FF00')).toBe(82);
+    // rank preservation on a sample triple
+    const d1 = ColorConverter.getColorDistance('#FF0000', '#FF2000');
+    const d2 = ColorConverter.getColorDistance('#FF0000', '#FFA000');
+    expect(d2).toBeGreaterThan(d1);
+    expect(
+      ColorConverter.getDistinguishabilityPercent('#FF0000', '#FFA000')
+    ).toBeGreaterThanOrEqual(ColorConverter.getDistinguishabilityPercent('#FF0000', '#FF2000'));
+  });
+
+  it('integer rounding creates ties for near-equal distances', () => {
+    // Two different but tiny distances both round to the same percent
+    const p1 = ColorConverter.getDistinguishabilityPercent('#808080', '#818181');
+    const p2 = ColorConverter.getDistinguishabilityPercent('#808080', '#828080');
+    expect(p1).toBe(p2);
+  });
+});
