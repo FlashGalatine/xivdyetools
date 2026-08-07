@@ -27,6 +27,10 @@ export {
   rgbToHsv,
   THEME,
   FONTS,
+  ACCENT,
+  NUMFMT,
+  num,
+  grp,
   DEFAULT_DISPLAY_OPTIONS,
 } from './base.js';
 export type { DisplayOptions } from './base.js';
@@ -59,7 +63,6 @@ export type {
 // Accessibility / Colorblind Comparison
 export {
   generateAccessibilityComparison,
-  generateCompactAccessibilityRow,
 } from './accessibility-comparison.js';
 export type {
   AccessibilityComparisonOptions,
@@ -92,7 +95,6 @@ export type { DyeInfoCardOptions } from './dye-info-card.js';
 // Preset Swatch
 export {
   generatePresetSwatch,
-  generateCompactPresetSwatch,
   CATEGORY_DISPLAY,
 } from './preset-swatch.js';
 export type { PresetSwatchOptions } from './preset-swatch.js';
@@ -100,8 +102,6 @@ export type { PresetSwatchOptions } from './preset-swatch.js';
 // Budget Comparison
 export {
   generateBudgetComparison,
-  generateNoWorldSetSvg,
-  generateErrorSvg,
   formatGil,
 } from './budget-comparison.js';
 export type {

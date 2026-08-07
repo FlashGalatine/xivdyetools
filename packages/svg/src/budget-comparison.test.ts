@@ -10,8 +10,6 @@
 import { describe, it, expect } from 'vitest';
 import {
   generateBudgetComparison,
-  generateNoWorldSetSvg,
-  generateErrorSvg,
   formatGil,
   type BudgetSvgLabels,
   type BudgetComparisonOptions,
@@ -254,50 +252,9 @@ describe('generateBudgetComparison', () => {
   });
 });
 
-// ============================================================================
-// generateNoWorldSetSvg
-// ============================================================================
 
-describe('generateNoWorldSetSvg', () => {
-  it('returns a valid SVG document', () => {
-    const svg = generateNoWorldSetSvg();
-    expect(svg).toContain('<svg xmlns="http://www.w3.org/2000/svg"');
-    expect(svg).toContain('</svg>');
-  });
 
-  it('contains the "No World Set" prompt', () => {
-    const svg = generateNoWorldSetSvg();
-    expect(svg).toContain('No World Set');
-  });
 
-  it('accepts a custom width', () => {
-    const svg = generateNoWorldSetSvg(600);
-    expect(svg).toContain('width="600"');
-  });
-});
-
-// ============================================================================
-// generateErrorSvg
-// ============================================================================
-
-describe('generateErrorSvg', () => {
-  it('returns a valid SVG document', () => {
-    const svg = generateErrorSvg('Something went wrong');
-    expect(svg).toContain('<svg xmlns="http://www.w3.org/2000/svg"');
-    expect(svg).toContain('</svg>');
-  });
-
-  it('includes the error message', () => {
-    const svg = generateErrorSvg('API unavailable');
-    expect(svg).toContain('API unavailable');
-  });
-
-  it('XML-escapes special characters in the error message', () => {
-    const svg = generateErrorSvg('Error: <timeout> & retry');
-    expect(svg).toContain('&lt;timeout&gt;');
-    expect(svg).toContain('&amp;');
-  });
-});
 
 // ============================================================================
 // formatGil

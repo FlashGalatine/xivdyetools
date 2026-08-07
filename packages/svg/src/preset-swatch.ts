@@ -267,55 +267,5 @@ function generateEmptySwatch(width: number, name: string): string {
   return createSvgDocument(width, height, elements.join('\n'));
 }
 
-/**
- * Generate a compact preset swatch for list views (smaller size)
- *
- * @param options - Preset swatch configuration
- * @returns SVG string
- */
-export function generateCompactPresetSwatch(options: PresetSwatchOptions): string {
-  const { name, dyes, width = 300 } = options;
-
-  const validDyes = dyes.filter((d): d is Dye => d !== null);
-
-  if (validDyes.length === 0) {
-    return generateEmptySwatch(width, name);
-  }
-
-  const height = 60;
-  const swatchSize = 40;
-  const gap = 4;
-  const elements: string[] = [];
-
-  // Background
-  elements.push(rect(0, 0, width, height, THEME.background, { rx: 8, ry: 8 }));
-
-  // Preset name (left aligned)
-  elements.push(
-    text(12, height / 2 + 4, name, {
-      fill: THEME.text,
-      fontSize: 14,
-      fontFamily: FONTS.primary,
-      fontWeight: 600,
-    })
-  );
-
-  // Color swatches (right aligned)
-  const totalSwatchWidth = validDyes.length * swatchSize + (validDyes.length - 1) * gap;
-  const startX = width - 12 - totalSwatchWidth;
-  const swatchY = (height - swatchSize) / 2;
-
-  validDyes.forEach((dye, index) => {
-    const x = startX + index * (swatchSize + gap);
-    elements.push(
-      rect(x, swatchY, swatchSize, swatchSize, dye.hex, {
-        rx: 4,
-        ry: 4,
-        stroke: THEME.border,
-        strokeWidth: 1,
-      })
-    );
-  });
-
-  return createSvgDocument(width, height, elements.join('\n'));
-}
+// generateCompactPresetSwatch deleted (5.0): zero callers, condemned in the
+// register's /preset cheap-fix list.

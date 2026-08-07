@@ -295,35 +295,5 @@ function generateVisionSwatch(
   return elements.join('\n');
 }
 
-/**
- * Generate a compact accessibility comparison (single row)
- * Useful for inline display in other components
- */
-export function generateCompactAccessibilityRow(
-  hex: string,
-  visionTypes: VisionType[] = ['protanopia', 'deuteranopia', 'tritanopia']
-): { type: AllVisionTypes; hex: string; label: string }[] {
-  const rgb = hexToRgb(hex);
-  const results: { type: AllVisionTypes; hex: string; label: string }[] = [];
-
-  // Normal vision
-  results.push({
-    type: 'normal',
-    hex,
-    label: 'Normal',
-  });
-
-  // Simulated versions
-  for (const visionType of visionTypes) {
-    const simulated = ColorService.simulateColorblindness(rgb, visionType);
-    const simHex = rgbToHex(simulated.r, simulated.g, simulated.b);
-
-    results.push({
-      type: visionType,
-      hex: simHex,
-      label: VISION_LABELS[visionType].label.split(' ')[0], // Just "Protanopia" etc
-    });
-  }
-
-  return results;
-}
+// generateCompactAccessibilityRow deleted (5.0): zero callers, and the
+// confirmed decision is that no error/precondition state renders a PNG.

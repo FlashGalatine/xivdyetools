@@ -3,6 +3,8 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
+    num,
+    grp,
     escapeXml,
     hexToRgb,
     rgbToHex,
@@ -300,7 +302,7 @@ describe('svg/base.ts', () => {
             expect(THEME.text).toBe('#ffffff');
             expect(THEME.textMuted).toBe('#909090');
             expect(THEME.textDim).toBe('#666666');
-            expect(THEME.accent).toBe('#5865f2');
+            expect(THEME.accent).toBe('#EA4133'); // one 5.0 accent, blurple retired
             expect(THEME.border).toBe('#404050');
             expect(THEME.success).toBe('#57f287');
             expect(THEME.warning).toBe('#fee75c');
@@ -312,7 +314,7 @@ describe('svg/base.ts', () => {
         it('should have all font families defined', () => {
             expect(FONTS.header).toBe('Space Grotesk');
             expect(FONTS.primary).toBe('Onest');
-            expect(FONTS.mono).toBe('Habibi');
+            expect(FONTS.mono).toBe('Fragment Mono');
         });
     });
 
@@ -366,5 +368,27 @@ describe('svg/base.ts', () => {
         it('should return 0 for empty string', () => {
             expect(estimateTextWidth('', 8)).toBe(0);
         });
+    });
+});
+
+describe('NUMFMT / num / grp', () => {
+    it('formats decimals per language at a fixed precision', () => {
+        expect(num(9.53, 'en', 2)).toBe('9.53');
+        expect(num(9.53, 'de', 2)).toBe('9,53');
+        expect(num(9.53, 'fr', 1)).toBe('9,5');
+        expect(num(7, 'ja', 1)).toBe('7.0');
+    });
+
+    it('groups thousands per language', () => {
+        expect(grp(1234567, 'en')).toBe('1,234,567');
+        expect(grp(1234567, 'de')).toBe('1.234.567');
+        expect(grp(1234567, 'fr')).toBe('1\u202f234\u202f567');
+        expect(grp(-4200, 'de')).toBe('-4.200');
+        expect(grp(999, 'en')).toBe('999');
+    });
+
+    it('falls back to en for unknown languages', () => {
+        expect(num(1.5, 'xx', 1)).toBe('1.5');
+        expect(grp(1000, 'xx')).toBe('1,000');
     });
 });

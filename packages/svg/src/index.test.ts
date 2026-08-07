@@ -58,8 +58,6 @@ describe('@xivdyetools/svg index exports', () => {
         expect(svg.generateAccessibilityComparison).toBeDefined();
         expect(typeof svg.generateAccessibilityComparison).toBe('function');
 
-        expect(svg.generateCompactAccessibilityRow).toBeDefined();
-        expect(typeof svg.generateCompactAccessibilityRow).toBe('function');
     });
 
     it('exports contrast matrix generator', async () => {
@@ -99,9 +97,6 @@ describe('@xivdyetools/svg index exports', () => {
         expect(svg.generatePresetSwatch).toBeDefined();
         expect(typeof svg.generatePresetSwatch).toBe('function');
 
-        expect(svg.generateCompactPresetSwatch).toBeDefined();
-        expect(typeof svg.generateCompactPresetSwatch).toBe('function');
-
         expect(svg.CATEGORY_DISPLAY).toBeDefined();
         expect(typeof svg.CATEGORY_DISPLAY).toBe('object');
     });
@@ -111,12 +106,6 @@ describe('@xivdyetools/svg index exports', () => {
 
         expect(svg.generateBudgetComparison).toBeDefined();
         expect(typeof svg.generateBudgetComparison).toBe('function');
-
-        expect(svg.generateNoWorldSetSvg).toBeDefined();
-        expect(typeof svg.generateNoWorldSetSvg).toBe('function');
-
-        expect(svg.generateErrorSvg).toBeDefined();
-        expect(typeof svg.generateErrorSvg).toBe('function');
 
         expect(svg.formatGil).toBeDefined();
         expect(typeof svg.formatGil).toBe('function');

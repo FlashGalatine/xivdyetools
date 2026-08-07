@@ -4,7 +4,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
     generateAccessibilityComparison,
-    generateCompactAccessibilityRow,
     type VisionType,
 } from './accessibility-comparison.js';
 
@@ -136,54 +135,4 @@ describe('svg/accessibility-comparison.ts', () => {
         });
     });
 
-    describe('generateCompactAccessibilityRow', () => {
-        it('should return array of vision results', () => {
-            const results = generateCompactAccessibilityRow('#AA1111');
-
-            expect(Array.isArray(results)).toBe(true);
-            expect(results.length).toBeGreaterThan(0);
-        });
-
-        it('should include normal vision first', () => {
-            const results = generateCompactAccessibilityRow('#AA1111');
-
-            expect(results[0].type).toBe('normal');
-            expect(results[0].hex).toBe('#AA1111');
-            expect(results[0].label).toBe('Normal');
-        });
-
-        it('should include all default vision types', () => {
-            const results = generateCompactAccessibilityRow('#AA1111');
-
-            const types = results.map((r) => r.type);
-            expect(types).toContain('normal');
-            expect(types).toContain('protanopia');
-            expect(types).toContain('deuteranopia');
-            expect(types).toContain('tritanopia');
-        });
-
-        it('should handle custom vision types', () => {
-            const results = generateCompactAccessibilityRow('#AA1111', ['protanopia']);
-
-            expect(results).toHaveLength(2); // normal + protanopia
-            expect(results[0].type).toBe('normal');
-            expect(results[1].type).toBe('protanopia');
-        });
-
-        it('should return simulated hex colors', () => {
-            const results = generateCompactAccessibilityRow('#AA1111');
-
-            // Each simulation should have a hex color
-            for (const result of results) {
-                expect(result.hex).toMatch(/^#[0-9a-fA-F]{6}$/);
-            }
-        });
-
-        it('should use short labels', () => {
-            const results = generateCompactAccessibilityRow('#AA1111');
-
-            // Labels should be short (first word of the full label)
-            expect(results.find((r) => r.type === 'protanopia')?.label).toBe('Protanopia');
-        });
-    });
 });

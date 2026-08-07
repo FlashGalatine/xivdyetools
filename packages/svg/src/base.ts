@@ -262,6 +262,13 @@ export function group(content: string, transform?: string): string {
 }
 
 /**
+ * The one suite accent (5.0). Blurple is retired everywhere — colour is
+ * reserved for state, and the accent is this red on dark grounds
+ * (`#CE2222` is its light-ground counterpart, see the icon system).
+ */
+export const ACCENT = '#EA4133';
+
+/**
  * Theme colors for consistent styling
  */
 export const THEME = {
@@ -270,7 +277,7 @@ export const THEME = {
   text: '#ffffff',
   textMuted: '#909090',
   textDim: '#666666',
-  accent: '#5865f2', // Discord Blurple
+  accent: ACCENT,
   border: '#404050',
   success: '#57f287',
   warning: '#fee75c',
@@ -283,20 +290,62 @@ export const THEME = {
  *
  * - header: Space Grotesk (variable 300-700) - titles, headers
  * - primary: Onest (variable 100-900) - body text, labels
- * - mono: Habibi (regular only) - hex codes, monospace-like text
+ * - mono: Fragment Mono - hex codes, numeric columns, mono labels
+ *   (the previous 'Habibi' was a proportional serif — numbers never aligned)
  * - cjk: Noto Sans SC + Noto Sans KR - Japanese, Korean, Chinese text
  * - primaryCjk: Onest with CJK/KR fallback - for localized text that may contain CJK
+ * - monoCjk: Fragment Mono has no CJK — mono labels containing CJK fall back
+ *   to the body sans (letter-spacing 0.04em at the call site; no case in CJK)
  */
 export const FONTS = {
   header: 'Space Grotesk',
   primary: 'Onest',
-  mono: 'Habibi',
+  mono: 'Fragment Mono',
   cjk: 'Noto Sans SC, Noto Sans KR',
   /** Use this for headings that may contain CJK characters (e.g., dye names) */
   headerCjk: 'Space Grotesk, Noto Sans SC, Noto Sans KR',
   /** Use this for body text that may contain CJK characters (e.g., dye names) */
   primaryCjk: 'Onest, Noto Sans SC, Noto Sans KR',
+  /** Mono labels that may contain CJK (Fragment Mono has no CJK glyphs) */
+  monoCjk: 'Fragment Mono, Onest, Noto Sans SC, Noto Sans KR',
 } as const;
+
+/**
+ * Per-language number formatting: decimal separator and thousands grouping.
+ * Every measured value in a card goes through {@link num} or {@link grp};
+ * verdict sentences receive a formatter, never format inline. Identifiers
+ * (criterion numbers, item IDs, stain IDs) are NOT quantities — never
+ * localise them. One key per unit or it drifts.
+ */
+export const NUMFMT: Record<string, { dec: string; thou: string }> = {
+  en: { dec: '.', thou: ',' },
+  ja: { dec: '.', thou: ',' },
+  de: { dec: ',', thou: '.' },
+  fr: { dec: ',', thou: ' ' }, // narrow no-break space
+  ko: { dec: '.', thou: ',' },
+  zh: { dec: '.', thou: ',' },
+};
+
+/**
+ * Format a measured value at a fixed precision with the language's decimal
+ * separator. Precision travels with the formatter — callers never
+ * `toFixed()` beside it (the 2-dp-verdict-on-1-dp-rows incident).
+ */
+export function num(value: number, lang: string, dp: number): string {
+  const fmt = NUMFMT[lang] ?? NUMFMT['en'];
+  return value.toFixed(dp).replace('.', fmt.dec);
+}
+
+/**
+ * Format an integer with the language's thousands grouping (prices, counts).
+ */
+export function grp(value: number, lang: string): string {
+  const fmt = NUMFMT[lang] ?? NUMFMT['en'];
+  const rounded = Math.round(value);
+  const sign = rounded < 0 ? '-' : '';
+  const digits = Math.abs(rounded).toString();
+  return sign + digits.replace(/\B(?=(\d{3})+(?!\d))/g, fmt.thou);
+}
 
 /**
  * Truncates text to a maximum length, appending a Unicode ellipsis (U+2026) if truncated.

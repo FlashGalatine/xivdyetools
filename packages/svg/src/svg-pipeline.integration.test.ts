@@ -11,7 +11,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { generateHarmonyWheel } from './harmony-wheel.js';
-import { generateBudgetComparison, generateNoWorldSetSvg, generateErrorSvg } from './budget-comparison.js';
+import { generateBudgetComparison } from './budget-comparison.js';
 import { generateDyeInfoCard } from './dye-info-card.js';
 import { generateRandomDyesGrid } from './random-dyes-grid.js';
 import { createMockDye } from '@xivdyetools/test-utils/factories';
@@ -193,16 +193,6 @@ describe('SVG Pipeline: Budget Comparison', () => {
     expect(svg).toContain('No listings');
   });
 
-  it('generates no-world-set SVG', () => {
-    const svg = generateNoWorldSetSvg();
-    expectValidSvg(svg);
-  });
-
-  it('generates error SVG with custom message', () => {
-    const svg = generateErrorSvg('Market board unavailable');
-    expectValidSvg(svg);
-    expect(svg).toContain('Market board unavailable');
-  });
 });
 
 // ============================================================================

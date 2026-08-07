@@ -4,7 +4,6 @@
 import { describe, it, expect } from 'vitest';
 import {
     generatePresetSwatch,
-    generateCompactPresetSwatch,
     type PresetSwatchOptions,
 } from './preset-swatch.js';
 import { createMockDye } from '@xivdyetools/test-utils/factories';
@@ -185,63 +184,6 @@ describe('svg/preset-swatch.ts', () => {
         });
     });
 
-    describe('generateCompactPresetSwatch', () => {
-        it('should generate valid SVG document', () => {
-            const svg = generateCompactPresetSwatch(baseOptions);
-
-            expect(svg).toContain('<svg xmlns="http://www.w3.org/2000/svg"');
-            expect(svg).toContain('</svg>');
-        });
-
-        it('should include preset name', () => {
-            const svg = generateCompactPresetSwatch(baseOptions);
-
-            expect(svg).toContain('Test Preset');
-        });
-
-        it('should include all dye swatches', () => {
-            const svg = generateCompactPresetSwatch(baseOptions);
-
-            expect(svg).toContain('fill="#AA1111"');
-            expect(svg).toContain('fill="#000000"');
-        });
-
-        it('should use custom width', () => {
-            const svg = generateCompactPresetSwatch({
-                ...baseOptions,
-                width: 400,
-            });
-
-            expect(svg).toContain('width="400"');
-        });
-
-        it('should be more compact in height', () => {
-            const svg = generateCompactPresetSwatch(baseOptions);
-
-            // Compact version should be 60px tall
-            expect(svg).toContain('height="60"');
-        });
-
-        it('should show empty message when all dyes are null', () => {
-            const svg = generateCompactPresetSwatch({
-                ...baseOptions,
-                dyes: [null, null],
-            });
-
-            expect(svg).toContain('No valid dyes in this preset');
-        });
-
-        it('should filter out null dyes', () => {
-            const svg = generateCompactPresetSwatch({
-                ...baseOptions,
-                dyes: [mockDye1, null, mockDye2],
-            });
-
-            expect(svg).toContain('fill="#AA1111"');
-            expect(svg).toContain('fill="#000000"');
-        });
-
-    });
 
     describe('dye name truncation', () => {
         it('should truncate long dye names in full swatch view', () => {
