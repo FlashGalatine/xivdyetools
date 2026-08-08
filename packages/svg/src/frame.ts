@@ -401,6 +401,11 @@ export interface MeasuredRowOptions {
   nameSize?: number;
   /** Band context for the tier bar (default 'match') */
   context?: 'match' | 'harmony';
+  /**
+   * The source half is an *ideal* (unbuyable) colour — it takes the
+   * vocabulary's outline ring (12H's gradient steps, 12F's blends).
+   */
+  sourceIdeal?: boolean;
 }
 
 /** A rect rounded only on its left or right edge (for the butted pair). */
@@ -444,6 +449,12 @@ export function measuredRow(x: number, y: number, rowH: number, o: MeasuredRowOp
   const half = w.pair / 2;
   parts.push(halfRoundedRect(cx, cy - pairH / 2, half, pairH, 7, 'left', o.sourceHex));
   parts.push(halfRoundedRect(cx + half, cy - pairH / 2, half, pairH, 7, 'right', o.dyeHex));
+  if (o.sourceIdeal) {
+    // The ideal half takes the outline ring — visibly not a thing you can buy
+    parts.push(
+      `<rect x="${cx + 1.25}" y="${cy - pairH / 2 + 1.25}" width="${half - 2.5}" height="${pairH - 2.5}" rx="5.5" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>`
+    );
+  }
   parts.push(
     `<rect x="${cx + 0.5}" y="${cy - pairH / 2 + 0.5}" width="${w.pair - 1}" height="${pairH - 1}" rx="6.5" fill="none" stroke="${escapeXml(theme.swatchRing)}" stroke-width="1"/>`
   );

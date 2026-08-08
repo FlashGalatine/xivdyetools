@@ -134,7 +134,7 @@ describe('executeMixer', () => {
     expect(result.embed.description).toBeDefined();
   });
 
-  it('sets embed color from blended hex', async () => {
+  it('sets embed color from the sweep best stop and renders the 12F card', async () => {
     const result = await executeMixer({
       dye1,
       dye2,
@@ -145,8 +145,11 @@ describe('executeMixer', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    const expectedColor = parseInt(result.blendedHex.replace('#', ''), 16);
-    expect(result.embed.color).toBe(expectedColor);
+    const best = result.sweep.find((s) => s.best);
+    expect(best).toBeDefined();
+    expect(result.embed.color).toBe(parseInt(best!.dye.hex.replace('#', ''), 16));
+    expect(result.svgString).toContain('/MIXER');
+    expect(result.sweep).toHaveLength(5);
   });
 
   it('different blending modes produce different results', async () => {

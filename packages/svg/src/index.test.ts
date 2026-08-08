@@ -34,8 +34,11 @@ describe('@xivdyetools/svg index exports', () => {
     it('exports gradient generator', async () => {
         const svg = await import('./index.js');
 
-        expect(svg.generateGradientBar).toBeDefined();
-        expect(typeof svg.generateGradientBar).toBe('function');
+        expect(svg.generateGradientCard).toBeDefined();
+        expect(typeof svg.generateGradientCard).toBe('function');
+
+        expect(svg.generateMixerCard).toBeDefined();
+        expect(typeof svg.generateMixerCard).toBe('function');
 
         expect(svg.generateGradientColors).toBeDefined();
         expect(typeof svg.generateGradientColors).toBe('function');

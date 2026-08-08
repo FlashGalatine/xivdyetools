@@ -666,6 +666,11 @@
     "rampKey": "band width = share of image",
     "matchKey": "nearest by ΔE2000",
     "manualLead": "Colours not what you expected? Try",
-    "manualTail": ""
+    "manualTail": "",
+    "gradKey": "strip = every step · rows = the distinct dyes",
+    "gradKeyCut": "strip = all {n} steps · rows = the {k} widest gaps",
+    "gradVerdict": "{n} steps resolve to {k} dyes. Nothing in the game sits between them.",
+    "gradOmitted": "+{n} more, listed in the message",
+    "ratioKey": "outline = blend · solid = nearest dye"
   }
 }

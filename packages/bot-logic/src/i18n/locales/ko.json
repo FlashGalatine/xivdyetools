@@ -666,6 +666,11 @@
     "rampKey": "밴드 너비 = 이미지 비중",
     "matchKey": "ΔE2000 최근접",
     "manualLead": "예상과 다른 색이 나왔다면",
-    "manualTail": " 참고"
+    "manualTail": " 참고",
+    "gradKey": "띠＝모든 단계／행＝서로 다른 염료",
+    "gradKeyCut": "띠＝전체 {n}단계／행＝차이가 큰 {k}개",
+    "gradVerdict": "{n}단계가 염료 {k}개로 수렴합니다. 그 사이에 해당하는 염료는 없습니다.",
+    "gradOmitted": "외 {n}개, 메시지에 표시",
+    "ratioKey": "외곽선＝혼합／채움＝가장 가까운 염료"
   }
 }

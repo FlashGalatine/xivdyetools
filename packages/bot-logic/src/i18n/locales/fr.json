@@ -666,6 +666,11 @@
     "rampKey": "largeur = part de l’image",
     "matchKey": "plus proches par ΔE2000",
     "manualLead": "Couleurs inattendues ? Essayez",
-    "manualTail": ""
+    "manualTail": "",
+    "gradKey": "bande = chaque palier · lignes = les teintures distinctes",
+    "gradKeyCut": "bande = les {n} paliers · lignes = les {k} écarts les plus grands",
+    "gradVerdict": "{n} paliers pour {k} teintures. Rien dans le jeu ne se place entre elles.",
+    "gradOmitted": "+{n} de plus, listées dans le message",
+    "ratioKey": "contour = mélange · plein = teinture proche"
   }
 }

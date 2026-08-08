@@ -75,13 +75,21 @@ export type {
   HarmonyCardOptions,
 } from './harmony-card.js';
 
-// Gradient Bar
+// Gradient Card (12H·2/·3/·4 — strip over distinct dyes)
 export {
-  generateGradientBar,
+  generateGradientCard,
   interpolateColor,
   generateGradientColors,
 } from './gradient.js';
-export type { GradientStep, GradientBarOptions } from './gradient.js';
+export type {
+  GradientStripCell,
+  GradientRowEntry,
+  GradientCardOptions,
+} from './gradient.js';
+
+// Mixer Card (12F — the ratio sweep, the command's first image)
+export { generateMixerCard } from './mixer-card.js';
+export type { MixerCardRow, MixerCardOptions } from './mixer-card.js';
 
 // Palette Grid (14K ramp — /extractor image)
 export { generatePaletteGrid, bandSlices } from './palette-grid.js';

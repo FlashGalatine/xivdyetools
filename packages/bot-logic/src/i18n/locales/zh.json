@@ -666,6 +666,11 @@
     "rampKey": "色带宽度＝画面占比",
     "matchKey": "按 ΔE2000 取最近",
     "manualLead": "颜色与预期不符？请试",
-    "manualTail": ""
+    "manualTail": "",
+    "gradKey": "色带＝每一阶／行＝不同染剂",
+    "gradKeyCut": "色带＝全部{n}阶／行＝差距最大的{k}项",
+    "gradVerdict": "{n}阶仅对应{k}种染剂。两者之间游戏内没有可用色。",
+    "gradOmitted": "另有 {n} 项，列于消息中",
+    "ratioKey": "描边＝混合／填充＝最接近的染剂"
   }
 }

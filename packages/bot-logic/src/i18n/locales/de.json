@@ -666,6 +666,11 @@
     "rampKey": "Bandbreite = Bildanteil",
     "matchKey": "nächste per ΔE2000",
     "manualLead": "Farben nicht wie erwartet? Siehe",
-    "manualTail": ""
+    "manualTail": "",
+    "gradKey": "Streifen = jeder Schritt · Zeilen = die Farbstoffe",
+    "gradKeyCut": "Streifen = alle {n} Schritte · Zeilen = die {k} größten Abstände",
+    "gradVerdict": "{n} Schritte ergeben {k} Farbstoffe. Dazwischen gibt es im Spiel nichts.",
+    "gradOmitted": "+{n} weitere, in der Nachricht gelistet",
+    "ratioKey": "Umriss = Mischung · Fläche = nächster Farbstoff"
   }
 }
