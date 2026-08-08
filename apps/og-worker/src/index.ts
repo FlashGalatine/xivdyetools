@@ -33,6 +33,9 @@ import {
   generateSwatchOG,
   generateComparisonOG,
   generateAccessibilityOG,
+  generateExtractorOG,
+  generatePresetsOG,
+  generateBudgetOG,
   generateOGCard,
   THEME,
   FONTS,
@@ -587,6 +590,86 @@ app.get('/og/accessibility/:dyes/:visionType', async (c) => {
   });
 
   return renderOGImage(svg);
+});
+
+/**
+ * Extractor OG image (5.0, net-new)
+ * Pattern: /og/extractor/:colors.png — colors = `RRGGBB-share` pairs,
+ * comma-separated (e.g. 8E5A3C-31,C9A96A-24), max 5
+ */
+app.get('/og/extractor/:colors', async (c) => {
+  const colorsParam = c.req.param('colors').replace('.png', '');
+  const locale = resolveLocale(new URL(c.req.url).searchParams);
+
+  const entries = colorsParam
+    .split(',')
+    .slice(0, 5)
+    .map((pair) => {
+      const [hex, shareRaw] = pair.split('-');
+      return { hex: hex ?? '', share: parseInt(shareRaw ?? '0', 10) };
+    })
+    .filter((e) => /^[0-9A-Fa-f]{6}$/.test(e.hex) && !isNaN(e.share) && e.share > 0);
+
+  if (entries.length === 0) {
+    return c.json({ error: 'extractor requires RRGGBB-share pairs' }, 400);
+  }
+
+  trackAnalytics(c.env, {
+    event: 'og_image_request',
+    tool: 'extractor',
+    crawler: 'none',
+    cacheHit: false,
+    timestamp: Date.now(),
+  });
+
+  return renderOGImage(generateExtractorOG({ entries, locale }));
+});
+
+/**
+ * Presets OG image (5.0, net-new)
+ * Pattern: /og/presets/:presetId.png — curated preset slug
+ */
+app.get('/og/presets/:presetId', async (c) => {
+  const presetId = c.req.param('presetId').replace('.png', '');
+  const locale = resolveLocale(new URL(c.req.url).searchParams);
+
+  // Slugs only — reject anything that could not be a stored choice value
+  if (!/^[a-z0-9-]{1,64}$/.test(presetId)) {
+    return c.json({ error: 'Invalid preset id' }, 400);
+  }
+
+  trackAnalytics(c.env, {
+    event: 'og_image_request',
+    tool: 'presets',
+    crawler: 'none',
+    cacheHit: false,
+    timestamp: Date.now(),
+  });
+
+  return renderOGImage(generatePresetsOG({ presetId, locale }));
+});
+
+/**
+ * Budget OG image (5.0, net-new)
+ * Pattern: /og/budget/:dyeId.png — target dye stainID
+ */
+app.get('/og/budget/:dyeId', async (c) => {
+  const dyeId = parseInt(c.req.param('dyeId').replace('.png', ''), 10);
+  const locale = resolveLocale(new URL(c.req.url).searchParams);
+
+  if (isNaN(dyeId)) {
+    return c.json({ error: 'Invalid dye ID' }, 400);
+  }
+
+  trackAnalytics(c.env, {
+    event: 'og_image_request',
+    tool: 'budget',
+    crawler: 'none',
+    cacheHit: false,
+    timestamp: Date.now(),
+  });
+
+  return renderOGImage(generateBudgetOG({ dyeId, locale }));
 });
 
 /**

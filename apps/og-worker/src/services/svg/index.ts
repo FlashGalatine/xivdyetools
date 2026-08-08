@@ -29,6 +29,15 @@ export type { ComparisonOGOptions } from './comparison';
 export { generateAccessibilityOG } from './accessibility';
 export type { AccessibilityOGOptions } from './accessibility';
 
+export { generateExtractorOG } from './extractor';
+export type { ExtractorOGOptions } from './extractor';
+
+export { generatePresetsOG } from './presets';
+export type { PresetsOGOptions } from './presets';
+
+export { generateBudgetOG } from './budget';
+export type { BudgetOGOptions } from './budget';
+
 // Base utilities
 export * from './base';
 
