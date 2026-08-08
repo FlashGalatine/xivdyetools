@@ -637,5 +637,24 @@
     "matchQualityRatings": "Évaluations de qualité",
     "matchQualityRatingsContent": "**Parfait** (distance 0)\n**Excellent** (distance <10)\n**Bon** (distance <25)\n**Correct** (distance <50)\n**Approximatif** (distance ≥50)\n\n*Distance plus faible = meilleure correspondance*",
     "poweredBy": "Propulsé par le traitement d'image Photon WASM"
+  },
+  "card": {
+    "stain": "N° TEINTE",
+    "src": "SOURCE",
+    "mkt": "MARCHÉ",
+    "cost": "PRIX",
+    "base": "BASE",
+    "nearest": "TEINTURES PROCHES",
+    "nearestMore": "+{n} autres",
+    "ideal": "IDÉAL",
+    "found": "TROUVÉ",
+    "name": "TEINTURE",
+    "cat": "CATÉGORIE",
+    "idealKey": "contour = idéal · plein = trouvé",
+    "bandKey": "bandes : ≤6 / ≤12 / ≤20",
+    "tier0": "EXACT",
+    "tier1": "PROCHE",
+    "tier2": "LARGE",
+    "tier3": "INATTEIGNABLE"
   }
 }

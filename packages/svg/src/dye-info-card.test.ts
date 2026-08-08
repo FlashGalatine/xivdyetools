@@ -1,9 +1,9 @@
 /**
- * Tests for Dye Info Card SVG Generator.
+ * Tests for the 11B Dye Info sheet generator.
  *
- * generateDyeInfoCard is a pure function (options → SVG string).
- * Tests assert structural validity, presence of key content strings,
- * and that displayOptions flags correctly gate sections.
+ * generateDyeInfoCard is a pure function (options → SVG string). Tests
+ * assert structural validity, the confirmed section content, band tiering
+ * on the nearest strip, and theme behaviour.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -15,18 +15,36 @@ import { createMockDye } from '@xivdyetools/test-utils/factories';
 // ============================================================================
 
 const mockDye = createMockDye({
-  id: 7,
-  itemID: 5735,
-  stainID: 7,
+  id: 10,
+  itemID: 5738,
+  stainID: 10,
   name: 'Dalamud Red',
-  hex: '#9B111E',
-  rgb: { r: 155, g: 17, b: 30 },
-  hsv: { h: 354, s: 89, v: 61 },
-  category: 'Red',
+  hex: '#781A1A',
+  rgb: { r: 120, g: 26, b: 26 },
+  hsv: { h: 0, s: 78, v: 47 },
+  category: 'Reds',
 });
 
 const defaultOptions: DyeInfoCardOptions = {
   dye: mockDye,
+  localizedName: 'Dalamud Red',
+  localizedCategory: 'Reds',
+  stainID: 10,
+  srcValue: 'Dye Vendor · 216 Gil',
+  mktValue: 'Standard Spectrum Dye · 52254',
+  nearest: [
+    { hex: '#622207', name: 'Rust Red', deltaE: 8.74 },
+    { hex: '#913B27', name: 'Blood Red', deltaE: 9.38 },
+    { hex: '#470103', name: 'Metallic Ruby Red', deltaE: 10.77 },
+  ],
+  labels: {
+    stain: 'STAIN',
+    src: 'SRC',
+    mkt: 'MKT',
+    nearest: 'NEAREST DYES',
+    nearestMore: '+1 more',
+  },
+  lang: 'en',
 };
 
 // ============================================================================
@@ -34,140 +52,92 @@ const defaultOptions: DyeInfoCardOptions = {
 // ============================================================================
 
 describe('generateDyeInfoCard', () => {
-  describe('SVG structure', () => {
-    it('returns a valid SVG document', () => {
-      const svg = generateDyeInfoCard(defaultOptions);
+  it('returns a valid 400×350 SVG document', () => {
+    const svg = generateDyeInfoCard(defaultOptions);
 
-      expect(svg).toContain('<svg xmlns="http://www.w3.org/2000/svg"');
-      expect(svg).toContain('</svg>');
-    });
-
-    it('includes a viewBox attribute', () => {
-      const svg = generateDyeInfoCard(defaultOptions);
-      expect(svg).toContain('viewBox');
-    });
+    expect(svg).toContain('<svg xmlns="http://www.w3.org/2000/svg"');
+    expect(svg).toContain('width="400"');
+    expect(svg).toContain('height="350"');
+    expect(svg).toContain('</svg>');
   });
 
-  describe('dye content', () => {
-    it('includes the dye name', () => {
-      const svg = generateDyeInfoCard(defaultOptions);
-      expect(svg).toContain('Dalamud Red');
-    });
+  it('draws the header band in the dye colour with name, category and stain', () => {
+    const svg = generateDyeInfoCard(defaultOptions);
 
-    it('includes the dye hex color (uppercase)', () => {
-      const svg = generateDyeInfoCard(defaultOptions);
-      expect(svg).toContain('#9B111E');
-    });
-
-    it('uses the dye hex as a fill color in swatch', () => {
-      const svg = generateDyeInfoCard(defaultOptions);
-      // The hex is used as SVG fill attribute
-      expect(svg).toContain('#9B111E');
-    });
-
-    it('includes the category', () => {
-      const svg = generateDyeInfoCard(defaultOptions);
-      expect(svg).toContain('Red');
-    });
-
-    it('includes the dye ID', () => {
-      const svg = generateDyeInfoCard(defaultOptions);
-      expect(svg).toContain('7');
-    });
+    expect(svg).toContain('fill="#781A1A"');
+    expect(svg).toContain('Dalamud Red');
+    expect(svg).toContain('Reds');
+    expect(svg).toContain('STAIN 10');
   });
 
-  describe('localization', () => {
-    it('uses localizedName when provided', () => {
-      const svg = generateDyeInfoCard({
-        ...defaultOptions,
-        localizedName: 'ダラムドレッド',
-      });
+  it('prints the numeric grid (HEX/RGB/HSV/LAB) at the type floor', () => {
+    const svg = generateDyeInfoCard(defaultOptions);
 
-      expect(svg).toContain('ダラムドレッド');
-      // Original name should not appear in main title area (localized overrides it)
-    });
-
-    it('falls back to dye.name when localizedName is not provided', () => {
-      const svg = generateDyeInfoCard(defaultOptions);
-      expect(svg).toContain('Dalamud Red');
-    });
-
-    it('uses localizedCategory when provided', () => {
-      const svg = generateDyeInfoCard({
-        ...defaultOptions,
-        localizedCategory: 'Rouge',
-      });
-
-      expect(svg).toContain('Rouge');
-    });
+    expect(svg).toContain('>HEX</text>');
+    expect(svg).toContain('#781A1A');
+    expect(svg).toContain('>120 26 26</text>');
+    expect(svg).toContain('>0 78 47</text>');
+    expect(svg).toContain('>LAB</text>');
   });
 
-  describe('displayOptions', () => {
-    it('omits HEX row when showHex is false', () => {
-      const svg = generateDyeInfoCard({
-        ...defaultOptions,
-        displayOptions: { showHex: false, showRgb: true, showHsv: true, showLab: true },
-      });
+  it('carries SRC (with price) and MKT (verbatim Spectrum item) rows', () => {
+    const svg = generateDyeInfoCard(defaultOptions);
 
-      // The label "HEX" in the info section should not appear
-      // (the hex still appears in the swatch overlay, but not as a "HEX:" label)
-      const labelCount = (svg.match(/>HEX</g) ?? []).length;
-      expect(labelCount).toBe(0);
-    });
-
-    it('omits RGB row when showRgb is false', () => {
-      const svg = generateDyeInfoCard({
-        ...defaultOptions,
-        displayOptions: { showHex: true, showRgb: false, showHsv: true, showLab: true },
-      });
-
-      expect(svg).not.toContain('>RGB<');
-    });
-
-    it('omits HSV row when showHsv is false', () => {
-      const svg = generateDyeInfoCard({
-        ...defaultOptions,
-        displayOptions: { showHex: true, showRgb: true, showHsv: false, showLab: true },
-      });
-
-      expect(svg).not.toContain('>HSV<');
-    });
-
-    it('omits LAB row when showLab is false', () => {
-      const svg = generateDyeInfoCard({
-        ...defaultOptions,
-        displayOptions: { showHex: true, showRgb: true, showHsv: true, showLab: false },
-      });
-
-      expect(svg).not.toContain('>LAB<');
-    });
-
-    it('shows all sections by default (no displayOptions provided)', () => {
-      const svg = generateDyeInfoCard(defaultOptions);
-
-      expect(svg).toContain('>HEX<');
-      expect(svg).toContain('>RGB<');
-      expect(svg).toContain('>HSV<');
-      expect(svg).toContain('>LAB<');
-    });
+    expect(svg).toContain('Dye Vendor · 216 Gil');
+    expect(svg).toContain('Standard Spectrum Dye · 52254');
   });
 
-  describe('layout', () => {
-    it('accepts a custom width', () => {
-      const svg = generateDyeInfoCard({ ...defaultOptions, width: 600 });
-      expect(svg).toContain('width="600"');
-    });
+  it('renders the nearest strip with tier-toned bars and the omitted count', () => {
+    const svg = generateDyeInfoCard(defaultOptions);
 
-    it('uses default width (500) when not specified', () => {
-      const svg = generateDyeInfoCard(defaultOptions);
-      expect(svg).toContain('width="500"');
-    });
+    expect(svg).toContain('NEAREST DYES · +1 more');
+    expect(svg).toContain('Rust Red');
+    expect(svg).toContain('Metallic Ruby Red');
+    // 8.74 is in the 5–10 match band → the second dark tier colour
+    expect(svg).toContain('#8bc34a');
+    // 10.77 is in the 10–20 band → the third tier colour
+    expect(svg).toContain('#ffc107');
   });
 
-  describe('branding', () => {
-    it('includes the XIV Dye Tools footer', () => {
-      const svg = generateDyeInfoCard(defaultOptions);
-      expect(svg).toContain('XIV Dye Tools');
+  it('omits the "+N more" suffix when nothing is omitted', () => {
+    const svg = generateDyeInfoCard({ ...defaultOptions, labels: { ...defaultOptions.labels, nearestMore: '' } });
+    expect(svg).toContain('NEAREST DYES');
+    expect(svg).not.toContain('NEAREST DYES ·');
+  });
+
+  it('hides the stain readout when stainID is null', () => {
+    const svg = generateDyeInfoCard({ ...defaultOptions, stainID: null });
+    expect(svg).not.toContain('STAIN 10');
+  });
+
+  it('localizes labels and number formatting', () => {
+    const svg = generateDyeInfoCard({
+      ...defaultOptions,
+      labels: { stain: 'FARBNR.', src: 'QUELLE', mkt: 'MARKT', nearest: 'NÄCHSTE FARBSTOFFE', nearestMore: '+1 weitere' },
+      srcValue: 'Farbstoffverkäufer · 216 Gil',
+      lang: 'de',
     });
+
+    expect(svg).toContain('FARBNR. 10');
+    expect(svg).toContain('Farbstoffverkäufer · 216 Gil');
+    // German decimal comma on the strip ΔE (8.74 → 8,7)
+    expect(svg).toContain('8,7');
+  });
+
+  it('ships both themes on the same geometry', () => {
+    const dark = generateDyeInfoCard(defaultOptions);
+    const light = generateDyeInfoCard({ ...defaultOptions, theme: 'light' });
+
+    expect(dark).toContain('#17171A');
+    expect(light).toContain('#FFFFFF');
+    expect(light).toContain('#E4E4E7');
+    // Light tier ramp on the strip
+    expect(light).toContain('#1C7D3A');
+  });
+
+  it('always renders the attribution mark, never a centred footer', () => {
+    const svg = generateDyeInfoCard(defaultOptions);
+    expect(svg).toContain('xivdyetools.app');
+    expect(svg).not.toContain('Run again');
   });
 });

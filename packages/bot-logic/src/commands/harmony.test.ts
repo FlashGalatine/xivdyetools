@@ -151,11 +151,12 @@ describe('executeHarmony', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
+    // One line: the card names every slot; the embed carries the share URL
     expect(result.embed.description).toBeDefined();
-    expect(result.embed.description).toContain('**1.**');
+    expect(result.embed.description).toContain('xivdyetools.app/harmony');
   });
 
-  it('returns embed with footer', async () => {
+  it('renders the 11A slot rows into the SVG', async () => {
     const result = await executeHarmony({
       baseHex: BASE_HEX,
       harmonyType: 'analogous',
@@ -165,7 +166,10 @@ describe('executeHarmony', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    expect(result.embed.footer).toBeDefined();
+    // Frame vocabulary: 400 wide, the mark, the base label
+    expect(result.svgString).toContain('width="400"');
+    expect(result.svgString).toContain('xivdyetools.app');
+    expect(result.svgString).toContain('BASE');
   });
 
   it('works with Japanese locale', async () => {

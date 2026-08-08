@@ -19,11 +19,16 @@ describe('@xivdyetools/svg index exports', () => {
         expect(svg.FONTS).toBeDefined();
     });
 
-    it('exports harmony wheel generator', async () => {
+    it('exports the harmony card generator and the frame system', async () => {
         const svg = await import('./index.js');
 
-        expect(svg.generateHarmonyWheel).toBeDefined();
-        expect(typeof svg.generateHarmonyWheel).toBe('function');
+        expect(svg.generateHarmonyCard).toBeDefined();
+        expect(typeof svg.generateHarmonyCard).toBe('function');
+        expect(svg.CARD_WIDTH).toBe(400);
+        expect(svg.CARD_MAX_HEIGHT).toBe(350);
+        expect(svg.ROW_CAP).toBe(5);
+        expect(svg.CARD_DARK).toBeDefined();
+        expect(svg.CARD_LIGHT).toBeDefined();
     });
 
     it('exports gradient generator', async () => {

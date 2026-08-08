@@ -13,9 +13,9 @@ import {
   type HarmonyColorSpace,
   type MatchingMethod,
 } from '@xivdyetools/core';
-import { filterDyes } from '@xivdyetools/core';
+import { filterDyes, ColorService } from '@xivdyetools/core';
 import { createTranslator, type Translator, type LocaleCode } from '../i18n/index.js';
-import { generateHarmonyWheel, type HarmonyDye } from '@xivdyetools/svg';
+import { generateHarmonyCard, type HarmonyCardSlot } from '@xivdyetools/svg';
 import { dyeService } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
 import type { EmbedData } from './types.js';
@@ -60,6 +60,8 @@ export interface HarmonyInput {
   strictMatching?: boolean;
   /** When true, deduplicates dyes by id across all output slots (default: false). */
   preventDuplicates?: boolean;
+  /** Card theme (stored user preference; defaults dark) */
+  theme?: 'dark' | 'light';
 }
 
 export type HarmonyResult =
@@ -101,6 +103,23 @@ function getHarmonyDyes(hex: string, type: HarmonyType, options?: HarmonyOptions
       return dyeService.findTriadicDyes(hex, options);
   }
 }
+
+/**
+ * The ideal hue offsets each harmony type asks for (HSV rotation at the
+ * base's saturation and value — mirrors core's HarmonyGenerator).
+ * Monochromatic has no hue-rotation ideals; its rows render without the
+ * outlined swatch.
+ */
+const IDEAL_OFFSETS: Record<HarmonyType, number[]> = {
+  complementary: [180],
+  triadic: [120, 240],
+  analogous: [30, -30, 180],
+  'split-complementary': [150, 210],
+  tetradic: [60, 180, 240],
+  'inverted-tetradic': [120, 180, 300],
+  square: [90, 180, 270],
+  monochromatic: [],
+};
 
 function getLocalizedHarmonyType(type: string, t: Translator): string {
   const keyMap: Record<string, string> = {
@@ -204,43 +223,67 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
     }
 
 
-    // Convert to HarmonyDye[] with localized names for the SVG
-    const dyesForWheel: HarmonyDye[] = harmonyDyes.map((dye) => ({
-      id: dye.id,
-      name: getLocalizedDyeName(dye.itemID, dye.name, locale),
-      hex: dye.hex,
-      category: dye.category,
-    }));
-
-    const svgString = generateHarmonyWheel({
-      baseColor: baseHex,
-      harmonyType,
-      dyes: dyesForWheel,
-      width: 600,
-      height: 600,
+    // 11A: the ideal hue the maths asked for, beside the dye that exists.
+    // Each found dye pairs with the offset ideal it is nearest to (ΔE2000),
+    // which also yields the row's verdict; monochromatic rows have no ideal.
+    // Unknown types fall back to triadic, mirroring getHarmonyDyes
+    const offsets = IDEAL_OFFSETS[harmonyType] ?? IDEAL_OFFSETS.triadic;
+    const ideals = offsets.map((offset) => ColorService.rotateHue(baseHex, offset));
+    const stainLabel = t.t('card.stain');
+    const slots: HarmonyCardSlot[] = harmonyDyes.map((dye) => {
+      let idealHex: string | null = null;
+      let deltaE: number | null = null;
+      for (const ideal of ideals) {
+        const d = ColorService.getDistanceForMethod(ideal, dye.hex, 'ciede2000');
+        if (deltaE === null || d < deltaE) {
+          deltaE = d;
+          idealHex = ideal;
+        }
+      }
+      const stainText = dye.stainID != null ? ` · ${stainLabel} ${dye.stainID}` : '';
+      return {
+        idealHex,
+        hex: dye.hex,
+        localizedName: getLocalizedDyeName(dye.itemID, dye.name, locale),
+        subText: `${dye.hex.toUpperCase()}${stainText}`,
+        deltaE,
+      };
     });
-
-    // Build embed description text (no platform-specific emoji)
-    const dyeList = harmonyDyes
-      .map((dye, i) => {
-        const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
-        return `**${i + 1}.** ${localizedName} (\`${dye.hex.toUpperCase()}\`)`;
-      })
-      .join('\n');
 
     // Localize base name if it's a dye
     const localizedBaseName = baseItemID && baseName
       ? getLocalizedDyeName(baseItemID, baseName, locale)
       : (baseName || baseHex.toUpperCase());
-    const baseColorText = `${t.t('harmony.baseColor')}: **${localizedBaseName}** (\`${baseHex.toUpperCase()}\`)`;
-
     const harmonyTitle = getLocalizedHarmonyType(harmonyType, t);
 
+    const baseDye = baseId !== undefined ? dyeService.getDyeById(baseId) : null;
+    const baseStainText =
+      baseDye?.stainID != null ? ` · ${stainLabel} ${baseDye.stainID}` : '';
+
+    const svgString = generateHarmonyCard({
+      typeLabel: harmonyTitle,
+      baseHex,
+      baseName: localizedBaseName,
+      baseSubText: `${baseHex.toUpperCase()}${baseStainText}`,
+      slots,
+      labels: {
+        base: t.t('card.base'),
+        idealKey: t.t('card.idealKey'),
+      },
+      tierWords: [t.t('card.tier0'), t.t('card.tier1'), t.t('card.tier2'), t.t('card.tier3')],
+      lang: locale,
+      theme: input.theme,
+    });
+
+    // One line: the card names every slot; the embed carries the share URL
+    const shareUrl =
+      baseDye?.stainID != null
+        ? `https://xivdyetools.app/harmony?dye=${baseDye.stainID}&harmony=${harmonyType}`
+        : 'https://xivdyetools.app/harmony';
     const embed: EmbedData = {
       title: t.t('harmony.title', { type: harmonyTitle }),
-      description: `${baseColorText}\n\n${dyeList}`,
+      description: shareUrl,
       color: parseInt(baseHex.replace('#', ''), 16),
-      footer: t.t('common.footer'),
     };
 
     return {

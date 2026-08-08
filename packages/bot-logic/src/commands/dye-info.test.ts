@@ -40,13 +40,14 @@ describe('executeDyeInfo', () => {
     expect(result.localizedName).toBe('Snow White');
   });
 
-  it('returns embed with footer', async () => {
+  it('returns a one-line embed (the PNG is self-contained)', async () => {
     const result = await executeDyeInfo({ dye: snowWhite, locale: 'en' });
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    expect(result.embed.footer).toBeDefined();
+    expect(result.embed.title).toBe('Snow White');
+    expect(result.embed.description).toContain('xivdyetools.app');
   });
 
   it('sets embed color from dye hex', async () => {
@@ -121,13 +122,13 @@ describe('executeRandom', () => {
     expect(result.dyes.length).toBe(5);
   });
 
-  it('returns dyeInfos matching dyes count', async () => {
-    const result = await executeRandom({ locale: 'en', count: 3 });
+  it('clamps the count to the R1 five-row cap', async () => {
+    const result = await executeRandom({ locale: 'en', count: 9 });
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    expect(result.dyeInfos.length).toBe(result.dyes.length);
+    expect(result.dyes.length).toBe(5);
   });
 
   it('excludes Facewear dyes', async () => {
@@ -153,14 +154,13 @@ describe('executeRandom', () => {
     expect(uniqueCategories.size).toBe(categories.length);
   });
 
-  it('returns embed with description containing dye list', async () => {
+  it('keeps the embed to one line — the table already names every dye', async () => {
     const result = await executeRandom({ locale: 'en', count: 2 });
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    expect(result.embed.description).toBeDefined();
-    expect(result.embed.description).toContain('**1.**');
-    expect(result.embed.description).toContain('**2.**');
+    expect(result.embed.title).toBeDefined();
+    expect(result.embed.description).toBeUndefined();
   });
 });

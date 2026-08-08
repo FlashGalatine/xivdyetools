@@ -637,5 +637,24 @@
     "matchQualityRatings": "マッチ品質評価",
     "matchQualityRatingsContent": "**完璧** (距離0)\n**優秀** (距離<10)\n**良好** (距離<25)\n**まずまず** (距離<50)\n**おおよそ** (距離≥50)\n\n*距離が低いほど = より良いマッチ*",
     "poweredBy": "Photon WASM画像処理を使用"
+  },
+  "card": {
+    "stain": "番号",
+    "src": "入手",
+    "mkt": "市場",
+    "cost": "価格",
+    "base": "ベース",
+    "nearest": "最も近いカララント",
+    "nearestMore": "他{n}色",
+    "ideal": "理想の色相",
+    "found": "最も近い色",
+    "name": "カララント",
+    "cat": "カテゴリ",
+    "idealKey": "枠線＝理想／塗り＝実在",
+    "bandKey": "バンド: ≤6 / ≤12 / ≤20",
+    "tier0": "完全",
+    "tier1": "近い",
+    "tier2": "緩い",
+    "tier3": "到達不可"
   }
 }

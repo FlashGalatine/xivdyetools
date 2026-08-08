@@ -31,7 +31,7 @@ vi.mock('../../services/bot-i18n.js', () => ({
 }));
 
 vi.mock('@xivdyetools/svg', () => ({
-  generateHarmonyWheel: vi.fn(() => '<svg />'),
+  generateHarmonyCard: vi.fn(() => '<svg />'),
 }));
 
 vi.mock('../../services/svg/renderer.js', () => ({
@@ -81,7 +81,18 @@ vi.mock('@xivdyetools/core', () => {
   }
 
   const dyeDatabase = {} as const;
-  return { DyeService: MockDyeService, dyeDatabase, LocalizationService: MockLocalizationService };
+  // 11A pairing: ideal hues via rotateHue, verdicts via ΔE2000
+  const ColorService = {
+    rotateHue: (hex: string, _degrees: number) => hex,
+    getDistanceForMethod: () => 5,
+  };
+  return {
+    DyeService: MockDyeService,
+    dyeDatabase,
+    LocalizationService: MockLocalizationService,
+    ColorService,
+    filterDyes: (_f: unknown, dyes: unknown[]) => dyes,
+  };
 });
 
 describe('handleHarmonyCommand', () => {

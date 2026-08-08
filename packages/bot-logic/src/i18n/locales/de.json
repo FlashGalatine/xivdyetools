@@ -637,5 +637,24 @@
     "matchQualityRatings": "Qualitätsbewertungen",
     "matchQualityRatingsContent": "**Perfekt** (0 Distanz)\n**Ausgezeichnet** (<10 Distanz)\n**Gut** (<25 Distanz)\n**Akzeptabel** (<50 Distanz)\n**Ungefähr** (≥50 Distanz)\n\n*Niedrigere Distanz = bessere Übereinstimmung*",
     "poweredBy": "Powered by Photon WASM Bildverarbeitung"
+  },
+  "card": {
+    "stain": "FARBNR.",
+    "src": "QUELLE",
+    "mkt": "MARKT",
+    "cost": "PREIS",
+    "base": "BASIS",
+    "nearest": "NÄCHSTE FARBSTOFFE",
+    "nearestMore": "+{n} weitere",
+    "ideal": "IDEALFARBTON",
+    "found": "NÄCHSTER FARBSTOFF",
+    "name": "FARBSTOFF",
+    "cat": "KATEGORIE",
+    "idealKey": "Umriss = ideal · Fläche = gefunden",
+    "bandKey": "Bänder: ≤6 / ≤12 / ≤20",
+    "tier0": "EXAKT",
+    "tier1": "NAH",
+    "tier2": "LOSE",
+    "tier3": "UNERREICHBAR"
   }
 }

@@ -35,9 +35,38 @@ export {
 } from './base.js';
 export type { DisplayOptions } from './base.js';
 
-// Harmony Wheel
-export { generateHarmonyWheel } from './harmony-wheel.js';
-export type { HarmonyDye, HarmonyWheelOptions } from './harmony-wheel.js';
+// 5.0 bot card frame system (Turn-11 vocabulary)
+export {
+  CARD_WIDTH,
+  CARD_MAX_HEIGHT,
+  CARD_TYPE,
+  ROW_CAP,
+  HARMONY_ROW_CAP,
+  CARD_DARK,
+  CARD_LIGHT,
+  cardTheme,
+  cardShell,
+  cardText,
+  textWidth,
+  fitText,
+  commandChip,
+  placeGlyph,
+  appIcon,
+  markFooter,
+  swatch,
+  idealSwatch,
+  dashedRule,
+  hairline,
+} from './frame.js';
+export type { CardTheme, CardTextOptions, CommandChipOptions } from './frame.js';
+
+// Harmony Card (11A — replaces the retired harmony wheel)
+export { generateHarmonyCard } from './harmony-card.js';
+export type {
+  HarmonyCardSlot,
+  HarmonyCardLabels,
+  HarmonyCardOptions,
+} from './harmony-card.js';
 
 // Gradient Bar
 export {
@@ -80,17 +109,17 @@ export type {
   WCAGLevel,
 } from './contrast-matrix.js';
 
-// Random Dyes Grid
+// Random Dyes Grid (11B table)
 export { generateRandomDyesGrid } from './random-dyes-grid.js';
-export type { RandomDyeInfo, RandomDyesGridOptions } from './random-dyes-grid.js';
+export type { RandomDyeRow, RandomGridLabels, RandomDyesGridOptions } from './random-dyes-grid.js';
 
 // Dye Comparison Grid
 export { generateComparisonGrid } from './comparison-grid.js';
 export type { ComparisonGridOptions } from './comparison-grid.js';
 
-// Dye Info Card
+// Dye Info Card (11B sheet)
 export { generateDyeInfoCard } from './dye-info-card.js';
-export type { DyeInfoCardOptions } from './dye-info-card.js';
+export type { DyeInfoCardOptions, DyeInfoLabels, NearestDyeInfo } from './dye-info-card.js';
 
 // Preset Swatch
 export {

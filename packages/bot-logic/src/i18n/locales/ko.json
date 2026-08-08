@@ -637,5 +637,24 @@
     "matchQualityRatings": "매칭 품질 등급",
     "matchQualityRatingsContent": "**완벽** (거리 0)\n**우수** (거리 <10)\n**좋음** (거리 <25)\n**적당** (거리 <50)\n**근사** (거리 ≥50)\n\n*거리가 낮을수록 = 더 좋은 매칭*",
     "poweredBy": "Photon WASM 이미지 처리 기반"
+  },
+  "card": {
+    "stain": "염색번호",
+    "src": "출처",
+    "mkt": "시장",
+    "cost": "가격",
+    "base": "기준",
+    "nearest": "가장 가까운 염료",
+    "nearestMore": "외 {n}개",
+    "ideal": "이상 색상",
+    "found": "가장 가까운",
+    "name": "염료",
+    "cat": "분류",
+    "idealKey": "외곽선＝이상／채움＝실제",
+    "bandKey": "구간: ≤6 / ≤12 / ≤20",
+    "tier0": "완전",
+    "tier1": "근접",
+    "tier2": "느슨",
+    "tier3": "도달 불가"
   }
 }

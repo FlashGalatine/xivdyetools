@@ -107,3 +107,39 @@ export function getLocalizedCategory(category: string, locale: LocaleCode = 'en'
     return category;
   }
 }
+
+/**
+ * Get localized acquisition source from xivdyetools-core (the 5.0 card's SRC
+ * row value, e.g. "Dye Vendor" → "Farbstoffverkäufer").
+ *
+ * @param acquisition - The acquisition key (e.g., "Dye Vendor")
+ * @param locale - Locale code (defaults to 'en')
+ * @returns Localized acquisition name
+ */
+export function getLocalizedAcquisition(acquisition: string, locale: LocaleCode = 'en'): string {
+  try {
+    const instance = localeInstances.get(locale);
+    if (!instance) return acquisition;
+    return instance.getAcquisition(acquisition);
+  } catch {
+    return acquisition;
+  }
+}
+
+/**
+ * Get localized currency display label from xivdyetools-core
+ * ("Gil" → "ギル", "Venture Coffer" → "Schatzkiste").
+ *
+ * @param currency - The currency key (e.g., "Gil")
+ * @param locale - Locale code (defaults to 'en')
+ * @returns Localized currency label
+ */
+export function getLocalizedCurrency(currency: string, locale: LocaleCode = 'en'): string {
+  try {
+    const instance = localeInstances.get(locale);
+    if (!instance) return currency;
+    return instance.getCurrency(currency);
+  } catch {
+    return currency;
+  }
+}

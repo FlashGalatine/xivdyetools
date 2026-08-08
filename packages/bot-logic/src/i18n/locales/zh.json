@@ -637,5 +637,24 @@
     "matchQualityRatings": "匹配质量等级",
     "matchQualityRatingsContent": "**完美** (距离 0)\n**优秀** (距离 <10)\n**良好** (距离 <25)\n**一般** (距离 <50)\n**近似** (距离 ≥50)\n\n*距离越低 = 匹配越好*",
     "poweredBy": "由 Photon WASM 图像处理驱动"
+  },
+  "card": {
+    "stain": "染色号",
+    "src": "来源",
+    "mkt": "市场",
+    "cost": "价格",
+    "base": "基色",
+    "nearest": "最接近的染剂",
+    "nearestMore": "另有{n}项",
+    "ideal": "理想色相",
+    "found": "最接近",
+    "name": "染剂",
+    "cat": "分类",
+    "idealKey": "描边＝理想／填充＝实际",
+    "bandKey": "区间：≤6 / ≤12 / ≤20",
+    "tier0": "完全",
+    "tier1": "接近",
+    "tier2": "宽松",
+    "tier3": "无法达到"
   }
 }

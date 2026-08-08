@@ -1,156 +1,112 @@
 /**
- * Tests for Random Dyes Grid SVG Generator.
+ * Tests for the 11B Random Dyes table generator.
  *
- * generateRandomDyesGrid is a pure function (options → SVG string).
- * Tests assert structural validity, dye content presence,
- * layout mode behaviour (uniqueCategories), and edge cases.
+ * generateRandomDyesGrid is a pure function (options → SVG string). Tests
+ * assert structural validity, table content, the R1 five-row cap, and the
+ * grow-with-count height rule.
  */
 
 import { describe, it, expect } from 'vitest';
 import {
   generateRandomDyesGrid,
-  type RandomDyeInfo,
+  type RandomDyeRow,
   type RandomDyesGridOptions,
 } from './random-dyes-grid.js';
-import { createMockDye } from '@xivdyetools/test-utils/factories';
 
 // ============================================================================
 // Test fixtures
 // ============================================================================
 
-function makeDyeInfo(id: number, name: string, hex: string, category = 'Basic'): RandomDyeInfo {
-  return {
-    dye: createMockDye({ id, name, hex, category }),
-    localizedName: name,
-    localizedCategory: category,
-  };
+function makeRow(stain: number, name: string, hex: string, category = 'Reds'): RandomDyeRow {
+  return { hex, localizedName: name, localizedCategory: category, stainID: stain };
 }
 
-const fiveDyes: RandomDyeInfo[] = [
-  makeDyeInfo(1, 'Bone White', '#F0EBE0', 'White'),
-  makeDyeInfo(2, 'Dalamud Red', '#9B111E', 'Red'),
-  makeDyeInfo(3, 'Celeste Green', '#50C878', 'Green'),
-  makeDyeInfo(4, 'Storm Blue', '#2255AA', 'Blue'),
-  makeDyeInfo(5, 'Soot Black', '#1C1C1C', 'Black'),
+const fiveRows: RandomDyeRow[] = [
+  makeRow(82, 'Lotus Pink', '#FECEF5', 'Purples'),
+  makeRow(52, 'Hunter Green', '#284B2C', 'Greens'),
+  makeRow(35, 'Ul Brown', '#B7A370', 'Yellows'),
+  makeRow(63, 'Peacock Blue', '#3B6886', 'Blues'),
+  makeRow(12, 'Wine Red', '#451511', 'Reds'),
 ];
+
+const defaultOptions: RandomDyesGridOptions = {
+  dyes: fiveRows,
+  title: 'Random Dyes',
+  labels: { name: 'DYE', cat: 'CATEGORY', stain: 'STAIN' },
+};
 
 // ============================================================================
 // generateRandomDyesGrid
 // ============================================================================
 
 describe('generateRandomDyesGrid', () => {
-  describe('SVG structure', () => {
-    it('returns a valid SVG document', () => {
-      const svg = generateRandomDyesGrid({ dyes: fiveDyes });
+  it('returns a valid SVG table at 400 wide', () => {
+    const svg = generateRandomDyesGrid(defaultOptions);
 
-      expect(svg).toContain('<svg xmlns="http://www.w3.org/2000/svg"');
-      expect(svg).toContain('</svg>');
-    });
-
-    it('includes a viewBox attribute', () => {
-      const svg = generateRandomDyesGrid({ dyes: fiveDyes });
-      expect(svg).toContain('viewBox');
-    });
+    expect(svg).toContain('<svg xmlns="http://www.w3.org/2000/svg"');
+    expect(svg).toContain('width="400"');
+    expect(svg).toContain('</svg>');
   });
 
-  describe('dye content', () => {
-    it('includes all dye names', () => {
-      const svg = generateRandomDyesGrid({ dyes: fiveDyes });
+  it('renders the title, the pill and the header row', () => {
+    const svg = generateRandomDyesGrid(defaultOptions);
 
-      expect(svg).toContain('Bone White');
-      expect(svg).toContain('Dalamud Red');
-      expect(svg).toContain('Celeste Green');
-      expect(svg).toContain('Storm Blue');
-      expect(svg).toContain('Soot Black');
-    });
-
-    it('includes dye hex colors as fill attributes', () => {
-      const svg = generateRandomDyesGrid({ dyes: fiveDyes });
-
-      expect(svg).toContain('#F0EBE0');
-      expect(svg).toContain('#9B111E');
-    });
-
-    it('includes category labels', () => {
-      const svg = generateRandomDyesGrid({ dyes: fiveDyes });
-
-      expect(svg).toContain('White');
-      expect(svg).toContain('Red');
-    });
+    expect(svg).toContain('Random Dyes');
+    expect(svg).toContain('/DYE RANDOM');
+    expect(svg).toContain('>DYE</text>');
+    expect(svg).toContain('CATEGORY');
+    expect(svg).toContain('STAIN');
   });
 
-  describe('title', () => {
-    it('uses default title when not specified', () => {
-      const svg = generateRandomDyesGrid({ dyes: fiveDyes });
-      // Default title contains the dice emoji text or a text node with the title string
-      expect(svg).toContain('Random Dyes');
-    });
+  it('prints every row with name, hex, category and stain', () => {
+    const svg = generateRandomDyesGrid(defaultOptions);
 
-    it('uses custom title when provided', () => {
-      const svg = generateRandomDyesGrid({ dyes: fiveDyes, title: 'My Picks' });
-      expect(svg).toContain('My Picks');
-    });
+    for (const row of fiveRows) {
+      expect(svg).toContain(row.localizedName);
+      expect(svg).toContain(row.hex.toUpperCase());
+      expect(svg).toContain(`>${row.stainID}</text>`);
+    }
   });
 
-  describe('subtitle / mode', () => {
-    it('shows count subtitle in random mode', () => {
-      const svg = generateRandomDyesGrid({ dyes: fiveDyes });
-      expect(svg).toContain('5 randomly selected dyes');
-    });
-
-    it('shows uniqueCategories subtitle when flag is set', () => {
-      const svg = generateRandomDyesGrid({ dyes: fiveDyes, uniqueCategories: true });
-      expect(svg).toContain('One from each category');
-    });
+  it('five rows plus a header is exactly what 350 buys', () => {
+    const svg = generateRandomDyesGrid(defaultOptions);
+    const height = Number(/height="(\d+)"/.exec(svg)?.[1]);
+    expect(height).toBeLessThanOrEqual(350);
+    expect(height).toBeGreaterThan(330);
   });
 
-  describe('layout', () => {
-    it('accepts a custom width', () => {
-      const svg = generateRandomDyesGrid({ dyes: fiveDyes, width: 800 });
-      expect(svg).toContain('width="800"');
-    });
-
-    it('uses default width (600) when not specified', () => {
-      const svg = generateRandomDyesGrid({ dyes: fiveDyes });
-      expect(svg).toContain('width="600"');
-    });
+  it('grows with the count — a shorter result is a shorter card', () => {
+    const two = generateRandomDyesGrid({ ...defaultOptions, dyes: fiveRows.slice(0, 2) });
+    const five = generateRandomDyesGrid(defaultOptions);
+    const h2 = Number(/height="(\d+)"/.exec(two)?.[1]);
+    const h5 = Number(/height="(\d+)"/.exec(five)?.[1]);
+    expect(h2).toBeLessThan(h5);
   });
 
-  describe('edge cases', () => {
-    it('renders correctly with a single dye', () => {
-      const svg = generateRandomDyesGrid({ dyes: [fiveDyes[0]] });
-
-      expect(svg).toContain('<svg xmlns="http://www.w3.org/2000/svg"');
-      expect(svg).toContain('Bone White');
+  it('caps at five rows (R1)', () => {
+    const svg = generateRandomDyesGrid({
+      ...defaultOptions,
+      dyes: [...fiveRows, makeRow(99, 'Sixth Dye', '#123456')],
     });
-
-    it('renders correctly with an empty dye list', () => {
-      const svg = generateRandomDyesGrid({ dyes: [] });
-
-      expect(svg).toContain('<svg xmlns="http://www.w3.org/2000/svg"');
-      expect(svg).toContain('</svg>');
-    });
-
-    it('renders correctly with fewer than 3 dyes (partial first row)', () => {
-      const svg = generateRandomDyesGrid({ dyes: fiveDyes.slice(0, 2) });
-
-      expect(svg).toContain('Bone White');
-      expect(svg).toContain('Dalamud Red');
-    });
-
-    it('truncates long dye names (adds ellipsis for names > 18 chars)', () => {
-      const longName = makeDyeInfo(99, 'A Very Long Dye Name Indeed', '#123456');
-      const svg = generateRandomDyesGrid({ dyes: [longName] });
-
-      // The full name is 27 chars, truncation limit is 18 — expect ellipsis
-      expect(svg).toContain('…');
-    });
+    expect(svg).not.toContain('Sixth Dye');
   });
 
-  describe('branding', () => {
-    it('includes XIV Dye Tools footer', () => {
-      const svg = generateRandomDyesGrid({ dyes: fiveDyes });
-      expect(svg).toContain('XIV Dye Tools');
+  it('escapes XML in localized names', () => {
+    const svg = generateRandomDyesGrid({
+      ...defaultOptions,
+      dyes: [makeRow(1, 'A <&> Dye', '#101010')],
     });
+    expect(svg).toContain('A &lt;&amp;&gt; Dye');
+  });
+
+  it('renders the light theme surface', () => {
+    const svg = generateRandomDyesGrid({ ...defaultOptions, theme: 'light' });
+    expect(svg).toContain('#FFFFFF');
+  });
+
+  it('carries the mark and never an instruction', () => {
+    const svg = generateRandomDyesGrid(defaultOptions);
+    expect(svg).toContain('xivdyetools.app');
+    expect(svg).not.toContain('Run again');
   });
 });

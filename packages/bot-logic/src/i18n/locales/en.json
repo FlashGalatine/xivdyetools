@@ -637,5 +637,24 @@
     "matchQualityRatings": "Match Quality Ratings",
     "matchQualityRatingsContent": "**Perfect** (0 distance)\n**Excellent** (<10 distance)\n**Good** (<25 distance)\n**Fair** (<50 distance)\n**Approximate** (≥50 distance)\n\n*Lower distance = better match*",
     "poweredBy": "Powered by Photon WASM image processing"
+  },
+  "card": {
+    "stain": "STAIN",
+    "src": "SRC",
+    "mkt": "MKT",
+    "cost": "COST",
+    "base": "BASE",
+    "nearest": "NEAREST DYES",
+    "nearestMore": "+{n} more",
+    "ideal": "IDEAL HUE",
+    "found": "NEAREST DYE",
+    "name": "DYE",
+    "cat": "CATEGORY",
+    "idealKey": "outline = ideal · solid = found",
+    "bandKey": "bands: ≤6 / ≤12 / ≤20",
+    "tier0": "EXACT",
+    "tier1": "CLOSE",
+    "tier2": "LOOSE",
+    "tier3": "UNREACHABLE"
   }
 }
