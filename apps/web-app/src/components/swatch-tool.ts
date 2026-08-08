@@ -11,7 +11,6 @@
  * @module components/tools/swatch-tool
  */
 
-import { normalizeMatchingMethod } from '@xivdyetools/core';
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { MarketBoard } from '@components/market-board';
@@ -25,7 +24,7 @@ import {
   ToastService,
 } from '@services/index';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
-import { CharacterColorService, ColorConverter } from '@xivdyetools/core';
+import { CharacterColorService } from '@xivdyetools/core';
 import type { CharacterColor, CharacterColorMatch, SubRace, Gender } from '@xivdyetools/types';
 import { ICON_TOOL_CHARACTER } from '@shared/tool-icons';
 import { ICON_PALETTE, ICON_MARKET } from '@shared/ui-icons';
@@ -48,6 +47,7 @@ import '@components/v4/result-card';
 import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
 import { ShareService } from '@services/share-service';
+import { CharaImport } from '@components/chara-import';
 
 // ============================================================================
 // Types and Constants
@@ -135,11 +135,7 @@ const RACE_SPECIFIC_CATEGORIES: ColorCategory[] = ['hairColors', 'skinColors'];
  * (highlightColors may join this set if hair highlights are confirmed to use
  * the free picker too.)
  */
-const EVERCOLD_DEPRECATED_CATEGORIES: ColorCategory[] = [
-  'eyeColors',
-  'hairColors',
-  'skinColors',
-];
+const EVERCOLD_DEPRECATED_CATEGORIES: ColorCategory[] = ['eyeColors', 'hairColors', 'skinColors'];
 
 /**
  * Default values
@@ -163,6 +159,7 @@ const DEFAULTS = {
 export class SwatchTool extends BaseComponent {
   private options: SwatchToolOptions;
   private characterColorService: CharacterColorService;
+  private charaImport: CharaImport | null = null;
   private marketBoardService: MarketBoardService;
 
   // State
@@ -325,6 +322,8 @@ export class SwatchTool extends BaseComponent {
   destroy(): void {
     this.resultsPanelMediaQueryCleanup?.();
 
+    this.charaImport?.destroy();
+    this.charaImport = null;
     this.marketBoard?.destroy();
     this.marketPanel?.destroy();
     this.racePanel?.destroy();
@@ -1160,6 +1159,28 @@ export class SwatchTool extends BaseComponent {
       overflow-y: auto;
     `
     );
+
+    // 10A: the .chara reader sits ABOVE the workspace — the drop zone is an
+    // offer, not a replacement; everything below keeps working without it.
+    const charaContainer = this.createElement('div', {
+      attributes: { style: 'width: 100%; max-width: 1400px;' },
+    });
+    right.appendChild(charaContainer);
+    this.charaImport?.destroy();
+    this.charaImport = new CharaImport(charaContainer, {
+      onSlotPick: (hex) => {
+        this.selectCustomColor(hex);
+      },
+      onTribeGender: (tribe, gender) => {
+        this.setConfig({ race: tribe, gender });
+      },
+      onSubmitPalette: (dyes) => {
+        void import('@components/preset-submission-form').then(({ showPresetSubmissionForm }) => {
+          showPresetSubmissionForm(undefined, { dyes });
+        });
+      },
+    });
+    this.charaImport.init();
 
     // Main layout container: Color Grid (LEFT) | Results Area (RIGHT)
     // Use align-items: flex-start so children size to their content, not stretch to fill

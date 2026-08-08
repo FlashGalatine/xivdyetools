@@ -83,10 +83,19 @@ const MAX_DYES = 6;
 // Show Modal Function
 // ============================================
 
+/** Optional prefill (10A make-a-palette hands the glamour's dyes in). */
+export interface SubmissionFormInitial {
+  name?: string;
+  dyes?: Dye[];
+}
+
 /**
  * Show the preset submission form modal
  */
-export function showPresetSubmissionForm(onSubmit?: OnSubmitCallback): void {
+export function showPresetSubmissionForm(
+  onSubmit?: OnSubmitCallback,
+  initial?: SubmissionFormInitial
+): void {
   // Check authentication first
   if (!authService.isAuthenticated()) {
     ToastService.error(LanguageService.t('preset.loginToSubmit'));
@@ -95,10 +104,10 @@ export function showPresetSubmissionForm(onSubmit?: OnSubmitCallback): void {
 
   // Initialize form state
   const state: FormState = {
-    name: '',
+    name: initial?.name ?? '',
     description: '',
     category: 'events',
-    selectedDyes: [],
+    selectedDyes: initial?.dyes ? initial.dyes.slice(0, MAX_DYES) : [],
     tags: '',
     exampleLink: '',
   };
