@@ -739,6 +739,23 @@ export class PresetTool extends BaseLitComponent {
         <button class="sort-btn" @click=${this.handleSortNext}>
           ${LanguageService.t(sortKeys[this.config.sortBy] ?? 'preset.sort.popular')}
         </button>
+        ${
+          this.tab === 'mine' && this.isAuthenticated
+            ? html`<button
+                class="sort-btn"
+                @click=${() => {
+                  void import('../my-submissions-modal').then(({ showMySubmissionsModal }) =>
+                    showMySubmissionsModal(() => {
+                      void this.loadPresets();
+                      void this.loadUserSubmissions();
+                    })
+                  );
+                }}
+              >
+                ${LanguageService.t('preset.mySubmissions')}
+              </button>`
+            : nothing
+        }
         <span class="results-count">${pool.length} ${LanguageService.t('preset.resultsWord')}</span>
       </div>
       <div class="cat-row">
