@@ -110,8 +110,8 @@ export async function handleMixerV4Command(
     ? getLocalizedDyeName(dye2Resolved.itemID, dye2Resolved.name, locale)
     : dye2Resolved.name;
 
-  const dye1Emoji = dye1Resolved.id ? getDyeEmoji(dye1Resolved.id) : undefined;
-  const dye2Emoji = dye2Resolved.id ? getDyeEmoji(dye2Resolved.id) : undefined;
+  const dye1Emoji = dye1Resolved.id ? getDyeEmoji(dye1Resolved.stainID ?? 0) : undefined;
+  const dye2Emoji = dye2Resolved.id ? getDyeEmoji(dye2Resolved.stainID ?? 0) : undefined;
 
   const dye1Display = dye1Name
     ? `${dye1Emoji ? `${dye1Emoji} ` : ''}**${dye1Name}** (\`${dye1Resolved.hex.toUpperCase()}\`)`
@@ -123,7 +123,7 @@ export async function handleMixerV4Command(
   const modeDisplay = t.t(`mixer.modes.${blendingMode}`) || blendingMode;
 
   const matchLines = result.matches.map((match, i) => {
-    const emoji = getDyeEmoji(match.dye.id);
+    const emoji = getDyeEmoji(match.dye.stainID ?? 0);
     const emojiPrefix = emoji ? `${emoji} ` : '';
     const localizedName = getLocalizedDyeName(match.dye.itemID, match.dye.name, locale);
     const quality = getMatchQualityLabel(match.distance, t);

@@ -609,7 +609,7 @@ function buildSwatchResponse(
   const matchLines = matches.map((match, i) => {
     const { dye, distance } = match;
     const quality = getMatchQuality(distance, t);
-    const emoji = getDyeEmoji(dye.id);
+    const emoji = getDyeEmoji(dye.stainID ?? 0);
     const emojiPrefix = emoji ? `${emoji} ` : '';
     const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
 

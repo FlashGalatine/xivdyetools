@@ -161,7 +161,7 @@ async function processInfoCard(
 
   try {
     const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
-    const emoji = getDyeEmoji(dye.id);
+    const emoji = getDyeEmoji(dye.stainID ?? 0);
     const emojiPrefix = emoji ? `${emoji} ` : '';
 
     const rgb = dye.rgb;
@@ -199,7 +199,7 @@ async function sendDyeInfoFallback(
 ): Promise<void> {
   const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
   const localizedCategory = getLocalizedCategory(dye.category, locale);
-  const emoji = getDyeEmoji(dye.id);
+  const emoji = getDyeEmoji(dye.stainID ?? 0);
   const emojiPrefix = emoji ? `${emoji} ` : '';
   const rgb = dye.rgb;
   const hsv = dye.hsv;
@@ -319,7 +319,7 @@ async function processRandomGrid(
     // Build description with Discord emojis
     const dyeList = result.dyes
       .map((dye, i) => {
-        const emoji = getDyeEmoji(dye.id);
+        const emoji = getDyeEmoji(dye.stainID ?? 0);
         const emojiPrefix = emoji ? `${emoji} ` : '';
         const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
         return `**${i + 1}.** ${emojiPrefix}${localizedName} (\`${dye.hex.toUpperCase()}\`)`;
@@ -358,7 +358,7 @@ async function sendRandomFallback(
 
   const dyeList = result.dyes
     .map((dye, i) => {
-      const emoji = getDyeEmoji(dye.id);
+      const emoji = getDyeEmoji(dye.stainID ?? 0);
       const emojiPrefix = emoji ? `${emoji} ` : '';
       const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
       const localizedCategory = getLocalizedCategory(dye.category, locale);
@@ -381,7 +381,7 @@ async function sendRandomFallback(
 // ============================================================================
 
 function formatDyeListItem(dye: Dye, locale: LocaleCode): string {
-  const emoji = getDyeEmoji(dye.id);
+  const emoji = getDyeEmoji(dye.stainID ?? 0);
   const emojiPrefix = emoji ? `${emoji} ` : '';
   const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
   return `${emojiPrefix}**${localizedName}** (\`${dye.hex.toUpperCase()}\`)`;

@@ -110,7 +110,7 @@ async function processAccessibilityCommand(
     // Build Discord embed description with emojis (for single-dye mode, add emoji prefix)
     let description = result.embed.description ?? '';
     if (result.mode === 'simulation' && dyes[0]?.dye) {
-      const emoji = getDyeEmoji(dyes[0].dye.id);
+      const emoji = getDyeEmoji(dyes[0].dye.stainID ?? 0);
       if (emoji) description = description.replace(/^\*\*/, `${emoji} **`);
     } else if (result.mode === 'contrast') {
       // Add emojis to the dye list lines in contrast mode
@@ -118,7 +118,7 @@ async function processAccessibilityCommand(
       description = lines.map((line: string) => {
         const dyeMatch = dyes.find((d) => d.dye && line.includes(d.name));
         if (dyeMatch?.dye) {
-          const emoji = getDyeEmoji(dyeMatch.dye.id);
+          const emoji = getDyeEmoji(dyeMatch.dye.stainID ?? 0);
           return emoji ? line.replace(dyeMatch.name, `${emoji} ${dyeMatch.name}`) : line;
         }
         return line;

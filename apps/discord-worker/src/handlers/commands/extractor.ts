@@ -331,7 +331,7 @@ function buildSingleMatchResponse(
 ): Response {
   const { dye, distance } = match;
   const quality = getMatchQuality(distance, t);
-  const emoji = getDyeEmoji(dye.id);
+  const emoji = getDyeEmoji(dye.stainID ?? 0);
   const emojiPrefix = emoji ? `${emoji} ` : '';
 
   // Build input color description
@@ -340,7 +340,7 @@ function buildSingleMatchResponse(
   inputDesc += `**${t.t('common.hsv')}:** \`${formatHsv(targetHex)}\``;
 
   if (fromDye) {
-    const fromEmoji = getDyeEmoji(fromDye.id);
+    const fromEmoji = getDyeEmoji(fromDye.stainID ?? 0);
     const fromEmojiPrefix = fromEmoji ? `${fromEmoji} ` : '';
     const fromDyeName = getLocalizedDyeName(fromDye.itemID, fromDye.name, t.getLocale());
     inputDesc = `${fromEmojiPrefix}**${fromDyeName}**\n${inputDesc}`;
@@ -413,7 +413,7 @@ function buildMultiMatchResponse(
   const matchLines = matches.map((match, i) => {
     const { dye, distance } = match;
     const quality = getMatchQuality(distance, t);
-    const emoji = getDyeEmoji(dye.id);
+    const emoji = getDyeEmoji(dye.stainID ?? 0);
     const emojiPrefix = emoji ? `${emoji} ` : '';
     const localizedName = getLocalizedDyeName(dye.itemID, dye.name, t.getLocale());
 
@@ -656,7 +656,7 @@ async function processImageExtraction(
  */
 function buildImageMatchDescription(matches: PaletteMatch[], t: Translator): string {
   const lines = matches.map((match, i) => {
-    const emoji = getDyeEmoji(match.matchedDye.id);
+    const emoji = getDyeEmoji(match.matchedDye.stainID ?? 0);
     const emojiPrefix = emoji ? `${emoji} ` : '';
     const quality = getImageMatchQuality(match.distance);
     const qualityLabel = t.t(`quality.${quality.shortLabel.toLowerCase()}`);

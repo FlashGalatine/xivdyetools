@@ -1,39 +1,52 @@
 /**
- * Discord App Emoji Upload Script
+ * Dye emoji sync — GENERATED from dyes.json (5.0, confirmed 1a).
  *
- * Uploads dye emoji images to Discord's Application Emojis feature.
- * Discord allows up to 2,000 emojis per application.
+ * Every application emoji is rendered at run time: a 128×128 rounded-square
+ * bare chip (r 28 ≈ 22%) of the dye hex with the suite's hairline inset ring
+ * (6 px, rgba(127,127,127,0.45) — visible on Discord dark #313338 and light
+ * #FFFFFF both, invisible against mid-tones where it is not needed). No
+ * source image folder, no external repo, our own provenance. Keyed by
+ * **stainID** end to end; Facewear stays out (it is not in dyes.json).
  *
- * Run with: npx tsx scripts/upload-emojis.ts
+ * Sync semantics (5.0 — no longer skip-only):
+ * - upload any dye missing from the application set
+ * - when ARTWORK_VERSION differs from the mapping's recorded tag, delete and
+ *   re-upload the whole set (artwork change = full regeneration)
+ * - delete application emojis whose names no longer correspond to a dye
+ * - two dye names normalising to the same emoji name FAIL the run loudly —
+ *   a silent skip would leave one dye wearing the other's chip
  *
- * Environment variables:
- * - DISCORD_TOKEN: Your bot token
- * - DISCORD_CLIENT_ID: Your application's client ID
+ * Usage:
+ *   $env:DISCORD_TOKEN = "..."; $env:DISCORD_CLIENT_ID = "..."
+ *   npm run upload-emojis
  *
- * @see https://discord.com/developers/docs/resources/emoji
+ * Capacity: ~125 emojis vs Discord's 2,000-per-application cap.
  */
 
 import 'dotenv/config';
-import * as fs from 'fs';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
-// ES Module dirname equivalent
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+const here = dirname(fileURLToPath(import.meta.url));
 
-// Path to emoji files (in the discord-bot project)
-const EMOJI_DIR = path.resolve(__dirname, '../../xivdyetools-discord-bot/emoji');
+const DYE_DATA_PATH = resolve(here, '../../../packages/core/src/data/dyes.json');
+const MAPPING_PATH = resolve(here, '../src/data/emoji-mapping.json');
 
-// Path to dye database (in the core project)
-const DYE_DATA_PATH = path.resolve(__dirname, '../../../packages/core/src/data/dyes.json');
+/** Bump when the chip artwork generation changes — forces a full re-upload. */
+const ARTWORK_VERSION = 'chip-1';
 
-/** Schema-v2 dye entry (dyes.json). */
-interface Dye {
+interface DyeEntry {
   stainID: number;
-  legacyItemID: number | null;
   name: string;
-  category: string;
+  hex: string;
+}
+
+interface EmojiMappingFile {
+  artwork: string;
+  byStainId: Record<string, string>;
 }
 
 interface DiscordEmoji {
@@ -41,213 +54,154 @@ interface DiscordEmoji {
   name: string;
 }
 
+const token = process.env.DISCORD_TOKEN;
+const clientId = process.env.DISCORD_CLIENT_ID;
+if (!token || !clientId) {
+  console.error('Error: DISCORD_TOKEN and DISCORD_CLIENT_ID environment variables are required');
+  process.exit(1);
+}
+
+const API = `https://discord.com/api/v10/applications/${clientId}/emojis`;
+const HEADERS = { Authorization: `Bot ${token}`, 'Content-Type': 'application/json' };
+
 /**
- * Convert dye name to valid emoji name (alphanumeric + underscore, 2-32 chars)
+ * Lowercase, non-alphanumeric → _, collapse, trim, ≤32 chars — kept
+ * human-readable in the emoji picker. Collisions fail the run (below).
  */
 function dyeNameToEmojiName(name: string): string {
   return name
     .toLowerCase()
-    .replace(/[^a-z0-9]/g, '_')  // Replace non-alphanumeric with underscore
-    .replace(/_+/g, '_')          // Collapse multiple underscores
-    .replace(/^_|_$/g, '')        // Remove leading/trailing underscores
-    .slice(0, 32);                // Max 32 characters
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 32);
 }
 
-/**
- * Read file and convert to base64 data URL
- */
-function fileToBase64DataUrl(filePath: string): string {
-  const buffer = fs.readFileSync(filePath);
-  const base64 = buffer.toString('base64');
-  const ext = path.extname(filePath).slice(1);
-  const mimeType = ext === 'webp' ? 'image/webp' : `image/${ext}`;
-  return `data:${mimeType};base64,${base64}`;
+/** The 1a chip: rounded square of the dye hex + 6 px hairline inset ring. */
+function chipSvg(hex: string): string {
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">` +
+    `<rect x="0" y="0" width="128" height="128" rx="28" fill="${hex}"/>` +
+    `<rect x="3" y="3" width="122" height="122" rx="25" fill="none" stroke="rgba(127,127,127,0.45)" stroke-width="6"/>` +
+    `</svg>`
+  );
 }
 
-/**
- * Get existing emojis from Discord
- */
-async function getExistingEmojis(token: string, clientId: string): Promise<Map<string, DiscordEmoji>> {
-  const url = `https://discord.com/api/v10/applications/${clientId}/emojis`;
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bot ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to get emojis: ${response.status} - ${error}`);
+async function renderChipPng(hex: string): Promise<Buffer> {
+  // resvg-wasm is already a worker dependency; in Node we init it from the
+  // bundled wasm file.
+  const { initWasm, Resvg } = await import('@resvg/resvg-wasm');
+  if (!(renderChipPng as { initialized?: boolean }).initialized) {
+    const wasmPath = require.resolve('@resvg/resvg-wasm/index_bg.wasm');
+    await initWasm(readFileSync(wasmPath));
+    (renderChipPng as { initialized?: boolean }).initialized = true;
   }
-
-  const data = await response.json() as { items: DiscordEmoji[] };
-  const emojiMap = new Map<string, DiscordEmoji>();
-
-  for (const emoji of data.items || []) {
-    emojiMap.set(emoji.name, emoji);
-  }
-
-  return emojiMap;
+  const resvg = new Resvg(chipSvg(hex));
+  return Buffer.from(resvg.render().asPng());
 }
 
-/**
- * Upload a single emoji to Discord
- */
-async function uploadEmoji(
-  token: string,
-  clientId: string,
-  name: string,
-  imageDataUrl: string
-): Promise<DiscordEmoji> {
-  const url = `https://discord.com/api/v10/applications/${clientId}/emojis`;
+async function listApplicationEmojis(): Promise<DiscordEmoji[]> {
+  const res = await fetch(API, { headers: HEADERS });
+  if (!res.ok) throw new Error(`List failed: ${res.status} ${await res.text()}`);
+  const body = (await res.json()) as { items: DiscordEmoji[] };
+  return body.items;
+}
 
-  const response = await fetch(url, {
+async function uploadEmoji(name: string, png: Buffer): Promise<DiscordEmoji> {
+  const res = await fetch(API, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bot ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      name,
-      image: imageDataUrl,
-    }),
+    headers: HEADERS,
+    body: JSON.stringify({ name, image: `data:image/png;base64,${png.toString('base64')}` }),
   });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to upload emoji "${name}": ${response.status} - ${error}`);
+  if (res.status === 429) {
+    const retry = ((await res.json()) as { retry_after?: number }).retry_after ?? 30;
+    console.log(`  Rate limited, waiting ${retry}s...`);
+    await new Promise((r) => setTimeout(r, retry * 1000));
+    return uploadEmoji(name, png);
   }
-
-  return response.json() as Promise<DiscordEmoji>;
+  if (!res.ok) throw new Error(`Upload ${name} failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as DiscordEmoji;
 }
 
-/**
- * Delay helper for rate limiting
- */
-function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+async function deleteEmoji(emoji: DiscordEmoji): Promise<void> {
+  const res = await fetch(`${API}/${emoji.id}`, { method: 'DELETE', headers: HEADERS });
+  if (!res.ok && res.status !== 404) {
+    throw new Error(`Delete ${emoji.name} failed: ${res.status} ${await res.text()}`);
+  }
 }
 
-async function main() {
-  const token = process.env.DISCORD_TOKEN;
-  const clientId = process.env.DISCORD_CLIENT_ID;
+async function main(): Promise<void> {
+  const dyes: DyeEntry[] = JSON.parse(readFileSync(DYE_DATA_PATH, 'utf8'));
+  const mapping: EmojiMappingFile = JSON.parse(readFileSync(MAPPING_PATH, 'utf8'));
 
-  if (!token) {
-    console.error('Error: DISCORD_TOKEN environment variable is not set');
-    process.exit(1);
-  }
-
-  if (!clientId) {
-    console.error('Error: DISCORD_CLIENT_ID environment variable is not set');
-    process.exit(1);
-  }
-
-  // Load dye database
-  console.log('Loading dye database...');
-  const dyeData: Dye[] = JSON.parse(fs.readFileSync(DYE_DATA_PATH, 'utf-8'));
-
-  // Create legacy-itemID -> dye name map (the emoji files are keyed by the
-  // market-era item IDs; schema v2 calls these legacyItemID)
-  const dyeMap = new Map<number, string>();
-  for (const dye of dyeData) {
-    if (dye.legacyItemID !== null) {
-      dyeMap.set(dye.legacyItemID, dye.name);
+  // Collision check: two names normalising identically must FAIL the run.
+  const byEmojiName = new Map<string, DyeEntry>();
+  for (const dye of dyes) {
+    const name = dyeNameToEmojiName(dye.name);
+    const clash = byEmojiName.get(name);
+    if (clash) {
+      console.error(
+        `FATAL: "${dye.name}" and "${clash.name}" both normalise to emoji name "${name}".`
+      );
+      process.exit(1);
     }
+    byEmojiName.set(name, dye);
   }
-  console.log(`Loaded ${dyeMap.size} dyes`);
 
-  // Get list of emoji files
-  const emojiFiles = fs.readdirSync(EMOJI_DIR)
-    .filter(f => f.endsWith('.webp') || f.endsWith('.png'))
-    .sort();
-  console.log(`Found ${emojiFiles.length} emoji files`);
+  const existing = await listApplicationEmojis();
+  const existingByName = new Map(existing.map((e) => [e.name, e]));
+  const artworkChanged = mapping.artwork !== ARTWORK_VERSION;
+  if (artworkChanged) {
+    console.log(
+      `Artwork generation changed (${mapping.artwork} -> ${ARTWORK_VERSION}) — regenerating the full set.`
+    );
+  }
 
-  // Get existing emojis
-  console.log('\nFetching existing emojis from Discord...');
-  const existingEmojis = await getExistingEmojis(token, clientId);
-  console.log(`Found ${existingEmojis.size} existing emojis`);
-
-  // Process each emoji
+  const newMapping: EmojiMappingFile = { artwork: ARTWORK_VERSION, byStainId: {} };
   let uploaded = 0;
-  let skipped = 0;
-  let errors = 0;
+  let replaced = 0;
 
-  console.log('\nUploading emojis...\n');
+  for (const dye of dyes) {
+    const name = dyeNameToEmojiName(dye.name);
+    let emoji = existingByName.get(name);
 
-  for (const file of emojiFiles) {
-    const itemId = parseInt(path.basename(file, path.extname(file)), 10);
-    const dyeName = dyeMap.get(itemId);
-
-    if (!dyeName) {
-      console.log(`⚠️  Skipped ${file}: No matching dye found for itemID ${itemId}`);
-      skipped++;
-      continue;
+    if (emoji && artworkChanged) {
+      await deleteEmoji(emoji);
+      existingByName.delete(name);
+      emoji = undefined;
+      replaced++;
     }
 
-    const emojiName = dyeNameToEmojiName(dyeName);
-
-    // Check if emoji already exists
-    if (existingEmojis.has(emojiName)) {
-      console.log(`⏭️  Skipped "${emojiName}" (${dyeName}): Already exists`);
-      skipped++;
-      continue;
-    }
-
-    // Upload emoji
-    const filePath = path.join(EMOJI_DIR, file);
-    try {
-      const imageDataUrl = fileToBase64DataUrl(filePath);
-      await uploadEmoji(token, clientId, emojiName, imageDataUrl);
-      console.log(`✅ Uploaded "${emojiName}" (${dyeName})`);
+    if (!emoji) {
+      const png = await renderChipPng(dye.hex);
+      emoji = await uploadEmoji(name, png);
       uploaded++;
-
-      // Rate limit: Discord allows 50 requests per second, but be conservative
-      await delay(100);
-    } catch (error) {
-      console.error(`❌ Error uploading "${emojiName}" (${dyeName}): ${error}`);
-      errors++;
-
-      // If rate limited, wait longer
-      if (error instanceof Error && error.message.includes('429')) {
-        console.log('Rate limited, waiting 30 seconds...');
-        await delay(30000);
-      }
+      console.log(`  Uploaded :${name}: for ${dye.name} (stainID ${dye.stainID})`);
+      await new Promise((r) => setTimeout(r, 150));
     }
+
+    newMapping.byStainId[String(dye.stainID)] = `<:${emoji.name}:${emoji.id}>`;
+    existingByName.delete(name);
   }
 
-  console.log('\n========================================');
-  console.log('Upload complete!');
-  console.log(`  ✅ Uploaded: ${uploaded}`);
-  console.log(`  ⏭️  Skipped: ${skipped}`);
-  console.log(`  ❌ Errors: ${errors}`);
-  console.log('========================================');
-
-  // Generate emoji mapping file for use in the worker
-  console.log('\nGenerating emoji mapping...');
-
-  // Re-fetch to get all emoji IDs
-  const finalEmojis = await getExistingEmojis(token, clientId);
-
-  // Create itemID -> emoji format string mapping
-  const emojiMapping: Record<number, string> = {};
-
-  for (const [itemId, dyeName] of dyeMap.entries()) {
-    const emojiName = dyeNameToEmojiName(dyeName);
-    const emoji = finalEmojis.get(emojiName);
-    if (emoji) {
-      // Discord emoji format: <:name:id>
-      emojiMapping[itemId] = `<:${emoji.name}:${emoji.id}>`;
-    }
+  // Anything left in the application set no longer corresponds to a dye.
+  let deleted = 0;
+  for (const orphan of existingByName.values()) {
+    await deleteEmoji(orphan);
+    deleted++;
+    console.log(`  Deleted orphan :${orphan.name}:`);
   }
 
-  // Write mapping file
-  const mappingPath = path.resolve(__dirname, '../src/data/emoji-mapping.json');
-  fs.mkdirSync(path.dirname(mappingPath), { recursive: true });
-  fs.writeFileSync(mappingPath, JSON.stringify(emojiMapping, null, 2));
-  console.log(`Wrote emoji mapping to ${mappingPath}`);
-  console.log(`  Total mapped: ${Object.keys(emojiMapping).length} emojis`);
+  newMapping.byStainId = Object.fromEntries(
+    Object.entries(newMapping.byStainId).sort(([a], [b]) => Number(a) - Number(b))
+  );
+  writeFileSync(MAPPING_PATH, `${JSON.stringify(newMapping, null, 2)}\n`);
+
+  console.log(
+    `Done. ${dyes.length} dyes → uploaded ${uploaded} (replaced ${replaced}), deleted ${deleted} orphans. Mapping written.`
+  );
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error('Sync failed:', error);
+  process.exit(1);
+});

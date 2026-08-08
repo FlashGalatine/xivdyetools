@@ -85,6 +85,8 @@ export interface ResolvedColor {
   id?: number;
   /** FFXIV item ID if resolved from a dye */
   itemID?: number | null;
+  /** Game stain ID if resolved from a dye (5.0 canonical key) */
+  stainID?: number | null;
   /** The full Dye object if resolved from a dye */
   dye?: Dye;
 }
@@ -134,6 +136,7 @@ export function resolveColorInput(
           name: closest.name,
           id: closest.id,
           itemID: closest.itemID,
+          stainID: closest.stainID,
           dye: closest,
         };
       }
@@ -161,6 +164,7 @@ export function resolveColorInput(
         name: dye.name,
         id: dye.id,
         itemID: dye.itemID,
+      stainID: dye.stainID,
         dye,
       };
     }
@@ -177,6 +181,7 @@ export function resolveColorInput(
           name: closest.name,
           id: closest.id,
           itemID: closest.itemID,
+          stainID: closest.stainID,
           dye: closest,
         };
       }

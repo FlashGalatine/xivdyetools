@@ -259,7 +259,7 @@ async function processFindCommand(
 
     // Get dye emoji and localized name for target
     const localizedTargetName = dyeNames[result.targetDye.itemID] ?? result.targetDye.name;
-    const emoji = getDyeEmoji(result.targetDye.itemID);
+    const emoji = getDyeEmoji(result.targetDye.stainID ?? 0);
     const emojiPrefix = emoji ? `${emoji} ` : '';
 
     // Send response

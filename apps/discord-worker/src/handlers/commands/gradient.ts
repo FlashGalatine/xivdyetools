@@ -81,8 +81,8 @@ export async function handleGradientCommand(
 async function processGradientCommand(
   interaction: DiscordInteraction,
   env: Env,
-  startColor: { hex: string; name?: string; id?: number; itemID?: number | null },
-  endColor: { hex: string; name?: string; id?: number; itemID?: number | null },
+  startColor: { hex: string; name?: string; id?: number; itemID?: number | null; stainID?: number | null },
+  endColor: { hex: string; name?: string; id?: number; itemID?: number | null; stainID?: number | null },
   stepCount: number,
   colorSpace: InterpolationMode,
   matchingMethod: MatchingMethod,
@@ -130,8 +130,8 @@ async function processGradientCommand(
       return `**${i + 1}.** ${dyeText} • \`${step.hex.toUpperCase()}\` • ${quality}${label}`;
     }).join('\n');
 
-    const startEmoji = startColor.id ? getDyeEmoji(startColor.id) : undefined;
-    const endEmoji = endColor.id ? getDyeEmoji(endColor.id) : undefined;
+    const startEmoji = startColor.id ? getDyeEmoji(startColor.stainID ?? 0) : undefined;
+    const endEmoji = endColor.id ? getDyeEmoji(endColor.stainID ?? 0) : undefined;
     const startText = startColor.name
       ? `${startEmoji ? `${startEmoji} ` : ''}**${startColor.name}** (\`${startColor.hex.toUpperCase()}\`)`
       : `\`${startColor.hex.toUpperCase()}\``;
