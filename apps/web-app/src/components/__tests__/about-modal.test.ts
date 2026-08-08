@@ -29,6 +29,13 @@ vi.mock('@services/language-service', () => ({
 vi.mock('@shared/constants', () => ({
   APP_NAME: 'XIV Dye Tools',
   APP_VERSION: '4.0.0',
+  BUILD_DATE: '2026.08.07',
+}));
+
+vi.mock('@services/dye-service-wrapper', () => ({
+  dyeService: {
+    getAllDyes: () => new Array(125).fill({}),
+  },
 }));
 
 vi.mock('@shared/social-icons', () => ({
@@ -115,7 +122,9 @@ describe('AboutModal', () => {
       expect(mockShow).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'custom',
-          size: 'md',
+          eyebrow: 'XIV DYE TOOLS',
+          subtitle: 'about.subtitle',
+          confirmText: 'common.close',
           closable: true,
           closeOnBackdrop: true,
           closeOnEscape: true,

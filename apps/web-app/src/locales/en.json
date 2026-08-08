@@ -22,10 +22,16 @@
   },
   "about": {
     "title": "About XIV Dye Tools",
-    "connect": "Connect",
-    "builtWith": "Built with TypeScript, Vite, and Tailwind CSS",
     "developerApi": "Developer API",
-    "developerApiDesc": "Build your own tools with the XIV Dye Tools public API — dye database, color matching, and more."
+    "developerApiDesc": "Every dye, stain ID and spectrum mapping this app uses, served as JSON. No key required.",
+    "subtitle": "Who made this, what it runs on, and who owns the game.",
+    "statVersion": "VERSION",
+    "statBuild": "BUILD",
+    "statDyes": "DYES",
+    "elsewhere": "ELSEWHERE",
+    "apiSummary": "Public dye data, two endpoints",
+    "legalLabel": "ATTRIBUTION",
+    "spectralCredit": "Realistic paint mixing (Kubelka–Munk theory) by"
   },
   "footer": {
     "version": "Version",

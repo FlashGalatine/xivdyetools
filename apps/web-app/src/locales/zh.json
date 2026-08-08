@@ -22,10 +22,16 @@
   },
   "about": {
     "title": "关于 XIV 染色工具",
-    "connect": "连接",
-    "builtWith": "使用TypeScript、Vite和Tailwind CSS构建",
     "developerApi": "开发者API",
-    "developerApiDesc": "使用 XIV 染色工具公共API构建您自己的工具 — 染料数据库、颜色匹配等。"
+    "developerApiDesc": "本应用使用的所有染剂、Stain ID 和光谱映射，以 JSON 提供。无需密钥。",
+    "subtitle": "谁做了这个工具、它靠什么运行、游戏归谁所有。",
+    "statVersion": "版本",
+    "statBuild": "构建",
+    "statDyes": "染剂",
+    "elsewhere": "其他平台",
+    "apiSummary": "公开染剂数据，两个接口",
+    "legalLabel": "版权声明",
+    "spectralCredit": "逼真的颜料混合（Kubelka–Munk 理论）来自"
   },
   "footer": {
     "version": "版本",

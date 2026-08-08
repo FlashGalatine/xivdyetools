@@ -18,6 +18,9 @@ export const APP_NAME = 'XIV Dye Tools';
 // Version injected from package.json by Vite at build time
 declare const __APP_VERSION__: string;
 export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
+// Build date (yyyy.mm.dd) stamped by Vite at build time — About's BUILD cell
+declare const __BUILD_DATE__: string;
+export const BUILD_DATE = typeof __BUILD_DATE__ !== 'undefined' ? __BUILD_DATE__ : '';
 // ============================================================================
 // Theme Configuration
 // ============================================================================

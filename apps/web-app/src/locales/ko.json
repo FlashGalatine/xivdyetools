@@ -22,10 +22,16 @@
   },
   "about": {
     "title": "XIV 염색 도구 정보",
-    "connect": "연결",
-    "builtWith": "TypeScript, Vite, Tailwind CSS로 구축됨",
     "developerApi": "개발자 API",
-    "developerApiDesc": "XIV 염색 도구 공개 API로 나만의 도구를 만드세요 — 염료 데이터베이스, 색상 매칭 등."
+    "developerApiDesc": "이 앱이 사용하는 모든 염료, Stain ID, 스펙트럼 매핑을 JSON으로 제공합니다. 키가 필요 없습니다.",
+    "subtitle": "누가 만들었고, 무엇으로 돌아가며, 게임의 권리는 누구에게 있는지.",
+    "statVersion": "버전",
+    "statBuild": "빌드",
+    "statDyes": "염료",
+    "elsewhere": "다른 곳에서",
+    "apiSummary": "공개 염료 데이터, 엔드포인트 2개",
+    "legalLabel": "저작권 표기",
+    "spectralCredit": "사실적인 물감 혼합(쿠벨카-뭉크 이론):"
   },
   "footer": {
     "version": "버전",

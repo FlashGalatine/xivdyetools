@@ -22,10 +22,16 @@
   },
   "about": {
     "title": "Über XIV Farbwerkzeuge",
-    "connect": "Verbinden",
-    "builtWith": "Erstellt mit TypeScript, Vite und Tailwind CSS",
     "developerApi": "Entwickler-API",
-    "developerApiDesc": "Erstelle eigene Tools mit der öffentlichen XIV Farbwerkzeuge API — Farbdatenbank, Farbabgleich und mehr."
+    "developerApiDesc": "Alle Farbstoffe, Stain-IDs und Spektrum-Zuordnungen dieser App als JSON. Kein Schlüssel nötig.",
+    "subtitle": "Wer das gebaut hat, worauf es läuft und wem das Spiel gehört.",
+    "statVersion": "VERSION",
+    "statBuild": "BUILD",
+    "statDyes": "FARBSTOFFE",
+    "elsewhere": "ANDERSWO",
+    "apiSummary": "Öffentliche Farbstoffdaten, zwei Endpunkte",
+    "legalLabel": "RECHTLICHES",
+    "spectralCredit": "Realistische Farbmischung (Kubelka–Munk-Theorie) von"
   },
   "footer": {
     "version": "Version",

@@ -7,6 +7,8 @@ import pkg from './package.json'
 export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
+    // About's BUILD stat cell (yyyy.mm.dd, stamped at build time)
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10).replace(/-/g, '.')),
   },
   root: 'src',
   base: '/',
