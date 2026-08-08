@@ -1605,7 +1605,11 @@
       "gradient": "Farbverlauf-Ersteller",
       "mixer": "Farbstoff-Mischer",
       "swatch": "Farbmuster-Zuordnung"
-    }
+    },
+    "spectrumShort": "SPEK.",
+    "acquisitionShort": "QUELLE",
+    "categoryShort": "KAT.",
+    "hueOff": "FARBTON"
   },
   "share": {
     "button": "Teilen",

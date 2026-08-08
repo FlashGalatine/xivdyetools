@@ -198,7 +198,11 @@
       "gradient": "渐变生成器",
       "mixer": "染剂混合器",
       "swatch": "色板匹配器"
-    }
+    },
+    "spectrumShort": "光谱",
+    "acquisitionShort": "来源",
+    "categoryShort": "色系",
+    "hueOff": "色相差"
   },
   "config": {
     "harmonyType": "和谐类型",

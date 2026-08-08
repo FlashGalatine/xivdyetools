@@ -1605,7 +1605,11 @@
       "gradient": "Créateur de Dégradé",
       "mixer": "Mélangeur de Teintures",
       "swatch": "Nuancier"
-    }
+    },
+    "spectrumShort": "SPECTRE",
+    "acquisitionShort": "SOURCE",
+    "categoryShort": "CAT.",
+    "hueOff": "TEINTE"
   },
   "share": {
     "button": "Partager",

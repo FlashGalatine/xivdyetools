@@ -1605,7 +1605,11 @@
       "gradient": "グラデーションビルダー",
       "mixer": "染料ミキサー",
       "swatch": "スウォッチマッチャー"
-    }
+    },
+    "spectrumShort": "スペクトル",
+    "acquisitionShort": "入手先",
+    "categoryShort": "系統",
+    "hueOff": "色相差"
   },
   "share": {
     "button": "共有",

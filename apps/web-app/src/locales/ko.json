@@ -1604,7 +1604,11 @@
       "gradient": "그라디언트 빌더",
       "mixer": "염료 믹서",
       "swatch": "색상 매칭"
-    }
+    },
+    "spectrumShort": "스펙트럼",
+    "acquisitionShort": "출처",
+    "categoryShort": "계열",
+    "hueOff": "색상차"
   },
   "share": {
     "button": "공유",
