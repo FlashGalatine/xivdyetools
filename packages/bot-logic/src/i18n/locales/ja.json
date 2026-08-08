@@ -701,6 +701,17 @@
     "cmpTag3": "遠い",
     "cmpKey": "緑＝近い・帯 5 / 10 / 20",
     "cmpRatioKey": "コントラスト比は明度差で距離ではありません",
-    "triKey": "上三角・各ペア1回"
+    "triKey": "上三角・各ペア1回",
+    "lTarget": "目標",
+    "lBoardOnly": "市場のみ",
+    "lVendor": "店売り",
+    "lNoPrice": "価格なし",
+    "lCandidate": "候補",
+    "vendorCheaper": "店売りが安い",
+    "budgetKey": "GIL/ΔE =（目標 − 行）÷ ΔE2000",
+    "budgetKeyMethod": "ΔE列は{tag} · 比率はΔE2000固定",
+    "budgetBest": "最高コスパ: **{name}** — ΔE {de}・{price}",
+    "budgetNoTarget": "{world}に目標の価格なし — 順位・比率は空欄",
+    "budgetFloor": "すでに最安ティア — {price}を下回るものはありません。"
   }
 }

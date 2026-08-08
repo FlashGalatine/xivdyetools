@@ -8,6 +8,7 @@
  */
 
 import type { Dye, PriceData } from '@xivdyetools/types';
+import type { ConsolidationType, MatchingMethod } from '@xivdyetools/core';
 
 // ============================================================================
 // PRICE DATA TYPES
@@ -42,80 +43,89 @@ export interface CachedPriceEntry {
 }
 
 // ============================================================================
-// BUDGET SUGGESTION TYPES
+// 13G LEDGER TYPES (5.0)
 // ============================================================================
 
 /**
- * A budget-friendly alternative to an expensive dye
- *
- * Combines dye information, pricing, and calculated metrics
- * to help users find cheaper alternatives.
+ * Options for the ledger build. The old `maxPrice`/`sortBy`/`limit` are gone:
+ * the ledger's sort IS the gil/ΔE ratio (a PNG cannot re-sort), and the row
+ * cap belongs to the frame.
  */
-export interface BudgetSuggestion {
-  /** The alternative dye */
+export interface LedgerSearchOptions {
+  /** Matching method for the ΔE column (default ciede2000) */
+  method?: MatchingMethod;
+
+  /** Match line, ΔE2000 only (2–20, default 8) — other methods pin to their
+   *  calibrated MATCH middle cut */
+  matchLine?: number;
+
+  /** Remove the Venture Coffers group (gacha — no purchasable source) */
+  excludeCoffers?: boolean;
+
+  /** Remove Wide Spectrum #1 + #2 (types B/C — a different acquisition path) */
+  excludeWideSpectrum?: boolean;
+}
+
+/** A priceless candidate row — the price lives on its group. */
+export interface LedgerRowResult {
   dye: Dye;
 
-  /** Market board price info (null if no listings) */
-  price: DyePriceData | null;
+  /** Distance in the chosen method's native unit */
+  de: number;
 
-  /** Color distance from target (lower = more similar) */
-  colorDistance: number;
+  /** Pinned ΔE2000 (drives the ratio + sort fallback) */
+  de2000: number;
 
-  /** Amount saved compared to target in gil */
-  savings: number;
+  /** gil per ΔE2000 point — null when target or group has no price */
+  perDe: number | null;
 
-  /** Percentage savings compared to target */
-  savingsPercent: number;
-
-  /**
-   * Combined value score (lower = better value)
-   *
-   * Calculated as: (colorDistance * 2) + (price / 1000)
-   * This balances color similarity with price.
-   */
-  valueScore: number;
+  /** DISTINGUISH % integer tie (amber in the frame, ΔE2000 breaks the sort) */
+  tie?: boolean;
 }
 
-/**
- * Options for the budget find operation
- */
-export interface BudgetSearchOptions {
-  /** Maximum price to consider in gil (default: no limit) */
-  maxPrice?: number;
+/** One pricing-path group: A/B/C consolidated item or a board-only listing. */
+export interface LedgerGroupResult {
+  /** 'A' | 'B' | 'C' | 'x{itemID}' */
+  key: string;
 
-  /** Maximum color distance from target (default: 50) */
-  maxDistance?: number;
+  type: ConsolidationType | null;
 
-  /** How to sort results */
-  sortBy?: BudgetSortOption;
+  /** Verbatim EN Spectrum item name for A/B/C; the raw acquisition otherwise
+   *  (the handler localizes board-only labels) */
+  label: string;
 
-  /** Maximum results to return (default: 5) */
-  limit?: number;
+  /** Raw acquisition for board-only groups, null for A/B/C */
+  acquisition: string | null;
+
+  /** The group's single gil figure, or null (offline board-only) */
+  price: number | null;
+
+  /** A's vendor 216 undercuts the board listing */
+  vendorCheaper: boolean;
+
+  rows: LedgerRowResult[];
 }
 
-/**
- * Sort options for budget suggestions
- */
-export type BudgetSortOption = 'price' | 'color_match' | 'value_score';
-
-/**
- * Result of a budget find operation
- */
-export interface BudgetFindResult {
-  /** The target dye user wants alternatives for */
+/** Result of a 13G ledger build. */
+export interface BudgetLedgerFindResult {
   targetDye: Dye;
 
-  /** Target dye's current price (null if no listings) */
-  targetPrice: DyePriceData | null;
+  /** The target's group-rule price in gil, or null — blanks, never inventions */
+  targetPrice: number | null;
 
-  /** List of cheaper alternatives */
-  alternatives: BudgetSuggestion[];
+  targetPriceSource: 'vendor' | 'board' | null;
 
-  /** World/datacenter used for price lookup */
+  /** Target is priced and nothing undercuts it → sentence, not an empty frame */
+  alreadyFloor: boolean;
+
+  groups: LedgerGroupResult[];
+
+  /** Rows dropped by the pixel cap, named in the embed */
+  omitted: Array<{ itemID: number; name: string }>;
+
+  method: MatchingMethod;
+  matchLine: number;
   world: string;
-
-  /** Search options that were applied */
-  searchOptions: BudgetSearchOptions;
 
   /** When prices were last updated (ISO timestamp) */
   pricesAsOf: string;
@@ -185,9 +195,3 @@ export class UniversalisError extends Error {
   }
 }
 
-/**
- * Format gil amount with commas
- */
-export function formatGil(amount: number): string {
-  return amount.toLocaleString('en-US');
-}

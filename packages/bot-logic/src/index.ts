@@ -25,6 +25,8 @@ export {
   initializeLocale,
   getLocalizedDyeName,
   getLocalizedCategory,
+  getLocalizedAcquisition,
+  getLocalizedCurrency,
 } from './localization.js';
 export type { LocaleCode } from './localization.js';
 

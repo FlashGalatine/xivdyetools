@@ -151,18 +151,22 @@ export {
 } from './preset-swatch.js';
 export type { PresetSwatchOptions } from './preset-swatch.js';
 
-// Budget Comparison
+// Budget Ledger (13G — tier groups carry the single price)
 export {
-  generateBudgetComparison,
-  formatGil,
-} from './budget-comparison.js';
+  generateBudgetLedger,
+  LEDGER_HEADER_H,
+  LEDGER_COLHEAD_H,
+  LEDGER_GROUP_H,
+  LEDGER_ROW_H,
+  LEDGER_FOOTER_H,
+  LEDGER_FOOTER_2LINE_H,
+} from './budget-ledger.js';
 export type {
-  DyePriceData,
-  BudgetSuggestion,
-  BudgetSortOption,
-  BudgetSvgLabels,
-  BudgetComparisonOptions,
-} from './budget-comparison.js';
+  BudgetLedgerRow,
+  BudgetLedgerGroup,
+  BudgetLedgerLabels,
+  BudgetLedgerOptions,
+} from './budget-ledger.js';
 
 // 5.0 icon system (single geometry home — web apps consume via shims)
 export {

@@ -11,11 +11,10 @@
 
 import { describe, it, expect } from 'vitest';
 import { generateHarmonyCard } from './harmony-card.js';
-import { generateBudgetComparison } from './budget-comparison.js';
+import { generateBudgetLedger, type BudgetLedgerGroup } from './budget-ledger.js';
 import { generateDyeInfoCard, type DyeInfoLabels } from './dye-info-card.js';
 import { generateRandomDyesGrid } from './random-dyes-grid.js';
 import { createMockDye } from '@xivdyetools/test-utils/factories';
-import type { BudgetSuggestion, DyePriceData } from './budget-comparison.js';
 
 // Shared 5.0 card label fixtures (real keys ×6 land in bot-logic i18n)
 const INFO_LABELS: DyeInfoLabels = {
@@ -40,14 +39,6 @@ function expectValidSvg(svg: string) {
   expect(svg).toContain('</svg>');
 }
 
-/** Creates a mock DyePriceData with only the fields required by the SVG package */
-function createMockPrice(_itemID: number, price: number): DyePriceData {
-  return {
-    currentMinPrice: price,
-    world: 'Cactuar',
-    listingCount: 10,
-  };
-}
 
 // ============================================================================
 // Harmony Wheel
@@ -139,89 +130,93 @@ describe('SVG Pipeline: Harmony Card (11A)', () => {
 });
 
 // ============================================================================
-// Budget Comparison
+// Budget Ledger (13G)
 // ============================================================================
 
-describe('SVG Pipeline: Budget Comparison', () => {
-  const targetDye = createMockDye({
-    id: 1,
-    name: 'Pure White',
-    hex: '#FFFFFF',
-    category: 'Metallic',
-    itemID: 5820,
-  });
-
-  const mockLabels = {
-    headerLabel: 'BUDGET ALTERNATIVES FOR',
-    targetPriceLabel: 'Target Price',
-    noListings: 'No listings',
-    noAlternatives: 'No cheaper alternatives found',
-    sortedBy: 'Sorted by: Best Value',
-    onWorld: 'on Aether',
-    gilAmountTemplate: '{amount} Gil',
-    saveAmountTemplate: 'Save {amount} ({percent}%)',
-    listingCountTemplate: '{count} listings',
-    distanceQuality: {
-      perfect: 'Perfect',
-      excellent: 'Excellent',
-      good: 'Good',
-      fair: 'Fair',
-      approximate: 'Approximate',
-    },
-    dyeNames: { 5820: 'Pure White', 5701: 'Snow White', 5702: 'Ash Grey' },
-    categoryNames: { Metallic: 'Metallic', White: 'White', Grey: 'Grey' },
+describe('SVG Pipeline: Budget Ledger (13G)', () => {
+  const LEDGER_LABELS = {
+    lTarget: 'TARGET',
+    lCandidate: 'CANDIDATE',
+    deLabel: 'ΔE',
+    perDeLabel: 'GIL/ΔE',
+    keyLines: ['GIL/ΔE = (TARGET − ROW) ÷ ΔE2000'],
   };
+  const GROUPS: BudgetLedgerGroup[] = [
+    {
+      tier: 'Standard Spectrum Dye',
+      price: '216 GIL',
+      flag: 'VENDOR CHEAPER',
+      rows: [
+        { hex: '#2F2C2B', name: 'Soot Black', de: '5.2', tier: 1, perDe: '13.6k' },
+        { hex: '#1B2A3E', name: 'Ink Blue', de: '5.4', tier: 1, perDe: '13.2k' },
+        { hex: '#3A2141', name: 'Currant Purple', de: '11.2', tier: 2, perDe: '6.3k' },
+      ],
+    },
+    {
+      tier: 'Venture Coffers',
+      price: '41,200 GIL',
+      rows: [{ hex: '#3F3329', name: 'Dark Brown', de: '5.3', tier: 1, perDe: '5.7k' }],
+    },
+  ];
 
-  it('generates valid SVG with alternatives', () => {
-    const alternatives: BudgetSuggestion[] = [
-      {
-        dye: createMockDye({ id: 2, name: 'Snow White', hex: '#EEEEEE', category: 'White', itemID: 5701 }),
-        price: createMockPrice(5701, 500),
-        colorDistance: 5.2,
-        savings: 49500,
-        savingsPercent: 99,
-        valueScore: 10.9,
-      },
-      {
-        dye: createMockDye({ id: 3, name: 'Ash Grey', hex: '#CCCCCC', category: 'Grey', itemID: 5702 }),
-        price: createMockPrice(5702, 200),
-        colorDistance: 20.1,
-        savings: 49800,
-        savingsPercent: 99.6,
-        valueScore: 40.4,
-      },
-    ];
-
-    const svg = generateBudgetComparison({
-      targetDye,
-      targetPrice: createMockPrice(5820, 50000),
-      alternatives,
-      world: 'Aether',
-      sortBy: 'value_score',
-      labels: mockLabels,
+  it('renders the drawn frame: two groups, four rows, one price per group', () => {
+    const svg = generateBudgetLedger({
+      target: { hex: '#1F1D1A', name: 'Jet Black', price: '71,400 GIL', subLabel: 'board only' },
+      groups: GROUPS,
+      labels: LEDGER_LABELS,
+      lang: 'en',
     });
 
     expectValidSvg(svg);
-    // Should contain dye names and price-related text
-    expect(svg).toContain('Pure White');
-    expect(svg).toContain('Snow White');
-    expect(svg).toContain('Ash Grey');
+    expect(svg).toContain('Jet Black');
+    expect(svg).toContain('71,400 GIL');
+    expect(svg).toContain('Standard Spectrum Dye');
+    expect(svg).toContain('VENDOR CHEAPER');
+    expect(svg).toContain('Venture Coffers');
+    expect(svg).toContain('13.6k');
+    // Rows are priceless — the only prices are the two group figures + target
+    expect(svg).toContain('216 GIL');
+    expect(svg).toContain('41,200 GIL');
+    expect(svg).toContain('/BUDGET');
+    const height = Number(/height="(\d+)"/.exec(svg)?.[1]);
+    expect(height).toBeLessThanOrEqual(350);
   });
 
-  it('generates SVG when target has no listings', () => {
-    const svg = generateBudgetComparison({
-      targetDye,
-      targetPrice: null,
-      alternatives: [],
-      world: 'Aether',
-      sortBy: 'price',
-      labels: mockLabels,
+  it('blanks, never invents: null prices and ratios print em dashes', () => {
+    const svg = generateBudgetLedger({
+      target: { hex: '#1F1D1A', name: 'Jet Black', price: null, subLabel: 'no price' },
+      groups: [
+        {
+          tier: 'Standard Spectrum Dye',
+          price: '216 GIL',
+          rows: [{ hex: '#2F2C2B', name: 'Soot Black', de: '5.2', tier: 1, perDe: null }],
+        },
+      ],
+      labels: LEDGER_LABELS,
+      lang: 'en',
     });
 
     expectValidSvg(svg);
-    expect(svg).toContain('No listings');
+    expect(svg).toContain('—');
+    expect(svg).toContain('no price');
   });
 
+  it('renders a second footer key line off-ΔE2000', () => {
+    const svg = generateBudgetLedger({
+      target: { hex: '#1F1D1A', name: 'Jet Black', price: '71,400 GIL', subLabel: 'board only' },
+      groups: GROUPS,
+      labels: {
+        ...LEDGER_LABELS,
+        deLabel: 'RGB',
+        keyLines: ['GIL/ΔE = (TARGET − ROW) ÷ ΔE2000', 'ΔE column: RGB DIST · ratio stays ΔE2000'],
+      },
+      lang: 'en',
+      wideDe: true,
+    });
+
+    expectValidSvg(svg);
+    expect(svg).toContain('ratio stays ΔE2000');
+  });
 });
 
 // ============================================================================

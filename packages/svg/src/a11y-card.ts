@@ -121,7 +121,7 @@ function separationTone(deltaE: number, theme: CardTheme): string {
  * Generate the /accessibility card (13D/13E/13H by mode).
  */
 export function generateA11yCard(options: A11yCardOptions): string {
-  const { mode, titleText, labels, lang, commandLabel = '/ACCESSIBILITY' } = options;
+  const { mode, titleText, lang, commandLabel = '/ACCESSIBILITY' } = options;
   const theme: CardTheme = cardTheme(options.theme);
   const commandGlyph =
     options.commandGlyph !== undefined

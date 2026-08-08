@@ -29,9 +29,9 @@ export {
   fetchWithCache,
 } from './price-cache.js';
 
-// Budget calculator
+// Budget calculator (13G ledger model)
 export {
-  findCheaperAlternatives,
+  findBudgetLedger,
   searchDyes,
   getDyeById,
   getDyeByName,

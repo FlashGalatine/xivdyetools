@@ -701,6 +701,17 @@
     "cmpTag3": "较远",
     "cmpKey": "绿＝接近 · 区间 5 / 10 / 20",
     "cmpRatioKey": "对比度衡量明度，不是色差",
-    "triKey": "上三角 · 每对仅一次"
+    "triKey": "上三角 · 每对仅一次",
+    "lTarget": "目标",
+    "lBoardOnly": "仅市场",
+    "lVendor": "商店",
+    "lNoPrice": "无价格",
+    "lCandidate": "候选",
+    "vendorCheaper": "商店更便宜",
+    "budgetKey": "GIL/ΔE =（目标 − 行）÷ ΔE2000",
+    "budgetKeyMethod": "ΔE列为{tag} · 比率固定为ΔE2000",
+    "budgetBest": "最划算：**{name}** — ΔE {de} · {price}",
+    "budgetNoTarget": "{world}上无目标价格 — 行未排序，比率留空",
+    "budgetFloor": "已是最便宜的一档 — 没有低于{price}的选择。"
   }
 }

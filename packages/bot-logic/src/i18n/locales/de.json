@@ -701,6 +701,17 @@
     "cmpTag3": "FERN",
     "cmpKey": "grün = nah · Bänder 5 / 10 / 20",
     "cmpRatioKey": "Verhältnis misst Helligkeit, nicht Abstand",
-    "triKey": "obere Hälfte · jedes Paar einmal"
+    "triKey": "obere Hälfte · jedes Paar einmal",
+    "lTarget": "ZIEL",
+    "lBoardOnly": "nur Markt",
+    "lVendor": "Händler",
+    "lNoPrice": "kein Preis",
+    "lCandidate": "KANDIDAT",
+    "vendorCheaper": "HÄNDLER GÜNSTIGER",
+    "budgetKey": "GIL/ΔE = (ZIEL − ZEILE) ÷ ΔE2000",
+    "budgetKeyMethod": "ΔE-Spalte: {tag} · Verhältnis bleibt ΔE2000",
+    "budgetBest": "Bester Wert: **{name}** — {de} ΔE für {price}",
+    "budgetNoTarget": "Kein Zielpreis auf {world} — Zeilen unsortiert, Verhältnis leer",
+    "budgetFloor": "Bereits die günstigste Stufe — nichts unterbietet {price}."
   }
 }

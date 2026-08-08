@@ -143,7 +143,7 @@ export function generateContrastCard(options: ContrastCardOptions): string {
 
 /** 13A: the worst pair gets the whole card. */
 function render13A(o: ContrastCardOptions, theme: CardTheme): string {
-  const { labels, lang, commandLabel = '/CONTRAST' } = o;
+  const { labels, commandLabel = '/CONTRAST' } = o;
   const worst = o.pairs[0];
   const rest = o.pairs.slice(1, 6);
   const parts: string[] = [];

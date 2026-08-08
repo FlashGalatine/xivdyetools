@@ -701,6 +701,17 @@
     "cmpTag3": "FAR",
     "cmpKey": "green = close · bands 5 / 10 / 20",
     "cmpRatioKey": "ratio measures lightness, not distance",
-    "triKey": "upper triangle · each pair once"
+    "triKey": "upper triangle · each pair once",
+    "lTarget": "TARGET",
+    "lBoardOnly": "board only",
+    "lVendor": "vendor",
+    "lNoPrice": "no price",
+    "lCandidate": "CANDIDATE",
+    "vendorCheaper": "VENDOR CHEAPER",
+    "budgetKey": "GIL/ΔE = (TARGET − ROW) ÷ ΔE2000",
+    "budgetKeyMethod": "ΔE column: {tag} · ratio stays ΔE2000",
+    "budgetBest": "Best value: **{name}** — {de} ΔE at {price}",
+    "budgetNoTarget": "No target price on {world} — rows unranked, ratio blank",
+    "budgetFloor": "Already the cheapest tier — nothing undercuts {price}."
   }
 }

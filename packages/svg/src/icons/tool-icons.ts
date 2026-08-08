@@ -286,7 +286,7 @@ export function toolGlyph(
 ): string {
   const geometry =
     variant === 'detail' && name !== 'tools'
-      ? TOOL_DETAIL[name as Exclude<ToolGlyphName, 'tools'>]
+      ? TOOL_DETAIL[name]
       : TOOL_COMPACT[name];
   return renderGlyph(geometry, 2.4, options);
 }

@@ -4,7 +4,7 @@
  * Tests the Universalis client with mock Service Bindings and the
  * budget calculator's dye lookup functions with real @xivdyetools/core data.
  *
- * The full findCheaperAlternatives pipeline requires the Cloudflare Cache API
+ * The full findBudgetLedger pipeline requires the Cloudflare Cache API
  * (caches.default), so we test sub-pipelines individually:
  * - universalis-client.ts: fetchPrices, fetchPricesBatched, validateWorld, getWorldAutocomplete
  * - budget-calculator.ts: searchDyes, getDyeById, getDyeByName, getAllDyes, getCategories

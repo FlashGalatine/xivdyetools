@@ -701,6 +701,17 @@
     "cmpTag3": "멀다",
     "cmpKey": "초록 = 가까움 · 구간 5 / 10 / 20",
     "cmpRatioKey": "명암비는 밝기를 재며 색차가 아닙니다",
-    "triKey": "상삼각 · 각 쌍 한 번"
+    "triKey": "상삼각 · 각 쌍 한 번",
+    "lTarget": "목표",
+    "lBoardOnly": "시장만",
+    "lVendor": "상점",
+    "lNoPrice": "가격 없음",
+    "lCandidate": "후보",
+    "vendorCheaper": "상점이 더 저렴",
+    "budgetKey": "GIL/ΔE = (목표 − 행) ÷ ΔE2000",
+    "budgetKeyMethod": "ΔE 열: {tag} · 비율은 ΔE2000 고정",
+    "budgetBest": "최고 가성비: **{name}** — ΔE {de} · {price}",
+    "budgetNoTarget": "{world}에 목표 가격 없음 — 순위·비율 공란",
+    "budgetFloor": "이미 가장 저렴한 단계 — {price}보다 싼 것은 없습니다."
   }
 }

@@ -108,13 +108,13 @@ describe('@xivdyetools/svg index exports', () => {
         expect(typeof svg.CATEGORY_DISPLAY).toBe('object');
     });
 
-    it('exports budget comparison generators', async () => {
+    it('exports the budget ledger generator (13G)', async () => {
         const svg = await import('./index.js');
 
-        expect(svg.generateBudgetComparison).toBeDefined();
-        expect(typeof svg.generateBudgetComparison).toBe('function');
+        expect(svg.generateBudgetLedger).toBeDefined();
+        expect(typeof svg.generateBudgetLedger).toBe('function');
 
-        expect(svg.formatGil).toBeDefined();
-        expect(typeof svg.formatGil).toBe('function');
+        expect(svg.LEDGER_ROW_H).toBe(40);
+        expect(svg.LEDGER_GROUP_H).toBe(24);
     });
 });

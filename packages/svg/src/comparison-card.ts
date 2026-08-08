@@ -17,7 +17,6 @@
 
 import { classifyBandTier } from '@xivdyetools/core';
 import { num } from './base.js';
-import { contrastRatio } from './contrast-card.js';
 import {
   CARD_WIDTH,
   CARD_TYPE,

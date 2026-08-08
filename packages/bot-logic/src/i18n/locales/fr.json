@@ -701,6 +701,17 @@
     "cmpTag3": "LOIN",
     "cmpKey": "vert = proche · bandes 5 / 10 / 20",
     "cmpRatioKey": "le ratio mesure la clarté, pas la distance",
-    "triKey": "triangle supérieur · chaque paire une fois"
+    "triKey": "triangle supérieur · chaque paire une fois",
+    "lTarget": "CIBLE",
+    "lBoardOnly": "marché seul",
+    "lVendor": "marchand",
+    "lNoPrice": "sans prix",
+    "lCandidate": "CANDIDAT",
+    "vendorCheaper": "MARCHAND MOINS CHER",
+    "budgetKey": "GIL/ΔE = (CIBLE − LIGNE) ÷ ΔE2000",
+    "budgetKeyMethod": "colonne ΔE : {tag} · ratio fixé sur ΔE2000",
+    "budgetBest": "Meilleur rapport : **{name}** — {de} ΔE à {price}",
+    "budgetNoTarget": "Pas de prix cible sur {world} — lignes non classées, ratio vide",
+    "budgetFloor": "Déjà le palier le moins cher — rien sous {price}."
   }
 }
