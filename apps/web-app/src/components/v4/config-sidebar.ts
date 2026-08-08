@@ -125,7 +125,7 @@ export class ConfigSidebar extends BaseLitComponent {
   @state() private harmonyConfig: HarmonyConfig = {
     harmonyType: 'tetradic',
     strictMatching: false,
-    matchingMethod: 'oklab',
+    matchingMethod: 'ciede2000',
     preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
@@ -135,7 +135,7 @@ export class ConfigSidebar extends BaseLitComponent {
     maxColors: 8,
     dragThreshold: 5,
     sampleAreaSize: 1,
-    matchingMethod: 'oklab',
+    matchingMethod: 'ciede2000',
     preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
@@ -162,14 +162,14 @@ export class ConfigSidebar extends BaseLitComponent {
   @state() private gradientConfig: GradientConfig = {
     stepCount: 8,
     interpolation: 'hsv',
-    matchingMethod: 'oklab',
+    matchingMethod: 'ciede2000',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
   @state() private mixerConfig: MixerConfig = {
     maxResults: 3,
     mixingMode: 'ryb',
-    matchingMethod: 'oklab',
+    matchingMethod: 'ciede2000',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
@@ -194,7 +194,7 @@ export class ConfigSidebar extends BaseLitComponent {
     race: 'Midlander',
     gender: 'Male',
     maxResults: 3,
-    matchingMethod: 'oklab',
+    matchingMethod: 'ciede2000',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };

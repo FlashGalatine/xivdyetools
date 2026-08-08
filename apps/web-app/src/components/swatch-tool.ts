@@ -175,7 +175,8 @@ export class SwatchTool extends BaseComponent {
 
   // Display options (from ConfigController) - for v4-result-card
   private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
-  private matchingMethod: MatchingMethod = 'oklab';
+  // 5.0: one vocabulary across the suite — ΔE2000 default, same as 7C/9C.
+  private matchingMethod: MatchingMethod = 'ciede2000';
   private dyeFiltersConfig: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
 
   // Reverse matching state (dye/hex → closest swatch)
@@ -214,6 +215,8 @@ export class SwatchTool extends BaseComponent {
   // Layout containers for responsive behavior
   private mainLayout: HTMLElement | null = null;
   private gridPanel: HTMLElement | null = null;
+  private paletteRailContainer: HTMLElement | null = null;
+  private gridTitleEl: HTMLElement | null = null;
 
   // Mobile DOM References
   private mobileSubraceSelect: HTMLSelectElement | null = null;
@@ -562,7 +565,8 @@ export class SwatchTool extends BaseComponent {
       return;
     }
 
-    const TOP_N = 3;
+    // 5.0: the hardcoded top-3 is cut — the result count follows the same
+    // maxResults control as the forward side.
     const scored: Array<{ color: CharacterColor; distance: number }> = [];
 
     for (const color of this.colors) {
@@ -571,7 +575,7 @@ export class SwatchTool extends BaseComponent {
     }
     scored.sort((a, b) => a.distance - b.distance);
 
-    this.reverseMatchedSwatches = scored.slice(0, TOP_N).map((s, i) => ({
+    this.reverseMatchedSwatches = scored.slice(0, this.maxResults).map((s, i) => ({
       color: s.color,
       distance: s.distance,
       rank: i + 1,
@@ -1236,7 +1240,7 @@ export class SwatchTool extends BaseComponent {
         `,
       },
     });
-    const gridTitle = this.createElement('span', {
+    this.gridTitleEl = this.createElement('span', {
       className: 'section-title',
       textContent: `${this.getCategoryDisplayName(this.colorCategory)} (${this.colors.length})`,
       attributes: {
@@ -1249,8 +1253,17 @@ export class SwatchTool extends BaseComponent {
         `,
       },
     });
-    gridHeader.appendChild(gridTitle);
+    gridHeader.appendChild(this.gridTitleEl);
     this.gridPanel.appendChild(gridHeader);
+
+    // 10A: seven palettes, not nine — Dark and Light are one game control
+    // with two ranges, so lip/face-paint get a range toggle instead of
+    // doubling the list.
+    this.paletteRailContainer = this.createElement('div', {
+      attributes: { style: 'width: 100%; margin-bottom: 12px;' },
+    });
+    this.gridPanel.appendChild(this.paletteRailContainer);
+    this.renderPaletteRail();
 
     // Color grid (8 columns with larger swatches)
     // Swatch size adjusted via updateSwatchLayout() for mobile
@@ -1604,7 +1617,93 @@ export class SwatchTool extends BaseComponent {
     return notice;
   }
 
+  /**
+   * 10A palette rail: seven palettes with a Dark/Light range toggle for the
+   * two split ones. Chips drive the same colorSheet config as the sidebar.
+   */
+  private renderPaletteRail(): void {
+    if (!this.paletteRailContainer) return;
+    clearContainer(this.paletteRailContainer);
+
+    const PALETTES: Array<{ base: string; labelKey: string; split: boolean }> = [
+      { base: 'eyeColors', labelKey: 'swatch.palEye', split: false },
+      { base: 'hairColors', labelKey: 'swatch.palHair', split: false },
+      { base: 'highlightColors', labelKey: 'swatch.palHighlight', split: false },
+      { base: 'skinColors', labelKey: 'swatch.palSkin', split: false },
+      { base: 'tattooColors', labelKey: 'swatch.palTattoo', split: false },
+      { base: 'lipColors', labelKey: 'swatch.palLip', split: true },
+      { base: 'facePaintColors', labelKey: 'swatch.palFacepaint', split: true },
+    ];
+
+    const current = this.colorCategory as string;
+    const currentBase = current.replace(/(Dark|Light)$/, '');
+    const currentRange = current.endsWith('Light') ? 'Light' : 'Dark';
+
+    const rail = this.createElement('div', {
+      attributes: { style: 'display: flex; gap: 6px; flex-wrap: wrap; align-items: center;' },
+    });
+
+    for (const palette of PALETTES) {
+      const active = currentBase === palette.base;
+      const chip = this.createElement('button', {
+        textContent: LanguageService.t(palette.labelKey),
+        attributes: {
+          type: 'button',
+          style: `font-size: 12px; padding: 5px 11px; border-radius: 999px; cursor: pointer; border: 1px solid ${
+            active ? 'var(--theme-primary)' : 'transparent'
+          }; background: ${
+            active
+              ? 'color-mix(in srgb, var(--theme-primary) 14%, transparent)'
+              : 'var(--theme-background-secondary)'
+          }; color: ${active ? 'var(--theme-primary)' : 'var(--theme-text-muted)'};`,
+        },
+      }) as HTMLButtonElement;
+      this.on(chip, 'click', () => {
+        const target = palette.split ? `${palette.base}${currentRange}` : palette.base;
+        this.setConfig({ colorSheet: target });
+      });
+      rail.appendChild(chip);
+    }
+
+    // Range toggle — only the split palettes have a Light variant.
+    const activePalette = PALETTES.find((p) => p.base === currentBase);
+    if (activePalette?.split) {
+      const toggle = this.createElement('div', {
+        attributes: {
+          style:
+            'display: inline-flex; border: 1px solid var(--theme-border); border-radius: 999px; overflow: hidden; margin-left: 4px;',
+        },
+      });
+      for (const range of ['Dark', 'Light'] as const) {
+        const on = currentRange === range;
+        const btn = this.createElement('button', {
+          textContent: LanguageService.t(
+            range === 'Dark' ? 'swatch.rangeDark' : 'swatch.rangeLight'
+          ),
+          attributes: {
+            type: 'button',
+            style: `font-size: 11px; padding: 4px 10px; border: none; cursor: pointer; background: ${
+              on ? 'color-mix(in srgb, var(--theme-primary) 16%, transparent)' : 'transparent'
+            }; color: ${on ? 'var(--theme-primary)' : 'var(--theme-text-muted)'};`,
+          },
+        }) as HTMLButtonElement;
+        this.on(btn, 'click', () => {
+          this.setConfig({ colorSheet: `${currentBase}${range}` });
+        });
+        toggle.appendChild(btn);
+      }
+      rail.appendChild(toggle);
+    }
+
+    this.paletteRailContainer.appendChild(rail);
+  }
+
   private updateColorGrid(): void {
+    this.renderPaletteRail();
+    // Title tracks the palette — it went stale on category change before.
+    if (this.gridTitleEl) {
+      this.gridTitleEl.textContent = `${this.getCategoryDisplayName(this.colorCategory)} (${this.colors.length})`;
+    }
     if (!this.colorGridContainer) return;
     this.updateEvercoldNotice();
     clearContainer(this.colorGridContainer);
