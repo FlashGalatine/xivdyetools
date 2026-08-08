@@ -125,24 +125,23 @@ export function createMetricHelp(options: MetricHelpOptions): HTMLElement {
   const def = PAIR_READOUT_UNITS[options.unit];
   const bands = def.bands(options.threshold);
 
+  // Inline styles throughout: this renders inside the v4 shell's shadow
+  // DOM, where document-level Tailwind utilities do not reach
   const box = document.createElement('div');
-  box.className = 'rounded-xl border px-3 py-3 mb-3 flex flex-col gap-2.5';
-  box.style.borderColor = 'var(--theme-border)';
-  box.style.backgroundColor = 'var(--theme-card-background)';
+  box.style.cssText =
+    'display: flex; flex-direction: column; gap: 10px; padding: 12px; margin-bottom: 12px; border-radius: 12px; border: 1px solid var(--theme-border); background: var(--theme-card-background);';
 
   // Title row: unit label + NOT A STANDARD badge (or nothing for ratio)
   const titleRow = document.createElement('div');
-  titleRow.className = 'flex items-center gap-2 flex-wrap';
+  titleRow.style.cssText = 'display: flex; align-items: center; gap: 8px; flex-wrap: wrap;';
   const title = document.createElement('span');
-  title.className = 'text-sm font-semibold';
-  title.style.color = 'var(--theme-text)';
+  title.style.cssText = 'font-size: 13px; font-weight: 600; color: var(--theme-text);';
   title.textContent = t(`${def.stem}Label`);
   titleRow.appendChild(title);
   if (!def.standard) {
     const badge = document.createElement('span');
-    badge.className = 'm16-label px-1.5 py-0.5 rounded border';
-    badge.style.color = 'var(--theme-text-muted)';
-    badge.style.borderColor = 'var(--theme-border)';
+    badge.style.cssText =
+      "font-family: 'Fragment Mono', monospace; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; border: 1px solid var(--theme-border); color: var(--theme-text-muted);";
     badge.textContent = t('notAStandard');
     titleRow.appendChild(badge);
   }
@@ -150,42 +149,35 @@ export function createMetricHelp(options: MetricHelpOptions): HTMLElement {
 
   // Definition + caveat
   const desc = document.createElement('p');
-  desc.className = 'text-xs leading-relaxed';
-  desc.style.color = 'var(--theme-text-muted)';
+  desc.style.cssText = 'font-size: 12px; line-height: 1.55; margin: 0; color: var(--theme-text-muted);';
   desc.textContent = t(`${def.stem}Desc`);
   box.appendChild(desc);
 
   const caveat = document.createElement('p');
-  caveat.className = 'text-xs leading-relaxed';
-  caveat.style.color = 'var(--theme-text-muted)';
+  caveat.style.cssText = 'font-size: 12px; line-height: 1.55; margin: 0; color: var(--theme-text-muted);';
   caveat.textContent = t(`${def.stem}Caveat`);
   box.appendChild(caveat);
 
   // Tier legend: same four words in every unit, numbers change
   const legend = document.createElement('div');
-  legend.className = 'grid grid-cols-4 gap-1.5';
+  legend.style.cssText = 'display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;';
   const tierKeys = ['tierClear', 'tierFine', 'tierTight', 'tierCollapsed'] as const;
   const ranges = def.ranges(bands);
   const ramp = options.dark ? TIER_COLORS_DARK : TIER_COLORS_LIGHT;
   tierKeys.forEach((key, i) => {
     const cell = document.createElement('div');
-    cell.className = 'flex flex-col items-center gap-1 py-1.5 rounded-lg';
-    cell.style.backgroundColor = 'var(--theme-background-secondary)';
+    cell.style.cssText =
+      'display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; border-radius: 8px; background: var(--theme-background-secondary);';
     const bar = document.createElement('span');
-    bar.className = 'block rounded-full';
-    bar.style.width = '70%';
-    bar.style.height = '4px';
-    bar.style.backgroundColor = ramp[i];
+    bar.style.cssText = `display: block; border-radius: 2px; width: 70%; height: 4px; background: ${ramp[i]};`;
     cell.appendChild(bar);
     const word = document.createElement('span');
-    word.className = 'text-xs font-semibold';
-    word.style.color = 'var(--theme-text)';
+    word.style.cssText = 'font-size: 11px; font-weight: 600; color: var(--theme-text);';
     word.textContent = t(key);
     cell.appendChild(word);
     const range = document.createElement('span');
-    range.className = 'text-xs';
-    range.style.fontFamily = "'Fragment Mono', monospace";
-    range.style.color = 'var(--theme-text-muted)';
+    range.style.cssText =
+      "font-family: 'Fragment Mono', monospace; font-size: 10px; color: var(--theme-text-muted);";
     range.textContent = ranges[i];
     cell.appendChild(range);
     legend.appendChild(cell);
@@ -194,16 +186,13 @@ export function createMetricHelp(options: MetricHelpOptions): HTMLElement {
 
   // Unit switcher
   const switcher = document.createElement('div');
-  switcher.className = 'flex gap-1.5 flex-wrap';
+  switcher.style.cssText = 'display: flex; gap: 6px; flex-wrap: wrap;';
   (Object.keys(PAIR_READOUT_UNITS) as PairReadoutUnit[]).forEach((id) => {
     const u = PAIR_READOUT_UNITS[id];
     const active = id === options.unit;
     const chip = document.createElement('button');
     chip.type = 'button';
-    chip.className = 'px-3 py-1.5 rounded-full text-xs font-semibold border';
-    chip.style.backgroundColor = active ? 'var(--theme-primary)' : 'var(--theme-card-background)';
-    chip.style.color = active ? 'var(--theme-text-header)' : 'var(--theme-text)';
-    chip.style.borderColor = active ? 'var(--theme-primary)' : 'var(--theme-border)';
+    chip.style.cssText = `padding: 6px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 600; cursor: pointer; border: 1px solid ${active ? 'var(--theme-primary)' : 'var(--theme-border)'}; background: ${active ? 'var(--theme-primary)' : 'var(--theme-card-background)'}; color: ${active ? 'var(--theme-text-header)' : 'var(--theme-text)'};`;
     chip.textContent = t(`${u.stem}Short`);
     chip.setAttribute('aria-pressed', String(active));
     chip.addEventListener('click', () => {
@@ -216,8 +205,7 @@ export function createMetricHelp(options: MetricHelpOptions): HTMLElement {
   // Learn-more link (ratio — the only unit with a published standard)
   if (options.unit === 'ratio') {
     const link = document.createElement('a');
-    link.className = 'text-xs hover:underline';
-    link.style.color = 'var(--theme-primary)';
+    link.style.cssText = 'font-size: 12px; color: var(--theme-primary); text-decoration: underline;';
     link.href = LEARN_URL;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
