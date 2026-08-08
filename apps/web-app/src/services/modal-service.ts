@@ -39,6 +39,30 @@ export interface ModalConfig {
   onConfirm?: () => void;
   confirmText?: string;
   cancelText?: string;
+  // -------------------------------------------------------------------------
+  // 5.0 (16A) shell options
+  // -------------------------------------------------------------------------
+  /**
+   * Shell variant (16A): `sheet` = the default dialog (bottom sheet on
+   * mobile with grab handle + drag-to-close, centered 560px on desktop);
+   * `panel` = 480px right slide-over for settings-like surfaces; `card` =
+   * centered card; `alert` = compact centered alert (destructive confirms).
+   */
+  variant?: 'sheet' | 'panel' | 'card' | 'alert';
+  /** Mono eyebrow line above the title */
+  eyebrow?: string;
+  /** Subtitle under the title */
+  subtitle?: string;
+  /**
+   * Sheet height class (mobile): `content` hugs the content, `tall` ≈ 60%,
+   * `full` = the 88% camera/full-bleed height. The old 60vh cap is dead.
+   */
+  sheetHeight?: 'content' | 'tall' | 'full';
+  /**
+   * Destructive convention (suite-wide): primary = solid accent,
+   * destructive = OUTLINED accent, Cancel is the wide thumb target.
+   */
+  destructive?: boolean;
 }
 
 /**

@@ -128,34 +128,35 @@ describe('ModalContainer', () => {
   // ============================================================================
 
   describe('Modal Sizes', () => {
-    it('should render small modal', () => {
+    it('renders the default sheet variant (16A)', () => {
       modalContainer = new ModalContainer(container);
       modalContainer.init();
 
       ModalService.show({ type: 'custom', title: 'Small', size: 'sm' });
 
       const dialog = query(container, '.modal-dialog');
-      expect(dialog?.classList.contains('max-w-sm')).toBe(true);
+      expect(dialog?.classList.contains('m16-sheet-desktop')).toBe(true);
+      expect(dialog?.classList.contains('m16-sheet--content')).toBe(true);
     });
 
-    it('should render medium modal by default', () => {
+    it('renders the tall sheet height when asked', () => {
       modalContainer = new ModalContainer(container);
       modalContainer.init();
 
-      ModalService.show({ type: 'custom', title: 'Default' });
+      ModalService.show({ type: 'custom', title: 'Tall', sheetHeight: 'tall' });
 
       const dialog = query(container, '.modal-dialog');
-      expect(dialog?.classList.contains('max-w-lg')).toBe(true);
+      expect(dialog?.classList.contains('m16-sheet--tall')).toBe(true);
     });
 
-    it('should render large modal', () => {
+    it('renders the panel variant for settings-like surfaces', () => {
       modalContainer = new ModalContainer(container);
       modalContainer.init();
 
-      ModalService.show({ type: 'custom', title: 'Large', size: 'lg' });
+      ModalService.show({ type: 'custom', title: 'Settings', variant: 'panel' });
 
       const dialog = query(container, '.modal-dialog');
-      expect(dialog?.classList.contains('max-w-2xl')).toBe(true);
+      expect(dialog?.classList.contains('m16-panel')).toBe(true);
     });
   });
 
@@ -350,7 +351,7 @@ describe('ModalContainer', () => {
 
       ModalService.show({ type: 'custom', title: 'Test' });
 
-      const backdrop = query(container, '.modal-backdrop');
+      const backdrop = query(container, '.m16-backdrop');
       expect(backdrop).not.toBeNull();
     });
 
@@ -365,7 +366,7 @@ describe('ModalContainer', () => {
         closeOnBackdrop: true,
       });
 
-      const backdrop = query<HTMLElement>(container, '.modal-backdrop');
+      const backdrop = query<HTMLElement>(container, '.m16-backdrop');
       click(backdrop);
 
       expect(queryAll(container, '[data-modal-id]').length).toBe(0);
@@ -382,7 +383,7 @@ describe('ModalContainer', () => {
         closeOnBackdrop: false,
       });
 
-      const backdrop = query<HTMLElement>(container, '.modal-backdrop');
+      const backdrop = query<HTMLElement>(container, '.m16-backdrop');
       click(backdrop);
 
       expect(queryAll(container, '[data-modal-id]').length).toBe(1);
@@ -499,9 +500,9 @@ describe('ModalContainer', () => {
       ModalService.show({ type: 'custom', title: 'First' });
       ModalService.show({ type: 'custom', title: 'Second' });
 
-      const modals = queryAll(container, '.modal-backdrop');
-      expect(modals[0].classList.contains('bg-transparent')).toBe(true);
-      expect(modals[1].classList.contains('bg-black/50')).toBe(true);
+      const modals = queryAll(container, '.m16-backdrop');
+      expect(modals[0].hasAttribute('data-under')).toBe(true);
+      expect(modals[1].hasAttribute('data-under')).toBe(false);
     });
 
     it('should close only top modal on Escape', () => {
