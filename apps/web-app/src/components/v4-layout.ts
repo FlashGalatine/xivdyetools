@@ -27,6 +27,7 @@ import { showThemeModal } from './v4/theme-modal';
 import { showLanguageModal } from './v4/language-modal';
 import { showAboutModal } from './about-modal';
 import { showChangelogModal } from './changelog-modal';
+import { showAdvancedOptionsPanel } from './advanced-options-panel';
 import { WelcomeModal } from './welcome-modal';
 
 // Import V4 layout shell (registers custom element)
@@ -252,6 +253,14 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
   layoutElement.addEventListener('about-click', (() => {
     logger.debug('[V4 Layout] About button clicked');
     showAboutModal();
+  }) as EventListener);
+
+  // Listen for the advanced-options gear click from header. The panel
+  // dispatches its data events (settings-reset, clear-all-dyes, ...) on
+  // layoutElement so the listeners below keep working unchanged.
+  layoutElement.addEventListener('advanced-click', (() => {
+    logger.debug('[V4 Layout] Advanced options button clicked');
+    showAdvancedOptionsPanel(layoutElement ?? undefined);
   }) as EventListener);
 
   // Listen for language button click from header

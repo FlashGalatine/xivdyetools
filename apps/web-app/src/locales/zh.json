@@ -1344,5 +1344,14 @@
     "invalidDye": "此链接指向的染剂在当前版本中无法识别。",
     "legacyLink": "此链接由旧版本生成，使用了过时的染剂ID——请重新获取链接。",
     "invalidHex": "此链接包含无效的颜色值。"
+  },
+  "advanced": {
+    "eyebrow": "设置",
+    "dataTitle": "数据",
+    "dataSummary": "重置 · 清除已存染剂、收藏、调色板",
+    "backupTitle": "备份",
+    "backupSummary": "以 JSON 导出 / 导入设置",
+    "behaviorTitle": "行为",
+    "behaviorSummary": "性能模式 · 分析"
   }
 }

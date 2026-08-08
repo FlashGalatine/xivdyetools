@@ -75,6 +75,11 @@ export interface ModalConfig {
    * it was hiding the feature).
    */
   lightScrim?: boolean;
+  /**
+   * Panel variant only: desktop slide-over width in px (default 480).
+   * The Advanced Options surface is drawn at 392.
+   */
+  panelWidth?: number;
 }
 
 /**

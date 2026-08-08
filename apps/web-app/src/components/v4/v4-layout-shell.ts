@@ -897,6 +897,14 @@ export class V4LayoutShell extends BaseLitComponent {
     this.emit('language-click');
   }
 
+  /**
+   * Handle advanced-options (gear) button click from header
+   * Bubbles up to v4-layout.ts
+   */
+  private handleAdvancedClick(): void {
+    this.emit('advanced-click');
+  }
+
   protected override render(): TemplateResult {
     return html`
       <!-- App Header -->
@@ -905,6 +913,7 @@ export class V4LayoutShell extends BaseLitComponent {
         @theme-click=${this.handleThemeClick}
         @about-click=${this.handleAboutClick}
         @language-click=${this.handleLanguageClick}
+        @advanced-click=${this.handleAdvancedClick}
       ></v4-app-header>
 
       <!-- Tool Banner -->

@@ -10,7 +10,7 @@
 import { html, css, CSSResultGroup, TemplateResult } from 'lit';
 import { customElement } from 'lit/decorators.js';
 import { BaseLitComponent } from './base-lit-component';
-import { ICON_GLOBE, ICON_ABOUT, ICON_THEME, ICON_SCROLL } from '@shared/ui-icons';
+import { ICON_GLOBE, ICON_ABOUT, ICON_THEME, ICON_SCROLL, ICON_SETTINGS } from '@shared/ui-icons';
 import { LOGO_SPARKLES } from '@shared/app-logo';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { LanguageService } from '@services/index';
@@ -169,6 +169,13 @@ export class V4AppHeader extends BaseLitComponent {
     this.emit('theme-click');
   }
 
+  /**
+   * Handle advanced-options (gear) button click
+   */
+  private handleAdvancedClick(): void {
+    this.emit('advanced-click');
+  }
+
   protected override render(): TemplateResult {
     return html`
       <header class="v4-app-header" role="banner">
@@ -218,6 +225,16 @@ export class V4AppHeader extends BaseLitComponent {
             @click=${this.handleThemeClick}
           >
             ${unsafeHTML(ICON_THEME)}
+          </button>
+
+          <button
+            class="v4-header-nav-btn"
+            type="button"
+            title="${LanguageService.t('config.advancedSettings')}"
+            aria-label="${LanguageService.t('config.advancedSettings')}"
+            @click=${this.handleAdvancedClick}
+          >
+            ${unsafeHTML(ICON_SETTINGS)}
           </button>
         </nav>
       </header>

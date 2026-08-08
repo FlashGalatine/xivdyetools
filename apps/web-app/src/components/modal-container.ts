@@ -59,7 +59,7 @@ const SHELL_STYLES = `
 }
 .m16-backdrop--panel { justify-content: flex-end; align-items: stretch; padding: 0; }
 .m16-panel {
-  width: 480px; max-width: 100%;
+  width: var(--m16-panel-width, 480px); max-width: 100%;
   margin-top: calc(var(--v4-header-height, 48px) + var(--v4-tool-bar-height, 44px));
   border-radius: 14px 0 0 0;
   border-left: 1px solid var(--theme-border);
@@ -343,6 +343,10 @@ export class ModalContainer extends BaseComponent {
       className: `m16-dialog modal-dialog ${variantClass}`,
       attributes: dialogAttributes,
     });
+    // Panel width override (desktop only — the mobile rule sets 100%)
+    if (variant === 'panel' && modal.panelWidth) {
+      dialog.style.setProperty('--m16-panel-width', `${modal.panelWidth}px`);
+    }
 
     // Grab handle (mobile sheets only; hidden by CSS elsewhere)
     if (variant === 'sheet') {

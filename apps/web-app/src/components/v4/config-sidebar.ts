@@ -16,9 +16,7 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { customElement, property, state } from 'lit/decorators.js';
 import { BaseLitComponent } from './base-lit-component';
 import { ConfigController } from '@services/config-controller';
-import { authService, LanguageService, CollectionService } from '@services/index';
-import { StorageService } from '@services/storage-service';
-import { TutorialService } from '@services/tutorial-service';
+import { authService, LanguageService } from '@services/index';
 import type { ToolId } from '@services/router-service';
 import type {
   HarmonyConfig,
@@ -32,28 +30,13 @@ import type {
   BudgetConfig,
   SwatchConfig,
   MarketConfig,
-  AdvancedConfig,
   ConfigKey,
   DisplayOptionsConfig,
   DyeFiltersConfig,
   PresetCategoryFilter,
   MatchingMethod,
 } from '@shared/tool-config-types';
-import {
-  DEFAULT_DISPLAY_OPTIONS,
-  DEFAULT_DYE_FILTERS,
-  DEFAULT_CONFIGS,
-} from '@shared/tool-config-types';
-import { STORAGE_KEYS } from '@shared/constants';
-import {
-  ICON_REFRESH,
-  ICON_PALETTE,
-  ICON_STAR,
-  ICON_FOLDER,
-  ICON_BOOK,
-  ICON_EXPORT,
-  ICON_IMPORT,
-} from '@shared/ui-icons';
+import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
 import { showPresetSubmissionForm } from '@components/preset-submission-form';
 import type { DataCenter, World } from '@shared/types';
 import { logger } from '@shared/logger';
@@ -234,10 +217,6 @@ export class ConfigSidebar extends BaseLitComponent {
 
   // Collapsible section state
   @state() private marketBoardCollapsed: boolean = false;
-  @state() private advancedSettingsCollapsed: boolean = true; // Collapsed by default
-
-  // Advanced settings config
-  @state() private advancedConfig: AdvancedConfig = { ...DEFAULT_CONFIGS.advanced };
 
   private configController: ConfigController | null = null;
   private languageUnsubscribe: (() => void) | null = null;
@@ -601,90 +580,6 @@ export class ConfigSidebar extends BaseLitComponent {
         border-color: var(--theme-text-muted, #888888);
       }
 
-      /* Advanced Settings Section */
-      .advanced-settings {
-        margin-top: var(--v4-display-options-group-gap, 20px);
-        border-top: 1px solid var(--v4-glass-border, rgba(255, 255, 255, 0.1));
-        padding-top: 16px;
-      }
-
-      .advanced-btn {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        width: 100%;
-        padding: 10px 16px;
-        margin-bottom: 8px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid var(--v4-border-subtle, rgba(255, 255, 255, 0.15));
-        border-radius: 6px;
-        color: var(--theme-text, #e0e0e0);
-        font-size: 13px;
-        cursor: pointer;
-        text-align: left;
-        transition:
-          background 0.15s,
-          border-color 0.15s;
-      }
-
-      .advanced-btn-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 18px;
-        height: 18px;
-        flex-shrink: 0;
-        opacity: 0.8;
-      }
-
-      .advanced-btn-icon svg {
-        width: 100%;
-        height: 100%;
-      }
-
-      .advanced-btn:hover {
-        background: rgba(255, 255, 255, 0.12);
-        border-color: rgba(255, 255, 255, 0.25);
-      }
-
-      .advanced-btn:active {
-        transform: scale(0.98);
-      }
-
-      .advanced-btn-row {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 12px;
-      }
-
-      .advanced-btn-half {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        flex: 1;
-        padding: 8px 12px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid var(--v4-border-subtle, rgba(255, 255, 255, 0.15));
-        border-radius: 6px;
-        color: var(--theme-text, #e0e0e0);
-        font-size: 12px;
-        cursor: pointer;
-        transition:
-          background 0.15s,
-          border-color 0.15s;
-      }
-
-      .advanced-btn-half .advanced-btn-icon {
-        width: 16px;
-        height: 16px;
-      }
-
-      .advanced-btn-half:hover {
-        background: rgba(255, 255, 255, 0.12);
-        border-color: rgba(255, 255, 255, 0.25);
-      }
-
       /* Reduced motion */
       @media (prefers-reduced-motion: reduce) {
         :host {
@@ -692,9 +587,7 @@ export class ConfigSidebar extends BaseLitComponent {
         }
         .auth-btn,
         .submit-btn,
-        .logout-btn,
-        .advanced-btn,
-        .advanced-btn-half {
+        .logout-btn {
           transition: none;
         }
       }
@@ -777,7 +670,6 @@ export class ConfigSidebar extends BaseLitComponent {
     this.budgetConfig = this.configController.getConfig('budget');
     this.swatchConfig = this.configController.getConfig('swatch');
     this.marketConfig = this.configController.getConfig('market');
-    this.advancedConfig = this.configController.getConfig('advanced');
   }
 
   /**
@@ -841,135 +733,6 @@ export class ConfigSidebar extends BaseLitComponent {
    */
   private toggleMarketBoard(): void {
     this.marketBoardCollapsed = !this.marketBoardCollapsed;
-  }
-
-  /**
-   * Toggle Advanced Settings section collapsed state
-   */
-  private toggleAdvancedSettings(): void {
-    this.advancedSettingsCollapsed = !this.advancedSettingsCollapsed;
-  }
-
-  // =========================================================================
-  // Advanced Settings Handlers
-  // =========================================================================
-
-  /**
-   * Reset all tool configs to defaults
-   */
-  private handleResetSettings(): void {
-    if (!confirm(LanguageService.t('config.resetSettingsConfirm'))) return;
-    ConfigController.getInstance().resetAllConfigs();
-    this.loadConfigsFromController();
-    this.emit('settings-reset');
-    logger.info('[ConfigSidebar] All settings reset to defaults');
-  }
-
-  /**
-   * Emit event to clear dyes across all tools
-   */
-  private handleClearDyes(): void {
-    if (!confirm(LanguageService.t('config.clearDyesConfirm'))) return;
-    this.emit('clear-all-dyes');
-    logger.info('[ConfigSidebar] Clear dyes event emitted');
-  }
-
-  /**
-   * Clear favorite dyes via CollectionService
-   */
-  private handleClearFavorites(): void {
-    if (!confirm(LanguageService.t('config.clearFavoritesConfirm'))) return;
-    CollectionService.clearFavorites();
-    this.emit('favorites-cleared');
-    logger.info('[ConfigSidebar] Favorites cleared');
-  }
-
-  /**
-   * Clear saved palettes from localStorage
-   */
-  private handleClearPalettes(): void {
-    if (!confirm(LanguageService.t('config.clearPalettesConfirm'))) return;
-    StorageService.removeItem(STORAGE_KEYS.SAVED_PALETTES);
-    this.emit('palettes-cleared');
-    logger.info('[ConfigSidebar] Saved palettes cleared');
-  }
-
-  /**
-   * Reset tutorial state to show onboarding hints again
-   */
-  private handleResetTutorial(): void {
-    TutorialService.resetAllCompletions();
-    this.emit('tutorial-reset');
-    logger.info('[ConfigSidebar] Tutorial reset');
-  }
-
-  /**
-   * Export all settings as JSON file download
-   */
-  private handleExportSettings(): void {
-    const configs = ConfigController.getInstance().exportAllConfigs();
-    const exportData = {
-      version: '1.0.0',
-      exportedAt: new Date().toISOString(),
-      type: 'xivdyetools-settings',
-      configs,
-    };
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `xivdyetools-settings-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    logger.info('[ConfigSidebar] Settings exported');
-  }
-
-  /**
-   * Trigger hidden file input for import
-   */
-  private triggerImportSettings(): void {
-    this.renderRoot.querySelector<HTMLInputElement>('.import-file-input')?.click();
-  }
-
-  /**
-   * Handle file selection for import
-   */
-  private async handleImportFile(e: Event): Promise<void> {
-    const input = e.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-
-    try {
-      const text = await file.text();
-      const data = JSON.parse(text);
-
-      // Validate export format
-      if (data.type !== 'xivdyetools-settings' || !data.configs) {
-        throw new Error('Invalid settings file format');
-      }
-
-      ConfigController.getInstance().importConfigs(data.configs);
-      this.loadConfigsFromController();
-      this.emit('settings-imported');
-      logger.info('[ConfigSidebar] Settings imported successfully');
-    } catch (error) {
-      logger.error('[ConfigSidebar] Import failed:', error);
-      alert(LanguageService.t('config.importError'));
-    }
-
-    // Reset file input so the same file can be selected again
-    input.value = '';
-  }
-
-  /**
-   * Handle toggle changes for advanced config
-   */
-  private handleAdvancedConfigChange(key: keyof AdvancedConfig, value: boolean): void {
-    this.advancedConfig = { ...this.advancedConfig, [key]: value };
-    if (this.configController) {
-      this.configController.setConfig('advanced', { [key]: value });
-    }
-    this.emit('config-change', { tool: 'advanced', key, value });
   }
 
   /**
@@ -2107,101 +1870,6 @@ export class ConfigSidebar extends BaseLitComponent {
     `;
   }
 
-  /**
-   * Render Advanced Settings section (collapsed by default)
-   */
-  private renderAdvancedSettings(): TemplateResult {
-    return html`
-      <div class="config-section advanced-settings">
-        <div class="config-group">
-          <!-- Collapsible Header -->
-          <div
-            class="config-label-header"
-            @click=${this.toggleAdvancedSettings}
-            role="button"
-            aria-expanded=${!this.advancedSettingsCollapsed}
-            tabindex="0"
-            @keydown=${(e: KeyboardEvent) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                this.toggleAdvancedSettings();
-              }
-            }}
-          >
-            <div class="config-label">${LanguageService.t('config.advancedSettings')}</div>
-            <span class="collapse-icon ${this.advancedSettingsCollapsed ? 'collapsed' : ''}">
-              ${this.advancedSettingsCollapsed ? '▼' : '▲'}
-            </span>
-          </div>
-
-          <div class="config-group-content ${this.advancedSettingsCollapsed ? 'collapsed' : ''}">
-            <!-- Data Management Buttons -->
-            <button class="advanced-btn" @click=${this.handleResetSettings}>
-              <span class="advanced-btn-icon">${unsafeHTML(ICON_REFRESH)}</span>
-              ${LanguageService.t('config.resetSettings')}
-            </button>
-            <button class="advanced-btn" @click=${this.handleClearDyes}>
-              <span class="advanced-btn-icon">${unsafeHTML(ICON_PALETTE)}</span>
-              ${LanguageService.t('config.clearDyes')}
-            </button>
-            <button class="advanced-btn" @click=${this.handleClearFavorites}>
-              <span class="advanced-btn-icon">${unsafeHTML(ICON_STAR)}</span>
-              ${LanguageService.t('config.clearFavorites')}
-            </button>
-            <button class="advanced-btn" @click=${this.handleClearPalettes}>
-              <span class="advanced-btn-icon">${unsafeHTML(ICON_FOLDER)}</span>
-              ${LanguageService.t('config.clearPalettes')}
-            </button>
-            <button class="advanced-btn" @click=${this.handleResetTutorial}>
-              <span class="advanced-btn-icon">${unsafeHTML(ICON_BOOK)}</span>
-              ${LanguageService.t('config.resetTutorial')}
-            </button>
-
-            <!-- Export/Import Row -->
-            <div class="advanced-btn-row">
-              <button class="advanced-btn-half" @click=${this.handleExportSettings}>
-                <span class="advanced-btn-icon">${unsafeHTML(ICON_EXPORT)}</span>
-                ${LanguageService.t('config.exportSettings')}
-              </button>
-              <button class="advanced-btn-half" @click=${this.triggerImportSettings}>
-                <span class="advanced-btn-icon">${unsafeHTML(ICON_IMPORT)}</span>
-                ${LanguageService.t('config.importSettings')}
-              </button>
-              <input
-                type="file"
-                class="import-file-input"
-                accept=".json"
-                hidden
-                @change=${this.handleImportFile}
-              />
-            </div>
-
-            <!-- Toggle Switches -->
-            <div class="config-row">
-              <v4-toggle-switch
-                label=${LanguageService.t('config.performanceMode')}
-                .checked=${this.advancedConfig.performanceMode}
-                @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                  this.handleAdvancedConfigChange('performanceMode', e.detail.checked)}
-              ></v4-toggle-switch>
-            </div>
-            <div class="config-description">${LanguageService.t('config.performanceModeDesc')}</div>
-
-            <div class="config-row">
-              <v4-toggle-switch
-                label=${LanguageService.t('config.enableAnalytics')}
-                .checked=${this.advancedConfig.analyticsEnabled}
-                @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                  this.handleAdvancedConfigChange('analyticsEnabled', e.detail.checked)}
-              ></v4-toggle-switch>
-            </div>
-            <div class="config-description">${LanguageService.t('config.analyticsDesc')}</div>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
   protected override render(): TemplateResult {
     return html`
       <aside
@@ -2229,7 +1897,6 @@ export class ConfigSidebar extends BaseLitComponent {
           ${this.renderAccessibilityConfig()} ${this.renderComparisonConfig()}
           ${this.renderGradientConfig()} ${this.renderMixerConfig()} ${this.renderPresetsConfig()}
           ${this.renderBudgetConfig()} ${this.renderSwatchConfig()} ${this.renderMarketConfig()}
-          ${this.renderAdvancedSettings()}
         </div>
       </aside>
     `;

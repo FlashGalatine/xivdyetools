@@ -1345,5 +1345,14 @@
     "invalidDye": "Dieser Link verweist auf eine Farbe, die diese Version nicht kennt.",
     "legacyLink": "Dieser Link stammt aus einer älteren Version und nutzt eine veraltete Farb-ID — bitte um einen neuen Link.",
     "invalidHex": "Dieser Link enthält einen ungültigen Farbwert."
+  },
+  "advanced": {
+    "eyebrow": "EINSTELLUNGEN",
+    "dataTitle": "Daten",
+    "dataSummary": "zurücksetzen · Farbstoffe, Favoriten, Paletten löschen",
+    "backupTitle": "Sicherung",
+    "backupSummary": "Einstellungen als JSON exportieren / importieren",
+    "behaviorTitle": "Verhalten",
+    "behaviorSummary": "Performance-Modus · Analytik"
   }
 }

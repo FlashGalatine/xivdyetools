@@ -1345,5 +1345,14 @@
     "invalidDye": "このリンクは、このバージョンでは認識できないカララントを指しています。",
     "legacyLink": "このリンクは旧バージョンで作成され、古いカララントIDを使用しています。新しいリンクを取得してください。",
     "invalidHex": "このリンクには無効なカラー値が含まれています。"
+  },
+  "advanced": {
+    "eyebrow": "設定",
+    "dataTitle": "データ",
+    "dataSummary": "リセット · 保存した色・お気に入り・パレットを削除",
+    "backupTitle": "バックアップ",
+    "backupSummary": "設定をJSONで書き出し / 読み込み",
+    "behaviorTitle": "動作",
+    "behaviorSummary": "パフォーマンスモード · 分析"
   }
 }

@@ -1344,5 +1344,14 @@
     "invalidDye": "이 링크는 이 버전에서 인식할 수 없는 염색약을 가리킵니다.",
     "legacyLink": "이 링크는 이전 버전에서 생성되어 오래된 염색약 ID를 사용합니다. 새 링크를 요청하세요.",
     "invalidHex": "이 링크에 잘못된 색상 값이 포함되어 있습니다."
+  },
+  "advanced": {
+    "eyebrow": "설정",
+    "dataTitle": "데이터",
+    "dataSummary": "초기화 · 저장된 염료·즐겨찾기·팔레트 삭제",
+    "backupTitle": "백업",
+    "backupSummary": "설정을 JSON으로 내보내기 / 가져오기",
+    "behaviorTitle": "동작",
+    "behaviorSummary": "성능 모드 · 분석"
   }
 }
