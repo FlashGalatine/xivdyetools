@@ -387,7 +387,7 @@ describe('og-data-generator', () => {
       const html = generateOGHTML(testOGData);
 
       expect(html).toContain('href="https://example.com/test?foo=bar"');
-      expect(html).toContain("Click here if you're not redirected");
+      expect(html).toContain('Open XIV Dye Tools');
     });
   });
 

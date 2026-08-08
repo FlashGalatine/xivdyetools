@@ -25,6 +25,7 @@ import { extractLocaleCode } from '@xivdyetools/core';
 import type { LocaleCode } from '@xivdyetools/types';
 import { detectCrawlerFromRequest, getCrawlerName } from './crawler-detector';
 import { generateOGDataForTool, generateOGHTML } from './og-data-generator';
+import { getOgDeck } from './services/og-strings';
 import { renderOGImage } from './services/renderer';
 import {
   generateHarmonyOG,
@@ -256,22 +257,28 @@ for (const tool of SUPPORTED_TOOLS) {
  * dark tile, and the deck explains. The root card takes no tile and drops
  * the method tag.
  */
-function buildDefaultCardSvg(tool: ToolId | null, frame: 'discord' | 'x'): string {
+function buildDefaultCardSvg(
+  tool: ToolId | null,
+  frame: 'discord' | 'x',
+  locale: LocaleCode
+): string {
   if (tool && DEFAULT_DECK[tool]) {
     const deck = DEFAULT_DECK[tool];
+    const strings = getOgDeck(tool, locale);
     return generateDefaultCard({
       tool: { glyphName: deck.glyphName, label: deck.label },
-      name: deck.name,
-      sub: deck.sub,
+      name: strings.name,
+      sub: strings.sub,
       path: `xivdyetools.app/${tool}`,
       methodTag: tool === 'presets' ? 'CURATED' : 'ΔE2000',
       frame,
     });
   }
+  const root = getOgDeck('root', locale);
   return generateDefaultCard({
     tool: null,
-    name: 'XIV Dye Tools',
-    sub: 'Colour tools for FFXIV dyes — harmony, matching, prices, accessibility.',
+    name: root.name,
+    sub: root.sub,
     path: 'xivdyetools.app',
     methodTag: null,
     frame,
@@ -289,7 +296,7 @@ app.get('/og/:tool/default.png', async (c) => {
     return c.json({ error: 'Unknown tool' }, 404);
   }
   return renderOGImage(
-    buildDefaultCardSvg(tool, frameFromQuery(c)),
+    buildDefaultCardSvg(tool, frameFromQuery(c), resolveLocale(new URL(c.req.url).searchParams)),
     { browser: 86400, edge: 604800 },
     BAND_RENDER
   );
@@ -674,7 +681,7 @@ app.get('/og/default.png', async (c) => {
   // BUG-068: explicit TTLs — 24h browser / 7d edge (the old param was
   // multiplied by 7 internally, yielding a 49-day edge TTL)
   return renderOGImage(
-    buildDefaultCardSvg(null, frameFromQuery(c)),
+    buildDefaultCardSvg(null, frameFromQuery(c), resolveLocale(new URL(c.req.url).searchParams)),
     { browser: 86400, edge: 604800 },
     BAND_RENDER
   );

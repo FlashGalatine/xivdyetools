@@ -405,33 +405,57 @@ export function generateOGHTML(ogData: OGData): string {
   <meta http-equiv="refresh" content="0;url=${escapeHtml(ogData.url)}">
 
   <style>
+    /* The page nobody designed, designed: the console palette, the mark's
+       stripes, and the thing you asked for named while you wait. Reached by
+       refresh-blocking browsers and pre-fetching clients — same surface,
+       same theme. */
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Segoe UI', system-ui, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
       margin: 0;
-      background: #1a1a2e;
-      color: #fff;
+      background: #0B0B0C;
+      color: #ECECEE;
     }
-    .container {
-      text-align: center;
-      padding: 2rem;
+    .card {
+      width: min(400px, calc(100vw - 48px));
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #17171A;
     }
+    .stripes { display: flex; height: 64px; }
+    .stripes span { flex: 1; }
+    .deck { padding: 16px 18px 18px; }
+    .title { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+    .sub { font-size: 12.5px; color: #9C9CA2; margin: 0 0 14px; line-height: 1.5; }
     a {
-      color: #6366f1;
+      color: #FF6257;
       text-decoration: none;
+      border-bottom: 1px solid rgba(255,98,87,0.35);
     }
-    a:hover {
-      text-decoration: underline;
+    a:hover { color: #ff8579; }
+    .foot {
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      color: #86868C;
+      margin-top: 14px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <p>Redirecting to XIV Dye Tools...</p>
-    <p><a href="${escapeHtml(ogData.url)}">Click here if you're not redirected</a></p>
+  <div class="card">
+    <div class="stripes">
+      <span style="background:#E5484D"></span><span style="background:#F76B15"></span><span style="background:#FFC53D"></span><span style="background:#30A46C"></span><span style="background:#0091FF"></span><span style="background:#8E4EC6"></span>
+    </div>
+    <div class="deck">
+      <p class="title">${escapeHtml(ogData.title)}</p>
+      <p class="sub">${escapeHtml(ogData.description)}</p>
+      <p><a href="${escapeHtml(ogData.url)}">Open XIV Dye Tools →</a></p>
+      <p class="foot">xivdyetools.app</p>
+    </div>
   </div>
 </body>
 </html>`;

@@ -214,66 +214,18 @@ export function generateDefaultCard(options: DefaultCardOptions): string {
 }
 
 /**
- * The per-tool default deck strings — EN drafts for the ×6 pass (the doc's
- * four verbatim + five authored). The first card strings this worker owns
- * that describe tools rather than data.
+ * Per-tool glyph + chip label for the default cards. Deck strings (name +
+ * one-liner ×6) live in `services/og-strings.ts` — the confirmed string
+ * pass, not these constants.
  */
-export const DEFAULT_DECK: Record<
-  string,
-  { glyphName: ToolGlyphName; label: string; name: string; sub: string }
-> = {
-  harmony: {
-    glyphName: 'harmony',
-    label: '/HARMONY',
-    name: 'Colour Harmony',
-    sub: 'Build a palette around any dye. Six harmony types, real dyes only.',
-  },
-  gradient: {
-    glyphName: 'gradient',
-    label: '/GRADIENT',
-    name: 'Gradient Builder',
-    sub: 'Step between two dyes — every stop is a dye you can buy.',
-  },
-  mixer: {
-    glyphName: 'mixer',
-    label: '/MIXER',
-    name: 'Dye Mixer',
-    sub: 'Blend two dyes and find the closest buyable match.',
-  },
-  swatch: {
-    glyphName: 'swatch',
-    label: '/SWATCH',
-    name: 'Swatch Matcher',
-    sub: 'Load a character file and match every colour on it to a dye.',
-  },
-  comparison: {
-    glyphName: 'comparison',
-    label: '/COMPARISON',
-    name: 'Dye Comparison',
-    sub: 'Set up to four dyes side by side and measure every pair.',
-  },
-  accessibility: {
-    glyphName: 'accessibility',
-    label: '/A11Y',
-    name: 'Accessibility Checker',
-    sub: 'See your dyes through four colour-vision lenses.',
-  },
-  extractor: {
-    glyphName: 'extractor',
-    label: '/EXTRACTOR',
-    name: 'Palette Extractor',
-    sub: 'Pull the palette from any image and match every colour to a buyable dye.',
-  },
-  presets: {
-    glyphName: 'presets',
-    label: '/PRESETS',
-    name: 'Community Presets',
-    sub: 'Curated palettes, ready to wear.',
-  },
-  budget: {
-    glyphName: 'budget',
-    label: '/BUDGET',
-    name: 'Budget',
-    sub: 'The cheapest dye near the one you want, priced from the market board.',
-  },
+export const DEFAULT_DECK: Record<string, { glyphName: ToolGlyphName; label: string }> = {
+  harmony: { glyphName: 'harmony', label: '/HARMONY' },
+  gradient: { glyphName: 'gradient', label: '/GRADIENT' },
+  mixer: { glyphName: 'mixer', label: '/MIXER' },
+  swatch: { glyphName: 'swatch', label: '/SWATCH' },
+  comparison: { glyphName: 'comparison', label: '/COMPARISON' },
+  accessibility: { glyphName: 'accessibility', label: '/A11Y' },
+  extractor: { glyphName: 'extractor', label: '/EXTRACTOR' },
+  presets: { glyphName: 'presets', label: '/PRESETS' },
+  budget: { glyphName: 'budget', label: '/BUDGET' },
 };
