@@ -49,7 +49,9 @@ export type HarmonyType =
   | 'compound'
   | 'shades';
 
-export type MatchingAlgorithm = 'oklab' | 'ciede2000' | 'euclidean';
+// 5.0: the shared matching vocabulary (legacy URL values like 'euclidean'
+// normalise at the boundary via normalizeMatchingMethod)
+export type MatchingAlgorithm = import('@xivdyetools/core').MatchingMethod;
 
 export type VisionType =
   | 'normal'

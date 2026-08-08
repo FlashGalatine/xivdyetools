@@ -14,6 +14,7 @@
  * @module index
  */
 
+import { normalizeMatchingMethod } from '@xivdyetools/core';
 import { Hono, type Context } from 'hono';
 import {
   requestIdMiddleware,
@@ -72,7 +73,19 @@ const VALID_HARMONY_TYPES: readonly string[] = [
   'complementary', 'analogous', 'triadic', 'split-complementary',
   'tetradic', 'inverted-tetradic', 'square', 'monochromatic', 'compound', 'shades',
 ];
-const VALID_ALGORITHMS: readonly string[] = ['oklab', 'ciede2000', 'euclidean'];
+// 5.0 vocabulary + the legacy spellings normalizeMatchingMethod accepts
+const VALID_ALGORITHMS: readonly string[] = [
+  'ciede2000',
+  'oklab',
+  'cie76',
+  'redmean',
+  'rgb',
+  'distinguish',
+  // legacy (normalised on use)
+  'euclidean',
+  'hyab',
+  'oklch-weighted',
+];
 const VALID_VISION_TYPES: readonly string[] = [
   'normal', 'protanopia', 'deuteranopia', 'tritanopia', 'achromatopsia',
 ];

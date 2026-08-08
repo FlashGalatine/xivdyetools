@@ -1520,18 +1520,18 @@ export class ConfigSidebar extends BaseLitComponent {
    */
   private getMatchingMethodDescription(method: MatchingMethod): string {
     switch (method) {
-      case 'oklab':
-        return LanguageService.t('config.matchingOklabDesc');
-      case 'hyab':
-        return LanguageService.t('config.matchingHyabDesc');
       case 'ciede2000':
         return LanguageService.t('config.matchingCiede2000Desc');
+      case 'oklab':
+        return LanguageService.t('config.matchingOklabDesc');
       case 'cie76':
         return LanguageService.t('config.matchingCie76Desc');
+      case 'redmean':
+        return LanguageService.t('config.matchingRedmeanDesc');
       case 'rgb':
         return LanguageService.t('config.matchingRgbDesc');
-      case 'oklch-weighted':
-        return LanguageService.t('config.matchingOklchWeightedDesc');
+      case 'distinguish':
+        return LanguageService.t('config.matchingDistinguishDesc');
       default:
         return '';
     }
@@ -1555,13 +1555,18 @@ export class ConfigSidebar extends BaseLitComponent {
             this.handleConfigChange(toolKey, 'matchingMethod', value);
           }}
         >
-          <option value="oklab">OKLAB - ${LanguageService.t('config.matchingOklab')}</option>
-          <option value="hyab">HyAB - ${LanguageService.t('config.matchingHyab')}</option>
           <option value="ciede2000">
-            CIEDE2000 - ${LanguageService.t('config.matchingCiede2000')}
+            ΔE2000 - ${LanguageService.t('config.matchingCiede2000')}
           </option>
-          <option value="cie76">CIE76 - ${LanguageService.t('config.matchingCie76')}</option>
-          <option value="rgb">RGB - ${LanguageService.t('config.matchingRgb')}</option>
+          <option value="oklab">ΔEOK - ${LanguageService.t('config.matchingOklab')}</option>
+          <option value="cie76">ΔE76 - ${LanguageService.t('config.matchingCie76')}</option>
+          <option value="redmean">
+            REDMEAN - ${LanguageService.t('config.matchingRedmean')}
+          </option>
+          <option value="rgb">RGB DIST - ${LanguageService.t('config.matchingRgb')}</option>
+          <option value="distinguish">
+            DISTINGUISH % - ${LanguageService.t('config.matchingDistinguish')}
+          </option>
         </select>
         <div class="config-description">${this.getMatchingMethodDescription(currentMethod)}</div>
       </div>

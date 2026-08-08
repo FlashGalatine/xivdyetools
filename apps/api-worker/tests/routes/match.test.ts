@@ -24,7 +24,7 @@ describe('GET /v1/match/closest', () => {
     expect(body.data.dye).toBeDefined();
     expect(body.data.distance).toBeDefined();
     expect(typeof body.data.distance).toBe('number');
-    expect(body.data.method).toBe('oklab');
+    expect(body.data.method).toBe('ciede2000');
     expect(body.data.inputHex).toBe('#FF0000');
   });
 
@@ -42,11 +42,11 @@ describe('GET /v1/match/closest', () => {
     expect(body.data.method).toBe('ciede2000');
   });
 
-  it('supports oklch-weighted with custom weights', async () => {
+  it('normalises retired oklch-weighted to the suite default', async () => {
     const { body } = await getJson('/v1/match/closest?hex=FF0000&method=oklch-weighted&kL=2&kC=1&kH=0.5');
 
     expect(body.success).toBe(true);
-    expect(body.data.method).toBe('oklch-weighted');
+    expect(body.data.method).toBe('ciede2000');
   });
 
   it('returns 400 for missing hex', async () => {
@@ -96,11 +96,14 @@ describe('GET /v1/match/closest', () => {
     expect(body.data.method).toBe('cie76');
   });
 
-  it('supports hyab matching method', async () => {
-    const { body } = await getJson('/v1/match/closest?hex=FF0000&method=hyab');
-
+  it('supports redmean matching method (and normalises legacy hyab)', async () => {
+    const { body } = await getJson('/v1/match/closest?hex=FF0000&method=redmean');
     expect(body.success).toBe(true);
-    expect(body.data.method).toBe('hyab');
+    expect(body.data.method).toBe('redmean');
+
+    const { body: legacy } = await getJson('/v1/match/closest?hex=FF0000&method=hyab');
+    expect(legacy.success).toBe(true);
+    expect(legacy.data.method).toBe('ciede2000');
   });
 
   it('supports excludeIds parameter', async () => {
@@ -123,7 +126,7 @@ describe('GET /v1/match/within-distance', () => {
     expect(Array.isArray(body.data.results)).toBe(true);
     expect(body.data.inputHex).toBe('#FF0000');
     expect(body.data.maxDistance).toBe(50);
-    expect(body.data.method).toBe('oklab');
+    expect(body.data.method).toBe('ciede2000');
     expect(typeof body.data.resultCount).toBe('number');
   });
 

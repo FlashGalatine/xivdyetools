@@ -11,6 +11,7 @@
  * @module components/tools/swatch-tool
  */
 
+import { normalizeMatchingMethod } from '@xivdyetools/core';
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { MarketBoard } from '@components/market-board';
@@ -582,25 +583,8 @@ export class SwatchTool extends BaseComponent {
    * Mirrors CharacterColorService.calculateDistanceWithMethod.
    */
   private calculateColorDistance(hex1: string, hex2: string): number {
-    switch (this.matchingMethod) {
-      case 'rgb': {
-        const r1 = ColorService.hexToRgb(hex1);
-        const r2 = ColorService.hexToRgb(hex2);
-        const dr = r1.r - r2.r;
-        const dg = r1.g - r2.g;
-        const db = r1.b - r2.b;
-        return Math.sqrt(dr * dr + dg * dg + db * db);
-      }
-      case 'cie76':
-        return ColorConverter.getDeltaE(hex1, hex2, 'cie76');
-      case 'ciede2000':
-        return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
-      case 'hyab':
-        return ColorConverter.getDeltaE_HyAB(hex1, hex2);
-      case 'oklab':
-      default:
-        return ColorConverter.getDeltaE_Oklab(hex1, hex2);
-    }
+    // 5.0: one dispatch suite-wide (dE2000 default lives in core)
+    return ColorService.getDistanceForMethod(hex1, hex2, this.matchingMethod);
   }
 
   /**

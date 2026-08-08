@@ -5,6 +5,7 @@
  * which the core library's findClosestDye doesn't directly expose.
  */
 
+import { normalizeMatchingMethod } from '@xivdyetools/core';
 import {
   DyeService,
   dyeDatabase,
@@ -37,15 +38,8 @@ export function deltaForAlgorithm(
   hex2: string,
   algorithm: MatchingAlgorithm
 ): number {
-  switch (algorithm) {
-    case 'ciede2000':
-      return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
-    case 'euclidean':
-      return ColorService.getColorDistance(hex1, hex2);
-    case 'oklab':
-    default:
-      return ColorConverter.getDeltaE_Oklab(hex1, hex2);
-  }
+  // 5.0: one dispatch suite-wide; legacy spellings normalise first
+  return ColorService.getDistanceForMethod(hex1, hex2, normalizeMatchingMethod(algorithm));
 }
 
 /**

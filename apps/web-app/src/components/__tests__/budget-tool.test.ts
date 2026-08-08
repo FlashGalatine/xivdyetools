@@ -385,7 +385,7 @@ describe('BudgetTool', () => {
       expect(mockFindDyesWithinDistance).toHaveBeenCalled();
       expect(mockFindDyesWithinDistance).toHaveBeenCalledWith(mockDyes[0].hex, {
         maxDistance: 50,
-        matchingMethod: 'oklab',
+        matchingMethod: 'ciede2000',
       });
     });
 

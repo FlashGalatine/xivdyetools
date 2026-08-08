@@ -13,12 +13,12 @@ export type { BlendingMode } from '@xivdyetools/core/blending';
 export { BLENDING_MODES, isValidBlendingMode } from '@xivdyetools/core/blending';
 import type { BlendingMode } from '@xivdyetools/core/blending';
 
-/**
- * Color matching methods for finding closest dyes
- *
- * @see https://xivdyetools.com/docs/matching-methods
- */
-export type MatchingMethod = 'rgb' | 'cie76' | 'ciede2000' | 'oklab' | 'hyab' | 'oklch-weighted';
+// 5.0: the matching vocabulary is defined once in core — one list
+// suite-wide, dE2000 default. Stored v4 values (hyab, oklch-weighted)
+// normalise on read via normalizeMatchingMethod.
+export type { MatchingMethod } from '@xivdyetools/core';
+import type { MatchingMethod } from '@xivdyetools/core';
+import { isMatchingMethod } from '@xivdyetools/core';
 
 /**
  * Character gender for swatch matching
@@ -109,7 +109,7 @@ export interface UserPreferences {
 export const PREFERENCE_DEFAULTS: Required<Omit<UserPreferences, 'clan' | 'gender' | 'world' | 'updatedAt' | '_version'>> = {
   language: 'en',
   blending: 'rgb',
-  matching: 'oklab',
+  matching: 'ciede2000',
   count: 5,
   market: false,
   showHex: true,
@@ -122,15 +122,18 @@ export const PREFERENCE_DEFAULTS: Required<Omit<UserPreferences, 'clan' | 'gende
 };
 
 /**
- * Valid matching methods with descriptions (for autocomplete)
+ * The 5.0 matching vocabulary with display names (suite tags) for
+ * autocomplete and /preferences. Localised descriptions land with the
+ * MATCHING_METHODS locale keys in the graphics port; the tags themselves
+ * are identifiers and never localise.
  */
 export const MATCHING_METHODS: Array<{ value: MatchingMethod; name: string; description: string }> = [
-  { value: 'rgb', name: 'RGB', description: 'Euclidean RGB distance' },
-  { value: 'cie76', name: 'CIE76', description: 'CIELAB Euclidean distance' },
-  { value: 'ciede2000', name: 'CIEDE2000', description: 'Industry standard perceptual formula' },
-  { value: 'oklab', name: 'OKLAB', description: 'Modern perceptual distance (default)' },
-  { value: 'hyab', name: 'HyAB', description: 'Hybrid distance for large differences' },
-  { value: 'oklch-weighted', name: 'OKLCH Weighted', description: 'Weighted L/C/H priorities' },
+  { value: 'ciede2000', name: 'ΔE2000', description: 'Industry-standard perceptual formula (default)' },
+  { value: 'oklab', name: 'ΔEOK', description: 'OKLAB perceptual distance' },
+  { value: 'cie76', name: 'ΔE76', description: 'CIELAB Euclidean distance' },
+  { value: 'redmean', name: 'REDMEAN', description: 'Weighted RGB approximation' },
+  { value: 'rgb', name: 'RGB DIST', description: 'Euclidean RGB distance' },
+  { value: 'distinguish', name: 'DISTINGUISH %', description: 'RGB DIST rescaled to 0-100' },
 ];
 
 /**
@@ -153,10 +156,10 @@ export const CLANS_BY_RACE: Record<string, string[]> = {
 export const VALID_CLANS: string[] = Object.values(CLANS_BY_RACE).flat();
 
 /**
- * Validate if a string is a valid matching method
+ * Validate if a string is a valid matching method (5.0 vocabulary).
  */
 export function isValidMatchingMethod(method: string): method is MatchingMethod {
-  return MATCHING_METHODS.some((m) => m.value === method);
+  return isMatchingMethod(method);
 }
 
 /**

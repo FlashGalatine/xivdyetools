@@ -36,11 +36,6 @@ matchRouter.get('/closest', (c) => {
   const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
   const excludeIdsRaw = c.req.query('excludeIds');
 
-  // OKLCH weights (only meaningful for oklch-weighted method)
-  const kL = parseFloatParam(c.req.query('kL'), 'kL', { min: 0, defaultValue: 1.0 });
-  const kC = parseFloatParam(c.req.query('kC'), 'kC', { min: 0, defaultValue: 1.0 });
-  const kH = parseFloatParam(c.req.query('kH'), 'kH', { min: 0, defaultValue: 1.0 });
-
   // Dye type/acquisition filters
   const filters = parseDyeFilters(c.req.query.bind(c.req));
   const filterExcludeIds = buildFilterExcludeIds(filters);
@@ -50,7 +45,6 @@ matchRouter.get('/closest', (c) => {
   const options: FindClosestOptions = {
     excludeIds: combinedExcludeIds.length > 0 ? combinedExcludeIds : undefined,
     matchingMethod: method,
-    weights: method === 'oklch-weighted' ? { kL, kC, kH } : undefined,
   };
 
   const dye = dyeService.findClosestDye(hex, options);
@@ -71,8 +65,7 @@ matchRouter.get('/closest', (c) => {
   }
 
   // Recalculate distance for the response (core doesn't return it)
-  const distance = calculateDistance(hex, dye.hex, method,
-    method === 'oklch-weighted' ? { kL, kC, kH } : undefined);
+  const distance = calculateDistance(hex, dye.hex, method);
 
   const localizedName = localizedNameFor(dye, locale);
 
@@ -96,12 +89,6 @@ matchRouter.get('/within-distance', (c) => {
   const locale = c.get('locale'); // REFACTOR-023: parsed once by localeMiddleware
   const excludeIdsRaw = c.req.query('excludeIds');
 
-  const kL = parseFloatParam(c.req.query('kL'), 'kL', { min: 0, defaultValue: 1.0 });
-  const kC = parseFloatParam(c.req.query('kC'), 'kC', { min: 0, defaultValue: 1.0 });
-  const kH = parseFloatParam(c.req.query('kH'), 'kH', { min: 0, defaultValue: 1.0 });
-
-  const weights = method === 'oklch-weighted' ? { kL, kC, kH } : undefined;
-
   // Dye type/acquisition filters
   const filters = parseDyeFilters(c.req.query.bind(c.req));
 
@@ -112,7 +99,6 @@ matchRouter.get('/within-distance', (c) => {
   const options: FindWithinDistanceOptions = {
     maxDistance,
     matchingMethod: method,
-    weights,
   };
 
   // Note: core returns Dye[] without distances, and excludeIds uses dye.id
@@ -133,7 +119,7 @@ matchRouter.get('/within-distance', (c) => {
 
   // Recalculate distances for the response
   const results = dyes.map((dye) => {
-    const dist = calculateDistance(hex, dye.hex, method, weights);
+    const dist = calculateDistance(hex, dye.hex, method);
     return serializeDyeWithDistance(dye, dist, localizedNameFor(dye, locale));
   });
 

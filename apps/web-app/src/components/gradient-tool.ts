@@ -10,6 +10,7 @@
  * @module components/tools/gradient-tool
  */
 
+import { normalizeMatchingMethod } from '@xivdyetools/core';
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
@@ -298,9 +299,8 @@ export class GradientTool extends BaseComponent {
 
     // Load matching algorithm
     if (params.algo && typeof params.algo === 'string') {
-      const validAlgos = ['oklab', 'ciede2000', 'euclidean'];
-      if (validAlgos.includes(params.algo)) {
-        this.matchingMethod = params.algo as typeof this.matchingMethod;
+      {
+        this.matchingMethod = normalizeMatchingMethod(params.algo);
       }
     }
 

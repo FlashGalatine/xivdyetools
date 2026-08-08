@@ -6,6 +6,7 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
+import { DEFAULT_MATCHING_METHOD, LEGACY_MATCHING_METHOD_MAP } from '@xivdyetools/core';
 import type { MatchingMethod } from '@xivdyetools/core';
 import {
   EXPENSIVE_DYE_IDS,
@@ -22,8 +23,11 @@ import { dyeService } from './services.js';
 export const VALID_LOCALES = ['en', 'ja', 'de', 'fr', 'ko', 'zh'] as const;
 export type ValidLocale = (typeof VALID_LOCALES)[number];
 
+// The 5.0 vocabulary (one list suite-wide). Retired v4 values (hyab,
+// oklch-weighted) stay accepted at the boundary for compatibility and are
+// normalised to their replacement.
 export const VALID_MATCHING_METHODS: MatchingMethod[] = [
-  'rgb', 'cie76', 'ciede2000', 'oklab', 'hyab', 'oklch-weighted',
+  'ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish',
 ];
 
 export const VALID_SORT_FIELDS = ['name', 'brightness', 'saturation', 'hue', 'cost'] as const;
@@ -304,9 +308,14 @@ export function parseLocale(value: string | undefined): ValidLocale {
   return value as ValidLocale;
 }
 
-/** Parse the matching method param, defaulting to 'oklab'. */
+/** Parse the matching method param, defaulting to the suite default (dE2000).
+ *  Retired v4 values normalise to their replacement instead of erroring —
+ *  existing API clients keep working. */
 export function parseMatchingMethod(value: string | undefined): MatchingMethod {
-  if (!value || value === '') return 'oklab';
+  if (!value || value === '') return DEFAULT_MATCHING_METHOD;
+  if (value in LEGACY_MATCHING_METHOD_MAP) {
+    return LEGACY_MATCHING_METHOD_MAP[value];
+  }
   if (!VALID_MATCHING_METHODS.includes(value as MatchingMethod)) {
     throw new ApiError(ErrorCode.INVALID_MATCHING_METHOD, `Invalid matching method "${value}". Must be one of: ${VALID_MATCHING_METHODS.join(', ')}`, 400, {
       parameter: 'method',

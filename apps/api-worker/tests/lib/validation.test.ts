@@ -186,14 +186,20 @@ describe('parseLocale', () => {
 });
 
 describe('parseMatchingMethod', () => {
-  it('defaults to oklab', () => {
-    expect(parseMatchingMethod(undefined)).toBe('oklab');
+  it('defaults to the suite default (ciede2000)', () => {
+    expect(parseMatchingMethod(undefined)).toBe('ciede2000');
   });
 
   it('accepts valid methods', () => {
     expect(parseMatchingMethod('rgb')).toBe('rgb');
     expect(parseMatchingMethod('ciede2000')).toBe('ciede2000');
-    expect(parseMatchingMethod('oklch-weighted')).toBe('oklch-weighted');
+    expect(parseMatchingMethod('redmean')).toBe('redmean');
+    expect(parseMatchingMethod('distinguish')).toBe('distinguish');
+  });
+
+  it('normalises retired v4 methods instead of erroring', () => {
+    expect(parseMatchingMethod('hyab')).toBe('ciede2000');
+    expect(parseMatchingMethod('oklch-weighted')).toBe('ciede2000');
   });
 
   it('throws for invalid methods', () => {

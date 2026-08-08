@@ -116,10 +116,10 @@ describe('mixer SVG generator', () => {
           dyeAId: a,
           dyeBId: b,
           ratio: 50,
-          algorithm: 'euclidean',
+          algorithm: 'rgb',
         });
 
-        expect(result).toContain('EUCLIDEAN');
+        expect(result).toContain('RGB');
       });
     });
 

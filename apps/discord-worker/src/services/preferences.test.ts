@@ -17,6 +17,21 @@ vi.mock('@xivdyetools/core', () => ({
   // bot-logic/input-resolution.ts creates a DyeService instance at module load time
   DyeService: vi.fn().mockImplementation(function () { return {}; }),
   dyeDatabase: [],
+  // 5.0 matching vocabulary (mirrors core; the mock exists only to dodge
+  // JSON imports, not to change behaviour)
+  MATCHING_METHODS: ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish'],
+  DEFAULT_MATCHING_METHOD: 'ciede2000',
+  LEGACY_MATCHING_METHOD_MAP: { hyab: 'ciede2000', 'oklch-weighted': 'ciede2000', euclidean: 'rgb' },
+  isMatchingMethod: (v: unknown) =>
+    typeof v === 'string' &&
+    ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish'].includes(v),
+  normalizeMatchingMethod: (v: unknown) => {
+    const valid = ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish'];
+    if (typeof v === 'string' && valid.includes(v)) return v;
+    if (v === 'hyab' || v === 'oklch-weighted') return 'ciede2000';
+    if (v === 'euclidean') return 'rgb';
+    return 'ciede2000';
+  },
 }));
 
 // Create mock KV namespace
@@ -271,7 +286,12 @@ describe('Preferences Service', () => {
     describe('resolveMatchingMethod', () => {
       it('uses explicit value when provided', () => {
         const prefs: UserPreferences = { matching: 'ciede2000' };
-        expect(resolveMatchingMethod('hyab', prefs)).toBe('hyab');
+        expect(resolveMatchingMethod('redmean', prefs)).toBe('redmean');
+      });
+
+      it('a retired explicit value falls through to the (normalised) preference', () => {
+        const prefs: UserPreferences = { matching: 'hyab' as never };
+        expect(resolveMatchingMethod('hyab', prefs)).toBe('ciede2000');
       });
 
       it('uses preference when no explicit value', () => {
@@ -281,7 +301,7 @@ describe('Preferences Service', () => {
 
       it('uses default when no explicit or preference', () => {
         const prefs: UserPreferences = {};
-        expect(resolveMatchingMethod(undefined, prefs)).toBe('oklab');
+        expect(resolveMatchingMethod(undefined, prefs)).toBe('ciede2000');
       });
     });
 
@@ -378,7 +398,7 @@ describe('Preferences Service', () => {
     it('returns correct defaults', () => {
       expect(getDefaultValue('language')).toBe('en');
       expect(getDefaultValue('blending')).toBe('rgb');
-      expect(getDefaultValue('matching')).toBe('oklab');
+      expect(getDefaultValue('matching')).toBe('ciede2000');
       expect(getDefaultValue('count')).toBe(5);
       expect(getDefaultValue('market')).toBe(false);
       expect(getDefaultValue('clan')).toBeUndefined();

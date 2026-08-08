@@ -10,6 +10,7 @@
  * @module components/tools/budget-tool
  */
 
+import { normalizeMatchingMethod } from '@xivdyetools/core';
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
@@ -208,7 +209,7 @@ export class BudgetTool extends BaseComponent {
     this.colorDistance =
       StorageService.getItem<number>(STORAGE_KEYS.colorDistance) ?? DEFAULTS.colorDistance;
     this.matchingMethod =
-      StorageService.getItem<MatchingMethod>(STORAGE_KEYS.matchingMethod) ?? 'oklab';
+      normalizeMatchingMethod(StorageService.getItem<string>(STORAGE_KEYS.matchingMethod));
     this.resultLimit =
       StorageService.getItem<number>(STORAGE_KEYS.resultLimit) ?? DEFAULTS.resultLimit;
 

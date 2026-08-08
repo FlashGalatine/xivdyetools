@@ -33,12 +33,12 @@ import { DyeService } from '@services/dye-service-wrapper';
  * Human-readable labels for matching algorithms
  */
 const MATCHING_METHOD_LABELS: Record<MatchingMethod, string> = {
-  rgb: 'RGB',
-  cie76: 'CIE76',
   ciede2000: 'ΔE2000',
-  oklab: 'OKLAB',
-  hyab: 'HyAB',
-  'oklch-weighted': 'OKLCH',
+  oklab: 'ΔEOK',
+  cie76: 'ΔE76',
+  redmean: 'REDMEAN',
+  rgb: 'RGB DIST',
+  distinguish: 'DIST %',
 };
 
 /**
@@ -57,12 +57,15 @@ const DELTA_THRESHOLDS: Record<
   MatchingMethod,
   { excellent: number; good: number; acceptable: number; noticeable: number }
 > = {
-  rgb: { excellent: 15, good: 35, acceptable: 60, noticeable: 100 },
-  cie76: { excellent: 1, good: 3, acceptable: 5, noticeable: 10 },
   ciede2000: { excellent: 1, good: 3, acceptable: 5, noticeable: 10 },
-  oklab: { excellent: 1, good: 3, acceptable: 5, noticeable: 10 },
-  hyab: { excellent: 1, good: 3, acceptable: 5, noticeable: 10 },
-  'oklch-weighted': { excellent: 1, good: 3, acceptable: 5, noticeable: 10 },
+  // dEOK lives on ~0-0.4 raw (prints dp 3)
+  oklab: { excellent: 0.01, good: 0.03, acceptable: 0.05, noticeable: 0.1 },
+  cie76: { excellent: 1, good: 3, acceptable: 5, noticeable: 10 },
+  // Redmean ~1.7x the RGB scale
+  redmean: { excellent: 25, good: 60, acceptable: 105, noticeable: 175 },
+  rgb: { excellent: 15, good: 35, acceptable: 60, noticeable: 100 },
+  // Distinguish = RGB rescaled to 0-100 (thresholds / 4.4167)
+  distinguish: { excellent: 3, good: 8, acceptable: 14, noticeable: 23 },
 };
 
 /**

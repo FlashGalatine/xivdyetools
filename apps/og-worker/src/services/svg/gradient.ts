@@ -58,8 +58,11 @@ function interpolateColor(
 ): string {
   switch (algorithm) {
     case 'ciede2000':
+    case 'cie76':
       return ColorService.mixColorsLab(color1, color2, ratio);
-    case 'euclidean':
+    case 'rgb':
+    case 'redmean':
+    case 'distinguish':
       return ColorService.mixColorsRgb(color1, color2, ratio);
     case 'oklab':
     default:

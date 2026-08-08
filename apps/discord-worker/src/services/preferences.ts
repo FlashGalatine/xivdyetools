@@ -25,6 +25,7 @@
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { LocaleCode } from './i18n.js';
+import { normalizeMatchingMethod } from '@xivdyetools/core';
 import { isValidLocale } from './i18n.js';
 import type {
   UserPreferences,
@@ -331,7 +332,13 @@ export function resolveMatchingMethod(
   if (explicit && isValidMatchingMethod(explicit)) {
     return explicit;
   }
-  return prefs.matching ?? PREFERENCE_DEFAULTS.matching;
+  // 5.0 KV migration on read: v4 stored values (oklab-as-default era,
+  // hyab, oklch-weighted) normalise into the new vocabulary; absent falls
+  // to the suite default (dE2000).
+  if (prefs.matching !== undefined) {
+    return normalizeMatchingMethod(prefs.matching);
+  }
+  return PREFERENCE_DEFAULTS.matching;
 }
 
 /**

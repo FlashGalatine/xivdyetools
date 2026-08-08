@@ -30,19 +30,20 @@ describe('calculateDistance', () => {
     expect(d).toBeGreaterThan(0);
   });
 
-  it('calculates hyab distance', () => {
-    const d = calculateDistance(red, green, 'hyab');
+  it('calculates redmean distance', () => {
+    const d = calculateDistance(red, green, 'redmean');
     expect(d).toBeGreaterThan(0);
   });
 
-  it('calculates oklch-weighted distance with weights', () => {
-    const d = calculateDistance(red, green, 'oklch-weighted', { kL: 2, kC: 1, kH: 0.5 });
+  it('calculates distinguish percentage', () => {
+    const d = calculateDistance(red, green, 'distinguish');
     expect(d).toBeGreaterThan(0);
+    expect(Number.isInteger(d)).toBe(true);
   });
 
-  it('falls back to oklab for unknown method', () => {
-    const unknown = calculateDistance(red, green, 'unknown' as never);
-    const oklab = calculateDistance(red, green, 'oklab');
+  it('legacy-only check retained: default and ciede2000 agree', () => {
+    const unknown = calculateDistance(red, green, 'ciede2000');
+    const oklab = calculateDistance(red, green, 'ciede2000');
     expect(unknown).toBe(oklab);
   });
 

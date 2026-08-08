@@ -10,6 +10,7 @@
  * @module components/tools/harmony-tool
  */
 
+import { normalizeMatchingMethod } from '@xivdyetools/core';
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
@@ -480,20 +481,14 @@ export class HarmonyTool extends BaseComponent {
       }
     }
 
-    // Apply matching algorithm if valid
+    // Apply matching algorithm (5.0: legacy/unknown values normalise loudly-defaulted)
     if (algoParam) {
-      const validAlgorithms = ['oklab', 'ciede2000', 'euclidean'];
-      const normalizedAlgo = algoParam.toLowerCase();
+      const normalizedAlgo = normalizeMatchingMethod(algoParam.toLowerCase());
+      this.matchingMethod = normalizedAlgo;
+      logger.info(`[HarmonyTool] Share URL loaded matching algorithm: ${normalizedAlgo}`);
 
-      if (validAlgorithms.includes(normalizedAlgo)) {
-        this.matchingMethod = normalizedAlgo as typeof this.matchingMethod;
-        logger.info(`[HarmonyTool] Share URL loaded matching algorithm: ${normalizedAlgo}`);
-
-        // Sync with ConfigController so sidebar updates
-        configController.setConfig('harmony', { matchingMethod: normalizedAlgo as MatchingMethod });
-      } else {
-        logger.warn(`[HarmonyTool] Invalid algorithm in URL: ${algoParam}`);
-      }
+      // Sync with ConfigController so sidebar updates
+      configController.setConfig('harmony', { matchingMethod: normalizedAlgo });
     }
 
     // Apply perceptual matching flag

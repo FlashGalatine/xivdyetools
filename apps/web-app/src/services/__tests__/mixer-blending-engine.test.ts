@@ -20,6 +20,10 @@ vi.mock('@services/index', () => ({
     mixColorsHsl: vi.fn(() => '#80FF80'),
     mixColorsSpectral: vi.fn(() => '#008000'),
     getColorDistance: vi.fn(() => 100),
+    getDistanceForMethod: vi.fn(
+      (_h1: string, _h2: string, m: string) =>
+        ({ ciede2000: 25, oklab: 15, cie76: 50, redmean: 20, rgb: 100, distinguish: 23 } as Record<string, number>)[m] ?? 25
+    ),
   },
   dyeService: {
     getAllDyes: vi.fn(() => []),
@@ -34,7 +38,7 @@ vi.mock('@xivdyetools/core', () => ({
       return 30;
     }),
     getDeltaE_Oklab: vi.fn(() => 15),
-    getDeltaE_HyAB: vi.fn(() => 20),
+    getDeltaE_redmean: vi.fn(() => 20),
     getDeltaE_OklchWeighted: vi.fn(() => 18),
   },
 }));
@@ -195,67 +199,22 @@ describe('mixer-blending-engine', () => {
     const hex1 = '#FF0000';
     const hex2 = '#0000FF';
 
-    it('should use RGB distance', async () => {
+    it('dispatches every 5.0 method through ColorService.getDistanceForMethod', async () => {
       const { ColorService } = await import('@services/index');
 
-      const result = calculateColorDistance(hex1, hex2, 'rgb');
-
-      expect(ColorService.getColorDistance).toHaveBeenCalledWith(hex1, hex2);
-      expect(result).toBe(100);
-    });
-
-    it('should use CIE76 DeltaE', async () => {
-      const { ColorConverter } = await import('@xivdyetools/core');
-
-      const result = calculateColorDistance(hex1, hex2, 'cie76');
-
-      expect(ColorConverter.getDeltaE).toHaveBeenCalledWith(hex1, hex2, 'cie76');
-      expect(result).toBe(50);
-    });
-
-    it('should use CIEDE2000 DeltaE', async () => {
-      const { ColorConverter } = await import('@xivdyetools/core');
-
-      const result = calculateColorDistance(hex1, hex2, 'ciede2000');
-
-      expect(ColorConverter.getDeltaE).toHaveBeenCalledWith(hex1, hex2, 'cie2000');
-      expect(result).toBe(25);
-    });
-
-    it('should use OKLAB DeltaE', async () => {
-      const { ColorConverter } = await import('@xivdyetools/core');
-
-      const result = calculateColorDistance(hex1, hex2, 'oklab');
-
-      expect(ColorConverter.getDeltaE_Oklab).toHaveBeenCalledWith(hex1, hex2);
-      expect(result).toBe(15);
-    });
-
-    it('should use HyAB DeltaE', async () => {
-      const { ColorConverter } = await import('@xivdyetools/core');
-
-      const result = calculateColorDistance(hex1, hex2, 'hyab');
-
-      expect(ColorConverter.getDeltaE_HyAB).toHaveBeenCalledWith(hex1, hex2);
-      expect(result).toBe(20);
-    });
-
-    it('should use OKLCH weighted DeltaE', async () => {
-      const { ColorConverter } = await import('@xivdyetools/core');
-
-      const result = calculateColorDistance(hex1, hex2, 'oklch-weighted');
-
-      expect(ColorConverter.getDeltaE_OklchWeighted).toHaveBeenCalledWith(hex1, hex2);
-      expect(result).toBe(18);
-    });
-
-    it('should default to OKLAB for unknown method', async () => {
-      const { ColorConverter } = await import('@xivdyetools/core');
-
-      const result = calculateColorDistance(hex1, hex2, 'unknown' as MatchingMethod);
-
-      expect(ColorConverter.getDeltaE_Oklab).toHaveBeenCalledWith(hex1, hex2);
-      expect(result).toBe(15);
+      const expected: Record<string, number> = {
+        ciede2000: 25,
+        oklab: 15,
+        cie76: 50,
+        redmean: 20,
+        rgb: 100,
+        distinguish: 23,
+      };
+      for (const method of Object.keys(expected)) {
+        const result = calculateColorDistance(hex1, hex2, method as MatchingMethod);
+        expect(ColorService.getDistanceForMethod).toHaveBeenCalledWith(hex1, hex2, method);
+        expect(result, method).toBe(expected[method]);
+      }
     });
   });
 });

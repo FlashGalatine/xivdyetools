@@ -16,6 +16,7 @@
  * @module components/tools/mixer-tool
  */
 
+import { normalizeMatchingMethod } from '@xivdyetools/core';
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
@@ -650,8 +651,8 @@ export class MixerTool extends BaseComponent {
     }
 
     // Load matching algorithm
-    if (typeof params.algo === 'string' && ['oklab', 'ciede2000', 'rgb'].includes(params.algo)) {
-      this.matchingMethod = params.algo as MatchingMethod;
+    if (typeof params.algo === 'string') {
+      this.matchingMethod = normalizeMatchingMethod(params.algo);
       ConfigController.getInstance().setConfig('mixer', { matchingMethod: this.matchingMethod });
     }
 
