@@ -7,9 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 `xivdyetools-og-worker` is a Cloudflare Worker that generates **dynamic OpenGraph previews** for shared XIV Dye Tools links. It serves two distinct surfaces:
 
 1. **Crawler interception** — when Discord, Twitter, Facebook, Slack, etc. fetch a tool URL like `xivdyetools.app/harmony/?dye=5771&harmony=tetradic`, the worker detects the bot by `User-Agent` and returns HTML stuffed with locale-aware `og:*` meta tags. Real users get passed through to the SPA.
-2. **OG image rendering** — direct PNG endpoints under `/og/*` produce 1200×630 social cards by composing tool-specific SVGs and rasterizing through `resvg-wasm`. Five fonts are bundled as `*.ttf` data imports at build time: Space Grotesk, Onest, Habibi, plus the CJK subsets `NotoSansSC-Subset.ttf` (~290 KiB) and `NotoSansKR-Subset.ttf` (~176 KiB) for ja/zh/ko dye names (regenerate via `scripts/subset-cjk-fonts.py` whenever dyes or locale strings change).
+2. **OG image rendering** — direct PNG endpoints under `/og/*` produce the 5.0 **15E band cards**: drawn on a 400 design grid and rastered ×3 through `resvg-wasm` (Discord frame 400×350 → 1200×1050; X frame 400×210 → 1200×630 via `?frame=x`, which `twitter:image` carries). Six fonts are bundled as `*.ttf` data imports: Space Grotesk, Onest, Fragment Mono, plus the CJK subsets NotoSansJP/SC/KR (regenerate via `scripts/subset-cjk-fonts.py` whenever dyes or card strings change).
 
-Six tools are supported: harmony, gradient, mixer, swatch, comparison, accessibility. Each has its own SVG generator under `src/services/svg/`. Localization is handled via a stateless `TranslationProvider` with all 6 locales eagerly preloaded — concurrent requests with different `?lang=` cannot trample state (see REFACTOR-001).
+All nine tools are supported: harmony, gradient, mixer, swatch, comparison, accessibility, extractor, presets, budget — each a thin adapter onto the shared `services/svg/band.ts` frame (plus the 2a default cards in `default-card.ts` and the ×6 deck strings in `services/og-strings.ts`). Localization is handled via a stateless `TranslationProvider` with all 6 locales eagerly preloaded — concurrent requests with different `?lang=` cannot trample state (see REFACTOR-001).
 
 ## Commands
 

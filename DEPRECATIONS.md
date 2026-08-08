@@ -7,6 +7,30 @@ Each entry includes a target removal date and migration guide.
 
 ## Active Deprecations
 
+### 5.0 graphics-era removals (`@xivdyetools/svg` + Discord bot surface)
+
+| Field       | Value |
+|-------------|-------|
+| Deprecated  | 2026-08-08 (5.0 redesign) |
+| Removed     | Same release — the replacements shipped together |
+| Severity    | Medium — npm API removals in `@xivdyetools/svg`; Discord schema reshape |
+
+**What was removed (svg package API):** `generateHarmonyWheel`, `generateContrastMatrix`
+(+`calculateContrast`/WCAG level types), `generateAccessibilityComparison` /
+`generateCompactAccessibilityRow`, `generateComparisonGrid`, `generateBudgetComparison`
+(+`formatGil`, `BudgetSvgLabels`, `BudgetSuggestion` shapes), `generateGradientBar`,
+`getMatchQuality`/`MATCH_QUALITIES`. **Replacements:** the 5.0 frame system
+(`cardShell`/`measuredRow`/`commandChip`/`markFooter`) and per-command generators
+(`generateHarmonyCard`, `generateContrastCard`, `generateA11yCard`, `generateComparisonCard`,
+`generateBudgetLedger`, `generateGradientCard`, `generateSwatchCard`, `generatePaletteGrid`,
+`generateNearestSheet`). Tier language moved to core's calibrated `classifyBandTier` —
+AA/AAA letter grades and the emoji quality ladders left every surface.
+
+**Discord surface:** `/swatch color|grid` subcommands replaced by the required `file:`
+(.chara) shape; `/budget find` lost `max_price`/`sort_by`/`max_results` (the 13G ledger's
+sort IS gil/ΔE) and gained `matching` + tier exclusions; `/accessibility` dye3–6 moved to
+the new `/contrast`. Re-run `register-commands` on deploy.
+
 ### `apps/api-docs` (standalone CF Pages site)
 
 | Field       | Value |

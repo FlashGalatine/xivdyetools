@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The primary FFXIV Dye Tools Discord bot, running on Cloudflare Workers via Discord HTTP Interactions (no Gateway WebSocket — fully serverless). All slash commands, autocompletes, button clicks, and modal submissions hit a single POST endpoint that verifies an Ed25519 signature and routes by interaction type.
 
-This worker replaces the deprecated `xivdyetools-discord-bot` (Node.js + discord.js Gateway bot). It hosts ~20 user-facing commands spanning color matching, harmony generation, image extraction, dye comparison, accessibility checks, favorites/collections, community presets, and a Universalis-backed `/budget` command. Renders SVG cards converted to PNG via `resvg-wasm` and uses `photon-wasm` for dominant-color extraction from uploaded images.
+This worker replaces the deprecated `xivdyetools-discord-bot` (Node.js + discord.js Gateway bot). It hosts the 5.0 command set spanning colour matching, harmony generation, image extraction, dye comparison, WCAG contrast, colour-vision accessibility, `.chara` character files, community presets, and the Universalis-backed 13G `/budget` ledger. The v4 `/match`, `/match_image`, `/favorites`, `/collection` and `/language` commands were deleted in 5.0. Renders SVG cards converted to PNG via `resvg-wasm` and uses `photon-wasm` for dominant-color extraction from uploaded images.
 
 ## Commands
 
@@ -231,25 +231,22 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 
 | Command | Description |
 |---------|-------------|
-| `/about` | Bot info and links |
-| `/harmony` | Generate harmony palettes from a base color |
-| `/dye search\|info\|list\|random` | Dye database lookups |
-| `/match` | Closest dye to a hex color |
-| `/match_image` | Extract dominant colors from an attached image |
-| `/comparison` | Side-by-side dye comparison |
-| `/accessibility` | Colorblind simulation + WCAG contrast |
-| `/mixer` | V4 dye blending (six algorithms) |
-| `/gradient` | Color gradient between two endpoints |
-| `/swatch` | Single-dye swatch card |
-| `/extractor` | V4 image color extractor |
-| `/preferences` | Set race/clan/world/language preferences |
-| `/favorites` | Manage favorite dyes (KV-backed, 20 max) |
-| `/collection` | Custom dye collections (50 max, 20 dyes each) |
+| `/about` | Bot info, registry-built command roster, Removed-in-v5 field |
+| `/harmony` | Harmony palettes (11A card — found dye vs computed ideal) |
+| `/dye search\|info\|list\|random` | Dye database lookups (11B cards) |
+| `/comparison` | 14A Duel / 14C triangle router (2–4 dyes) |
+| `/contrast` | WCAG 1.4.11 ratios, 13A/13B/13C·1 router (2–4 dyes) |
+| `/accessibility` + `/a11y` | Colour-vision lenses (13D/13E/13H via `vision:`) |
+| `/mixer` | 12F ratio-sweep blending card |
+| `/gradient` | 12H gradient card (distinct dyes, 3-stage cap) |
+| `/swatch` | `.chara` character-file frame (required `file:` attachment) |
+| `/extractor` | Image ramp (14K) / colour sheet (14J·2) |
+| `/preferences` | Race/clan/world/language/matching/theme preferences |
 | `/preset` | Browse/submit/vote/edit community presets |
-| `/budget` | Universalis pricing for a dye palette |
-| `/language` | Set bot language (en/ja/de/fr/ko/zh) |
-| `/manual` | Help guide (`topic:` option for deep-links) |
-| `/stats` | Usage stats (gated by `STATS_AUTHORIZED_USERS`) |
+| `/budget` | 13G ledger — tier-group pricing via Universalis |
+| `/changelog` | Release notes from CHANGELOG-laymans.md (ephemeral) |
+| `/manual` | Help topics (📸 ♿ 🔲 📐 🪙 👤) with learn-more links |
+| `/stats` | Usage stats incl. the 5.0 adoption panel (gated) |
 
 ## Dependencies
 
