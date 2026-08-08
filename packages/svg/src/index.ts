@@ -108,16 +108,10 @@ export type {
   NearestSheetOptions,
 } from './nearest-sheet.js';
 
-// Accessibility / Colorblind Comparison
-export {
-  generateAccessibilityComparison,
-} from './accessibility-comparison.js';
-export type {
-  AccessibilityComparisonOptions,
-  VisionType,
-  AllVisionTypes,
-  VisionLabels,
-} from './accessibility-comparison.js';
+// Accessibility card (13D/13E/13H — the vision: option chooses the frame)
+export { generateA11yCard } from './a11y-card.js';
+export type { A11yCardOptions, A11yCardLabels, A11yLensRow } from './a11y-card.js';
+export type { VisionType, AllVisionTypes } from './accessibility-comparison.js';
 
 // WCAG Contrast Matrix
 export { generateContrastMatrix, calculateContrast } from './contrast-matrix.js';

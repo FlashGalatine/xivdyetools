@@ -235,7 +235,8 @@
     "wcagAAADesc": "Excellent for all text sizes",
     "wcagAADesc": "Acceptable for normal text",
     "wcagFailDesc": "May be difficult to distinguish",
-    "wcagGuidelines": "WCAG 2.1 contrast guidelines"
+    "wcagGuidelines": "WCAG 2.1 contrast guidelines",
+    "achromatopsia": "Achromatopsia"
   },
   "about": {
     "title": "XIV Dye Tools Bot",
@@ -671,6 +672,15 @@
     "gradKeyCut": "strip = all {n} steps · rows = the {k} widest gaps",
     "gradVerdict": "{n} steps resolve to {k} dyes. Nothing in the game sits between them.",
     "gradOmitted": "+{n} more, listed in the message",
-    "ratioKey": "outline = blend · solid = nearest dye"
+    "ratioKey": "outline = blend · solid = nearest dye",
+    "designed": "AS DESIGNED",
+    "perceived": "AS PERCEIVED",
+    "separationCol": "SEPARATION",
+    "lensCol": "LENS",
+    "shiftCol": "SHIFT",
+    "sepBandKey": "bands: ≥30 / ≥15 / ≥8 — larger is safer",
+    "soloKey": "bar = relative shift · carries no verdict",
+    "worstNote": "weakest: {lens}",
+    "a11yVerdict": "Weakest under {lens} — the pair sits {de} apart there."
   }
 }

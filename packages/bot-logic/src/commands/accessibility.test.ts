@@ -1,223 +1,139 @@
 /**
- * Accessibility Command — Unit Tests
+ * Tests for the /accessibility command (13D/13E/13H router).
  *
- * Tests for executeAccessibility — colorblind simulation and contrast matrix.
+ * The vision: option chooses the frame — a named lens renders 13D,
+ * vision:all (or absent) renders 13E, a single dye renders 13H.
  */
 
 import { describe, it, expect } from 'vitest';
 import { executeAccessibility, VISION_TYPES } from './accessibility.js';
-import type { AccessibilityDye } from './accessibility.js';
 
-const whiteDye: AccessibilityDye = { hex: '#FFFFFF', name: 'Snow White', itemID: 5729 };
-const blackDye: AccessibilityDye = { hex: '#2B2B2B', name: 'Soot Black', itemID: 5730 };
-const redDye: AccessibilityDye = { hex: '#D60000', name: 'Dalamud Red', itemID: 5790 };
-const blueDye: AccessibilityDye = { hex: '#0000D6', name: 'Royal Blue', itemID: 5806 };
-const hexOnly: AccessibilityDye = { hex: '#FF8800', name: '#FF8800' };
+const dalamud = { hex: '#781A1A', name: 'Dalamud Red', itemID: 5738 };
+const hunter = { hex: '#284B2C', name: 'Hunter Green', itemID: 5748 };
 
-// ============================================================================
-// VISION_TYPES
-// ============================================================================
-
-describe('VISION_TYPES', () => {
-  it('contains 4 vision types (protan/deuter/trit/achromatopsia)', () => {
-    expect(VISION_TYPES).toHaveLength(4);
-  });
-
-  it('includes protanopia, deuteranopia, tritanopia, and achromatopsia', () => {
-    expect(VISION_TYPES).toContain('protanopia');
-    expect(VISION_TYPES).toContain('deuteranopia');
-    expect(VISION_TYPES).toContain('tritanopia');
-    expect(VISION_TYPES).toContain('achromatopsia');
-  });
-});
-
-// ============================================================================
-// Single dye — colorblind simulation mode
-// ============================================================================
-
-describe('executeAccessibility — simulation mode (single dye)', () => {
-  it('generates simulation SVG for a single dye', async () => {
-    const result = await executeAccessibility({
-      dyes: [redDye],
-      locale: 'en',
-    });
+describe('executeAccessibility — 13H solo (one dye)', () => {
+  it('renders every lens for a single dye', async () => {
+    const result = await executeAccessibility({ dyes: [dalamud], locale: 'en' });
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    expect(result.mode).toBe('simulation');
-    expect(result.svgString).toContain('<svg');
-    expect(result.embed.title).toBeDefined();
+    expect(result.mode).toBe('solo');
+    expect(result.svgString).toContain('/ACCESSIBILITY');
+    expect(result.svgString).toContain('Dalamud Red');
+    // Every lens row + the SHIFT column
+    expect(result.svgString).toContain('SHIFT');
+    expect(result.svgString).toContain('Achromatopsia');
   });
 
-  it('uses all 3 vision types by default', async () => {
-    const result = await executeAccessibility({
-      dyes: [redDye],
-      locale: 'en',
-    });
-
+  it('carries no tier colours — a shift is not a risk', async () => {
+    const result = await executeAccessibility({ dyes: [dalamud], locale: 'en' });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-
-    // The embed description should mention all vision types
-    expect(result.embed.description).toBeDefined();
-  });
-
-  it('accepts custom vision types', async () => {
-    const result = await executeAccessibility({
-      dyes: [redDye],
-      visionTypes: ['protanopia'],
-      locale: 'en',
-    });
-
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-
-    expect(result.mode).toBe('simulation');
+    // The far tier colour never appears in the solo frame
+    expect(result.svgString).not.toContain('#f4645a');
   });
 
   it('works with hex-only input (no itemID)', async () => {
     const result = await executeAccessibility({
-      dyes: [hexOnly],
+      dyes: [{ hex: '#336699', name: '#336699' }],
       locale: 'en',
     });
-
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-
-    expect(result.mode).toBe('simulation');
-    expect(result.svgString).toContain('<svg');
-  });
-
-  it('sets embed color from dye hex', async () => {
-    const result = await executeAccessibility({
-      dyes: [redDye],
-      locale: 'en',
-    });
-
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-
-    const expectedColor = parseInt(redDye.hex.replace('#', ''), 16);
-    expect(result.embed.color).toBe(expectedColor);
-  });
-
-  it('includes footer with simulation method', async () => {
-    const result = await executeAccessibility({
-      dyes: [redDye],
-      locale: 'en',
-    });
-
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-
-    expect(result.embed.footer).toBeDefined();
+    expect(result.svgString).toContain('#336699');
   });
 });
 
-// ============================================================================
-// Multiple dyes — contrast matrix mode
-// ============================================================================
-
-describe('executeAccessibility — contrast matrix mode (multiple dyes)', () => {
-  it('generates contrast matrix for 2 dyes', async () => {
+describe('executeAccessibility — 13E all lenses (pair)', () => {
+  it('renders one row per lens including the normal control', async () => {
     const result = await executeAccessibility({
-      dyes: [whiteDye, blackDye],
+      dyes: [dalamud, hunter],
+      vision: 'all',
       locale: 'en',
     });
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    expect(result.mode).toBe('contrast');
-    expect(result.svgString).toContain('<svg');
-  });
-
-  it('generates contrast matrix for 3 dyes', async () => {
-    const result = await executeAccessibility({
-      dyes: [whiteDye, blackDye, redDye],
-      locale: 'en',
-    });
-
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-
-    expect(result.mode).toBe('contrast');
-  });
-
-  it('generates contrast matrix for 4 dyes', async () => {
-    const result = await executeAccessibility({
-      dyes: [whiteDye, blackDye, redDye, blueDye],
-      locale: 'en',
-    });
-
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-
-    expect(result.mode).toBe('contrast');
-    expect(result.svgString).toContain('<svg');
-  });
-
-  it('embed mentions WCAG guidelines', async () => {
-    const result = await executeAccessibility({
-      dyes: [whiteDye, blackDye],
-      locale: 'en',
-    });
-
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-
-    // Should mention AAA and AA
-    expect(result.embed.description).toContain('AAA');
-    expect(result.embed.description).toContain('AA');
-  });
-
-  it('lists all compared dyes in description', async () => {
-    const result = await executeAccessibility({
-      dyes: [whiteDye, blackDye, redDye],
-      locale: 'en',
-    });
-
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-
+    expect(result.mode).toBe('all');
+    expect(result.svgString).toContain('Normal Vision');
+    expect(result.svgString).toContain('Achromatopsia');
+    expect(result.svgString).toContain('SEPARATION');
+    // The verdict sentence lives in the embed, not the frame
     expect(result.embed.description).toBeDefined();
+    expect(result.embed.title).toContain('↔');
   });
 
-  it('sets embed color from first dye', async () => {
+  it('defaults a pair with no vision option to 13E', async () => {
+    const result = await executeAccessibility({ dyes: [dalamud, hunter], locale: 'en' });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.mode).toBe('all');
+  });
+
+  it('names the weakest lens under the table', async () => {
     const result = await executeAccessibility({
-      dyes: [redDye, whiteDye],
+      dyes: [dalamud, hunter],
+      vision: 'all',
+      locale: 'en',
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // The red/green pair's only real failure is achromatopsia
+    expect(result.svgString).toContain('weakest: Achromatopsia');
+  });
+});
+
+describe('executeAccessibility — 13D named lens (pair)', () => {
+  it('routes a named lens to the lens frame', async () => {
+    const result = await executeAccessibility({
+      dyes: [dalamud, hunter],
+      vision: 'protanopia',
       locale: 'en',
     });
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    const expectedColor = parseInt(redDye.hex.replace('#', ''), 16);
-    expect(result.embed.color).toBe(expectedColor);
+    expect(result.mode).toBe('lens');
+    expect(result.svgString).toContain('AS DESIGNED');
+    expect(result.svgString).toContain('AS PERCEIVED');
+    // The other lenses stay as the summary strip (untranslated codes)
+    expect(result.svgString).toContain('DEUT');
+    expect(result.svgString).toContain('ACHR');
+  });
+
+  it('prints the typed command in the chip (/a11y alias)', async () => {
+    const result = await executeAccessibility({
+      dyes: [dalamud, hunter],
+      vision: 'deuteranopia',
+      locale: 'en',
+      commandLabel: '/A11Y',
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.svgString).toContain('/A11Y');
+    expect(result.svgString).not.toContain('/ACCESSIBILITY');
   });
 });
 
-// ============================================================================
-// Cross-locale
-// ============================================================================
-
-describe('executeAccessibility — locales', () => {
-  it('works with Japanese locale (simulation)', async () => {
-    const result = await executeAccessibility({
-      dyes: [redDye],
-      locale: 'ja',
-    });
-
-    expect(result.ok).toBe(true);
+describe('VISION_TYPES', () => {
+  it('achromatopsia is a full member, not a hidden flag', () => {
+    expect(VISION_TYPES).toContain('achromatopsia');
+    expect(VISION_TYPES).toHaveLength(4);
   });
+});
 
-  it('works with Japanese locale (contrast)', async () => {
+describe('localization', () => {
+  it('works with Japanese locale', async () => {
     const result = await executeAccessibility({
-      dyes: [whiteDye, blackDye],
+      dyes: [dalamud, hunter],
+      vision: 'all',
       locale: 'ja',
     });
-
     expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.svgString).toContain('通常の視覚');
   });
 });

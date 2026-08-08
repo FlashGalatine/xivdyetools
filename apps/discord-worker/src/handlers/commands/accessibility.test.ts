@@ -73,10 +73,17 @@ vi.mock('@xivdyetools/core', () => {
     getCategory(category: string): string { return category; }
   }
 
+  // 13D/E/H: simulation + ΔE2000 separation run through ColorService
+  const ColorService = {
+    simulateColorblindnessHex: (hex: string, _lens: string) => hex,
+    getDistanceForMethod: () => 20,
+  };
+
   return {
     DyeService: MockDyeService,
     dyeDatabase: {},
     LocalizationService: MockLocalizationService,
+    ColorService,
   };
 });
 
@@ -150,8 +157,7 @@ vi.mock('../../services/i18n.js', () => ({
 }));
 
 vi.mock('@xivdyetools/svg', () => ({
-  generateAccessibilityComparison: vi.fn().mockReturnValue('<svg>accessibility</svg>'),
-  generateContrastMatrix: vi.fn().mockReturnValue('<svg>contrast</svg>'),
+  generateA11yCard: vi.fn().mockReturnValue('<svg>accessibility</svg>'),
 }));
 
 vi.mock('../../services/svg/renderer.js', () => ({
@@ -170,7 +176,7 @@ vi.mock('../../utils/discord-api.js', () => {
 });
 
 import { editOriginalResponse } from '../../utils/discord-api.js';
-import { generateAccessibilityComparison, generateContrastMatrix } from '@xivdyetools/svg';
+import { generateA11yCard } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 
 describe('accessibility.ts', () => {
@@ -371,7 +377,7 @@ describe('accessibility.ts', () => {
       // Wait for background processing
       await Promise.all(waitUntilPromises);
 
-      expect(generateAccessibilityComparison).toHaveBeenCalled();
+      expect(generateA11yCard).toHaveBeenCalled();
       expect(renderSvgToPng).toHaveBeenCalled();
       expect(editOriginalResponse).toHaveBeenCalled();
     });
@@ -395,10 +401,9 @@ describe('accessibility.ts', () => {
       await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
       await Promise.all(waitUntilPromises);
 
-      expect(generateAccessibilityComparison).toHaveBeenCalledWith(
-        expect.objectContaining({
-          visionTypes: ['protanopia'],
-        })
+      // A single dye always renders 13H (every lens), whatever vision says
+      expect(generateA11yCard).toHaveBeenCalledWith(
+        expect.objectContaining({ mode: 'solo' })
       );
     });
   });
@@ -445,7 +450,10 @@ describe('accessibility.ts', () => {
       await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
       await Promise.all(waitUntilPromises);
 
-      expect(generateContrastMatrix).toHaveBeenCalled();
+      // A pair with no vision option renders 13E (all lenses)
+      expect(generateA11yCard).toHaveBeenCalledWith(
+        expect.objectContaining({ mode: 'all' })
+      );
       expect(renderSvgToPng).toHaveBeenCalled();
       expect(editOriginalResponse).toHaveBeenCalled();
     });

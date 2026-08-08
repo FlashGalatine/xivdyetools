@@ -60,12 +60,11 @@ describe('@xivdyetools/svg index exports', () => {
         expect(typeof svg.measuredRow).toBe('function');
     });
 
-    it('exports accessibility comparison generator', async () => {
+    it('exports the accessibility card generator (13D/13E/13H)', async () => {
         const svg = await import('./index.js');
 
-        expect(svg.generateAccessibilityComparison).toBeDefined();
-        expect(typeof svg.generateAccessibilityComparison).toBe('function');
-
+        expect(svg.generateA11yCard).toBeDefined();
+        expect(typeof svg.generateA11yCard).toBe('function');
     });
 
     it('exports contrast matrix generator', async () => {

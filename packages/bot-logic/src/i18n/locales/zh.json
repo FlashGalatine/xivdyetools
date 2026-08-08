@@ -235,7 +235,8 @@
     "wcagAAADesc": "适用于所有文字大小",
     "wcagAADesc": "适用于普通文字",
     "wcagFailDesc": "可能难以区分",
-    "wcagGuidelines": "WCAG 2.1 对比度指南"
+    "wcagGuidelines": "WCAG 2.1 对比度指南",
+    "achromatopsia": "全色盲"
   },
   "about": {
     "title": "XIV Dye Tools 机器人",
@@ -671,6 +672,15 @@
     "gradKeyCut": "色带＝全部{n}阶／行＝差距最大的{k}项",
     "gradVerdict": "{n}阶仅对应{k}种染剂。两者之间游戏内没有可用色。",
     "gradOmitted": "另有 {n} 项，列于消息中",
-    "ratioKey": "描边＝混合／填充＝最接近的染剂"
+    "ratioKey": "描边＝混合／填充＝最接近的染剂",
+    "designed": "原始颜色",
+    "perceived": "感知颜色",
+    "separationCol": "区分度",
+    "lensCol": "视觉类型",
+    "shiftCol": "偏移量",
+    "sepBandKey": "区间：≥30 / ≥15 / ≥8 —— 越大越安全",
+    "soloKey": "条形＝相对偏移 · 不作判定",
+    "worstNote": "最难区分：{lens}",
+    "a11yVerdict": "在{lens}下最难区分，两色仅相差 {de}。"
   }
 }

@@ -40,6 +40,9 @@ export const COMMAND_REGISTRY: readonly CommandRegistryEntry[] = [
   // Analysis
   { name: 'comparison', category: 'analysis' },
   { name: 'accessibility', category: 'analysis' },
+  // /a11y: a second registration sharing the accessibility handler —
+  // Discord has no alias mechanism (Turn 13 RESOLVED)
+  { name: 'a11y', category: 'analysis' },
   { name: 'budget', category: 'analysis' },
 
   // Community

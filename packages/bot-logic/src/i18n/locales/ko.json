@@ -235,7 +235,8 @@
     "wcagAAADesc": "모든 텍스트 크기에 최적",
     "wcagAADesc": "일반 텍스트에 적합",
     "wcagFailDesc": "구별하기 어려울 수 있음",
-    "wcagGuidelines": "WCAG 2.1 대비 가이드라인"
+    "wcagGuidelines": "WCAG 2.1 대비 가이드라인",
+    "achromatopsia": "전색맹"
   },
   "about": {
     "title": "XIV Dye Tools Bot",
@@ -671,6 +672,15 @@
     "gradKeyCut": "띠＝전체 {n}단계／행＝차이가 큰 {k}개",
     "gradVerdict": "{n}단계가 염료 {k}개로 수렴합니다. 그 사이에 해당하는 염료는 없습니다.",
     "gradOmitted": "외 {n}개, 메시지에 표시",
-    "ratioKey": "외곽선＝혼합／채움＝가장 가까운 염료"
+    "ratioKey": "외곽선＝혼합／채움＝가장 가까운 염료",
+    "designed": "원래 색",
+    "perceived": "보이는 색",
+    "separationCol": "구분도",
+    "lensCol": "시각 유형",
+    "shiftCol": "변화량",
+    "sepBandKey": "구간: ≥30 / ≥15 / ≥8 — 클수록 안전",
+    "soloKey": "막대 = 상대적 변화량 · 판정 없음",
+    "worstNote": "가장 약함: {lens}",
+    "a11yVerdict": "{lens}에서 가장 약하며, 그 차이는 {de}입니다."
   }
 }

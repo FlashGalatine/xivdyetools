@@ -503,7 +503,10 @@ async function handleCommand(
       // v5: /match, /match_image, /favorites, /collection and /language are
       // deleted outright (register decision); /about carries a Removed-in-v5
       // field for one release and /preferences owns language.
+      // /a11y is a second registration sharing this handler — Discord has no
+      // alias mechanism; the chip prints the command the user actually typed
       case 'accessibility':
+      case 'a11y':
         response = await handleAccessibilityCommand(interaction, env, ctx, logger);
         break;
 

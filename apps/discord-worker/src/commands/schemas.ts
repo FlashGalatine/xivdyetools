@@ -28,6 +28,40 @@ export const OptionType = {
  * All slash commands for the bot
  * V4.0.0 command set
  */
+/**
+ * Shared by /accessibility and its /a11y alias — the two registrations must
+ * carry identical options or the alias silently drifts.
+ */
+const ACCESSIBILITY_OPTIONS = [
+  {
+    name: 'dye',
+    description: 'Primary dye (hex code or dye name)',
+    type: OptionType.STRING,
+    required: true,
+    autocomplete: true,
+  },
+  {
+    name: 'dye2',
+    description: 'Second dye — renders the pair frames (optional)',
+    type: OptionType.STRING,
+    required: false,
+    autocomplete: true,
+  },
+  {
+    name: 'vision',
+    description: 'The lens: a named type renders one lens, All renders every lens',
+    type: OptionType.STRING,
+    required: false,
+    choices: [
+      { name: 'All lenses', value: 'all' },
+      { name: 'Protanopia (red-blind)', value: 'protanopia' },
+      { name: 'Deuteranopia (green-blind)', value: 'deuteranopia' },
+      { name: 'Tritanopia (blue-blind)', value: 'tritanopia' },
+      { name: 'Achromatopsia (total colorblindness)', value: 'achromatopsia' },
+    ],
+  },
+];
+
 export const commands = [
   // =========================================================================
   // General
@@ -408,66 +442,21 @@ export const commands = [
   // =========================================================================
   // Utility Commands
   // =========================================================================
+  // 5.0: the vision: option routes the frame — a named lens renders 13D,
+  // vision:all renders 13E, a single dye renders 13H. Achromatopsia is a
+  // full member of the choice list, not a hidden flag. WCAG contrast moves
+  // to its own command; /accessibility is pair-based. /a11y is a second
+  // registration with identical options and output (Discord has no alias
+  // mechanism); the handler is shared and the chip prints the typed name.
   {
     name: 'accessibility',
-    description: 'Check color accessibility for colorblind users or contrast',
-    options: [
-      {
-        name: 'dye',
-        description: 'Primary dye (hex code or dye name)',
-        type: OptionType.STRING,
-        required: true,
-        autocomplete: true,
-      },
-      {
-        name: 'dye2',
-        description: 'Second dye for contrast comparison (optional)',
-        type: OptionType.STRING,
-        required: false,
-        autocomplete: true,
-      },
-      {
-        name: 'dye3',
-        description: 'Third dye for contrast comparison (optional)',
-        type: OptionType.STRING,
-        required: false,
-        autocomplete: true,
-      },
-      {
-        name: 'dye4',
-        description: 'Fourth dye for contrast comparison (optional)',
-        type: OptionType.STRING,
-        required: false,
-        autocomplete: true,
-      },
-      {
-        name: 'dye5',
-        description: 'Fifth dye for contrast comparison (optional, outfit slot)',
-        type: OptionType.STRING,
-        required: false,
-        autocomplete: true,
-      },
-      {
-        name: 'dye6',
-        description: 'Sixth dye for contrast comparison (optional, outfit slot)',
-        type: OptionType.STRING,
-        required: false,
-        autocomplete: true,
-      },
-      {
-        name: 'vision',
-        description: 'Filter to specific vision type (single dye mode only)',
-        type: OptionType.STRING,
-        required: false,
-        choices: [
-          { name: 'Normal Vision', value: 'normal' },
-          { name: 'Protanopia (red-blind)', value: 'protanopia' },
-          { name: 'Deuteranopia (green-blind)', value: 'deuteranopia' },
-          { name: 'Tritanopia (blue-blind)', value: 'tritanopia' },
-          { name: 'Achromatopsia (total colorblindness)', value: 'achromatopsia' },
-        ],
-      },
-    ],
+    description: 'How a dye or a pair of dyes survives each kind of color vision',
+    options: ACCESSIBILITY_OPTIONS,
+  },
+  {
+    name: 'a11y',
+    description: 'How a dye or a pair of dyes survives each kind of color vision',
+    options: ACCESSIBILITY_OPTIONS,
   },
 
   {

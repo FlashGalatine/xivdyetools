@@ -235,7 +235,8 @@
     "wcagAAADesc": "すべてのテキストサイズに最適",
     "wcagAADesc": "通常のテキストに許容可能",
     "wcagFailDesc": "区別しにくい可能性があります",
-    "wcagGuidelines": "WCAG 2.1コントラストガイドライン"
+    "wcagGuidelines": "WCAG 2.1コントラストガイドライン",
+    "achromatopsia": "1色覚（全色盲）"
   },
   "about": {
     "title": "XIV Dye Tools Bot",
@@ -671,6 +672,15 @@
     "gradKeyCut": "帯＝全{n}ステップ／行＝差の大きい{k}件",
     "gradVerdict": "{n}ステップの該当は{k}色のみ。中間に存在するカララントはありません。",
     "gradOmitted": "他{n}色はメッセージに記載",
-    "ratioKey": "枠線＝ブレンド／塗り＝最も近い色"
+    "ratioKey": "枠線＝ブレンド／塗り＝最も近い色",
+    "designed": "本来の色",
+    "perceived": "見え方",
+    "separationCol": "区別しやすさ",
+    "lensCol": "見え方の種類",
+    "shiftCol": "変化量",
+    "sepBandKey": "バンド: ≥30 / ≥15 / ≥8（大きいほど安全）",
+    "soloKey": "バー＝相対的な変化量・判定なし",
+    "worstNote": "最も区別しにくい: {lens}",
+    "a11yVerdict": "{lens}で最も区別しにくく、差は{de}です。"
   }
 }

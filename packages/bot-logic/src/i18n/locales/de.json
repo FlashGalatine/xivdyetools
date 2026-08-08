@@ -235,7 +235,8 @@
     "wcagAAADesc": "Ausgezeichnet für alle Textgrößen",
     "wcagAADesc": "Akzeptabel für normalen Text",
     "wcagFailDesc": "Möglicherweise schwer zu unterscheiden",
-    "wcagGuidelines": "WCAG 2.1 Kontrastrichtlinien"
+    "wcagGuidelines": "WCAG 2.1 Kontrastrichtlinien",
+    "achromatopsia": "Achromatopsie"
   },
   "about": {
     "title": "XIV Dye Tools Bot",
@@ -671,6 +672,15 @@
     "gradKeyCut": "Streifen = alle {n} Schritte · Zeilen = die {k} größten Abstände",
     "gradVerdict": "{n} Schritte ergeben {k} Farbstoffe. Dazwischen gibt es im Spiel nichts.",
     "gradOmitted": "+{n} weitere, in der Nachricht gelistet",
-    "ratioKey": "Umriss = Mischung · Fläche = nächster Farbstoff"
+    "ratioKey": "Umriss = Mischung · Fläche = nächster Farbstoff",
+    "designed": "WIE ENTWORFEN",
+    "perceived": "WIE GESEHEN",
+    "separationCol": "ABSTAND",
+    "lensCol": "SEHFILTER",
+    "shiftCol": "VERSCHIEBUNG",
+    "sepBandKey": "Bänder: ≥30 / ≥15 / ≥8 — größer ist sicherer",
+    "soloKey": "Balken = relative Verschiebung · kein Urteil",
+    "worstNote": "am schwächsten: {lens}",
+    "a11yVerdict": "Am schwächsten unter {lens} — dort liegt das Paar {de} auseinander."
   }
 }
