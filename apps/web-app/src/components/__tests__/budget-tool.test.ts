@@ -55,6 +55,8 @@ vi.mock('@services/index', () => ({
     tInterpolate: (key: string, params: Record<string, string>) =>
       `${key}: ${Object.values(params).join('/')}`,
     getDyeName: (itemId: number) => `Dye-${itemId}`,
+    getCurrentLocale: () => 'en',
+    getAcquisition: (acquisition: string) => acquisition,
     subscribe: vi.fn().mockReturnValue(() => {}),
   },
   StorageService: {
@@ -74,6 +76,7 @@ vi.mock('@services/index', () => ({
     }),
     rgbToHsv: vi.fn(() => ({ h: 0, s: 100, v: 100 })),
     calculateColorDistance: vi.fn(() => 15),
+    getDistanceForMethod: vi.fn(() => 5),
   },
   MarketBoardService: {
     getInstance: vi.fn().mockReturnValue({
@@ -82,6 +85,7 @@ vi.mock('@services/index', () => ({
       setWorldId: vi.fn(),
       getPriceForItem: vi.fn().mockReturnValue(null),
       fetchPricesForDyes: vi.fn().mockResolvedValue(new Map()),
+      getWorldNameForPrice: vi.fn().mockReturnValue('Balmung'),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       setShowPrices: vi.fn(),
@@ -134,6 +138,12 @@ vi.mock('@shared/ui-icons', () => ({
   ICON_GIL: '<svg></svg>',
   ICON_CRYSTAL: '<svg></svg>',
   ICON_SORT: '<svg></svg>',
+  ICON_TARGET: '<svg></svg>',
+  ICON_SPARKLES: '<svg></svg>',
+  ICON_DISTANCE: '<svg></svg>',
+  ICON_EYE: '<svg></svg>',
+  // Consumed by the real v4-result-card element the tool renders
+  ICON_CONTEXT_MENU: '<svg></svg>',
 }));
 
 vi.mock('@shared/tool-icons', () => ({
@@ -319,7 +329,17 @@ describe('BudgetTool', () => {
       tool.init();
 
       // Should not throw
-      expect(() => tool!.setConfig({ maxPrice: 50000 })).not.toThrow();
+      expect(() => tool!.setConfig({ maxDeltaE: 12 })).not.toThrow();
+    });
+
+    it('should reset an out-of-range legacy match line to the default', () => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel });
+      tool.init();
+
+      // Legacy v3 distance values (25-100) are outside the 2-20 line range
+      tool.setConfig({ maxDeltaE: 50 });
+      const line = (tool as unknown as { matchLine: number }).matchLine;
+      expect(line).toBe(8);
     });
   });
 
@@ -362,19 +382,18 @@ describe('BudgetTool', () => {
   });
 
   // ============================================================================
-  // Budget Filter Tests
+  // 9C Pricing Rules
   // ============================================================================
 
-  describe('Budget Filter', () => {
-    it('should render budget controls', () => {
-      tool = new BudgetTool(container, { leftPanel, rightPanel });
-      tool.init();
+  describe('Pricing (9C rules)', () => {
+    type PriceOf = (dye: (typeof mockDyes)[number]) => {
+      tier: string;
+      gil: number | null;
+      board: number | null;
+      localCost: string | null;
+    };
 
-      // Tool should render budget-related content
-      expect(leftPanel).not.toBeNull();
-    });
-
-    it('should query alternatives without a fixed candidate cap', async () => {
+    it('should scan the full dye list when a target is selected', async () => {
       tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
       tool.init();
 
@@ -382,27 +401,47 @@ describe('BudgetTool', () => {
       await Promise.resolve();
       await Promise.resolve();
 
-      expect(mockFindDyesWithinDistance).toHaveBeenCalled();
-      expect(mockFindDyesWithinDistance).toHaveBeenCalledWith(mockDyes[0].hex, {
-        maxDistance: 50,
-        matchingMethod: 'ciede2000',
-      });
+      expect(mockGetAllDyes).toHaveBeenCalled();
     });
 
-    it('should fall back to dye cost when market price is unavailable', () => {
+    it('should never price a coffer dye from dye.cost', () => {
       tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
       tool.init();
 
-      const price = (
-        tool as unknown as {
-          getBudgetComparablePrice: (
-            dye: (typeof mockDyes)[number],
-            priceData?: { currentMinPrice?: number }
-          ) => number;
-        }
-      ).getBudgetComparablePrice(mockDyes[0], undefined);
+      // No consolidation bucket = market-only (Venture Coffer) dye. The shipped
+      // 4.x defect read dye.cost here and priced these at ~1 gil.
+      const coffer = { ...mockDyes[0], consolidationType: null, cost: 1 };
+      const price = (tool as unknown as { priceOf: PriceOf }).priceOf(coffer);
 
-      expect(price).toBe(mockDyes[0].cost);
+      expect(price.tier).toBe('X');
+      expect(price.gil).toBeNull();
+      expect(price.board).toBeNull();
+      expect(price.localCost).toBeNull();
+    });
+
+    it('should price a Standard Spectrum dye at the 216 gil vendor floor', () => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+
+      const standard = { ...mockDyes[0], consolidationType: 'A' as const };
+      const price = (tool as unknown as { priceOf: PriceOf }).priceOf(standard);
+
+      expect(price.tier).toBe('A');
+      expect(price.gil).toBe(216);
+      expect(price.localCost).toContain('216');
+    });
+
+    it('should leave scrip/credit tiers without a gil figure when the board is silent', () => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+
+      const wide = { ...mockDyes[0], consolidationType: 'C' as const };
+      const price = (tool as unknown as { priceOf: PriceOf }).priceOf(wide);
+
+      // Cosmocredits are never converted to gil — no board price, no gil figure.
+      expect(price.tier).toBe('C');
+      expect(price.gil).toBeNull();
+      expect(price.localCost).toContain('Cosmocredits');
     });
   });
 

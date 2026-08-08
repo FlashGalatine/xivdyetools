@@ -12,7 +12,6 @@
  */
 
 import { html, css, CSSResultGroup, TemplateResult } from 'lit';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { customElement, property, state } from 'lit/decorators.js';
 import { BaseLitComponent } from './base-lit-component';
 import { ConfigController } from '@services/config-controller';
@@ -183,10 +182,8 @@ export class ConfigSidebar extends BaseLitComponent {
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
   };
   @state() private budgetConfig: BudgetConfig = {
-    maxPrice: 200000,
-    maxResults: 8,
-    maxDeltaE: 75,
-    matchingMethod: 'oklab',
+    maxDeltaE: 8,
+    matchingMethod: 'ciede2000',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
@@ -1323,9 +1320,7 @@ export class ConfigSidebar extends BaseLitComponent {
           </option>
           <option value="oklab">ΔEOK - ${LanguageService.t('config.matchingOklab')}</option>
           <option value="cie76">ΔE76 - ${LanguageService.t('config.matchingCie76')}</option>
-          <option value="redmean">
-            REDMEAN - ${LanguageService.t('config.matchingRedmean')}
-          </option>
+          <option value="redmean">REDMEAN - ${LanguageService.t('config.matchingRedmean')}</option>
           <option value="rgb">RGB DIST - ${LanguageService.t('config.matchingRgb')}</option>
           <option value="distinguish">
             DISTINGUISH % - ${LanguageService.t('config.matchingDistinguish')}
@@ -1556,39 +1551,13 @@ export class ConfigSidebar extends BaseLitComponent {
     return html`
       <div class="config-section" ?hidden=${this.activeTool !== 'budget'}>
         <div class="config-group">
-          <div class="config-label">${LanguageService.t('config.budgetLimit')}</div>
+          <div class="config-label">${LanguageService.t('budget.matchLine')}</div>
           <div class="slider-wrapper">
             <v4-range-slider
-              label=${LanguageService.t('config.maxPrice')}
-              .value=${this.budgetConfig.maxPrice}
-              .min=${0}
-              .max=${200000}
-              .step=${5000}
-              .valueFormatter=${(v: number) => `${v.toLocaleString()} gil`}
-              @slider-change=${(e: CustomEvent<{ value: number }>) =>
-                this.handleConfigChange('budget', 'maxPrice', e.detail.value)}
-            ></v4-range-slider>
-          </div>
-          <div class="slider-wrapper">
-            <v4-range-slider
-              label=${LanguageService.t('config.maxResults')}
-              .value=${this.budgetConfig.maxResults}
-              .min=${1}
-              .max=${20}
-              @slider-change=${(e: CustomEvent<{ value: number }>) =>
-                this.handleConfigChange('budget', 'maxResults', e.detail.value)}
-            ></v4-range-slider>
-          </div>
-        </div>
-
-        <div class="config-group">
-          <div class="config-label">${LanguageService.t('config.colorDistance')}</div>
-          <div class="slider-wrapper">
-            <v4-range-slider
-              label=${LanguageService.t('config.maxDeltaE')}
+              label=${LanguageService.t('budget.matchLine')}
               .value=${this.budgetConfig.maxDeltaE}
-              .min=${0}
-              .max=${100}
+              .min=${2}
+              .max=${20}
               @slider-change=${(e: CustomEvent<{ value: number }>) =>
                 this.handleConfigChange('budget', 'maxDeltaE', e.detail.value)}
             ></v4-range-slider>
@@ -1734,7 +1703,7 @@ export class ConfigSidebar extends BaseLitComponent {
             .showRgb=${this.globalDisplayOptions.showRgb}
             .showHsv=${this.globalDisplayOptions.showHsv}
             .showLab=${this.globalDisplayOptions.showLab}
-          .showCmyk=${this.globalDisplayOptions.showCmyk}
+            .showCmyk=${this.globalDisplayOptions.showCmyk}
             .showPrice=${this.globalDisplayOptions.showPrice}
             .showDeltaE=${this.globalDisplayOptions.showDeltaE}
             .showAcquisition=${this.globalDisplayOptions.showAcquisition}

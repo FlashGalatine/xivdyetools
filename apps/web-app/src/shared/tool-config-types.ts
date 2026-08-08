@@ -203,11 +203,7 @@ export interface PresetsConfig {
  * Budget Suggestions configuration
  */
 export interface BudgetConfig {
-  /** Maximum price limit in gil (0-200000) */
-  maxPrice: number;
-  /** Maximum results to show (1-20) */
-  maxResults: number;
-  /** Maximum Delta-E color distance (0-100) */
+  /** Match line: how far a substitute may drift (ΔE2000, 2-20) */
   maxDeltaE: number;
   /** Color matching algorithm for finding closest dyes */
   matchingMethod: MatchingMethod;
@@ -451,9 +447,7 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
   },
   budget: {
-    maxPrice: 100000,
-    maxResults: 8,
-    maxDeltaE: 50,
+    maxDeltaE: 8,
     matchingMethod: 'ciede2000',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },

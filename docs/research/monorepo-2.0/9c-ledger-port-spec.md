@@ -40,8 +40,9 @@ nearly always a Spectrum dye.
      the tool inverts. badge `ALREADY THE FLOOR` / "Nothing is cheaper than {t}." / upSub
      ("…the ladder runs the other way: here is what more money would buy instead") / money
      `216 gil`, label `THE FLOOR`; tier multiples read `×N more`.
-4. **Tier groups**, order X (Coffer) → C (Wide #2) → B (Wide #1) → A (Standard) —
-   descending price; upgrade mode ascends and drops the target's own tier. Each group:
+4. **Tier groups**, order A (Standard) → B (Wide #1) → C (Wide #2) → X (Coffer) —
+   Standard Spectrum leads (user decision 2026-08-08, overriding the drawn doc's
+   descending-price order); upgrade mode drops the target's own (A) tier. Each group:
    - rail + tag colour per tier (A #5bbd68 · B #8bc34a · C #ffc107 · X #f4645a),
      mono tier tag (STANDARD / WIDE #1 / WIDE #2 / COFFER), localized tier name,
      count `matches / pool`.
