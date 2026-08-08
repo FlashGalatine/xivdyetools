@@ -139,26 +139,33 @@ describe('AnnouncerService', () => {
       expect(politeRegion?.textContent).toBe('');
     });
 
+    // The debounce timer fires late under CPU contention (parallel turbo
+    // runs), so poll for the flushed text instead of one fixed sleep
+    const waitForRegionText = async (regionId: string, expected: string): Promise<string> => {
+      const deadline = Date.now() + 3000;
+      let text = '';
+      while (Date.now() < deadline) {
+        text = document.getElementById(regionId)?.textContent ?? '';
+        if (text === expected) return text;
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      return text;
+    };
+
     it('should combine multiple polite announcements', async () => {
       AnnouncerService.announce('Message 1', 'polite');
       AnnouncerService.announce('Message 2', 'polite');
 
-      // Wait for debounce
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const politeRegion = document.getElementById('sr-announcements-polite');
-      expect(politeRegion?.textContent).toBe('Message 1. Message 2');
+      const text = await waitForRegionText('sr-announcements-polite', 'Message 1. Message 2');
+      expect(text).toBe('Message 1. Message 2');
     });
 
     it('should use latest assertive message when multiple are queued', async () => {
       AnnouncerService.announce('Urgent 1', 'assertive');
       AnnouncerService.announce('Urgent 2', 'assertive');
 
-      // Wait for debounce
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const assertiveRegion = document.getElementById('sr-announcements-assertive');
-      expect(assertiveRegion?.textContent).toBe('Urgent 2');
+      const text = await waitForRegionText('sr-announcements-assertive', 'Urgent 2');
+      expect(text).toBe('Urgent 2');
     });
 
     it('should handle mixed priority announcements', async () => {
