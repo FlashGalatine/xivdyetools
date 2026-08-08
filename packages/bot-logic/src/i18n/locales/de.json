@@ -142,13 +142,6 @@
       "runAgainHint": "Führe erneut aus für andere Farbstoffe!"
     }
   },
-  "match": {
-    "title": "Farbstoff-Übereinstimmung: {name}",
-    "topMatches": "Top {count} Farbstoff-Übereinstimmungen",
-    "findingMatches": "Finde nächste Übereinstimmungen für {input}",
-    "useInfoHint": "Verwende /dye info für Beschaffungsdetails",
-    "useInfoNameHint": "Verwende /dye info <Name> für Beschaffungsdetails"
-  },
   "extractor": {
     "title": "Farbextraktion: {name}",
     "topMatches": "Top {count} Farbstoff-Übereinstimmungen",
@@ -244,54 +237,6 @@
     "wcagFailDesc": "Möglicherweise schwer zu unterscheiden",
     "wcagGuidelines": "WCAG 2.1 Kontrastrichtlinien"
   },
-  "favorites": {
-    "title": "Deine Favoriten",
-    "empty": "Du hast noch keine Lieblingsfarbstoffe.",
-    "addHint": "Verwende `/favorites add <Farbstoff>` um welche hinzuzufügen!",
-    "added": "**{name}** zu deinen Favoriten hinzugefügt.",
-    "removed": "**{name}** aus deinen Favoriten entfernt.",
-    "cleared": "Alle deine Lieblingsfarbstoffe gelöscht.",
-    "alreadyFavorite": "**{name}** ist bereits in deinen Favoriten.",
-    "notInFavorites": "**{name}** ist nicht in deinen Favoriten.",
-    "limitReached": "Du hast die maximale Anzahl von {max} Favoriten erreicht.\n\nEntferne zuerst einen mit `/favorites remove`.",
-    "count": "{count}/{max} Favoriten"
-  },
-  "collection": {
-    "title": "Deine Sammlungen",
-    "empty": "Du hast noch keine Sammlungen.",
-    "createHint": "Verwende `/collection create <Name>` um eine zu erstellen!",
-    "created": "Neue Sammlung erstellt: **{name}**",
-    "deleted": "Sammlung gelöscht: **{name}**",
-    "renamed": "Sammlung von **{oldName}** in **{newName}** umbenannt.",
-    "dyeAdded": "**{dye}** zur Sammlung \"{collection}\" hinzugefügt.",
-    "dyeRemoved": "**{dye}** aus Sammlung \"{collection}\" entfernt.",
-    "addDyeHint": "Verwende `/collection add {name} <Farbstoff>` um Farbstoffe hinzuzufügen.",
-    "showHint": "Verwende /collection show <Name> um eine Sammlung anzuzeigen",
-    "collectionEmpty": "Diese Sammlung ist leer.",
-    "alreadyExists": "Eine Sammlung mit dem Namen \"{name}\" existiert bereits.",
-    "notFound": "Sammlung mit dem Namen \"{name}\" wurde nicht gefunden.",
-    "nameTooLong": "Sammlungsnamen müssen {max} Zeichen oder weniger haben.",
-    "limitReached": "Du hast die maximale Anzahl von {max} Sammlungen erreicht.\n\nVerwende `/collection delete` um zuerst eine zu entfernen.",
-    "dyeLimitReached": "Diese Sammlung hat die maximale Anzahl von {max} Farbstoffen erreicht.",
-    "dyeAlreadyInCollection": "**{dye}** ist bereits in der Sammlung \"{collection}\".",
-    "dyeNotInCollection": "**{dye}** ist nicht in der Sammlung \"{collection}\" (oder die Sammlung existiert nicht).",
-    "count": "{count}/{max} Sammlungen"
-  },
-  "language": {
-    "title": "Spracheinstellungen",
-    "updated": "Deine Spracheinstellung wurde auf **{language}** gesetzt.",
-    "updateNote": "Farbstoffnamen und Bot-Nachrichten werden jetzt in dieser Sprache angezeigt, wenn verfügbar.",
-    "reset": "Deine Spracheinstellung wurde zurückgesetzt.",
-    "resetNote": "Der Bot wird jetzt die Spracheinstellung deines Discord-Clients verwenden (wenn unterstützt) oder standardmäßig Englisch.",
-    "yourPreference": "Deine Einstellung",
-    "notSet": "Nicht gesetzt",
-    "discordLocale": "Discord-Gebietsschema",
-    "unsupported": "nicht unterstützt",
-    "effectiveLanguage": "Aktive Sprache",
-    "supportedLanguages": "Unterstützte Sprachen",
-    "missingLanguage": "Bitte gib eine Sprache an.",
-    "invalidLanguage": "\"{locale}\" ist keine unterstützte Sprache.\n\nUnterstützte Sprachen: {validList}"
-  },
   "about": {
     "title": "XIV Dye Tools Bot",
     "version": "Version",
@@ -326,7 +271,9 @@
       "manual": "Hilfe-Handbuch anzeigen",
       "about": "Bot-Informationen (dieser Befehl)",
       "stats": "Nutzungsstatistiken (nur autorisiert)"
-    }
+    },
+    "removedTitle": "In v5 entfernt",
+    "removedBody": "diese Befehle wurden entfernt — nutze /extractor, /preferences und die Sammlungen in der Web-App."
   },
   "paletteGrid": {
     "extracted": "EXTRAHIERT",
@@ -340,50 +287,6 @@
       "fair": "AKZEPTABEL",
       "approximate": "UNGEFÄHR"
     }
-  },
-  "matchImage": {
-    "missingImage": "Bitte hänge ein Bild zur Analyse an.",
-    "invalidAttachment": "Angehängtes Bild konnte nicht gefunden werden.",
-    "noColors": "Das Bild scheint vollständig transparent oder zu klein für die Analyse zu sein.",
-    "extractionFailed": "Farben konnten nicht aus dem Bild extrahiert werden.",
-    "colorMatch": "Farbabgleich",
-    "colorPalette": "{count}-Farben-Palette",
-    "closestMatch": "Nächste Farbstoff-Übereinstimmung",
-    "topMatches": "Top {count} passende Farbstoffe",
-    "extractionMethod": "Farbe mittels K-Means-Clustering extrahiert",
-    "processingFailed": "Bei der Verarbeitung des Bildes ist ein Fehler aufgetreten.",
-    "onlyDiscord": "Nur direkt auf Discord hochgeladene Bilder können analysiert werden.",
-    "imageTooLarge": "Bild ist zu groß. Bitte verwende ein kleineres Bild.",
-    "unsupportedFormat": "Nicht unterstütztes Bildformat. Bitte verwende PNG, JPEG, GIF oder WebP.",
-    "timeout": "Bild-Download hat zu lange gedauert. Bitte versuche es erneut."
-  },
-  "matchImageHelp": {
-    "title": "So verwendest du /match_image",
-    "description": "Der `/match_image`-Befehl analysiert dein hochgeladenes Bild, um die dominante Farbe zu finden und sie dem nächsten FFXIV-Farbstoff zuzuordnen. Hier sind einige Tipps für beste Ergebnisse!",
-    "howItWorks": "So funktioniert es",
-    "howItWorksContent": "**1. Bildanalyse**\n- Dein Bild wird mit K-Means-Clustering verarbeitet\n- Die dominante(n) Farbe(n) werden extrahiert\n- Farben werden mit 136 FFXIV-Farbstoffen abgeglichen\n\n**2. Farbstoff-Zuordnung**\n- Verwendet euklidische Distanz im RGB-Farbraum\n- Gibt den/die nächsten passenden Farbstoff(e) zurück",
-    "tipsForBestResults": "Tipps für beste Ergebnisse",
-    "tipsContent": "**Bilder zuschneiden**\n- Fokussiere auf den spezifischen Bereich, den du abgleichen möchtest\n- Entferne UI-Elemente und Hintergründe\n\n**Gute Beleuchtung wählen**\n- Mache Screenshots in gut beleuchteten Bereichen\n- Vermeide dunkle Schatten oder extreme Highlights\n\n**Dunkle Hintergründe vermeiden**\n- Schwarze Hintergründe können Ergebnisse verfälschen\n- Verwende wenn möglich neutrale, hellere Hintergründe",
-    "commonIssues": "Häufige Probleme",
-    "commonIssuesContent": "**‚Ich habe eine dunkle Farbe bekommen, aber meine Ausrüstung ist hell!'**\n→ Dein Hintergrund ist wahrscheinlich dunkel. Schneide das Bild nur auf deine Ausrüstung zu.\n\n**‚Die Zuordnung scheint nicht zu stimmen'**\n→ Mehrere Farben? Der Algorithmus wählt die HÄUFIGSTE Farbe.\n\n**‚Kann ich einen bestimmten Teil abgleichen?'**\n→ Ja! Schneide vor dem Hochladen auf genau diesen Bereich zu.",
-    "proTips": "Profi-Tipps",
-    "proTipsContent": "• Verwende Bildbearbeitungssoftware zum Zuschneiden vor dem Hochladen\n• Bei metallischer/glänzender Ausrüstung können Ergebnisse variieren\n• Wenn du den Hex-Code kennst, verwende stattdessen `/match`\n• Extrahiere mehrere Farben mit der `colors`-Option (1-5)\n• Screenshots in 1920x1080 oder höher für beste Qualität",
-    "footer": "XIV Dye Tools - Mit Liebe für FFXIV Glamour-Enthusiasten gemacht",
-    "exampleUseCases": "Beispiel-Anwendungsfälle",
-    "goodExamples": "Gute Beispiele",
-    "goodExamplesContent": "• Zugeschnittener Screenshot eines einzelnen Bruststücks\n• Nahaufnahme von gefärbter Rüstung mit neutralem Hintergrund\n• Screenshot bei hellem Tageslicht\n• Bild fokussiert auf die Farbe, die du abgleichen möchtest",
-    "poorExamples": "Schlechte Beispiele",
-    "poorExamplesContent": "• Vollbild-Screenshot mit viel UI\n• Charakter in einem dunklen Dungeon oder einer Höhle\n• Mehrere Rüstungsteile mit verschiedenen Farbstoffen\n• Bild dominiert von Hintergrundfarben",
-    "whenToUse": "Wann /match_image vs /match verwenden",
-    "whenToUseContent": "**Verwende `/match_image` wenn:**\n• Du einen Screenshot hast und den Farbstoff finden möchtest\n• Du den genauen Farbcode nicht kennst\n• Du eine Farbe aus Inspirationsfotos abgleichen möchtest\n\n**Verwende `/match` wenn:**\n• Du den Hex-Farbcode bereits kennst\n• Du präzisere/exaktere Ergebnisse brauchst\n• Du mit Farbfeldern arbeitest",
-    "technicalDetails": "Technische Details",
-    "supportedFormats": "Unterstützte Formate",
-    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
-    "fileLimits": "Dateilimits",
-    "fileLimitsContent": "• Maximale Größe: 8MB\n• Verarbeitungszeit: ~1-3 Sekunden",
-    "matchQualityRatings": "Qualitätsbewertungen",
-    "matchQualityRatingsContent": "**Perfekt** (0 Distanz)\n**Ausgezeichnet** (<10 Distanz)\n**Gut** (<25 Distanz)\n**Akzeptabel** (<50 Distanz)\n**Ungefähr** (≥50 Distanz)\n\n*Niedrigere Distanz = bessere Übereinstimmung*",
-    "poweredBy": "Powered by Photon WASM Bildverarbeitung"
   },
   "preset": {
     "title": "Community-Vorlagen",
@@ -690,5 +593,49 @@
       "web": "Web-App",
       "discord": "Discord"
     }
+  },
+  "matchImage": {
+    "missingImage": "Bitte hänge ein Bild zur Analyse an.",
+    "invalidAttachment": "Angehängtes Bild konnte nicht gefunden werden.",
+    "noColors": "Das Bild scheint vollständig transparent oder zu klein für die Analyse zu sein.",
+    "extractionFailed": "Farben konnten nicht aus dem Bild extrahiert werden.",
+    "colorMatch": "Farbabgleich",
+    "colorPalette": "{count}-Farben-Palette",
+    "closestMatch": "Nächste Farbstoff-Übereinstimmung",
+    "topMatches": "Top {count} passende Farbstoffe",
+    "extractionMethod": "Farbe mittels K-Means-Clustering extrahiert",
+    "processingFailed": "Bei der Verarbeitung des Bildes ist ein Fehler aufgetreten.",
+    "onlyDiscord": "Nur direkt auf Discord hochgeladene Bilder können analysiert werden.",
+    "imageTooLarge": "Bild ist zu groß. Bitte verwende ein kleineres Bild.",
+    "unsupportedFormat": "Nicht unterstütztes Bildformat. Bitte verwende PNG, JPEG, GIF oder WebP.",
+    "timeout": "Bild-Download hat zu lange gedauert. Bitte versuche es erneut."
+  },
+  "matchImageHelp": {
+    "title": "So verwendest du /match_image",
+    "description": "Der `/match_image`-Befehl analysiert dein hochgeladenes Bild, um die dominante Farbe zu finden und sie dem nächsten FFXIV-Farbstoff zuzuordnen. Hier sind einige Tipps für beste Ergebnisse!",
+    "howItWorks": "So funktioniert es",
+    "howItWorksContent": "**1. Bildanalyse**\n- Dein Bild wird mit K-Means-Clustering verarbeitet\n- Die dominante(n) Farbe(n) werden extrahiert\n- Farben werden mit 136 FFXIV-Farbstoffen abgeglichen\n\n**2. Farbstoff-Zuordnung**\n- Verwendet euklidische Distanz im RGB-Farbraum\n- Gibt den/die nächsten passenden Farbstoff(e) zurück",
+    "tipsForBestResults": "Tipps für beste Ergebnisse",
+    "tipsContent": "**Bilder zuschneiden**\n- Fokussiere auf den spezifischen Bereich, den du abgleichen möchtest\n- Entferne UI-Elemente und Hintergründe\n\n**Gute Beleuchtung wählen**\n- Mache Screenshots in gut beleuchteten Bereichen\n- Vermeide dunkle Schatten oder extreme Highlights\n\n**Dunkle Hintergründe vermeiden**\n- Schwarze Hintergründe können Ergebnisse verfälschen\n- Verwende wenn möglich neutrale, hellere Hintergründe",
+    "commonIssues": "Häufige Probleme",
+    "commonIssuesContent": "**‚Ich habe eine dunkle Farbe bekommen, aber meine Ausrüstung ist hell!'**\n→ Dein Hintergrund ist wahrscheinlich dunkel. Schneide das Bild nur auf deine Ausrüstung zu.\n\n**‚Die Zuordnung scheint nicht zu stimmen'**\n→ Mehrere Farben? Der Algorithmus wählt die HÄUFIGSTE Farbe.\n\n**‚Kann ich einen bestimmten Teil abgleichen?'**\n→ Ja! Schneide vor dem Hochladen auf genau diesen Bereich zu.",
+    "proTips": "Profi-Tipps",
+    "proTipsContent": "• Verwende Bildbearbeitungssoftware zum Zuschneiden vor dem Hochladen\n• Bei metallischer/glänzender Ausrüstung können Ergebnisse variieren\n• Wenn du den Hex-Code kennst, verwende stattdessen `/match`\n• Extrahiere mehrere Farben mit der `colors`-Option (1-5)\n• Screenshots in 1920x1080 oder höher für beste Qualität",
+    "footer": "XIV Dye Tools - Mit Liebe für FFXIV Glamour-Enthusiasten gemacht",
+    "exampleUseCases": "Beispiel-Anwendungsfälle",
+    "goodExamples": "Gute Beispiele",
+    "goodExamplesContent": "• Zugeschnittener Screenshot eines einzelnen Bruststücks\n• Nahaufnahme von gefärbter Rüstung mit neutralem Hintergrund\n• Screenshot bei hellem Tageslicht\n• Bild fokussiert auf die Farbe, die du abgleichen möchtest",
+    "poorExamples": "Schlechte Beispiele",
+    "poorExamplesContent": "• Vollbild-Screenshot mit viel UI\n• Charakter in einem dunklen Dungeon oder einer Höhle\n• Mehrere Rüstungsteile mit verschiedenen Farbstoffen\n• Bild dominiert von Hintergrundfarben",
+    "whenToUse": "Wann /match_image vs /match verwenden",
+    "whenToUseContent": "**Verwende `/match_image` wenn:**\n• Du einen Screenshot hast und den Farbstoff finden möchtest\n• Du den genauen Farbcode nicht kennst\n• Du eine Farbe aus Inspirationsfotos abgleichen möchtest\n\n**Verwende `/match` wenn:**\n• Du den Hex-Farbcode bereits kennst\n• Du präzisere/exaktere Ergebnisse brauchst\n• Du mit Farbfeldern arbeitest",
+    "technicalDetails": "Technische Details",
+    "supportedFormats": "Unterstützte Formate",
+    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
+    "fileLimits": "Dateilimits",
+    "fileLimitsContent": "• Maximale Größe: 8MB\n• Verarbeitungszeit: ~1-3 Sekunden",
+    "matchQualityRatings": "Qualitätsbewertungen",
+    "matchQualityRatingsContent": "**Perfekt** (0 Distanz)\n**Ausgezeichnet** (<10 Distanz)\n**Gut** (<25 Distanz)\n**Akzeptabel** (<50 Distanz)\n**Ungefähr** (≥50 Distanz)\n\n*Niedrigere Distanz = bessere Übereinstimmung*",
+    "poweredBy": "Powered by Photon WASM Bildverarbeitung"
   }
 }

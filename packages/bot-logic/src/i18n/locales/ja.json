@@ -142,13 +142,6 @@
       "runAgainHint": "もう一度実行すると別のカララントが表示されます！"
     }
   },
-  "match": {
-    "title": "カララントマッチ：{name}",
-    "topMatches": "上位{count}件のカララントマッチ",
-    "findingMatches": "{input}に最も近いマッチを検索中",
-    "useInfoHint": "/dye info で入手方法の詳細を確認できます",
-    "useInfoNameHint": "/dye info <名前> で入手方法の詳細を確認できます"
-  },
   "extractor": {
     "title": "カラー抽出：{name}",
     "topMatches": "上位{count}件のカララントマッチ",
@@ -244,54 +237,6 @@
     "wcagFailDesc": "区別しにくい可能性があります",
     "wcagGuidelines": "WCAG 2.1コントラストガイドライン"
   },
-  "favorites": {
-    "title": "お気に入り",
-    "empty": "お気に入りのカララントがまだありません。",
-    "addHint": "`/favorites add <カララント>` で追加してください！",
-    "added": "**{name}**をお気に入りに追加しました。",
-    "removed": "**{name}**をお気に入りから削除しました。",
-    "cleared": "すべてのお気に入りカララントをクリアしました。",
-    "alreadyFavorite": "**{name}**は既にお気に入りに登録されています。",
-    "notInFavorites": "**{name}**はお気に入りに登録されていません。",
-    "limitReached": "お気に入りの上限（{max}件）に達しました。\n\n`/favorites remove` で削除してから追加してください。",
-    "count": "お気に入り {count}/{max}件"
-  },
-  "collection": {
-    "title": "コレクション",
-    "empty": "コレクションがまだありません。",
-    "createHint": "`/collection create <名前>` で作成してください！",
-    "created": "新しいコレクションを作成しました：**{name}**",
-    "deleted": "コレクションを削除しました：**{name}**",
-    "renamed": "コレクション名を**{oldName}**から**{newName}**に変更しました。",
-    "dyeAdded": "**{dye}**をコレクション「{collection}」に追加しました。",
-    "dyeRemoved": "**{dye}**をコレクション「{collection}」から削除しました。",
-    "addDyeHint": "`/collection add {name} <カララント>` でカララントを追加できます。",
-    "showHint": "/collection show <名前> でコレクションを表示できます",
-    "collectionEmpty": "このコレクションは空です。",
-    "alreadyExists": "「{name}」という名前のコレクションは既に存在します。",
-    "notFound": "「{name}」という名前のコレクションが見つかりませんでした。",
-    "nameTooLong": "コレクション名は{max}文字以下にしてください。",
-    "limitReached": "コレクションの上限（{max}件）に達しました。\n\n`/collection delete` で削除してから作成してください。",
-    "dyeLimitReached": "このコレクションはカララントの上限（{max}件）に達しました。",
-    "dyeAlreadyInCollection": "**{dye}**は既にコレクション「{collection}」に登録されています。",
-    "dyeNotInCollection": "**{dye}**はコレクション「{collection}」に登録されていません（またはコレクションが存在しません）。",
-    "count": "コレクション {count}/{max}件"
-  },
-  "language": {
-    "title": "言語設定",
-    "updated": "言語設定を**{language}**に変更しました。",
-    "updateNote": "カララント名とボットメッセージがこの言語で表示されます（対応している場合）。",
-    "reset": "言語設定をリセットしました。",
-    "resetNote": "ボットはDiscordクライアントの言語設定を使用します（対応している場合）。対応していない場合は英語がデフォルトになります。",
-    "yourPreference": "設定言語",
-    "notSet": "未設定",
-    "discordLocale": "Discordロケール",
-    "unsupported": "未対応",
-    "effectiveLanguage": "有効な言語",
-    "supportedLanguages": "対応言語",
-    "missingLanguage": "言語を指定してください。",
-    "invalidLanguage": "「{locale}」は対応していない言語です。\n\n対応言語：{validList}"
-  },
   "about": {
     "title": "XIV Dye Tools Bot",
     "version": "バージョン",
@@ -326,7 +271,9 @@
       "manual": "ヘルプガイドを表示",
       "about": "ボット情報（このコマンド）",
       "stats": "使用統計（権限者のみ）"
-    }
+    },
+    "removedTitle": "v5で削除",
+    "removedBody": "これらのコマンドは削除されました。/extractor、/preferences、またはWebアプリのコレクションをご利用ください。"
   },
   "paletteGrid": {
     "extracted": "抽出色",
@@ -340,50 +287,6 @@
       "fair": "まずまず",
       "approximate": "近似"
     }
-  },
-  "matchImage": {
-    "missingImage": "分析する画像を添付してください。",
-    "invalidAttachment": "添付された画像が見つかりませんでした。",
-    "noColors": "画像が完全に透明か、分析には小さすぎるようです。",
-    "extractionFailed": "画像から色を抽出できませんでした。",
-    "colorMatch": "色のマッチング",
-    "colorPalette": "{count}色パレット",
-    "closestMatch": "最も近いカララント",
-    "topMatches": "上位{count}件のマッチング",
-    "extractionMethod": "K-meansクラスタリングによる色抽出",
-    "processingFailed": "画像の処理中にエラーが発生しました。",
-    "onlyDiscord": "Discordに直接アップロードされた画像のみ分析できます。",
-    "imageTooLarge": "画像が大きすぎます。より小さい画像を使用してください。",
-    "unsupportedFormat": "サポートされていない画像形式です。PNG、JPEG、GIF、またはWebPを使用してください。",
-    "timeout": "画像のダウンロードがタイムアウトしました。もう一度お試しください。"
-  },
-  "matchImageHelp": {
-    "title": "/match_image の使い方",
-    "description": "`/match_image` コマンドはアップロードされた画像を分析し、最も近いFFXIVカララントに一致する主要な色を見つけます。最良の結果を得るためのヒントをご紹介します！",
-    "howItWorks": "仕組み",
-    "howItWorksContent": "**1. 画像分析**\n- 画像はK-meansクラスタリングで処理されます\n- 主要な色が抽出されます\n- 136種類のFFXIVカララントと照合されます\n\n**2. カララントマッチング**\n- RGB色空間でのユークリッド距離を使用\n- 最も近いカララントを返します",
-    "tipsForBestResults": "最良の結果を得るためのヒント",
-    "tipsContent": "**画像をトリミング**\n- マッチングしたい特定の部分にフォーカス\n- UI要素や背景を削除\n\n**良い照明を選ぶ**\n- 明るい場所でスクリーンショットを撮影\n- 暗い影や極端なハイライトを避ける\n\n**暗い背景を避ける**\n- 黒い背景は結果を歪める可能性があります\n- 可能であれば中間色の明るい背景を使用",
-    "commonIssues": "よくある問題",
-    "commonIssuesContent": "**「暗い色が出たのに装備は明るいです！」**\n→ 背景が暗い可能性があります。装備だけに画像をトリミングしてください。\n\n**「マッチングがおかしいようです」**\n→ 複数の色がありますか？アルゴリズムは最も一般的な色を選択します。\n\n**「特定の部分だけマッチングできますか？」**\n→ はい！アップロード前にその部分だけにトリミングしてください。",
-    "proTips": "プロのヒント",
-    "proTipsContent": "• アップロード前に画像編集ソフトでトリミング\n• メタリック/光沢のある装備は結果が異なる場合があります\n• 16進数コードがわかっている場合は `/match` を使用\n• `colors` オプションで複数の色を抽出（1-5）\n• 最高品質のために1920x1080以上でスクリーンショット",
-    "footer": "XIV Dye Tools - FFXIVグラマー愛好家のために愛を込めて作成",
-    "exampleUseCases": "使用例",
-    "goodExamples": "良い例",
-    "goodExamplesContent": "• 胴装備1点だけのトリミングされたスクリーンショット\n• ニュートラルな背景での染色された鎧のクローズアップ\n• 明るい日中エリアで撮影されたスクリーンショット\n• マッチングしたい色にフォーカスした画像",
-    "poorExamples": "悪い例",
-    "poorExamplesContent": "• UIが多いフルスクリーンのスクリーンショット\n• 暗いダンジョンや洞窟内のキャラクター\n• 異なるカララントの複数の装備\n• 背景色に支配された画像",
-    "whenToUse": "/match_image と /match の使い分け",
-    "whenToUseContent": "**`/match_image` を使う場合：**\n• スクリーンショットがあり、カララントを見つけたい\n• 正確な色コードがわからない\n• インスピレーション写真の色をマッチングしたい\n\n**`/match` を使う場合：**\n• すでに16進数カラーコードを知っている\n• より正確な結果が必要\n• カラーパレットで作業している",
-    "technicalDetails": "技術的な詳細",
-    "supportedFormats": "対応フォーマット",
-    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
-    "fileLimits": "ファイル制限",
-    "fileLimitsContent": "• 最大サイズ：8MB\n• 処理時間：約1-3秒",
-    "matchQualityRatings": "マッチ品質評価",
-    "matchQualityRatingsContent": "**完璧** (距離0)\n**優秀** (距離<10)\n**良好** (距離<25)\n**まずまず** (距離<50)\n**おおよそ** (距離≥50)\n\n*距離が低いほど = より良いマッチ*",
-    "poweredBy": "Photon WASM画像処理を使用"
   },
   "preset": {
     "title": "コミュニティプリセット",
@@ -690,5 +593,49 @@
       "web": "Webアプリ",
       "discord": "Discord"
     }
+  },
+  "matchImage": {
+    "missingImage": "分析する画像を添付してください。",
+    "invalidAttachment": "添付された画像が見つかりませんでした。",
+    "noColors": "画像が完全に透明か、分析には小さすぎるようです。",
+    "extractionFailed": "画像から色を抽出できませんでした。",
+    "colorMatch": "色のマッチング",
+    "colorPalette": "{count}色パレット",
+    "closestMatch": "最も近いカララント",
+    "topMatches": "上位{count}件のマッチング",
+    "extractionMethod": "K-meansクラスタリングによる色抽出",
+    "processingFailed": "画像の処理中にエラーが発生しました。",
+    "onlyDiscord": "Discordに直接アップロードされた画像のみ分析できます。",
+    "imageTooLarge": "画像が大きすぎます。より小さい画像を使用してください。",
+    "unsupportedFormat": "サポートされていない画像形式です。PNG、JPEG、GIF、またはWebPを使用してください。",
+    "timeout": "画像のダウンロードがタイムアウトしました。もう一度お試しください。"
+  },
+  "matchImageHelp": {
+    "title": "/match_image の使い方",
+    "description": "`/match_image` コマンドはアップロードされた画像を分析し、最も近いFFXIVカララントに一致する主要な色を見つけます。最良の結果を得るためのヒントをご紹介します！",
+    "howItWorks": "仕組み",
+    "howItWorksContent": "**1. 画像分析**\n- 画像はK-meansクラスタリングで処理されます\n- 主要な色が抽出されます\n- 136種類のFFXIVカララントと照合されます\n\n**2. カララントマッチング**\n- RGB色空間でのユークリッド距離を使用\n- 最も近いカララントを返します",
+    "tipsForBestResults": "最良の結果を得るためのヒント",
+    "tipsContent": "**画像をトリミング**\n- マッチングしたい特定の部分にフォーカス\n- UI要素や背景を削除\n\n**良い照明を選ぶ**\n- 明るい場所でスクリーンショットを撮影\n- 暗い影や極端なハイライトを避ける\n\n**暗い背景を避ける**\n- 黒い背景は結果を歪める可能性があります\n- 可能であれば中間色の明るい背景を使用",
+    "commonIssues": "よくある問題",
+    "commonIssuesContent": "**「暗い色が出たのに装備は明るいです！」**\n→ 背景が暗い可能性があります。装備だけに画像をトリミングしてください。\n\n**「マッチングがおかしいようです」**\n→ 複数の色がありますか？アルゴリズムは最も一般的な色を選択します。\n\n**「特定の部分だけマッチングできますか？」**\n→ はい！アップロード前にその部分だけにトリミングしてください。",
+    "proTips": "プロのヒント",
+    "proTipsContent": "• アップロード前に画像編集ソフトでトリミング\n• メタリック/光沢のある装備は結果が異なる場合があります\n• 16進数コードがわかっている場合は `/match` を使用\n• `colors` オプションで複数の色を抽出（1-5）\n• 最高品質のために1920x1080以上でスクリーンショット",
+    "footer": "XIV Dye Tools - FFXIVグラマー愛好家のために愛を込めて作成",
+    "exampleUseCases": "使用例",
+    "goodExamples": "良い例",
+    "goodExamplesContent": "• 胴装備1点だけのトリミングされたスクリーンショット\n• ニュートラルな背景での染色された鎧のクローズアップ\n• 明るい日中エリアで撮影されたスクリーンショット\n• マッチングしたい色にフォーカスした画像",
+    "poorExamples": "悪い例",
+    "poorExamplesContent": "• UIが多いフルスクリーンのスクリーンショット\n• 暗いダンジョンや洞窟内のキャラクター\n• 異なるカララントの複数の装備\n• 背景色に支配された画像",
+    "whenToUse": "/match_image と /match の使い分け",
+    "whenToUseContent": "**`/match_image` を使う場合：**\n• スクリーンショットがあり、カララントを見つけたい\n• 正確な色コードがわからない\n• インスピレーション写真の色をマッチングしたい\n\n**`/match` を使う場合：**\n• すでに16進数カラーコードを知っている\n• より正確な結果が必要\n• カラーパレットで作業している",
+    "technicalDetails": "技術的な詳細",
+    "supportedFormats": "対応フォーマット",
+    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
+    "fileLimits": "ファイル制限",
+    "fileLimitsContent": "• 最大サイズ：8MB\n• 処理時間：約1-3秒",
+    "matchQualityRatings": "マッチ品質評価",
+    "matchQualityRatingsContent": "**完璧** (距離0)\n**優秀** (距離<10)\n**良好** (距離<25)\n**まずまず** (距離<50)\n**おおよそ** (距離≥50)\n\n*距離が低いほど = より良いマッチ*",
+    "poweredBy": "Photon WASM画像処理を使用"
   }
 }

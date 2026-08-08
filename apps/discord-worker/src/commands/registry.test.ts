@@ -19,7 +19,7 @@ describe('command registry', () => {
     }
   });
 
-  it('marks only /language as deprecated (v5 removes it)', () => {
-    expect(COMMAND_REGISTRY.filter((c) => c.deprecated).map((c) => c.name)).toEqual(['language']);
+  it('carries no deprecated commands (the v4 set is deleted)', () => {
+    expect(COMMAND_REGISTRY.filter((c) => c.deprecated)).toEqual([]);
   });
 });

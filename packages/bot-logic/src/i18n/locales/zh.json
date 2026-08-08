@@ -142,13 +142,6 @@
       "runAgainHint": "再次运行可获取不同的染剂！"
     }
   },
-  "match": {
-    "title": "染剂匹配：{name}",
-    "topMatches": "前 {count} 个染剂匹配",
-    "findingMatches": "正在为 {input} 查找最接近的匹配",
-    "useInfoHint": "使用 /dye info 查看获取方式",
-    "useInfoNameHint": "使用 /dye info <名称> 查看获取方式"
-  },
   "extractor": {
     "title": "颜色提取：{name}",
     "topMatches": "前 {count} 个染剂匹配",
@@ -244,54 +237,6 @@
     "wcagFailDesc": "可能难以区分",
     "wcagGuidelines": "WCAG 2.1 对比度指南"
   },
-  "favorites": {
-    "title": "您的收藏",
-    "empty": "您还没有收藏任何染剂。",
-    "addHint": "使用 `/favorites add <染剂>` 添加！",
-    "added": "已将 **{name}** 添加到您的收藏。",
-    "removed": "已将 **{name}** 从您的收藏中移除。",
-    "cleared": "已清除所有收藏的染剂。",
-    "alreadyFavorite": "**{name}** 已经在您的收藏中。",
-    "notInFavorites": "**{name}** 不在您的收藏中。",
-    "limitReached": "您已达到 {max} 个收藏的上限。\n\n请先使用 `/favorites remove` 移除一个。",
-    "count": "收藏 {count}/{max}"
-  },
-  "collection": {
-    "title": "您的合集",
-    "empty": "您还没有创建任何合集。",
-    "createHint": "使用 `/collection create <名称>` 创建一个！",
-    "created": "已创建新合集：**{name}**",
-    "deleted": "已删除合集：**{name}**",
-    "renamed": "已将合集从 **{oldName}** 重命名为 **{newName}**。",
-    "dyeAdded": "已将 **{dye}** 添加到合集「{collection}」。",
-    "dyeRemoved": "已将 **{dye}** 从合集「{collection}」移除。",
-    "addDyeHint": "使用 `/collection add {name} <染剂>` 添加染剂。",
-    "showHint": "使用 /collection show <名称> 查看合集",
-    "collectionEmpty": "此合集为空。",
-    "alreadyExists": "名为「{name}」的合集已存在。",
-    "notFound": "找不到名为「{name}」的合集。",
-    "nameTooLong": "合集名称必须在 {max} 个字符以内。",
-    "limitReached": "您已达到 {max} 个合集的上限。\n\n请先使用 `/collection delete` 删除一个。",
-    "dyeLimitReached": "此合集已达到 {max} 个染剂的上限。",
-    "dyeAlreadyInCollection": "**{dye}** 已经在合集「{collection}」中。",
-    "dyeNotInCollection": "**{dye}** 不在合集「{collection}」中（或合集不存在）。",
-    "count": "合集 {count}/{max}"
-  },
-  "language": {
-    "title": "语言设置",
-    "updated": "您的语言偏好已设置为 **{language}**。",
-    "updateNote": "染剂名称和机器人消息现在将使用此语言显示（如果可用）。",
-    "reset": "您的语言偏好已重置。",
-    "resetNote": "机器人现在将使用您的Discord客户端语言设置（如果支持），否则默认使用英语。",
-    "yourPreference": "您的偏好",
-    "notSet": "未设置",
-    "discordLocale": "Discord语言",
-    "unsupported": "不支持",
-    "effectiveLanguage": "当前语言",
-    "supportedLanguages": "支持的语言",
-    "missingLanguage": "请指定语言。",
-    "invalidLanguage": "「{locale}」不是支持的语言。\n\n支持的语言：{validList}"
-  },
   "about": {
     "title": "XIV Dye Tools 机器人",
     "version": "版本",
@@ -326,7 +271,9 @@
       "manual": "显示帮助指南",
       "about": "机器人信息（此命令）",
       "stats": "使用统计（仅限授权）"
-    }
+    },
+    "removedTitle": "v5中已移除",
+    "removedBody": "这些命令已被移除——请使用 /extractor、/preferences 或网页应用中的收藏。"
   },
   "paletteGrid": {
     "extracted": "提取颜色",
@@ -340,50 +287,6 @@
       "fair": "一般",
       "approximate": "近似"
     }
-  },
-  "matchImage": {
-    "missingImage": "请附加一张图片进行分析。",
-    "invalidAttachment": "找不到附加的图片。",
-    "noColors": "图片似乎完全透明或太小无法分析。",
-    "extractionFailed": "无法从图片中提取颜色。",
-    "colorMatch": "颜色匹配",
-    "colorPalette": "{count} 色调色板",
-    "closestMatch": "最接近的染剂",
-    "topMatches": "前 {count} 个匹配染剂",
-    "extractionMethod": "通过 K-means 聚类提取颜色",
-    "processingFailed": "处理图片时发生错误。",
-    "onlyDiscord": "只能分析直接上传到 Discord 的图片。",
-    "imageTooLarge": "图片太大。请使用较小的图片。",
-    "unsupportedFormat": "不支持的图片格式。请使用 PNG、JPEG、GIF 或 WebP。",
-    "timeout": "图片下载超时。请重试。"
-  },
-  "matchImageHelp": {
-    "title": "如何使用 /match_image",
-    "description": "`/match_image` 命令会分析您上传的图片，找出主导颜色并匹配最接近的FFXIV染剂。以下是一些获得最佳结果的技巧！",
-    "howItWorks": "工作原理",
-    "howItWorksContent": "**1. 图像分析**\n- 您的图片会通过K-means聚类处理\n- 提取最主要的颜色\n- 与136种FFXIV染剂进行匹配\n\n**2. 染剂匹配**\n- 使用RGB色彩空间中的欧几里得距离\n- 返回最接近的匹配染剂",
-    "tipsForBestResults": "获得最佳结果的技巧",
-    "tipsContent": "**裁剪您的图片**\n- 专注于您想要匹配的特定区域\n- 移除UI元素和背景\n\n**选择良好的光线**\n- 在光线充足的区域截图\n- 避免暗影或过度高光\n\n**避免暗色背景**\n- 黑色背景可能会影响结果\n- 尽可能使用中性的浅色背景",
-    "commonIssues": "常见问题",
-    "commonIssuesContent": "**「我得到了暗色，但我的装备是亮色的！」**\n→ 您的背景可能是暗色的。请将图片裁剪到只包含装备。\n\n**「匹配结果似乎不对」**\n→ 有多种颜色？算法会选择最常见的颜色。\n\n**「我能匹配特定部分吗？」**\n→ 可以！在上传前裁剪到该精确区域。",
-    "proTips": "专业技巧",
-    "proTipsContent": "• 使用图像编辑软件在上传前裁剪\n• 金属/闪亮装备的结果可能会有所不同\n• 如果您知道十六进制代码，请使用 `/match`\n• 使用 `colors` 选项提取多种颜色（1-5）\n• 使用1920x1080或更高分辨率截图以获得最佳质量",
-    "footer": "XIV Dye Tools - 为FFXIV时装爱好者倾心打造",
-    "exampleUseCases": "使用案例示例",
-    "goodExamples": "好的示例",
-    "goodExamplesContent": "• 裁剪后只包含单件胸甲的截图\n• 中性背景下染色盔甲的特写\n• 在明亮日光区域拍摄的截图\n• 聚焦于您想要匹配的颜色的图片",
-    "poorExamples": "不好的示例",
-    "poorExamplesContent": "• 包含大量UI的全屏截图\n• 在黑暗副本或洞穴中的角色\n• 多件不同染色的装备\n• 被背景颜色主导的图片",
-    "whenToUse": "何时使用 /match_image vs /match",
-    "whenToUseContent": "**使用 `/match_image` 当：**\n• 您有一张截图并想找到对应的染剂\n• 您不确定确切的颜色代码\n• 您想从灵感照片中匹配颜色\n\n**使用 `/match` 当：**\n• 您已经知道十六进制颜色代码\n• 您需要更精确的结果\n• 您正在使用色卡工作",
-    "technicalDetails": "技术细节",
-    "supportedFormats": "支持的格式",
-    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
-    "fileLimits": "文件限制",
-    "fileLimitsContent": "• 最大大小：8MB\n• 处理时间：约1-3秒",
-    "matchQualityRatings": "匹配质量等级",
-    "matchQualityRatingsContent": "**完美** (距离 0)\n**优秀** (距离 <10)\n**良好** (距离 <25)\n**一般** (距离 <50)\n**近似** (距离 ≥50)\n\n*距离越低 = 匹配越好*",
-    "poweredBy": "由 Photon WASM 图像处理驱动"
   },
   "preset": {
     "title": "社区预设",
@@ -690,5 +593,49 @@
       "web": "网页应用",
       "discord": "Discord"
     }
+  },
+  "matchImage": {
+    "missingImage": "请附加一张图片进行分析。",
+    "invalidAttachment": "找不到附加的图片。",
+    "noColors": "图片似乎完全透明或太小无法分析。",
+    "extractionFailed": "无法从图片中提取颜色。",
+    "colorMatch": "颜色匹配",
+    "colorPalette": "{count} 色调色板",
+    "closestMatch": "最接近的染剂",
+    "topMatches": "前 {count} 个匹配染剂",
+    "extractionMethod": "通过 K-means 聚类提取颜色",
+    "processingFailed": "处理图片时发生错误。",
+    "onlyDiscord": "只能分析直接上传到 Discord 的图片。",
+    "imageTooLarge": "图片太大。请使用较小的图片。",
+    "unsupportedFormat": "不支持的图片格式。请使用 PNG、JPEG、GIF 或 WebP。",
+    "timeout": "图片下载超时。请重试。"
+  },
+  "matchImageHelp": {
+    "title": "如何使用 /match_image",
+    "description": "`/match_image` 命令会分析您上传的图片，找出主导颜色并匹配最接近的FFXIV染剂。以下是一些获得最佳结果的技巧！",
+    "howItWorks": "工作原理",
+    "howItWorksContent": "**1. 图像分析**\n- 您的图片会通过K-means聚类处理\n- 提取最主要的颜色\n- 与136种FFXIV染剂进行匹配\n\n**2. 染剂匹配**\n- 使用RGB色彩空间中的欧几里得距离\n- 返回最接近的匹配染剂",
+    "tipsForBestResults": "获得最佳结果的技巧",
+    "tipsContent": "**裁剪您的图片**\n- 专注于您想要匹配的特定区域\n- 移除UI元素和背景\n\n**选择良好的光线**\n- 在光线充足的区域截图\n- 避免暗影或过度高光\n\n**避免暗色背景**\n- 黑色背景可能会影响结果\n- 尽可能使用中性的浅色背景",
+    "commonIssues": "常见问题",
+    "commonIssuesContent": "**「我得到了暗色，但我的装备是亮色的！」**\n→ 您的背景可能是暗色的。请将图片裁剪到只包含装备。\n\n**「匹配结果似乎不对」**\n→ 有多种颜色？算法会选择最常见的颜色。\n\n**「我能匹配特定部分吗？」**\n→ 可以！在上传前裁剪到该精确区域。",
+    "proTips": "专业技巧",
+    "proTipsContent": "• 使用图像编辑软件在上传前裁剪\n• 金属/闪亮装备的结果可能会有所不同\n• 如果您知道十六进制代码，请使用 `/match`\n• 使用 `colors` 选项提取多种颜色（1-5）\n• 使用1920x1080或更高分辨率截图以获得最佳质量",
+    "footer": "XIV Dye Tools - 为FFXIV时装爱好者倾心打造",
+    "exampleUseCases": "使用案例示例",
+    "goodExamples": "好的示例",
+    "goodExamplesContent": "• 裁剪后只包含单件胸甲的截图\n• 中性背景下染色盔甲的特写\n• 在明亮日光区域拍摄的截图\n• 聚焦于您想要匹配的颜色的图片",
+    "poorExamples": "不好的示例",
+    "poorExamplesContent": "• 包含大量UI的全屏截图\n• 在黑暗副本或洞穴中的角色\n• 多件不同染色的装备\n• 被背景颜色主导的图片",
+    "whenToUse": "何时使用 /match_image vs /match",
+    "whenToUseContent": "**使用 `/match_image` 当：**\n• 您有一张截图并想找到对应的染剂\n• 您不确定确切的颜色代码\n• 您想从灵感照片中匹配颜色\n\n**使用 `/match` 当：**\n• 您已经知道十六进制颜色代码\n• 您需要更精确的结果\n• 您正在使用色卡工作",
+    "technicalDetails": "技术细节",
+    "supportedFormats": "支持的格式",
+    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
+    "fileLimits": "文件限制",
+    "fileLimitsContent": "• 最大大小：8MB\n• 处理时间：约1-3秒",
+    "matchQualityRatings": "匹配质量等级",
+    "matchQualityRatingsContent": "**完美** (距离 0)\n**优秀** (距离 <10)\n**良好** (距离 <25)\n**一般** (距离 <50)\n**近似** (距离 ≥50)\n\n*距离越低 = 匹配越好*",
+    "poweredBy": "由 Photon WASM 图像处理驱动"
   }
 }

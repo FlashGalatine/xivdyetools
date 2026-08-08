@@ -142,13 +142,6 @@
       "runAgainHint": "Exécutez à nouveau pour des teintures différentes !"
     }
   },
-  "match": {
-    "title": "Correspondance de teinture : {name}",
-    "topMatches": "Top {count} correspondances de teinture",
-    "findingMatches": "Recherche des correspondances les plus proches pour {input}",
-    "useInfoHint": "Utilisez /dye info pour les détails d'acquisition",
-    "useInfoNameHint": "Utilisez /dye info <nom> pour les détails d'acquisition"
-  },
   "extractor": {
     "title": "Extracteur de couleur : {name}",
     "topMatches": "Top {count} correspondances de teinture",
@@ -244,54 +237,6 @@
     "wcagFailDesc": "Peut être difficile à distinguer",
     "wcagGuidelines": "Directives de contraste WCAG 2.1"
   },
-  "favorites": {
-    "title": "Vos favoris",
-    "empty": "Vous n'avez pas encore de teintures favorites.",
-    "addHint": "Utilisez `/favorites add <teinture>` pour en ajouter !",
-    "added": "**{name}** ajouté à vos favoris.",
-    "removed": "**{name}** retiré de vos favoris.",
-    "cleared": "Tous vos favoris ont été effacés.",
-    "alreadyFavorite": "**{name}** est déjà dans vos favoris.",
-    "notInFavorites": "**{name}** n'est pas dans vos favoris.",
-    "limitReached": "Vous avez atteint le maximum de {max} favoris.\n\nSupprimez-en un avec `/favorites remove` d'abord.",
-    "count": "{count}/{max} favoris"
-  },
-  "collection": {
-    "title": "Vos collections",
-    "empty": "Vous n'avez pas encore de collections.",
-    "createHint": "Utilisez `/collection create <nom>` pour en créer une !",
-    "created": "Nouvelle collection créée : **{name}**",
-    "deleted": "Collection supprimée : **{name}**",
-    "renamed": "Collection renommée de **{oldName}** en **{newName}**.",
-    "dyeAdded": "**{dye}** ajouté à la collection \"{collection}\".",
-    "dyeRemoved": "**{dye}** retiré de la collection \"{collection}\".",
-    "addDyeHint": "Utilisez `/collection add {name} <teinture>` pour ajouter des teintures.",
-    "showHint": "Utilisez /collection show <nom> pour voir une collection",
-    "collectionEmpty": "Cette collection est vide.",
-    "alreadyExists": "Une collection nommée \"{name}\" existe déjà.",
-    "notFound": "Impossible de trouver une collection nommée \"{name}\".",
-    "nameTooLong": "Les noms de collection doivent avoir {max} caractères ou moins.",
-    "limitReached": "Vous avez atteint le maximum de {max} collections.\n\nUtilisez `/collection delete` pour en supprimer une d'abord.",
-    "dyeLimitReached": "Cette collection a atteint le maximum de {max} teintures.",
-    "dyeAlreadyInCollection": "**{dye}** est déjà dans la collection \"{collection}\".",
-    "dyeNotInCollection": "**{dye}** n'est pas dans la collection \"{collection}\" (ou la collection n'existe pas).",
-    "count": "{count}/{max} collections"
-  },
-  "language": {
-    "title": "Paramètres de langue",
-    "updated": "Votre préférence de langue a été définie sur **{language}**.",
-    "updateNote": "Les noms de teinture et les messages du bot utiliseront désormais cette langue lorsque disponible.",
-    "reset": "Votre préférence de langue a été réinitialisée.",
-    "resetNote": "Le bot utilisera désormais la langue de votre client Discord (si prise en charge) ou l'anglais par défaut.",
-    "yourPreference": "Votre préférence",
-    "notSet": "Non définie",
-    "discordLocale": "Langue Discord",
-    "unsupported": "non prise en charge",
-    "effectiveLanguage": "Langue effective",
-    "supportedLanguages": "Langues prises en charge",
-    "missingLanguage": "Veuillez spécifier une langue.",
-    "invalidLanguage": "\"{locale}\" n'est pas une langue prise en charge.\n\nLangues prises en charge : {validList}"
-  },
   "about": {
     "title": "XIV Dye Tools Bot",
     "version": "Version",
@@ -326,7 +271,9 @@
       "manual": "Afficher le guide d'aide",
       "about": "Informations du bot (cette commande)",
       "stats": "Statistiques d'utilisation (autorisé uniquement)"
-    }
+    },
+    "removedTitle": "Supprimés en v5",
+    "removedBody": "ces commandes ont été supprimées — utilisez /extractor, /preferences et les collections de l'application web."
   },
   "paletteGrid": {
     "extracted": "EXTRAITE",
@@ -340,50 +287,6 @@
       "fair": "CORRECT",
       "approximate": "APPROXIMATIF"
     }
-  },
-  "matchImage": {
-    "missingImage": "Veuillez joindre une image à analyser.",
-    "invalidAttachment": "Impossible de trouver l'image jointe.",
-    "noColors": "L'image semble être entièrement transparente ou trop petite pour être analysée.",
-    "extractionFailed": "Impossible d'extraire les couleurs de l'image.",
-    "colorMatch": "Correspondance de couleur",
-    "colorPalette": "Palette de {count} couleurs",
-    "closestMatch": "Teinture la plus proche",
-    "topMatches": "Top {count} teintures correspondantes",
-    "extractionMethod": "Couleur extraite via clustering K-means",
-    "processingFailed": "Une erreur s'est produite lors du traitement de l'image.",
-    "onlyDiscord": "Seules les images téléchargées directement sur Discord peuvent être analysées.",
-    "imageTooLarge": "L'image est trop grande. Veuillez utiliser une image plus petite.",
-    "unsupportedFormat": "Format d'image non pris en charge. Veuillez utiliser PNG, JPEG, GIF ou WebP.",
-    "timeout": "Le téléchargement de l'image a expiré. Veuillez réessayer."
-  },
-  "matchImageHelp": {
-    "title": "Comment utiliser /match_image",
-    "description": "La commande `/match_image` analyse votre image téléchargée pour trouver la couleur dominante et la faire correspondre à la teinture FFXIV la plus proche. Voici quelques conseils pour obtenir les meilleurs résultats !",
-    "howItWorks": "Comment ça marche",
-    "howItWorksContent": "**1. Analyse d'image**\n- Votre image est traitée avec le clustering K-means\n- La/les couleur(s) dominante(s) sont extraites\n- Les couleurs sont comparées à 136 teintures FFXIV\n\n**2. Correspondance de teinture**\n- Utilise la distance euclidienne dans l'espace colorimétrique RGB\n- Retourne la/les teinture(s) correspondante(s) la/les plus proche(s)",
-    "tipsForBestResults": "Conseils pour de meilleurs résultats",
-    "tipsContent": "**Recadrez vos images**\n- Concentrez-vous sur la zone spécifique que vous souhaitez faire correspondre\n- Supprimez les éléments d'interface et les arrière-plans\n\n**Choisissez un bon éclairage**\n- Prenez des captures d'écran dans des zones bien éclairées\n- Évitez les ombres sombres ou les reflets extrêmes\n\n**Évitez les arrière-plans sombres**\n- Les arrière-plans noirs peuvent fausser les résultats\n- Utilisez des arrière-plans neutres et clairs si possible",
-    "commonIssues": "Problèmes courants",
-    "commonIssuesContent": "**« J'ai obtenu une couleur sombre mais mon équipement est clair ! »**\n→ Votre arrière-plan est probablement sombre. Recadrez l'image sur votre équipement uniquement.\n\n**« La correspondance semble incorrecte »**\n→ Plusieurs couleurs ? L'algorithme choisit la couleur la PLUS courante.\n\n**« Puis-je faire correspondre une partie spécifique ? »**\n→ Oui ! Recadrez sur cette zone exacte avant de télécharger.",
-    "proTips": "Conseils pro",
-    "proTipsContent": "• Utilisez un logiciel de retouche d'image pour recadrer avant de télécharger\n• Pour les équipements métalliques/brillants, les résultats peuvent varier\n• Si vous connaissez le code hexadécimal, utilisez `/match` à la place\n• Extrayez plusieurs couleurs avec l'option `colors` (1-5)\n• Captures d'écran en 1920x1080 ou plus pour une meilleure qualité",
-    "footer": "XIV Dye Tools - Fait avec amour pour les passionnés de glamour FFXIV",
-    "exampleUseCases": "Exemples d'utilisation",
-    "goodExamples": "Bons exemples",
-    "goodExamplesContent": "• Capture d'écran recadrée d'une seule pièce de poitrine\n• Gros plan d'une armure teinte avec un arrière-plan neutre\n• Capture d'écran prise en plein jour\n• Image centrée sur la couleur que vous voulez faire correspondre",
-    "poorExamples": "Mauvais exemples",
-    "poorExamplesContent": "• Capture d'écran plein écran avec beaucoup d'interface\n• Personnage dans un donjon ou une grotte sombre\n• Plusieurs pièces d'armure avec différentes teintures\n• Image dominée par les couleurs d'arrière-plan",
-    "whenToUse": "Quand utiliser /match_image vs /match",
-    "whenToUseContent": "**Utilisez `/match_image` quand :**\n• Vous avez une capture d'écran et voulez trouver la teinture\n• Vous ne connaissez pas le code couleur exact\n• Vous voulez faire correspondre une couleur à partir de photos d'inspiration\n\n**Utilisez `/match` quand :**\n• Vous connaissez déjà le code hexadécimal\n• Vous avez besoin de résultats plus précis/exacts\n• Vous travaillez avec des nuanciers",
-    "technicalDetails": "Détails techniques",
-    "supportedFormats": "Formats pris en charge",
-    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
-    "fileLimits": "Limites de fichier",
-    "fileLimitsContent": "• Taille maximale : 8 Mo\n• Temps de traitement : ~1-3 secondes",
-    "matchQualityRatings": "Évaluations de qualité",
-    "matchQualityRatingsContent": "**Parfait** (distance 0)\n**Excellent** (distance <10)\n**Bon** (distance <25)\n**Correct** (distance <50)\n**Approximatif** (distance ≥50)\n\n*Distance plus faible = meilleure correspondance*",
-    "poweredBy": "Propulsé par le traitement d'image Photon WASM"
   },
   "preset": {
     "title": "Préréglages communautaires",
@@ -690,5 +593,49 @@
       "web": "Application Web",
       "discord": "Discord"
     }
+  },
+  "matchImage": {
+    "missingImage": "Veuillez joindre une image à analyser.",
+    "invalidAttachment": "Impossible de trouver l'image jointe.",
+    "noColors": "L'image semble être entièrement transparente ou trop petite pour être analysée.",
+    "extractionFailed": "Impossible d'extraire les couleurs de l'image.",
+    "colorMatch": "Correspondance de couleur",
+    "colorPalette": "Palette de {count} couleurs",
+    "closestMatch": "Teinture la plus proche",
+    "topMatches": "Top {count} teintures correspondantes",
+    "extractionMethod": "Couleur extraite via clustering K-means",
+    "processingFailed": "Une erreur s'est produite lors du traitement de l'image.",
+    "onlyDiscord": "Seules les images téléchargées directement sur Discord peuvent être analysées.",
+    "imageTooLarge": "L'image est trop grande. Veuillez utiliser une image plus petite.",
+    "unsupportedFormat": "Format d'image non pris en charge. Veuillez utiliser PNG, JPEG, GIF ou WebP.",
+    "timeout": "Le téléchargement de l'image a expiré. Veuillez réessayer."
+  },
+  "matchImageHelp": {
+    "title": "Comment utiliser /match_image",
+    "description": "La commande `/match_image` analyse votre image téléchargée pour trouver la couleur dominante et la faire correspondre à la teinture FFXIV la plus proche. Voici quelques conseils pour obtenir les meilleurs résultats !",
+    "howItWorks": "Comment ça marche",
+    "howItWorksContent": "**1. Analyse d'image**\n- Votre image est traitée avec le clustering K-means\n- La/les couleur(s) dominante(s) sont extraites\n- Les couleurs sont comparées à 136 teintures FFXIV\n\n**2. Correspondance de teinture**\n- Utilise la distance euclidienne dans l'espace colorimétrique RGB\n- Retourne la/les teinture(s) correspondante(s) la/les plus proche(s)",
+    "tipsForBestResults": "Conseils pour de meilleurs résultats",
+    "tipsContent": "**Recadrez vos images**\n- Concentrez-vous sur la zone spécifique que vous souhaitez faire correspondre\n- Supprimez les éléments d'interface et les arrière-plans\n\n**Choisissez un bon éclairage**\n- Prenez des captures d'écran dans des zones bien éclairées\n- Évitez les ombres sombres ou les reflets extrêmes\n\n**Évitez les arrière-plans sombres**\n- Les arrière-plans noirs peuvent fausser les résultats\n- Utilisez des arrière-plans neutres et clairs si possible",
+    "commonIssues": "Problèmes courants",
+    "commonIssuesContent": "**« J'ai obtenu une couleur sombre mais mon équipement est clair ! »**\n→ Votre arrière-plan est probablement sombre. Recadrez l'image sur votre équipement uniquement.\n\n**« La correspondance semble incorrecte »**\n→ Plusieurs couleurs ? L'algorithme choisit la couleur la PLUS courante.\n\n**« Puis-je faire correspondre une partie spécifique ? »**\n→ Oui ! Recadrez sur cette zone exacte avant de télécharger.",
+    "proTips": "Conseils pro",
+    "proTipsContent": "• Utilisez un logiciel de retouche d'image pour recadrer avant de télécharger\n• Pour les équipements métalliques/brillants, les résultats peuvent varier\n• Si vous connaissez le code hexadécimal, utilisez `/match` à la place\n• Extrayez plusieurs couleurs avec l'option `colors` (1-5)\n• Captures d'écran en 1920x1080 ou plus pour une meilleure qualité",
+    "footer": "XIV Dye Tools - Fait avec amour pour les passionnés de glamour FFXIV",
+    "exampleUseCases": "Exemples d'utilisation",
+    "goodExamples": "Bons exemples",
+    "goodExamplesContent": "• Capture d'écran recadrée d'une seule pièce de poitrine\n• Gros plan d'une armure teinte avec un arrière-plan neutre\n• Capture d'écran prise en plein jour\n• Image centrée sur la couleur que vous voulez faire correspondre",
+    "poorExamples": "Mauvais exemples",
+    "poorExamplesContent": "• Capture d'écran plein écran avec beaucoup d'interface\n• Personnage dans un donjon ou une grotte sombre\n• Plusieurs pièces d'armure avec différentes teintures\n• Image dominée par les couleurs d'arrière-plan",
+    "whenToUse": "Quand utiliser /match_image vs /match",
+    "whenToUseContent": "**Utilisez `/match_image` quand :**\n• Vous avez une capture d'écran et voulez trouver la teinture\n• Vous ne connaissez pas le code couleur exact\n• Vous voulez faire correspondre une couleur à partir de photos d'inspiration\n\n**Utilisez `/match` quand :**\n• Vous connaissez déjà le code hexadécimal\n• Vous avez besoin de résultats plus précis/exacts\n• Vous travaillez avec des nuanciers",
+    "technicalDetails": "Détails techniques",
+    "supportedFormats": "Formats pris en charge",
+    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
+    "fileLimits": "Limites de fichier",
+    "fileLimitsContent": "• Taille maximale : 8 Mo\n• Temps de traitement : ~1-3 secondes",
+    "matchQualityRatings": "Évaluations de qualité",
+    "matchQualityRatingsContent": "**Parfait** (distance 0)\n**Excellent** (distance <10)\n**Bon** (distance <25)\n**Correct** (distance <50)\n**Approximatif** (distance ≥50)\n\n*Distance plus faible = meilleure correspondance*",
+    "poweredBy": "Propulsé par le traitement d'image Photon WASM"
   }
 }

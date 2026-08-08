@@ -142,13 +142,6 @@
       "runAgainHint": "Run again for different dyes!"
     }
   },
-  "match": {
-    "title": "Dye Match: {name}",
-    "topMatches": "Top {count} Dye Matches",
-    "findingMatches": "Finding closest matches for {input}",
-    "useInfoHint": "Use /dye info for acquisition details",
-    "useInfoNameHint": "Use /dye info <name> for acquisition details"
-  },
   "extractor": {
     "title": "Color Extractor: {name}",
     "topMatches": "Top {count} Dye Matches",
@@ -244,54 +237,6 @@
     "wcagFailDesc": "May be difficult to distinguish",
     "wcagGuidelines": "WCAG 2.1 contrast guidelines"
   },
-  "favorites": {
-    "title": "Your Favorites",
-    "empty": "You don't have any favorite dyes yet.",
-    "addHint": "Use `/favorites add <dye>` to add some!",
-    "added": "Added **{name}** to your favorites.",
-    "removed": "Removed **{name}** from your favorites.",
-    "cleared": "Cleared all your favorite dyes.",
-    "alreadyFavorite": "**{name}** is already in your favorites.",
-    "notInFavorites": "**{name}** is not in your favorites.",
-    "limitReached": "You've reached the maximum of {max} favorites.\n\nRemove one with `/favorites remove` first.",
-    "count": "{count}/{max} favorites"
-  },
-  "collection": {
-    "title": "Your Collections",
-    "empty": "You don't have any collections yet.",
-    "createHint": "Use `/collection create <name>` to create one!",
-    "created": "Created new collection: **{name}**",
-    "deleted": "Deleted collection: **{name}**",
-    "renamed": "Renamed collection from **{oldName}** to **{newName}**.",
-    "dyeAdded": "Added **{dye}** to collection \"{collection}\".",
-    "dyeRemoved": "Removed **{dye}** from collection \"{collection}\".",
-    "addDyeHint": "Use `/collection add {name} <dye>` to add dyes.",
-    "showHint": "Use /collection show <name> to view a collection",
-    "collectionEmpty": "This collection is empty.",
-    "alreadyExists": "A collection named \"{name}\" already exists.",
-    "notFound": "Could not find a collection named \"{name}\".",
-    "nameTooLong": "Collection names must be {max} characters or less.",
-    "limitReached": "You've reached the maximum of {max} collections.\n\nUse `/collection delete` to remove one first.",
-    "dyeLimitReached": "This collection has reached the maximum of {max} dyes.",
-    "dyeAlreadyInCollection": "**{dye}** is already in the collection \"{collection}\".",
-    "dyeNotInCollection": "**{dye}** is not in the collection \"{collection}\" (or collection doesn't exist).",
-    "count": "{count}/{max} collections"
-  },
-  "language": {
-    "title": "Language Settings",
-    "updated": "Your language preference has been set to **{language}**.",
-    "updateNote": "Dye names and bot messages will now use this language when available.",
-    "reset": "Your language preference has been cleared.",
-    "resetNote": "The bot will now use your Discord client's language setting (if supported) or default to English.",
-    "yourPreference": "Your preference",
-    "notSet": "Not set",
-    "discordLocale": "Discord locale",
-    "unsupported": "unsupported",
-    "effectiveLanguage": "Effective language",
-    "supportedLanguages": "Supported languages",
-    "missingLanguage": "Please specify a language to set.",
-    "invalidLanguage": "\"{locale}\" is not a supported language.\n\nSupported languages: {validList}"
-  },
   "about": {
     "title": "XIV Dye Tools Bot",
     "version": "Version",
@@ -326,7 +271,9 @@
       "manual": "Show help guide",
       "about": "Bot information (this command)",
       "stats": "Usage statistics (authorized only)"
-    }
+    },
+    "removedTitle": "Removed in v5",
+    "removedBody": "these commands have been removed — use /extractor, /preferences, and Collections in the web app."
   },
   "paletteGrid": {
     "extracted": "EXTRACTED",
@@ -340,50 +287,6 @@
       "fair": "FAIR",
       "approximate": "APPROX"
     }
-  },
-  "matchImage": {
-    "missingImage": "Please attach an image to analyze.",
-    "invalidAttachment": "Could not find the attached image.",
-    "noColors": "The image appears to be fully transparent or too small to analyze.",
-    "extractionFailed": "Could not extract colors from the image.",
-    "colorMatch": "Color Match",
-    "colorPalette": "{count} Color Palette",
-    "closestMatch": "Closest Dye Match",
-    "topMatches": "Top {count} Matching Dyes",
-    "extractionMethod": "Color extracted via K-means clustering",
-    "processingFailed": "An error occurred while processing the image.",
-    "onlyDiscord": "Only images uploaded directly to Discord can be analyzed.",
-    "imageTooLarge": "Image is too large. Please use a smaller image.",
-    "unsupportedFormat": "Unsupported image format. Please use PNG, JPEG, GIF, or WebP.",
-    "timeout": "Image download timed out. Please try again."
-  },
-  "matchImageHelp": {
-    "title": "How to Use /match_image",
-    "description": "The `/match_image` command analyzes your uploaded image to find the dominant color and matches it to the closest FFXIV dye. Here are some tips to get the best results!",
-    "howItWorks": "How It Works",
-    "howItWorksContent": "**1. Image Analysis**\n- Your image is processed using K-means clustering\n- The most dominant color(s) are extracted\n- Colors are matched against 136 FFXIV dyes\n\n**2. Dye Matching**\n- Uses Euclidean distance in RGB color space\n- Returns the closest matching dye(s)",
-    "tipsForBestResults": "Tips for Best Results",
-    "tipsContent": "**Crop Your Images**\n- Focus on the specific area you want to match\n- Remove UI elements and backgrounds\n\n**Choose Good Lighting**\n- Take screenshots in well-lit areas\n- Avoid dark shadows or extreme highlights\n\n**Avoid Dark Backgrounds**\n- Black backgrounds can skew results\n- Use neutral, lighter backgrounds when possible",
-    "commonIssues": "Common Issues",
-    "commonIssuesContent": "**\"I got a dark color but my gear is bright!\"**\n→ Your background is likely dark. Crop the image to just your gear.\n\n**\"The match seems off\"**\n→ Multiple colors? The algorithm picks the MOST common color.\n\n**\"Can I match a specific part?\"**\n→ Yes! Crop to that exact area before uploading.",
-    "proTips": "Pro Tips",
-    "proTipsContent": "• Use image editing software to crop before uploading\n• For metallic/shiny gear, results may vary\n• If you know the hex code, use `/match` instead\n• Extract multiple colors with the `colors` option (1-5)\n• Screenshot at 1920x1080 or higher for best quality",
-    "footer": "XIV Dye Tools - Made with love for FFXIV glamour enthusiasts",
-    "exampleUseCases": "Example Use Cases",
-    "goodExamples": "Good Examples",
-    "goodExamplesContent": "• Cropped screenshot of a single chest piece\n• Close-up of dyed armor with neutral background\n• Screenshot taken in bright daylight area\n• Image focused on the color you want to match",
-    "poorExamples": "Poor Examples",
-    "poorExamplesContent": "• Full-screen screenshot with lots of UI\n• Character in a dark dungeon or cave\n• Multiple armor pieces with different dyes\n• Image dominated by background colors",
-    "whenToUse": "When to Use /match_image vs /match",
-    "whenToUseContent": "**Use `/match_image` when:**\n• You have a screenshot and want to find the dye\n• You're unsure of the exact color code\n• You want to match a color from inspiration photos\n\n**Use `/match` when:**\n• You already know the hex color code\n• You need more precise/exact results\n• You're working with color swatches",
-    "technicalDetails": "Technical Details",
-    "supportedFormats": "Supported Formats",
-    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
-    "fileLimits": "File Limits",
-    "fileLimitsContent": "• Maximum size: 8MB\n• Processing time: ~1-3 seconds",
-    "matchQualityRatings": "Match Quality Ratings",
-    "matchQualityRatingsContent": "**Perfect** (0 distance)\n**Excellent** (<10 distance)\n**Good** (<25 distance)\n**Fair** (<50 distance)\n**Approximate** (≥50 distance)\n\n*Lower distance = better match*",
-    "poweredBy": "Powered by Photon WASM image processing"
   },
   "preset": {
     "title": "Community Presets",
@@ -690,5 +593,49 @@
       "web": "Web App",
       "discord": "Discord"
     }
+  },
+  "matchImage": {
+    "missingImage": "Please attach an image to analyze.",
+    "invalidAttachment": "Could not find the attached image.",
+    "noColors": "The image appears to be fully transparent or too small to analyze.",
+    "extractionFailed": "Could not extract colors from the image.",
+    "colorMatch": "Color Match",
+    "colorPalette": "{count} Color Palette",
+    "closestMatch": "Closest Dye Match",
+    "topMatches": "Top {count} Matching Dyes",
+    "extractionMethod": "Color extracted via K-means clustering",
+    "processingFailed": "An error occurred while processing the image.",
+    "onlyDiscord": "Only images uploaded directly to Discord can be analyzed.",
+    "imageTooLarge": "Image is too large. Please use a smaller image.",
+    "unsupportedFormat": "Unsupported image format. Please use PNG, JPEG, GIF, or WebP.",
+    "timeout": "Image download timed out. Please try again."
+  },
+  "matchImageHelp": {
+    "title": "How to Use /match_image",
+    "description": "The `/match_image` command analyzes your uploaded image to find the dominant color and matches it to the closest FFXIV dye. Here are some tips to get the best results!",
+    "howItWorks": "How It Works",
+    "howItWorksContent": "**1. Image Analysis**\n- Your image is processed using K-means clustering\n- The most dominant color(s) are extracted\n- Colors are matched against 136 FFXIV dyes\n\n**2. Dye Matching**\n- Uses Euclidean distance in RGB color space\n- Returns the closest matching dye(s)",
+    "tipsForBestResults": "Tips for Best Results",
+    "tipsContent": "**Crop Your Images**\n- Focus on the specific area you want to match\n- Remove UI elements and backgrounds\n\n**Choose Good Lighting**\n- Take screenshots in well-lit areas\n- Avoid dark shadows or extreme highlights\n\n**Avoid Dark Backgrounds**\n- Black backgrounds can skew results\n- Use neutral, lighter backgrounds when possible",
+    "commonIssues": "Common Issues",
+    "commonIssuesContent": "**\"I got a dark color but my gear is bright!\"**\n→ Your background is likely dark. Crop the image to just your gear.\n\n**\"The match seems off\"**\n→ Multiple colors? The algorithm picks the MOST common color.\n\n**\"Can I match a specific part?\"**\n→ Yes! Crop to that exact area before uploading.",
+    "proTips": "Pro Tips",
+    "proTipsContent": "• Use image editing software to crop before uploading\n• For metallic/shiny gear, results may vary\n• If you know the hex code, use `/match` instead\n• Extract multiple colors with the `colors` option (1-5)\n• Screenshot at 1920x1080 or higher for best quality",
+    "footer": "XIV Dye Tools - Made with love for FFXIV glamour enthusiasts",
+    "exampleUseCases": "Example Use Cases",
+    "goodExamples": "Good Examples",
+    "goodExamplesContent": "• Cropped screenshot of a single chest piece\n• Close-up of dyed armor with neutral background\n• Screenshot taken in bright daylight area\n• Image focused on the color you want to match",
+    "poorExamples": "Poor Examples",
+    "poorExamplesContent": "• Full-screen screenshot with lots of UI\n• Character in a dark dungeon or cave\n• Multiple armor pieces with different dyes\n• Image dominated by background colors",
+    "whenToUse": "When to Use /match_image vs /match",
+    "whenToUseContent": "**Use `/match_image` when:**\n• You have a screenshot and want to find the dye\n• You're unsure of the exact color code\n• You want to match a color from inspiration photos\n\n**Use `/match` when:**\n• You already know the hex color code\n• You need more precise/exact results\n• You're working with color swatches",
+    "technicalDetails": "Technical Details",
+    "supportedFormats": "Supported Formats",
+    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
+    "fileLimits": "File Limits",
+    "fileLimitsContent": "• Maximum size: 8MB\n• Processing time: ~1-3 seconds",
+    "matchQualityRatings": "Match Quality Ratings",
+    "matchQualityRatingsContent": "**Perfect** (0 distance)\n**Excellent** (<10 distance)\n**Good** (<25 distance)\n**Fair** (<50 distance)\n**Approximate** (≥50 distance)\n\n*Lower distance = better match*",
+    "poweredBy": "Powered by Photon WASM image processing"
   }
 }

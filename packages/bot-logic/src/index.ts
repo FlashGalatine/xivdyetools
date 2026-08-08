@@ -71,9 +71,6 @@ export type {
   MatchingMethod,
 } from './commands/gradient.js';
 
-// Command: Color match
-export { executeMatch } from './commands/match.js';
-export type { MatchInput, MatchResult, MatchEntry } from './commands/match.js';
 
 // Command: Dye comparison grid
 export { executeComparison } from './commands/comparison.js';

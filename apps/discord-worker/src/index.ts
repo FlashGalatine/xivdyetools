@@ -25,14 +25,9 @@ import {
   handleMixerV4Command,
   handleSwatchCommand,
   // Legacy commands (kept for backward compatibility during migration)
-  handleMatchCommand,
-  handleMatchImageCommand,
   handleAccessibilityCommand,
   handleManualCommand,
   handleComparisonCommand,
-  handleLanguageCommand,
-  handleFavoritesCommand,
-  handleCollectionCommand,
   handlePresetCommand,
   handleStatsCommand,
   handleBudgetCommand,
@@ -40,7 +35,6 @@ import {
 } from './handlers/commands/index.js';
 import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.js';
 import { trackCommandWithKV } from './services/analytics.js';
-import { getCollections } from './services/user-storage.js';
 import { getPresetFavoriteEntries, savePresetFavoriteEntries } from './services/preset-favorites.js';
 import { handleButtonInteraction } from './handlers/buttons/index.js';
 import { dyeService } from './utils/color.js';
@@ -506,15 +500,9 @@ async function handleCommand(
         response = await handleSwatchCommand(interaction, env, ctx, logger);
         break;
 
-      // Legacy commands (kept for backward compatibility during migration)
-      case 'match':
-        response = await handleMatchCommand(interaction, env, ctx);
-        break;
-
-      case 'match_image':
-        response = await handleMatchImageCommand(interaction, env, ctx, logger);
-        break;
-
+      // v5: /match, /match_image, /favorites, /collection and /language are
+      // deleted outright (register decision); /about carries a Removed-in-v5
+      // field for one release and /preferences owns language.
       case 'accessibility':
         response = await handleAccessibilityCommand(interaction, env, ctx, logger);
         break;
@@ -525,18 +513,6 @@ async function handleCommand(
 
       case 'comparison':
         response = await handleComparisonCommand(interaction, env, ctx, logger);
-        break;
-
-      case 'language':
-        response = await handleLanguageCommand(interaction, env, ctx);
-        break;
-
-      case 'favorites':
-        response = await handleFavoritesCommand(interaction, env, ctx);
-        break;
-
-      case 'collection':
-        response = await handleCollectionCommand(interaction, env, ctx);
         break;
 
       case 'preset':
@@ -661,21 +637,8 @@ async function handleAutocomplete(
   const query = (focusedOption?.value as string) || '';
   let choices: Array<{ name: string; value: string }> = [];
 
-  // Handle collection command autocomplete
-  if (commandName === 'collection') {
-    const focusedName = focusedOption?.name;
-
-    // Collection name autocomplete (for add, remove, show, delete, rename subcommands)
-    if (focusedName === 'name') {
-      choices = await getCollectionAutocompleteChoices(interaction, env, query, logger);
-    }
-    // Dye autocomplete (for add/remove subcommands)
-    else if (focusedName === 'dye') {
-      choices = getDyeAutocompleteChoices(query);
-    }
-  }
   // Handle preset command autocomplete
-  else if (commandName === 'preset') {
+  if (commandName === 'preset') {
     const focusedName = focusedOption?.name;
 
     // Preset name autocomplete (for show, vote, moderate, edit, favorite subcommands)
@@ -736,51 +699,6 @@ async function handleAutocomplete(
   });
 }
 
-/**
- * Get collection autocomplete choices for the given query
- *
- * DISCORD-CRITICAL-002: Note on race conditions
- * This function reads collections without a locking mechanism. If a user modifies
- * their collection while autocomplete is running, they may see slightly stale dye counts.
- * This is acceptable for autocomplete UX - the user can refresh to see updated counts.
- * A full fix would require adding version/etag to collection metadata for optimistic
- * concurrency, which is beyond the scope of a quick fix.
- */
-async function getCollectionAutocompleteChoices(
-  interaction: DiscordInteraction,
-  env: Env,
-  query: string,
-  logger: ExtendedLogger
-): Promise<Array<{ name: string; value: string }>> {
-  const userId = interaction.member?.user?.id ?? interaction.user?.id;
-
-  if (!userId) {
-    return [];
-  }
-
-  try {
-    const collections = await getCollections(env.KV, userId);
-
-    if (collections.length === 0) {
-      return [];
-    }
-
-    // Filter collections by query (case-insensitive)
-    const lowerQuery = query.toLowerCase();
-    const filtered = query.length > 0
-      ? collections.filter((c) => c.name.toLowerCase().includes(lowerQuery))
-      : collections;
-
-    // Return up to 25 choices (Discord's maximum)
-    return filtered.slice(0, 25).map((c) => ({
-      name: `${c.name} (${c.dyes.length} dyes)`,
-      value: c.name,
-    }));
-  } catch (error) {
-    logger.error('Failed to get collection autocomplete choices', error instanceof Error ? error : undefined);
-    return [];
-  }
-}
 
 /**
  * Get dye autocomplete choices for the given query

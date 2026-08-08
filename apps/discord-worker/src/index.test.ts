@@ -26,15 +26,9 @@ vi.mock('./handlers/commands/index.js', () => ({
   handlePreferencesCommand: vi.fn(),
   handleMixerV4Command: vi.fn(),
   handleSwatchCommand: vi.fn(),
-  // Legacy commands
-  handleMatchCommand: vi.fn(),
-  handleMatchImageCommand: vi.fn(),
   handleAccessibilityCommand: vi.fn(),
   handleManualCommand: vi.fn(),
   handleComparisonCommand: vi.fn(),
-  handleLanguageCommand: vi.fn(),
-  handleFavoritesCommand: vi.fn(),
-  handleCollectionCommand: vi.fn(),
   handlePresetCommand: vi.fn(),
   handleStatsCommand: vi.fn(),
   handleBudgetCommand: vi.fn(),
@@ -55,10 +49,6 @@ vi.mock('./services/analytics.js', () => ({
 vi.mock('./services/rate-limiter.js', () => ({
   checkRateLimit: vi.fn(),
   formatRateLimitMessage: vi.fn(),
-}));
-
-vi.mock('./services/user-storage.js', () => ({
-  getCollections: vi.fn(),
 }));
 
 vi.mock('./services/preset-api.js', () => ({
@@ -523,56 +513,6 @@ describe('index.ts', () => {
         expect(data.data!.choices).toBeInstanceOf(Array);
       });
 
-      it('should handle collection autocomplete', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
-        const { getCollections } = await import('./services/user-storage.js');
-
-        vi.mocked(verifyDiscordRequest).mockResolvedValue({
-          isValid: true,
-          body: JSON.stringify({
-            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
-            data: {
-              name: 'collection',
-              options: [
-                {
-                  name: 'show',
-                  type: 1,
-                  options: [{ name: 'name', value: 'my', focused: true }],
-                },
-              ],
-            },
-            user: { id: 'user-123' },
-          }),
-          error: '',
-        });
-        vi.mocked(getCollections).mockResolvedValue([
-          { id: 'coll-1', name: 'My Collection', dyes: [1, 2, 3], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-        ]);
-
-        const req = new Request('http://localhost/', {
-          method: 'POST',
-          body: JSON.stringify({
-            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
-            data: {
-              name: 'collection',
-              options: [
-                {
-                  name: 'show',
-                  type: 1,
-                  options: [{ name: 'name', value: 'my', focused: true }],
-                },
-              ],
-            },
-            user: { id: 'user-123' },
-          }),
-        });
-
-        const res = await app.fetch(req, mockEnv, mockCtx);
-        expect(res.status).toBe(200);
-        const data = (await res.json()) as InteractionResponseBody;
-        expect(data.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
-        expect(data.data!.choices![0].name).toContain('My Collection');
-      });
 
       it('should handle preset autocomplete for approved presets', async () => {
         const { verifyDiscordRequest } = await import('./utils/verify.js');
@@ -859,101 +799,7 @@ describe('index.ts', () => {
         expect(data.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
       });
 
-      it('should handle collection autocomplete with empty collections', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
-        const { getCollections } = await import('./services/user-storage.js');
 
-        vi.mocked(verifyDiscordRequest).mockResolvedValue({
-          isValid: true,
-          body: JSON.stringify({
-            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
-            data: {
-              name: 'collection',
-              options: [
-                {
-                  name: 'show',
-                  type: 1,
-                  options: [{ name: 'name', value: 'test', focused: true }],
-                },
-              ],
-            },
-            user: { id: 'user-123' },
-          }),
-          error: '',
-        });
-        vi.mocked(getCollections).mockResolvedValue([]);
-
-        const req = new Request('http://localhost/', {
-          method: 'POST',
-          body: JSON.stringify({
-            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
-            data: {
-              name: 'collection',
-              options: [
-                {
-                  name: 'show',
-                  type: 1,
-                  options: [{ name: 'name', value: 'test', focused: true }],
-                },
-              ],
-            },
-            user: { id: 'user-123' },
-          }),
-        });
-
-        const res = await app.fetch(req, mockEnv, mockCtx);
-        expect(res.status).toBe(200);
-        const data = (await res.json()) as InteractionResponseBody;
-        expect(data.data!.choices).toEqual([]);
-      });
-
-      it('should handle collection autocomplete error gracefully', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
-        const { getCollections } = await import('./services/user-storage.js');
-
-        vi.mocked(verifyDiscordRequest).mockResolvedValue({
-          isValid: true,
-          body: JSON.stringify({
-            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
-            data: {
-              name: 'collection',
-              options: [
-                {
-                  name: 'show',
-                  type: 1,
-                  options: [{ name: 'name', value: 'test', focused: true }],
-                },
-              ],
-            },
-            user: { id: 'user-123' },
-          }),
-          error: '',
-        });
-        vi.mocked(getCollections).mockRejectedValue(new Error('KV error'));
-
-        const req = new Request('http://localhost/', {
-          method: 'POST',
-          body: JSON.stringify({
-            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
-            data: {
-              name: 'collection',
-              options: [
-                {
-                  name: 'show',
-                  type: 1,
-                  options: [{ name: 'name', value: 'test', focused: true }],
-                },
-              ],
-            },
-            user: { id: 'user-123' },
-          }),
-        });
-
-        const res = await app.fetch(req, mockEnv, mockCtx);
-        expect(res.status).toBe(200);
-        const data = (await res.json()) as InteractionResponseBody;
-        expect(data.data!.choices).toEqual([]);
-      });
 
       it('should handle getMyPresets with empty presets', async () => {
         const { verifyDiscordRequest } = await import('./utils/verify.js');
@@ -1223,53 +1069,6 @@ describe('index.ts', () => {
       });
     });
 
-    describe('Collection autocomplete without user', () => {
-      it('should return empty choices when no user ID available', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
-
-        vi.mocked(verifyDiscordRequest).mockResolvedValue({
-          isValid: true,
-          body: JSON.stringify({
-            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
-            data: {
-              name: 'collection',
-              options: [
-                {
-                  name: 'show',
-                  type: 1,
-                  options: [{ name: 'name', value: 'test', focused: true }],
-                },
-              ],
-            },
-            // No user or member
-          }),
-          error: '',
-        });
-
-        const req = new Request('http://localhost/', {
-          method: 'POST',
-          body: JSON.stringify({
-            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
-            data: {
-              name: 'collection',
-              options: [
-                {
-                  name: 'show',
-                  type: 1,
-                  options: [{ name: 'name', value: 'test', focused: true }],
-                },
-              ],
-            },
-          }),
-        });
-
-        const res = await app.fetch(req, mockEnv, mockCtx);
-        expect(res.status).toBe(200);
-        const data = (await res.json()) as InteractionResponseBody;
-        expect(data.data!.choices).toEqual([]);
-      });
-    });
-
     describe('Preset edit autocomplete without user', () => {
       it('should return empty choices when no user ID available for edit', async () => {
         const { verifyDiscordRequest } = await import('./utils/verify.js');
@@ -1333,15 +1132,9 @@ describe('index.ts', () => {
           { name: 'preferences', handler: commands.handlePreferencesCommand },
           { name: 'mixer', handler: commands.handleMixerV4Command },
           { name: 'swatch', handler: commands.handleSwatchCommand },
-          // Legacy commands
-          { name: 'match', handler: commands.handleMatchCommand },
-          { name: 'match_image', handler: commands.handleMatchImageCommand },
           { name: 'accessibility', handler: commands.handleAccessibilityCommand },
           { name: 'manual', handler: commands.handleManualCommand },
           { name: 'comparison', handler: commands.handleComparisonCommand },
-          { name: 'language', handler: commands.handleLanguageCommand },
-          { name: 'favorites', handler: commands.handleFavoritesCommand },
-          { name: 'collection', handler: commands.handleCollectionCommand },
           { name: 'preset', handler: commands.handlePresetCommand },
           { name: 'stats', handler: commands.handleStatsCommand },
           { name: 'budget', handler: commands.handleBudgetCommand },
@@ -1411,57 +1204,5 @@ describe('index.ts', () => {
       });
     });
 
-    describe('Collection autocomplete with query filter', () => {
-      it('should filter collections with empty query', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
-        const { getCollections } = await import('./services/user-storage.js');
-
-        vi.mocked(verifyDiscordRequest).mockResolvedValue({
-          isValid: true,
-          body: JSON.stringify({
-            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
-            data: {
-              name: 'collection',
-              options: [
-                {
-                  name: 'show',
-                  type: 1,
-                  options: [{ name: 'name', value: '', focused: true }], // Empty query
-                },
-              ],
-            },
-            user: { id: 'user-123' },
-          }),
-          error: '',
-        });
-        vi.mocked(getCollections).mockResolvedValue([
-          { id: 'col-1', name: 'Collection A', dyes: [1], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-          { id: 'col-2', name: 'Collection B', dyes: [2], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-        ]);
-
-        const req = new Request('http://localhost/', {
-          method: 'POST',
-          body: JSON.stringify({
-            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
-            data: {
-              name: 'collection',
-              options: [
-                {
-                  name: 'show',
-                  type: 1,
-                  options: [{ name: 'name', value: '', focused: true }],
-                },
-              ],
-            },
-            user: { id: 'user-123' },
-          }),
-        });
-
-        const res = await app.fetch(req, mockEnv, mockCtx);
-        expect(res.status).toBe(200);
-        const data = (await res.json()) as InteractionResponseBody;
-        expect(data.data!.choices!.length).toBe(2); // All collections returned
-      });
-    });
   });
 });

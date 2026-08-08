@@ -49,11 +49,6 @@ describe('commands/index exports', () => {
         expect(typeof commands.handleSwatchCommand).toBe('function');
 
         // Legacy commands (still exported for backward compatibility)
-        expect(commands.handleMatchCommand).toBeDefined();
-        expect(typeof commands.handleMatchCommand).toBe('function');
-
-        expect(commands.handleMatchImageCommand).toBeDefined();
-        expect(typeof commands.handleMatchImageCommand).toBe('function');
 
         expect(commands.handleAccessibilityCommand).toBeDefined();
         expect(typeof commands.handleAccessibilityCommand).toBe('function');
@@ -63,15 +58,6 @@ describe('commands/index exports', () => {
 
         expect(commands.handleComparisonCommand).toBeDefined();
         expect(typeof commands.handleComparisonCommand).toBe('function');
-
-        expect(commands.handleLanguageCommand).toBeDefined();
-        expect(typeof commands.handleLanguageCommand).toBe('function');
-
-        expect(commands.handleFavoritesCommand).toBeDefined();
-        expect(typeof commands.handleFavoritesCommand).toBe('function');
-
-        expect(commands.handleCollectionCommand).toBeDefined();
-        expect(typeof commands.handleCollectionCommand).toBe('function');
 
         expect(commands.handlePresetCommand).toBeDefined();
         expect(typeof commands.handlePresetCommand).toBe('function');
