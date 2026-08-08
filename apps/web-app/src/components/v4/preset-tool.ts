@@ -15,6 +15,8 @@
 
 import { html, css, CSSResultGroup, TemplateResult, nothing } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { ICON_STATE_PRESETS_EMPTY, ICON_STATE_SEARCH } from '@shared/state-icons';
 import { BaseLitComponent } from './base-lit-component';
 import { ConfigController } from '@services/config-controller';
 import { hybridPresetService } from '@services/hybrid-preset-service';
@@ -303,6 +305,18 @@ export class PresetTool extends BaseLitComponent {
         color: var(--theme-text-muted, #888888);
         font-size: 13.5px;
         max-width: 420px;
+      }
+
+      /* 1a: the shelves with room — full-strength ink in the measured quiet
+         grey; the one filled chip is the accent slot */
+      .empty-glyph {
+        color: var(--theme-text-muted, #9c9ca2);
+      }
+
+      .empty-glyph svg {
+        width: 62px;
+        height: 62px;
+        display: block;
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -831,6 +845,9 @@ export class PresetTool extends BaseLitComponent {
     }
     return html`
       <div class="empty-container">
+        <span class="empty-glyph" aria-hidden="true"
+          >${unsafeHTML(this.searchQuery ? ICON_STATE_SEARCH : ICON_STATE_PRESETS_EMPTY)}</span
+        >
         <p class="empty-message">
           ${
             this.searchQuery

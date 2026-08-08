@@ -24,6 +24,8 @@
  * @module shared/ui-icons
  */
 
+import { panelGlyph } from '@xivdyetools/svg';
+
 /**
  * Theme Switcher icon - Paint palette
  */
@@ -252,11 +254,12 @@ export const ICON_STAIRS = `<svg viewBox="0 0 24 24" fill="none" stroke="current
 </svg>`;
 
 /**
- * Star icon - Filled star (for ratings/favorites)
+ * Star pair (5.0): one geometry on the 32 grid, two states — outline for
+ * not-voted/not-saved, filled (accent slot) for voted/saved. State comes from
+ * the fill, never from fading. Geometry home: `@xivdyetools/svg`.
  */
-export const ICON_STAR = `<svg viewBox="0 0 20 20" fill="currentColor">
-  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-</svg>`;
+export const ICON_STAR = panelGlyph('star', { fluid: true });
+export const ICON_STAR_FILLED = panelGlyph('star-fill', { fluid: true });
 
 /**
  * Search icon - Magnifying glass
@@ -266,10 +269,11 @@ export const ICON_SEARCH = `<svg viewBox="0 0 24 24" fill="none" stroke="current
 </svg>`;
 
 /**
- * Grid icon - Grid layout view
+ * Back arrow icon - Left-pointing chevron (moved from category-icons.ts —
+ * a navigation affordance, not a category)
  */
-export const ICON_GRID = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+export const ICON_ARROW_BACK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M15 18l-6-6 6-6" />
 </svg>`;
 
 /**

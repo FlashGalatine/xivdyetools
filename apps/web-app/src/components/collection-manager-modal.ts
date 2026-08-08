@@ -11,7 +11,7 @@ import {
   dyeService,
 } from '@services/index';
 import type { Collection } from '@services/collection-service';
-import { ICON_FOLDER } from '@shared/empty-state-icons';
+import { ICON_STATE_FOLDER as ICON_FOLDER } from '@shared/state-icons';
 import type { Dye } from '@xivdyetools/types';
 
 /**

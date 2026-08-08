@@ -17,8 +17,10 @@
 
 import { html, css, CSSResultGroup, TemplateResult, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { BaseLitComponent } from './base-lit-component';
 import { LanguageService } from '@services/language-service';
+import { ICON_STAR, ICON_STAR_FILLED } from '@shared/ui-icons';
 import type { UnifiedPreset } from '@services/hybrid-preset-service';
 
 /**
@@ -201,6 +203,9 @@ export class PresetCard extends BaseLitComponent {
       }
 
       .face-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
         font-size: 11px;
         font-weight: 600;
         padding: 4px 10px;
@@ -210,6 +215,13 @@ export class PresetCard extends BaseLitComponent {
         color: var(--theme-text-muted, #888888);
         cursor: pointer;
         white-space: nowrap;
+      }
+
+      /* 1b: the star pair at pill size — state comes from the fill, never fading */
+      .face-btn svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
       }
 
       .face-btn--on {
@@ -364,7 +376,7 @@ export class PresetCard extends BaseLitComponent {
                       class="face-btn ${this.voted ? 'face-btn--on' : ''}"
                       @click=${this.handleVote}
                     >
-                      ${voteLabel}
+                      ${unsafeHTML(this.voted ? ICON_STAR_FILLED : ICON_STAR)}${voteLabel}
                     </button>`
                   : nothing
               }
@@ -372,7 +384,7 @@ export class PresetCard extends BaseLitComponent {
                 class="face-btn ${this.saved ? 'face-btn--on' : ''}"
                 @click=${this.handleSave}
               >
-                ${saveLabel}
+                ${unsafeHTML(this.saved ? ICON_STAR_FILLED : ICON_STAR)}${saveLabel}
               </button>
             </span>
           </div>

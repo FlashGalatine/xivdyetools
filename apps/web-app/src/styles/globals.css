@@ -384,19 +384,19 @@ body.theme-sugar-riot .tool-card:hover {
   max-height: 80vh;
 }
 
+/* 5.0: full-strength ink in the measured quiet grey — state never comes from
+   opacity. Glyphs render at the 62 px detail-class placement. */
 .empty-state-icon {
-  font-size: 8rem;
   margin-bottom: 1.5rem;
-  opacity: 0.3;
-  color: var(--theme-text);
+  color: var(--theme-text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .empty-state-icon svg {
-  width: 180px;
-  height: 180px;
+  width: 62px;
+  height: 62px;
 }
 
 .empty-state-title {

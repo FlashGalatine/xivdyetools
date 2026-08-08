@@ -131,11 +131,11 @@ body.theme-high-contrast-dark v4-config-sidebar {
   color: var(--theme-text-muted, #a0a0a0);
 }
 
+/* 5.0: no load-bearing opacity — the container's muted colour is the quiet */
 .v4-empty-state-icon {
-  width: 64px;
-  height: 64px;
+  width: 62px;
+  height: 62px;
   margin-bottom: 16px;
-  opacity: 0.5;
 }
 
 .v4-empty-state-title {

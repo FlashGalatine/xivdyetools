@@ -3,7 +3,7 @@ import { LanguageService, CollectionService, ToastService } from '@services/inde
 import { Dye } from '@xivdyetools/types';
 import { clearContainer } from '@shared/utils';
 import { getEmptyStateHTML } from './empty-state';
-import { ICON_SEARCH, ICON_PALETTE } from '@shared/empty-state-icons';
+import { ICON_STATE_SEARCH, ICON_STATE_FUNNEL } from '@shared/state-icons';
 import { showAddToCollectionMenu } from './add-to-collection-menu';
 
 export interface DyeGridOptions {
@@ -76,7 +76,7 @@ export class DyeGrid extends BaseComponent {
       const emptyHtml =
         this.emptyState.type === 'search'
           ? getEmptyStateHTML({
-              icon: ICON_SEARCH,
+              icon: ICON_STATE_SEARCH,
               title:
                 LanguageService.tInterpolate('dyeSelector.noResults', {
                   query: this.emptyState.query || '',
@@ -84,7 +84,7 @@ export class DyeGrid extends BaseComponent {
               description: LanguageService.t('dyeSelector.noResultsHint'),
             })
           : getEmptyStateHTML({
-              icon: ICON_PALETTE,
+              icon: ICON_STATE_FUNNEL,
               title: LanguageService.t('dyeSelector.noDyesInCategory'),
               description: LanguageService.t('dyeSelector.tryCategoryHint'),
             });

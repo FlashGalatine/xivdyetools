@@ -76,13 +76,6 @@ const ICON_CATEGORY_COMMUNITY = `<svg viewBox="0 0 24 24" fill="none" stroke="cu
 </svg>`;
 
 /**
- * Back arrow icon - Left-pointing chevron
- */
-export const ICON_ARROW_BACK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M15 18l-6-6 6-6" />
-</svg>`;
-
-/**
  * Default fallback icon - Palette
  */
 const ICON_CATEGORY_DEFAULT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
