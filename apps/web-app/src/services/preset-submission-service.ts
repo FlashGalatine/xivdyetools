@@ -19,6 +19,8 @@ export interface PresetSubmission {
   category_id: PresetCategory;
   dyes: number[];
   tags: string[];
+  /** 8A: allowlisted example link (Eorzea Collection / Imgur / Flickr) */
+  example_link?: string | null;
 }
 
 export interface SubmissionResult {
@@ -119,12 +121,17 @@ export function validateSubmission(submission: PresetSubmission): ValidationErro
     errors.push({ field: 'dyes', message: 'Must include at least 3 dyes' });
   } else if (submission.dyes.length > 6) {
     errors.push({ field: 'dyes', message: 'Maximum 6 dyes allowed' });
-  } else if (!submission.dyes.every((id) => typeof id === 'number' && Number.isInteger(id) && id > 0)) {
+  } else if (
+    !submission.dyes.every((id) => typeof id === 'number' && Number.isInteger(id) && id > 0)
+  ) {
     errors.push({ field: 'dyes', message: 'Invalid dye selection' });
   } else if (submission.dyes.some((id) => id >= 5000)) {
     // 5.0 range guard: dyes are stainIDs (1-254); a legacy itemID means a
     // half-migrated caller — fail loudly, never submit the wrong era
-    errors.push({ field: 'dyes', message: 'Dye IDs must be stainIDs (1-254), not legacy item IDs' });
+    errors.push({
+      field: 'dyes',
+      message: 'Dye IDs must be stainIDs (1-254), not legacy item IDs',
+    });
   } else if (submission.dyes.some((id) => id > 254)) {
     errors.push({ field: 'dyes', message: 'Dye IDs must be stainIDs (1-254)' });
   }
@@ -185,6 +192,7 @@ class PresetSubmissionServiceImpl {
           category_id: submission.category_id,
           dyes: submission.dyes,
           tags: submission.tags.map((t) => t.trim()).filter(Boolean),
+          example_link: submission.example_link ?? null,
         }),
         signal: controller.signal,
       });
@@ -437,7 +445,10 @@ class PresetSubmissionServiceImpl {
       } else if (updates.dyes.length > 6) {
         errors.push({ field: 'dyes', message: 'Maximum 6 dyes allowed' });
       } else if (updates.dyes.some((id) => id >= 5000)) {
-        errors.push({ field: 'dyes', message: 'Dye IDs must be stainIDs (1-254), not legacy item IDs' });
+        errors.push({
+          field: 'dyes',
+          message: 'Dye IDs must be stainIDs (1-254), not legacy item IDs',
+        });
       } else if (updates.dyes.some((id) => id < 1 || id > 254)) {
         errors.push({ field: 'dyes', message: 'Dye IDs must be stainIDs (1-254)' });
       } else if (!updates.dyes.every((id) => typeof id === 'number' && id > 0)) {

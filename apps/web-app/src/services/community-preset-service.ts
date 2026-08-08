@@ -28,6 +28,10 @@ export interface CommunityPreset {
   is_curated: boolean;
   created_at: string;
   updated_at: string;
+  /** 8A: allowlisted example-link page URL (stored, never a copy) */
+  example_link?: string | null;
+  /** 8S: latest moderation reject reason (own-submissions listing only) */
+  rejection_reason?: string | null;
 }
 
 export interface PresetListResponse {

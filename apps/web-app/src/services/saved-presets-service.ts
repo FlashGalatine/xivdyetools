@@ -84,6 +84,7 @@ export class SavedPresetsService {
       tags: [...preset.tags],
       author: preset.author,
       isCurated: preset.isCurated,
+      exampleLink: preset.exampleLink ?? undefined,
       savedAt: new Date().toISOString(),
     };
   }

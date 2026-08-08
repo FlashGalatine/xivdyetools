@@ -29,8 +29,31 @@ interface FormState {
   category: PresetCategory;
   selectedDyes: Dye[];
   tags: string;
+  /** 8A example link (allowlisted host; validated on blur) */
+  exampleLink: string;
   /** Re-render the HOW IT WILL LOOK preview band (8S) */
   refreshPreview?: () => void;
+}
+
+/** Client mirror of the presets-api example-link host allowlist. */
+const EXAMPLE_LINK_HOSTS = ['eorzeacollection.com', 'imgur.com', 'flickr.com'];
+
+/** Validate an example link locally; returns an error string or null. */
+function exampleLinkError(link: string): string | null {
+  const trimmed = link.trim();
+  if (!trimmed) return null;
+  let url: URL;
+  try {
+    url = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
+  } catch {
+    return LanguageService.t('preset.fieldLinkHint');
+  }
+  const host = url.hostname.toLowerCase();
+  const allowed = EXAMPLE_LINK_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
+  if (url.protocol !== 'https:' || !allowed) {
+    return LanguageService.t('preset.fieldLinkHint');
+  }
+  return null;
 }
 
 type OnSubmitCallback = (result: SubmissionResult) => void;
@@ -77,6 +100,7 @@ export function showPresetSubmissionForm(onSubmit?: OnSubmitCallback): void {
     category: 'events',
     selectedDyes: [],
     tags: '',
+    exampleLink: '',
   };
 
   // Create form content
@@ -209,6 +233,9 @@ function createFormContent(state: FormState, onSubmit?: OnSubmitCallback): HTMLE
 
   // Tags input
   form.appendChild(createTagsInput(state));
+
+  // Example link (8A) — validated on blur, not per keystroke
+  form.appendChild(createExampleLinkInput(state));
 
   // Moderation rules line
   const rules = fieldHint(LanguageService.t('preset.rulesNote'));
@@ -581,6 +608,45 @@ function createTagsInput(state: FormState): HTMLElement {
   return wrapper;
 }
 
+function createExampleLinkInput(state: FormState): HTMLElement {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'form-field';
+
+  const label = fieldLabelRow(
+    LanguageService.t('preset.fieldLink'),
+    LanguageService.t('preset.reqNewOptional'),
+    false
+  );
+
+  const input = document.createElement('input');
+  input.type = 'url';
+  input.id = 'preset-example-link';
+  input.className =
+    'w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500';
+  input.style.cssText =
+    'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
+  input.placeholder = 'eorzeacollection.com/glamour/44120';
+  input.value = state.exampleLink;
+
+  const hint = fieldHint(LanguageService.t('preset.fieldLinkHint'));
+
+  input.addEventListener('input', () => {
+    state.exampleLink = input.value;
+  });
+  // Validate on blur, not per keystroke — a half-typed URL is not an error yet.
+  input.addEventListener('blur', () => {
+    const error = exampleLinkError(state.exampleLink);
+    input.style.borderColor = error ? '#ef4444' : 'var(--theme-border)';
+    hint.style.color = error ? '#ef4444' : 'var(--theme-text-muted)';
+  });
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(input);
+  wrapper.appendChild(hint);
+
+  return wrapper;
+}
+
 function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'flex justify-end gap-2 pt-4 border-t';
@@ -631,12 +697,18 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
         .split(',')
         .map((t) => t.trim())
         .filter(Boolean),
+      example_link: state.exampleLink.trim() || null,
     };
 
     // Validate
     const errors = validateSubmission(submission);
     if (errors.length > 0) {
       ToastService.error(errors.map((e) => e.message).join('. '));
+      return;
+    }
+    const linkError = exampleLinkError(state.exampleLink);
+    if (linkError) {
+      ToastService.error(linkError);
       return;
     }
 

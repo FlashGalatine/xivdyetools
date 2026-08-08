@@ -47,6 +47,8 @@ export interface UnifiedPreset {
   apiPresetId?: string;
   /** Creation date for community presets */
   createdAt?: string;
+  /** 8A: allowlisted example-link page URL, when the author gave one */
+  exampleLink?: string | null;
 }
 
 /**
@@ -172,6 +174,7 @@ export class HybridPresetService {
       isFromAPI: true,
       apiPresetId: preset.id,
       createdAt: preset.created_at,
+      exampleLink: preset.example_link ?? null,
     };
   }
 

@@ -95,9 +95,14 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
           : kind === 'review'
             ? t('preset.statusReview')
             : t('preset.statusRejected');
-      // Rejection reasons live in the moderation worker until the API
-      // exposes them — the review note is the honest fallback.
-      const note = kind === 'live' ? '' : t('preset.reviewNote');
+      // Rejected rows show the actual moderation reason (joined by the API
+      // from moderation_log); the review note is the fallback.
+      const note =
+        kind === 'live'
+          ? ''
+          : kind === 'rejected'
+            ? preset.rejection_reason || t('preset.reviewNote')
+            : t('preset.reviewNote');
       const actions =
         kind === 'live'
           ? [

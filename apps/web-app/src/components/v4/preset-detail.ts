@@ -404,6 +404,37 @@ export class PresetDetail extends BaseLitComponent {
       }
     `,
     css`
+      /* 8A: example link block — stored link, never a copy of the image */
+      .example-link {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        max-width: 640px;
+        padding: 12px 14px;
+        margin-bottom: 20px;
+        border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.12));
+        border-radius: 10px;
+        text-decoration: none;
+      }
+
+      .example-link:hover {
+        border-color: var(--theme-primary, #ea4133);
+      }
+
+      .example-link-label {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 8.5px;
+        letter-spacing: 1px;
+        color: var(--theme-text-muted, #888888);
+      }
+
+      .example-link-url {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 12.5px;
+        color: var(--theme-primary, #ea4133);
+        overflow-wrap: anywhere;
+      }
+
       /* 8A: palette as a readable list, not Result Cards */
       .dye-list {
         display: flex;
@@ -864,6 +895,23 @@ export class PresetDetail extends BaseLitComponent {
         ${
           this.preset.author
             ? html`<p class="preset-author">Created by ${this.preset.author}</p>`
+            : nothing
+        }
+
+        <!-- 8A: example link — the glamour gets the top of the page -->
+        ${
+          this.preset.exampleLink
+            ? html`
+                <a
+                  class="example-link"
+                  href=${this.preset.exampleLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span class="example-link-label">${LanguageService.t('preset.shotSlot')}</span>
+                  <span class="example-link-url">${this.preset.exampleLink}</span>
+                </a>
+              `
             : nothing
         }
 
