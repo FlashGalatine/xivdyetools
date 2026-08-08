@@ -360,6 +360,11 @@ export function generateAccessibilityOGData(
  * @param ogData - The OpenGraph data to include in meta tags
  * @returns Complete HTML string
  */
+/** Append the X frame selector to an image URL (respects existing queries). */
+function withFrameX(imageUrl: string): string {
+  return imageUrl.includes('?') ? `${imageUrl}&frame=x` : `${imageUrl}?frame=x`;
+}
+
 export function generateOGHTML(ogData: OGData): string {
   const themeColorTag = ogData.themeColor
     ? `<meta name="theme-color" content="${escapeHtml(ogData.themeColor)}">`
@@ -383,15 +388,15 @@ export function generateOGHTML(ogData: OGData): string {
   <meta property="og:description" content="${escapeHtml(ogData.description)}">
   <meta property="og:image" content="${escapeHtml(ogData.imageUrl)}">
   <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  <meta property="og:image:height" content="1050">
   <meta property="og:site_name" content="${escapeHtml(ogData.siteName)}">
 
-  <!-- Twitter -->
+  <!-- Twitter: summary_large_image crops non-2:1, so X gets its own frame -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="${escapeHtml(ogData.url)}">
   <meta name="twitter:title" content="${escapeHtml(ogData.title)}">
   <meta name="twitter:description" content="${escapeHtml(ogData.description)}">
-  <meta name="twitter:image" content="${escapeHtml(ogData.imageUrl)}">
+  <meta name="twitter:image" content="${escapeHtml(withFrameX(ogData.imageUrl))}">
 
   <!-- Discord embed color -->
   ${themeColorTag}

@@ -117,12 +117,15 @@ export async function renderSvgToPng(
  */
 export async function renderOGImage(
   svgString: string,
-  ttl: { browser: number; edge: number } = { browser: 86400, edge: 604800 }
+  ttl: { browser: number; edge: number } = { browser: 86400, edge: 604800 },
+  render: { scale?: number; background?: string } = {}
 ): Promise<Response> {
   try {
     const pngBuffer = await renderSvgToPng(svgString, {
-      scale: 1, // 1200x630 is already full resolution
-      background: '#1a1a2e', // Match theme background
+      // 15E band cards are drawn on the 400 design grid and rastered ×3
+      // (1200×1050 / 1200×630); legacy 1200-wide SVGs pass scale 1.
+      scale: render.scale ?? 1,
+      background: render.background ?? '#1a1a2e',
     });
 
     return new Response(pngBuffer, {

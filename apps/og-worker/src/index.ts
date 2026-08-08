@@ -50,6 +50,14 @@ import type { Env, ToolId, AnalyticsEvent, HarmonyType, MatchingAlgorithm, Visio
 // Constants
 // ============================================================================
 
+/** 15E band cards: 400-grid SVG rastered ×3 on the band ground. */
+const BAND_RENDER = { scale: 3, background: '#0B0B0C' } as const;
+
+/** The X frame rides ?frame=x (the tag-based branch — twitter:image only). */
+function frameFromQuery(c: { req: { query: (k: string) => string | undefined } }): 'discord' | 'x' {
+  return c.req.query('frame') === 'x' ? 'x' : 'discord';
+}
+
 const SUPPORTED_TOOLS: ToolId[] = [
   'harmony',
   'gradient',
@@ -344,9 +352,10 @@ app.get('/og/harmony/:dyeId/:harmonyType', async (c) => {
     harmonyType,
     algorithm,
     locale,
+    frame: frameFromQuery(c),
   });
 
-  return renderOGImage(svg);
+  return renderOGImage(svg, undefined, BAND_RENDER);
 });
 
 /**
@@ -388,9 +397,10 @@ app.get('/og/gradient/:startId/:endId/:steps', async (c) => {
     steps,
     algorithm,
     locale,
+    frame: frameFromQuery(c),
   });
 
-  return renderOGImage(svg);
+  return renderOGImage(svg, undefined, BAND_RENDER);
 });
 
 /**
@@ -432,9 +442,10 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:ratio', async (c) => {
     ratio,
     algorithm,
     locale,
+    frame: frameFromQuery(c),
   });
 
-  return renderOGImage(svg);
+  return renderOGImage(svg, undefined, BAND_RENDER);
 });
 
 /**
@@ -478,9 +489,10 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio', async (c) => {
     ratio,
     algorithm,
     locale,
+    frame: frameFromQuery(c),
   });
 
-  return renderOGImage(svg);
+  return renderOGImage(svg, undefined, BAND_RENDER);
 });
 
 /**
@@ -516,6 +528,7 @@ app.get('/og/swatch/:color/:limit', async (c) => {
   }
 
   const svg = await generateSwatchOG({
+    frame: frameFromQuery(c),
     color,
     limit,
     algorithm,
@@ -525,7 +538,7 @@ app.get('/og/swatch/:color/:limit', async (c) => {
     locale,
   });
 
-  return renderOGImage(svg);
+  return renderOGImage(svg, undefined, BAND_RENDER);
 });
 
 /**
@@ -552,7 +565,7 @@ app.get('/og/comparison/:dyes', async (c) => {
 
   const svg = generateComparisonOG({ dyeIds, locale });
 
-  return renderOGImage(svg);
+  return renderOGImage(svg, undefined, BAND_RENDER);
 });
 
 /**
@@ -587,9 +600,10 @@ app.get('/og/accessibility/:dyes/:visionType', async (c) => {
     dyeIds,
     visionType,
     locale,
+    frame: frameFromQuery(c),
   });
 
-  return renderOGImage(svg);
+  return renderOGImage(svg, undefined, BAND_RENDER);
 });
 
 /**
@@ -622,7 +636,7 @@ app.get('/og/extractor/:colors', async (c) => {
     timestamp: Date.now(),
   });
 
-  return renderOGImage(generateExtractorOG({ entries, locale }));
+  return renderOGImage(generateExtractorOG({ entries, locale, frame: frameFromQuery(c) }), undefined, BAND_RENDER);
 });
 
 /**
@@ -646,7 +660,7 @@ app.get('/og/presets/:presetId', async (c) => {
     timestamp: Date.now(),
   });
 
-  return renderOGImage(generatePresetsOG({ presetId, locale }));
+  return renderOGImage(generatePresetsOG({ presetId, locale, frame: frameFromQuery(c) }), undefined, BAND_RENDER);
 });
 
 /**
@@ -669,7 +683,7 @@ app.get('/og/budget/:dyeId', async (c) => {
     timestamp: Date.now(),
   });
 
-  return renderOGImage(generateBudgetOG({ dyeId, locale }));
+  return renderOGImage(generateBudgetOG({ dyeId, locale, frame: frameFromQuery(c) }), undefined, BAND_RENDER);
 });
 
 /**

@@ -344,7 +344,10 @@ describe('og-data-generator', () => {
       expect(html).toContain('property="og:description"');
       expect(html).toContain('property="og:image"');
       expect(html).toContain('property="og:image:width" content="1200"');
-      expect(html).toContain('property="og:image:height" content="630"');
+      // 15E: og:image is the Discord frame (1200×1050); X reads its own
+      // twitter:image with ?frame=x at 1200×630
+      expect(html).toContain('property="og:image:height" content="1050"');
+      expect(html).toContain('frame=x');
       expect(html).toContain('property="og:site_name"');
     });
 
