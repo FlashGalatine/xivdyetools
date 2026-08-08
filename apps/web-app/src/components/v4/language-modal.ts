@@ -33,14 +33,15 @@ export class LanguageModal {
     this.currentLocale = LanguageService.getCurrentLocale();
     const content = this.createContent();
 
+    // Applies on tap like the theme picker, so the footer says Done
     this.modalId = ModalService.show({
       type: 'custom',
       title: LanguageService.t('header.languageSelector'),
       content,
-      size: 'sm',
       closable: true,
       closeOnBackdrop: true,
       closeOnEscape: true,
+      confirmText: LanguageService.t('common.done'),
       onClose: () => {
         this.cleanup();
       },

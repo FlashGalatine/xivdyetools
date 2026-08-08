@@ -595,9 +595,13 @@ export class PresetTool extends BaseLitComponent {
     confirmEl.textContent = LanguageService.t('preset.confirmDelete');
 
     // Use ModalService for a custom confirmation dialog
+    // Destructive convention: Delete is the outlined narrow button,
+    // Cancel the solid wide one — with a red accent, a solid red Delete
+    // would be indistinguishable from a solid red primary
     ModalService.showConfirm({
       title: LanguageService.t('preset.deleteTitle'),
       content: confirmEl,
+      destructive: true,
       confirmText: LanguageService.t('common.delete'),
       cancelText: LanguageService.t('common.cancel'),
       onConfirm: async () => {

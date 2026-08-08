@@ -31,7 +31,7 @@ function getShortcuts(): ShortcutGroup[] {
       title: LanguageService.t('shortcuts.navigation'),
       shortcuts: [
         {
-          keys: '1-5',
+          keys: '1-9',
           description: LanguageService.t('shortcuts.switchTool'),
         },
         {
@@ -134,9 +134,6 @@ function createPanelContent(): HTMLElement {
   platformHint.className = 'text-xs mt-4 pt-4 border-t';
   platformHint.style.cssText = 'color: var(--theme-text-muted); border-color: var(--theme-border);';
 
-  // Detect platform for modifier key hint
-  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-  const _modifierKey = isMac ? '⌘ Cmd' : 'Ctrl';
   platformHint.innerHTML = `
     <span class="opacity-70">
       ${LanguageService.t('shortcuts.platformHint')}:

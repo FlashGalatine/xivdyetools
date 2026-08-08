@@ -19,14 +19,20 @@ import { logger } from '@shared/logger';
 // ============================================================================
 
 /**
- * Maps number keys 1-5 to tool IDs
+ * Maps number keys 1-9 to the nine tools, in ROUTES order.
+ * (Pre-5.0 this stopped at 5 and still said 'matcher', which is not a
+ * routable ToolId — key 2 dispatched a tool the router could not open.)
  */
 const TOOL_KEY_MAP: Record<string, string> = {
   '1': 'harmony',
-  '2': 'matcher',
+  '2': 'extractor',
   '3': 'accessibility',
   '4': 'comparison',
-  '5': 'mixer',
+  '5': 'gradient',
+  '6': 'presets',
+  '7': 'budget',
+  '8': 'swatch',
+  '9': 'mixer',
 };
 
 // ============================================================================

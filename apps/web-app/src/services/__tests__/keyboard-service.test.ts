@@ -95,7 +95,7 @@ describe('KeyboardService', () => {
   // Tool Navigation Tests
   // ============================================================================
 
-  describe('Tool Navigation (1-5 keys)', () => {
+  describe('Tool Navigation (1-9 keys)', () => {
     beforeEach(() => {
       KeyboardService.initialize();
     });
@@ -116,7 +116,7 @@ describe('KeyboardService', () => {
       window.removeEventListener('keyboard-navigate-tool', listener);
     });
 
-    it('should dispatch navigation event for key 2 (matcher)', () => {
+    it('should dispatch navigation event for key 2 (extractor)', () => {
       const listener = vi.fn();
       window.addEventListener('keyboard-navigate-tool', listener);
 
@@ -125,7 +125,7 @@ describe('KeyboardService', () => {
 
       expect(listener).toHaveBeenCalledWith(
         expect.objectContaining({
-          detail: { toolId: 'matcher' },
+          detail: { toolId: 'extractor' },
         })
       );
 
@@ -164,11 +164,27 @@ describe('KeyboardService', () => {
       window.removeEventListener('keyboard-navigate-tool', listener);
     });
 
-    it('should dispatch navigation event for key 5 (mixer)', () => {
+    it('should dispatch navigation event for key 5 (gradient)', () => {
       const listener = vi.fn();
       window.addEventListener('keyboard-navigate-tool', listener);
 
       const event = new KeyboardEvent('keydown', { key: '5' });
+      document.dispatchEvent(event);
+
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({
+          detail: { toolId: 'gradient' },
+        })
+      );
+
+      window.removeEventListener('keyboard-navigate-tool', listener);
+    });
+
+    it('should dispatch navigation event for key 9 (mixer)', () => {
+      const listener = vi.fn();
+      window.addEventListener('keyboard-navigate-tool', listener);
+
+      const event = new KeyboardEvent('keydown', { key: '9' });
       document.dispatchEvent(event);
 
       expect(listener).toHaveBeenCalledWith(
@@ -456,14 +472,18 @@ describe('KeyboardService', () => {
       window.removeEventListener('keyboard-navigate-tool', listener);
     });
 
-    it('should ignore key 6 (not mapped)', () => {
+    it('should dispatch navigation event for key 6 (presets)', () => {
       const listener = vi.fn();
       window.addEventListener('keyboard-navigate-tool', listener);
 
       const event = new KeyboardEvent('keydown', { key: '6' });
       document.dispatchEvent(event);
 
-      expect(listener).not.toHaveBeenCalled();
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({
+          detail: { toolId: 'presets' },
+        })
+      );
 
       window.removeEventListener('keyboard-navigate-tool', listener);
     });
