@@ -11,7 +11,7 @@
 import { ColorService } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
-import { ALGO_TAG, bandGlyph, notFoundBand } from './band-shared';
+import { ALGO_TAG, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
 import { dyeService, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
 import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm } from '../../types';
@@ -91,7 +91,7 @@ export function generateMixerOG(options: MixerOGOptions): string {
       role: 'BUYABLE',
       name: getLocalizedDyeName(hit.dye, locale),
       value: hit.dye.hex.toUpperCase(),
-      tag: `Δ${delta.toFixed(1)}`,
+      tag: `Δ${fmtDelta(delta, algorithm)}`,
       grow: dyeC ? 3 : 100,
       nameSize: 17,
       src: { hex: mixHex, height: MIX_STRIP_H },

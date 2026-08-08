@@ -13,7 +13,7 @@
 import { ColorService } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, BAND_CAP, type BandEntry, type BandFrame } from './band';
-import { ALGO_TAG, bandGlyph, notFoundBand } from './band-shared';
+import { ALGO_TAG, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
 import { dyeService, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
 import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm } from '../../types';
@@ -90,7 +90,7 @@ export function generateGradientOG(options: GradientOGOptions): string {
         role: String(i + 1),
         name: getLocalizedDyeName(best, locale),
         value: best.hex.toUpperCase(),
-        tag: `Δ${deltaForAlgorithm(stepHex, best.hex, algorithm).toFixed(1)}`,
+        tag: `Δ${fmtDelta(deltaForAlgorithm(stepHex, best.hex, algorithm), algorithm)}`,
       });
     }
   }

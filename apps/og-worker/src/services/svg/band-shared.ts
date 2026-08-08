@@ -18,6 +18,12 @@ export const ALGO_TAG: Record<string, string> = {
   euclidean: 'RGB DIST',
 };
 
+/** Per-method display precision (ΔEOK prints raw dp3; DISTINGUISH is an int). */
+export function fmtDelta(value: number, algorithm: string): string {
+  const dp = algorithm === 'oklab' ? 3 : algorithm === 'distinguish' ? 0 : 1;
+  return value.toFixed(dp);
+}
+
 /** The strip glyph: compact set, 13px, strip inks. */
 export function bandGlyph(name: ToolGlyphName): string {
   return toolGlyph(name, 'compact', { size: 13, ink: '#ECECEE', accent: '#FF6257' });

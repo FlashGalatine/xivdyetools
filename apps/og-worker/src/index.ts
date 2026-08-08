@@ -36,13 +36,8 @@ import {
   generateExtractorOG,
   generatePresetsOG,
   generateBudgetOG,
-  generateOGCard,
-  THEME,
-  FONTS,
-  OG_DIMENSIONS,
-  rect,
-  text,
-  circle,
+  generateDefaultCard,
+  DEFAULT_DECK,
 } from './services/svg';
 import type { Env, ToolId, AnalyticsEvent, HarmonyType, MatchingAlgorithm, VisionType } from './types';
 
@@ -256,48 +251,30 @@ for (const tool of SUPPORTED_TOOLS) {
 // ============================================================================
 
 /**
- * Shared default-card SVG (root and per-tool fallbacks).
- *
- * Every emitted `{tool}/default.png` fallback URL resolves here, so crawler
- * previews for parameterless tool pages stop 404ing. The 15E glyph-tile
- * artwork (per-tool banner glyph over the stripe field) replaces this
- * generic card in the OG redesign phase.
+ * The 2a default cards (confirmed 2026-08-07): a default never fakes data —
+ * the mark's six stripes carry identity, the tool's banner glyph floats in a
+ * dark tile, and the deck explains. The root card takes no tile and drops
+ * the method tag.
  */
-function buildDefaultCardSvg(): string {
-  const contentElements: string[] = [];
-  const centerX = OG_DIMENSIONS.width / 2;
-  const centerY = OG_DIMENSIONS.height / 2;
-
-  contentElements.push(
-    text(centerX, centerY - 60, 'XIV DYE TOOLS', {
-      fill: THEME.text,
-      fontSize: 48,
-      fontFamily: FONTS.header,
-      fontWeight: 700,
-      textAnchor: 'middle',
-    })
-  );
-
-  contentElements.push(
-    text(centerX, centerY, 'FFXIV Color & Dye Companion', {
-      fill: THEME.textMuted,
-      fontSize: 24,
-      fontFamily: FONTS.primary,
-      textAnchor: 'middle',
-    })
-  );
-
-  const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'];
-  const circleY = centerY + 80;
-  const circleSpacing = 70;
-  const startX = centerX - ((colors.length - 1) * circleSpacing) / 2;
-  colors.forEach((color, i) => {
-    contentElements.push(circle(startX + i * circleSpacing, circleY, 22, color));
-  });
-
-  return generateOGCard({
-    toolName: 'XIV Dye Tools',
-    content: contentElements.join('\n'),
+function buildDefaultCardSvg(tool: ToolId | null, frame: 'discord' | 'x'): string {
+  if (tool && DEFAULT_DECK[tool]) {
+    const deck = DEFAULT_DECK[tool];
+    return generateDefaultCard({
+      tool: { glyphName: deck.glyphName, label: deck.label },
+      name: deck.name,
+      sub: deck.sub,
+      path: `xivdyetools.app/${tool}`,
+      methodTag: tool === 'presets' ? 'CURATED' : 'ΔE2000',
+      frame,
+    });
+  }
+  return generateDefaultCard({
+    tool: null,
+    name: 'XIV Dye Tools',
+    sub: 'Colour tools for FFXIV dyes — harmony, matching, prices, accessibility.',
+    path: 'xivdyetools.app',
+    methodTag: null,
+    frame,
   });
 }
 
@@ -311,7 +288,11 @@ app.get('/og/:tool/default.png', async (c) => {
   if (!SUPPORTED_TOOLS.includes(tool)) {
     return c.json({ error: 'Unknown tool' }, 404);
   }
-  return renderOGImage(buildDefaultCardSvg(), { browser: 86400, edge: 604800 });
+  return renderOGImage(
+    buildDefaultCardSvg(tool, frameFromQuery(c)),
+    { browser: 86400, edge: 604800 },
+    BAND_RENDER
+  );
 });
 
 /**
@@ -692,7 +673,11 @@ app.get('/og/budget/:dyeId', async (c) => {
 app.get('/og/default.png', async (c) => {
   // BUG-068: explicit TTLs — 24h browser / 7d edge (the old param was
   // multiplied by 7 internally, yielding a 49-day edge TTL)
-  return renderOGImage(buildDefaultCardSvg(), { browser: 86400, edge: 604800 });
+  return renderOGImage(
+    buildDefaultCardSvg(null, frameFromQuery(c)),
+    { browser: 86400, edge: 604800 },
+    BAND_RENDER
+  );
 });
 
 // ============================================================================

@@ -11,6 +11,10 @@ export type { OGCardOptions } from './og-card';
 export { generateBandCard, bandInk, ogMark, BAND_FRAMES, BAND_CAP } from './band';
 export type { BandCardOptions, BandEntry, BandFrame } from './band';
 
+// The 2a default cards (stripes + glyph tile; root = plain stripes)
+export { generateDefaultCard, DEFAULT_DECK, MARK_STRIPES } from './default-card';
+export type { DefaultCardOptions } from './default-card';
+
 export { generateHarmonyOG } from './harmony';
 export type { HarmonyOGOptions } from './harmony';
 

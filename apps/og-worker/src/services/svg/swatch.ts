@@ -12,7 +12,7 @@
 import { ColorService } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
-import { ALGO_TAG, bandGlyph, notFoundBand } from './band-shared';
+import { ALGO_TAG, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
 import { dyeService, deltaForAlgorithm } from './dye-helpers';
 import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm, ColorSheetCategory, CharacterGender } from '../../types';
@@ -77,7 +77,7 @@ export async function generateSwatchOG(options: SwatchOGOptions): Promise<string
       role: String(i + 1),
       name: getLocalizedDyeName(m.dye, locale),
       value: m.dye.hex.toUpperCase(),
-      tag: `Δ${deltaForAlgorithm(targetHex, m.dye.hex, algorithm).toFixed(1)}`,
+      tag: `Δ${fmtDelta(deltaForAlgorithm(targetHex, m.dye.hex, algorithm), algorithm)}`,
       grow: 1,
     })),
   ];

@@ -14,6 +14,7 @@ import { ColorService } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { toolGlyph } from '@xivdyetools/svg';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
+import { fmtDelta } from './band-shared';
 import { dyeService, findClosestDyesWithDistance, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
 import { getLocalizedDyeName } from '../translator';
 import type { HarmonyType, MatchingAlgorithm } from '../../types';
@@ -142,7 +143,7 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
       role: m.offset === null ? '≈' : `${m.offset > 0 ? '+' : ''}${m.offset}°`,
       name: getLocalizedDyeName(m.dye, locale),
       value: m.dye.hex.toUpperCase(),
-      tag: `Δ${m.delta.toFixed(1)}`,
+      tag: `Δ${fmtDelta(m.delta, algorithm)}`,
       grow: 1,
       nameSize: 12,
     })),
