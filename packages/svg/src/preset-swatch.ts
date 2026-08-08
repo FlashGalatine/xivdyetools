@@ -43,7 +43,6 @@ export const CATEGORY_DISPLAY: Record<PresetCategory, { icon: string; name: stri
   seasons: { icon: '🍂', name: 'Seasons' },
   events: { icon: '🎉', name: 'FFXIV Events' },
   aesthetics: { icon: '🎨', name: 'Aesthetics' },
-  community: { icon: '🌐', name: 'Community' },
 };
 
 // ============================================================================

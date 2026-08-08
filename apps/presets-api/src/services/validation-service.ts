@@ -26,8 +26,8 @@ export const PRESET_VALIDATION_RULES = {
     maxLength: 200,
   },
   dyes: {
-    minLength: 2,
-    maxLength: 5,
+    minLength: 3,
+    maxLength: 6,
   },
   tags: {
     maxLength: 10,
@@ -222,8 +222,20 @@ export function validatePresetDyes(dyes: unknown): string | null {
   }
 
   // Check each element is a positive integer
-  if (!dyes.every((id) => typeof id === 'number' && id > 0)) {
+  if (!dyes.every((id) => typeof id === 'number' && Number.isInteger(id) && id > 0)) {
     return 'Invalid dye IDs';
+  }
+
+  // 5.0 range guard: dyes are stainIDs (1-254). Legacy itemIDs (>= 5729) are
+  // a disjoint range — without this guard a half-migrated client fails
+  // SILENTLY (resolvers return null and palettes render empty). Reject the
+  // wrong era loudly instead.
+  const legacy = dyes.find((id: number) => id >= 5000);
+  if (legacy !== undefined) {
+    return `Dye ${legacy} looks like a legacy item ID; expected a stainID (1-254)`;
+  }
+  if (!dyes.every((id: number) => id <= 254)) {
+    return 'Dye IDs must be stainIDs (1-254)';
   }
 
   return null;

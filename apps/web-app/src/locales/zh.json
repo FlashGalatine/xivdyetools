@@ -1113,7 +1113,130 @@
     "editSuccess": "预设更新成功！",
     "deleting": "正在删除预设...",
     "deleteSuccess": "预设删除成功",
-    "notFound": "预设未找到"
+    "notFound": "预设未找到",
+    "gc-maelstrom": {
+      "name": "黑涡团",
+      "description": "利姆萨·罗敏萨的海军军旗——风暴之红、漆黑与浪花之白。",
+      "tags": [
+        "黑涡团",
+        "利姆萨·罗敏萨",
+        "海军"
+      ]
+    },
+    "gc-adders": {
+      "name": "双蛇党",
+      "description": "格里达尼亚的森林守卫——以叶光与深林立誓。",
+      "tags": [
+        "双蛇党",
+        "格里达尼亚",
+        "森林"
+      ]
+    },
+    "gc-flames": {
+      "name": "恒辉队",
+      "description": "乌尔达哈的常备军——煤黑与烬红，永不熄灭的火焰。",
+      "tags": [
+        "恒辉队",
+        "乌尔达哈",
+        "沙漠"
+      ]
+    },
+    "season-spring": {
+      "name": "春",
+      "description": "萌芽时节——花瓣粉、新芽绿与清晨淡光。",
+      "tags": [
+        "春",
+        "花"
+      ]
+    },
+    "season-summer": {
+      "name": "夏",
+      "description": "盛夏——港湾深水、明亮的帆与温暖的沙。",
+      "tags": [
+        "夏",
+        "海滩"
+      ]
+    },
+    "season-autumn": {
+      "name": "秋",
+      "description": "染色的森林——南瓜橙、苔藓棕与酒红。",
+      "tags": [
+        "秋",
+        "丰收"
+      ]
+    },
+    "season-winter": {
+      "name": "冬",
+      "description": "隆冬——新雪、冰蓝与凝霜般的银光。",
+      "tags": [
+        "冬",
+        "雪"
+      ]
+    },
+    "event-starlight": {
+      "name": "星芒节",
+      "description": "红外套、常青枝与新雪——主城亮起灯火。",
+      "tags": [
+        "星芒节",
+        "圣诞"
+      ]
+    },
+    "event-moonfire": {
+      "name": "红莲节",
+      "description": "海边的夏日祭——海之蓝、晒白的白与节日的火星。",
+      "tags": [
+        "红莲节",
+        "夏"
+      ]
+    },
+    "event-rising": {
+      "name": "新生庆典",
+      "description": "纪念新生——纪念之金与尊贵之紫，映在珍珠白上。",
+      "tags": [
+        "新生庆典",
+        "纪念"
+      ]
+    },
+    "event-hatching": {
+      "name": "彩蛋狩猎",
+      "description": "彩绘彩蛋——糖果般的粉彩与春日缎带。",
+      "tags": [
+        "彩蛋狩猎",
+        "春"
+      ]
+    },
+    "event-valentione": {
+      "name": "恋人节",
+      "description": "求爱之红、绯颊之粉与蕾丝之白——用染料写就的情书。",
+      "tags": [
+        "恋人节",
+        "爱"
+      ]
+    },
+    "event-heavensturn": {
+      "name": "降神节",
+      "description": "东方风的迎新——仪式之红、深漆与庙宇之金。",
+      "tags": [
+        "降神节",
+        "新年"
+      ]
+    },
+    "event-littleladies": {
+      "name": "女儿节",
+      "description": "为公主们的巡游献上桃花——浅色花瓣、一点鲜樱与节日之白。",
+      "tags": [
+        "女儿节",
+        "公主"
+      ]
+    },
+    "event-allsaints": {
+      "name": "守护天节",
+      "description": "南瓜灯、魔女之黑与小鬼的李紫——三色描绘的马戏之夜。",
+      "tags": [
+        "守护天节",
+        "万圣"
+      ]
+    }
   },
   "auth": {
     "logout": "登出",

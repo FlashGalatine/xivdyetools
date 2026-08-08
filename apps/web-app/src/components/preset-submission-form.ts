@@ -43,7 +43,6 @@ const CATEGORIES: { id: PresetCategory; label: string }[] = [
   { id: 'seasons', label: 'Seasons' },
   { id: 'events', label: 'Events' },
   { id: 'aesthetics', label: 'Aesthetics' },
-  { id: 'community', label: 'Community' },
 ];
 
 const MIN_NAME_LENGTH = 2;
@@ -72,7 +71,7 @@ export function showPresetSubmissionForm(onSubmit?: OnSubmitCallback): void {
   const state: FormState = {
     name: '',
     description: '',
-    category: 'community',
+    category: 'events',
     selectedDyes: [],
     tags: '',
   };

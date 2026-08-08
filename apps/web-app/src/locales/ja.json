@@ -1130,7 +1130,131 @@
     "editSuccess": "プリセットを正常に更新しました！",
     "deleting": "プリセットを削除中...",
     "deleteSuccess": "プリセットを正常に削除しました",
-    "notFound": "プリセットが見つかりません"
+    "notFound": "プリセットが見つかりません",
+    "gc-maelstrom": {
+      "name": "黒渦団",
+      "description": "リムサ・ロミンサ海軍の軍旗——嵐の赤、漆黒、しぶきの白。",
+      "tags": [
+        "黒渦団",
+        "リムサ・ロミンサ",
+        "海軍"
+      ]
+    },
+    "gc-adders": {
+      "name": "双蛇党",
+      "description": "グリダニアの森の守り——木漏れ日と深い森に誓って。",
+      "tags": [
+        "双蛇党",
+        "グリダニア",
+        "森"
+      ]
+    },
+    "gc-flames": {
+      "name": "不滅隊",
+      "description": "ウルダハの常備軍——煤の黒と燠の赤、消えない炎。",
+      "tags": [
+        "不滅隊",
+        "ウルダハ",
+        "砂漠"
+      ]
+    },
+    "season-spring": {
+      "name": "春",
+      "description": "芽吹きの季節——花びらの桃色、若葉の緑、朝の淡い光。",
+      "tags": [
+        "春",
+        "花"
+      ]
+    },
+    "season-summer": {
+      "name": "夏",
+      "description": "真夏——港の深い水、白い帆、温かい砂。",
+      "tags": [
+        "夏",
+        "海辺"
+      ]
+    },
+    "season-autumn": {
+      "name": "秋",
+      "description": "色づく森——南瓜色、苔の茶、葡萄酒の赤。",
+      "tags": [
+        "秋",
+        "収穫"
+      ]
+    },
+    "season-winter": {
+      "name": "冬",
+      "description": "真冬——新雪、氷の青、凍てつく銀の輝き。",
+      "tags": [
+        "冬",
+        "雪"
+      ]
+    },
+    "event-starlight": {
+      "name": "星芒祭",
+      "description": "赤い外套と常緑の枝、新雪——街に灯りがともる。",
+      "tags": [
+        "星芒祭",
+        "クリスマス"
+      ]
+    },
+    "event-moonfire": {
+      "name": "紅蓮祭",
+      "description": "海辺の夏祭り——海の青、灼けた白、祭りの火の粉。",
+      "tags": [
+        "紅蓮祭",
+        "夏",
+        "海辺"
+      ]
+    },
+    "event-rising": {
+      "name": "新生祭",
+      "description": "新生を祝う——記念の金と王者の紫、真珠色の上に。",
+      "tags": [
+        "新生祭",
+        "記念"
+      ]
+    },
+    "event-hatching": {
+      "name": "エッグハント",
+      "description": "彩られたエッグ——菓子のようなパステルと春のリボン。",
+      "tags": [
+        "エッグハント",
+        "春"
+      ]
+    },
+    "event-valentione": {
+      "name": "ヴァレンティオンデー",
+      "description": "求愛の赤、頬染めの桃色、レースの白——染料でつづる恋文。",
+      "tags": [
+        "ヴァレンティオンデー",
+        "恋"
+      ]
+    },
+    "event-heavensturn": {
+      "name": "降神祭",
+      "description": "東方風の年迎え——儀式の赤、深い漆、社の金。",
+      "tags": [
+        "降神祭",
+        "正月"
+      ]
+    },
+    "event-littleladies": {
+      "name": "プリンセスデー",
+      "description": "姫君たちのパレードに桃の花——淡い花びら、ひとつの鮮やかな桜桃、祝いの白。",
+      "tags": [
+        "プリンセスデー",
+        "桃"
+      ]
+    },
+    "event-allsaints": {
+      "name": "守護天節",
+      "description": "南瓜の提灯、魔女の黒、インプの李紫——三色で描くサーカスの夜。",
+      "tags": [
+        "守護天節",
+        "ハロウィン"
+      ]
+    }
   },
   "auth": {
     "logout": "ログアウト",

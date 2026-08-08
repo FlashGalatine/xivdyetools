@@ -44,6 +44,7 @@ export interface ResolvedPreset extends PresetPalette {
  */
 interface IDyeService {
   getDyeById(id: number): Dye | null;
+  getByStainId(stainId: number): Dye | null;
 }
 
 /**
@@ -270,7 +271,8 @@ export class PresetService {
 
     return {
       ...preset,
-      resolvedDyes: preset.dyes.map((dyeId) => dyeService.getDyeById(dyeId)),
+      // 5.0: presets.json 2.0.0 stores stainIDs (never derived from ranges)
+      resolvedDyes: preset.dyes.map((stainId) => dyeService.getByStainId(stainId)),
     };
   }
 
@@ -283,7 +285,7 @@ export class PresetService {
   resolvePresets(presets: PresetPalette[], dyeService: IDyeService): ResolvedPreset[] {
     return presets.map((preset) => ({
       ...preset,
-      resolvedDyes: preset.dyes.map((dyeId) => dyeService.getDyeById(dyeId)),
+      resolvedDyes: preset.dyes.map((stainId) => dyeService.getByStainId(stainId)),
     }));
   }
 

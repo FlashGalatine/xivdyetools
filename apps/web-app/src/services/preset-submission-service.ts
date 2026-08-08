@@ -77,7 +77,6 @@ const VALID_CATEGORIES: PresetCategory[] = [
   'seasons',
   'events',
   'aesthetics',
-  'community',
 ];
 
 /**
@@ -115,13 +114,19 @@ export function validateSubmission(submission: PresetSubmission): ValidationErro
     errors.push({ field: 'category_id', message: 'Please select a valid category' });
   }
 
-  // Dyes validation (2-5 dyes)
-  if (!Array.isArray(submission.dyes) || submission.dyes.length < 2) {
-    errors.push({ field: 'dyes', message: 'Must include at least 2 dyes' });
-  } else if (submission.dyes.length > 5) {
-    errors.push({ field: 'dyes', message: 'Maximum 5 dyes allowed' });
-  } else if (!submission.dyes.every((id) => typeof id === 'number' && id > 0)) {
+  // Dyes validation (5.0: 3-6 stainIDs)
+  if (!Array.isArray(submission.dyes) || submission.dyes.length < 3) {
+    errors.push({ field: 'dyes', message: 'Must include at least 3 dyes' });
+  } else if (submission.dyes.length > 6) {
+    errors.push({ field: 'dyes', message: 'Maximum 6 dyes allowed' });
+  } else if (!submission.dyes.every((id) => typeof id === 'number' && Number.isInteger(id) && id > 0)) {
     errors.push({ field: 'dyes', message: 'Invalid dye selection' });
+  } else if (submission.dyes.some((id) => id >= 5000)) {
+    // 5.0 range guard: dyes are stainIDs (1-254); a legacy itemID means a
+    // half-migrated caller — fail loudly, never submit the wrong era
+    errors.push({ field: 'dyes', message: 'Dye IDs must be stainIDs (1-254), not legacy item IDs' });
+  } else if (submission.dyes.some((id) => id > 254)) {
+    errors.push({ field: 'dyes', message: 'Dye IDs must be stainIDs (1-254)' });
   }
 
   // Tags validation (0-10 tags, max 30 chars each)
@@ -427,10 +432,14 @@ class PresetSubmissionServiceImpl {
     }
 
     if (updates.dyes !== undefined) {
-      if (!Array.isArray(updates.dyes) || updates.dyes.length < 2) {
-        errors.push({ field: 'dyes', message: 'Must include at least 2 dyes' });
-      } else if (updates.dyes.length > 5) {
-        errors.push({ field: 'dyes', message: 'Maximum 5 dyes allowed' });
+      if (!Array.isArray(updates.dyes) || updates.dyes.length < 3) {
+        errors.push({ field: 'dyes', message: 'Must include at least 3 dyes' });
+      } else if (updates.dyes.length > 6) {
+        errors.push({ field: 'dyes', message: 'Maximum 6 dyes allowed' });
+      } else if (updates.dyes.some((id) => id >= 5000)) {
+        errors.push({ field: 'dyes', message: 'Dye IDs must be stainIDs (1-254), not legacy item IDs' });
+      } else if (updates.dyes.some((id) => id < 1 || id > 254)) {
+        errors.push({ field: 'dyes', message: 'Dye IDs must be stainIDs (1-254)' });
       } else if (!updates.dyes.every((id) => typeof id === 'number' && id > 0)) {
         errors.push({ field: 'dyes', message: 'Invalid dye selection' });
       }

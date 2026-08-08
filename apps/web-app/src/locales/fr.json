@@ -1091,7 +1091,131 @@
     "editSuccess": "Préréglage mis à jour avec succès !",
     "deleting": "Suppression du préréglage...",
     "deleteSuccess": "Préréglage supprimé avec succès",
-    "notFound": "Préréglage non trouvé"
+    "notFound": "Préréglage non trouvé",
+    "gc-maelstrom": {
+      "name": "Le Maelstrom",
+      "description": "L'étendard naval de Limsa Lominsa — rouge tempête et noir de jais sur blanc d'écume.",
+      "tags": [
+        "maelstrom",
+        "limsa lominsa",
+        "marine"
+      ]
+    },
+    "gc-adders": {
+      "name": "L'Ordre des Deux Vipères",
+      "description": "La garde forestière de Gridania — un serment de lumière de feuille et de bois profond.",
+      "tags": [
+        "deux vipères",
+        "gridania",
+        "forêt"
+      ]
+    },
+    "gc-flames": {
+      "name": "Les Immortels",
+      "description": "L'armée permanente d'Ul'dah — noir de suie et rouge braise, des flammes qui ne meurent jamais.",
+      "tags": [
+        "immortels",
+        "ul’dah",
+        "désert"
+      ]
+    },
+    "season-spring": {
+      "name": "Printemps",
+      "description": "Premières floraisons — rose pétale, vert pousse et pâle lumière du matin.",
+      "tags": [
+        "printemps",
+        "floraison"
+      ]
+    },
+    "season-summer": {
+      "name": "Été",
+      "description": "Plein été — eau profonde du port, voile éclatante, sable chaud.",
+      "tags": [
+        "été",
+        "plage"
+      ]
+    },
+    "season-autumn": {
+      "name": "Automne",
+      "description": "Les bois qui tournent — orange citrouille, brun mousse et rouge vin.",
+      "tags": [
+        "automne",
+        "récolte"
+      ]
+    },
+    "season-winter": {
+      "name": "Hiver",
+      "description": "Cœur de l'hiver — neige fraîche, bleu de glace et un éclat d'argent gelé.",
+      "tags": [
+        "hiver",
+        "neige"
+      ]
+    },
+    "event-starlight": {
+      "name": "Fête des étoiles",
+      "description": "Manteaux rouges et sapin sur neige fraîche — les cités s’illuminent.",
+      "tags": [
+        "fête des étoiles",
+        "noël"
+      ]
+    },
+    "event-moonfire": {
+      "name": "Feux de la Mort",
+      "description": "L'été au bord de l'eau — bleu marin, blanc de soleil et une étincelle de fête.",
+      "tags": [
+        "feux de la mort",
+        "été",
+        "plage"
+      ]
+    },
+    "event-rising": {
+      "name": "Fête de la Commémoration",
+      "description": "Éorzéa fête sa renaissance — or d’anniversaire et pourpre royale sur blanc perle.",
+      "tags": [
+        "commémoration",
+        "anniversaire"
+      ]
+    },
+    "event-hatching": {
+      "name": "Chasse aux Prœufs",
+      "description": "Œufs d'archonte peints — pastels sucrés et ruban de printemps.",
+      "tags": [
+        "chasse aux prœufs",
+        "pâques"
+      ]
+    },
+    "event-valentione": {
+      "name": "La Valention",
+      "description": "Rouge de cour, rose tendre et blanc dentelle — des lettres d’amour en teinture.",
+      "tags": [
+        "valention",
+        "amour"
+      ]
+    },
+    "event-heavensturn": {
+      "name": "Fête de la transition",
+      "description": "La nouvelle année à l'orientale — rouge de cérémonie, laque profonde et or de temple.",
+      "tags": [
+        "fête de la transition",
+        "nouvel an"
+      ]
+    },
+    "event-littleladies": {
+      "name": "Fête des demoiselles",
+      "description": "Fleurs de pêcher pour la parade des princesses — pétales pâles, une cerise éclatante, blanc de fête.",
+      "tags": [
+        "fête des demoiselles",
+        "princesse"
+      ]
+    },
+    "event-allsaints": {
+      "name": "Veillée des saints",
+      "description": "Lanterne-citrouille, noir de sorcière et prune de farfadet — tout un cirque en trois teintures.",
+      "tags": [
+        "veillée des saints",
+        "halloween"
+      ]
+    }
   },
   "auth": {
     "logout": "Déconnexion",

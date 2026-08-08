@@ -923,7 +923,7 @@ describe('PresetsHandler', () => {
             expect(body.message).toContain('Description must be 10-200 characters');
         });
 
-        it('should validate dyes count (min 2)', async () => {
+        it('should validate dyes count (min 3)', async () => {
             // Return valid categories so category validation passes, allowing dye validation to run
             mockDb._setupMock((query) => {
                 if (query.includes('categories')) {
@@ -951,10 +951,10 @@ describe('PresetsHandler', () => {
 
             expect(res.status).toBe(400);
             const body = await res.json() as { message: string };
-            expect(body.message).toContain('Must include 2-5 dyes');
+            expect(body.message).toContain('Must include 3-6 dyes');
         });
 
-        it('should validate dyes count (max 5)', async () => {
+        it('should validate dyes count (max 6)', async () => {
             // Return valid categories so category validation passes, allowing dye validation to run
             mockDb._setupMock((query) => {
                 if (query.includes('categories')) {
@@ -974,7 +974,7 @@ describe('PresetsHandler', () => {
                     },
                     body: JSON.stringify({
                         ...createMockSubmission(),
-                        dyes: [1, 2, 3, 4, 5, 6],
+                        dyes: [1, 2, 3, 4, 5, 6, 7],
                     }),
                 },
                 env
@@ -1634,7 +1634,7 @@ describe('PresetsHandler', () => {
 
             expect(res.status).toBe(400);
             const body = await res.json() as { message: string };
-            expect(body.message).toContain('Must include 2-5 dyes');
+            expect(body.message).toContain('Must include 3-6 dyes');
         });
 
         it('should validate edit request dyes count', async () => {
@@ -1660,7 +1660,7 @@ describe('PresetsHandler', () => {
 
             expect(res.status).toBe(400);
             const body = await res.json() as { message: string };
-            expect(body.message).toContain('Must include 2-5 dyes');
+            expect(body.message).toContain('Must include 3-6 dyes');
         });
 
         it('should validate edit request dyes are valid numbers', async () => {

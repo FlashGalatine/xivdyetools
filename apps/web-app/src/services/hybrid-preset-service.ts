@@ -209,33 +209,14 @@ export class HybridPresetService {
           if (existing) {
             // Add community count to existing category
             existing.presetCount += apiCat.preset_count;
-          } else if (apiCat.id === 'community') {
-            // Add community category
-            categoryMap.set('community', {
-              id: 'community',
-              name: apiCat.name,
-              description: apiCat.description,
-              icon: apiCat.icon || '🌐',
-              presetCount: apiCat.preset_count,
-              isCurated: false,
-            });
           }
+          // 5.0: the 'community' category value is dropped everywhere —
+          // community-ness is a source, not a category (rows carry their
+          // real category; the D1 migration removes the category row).
         }
       } catch (error) {
         logger.warn('HybridPresetService: Failed to fetch API categories', error);
       }
-    }
-
-    // Add community category if not present but API is available
-    if (this.apiAvailable && !categoryMap.has('community')) {
-      categoryMap.set('community', {
-        id: 'community',
-        name: 'Community',
-        description: 'User-submitted color palettes',
-        icon: '🌐',
-        presetCount: 0,
-        isCurated: false,
-      });
     }
 
     return Array.from(categoryMap.values());
@@ -261,8 +242,9 @@ export class HybridPresetService {
 
     let presets: UnifiedPreset[] = [];
 
-    // Handle community category specially
-    if (category === 'community') {
+    // 5.0: 'community' is no longer a category — kept only as an
+    // unreachable guard while callers migrate.
+    if ((category as string) === 'community') {
       if (this.apiAvailable && includeAPI) {
         try {
           const response = await this.communityService.getPresets({

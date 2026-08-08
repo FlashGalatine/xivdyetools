@@ -1637,7 +1637,6 @@ export class ConfigSidebar extends BaseLitComponent {
             <option value="seasons">${LanguageService.t('config.seasons')}</option>
             <option value="events">${LanguageService.t('config.events')}</option>
             <option value="aesthetics">${LanguageService.t('config.aesthetics')}</option>
-            <option value="community">${LanguageService.t('config.community')}</option>
           </select>
         </div>
 

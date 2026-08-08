@@ -845,9 +845,9 @@ async function sendPresetEmbed(
   preset: CommunityPreset,
   locale: LocaleCode
 ): Promise<void> {
-  // Resolve dye IDs to Dye objects
-  const dyes: (Dye | null)[] = preset.dyes.map((dyeId) => {
-    return dyeService.getDyeById(dyeId) || null;
+  // Resolve stain IDs to Dye objects (5.0: preset dyes are stainIDs)
+  const dyes: (Dye | null)[] = preset.dyes.map((stainId) => {
+    return dyeService.getByStainId(stainId) || null;
   });
 
   // Generate SVG swatch

@@ -1091,7 +1091,130 @@
     "editSuccess": "프리셋이 성공적으로 업데이트되었습니다!",
     "deleting": "프리셋 삭제 중...",
     "deleteSuccess": "프리셋이 성공적으로 삭제되었습니다",
-    "notFound": "프리셋을 찾을 수 없습니다"
+    "notFound": "프리셋을 찾을 수 없습니다",
+    "gc-maelstrom": {
+      "name": "흑와단",
+      "description": "림사 로민사 해군의 군기 — 폭풍의 빨강, 칠흑, 물보라의 흰색.",
+      "tags": [
+        "흑와단",
+        "림사 로민사",
+        "해군"
+      ]
+    },
+    "gc-adders": {
+      "name": "쌍사당",
+      "description": "그리다니아 숲의 수호 — 나뭇잎 빛과 깊은 숲에 바친 맹세.",
+      "tags": [
+        "쌍사당",
+        "그리다니아",
+        "숲"
+      ]
+    },
+    "gc-flames": {
+      "name": "불멸대",
+      "description": "울다하의 상비군 — 그을음 검정과 잉걸불 빨강, 꺼지지 않는 불꽃.",
+      "tags": [
+        "불멸대",
+        "울다하",
+        "사막"
+      ]
+    },
+    "season-spring": {
+      "name": "봄",
+      "description": "싹트는 계절 — 꽃잎 분홍, 새싹 초록, 옅은 아침 빛.",
+      "tags": [
+        "봄",
+        "꽃"
+      ]
+    },
+    "season-summer": {
+      "name": "여름",
+      "description": "한여름 — 항구의 깊은 물, 밝은 돛, 따뜻한 모래.",
+      "tags": [
+        "여름",
+        "해변"
+      ]
+    },
+    "season-autumn": {
+      "name": "가을",
+      "description": "물드는 숲 — 호박 주황, 이끼 갈색, 와인 빨강.",
+      "tags": [
+        "가을",
+        "수확"
+      ]
+    },
+    "season-winter": {
+      "name": "겨울",
+      "description": "한겨울 — 새 눈, 얼음의 파랑, 얼어붙은 은빛.",
+      "tags": [
+        "겨울",
+        "눈"
+      ]
+    },
+    "event-starlight": {
+      "name": "별빛축제",
+      "description": "붉은 외투와 상록수 가지, 새 눈 — 도시에 불이 켜진다.",
+      "tags": [
+        "별빛축제",
+        "크리스마스"
+      ]
+    },
+    "event-moonfire": {
+      "name": "불꽃축제",
+      "description": "바닷가 여름 축제 — 바다의 파랑, 볕에 바랜 흰색, 축제의 불꽃.",
+      "tags": [
+        "불꽃축제",
+        "여름"
+      ]
+    },
+    "event-rising": {
+      "name": "신생제",
+      "description": "신생을 기념하며 — 기념의 금과 왕가의 보라, 진주빛 위에.",
+      "tags": [
+        "신생제",
+        "기념"
+      ]
+    },
+    "event-hatching": {
+      "name": "달걀축제",
+      "description": "색칠한 알 — 사탕 같은 파스텔과 봄의 리본.",
+      "tags": [
+        "달걀축제",
+        "봄"
+      ]
+    },
+    "event-valentione": {
+      "name": "발렌티온 데이",
+      "description": "구애의 빨강, 발그레한 분홍, 레이스 흰색 — 염료로 쓴 연애편지.",
+      "tags": [
+        "발렌티온 데이",
+        "사랑"
+      ]
+    },
+    "event-heavensturn": {
+      "name": "강신제",
+      "description": "동방식 새해맞이 — 의식의 빨강, 깊은 옻칠, 사원의 금.",
+      "tags": [
+        "강신제",
+        "새해"
+      ]
+    },
+    "event-littleladies": {
+      "name": "프린세스 데이",
+      "description": "공주님들의 행진에 복사꽃 — 옅은 꽃잎, 선명한 체리 하나, 축제의 흰색.",
+      "tags": [
+        "프린세스 데이",
+        "공주"
+      ]
+    },
+    "event-allsaints": {
+      "name": "수호천절",
+      "description": "호박 등불, 마녀의 검정, 임프의 자두색 — 세 가지 염료로 그린 서커스의 밤.",
+      "tags": [
+        "수호천절",
+        "할로윈"
+      ]
+    }
   },
   "auth": {
     "logout": "로그아웃",

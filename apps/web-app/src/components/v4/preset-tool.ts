@@ -657,7 +657,6 @@ export class PresetTool extends BaseLitComponent {
       seasons: 'Seasons',
       events: 'Events',
       aesthetics: 'Aesthetics',
-      community: 'Community',
     };
     return categoryNames[this.config.category] || 'All';
   }

@@ -40,11 +40,6 @@ const mockPresetData: PresetData = {
       description: 'General aesthetic themes',
       icon: '🎨',
     },
-    community: {
-      name: 'Community',
-      description: 'Community-submitted palettes',
-      icon: '👥',
-    },
   },
   palettes: [
     {
@@ -52,7 +47,7 @@ const mockPresetData: PresetData = {
       name: 'Red Mage',
       category: 'jobs',
       description: 'The crimson elegance of the Red Mage',
-      dyes: [5738, 13115, 13117, 5729],
+      dyes: [10, 102, 113, 1],
       tags: ['red mage', 'rdm', 'caster', 'melee', 'crimson'],
     },
     {
@@ -60,7 +55,7 @@ const mockPresetData: PresetData = {
       name: 'Black Mage',
       category: 'jobs',
       description: 'Dark arcane power',
-      dyes: [5813, 13115, 13117],
+      dyes: [85, 102, 113],
       tags: ['black mage', 'blm', 'caster', 'magic', 'dark'],
     },
     {
@@ -68,7 +63,7 @@ const mockPresetData: PresetData = {
       name: 'White Mage',
       category: 'jobs',
       description: 'Pure healing light',
-      dyes: [5729, 5785, 5746],
+      dyes: [1, 57, 18],
       tags: ['white mage', 'whm', 'healer', 'pure', 'nature'],
     },
     {
@@ -76,7 +71,7 @@ const mockPresetData: PresetData = {
       name: 'Paladin',
       category: 'jobs',
       description: 'Noble defender of the realm',
-      dyes: [5801, 13116, 5729],
+      dyes: [73, 112, 1],
       tags: ['paladin', 'pld', 'tank', 'holy', 'knight'],
     },
     {
@@ -84,7 +79,7 @@ const mockPresetData: PresetData = {
       name: 'The Maelstrom',
       category: 'grand-companies',
       description: 'Storm-born naval power',
-      dyes: [5738, 5813, 5729],
+      dyes: [10, 85, 1],
       tags: ['maelstrom', 'limsa', 'red', 'navy'],
     },
     {
@@ -92,7 +87,7 @@ const mockPresetData: PresetData = {
       name: 'Twin Adder',
       category: 'grand-companies',
       description: 'Forest guardians of Gridania',
-      dyes: [5785, 5746, 5729],
+      dyes: [57, 18, 1],
       tags: ['twin adder', 'gridania', 'yellow', 'forest'],
     },
     {
@@ -100,7 +95,7 @@ const mockPresetData: PresetData = {
       name: 'Autumn Harvest',
       category: 'seasons',
       description: 'Warm fall colors',
-      dyes: [5740, 5785, 5746],
+      dyes: [12, 57, 18],
       tags: ['autumn', 'fall', 'harvest', 'warm', 'orange'],
     },
     {
@@ -108,7 +103,7 @@ const mockPresetData: PresetData = {
       name: 'Starlight Celebration',
       category: 'events',
       description: 'Holiday cheer',
-      dyes: [5738, 5729, 5785],
+      dyes: [10, 1, 57],
       tags: ['starlight', 'christmas', 'holiday', 'festive'],
     },
     {
@@ -116,15 +111,15 @@ const mockPresetData: PresetData = {
       name: 'Cottagecore',
       category: 'aesthetics',
       description: 'Pastoral and cozy',
-      dyes: [5746, 5785, 5729],
+      dyes: [18, 57, 1],
       tags: ['cottagecore', 'cozy', 'pastoral', 'nature'],
     },
     {
-      id: 'community-darkelegance',
+      id: 'aesthetic-darkelegance',
       name: 'Dark Elegance',
-      category: 'community',
+      category: 'aesthetics',
       description: 'Community favorite dark theme',
-      dyes: [5813, 13115, 5730],
+      dyes: [85, 102, 2],
       tags: ['dark', 'elegant', 'gothic'],
       author: 'TestUser',
     },
@@ -132,7 +127,8 @@ const mockPresetData: PresetData = {
 };
 
 // Mock DyeService interface
-const createMockDyeService = () => ({
+const createMockDyeService = () => {
+  const service = {
   getDyeById: vi.fn((id: number): Dye | null => {
     const mockDyes: Record<number, Dye> = {
       5729: {
@@ -214,7 +210,17 @@ const createMockDyeService = () => ({
     };
     return mockDyes[id] || null;
   }),
-});
+};
+  const byStain: Record<number, Dye> = {};
+  // Re-key the same mock dyes by their stainID (5.0 resolver path)
+  for (const dye of [service.getDyeById(5729), service.getDyeById(5738), service.getDyeById(13115), service.getDyeById(13117)]) {
+    if (dye && dye.stainID !== null) byStain[dye.stainID] = dye;
+  }
+  return {
+    ...service,
+    getByStainId: vi.fn((sid: number): Dye | null => byStain[sid] ?? null),
+  };
+};
 
 describe('PresetService', () => {
   let presetService: PresetService;
@@ -256,7 +262,7 @@ describe('PresetService', () => {
   describe('getCategories', () => {
     it('should return all categories with metadata', () => {
       const categories = presetService.getCategories();
-      expect(categories).toHaveLength(6);
+      expect(categories).toHaveLength(5);
     });
 
     it('should include category ID in returned objects', () => {
@@ -306,7 +312,6 @@ describe('PresetService', () => {
         'seasons',
         'events',
         'aesthetics',
-        'community',
       ] as const;
 
       validCategories.forEach((category) => {
@@ -344,7 +349,7 @@ describe('PresetService', () => {
         name: 'Red Mage',
         category: 'jobs',
         description: 'The crimson elegance of the Red Mage',
-        dyes: [5738, 13115, 13117, 5729],
+        dyes: [10, 102, 113, 1],
         tags: ['red mage', 'rdm', 'caster', 'melee', 'crimson'],
       });
     });
@@ -366,11 +371,11 @@ describe('PresetService', () => {
     it('should return empty array for category with no presets', () => {
       const emptyData: PresetData = {
         ...mockPresetData,
-        palettes: mockPresetData.palettes.filter((p) => p.category !== 'community'),
+        palettes: mockPresetData.palettes.filter((p) => p.category !== 'aesthetics'),
       };
       const service = new PresetService(emptyData);
-      const communityPresets = service.getPresetsByCategory('community');
-      expect(communityPresets).toHaveLength(0);
+      const aestheticPresets = service.getPresetsByCategory('aesthetics');
+      expect(aestheticPresets).toHaveLength(0);
     });
 
     it('should handle grand-companies category', () => {
@@ -394,7 +399,7 @@ describe('PresetService', () => {
     });
 
     it('should return preset with all fields', () => {
-      const preset = presetService.getPreset('community-darkelegance');
+      const preset = presetService.getPreset('aesthetic-darkelegance');
       expect(preset).toBeDefined();
       expect(preset?.author).toBe('TestUser');
     });
@@ -416,8 +421,7 @@ describe('PresetService', () => {
       expect(counts.get('grand-companies')).toBe(2);
       expect(counts.get('seasons')).toBe(1);
       expect(counts.get('events')).toBe(1);
-      expect(counts.get('aesthetics')).toBe(1);
-      expect(counts.get('community')).toBe(1);
+      expect(counts.get('aesthetics')).toBe(2);
     });
 
     it('should return a Map object', () => {
@@ -614,12 +618,12 @@ describe('PresetService', () => {
       expect(resolved?.resolvedDyes.some((d) => d !== null)).toBe(true);
     });
 
-    it('should call getDyeById for each dye in preset', () => {
+    it('should call getByStainId for each dye in preset', () => {
       const mockDyeService = createMockDyeService();
       presetService.getPresetWithDyes('job-rdm', mockDyeService);
 
       // job-rdm has 4 dyes
-      expect(mockDyeService.getDyeById).toHaveBeenCalledTimes(4);
+      expect(mockDyeService.getByStainId).toHaveBeenCalledTimes(4);
     });
 
     it('should preserve all original preset properties', () => {
@@ -744,7 +748,6 @@ describe('PresetService', () => {
           seasons: { name: 'Seasons', description: 'Test' },
           events: { name: 'Events', description: 'Test' },
           aesthetics: { name: 'Aesthetics', description: 'Test' },
-          community: { name: 'Community', description: 'Test' },
         },
         palettes: [
           {
@@ -752,7 +755,7 @@ describe('PresetService', () => {
             name: 'Test',
             category: 'jobs',
             description: 'Test preset',
-            dyes: [5729],
+            dyes: [1],
             tags: [],
           },
         ],
@@ -777,5 +780,29 @@ describe('PresetService', () => {
       const results = presetService.searchPresets('日本語');
       expect(results).toHaveLength(0);
     });
+  });
+});
+
+describe('curated parity (5.0 stainID migration)', () => {
+  it('every curated dye resolves via getByStainId — the silent-null guard', async () => {
+    const { DyeService } = await import('../DyeService.js');
+    const { default: dyeData } = await import('../../data/dyes.json', { with: { type: 'json' } });
+    const { default: presetData } = await import('../../data/presets.json', { with: { type: 'json' } });
+    const dyeService = new DyeService(dyeData);
+
+    expect(presetData.version).toBe('2.0.0');
+    expect(presetData.palettes).toHaveLength(15);
+    expect(Object.keys(presetData.categories)).not.toContain('community');
+
+    for (const palette of presetData.palettes) {
+      expect(palette.dyes.length).toBeGreaterThanOrEqual(3);
+      expect(palette.dyes.length).toBeLessThanOrEqual(6);
+      for (const stainId of palette.dyes) {
+        const dye = dyeService.getByStainId(stainId);
+        expect(dye, `${palette.id} stainID ${stainId}`).not.toBeNull();
+        // The ranges are disjoint — a legacy itemID here means a half-migration
+        expect(stainId).toBeLessThan(255);
+      }
+    }
   });
 });

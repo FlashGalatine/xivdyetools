@@ -6,7 +6,7 @@
 -- Preset categories with metadata
 -- ============================================
 CREATE TABLE IF NOT EXISTS categories (
-  id TEXT PRIMARY KEY,                    -- e.g., 'jobs', 'community'
+  id TEXT PRIMARY KEY,                    -- e.g., 'jobs', 'events'
   name TEXT NOT NULL,                     -- Display name
   description TEXT NOT NULL,
   icon TEXT,                              -- Emoji
@@ -21,7 +21,6 @@ INSERT OR IGNORE INTO categories (id, name, description, icon, is_curated, displ
   ('seasons', 'Seasons', 'Seasonal color palettes', '🌸', 1, 3),
   ('events', 'FFXIV Events', 'Colors for in-game seasonal events', '🎉', 1, 4),
   ('aesthetics', 'Aesthetics', 'General aesthetic themes', '✨', 1, 5),
-  ('community', 'Community', 'Community-submitted palettes', '👥', 0, 6);
 
 -- ============================================
 -- PRESETS TABLE

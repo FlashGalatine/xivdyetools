@@ -28,8 +28,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const submission = {
         name: 'AB',
         description: 'Exactly ten',
-        category_id: 'community' as const,
-        dyes: [1, 2],
+        category_id: 'events' as const,
+        dyes: [1, 2, 3],
         tags: [],
       };
 
@@ -61,7 +61,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: '',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
@@ -77,7 +77,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: '   ',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
@@ -93,7 +93,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'A',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
@@ -109,7 +109,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'A'.repeat(51),
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
@@ -131,7 +131,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: '',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
@@ -147,7 +147,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: '         ',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
@@ -163,7 +163,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Too short',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
@@ -179,7 +179,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'A'.repeat(201),
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
@@ -201,7 +201,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: '' as never,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
@@ -217,7 +217,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'invalid-category' as never,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
@@ -235,7 +235,6 @@ describe('PresetSubmissionService - validateSubmission', () => {
         'seasons',
         'events',
         'aesthetics',
-        'community',
       ] as const;
 
       for (const category of validCategories) {
@@ -243,7 +242,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
           name: 'Valid Name',
           description: 'Valid description here',
           category_id: category,
-          dyes: [1, 2],
+          dyes: [1, 2, 3],
           tags: [],
         };
 
@@ -271,7 +270,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'dyes',
-        message: 'Must include at least 2 dyes',
+        message: 'Must include at least 3 dyes',
       });
     });
 
@@ -287,23 +286,23 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'dyes',
-        message: 'Must include at least 2 dyes',
+        message: 'Must include at least 3 dyes',
       });
     });
 
-    it('should reject more than 5 dyes', () => {
+    it('should reject more than 6 dyes', () => {
       const submission = {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2, 3, 4, 5, 6],
+        dyes: [1, 2, 3, 4, 5, 6, 7],
         tags: [],
       };
 
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'dyes',
-        message: 'Maximum 5 dyes allowed',
+        message: 'Maximum 6 dyes allowed',
       });
     });
 
@@ -319,7 +318,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'dyes',
-        message: 'Must include at least 2 dyes',
+        message: 'Must include at least 3 dyes',
       });
     });
 
@@ -328,7 +327,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 0],
+        dyes: [1, 2, 0],
         tags: [],
       };
 
@@ -344,7 +343,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 'two'] as never,
+        dyes: [1, 2, 'two'] as never,
         tags: [],
       };
 
@@ -366,7 +365,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: [],
       };
 
@@ -380,7 +379,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: 'not an array' as never,
       };
 
@@ -396,7 +395,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: Array(11).fill('tag'),
       };
 
@@ -412,7 +411,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: ['valid', 'A'.repeat(31)],
       };
 
@@ -428,7 +427,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
         name: 'Valid Name',
         description: 'Valid description here',
         category_id: 'jobs' as const,
-        dyes: [1, 2],
+        dyes: [1, 2, 3],
         tags: ['valid', 123] as never,
       };
 

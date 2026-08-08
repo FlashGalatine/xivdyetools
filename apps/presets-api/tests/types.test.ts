@@ -51,10 +51,10 @@ describe('Types', () => {
                 'seasons',
                 'events',
                 'aesthetics',
-                'community',
             ];
 
-            expect(categories).toHaveLength(6);
+            // 5.0: 'community' is dropped — community-ness is a source, not a category
+            expect(categories).toHaveLength(5);
         });
     });
 

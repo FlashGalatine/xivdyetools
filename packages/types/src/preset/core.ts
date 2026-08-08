@@ -14,8 +14,7 @@ export type PresetCategory =
   | 'grand-companies'
   | 'seasons'
   | 'events'
-  | 'aesthetics'
-  | 'community';
+  | 'aesthetics';
 
 /**
  * Status of a preset submission in the moderation workflow
@@ -77,7 +76,7 @@ export interface PresetPalette {
   /** Brief description of the palette */
   description: string;
 
-  /** Array of dye itemIDs (2-5 dyes) */
+  /** Array of dye stainIDs (3-6 dyes) */
   dyes: number[];
 
   /** Searchable tags */

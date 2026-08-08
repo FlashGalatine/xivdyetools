@@ -1091,7 +1091,131 @@
     "editSuccess": "Voreinstellung erfolgreich aktualisiert!",
     "deleting": "Voreinstellung wird gelöscht...",
     "deleteSuccess": "Voreinstellung erfolgreich gelöscht",
-    "notFound": "Voreinstellung nicht gefunden"
+    "notFound": "Voreinstellung nicht gefunden",
+    "gc-maelstrom": {
+      "name": "Mahlstrom",
+      "description": "Limsa Lominsas Marinestandarte — Sturmrot und Pechschwarz auf Gischtweiß.",
+      "tags": [
+        "mahlstrom",
+        "limsa lominsa",
+        "marine"
+      ]
+    },
+    "gc-adders": {
+      "name": "Bund der Morgenviper",
+      "description": "Gridanias Waldgarde — ein Schwur in Blattlicht und tiefem Holz.",
+      "tags": [
+        "morgenviper",
+        "gridania",
+        "wald"
+      ]
+    },
+    "gc-flames": {
+      "name": "Legion der Unsterblichen",
+      "description": "Ul’dahs stehendes Heer — Rußschwarz und Glutrot, Flammen, die nie verlöschen.",
+      "tags": [
+        "unsterbliche",
+        "ul’dah",
+        "wüste"
+      ]
+    },
+    "season-spring": {
+      "name": "Frühling",
+      "description": "Erste Blüte — Blütenrosa, Keimgrün und blasses Morgenlicht.",
+      "tags": [
+        "frühling",
+        "blüte"
+      ]
+    },
+    "season-summer": {
+      "name": "Sommer",
+      "description": "Hochsommer — tiefes Hafenwasser, helles Segel, warmer Sand.",
+      "tags": [
+        "sommer",
+        "strand"
+      ]
+    },
+    "season-autumn": {
+      "name": "Herbst",
+      "description": "Der Wald färbt sich — Kürbisorange, Moosbraun und Weinrot.",
+      "tags": [
+        "herbst",
+        "ernte"
+      ]
+    },
+    "season-winter": {
+      "name": "Winter",
+      "description": "Tiefer Winter — frischer Schnee, Eisblau und ein Schimmer gefrorenen Silbers.",
+      "tags": [
+        "winter",
+        "schnee"
+      ]
+    },
+    "event-starlight": {
+      "name": "Sternenlichtfest",
+      "description": "Rote Mäntel und Tannengrün auf frischem Schnee — Lichter in allen Stadtvierteln.",
+      "tags": [
+        "sternenlichtfest",
+        "weihnachten"
+      ]
+    },
+    "event-moonfire": {
+      "name": "Feuermond-Reigen",
+      "description": "Sommerfest am Meer — Seeblau, sonnengebleichtes Weiß und ein Funke Festfeuer.",
+      "tags": [
+        "feuermond-reigen",
+        "sommer",
+        "strand"
+      ]
+    },
+    "event-rising": {
+      "name": "Fest der Wiedergeburt",
+      "description": "Das Reich feiert seine Wiedergeburt — Jubiläumsgold und Königspurpur auf Perlweiß.",
+      "tags": [
+        "wiedergeburt",
+        "jubiläum"
+      ]
+    },
+    "event-hatching": {
+      "name": "Wundereiersuche",
+      "description": "Bemalte Archonteneier — Zuckerpastell und Frühlingsband.",
+      "tags": [
+        "wundereiersuche",
+        "ostern"
+      ]
+    },
+    "event-valentione": {
+      "name": "Valentiontag",
+      "description": "Herzrot, zartes Rosa und Spitzenweiß — Liebesbriefe in Farbe.",
+      "tags": [
+        "valentiontag",
+        "liebe"
+      ]
+    },
+    "event-heavensturn": {
+      "name": "Himmelswende",
+      "description": "Jahreswechsel nach fernöstlicher Art — Zeremonienrot, tiefer Lack und Tempelgold.",
+      "tags": [
+        "himmelswende",
+        "neujahr"
+      ]
+    },
+    "event-littleladies": {
+      "name": "Prinzessinnenfest",
+      "description": "Pfirsichblüten zur Parade der Prinzessinnen — blasse Blütenblätter, eine leuchtende Kirsche, Festweiß.",
+      "tags": [
+        "prinzessinnenfest",
+        "blüte"
+      ]
+    },
+    "event-allsaints": {
+      "name": "Allerschutzheiligen",
+      "description": "Kürbislaterne, Hexenschwarz und das Pflaumenlila eines Imps — Spuk und Spektakel in drei Farben.",
+      "tags": [
+        "allerschutzheiligen",
+        "halloween"
+      ]
+    }
   },
   "auth": {
     "logout": "Abmelden",

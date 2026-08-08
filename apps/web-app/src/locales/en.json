@@ -1130,7 +1130,155 @@
     "editSuccess": "Preset updated successfully!",
     "deleting": "Deleting preset...",
     "deleteSuccess": "Preset deleted successfully",
-    "notFound": "Preset not found"
+    "notFound": "Preset not found",
+    "gc-maelstrom": {
+      "name": "Maelstrom",
+      "description": "Limsa Lominsa's naval standard — storm red and jet black over sea-spray white.",
+      "tags": [
+        "maelstrom",
+        "limsa lominsa",
+        "navy",
+        "storm"
+      ]
+    },
+    "gc-adders": {
+      "name": "Twin Adders",
+      "description": "Gridania's forest guard — an oath kept in leaf-light and deep wood.",
+      "tags": [
+        "twin adders",
+        "gridania",
+        "forest",
+        "nature"
+      ]
+    },
+    "gc-flames": {
+      "name": "Immortal Flames",
+      "description": "Ul'dah's standing army — soot black and ember red, flames that never gutter.",
+      "tags": [
+        "immortal flames",
+        "uldah",
+        "desert",
+        "fire"
+      ]
+    },
+    "season-spring": {
+      "name": "Spring",
+      "description": "First thaw — petal pink, seedling green and pale morning light.",
+      "tags": [
+        "spring",
+        "flowers",
+        "fresh",
+        "bloom"
+      ]
+    },
+    "season-summer": {
+      "name": "Summer",
+      "description": "High summer — deep harbour water, bright sail and warm sand.",
+      "tags": [
+        "summer",
+        "beach",
+        "sun",
+        "warm"
+      ]
+    },
+    "season-autumn": {
+      "name": "Autumn",
+      "description": "The turning wood — pumpkin orange, mossy brown and mulled red.",
+      "tags": [
+        "autumn",
+        "fall",
+        "leaves",
+        "harvest"
+      ]
+    },
+    "season-winter": {
+      "name": "Winter",
+      "description": "Deep winter — fresh snow, ice blue and a gleam of frozen silver.",
+      "tags": [
+        "winter",
+        "snow",
+        "frost",
+        "cold"
+      ]
+    },
+    "event-starlight": {
+      "name": "Starlight Celebration",
+      "description": "Saint's red coats and evergreen boughs on fresh snow, lighting the city squares.",
+      "tags": [
+        "starlight",
+        "christmas",
+        "holiday",
+        "winter"
+      ]
+    },
+    "event-moonfire": {
+      "name": "Moonfire Faire",
+      "description": "Bombards by the shore — sea blue, sun-bleached white and a spark of festival flame.",
+      "tags": [
+        "moonfire",
+        "summer",
+        "beach",
+        "festival"
+      ]
+    },
+    "event-rising": {
+      "name": "The Rising",
+      "description": "The realm remembers its rebirth — anniversary gold and regal purple over pearl.",
+      "tags": [
+        "rising",
+        "anniversary",
+        "celebration"
+      ]
+    },
+    "event-hatching": {
+      "name": "Hatching-tide",
+      "description": "Painted archon eggs on parade — sweetshop pastels and spring ribbon.",
+      "tags": [
+        "hatching",
+        "easter",
+        "spring",
+        "eggs"
+      ]
+    },
+    "event-valentione": {
+      "name": "Valentione's Day",
+      "description": "Courtship red, blushing pink and lace white — love letters done in dye.",
+      "tags": [
+        "valentione",
+        "valentine",
+        "love",
+        "romance"
+      ]
+    },
+    "event-heavensturn": {
+      "name": "Heavensturn",
+      "description": "Ringing in the year, Far Eastern style — ceremonial red, deep lacquer and temple gold.",
+      "tags": [
+        "heavensturn",
+        "new year",
+        "celebration"
+      ]
+    },
+    "event-littleladies": {
+      "name": "Little Ladies' Day",
+      "description": "Peach blossoms for the princesses' parade — pale petals, one bright cherry, festival white.",
+      "tags": [
+        "little ladies day",
+        "princess",
+        "blossom",
+        "pink"
+      ]
+    },
+    "event-allsaints": {
+      "name": "All Saints' Wake",
+      "description": "Pumpkin lantern, witching black and an imp's plum purple — the Continental Circus in three dyes.",
+      "tags": [
+        "all saints wake",
+        "halloween",
+        "spooky",
+        "pumpkin"
+      ]
+    }
   },
   "auth": {
     "logout": "Logout",
