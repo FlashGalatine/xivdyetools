@@ -78,7 +78,7 @@ export class DyeSelector extends BaseComponent {
   private updateFavoriteDyes(favoriteIds: number[]): void {
     const dyeService = DyeService.getInstance();
     this.favoriteDyes = favoriteIds
-      .map((id) => dyeService.getDyeById(id))
+      .map((id) => dyeService.getByStainId(id))
       .filter((dye): dye is Dye => dye !== undefined);
     this.updateFavoritesPanel();
   }

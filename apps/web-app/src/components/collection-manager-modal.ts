@@ -191,7 +191,7 @@ function createCollectionItem(collection: Collection, onRefresh: () => void): HT
 
     const displayedDyes = collection.dyes.slice(0, 8);
     for (const dyeId of displayedDyes) {
-      const dye = dyeService.getDyeById(dyeId);
+      const dye = dyeService.getByStainId(dyeId);
       if (dye) {
         const swatch = document.createElement('div');
         swatch.className =
@@ -387,7 +387,7 @@ function showEditCollectionDialog(collection: Collection, onUpdated: () => void)
     dyesGrid.className = 'flex flex-wrap gap-2';
 
     for (const dyeId of collection.dyes) {
-      const dye = dyeService.getDyeById(dyeId);
+      const dye = dyeService.getByStainId(dyeId);
       if (dye) {
         const dyeTag = createDyeTag(dye, () => {
           CollectionService.removeDyeFromCollection(collection.id, dyeId);

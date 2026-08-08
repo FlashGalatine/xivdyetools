@@ -777,7 +777,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
   private updateFavoriteDyes(favoriteIds: number[]): void {
     const dyeService = DyeService.getInstance();
     this.favoriteDyes = favoriteIds
-      .map((id) => dyeService.getDyeById(id))
+      .map((id) => dyeService.getByStainId(id))
       .filter((dye): dye is Dye => dye !== null);
   }
 
@@ -919,8 +919,8 @@ export class DyePaletteDrawer extends BaseLitComponent {
     e.stopPropagation();
     e.preventDefault();
 
-    const wasFavorite = this.favoriteIds.has(dye.id);
-    const result = CollectionService.toggleFavorite(dye.id);
+    const wasFavorite = this.favoriteIds.has(dye.stainID ?? 0);
+    const result = CollectionService.toggleFavorite(dye.stainID ?? 0);
 
     if (!result && !wasFavorite) {
       // Failed to add - likely at limit
@@ -1212,7 +1212,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
    * Render a single dye swatch with favorite star button
    */
   private renderSwatch(dye: Dye): TemplateResult {
-    const isFav = this.isFavorite(dye.id);
+    const isFav = this.isFavorite(dye.stainID ?? 0);
     const localizedName = this.getLocalizedDyeName(dye);
 
     return html`

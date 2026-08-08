@@ -16,12 +16,10 @@
 
 import { ModalService } from '@services/modal-service';
 import { LanguageService } from '@services/language-service';
-import { StorageService } from '@services/storage-service';
 import { TutorialService } from '@services/tutorial-service';
 import { CollectionService } from '@services/collection-service';
 import { ConfigController } from '@services/config-controller';
 import type { AdvancedConfig } from '@shared/tool-config-types';
-import { STORAGE_KEYS } from '@shared/constants';
 import { logger } from '@shared/logger';
 
 // ============================================================================
@@ -246,9 +244,11 @@ function createContent(host: HTMLElement): HTMLElement {
   data.body.appendChild(
     actionRow(t('config.clearPalettes'), '', () =>
       destructiveConfirm(t('config.clearPalettesConfirm'), () => {
-        StorageService.removeItem(STORAGE_KEYS.SAVED_PALETTES);
+        // 5.0: saved palettes are palette-kind CollectionService records
+        // (the legacy PaletteService key migrates there on init)
+        const deleted = CollectionService.deleteCollectionsByKind('palette');
         host.dispatchEvent(new CustomEvent('palettes-cleared', { bubbles: true, composed: true }));
-        logger.info('[AdvancedOptions] Saved palettes cleared');
+        logger.info(`[AdvancedOptions] Cleared ${deleted} saved palettes`);
       })
     )
   );

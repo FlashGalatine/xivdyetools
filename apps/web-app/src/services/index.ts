@@ -31,7 +31,6 @@ export { ModalService } from './modal-service';
 export type { Modal } from './modal-service';
 export { TooltipService } from './tooltip-service';
 export { AnnouncerService } from './announcer-service';
-export { PaletteService } from './palette-service';
 export { CameraService, cameraService } from './camera-service';
 export type { CaptureResult } from './camera-service';
 export { IndexedDBService, indexedDBService, STORES } from './indexeddb-service';

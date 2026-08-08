@@ -381,4 +381,149 @@ describe('CollectionService', () => {
       expect(imported).not.toBeUndefined();
     });
   });
+
+  // ==========================================================================
+  // 5.0: typed records, tombstones, stainID guard, legacy migrations
+  // ==========================================================================
+
+  describe('Typed records (5.0)', () => {
+    it('should default new collections to kind palette', () => {
+      const collection = CollectionService.createCollection('Plain');
+      expect(collection?.kind).toBe('palette');
+      expect(collection?.target).toBeUndefined();
+    });
+
+    it('should create swap records carrying a target', () => {
+      const collection = CollectionService.createCollection('Cheap Ink', undefined, {
+        kind: 'swap',
+        target: 6,
+      });
+      expect(collection?.kind).toBe('swap');
+      expect(collection?.target).toBe(6);
+    });
+
+    it('should reject a swap target that is not a stainID', () => {
+      const collection = CollectionService.createCollection('Bad Swap', undefined, {
+        kind: 'swap',
+        target: 5729,
+      });
+      expect(collection).toBeNull();
+    });
+
+    it('should filter and delete by kind', () => {
+      CollectionService.createCollection('P1');
+      CollectionService.createCollection('C1', undefined, { kind: 'character' });
+      CollectionService.createCollection('S1', undefined, { kind: 'swap', target: 3 });
+
+      expect(CollectionService.getCollectionsByKind('palette').length).toBe(1);
+      expect(CollectionService.getCollectionsByKind('character').length).toBe(1);
+
+      const deleted = CollectionService.deleteCollectionsByKind('palette');
+      expect(deleted).toBe(1);
+      expect(CollectionService.getCollectionsByKind('palette').length).toBe(0);
+      expect(CollectionService.getCollectionsByKind('swap').length).toBe(1);
+    });
+  });
+
+  describe('stainID guard (5.0)', () => {
+    it('should reject legacy itemID favorites', () => {
+      expect(CollectionService.addFavorite(5729)).toBe(false);
+      expect(CollectionService.getFavoritesCount()).toBe(0);
+    });
+
+    it('should reject legacy itemID dye refs in collections', () => {
+      const collection = CollectionService.createCollection('Guarded');
+      expect(CollectionService.addDyeToCollection(collection!.id, 5729)).toBe(false);
+      expect(CollectionService.addDyeToCollection(collection!.id, 1)).toBe(true);
+    });
+  });
+
+  describe('Tombstones (5.0)', () => {
+    it('should tombstone deleted collections and block their re-import', () => {
+      const collection = CollectionService.createCollection('Doomed');
+      const id = collection!.id;
+      CollectionService.addDyeToCollection(id, 1);
+
+      const exported = CollectionService.exportCollection(id)!;
+      CollectionService.deleteCollection(id);
+      expect(CollectionService.isTombstoned(id)).toBe(true);
+
+      // Importing the offline copy must not resurrect the deleted record
+      const result = CollectionService.importData(exported);
+      expect(result.collectionsImported).toBe(0);
+      expect(CollectionService.getCollectionByName('Doomed')).toBeUndefined();
+    });
+  });
+
+  describe('Legacy migrations (5.0)', () => {
+    it('should migrate stored legacy itemIDs to stainIDs on load', () => {
+      // Jet Black: stainID 6, legacy itemID 5729 (4.x stored dye.id = itemID)
+      localStorageMock.setItem(
+        'xivdyetools_favorites',
+        JSON.stringify({
+          version: '1.0.0',
+          favorites: [5729, 3],
+          lastModified: new Date().toISOString(),
+        })
+      );
+      CollectionService.__reloadForTesting();
+
+      const favorites = CollectionService.getFavorites();
+      expect(favorites).toContain(3);
+      expect(favorites).not.toContain(5729);
+      // 5729 resolved to its stainID rather than being dropped
+      expect(favorites.length).toBe(2);
+      expect(favorites.every((id) => id >= 1 && id <= 254)).toBe(true);
+    });
+
+    it('should default legacy collections to kind palette on load', () => {
+      localStorageMock.setItem(
+        'xivdyetools_collections',
+        JSON.stringify({
+          version: '1.0.0',
+          collections: [
+            {
+              id: 'legacy-1',
+              name: 'Old List',
+              dyes: [1, 2],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          ],
+          lastModified: new Date().toISOString(),
+        })
+      );
+      CollectionService.__reloadForTesting();
+
+      const collection = CollectionService.getCollectionByName('Old List');
+      expect(collection?.kind).toBe('palette');
+      expect(collection?.dyes).toEqual([1, 2]);
+    });
+
+    it('should migrate legacy PaletteService records into palette-kind collections', () => {
+      localStorageMock.setItem(
+        'xivdyetools_saved_palettes',
+        JSON.stringify([
+          {
+            id: 'pal-1',
+            name: 'My Harmony',
+            baseColor: '#2f2f33', // resolved by hex if it matches a dye, else by name below
+            baseDyeName: 'Jet Black',
+            harmonyType: 'complementary',
+            companions: ['Snow White', 'Not A Real Dye Name'],
+            dateCreated: new Date().toISOString(),
+          },
+        ])
+      );
+      CollectionService.__reloadForTesting();
+
+      const migrated = CollectionService.getCollectionByName('My Harmony');
+      expect(migrated).toBeDefined();
+      expect(migrated?.kind).toBe('palette');
+      // Jet Black + Snow White resolve; the fake name drops loudly
+      expect(migrated?.dyes.length).toBe(2);
+      // The legacy key is removed once processed
+      expect(localStorageMock.getItem('xivdyetools_saved_palettes')).toBeNull();
+    });
+  });
 });

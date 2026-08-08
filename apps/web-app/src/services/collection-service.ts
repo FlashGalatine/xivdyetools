@@ -1,13 +1,25 @@
 /**
- * XIV Dye Tools v2.1.0 - Collection Service
+ * XIV Dye Tools 5.0 - Collection Service
  *
- * Manages user favorites and dye collections with localStorage persistence.
- * Provides subscription model for reactive UI updates.
+ * The ONE store for saved things (register: "Saved things: one
+ * CollectionService store, typed records (palette | swap | character)").
+ * Records are typed by `kind`, swap records carry a `target`, and one
+ * offline/tombstone/cap policy covers every kind.
+ *
+ * 5.0 ID convention: every stored dye reference is a **stainID** (1–254),
+ * one convention with share URLs, presets and `.chara`. Records written by
+ * 4.x stored `dye.id` (= legacy market itemIDs, ≥ 5729 — the "three saved-
+ * thing stores, three ID schemes" defect) and migrate on load; the ranges
+ * are disjoint, so detection is exact. The 4.x PaletteService store, which
+ * saved localized dye *names*, migrates here as `kind: 'palette'` records.
  *
  * @module services/collection-service
  */
 
 import { StorageService } from './storage-service';
+import { dyeService } from './dye-service-wrapper';
+import { LanguageService } from './language-service';
+import { STORAGE_KEYS } from '@shared/constants';
 import { logger } from '@shared/logger';
 
 // ============================================================================
@@ -15,9 +27,18 @@ import { logger } from '@shared/logger';
 // ============================================================================
 
 /**
- * Dye ID type for type safety
+ * Dye ID type for type safety. 5.0: semantically a stainID (1–254).
  */
 export type DyeId = number;
+
+/**
+ * Typed record kinds (confirmed register entry):
+ * - `palette` — a saved list of dyes (harmony palettes, 8A saved presets,
+ *   9C save-to-a-list, and the sibling record a 10A glamour export creates)
+ * - `swap` — budget substitutes; carries `target`
+ * - `character` — a `.chara`-derived character palette (10A)
+ */
+export type CollectionKind = 'palette' | 'swap' | 'character';
 
 /**
  * Favorites data structure
@@ -35,9 +56,22 @@ export interface Collection {
   id: string;
   name: string;
   description?: string;
+  /** Typed record kind — 4.x records without one read as 'palette' */
+  kind: CollectionKind;
+  /** swap records only: the dye the saved substitutes replace */
+  target?: DyeId;
   dyes: DyeId[];
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * Tombstone for a deleted record — import/merge must never resurrect a
+ * record the user deleted (offline copies, restored backups, other tabs).
+ */
+export interface Tombstone {
+  id: string;
+  deletedAt: string;
 }
 
 /**
@@ -46,6 +80,7 @@ export interface Collection {
 export interface CollectionsData {
   version: string;
   collections: Collection[];
+  tombstones?: Tombstone[];
   lastModified: string;
 }
 
@@ -78,7 +113,8 @@ export interface ImportResult {
 
 const FAVORITES_KEY = 'xivdyetools_favorites';
 const COLLECTIONS_KEY = 'xivdyetools_collections';
-const DATA_VERSION = '1.0.0';
+/** 2.0.0 = 5.0 schema: stainID dye refs, typed records, tombstones */
+const DATA_VERSION = '2.0.0';
 
 // Limits per spec
 const MAX_FAVORITES = 40;
@@ -86,6 +122,41 @@ const MAX_COLLECTIONS = 50;
 const MAX_DYES_PER_COLLECTION = 20;
 const MAX_COLLECTION_NAME_LENGTH = 50;
 const MAX_DESCRIPTION_LENGTH = 200;
+const MAX_TOMBSTONES = 200;
+
+/** stainIDs live in 1–254; legacy market itemIDs start at 5729 — disjoint */
+const STAIN_ID_MAX = 254;
+
+// ============================================================================
+// 4.x → 5.0 migration helpers
+// ============================================================================
+
+/**
+ * Resolve a stored dye reference to a stainID. 5.0 values (1–254) pass
+ * through when the stainID exists; 4.x values (legacy itemIDs, incl. the
+ * negative synthetic Facewear range) resolve via the dye database.
+ * Returns null for anything unresolvable — the caller drops it loudly.
+ */
+function toStainId(stored: number): DyeId | null {
+  if (!Number.isFinite(stored)) return null;
+  if (stored >= 1 && stored <= STAIN_ID_MAX) {
+    return dyeService.getByStainId(stored) ? stored : null;
+  }
+  // Legacy itemID (dye.id === dye.itemID in 4.x)
+  const dye = dyeService.getAllDyes().find((d) => d.itemID === stored || d.id === stored);
+  return dye?.stainID ?? null;
+}
+
+/** Shape of the retired 4.x PaletteService records (localized dye names) */
+interface LegacySavedPalette {
+  id: string;
+  name: string;
+  baseColor: string;
+  baseDyeName: string;
+  harmonyType: string;
+  companions: string[];
+  dateCreated: string;
+}
 
 // ============================================================================
 // Collection Service Class
@@ -118,7 +189,10 @@ export class CollectionService {
 
     this.loadFavorites();
     this.loadCollections();
+    // Flag first: the palette migration goes through the public APIs
+    // (createCollection etc.), which re-enter initialize()
     this.initialized = true;
+    this.migrateLegacyPalettes();
     logger.info('📚 CollectionService initialized');
   }
 
@@ -135,7 +209,17 @@ export class CollectionService {
         );
         data.favorites = data.favorites.slice(0, MAX_FAVORITES);
       }
-      this.favoritesData = data;
+
+      // 5.0: migrate stored refs to stainIDs (4.x stored legacy itemIDs)
+      const migrated = this.migrateDyeIds(data.favorites, 'favorites');
+      if (migrated) {
+        data.favorites = migrated;
+        data.version = DATA_VERSION;
+        this.favoritesData = data;
+        this.saveFavorites();
+      } else {
+        this.favoritesData = data;
+      }
     } else {
       this.favoritesData = {
         version: DATA_VERSION,
@@ -143,6 +227,28 @@ export class CollectionService {
         lastModified: new Date().toISOString(),
       };
     }
+  }
+
+  /**
+   * Migrate an id list to stainIDs. Returns the new list when anything
+   * changed (values migrated or dropped), or null when it was already clean.
+   */
+  private static migrateDyeIds(ids: DyeId[], label: string): DyeId[] | null {
+    let changed = false;
+    const out: DyeId[] = [];
+    for (const stored of ids) {
+      const stainId = toStainId(stored);
+      if (stainId === null) {
+        logger.warn(`[CollectionService] Dropped unresolvable dye ref ${stored} in ${label}`);
+        changed = true;
+        continue;
+      }
+      if (stainId !== stored) changed = true;
+      // Migration can create duplicates (two legacy ids → one dye)
+      if (!out.includes(stainId)) out.push(stainId);
+      else changed = true;
+    }
+    return changed ? out : null;
   }
 
   /**
@@ -159,7 +265,8 @@ export class CollectionService {
         data.collections = data.collections.slice(0, MAX_COLLECTIONS);
       }
 
-      // Also validate dyes per collection
+      // Also validate dyes per collection + apply the 5.0 record shape
+      let migrated = false;
       for (const collection of data.collections) {
         if (collection.dyes.length > MAX_DYES_PER_COLLECTION) {
           logger.warn(
@@ -167,9 +274,36 @@ export class CollectionService {
           );
           collection.dyes = collection.dyes.slice(0, MAX_DYES_PER_COLLECTION);
         }
+
+        // 5.0: 4.x records have no kind — they were dye lists, i.e. palettes
+        if (!collection.kind) {
+          collection.kind = 'palette';
+          migrated = true;
+        }
+
+        // 5.0: stored refs become stainIDs
+        const migratedDyes = this.migrateDyeIds(collection.dyes, `collection "${collection.name}"`);
+        if (migratedDyes) {
+          collection.dyes = migratedDyes;
+          migrated = true;
+        }
+        if (collection.target !== undefined) {
+          const target = toStainId(collection.target);
+          if (target === null) {
+            delete collection.target;
+            migrated = true;
+          } else if (target !== collection.target) {
+            collection.target = target;
+            migrated = true;
+          }
+        }
       }
 
       this.collectionsData = data;
+      if (migrated || data.version !== DATA_VERSION) {
+        data.version = DATA_VERSION;
+        this.saveCollections();
+      }
     } else {
       this.collectionsData = {
         version: DATA_VERSION,
@@ -178,6 +312,91 @@ export class CollectionService {
       };
     }
     this.rebuildIndexes();
+  }
+
+  /**
+   * Migrate the retired 4.x PaletteService store (localized dye names — the
+   * defect that broke records across locale switches) into `kind: 'palette'`
+   * records. Base resolves by hex first (locale-free), then name; companions
+   * resolve by EN name, then the current locale's dye names. Unresolvable
+   * dyes drop loudly; the legacy key is removed once processed.
+   */
+  private static migrateLegacyPalettes(): void {
+    const legacy = StorageService.getItem<LegacySavedPalette[]>(STORAGE_KEYS.SAVED_PALETTES);
+    if (!legacy || !Array.isArray(legacy) || legacy.length === 0) {
+      if (legacy !== null) StorageService.removeItem(STORAGE_KEYS.SAVED_PALETTES);
+      return;
+    }
+
+    const allDyes = dyeService.getAllDyes();
+    const byHex = new Map<string, DyeId>();
+    const byName = new Map<string, DyeId>();
+    for (const dye of allDyes) {
+      if (dye.stainID === null) continue;
+      byHex.set(dye.hex.toLowerCase(), dye.stainID);
+      byName.set(dye.name.toLowerCase(), dye.stainID);
+      // Names in the active locale — best-effort cover for the stored-name
+      // defect (cross-locale switchers may still lose dyes, loudly)
+      const localized = LanguageService.getDyeName(dye.itemID);
+      if (localized) byName.set(localized.toLowerCase(), dye.stainID);
+    }
+
+    let migratedCount = 0;
+    let droppedDyes = 0;
+    for (const palette of legacy) {
+      if (!palette || typeof palette.name !== 'string' || !Array.isArray(palette.companions)) {
+        continue;
+      }
+
+      const dyes: DyeId[] = [];
+      const base =
+        (typeof palette.baseColor === 'string' && byHex.get(palette.baseColor.toLowerCase())) ||
+        (typeof palette.baseDyeName === 'string' &&
+          byName.get(palette.baseDyeName.toLowerCase())) ||
+        null;
+      if (base) dyes.push(base);
+      else droppedDyes++;
+
+      for (const companion of palette.companions) {
+        if (typeof companion !== 'string') continue;
+        const resolved = byName.get(companion.toLowerCase());
+        if (resolved && !dyes.includes(resolved)) dyes.push(resolved);
+        else if (!resolved) droppedDyes++;
+      }
+
+      if (dyes.length === 0) {
+        logger.warn(
+          `[CollectionService] Legacy palette "${palette.name}" had no resolvable dyes — dropped`
+        );
+        continue;
+      }
+
+      // Dedupe the name against existing records
+      let name = palette.name;
+      let suffix = 1;
+      while (this.getCollectionByName(name)) {
+        name = `${palette.name} (${suffix})`;
+        suffix++;
+      }
+
+      const created = this.createCollection(name, palette.harmonyType, { kind: 'palette' });
+      if (!created) {
+        logger.warn(
+          `[CollectionService] Could not migrate legacy palette "${palette.name}" (cap reached?)`
+        );
+        continue;
+      }
+      for (const dyeId of dyes.slice(0, MAX_DYES_PER_COLLECTION)) {
+        this.addDyeToCollection(created.id, dyeId);
+      }
+      migratedCount++;
+    }
+
+    StorageService.removeItem(STORAGE_KEYS.SAVED_PALETTES);
+    logger.info(
+      `[CollectionService] Migrated ${migratedCount}/${legacy.length} legacy palettes` +
+        (droppedDyes > 0 ? ` (${droppedDyes} unresolvable dye names dropped)` : '')
+    );
   }
 
   /**
@@ -247,6 +466,12 @@ export class CollectionService {
   static addFavorite(dyeId: DyeId): boolean {
     this.initialize();
     if (!this.favoritesData) return false;
+
+    // 5.0 guard: the store only accepts stainIDs
+    if (toStainId(dyeId) !== dyeId) {
+      logger.warn(`[CollectionService] Rejected non-stainID favorite ${dyeId}`);
+      return false;
+    }
 
     // Check if already a favorite
     if (this.favoritesData.favorites.includes(dyeId)) {
@@ -381,11 +606,23 @@ export class CollectionService {
 
   /**
    * Create a new collection
+   * @param options.kind - Typed record kind (default 'palette')
+   * @param options.target - swap records only: the dye being replaced (stainID)
    * @returns The created collection, or null if failed
    */
-  static createCollection(name: string, description?: string): Collection | null {
+  static createCollection(
+    name: string,
+    description?: string,
+    options?: { kind?: CollectionKind; target?: DyeId }
+  ): Collection | null {
     this.initialize();
     if (!this.collectionsData) return null;
+
+    // A swap's target must be a real dye
+    if (options?.target !== undefined && toStainId(options.target) !== options.target) {
+      logger.warn(`Invalid swap target ${options.target} — not a stainID`);
+      return null;
+    }
 
     // Validate name
     const trimmedName = name.trim();
@@ -418,6 +655,8 @@ export class CollectionService {
       id: this.generateId(),
       name: trimmedName,
       description: trimmedDesc,
+      kind: options?.kind ?? 'palette',
+      ...(options?.target !== undefined ? { target: options.target } : {}),
       dyes: [],
       createdAt: now,
       updatedAt: now,
@@ -466,7 +705,8 @@ export class CollectionService {
   }
 
   /**
-   * Delete a collection
+   * Delete a collection. Leaves a tombstone so an import/merge from an
+   * offline copy can never resurrect it.
    */
   static deleteCollection(id: string): boolean {
     this.initialize();
@@ -476,9 +716,58 @@ export class CollectionService {
     if (index === -1) return false;
 
     const deleted = this.collectionsData.collections.splice(index, 1)[0];
+    this.addTombstone(deleted.id);
     this.saveCollections();
     logger.info(`🗑️ Deleted collection "${deleted.name}"`);
     return true;
+  }
+
+  /**
+   * Get collections of one typed kind
+   */
+  static getCollectionsByKind(kind: CollectionKind): Collection[] {
+    return this.getCollections().filter((c) => c.kind === kind);
+  }
+
+  /**
+   * Delete every collection of one typed kind (tombstoned).
+   * @returns number of records deleted
+   */
+  static deleteCollectionsByKind(kind: CollectionKind): number {
+    this.initialize();
+    if (!this.collectionsData) return 0;
+
+    const doomed = this.collectionsData.collections.filter((c) => c.kind === kind);
+    if (doomed.length === 0) return 0;
+
+    for (const collection of doomed) {
+      this.addTombstone(collection.id);
+    }
+    this.collectionsData.collections = this.collectionsData.collections.filter(
+      (c) => c.kind !== kind
+    );
+    this.saveCollections();
+    logger.info(`🗑️ Deleted ${doomed.length} ${kind} collections`);
+    return doomed.length;
+  }
+
+  /**
+   * Record a tombstone (capped FIFO)
+   */
+  private static addTombstone(id: string): void {
+    if (!this.collectionsData) return;
+    const tombstones = this.collectionsData.tombstones ?? [];
+    tombstones.push({ id, deletedAt: new Date().toISOString() });
+    while (tombstones.length > MAX_TOMBSTONES) tombstones.shift();
+    this.collectionsData.tombstones = tombstones;
+  }
+
+  /**
+   * Check whether a record id was deleted here
+   */
+  static isTombstoned(id: string): boolean {
+    this.initialize();
+    return this.collectionsData?.tombstones?.some((t) => t.id === id) ?? false;
   }
 
   /**
@@ -487,6 +776,12 @@ export class CollectionService {
   static addDyeToCollection(collectionId: string, dyeId: DyeId): boolean {
     this.initialize();
     if (!this.collectionsData) return false;
+
+    // 5.0 guard: the store only accepts stainIDs
+    if (toStainId(dyeId) !== dyeId) {
+      logger.warn(`[CollectionService] Rejected non-stainID dye ref ${dyeId}`);
+      return false;
+    }
 
     const collection = this.collectionsData.collections.find((c) => c.id === collectionId);
     if (!collection) return false;
@@ -644,10 +939,12 @@ export class CollectionService {
         return result;
       }
 
-      // Import favorites
+      // Import favorites (legacy exports may carry itemIDs — resolve them)
       if (Array.isArray(data.data.favorites)) {
         for (const dyeId of data.data.favorites) {
-          if (typeof dyeId === 'number' && this.addFavorite(dyeId)) {
+          if (typeof dyeId !== 'number') continue;
+          const stainId = toStainId(dyeId);
+          if (stainId !== null && this.addFavorite(stainId)) {
             result.favoritesImported++;
           }
         }
@@ -661,6 +958,12 @@ export class CollectionService {
             continue;
           }
 
+          // Tombstone check: never resurrect a record the user deleted here
+          if (collection.id && this.isTombstoned(collection.id)) {
+            logger.info(`[CollectionService] Skipped tombstoned record "${collection.name}"`);
+            continue;
+          }
+
           // Handle name conflicts
           let name = collection.name;
           let suffix = 1;
@@ -669,11 +972,20 @@ export class CollectionService {
             suffix++;
           }
 
-          const newCollection = this.createCollection(name, collection.description);
+          const target =
+            typeof collection.target === 'number'
+              ? (toStainId(collection.target) ?? undefined)
+              : undefined;
+          const newCollection = this.createCollection(name, collection.description, {
+            kind: collection.kind ?? 'palette',
+            ...(target !== undefined ? { target } : {}),
+          });
           if (newCollection) {
             for (const dyeId of collection.dyes) {
-              if (typeof dyeId === 'number') {
-                this.addDyeToCollection(newCollection.id, dyeId);
+              if (typeof dyeId !== 'number') continue;
+              const stainId = toStainId(dyeId);
+              if (stainId !== null) {
+                this.addDyeToCollection(newCollection.id, stainId);
               }
             }
             result.collectionsImported++;
@@ -780,6 +1092,18 @@ export class CollectionService {
   }
 
   /**
+   * Re-run initialization from storage — exercises the load-time
+   * migrations (for testing only)
+   * @internal
+   */
+  static __reloadForTesting(): void {
+    this.initialized = false;
+    this.favoritesData = null;
+    this.collectionsData = null;
+    this.initialize();
+  }
+
+  /**
    * Reset all data (for testing)
    */
   static reset(): void {
@@ -791,6 +1115,7 @@ export class CollectionService {
     this.collectionsData = {
       version: DATA_VERSION,
       collections: [],
+      tombstones: [],
       lastModified: new Date().toISOString(),
     };
     // OPT-004: Clear indexes

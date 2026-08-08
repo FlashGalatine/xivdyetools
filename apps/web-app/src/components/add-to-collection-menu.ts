@@ -87,7 +87,7 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
     list.appendChild(emptyItem);
   } else {
     for (const collection of collections) {
-      const item = createCollectionMenuItem(collection, dye.id, dyeName, (addedCollection) => {
+      const item = createCollectionMenuItem(collection, dye.stainID ?? 0, dyeName, (addedCollection) => {
         closeAddToCollectionMenu();
         if (onAdded) {
           onAdded(addedCollection);
@@ -122,7 +122,7 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
     closeAddToCollectionMenu();
     showCreateCollectionDialog((newCollection) => {
       // Auto-add dye to the new collection
-      CollectionService.addDyeToCollection(newCollection.id, dye.id);
+      CollectionService.addDyeToCollection(newCollection.id, dye.stainID ?? 0);
       ToastService.success(
         LanguageService.tInterpolate('collections.addedToCollection', { name: newCollection.name })
       );
