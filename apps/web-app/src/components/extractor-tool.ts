@@ -796,9 +796,10 @@ export class ExtractorTool extends BaseComponent {
     this.paletteOptionsContainer.appendChild(colorCountGroup);
 
     // Extract palette button
+    // 3C: bulk extraction survives as one button that fills the roll.
     this.extractPaletteBtn = this.createElement('button', {
       className: 'w-full py-2 px-4 rounded-lg font-medium text-sm transition-colors',
-      textContent: LanguageService.t('matcher.extractPaletteBtn'),
+      textContent: LanguageService.t('matcher.autoExtract'),
       attributes: {
         style: 'background: var(--theme-primary); color: white;',
       },
@@ -1520,11 +1521,38 @@ export class ExtractorTool extends BaseComponent {
       this.clearImage();
     });
 
-    // Listen for canvas click (no drag) to trigger file upload
-    this.onPanelEvent(canvasWrapper, 'canvas-clicked', () => {
-      // Trigger file dialog when user clicks (not drags) on the canvas
-      this.dropZoneFileInput?.click();
+    // 3C: plain click samples now (the controller's default changed) — the
+    // file dialog is reached through Replace/drop, never by touching the
+    // image you are trying to read. The hint + the one surviving bulk
+    // button live OUTSIDE the wrapper (the zoom controller owns its DOM).
+    const sampleBar = this.createElement('div', {
+      attributes: {
+        style:
+          'display: flex; align-items: center; justify-content: center; gap: 12px; padding: 6px 0;',
+      },
     });
+    sampleBar.appendChild(
+      this.createElement('span', {
+        textContent: LanguageService.t('matcher.clickToSample'),
+        attributes: {
+          style:
+            "font-family: 'Fragment Mono', monospace; font-size: 9px; letter-spacing: 0.5px; color: var(--theme-text-muted);",
+        },
+      })
+    );
+    const autoBtn = this.createElement('button', {
+      textContent: LanguageService.t('matcher.autoExtract'),
+      attributes: {
+        type: 'button',
+        style:
+          'font-size: 11.5px; font-weight: 600; padding: 4px 12px; border-radius: 7px; border: 1px solid var(--theme-border); background: transparent; color: var(--theme-text); cursor: pointer;',
+      },
+    }) as HTMLButtonElement;
+    this.on(autoBtn, 'click', () => {
+      void this.extractPalette();
+    });
+    sampleBar.appendChild(autoBtn);
+    this.canvasContainer.appendChild(sampleBar);
 
     // Listen for image-sampled (drag to select region, or Shift+Click pixel sample)
     this.onPanelEvent(canvasWrapper, 'image-sampled', (event: CustomEvent) => {

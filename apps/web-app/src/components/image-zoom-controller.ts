@@ -707,16 +707,11 @@ export class ImageZoomController extends BaseComponent {
           height,
           isRegion: true,
         });
-      } else if (mouseEvent.shiftKey) {
-        // Shift+Click: sample pixel/area color and match dyes
-        sampleColorAtArea(coords.x, coords.y);
       } else {
-        // Click (no drag) - emit canvas-clicked event for file upload
-        const ctx = this.canvasRef.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(this.currentImage, 0, 0);
-        }
-        this.emit('canvas-clicked', {});
+        // 3C: sampling is the default — a plain click reads the real pixels
+        // (the algorithm's dominant colours are usually not the ones you
+        // want). Replacing the image moved to its own affordances.
+        sampleColorAtArea(coords.x, coords.y);
       }
       hasDraggedPastThreshold = false;
     });
@@ -817,12 +812,8 @@ export class ImageZoomController extends BaseComponent {
           isRegion: true,
         });
       } else {
-        // Tap (no drag) - emit canvas-clicked event for file upload
-        const ctx = this.canvasRef.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(this.currentImage, 0, 0);
-        }
-        this.emit('canvas-clicked', {});
+        // 3C: tap to sample — the mobile default matches desktop click.
+        sampleColorAtArea(coords.x, coords.y);
       }
       hasDraggedPastThreshold = false;
     });
