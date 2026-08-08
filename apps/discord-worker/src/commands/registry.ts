@@ -39,6 +39,8 @@ export const COMMAND_REGISTRY: readonly CommandRegistryEntry[] = [
 
   // Analysis
   { name: 'comparison', category: 'analysis' },
+  // /contrast: WCAG 1.4.11 pairs left /accessibility with the 5.0 split
+  { name: 'contrast', category: 'analysis' },
   { name: 'accessibility', category: 'analysis' },
   // /a11y: a second registration sharing the accessibility handler —
   // Discord has no alias mechanism (Turn 13 RESOLVED)

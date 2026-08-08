@@ -459,6 +459,44 @@ export const commands = [
     options: ACCESSIBILITY_OPTIONS,
   },
 
+  // 5.0: WCAG 1.4.11 contrast — the pair count routes the frame; four is
+  // the command's own limit, enforced here by four discrete options (the
+  // rejection happens before the handler runs and needs no error copy).
+  {
+    name: 'contrast',
+    description: 'WCAG non-text contrast between dye pairs (floor 3:1)',
+    options: [
+      {
+        name: 'dye1',
+        description: 'First dye (hex code or dye name)',
+        type: OptionType.STRING,
+        required: true,
+        autocomplete: true,
+      },
+      {
+        name: 'dye2',
+        description: 'Second dye (hex code or dye name)',
+        type: OptionType.STRING,
+        required: true,
+        autocomplete: true,
+      },
+      {
+        name: 'dye3',
+        description: 'Third dye (optional)',
+        type: OptionType.STRING,
+        required: false,
+        autocomplete: true,
+      },
+      {
+        name: 'dye4',
+        description: 'Fourth dye (optional)',
+        type: OptionType.STRING,
+        required: false,
+        autocomplete: true,
+      },
+    ],
+  },
+
   {
     name: 'manual',
     description: 'Show help and usage guide for all commands',

@@ -681,6 +681,18 @@
     "sepBandKey": "구간: ≥30 / ≥15 / ≥8 — 클수록 안전",
     "soloKey": "막대 = 상대적 변화량 · 판정 없음",
     "worstNote": "가장 약함: {lens}",
-    "a11yVerdict": "{lens}에서 가장 약하며, 그 차이는 {de}입니다."
+    "a11yVerdict": "{lens}에서 가장 약하며, 그 차이는 {de}입니다.",
+    "worstPair": "가장 약한 쌍",
+    "pairCol": "쌍",
+    "ratioCol": "명암비",
+    "ratioShort": "비율",
+    "restCol": "기타",
+    "ratioBand0": "3:1 미만",
+    "ratioBand1": "≥ 3:1",
+    "ratioBand2": "≥ 4.5:1",
+    "ratioBand3": "≥ 7:1",
+    "floorKey": "비텍스트 하한은 3:1 — WCAG 1.4.11",
+    "plotKey": "초록 = 멀리 떨어짐 · 기준선 3 / 4.5 / 7",
+    "contrastTitle": "명암비 — 염료 {n}종"
   }
 }

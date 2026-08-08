@@ -681,6 +681,18 @@
     "sepBandKey": "bands: ≥30 / ≥15 / ≥8 — larger is safer",
     "soloKey": "bar = relative shift · carries no verdict",
     "worstNote": "weakest: {lens}",
-    "a11yVerdict": "Weakest under {lens} — the pair sits {de} apart there."
+    "a11yVerdict": "Weakest under {lens} — the pair sits {de} apart there.",
+    "worstPair": "WORST PAIR",
+    "pairCol": "PAIR",
+    "ratioCol": "RATIO",
+    "ratioShort": "RATIO",
+    "restCol": "REST",
+    "ratioBand0": "BELOW 3:1",
+    "ratioBand1": "≥ 3:1",
+    "ratioBand2": "≥ 4.5:1",
+    "ratioBand3": "≥ 7:1",
+    "floorKey": "non-text floor is 3:1 — WCAG 1.4.11",
+    "plotKey": "green = far apart · lines at 3 / 4.5 / 7",
+    "contrastTitle": "Contrast — {n} dyes"
   }
 }

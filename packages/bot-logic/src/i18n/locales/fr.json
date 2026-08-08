@@ -681,6 +681,18 @@
     "sepBandKey": "bandes : ≥30 / ≥15 / ≥8 — plus grand = plus sûr",
     "soloKey": "barre = décalage relatif · sans verdict",
     "worstNote": "le plus faible : {lens}",
-    "a11yVerdict": "Le plus faible sous {lens} — la paire n'y est séparée que de {de}."
+    "a11yVerdict": "Le plus faible sous {lens} — la paire n'y est séparée que de {de}.",
+    "worstPair": "PAIRE LA PLUS FAIBLE",
+    "pairCol": "PAIRE",
+    "ratioCol": "RATIO",
+    "ratioShort": "RATIO",
+    "restCol": "RESTE",
+    "ratioBand0": "SOUS 3:1",
+    "ratioBand1": "≥ 3:1",
+    "ratioBand2": "≥ 4.5:1",
+    "ratioBand3": "≥ 7:1",
+    "floorKey": "le plancher non-texte est 3:1 — WCAG 1.4.11",
+    "plotKey": "vert = éloignés · lignes à 3 / 4.5 / 7",
+    "contrastTitle": "Contraste — {n} teintures"
   }
 }

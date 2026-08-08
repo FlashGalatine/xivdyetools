@@ -67,14 +67,14 @@ describe('@xivdyetools/svg index exports', () => {
         expect(typeof svg.generateA11yCard).toBe('function');
     });
 
-    it('exports contrast matrix generator', async () => {
+    it('exports the contrast card generator (13A/13B/13C·1)', async () => {
         const svg = await import('./index.js');
 
-        expect(svg.generateContrastMatrix).toBeDefined();
-        expect(typeof svg.generateContrastMatrix).toBe('function');
+        expect(svg.generateContrastCard).toBeDefined();
+        expect(typeof svg.generateContrastCard).toBe('function');
 
-        expect(svg.calculateContrast).toBeDefined();
-        expect(typeof svg.calculateContrast).toBe('function');
+        expect(svg.contrastRatio).toBeDefined();
+        expect(svg.contrastRatio('#FFFFFF', '#000000')).toBeCloseTo(21, 0);
     });
 
     it('exports random dyes grid generator', async () => {

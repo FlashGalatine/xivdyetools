@@ -24,6 +24,7 @@ export { handleSwatchCommand } from './swatch.js';
 // Legacy commands (deprecated in v4, kept for backward compatibility)
 
 export { handleAccessibilityCommand } from './accessibility.js';
+export { handleContrastCommand } from './contrast.js';
 export { handleManualCommand } from './manual.js';
 export { handleComparisonCommand } from './comparison.js';
 export { handlePresetCommand } from './preset.js';

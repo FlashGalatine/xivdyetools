@@ -681,6 +681,18 @@
     "sepBandKey": "区间：≥30 / ≥15 / ≥8 —— 越大越安全",
     "soloKey": "条形＝相对偏移 · 不作判定",
     "worstNote": "最难区分：{lens}",
-    "a11yVerdict": "在{lens}下最难区分，两色仅相差 {de}。"
+    "a11yVerdict": "在{lens}下最难区分，两色仅相差 {de}。",
+    "worstPair": "最弱的一对",
+    "pairCol": "配对",
+    "ratioCol": "对比度",
+    "ratioShort": "比率",
+    "restCol": "其余",
+    "ratioBand0": "低于 3:1",
+    "ratioBand1": "≥ 3:1",
+    "ratioBand2": "≥ 4.5:1",
+    "ratioBand3": "≥ 7:1",
+    "floorKey": "非文本下限为 3:1 — WCAG 1.4.11",
+    "plotKey": "绿＝相距远 · 基准线 3 / 4.5 / 7",
+    "contrastTitle": "对比度 — {n} 种染剂"
   }
 }

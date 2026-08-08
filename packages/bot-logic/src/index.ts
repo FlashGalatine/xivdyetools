@@ -76,7 +76,7 @@ export type {
 export { executeComparison } from './commands/comparison.js';
 export type { ComparisonInput, ComparisonResult } from './commands/comparison.js';
 
-// Command: Accessibility (colorblind simulation + contrast matrix)
+// Command: Accessibility (13D/13E/13H — the vision: option routes the frame)
 export { executeAccessibility, VISION_TYPES } from './commands/accessibility.js';
 export type {
   AccessibilityInput,
@@ -84,6 +84,14 @@ export type {
   AccessibilityDye,
   VisionType,
 } from './commands/accessibility.js';
+
+// Command: Contrast (13A/13B/13C·1 — the pair count routes the frame)
+export { executeContrast } from './commands/contrast.js';
+export type {
+  ContrastInput,
+  ContrastResult,
+  ContrastDyeInput,
+} from './commands/contrast.js';
 
 // BUG-073/REFACTOR-010 (2026-07-18 audit): single MODERATOR_IDS grammar for both bot workers
 export { parseModeratorIds, isModeratorId, isValidDiscordSnowflake } from './moderators.js';

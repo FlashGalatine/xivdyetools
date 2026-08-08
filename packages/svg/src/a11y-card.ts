@@ -45,6 +45,12 @@ import { toolGlyph } from './icons/tool-icons.js';
 // Types
 // ============================================================================
 
+/** The four simulated vision types (Brettel matrices in core). */
+export type VisionType = 'protanopia' | 'deuteranopia' | 'tritanopia' | 'achromatopsia';
+
+/** Every lens including the unsimulated control. */
+export type AllVisionTypes = 'normal' | VisionType;
+
 /** One lens row: the pair's separation (or the dye's shift) under a lens. */
 export interface A11yLensRow {
   /** Localized lens label ("Deuteranopia") */

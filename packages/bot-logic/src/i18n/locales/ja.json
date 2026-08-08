@@ -681,6 +681,18 @@
     "sepBandKey": "バンド: ≥30 / ≥15 / ≥8（大きいほど安全）",
     "soloKey": "バー＝相対的な変化量・判定なし",
     "worstNote": "最も区別しにくい: {lens}",
-    "a11yVerdict": "{lens}で最も区別しにくく、差は{de}です。"
+    "a11yVerdict": "{lens}で最も区別しにくく、差は{de}です。",
+    "worstPair": "最も弱いペア",
+    "pairCol": "ペア",
+    "ratioCol": "コントラスト比",
+    "ratioShort": "比率",
+    "restCol": "他",
+    "ratioBand0": "3:1 未満",
+    "ratioBand1": "≥ 3:1",
+    "ratioBand2": "≥ 4.5:1",
+    "ratioBand3": "≥ 7:1",
+    "floorKey": "非テキストの下限は 3:1 — WCAG 1.4.11",
+    "plotKey": "緑＝離れている・基準線 3 / 4.5 / 7",
+    "contrastTitle": "コントラスト — {n}色"
   }
 }

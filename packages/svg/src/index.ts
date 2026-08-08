@@ -110,17 +110,22 @@ export type {
 
 // Accessibility card (13D/13E/13H — the vision: option chooses the frame)
 export { generateA11yCard } from './a11y-card.js';
-export type { A11yCardOptions, A11yCardLabels, A11yLensRow } from './a11y-card.js';
-export type { VisionType, AllVisionTypes } from './accessibility-comparison.js';
-
-// WCAG Contrast Matrix
-export { generateContrastMatrix, calculateContrast } from './contrast-matrix.js';
 export type {
-  ContrastDye,
-  ContrastMatrixOptions,
-  ContrastResult,
-  WCAGLevel,
-} from './contrast-matrix.js';
+  A11yCardOptions,
+  A11yCardLabels,
+  A11yLensRow,
+  VisionType,
+  AllVisionTypes,
+} from './a11y-card.js';
+
+// Contrast card (13A/13B/13C·1 — the pair count routes the frame)
+export { generateContrastCard, contrastRatio } from './contrast-card.js';
+export type {
+  ContrastPair,
+  ContrastCardLabels,
+  ContrastCardOptions,
+} from './contrast-card.js';
+
 
 // Random Dyes Grid (11B table)
 export { generateRandomDyesGrid } from './random-dyes-grid.js';

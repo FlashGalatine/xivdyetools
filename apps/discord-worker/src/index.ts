@@ -26,6 +26,7 @@ import {
   handleSwatchCommand,
   // Legacy commands (kept for backward compatibility during migration)
   handleAccessibilityCommand,
+  handleContrastCommand,
   handleManualCommand,
   handleComparisonCommand,
   handlePresetCommand,
@@ -508,6 +509,10 @@ async function handleCommand(
       case 'accessibility':
       case 'a11y':
         response = await handleAccessibilityCommand(interaction, env, ctx, logger);
+        break;
+
+      case 'contrast':
+        response = await handleContrastCommand(interaction, env, ctx, logger);
         break;
 
       case 'manual':

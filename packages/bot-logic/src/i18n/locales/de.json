@@ -681,6 +681,18 @@
     "sepBandKey": "Bänder: ≥30 / ≥15 / ≥8 — größer ist sicherer",
     "soloKey": "Balken = relative Verschiebung · kein Urteil",
     "worstNote": "am schwächsten: {lens}",
-    "a11yVerdict": "Am schwächsten unter {lens} — dort liegt das Paar {de} auseinander."
+    "a11yVerdict": "Am schwächsten unter {lens} — dort liegt das Paar {de} auseinander.",
+    "worstPair": "SCHWÄCHSTES PAAR",
+    "pairCol": "PAAR",
+    "ratioCol": "VERHÄLTNIS",
+    "ratioShort": "VERH.",
+    "restCol": "REST",
+    "ratioBand0": "UNTER 3:1",
+    "ratioBand1": "≥ 3:1",
+    "ratioBand2": "≥ 4.5:1",
+    "ratioBand3": "≥ 7:1",
+    "floorKey": "Untergrenze für Nicht-Text ist 3:1 — WCAG 1.4.11",
+    "plotKey": "grün = weit auseinander · Linien bei 3 / 4.5 / 7",
+    "contrastTitle": "Kontrast — {n} Farbstoffe"
   }
 }
