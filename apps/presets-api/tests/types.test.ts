@@ -286,6 +286,7 @@ describe('Types', () => {
                 updated_at: '2025-06-15T12:00:00Z',
                 dye_signature: '[1,2,3]',
                 previous_values: null,
+                example_link: null,
             };
 
             expect(typeof row.dyes).toBe('string');

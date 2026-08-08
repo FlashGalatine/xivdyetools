@@ -96,6 +96,8 @@ export interface PresetRow {
   updated_at: string;
   dye_signature: string | null;
   previous_values: string | null; // JSON string of PresetPreviousValues
+  example_link: string | null; // 8A: allowlisted page URL, stored not copied
+  rejection_reason?: string | null; // joined from moderation_log on /mine only
 }
 
 export interface CategoryRow {

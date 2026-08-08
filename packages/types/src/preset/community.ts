@@ -82,6 +82,18 @@ export interface CommunityPreset {
 
   /** Previous values for revert capability (if edited) */
   previous_values?: PresetPreviousValues | null;
+
+  /**
+   * Example link (8A): page URL on an allowlisted host (Eorzea Collection,
+   * Imgur, Flickr). Stored, never copied; null when the author gave none.
+   */
+  example_link?: string | null;
+
+  /**
+   * Rejection reason from the latest moderation action (8S My Submissions).
+   * Populated only on the author's own-submissions listing; null elsewhere.
+   */
+  rejection_reason?: string | null;
 }
 
 /**
@@ -102,6 +114,12 @@ export interface PresetSubmission {
 
   /** Tags (0-10 tags, max 30 chars each) */
   tags: string[];
+
+  /**
+   * Example link (8A): a page URL on an allowlisted host (Eorzea Collection,
+   * Imgur, Flickr). The link is stored, never a copy of the image.
+   */
+  example_link?: string | null;
 }
 
 

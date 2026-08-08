@@ -313,3 +313,61 @@ export function validateModerationReason(reason: unknown): string | null {
 
   return null;
 }
+
+/**
+ * 8A example-link host allowlist. Exact hosts plus their subdomains
+ * (www.eorzeacollection.com, i.imgur.com, …). The client mirrors this list.
+ */
+export const EXAMPLE_LINK_HOSTS = ['eorzeacollection.com', 'imgur.com', 'flickr.com'] as const;
+
+const EXAMPLE_LINK_MAX_LENGTH = 300;
+
+/**
+ * Validate an 8A example link: https, allowlisted host, bounded length.
+ * `null`/`undefined`/`''` are valid (the field is optional; empty clears it).
+ *
+ * @param link - The link to validate
+ * @returns Error message or null if valid
+ */
+export function validateExampleLink(link: unknown): string | null {
+  if (link === undefined || link === null || link === '') {
+    return null;
+  }
+  if (typeof link !== 'string') {
+    return 'Example link must be a URL string';
+  }
+  if (link.length > EXAMPLE_LINK_MAX_LENGTH) {
+    return `Example link must be at most ${EXAMPLE_LINK_MAX_LENGTH} characters`;
+  }
+
+  let url: URL;
+  try {
+    // Accept links pasted without a scheme ("eorzeacollection.com/…")
+    url = new URL(/^https?:\/\//i.test(link) ? link : `https://${link}`);
+  } catch {
+    return 'Example link is not a valid URL';
+  }
+
+  if (url.protocol !== 'https:') {
+    return 'Example link must use https';
+  }
+
+  const host = url.hostname.toLowerCase();
+  const allowed = EXAMPLE_LINK_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
+  if (!allowed) {
+    return `Example link host must be one of: ${EXAMPLE_LINK_HOSTS.join(', ')}`;
+  }
+
+  return null;
+}
+
+/**
+ * Normalize a validated example link for storage (adds https:// when the
+ * author pasted a bare host, trims whitespace). Returns null for empty input.
+ */
+export function normalizeExampleLink(link: string | null | undefined): string | null {
+  if (link === undefined || link === null) return null;
+  const trimmed = link.trim();
+  if (!trimmed) return null;
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}

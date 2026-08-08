@@ -44,6 +44,8 @@ export interface PresetRow {
   updated_at: string;
   dye_signature: string | null;
   previous_values: string | null;
+  example_link: string | null;
+  rejection_reason?: string | null;
 }
 
 // Re-export types for convenience
@@ -95,6 +97,7 @@ export function createMockPresetRow(overrides: Partial<PresetRow> = {}): PresetR
     updated_at: now,
     dye_signature: JSON.stringify([1, 2, 3]),
     previous_values: null,
+    example_link: null,
     ...overrides,
   };
 }
@@ -193,6 +196,7 @@ export function presetToRow(preset: CommunityPreset): PresetRow {
     is_curated: preset.is_curated ? 1 : 0,
     dye_signature: JSON.stringify(preset.dyes),
     previous_values: null,
+    example_link: preset.example_link ?? null,
   };
 }
 

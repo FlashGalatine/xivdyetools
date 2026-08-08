@@ -32,6 +32,8 @@ import {
   validatePresetDescription,
   validatePresetDyes,
   validatePresetTags,
+  validateExampleLink,
+  normalizeExampleLink,
 } from '../services/validation-service.js';
 import { addVote } from './votes.js';
 import {
@@ -289,7 +291,13 @@ presetsRouter.patch('/:id', async (c) => {
   }
 
   // Check if any updates provided
-  if (!body.name && !body.description && !body.dyes && !body.tags) {
+  if (
+    !body.name &&
+    !body.description &&
+    !body.dyes &&
+    !body.tags &&
+    body.example_link === undefined
+  ) {
     return validationErrorResponse(c, 'No updates provided');
   }
 
@@ -663,6 +671,10 @@ async function validateSubmission(body: PresetSubmission, db: D1Database): Promi
   const tagsError = validatePresetTags(body.tags);
   if (tagsError) return tagsError;
 
+  const linkError = validateExampleLink(body.example_link);
+  if (linkError) return linkError;
+  body.example_link = normalizeExampleLink(body.example_link);
+
   return null;
 }
 
@@ -690,6 +702,12 @@ function validateEditRequest(body: PresetEditRequest): string | null {
   if (body.tags !== undefined) {
     const tagsError = validatePresetTags(body.tags);
     if (tagsError) return tagsError;
+  }
+
+  if (body.example_link !== undefined) {
+    const linkError = validateExampleLink(body.example_link);
+    if (linkError) return linkError;
+    body.example_link = normalizeExampleLink(body.example_link);
   }
 
   return null;

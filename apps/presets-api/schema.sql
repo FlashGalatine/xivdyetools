@@ -44,6 +44,8 @@ CREATE TABLE IF NOT EXISTS presets (
   dye_signature TEXT,
   -- Store pre-edit values for moderation revert capability
   previous_values TEXT,
+  -- 8A: allowlisted example-link page URL (stored, never a copy of the image)
+  example_link TEXT,
 
   FOREIGN KEY (category_id) REFERENCES categories(id)
 );

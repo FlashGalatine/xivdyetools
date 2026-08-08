@@ -88,6 +88,8 @@ export function rowToPreset(row: PresetRow, logger?: PresetServiceLogger): Commu
     updated_at: row.updated_at,
     dye_signature: row.dye_signature || undefined,
     previous_values,
+    example_link: row.example_link ?? null,
+    rejection_reason: row.rejection_reason ?? null,
   };
 }
 
@@ -277,8 +279,8 @@ export async function createPreset(
     INSERT INTO presets (
       id, name, description, category_id, dyes, tags,
       author_discord_id, author_name, vote_count, status, is_curated,
-      created_at, updated_at, dye_signature
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?, ?, ?)
+      created_at, updated_at, dye_signature, example_link
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?, ?, ?, ?)
   `;
 
   await db
@@ -295,7 +297,8 @@ export async function createPreset(
       status,
       now,
       now,
-      dyeSignature
+      dyeSignature,
+      submission.example_link ?? null
     )
     .run();
 
@@ -314,6 +317,7 @@ export async function createPreset(
     created_at: now,
     updated_at: now,
     dye_signature: dyeSignature,
+    example_link: submission.example_link ?? null,
   };
 }
 
@@ -396,10 +400,19 @@ export async function getPresetsByUser(
   authorDiscordId: string,
   logger?: PresetServiceLogger,
 ): Promise<CommunityPreset[]> {
+  // 8S My Submissions: surface the latest reject reason to the author —
+  // previously it lived only in moderation_log, and a rejected submission
+  // just failed to appear.
   const query = `
-    SELECT * FROM presets
-    WHERE author_discord_id = ?
-    ORDER BY created_at DESC
+    SELECT p.*, (
+      SELECT m.reason FROM moderation_log m
+      WHERE m.preset_id = p.id AND m.action = 'reject'
+      ORDER BY m.created_at DESC
+      LIMIT 1
+    ) AS rejection_reason
+    FROM presets p
+    WHERE p.author_discord_id = ?
+    ORDER BY p.created_at DESC
   `;
   const result = await db.prepare(query).bind(authorDiscordId).all<PresetRow>();
   return rowsToPresets(result.results || [], logger);
@@ -462,6 +475,11 @@ export async function updatePreset(
   if (updates.tags !== undefined) {
     setClauses.push('tags = ?');
     params.push(JSON.stringify(updates.tags));
+  }
+
+  if (updates.example_link !== undefined) {
+    setClauses.push('example_link = ?');
+    params.push(updates.example_link);
   }
 
   if (previousValues !== undefined) {

@@ -51,4 +51,7 @@ export interface PresetEditRequest {
 
   /** New tags (0-10 tags, max 30 chars each) */
   tags?: string[];
+
+  /** New example link (8A) — allowlisted host, or null to clear */
+  example_link?: string | null;
 }
