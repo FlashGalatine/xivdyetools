@@ -84,7 +84,7 @@ const SUBRACE_TO_CLAN_KEY: Record<SubRace, string> = {
   Hellsguard: 'hellsguard',
   Raen: 'raen',
   Xaela: 'xaela',
-  Helion: 'helion',
+  Helions: 'helions',
   TheLost: 'theLost',
   Rava: 'rava',
   Veena: 'veena',
@@ -100,7 +100,7 @@ const RACE_GROUPS: Array<{ raceKey: string; subraces: SubRace[] }> = [
   { raceKey: 'miqote', subraces: ['SeekerOfTheSun', 'KeeperOfTheMoon'] },
   { raceKey: 'roegadyn', subraces: ['SeaWolf', 'Hellsguard'] },
   { raceKey: 'auRa', subraces: ['Raen', 'Xaela'] },
-  { raceKey: 'hrothgar', subraces: ['Helion', 'TheLost'] },
+  { raceKey: 'hrothgar', subraces: ['Helions', 'TheLost'] },
   { raceKey: 'viera', subraces: ['Rava', 'Veena'] },
 ];
 

@@ -2,7 +2,7 @@
   "locale": "zh",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-08-01T23:19:30.477Z",
+    "generated": "2026-08-08T00:43:13.444Z",
     "dyeCount": 125
   },
   "labels": {
@@ -289,7 +289,7 @@
     "hellsguard": "红焰之民",
     "raen": "晨曦之民",
     "xaela": "暮晖之民",
-    "helion": "日光之民",
+    "helions": "日光之民",
     "theLost": "迷失之民",
     "rava": "拉瓦族",
     "veena": "维纳族"

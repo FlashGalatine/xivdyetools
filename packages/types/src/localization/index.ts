@@ -128,7 +128,7 @@ export type ClanKey =
   | 'hellsguard'
   | 'raen'
   | 'xaela'
-  | 'helion'
+  | 'helions'
   | 'theLost'
   | 'rava'
   | 'veena';

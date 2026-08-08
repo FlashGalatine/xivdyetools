@@ -102,7 +102,7 @@ const SUBRACE_TO_CLAN_KEY: Record<SubRace, string> = {
   Hellsguard: 'hellsguard',
   Raen: 'raen',
   Xaela: 'xaela',
-  Helion: 'helion',
+  Helions: 'helions',
   TheLost: 'theLost',
   Rava: 'rava',
   Veena: 'veena',
@@ -118,7 +118,7 @@ const RACE_GROUPS: Array<{ raceKey: string; subraces: SubRace[] }> = [
   { raceKey: 'miqote', subraces: ['SeekerOfTheSun', 'KeeperOfTheMoon'] },
   { raceKey: 'roegadyn', subraces: ['SeaWolf', 'Hellsguard'] },
   { raceKey: 'auRa', subraces: ['Raen', 'Xaela'] },
-  { raceKey: 'hrothgar', subraces: ['Helion', 'TheLost'] },
+  { raceKey: 'hrothgar', subraces: ['Helions', 'TheLost'] },
   { raceKey: 'viera', subraces: ['Rava', 'Veena'] },
 ];
 
@@ -233,7 +233,15 @@ export class SwatchTool extends BaseComponent {
     this.marketBoardService = MarketBoardService.getInstance();
 
     // Load persisted settings
-    this.subrace = StorageService.getItem<SubRace>(STORAGE_KEYS.subrace) ?? DEFAULTS.subrace;
+    {
+      // 5.0 stored-tribe migration: 'Helion' was renamed 'Helions' (the
+      // game's plural); migrate the persisted value on read.
+      const storedSubrace = StorageService.getItem<string>(STORAGE_KEYS.subrace);
+      this.subrace =
+        storedSubrace === 'Helion'
+          ? 'Helions'
+          : ((storedSubrace as SubRace | null) ?? DEFAULTS.subrace);
+    }
     this.gender = StorageService.getItem<Gender>(STORAGE_KEYS.gender) ?? DEFAULTS.gender;
     this.colorCategory =
       StorageService.getItem<ColorCategory>(STORAGE_KEYS.colorCategory) ?? DEFAULTS.colorCategory;
@@ -2467,7 +2475,7 @@ export class SwatchTool extends BaseComponent {
           'Hellsguard',
           'Raen',
           'Xaela',
-          'Helion',
+          'Helions',
           'TheLost',
           'Rava',
           'Veena',

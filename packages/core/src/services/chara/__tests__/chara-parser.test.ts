@@ -68,7 +68,7 @@ describe('parseCharaFile', () => {
     const parsed = parseCharaFile(fixture('hrothgar-helions.chara'));
 
     it('maps the file plural "Helions" to the SubRace', () => {
-      expect(parsed.tribe).toBe('Helion');
+      expect(parsed.tribe).toBe('Helions');
       expect(parsed.tribeRaw).toBe('Helions');
     });
 

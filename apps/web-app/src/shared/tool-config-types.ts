@@ -232,7 +232,7 @@ export interface SwatchConfig {
    * Selected subrace (SubRace type).
    * Values: 'Midlander', 'Highlander', 'Wildwood', 'Duskwight',
    * 'Plainsfolk', 'Dunesfolk', 'SeekerOfTheSun', 'KeeperOfTheMoon',
-   * 'SeaWolf', 'Hellsguard', 'Raen', 'Xaela', 'Helion', 'TheLost',
+   * 'SeaWolf', 'Hellsguard', 'Raen', 'Xaela', 'Helions', 'TheLost',
    * 'Rava', 'Veena'
    */
   race: string;

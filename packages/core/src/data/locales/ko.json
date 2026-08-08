@@ -2,7 +2,7 @@
   "locale": "ko",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-08-01T23:19:30.476Z",
+    "generated": "2026-08-08T00:43:13.443Z",
     "dyeCount": 125
   },
   "labels": {
@@ -289,7 +289,7 @@
     "hellsguard": "불꽃 파수꾼",
     "raen": "렌",
     "xaela": "젤라",
-    "helion": "헬리온",
+    "helions": "헬리온",
     "theLost": "로스트",
     "rava": "라바",
     "veena": "비나"

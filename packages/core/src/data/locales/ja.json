@@ -2,7 +2,7 @@
   "locale": "ja",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-08-01T23:19:30.472Z",
+    "generated": "2026-08-08T00:43:13.438Z",
     "dyeCount": 125
   },
   "labels": {
@@ -289,7 +289,7 @@
     "hellsguard": "ローエンガルデ",
     "raen": "アウラ・レン",
     "xaela": "アウラ・ゼラ",
-    "helion": "ヘリオン",
+    "helions": "ヘリオン",
     "theLost": "ロスト",
     "rava": "ラヴァ・ヴィエラ",
     "veena": "ヴィナ・ヴィエラ"

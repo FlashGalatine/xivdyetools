@@ -22,7 +22,10 @@ vi.mock('../../services/fonts', () => ({
 }));
 
 describe('commands/index exports', () => {
-    it('exports all command handlers', async () => {
+    // The barrel import pulls every handler (and their transitive deps) in one
+    // dynamic import — near the 5s default under parallel CI load, so it gets
+    // an explicit budget instead of flaking the workspace gate.
+    it('exports all command handlers', { timeout: 30_000 }, async () => {
         const commands = await import('./index.js');
 
         expect(commands.handleHarmonyCommand).toBeDefined();

@@ -107,7 +107,7 @@ describe('LocaleRegistry', () => {
       hellsguard: 'hellsguard',
       raen: 'raen',
       xaela: 'xaela',
-      helion: 'helion',
+      helions: 'helions',
       theLost: 'theLost',
       rava: 'rava',
       veena: 'veena',

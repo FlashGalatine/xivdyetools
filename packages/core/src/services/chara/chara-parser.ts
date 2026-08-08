@@ -132,8 +132,9 @@ const TRIBE_MAP: Record<string, SubRace> = {
   Hellsguard: 'Hellsguard',
   Raen: 'Raen',
   Xaela: 'Xaela',
-  Helions: 'Helion',
-  Helion: 'Helion',
+  Helions: 'Helions',
+  // Pre-5.0 identifier — accepted on read, stored as the game's plural
+  Helion: 'Helions',
   TheLost: 'TheLost',
   Rava: 'Rava',
   Veena: 'Veena',

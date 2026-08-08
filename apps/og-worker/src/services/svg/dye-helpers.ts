@@ -86,7 +86,7 @@ const ALL_SUBRACES: SubRace[] = [
   'SeaWolf', 'Hellsguard', // Roegadyn
   'Raen', 'Xaela', // Au Ra
   'Rava', 'Veena', // Viera
-  'Helion', 'TheLost', // Hrothgar
+  'Helions', 'TheLost', // Hrothgar
 ];
 
 const GENDERS: Gender[] = ['Male', 'Female'];

@@ -128,7 +128,7 @@ const CLAN_TO_SUBRACE: Record<string, SubRace> = {
   'Xaela': 'Xaela',
   'Rava': 'Rava',
   'Veena': 'Veena',
-  'Helions': 'Helion',
+  'Helions': 'Helions',
   'The Lost': 'TheLost',
 };
 

@@ -97,7 +97,7 @@ export type SubRace =
   | 'Raen'
   | 'Xaela'
   // Hrothgar
-  | 'Helion'
+  | 'Helions'
   | 'TheLost'
   // Viera
   | 'Rava'
@@ -132,7 +132,7 @@ export const RACE_SUBRACES: Record<Race, [SubRace, SubRace]> = {
   "Miqo'te": ['SeekerOfTheSun', 'KeeperOfTheMoon'],
   Roegadyn: ['SeaWolf', 'Hellsguard'],
   AuRa: ['Raen', 'Xaela'],
-  Hrothgar: ['Helion', 'TheLost'],
+  Hrothgar: ['Helions', 'TheLost'],
   Viera: ['Rava', 'Veena'],
 };
 
@@ -152,7 +152,7 @@ export const SUBRACE_TO_RACE: Record<SubRace, Race> = {
   Hellsguard: 'Roegadyn',
   Raen: 'AuRa',
   Xaela: 'AuRa',
-  Helion: 'Hrothgar',
+  Helions: 'Hrothgar',
   TheLost: 'Hrothgar',
   Rava: 'Viera',
   Veena: 'Viera',

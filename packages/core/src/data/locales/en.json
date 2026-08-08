@@ -2,7 +2,7 @@
   "locale": "en",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-08-01T23:19:30.468Z",
+    "generated": "2026-08-08T00:43:13.434Z",
     "dyeCount": 125
   },
   "labels": {
@@ -289,7 +289,7 @@
     "hellsguard": "Hellsguard",
     "raen": "Raen",
     "xaela": "Xaela",
-    "helion": "Helion",
+    "helions": "Helions",
     "theLost": "The Lost",
     "rava": "Rava",
     "veena": "Veena"
