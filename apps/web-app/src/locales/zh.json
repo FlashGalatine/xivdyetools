@@ -42,8 +42,8 @@
       "subtitle": "使用色彩理论发现和谐的颜色组合。选择一个基础颜色来生成经典的和谐类型。"
     },
     "matcher": {
-      "title": "颜色匹配器",
-      "shortName": "匹配",
+      "title": "调色板提取",
+      "shortName": "提取",
       "description": "从图像匹配颜色",
       "subtitle": "上传图像或选择颜色，找到最接近的 FFXIV 染剂。"
     },

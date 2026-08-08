@@ -42,8 +42,8 @@
       "subtitle": "Entdecke harmonische Farbkombinationen mit Farbtheorie. Wähle eine Grundfarbe, um klassische Harmonietypen zu generieren."
     },
     "matcher": {
-      "title": "Farbabgleich",
-      "shortName": "Abgleich",
+      "title": "Paletten-Extraktor",
+      "shortName": "Extraktor",
       "description": "Farben aus Bildern abgleichen",
       "subtitle": "Lade ein Bild hoch oder wähle eine Farbe, um die am besten passenden FFXIV-Farbstoffe zu finden."
     },

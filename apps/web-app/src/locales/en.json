@@ -42,7 +42,7 @@
       "subtitle": "Discover harmonious color combinations using color theory. Select a base color to generate classic harmony types."
     },
     "matcher": {
-      "title": "Color Matcher",
+      "title": "Palette Extractor",
       "shortName": "Extractor",
       "description": "Match colors from images",
       "subtitle": "Upload an image or select a color to find the closest matching FFXIV dyes."

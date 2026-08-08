@@ -42,8 +42,8 @@
       "subtitle": "Découvrez des combinaisons de couleurs harmonieuses grâce à la théorie des couleurs. Sélectionnez une couleur de base pour générer des types d'harmonie classiques."
     },
     "matcher": {
-      "title": "Correspondance de Couleurs",
-      "shortName": "Corresp.",
+      "title": "Extracteur de palette",
+      "shortName": "Extracteur",
       "description": "Faire correspondre les couleurs des images",
       "subtitle": "Téléchargez une image ou sélectionnez une couleur pour trouver les teintures FFXIV les plus proches."
     },
@@ -95,8 +95,8 @@
       "budgetOptions": "Options Budget"
     },
     "character": {
-      "title": "Correspondance Personnage",
-      "shortName": "Palette",
+      "title": "Nuancier",
+      "shortName": "Nuancier",
       "description": "Associer les teintures aux couleurs du personnage",
       "subtitle": "Trouvez les teintures FFXIV qui correspondent aux cheveux, yeux, peau et autres couleurs de personnalisation de votre personnage.",
       "selectSubrace": "Sélectionner l'ethnie",
