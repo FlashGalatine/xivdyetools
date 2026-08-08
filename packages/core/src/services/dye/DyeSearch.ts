@@ -5,7 +5,8 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
-import type { MatchingMethod, OklchWeights } from '../../types/index.js';
+import type { MatchingMethod } from '../../types/index.js';
+import { COLOR_DISTANCE_MAX } from '../../constants/index.js';
 import { ColorConverter } from '../color/ColorConverter.js';
 import type { Point3D } from '../../utils/kd-tree.js';
 import type { DyeDatabase } from './DyeDatabase.js';
@@ -18,8 +19,6 @@ export interface FindClosestOptions {
   excludeIds?: number[];
   /** Color matching algorithm (default: 'oklab') */
   matchingMethod?: MatchingMethod;
-  /** Custom weights for oklch-weighted method */
-  weights?: OklchWeights;
 }
 
 /**
@@ -32,8 +31,6 @@ export interface FindWithinDistanceOptions {
   limit?: number;
   /** Color matching algorithm (default: 'rgb' for backwards compatibility) */
   matchingMethod?: MatchingMethod;
-  /** Custom weights for oklch-weighted method */
-  weights?: OklchWeights;
 }
 
 /**
@@ -54,31 +51,27 @@ export class DyeSearch {
    * @param hex1 - First color in hex format
    * @param hex2 - Second color in hex format
    * @param method - Matching algorithm to use
-   * @param weights - Custom weights for oklch-weighted method
    * @returns Distance value (lower = more similar)
    */
-  private calculateDistance(
-    hex1: string,
-    hex2: string,
-    method: MatchingMethod,
-    weights?: OklchWeights
-  ): number {
+  private calculateDistance(hex1: string, hex2: string, method: MatchingMethod): number {
     switch (method) {
       case 'rgb':
         return ColorConverter.getColorDistance(hex1, hex2);
+      case 'redmean':
+        return ColorConverter.getRedmeanDistance(hex1, hex2);
+      case 'distinguish':
+        // Unrounded percent: identical ranks to RGB DIST (no ranking ties);
+        // display rounding happens at the consumer, where ties badge TIE.
+        return (ColorConverter.getColorDistance(hex1, hex2) / COLOR_DISTANCE_MAX) * 100;
       case 'cie76':
         return ColorConverter.getDeltaE(hex1, hex2, 'cie76');
       case 'ciede2000':
         return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
       case 'oklab':
         return ColorConverter.getDeltaE_Oklab(hex1, hex2);
-      case 'hyab':
-        return ColorConverter.getDeltaE_HyAB(hex1, hex2);
-      case 'oklch-weighted':
-        return ColorConverter.getDeltaE_OklchWeighted(hex1, hex2, weights);
       default:
-        // Default to OKLAB for unknown methods
-        return ColorConverter.getDeltaE_Oklab(hex1, hex2);
+        // Default to dE2000 for unknown methods (the suite default)
+        return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
     }
   }
 
@@ -175,7 +168,7 @@ export class DyeSearch {
       ? { excludeIds: excludeIdsOrOptions }
       : excludeIdsOrOptions;
 
-    const { excludeIds = [], matchingMethod = 'oklab', weights } = options;
+    const { excludeIds = [], matchingMethod = 'ciede2000' } = options;
 
     try {
       const targetRgb = ColorConverter.hexToRgb(hex);
@@ -223,7 +216,7 @@ export class DyeSearch {
         }
 
         try {
-          const distance = this.calculateDistance(hex, dye.hex, matchingMethod, weights);
+          const distance = this.calculateDistance(hex, dye.hex, matchingMethod);
           if (distance < minDistance) {
             minDistance = distance;
             closest = dye;
@@ -272,7 +265,7 @@ export class DyeSearch {
         ? { maxDistance: maxDistanceOrOptions, limit }
         : maxDistanceOrOptions;
 
-    const { maxDistance, limit: resultLimit, matchingMethod = 'rgb', weights } = options;
+    const { maxDistance, limit: resultLimit, matchingMethod = 'rgb' } = options;
 
     try {
       const targetRgb = ColorConverter.hexToRgb(hex);
@@ -314,7 +307,7 @@ export class DyeSearch {
             continue;
           }
 
-          const distance = this.calculateDistance(hex, dye.hex, matchingMethod, weights);
+          const distance = this.calculateDistance(hex, dye.hex, matchingMethod);
           if (distance <= maxDistance) {
             results.push({ dye, distance });
           }

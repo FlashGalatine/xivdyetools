@@ -39,6 +39,7 @@ import type {
   CMYK,
 } from '@xivdyetools/types';
 import { ColorConverter, type DeltaEFormula } from './color/ColorConverter.js';
+import type { MatchingMethod } from '../types/index.js';
 import { ColorblindnessSimulator } from './color/ColorblindnessSimulator.js';
 import { ColorAccessibility } from './color/ColorAccessibility.js';
 import { ColorManipulator } from './color/ColorManipulator.js';
@@ -166,6 +167,30 @@ export class ColorService {
    */
   static getDistinguishabilityPercent(hex1: string, hex2: string): number {
     return ColorConverter.getDistinguishabilityPercent(hex1, hex2);
+  }
+
+  /**
+   * Distance between two colors in a 5.0 matching-vocabulary method's native
+   * unit — the one dispatch every surface shares (web readouts, bot cards,
+   * OG images). `distinguish` returns the display-rounded integer percent;
+   * for *ranking* use DyeSearch, which ranks distinguish by the unrounded
+   * value so display ties never scramble an ordering.
+   */
+  static getDistanceForMethod(hex1: string, hex2: string, method: MatchingMethod): number {
+    switch (method) {
+      case 'ciede2000':
+        return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
+      case 'oklab':
+        return ColorConverter.getDeltaE_Oklab(hex1, hex2);
+      case 'cie76':
+        return ColorConverter.getDeltaE(hex1, hex2, 'cie76');
+      case 'redmean':
+        return ColorConverter.getRedmeanDistance(hex1, hex2);
+      case 'rgb':
+        return ColorConverter.getColorDistance(hex1, hex2);
+      case 'distinguish':
+        return ColorConverter.getDistinguishabilityPercent(hex1, hex2);
+    }
   }
 
   // ============================================================================

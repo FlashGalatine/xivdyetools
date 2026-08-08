@@ -36,19 +36,19 @@ describe('band vocabulary parity with the calibration algorithm', () => {
       expect(result.pooledPairCount).toBe(38750);
 
       for (const context of ['match', 'harmony', 'separation'] as const) {
-        for (const method of ['deok', 'de76', 'redmean', 'rgbdist'] as const) {
+        for (const method of ['oklab', 'cie76', 'redmean', 'rgb'] as const) {
           expect(
             BAND_VOCABULARY[context][method].cuts,
             `${context}.${method}`
           ).toEqual(result[context][method].cuts);
         }
         // ΔE2000 rows are the settled ground truth, not calibrated
-        expect(BAND_VOCABULARY[context].de2000.cuts).toEqual([
+        expect(BAND_VOCABULARY[context].ciede2000.cuts).toEqual([
           ...DE2000_GROUND_TRUTH[context],
         ]);
         // DISTINGUISH % derives exactly from RGB DIST
         expect(BAND_VOCABULARY[context].distinguish.cuts).toEqual(
-          deriveDistinguishCuts(BAND_VOCABULARY[context].rgbdist.cuts)
+          deriveDistinguishCuts(BAND_VOCABULARY[context].rgb.cuts)
         );
       }
 
@@ -63,15 +63,15 @@ describe('band vocabulary parity with the calibration algorithm', () => {
 describe('classifyBandTier', () => {
   it('scores on the display-rounded value (tier-on-displayed-value rule)', () => {
     // MATCH ΔE2000 first cut is 5 (dp 1): 4.96 rounds to 5.0 → tier 1, not 0
-    expect(classifyBandTier(4.96, 'de2000', 'match')).toBe(1);
-    expect(classifyBandTier(4.94, 'de2000', 'match')).toBe(0);
+    expect(classifyBandTier(4.96, 'ciede2000', 'match')).toBe(1);
+    expect(classifyBandTier(4.94, 'ciede2000', 'match')).toBe(0);
   });
 
   it('classifies each boundary ascending', () => {
-    expect(classifyBandTier(0, 'de2000', 'match')).toBe(0);
-    expect(classifyBandTier(7, 'de2000', 'match')).toBe(1);
-    expect(classifyBandTier(15, 'de2000', 'match')).toBe(2);
-    expect(classifyBandTier(25, 'de2000', 'match')).toBe(3);
+    expect(classifyBandTier(0, 'ciede2000', 'match')).toBe(0);
+    expect(classifyBandTier(7, 'ciede2000', 'match')).toBe(1);
+    expect(classifyBandTier(15, 'ciede2000', 'match')).toBe(2);
+    expect(classifyBandTier(25, 'ciede2000', 'match')).toBe(3);
   });
 
   it('supports moved ΔE2000 cuts for the user match line', () => {
@@ -81,15 +81,15 @@ describe('classifyBandTier', () => {
   });
 
   it('ΔEOK classifies in its raw unit at dp 3', () => {
-    expect(classifyBandTier(0.0164, 'deok', 'match')).toBe(0);
+    expect(classifyBandTier(0.0164, 'oklab', 'match')).toBe(0);
     // 0.0169 display-rounds to 0.017 = the first cut → tier 1, not 0
-    expect(classifyBandTier(0.0169, 'deok', 'match')).toBe(1);
-    expect(classifyBandTier(0.0171, 'deok', 'match')).toBe(1);
+    expect(classifyBandTier(0.0169, 'oklab', 'match')).toBe(1);
+    expect(classifyBandTier(0.0171, 'oklab', 'match')).toBe(1);
   });
 
   it('rounds to method display precision', () => {
-    expect(roundToBandDisplay(0.12345, 'deok')).toBe(0.123);
-    expect(roundToBandDisplay(12.34, 'de76')).toBe(12.3);
+    expect(roundToBandDisplay(0.12345, 'oklab')).toBe(0.123);
+    expect(roundToBandDisplay(12.34, 'cie76')).toBe(12.3);
     expect(roundToBandDisplay(12.6, 'distinguish')).toBe(13);
   });
 });

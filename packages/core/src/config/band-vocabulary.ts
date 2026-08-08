@@ -32,7 +32,7 @@ import { COLOR_DISTANCE_MAX } from '../constants/index.js';
 export type BandContext = 'match' | 'harmony' | 'separation';
 
 /** Distance-like methods carrying tier bands. */
-export type BandMethod = 'de2000' | 'deok' | 'de76' | 'redmean' | 'rgbdist' | 'distinguish';
+export type BandMethod = 'ciede2000' | 'oklab' | 'cie76' | 'redmean' | 'rgb' | 'distinguish';
 
 /** Tier index: 0 = best band (below first cut) … 3 = beyond the last cut. */
 export type BandTier = 0 | 1 | 2 | 3;
@@ -46,11 +46,11 @@ export interface MethodBandSet {
 
 /** Display precision per method (identifiers, not quantities — never localise). */
 export const BAND_METHOD_DP: Record<BandMethod, number> = {
-  de2000: 1,
-  deok: 3,
-  de76: 1,
+  ciede2000: 1,
+  oklab: 3,
+  cie76: 1,
   redmean: 1,
-  rgbdist: 1,
+  rgb: 1,
   distinguish: 0,
 };
 
@@ -82,27 +82,27 @@ const RGBDIST_CUTS: Record<BandContext, readonly [number, number, number]> = {
  */
 export const BAND_VOCABULARY: Record<BandContext, Record<BandMethod, MethodBandSet>> = {
   match: {
-    de2000: bandSet([5, 10, 20], 'de2000'),
-    deok: bandSet([0.017, 0.04, 0.107], 'deok'),
-    de76: bandSet([5.4, 12.6, 26.2], 'de76'),
+    ciede2000: bandSet([5, 10, 20], 'ciede2000'),
+    oklab: bandSet([0.017, 0.04, 0.107], 'oklab'),
+    cie76: bandSet([5.4, 12.6, 26.2], 'cie76'),
     redmean: bandSet([13.9, 31.9, 91.1], 'redmean'),
-    rgbdist: bandSet(RGBDIST_CUTS.match, 'rgbdist'),
+    rgb: bandSet(RGBDIST_CUTS.match, 'rgb'),
     distinguish: bandSet(deriveDistinguishCuts(RGBDIST_CUTS.match), 'distinguish'),
   },
   harmony: {
-    de2000: bandSet([6, 12, 20], 'de2000'),
-    deok: bandSet([0.02, 0.053, 0.107], 'deok'),
-    de76: bandSet([6.7, 14.5, 26.2], 'de76'),
+    ciede2000: bandSet([6, 12, 20], 'ciede2000'),
+    oklab: bandSet([0.02, 0.053, 0.107], 'oklab'),
+    cie76: bandSet([6.7, 14.5, 26.2], 'cie76'),
     redmean: bandSet([16.5, 44.4, 91.1], 'redmean'),
-    rgbdist: bandSet(RGBDIST_CUTS.harmony, 'rgbdist'),
+    rgb: bandSet(RGBDIST_CUTS.harmony, 'rgb'),
     distinguish: bandSet(deriveDistinguishCuts(RGBDIST_CUTS.harmony), 'distinguish'),
   },
   separation: {
-    de2000: bandSet([8, 15, 30], 'de2000'),
-    deok: bandSet([0.062, 0.103, 0.252], 'deok'),
-    de76: bandSet([10.4, 19.3, 38.4], 'de76'),
+    ciede2000: bandSet([8, 15, 30], 'ciede2000'),
+    oklab: bandSet([0.062, 0.103, 0.252], 'oklab'),
+    cie76: bandSet([10.4, 19.3, 38.4], 'cie76'),
     redmean: bandSet([54, 102, 222], 'redmean'),
-    rgbdist: bandSet(RGBDIST_CUTS.separation, 'rgbdist'),
+    rgb: bandSet(RGBDIST_CUTS.separation, 'rgb'),
     distinguish: bandSet(deriveDistinguishCuts(RGBDIST_CUTS.separation), 'distinguish'),
   },
 };

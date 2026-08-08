@@ -467,37 +467,27 @@ describe('CharacterColorService', () => {
       expect(matches[0].dye.name).toBe('Red Dye');
     });
 
-    it('should support hyab matching method', () => {
+    it('should support redmean matching method', () => {
       const matches = service.findClosestDyes(testColor, mockDyeService, {
         count: 2,
-        matchingMethod: 'hyab',
+        matchingMethod: 'redmean',
       });
       expect(matches).toBeDefined();
       expect(matches.length).toBe(2);
       expect(matches[0].dye.name).toBe('Red Dye');
     });
 
-    it('should support oklch-weighted matching method', () => {
+    it('should support distinguish matching method (RGB DIST rescaled)', () => {
       const matches = service.findClosestDyes(testColor, mockDyeService, {
         count: 2,
-        matchingMethod: 'oklch-weighted',
+        matchingMethod: 'distinguish',
       });
       expect(matches).toBeDefined();
       expect(matches.length).toBe(2);
       expect(matches[0].dye.name).toBe('Red Dye');
     });
 
-    it('should support oklch-weighted with custom weights', () => {
-      const matches = service.findClosestDyes(testColor, mockDyeService, {
-        count: 2,
-        matchingMethod: 'oklch-weighted',
-        weights: { kL: 1, kC: 1, kH: 1 },
-      });
-      expect(matches).toBeDefined();
-      expect(matches.length).toBe(2);
-    });
-
-    it('should use default method (oklab) for unknown method', () => {
+    it('should use the suite default (ciede2000) for unknown method', () => {
       // Testing the default case of the switch statement
       const matches = service.findClosestDyes(testColor, mockDyeService, {
         count: 2,

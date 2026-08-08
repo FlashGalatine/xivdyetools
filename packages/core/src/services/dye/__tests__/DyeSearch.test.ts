@@ -638,22 +638,21 @@ describe('DyeSearch', () => {
         expect(closest).not.toBeNull();
       });
 
-      it('should find closest dye using hyab method', () => {
-        const closest = search.findClosestDye('#FF0000', { matchingMethod: 'hyab' });
+      it('should find closest dye using redmean method', () => {
+        const closest = search.findClosestDye('#FF0000', { matchingMethod: 'redmean' });
         expect(closest).not.toBeNull();
       });
 
-      it('should find closest dye using oklch-weighted method', () => {
+      it('should find closest dye using distinguish method', () => {
         const closest = search.findClosestDye('#FF0000', {
-          matchingMethod: 'oklch-weighted',
+          matchingMethod: 'distinguish',
         });
         expect(closest).not.toBeNull();
       });
 
-      it('should find closest dye using oklch-weighted with custom weights', () => {
+      it('should find closest dye using the suite default explicitly', () => {
         const closest = search.findClosestDye('#FF0000', {
-          matchingMethod: 'oklch-weighted',
-          weights: { kL: 1, kC: 1.5, kH: 2 },
+          matchingMethod: 'ciede2000',
         });
         expect(closest).not.toBeNull();
       });
@@ -685,27 +684,18 @@ describe('DyeSearch', () => {
         expect(Array.isArray(results)).toBe(true);
       });
 
-      it('should find dyes within distance using hyab method', () => {
+      it('should find dyes within distance using redmean method', () => {
         const results = search.findDyesWithinDistance('#FF0000', {
           maxDistance: 100,
-          matchingMethod: 'hyab',
+          matchingMethod: 'redmean',
         });
         expect(Array.isArray(results)).toBe(true);
       });
 
-      it('should find dyes within distance using oklch-weighted method', () => {
+      it('should find dyes within distance using distinguish method', () => {
         const results = search.findDyesWithinDistance('#FF0000', {
           maxDistance: 100,
-          matchingMethod: 'oklch-weighted',
-        });
-        expect(Array.isArray(results)).toBe(true);
-      });
-
-      it('should find dyes within distance using oklch-weighted with custom weights', () => {
-        const results = search.findDyesWithinDistance('#FF0000', {
-          maxDistance: 100,
-          matchingMethod: 'oklch-weighted',
-          weights: { kL: 1, kC: 1.5, kH: 2 },
+          matchingMethod: 'distinguish',
         });
         expect(Array.isArray(results)).toBe(true);
       });

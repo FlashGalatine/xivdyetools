@@ -32,8 +32,6 @@ export {
 // Types (core-specific)
 export type {
   MatchingMethod,
-  OklchWeights,
-  MatchingConfig,
 } from './types/index.js';
 
 // Harmony types
@@ -61,8 +59,13 @@ export {
 } from './services/dye/DyeFilter.js';
 
 export {
-  // Color matching presets (core-specific, not deprecated)
-  MATCHING_PRESETS,
+  // 5.0 matching vocabulary (one list suite-wide, dE2000 default)
+  MATCHING_METHODS,
+  DEFAULT_MATCHING_METHOD,
+  MATCHING_METHOD_TAGS,
+  LEGACY_MATCHING_METHOD_MAP,
+  isMatchingMethod,
+  normalizeMatchingMethod,
 } from './types/index.js';
 
 // Dye consolidation (Patch 7.5)

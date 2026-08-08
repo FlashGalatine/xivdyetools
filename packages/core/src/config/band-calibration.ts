@@ -30,7 +30,7 @@ import { ColorblindnessSimulator } from '../services/color/ColorblindnessSimulat
 import { ColorAccessibility } from '../services/color/ColorAccessibility.js';
 
 /** Methods calibrated against ΔE2000 (DISTINGUISH % derives from RGB DIST). */
-export type CalibratedMethodId = 'deok' | 'de76' | 'redmean' | 'rgbdist';
+export type CalibratedMethodId = 'oklab' | 'cie76' | 'redmean' | 'rgb';
 
 export interface CalibratedMethodBands {
   /** Accuracy-optimal cuts, display-rounded, ordering enforced (ascending) */
@@ -71,10 +71,10 @@ export const DE2000_GROUND_TRUTH = {
 
 /** Display precision (decimal places) per calibrated method */
 export const METHOD_DISPLAY_DP: Record<CalibratedMethodId, number> = {
-  deok: 3,
-  de76: 1,
+  oklab: 3,
+  cie76: 1,
   redmean: 1,
-  rgbdist: 1,
+  rgb: 1,
 };
 
 const LENSES: readonly VisionType[] = [
@@ -85,11 +85,11 @@ const LENSES: readonly VisionType[] = [
 ];
 
 interface PairRows {
-  de2000: number[];
-  deok: number[];
-  de76: number[];
+  ciede2000: number[];
+  oklab: number[];
+  cie76: number[];
   redmean: number[];
-  rgbdist: number[];
+  rgb: number[];
   ratio: number[];
 }
 
@@ -155,16 +155,16 @@ function jointAgree(
 }
 
 function pairRows(hexes: readonly string[]): PairRows {
-  const rows: PairRows = { de2000: [], deok: [], de76: [], redmean: [], rgbdist: [], ratio: [] };
+  const rows: PairRows = { ciede2000: [], oklab: [], cie76: [], redmean: [], rgb: [], ratio: [] };
   for (let i = 0; i < hexes.length; i++) {
     for (let j = i + 1; j < hexes.length; j++) {
       const a = hexes[i];
       const b = hexes[j];
-      rows.de2000.push(ColorConverter.getDeltaE(a, b, 'cie2000'));
-      rows.deok.push(ColorConverter.getDeltaE_Oklab(a, b));
-      rows.de76.push(ColorConverter.getDeltaE(a, b, 'cie76'));
+      rows.ciede2000.push(ColorConverter.getDeltaE(a, b, 'cie2000'));
+      rows.oklab.push(ColorConverter.getDeltaE_Oklab(a, b));
+      rows.cie76.push(ColorConverter.getDeltaE(a, b, 'cie76'));
       rows.redmean.push(ColorConverter.getRedmeanDistance(a, b));
-      rows.rgbdist.push(ColorConverter.getColorDistance(a, b));
+      rows.rgb.push(ColorConverter.getColorDistance(a, b));
       rows.ratio.push(ColorAccessibility.getContrastRatio(a, b));
     }
   }
@@ -175,9 +175,9 @@ function calibrateContext(
   rows: PairRows,
   refBands: readonly number[]
 ): Record<CalibratedMethodId, CalibratedMethodBands> {
-  const refTiers = rows.de2000.map((v) => tierOf(roundTo(v, 1), refBands));
+  const refTiers = rows.ciede2000.map((v) => tierOf(roundTo(v, 1), refBands));
   const result = {} as Record<CalibratedMethodId, CalibratedMethodBands>;
-  for (const id of ['deok', 'de76', 'redmean', 'rgbdist'] as const) {
+  for (const id of ['oklab', 'cie76', 'redmean', 'rgb'] as const) {
     const dp = METHOD_DISPLAY_DP[id];
     const vals = rows[id];
     const cuts: number[] = [];
@@ -202,7 +202,7 @@ function calibrateContext(
 }
 
 function calibrateRatio(rows: PairRows, refBands: readonly number[]): RatioCalibration {
-  const refTiers = rows.de2000.map((v) => tierOf(roundTo(v, 1), refBands));
+  const refTiers = rows.ciede2000.map((v) => tierOf(roundTo(v, 1), refBands));
   const cuts: number[] = [];
   for (let k = 0; k < 3; k++) {
     cuts.push(
@@ -230,11 +230,11 @@ export function calibrateBandVocabulary(hexes: readonly string[]): BandCalibrati
   const normal = pairRows(hexes);
 
   const pooled: PairRows = {
-    de2000: [...normal.de2000],
-    deok: [...normal.deok],
-    de76: [...normal.de76],
+    ciede2000: [...normal.ciede2000],
+    oklab: [...normal.oklab],
+    cie76: [...normal.cie76],
     redmean: [...normal.redmean],
-    rgbdist: [...normal.rgbdist],
+    rgb: [...normal.rgb],
     ratio: [...normal.ratio],
   };
   for (const lens of LENSES) {
@@ -251,13 +251,13 @@ export function calibrateBandVocabulary(hexes: readonly string[]): BandCalibrati
   const anchoredCuts = [accessibility.cuts[0], accessibility.cuts[1], 3.0].map((v, i, a) =>
     i > 0 && v < a[i - 1] ? a[i - 1] : v
   ) as [number, number, number];
-  const refTiersSep = pooled.de2000.map((v) =>
+  const refTiersSep = pooled.ciede2000.map((v) =>
     tierOf(roundTo(v, 1), DE2000_GROUND_TRUTH.separation)
   );
 
   return {
-    realPairCount: normal.de2000.length,
-    pooledPairCount: pooled.de2000.length,
+    realPairCount: normal.ciede2000.length,
+    pooledPairCount: pooled.ciede2000.length,
     match: calibrateContext(normal, DE2000_GROUND_TRUTH.match),
     harmony: calibrateContext(normal, DE2000_GROUND_TRUTH.harmony),
     separation: calibrateContext(pooled, DE2000_GROUND_TRUTH.separation),

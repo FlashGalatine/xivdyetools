@@ -35,7 +35,7 @@ import type {
   Gender,
 } from '@xivdyetools/types';
 import type { RGB } from '@xivdyetools/types';
-import type { MatchingMethod, OklchWeights } from '../types/index.js';
+import type { MatchingMethod } from '../types/index.js';
 import type { DyeService } from './DyeService.js';
 import { ColorConverter } from './color/ColorConverter.js';
 
@@ -47,8 +47,6 @@ export interface CharacterMatchOptions {
   count?: number;
   /** Color matching algorithm (default: 'oklab') */
   matchingMethod?: MatchingMethod;
-  /** Custom weights for oklch-weighted method */
-  weights?: OklchWeights;
 }
 
 // =============================================================================
@@ -281,12 +279,7 @@ export class CharacterColorService {
    * Calculate color distance using the specified matching method.
    * Converts RGB to hex for perceptual methods that require it.
    */
-  private calculateDistanceWithMethod(
-    rgb1: RGB,
-    rgb2: RGB,
-    method: MatchingMethod,
-    weights?: OklchWeights
-  ): number {
+  private calculateDistanceWithMethod(rgb1: RGB, rgb2: RGB, method: MatchingMethod): number {
     // For RGB method, use simple Euclidean distance
     if (method === 'rgb') {
       return this.calculateDistance(rgb1, rgb2);
@@ -303,12 +296,13 @@ export class CharacterColorService {
         return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
       case 'oklab':
         return ColorConverter.getDeltaE_Oklab(hex1, hex2);
-      case 'hyab':
-        return ColorConverter.getDeltaE_HyAB(hex1, hex2);
-      case 'oklch-weighted':
-        return ColorConverter.getDeltaE_OklchWeighted(hex1, hex2, weights);
+      case 'redmean':
+        return ColorConverter.getRedmeanDistance(hex1, hex2);
+      case 'distinguish':
+        // Unrounded percent — identical ranks to RGB DIST, no ranking ties
+        return ColorConverter.getColorDistance(hex1, hex2) / 4.416729559;
       default:
-        return ColorConverter.getDeltaE_Oklab(hex1, hex2);
+        return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
     }
   }
 
@@ -345,7 +339,7 @@ export class CharacterColorService {
     const options: CharacterMatchOptions =
       typeof countOrOptions === 'number' ? { count: countOrOptions } : countOrOptions;
 
-    const { count = 3, matchingMethod = 'oklab', weights } = options;
+    const { count = 3, matchingMethod = 'ciede2000' } = options;
 
     const allDyes = dyeService.getAllDyes();
 
@@ -362,12 +356,7 @@ export class CharacterColorService {
         continue;
       }
 
-      const distance = this.calculateDistanceWithMethod(
-        color.rgb,
-        dye.rgb,
-        matchingMethod,
-        weights
-      );
+      const distance = this.calculateDistanceWithMethod(color.rgb, dye.rgb, matchingMethod);
 
       if (best.length < count) {
         best.push({ dye, distance });
