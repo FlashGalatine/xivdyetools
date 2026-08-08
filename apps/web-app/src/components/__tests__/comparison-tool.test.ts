@@ -68,6 +68,9 @@ vi.mock('@services/index', () => ({
     calculateDeltaE: vi.fn(() => 10),
     calculateColorDistance: vi.fn(() => 15),
     getColorDistance: vi.fn(() => 15),
+    // 7C Duel plumbing
+    getDistanceForMethod: vi.fn(() => 12),
+    getContrastRatio: vi.fn(() => 1.5),
   },
   MarketBoardService: {
     getInstance: vi.fn().mockReturnValue({
