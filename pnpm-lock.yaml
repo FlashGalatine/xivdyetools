@@ -356,6 +356,9 @@ importers:
       '@xivdyetools/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@xivdyetools/svg':
+        specifier: workspace:*
+        version: link:../../packages/svg
       '@xivdyetools/types':
         specifier: workspace:*
         version: link:../../packages/types

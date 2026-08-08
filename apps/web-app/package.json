@@ -55,7 +55,8 @@
     "@xivdyetools/logger": "workspace:*",
     "@xivdyetools/types": "workspace:*",
     "lit": "^3.3.3",
-    "spectral.js": "^3.0.0"
+    "spectral.js": "^3.0.0",
+    "@xivdyetools/svg": "workspace:*"
   },
   "engines": {
     "node": ">=18.0.0"

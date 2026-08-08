@@ -97,3 +97,11 @@ describe('5.0 icon system', () => {
     expect(svg).toContain('stroke-width="2"');
   });
 });
+
+describe('fluid sizing', () => {
+  it('omits width/height for CSS-sized DOM shims', () => {
+    const svg = toolGlyph('harmony', 'compact', { fluid: true });
+    expect(svg).not.toMatch(/<svg [^>]*\bwidth=/);
+    expect(svg).toContain('viewBox="0 0 32 32"');
+  });
+});

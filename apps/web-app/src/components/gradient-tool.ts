@@ -34,7 +34,7 @@ import {
 } from '@services/index';
 // Note: setupMarketBoardListeners still used by drawer code until Phase 2 refactor
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
-import { ICON_TOOL_MIXER } from '@shared/tool-icons';
+import { ICON_TOOL_GRADIENT } from '@shared/tool-icons';
 // Note: ICON_MARKET still used by drawer code until Phase 2 refactor
 import { ICON_MARKET, ICON_EXPORT, ICON_STAIRS, ICON_PALETTE } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
@@ -1131,7 +1131,7 @@ export class GradientTool extends BaseComponent {
     });
     this.emptyStateContainer.innerHTML = `
       <div style="width: 150px; height: 150px; opacity: 0.3; margin-bottom: 16px; color: currentColor;">
-        ${ICON_TOOL_MIXER}
+        ${ICON_TOOL_GRADIENT}
       </div>
       <div style="font-size: 16px; color: var(--theme-text); margin-bottom: 8px;">${LanguageService.t('gradient.setStartAndEnd')}</div>
       <div style="font-size: 14px; opacity: 0.7;">${LanguageService.t('gradient.clickPlusButtons')}</div>

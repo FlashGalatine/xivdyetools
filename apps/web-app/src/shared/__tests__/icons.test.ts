@@ -247,15 +247,15 @@ describe('Tool Icons', () => {
   });
 
   describe('Individual icon constants', () => {
-    it('ICON_TOOL_HARMONY should be a valid SVG with circles', () => {
+    it('ICON_TOOL_HARMONY is the 1B chip cluster (four chips, one accent)', () => {
       expect(ICON_TOOL_HARMONY).toContain('<svg');
-      expect(ICON_TOOL_HARMONY).toContain('circle');
+      expect(ICON_TOOL_HARMONY).toContain('rect');
+      expect(ICON_TOOL_HARMONY).toContain('#EA4133');
     });
 
-    it('ICON_TOOL_MATCHER should be a valid SVG with selection elements', () => {
-      // V4: Icon updated to selection crop design with paths and rect (no circles)
+    it('ICON_TOOL_MATCHER is the extractor chip set (5.0)', () => {
       expect(ICON_TOOL_MATCHER).toContain('<svg');
-      expect(ICON_TOOL_MATCHER).toContain('path');
+      expect(ICON_TOOL_MATCHER).toContain('rect');
     });
 
     it('ICON_TOOL_ACCESSIBILITY should be a valid SVG with eye path', () => {
@@ -274,9 +274,10 @@ describe('Tool Icons', () => {
       expect(ICON_TOOL_MIXER).toContain('rect');
     });
 
-    it('ICON_TOOL_MENU should be a valid SVG with rect', () => {
+    it('ICON_TOOL_MENU is the dot grid with an ink centre (no accent chip)', () => {
       expect(ICON_TOOL_MENU).toContain('<svg');
-      expect(ICON_TOOL_MENU).toContain('rect');
+      expect(ICON_TOOL_MENU).toContain('circle');
+      expect(ICON_TOOL_MENU).not.toContain('#EA4133');
     });
   });
 });

@@ -16,7 +16,7 @@ import {
   ICON_TOOL_HARMONY,
   ICON_TOOL_MATCHER,
   ICON_TOOL_COMPARISON,
-  ICON_TOOL_MIXER,
+  ICON_TOOL_GRADIENT,
   ICON_TOOL_ACCESSIBILITY,
   ICON_TOOL_DYE_MIXER,
   ICON_TOOL_PRESETS,
@@ -56,7 +56,7 @@ const TOOLS: ToolInfo[] = [
   },
   {
     id: 'gradient',
-    icon: ICON_TOOL_MIXER,
+    icon: ICON_TOOL_GRADIENT,
     nameKey: 'tools.gradient.shortName',
     descriptionKey: 'tools.gradient.description',
   },

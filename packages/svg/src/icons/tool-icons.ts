@@ -237,6 +237,11 @@ export interface GlyphRenderOptions {
   /** Rendered width/height in px (default 32) */
   size?: number;
   /**
+   * Omit the width/height attributes so CSS sizes the glyph (browser DOM
+   * shims). Renderer contexts must NOT use this — resvg needs explicit size.
+   */
+  fluid?: boolean;
+  /**
    * Stroke/ink colour. Defaults to `currentColor` for browser DOM use —
    * renderer contexts (resvg: bot cards, OG images) MUST pin an explicit ink
    * or every stroke comes out black.
@@ -254,14 +259,15 @@ export interface GlyphRenderOptions {
 function renderGlyph(
   inner: string,
   defaultWeight: number,
-  { size = 32, ink = 'currentColor', accent = GLYPH_ACCENT_DARK, weight }: GlyphRenderOptions = {}
+  { size = 32, ink = 'currentColor', accent = GLYPH_ACCENT_DARK, weight, fluid }: GlyphRenderOptions = {}
 ): string {
   const substituted = inner
     .replace(' F ', ` stroke="none" fill="${accent}" `)
     .replaceAll('INK', ink);
   const sw = weight ?? defaultWeight;
+  const sizeAttrs = fluid ? '' : `width="${size}" height="${size}" `;
   return (
-    `<svg width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true">` +
+    `<svg ${sizeAttrs}viewBox="0 0 32 32" aria-hidden="true">` +
     `<g fill="none" stroke="${ink}" stroke-linecap="round" stroke-linejoin="round" stroke-width="${sw}">` +
     substituted +
     '</g></svg>'
