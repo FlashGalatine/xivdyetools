@@ -5,6 +5,21 @@
 
 import { AnnouncerService } from '../announcer-service';
 
+/**
+ * The announcer debounce timer fires late under CPU contention (parallel
+ * turbo runs), so poll for the flushed text instead of one fixed sleep.
+ */
+async function waitForRegionText(regionId: string, expected: string): Promise<string> {
+  const deadline = Date.now() + 3000;
+  let text = '';
+  while (Date.now() < deadline) {
+    text = document.getElementById(regionId)?.textContent ?? '';
+    if (text === expected) return text;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  return text;
+}
+
 describe('AnnouncerService', () => {
   let container: HTMLElement;
 
@@ -82,41 +97,25 @@ describe('AnnouncerService', () => {
     it('should announce polite message', async () => {
       AnnouncerService.announce('Test message', 'polite');
 
-      // Wait for debounce
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const politeRegion = document.getElementById('sr-announcements-polite');
-      expect(politeRegion?.textContent).toBe('Test message');
+      expect(await waitForRegionText('sr-announcements-polite', 'Test message')).toBe('Test message');
     });
 
     it('should announce assertive message', async () => {
       AnnouncerService.announce('Urgent message', 'assertive');
 
-      // Wait for debounce
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const assertiveRegion = document.getElementById('sr-announcements-assertive');
-      expect(assertiveRegion?.textContent).toBe('Urgent message');
+      expect(await waitForRegionText('sr-announcements-assertive', 'Urgent message')).toBe('Urgent message');
     });
 
     it('should default to polite priority', async () => {
       AnnouncerService.announce('Default priority message');
 
-      // Wait for debounce
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const politeRegion = document.getElementById('sr-announcements-polite');
-      expect(politeRegion?.textContent).toBe('Default priority message');
+      expect(await waitForRegionText('sr-announcements-polite', 'Default priority message')).toBe('Default priority message');
     });
 
     it('should trim message whitespace', async () => {
       AnnouncerService.announce('  Trimmed message  ');
 
-      // Wait for debounce
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const politeRegion = document.getElementById('sr-announcements-polite');
-      expect(politeRegion?.textContent).toBe('Trimmed message');
+      expect(await waitForRegionText('sr-announcements-polite', 'Trimmed message')).toBe('Trimmed message');
     });
 
     it('should not announce empty messages', async () => {
@@ -139,19 +138,6 @@ describe('AnnouncerService', () => {
       expect(politeRegion?.textContent).toBe('');
     });
 
-    // The debounce timer fires late under CPU contention (parallel turbo
-    // runs), so poll for the flushed text instead of one fixed sleep
-    const waitForRegionText = async (regionId: string, expected: string): Promise<string> => {
-      const deadline = Date.now() + 3000;
-      let text = '';
-      while (Date.now() < deadline) {
-        text = document.getElementById(regionId)?.textContent ?? '';
-        if (text === expected) return text;
-        await new Promise((resolve) => setTimeout(resolve, 50));
-      }
-      return text;
-    };
-
     it('should combine multiple polite announcements', async () => {
       AnnouncerService.announce('Message 1', 'polite');
       AnnouncerService.announce('Message 2', 'polite');
@@ -172,16 +158,12 @@ describe('AnnouncerService', () => {
       AnnouncerService.announce('Polite message', 'polite');
       AnnouncerService.announce('Assertive message', 'assertive');
 
-      // Wait for debounce (150ms) + extra time for requestAnimationFrame callbacks
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      // Additional wait for RAF to execute (jsdom implements RAF as setTimeout)
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-
-      const politeRegion = document.getElementById('sr-announcements-polite');
-      const assertiveRegion = document.getElementById('sr-announcements-assertive');
-
-      expect(politeRegion?.textContent).toBe('Polite message');
-      expect(assertiveRegion?.textContent).toBe('Assertive message');
+      expect(await waitForRegionText('sr-announcements-polite', 'Polite message')).toBe(
+        'Polite message'
+      );
+      expect(await waitForRegionText('sr-announcements-assertive', 'Assertive message')).toBe(
+        'Assertive message'
+      );
     });
   });
 
@@ -197,19 +179,13 @@ describe('AnnouncerService', () => {
     it('should announce result count', async () => {
       AnnouncerService.announceResults(5, 'matching dyes');
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const politeRegion = document.getElementById('sr-announcements-polite');
-      expect(politeRegion?.textContent).toBe('Found 5 matching dyes');
+      expect(await waitForRegionText('sr-announcements-polite', 'Found 5 matching dyes')).toBe('Found 5 matching dyes');
     });
 
     it('should announce no results found', async () => {
       AnnouncerService.announceResults(0, 'matching dyes');
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const politeRegion = document.getElementById('sr-announcements-polite');
-      expect(politeRegion?.textContent).toBe('No matching dyes found');
+      expect(await waitForRegionText('sr-announcements-polite', 'No matching dyes found')).toBe('No matching dyes found');
     });
   });
 
@@ -221,10 +197,7 @@ describe('AnnouncerService', () => {
     it('should announce selection with assertive priority', async () => {
       AnnouncerService.announceSelection('Snow White');
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const assertiveRegion = document.getElementById('sr-announcements-assertive');
-      expect(assertiveRegion?.textContent).toBe('Snow White selected');
+      expect(await waitForRegionText('sr-announcements-assertive', 'Snow White selected')).toBe('Snow White selected');
     });
   });
 
@@ -236,10 +209,7 @@ describe('AnnouncerService', () => {
     it('should announce deselection', async () => {
       AnnouncerService.announceDeselection('Snow White');
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const politeRegion = document.getElementById('sr-announcements-polite');
-      expect(politeRegion?.textContent).toBe('Snow White deselected');
+      expect(await waitForRegionText('sr-announcements-polite', 'Snow White deselected')).toBe('Snow White deselected');
     });
   });
 
@@ -251,10 +221,7 @@ describe('AnnouncerService', () => {
     it('should announce error with assertive priority', async () => {
       AnnouncerService.announceError('Failed to load prices');
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const assertiveRegion = document.getElementById('sr-announcements-assertive');
-      expect(assertiveRegion?.textContent).toBe('Error: Failed to load prices');
+      expect(await waitForRegionText('sr-announcements-assertive', 'Error: Failed to load prices')).toBe('Error: Failed to load prices');
     });
   });
 
@@ -266,10 +233,7 @@ describe('AnnouncerService', () => {
     it('should announce success message', async () => {
       AnnouncerService.announceSuccess('Palette saved successfully');
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const politeRegion = document.getElementById('sr-announcements-polite');
-      expect(politeRegion?.textContent).toBe('Palette saved successfully');
+      expect(await waitForRegionText('sr-announcements-polite', 'Palette saved successfully')).toBe('Palette saved successfully');
     });
   });
 
@@ -281,10 +245,7 @@ describe('AnnouncerService', () => {
     it('should announce loading state', async () => {
       AnnouncerService.announceLoading('market prices');
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const politeRegion = document.getElementById('sr-announcements-polite');
-      expect(politeRegion?.textContent).toBe('Loading market prices...');
+      expect(await waitForRegionText('sr-announcements-polite', 'Loading market prices...')).toBe('Loading market prices...');
     });
   });
 
@@ -296,10 +257,7 @@ describe('AnnouncerService', () => {
     it('should announce loaded state', async () => {
       AnnouncerService.announceLoaded('Market prices');
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const politeRegion = document.getElementById('sr-announcements-polite');
-      expect(politeRegion?.textContent).toBe('Market prices loaded');
+      expect(await waitForRegionText('sr-announcements-polite', 'Market prices loaded')).toBe('Market prices loaded');
     });
   });
 
@@ -311,37 +269,25 @@ describe('AnnouncerService', () => {
     it('should announce filter change with string value', async () => {
       AnnouncerService.announceFilterChange('Category', 'Red');
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const politeRegion = document.getElementById('sr-announcements-polite');
-      expect(politeRegion?.textContent).toBe('Category filter Red');
+      expect(await waitForRegionText('sr-announcements-polite', 'Category filter Red')).toBe('Category filter Red');
     });
 
     it('should announce filter enabled state', async () => {
       AnnouncerService.announceFilterChange('Premium only', true);
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const politeRegion = document.getElementById('sr-announcements-polite');
-      expect(politeRegion?.textContent).toBe('Premium only filter enabled');
+      expect(await waitForRegionText('sr-announcements-polite', 'Premium only filter enabled')).toBe('Premium only filter enabled');
     });
 
     it('should announce filter disabled state', async () => {
       AnnouncerService.announceFilterChange('Premium only', false);
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const politeRegion = document.getElementById('sr-announcements-polite');
-      expect(politeRegion?.textContent).toBe('Premium only filter disabled');
+      expect(await waitForRegionText('sr-announcements-polite', 'Premium only filter disabled')).toBe('Premium only filter disabled');
     });
 
     it('should include result count if provided', async () => {
       AnnouncerService.announceFilterChange('Category', 'Red', 15);
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const politeRegion = document.getElementById('sr-announcements-polite');
-      expect(politeRegion?.textContent).toBe('Category filter Red. 15 items visible');
+      expect(await waitForRegionText('sr-announcements-polite', 'Category filter Red. 15 items visible')).toBe('Category filter Red. 15 items visible');
     });
   });
 
@@ -353,10 +299,7 @@ describe('AnnouncerService', () => {
     it('should announce navigation with assertive priority', async () => {
       AnnouncerService.announceNavigation('Harmony Generator');
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const assertiveRegion = document.getElementById('sr-announcements-assertive');
-      expect(assertiveRegion?.textContent).toBe('Navigated to Harmony Generator');
+      expect(await waitForRegionText('sr-announcements-assertive', 'Navigated to Harmony Generator')).toBe('Navigated to Harmony Generator');
     });
   });
 
@@ -368,10 +311,7 @@ describe('AnnouncerService', () => {
     it('should announce copy action', async () => {
       AnnouncerService.announceCopy('Hex color');
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const politeRegion = document.getElementById('sr-announcements-polite');
-      expect(politeRegion?.textContent).toBe('Hex color copied to clipboard');
+      expect(await waitForRegionText('sr-announcements-polite', 'Hex color copied to clipboard')).toBe('Hex color copied to clipboard');
     });
   });
 
