@@ -29,6 +29,8 @@ interface FormState {
   category: PresetCategory;
   selectedDyes: Dye[];
   tags: string;
+  /** Re-render the HOW IT WILL LOOK preview band (8S) */
+  refreshPreview?: () => void;
 }
 
 type OnSubmitCallback = (result: SubmissionResult) => void;
@@ -37,12 +39,12 @@ type OnSubmitCallback = (result: SubmissionResult) => void;
 // Configuration
 // ============================================
 
-const CATEGORIES: { id: PresetCategory; label: string }[] = [
-  { id: 'jobs', label: 'Jobs' },
-  { id: 'grand-companies', label: 'Grand Companies' },
-  { id: 'seasons', label: 'Seasons' },
-  { id: 'events', label: 'Events' },
-  { id: 'aesthetics', label: 'Aesthetics' },
+const CATEGORIES: { id: PresetCategory; labelKey: string }[] = [
+  { id: 'jobs', labelKey: 'preset.categories.jobs' },
+  { id: 'grand-companies', labelKey: 'preset.categories.grandCompanies' },
+  { id: 'seasons', labelKey: 'preset.categories.seasons' },
+  { id: 'events', labelKey: 'preset.categories.events' },
+  { id: 'aesthetics', labelKey: 'preset.categories.aesthetics' },
 ];
 
 const MIN_NAME_LENGTH = 2;
@@ -53,7 +55,6 @@ const MAX_DESC_LENGTH = 200;
 // (matches the Phase-1 presets-api validation change).
 const MIN_DYES = 3;
 const MAX_DYES = 6;
-const MAX_TAGS = 10;
 
 // ============================================
 // Show Modal Function
@@ -97,9 +98,101 @@ export function showPresetSubmissionForm(onSubmit?: OnSubmitCallback): void {
 // Form Content Creation
 // ============================================
 
+/** 8S label row: localized label + REQUIRED/OPTIONAL chip. */
+function fieldLabelRow(labelText: string, reqText: string, required: boolean): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'flex items-center justify-between mb-1';
+  const label = document.createElement('span');
+  label.className = 'text-sm font-medium';
+  label.style.color = 'var(--theme-text)';
+  label.textContent = labelText;
+  const chip = document.createElement('span');
+  chip.style.cssText = `font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; padding: 2px 6px; border-radius: 4px; background: ${
+    required
+      ? 'color-mix(in srgb, var(--theme-primary) 14%, transparent)'
+      : 'var(--theme-background-secondary)'
+  }; color: ${required ? 'var(--theme-primary)' : 'var(--theme-text-muted)'};`;
+  chip.textContent = reqText;
+  row.appendChild(label);
+  row.appendChild(chip);
+  return row;
+}
+
+/** 8S field hint under an input. */
+function fieldHint(text: string): HTMLElement {
+  const hint = document.createElement('div');
+  hint.className = 'text-xs mt-1';
+  hint.style.color = 'var(--theme-text-muted)';
+  hint.textContent = text;
+  return hint;
+}
+
+/** HOW IT WILL LOOK — live preview band built from the current draft. */
+function createPreviewBand(state: FormState): HTMLElement {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'mb-4';
+
+  const labelRow = document.createElement('div');
+  labelRow.className = 'flex items-center justify-between mb-2';
+  const label = document.createElement('span');
+  label.style.cssText =
+    "font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted);";
+  label.textContent = LanguageService.t('preset.previewLabel');
+  const draft = document.createElement('span');
+  draft.style.cssText =
+    "font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; padding: 2px 6px; border-radius: 4px; background: var(--theme-background-secondary); color: var(--theme-text-muted);";
+  draft.textContent = LanguageService.t('preset.draftBadge');
+  labelRow.appendChild(label);
+  labelRow.appendChild(draft);
+
+  const card = document.createElement('div');
+  card.style.cssText =
+    'border: 1px solid var(--theme-border); border-radius: 10px; overflow: hidden;';
+
+  const band = document.createElement('div');
+  band.style.cssText = 'display: flex; height: 44px;';
+  const nameLine = document.createElement('div');
+  nameLine.style.cssText =
+    'padding: 8px 12px; font-size: 13px; font-weight: 650; color: var(--theme-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+
+  const refresh = (): void => {
+    band.replaceChildren(
+      ...(state.selectedDyes.length
+        ? state.selectedDyes.map((d) => {
+            const seg = document.createElement('div');
+            seg.style.cssText = `flex: 1; background: ${d.hex};`;
+            return seg;
+          })
+        : [
+            (() => {
+              const seg = document.createElement('div');
+              seg.style.cssText = 'flex: 1; background: var(--theme-background-secondary);';
+              return seg;
+            })(),
+          ])
+    );
+    nameLine.textContent = state.name || '—';
+  };
+  state.refreshPreview = refresh;
+  refresh();
+
+  card.appendChild(band);
+  card.appendChild(nameLine);
+  wrapper.appendChild(labelRow);
+  wrapper.appendChild(card);
+  return wrapper;
+}
+
 function createFormContent(state: FormState, onSubmit?: OnSubmitCallback): HTMLElement {
   const form = document.createElement('div');
   form.className = 'preset-submission-form space-y-4';
+
+  // 8S: live preview leads the form
+  form.appendChild(createPreviewBand(state));
+
+  // Any edit refreshes the preview (covers inputs, category and dye slots)
+  form.addEventListener('input', () => state.refreshPreview?.());
+  form.addEventListener('click', () => setTimeout(() => state.refreshPreview?.(), 0));
 
   // Name input
   form.appendChild(createNameInput(state));
@@ -110,11 +203,17 @@ function createFormContent(state: FormState, onSubmit?: OnSubmitCallback): HTMLE
   // Category selector
   form.appendChild(createCategorySelector(state));
 
-  // Dye selector
+  // Dye selector — slot picker only: a preset has to be buyable
   form.appendChild(createDyeSelector(state));
+  form.appendChild(fieldHint(LanguageService.t('preset.dyesHint')));
 
   // Tags input
   form.appendChild(createTagsInput(state));
+
+  // Moderation rules line
+  const rules = fieldHint(LanguageService.t('preset.rulesNote'));
+  rules.style.cssText += 'line-height: 1.55; margin-top: 8px;';
+  form.appendChild(rules);
 
   // Submit button
   form.appendChild(createSubmitButton(state, onSubmit));
@@ -130,11 +229,11 @@ function createNameInput(state: FormState): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'form-field';
 
-  const label = document.createElement('label');
-  label.className = 'block text-sm font-medium mb-1';
-  label.style.color = 'var(--theme-text)';
-  label.textContent = 'Preset Name';
-  label.htmlFor = 'preset-name';
+  const label = fieldLabelRow(
+    LanguageService.t('preset.fieldName'),
+    LanguageService.t('preset.reqRequired'),
+    true
+  );
 
   const input = document.createElement('input');
   input.type = 'text';
@@ -167,6 +266,7 @@ function createNameInput(state: FormState): HTMLElement {
   wrapper.appendChild(label);
   wrapper.appendChild(input);
   wrapper.appendChild(counter);
+  wrapper.appendChild(fieldHint(LanguageService.t('preset.fieldNameHint')));
 
   return wrapper;
 }
@@ -175,11 +275,11 @@ function createDescriptionInput(state: FormState): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'form-field';
 
-  const label = document.createElement('label');
-  label.className = 'block text-sm font-medium mb-1';
-  label.style.color = 'var(--theme-text)';
-  label.textContent = 'Description';
-  label.htmlFor = 'preset-description';
+  const label = fieldLabelRow(
+    LanguageService.t('preset.fieldDesc'),
+    LanguageService.t('preset.reqRequired'),
+    true
+  );
 
   const textarea = document.createElement('textarea');
   textarea.id = 'preset-description';
@@ -211,6 +311,7 @@ function createDescriptionInput(state: FormState): HTMLElement {
   wrapper.appendChild(label);
   wrapper.appendChild(textarea);
   wrapper.appendChild(counter);
+  wrapper.appendChild(fieldHint(LanguageService.t('preset.fieldDescHint')));
 
   return wrapper;
 }
@@ -219,10 +320,11 @@ function createCategorySelector(state: FormState): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'form-field';
 
-  const label = document.createElement('label');
-  label.className = 'block text-sm font-medium mb-1';
-  label.style.color = 'var(--theme-text)';
-  label.textContent = 'Category';
+  const label = fieldLabelRow(
+    LanguageService.t('preset.fieldCategory'),
+    LanguageService.t('preset.reqRequired'),
+    true
+  );
 
   const grid = document.createElement('div');
   grid.className = 'grid grid-cols-3 gap-2';
@@ -242,7 +344,7 @@ function createCategorySelector(state: FormState): HTMLElement {
         'background-color: var(--theme-card-background); color: var(--theme-text); border-color: var(--theme-border);';
     }
 
-    btn.innerHTML = `<span class="w-4 h-4 inline-block">${getCategoryIcon(cat.id)}</span><span>${cat.label}</span>`;
+    btn.innerHTML = `<span class="w-4 h-4 inline-block">${getCategoryIcon(cat.id)}</span><span>${LanguageService.t(cat.labelKey)}</span>`;
 
     btn.addEventListener('click', () => {
       state.category = cat.id;
@@ -277,6 +379,7 @@ function createCategorySelector(state: FormState): HTMLElement {
 
   wrapper.appendChild(label);
   wrapper.appendChild(grid);
+  wrapper.appendChild(fieldHint(LanguageService.t('preset.fieldCategoryHint')));
 
   return wrapper;
 }
@@ -291,7 +394,7 @@ function createDyeSelector(state: FormState): HTMLElement {
   const label = document.createElement('label');
   label.className = 'text-sm font-medium';
   label.style.color = 'var(--theme-text)';
-  label.textContent = 'Select Dyes';
+  label.textContent = `${LanguageService.t('preset.dyes')} — ${LanguageService.t('preset.dyesReq')}`;
 
   const counter = document.createElement('span');
   counter.className = 'text-xs';
@@ -449,11 +552,11 @@ function createTagsInput(state: FormState): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'form-field';
 
-  const label = document.createElement('label');
-  label.className = 'block text-sm font-medium mb-1';
-  label.style.color = 'var(--theme-text)';
-  label.textContent = 'Tags (optional)';
-  label.htmlFor = 'preset-tags';
+  const label = fieldLabelRow(
+    LanguageService.t('preset.fieldTags'),
+    LanguageService.t('preset.reqOptional'),
+    false
+  );
 
   const input = document.createElement('input');
   input.type = 'text';
@@ -465,10 +568,7 @@ function createTagsInput(state: FormState): HTMLElement {
   input.placeholder = 'dark, gothic, elegant (comma-separated)';
   input.value = state.tags;
 
-  const hint = document.createElement('div');
-  hint.className = 'text-xs mt-1';
-  hint.style.color = 'var(--theme-text-secondary)';
-  hint.textContent = `Up to ${MAX_TAGS} tags, each max 30 characters`;
+  const hint = fieldHint(LanguageService.t('preset.fieldTagsHint'));
 
   input.addEventListener('input', () => {
     state.tags = input.value;
