@@ -855,10 +855,13 @@
   },
   "changelog": {
     "title": "What's New",
-    "previousUpdates": "Previous updates:",
-    "viewFull": "View full changelog",
     "gotIt": "Got it!",
-    "noChanges": "Bug fixes and performance improvements."
+    "noChanges": "Bug fixes and performance improvements.",
+    "historyTitle": "Release history",
+    "updatedEyebrow": "UPDATED SINCE YOUR LAST VISIT",
+    "allReleases": "ALL RELEASES",
+    "pastLabel": "EARLIER RELEASES",
+    "currentTag": "CURRENT"
   },
   "welcome": {
     "title": "Welcome to XIV Dye Tools",

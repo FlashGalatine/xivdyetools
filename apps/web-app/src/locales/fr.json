@@ -855,10 +855,13 @@
   },
   "changelog": {
     "title": "Nouveautés",
-    "previousUpdates": "Mises à jour précédentes :",
-    "viewFull": "Voir le journal complet des modifications",
     "gotIt": "Compris !",
-    "noChanges": "Corrections de bogues et améliorations de performances."
+    "noChanges": "Corrections de bogues et améliorations de performances.",
+    "historyTitle": "Historique des versions",
+    "updatedEyebrow": "MIS À JOUR DEPUIS VOTRE DERNIÈRE VISITE",
+    "allReleases": "TOUTES LES VERSIONS",
+    "pastLabel": "VERSIONS PRÉCÉDENTES",
+    "currentTag": "ACTUELLE"
   },
   "welcome": {
     "title": "Bienvenue sur Outils de Teinture XIV",

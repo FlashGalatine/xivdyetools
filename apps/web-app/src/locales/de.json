@@ -855,10 +855,13 @@
   },
   "changelog": {
     "title": "Neuigkeiten",
-    "previousUpdates": "Frühere Updates:",
-    "viewFull": "Vollständiges Änderungsprotokoll anzeigen",
     "gotIt": "Verstanden!",
-    "noChanges": "Fehlerbehebungen und Leistungsverbesserungen."
+    "noChanges": "Fehlerbehebungen und Leistungsverbesserungen.",
+    "historyTitle": "Versionsverlauf",
+    "updatedEyebrow": "SEIT DEINEM LETZTEN BESUCH AKTUALISIERT",
+    "allReleases": "ALLE VERSIONEN",
+    "pastLabel": "FRÜHERE VERSIONEN",
+    "currentTag": "AKTUELL"
   },
   "welcome": {
     "title": "Willkommen bei XIV Farbwerkzeuge",

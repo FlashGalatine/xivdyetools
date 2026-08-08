@@ -1,12 +1,18 @@
 /**
- * XIV Dye Tools - Changelog Modal Component
+ * XIV Dye Tools 5.0 - Changelog Modal Component (C2)
  *
- * Shows "What's New" modal after version updates
- * Displays recent changes to returning users
+ * One layout for both entry points, per the confirmed Modal Directions C2:
+ * the auto-popup ("what changed since I was last here") and the header
+ * button ("what has this thing been doing") render the same component and
+ * differ only in the eyebrow, the title, and the footer verb. One release is
+ * expanded — the current one for the popup, the newest for the history —
+ * and every other release is a collapsed row you can open in place.
  *
- * Changelog data is automatically parsed from CHANGELOG-laymans.md at build time
- * by the vite-plugin-changelog-parser plugin, providing rich section data
- * (headers, titles, and bullet descriptions).
+ * Changelog data is parsed from CHANGELOG-laymans.md at build time by
+ * vite-plugin-changelog-parser (virtual:changelog). Emoji stay — they come
+ * out of the markdown and are the fastest thing on the screen to scan.
+ * Bullets take the accent (green already means two different things in this
+ * app); the shell owns all chrome colors via theme tokens.
  *
  * @module components/changelog-modal
  */
@@ -33,6 +39,9 @@ interface ChangelogEntry {
   highlights: string[];
   sections: ChangelogSection[];
 }
+
+/** Which entry point opened the modal — same layout, different framing */
+export type ChangelogMode = 'popup' | 'history';
 
 // ============================================================================
 // Changelog Modal Class
@@ -75,51 +84,32 @@ export class ChangelogModal {
   }
 
   /**
-   * Get the entries to display.
-   * - Default: current version + up to 2 previous (the "version changed" popup).
-   * - Full: the entire parsed history (the manually-opened "What's New" modal).
-   * Uses dynamically parsed changelog data from CHANGELOG-laymans.md
-   */
-  private getRelevantEntries(full = false): ChangelogEntry[] {
-    if (full) {
-      return changelogEntries;
-    }
-
-    // Find current version entry from parsed changelog
-    const currentIndex = changelogEntries.findIndex((e) => e.version === APP_VERSION);
-
-    // BUG-043 (2026-07-18 audit): if APP_VERSION is missing from the parsed
-    // changelog (entry forgotten or header typo), findIndex is -1 and the old
-    // slice(0, 2) presented the newest OLD release unlabeled as "what's new".
-    // Fall through to the changelog.noChanges fallback instead.
-    if (currentIndex === -1) {
-      return [];
-    }
-
-    // Current version + up to 2 previous versions for context
-    return changelogEntries.slice(currentIndex, currentIndex + 3);
-  }
-
-  /**
    * Show the changelog modal
    *
-   * @param opts.full - When true, render the entire release history (used by the
-   *   header "What's New" button). When omitted, shows current + recent versions
-   *   (used by the automatic "version changed" popup).
+   * @param opts.mode - `popup` (auto after an update; expands the running
+   *   version) or `history` (header button; expands the newest release).
    */
-  show(opts: { full?: boolean } = {}): void {
+  show(opts: { mode?: ChangelogMode } = {}): void {
     if (this.modalId) return; // Already showing
 
-    const full = opts.full ?? false;
-    const content = this.createContent(full);
+    const mode = opts.mode ?? 'popup';
+    const content = this.createContent(mode);
 
     this.modalId = ModalService.showChangelog({
-      title: LanguageService.t('changelog.title'),
+      title:
+        mode === 'popup'
+          ? LanguageService.t('changelog.title')
+          : LanguageService.t('changelog.historyTitle'),
+      eyebrow:
+        mode === 'popup'
+          ? LanguageService.t('changelog.updatedEyebrow')
+          : LanguageService.t('changelog.allReleases'),
       content,
-      size: 'lg',
       closable: true,
       closeOnBackdrop: true,
       closeOnEscape: true,
+      confirmText:
+        mode === 'popup' ? LanguageService.t('changelog.gotIt') : LanguageService.t('common.close'),
       onClose: () => {
         ChangelogModal.markAsViewed();
         this.modalId = null;
@@ -138,179 +128,210 @@ export class ChangelogModal {
   }
 
   /**
-   * Create modal content
-   *
-   * @param full - When true, render every parsed release with its own version
-   *   heading and full sections. When false, render the current version in full
-   *   plus a collapsed summary of recent previous versions.
+   * Create modal content: one release expanded, the rest collapsed rows.
    */
-  private createContent(full = false): HTMLElement {
+  private createContent(mode: ChangelogMode): HTMLElement {
     const container = document.createElement('div');
     container.className = 'changelog-modal-content';
 
-    const entries = this.getRelevantEntries(full);
-
-    if (entries.length === 0) {
-      // Fallback if no changelog data is available
+    if (changelogEntries.length === 0) {
       const fallback = document.createElement('p');
-      fallback.className = 'text-gray-600 dark:text-gray-300';
+      fallback.className = 'text-sm';
+      fallback.style.color = 'var(--theme-text-muted)';
       fallback.textContent = LanguageService.t('changelog.noChanges');
       container.appendChild(fallback);
-    } else if (full) {
-      // Full history — render each release with a version heading + full sections
-      const list = document.createElement('div');
-      list.className = 'space-y-8';
-
-      entries.forEach((entry) => {
-        const entryWrapper = document.createElement('div');
-
-        const versionHeading = document.createElement('h3');
-        versionHeading.className =
-          'text-lg font-bold text-gray-800 dark:text-gray-100 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700';
-        // SECURITY: Use DOM construction instead of innerHTML for text content
-        versionHeading.textContent = entry.date
-          ? `v${entry.version} — ${entry.date}`
-          : `v${entry.version}`;
-        entryWrapper.appendChild(versionHeading);
-
-        entryWrapper.appendChild(this.createCurrentVersionContent(entry));
-        list.appendChild(entryWrapper);
-      });
-
-      container.appendChild(list);
-    } else {
-      // Current version — render full sections
-      const currentEntry = entries[0];
-      if (currentEntry) {
-        const currentContent = this.createCurrentVersionContent(currentEntry);
-        container.appendChild(currentContent);
-      }
-
-      // Previous versions (collapsed summary using highlights)
-      if (entries.length > 1) {
-        const previousSection = document.createElement('div');
-        previousSection.className = 'mt-6 pt-4 border-t border-gray-200 dark:border-gray-700';
-
-        const previousTitle = document.createElement('h4');
-        previousTitle.className = 'text-sm font-medium text-gray-500 dark:text-gray-400 mb-3';
-        previousTitle.textContent = LanguageService.t('changelog.previousUpdates');
-        previousSection.appendChild(previousTitle);
-
-        const previousList = document.createElement('div');
-        previousList.className = 'space-y-2';
-
-        entries.slice(1).forEach((entry) => {
-          const item = document.createElement('div');
-          item.className = 'text-sm text-gray-600 dark:text-gray-400';
-          // SECURITY: Use DOM construction instead of innerHTML for text content
-          const versionSpan = document.createElement('span');
-          versionSpan.className = 'font-medium';
-          versionSpan.textContent = `v${entry.version}`;
-          item.appendChild(versionSpan);
-          // BUG-043: highlights can be empty (parser skips short headers) —
-          // never render a literal "— undefined"
-          const summary = entry.highlights[0] ?? entry.sections[0]?.header ?? '';
-          if (summary) {
-            item.appendChild(document.createTextNode(` — ${summary}`));
-          }
-          previousList.appendChild(item);
-        });
-
-        previousSection.appendChild(previousList);
-        container.appendChild(previousSection);
-      }
+      return container;
     }
 
-    // Action buttons
-    const buttonContainer = document.createElement('div');
-    buttonContainer.className =
-      'flex justify-between items-center mt-6 pt-4 border-t border-gray-200 dark:border-gray-700';
+    // The popup opens at the running version. BUG-043 rework: if APP_VERSION
+    // is missing from the parsed changelog (entry forgotten, header typo),
+    // expand the newest release instead of falling back to an empty modal —
+    // the history is the popup now, so there is always something to show.
+    let expandedIndex = 0;
+    if (mode === 'popup') {
+      const currentIndex = changelogEntries.findIndex((e) => e.version === APP_VERSION);
+      expandedIndex = currentIndex === -1 ? 0 : currentIndex;
+    }
 
-    // View full changelog link
-    const viewFullBtn = document.createElement('a');
-    viewFullBtn.className = 'text-sm text-blue-600 dark:text-blue-400 hover:underline';
-    viewFullBtn.href =
-      'https://github.com/FlashGalatine/xivdyetools/blob/main/apps/web-app/CHANGELOG.md';
-    viewFullBtn.target = '_blank';
-    viewFullBtn.rel = 'noopener noreferrer';
-    viewFullBtn.textContent = LanguageService.t('changelog.viewFull');
+    const expandedEntry = changelogEntries[expandedIndex];
+    container.appendChild(this.createExpandedEntry(expandedEntry));
 
-    // Got it button
-    const gotItBtn = document.createElement('button');
-    gotItBtn.className = `
-      px-6 py-2 text-sm font-medium rounded-lg
-      text-white bg-blue-600 hover:bg-blue-700 transition-colors
-      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
-    `
-      .replace(/\s+/g, ' ')
-      .trim();
-    gotItBtn.textContent = LanguageService.t('changelog.gotIt');
-    gotItBtn.addEventListener('click', () => {
-      this.close();
-    });
+    const rest = changelogEntries.filter((_, i) => i !== expandedIndex);
+    if (rest.length > 0) {
+      const pastLabel = document.createElement('div');
+      pastLabel.className = 'm16-label mt-6 mb-2 pt-4 border-t';
+      pastLabel.style.borderColor = 'var(--theme-border)';
+      pastLabel.textContent = LanguageService.t('changelog.pastLabel');
+      container.appendChild(pastLabel);
 
-    buttonContainer.appendChild(viewFullBtn);
-    buttonContainer.appendChild(gotItBtn);
-    container.appendChild(buttonContainer);
+      const list = document.createElement('div');
+      list.className = 'flex flex-col gap-1.5';
+      rest.forEach((entry) => {
+        list.appendChild(this.createCollapsedRow(entry));
+      });
+      container.appendChild(list);
+    }
 
     return container;
   }
 
   /**
-   * Create the rich content for the current version using full sections
-   * Shows section headers, titles, and bullet descriptions
+   * A fully expanded release: version header (+ CURRENT tag when it is the
+   * running version) and every section with accent bullets.
    */
-  private createCurrentVersionContent(entry: ChangelogEntry): HTMLElement {
+  private createExpandedEntry(entry: ChangelogEntry): HTMLElement {
     const wrapper = document.createElement('div');
-    wrapper.className = 'space-y-5';
 
-    // Use sections if available, otherwise fall back to highlights
-    if (entry.sections && entry.sections.length > 0) {
-      entry.sections.forEach((section) => {
-        const sectionEl = this.createSectionBlock(section);
-        wrapper.appendChild(sectionEl);
-      });
-    } else {
-      // Fallback: render highlights as simple list (backward compat)
-      const list = this.createHighlightsList(entry.highlights);
-      wrapper.appendChild(list);
-    }
+    wrapper.appendChild(this.createVersionHeader(entry));
+
+    const sections = document.createElement('div');
+    sections.className = 'space-y-4 mt-3';
+    entry.sections.forEach((section) => {
+      sections.appendChild(this.createSectionBlock(section));
+    });
+    wrapper.appendChild(sections);
 
     return wrapper;
   }
 
   /**
-   * Create a section block with header, title badge, and bullet descriptions
+   * Version header row: mono version, date, CURRENT chip.
+   */
+  private createVersionHeader(entry: ChangelogEntry): HTMLElement {
+    const header = document.createElement('div');
+    header.className = 'flex items-baseline gap-2 flex-wrap';
+
+    const version = document.createElement('span');
+    version.className = 'text-sm font-bold';
+    version.style.fontFamily = "'Fragment Mono', monospace";
+    version.style.color = 'var(--theme-text)';
+    version.textContent = `v${entry.version}`;
+    header.appendChild(version);
+
+    if (entry.date) {
+      const date = document.createElement('span');
+      date.className = 'text-xs';
+      date.style.color = 'var(--theme-text-muted)';
+      date.textContent = entry.date;
+      header.appendChild(date);
+    }
+
+    if (entry.version === APP_VERSION) {
+      const tag = document.createElement('span');
+      tag.className = 'm16-label px-1.5 py-0.5 rounded border';
+      tag.style.color = 'var(--theme-primary)';
+      tag.style.borderColor = 'var(--theme-primary)';
+      tag.textContent = LanguageService.t('changelog.currentTag');
+      header.appendChild(tag);
+    }
+
+    return header;
+  }
+
+  /**
+   * A collapsed release row — version, date, one-line summary — that expands
+   * in place when tapped.
+   */
+  private createCollapsedRow(entry: ChangelogEntry): HTMLElement {
+    const row = document.createElement('div');
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'w-full text-left px-3 py-2.5 rounded-lg transition-colors';
+    button.style.backgroundColor = 'var(--theme-card-background)';
+    button.setAttribute('aria-expanded', 'false');
+    button.addEventListener('mouseenter', () => {
+      button.style.backgroundColor = 'var(--theme-card-hover, var(--theme-background-secondary))';
+    });
+    button.addEventListener('mouseleave', () => {
+      button.style.backgroundColor = 'var(--theme-card-background)';
+    });
+
+    const line = document.createElement('div');
+    line.className = 'flex items-baseline gap-2 flex-wrap';
+
+    const version = document.createElement('span');
+    version.className = 'text-xs font-bold';
+    version.style.fontFamily = "'Fragment Mono', monospace";
+    version.style.color = 'var(--theme-text)';
+    version.textContent = `v${entry.version}`;
+    line.appendChild(version);
+
+    if (entry.date) {
+      const date = document.createElement('span');
+      date.className = 'text-xs';
+      date.style.color = 'var(--theme-text-muted)';
+      date.textContent = entry.date;
+      line.appendChild(date);
+    }
+    button.appendChild(line);
+
+    // BUG-043: highlights can be empty (parser skips short headers) — never
+    // render a literal "undefined"
+    const summaryText = entry.highlights[0] ?? entry.sections[0]?.header ?? '';
+    if (summaryText) {
+      const summary = document.createElement('div');
+      summary.className = 'text-xs mt-0.5';
+      summary.style.color = 'var(--theme-text-muted)';
+      summary.textContent = summaryText;
+      button.appendChild(summary);
+    }
+
+    // Expanded body (hidden until opened)
+    const body = document.createElement('div');
+    body.className = 'hidden px-3 pt-1 pb-2 space-y-4';
+    entry.sections.forEach((section) => {
+      body.appendChild(this.createSectionBlock(section));
+    });
+
+    button.addEventListener('click', () => {
+      const isOpen = !body.classList.contains('hidden');
+      body.classList.toggle('hidden', isOpen);
+      button.setAttribute('aria-expanded', String(!isOpen));
+    });
+
+    row.appendChild(button);
+    row.appendChild(body);
+    return row;
+  }
+
+  /**
+   * Create a section block with header and accent-bullet descriptions.
+   * The emoji lives in the header text straight from CHANGELOG-laymans.md.
    */
   private createSectionBlock(section: ChangelogSection): HTMLElement {
     const block = document.createElement('div');
 
-    // Section header (e.g., "🎨 No More Duplicate Results")
     const header = document.createElement('h4');
-    header.className = 'text-base font-semibold text-gray-800 dark:text-gray-100 mb-1';
+    header.className = 'text-sm font-semibold mb-1';
+    header.style.color = 'var(--theme-text)';
     header.textContent = section.header;
     block.appendChild(header);
 
-    // Title badge (e.g., "Harmony Explorer & Palette Extractor")
+    // Title badge (chip grey — never a meaning-bearing color)
     if (section.title) {
       const badge = document.createElement('span');
-      badge.className =
-        'inline-block text-xs font-medium px-2 py-0.5 mb-2 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300';
+      badge.className = 'inline-block text-xs font-medium px-2 py-0.5 mb-2 rounded-full';
+      badge.style.backgroundColor = 'var(--theme-card-background)';
+      badge.style.color = 'var(--theme-text-muted)';
       badge.textContent = section.title;
       block.appendChild(badge);
     }
 
-    // Bullet descriptions
     if (section.bullets.length > 0) {
       const list = document.createElement('ul');
       list.className = 'space-y-1 ml-1';
 
       section.bullets.forEach((bullet) => {
         const item = document.createElement('li');
-        item.className = 'flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300';
-        // SECURITY: Use DOM construction instead of innerHTML for text content
+        item.className = 'flex items-start gap-2 text-sm';
+        item.style.color = 'var(--theme-text-muted)';
+        // Bullets take the accent: green means "safe" in the Accessibility
+        // Checker and "close" in Dye Comparison, and a changelog bullet
+        // means neither
         const dotSpan = document.createElement('span');
-        dotSpan.className = 'text-green-500 dark:text-green-400 flex-shrink-0 mt-0.5';
+        dotSpan.className = 'flex-shrink-0 mt-0.5';
+        dotSpan.style.color = 'var(--theme-primary)';
         dotSpan.textContent = '•';
         const textSpan = document.createElement('span');
         textSpan.textContent = bullet;
@@ -324,30 +345,6 @@ export class ChangelogModal {
 
     return block;
   }
-
-  /**
-   * Create a simple highlights list (fallback when sections are not available)
-   */
-  private createHighlightsList(highlights: string[]): HTMLElement {
-    const list = document.createElement('ul');
-    list.className = 'space-y-2';
-
-    highlights.forEach((highlight) => {
-      const item = document.createElement('li');
-      item.className = 'flex items-start gap-2 text-gray-600 dark:text-gray-300';
-      // SECURITY: Use DOM construction instead of innerHTML for text content
-      const starSpan = document.createElement('span');
-      starSpan.className = 'text-green-500 dark:text-green-400 flex-shrink-0';
-      starSpan.textContent = '★';
-      const textSpan = document.createElement('span');
-      textSpan.textContent = highlight;
-      item.appendChild(starSpan);
-      item.appendChild(textSpan);
-      list.appendChild(item);
-    });
-
-    return list;
-  }
 }
 
 /**
@@ -358,7 +355,7 @@ export function showChangelogIfUpdated(): void {
     // Small delay to ensure app is fully loaded and welcome modal has had a chance
     setTimeout(() => {
       const modal = new ChangelogModal();
-      modal.show();
+      modal.show({ mode: 'popup' });
     }, 1000);
   }
 }
@@ -369,15 +366,15 @@ export function showChangelogIfUpdated(): void {
 let changelogModalInstance: ChangelogModal | null = null;
 
 /**
- * Show the full release-history changelog modal.
- * Triggered by the "What's New" button in the v4 header.
+ * Show the release-history changelog modal (newest expanded, rest collapsed).
+ * Triggered by the "What's New" button in the header.
  * Uses a singleton to prevent multiple instances, matching the About/Theme/Language modals.
  */
 export function showChangelogModal(): void {
   if (!changelogModalInstance) {
     changelogModalInstance = new ChangelogModal();
   }
-  changelogModalInstance.show({ full: true });
+  changelogModalInstance.show({ mode: 'history' });
 }
 
 /**

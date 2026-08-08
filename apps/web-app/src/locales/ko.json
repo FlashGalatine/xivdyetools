@@ -855,10 +855,13 @@
   },
   "changelog": {
     "title": "새로운 기능",
-    "previousUpdates": "이전 업데이트:",
-    "viewFull": "전체 변경 기록 보기",
     "gotIt": "확인!",
-    "noChanges": "버그 수정 및 성능 개선."
+    "noChanges": "버그 수정 및 성능 개선.",
+    "historyTitle": "릴리스 기록",
+    "updatedEyebrow": "지난 방문 이후 업데이트됨",
+    "allReleases": "모든 릴리스",
+    "pastLabel": "이전 릴리스",
+    "currentTag": "현재"
   },
   "welcome": {
     "title": "XIV 염색 도구에 오신 것을 환영합니다",
