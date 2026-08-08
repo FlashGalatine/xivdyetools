@@ -1,7 +1,7 @@
-/**
+﻿/**
  * XIV Dye Tools v4.0.0 - Gradient Tool Component (Gradient Builder)
  *
- * V4 Renamed: mixer-tool.ts → gradient-tool.ts
+ * V4 Renamed: mixer-tool.ts â†’ gradient-tool.ts
  * Creates color gradients between two dyes with intermediate matches.
  *
  * Left Panel: Start/End dye selectors, steps slider, color space toggle, filters, market board
@@ -109,6 +109,10 @@ export class GradientTool extends BaseComponent {
   private colorSpace: InterpolationMode;
   private matchingMethod: MatchingMethod = 'oklab';
   private currentSteps: InterpolationStep[] = [];
+  /** 4C: pinned step index â†’ the dye anchored there (captured at pin time) */
+  private pinnedSteps = new Map<number, Dye>();
+  /** Pins are meaningless across an endpoint change â€” track to invalidate */
+  private lastEndpointsKey = '';
 
   // Market Board Service integration
   private marketBoardService: MarketBoardService;
@@ -118,7 +122,7 @@ export class GradientTool extends BaseComponent {
     return this.marketBoardService.getShowPrices();
   }
 
-  // OPT-027 (2026-07-18 audit): read-only view, no per-access map clone —
+  // OPT-027 (2026-07-18 audit): read-only view, no per-access map clone â€”
   // this getter is hit inside per-card render loops
   private get priceData(): ReadonlyMap<number, PriceData> {
     return this.marketBoardService.getPricesView();
@@ -729,7 +733,7 @@ export class GradientTool extends BaseComponent {
       let detailText = dye.hex;
       const priceText = this.formatPrice(dye);
       if (priceText) {
-        detailText += ` • ${priceText}`;
+        detailText += ` â€¢ ${priceText}`;
       }
       details.textContent = detailText;
       info.appendChild(details);
@@ -1373,6 +1377,63 @@ export class GradientTool extends BaseComponent {
    * - OKLCH: Modern perceptual with hue (best for gradients, fixes LAB's blue distortion)
    * - LCH: Cylindrical LAB with hue (good balance of perceptual uniformity)
    */
+  /** Interpolate between two hexes at t in the active colour space. */
+  private interpolateInSpace(startHex: string, endHex: string, t: number): string {
+    switch (this.colorSpace) {
+      case 'rgb': {
+        const startRgb = ColorService.hexToRgb(startHex);
+        const endRgb = ColorService.hexToRgb(endHex);
+        const r = Math.round(startRgb.r + (endRgb.r - startRgb.r) * t);
+        const g = Math.round(startRgb.g + (endRgb.g - startRgb.g) * t);
+        const b = Math.round(startRgb.b + (endRgb.b - startRgb.b) * t);
+        return ColorService.rgbToHex(r, g, b);
+      }
+      case 'hsv': {
+        const startHsv = ColorService.hexToHsv(startHex);
+        const endHsv = ColorService.hexToHsv(endHex);
+        let hueDiff = endHsv.h - startHsv.h;
+        if (hueDiff > 180) hueDiff -= 360;
+        if (hueDiff < -180) hueDiff += 360;
+        const h = (startHsv.h + hueDiff * t + 360) % 360;
+        const s = startHsv.s + (endHsv.s - startHsv.s) * t;
+        const v = startHsv.v + (endHsv.v - startHsv.v) * t;
+        return ColorService.hsvToHex(h, s, v);
+      }
+      case 'lab': {
+        const startLab = ColorService.hexToLab(startHex);
+        const endLab = ColorService.hexToLab(endHex);
+        const L = startLab.L + (endLab.L - startLab.L) * t;
+        const a = startLab.a + (endLab.a - startLab.a) * t;
+        const b = startLab.b + (endLab.b - startLab.b) * t;
+        return ColorService.labToHex(L, a, b);
+      }
+      case 'oklch': {
+        const startOklch = ColorService.hexToOklch(startHex);
+        const endOklch = ColorService.hexToOklch(endHex);
+        let hueDiff = endOklch.h - startOklch.h;
+        if (hueDiff > 180) hueDiff -= 360;
+        if (hueDiff < -180) hueDiff += 360;
+        const L = startOklch.L + (endOklch.L - startOklch.L) * t;
+        const C = startOklch.C + (endOklch.C - startOklch.C) * t;
+        const h = (startOklch.h + hueDiff * t + 360) % 360;
+        return ColorService.oklchToHex(L, C, h);
+      }
+      case 'lch': {
+        const startLch = ColorService.hexToLch(startHex);
+        const endLch = ColorService.hexToLch(endHex);
+        let hueDiff = endLch.h - startLch.h;
+        if (hueDiff > 180) hueDiff -= 360;
+        if (hueDiff < -180) hueDiff += 360;
+        const L = startLch.L + (endLch.L - startLch.L) * t;
+        const C = startLch.C + (endLch.C - startLch.C) * t;
+        const h = (startLch.h + hueDiff * t + 360) % 360;
+        return ColorService.lchToHex(L, C, h);
+      }
+      default:
+        return ColorService.hsvToHex(0, 0, 50);
+    }
+  }
+
   private calculateInterpolation(): void {
     if (!this.startDye || !this.endDye) {
       this.currentSteps = [];
@@ -1382,95 +1443,52 @@ export class GradientTool extends BaseComponent {
     const result: InterpolationStep[] = [];
     const steps = this.stepCount;
 
+    // 4C: changing an endpoint redraws a different ramp â€” old pins would
+    // anchor a curve they were never part of.
+    const endpointsKey = `${this.startDye.id}-${this.endDye.id}`;
+    if (endpointsKey !== this.lastEndpointsKey) {
+      this.lastEndpointsKey = endpointsKey;
+      this.pinnedSteps.clear();
+    }
+
+    // 4C: pins on endpoints or beyond the ramp are meaningless â€” drop them.
+    for (const index of [...this.pinnedSteps.keys()]) {
+      if (index <= 0 || index >= steps - 1) this.pinnedSteps.delete(index);
+    }
+
+    // 4C Pin rail: anchors are the endpoints plus every pinned step's matched
+    // dye. Each segment between consecutive anchors re-interpolates on its
+    // own, so the curve passes through colours that actually exist.
+    const anchors: Array<{ index: number; hex: string }> = [
+      { index: 0, hex: this.startDye.hex },
+      ...[...this.pinnedSteps.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .map(([index, dye]) => ({ index, hex: dye.hex })),
+      { index: steps - 1, hex: this.endDye.hex },
+    ];
+
     for (let i = 0; i < steps; i++) {
-      const t = steps === 1 ? 0 : i / (steps - 1);
+      let lower = anchors[0];
+      let upper = anchors[anchors.length - 1];
+      for (const anchor of anchors) {
+        if (anchor.index <= i && anchor.index >= lower.index) lower = anchor;
+        if (anchor.index >= i && anchor.index <= upper.index) upper = anchor;
+      }
+      const span = upper.index - lower.index;
+      const t = span === 0 ? 0 : (i - lower.index) / span;
+      const theoreticalColor = this.interpolateInSpace(lower.hex, upper.hex, t);
 
-      let theoreticalColor: string;
-
-      switch (this.colorSpace) {
-        case 'rgb': {
-          // RGB interpolation (linear)
-          const startRgb = ColorService.hexToRgb(this.startDye.hex);
-          const endRgb = ColorService.hexToRgb(this.endDye.hex);
-
-          const r = Math.round(startRgb.r + (endRgb.r - startRgb.r) * t);
-          const g = Math.round(startRgb.g + (endRgb.g - startRgb.g) * t);
-          const b = Math.round(startRgb.b + (endRgb.b - startRgb.b) * t);
-
-          theoreticalColor = ColorService.rgbToHex(r, g, b);
-          break;
-        }
-
-        case 'hsv': {
-          // HSV interpolation (with hue wraparound)
-          const startHsv = ColorService.hexToHsv(this.startDye.hex);
-          const endHsv = ColorService.hexToHsv(this.endDye.hex);
-
-          // Handle hue wraparound (take shorter path)
-          let hueDiff = endHsv.h - startHsv.h;
-          if (hueDiff > 180) hueDiff -= 360;
-          if (hueDiff < -180) hueDiff += 360;
-
-          const h = (startHsv.h + hueDiff * t + 360) % 360;
-          const s = startHsv.s + (endHsv.s - startHsv.s) * t;
-          const v = startHsv.v + (endHsv.v - startHsv.v) * t;
-
-          theoreticalColor = ColorService.hsvToHex(h, s, v);
-          break;
-        }
-
-        case 'lab': {
-          // LAB interpolation (perceptually uniform, linear in L*a*b*)
-          const startLab = ColorService.hexToLab(this.startDye.hex);
-          const endLab = ColorService.hexToLab(this.endDye.hex);
-
-          const L = startLab.L + (endLab.L - startLab.L) * t;
-          const a = startLab.a + (endLab.a - startLab.a) * t;
-          const b = startLab.b + (endLab.b - startLab.b) * t;
-
-          theoreticalColor = ColorService.labToHex(L, a, b);
-          break;
-        }
-
-        case 'oklch': {
-          // OKLCH interpolation (modern perceptual with hue)
-          const startOklch = ColorService.hexToOklch(this.startDye.hex);
-          const endOklch = ColorService.hexToOklch(this.endDye.hex);
-
-          // Handle hue wraparound (take shorter path)
-          let hueDiff = endOklch.h - startOklch.h;
-          if (hueDiff > 180) hueDiff -= 360;
-          if (hueDiff < -180) hueDiff += 360;
-
-          const L = startOklch.L + (endOklch.L - startOklch.L) * t;
-          const C = startOklch.C + (endOklch.C - startOklch.C) * t;
-          const h = (startOklch.h + hueDiff * t + 360) % 360;
-
-          theoreticalColor = ColorService.oklchToHex(L, C, h);
-          break;
-        }
-
-        case 'lch': {
-          // LCH interpolation (cylindrical LAB with hue)
-          const startLch = ColorService.hexToLch(this.startDye.hex);
-          const endLch = ColorService.hexToLch(this.endDye.hex);
-
-          // Handle hue wraparound (take shorter path)
-          let hueDiff = endLch.h - startLch.h;
-          if (hueDiff > 180) hueDiff -= 360;
-          if (hueDiff < -180) hueDiff += 360;
-
-          const L = startLch.L + (endLch.L - startLch.L) * t;
-          const C = startLch.C + (endLch.C - startLch.C) * t;
-          const h = (startLch.h + hueDiff * t + 360) % 360;
-
-          theoreticalColor = ColorService.lchToHex(L, C, h);
-          break;
-        }
-
-        default:
-          // Default to HSV for backward compatibility
-          theoreticalColor = ColorService.hsvToHex(0, 0, 50);
+      // 4C: a pinned step is no longer aiming at anything â€” its matched dye
+      // IS the anchor and its drift reads 0.0.
+      const pinnedDye = this.pinnedSteps.get(i);
+      if (pinnedDye) {
+        result.push({
+          position: steps === 1 ? 0 : i / (steps - 1),
+          theoreticalColor,
+          matchedDye: pinnedDye,
+          distance: 0,
+        });
+        continue;
       }
 
       // Find closest dye (excluding start and end) using configured matching algorithm
@@ -1497,12 +1515,14 @@ export class GradientTool extends BaseComponent {
             : null;
       }
 
+      // Drift in the suite vocabulary: step vs its matched dye, in the
+      // active matching method â€” not raw RGB distance.
       const distance = matchedDye
-        ? ColorService.getColorDistance(theoreticalColor, matchedDye.hex)
+        ? ColorService.getDistanceForMethod(theoreticalColor, matchedDye.hex, this.matchingMethod)
         : Infinity;
 
       result.push({
-        position: t,
+        position: steps === 1 ? 0 : i / (steps - 1),
         theoreticalColor,
         matchedDye: matchedDye || null,
         distance: distance === Infinity ? 0 : distance,
@@ -1586,6 +1606,64 @@ export class GradientTool extends BaseComponent {
     // Clear previous card references
     this.v4ResultCards = [];
 
+    // 4C: drift summary + pin controls above the cards.
+    if (this.currentSteps.length > 0) {
+      const drifts = this.currentSteps.filter((s) => s.matchedDye).map((s) => s.distance);
+      const avgRaw = drifts.length ? drifts.reduce((a, b) => a + b, 0) / drifts.length : 0;
+      // ΔEOK displays ×100 per the register (raw values are ~0.03).
+      const avg = this.matchingMethod === 'oklab' ? avgRaw * 100 : avgRaw;
+      const summary = this.createElement('div', {
+        attributes: {
+          style:
+            'width: 100%; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 4px;',
+        },
+      });
+      summary.appendChild(
+        this.createElement('span', {
+          textContent: `${LanguageService.t('gradient.avgDrift')} ${avg.toFixed(1)}`,
+          attributes: {
+            style:
+              "font-family: 'Fragment Mono', monospace; font-size: 11px; letter-spacing: 0.5px; color: var(--theme-text);",
+          },
+        })
+      );
+      if (this.pinnedSteps.size > 0) {
+        summary.appendChild(
+          this.createElement('span', {
+            textContent: `${LanguageService.t('gradient.pinned')} Â· ${this.pinnedSteps.size}`,
+            attributes: {
+              style:
+                "font-family: 'Fragment Mono', monospace; font-size: 10px; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 5px; background: color-mix(in srgb, var(--theme-primary) 14%, transparent); color: var(--theme-primary);",
+            },
+          })
+        );
+        const clearBtn = this.createElement('button', {
+          textContent: LanguageService.t('gradient.clearPins'),
+          attributes: {
+            type: 'button',
+            style:
+              'font-size: 11px; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--theme-border); background: transparent; color: var(--theme-text-muted); cursor: pointer;',
+          },
+        }) as HTMLButtonElement;
+        this.on(clearBtn, 'click', () => {
+          this.pinnedSteps.clear();
+          this.calculateInterpolation();
+          this.renderGradientPreview();
+          this.renderIntermediateMatches();
+        });
+        summary.appendChild(clearBtn);
+      }
+      summary.appendChild(
+        this.createElement('span', {
+          textContent: LanguageService.t('gradient.pinnedDesc'),
+          attributes: {
+            style: 'font-size: 11px; color: var(--theme-text-muted); flex: 1 1 260px;',
+          },
+        })
+      );
+      this.matchesContainer.appendChild(summary);
+    }
+
     // Render ALL steps as v4-result-card components
     for (let i = 0; i < this.currentSteps.length; i++) {
       const step = this.currentSteps[i];
@@ -1633,7 +1711,7 @@ export class GradientTool extends BaseComponent {
       card.showPrice = this.displayOptions.showPrice;
       card.showAcquisition = this.displayOptions.showAcquisition;
 
-      // Enable slot picker for gradient tool (Select Dye → choose Start or End slot)
+      // Enable slot picker for gradient tool (Select Dye â†’ choose Start or End slot)
       card.showSlotPicker = true;
       card.primaryActionLabel = LanguageService.t('common.selectDye');
 
@@ -1662,7 +1740,53 @@ export class GradientTool extends BaseComponent {
       // Store reference for later price updates
       this.v4ResultCards.push(card);
 
-      this.matchesContainer.appendChild(card);
+      // 4C: each step carries its pin control; endpoints are already anchors.
+      const wrapper = this.createElement('div', {
+        attributes: { style: 'display: flex; flex-direction: column; gap: 6px;' },
+      });
+      const isEndpoint = i === 0 || i === this.currentSteps.length - 1;
+      const isPinned = this.pinnedSteps.has(i);
+      const pinBtn = this.createElement('button', {
+        textContent: isEndpoint
+          ? LanguageService.t('gradient.endAnchor')
+          : isPinned
+            ? LanguageService.t('gradient.unpinStep')
+            : LanguageService.t('gradient.pinStep'),
+        attributes: {
+          type: 'button',
+          ...(isEndpoint ? { disabled: '' } : {}),
+          style: `font-family: 'Fragment Mono', monospace; font-size: 9px; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 5px; cursor: ${
+            isEndpoint ? 'default' : 'pointer'
+          }; border: 1px ${isEndpoint ? 'dashed' : 'solid'} ${
+            isPinned ? 'var(--theme-primary)' : 'var(--theme-border)'
+          }; background: ${
+            isPinned ? 'color-mix(in srgb, var(--theme-primary) 14%, transparent)' : 'transparent'
+          }; color: ${
+            isPinned
+              ? 'var(--theme-primary)'
+              : isEndpoint
+                ? 'var(--theme-text-muted)'
+                : 'var(--theme-text)'
+          };`,
+        },
+      }) as HTMLButtonElement;
+      if (!isEndpoint) {
+        const stepIndex = i;
+        const stepDye = step.matchedDye;
+        this.on(pinBtn, 'click', () => {
+          if (this.pinnedSteps.has(stepIndex)) {
+            this.pinnedSteps.delete(stepIndex);
+          } else if (stepDye) {
+            this.pinnedSteps.set(stepIndex, stepDye);
+          }
+          this.calculateInterpolation();
+          this.renderGradientPreview();
+          this.renderIntermediateMatches();
+        });
+      }
+      wrapper.appendChild(pinBtn);
+      wrapper.appendChild(card);
+      this.matchesContainer.appendChild(wrapper);
     }
 
     // If no steps have matches
@@ -2436,7 +2560,7 @@ export class GradientTool extends BaseComponent {
       this.selectedDyes[1] = dye;
       logger.info(`[GradientTool] External dye set as end: ${dye.name}`);
     }
-    // If both are set: shift dyes (new dye → Start, old Start → End)
+    // If both are set: shift dyes (new dye â†’ Start, old Start â†’ End)
     else {
       // Check if shift would result in same dye in both slots
       // After shift: Start = new dye, End = old Start
@@ -2454,7 +2578,7 @@ export class GradientTool extends BaseComponent {
         this.selectedDyes[1] = temp;
         logger.info(`[GradientTool] Swapped: ${dye.name} is now start`);
       } else {
-        // Normal shift: old Start → End, new dye → Start
+        // Normal shift: old Start â†’ End, new dye â†’ Start
         this.selectedDyes[1] = this.selectedDyes[0];
         this.selectedDyes[0] = dye;
         logger.info(`[GradientTool] Shifted dyes: ${dye.name} is now start`);
