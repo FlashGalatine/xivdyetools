@@ -14,6 +14,7 @@
  */
 
 import { LanguageService } from '@services/language-service';
+import type { MatchingMethod } from '@xivdyetools/core';
 
 // ============================================================================
 // Unit definitions (bands per the drawn 6A spec)
@@ -212,6 +213,117 @@ export function createMetricHelp(options: MetricHelpOptions): HTMLElement {
     link.textContent = t('learnMore');
     box.appendChild(link);
   }
+
+  return box;
+}
+
+// ============================================================================
+// Methods mode (7C Duel) — the six matching methods, perceptual → not
+// ============================================================================
+
+/** Ordered perceptual → not; "which formula you trust is the whole argument" */
+export const METHOD_ORDER: readonly MatchingMethod[] = [
+  'ciede2000',
+  'oklab',
+  'cie76',
+  'redmean',
+  'rgb',
+  'distinguish',
+] as const;
+
+const METHOD_STEM: Record<MatchingMethod, string> = {
+  ciede2000: 'mCiede2000',
+  oklab: 'mOklab',
+  cie76: 'mCie76',
+  redmean: 'mRedmean',
+  rgb: 'mRgb',
+  distinguish: 'mDistinguish',
+};
+
+/** 2 = perceptual, 1 = approximate, 0 = not perceptual */
+const METHOD_KIND: Record<MatchingMethod, 0 | 1 | 2> = {
+  ciede2000: 2,
+  oklab: 2,
+  cie76: 1,
+  redmean: 1,
+  rgb: 0,
+  distinguish: 0,
+};
+
+const METHODS_LEARN_URL = 'https://en.wikipedia.org/wiki/Color_difference#CIEDE2000';
+
+/** Mono tag for a method (used by readout rows and the switcher) */
+export function methodShort(method: MatchingMethod): string {
+  return LanguageService.t(`comparison.${METHOD_STEM[method]}Short`);
+}
+
+export interface MethodHelpOptions {
+  method: MatchingMethod;
+  dark: boolean;
+  onMethodChange: (method: MatchingMethod) => void;
+}
+
+/**
+ * Build the MetricHelp expander for 7C's matching-method switch: the active
+ * method's definition, its caveat, a perceptual-kind badge, the six-method
+ * switcher, and the colour-difference learn-more link.
+ */
+export function createMethodHelp(options: MethodHelpOptions): HTMLElement {
+  const t = (key: string): string => LanguageService.t(`comparison.${key}`);
+  const stem = METHOD_STEM[options.method];
+
+  const box = document.createElement('div');
+  box.style.cssText =
+    'display: flex; flex-direction: column; gap: 10px; padding: 12px; margin-bottom: 12px; border-radius: 12px; border: 1px solid var(--theme-border); background: var(--theme-card-background);';
+
+  const titleRow = document.createElement('div');
+  titleRow.style.cssText = 'display: flex; align-items: center; gap: 8px; flex-wrap: wrap;';
+  const title = document.createElement('span');
+  title.style.cssText = 'font-size: 13px; font-weight: 600; color: var(--theme-text);';
+  title.textContent = t(`${stem}Label`);
+  titleRow.appendChild(title);
+  const kindBadge = document.createElement('span');
+  kindBadge.style.cssText =
+    "font-family: 'Fragment Mono', monospace; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; border: 1px solid var(--theme-border); color: var(--theme-text-muted);";
+  kindBadge.textContent = t(`kind${METHOD_KIND[options.method]}`);
+  titleRow.appendChild(kindBadge);
+  box.appendChild(titleRow);
+
+  const desc = document.createElement('p');
+  desc.style.cssText =
+    'font-size: 12px; line-height: 1.55; margin: 0; color: var(--theme-text-muted);';
+  desc.textContent = t(`${stem}Desc`);
+  box.appendChild(desc);
+
+  const caveat = document.createElement('p');
+  caveat.style.cssText =
+    'font-size: 12px; line-height: 1.55; margin: 0; color: var(--theme-text-muted);';
+  caveat.textContent = t(`${stem}Caveat`);
+  box.appendChild(caveat);
+
+  const switcher = document.createElement('div');
+  switcher.style.cssText = 'display: flex; gap: 6px; flex-wrap: wrap;';
+  for (const id of METHOD_ORDER) {
+    const active = id === options.method;
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.style.cssText = `padding: 6px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 600; cursor: pointer; border: 1px solid ${active ? 'var(--theme-primary)' : 'var(--theme-border)'}; background: ${active ? 'var(--theme-primary)' : 'var(--theme-card-background)'}; color: ${active ? 'var(--theme-text-header)' : 'var(--theme-text)'};`;
+    chip.textContent = methodShort(id);
+    chip.setAttribute('aria-pressed', String(active));
+    chip.addEventListener('click', () => {
+      if (!active) options.onMethodChange(id);
+    });
+    switcher.appendChild(chip);
+  }
+  box.appendChild(switcher);
+
+  const link = document.createElement('a');
+  link.style.cssText = 'font-size: 12px; color: var(--theme-primary); text-decoration: underline;';
+  link.href = METHODS_LEARN_URL;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = t('methodsLearnMore');
+  box.appendChild(link);
 
   return box;
 }

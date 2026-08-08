@@ -123,3 +123,38 @@ describe('createMetricHelp', () => {
     expect(el.textContent).toContain('< 10');
   });
 });
+
+describe('createMethodHelp (7C methods mode)', () => {
+  it('orders the six methods perceptual to not', async () => {
+    const { METHOD_ORDER } = await import('../metric-help');
+    expect(METHOD_ORDER).toEqual(['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish']);
+  });
+
+  it('renders the kind badge and learn link', async () => {
+    const { createMethodHelp } = await import('../metric-help');
+    const el = createMethodHelp({ method: 'ciede2000', dark: true, onMethodChange: vi.fn() });
+    expect(el.textContent).toContain('comparison.kind2');
+    const link = el.querySelector('a');
+    expect(link?.href).toContain('wikipedia.org/wiki/Color_difference');
+  });
+
+  it('switches methods through the chip row without re-firing the active one', async () => {
+    const { createMethodHelp } = await import('../metric-help');
+    const onMethodChange = vi.fn();
+    const el = createMethodHelp({ method: 'ciede2000', dark: true, onMethodChange });
+    const chips = el.querySelectorAll('button');
+    expect(chips.length).toBe(6);
+    (chips[0] as HTMLButtonElement).click();
+    expect(onMethodChange).not.toHaveBeenCalled();
+    (chips[1] as HTMLButtonElement).click();
+    expect(onMethodChange).toHaveBeenCalledWith('oklab');
+  });
+
+  it('shows NOT-PERCEPTUAL kind for rgb and distinguish', async () => {
+    const { createMethodHelp } = await import('../metric-help');
+    for (const method of ['rgb', 'distinguish'] as const) {
+      const el = createMethodHelp({ method, dark: false, onMethodChange: vi.fn() });
+      expect(el.textContent).toContain('comparison.kind0');
+    }
+  });
+});
