@@ -403,6 +403,130 @@ export class PresetDetail extends BaseLitComponent {
         }
       }
     `,
+    css`
+      /* 8A: palette as a readable list, not Result Cards */
+      .dye-list {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
+        border-radius: 10px;
+        overflow: hidden;
+        max-width: 640px;
+      }
+
+      .dye-row {
+        display: grid;
+        grid-template-columns: 22px minmax(0, 1fr) 84px minmax(0, 1fr) 90px;
+        gap: 10px;
+        align-items: center;
+        padding: 9px 14px;
+        border-top: 1px solid var(--theme-border, rgba(255, 255, 255, 0.08));
+        font-size: 13px;
+      }
+
+      .dye-row:first-child {
+        border-top: none;
+      }
+
+      .dye-swatch {
+        width: 18px;
+        height: 18px;
+        border-radius: 5px;
+        border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.2));
+      }
+
+      .dye-name {
+        color: var(--theme-text, #e0e0e0);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .dye-hex {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 11.5px;
+        color: var(--theme-text-muted, #888888);
+      }
+
+      .dye-source {
+        font-size: 11.5px;
+        color: var(--theme-text-muted, #888888);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .dye-price {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 12px;
+        text-align: right;
+        color: var(--theme-text, #e0e0e0);
+      }
+
+      .dye-price--na {
+        color: var(--theme-text-muted, #888888);
+      }
+
+      .cost-label {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 8.5px;
+        letter-spacing: 1px;
+        color: var(--theme-text-muted, #888888);
+        margin: 14px 0 4px;
+      }
+
+      .cost-note {
+        font-size: 12.5px;
+        line-height: 1.55;
+        color: var(--theme-text, #e0e0e0);
+        max-width: 640px;
+        margin: 0;
+      }
+
+      /* 8A: handoff row so the page does not dead-end */
+      .handoff-label {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 8.5px;
+        letter-spacing: 1px;
+        color: var(--theme-text-muted, #888888);
+        margin: 22px 0 8px;
+      }
+
+      .handoff-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 10px;
+        max-width: 820px;
+      }
+
+      .handoff-btn {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        align-items: flex-start;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.12));
+        background: transparent;
+        cursor: pointer;
+        text-align: left;
+      }
+
+      .handoff-btn:hover {
+        border-color: var(--theme-primary, #ea4133);
+      }
+
+      .handoff-name {
+        font-size: 12.5px;
+        font-weight: 650;
+        color: var(--theme-text, #e0e0e0);
+      }
+
+      .handoff-note {
+        font-size: 11px;
+        color: var(--theme-text-muted, #888888);
+      }
+    `,
   ];
 
   override async connectedCallback(): Promise<void> {
@@ -630,6 +754,68 @@ export class PresetDetail extends BaseLitComponent {
     return dyeService.getDyeById(dyeId);
   }
 
+  private resolvedDyes(): Dye[] {
+    if (!this.preset) return [];
+    return this.preset.dyes.map((id) => this.resolveDye(id)).filter((d): d is Dye => d !== null);
+  }
+
+  private dyeNameOf(dye: Dye): string {
+    return LanguageService.getDyeName(dye.itemID) || dye.name;
+  }
+
+  /**
+   * PALETTE COST note in the 9C pricing vocabulary: gil-vendor dyes sum;
+   * scrip/credit/coffer dyes are named with their source, never converted.
+   */
+  private costNote(dyes: Dye[]): string {
+    const gilDyes = dyes.filter((d) => /gil/i.test(d.currency || '') && d.cost > 0);
+    const gil = gilDyes.reduce((sum, d) => sum + d.cost, 0);
+    if (gilDyes.length === dyes.length && dyes.length > 0) {
+      return LanguageService.tInterpolate('preset.costNoteAll', {
+        total: dyes.length,
+        gil: gil.toLocaleString(),
+      });
+    }
+    const notSold = dyes.filter((d) => !(/gil/i.test(d.currency || '') && d.cost > 0));
+    const sources = Array.from(
+      new Set(notSold.map((d) => LanguageService.getAcquisition(d.acquisition)))
+    );
+    return LanguageService.tInterpolate('preset.costNotePartial', {
+      bought: gilDyes.length,
+      total: dyes.length,
+      names: notSold.map((d) => this.dyeNameOf(d)).join(' · '),
+      sources: sources.join(', '),
+    });
+  }
+
+  /** TAKE THIS PALETTE INTO — targets built on the 5.0 share grammar (stainIDs). */
+  private handoffTargets(dyes: Dye[]): Array<{ label: string; note: string; url: string }> {
+    const ids = dyes.map((d) => d.stainID).filter((id): id is number => typeof id === 'number');
+    if (ids.length === 0) return [];
+    return [
+      {
+        label: LanguageService.t('tools.harmony.title'),
+        note: LanguageService.t('preset.handoffHarmony'),
+        url: `/harmony/?dye=${ids[0]}&harmony=complementary`,
+      },
+      {
+        label: LanguageService.t('tools.comparison.title'),
+        note: LanguageService.t('preset.handoffComparison'),
+        url: `/comparison/?dyes=${ids.slice(0, 4).join(',')}`,
+      },
+      {
+        label: LanguageService.t('tools.gradient.title'),
+        note: LanguageService.t('preset.handoffGradient'),
+        url: ids.length >= 2 ? `/gradient/?start=${ids[0]}&end=${ids[1]}` : `/gradient/`,
+      },
+      {
+        label: LanguageService.t('tools.accessibility.title'),
+        note: LanguageService.t('preset.handoffAccessibility'),
+        url: `/accessibility/?dyes=${ids.slice(0, 4).join(',')}`,
+      },
+    ];
+  }
+
   protected override render(): TemplateResult {
     if (!this.preset) {
       return html`
@@ -660,8 +846,10 @@ export class PresetDetail extends BaseLitComponent {
           </span>
           ${
             this.preset.isCurated
-              ? html`<span class="badge badge-curated">Official</span>`
-              : html`<span class="badge badge-community">Community</span>`
+              ? html`<span class="badge badge-curated"
+                  >${LanguageService.t('preset.tabOfficial')}</span
+                >`
+              : nothing
           }
           ${
             this.currentVoteCount > 0
@@ -679,45 +867,31 @@ export class PresetDetail extends BaseLitComponent {
             : nothing
         }
 
-        <!-- Dyes grid using v4-result-card -->
+        <!-- 8A: the palette is a readable list, not a set of Result Cards -->
         <div class="dyes-section">
-          <h3 class="section-title">Colors in Palette</h3>
-          <div class="dyes-grid">
-            ${this.preset.dyes.map((dyeId) => {
-              const dye = this.resolveDye(dyeId);
-              if (!dye) return nothing;
-              // Get price data for this dye
-              const priceInfo = this.priceData.get(dye.itemID);
-              // Resolve world name from price data, or fall back to selected server
-              const marketServer =
-                this.marketBoardService?.getWorldNameForPrice(priceInfo) ??
-                this.marketConfig.selectedServer;
+          <h3 class="section-title">${LanguageService.t('preset.paletteLabel')}</h3>
+          <div class="dye-list">
+            ${this.resolvedDyes().map((dye) => {
+              const gilVendor = /gil/i.test(dye.currency || '') && dye.cost > 0;
               return html`
-                <v4-result-card
-                  .data=${{
-                    dye,
-                    originalColor: dye.hex,
-                    matchedColor: dye.hex,
-                    marketServer: marketServer,
-                    price:
-                      this.marketConfig.showPrices && priceInfo
-                        ? priceInfo.currentAverage
-                        : undefined,
-                    vendorCost: dye.cost,
-                  }}
-                  ?show-actions=${false}
-                  ?show-hex=${this.displayOptions.showHex}
-                  ?show-rgb=${this.displayOptions.showRgb}
-                  ?show-hsv=${this.displayOptions.showHsv}
-                  ?show-lab=${this.displayOptions.showLab}
-                  ?show-cmyk=${this.displayOptions.showCmyk}
-                  ?show-delta-e=${this.displayOptions.showDeltaE}
-                  ?show-price=${this.displayOptions.showPrice && this.marketConfig.showPrices}
-                  ?show-acquisition=${this.displayOptions.showAcquisition}
-                ></v4-result-card>
+                <div class="dye-row">
+                  <span class="dye-swatch" style="background: ${dye.hex}"></span>
+                  <span class="dye-name">${this.dyeNameOf(dye)}</span>
+                  <span class="dye-hex">${dye.hex.toUpperCase()}</span>
+                  <span class="dye-source">${LanguageService.getAcquisition(dye.acquisition)}</span>
+                  <span class="dye-price ${gilVendor ? '' : 'dye-price--na'}"
+                    >${
+                      gilVendor
+                        ? `${dye.cost.toLocaleString()}g`
+                        : LanguageService.t('preset.notSold')
+                    }</span
+                  >
+                </div>
               `;
             })}
           </div>
+          <div class="cost-label">${LanguageService.t('preset.paletteCost')}</div>
+          <p class="cost-note">${this.costNote(this.resolvedDyes())}</p>
         </div>
 
         <!-- Tags -->
@@ -733,6 +907,19 @@ export class PresetDetail extends BaseLitComponent {
               `
             : nothing
         }
+
+        <!-- 8A: handoff row so the page does not dead-end -->
+        <div class="handoff-label">${LanguageService.t('preset.takeInto')}</div>
+        <div class="handoff-row">
+          ${this.handoffTargets(this.resolvedDyes()).map(
+            (h) => html`
+              <button class="handoff-btn" @click=${() => window.location.assign(h.url)}>
+                <span class="handoff-name">${h.label}</span>
+                <span class="handoff-note">${h.note}</span>
+              </button>
+            `
+          )}
+        </div>
 
         <!-- Actions -->
         <div class="actions">
