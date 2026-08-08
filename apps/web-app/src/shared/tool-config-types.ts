@@ -187,14 +187,20 @@ export type PresetSortOption = 'popular' | 'recent' | 'name';
  * Community Presets configuration
  */
 export interface PresetsConfig {
-  /** Show only user's own presets */
-  showMyPresetsOnly: boolean;
-  /** Show only favorited presets */
-  showFavorites: boolean;
-  /** Sort order */
+  /** Sort order (page control; mirrored here for persistence) */
   sortBy: PresetSortOption;
-  /** Category filter */
+  /** Category filter (page rail; mirrored here for persistence) */
   category: PresetCategoryFilter;
+  /** Feed: show example-link areas on cards (off = every card a palette strip) */
+  feedShots: boolean;
+  /** Feed: mix curated palettes into the Community tab (off = own tab only) */
+  feedBlend: boolean;
+  /** Feed: hide palettes containing market-only (coffer) dyes */
+  feedHideUnbuyable: boolean;
+  /** Saved shelf: pin saved presets to the top of every tab */
+  savedFirst: boolean;
+  /** Saved shelf: keep author-deleted saved presets, marked */
+  keepDeleted: boolean;
   /** Display options for dye cards in preset details */
   displayOptions: DisplayOptionsConfig;
 }
@@ -440,10 +446,13 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },
   presets: {
-    showMyPresetsOnly: false,
-    showFavorites: false,
     sortBy: 'popular',
     category: 'all',
+    feedShots: true,
+    feedBlend: false,
+    feedHideUnbuyable: false,
+    savedFirst: true,
+    keepDeleted: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
   },
   budget: {

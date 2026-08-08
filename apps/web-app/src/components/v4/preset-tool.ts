@@ -85,10 +85,13 @@ export class PresetTool extends BaseLitComponent {
 
   @state()
   private config: PresetsConfig = {
-    showMyPresetsOnly: false,
-    showFavorites: false,
     sortBy: 'popular',
     category: 'all',
+    feedShots: true,
+    feedBlend: false,
+    feedHideUnbuyable: false,
+    savedFirst: true,
+    keepDeleted: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
   };
 
@@ -467,14 +470,32 @@ export class PresetTool extends BaseLitComponent {
     return { preset, colors };
   }
 
+  /** A palette is buyable when none of its dyes are market-only (coffer). */
+  private isBuyable(preset: UnifiedPreset): boolean {
+    return preset.dyes.every((id) => {
+      const dye = dyeService.getDyeById(id);
+      return !dye || dye.consolidationType !== null;
+    });
+  }
+
+  /** Saved shelf pins to the top of every tab when savedFirst is on. */
+  private applySavedFirst(pool: UnifiedPreset[]): UnifiedPreset[] {
+    if (!this.config.savedFirst) return pool;
+    const savedIds = new Set(this.savedList.map((s) => s.id));
+    const saved = pool.filter((p) => savedIds.has(p.id));
+    return saved.length ? [...saved, ...pool.filter((p) => !savedIds.has(p.id))] : pool;
+  }
+
   /** The active tab's pool, sliced from the one loaded list. */
   private currentPool(): UnifiedPreset[] {
     switch (this.tab) {
       case 'official':
-        return this.presets.filter((p) => p.isCurated);
+        return this.applySavedFirst(this.presets.filter((p) => p.isCurated));
       case 'saved': {
         const q = this.searchQuery.toLowerCase();
-        let pool = this.savedList.map((s) => this.savedToUnified(s));
+        let pool = this.savedList
+          .filter((s) => this.config.keepDeleted || !s.deletedByAuthor)
+          .map((s) => this.savedToUnified(s));
         if (this.config.category !== 'all') {
           pool = pool.filter((p) => p.category === this.config.category);
         }
@@ -491,8 +512,13 @@ export class PresetTool extends BaseLitComponent {
       case 'mine':
         return this.userSubmissions.map((p) => this.communityToUnified(p));
       case 'community':
-      default:
-        return this.presets.filter((p) => !p.isCurated);
+      default: {
+        let pool = this.config.feedBlend ? this.presets : this.presets.filter((p) => !p.isCurated);
+        if (this.config.feedHideUnbuyable) {
+          pool = pool.filter((p) => this.isBuyable(p));
+        }
+        return this.applySavedFirst(pool);
+      }
     }
   }
 
@@ -836,6 +862,7 @@ export class PresetTool extends BaseLitComponent {
               .data=${cardData}
               .saved=${!!savedEntry}
               .voted=${this.votedIds.has(preset.id)}
+              .showShot=${this.config.feedShots}
               .tombstone=${this.tab === 'saved' && !!savedEntry?.deletedByAuthor}
               @preset-select=${this.handlePresetSelect}
               @preset-vote=${this.handleCardVote}

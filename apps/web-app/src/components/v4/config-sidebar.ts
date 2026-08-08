@@ -32,7 +32,6 @@ import type {
   ConfigKey,
   DisplayOptionsConfig,
   DyeFiltersConfig,
-  PresetCategoryFilter,
   MatchingMethod,
 } from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
@@ -175,10 +174,13 @@ export class ConfigSidebar extends BaseLitComponent {
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
   @state() private presetsConfig: PresetsConfig = {
-    showMyPresetsOnly: false,
-    showFavorites: false,
     sortBy: 'popular',
     category: 'all',
+    feedShots: true,
+    feedBlend: false,
+    feedHideUnbuyable: false,
+    savedFirst: true,
+    keepDeleted: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
   };
   @state() private budgetConfig: BudgetConfig = {
@@ -326,6 +328,14 @@ export class ConfigSidebar extends BaseLitComponent {
         text-transform: uppercase;
         letter-spacing: 1px;
         margin-bottom: 12px;
+      }
+
+      /* 8A: one-line explanation under a toggle */
+      .config-hint {
+        font-size: 11px;
+        line-height: 1.45;
+        color: var(--theme-text-muted, #a0a0a0);
+        margin: 2px 0 10px;
       }
 
       /* Config Row (for toggle switches) */
@@ -1379,58 +1389,62 @@ export class ConfigSidebar extends BaseLitComponent {
       <div class="config-section" ?hidden=${this.activeTool !== 'presets'}>
         ${this.renderPresetsAuthSection()}
 
+        <!-- 8A: category + sort moved onto the page (rail + cycling sort);
+             the sidebar carries the Feed and Saved-shelf options instead -->
         <div class="config-group">
-          <div class="config-label">${LanguageService.t('config.category')}</div>
-          <select
-            class="config-select"
-            .value=${this.presetsConfig.category}
-            @change=${(e: Event) => {
-              const value = (e.target as HTMLSelectElement).value as PresetCategoryFilter;
-              this.handleConfigChange('presets', 'category', value);
-            }}
-          >
-            <option value="all">${LanguageService.t('config.allCategories')}</option>
-            <option value="jobs">${LanguageService.t('config.jobs')}</option>
-            <option value="grand-companies">${LanguageService.t('config.grandCompanies')}</option>
-            <option value="seasons">${LanguageService.t('config.seasons')}</option>
-            <option value="events">${LanguageService.t('config.events')}</option>
-            <option value="aesthetics">${LanguageService.t('config.aesthetics')}</option>
-          </select>
-        </div>
-
-        <div class="config-group">
-          <div class="config-label">${LanguageService.t('config.sortBy')}</div>
-          <select
-            class="config-select"
-            .value=${this.presetsConfig.sortBy}
-            @change=${(e: Event) => {
-              const value = (e.target as HTMLSelectElement).value;
-              this.handleConfigChange('presets', 'sortBy', value);
-            }}
-          >
-            <option value="popular">${LanguageService.t('config.mostPopular')}</option>
-            <option value="recent">${LanguageService.t('config.mostRecent')}</option>
-            <option value="name">${LanguageService.t('config.alphabetical')}</option>
-          </select>
-        </div>
-
-        <div class="config-group">
-          <div class="config-label">${LanguageService.t('config.filters')}</div>
+          <div class="config-label">${LanguageService.t('preset.tabCommunity')}</div>
           <div class="config-row">
             <v4-toggle-switch
-              label=${LanguageService.t('config.showMyPresetsOnly')}
-              .checked=${this.presetsConfig.showMyPresetsOnly}
+              label=${LanguageService.t('preset.cfgShowShots')}
+              .checked=${this.presetsConfig.feedShots}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                this.handleConfigChange('presets', 'showMyPresetsOnly', e.detail.checked)}
+                this.handleConfigChange('presets', 'feedShots', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
+          <div class="config-hint">${LanguageService.t('preset.cfgShowShotsDesc')}</div>
           <div class="config-row">
             <v4-toggle-switch
-              label=${LanguageService.t('config.showFavorites')}
-              .checked=${this.presetsConfig.showFavorites}
+              label=${LanguageService.t('preset.cfgBlend')}
+              .checked=${this.presetsConfig.feedBlend}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                this.handleConfigChange('presets', 'showFavorites', e.detail.checked)}
+                this.handleConfigChange('presets', 'feedBlend', e.detail.checked)}
             ></v4-toggle-switch>
+          </div>
+          <div class="config-hint">${LanguageService.t('preset.cfgBlendDesc')}</div>
+          <div class="config-row">
+            <v4-toggle-switch
+              label=${LanguageService.t('preset.cfgHideUnbuyable')}
+              .checked=${this.presetsConfig.feedHideUnbuyable}
+              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                this.handleConfigChange('presets', 'feedHideUnbuyable', e.detail.checked)}
+            ></v4-toggle-switch>
+          </div>
+          <div class="config-hint">${LanguageService.t('preset.cfgHideUnbuyableDesc')}</div>
+        </div>
+
+        <div class="config-group">
+          <div class="config-label">${LanguageService.t('preset.tabSaved')}</div>
+          <div class="config-row">
+            <v4-toggle-switch
+              label=${LanguageService.t('preset.cfgSavedFirst')}
+              .checked=${this.presetsConfig.savedFirst}
+              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                this.handleConfigChange('presets', 'savedFirst', e.detail.checked)}
+            ></v4-toggle-switch>
+          </div>
+          <div class="config-hint">${LanguageService.t('preset.cfgSavedFirstDesc')}</div>
+          <div class="config-row">
+            <v4-toggle-switch
+              label=${LanguageService.t('preset.cfgKeepDeleted')}
+              .checked=${this.presetsConfig.keepDeleted}
+              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                this.handleConfigChange('presets', 'keepDeleted', e.detail.checked)}
+            ></v4-toggle-switch>
+          </div>
+          <div class="config-hint">${LanguageService.t('preset.cfgKeepDeletedDesc')}</div>
+          <div class="config-hint" style="margin-top: 6px; opacity: 0.85;">
+            ${LanguageService.t('preset.cfgStoredLocally')} —
+            ${LanguageService.t('preset.cfgStoredLocallyDesc')}
           </div>
         </div>
 
