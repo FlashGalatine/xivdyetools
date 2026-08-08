@@ -460,11 +460,14 @@ export class ModalContainer extends BaseComponent {
         className: 'modal-container',
         attributes: { 'aria-label': 'Modal dialogs' },
       });
-      if (!this.stylesInjected) {
+      // Inject into <head>, NOT into this.element — the container is cleared
+      // when the last modal closes, which would take the styles with it and
+      // leave every subsequent modal unstyled
+      if (!this.stylesInjected && !document.getElementById('m16-shell-styles')) {
         const style = document.createElement('style');
         style.id = 'm16-shell-styles';
         style.textContent = SHELL_STYLES;
-        this.element.appendChild(style);
+        document.head.appendChild(style);
         this.stylesInjected = true;
       }
       this.container.appendChild(this.element);
