@@ -66,6 +66,64 @@ Console-themed (mark, dark palette), names the tool + the dye you asked for
 while the refresh waits, `/manual`-equivalent link — replaces the two centred
 paragraphs on `#1a1a2e`.
 
+## Drawn geometry (verbatim from the 15E markup)
+
+- Ground `#0B0B0C`. Discord: bands area 400×316 (flex row; each band flex-grow
+  = weight, padding 12×10, column space-between: role 11px mono onDim top;
+  bottom stack gap 4 = name Onest 600 (base 17px / others 12px, lh 1.18) ·
+  hex 11px mono onDim · tag 11px mono onDim). Strip 34px pad 0 13: ogmark
+  17×17 + wordmark `XIV DYE TOOLS` Space Grotesk 600 11px tracking 1.3
+  `#9C9CA2` + tool glyph 13px (ink #ECECEE, accent #FF6257) + tool tag 11px
+  mono `#FF6257` — right side: context sub-line 11px mono `#86868C`.
+- X frame: bands area 400×150, only the tag at the band foot (11px mono
+  onDim, pad 10); strip 60px pad 0 13 = ogmark 19 + column(bandLine Onest 600
+  14px #ECECEE / `url · METHOD` 11px mono #86868C) + glyph+tag right.
+- The split-strip variant = a horizontal `srcHex` strip at the TOP of a band
+  (heights per tool: mixer 46px, accessibility 52px, extractor 54px).
+- The `#ogmark` is a REDUCED 48-grid bucket (rect rx11 #CE2222, handle
+  stroke #9BA1AD 2.4, clipped 6-stripe body, white rim ellipse) — copy the
+  symbol geometry verbatim from `og-cards.html` defs (scratchpad).
+
+## Band ink law (differs from svg package's getContrastTextColor!)
+
+`preferDark(hex)`: relative luminance l; dark ink wins when
+`(l+0.05)/0.05 >= 1.05/(l+0.05)` (measured contrast against both candidates —
+a fixed luminance cut gives mid-tones the worse ink). on = `#0A0A0A` | `#FFFFFF`;
+onDim = `rgba(10,10,10,0.72)` | `rgba(255,255,255,0.78)`.
+
+## Per-tool band recipes (from the doc's toolCards data script)
+
+- **harmony**: base grow 2, role=BASE, tag=stain tag, name 17px; matches grow
+  1, role=offset tag (+120°…), tag=Δ(match→ideal), name 12px. Footer sub:
+  `{TYPE} ON {stainTag}`.
+- **gradient**: N equal bands = the MATCHED dyes, never the interpolation
+  ("the interpolation is not something anyone can buy"). Endpoints role
+  START/END + `#stain`; middles role = step number, tag = Δ to the
+  interpolated step.
+- **mixer**: A grow=ratio role `A · 60%`, B grow=100−ratio, result band
+  grow=100 with the 46px mix-hex strip above, role=BUYABLE, tag Δ. Proportion
+  IS the ratio.
+- **swatch**: target grow 2, role TARGET, name = the hex itself, tag
+  `NO STAIN ID` (an arbitrary colour is a target, never a result — the card
+  must not invent a name); 4 matches (not 5 — 11px floor), role=rank, tag Δ.
+- **comparison**: 4 bands; the closest pair first, adjacent, grow 3, role
+  `CLOSEST PAIR`; others grow 2; tag `#stain`. The six pair Δs live ONLY as a
+  mono run in the embed/sub-line (the accepted narrowing).
+- **accessibility**: band body = dye AS PERCEIVED (simulated), 52px strip
+  above = as designed; role `AS DESIGNED`, tag Δ shift. No WCAG percentage on
+  the picture.
+- **extractor**: grow = share-of-image %, 54px strip = extracted pixel, body =
+  nearest dye, role `{share}%`, tag Δ. The one genuinely proportional card.
+- **presets**: equal bands whatever the count, name + `#stain`, NO Δ (a
+  palette has no target); footRight `CURATED`; preset names not localised.
+- **budget**: target grow 2, role `TARGET · COFFER`, tag = price (`71,400 G`);
+  candidates grow 1, role = tier name (`Std Spectrum` / `Coffer`), tag =
+  `Δ{d} · {price}G` with `—` for the unpriced coffer (blanks never invent).
+  Headline = `Best per point: {dye} · {n} G/Δ` — the ledger ranked four, the
+  band recommends ONE (gil/ΔE has no proportional reading; widening by
+  value-for-money makes the poorest candidates unreadably narrow — rejected).
+  footRight `VENDOR 216 G`. Price rides on the tier label, never the dye.
+
 ## Implementation order
 
 1. Shared band module in og-worker `services/svg` (band layout + split-strip
