@@ -44,17 +44,17 @@ describe('@xivdyetools/svg index exports', () => {
         expect(typeof svg.interpolateColor).toBe('function');
     });
 
-    it('exports palette grid generator', async () => {
+    it('exports the extractor generators and the measured row', async () => {
         const svg = await import('./index.js');
 
         expect(svg.generatePaletteGrid).toBeDefined();
         expect(typeof svg.generatePaletteGrid).toBe('function');
 
-        expect(svg.getMatchQuality).toBeDefined();
-        expect(typeof svg.getMatchQuality).toBe('function');
+        expect(svg.generateNearestSheet).toBeDefined();
+        expect(typeof svg.generateNearestSheet).toBe('function');
 
-        expect(svg.MATCH_QUALITIES).toBeDefined();
-        expect(Array.isArray(svg.MATCH_QUALITIES)).toBe(true);
+        expect(svg.measuredRow).toBeDefined();
+        expect(typeof svg.measuredRow).toBe('function');
     });
 
     it('exports accessibility comparison generator', async () => {

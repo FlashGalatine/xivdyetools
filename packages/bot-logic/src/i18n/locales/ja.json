@@ -655,6 +655,17 @@
     "tier0": "完全",
     "tier1": "近い",
     "tier2": "緩い",
-    "tier3": "到達不可"
+    "tier3": "到達不可",
+    "share": "割合",
+    "matched": "該当カララント",
+    "rank": "順位",
+    "target": "目標色",
+    "rampTitle": "画像からのパレット",
+    "matchTitle": "最も近い色",
+    "colours": "{n}色",
+    "rampKey": "帯の幅＝画像内の割合",
+    "matchKey": "ΔE2000 による最近傍",
+    "manualLead": "色が想定と違う場合は",
+    "manualTail": " をご覧ください"
   }
 }

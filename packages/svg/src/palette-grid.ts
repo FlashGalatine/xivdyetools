@@ -1,443 +1,212 @@
 /**
- * Palette Grid SVG Generator
+ * /extractor image — the confirmed 14K Ramp (Turn 14), 400×350.
  *
- * Generates a visual comparison of extracted colors to matched FFXIV dyes.
- * Used by the /extractor image command to display color extraction results.
+ * The five-row cap only binds the list: the band carries ALL colours at
+ * their real share of the image — the one thing an extractor should show
+ * and a row cannot, because a row gives a 42% colour and a 2% colour
+ * identical height. The rows carry the butted extracted→dye pair, because
+ * the band answers "how much" and only the pair answers "which became
+ * which". Nothing is deferred: the list is explicitly a top five, so the
+ * count in the embed is a description, not an apology.
  *
- * Layout:
- * +----------------------------------------------------------+
- * | [Extracted Color] 42%  -->  [Matched Dye] Dalamud Red    |
- * | #B01515                     #AA1111 Δ8.5     [EXCELLENT] |
- * +----------------------------------------------------------+
- *
- * @module svg/palette-grid
+ * @module palette-grid
  */
 
-import type { RGB, Dye } from '@xivdyetools/types';
-import { classifyMatchDistance } from '@xivdyetools/types';
 import {
-  createSvgDocument,
-  rect,
-  text,
-  line,
-  THEME,
-  FONTS,
-  rgbToHex,
-} from './base.js';
-
-// ============================================================================
-// Match Quality (display logic, inlined from types/image)
-// ============================================================================
-
-export interface MatchQuality {
-  /** Locale key for translation lookup (e.g., 'perfect', 'excellent') */
-  key: string;
-  /** Human-readable label */
-  label: string;
-  /** Short label for display */
-  shortLabel: string;
-  /** Distance threshold for this quality level */
-  maxDistance: number;
-}
-
-/**
- * Match quality thresholds
- *
- * Based on Euclidean distance in RGB space:
- * - Max possible distance: ~441 (black to white)
- * - Noticeable difference: ~10-15
- * - Perceptually similar: ~25-30
- */
-export const MATCH_QUALITIES: MatchQuality[] = [
-  { key: 'perfect', label: 'Perfect Match', shortLabel: 'PERFECT', maxDistance: 0 },
-  { key: 'excellent', label: 'Excellent Match', shortLabel: 'EXCELLENT', maxDistance: 10 },
-  { key: 'good', label: 'Good Match', shortLabel: 'GOOD', maxDistance: 25 },
-  { key: 'fair', label: 'Fair Match', shortLabel: 'FAIR', maxDistance: 50 },
-  { key: 'approximate', label: 'Approximate Match', shortLabel: 'APPROX', maxDistance: Infinity },
-];
-
-/**
- * Get the quality rating for a color distance
- */
-export function getMatchQuality(distance: number): MatchQuality {
-  // REFACTOR-004: thresholds live in the shared classifier (inclusive bounds).
-  const key = classifyMatchDistance(distance);
-  return MATCH_QUALITIES.find((q) => q.key === key) ?? MATCH_QUALITIES[MATCH_QUALITIES.length - 1];
-}
+  CARD_WIDTH,
+  CARD_TYPE,
+  ROW_CAP,
+  cardShell,
+  cardTheme,
+  cardText,
+  commandChip,
+  fitText,
+  hairline,
+  markFooter,
+  measuredRow,
+  type CardTheme,
+  type MeasuredRowWidths,
+} from './frame.js';
+import { toolGlyph } from './icons/tool-icons.js';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-/**
- * A single palette entry with extracted and matched colors
- */
-export interface PaletteEntry {
-  /** The extracted RGB color from the image */
-  extracted: RGB;
-  /** The closest matching FFXIV dye */
-  matchedDye: Dye;
-  /** Color distance (Euclidean in RGB space) */
-  distance: number;
-  /** Percentage of pixels with this color (0-100) */
-  dominance: number;
+/** One colour in the proportional band (every extracted colour rides here). */
+export interface PaletteBandEntry {
+  hex: string;
+  /** Share of the image, 0–100 */
+  share: number;
 }
 
-/**
- * Translatable labels for the palette grid SVG.
- * Pass these from the bot's i18n system to localize the image.
- */
+/** One list row (top five by share). */
+export interface PaletteRowEntry {
+  /** Share of the image, 0–100 */
+  share: number;
+  /** The extracted cluster colour (left half of the butted pair) */
+  extractedHex: string;
+  /** The matched dye (right half) */
+  matchedHex: string;
+  /** Localized matched dye name */
+  matchedName: string;
+  /** ΔE2000 extracted → matched */
+  deltaE: number;
+}
+
 export interface PaletteGridLabels {
-  /** Label above extracted color (e.g., "EXTRACTED") */
-  extracted: string;
-  /** Label above matched dye (e.g., "MATCHED DYE") */
-  matchedDye: string;
-  /** Suffix for dominance percentage (e.g., "of image") */
-  ofImage: string;
-  /** Empty state message (e.g., "No colors extracted from image") */
-  noColors: string;
-  /** Quality badge labels keyed by quality key */
-  quality: Record<string, string>;
+  /** SHARE / ANTEIL / 割合 … */
+  share: string;
+  /** MATCHED DYE / PASSENDER FARBSTOFF / 該当カララント … */
+  matched: string;
+  /** "band width = share of image" ×6 */
+  rampKey: string;
 }
 
-/**
- * Options for generating the palette grid
- */
 export interface PaletteGridOptions {
-  /** Array of palette entries to display */
-  entries: PaletteEntry[];
-  /** Canvas width in pixels (default: 800) */
-  width?: number;
-  /** Show color distance values (default: true) */
-  showDistance?: boolean;
-  /** Title text (optional) */
-  title?: string;
-  /** Translated labels for i18n (defaults to English if omitted) */
-  labels?: PaletteGridLabels;
+  /** Localized card title ("Palette from image" ×6) */
+  title: string;
+  /** Every extracted colour, in extraction order */
+  band: PaletteBandEntry[];
+  /** Top five rows */
+  rows: PaletteRowEntry[];
+  labels: PaletteGridLabels;
+  lang: string;
+  theme?: 'dark' | 'light';
+  /** The chip names the SUBCOMMAND — a glyph cannot */
+  commandLabel?: string;
+  commandGlyph?: string | null;
 }
 
 // ============================================================================
-// Constants
+// Generator
 // ============================================================================
 
-const DEFAULT_WIDTH = 800;
-const PADDING = 24;
-const ROW_HEIGHT = 100;
-const SWATCH_SIZE = 60;
-const ARROW_WIDTH = 40;
-const TITLE_HEIGHT = 50;
-const QUALITY_BADGE_WIDTH = 90;
-const QUALITY_BADGE_HEIGHT = 22;
+const PAD = 16;
+const BAND_H = 30;
+const ROW_H = 45;
 
-/** Default English labels used when no labels are provided */
-const DEFAULT_LABELS: PaletteGridLabels = {
-  extracted: 'EXTRACTED',
-  matchedDye: 'MATCHED DYE',
-  ofImage: 'of image',
-  noColors: 'No colors extracted from image',
-  quality: {
-    perfect: 'PERFECT',
-    excellent: 'EXCELLENT',
-    good: 'GOOD',
-    fair: 'FAIR',
-    approximate: 'APPROX',
-  },
-};
+/** 14K slot widths (name at 12.5 px, 35 px spare on the longest DE name). */
+const ROW_WIDTHS: MeasuredRowWidths = { lead: 38, pair: 52, name: 180, bar: 26, measure: 34 };
 
-// ============================================================================
-// SVG Generation
-// ============================================================================
+/** A 2% band is 7 px and needs a floor, or the tenth colour disappears. */
+const MIN_SLICE = 7;
 
 /**
- * Generate a palette grid SVG showing extracted colors matched to dyes
- *
- * @param options - Palette grid configuration
- * @returns SVG string
- *
- * @example
- * ```typescript
- * const svg = generatePaletteGrid({
- *   entries: [
- *     {
- *       extracted: { r: 176, g: 21, b: 21 },
- *       matchedDye: { name: 'Dalamud Red', hex: '#AA1111', ... },
- *       distance: 8.5,
- *       dominance: 42,
- *     },
- *   ],
- * });
- * const png = await renderSvgToPng(svg);
- * ```
+ * Proportional band slices with a minimum visible width; the remainder comes
+ * off the largest band so the strip never silently drops a colour.
+ */
+export function bandSlices(entries: PaletteBandEntry[], totalWidth: number): number[] {
+  const totalShare = entries.reduce((a, e) => a + e.share, 0) || 1;
+  const widths = entries.map((e) => (e.share / totalShare) * totalWidth);
+  let debt = 0;
+  for (let i = 0; i < widths.length; i++) {
+    if (widths[i] < MIN_SLICE) {
+      debt += MIN_SLICE - widths[i];
+      widths[i] = MIN_SLICE;
+    }
+  }
+  while (debt > 0.01) {
+    const largest = widths.indexOf(Math.max(...widths));
+    const give = Math.min(debt, widths[largest] - MIN_SLICE);
+    if (give <= 0) break;
+    widths[largest] -= give;
+    debt -= give;
+  }
+  return widths;
+}
+
+/**
+ * Generate the /extractor image card (14K). Height grows with the row count
+ * and reaches 350 at five rows.
  */
 export function generatePaletteGrid(options: PaletteGridOptions): string {
-  const {
-    entries,
-    width = DEFAULT_WIDTH,
-    showDistance = true,
-    title,
-    labels = DEFAULT_LABELS,
-  } = options;
+  const { title, band, labels, lang, commandLabel = '/EXTRACTOR IMAGE' } = options;
+  const rows = options.rows.slice(0, ROW_CAP);
+  const theme: CardTheme = cardTheme(options.theme);
+  const commandGlyph =
+    options.commandGlyph !== undefined
+      ? options.commandGlyph
+      : toolGlyph('extractor', 'compact', { size: 13, ink: theme.pillInk, accent: theme.glyphAccent });
+  const parts: string[] = [];
 
-  if (entries.length === 0) {
-    return generateEmptyPalette(width, labels);
-  }
+  // --- Title + subcommand chip
+  const chip = commandChip(0, 13, commandLabel, theme, { glyph: commandGlyph });
+  parts.push(`<g transform="translate(${CARD_WIDTH - PAD - chip.width},0)">${chip.svg}</g>`);
+  parts.push(
+    cardText(PAD, 13 + 18, fitText(title, CARD_WIDTH - PAD * 2 - chip.width - 10, 18, 'display'), {
+      fill: theme.name,
+      size: 18,
+      font: 'display',
+      weight: 600,
+    })
+  );
 
-  // Calculate dimensions
-  const hasTitle = Boolean(title);
-  const titleSpace = hasTitle ? TITLE_HEIGHT : 0;
-  const contentHeight = entries.length * ROW_HEIGHT;
-  const height = PADDING * 2 + titleSpace + contentHeight;
+  // --- The band: all colours, real shares, floored slices
+  const bandY = 13 + 22 + 9;
+  const innerW = CARD_WIDTH - PAD * 2;
+  const slices = bandSlices(band, innerW);
+  let bx = PAD;
+  const bandRects: string[] = [];
+  slices.forEach((w, i) => {
+    bandRects.push(`<rect x="${bx}" y="${bandY}" width="${w}" height="${BAND_H}" fill="${band[i].hex}"/>`);
+    bx += w;
+  });
+  parts.push(
+    `<defs><clipPath id="pgband"><rect x="${PAD}" y="${bandY}" width="${innerW}" height="${BAND_H}" rx="8"/></clipPath></defs>` +
+      `<g clip-path="url(#pgband)">${bandRects.join('')}</g>` +
+      `<rect x="${PAD + 0.5}" y="${bandY + 0.5}" width="${innerW - 1}" height="${BAND_H - 1}" rx="7.5" fill="none" stroke="${theme.swatchRing}" stroke-width="1"/>`
+  );
 
-  const elements: string[] = [];
+  // --- Column labels
+  const headY = bandY + BAND_H + 9 + 11;
+  const nameX = PAD + ROW_WIDTHS.lead + 10 + ROW_WIDTHS.pair + 10;
+  parts.push(
+    cardText(PAD, headY, labels.share, { fill: theme.label, size: CARD_TYPE.label, font: 'mono', letterSpacing: 1 })
+  );
+  parts.push(
+    cardText(nameX, headY, labels.matched, { fill: theme.label, size: CARD_TYPE.label, font: 'mono', letterSpacing: 1 })
+  );
+  parts.push(
+    cardText(CARD_WIDTH - PAD, headY, 'ΔE', {
+      fill: theme.label,
+      size: CARD_TYPE.label,
+      font: 'mono',
+      letterSpacing: 1,
+      anchor: 'end',
+    })
+  );
 
-  // Background
-  elements.push(rect(0, 0, width, height, THEME.background, { rx: 12, ry: 12 }));
-
-  // Title
-  if (title) {
-    elements.push(
-      text(width / 2, PADDING + 20, title, {
-        fill: THEME.text,
-        fontSize: 20,
-        fontFamily: FONTS.headerCjk,
-        fontWeight: 600,
-        textAnchor: 'middle',
+  // --- Rows: the suite's five-slot row (lead = share)
+  const rowsTop = headY + 5;
+  rows.forEach((r, i) => {
+    const top = rowsTop + i * ROW_H;
+    parts.push(hairline(PAD, CARD_WIDTH - PAD, top, theme));
+    parts.push(
+      measuredRow(PAD, top, ROW_H, {
+        lead: `${Math.round(r.share)}%`,
+        sourceHex: r.extractedHex,
+        dyeHex: r.matchedHex,
+        name: r.matchedName,
+        deltaE: r.deltaE,
+        lang,
+        theme,
+        widths: ROW_WIDTHS,
+        nameSize: 12.5,
       })
     );
-  }
-
-  // Render each row
-  const startY = PADDING + titleSpace;
-  entries.forEach((entry, index) => {
-    const rowY = startY + index * ROW_HEIGHT;
-    elements.push(generatePaletteRow(entry, PADDING, rowY, width - PADDING * 2, showDistance, labels));
-
-    // Separator line (except after last row)
-    if (index < entries.length - 1) {
-      elements.push(
-        line(
-          PADDING,
-          rowY + ROW_HEIGHT,
-          width - PADDING,
-          rowY + ROW_HEIGHT,
-          THEME.border,
-          1
-        )
-      );
-    }
   });
 
-  return createSvgDocument(width, height, elements.join('\n'));
-}
-
-/**
- * Generate a single palette row
- */
-function generatePaletteRow(
-  entry: PaletteEntry,
-  x: number,
-  y: number,
-  width: number,
-  showDistance: boolean,
-  labels: PaletteGridLabels
-): string {
-  const elements: string[] = [];
-
-  const extractedHex = rgbToHex(entry.extracted.r, entry.extracted.g, entry.extracted.b);
-  const matchedHex = entry.matchedDye.hex;
-  const quality = getMatchQuality(entry.distance);
-
-  // Row background (subtle highlight)
-  elements.push(
-    rect(x, y + 4, width, ROW_HEIGHT - 8, THEME.backgroundLight, {
-      rx: 8,
-      ry: 8,
-      opacity: 0.5,
+  // --- Footer: legend + mark
+  const height = Math.min(350, rowsTop + rows.length * ROW_H + 30);
+  parts.push(
+    cardText(PAD, height - 13, fitText(labels.rampKey, CARD_WIDTH - PAD * 2 - 130, CARD_TYPE.label, 'mono'), {
+      fill: theme.label,
+      size: CARD_TYPE.label,
+      font: 'mono',
     })
   );
+  parts.push(markFooter(CARD_WIDTH - PAD, height - 13, theme));
 
-  // ── Left side: Extracted color ──
-
-  const extractedX = x + 16;
-  const swatchY = y + (ROW_HEIGHT - SWATCH_SIZE) / 2;
-
-  // Extracted color swatch
-  elements.push(
-    rect(extractedX, swatchY, SWATCH_SIZE, SWATCH_SIZE, extractedHex, {
-      rx: 6,
-      ry: 6,
-      stroke: THEME.border,
-      strokeWidth: 2,
-    })
-  );
-
-  // Extracted info (right of swatch)
-  const extractedInfoX = extractedX + SWATCH_SIZE + 12;
-  elements.push(
-    text(extractedInfoX, y + 36, labels.extracted.toUpperCase(), {
-      fill: THEME.textMuted,
-      fontSize: 10,
-      fontFamily: FONTS.primary,
-      fontWeight: 500,
-    })
-  );
-  elements.push(
-    text(extractedInfoX, y + 55, extractedHex.toUpperCase(), {
-      fill: THEME.text,
-      fontSize: 14,
-      fontFamily: FONTS.mono,
-      fontWeight: 600,
-    })
-  );
-  elements.push(
-    text(extractedInfoX, y + 75, `${entry.dominance}% ${labels.ofImage}`, {
-      fill: THEME.textDim,
-      fontSize: 11,
-      fontFamily: FONTS.primary,
-    })
-  );
-
-  // ── Arrow in the middle ──
-
-  const arrowX = x + width / 2 - ARROW_WIDTH / 2;
-  const arrowY = y + ROW_HEIGHT / 2;
-  elements.push(generateArrow(arrowX, arrowY, ARROW_WIDTH, THEME.textMuted));
-
-  // ── Right side: Matched dye ──
-  // Position swatch right after the arrow area for maximum text room
-
-  const matchedSwatchX = x + width / 2 + ARROW_WIDTH / 2 + 12;
-
-  // Matched dye swatch
-  elements.push(
-    rect(matchedSwatchX, swatchY, SWATCH_SIZE, SWATCH_SIZE, matchedHex, {
-      rx: 6,
-      ry: 6,
-      stroke: THEME.border,
-      strokeWidth: 2,
-    })
-  );
-
-  // Matched info (right of swatch)
-  const matchedInfoX = matchedSwatchX + SWATCH_SIZE + 12;
-  const rowRightEdge = x + width - 16;
-
-  elements.push(
-    text(matchedInfoX, y + 36, labels.matchedDye.toUpperCase(), {
-      fill: THEME.textMuted,
-      fontSize: 10,
-      fontFamily: FONTS.primary,
-      fontWeight: 500,
-    })
-  );
-  elements.push(
-    text(matchedInfoX, y + 55, entry.matchedDye.name, {
-      fill: THEME.text,
-      fontSize: 14,
-      fontFamily: FONTS.primaryCjk,
-      fontWeight: 600,
-    })
-  );
-
-  // Bottom line: hex + distance on left, quality badge on right
-  const distanceText = showDistance ? `  Δ${entry.distance.toFixed(1)}` : '';
-  elements.push(
-    text(matchedInfoX, y + 75, `${matchedHex.toUpperCase()}${distanceText}`, {
-      fill: THEME.textDim,
-      fontSize: 11,
-      fontFamily: FONTS.mono,
-    })
-  );
-
-  // Quality badge (right-aligned, vertically centered in row)
-  const badgeX = rowRightEdge - QUALITY_BADGE_WIDTH;
-  const badgeY = y + (ROW_HEIGHT - QUALITY_BADGE_HEIGHT) / 2;
-  const qualityLabel = labels.quality[quality.key] ?? quality.shortLabel;
-  elements.push(generateQualityBadge(qualityLabel, badgeX, badgeY, entry.distance));
-
-  return elements.join('\n');
-}
-
-/**
- * Generate an arrow SVG element
- */
-function generateArrow(x: number, y: number, width: number, color: string): string {
-  const arrowHeight = 12;
-  const lineEnd = x + width - 8;
-
-  return `<g>
-    <line x1="${x}" y1="${y}" x2="${lineEnd}" y2="${y}" stroke="${color}" stroke-width="2"/>
-    <polygon points="${lineEnd},${y - arrowHeight / 2} ${lineEnd + 8},${y} ${lineEnd},${y + arrowHeight / 2}" fill="${color}"/>
-  </g>`;
-}
-
-/**
- * Generate a quality badge
- */
-function generateQualityBadge(
-  label: string,
-  x: number,
-  y: number,
-  distance: number
-): string {
-  // Determine badge color based on distance
-  let bgColor: string;
-  let textColor: string;
-
-  // REFACTOR-004: classify via the shared tiers (inclusive bounds) — this
-  // inline copy previously used exclusive `<`, so a distance of exactly 10
-  // got a different badge here than the exported getMatchQuality gave it.
-  switch (classifyMatchDistance(distance)) {
-    case 'perfect':
-      bgColor = THEME.success;
-      textColor = '#000000';
-      break;
-    case 'excellent':
-      bgColor = '#3b82f6'; // Blue
-      textColor = '#ffffff';
-      break;
-    case 'good':
-      bgColor = '#22c55e'; // Green
-      textColor = '#ffffff';
-      break;
-    case 'fair':
-      bgColor = THEME.warning;
-      textColor = '#000000';
-      break;
-    default:
-      bgColor = THEME.textDim;
-      textColor = '#ffffff';
-  }
-
-  return `<g>
-    ${rect(x, y, QUALITY_BADGE_WIDTH, QUALITY_BADGE_HEIGHT, bgColor, { rx: 4, ry: 4 })}
-    ${text(x + QUALITY_BADGE_WIDTH / 2, y + QUALITY_BADGE_HEIGHT - 6, label, {
-      fill: textColor,
-      fontSize: 11,
-      fontFamily: FONTS.primaryCjk,
-      fontWeight: 600,
-      textAnchor: 'middle',
-    })}
-  </g>`;
-}
-
-/**
- * Generate an empty palette message
- */
-function generateEmptyPalette(width: number, labels: PaletteGridLabels): string {
-  const height = 120;
-  const elements: string[] = [];
-
-  elements.push(rect(0, 0, width, height, THEME.background, { rx: 12, ry: 12 }));
-  elements.push(
-    text(width / 2, height / 2, labels.noColors, {
-      fill: THEME.textMuted,
-      fontSize: 16,
-      fontFamily: FONTS.primary,
-      textAnchor: 'middle',
-      dominantBaseline: 'middle',
-    })
-  );
-
-  return createSvgDocument(width, height, elements.join('\n'));
+  return cardShell(height, theme, parts.join(''));
 }

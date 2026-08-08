@@ -655,6 +655,17 @@
     "tier0": "완전",
     "tier1": "근접",
     "tier2": "느슨",
-    "tier3": "도달 불가"
+    "tier3": "도달 불가",
+    "share": "비중",
+    "matched": "일치 염료",
+    "rank": "순위",
+    "target": "목표색",
+    "rampTitle": "이미지에서 추출한 팔레트",
+    "matchTitle": "가장 가까운 염료",
+    "colours": "{n}가지 색",
+    "rampKey": "밴드 너비 = 이미지 비중",
+    "matchKey": "ΔE2000 최근접",
+    "manualLead": "예상과 다른 색이 나왔다면",
+    "manualTail": " 참고"
   }
 }

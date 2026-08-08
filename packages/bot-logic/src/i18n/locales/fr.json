@@ -655,6 +655,17 @@
     "tier0": "EXACT",
     "tier1": "PROCHE",
     "tier2": "LARGE",
-    "tier3": "INATTEIGNABLE"
+    "tier3": "INATTEIGNABLE",
+    "share": "PART",
+    "matched": "TEINTURE TROUVÉE",
+    "rank": "RANG",
+    "target": "CIBLE",
+    "rampTitle": "Palette depuis l’image",
+    "matchTitle": "Teintures les plus proches",
+    "colours": "{n} couleurs",
+    "rampKey": "largeur = part de l’image",
+    "matchKey": "plus proches par ΔE2000",
+    "manualLead": "Couleurs inattendues ? Essayez",
+    "manualTail": ""
   }
 }

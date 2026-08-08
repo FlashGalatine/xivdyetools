@@ -655,6 +655,17 @@
     "tier0": "EXACT",
     "tier1": "CLOSE",
     "tier2": "LOOSE",
-    "tier3": "UNREACHABLE"
+    "tier3": "UNREACHABLE",
+    "share": "SHARE",
+    "matched": "MATCHED DYE",
+    "rank": "RANK",
+    "target": "TARGET",
+    "rampTitle": "Palette from image",
+    "matchTitle": "Nearest dyes",
+    "colours": "{n} colours",
+    "rampKey": "band width = share of image",
+    "matchKey": "nearest by ΔE2000",
+    "manualLead": "Colours not what you expected? Try",
+    "manualTail": ""
   }
 }

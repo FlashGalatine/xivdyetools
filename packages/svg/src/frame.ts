@@ -16,7 +16,8 @@
  * @module frame
  */
 
-import { escapeXml, estimateTextWidth } from './base.js';
+import { classifyBandTier } from '@xivdyetools/core';
+import { escapeXml, estimateTextWidth, num } from './base.js';
 
 // ============================================================================
 // Card dimensions & type scale
@@ -364,6 +365,116 @@ export function idealSwatch(x: number, y: number, w: number, h: number, hex: str
     `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${radius}" fill="${escapeXml(hex)}"/>` +
     `<rect x="${x + 0.75}" y="${y + 0.75}" width="${w - 1.5}" height="${h - 1.5}" rx="${radius - 0.75}" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>`
   );
+}
+
+// ============================================================================
+// The measured row (14I: one unconditional row, no optional slots)
+// ============================================================================
+
+/**
+ * Per-card slot widths. 14K uses 38·52·180·26·34 with a 12.5 px name;
+ * 14J·2 (the binding case) 40·54·176·26·34 at 13 px.
+ */
+export interface MeasuredRowWidths {
+  lead: number;
+  pair: number;
+  name: number;
+  bar: number;
+  measure: number;
+}
+
+export interface MeasuredRowOptions {
+  /** Lead value — only its *meaning* varies (step, share, rank) */
+  lead: string;
+  /** Left half of the butted pair: the asked-for colour (ideal/extracted/target) */
+  sourceHex: string;
+  /** Right half: the dye you can buy */
+  dyeHex: string;
+  /** Localized dye name (ellipsised to the slot, never a character count) */
+  name: string;
+  /** ΔE2000 source → dye */
+  deltaE: number;
+  lang: string;
+  theme: CardTheme;
+  widths: MeasuredRowWidths;
+  /** Name type size (12.5 in 14K, 13 elsewhere) */
+  nameSize?: number;
+  /** Band context for the tier bar (default 'match') */
+  context?: 'match' | 'harmony';
+}
+
+/** A rect rounded only on its left or right edge (for the butted pair). */
+function halfRoundedRect(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+  side: 'left' | 'right',
+  fill: string
+): string {
+  const d =
+    side === 'left'
+      ? `M ${x + r} ${y} H ${x + w} V ${y + h} H ${x + r} Q ${x} ${y + h} ${x} ${y + h - r} V ${y + r} Q ${x} ${y} ${x + r} ${y} Z`
+      : `M ${x} ${y} H ${x + w - r} Q ${x + w} ${y} ${x + w} ${y + r} V ${y + h - r} Q ${x + w} ${y + h} ${x + w - r} ${y + h} H ${x} Z`;
+  return `<path d="${d}" fill="${escapeXml(fill)}"/>`;
+}
+
+/**
+ * The suite's five-slot list row (confirmed for 12H, 12F, 14K and 14J·2):
+ * lead value · butted source→dye pair · name · tier bar · measure. Every
+ * argument required — a consumer that cannot fill all five is the signal the
+ * abstraction needs revisiting, not a reason to add a flag.
+ */
+export function measuredRow(x: number, y: number, rowH: number, o: MeasuredRowOptions): string {
+  const { widths: w, theme } = o;
+  const nameSize = o.nameSize ?? 13;
+  const gap = 10;
+  const parts: string[] = [];
+  const cy = y + rowH / 2;
+
+  // Lead
+  parts.push(
+    cardText(x, cy + 4, o.lead, { fill: theme.subValue, size: CARD_TYPE.value, font: 'mono' })
+  );
+  let cx = x + w.lead + gap;
+
+  // Butted pair: the seam between the halves is the drift made visible
+  const pairH = Math.min(rowH - 12, 30);
+  const half = w.pair / 2;
+  parts.push(halfRoundedRect(cx, cy - pairH / 2, half, pairH, 7, 'left', o.sourceHex));
+  parts.push(halfRoundedRect(cx + half, cy - pairH / 2, half, pairH, 7, 'right', o.dyeHex));
+  parts.push(
+    `<rect x="${cx + 0.5}" y="${cy - pairH / 2 + 0.5}" width="${w.pair - 1}" height="${pairH - 1}" rx="6.5" fill="none" stroke="${escapeXml(theme.swatchRing)}" stroke-width="1"/>`
+  );
+  cx += w.pair + gap;
+
+  // Name
+  parts.push(
+    cardText(cx, cy + 4, fitText(o.name, w.name, nameSize, 'body'), {
+      fill: theme.name,
+      size: nameSize,
+      font: 'body',
+      weight: 600,
+    })
+  );
+  cx += w.name + gap;
+
+  // Tier bar + measure, both in the tone
+  const tier = classifyBandTier(o.deltaE, 'ciede2000', o.context ?? 'match');
+  const tone = theme.tiers[Math.min(tier, 3)];
+  parts.push(`<rect x="${cx}" y="${cy - 2.5}" width="${w.bar}" height="5" rx="2.5" fill="${tone}"/>`);
+  cx += w.bar + gap;
+  parts.push(
+    cardText(cx + w.measure, cy + 4, num(o.deltaE, o.lang, 1), {
+      fill: tone,
+      size: CARD_TYPE.value,
+      font: 'mono',
+      anchor: 'end',
+    })
+  );
+
+  return parts.join('');
 }
 
 /** Horizontal dashed rule. */

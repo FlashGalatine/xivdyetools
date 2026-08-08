@@ -57,8 +57,15 @@ export {
   idealSwatch,
   dashedRule,
   hairline,
+  measuredRow,
 } from './frame.js';
-export type { CardTheme, CardTextOptions, CommandChipOptions } from './frame.js';
+export type {
+  CardTheme,
+  CardTextOptions,
+  CommandChipOptions,
+  MeasuredRowOptions,
+  MeasuredRowWidths,
+} from './frame.js';
 
 // Harmony Card (11A — replaces the retired harmony wheel)
 export { generateHarmonyCard } from './harmony-card.js';
@@ -76,18 +83,22 @@ export {
 } from './gradient.js';
 export type { GradientStep, GradientBarOptions } from './gradient.js';
 
-// Palette Grid (color extraction match results)
-export {
-  generatePaletteGrid,
-  getMatchQuality,
-  MATCH_QUALITIES,
-} from './palette-grid.js';
+// Palette Grid (14K ramp — /extractor image)
+export { generatePaletteGrid, bandSlices } from './palette-grid.js';
 export type {
-  PaletteEntry,
+  PaletteBandEntry,
+  PaletteRowEntry,
   PaletteGridOptions,
   PaletteGridLabels,
-  MatchQuality,
 } from './palette-grid.js';
+
+// Nearest Sheet (14J·2 — /extractor color)
+export { generateNearestSheet } from './nearest-sheet.js';
+export type {
+  NearestSheetRow,
+  NearestSheetLabels,
+  NearestSheetOptions,
+} from './nearest-sheet.js';
 
 // Accessibility / Colorblind Comparison
 export {

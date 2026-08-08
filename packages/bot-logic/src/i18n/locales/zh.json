@@ -655,6 +655,17 @@
     "tier0": "完全",
     "tier1": "接近",
     "tier2": "宽松",
-    "tier3": "无法达到"
+    "tier3": "无法达到",
+    "share": "占比",
+    "matched": "匹配染剂",
+    "rank": "排名",
+    "target": "目标色",
+    "rampTitle": "从图像提取配色",
+    "matchTitle": "最接近的染剂",
+    "colours": "{n} 种颜色",
+    "rampKey": "色带宽度＝画面占比",
+    "matchKey": "按 ΔE2000 取最近",
+    "manualLead": "颜色与预期不符？请试",
+    "manualTail": ""
   }
 }

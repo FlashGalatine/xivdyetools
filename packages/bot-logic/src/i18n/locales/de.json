@@ -655,6 +655,17 @@
     "tier0": "EXAKT",
     "tier1": "NAH",
     "tier2": "LOSE",
-    "tier3": "UNERREICHBAR"
+    "tier3": "UNERREICHBAR",
+    "share": "ANTEIL",
+    "matched": "PASSENDER FARBSTOFF",
+    "rank": "RANG",
+    "target": "ZIEL",
+    "rampTitle": "Palette aus Bild",
+    "matchTitle": "Nächste Farbstoffe",
+    "colours": "{n} Farben",
+    "rampKey": "Bandbreite = Bildanteil",
+    "matchKey": "nächste per ΔE2000",
+    "manualLead": "Farben nicht wie erwartet? Siehe",
+    "manualTail": ""
   }
 }
