@@ -71,7 +71,7 @@ describe('executeComparison', () => {
     expect(result.embed.color).toBe(expectedColor);
   });
 
-  it('embed description lists all dyes', async () => {
+  it('keeps the embed to one line naming the closest pair', async () => {
     const result = await executeComparison({
       dyes: [snowWhite, sootBlack],
       locale: 'en',
@@ -80,11 +80,10 @@ describe('executeComparison', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    expect(result.embed.description).toContain('**1.**');
-    expect(result.embed.description).toContain('**2.**');
+    expect(result.embed.description).toContain('↔');
   });
 
-  it('includes footer in embed', async () => {
+  it('renders the duel card for two dyes', async () => {
     const result = await executeComparison({
       dyes: [snowWhite, sootBlack],
       locale: 'en',
@@ -93,7 +92,8 @@ describe('executeComparison', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    expect(result.embed.footer).toBeDefined();
+    expect(result.svgString).toContain('/COMPARE');
+    expect(result.svgString).toContain('ΔE2000');
   });
 
   it('works with Japanese locale', async () => {

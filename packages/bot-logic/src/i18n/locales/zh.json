@@ -693,6 +693,14 @@
     "ratioBand3": "≥ 7:1",
     "floorKey": "非文本下限为 3:1 — WCAG 1.4.11",
     "plotKey": "绿＝相距远 · 基准线 3 / 4.5 / 7",
-    "contrastTitle": "对比度 — {n} 种染剂"
+    "contrastTitle": "对比度 — {n} 种染剂",
+    "cmpTitle": "比较 — {n} 种染剂",
+    "cmpTag0": "相同",
+    "cmpTag1": "接近",
+    "cmpTag2": "相近",
+    "cmpTag3": "较远",
+    "cmpKey": "绿＝接近 · 区间 5 / 10 / 20",
+    "cmpRatioKey": "对比度衡量明度，不是色差",
+    "triKey": "上三角 · 每对仅一次"
   }
 }

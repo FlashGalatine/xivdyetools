@@ -87,8 +87,8 @@ describe('@xivdyetools/svg index exports', () => {
     it('exports comparison grid generator', async () => {
         const svg = await import('./index.js');
 
-        expect(svg.generateComparisonGrid).toBeDefined();
-        expect(typeof svg.generateComparisonGrid).toBe('function');
+        expect(svg.generateComparisonCard).toBeDefined();
+        expect(typeof svg.generateComparisonCard).toBe('function');
     });
 
     it('exports dye info card generator', async () => {

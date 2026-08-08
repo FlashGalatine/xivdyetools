@@ -131,9 +131,14 @@ export type {
 export { generateRandomDyesGrid } from './random-dyes-grid.js';
 export type { RandomDyeRow, RandomGridLabels, RandomDyesGridOptions } from './random-dyes-grid.js';
 
-// Dye Comparison Grid
-export { generateComparisonGrid } from './comparison-grid.js';
-export type { ComparisonGridOptions } from './comparison-grid.js';
+// Comparison card (14A/14C·2/14C — the dye count routes the frame)
+export { generateComparisonCard } from './comparison-card.js';
+export type {
+  ComparisonDyeEntry,
+  ComparisonReadout,
+  ComparisonCardLabels,
+  ComparisonCardOptions,
+} from './comparison-card.js';
 
 // Dye Info Card (11B sheet)
 export { generateDyeInfoCard } from './dye-info-card.js';

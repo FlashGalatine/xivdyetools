@@ -693,6 +693,14 @@
     "ratioBand3": "≥ 7:1",
     "floorKey": "Untergrenze für Nicht-Text ist 3:1 — WCAG 1.4.11",
     "plotKey": "grün = weit auseinander · Linien bei 3 / 4.5 / 7",
-    "contrastTitle": "Kontrast — {n} Farbstoffe"
+    "contrastTitle": "Kontrast — {n} Farbstoffe",
+    "cmpTitle": "Vergleich — {n} Farbstoffe",
+    "cmpTag0": "GLEICH",
+    "cmpTag1": "NAH",
+    "cmpTag2": "ÄHNLICH",
+    "cmpTag3": "FERN",
+    "cmpKey": "grün = nah · Bänder 5 / 10 / 20",
+    "cmpRatioKey": "Verhältnis misst Helligkeit, nicht Abstand",
+    "triKey": "obere Hälfte · jedes Paar einmal"
   }
 }

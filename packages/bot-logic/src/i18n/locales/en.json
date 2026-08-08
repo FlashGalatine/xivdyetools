@@ -693,6 +693,14 @@
     "ratioBand3": "≥ 7:1",
     "floorKey": "non-text floor is 3:1 — WCAG 1.4.11",
     "plotKey": "green = far apart · lines at 3 / 4.5 / 7",
-    "contrastTitle": "Contrast — {n} dyes"
+    "contrastTitle": "Contrast — {n} dyes",
+    "cmpTitle": "Comparison — {n} dyes",
+    "cmpTag0": "SAME",
+    "cmpTag1": "CLOSE",
+    "cmpTag2": "NEAR",
+    "cmpTag3": "FAR",
+    "cmpKey": "green = close · bands 5 / 10 / 20",
+    "cmpRatioKey": "ratio measures lightness, not distance",
+    "triKey": "upper triangle · each pair once"
   }
 }

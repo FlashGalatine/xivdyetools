@@ -693,6 +693,14 @@
     "ratioBand3": "≥ 7:1",
     "floorKey": "le plancher non-texte est 3:1 — WCAG 1.4.11",
     "plotKey": "vert = éloignés · lignes à 3 / 4.5 / 7",
-    "contrastTitle": "Contraste — {n} teintures"
+    "contrastTitle": "Contraste — {n} teintures",
+    "cmpTitle": "Comparaison — {n} teintures",
+    "cmpTag0": "IDENTIQUE",
+    "cmpTag1": "PROCHE",
+    "cmpTag2": "VOISIN",
+    "cmpTag3": "LOIN",
+    "cmpKey": "vert = proche · bandes 5 / 10 / 20",
+    "cmpRatioKey": "le ratio mesure la clarté, pas la distance",
+    "triKey": "triangle supérieur · chaque paire une fois"
   }
 }

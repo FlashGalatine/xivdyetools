@@ -693,6 +693,14 @@
     "ratioBand3": "≥ 7:1",
     "floorKey": "비텍스트 하한은 3:1 — WCAG 1.4.11",
     "plotKey": "초록 = 멀리 떨어짐 · 기준선 3 / 4.5 / 7",
-    "contrastTitle": "명암비 — 염료 {n}종"
+    "contrastTitle": "명암비 — 염료 {n}종",
+    "cmpTitle": "비교 — 염료 {n}종",
+    "cmpTag0": "동일",
+    "cmpTag1": "근접",
+    "cmpTag2": "유사",
+    "cmpTag3": "멀다",
+    "cmpKey": "초록 = 가까움 · 구간 5 / 10 / 20",
+    "cmpRatioKey": "명암비는 밝기를 재며 색차가 아닙니다",
+    "triKey": "상삼각 · 각 쌍 한 번"
   }
 }

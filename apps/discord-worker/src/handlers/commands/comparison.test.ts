@@ -73,10 +73,16 @@ vi.mock('@xivdyetools/core', () => {
     getCategory(category: string): string { return category; }
   }
 
+  // 14A/14C: pair ΔEs + the duel's seven readouts run through ColorService
+  const ColorService = {
+    getDistanceForMethod: () => 12,
+  };
+
   return {
     DyeService: MockDyeService,
     dyeDatabase: {},
     LocalizationService: MockLocalizationService,
+    ColorService,
   };
 });
 
@@ -115,7 +121,8 @@ vi.mock('../../services/i18n.js', () => ({
 }));
 
 vi.mock('@xivdyetools/svg', () => ({
-  generateComparisonGrid: vi.fn().mockReturnValue('<svg>comparison</svg>'),
+  generateComparisonCard: vi.fn().mockReturnValue('<svg>comparison</svg>'),
+  contrastRatio: vi.fn().mockReturnValue(4.5),
 }));
 
 vi.mock('../../services/svg/renderer.js', () => ({
@@ -134,7 +141,7 @@ vi.mock('../../utils/discord-api.js', () => {
 });
 
 import { editOriginalResponse } from '../../utils/discord-api.js';
-import { generateComparisonGrid } from '@xivdyetools/svg';
+import { generateComparisonCard } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 
 describe('comparison.ts', () => {
@@ -303,14 +310,12 @@ describe('comparison.ts', () => {
       await handleComparisonCommand(interaction, mockEnv, mockCtx);
       await Promise.all(waitUntilPromises);
 
-      expect(generateComparisonGrid).toHaveBeenCalledWith(
+      expect(generateComparisonCard).toHaveBeenCalledWith(
         expect.objectContaining({
           dyes: expect.arrayContaining([
             expect.objectContaining({ name: 'Snow White' }),
             expect.objectContaining({ name: 'Soot Black' }),
           ]),
-          width: 800,
-          showHsv: true,
         })
       );
       expect(renderSvgToPng).toHaveBeenCalled();
@@ -405,7 +410,7 @@ describe('comparison.ts', () => {
       await handleComparisonCommand(interaction, mockEnv, mockCtx);
       await Promise.all(waitUntilPromises);
 
-      expect(generateComparisonGrid).toHaveBeenCalledWith(
+      expect(generateComparisonCard).toHaveBeenCalledWith(
         expect.objectContaining({
           dyes: expect.arrayContaining([
             expect.any(Object),
@@ -505,8 +510,8 @@ describe('comparison.ts', () => {
       consoleSpy.mockRestore();
     });
 
-    it('should handle generateComparisonGrid errors gracefully', async () => {
-      vi.mocked(generateComparisonGrid).mockImplementationOnce(() => {
+    it('should handle card generation errors gracefully', async () => {
+      vi.mocked(generateComparisonCard).mockImplementationOnce(() => {
         throw new Error('SVG generation failed');
       });
 

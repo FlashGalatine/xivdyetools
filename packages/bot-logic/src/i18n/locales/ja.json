@@ -693,6 +693,14 @@
     "ratioBand3": "≥ 7:1",
     "floorKey": "非テキストの下限は 3:1 — WCAG 1.4.11",
     "plotKey": "緑＝離れている・基準線 3 / 4.5 / 7",
-    "contrastTitle": "コントラスト — {n}色"
+    "contrastTitle": "コントラスト — {n}色",
+    "cmpTitle": "比較 — {n}色",
+    "cmpTag0": "同一",
+    "cmpTag1": "近い",
+    "cmpTag2": "やや近い",
+    "cmpTag3": "遠い",
+    "cmpKey": "緑＝近い・帯 5 / 10 / 20",
+    "cmpRatioKey": "コントラスト比は明度差で距離ではありません",
+    "triKey": "上三角・各ペア1回"
   }
 }
