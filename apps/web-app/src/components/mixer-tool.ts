@@ -35,6 +35,7 @@ import {
 } from '@services/index';
 import type { MixedColorResult } from '@services/index';
 import { ConfigController } from '@services/config-controller';
+import { blendTwoColors } from '@services/mixer-blending-engine';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { ICON_TOOL_DYE_MIXER } from '@shared/tool-icons';
 import { ICON_MARKET, ICON_PALETTE, ICON_SLIDERS } from '@shared/ui-icons';
@@ -118,6 +119,9 @@ export class MixerTool extends BaseComponent {
   private maxResults: number = 5;
   private mixingMode: MixingMode = 'ryb';
   private matchingMethod: MatchingMethod = 'oklab';
+  /** 5C: A-share of the two-dye mix, selected in the field (0-1, A weight) */
+  private mixRatio: number = 0.5;
+  private fieldContainer: HTMLElement | null = null;
 
   // Market Board Service (shared price cache with race condition protection)
   private marketBoardService: MarketBoardService;
@@ -1093,6 +1097,147 @@ export class MixerTool extends BaseComponent {
   // Right Panel Rendering
   // ============================================================================
 
+  /**
+   * 5C Mixing field: six model rows × five ratio columns, thirty real
+   * blends, every cell tappable. The only view where you can see two
+   * models agree at 50/50 and diverge at 80/20.
+   */
+  private renderMixingField(): void {
+    if (!this.fieldContainer) return;
+    clearContainer(this.fieldContainer);
+
+    const dyeA = this.selectedDyes[0];
+    const dyeB = this.selectedDyes[1];
+    // The field is the two-dye map; a third slot switches to the multi-blend flow.
+    if (!dyeA || !dyeB || this.selectedDyes[2]) return;
+
+    const MONO = "'Fragment Mono', monospace";
+    const MODELS: MixingMode[] = ['ryb', 'spectral', 'oklab', 'lab', 'hsl', 'rgb'];
+    // Row headers use the technical abbreviation — identical in every locale.
+    const MODEL_SHORT: Record<string, string> = {
+      ryb: 'RYB',
+      spectral: 'Spectral',
+      oklab: 'OKLAB',
+      lab: 'LAB',
+      hsl: 'HSL',
+      rgb: 'RGB',
+    };
+    const RATIOS = [10, 30, 50, 70, 90];
+
+    const head = this.createElement('div', {
+      attributes: {
+        style:
+          'display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px;',
+      },
+    });
+    head.appendChild(
+      this.createElement('span', {
+        className: 'section-title',
+        textContent: LanguageService.t('mixer.fieldLabel'),
+      })
+    );
+    head.appendChild(
+      this.createElement('span', {
+        textContent: LanguageService.t('mixer.fieldHint'),
+        attributes: {
+          style: `font-family: ${MONO}; font-size: 9px; letter-spacing: 1px; color: var(--theme-text-muted);`,
+        },
+      })
+    );
+    this.fieldContainer.appendChild(head);
+    this.fieldContainer.appendChild(
+      this.createElement('p', {
+        textContent: LanguageService.t('mixer.fieldDesc'),
+        attributes: {
+          style: 'font-size: 11.5px; color: var(--theme-text-muted); margin: 0 0 10px;',
+        },
+      })
+    );
+
+    const grid = this.createElement('div', {
+      attributes: {
+        style:
+          'display: grid; grid-template-columns: 68px repeat(5, minmax(52px, 1fr)); gap: 4px; max-width: 560px;',
+      },
+    });
+
+    // Column headers: A/B split per ratio.
+    grid.appendChild(this.createElement('span'));
+    for (const r of RATIOS) {
+      grid.appendChild(
+        this.createElement('span', {
+          textContent: `${r}/${100 - r}`,
+          attributes: {
+            style: `font-family: ${MONO}; font-size: 9px; letter-spacing: 0.5px; text-align: center; color: var(--theme-text-muted);`,
+          },
+        })
+      );
+    }
+
+    const currentRatioPct = Math.round(this.mixRatio * 100);
+    for (const model of MODELS) {
+      const rowHeader = this.createElement('span', {
+        textContent: MODEL_SHORT[model],
+        attributes: {
+          title: LanguageService.t(`mixer.model${model.charAt(0).toUpperCase()}${model.slice(1)}`),
+          style: `font-family: ${MONO}; font-size: 9.5px; letter-spacing: 0.5px; align-self: center; color: var(--theme-text-muted);`,
+        },
+      });
+      grid.appendChild(rowHeader);
+
+      for (const r of RATIOS) {
+        // Ratio column r = A share; blend t runs toward B.
+        const t = (100 - r) / 100;
+        const blend = blendTwoColors(dyeA.hex, dyeB.hex, model, t);
+        const nearest = dyeService.findClosestDye(blend, {
+          matchingMethod: this.matchingMethod,
+        });
+        const deltaRaw = nearest
+          ? ColorService.getDistanceForMethod(blend, nearest.hex, this.matchingMethod)
+          : 0;
+        const delta = this.matchingMethod === 'oklab' ? deltaRaw * 100 : deltaRaw;
+        const selected = model === this.mixingMode && r === currentRatioPct;
+
+        const luminance =
+          (0.299 * parseInt(blend.slice(1, 3), 16) +
+            0.587 * parseInt(blend.slice(3, 5), 16) +
+            0.114 * parseInt(blend.slice(5, 7), 16)) /
+          255;
+        const ink = luminance > 0.45 ? 'rgba(10,10,10,0.75)' : 'rgba(255,255,255,0.8)';
+
+        const cell = this.createElement('button', {
+          attributes: {
+            type: 'button',
+            title: `${MODEL_SHORT[model]} · ${r}/${100 - r} · ${blend.toUpperCase()}`,
+            style: `height: 40px; border-radius: 7px; cursor: pointer; background: ${blend}; border: 2px solid ${
+              selected ? 'var(--theme-primary)' : 'transparent'
+            }; display: flex; align-items: flex-end; justify-content: flex-end; padding: 2px 4px;`,
+          },
+        }) as HTMLButtonElement;
+        cell.appendChild(
+          this.createElement('span', {
+            textContent: delta.toFixed(1),
+            attributes: {
+              style: `font-family: ${MONO}; font-size: 8px; color: ${ink}; pointer-events: none;`,
+            },
+          })
+        );
+        this.on(cell, 'click', () => {
+          this.mixingMode = model;
+          this.mixRatio = r / 100;
+          this.blendedColor = blendTwoColors(dyeA.hex, dyeB.hex, model, t);
+          this.findMatchingDyesInternal();
+          this.updateCraftingUI();
+          this.renderResultsGrid();
+          this.renderMixingField();
+        });
+        grid.appendChild(cell);
+      }
+    }
+
+    this.fieldContainer.appendChild(grid);
+  }
+
   private renderRightPanel(): void {
     const right = this.options.rightPanel;
     // In V4, leftPanel and rightPanel are the same element.
@@ -1136,6 +1281,13 @@ export class MixerTool extends BaseComponent {
     });
     this.renderCraftingUI();
     contentWrapper.appendChild(this.craftingContainer);
+
+    // 5C: the mixing field — model × ratio, the whole space at one glance.
+    this.fieldContainer = this.createElement('div', {
+      attributes: { style: 'width: 100%;' },
+    });
+    this.renderMixingField();
+    contentWrapper.appendChild(this.fieldContainer);
 
     // Results grid section (hidden initially)
     this.resultsSection = this.createElement('div', {
@@ -1535,6 +1687,9 @@ export class MixerTool extends BaseComponent {
    */
   private updateCraftingUI(): void {
     if (!this.craftingContainer) return;
+
+    // 5C: the field follows every dye/blend change.
+    this.renderMixingField();
 
     // Re-render the crafting UI
     this.renderCraftingUI();
