@@ -862,14 +862,20 @@
   },
   "welcome": {
     "title": "Welcome to XIV Dye Tools",
-    "intro": "Find the perfect dyes for your FFXIV glamours! Explore our tools below:",
-    "dontShowAgain": "Don't show this again",
-    "getStarted": "Get Started",
-    "takeTour": "Take the Tour",
-    "quickTips": "Quick Tips",
-    "tip1": "Click tool names in the header to switch between tools",
-    "tip2": "Prices are from Universalis (live market data)",
-    "tip3": "Your settings are saved locally in your browser"
+    "eyebrow": "FIRST VISIT",
+    "intro": "Every dye in the game, measured. Pick a colour you want and the tools tell you which of the 125 dyes actually gets you there — and what it costs.",
+    "lead": {
+      "harmony": "Start from one dye and get the four or five that go with it.",
+      "extractor": "Upload a screenshot; get the closest dye for every colour in it.",
+      "mixer": "Blend two dyes to see what sits between them, then buy the nearest.",
+      "gradient": "Build a ramp between two dyes — every step is a dye you can wear."
+    },
+    "restLabel": "AND FIVE MORE",
+    "tipsLabel": "WORTH KNOWING",
+    "tip1": "Any dye slot also takes a plain hex code, so you can match something that is not in the game.",
+    "tip2": "Every result is a link. Share it and it opens on the same dye for everyone.",
+    "takeTour": "Take the tour",
+    "getStarted": "Get started"
   },
   "shortcuts": {
     "title": "Keyboard Shortcuts",

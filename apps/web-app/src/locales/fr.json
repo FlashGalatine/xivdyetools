@@ -862,14 +862,20 @@
   },
   "welcome": {
     "title": "Bienvenue sur Outils de Teinture XIV",
-    "intro": "Trouvez les teintures parfaites pour vos glamours FFXIV ! Explorez nos outils ci-dessous :",
-    "dontShowAgain": "Ne plus afficher",
-    "getStarted": "Commencer",
-    "takeTour": "Faire la visite",
-    "quickTips": "Astuces rapides",
-    "tip1": "Cliquez sur les noms des outils dans l'en-tête pour changer d'outil",
-    "tip2": "Les prix proviennent d'Universalis (données de marché en direct)",
-    "tip3": "Vos paramètres sont enregistrés localement dans votre navigateur"
+    "eyebrow": "PREMIÈRE VISITE",
+    "intro": "Chaque teinture du jeu, mesurée. Choisissez une couleur : les outils vous disent laquelle des 125 teintures y parvient vraiment, et à quel prix.",
+    "lead": {
+      "harmony": "Partez d'une teinture et obtenez les quatre ou cinq qui l'accompagnent.",
+      "extractor": "Importez une capture ; trouvez la teinture la plus proche de chaque couleur.",
+      "mixer": "Mélangez deux teintures pour voir ce qui se trouve entre elles.",
+      "gradient": "Créez un dégradé entre deux teintures — chaque étape est portable."
+    },
+    "restLabel": "ET CINQ AUTRES",
+    "tipsLabel": "BON À SAVOIR",
+    "tip1": "Chaque emplacement accepte aussi un code hexadécimal, pour viser une couleur absente du jeu.",
+    "tip2": "Chaque résultat est un lien. Partagez-le : il ouvre la même teinture pour tout le monde.",
+    "takeTour": "Visite rapide",
+    "getStarted": "Commencer"
   },
   "shortcuts": {
     "title": "Raccourcis Clavier",

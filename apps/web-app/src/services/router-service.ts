@@ -139,6 +139,15 @@ export class RouterService {
   }
 
   /**
+   * The router's own default tool. Consumers that need "somewhere deliberate"
+   * to land (Welcome's Get started, the tour prompt) call this instead of
+   * naming a tool — the default lives here and only here.
+   */
+  static getDefaultTool(): ToolId {
+    return DEFAULT_TOOL;
+  }
+
+  /**
    * Navigate to a tool
    * @param toolId - The tool to navigate to
    * @param additionalParams - Additional query parameters to add

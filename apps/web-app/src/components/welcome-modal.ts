@@ -1,8 +1,15 @@
 /**
- * XIV Dye Tools v2.1.0 - Welcome Modal Component
+ * XIV Dye Tools 5.0 - Welcome Modal Component (W2 Shortlist)
  *
- * First-time user welcome modal introducing app features
- * Shows only once unless reset by user
+ * First-visit welcome per the confirmed Modal Directions W2 frame:
+ * four colour-in/colour-out leads (Harmony, Extractor, Mixer, Gradient) with
+ * one line each, the other five tools named in a mono row (text, not targets),
+ * and two tips. The dead `dontShowAgain` checkbox is cut — `markAsSeen()`
+ * already runs on every close path (BUG-077), so the control offered a choice
+ * that had already been made.
+ *
+ * Get started lands on the router's own default (never a hardcoded tool);
+ * Take the tour starts the tutorial there too.
  *
  * @module components/welcome-modal
  */
@@ -10,86 +17,58 @@
 import { ModalService } from '@services/modal-service';
 import { StorageService } from '@services/storage-service';
 import { LanguageService } from '@services/language-service';
-import { TutorialService } from '@services/tutorial-service';
+import { TutorialService, type TutorialTool } from '@services/tutorial-service';
+import { RouterService } from '@services/router-service';
 import { STORAGE_KEYS, APP_VERSION } from '@shared/constants';
-import {
-  ICON_TOOL_HARMONY,
-  ICON_TOOL_MATCHER,
-  ICON_TOOL_COMPARISON,
-  ICON_TOOL_GRADIENT,
-  ICON_TOOL_ACCESSIBILITY,
-  ICON_TOOL_DYE_MIXER,
-  ICON_TOOL_PRESETS,
-  ICON_TOOL_BUDGET,
-  ICON_TOOL_CHARACTER,
-} from '@shared/tool-icons';
+import { TOOL_ICONS } from '@shared/tool-icons';
 
 // ============================================================================
-// Tool Definitions
+// W2 Shortlist — the four leads (colour-in, colour-out; Budget is in the row)
 // ============================================================================
 
-interface ToolInfo {
+interface LeadInfo {
   id: string;
   icon: string;
+  /** Existing tool title key — the lead names track the tool registry */
   nameKey: string;
-  descriptionKey: string;
+  /** W2 one-liner */
+  lineKey: string;
 }
 
-const TOOLS: ToolInfo[] = [
+const LEADS: LeadInfo[] = [
   {
     id: 'harmony',
-    icon: ICON_TOOL_HARMONY,
-    nameKey: 'tools.harmony.shortName',
-    descriptionKey: 'tools.harmony.description',
+    icon: TOOL_ICONS.harmony,
+    nameKey: 'tools.harmony.title',
+    lineKey: 'welcome.lead.harmony',
   },
   {
     id: 'extractor',
-    icon: ICON_TOOL_MATCHER,
-    nameKey: 'tools.matcher.shortName',
-    descriptionKey: 'tools.matcher.description',
-  },
-  {
-    id: 'comparison',
-    icon: ICON_TOOL_COMPARISON,
-    nameKey: 'tools.comparison.shortName',
-    descriptionKey: 'tools.comparison.description',
-  },
-  {
-    id: 'gradient',
-    icon: ICON_TOOL_GRADIENT,
-    nameKey: 'tools.gradient.shortName',
-    descriptionKey: 'tools.gradient.description',
+    icon: TOOL_ICONS.extractor,
+    nameKey: 'tools.matcher.title',
+    lineKey: 'welcome.lead.extractor',
   },
   {
     id: 'mixer',
-    icon: ICON_TOOL_DYE_MIXER,
-    nameKey: 'tools.mixer.shortName',
-    descriptionKey: 'tools.mixer.description',
+    icon: TOOL_ICONS.mixer,
+    nameKey: 'tools.mixer.title',
+    lineKey: 'welcome.lead.mixer',
   },
   {
-    id: 'presets',
-    icon: ICON_TOOL_PRESETS,
-    nameKey: 'tools.presets.shortName',
-    descriptionKey: 'tools.presets.description',
+    id: 'gradient',
+    icon: TOOL_ICONS.gradient,
+    nameKey: 'tools.gradient.title',
+    lineKey: 'welcome.lead.gradient',
   },
-  {
-    id: 'budget',
-    icon: ICON_TOOL_BUDGET,
-    nameKey: 'tools.budget.shortName',
-    descriptionKey: 'tools.budget.description',
-  },
-  {
-    id: 'swatch',
-    icon: ICON_TOOL_CHARACTER,
-    nameKey: 'tools.character.shortName',
-    descriptionKey: 'tools.character.description',
-  },
-  {
-    id: 'accessibility',
-    icon: ICON_TOOL_ACCESSIBILITY,
-    nameKey: 'tools.accessibility.shortName',
-    descriptionKey: 'tools.accessibility.description',
-  },
+];
+
+/** The five in the mono row — named so nothing is hidden, but text, not targets */
+const REST_SHORT_NAME_KEYS = [
+  'tools.comparison.shortName',
+  'tools.budget.shortName',
+  'tools.presets.shortName',
+  'tools.character.shortName',
+  'tools.accessibility.shortName',
 ];
 
 // ============================================================================
@@ -101,7 +80,6 @@ const TOOLS: ToolInfo[] = [
  */
 export class WelcomeModal {
   private modalId: string | null = null;
-  private dontShowAgain = false;
 
   /**
    * Check if welcome modal should be shown
@@ -136,11 +114,27 @@ export class WelcomeModal {
 
     this.modalId = ModalService.showWelcome({
       title: LanguageService.t('welcome.title'),
+      eyebrow: LanguageService.t('welcome.eyebrow'),
       content,
-      size: 'lg',
       closable: true,
       closeOnBackdrop: true,
       closeOnEscape: true,
+      cancelText: LanguageService.t('welcome.takeTour'),
+      onCancel: () => {
+        // Start the tutorial on the router's default tool after the modal
+        // animation completes
+        setTimeout(() => {
+          // TutorialTool is a narrower union than ToolId; start() warns and
+          // no-ops if the router default ever moves to a tool without a tour
+          TutorialService.start(RouterService.getDefaultTool() as TutorialTool);
+        }, 350);
+      },
+      confirmText: LanguageService.t('welcome.getStarted'),
+      onConfirm: () => {
+        // Land somewhere deliberate: the router's own default, never a
+        // hardcoded tool name (the five mono-row tools are text, not targets)
+        RouterService.navigateTo(RouterService.getDefaultTool());
+      },
       onClose: () => {
         // BUG-077 (2026-07-18 audit): any close counts as "seen" — matching
         // the documented "shows only once" behavior. Previously X/backdrop/
@@ -164,7 +158,7 @@ export class WelcomeModal {
   }
 
   /**
-   * Create modal content
+   * Create modal content (W2: intro, four leads, mono row, two tips)
    */
   private createContent(): HTMLElement {
     const container = document.createElement('div');
@@ -172,164 +166,101 @@ export class WelcomeModal {
 
     // Introduction text
     const intro = document.createElement('p');
-    intro.className = 'mb-6';
+    intro.className = 'mb-5 text-sm leading-relaxed';
     intro.style.color = 'var(--theme-text-muted)';
     intro.textContent = LanguageService.t('welcome.intro');
     container.appendChild(intro);
 
-    // Tools grid
-    const toolsGrid = document.createElement('div');
-    toolsGrid.className = 'grid grid-cols-3 gap-3 mb-6';
-
-    TOOLS.forEach((tool) => {
-      const toolCard = this.createToolCard(tool);
-      toolsGrid.appendChild(toolCard);
+    // The four leads
+    const leadList = document.createElement('div');
+    leadList.className = 'flex flex-col gap-2 mb-5';
+    LEADS.forEach((lead) => {
+      leadList.appendChild(this.createLeadRow(lead));
     });
+    container.appendChild(leadList);
 
-    container.appendChild(toolsGrid);
+    // The other five, named in a mono row
+    const rest = document.createElement('div');
+    rest.className = 'mb-5';
 
-    // Quick tips section
-    const tipsSection = this.createTipsSection();
-    container.appendChild(tipsSection);
+    const restLabel = document.createElement('div');
+    restLabel.className = 'm16-label mb-1';
+    restLabel.textContent = LanguageService.t('welcome.restLabel');
+    rest.appendChild(restLabel);
 
-    // Don't show again checkbox
-    const checkboxContainer = document.createElement('div');
-    checkboxContainer.className = 'flex items-center gap-2 mt-6 pt-4 border-t';
-    checkboxContainer.style.borderColor = 'var(--theme-border)';
+    const restRow = document.createElement('div');
+    restRow.className = 'text-xs';
+    restRow.style.fontFamily = "'Fragment Mono', monospace";
+    restRow.style.color = 'var(--theme-text-muted)';
+    restRow.textContent = REST_SHORT_NAME_KEYS.map((key) => LanguageService.t(key)).join(' · ');
+    rest.appendChild(restRow);
 
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.id = 'welcome-dont-show';
-    checkbox.className = 'w-4 h-4 rounded';
-    checkbox.style.accentColor = 'var(--theme-primary)';
-    checkbox.addEventListener('change', () => {
-      this.dontShowAgain = checkbox.checked;
-    });
+    container.appendChild(rest);
 
-    const label = document.createElement('label');
-    label.htmlFor = 'welcome-dont-show';
-    label.className = 'text-sm cursor-pointer';
-    label.style.color = 'var(--theme-text-muted)';
-    label.textContent = LanguageService.t('welcome.dontShowAgain');
-
-    checkboxContainer.appendChild(checkbox);
-    checkboxContainer.appendChild(label);
-    container.appendChild(checkboxContainer);
-
-    // Action buttons
-    const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'flex justify-end gap-3 mt-4';
-
-    // "Take the Tour" button (secondary)
-    const takeTourBtn = document.createElement('button');
-    takeTourBtn.className =
-      'px-6 py-2 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1';
-    takeTourBtn.style.backgroundColor = 'var(--theme-card-background)';
-    takeTourBtn.style.color = 'var(--theme-text)';
-    takeTourBtn.style.border = '1px solid var(--theme-primary)';
-    takeTourBtn.addEventListener('mouseenter', () => {
-      takeTourBtn.style.backgroundColor = 'var(--theme-card-hover)';
-    });
-    takeTourBtn.addEventListener('mouseleave', () => {
-      takeTourBtn.style.backgroundColor = 'var(--theme-card-background)';
-    });
-    takeTourBtn.textContent = LanguageService.t('welcome.takeTour');
-    takeTourBtn.addEventListener('click', () => {
-      this.dontShowAgain = true; // Mark as seen
-      this.close();
-      WelcomeModal.markAsSeen();
-      // Start tutorial after modal animation completes
-      setTimeout(() => {
-        TutorialService.start('harmony');
-      }, 350);
-    });
-
-    // "Get Started" button (primary)
-    const getStartedBtn = document.createElement('button');
-    getStartedBtn.className =
-      'px-6 py-2 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1';
-    getStartedBtn.style.backgroundColor = 'var(--theme-primary)';
-    getStartedBtn.style.color = 'var(--theme-text-header)';
-    getStartedBtn.addEventListener('mouseenter', () => {
-      getStartedBtn.style.filter = 'brightness(1.1)';
-    });
-    getStartedBtn.addEventListener('mouseleave', () => {
-      getStartedBtn.style.filter = '';
-    });
-    getStartedBtn.textContent = LanguageService.t('welcome.getStarted');
-    getStartedBtn.addEventListener('click', () => {
-      this.dontShowAgain = true; // Always mark as seen when clicking Get Started
-      this.close();
-      WelcomeModal.markAsSeen();
-    });
-
-    buttonContainer.appendChild(takeTourBtn);
-    buttonContainer.appendChild(getStartedBtn);
-    container.appendChild(buttonContainer);
+    // Two tips
+    container.appendChild(this.createTipsSection());
 
     return container;
   }
 
   /**
-   * Create a tool card
+   * Create one lead row: glyph, tool name, one line
    */
-  private createToolCard(tool: ToolInfo): HTMLElement {
-    const card = document.createElement('div');
-    card.className = 'flex flex-col items-center p-3 rounded-lg transition-colors cursor-pointer';
-    card.style.backgroundColor = 'var(--theme-card-background)';
-    card.addEventListener('mouseenter', () => {
-      card.style.backgroundColor = 'var(--theme-card-hover)';
-    });
-    card.addEventListener('mouseleave', () => {
-      card.style.backgroundColor = 'var(--theme-card-background)';
-    });
+  private createLeadRow(lead: LeadInfo): HTMLElement {
+    const row = document.createElement('div');
+    row.className = 'flex items-start gap-3 p-3 rounded-xl';
+    row.style.backgroundColor = 'var(--theme-card-background)';
 
-    // Use inline SVG for theme color inheritance
     const iconContainer = document.createElement('span');
-    iconContainer.className = 'w-8 h-8 mb-2 flex items-center justify-center';
+    iconContainer.className = 'flex items-center justify-center flex-shrink-0';
+    iconContainer.style.width = '30px';
+    iconContainer.style.height = '30px';
     iconContainer.style.color = 'var(--theme-text)';
     iconContainer.setAttribute('aria-hidden', 'true');
-    iconContainer.innerHTML = tool.icon;
-    card.appendChild(iconContainer);
+    iconContainer.innerHTML = lead.icon;
+    row.appendChild(iconContainer);
+
+    const text = document.createElement('div');
+    text.className = 'flex flex-col gap-0.5 min-w-0';
 
     const name = document.createElement('span');
-    name.className = 'text-xs font-medium text-center';
+    name.className = 'text-sm font-semibold';
     name.style.color = 'var(--theme-text)';
-    name.textContent = LanguageService.t(tool.nameKey);
-    card.appendChild(name);
+    name.textContent = LanguageService.t(lead.nameKey);
+    text.appendChild(name);
 
-    // Tooltip with description
-    card.title = LanguageService.t(tool.descriptionKey);
+    const line = document.createElement('span');
+    line.className = 'text-xs leading-relaxed';
+    line.style.color = 'var(--theme-text-muted)';
+    line.textContent = LanguageService.t(lead.lineKey);
+    text.appendChild(line);
 
-    return card;
+    row.appendChild(text);
+    return row;
   }
 
   /**
-   * Create quick tips section
+   * Create the two-tip section (the Spectrum pricing tip is cut — Budget is
+   * no longer on the shortlist, and three tips overflowed DE/FR/JA)
    */
   private createTipsSection(): HTMLElement {
     const section = document.createElement('div');
-    section.className = 'rounded-lg p-4';
+    section.className = 'rounded-xl p-4';
     section.style.backgroundColor = 'var(--theme-background-secondary)';
 
-    const title = document.createElement('h3');
-    title.className = 'text-sm font-semibold mb-2';
-    title.style.color = 'var(--theme-text)';
-    title.textContent = LanguageService.t('welcome.quickTips');
+    const title = document.createElement('div');
+    title.className = 'm16-label mb-2';
+    title.textContent = LanguageService.t('welcome.tipsLabel');
     section.appendChild(title);
 
-    const tips = [
-      LanguageService.t('welcome.tip1'),
-      LanguageService.t('welcome.tip2'),
-      LanguageService.t('welcome.tip3'),
-    ];
+    const tips = [LanguageService.t('welcome.tip1'), LanguageService.t('welcome.tip2')];
 
     const list = document.createElement('ul');
-    list.className = 'space-y-1';
+    list.className = 'space-y-1.5';
 
     tips.forEach((tip) => {
       const item = document.createElement('li');
-      item.className = 'text-sm flex items-start gap-2';
+      item.className = 'text-xs leading-relaxed flex items-start gap-2';
       item.style.color = 'var(--theme-text-muted)';
       const bullet = document.createElement('span');
       bullet.style.color = 'var(--theme-primary)';

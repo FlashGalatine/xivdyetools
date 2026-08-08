@@ -106,6 +106,18 @@ const SHELL_STYLES = `
   border: 1px solid var(--theme-primary);
 }
 .m16-grab { display: none; }
+/* Shared mono section label for modal bodies (restLabel, pastLabel, ...) */
+.m16-label {
+  font-family: 'Fragment Mono', monospace; font-size: 10px;
+  letter-spacing: 1.2px; color: var(--theme-text-muted);
+  text-transform: uppercase;
+}
+/* Fragment Mono has no CJK coverage and CJK has no case — fall back to the
+   body sans with CJK-appropriate tracking (per the Modal Directions finding) */
+:lang(ja) .m16-eyebrow, :lang(ko) .m16-eyebrow, :lang(zh) .m16-eyebrow,
+:lang(ja) .m16-label, :lang(ko) .m16-label, :lang(zh) .m16-label {
+  font-family: inherit; letter-spacing: 0.04em;
+}
 
 @media ${MOBILE_QUERY} {
   .m16-backdrop { padding: 0; align-items: flex-end; }
@@ -128,8 +140,11 @@ const SHELL_STYLES = `
   }
   .m16-footer { padding: 11px 14px 26px; }
   .m16-btn { min-height: 50px; border-radius: 12px; font-size: 13.5px; flex: 1; }
-  /* Cancel is the wide thumb target */
-  .m16-btn--cancel { flex: 1.4; }
+  /* Primary is the widest thing on screen — except on destructive footers,
+     where Cancel is the wide thumb target and the dangerous action narrow */
+  .m16-btn--primary { flex: 1.4; }
+  .m16-footer--destructive .m16-btn--cancel { flex: 1.5; }
+  .m16-footer--destructive .m16-btn--destructive { flex: 1; }
 }
 `;
 
@@ -390,13 +405,16 @@ export class ModalContainer extends BaseComponent {
 
     // Footer
     if (modal.type === 'confirm' || modal.confirmText || modal.cancelText) {
-      const footer = this.createElement('div', { className: 'm16-footer' });
+      const footer = this.createElement('div', {
+        className: `m16-footer${modal.destructive ? ' m16-footer--destructive' : ''}`,
+      });
 
       if (modal.cancelText || modal.type === 'confirm') {
         footer.appendChild(
-          this.createActionButton(modal.cancelText || 'Cancel', 'cancel', () =>
-            ModalService.dismiss(modal.id)
-          )
+          this.createActionButton(modal.cancelText || 'Cancel', 'cancel', () => {
+            if (modal.onCancel) modal.onCancel();
+            ModalService.dismiss(modal.id);
+          })
         );
       }
       if (modal.confirmText || modal.type === 'confirm') {

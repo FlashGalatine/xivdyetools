@@ -862,14 +862,20 @@
   },
   "welcome": {
     "title": "Willkommen bei XIV Farbwerkzeuge",
-    "intro": "Finde die perfekten Farbstoffe für deine FFXIV-Glamours! Entdecke unsere Werkzeuge unten:",
-    "dontShowAgain": "Nicht mehr anzeigen",
-    "getStarted": "Los geht's",
+    "eyebrow": "ERSTER BESUCH",
+    "intro": "Jeder Farbstoff im Spiel, vermessen. Wähle eine Farbe, und die Werkzeuge zeigen dir, welcher der 125 Farbstoffe sie wirklich trifft — und was er kostet.",
+    "lead": {
+      "harmony": "Von einer Farbe ausgehen und die vier oder fünf passenden dazu erhalten.",
+      "extractor": "Screenshot hochladen und zu jeder Farbe den nächsten Farbstoff finden.",
+      "mixer": "Zwei Farbstoffe mischen und sehen, was dazwischen liegt.",
+      "gradient": "Einen Verlauf zwischen zwei Farbstoffen bauen — jede Stufe ist tragbar."
+    },
+    "restLabel": "UND FÜNF WEITERE",
+    "tipsLabel": "GUT ZU WISSEN",
+    "tip1": "Jedes Farbfeld akzeptiert auch einen Hex-Code — so triffst du Farben, die es im Spiel nicht gibt.",
+    "tip2": "Jedes Ergebnis ist ein Link. Geteilt öffnet er bei allen denselben Farbstoff.",
     "takeTour": "Tour starten",
-    "quickTips": "Schnelltipps",
-    "tip1": "Klicke auf Werkzeugnamen im Header, um zwischen Werkzeugen zu wechseln",
-    "tip2": "Preise stammen von Universalis (Live-Marktdaten)",
-    "tip3": "Deine Einstellungen werden lokal im Browser gespeichert"
+    "getStarted": "Loslegen"
   },
   "shortcuts": {
     "title": "Tastenkürzel",

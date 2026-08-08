@@ -37,6 +37,12 @@ export interface ModalConfig {
   closeOnEscape?: boolean;
   onClose?: () => void;
   onConfirm?: () => void;
+  /**
+   * Called when the footer cancel/secondary button is pressed (before dismiss).
+   * Lets the secondary action do real work (e.g. Welcome's "Take the tour")
+   * instead of only dismissing.
+   */
+  onCancel?: () => void;
   confirmText?: string;
   cancelText?: string;
   // -------------------------------------------------------------------------
