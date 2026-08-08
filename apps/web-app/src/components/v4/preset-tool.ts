@@ -516,6 +516,9 @@ export class PresetTool extends BaseLitComponent {
   private handleTabSelect(tab: PresetTab): void {
     this.tab = tab;
     this.selectedPreset = null;
+    if (tab === 'mine' && !this.isAuthenticated) {
+      void import('../signin-modal').then(({ showSignInModal }) => showSignInModal());
+    }
   }
 
   private handleCategorySelect(category: PresetCategoryFilter): void {
@@ -543,7 +546,8 @@ export class PresetTool extends BaseLitComponent {
     if (!preset.apiPresetId) return;
 
     if (!this.isAuthenticated) {
-      ToastService.info(LanguageService.t('preset.loginToVote'));
+      const { showSignInModal } = await import('../signin-modal');
+      showSignInModal();
       return;
     }
 
