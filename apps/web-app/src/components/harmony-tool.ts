@@ -168,6 +168,8 @@ export class HarmonyTool extends BaseComponent {
 
   // DOM References
   private harmonyTypesContainer: HTMLElement | null = null;
+  /** 1A: the visible type rail centred over the wheel */
+  private typeRailContainer: HTMLElement | null = null;
   private companionSlider: HTMLInputElement | null = null;
   private companionDisplay: HTMLElement | null = null;
   private colorWheelContainer: HTMLElement | null = null;
@@ -938,6 +940,7 @@ export class HarmonyTool extends BaseComponent {
     // Update button styles for both desktop and drawer
     this.updateHarmonyTypeButtonStyles(this.harmonyTypesContainer, typeId);
     this.updateHarmonyTypeButtonStyles(this.drawerHarmonyTypesContainer, typeId);
+    this.renderTypeRail();
 
     this.generateHarmonies();
     this.updateDrawerContent();
@@ -978,6 +981,17 @@ export class HarmonyTool extends BaseComponent {
         style: 'max-width: 1200px; margin: 0 auto; width: 100%;',
       },
     });
+
+    // 1A: harmony-type chips centred over the wheel — the picker lives with
+    // the dial, not in a sidebar nobody opens.
+    this.typeRailContainer = this.createElement('div', {
+      attributes: {
+        style:
+          'display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; width: 100%; margin-bottom: 1rem;',
+      },
+    });
+    contentWrapper.appendChild(this.typeRailContainer);
+    this.renderTypeRail();
 
     // Color Wheel Section - centered with inline styles for reliability
     this.colorWheelContainer = this.createElement('div', {
@@ -1066,7 +1080,58 @@ export class HarmonyTool extends BaseComponent {
       wheel.setAttribute('empty', '');
     }
 
+    // 1A: node pucks are tappable — a tap jumps the base dye to that node.
+    wheel.addEventListener('node-click', ((e: CustomEvent<{ color: string; hue: number }>) => {
+      const nearest = dyeService.findClosestDye(e.detail.color);
+      if (nearest) {
+        this.selectDye(Array.isArray(nearest) ? nearest[0] : nearest);
+      }
+    }) as EventListener);
+
     this.colorWheelContainer.appendChild(wheel);
+  }
+
+  /**
+   * 1A: all nine harmony types as icon chips centred over the wheel.
+   */
+  private renderTypeRail(): void {
+    if (!this.typeRailContainer) return;
+    clearContainer(this.typeRailContainer);
+
+    for (const type of getHarmonyTypes()) {
+      const active = this.selectedHarmonyType === type.id;
+      const chip = this.createElement('button', {
+        attributes: {
+          type: 'button',
+          title: type.name,
+          style: `display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 5px 11px; border-radius: 999px; cursor: pointer; border: 1px solid ${
+            active ? 'var(--theme-primary)' : 'transparent'
+          }; background: ${
+            active
+              ? 'color-mix(in srgb, var(--theme-primary) 14%, transparent)'
+              : 'var(--theme-background-secondary)'
+          }; color: ${active ? 'var(--theme-primary)' : 'var(--theme-text-muted)'};`,
+        },
+      }) as HTMLButtonElement;
+      const icon = HARMONY_ICONS[type.icon];
+      if (icon) {
+        const iconSpan = this.createElement('span', {
+          attributes: { style: 'width: 14px; height: 14px; display: inline-flex;' },
+        });
+        iconSpan.innerHTML = icon;
+        chip.appendChild(iconSpan);
+      }
+      chip.appendChild(
+        this.createElement('span', {
+          textContent: type.name,
+        })
+      );
+      this.on(chip, 'click', () => {
+        this.selectHarmonyType(type.id);
+        this.renderTypeRail();
+      });
+      this.typeRailContainer.appendChild(chip);
+    }
   }
 
   /**
@@ -1416,7 +1481,7 @@ export class HarmonyTool extends BaseComponent {
     card.showRgb = this.displayOptions.showRgb;
     card.showHsv = this.displayOptions.showHsv;
     card.showLab = this.displayOptions.showLab;
-      card.showCmyk = this.displayOptions.showCmyk;
+    card.showCmyk = this.displayOptions.showCmyk;
     card.showDeltaE = this.displayOptions.showDeltaE;
     card.showPrice = this.displayOptions.showPrice;
     card.showAcquisition = this.displayOptions.showAcquisition;
