@@ -712,6 +712,25 @@
     "budgetKeyMethod": "ΔE 열: {tag} · 비율은 ΔE2000 고정",
     "budgetBest": "최고 가성비: **{name}** — ΔE {de} · {price}",
     "budgetNoTarget": "{world}에 목표 가격 없음 — 순위·비율 공란",
-    "budgetFloor": "이미 가장 저렴한 단계 — {price}보다 싼 것은 없습니다."
+    "budgetFloor": "이미 가장 저렴한 단계 — {price}보다 싼 것은 없습니다.",
+    "swatchSlot": "부위",
+    "swatchNearest": "가까운 염료",
+    "slotSkin": "피부",
+    "slotHair": "머리",
+    "slotHl": "브릿지",
+    "slotEyes": "눈",
+    "slotLip": "입술",
+    "slotPaint": "페인트",
+    "slotTattoo": "문신",
+    "slotLimbal": "림벌",
+    "offGridShort": "그리드 외",
+    "swatchFootKey": "ΔE2000 기준 최근접 · 전체 {n}개 중 {s}개 부위",
+    "swatchOffGrid": "{slot} 그리드 외 — 인덱스 {index}, 실제 {float}",
+    "swatchLip": "입술 α {alpha} — 원본 {raw}, 합성 {blend}",
+    "swatchGear": "장비 염료: {list}",
+    "swatchDropped": "제외(가장 근접한 일치): {slot} · ΔE {de}",
+    "swatchParseError": "파일을 읽을 수 없습니다 — {message}",
+    "swatchNoSlots": "이 파일에 활성 색상 부위가 없습니다.",
+    "swatchSlotMissing": "{slot}은(는) 이 파일에서 활성 부위가 아닙니다."
   }
 }

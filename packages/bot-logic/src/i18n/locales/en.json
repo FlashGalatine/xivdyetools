@@ -712,6 +712,25 @@
     "budgetKeyMethod": "ΔE column: {tag} · ratio stays ΔE2000",
     "budgetBest": "Best value: **{name}** — {de} ΔE at {price}",
     "budgetNoTarget": "No target price on {world} — rows unranked, ratio blank",
-    "budgetFloor": "Already the cheapest tier — nothing undercuts {price}."
+    "budgetFloor": "Already the cheapest tier — nothing undercuts {price}.",
+    "swatchSlot": "SLOT",
+    "swatchNearest": "NEAREST DYE",
+    "slotSkin": "SKIN",
+    "slotHair": "HAIR",
+    "slotHl": "HL",
+    "slotEyes": "EYES",
+    "slotLip": "LIP",
+    "slotPaint": "PAINT",
+    "slotTattoo": "TATT.",
+    "slotLimbal": "LIMBAL",
+    "offGridShort": "OFF GRID",
+    "swatchFootKey": "nearest by ΔE2000 · {s} of {n} slots",
+    "swatchOffGrid": "{slot} off grid — index {index}, live {float}",
+    "swatchLip": "Lip α {alpha} — raw {raw}, blended {blend}",
+    "swatchGear": "Gear dyes: {list}",
+    "swatchDropped": "Dropped (safest): {slot} · ΔE {de}",
+    "swatchParseError": "Could not read the file — {message}",
+    "swatchNoSlots": "No live colour slots in this file.",
+    "swatchSlotMissing": "{slot} is not a live slot in this file."
   }
 }

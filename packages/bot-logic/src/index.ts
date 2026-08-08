@@ -87,6 +87,10 @@ export type {
   VisionType,
 } from './commands/accessibility.js';
 
+// Command: Swatch (character-file frame — measuredRow consumer #5)
+export { executeSwatch } from './commands/swatch.js';
+export type { SwatchInput, SwatchResult, SwatchSlotOption } from './commands/swatch.js';
+
 // Command: Contrast (13A/13B/13C·1 — the pair count routes the frame)
 export { executeContrast } from './commands/contrast.js';
 export type {

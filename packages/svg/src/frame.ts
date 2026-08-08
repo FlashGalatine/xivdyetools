@@ -316,17 +316,18 @@ export function appIcon(x: number, y: number, size: number): string {
 }
 
 /**
- * The footer mark: 13 px app icon + `xivdyetools.app`, right-aligned at the
- * given right edge / baseline. Returns its total width for layout math.
+ * The footer mark: the app icon + `xivdyetools.app`, right-aligned at the
+ * given right edge / baseline. Icon at 18 px per the 2026-08-07 decision
+ * (chip-rework conventions — replaced the earlier 13 px drawn size).
  */
 export function markFooter(rightX: number, baselineY: number, theme: CardTheme): string {
   const domain = 'xivdyetools.app';
   const domainW = textWidth(domain, CARD_TYPE.label, 'mono');
-  const iconSize = 13;
+  const iconSize = 18;
   const gap = 7;
   const iconX = rightX - domainW - gap - iconSize;
   return (
-    appIcon(iconX, baselineY - 11, iconSize) +
+    appIcon(iconX, baselineY - 13, iconSize) +
     cardText(rightX, baselineY, domain, {
       fill: theme.label,
       size: CARD_TYPE.label,
@@ -383,9 +384,22 @@ export interface MeasuredRowWidths {
   measure: number;
 }
 
+/**
+ * A shaped lead value — still ONE lead value (like 12H's step fractions):
+ * a main line with an optional sub line beneath (the swatch card's slot
+ * label over its grid address).
+ */
+export interface MeasuredLead {
+  text: string;
+  /** Second line under the lead */
+  sub?: string;
+  /** Sub line ink: quiet label (default) or the amber warn tier (OFF GRID) */
+  subTone?: 'label' | 'warn';
+}
+
 export interface MeasuredRowOptions {
-  /** Lead value — only its *meaning* varies (step, share, rank) */
-  lead: string;
+  /** Lead value — only its *meaning* varies (step, share, rank, slot label) */
+  lead: string | MeasuredLead;
   /** Left half of the butted pair: the asked-for colour (ideal/extracted/target) */
   sourceHex: string;
   /** Right half: the dye you can buy */
@@ -438,10 +452,30 @@ export function measuredRow(x: number, y: number, rowH: number, o: MeasuredRowOp
   const parts: string[] = [];
   const cy = y + rowH / 2;
 
-  // Lead
-  parts.push(
-    cardText(x, cy + 4, o.lead, { fill: theme.subValue, size: CARD_TYPE.value, font: 'mono' })
-  );
+  // Lead — a plain value, or a shaped label (main line + sub line)
+  if (typeof o.lead === 'string') {
+    parts.push(
+      cardText(x, cy + 4, o.lead, { fill: theme.subValue, size: CARD_TYPE.value, font: 'mono' })
+    );
+  } else {
+    parts.push(
+      cardText(x, cy - 2, o.lead.text, {
+        fill: theme.value,
+        size: CARD_TYPE.label,
+        font: 'mono',
+        letterSpacing: 0.8,
+      })
+    );
+    if (o.lead.sub) {
+      parts.push(
+        cardText(x, cy + 11, o.lead.sub, {
+          fill: o.lead.subTone === 'warn' ? theme.tiers[2] : theme.label,
+          size: CARD_TYPE.label,
+          font: 'mono',
+        })
+      );
+    }
+  }
   let cx = x + w.lead + gap;
 
   // Butted pair: the seam between the halves is the drift made visible

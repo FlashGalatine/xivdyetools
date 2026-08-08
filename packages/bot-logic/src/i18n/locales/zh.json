@@ -712,6 +712,25 @@
     "budgetKeyMethod": "ΔE列为{tag} · 比率固定为ΔE2000",
     "budgetBest": "最划算：**{name}** — ΔE {de} · {price}",
     "budgetNoTarget": "{world}上无目标价格 — 行未排序，比率留空",
-    "budgetFloor": "已是最便宜的一档 — 没有低于{price}的选择。"
+    "budgetFloor": "已是最便宜的一档 — 没有低于{price}的选择。",
+    "swatchSlot": "部位",
+    "swatchNearest": "最近的染剂",
+    "slotSkin": "皮肤",
+    "slotHair": "头发",
+    "slotHl": "挑染",
+    "slotEyes": "眼睛",
+    "slotLip": "嘴唇",
+    "slotPaint": "彩绘",
+    "slotTattoo": "纹身",
+    "slotLimbal": "角膜环",
+    "offGridShort": "网格外",
+    "swatchFootKey": "按ΔE2000最近 · 共{n}个部位中{s}个",
+    "swatchOffGrid": "{slot}在网格外 — 索引 {index}，实际 {float}",
+    "swatchLip": "嘴唇 α {alpha} — 原色 {raw}，合成 {blend}",
+    "swatchGear": "装备染剂：{list}",
+    "swatchDropped": "已省略（最接近的匹配）：{slot} · ΔE {de}",
+    "swatchParseError": "无法读取文件 — {message}",
+    "swatchNoSlots": "此文件中没有有效的颜色部位。",
+    "swatchSlotMissing": "{slot}在此文件中不是有效部位。"
   }
 }

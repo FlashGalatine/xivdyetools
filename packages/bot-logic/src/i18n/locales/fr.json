@@ -712,6 +712,25 @@
     "budgetKeyMethod": "colonne ΔE : {tag} · ratio fixé sur ΔE2000",
     "budgetBest": "Meilleur rapport : **{name}** — {de} ΔE à {price}",
     "budgetNoTarget": "Pas de prix cible sur {world} — lignes non classées, ratio vide",
-    "budgetFloor": "Déjà le palier le moins cher — rien sous {price}."
+    "budgetFloor": "Déjà le palier le moins cher — rien sous {price}.",
+    "swatchSlot": "EMPL.",
+    "swatchNearest": "TEINTURE PROCHE",
+    "slotSkin": "PEAU",
+    "slotHair": "CHEV.",
+    "slotHl": "MÈCHE",
+    "slotEyes": "YEUX",
+    "slotLip": "LÈVRE",
+    "slotPaint": "PEINT.",
+    "slotTattoo": "TATOU.",
+    "slotLimbal": "LIMBAL",
+    "offGridShort": "HORS G.",
+    "swatchFootKey": "plus proches par ΔE2000 · {s} empl. sur {n}",
+    "swatchOffGrid": "{slot} hors grille — index {index}, direct {float}",
+    "swatchLip": "Lèvre α {alpha} — brut {raw}, fondu {blend}",
+    "swatchGear": "Teintures d'équipement : {list}",
+    "swatchDropped": "Retiré (le plus sûr) : {slot} · ΔE {de}",
+    "swatchParseError": "Fichier illisible — {message}",
+    "swatchNoSlots": "Aucun emplacement de couleur actif dans ce fichier.",
+    "swatchSlotMissing": "{slot} n’est pas un emplacement actif dans ce fichier."
   }
 }

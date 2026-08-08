@@ -63,6 +63,7 @@ export type {
   CardTheme,
   CardTextOptions,
   CommandChipOptions,
+  MeasuredLead,
   MeasuredRowOptions,
   MeasuredRowWidths,
 } from './frame.js';
@@ -139,6 +140,10 @@ export type {
   ComparisonCardLabels,
   ComparisonCardOptions,
 } from './comparison-card.js';
+
+// Swatch card (character sheet — measuredRow consumer #5)
+export { generateSwatchCard } from './swatch-card.js';
+export type { SwatchCardRow, SwatchCardLabels, SwatchCardOptions } from './swatch-card.js';
 
 // Dye Info Card (11B sheet)
 export { generateDyeInfoCard } from './dye-info-card.js';

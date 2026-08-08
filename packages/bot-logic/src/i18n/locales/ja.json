@@ -712,6 +712,25 @@
     "budgetKeyMethod": "ΔE列は{tag} · 比率はΔE2000固定",
     "budgetBest": "最高コスパ: **{name}** — ΔE {de}・{price}",
     "budgetNoTarget": "{world}に目標の価格なし — 順位・比率は空欄",
-    "budgetFloor": "すでに最安ティア — {price}を下回るものはありません。"
+    "budgetFloor": "すでに最安ティア — {price}を下回るものはありません。",
+    "swatchSlot": "部位",
+    "swatchNearest": "近いカララント",
+    "slotSkin": "肌",
+    "slotHair": "髪",
+    "slotHl": "メッシュ",
+    "slotEyes": "瞳",
+    "slotLip": "唇",
+    "slotPaint": "ペイント",
+    "slotTattoo": "刺青",
+    "slotLimbal": "リムバル",
+    "offGridShort": "グリッド外",
+    "swatchFootKey": "ΔE2000 による最近傍 · 全{n}部位中{s}部位",
+    "swatchOffGrid": "{slot}はグリッド外 — インデックス {index}、実色 {float}",
+    "swatchLip": "唇 α {alpha} — 元色 {raw}、合成 {blend}",
+    "swatchGear": "装備のカララント: {list}",
+    "swatchDropped": "省略（最も近い一致）: {slot} · ΔE {de}",
+    "swatchParseError": "ファイルを読み取れません — {message}",
+    "swatchNoSlots": "このファイルに有効なカラー部位がありません。",
+    "swatchSlotMissing": "{slot}はこのファイルでは有効な部位ではありません。"
   }
 }
