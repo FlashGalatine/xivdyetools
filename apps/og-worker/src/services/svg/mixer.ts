@@ -1,41 +1,27 @@
 /**
- * Mixer Tool OG Image Generator
+ * Mixer OG image — the 15E band (5.0).
  *
- * Creates an OG image showing a color mix between two dyes
- * with the resulting blend and closest dye match.
+ * Widths ARE the ratio — proportion says 60/40 without a slider nobody can
+ * drag. The result band carries the one structural variant: the mix itself
+ * is the 46px strip above, the band under it is the dye you can buy.
  *
- * Layout (1200x630):
- * ┌──────────────────────────────────────────────────────┐
- * │  ✦ XIV DYE TOOLS      DYE MIXER        60/40 BLEND  │
- * ├──────────────────────────────────────────────────────┤
- * │                                                      │
- * │     ┌────┐    60%    ┌────────────┐    40%    ┌────┐│
- * │     │    │───────────│   RESULT   │───────────│    ││
- * │     └────┘           │            │           └────┘│
- * │   Dalamud Red        │  [Blended] │         Snow    │
- * │   #B22222            │   #D46A6A  │         White   │
- * │                      └────────────┘                  │
- * │                      ≈ Coral Pink (Δ 2.1)           │
- * │                                                      │
- * ├──────────────────────────────────────────────────────┤
- * │  🎨 xivdyetools.app                  Algorithm: CIEDE2000│
- * └──────────────────────────────────────────────────────┘
+ * @module services/svg/mixer
  */
 
 import { ColorService } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
-import { rect, text, line, THEME, FONTS, OG_DIMENSIONS, truncateText } from './base';
-import { generateOGCard, LAYOUT } from './og-card';
-import { findClosestDyesWithDistance, getDyeByItemId } from './dye-helpers';
+import { generateBandCard, type BandEntry, type BandFrame } from './band';
+import { ALGO_TAG, bandGlyph, notFoundBand } from './band-shared';
+import { dyeService, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
 import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm } from '../../types';
 
 export interface MixerOGOptions {
-  /** First dye itemID */
+  /** First dye stainID (param name kept for call-site stability) */
   dyeAId: number;
-  /** Second dye itemID */
+  /** Second dye stainID */
   dyeBId: number;
-  /** Third dye itemID (optional) */
+  /** Third dye stainID (optional) */
   dyeCId?: number;
   /** Mix ratio (0-100, percentage of dyeA) */
   ratio: number;
@@ -43,594 +29,82 @@ export interface MixerOGOptions {
   algorithm?: MatchingAlgorithm;
   /** Locale for dye name display */
   locale?: LocaleCode;
+  /** 15E frame */
+  frame?: BandFrame;
 }
 
-/**
- * Mix two hex colors in the space implied by the requested algorithm
- * (BUG-031: previously always raw RGB, while the footer printed the
- * requested algorithm name; REFACTOR-009: private hexToRgb/rgbToHex copies
- * removed in favor of core's mixers).
- *
- * @param ratio - percentage of color1 (1-99)
- */
-function mixColors(
-  color1: string,
-  color2: string,
-  ratio: number,
-  algorithm: MatchingAlgorithm
-): string {
-  // core mixers use ratio = weight of the SECOND color
-  const t = 1 - ratio / 100;
-  switch (algorithm) {
-    case 'ciede2000':
-    case 'cie76':
-      return ColorService.mixColorsLab(color1, color2, t);
-    case 'rgb':
-    case 'redmean':
-    case 'distinguish':
-      return ColorService.mixColorsRgb(color1, color2, t);
-    case 'oklab':
-    default:
-      return ColorService.mixColorsOklab(color1, color2, t);
+/** The mix strip height (the drawn structural-variant size for mixer). */
+const MIX_STRIP_H = 46;
+
+function nearestDye(hex: string): { dye: Dye; delta: number } {
+  let best: Dye | null = null;
+  let bestDelta = Infinity;
+  for (const candidate of dyeService.getAllDyes()) {
+    const delta = ColorService.getDistanceForMethod(hex, candidate.hex, 'ciede2000');
+    if (delta < bestDelta) {
+      bestDelta = delta;
+      best = candidate;
+    }
   }
+  return { dye: best!, delta: bestDelta };
 }
 
 /**
- * Mixes three hex colors with the validated ratio applied (BUG-031: the
- * range-validated ratio path parameter was previously ignored — equal
- * thirds regardless of the shared URL).
- *
- * Weighting: color1 gets ratio%, colors 2+3 split the remainder evenly.
- * Computed as pair-mix(2,3 @ 50%) then mix with color1 — equivalent to a
- * weighted average in the linear mixing spaces used above.
- */
-function mixThreeColors(
-  color1: string,
-  color2: string,
-  color3: string,
-  ratio: number,
-  algorithm: MatchingAlgorithm
-): string {
-  const bc = mixColors(color2, color3, 50, algorithm);
-  return mixColors(color1, bc, ratio, algorithm);
-}
-
-/**
- * Generates the Mixer tool OG image SVG
+ * Generates the Mixer OG image SVG (400-grid — raster ×3 downstream).
  */
 export function generateMixerOG(options: MixerOGOptions): string {
-  const { dyeAId, dyeBId, dyeCId, ratio, algorithm = 'oklab', locale = 'en' } = options;
+  const { dyeAId, dyeBId, dyeCId, algorithm = 'oklab', locale = 'en', frame = 'discord' } = options;
+  const ratio = Math.max(1, Math.min(99, options.ratio));
 
-  // Look up the dyes
   const dyeA = getDyeByItemId(dyeAId);
   const dyeB = getDyeByItemId(dyeBId);
-  const dyeC = dyeCId ? getDyeByItemId(dyeCId) : null;
-
-  if (!dyeA || !dyeB) {
-    return generateFallbackMixerOG(ratio, algorithm, !!dyeC);
+  const dyeC = dyeCId !== undefined ? getDyeByItemId(dyeCId) : undefined;
+  if (!dyeA || !dyeB || (dyeCId !== undefined && !dyeC)) {
+    return notFoundBand('MIXER', 'mixer', `#${dyeAId} + #${dyeBId}`, 'mixer', frame);
   }
 
-  // If dyeC was requested but not found, proceed with 2-dye mix
-  if (dyeCId && !dyeC) {
-    return generateTwoDyeMixerOG(dyeA, dyeB, ratio, algorithm, locale);
-  }
-
-  // Route to appropriate generator
+  // The mix: A at ratio% against B (LAB), the third dye folded in equally
+  let mixHex = ColorService.mixColorsLab(dyeA.hex, dyeB.hex, 1 - ratio / 100);
   if (dyeC) {
-    return generateThreeDyeMixerOG(dyeA, dyeB, dyeC, ratio, algorithm, locale);
+    mixHex = ColorService.mixColorsLab(mixHex, dyeC.hex, 1 / 3);
   }
+  const hit = nearestDye(mixHex);
+  const delta = deltaForAlgorithm(mixHex, hit.dye.hex, algorithm);
 
-  return generateTwoDyeMixerOG(dyeA, dyeB, ratio, algorithm, locale);
-}
-
-/**
- * Generates OG image for 2-dye mix
- */
-function generateTwoDyeMixerOG(
-  dyeA: ReturnType<typeof getDyeByItemId>,
-  dyeB: ReturnType<typeof getDyeByItemId>,
-  ratio: number,
-  algorithm: MatchingAlgorithm,
-  locale: LocaleCode = 'en'
-): string {
-  if (!dyeA || !dyeB) return generateFallbackMixerOG(ratio, algorithm, false);
-
-  // Calculate mixed color
-  const mixedHex = mixColors(dyeA.hex, dyeB.hex, ratio, algorithm);
-
-  // Find closest matching dye
-  const matches = findClosestDyesWithDistance(mixedHex, { limit: 1, algorithm });
-  const closestMatch = matches[0];
-
-  // Build content elements
-  const contentElements: string[] = [];
-  const { contentTop, contentHeight } = LAYOUT;
-  const centerX = OG_DIMENSIONS.width / 2;
-
-  // Layout: centered equation [DyeA] + [DyeB] = [Result]
-  const swatchSize = 120;
-  const operatorGap = 35;
-
-  // Calculate total width: swatch + gap + "+" + gap + swatch + gap + "=" + gap + swatch
-  const totalWidth = swatchSize * 3 + operatorGap * 4;
-  const startX = centerX - totalWidth / 2;
-
-  // Vertical centering: account for label above (15px) and info below (~60px)
-  const totalVisualHeight = 15 + swatchSize + 60; // 175px total
-  const swatchY = contentTop + (contentHeight - totalVisualHeight) / 2 + 15;
-
-  // Positions
-  const dyeAX = startX;
-  const plusX = dyeAX + swatchSize + operatorGap;
-  const dyeBX = plusX + operatorGap;
-  const equalsX = dyeBX + swatchSize + operatorGap;
-  const resultX = equalsX + operatorGap;
-
-  // Dye A swatch
-  contentElements.push(
-    rect(dyeAX, swatchY, swatchSize, swatchSize, dyeA.hex, {
-      rx: 10,
-      stroke: '#ffffff',
-      strokeWidth: 2,
-    })
-  );
-
-  // Dye A percentage label (above)
-  contentElements.push(
-    text(dyeAX + swatchSize / 2, swatchY - 15, `${ratio}%`, {
-      fill: THEME.accent,
-      fontSize: 16,
-      fontFamily: FONTS.header,
-      fontWeight: 700,
-      textAnchor: 'middle',
-    })
-  );
-
-  // Dye A name (below)
-  const dyeADisplayName = getLocalizedDyeName(dyeA, locale);
-  const dyeAName = truncateText(dyeADisplayName, 12);
-  contentElements.push(
-    text(dyeAX + swatchSize / 2, swatchY + swatchSize + 22, dyeAName, {
-      fill: THEME.text,
-      fontSize: 13,
-      fontFamily: FONTS.primaryCjk,
-      fontWeight: 500,
-      textAnchor: 'middle',
-    })
-  );
-
-  // Dye A hex (below name)
-  contentElements.push(
-    text(dyeAX + swatchSize / 2, swatchY + swatchSize + 40, dyeA.hex.toUpperCase(), {
-      fill: THEME.textMuted,
-      fontSize: 11,
-      fontFamily: FONTS.mono,
-      textAnchor: 'middle',
-    })
-  );
-
-  // "+" operator
-  contentElements.push(
-    text(plusX, swatchY + swatchSize / 2 + 8, '+', {
-      fill: THEME.textMuted,
-      fontSize: 36,
-      fontFamily: FONTS.header,
-      fontWeight: 300,
-      textAnchor: 'middle',
-    })
-  );
-
-  // Dye B swatch
-  contentElements.push(
-    rect(dyeBX, swatchY, swatchSize, swatchSize, dyeB.hex, {
-      rx: 10,
-      stroke: '#ffffff',
-      strokeWidth: 2,
-    })
-  );
-
-  // Dye B percentage label (above)
-  contentElements.push(
-    text(dyeBX + swatchSize / 2, swatchY - 15, `${100 - ratio}%`, {
-      fill: THEME.accent,
-      fontSize: 16,
-      fontFamily: FONTS.header,
-      fontWeight: 700,
-      textAnchor: 'middle',
-    })
-  );
-
-  // Dye B name (below)
-  const dyeBDisplayName = getLocalizedDyeName(dyeB, locale);
-  const dyeBName = truncateText(dyeBDisplayName, 12);
-  contentElements.push(
-    text(dyeBX + swatchSize / 2, swatchY + swatchSize + 22, dyeBName, {
-      fill: THEME.text,
-      fontSize: 13,
-      fontFamily: FONTS.primaryCjk,
-      fontWeight: 500,
-      textAnchor: 'middle',
-    })
-  );
-
-  // Dye B hex (below name)
-  contentElements.push(
-    text(dyeBX + swatchSize / 2, swatchY + swatchSize + 40, dyeB.hex.toUpperCase(), {
-      fill: THEME.textMuted,
-      fontSize: 11,
-      fontFamily: FONTS.mono,
-      textAnchor: 'middle',
-    })
-  );
-
-  // "=" operator
-  contentElements.push(
-    text(equalsX, swatchY + swatchSize / 2 + 8, '=', {
-      fill: THEME.textMuted,
-      fontSize: 36,
-      fontFamily: FONTS.header,
-      fontWeight: 300,
-      textAnchor: 'middle',
-    })
-  );
-
-  // Result swatch
-  contentElements.push(
-    rect(resultX, swatchY, swatchSize, swatchSize, mixedHex, {
-      rx: 10,
-      stroke: THEME.accent,
-      strokeWidth: 3,
-    })
-  );
-
-  // Result label (above)
-  contentElements.push(
-    text(resultX + swatchSize / 2, swatchY - 15, 'RESULT', {
-      fill: THEME.textMuted,
-      fontSize: 12,
-      fontFamily: FONTS.header,
-      fontWeight: 600,
-      textAnchor: 'middle',
-    })
-  );
-
-  // Result hex (below swatch)
-  contentElements.push(
-    text(resultX + swatchSize / 2, swatchY + swatchSize + 22, mixedHex.toUpperCase(), {
-      fill: THEME.text,
-      fontSize: 13,
-      fontFamily: FONTS.mono,
-      fontWeight: 500,
-      textAnchor: 'middle',
-    })
-  );
-
-  // Closest match info (below result)
-  if (closestMatch) {
-    contentElements.push(
-      text(resultX + swatchSize / 2, swatchY + swatchSize + 42, `≈ ${getLocalizedDyeName(closestMatch.dye, locale)}`, {
-        fill: THEME.textMuted,
-        fontSize: 11,
-        fontFamily: FONTS.primaryCjk,
-        textAnchor: 'middle',
-      })
-    );
-
-    const deltaColor =
-      closestMatch.distance < 5
-        ? THEME.success
-        : closestMatch.distance < 10
-          ? THEME.warning
-          : THEME.error;
-
-    contentElements.push(
-      text(resultX + swatchSize / 2, swatchY + swatchSize + 60, `Δ${closestMatch.distance.toFixed(1)}`, {
-        fill: deltaColor,
-        fontSize: 11,
-        fontFamily: FONTS.mono,
-        textAnchor: 'middle',
-      })
-    );
-  }
-
-  return generateOGCard({
-    toolName: 'Dye Mixer',
-    subtitle: `${ratio}/${100 - ratio} Blend`,
-    content: contentElements.join('\n'),
-    algorithm,
+  const inputBand = (dye: Dye, role: string, grow: number): BandEntry => ({
+    hex: dye.hex,
+    role,
+    name: getLocalizedDyeName(dye, locale),
+    value: dye.hex.toUpperCase(),
+    tag: `#${dye.stainID ?? dye.id}`,
+    grow,
   });
-}
 
-/**
- * Generates OG image for 3-dye mix
- *
- * Layout:
- * ┌──────────────────────────────────────────────────────┐
- * │     ┌────┐           ┌────┐           ┌────┐        │
- * │     │ A  │     +     │ B  │     +     │ C  │        │
- * │     └────┘           └────┘           └────┘        │
- * │   Dalamud Red     Snow White     Soot Black         │
- * │                                                      │
- * │                    ──────▼──────                     │
- * │                    ┌────────────┐                    │
- * │                    │   Result   │                    │
- * │                    └────────────┘                    │
- * │                     ≈ Ash Grey                       │
- * └──────────────────────────────────────────────────────┘
- */
-function generateThreeDyeMixerOG(
-  dyeA: NonNullable<ReturnType<typeof getDyeByItemId>>,
-  dyeB: NonNullable<ReturnType<typeof getDyeByItemId>>,
-  dyeC: NonNullable<ReturnType<typeof getDyeByItemId>>,
-  ratio: number,
-  algorithm: MatchingAlgorithm,
-  locale: LocaleCode = 'en'
-): string {
-  // Calculate mixed color (equal parts)
-  const mixedHex = mixThreeColors(dyeA.hex, dyeB.hex, dyeC.hex, ratio, algorithm);
+  const inputs: BandEntry[] = dyeC
+    ? [inputBand(dyeA, 'A', 1), inputBand(dyeB, 'B', 1), inputBand(dyeC, 'C', 1)]
+    : [inputBand(dyeA, `A · ${ratio}%`, ratio), inputBand(dyeB, `B · ${100 - ratio}%`, 100 - ratio)];
 
-  // Find closest matching dye
-  const matches = findClosestDyesWithDistance(mixedHex, { limit: 1, algorithm });
-  const closestMatch = matches[0];
+  const bands: BandEntry[] = [
+    ...inputs,
+    {
+      hex: hit.dye.hex,
+      role: 'BUYABLE',
+      name: getLocalizedDyeName(hit.dye, locale),
+      value: hit.dye.hex.toUpperCase(),
+      tag: `Δ${delta.toFixed(1)}`,
+      grow: dyeC ? 3 : 100,
+      nameSize: 17,
+      src: { hex: mixHex, height: MIX_STRIP_H },
+    },
+  ];
 
-  // Build content elements
-  const contentElements: string[] = [];
-  const { contentTop, contentHeight } = LAYOUT;
-  const centerX = OG_DIMENSIONS.width / 2;
-
-  // Layout constants
-  const inputSwatchSize = 90;
-  const resultSwatchSize = 110;
-  const operatorGap = 30;
-  const inputLabelHeight = 25;
-  const arrowGapHeight = 55;
-  const resultLabelHeight = 65;
-
-  // Calculate total visual height for vertical centering
-  const totalVisualHeight = inputSwatchSize + inputLabelHeight + arrowGapHeight + resultSwatchSize + resultLabelHeight;
-  // Center content vertically with offset to account for header/footer visual weight
-  const contentStartY = contentTop + (contentHeight - totalVisualHeight) / 2 + 3;
-
-  // Top row: 3 input swatches with + operators
-  // Total width: swatch + gap + "+" + gap + swatch + gap + "+" + gap + swatch
-  const topRowWidth = inputSwatchSize * 3 + operatorGap * 4;
-  const topRowStartX = centerX - topRowWidth / 2;
-  const inputSwatchY = contentStartY;
-
-  // Positions for input dyes
-  const dyeAX = topRowStartX;
-  const plus1X = dyeAX + inputSwatchSize + operatorGap;
-  const dyeBX = plus1X + operatorGap;
-  const plus2X = dyeBX + inputSwatchSize + operatorGap;
-  const dyeCX = plus2X + operatorGap;
-
-  // Result row position (below inputs)
-  const resultY = inputSwatchY + inputSwatchSize + inputLabelHeight + arrowGapHeight;
-  const resultX = centerX - resultSwatchSize / 2;
-
-  // ─── Input Dye A ───
-  contentElements.push(
-    rect(dyeAX, inputSwatchY, inputSwatchSize, inputSwatchSize, dyeA.hex, {
-      rx: 8,
-      stroke: '#ffffff',
-      strokeWidth: 2,
-    })
-  );
-
-  const dyeADisplayName3 = getLocalizedDyeName(dyeA, locale);
-  const dyeAName = truncateText(dyeADisplayName3, 10);
-  contentElements.push(
-    text(dyeAX + inputSwatchSize / 2, inputSwatchY + inputSwatchSize + 18, dyeAName, {
-      fill: THEME.text,
-      fontSize: 12,
-      fontFamily: FONTS.primaryCjk,
-      fontWeight: 500,
-      textAnchor: 'middle',
-    })
-  );
-
-  // "+" operator 1
-  contentElements.push(
-    text(plus1X, inputSwatchY + inputSwatchSize / 2 + 6, '+', {
-      fill: THEME.textMuted,
-      fontSize: 28,
-      fontFamily: FONTS.header,
-      fontWeight: 300,
-      textAnchor: 'middle',
-    })
-  );
-
-  // ─── Input Dye B ───
-  contentElements.push(
-    rect(dyeBX, inputSwatchY, inputSwatchSize, inputSwatchSize, dyeB.hex, {
-      rx: 8,
-      stroke: '#ffffff',
-      strokeWidth: 2,
-    })
-  );
-
-  const dyeBDisplayName3 = getLocalizedDyeName(dyeB, locale);
-  const dyeBName = truncateText(dyeBDisplayName3, 10);
-  contentElements.push(
-    text(dyeBX + inputSwatchSize / 2, inputSwatchY + inputSwatchSize + 18, dyeBName, {
-      fill: THEME.text,
-      fontSize: 12,
-      fontFamily: FONTS.primaryCjk,
-      fontWeight: 500,
-      textAnchor: 'middle',
-    })
-  );
-
-  // "+" operator 2
-  contentElements.push(
-    text(plus2X, inputSwatchY + inputSwatchSize / 2 + 6, '+', {
-      fill: THEME.textMuted,
-      fontSize: 28,
-      fontFamily: FONTS.header,
-      fontWeight: 300,
-      textAnchor: 'middle',
-    })
-  );
-
-  // ─── Input Dye C ───
-  contentElements.push(
-    rect(dyeCX, inputSwatchY, inputSwatchSize, inputSwatchSize, dyeC.hex, {
-      rx: 8,
-      stroke: '#ffffff',
-      strokeWidth: 2,
-    })
-  );
-
-  const dyeCDisplayName3 = getLocalizedDyeName(dyeC, locale);
-  const dyeCName = truncateText(dyeCDisplayName3, 10);
-  contentElements.push(
-    text(dyeCX + inputSwatchSize / 2, inputSwatchY + inputSwatchSize + 18, dyeCName, {
-      fill: THEME.text,
-      fontSize: 12,
-      fontFamily: FONTS.primaryCjk,
-      fontWeight: 500,
-      textAnchor: 'middle',
-    })
-  );
-
-  // ─── Arrow pointing down ───
-  const arrowY = inputSwatchY + inputSwatchSize + inputLabelHeight + (arrowGapHeight / 2);
-  contentElements.push(
-    text(centerX, arrowY, '▼', {
-      fill: THEME.accent,
-      fontSize: 20,
-      fontFamily: FONTS.primary,
-      textAnchor: 'middle',
-    })
-  );
-
-  // ─── Result swatch ───
-  contentElements.push(
-    rect(resultX, resultY, resultSwatchSize, resultSwatchSize, mixedHex, {
-      rx: 10,
-      stroke: THEME.accent,
-      strokeWidth: 3,
-    })
-  );
-
-  // Result hex (inside or below swatch)
-  contentElements.push(
-    text(centerX, resultY + resultSwatchSize + 20, mixedHex.toUpperCase(), {
-      fill: THEME.text,
-      fontSize: 14,
-      fontFamily: FONTS.mono,
-      fontWeight: 500,
-      textAnchor: 'middle',
-    })
-  );
-
-  // Closest match info
-  if (closestMatch) {
-    const closestDisplayName = getLocalizedDyeName(closestMatch.dye, locale);
-    const matchName =
-      closestDisplayName.length > 18
-        ? closestDisplayName.slice(0, 16) + '..'
-        : closestDisplayName;
-
-    contentElements.push(
-      text(centerX, resultY + resultSwatchSize + 42, `≈ ${matchName}`, {
-        fill: THEME.textMuted,
-        fontSize: 12,
-        fontFamily: FONTS.primaryCjk,
-        textAnchor: 'middle',
-      })
-    );
-
-    const deltaColor =
-      closestMatch.distance < 5
-        ? THEME.success
-        : closestMatch.distance < 10
-          ? THEME.warning
-          : THEME.error;
-
-    contentElements.push(
-      text(centerX, resultY + resultSwatchSize + 60, `Δ${closestMatch.distance.toFixed(1)}`, {
-        fill: deltaColor,
-        fontSize: 12,
-        fontFamily: FONTS.mono,
-        textAnchor: 'middle',
-      })
-    );
-  }
-
-  return generateOGCard({
-    toolName: 'Dye Mixer',
-    subtitle: '3-Dye Blend',
-    content: contentElements.join('\n'),
-    algorithm,
-  });
-}
-
-/**
- * Generates a fallback OG image when dyes are not found
- */
-function generateFallbackMixerOG(ratio: number, algorithm: MatchingAlgorithm, isThreeDye: boolean): string {
-  const contentElements: string[] = [];
-  const { contentTop, contentHeight } = LAYOUT;
-
-  // Centered message
-  contentElements.push(
-    text(OG_DIMENSIONS.width / 2, contentTop + contentHeight / 2 - 20, 'Mix Dye Colors', {
-      fill: THEME.text,
-      fontSize: 32,
-      fontFamily: FONTS.header,
-      fontWeight: 600,
-      textAnchor: 'middle',
-    })
-  );
-
-  contentElements.push(
-    text(
-      OG_DIMENSIONS.width / 2,
-      contentTop + contentHeight / 2 + 30,
-      'Blend two FFXIV dyes and find the closest match',
-      {
-        fill: THEME.textMuted,
-        fontSize: 18,
-        fontFamily: FONTS.primary,
-        textAnchor: 'middle',
-      }
-    )
-  );
-
-  // Example mixing visualization
-  const exampleY = contentTop + contentHeight / 2 + 100;
-  const centerX = OG_DIMENSIONS.width / 2;
-
-  // Left color
-  contentElements.push(rect(centerX - 200, exampleY, 60, 60, '#ef4444', { rx: 8 }));
-  // Plus sign
-  contentElements.push(
-    text(centerX - 120, exampleY + 35, '+', {
-      fill: THEME.textMuted,
-      fontSize: 30,
-      fontFamily: FONTS.header,
-      textAnchor: 'middle',
-    })
-  );
-  // Right color
-  contentElements.push(rect(centerX - 80, exampleY, 60, 60, '#3b82f6', { rx: 8 }));
-  // Equals sign
-  contentElements.push(
-    text(centerX + 10, exampleY + 35, '=', {
-      fill: THEME.textMuted,
-      fontSize: 30,
-      fontFamily: FONTS.header,
-      textAnchor: 'middle',
-    })
-  );
-  // Result color
-  contentElements.push(rect(centerX + 50, exampleY, 60, 60, '#9747ba', { rx: 8 }));
-
-  return generateOGCard({
-    toolName: 'Dye Mixer',
-    subtitle: isThreeDye ? '3-Dye Blend' : `${ratio}/${100 - ratio} Blend`,
-    content: contentElements.join('\n'),
-    algorithm,
+  return generateBandCard({
+    bands,
+    toolTag: 'MIXER',
+    toolGlyph: bandGlyph('mixer'),
+    subLine: `${ratio}/${100 - ratio} · ${ALGO_TAG[algorithm] ?? algorithm.toUpperCase()}`,
+    bandLine: getLocalizedDyeName(hit.dye, locale),
+    urlLine: `xivdyetools.app/mixer · ${ALGO_TAG[algorithm] ?? algorithm.toUpperCase()}`,
+    frame,
   });
 }

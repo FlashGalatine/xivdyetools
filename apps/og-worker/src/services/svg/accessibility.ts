@@ -1,382 +1,84 @@
 /**
- * Accessibility Tool OG Image Generator
+ * Accessibility OG image — the 15E band (5.0).
  *
- * Creates an OG image showing dyes with color vision deficiency simulation.
+ * The band body is the dye AS PERCEIVED (through the lens); the 52px strip
+ * above it is the dye as designed — the one structural variant the shape
+ * needs, shared with Extractor and Mixer. Δ is the shift the lens
+ * introduces, not a distance between dyes; no WCAG percentage rides the
+ * picture (no criterion measures whether two colours are tellable apart).
  *
- * Layout (1200x630):
- * ┌──────────────────────────────────────────────────────────────────┐
- * │  ✦ XIV DYE TOOLS       ACCESSIBILITY         PROTANOPIA VIEW    │
- * ├──────────────────────────────────────────────────────────────────┤
- * │                                                                  │
- * │    ORIGINAL COLORS              SIMULATED VIEW                   │
- * │    ┌───┐ ┌───┐ ┌───┐          ┌───┐ ┌───┐ ┌───┐                │
- * │    │   │ │   │ │   │    →     │   │ │   │ │   │                │
- * │    └───┘ └───┘ └───┘          └───┘ └───┘ └───┘                │
- * │    Red   Green  Blue          [Simulated colors]                │
- * │                                                                  │
- * │    Test how your dye choices appear to colorblind players       │
- * │                                                                  │
- * ├──────────────────────────────────────────────────────────────────┤
- * │  🎨 xivdyetools.app                                              │
- * └──────────────────────────────────────────────────────────────────┘
+ * @module services/svg/accessibility
  */
 
+import { ColorService } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
-import { rect, text, hexToRgb, rgbToHex, THEME, FONTS, OG_DIMENSIONS, truncateText } from './base';
-import { generateOGCard, LAYOUT } from './og-card';
+import { generateBandCard, type BandEntry, type BandFrame } from './band';
+import { bandGlyph, notFoundBand } from './band-shared';
 import { getDyeByItemId } from './dye-helpers';
 import { getLocalizedDyeName } from '../translator';
 import type { VisionType } from '../../types';
 
 export interface AccessibilityOGOptions {
-  /** Array of dye itemIDs (1-4) */
+  /** Array of dye stainIDs (1-4; param name kept for call-site stability) */
   dyeIds: number[];
   /** Vision type to simulate */
   visionType?: VisionType;
   /** Locale for dye name display */
   locale?: LocaleCode;
+  /** 15E frame */
+  frame?: BandFrame;
 }
 
-/**
- * Vision type display names
- */
-const VISION_NAMES: Record<VisionType, string> = {
-  normal: 'Normal Vision',
-  protanopia: 'Protanopia',
-  deuteranopia: 'Deuteranopia',
-  tritanopia: 'Tritanopia',
-  achromatopsia: 'Achromatopsia',
+/** The as-designed strip height (the drawn structural-variant size here). */
+const DESIGNED_STRIP_H = 52;
+
+/** Lens short codes — untranslated identifiers, the suite's vocabulary. */
+const LENS_SHORT: Record<string, string> = {
+  normal: 'NORM',
+  protanopia: 'PROT',
+  deuteranopia: 'DEUT',
+  tritanopia: 'TRIT',
+  achromatopsia: 'ACHR',
 };
 
 /**
- * Vision type descriptions
- */
-const VISION_DESCRIPTIONS: Record<VisionType, string> = {
-  normal: 'Full color vision',
-  protanopia: 'Red-blind (no red cones)',
-  deuteranopia: 'Green-blind (no green cones)',
-  tritanopia: 'Blue-blind (no blue cones)',
-  achromatopsia: 'Complete color blindness',
-};
-
-/**
- * Color vision simulation matrices
- * Based on Brettel, Viénot, and Mollon (1997) simulation
- */
-const VISION_MATRICES: Record<VisionType, number[][]> = {
-  normal: [
-    [1, 0, 0],
-    [0, 1, 0],
-    [0, 0, 1],
-  ],
-  protanopia: [
-    [0.567, 0.433, 0],
-    [0.558, 0.442, 0],
-    [0, 0.242, 0.758],
-  ],
-  deuteranopia: [
-    [0.625, 0.375, 0],
-    [0.7, 0.3, 0],
-    [0, 0.3, 0.7],
-  ],
-  tritanopia: [
-    [0.95, 0.05, 0],
-    [0, 0.433, 0.567],
-    [0, 0.475, 0.525],
-  ],
-  achromatopsia: [
-    [0.299, 0.587, 0.114],
-    [0.299, 0.587, 0.114],
-    [0.299, 0.587, 0.114],
-  ],
-};
-
-/**
- * Simulates how a color appears under a specific vision type
- */
-function simulateColorVision(hex: string, visionType: VisionType): string {
-  if (visionType === 'normal') return hex;
-
-  const { r, g, b } = hexToRgb(hex);
-  const matrix = VISION_MATRICES[visionType];
-
-  // Apply the transformation matrix
-  const newR = Math.round(
-    Math.min(255, Math.max(0, matrix[0][0] * r + matrix[0][1] * g + matrix[0][2] * b))
-  );
-  const newG = Math.round(
-    Math.min(255, Math.max(0, matrix[1][0] * r + matrix[1][1] * g + matrix[1][2] * b))
-  );
-  const newB = Math.round(
-    Math.min(255, Math.max(0, matrix[2][0] * r + matrix[2][1] * g + matrix[2][2] * b))
-  );
-
-  return rgbToHex(newR, newG, newB);
-}
-
-/**
- * Generates the Accessibility tool OG image SVG
+ * Generates the Accessibility OG image SVG (400-grid — raster ×3 downstream).
  */
 export function generateAccessibilityOG(options: AccessibilityOGOptions): string {
-  const { dyeIds, visionType = 'protanopia', locale = 'en' } = options;
+  const { visionType = 'deuteranopia', locale = 'en', frame = 'discord' } = options;
 
-  // Look up all dyes
-  const dyes: Dye[] = dyeIds
+  const dyes = options.dyeIds
+    .slice(0, 4)
     .map((id) => getDyeByItemId(id))
-    .filter((d): d is Dye => d !== undefined)
-    .slice(0, 4);
-
+    .filter((d): d is Dye => d !== undefined);
   if (dyes.length === 0) {
-    return generateFallbackAccessibilityOG(visionType);
+    return notFoundBand('A11Y', 'accessibility', options.dyeIds.join(' · '), 'accessibility', frame);
   }
 
-  // Build content elements
-  const contentElements: string[] = [];
-  const { contentTop, contentHeight, padding } = LAYOUT;
-
-  // Calculate layout based on number of dyes
-  const numDyes = dyes.length;
-  const swatchSize = numDyes === 1 ? 140 : numDyes === 2 ? 120 : numDyes === 3 ? 100 : 85;
-  const gap = numDyes <= 2 ? 20 : 15;
-
-  // Two columns: Original and Simulated
-  const columnWidth = (OG_DIMENSIONS.width - padding * 3) / 2;
-  const leftColumnX = padding;
-  const rightColumnX = padding * 2 + columnWidth;
-
-  // Arrow position
-  const arrowX = OG_DIMENSIONS.width / 2;
-
-  // Calculate total content height for vertical centering
-  const labelHeight = 25;
-  const labelToSwatchGap = 20;
-  const swatchLabelHeight = 30;
-  const swatchToInfoGap = 25;
-  const infoBoxHeight = 80;
-
-  const totalContentHeight = labelHeight + labelToSwatchGap + swatchSize + swatchLabelHeight + swatchToInfoGap + infoBoxHeight;
-  // Center content vertically with offset to account for header/footer visual weight
-  const contentStartY = contentTop + (contentHeight - totalContentHeight) / 2 + 40;
-
-  // "ORIGINAL COLORS" label
-  contentElements.push(
-    text(leftColumnX + columnWidth / 2, contentStartY + labelHeight / 2, 'ORIGINAL COLORS', {
-      fill: THEME.textMuted,
-      fontSize: 14,
-      fontFamily: FONTS.header,
-      fontWeight: 600,
-      textAnchor: 'middle',
-    })
-  );
-
-  // "SIMULATED VIEW" label
-  contentElements.push(
-    text(rightColumnX + columnWidth / 2, contentStartY + labelHeight / 2, 'SIMULATED VIEW', {
-      fill: THEME.textMuted,
-      fontSize: 14,
-      fontFamily: FONTS.header,
-      fontWeight: 600,
-      textAnchor: 'middle',
-    })
-  );
-
-  // Calculate swatch positioning
-  const totalSwatchWidth = numDyes * swatchSize + (numDyes - 1) * gap;
-  const swatchStartXLeft = leftColumnX + (columnWidth - totalSwatchWidth) / 2;
-  const swatchStartXRight = rightColumnX + (columnWidth - totalSwatchWidth) / 2;
-  const swatchY = contentStartY + labelHeight + labelToSwatchGap;
-
-  // Draw original colors (left side)
-  dyes.forEach((dye, index) => {
-    const x = swatchStartXLeft + index * (swatchSize + gap);
-
-    // Original color swatch
-    contentElements.push(
-      rect(x, swatchY, swatchSize, swatchSize, dye.hex, {
-        rx: 8,
-        stroke: THEME.border,
-        strokeWidth: 2,
-      })
-    );
-
-    // Dye name
-    const dyeDisplayName = getLocalizedDyeName(dye, locale);
-    const truncatedName = truncateText(dyeDisplayName, 10);
-    contentElements.push(
-      text(x + swatchSize / 2, swatchY + swatchSize + 18, truncatedName, {
-        fill: THEME.text,
-        fontSize: numDyes <= 2 ? 13 : 11,
-        fontFamily: FONTS.primaryCjk,
-        fontWeight: 500,
-        textAnchor: 'middle',
-      })
-    );
+  const lens = LENS_SHORT[visionType] ?? visionType.toUpperCase();
+  const bands: BandEntry[] = dyes.map((dye) => {
+    const simulated =
+      visionType === 'normal'
+        ? dye.hex
+        : ColorService.simulateColorblindnessHex(dye.hex, visionType);
+    const shift = ColorService.getDistanceForMethod(dye.hex, simulated, 'ciede2000');
+    return {
+      hex: simulated,
+      role: 'AS DESIGNED',
+      name: getLocalizedDyeName(dye, locale),
+      value: dye.hex.toUpperCase(),
+      tag: `Δ${shift.toFixed(1)}`,
+      src: { hex: dye.hex, height: DESIGNED_STRIP_H },
+    };
   });
 
-  // Draw arrow between columns
-  const arrowY = swatchY + swatchSize / 2;
-  contentElements.push(
-    text(arrowX, arrowY, '→', {
-      fill: THEME.accent,
-      fontSize: 48,
-      fontFamily: FONTS.primary,
-      fontWeight: 700,
-      textAnchor: 'middle',
-      dominantBaseline: 'middle',
-    })
-  );
-
-  // Draw simulated colors (right side)
-  dyes.forEach((dye, index) => {
-    const x = swatchStartXRight + index * (swatchSize + gap);
-    const simulatedHex = simulateColorVision(dye.hex, visionType);
-
-    // Simulated color swatch
-    contentElements.push(
-      rect(x, swatchY, swatchSize, swatchSize, simulatedHex, {
-        rx: 8,
-        stroke: THEME.border,
-        strokeWidth: 2,
-      })
-    );
-
-    // Simulated hex
-    contentElements.push(
-      text(x + swatchSize / 2, swatchY + swatchSize + 18, simulatedHex.toUpperCase(), {
-        fill: THEME.textMuted,
-        fontSize: numDyes <= 2 ? 11 : 9,
-        fontFamily: FONTS.mono,
-        textAnchor: 'middle',
-      })
-    );
-  });
-
-  // Vision type info box at bottom (positioned relative to centered content)
-  const infoBoxY = swatchY + swatchSize + swatchLabelHeight + swatchToInfoGap;
-  const infoBoxWidth = 500;
-  const infoBoxX = (OG_DIMENSIONS.width - infoBoxWidth) / 2;
-
-  // Info box background
-  contentElements.push(
-    rect(infoBoxX, infoBoxY, infoBoxWidth, infoBoxHeight, THEME.backgroundCard, {
-      rx: 12,
-      stroke: THEME.border,
-      strokeWidth: 1,
-    })
-  );
-
-  // Vision type name
-  contentElements.push(
-    text(OG_DIMENSIONS.width / 2, infoBoxY + 30, VISION_NAMES[visionType], {
-      fill: THEME.text,
-      fontSize: 22,
-      fontFamily: FONTS.header,
-      fontWeight: 600,
-      textAnchor: 'middle',
-    })
-  );
-
-  // Vision type description
-  contentElements.push(
-    text(OG_DIMENSIONS.width / 2, infoBoxY + 58, VISION_DESCRIPTIONS[visionType], {
-      fill: THEME.textMuted,
-      fontSize: 14,
-      fontFamily: FONTS.primary,
-      textAnchor: 'middle',
-    })
-  );
-
-  return generateOGCard({
-    toolName: 'Accessibility',
-    subtitle: VISION_NAMES[visionType],
-    content: contentElements.join('\n'),
-  });
-}
-
-/**
- * Generates a fallback OG image when no dyes are provided
- */
-function generateFallbackAccessibilityOG(visionType: VisionType): string {
-  const contentElements: string[] = [];
-  const { contentTop, contentHeight } = LAYOUT;
-
-  // Centered message
-  contentElements.push(
-    text(
-      OG_DIMENSIONS.width / 2,
-      contentTop + contentHeight / 2 - 40,
-      'Color Vision Accessibility',
-      {
-        fill: THEME.text,
-        fontSize: 32,
-        fontFamily: FONTS.header,
-        fontWeight: 600,
-        textAnchor: 'middle',
-      }
-    )
-  );
-
-  contentElements.push(
-    text(
-      OG_DIMENSIONS.width / 2,
-      contentTop + contentHeight / 2 + 10,
-      'See how your dye choices appear to colorblind players',
-      {
-        fill: THEME.textMuted,
-        fontSize: 18,
-        fontFamily: FONTS.primary,
-        textAnchor: 'middle',
-      }
-    )
-  );
-
-  // Example showing vision type simulations
-  const exampleColors = ['#ef4444', '#22c55e', '#3b82f6', '#eab308'];
-  const swatchSize = 50;
-  const gap = 15;
-
-  // Original row
-  const totalWidth = exampleColors.length * swatchSize + (exampleColors.length - 1) * gap;
-  const startX = (OG_DIMENSIONS.width - totalWidth) / 2;
-  const originalY = contentTop + contentHeight / 2 + 70;
-
-  contentElements.push(
-    text(startX - 100, originalY + swatchSize / 2, 'Original:', {
-      fill: THEME.textMuted,
-      fontSize: 14,
-      fontFamily: FONTS.primary,
-      textAnchor: 'end',
-      dominantBaseline: 'middle',
-    })
-  );
-
-  exampleColors.forEach((color, i) => {
-    const x = startX + i * (swatchSize + gap);
-    contentElements.push(rect(x, originalY, swatchSize, swatchSize, color, { rx: 6 }));
-  });
-
-  // Simulated row
-  const simulatedY = originalY + swatchSize + 20;
-
-  contentElements.push(
-    text(startX - 100, simulatedY + swatchSize / 2, `${VISION_NAMES[visionType]}:`, {
-      fill: THEME.textMuted,
-      fontSize: 14,
-      fontFamily: FONTS.primary,
-      textAnchor: 'end',
-      dominantBaseline: 'middle',
-    })
-  );
-
-  exampleColors.forEach((color, i) => {
-    const x = startX + i * (swatchSize + gap);
-    const simulated = simulateColorVision(color, visionType);
-    contentElements.push(rect(x, simulatedY, swatchSize, swatchSize, simulated, { rx: 6 }));
-  });
-
-  return generateOGCard({
-    toolName: 'Accessibility',
-    subtitle: VISION_NAMES[visionType],
-    content: contentElements.join('\n'),
+  return generateBandCard({
+    bands,
+    toolTag: 'A11Y',
+    toolGlyph: bandGlyph('accessibility'),
+    subLine: `${lens} · ΔE2000`,
+    bandLine: `${lens} · ${dyes.length}`,
+    urlLine: `xivdyetools.app/accessibility?vision=${visionType} · ΔE2000`,
+    frame,
   });
 }
