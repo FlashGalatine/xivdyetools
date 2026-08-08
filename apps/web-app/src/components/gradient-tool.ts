@@ -243,12 +243,10 @@ export class GradientTool extends BaseComponent {
   }
 
   /**
-   * Find a dye by its itemID (FFXIV game item ID).
-   * Share URLs use itemID, but getDyeById() uses internal database id.
+   * Resolve a shared dye param (5.0: stainID; legacy itemIDs fail loudly).
    */
-  private findDyeByItemId(itemId: number): Dye | null {
-    const allDyes = dyeService.getAllDyes();
-    return allDyes.find((d) => d.itemID === itemId) ?? null;
+  private findSharedDye(value: number): Dye | null {
+    return ShareService.resolveSharedDye(value);
   }
 
   /**
@@ -266,7 +264,7 @@ export class GradientTool extends BaseComponent {
 
     // Load start dye
     if (typeof params.start === 'number') {
-      const startDye = this.findDyeByItemId(params.start);
+      const startDye = this.findSharedDye(params.start);
       if (startDye) {
         this.selectedDyes[0] = startDye;
         hasChanges = true;
@@ -275,7 +273,7 @@ export class GradientTool extends BaseComponent {
 
     // Load end dye
     if (typeof params.end === 'number') {
-      const endDye = this.findDyeByItemId(params.end);
+      const endDye = this.findSharedDye(params.end);
       if (endDye) {
         this.selectedDyes[1] = endDye;
         hasChanges = true;
@@ -1346,8 +1344,8 @@ export class GradientTool extends BaseComponent {
     }
 
     return {
-      start: this.startDye.itemID,
-      end: this.endDye.itemID,
+      start: this.startDye.stainID ?? 0,
+      end: this.endDye.stainID ?? 0,
       steps: this.stepCount,
       interpolation: this.colorSpace,
       algo: this.matchingMethod,

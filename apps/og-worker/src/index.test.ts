@@ -112,13 +112,13 @@ describe('GET /og/harmony/:dyeId/:harmonyType', () => {
   });
 
   it('returns image for valid parameters', async () => {
-    const res = await app.request('/og/harmony/5771/complementary', {}, TEST_ENV);
+    const res = await app.request('/og/harmony/43/complementary', {}, TEST_ENV);
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/png');
   });
 
   it('strips .png extension from harmonyType', async () => {
-    const res = await app.request('/og/harmony/5771/tetradic.png', {}, TEST_ENV);
+    const res = await app.request('/og/harmony/43/tetradic.png', {}, TEST_ENV);
     expect(res.status).toBe(200);
   });
 });
@@ -129,49 +129,49 @@ describe('GET /og/harmony/:dyeId/:harmonyType', () => {
 
 describe('GET /og/gradient/:startId/:endId/:steps', () => {
   it('returns 400 for NaN start dye ID', async () => {
-    const res = await app.request('/og/gradient/abc/5772/5', {}, TEST_ENV);
+    const res = await app.request('/og/gradient/abc/44/5', {}, TEST_ENV);
     expect(res.status).toBe(400);
     const body = await res.json() as Record<string, unknown>;
     expect(body.error).toBe('Invalid dye ID');
   });
 
   it('returns 400 for NaN end dye ID', async () => {
-    const res = await app.request('/og/gradient/5771/abc/5', {}, TEST_ENV);
+    const res = await app.request('/og/gradient/43/abc/5', {}, TEST_ENV);
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for steps below minimum (< 2)', async () => {
-    const res = await app.request('/og/gradient/5771/5772/1', {}, TEST_ENV);
+    const res = await app.request('/og/gradient/43/44/1', {}, TEST_ENV);
     expect(res.status).toBe(400);
     const body = await res.json() as Record<string, unknown>;
     expect(body.error).toContain('steps must be between 2 and 20');
   });
 
   it('returns 400 for steps above maximum (> 20)', async () => {
-    const res = await app.request('/og/gradient/5771/5772/21', {}, TEST_ENV);
+    const res = await app.request('/og/gradient/43/44/21', {}, TEST_ENV);
     expect(res.status).toBe(400);
     const body = await res.json() as Record<string, unknown>;
     expect(body.error).toContain('steps must be between 2 and 20');
   });
 
   it('returns 400 for NaN steps', async () => {
-    const res = await app.request('/og/gradient/5771/5772/abc', {}, TEST_ENV);
+    const res = await app.request('/og/gradient/43/44/abc', {}, TEST_ENV);
     expect(res.status).toBe(400);
   });
 
   it('returns image for valid parameters', async () => {
-    const res = await app.request('/og/gradient/5771/5772/5', {}, TEST_ENV);
+    const res = await app.request('/og/gradient/43/44/5', {}, TEST_ENV);
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/png');
   });
 
   it('accepts boundary value steps=2', async () => {
-    const res = await app.request('/og/gradient/5771/5772/2', {}, TEST_ENV);
+    const res = await app.request('/og/gradient/43/44/2', {}, TEST_ENV);
     expect(res.status).toBe(200);
   });
 
   it('accepts boundary value steps=20', async () => {
-    const res = await app.request('/og/gradient/5771/5772/20', {}, TEST_ENV);
+    const res = await app.request('/og/gradient/43/44/20', {}, TEST_ENV);
     expect(res.status).toBe(200);
   });
 });
@@ -182,47 +182,47 @@ describe('GET /og/gradient/:startId/:endId/:steps', () => {
 
 describe('GET /og/mixer/:dyeAId/:dyeBId/:ratio', () => {
   it('returns 400 for NaN dye A ID', async () => {
-    const res = await app.request('/og/mixer/abc/5772/50', {}, TEST_ENV);
+    const res = await app.request('/og/mixer/abc/44/50', {}, TEST_ENV);
     expect(res.status).toBe(400);
     const body = await res.json() as Record<string, unknown>;
     expect(body.error).toBe('Invalid dye ID');
   });
 
   it('returns 400 for NaN dye B ID', async () => {
-    const res = await app.request('/og/mixer/5771/abc/50', {}, TEST_ENV);
+    const res = await app.request('/og/mixer/43/abc/50', {}, TEST_ENV);
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for ratio below minimum (< 1)', async () => {
-    const res = await app.request('/og/mixer/5771/5772/0', {}, TEST_ENV);
+    const res = await app.request('/og/mixer/43/44/0', {}, TEST_ENV);
     expect(res.status).toBe(400);
     const body = await res.json() as Record<string, unknown>;
     expect(body.error).toContain('ratio must be between 1 and 99');
   });
 
   it('returns 400 for ratio above maximum (> 99)', async () => {
-    const res = await app.request('/og/mixer/5771/5772/100', {}, TEST_ENV);
+    const res = await app.request('/og/mixer/43/44/100', {}, TEST_ENV);
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for NaN ratio', async () => {
-    const res = await app.request('/og/mixer/5771/5772/abc', {}, TEST_ENV);
+    const res = await app.request('/og/mixer/43/44/abc', {}, TEST_ENV);
     expect(res.status).toBe(400);
   });
 
   it('returns image for valid parameters', async () => {
-    const res = await app.request('/og/mixer/5771/5772/50', {}, TEST_ENV);
+    const res = await app.request('/og/mixer/43/44/50', {}, TEST_ENV);
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/png');
   });
 
   it('accepts boundary ratio=1', async () => {
-    const res = await app.request('/og/mixer/5771/5772/1', {}, TEST_ENV);
+    const res = await app.request('/og/mixer/43/44/1', {}, TEST_ENV);
     expect(res.status).toBe(200);
   });
 
   it('accepts boundary ratio=99', async () => {
-    const res = await app.request('/og/mixer/5771/5772/99', {}, TEST_ENV);
+    const res = await app.request('/og/mixer/43/44/99', {}, TEST_ENV);
     expect(res.status).toBe(200);
   });
 });
@@ -233,19 +233,19 @@ describe('GET /og/mixer/:dyeAId/:dyeBId/:ratio', () => {
 
 describe('GET /og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio', () => {
   it('returns 400 for NaN dye C ID', async () => {
-    const res = await app.request('/og/mixer/5771/5772/abc/50', {}, TEST_ENV);
+    const res = await app.request('/og/mixer/43/44/abc/50', {}, TEST_ENV);
     expect(res.status).toBe(400);
     const body = await res.json() as Record<string, unknown>;
     expect(body.error).toBe('Invalid dye ID');
   });
 
   it('returns 400 for invalid ratio in 3-dye mode', async () => {
-    const res = await app.request('/og/mixer/5771/5772/5773/0', {}, TEST_ENV);
+    const res = await app.request('/og/mixer/43/44/45/0', {}, TEST_ENV);
     expect(res.status).toBe(400);
   });
 
   it('returns image for valid 3-dye parameters', async () => {
-    const res = await app.request('/og/mixer/5771/5772/5773/50', {}, TEST_ENV);
+    const res = await app.request('/og/mixer/43/44/45/50', {}, TEST_ENV);
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/png');
   });
@@ -303,14 +303,14 @@ describe('GET /og/comparison/:dyes', () => {
   });
 
   it('returns 400 for too many dye IDs (> 16)', async () => {
-    const ids = Array.from({ length: 17 }, (_, i) => 5770 + i).join(',');
+    const ids = Array.from({ length: 17 }, (_, i) => 42 + i).join(',');
     const res = await app.request(`/og/comparison/${ids}`, {}, TEST_ENV);
     expect(res.status).toBe(400);
   });
 
   it('filters out NaN IDs from comma-separated list', async () => {
-    // "abc,5771" should parse to [5771] which is valid (length 1)
-    const res = await app.request('/og/comparison/abc,5771', {}, TEST_ENV);
+    // "abc,43" should parse to [43] which is valid (length 1)
+    const res = await app.request('/og/comparison/abc,43', {}, TEST_ENV);
     expect(res.status).toBe(200);
   });
 
@@ -320,18 +320,18 @@ describe('GET /og/comparison/:dyes', () => {
   });
 
   it('returns image for single valid dye', async () => {
-    const res = await app.request('/og/comparison/5771', {}, TEST_ENV);
+    const res = await app.request('/og/comparison/43', {}, TEST_ENV);
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/png');
   });
 
   it('returns image for multiple valid dyes', async () => {
-    const res = await app.request('/og/comparison/5771,5772,5773', {}, TEST_ENV);
+    const res = await app.request('/og/comparison/43,44,45', {}, TEST_ENV);
     expect(res.status).toBe(200);
   });
 
   it('accepts boundary value of 16 dyes', async () => {
-    const ids = Array.from({ length: 16 }, (_, i) => 5770 + i).join(',');
+    const ids = Array.from({ length: 16 }, (_, i) => 42 + i).join(',');
     const res = await app.request(`/og/comparison/${ids}`, {}, TEST_ENV);
     expect(res.status).toBe(200);
   });
@@ -350,19 +350,19 @@ describe('GET /og/accessibility/:dyes/:visionType', () => {
   });
 
   it('returns 400 for too many dye IDs', async () => {
-    const ids = Array.from({ length: 17 }, (_, i) => 5770 + i).join(',');
+    const ids = Array.from({ length: 17 }, (_, i) => 42 + i).join(',');
     const res = await app.request(`/og/accessibility/${ids}/protanopia`, {}, TEST_ENV);
     expect(res.status).toBe(400);
   });
 
   it('returns image for valid parameters', async () => {
-    const res = await app.request('/og/accessibility/5771,5772/protanopia', {}, TEST_ENV);
+    const res = await app.request('/og/accessibility/43,44/protanopia', {}, TEST_ENV);
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/png');
   });
 
   it('strips .png extension from visionType', async () => {
-    const res = await app.request('/og/accessibility/5771/deuteranopia.png', {}, TEST_ENV);
+    const res = await app.request('/og/accessibility/43/deuteranopia.png', {}, TEST_ENV);
     expect(res.status).toBe(200);
   });
 });
@@ -449,23 +449,23 @@ describe('extractor/presets/budget crawler routes', () => {
 describe('?lang= travels with emitted og:image URLs', () => {
   it('appends lang for non-English crawler requests', async () => {
     const res = await app.request(
-      '/harmony/?dye=5771&harmony=tetradic&lang=ja',
+      '/harmony/?dye=43&harmony=tetradic&lang=ja',
       { headers: { 'User-Agent': CRAWLER_UA } },
       TEST_ENV
     );
     expect(res.status).toBe(200);
     const html = await res.text();
-    expect(html).toContain('/og/harmony/5771/tetradic.png?lang=ja');
+    expect(html).toContain('/og/harmony/43/tetradic.png?lang=ja');
   });
 
   it('keeps English URLs unparameterised (stable cache keys)', async () => {
     const res = await app.request(
-      '/harmony/?dye=5771&harmony=tetradic',
+      '/harmony/?dye=43&harmony=tetradic',
       { headers: { 'User-Agent': CRAWLER_UA } },
       TEST_ENV
     );
     const html = await res.text();
-    expect(html).toContain('/og/harmony/5771/tetradic.png');
+    expect(html).toContain('/og/harmony/43/tetradic.png');
     expect(html).not.toContain('.png?lang=');
   });
 });

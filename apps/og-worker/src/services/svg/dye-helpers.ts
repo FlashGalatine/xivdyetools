@@ -25,8 +25,14 @@ export const characterColorService = new CharacterColorService();
  * OPT-023: O(1) itemID lookup -- getAllDyes() returns a fresh array copy per
  * call and the comparison route did up to 16 copy+linear-scans per request.
  */
-const dyeByItemId = new Map<number, Dye>(
-  dyeService.getAllDyes().map((d) => [d.itemID, d])
+// 5.0 share-URL grammar: dye params carry stainIDs (1-254). Legacy itemIDs
+// (>= 5729) are a disjoint range and deliberately miss — the caller renders
+// its default/fallback rather than guessing a dye.
+const dyeByStainId = new Map<number, Dye>(
+  dyeService
+    .getAllDyes()
+    .filter((d) => d.stainID !== null)
+    .map((d) => [d.stainID as number, d])
 );
 
 /**
@@ -205,9 +211,9 @@ export function findClosestDyesWithDistance(
 /**
  * Get a single dye by its itemID
  */
-export function getDyeByItemId(itemId: number): Dye | undefined {
-  // OPT-023: precomputed map instead of a fresh array copy + linear scan
-  return dyeByItemId.get(itemId);
+export function getDyeByItemId(id: number): Dye | undefined {
+  // Name kept for call-site stability; the lookup is stainID-keyed (5.0).
+  return dyeByStainId.get(id);
 }
 
 /**

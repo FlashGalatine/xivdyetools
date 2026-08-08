@@ -1209,6 +1209,9 @@
   },
   "share": {
     "button": "Partager",
-    "copied": "Copié !"
+    "copied": "Copié !",
+    "invalidDye": "Ce lien pointe vers une teinture que cette version ne reconnaît pas.",
+    "legacyLink": "Ce lien provient d'une ancienne version et utilise un ID de teinture obsolète — demandez un nouveau lien.",
+    "invalidHex": "Ce lien contient une valeur de couleur invalide."
   }
 }

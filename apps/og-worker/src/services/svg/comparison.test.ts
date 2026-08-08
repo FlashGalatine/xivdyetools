@@ -12,7 +12,7 @@ describe('comparison SVG generator', () => {
   // Get valid dye IDs for testing
   const getValidDyeIds = (count: number): number[] => {
     const allDyes = dyeService.getAllDyes();
-    return allDyes.slice(0, count).map((d) => d.itemID);
+    return allDyes.slice(0, count).map((d) => d.stainID ?? 0);
   };
 
   describe('generateComparisonOG', () => {
@@ -58,7 +58,7 @@ describe('comparison SVG generator', () => {
       const allDyes = dyeService.getAllDyes();
       const testDye = allDyes[0];
 
-      const result = generateComparisonOG({ dyeIds: [testDye.itemID] });
+      const result = generateComparisonOG({ dyeIds: [testDye.stainID ?? 0] });
 
       // Name may be truncated
       expect(result).toContain(testDye.name.slice(0, 12));
@@ -76,7 +76,7 @@ describe('comparison SVG generator', () => {
       const allDyes = dyeService.getAllDyes();
       const testDye = allDyes[0];
 
-      const result = generateComparisonOG({ dyeIds: [testDye.itemID] });
+      const result = generateComparisonOG({ dyeIds: [testDye.stainID ?? 0] });
 
       expect(result).toContain(testDye.category);
     });

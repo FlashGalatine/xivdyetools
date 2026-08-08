@@ -432,7 +432,7 @@ function navigateToHarmony(dye: Dye): void {
   logger.info(
     `[DyeActionDropdown] navigateToHarmony called - dye: "${dye.name}", itemID: ${dye.itemID}`
   );
-  RouterService.navigateTo('harmony', { dyeId: String(dye.itemID) });
+  RouterService.navigateTo('harmony', { dye: String(dye.stainID ?? 0) });
 }
 
 /**

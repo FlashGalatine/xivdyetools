@@ -2387,7 +2387,7 @@ export class SwatchTool extends BaseComponent {
     if (!this.selectedColor) return {};
 
     const params: Record<string, unknown> = {
-      color: this.selectedColor.hex.replace('#', ''), // Hex without #
+      hex: this.selectedColor.hex.replace('#', ''), // Bare colour (5.0 grammar)
       sheet: this.colorCategory, // Which color sheet this color is from
       algo: this.matchingMethod,
       limit: this.maxResults,
@@ -2523,9 +2523,11 @@ export class SwatchTool extends BaseComponent {
     }
 
     // Load color if specified
-    if (params.color && typeof params.color === 'string') {
+    const sharedHexRaw = params.hex ?? params.color; // `color` accepted as legacy alias
+    if (sharedHexRaw && typeof sharedHexRaw === 'string') {
       // Normalize hex color (add # prefix if missing)
-      const hexColor = params.color.startsWith('#') ? params.color : `#${params.color}`;
+      const hexColor = ShareService.parseSharedHex(sharedHexRaw);
+      if (!hexColor) return;
 
       // Ensure colors are loaded before searching
       if (this.colors.length === 0) {

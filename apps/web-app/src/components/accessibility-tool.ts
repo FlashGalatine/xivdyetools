@@ -2351,7 +2351,7 @@ export class AccessibilityTool extends BaseComponent {
 
     // Use the vision type selected in the share dropdown
     return {
-      dyes: this.selectedDyes.map((d) => d.itemID),
+      dyes: this.selectedDyes.map((d) => d.stainID ?? 0),
       vision: this.shareVisionType,
     };
   }
@@ -2391,7 +2391,7 @@ export class AccessibilityTool extends BaseComponent {
 
       for (const itemId of params.dyes) {
         if (typeof itemId === 'number') {
-          const dye = allDyes.find((d) => d.itemID === itemId);
+          const dye = ShareService.resolveSharedDye(itemId);
           if (dye && !loadedDyes.some((d) => d.id === dye.id)) {
             loadedDyes.push(dye);
             if (loadedDyes.length >= 4) break; // Max 4 dyes

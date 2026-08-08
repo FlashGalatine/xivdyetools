@@ -25,18 +25,18 @@ const mockEnv: Env = {
 describe('og-data-generator', () => {
   describe('generateHarmonyOGData', () => {
     it('should generate OG data for valid dye', () => {
-      // Dye 5771 is "Mud Green" in the dye database
+      // Dye 43 is "Mud Green" in the dye database
       const result = generateHarmonyOGData(
-        { dye: 5771, harmony: 'complementary' },
+        { dye: 43, harmony: 'complementary' },
         mockEnv
       );
 
       expect(result.title).toContain('Complementary');
       expect(result.title).toContain('XIV Dye Tools');
       expect(result.description).toContain('complementary');
-      expect(result.url).toContain('dye=5771');
+      expect(result.url).toContain('dye=43');
       expect(result.url).toContain('harmony=complementary');
-      expect(result.imageUrl).toContain('/harmony/5771/complementary.png');
+      expect(result.imageUrl).toContain('/harmony/43/complementary.png');
       expect(result.siteName).toBe('XIV Dye Tools');
       expect(result.themeColor).toBeDefined();
     });
@@ -66,7 +66,7 @@ describe('og-data-generator', () => {
       ] as const;
 
       harmonyTypes.forEach((harmony) => {
-        const result = generateHarmonyOGData({ dye: 5771, harmony }, mockEnv);
+        const result = generateHarmonyOGData({ dye: 43, harmony }, mockEnv);
         expect(result.url).toContain(`harmony=${harmony}`);
       });
     });
@@ -75,17 +75,17 @@ describe('og-data-generator', () => {
   describe('generateGradientOGData', () => {
     it('should generate OG data for valid gradient', () => {
       const result = generateGradientOGData(
-        { start: 5771, end: 5772, steps: 5 },
+        { start: 43, end: 44, steps: 5 },
         mockEnv
       );
 
       expect(result.title).toContain('Gradient');
       expect(result.title).toContain('XIV Dye Tools');
       expect(result.description).toContain('5-step gradient');
-      expect(result.url).toContain('start=5771');
-      expect(result.url).toContain('end=5772');
+      expect(result.url).toContain('start=43');
+      expect(result.url).toContain('end=44');
       expect(result.url).toContain('steps=5');
-      expect(result.imageUrl).toContain('/gradient/5771/5772/5.png');
+      expect(result.imageUrl).toContain('/gradient/43/44/5.png');
     });
 
     it('should generate fallback for invalid dyes', () => {
@@ -100,7 +100,7 @@ describe('og-data-generator', () => {
 
     it('should handle missing start dye', () => {
       const result = generateGradientOGData(
-        { start: 999999, end: 5772, steps: 5 },
+        { start: 999999, end: 44, steps: 5 },
         mockEnv
       );
 
@@ -109,7 +109,7 @@ describe('og-data-generator', () => {
 
     it('should handle missing end dye', () => {
       const result = generateGradientOGData(
-        { start: 5771, end: 999999, steps: 5 },
+        { start: 43, end: 999999, steps: 5 },
         mockEnv
       );
 
@@ -120,27 +120,27 @@ describe('og-data-generator', () => {
   describe('generateMixerOGData', () => {
     it('should generate OG data for 2-dye mix', () => {
       const result = generateMixerOGData(
-        { dyeA: 5771, dyeB: 5772, ratio: 60 },
+        { dyeA: 43, dyeB: 44, ratio: 60 },
         mockEnv
       );
 
       expect(result.title).toContain('60%');
       expect(result.title).toContain('40%');
-      expect(result.url).toContain('dyeA=5771');
-      expect(result.url).toContain('dyeB=5772');
+      expect(result.url).toContain('dyeA=43');
+      expect(result.url).toContain('dyeB=44');
       expect(result.url).toContain('ratio=60');
-      expect(result.imageUrl).toContain('/mixer/5771/5772/60.png');
+      expect(result.imageUrl).toContain('/mixer/43/44/60.png');
     });
 
     it('should generate OG data for 3-dye mix', () => {
       const result = generateMixerOGData(
-        { dyeA: 5771, dyeB: 5772, dyeC: 5773, ratio: 50 },
+        { dyeA: 43, dyeB: 44, dyeC: 45, ratio: 50 },
         mockEnv
       );
 
       expect(result.title).toContain('+');
-      expect(result.url).toContain('dyeC=5773');
-      expect(result.imageUrl).toContain('/mixer/5771/5772/5773/50.png');
+      expect(result.url).toContain('dyeC=45');
+      expect(result.imageUrl).toContain('/mixer/43/44/45/50.png');
     });
 
     it('should generate fallback for invalid dyes', () => {
@@ -218,18 +218,18 @@ describe('og-data-generator', () => {
 
   describe('generateComparisonOGData', () => {
     it('should generate OG data for multiple dyes', () => {
-      const result = generateComparisonOGData({ dyes: [5771, 5772] }, mockEnv);
+      const result = generateComparisonOGData({ dyes: [43, 44] }, mockEnv);
 
       expect(result.title).toContain('Compare');
       expect(result.description).toContain('comparison');
       expect(result.description).toContain('2');
-      expect(result.url).toContain('dyes=5771,5772');
-      expect(result.imageUrl).toContain('/comparison/5771,5772.png');
+      expect(result.url).toContain('dyes=43,44');
+      expect(result.imageUrl).toContain('/comparison/43,44.png');
     });
 
     it('should limit to 4 dyes', () => {
       const result = generateComparisonOGData(
-        { dyes: [5771, 5772, 5773, 5774, 5775] },
+        { dyes: [43, 44, 45, 46, 47] },
         mockEnv
       );
 
@@ -255,15 +255,15 @@ describe('og-data-generator', () => {
   describe('generateAccessibilityOGData', () => {
     it('should generate OG data for accessibility check', () => {
       const result = generateAccessibilityOGData(
-        { dyes: [5771, 5772], vision: 'protanopia' },
+        { dyes: [43, 44], vision: 'protanopia' },
         mockEnv
       );
 
       expect(result.title).toContain('Protanopia');
       expect(result.description).toContain('protanopia');
-      expect(result.url).toContain('dyes=5771,5772');
+      expect(result.url).toContain('dyes=43,44');
       expect(result.url).toContain('vision=protanopia');
-      expect(result.imageUrl).toContain('/accessibility/5771,5772/protanopia.png');
+      expect(result.imageUrl).toContain('/accessibility/43,44/protanopia.png');
     });
 
     it('should handle all vision types', () => {
@@ -277,7 +277,7 @@ describe('og-data-generator', () => {
 
       visionTypes.forEach((vision) => {
         const result = generateAccessibilityOGData(
-          { dyes: [5771], vision },
+          { dyes: [43], vision },
           mockEnv
         );
         expect(result.url).toContain(`vision=${vision}`);
@@ -285,7 +285,7 @@ describe('og-data-generator', () => {
     });
 
     it('should default to normal vision', () => {
-      const result = generateAccessibilityOGData({ dyes: [5771] }, mockEnv);
+      const result = generateAccessibilityOGData({ dyes: [43] }, mockEnv);
 
       expect(result.url).toContain('vision=normal');
     });
@@ -390,21 +390,21 @@ describe('og-data-generator', () => {
 
   describe('generateOGDataForTool', () => {
     it('should dispatch to harmony generator', () => {
-      const params = new URLSearchParams('dye=5771&harmony=tetradic');
+      const params = new URLSearchParams('dye=43&harmony=tetradic');
       const result = generateOGDataForTool('harmony', params, mockEnv);
 
       expect(result.imageUrl).toContain('/harmony/');
     });
 
     it('should dispatch to gradient generator', () => {
-      const params = new URLSearchParams('start=5771&end=5772&steps=5');
+      const params = new URLSearchParams('start=43&end=44&steps=5');
       const result = generateOGDataForTool('gradient', params, mockEnv);
 
       expect(result.imageUrl).toContain('/gradient/');
     });
 
     it('should dispatch to mixer generator', () => {
-      const params = new URLSearchParams('dyeA=5771&dyeB=5772&ratio=60');
+      const params = new URLSearchParams('dyeA=43&dyeB=44&ratio=60');
       const result = generateOGDataForTool('mixer', params, mockEnv);
 
       expect(result.imageUrl).toContain('/mixer/');
@@ -418,14 +418,14 @@ describe('og-data-generator', () => {
     });
 
     it('should dispatch to comparison generator', () => {
-      const params = new URLSearchParams('dyes=5771,5772');
+      const params = new URLSearchParams('dyes=43,44');
       const result = generateOGDataForTool('comparison', params, mockEnv);
 
       expect(result.imageUrl).toContain('/comparison/');
     });
 
     it('should dispatch to accessibility generator', () => {
-      const params = new URLSearchParams('dyes=5771&vision=protanopia');
+      const params = new URLSearchParams('dyes=43&vision=protanopia');
       const result = generateOGDataForTool('accessibility', params, mockEnv);
 
       expect(result.imageUrl).toContain('/accessibility/');
@@ -460,7 +460,7 @@ describe('og-data-generator', () => {
     });
 
     it('should parse perceptual param for harmony', () => {
-      const params = new URLSearchParams('dye=5771&harmony=analogous&perceptual=1');
+      const params = new URLSearchParams('dye=43&harmony=analogous&perceptual=1');
       const result = generateOGDataForTool('harmony', params, mockEnv);
 
       // Should complete without error
@@ -468,18 +468,18 @@ describe('og-data-generator', () => {
     });
 
     it('should handle optional dyeC for mixer', () => {
-      const params = new URLSearchParams('dyeA=5771&dyeB=5772&dyeC=5773&ratio=50');
+      const params = new URLSearchParams('dyeA=43&dyeB=44&dyeC=45&ratio=50');
       const result = generateOGDataForTool('mixer', params, mockEnv);
 
-      expect(result.imageUrl).toContain('/mixer/5771/5772/5773/');
+      expect(result.imageUrl).toContain('/mixer/43/44/45/');
     });
 
     it('should filter invalid dye IDs in comparison', () => {
-      const params = new URLSearchParams('dyes=5771,invalid,5772');
+      const params = new URLSearchParams('dyes=43,invalid,44');
       const result = generateOGDataForTool('comparison', params, mockEnv);
 
       // Should only include valid IDs
-      expect(result.url).toContain('dyes=5771,5772');
+      expect(result.url).toContain('dyes=43,44');
     });
   });
 
@@ -489,7 +489,7 @@ describe('og-data-generator', () => {
   // path that the rest of the suite (which only uses default 'en') doesn't.
   describe('localization (REFACTOR-001)', () => {
     it('uses Japanese harmony name when locale is ja', () => {
-      const params = new URLSearchParams('dye=5771&harmony=complementary');
+      const params = new URLSearchParams('dye=43&harmony=complementary');
       const en = generateOGDataForTool('harmony', params, mockEnv, 'en');
       const ja = generateOGDataForTool('harmony', params, mockEnv, 'ja');
 
@@ -499,7 +499,7 @@ describe('og-data-generator', () => {
     });
 
     it('localizes split-complementary across the kebab/camel boundary', () => {
-      const params = new URLSearchParams('dye=5771&harmony=split-complementary');
+      const params = new URLSearchParams('dye=43&harmony=split-complementary');
       const ja = generateOGDataForTool('harmony', params, mockEnv, 'ja');
       // splitComplementary key in core's harmonyTypes: ja value is "分裂補色"
       expect(ja.title).toContain('分裂補色');
@@ -520,13 +520,13 @@ describe('og-data-generator', () => {
     });
 
     it('uses French short vision name in accessibility title', () => {
-      const params = new URLSearchParams('dyes=5771,5772&vision=deuteranopia');
+      const params = new URLSearchParams('dyes=43,44&vision=deuteranopia');
       const fr = generateOGDataForTool('accessibility', params, mockEnv, 'fr');
       expect(fr.title).toContain('Deutéranopie');
     });
 
     it('falls back to en when locale arg is omitted', () => {
-      const params = new URLSearchParams('dye=5771&harmony=triadic');
+      const params = new URLSearchParams('dye=43&harmony=triadic');
       const result = generateOGDataForTool('harmony', params, mockEnv);
       expect(result.title).toContain('Triadic');
     });

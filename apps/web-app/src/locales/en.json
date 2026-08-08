@@ -1209,6 +1209,9 @@
   },
   "share": {
     "button": "Share",
-    "copied": "Copied!"
+    "copied": "Copied!",
+    "invalidDye": "This link points at a dye this version doesn't recognise.",
+    "legacyLink": "This link was made with an older version and uses an outdated dye ID — ask for a fresh link.",
+    "invalidHex": "This link carries an invalid colour value."
   }
 }

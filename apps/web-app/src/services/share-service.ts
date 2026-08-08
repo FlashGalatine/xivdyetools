@@ -8,6 +8,9 @@
  */
 
 import { ToastService } from './toast-service';
+import { LanguageService } from './language-service';
+import { dyeService } from './dye-service-wrapper';
+import type { Dye } from '@xivdyetools/types';
 import { logger } from '@shared/logger';
 import type { ToolId } from './router-service';
 import type { MatchingMethod } from '@xivdyetools/core';
@@ -44,42 +47,56 @@ export const BASE_URL = 'https://xivdyetools.app';
 /**
  * Tool-specific share parameters
  */
+/*
+ * 5.0 share-URL grammar (atomic across web + og-worker):
+ * - Every `dye`-class param keys on **stainID** (1-254). Legacy itemIDs
+ *   (>= 5729) are disjoint and rejected loudly on read — never silently
+ *   resolved to a fallback dye.
+ * - Bare colours travel as `hex`-class params (per slot, RRGGBB without #),
+ *   mutually exclusive with the slot's dye param. Validated on read.
+ */
 export interface HarmonyShareParams {
-  dye: number; // itemID
+  dye?: number; // stainID
+  hex?: string; // bare colour slot (RRGGBB) — exclusive with `dye`
   harmony: HarmonyType;
   algo?: MatchingMethod;
   perceptual?: boolean;
 }
 
 export interface GradientShareParams {
-  start: number; // itemID
-  end: number; // itemID
+  start?: number; // stainID
+  end?: number; // stainID
+  hexStart?: string; // bare colour slot — exclusive with `start`
+  hexEnd?: string; // bare colour slot — exclusive with `end`
   steps?: number;
   interpolation?: InterpolationMode;
   algo?: MatchingMethod;
 }
 
 export interface MixerShareParams {
-  dyeA: number; // itemID
-  dyeB: number; // itemID
-  dyeC?: number; // itemID (optional third dye)
+  dyeA?: number; // stainID
+  dyeB?: number; // stainID
+  dyeC?: number; // stainID (optional third dye)
+  hexA?: string; // bare colour slots — each exclusive with its dye param
+  hexB?: string;
+  hexC?: string;
   ratio?: number; // 0-100 (percentage of dyeA)
   mode?: MixingMode;
   algo?: MatchingMethod;
 }
 
 export interface SwatchShareParams {
-  color: string; // Hex without #
+  hex: string; // Bare colour (RRGGBB without #)
   algo?: MatchingMethod;
   limit?: number;
 }
 
 export interface ComparisonShareParams {
-  dyes: number[]; // Array of itemIDs (max 4)
+  dyes: number[]; // Array of stainIDs (max 4)
 }
 
 export interface AccessibilityShareParams {
-  dyes: number[]; // Array of itemIDs
+  dyes: number[]; // Array of stainIDs
   vision?: string; // Vision type
 }
 
@@ -89,7 +106,8 @@ export interface ExtractorShareParams {
 }
 
 export interface BudgetShareParams {
-  dye: number; // Target dye itemID
+  dye?: number; // Target dye stainID
+  hex?: string; // bare colour target — exclusive with `dye`
   maxPrice?: number;
   maxDelta?: number;
 }
@@ -278,6 +296,59 @@ export class ShareService {
       default:
         return 'Free dye tools for FFXIV players.';
     }
+  }
+
+
+  // ==========================================================================
+  // 5.0 shared-value resolution (stainID grammar, loud failures)
+  // ==========================================================================
+
+  /**
+   * Resolve a shared `dye`-class param (stainID) to a Dye.
+   *
+   * Loud-failure contract: a legacy itemID (>= 5729, disjoint from the stain
+   * range) or an unknown value produces a visible toast and `null` — never a
+   * fallback dye.
+   */
+  static resolveSharedDye(raw: unknown): Dye | null {
+    const id =
+      typeof raw === 'number' ? raw : typeof raw === 'string' ? parseInt(raw, 10) : NaN;
+    if (!Number.isFinite(id)) {
+      ToastService.error(LanguageService.t('share.invalidDye'));
+      return null;
+    }
+    if (id >= 5729) {
+      // The pre-5.0 grammar carried FFXIV item IDs — tell the user instead of
+      // guessing (the ranges are disjoint, so this is always detectable).
+      ToastService.error(LanguageService.t('share.legacyLink'));
+      logger.warn(`[ShareService] Legacy itemID in share URL rejected: ${id}`);
+      return null;
+    }
+    const dye = dyeService.getByStainId(id);
+    if (!dye) {
+      ToastService.error(LanguageService.t('share.invalidDye'));
+      logger.warn(`[ShareService] Unknown stainID in share URL: ${id}`);
+      return null;
+    }
+    return dye;
+  }
+
+  /**
+   * Validate a shared `hex`-class param. Accepts RRGGBB or RGB (with or
+   * without #) and returns a normalized `#rrggbb`, or null with a toast.
+   */
+  static parseSharedHex(raw: unknown): string | null {
+    if (typeof raw !== 'string') {
+      ToastService.error(LanguageService.t('share.invalidHex'));
+      return null;
+    }
+    const cleaned = raw.trim().replace(/^#/, '').toLowerCase();
+    if (/^[0-9a-f]{6}$/.test(cleaned)) return `#${cleaned}`;
+    if (/^[0-9a-f]{3}$/.test(cleaned)) {
+      return `#${cleaned[0]}${cleaned[0]}${cleaned[1]}${cleaned[1]}${cleaned[2]}${cleaned[2]}`;
+    }
+    ToastService.error(LanguageService.t('share.invalidHex'));
+    return null;
   }
 
   // ==========================================================================

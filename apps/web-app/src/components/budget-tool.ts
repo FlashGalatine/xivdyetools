@@ -11,6 +11,7 @@
  */
 
 import { normalizeMatchingMethod } from '@xivdyetools/core';
+import { ShareService } from '@services/share-service';
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
@@ -459,12 +460,13 @@ export class BudgetTool extends BaseComponent {
    */
   private handleDeepLink(): void {
     const params = new URLSearchParams(window.location.search);
-    const dyeName = params.get('dye');
+    const dyeParam = params.get('dye');
 
-    if (dyeName) {
-      // Search for dye by name (exact match preferred)
-      const matches = dyeService.searchByName(dyeName);
-      const dye = matches.find((d) => d.name.toLowerCase() === dyeName.toLowerCase()) || matches[0];
+    if (dyeParam) {
+      // 5.0 grammar: ?dye= is a stainID (the old name-based form is the
+      // localStorage-name defect the register records; names are localised
+      // six ways and were never a stable key)
+      const dye = ShareService.resolveSharedDye(dyeParam);
       if (dye) {
         this.targetDye = dye;
         this.updateTargetDyeDisplay();

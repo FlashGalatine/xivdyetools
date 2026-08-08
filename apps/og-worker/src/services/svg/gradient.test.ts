@@ -13,8 +13,8 @@ describe('gradient SVG generator', () => {
   const getValidDyeIds = (): { start: number; end: number } => {
     const allDyes = dyeService.getAllDyes();
     return {
-      start: allDyes[0]?.itemID ?? 5771,
-      end: allDyes[1]?.itemID ?? 5772,
+      start: allDyes[0]?.stainID ?? 43,
+      end: allDyes[1]?.stainID ?? 44,
     };
   };
 
@@ -106,8 +106,8 @@ describe('gradient SVG generator', () => {
       const endDye = allDyes[1];
 
       const result = generateGradientOG({
-        startDyeId: startDye.itemID,
-        endDyeId: endDye.itemID,
+        startDyeId: startDye.stainID ?? 0,
+        endDyeId: endDye.stainID ?? 0,
         steps: 5,
       });
 

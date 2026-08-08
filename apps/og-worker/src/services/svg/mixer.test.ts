@@ -13,9 +13,9 @@ describe('mixer SVG generator', () => {
   const getValidDyeIds = (): { a: number; b: number; c: number } => {
     const allDyes = dyeService.getAllDyes();
     return {
-      a: allDyes[0]?.itemID ?? 5771,
-      b: allDyes[1]?.itemID ?? 5772,
-      c: allDyes[2]?.itemID ?? 5773,
+      a: allDyes[0]?.stainID ?? 43,
+      b: allDyes[1]?.stainID ?? 44,
+      c: allDyes[2]?.stainID ?? 45,
     };
   };
 
@@ -100,8 +100,8 @@ describe('mixer SVG generator', () => {
         const dyeB = allDyes[1];
 
         const result = generateMixerOG({
-          dyeAId: dyeA.itemID,
-          dyeBId: dyeB.itemID,
+          dyeAId: dyeA.stainID ?? 0,
+          dyeBId: dyeB.stainID ?? 0,
           ratio: 50,
         });
 
@@ -157,9 +157,9 @@ describe('mixer SVG generator', () => {
         const dyeC = allDyes[2];
 
         const result = generateMixerOG({
-          dyeAId: dyeA.itemID,
-          dyeBId: dyeB.itemID,
-          dyeCId: dyeC.itemID,
+          dyeAId: dyeA.stainID ?? 0,
+          dyeBId: dyeB.stainID ?? 0,
+          dyeCId: dyeC.stainID ?? 0,
           ratio: 50,
         });
 

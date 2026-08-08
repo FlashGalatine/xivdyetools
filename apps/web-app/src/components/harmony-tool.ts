@@ -11,6 +11,7 @@
  */
 
 import { normalizeMatchingMethod } from '@xivdyetools/core';
+import { ShareService } from '@services/share-service';
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
@@ -504,13 +505,10 @@ export class HarmonyTool extends BaseComponent {
       configController.setConfig('harmony', { strictMatching: this.usePerceptualMatching });
     }
 
-    // Load dye by itemID
+    // Load dye by stainID (5.0 grammar; legacy itemIDs fail loudly)
     if (dyeIdParam) {
-      const dyeId = parseInt(dyeIdParam, 10);
-      if (!isNaN(dyeId)) {
-        // Find dye by itemID (FFXIV item ID)
-        const allDyes = dyeService.getAllDyes();
-        const dye = allDyes.find((d) => d.itemID === dyeId);
+      {
+        const dye = ShareService.resolveSharedDye(dyeIdParam);
 
         if (dye) {
           this.selectedDye = dye;
@@ -540,8 +538,6 @@ export class HarmonyTool extends BaseComponent {
           if (this.showPrices) {
             void this.fetchPricesForDisplayedDyes();
           }
-        } else {
-          logger.warn(`[HarmonyTool] Share URL dye not found: itemID=${dyeId}`);
         }
       }
     } else if (harmonyParam && this.selectedDye) {
@@ -1697,7 +1693,7 @@ export class HarmonyTool extends BaseComponent {
     }
 
     return {
-      dye: this.selectedDye.itemID,
+      dye: this.selectedDye.stainID ?? 0,
       harmony: this.selectedHarmonyType,
       algo: this.matchingMethod,
       perceptual: this.usePerceptualMatching,

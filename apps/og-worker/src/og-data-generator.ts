@@ -91,9 +91,9 @@ function getSheetName(sheet: ColorSheetCategory, locale: LocaleCode): string {
 /**
  * Get dye name and hex color by itemID
  */
-function getDyeInfo(itemID: number): { name: string; hex: string } | null {
+function getDyeInfo(stainID: number): { name: string; hex: string } | null {
   // OPT-023: O(1) map lookup via the shared helper
-  const dye = getDyeByItemId(itemID);
+  const dye = getDyeByItemId(stainID);
 
   if (!dye) {
     return null;
@@ -500,7 +500,7 @@ export function generateOGDataForTool(
 
     case 'swatch': {
       const params: SwatchParams = {
-        color: searchParams.get('color') || 'FFFFFF',
+        color: searchParams.get('hex') || searchParams.get('color') || 'FFFFFF',
         algo: searchParams.get('algo') as SwatchParams['algo'],
         limit: parseInt(searchParams.get('limit') || '5', 10),
         sheet: searchParams.get('sheet') as ColorSheetCategory | undefined,

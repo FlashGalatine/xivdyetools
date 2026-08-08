@@ -13,7 +13,7 @@ describe('accessibility SVG generator', () => {
   // Get valid dye IDs for testing
   const getValidDyeIds = (count: number): number[] => {
     const allDyes = dyeService.getAllDyes();
-    return allDyes.slice(0, count).map((d) => d.itemID);
+    return allDyes.slice(0, count).map((d) => d.stainID ?? 0);
   };
 
   describe('generateAccessibilityOG', () => {
@@ -149,7 +149,7 @@ describe('accessibility SVG generator', () => {
       const testDye = allDyes[0];
 
       const result = generateAccessibilityOG({
-        dyeIds: [testDye.itemID],
+        dyeIds: [testDye.stainID ?? 0],
         visionType: 'protanopia',
       });
 
@@ -175,7 +175,7 @@ describe('accessibility SVG generator', () => {
         const testDye = allDyes[0];
 
         const result = generateAccessibilityOG({
-          dyeIds: [testDye.itemID],
+          dyeIds: [testDye.stainID ?? 0],
           visionType: 'normal',
         });
 
@@ -194,7 +194,7 @@ describe('accessibility SVG generator', () => {
 
         if (redDye) {
           const result = generateAccessibilityOG({
-            dyeIds: [redDye.itemID],
+            dyeIds: [redDye.stainID ?? 0],
             visionType: 'protanopia',
           });
 

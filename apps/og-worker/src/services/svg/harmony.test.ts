@@ -12,7 +12,7 @@ describe('harmony SVG generator', () => {
   // Get a known valid dye for testing
   const getValidDyeId = (): number => {
     const allDyes = dyeService.getAllDyes();
-    return allDyes[0]?.itemID ?? 5771;
+    return allDyes[0]?.stainID ?? 43;
   };
 
   describe('generateHarmonyOG', () => {
@@ -95,7 +95,7 @@ describe('harmony SVG generator', () => {
       const testDye = allDyes[0];
 
       const result = generateHarmonyOG({
-        dyeId: testDye.itemID,
+        dyeId: testDye.stainID ?? 0,
         harmonyType: 'complementary',
       });
 
@@ -107,7 +107,7 @@ describe('harmony SVG generator', () => {
       const testDye = allDyes[0];
 
       const result = generateHarmonyOG({
-        dyeId: testDye.itemID,
+        dyeId: testDye.stainID ?? 0,
         harmonyType: 'complementary',
       });
 
@@ -119,7 +119,7 @@ describe('harmony SVG generator', () => {
       const testDye = allDyes[0];
 
       const result = generateHarmonyOG({
-        dyeId: testDye.itemID,
+        dyeId: testDye.stainID ?? 0,
         harmonyType: 'complementary',
       });
 

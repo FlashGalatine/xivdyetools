@@ -45,7 +45,7 @@ describe('dye-helpers', () => {
       const allDyes = dyeService.getAllDyes();
       const knownDye = allDyes[0];
 
-      const result = getDyeByItemId(knownDye.itemID);
+      const result = getDyeByItemId(knownDye.stainID ?? 0);
       expect(result).toBeDefined();
       expect(result?.itemID).toBe(knownDye.itemID);
       expect(result?.name).toBe(knownDye.name);

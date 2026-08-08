@@ -604,9 +604,9 @@ export class MixerTool extends BaseComponent {
    * Find a dye by its itemID (FFXIV game item ID)
    * This is different from getDyeById which uses the internal database ID
    */
-  private findDyeByItemId(itemId: number): Dye | null {
-    const allDyes = dyeService.getAllDyes();
-    return allDyes.find((d) => d.itemID === itemId) ?? null;
+  private findSharedDye(value: number): Dye | null {
+    // 5.0: stainID grammar; legacy itemIDs fail loudly
+    return ShareService.resolveSharedDye(value);
   }
 
   /**
@@ -622,7 +622,7 @@ export class MixerTool extends BaseComponent {
 
     // Load dyeA (required)
     if (typeof params.dyeA === 'number') {
-      const dyeA = this.findDyeByItemId(params.dyeA);
+      const dyeA = this.findSharedDye(params.dyeA);
       if (dyeA) {
         this.selectedDyes[0] = dyeA;
       }
@@ -630,7 +630,7 @@ export class MixerTool extends BaseComponent {
 
     // Load dyeB (required)
     if (typeof params.dyeB === 'number') {
-      const dyeB = this.findDyeByItemId(params.dyeB);
+      const dyeB = this.findSharedDye(params.dyeB);
       if (dyeB) {
         this.selectedDyes[1] = dyeB;
       }
@@ -638,7 +638,7 @@ export class MixerTool extends BaseComponent {
 
     // Load dyeC (optional third dye)
     if (typeof params.dyeC === 'number') {
-      const dyeC = this.findDyeByItemId(params.dyeC);
+      const dyeC = this.findSharedDye(params.dyeC);
       if (dyeC) {
         this.selectedDyes[2] = dyeC;
       }
@@ -1591,15 +1591,15 @@ export class MixerTool extends BaseComponent {
     }
 
     const params: Record<string, unknown> = {
-      dyeA: dyeA.itemID,
-      dyeB: dyeB.itemID,
+      dyeA: dyeA.stainID ?? 0,
+      dyeB: dyeB.stainID ?? 0,
       mode: this.mixingMode,
       algo: this.matchingMethod,
     };
 
     // Include optional third dye if present
     if (dyeC) {
-      params.dyeC = dyeC.itemID;
+      params.dyeC = dyeC.stainID ?? 0;
     }
 
     return params;
