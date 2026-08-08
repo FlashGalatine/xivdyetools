@@ -37,13 +37,30 @@ const TIER_RAMP_DARK = ['#5bbd68', '#8bc34a', '#ffc107', '#f4645a'] as const;
 const TIER_RAMP_LIGHT = ['#137A33', '#1C7D3A', '#B45309', '#B91C1C'] as const;
 const OFF_GRID_AMBER = '#F4BF4F';
 
+/** Where a picked slot lives in the creator, for pins and the grid excerpt. */
+export interface CharaSlotGridRef {
+  /** Palette base the slot indexes into (matches ColorCategory bases) */
+  paletteBase:
+    | 'eyeColors'
+    | 'hairColors'
+    | 'highlightColors'
+    | 'skinColors'
+    | 'tattooColors'
+    | 'lipColors'
+    | 'facePaintColors';
+  variant: 'dark' | 'light' | null;
+  sheetIndex: number;
+}
+
 export interface CharaImportCallbacks {
   /** A slot card was picked — hand its winning colour to the workspace */
-  onSlotPick: (hex: string, label: string) => void;
+  onSlotPick: (hex: string, label: string, gridRef: CharaSlotGridRef | null) => void;
   /** The file supplied tribe + gender — the selectors become a readout */
   onTribeGender?: (tribe: SubRace, gender: Gender) => void;
   /** Make-a-palette: deduped worn dyes, ready for the submission form */
   onSubmitPalette?: (dyes: Dye[]) => void;
+  /** Fired on load (resolved) and on clear (null) — drives pins + readout lock */
+  onResolved?: (resolved: ResolvedCharaCharacter | null) => void;
 }
 
 /**
@@ -89,6 +106,7 @@ export class CharaImport {
       if (this.resolved.tribe && this.resolved.gender && this.callbacks.onTribeGender) {
         this.callbacks.onTribeGender(this.resolved.tribe, this.resolved.gender);
       }
+      this.callbacks.onResolved?.(this.resolved);
       logger.info(
         `[CharaImport] Parsed ${file.name} (${this.resolved.producer ?? 'unknown producer'})`
       );
@@ -155,6 +173,29 @@ export class CharaImport {
       default:
         return this.t('absentNotInFile');
     }
+  }
+
+  /** Palette base a slot indexes into (for pins + the grid excerpt). */
+  private gridRefOf(slot: ResolvedCharaSlot): CharaSlotGridRef | null {
+    if (slot.sheetIndex === null) return null;
+    const base: CharaSlotGridRef['paletteBase'] | null =
+      slot.slot === 'leftEye' || slot.slot === 'rightEye'
+        ? 'eyeColors'
+        : slot.slot === 'hair'
+          ? 'hairColors'
+          : slot.slot === 'highlights'
+            ? 'highlightColors'
+            : slot.slot === 'skin'
+              ? 'skinColors'
+              : slot.slot === 'limbal'
+                ? 'tattooColors'
+                : slot.slot === 'lip'
+                  ? 'lipColors'
+                  : slot.slot === 'facePaint'
+                    ? 'facePaintColors'
+                    : null;
+    if (!base) return null;
+    return { paletteBase: base, variant: slot.sheetVariant, sheetIndex: slot.sheetIndex };
   }
 
   /** The colour the slot is wearing: float wins off-grid, index otherwise. */
@@ -363,6 +404,7 @@ export class CharaImport {
     replaceBtn.addEventListener('click', () => {
       this.resolved = null;
       this.fileName = null;
+      this.callbacks.onResolved?.(null);
       this.render();
     });
     bottomRow.appendChild(replaceBtn);
@@ -514,7 +556,7 @@ export class CharaImport {
       card.appendChild(row);
     }
 
-    const pick = () => this.callbacks.onSlotPick(hex, label);
+    const pick = () => this.callbacks.onSlotPick(hex, label, offGrid ? null : this.gridRefOf(slot));
     card.addEventListener('click', pick);
     card.addEventListener('keydown', (e) => {
       if ((e as KeyboardEvent).key === 'Enter' || (e as KeyboardEvent).key === ' ') {

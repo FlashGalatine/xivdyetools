@@ -230,6 +230,8 @@ export interface SwatchConfig {
    * 'facePaintColorsDark', 'facePaintColorsLight'
    */
   colorSheet: string;
+  /** 10A: a .chara file set tribe+gender — the selectors become a readout */
+  fileProvided: boolean;
   /**
    * Selected subrace (SubRace type).
    * Values: 'Midlander', 'Highlander', 'Wildwood', 'Duskwight',
@@ -463,6 +465,7 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
   },
   swatch: {
     colorSheet: 'hairColors',
+    fileProvided: false,
     race: 'SeekerOfTheSun',
     gender: 'Female',
     maxResults: 3,

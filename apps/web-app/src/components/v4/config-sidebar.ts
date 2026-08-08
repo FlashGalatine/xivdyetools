@@ -191,6 +191,7 @@ export class ConfigSidebar extends BaseLitComponent {
   };
   @state() private swatchConfig: SwatchConfig = {
     colorSheet: 'eyeColors',
+    fileProvided: false,
     race: 'Midlander',
     gender: 'Male',
     maxResults: 3,
@@ -219,6 +220,7 @@ export class ConfigSidebar extends BaseLitComponent {
 
   private configController: ConfigController | null = null;
   private languageUnsubscribe: (() => void) | null = null;
+  private swatchConfigUnsubscribe: (() => void) | null = null;
   private authUnsubscribe: (() => void) | null = null;
 
   static override styles: CSSResultGroup = [
@@ -605,6 +607,13 @@ export class ConfigSidebar extends BaseLitComponent {
     super.connectedCallback();
     this.loadConfigsFromController();
     void this.loadServerData();
+    // 10A: the swatch tool pushes config changes of its own (a .chara file
+    // sets tribe/gender and the fileProvided readout lock) — the sidebar
+    // must follow, not just lead.
+    this.swatchConfigUnsubscribe =
+      this.configController?.subscribe('swatch', (config) => {
+        this.swatchConfig = config;
+      }) ?? null;
     // Subscribe to language changes to update translated text
     this.languageUnsubscribe = LanguageService.subscribe(() => {
       this.requestUpdate();
@@ -622,6 +631,8 @@ export class ConfigSidebar extends BaseLitComponent {
     this.languageUnsubscribe = null;
     this.authUnsubscribe?.();
     this.authUnsubscribe = null;
+    this.swatchConfigUnsubscribe?.();
+    this.swatchConfigUnsubscribe = null;
   }
 
   /**
@@ -1627,36 +1638,13 @@ export class ConfigSidebar extends BaseLitComponent {
 
     return html`
       <div class="config-section" ?hidden=${this.activeTool !== 'swatch'}>
-        <div class="config-group">
-          <div class="config-label">${LanguageService.t('config.colorSheet')}</div>
-          <select
-            class="config-select"
-            .value=${this.swatchConfig.colorSheet}
-            @change=${(e: Event) => {
-              const value = (e.target as HTMLSelectElement).value;
-              this.handleConfigChange('swatch', 'colorSheet', value);
-            }}
-          >
-            <option value="eyeColors">${LanguageService.t('config.eyeColors')}</option>
-            <option value="hairColors">${LanguageService.t('config.hairColors')}</option>
-            <option value="skinColors">${LanguageService.t('config.skinColors')}</option>
-            <option value="highlightColors">${LanguageService.t('config.highlightColors')}</option>
-            <option value="lipColorsDark">${LanguageService.t('config.lipColorsDark')}</option>
-            <option value="lipColorsLight">${LanguageService.t('config.lipColorsLight')}</option>
-            <option value="tattooColors">${LanguageService.t('config.tattooColors')}</option>
-            <option value="facePaintColorsDark">
-              ${LanguageService.t('config.facePaintDark')}
-            </option>
-            <option value="facePaintColorsLight">
-              ${LanguageService.t('config.facePaintLight')}
-            </option>
-          </select>
-        </div>
-
+        <!-- 10A: the nine-entry colorSheet dropdown is cut — the palette rail
+             on the grid panel owns category + range now. -->
         <div class="config-group" ?hidden=${!showCharacterSection}>
-          <div class="config-label">${LanguageService.t('config.character')}</div>
+          <div class="config-label">${LanguageService.t('swatch.whoHead')}</div>
           <select
             class="config-select"
+            ?disabled=${this.swatchConfig.fileProvided}
             .value=${this.swatchConfig.race}
             @change=${(e: Event) => {
               const value = (e.target as HTMLSelectElement).value;
@@ -1679,6 +1667,7 @@ export class ConfigSidebar extends BaseLitComponent {
           </select>
           <select
             class="config-select"
+            ?disabled=${this.swatchConfig.fileProvided}
             .value=${this.swatchConfig.gender}
             @change=${(e: Event) => {
               const value = (e.target as HTMLSelectElement).value;
@@ -1692,6 +1681,7 @@ export class ConfigSidebar extends BaseLitComponent {
               ${LanguageService.t('tools.character.female')}
             </option>
           </select>
+          <div class="config-hint">${LanguageService.t('swatch.whoHint')}</div>
         </div>
 
         <div class="config-group">

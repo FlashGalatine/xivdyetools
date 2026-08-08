@@ -217,6 +217,10 @@ export class SwatchTool extends BaseComponent {
   private gridPanel: HTMLElement | null = null;
   private paletteRailContainer: HTMLElement | null = null;
   private gridTitleEl: HTMLElement | null = null;
+  /** Loaded .chara character — drives grid pins and the readout lock */
+  private charaResolved: import('@xivdyetools/core').ResolvedCharaCharacter | null = null;
+  /** Sheet index the grid excerpt centres on (from a sheet-slot pick) */
+  private gridExcerptAnchor: number | null = null;
 
   // Mobile DOM References
   private mobileSubraceSelect: HTMLSelectElement | null = null;
@@ -1172,11 +1176,37 @@ export class SwatchTool extends BaseComponent {
     right.appendChild(charaContainer);
     this.charaImport?.destroy();
     this.charaImport = new CharaImport(charaContainer, {
-      onSlotPick: (hex) => {
+      onSlotPick: (hex, _label, gridRef) => {
+        if (gridRef) {
+          // The grid becomes a five-row excerpt around the slot's cell.
+          this.gridExcerptAnchor = gridRef.sheetIndex;
+          const target = gridRef.variant
+            ? `${gridRef.paletteBase}${gridRef.variant === 'light' ? 'Light' : 'Dark'}`
+            : gridRef.paletteBase;
+          if (target !== (this.colorCategory as string)) {
+            this.setConfig({ colorSheet: target });
+          } else {
+            this.updateColorGrid();
+          }
+        } else {
+          this.gridExcerptAnchor = null;
+          this.updateColorGrid();
+        }
         this.selectCustomColor(hex);
       },
+      onResolved: (resolved) => {
+        this.charaResolved = resolved;
+        this.gridExcerptAnchor = null;
+        // Sidebar race/gender become a readout while a file is loaded —
+        // push through ConfigController so the sidebar sees the flag.
+        ConfigController.getInstance().setConfig('swatch', {
+          fileProvided: resolved !== null,
+        });
+        this.updateColorGrid();
+      },
       onTribeGender: (tribe, gender) => {
-        this.setConfig({ race: tribe, gender });
+        // Through ConfigController so the sidebar readout follows the file.
+        ConfigController.getInstance().setConfig('swatch', { race: tribe, gender });
       },
       onSubmitPalette: (dyes) => {
         void import('@components/preset-submission-form').then(({ showPresetSubmissionForm }) => {
@@ -1659,6 +1689,7 @@ export class SwatchTool extends BaseComponent {
         },
       }) as HTMLButtonElement;
       this.on(chip, 'click', () => {
+        this.gridExcerptAnchor = null;
         const target = palette.split ? `${palette.base}${currentRange}` : palette.base;
         this.setConfig({ colorSheet: target });
       });
@@ -1688,6 +1719,7 @@ export class SwatchTool extends BaseComponent {
           },
         }) as HTMLButtonElement;
         this.on(btn, 'click', () => {
+          this.gridExcerptAnchor = null;
           this.setConfig({ colorSheet: `${currentBase}${range}` });
         });
         toggle.appendChild(btn);
@@ -1696,6 +1728,52 @@ export class SwatchTool extends BaseComponent {
     }
 
     this.paletteRailContainer.appendChild(rail);
+  }
+
+  /**
+   * Pins for the current palette from the loaded .chara: sheetIndex → badge.
+   * Co-located slots merge into one badge (1·2) — 84% of files put both
+   * eyes on one cell, and a naive pin map would overwrite one of them.
+   */
+  private currentPalettePins(): Map<number, string> {
+    const pins = new Map<number, string>();
+    if (!this.charaResolved) return pins;
+
+    const current = this.colorCategory as string;
+    const currentBase = current.replace(/(Dark|Light)$/, '');
+    const currentVariant = current.endsWith('Light')
+      ? 'light'
+      : current.endsWith('Dark')
+        ? 'dark'
+        : null;
+
+    const baseOf = (slot: string): string | null =>
+      slot === 'leftEye' || slot === 'rightEye'
+        ? 'eyeColors'
+        : slot === 'hair'
+          ? 'hairColors'
+          : slot === 'highlights'
+            ? 'highlightColors'
+            : slot === 'skin'
+              ? 'skinColors'
+              : slot === 'limbal'
+                ? 'tattooColors'
+                : slot === 'lip'
+                  ? 'lipColors'
+                  : slot === 'facePaint'
+                    ? 'facePaintColors'
+                    : null;
+
+    let pinNumber = 0;
+    for (const slot of this.charaResolved.slots) {
+      if (slot.sheetIndex === null) continue;
+      pinNumber++;
+      if (baseOf(slot.slot) !== currentBase) continue;
+      if (currentVariant && slot.sheetVariant && slot.sheetVariant !== currentVariant) continue;
+      const existing = pins.get(slot.sheetIndex);
+      pins.set(slot.sheetIndex, existing ? `${existing}·${pinNumber}` : String(pinNumber));
+    }
+    return pins;
   }
 
   private updateColorGrid(): void {
@@ -1717,23 +1795,85 @@ export class SwatchTool extends BaseComponent {
       }
     }
 
-    for (const color of this.colors) {
+    // 10A: pins from the loaded file (merged when co-located — both eyes on
+    // one cell is the normal case), and a five-row excerpt around a picked
+    // sheet slot — enough to count to it in the creator, none of the wall.
+    const pins = this.currentPalettePins();
+    const totalRows = Math.ceil(this.colors.length / 8);
+    let rowStart = 0;
+    let rowEnd = totalRows;
+    if (this.gridExcerptAnchor !== null) {
+      const anchorRow = Math.floor(this.gridExcerptAnchor / 8);
+      rowStart = Math.max(0, Math.min(anchorRow - 2, totalRows - 5));
+      rowEnd = Math.min(totalRows, rowStart + 5);
+
+      const excerptBar = this.createElement('div', {
+        attributes: {
+          style:
+            'grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 2px 0 6px;',
+        },
+      });
+      excerptBar.appendChild(
+        this.createElement('span', {
+          textContent: `R${anchorRow + 1}·C${(this.gridExcerptAnchor % 8) + 1}`,
+          attributes: {
+            style:
+              "font-family: 'Fragment Mono', monospace; font-size: 10.5px; letter-spacing: 0.5px; color: var(--theme-primary);",
+          },
+        })
+      );
+      const showAll = this.createElement('button', {
+        textContent: `${LanguageService.t('swatch.inGrid')} · ${this.colors.length}`,
+        attributes: {
+          type: 'button',
+          style:
+            "font-family: 'Fragment Mono', monospace; font-size: 9px; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 5px; border: 1px solid var(--theme-border); background: transparent; color: var(--theme-text-muted); cursor: pointer;",
+        },
+      }) as HTMLButtonElement;
+      this.on(showAll, 'click', () => {
+        this.gridExcerptAnchor = null;
+        this.updateColorGrid();
+      });
+      excerptBar.appendChild(showAll);
+      this.colorGridContainer.appendChild(excerptBar);
+    }
+
+    for (let sheetIndex = 0; sheetIndex < this.colors.length; sheetIndex++) {
+      const color = this.colors[sheetIndex];
+      const cellRow = Math.floor(sheetIndex / 8);
+      if (cellRow < rowStart || cellRow >= rowEnd) continue;
+      const address = `R${cellRow + 1}·C${(sheetIndex % 8) + 1}`;
+
       const swatch = this.createElement('button', {
         className:
           'cursor-pointer transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-1',
         attributes: {
           style: `
+            position: relative;
             width: 44px;
             height: 44px;
             background-color: ${color.hex};
             border: 1px solid var(--theme-border);
             border-radius: 4px;
           `,
-          title: `${color.hex} (Index: ${color.index})`,
+          title: `${address} · ${color.hex}`,
           'data-index': String(color.index),
-          'aria-label': `Color ${color.index + 1}: ${color.hex}`,
+          'aria-label': `${address}: ${color.hex}`,
         },
       });
+
+      const pinLabel = pins.get(sheetIndex);
+      if (pinLabel) {
+        swatch.appendChild(
+          this.createElement('span', {
+            textContent: pinLabel,
+            attributes: {
+              style:
+                "position: absolute; top: -5px; right: -5px; font-family: 'Fragment Mono', monospace; font-size: 8px; line-height: 1; padding: 2px 4px; border-radius: 4px; background: var(--theme-primary); color: #fff; pointer-events: none;",
+            },
+          })
+        );
+      }
 
       swatch.addEventListener('click', () => {
         this.selectColor(color);
