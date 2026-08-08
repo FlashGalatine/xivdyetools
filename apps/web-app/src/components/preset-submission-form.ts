@@ -49,8 +49,10 @@ const MIN_NAME_LENGTH = 2;
 const MAX_NAME_LENGTH = 50;
 const MIN_DESC_LENGTH = 10;
 const MAX_DESC_LENGTH = 200;
-const MIN_DYES = 2;
-const MAX_DYES = 5;
+// 8S: a preset has to be buyable and substantial — 3–6 real dyes
+// (matches the Phase-1 presets-api validation change).
+const MIN_DYES = 3;
+const MAX_DYES = 6;
 const MAX_TAGS = 10;
 
 // ============================================
@@ -79,12 +81,14 @@ export function showPresetSubmissionForm(onSubmit?: OnSubmitCallback): void {
   // Create form content
   const content = createFormContent(state, onSubmit);
 
-  // Show modal using ModalService
+  // 8S: one content column at 560 so the dye slots and preview band
+  // are not squeezed.
   ModalService.show({
     type: 'custom',
-    title: 'Submit a Preset',
+    title: LanguageService.t('preset.submitTitle'),
+    subtitle: LanguageService.t('preset.submitSub'),
     content,
-    size: 'lg',
+    panelWidth: 560,
     closable: true,
   });
 }
