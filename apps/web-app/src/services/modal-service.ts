@@ -69,6 +69,12 @@ export interface ModalConfig {
    * destructive = OUTLINED accent, Cancel is the wide thumb target.
    */
   destructive?: boolean;
+  /**
+   * Reduced backdrop scrim — for modals that live-preview changes behind
+   * the dialog (the theme picker repaints the whole app on tap; dimming
+   * it was hiding the feature).
+   */
+  lightScrim?: boolean;
 }
 
 /**

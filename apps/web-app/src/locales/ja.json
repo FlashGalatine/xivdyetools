@@ -175,7 +175,8 @@
     "copyFailed": "コピーに失敗しました",
     "downloaded": "ダウンロードしました！",
     "dismiss": "閉じる",
-    "optional": "(任意)"
+    "optional": "(任意)",
+    "done": "完了"
   },
   "config": {
     "harmonyType": "ハーモニータイプ",
@@ -846,18 +847,10 @@
     "gradientSaved": "グラデーションを保存しました！"
   },
   "themes": {
-    "standardLight": "スタンダード（ライト）",
-    "standardDark": "スタンダード（ダーク）",
-    "premiumDark": "プレミアムダーク",
-    "hydaelynLight": "ハイデリン",
-    "ogClassicDark": "OGクラシック",
-    "parchmentLight": "パーチメント",
-    "cottonCandy": "コットンキャンディ",
-    "sugarRiot": "シュガーライオット",
-    "grayscaleLight": "グレースケール（ライト）",
-    "grayscaleDark": "グレースケール（ダーク）",
-    "highContrastLight": "ハイコントラスト（ライト）",
-    "highContrastDark": "ハイコントラスト（ダーク）"
+    "standardLight": "ライト",
+    "standardDark": "ダーク",
+    "eyebrow": "外観",
+    "bandsLabel": "背景 · サーフェス · アクセント"
   },
   "changelog": {
     "title": "新機能",

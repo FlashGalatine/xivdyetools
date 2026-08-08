@@ -25,22 +25,10 @@ export const BUILD_DATE = typeof __BUILD_DATE__ !== 'undefined' ? __BUILD_DATE__
 // Theme Configuration
 // ============================================================================
 
-export const THEME_NAMES: readonly ThemeName[] = [
-  'standard-light',
-  'standard-dark',
-  'premium-dark',
-  'hydaelyn-light',
-  'og-classic-dark',
-  'parchment-light',
-  'cotton-candy',
-  'sugar-riot',
-  'grayscale-light',
-  'grayscale-dark',
-  'high-contrast-light',
-  'high-contrast-dark',
-] as const;
+/** 5.0 fixed decision: Light and Dark only */
+export const THEME_NAMES: readonly ThemeName[] = ['standard-light', 'standard-dark'] as const;
 
-export const DEFAULT_THEME: ThemeName = 'premium-dark';
+export const DEFAULT_THEME: ThemeName = 'standard-dark';
 
 // ============================================================================
 // Localization Configuration

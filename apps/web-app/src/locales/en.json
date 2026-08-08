@@ -175,7 +175,8 @@
     "copyFailed": "Failed to copy",
     "downloaded": "Downloaded!",
     "dismiss": "Dismiss",
-    "optional": "(optional)"
+    "optional": "(optional)",
+    "done": "Done"
   },
   "config": {
     "harmonyType": "Harmony Type",
@@ -846,18 +847,10 @@
     "gradientSaved": "Gradient saved!"
   },
   "themes": {
-    "standardLight": "Standard (Light)",
-    "standardDark": "Standard (Dark)",
-    "premiumDark": "Premium Dark",
-    "hydaelynLight": "Hydaelyn",
-    "ogClassicDark": "OG Classic",
-    "parchmentLight": "Parchment",
-    "cottonCandy": "Cotton Candy",
-    "sugarRiot": "Sugar Riot",
-    "grayscaleLight": "Grayscale (Light)",
-    "grayscaleDark": "Grayscale (Dark)",
-    "highContrastLight": "High Contrast (Light)",
-    "highContrastDark": "High Contrast (Dark)"
+    "standardLight": "Light",
+    "standardDark": "Dark",
+    "eyebrow": "APPEARANCE",
+    "bandsLabel": "BACKGROUND · SURFACE · ACCENT"
   },
   "changelog": {
     "title": "What's New",

@@ -175,7 +175,8 @@
     "copyFailed": "복사 실패",
     "downloaded": "다운로드됨!",
     "dismiss": "닫기",
-    "optional": "(선택사항)"
+    "optional": "(선택사항)",
+    "done": "완료"
   },
   "config": {
     "harmonyType": "조화 유형",
@@ -846,18 +847,10 @@
     "gradientSaved": "그라데이션이 저장되었습니다!"
   },
   "themes": {
-    "standardLight": "스탠다드 (라이트)",
-    "standardDark": "스탠다드 (다크)",
-    "premiumDark": "프리미엄 다크",
-    "hydaelynLight": "하이델린",
-    "ogClassicDark": "OG 클래식",
-    "parchmentLight": "파치먼트",
-    "cottonCandy": "코튼 캔디",
-    "sugarRiot": "슈거 라이엇",
-    "grayscaleLight": "그레이스케일 (라이트)",
-    "grayscaleDark": "그레이스케일 (다크)",
-    "highContrastLight": "고대비 (라이트)",
-    "highContrastDark": "고대비 (다크)"
+    "standardLight": "라이트",
+    "standardDark": "다크",
+    "eyebrow": "모양",
+    "bandsLabel": "배경 · 표면 · 강조색"
   },
   "changelog": {
     "title": "새로운 기능",

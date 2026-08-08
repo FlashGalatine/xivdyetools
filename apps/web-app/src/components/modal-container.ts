@@ -41,6 +41,8 @@ const SHELL_STYLES = `
   background: rgba(0, 0, 0, 0.5);
 }
 .m16-backdrop[data-under] { background: transparent; }
+/* Reduced scrim for live-preview modals (theme picker) */
+.m16-backdrop--light-scrim { background: rgba(0, 0, 0, 0.18); }
 .m16-dialog {
   display: flex; flex-direction: column; overflow: hidden;
   background: var(--theme-background);
@@ -309,7 +311,7 @@ export class ModalContainer extends BaseComponent {
     const variant = modal.variant ?? (modal.type === 'confirm' ? 'alert' : 'sheet');
 
     const backdrop = this.createElement('div', {
-      className: `m16-backdrop m16-backdrop--${variant}`,
+      className: `m16-backdrop m16-backdrop--${variant}${modal.lightScrim ? ' m16-backdrop--light-scrim' : ''}`,
       attributes: {
         role: 'presentation',
         'data-modal-id': modal.id,

@@ -56,70 +56,13 @@
 }
 
 /* =====================================================
-   STANDARD THEME (Light/Dark)
+   THEMES (5.0: Light and Dark only — fixed decision)
    ===================================================== */
 html.theme-standard-light {
   color-scheme: light;
 }
 
 html.theme-standard-dark {
-  color-scheme: dark;
-}
-
-/* =====================================================
-   HYDAELYN THEME (Light/Dark)
-   ===================================================== */
-html.theme-hydaelyn-light {
-  color-scheme: light;
-}
-
-/* =====================================================
-   OG CLASSIC THEME (Dark)
-   ===================================================== */
-html.theme-og-classic-dark {
-  color-scheme: dark;
-}
-
-/* =====================================================
-   PARCHMENT THEME (Light)
-   ===================================================== */
-html.theme-parchment-light {
-  color-scheme: light;
-}
-
-/* =====================================================
-   COTTON CANDY THEME (Light)
-   ===================================================== */
-html.theme-cotton-candy {
-  color-scheme: light;
-}
-
-/* =====================================================
-   SUGAR RIOT THEME (Dark)
-   ===================================================== */
-html.theme-sugar-riot {
-  color-scheme: dark;
-}
-
-/* =====================================================
-   GRAYSCALE THEME (Light/Dark)
-   ===================================================== */
-html.theme-grayscale-light {
-  color-scheme: light;
-}
-
-html.theme-grayscale-dark {
-  color-scheme: dark;
-}
-
-/* =====================================================
-   HIGH CONTRAST THEME (Light/Dark) - WCAG AAA
-   ===================================================== */
-html.theme-high-contrast-light {
-  color-scheme: light;
-}
-
-html.theme-high-contrast-dark {
   color-scheme: dark;
 }
 

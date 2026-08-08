@@ -20,19 +20,12 @@ import type { HexColor } from '@xivdyetools/types';
 /**
  * Theme names available in the system
  */
-export type ThemeName =
-  | 'standard-light'
-  | 'standard-dark'
-  | 'premium-dark'
-  | 'hydaelyn-light'
-  | 'og-classic-dark'
-  | 'parchment-light'
-  | 'cotton-candy'
-  | 'sugar-riot'
-  | 'grayscale-light'
-  | 'grayscale-dark'
-  | 'high-contrast-light'
-  | 'high-contrast-dark';
+/**
+ * 5.0 fixed decision: the theme system reduces to Light and Dark, on the
+ * confirmed 16A palette. Legacy stored names migrate on read in
+ * ThemeService.initialize().
+ */
+export type ThemeName = 'standard-light' | 'standard-dark';
 
 /**
  * Color palette for a theme

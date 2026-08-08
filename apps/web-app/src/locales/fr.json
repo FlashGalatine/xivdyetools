@@ -175,7 +175,8 @@
     "copyFailed": "Échec de la copie",
     "downloaded": "Téléchargé !",
     "dismiss": "Fermer",
-    "optional": "(optionnel)"
+    "optional": "(optionnel)",
+    "done": "Terminé"
   },
   "config": {
     "harmonyType": "Type d'harmonie",
@@ -846,18 +847,10 @@
     "gradientSaved": "Dégradé enregistré !"
   },
   "themes": {
-    "standardLight": "Standard (Clair)",
-    "standardDark": "Standard (Sombre)",
-    "premiumDark": "Premium sombre",
-    "hydaelynLight": "Hydaelyn",
-    "ogClassicDark": "OG Classique",
-    "parchmentLight": "Parchemin",
-    "cottonCandy": "Barbe à Papa",
-    "sugarRiot": "Sugar Riot",
-    "grayscaleLight": "Niveaux de Gris (Clair)",
-    "grayscaleDark": "Niveaux de Gris (Sombre)",
-    "highContrastLight": "Contraste Élevé (Clair)",
-    "highContrastDark": "Contraste Élevé (Sombre)"
+    "standardLight": "Clair",
+    "standardDark": "Sombre",
+    "eyebrow": "APPARENCE",
+    "bandsLabel": "FOND · SURFACE · ACCENT"
   },
   "changelog": {
     "title": "Nouveautés",

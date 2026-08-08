@@ -175,7 +175,8 @@
     "copyFailed": "复制失败",
     "downloaded": "已下载！",
     "dismiss": "关闭",
-    "optional": "（可选）"
+    "optional": "（可选）",
+    "done": "完成"
   },
   "resultCard": {
     "inspectDyeIn": "在以下工具中查看...",
@@ -868,18 +869,10 @@
     "gradientSaved": "渐变已保存！"
   },
   "themes": {
-    "standardLight": "标准（浅色）",
-    "standardDark": "标准（深色）",
-    "premiumDark": "高级深色",
-    "hydaelynLight": "海德林",
-    "ogClassicDark": "OG 经典",
-    "parchmentLight": "羊皮纸",
-    "cottonCandy": "棉花糖",
-    "sugarRiot": "Sugar Riot",
-    "grayscaleLight": "灰度（浅色）",
-    "grayscaleDark": "灰度（深色）",
-    "highContrastLight": "高对比度（浅色）",
-    "highContrastDark": "高对比度（深色）"
+    "standardLight": "浅色",
+    "standardDark": "深色",
+    "eyebrow": "外观",
+    "bandsLabel": "背景 · 表面 · 强调色"
   },
   "changelog": {
     "title": "新功能",
