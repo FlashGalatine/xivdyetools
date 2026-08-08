@@ -477,7 +477,8 @@
       "showLab": "Show LAB Values",
       "showDeltaE": "Show Delta-E",
       "showAcquisition": "Show Acquisition Source",
-      "filters": "Dye Filters"
+      "filters": "Dye Filters",
+      "theme": "Card Theme"
     },
     "descriptions": {
       "language": "Language for dye names and bot messages",
@@ -516,7 +517,8 @@
     "errors": {
       "invalidKey": "Unknown preference key: {key}",
       "invalidValue": "Invalid value for {key}. Valid options: {options}",
-      "noSubcommand": "No subcommand provided"
+      "noSubcommand": "No subcommand provided",
+      "invalidTheme": "Theme must be dark or light."
     },
     "filters": {
       "noOptions": "Please provide at least one filter option to set.",
@@ -732,5 +734,40 @@
     "swatchParseError": "Could not read the file — {message}",
     "swatchNoSlots": "No live colour slots in this file.",
     "swatchSlotMissing": "{slot} is not a live slot in this file."
+  },
+  "firstRun": {
+    "title": "XIV Dye Tools 5.0",
+    "body": "This bot was redesigned: new cards, a suite-wide matching vocabulary (ΔE2000 default), /contrast and /a11y, and a character-file /swatch. See /manual for the tour, /changelog for what changed, and /preferences to make it yours. This notice shows once."
+  },
+  "changelog": {
+    "title": "What's new",
+    "earlier": "Earlier releases",
+    "notFound": "No entry for version {version}.",
+    "empty": "The changelog is unavailable right now."
+  },
+  "manual5": {
+    "learnLead": "Learn more: {link}",
+    "topics": {
+      "colorVision": {
+        "name": "Colour Vision",
+        "body": "The accessibility tools simulate four lenses — protanopia (PROT), deuteranopia (DEUT), tritanopia (TRIT) and achromatopsia (ACHR) — using the Brettel method, then measure how far apart two dyes remain under each lens. Larger separation is safer: the bands read 30 / 15 / 8 under ΔE2000."
+      },
+      "contrast": {
+        "name": "Contrast",
+        "body": "/contrast measures WCAG luminance ratios between dyes (1:1–21:1). The non-text floor is 3:1 (WCAG 2.1, criterion 1.4.11); the frames mark 3 / 4.5 / 7 and name bands by their ratio — no letter grades. Ratio measures lightness only, not colour difference."
+      },
+      "matchingMethods": {
+        "name": "Matching Methods",
+        "body": "Six methods, one vocabulary: ΔE2000 (default), ΔEOK, ΔE76, REDMEAN, RGB DIST and DISTINGUISH %. Only ΔE2000's bands follow your match line; every other method's bands are fixed, tiers are never compared across methods, and the method prints wherever a tier appears."
+      },
+      "spectrumPrices": {
+        "name": "Spectrum & Prices",
+        "body": "Since Patch 7.5, 105 of the 125 dyes share three market items: Standard Spectrum Dye (216 gil at the vendor — the one price that cannot move), Wide Spectrum #1 (Skybuilders' Scrips) and Wide Spectrum #2 (Cosmocredits). A consolidated dye has no listing of its own, so /budget prices the group, never the dye."
+      },
+      "characterFile": {
+        "name": "Character File",
+        "body": "/swatch reads a .chara export from Anamnesis or Ktisis: colour slots (skin, hair, eyes, lip, paint) and worn gear dyes. The file is read once to build the reply and is not stored. Off-grid colours (edited past the game's palette) are matched by their live value and flagged OFF GRID."
+      }
+    }
   }
 }

@@ -477,7 +477,8 @@
       "showLab": "显示 LAB 值",
       "showDeltaE": "显示色差 Delta-E",
       "showAcquisition": "显示获取来源",
-      "filters": "染剂过滤"
+      "filters": "染剂过滤",
+      "theme": "卡片主题"
     },
     "descriptions": {
       "language": "染剂名称和机器人消息的语言",
@@ -498,7 +499,8 @@
     "errors": {
       "invalidKey": "未知偏好设置键：{key}",
       "invalidValue": "{key} 的值无效。有效选项：{options}",
-      "noSubcommand": "未指定子命令"
+      "noSubcommand": "未指定子命令",
+      "invalidTheme": "主题必须是 dark 或 light。"
     },
     "values": {
       "results": "{count}个结果",
@@ -732,5 +734,40 @@
     "swatchParseError": "无法读取文件 — {message}",
     "swatchNoSlots": "此文件中没有有效的颜色部位。",
     "swatchSlotMissing": "{slot}在此文件中不是有效部位。"
+  },
+  "firstRun": {
+    "title": "XIV Dye Tools 5.0",
+    "body": "机器人已全面改版：全新卡片、统一的匹配方式（默认ΔE2000）、/contrast 和 /a11y，以及支持角色文件的 /swatch。请通过 /manual 了解用法，/changelog 查看更新，/preferences 进行设置。此通知仅显示一次。"
+  },
+  "changelog": {
+    "title": "更新内容",
+    "earlier": "早期版本",
+    "notFound": "没有版本{version}的记录。",
+    "empty": "更新日志暂时不可用。"
+  },
+  "manual5": {
+    "learnLead": "了解更多：{link}",
+    "topics": {
+      "colorVision": {
+        "name": "色觉",
+        "body": "无障碍工具使用 Brettel 方法模拟四种色觉——红色盲（PROT）、绿色盲（DEUT）、蓝色盲（TRIT）和全色盲（ACHR），并测量两种染剂在每种色觉下的剩余差距。差距越大越安全：ΔE2000 下的分档为 30 / 15 / 8。"
+      },
+      "contrast": {
+        "name": "对比度",
+        "body": "/contrast 测量染剂之间的 WCAG 亮度对比（1:1–21:1）。非文本下限为 3:1（WCAG 2.1 标准 1.4.11）；卡片标出 3 / 4.5 / 7，并按比值命名分档——没有字母等级。比值只衡量明度，不衡量色差。"
+      },
+      "matchingMethods": {
+        "name": "匹配方式",
+        "body": "六种方式，一套词汇：ΔE2000（默认）、ΔEOK、ΔE76、REDMEAN、RGB DIST 和 DISTINGUISH %。只有 ΔE2000 的分档跟随你的匹配线；其他方式的分档固定，档位不跨方式比较，且出现档位的地方必定标注方式。"
+      },
+      "spectrumPrices": {
+        "name": "染剂合并与价格",
+        "body": "自7.5版本起，125种染剂中的105种共享三个市场物品：通用染剂（商店216金币——唯一不变的价格）、追加染剂1（天穹街振兴票）和追加染剂2（宇宙币）。合并后的染剂没有独立挂单，因此 /budget 只显示组价格。"
+      },
+      "characterFile": {
+        "name": "角色文件",
+        "body": "/swatch 读取来自 Anamnesis 或 Ktisis 的 .chara 导出文件：颜色部位（皮肤、头发、眼睛、嘴唇、彩绘）和穿戴装备的染色。文件仅为生成回复读取一次，不会保存。超出游戏调色板的颜色按实际值匹配，并标记为「网格外」。"
+      }
+    }
   }
 }

@@ -477,7 +477,8 @@
       "showLab": "LAB値表示",
       "showDeltaE": "色差ΔE表示",
       "showAcquisition": "入手方法表示",
-      "filters": "カララントフィルター"
+      "filters": "カララントフィルター",
+      "theme": "カードテーマ"
     },
     "descriptions": {
       "language": "カララント名とボットメッセージの言語",
@@ -498,7 +499,8 @@
     "errors": {
       "invalidKey": "不明な設定キー：{key}",
       "invalidValue": "{key}の値が無効です。有効なオプション：{options}",
-      "noSubcommand": "サブコマンドが指定されていません"
+      "noSubcommand": "サブコマンドが指定されていません",
+      "invalidTheme": "テーマは dark か light を指定してください。"
     },
     "values": {
       "results": "{count}件の結果",
@@ -732,5 +734,40 @@
     "swatchParseError": "ファイルを読み取れません — {message}",
     "swatchNoSlots": "このファイルに有効なカラー部位がありません。",
     "swatchSlotMissing": "{slot}はこのファイルでは有効な部位ではありません。"
+  },
+  "firstRun": {
+    "title": "XIV Dye Tools 5.0",
+    "body": "ボットがリニューアルされました：新しいカード、共通のマッチング方式（既定はΔE2000）、/contrast と /a11y、キャラクターファイル対応の /swatch。/manual で使い方、/changelog で変更点、/preferences で設定を確認できます。この通知は一度だけ表示されます。"
+  },
+  "changelog": {
+    "title": "更新情報",
+    "earlier": "以前のリリース",
+    "notFound": "バージョン{version}の項目はありません。",
+    "empty": "変更履歴は現在利用できません。"
+  },
+  "manual5": {
+    "learnLead": "詳しくは {link} をご覧ください",
+    "topics": {
+      "colorVision": {
+        "name": "色覚",
+        "body": "アクセシビリティ機能は Brettel 法で4つの色覚 — 1型（PROT）・2型（DEUT）・3型（TRIT）・全色盲（ACHR）— をシミュレートし、各色覚下で2つのカララントがどれだけ離れて見えるかを測定します。距離が大きいほど安全で、ΔE2000では 30 / 15 / 8 が基準です。"
+      },
+      "contrast": {
+        "name": "コントラスト",
+        "body": "/contrast はカララント間の WCAG 輝度比（1:1〜21:1）を測定します。非テキストの下限は 3:1（WCAG 2.1 基準 1.4.11）。カードは 3 / 4.5 / 7 を示し、帯は比率そのもので呼ばれます。比率は明るさのみを測り、色の違いは測りません。"
+      },
+      "matchingMethods": {
+        "name": "マッチング方式",
+        "body": "6つの方式、1つの語彙：ΔE2000（既定）・ΔEOK・ΔE76・REDMEAN・RGB DIST・DISTINGUISH %。マッチラインに追従するのは ΔE2000 の帯だけで、他の方式の帯は固定です。ティアを方式間で比較することはなく、ティアが表示される場所には必ず方式名が付きます。"
+      },
+      "spectrumPrices": {
+        "name": "スペクトラムと価格",
+        "body": "パッチ7.5以降、125色中105色が3つのマーケット品目を共有します：カララント:ノーマルカラー（店売り216ギル — 唯一動かない価格）、アディショナルカラー1（蒼天街振興券）、アディショナルカラー2（コスモクレジット）。統合されたカララントには個別の出品がないため、/budget はグループの価格を表示します。"
+      },
+      "characterFile": {
+        "name": "キャラクターファイル",
+        "body": "/swatch は Anamnesis / Ktisis の .chara エクスポートを読み取ります：カラー部位（肌・髪・瞳・唇・ペイント）と装備の染色です。ファイルは返信の生成に一度だけ読み取られ、保存されません。パレット外に編集された色は実際の値でマッチされ、「グリッド外」と表示されます。"
+      }
+    }
   }
 }

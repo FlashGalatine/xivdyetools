@@ -284,12 +284,16 @@ async function handleCommandsSubcommand(
         .join('\n')
     : 'N/A';
 
-  // V4 vs Legacy breakdown
-  const v4Commands = ['extractor', 'gradient', 'mixer', 'swatch', 'preferences'];
-  const legacyCommands = ['match', 'match_image', 'favorites', 'collection', 'language'];
+  // 5.0 adoption: the commands the redesign introduced (the legacy set was
+  // deleted with Phase 1 — its counters only drain now). Extractor telemetry
+  // arrives split by subcommand (extractor_image / extractor_color).
+  const v5NewCommands = ['contrast', 'a11y', 'changelog', 'swatch'];
+  const extractorSubs = ['extractor_image', 'extractor_color'];
 
-  const v4Usage = v4Commands.reduce((sum, cmd) => sum + (stats.commandBreakdown[cmd] || 0), 0);
-  const legacyUsage = legacyCommands.reduce((sum, cmd) => sum + (stats.commandBreakdown[cmd] || 0), 0);
+  const v5NewUsage = v5NewCommands.reduce((sum, cmd) => sum + (stats.commandBreakdown[cmd] || 0), 0);
+  const extractorSplit = extractorSubs
+    .map((cmd) => `\`${cmd.replace('extractor_', '')}\` ${(stats.commandBreakdown[cmd] || 0).toLocaleString()}`)
+    .join(' · ');
 
   return messageResponse({
     embeds: [{
@@ -307,10 +311,10 @@ async function handleCommandsSubcommand(
           inline: true,
         },
         {
-          name: '🔄 V4 Migration',
+          name: '🆕 5.0 Adoption',
           value: [
-            `**V4 Commands:** ${v4Usage.toLocaleString()}`,
-            `**Legacy Commands:** ${legacyUsage.toLocaleString()}`,
+            `**New in 5.0:** ${v5NewUsage.toLocaleString()} (${v5NewCommands.map((c) => `\`/${c}\``).join(' ')})`,
+            `**Extractor:** ${extractorSplit}`,
           ].join('\n'),
           inline: true,
         },

@@ -42,7 +42,11 @@ export type PreferenceKey =
   | 'showHsv'
   | 'showLab'
   | 'showDeltaE'
-  | 'showAcquisition';
+  | 'showAcquisition'
+  | 'theme';
+
+/** 5.0 card themes — light cards via /preferences, no first-run prompt. */
+export type CardTheme = 'dark' | 'light';
 
 /**
  * User preferences object stored in KV
@@ -93,6 +97,9 @@ export interface UserPreferences {
   /** Show dye acquisition source on result cards (default: true) */
   showAcquisition?: boolean;
 
+  /** Card theme for every generated PNG (default: dark) */
+  theme?: CardTheme;
+
   /** Dye type filters for excluding categories from results */
   dyeFilters?: DyeTypeFilters;
 
@@ -118,6 +125,7 @@ export const PREFERENCE_DEFAULTS: Required<Omit<UserPreferences, 'clan' | 'gende
   showLab: true,
   showDeltaE: true,
   showAcquisition: true,
+  theme: 'dark',
   dyeFilters: {},
 };
 

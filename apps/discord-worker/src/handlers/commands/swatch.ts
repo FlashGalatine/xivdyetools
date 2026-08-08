@@ -18,6 +18,7 @@ import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { createTranslator, createUserTranslator } from '../../services/bot-i18n.js';
 import { discordLocaleToLocaleCode, type LocaleCode } from '../../services/i18n.js';
 import { executeSwatch, type SwatchInput, type SwatchSlotOption } from '@xivdyetools/bot-logic';
+import { getUserPreferences } from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 /** .chara files are small JSON — anything past 1 MiB is not one. */
@@ -43,6 +44,7 @@ export async function handleSwatchCommand(
   const t = userId
     ? await createUserTranslator(env.KV, userId, interaction.locale)
     : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+  const theme = userId ? (await getUserPreferences(env.KV, userId)).theme : undefined;
 
   const options = interaction.data?.options || [];
   const fileId = options.find((opt) => opt.name === 'file')?.value as string | undefined;
@@ -64,6 +66,7 @@ export async function handleSwatchCommand(
     fileName: attachment.filename,
     locale: t.getLocale(),
   };
+  if (theme) input.theme = theme;
   if (orderRaw === 'hardest' || orderRaw === 'slots') input.order = orderRaw;
   if (slotRaw && (SLOT_VALUES as readonly string[]).includes(slotRaw)) {
     input.slot = slotRaw as SwatchSlotOption;

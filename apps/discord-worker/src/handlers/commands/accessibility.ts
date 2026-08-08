@@ -20,6 +20,7 @@ import {
   type VisionType,
   type AccessibilityDye,
 } from '@xivdyetools/bot-logic';
+import { getUserPreferences } from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 export async function handleAccessibilityCommand(
@@ -43,6 +44,7 @@ export async function handleAccessibilityCommand(
   const t = userId
     ? await createUserTranslator(env.KV, userId, interaction.locale)
     : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+  const theme = userId ? (await getUserPreferences(env.KV, userId)).theme : undefined;
 
   if (dyeInputs.length === 0) {
     return Response.json({
@@ -78,7 +80,7 @@ export async function handleAccessibilityCommand(
   const commandLabel = interaction.data?.name === 'a11y' ? '/A11Y' : '/ACCESSIBILITY';
   const deferResponse = deferredResponse();
   ctx.waitUntil(
-    processAccessibilityCommand(interaction, env, resolvedDyes, visionFilter, locale, commandLabel, logger)
+    processAccessibilityCommand(interaction, env, resolvedDyes, visionFilter, locale, commandLabel, theme, logger)
   );
   return deferResponse;
 }
@@ -90,6 +92,7 @@ async function processAccessibilityCommand(
   visionFilter: VisionType | 'all' | undefined,
   locale: LocaleCode,
   commandLabel: string,
+  theme?: 'dark' | 'light',
   logger?: ExtendedLogger
 ): Promise<void> {
   const t = createTranslator(locale);
@@ -97,7 +100,7 @@ async function processAccessibilityCommand(
 
   // The vision: option routes the frame — named lens → 13D, all/absent → 13E,
   // a single dye → 13H
-  const result = await executeAccessibility({ dyes, vision: visionFilter, locale, commandLabel });
+  const result = await executeAccessibility({ dyes, vision: visionFilter, locale, commandLabel, theme });
 
   if (!result.ok) {
     if (logger) logger.error('Accessibility command failed');

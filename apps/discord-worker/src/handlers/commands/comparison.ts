@@ -12,7 +12,7 @@ import { resolveColorInput as resolveColor } from '../../utils/color.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
-import { createUserTranslator, createTranslator } from '../../services/bot-i18n.js';
+import { createUserTranslatorWithPrefs, createTranslator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import { executeComparison } from '@xivdyetools/bot-logic';
 import type { Env, DiscordInteraction } from '../../types/env.js';
@@ -29,7 +29,7 @@ export async function handleComparisonCommand(
   logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
-  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
 
   const options = interaction.data?.options || [];
   const dye1Input = options.find((opt) => opt.name === 'dye1')?.value as string | undefined;
@@ -66,7 +66,7 @@ export async function handleComparisonCommand(
   const dyes = resolvedDyes.map((r) => r.dye as Dye);
   const locale = t.getLocale();
   const deferResponse = deferredResponse();
-  ctx.waitUntil(processComparisonCommand(interaction, env, dyes, locale, logger));
+  ctx.waitUntil(processComparisonCommand(interaction, env, dyes, locale, prefs.theme, logger));
   return deferResponse;
 }
 
@@ -75,12 +75,13 @@ async function processComparisonCommand(
   env: Env,
   dyes: Dye[],
   locale: LocaleCode,
+  theme?: 'dark' | 'light',
   logger?: ExtendedLogger
 ): Promise<void> {
   const t = createTranslator(locale);
   await initializeLocale(locale);
 
-  const result = await executeComparison({ dyes, locale });
+  const result = await executeComparison({ dyes, locale, theme });
 
   if (!result.ok) {
     if (logger) logger.error('Comparison command failed');

@@ -33,6 +33,7 @@ import {
   handleStatsCommand,
   handleBudgetCommand,
   handleBudgetAutocomplete,
+  handleChangelogCommand,
 } from './handlers/commands/index.js';
 import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.js';
 import { trackCommandWithKV } from './services/analytics.js';
@@ -40,9 +41,9 @@ import { getPresetFavoriteEntries, savePresetFavoriteEntries } from './services/
 import { handleButtonInteraction } from './handlers/buttons/index.js';
 import { dyeService } from './utils/color.js';
 import * as presetApi from './services/preset-api.js';
-import { sendMessage } from './utils/discord-api.js';
+import { sendMessage, sendFollowUp } from './utils/discord-api.js';
 import { STATUS_DISPLAY, type PresetNotificationPayload } from './types/preset.js';
-import { getLocalizedDyeName } from './services/i18n.js';
+import { getLocalizedDyeName, discordLocaleToLocaleCode } from './services/i18n.js';
 import { createTranslator } from './services/bot-i18n.js';
 import { sendModerationNotification } from './handlers/commands/preset-notifications.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
@@ -424,6 +425,42 @@ app.post('/', async (c) => {
 });
 
 /**
+ * 5.0 first-run notice: one ephemeral follow-up naming what changed, gated
+ * by a permanent KV flag. Existing users (stored preferences) are flagged
+ * silently — the redesign notice is for people meeting the bot fresh.
+ */
+async function maybeSendFirstRunNotice(
+  env: Env,
+  interaction: DiscordInteraction,
+  userId: string,
+  logger: ExtendedLogger
+): Promise<void> {
+  const flagKey = `firstrun:v5:${userId}`;
+  const seen = await env.KV.get(flagKey);
+  if (seen) return;
+  // Flag before sending — a failed send must never become a repeat notice
+  await env.KV.put(flagKey, '1');
+
+  const prefs = await env.KV.get(`prefs:v1:${userId}`);
+  if (prefs) return; // existing user — suppressed by decision
+
+  const t = createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+  const response = await sendFollowUp(env.DISCORD_CLIENT_ID, interaction.token, {
+    embeds: [
+      {
+        title: t.t('firstRun.title'),
+        description: t.t('firstRun.body'),
+        color: 0xea4133,
+      },
+    ],
+    ephemeral: true,
+  });
+  if (!response.ok) {
+    logger.warn('First-run follow-up rejected', { status: response.status });
+  }
+}
+
+/**
  * Handle slash commands
  */
 async function handleCommand(
@@ -444,7 +481,7 @@ async function handleCommand(
   logger.info('Handling command', { command: commandName, userId });
 
   // Check rate limit (skip for utility commands)
-  if (commandName && !['about', 'manual', 'stats'].includes(commandName)) {
+  if (commandName && !['about', 'manual', 'stats', 'changelog'].includes(commandName)) {
     const rateLimitResult = await checkRateLimit(
       {
         upstashUrl: env.UPSTASH_REDIS_REST_URL,
@@ -459,6 +496,15 @@ async function handleCommand(
       return ephemeralResponse(formatRateLimitMessage(rateLimitResult));
     }
   }
+
+  // 5.0 first-run: a one-time ephemeral follow-up naming what changed.
+  // KV-flagged; suppressed (but still flagged) when the user already has
+  // stored preferences — an existing user is not "first-run".
+  ctx.waitUntil(
+    maybeSendFirstRunNotice(env, interaction, userId, logger).catch((error) => {
+      logger.warn('First-run notice failed', { error: String(error) });
+    })
+  );
 
   // DISCORD-CRITICAL-001: Track analytics AFTER command execution with actual success status
   let success = true;
@@ -519,6 +565,10 @@ async function handleCommand(
         response = await handleManualCommand(interaction, env, ctx);
         break;
 
+      case 'changelog':
+        response = await handleChangelogCommand(interaction, env, ctx);
+        break;
+
       case 'comparison':
         response = await handleComparisonCommand(interaction, env, ctx, logger);
         break;
@@ -547,11 +597,18 @@ async function handleCommand(
     logger.error('Command execution failed', error instanceof Error ? error : undefined, { command: commandName });
     response = ephemeralResponse('An error occurred while processing your command.');
   } finally {
-    // Track command usage with actual success status (fire-and-forget)
-    if (userId && commandName) {
+    // Track command usage with actual success status (fire-and-forget).
+    // 5.0 telemetry: /extractor records its subcommand (extractor_image /
+    // extractor_color) so the /stats adoption panel can tell them apart.
+    let trackedName = commandName;
+    if (commandName === 'extractor') {
+      const sub = interaction.data?.options?.[0]?.name;
+      if (sub) trackedName = `extractor_${sub}`;
+    }
+    if (userId && trackedName) {
       ctx.waitUntil(
         trackCommandWithKV(env, {
-          commandName,
+          commandName: trackedName,
           userId,
           guildId: interaction.guild_id,
           success,

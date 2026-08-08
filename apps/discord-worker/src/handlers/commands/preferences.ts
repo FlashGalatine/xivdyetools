@@ -57,6 +57,7 @@ const PREFERENCE_ORDER: PreferenceKey[] = [
   'showLab',
   'showDeltaE',
   'showAcquisition',
+  'theme',
 ];
 
 /** Emojis for preference categories */
@@ -75,6 +76,7 @@ const PREFERENCE_EMOJIS: Record<PreferenceKey, string> = {
   showLab: '🧪',
   showDeltaE: '📐',
   showAcquisition: '🛒',
+  theme: '🌙',
 };
 
 /**
@@ -521,6 +523,8 @@ function formatPreferenceValue(key: PreferenceKey, value: unknown, t: Translator
       return value === true || value === 'on' || value === 'true'
         ? t.t('preferences.values.yes')
         : t.t('preferences.values.no');
+    case 'theme':
+      return value === 'light' ? '☀️ light' : '🌙 dark';
 
     default:
       return String(value);

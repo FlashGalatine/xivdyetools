@@ -53,6 +53,7 @@ export const COMMAND_REGISTRY: readonly CommandRegistryEntry[] = [
   // Utility / meta
   { name: 'preferences', category: 'utility' },
   { name: 'manual', category: 'utility' },
+  { name: 'changelog', category: 'utility' },
   { name: 'about', category: 'utility' },
   { name: 'stats', category: 'utility' },
 ];

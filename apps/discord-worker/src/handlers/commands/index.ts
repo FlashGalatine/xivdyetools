@@ -26,6 +26,7 @@ export { handleSwatchCommand } from './swatch.js';
 export { handleAccessibilityCommand } from './accessibility.js';
 export { handleContrastCommand } from './contrast.js';
 export { handleManualCommand } from './manual.js';
+export { handleChangelogCommand } from './changelog.js';
 export { handleComparisonCommand } from './comparison.js';
 export { handlePresetCommand } from './preset.js';
 export { handleStatsCommand } from './stats.js';

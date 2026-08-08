@@ -9,7 +9,17 @@ vi.mock('../../services/bot-i18n.js', () => ({
     createUserTranslator: vi.fn(() =>
         Promise.resolve({
             t: vi.fn((key: string) => key),
+            getLocale: () => 'en',
             locale: 'en',
+        })
+    ),
+    createUserTranslatorWithPrefs: vi.fn(() =>
+        Promise.resolve({
+            t: {
+                t: vi.fn((key: string) => key),
+                getLocale: () => 'en',
+            },
+            prefs: {},
         })
     ),
 }));

@@ -477,7 +477,8 @@
       "showLab": "Afficher les valeurs LAB",
       "showDeltaE": "Afficher Delta-E",
       "showAcquisition": "Afficher la source d'acquisition",
-      "filters": "Filtres de teinture"
+      "filters": "Filtres de teinture",
+      "theme": "Thème des cartes"
     },
     "descriptions": {
       "language": "Langue pour les noms de teinture et les messages du bot",
@@ -516,7 +517,8 @@
     "errors": {
       "invalidKey": "Clé de préférence inconnue : {key}",
       "invalidValue": "Valeur invalide pour {key}. Options valides : {options}",
-      "noSubcommand": "Aucune sous-commande fournie"
+      "noSubcommand": "Aucune sous-commande fournie",
+      "invalidTheme": "Le thème doit être dark ou light."
     },
     "filters": {
       "noOptions": "Veuillez fournir au moins une option de filtre.",
@@ -732,5 +734,40 @@
     "swatchParseError": "Fichier illisible — {message}",
     "swatchNoSlots": "Aucun emplacement de couleur actif dans ce fichier.",
     "swatchSlotMissing": "{slot} n’est pas un emplacement actif dans ce fichier."
+  },
+  "firstRun": {
+    "title": "XIV Dye Tools 5.0",
+    "body": "Le bot a été repensé : nouvelles cartes, vocabulaire de correspondance unifié (ΔE2000 par défaut), /contrast et /a11y, et /swatch pour les fichiers de personnage. Voir /manual pour la visite, /changelog pour les nouveautés, /preferences pour les réglages. Cet avis ne s'affiche qu'une fois."
+  },
+  "changelog": {
+    "title": "Nouveautés",
+    "earlier": "Versions précédentes",
+    "notFound": "Aucune entrée pour la version {version}.",
+    "empty": "Le journal des modifications est indisponible pour le moment."
+  },
+  "manual5": {
+    "learnLead": "En savoir plus : {link}",
+    "topics": {
+      "colorVision": {
+        "name": "Vision des couleurs",
+        "body": "Les outils d'accessibilité simulent quatre visions — protanopie (PROT), deutéranopie (DEUT), tritanopie (TRIT) et achromatopsie (ACHR) — selon la méthode Brettel, puis mesurent l'écart restant entre deux teintures sous chaque vision. Plus l'écart est grand, mieux c'est : les bandes sont à 30 / 15 / 8 en ΔE2000."
+      },
+      "contrast": {
+        "name": "Contraste",
+        "body": "/contrast mesure les rapports de luminance WCAG entre teintures (1:1–21:1). Le seuil non textuel est 3:1 (WCAG 2.1, critère 1.4.11) ; les cartes marquent 3 / 4,5 / 7 et nomment les bandes par leur rapport — pas de notes en lettres. Le rapport mesure la clarté seule, pas la différence de couleur."
+      },
+      "matchingMethods": {
+        "name": "Méthodes de correspondance",
+        "body": "Six méthodes, un vocabulaire : ΔE2000 (par défaut), ΔEOK, ΔE76, REDMEAN, RGB DIST et DISTINGUISH %. Seules les bandes de ΔE2000 suivent votre ligne de correspondance ; celles des autres méthodes sont fixes, les paliers ne se comparent jamais entre méthodes, et la méthode s'affiche partout où un palier apparaît."
+      },
+      "spectrumPrices": {
+        "name": "Spectrum et prix",
+        "body": "Depuis le patch 7.5, 105 des 125 teintures partagent trois objets du marché : Teinture standard (216 gils chez le marchand — le seul prix qui ne bouge jamais), Teinture additionnelle n°1 (scrips des Artisans célestes) et n°2 (cosmocrédits). Une teinture consolidée n'a pas d'annonce propre : /budget affiche le prix du groupe, jamais celui de la teinture."
+      },
+      "characterFile": {
+        "name": "Fichier de personnage",
+        "body": "/swatch lit un export .chara d'Anamnesis ou de Ktisis : les emplacements de couleur (peau, cheveux, yeux, lèvres, peinture) et les teintures d'équipement portées. Le fichier est lu une fois pour construire la réponse et n'est pas conservé. Les couleurs hors grille sont associées par leur valeur réelle et marquées HORS GRILLE."
+      }
+    }
   }
 }

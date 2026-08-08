@@ -33,6 +33,7 @@ import type {
   BlendingMode,
   MatchingMethod,
   Gender,
+  CardTheme,
 } from '../types/preferences.js';
 import {
   PREFERENCE_DEFAULTS,
@@ -196,6 +197,9 @@ export async function setPreference(
         break;
       case 'showAcquisition':
         prefs.showAcquisition = value === true || value === 'on' || value === 'true';
+        break;
+      case 'theme':
+        prefs.theme = value as CardTheme;
         break;
     }
 
@@ -425,6 +429,12 @@ export function validatePreferenceValue(
       // For now, we accept any non-empty string
       break;
 
+    case 'theme':
+      if (value !== 'dark' && value !== 'light') {
+        return { valid: false, reason: 'invalidTheme' };
+      }
+      break;
+
     case 'market':
     case 'showHex':
     case 'showRgb':
@@ -541,6 +551,8 @@ export function getDefaultValue(key: PreferenceKey): string | number | boolean |
       return PREFERENCE_DEFAULTS.showDeltaE;
     case 'showAcquisition':
       return PREFERENCE_DEFAULTS.showAcquisition;
+    case 'theme':
+      return PREFERENCE_DEFAULTS.theme;
     case 'clan':
     case 'gender':
     case 'world':
@@ -566,6 +578,8 @@ export function getAffectedCommands(key: PreferenceKey): string[] {
       return ['/swatch'];
     case 'world':
       return ['/budget', 'market data on Result Cards'];
+    case 'theme':
+      return ['every generated card'];
     case 'market':
     case 'showHex':
     case 'showRgb':

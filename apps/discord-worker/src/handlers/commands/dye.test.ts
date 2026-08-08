@@ -122,6 +122,7 @@ vi.mock('../../services/bot-i18n.js', () => {
   };
   return {
     createUserTranslator: vi.fn().mockResolvedValue(mockTranslator),
+    createUserTranslatorWithPrefs: vi.fn().mockResolvedValue({ t: mockTranslator, prefs: {} }),
     createTranslator: vi.fn().mockReturnValue(mockTranslator),
   };
 });

@@ -31,6 +31,7 @@ import { createCopyButtons } from '../buttons/index.js';
 import {
   createTranslator,
   createUserTranslator,
+  createUserTranslatorWithPrefs,
   type Translator,
 } from '../../services/bot-i18n.js';
 import {
@@ -42,6 +43,7 @@ import {
 import { generatePaletteGrid, generateNearestSheet } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { validateAndFetchImage, processImageForExtraction } from '../../services/image/index.js';
+import { getUserPreferences } from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // ============================================================================
@@ -187,7 +189,8 @@ async function handleColorSubcommand(
   options: Array<{ name: string; value?: string | number | boolean }>
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
-  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
+  const theme = prefs.theme;
 
   // Initialize localization for dye names
   const locale = t.getLocale();
@@ -249,7 +252,7 @@ async function handleColorSubcommand(
 
   // Defer — the card renders to PNG in the background
   ctx.waitUntil(
-    renderColorSheet(interaction, env, targetHex, matches, t, resolved.fromDye)
+    renderColorSheet(interaction, env, targetHex, matches, t, theme, resolved.fromDye)
   );
   return deferredResponse();
 }
@@ -266,6 +269,7 @@ async function renderColorSheet(
   targetHex: string,
   matches: Array<{ dye: Dye; distance: number }>,
   t: Translator,
+  theme?: 'dark' | 'light',
   fromDye?: Dye
 ): Promise<void> {
   const locale = t.getLocale();
@@ -290,6 +294,7 @@ async function renderColorSheet(
         matchKey: t.t('card.matchKey'),
       },
       lang: locale,
+      theme,
     });
     const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
 
@@ -408,8 +413,9 @@ async function handleImageSubcommand(
   const deferResponse = deferredResponse();
 
   // Process in background
+  const theme = userId ? (await getUserPreferences(env.KV, userId)).theme : undefined;
   ctx.waitUntil(
-    processImageExtraction(interaction, env, attachment.url, colorCount, locale, logger)
+    processImageExtraction(interaction, env, attachment.url, colorCount, locale, theme, logger)
   );
 
   return deferResponse;
@@ -424,6 +430,7 @@ async function processImageExtraction(
   imageUrl: string,
   colorCount: number,
   locale: LocaleCode,
+  theme?: 'dark' | 'light',
   logger?: ExtendedLogger
 ): Promise<void> {
   const t = createTranslator(locale);
@@ -497,6 +504,7 @@ async function processImageExtraction(
         rampKey: t.t('card.rampKey'),
       },
       lang: locale,
+      theme,
     });
     const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
 

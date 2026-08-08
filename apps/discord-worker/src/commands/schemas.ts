@@ -508,7 +508,26 @@ export const commands = [
         required: false,
         choices: [
           { name: '📸 Image Matching Tips', value: 'match_image' },
+          { name: '♿ Colour Vision', value: 'color_vision' },
+          { name: '🔲 Contrast', value: 'contrast' },
+          { name: '📐 Matching Methods', value: 'matching_methods' },
+          { name: '🪙 Spectrum & Prices', value: 'spectrum_prices' },
+          { name: '👤 Character File', value: 'character_file' },
         ],
+      },
+    ],
+  },
+
+  // /changelog - Product-level release notes (5.0, ephemeral)
+  {
+    name: 'changelog',
+    description: "See what's new — release notes for the whole toolset",
+    options: [
+      {
+        name: 'version',
+        description: 'Expand a specific release (e.g. 5.0.0)',
+        type: OptionType.STRING,
+        required: false,
       },
     ],
   },
@@ -677,6 +696,16 @@ export const commands = [
             type: OptionType.BOOLEAN,
             required: false,
           },
+          {
+            name: 'theme',
+            description: 'Card theme for every generated image',
+            type: OptionType.STRING,
+            required: false,
+            choices: [
+              { name: '🌙 Dark (default)', value: 'dark' },
+              { name: '☀️ Light', value: 'light' },
+            ],
+          },
         ],
       },
       {
@@ -704,6 +733,7 @@ export const commands = [
               { name: 'Show LAB', value: 'show_lab' },
               { name: 'Show Delta-E', value: 'show_deltae' },
               { name: 'Show Acquisition', value: 'show_acquisition' },
+              { name: 'Card Theme', value: 'theme' },
               { name: 'Dye Filters', value: 'filters' },
             ],
           },

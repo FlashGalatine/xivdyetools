@@ -180,6 +180,7 @@ async function handleFindSubcommand(
       world,
       { method, matchLine: matchLineRaw, excludeCoffers, excludeWideSpectrum },
       t,
+      prefs.theme,
       logger
     )
   );
@@ -200,6 +201,7 @@ async function processFindCommand(
   world: string,
   searchOptions: LedgerSearchOptions,
   t: Translator,
+  theme?: 'dark' | 'light',
   logger?: ExtendedLogger
 ): Promise<void> {
   try {
@@ -294,6 +296,7 @@ async function processFindCommand(
         keyLines,
       },
       lang: locale,
+      theme,
       wideDe: WIDE_DE.has(method),
     });
 
@@ -433,6 +436,7 @@ async function handleQuickSubcommand(
       world,
       { method: prefs.matching ?? 'ciede2000' },
       t,
+      prefs.theme,
       logger
     )
   );

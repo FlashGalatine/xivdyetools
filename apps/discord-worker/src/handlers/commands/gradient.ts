@@ -72,7 +72,7 @@ export async function handleGradientCommand(
   const prefs = userId ? await getUserPreferences(env.KV, userId) : {};
   ctx.waitUntil(
     processGradientCommand(
-      interaction, env, startResolved, endResolved, stepCount, colorSpace, matchingMethod, locale, logger, prefs.dyeFilters
+      interaction, env, startResolved, endResolved, stepCount, colorSpace, matchingMethod, locale, logger, prefs.dyeFilters, prefs.theme
     )
   );
   return deferResponse;
@@ -88,7 +88,8 @@ async function processGradientCommand(
   matchingMethod: MatchingMethod,
   locale: LocaleCode,
   logger?: ExtendedLogger,
-  dyeFilters?: DyeTypeFilters
+  dyeFilters?: DyeTypeFilters,
+  theme?: 'dark' | 'light'
 ): Promise<void> {
   const t = createTranslator(locale);
   await initializeLocale(locale);
@@ -101,6 +102,7 @@ async function processGradientCommand(
     matchingMethod,
     locale,
     dyeFilters,
+    theme,
   });
 
   if (!result.ok) {

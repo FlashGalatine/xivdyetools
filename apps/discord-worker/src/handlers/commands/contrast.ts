@@ -16,6 +16,7 @@ import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { createTranslator, createUserTranslator } from '../../services/bot-i18n.js';
 import { discordLocaleToLocaleCode, initializeLocale, type LocaleCode } from '../../services/i18n.js';
 import { executeContrast, type ContrastDyeInput } from '@xivdyetools/bot-logic';
+import { getUserPreferences } from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 export async function handleContrastCommand(
@@ -37,6 +38,7 @@ export async function handleContrastCommand(
   const t = userId
     ? await createUserTranslator(env.KV, userId, interaction.locale)
     : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+  const theme = userId ? (await getUserPreferences(env.KV, userId)).theme : undefined;
 
   if (dyeInputs.length < 2) {
     return Response.json({
@@ -67,7 +69,7 @@ export async function handleContrastCommand(
 
   const locale = t.getLocale();
   const deferResponse = deferredResponse();
-  ctx.waitUntil(processContrastCommand(interaction, env, resolvedDyes, locale, logger));
+  ctx.waitUntil(processContrastCommand(interaction, env, resolvedDyes, locale, theme, logger));
   return deferResponse;
 }
 
@@ -76,12 +78,13 @@ async function processContrastCommand(
   env: Env,
   dyes: ContrastDyeInput[],
   locale: LocaleCode,
+  theme?: 'dark' | 'light',
   logger?: ExtendedLogger
 ): Promise<void> {
   const t = createTranslator(locale);
   await initializeLocale(locale);
 
-  const result = await executeContrast({ dyes, locale });
+  const result = await executeContrast({ dyes, locale, theme });
 
   if (!result.ok) {
     if (logger) logger.error('Contrast command failed');

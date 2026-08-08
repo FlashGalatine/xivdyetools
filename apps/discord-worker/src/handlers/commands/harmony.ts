@@ -76,7 +76,7 @@ export async function handleHarmonyCommand(
       interaction, env,
       resolved.hex, resolved.name, resolved.id, resolved.itemID ?? undefined,
       harmonyType, locale, logger, harmonyOptions, prefs.dyeFilters,
-      companionCount, effectiveMatching, strictMatching, preventDuplicates
+      companionCount, effectiveMatching, strictMatching, preventDuplicates, prefs.theme
     )
   );
   return deferResponse;
@@ -97,7 +97,8 @@ async function processHarmonyCommand(
   companionCount?: number,
   matchingMethod?: MatchingMethod,
   strictMatching?: boolean,
-  preventDuplicates?: boolean
+  preventDuplicates?: boolean,
+  theme?: 'dark' | 'light'
 ): Promise<void> {
   const t = createTranslator(locale);
   await initializeLocale(locale);
@@ -110,6 +111,7 @@ async function processHarmonyCommand(
     matchingMethod,
     strictMatching,
     preventDuplicates,
+    theme,
   });
 
   if (!result.ok) {

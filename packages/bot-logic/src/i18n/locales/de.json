@@ -477,7 +477,8 @@
       "showLab": "LAB-Werte anzeigen",
       "showDeltaE": "Delta-E anzeigen",
       "showAcquisition": "Bezugsquelle anzeigen",
-      "filters": "Farbstoff-Filter"
+      "filters": "Farbstoff-Filter",
+      "theme": "Karten-Design"
     },
     "descriptions": {
       "language": "Sprache für Farbstoffnamen und Bot-Nachrichten",
@@ -498,7 +499,8 @@
     "errors": {
       "invalidKey": "Unbekannter Einstellungsschlüssel: {key}",
       "invalidValue": "Ungültiger Wert für {key}. Gültige Optionen: {options}",
-      "noSubcommand": "Kein Unterbefehl angegeben"
+      "noSubcommand": "Kein Unterbefehl angegeben",
+      "invalidTheme": "Design muss dark oder light sein."
     },
     "values": {
       "results": "{count} Ergebnisse",
@@ -732,5 +734,40 @@
     "swatchParseError": "Datei nicht lesbar — {message}",
     "swatchNoSlots": "Keine aktiven Farb-Slots in dieser Datei.",
     "swatchSlotMissing": "{slot} ist in dieser Datei kein aktiver Slot."
+  },
+  "firstRun": {
+    "title": "XIV Dye Tools 5.0",
+    "body": "Der Bot wurde neu gestaltet: neue Karten, ein einheitliches Matching-Vokabular (Standard ΔE2000), /contrast und /a11y sowie /swatch für Charakterdateien. /manual zeigt die Tour, /changelog die Änderungen, /preferences die Einstellungen. Dieser Hinweis erscheint nur einmal."
+  },
+  "changelog": {
+    "title": "Was ist neu",
+    "earlier": "Frühere Versionen",
+    "notFound": "Kein Eintrag für Version {version}.",
+    "empty": "Das Änderungsprotokoll ist derzeit nicht verfügbar."
+  },
+  "manual5": {
+    "learnLead": "Mehr erfahren: {link}",
+    "topics": {
+      "colorVision": {
+        "name": "Farbsehen",
+        "body": "Die Barrierefreiheits-Tools simulieren vier Sehweisen — Protanopie (PROT), Deuteranopie (DEUT), Tritanopie (TRIT) und Achromatopsie (ACHR) — nach der Brettel-Methode und messen, wie weit zwei Farben unter jeder Sehweise auseinander bleiben. Größerer Abstand ist sicherer: die Bänder liegen bei 30 / 15 / 8 unter ΔE2000."
+      },
+      "contrast": {
+        "name": "Kontrast",
+        "body": "/contrast misst WCAG-Leuchtdichteverhältnisse zwischen Farben (1:1–21:1). Die Untergrenze für Nicht-Text ist 3:1 (WCAG 2.1, Kriterium 1.4.11); die Karten markieren 3 / 4,5 / 7 und benennen Bänder nach ihrem Verhältnis — keine Buchstabennoten. Das Verhältnis misst nur Helligkeit, nicht Farbunterschied."
+      },
+      "matchingMethods": {
+        "name": "Matching-Methoden",
+        "body": "Sechs Methoden, ein Vokabular: ΔE2000 (Standard), ΔEOK, ΔE76, REDMEAN, RGB DIST und DISTINGUISH %. Nur die Bänder von ΔE2000 folgen deiner Match-Linie; alle anderen sind fest, Stufen werden nie zwischen Methoden verglichen, und die Methode steht überall dort, wo eine Stufe erscheint."
+      },
+      "spectrumPrices": {
+        "name": "Spectrum & Preise",
+        "body": "Seit Patch 7.5 teilen sich 105 der 125 Farben drei Marktartikel: Einfacher Farbstoff (216 Gil beim Händler — der eine Preis, der sich nie bewegt), Zusatzfarbstoff 1 (Himmelsstadt-Scrips) und Zusatzfarbstoff 2 (Kosmo-Credits). Eine konsolidierte Farbe hat kein eigenes Angebot, daher bepreist /budget die Gruppe, nie die Farbe."
+      },
+      "characterFile": {
+        "name": "Charakterdatei",
+        "body": "/swatch liest einen .chara-Export aus Anamnesis oder Ktisis: Farb-Slots (Haut, Haar, Augen, Lippe, Bemalung) und getragene Ausrüstungsfarben. Die Datei wird einmal für die Antwort gelesen und nicht gespeichert. Farben abseits des Rasters werden nach ihrem Live-Wert gematcht und als ABSEITS markiert."
+      }
+    }
   }
 }

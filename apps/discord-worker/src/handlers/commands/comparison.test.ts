@@ -87,6 +87,23 @@ vi.mock('@xivdyetools/core', () => {
 });
 
 vi.mock('../../services/bot-i18n.js', () => ({
+  createUserTranslatorWithPrefs: vi.fn().mockResolvedValue({
+    prefs: {},
+    t: {
+      t: (key: string, vars?: Record<string, unknown>) => {
+        const translations: Record<string, string> = {
+          'common.error': 'Error',
+          'errors.missingInput': 'Please provide at least two dyes to compare',
+          'errors.invalidColor': `Could not find dye or parse color: ${vars?.input}`,
+          'errors.generationFailed': 'Failed to generate comparison image',
+          'comparison.title': 'Dye Comparison',
+          'common.footer': 'XIV Dye Tools',
+        };
+        return translations[key] || key;
+      },
+      getLocale: () => 'en',
+    },
+  }),
   createUserTranslator: vi.fn().mockResolvedValue({
     t: (key: string, vars?: Record<string, unknown>) => {
       const translations: Record<string, string> = {
@@ -569,8 +586,8 @@ describe('comparison.ts', () => {
 
       await handleComparisonCommand(interaction, mockEnv, mockCtx);
 
-      const { createUserTranslator } = await import('../../services/bot-i18n.js');
-      expect(createUserTranslator).toHaveBeenCalledWith(
+      const { createUserTranslatorWithPrefs } = await import('../../services/bot-i18n.js');
+      expect(createUserTranslatorWithPrefs).toHaveBeenCalledWith(
         mockEnv.KV,
         'user-123',
         'de'

@@ -17,7 +17,7 @@ import { messageResponse, deferredResponse, errorEmbed, hexToDiscordColor } from
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createCopyButtons } from '../buttons/index.js';
-import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
+import { createUserTranslatorWithPrefs, createTranslator, type Translator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, getLocalizedCategory, type LocaleCode } from '../../services/i18n.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { executeDyeInfo, executeRandom } from '@xivdyetools/bot-logic';
@@ -33,7 +33,8 @@ export async function handleDyeCommand(
   ctx: ExecutionContext
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
-  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
+  const theme = prefs.theme ?? 'dark';
   const locale = t.getLocale();
   await initializeLocale(locale);
 
@@ -51,11 +52,11 @@ export async function handleDyeCommand(
     case 'search':
       return handleSearchSubcommand(t, subcommand.options);
     case 'info':
-      return handleInfoSubcommand(interaction, env, ctx, t, locale, subcommand.options);
+      return handleInfoSubcommand(interaction, env, ctx, t, locale, theme, subcommand.options);
     case 'list':
       return handleListSubcommand(t, subcommand.options);
     case 'random':
-      return handleRandomSubcommand(interaction, env, ctx, t, locale, subcommand.options);
+      return handleRandomSubcommand(interaction, env, ctx, t, locale, theme, subcommand.options);
     default:
       return messageResponse({
         embeds: [errorEmbed(t.t('common.error'), t.t('errors.unknownSubcommand', { name: subcommand.name }))],
@@ -119,6 +120,7 @@ function handleInfoSubcommand(
   ctx: ExecutionContext,
   t: Translator,
   locale: LocaleCode,
+  theme: 'dark' | 'light',
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Response {
   const name = options?.find((opt) => opt.name === 'name')?.value as string | undefined;
@@ -140,7 +142,7 @@ function handleInfoSubcommand(
   }
 
   const deferResponse = deferredResponse();
-  ctx.waitUntil(processInfoCard(interaction, env, dye, locale));
+  ctx.waitUntil(processInfoCard(interaction, env, dye, locale, theme));
   return deferResponse;
 }
 
@@ -148,10 +150,11 @@ async function processInfoCard(
   interaction: DiscordInteraction,
   env: Env,
   dye: Dye,
-  locale: LocaleCode
+  locale: LocaleCode,
+  theme: 'dark' | 'light'
 ): Promise<void> {
   const t = createTranslator(locale);
-  const result = await executeDyeInfo({ dye, locale });
+  const result = await executeDyeInfo({ dye, locale, theme });
 
   if (!result.ok) {
     // Fallback to text-based response on error
@@ -285,11 +288,12 @@ function handleRandomSubcommand(
   ctx: ExecutionContext,
   _t: Translator,
   locale: LocaleCode,
+  theme: 'dark' | 'light',
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Response {
   const uniqueCategories = options?.find((opt) => opt.name === 'unique_categories')?.value === true;
   const deferResponse = deferredResponse();
-  ctx.waitUntil(processRandomGrid(interaction, env, uniqueCategories, locale));
+  ctx.waitUntil(processRandomGrid(interaction, env, uniqueCategories, locale, theme));
   return deferResponse;
 }
 
@@ -297,10 +301,11 @@ async function processRandomGrid(
   interaction: DiscordInteraction,
   env: Env,
   uniqueCategories: boolean,
-  locale: LocaleCode
+  locale: LocaleCode,
+  theme: 'dark' | 'light'
 ): Promise<void> {
   const t = createTranslator(locale);
-  const result = await executeRandom({ locale, count: 5, uniqueCategories });
+  const result = await executeRandom({ locale, count: 5, uniqueCategories, theme });
 
   if (!result.ok) {
     if (result.error === 'NO_DYES') {

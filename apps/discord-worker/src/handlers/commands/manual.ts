@@ -8,7 +8,17 @@
  */
 
 import type { Env, DiscordInteraction } from '../../types/env.js';
-import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
+import {
+  getLearnLink,
+  getLodestoneLink,
+  MANUAL_TOPICS,
+  type LearnLink,
+  type LodestoneRegion,
+  type ManualTopicId,
+} from '@xivdyetools/core';
+import { createUserTranslatorWithPrefs, type Translator } from '../../services/bot-i18n.js';
+import type { LocaleCode } from '../../services/i18n.js';
+import { fetchWorlds, fetchDataCenters } from '../../services/budget/index.js';
 
 // Discord embed color constants
 const COLORS = {
@@ -229,6 +239,73 @@ function buildEmbeds(t: Translator): object[] {
   ];
 }
 
+// ============================================================================
+// 5.0 topic roster (core's MANUAL_TOPICS is the roster of record)
+// ============================================================================
+
+/** Topic id → manual5.topics.* locale key (identifiers never localise). */
+const TOPIC_KEYS: Partial<Record<ManualTopicId, string>> = {
+  color_vision: 'colorVision',
+  contrast: 'contrast',
+  matching_methods: 'matchingMethods',
+  spectrum_prices: 'spectrumPrices',
+  character_file: 'characterFile',
+};
+
+/**
+ * Spectrum & Prices links the Lodestone **by game region, not locale** —
+ * resolved from the user's stored world via Universalis. Any failure (no
+ * world, proxy absent, unknown world) degrades to the absent-link state.
+ */
+async function resolveLodestoneRegion(env: Env, world: string | undefined): Promise<LearnLink | null> {
+  if (!world) return null;
+  try {
+    const [worlds, dcs] = await Promise.all([fetchWorlds(env), fetchDataCenters(env)]);
+    const target = world.toLowerCase();
+    const worldEntry = worlds.find((w) => w.name.toLowerCase() === target);
+    // The stored value may be a datacenter name rather than a world
+    const dc = worldEntry
+      ? dcs.find((d) => d.worlds.includes(worldEntry.id))
+      : dcs.find((d) => d.name.toLowerCase() === target);
+    if (!dc) return null;
+    const region = dc.region.toLowerCase();
+    const mapped: LodestoneRegion = region.includes('japan')
+      ? 'jp'
+      : region.includes('europe')
+        ? 'eu'
+        : 'na';
+    return getLodestoneLink(mapped);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A 5.0 topic embed: emoji + localized name, the localized body, and the
+ * learn-more line. A missing URL degrades to NO link, never the English one;
+ * the embed prints authority + host, never the path.
+ */
+function buildTopicEmbed(
+  t: Translator,
+  topicId: ManualTopicId,
+  link: LearnLink | null
+): object {
+  const meta = MANUAL_TOPICS.find((m) => m.id === topicId);
+  const key = TOPIC_KEYS[topicId];
+  const description: string[] = [t.t(`manual5.topics.${key}.body`)];
+  if (link) {
+    description.push('');
+    description.push(
+      t.t('manual5.learnLead', { link: `[${link.authority}](${link.url}) · ${link.host}` })
+    );
+  }
+  return {
+    title: `${meta?.emoji ?? ''} ${t.t(`manual5.topics.${key}.name`)}`.trim(),
+    description: description.join('\n'),
+    color: COLORS.blurple,
+  };
+}
+
 /**
  * Handles the /manual command
  */
@@ -239,8 +316,9 @@ export async function handleManualCommand(
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
 
-  // Get translator for user's locale
-  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+  // One KV read yields both translator and prefs (world for the 🪙 topic)
+  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
+  const locale: LocaleCode = t.getLocale();
 
   // Check for topic option
   const options = interaction.data?.options || [];
@@ -251,6 +329,13 @@ export async function handleManualCommand(
   let embeds;
   if (topic === 'match_image') {
     embeds = buildMatchImageHelpEmbeds(t);
+  } else if (topic && topic in TOPIC_KEYS) {
+    const topicId = topic as ManualTopicId;
+    const link =
+      topicId === 'spectrum_prices'
+        ? await resolveLodestoneRegion(env, prefs.world)
+        : getLearnLink(topicId, locale);
+    embeds = [buildTopicEmbed(t, topicId, link)];
   } else {
     embeds = buildEmbeds(t);
   }

@@ -47,6 +47,8 @@ export interface GradientInput {
   locale: LocaleCode;
   /** Optional dye type filters (e.g., exclude metallic, pastel, etc.) */
   dyeFilters?: DyeTypeFilters;
+  /** Card theme (stored user preference; defaults dark) */
+  theme?: 'dark' | 'light';
 }
 
 export interface GradientStepResult {
@@ -323,6 +325,7 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
       verdict,
       legend,
       lang: locale,
+      theme: input.theme,
     });
 
     // One line: the card carries every step; the embed names the omissions

@@ -588,18 +588,18 @@ describe('stats.ts', () => {
       expect(leastField).toBeDefined();
     });
 
-    it('should display V4 migration stats', async () => {
+    it('should display the 5.0 adoption panel', async () => {
       const interaction = makeInteraction('admin-123', 'commands');
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const migrationField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('V4 Migration')
+      const adoptionField = data.data!.embeds![0].fields!.find(
+        (f: { name: string }) => f.name.includes('5.0 Adoption')
       );
-      expect(migrationField).toBeDefined();
-      expect(migrationField!.value).toContain('V4 Commands');
-      expect(migrationField!.value).toContain('Legacy Commands');
+      expect(adoptionField).toBeDefined();
+      expect(adoptionField!.value).toContain('New in 5.0');
+      expect(adoptionField!.value).toContain('Extractor');
     });
 
     it('should show "No commands executed yet" when no commands', async () => {
