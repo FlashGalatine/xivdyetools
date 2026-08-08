@@ -321,7 +321,10 @@
     "matchingRedmean": "RVB pondéré",
     "matchingRedmeanDesc": "Distance RVB pondérée — une approximation simple de la différence perçue.",
     "matchingDistinguish": "Pourcentage",
-    "matchingDistinguishDesc": "Distance RVB ramenée de 0 à 100. Même classement que RGB DIST, affichée en pourcentage."
+    "matchingDistinguishDesc": "Distance RVB ramenée de 0 à 100. Même classement que RGB DIST, affichée en pourcentage.",
+    "showHue": "Écart de teinte",
+    "showStain": "ID Stain",
+    "showSpectrum": "Spectre"
   },
   "colorPalette": {
     "title": "Palette de couleurs",

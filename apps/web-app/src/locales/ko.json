@@ -321,7 +321,10 @@
     "matchingRedmean": "가중 RGB",
     "matchingRedmeanDesc": "가중 RGB 거리 — 지각 차이의 간단한 근사치입니다.",
     "matchingDistinguish": "퍼센트",
-    "matchingDistinguishDesc": "RGB 거리를 0~100으로 환산한 값입니다. RGB DIST와 순위가 같으며 퍼센트로 표시됩니다."
+    "matchingDistinguishDesc": "RGB 거리를 0~100으로 환산한 값입니다. RGB DIST와 순위가 같으며 퍼센트로 표시됩니다.",
+    "showHue": "색상차",
+    "showStain": "스테인 ID",
+    "showSpectrum": "스펙트럼"
   },
   "colorPalette": {
     "title": "색상 팔레트",

@@ -321,7 +321,10 @@
     "matchingRedmean": "Weighted RGB",
     "matchingRedmeanDesc": "Weighted RGB distance — a low-cost approximation of perceived difference.",
     "matchingDistinguish": "Percentage",
-    "matchingDistinguishDesc": "RGB distance rescaled to 0-100. Same ranking as RGB DIST, shown as a percentage."
+    "matchingDistinguishDesc": "RGB distance rescaled to 0-100. Same ranking as RGB DIST, shown as a percentage.",
+    "showHue": "Hue deviance",
+    "showStain": "Stain ID",
+    "showSpectrum": "Spectrum"
   },
   "colorPalette": {
     "title": "Color Palette",

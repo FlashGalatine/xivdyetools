@@ -321,7 +321,10 @@
     "matchingRedmean": "Gewichtetes RGB",
     "matchingRedmeanDesc": "Gewichtete RGB-Distanz — eine einfache Näherung des wahrgenommenen Unterschieds.",
     "matchingDistinguish": "Prozentwert",
-    "matchingDistinguishDesc": "RGB-Distanz auf 0-100 skaliert. Gleiche Rangfolge wie RGB DIST, als Prozentwert angezeigt."
+    "matchingDistinguishDesc": "RGB-Distanz auf 0-100 skaliert. Gleiche Rangfolge wie RGB DIST, als Prozentwert angezeigt.",
+    "showHue": "Farbton-Abweichung",
+    "showStain": "Stain-ID",
+    "showSpectrum": "Spektrum"
   },
   "colorPalette": {
     "title": "Farbpalette",

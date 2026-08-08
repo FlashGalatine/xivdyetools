@@ -1239,6 +1239,9 @@ export class AccessibilityTool extends BaseComponent {
       card.showHsv = this.cardDisplayOptions.showHsv;
       card.showLab = this.cardDisplayOptions.showLab;
       card.showCmyk = this.cardDisplayOptions.showCmyk;
+      card.showHue = this.cardDisplayOptions.showHue ?? true;
+      card.showStain = this.cardDisplayOptions.showStain ?? true;
+      card.showConsolidation = this.cardDisplayOptions.showSpectrum ?? true;
       card.showDeltaE = lensActive; // 6A: ΔE is the shift the lens introduces
       card.showPrice = false; // Keep prices hidden for accessibility tool
       card.showAcquisition = false; // Keep it simple, focus on colors

@@ -321,7 +321,10 @@
     "matchingRedmean": "加重RGB",
     "matchingRedmeanDesc": "加重RGB距離。知覚差の軽量な近似です。",
     "matchingDistinguish": "パーセント",
-    "matchingDistinguishDesc": "RGB距離を0～100に換算した値。RGB DISTと同じ順位で、パーセントとして表示します。"
+    "matchingDistinguishDesc": "RGB距離を0～100に換算した値。RGB DISTと同じ順位で、パーセントとして表示します。",
+    "showHue": "色相差",
+    "showStain": "ステインID",
+    "showSpectrum": "スペクトル"
   },
   "colorPalette": {
     "title": "カラーパレット",

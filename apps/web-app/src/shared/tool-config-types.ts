@@ -323,10 +323,22 @@ export interface DisplayOptionsConfig {
   // Result metadata visibility
   /** Show market prices */
   showPrice: boolean;
-  /** Show Delta-E color distance */
+  /**
+   * @deprecated The ΔE2000 verdict is structural on the 5.0 Result Card and
+   * always renders; this flag no longer controls anything on the card.
+   */
   showDeltaE: boolean;
   /** Show acquisition source information */
   showAcquisition: boolean;
+
+  // 5.0 Ticket optional fields (persistent, default all-on).
+  // Optional so configs persisted before 5.0 stay valid — read with `?? true`.
+  /** Show the HUE OFF readout beside the verdict */
+  showHue?: boolean;
+  /** Show the STAIN readout beside the verdict */
+  showStain?: boolean;
+  /** Show the consolidated dye spectrum row */
+  showSpectrum?: boolean;
 }
 
 /**
@@ -341,6 +353,9 @@ export const DEFAULT_DISPLAY_OPTIONS: DisplayOptionsConfig = {
   showPrice: true,
   showDeltaE: true,
   showAcquisition: true,
+  showHue: true,
+  showStain: true,
+  showSpectrum: true,
 };
 
 // ============================================================================

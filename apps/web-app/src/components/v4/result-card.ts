@@ -1,17 +1,21 @@
 /**
- * XIV Dye Tools v4.0 - Result Card Component
+ * XIV Dye Tools 5.0 - Result Card Component (Ticket · Split zones)
  *
- * Unified 280px result card for displaying dye match results.
- * Used across Harmony, Gradient, Budget, Swatch, Extractor, and other tools.
+ * The confirmed 5B "Ticket" geometry from the design project's
+ * `ResultCard.dc.html`: a colour verdict above a perforation, the data below
+ * it split into a two-column numeric matrix (short uniform values inline) and
+ * a full-width text zone (long localized values wrap, never truncate).
  *
- * V4 Design Updates:
- * - Dark header background (rgba(0, 0, 0, 0.4)) with centered dye name
- * - Preview labels: "Original" / "Match"
- * - Taller preview area (100px)
- * - HSV values in Technical column
- * - Hue Deviance (°) displayed alongside Delta-E
- * - Action bar at bottom with "Select Dye" button + context menu
- * - Context menu pops UP from action bar
+ * German-proofing contract (Turn 5):
+ * - the card root carries `lang` so DE hyphenates,
+ * - the dye name uses `overflow-wrap: anywhere; hyphens: auto`,
+ * - every label is `flex-shrink: 0`, every value `min-width: 0` with
+ *   `overflow-wrap: anywhere` — nothing truncates in any language.
+ *
+ * The verdict is structural and always ΔE2000 (standing decision) — when the
+ * tool ordered its results with another method, the card derives ΔE2000
+ * itself from the original/matched pair. Optional rows are user-configurable
+ * (persistent via DisplayOptionsConfig, default all-on).
  *
  * @module components/v4/result-card
  */
@@ -23,50 +27,20 @@ import { BaseLitComponent } from './base-lit-component';
 import { ICON_CONTEXT_MENU } from '@shared/ui-icons';
 import type { Dye, DyeWithDistance } from '@xivdyetools/types';
 import type { MatchingMethod } from '@shared/tool-config-types';
-import { ColorService, getConsolidatedDyeName, getMarketItemID } from '@xivdyetools/core';
-import { LanguageService, StorageService, RouterService } from '@services/index';
+import {
+  ColorService,
+  classifyBandTier,
+  getConsolidatedDyeName,
+  getMarketItemID,
+} from '@xivdyetools/core';
+import { LanguageService, StorageService, RouterService, ThemeService } from '@services/index';
 import { ToastService } from '@services/toast-service';
 import { ModalService } from '@services/modal-service';
 import { DyeService } from '@services/dye-service-wrapper';
 
-/**
- * Human-readable labels for matching algorithms
- */
-const MATCHING_METHOD_LABELS: Record<MatchingMethod, string> = {
-  ciede2000: 'ΔE2000',
-  oklab: 'ΔEOK',
-  cie76: 'ΔE76',
-  redmean: 'REDMEAN',
-  rgb: 'RGB DIST',
-  distinguish: 'DIST %',
-};
-
-/**
- * Delta-E thresholds for each matching method.
- * Each algorithm has different scales for what constitutes excellent/good/acceptable/noticeable/poor.
- *
- * RGB uses Euclidean distance in 0-255 space (max ~442), so thresholds are much higher.
- * Perceptual algorithms (CIE76, CIEDE2000, OKLAB, HyAB, OKLCH) use similar scales:
- * - < 1: Imperceptible difference
- * - 1-3: Barely noticeable
- * - 3-5: Noticeable but acceptable
- * - 5-10: Clearly noticeable
- * - > 10: Very different colors
- */
-const DELTA_THRESHOLDS: Record<
-  MatchingMethod,
-  { excellent: number; good: number; acceptable: number; noticeable: number }
-> = {
-  ciede2000: { excellent: 1, good: 3, acceptable: 5, noticeable: 10 },
-  // dEOK lives on ~0-0.4 raw (prints dp 3)
-  oklab: { excellent: 0.01, good: 0.03, acceptable: 0.05, noticeable: 0.1 },
-  cie76: { excellent: 1, good: 3, acceptable: 5, noticeable: 10 },
-  // Redmean ~1.7x the RGB scale
-  redmean: { excellent: 25, good: 60, acceptable: 105, noticeable: 175 },
-  rgb: { excellent: 15, good: 35, acceptable: 60, noticeable: 100 },
-  // Distinguish = RGB rescaled to 0-100 (thresholds / 4.4167)
-  distinguish: { excellent: 3, good: 8, acceptable: 14, noticeable: 23 },
-};
+/** Shared 5.0 tier ramps (same as 7C Duel / 9C Ledger). */
+const TIER_RAMP_DARK = ['#5bbd68', '#8bc34a', '#ffc107', '#f4645a'] as const;
+const TIER_RAMP_LIGHT = ['#137A33', '#1C7D3A', '#B45309', '#B91C1C'] as const;
 
 /**
  * Data structure for the result card
@@ -83,8 +57,9 @@ export interface ResultCardData {
   /** Hue deviance in degrees from ideal (optional) */
   hueDeviance?: number;
   /**
-   * Color matching algorithm used for distance calculation.
-   * Used to display appropriate labels and adjust color coding thresholds.
+   * Color matching algorithm the tool used for `deltaE`. The card's verdict
+   * is always ΔE2000 — a non-ciede2000 value here makes the card derive
+   * ΔE2000 from the colour pair instead of using `deltaE`.
    */
   matchingMethod?: MatchingMethod;
   /** Market server name (optional) */
@@ -231,16 +206,11 @@ export function generateMarketErrorCode(error: unknown): string {
 }
 
 /**
- * V4 Result Card - Unified dye result display
+ * V4 Result Card - the 5.0 Ticket
  *
- * Features:
- * - Fixed 280px width for consistent grid layouts
- * - Split color preview (Original vs Match) - 100px tall
- * - Two-column details grid (Technical + Acquisition)
- * - Delta-E and Hue Deviance color coding for match quality
- * - HSV values in Technical column
- * - Action bar at bottom with Select Dye button + context menu
- * - Context menu pops UP from action bar
+ * Structural (always rendered): swatch pair, name, ΔE2000 verdict, action bar.
+ * Optional rows are gated by the show* properties, which the tools AND with
+ * the user's persisted DisplayOptionsConfig.
  *
  * @fires card-select - Emits when "Select Dye" button is clicked
  *   - `detail.dye`: The selected dye
@@ -304,55 +274,69 @@ export class ResultCard extends BaseLitComponent {
   selected: boolean = false;
 
   /**
-   * Show HEX code in technical details
+   * Show HEX code in the numeric matrix
    */
   @property({ type: Boolean, attribute: 'show-hex' })
   showHex: boolean = true;
 
   /**
-   * Show RGB values in technical details
+   * Show RGB values in the numeric matrix
    */
   @property({ type: Boolean, attribute: 'show-rgb' })
   showRgb: boolean = true;
 
   /**
-   * Show HSV values in technical details
+   * Show HSV values in the numeric matrix
    */
   @property({ type: Boolean, attribute: 'show-hsv' })
   showHsv: boolean = true;
 
   /**
-   * Show LAB values in technical details
+   * Show LAB values in the numeric matrix
    */
   @property({ type: Boolean, attribute: 'show-lab' })
-  showLab: boolean = false;
+  showLab: boolean = true;
 
   /**
-   * Show CMYK values in technical details
+   * Show CMYK values in the numeric matrix (off-doc extra; default off)
    */
   @property({ type: Boolean, attribute: 'show-cmyk' })
   showCmyk: boolean = false;
 
   /**
-   * Show Delta-E color distance in technical details
+   * Legacy gate — the ΔE2000 verdict is structural in 5.0 and always renders
+   * (when a real match pair exists). Kept so existing tool assignments and
+   * attributes don't break; it no longer controls anything.
    */
   @property({ type: Boolean, attribute: 'show-delta-e' })
   showDeltaE: boolean = true;
 
   /**
-   * Show market prices in acquisition column
+   * Show the HUE OFF readout beside the verdict (when hueDeviance provided)
+   */
+  @property({ type: Boolean, attribute: 'show-hue' })
+  showHue: boolean = true;
+
+  /**
+   * Show the STAIN readout beside the verdict
+   */
+  @property({ type: Boolean, attribute: 'show-stain' })
+  showStain: boolean = true;
+
+  /**
+   * Show market price row in the text zone
    */
   @property({ type: Boolean, attribute: 'show-price' })
   showPrice: boolean = true;
 
   /**
-   * Show acquisition source information
+   * Show acquisition source + vendor cost rows in the text zone
    */
   @property({ type: Boolean, attribute: 'show-acquisition' })
   showAcquisition: boolean = true;
 
   /**
-   * Show consolidated dye spectrum membership in acquisition column
+   * Show consolidated dye spectrum row in the text zone
    */
   @property({ type: Boolean, attribute: 'show-consolidation' })
   showConsolidation: boolean = true;
@@ -377,226 +361,262 @@ export class ResultCard extends BaseLitComponent {
         width: var(--v4-result-card-width, 280px);
       }
 
-      .result-card {
-        background: linear-gradient(
-          to bottom,
-          var(--theme-card-background, #2a2a2a),
-          var(--v4-card-gradient-end, #151515)
-        );
+      .ticket {
+        display: flex;
+        flex-direction: column;
+        background: var(--theme-card-background, #17171a);
         border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
         border-radius: 12px;
         /* overflow: visible to allow context menu submenus to escape */
         overflow: visible;
+        position: relative;
         transition:
           transform var(--v4-transition-fast, 150ms),
           box-shadow var(--v4-transition-fast, 150ms),
           border-color var(--v4-transition-fast, 150ms);
-        position: relative;
       }
 
-      /* Clip color preview area for rounded corners */
-      .color-preview {
-        overflow: hidden;
-      }
-
-      /* Clip header for rounded top corners */
-      .card-header {
-        border-radius: 11px 11px 0 0;
-      }
-
-      .result-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      .ticket:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
         border-color: var(--theme-text-muted, #888888);
       }
 
-      :host([selected]) .result-card {
+      :host([selected]) .ticket {
         border-color: var(--theme-primary, #d4af37);
         box-shadow: 0 0 0 2px var(--theme-primary, #d4af37);
       }
 
-      /* Header - Dark background, centered name */
-      .card-header {
+      /* ---- verdict stub ------------------------------------------------ */
+
+      .head {
+        padding: 12px 12px 12px;
+      }
+
+      .swatches {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 10px 16px;
-        background: rgba(0, 0, 0, 0.4);
-        border-bottom: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+
+      .swatch {
+        flex: 1;
+        height: 52px;
+        border-radius: 8px;
       }
 
       .dye-name {
         margin: 0;
         font-family: 'Space Grotesk', sans-serif;
-        font-size: 14px;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        color: var(--theme-text, #e0e0e0);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-align: center;
-      }
-
-      /* Color Preview - 100px tall */
-      .color-preview {
-        display: flex;
-        height: 100px;
-        width: 100%;
-        position: relative;
-        flex-shrink: 0;
-      }
-
-      .preview-half {
-        flex: 1;
-        height: 100%;
-        position: relative;
-      }
-
-      .preview-label {
-        position: absolute;
-        bottom: 4px;
-        width: 100%;
-        text-align: center;
-        font-size: 9px;
-        text-transform: uppercase;
-        color: rgba(255, 255, 255, 0.8);
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-        pointer-events: none;
-      }
-
-      /* Details Grid */
-      .details-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        padding: 12px;
-        background: linear-gradient(
-          to bottom,
-          var(--theme-card-background, #2a2a2a),
-          var(--v4-card-gradient-end, #151515)
-        );
-      }
-
-      .detail-column {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .column-header {
-        font-size: 10px;
+        font-size: 15px;
         font-weight: 600;
-        text-transform: uppercase;
-        color: var(--theme-text-muted, #888888);
-        margin-bottom: 4px;
-        border-bottom: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
-        padding-bottom: 2px;
+        line-height: 1.2;
+        color: var(--theme-text, #ececee);
+        min-height: 36px;
+        overflow-wrap: anywhere;
+        hyphens: auto;
       }
 
-      .detail-row {
+      .verdict {
         display: flex;
+        align-items: flex-end;
         justify-content: space-between;
-        align-items: baseline;
-        font-size: 11px;
+        gap: 10px;
+        margin-top: 6px;
       }
 
-      .detail-label {
-        color: var(--theme-text-muted, #888888);
+      .de-num {
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 700;
+        font-size: 26px;
+        line-height: 0.92;
+        letter-spacing: -0.5px;
       }
 
-      .detail-value {
-        font-family: 'Consolas', 'Monaco', monospace;
-        color: var(--theme-text, #e0e0e0);
+      .metric-label {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 8.5px;
+        letter-spacing: 0.5px;
+        color: var(--theme-text-muted, #86868c);
+        margin-top: 4px;
+      }
+
+      .readout {
         text-align: right;
       }
 
-      .detail-value.large {
+      .readout-val {
+        font-family: 'Fragment Mono', monospace;
         font-size: 13px;
-        font-weight: 600;
-        color: var(--theme-primary, #d4af37);
-        margin-left: auto; /* Right-align when no label present */
+        color: var(--theme-text, #c6c6ca);
       }
 
-      /* Delta-E color coding */
-      .delta-excellent {
-        color: #4caf50;
-      }
-      .delta-good {
-        color: #8bc34a;
-      }
-      .delta-acceptable {
-        color: #ffc107;
-      }
-      .delta-noticeable {
-        color: #ff9800;
-      }
-      .delta-poor {
-        color: #f44336;
+      /* ---- perforation ------------------------------------------------- */
+
+      .perf {
+        position: relative;
+        height: 1px;
+        border-top: 1px dashed var(--theme-text-muted, rgba(255, 255, 255, 0.3));
+        opacity: 0.6;
       }
 
-      /* Market error code styling */
+      .perf .notch {
+        position: absolute;
+        top: -7px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--theme-background, #0b0b0c);
+      }
+
+      .perf .notch.left {
+        left: -8px;
+      }
+
+      .perf .notch.right {
+        right: -8px;
+      }
+
+      /* ---- numeric matrix ---------------------------------------------- */
+
+      .matrix {
+        padding: 12px 12px 10px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px 18px;
+      }
+
+      .cell {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .cell-label {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 10px;
+        color: var(--theme-text-muted, #86868c);
+        flex-shrink: 0;
+      }
+
+      .cell-val {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 11.5px;
+        line-height: 1.3;
+        color: var(--theme-text, #c6c6ca);
+        min-width: 0;
+        text-align: right;
+        overflow-wrap: anywhere;
+      }
+
+      /* ---- text zone ---------------------------------------------------- */
+
+      .zone-rule {
+        margin: 0 12px;
+        border-top: 1px solid var(--theme-border, rgba(255, 255, 255, 0.07));
+      }
+
+      .zone {
+        padding: 10px 12px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .zrow {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .zlabel {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 10px;
+        color: var(--theme-text-muted, #86868c);
+        width: 62px;
+        flex-shrink: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .zlabel.latin {
+        text-transform: uppercase;
+      }
+
+      .zval {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 11.5px;
+        line-height: 1.3;
+        color: var(--theme-text, #c6c6ca);
+        text-align: right;
+        margin-left: auto;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .zrow.market {
+        margin-top: 1px;
+        padding-top: 7px;
+        border-top: 1px dashed var(--theme-border, rgba(255, 255, 255, 0.12));
+      }
+
       .market-error {
-        color: #f44336;
-        font-size: 11px;
-        font-weight: 500;
+        color: #f4645a;
         letter-spacing: 0.5px;
       }
 
-      /* Action Bar at Bottom */
-      .card-actions {
-        padding: 8px;
-        display: flex;
-        justify-content: center;
-        border-top: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
-        background: rgba(0, 0, 0, 0.2);
-      }
+      /* ---- action bar ---------------------------------------------------- */
 
-      .action-row {
+      .card-actions {
         display: flex;
-        gap: 8px;
-        width: 100%;
-        align-items: center;
+        align-items: stretch;
+        border-top: 1px solid var(--theme-border, rgba(255, 255, 255, 0.07));
       }
 
       .primary-action-btn {
         flex: 1;
-        text-align: center;
-        padding: 8px;
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--theme-card-background, #121212);
-        background: var(--theme-primary, #d4af37);
+        min-width: 0;
+        height: 46px;
         border: none;
-        border-radius: 4px;
+        border-radius: 0 0 0 11px;
         cursor: pointer;
-        transition: background-color var(--v4-transition-fast, 150ms);
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 600;
+        font-size: 12.5px;
+        line-height: 1.15;
+        padding: 0 6px;
+        background: var(--theme-primary, #d4af37);
+        color: var(--theme-card-background, #121212);
+        transition: filter var(--v4-transition-fast, 150ms);
       }
 
       .primary-action-btn:hover {
-        background: var(--theme-accent-hover, #f0c040);
+        filter: brightness(1.12);
       }
 
       .primary-action-btn:focus-visible {
         outline: 2px solid var(--theme-text, #e0e0e0);
-        outline-offset: 2px;
+        outline-offset: -2px;
       }
 
       /* Context Menu Container */
       .context-menu-container {
         position: relative;
-        display: inline-block;
+        display: flex;
       }
 
       .menu-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 32px;
-        height: 32px;
-        padding: 6px;
-        border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
-        border-radius: 4px;
+        width: 46px;
+        height: 46px;
+        padding: 0;
+        border: none;
+        border-left: 1px solid var(--theme-border, rgba(255, 255, 255, 0.07));
+        border-radius: 0 0 11px 0;
         background: transparent;
         color: var(--theme-text-muted, #888888);
         cursor: pointer;
@@ -605,14 +625,13 @@ export class ResultCard extends BaseLitComponent {
 
       .menu-btn:hover,
       .menu-btn.active {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(128, 128, 128, 0.15);
         color: var(--theme-text, #e0e0e0);
-        border-color: var(--theme-text-muted, #888888);
       }
 
       .menu-btn:focus-visible {
         outline: 2px solid var(--theme-primary, #d4af37);
-        outline-offset: 2px;
+        outline-offset: -2px;
       }
 
       .menu-btn svg {
@@ -818,14 +837,14 @@ export class ResultCard extends BaseLitComponent {
 
       /* Reduced motion */
       @media (prefers-reduced-motion: reduce) {
-        .result-card,
+        .ticket,
         .menu-btn,
         .context-menu,
         .slot-picker-menu,
         .primary-action-btn {
           transition: none;
         }
-        .result-card:hover {
+        .ticket:hover {
           transform: none;
         }
       }
@@ -833,28 +852,35 @@ export class ResultCard extends BaseLitComponent {
   ];
 
   /**
-   * Get Delta-E color class based on value and matching method.
-   * Uses algorithm-specific thresholds since RGB has different scale than perceptual methods.
+   * The structural verdict value: always ΔE2000. Uses the tool-provided
+   * distance when it already is ΔE2000; derives it from the colour pair
+   * otherwise. Undefined when the card shows a plain dye (no real match pair).
    */
-  private getDeltaEClass(deltaE?: number, method?: MatchingMethod): string {
-    if (deltaE === undefined) return '';
-
-    // Use method-specific thresholds, fallback to OKLAB thresholds
-    const thresholds = DELTA_THRESHOLDS[method ?? 'oklab'];
-
-    if (deltaE <= thresholds.excellent) return 'delta-excellent';
-    if (deltaE <= thresholds.good) return 'delta-good';
-    if (deltaE <= thresholds.acceptable) return 'delta-acceptable';
-    if (deltaE <= thresholds.noticeable) return 'delta-noticeable';
-    return 'delta-poor';
+  private getDeltaE2000(): number | undefined {
+    if (!this.data) return undefined;
+    const { deltaE, matchingMethod, originalColor, matchedColor } = this.data;
+    if (deltaE !== undefined && (matchingMethod === undefined || matchingMethod === 'ciede2000')) {
+      return deltaE;
+    }
+    const hasPair =
+      Boolean(originalColor) &&
+      Boolean(matchedColor) &&
+      originalColor.toLowerCase() !== matchedColor.toLowerCase();
+    if (deltaE === undefined && !hasPair) return undefined;
+    try {
+      return ColorService.getDistanceForMethod(originalColor, matchedColor, 'ciede2000');
+    } catch {
+      return undefined;
+    }
   }
 
   /**
-   * Get the display label for a matching method
+   * Tier colour for the verdict, from the calibrated MATCH bands
    */
-  private getMatchingMethodLabel(method?: MatchingMethod): string {
-    if (!method) return 'ΔE'; // Generic fallback
-    return MATCHING_METHOD_LABELS[method];
+  private getTierColor(deltaE2000: number): string {
+    const ramp = ThemeService.isDarkMode() ? TIER_RAMP_DARK : TIER_RAMP_LIGHT;
+    const tier = classifyBandTier(deltaE2000, 'ciede2000', 'match');
+    return ramp[Math.min(tier, ramp.length - 1)];
   }
 
   /**
@@ -1322,195 +1348,86 @@ export class ResultCard extends BaseLitComponent {
     document.removeEventListener('keydown', this.handleKeyDown);
   }
 
+  /** One numeric-matrix cell */
+  private matrixCell(label: string, value: string): TemplateResult {
+    return html`
+      <div class="cell">
+        <span class="cell-label">${label}</span>
+        <span class="cell-val">${value}</span>
+      </div>
+    `;
+  }
+
   protected override render(): TemplateResult {
     if (!this.data) {
-      return html`<div class="result-card">No data</div>`;
+      return html`<div class="ticket">No data</div>`;
     }
 
-    const {
-      dye,
-      originalColor,
-      matchedColor,
-      deltaE,
-      hueDeviance,
-      marketServer,
-      price,
-      vendorCost,
-    } = this.data;
+    const { dye, originalColor, matchedColor, hueDeviance, marketServer, price } = this.data;
 
-    // Get HSV values from dye (may be undefined for some dye types)
+    const locale = LanguageService.getCurrentLocale();
+    const isLatin = locale === 'en' || locale === 'de' || locale === 'fr';
+    const dyeName = LanguageService.getDyeName(dye.id) || dye.name;
     const hsv = dye.hsv;
+    const deltaE2000 = this.getDeltaE2000();
+    const stain = dye.stainID;
+    const marketLabel = marketServer
+      ? `${LanguageService.t('common.market')} · ${marketServer}`
+      : LanguageService.t('common.market');
 
     return html`
-      <article
-        class="result-card"
-        role="article"
-        aria-label="Dye result: ${LanguageService.getDyeName(dye.id) || dye.name}"
-      >
-        <!-- Header - Dark bg, centered name -->
-        <header class="card-header">
-          <h3 class="dye-name">${LanguageService.getDyeName(dye.id) || dye.name}</h3>
-        </header>
-
-        <!-- Color Preview - 100px tall -->
-        <div class="color-preview">
-          <div class="preview-half" style="background-color: ${originalColor}">
-            <span class="preview-label">${LanguageService.t('common.original')}</span>
+      <article class="ticket" lang="${locale}" role="article" aria-label="Dye result: ${dyeName}">
+        <!-- Verdict stub -->
+        <div class="head">
+          <div class="swatches">
+            ${
+              originalColor && originalColor.toLowerCase() !== matchedColor.toLowerCase()
+                ? html`
+                    <div
+                      class="swatch"
+                      style="background: ${originalColor}"
+                      title="${LanguageService.t('common.original')}"
+                    ></div>
+                  `
+                : nothing
+            }
+            <div class="swatch" style="background: ${matchedColor}" title="${dyeName}"></div>
           </div>
-          <div class="preview-half" style="background-color: ${matchedColor}">
-            <span class="preview-label">${LanguageService.t('common.match')}</span>
-          </div>
-        </div>
-
-        <!-- Details Grid -->
-        <div class="details-grid">
-          <!-- Technical Column -->
-          <div class="detail-column">
-            <div class="column-header">${LanguageService.t('common.technical')}</div>
-            ${
-              this.showDeltaE
-                ? html`
-                    <div class="detail-row">
-                      <span
-                        class="detail-label"
-                        title="${
-                          this.data?.matchingMethod
-                            ? `Distance calculated using ${this.getMatchingMethodLabel(this.data.matchingMethod)} algorithm`
-                            : 'Color distance'
-                        }"
-                        >${this.getMatchingMethodLabel(this.data?.matchingMethod)}</span
-                      >
-                      <span
-                        class="detail-value ${this.getDeltaEClass(deltaE, this.data?.matchingMethod)}"
-                      >
-                        ${deltaE !== undefined ? deltaE.toFixed(2) : '—'}
-                      </span>
-                    </div>
-                  `
-                : nothing
-            }
-            ${
-              this.showDeltaE && hueDeviance !== undefined
-                ? html`
-                    <div class="detail-row">
-                      <span class="detail-label">Hue°</span>
-                      <span class="detail-value">${hueDeviance.toFixed(1)}°</span>
-                    </div>
-                  `
-                : nothing
-            }
-            ${
-              this.showHex
-                ? html`
-                    <div class="detail-row">
-                      <span class="detail-label">HEX</span>
-                      <span class="detail-value">${matchedColor.toUpperCase()}</span>
-                    </div>
-                  `
-                : nothing
-            }
-            ${
-              this.showRgb
-                ? html`
-                    <div class="detail-row">
-                      <span class="detail-label">RGB</span>
-                      <span class="detail-value">${dye.rgb.r}, ${dye.rgb.g}, ${dye.rgb.b}</span>
-                    </div>
-                  `
-                : nothing
-            }
-            ${
-              this.showHsv && hsv
-                ? html`
-                    <div class="detail-row">
-                      <span class="detail-label">HSV</span>
-                      <span class="detail-value"
-                        >${Math.round(hsv.h)}°, ${Math.round(hsv.s)}%, ${Math.round(hsv.v)}%</span
-                      >
-                    </div>
-                  `
-                : nothing
-            }
-            ${
-              this.showLab
-                ? html`
-                    <div class="detail-row">
-                      <span class="detail-label">LAB</span>
-                      <span class="detail-value">${this.formatLabValues()}</span>
-                    </div>
-                  `
-                : nothing
-            }
-            ${
-              this.showCmyk
-                ? html`
-                    <div class="detail-row">
-                      <span class="detail-label">CMYK</span>
-                      <span class="detail-value">${this.formatCmykValues()}</span>
-                    </div>
-                  `
-                : nothing
-            }
-          </div>
-
-          <!-- Acquisition Column - only show if acquisition, price, or consolidation enabled -->
+          <h3 class="dye-name">${dyeName}</h3>
           ${
-            this.showAcquisition || this.showPrice || this.showConsolidation
+            deltaE2000 !== undefined || (this.showStain && stain != null)
               ? html`
-                  <div class="detail-column">
-                    <div class="column-header">${LanguageService.t('common.acquisition')}</div>
+                  <div class="verdict">
                     ${
-                      this.showConsolidation
+                      deltaE2000 !== undefined
                         ? html`
-                            <div class="detail-row">
-                              <span class="detail-label"
-                                >${LanguageService.t('common.spectrum')}</span
-                              >
-                              <span class="detail-value">${this.formatConsolidation()}</span>
+                            <div>
+                              <div class="de-num" style="color: ${this.getTierColor(deltaE2000)}">
+                                ${deltaE2000.toFixed(2)}
+                              </div>
+                              <div class="metric-label">ΔE2000</div>
                             </div>
                           `
                         : nothing
                     }
                     ${
-                      this.showAcquisition
+                      this.showHue && hueDeviance !== undefined
                         ? html`
-                            <div class="detail-row">
-                              <span class="detail-label"
-                                >${LanguageService.t('common.source')}</span
-                              >
-                              <span class="detail-value"
-                                >${
-                                  dye.acquisition
-                                    ? LanguageService.getAcquisition(dye.acquisition)
-                                    : '—'
-                                }</span
-                              >
-                            </div>
-                            <div class="detail-row">
-                              <span class="detail-label">${LanguageService.t('common.cost')}</span>
-                              <span class="detail-value"
-                                >${this.formatVendorCost(vendorCost, dye.currency)}</span
-                              >
+                            <div class="readout">
+                              <div class="readout-val">${hueDeviance.toFixed(1)}°</div>
+                              <div class="metric-label">
+                                ${LanguageService.t('resultCard.hueOff')}
+                              </div>
                             </div>
                           `
                         : nothing
                     }
                     ${
-                      this.showPrice
+                      this.showStain && stain != null
                         ? html`
-                            <div class="detail-row">
-                              <span class="detail-label"
-                                >${LanguageService.t('common.market')}</span
-                              >
-                              <span class="detail-value">${marketServer ?? 'N/A'}</span>
-                            </div>
-                            <div class="detail-row">
-                              <span
-                                class="detail-value large ${
-                                  this.data?.marketError ? 'market-error' : ''
-                                }"
-                                >${this.formatPrice(price, this.data?.marketError)}</span
-                              >
+                            <div class="readout">
+                              <div class="readout-val">${stain}</div>
+                              <div class="metric-label">STAIN</div>
                             </div>
                           `
                         : nothing
@@ -1521,175 +1438,270 @@ export class ResultCard extends BaseLitComponent {
           }
         </div>
 
+        <!-- Perforation -->
+        <div class="perf" aria-hidden="true">
+          <span class="notch left"></span>
+          <span class="notch right"></span>
+        </div>
+
+        <!-- Numeric matrix -->
+        ${
+          this.showHex || this.showRgb || this.showHsv || this.showLab || this.showCmyk
+            ? html`
+                <div class="matrix">
+                  ${this.showHex ? this.matrixCell('HEX', matchedColor.toUpperCase()) : nothing}
+                  ${
+                    this.showRgb
+                      ? this.matrixCell('RGB', `${dye.rgb.r}, ${dye.rgb.g}, ${dye.rgb.b}`)
+                      : nothing
+                  }
+                  ${
+                    this.showHsv && hsv
+                      ? this.matrixCell(
+                          'HSV',
+                          `${Math.round(hsv.h)}°, ${Math.round(hsv.s)}%, ${Math.round(hsv.v)}%`
+                        )
+                      : nothing
+                  }
+                  ${this.showLab ? this.matrixCell('LAB', this.formatLabValues()) : nothing}
+                  ${this.showCmyk ? this.matrixCell('CMYK', this.formatCmykValues()) : nothing}
+                </div>
+              `
+            : nothing
+        }
+
+        <!-- Text zone: spectrum / source / cost, market after a dashed rule -->
+        ${
+          this.showConsolidation || this.showAcquisition || this.showPrice
+            ? html`
+                <div class="zone-rule"></div>
+                <div class="zone">
+                  ${
+                    this.showConsolidation
+                      ? html`
+                          <div class="zrow">
+                            <span
+                              class="zlabel ${isLatin ? 'latin' : ''}"
+                              title="${LanguageService.t('common.spectrum')}"
+                              >${LanguageService.t('resultCard.spectrumShort')}</span
+                            >
+                            <span class="zval">${this.formatConsolidation()}</span>
+                          </div>
+                        `
+                      : nothing
+                  }
+                  ${
+                    this.showAcquisition
+                      ? html`
+                          <div class="zrow">
+                            <span
+                              class="zlabel ${isLatin ? 'latin' : ''}"
+                              title="${LanguageService.t('common.acquisition')}"
+                              >${LanguageService.t('resultCard.acquisitionShort')}</span
+                            >
+                            <span class="zval"
+                              >${
+                                dye.acquisition
+                                  ? LanguageService.getAcquisition(dye.acquisition)
+                                  : '—'
+                              }</span
+                            >
+                          </div>
+                          <div class="zrow">
+                            <span class="zlabel ${isLatin ? 'latin' : ''}"
+                              >${LanguageService.t('common.cost')}</span
+                            >
+                            <span class="zval"
+                              >${this.formatVendorCost(this.data.vendorCost, dye.currency)}</span
+                            >
+                          </div>
+                        `
+                      : nothing
+                  }
+                  ${
+                    this.showPrice
+                      ? html`
+                          <div class="zrow market">
+                            <span class="zlabel ${isLatin ? 'latin' : ''}">${marketLabel}</span>
+                            <span class="zval ${this.data.marketError ? 'market-error' : ''}"
+                              >${this.formatPrice(price, this.data.marketError)}</span
+                            >
+                          </div>
+                        `
+                      : nothing
+                  }
+                </div>
+              `
+            : nothing
+        }
+
         <!-- Action Bar at Bottom -->
         ${
           this.showActions
             ? html`
                 <div class="card-actions">
-                  <div class="action-row">
-                    ${
-                      this.showSlotPicker
-                        ? html`
-                            <div class="slot-picker-container">
-                              <button
-                                class="primary-action-btn"
-                                type="button"
-                                aria-haspopup="true"
-                                aria-expanded=${this.slotMenuOpen}
-                                @click=${this.handleSelectClick}
-                              >
-                                ${this.primaryActionLabel}
-                              </button>
-                              <!-- Slot Picker Menu - Pops UP -->
-                              <div
-                                class="slot-picker-menu ${this.slotMenuOpen ? 'open' : ''}"
-                                role="menu"
-                                aria-hidden=${!this.slotMenuOpen}
-                              >
-                                <button
-                                  class="slot-picker-item"
-                                  role="menuitem"
-                                  @click=${() => this.handleSlotAction(1)}
-                                >
-                                  ${LanguageService.t('common.replace')}
-                                  ${LanguageService.t('common.slot')} 1
-                                </button>
-                                <button
-                                  class="slot-picker-item"
-                                  role="menuitem"
-                                  @click=${() => this.handleSlotAction(2)}
-                                >
-                                  ${LanguageService.t('common.replace')}
-                                  ${LanguageService.t('common.slot')} 2
-                                </button>
-                              </div>
-                            </div>
-                          `
-                        : html`
+                  ${
+                    this.showSlotPicker
+                      ? html`
+                          <div class="slot-picker-container">
                             <button
                               class="primary-action-btn"
                               type="button"
+                              aria-haspopup="true"
+                              aria-expanded=${this.slotMenuOpen}
                               @click=${this.handleSelectClick}
                             >
                               ${this.primaryActionLabel}
                             </button>
-                          `
-                    }
-                    <div class="context-menu-container">
-                      <button
-                        class="menu-btn ${this.menuOpen ? 'active' : ''}"
-                        type="button"
-                        aria-label="${LanguageService.t('aria.moreActions')}"
-                        aria-haspopup="true"
-                        aria-expanded=${this.menuOpen}
-                        @click=${this.handleMenuClick}
-                      >
-                        ${unsafeHTML(ICON_CONTEXT_MENU)}
-                      </button>
-                      <!-- Context Menu - Pops UP with nested submenus -->
-                      <div
-                        class="context-menu ${this.menuOpen ? 'open' : ''}"
-                        role="menu"
-                        aria-hidden=${!this.menuOpen}
-                      >
-                        <!-- Inspect Dye in... -->
-                        <div class="menu-item has-submenu" role="menuitem" tabindex="0">
-                          ${LanguageService.t('resultCard.inspectDyeIn')}
-                          <div class="submenu" role="menu">
-                            <button
-                              class="menu-item"
-                              role="menuitem"
-                              @click=${() => this.handleMenuAction('inspect-harmony')}
+                            <!-- Slot Picker Menu - Pops UP -->
+                            <div
+                              class="slot-picker-menu ${this.slotMenuOpen ? 'open' : ''}"
+                              role="menu"
+                              aria-hidden=${!this.slotMenuOpen}
                             >
-                              ${LanguageService.t('resultCard.tools.harmony')}
-                            </button>
-                            <button
-                              class="menu-item"
-                              role="menuitem"
-                              @click=${() => this.handleMenuAction('inspect-budget')}
-                            >
-                              ${LanguageService.t('resultCard.tools.budget')}
-                            </button>
-                            <button
-                              class="menu-item"
-                              role="menuitem"
-                              @click=${() => this.handleMenuAction('inspect-accessibility')}
-                            >
-                              ${LanguageService.t('resultCard.tools.accessibility')}
-                            </button>
-                            <button
-                              class="menu-item"
-                              role="menuitem"
-                              @click=${() => this.handleMenuAction('inspect-comparison')}
-                            >
-                              ${LanguageService.t('resultCard.tools.comparison')}
-                            </button>
-                            <button
-                              class="menu-item"
-                              role="menuitem"
-                              @click=${() => this.handleMenuAction('inspect-swatch')}
-                            >
-                              ${LanguageService.t('resultCard.tools.swatch')}
-                            </button>
+                              <button
+                                class="slot-picker-item"
+                                role="menuitem"
+                                @click=${() => this.handleSlotAction(1)}
+                              >
+                                ${LanguageService.t('common.replace')}
+                                ${LanguageService.t('common.slot')} 1
+                              </button>
+                              <button
+                                class="slot-picker-item"
+                                role="menuitem"
+                                @click=${() => this.handleSlotAction(2)}
+                              >
+                                ${LanguageService.t('common.replace')}
+                                ${LanguageService.t('common.slot')} 2
+                              </button>
+                            </div>
                           </div>
+                        `
+                      : html`
+                          <button
+                            class="primary-action-btn"
+                            type="button"
+                            @click=${this.handleSelectClick}
+                          >
+                            ${this.primaryActionLabel}
+                          </button>
+                        `
+                  }
+                  <div class="context-menu-container">
+                    <button
+                      class="menu-btn ${this.menuOpen ? 'active' : ''}"
+                      type="button"
+                      aria-label="${LanguageService.t('aria.moreActions')}"
+                      aria-haspopup="true"
+                      aria-expanded=${this.menuOpen}
+                      @click=${this.handleMenuClick}
+                    >
+                      ${unsafeHTML(ICON_CONTEXT_MENU)}
+                    </button>
+                    <!-- Context Menu - Pops UP with nested submenus -->
+                    <div
+                      class="context-menu ${this.menuOpen ? 'open' : ''}"
+                      role="menu"
+                      aria-hidden=${!this.menuOpen}
+                    >
+                      <!-- Inspect Dye in... -->
+                      <div class="menu-item has-submenu" role="menuitem" tabindex="0">
+                        ${LanguageService.t('resultCard.inspectDyeIn')}
+                        <div class="submenu" role="menu">
+                          <button
+                            class="menu-item"
+                            role="menuitem"
+                            @click=${() => this.handleMenuAction('inspect-harmony')}
+                          >
+                            ${LanguageService.t('resultCard.tools.harmony')}
+                          </button>
+                          <button
+                            class="menu-item"
+                            role="menuitem"
+                            @click=${() => this.handleMenuAction('inspect-budget')}
+                          >
+                            ${LanguageService.t('resultCard.tools.budget')}
+                          </button>
+                          <button
+                            class="menu-item"
+                            role="menuitem"
+                            @click=${() => this.handleMenuAction('inspect-accessibility')}
+                          >
+                            ${LanguageService.t('resultCard.tools.accessibility')}
+                          </button>
+                          <button
+                            class="menu-item"
+                            role="menuitem"
+                            @click=${() => this.handleMenuAction('inspect-comparison')}
+                          >
+                            ${LanguageService.t('resultCard.tools.comparison')}
+                          </button>
+                          <button
+                            class="menu-item"
+                            role="menuitem"
+                            @click=${() => this.handleMenuAction('inspect-swatch')}
+                          >
+                            ${LanguageService.t('resultCard.tools.swatch')}
+                          </button>
                         </div>
+                      </div>
 
-                        <!-- Transform Dye in... -->
-                        <div class="menu-item has-submenu" role="menuitem" tabindex="0">
-                          ${LanguageService.t('resultCard.transformDyeIn')}
-                          <div class="submenu" role="menu">
-                            <button
-                              class="menu-item"
-                              role="menuitem"
-                              @click=${() => this.handleMenuAction('transform-gradient')}
-                            >
-                              ${LanguageService.t('resultCard.tools.gradient')}
-                            </button>
-                            <button
-                              class="menu-item"
-                              role="menuitem"
-                              @click=${() => this.handleMenuAction('transform-mixer')}
-                            >
-                              ${LanguageService.t('resultCard.tools.mixer')}
-                            </button>
-                          </div>
+                      <!-- Transform Dye in... -->
+                      <div class="menu-item has-submenu" role="menuitem" tabindex="0">
+                        ${LanguageService.t('resultCard.transformDyeIn')}
+                        <div class="submenu" role="menu">
+                          <button
+                            class="menu-item"
+                            role="menuitem"
+                            @click=${() => this.handleMenuAction('transform-gradient')}
+                          >
+                            ${LanguageService.t('resultCard.tools.gradient')}
+                          </button>
+                          <button
+                            class="menu-item"
+                            role="menuitem"
+                            @click=${() => this.handleMenuAction('transform-mixer')}
+                          >
+                            ${LanguageService.t('resultCard.tools.mixer')}
+                          </button>
                         </div>
+                      </div>
 
-                        <div class="menu-divider"></div>
+                      <div class="menu-divider"></div>
 
-                        <!-- Open in browser... -->
-                        <div class="menu-item has-submenu" role="menuitem" tabindex="0">
-                          ${LanguageService.t('resultCard.openInBrowser')}
-                          <div class="submenu" role="menu">
-                            <button
-                              class="menu-item"
-                              role="menuitem"
-                              @click=${() => this.handleMenuAction('external-universalis')}
-                            >
-                              Universalis
-                            </button>
-                            <button
-                              class="menu-item"
-                              role="menuitem"
-                              @click=${() => this.handleMenuAction('external-garlandtools')}
-                            >
-                              GarlandTools
-                            </button>
-                            <button
-                              class="menu-item"
-                              role="menuitem"
-                              @click=${() => this.handleMenuAction('external-teamcraft')}
-                            >
-                              TeamCraft
-                            </button>
-                            <button
-                              class="menu-item"
-                              role="menuitem"
-                              @click=${() => this.handleMenuAction('external-saddlebag')}
-                            >
-                              Saddlebag Exchange
-                            </button>
-                          </div>
+                      <!-- Open in browser... -->
+                      <div class="menu-item has-submenu" role="menuitem" tabindex="0">
+                        ${LanguageService.t('resultCard.openInBrowser')}
+                        <div class="submenu" role="menu">
+                          <button
+                            class="menu-item"
+                            role="menuitem"
+                            @click=${() => this.handleMenuAction('external-universalis')}
+                          >
+                            Universalis
+                          </button>
+                          <button
+                            class="menu-item"
+                            role="menuitem"
+                            @click=${() => this.handleMenuAction('external-garlandtools')}
+                          >
+                            GarlandTools
+                          </button>
+                          <button
+                            class="menu-item"
+                            role="menuitem"
+                            @click=${() => this.handleMenuAction('external-teamcraft')}
+                          >
+                            TeamCraft
+                          </button>
+                          <button
+                            class="menu-item"
+                            role="menuitem"
+                            @click=${() => this.handleMenuAction('external-saddlebag')}
+                          >
+                            Saddlebag Exchange
+                          </button>
                         </div>
                       </div>
                     </div>

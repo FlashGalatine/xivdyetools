@@ -913,6 +913,9 @@ export class ConfigSidebar extends BaseLitComponent {
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+          .showHue=${this.globalDisplayOptions.showHue ?? true}
+          .showStain=${this.globalDisplayOptions.showStain ?? true}
+          .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('harmony', e)}
@@ -1022,6 +1025,9 @@ export class ConfigSidebar extends BaseLitComponent {
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+          .showHue=${this.globalDisplayOptions.showHue ?? true}
+          .showStain=${this.globalDisplayOptions.showStain ?? true}
+          .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('extractor', e)}
@@ -1122,6 +1128,9 @@ export class ConfigSidebar extends BaseLitComponent {
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+          .showHue=${this.globalDisplayOptions.showHue ?? true}
+          .showStain=${this.globalDisplayOptions.showStain ?? true}
+          .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
           .visibleGroups=${['colorFormats']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('accessibility', e)}
@@ -1145,6 +1154,9 @@ export class ConfigSidebar extends BaseLitComponent {
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+          .showHue=${this.globalDisplayOptions.showHue ?? true}
+          .showStain=${this.globalDisplayOptions.showStain ?? true}
+          .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('comparison', e)}
@@ -1203,6 +1215,9 @@ export class ConfigSidebar extends BaseLitComponent {
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+          .showHue=${this.globalDisplayOptions.showHue ?? true}
+          .showStain=${this.globalDisplayOptions.showStain ?? true}
+          .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('gradient', e)}
@@ -1275,6 +1290,9 @@ export class ConfigSidebar extends BaseLitComponent {
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+          .showHue=${this.globalDisplayOptions.showHue ?? true}
+          .showStain=${this.globalDisplayOptions.showStain ?? true}
+          .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('mixer', e)}
@@ -1468,6 +1486,9 @@ export class ConfigSidebar extends BaseLitComponent {
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+          .showHue=${this.globalDisplayOptions.showHue ?? true}
+          .showStain=${this.globalDisplayOptions.showStain ?? true}
+          .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('harmony', e)}
@@ -1600,6 +1621,9 @@ export class ConfigSidebar extends BaseLitComponent {
           .showPrice=${this.globalDisplayOptions.showPrice}
           .showDeltaE=${this.globalDisplayOptions.showDeltaE}
           .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+          .showHue=${this.globalDisplayOptions.showHue ?? true}
+          .showStain=${this.globalDisplayOptions.showStain ?? true}
+          .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
           .visibleGroups=${['colorFormats', 'resultMetadata']}
           @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
             this.handleDisplayOptionsChange('budget', e)}
@@ -1711,6 +1735,9 @@ export class ConfigSidebar extends BaseLitComponent {
             .showPrice=${this.globalDisplayOptions.showPrice}
             .showDeltaE=${this.globalDisplayOptions.showDeltaE}
             .showAcquisition=${this.globalDisplayOptions.showAcquisition}
+            .showHue=${this.globalDisplayOptions.showHue ?? true}
+            .showStain=${this.globalDisplayOptions.showStain ?? true}
+            .showSpectrum=${this.globalDisplayOptions.showSpectrum ?? true}
             .visibleGroups=${['colorFormats', 'resultMetadata']}
             @display-options-change=${(e: CustomEvent<DisplayOptionsChangeDetail>) =>
               this.handleDisplayOptionsChange('swatch', e)}

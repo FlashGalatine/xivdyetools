@@ -110,7 +110,8 @@ export class DisplayOptionsV4 extends BaseLitComponent {
   showPrice: boolean = DEFAULT_DISPLAY_OPTIONS.showPrice;
 
   /**
-   * Show Delta-E color distance in results
+   * @deprecated ΔE2000 verdict is structural on the 5.0 Result Card; the flag
+   * is carried through unchanged but no longer has a toggle.
    */
   @property({ type: Boolean, attribute: 'show-delta-e' })
   showDeltaE: boolean = DEFAULT_DISPLAY_OPTIONS.showDeltaE;
@@ -120,6 +121,24 @@ export class DisplayOptionsV4 extends BaseLitComponent {
    */
   @property({ type: Boolean, attribute: 'show-acquisition' })
   showAcquisition: boolean = DEFAULT_DISPLAY_OPTIONS.showAcquisition;
+
+  /**
+   * Show the HUE OFF readout beside the verdict
+   */
+  @property({ type: Boolean, attribute: 'show-hue' })
+  showHue: boolean = DEFAULT_DISPLAY_OPTIONS.showHue ?? true;
+
+  /**
+   * Show the STAIN readout beside the verdict
+   */
+  @property({ type: Boolean, attribute: 'show-stain' })
+  showStain: boolean = DEFAULT_DISPLAY_OPTIONS.showStain ?? true;
+
+  /**
+   * Show the consolidated dye spectrum row
+   */
+  @property({ type: Boolean, attribute: 'show-spectrum' })
+  showSpectrum: boolean = DEFAULT_DISPLAY_OPTIONS.showSpectrum ?? true;
 
   // ========== Configuration ==========
 
@@ -276,6 +295,9 @@ export class DisplayOptionsV4 extends BaseLitComponent {
       showPrice: this.showPrice,
       showDeltaE: this.showDeltaE,
       showAcquisition: this.showAcquisition,
+      showHue: this.showHue,
+      showStain: this.showStain,
+      showSpectrum: this.showSpectrum,
     };
   }
 
@@ -429,18 +451,34 @@ export class DisplayOptionsV4 extends BaseLitComponent {
           </div>
           <div class="option-row">
             <v4-toggle-switch
-              label=${LanguageService.t('config.showDeltaE')}
-              .checked=${this.showDeltaE}
-              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                this.handleOptionChange('showDeltaE', e.detail.checked)}
-            ></v4-toggle-switch>
-          </div>
-          <div class="option-row">
-            <v4-toggle-switch
               label=${LanguageService.t('config.showAcquisition')}
               .checked=${this.showAcquisition}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
                 this.handleOptionChange('showAcquisition', e.detail.checked)}
+            ></v4-toggle-switch>
+          </div>
+          <div class="option-row">
+            <v4-toggle-switch
+              label=${LanguageService.t('config.showHue')}
+              .checked=${this.showHue}
+              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                this.handleOptionChange('showHue', e.detail.checked)}
+            ></v4-toggle-switch>
+          </div>
+          <div class="option-row">
+            <v4-toggle-switch
+              label=${LanguageService.t('config.showStain')}
+              .checked=${this.showStain}
+              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                this.handleOptionChange('showStain', e.detail.checked)}
+            ></v4-toggle-switch>
+          </div>
+          <div class="option-row">
+            <v4-toggle-switch
+              label=${LanguageService.t('config.showSpectrum')}
+              .checked=${this.showSpectrum}
+              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                this.handleOptionChange('showSpectrum', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
         </div>

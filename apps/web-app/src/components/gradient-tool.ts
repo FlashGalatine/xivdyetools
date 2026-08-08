@@ -1708,6 +1708,9 @@ export class GradientTool extends BaseComponent {
       card.showLab = this.displayOptions.showLab;
       card.showCmyk = this.displayOptions.showCmyk;
       card.showDeltaE = this.displayOptions.showDeltaE;
+      card.showHue = this.displayOptions.showHue ?? true;
+      card.showStain = this.displayOptions.showStain ?? true;
+      card.showConsolidation = this.displayOptions.showSpectrum ?? true;
       card.showPrice = this.displayOptions.showPrice;
       card.showAcquisition = this.displayOptions.showAcquisition;
 

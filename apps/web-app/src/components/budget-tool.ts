@@ -339,7 +339,10 @@ export class BudgetTool extends BaseComponent {
         incoming: config.displayOptions,
         toolName: 'BudgetTool',
         onChange: (key, value) => {
-          StorageService.setItem(STORAGE_KEYS[key], value);
+          // 5.0 fields (showHue/showStain/showSpectrum) have no budget-local
+          // storage key — they ride the card defaults.
+          const storageKey = (STORAGE_KEYS as Partial<Record<typeof key, string>>)[key];
+          if (storageKey) StorageService.setItem(storageKey, value);
         },
       });
 

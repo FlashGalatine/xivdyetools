@@ -347,7 +347,10 @@
     "matchingRedmean": "加权RGB",
     "matchingRedmeanDesc": "加权RGB距离——感知差异的轻量近似。",
     "matchingDistinguish": "百分比",
-    "matchingDistinguishDesc": "RGB距离换算为0-100。与RGB DIST排名相同，以百分比显示。"
+    "matchingDistinguishDesc": "RGB距离换算为0-100。与RGB DIST排名相同，以百分比显示。",
+    "showHue": "色相差",
+    "showStain": "染色ID",
+    "showSpectrum": "光谱"
   },
   "colorPalette": {
     "title": "调色板",

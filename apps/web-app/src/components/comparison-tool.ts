@@ -67,6 +67,10 @@ interface ComparisonOptions {
   showLab: boolean;
   showCmyk: boolean;
   showMarketPrices: boolean;
+  // 5.0 Ticket optional fields — not persisted per-tool; default all-on
+  showHue?: boolean;
+  showStain?: boolean;
+  showSpectrum?: boolean;
 }
 
 /**
@@ -720,7 +724,10 @@ export class ComparisonTool extends BaseComponent {
   /**
    * Create a toggle row with V4-style switch
    */
-  private createToggleRow(key: keyof ComparisonOptions, label: string): HTMLElement {
+  private createToggleRow(
+    key: keyof ComparisonOptions & keyof typeof STORAGE_KEYS,
+    label: string
+  ): HTMLElement {
     const row = this.createElement('label', {
       className: 'flex items-center justify-between cursor-pointer',
     });
@@ -1415,6 +1422,9 @@ export class ComparisonTool extends BaseComponent {
       card.showLab = this.comparisonOptions.showLab;
       card.showCmyk = this.comparisonOptions.showCmyk;
       card.showDeltaE = true; // the card keeps ΔE2000 whatever the switch says
+      card.showHue = this.comparisonOptions.showHue ?? true;
+      card.showStain = this.comparisonOptions.showStain ?? true;
+      card.showConsolidation = this.comparisonOptions.showSpectrum ?? true;
       card.showPrice = this.comparisonOptions.showMarketPrices;
       card.showAcquisition = true; // once the colours tie, this is the decision
       card.primaryActionLabel = LanguageService.t('common.remove');
@@ -1861,6 +1871,9 @@ export class ComparisonTool extends BaseComponent {
       card.showLab = this.comparisonOptions.showLab;
       card.showCmyk = this.comparisonOptions.showCmyk;
       card.showDeltaE = false; // No Delta-E in comparison context
+      card.showHue = this.comparisonOptions.showHue ?? true;
+      card.showStain = this.comparisonOptions.showStain ?? true;
+      card.showConsolidation = this.comparisonOptions.showSpectrum ?? true;
       card.showPrice = this.comparisonOptions.showMarketPrices;
       card.showAcquisition = true;
       card.primaryActionLabel = LanguageService.t('common.remove');
