@@ -8,28 +8,7 @@
  */
 
 import { test, expect } from './fixtures/coverage';
-
-async function seedStartupStorage(page: Parameters<typeof test>[0]['page']): Promise<void> {
-  await page.addInitScript(() => {
-    localStorage.setItem('xivdyetools_welcome_seen', 'true');
-    localStorage.setItem('xivdyetools_last_version_viewed', '4.10.0');
-    localStorage.setItem('xivdyetools_tutorials_disabled', 'true');
-  });
-}
-
-async function dismissBlockingOverlays(page: Parameters<typeof test>[0]['page']): Promise<void> {
-  for (let i = 0; i < 5; i++) {
-    const backdropCount = await page.locator('.modal-backdrop').count();
-    if (backdropCount === 0) break;
-
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(250);
-  }
-
-  await page.evaluate(() => {
-    document.querySelectorAll('.modal-backdrop').forEach((el) => el.remove());
-  });
-}
+import { waitForAppReady, gotoTool, seedStartupStorage, dismissBlockingOverlays } from './fixtures/navigation';
 
 test.describe('Dye Comparison Tool (Coverage)', () => {
   test.beforeEach(async ({ page }) => {
@@ -50,11 +29,10 @@ test.describe('Dye Comparison Tool (Coverage)', () => {
     await dismissBlockingOverlays(page);
     await page.waitForTimeout(300);
 
-    await page.waitForSelector('[data-tool]', { state: 'attached', timeout: 15000 });
+  await waitForAppReady(page);
     await page.waitForTimeout(500);
 
-    const comparisonButton = page.locator('[data-tool="comparison"]:visible').first();
-    await comparisonButton.click();
+  await gotoTool(page, 'comparison');
     await dismissBlockingOverlays(page);
     await page.waitForTimeout(800);
   });

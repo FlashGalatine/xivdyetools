@@ -1,44 +1,8 @@
 import { test, expect } from '@playwright/test';
-
-async function seedStartupStorage(page: Parameters<typeof test>[0]['page']): Promise<void> {
-  await page.addInitScript(() => {
-    localStorage.setItem('xivdyetools_welcome_seen', 'true');
-    localStorage.setItem('xivdyetools_last_version_viewed', '4.10.0');
-    localStorage.setItem('xivdyetools_tutorials_disabled', 'true');
-  });
-}
-
-async function dismissBlockingOverlays(page: Parameters<typeof test>[0]['page']): Promise<void> {
-  for (let i = 0; i < 5; i++) {
-    const backdropCount = await page.locator('.modal-backdrop').count();
-    if (backdropCount === 0) break;
-
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(250);
-  }
-
-  await page.evaluate(() => {
-    document.querySelectorAll('.modal-backdrop').forEach((el) => el.remove());
-  });
-}
-
-async function waitForAppReady(page: Parameters<typeof test>[0]['page']): Promise<void> {
-  await page.waitForLoadState('networkidle');
-  await page.waitForFunction(
-    () => {
-      const app = document.getElementById('app');
-      return app && app.children.length > 0;
-    },
-    { timeout: 15000 }
-  );
-  await page.waitForSelector('[data-tool]', { state: 'attached', timeout: 15000 });
-  await dismissBlockingOverlays(page);
-  await page.waitForTimeout(400);
-}
+import { waitForAppReady, gotoTool, seedStartupStorage, dismissBlockingOverlays } from './fixtures/navigation';
 
 async function navigateToMixerTool(page: Parameters<typeof test>[0]['page']): Promise<void> {
-  const mixerButton = page.locator('[data-tool="mixer"]:visible').first();
-  await mixerButton.click();
+  await gotoTool(page, 'mixer');
   await dismissBlockingOverlays(page);
   await page.waitForTimeout(900);
 }
@@ -141,13 +105,12 @@ test.describe.skip('Dye Mixer Tool (legacy DOM IDs pending v4 rewrite)', () => {
       },
       { timeout: 15000 }
     );
-    await page.waitForSelector('[data-tool]', { state: 'attached', timeout: 15000 });
+  await waitForAppReady(page);
     await dismissBlockingOverlays(page);
     await page.waitForTimeout(500);
 
     // Navigate to Dye Mixer tool
-    const mixerButton = page.locator('[data-tool="mixer"]:visible').first();
-    await mixerButton.click();
+  await gotoTool(page, 'mixer');
     await page.waitForTimeout(1000);
   });
 
@@ -362,13 +325,12 @@ test.describe.skip('Dye Mixer - UI Interaction (legacy DOM IDs pending v4 rewrit
       },
       { timeout: 15000 }
     );
-    await page.waitForSelector('[data-tool]', { state: 'attached', timeout: 15000 });
+  await waitForAppReady(page);
     await dismissBlockingOverlays(page);
     await page.waitForTimeout(500);
 
     // Navigate to Dye Mixer tool
-    const mixerButton = page.locator('[data-tool="mixer"]:visible').first();
-    await mixerButton.click();
+  await gotoTool(page, 'mixer');
     await page.waitForTimeout(1000);
   });
 

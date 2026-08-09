@@ -413,6 +413,7 @@ export class V4AppHeader extends BaseLitComponent {
             <button
               class="tool-menu-item ${tool.id === this.activeTool ? 'active' : ''}"
               role="menuitem"
+              data-tool=${tool.id}
               title=${desc}
               @click=${(): void => this.selectTool(tool.id)}
             >

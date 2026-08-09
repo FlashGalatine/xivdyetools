@@ -1,26 +1,5 @@
 import { test, expect } from '@playwright/test';
-
-async function seedStartupStorage(page: Parameters<typeof test>[0]['page']): Promise<void> {
-  await page.addInitScript(() => {
-    localStorage.setItem('xivdyetools_welcome_seen', 'true');
-    localStorage.setItem('xivdyetools_last_version_viewed', '4.10.0');
-    localStorage.setItem('xivdyetools_tutorials_disabled', 'true');
-  });
-}
-
-async function dismissBlockingOverlays(page: Parameters<typeof test>[0]['page']): Promise<void> {
-  for (let i = 0; i < 5; i++) {
-    const backdropCount = await page.locator('.modal-backdrop').count();
-    if (backdropCount === 0) break;
-
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(250);
-  }
-
-  await page.evaluate(() => {
-    document.querySelectorAll('.modal-backdrop').forEach((el) => el.remove());
-  });
-}
+import { waitForAppReady, gotoTool, seedStartupStorage, dismissBlockingOverlays } from './fixtures/navigation';
 
 /**
  * E2E Tests for Preset Browser Tool
@@ -46,13 +25,12 @@ test.describe('Preset Browser Tool', () => {
       },
       { timeout: 15000 }
     );
-    await page.waitForSelector('[data-tool]', { state: 'attached', timeout: 15000 });
+  await waitForAppReady(page);
     await dismissBlockingOverlays(page);
     await page.waitForTimeout(500);
 
     // Navigate to Presets tool
-    const presetsButton = page.locator('[data-tool="presets"]:visible').first();
-    await presetsButton.click();
+  await gotoTool(page, 'presets');
 
     // Presets tool loads data asynchronously, wait longer
     await page.waitForTimeout(2000);
@@ -174,13 +152,12 @@ test.describe('Preset Browser - Preset Interaction', () => {
       },
       { timeout: 15000 }
     );
-    await page.waitForSelector('[data-tool]', { state: 'attached', timeout: 15000 });
+  await waitForAppReady(page);
     await dismissBlockingOverlays(page);
     await page.waitForTimeout(500);
 
     // Navigate to Presets tool
-    const presetsButton = page.locator('[data-tool="presets"]:visible').first();
-    await presetsButton.click();
+  await gotoTool(page, 'presets');
     await page.waitForTimeout(2000);
   });
 
