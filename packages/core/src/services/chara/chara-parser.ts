@@ -204,6 +204,30 @@ function parseFloatColor(field: string, value: unknown): ParsedFloat | null {
   };
 }
 
+/**
+ * Every character colour field — the eight palette indices plus the extended
+ * appearance floats. Presence of at least one is what makes a JSON document
+ * a `.chara` file; an extended-only file (floats, no indices) is legitimate
+ * and resolves as `floatOnly`. See the key-presence rule in `parseCharaFile`.
+ */
+const COLOR_KEYS = [
+  'REyeColor',
+  'LEyeColor',
+  'HairTone',
+  'Highlights',
+  'Skintone',
+  'LimbalEyes',
+  'LipsToneFurPattern',
+  'FacePaintColor',
+  'SkinColor',
+  'LeftEyeColor',
+  'RightEyeColor',
+  'LimbalRingColor',
+  'HairColor',
+  'HairHighlight',
+  'MouthColor',
+] as const;
+
 function readIndex(record: Record<string, unknown>, key: string): number | null {
   const value = record[key];
   if (value === null || value === undefined) return null;
@@ -259,9 +283,23 @@ export function parseCharaFile(text: string): ParsedCharaFile {
   }
   const record = data as Record<string, unknown>;
 
+  // Identity fields first: a file that names a bad tribe deserves that
+  // message, not the generic refusal below.
   const { mapped: race } = mapNamed(RACE_MAP, 'Race', record['Race']);
   const { mapped: tribe, raw: tribeRaw } = mapNamed(TRIBE_MAP, 'Tribe', record['Tribe']);
   const { mapped: gender } = mapNamed(GENDER_MAP, 'Gender', record['Gender']);
+
+  // Parse by key presence: a JSON carrying no colour field at all is some
+  // other document that happens to be JSON, not a sparse character. Refuse
+  // it rather than resolving eight dashed slots that read as a valid
+  // character wearing nothing.
+  if (!COLOR_KEYS.some((key) => key in record)) {
+    throw new AppError(
+      ErrorCode.INVALID_INPUT,
+      `.chara file carries no character colour fields (expected at least one of: ${COLOR_KEYS.join(', ')})`,
+      'error'
+    );
+  }
 
   const extendedDeclared = 'IsExtendedAppearanceValid' in record;
   const extendedValid = record['IsExtendedAppearanceValid'] === true;
@@ -334,12 +372,12 @@ export function parseCharaFile(text: string): ParsedCharaFile {
   }
 
   return {
-    producer: typeof record['TypeName'] === 'string' ? (record['TypeName'] as string) : null,
+    producer: typeof record['TypeName'] === 'string' ? (record['TypeName']) : null,
     race,
     tribe,
     tribeRaw,
     gender,
-    nickname: typeof record['Nickname'] === 'string' ? (record['Nickname'] as string) : null,
+    nickname: typeof record['Nickname'] === 'string' ? (record['Nickname']) : null,
     extendedValid,
     extendedDeclared,
     slots,

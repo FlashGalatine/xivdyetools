@@ -81,6 +81,20 @@ const EN_OVER_CAP_BODY = (n: number): string =>
   `${n} dyes make a strip nobody can read at card size — drop down to six or fewer. Save and submit stay disabled.`;
 // TODO(i18n): needs key — swatch.paletteDefaultName
 const EN_DEFAULT_PALETTE_NAME = 'Glamour palette';
+// TODO(i18n): needs key — swatch.blendTag (template of alpha)
+const EN_BLEND_TAG = (alpha: number): string => `BLEND · α ${alpha.toFixed(2)}`;
+// TODO(i18n): needs key — swatch.blendPlain
+const EN_BLEND_PLAIN = 'BLEND';
+// TODO(i18n): needs key — swatch.blendNote
+const EN_BLEND_NOTE =
+  'The lip colour composited over the skin colour — what the character actually shows. Dye matching follows this, not the raw cell.';
+// TODO(i18n): needs key — swatch.characterDefaultName
+const EN_DEFAULT_CHARACTER_NAME = 'Character colours';
+// TODO(i18n): needs key — swatch.saveCharacter
+const EN_SAVE_CHARACTER = 'Save character colours';
+// TODO(i18n): needs key — swatch.characterSaved (template of n)
+const EN_CHARACTER_SAVED = (n: number): string =>
+  `Saved ${n} character ${n === 1 ? 'colour' : 'colours'} to this device.`;
 
 /** Responsive grids for the sheet — injected once per render (shadow-DOM scoped). */
 const CHARA_RESPONSIVE_CSS = `
@@ -554,7 +568,54 @@ export class CharaImport {
     });
     card.appendChild(swapBtn);
 
+    // Save the character's own colours (not the glamour's) as the store's
+    // `kind: 'character'` record — the second half of the export flow.
+    const saveBtn = this.el(
+      'button',
+      `flex-shrink: 0; padding: 6px 10px; font-size: 11px; font-weight: 600; border-radius: 9px; border: 1px solid var(--theme-border); background: var(--theme-background-secondary); color: var(--theme-text); cursor: pointer; font-family: inherit;`,
+      EN_SAVE_CHARACTER
+    );
+    (saveBtn as HTMLButtonElement).type = 'button';
+    saveBtn.addEventListener('click', () => this.saveCharacterRecord());
+    card.appendChild(saveBtn);
+
     return card;
+  }
+
+  /**
+   * Save the character's resolved slot colours as a `kind: 'character'`
+   * CollectionService record — each slot contributes the dye closest to the
+   * colour it actually wears (the lip contributes its blend).
+   */
+  private saveCharacterRecord(): void {
+    const resolved = this.resolved;
+    if (!resolved) return;
+
+    const stainIds: number[] = [];
+    for (const slot of resolved.slots) {
+      const hex = slot.blendHex ?? this.winningHex(slot);
+      if (!hex) continue;
+      const best = this.bestDye(hex);
+      if (best?.dye.stainID != null && !stainIds.includes(best.dye.stainID)) {
+        stainIds.push(best.dye.stainID);
+      }
+    }
+    if (stainIds.length === 0) {
+      ToastService.error(LanguageService.t('errors.saveChangesFailed'));
+      return;
+    }
+
+    const name = (resolved.nickname ?? this.fileName ?? EN_DEFAULT_CHARACTER_NAME).slice(0, 50);
+    const record = CollectionService.createCollection(name, undefined, { kind: 'character' });
+    if (!record) {
+      ToastService.error(LanguageService.t('errors.saveChangesFailed'));
+      return;
+    }
+    for (const stainId of stainIds) {
+      CollectionService.addDyeToCollection(record.id, stainId);
+    }
+    logger.info(`[CharaImport] Saved character "${name}" (${stainIds.length} colours)`);
+    ToastService.success(EN_CHARACTER_SAVED(stainIds.length));
   }
 
   /** Amber warnings card: one row per parse warning — TAG chip + 11px text. */
@@ -714,8 +775,36 @@ export class CharaImport {
     head.appendChild(headText);
     card.appendChild(head);
 
+    // Lip only: the raw cell overstates a 0.25-alpha lip, so the card shows
+    // both — the cell the R·C address points at (above) and the colour the
+    // character actually wears, composited over skin. Matching follows the
+    // blend, because that is the colour you are trying to hit.
+    const blend = slot.blendHex;
+    const effective = blend ?? hex;
+    if (blend) {
+      const blendRow = this.el(
+        'span',
+        'display: flex; align-items: center; gap: 5px; min-width: 0; width: 100%;'
+      );
+      blendRow.appendChild(
+        this.el(
+          'span',
+          `width: 13px; height: 13px; border-radius: 4px; flex: 0 0 auto; background: ${blend}; ${INSET_RING}`
+        )
+      );
+      blendRow.appendChild(
+        this.el(
+          'span',
+          `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 0.5px; color: var(--theme-text-muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`,
+          slot.alpha !== null ? EN_BLEND_TAG(slot.alpha) : EN_BLEND_PLAIN
+        )
+      );
+      blendRow.title = EN_BLEND_NOTE;
+      card.appendChild(blendRow);
+    }
+
     // Bottom row: best dye already on the card — the sheet answers first.
-    const best = this.bestDye(hex);
+    const best = this.bestDye(effective);
     if (best) {
       const tier = classifyBandTier(
         roundToBandDisplay(best.deltaE, 'ciede2000'),
@@ -749,13 +838,13 @@ export class CharaImport {
         )
       );
       card.appendChild(row);
-      card.title = `${label} · ${hex.toUpperCase()} → ${this.dyeName(best.dye)}`;
+      card.title = `${label} · ${effective.toUpperCase()} → ${this.dyeName(best.dye)}`;
     }
 
     card.addEventListener('click', () => {
       this.selectedSlotKey = slot.slot;
       this.render();
-      this.callbacks.onSlotPick(hex, label, offGrid ? null : this.gridRefOf(slot));
+      this.callbacks.onSlotPick(effective, label, offGrid ? null : this.gridRefOf(slot));
     });
 
     return card;

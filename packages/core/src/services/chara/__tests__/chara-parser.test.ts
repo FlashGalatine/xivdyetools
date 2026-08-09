@@ -120,6 +120,17 @@ describe('parseCharaFile', () => {
       );
     });
 
+    it('refuses a JSON carrying no colour field at all (wrong kind of file)', () => {
+      expect(() => parseCharaFile(JSON.stringify({ name: 'not-a-character', version: 3 }))).toThrow(
+        /no character colour fields/
+      );
+    });
+
+    it('accepts an extended-only file (floats, no palette indices)', () => {
+      const parsed = parseCharaFile(JSON.stringify({ SkinColor: '0.5, 0.4, 0.3' }));
+      expect(parsed.slots.find((s) => s.slot === 'skin')?.float).not.toBeNull();
+    });
+
     it('rejects a malformed float colour naming the field', () => {
       expect(() =>
         parseCharaFile(JSON.stringify({ SkinColor: 'red, green, blue' }))

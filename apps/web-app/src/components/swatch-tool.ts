@@ -24,7 +24,7 @@ import {
   ToastService,
 } from '@services/index';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
-import { CharacterColorService } from '@xivdyetools/core';
+import { CharacterColorService, normalizeMatchingMethod } from '@xivdyetools/core';
 import type { CharacterColor, CharacterColorMatch, SubRace, Gender } from '@xivdyetools/types';
 import {
   ICON_TOOL_CHARACTER,
@@ -158,6 +158,13 @@ const DEFAULTS = {
 // ============================================================================
 
 const MONO = "'Fragment Mono', monospace";
+
+/**
+ * Grid cell sizes per the 5.0 register: a dense 26px reference chart on
+ * desktop (the slot cards' chip size), 44px touch targets on mobile.
+ */
+const GRID_CELL_DESKTOP = 26;
+const GRID_CELL_MOBILE = 44;
 /** Matches globals.css h1–h6 — Space Grotesk with the system fallback. */
 const SANS = "'Space Grotesk', system-ui, sans-serif";
 
@@ -657,13 +664,17 @@ export class SwatchTool extends BaseComponent {
   }
 
   /**
-   * Apply blue glow highlights to reverse-matched swatches.
-   * Uses box-shadow (distinct from forward selection's outline).
+   * Ring reverse-matched swatches. One vocabulary: the theme accent at three
+   * strengths by rank (the legacy blue second vocabulary was cut in 10A).
+   * Still a box-shadow, so it reads as distinct from the forward selection's
+   * outline without introducing a colour the palette never uses.
    */
   private updateReverseHighlights(): void {
     if (!this.colorGridContainer) return;
 
     const reverseMap = new Map(this.reverseMatchedSwatches.map((m) => [m.color.index, m.rank]));
+    const accent = (pct: number): string =>
+      `color-mix(in srgb, var(--theme-primary) ${pct}%, transparent)`;
 
     this.colorGridContainer.querySelectorAll('button').forEach((swatch) => {
       const el = swatch as HTMLElement;
@@ -674,13 +685,13 @@ export class SwatchTool extends BaseComponent {
       el.style.boxShadow = '';
 
       if (rank === 1) {
-        el.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.9), 0 0 12px rgba(59, 130, 246, 0.5)';
+        el.style.boxShadow = `0 0 0 3px ${accent(90)}, 0 0 12px ${accent(50)}`;
         if (index !== this.selectedColor?.index) el.style.zIndex = '9';
       } else if (rank === 2) {
-        el.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.6), 0 0 8px rgba(59, 130, 246, 0.3)';
+        el.style.boxShadow = `0 0 0 2px ${accent(60)}, 0 0 8px ${accent(30)}`;
         if (index !== this.selectedColor?.index) el.style.zIndex = '8';
       } else if (rank === 3) {
-        el.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.3), 0 0 4px rgba(59, 130, 246, 0.15)';
+        el.style.boxShadow = `0 0 0 2px ${accent(30)}, 0 0 4px ${accent(15)}`;
         if (index !== this.selectedColor?.index) el.style.zIndex = '7';
       } else if (index !== this.selectedColor?.index) {
         el.style.zIndex = 'auto';
@@ -816,8 +827,12 @@ export class SwatchTool extends BaseComponent {
             width: 28px;
             height: 28px;
             border-radius: 50%;
-            background: ${match.rank === 1 ? 'rgba(59, 130, 246, 0.3)' : 'rgba(255, 255, 255, 0.08)'};
-            color: ${match.rank === 1 ? 'rgb(147, 197, 253)' : 'var(--theme-text-muted, #a0a0a0)'};
+            background: ${
+              match.rank === 1
+                ? 'color-mix(in srgb, var(--theme-primary) 18%, transparent)'
+                : 'var(--theme-background-secondary)'
+            };
+            color: ${match.rank === 1 ? 'var(--theme-primary)' : 'var(--theme-text-muted, #a0a0a0)'};
             font-size: 11px;
             font-weight: 700;
             flex-shrink: 0;
@@ -1257,7 +1272,7 @@ export class SwatchTool extends BaseComponent {
       attributes: {
         style: `
           flex: 0 0 auto;
-          width: 420px;
+          width: fit-content;
           height: fit-content;
           background: var(--v4-glass-bg, rgba(30, 30, 30, 0.7));
           backdrop-filter: blur(12px);
@@ -1309,13 +1324,14 @@ export class SwatchTool extends BaseComponent {
     this.gridPanel.appendChild(this.paletteRailContainer);
     this.renderPaletteRail();
 
-    // Color grid (8 columns with larger swatches)
-    // Swatch size adjusted via updateSwatchLayout() for mobile
+    // Colour grid, 8 columns. Register sizing: 26px on desktop (a dense
+    // reference chart you scan, same chip size as the slot cards), 44px on
+    // mobile (a touch target). updateSwatchLayout() swaps to the mobile size.
     this.colorGridContainer = this.createElement('div', {
       attributes: {
         style: `
           display: grid;
-          grid-template-columns: repeat(8, 44px);
+          grid-template-columns: repeat(8, ${GRID_CELL_DESKTOP}px);
           gap: 4px;
           width: fit-content;
         `,
@@ -1592,9 +1608,9 @@ export class SwatchTool extends BaseComponent {
   }
 
   /**
-   * Update layout based on viewport width
-   * Mobile: Vertical stack with responsive swatch sizes
-   * Desktop: Horizontal layout with fixed 44px swatches
+   * Update layout based on viewport width.
+   * Mobile: vertical stack, 44px touch cells (scrolls sideways if needed).
+   * Desktop: horizontal layout, 26px reference cells.
    */
   private updateSwatchLayout(): void {
     if (!this.mainLayout || !this.gridPanel || !this.colorGridContainer) return;
@@ -1606,22 +1622,19 @@ export class SwatchTool extends BaseComponent {
       this.mainLayout.style.flexDirection = 'column';
       this.mainLayout.style.alignItems = 'center';
 
-      // Calculate available width for grid (viewport - padding)
+      // Register sizing: cells are touch targets on mobile, so 44px is a
+      // floor, not a ceiling. Where eight of them plus gaps overrun the
+      // viewport the grid scrolls sideways inside its own panel rather than
+      // shrinking below the target size.
       const viewportWidth = window.innerWidth;
       const containerPadding = 32; // From right panel padding
-      const gridPadding = 20; // From gridPanel padding on each side
       const availableWidth = viewportWidth - containerPadding * 2;
-
-      // Calculate swatch size: (available - grid padding - gaps) / 8 columns
-      // 7 gaps at 4px each = 28px
-      const gridInnerWidth = availableWidth - gridPadding * 2;
-      const swatchSize = Math.floor((gridInnerWidth - 28) / 8);
-      // Clamp to reasonable range (min 28px, max 44px)
-      const clampedSwatchSize = Math.max(28, Math.min(44, swatchSize));
+      const clampedSwatchSize = GRID_CELL_MOBILE;
 
       // Update grid panel width
       this.gridPanel.style.width = '100%';
       this.gridPanel.style.maxWidth = `${availableWidth}px`;
+      this.gridPanel.style.overflowX = 'auto';
 
       // Update grid template
       this.colorGridContainer.style.gridTemplateColumns = `repeat(8, ${clampedSwatchSize}px)`;
@@ -1638,16 +1651,17 @@ export class SwatchTool extends BaseComponent {
       this.mainLayout.style.alignItems = 'flex-start';
 
       // Restore fixed width
-      this.gridPanel.style.width = '420px';
+      this.gridPanel.style.width = '';
       this.gridPanel.style.maxWidth = '';
+      this.gridPanel.style.overflowX = '';
 
-      // Restore fixed swatch sizes
-      this.colorGridContainer.style.gridTemplateColumns = 'repeat(8, 44px)';
+      // Restore the register's desktop cell size
+      this.colorGridContainer.style.gridTemplateColumns = `repeat(8, ${GRID_CELL_DESKTOP}px)`;
 
       const swatches = this.colorGridContainer.querySelectorAll('button');
       swatches.forEach((swatch) => {
-        (swatch as HTMLElement).style.width = '44px';
-        (swatch as HTMLElement).style.height = '44px';
+        (swatch as HTMLElement).style.width = `${GRID_CELL_DESKTOP}px`;
+        (swatch as HTMLElement).style.height = `${GRID_CELL_DESKTOP}px`;
       });
     }
   }
@@ -1872,8 +1886,8 @@ export class SwatchTool extends BaseComponent {
         attributes: {
           style: `
             position: relative;
-            width: 44px;
-            height: 44px;
+            width: ${GRID_CELL_DESKTOP}px;
+            height: ${GRID_CELL_DESKTOP}px;
             background-color: ${color.hex};
             border: 1px solid var(--theme-border);
             border-radius: 4px;
@@ -2843,9 +2857,13 @@ export class SwatchTool extends BaseComponent {
   private getShareParams(): Record<string, unknown> {
     if (!this.selectedColor) return {};
 
+    // Confirmed grammar: slot + i. A character swatch is identified by its
+    // cell address, not its hex — two cells can carry the same colour, and
+    // a hex lookup silently misses when the sheet reloads under a different
+    // tribe/gender. `i` is the index the R·C address is derived from.
     const params: Record<string, unknown> = {
-      hex: this.selectedColor.hex.replace('#', ''), // Bare colour (5.0 grammar)
-      sheet: this.colorCategory, // Which color sheet this color is from
+      slot: this.colorCategory,
+      i: this.selectedColor.index,
       algo: this.matchingMethod,
       limit: this.maxResults,
     };
@@ -2882,8 +2900,10 @@ export class SwatchTool extends BaseComponent {
     let hasChanges = false;
     let needsReload = false;
 
-    // Load color sheet (category) if specified - do this FIRST before loading colors
-    if (params.sheet && typeof params.sheet === 'string') {
+    // Load the slot (colour sheet) — FIRST, before the colours load.
+    // `sheet` is the pre-5.0 alias for the same value; both are accepted.
+    const slotParam = params.slot ?? params.sheet;
+    if (slotParam && typeof slotParam === 'string') {
       const validSheets: ColorCategory[] = [
         'eyeColors',
         'hairColors',
@@ -2895,8 +2915,8 @@ export class SwatchTool extends BaseComponent {
         'facePaintColorsDark',
         'facePaintColorsLight',
       ];
-      if (validSheets.includes(params.sheet as ColorCategory)) {
-        const newCategory = params.sheet as ColorCategory;
+      if (validSheets.includes(slotParam as ColorCategory)) {
+        const newCategory = slotParam as ColorCategory;
         if (newCategory !== this.colorCategory) {
           this.colorCategory = newCategory;
           StorageService.setItem(STORAGE_KEYS.colorCategory, newCategory);
@@ -2963,13 +2983,12 @@ export class SwatchTool extends BaseComponent {
       this.syncDesktopSelectors();
     }
 
-    // Load matching algorithm if specified
+    // Load matching algorithm if specified. One vocabulary, six methods —
+    // normalize migrates legacy stored/shared spellings instead of dropping
+    // every link that isn't one of the three the old whitelist knew.
     if (params.algo && typeof params.algo === 'string') {
-      const validAlgos = ['oklab', 'ciede2000', 'euclidean'];
-      if (validAlgos.includes(params.algo)) {
-        this.matchingMethod = params.algo as MatchingMethod;
-        hasChanges = true;
-      }
+      this.matchingMethod = normalizeMatchingMethod(params.algo);
+      hasChanges = true;
     }
 
     // Load max results limit if specified
@@ -2979,9 +2998,35 @@ export class SwatchTool extends BaseComponent {
       hasChanges = true;
     }
 
-    // Load color if specified
+    // Load the cell by index — the confirmed grammar's identity handle.
+    const indexRaw = params.i;
+    const sharedIndex =
+      typeof indexRaw === 'number'
+        ? indexRaw
+        : typeof indexRaw === 'string' && /^\d+$/.test(indexRaw)
+          ? Number(indexRaw)
+          : null;
+    if (sharedIndex !== null) {
+      if (this.colors.length === 0) {
+        await this.loadColors();
+      }
+      const cell = this.colors.find((c) => c.index === sharedIndex);
+      if (cell) {
+        this.selectedColor = cell;
+        this.selectionContext = { source: 'grid' };
+        StorageService.setItem(STORAGE_KEYS.selectedColorIndex, cell.index);
+        hasChanges = true;
+        logger.info(`[SwatchTool] Loaded cell ${sharedIndex} from share URL`);
+      } else {
+        logger.warn(
+          `[SwatchTool] Shared cell ${sharedIndex} is outside the ${this.colorCategory} sheet`
+        );
+      }
+    }
+
+    // Legacy hex links (pre-slot+i) still resolve by colour match
     const sharedHexRaw = params.hex ?? params.color; // `color` accepted as legacy alias
-    if (sharedHexRaw && typeof sharedHexRaw === 'string') {
+    if (sharedIndex === null && sharedHexRaw && typeof sharedHexRaw === 'string') {
       // Normalize hex color (add # prefix if missing)
       const hexColor = ShareService.parseSharedHex(sharedHexRaw);
       if (!hexColor) return;
