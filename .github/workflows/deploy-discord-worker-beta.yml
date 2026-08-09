@@ -1,0 +1,101 @@
+# Deploys the BETA Discord bot (xivdyetools-discord-worker-dev) on any push to a
+# non-main branch that touches discord-worker or one of its packages.
+#
+# Safe because of docs/operations/DEPLOY_ENVIRONMENTS.md: a bare `wrangler deploy`
+# targets the top-level env, which is the beta worker — its own Worker name, its
+# own Discord application, its own KV namespace, and NO routes. Production is
+# reachable only via `--env production`, which this workflow never passes.
+#
+# There is ONE beta bot. Concurrent branches share it, so the most recent push
+# wins; `cancel-in-progress: true` makes that explicit rather than a race.
+name: Deploy Beta Discord Worker
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+      # Dependency bumps should not seize the beta bot from whoever is testing on it.
+      - 'dependabot/**'
+    paths:
+      - 'apps/discord-worker/**'
+      - 'packages/core/**'
+      - 'packages/types/**'
+      - 'packages/logger/**'
+      - 'packages/auth/**'
+      - 'packages/bot-logic/**'
+      - 'packages/svg/**'
+      - 'packages/worker-kit/**'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-discord-worker-beta
+  # Unlike production, a superseded beta deploy is worth cancelling: the newer
+  # commit is the one being tested.
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy Beta Discord Worker
+    runs-on: ubuntu-latest
+    env:
+      # Read once at job level so the register step can gate on their presence.
+      # Both are optional: without them the worker still deploys, and only the
+      # command registration is skipped.
+      BETA_DISCORD_TOKEN: ${{ secrets.BETA_DISCORD_TOKEN }}
+      BETA_DISCORD_GUILD_ID: ${{ secrets.BETA_DISCORD_GUILD_ID }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v5
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build dependencies
+        run: pnpm turbo run build --filter=xivdyetools-discord-worker...
+
+      - name: Type-check
+        run: pnpm turbo run type-check --filter=xivdyetools-discord-worker
+
+      - name: Test
+        run: pnpm turbo run test --filter=xivdyetools-discord-worker
+
+      # Bare `deploy` = the top-level env = the beta worker. Never add --env here.
+      - name: Deploy beta worker
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/discord-worker
+          command: deploy
+          packageManager: pnpm
+
+      # Registered command schemas live on Discord's side, so a deploy alone
+      # leaves beta's command list stale — the same drift that produced BUG-001.
+      # GUILD-SCOPED deliberately: register-commands is a bulk PUT that
+      # overwrites the entire command set at whichever scope it targets, and
+      # guild scope confines that to the test server. Never let this run global.
+      - name: Register beta commands (guild-scoped)
+        if: env.BETA_DISCORD_TOKEN != '' && env.BETA_DISCORD_GUILD_ID != ''
+        working-directory: apps/discord-worker
+        run: pnpm run register-commands
+        env:
+          DISCORD_TOKEN: ${{ secrets.BETA_DISCORD_TOKEN }}
+          DISCORD_CLIENT_ID: '1536085517270261771'
+          DISCORD_GUILD_ID: ${{ secrets.BETA_DISCORD_GUILD_ID }}
+
+      - name: Skipped command registration
+        if: env.BETA_DISCORD_TOKEN == '' || env.BETA_DISCORD_GUILD_ID == ''
+        run: |
+          echo "::notice::Beta worker deployed, but slash commands were NOT registered."
+          echo "Add repository secrets BETA_DISCORD_TOKEN and BETA_DISCORD_GUILD_ID to enable it."
+          echo "Until then, register manually — always with DISCORD_GUILD_ID set."
+
+      # No health smoke test: the beta worker is published on a *.workers.dev
+      # subdomain that is account-specific, and hardcoding it here would rot.
+      # `wrangler deploy` already fails the job if the upload is rejected.

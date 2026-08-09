@@ -222,6 +222,40 @@ deliberately out of scope (see below).
     The script targets `/applications/{id}/guilds/{guildId}/commands` when `DISCORD_GUILD_ID`
     is set, leaving global commands untouched.
 
+## Continuous deployment of the beta bot
+
+`.github/workflows/deploy-discord-worker-beta.yml` deploys the beta bot on **any push to a
+non-main branch** that touches `apps/discord-worker/**` or one of its packages. It runs the same
+build / type-check / test gate as production, then `wrangler deploy` with **no `--env`** — which
+is the beta worker.
+
+| | Production workflow | Beta workflow |
+|---|---|---|
+| Trigger | push to `main`/`master` | push to any other branch (excluding `dependabot/**`) |
+| Deploy command | `deploy --env production` | `deploy` |
+| `cancel-in-progress` | `false` | `true` — a newer commit supersedes |
+| Command registration | global, always | **guild-scoped**, only if secrets are set |
+| Smoke test | `bot.xivdyetools.app/health` | none (the `*.workers.dev` host is account-specific) |
+
+**Optional secrets.** Add `BETA_DISCORD_TOKEN` and `BETA_DISCORD_GUILD_ID` to enable automatic
+command registration. Without them the worker still deploys and the workflow emits a notice —
+so nothing breaks before they exist.
+
+**Registration is guild-scoped, and must stay that way.** `register-commands` is a bulk `PUT`
+that overwrites the entire command set at whichever scope it targets. Guild scope confines that
+to the test server; a global run from a feature branch would overwrite the live command set.
+
+**There is one beta bot.** Concurrent branches share it and the most recent push wins — inherent
+to having a single beta Discord application, not a flaw in the workflow.
+
+### Correction: production registration is automatic
+
+`deploy-discord-worker.yml` already runs `register-commands` (globally) as a step of every
+production deploy. Both this document's earlier drafts and the 2026-08-09 audit's
+`REMEDIATION_PLAN.md` describe that step as user-run — it is not. **Merging to `main` deploys the
+Worker and registers the commands**, so `BUG-001`'s registered-schema fix ships automatically on
+merge rather than needing a follow-up command.
+
 ### Verification
 
 - The script prints `Target: Guild <id>` — if it prints `Global`, stop; `DISCORD_GUILD_ID` did
