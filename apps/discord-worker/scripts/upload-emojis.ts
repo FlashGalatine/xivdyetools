@@ -21,6 +21,23 @@
  *   npm run upload-emojis
  *
  * Capacity: ~125 emojis vs Discord's 2,000-per-application cap.
+ *
+ * ⚠️ READ BEFORE RUNNING THIS AGAINST PRODUCTION (app 1447108133020369048).
+ *
+ * Production's slot still records `artwork: "legacy-icons"` while
+ * ARTWORK_VERSION above is `chip-1`. Running this with production credentials
+ * will therefore DELETE and RE-UPLOAD all 125 production emoji, replacing the
+ * legacy icons with the 5.0 flat chips — a visible change to the live bot,
+ * triggered as a side effect of a routine sync rather than as a deliberate
+ * act.
+ *
+ * That regeneration is intentionally DEFERRED until the 2026-08-09 pre-release
+ * remediation sprints are complete (decision 2026-08-09). Until then, run this
+ * only against the beta application (1536085517270261771), whose slot is
+ * already on `chip-1`.
+ *
+ * Each application's slot carries its own artwork tag precisely so this
+ * divergence is visible and survivable — see the EmojiMappingFile comment.
  */
 
 import 'dotenv/config';
