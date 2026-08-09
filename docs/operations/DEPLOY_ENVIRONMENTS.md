@@ -119,6 +119,13 @@ A separate Discord application is **required, not optional**: an application has
 Interactions Endpoint URL, and the existing one points at `bot.xivdyetools.app`. The beta Worker
 can only receive interactions through its own application.
 
+**The beta application needs no OAuth configuration.** Interactions are Ed25519-verified POSTs,
+not an OAuth flow, and the bot invite uses the `bot` + `applications.commands` scopes, which do
+not require a registered redirect URI. Web-app login is unaffected: the `oauth` Worker
+authenticates as the *production* application (`DISCORD_CLIENT_ID = "1447108133020369048"` in
+all three of its environments), so the beta app never appears in that flow. Testing web-app
+login against a beta stack would need its own OAuth application and is out of scope here.
+
 ### 3. Data isolation
 
 ```

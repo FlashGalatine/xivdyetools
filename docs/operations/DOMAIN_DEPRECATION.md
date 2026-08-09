@@ -64,10 +64,27 @@ production the moment a route is removed.
 |---|---|---|---|
 | 1 | Interactions Endpoint URL of the **main** bot app (`1447108133020369048`) | Discord Developer Portal → General Information | If it points at `bot.xivdyetools.projectgalatine.com`, removing that route kills the live bot immediately |
 | 2 | Interactions Endpoint URL of the **moderation** bot app (`1453806659708129374`) | same | Same, for the moderation bot |
-| 3 | Registered OAuth **Redirect URIs** | Discord Developer Portal → OAuth2 | A registered URI on the old domain breaks login |
+| 3 | Registered OAuth **Redirect URIs** on app `1447108133020369048` | Discord Developer Portal → OAuth2 | A registered URI on the old domain breaks login |
 | 4 | Per-hostname request volume for all five domains | Cloudflare dashboard → Worker → Metrics | Replaces guesswork about who still uses each domain |
 
 Record the answers in this document before proceeding.
+
+**Which application to check for #3.** The `oauth` Worker authenticates as
+`DISCORD_CLIENT_ID = "1447108133020369048"` — the *production* application — in all three of its
+environments (`apps/oauth/wrangler.toml:17,25,34`). That application therefore serves two roles:
+Discord bot interactions **and** web-app login. Check its OAuth2 redirect URIs, not the
+moderation app's and not the beta bot's.
+
+**Two distinct things are called "redirect URI" here — do not conflate them:**
+
+| Layer | Configured where | Example |
+|---|---|---|
+| Discord → `oauth` Worker (registered at Discord) | Developer Portal → OAuth2 | `https://auth.xivdyetools.app/auth/callback` |
+| `oauth` Worker → front-end (this project's allowlist) | `ALLOWED_REDIRECT_ORIGINS`, `apps/oauth/src/constants/oauth.ts:10` | `https://xivdyetools.app/auth/callback` |
+
+Only the first is registered at Discord and gates Phase 2. The second is the allowlist Phase 1
+edits. `BUG-018` (2026-07-18 audit) was caused by exactly this blur — three divergent copies of
+the second list let a login begin on the transition domain and fail at the callback.
 
 ## Phase 1 — Allowlists and documentation (no runtime route touched)
 
