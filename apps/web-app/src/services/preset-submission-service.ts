@@ -47,6 +47,9 @@ export interface PresetEditRequest {
   description?: string;
   dyes?: number[];
   tags?: string[];
+  /** Allowlisted glamour-page URL; null clears it. The API validates and
+   *  persists this on edit — the client just never offered the field. */
+  example_link?: string | null;
 }
 
 export interface EditResult {

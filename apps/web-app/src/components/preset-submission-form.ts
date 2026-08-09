@@ -18,6 +18,7 @@ import {
 import { getCategoryIcon } from '@shared/category-icons';
 import type { Dye, PresetCategory } from '@xivdyetools/types';
 import type { PresetSubmission, SubmissionResult } from '@services/preset-submission-service';
+import { exampleLinkError } from '@shared/example-link';
 
 // ============================================
 // Types
@@ -33,27 +34,6 @@ interface FormState {
   exampleLink: string;
   /** Re-render the HOW IT WILL LOOK preview band (8S) */
   refreshPreview?: () => void;
-}
-
-/** Client mirror of the presets-api example-link host allowlist. */
-const EXAMPLE_LINK_HOSTS = ['eorzeacollection.com', 'imgur.com', 'flickr.com'];
-
-/** Validate an example link locally; returns an error string or null. */
-function exampleLinkError(link: string): string | null {
-  const trimmed = link.trim();
-  if (!trimmed) return null;
-  let url: URL;
-  try {
-    url = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
-  } catch {
-    return LanguageService.t('preset.fieldLinkHint');
-  }
-  const host = url.hostname.toLowerCase();
-  const allowed = EXAMPLE_LINK_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
-  if (url.protocol !== 'https:' || !allowed) {
-    return LanguageService.t('preset.fieldLinkHint');
-  }
-  return null;
 }
 
 type OnSubmitCallback = (result: SubmissionResult) => void;

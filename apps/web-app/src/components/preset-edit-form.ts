@@ -16,6 +16,7 @@ import {
   presetSubmissionService,
 } from '@services/index';
 import { getCategoryIcon } from '@shared/category-icons';
+import { exampleLinkError } from '@shared/example-link';
 import type { Dye, PresetCategory } from '@xivdyetools/types';
 import type { CommunityPreset } from '@services/community-preset-service';
 import type { EditResult, PresetEditRequest } from '@services/preset-submission-service';
@@ -30,6 +31,7 @@ interface FormState {
   category: PresetCategory; // Read-only, for display
   selectedDyes: Dye[];
   tags: string;
+  exampleLink: string;
 }
 
 type OnEditCallback = (result: EditResult) => void;
@@ -89,6 +91,7 @@ export function showPresetEditForm(preset: CommunityPreset, onEdit?: OnEditCallb
     category: preset.category_id,
     selectedDyes: dyeObjects,
     tags: preset.tags.join(', '),
+    exampleLink: preset.example_link ?? '',
   };
 
   // Create form content
@@ -130,6 +133,10 @@ function createFormContent(
 
   // Tags input
   form.appendChild(createTagsInput(state));
+
+  // 8A: the example link is editable here too — it was submit-only, so a
+  // link could be added at creation and then never corrected.
+  form.appendChild(createExampleLinkInput(state));
 
   // Submit button
   form.appendChild(createSubmitButton(presetId, state, onEdit));
@@ -396,6 +403,53 @@ function createDyeSelector(state: FormState): HTMLElement {
   return wrapper;
 }
 
+/**
+ * Example link (8A) — the same allowlisted-host field the submission form
+ * offers, validated by the same shared rule so the two cannot disagree.
+ * Blank clears the link.
+ */
+function createExampleLinkInput(state: FormState): HTMLElement {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'form-field';
+
+  const label = document.createElement('label');
+  label.className = 'block text-sm font-medium mb-1';
+  label.style.color = 'var(--theme-text)';
+  label.textContent = LanguageService.t('preset.fieldLink');
+  label.htmlFor = 'edit-preset-example-link';
+
+  const input = document.createElement('input');
+  input.type = 'url';
+  input.id = 'edit-preset-example-link';
+  input.className =
+    'w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500';
+  input.style.cssText =
+    'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
+  input.placeholder = 'eorzeacollection.com/glamour/44120';
+  input.value = state.exampleLink;
+
+  const hint = document.createElement('div');
+  hint.className = 'text-xs mt-1';
+  hint.style.color = 'var(--theme-text-secondary)';
+  hint.textContent = LanguageService.t('preset.fieldLinkHint');
+
+  input.addEventListener('input', () => {
+    state.exampleLink = input.value;
+  });
+  // Validate on blur, not per keystroke — a half-typed URL is not an error yet
+  input.addEventListener('blur', () => {
+    const error = exampleLinkError(state.exampleLink);
+    input.style.borderColor = error ? '#ef4444' : 'var(--theme-border)';
+    hint.style.color = error ? '#ef4444' : 'var(--theme-text-secondary)';
+  });
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(input);
+  wrapper.appendChild(hint);
+
+  return wrapper;
+}
+
 function createTagsInput(state: FormState): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'form-field';
@@ -494,6 +548,8 @@ function createSubmitButton(
       .split(',')
       .map((t) => t.trim())
       .filter(Boolean);
+    // Empty clears the link rather than leaving the old one in place
+    updates.example_link = state.exampleLink.trim() || null;
 
     // Validate
     const errors: string[] = [];

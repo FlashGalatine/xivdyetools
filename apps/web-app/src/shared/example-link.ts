@@ -1,0 +1,34 @@
+/**
+ * Example-link validation, shared by the preset submission and edit forms.
+ *
+ * 8A stores a link to a glamour page, never a copy of the image, and the
+ * presets-api enforces an allowlist of hosts. This is the client mirror of
+ * that list — it lives here so the two forms cannot drift into disagreeing
+ * about what a valid link is, which is exactly how the edit form ended up
+ * with a different dye range than submit.
+ *
+ * @module shared/example-link
+ */
+
+import { LanguageService } from '@services/language-service';
+
+/** Client mirror of the presets-api example-link host allowlist. */
+export const EXAMPLE_LINK_HOSTS = ['eorzeacollection.com', 'imgur.com', 'flickr.com'];
+
+/** Validate an example link locally; returns an error string or null. */
+export function exampleLinkError(link: string): string | null {
+  const trimmed = link.trim();
+  if (!trimmed) return null;
+  let url: URL;
+  try {
+    url = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
+  } catch {
+    return LanguageService.t('preset.fieldLinkHint');
+  }
+  const host = url.hostname.toLowerCase();
+  const allowed = EXAMPLE_LINK_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
+  if (url.protocol !== 'https:' || !allowed) {
+    return LanguageService.t('preset.fieldLinkHint');
+  }
+  return null;
+}
