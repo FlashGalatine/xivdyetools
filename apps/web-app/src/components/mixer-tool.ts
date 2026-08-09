@@ -240,6 +240,13 @@ export class MixerTool extends BaseComponent {
    * Delegates to extracted blending engine for algorithm implementation.
    */
   private blendColorsInternal(hexColors: string[]): string {
+    // The mixer is a two-dye pair: honour the tapped ratio instead of
+    // re-blending 50/50 every time something else changes. blendColors is
+    // still the path for any other arity (it weights equally).
+    if (hexColors.length === 2) {
+      // mixRatio is A's share; blendTwoColors' t runs toward B.
+      return blendTwoColors(hexColors[0], hexColors[1], this.mixingMode, 1 - this.mixRatio);
+    }
     return blendColors(hexColors, this.mixingMode);
   }
 
@@ -658,6 +665,11 @@ export class MixerTool extends BaseComponent {
       ConfigController.getInstance().setConfig('mixer', { matchingMethod: this.matchingMethod });
     }
 
+    // Load the mix ratio (A's share, 0-100) — the blend below reads it
+    if (typeof params.ratio === 'number' && params.ratio >= 0 && params.ratio <= 100) {
+      this.mixRatio = params.ratio / 100;
+    }
+
     // If we loaded dyes, save to storage and update selectors
     if (this.selectedDyes[0] || this.selectedDyes[1]) {
       this.saveSelectedDyes();
@@ -928,6 +940,9 @@ export class MixerTool extends BaseComponent {
     if (needsUpdate && this.blendedColor) {
       this.findMatchingDyesInternal();
       this.renderResultsGrid();
+      // The field's thirty cells carry their own ΔEs in the active method's
+      // unit — a method, model or filter change restates every one of them.
+      this.renderMixingField();
       if (this.showPrices) {
         void this.fetchPricesForDisplayedDyes();
       }
@@ -1170,6 +1185,9 @@ export class MixerTool extends BaseComponent {
     }
 
     const currentRatioPct = Math.round(this.mixRatio * 100);
+    const fieldExcludeIds = this.selectedDyes
+      .filter((dye): dye is Dye => dye !== null)
+      .map((dye) => dye.id);
     for (const model of MODELS) {
       const rowHeader = this.createElement('span', {
         textContent: MODEL_SHORT[model],
@@ -1184,12 +1202,16 @@ export class MixerTool extends BaseComponent {
         // Ratio column r = A share; blend t runs toward B.
         const t = (100 - r) / 100;
         const blend = blendTwoColors(dyeA.hex, dyeB.hex, model, t);
-        const nearest = dyeService.findClosestDye(blend, {
-          matchingMethod: this.matchingMethod,
-        });
-        const deltaRaw = nearest
-          ? ColorService.getDistanceForMethod(blend, nearest.hex, this.matchingMethod)
-          : 0;
+        // Same engine, same pool as the results grid: a cell must never quote
+        // a ΔE against a dye the grid can't show (an input dye, or one the
+        // user's filters exclude).
+        const deltaRaw =
+          findMatchingDyesEngine(
+            blend,
+            { matchingMethod: this.matchingMethod, maxResults: 1 },
+            fieldExcludeIds,
+            this.dyeFiltersConfig
+          )[0]?.distance ?? 0;
         const deltaDp = BAND_METHOD_DP[this.matchingMethod] ?? 1;
         const selected = model === this.mixingMode && r === currentRatioPct;
 
@@ -1715,26 +1737,21 @@ export class MixerTool extends BaseComponent {
   private getShareParams(): Record<string, unknown> {
     const dyeA = this.selectedDyes[0];
     const dyeB = this.selectedDyes[1];
-    const dyeC = this.selectedDyes[2];
 
-    // Need at least 2 dyes to share
+    // The mixer is a pair — both slots are required to share
     if (!dyeA || !dyeB) {
       return {};
     }
 
-    const params: Record<string, unknown> = {
+    // The ratio is half the answer: 75/25 Ink Blue + Snow White is a
+    // different colour from 50/50, and a link without it opens on neither.
+    return {
       dyeA: dyeA.stainID ?? 0,
       dyeB: dyeB.stainID ?? 0,
+      ratio: Math.round(this.mixRatio * 100),
       mode: this.mixingMode,
       algo: this.matchingMethod,
     };
-
-    // Include optional third dye if present
-    if (dyeC) {
-      params.dyeC = dyeC.stainID ?? 0;
-    }
-
-    return params;
   }
 
   /**
@@ -1776,6 +1793,9 @@ export class MixerTool extends BaseComponent {
         matchedColor: result.matchedDye.hex,
         deltaE: result.distance,
         matchingMethod: this.matchingMethod,
+        // The vendor price is local and always known — without it the card's
+        // COST line prints a dash for dyes harmony shows at 216 Gil.
+        vendorCost: result.matchedDye.cost,
         // Resolve worldId to actual world name (e.g., "Balmung" instead of "Crystal")
         marketServer: this.marketBoardService.getWorldNameForPrice(priceDataForDye),
         price: priceDataForDye?.currentMinPrice,
