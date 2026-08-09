@@ -125,7 +125,9 @@ export async function renderOGImage(
       // 15E band cards are drawn on the 400 design grid and rastered ×3
       // (1200×1050 / 1200×630); legacy 1200-wide SVGs pass scale 1.
       scale: render.scale ?? 1,
-      background: render.background ?? '#1a1a2e',
+      // The console ground. Every card is drawn on it; a caller that forgets
+      // to say so should not get the retired pre-5.0 indigo.
+      background: render.background ?? '#0B0B0C',
     });
 
     return new Response(pngBuffer, {

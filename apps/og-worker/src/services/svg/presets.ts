@@ -14,6 +14,7 @@ import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
 import { bandGlyph, notFoundBand } from './band-shared';
 import { dyeService } from './dye-helpers';
+import { getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 
 export interface PresetsOGOptions {
@@ -41,14 +42,14 @@ export function generatePresetsOG(options: PresetsOGOptions): string {
   const palettes = (presetData as { palettes: PresetPalette[] }).palettes;
   const preset = palettes.find((p) => p.id === presetId);
   if (!preset) {
-    return notFoundBand('PRESETS', 'presets', presetId, 'presets', frame);
+    return notFoundBand(getToolTag('presets', locale), 'presets', presetId, 'presets', frame);
   }
 
   const dyes = preset.dyes
     .map((stainId) => dyeService.getByStainId(stainId))
     .filter((d): d is Dye => d !== null && d !== undefined);
   if (dyes.length === 0) {
-    return notFoundBand('PRESETS', 'presets', presetId, 'presets', frame);
+    return notFoundBand(getToolTag('presets', locale), 'presets', presetId, 'presets', frame);
   }
 
   // Equal bands, whatever the count — the 8A strip inherited
@@ -62,12 +63,14 @@ export function generatePresetsOG(options: PresetsOGOptions): string {
 
   return generateBandCard({
     bands,
-    toolTag: 'PRESETS',
+    toolTag: getToolTag('presets', locale),
     toolGlyph: bandGlyph('presets'),
-    subLine: `${preset.name} · ${dyes.length}`,
-    bandLine: preset.name,
-    // No query on the X line — a long slug would ellipsise the CURATED tag
-    urlLine: 'xivdyetools.app/presets · CURATED',
+    path: 'xivdyetools.app/presets',
+    // The preset's name was the deck's whole job, so on X it moves to the
+    // footer verbatim — preset names are never localised, so no key is needed.
+    deck: preset.name,
+    footRight: frame === 'x' ? `${preset.name} · CURATED` : 'CURATED',
+    footRightFont: frame === 'x' ? 'body' : 'mono',
     frame,
   });
 }

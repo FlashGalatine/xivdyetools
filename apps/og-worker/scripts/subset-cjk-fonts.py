@@ -12,11 +12,18 @@ Prerequisites:
 Usage:
   python scripts/subset-cjk-fonts.py
 
-The script reads locale JSON files from:
-  - packages/core/src/data/locales/ (dye names, categories — all that og-worker renders)
+The script reads:
+  - packages/core/src/data/locales/ (dye names, categories, tool/harmony/vision names)
+  - src/services/og-strings.ts (the worker's OWN card strings ×6 — deck names and
+    one-liners, header tool tags, authored deck lines)
+
+The second source is not optional. og-worker owns card strings that exist in no
+locale JSON: a tool tag like 색각 or a deck line like "画像から5色" is authored in
+og-strings.ts, and a subset built from core alone renders it as tofu whenever
+the characters happen not to appear in a dye name.
 
 Unlike the discord-worker subset, bot UI strings (packages/bot-i18n/) are
-intentionally excluded: og-worker only renders dye names, not bot responses.
+intentionally excluded: og-worker does not render bot responses.
 
 And produces:
   - src/fonts/NotoSansSC-Subset.ttf (Chinese ideographs; fallback for everything)
@@ -36,6 +43,7 @@ the updated subset files.
 """
 
 import os
+import re
 import sys
 import json
 from fontTools.ttLib import TTFont
@@ -51,6 +59,7 @@ APPS_DIR = os.path.dirname(WORKER_ROOT)                        # apps
 MONOREPO_ROOT = os.path.dirname(APPS_DIR)                      # repo root
 
 CORE_LOCALES_DIR = os.path.join(MONOREPO_ROOT, "packages", "core", "src", "data", "locales")
+OG_STRINGS_TS = os.path.join(WORKER_ROOT, "src", "services", "og-strings.ts")
 FONTS_DIR = os.path.join(WORKER_ROOT, "src", "fonts")
 # Downloaded full sources live OUTSIDE src/fonts — wrangler bundles **/*.ttf,
 # and a 10 MiB variable source in src/fonts would ship inside the Worker.
@@ -128,9 +137,66 @@ def collect_characters(languages):
     return codepoints
 
 
+# Each ×6 table in og-strings.ts opens a locale block at two-space indent and
+# closes it at the same indent — `  ja: {` ... `  },`. The file is ours and
+# Prettier-formatted, so this is stable; it fails loudly if it ever is not.
+OG_LOCALE_BLOCK = re.compile(
+    r"^  (en|de|fr|ja|ko|zh): \{$(.*?)^  \},$",
+    re.MULTILINE | re.DOTALL,
+)
+
+
+def collect_og_card_characters(languages):
+    """
+    Collect characters from the worker's OWN card strings, per locale.
+
+    Returns {lang: {codepoints}}. These strings exist in no locale JSON — a
+    subset built without them renders tofu on any card whose tag or deck line
+    uses a character no dye name happens to contain.
+    """
+    if not os.path.exists(OG_STRINGS_TS):
+        raise FileNotFoundError(
+            f"Card strings not found: {OG_STRINGS_TS}\n"
+            "Did the worker layout change? Update OG_STRINGS_TS."
+        )
+    with open(OG_STRINGS_TS, "r", encoding="utf-8") as f:
+        source = f.read()
+
+    blocks = OG_LOCALE_BLOCK.findall(source)
+    if not blocks:
+        raise ValueError(
+            f"No locale blocks parsed from {OG_STRINGS_TS}.\n"
+            "The ×6 table layout changed — fix OG_LOCALE_BLOCK before shipping, "
+            "or the subsets will silently under-cover the card strings."
+        )
+
+    per_lang = {lang: set() for lang in languages}
+    seen = set()
+    for lang, body in blocks:
+        seen.add(lang)
+        if lang not in per_lang:
+            continue
+        for ch in body:
+            per_lang[lang].add(ord(ch))
+
+    missing = {"en", "de", "fr", "ja", "ko", "zh"} - seen
+    if missing:
+        raise ValueError(
+            f"Card strings parsed, but these locales never appeared: {sorted(missing)}.\n"
+            "A ×6 table is incomplete or the layout changed."
+        )
+
+    for lang in languages:
+        print(f"  og-strings.ts [{lang}]: {len(per_lang[lang])} codepoints")
+    return per_lang
+
+
 def collect_all_characters():
-    """Collect all unique characters from core locale files (dye names only)."""
-    return collect_characters(LOCALE_LANGUAGES)
+    """Every character og-worker can render: core locale data + its own cards."""
+    codepoints = collect_characters(LOCALE_LANGUAGES)
+    for chars in collect_og_card_characters(LOCALE_LANGUAGES).values():
+        codepoints |= chars
+    return codepoints
 
 
 def download_font(url, dest):
@@ -252,8 +318,8 @@ def main():
         os.makedirs(SOURCES_DIR, exist_ok=True)
         jp_input = download_font(NOTO_JP_URL, os.path.join(SOURCES_DIR, "NotoSansJP-Variable.ttf"))
 
-    print("\nCollecting Japanese characters (ja.json only)...")
-    jp_codepoints = collect_characters(["ja"])
+    print("\nCollecting Japanese characters (ja.json + the JA card strings)...")
+    jp_codepoints = collect_characters(["ja"]) | collect_og_card_characters(["ja"])["ja"]
 
     print(f"\n--- Noto Sans JP ---")
     print(f"Source: {jp_input}")

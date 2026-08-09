@@ -1,22 +1,31 @@
 /**
- * The 15E Band frame — CONFIRMED for all nine tools (Turn 15 + Turn 19).
+ * The 15E Band frame — CONFIRMED for all nine tools.
  *
  * Colour edge to edge, data written into it: no card, no border, no content
- * area — vertical bands fill the frame, hierarchy is proportion (base 2× a
+ * area — vertical bands fill the field, hierarchy is proportion (base 2× a
  * match; only Extractor's share and Mixer's ratio are genuinely
- * proportional — never claim proportion where it is decoration). The chrome
- * is ONE 34px bottom strip: reduced bucket mark + wordmark + tool glyph
- * (redundancy, not replacement — an unfurl has no embed title) + tool tag.
- * The URL is NOT in the strip — the embed above the picture carries it.
+ * proportional — never claim proportion where it is decoration).
+ *
+ * The chrome is the suite's four-zone card, shared verbatim with the 2a
+ * default cards (`cardHeader` / `cardFooter` below are the single source):
+ *
+ *   30px header   mark + wordmark left · tool glyph + tool tag right
+ *   band field    flex by `grow`; role top, name + tag bottom
+ *   deck          DISCORD ONLY — one headline line, dropped on X
+ *   26px footer   path left (never the query string) · verdict right
  *
  * One structural variant: a horizontal source strip at the top of a band
  * (as designed above as perceived · extracted pixel above matched dye · mix
- * above buyable). One mechanism, never three special cases.
+ * above buyable). One mechanism, never three special cases. Its height is a
+ * proportion of the field, so X takes ×0.66 of the Discord value.
  *
  * Two frames, and the reason is X, not Discord: summary_large_image crops
- * non-2:1, so X gets 400×210 (names drop to the strip); Discord honours the
- * real aspect and gets the bot's settled 400×350. Both raster ×3 — 1200×630
- * and 1200×1050 — and og:image:width/height state the RASTER size.
+ * non-2:1, so X gets 400×210 — the deck drops and the load-bearing headline
+ * moves to the footer's right slot, but the IN-BAND CONTENT IS UNCHANGED
+ * (only Extractor's names yield, its narrowest band being under the floor).
+ * Discord honours the real aspect and gets the bot's settled 400×350. Both
+ * raster ×3 — 1200×630 and 1200×1050 — and og:image:width/height state the
+ * RASTER size.
  *
  * Dark only (console theme), square corners (the platform rounds the frame),
  * 11px type floor, Fragment Mono for values, band cap 5 (comfortable 4 — R1
@@ -54,9 +63,29 @@ export const BAND_FRAMES: Record<BandFrame, { width: number; height: number; sca
 /** R1 on a second surface: five bands at full size, four is the comfort line. */
 export const BAND_CAP = 5;
 
+/**
+ * The shared chrome. Both card families draw these exact zones — a band card
+ * and a default card at the same frame emit byte-identical header markup.
+ */
+export const HEADER_H = 30;
+export const FOOTER_H = 26;
+/** Discord's one-line deck. X drops it; the headline moves to footer-right. */
+export const DECK_H = 36;
+
+/**
+ * The structural source strip keeps its PROPORTION of the shorter X field
+ * rather than its absolute height, so the split still reads as annotation
+ * and not as a second row of bands.
+ */
+export const X_STRIP_SCALE = 0.66;
+
+/** Discord source-strip height → the X value. */
+export function xStrip(discordHeight: number): number {
+  return Math.round(discordHeight * X_STRIP_SCALE);
+}
+
 const GROUND = '#0B0B0C';
-const STRIP_H_DISCORD = 34;
-const STRIP_H_X = 60;
+export const RULE = 'rgba(255,255,255,0.07)';
 const WORDMARK_INK = '#9C9CA2';
 const TAG_INK = '#FF6257';
 const SUB_INK = '#86868C';
@@ -115,11 +144,12 @@ export function ogMark(x: number, y: number, size: number): string {
     `<rect x="14" y="16" width="6" height="30" fill="#F76B15"/>` +
     `<rect x="20" y="16" width="5" height="30" fill="#FFC53D"/>` +
     `<rect x="25" y="16" width="5" height="30" fill="#30A46C"/>` +
-    `<rect x="30" y="16" width="4" height="30" fill="#0091FF"/>` +
-    `<rect x="34" y="16" width="4" height="30" fill="#8E4EC6"/>` +
+    `<rect x="30" y="16" width="5" height="30" fill="#0091FF"/>` +
+    `<rect x="35" y="16" width="6" height="30" fill="#8E4EC6"/>` +
     `</g>` +
-    `<ellipse cx="24" cy="17" rx="14.5" ry="6" fill="#FBFBFC"/>` +
-    `<ellipse cx="24" cy="17" rx="12" ry="4.6" fill="#E5484D"/>` +
+    `<path d="M 10 17 C 11 30 13 39.5 15.5 42.5 C 18 45 30 45 32.5 42.5 C 35 39.5 37 30 38 17 Z" fill="none" stroke="#C8CCD5" stroke-width="1.4"/>` +
+    `<ellipse cx="24" cy="17" rx="14" ry="5.4" fill="#FBFBFC"/>` +
+    `<ellipse cx="24" cy="17" rx="9.6" ry="3.4" fill="#8E4EC6"/>` +
     `</g>`
   );
 }
@@ -141,27 +171,38 @@ export interface BandEntry {
   tag?: string;
   /** Flex weight — base 2 / match 1; extractor uses real shares */
   grow?: number;
-  /** Name type size — base 17, others 12 (the drawn sizes) */
+  /** Name type size — Harmony's base 17 / matches 12; the other eight 11.5 */
   nameSize?: number;
   /**
    * The structural variant: a horizontal source strip at the band top
-   * (as designed / extracted pixel / the mix). Height per tool: 46–54px.
+   * (as designed / extracted pixel / the mix). Discord heights are 46–54px;
+   * pass `xStrip(n)` on the X frame.
    */
   src?: { hex: string; height: number };
 }
 
 export interface BandCardOptions {
   bands: BandEntry[];
-  /** Localized tool tag beside the glyph (HARMONY / ハーモニー …) */
+  /** Localized tool tag beside the glyph (HARMONY / ハーモニー / 色覚 …) */
   toolTag: string;
   /** Rendered tool glyph markup (13px, ink #ECECEE, accent #FF6257) or null */
   toolGlyph?: string | null;
-  /** Right side of the Discord strip (e.g. "TETRADIC ON #43") */
-  subLine?: string;
-  /** X frame: the one-line summary that replaces the band names */
-  bandLine?: string;
-  /** X frame: "xivdyetools.app/… · ΔE2000" under the bandLine */
-  urlLine?: string;
+  /**
+   * Footer left — the PATH ONLY, never the scheme and never the query string.
+   * One resvg text node has no wrapping, so a query string clips at the frame
+   * edge rather than reflowing.
+   */
+  path: string;
+  /**
+   * Footer right. The method tag on Discord; on X the card's load-bearing
+   * headline moves here (Budget's verdict, the closest Δ, the lens, the
+   * preset name) because the deck that carried it has dropped.
+   */
+  footRight?: string | null;
+  /** Footer-right face — mono for a method tag, body for a yielding verdict */
+  footRightFont?: 'mono' | 'body';
+  /** DISCORD ONLY: the one-line deck headline. Ignored on the X frame. */
+  deck?: string | null;
   frame?: BandFrame;
 }
 
@@ -201,6 +242,149 @@ function fit(content: string, maxPx: number, size: number, mono = false): string
   return out.trimEnd() + '…';
 }
 
+/** CJK by codepoint, never by "has no spaces" — so is `Rußschwarzer`. */
+const CJK_RE = /[　-ヿ㐀-䶿一-鿿豈-﫿가-힯]/;
+
+/**
+ * Wrap a NAME to a pixel budget. The standing rule is hyphenate, never
+ * truncate — a character cap is an EN-width heuristic that decapitates German
+ * compounds, and a vertical band is exactly where a long dye name has nowhere
+ * else to go.
+ *
+ * Latin wraps on spaces and, when a single word is still wider than the band
+ * (`Johannisbeerenvioletter` in a 67px column), breaks it with a hyphen — the
+ * soft-hyphen pass the design asks of resvg, which has no `hyphens: auto`.
+ * CJK wraps per character; `estimateTextWidth` already knows a CJK glyph is a
+ * full em. Only the final line can still overflow, and it ellipsises.
+ */
+function wrapName(content: string, maxPx: number, size: number, maxLines: number): string[] {
+  const w = (s: string): number => estimateTextWidth(s, size * 0.54);
+  if (w(content) <= maxPx) return [content];
+
+  const cjk = CJK_RE.test(content);
+
+  // Break any over-wide word into hyphenated fragments that do fit
+  const atoms: string[] = [];
+  for (const word of cjk ? [...content] : content.split(' ')) {
+    if (cjk || w(word) <= maxPx) {
+      atoms.push(word);
+      continue;
+    }
+    let rest = word;
+    while (w(rest) > maxPx) {
+      let cut = rest.length - 1;
+      while (cut > 2 && w(`${rest.slice(0, cut)}-`) > maxPx) cut--;
+      if (cut <= 2) break;
+      atoms.push(`${rest.slice(0, cut)}-`);
+      rest = rest.slice(cut);
+    }
+    atoms.push(rest);
+  }
+
+  const lines: string[] = [];
+  let line = '';
+  for (const atom of atoms) {
+    // A fragment we just hyphenated must not take a space before the next one
+    const glue = !line || cjk || line.endsWith('-') ? '' : ' ';
+    const next = line + glue + atom;
+    if (w(next) <= maxPx || !line) {
+      line = next;
+      continue;
+    }
+    if (lines.length === maxLines - 1) {
+      // No room for another line: the current one absorbs the remainder
+      line = next;
+      continue;
+    }
+    lines.push(line);
+    line = atom;
+  }
+  lines.push(line);
+
+  return lines.slice(0, maxLines).map((l) => fit(l, maxPx, size));
+}
+
+// ============================================================================
+// The shared chrome — one source for band cards and default cards alike
+// ============================================================================
+
+/**
+ * The 30px header: mark + wordmark left, tool glyph + tool tag right, and the
+ * hairline rule under it. Identical on both frames and on both card families.
+ */
+export function cardHeader(
+  width: number,
+  o: { toolTag?: string | null; toolGlyph?: string | null }
+): string {
+  const parts: string[] = [ogMark(13, 6.5, 17)];
+  const wordmark = 'XIV DYE TOOLS';
+  parts.push(
+    bandText(37, 19, wordmark, {
+      fill: WORDMARK_INK,
+      size: 11,
+      font: 'display',
+      weight: 600,
+      spacing: 1.3,
+    })
+  );
+
+  if (o.toolTag) {
+    // The tag yields to the wordmark, never the other way round — measure the
+    // room left after the wordmark and the glyph before drawing it.
+    const wordmarkRight = 37 + estimateTextWidth(wordmark, 11 * 0.62) + wordmark.length * 1.3;
+    const glyphW = o.toolGlyph ? 13 + 6 : 0;
+    const tag = fit(o.toolTag, width - 13 - glyphW - wordmarkRight - 10, 11, true);
+    const tagW = estimateTextWidth(tag, 11 * 0.62) + tag.length * 0.5;
+    parts.push(
+      bandText(width - 13, 19, tag, {
+        fill: TAG_INK,
+        size: 11,
+        font: 'mono',
+        spacing: 0.5,
+        anchor: 'end',
+      })
+    );
+    if (o.toolGlyph) {
+      parts.push(
+        o.toolGlyph.replace('<svg ', `<svg x="${(width - 13 - tagW - 6 - 13).toFixed(1)}" y="8.5" `)
+      );
+    }
+  }
+
+  parts.push(`<line x1="0" y1="${HEADER_H}" x2="${width}" y2="${HEADER_H}" stroke="${RULE}" stroke-width="1"/>`);
+  return parts.join('');
+}
+
+/**
+ * The 26px footer: path left, verdict or method tag right. The path is the one
+ * thing a reader can act on, so it never yields — the right slot ellipsises
+ * into whatever room is left.
+ */
+export function cardFooter(
+  width: number,
+  height: number,
+  o: { path: string; right?: string | null; rightFont?: 'mono' | 'body' }
+): string {
+  const footTop = height - FOOTER_H;
+  const parts: string[] = [
+    `<line x1="0" y1="${footTop}" x2="${width}" y2="${footTop}" stroke="${RULE}" stroke-width="1"/>`,
+    bandText(13, footTop + 17, o.path, { fill: SUB_INK, size: 11, font: 'mono' }),
+  ];
+  if (o.right) {
+    const mono = (o.rightFont ?? 'mono') === 'mono';
+    const budget = width - 26 - estimateTextWidth(o.path, 11 * 0.62) - 10;
+    parts.push(
+      bandText(width - 13, footTop + 17, fit(o.right, budget, 11, mono), {
+        fill: SUB_INK,
+        size: 11,
+        font: mono ? 'mono' : 'body',
+        anchor: 'end',
+      })
+    );
+  }
+  return parts.join('');
+}
+
 // ============================================================================
 // Generator
 // ============================================================================
@@ -209,163 +393,120 @@ function fit(content: string, maxPx: number, size: number, mono = false): string
 export function generateBandCard(options: BandCardOptions): string {
   const frame = options.frame ?? 'discord';
   const { width, height } = BAND_FRAMES[frame];
-  const stripH = frame === 'discord' ? STRIP_H_DISCORD : STRIP_H_X;
-  const bandsH = height - stripH;
+
+  // The deck is a Discord-only zone. On X it drops and its headline is
+  // expected in `footRight` — the degrade rule, one rule for all nine.
+  const deck = frame === 'discord' ? (options.deck ?? null) : null;
+
+  const fieldTop = HEADER_H;
+  const fieldBottom = height - FOOTER_H - (deck ? DECK_H : 0);
+  const fieldH = fieldBottom - fieldTop;
+
   const bands = options.bands.slice(0, BAND_CAP);
   const totalGrow = bands.reduce((sum, b) => sum + (b.grow ?? 1), 0) || 1;
 
   const parts: string[] = [];
   parts.push(`<rect x="0" y="0" width="${width}" height="${height}" fill="${GROUND}"/>`);
 
-  // Bands
+  // ---- The band field. One code path: X differs only by how tall it is.
   let x = 0;
   for (const band of bands) {
     const w = ((band.grow ?? 1) / totalGrow) * width;
     const ink = bandInk(band.hex);
     parts.push(
-      `<rect x="${x.toFixed(2)}" y="0" width="${(w + 0.5).toFixed(2)}" height="${bandsH}" fill="${escapeXml(band.hex)}"/>`
+      `<rect x="${x.toFixed(2)}" y="${fieldTop}" width="${(w + 0.5).toFixed(2)}" height="${fieldH}" fill="${escapeXml(band.hex)}"/>`
     );
 
     // The structural variant: source strip at the band top
-    let topY = 0;
+    let topY = fieldTop;
     if (band.src) {
       parts.push(
-        `<rect x="${x.toFixed(2)}" y="0" width="${(w + 0.5).toFixed(2)}" height="${band.src.height}" fill="${escapeXml(band.src.hex)}"/>`
+        `<rect x="${x.toFixed(2)}" y="${fieldTop}" width="${(w + 0.5).toFixed(2)}" height="${band.src.height}" fill="${escapeXml(band.src.hex)}"/>`
       );
-      topY = band.src.height;
+      topY = fieldTop + band.src.height;
     }
 
     const pad = 10;
     const innerW = w - pad * 2;
-    if (frame === 'discord') {
-      if (band.role) {
+
+    if (band.role) {
+      parts.push(
+        bandText(x + pad, topY + 21, fit(band.role, innerW, 11, true), {
+          fill: ink.onDim,
+          size: 11,
+          font: 'mono',
+          spacing: 0.6,
+        })
+      );
+    }
+
+    // Bottom stack: name / value / tag (drawn baseline rhythm, climbing)
+    const nameSize = band.nameSize ?? 11.5;
+    let baseline = fieldBottom - 12;
+    if (band.tag) {
+      parts.push(
+        bandText(x + pad, baseline, fit(band.tag, innerW, 11, true), {
+          fill: ink.onDim,
+          size: 11,
+          font: 'mono',
+        })
+      );
+      baseline -= 15;
+    }
+    if (band.value) {
+      parts.push(
+        bandText(x + pad, baseline, fit(band.value, innerW, 11, true), {
+          fill: ink.onDim,
+          size: 11,
+          font: 'mono',
+        })
+      );
+      baseline -= 15;
+    }
+    if (band.name) {
+      // Names wrap rather than truncate, climbing from the bottom stack. The
+      // room above is whatever the role line does not claim.
+      const lineH = Math.round(nameSize * 1.2);
+      const roomPx = baseline - (topY + (band.role ? 27 : 6));
+      const maxLines = Math.max(1, Math.min(3, Math.floor(roomPx / lineH)));
+      const lines = wrapName(band.name, innerW, nameSize, maxLines);
+      lines.forEach((line, i) => {
         parts.push(
-          bandText(x + pad, topY + 21, fit(band.role, innerW, 11, true), {
-            fill: ink.onDim,
-            size: 11,
-            font: 'mono',
-            spacing: 0.6,
-          })
-        );
-      }
-      // Bottom stack: name / value / tag (gap 4, drawn baseline rhythm)
-      const nameSize = band.nameSize ?? 12;
-      let baseline = bandsH - 12;
-      if (band.tag) {
-        parts.push(
-          bandText(x + pad, baseline, fit(band.tag, innerW, 11, true), {
-            fill: ink.onDim,
-            size: 11,
-            font: 'mono',
-          })
-        );
-        baseline -= 15;
-      }
-      if (band.value) {
-        parts.push(
-          bandText(x + pad, baseline, fit(band.value, innerW, 11, true), {
-            fill: ink.onDim,
-            size: 11,
-            font: 'mono',
-          })
-        );
-        baseline -= 15;
-      }
-      if (band.name) {
-        parts.push(
-          bandText(x + pad, baseline, fit(band.name, innerW, nameSize), {
+          bandText(x + pad, baseline - (lines.length - 1 - i) * lineH, line, {
             fill: ink.on,
             size: nameSize,
             font: 'body',
             weight: 600,
           })
         );
-      }
-    } else {
-      // X frame: only the tag survives on the band; names drop to the strip
-      if (band.tag) {
-        parts.push(
-          bandText(x + pad, bandsH - 10, fit(band.tag, innerW, 11, true), {
-            fill: ink.onDim,
-            size: 11,
-            font: 'mono',
-          })
-        );
-      }
+      });
     }
     x += w;
   }
 
-  // The one chrome strip
-  const stripTop = bandsH;
-  parts.push(`<rect x="0" y="${stripTop}" width="${width}" height="${stripH}" fill="${GROUND}"/>`);
+  // ---- Chrome
+  parts.push(cardHeader(width, { toolTag: options.toolTag, toolGlyph: options.toolGlyph }));
 
-  if (frame === 'discord') {
-    const cy = stripTop + stripH / 2;
-    let cx = 13;
-    parts.push(ogMark(cx, cy - 8.5, 17));
-    cx += 17 + 7;
-    const wordmark = 'XIV DYE TOOLS';
+  if (deck) {
+    const deckTop = height - FOOTER_H - DECK_H;
+    parts.push(`<line x1="0" y1="${deckTop}" x2="${width}" y2="${deckTop}" stroke="${RULE}" stroke-width="1"/>`);
     parts.push(
-      bandText(cx, cy + 4, wordmark, {
-        fill: WORDMARK_INK,
-        size: 11,
-        font: 'display',
+      bandText(13, deckTop + 23, fit(deck, width - 26, 14.5), {
+        fill: NAME_INK,
+        size: 14.5,
+        font: 'body',
         weight: 600,
-        spacing: 1.3,
       })
     );
-    cx += estimateTextWidth(wordmark, 11 * 0.62) + wordmark.length * 1.3 + 9;
-    if (options.toolGlyph) {
-      parts.push(options.toolGlyph.replace('<svg ', `<svg x="${cx.toFixed(1)}" y="${(cy - 6.5).toFixed(1)}" `));
-      cx += 13 + 6;
-    }
-    parts.push(
-      bandText(cx, cy + 4, options.toolTag, { fill: TAG_INK, size: 11, font: 'mono' })
-    );
-    if (options.subLine) {
-      parts.push(
-        bandText(width - 13, cy + 4, fit(options.subLine, 170, 11, true), {
-          fill: SUB_INK,
-          size: 11,
-          font: 'mono',
-          anchor: 'end',
-        })
-      );
-    }
-  } else {
-    const cy = stripTop + stripH / 2;
-    let cx = 13;
-    parts.push(ogMark(cx, cy - 9.5, 19));
-    cx += 19 + 9;
-    const tagW = estimateTextWidth(options.toolTag, 11 * 0.62) + 6 + 13;
-    const textMax = width - cx - 13 - tagW - 10;
-    if (options.bandLine) {
-      parts.push(
-        bandText(cx, cy - 2, fit(options.bandLine, textMax, 14), {
-          fill: NAME_INK,
-          size: 14,
-          font: 'body',
-          weight: 600,
-        })
-      );
-    }
-    if (options.urlLine) {
-      parts.push(
-        bandText(cx, cy + 14, fit(options.urlLine, textMax, 11, true), {
-          fill: SUB_INK,
-          size: 11,
-          font: 'mono',
-        })
-      );
-    }
-    let rx = width - 13 - estimateTextWidth(options.toolTag, 11 * 0.62);
-    parts.push(bandText(width - 13, cy + 4, options.toolTag, { fill: TAG_INK, size: 11, font: 'mono', anchor: 'end' }));
-    if (options.toolGlyph) {
-      rx -= 6 + 13;
-      parts.push(options.toolGlyph.replace('<svg ', `<svg x="${rx.toFixed(1)}" y="${(cy - 6.5).toFixed(1)}" `));
-    }
   }
+
+  parts.push(
+    cardFooter(width, height, {
+      path: options.path,
+      right: options.footRight,
+      rightFont: options.footRightFont,
+    })
+  );
 
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">` +

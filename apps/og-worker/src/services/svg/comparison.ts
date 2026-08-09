@@ -15,6 +15,7 @@ import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
 import { bandGlyph, notFoundBand } from './band-shared';
 import { getDyeByItemId } from './dye-helpers';
+import { getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 
 export interface ComparisonOGOptions {
@@ -37,7 +38,13 @@ export function generateComparisonOG(options: ComparisonOGOptions): string {
     .map((id) => getDyeByItemId(id))
     .filter((d): d is Dye => d !== undefined);
   if (dyes.length < 2) {
-    return notFoundBand('COMPARISON', 'comparison', options.dyeIds.join(' · '), 'comparison', frame);
+    return notFoundBand(
+      getToolTag('comparison', locale),
+      'comparison',
+      options.dyeIds.join(' · '),
+      'comparison',
+      frame
+    );
   }
 
   // Every pair, closest first
@@ -66,15 +73,16 @@ export function generateComparisonOG(options: ComparisonOGOptions): string {
   }));
 
   const closestLine = `${getLocalizedDyeName(closest.a, locale)} ↔ ${getLocalizedDyeName(closest.b, locale)}`;
-  const pairRun = pairs.map((p) => p.delta.toFixed(1)).join(' · ');
 
   return generateBandCard({
     bands,
-    toolTag: 'COMPARISON',
+    toolTag: getToolTag('comparison', locale),
     toolGlyph: bandGlyph('comparison'),
-    subLine: `Δ ${pairRun}`,
-    bandLine: `${closestLine} · Δ${closest.delta.toFixed(1)}`,
-    urlLine: 'xivdyetools.app/comparison · ΔE2000',
+    path: 'xivdyetools.app/comparison',
+    // Six pair numbers are not four of anything, so only the closest survives:
+    // the deck on Discord, the footer's right slot on X.
+    deck: `${closestLine} · Δ${closest.delta.toFixed(1)}`,
+    footRight: frame === 'x' ? `CLOSEST Δ${closest.delta.toFixed(1)}` : 'ΔE2000',
     frame,
   });
 }

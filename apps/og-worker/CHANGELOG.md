@@ -5,6 +5,44 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-08-09
+
+The 5.0 card rewrite, plus a reconciliation pass against the confirmed design
+record (`OG Card Directions` / `OG Default Cards` / `OG X Variants` /
+`String Pass - OG One-liners`, ratified in `Decisions.md`).
+
+### Added
+
+- **The 15E band frame**, one shape for all nine tools, on a 400-wide design grid rastered ×3 (Discord 400×350 → 1200×1050, X 400×210 → 1200×630 via `?frame=x`, which `twitter:image` carries). `og:image:width/height` state the raster size and the two frames take separate cache keys.
+- **Routes for the three unwired tools** — extractor, presets and budget — in `SUPPORTED_TOOLS`, `wrangler.toml` and `services/svg/`. A shared preset or budget swap no longer unfurls as a bare URL.
+- **The 2a default cards**: `/og/default.png` and `/og/:tool/default.png`. A default card never fakes data — no dye names, no Δ, no prices — the mark's six spill stripes carry the identity and the tool's banner glyph floats in a dark tile. The root card takes no tile and drops the method tag.
+- **Deck strings ×6** (`OG_DECK`) — ten tool name + one-liner pairs, the worker's first tool-describing card strings.
+- **The localized header tool tag ×6** (`TOOL_TAG`) — `BandCardOptions.toolTag` was documented as localized and passed an English literal at all nine call sites. EN also takes the design's card vocabulary: COMPARE, VISION, EXTRACT, PRESET.
+- **Four authored deck lines ×6** (`OG_DECK_LINE`) for the headlines that are not pure data — swatch's "Nearest {n} to {hex}", extractor's count, budget's "Best per point:", accessibility's dye count.
+- **Name wrapping** (`wrapName`): band names wrap and hyphenate instead of truncating. A character cap is an EN-width heuristic that decapitates German compounds, and a vertical band is exactly where a long dye name has nowhere to go. resvg has no `hyphens: auto`, so this is that pass.
+- Fragment Mono is bundled and every value is set in it; a JP subset joins SC and KR so JA stops rendering in Chinese letterforms.
+
+### Fixed
+
+- **The `/og/` prefix**, missing from every emitted `og:image` URL — the routes register under `/og/`, the meta tags pointed one level up, and nothing served that path. No card of any design was ever fetched.
+- **`?lang=` reaches the picture.** The text localized six ways around an English card while the worker bundled CJK subsets precisely so it would not have to.
+- **Harmony's Δ measures the right pair** — match → computed ideal, not base → match. A complement is far from its base by definition, so a correct tetrad printed four reds.
+- **The emoji glyphs are gone.** `✦ XIV DYE TOOLS` and `🎨 xivdyetools.app` had no glyph in a rasterizer with no emoji font, and arrived as tofu or as nothing.
+- **The CJK subsets cover the worker's own card strings.** `subset-cjk-fonts.py` read `packages/core` locales only, so every string authored in `og-strings.ts` — deck names, one-liners, tool tags — was covered by luck alone. It now reads both, and fails loudly if the ×6 tables stop parsing rather than silently under-covering them.
+- **The chrome is one chrome.** Data cards drew a single bottom strip (the Turn-15 sketch) while default cards drew the confirmed 30px header / deck / 26px footer. `cardHeader` and `cardFooter` in `band.ts` are now the single source for both families, so the same frame emits the same markup.
+- **The X frame keeps its bands.** Names were dropped from every X band and replaced by a one-line summary; the confirmed degrade rule drops the deck *only*, moves its headline to the footer's right slot, and leaves in-band content unchanged. Extractor is the one exception — its narrowest band is under the 11px floor.
+- **X source strips scale ×0.66** (accessibility 52→34, extractor 54→36, mixer 46→30) so the split still reads as annotation, not as a second row of bands. They were passing the Discord height through.
+- **The mark matches the OG doc's `#ogmark`**, which its own comment claimed to copy verbatim: two spill-stripe widths, the missing `#C8CCD5` bucket outline, and the rim and pour ellipses (the pour is purple, not red).
+- **The footer prints the path only.** One resvg text node has no wrapping, so a query string clips at the frame edge rather than reflowing.
+- **Budget holds one figure per row on both frames.** A five-band card makes each candidate ~67px wide regardless of height, so neither `Δ5.2 · 216 G` nor `STD SPECTRUM` fits — the latter ellipsised to an identical `STD S…` on every priced band. The price takes the role row, Δ stands alone, and the footer names the tier once.
+- Extractor's `N colours` was hardcoded en-GB against the String Pass's explicit EN-US rule, and never localized.
+- `renderOGImage`'s default background was still the retired `#1a1a2e`.
+
+### Removed
+
+- `og-card.ts` and its tests — the pre-5.0 1200×630 shell, with no caller left.
+- The duplicate `ALGO_TAG` map in `harmony.ts`, which shadowed `band-shared.ts`.
+
 ## [1.4.0] - 2026-07-19
 
 2026-07-18 audit remediation (Sprint 7) — OG image fidelity.

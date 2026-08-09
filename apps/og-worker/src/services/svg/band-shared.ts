@@ -32,6 +32,9 @@ export function bandGlyph(name: ToolGlyphName): string {
 /**
  * The never-throws neutral state for an unresolvable input (route contract —
  * the glyph-tile default set replaces this in the defaults step).
+ *
+ * It fakes nothing: one neutral band, the input echoed back, and no method
+ * tag in the footer-right slot — there is no measurement to name.
  */
 export function notFoundBand(
   toolTag: string,
@@ -44,8 +47,8 @@ export function notFoundBand(
     bands: [{ hex: '#17171A', role: 'NOT FOUND', name: label, nameSize: 17 }],
     toolTag,
     toolGlyph: bandGlyph(glyphName),
-    bandLine: label,
-    urlLine: `xivdyetools.app/${urlPath}`,
+    path: `xivdyetools.app/${urlPath}`,
+    deck: label,
     frame,
   });
 }

@@ -3,17 +3,23 @@
  *
  * The one card where proportion is genuine: band width is each colour's
  * share of the image, so the palette is ordered by dominance rather than by
- * rank. The 54px strip above each band is the extracted pixel; the body is
- * the dye nearest to it.
+ * rank. The 54px strip above each band is the extracted pixel (×0.66 on X);
+ * the body is the dye nearest to it.
+ *
+ * It is also the ONE card whose names yield: at 11% share the narrowest band
+ * is ~44px on the X field and cannot hold a name at the 11px floor, so on X
+ * the share-% and Δ stay and the name goes. The dye is the colour itself, and
+ * the link target names it.
  *
  * @module services/svg/extractor
  */
 
 import { ColorService } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
-import { generateBandCard, BAND_CAP, type BandEntry, type BandFrame } from './band';
+import { generateBandCard, xStrip, BAND_CAP, type BandEntry, type BandFrame } from './band';
 import { bandGlyph, notFoundBand } from './band-shared';
 import { dyeService } from './dye-helpers';
+import { deckLine, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 
 export interface ExtractorOGOptions {
@@ -42,8 +48,10 @@ export function generateExtractorOG(options: ExtractorOGOptions): string {
     .sort((a, b) => b.share - a.share)
     .slice(0, BAND_CAP);
   if (entries.length === 0) {
-    return notFoundBand('EXTRACTOR', 'extractor', '—', 'extractor', frame);
+    return notFoundBand(getToolTag('extractor', locale), 'extractor', '—', 'extractor', frame);
   }
+
+  const stripH = frame === 'x' ? xStrip(EXTRACT_STRIP_H) : EXTRACT_STRIP_H;
 
   const bands: BandEntry[] = entries.map((entry) => {
     let best: Dye | null = null;
@@ -58,21 +66,22 @@ export function generateExtractorOG(options: ExtractorOGOptions): string {
     return {
       hex: best!.hex,
       role: `${Math.round(entry.share)}%`,
-      name: getLocalizedDyeName(best!, locale),
-      value: best!.hex.toUpperCase(),
+      // The one card where the name yields — see the module note
+      name: frame === 'x' ? undefined : getLocalizedDyeName(best!, locale),
+      value: frame === 'x' ? undefined : best!.hex.toUpperCase(),
       tag: `Δ${bestDelta.toFixed(1)}`,
       grow: entry.share,
-      src: { hex: entry.hex.toUpperCase(), height: EXTRACT_STRIP_H },
+      src: { hex: entry.hex.toUpperCase(), height: stripH },
     };
   });
 
   return generateBandCard({
     bands,
-    toolTag: 'EXTRACTOR',
+    toolTag: getToolTag('extractor', locale),
     toolGlyph: bandGlyph('extractor'),
-    subLine: `${entries.length} · ΔE2000`,
-    bandLine: `${entries.length} colours`,
-    urlLine: 'xivdyetools.app/extractor · ΔE2000',
+    path: 'xivdyetools.app/extractor',
+    deck: deckLine('extractorCount', locale, { n: entries.length }),
+    footRight: 'ΔE2000',
     frame,
   });
 }

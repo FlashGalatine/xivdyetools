@@ -25,7 +25,7 @@ import { extractLocaleCode } from '@xivdyetools/core';
 import type { LocaleCode } from '@xivdyetools/types';
 import { detectCrawlerFromRequest, getCrawlerName } from './crawler-detector';
 import { generateOGDataForTool, generateOGHTML } from './og-data-generator';
-import { getOgDeck } from './services/og-strings';
+import { getOgDeck, getToolTag } from './services/og-strings';
 import { renderOGImage } from './services/renderer';
 import {
   generateHarmonyOG,
@@ -266,7 +266,9 @@ function buildDefaultCardSvg(
     const deck = DEFAULT_DECK[tool];
     const strings = getOgDeck(tool, locale);
     return generateDefaultCard({
-      tool: { glyphName: deck.glyphName, label: deck.label },
+      // Same header slot as a data card, so the same localized tag — the
+      // leading slash is what says "the tool" rather than "a result from it".
+      tool: { glyphName: deck.glyphName, label: `/${getToolTag(tool, locale)}` },
       name: strings.name,
       sub: strings.sub,
       path: `xivdyetools.app/${tool}`,

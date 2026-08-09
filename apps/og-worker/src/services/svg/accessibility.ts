@@ -2,8 +2,9 @@
  * Accessibility OG image — the 15E band (5.0).
  *
  * The band body is the dye AS PERCEIVED (through the lens); the 52px strip
- * above it is the dye as designed — the one structural variant the shape
- * needs, shared with Extractor and Mixer. Δ is the shift the lens
+ * above it is the dye as designed (×0.66 on the shorter X field — the strip
+ * keeps its proportion, not its absolute height) — the one structural variant
+ * the shape needs, shared with Extractor and Mixer. Δ is the shift the lens
  * introduces, not a distance between dyes; no WCAG percentage rides the
  * picture (no criterion measures whether two colours are tellable apart).
  *
@@ -12,10 +13,11 @@
 
 import { ColorService } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
-import { generateBandCard, type BandEntry, type BandFrame } from './band';
+import { generateBandCard, xStrip, type BandEntry, type BandFrame } from './band';
 import { bandGlyph, notFoundBand } from './band-shared';
 import { getDyeByItemId } from './dye-helpers';
-import { getLocalizedDyeName } from '../translator';
+import { deckLine, getToolTag } from '../og-strings';
+import { getLocalizedDyeName, getLocalizedVisionName } from '../translator';
 import type { VisionType } from '../../types';
 
 export interface AccessibilityOGOptions {
@@ -52,10 +54,21 @@ export function generateAccessibilityOG(options: AccessibilityOGOptions): string
     .map((id) => getDyeByItemId(id))
     .filter((d): d is Dye => d !== undefined);
   if (dyes.length === 0) {
-    return notFoundBand('A11Y', 'accessibility', options.dyeIds.join(' · '), 'accessibility', frame);
+    return notFoundBand(
+      getToolTag('accessibility', locale),
+      'accessibility',
+      options.dyeIds.join(' · '),
+      'accessibility',
+      frame
+    );
   }
 
   const lens = LENS_SHORT[visionType] ?? visionType.toUpperCase();
+  // The lens is the one thing the deck says that nothing else does, so it is
+  // what moves to the footer on X — from the same locale key the embed uses.
+  const lensName = getLocalizedVisionName(visionType, locale);
+  const stripH = frame === 'x' ? xStrip(DESIGNED_STRIP_H) : DESIGNED_STRIP_H;
+
   const bands: BandEntry[] = dyes.map((dye) => {
     const simulated =
       visionType === 'normal'
@@ -68,17 +81,17 @@ export function generateAccessibilityOG(options: AccessibilityOGOptions): string
       name: getLocalizedDyeName(dye, locale),
       value: dye.hex.toUpperCase(),
       tag: `Δ${shift.toFixed(1)}`,
-      src: { hex: dye.hex, height: DESIGNED_STRIP_H },
+      src: { hex: dye.hex, height: stripH },
     };
   });
 
   return generateBandCard({
     bands,
-    toolTag: 'A11Y',
+    toolTag: getToolTag('accessibility', locale),
     toolGlyph: bandGlyph('accessibility'),
-    subLine: `${lens} · ΔE2000`,
-    bandLine: `${lens} · ${dyes.length}`,
-    urlLine: `xivdyetools.app/accessibility?vision=${visionType} · ΔE2000`,
+    path: 'xivdyetools.app/accessibility',
+    deck: `${lensName} · ${deckLine('a11yDyeCount', locale, { n: dyes.length })}`,
+    footRight: frame === 'x' ? lens : 'ΔE2000',
     frame,
   });
 }

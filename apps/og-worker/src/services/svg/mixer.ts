@@ -3,16 +3,18 @@
  *
  * Widths ARE the ratio — proportion says 60/40 without a slider nobody can
  * drag. The result band carries the one structural variant: the mix itself
- * is the 46px strip above, the band under it is the dye you can buy.
+ * is the 46px strip above (×0.66 on the shorter X field), the band under it
+ * is the dye you can buy.
  *
  * @module services/svg/mixer
  */
 
 import { ColorService } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
-import { generateBandCard, type BandEntry, type BandFrame } from './band';
+import { generateBandCard, xStrip, type BandEntry, type BandFrame } from './band';
 import { ALGO_TAG, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
 import { dyeService, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
+import { getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm } from '../../types';
 
@@ -60,7 +62,7 @@ export function generateMixerOG(options: MixerOGOptions): string {
   const dyeB = getDyeByItemId(dyeBId);
   const dyeC = dyeCId !== undefined ? getDyeByItemId(dyeCId) : undefined;
   if (!dyeA || !dyeB || (dyeCId !== undefined && !dyeC)) {
-    return notFoundBand('MIXER', 'mixer', `#${dyeAId} + #${dyeBId}`, 'mixer', frame);
+    return notFoundBand(getToolTag('mixer', locale), 'mixer', `#${dyeAId} + #${dyeBId}`, 'mixer', frame);
   }
 
   // The mix: A at ratio% against B (LAB), the third dye folded in equally
@@ -94,17 +96,19 @@ export function generateMixerOG(options: MixerOGOptions): string {
       tag: `Δ${fmtDelta(delta, algorithm)}`,
       grow: dyeC ? 3 : 100,
       nameSize: 17,
-      src: { hex: mixHex, height: MIX_STRIP_H },
+      src: { hex: mixHex, height: frame === 'x' ? xStrip(MIX_STRIP_H) : MIX_STRIP_H },
     },
   ];
 
   return generateBandCard({
     bands,
-    toolTag: 'MIXER',
+    toolTag: getToolTag('mixer', locale),
     toolGlyph: bandGlyph('mixer'),
-    subLine: `${ratio}/${100 - ratio} · ${ALGO_TAG[algorithm] ?? algorithm.toUpperCase()}`,
-    bandLine: getLocalizedDyeName(hit.dye, locale),
-    urlLine: `xivdyetools.app/mixer · ${ALGO_TAG[algorithm] ?? algorithm.toUpperCase()}`,
+    path: 'xivdyetools.app/mixer',
+    // The ratio is structural and the buyable dye is the third band's own
+    // name, so the deck names the answer and nothing has to move on X.
+    deck: getLocalizedDyeName(hit.dye, locale),
+    footRight: ALGO_TAG[algorithm] ?? algorithm.toUpperCase(),
     frame,
   });
 }

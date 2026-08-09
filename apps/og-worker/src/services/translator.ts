@@ -3,7 +3,12 @@ import {
   LocaleRegistry,
   TranslationProvider,
 } from '@xivdyetools/core';
-import type { Dye, LocaleCode } from '@xivdyetools/types';
+import type {
+  Dye,
+  HarmonyTypeKey,
+  LocaleCode,
+  VisionType as CoreVisionType,
+} from '@xivdyetools/types';
 
 /**
  * Module-scoped translator with all 6 locales eagerly preloaded.
@@ -26,4 +31,22 @@ export const ogTranslator: TranslationProvider = (() => {
  */
 export function getLocalizedDyeName(dye: Dye, locale: LocaleCode): string {
   return ogTranslator.getDyeName(dye.itemID, locale) ?? dye.name;
+}
+
+/** Route form (`split-complementary`) → locale key form (`splitComplementary`). */
+export function harmonyToKey(harmony: string): HarmonyTypeKey {
+  return harmony.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase()) as HarmonyTypeKey;
+}
+
+/**
+ * The localized harmony-type name. Shared by the crawler HTML and the cards so
+ * the embed text and the picture inside it cannot disagree.
+ */
+export function getLocalizedHarmonyName(harmony: string, locale: LocaleCode): string {
+  return ogTranslator.getHarmonyType(harmonyToKey(harmony), locale);
+}
+
+/** The localized lens name — the same shipped key the embed uses. */
+export function getLocalizedVisionName(vision: string, locale: LocaleCode): string {
+  return ogTranslator.getVisionShort(vision as CoreVisionType, locale);
 }

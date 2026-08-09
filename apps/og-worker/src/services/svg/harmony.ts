@@ -4,8 +4,8 @@
  * Base at double width, matches beside it; the Δ measures **match → computed
  * ideal** via core's LCh rotation — the shipped base→match delta painted a
  * correct tetrad four-reds, because a complement is far from its base by
- * definition. The strip's sub-line carries the harmony type + the stain tag;
- * the URL stays in the embed.
+ * definition. The deck names the base and its harmony; the footer carries the
+ * path and the requested method.
  *
  * @module services/svg/harmony
  */
@@ -14,9 +14,10 @@ import { ColorService } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { toolGlyph } from '@xivdyetools/svg';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
-import { fmtDelta } from './band-shared';
+import { ALGO_TAG, fmtDelta } from './band-shared';
 import { dyeService, findClosestDyesWithDistance, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
-import { getLocalizedDyeName } from '../translator';
+import { getToolTag } from '../og-strings';
+import { getLocalizedDyeName, getLocalizedHarmonyName } from '../translator';
 import type { HarmonyType, MatchingAlgorithm } from '../../types';
 
 export interface HarmonyOGOptions {
@@ -93,16 +94,6 @@ function getHarmonyMatches(
   return matches.slice(0, 4);
 }
 
-const ALGO_TAG: Record<string, string> = {
-  ciede2000: 'ΔE2000',
-  oklab: 'ΔEOK',
-  cie76: 'ΔE76',
-  redmean: 'REDMEAN',
-  rgb: 'RGB DIST',
-  distinguish: 'DISTINGUISH %',
-  euclidean: 'RGB DIST',
-};
-
 /**
  * Generates the Harmony OG image SVG (400-grid — raster ×3 downstream).
  */
@@ -116,16 +107,17 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
     // default set replaces this in the defaults step.
     return generateBandCard({
       bands: [{ hex: '#17171A', role: 'NOT FOUND', name: `#${dyeId}`, nameSize: 17 }],
-      toolTag: 'HARMONY',
+      toolTag: getToolTag('harmony', locale),
       toolGlyph: toolGlyph('harmony', 'compact', { size: 13, ink: '#ECECEE', accent: '#FF6257' }),
-      bandLine: `#${dyeId}`,
-      urlLine: 'xivdyetools.app/harmony',
+      path: 'xivdyetools.app/harmony',
+      deck: `#${dyeId}`,
       frame,
     });
   }
 
   const matches = getHarmonyMatches(dye, harmonyType, algorithm);
   const baseName = getLocalizedDyeName(dye, locale);
+  const harmonyName = getLocalizedHarmonyName(harmonyType, locale);
   const stainTag = `#${dye.stainID ?? dye.id}`;
 
   const bands: BandEntry[] = [
@@ -151,11 +143,12 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
 
   return generateBandCard({
     bands,
-    toolTag: 'HARMONY',
+    toolTag: getToolTag('harmony', locale),
     toolGlyph: toolGlyph('harmony', 'compact', { size: 13, ink: '#ECECEE', accent: '#FF6257' }),
-    subLine: `${harmonyType.toUpperCase()} ON ${stainTag}`,
-    bandLine: `${baseName} + ${matches.length}`,
-    urlLine: `xivdyetools.app/harmony?dye=${dye.stainID ?? dye.id} · ${ALGO_TAG[algorithm] ?? algorithm.toUpperCase()}`,
+    path: 'xivdyetools.app/harmony',
+    // Harmony's headline is pure data — the base and the harmony it anchors.
+    deck: `${baseName} · ${harmonyName}`,
+    footRight: ALGO_TAG[algorithm] ?? algorithm.toUpperCase(),
     frame,
   });
 }

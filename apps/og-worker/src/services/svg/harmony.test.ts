@@ -18,10 +18,13 @@ describe('generateHarmonyOG (15E band)', () => {
     expect(svg).toContain('XIV DYE TOOLS');
     expect(svg).toContain('HARMONY');
     expect(svg).toContain('BASE');
-    // The sub-line names the harmony type + the stain tag
-    expect(svg).toContain(`TETRADIC ON #${stainId}`);
+    // The deck names the base and the harmony it anchors
+    expect(svg).toMatch(/font-size="14.5"[^>]*>[^<]*Tetradic</);
     // Ideal offsets ride the match roles
     expect(svg).toContain('+60°');
+    // The footer prints the path only
+    expect(svg).toContain('xivdyetools.app/harmony');
+    expect(svg).not.toContain('?dye=');
   });
 
   it('the Δ is match → computed ideal (never four-reds on a correct tetrad)', () => {
@@ -31,10 +34,17 @@ describe('generateHarmonyOG (15E band)', () => {
     expect(deltas.length).toBeGreaterThan(0);
   });
 
-  it('renders the X frame at 400×210', () => {
+  it('renders the X frame at 400×210, deck dropped, bands intact', () => {
+    const discord = generateHarmonyOG({ dyeId: stainId, harmonyType: 'triadic' });
     const svg = generateHarmonyOG({ dyeId: stainId, harmonyType: 'triadic', frame: 'x' });
     expect(svg).toContain('height="210"');
-    expect(svg).toContain('xivdyetools.app/harmony?dye=');
+    expect(svg).toContain('xivdyetools.app/harmony');
+    // The deck drops...
+    expect(discord).toContain('font-size="14.5"');
+    expect(svg).not.toContain('font-size="14.5"');
+    // ...and the bands keep their roles and names
+    expect(svg).toContain('BASE');
+    expect(svg).toContain('font-size="17"');
   });
 
   it('monochromatic falls back to nearest dyes', () => {
@@ -56,7 +66,7 @@ describe('generateHarmonyOG (15E band)', () => {
     expect(ja).toContain('<svg');
   });
 
-  it('names the requested algorithm in the X url line', () => {
+  it('names the requested algorithm in the footer-right slot', () => {
     const svg = generateHarmonyOG({
       dyeId: stainId,
       harmonyType: 'triadic',
@@ -64,5 +74,12 @@ describe('generateHarmonyOG (15E band)', () => {
       frame: 'x',
     });
     expect(svg).toContain('ΔE2000');
+  });
+
+  it('localizes the tool tag and the harmony name', () => {
+    const de = generateHarmonyOG({ dyeId: stainId, harmonyType: 'triadic', locale: 'de' });
+    expect(de).toContain('HARMONIE');
+    const ja = generateHarmonyOG({ dyeId: stainId, harmonyType: 'triadic', locale: 'ja' });
+    expect(ja).toContain('ハーモニー');
   });
 });

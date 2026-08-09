@@ -14,6 +14,7 @@ import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
 import { ALGO_TAG, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
 import { dyeService, deltaForAlgorithm } from './dye-helpers';
+import { deckLine, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm, ColorSheetCategory, CharacterGender } from '../../types';
 
@@ -49,7 +50,7 @@ export async function generateSwatchOG(options: SwatchOGOptions): Promise<string
 
   const clean = options.color.replace('#', '').toUpperCase();
   if (!/^[0-9A-F]{6}$/.test(clean)) {
-    return notFoundBand('SWATCH', 'swatch', `#${clean}`, 'swatch', frame);
+    return notFoundBand(getToolTag('swatch', locale), 'swatch', `#${clean}`, 'swatch', frame);
   }
   const targetHex = `#${clean}`;
 
@@ -84,11 +85,11 @@ export async function generateSwatchOG(options: SwatchOGOptions): Promise<string
 
   return generateBandCard({
     bands,
-    toolTag: 'SWATCH',
+    toolTag: getToolTag('swatch', locale),
     toolGlyph: bandGlyph('swatch'),
-    subLine: `${ALGO_TAG[algorithm] ?? algorithm.toUpperCase()}`,
-    bandLine: `${targetHex} → ${matches.length}`,
-    urlLine: `xivdyetools.app/swatch · ${ALGO_TAG[algorithm] ?? algorithm.toUpperCase()}`,
+    path: 'xivdyetools.app/swatch',
+    deck: deckLine('swatchNearest', locale, { n: matches.length, hex: targetHex }),
+    footRight: ALGO_TAG[algorithm] ?? algorithm.toUpperCase(),
     frame,
   });
 }

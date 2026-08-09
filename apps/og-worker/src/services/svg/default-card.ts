@@ -11,12 +11,28 @@
  * carries the tool; the root has none) and drops the method tag (it fronts
  * no method — the tool defaults keep ΔE2000 as a fact about the tool).
  *
+ * The Discord frame shares `cardHeader` / `cardFooter` with the band cards —
+ * one chrome, one source. The X frame deliberately does NOT: 2a draws it as
+ * a 60px strip carrying the mark, the deck name and the path, because a
+ * default card has no in-band data to protect and its name needs somewhere to
+ * live once the deck drops. A band card's X keeps the 30/26 chrome instead so
+ * its bands survive intact.
+ *
  * @module services/svg/default-card
  */
 
 import { toolGlyph, type ToolGlyphName } from '@xivdyetools/svg';
 import { escapeXml, estimateTextWidth } from './base';
-import { ogMark, BAND_FRAMES, type BandFrame } from './band';
+import {
+  BAND_FRAMES,
+  FOOTER_H,
+  HEADER_H,
+  RULE,
+  cardFooter,
+  cardHeader,
+  ogMark,
+  type BandFrame,
+} from './band';
 
 /**
  * The six spill colours as drawn in the app icon — the mark's source of
@@ -32,11 +48,15 @@ export const MARK_STRIPES = [
 ] as const;
 
 const GROUND = '#0B0B0C';
-const RULE = 'rgba(255,255,255,0.07)';
+
+/**
+ * Two deck lines here, against a band card's one: a default card has a
+ * confirmed one-liner to spend the second line on, and no data to protect.
+ */
+const DEFAULT_DECK_H = 54;
 
 const STACK_BODY = 'Onest, Noto Sans JP, Noto Sans SC, Noto Sans KR';
 const STACK_MONO = 'Fragment Mono, Onest, Noto Sans JP, Noto Sans SC, Noto Sans KR';
-const STACK_DISPLAY = 'Space Grotesk, Noto Sans JP, Noto Sans SC, Noto Sans KR';
 
 export interface DefaultCardOptions {
   /** Compact glyph name + banner (detail) glyph name; null = the root card */
@@ -81,41 +101,24 @@ export function generateDefaultCard(options: DefaultCardOptions): string {
   const stripeW = width / MARK_STRIPES.length;
 
   if (frame === 'discord') {
-    // Header strip 30px: mark + wordmark left · glyph + label right
-    parts.push(ogMark(13, 6.5, 17));
+    // Header strip 30px — the SHARED chrome, byte-identical to a band card's
     parts.push(
-      text(37, 19, 'XIV DYE TOOLS', {
-        fill: '#9C9CA2',
-        size: 11,
-        family: STACK_DISPLAY,
-        weight: 600,
-        spacing: 1.3,
+      cardHeader(width, {
+        toolTag: options.tool?.label,
+        toolGlyph: options.tool
+          ? toolGlyph(options.tool.glyphName, 'compact', {
+              size: 13,
+              ink: '#ECECEE',
+              accent: '#FF6257',
+            })
+          : null,
       })
     );
-    if (options.tool) {
-      const labelW = estimateTextWidth(options.tool.label, 11 * 0.62);
-      parts.push(
-        text(width - 13, 19, options.tool.label, {
-          fill: '#FF6257',
-          size: 11,
-          family: STACK_MONO,
-          spacing: 0.5,
-          anchor: 'end',
-        })
-      );
-      parts.push(
-        toolGlyph(options.tool.glyphName, 'compact', {
-          size: 13,
-          ink: '#ECECEE',
-          accent: '#FF6257',
-        }).replace('<svg ', `<svg x="${(width - 13 - labelW - 6 - 13).toFixed(1)}" y="8.5" `)
-      );
-    }
-    parts.push(`<line x1="0" y1="30" x2="${width}" y2="30" stroke="${RULE}" stroke-width="1"/>`);
 
-    // Deck ~54px + footer 26px bound the stripe field
-    const deckTop = height - 26 - 54;
-    const fieldTop = 30;
+    // Deck (two lines here — a default card has a one-liner to spend them on)
+    // + footer 26px bound the stripe field
+    const deckTop = height - FOOTER_H - DEFAULT_DECK_H;
+    const fieldTop = HEADER_H;
     const fieldH = deckTop - fieldTop;
     MARK_STRIPES.forEach((hex, i) => {
       parts.push(
@@ -146,20 +149,8 @@ export function generateDefaultCard(options: DefaultCardOptions): string {
     );
     parts.push(text(13, deckTop + 40, options.sub, { fill: '#9C9CA2', size: 12, family: STACK_BODY }));
 
-    // Footer 26px: path · method tag (only where it is true)
-    const footTop = height - 26;
-    parts.push(`<line x1="0" y1="${footTop}" x2="${width}" y2="${footTop}" stroke="${RULE}" stroke-width="1"/>`);
-    parts.push(text(13, footTop + 17, options.path, { fill: '#86868C', size: 11, family: STACK_MONO }));
-    if (options.methodTag) {
-      parts.push(
-        text(width - 13, footTop + 17, options.methodTag, {
-          fill: '#86868C',
-          size: 11,
-          family: STACK_MONO,
-          anchor: 'end',
-        })
-      );
-    }
+    // Footer 26px: path · method tag (only where it is true) — shared chrome
+    parts.push(cardFooter(width, height, { path: options.path, right: options.methodTag }));
   } else {
     // X 400×210: stripes (tile ×0.66), deck drops, 60px strip
     const stripH = 60;

@@ -13,14 +13,14 @@ describe('generateComparisonOG (15E band)', () => {
     const svg = generateComparisonOG({ dyeIds: [sid(0), sid(5), sid(50), sid(90)] });
     expect(svg).toContain('width="400"');
     expect(svg).toContain('CLOSEST PAIR');
-    expect(svg).toContain('COMPARISON');
+    expect(svg).toContain('COMPARE');
   });
 
-  it('the six pair numbers survive only as a mono run in the sub-line', () => {
+  it('only the closest pair survives, as the deck — six numbers are not four of anything', () => {
     const svg = generateComparisonOG({ dyeIds: [sid(0), sid(5), sid(50), sid(90)] });
-    // The pair-Δ run (ellipsised to the sub-line's pixel budget)
-    const sub = /Δ (\d+\.\d)( · \d+\.\d)+/.exec(svg);
-    expect(sub).not.toBeNull();
+    expect(svg).toMatch(/↔.*· Δ\d+\.\d/);
+    // The full six-pair run is gone; there is no sub-line to carry it
+    expect(svg).not.toMatch(/Δ \d+\.\d · \d+\.\d/);
   });
 
   it('handles two dyes', () => {
@@ -28,11 +28,18 @@ describe('generateComparisonOG (15E band)', () => {
     expect(svg).toContain('CLOSEST PAIR');
   });
 
-  it('the X frame names the closest pair with its Δ', () => {
+  it('the X frame moves the closest-pair Δ to the footer and keeps the band names', () => {
     const svg = generateComparisonOG({ dyeIds: [sid(0), sid(5), sid(50)], frame: 'x' });
     expect(svg).toContain('height="210"');
-    expect(svg).toMatch(/↔/);
+    expect(svg).toMatch(/CLOSEST Δ\d+\.\d/);
     expect(svg).toContain('xivdyetools.app/comparison');
+    // In-band content is unchanged by the degrade
+    expect(svg).toContain('CLOSEST PAIR');
+  });
+
+  it('localizes the tool tag', () => {
+    expect(generateComparisonOG({ dyeIds: [sid(0), sid(5)], locale: 'de' })).toContain('VERGLEICH');
+    expect(generateComparisonOG({ dyeIds: [sid(0), sid(5)], locale: 'ja' })).toContain('比較');
   });
 
   it('fewer than two resolvable dyes renders the neutral state', () => {

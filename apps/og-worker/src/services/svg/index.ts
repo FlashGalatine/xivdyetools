@@ -4,11 +4,20 @@
  * Re-exports all SVG generation functions for OG images.
  */
 
-export { generateOGCard, LAYOUT } from './og-card';
-export type { OGCardOptions } from './og-card';
-
 // The 15E band frame (5.0 — one shape for all nine tools)
-export { generateBandCard, bandInk, ogMark, BAND_FRAMES, BAND_CAP } from './band';
+export {
+  generateBandCard,
+  bandInk,
+  cardFooter,
+  cardHeader,
+  ogMark,
+  xStrip,
+  BAND_FRAMES,
+  BAND_CAP,
+  DECK_H,
+  FOOTER_H,
+  HEADER_H,
+} from './band';
 export type { BandCardOptions, BandEntry, BandFrame } from './band';
 
 // The 2a default cards (stripes + glyph tile; root = plain stripes)

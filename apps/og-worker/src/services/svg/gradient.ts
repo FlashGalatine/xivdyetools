@@ -15,6 +15,7 @@ import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, BAND_CAP, type BandEntry, type BandFrame } from './band';
 import { ALGO_TAG, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
 import { dyeService, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
+import { getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm } from '../../types';
 
@@ -51,7 +52,13 @@ export function generateGradientOG(options: GradientOGOptions): string {
   const startDye = getDyeByItemId(startDyeId);
   const endDye = getDyeByItemId(endDyeId);
   if (!startDye || !endDye) {
-    return notFoundBand('GRADIENT', 'gradient', `#${startDyeId} → #${endDyeId}`, 'gradient', frame);
+    return notFoundBand(
+      getToolTag('gradient', locale),
+      'gradient',
+      `#${startDyeId} → #${endDyeId}`,
+      'gradient',
+      frame
+    );
   }
 
   // Band cap on a second surface: the card shows at most five steps
@@ -100,11 +107,13 @@ export function generateGradientOG(options: GradientOGOptions): string {
 
   return generateBandCard({
     bands,
-    toolTag: 'GRADIENT',
+    toolTag: getToolTag('gradient', locale),
     toolGlyph: bandGlyph('gradient'),
-    subLine: `${steps} · ${ALGO_TAG[algorithm] ?? algorithm.toUpperCase()}`,
-    bandLine: `${startName} → ${endName}`,
-    urlLine: `xivdyetools.app/gradient · ${ALGO_TAG[algorithm] ?? algorithm.toUpperCase()}`,
+    path: 'xivdyetools.app/gradient',
+    // The cleanest degrade of the nine: the headline is the endpoints, and
+    // START and END keep them named in-band, so nothing moves on X.
+    deck: `${startName} → ${endName}`,
+    footRight: ALGO_TAG[algorithm] ?? algorithm.toUpperCase(),
     frame,
   });
 }

@@ -111,3 +111,159 @@ export const OG_DECK: Record<LocaleCode, Record<DeckKey, OgDeckStrings>> = {
 export function getOgDeck(key: DeckKey, locale: LocaleCode): OgDeckStrings {
   return OG_DECK[locale]?.[key] ?? OG_DECK.en[key];
 }
+
+// ============================================================================
+// The header tool tag ×6
+// ============================================================================
+
+export type ToolTagKey = Exclude<DeckKey, 'root'>;
+
+/**
+ * The tool tag beside the header glyph — the design's `S` table verbatim
+ * (`OG Card Directions` carries Harmony's row, `OG X Variants` the other
+ * eight; they agree everywhere they overlap).
+ *
+ * The tag is a card label, not a tool title: it is deliberately shorter than
+ * the deck name (COMPARE not Dye Comparison, VISION not Accessibility
+ * Checker) because it shares a 30px strip with the wordmark. The glyph beside
+ * it is redundancy, not a replacement — an unfurl has no embed title naming
+ * the tool the way the bot's does.
+ */
+export const TOOL_TAG: Record<LocaleCode, Record<ToolTagKey, string>> = {
+  en: {
+    harmony: 'HARMONY',
+    gradient: 'GRADIENT',
+    mixer: 'MIXER',
+    swatch: 'SWATCH',
+    comparison: 'COMPARE',
+    accessibility: 'VISION',
+    extractor: 'EXTRACT',
+    presets: 'PRESET',
+    budget: 'BUDGET',
+  },
+  de: {
+    harmony: 'HARMONIE',
+    gradient: 'VERLAUF',
+    mixer: 'MISCHER',
+    swatch: 'FARBPROBE',
+    comparison: 'VERGLEICH',
+    accessibility: 'SEHKRAFT',
+    extractor: 'EXTRAKT',
+    presets: 'VORLAGE',
+    budget: 'BUDGET',
+  },
+  fr: {
+    harmony: 'HARMONIE',
+    gradient: 'DÉGRADÉ',
+    mixer: 'MÉLANGE',
+    swatch: 'ÉCHANTILLON',
+    comparison: 'COMPARER',
+    accessibility: 'VISION',
+    extractor: 'EXTRAIRE',
+    presets: 'PRÉRÉGLAGE',
+    budget: 'BUDGET',
+  },
+  ja: {
+    harmony: 'ハーモニー',
+    gradient: 'グラデーション',
+    mixer: 'ミックス',
+    swatch: 'カラー照合',
+    comparison: '比較',
+    accessibility: '色覚',
+    extractor: '抽出',
+    presets: 'プリセット',
+    budget: '予算',
+  },
+  ko: {
+    harmony: '하모니',
+    gradient: '그라데이션',
+    mixer: '믹서',
+    swatch: '색상 대조',
+    comparison: '비교',
+    accessibility: '색각',
+    extractor: '추출',
+    presets: '프리셋',
+    budget: '예산',
+  },
+  zh: {
+    harmony: '配色',
+    gradient: '渐变',
+    mixer: '混色',
+    swatch: '色样匹配',
+    comparison: '比较',
+    accessibility: '色觉',
+    extractor: '提取',
+    presets: '预设',
+    budget: '预算',
+  },
+};
+
+/** The header tool tag for a tool in a locale, EN fallback. */
+export function getToolTag(key: ToolTagKey, locale: LocaleCode): string {
+  return TOOL_TAG[locale]?.[key] ?? TOOL_TAG.en[key];
+}
+
+// ============================================================================
+// Deck lines ×6 — the four headlines that are not pure data
+// ============================================================================
+
+/**
+ * Five of the nine deck headlines compose themselves out of data the card
+ * already localises (dye names, a preset name, Δ, the shipped harmony-type
+ * and lens keys). These four do not, so they are authored here ×6 against the
+ * suite's existing vocabulary. EN writes EN-US, per the String Pass.
+ *
+ * `{n}` / `{hex}` are substituted by `deckLine()`.
+ */
+export type DeckLineKey = 'swatchNearest' | 'extractorCount' | 'budgetBest' | 'a11yDyeCount';
+
+export const OG_DECK_LINE: Record<LocaleCode, Record<DeckLineKey, string>> = {
+  en: {
+    swatchNearest: 'Nearest {n} to {hex}',
+    extractorCount: '{n} colors from an image',
+    budgetBest: 'Best per point:',
+    a11yDyeCount: '{n} dyes',
+  },
+  de: {
+    swatchNearest: 'Die {n} nächsten zu {hex}',
+    extractorCount: '{n} Farben aus einem Bild',
+    budgetBest: 'Bestes pro Punkt:',
+    a11yDyeCount: '{n} Farbstoffe',
+  },
+  fr: {
+    swatchNearest: 'Les {n} plus proches de {hex}',
+    extractorCount: '{n} couleurs extraites d’une image',
+    budgetBest: 'Meilleur par point :',
+    a11yDyeCount: '{n} teintures',
+  },
+  ja: {
+    swatchNearest: '{hex} に最も近い{n}色',
+    extractorCount: '画像から{n}色',
+    budgetBest: 'ポイント当たり最良：',
+    a11yDyeCount: '{n}色の染料',
+  },
+  ko: {
+    swatchNearest: '{hex}에 가장 가까운 {n}개',
+    extractorCount: '이미지에서 {n}색',
+    budgetBest: '포인트당 최적:',
+    a11yDyeCount: '염료 {n}개',
+  },
+  zh: {
+    swatchNearest: '最接近 {hex} 的 {n} 种',
+    extractorCount: '从图像提取 {n} 种颜色',
+    budgetBest: '每点最优：',
+    a11yDyeCount: '{n} 种染剂',
+  },
+};
+
+/** An authored deck line with `{n}` / `{hex}` filled in, EN fallback. */
+export function deckLine(
+  key: DeckLineKey,
+  locale: LocaleCode,
+  vars: { n?: number | string; hex?: string } = {}
+): string {
+  const template = OG_DECK_LINE[locale]?.[key] ?? OG_DECK_LINE.en[key];
+  return template
+    .replace('{n}', String(vars.n ?? ''))
+    .replace('{hex}', vars.hex ?? '');
+}

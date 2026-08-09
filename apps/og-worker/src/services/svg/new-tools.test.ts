@@ -26,7 +26,34 @@ describe('generateExtractorOG (15E band)', () => {
     expect(svg).toContain('height="54"');
     expect(svg).toContain('#8E5A3C');
     expect(svg).toMatch(/Δ\d+\.\d/);
-    expect(svg).toContain('EXTRACTOR');
+    expect(svg).toContain('EXTRACT');
+    // EN writes EN-US, per the String Pass
+    expect(svg).toContain('colors from an image');
+    expect(svg).not.toContain('colours');
+  });
+
+  it('the X frame is the one card whose names yield, and scales the strip ×0.66', () => {
+    const entries = [
+      { hex: '8E5A3C', share: 31 },
+      { hex: '221C1A', share: 11 },
+    ];
+    const discord = generateExtractorOG({ entries });
+    const x = generateExtractorOG({ entries, frame: 'x' });
+
+    // 54 → 36
+    expect(x).toContain('height="36"');
+    expect(x).not.toContain('height="54"');
+    // The share-% and Δ stay; the name goes — a 44px band is under the floor
+    expect(x).toContain('31%');
+    expect(x).toMatch(/Δ\d+\.\d/);
+    expect(discord).toContain('font-size="11.5"');
+    expect(x).not.toContain('font-size="11.5"');
+  });
+
+  it('localizes the tool tag', () => {
+    const entries = [{ hex: '8E5A3C', share: 31 }];
+    expect(generateExtractorOG({ entries, locale: 'de' })).toContain('EXTRAKT');
+    expect(generateExtractorOG({ entries, locale: 'ko' })).toContain('추출');
   });
 
   it('caps at five entries and sorts by dominance', () => {
@@ -53,9 +80,13 @@ describe('generatePresetsOG (15E band)', () => {
     expect(svg).not.toMatch(/Δ\d/);
   });
 
-  it('the X frame carries the CURATED tag on the url line', () => {
+  it('the X frame moves the preset name to the footer beside CURATED', () => {
     const svg = generatePresetsOG({ presetId: firstPreset.id, frame: 'x' });
-    expect(svg).toContain('CURATED');
+    expect(svg).toContain(`${firstPreset.name} · CURATED`);
+    // Preset names are never localised, so the slot needs no key
+    expect(generatePresetsOG({ presetId: firstPreset.id, frame: 'x', locale: 'ja' })).toContain(
+      firstPreset.name
+    );
   });
 
   it('an unknown preset renders the neutral state', () => {
@@ -69,9 +100,15 @@ describe('generateBudgetOG (15E band)', () => {
     const coffer = dyes.find((d) => d.acquisition === 'Venture Coffers');
     const svg = generateBudgetOG({ dyeId: coffer!.stainID ?? coffer!.id });
     expect(svg).toContain('TARGET · COFFER');
-    // Tier labels + the static vendor price (ellipsised to the band width)
-    expect(svg).toContain('STD S');
+    // One figure per row: the price takes the role row (a 67px band cannot
+    // hold 'STD SPECTRUM' on either frame), Δ stands alone in the tag, and
+    // the footer names the tier once where it fits whole
+    expect(svg).toContain('216 G');
+    expect(svg).not.toContain('STD S…');
     expect(svg).toContain('VENDOR 216 G');
+    expect(svg).not.toMatch(/Δ\d+\.\d · /);
+    // The verdict is the deck: the ledger ranked four, the band recommends one
+    expect(svg).toContain('Best per point:');
   });
 
   it('a vendor-tier target still renders (nearest-any stands in)', () => {
@@ -85,8 +122,19 @@ describe('generateBudgetOG (15E band)', () => {
     expect(svg).toContain('NOT FOUND');
   });
 
-  it('the X frame links the stainID share grammar', () => {
-    const svg = generateBudgetOG({ dyeId: sid(0), frame: 'x' });
-    expect(svg).toContain('xivdyetools.app/budget?dye=');
+  it('the X frame moves the verdict to the footer and gives each band one figure', () => {
+    const coffer = dyes.find((d) => d.acquisition === 'Venture Coffers');
+    const svg = generateBudgetOG({ dyeId: coffer!.stainID ?? coffer!.id, frame: 'x' });
+
+    expect(svg).toContain('xivdyetools.app/budget');
+    expect(svg).not.toContain('?dye=');
+    expect(svg).toMatch(/BEST · /);
+    // Price replaces the tier name on the role row; Δ stands alone in the tag
+    expect(svg).toContain('216 G');
+    expect(svg).not.toMatch(/Δ\d+\.\d · /);
+  });
+
+  it('localizes the tool tag', () => {
+    expect(generateBudgetOG({ dyeId: sid(0), locale: 'ja' })).toContain('予算');
   });
 });

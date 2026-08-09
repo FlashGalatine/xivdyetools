@@ -18,6 +18,7 @@ import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
 import { bandGlyph, notFoundBand } from './band-shared';
 import { dyeService, getDyeByItemId } from './dye-helpers';
+import { deckLine, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 
 export interface BudgetOGOptions {
@@ -50,7 +51,7 @@ export function generateBudgetOG(options: BudgetOGOptions): string {
 
   const target = getDyeByItemId(dyeId);
   if (!target) {
-    return notFoundBand('BUDGET', 'budget', `#${dyeId}`, 'budget', frame);
+    return notFoundBand(getToolTag('budget', locale), 'budget', `#${dyeId}`, 'budget', frame);
   }
 
   // Nearest four from a CHEAPER pricing path than the target's own — for a
@@ -77,23 +78,36 @@ export function generateBudgetOG(options: BudgetOGOptions): string {
       grow: 2,
       nameSize: 17,
     },
+    // Budget is the only card that wanted two figures per band, and it cannot
+    // have them on EITHER frame: five bands make each candidate ~67px wide
+    // (~51px usable) regardless of height, and 'Δ5.2 · 216 G' measures 74+.
+    // So one figure per row throughout — and 'STD SPECTRUM' does not fit that
+    // row either, ellipsising to an identical 'STD S…' on every priced band.
+    // The price goes there instead ('216 G' ≈ 34px), which is the fact the
+    // tier name was standing in for anyway; the footer names the tier once.
+    // The coffer keeps its label and no figure — no listing is its answer.
     ...candidates.map((c) => ({
       hex: c.dye.hex,
-      role: tierLabel(c.dye),
+      role: tierPrice(c.dye) !== '—' ? tierPrice(c.dye) : tierLabel(c.dye),
       name: getLocalizedDyeName(c.dye, locale),
       value: c.dye.hex.toUpperCase(),
-      tag: `Δ${c.delta.toFixed(1)} · ${tierPrice(c.dye)}`,
+      tag: `Δ${c.delta.toFixed(1)}`,
       grow: 1,
     })),
   ];
 
+  const bestName = getLocalizedDyeName((best ?? { dye: target }).dye, locale);
+
   return generateBandCard({
     bands,
-    toolTag: 'BUDGET',
+    toolTag: getToolTag('budget', locale),
     toolGlyph: bandGlyph('budget'),
-    subLine: 'VENDOR 216 G',
-    bandLine: best ? getLocalizedDyeName(best.dye, locale) : getLocalizedDyeName(target, locale),
-    urlLine: `xivdyetools.app/budget?dye=${target.stainID ?? target.id} · ΔE2000`,
+    path: 'xivdyetools.app/budget',
+    // The ledger ranked four; the band recommends one. That verdict is the
+    // deck on Discord and moves to the footer's right slot on X.
+    deck: `${deckLine('budgetBest', locale)} ${bestName}`,
+    footRight: frame === 'x' ? `BEST · ${bestName}` : 'VENDOR 216 G',
+    footRightFont: frame === 'x' ? 'body' : 'mono',
     frame,
   });
 }
