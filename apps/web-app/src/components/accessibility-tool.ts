@@ -2077,14 +2077,23 @@ export class AccessibilityTool extends BaseComponent {
         'achromatopsia',
       ];
       if (validVisionTypes.includes(params.vision as VisionTypeId)) {
-        // Add this vision type to enabled types
-        this.enabledVisionTypes.add(params.vision as VisionTypeId);
+        const shared = params.vision as VisionTypeId;
+
+        // Enabling the type only puts it in the tab strip. The share says
+        // "look at this through Deuteranopia", so it also has to BE the
+        // active lens — otherwise the recipient opens on their own default
+        // and sees a different picture than the sender described.
+        this.enabledVisionTypes.add(shared);
         StorageService.setItem(
           STORAGE_KEYS.enabledVisionTypes,
           Array.from(this.enabledVisionTypes)
         );
+        this.activeVision = shared;
+        StorageService.setItem(STORAGE_KEYS.activeLens, shared);
+        // Keep the share control showing what this link is
+        this.shareVisionType = shared;
         hasChanges = true;
-        logger.info(`[AccessibilityTool] Loaded vision type from share URL: ${params.vision}`);
+        logger.info(`[AccessibilityTool] Loaded vision type from share URL: ${shared}`);
       }
     }
 
