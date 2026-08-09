@@ -1252,7 +1252,7 @@
     "search": "搜索",
     "browse": "浏览",
     "mySubmissions": "我的提交",
-    "searchPlaceholder": "搜索预设...",
+    "searchPlaceholder": "搜索预设、染剂、标签…",
     "categoriesTitle": "类别",
     "sortBy": "排序方式",
     "account": "账户",
@@ -1521,7 +1521,8 @@
     "cfgKeepDeleted": "保留已删除配色",
     "cfgKeepDeletedDesc": "作者删除后仍保留并标记",
     "cfgStoredLocally": "本地存储",
-    "cfgStoredLocallyDesc": "绝不上传服务器，未登录也可用"
+    "cfgStoredLocallyDesc": "绝不上传服务器，未登录也可用",
+    "authorBy": "由 {author} 创建"
   },
   "auth": {
     "logout": "登出",

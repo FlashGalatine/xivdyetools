@@ -1226,7 +1226,7 @@
     "search": "Rechercher",
     "browse": "Parcourir",
     "mySubmissions": "Mes soumissions",
-    "searchPlaceholder": "Rechercher des préréglages...",
+    "searchPlaceholder": "Rechercher préréglages, teintures, tags…",
     "categoriesTitle": "Catégories",
     "sortBy": "Trier par",
     "account": "Compte",
@@ -1496,7 +1496,8 @@
     "cfgKeepDeleted": "Garder les palettes supprimées",
     "cfgKeepDeletedDesc": "Une palette enregistrée que l'auteur retire reste, marquée",
     "cfgStoredLocally": "Stocké en local",
-    "cfgStoredLocallyDesc": "Jamais envoyé au serveur, fonctionne déconnecté"
+    "cfgStoredLocallyDesc": "Jamais envoyé au serveur, fonctionne déconnecté",
+    "authorBy": "Créé par {author}"
   },
   "auth": {
     "logout": "Déconnexion",

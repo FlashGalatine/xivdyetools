@@ -1226,7 +1226,7 @@
     "search": "검색",
     "browse": "둘러보기",
     "mySubmissions": "내 제출물",
-    "searchPlaceholder": "프리셋 검색...",
+    "searchPlaceholder": "프리셋·염료·태그 검색…",
     "categoriesTitle": "카테고리",
     "sortBy": "정렬",
     "account": "계정",
@@ -1495,7 +1495,8 @@
     "cfgKeepDeleted": "삭제된 팔레트 유지",
     "cfgKeepDeletedDesc": "작성자가 삭제해도 표시된 채 남습니다",
     "cfgStoredLocally": "로컬 저장",
-    "cfgStoredLocallyDesc": "서버로 전송되지 않으며 로그아웃 상태에서도 동작"
+    "cfgStoredLocallyDesc": "서버로 전송되지 않으며 로그아웃 상태에서도 동작",
+    "authorBy": "{author} 님이 제작"
   },
   "auth": {
     "logout": "로그아웃",

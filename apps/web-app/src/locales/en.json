@@ -1265,7 +1265,7 @@
     "search": "Search",
     "browse": "Browse",
     "mySubmissions": "My Submissions",
-    "searchPlaceholder": "Search presets...",
+    "searchPlaceholder": "Search presets, dyes, tags…",
     "categoriesTitle": "Categories",
     "sortBy": "Sort By",
     "account": "Account",
@@ -1559,7 +1559,8 @@
     "cfgKeepDeleted": "Keep deleted presets",
     "cfgKeepDeletedDesc": "A saved preset the author removes stays, marked",
     "cfgStoredLocally": "Stored locally",
-    "cfgStoredLocallyDesc": "Never sent to the server, works signed out"
+    "cfgStoredLocallyDesc": "Never sent to the server, works signed out",
+    "authorBy": "Created by {author}"
   },
   "auth": {
     "logout": "Logout",

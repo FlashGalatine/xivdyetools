@@ -185,17 +185,27 @@ export class PresetService {
    * // Returns: Paladin, Warrior, Dark Knight, Gunbreaker
    * ```
    */
-  searchPresets(query: string): PresetPalette[] {
+  searchPresets(query: string, dyeService?: IDyeService): PresetPalette[] {
     const lowerQuery = query.toLowerCase().trim();
     if (!lowerQuery) {
       return [];
     }
 
+    // With a dye service, a palette also matches on the names of the dyes it
+    // contains — "search presets, dyes, tags" is only true if dyes count.
+    const matchesDye = (p: PresetPalette): boolean => {
+      if (!dyeService) return false;
+      return p.dyes.some((stainId) =>
+        dyeService.getByStainId(stainId)?.name.toLowerCase().includes(lowerQuery)
+      );
+    };
+
     return this.data.palettes.filter(
       (p) =>
         p.name.toLowerCase().includes(lowerQuery) ||
         p.description.toLowerCase().includes(lowerQuery) ||
-        p.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))
+        p.tags.some((tag) => tag.toLowerCase().includes(lowerQuery)) ||
+        matchesDye(p)
     );
   }
 

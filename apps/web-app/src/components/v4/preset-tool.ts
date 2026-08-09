@@ -36,7 +36,6 @@ import type { UnifiedPreset } from '@services/hybrid-preset-service';
 import type { CommunityPreset } from '@services/community-preset-service';
 import type { PresetsConfig, PresetCategoryFilter } from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
-import type { PresetCategory } from '@xivdyetools/types';
 
 // Import child components
 import './preset-card';
@@ -110,6 +109,7 @@ export class PresetTool extends BaseLitComponent {
   private authUnsubscribe: (() => void) | null = null;
   private configUnsubscribe: (() => void) | null = null;
   private savedUnsubscribe: (() => void) | null = null;
+  private languageUnsubscribe: (() => void) | null = null;
   private _searchDebounce: number = 0;
 
   static override styles: CSSResultGroup = [
@@ -359,6 +359,8 @@ export class PresetTool extends BaseLitComponent {
     });
 
     this.savedList = SavedPresetsService.getAll();
+    this.languageUnsubscribe = LanguageService.subscribe(() => this.requestUpdate());
+
     this.savedUnsubscribe = SavedPresetsService.subscribe((saved) => {
       this.savedList = saved;
     });
@@ -381,6 +383,8 @@ export class PresetTool extends BaseLitComponent {
     this.authUnsubscribe = null;
     this.savedUnsubscribe?.();
     this.savedUnsubscribe = null;
+    this.languageUnsubscribe?.();
+    this.languageUnsubscribe = null;
   }
 
   private async handleDeepLink(): Promise<void> {
@@ -408,21 +412,49 @@ export class PresetTool extends BaseLitComponent {
   private async loadPresets(): Promise<void> {
     this.isLoading = true;
     try {
-      const category: PresetCategory | undefined =
-        this.config.category === 'all' ? undefined : (this.config.category as PresetCategory);
-
+      // The category is NOT passed down: the rail's counts are computed over
+      // the unfiltered pool, so pre-filtering here made every other chip read
+      // 0 and "All" equal the current category. Category slicing happens at
+      // render time, like the tab slicing above it.
       this.presets = await hybridPresetService.getPresets({
-        category,
         search: this.searchQuery || undefined,
         sort: this.config.sortBy,
         limit: 100,
       });
       this.offline = !hybridPresetService.isAPIAvailable();
+      this.reconcileTombstones();
     } catch (error) {
       logger.error('[v4-preset-tool] Failed to load presets:', error);
       this.offline = true;
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  /**
+   * Detect saved community presets whose live copy is gone, and un-mark any
+   * that came back. This is the writer behind the "Removed by its author"
+   * chip and the Keep-deleted toggle — without it both were dead paths.
+   *
+   * Two guards, because a false tombstone is worse than a late one:
+   * - never run while offline (an unreachable API is not a deletion),
+   * - never run against a filtered pool (a search query would tombstone
+   *   everything that didn't match).
+   */
+  private reconcileTombstones(): void {
+    if (this.offline || this.searchQuery) return;
+
+    const live = new Set(this.presets.filter((p) => p.isFromAPI).map((p) => p.id));
+    for (const saved of this.savedList) {
+      // Curated palettes ship with the app — they can't be author-deleted
+      if (saved.isCurated) continue;
+      const gone = !live.has(saved.id);
+      if (gone !== Boolean(saved.deletedByAuthor)) {
+        SavedPresetsService.markDeleted(saved.id, gone);
+        logger.info(
+          `[v4-preset-tool] Saved preset ${saved.id} ${gone ? 'tombstoned' : 'restored'}`
+        );
+      }
     }
   }
 
@@ -502,8 +534,18 @@ export class PresetTool extends BaseLitComponent {
     return saved.length ? [...saved, ...pool.filter((p) => !savedIds.has(p.id))] : pool;
   }
 
-  /** The active tab's pool, sliced from the one loaded list. */
+  /**
+   * The active tab's pool, sliced from the one loaded list and then by the
+   * selected category (the rail's counts need the pool unfiltered, so the
+   * category cut happens here rather than in the service query).
+   */
   private currentPool(): UnifiedPreset[] {
+    const pool = this.currentTabPool();
+    if (this.config.category === 'all') return pool;
+    return pool.filter((p) => p.category === this.config.category);
+  }
+
+  private currentTabPool(): UnifiedPreset[] {
     switch (this.tab) {
       case 'official':
         return this.applySavedFirst(this.presets.filter((p) => p.isCurated));
@@ -512,9 +554,6 @@ export class PresetTool extends BaseLitComponent {
         let pool = this.savedList
           .filter((s) => this.config.keepDeleted || !s.deletedByAuthor)
           .map((s) => this.savedToUnified(s));
-        if (this.config.category !== 'all') {
-          pool = pool.filter((p) => p.category === this.config.category);
-        }
         if (q) {
           pool = pool.filter(
             (p) =>

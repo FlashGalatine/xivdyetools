@@ -1226,7 +1226,7 @@
     "search": "Suche",
     "browse": "Durchsuchen",
     "mySubmissions": "Meine Einreichungen",
-    "searchPlaceholder": "Voreinstellungen suchen...",
+    "searchPlaceholder": "Presets, Farbstoffe, Tags suchen…",
     "categoriesTitle": "Kategorien",
     "sortBy": "Sortieren nach",
     "account": "Konto",
@@ -1496,7 +1496,8 @@
     "cfgKeepDeleted": "Gelöschte behalten",
     "cfgKeepDeletedDesc": "Vom Autor gelöschte bleiben markiert",
     "cfgStoredLocally": "Lokal gespeichert",
-    "cfgStoredLocallyDesc": "Nie an den Server, auch abgemeldet"
+    "cfgStoredLocallyDesc": "Nie an den Server, auch abgemeldet",
+    "authorBy": "Erstellt von {author}"
   },
   "auth": {
     "logout": "Abmelden",

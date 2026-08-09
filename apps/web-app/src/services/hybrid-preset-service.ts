@@ -270,7 +270,8 @@ export class HybridPresetService {
     if (category) {
       localPresets = this.localPresetService.getPresetsByCategory(category);
     } else if (search) {
-      localPresets = this.localPresetService.searchPresets(search);
+      // Pass the dye service so a palette matches on its dye names too
+      localPresets = this.localPresetService.searchPresets(search, this.dyeService);
     } else {
       localPresets = this.localPresetService.getAllPresets();
     }

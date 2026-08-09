@@ -666,7 +666,7 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
   cancelBtn.className = 'px-4 py-2 rounded-lg border transition-colors';
   cancelBtn.style.cssText =
     'background-color: var(--theme-card-background); color: var(--theme-text); border-color: var(--theme-border);';
-  cancelBtn.textContent = 'Cancel';
+  cancelBtn.textContent = LanguageService.t('common.cancel');
 
   cancelBtn.addEventListener('click', () => {
     ModalService.dismissTop();
@@ -685,7 +685,7 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
   submitBtn.id = 'submit-preset-btn';
   submitBtn.className = 'px-4 py-2 rounded-lg font-medium text-white transition-colors';
   submitBtn.style.cssText = 'background-color: var(--theme-primary);';
-  submitBtn.textContent = 'Submit Preset';
+  submitBtn.textContent = LanguageService.t('preset.submitPreset');
 
   submitBtn.addEventListener('mouseenter', () => {
     submitBtn.style.opacity = '0.9';
@@ -769,7 +769,7 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
       ToastService.error(LanguageService.t('errors.submitPresetFailed'));
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Submit Preset';
+      submitBtn.textContent = LanguageService.t('preset.submitPreset');
     }
   });
 

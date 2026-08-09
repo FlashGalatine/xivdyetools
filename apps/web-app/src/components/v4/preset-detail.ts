@@ -22,6 +22,7 @@ import {
   ToastService,
   LanguageService,
 } from '@services/index';
+import { presetName, presetDescription } from '@shared/preset-i18n';
 import { MarketBoardService } from '@services/market-board-service';
 import type { PriceData } from '@xivdyetools/types';
 import { ConfigController } from '@services/config-controller';
@@ -565,6 +566,8 @@ export class PresetDetail extends BaseLitComponent {
     super.connectedCallback();
     this.marketBoardService = MarketBoardService.getInstance();
     this.loadConfigAndSubscribe();
+    // Curated name/description and this page's chrome both follow the locale
+    this.configUnsubscribers.push(LanguageService.subscribe(() => this.requestUpdate()));
     await this.checkVoteStatus();
     // Fetch prices for preset dyes if prices are enabled
     await this.fetchPricesIfNeeded();
@@ -868,7 +871,7 @@ export class PresetDetail extends BaseLitComponent {
         <!-- Back button -->
         <button class="back-button" @click=${this.handleBack}>
           ${unsafeHTML(ICON_ARROW_BACK)}
-          <span>Back to list</span>
+          <span>${LanguageService.t('tools.presets.backToList')}</span>
         </button>
 
         <!-- Badges -->
@@ -891,11 +894,13 @@ export class PresetDetail extends BaseLitComponent {
         </div>
 
         <!-- Title & description -->
-        <h2 class="preset-title">${this.preset.name}</h2>
-        <p class="preset-description">${this.preset.description}</p>
+        <h2 class="preset-title">${presetName(this.preset)}</h2>
+        <p class="preset-description">${presetDescription(this.preset)}</p>
         ${
           this.preset.author
-            ? html`<p class="preset-author">Created by ${this.preset.author}</p>`
+            ? html`<p class="preset-author">
+                ${LanguageService.tInterpolate('preset.authorBy', { author: this.preset.author })}
+              </p>`
             : nothing
         }
 
@@ -948,7 +953,7 @@ export class PresetDetail extends BaseLitComponent {
           this.preset.tags && this.preset.tags.length > 0
             ? html`
                 <div class="tags-section">
-                  <h4 class="section-title">Tags</h4>
+                  <h4 class="section-title">${LanguageService.t('preset.tags')}</h4>
                   <div class="tags-list">
                     ${this.preset.tags.map((tag) => html`<span class="tag">${tag}</span>`)}
                   </div>

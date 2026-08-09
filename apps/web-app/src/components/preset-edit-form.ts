@@ -50,8 +50,10 @@ const MIN_NAME_LENGTH = 2;
 const MAX_NAME_LENGTH = 50;
 const MIN_DESC_LENGTH = 10;
 const MAX_DESC_LENGTH = 200;
-const MIN_DYES = 2;
-const MAX_DYES = 5;
+// Match the submission form and the service: a 2-dye edit passed here and
+// then failed server-side, and a legal 6-dye palette could not be edited.
+const MIN_DYES = 3;
+const MAX_DYES = 6;
 const MAX_TAGS = 10;
 
 // ============================================

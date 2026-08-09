@@ -22,6 +22,7 @@ import { BaseLitComponent } from './base-lit-component';
 import { LanguageService } from '@services/language-service';
 import { ICON_STAR, ICON_STAR_FILLED } from '@shared/ui-icons';
 import type { UnifiedPreset } from '@services/hybrid-preset-service';
+import { presetName, presetDescription } from '@shared/preset-i18n';
 
 /**
  * Data structure for the preset card
@@ -241,6 +242,21 @@ export class PresetCard extends BaseLitComponent {
     `,
   ];
 
+  private languageUnsubscribe: (() => void) | null = null;
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    // Nothing on this card re-rendered on a locale switch: its own labels
+    // stayed English, and so did the curated name/description lookup.
+    this.languageUnsubscribe = LanguageService.subscribe(() => this.requestUpdate());
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.languageUnsubscribe?.();
+    this.languageUnsubscribe = null;
+  }
+
   private handleClick(): void {
     if (this.data) {
       this.emit<{ preset: UnifiedPreset }>('preset-select', { preset: this.data.preset });
@@ -322,7 +338,7 @@ export class PresetCard extends BaseLitComponent {
         class="preset-card"
         role="button"
         tabindex="0"
-        aria-label="${preset.name}"
+        aria-label="${presetName(preset)}"
         @click=${this.handleClick}
         @keydown=${(e: KeyboardEvent) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -353,7 +369,7 @@ export class PresetCard extends BaseLitComponent {
 
         <div class="preset-content">
           <div class="top-row">
-            <span class="preset-name">${preset.name}</span>
+            <span class="preset-name">${presetName(preset)}</span>
             ${
               this.tombstone
                 ? html`<span class="chip chip--tombstone"
@@ -367,7 +383,7 @@ export class PresetCard extends BaseLitComponent {
             }
           </div>
 
-          <p class="preset-description">${preset.description}</p>
+          <p class="preset-description">${presetDescription(preset)}</p>
 
           <div class="meta-row">
             <span class="byline">${byline} · ${preset.dyes.length} · ${this.ageText(preset)}</span>

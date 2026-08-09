@@ -1265,7 +1265,7 @@
     "search": "検索",
     "browse": "閲覧",
     "mySubmissions": "マイ投稿",
-    "searchPlaceholder": "プリセットを検索...",
+    "searchPlaceholder": "プリセット・カララント・タグを検索…",
     "categoriesTitle": "カテゴリ",
     "sortBy": "並び替え",
     "account": "アカウント",
@@ -1535,7 +1535,8 @@
     "cfgKeepDeleted": "削除済みも保持",
     "cfgKeepDeletedDesc": "作者が削除しても印付きで残す",
     "cfgStoredLocally": "端末に保存",
-    "cfgStoredLocallyDesc": "サーバー送信なし・ログアウト時も有効"
+    "cfgStoredLocallyDesc": "サーバー送信なし・ログアウト時も有効",
+    "authorBy": "{author} が作成"
   },
   "auth": {
     "logout": "ログアウト",
