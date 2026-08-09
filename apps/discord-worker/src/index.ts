@@ -77,8 +77,14 @@ let envErrorsLogged = false;
 
 // FINDING-004: Restrict CORS to known web app origins instead of wildcard.
 // Discord interactions and webhooks are server-to-server; only /health is browser-hit.
+//
+// allowMethods is pinned rather than left to hono's default: 4.13.0 added QUERY
+// to that default, so preflights began advertising a verb this Worker has no
+// route for. The live surface is GET /health plus three POSTs (/, /webhooks/*).
+// Matches the explicit pinning in api-worker, oauth and presets-api.
 app.use('*', cors({
   origin: ['https://xivdyetools.app', 'https://www.xivdyetools.app'],
+  allowMethods: ['GET', 'POST', 'OPTIONS'],
 }));
 
 // REFACTOR-001: Shared middleware from @xivdyetools/worker-middleware
