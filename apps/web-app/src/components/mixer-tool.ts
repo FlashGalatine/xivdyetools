@@ -16,7 +16,12 @@
  * @module components/tools/mixer-tool
  */
 
-import { BAND_METHOD_DP, normalizeMatchingMethod } from '@xivdyetools/core';
+import {
+  BAND_METHOD_DP,
+  classifyBandTier,
+  normalizeMatchingMethod,
+  roundToBandDisplay,
+} from '@xivdyetools/core';
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
@@ -35,6 +40,8 @@ import {
 } from '@services/index';
 import type { MixedColorResult } from '@services/index';
 import { ConfigController } from '@services/config-controller';
+import { CollectionService } from '@services/collection-service';
+import { ThemeService } from '@services/theme-service';
 import { blendTwoColors } from '@services/mixer-blending-engine';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { ICON_TOOL_DYE_MIXER } from '@shared/tool-icons';
@@ -1112,6 +1119,41 @@ export class MixerTool extends BaseComponent {
    * blends, every cell tappable. The only view where you can see two
    * models agree at 50/50 and diverge at 80/20.
    */
+  private dyeName(dye: Dye): string {
+    return LanguageService.getDyeName(dye.itemID) || dye.name;
+  }
+
+  /**
+   * The widest gap between any two models at the current ratio, in the active
+   * matching method. Answers "does the model choice matter for this pair?"
+   */
+  private modelSpread(hexA: string, hexB: string, models: MixingMode[]): number | null {
+    const t = 1 - this.mixRatio;
+    const blends = models.map((m) => blendTwoColors(hexA, hexB, m, t));
+    let widest = 0;
+    for (let i = 0; i < blends.length; i++) {
+      for (let j = i + 1; j < blends.length; j++) {
+        const d = ColorService.getDistanceForMethod(blends[i], blends[j], this.matchingMethod);
+        if (d > widest) widest = d;
+      }
+    }
+    return Number.isFinite(widest) ? widest : null;
+  }
+
+  /** Reuse the suite's separation bands — a wide spread is the notable state. */
+  private spreadTone(value: number): string {
+    const tier = classifyBandTier(
+      roundToBandDisplay(value, this.matchingMethod),
+      this.matchingMethod,
+      'separation'
+    );
+    const dark = ThemeService.isDarkMode();
+    const ramp = dark
+      ? ['#8a877f', '#8bc34a', '#ffc107', '#5bbd68']
+      : ['#6b6862', '#1C7D3A', '#B45309', '#137A33'];
+    return ramp[tier];
+  }
+
   private renderMixingField(): void {
     if (!this.fieldContainer) return;
     clearContainer(this.fieldContainer);
@@ -1154,6 +1196,22 @@ export class MixerTool extends BaseComponent {
         },
       })
     );
+
+    // Model spread: how far apart the six models land at the chosen ratio.
+    // A wide spread is the whole argument for the field existing — it says
+    // the model choice decides this pair; a tight one says it barely matters.
+    const spread = this.modelSpread(dyeA.hex, dyeB.hex, MODELS);
+    if (spread !== null) {
+      const dp = BAND_METHOD_DP[this.matchingMethod] ?? 1;
+      const chip = this.createElement('span', {
+        textContent: `${LanguageService.t('mixer.spread')} ${spread.toFixed(dp)}`,
+        attributes: {
+          title: LanguageService.t('mixer.spreadDesc'),
+          style: `margin-left: auto; font-family: ${MONO}; font-size: 11px; letter-spacing: 0.5px; color: ${this.spreadTone(spread)};`,
+        },
+      });
+      head.appendChild(chip);
+    }
     this.fieldContainer.appendChild(head);
     this.fieldContainer.appendChild(
       this.createElement('p', {
@@ -1253,6 +1311,57 @@ export class MixerTool extends BaseComponent {
     }
 
     this.fieldContainer.appendChild(grid);
+
+    // Save mix: the pair, the model and the ratio are a recipe worth keeping.
+    // Stored as a device-local palette holding both inputs and the current
+    // best match, so it reopens as dyes rather than as a colour.
+    const saveRow = this.createElement('div', {
+      attributes: { style: 'display: flex; justify-content: flex-end; margin-top: 8px;' },
+    });
+    const saveBtn = this.createElement('button', {
+      textContent: LanguageService.t('mixer.saveMix'),
+      attributes: {
+        type: 'button',
+        style:
+          'min-height: 32px; padding: 5px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 600; cursor: pointer; font-family: inherit; background: var(--theme-card-background); border: 1px solid var(--theme-border); color: var(--theme-text);',
+      },
+    });
+    this.on(saveBtn, 'click', () => this.saveCurrentMix());
+    saveRow.appendChild(saveBtn);
+    this.fieldContainer.appendChild(saveRow);
+  }
+
+  /**
+   * Persist the current mix as a `kind: 'palette'` collection: dye A, dye B,
+   * and the dye the blend currently resolves to. Custom colours carry no
+   * stainID and are skipped by the store, so a mix of two customs saves
+   * nothing and says so.
+   */
+  private saveCurrentMix(): void {
+    const dyeA = this.selectedDyes[0];
+    const dyeB = this.selectedDyes[1];
+    if (!dyeA || !dyeB) return;
+
+    const stainIds = [dyeA.stainID, dyeB.stainID, this.matchedResults[0]?.matchedDye.stainID]
+      .filter((id): id is number => id !== null && id !== undefined)
+      .filter((id, i, all) => all.indexOf(id) === i);
+
+    if (stainIds.length === 0) {
+      ToastService.error(LanguageService.t('errors.saveChangesFailed'));
+      return;
+    }
+
+    const name = `${this.dyeName(dyeA)} × ${this.dyeName(dyeB)}`.slice(0, 50);
+    const record = CollectionService.createCollection(name, undefined, { kind: 'palette' });
+    if (!record) {
+      ToastService.error(LanguageService.t('errors.saveChangesFailed'));
+      return;
+    }
+    for (const stainId of stainIds) {
+      CollectionService.addDyeToCollection(record.id, stainId);
+    }
+    logger.info(`[MixerTool] Saved mix "${name}" (${stainIds.length} dyes)`);
+    ToastService.success(LanguageService.t('palette.saveSuccess'));
   }
 
   private renderRightPanel(): void {
