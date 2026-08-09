@@ -62,6 +62,8 @@ import '@components/v4/result-card';
 import type { ResultCardData, ContextAction } from '@components/v4/result-card';
 import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
+import { openExportSheet } from '@components/export-sheet';
+import type { ExportEntry } from '@shared/palette-export';
 import { ShareService } from '@services/share-service';
 
 // ============================================================================
@@ -1431,13 +1433,34 @@ export class MixerTool extends BaseComponent {
       textContent: LanguageService.t('mixer.matchingDyes'),
     });
 
+    // Right cluster: Export beside Share, keeping the header's two-child
+    // space-between intact.
+    const headerActions = this.createElement('div', {
+      attributes: { style: 'display: flex; align-items: center; gap: 12px;' },
+    });
+    const exportBtn = this.createElement('button', {
+      textContent: LanguageService.t('common.export'),
+      attributes: {
+        type: 'button',
+        'data-testid': 'mixer-export',
+        style: [
+          'background: none; border: none; color: var(--theme-primary);',
+          'font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;',
+          'text-transform: uppercase; letter-spacing: 0.5px;',
+        ].join(' '),
+      },
+    });
+    this.on(exportBtn, 'click', () => this.openMixerExport());
+    headerActions.appendChild(exportBtn);
+
     // Share Button - v4-share-button custom element
     this.shareButton = document.createElement('v4-share-button') as ShareButton;
     this.shareButton.tool = 'mixer';
     this.shareButton.shareParams = this.getShareParams();
+    headerActions.appendChild(this.shareButton);
 
     resultsHeader.appendChild(resultsTitle);
-    resultsHeader.appendChild(this.shareButton);
+    resultsHeader.appendChild(headerActions);
     this.resultsSection.appendChild(resultsHeader);
     this.resultsGridContainer = this.createElement('div', {
       className: 'v5-results-grid',
@@ -1843,6 +1866,33 @@ export class MixerTool extends BaseComponent {
   /**
    * Get current share parameters for the share button
    */
+  /**
+   * Open the shared export sheet over the current mix: both inputs, then the
+   * blend as a source/dye pair. The inputs carry no source of their own — they
+   * ARE sources — so only the blend row shows drift.
+   */
+  private openMixerExport(): void {
+    const entries: ExportEntry[] = [];
+    const [dyeA, dyeB] = this.selectedDyes;
+    if (dyeA) entries.push({ key: 'input-a', dye: dyeA });
+    if (dyeB) entries.push({ key: 'input-b', dye: dyeB });
+    if (this.blendedColor) {
+      entries.push({
+        key: 'blend',
+        source: this.blendedColor,
+        dye: this.matchedResults[0]?.matchedDye ?? null,
+        delta: this.matchedResults[0]?.distance ?? null,
+      });
+    }
+
+    openExportSheet({
+      tool: 'mixer',
+      title: LanguageService.t('mixer.matchingDyes'),
+      meta: [`Blend: ${this.mixingMode} @ ${Math.round(this.mixRatio * 100)}%`],
+      entries,
+    });
+  }
+
   private getShareParams(): Record<string, unknown> {
     const dyeA = this.selectedDyes[0];
     const dyeB = this.selectedDyes[1];

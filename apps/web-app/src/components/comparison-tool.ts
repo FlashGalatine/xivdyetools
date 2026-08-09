@@ -44,6 +44,7 @@ import { ThemeService } from '@services/theme-service';
 import type { ComparisonConfig } from '@shared/tool-config-types';
 import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
+import { openExportSheet } from '@components/export-sheet';
 import { ShareService } from '@services/share-service';
 
 // ============================================================================
@@ -896,12 +897,33 @@ export class ComparisonTool extends BaseComponent {
     });
     selectedDyesHeader.appendChild(selectedDyesTitle);
 
+    // Right cluster: Export sits beside Share, so the header keeps its
+    // two-child space-between rather than spreading three items apart.
+    const headerActions = this.createElement('div', {
+      attributes: { style: 'display: flex; align-items: center; gap: 12px;' },
+    });
+    const exportBtn = this.createElement('button', {
+      textContent: LanguageService.t('common.export'),
+      attributes: {
+        type: 'button',
+        'data-testid': 'comparison-export',
+        style: [
+          'background: none; border: none; color: var(--theme-primary);',
+          'font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;',
+          'text-transform: uppercase; letter-spacing: 0.5px;',
+        ].join(' '),
+      },
+    });
+    this.on(exportBtn, 'click', () => this.openComparisonExport());
+    headerActions.appendChild(exportBtn);
+
     // Share Button - v4-share-button custom element
     this.shareButton = document.createElement('v4-share-button') as ShareButton;
     this.shareButton.tool = 'comparison';
     this.shareButton.shareParams = this.getShareParams();
     this.shareButton.disabled = this.selectedDyes.length === 0;
-    selectedDyesHeader.appendChild(this.shareButton);
+    headerActions.appendChild(this.shareButton);
+    selectedDyesHeader.appendChild(headerActions);
 
     this.selectedDyesSection.appendChild(selectedDyesHeader);
     this.selectedDyesCardsContainer = this.createElement('div', {
@@ -2435,6 +2457,22 @@ export class ComparisonTool extends BaseComponent {
   /**
    * Get parameters for generating a share URL
    */
+  /**
+   * Open the shared export sheet over the compared set. Comparison entries have
+   * no source colour — the dyes ARE the input here, so nothing drifted and
+   * there is no second half to publish.
+   */
+  private openComparisonExport(): void {
+    openExportSheet({
+      tool: 'comparison',
+      title: LanguageService.t('comparison.selectedDyes'),
+      entries: this.selectedDyes.map((dye, index) => ({
+        key: `dye-${index + 1}`,
+        dye,
+      })),
+    });
+  }
+
   private getShareParams(): Record<string, unknown> {
     if (this.selectedDyes.length === 0) {
       return {};

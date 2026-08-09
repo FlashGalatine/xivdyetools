@@ -15,6 +15,7 @@ import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
 import { MarketBoard } from '@components/market-board';
+import { openExportSheet } from '@components/export-sheet';
 import '@components/v4/result-card';
 import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
 import '@components/v4/share-button';
@@ -200,6 +201,7 @@ export class GradientTool extends BaseComponent {
   private pinColumn: HTMLElement | null = null;
   private rowsColumn: HTMLElement | null = null;
   private summaryCluster: HTMLElement | null = null;
+  private exportButton: HTMLElement | null = null;
 
   /** 4C: armed endpoint — the dye-palette drawer's next pick lands here */
   private activeEndpoint: 0 | 1 | null = null;
@@ -1088,6 +1090,26 @@ export class GradientTool extends BaseComponent {
       },
     });
 
+    // Export: the 4C spec's header action, on the shared sheet. A ramp is the
+    // one output here people paste into a stylesheet, and until 5.0 this tool
+    // had no export at all — only its locale string existed.
+    // Held as a field, not appended here: updateFocusHeader() clears the
+    // cluster on every recalculation, so anything parked at construction time
+    // is gone by the first render. It re-appends this alongside Share.
+    this.exportButton = this.createElement('button', {
+      textContent: LanguageService.t('common.export'),
+      attributes: {
+        type: 'button',
+        'data-testid': 'gradient-export',
+        style: [
+          'background: none; border: none; color: var(--theme-primary);',
+          'font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;',
+          'text-transform: uppercase; letter-spacing: 0.5px;',
+        ].join(' '),
+      },
+    });
+    this.on(this.exportButton, 'click', () => this.openGradientExport());
+
     // Share Button - v4-share-button custom element (lives in the header's
     // right slot; share URL write path)
     this.shareButton = document.createElement('v4-share-button') as ShareButton;
@@ -1301,6 +1323,25 @@ export class GradientTool extends BaseComponent {
     this.bandContainer.appendChild(legend);
   }
 
+  /**
+   * Open the shared export sheet over the ramp. Each step exports as a pair:
+   * the ideal interpolated colour and the dye that step resolved to — the same
+   * ideal-over-achievable divergence the dual band draws, in text form.
+   */
+  private openGradientExport(): void {
+    openExportSheet({
+      tool: 'gradient',
+      title: LanguageService.t('gradient.gradientResults'),
+      meta: [`Interpolation: ${this.colorSpace} · ${this.currentSteps.length} steps`],
+      entries: this.currentSteps.map((step, index) => ({
+        key: `step-${index + 1}`,
+        source: step.theoreticalColor,
+        dye: step.matchedDye,
+        delta: step.distance,
+      })),
+    });
+  }
+
   private renderPinRail(): void {
     if (!this.railSection || !this.pinColumn || !this.rowsColumn) return;
     this.renderDualBand();
@@ -1501,6 +1542,10 @@ export class GradientTool extends BaseComponent {
           this.renderIntermediateMatches();
         });
         this.summaryCluster.appendChild(clearBtn);
+      }
+      // Only offered once there is a ramp to export.
+      if (this.exportButton) {
+        this.summaryCluster.appendChild(this.exportButton);
       }
     }
 

@@ -19,7 +19,6 @@ import { MarketBoard } from '@components/market-board';
 import { HarmonyType } from '@components/harmony-type';
 import { HarmonyResultPanel } from '@components/harmony-result-panel';
 import { ColorWheelDisplay } from '@components/color-wheel-display';
-import { PaletteExporter } from '@components/palette-exporter';
 import {
   ColorService,
   dyeService,
@@ -164,7 +163,6 @@ export class HarmonyTool extends BaseComponent {
   private colorWheel: ColorWheelDisplay | null = null;
   private harmonyDisplays: Map<string, HarmonyType> = new Map();
   private resultPanels: HarmonyResultPanel[] = [];
-  private paletteExporter: PaletteExporter | null = null;
 
   // Child components (mobile drawer) - separate instances for mobile config
   private drawerDyeSelector: DyeSelector | null = null;
@@ -277,9 +275,6 @@ export class HarmonyTool extends BaseComponent {
 
     this.colorWheel?.destroy();
     this.colorWheel = null;
-
-    this.paletteExporter?.destroy();
-    this.paletteExporter = null;
 
     this.shareButton = null;
 

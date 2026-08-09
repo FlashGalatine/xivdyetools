@@ -17,6 +17,7 @@ import { ColorPickerDisplay } from '@components/color-picker-display';
 import { ImageZoomController } from '@components/image-zoom-controller';
 import { RecentColorsPanel } from '@components/recent-colors-panel';
 import { MarketBoard } from '@components/market-board';
+import { openExportSheet } from '@components/export-sheet';
 import {
   ColorService,
   ConfigController,
@@ -212,7 +213,7 @@ export class ExtractorTool extends BaseComponent {
   private colorCountSlider: HTMLInputElement | null = null;
   private colorCountDisplay: HTMLElement | null = null;
   private extractPaletteBtn: HTMLButtonElement | null = null;
-  private exportCssBtn: HTMLButtonElement | null = null;
+  private exportBtn: HTMLButtonElement | null = null;
   private resultsContainer: HTMLElement | null = null;
   private canvasContainer: HTMLElement | null = null;
   private resultsTitleElement: HTMLElement | null = null;
@@ -1405,7 +1406,7 @@ export class ExtractorTool extends BaseComponent {
 
   /**
    * FOCUS results — uppercase focus label, Fragment Mono count and the Export
-   * CSS action on the right, then the existing v5-results-grid card container.
+   * action on the right, then the existing v5-results-grid card container.
    */
   private buildResultsSection(): HTMLElement {
     const resultsSection = this.createElement('div', {
@@ -1450,19 +1451,19 @@ export class ExtractorTool extends BaseComponent {
       'font-size: 12px; font-weight: 600; cursor: pointer;',
       'text-transform: uppercase; letter-spacing: 0.5px;',
     ].join(' ');
-    this.exportCssBtn = this.createElement('button', {
+    this.exportBtn = this.createElement('button', {
       className: 'action-btn-text',
-      textContent: LanguageService.t('matcher.exportCss'),
+      textContent: LanguageService.t('common.export'),
       attributes: {
         type: 'button',
         disabled: 'true',
         style: `${actionBtnStyle} opacity: 0.5; cursor: not-allowed;`,
       },
     }) as HTMLButtonElement;
-    this.on(this.exportCssBtn, 'click', () => {
-      this.exportPaletteAsCss();
+    this.on(this.exportBtn, 'click', () => {
+      this.openPaletteExport();
     });
-    focusActions.appendChild(this.exportCssBtn);
+    focusActions.appendChild(this.exportBtn);
     focusHeader.appendChild(focusActions);
     resultsSection.appendChild(focusHeader);
 
@@ -1634,10 +1635,10 @@ export class ExtractorTool extends BaseComponent {
     }
 
     // Disable export button
-    if (this.exportCssBtn) {
-      this.exportCssBtn.disabled = true;
-      this.exportCssBtn.style.opacity = '0.5';
-      this.exportCssBtn.style.cursor = 'not-allowed';
+    if (this.exportBtn) {
+      this.exportBtn.disabled = true;
+      this.exportBtn.style.opacity = '0.5';
+      this.exportBtn.style.cursor = 'not-allowed';
     }
 
     this.hideLoupe();
@@ -2712,11 +2713,11 @@ export class ExtractorTool extends BaseComponent {
     }
 
     // Enable/disable export button based on results
-    if (this.exportCssBtn) {
+    if (this.exportBtn) {
       const hasResults = matches.length > 0;
-      this.exportCssBtn.disabled = !hasResults;
-      this.exportCssBtn.style.opacity = hasResults ? '1' : '0.5';
-      this.exportCssBtn.style.cursor = hasResults ? 'pointer' : 'not-allowed';
+      this.exportBtn.disabled = !hasResults;
+      this.exportBtn.style.opacity = hasResults ? '1' : '0.5';
+      this.exportBtn.style.cursor = hasResults ? 'pointer' : 'not-allowed';
     }
 
     if (matches.length === 0) {
@@ -2847,72 +2848,25 @@ export class ExtractorTool extends BaseComponent {
   }
 
   /**
-   * Export the extracted palette as a CSS file with custom properties
+   * Open the shared export sheet over the current roll. Each pick exports as a
+   * pair — the pixel actually sampled and the dye it resolved to — because the
+   * drift between them is the whole reason this tool matches rather than just
+   * reporting colours.
    */
-  private exportPaletteAsCss(): void {
-    if (this.lastPaletteResults.length === 0) {
-      ToastService.error(LanguageService.t('matcher.noPaletteToExport'));
-      return;
-    }
-
-    // Generate CSS content
-    const timestamp = new Date().toISOString().split('T')[0];
-    let cssContent = `/**
- * XIV Dye Tools - Extracted Palette
- * Generated: ${timestamp}
- * Colors: ${this.lastPaletteResults.length}
- */
-
-:root {
-  /* Extracted Colors (Original from image) */
-`;
-
-    // Add extracted colors
-    this.lastPaletteResults.forEach((match, index) => {
-      const { r, g, b } = match.extracted;
-      const hex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-      cssContent += `  --extracted-color-${index + 1}: ${hex.toUpperCase()};\n`;
+  private openPaletteExport(): void {
+    openExportSheet({
+      tool: 'extractor',
+      title: LanguageService.t('matcher.extractedPalette'),
+      entries: this.lastPaletteResults.map((match, index) => {
+        const { r, g, b } = match.extracted;
+        const hex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        return {
+          key: `pick-${index + 1}`,
+          source: hex,
+          dye: match.matchedDye,
+          delta: match.distance,
+        };
+      }),
     });
-
-    cssContent += `\n  /* Matched FFXIV Dyes */\n`;
-
-    // Add matched dye colors
-    this.lastPaletteResults.forEach((match, index) => {
-      const dyeName = match.matchedDye.name
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-]/g, '');
-      cssContent += `  --dye-${index + 1}-${dyeName}: ${match.matchedDye.hex.toUpperCase()};\n`;
-    });
-
-    cssContent += `}\n\n/* Utility Classes */\n`;
-
-    // Add utility classes for each color
-    this.lastPaletteResults.forEach((match, index) => {
-      const dyeName = match.matchedDye.name
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-]/g, '');
-      cssContent += `
-.bg-extracted-${index + 1} { background-color: var(--extracted-color-${index + 1}); }
-.text-extracted-${index + 1} { color: var(--extracted-color-${index + 1}); }
-.bg-dye-${index + 1} { background-color: var(--dye-${index + 1}-${dyeName}); }
-.text-dye-${index + 1} { color: var(--dye-${index + 1}-${dyeName}); }
-`;
-    });
-
-    // Create and trigger download
-    const blob = new Blob([cssContent], { type: 'text/css' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `xiv-palette-${timestamp}.css`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    ToastService.success(LanguageService.t('matcher.paletteExported'));
-    logger.info('[ExtractorTool] Palette exported as CSS');
   }
 }

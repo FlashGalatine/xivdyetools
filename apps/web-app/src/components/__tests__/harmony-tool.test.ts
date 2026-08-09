@@ -135,15 +135,6 @@ vi.mock('@components/v4/v4-color-wheel', () => ({}));
 
 vi.mock('@components/v4/result-card', () => ({}));
 
-vi.mock('../palette-exporter', () => ({
-  PaletteExporter: class MockPaletteExporter {
-    constructor() {}
-    init() {}
-    destroy() {}
-    setPaletteData() {}
-  },
-}));
-
 vi.mock('../harmony-result-panel', () => ({
   HarmonyResultPanel: class MockHarmonyResultPanel {
     container: HTMLElement;
