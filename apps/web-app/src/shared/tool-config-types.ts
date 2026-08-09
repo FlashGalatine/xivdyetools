@@ -109,6 +109,8 @@ export interface AccessibilityConfig {
  * Uses shared displayOptions for all color format and metadata visibility settings.
  */
 export interface ComparisonConfig {
+  /** The ΔE2000 SAME cut ("match line", 1-15) the duel verdict follows */
+  matchThreshold: number;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
 }
@@ -437,6 +439,7 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     },
   },
   comparison: {
+    matchThreshold: 5,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
   },
   gradient: {

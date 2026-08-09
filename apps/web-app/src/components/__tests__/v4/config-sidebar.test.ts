@@ -94,7 +94,7 @@ vi.mock('@shared/tool-config-types', () => {
         achromatopsia: true,
         displayOptions: DEFAULT_DISPLAY_OPTIONS,
       },
-      comparison: { displayOptions: DEFAULT_DISPLAY_OPTIONS },
+      comparison: { matchThreshold: 5, displayOptions: DEFAULT_DISPLAY_OPTIONS },
       gradient: {
         stepCount: 4,
         interpolation: 'hsv',

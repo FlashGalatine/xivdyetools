@@ -161,6 +161,7 @@ export class ConfigSidebar extends BaseLitComponent {
     },
   };
   @state() private comparisonConfig: ComparisonConfig = {
+    matchThreshold: 5,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
   };
   @state() private gradientConfig: GradientConfig = {
@@ -1145,6 +1146,19 @@ export class ConfigSidebar extends BaseLitComponent {
   private renderComparisonConfig(): TemplateResult {
     return html`
       <div class="config-section" ?hidden=${this.activeTool !== 'comparison'}>
+        <div class="config-group">
+          <div class="config-label">${LanguageService.t('comparison.matchLine')}</div>
+          <div class="slider-wrapper">
+            <v4-range-slider
+              label=${LanguageService.t('comparison.matchLine')}
+              .value=${this.comparisonConfig.matchThreshold ?? 5}
+              .min=${1}
+              .max=${15}
+              @slider-change=${(e: CustomEvent<{ value: number }>) =>
+                this.handleConfigChange('comparison', 'matchThreshold', e.detail.value)}
+            ></v4-range-slider>
+          </div>
+        </div>
         <v4-display-options
           .showHex=${this.globalDisplayOptions.showHex}
           .showRgb=${this.globalDisplayOptions.showRgb}

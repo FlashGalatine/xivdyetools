@@ -35,6 +35,7 @@ import type { Dye } from '@xivdyetools/types';
 import {
   BAND_METHOD_DP,
   classifyBandTier,
+  BAND_VOCABULARY,
   roundToBandDisplay,
   type MatchingMethod,
 } from '@xivdyetools/core';
@@ -166,6 +167,7 @@ export class ComparisonTool extends BaseComponent {
   private pairChipsSection: HTMLElement | null = null;
   private pairChipsContainer: HTMLElement | null = null;
   private pairUnitTag: HTMLElement | null = null;
+  private pairsHeading: HTMLElement | null = null;
   private duelSection: HTMLElement | null = null;
   private duelContainer: HTMLElement | null = null;
 
@@ -352,6 +354,19 @@ export class ComparisonTool extends BaseComponent {
    */
   public setConfig(config: Partial<ComparisonConfig>): void {
     let needsRerender = false;
+
+    // Match line (the ΔE2000 SAME cut) from the Simple-Settings slider
+    if (
+      config.matchThreshold !== undefined &&
+      config.matchThreshold !== this.matchThreshold &&
+      config.matchThreshold >= 1 &&
+      config.matchThreshold <= 15
+    ) {
+      this.matchThreshold = config.matchThreshold;
+      StorageService.setItem(STORAGE_KEYS.matchThreshold, config.matchThreshold);
+      needsRerender = true;
+      logger.info(`[ComparisonTool] setConfig: matchThreshold -> ${config.matchThreshold}`);
+    }
 
     // Handle displayOptions from v4-display-options component
     // Note: ComparisonTool uses custom property mapping (showDeltaE→showDistanceValues,
@@ -909,12 +924,11 @@ export class ComparisonTool extends BaseComponent {
           'display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;',
       },
     });
-    chipsHeader.appendChild(
-      this.createElement('span', {
-        className: 'section-title',
-        textContent: LanguageService.t('comparison.sixPairs'),
-      })
-    );
+    this.pairsHeading = this.createElement('span', {
+      className: 'section-title',
+      textContent: LanguageService.t('comparison.thisPair'),
+    });
+    chipsHeader.appendChild(this.pairsHeading);
     this.pairUnitTag = this.createElement('span', {
       attributes: {
         style:
@@ -1182,19 +1196,25 @@ export class ComparisonTool extends BaseComponent {
     return value.toFixed(BAND_METHOD_DP[method]);
   }
 
-  /** All pairs, closest first in the active method */
-  private sortedPairs(): Array<{ i: number; j: number; value: number }> {
-    const pairs: Array<{ i: number; j: number; value: number }> = [];
+  /**
+   * All pairs, closest first in the active method. Ties on the displayed
+   * value fall back to the raw distance (the calibration note: integer
+   * rounding creates ties — orderings need a sort fallback), so NEAREST
+   * and the default pair are deterministic.
+   */
+  private sortedPairs(): Array<{ i: number; j: number; value: number; raw: number }> {
+    const pairs: Array<{ i: number; j: number; value: number; raw: number }> = [];
     for (let i = 0; i < this.selectedDyes.length; i++) {
       for (let j = i + 1; j < this.selectedDyes.length; j++) {
-        pairs.push({
-          i,
-          j,
-          value: this.metricValue(this.selectedDyes[i], this.selectedDyes[j]),
-        });
+        const raw = ColorService.getDistanceForMethod(
+          this.selectedDyes[i].hex,
+          this.selectedDyes[j].hex,
+          this.method
+        );
+        pairs.push({ i, j, value: roundToBandDisplay(raw, this.method), raw });
       }
     }
-    return pairs.sort((a, b) => a.value - b.value);
+    return pairs.sort((a, b) => a.value - b.value || a.raw - b.raw);
   }
 
   /** Keep the active pair valid; default to the closest pair */
@@ -1228,7 +1248,25 @@ export class ComparisonTool extends BaseComponent {
       this.pairUnitTag.textContent = methodShort(this.method);
     }
 
-    for (const pair of this.sortedPairs()) {
+    const pairs = this.sortedPairs();
+
+    // Counts rule: the heading is a template of n (1/3/6 pairs)
+    if (this.pairsHeading) {
+      this.pairsHeading.textContent =
+        pairs.length === 1
+          ? LanguageService.t('comparison.thisPair')
+          : LanguageService.tInterpolate('comparison.allPairs', { n: pairs.length });
+    }
+
+    // Pairs sharing a displayed value are marked TIE (dp rounding creates
+    // ties — common for DISTINGUISH at dp 0; the raw sort broke the order)
+    const displayCounts = new Map<string, number>();
+    for (const p of pairs) {
+      const k = this.fmtValue(p.value);
+      displayCounts.set(k, (displayCounts.get(k) ?? 0) + 1);
+    }
+
+    for (const pair of pairs) {
       const a = this.selectedDyes[pair.i];
       const b = this.selectedDyes[pair.j];
       const active =
@@ -1278,6 +1316,18 @@ export class ComparisonTool extends BaseComponent {
           },
         })
       );
+
+      if ((displayCounts.get(this.fmtValue(pair.value)) ?? 0) > 1) {
+        chip.appendChild(
+          this.createElement('span', {
+            textContent: LanguageService.t('comparison.tieBadge'),
+            attributes: {
+              style:
+                "flex-shrink: 0; font-family: 'Fragment Mono', monospace; font-size: 8px; letter-spacing: 0.8px; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--theme-border); color: var(--theme-text-muted);",
+            },
+          })
+        );
+      }
 
       this.on(chip, 'click', () => {
         this.activePair = [pair.i, pair.j];
@@ -1490,6 +1540,14 @@ export class ComparisonTool extends BaseComponent {
     const t = (key: string): string => LanguageService.t(`comparison.${key}`);
     const w = `${this.fmtValue(value)} ${methodShort(this.method)}`;
 
+    // The match line the SAME verdict cites: ΔE2000 follows the user's
+    // slider; every other method carries its fixed calibrated SAME cut,
+    // printed with its own tag (never ΔE2000's number under another method)
+    const matchLine =
+      this.method === 'ciede2000'
+        ? `ΔE ${this.matchThreshold}`
+        : `${methodShort(this.method)} ${this.fmtValue(BAND_VOCABULARY.match[this.method].cuts[0], this.method)}`;
+
     let badge: string;
     let headline: string;
     let sub: string;
@@ -1498,7 +1556,7 @@ export class ComparisonTool extends BaseComponent {
       headline = LanguageService.tInterpolate('comparison.headSame', { a: nameA, b: nameB });
       sub = LanguageService.tInterpolate('comparison.subSame', {
         w,
-        thr: String(this.matchThreshold),
+        thr: matchLine,
       });
     } else if (tier === 1) {
       badge = t('badgeClose');
@@ -1552,27 +1610,26 @@ export class ComparisonTool extends BaseComponent {
       })
     );
 
-    // The cost line — once the colours tie, the decision is price
-    if (tier === 0) {
-      let costLine: string;
-      const aVendor = a.cost > 0 && a.currency === 'Gil';
-      const bVendor = b.cost > 0 && b.currency === 'Gil';
-      if (aVendor && bVendor) {
-        if (a.cost === b.cost) {
-          costLine = t('costSame');
-        } else {
-          const cheap = a.cost < b.cost ? nameA : nameB;
-          const saving = `${Math.abs(a.cost - b.cost)} gil`;
-          costLine = LanguageService.tInterpolate('comparison.costDiff', { cheap, saving });
-        }
-      } else if (aVendor !== bVendor) {
-        costLine = LanguageService.tInterpolate('comparison.costUnknown', {
-          a: aVendor ? nameA : nameB,
-          b: aVendor ? nameB : nameA,
-        });
-      } else {
+    // The cost line — appended on every tier when a price is known (once
+    // the colours tie it IS the decision; on SUBSTITUTABLE it still is)
+    let costLine: string | null = null;
+    const aVendor = a.cost > 0 && a.currency === 'Gil';
+    const bVendor = b.cost > 0 && b.currency === 'Gil';
+    if (aVendor && bVendor) {
+      if (a.cost === b.cost) {
         costLine = t('costSame');
+      } else {
+        const cheap = a.cost < b.cost ? nameA : nameB;
+        const saving = `${Math.abs(a.cost - b.cost)} gil`;
+        costLine = LanguageService.tInterpolate('comparison.costDiff', { cheap, saving });
       }
+    } else if (aVendor !== bVendor) {
+      costLine = LanguageService.tInterpolate('comparison.costUnknown', {
+        a: aVendor ? nameA : nameB,
+        b: aVendor ? nameB : nameA,
+      });
+    }
+    if (costLine) {
       text.appendChild(
         this.createElement('span', {
           textContent: costLine,
@@ -1610,7 +1667,9 @@ export class ComparisonTool extends BaseComponent {
       textContent: 'ⓘ',
       attributes: {
         type: 'button',
-        'aria-label': t('sixMethods'),
+        'aria-label': LanguageService.tInterpolate('comparison.methodsHeading', {
+          n: METHOD_ORDER.length,
+        }),
         style:
           'width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--theme-text-muted); font-size: 14px;',
       },
@@ -1650,12 +1709,21 @@ export class ComparisonTool extends BaseComponent {
     const hsvA = ColorService.hexToHsv(a.hex);
     const hsvB = ColorService.hexToHsv(b.hex);
     const hueDiff = Math.min(Math.abs(hsvA.h - hsvB.h), 360 - Math.abs(hsvA.h - hsvB.h));
+    // LIGHTNESS is Lab L* with a signed delta (HSV V calls saturated red
+    // and white both 100); sign reads B relative to A
+    const lA = Math.round(ColorService.hexToLab(a.hex).L);
+    const lB = Math.round(ColorService.hexToLab(b.hex).L);
+    const lDiff = lB - lA;
+    // A coffer has no purchase price — VENDOR prints gil only, and Δ never
+    // crosses currencies (the "price 1 = one venture" defect class)
+    const aGil = a.cost > 0 && a.currency === 'Gil';
+    const bGil = b.cost > 0 && b.currency === 'Gil';
     const rows: Array<[string, string, string, string]> = [
       [
         t('deltaLight'),
-        `${Math.round(hsvA.v)}%`,
-        `${Math.round(hsvB.v)}%`,
-        `Δ ${Math.abs(Math.round(hsvA.v) - Math.round(hsvB.v))}`,
+        `L* ${lA}`,
+        `L* ${lB}`,
+        `Δ ${lDiff > 0 ? '+' : lDiff < 0 ? '−' : ''}${Math.abs(lDiff)}`,
       ],
       [
         t('deltaSat'),
@@ -1671,9 +1739,9 @@ export class ComparisonTool extends BaseComponent {
       ],
       [
         t('deltaVendor'),
-        a.cost > 0 ? `${a.cost}` : '—',
-        b.cost > 0 ? `${b.cost}` : '—',
-        a.cost > 0 && b.cost > 0 ? `Δ ${Math.abs(a.cost - b.cost)}` : '—',
+        aGil ? `${a.cost}` : '—',
+        bGil ? `${b.cost}` : '—',
+        aGil && bGil ? `Δ ${Math.abs(a.cost - b.cost)}` : '—',
       ],
       [
         t('deltaSource'),
@@ -1729,7 +1797,6 @@ export class ComparisonTool extends BaseComponent {
   }
 
   private buildSevenReadouts(a: Dye, b: Dye, nameA: string, nameB: string): HTMLElement {
-    const t = (key: string): string => LanguageService.t(`comparison.${key}`);
     const wrap = this.createElement('div', { attributes: { style: 'margin-bottom: 4px;' } });
 
     const header = this.createElement('div', {
@@ -1741,7 +1808,9 @@ export class ComparisonTool extends BaseComponent {
     header.appendChild(
       this.createElement('span', {
         className: 'section-title',
-        textContent: t('sixMethods'),
+        textContent: LanguageService.tInterpolate('comparison.methodsHeading', {
+          n: METHOD_ORDER.length,
+        }),
       })
     );
     header.appendChild(
@@ -1765,13 +1834,33 @@ export class ComparisonTool extends BaseComponent {
       tag: string,
       value: string,
       tier: 0 | 1 | 2 | 3 | null,
-      topRule = false
+      topRule = false,
+      onTap?: () => void,
+      active = false
     ): void => {
-      const row = this.createElement('div', {
+      // RATIO prints last after a drawn rule, not just a gap
+      if (topRule) {
+        list.appendChild(
+          this.createElement('div', {
+            attributes: {
+              style:
+                'height: 1px; flex-shrink: 0; background: var(--theme-border); margin: 6px 2px 2px;',
+            },
+          })
+        );
+      }
+      // Method rows are tiles: tapping one switches the tool's method
+      const row = this.createElement(onTap ? 'button' : 'div', {
         attributes: {
-          style: `display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 4px 10px; border-radius: 8px; background: var(--theme-card-background);${topRule ? ' margin-top: 8px;' : ''}`,
+          ...(onTap ? { type: 'button', 'aria-pressed': String(active) } : {}),
+          style: `display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 4px 10px; border-radius: 8px; width: 100%; font-family: inherit; text-align: left; background: var(--theme-card-background);${
+            onTap
+              ? ` cursor: pointer; border: 1px solid ${active ? 'var(--theme-primary)' : 'var(--theme-border)'};`
+              : ' border: 1px solid transparent;'
+          }`,
         },
       });
+      if (onTap) this.on(row, 'click', onTap);
       row.appendChild(
         this.createElement('span', {
           textContent: tag,
@@ -1806,7 +1895,21 @@ export class ComparisonTool extends BaseComponent {
       const value = roundToBandDisplay(raw, method);
       let tier = classifyBandTier(value, method, 'match');
       if (method === 'ciede2000' && value < this.matchThreshold) tier = 0;
-      addRow(methodShort(method), this.fmtValue(value, method), tier);
+      const active = method === this.method;
+      addRow(
+        methodShort(method),
+        this.fmtValue(value, method),
+        tier,
+        false,
+        () => {
+          if (method === this.method) return;
+          this.method = method;
+          StorageService.setItem(STORAGE_KEYS.method, method);
+          this.renderPairChips();
+          this.renderDuel();
+        },
+        active
+      );
     }
 
     // RATIO, last, after a rule — it is not a colour difference, so it
@@ -2293,6 +2396,38 @@ export class ComparisonTool extends BaseComponent {
     this.addDye(dye);
   }
 
+  /**
+   * Select an arbitrary colour from the Color Palette drawer's hex field /
+   * native picker ("arbitrary colours enter every picker"). Wraps the hex
+   * in a virtual dye; it duels like any dye but has no stainID, so it never
+   * persists across sessions or enters share URLs.
+   */
+  public selectCustomColor(hex: string): void {
+    if (!hex) return;
+
+    const virtualDye: Dye = {
+      id: -Date.now(),
+      itemID: -Date.now(),
+      stainID: null,
+      name: `Custom (${hex.toUpperCase()})`,
+      hex: hex.toUpperCase(),
+      rgb: ColorService.hexToRgb(hex),
+      hsv: ColorService.hexToHsv(hex),
+      category: 'Custom',
+      acquisition: 'Custom',
+      cost: 0,
+      currency: null,
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
+      isIshgardian: false,
+      consolidationType: null,
+    };
+
+    this.addDye(virtualDye);
+  }
+
   // ============================================================================
   // Share Functionality
   // ============================================================================
@@ -2305,8 +2440,9 @@ export class ComparisonTool extends BaseComponent {
       return {};
     }
 
+    // Virtual custom colours carry no stainID and are excluded
     return {
-      dyes: this.selectedDyes.map((d) => d.stainID ?? 0),
+      dyes: this.selectedDyes.map((d) => d.stainID).filter((id): id is number => id !== null),
     };
   }
 
