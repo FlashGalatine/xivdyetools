@@ -67,7 +67,50 @@ production the moment a route is removed.
 | 3 | Registered OAuth **Redirect URIs** on app `1447108133020369048` | Discord Developer Portal → OAuth2 | A registered URI on the old domain breaks login |
 | 4 | Per-hostname request volume for all five domains | Cloudflare dashboard → Worker → Metrics | Replaces guesswork about who still uses each domain |
 
-Record the answers in this document before proceeding.
+### Results (recorded 2026-08-09)
+
+| # | Finding | Verdict |
+|---|---|---|
+| 1 | Main bot (`1447108133020369048`) → `https://bot.xivdyetools.app/` | ✅ **Clean** — already on `.app` |
+| 2 | Moderation bot (`1453806659708129374`) → `https://moderation-bot.xivdyetools.projectgalatine.com` | ❌ **Blocker** — see Phase 0.5 |
+| 3 | Two OAuth redirect URIs on the old domain: `https://xivdyetools.projectgalatine.com/auth/callback` and `https://auth.xivdyetools.projectgalatine.com/auth/callback` | ⚠️ Retire in Phase 2, **after** their routes |
+| 4 | Per-hostname traffic | Not yet gathered |
+
+Incidental observation from check 3: `http://localhost:8788/auth/callback` is registered on the
+**production** application. `getAllowedRedirectOrigins()` filters localhost when
+`ENVIRONMENT !== 'development'`, so this is defended in depth, but the Discord-side registration
+is broader than the code permits. Not urgent; worth revisiting separately.
+
+## Phase 0.5 — Repoint the moderation bot's interactions endpoint
+
+**Do this before Phase 2. It is safe to do immediately.**
+
+Change app `1453806659708129374`'s Interactions Endpoint URL from
+`https://moderation-bot.xivdyetools.projectgalatine.com` to
+`https://moderation-bot.xivdyetools.app`.
+
+Functionally a no-op: both hostnames are custom domains on the *same* Worker script
+(`xivdyetools-moderation-worker`) — verified 2026-08-09, both return `HTTP 200` on `/health`, and
+`main`'s `wrangler.toml` attaches both. Only the hostname Discord POSTs to changes; it reaches
+the same isolate, code and secrets.
+
+Discord sends a signed Ed25519 PING and refuses to save if verification fails, so a successful
+save is itself the verification. Afterwards, exercise one approve/reject button — those are
+`MESSAGE_COMPONENT` interactions on the same endpoint, so a working button confirms the path.
+
+### The general rule this illustrates
+
+**Repoint pointers early; retire allowlist entries late.**
+
+| | Interactions Endpoint URL | OAuth Redirect URIs |
+|---|---|---|
+| Kind | a **pointer** — exactly one per app | an **allowlist** — many entries |
+| Changing it | repoints traffic to an equivalent live host | removes a permitted destination; repoints nothing |
+| Safe order | repoint **first**, then remove the route | remove the route **first**, then the entry |
+| Wrong order costs | nothing — both hosts serve the same Worker | live logins fail with `invalid_redirect_uri` |
+
+A pointer's old value stops mattering the moment it changes. An allowlist entry stays
+load-bearing for anyone still using the path it permits.
 
 **Which application to check for #3.** The `oauth` Worker authenticates as
 `DISCORD_CLIENT_ID = "1447108133020369048"` — the *production* application — in all three of its
@@ -105,7 +148,9 @@ before any API call is made. The allowlist entries are already dead in practice.
 
 ## Phase 2 — Retire the four internal subdomains
 
-**Gate:** Phase 0 checks 1–3 clean.
+**Gate:** Phase 0.5 done (moderation bot repointed), and no OAuth redirect URI still needed on a
+domain about to be removed. For each domain, remove the route *before* retiring any Discord-side
+registration that references it.
 
 Retire `bot.`, `moderation-bot.`, `api.`, `auth.` — one Worker at a time, verifying between
 each. For each:
