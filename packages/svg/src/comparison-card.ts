@@ -192,8 +192,16 @@ function renderDuel(o: ComparisonCardOptions, theme: CardTheme): string {
       parts.push(
         cardText(x, stripTop + 24, r.value, { fill: theme.value, size: 12, font: 'mono' })
       );
+      // 11 px, not 9.5 — the floor is a wall. REDMEAN is the widest label
+      // and clears a 52 px column by ~2 px, so it is fitted rather than
+      // trusted.
       parts.push(
-        cardText(x, stripTop + 39, r.short, { fill: theme.label, size: 9.5, font: 'mono', letterSpacing: 0.4 })
+        cardText(x, stripTop + 39, fitText(r.short, cw - 4, CARD_TYPE.label, 'mono'), {
+          fill: theme.label,
+          size: CARD_TYPE.label,
+          font: 'mono',
+          letterSpacing: 0.4,
+        })
       );
     });
   }
@@ -289,9 +297,9 @@ function renderTriangle(o: ComparisonCardOptions, theme: CardTheme): string {
         })
       );
       parts.push(
-        cardText(x + cellW / 2, y + cellH / 2 + 16, labels.tags[tier], {
+        cardText(x + cellW / 2, y + cellH / 2 + 16, fitText(labels.tags[tier], cellW - 8, CARD_TYPE.label, 'mono'), {
           fill: tone,
-          size: 9.5,
+          size: CARD_TYPE.label,
           font: 'mono',
           letterSpacing: 0.4,
           anchor: 'middle',

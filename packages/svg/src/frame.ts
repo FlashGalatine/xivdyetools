@@ -11,7 +11,7 @@
  *
  * R1 Cap (Turn 12): every list graphic holds five rows at full size; the
  * tail (only when more was asked for) is a swatch strip and a count in the
- * embed. Harmony's 55 px slot rows hold three.
+ * embed. Harmony's taller 39 px slot rows hold four (Turn 13's measurement).
  *
  * @module frame
  */
@@ -35,8 +35,15 @@ export const CARD_TYPE = { label: 11, value: 13, name: 16 } as const;
 /** R1 Cap: rows at full size for every list graphic. */
 export const ROW_CAP = 5;
 
-/** Harmony's taller 55 px slot rows hold three before the tail strip. */
-export const HARMONY_ROW_CAP = 3;
+/**
+ * Harmony's taller slot rows hold four before the tail strip.
+ *
+ * Turn 11 asserted three at a 55 px row, on a frame that was 400 × 390 and
+ * therefore broke this ceiling. Turn 13 re-measured against a square
+ * harmony: at 39 px rows the frame keeps 44.9 px of spare height, so base
+ * plus four slots renders at 350 with about 6 px spare. Six does not fit.
+ */
+export const HARMONY_ROW_CAP = 4;
 
 // ============================================================================
 // Card themes
@@ -69,7 +76,22 @@ export interface CardTheme {
   glyphAccent: string;
   /** Swatch inset ring (legible on any dye colour) */
   swatchRing: string;
-  /** Tier ramp: exact/close/loose/far */
+  /**
+   * Tier ramp: exact / close / loose / far.
+   *
+   * **Settled 2026-08-09 — the Turn 13/14 ramp is the one.** The design set
+   * disagreed with itself: Turns 13/14 draw `#8bc34a` / `#ffc107` for the
+   * middle bands, the 2026-08-07 Swatch doc draws `#9ecf5e` / `#F4BF4F`.
+   * Turns 13/14 win because that ramp is already the shipped ramp in eight
+   * web-app components as well as here, so it is what a player has learned
+   * to read; a two-frame revision does not outrank a suite-wide convention.
+   *
+   * `#F4BF4F` is NOT a retired tier colour and must not be swept into this
+   * ramp: it is the separate **state** amber — OFF GRID on the swatch card,
+   * the vendor flag, a destructive confirm. A tier answers "how close is
+   * this?", a state answers "something here needs your attention". They are
+   * allowed to look similar; they are not allowed to be the same token.
+   */
   tiers: readonly [string, string, string, string];
 }
 

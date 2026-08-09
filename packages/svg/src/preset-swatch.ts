@@ -4,6 +4,24 @@
  * Generates a visual display of preset color palettes.
  * Shows the preset name, description, and color swatches with dye names.
  *
+ * **The 5.0 frame is DEFERRED, the defects are not.** Turn 14 parked all four
+ * `/preset` directions — not between frames, but on whether the command
+ * survives 5.0 at all, which is a product call and cannot be answered by
+ * drawing another one. What did *not* defer is the list of defects that are
+ * real in shipped code and cheap to fix either way:
+ *
+ * - the centred header measured nothing, in a package that ships
+ *   `estimateTextWidth` precisely because CJK is 2× wide — now measured;
+ * - the description was cut at 60 Latin characters — now a pixel budget;
+ * - `Math.floor(width / 7)` divided pixels by one Latin character, so every
+ *   CJK dye name overran its swatch by roughly double — now measured;
+ * - the palette was the deleted navy, replaced wholesale in `base.ts`.
+ *
+ * Still deferred with the command: the 600 px canvas (against the suite's
+ * 400 × 350 budget), the proportional band, and localised category names.
+ * `generateCompactPresetSwatch` was deleted — it was written for a list view
+ * that shipped as embed text and had zero callers through two releases.
+ *
  * Layout:
  * +----------------------------------------------------------+
  * |              [Icon] Preset Name                          |
@@ -22,12 +40,46 @@ import type { Dye } from '@xivdyetools/types';
 import type { PresetCategory } from '@xivdyetools/types';
 import {
   createSvgDocument,
+  estimateTextWidth,
   rect,
   text,
-  truncateText,
   THEME,
   FONTS,
 } from './base.js';
+
+// ============================================================================
+// Measured text
+// ============================================================================
+
+/**
+ * Per-character width factors against the font size, matching `frame.ts`'s
+ * `textWidth`. Kept local because this generator predates the frame system
+ * and still draws on `createSvgDocument`.
+ */
+const WIDTH_FACTOR = { header: 0.58, body: 0.54, mono: 0.62 } as const;
+
+/**
+ * Ellipsise to a **pixel** budget, never a character count.
+ *
+ * The two defects this replaces were both character-count truncations in a
+ * package that ships `estimateTextWidth` precisely because CJK is 2× wide:
+ * a fixed 60-character description cut, and `Math.floor(width / 7)` — pixels
+ * divided by one Latin character — which let every CJK dye name overrun its
+ * swatch by roughly double.
+ */
+function fitToWidth(
+  content: string,
+  maxPx: number,
+  fontSize: number,
+  kind: keyof typeof WIDTH_FACTOR = 'body'
+): string {
+  const measure = (s: string) => estimateTextWidth(s, fontSize * WIDTH_FACTOR[kind]);
+  if (measure(content) <= maxPx) return content;
+  // Slice by code point — a UTF-16 slice bisects surrogate pairs (BUG-060)
+  const chars = [...content];
+  while (chars.length > 1 && measure(`${chars.join('')}…`) > maxPx) chars.pop();
+  return `${chars.join('').trimEnd()}…`;
+}
 
 // ============================================================================
 // Category Display (visual display constant, moved from discord-worker)
@@ -134,8 +186,12 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
   // Title — BUG-056: no category emoji in SVG text; the bundled resvg fonts
   // have no emoji glyphs, so the icon rendered as a tofu box in the PNG.
   // CATEGORY_DISPLAY icons remain for Discord *message* text, where they work.
+  // Every string in this header is centred, so it can overrun in BOTH
+  // directions — each one is measured against the content box before it is
+  // anchored.
+  const headerW = width - PADDING * 2;
   elements.push(
-    text(width / 2, PADDING + 24, name, {
+    text(width / 2, PADDING + 24, fitToWidth(name, headerW, 22, 'header'), {
       fill: THEME.text,
       fontSize: 22,
       fontFamily: FONTS.headerCjk,
@@ -144,15 +200,11 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
     })
   );
 
-  // Description (truncated if too long)
-  const maxDescLength = 60;
-  const truncatedDesc = truncateText(description, maxDescLength);
-
   elements.push(
-    text(width / 2, PADDING + 50, truncatedDesc, {
+    text(width / 2, PADDING + 50, fitToWidth(description, headerW, 13), {
       fill: THEME.textMuted,
       fontSize: 13,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       textAnchor: 'middle',
     })
   );
@@ -169,10 +221,10 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
   }
 
   elements.push(
-    text(width / 2, PADDING + 72, metaParts.join(' • '), {
+    text(width / 2, PADDING + 72, fitToWidth(metaParts.join(' • '), headerW, 11), {
       fill: THEME.textDim,
       fontSize: 11,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       textAnchor: 'middle',
     })
   );
@@ -207,10 +259,9 @@ function generateDyeSwatch(dye: Dye, x: number, y: number, width: number): strin
     })
   );
 
-  // Dye name (truncated if needed)
+  // Dye name — measured against the swatch, not divided by a Latin character
   const labelY = y + SWATCH_HEIGHT + 18;
-  const maxNameLength = Math.floor(width / 7); // Approximate chars that fit
-  const truncatedName = truncateText(dye.name, maxNameLength);
+  const truncatedName = fitToWidth(dye.name, width, 11);
 
   elements.push(
     text(x + width / 2, labelY, truncatedName, {
@@ -245,10 +296,10 @@ function generateEmptySwatch(width: number, name: string): string {
   elements.push(rect(0, 0, width, height, THEME.background, { rx: 12, ry: 12 }));
 
   elements.push(
-    text(width / 2, 40, name, {
+    text(width / 2, 40, fitToWidth(name, width - PADDING * 2, 18, 'header'), {
       fill: THEME.text,
       fontSize: 18,
-      fontFamily: FONTS.header,
+      fontFamily: FONTS.headerCjk,
       fontWeight: 600,
       textAnchor: 'middle',
     })

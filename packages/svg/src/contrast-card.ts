@@ -21,7 +21,7 @@
  * @module contrast-card
  */
 
-import { getLuminance } from './base.js';
+import { ColorService } from '@xivdyetools/core';
 import {
   CARD_WIDTH,
   CARD_TYPE,
@@ -90,13 +90,15 @@ export interface ContrastCardOptions {
 
 const PAD = 16;
 
-/** WCAG contrast ratio between two colours (1–21). */
+/**
+ * WCAG contrast ratio between two colours (1–21).
+ *
+ * Re-exported from `core`, never re-derived: the ratio is the seventh entry
+ * in the suite's shared readout vocabulary, and two implementations of it is
+ * exactly the defect that gave the bot two hardcoded 4.5/7 ladders.
+ */
 export function contrastRatio(hexA: string, hexB: string): number {
-  const la = getLuminance(hexA);
-  const lb = getLuminance(hexB);
-  const lighter = Math.max(la, lb);
-  const darker = Math.min(la, lb);
-  return (lighter + 0.05) / (darker + 0.05);
+  return ColorService.getContrastRatio(hexA, hexB);
 }
 
 /** 1.4.11 bands: 3 / 4.5 / 7, higher is safer — the ramp reads in reverse. */
@@ -355,9 +357,15 @@ function render13C1(o: ContrastCardOptions, theme: CardTheme): string {
     })
   );
 
-  // Plot geometry: gutter (pair codes) · axis · 46 px value column
+  // Plot geometry: gutter (pair codes) · axis · value column.
+  //
+  // The column was drawn at 46 px against a two-decimal ratio. Nothing in
+  // this tool acts on the second digit — the bands are 3, 4.5 and 7 — so the
+  // rows print one decimal, and the column narrows to 36 px with it. That
+  // hands 10 px straight back to the axis, which is the resolution 13C·1
+  // exists to show.
   const gutterW = 58;
-  const valueW = 46;
+  const valueW = 36;
   const axisX = PAD + gutterW;
   const axisRight = CARD_WIDTH - PAD - valueW - 10;
   const axisW = axisRight - axisX;

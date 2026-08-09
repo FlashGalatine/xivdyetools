@@ -25,7 +25,13 @@ const INFO_LABELS: DyeInfoLabels = {
   nearestMore: '+1 more',
 };
 const GRID_LABELS = { name: 'DYE', cat: 'CATEGORY', stain: 'STAIN' };
-const HARMONY_LABELS = { base: 'BASE', idealKey: 'outline = ideal · solid = found' };
+const HARMONY_LABELS = {
+  base: 'BASE',
+  ideal: 'IDEAL HUE',
+  found: 'NEAREST DYE',
+  bandKey: 'bands: ≤6 / ≤12 / ≤20',
+  derivedNote: 'ΔE2000-derived',
+};
 const TIER_WORDS = ['EXACT', 'CLOSE', 'LOOSE', 'UNREACHABLE'] as const;
 
 // ============================================================================
@@ -49,7 +55,7 @@ describe('SVG Pipeline: Harmony Card (11A)', () => {
     typeLabel: 'Triadic',
     baseHex: '#781A1A',
     baseName: 'Dalamud Red',
-    baseSubText: '#781A1A · STAIN 10',
+    baseAngle: '0°',
     labels: HARMONY_LABELS,
     tierWords: TIER_WORDS,
     lang: 'en',
@@ -65,6 +71,7 @@ describe('SVG Pipeline: Harmony Card (11A)', () => {
           localizedName: 'Cactuar Green',
           subText: '#658241 · STAIN 51',
           deltaE: 11.19,
+          angleLabel: '120°',
         },
         {
           idealHex: '#1A1A78',
@@ -72,6 +79,7 @@ describe('SVG Pipeline: Harmony Card (11A)', () => {
           localizedName: 'Dragoon Blue',
           subText: '#000B9D · STAIN 90',
           deltaE: 4.87,
+          angleLabel: '240°',
         },
       ],
     });
@@ -89,7 +97,7 @@ describe('SVG Pipeline: Harmony Card (11A)', () => {
     expect(svg).toContain('xivdyetools.app');
   });
 
-  it('caps rows at three and renders a tail strip (R1)', () => {
+  it('caps rows at four and renders a tail strip (R1)', () => {
     const slot = (i: number) => ({
       idealHex: null,
       hex: `#10101${i}`,
@@ -104,10 +112,40 @@ describe('SVG Pipeline: Harmony Card (11A)', () => {
     });
 
     expectValidSvg(svg);
-    expect(svg).toContain('Mono 3');
-    // Slots past three become tail swatches, not rows
-    expect(svg).not.toContain('Mono 4');
-    expect(svg).toContain('+2');
+    // Turn 13 re-measured 11A: 39 px rows hold base + FOUR slots at 350
+    expect(svg).toContain('Mono 4');
+    // Slots past four become tail swatches, not rows
+    expect(svg).not.toContain('Mono 5');
+    expect(svg).toContain('+1');
+  });
+
+  it('holds the worst case — four slots, verdict and an off-default method — under 350', () => {
+    // Turn 13's measurement, as a guard: past 350 Discord contracts the box
+    // horizontally and every type size in it shrinks again.
+    const slot = (i: number) => ({
+      idealHex: '#1A781A',
+      hex: `#65824${i}`,
+      localizedName: 'Metallic kobaltgrüner',
+      subText: '#658241 · FARBNR. 124',
+      deltaE: 12.34,
+      angleLabel: `${i * 90}°`,
+    });
+    const svg = generateHarmonyCard({
+      ...baseOptions,
+      typeLabel: 'Tetradisch',
+      slots: [slot(1), slot(2), slot(3), slot(4)],
+      verdict: '270° · Metallic kobaltgrüner · 12,3',
+      method: 'redmean',
+      lang: 'de',
+    });
+
+    const height = Number(/height="(\d+)"/.exec(svg)?.[1]);
+    expect(height).toBeLessThanOrEqual(350);
+    // All four slots are rows, not a tail
+    expect(svg).not.toContain('+1');
+    // The method is printed wherever a tier or verdict appears
+    expect(svg).toContain('REDMEAN');
+    expect(svg).toContain('↓');
   });
 
   it('never exceeds the 350 px ceiling', () => {
@@ -379,7 +417,7 @@ describe('SVG Pipeline: Cross-Module Integration', () => {
       typeLabel: 'Complementary',
       baseHex: '#FF0000',
       baseName: 'Red',
-      baseSubText: '#FF0000',
+      baseAngle: '0°',
       slots: [
         { idealHex: '#00FFFF', hex: '#00EEEE', localizedName: 'Cyan', subText: '#00EEEE', deltaE: 2 },
       ],

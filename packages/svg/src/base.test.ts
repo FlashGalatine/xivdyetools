@@ -297,13 +297,15 @@ describe('svg/base.ts', () => {
 
     describe('THEME', () => {
         it('should have all theme colors defined', () => {
-            expect(THEME.background).toBe('#1a1a2e');
-            expect(THEME.backgroundLight).toBe('#2d2d3d');
-            expect(THEME.text).toBe('#ffffff');
-            expect(THEME.textMuted).toBe('#909090');
-            expect(THEME.textDim).toBe('#666666');
+            // 5.0 replaced the palette wholesale — the old navy appeared
+            // nowhere else we make. These are CARD_DARK's surfaces.
+            expect(THEME.background).toBe('#17171A');
+            expect(THEME.backgroundLight).toBe('#141416');
+            expect(THEME.text).toBe('#ECECEE');
+            expect(THEME.textMuted).toBe('#9C9CA2');
+            expect(THEME.textDim).toBe('#86868C');
             expect(THEME.accent).toBe('#EA4133'); // one 5.0 accent, blurple retired
-            expect(THEME.border).toBe('#404050');
+            expect(THEME.border).toBe('rgba(255,255,255,0.07)');
             expect(THEME.success).toBe('#57f287');
             expect(THEME.warning).toBe('#fee75c');
             expect(THEME.error).toBe('#ed4245');

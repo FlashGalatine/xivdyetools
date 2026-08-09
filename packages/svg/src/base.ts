@@ -269,16 +269,25 @@ export function group(content: string, transform?: string): string {
 export const ACCENT = '#EA4133';
 
 /**
- * Theme colors for consistent styling
+ * Theme colours for the pre-frame generators.
+ *
+ * Replaced wholesale in 5.0: the old palette was built on `#1a1a2e`, a navy
+ * that appears nowhere else we make, and `#5865f2`, Discord's brand rather
+ * than ours. These are the same surfaces `CARD_DARK` carries in `frame.ts` —
+ * the two must not drift, because a card and a pre-frame generator can land
+ * in the same channel a second apart.
+ *
+ * `frame.ts`'s `CardTheme` is the home for anything new; this object exists
+ * for the generators that have not been re-cut onto the frame system yet.
  */
 export const THEME = {
-  background: '#1a1a2e',
-  backgroundLight: '#2d2d3d',
-  text: '#ffffff',
-  textMuted: '#909090',
-  textDim: '#666666',
+  background: '#17171A',
+  backgroundLight: '#141416',
+  text: '#ECECEE',
+  textMuted: '#9C9CA2',
+  textDim: '#86868C',
   accent: ACCENT,
-  border: '#404050',
+  border: 'rgba(255,255,255,0.07)',
   success: '#57f287',
   warning: '#fee75c',
   error: '#ed4245',
