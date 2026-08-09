@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
+import { BAND_VOCABULARY } from '@xivdyetools/core';
 import { PAIR_READOUT_UNITS, tierColor, shiftTierColor, createMetricHelp } from '../metric-help';
 
 vi.mock('@services/language-service', () => ({
@@ -13,17 +14,26 @@ vi.mock('@services/language-service', () => ({
 }));
 
 describe('PAIR_READOUT_UNITS', () => {
-  it('pct bands derive from the user threshold', () => {
-    expect(PAIR_READOUT_UNITS.pct.bands(30)).toEqual({ good: 60, tight: 60, fail: 30 });
-    expect(PAIR_READOUT_UNITS.pct.bands(20)).toEqual({ good: 60, tight: 40, fail: 20 });
+  it("pct bands are core's derived DISTINGUISH separation cuts", () => {
+    const [fail, tight, good] = BAND_VOCABULARY.separation.distinguish.cuts;
+    expect(PAIR_READOUT_UNITS.pct.bands).toEqual({ good, tight, fail });
+    expect(PAIR_READOUT_UNITS.pct.bands).toEqual({ good: 29, tight: 13, fail: 8 });
   });
 
-  it('ratio bands are the 1.4.11 cuts', () => {
-    expect(PAIR_READOUT_UNITS.ratio.bands(30)).toEqual({ good: 7, tight: 4.5, fail: 3 });
+  it('ratio bands stay the WCAG 1.4.11 anchors (decision — not core)', () => {
+    expect(PAIR_READOUT_UNITS.ratio.bands).toEqual({ good: 7, tight: 4.5, fail: 3 });
   });
 
-  it('de2000 bands are the drawn cuts', () => {
-    expect(PAIR_READOUT_UNITS.de2000.bands(30)).toEqual({ good: 35, tight: 20, fail: 10 });
+  it("de2000 bands are core's calibrated separation cuts", () => {
+    const [fail, tight, good] = BAND_VOCABULARY.separation.ciede2000.cuts;
+    expect(PAIR_READOUT_UNITS.de2000.bands).toEqual({ good, tight, fail });
+    expect(PAIR_READOUT_UNITS.de2000.bands).toEqual({ good: 30, tight: 15, fail: 8 });
+  });
+
+  it('display precision follows the band vocabulary', () => {
+    expect(PAIR_READOUT_UNITS.pct.dp).toBe(0);
+    expect(PAIR_READOUT_UNITS.de2000.dp).toBe(1);
+    expect(PAIR_READOUT_UNITS.ratio.dp).toBe(2);
   });
 
   it('formats per unit', () => {
@@ -67,40 +77,25 @@ describe('shiftTierColor', () => {
 
 describe('createMetricHelp', () => {
   it('renders the NOT A STANDARD badge for pct but not ratio', () => {
-    const pct = createMetricHelp({ unit: 'pct', threshold: 30, dark: true, onUnitChange: vi.fn() });
+    const pct = createMetricHelp({ unit: 'pct', dark: true, onUnitChange: vi.fn() });
     expect(pct.textContent).toContain('accessibility.notAStandard');
 
-    const ratio = createMetricHelp({
-      unit: 'ratio',
-      threshold: 30,
-      dark: true,
-      onUnitChange: vi.fn(),
-    });
+    const ratio = createMetricHelp({ unit: 'ratio', dark: true, onUnitChange: vi.fn() });
     expect(ratio.textContent).not.toContain('accessibility.notAStandard');
   });
 
   it('links to the W3C page only for ratio', () => {
-    const ratio = createMetricHelp({
-      unit: 'ratio',
-      threshold: 30,
-      dark: true,
-      onUnitChange: vi.fn(),
-    });
+    const ratio = createMetricHelp({ unit: 'ratio', dark: true, onUnitChange: vi.fn() });
     const link = ratio.querySelector('a');
     expect(link?.href).toContain('w3.org/WAI/WCAG21/Understanding/non-text-contrast');
 
-    const de = createMetricHelp({
-      unit: 'de2000',
-      threshold: 30,
-      dark: true,
-      onUnitChange: vi.fn(),
-    });
+    const de = createMetricHelp({ unit: 'de2000', dark: true, onUnitChange: vi.fn() });
     expect(de.querySelector('a')).toBeNull();
   });
 
   it('switches units through the chip row', () => {
     const onUnitChange = vi.fn();
-    const el = createMetricHelp({ unit: 'pct', threshold: 30, dark: true, onUnitChange });
+    const el = createMetricHelp({ unit: 'pct', dark: true, onUnitChange });
     const chips = el.querySelectorAll('button');
     expect(chips.length).toBe(3);
     // Active chip does not re-fire
@@ -111,16 +106,11 @@ describe('createMetricHelp', () => {
   });
 
   it('renders the four-word tier legend with unit-specific ranges', () => {
-    const el = createMetricHelp({
-      unit: 'de2000',
-      threshold: 30,
-      dark: true,
-      onUnitChange: vi.fn(),
-    });
+    const el = createMetricHelp({ unit: 'de2000', dark: true, onUnitChange: vi.fn() });
     expect(el.textContent).toContain('accessibility.tierClear');
     expect(el.textContent).toContain('accessibility.tierCollapsed');
-    expect(el.textContent).toContain('35 +');
-    expect(el.textContent).toContain('< 10');
+    expect(el.textContent).toContain('30 +');
+    expect(el.textContent).toContain('< 8');
   });
 });
 

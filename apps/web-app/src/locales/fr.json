@@ -580,7 +580,7 @@
     "unitDeLabel": "Distance perceptuelle",
     "unitDeShort": "ΔE2000",
     "unitDeDesc": "Écart colorimétrique CIEDE2000 entre les deux couleurs simulées — la même métrique que les autres outils. Environ 1,0 est le plus petit écart perceptible par un œil entraîné.",
-    "unitDeCaveat": "Perceptuellement honnête et cohérente avec le reste de l'application, mais aucune norme ne définit de seuil — les 10 et 20 sont le choix de cet outil.",
+    "unitDeCaveat": "Perceptuellement honnête et cohérente avec le reste de l'application, mais aucune norme ne définit de seuil — les coupures ici sont les bandes de séparation calibrées de l'application, partagées par tous ses outils.",
     "tierClear": "Nette",
     "tierFine": "Bonne",
     "tierTight": "Juste",

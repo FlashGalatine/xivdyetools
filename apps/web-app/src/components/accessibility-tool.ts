@@ -163,12 +163,6 @@ const STORAGE_KEYS = {
 } as const;
 
 /**
- * pct-unit fail threshold (6A: tight = 2x). 25 keeps the Fine band real —
- * at 30 the tight cut collides with the 60 good cut and Fine collapses.
- */
-const DEFAULT_PCT_THRESHOLD = 25;
-
-/**
  * Default enabled vision types (all four colorblindness types plus normal vision)
  */
 const DEFAULT_VISION_TYPES: VisionTypeId[] = [
@@ -1377,17 +1371,25 @@ export class AccessibilityTool extends BaseComponent {
     return result.colorblindnessSimulations[vision];
   }
 
-  /** Pair value between two selected dyes under a vision, in the active unit */
+  /**
+   * Pair value between two selected dyes under a vision, in the active unit —
+   * rounded to the unit's display precision so tiers score on the shown value
+   */
   private pairValue(i: number, j: number, vision: VisionTypeId): number {
     const a = this.simHex(i, vision);
     const b = this.simHex(j, vision);
-    if (this.readoutUnit === 'ratio') return ColorService.getContrastRatio(a, b);
-    if (this.readoutUnit === 'de2000') return ColorService.getDeltaE(a, b, 'cie2000');
-    return (ColorService.getColorDistance(a, b) / 441.67) * 100;
+    const raw =
+      this.readoutUnit === 'ratio'
+        ? ColorService.getContrastRatio(a, b)
+        : this.readoutUnit === 'de2000'
+          ? ColorService.getDeltaE(a, b, 'cie2000')
+          : (ColorService.getColorDistance(a, b) / 441.67) * 100;
+    const f = 10 ** PAIR_READOUT_UNITS[this.readoutUnit].dp;
+    return Math.round(raw * f) / f;
   }
 
   private unitBands(): { good: number; tight: number; fail: number } {
-    return PAIR_READOUT_UNITS[this.readoutUnit].bands(DEFAULT_PCT_THRESHOLD);
+    return PAIR_READOUT_UNITS[this.readoutUnit].bands;
   }
 
   /** All pair index combinations for the current selection */
@@ -1549,7 +1551,6 @@ export class AccessibilityTool extends BaseComponent {
       this.pairHelpContainer.appendChild(
         createMetricHelp({
           unit: this.readoutUnit,
-          threshold: DEFAULT_PCT_THRESHOLD,
           dark: ThemeService.isDarkMode(),
           onUnitChange: (next) => {
             this.readoutUnit = next;

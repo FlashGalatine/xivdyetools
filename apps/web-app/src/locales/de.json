@@ -580,7 +580,7 @@
     "unitDeLabel": "Perzeptueller Abstand",
     "unitDeShort": "ΔE2000",
     "unitDeDesc": "CIEDE2000-Farbabstand der beiden simulierten Farben — dieselbe Metrik, die die anderen Werkzeuge für die Trefferqualität nutzen. Etwa 1,0 ist der kleinste sichtbare Unterschied.",
-    "unitDeCaveat": "Perzeptuell ehrlich und konsistent mit dem Rest der App, aber kein Standard definiert eine Bestehensgrenze — die 10 und 20 sind hier gesetzt.",
+    "unitDeCaveat": "Perzeptuell ehrlich und konsistent mit dem Rest der App, aber kein Standard definiert eine Bestehensgrenze — die Grenzwerte hier sind die kalibrierten Trennungsbänder der App, die alle Werkzeuge teilen.",
     "tierClear": "Klar",
     "tierFine": "Gut",
     "tierTight": "Knapp",

@@ -14,10 +14,13 @@
  */
 
 import { LanguageService } from '@services/language-service';
+import { BAND_VOCABULARY } from '@xivdyetools/core';
 import type { MatchingMethod } from '@xivdyetools/core';
 
 // ============================================================================
-// Unit definitions (bands per the drawn 6A spec)
+// Unit definitions — bands from core's calibrated SEPARATION vocabulary
+// (Band Calibration, 2026-08-07). Ratio is the one deliberate exception:
+// WCAG 1.4.11 anchors by decision, not core's RATIO_BANDS.accessibility.
 // ============================================================================
 
 export type PairReadoutUnit = 'pct' | 'ratio' | 'de2000';
@@ -33,11 +36,19 @@ interface UnitDef {
   /** Locale key stem under accessibility.* */
   stem: string;
   standard: boolean;
-  /** Static bands; pct's tight/fail derive from the user threshold at call time */
-  bands: (threshold: number) => UnitBands;
+  /** Display precision — pair values round to it before display AND tier scoring */
+  dp: number;
+  /** Fixed bands, descending polarity (higher = safer) */
+  bands: UnitBands;
   format: (v: number) => string;
   /** Tier-legend number ranges, derived from the bands */
   ranges: (b: UnitBands) => [string, string, string, string];
+}
+
+/** Descending-polarity view of core's ascending separation cuts. */
+function separationBands(method: 'ciede2000' | 'distinguish'): UnitBands {
+  const [fail, tight, good] = BAND_VOCABULARY.separation[method].cuts;
+  return { good, tight, fail };
 }
 
 export const PAIR_READOUT_UNITS: Record<PairReadoutUnit, UnitDef> = {
@@ -45,7 +56,8 @@ export const PAIR_READOUT_UNITS: Record<PairReadoutUnit, UnitDef> = {
     id: 'pct',
     stem: 'unitPct',
     standard: false,
-    bands: (threshold) => ({ good: 60, tight: threshold * 2, fail: threshold }),
+    dp: BAND_VOCABULARY.separation.distinguish.dp,
+    bands: separationBands('distinguish'),
     format: (v) => `${Math.round(v)}%`,
     ranges: (b) => [
       `${b.good}% +`,
@@ -58,7 +70,8 @@ export const PAIR_READOUT_UNITS: Record<PairReadoutUnit, UnitDef> = {
     id: 'ratio',
     stem: 'unitRatio',
     standard: true,
-    bands: () => ({ good: 7, tight: 4.5, fail: 3 }),
+    dp: 2,
+    bands: { good: 7, tight: 4.5, fail: 3 },
     format: (v) => `${v.toFixed(2)}:1`,
     ranges: () => ['7:1 +', '4.5–7', '3–4.5', '< 3:1'],
   },
@@ -66,9 +79,10 @@ export const PAIR_READOUT_UNITS: Record<PairReadoutUnit, UnitDef> = {
     id: 'de2000',
     stem: 'unitDe',
     standard: false,
-    bands: () => ({ good: 35, tight: 20, fail: 10 }),
+    dp: BAND_VOCABULARY.separation.ciede2000.dp,
+    bands: separationBands('ciede2000'),
     format: (v) => `ΔE ${v.toFixed(1)}`,
-    ranges: () => ['35 +', '20–35', '10–20', '< 10'],
+    ranges: (b) => [`${b.good} +`, `${b.tight}–${b.good}`, `${b.fail}–${b.tight}`, `< ${b.fail}`],
   },
 };
 
@@ -83,6 +97,8 @@ const TIER_COLORS_LIGHT = ['#137A33', '#1C7D3A', '#B45309', '#B91C1C'] as const;
 
 /**
  * Colour for a metric value under a unit's bands (higher = safer).
+ * Pass the display-rounded value — tiers score on what the user sees
+ * (round to the unit's `dp` first, as `pairValue` does at source).
  */
 export function tierColor(value: number, bands: UnitBands, dark: boolean): string {
   const ramp = dark ? TIER_COLORS_DARK : TIER_COLORS_LIGHT;
@@ -110,8 +126,6 @@ export function shiftTierColor(deltaE: number, dark: boolean): string {
 
 export interface MetricHelpOptions {
   unit: PairReadoutUnit;
-  /** The user's MATCH threshold (feeds pct's bands) */
-  threshold: number;
   dark: boolean;
   /** Called when the user picks another unit from the switcher */
   onUnitChange: (unit: PairReadoutUnit) => void;
@@ -124,7 +138,7 @@ export interface MetricHelpOptions {
 export function createMetricHelp(options: MetricHelpOptions): HTMLElement {
   const t = (key: string): string => LanguageService.t(`accessibility.${key}`);
   const def = PAIR_READOUT_UNITS[options.unit];
-  const bands = def.bands(options.threshold);
+  const bands = def.bands;
 
   // Inline styles throughout: this renders inside the v4 shell's shadow
   // DOM, where document-level Tailwind utilities do not reach
