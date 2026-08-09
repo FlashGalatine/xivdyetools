@@ -7,7 +7,7 @@
 import type { FacewearColor } from '@xivdyetools/types';
 import facewearData from '../data/facewear_colors.json' with { type: 'json' };
 
-export const facewearColors: readonly FacewearColor[] = facewearData as FacewearColor[];
+export const facewearColors: readonly FacewearColor[] = facewearData;
 
 /**
  * Frozen mapping of the pre-v2 synthetic negative itemIDs to facewear slugs.

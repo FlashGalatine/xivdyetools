@@ -892,6 +892,52 @@ export async function retry<T>(
 }
 
 // ============================================================================
+// Text Utilities
+// ============================================================================
+
+/**
+ * Three-character axis code for a localized dye name (the bot's 14C triangle
+ * and 13C·1 contrast plot).
+ *
+ * The order of operations is the whole point, and it is why this lives in
+ * core rather than being re-derived per generator:
+ *
+ * 1. **Uppercase before slicing.** `'ß'.toUpperCase()` is `'SS'` — two
+ *    characters — so slicing first and uppercasing after silently yields a
+ *    four-character code for German names.
+ * 2. **Strip punctuation.** `Ul'dahbrauner` must abbreviate to `ULD`, not
+ *    `UL'` — an apostrophe carries no identifying signal in a 3-char code.
+ * 3. **CJK keeps its first three characters** and is not uppercased: those
+ *    scripts have no case, and each glyph already carries a full word's
+ *    worth of meaning.
+ *
+ * A code is deliberately **not** globally unique — the nine Metallics all
+ * abbreviate to `MET`, the Dark run to `DAR`, and every German
+ * `Schnee-`/`Schiefer-` name collides on `SCH`. That is accepted because a
+ * code never appears alone: the swatch pair sits on the same row, so colour
+ * disambiguates the letters and the letters disambiguate the colour.
+ *
+ * @param name - The dye name, already localized
+ * @param locale - Locale code; `ja`/`zh`/`ko` take the CJK path
+ * @returns A code of at most three characters
+ *
+ * @example
+ * ```typescript
+ * abbreviateDyeName("Ul'dahbrauner", 'de')   // 'ULD'
+ * abbreviateDyeName('Rußschwarzer', 'de')    // 'RUS'  (ß → SS, then sliced)
+ * abbreviateDyeName('Metallic Gold', 'en')   // 'MET'
+ * abbreviateDyeName('ダラガブレッド', 'ja')      // 'ダラガ'
+ * ```
+ */
+export function abbreviateDyeName(name: string, locale: string): string {
+  if (locale === 'ja' || locale === 'zh' || locale === 'ko') return name.slice(0, 3);
+  return name
+    .toUpperCase()
+    .replace(/[^\p{L}\p{N}]/gu, '')
+    .slice(0, 3);
+}
+
+// ============================================================================
 // Data Integrity Utilities
 // ============================================================================
 

@@ -117,6 +117,8 @@ export {
   DE2000_GROUND_TRUTH,
   METHOD_DISPLAY_DP,
 } from './config/band-calibration.js';
+export { SOCIAL_LINKS, PRODUCT_LINKS } from './config/product-links.js';
+export type { ProductLink } from './config/product-links.js';
 export type {
   BandCalibrationResult,
   CalibratedMethodId,
@@ -219,6 +221,7 @@ export {
   retry,
   isAbortError,
   generateChecksum,
+  abbreviateDyeName,
 } from './utils/index.js';
 
 // Data (for browser environments - to be injected)

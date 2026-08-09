@@ -26,11 +26,53 @@ import {
   retry,
   isAbortError,
   generateChecksum,
+  abbreviateDyeName,
   LRUCache,
   AsyncLRUCache,
 } from '../index.js';
 
 describe('Utils', () => {
+  // ============================================================================
+  // Text Utilities
+  // ============================================================================
+
+  describe('abbreviateDyeName', () => {
+    it('strips punctuation rather than spending a slot on it', () => {
+      // Ul'dahbrauner must not become UL'
+      expect(abbreviateDyeName("Ul'dahbrauner", 'de')).toBe('ULD');
+    });
+
+    it('uppercases BEFORE slicing, so eszett does not overflow the code', () => {
+      // 'ss'.toUpperCase() is two characters; slicing first would give RUSS
+      expect(abbreviateDyeName('Rußschwarzer', 'de')).toBe('RUS');
+      expect(abbreviateDyeName('Rußschwarzer', 'de')).toHaveLength(3);
+    });
+
+    it('collides by design on shared prefixes', () => {
+      // Accepted: the swatch pair on the same row disambiguates the code
+      expect(abbreviateDyeName('Metallic Gold', 'en')).toBe('MET');
+      expect(abbreviateDyeName('Metallic Cobalt Green', 'en')).toBe('MET');
+    });
+
+    it('takes the first three characters for CJK, uncased', () => {
+      // Dalamud Red / Soot Black / Soot Black — read from core's locale data,
+      // never hand-written (an invented name eventually gets reasoned from)
+      expect(abbreviateDyeName('ダラガブレッド', 'ja')).toBe('ダラガ');
+      expect(abbreviateDyeName('숯검정색', 'ko')).toBe('숯검정');
+      expect(abbreviateDyeName('煤烟黑', 'zh')).toBe('煤烟黑');
+    });
+
+    it('never exceeds three characters, whatever the input', () => {
+      for (const name of ['Snow White', "Ul'dahbrauner", 'Rußschwarzer', 'A', '']) {
+        expect(abbreviateDyeName(name, 'en').length).toBeLessThanOrEqual(3);
+      }
+    });
+
+    it('returns an empty code for a name with no letters or digits', () => {
+      expect(abbreviateDyeName('---', 'en')).toBe('');
+    });
+  });
+
   // ============================================================================
   // Math Utilities
   // ============================================================================
