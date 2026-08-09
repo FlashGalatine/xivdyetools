@@ -98,6 +98,43 @@ Discord sends a signed Ed25519 PING and refuses to save if verification fails, s
 save is itself the verification. Afterwards, exercise one approve/reject button — those are
 `MESSAGE_COMPONENT` interactions on the same endpoint, so a working button confirms the path.
 
+### Outcome (2026-08-09): this repoint uncovered a live outage
+
+The repoint **failed** with `interactions_endpoint_url: The specified interactions endpoint url
+could not be verified`. Root cause: the moderation Worker's `DISCORD_PUBLIC_KEY` secret did not
+match application `1453806659708129374`'s public key. Fixed with:
+
+```bash
+cd apps/moderation-worker && npx wrangler secret put DISCORD_PUBLIC_KEY
+```
+
+Secrets apply immediately; no redeploy was needed. The repoint then succeeded.
+
+**The moderation bot had been non-functional in production.** Ed25519 verification gates every
+interaction, so `/preset moderate`, approve/reject buttons, ban/unban and all modals were
+returning `401`. Only the auto-approval path still worked, because that runs in `presets-api`
+and reaches `discord-worker` by Service Binding — it never touches this endpoint, which is
+exactly why the outage produced no visible symptom.
+
+**⚠️ A saved Interactions Endpoint URL is NOT evidence the endpoint works.** Discord verifies
+only when the value *changes*, and silently accepts a save that restores a previously-verified
+URL. During diagnosis, re-saving the old projectgalatine URL appeared to succeed *with the bad
+key still in place*, which looked like proof the key was fine. It was not a live check. Only a
+genuinely new URL forces real verification.
+
+Diagnostic notes for next time — `npx wrangler tail` on the Worker while saving is the decisive
+instrument, and the error strings discriminate cleanly:
+
+| Log error | Meaning |
+|---|---|
+| `Missing signature headers` (`packages/auth/src/discord.ts:83`) | headers stripped before the Worker — suspect edge/WAF |
+| `Invalid signature` (`discord.ts:109`) | headers arrived; key mismatch or altered body |
+| no request logged at all | blocked upstream; never reached the Worker |
+
+**Audit the sibling apps.** The same drift is undetectable by inspection anywhere else. The main
+bot (`1447108133020369048`) is high-traffic, so a bad key there would be immediately obvious —
+but its saved URL is no more proof of health than the moderation bot's was.
+
 ### The general rule this illustrates
 
 **Repoint pointers early; retire allowlist entries late.**
