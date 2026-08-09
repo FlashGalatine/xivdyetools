@@ -14,7 +14,7 @@
  */
 
 import { LanguageService } from '@services/language-service';
-import { BAND_VOCABULARY } from '@xivdyetools/core';
+import { BAND_VOCABULARY, getLearnLink } from '@xivdyetools/core';
 import type { MatchingMethod } from '@xivdyetools/core';
 
 // ============================================================================
@@ -85,8 +85,6 @@ export const PAIR_READOUT_UNITS: Record<PairReadoutUnit, UnitDef> = {
     ranges: (b) => [`${b.good} +`, `${b.tight}–${b.good}`, `${b.fail}–${b.tight}`, `< ${b.fail}`],
   },
 };
-
-const LEARN_URL = 'https://www.w3.org/WAI/WCAG21/Understanding/non-text-contrast.html';
 
 /**
  * Tier colours per the drawn ramps (dark / light theme).
@@ -219,16 +217,29 @@ export function createMetricHelp(options: MetricHelpOptions): HTMLElement {
   });
   box.appendChild(switcher);
 
-  // Learn-more link (ratio — the only unit with a published standard)
+  // Learn-more link (ratio — the only unit with a published standard),
+  // from core's per-locale authority table. An absent locale renders no
+  // link, never the English URL; the visible row names the authority.
   if (options.unit === 'ratio') {
-    const link = document.createElement('a');
-    link.style.cssText =
-      'font-size: 12px; color: var(--theme-primary); text-decoration: underline;';
-    link.href = LEARN_URL;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.textContent = t('learnMore');
-    box.appendChild(link);
+    const learn = getLearnLink('contrast', LanguageService.getCurrentLocale());
+    if (learn) {
+      const row = document.createElement('div');
+      row.style.cssText = 'display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;';
+      const link = document.createElement('a');
+      link.style.cssText =
+        'font-size: 12px; color: var(--theme-primary); text-decoration: underline;';
+      link.href = learn.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = t('learnMore');
+      row.appendChild(link);
+      const authority = document.createElement('span');
+      authority.style.cssText =
+        "font-family: 'Fragment Mono', monospace; font-size: 10px; color: var(--theme-text-muted);";
+      authority.textContent = `${learn.authority} · ${learn.host}`;
+      row.appendChild(authority);
+      box.appendChild(row);
+    }
   }
 
   return box;

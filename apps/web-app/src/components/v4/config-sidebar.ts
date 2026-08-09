@@ -153,9 +153,6 @@ export class ConfigSidebar extends BaseLitComponent {
     protanopia: true,
     tritanopia: true,
     achromatopsia: true,
-    showLabels: true,
-    showHexValues: false,
-    highContrastMode: false,
     displayOptions: {
       ...DEFAULT_DISPLAY_OPTIONS,
       showPrice: false,
@@ -1118,34 +1115,6 @@ export class ConfigSidebar extends BaseLitComponent {
               .checked=${this.accessibilityConfig.achromatopsia}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
                 this.handleConfigChange('accessibility', 'achromatopsia', e.detail.checked)}
-            ></v4-toggle-switch>
-          </div>
-        </div>
-
-        <div class="config-group">
-          <div class="config-label">${LanguageService.t('config.simulationDisplay')}</div>
-          <div class="config-row">
-            <v4-toggle-switch
-              label=${LanguageService.t('config.showLabels')}
-              .checked=${this.accessibilityConfig.showLabels}
-              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                this.handleConfigChange('accessibility', 'showLabels', e.detail.checked)}
-            ></v4-toggle-switch>
-          </div>
-          <div class="config-row">
-            <v4-toggle-switch
-              label=${LanguageService.t('config.showHexValues')}
-              .checked=${this.accessibilityConfig.showHexValues}
-              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                this.handleConfigChange('accessibility', 'showHexValues', e.detail.checked)}
-            ></v4-toggle-switch>
-          </div>
-          <div class="config-row">
-            <v4-toggle-switch
-              label=${LanguageService.t('config.highContrastMode')}
-              .checked=${this.accessibilityConfig.highContrastMode}
-              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                this.handleConfigChange('accessibility', 'highContrastMode', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
         </div>

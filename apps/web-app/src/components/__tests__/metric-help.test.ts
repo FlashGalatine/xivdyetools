@@ -3,13 +3,14 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { BAND_VOCABULARY } from '@xivdyetools/core';
+import { BAND_VOCABULARY, getLearnLink } from '@xivdyetools/core';
 import { PAIR_READOUT_UNITS, tierColor, shiftTierColor, createMetricHelp } from '../metric-help';
 
 vi.mock('@services/language-service', () => ({
   LanguageService: {
     t: (key: string) => key,
     subscribe: vi.fn().mockReturnValue(() => {}),
+    getCurrentLocale: vi.fn(() => 'en'),
   },
 }));
 
@@ -84,13 +85,22 @@ describe('createMetricHelp', () => {
     expect(ratio.textContent).not.toContain('accessibility.notAStandard');
   });
 
-  it('links to the W3C page only for ratio', () => {
+  it("links core's contrast authority for ratio and names it; de2000 has no link", () => {
     const ratio = createMetricHelp({ unit: 'ratio', dark: true, onUnitChange: vi.fn() });
     const link = ratio.querySelector('a');
-    expect(link?.href).toContain('w3.org/WAI/WCAG21/Understanding/non-text-contrast');
+    const learn = getLearnLink('contrast', 'en');
+    expect(link?.href).toBe(learn?.url);
+    expect(ratio.textContent).toContain(learn?.authority ?? '');
 
     const de = createMetricHelp({ unit: 'de2000', dark: true, onUnitChange: vi.fn() });
     expect(de.querySelector('a')).toBeNull();
+  });
+
+  it('renders the absent state (no link, never the EN URL) for unauthorized locales', async () => {
+    const { LanguageService } = await import('@services/language-service');
+    vi.mocked(LanguageService.getCurrentLocale).mockReturnValueOnce('de');
+    const ratio = createMetricHelp({ unit: 'ratio', dark: true, onUnitChange: vi.fn() });
+    expect(ratio.querySelector('a')).toBeNull();
   });
 
   it('switches units through the chip row', () => {

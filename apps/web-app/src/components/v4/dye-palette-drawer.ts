@@ -112,6 +112,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
     'gradient',
     'mixer',
     'swatch',
+    'accessibility',
   ];
 
   /**

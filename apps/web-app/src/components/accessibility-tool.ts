@@ -32,7 +32,7 @@ import type { Dye } from '@xivdyetools/types';
 import type { AccessibilityConfig, DisplayOptionsConfig } from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 import { ICON_TOOL_ACCESSIBILITY } from '@shared/tool-icons';
-import { ICON_BEAKER, ICON_EYE, ICON_SLIDERS } from '@shared/ui-icons';
+import { ICON_BEAKER, ICON_EYE } from '@shared/ui-icons';
 import {
   PAIR_READOUT_UNITS,
   createMetricHelp,
@@ -105,15 +105,6 @@ interface DyePairResult {
 }
 
 /**
- * Display options state
- */
-interface DisplayOptions {
-  showLabels: boolean;
-  showHexValues: boolean;
-  highContrastMode: boolean;
-}
-
-/**
  * Vision type configuration
  */
 const VISION_TYPES = [
@@ -157,7 +148,6 @@ type VisionTypeId = (typeof VISION_TYPES)[number]['id'];
 const STORAGE_KEYS = {
   selectedDyes: 'v3_accessibility_selected_dyes',
   enabledVisionTypes: 'v3_accessibility_vision_types',
-  displayOptions: 'v3_accessibility_display_options',
   activeLens: 'v5_accessibility_lens',
   readoutUnit: 'v5_accessibility_unit',
 } as const;
@@ -172,15 +162,6 @@ const DEFAULT_VISION_TYPES: VisionTypeId[] = [
   'tritanopia',
   'achromatopsia',
 ];
-
-/**
- * Default simulation display options (for vision simulation cards)
- */
-const DEFAULT_SIMULATION_OPTIONS: DisplayOptions = {
-  showLabels: true,
-  showHexValues: false,
-  highContrastMode: false,
-};
 
 // ============================================================================
 // AccessibilityTool Component
@@ -198,7 +179,6 @@ export class AccessibilityTool extends BaseComponent {
   // State
   private selectedDyes: Dye[] = [];
   private enabledVisionTypes: Set<VisionTypeId>;
-  private displayOptions: DisplayOptions;
   private cardDisplayOptions: DisplayOptionsConfig;
   private dyeResults: DyeAccessibilityResult[] = [];
   private pairResults: DyePairResult[] = [];
@@ -213,7 +193,6 @@ export class AccessibilityTool extends BaseComponent {
   private dyeSelector: DyeSelector | null = null;
   private dyePanel: CollapsiblePanel | null = null;
   private visionPanel: CollapsiblePanel | null = null;
-  private displayPanel: CollapsiblePanel | null = null;
   private shareButton: ShareButton | null = null;
   private shareVisionSelect: HTMLSelectElement | null = null;
 
@@ -221,11 +200,9 @@ export class AccessibilityTool extends BaseComponent {
   private drawerDyeSelector: DyeSelector | null = null;
   private drawerDyePanel: CollapsiblePanel | null = null;
   private drawerVisionPanel: CollapsiblePanel | null = null;
-  private drawerDisplayPanel: CollapsiblePanel | null = null;
 
   // DOM References
   private visionTogglesContainer: HTMLElement | null = null;
-  private displayOptionsContainer: HTMLElement | null = null;
   private selectedDyesSection: HTMLElement | null = null;
   private selectedDyesContainer: HTMLElement | null = null;
   private lensSection: HTMLElement | null = null;
@@ -251,10 +228,6 @@ export class AccessibilityTool extends BaseComponent {
       STORAGE_KEYS.enabledVisionTypes
     );
     this.enabledVisionTypes = new Set(savedVisionTypes ?? DEFAULT_VISION_TYPES);
-
-    this.displayOptions = StorageService.getItem<DisplayOptions>(STORAGE_KEYS.displayOptions) ?? {
-      ...DEFAULT_SIMULATION_OPTIONS,
-    };
 
     const savedLens = StorageService.getItem<VisionTypeId>(STORAGE_KEYS.activeLens);
     if (savedLens && VISION_TYPES.some((v) => v.id === savedLens)) {
@@ -328,13 +301,11 @@ export class AccessibilityTool extends BaseComponent {
     this.dyeSelector?.destroy();
     this.dyePanel?.destroy();
     this.visionPanel?.destroy();
-    this.displayPanel?.destroy();
 
     // Destroy drawer components
     this.drawerDyeSelector?.destroy();
     this.drawerDyePanel?.destroy();
     this.drawerVisionPanel?.destroy();
-    this.drawerDisplayPanel?.destroy();
 
     this.selectedDyes = [];
     this.dyeResults = [];
@@ -417,6 +388,39 @@ export class AccessibilityTool extends BaseComponent {
   }
 
   /**
+   * Select an arbitrary colour from the Color Palette drawer's hex field /
+   * native picker (6A: "the four slots take arbitrary colours too" — check a
+   * dye against an armour base colour or UI tint). Wraps the hex in a virtual
+   * dye; it joins the lens grid and pair readout like any dye but has no
+   * stainID, so it never persists across sessions or enters share URLs.
+   */
+  public selectCustomColor(hex: string): void {
+    if (!hex) return;
+
+    const virtualDye: Dye = {
+      id: -Date.now(),
+      itemID: -Date.now(),
+      stainID: null,
+      name: `Custom (${hex.toUpperCase()})`,
+      hex: hex.toUpperCase(),
+      rgb: ColorService.hexToRgb(hex),
+      hsv: ColorService.hexToHsv(hex),
+      category: 'Custom',
+      acquisition: 'Custom',
+      cost: 0,
+      currency: null,
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
+      isIshgardian: false,
+      consolidationType: null,
+    };
+
+    this.selectDye(virtualDye);
+  }
+
+  /**
    * Update tool configuration from external source (V4 ConfigSidebar)
    */
   public setConfig(config: Partial<AccessibilityConfig>): void {
@@ -448,31 +452,6 @@ export class AccessibilityTool extends BaseComponent {
       }
     }
 
-    // Handle display options
-    if (config.showLabels !== undefined && config.showLabels !== this.displayOptions.showLabels) {
-      this.displayOptions.showLabels = config.showLabels;
-      needsRerender = true;
-      logger.info(`[AccessibilityTool] setConfig: showLabels -> ${config.showLabels}`);
-    }
-
-    if (
-      config.showHexValues !== undefined &&
-      config.showHexValues !== this.displayOptions.showHexValues
-    ) {
-      this.displayOptions.showHexValues = config.showHexValues;
-      needsRerender = true;
-      logger.info(`[AccessibilityTool] setConfig: showHexValues -> ${config.showHexValues}`);
-    }
-
-    if (
-      config.highContrastMode !== undefined &&
-      config.highContrastMode !== this.displayOptions.highContrastMode
-    ) {
-      this.displayOptions.highContrastMode = config.highContrastMode;
-      needsRerender = true;
-      logger.info(`[AccessibilityTool] setConfig: highContrastMode -> ${config.highContrastMode}`);
-    }
-
     // Handle card display options (for v4-result-cards)
     // WEB-REF-003: Using shared applyDisplayOptions helper
     if (config.displayOptions !== undefined) {
@@ -495,11 +474,9 @@ export class AccessibilityTool extends BaseComponent {
     if (needsRerender) {
       // Save to storage
       StorageService.setItem(STORAGE_KEYS.enabledVisionTypes, Array.from(this.enabledVisionTypes));
-      StorageService.setItem(STORAGE_KEYS.displayOptions, this.displayOptions);
 
       // Sync desktop and drawer checkboxes
       this.syncDesktopVisionCheckboxes();
-      this.syncDesktopDisplayCheckboxes();
 
       // Re-render results if we have data
       if (this.selectedDyes.length > 0) {
@@ -541,19 +518,6 @@ export class AccessibilityTool extends BaseComponent {
     const visionContent = this.visionPanel.getContentContainer();
     if (visionContent) {
       this.renderVisionToggles(visionContent);
-    }
-
-    // Section 3: Display Options (Collapsible with sliders icon, default closed)
-    this.displayPanel = new CollapsiblePanel(left, {
-      title: LanguageService.t('accessibility.displayOptions'),
-      storageKey: 'accessibility_display',
-      defaultOpen: false,
-      icon: ICON_SLIDERS,
-    });
-    this.displayPanel.init();
-    const displayContent = this.displayPanel.getContentContainer();
-    if (displayContent) {
-      this.renderDisplayOptions(displayContent);
     }
   }
 
@@ -756,58 +720,6 @@ export class AccessibilityTool extends BaseComponent {
     }
 
     container.appendChild(this.visionTogglesContainer);
-  }
-
-  /**
-   * Render display options
-   */
-  private renderDisplayOptions(container: HTMLElement): void {
-    this.displayOptionsContainer = this.createElement('div', { className: 'space-y-2' });
-
-    const options = [
-      { key: 'showLabels', label: LanguageService.t('accessibility.showLabels') },
-      {
-        key: 'showHexValues',
-        label: LanguageService.t('accessibility.showHexValues'),
-      },
-      {
-        key: 'highContrastMode',
-        label: LanguageService.t('accessibility.highContrastMode'),
-      },
-    ] as const;
-
-    for (const option of options) {
-      const label = this.createElement('label', {
-        className: 'flex items-center gap-2 cursor-pointer',
-      });
-
-      const checkbox = this.createElement('input', {
-        attributes: {
-          type: 'checkbox',
-          'data-display-option': option.key,
-        },
-        className: 'w-4 h-4 rounded',
-      }) as HTMLInputElement;
-      checkbox.checked = this.displayOptions[option.key];
-
-      this.on(checkbox, 'change', () => {
-        this.displayOptions[option.key] = checkbox.checked;
-        StorageService.setItem(STORAGE_KEYS.displayOptions, this.displayOptions);
-        this.updateResults();
-      });
-
-      const text = this.createElement('span', {
-        className: 'text-sm',
-        textContent: option.label,
-        attributes: { style: 'color: var(--theme-text);' },
-      });
-
-      label.appendChild(checkbox);
-      label.appendChild(text);
-      this.displayOptionsContainer.appendChild(label);
-    }
-
-    container.appendChild(this.displayOptionsContainer);
   }
 
   // ============================================================================
@@ -1671,7 +1583,6 @@ export class AccessibilityTool extends BaseComponent {
     this.drawerDyeSelector?.destroy();
     this.drawerDyePanel?.destroy();
     this.drawerVisionPanel?.destroy();
-    this.drawerDisplayPanel?.destroy();
 
     // Section 1: Dye Selection (Collapsible)
     const dyeContainer = this.createElement('div');
@@ -1682,11 +1593,6 @@ export class AccessibilityTool extends BaseComponent {
     const visionContainer = this.createElement('div');
     drawer.appendChild(visionContainer);
     this.renderDrawerVisionPanel(visionContainer);
-
-    // Section 3: Display Options (Collapsible)
-    const displayContainer = this.createElement('div');
-    drawer.appendChild(displayContainer);
-    this.renderDrawerDisplayPanel(displayContainer);
   }
 
   /**
@@ -1907,80 +1813,6 @@ export class AccessibilityTool extends BaseComponent {
   }
 
   /**
-   * Render collapsible Display Options panel for mobile drawer
-   */
-  private renderDrawerDisplayPanel(container: HTMLElement): void {
-    this.drawerDisplayPanel = new CollapsiblePanel(container, {
-      title: LanguageService.t('accessibility.displayOptions'),
-      defaultOpen: false,
-      storageKey: 'accessibility_display_drawer',
-      icon: ICON_SLIDERS,
-    });
-    this.drawerDisplayPanel.init();
-
-    const contentContainer = this.drawerDisplayPanel.getContentContainer();
-    if (contentContainer) {
-      this.renderDrawerDisplayOptions(contentContainer);
-    }
-  }
-
-  /**
-   * Render display options for mobile drawer
-   */
-  private renderDrawerDisplayOptions(container: HTMLElement): void {
-    const optionsContainer = this.createElement('div', { className: 'space-y-2' });
-
-    const options = [
-      { key: 'showLabels', label: LanguageService.t('accessibility.showLabels') },
-      {
-        key: 'showHexValues',
-        label: LanguageService.t('accessibility.showHexValues'),
-      },
-      {
-        key: 'highContrastMode',
-        label: LanguageService.t('accessibility.highContrastMode'),
-      },
-    ] as const;
-
-    for (const option of options) {
-      const label = this.createElement('label', {
-        className: 'flex items-center gap-2 cursor-pointer',
-      });
-
-      const checkbox = this.createElement('input', {
-        attributes: {
-          type: 'checkbox',
-          'data-display-option': option.key,
-        },
-        className: 'w-4 h-4 rounded',
-      }) as HTMLInputElement;
-      checkbox.checked = this.displayOptions[option.key];
-
-      this.on(checkbox, 'change', () => {
-        this.displayOptions[option.key] = checkbox.checked;
-        StorageService.setItem(STORAGE_KEYS.displayOptions, this.displayOptions);
-
-        // Sync desktop checkboxes
-        this.syncDesktopDisplayCheckboxes();
-
-        this.updateResults();
-      });
-
-      const text = this.createElement('span', {
-        className: 'text-sm',
-        textContent: option.label,
-        attributes: { style: 'color: var(--theme-text);' },
-      });
-
-      label.appendChild(checkbox);
-      label.appendChild(text);
-      optionsContainer.appendChild(label);
-    }
-
-    container.appendChild(optionsContainer);
-  }
-
-  /**
    * Sync desktop vision type checkboxes with current state
    */
   private syncDesktopVisionCheckboxes(): void {
@@ -1991,21 +1823,6 @@ export class AccessibilityTool extends BaseComponent {
       const visionType = checkbox.getAttribute('data-vision-type') as VisionTypeId;
       if (visionType) {
         checkbox.checked = this.enabledVisionTypes.has(visionType);
-      }
-    });
-  }
-
-  /**
-   * Sync desktop display options checkboxes with current state
-   */
-  private syncDesktopDisplayCheckboxes(): void {
-    if (!this.displayOptionsContainer) return;
-    const checkboxes =
-      this.displayOptionsContainer.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
-    checkboxes.forEach((checkbox) => {
-      const optionKey = checkbox.getAttribute('data-display-option') as keyof DisplayOptions;
-      if (optionKey) {
-        checkbox.checked = this.displayOptions[optionKey];
       }
     });
   }
@@ -2181,9 +1998,10 @@ export class AccessibilityTool extends BaseComponent {
       return {};
     }
 
-    // Use the vision type selected in the share dropdown
+    // Use the vision type selected in the share dropdown. Virtual custom
+    // colours carry no stainID and are excluded from the share URL.
     return {
-      dyes: this.selectedDyes.map((d) => d.stainID ?? 0),
+      dyes: this.selectedDyes.map((d) => d.stainID).filter((id): id is number => id !== null),
       vision: this.shareVisionType,
     };
   }

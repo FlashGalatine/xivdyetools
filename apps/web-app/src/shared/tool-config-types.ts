@@ -100,12 +100,6 @@ export interface AccessibilityConfig {
   tritanopia: boolean;
   /** Show achromatopsia (complete colorblindness) simulation */
   achromatopsia: boolean;
-  /** Show labels on vision cards */
-  showLabels: boolean;
-  /** Show hex values on vision cards */
-  showHexValues: boolean;
-  /** Enable high contrast mode */
-  highContrastMode: boolean;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
 }
@@ -435,9 +429,6 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     protanopia: true,
     tritanopia: true,
     achromatopsia: true,
-    showLabels: true,
-    showHexValues: false,
-    highContrastMode: false,
     displayOptions: {
       ...DEFAULT_DISPLAY_OPTIONS,
       showPrice: false, // Accessibility tool doesn't show prices by default
