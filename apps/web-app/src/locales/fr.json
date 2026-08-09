@@ -420,7 +420,8 @@
       "compoundDesc": "Un mélange de couleurs complémentaires et analogues",
       "shadesDesc": "Différentes nuances et teintes de la couleur de base",
       "invertedTetradicDesc": "Quatre couleurs en motif rectangulaire inversé, orienté vers l'autre côté de la roue"
-    }
+    },
+    "railSwipeHint": "BALAYER POUR PLUS"
   },
   "matcher": {
     "imageUpload": "Téléchargement d'Image",

@@ -446,7 +446,8 @@
       "compoundDesc": "补色和类似色的混合",
       "shadesDesc": "基础色的不同明暗色调",
       "invertedTetradicDesc": "镜像矩形图案的四种颜色，偏向色轮另一侧"
-    }
+    },
+    "railSwipeHint": "滑动查看更多"
   },
   "matcher": {
     "imageUpload": "图像上传",

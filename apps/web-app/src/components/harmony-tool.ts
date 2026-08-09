@@ -52,7 +52,7 @@ import {
 // WEB-REF-003 FIX: ColorConverter usage moved to harmony-generator.ts
 import { HARMONY_ICONS } from '@shared/harmony-icons';
 import { ICON_MARKET, ICON_BEAKER, ICON_MUSIC } from '@shared/ui-icons';
-import { ICON_TOOL_HARMONY } from '@shared/tool-icons';
+import { createEmptyState, EMPTY_STATE_PRESETS } from '@components/empty-state';
 import { COMPANION_DYES_MIN, COMPANION_DYES_MAX, COMPANION_DYES_DEFAULT } from '@shared/constants';
 
 // V4 Components - Import to register custom elements
@@ -100,6 +100,7 @@ interface MarketPanelRefs {
  */
 const STORAGE_KEYS = {
   harmonyType: 'v3_harmony_type',
+  railHintSeen: 'v5_harmony_rail_hint_seen',
   companionCount: 'v3_harmony_companions',
   suggestionsMode: 'v3_harmony_mode',
   selectedDyeId: 'v3_harmony_selected_dye',
@@ -129,6 +130,10 @@ export class HarmonyTool extends BaseComponent {
   private swappedDyes: Map<number, Dye> = new Map();
   /** The dye each harmony slot is currently showing — the wheel mirrors this */
   private slotDyes: Dye[] = [];
+  private railMql: MediaQueryList | null = null;
+  private onRailBreakpoint = (): void => {
+    this.renderTypeRail();
+  };
   /** V4 result card elements for updating prices after fetch */
   private v4ResultCards: ResultCard[] = [];
 
@@ -407,6 +412,8 @@ export class HarmonyTool extends BaseComponent {
 
   destroy(): void {
     // Cleanup subscriptions
+    this.railMql?.removeEventListener('change', this.onRailBreakpoint);
+    this.railMql = null;
 
     // Cleanup child components
     this.destroyChildComponents();
@@ -429,6 +436,7 @@ export class HarmonyTool extends BaseComponent {
 
     // Support both 'dye' (new share URLs) and 'dyeId' (legacy deep links)
     const dyeIdParam = params.get('dye') ?? params.get('dyeId');
+    const hexParam = params.get('hex');
     const harmonyParam = params.get('harmony');
     const algoParam = params.get('algo');
     const perceptualParam = params.get('perceptual');
@@ -444,7 +452,7 @@ export class HarmonyTool extends BaseComponent {
     });
 
     // If no share params present, skip
-    if (!dyeIdParam && !harmonyParam) {
+    if (!dyeIdParam && !hexParam && !harmonyParam) {
       return;
     }
 
@@ -509,6 +517,14 @@ export class HarmonyTool extends BaseComponent {
 
       // Sync with ConfigController so sidebar updates
       configController.setConfig('harmony', { strictMatching: this.usePerceptualMatching });
+    }
+
+    // A bare-colour base: `hex` is the declared slot for a custom base,
+    // exclusive with `dye`. Wrapped in a virtual dye so the whole tool
+    // treats it like any other base.
+    if (!dyeIdParam && hexParam && /^#?[0-9a-fA-F]{6}$/.test(hexParam)) {
+      this.selectCustomColor(`#${hexParam.replace(/^#/, '')}`);
+      logger.info(`[HarmonyTool] Share URL loaded custom base: #${hexParam}`);
     }
 
     // Load dye by stainID (5.0 grammar; legacy itemIDs fail loudly)
@@ -938,6 +954,11 @@ export class HarmonyTool extends BaseComponent {
     this.selectedHarmonyType = typeId;
     StorageService.setItem(STORAGE_KEYS.harmonyType, typeId);
 
+    // Publish so the sidebar follows the rail. Every path that changes the
+    // type goes through here; without this the rail regenerated results while
+    // the sidebar dropdown still read the old type.
+    ConfigController.getInstance().setConfig('harmony', { harmonyType: typeId });
+
     // Clear swapped dyes when harmony type changes
     this.swappedDyes.clear();
 
@@ -988,14 +1009,14 @@ export class HarmonyTool extends BaseComponent {
 
     // 1A: harmony-type chips centred over the wheel — the picker lives with
     // the dial, not in a sidebar nobody opens.
-    this.typeRailContainer = this.createElement('div', {
-      attributes: {
-        style:
-          'display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; width: 100%; margin-bottom: 1rem;',
-      },
-    });
+    this.typeRailContainer = this.createElement('div', { attributes: { style: '' } });
+    this.applyTypeRailLayout();
     contentWrapper.appendChild(this.typeRailContainer);
     this.renderTypeRail();
+
+    // Re-lay the rail across the breakpoint (scrolling row ↔ centred wrap)
+    this.railMql = window.matchMedia('(max-width: 768px)');
+    this.railMql.addEventListener('change', this.onRailBreakpoint);
 
     // Color Wheel Section - centered with inline styles for reliability
     this.colorWheelContainer = this.createElement('div', {
@@ -1105,9 +1126,26 @@ export class HarmonyTool extends BaseComponent {
   /**
    * 1A: all nine harmony types as icon chips centred over the wheel.
    */
+  /**
+   * 1A: the ten types are a *scrolling* icon rail on mobile — one row you
+   * swipe, not a wrapped block that pushes the dial off-screen. Desktop keeps
+   * the centred wrap.
+   */
+  private applyTypeRailLayout(): void {
+    if (!this.typeRailContainer) return;
+    const narrow = window.matchMedia('(max-width: 768px)').matches;
+    this.typeRailContainer.setAttribute(
+      'style',
+      narrow
+        ? 'display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; width: 100%; margin-bottom: 1rem; padding-bottom: 4px;'
+        : 'display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; width: 100%; margin-bottom: 1rem;'
+    );
+  }
+
   private renderTypeRail(): void {
     if (!this.typeRailContainer) return;
     clearContainer(this.typeRailContainer);
+    this.applyTypeRailLayout();
 
     for (const type of getHarmonyTypes()) {
       const active = this.selectedHarmonyType === type.id;
@@ -1115,6 +1153,7 @@ export class HarmonyTool extends BaseComponent {
         attributes: {
           type: 'button',
           title: type.name,
+          'aria-pressed': String(active),
           style: `display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 5px 11px; border-radius: 999px; cursor: pointer; border: 1px solid ${
             active ? 'var(--theme-primary)' : 'transparent'
           }; background: ${
@@ -1137,12 +1176,52 @@ export class HarmonyTool extends BaseComponent {
           textContent: type.name,
         })
       );
+      chip.style.flex = '0 0 auto';
+      chip.style.scrollSnapAlign = 'start';
       this.on(chip, 'click', () => {
         this.selectHarmonyType(type.id);
         this.renderTypeRail();
       });
       this.typeRailContainer.appendChild(chip);
     }
+
+    // Keep the active chip in view when the rail scrolls rather than wraps
+    const active = this.typeRailContainer.querySelector<HTMLElement>('[aria-pressed="true"]');
+    active?.scrollIntoView({ block: 'nearest', inline: 'center' });
+
+    this.renderRailSwipeHint();
+  }
+
+  /**
+   * First-run swipe hint: the rail scrolls on mobile, and a row that only
+   * *looks* full hides the types past the edge. Shown once, then dismissed
+   * by the first scroll.
+   */
+  private renderRailSwipeHint(): void {
+    if (!this.typeRailContainer) return;
+    const narrow = window.matchMedia('(max-width: 768px)').matches;
+    if (!narrow || StorageService.getItem<boolean>(STORAGE_KEYS.railHintSeen)) return;
+
+    const hint = this.createElement('span', {
+      textContent: LanguageService.t('harmony.railSwipeHint'),
+      attributes: {
+        style:
+          "flex: 0 0 auto; align-self: center; font-family: 'Fragment Mono', monospace; font-size: 9px; letter-spacing: 0.5px; padding: 4px 8px; border-radius: 999px; white-space: nowrap; color: var(--theme-text-muted); background: var(--theme-background-secondary);",
+      },
+    });
+    this.typeRailContainer.appendChild(hint);
+
+    const dismiss = (): void => {
+      StorageService.setItem(STORAGE_KEYS.railHintSeen, true);
+      hint.remove();
+    };
+    // Bind on the next frame: keeping the active chip in view scrolls the
+    // rail programmatically, which would otherwise dismiss the hint before
+    // it was ever seen.
+    const rail = this.typeRailContainer;
+    requestAnimationFrame(() => {
+      rail.addEventListener('scroll', dismiss, { once: true, passive: true });
+    });
   }
 
   /**
@@ -1152,36 +1231,17 @@ export class HarmonyTool extends BaseComponent {
     if (!this.emptyStateContainer) return;
     clearContainer(this.emptyStateContainer);
 
-    const empty = this.createElement('div', {
-      className: 'harmony-results-empty',
-      attributes: {
-        style: `
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          flex: 1;
-          padding: 40px;
-          text-align: center;
-          color: var(--theme-text-muted, #a0a0a0);
-        `,
-      },
-    });
-
-    // Harmony tool icon using official tool icon
-    empty.innerHTML = `
-      <div style="width: 150px; height: 150px; margin-bottom: 24px; opacity: 0.4; color: currentColor;">
-        ${ICON_TOOL_HARMONY}
-      </div>
-      <div style="font-size: 18px; font-weight: 500; color: var(--theme-text, #e0e0e0); margin-bottom: 12px;">
-        ${LanguageService.t('harmony.noColorSelected')}
-      </div>
-      <div style="font-size: 14px; color: var(--theme-text-muted, #a0a0a0); max-width: 300px; line-height: 1.5;">
-        ${LanguageService.t('harmony.selectDyePrompt')}
-      </div>
-    `;
-
-    this.emptyStateContainer.appendChild(empty);
+    // The confirmed empty-state system: detail glyph, authored copy and an
+    // action. This was a hand-rolled 150px tool icon at 0.4 opacity with no
+    // way out of the state.
+    createEmptyState(
+      this.emptyStateContainer,
+      EMPTY_STATE_PRESETS.noHarmonyResults(() => {
+        this.container.dispatchEvent(
+          new CustomEvent('open-palette-drawer', { bubbles: true, composed: true })
+        );
+      })
+    );
   }
 
   // ============================================================================
@@ -1783,8 +1843,15 @@ export class HarmonyTool extends BaseComponent {
       return {};
     }
 
+    // A custom base has no stainID — share it as the declared bare-colour
+    // slot instead of the invalid dye=0 that lost the colour entirely.
+    const base =
+      this.selectedDye.stainID !== null
+        ? { dye: this.selectedDye.stainID }
+        : { hex: this.selectedDye.hex.replace('#', '') };
+
     return {
-      dye: this.selectedDye.stainID ?? 0,
+      ...base,
       harmony: this.selectedHarmonyType,
       algo: this.matchingMethod,
       perceptual: this.usePerceptualMatching,

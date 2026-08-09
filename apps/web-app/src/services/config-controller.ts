@@ -14,6 +14,7 @@
  */
 
 import { StorageService } from './storage-service';
+import { normalizeMatchingMethod } from '@xivdyetools/core';
 import { logger } from '@shared/logger';
 import {
   type ToolConfigMap,
@@ -310,6 +311,15 @@ export class ConfigController {
         ...defaults,
         ...stored,
       } as ToolConfigMap[K];
+
+      // 5.0: one matching vocabulary. A persisted 4.x method ('hyab',
+      // 'oklch-weighted', …) has to migrate here — normalizing on the share
+      // path only meant a stored legacy value survived every config load and
+      // each tool had to re-normalize defensively.
+      const withMethod = mergedConfig as { matchingMethod?: string };
+      if (typeof withMethod.matchingMethod === 'string') {
+        withMethod.matchingMethod = normalizeMatchingMethod(withMethod.matchingMethod);
+      }
 
       this.configs.set(key, mergedConfig);
       logger.debug(`[ConfigController] Loaded ${key} config from storage`);

@@ -420,7 +420,8 @@
       "compoundDesc": "補色と類似色の組み合わせ",
       "shadesDesc": "ベースカラーの異なるシェードとティント",
       "invertedTetradicDesc": "反転した長方形パターンの4色、ホイールの反対側寄り"
-    }
+    },
+    "railSwipeHint": "スワイプで他の種類"
   },
   "matcher": {
     "imageUpload": "画像アップロード",

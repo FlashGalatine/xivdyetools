@@ -420,7 +420,8 @@
       "compoundDesc": "보색과 유사색의 조합",
       "shadesDesc": "기본 색상의 다양한 명도와 채도 변형",
       "invertedTetradicDesc": "반전된 직사각형 패턴의 4가지 색상, 색상환 반대쪽 기준"
-    }
+    },
+    "railSwipeHint": "밀어서 더 보기"
   },
   "matcher": {
     "imageUpload": "이미지 업로드",

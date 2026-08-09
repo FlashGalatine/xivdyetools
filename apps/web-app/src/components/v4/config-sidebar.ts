@@ -227,6 +227,7 @@ export class ConfigSidebar extends BaseLitComponent {
   private configController: ConfigController | null = null;
   private languageUnsubscribe: (() => void) | null = null;
   private swatchConfigUnsubscribe: (() => void) | null = null;
+  private harmonyConfigUnsubscribe: (() => void) | null = null;
   private authUnsubscribe: (() => void) | null = null;
 
   static override styles: CSSResultGroup = [
@@ -644,6 +645,12 @@ export class ConfigSidebar extends BaseLitComponent {
       this.configController?.subscribe('swatch', (config) => {
         this.swatchConfig = config;
       }) ?? null;
+    // 1A: the harmony type rail sets the type from the workspace — the
+    // sidebar dropdown has to follow it, same one-way gotcha as swatch.
+    this.harmonyConfigUnsubscribe =
+      this.configController?.subscribe('harmony', (config) => {
+        this.harmonyConfig = config;
+      }) ?? null;
     // Subscribe to language changes to update translated text
     this.languageUnsubscribe = LanguageService.subscribe(() => {
       this.requestUpdate();
@@ -663,6 +670,8 @@ export class ConfigSidebar extends BaseLitComponent {
     this.authUnsubscribe = null;
     this.swatchConfigUnsubscribe?.();
     this.swatchConfigUnsubscribe = null;
+    this.harmonyConfigUnsubscribe?.();
+    this.harmonyConfigUnsubscribe = null;
   }
 
   /**

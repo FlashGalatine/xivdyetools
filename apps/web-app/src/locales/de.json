@@ -420,7 +420,8 @@
       "compoundDesc": "Eine Mischung aus Komplementär- und Analogfarben",
       "shadesDesc": "Verschiedene Schattierungen und Tönungen der Grundfarbe",
       "invertedTetradicDesc": "Vier Farben in einem gespiegelten rechteckigen Muster zur anderen Seite des Farbkreises"
-    }
+    },
+    "railSwipeHint": "WISCHEN FÜR MEHR"
   },
   "matcher": {
     "imageUpload": "Bild-Upload",

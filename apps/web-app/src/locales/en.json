@@ -420,7 +420,8 @@
       "compoundDesc": "A mix of complementary and analogous colors",
       "shadesDesc": "Different shades and tints of the base color",
       "invertedTetradicDesc": "Four colors in a mirrored rectangular pattern, leaning to the opposite side of the wheel"
-    }
+    },
+    "railSwipeHint": "SWIPE FOR MORE"
   },
   "matcher": {
     "imageUpload": "Image Upload",
