@@ -217,7 +217,7 @@ async function processFindCommand(
       result.targetDye.name,
       locale
     );
-    const emoji = getDyeEmoji(result.targetDye.stainID ?? 0);
+    const emoji = getDyeEmoji(result.targetDye.stainID ?? 0, env.DISCORD_CLIENT_ID);
     const emojiPrefix = emoji ? `${emoji} ` : '';
     const title = `${emojiPrefix}${t.t('budget.findTitle', { dyeName: localizedTargetName })}`;
     const embedColor = parseInt(result.targetDye.hex.replace('#', ''), 16);

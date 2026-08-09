@@ -44,9 +44,23 @@ interface DyeEntry {
   hex: string;
 }
 
-interface EmojiMappingFile {
+interface ApplicationEmojiSet {
+  /** Artwork generation for THIS application's set (regeneration is per-app). */
   artwork: string;
   byStainId: Record<string, string>;
+}
+
+interface EmojiMappingFile {
+  /**
+   * Discord application ID -> (stainID -> `<:name:id>`).
+   *
+   * Application emoji are owned by the application that uploaded them: a bot
+   * can only render its OWN application's emoji, and Discord degrades any
+   * others to literal `:name:` text. So each application gets its own slot and
+   * this script writes ONLY the slot for the DISCORD_CLIENT_ID it uploaded to,
+   * leaving every sibling application's IDs untouched.
+   */
+  byApplication: Record<string, ApplicationEmojiSet>;
 }
 
 interface DiscordEmoji {
@@ -60,6 +74,12 @@ if (!token || !clientId) {
   console.error('Error: DISCORD_TOKEN and DISCORD_CLIENT_ID environment variables are required');
   process.exit(1);
 }
+
+/**
+ * The guard above exits when this is unset, but TypeScript's narrowing does not
+ * reach into the async function bodies below — so re-bind it as a plain string.
+ */
+const APPLICATION_ID: string = clientId;
 
 const API = `https://discord.com/api/v10/applications/${clientId}/emojis`;
 const HEADERS = { Authorization: `Bot ${token}`, 'Content-Type': 'application/json' };
@@ -149,14 +169,19 @@ async function main(): Promise<void> {
 
   const existing = await listApplicationEmojis();
   const existingByName = new Map(existing.map((e) => [e.name, e]));
-  const artworkChanged = mapping.artwork !== ARTWORK_VERSION;
+  const currentSet = mapping.byApplication?.[APPLICATION_ID];
+  const artworkChanged = currentSet?.artwork !== ARTWORK_VERSION;
   if (artworkChanged) {
     console.log(
-      `Artwork generation changed (${mapping.artwork} -> ${ARTWORK_VERSION}) — regenerating the full set.`
+      `Artwork generation changed for application ${APPLICATION_ID} (${currentSet?.artwork ?? 'none'} -> ${ARTWORK_VERSION}) — regenerating its full set.`
     );
   }
 
-  const newMapping: EmojiMappingFile = { artwork: ARTWORK_VERSION, byStainId: {} };
+  // Only this application's slot is rewritten; siblings are carried over.
+  const slot: Record<string, string> = {};
+  const newMapping: EmojiMappingFile = {
+    byApplication: { ...(mapping.byApplication ?? {}) },
+  };
   let uploaded = 0;
   let replaced = 0;
 
@@ -179,7 +204,7 @@ async function main(): Promise<void> {
       await new Promise((r) => setTimeout(r, 150));
     }
 
-    newMapping.byStainId[String(dye.stainID)] = `<:${emoji.name}:${emoji.id}>`;
+    slot[String(dye.stainID)] = `<:${emoji.name}:${emoji.id}>`;
     existingByName.delete(name);
   }
 
@@ -191,9 +216,12 @@ async function main(): Promise<void> {
     console.log(`  Deleted orphan :${orphan.name}:`);
   }
 
-  newMapping.byStainId = Object.fromEntries(
-    Object.entries(newMapping.byStainId).sort(([a], [b]) => Number(a) - Number(b))
-  );
+  newMapping.byApplication[APPLICATION_ID] = {
+    artwork: ARTWORK_VERSION,
+    byStainId: Object.fromEntries(
+      Object.entries(slot).sort(([a], [b]) => Number(a) - Number(b))
+    ),
+  };
   writeFileSync(MAPPING_PATH, `${JSON.stringify(newMapping, null, 2)}\n`);
 
   console.log(

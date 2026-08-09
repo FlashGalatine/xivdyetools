@@ -51,11 +51,11 @@ export async function handleDyeCommand(
 
   switch (subcommand.name) {
     case 'search':
-      return handleSearchSubcommand(t, subcommand.options);
+      return handleSearchSubcommand(t, env.DISCORD_CLIENT_ID, subcommand.options);
     case 'info':
       return handleInfoSubcommand(interaction, env, ctx, t, locale, theme, subcommand.options);
     case 'list':
-      return handleListSubcommand(t, subcommand.options);
+      return handleListSubcommand(t, env.DISCORD_CLIENT_ID, subcommand.options);
     case 'random':
       return handleRandomSubcommand(interaction, env, ctx, t, locale, theme, subcommand.options);
     default:
@@ -72,6 +72,7 @@ export async function handleDyeCommand(
 
 function handleSearchSubcommand(
   t: Translator,
+  applicationId: string,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Response {
   const query = options?.find((opt) => opt.name === 'query')?.value as string | undefined;
@@ -95,7 +96,7 @@ function handleSearchSubcommand(
   }
 
   const displayResults = results.slice(0, 10);
-  const dyeList = displayResults.map((d) => formatDyeListItem(d, t.getLocale())).join('\n');
+  const dyeList = displayResults.map((d) => formatDyeListItem(d, t.getLocale(), applicationId)).join('\n');
   const moreText = results.length > 10 ? `\n\n*${t.t('dye.search.moreResults', { count: results.length - 10 })}*` : '';
   const foundText = results.length === 1
     ? t.t('dye.search.foundCount', { count: results.length })
@@ -165,7 +166,7 @@ async function processInfoCard(
 
   try {
     const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
-    const emoji = getDyeEmoji(dye.stainID ?? 0);
+    const emoji = getDyeEmoji(dye.stainID ?? 0, env.DISCORD_CLIENT_ID);
     const emojiPrefix = emoji ? `${emoji} ` : '';
 
     const rgb = dye.rgb;
@@ -203,7 +204,7 @@ async function sendDyeInfoFallback(
 ): Promise<void> {
   const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
   const localizedCategory = getLocalizedCategory(dye.category, locale);
-  const emoji = getDyeEmoji(dye.stainID ?? 0);
+  const emoji = getDyeEmoji(dye.stainID ?? 0, env.DISCORD_CLIENT_ID);
   const emojiPrefix = emoji ? `${emoji} ` : '';
   const rgb = dye.rgb;
   const hsv = dye.hsv;
@@ -236,6 +237,7 @@ async function sendDyeInfoFallback(
 
 function handleListSubcommand(
   t: Translator,
+  applicationId: string,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Response {
   const category = options?.find((opt) => opt.name === 'category')?.value as string | undefined;
@@ -249,7 +251,7 @@ function handleListSubcommand(
         flags: 64,
       });
     }
-    const dyeList = categoryDyes.map((d) => formatDyeListItem(d, t.getLocale())).join('\n');
+    const dyeList = categoryDyes.map((d) => formatDyeListItem(d, t.getLocale(), applicationId)).join('\n');
     const localizedCategoryName = getLocalizedCategory(category, t.getLocale());
     return messageResponse({
       embeds: [{
@@ -325,7 +327,7 @@ async function processRandomGrid(
     // Build description with Discord emojis
     const dyeList = result.dyes
       .map((dye, i) => {
-        const emoji = getDyeEmoji(dye.stainID ?? 0);
+        const emoji = getDyeEmoji(dye.stainID ?? 0, env.DISCORD_CLIENT_ID);
         const emojiPrefix = emoji ? `${emoji} ` : '';
         const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
         return `**${i + 1}.** ${emojiPrefix}${localizedName} (\`${dye.hex.toUpperCase()}\`)`;
@@ -364,7 +366,7 @@ async function sendRandomFallback(
 
   const dyeList = result.dyes
     .map((dye, i) => {
-      const emoji = getDyeEmoji(dye.stainID ?? 0);
+      const emoji = getDyeEmoji(dye.stainID ?? 0, env.DISCORD_CLIENT_ID);
       const emojiPrefix = emoji ? `${emoji} ` : '';
       const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
       const localizedCategory = getLocalizedCategory(dye.category, locale);
@@ -386,8 +388,8 @@ async function sendRandomFallback(
 // Shared helpers
 // ============================================================================
 
-function formatDyeListItem(dye: Dye, locale: LocaleCode): string {
-  const emoji = getDyeEmoji(dye.stainID ?? 0);
+function formatDyeListItem(dye: Dye, locale: LocaleCode, applicationId: string): string {
+  const emoji = getDyeEmoji(dye.stainID ?? 0, applicationId);
   const emojiPrefix = emoji ? `${emoji} ` : '';
   const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
   return `${emojiPrefix}**${localizedName}** (\`${dye.hex.toUpperCase()}\`)`;

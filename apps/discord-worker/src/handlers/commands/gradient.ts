@@ -118,7 +118,7 @@ async function processGradientCommand(
 
     // Rebuild description with Discord emojis for each step's dye
     const dyeLines = result.gradientSteps.map((step, i) => {
-      const emoji = step.dyeId ? getDyeEmoji(step.dyeId) : undefined;
+      const emoji = step.dyeId ? getDyeEmoji(step.dyeId, env.DISCORD_CLIENT_ID) : undefined;
       const emojiPrefix = emoji ? `${emoji} ` : '';
       const quality = getMatchQualityLabel(step.distance, t);
       const dyeText = step.dyeName
@@ -132,8 +132,8 @@ async function processGradientCommand(
       return `**${i + 1}.** ${dyeText} • \`${step.hex.toUpperCase()}\` • ${quality}${label}`;
     }).join('\n');
 
-    const startEmoji = startColor.id ? getDyeEmoji(startColor.stainID ?? 0) : undefined;
-    const endEmoji = endColor.id ? getDyeEmoji(endColor.stainID ?? 0) : undefined;
+    const startEmoji = startColor.id ? getDyeEmoji(startColor.stainID ?? 0, env.DISCORD_CLIENT_ID) : undefined;
+    const endEmoji = endColor.id ? getDyeEmoji(endColor.stainID ?? 0, env.DISCORD_CLIENT_ID) : undefined;
     const startText = startColor.name
       ? `${startEmoji ? `${startEmoji} ` : ''}**${startColor.name}** (\`${startColor.hex.toUpperCase()}\`)`
       : `\`${startColor.hex.toUpperCase()}\``;

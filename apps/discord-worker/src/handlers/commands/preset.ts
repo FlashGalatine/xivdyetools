@@ -868,7 +868,7 @@ async function sendPresetEmbed(
   const dyeList = dyes
     .filter((d): d is Dye => d !== null)
     .map((dye) => {
-      const emoji = getDyeEmoji(dye.stainID ?? 0);
+      const emoji = getDyeEmoji(dye.stainID ?? 0, env.DISCORD_CLIENT_ID);
       const emojiPrefix = emoji ? `${emoji} ` : '';
       const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
       return `${emojiPrefix}${localizedName} (\`${dye.hex.toUpperCase()}\`)`;

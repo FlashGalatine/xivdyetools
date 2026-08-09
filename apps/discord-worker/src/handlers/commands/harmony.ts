@@ -134,14 +134,14 @@ async function processHarmonyCommand(
     // Build description with Discord emojis
     const dyeList = result.harmonyDyes
       .map((dye, i) => {
-        const emoji = getDyeEmoji(dye.stainID ?? 0);
+        const emoji = getDyeEmoji(dye.stainID ?? 0, env.DISCORD_CLIENT_ID);
         const emojiPrefix = emoji ? `${emoji} ` : '';
         const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
         return `**${i + 1}.** ${emojiPrefix}${localizedName} (\`${dye.hex.toUpperCase()}\`)`;
       })
       .join('\n');
 
-    const baseEmoji = baseId ? getDyeEmoji(baseId) : undefined;
+    const baseEmoji = baseId ? getDyeEmoji(baseId, env.DISCORD_CLIENT_ID) : undefined;
     const baseEmojiPrefix = baseEmoji ? `${baseEmoji} ` : '';
     const baseColorText = `${t.t('harmony.baseColor')}: ${baseEmojiPrefix}**${result.baseName}** (\`${baseHex.toUpperCase()}\`)`;
 
