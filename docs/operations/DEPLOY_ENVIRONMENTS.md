@@ -1,6 +1,9 @@
 # Deploy Environments and the Beta Test Bot
 
 **Status:** design approved 2026-08-09, not yet implemented
+**⚠️ Blocked by:** `docs/operations/IMAGE_WORKER_SPLIT.md`. `discord-worker` currently exceeds
+Cloudflare's 3 MiB Worker size limit (3,209 KiB gzipped) and **cannot deploy at all** — beta
+included. The image-worker split must land before any step in this runbook can be exercised.
 **Scope:** `discord-worker`, `moderation-worker`, `presets-api` wrangler config; a new beta
 Discord application; documentation corrections.
 
