@@ -227,7 +227,9 @@ Service Binding is preferred over outbound HTTPS because Cloudflare Workers can'
 
 ### CORS
 
-Allowlist comes from `CORS_ORIGIN` + `ADDITIONAL_CORS_ORIGINS`. In dev mode only, specific localhost ports are also allowed: `5173` (Vite), `8787` (Wrangler), both with `localhost` and `127.0.0.1`. `maxAge: 3600` (1 hour) so policy changes propagate quickly.
+Allowlist comes from `CORS_ORIGIN` + `ADDITIONAL_CORS_ORIGINS`. In dev mode only, specific localhost ports are also allowed: `5173` (Vite), `8787` (Wrangler), both with `localhost` and `127.0.0.1` — the loopback block is wrapped in `if (env.ENVIRONMENT === 'development')` (FINDING-002, mirroring `OAUTH-SEC-001`), so production never reflects a loopback origin on this credentialed endpoint. `maxAge: 3600` (1 hour) so policy changes propagate quickly.
+
+`allowHeaders` is deliberately just `['Content-Type', 'Authorization']`. The bot identity headers below (`X-User-Discord-ID` / `X-User-Discord-Name`) are **not** listed: both bot callers arrive over Service Bindings and never preflight, so no real client needs the permission (FINDING-005).
 
 ### Public Rate Limiting
 

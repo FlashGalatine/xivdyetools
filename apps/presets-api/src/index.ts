@@ -108,22 +108,32 @@ app.use(
         return origin;
       }
 
-      // SECURITY: Only allow specific localhost ports in development
-      // This prevents malicious apps on other localhost ports from making requests
-      const allowedDevOrigins = [
-        'http://localhost:5173',   // Vite dev server
-        'http://127.0.0.1:5173',   // Vite dev server (IP)
-        'http://localhost:8787',   // Wrangler local dev
-        'http://127.0.0.1:8787',   // Wrangler local dev (IP)
-      ];
-      if (allowedDevOrigins.includes(origin)) {
-        return origin;
+      // SECURITY: Only allow specific localhost ports in development.
+      // FINDING-002 (2026-08-09 audit): this block previously had no environment
+      // guard, so production reflected these four loopback origins alongside
+      // `credentials: true`. Mirrors OAUTH-SEC-001 in apps/oauth/src/index.ts —
+      // the same fix, applied to the sibling it was never mirrored to.
+      if (env.ENVIRONMENT === 'development') {
+        const allowedDevOrigins = [
+          'http://localhost:5173',   // Vite dev server
+          'http://127.0.0.1:5173',   // Vite dev server (IP)
+          'http://localhost:8787',   // Wrangler local dev
+          'http://127.0.0.1:8787',   // Wrangler local dev (IP)
+        ];
+        if (allowedDevOrigins.includes(origin)) {
+          return origin;
+        }
       }
 
       return null;
     },
     allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization', 'X-User-Discord-ID', 'X-User-Discord-Name'],
+    // FINDING-005: X-User-Discord-ID / X-User-Discord-Name are server-to-server
+    // bot identity headers, honoured only behind a valid HMAC signature (see
+    // middleware/auth.ts). Browsers never legitimately send them — both bot
+    // callers reach this Worker over Service Bindings and never preflight — so
+    // advertising them here only left a trap for a future refactor.
+    allowHeaders: ['Content-Type', 'Authorization'],
     exposeHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset', 'Retry-After'],
     // ARCH-002: 1-hour maxAge (was 24h) so CORS policy changes propagate within an hour
     maxAge: 3600,

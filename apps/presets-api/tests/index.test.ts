@@ -141,6 +141,32 @@ describe('Index/App', () => {
             expect(res.headers.get('Access-Control-Allow-Methods')).toContain('POST');
         });
 
+        // FINDING-005 (2026-08-09 pre-release audit): X-User-Discord-ID and
+        // X-User-Discord-Name are server-to-server bot identity headers, only
+        // ever honoured behind a valid HMAC signature. No browser client sends
+        // them, so advertising them in the preflight is pure attack surface.
+        it('should not advertise the bot identity headers in preflight', async () => {
+            const res = await app.request(
+                '/api/v1/presets',
+                {
+                    method: 'OPTIONS',
+                    headers: {
+                        Origin: 'http://localhost:3000',
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type, Authorization',
+                    },
+                },
+                env
+            );
+
+            const allowHeaders = (res.headers.get('Access-Control-Allow-Headers') ?? '').toLowerCase();
+
+            expect(allowHeaders).toContain('content-type');
+            expect(allowHeaders).toContain('authorization');
+            expect(allowHeaders).not.toContain('x-user-discord-id');
+            expect(allowHeaders).not.toContain('x-user-discord-name');
+        });
+
         it('should expose rate limit headers', async () => {
             const res = await app.request(
                 '/api/v1/presets',
@@ -154,6 +180,60 @@ describe('Index/App', () => {
 
             expect(res.headers.get('Access-Control-Expose-Headers')).toContain('X-RateLimit-Remaining');
             expect(res.headers.get('Access-Control-Expose-Headers')).toContain('X-RateLimit-Reset');
+        });
+
+        // FINDING-002 (2026-08-09 pre-release audit): the loopback allowlist had
+        // no environment guard, so production reflected Access-Control-Allow-Origin
+        // for four localhost origins alongside credentials: true. Mirrors the
+        // OAUTH-SEC-001 fix already present in apps/oauth/src/index.ts.
+        describe('localhost origins are development-only (FINDING-002)', () => {
+            // A production env that PASSES validateEnv — otherwise the env-validation
+            // middleware 500s before cors() ever runs and every assertion below would
+            // pass vacuously.
+            const createProductionEnv = (): Env =>
+                createMockEnv({
+                    ENVIRONMENT: 'production',
+                    CORS_ORIGIN: 'https://xivdyetools.app',
+                    BOT_SIGNING_SECRET: 'test-signing-secret',
+                    MODERATOR_IDS: '123456789012345678',
+                });
+
+            it('positive control: the configured production origin is still reflected', async () => {
+                const res = await app.request(
+                    '/',
+                    { headers: { Origin: 'https://xivdyetools.app' } },
+                    createProductionEnv()
+                );
+
+                expect(res.status).toBe(200);
+                expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://xivdyetools.app');
+            });
+
+            it.each([
+                'http://localhost:5173',
+                'http://127.0.0.1:5173',
+                'http://localhost:8787',
+                'http://127.0.0.1:8787',
+            ])('should not reflect %s in production', async (origin) => {
+                const res = await app.request('/', { headers: { Origin: origin } }, createProductionEnv());
+
+                expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
+            });
+
+            it.each([
+                'http://localhost:5173',
+                'http://127.0.0.1:5173',
+                'http://localhost:8787',
+                'http://127.0.0.1:8787',
+            ])('should still reflect %s in development', async (origin) => {
+                const res = await app.request(
+                    '/',
+                    { headers: { Origin: origin } },
+                    createMockEnv({ ENVIRONMENT: 'development' })
+                );
+
+                expect(res.headers.get('Access-Control-Allow-Origin')).toBe(origin);
+            });
         });
     });
 
