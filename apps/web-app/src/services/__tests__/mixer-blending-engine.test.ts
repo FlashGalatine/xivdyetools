@@ -22,7 +22,16 @@ vi.mock('@services/index', () => ({
     getColorDistance: vi.fn(() => 100),
     getDistanceForMethod: vi.fn(
       (_h1: string, _h2: string, m: string) =>
-        ({ ciede2000: 25, oklab: 15, cie76: 50, redmean: 20, rgb: 100, distinguish: 23 } as Record<string, number>)[m] ?? 25
+        (
+          ({
+            ciede2000: 25,
+            oklab: 15,
+            cie76: 50,
+            redmean: 20,
+            rgb: 100,
+            distinguish: 23,
+          }) as Record<string, number>
+        )[m] ?? 25
     ),
   },
   dyeService: {

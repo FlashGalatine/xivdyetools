@@ -443,7 +443,6 @@ export class BudgetTool extends BaseComponent {
   }
 
   private fmtValue(value: number): string {
-    if (this.matchingMethod === 'oklab') return (value * 100).toFixed(1);
     return String(roundToBandDisplay(value, this.matchingMethod));
   }
 

@@ -12,7 +12,6 @@
  */
 
 import { ColorService, dyeService, LanguageService } from '@services/index';
-import { ColorConverter } from '@xivdyetools/core';
 import type { Dye } from '@xivdyetools/types';
 import type { MatchingMethod, DyeFiltersConfig } from '@shared/tool-config-types';
 import { isDyeExcluded, hasActiveFilters } from '@shared/dye-filter-utils';

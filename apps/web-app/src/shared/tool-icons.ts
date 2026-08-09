@@ -16,8 +16,10 @@
  */
 
 import { toolGlyph, type ToolGlyphName } from '@xivdyetools/svg';
+import { themedAccent } from './glyph-accent';
 
-const glyph = (name: ToolGlyphName): string => toolGlyph(name, 'compact', { fluid: true });
+const glyph = (name: ToolGlyphName): string =>
+  themedAccent(toolGlyph(name, 'compact', { fluid: true }));
 
 export const ICON_TOOL_HARMONY = glyph('harmony');
 export const ICON_TOOL_EXTRACTOR = glyph('extractor');

@@ -298,7 +298,6 @@ export class ShareService {
     }
   }
 
-
   // ==========================================================================
   // 5.0 shared-value resolution (stainID grammar, loud failures)
   // ==========================================================================
@@ -311,8 +310,7 @@ export class ShareService {
    * fallback dye.
    */
   static resolveSharedDye(raw: unknown): Dye | null {
-    const id =
-      typeof raw === 'number' ? raw : typeof raw === 'string' ? parseInt(raw, 10) : NaN;
+    const id = typeof raw === 'number' ? raw : typeof raw === 'string' ? parseInt(raw, 10) : NaN;
     if (!Number.isFinite(id)) {
       ToastService.error(LanguageService.t('share.invalidDye'));
       return null;

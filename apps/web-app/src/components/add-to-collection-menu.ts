@@ -87,12 +87,17 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
     list.appendChild(emptyItem);
   } else {
     for (const collection of collections) {
-      const item = createCollectionMenuItem(collection, dye.stainID ?? 0, dyeName, (addedCollection) => {
-        closeAddToCollectionMenu();
-        if (onAdded) {
-          onAdded(addedCollection);
+      const item = createCollectionMenuItem(
+        collection,
+        dye.stainID ?? 0,
+        dyeName,
+        (addedCollection) => {
+          closeAddToCollectionMenu();
+          if (onAdded) {
+            onAdded(addedCollection);
+          }
         }
-      });
+      );
       list.appendChild(item);
     }
   }

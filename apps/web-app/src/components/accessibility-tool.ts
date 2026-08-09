@@ -32,7 +32,7 @@ import type { Dye } from '@xivdyetools/types';
 import type { AccessibilityConfig, DisplayOptionsConfig } from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 import { ICON_TOOL_ACCESSIBILITY } from '@shared/tool-icons';
-import { ICON_WARNING, ICON_BEAKER, ICON_EYE, ICON_SLIDERS } from '@shared/ui-icons';
+import { ICON_BEAKER, ICON_EYE, ICON_SLIDERS } from '@shared/ui-icons';
 import {
   PAIR_READOUT_UNITS,
   createMetricHelp,
@@ -941,16 +941,7 @@ export class AccessibilityTool extends BaseComponent {
     this.selectedDyesSection.appendChild(selectedDyesHeader);
     // Horizontal flex layout for cards, centered
     this.selectedDyesContainer = this.createElement('div', {
-      attributes: {
-        style: `
-          display: flex;
-          flex-wrap: wrap;
-          gap: 16px;
-          justify-content: center;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
+      className: 'v5-results-grid',
     });
     this.selectedDyesSection.appendChild(this.selectedDyesContainer);
     // Appended to contentWrapper AFTER the pair section (drawn order:
@@ -1218,6 +1209,7 @@ export class AccessibilityTool extends BaseComponent {
     this.selectedDyes.forEach((dye, index) => {
       // Create v4-result-card element
       const card = document.createElement('v4-result-card') as ResultCard;
+      card.compact = true;
 
       // 6A semantics: both swatches are the same dye — as designed → as
       // perceived under the active lens; ΔE is the shift the lens introduces
@@ -2225,7 +2217,6 @@ export class AccessibilityTool extends BaseComponent {
 
     // Load dyes by itemID
     if (params.dyes && Array.isArray(params.dyes) && params.dyes.length > 0) {
-      const allDyes = dyeService.getAllDyes();
       const loadedDyes: Dye[] = [];
 
       for (const itemId of params.dyes) {

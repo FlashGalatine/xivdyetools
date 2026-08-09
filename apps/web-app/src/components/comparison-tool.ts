@@ -83,7 +83,6 @@ interface DyeWithHSV {
   v: number;
 }
 
-
 /**
  * Storage keys for v3 comparison tool
  */
@@ -1180,8 +1179,6 @@ export class ComparisonTool extends BaseComponent {
   }
 
   private fmtValue(value: number, method: MatchingMethod = this.method): string {
-    // The ΔEOK tag reads "OKLab ×100" — display scales; bands classify raw
-    if (method === 'oklab') return (value * 100).toFixed(1);
     return value.toFixed(BAND_METHOD_DP[method]);
   }
 
@@ -1526,7 +1523,9 @@ export class ComparisonTool extends BaseComponent {
       })
     );
     const text = this.createElement('span', {
-      attributes: { style: 'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px;' },
+      attributes: {
+        style: 'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px;',
+      },
     });
     text.appendChild(
       this.createElement('span', {
@@ -1650,10 +1649,7 @@ export class ComparisonTool extends BaseComponent {
 
     const hsvA = ColorService.hexToHsv(a.hex);
     const hsvB = ColorService.hexToHsv(b.hex);
-    const hueDiff = Math.min(
-      Math.abs(hsvA.h - hsvB.h),
-      360 - Math.abs(hsvA.h - hsvB.h)
-    );
+    const hueDiff = Math.min(Math.abs(hsvA.h - hsvB.h), 360 - Math.abs(hsvA.h - hsvB.h));
     const rows: Array<[string, string, string, string]> = [
       [
         t('deltaLight'),
@@ -2340,13 +2336,11 @@ export class ComparisonTool extends BaseComponent {
     }
 
     // Load dyes by itemID
-    const dyeService = DyeService.getInstance();
     const loadedDyes: Dye[] = [];
 
     for (const itemId of params.dyes) {
       if (typeof itemId === 'number') {
         // Find by itemID
-        const allDyes = dyeService.getAllDyes();
         const dye = ShareService.resolveSharedDye(itemId);
         if (dye && !loadedDyes.some((d) => d.id === dye.id)) {
           loadedDyes.push(dye);

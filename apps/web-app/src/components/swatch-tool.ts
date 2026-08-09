@@ -1437,16 +1437,9 @@ export class SwatchTool extends BaseComponent {
 
     matchSection.appendChild(matchHeader);
 
-    // Match results container (CSS grid with max 4 columns)
+    // Match results container — shared results grid (3-up desktop / 2-up mobile)
     this.matchResultsContainer = this.createElement('div', {
-      attributes: {
-        style: `
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 16px;
-          width: 100%;
-        `,
-      },
+      className: 'v5-results-grid',
     });
     matchSection.appendChild(this.matchResultsContainer);
     resultsArea.appendChild(matchSection);
@@ -2118,6 +2111,7 @@ export class SwatchTool extends BaseComponent {
     for (const match of this.matchedDyes) {
       // Create v4-result-card element
       const card = document.createElement('v4-result-card') as HTMLElement;
+      card.setAttribute('compact', '');
       card.setAttribute('show-actions', 'true');
       // Make primary button open context menu (same as the ... button)
       card.setAttribute('primary-opens-menu', 'true');
@@ -2146,8 +2140,7 @@ export class SwatchTool extends BaseComponent {
       (card as unknown as { showLab: boolean }).showLab = this.displayOptions.showLab;
       (card as unknown as { showDeltaE: boolean }).showDeltaE = this.displayOptions.showDeltaE;
       (card as unknown as { showHue: boolean }).showHue = this.displayOptions.showHue ?? true;
-      (card as unknown as { showStain: boolean }).showStain =
-        this.displayOptions.showStain ?? true;
+      (card as unknown as { showStain: boolean }).showStain = this.displayOptions.showStain ?? true;
       (card as unknown as { showConsolidation: boolean }).showConsolidation =
         this.displayOptions.showSpectrum ?? true;
       (card as unknown as { showPrice: boolean }).showPrice = this.displayOptions.showPrice;

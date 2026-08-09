@@ -25,11 +25,15 @@
   --theme-text-muted: #6b7280;
 
   /* ===== V4 LAYOUT DIMENSIONS ===== */
-  --v4-header-height: 48px;
-  --v4-tool-bar-height: 64px;
+  /* 5.0 console bar: 54px, no persistent tool rail */
+  --v4-header-height: 54px;
+  --v4-tool-bar-height: 0px;
   --v4-sidebar-width: 320px;
   --v4-content-padding: 24px;
   --v4-result-card-width: 280px;
+
+  /* Glyph accent chip (updated by ThemeService: #EA4133 dark / #CE2222 light) */
+  --glyph-accent: #ea4133;
 
   /* ===== V4 GLASSMORPHISM (defaults - updated by ThemeService) ===== */
   --v4-glass-bg: rgba(30, 30, 30, 0.7);

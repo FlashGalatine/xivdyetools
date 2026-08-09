@@ -150,12 +150,14 @@ export function createMetricHelp(options: MetricHelpOptions): HTMLElement {
 
   // Definition + caveat
   const desc = document.createElement('p');
-  desc.style.cssText = 'font-size: 12px; line-height: 1.55; margin: 0; color: var(--theme-text-muted);';
+  desc.style.cssText =
+    'font-size: 12px; line-height: 1.55; margin: 0; color: var(--theme-text-muted);';
   desc.textContent = t(`${def.stem}Desc`);
   box.appendChild(desc);
 
   const caveat = document.createElement('p');
-  caveat.style.cssText = 'font-size: 12px; line-height: 1.55; margin: 0; color: var(--theme-text-muted);';
+  caveat.style.cssText =
+    'font-size: 12px; line-height: 1.55; margin: 0; color: var(--theme-text-muted);';
   caveat.textContent = t(`${def.stem}Caveat`);
   box.appendChild(caveat);
 
@@ -206,7 +208,8 @@ export function createMetricHelp(options: MetricHelpOptions): HTMLElement {
   // Learn-more link (ratio — the only unit with a published standard)
   if (options.unit === 'ratio') {
     const link = document.createElement('a');
-    link.style.cssText = 'font-size: 12px; color: var(--theme-primary); text-decoration: underline;';
+    link.style.cssText =
+      'font-size: 12px; color: var(--theme-primary); text-decoration: underline;';
     link.href = LEARN_URL;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';

@@ -19,8 +19,14 @@ import { LanguageService } from '@services/language-service';
 import { TutorialService } from '@services/tutorial-service';
 import { CollectionService } from '@services/collection-service';
 import { ConfigController } from '@services/config-controller';
+import { RouterService } from '@services/router-service';
 import type { AdvancedConfig } from '@shared/tool-config-types';
 import { logger } from '@shared/logger';
+
+// The panel hosts the per-tool config surface (Q7: config lives behind the
+// header gear, not in a persistent column) — register the element.
+import './v4/config-sidebar';
+import type { ConfigSidebar } from './v4/config-sidebar';
 
 // ============================================================================
 // Section/row builders (AdvancedOptions.dc.html geometry)
@@ -213,6 +219,21 @@ function createContent(host: HTMLElement): HTMLElement {
   const configController = ConfigController.getInstance();
   const advancedConfig: AdvancedConfig = configController.getConfig('advanced');
 
+  // --- Per-tool configuration (the relocated config surface) ---
+  const configHost = document.createElement('v4-config-sidebar') as ConfigSidebar;
+  configHost.embedded = true;
+  configHost.activeTool = RouterService.getCurrentToolId();
+  // The sidebar's emits used to be re-dispatched by the shell; forward them
+  // onto the layout host so v4-layout's listeners keep working unchanged.
+  for (const eventName of ['config-change', 'clear-all-dyes'] as const) {
+    configHost.addEventListener(eventName, ((e: CustomEvent) => {
+      host.dispatchEvent(
+        new CustomEvent(eventName, { detail: e.detail, bubbles: true, composed: true })
+      );
+    }) as EventListener);
+  }
+  container.appendChild(configHost);
+
   // --- Data (destructive resets) ---
   const data = sectionCard(t('advanced.dataTitle'), 'DEVICE', t('advanced.dataSummary'), true);
   data.body.appendChild(
@@ -262,12 +283,7 @@ function createContent(host: HTMLElement): HTMLElement {
   container.appendChild(data.card);
 
   // --- Backup (export / import) ---
-  const backup = sectionCard(
-    t('advanced.backupTitle'),
-    'JSON',
-    t('advanced.backupSummary'),
-    false
-  );
+  const backup = sectionCard(t('advanced.backupTitle'), 'JSON', t('advanced.backupSummary'), false);
 
   backup.body.appendChild(
     actionRow(t('config.exportSettings'), '', () => {
@@ -307,9 +323,7 @@ function createContent(host: HTMLElement): HTMLElement {
         configController.importConfigs(
           dataObj.configs as Parameters<typeof configController.importConfigs>[0]
         );
-        host.dispatchEvent(
-          new CustomEvent('settings-imported', { bubbles: true, composed: true })
-        );
+        host.dispatchEvent(new CustomEvent('settings-imported', { bubbles: true, composed: true }));
         logger.info('[AdvancedOptions] Settings imported successfully');
       } catch (error) {
         logger.error('[AdvancedOptions] Import failed:', error);
@@ -318,9 +332,7 @@ function createContent(host: HTMLElement): HTMLElement {
       importInput.value = '';
     })();
   });
-  backup.body.appendChild(
-    actionRow(t('config.importSettings'), '', () => importInput.click())
-  );
+  backup.body.appendChild(actionRow(t('config.importSettings'), '', () => importInput.click()));
   backup.body.appendChild(importInput);
   container.appendChild(backup.card);
 
@@ -366,17 +378,27 @@ let panelModalId: string | null = null;
 export function showAdvancedOptionsPanel(host: HTMLElement = document.body): void {
   if (panelModalId) return; // Already showing
 
+  const content = createContent(host);
+
+  // Keep the embedded config surface on the active tool while the panel is
+  // open (the user can navigate via the title menu without closing it).
+  const configHost = content.querySelector('v4-config-sidebar') as ConfigSidebar | null;
+  const routeUnsubscribe = RouterService.subscribe((state) => {
+    if (configHost) configHost.activeTool = state.toolId;
+  });
+
   panelModalId = ModalService.show({
     type: 'custom',
     variant: 'panel',
     panelWidth: 392,
     title: LanguageService.t('config.advancedSettings'),
     eyebrow: LanguageService.t('advanced.eyebrow'),
-    content: createContent(host),
+    content,
     closable: true,
     closeOnBackdrop: true,
     closeOnEscape: true,
     onClose: () => {
+      routeUnsubscribe();
       panelModalId = null;
     },
   });

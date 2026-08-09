@@ -15,6 +15,7 @@
  */
 
 import { panelGlyph, toolGlyph, type GlyphRenderOptions } from '@xivdyetools/svg';
+import { themedAccent } from './glyph-accent';
 
 const FLUID: GlyphRenderOptions = { fluid: true };
 
@@ -28,22 +29,22 @@ export const ICON_STATE_FUNNEL = panelGlyph('funnel', FLUID);
 export const ICON_STATE_COINS = panelGlyph('coins', FLUID);
 
 /** Error (was ICON_WARNING ×2) — the dot is the only filled element */
-export const ICON_STATE_ALERT = panelGlyph('alert', FLUID);
+export const ICON_STATE_ALERT = themedAccent(panelGlyph('alert', FLUID));
 
 /** Collections empty (was ICON_FOLDER ×2) */
 export const ICON_STATE_FOLDER = panelGlyph('folder', FLUID);
 
 /** Loading, static form (rasters and reduced-motion always get this one) */
-export const ICON_STATE_WAIT = panelGlyph('wait', FLUID);
+export const ICON_STATE_WAIT = themedAccent(panelGlyph('wait', FLUID));
 
 /** 8A's launch-normal empty category — shelves with room (was ICON_EMPTY_INBOX) */
-export const ICON_STATE_PRESETS_EMPTY = panelGlyph('presets-empty', FLUID);
+export const ICON_STATE_PRESETS_EMPTY = themedAccent(panelGlyph('presets-empty', FLUID));
 
 /** No harmony results — the tool's own detail glyph, not music notes */
-export const ICON_DETAIL_HARMONY = toolGlyph('harmony', 'detail', FLUID);
+export const ICON_DETAIL_HARMONY = themedAccent(toolGlyph('harmony', 'detail', FLUID));
 
 /** No image loaded — the extractor's detail glyph (sampled points read as "nothing sampled yet") */
-export const ICON_DETAIL_EXTRACTOR = toolGlyph('extractor', 'detail', FLUID);
+export const ICON_DETAIL_EXTRACTOR = themedAccent(toolGlyph('extractor', 'detail', FLUID));
 
 /**
  * The animated hourglass (2a, web-only): one 2.4 s clock — the grain falls
@@ -69,6 +70,6 @@ export const ICON_STATE_WAIT_ANIMATED = `<svg viewBox="0 0 32 32" aria-hidden="t
     <path d="M 7.6 28.6 H 24.4"/>
     <path d="M 10.2 3.4 V 7.8 C 10.2 11.8 13 13.8 16 16 C 13 18.2 10.2 20.2 10.2 24.2 V 28.6"/>
     <path d="M 21.8 3.4 V 7.8 C 21.8 11.8 19 13.8 16 16 C 19 18.2 21.8 20.2 21.8 24.2 V 28.6"/>
-    <circle class="hg-dot" cx="16" cy="7.4" r="1.5" fill="#EA4133" stroke="none"/>
+    <circle class="hg-dot" cx="16" cy="7.4" r="1.5" fill="var(--glyph-accent, #EA4133)" stroke="none"/>
   </g>
 </svg>`;

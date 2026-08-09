@@ -253,7 +253,11 @@ export class AboutModal {
     };
 
     creditsSection.appendChild(
-      credit(LanguageService.t('footer.universalisCredit'), 'universalis.app', 'https://universalis.app/')
+      credit(
+        LanguageService.t('footer.universalisCredit'),
+        'universalis.app',
+        'https://universalis.app/'
+      )
     );
     creditsSection.appendChild(
       credit(
@@ -331,11 +335,7 @@ export class AboutModal {
     };
     links.appendChild(apiLink('Data API', 'data.xivdyetools.app', 'https://data.xivdyetools.app'));
     links.appendChild(
-      apiLink(
-        'API Worker docs',
-        'developers.xivdyetools.app',
-        'https://developers.xivdyetools.app'
-      )
+      apiLink('API Worker docs', 'developers.xivdyetools.app', 'https://developers.xivdyetools.app')
     );
     body.appendChild(links);
 

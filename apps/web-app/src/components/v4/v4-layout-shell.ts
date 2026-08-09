@@ -1,15 +1,11 @@
 /**
- * XIV Dye Tools v4.0 - Layout Shell Component
+ * XIV Dye Tools 5.0 - Layout Shell Component
  *
- * Main layout orchestrator combining:
- * - V4AppHeader (48px top header)
- * - ToolBanner (64px tool navigation)
- * - ConfigSidebar (320px left sidebar)
- * - Content Area (main slot for tool content)
- * - DyePaletteDrawer (320px right drawer)
- *
- * Handles routing subscription and coordinates all child components.
- * Provides 3-column layout: [ConfigSidebar] | [Content] | [DyePaletteDrawer]
+ * The console shell: the app bar (brand + 2B tool title-menu + chrome
+ * cluster) over the content area with the right dye-palette drawer. Tool
+ * configuration lives behind the header gear (the Advanced Options
+ * slide-over hosts the config surface) — there is no persistent tool rail
+ * and no left config column.
  *
  * @module components/v4/v4-layout-shell
  */
@@ -22,8 +18,6 @@ import { LanguageService } from '@services/index';
 
 // Import child components to ensure registration
 import './v4-app-header';
-import './tool-banner';
-import './config-sidebar';
 import './dye-palette-drawer';
 
 // Import Dye type for event handling
@@ -57,12 +51,6 @@ export class V4LayoutShell extends BaseLitComponent {
    */
   @property({ type: String, attribute: 'active-tool' })
   activeTool: ToolId = 'harmony';
-
-  /**
-   * Whether the sidebar is collapsed (mobile mode)
-   */
-  @state()
-  private sidebarCollapsed = false;
 
   /**
    * Whether we're in mobile viewport
@@ -147,28 +135,11 @@ export class V4LayoutShell extends BaseLitComponent {
         border-radius: 4px;
       }
 
-      /* Mobile Overlay */
-      .v4-sidebar-overlay {
-        display: none;
-        position: fixed;
-        top: calc(var(--v4-header-height, 48px) + var(--v4-tool-bar-height, 64px));
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 99;
-        cursor: pointer;
-      }
-
-      .v4-sidebar-overlay.visible {
-        display: block;
-      }
-
       /* Mobile Drawer Overlay (for tap-outside-to-close on palette drawer) */
       .v4-drawer-overlay {
         display: none;
         position: fixed;
-        top: calc(var(--v4-header-height, 48px) + var(--v4-tool-bar-height, 64px));
+        top: var(--v4-header-height, 54px);
         left: 0;
         right: 0;
         bottom: 0;
@@ -179,77 +150,6 @@ export class V4LayoutShell extends BaseLitComponent {
 
       .v4-drawer-overlay.visible {
         display: block;
-      }
-
-      /* Mobile Toggle Button */
-      .v4-mobile-sidebar-toggle {
-        display: none;
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        border: none;
-        background: var(--theme-primary, #d4af37);
-        color: var(--theme-text-on-primary, #000);
-        cursor: pointer;
-        box-shadow:
-          var(--v4-shadow-soft, 0 4px 6px rgba(0, 0, 0, 0.3)),
-          var(--v4-shadow-glow, 0 0 10px rgba(212, 175, 55, 0.2));
-        z-index: 100;
-        font-size: 24px;
-        transition: transform var(--v4-transition-fast, 150ms);
-      }
-
-      .v4-mobile-sidebar-toggle:hover {
-        transform: scale(1.05);
-      }
-
-      .v4-mobile-sidebar-toggle:active {
-        transform: scale(0.95);
-      }
-
-      /* Left Sidebar Toggle FAB (shown when sidebar is closed) */
-      .v4-sidebar-toggle {
-        position: fixed;
-        bottom: 24px;
-        left: 24px;
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        border: 1px solid var(--v4-glass-border, rgba(255, 255, 255, 0.1));
-        background: var(--v4-glass-bg, rgba(30, 30, 30, 0.9));
-        backdrop-filter: var(--v4-glass-blur, blur(12px));
-        -webkit-backdrop-filter: var(--v4-glass-blur, blur(12px));
-        color: var(--theme-primary, #d4af37);
-        cursor: pointer;
-        box-shadow: var(--v4-shadow-soft, 0 4px 6px rgba(0, 0, 0, 0.3));
-        z-index: 100;
-        transition:
-          transform var(--v4-transition-fast, 150ms),
-          opacity 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .v4-sidebar-toggle:hover {
-        transform: scale(1.05);
-      }
-
-      .v4-sidebar-toggle:active {
-        transform: scale(0.95);
-      }
-
-      .v4-sidebar-toggle svg {
-        width: 24px;
-        height: 24px;
-      }
-
-      /* Hide toggle when sidebar is open */
-      .v4-sidebar-toggle.sidebar-open {
-        display: none;
       }
 
       /* Right Drawer Toggle FAB */
@@ -301,23 +201,9 @@ export class V4LayoutShell extends BaseLitComponent {
 
       /* Mobile Styles */
       @media (max-width: 768px) {
-        .v4-mobile-sidebar-toggle {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        v4-config-sidebar {
-          position: fixed;
-          top: calc(var(--v4-header-height, 48px) + var(--v4-tool-bar-height, 64px));
-          left: 0;
-          bottom: 0;
-          z-index: 100;
-        }
-
         dye-palette-drawer {
           position: fixed;
-          top: calc(var(--v4-header-height, 48px) + var(--v4-tool-bar-height, 64px));
+          top: var(--v4-header-height, 54px);
           right: 0;
           bottom: 0;
           z-index: 100;
@@ -327,22 +213,6 @@ export class V4LayoutShell extends BaseLitComponent {
           display: flex;
           align-items: center;
           justify-content: center;
-        }
-
-        /* Hide desktop sidebar toggle on mobile - use mobile FAB instead */
-        .v4-sidebar-toggle {
-          display: none;
-        }
-      }
-
-      /* Reduced motion */
-      @media (prefers-reduced-motion: reduce) {
-        .v4-mobile-sidebar-toggle {
-          transition: none;
-        }
-        .v4-mobile-sidebar-toggle:hover,
-        .v4-mobile-sidebar-toggle:active {
-          transform: none;
         }
       }
       /* ==========================================================================
@@ -713,7 +583,6 @@ export class V4LayoutShell extends BaseLitComponent {
     // Set up mobile detection
     this.mobileQuery = window.matchMedia('(max-width: 768px)');
     this.isMobile = this.mobileQuery.matches;
-    this.sidebarCollapsed = this.isMobile;
 
     // Listen for viewport changes
     this.mobileQuery.addEventListener('change', this.handleMediaQueryChange);
@@ -731,12 +600,10 @@ export class V4LayoutShell extends BaseLitComponent {
    */
   private handleMediaQueryChange = (e: MediaQueryListEvent): void => {
     this.isMobile = e.matches;
-    // Auto-collapse sidebar on mobile, auto-expand on desktop
-    this.sidebarCollapsed = e.matches;
   };
 
   /**
-   * Handle tool selection from ToolBanner
+   * Handle tool selection from the app bar's title menu
    */
   private handleToolSelect(e: CustomEvent<{ toolId: ToolId }>): void {
     const { toolId } = e.detail;
@@ -744,33 +611,11 @@ export class V4LayoutShell extends BaseLitComponent {
       this.activeTool = toolId;
       this.emit('tool-change', { toolId });
 
-      // Collapse sidebar and close drawer on mobile after tool selection
+      // Close the drawer on mobile after tool selection
       if (this.isMobile) {
-        this.sidebarCollapsed = true;
         this.paletteDrawerOpen = false;
       }
     }
-  }
-
-  /**
-   * Handle sidebar collapse from ConfigSidebar
-   */
-  private handleSidebarCollapse(): void {
-    this.sidebarCollapsed = true;
-  }
-
-  /**
-   * Toggle sidebar visibility (mobile)
-   */
-  private toggleSidebar(): void {
-    this.sidebarCollapsed = !this.sidebarCollapsed;
-  }
-
-  /**
-   * Handle overlay click (close sidebar)
-   */
-  private handleOverlayClick(): void {
-    this.sidebarCollapsed = true;
   }
 
   /**
@@ -778,49 +623,6 @@ export class V4LayoutShell extends BaseLitComponent {
    */
   private handleDrawerOverlayClick(): void {
     this.paletteDrawerOpen = false;
-  }
-
-  /**
-   * Handle config changes from ConfigSidebar
-   * Re-emits the event for parent (v4-layout.ts) to handle
-   */
-  private handleConfigChange(e: CustomEvent): void {
-    this.emit('config-change', e.detail);
-  }
-
-  /**
-   * Handle settings reset from Advanced Settings
-   */
-  private handleSettingsReset(): void {
-    this.emit('settings-reset');
-  }
-
-  /**
-   * Handle favorites cleared from Advanced Settings
-   */
-  private handleFavoritesCleared(): void {
-    this.emit('favorites-cleared');
-  }
-
-  /**
-   * Handle palettes cleared from Advanced Settings
-   */
-  private handlePalettesCleared(): void {
-    this.emit('palettes-cleared');
-  }
-
-  /**
-   * Handle tutorial reset from Advanced Settings
-   */
-  private handleTutorialReset(): void {
-    this.emit('tutorial-reset');
-  }
-
-  /**
-   * Handle settings imported from Advanced Settings
-   */
-  private handleSettingsImported(): void {
-    this.emit('settings-imported');
   }
 
   /**
@@ -907,8 +709,10 @@ export class V4LayoutShell extends BaseLitComponent {
 
   protected override render(): TemplateResult {
     return html`
-      <!-- App Header -->
+      <!-- Console App Bar (brand + 2B tool title-menu + chrome cluster) -->
       <v4-app-header
+        .activeTool=${this.activeTool}
+        @tool-select=${this.handleToolSelect}
         @changelog-click=${this.handleChangelogClick}
         @theme-click=${this.handleThemeClick}
         @about-click=${this.handleAboutClick}
@@ -916,37 +720,8 @@ export class V4LayoutShell extends BaseLitComponent {
         @advanced-click=${this.handleAdvancedClick}
       ></v4-app-header>
 
-      <!-- Tool Banner -->
-      <v4-tool-banner
-        .activeTool=${this.activeTool}
-        @tool-select=${this.handleToolSelect}
-      ></v4-tool-banner>
-
-      <!-- Main Layout (Sidebar + Content) -->
+      <!-- Main Layout (Content + Drawer) -->
       <div class="v4-layout-main">
-        <!-- Config Sidebar -->
-        <v4-config-sidebar
-          .activeTool=${this.activeTool}
-          ?collapsed=${this.sidebarCollapsed}
-          @sidebar-collapse=${this.handleSidebarCollapse}
-          @config-change=${this.handleConfigChange}
-          @settings-reset=${this.handleSettingsReset}
-          @clear-all-dyes=${this.handleClearAllDyes}
-          @favorites-cleared=${this.handleFavoritesCleared}
-          @palettes-cleared=${this.handlePalettesCleared}
-          @tutorial-reset=${this.handleTutorialReset}
-          @settings-imported=${this.handleSettingsImported}
-        ></v4-config-sidebar>
-
-        <!-- Mobile Sidebar Overlay -->
-        <div
-          class="v4-sidebar-overlay ${!this.sidebarCollapsed && this.isMobile ? 'visible' : ''}"
-          @click=${this.handleOverlayClick}
-          role="button"
-          tabindex="-1"
-          aria-label="${LanguageService.t('aria.closeSidebar')}"
-        ></div>
-
         <!-- Mobile Drawer Overlay (tap outside to close palette) -->
         <div
           class="v4-drawer-overlay ${
@@ -981,42 +756,6 @@ export class V4LayoutShell extends BaseLitComponent {
             : ''
         }
       </div>
-
-      <!-- Mobile Sidebar Toggle FAB -->
-      <button
-        class="v4-mobile-sidebar-toggle"
-        type="button"
-        title="${LanguageService.t('aria.toggleConfigSidebar')}"
-        aria-label="${LanguageService.t('aria.toggleConfigSidebar')}"
-        aria-expanded=${!this.sidebarCollapsed}
-        @click=${this.toggleSidebar}
-      >
-        ☰
-      </button>
-
-      <!-- Desktop Sidebar Toggle FAB (shown when sidebar is closed) -->
-      <button
-        class="v4-sidebar-toggle ${!this.sidebarCollapsed ? 'sidebar-open' : ''}"
-        type="button"
-        title="${LanguageService.t('aria.toggleConfigSidebar')}"
-        aria-label="${LanguageService.t('aria.toggleConfigSidebar')}"
-        aria-expanded=${!this.sidebarCollapsed}
-        @click=${this.toggleSidebar}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="12" cy="12" r="3"></circle>
-          <path
-            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
-          ></path>
-        </svg>
-      </button>
 
       <!-- Palette Drawer Toggle FAB (hidden when drawer is open or tool doesn't use palette) -->
       <button

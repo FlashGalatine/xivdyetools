@@ -118,6 +118,13 @@ export class ConfigSidebar extends BaseLitComponent {
   @property({ type: Boolean, reflect: true })
   collapsed = false;
 
+  /**
+   * Embedded mode: hosted inside the Advanced Options slide-over rather than
+   * as a standalone column — drops its own header/chrome (Q7 decision).
+   */
+  @property({ type: Boolean, reflect: true })
+  embedded = false;
+
   // =========================================================================
   // Tool Configuration State
   // =========================================================================
@@ -235,6 +242,30 @@ export class ConfigSidebar extends BaseLitComponent {
 
       :host([collapsed]) {
         display: none;
+      }
+
+      /* Embedded inside the Advanced Options slide-over (Q7: the config
+         surface lives behind the header gear, not in a persistent column) */
+      :host([embedded]) {
+        width: 100%;
+        height: auto;
+      }
+
+      :host([embedded]) .v4-config-sidebar {
+        background: transparent;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        border-right: none;
+        height: auto;
+      }
+
+      :host([embedded]) .v4-sidebar-header {
+        display: none;
+      }
+
+      :host([embedded]) .v4-sidebar-content {
+        padding: 0;
+        overflow-y: visible;
       }
 
       .v4-config-sidebar {

@@ -24,17 +24,17 @@
  * @module shared/ui-icons
  */
 
-import { panelGlyph } from '@xivdyetools/svg';
+import { chromeGlyph, panelGlyph } from '@xivdyetools/svg';
+import { themedAccent } from './glyph-accent';
 
 /**
- * Theme Switcher icon - Paint palette
+ * Theme switcher icons — the confirmed 3D sun/moon pair (32 grid).
+ * The header shows the glyph of the ACTIVE theme; ICON_THEME stays as a
+ * legacy alias for consumers that don't switch.
  */
-export const ICON_THEME = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M 12 2 C 6.5 2 2 6.5 2 12 C 2 14.5 3 16.5 4.5 18 C 5 18.5 6 18.5 6.5 18 C 7 17.5 7 16.5 6.5 15.5 C 6 14.5 6 13 6 12 C 6 8.7 8.7 6 12 6 C 15.3 6 18 8.7 18 12 C 18 15.3 15.3 18 12 18 L 10 18 C 9 18 8 19 8 20 C 8 21 9 22 10 22 L 12 22 C 17.5 22 22 17.5 22 12 C 22 6.5 17.5 2 12 2 Z" fill="none"/>
-  <circle cx="8.5" cy="10.5" r="1.5" fill="currentColor" stroke="none" opacity="0.6"/>
-  <circle cx="12" cy="8" r="1.5" fill="currentColor" stroke="none" opacity="0.8"/>
-  <circle cx="15.5" cy="10.5" r="1.5" fill="currentColor" stroke="none" opacity="0.4"/>
-</svg>`;
+export const ICON_THEME_SUN = themedAccent(chromeGlyph('sun', { fluid: true }));
+export const ICON_THEME_MOON = themedAccent(chromeGlyph('moon', { fluid: true }));
+export const ICON_THEME = ICON_THEME_SUN;
 
 /**
  * Camera icon - Take photo
@@ -168,12 +168,9 @@ export const ICON_BEAKER = `<svg viewBox="0 0 24 24" fill="none" stroke="current
 </svg>`;
 
 /**
- * Settings icon - Cog/gear
+ * Settings icon — the confirmed 32-grid gear (keeps the ICON_SETTINGS name).
  */
-export const ICON_SETTINGS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <circle cx="12" cy="12" r="3"/>
-  <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
-</svg>`;
+export const ICON_SETTINGS = themedAccent(panelGlyph('gear', { fluid: true }));
 
 /**
  * Palette icon - Artist color palette
@@ -259,7 +256,7 @@ export const ICON_STAIRS = `<svg viewBox="0 0 24 24" fill="none" stroke="current
  * the fill, never from fading. Geometry home: `@xivdyetools/svg`.
  */
 export const ICON_STAR = panelGlyph('star', { fluid: true });
-export const ICON_STAR_FILLED = panelGlyph('star-fill', { fluid: true });
+export const ICON_STAR_FILLED = themedAccent(panelGlyph('star-fill', { fluid: true }));
 
 /**
  * Search icon - Magnifying glass
@@ -307,30 +304,18 @@ export const ICON_IMAGE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentC
 /**
  * About icon - Triangle warning sign with question mark (for about modals)
  */
-export const ICON_ABOUT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M12 2L2 20h20L12 2Z" fill="none"/>
-  <path d="M12 9c-1 0-1.5 0.5-1.5 1.5s0.5 1 1 1.5c0.5 0.5 0.5 1 0.5 1.5" fill="none"/>
-  <circle cx="12" cy="16" r="0.5" fill="currentColor" stroke="none"/>
-</svg>`;
+export const ICON_ABOUT = themedAccent(chromeGlyph('about', { fluid: true }));
 
 /**
  * Context menu icon - Vertical three dots (kebab menu)
  * Used for ResultCard action menus and dropdown triggers
  */
-export const ICON_CONTEXT_MENU = `<svg viewBox="0 0 24 24" fill="currentColor">
-  <circle cx="12" cy="5" r="2"/>
-  <circle cx="12" cy="12" r="2"/>
-  <circle cx="12" cy="19" r="2"/>
-</svg>`;
+export const ICON_CONTEXT_MENU = panelGlyph('kebab', { fluid: true });
 
 /**
  * Globe icon - Language/internationalization selector
  */
-export const ICON_GLOBE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="12" cy="12" r="10" fill="none"/>
-  <line x1="2" y1="12" x2="22" y2="12"/>
-  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" fill="none"/>
-</svg>`;
+export const ICON_GLOBE = chromeGlyph('globe', { fluid: true });
 
 /**
  * Link icon - Chain link for copy/share URLs

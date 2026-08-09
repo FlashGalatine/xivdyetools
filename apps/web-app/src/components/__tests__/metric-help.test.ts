@@ -3,12 +3,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import {
-  PAIR_READOUT_UNITS,
-  tierColor,
-  shiftTierColor,
-  createMetricHelp,
-} from '../metric-help';
+import { PAIR_READOUT_UNITS, tierColor, shiftTierColor, createMetricHelp } from '../metric-help';
 
 vi.mock('@services/language-service', () => ({
   LanguageService: {
@@ -116,7 +111,12 @@ describe('createMetricHelp', () => {
   });
 
   it('renders the four-word tier legend with unit-specific ranges', () => {
-    const el = createMetricHelp({ unit: 'de2000', threshold: 30, dark: true, onUnitChange: vi.fn() });
+    const el = createMetricHelp({
+      unit: 'de2000',
+      threshold: 30,
+      dark: true,
+      onUnitChange: vi.fn(),
+    });
     expect(el.textContent).toContain('accessibility.tierClear');
     expect(el.textContent).toContain('accessibility.tierCollapsed');
     expect(el.textContent).toContain('35 +');

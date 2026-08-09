@@ -16,7 +16,7 @@
  * @module components/tools/mixer-tool
  */
 
-import { normalizeMatchingMethod } from '@xivdyetools/core';
+import { BAND_METHOD_DP, normalizeMatchingMethod } from '@xivdyetools/core';
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
@@ -1195,7 +1195,7 @@ export class MixerTool extends BaseComponent {
         const deltaRaw = nearest
           ? ColorService.getDistanceForMethod(blend, nearest.hex, this.matchingMethod)
           : 0;
-        const delta = this.matchingMethod === 'oklab' ? deltaRaw * 100 : deltaRaw;
+        const deltaDp = BAND_METHOD_DP[this.matchingMethod] ?? 1;
         const selected = model === this.mixingMode && r === currentRatioPct;
 
         const luminance =
@@ -1216,7 +1216,7 @@ export class MixerTool extends BaseComponent {
         }) as HTMLButtonElement;
         cell.appendChild(
           this.createElement('span', {
-            textContent: delta.toFixed(1),
+            textContent: deltaRaw.toFixed(deltaDp),
             attributes: {
               style: `font-family: ${MONO}; font-size: 8px; color: ${ink}; pointer-events: none;`,
             },
@@ -1314,15 +1314,7 @@ export class MixerTool extends BaseComponent {
     resultsHeader.appendChild(this.shareButton);
     this.resultsSection.appendChild(resultsHeader);
     this.resultsGridContainer = this.createElement('div', {
-      attributes: {
-        style: `
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
-          gap: 16px;
-          --v4-result-card-width: 280px;
-        `,
-      },
+      className: 'v5-results-grid',
     });
     this.resultsSection.appendChild(this.resultsGridContainer);
     contentWrapper.appendChild(this.resultsSection);
@@ -1785,6 +1777,7 @@ export class MixerTool extends BaseComponent {
     for (const result of this.matchedResults) {
       // Create v4-result-card
       const card = document.createElement('v4-result-card') as HTMLElement;
+      card.setAttribute('compact', '');
       card.setAttribute('show-actions', 'true');
       card.setAttribute('show-slot-picker', 'true');
       card.setAttribute('primary-action-label', LanguageService.t('mixer.replaceSlot'));
@@ -1812,8 +1805,7 @@ export class MixerTool extends BaseComponent {
       (card as unknown as { showCmyk: boolean }).showCmyk = this.displayOptions.showCmyk;
       (card as unknown as { showDeltaE: boolean }).showDeltaE = this.displayOptions.showDeltaE;
       (card as unknown as { showHue: boolean }).showHue = this.displayOptions.showHue ?? true;
-      (card as unknown as { showStain: boolean }).showStain =
-        this.displayOptions.showStain ?? true;
+      (card as unknown as { showStain: boolean }).showStain = this.displayOptions.showStain ?? true;
       (card as unknown as { showConsolidation: boolean }).showConsolidation =
         this.displayOptions.showSpectrum ?? true;
       (card as unknown as { showPrice: boolean }).showPrice = this.displayOptions.showPrice;

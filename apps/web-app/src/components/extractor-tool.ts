@@ -2851,18 +2851,7 @@ export class ExtractorTool extends BaseComponent {
 
     // Create grid container matching palette results layout
     const cardsGrid = this.createElement('div', {
-      className: 'extractor-results-grid',
-      attributes: {
-        style: `
-          display: flex;
-          flex-wrap: wrap;
-          gap: 16px;
-          justify-content: center;
-          --v4-result-card-width: 280px;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
+      className: 'extractor-results-grid v5-results-grid',
     });
 
     for (const dye of this.matchedDyes) {
@@ -2888,6 +2877,7 @@ export class ExtractorTool extends BaseComponent {
 
       // Create the v4-result-card element
       const card = document.createElement('v4-result-card') as unknown as ResultCard;
+      card.compact = true;
       card.data = cardData;
       card.setAttribute('primary-opens-menu', 'true');
 
@@ -3456,18 +3446,7 @@ export class ExtractorTool extends BaseComponent {
 
     // Create grid container for cards with 280px card width
     const cardsGrid = this.createElement('div', {
-      className: 'extractor-results-grid',
-      attributes: {
-        style: `
-          display: flex;
-          flex-wrap: wrap;
-          gap: 16px;
-          justify-content: center;
-          --v4-result-card-width: 280px;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
+      className: 'extractor-results-grid v5-results-grid',
     });
 
     // Create a v4-result-card for each extracted color
@@ -3499,6 +3478,7 @@ export class ExtractorTool extends BaseComponent {
 
       // Create the v4-result-card element
       const card = document.createElement('v4-result-card') as unknown as ResultCard;
+      card.compact = true;
       card.data = cardData;
       // Make primary button open context menu (same as Swatch tool)
       card.setAttribute('primary-opens-menu', 'true');

@@ -1031,13 +1031,9 @@ export class HarmonyTool extends BaseComponent {
     resultsHeader.appendChild(this.shareButton);
     this.resultsSection.appendChild(resultsHeader);
 
-    // Harmony Results - horizontal row layout with inline styles for reliability
+    // Harmony Results — shared results grid (3-up desktop / 2-up mobile)
     this.harmonyGridContainer = this.createElement('div', {
-      className: 'harmony-results-container',
-      attributes: {
-        style:
-          'display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; --v4-result-card-width: 280px;',
-      },
+      className: 'harmony-results-container v5-results-grid',
     });
     this.resultsSection.appendChild(this.harmonyGridContainer);
 
@@ -1440,6 +1436,7 @@ export class HarmonyTool extends BaseComponent {
 
     // Create v4-result-card custom element
     const card = document.createElement('v4-result-card') as ResultCard;
+    card.compact = true;
 
     // Get price data for this dye
     const priceInfo = this.priceData.get(options.matchedDye.itemID);

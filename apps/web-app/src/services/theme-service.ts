@@ -129,8 +129,7 @@ const THEME_PALETTES: Record<ThemeName, ThemePalette> = {
  * Every retired light theme lands on standard-light, everything else dark.
  */
 function migrateLegacyThemeName(name: string): ThemeName {
-  const wasLight =
-    name.endsWith('-light') || name === 'cotton-candy' || name === 'parchment-light';
+  const wasLight = name.endsWith('-light') || name === 'cotton-candy' || name === 'parchment-light';
   return wasLight ? 'standard-light' : 'standard-dark';
 }
 
@@ -272,6 +271,10 @@ export class ThemeService {
 
     // ===== V3 Core Variables =====
     style.setProperty('--theme-primary', palette.primary);
+    // Glyph accent chips follow the theme (#EA4133 dark / #CE2222 light);
+    // the SVG package bakes the dark literal for raster targets, the web
+    // shims swap it for this property (shared/glyph-accent.ts).
+    style.setProperty('--glyph-accent', palette.primary);
     style.setProperty('--theme-background', palette.background);
     style.setProperty('--theme-text', palette.text);
     style.setProperty('--theme-text-header', palette.textHeader);

@@ -274,6 +274,14 @@ export class ResultCard extends BaseLitComponent {
   selected: boolean = false;
 
   /**
+   * Compact ticket variant (5B compact) — the grid default everywhere except
+   * Dye Comparison, which keeps the full variant. Tightens the head, drops
+   * the matrix to a single stacked column, and shrinks the action bar to 44px.
+   */
+  @property({ type: Boolean, reflect: true })
+  compact: boolean = false;
+
+  /**
    * Show HEX code in the numeric matrix
    */
   @property({ type: Boolean, attribute: 'show-hex' })
@@ -847,6 +855,112 @@ export class ResultCard extends BaseLitComponent {
         .ticket:hover {
           transform: none;
         }
+      }
+    `,
+    // 5B compact variant (ResultCard.dc.html compact geometry)
+    css`
+      :host([compact]) .ticket {
+        border-radius: 11px;
+      }
+
+      :host([compact]) .head {
+        padding: 8px 8px 9px;
+      }
+
+      :host([compact]) .swatches {
+        gap: 4px;
+        margin-bottom: 7px;
+      }
+
+      :host([compact]) .swatch {
+        height: 40px;
+        border-radius: 6px;
+      }
+
+      :host([compact]) .dye-name {
+        font-family: inherit;
+        font-size: 12px;
+        line-height: 1.18;
+        min-height: 0;
+        height: 28px;
+        overflow: hidden;
+      }
+
+      :host([compact]) .verdict {
+        gap: 6px;
+      }
+
+      :host([compact]) .de-num {
+        font-size: 19px;
+        line-height: 0.95;
+        letter-spacing: 0;
+      }
+
+      :host([compact]) .metric-label {
+        font-size: 7px;
+        margin-top: 3px;
+      }
+
+      :host([compact]) .readout-val {
+        font-size: 10.5px;
+      }
+
+      :host([compact]) .perf .notch {
+        width: 11px;
+        height: 11px;
+        top: -5.5px;
+      }
+
+      :host([compact]) .perf .notch.left {
+        left: -6px;
+      }
+
+      :host([compact]) .perf .notch.right {
+        right: -6px;
+      }
+
+      :host([compact]) .matrix {
+        grid-template-columns: 1fr;
+        gap: 3px;
+        padding: 9px 8px 0;
+      }
+
+      :host([compact]) .cell-label {
+        font-size: 9px;
+      }
+
+      :host([compact]) .cell-val {
+        font-size: 10px;
+      }
+
+      :host([compact]) .zone-rule {
+        margin: 0 8px;
+      }
+
+      :host([compact]) .zone {
+        padding: 9px 8px 10px;
+        gap: 3px;
+      }
+
+      :host([compact]) .zlabel {
+        font-size: 9px;
+        width: auto;
+      }
+
+      :host([compact]) .zval {
+        font-size: 10px;
+      }
+
+      :host([compact]) .primary-action-btn {
+        height: 44px;
+        font-size: 11.5px;
+        border-radius: 0 0 0 10px;
+      }
+
+      :host([compact]) .menu-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 0 0 10px 0;
       }
     `,
   ];

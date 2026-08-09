@@ -10,11 +10,12 @@
  * @module components/tools/gradient-tool
  */
 
-import { normalizeMatchingMethod } from '@xivdyetools/core';
+import { BAND_METHOD_DP, normalizeMatchingMethod } from '@xivdyetools/core';
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
 import { MarketBoard } from '@components/market-board';
+import '@components/v4/result-card';
 import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
 import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
@@ -1102,16 +1103,8 @@ export class GradientTool extends BaseComponent {
       className: 'gradient-results-list',
       attributes: {
         'data-testid': 'gradient-matches-container',
-        style: `
-          display: flex;
-          flex-direction: row;
-          flex-wrap: wrap;
-          justify-content: center;
-          gap: 16px;
-          width: 100%;
-          padding: 20px 0;
-          --v4-result-card-width: 280px;
-        `,
+        class: 'v5-results-grid',
+        style: 'padding: 20px 0;',
       },
     });
 
@@ -1610,8 +1603,7 @@ export class GradientTool extends BaseComponent {
     if (this.currentSteps.length > 0) {
       const drifts = this.currentSteps.filter((s) => s.matchedDye).map((s) => s.distance);
       const avgRaw = drifts.length ? drifts.reduce((a, b) => a + b, 0) / drifts.length : 0;
-      // ΔEOK displays ×100 per the register (raw values are ~0.03).
-      const avg = this.matchingMethod === 'oklab' ? avgRaw * 100 : avgRaw;
+      const avgDp = BAND_METHOD_DP[this.matchingMethod] ?? 1;
       const summary = this.createElement('div', {
         attributes: {
           style:
@@ -1620,7 +1612,7 @@ export class GradientTool extends BaseComponent {
       });
       summary.appendChild(
         this.createElement('span', {
-          textContent: `${LanguageService.t('gradient.avgDrift')} ${avg.toFixed(1)}`,
+          textContent: `${LanguageService.t('gradient.avgDrift')} ${avgRaw.toFixed(avgDp)}`,
           attributes: {
             style:
               "font-family: 'Fragment Mono', monospace; font-size: 11px; letter-spacing: 0.5px; color: var(--theme-text);",
@@ -1673,6 +1665,7 @@ export class GradientTool extends BaseComponent {
 
       // Create v4-result-card custom element
       const card = document.createElement('v4-result-card') as ResultCard;
+      card.compact = true;
 
       // Get price data for this dye
       const priceInfo = this.priceData.get(dye.itemID);

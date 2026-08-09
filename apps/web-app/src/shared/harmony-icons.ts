@@ -10,8 +10,9 @@
  */
 
 import { harmonyGlyph, type HarmonyGlyphName } from '@xivdyetools/svg';
+import { themedAccent } from './glyph-accent';
 
-const glyph = (name: HarmonyGlyphName): string => harmonyGlyph(name, { fluid: true });
+const glyph = (name: HarmonyGlyphName): string => themedAccent(harmonyGlyph(name, { fluid: true }));
 
 /**
  * Harmony type icon SVG strings, keyed by the web app's harmony type ids.

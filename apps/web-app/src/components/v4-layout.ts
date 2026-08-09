@@ -309,6 +309,36 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
   // This ensures the shadow DOM is available before we query for content container
   await layoutElement.updateComplete;
 
+  // Shared results-grid rule for every tool's card grid (Q4 decision:
+  // three cards per row on desktop, two on mobile). Injected once into the
+  // shell's shadow root — tool containers only carry the class.
+  if (
+    layoutElement.shadowRoot &&
+    !layoutElement.shadowRoot.querySelector('#v5-results-grid-style')
+  ) {
+    const gridStyle = document.createElement('style');
+    gridStyle.id = 'v5-results-grid-style';
+    gridStyle.textContent = `
+      .v5-results-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        width: 100%;
+      }
+      .v5-results-grid > v4-result-card {
+        width: auto;
+        min-width: 0;
+      }
+      @media (max-width: 768px) {
+        .v5-results-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+        }
+      }
+    `;
+    layoutElement.shadowRoot.appendChild(gridStyle);
+  }
+
   // Load initial tool
   await loadToolContent(initialTool);
 
