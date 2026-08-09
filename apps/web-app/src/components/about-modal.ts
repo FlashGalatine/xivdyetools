@@ -19,6 +19,7 @@ import { ModalService } from '@services/modal-service';
 import { LanguageService } from '@services/language-service';
 import { dyeService } from '@services/dye-service-wrapper';
 import { APP_NAME, APP_VERSION, BUILD_DATE } from '@shared/constants';
+import { SOCIAL_LINKS as CORE_SOCIAL_LINKS } from '@xivdyetools/core';
 import {
   ICON_GITHUB,
   ICON_TWITTER,
@@ -40,15 +41,27 @@ interface SocialLink {
   icon: string;
 }
 
-const SOCIAL_LINKS: SocialLink[] = [
-  { label: 'GitHub', url: 'https://github.com/FlashGalatine', icon: ICON_GITHUB },
-  { label: 'X/Twitter', url: 'https://x.com/AsheJunius', icon: ICON_TWITTER },
-  { label: 'Twitch', url: 'https://www.twitch.tv/flashgalatine', icon: ICON_TWITCH },
-  { label: 'Bluesky', url: 'https://bsky.app/profile/projectgalatine.com', icon: ICON_BLUESKY },
-  { label: 'Discord', url: 'https://discord.gg/5VUSKTZCe5', icon: ICON_DISCORD },
-  { label: 'Patreon', url: 'https://patreon.com/ProjectGalatine', icon: ICON_PATREON },
-  { label: 'Ko-fi', url: 'https://ko-fi.com/flashgalatine', icon: ICON_KOFI },
-];
+/**
+ * Icons are presentation and stay here; the URLs come from core, because the
+ * bot's `/about` prints the same seven and a duplicated list is one that
+ * drifts. Keyed by label so a reordering in core carries through and a
+ * renamed entry fails loudly rather than silently losing its icon.
+ */
+const SOCIAL_ICONS: Record<string, string> = {
+  GitHub: ICON_GITHUB,
+  'X/Twitter': ICON_TWITTER,
+  Twitch: ICON_TWITCH,
+  Bluesky: ICON_BLUESKY,
+  Discord: ICON_DISCORD,
+  Patreon: ICON_PATREON,
+  'Ko-fi': ICON_KOFI,
+};
+
+const SOCIAL_LINKS: SocialLink[] = CORE_SOCIAL_LINKS.map(({ label, url }) => ({
+  label,
+  url,
+  icon: SOCIAL_ICONS[label] ?? '',
+}));
 
 // ============================================================================
 // About Modal Class
