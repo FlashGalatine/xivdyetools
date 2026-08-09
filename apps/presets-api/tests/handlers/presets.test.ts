@@ -505,7 +505,7 @@ describe('PresetsHandler', () => {
                 }
                 // Category validation
                 if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 // Duplicate check
                 if (query.includes('dye_signature')) {
@@ -577,7 +577,7 @@ describe('PresetsHandler', () => {
                     return { count: 0 };
                 }
                 if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 if (query.includes('dye_signature')) {
                     return null;
@@ -638,7 +638,7 @@ describe('PresetsHandler', () => {
                     return { count: 0 };
                 }
                 if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 if (query.includes('dye_signature')) {
                     return null;
@@ -707,7 +707,7 @@ describe('PresetsHandler', () => {
                     return { count: 0 };
                 }
                 if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 if (query.includes('dye_signature')) {
                     return null;
@@ -764,7 +764,7 @@ describe('PresetsHandler', () => {
                 }
                 if (query.includes('categories')) {
                     categoryQueryCount++;
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 if (query.includes('dye_signature')) {
                     return null;
@@ -927,7 +927,7 @@ describe('PresetsHandler', () => {
             // Return valid categories so category validation passes, allowing dye validation to run
             mockDb._setupMock((query) => {
                 if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 return { count: 0 };
             });
@@ -958,7 +958,7 @@ describe('PresetsHandler', () => {
             // Return valid categories so category validation passes, allowing dye validation to run
             mockDb._setupMock((query) => {
                 if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 return { count: 0 };
             });
@@ -1035,7 +1035,7 @@ describe('PresetsHandler', () => {
             // Return valid categories so category validation passes, allowing tag validation to run
             mockDb._setupMock((query) => {
                 if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 return { count: 0 };
             });
@@ -1094,7 +1094,7 @@ describe('PresetsHandler', () => {
             mockDb._setupMock((query) => {
                 // Return valid categories for category validation
                 if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 if (query.includes('COUNT') && query.includes('author_discord_id')) {
                     return { count: 0 }; // Under rate limit
@@ -1827,7 +1827,7 @@ describe('PresetsHandler', () => {
             // Return valid categories so category validation passes, allowing dye validation to run
             mockDb._setupMock((query) => {
                 if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 return { count: 0 };
             });
@@ -1881,7 +1881,7 @@ describe('PresetsHandler', () => {
             // Return valid categories so category validation passes, allowing tag validation to run
             mockDb._setupMock((query) => {
                 if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 return { count: 0 };
             });
@@ -1960,7 +1960,7 @@ describe('PresetsHandler', () => {
             // Return valid categories so category validation passes, allowing dye validation to run
             mockDb._setupMock((query) => {
                 if (query.includes('categories')) {
-                    return [{ id: 'aesthetics' }, { id: 'jobs' }, { id: 'community' }];
+                    return [{ id: 'aesthetics' }, { id: 'jobs' }];
                 }
                 return { count: 0 };
             });
