@@ -245,6 +245,9 @@
     "commands": "명령어",
     "totalCount": "총 {count}개",
     "links": "링크",
+    "dyes": "염료",
+    "builtOn": "사용 기술",
+    "attribution": "권리 표기",
     "poweredBy": "Cloudflare Workers 기반",
     "categories": {
       "colorTools": "색상 도구",
@@ -655,6 +658,7 @@
     "cat": "분류",
     "idealKey": "외곽선＝이상／채움＝실제",
     "bandKey": "구간: ≤6 / ≤12 / ≤20",
+    "derivedNote": "ΔE2000 파생",
     "tier0": "완전",
     "tier1": "근접",
     "tier2": "느슨",

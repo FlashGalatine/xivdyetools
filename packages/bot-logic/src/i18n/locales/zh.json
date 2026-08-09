@@ -245,6 +245,9 @@
     "commands": "命令",
     "totalCount": "共{count}个",
     "links": "链接",
+    "dyes": "染剂",
+    "builtOn": "技术支持",
+    "attribution": "权利声明",
     "poweredBy": "由 Cloudflare Workers 提供支持",
     "categories": {
       "colorTools": "颜色工具",
@@ -655,6 +658,7 @@
     "cat": "分类",
     "idealKey": "描边＝理想／填充＝实际",
     "bandKey": "区间：≤6 / ≤12 / ≤20",
+    "derivedNote": "由 ΔE2000 推导",
     "tier0": "完全",
     "tier1": "接近",
     "tier2": "宽松",

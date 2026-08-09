@@ -15,7 +15,7 @@ import {
 } from '@xivdyetools/core';
 import { filterDyes, ColorService } from '@xivdyetools/core';
 import { createTranslator, type Translator, type LocaleCode } from '../i18n/index.js';
-import { generateHarmonyCard, type HarmonyCardSlot } from '@xivdyetools/svg';
+import { generateHarmonyCard, num, type HarmonyCardSlot } from '@xivdyetools/svg';
 import { dyeService } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
 import type { EmbedData } from './types.js';
@@ -224,20 +224,32 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
 
 
     // 11A: the ideal hue the maths asked for, beside the dye that exists.
-    // Each found dye pairs with the offset ideal it is nearest to (ΔE2000),
-    // which also yields the row's verdict; monochromatic rows have no ideal.
-    // Unknown types fall back to triadic, mirroring getHarmonyDyes
+    // Each found dye pairs with the offset ideal it is nearest to, which also
+    // yields the row's angle lead and the frame's verdict; monochromatic rows
+    // have no ideal. Unknown types fall back to triadic, mirroring
+    // getHarmonyDyes.
+    //
+    // The distance runs in the CHOSEN method, not always ΔE2000: a tier is a
+    // property of the method, so the card prints which one produced it. Two
+    // players with different stored preferences get different dyes back, and
+    // without the tag one of the two PNGs looks wrong.
     const offsets = IDEAL_OFFSETS[harmonyType] ?? IDEAL_OFFSETS.triadic;
-    const ideals = offsets.map((offset) => ColorService.rotateHue(baseHex, offset));
+    const ideals = offsets.map((offset) => ({
+      hex: ColorService.rotateHue(baseHex, offset),
+      // -30 reads as 330° — an angle on the wheel, never a signed rotation
+      angle: `${((offset % 360) + 360) % 360}°`,
+    }));
     const stainLabel = t.t('card.stain');
     const slots: HarmonyCardSlot[] = harmonyDyes.map((dye) => {
       let idealHex: string | null = null;
+      let angleLabel: string | undefined;
       let deltaE: number | null = null;
       for (const ideal of ideals) {
-        const d = ColorService.getDistanceForMethod(ideal, dye.hex, 'ciede2000');
+        const d = ColorService.getDistanceForMethod(ideal.hex, dye.hex, matchingMethod);
         if (deltaE === null || d < deltaE) {
           deltaE = d;
-          idealHex = ideal;
+          idealHex = ideal.hex;
+          angleLabel = ideal.angle;
         }
       }
       const stainText = dye.stainID != null ? ` · ${stainLabel} ${dye.stainID}` : '';
@@ -247,8 +259,23 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
         localizedName: getLocalizedDyeName(dye.itemID, dye.name, locale),
         subText: `${dye.hex.toUpperCase()}${stainText}`,
         deltaE,
+        angleLabel,
       };
     });
+
+    // The verdict names the weakest slot only — a glyph and three values,
+    // because "weakest slot" as a label overran the row in German. The card
+    // draws the ↓; every word here is already localized.
+    const weakest = slots.reduce<HarmonyCardSlot | null>(
+      (worst, s) => (s.deltaE != null && (worst?.deltaE == null || s.deltaE > worst.deltaE) ? s : worst),
+      null
+    );
+    const verdict =
+      weakest && weakest.deltaE != null
+        ? [weakest.angleLabel, weakest.localizedName, num(weakest.deltaE, locale, 1)]
+            .filter(Boolean)
+            .join(' · ')
+        : null;
 
     // Localize base name if it's a dye
     const localizedBaseName = baseItemID && baseName
@@ -257,20 +284,25 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
     const harmonyTitle = getLocalizedHarmonyType(harmonyType, t);
 
     const baseDye = baseId !== undefined ? dyeService.getDyeById(baseId) : null;
-    const baseStainText =
-      baseDye?.stainID != null ? ` · ${stainLabel} ${baseDye.stainID}` : '';
 
     const svgString = generateHarmonyCard({
       typeLabel: harmonyTitle,
       baseHex,
       baseName: localizedBaseName,
-      baseSubText: `${baseHex.toUpperCase()}${baseStainText}`,
+      // Turn 13 dropped the base hex line — the swatch pair already implies
+      // it, and that line is what pays for the verdict block.
+      baseAngle: '0°',
       slots,
       labels: {
         base: t.t('card.base'),
-        idealKey: t.t('card.idealKey'),
+        ideal: t.t('card.ideal'),
+        found: t.t('card.found'),
+        bandKey: t.t('card.bandKey'),
+        derivedNote: t.t('card.derivedNote'),
       },
       tierWords: [t.t('card.tier0'), t.t('card.tier1'), t.t('card.tier2'), t.t('card.tier3')],
+      verdict,
+      method: matchingMethod,
       lang: locale,
       theme: input.theme,
     });

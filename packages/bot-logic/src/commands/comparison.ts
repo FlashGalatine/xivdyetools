@@ -14,7 +14,7 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
-import { ColorService } from '@xivdyetools/core';
+import { abbreviateDyeName, ColorService } from '@xivdyetools/core';
 import { createTranslator, type LocaleCode } from '../i18n/index.js';
 import {
   generateComparisonCard,
@@ -48,14 +48,6 @@ export type ComparisonResult =
 // ============================================================================
 // Helpers
 // ============================================================================
-
-function abbr(name: string, locale: LocaleCode): string {
-  if (locale === 'ja' || locale === 'zh' || locale === 'ko') return name.slice(0, 3);
-  return name
-    .toUpperCase()
-    .replace(/[^\p{L}\p{N}]/gu, '')
-    .slice(0, 3);
-}
 
 /**
  * The duel's seven readouts — one shared vocabulary, or the bot disagrees
@@ -98,7 +90,7 @@ export async function executeComparison(input: ComparisonInput): Promise<Compari
       return {
         hex: dye.hex,
         name,
-        abbr: abbr(name, locale),
+        abbr: abbreviateDyeName(name, locale),
         metaText: `${dye.hex.toUpperCase()}${stainText}`,
       };
     });

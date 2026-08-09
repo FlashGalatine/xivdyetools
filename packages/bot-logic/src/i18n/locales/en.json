@@ -245,6 +245,9 @@
     "commands": "Commands",
     "totalCount": "{count} total",
     "links": "Links",
+    "dyes": "Dyes",
+    "builtOn": "Built on",
+    "attribution": "Attribution",
     "poweredBy": "Powered by Cloudflare Workers",
     "categories": {
       "colorTools": "Color Tools",
@@ -655,6 +658,7 @@
     "cat": "CATEGORY",
     "idealKey": "outline = ideal · solid = found",
     "bandKey": "bands: ≤6 / ≤12 / ≤20",
+    "derivedNote": "ΔE2000-derived",
     "tier0": "EXACT",
     "tier1": "CLOSE",
     "tier2": "LOOSE",

@@ -245,6 +245,9 @@
     "commands": "Commandes",
     "totalCount": "{count} au total",
     "links": "Liens",
+    "dyes": "Teintures",
+    "builtOn": "Repose sur",
+    "attribution": "Mentions légales",
     "poweredBy": "Propulsé par Cloudflare Workers",
     "categories": {
       "colorTools": "Outils de couleur",
@@ -655,6 +658,7 @@
     "cat": "CATÉGORIE",
     "idealKey": "contour = idéal · plein = trouvé",
     "bandKey": "bandes : ≤6 / ≤12 / ≤20",
+    "derivedNote": "dérivé de ΔE2000",
     "tier0": "EXACT",
     "tier1": "PROCHE",
     "tier2": "LARGE",

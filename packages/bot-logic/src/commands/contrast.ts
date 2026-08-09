@@ -16,6 +16,7 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
+import { abbreviateDyeName } from '@xivdyetools/core';
 import { createTranslator, type LocaleCode } from '../i18n/index.js';
 import { generateContrastCard, contrastRatio, type ContrastPair } from '@xivdyetools/svg';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
@@ -50,19 +51,6 @@ export type ContrastResult =
   | { ok: false; error: 'GENERATION_FAILED'; errorMessage: string };
 
 // ============================================================================
-// Helpers
-// ============================================================================
-
-/** 3-char axis codes for the plot (JA keeps its first three characters). */
-function abbr(name: string, locale: LocaleCode): string {
-  if (locale === 'ja' || locale === 'zh' || locale === 'ko') return name.slice(0, 3);
-  return name
-    .toUpperCase()
-    .replace(/[^\p{L}\p{N}]/gu, '')
-    .slice(0, 3);
-}
-
-// ============================================================================
 // Execute
 // ============================================================================
 
@@ -89,8 +77,8 @@ export async function executeContrast(input: ContrastInput): Promise<ContrastRes
           hexB: dyes[j].hex,
           nameA: localized[i],
           nameB: localized[j],
-          abbrA: abbr(localized[i], locale),
-          abbrB: abbr(localized[j], locale),
+          abbrA: abbreviateDyeName(localized[i], locale),
+          abbrB: abbreviateDyeName(localized[j], locale),
           ratio: contrastRatio(dyes[i].hex, dyes[j].hex),
         });
       }

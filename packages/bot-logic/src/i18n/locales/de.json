@@ -245,6 +245,9 @@
     "commands": "Befehle",
     "totalCount": "{count} insgesamt",
     "links": "Links",
+    "dyes": "Farbstoffe",
+    "builtOn": "Basiert auf",
+    "attribution": "Rechtliches",
     "poweredBy": "Powered by Cloudflare Workers",
     "categories": {
       "colorTools": "Farbwerkzeuge",
@@ -655,6 +658,7 @@
     "cat": "KATEGORIE",
     "idealKey": "Umriss = ideal · Fläche = gefunden",
     "bandKey": "Bänder: ≤6 / ≤12 / ≤20",
+    "derivedNote": "ΔE2000-Ableitung",
     "tier0": "EXAKT",
     "tier1": "NAH",
     "tier2": "LOSE",

@@ -245,6 +245,9 @@
     "commands": "コマンド",
     "totalCount": "合計{count}個",
     "links": "リンク",
+    "dyes": "カララント",
+    "builtOn": "使用技術",
+    "attribution": "権利表記",
     "poweredBy": "Cloudflare Workersで動作中",
     "categories": {
       "colorTools": "カラーツール",
@@ -655,6 +658,7 @@
     "cat": "カテゴリ",
     "idealKey": "枠線＝理想／塗り＝実在",
     "bandKey": "バンド: ≤6 / ≤12 / ≤20",
+    "derivedNote": "ΔE2000 導出",
     "tier0": "完全",
     "tier1": "近い",
     "tier2": "緩い",
