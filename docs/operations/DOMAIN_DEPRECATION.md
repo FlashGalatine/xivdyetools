@@ -125,11 +125,23 @@ genuinely new URL forces real verification.
 Diagnostic notes for next time — `npx wrangler tail` on the Worker while saving is the decisive
 instrument, and the error strings discriminate cleanly:
 
-| Log error | Meaning |
+**A healthy verification is exactly two POSTs**, confirmed by `wrangler tail` 2026-08-09: one
+validly signed → `200` with `Received PING, responding with PONG`, and one deliberately corrupt
+→ `401`. **The order is not fixed** — observed both ways across three attempts. Judge by the
+presence of the `200`, never by sequence.
+
+| Log pattern | Meaning |
 |---|---|
+| one `200` PONG + one `401` | healthy |
+| two `401`s, no `200` | the valid PING arrived and failed — key mismatch or altered body |
 | `Missing signature headers` (`packages/auth/src/discord.ts:83`) | headers stripped before the Worker — suspect edge/WAF |
-| `Invalid signature` (`discord.ts:109`) | headers arrived; key mismatch or altered body |
+| `Invalid signature` (`discord.ts:109`) | headers arrived; key or body wrong |
 | no request logged at all | blocked upstream; never reached the Worker |
+
+Note the discrimination that matters: **two `401`s is not the same as a blocked request.** It
+proves the valid PING reached the Worker and failed verification, which rules out edge/WAF
+causes and points squarely at the secret. Misreading that distinction cost the most time during
+this incident.
 
 **Audit the sibling apps.** The same drift is undetectable by inspection anywhere else. The main
 bot (`1447108133020369048`) is high-traffic, so a bad key there would be immediately obvious —
