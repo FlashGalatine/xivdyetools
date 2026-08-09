@@ -15,7 +15,7 @@
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { messageResponse, errorEmbed } from '../../utils/response.js';
+import { ephemeralResponse, errorEmbed } from '../../utils/response.js';
 import {
   getUserPreferences,
   setPreference,
@@ -133,9 +133,8 @@ export async function handlePreferencesCommand(
   const subcommandOption = options[0];
 
   if (!subcommandOption) {
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [errorEmbed(t.t('common.error'), t.t('preferences.errors.noSubcommand'))],
-      flags: 64,
     });
   }
 
@@ -155,9 +154,8 @@ export async function handlePreferencesCommand(
       // Subcommand group — filters set/show/reset
       const filterSubcommand = subcommandOption.options?.[0];
       if (!filterSubcommand) {
-        return messageResponse({
+        return ephemeralResponse({
           embeds: [errorEmbed(t.t('common.error'), t.t('preferences.errors.noSubcommand'))],
-          flags: 64,
         });
       }
       switch (filterSubcommand.name) {
@@ -168,17 +166,15 @@ export async function handlePreferencesCommand(
         case 'reset':
           return handleFiltersResetSubcommand(env, userId, t, logger);
         default:
-          return messageResponse({
+          return ephemeralResponse({
             embeds: [errorEmbed(t.t('common.error'), t.t('preferences.errors.noSubcommand'))],
-            flags: 64,
           });
       }
     }
 
     default:
-      return messageResponse({
+      return ephemeralResponse({
         embeds: [errorEmbed(t.t('common.error'), t.t('preferences.errors.noSubcommand'))],
-        flags: 64,
       });
   }
 }
@@ -248,7 +244,7 @@ async function handleShowSubcommand(
     ? { text: `Last updated: ${new Date(prefs.updatedAt).toLocaleString()}` }
     : { text: t.t('preferences.show.hint') };
 
-  return messageResponse({
+  return ephemeralResponse({
     embeds: [
       {
         title: `⚙️ ${t.t('preferences.title')}`,
@@ -281,11 +277,10 @@ async function handleSetSubcommand(
 ): Promise<Response> {
   // Check if any options were provided
   if (options.length === 0) {
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [
         errorEmbed(t.t('common.error'), t.t('preferences.set.noOptions')),
       ],
-      flags: 64,
     });
   }
 
@@ -315,11 +310,10 @@ async function handleSetSubcommand(
 
   // Check if any updates were attempted
   if (updates.length === 0) {
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [
         errorEmbed(t.t('common.error'), t.t('preferences.set.noValidOptions')),
       ],
-      flags: 64,
     });
   }
 
@@ -337,11 +331,10 @@ async function handleSetSubcommand(
       return `${emoji} **${label}**: ${reason}`;
     });
 
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [
         errorEmbed(t.t('common.error'), errorLines.join('\n\n')),
       ],
-      flags: 64,
     });
   }
 
@@ -383,7 +376,7 @@ async function handleSetSubcommand(
     ? `✅ ${t.t('preferences.set.success')}`
     : `✅ ${t.t('preferences.set.successCount', { count: successes.length })}`;
 
-  return messageResponse({
+  return ephemeralResponse({
     embeds: [
       {
         title,
@@ -427,14 +420,13 @@ async function handleResetSubcommand(
 
   // Validate key if provided
   if (key && !PREFERENCE_ORDER.includes(key)) {
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [
         errorEmbed(
           t.t('common.error'),
           t.t('preferences.errors.invalidKey', { key })
         ),
       ],
-      flags: 64,
     });
   }
 
@@ -442,9 +434,8 @@ async function handleResetSubcommand(
   const success = await resetPreference(env.KV, userId, key, logger);
 
   if (!success) {
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [errorEmbed(t.t('common.error'), t.t('preferences.reset.failed'))],
-      flags: 64,
     });
   }
 
@@ -453,7 +444,7 @@ async function handleResetSubcommand(
     const emoji = PREFERENCE_EMOJIS[key];
     const label = t.t(`preferences.keys.${key}`);
 
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [
         {
           title: `🔄 ${t.t('preferences.reset.success')}`,
@@ -463,7 +454,7 @@ async function handleResetSubcommand(
       ],
     });
   } else {
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [
         {
           title: `🔄 ${t.t('preferences.reset.allTitle')}`,
@@ -613,9 +604,8 @@ async function handleFiltersSetSubcommand(
   logger?: ExtendedLogger
 ): Promise<Response> {
   if (options.length === 0) {
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [errorEmbed(t.t('common.error'), t.t('preferences.filters.noOptions'))],
-      flags: 64,
     });
   }
 
@@ -634,9 +624,8 @@ async function handleFiltersSetSubcommand(
   }
 
   if (changes.length === 0) {
-    return messageResponse({
+    return ephemeralResponse({
       embeds: [errorEmbed(t.t('common.error'), t.t('preferences.filters.noOptions'))],
-      flags: 64,
     });
   }
 
@@ -646,7 +635,7 @@ async function handleFiltersSetSubcommand(
   const key = `prefs:v1:${userId}`;
   await env.KV.put(key, JSON.stringify(prefs));
 
-  return messageResponse({
+  return ephemeralResponse({
     embeds: [
       {
         title: `✅ ${t.t('preferences.filters.updated')}`,
@@ -679,7 +668,7 @@ async function handleFiltersShowSubcommand(
     return `${emoji} **${label}**: ${status}`;
   });
 
-  return messageResponse({
+  return ephemeralResponse({
     embeds: [
       {
         title: `🔍 ${t.t('preferences.filters.title')}`,
@@ -714,7 +703,7 @@ async function handleFiltersResetSubcommand(
     await env.KV.delete(key);
   }
 
-  return messageResponse({
+  return ephemeralResponse({
     embeds: [
       {
         title: `🔄 ${t.t('preferences.filters.resetSuccess')}`,
