@@ -1,0 +1,33 @@
+{
+  "name": "xivdyetools-image-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "XIV Dye Tools Image Worker - photon-backed image decode and pixel extraction",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:production": "wrangler deploy --env production",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@cloudflare/workers-types": "^5.20260727.1",
+    "@xivdyetools/logger": "workspace:*",
+    "@xivdyetools/worker-kit": "workspace:*",
+    "hono": "^4.12.34"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.10",
+    "@types/node": "^26.1.2",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.114.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

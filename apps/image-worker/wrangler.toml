@@ -1,0 +1,15 @@
+# Adopts the BUG-008 pattern from birth (see docs/operations/DEPLOY_ENVIRONMENTS.md):
+# the default (top-level) env is a separate dev worker with its own name and NO
+# routes, so a plain `wrangler deploy` can never overwrite production. Production
+# config lives exclusively under [env.production].
+name = "xivdyetools-image-worker-dev"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+# ARCH-001: no nodejs_compat — no Node.js APIs used
+workers_dev = true
+
+[env.production]
+name = "xivdyetools-image-worker"
+# No routes and no workers_dev: reachable ONLY via service binding from
+# discord-worker. There is deliberately no public surface.
+workers_dev = false
