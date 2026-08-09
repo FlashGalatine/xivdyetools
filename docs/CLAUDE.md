@@ -18,7 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Monorepo Quick Reference
 
-**16 Active Projects** (8 packages + 8 applications) — see [versions.md](versions.md) for current versions.
+**17 Active Projects** (8 packages + 9 applications) — see [versions.md](versions.md) for current versions.
 
 The dye database is **125 standard dyes** (`dyes.json`, schema v2: 7 fields, stainID-keyed; derived fields computed at `initialize()`). The 11 Facewear colors live separately in `facewearColors` (they are not dyes).
 

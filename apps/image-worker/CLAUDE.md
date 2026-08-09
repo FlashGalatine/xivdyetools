@@ -88,11 +88,13 @@ POST /extract
 ```
 
 **The error contract is verbatim.** `discord-worker`'s `extractor.ts` substring-matches the
-`error` field against fragments like `'Discord CDN'`, `'too large'`, `'format'` to choose a
-localized user-facing message. `index.ts`'s `catch` block returns `error.message` unmodified for
-every thrown `Error` (only non-`Error` throws fall back to a generic message). **Never reword,
-truncate, or generalize an error message thrown from `validators.ts` or `photon.ts`** — doing so
-silently breaks the caller's message-matching without failing any type check.
+`error` field against all five fragments `'SSRF'`, `'Discord CDN'`, `'too large'`, `'format'`,
+`'timeout'` (source of truth: `apps/discord-worker/src/handlers/commands/extractor.ts:536-543`)
+to choose a localized user-facing message. `index.ts`'s `catch` block returns `error.message`
+unmodified for every thrown `Error` (only non-`Error` throws fall back to a generic message).
+**Never reword, truncate, or generalize an error message thrown from `validators.ts` or
+`photon.ts`** — doing so silently breaks the caller's message-matching without failing any type
+check.
 
 ### Response size bound
 
