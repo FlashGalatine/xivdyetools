@@ -1,12 +1,20 @@
-name = "xivdyetools-moderation-worker"
+# DEPLOY_ENVIRONMENTS (docs/operations/DEPLOY_ENVIRONMENTS.md): the default
+# (top-level) env is a separate dev worker with its own name and NO routes, so
+# a plain `wrangler deploy` can never overwrite the production moderation bot.
+# Production config lives exclusively under [env.production] and ships via
+# `wrangler deploy --env production`.
+#
+# `routes` and `workers_dev` are INHERITABLE keys: a named environment takes
+# the top-level value unless it overrides it. `routes` therefore MOVED into
+# [env.production] — leaving it here would attach the production custom
+# domains to the dev worker.
+name = "xivdyetools-moderation-worker-dev"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 # ARCH-001: nodejs_compat removed — no Node.js APIs used
-
-routes = [
-  { pattern = "moderation-bot.xivdyetools.app", custom_domain = true },
-  { pattern = "moderation-bot.xivdyetools.projectgalatine.com", custom_domain = true }
-]
+# No reachable dev URL is needed: nothing binds to the dev worker, and the
+# moderation bot's interactions endpoint points at the production domain.
+workers_dev = false
 
 [[kv_namespaces]]
 binding = "KV"
@@ -31,6 +39,10 @@ PRESETS_API_URL = "https://api.xivdyetools.app"
 
 [env.production]
 name = "xivdyetools-moderation-worker"
+routes = [
+  { pattern = "moderation-bot.xivdyetools.app", custom_domain = true },
+  { pattern = "moderation-bot.xivdyetools.projectgalatine.com", custom_domain = true }
+]
 
 [env.production.vars]
 DISCORD_CLIENT_ID = "1453806659708129374"

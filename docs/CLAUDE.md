@@ -94,7 +94,9 @@ pnpm --filter xivdyetools-presets-api run dev       # localhost:8787
 ### Worker Deployment
 
 ```bash
-pnpm --filter xivdyetools-discord-worker run deploy              # Staging
+pnpm --filter xivdyetools-discord-worker run deploy              # BETA bot (…-dev, *.workers.dev)
+# NOTE: a bare `deploy` targets the DEV/BETA worker on every app. Production always
+# needs an explicit `--env production`. See docs/operations/DEPLOY_ENVIRONMENTS.md.
 pnpm --filter xivdyetools-discord-worker run deploy:production   # Production
 pnpm --filter xivdyetools-discord-worker run register-commands   # Register slash commands
 ```

@@ -12,7 +12,7 @@ This worker replaces the deprecated `xivdyetools-discord-bot` (Node.js + discord
 
 ```bash
 npm run dev                  # wrangler dev (local interactions endpoint)
-npm run deploy               # Deploy to staging (default env)
+npm run deploy               # Deploy the BETA bot (xivdyetools-discord-worker-dev, *.workers.dev)
 npm run deploy:production    # Deploy to production env
 npm run test                 # vitest unit tests
 npm run test:integration     # vitest integration tests (separate config)

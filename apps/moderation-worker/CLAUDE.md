@@ -12,7 +12,7 @@ This split keeps the privileged moderation surface (ban/unban, approve/reject, r
 
 ```bash
 npm run dev                  # wrangler dev
-npm run deploy               # Deploy to staging
+npm run deploy               # Deploy to the DEV worker (xivdyetools-moderation-worker-dev, no routes)
 npm run deploy:production    # Deploy to production env
 npm run test                 # vitest unit tests
 npm run test:coverage        # Coverage via @vitest/coverage-v8

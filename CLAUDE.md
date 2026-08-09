@@ -78,7 +78,9 @@ pnpm --filter xivdyetools-stoat-worker run dev     # tsx watch (Node.js)
 Workers additionally support:
 
 ```bash
-pnpm --filter xivdyetools-discord-worker run deploy              # Staging
+pnpm --filter xivdyetools-discord-worker run deploy              # BETA bot (…-dev, *.workers.dev)
+# NOTE: a bare `deploy` targets the DEV/BETA worker on every app. Production always
+# needs an explicit `--env production`. See docs/operations/DEPLOY_ENVIRONMENTS.md.
 pnpm --filter xivdyetools-discord-worker run deploy:production   # Production
 ```
 

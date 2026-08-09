@@ -1,12 +1,19 @@
-name = "xivdyetools-presets-api"
+# DEPLOY_ENVIRONMENTS (docs/operations/DEPLOY_ENVIRONMENTS.md): the default
+# (top-level) env is a separate dev worker with its own name and NO routes, so
+# a plain `wrangler deploy` can never overwrite the production API on
+# api.xivdyetools.app with the development vars below (note CORS_ORIGIN is
+# localhost here). Production config lives exclusively under [env.production]
+# and ships via `wrangler deploy --env production`.
+#
+# `routes` and `workers_dev` are INHERITABLE keys: a named environment takes
+# the top-level value unless it overrides it. `routes` therefore MOVED into
+# [env.production] — leaving it here would attach the production custom
+# domains to the dev worker.
+name = "xivdyetools-presets-api-dev"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 # ARCH-001: nodejs_compat removed — no Node.js APIs used
-
-routes = [
-  { pattern = "api.xivdyetools.app", custom_domain = true },
-  { pattern = "api.xivdyetools.projectgalatine.com", custom_domain = true }
-]
+workers_dev = false
 
 [dev]
 port = 8787
@@ -28,7 +35,11 @@ CORS_ORIGIN = "http://localhost:5173"
 
 [env.production]
 name = "xivdyetools-presets-api"
-vars = { ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com" }
+routes = [
+  { pattern = "api.xivdyetools.app", custom_domain = true },
+  { pattern = "api.xivdyetools.projectgalatine.com", custom_domain = true }
+]
+vars ={ ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com" }
 
 [[env.production.d1_databases]]
 binding = "DB"

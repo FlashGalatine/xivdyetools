@@ -1,9 +1,35 @@
 # Deploy Environments and the Beta Test Bot
 
-**Status:** design approved 2026-08-09, not yet implemented
-**⚠️ Blocked by:** `docs/operations/IMAGE_WORKER_SPLIT.md`. `discord-worker` currently exceeds
-Cloudflare's 3 MiB Worker size limit (3,209 KiB gzipped) and **cannot deploy at all** — beta
-included. The image-worker split must land before any step in this runbook can be exercised.
+**Status:** **config implemented 2026-08-09.** The three `wrangler.toml` files, the isolated KV
+namespace, and the documentation corrections are done. The remaining steps are the manual
+Discord-portal ones in the runbook below.
+
+**Blocker cleared:** `docs/operations/IMAGE_WORKER_SPLIT.md` shipped — `discord-worker` is
+2,589.70 KiB gzipped against the 3,072 KiB limit, and `xivdyetools-image-worker` is deployed, so
+the `IMAGE_WORKER` binding resolves.
+
+### What changed in the config
+
+| Worker | Top-level name (bare `deploy`) | Routes |
+|---|---|---|
+| `discord-worker` | `xivdyetools-discord-worker-dev` — **the beta bot**, `workers_dev = true` | moved to `[env.production]` |
+| `moderation-worker` | `xivdyetools-moderation-worker-dev`, `workers_dev = false` | moved to `[env.production]` |
+| `presets-api` | `xivdyetools-presets-api-dev`, `workers_dev = false` | moved to `[env.production]` |
+
+Beta bot bindings: isolated KV `7d76d17fbb16403c8bf40e16f5b58ba6`, isolated Analytics Engine
+dataset `xivdyetools_bot_analytics_beta`, shared D1 and shared `PRESETS_API` / `UNIVERSALIS_PROXY`
+/ `IMAGE_WORKER` service bindings. `DISCORD_CLIENT_ID` is the beta app, `1536085517270261771`.
+
+**Two traps found while implementing, recorded so they are not re-discovered:**
+
+1. **`routes` and `workers_dev` are INHERITABLE wrangler keys** — a named environment takes the
+   top-level value unless it overrides it. So `routes` had to *move* into `[env.production]`,
+   not be copied: left at the top level after the rename, the dev Worker would have claimed
+   `bot.xivdyetools.app`. Both keys are now declared explicitly in both environments.
+2. **`vars` are NOT inheritable.** `[env.production.vars]` was missing `ANNOUNCEMENT_CHANNEL_ID`,
+   which did not matter while both environments deployed to the same Worker. Separating them
+   would have silently dropped the GitHub release-announcement channel from production. It is
+   now declared in both.
 **Scope:** `discord-worker`, `moderation-worker`, `presets-api` wrangler config; a new beta
 Discord application; documentation corrections.
 

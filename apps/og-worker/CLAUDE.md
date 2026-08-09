@@ -15,7 +15,7 @@ All nine tools are supported: harmony, gradient, mixer, swatch, comparison, acce
 
 ```bash
 pnpm dev                    # wrangler dev
-pnpm deploy                 # Deploy to staging (default env)
+pnpm deploy                 # Deploy to the DEV worker (xivdyetools-og-worker-dev, no routes)
 pnpm deploy:production      # Deploy to env.production
 pnpm test                   # vitest run
 pnpm test:watch             # vitest in watch mode

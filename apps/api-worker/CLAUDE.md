@@ -12,7 +12,7 @@ The API is anonymous (no auth, no API key) with permissive CORS so it can be cal
 
 ```bash
 pnpm dev                    # wrangler dev on http://localhost:8790
-pnpm deploy                 # Deploy to staging (default env)
+pnpm deploy                 # Deploy to the DEV worker (xivdyetools-api-worker-dev, no routes)
 pnpm deploy:production      # Deploy to env.production
 pnpm test                   # vitest run
 pnpm test:watch             # vitest in watch mode

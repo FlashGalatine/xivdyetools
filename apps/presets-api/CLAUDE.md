@@ -12,7 +12,7 @@ This is the only D1 owner for `xivdyetools-presets`; sibling workers (`discord-w
 
 ```bash
 npm run dev                  # wrangler dev (port 8787)
-npm run deploy               # Deploy to staging
+npm run deploy               # Deploy to the DEV worker (xivdyetools-presets-api-dev, no routes)
 npm run deploy:production    # Deploy to production env
 npm run test                 # vitest
 npm run test:coverage        # Coverage via @vitest/coverage-v8
