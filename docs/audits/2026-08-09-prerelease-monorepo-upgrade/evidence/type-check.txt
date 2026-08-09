@@ -1,0 +1,101 @@
+
+   • Packages in scope: @xivdyetools/auth, @xivdyetools/bot-logic, @xivdyetools/core, @xivdyetools/logger, @xivdyetools/svg, @xivdyetools/test-utils, @xivdyetools/types, @xivdyetools/worker-kit, xivdyetools-api-worker, xivdyetools-discord-worker, xivdyetools-moderation-worker, xivdyetools-oauth-worker, xivdyetools-og-worker, xivdyetools-presets-api, xivdyetools-stoat-worker, xivdyetools-web-app
+   • Running type-check in 16 packages
+   • Remote caching disabled
+
+@xivdyetools/auth:type-check: cache hit, replaying logs 0413ee279fd2c82a
+@xivdyetools/auth:type-check: $ tsc --noEmit
+@xivdyetools/logger:type-check: cache hit, replaying logs 5dd003b6758d8379
+@xivdyetools/logger:type-check: $ tsc --noEmit
+@xivdyetools/types:type-check: cache hit, replaying logs bfaaf2746c5a63ba
+@xivdyetools/types:type-check: $ tsc --noEmit
+@xivdyetools/auth:build: cache hit, replaying logs ec51b2fe1b3f7081
+@xivdyetools/auth:build: $ tsc -p tsconfig.build.json
+@xivdyetools/logger:build: cache hit, replaying logs ad13c8e51c8fbeaa
+@xivdyetools/logger:build: $ tsc -p tsconfig.build.json
+@xivdyetools/worker-kit:type-check: cache hit, replaying logs c8493b3a4fcb4160
+@xivdyetools/worker-kit:type-check: $ tsc --noEmit
+@xivdyetools/types:build: cache hit, replaying logs 09c078c8cac6fa3d
+@xivdyetools/types:build: $ tsc -p tsconfig.build.json
+@xivdyetools/test-utils:type-check: cache hit, replaying logs 49163009ffaca7be
+@xivdyetools/test-utils:type-check: $ tsc --noEmit
+@xivdyetools/core:type-check: cache hit, replaying logs 3ff92d1bfad9d1e9
+@xivdyetools/core:type-check: $ tsc --noEmit
+@xivdyetools/worker-kit:build: cache hit, replaying logs 7aa117d347068f7c
+@xivdyetools/worker-kit:build: $ tsc -p tsconfig.build.json
+@xivdyetools/test-utils:build: cache hit, replaying logs 33363915f4720734
+@xivdyetools/test-utils:build: $ tsc -p tsconfig.build.json
+xivdyetools-presets-api:type-check: cache hit, replaying logs dda1351419169b3f
+xivdyetools-presets-api:type-check: $ tsc --noEmit
+xivdyetools-oauth-worker:type-check: cache hit, replaying logs 04e28df650d251d8
+xivdyetools-oauth-worker:type-check: $ tsc --noEmit
+@xivdyetools/core:build: cache hit, replaying logs c3be41c8ac37d8dc
+@xivdyetools/core:build: $ npm run build:version && npm run build:locales && tsc -p tsconfig.build.json && npm run copy:locales
+@xivdyetools/core:build: 
+@xivdyetools/core:build: > @xivdyetools/core@4.0.0 build:version
+@xivdyetools/core:build: > tsx scripts/generate-version.ts
+@xivdyetools/core:build: 
+@xivdyetools/core:build: Generated version.ts with VERSION = '4.0.0'
+@xivdyetools/core:build: 
+@xivdyetools/core:build: > @xivdyetools/core@4.0.0 build:locales
+@xivdyetools/core:build: > tsx scripts/build-locales.ts
+@xivdyetools/core:build: 
+@xivdyetools/core:build: 🌐 Building locale files...
+@xivdyetools/core:build: 
+@xivdyetools/core:build: Building English (en)...
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\en.json (125 dyes)
+@xivdyetools/core:build: 
+@xivdyetools/core:build: Building Japanese (ja)...
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\ja.json (125 dyes)
+@xivdyetools/core:build: 
+@xivdyetools/core:build: Building German (de)...
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\de.json (125 dyes)
+@xivdyetools/core:build: 
+@xivdyetools/core:build: Building French (fr)...
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\fr.json (125 dyes)
+@xivdyetools/core:build: 
+@xivdyetools/core:build: Building Korean (ko)...
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\ko.json (125 dyes)
+@xivdyetools/core:build: 
+@xivdyetools/core:build: Building Chinese (zh)...
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\packages\core\src\data\locales\zh.json (125 dyes)
+@xivdyetools/core:build: 
+@xivdyetools/core:build: ✅ Locale files already up to date (nothing written).
+@xivdyetools/core:build: 
+@xivdyetools/core:build: > @xivdyetools/core@4.0.0 copy:locales
+@xivdyetools/core:build: > tsx scripts/copy-locales.ts
+@xivdyetools/core:build: 
+@xivdyetools/core:build: 📦 Copying 6 locale files to dist...
+@xivdyetools/core:build:    ✓ de.json
+@xivdyetools/core:build:    ✓ en.json
+@xivdyetools/core:build:    ✓ fr.json
+@xivdyetools/core:build:    ✓ ja.json
+@xivdyetools/core:build:    ✓ ko.json
+@xivdyetools/core:build:    ✓ zh.json
+@xivdyetools/core:build: ✅ Locale files copied to C:\dev\XIVProjects\xivdyetools\packages\core\dist\data\locales
+@xivdyetools/svg:type-check: cache hit, replaying logs 3f1e942ad239b1c8
+@xivdyetools/svg:type-check: $ tsc --noEmit
+xivdyetools-api-worker:type-check: cache hit, replaying logs fcad4c92a329808b
+xivdyetools-api-worker:type-check: $ tsc --noEmit
+@xivdyetools/svg:build: cache hit, replaying logs 2d665728ef33938f
+@xivdyetools/svg:build: $ tsc -p tsconfig.build.json
+xivdyetools-web-app:type-check: cache hit, replaying logs f20d7ee59638bfc6
+xivdyetools-web-app:type-check: $ tsc --noEmit
+@xivdyetools/bot-logic:type-check: cache hit, replaying logs 686ae6ccaf5e0351
+xivdyetools-og-worker:type-check: cache miss, executing 9828688c8b02458f
+@xivdyetools/bot-logic:type-check: $ tsc --noEmit
+@xivdyetools/bot-logic:build: cache hit, replaying logs fbfe30c9c2f33ef3
+@xivdyetools/bot-logic:build: $ tsc -p tsconfig.build.json
+xivdyetools-discord-worker:type-check: cache hit, replaying logs 780db31b22cae4f4
+xivdyetools-discord-worker:type-check: $ tsc --noEmit
+xivdyetools-moderation-worker:type-check: cache hit, replaying logs d970d327c8cf77fa
+xivdyetools-moderation-worker:type-check: $ tsc --noEmit
+xivdyetools-stoat-worker:type-check: cache hit, replaying logs 81e555fc59a396b4
+xivdyetools-stoat-worker:type-check: $ tsc --noEmit
+xivdyetools-og-worker:type-check: $ tsc --noEmit
+
+ Tasks:    24 successful, 24 total
+Cached:    23 cached, 24 total
+  Time:    2.621s 
+
+TYPECHECK_EXIT=0
