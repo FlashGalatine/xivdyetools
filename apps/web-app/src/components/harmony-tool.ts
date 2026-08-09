@@ -127,6 +127,8 @@ export class HarmonyTool extends BaseComponent {
   private dyeFiltersConfig: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
   /** Tracks user-swapped dyes per harmony slot (harmonyIndex -> swapped dye) */
   private swappedDyes: Map<number, Dye> = new Map();
+  /** The dye each harmony slot is currently showing — the wheel mirrors this */
+  private slotDyes: Dye[] = [];
   /** V4 result card elements for updating prices after fetch */
   private v4ResultCards: ResultCard[] = [];
 
@@ -1071,6 +1073,10 @@ export class HarmonyTool extends BaseComponent {
       const matchedDyes = this.getMatchedDyesForCurrentHarmony();
 
       wheel.setAttribute('base-color', this.selectedDye.hex);
+      wheel.setAttribute(
+        'base-name',
+        LanguageService.getDyeName(this.selectedDye.itemID) || this.selectedDye.name
+      );
       wheel.harmonyColors = matchedDyes.map((dye) => dye.hex);
       wheel.harmonyDyes = matchedDyes;
     } else {
@@ -1085,6 +1091,13 @@ export class HarmonyTool extends BaseComponent {
         this.selectDye(Array.isArray(nearest) ? nearest[0] : nearest);
       }
     }) as EventListener);
+
+    // 1A: the hub is the base-dye button — it opens the picker
+    wheel.addEventListener('hub-click', () => {
+      this.container.dispatchEvent(
+        new CustomEvent('open-palette-drawer', { bubbles: true, composed: true })
+      );
+    });
 
     this.colorWheelContainer.appendChild(wheel);
   }
@@ -1322,9 +1335,6 @@ export class HarmonyTool extends BaseComponent {
     this.v4ResultCards = []; // Clear v4 card references
     clearContainer(this.harmonyGridContainer);
 
-    // Update color wheel
-    this.renderColorWheel();
-
     // Get offsets for the SELECTED harmony type only
     const offsets = HARMONY_OFFSETS[this.selectedHarmonyType] || [];
     const baseHsv = ColorService.hexToHsv(this.selectedDye.hex);
@@ -1343,6 +1353,7 @@ export class HarmonyTool extends BaseComponent {
     // Track dyes already used across slots to prevent duplicates
     const usedDyeIds = new Set<number>();
     usedDyeIds.add(this.selectedDye.itemID);
+    this.slotDyes = [];
 
     // Render Harmony panels for each offset in the selected harmony type
     offsets.forEach((offset, index) => {
@@ -1377,6 +1388,9 @@ export class HarmonyTool extends BaseComponent {
         deviance = matches[0].deviance;
       }
 
+      // Record what this slot shows so the wheel can mirror the grid
+      this.slotDyes[index] = displayDye;
+
       // Closest dyes excludes the currently displayed dye
       // When dedup is on, also exclude dyes already used in other slots
       const closestDyes = matches
@@ -1404,6 +1418,9 @@ export class HarmonyTool extends BaseComponent {
         onSwapDye: (dye) => this.handleSwapDye(index, dye),
       });
     });
+
+    // The wheel mirrors the grid, so it renders once the slots are decided
+    this.renderColorWheel();
 
     logger.info(
       '[HarmonyTool] Generated harmonies for:',
@@ -1600,11 +1617,15 @@ export class HarmonyTool extends BaseComponent {
   }
 
   /**
-   * Get matched dyes for the current harmony type (for color wheel)
+   * The dyes the result grid is actually showing, slot by slot.
+   *
+   * The wheel used to call the generator again on its own, which meant no
+   * dedup and no user swaps: with a companion count above 1, node N showed a
+   * lower-ranked companion of slot 1, and tapping it jumped to a dye no card
+   * displayed. The grid records what it rendered and the wheel mirrors it.
    */
   private getMatchedDyesForCurrentHarmony(): Dye[] {
-    const matches = this.findHarmonyDyesInternal(this.selectedHarmonyType);
-    return matches.map((m) => m.dye);
+    return this.slotDyes;
   }
 
   /**

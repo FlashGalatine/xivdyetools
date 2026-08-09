@@ -648,6 +648,14 @@ export class V4LayoutShell extends BaseLitComponent {
   }
 
   /**
+   * A tool asked for the picker (1A's hub button). The drawer is the app's
+   * dye picker, so "open the sheet" means reveal it.
+   */
+  private handleOpenPaletteDrawer(): void {
+    this.paletteDrawerOpen = true;
+  }
+
+  /**
    * Handle dye selection from DyePaletteDrawer
    * Re-emits for parent to route to active tool
    */
@@ -755,7 +763,12 @@ export class V4LayoutShell extends BaseLitComponent {
         ></div>
 
         <!-- Content Area -->
-        <main class="v4-layout-content" id="main-content" role="main">
+        <main
+          class="v4-layout-content"
+          id="main-content"
+          role="main"
+          @open-palette-drawer=${this.handleOpenPaletteDrawer}
+        >
           <div class="v4-layout-content-scroll">
             <slot></slot>
           </div>

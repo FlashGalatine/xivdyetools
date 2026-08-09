@@ -16,7 +16,7 @@
  * @module components/v4/v4-color-wheel
  */
 
-import { html, css, CSSResultGroup, TemplateResult, nothing } from 'lit';
+import { html, css, CSSResultGroup, TemplateResult } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { BaseLitComponent } from './base-lit-component';
 import { LanguageService } from '@services/index';
@@ -32,7 +32,10 @@ export type HarmonyType =
   | 'split-complementary'
   | 'tetradic'
   | 'inverted-tetradic'
-  | 'square';
+  | 'square'
+  | 'monochromatic'
+  | 'compound'
+  | 'shades';
 
 /**
  * V4 Color Wheel - Modern CSS-based harmony visualization
@@ -63,6 +66,12 @@ export class V4ColorWheel extends BaseLitComponent {
    */
   @property({ type: String, attribute: 'harmony-type' })
   harmonyType: HarmonyType = 'tetradic';
+
+  /**
+   * Base dye's display name, shown in the hub (falls back to the hex)
+   */
+  @property({ type: String, attribute: 'base-name' })
+  baseName: string = '';
 
   /**
    * Harmony colors to display (hex strings with #)
@@ -117,39 +126,52 @@ export class V4ColorWheel extends BaseLitComponent {
         -webkit-mask-image: radial-gradient(transparent 60%, black 61%);
       }
 
-      /* Harmony node dots */
+      /* 1A: node pucks — 42px tap targets, not 14px dots */
       .harmony-node {
         position: absolute;
-        width: 14px;
-        height: 14px;
+        width: 42px;
+        height: 42px;
+        padding: 0;
         background: var(--theme-card-background, #1e1e1e);
-        border: 2px solid #fff;
+        border: 3px solid var(--theme-background, #0b0b0c);
         border-radius: 50%;
         transform: translate(-50%, -50%);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
         z-index: 2;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Fragment Mono', monospace;
+        font-size: 12px;
+        line-height: 1;
         transition:
           transform 0.15s,
           box-shadow 0.15s;
       }
 
       .harmony-node:hover {
-        transform: translate(-50%, -50%) scale(1.2);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+        transform: translate(-50%, -50%) scale(1.08);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.55);
       }
 
+      .harmony-node:focus-visible {
+        outline: 2px solid var(--theme-primary, #ea4133);
+        outline-offset: 2px;
+      }
+
+      /* The base's own position on the ring — ringed, never numbered */
       .harmony-node.main {
-        width: 18px;
-        height: 18px;
-        border: 3px solid #fff;
         z-index: 3;
+        box-shadow:
+          0 0 0 2px var(--theme-primary, #ea4133),
+          0 2px 6px rgba(0, 0, 0, 0.45);
       }
 
       /* Empty state for nodes */
       .harmony-node.empty {
-        background-color: rgba(255, 255, 255, 0.1);
-        border: 2px dashed rgba(255, 255, 255, 0.3);
+        background-color: rgba(127, 127, 127, 0.12);
+        border: 2px dashed var(--theme-border, rgba(255, 255, 255, 0.3));
         cursor: default;
       }
 
@@ -175,23 +197,49 @@ export class V4ColorWheel extends BaseLitComponent {
         border-top: 1px dashed rgba(255, 255, 255, 0.2);
       }
 
-      /* Center swatch display */
+      /* 1A hub: 114px button carrying the base dye — tapping opens the picker */
       .main-swatch-display {
         position: absolute;
-        width: 120px;
-        height: 120px;
+        width: 114px;
+        height: 114px;
+        padding: 6px;
         border-radius: 50%;
         box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
-        border: 4px solid var(--theme-card-background, #121212);
+        border: 4px solid var(--theme-background, #0b0b0c);
         z-index: 10;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
+        gap: 3px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      .main-swatch-display:focus-visible {
+        outline: 2px solid var(--theme-primary, #ea4133);
+        outline-offset: 3px;
+      }
+
+      .hub-label {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 8px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        opacity: 0.75;
+      }
+
+      .hub-name {
+        font-weight: 600;
+        font-size: 12px;
+        line-height: 1.15;
+        text-align: center;
+        overflow-wrap: anywhere;
       }
 
       .main-swatch-display.empty {
         background-color: transparent;
-        border: 3px dashed rgba(255, 255, 255, 0.3);
+        border: 3px dashed var(--theme-border, rgba(255, 255, 255, 0.3));
         box-shadow: none;
       }
 
@@ -252,6 +300,17 @@ export class V4ColorWheel extends BaseLitComponent {
         return [0, 120, 180, 300];
       case 'square':
         return [0, 90, 180, 270];
+      // The three types that drew no nodes at all. Offsets mirror
+      // HARMONY_OFFSETS in harmony-generator — the wheel and the grid have to
+      // be describing the same geometry.
+      case 'compound':
+        return [0, 30, 180, 330];
+      case 'shades':
+        return [0, 15, 345];
+      case 'monochromatic':
+        // One companion at the base's own hue: it varies in value, not hue,
+        // so it shares the spoke and is staggered inward (see hueToPosition).
+        return [0, 0];
       default:
         return [0];
     }
@@ -261,9 +320,10 @@ export class V4ColorWheel extends BaseLitComponent {
    * Convert hue to position on the wheel
    * Returns {top, left} as percentage strings
    */
-  private hueToPosition(hue: number): { top: string; left: string } {
-    // Wheel radius is approximately 35% of container (nodes sit on the ring)
-    const radius = 42; // percentage from center
+  private hueToPosition(hue: number, depth: number = 0): { top: string; left: string } {
+    // Nodes sit on the ring; `depth` pulls coincident nodes inward along the
+    // same spoke so a monochromatic pair reads as two dyes, not one puck.
+    const radius = 42 - depth * 13; // percentage from center
     const angleRad = ((hue - 90) * Math.PI) / 180; // -90 to start from top
 
     const x = 50 + radius * Math.cos(angleRad);
@@ -363,16 +423,29 @@ export class V4ColorWheel extends BaseLitComponent {
    * Render harmony nodes
    */
   private renderHarmonyNodes(): TemplateResult[] {
+    const harmonyAngles = this.getHarmonyAngles();
+    // Nodes sharing a spoke step inward so none is hidden under another
+    const seenAngles = new Map<number, number>();
+    const depthFor = (angle: number): number => {
+      const key = Math.round(angle) % 360;
+      const depth = seenAngles.get(key) ?? 0;
+      seenAngles.set(key, depth + 1);
+      return depth;
+    };
+
     if (this.empty) {
       // Show placeholder nodes for empty state
-      const angles = this.getHarmonyAngles();
-      return angles.map((angle, index) => {
-        const pos = this.hueToPosition(angle);
+      return harmonyAngles.map((angle, index) => {
+        const pos = this.hueToPosition(angle, depthFor(angle));
         return html`
           <div
             class="harmony-node empty ${index === 0 ? 'main' : ''}"
             style="top: ${pos.top}; left: ${pos.left};"
-            title="${index === 0 ? 'Select a base color' : 'Harmony color'}"
+            title="${
+              index === 0
+                ? LanguageService.t('harmony.selectColorPrompt')
+                : `${LanguageService.t('harmony.harmony')} ${index}`
+            }"
           ></div>
         `;
       });
@@ -381,39 +454,53 @@ export class V4ColorWheel extends BaseLitComponent {
     if (!this.baseColor) return [];
 
     const baseHue = this.hexToHue(this.baseColor);
-    const harmonyAngles = this.getHarmonyAngles();
     const nodes: TemplateResult[] = [];
 
-    // Base color node
-    const basePos = this.hueToPosition(baseHue);
+    // Base color node — its position on the ring, ringed rather than numbered
+    const basePos = this.hueToPosition(baseHue, depthFor(baseHue));
     nodes.push(html`
-      <div
+      <button
+        type="button"
         class="harmony-node main"
         style="top: ${basePos.top}; left: ${basePos.left}; background-color: ${this.baseColor};"
-        title="Base: ${this.baseColor}"
+        title="${LanguageService.t('harmony.baseColorSection')}: ${this.baseColor.toUpperCase()}"
         @click=${() => this.handleNodeClick(this.baseColor, baseHue)}
-      ></div>
+      ></button>
     `);
 
-    // Harmony nodes
+    // Harmony nodes, numbered to match the result cards' "Harmony N" labels
     harmonyAngles.slice(1).forEach((offset, index) => {
       const hue = (baseHue + offset) % 360;
-      const pos = this.hueToPosition(hue);
+      const pos = this.hueToPosition(hue, depthFor(hue));
       const color = this.harmonyColors[index] || this.baseColor;
       const dye = this.harmonyDyes[index];
-      const title = dye ? dye.name : color;
+      const slot = `${LanguageService.t('harmony.harmony')} ${index + 1}`;
+      const title = dye ? `${slot} · ${dye.name}` : `${slot} · ${color.toUpperCase()}`;
 
       nodes.push(html`
-        <div
+        <button
+          type="button"
           class="harmony-node"
-          style="top: ${pos.top}; left: ${pos.left}; background-color: ${color};"
+          style="top: ${pos.top}; left: ${pos.left}; background-color: ${color}; color: ${this.inkOn(color)};"
           title="${title}"
           @click=${() => this.handleNodeClick(color, hue)}
-        ></div>
+        >
+          ${index + 1}
+        </button>
       `);
     });
 
     return nodes;
+  }
+
+  /** Readable ink for text sitting on a coloured puck. */
+  private inkOn(hex: string): string {
+    if (!hex || hex.length < 7) return '#fff';
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5 ? 'rgba(10,10,12,0.8)' : 'rgba(255,255,255,0.9)';
   }
 
   protected override render(): TemplateResult {
@@ -432,16 +519,27 @@ export class V4ColorWheel extends BaseLitComponent {
         <!-- Harmony nodes -->
         ${this.renderHarmonyNodes()}
 
-        <!-- Center swatch display -->
-        <div
+        <!-- 1A hub: the base dye lives here, and tapping it opens the picker -->
+        <button
+          type="button"
           class="main-swatch-display ${this.empty ? 'empty' : ''}"
-          style="${swatchStyle}"
+          style="${swatchStyle}${this.empty ? '' : ` color: ${this.inkOn(this.baseColor)};`}"
           title="${
-            this.empty ? LanguageService.t('harmony.selectColorPrompt') : `Base: ${this.baseColor}`
+            this.empty
+              ? LanguageService.t('harmony.selectColorPrompt')
+              : LanguageService.t('harmony.selectDye')
           }"
+          @click=${() => this.emit('hub-click', {})}
         >
-          ${this.empty ? html`<span class="empty-placeholder">?</span>` : nothing}
-        </div>
+          ${
+            this.empty
+              ? html`<span class="empty-placeholder">?</span>`
+              : html`
+                  <span class="hub-label">${LanguageService.t('harmony.baseColorSection')}</span>
+                  <span class="hub-name">${this.baseName || this.baseColor.toUpperCase()}</span>
+                `
+          }
+        </button>
 
         <!-- Harmony type label -->
         <span class="harmony-label ${this.empty ? 'empty' : ''}">
