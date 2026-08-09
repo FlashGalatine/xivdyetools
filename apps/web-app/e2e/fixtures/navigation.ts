@@ -15,6 +15,7 @@
  * @module e2e/fixtures/navigation
  */
 
+import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 
 /** Route path per tool id (mirrors ROUTES in services/router-service). */
@@ -71,19 +72,46 @@ export async function switchToolViaMenu(page: Page, toolId: string): Promise<voi
 }
 
 /**
+ * The app's real version, read from package.json — the same source Vite feeds
+ * into `__APP_VERSION__`.
+ */
+const APP_VERSION = JSON.parse(
+  readFileSync(new URL('../../package.json', import.meta.url), 'utf8')
+).version as string;
+
+/**
  * Seed the flags that suppress first-run modals.
  *
- * The version key matters: the changelog modal opens whenever the stored
- * version is older than the build, so a hardcoded 4.x value made every spec
- * race a "What's New" dialog that swallowed their clicks. A version ceiling
- * keeps it shut whatever the app is at.
+ * The version key is the fiddly one. `ChangelogModal.shouldShow()` tests
+ * `lastVersion !== APP_VERSION` — an INEQUALITY, not "older than". So a
+ * hardcoded 4.x seed opened the What's New dialog, and so did the 99.0.0
+ * "ceiling" that replaced it: any value that is not exactly the current
+ * version pops the modal, whose backdrop then eats the next click. Only the
+ * exact version suppresses it, so it is read from package.json rather than
+ * written down here, where it would rot at the next version bump.
  */
 export async function seedStartupStorage(page: Page): Promise<void> {
-  await page.addInitScript(() => {
+  await page.addInitScript((version: string) => {
     localStorage.setItem('xivdyetools_welcome_seen', 'true');
-    localStorage.setItem('xivdyetools_last_version_viewed', '99.0.0');
+    localStorage.setItem('xivdyetools_last_version_viewed', version);
     localStorage.setItem('xivdyetools_tutorials_disabled', 'true');
-  });
+  }, APP_VERSION);
+}
+
+/**
+ * Close the mobile palette drawer by tapping outside it.
+ *
+ * `.v4-drawer-overlay` is fixed to the whole viewport, but on a phone-width
+ * screen the 320px drawer panel sits over its CENTRE — and Playwright clicks
+ * element centres, so the drawer intercepts and the click is refused. Tapping
+ * the top-left corner hits the part of the overlay that is genuinely outside
+ * the drawer, which is also what a user does.
+ */
+export async function closePaletteDrawer(page: Page): Promise<void> {
+  const overlay = page.locator('.v4-drawer-overlay.visible');
+  if ((await overlay.count()) === 0) return;
+  await overlay.first().click({ position: { x: 8, y: 8 } });
+  await overlay.first().waitFor({ state: 'detached' }).catch(() => undefined);
 }
 
 /**

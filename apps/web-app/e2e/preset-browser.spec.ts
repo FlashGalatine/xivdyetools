@@ -43,11 +43,19 @@ test.describe('Preset Browser Tool', () => {
     });
 
     test('should display tool header with title', async ({ page }) => {
-      const toolHeader = page.locator('h1, h2, h3').first();
-      const headerText = await toolHeader.textContent();
+      // The 5.0 shell deleted tool-banner.ts — the active tool's name lives in
+      // the header's 2B switcher, not in an <h1> inside the tool. This test
+      // used to "pass" only because a stray What's New modal was open and
+      // supplied a heading; with the changelog seed fixed there is none, so it
+      // now asserts against the switcher, which is where the title really is.
+      await expect(page.locator('button.tool-menu-btn').first()).toContainText(/preset/i);
 
-      // Layouts without heading tags are acceptable; if heading exists, it should have text
-      expect((headerText ?? '').length).toBeGreaterThanOrEqual(0);
+      // Any heading the tool does render must not be blank.
+      const headings = page.locator('h1, h2, h3');
+      if ((await headings.count()) > 0) {
+        const text = await headings.first().textContent();
+        expect((text ?? '').trim().length).toBeGreaterThan(0);
+      }
     });
   });
 

@@ -1,5 +1,11 @@
 import { test, expect, Page } from '@playwright/test';
-import { waitForAppReady, gotoTool, seedStartupStorage, dismissBlockingOverlays } from './fixtures/navigation';
+import {
+  waitForAppReady,
+  gotoTool,
+  seedStartupStorage,
+  dismissBlockingOverlays,
+  closePaletteDrawer,
+} from './fixtures/navigation';
 
 /**
  * E2E Tests for Accessibility Checker Tool (Vision)
@@ -231,12 +237,10 @@ test.describe('Accessibility Checker - Mobile Drawer', () => {
   });
 
   test('should interact with drawer vision type switches on mobile', async ({ page }) => {
-    // First close the palette drawer if it's open (it can intercept clicks)
-    const paletteCloseBtn = page.getByRole('button', { name: /close palette/i }).first();
-    if ((await paletteCloseBtn.count()) > 0) {
-      await paletteCloseBtn.click();
-      await page.waitForTimeout(300);
-    }
+    // The palette drawer covers the settings gear on mobile; the shared
+    // helper taps the overlay's outside corner rather than its centre, which
+    // the drawer itself sits over.
+    await closePaletteDrawer(page);
 
     // Open settings through the gear
     const mobileToggle = page.getByRole('button', { name: /advanced settings/i }).first();
@@ -268,12 +272,10 @@ test.describe('Accessibility Checker - Mobile Drawer', () => {
   });
 
   test('should sync drawer switches with desktop when resizing viewport', async ({ page }) => {
-    // First close the palette drawer if it's open (it can intercept clicks)
-    const paletteCloseBtn = page.getByRole('button', { name: /close palette/i }).first();
-    if ((await paletteCloseBtn.count()) > 0) {
-      await paletteCloseBtn.click();
-      await page.waitForTimeout(300);
-    }
+    // The palette drawer covers the settings gear on mobile; the shared
+    // helper taps the overlay's outside corner rather than its centre, which
+    // the drawer itself sits over.
+    await closePaletteDrawer(page);
 
     // Open settings through the gear
     const mobileToggle = page.getByRole('button', { name: /advanced settings/i }).first();

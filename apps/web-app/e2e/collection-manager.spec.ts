@@ -128,23 +128,31 @@ test.describe('Collection Manager Modal', () => {
     await page.evaluate(() => {
       localStorage.removeItem('xivdye-collections');
       localStorage.removeItem('xivdye-favorites');
-      localStorage.setItem('xivdyetools_welcome_seen', 'true');
-      localStorage.setItem('xivdyetools_last_version_viewed', '4.10.0');
-      localStorage.setItem('xivdyetools_tutorials_disabled', 'true');
+      // Startup flags come from seedStartupStorage's init script, which
+      // re-runs on the reload below. Setting a stale version here is what
+      // used to pop What's New over this test.
     });
     await page.reload();
     await waitForAppReady(page);
 
     await expandAdvancedSettings(page);
 
+    // Export lives in the Backup section card, which renders COLLAPSED
+    // (sectionCard(..., open: false) in advanced-options-panel). Opening
+    // Advanced Settings is not enough — the row has to be revealed first.
+    const backupSection = page.getByRole('button', { name: /Backup/i }).first();
+    await backupSection.click();
+
     const exportBtn = page.getByRole('button', { name: /^Export$/i }).first();
+    await expect(exportBtn).toBeVisible();
+    // Now that the button is genuinely reachable, require the download rather
+    // than tolerating its absence — a tolerated no-op is how this test stayed
+    // green while the row it clicks was buried in a collapsed section.
     const [download] = await Promise.all([
-      page.waitForEvent('download', { timeout: 5000 }).catch(() => null),
+      page.waitForEvent('download', { timeout: 10000 }),
       exportBtn.click(),
     ]);
-    if (download) {
-      expect(download.suggestedFilename().toLowerCase()).toContain('.json');
-    }
+    expect(download.suggestedFilename().toLowerCase()).toContain('.json');
   });
 });
 
