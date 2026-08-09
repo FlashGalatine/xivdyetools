@@ -842,7 +842,9 @@
     "modeHsv": "색상 기반",
     "modeHsvDesc": "선명하며 색상환을 돎",
     "modeRgb": "선형",
-    "modeRgbDesc": "중간이 회색"
+    "modeRgbDesc": "중간이 회색",
+    "bandIdeal": "이상",
+    "bandAchievable": "실현 가능"
   },
   "dyeSelector": {
     "searchPlaceholder": "염료 이름으로 검색...",

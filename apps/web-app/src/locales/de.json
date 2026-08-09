@@ -842,7 +842,9 @@
     "modeHsv": "Farbtonbasiert",
     "modeHsvDesc": "Lebhaft, dreht durchs Rad",
     "modeRgb": "Linear",
-    "modeRgbDesc": "Graue Mittelpunkte"
+    "modeRgbDesc": "Graue Mittelpunkte",
+    "bandIdeal": "IDEAL",
+    "bandAchievable": "ERREICHBAR"
   },
   "dyeSelector": {
     "searchPlaceholder": "Farbstoffe nach Name suchen...",

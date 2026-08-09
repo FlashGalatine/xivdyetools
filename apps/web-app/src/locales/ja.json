@@ -842,7 +842,9 @@
     "modeHsv": "色相ベース",
     "modeHsvDesc": "鮮やか・色相を回る",
     "modeRgb": "線形",
-    "modeRgbDesc": "中間がグレー"
+    "modeRgbDesc": "中間がグレー",
+    "bandIdeal": "理想",
+    "bandAchievable": "実現可能"
   },
   "dyeSelector": {
     "searchPlaceholder": "カララント名で検索...",

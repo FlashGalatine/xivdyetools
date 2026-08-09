@@ -868,7 +868,9 @@
     "modeHsv": "基于色相",
     "modeHsvDesc": "鲜艳，扫过色轮",
     "modeRgb": "线性",
-    "modeRgbDesc": "中间发灰"
+    "modeRgbDesc": "中间发灰",
+    "bandIdeal": "理想",
+    "bandAchievable": "可实现"
   },
   "dyeSelector": {
     "searchPlaceholder": "按名称搜索染剂...",

@@ -842,7 +842,9 @@
     "modeHsv": "Hue-based",
     "modeHsvDesc": "Vibrant, sweeps the wheel",
     "modeRgb": "Linear",
-    "modeRgbDesc": "Grey midpoints"
+    "modeRgbDesc": "Grey midpoints",
+    "bandIdeal": "IDEAL",
+    "bandAchievable": "ACHIEVABLE"
   },
   "dyeSelector": {
     "searchPlaceholder": "Search dyes by name...",

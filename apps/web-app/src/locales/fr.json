@@ -842,7 +842,9 @@
     "modeHsv": "Basé sur la teinte",
     "modeHsvDesc": "Vif, balaie la roue",
     "modeRgb": "Linéaire",
-    "modeRgbDesc": "Milieux gris"
+    "modeRgbDesc": "Milieux gris",
+    "bandIdeal": "IDÉAL",
+    "bandAchievable": "RÉALISABLE"
   },
   "dyeSelector": {
     "searchPlaceholder": "Rechercher des teintures par nom...",

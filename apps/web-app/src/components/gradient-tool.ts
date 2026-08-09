@@ -195,6 +195,7 @@ export class GradientTool extends BaseComponent {
   // DOM References (4C pin-rail main flow)
   private endpointsRowContainer: HTMLElement | null = null;
   private railSection: HTMLElement | null = null;
+  private bandContainer: HTMLElement | null = null;
   private railPinCount: HTMLElement | null = null;
   private pinColumn: HTMLElement | null = null;
   private rowsColumn: HTMLElement | null = null;
@@ -1026,6 +1027,15 @@ export class GradientTool extends BaseComponent {
     railHeader.appendChild(this.railPinCount);
     this.railSection.appendChild(railHeader);
 
+    // Ideal over achievable: the smooth ramp you asked for, directly above the
+    // one the dye database can actually build. Reading down a column shows
+    // where the palette runs out — the rail's per-row cells say the same thing
+    // one step at a time, but the divergence is a shape, not a list.
+    this.bandContainer = this.createElement('div', {
+      attributes: { style: 'margin-bottom: 10px;' },
+    });
+    this.railSection.appendChild(this.bandContainer);
+
     const railBody = this.createElement('div', {
       attributes: { style: 'display: flex; gap: 8px;' },
     });
@@ -1239,8 +1249,61 @@ export class GradientTool extends BaseComponent {
    * carry pin toggles. Each row butts the ideal band against the matched dye
    * fill and prints the step's drift.
    */
+  /**
+   * The dual band: ideal ramp on top, achievable (matched dyes) beneath, both
+   * as equal-width segments so the columns line up step for step.
+   */
+  private renderDualBand(): void {
+    if (!this.bandContainer) return;
+    clearContainer(this.bandContainer);
+    if (this.currentSteps.length === 0) return;
+
+    const band = (colors: string[], radius: string): HTMLElement => {
+      const row = this.createElement('div', {
+        attributes: {
+          style: `display: flex; height: 18px; border-radius: ${radius}; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(127,127,127,0.22);`,
+        },
+      });
+      for (const c of colors) {
+        row.appendChild(
+          this.createElement('span', {
+            attributes: { style: `flex: 1; background: ${c};` },
+          })
+        );
+      }
+      return row;
+    };
+
+    const ideal = this.currentSteps.map((s) => s.theoreticalColor);
+    const achievable = this.currentSteps.map(
+      (s) => s.matchedDye?.hex ?? 'var(--theme-background-secondary)'
+    );
+
+    const wrap = this.createElement('div', {
+      attributes: { style: 'display: flex; flex-direction: column; gap: 2px;' },
+    });
+    wrap.appendChild(band(ideal, '8px 8px 0 0'));
+    wrap.appendChild(band(achievable, '0 0 8px 8px'));
+
+    const legend = this.createElement('div', {
+      attributes: {
+        style: `display: flex; gap: 10px; margin-top: 4px; font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted);`,
+      },
+    });
+    legend.appendChild(
+      this.createElement('span', { textContent: LanguageService.t('gradient.bandIdeal') })
+    );
+    legend.appendChild(
+      this.createElement('span', { textContent: LanguageService.t('gradient.bandAchievable') })
+    );
+
+    this.bandContainer.appendChild(wrap);
+    this.bandContainer.appendChild(legend);
+  }
+
   private renderPinRail(): void {
     if (!this.railSection || !this.pinColumn || !this.rowsColumn) return;
+    this.renderDualBand();
 
     clearContainer(this.pinColumn);
     clearContainer(this.rowsColumn);
