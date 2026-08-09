@@ -1,736 +1,301 @@
-import { test, expect } from '@playwright/test';
+/**
+ * E2E tests for shell UI interactions — theme picker, palette drawer, modals.
+ *
+ * Rewritten for the 5.0 shell. The previous version targeted pre-v4 selectors
+ * (`#theme-switcher-btn`, `#favorites-panel`, `.dye-select-btn`,
+ * `.saved-palettes-btn`) that no longer exist, and guarded every one with
+ * `if (count === 0) test.skip()`. The result was 16 tests reporting green
+ * while asserting nothing at all — worse than failing, because a skip reads
+ * as "not applicable" rather than "this UI is gone".
+ *
+ * Two describes were deleted rather than retargeted, because their surfaces
+ * were removed in 5.0 and are covered elsewhere:
+ * - "Saved Palettes Modal": `.saved-palettes-btn` exists nowhere in src.
+ *   Saved palettes are now palette-kind CollectionService records, covered by
+ *   collection-manager.spec.ts.
+ * - "Collection Manager Interactions": `#manage-collections-btn` lives in
+ *   dye-selector.ts, which Q7 unmounted when the drawer replaced the
+ *   persistent left column. Collections are covered by collection-manager.spec.
+ *
+ * Selector notes for the 5.0 DOM (verified against the running app):
+ * - The theme picker is a 16A modal (`.m16-backdrop`), not a dropdown. Its
+ *   options are `button[data-theme]`, and after consolidation there are
+ *   exactly two: `standard-light` and `standard-dark`.
+ * - The palette drawer renders inside `dye-palette-drawer`'s shadow root.
+ *   Playwright's CSS engine pierces open shadow roots, so its classes are
+ *   addressable directly. Swatches are `div.swatch` (NOT buttons), carrying
+ *   the dye name in `title`.
+ */
+
+import { test, expect, type Page } from '@playwright/test';
 import { seedStartupStorage, dismissBlockingOverlays, waitForAppReady } from './fixtures/navigation';
 
-async function openThemeMenuIfPresent(page: Parameters<typeof test>[0]['page']): Promise<boolean> {
-  const themeButton = page
-    .locator('button:has-text("Theme"), #theme-switcher-btn, [aria-label*="theme" i]')
-    .first();
-
-  if ((await themeButton.count()) === 0) return false;
-  await themeButton.click({ force: true });
-  await page.waitForTimeout(250);
-  return true;
+/** Open the 16A theme modal from the header's theme glyph. */
+async function openThemeModal(page: Page): Promise<void> {
+  // The header button is icon-only: it carries `title`/`aria-label`, no text.
+  await page.locator('button.v4-header-nav-btn[aria-label*="theme" i]').first().click();
+  await expect(page.locator('.m16-backdrop')).toBeVisible();
 }
 
-test.describe('UI Interactions (v4 rewrite)', () => {
+/** Ensure the palette drawer is open, whatever the shell's default is. */
+async function openPaletteDrawer(page: Page): Promise<void> {
+  const drawer = page.locator('dye-palette-drawer[is-open]');
+  if ((await drawer.count()) === 0) {
+    await page.locator('.v4-palette-toggle').first().click();
+  }
+  await expect(page.locator('dye-palette-drawer[is-open]')).toBeAttached();
+}
+
+test.describe('Shell controls', () => {
   test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     await seedStartupStorage(page);
     await page.goto('/');
     await waitForAppReady(page);
   });
 
-  test('loads interactive UI controls', async ({ page }) => {
-    const controls = page.locator('button, input, [role="button"], [role="switch"], a');
-    expect(await controls.count()).toBeGreaterThan(0);
-  });
-
-  test('supports theme menu interaction when available', async ({ page }) => {
-    const opened = await openThemeMenuIfPresent(page);
-    if (!opened) {
-      const controls = page.locator('button, [role="button"]');
-      expect(await controls.count()).toBeGreaterThan(0);
-      return;
-    }
-
-    const themeOptions = page.locator('[data-theme]');
-    if ((await themeOptions.count()) > 0) {
-      const first = themeOptions.first();
-      await first.hover();
-      await first.click({ force: true });
-      await page.waitForTimeout(250);
-      await expect(first).toBeAttached();
-      return;
-    }
-
-    const fallbackControls = page.locator('button, [role="button"]');
-    expect(await fallbackControls.count()).toBeGreaterThan(0);
-  });
-
-  test('supports saved palettes modal interaction when trigger exists', async ({ page }) => {
-    const savedPalettesBtn = page.locator('.saved-palettes-btn').first();
-    if ((await savedPalettesBtn.count()) === 0) {
-      const controls = page.locator('button, [role="button"]');
-      expect(await controls.count()).toBeGreaterThan(0);
-      return;
-    }
-
-    await savedPalettesBtn.click({ force: true });
-    await page.waitForTimeout(350);
-
-    const modalSignals = page.locator('.modal-backdrop, [role="dialog"], .modal-container');
-    expect(await modalSignals.count()).toBeGreaterThanOrEqual(0);
-
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(250);
-    await dismissBlockingOverlays(page);
+  test('renders the header chrome trio and the tool switcher', async ({ page }) => {
+    await expect(page.locator('button.tool-menu-btn').first()).toBeVisible();
+    // What's New · About · locale · theme · gear
+    await expect(page.locator('button.v4-header-nav-btn')).toHaveCount(5);
   });
 
   test('stays interactive after reload', async ({ page }) => {
     await page.reload();
     await waitForAppReady(page);
 
-    const controls = page.locator('button, input, [role="button"], [role="switch"], a');
-    expect(await controls.count()).toBeGreaterThan(0);
+    await expect(page.locator('button.tool-menu-btn').first()).toBeVisible();
+    await expect(page.locator('dye-palette-drawer')).toBeAttached();
   });
 });
 
-/**
- * E2E Tests for UI Interaction Branches
- *
- * Tests complex UI interactions that are difficult to unit test in jsdom:
- * - Theme switcher hover effects
- * - Saved palettes modal interactions
- * - Dye action dropdown with dynamically created content
- * - Collection manager modal interactions
- * - Favorites panel interactions
- */
-
-test.describe('Theme Switcher Interactions', () => {
+test.describe('Theme picker', () => {
   test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     await seedStartupStorage(page);
-
     await page.goto('/');
     await waitForAppReady(page);
   });
 
-  test('should open theme dropdown when clicking theme button', async ({ page }) => {
-    // Try multiple possible selectors for the theme button
-    const themeButton = page.locator('button:has-text("Theme"), #theme-switcher-btn, [aria-label*="theme" i]').first();
+  test('opens the theme modal with both consolidated themes', async ({ page }) => {
+    await openThemeModal(page);
 
-    if ((await themeButton.count()) > 0) {
-      await themeButton.click();
-      await page.waitForTimeout(200);
-
-      // Look for theme options after clicking
-      const themeOptions = page.locator('[data-theme]');
-      const count = await themeOptions.count();
-      expect(count).toBeGreaterThan(0);
-    } else {
-      // Theme button might be in a dropdown - skip this test
-      test.skip();
-    }
+    await expect(page.locator('.m16-title')).toHaveText(/theme/i);
+    // 5.0 consolidated twelve themes down to Light and Dark.
+    await expect(page.locator('button[data-theme]')).toHaveCount(2);
+    await expect(page.locator('button[data-theme="standard-light"]')).toBeVisible();
+    await expect(page.locator('button[data-theme="standard-dark"]')).toBeVisible();
   });
 
-  test('should show hover effect on theme options', async ({ page }) => {
-    const themeButton = page.locator('button:has-text("Theme"), #theme-switcher-btn').first();
+  test('marks exactly one option as selected', async ({ page }) => {
+    await openThemeModal(page);
 
-    if ((await themeButton.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    await themeButton.click();
-    await page.waitForTimeout(200);
-
-    // Find a theme button that isn't the current theme
-    const themeOption = page.locator('[data-theme="hydaelyn-light"]').first();
-
-    if ((await themeOption.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    await expect(themeOption).toBeVisible();
-
-    // Hover over the theme option
-    await themeOption.hover();
-    await page.waitForTimeout(100);
-
-    // The hover effect should apply
-    await expect(themeOption).toBeVisible();
+    await expect(page.locator('button[data-theme][aria-selected="true"]')).toHaveCount(1);
   });
 
-  test('should change theme when clicking a theme option', async ({ page }) => {
-    const themeButton = page.locator('button:has-text("Theme"), #theme-switcher-btn').first();
+  test('applies the chosen theme to the document', async ({ page }) => {
+    await openThemeModal(page);
 
-    if ((await themeButton.count()) === 0) {
-      test.skip();
-      return;
-    }
+    await page.locator('button[data-theme="standard-dark"]').click();
+    await expect(page.locator('html')).toHaveClass(/theme-standard-dark/);
 
-    await themeButton.click();
-    await page.waitForTimeout(200);
-
-    // Click on a different theme
-    const themeOption = page.locator('[data-theme="parchment-light"]').first();
-
-    if ((await themeOption.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    await themeOption.click();
-    await page.waitForTimeout(300);
-
-    // Verify the theme was applied to the document
-    const hasThemeClass = await page.evaluate(() => {
-      return document.documentElement.classList.contains('theme-parchment-light');
-    });
-    expect(hasThemeClass).toBe(true);
+    await page.locator('button[data-theme="standard-light"]').click();
+    await expect(page.locator('html')).toHaveClass(/theme-standard-light/);
   });
 
-  test('should close dropdown when clicking outside', async ({ page }) => {
-    const themeButton = page.locator('button:has-text("Theme"), #theme-switcher-btn').first();
+  test('keeps the selected option highlighted after hovering another', async ({ page }) => {
+    await openThemeModal(page);
 
-    if ((await themeButton.count()) === 0) {
-      test.skip();
-      return;
-    }
+    const selected = page.locator('button[data-theme][aria-selected="true"]');
+    const chosen = await selected.getAttribute('data-theme');
 
-    await themeButton.click();
-    await page.waitForTimeout(200);
-
-    // Count visible theme options before clicking outside
-    const visibleBefore = await page.locator('[data-theme]:visible').count();
-
-    if (visibleBefore === 0) {
-      test.skip();
-      return;
-    }
-
-    // Click outside
-    await page.click('h1, h2, .tool-header', { force: true });
-    await page.waitForTimeout(200);
-
-    // Theme options should be hidden or fewer visible
-    const visibleAfter = await page.locator('[data-theme]:visible').count();
-    expect(visibleAfter).toBeLessThanOrEqual(visibleBefore);
-  });
-
-  test('should maintain current theme highlight on mouseleave', async ({ page }) => {
-    const themeButton = page.locator('button:has-text("Theme"), #theme-switcher-btn').first();
-
-    if ((await themeButton.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    await themeButton.click();
-    await page.waitForTimeout(200);
-
-    const themeOption = page.locator('[data-theme]').first();
-
-    if ((await themeOption.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    // Hover and then leave
-    await themeOption.hover();
-    await page.waitForTimeout(100);
-
-    // Move mouse away
+    const other = page.locator(`button[data-theme]:not([data-theme="${chosen}"])`).first();
+    await other.hover();
     await page.mouse.move(0, 0);
-    await page.waitForTimeout(100);
 
-    // Theme option should still be visible
-    await expect(themeOption).toBeAttached();
-  });
-});
-
-test.describe('Saved Palettes Modal Interactions', () => {
-  test.beforeEach(async ({ page }) => {
-    await seedStartupStorage(page);
-    await page.addInitScript(() => {
-      // Add some test palettes
-      const palettes = [
-        {
-          id: 'test-1',
-          name: 'Test Palette 1',
-          baseColor: '#FF0000',
-          colors: ['#FF0000', '#00FF00', '#0000FF'],
-          harmonyType: 'triadic',
-          createdAt: Date.now() - 1000,
-        },
-        {
-          id: 'test-2',
-          name: 'Test Palette 2',
-          baseColor: '#3498DB',
-          colors: ['#3498DB', '#E74C3C'],
-          harmonyType: 'complementary',
-          createdAt: Date.now(),
-        },
-      ];
-      localStorage.setItem('xivdye-saved-palettes', JSON.stringify(palettes));
-    });
-
-    await page.goto('/');
-    await waitForAppReady(page);
+    // Hover is presentation only — it must not move the selection.
+    await expect(page.locator(`button[data-theme="${chosen}"]`)).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
   });
 
-  test('should open saved palettes modal', async ({ page }) => {
-    // Look for saved palettes button with various possible selectors
-    const savedPalettesBtn = page.locator('.saved-palettes-btn').first();
+  test('closes on Escape', async ({ page }) => {
+    await openThemeModal(page);
 
-    if ((await savedPalettesBtn.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    await savedPalettesBtn.click();
-    await page.waitForTimeout(500);
-
-    // Modal should appear
-    const modalBackdrop = page.locator('.modal-backdrop, [role="dialog"], .modal-container');
-    const count = await modalBackdrop.count();
-    expect(count).toBeGreaterThan(0);
-  });
-
-  test('should display saved palettes in the modal', async ({ page }) => {
-    const savedPalettesBtn = page.locator('.saved-palettes-btn').first();
-
-    if ((await savedPalettesBtn.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    await savedPalettesBtn.click();
-    await page.waitForTimeout(500);
-
-    // Should show palette entries or empty state
-    const modalContent = page.locator('.modal-backdrop, [role="dialog"]');
-    const count = await modalContent.count();
-    expect(count).toBeGreaterThanOrEqual(0);
-  });
-
-  test('should close modal when clicking backdrop', async ({ page }) => {
-    const savedPalettesBtn = page.locator('.saved-palettes-btn').first();
-
-    if ((await savedPalettesBtn.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    await savedPalettesBtn.click();
-    await page.waitForTimeout(500);
-
-    const modalBackdrop = page.locator('.modal-backdrop').first();
-
-    if ((await modalBackdrop.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    // Click the backdrop area (top-left corner)
-    await modalBackdrop.click({ position: { x: 10, y: 10 }, force: true });
-    await page.waitForTimeout(300);
-
-    // Modal should be dismissed
-    const backdropAfter = page.locator('.modal-backdrop');
-    const count = await backdropAfter.count();
-    expect(count).toBeLessThanOrEqual(1);
-  });
-
-  test('should close modal when pressing Escape', async ({ page }) => {
-    const savedPalettesBtn = page.locator('.saved-palettes-btn').first();
-
-    if ((await savedPalettesBtn.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    await savedPalettesBtn.click();
-    await page.waitForTimeout(500);
-
-    const modalBefore = await page.locator('.modal-backdrop').count();
-
-    if (modalBefore === 0) {
-      test.skip();
-      return;
-    }
-
-    // Press Escape
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
-
-    // Modal count should decrease or stay same
-    const modalAfter = await page.locator('.modal-backdrop').count();
-    expect(modalAfter).toBeLessThanOrEqual(modalBefore);
+    await expect(page.locator('.m16-backdrop')).toHaveCount(0);
   });
 });
 
-test.describe('Dye Selector Favorites Panel', () => {
+test.describe('Palette drawer — favorites', () => {
   test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     await seedStartupStorage(page);
     await page.addInitScript(() => {
-      // Add some favorites
-      const favorites = {
-        version: '1.0.0',
-        favorites: [1, 2, 3, 10, 20],
-        lastModified: new Date().toISOString(),
-      };
-      localStorage.setItem('xivdyetools_favorites', JSON.stringify(favorites));
+      localStorage.setItem(
+        'xivdyetools_favorites',
+        JSON.stringify({
+          version: '1.0.0',
+          favorites: [1, 2, 3, 10, 20],
+          lastModified: new Date().toISOString(),
+        })
+      );
     });
-
     await page.goto('/');
     await waitForAppReady(page);
+    await openPaletteDrawer(page);
   });
 
-  test('should show favorites panel in dye selector', async ({ page }) => {
-    const favoritesPanel = page.locator('#favorites-panel, .favorites-panel, [data-testid="favorites"]');
-
-    if ((await favoritesPanel.count()) === 0) {
-      // Favorites panel may not be visible on this tool
-      test.skip();
-      return;
-    }
-
-    await expect(favoritesPanel).toBeAttached();
+  test('renders one swatch per stored favorite', async ({ page }) => {
+    await expect(page.locator('.favorites-section')).toBeVisible();
+    // Five seeded favorites → five swatches, not "zero or more".
+    await expect(page.locator('.favorites-content .swatch')).toHaveCount(5);
+    await expect(page.locator('.favorites-empty')).toHaveCount(0);
   });
 
-  test('should toggle favorites panel when clicking header', async ({ page }) => {
-    const favoritesHeader = page.locator('#favorites-header, .favorites-header');
+  test('collapses and re-expands from the section header', async ({ page }) => {
+    const content = page.locator('.favorites-content');
+    await expect(content).toHaveClass(/expanded/);
 
-    if ((await favoritesHeader.count()) === 0) {
-      test.skip();
-      return;
-    }
+    await page.locator('.favorites-section .section-header').click();
+    await expect(content).not.toHaveClass(/expanded/);
 
-    const favoritesContent = page.locator('#favorites-content, .favorites-content');
-
-    if ((await favoritesContent.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    // Get initial state
-    const isHiddenInitially = await favoritesContent.evaluate((el) =>
-      el.classList.contains('hidden')
-    );
-
-    // Click header to toggle
-    await favoritesHeader.click();
-    await page.waitForTimeout(200);
-
-    // Should toggle visibility
-    const isHiddenAfter = await favoritesContent.evaluate((el) =>
-      el.classList.contains('hidden')
-    );
-    expect(isHiddenAfter).not.toBe(isHiddenInitially);
+    await page.locator('.favorites-section .section-header').click();
+    await expect(content).toHaveClass(/expanded/);
   });
 
-  test('should display favorite dye cards', async ({ page }) => {
-    const favoritesContent = page.locator('#favorites-content, .favorites-content');
-
-    if ((await favoritesContent.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    const favoriteCards = page.locator('.favorite-dye-card');
-    const count = await favoriteCards.count();
-
-    // Should have some favorite cards based on our test data
-    expect(count).toBeGreaterThanOrEqual(0);
-  });
-
-  test('should select dye when clicking favorite card', async ({ page }) => {
-    const favoriteCards = page.locator('.favorite-dye-card');
-    const count = await favoriteCards.count();
-
-    if (count > 0) {
-      const firstCard = favoriteCards.first();
-      await firstCard.click();
-      await page.waitForTimeout(200);
-
-      // Should show selection indicator or trigger selection event
-      await expect(firstCard).toBeAttached();
-    } else {
-      // No favorite cards, skip
-      test.skip();
-    }
-  });
-
-  test('should show manage collections button', async ({ page }) => {
-    const manageBtn = page.locator('#manage-collections-btn, button:has-text("Manage")');
-
-    if ((await manageBtn.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    await expect(manageBtn).toBeAttached();
+  test('names each favorite swatch for assistive tech', async ({ page }) => {
+    const first = page.locator('.favorites-content .swatch').first();
+    const title = await first.getAttribute('title');
+    expect((title ?? '').trim().length).toBeGreaterThan(0);
   });
 });
 
-test.describe('Dye Grid Interactions', () => {
+test.describe('Palette drawer — swatch grid', () => {
   test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     await seedStartupStorage(page);
-
     await page.goto('/');
     await waitForAppReady(page);
+    await openPaletteDrawer(page);
   });
 
-  test('should show dye grid container', async ({ page }) => {
-    const dyeGridContainer = page.locator('#dye-grid-container, .dye-grid, [data-testid="dye-grid"]');
-
-    if ((await dyeGridContainer.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    await expect(dyeGridContainer).toBeAttached();
+  test('renders the full dye database', async ({ page }) => {
+    // 125 standard dyes; the 11 Facewear colors are not dyes and are excluded.
+    await expect(page.locator('.swatch-grid .swatch')).toHaveCount(125);
   });
 
-  test('should display dye buttons in grid', async ({ page }) => {
-    const dyeButtons = page.locator('.dye-select-btn, .dye-btn, button[data-dye-id]');
-    const count = await dyeButtons.count();
+  test('filters the grid by search term', async ({ page }) => {
+    const grid = page.locator('.swatch-grid .swatch');
+    const before = await grid.count();
 
-    // Should have dye buttons (may be 0 if not on right tool)
-    expect(count).toBeGreaterThanOrEqual(0);
+    await page.locator('.search-input').fill('Snow');
+
+    await expect(grid).not.toHaveCount(before);
+    expect(await grid.count()).toBeGreaterThan(0);
+    await expect(grid.first()).toHaveAttribute('title', /snow/i);
   });
 
-  test('should select dye when clicking on dye button', async ({ page }) => {
-    const dyeButtons = page.locator('.dye-select-btn, .dye-btn, button[data-dye-id]');
+  test('restores the full grid when the search is cleared', async ({ page }) => {
+    const grid = page.locator('.swatch-grid .swatch');
 
-    if ((await dyeButtons.count()) === 0) {
-      test.skip();
-      return;
-    }
+    await page.locator('.search-input').fill('Snow');
+    await expect(grid).not.toHaveCount(125);
 
-    const firstDye = dyeButtons.first();
-
-    await firstDye.click();
-    await page.waitForTimeout(200);
-
-    // Selection behavior may vary, just verify click worked without error
-    await expect(firstDye).toBeAttached();
+    await page.locator('.search-input').fill('');
+    await expect(grid).toHaveCount(125);
   });
 
-  test('should show tooltip on dye hover', async ({ page }) => {
-    const dyeButtons = page.locator('.dye-select-btn, .dye-btn, button[data-dye-id]');
+  test('narrows the grid with a category filter chip', async ({ page }) => {
+    const grid = page.locator('.swatch-grid .swatch');
 
-    if ((await dyeButtons.count()) === 0) {
-      test.skip();
-      return;
-    }
+    const metallic = page.getByRole('button', { name: /^Metallic$/i }).first();
+    await metallic.click();
 
-    const firstDye = dyeButtons.first();
-
-    // Hover over the dye
-    await firstDye.hover();
-    await page.waitForTimeout(500);
-
-    // Tooltip should appear (may be in #tooltip-container or as data-tooltip)
-    const tooltip = page.locator('#tooltip-container, [role="tooltip"], .tooltip');
-    const tooltipCount = await tooltip.count();
-
-    // Tooltip may or may not appear depending on implementation
-    expect(tooltipCount).toBeGreaterThanOrEqual(0);
+    await expect(metallic).toHaveClass(/active/);
+    const filtered = await grid.count();
+    expect(filtered).toBeGreaterThan(0);
+    expect(filtered).toBeLessThan(125);
   });
 });
 
-test.describe('Search and Filter Interactions', () => {
+test.describe('Palette drawer — actions', () => {
   test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     await seedStartupStorage(page);
-
     await page.goto('/');
     await waitForAppReady(page);
+    await openPaletteDrawer(page);
   });
 
-  test('should filter dyes when typing in search box', async ({ page }) => {
-    // Find the search input in the dye selector
-    const searchInput = page.locator('#dye-selector-container input[type="text"]').first();
-
-    if ((await searchInput.count()) > 0) {
-      // Get initial dye count
-      const initialDyes = await page.locator('.dye-select-btn').count();
-
-      // Type a search term
-      await searchInput.fill('Snow');
-      await page.waitForTimeout(300);
-
-      // Should have fewer or filtered dyes
-      const filteredDyes = await page.locator('.dye-select-btn').count();
-
-      // Either filtering works, or we have same count (if Snow matches all)
-      expect(filteredDyes).toBeLessThanOrEqual(initialDyes);
-    }
+  test('offers random and clear actions', async ({ page }) => {
+    await expect(page.locator('.random-btn')).toBeVisible();
+    await expect(page.locator('.clear-btn')).toBeVisible();
   });
 
-  test('should clear search when pressing Escape in search field', async ({ page }) => {
-    const searchInput = page.locator('#dye-selector-container input[type="text"]').first();
+  test('picks a dye when the random action fires', async ({ page }) => {
+    // Harmony's share button is disabled until a base dye exists, so it reads
+    // on selection. Assert the TRANSITION, not the end state — checking only
+    // "not disabled" afterwards would pass even if it was never disabled.
+    const share = page.locator('v4-share-button').first();
+    await expect(share).toHaveAttribute('disabled', '');
 
-    if ((await searchInput.count()) > 0) {
-      // Type something
-      await searchInput.fill('Test');
-      await page.waitForTimeout(100);
+    await page.locator('.random-btn').click();
 
-      // Press Escape
-      await searchInput.press('Escape');
-      await page.waitForTimeout(100);
-
-      // Search should be cleared or field unfocused
-      const value = await searchInput.inputValue();
-      // Value may be cleared or still there depending on implementation
-      expect(searchInput).toBeAttached();
-    }
+    await expect(share).not.toHaveAttribute('disabled', '');
   });
 
-  test('should focus search with "/" keyboard shortcut', async ({ page }) => {
-    // Make sure we're not focused on an input
-    await page.click('body');
-    await page.waitForTimeout(100);
-
-    // Press "/" to focus search
-    await page.keyboard.press('/');
-    await page.waitForTimeout(200);
-
-    // The search input should be focused
-    const searchInput = page.locator('#dye-selector-container input[type="text"]').first();
-
-    if ((await searchInput.count()) > 0) {
-      const isFocused = await searchInput.evaluate((el) => document.activeElement === el);
-      expect(isFocused).toBe(true);
-    }
+  test('closes from the drawer close button', async ({ page }) => {
+    await page.locator('.close-btn').first().click();
+    await expect(page.locator('dye-palette-drawer[is-open]')).toHaveCount(0);
   });
 });
 
-test.describe('Random Dye Selection', () => {
+test.describe('Modal container', () => {
   test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     await seedStartupStorage(page);
-
     await page.goto('/');
     await waitForAppReady(page);
   });
 
-  test('should have random dye button', async ({ page }) => {
-    const randomBtn = page.locator('#random-dye-btn, button:has-text("Random"), [aria-label*="random" i]');
-    const count = await randomBtn.count();
-
-    // Random button may exist
-    expect(count).toBeGreaterThanOrEqual(0);
+  test('keeps a modal root in the light DOM', async ({ page }) => {
+    // Modals deliberately render OUTSIDE the shell's shadow DOM.
+    await expect(page.locator('#modal-root')).toBeAttached();
   });
 
-  test('should select a random dye when clicking random button', async ({ page }) => {
-    const randomBtn = page.locator('#random-dye-btn').first();
+  test('renders an accessible dialog and restores the page on dismiss', async ({ page }) => {
+    await openThemeModal(page);
 
-    if ((await randomBtn.count()) > 0) {
-      await randomBtn.click();
-      await page.waitForTimeout(300);
+    const dialog = page.locator('.m16-dialog[role="dialog"]');
+    await expect(dialog).toHaveAttribute('aria-modal', 'true');
 
-      // Some dye should be selected
-      const selectedDyes = page.locator('.dye-select-btn.ring-2, .dye-select-btn[aria-selected="true"]');
-      const count = await selectedDyes.count();
-
-      // May or may not have a selected dye depending on implementation
-      expect(count).toBeGreaterThanOrEqual(0);
-    }
+    await dismissBlockingOverlays(page);
+    await expect(page.locator('.m16-backdrop')).toHaveCount(0);
+    await expect(page.locator('button.tool-menu-btn').first()).toBeVisible();
   });
 });
 
-test.describe('Modal Container Interactions', () => {
+test.describe('Accessibility', () => {
   test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     await seedStartupStorage(page);
-
     await page.goto('/');
     await waitForAppReady(page);
   });
 
-  test('should have modal root container', async ({ page }) => {
-    const modalRoot = page.locator('#modal-root, .modal-root, [data-testid="modal-root"]');
-
-    if ((await modalRoot.count()) === 0) {
-      // Modal root may not exist until a modal is opened
-      test.skip();
-      return;
-    }
-
-    await expect(modalRoot).toBeAttached();
-  });
-
-  test('should show stacked modals correctly', async ({ page }) => {
-    // Find any button that opens a modal
-    const modalTrigger = page.locator('.saved-palettes-btn').first();
-
-    if ((await modalTrigger.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    await modalTrigger.click();
-    await page.waitForTimeout(500);
-
-    // Count modal backdrops
-    const backdrops = page.locator('.modal-backdrop, [role="dialog"]');
-    const count = await backdrops.count();
-
-    // May have 0 or more modals
-    expect(count).toBeGreaterThanOrEqual(0);
-  });
-});
-
-test.describe('Collection Manager Interactions', () => {
-  test.beforeEach(async ({ page }) => {
-    await seedStartupStorage(page);
-    await page.addInitScript(() => {
-      // Add some collections
-      const collections = {
-        version: '1.0.0',
-        collections: [
-          {
-            id: 'col-1',
-            name: 'My Collection',
-            dyes: [1, 2, 3],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-        ],
-        lastModified: new Date().toISOString(),
-      };
-      localStorage.setItem('xivdyetools_collections', JSON.stringify(collections));
-
-      // Add favorites
-      const favorites = {
-        version: '1.0.0',
-        favorites: [1, 2, 3],
-        lastModified: new Date().toISOString(),
-      };
-      localStorage.setItem('xivdyetools_favorites', JSON.stringify(favorites));
-    });
-
-    await page.goto('/');
-    await waitForAppReady(page);
-  });
-
-  test('should open collection manager when clicking manage button', async ({ page }) => {
-    const manageBtn = page.locator('#manage-collections-btn');
-
-    if ((await manageBtn.count()) > 0) {
-      await manageBtn.click();
-      await page.waitForTimeout(500);
-
-      // Modal should appear
-      const modalBackdrop = page.locator('.modal-backdrop');
-      const count = await modalBackdrop.count();
-      expect(count).toBeGreaterThanOrEqual(1);
-    }
-  });
-});
-
-test.describe('Accessibility Interactions', () => {
-  test.beforeEach(async ({ page }) => {
-    await seedStartupStorage(page);
-
-    await page.goto('/');
-    await waitForAppReady(page);
-  });
-
-  test('should be able to navigate with keyboard', async ({ page }) => {
-    // Press Tab to navigate
+  test('moves focus into the page on Tab', async ({ page }) => {
     await page.keyboard.press('Tab');
-    await page.waitForTimeout(100);
 
-    // Something should be focused
-    const focusedElement = await page.evaluate(() => document.activeElement?.tagName);
-    expect(focusedElement).not.toBe('BODY');
+    const focused = await page.evaluate(() => document.activeElement?.tagName ?? 'BODY');
+    expect(focused).not.toBe('BODY');
   });
 
-  test('should have skip link for accessibility', async ({ page }) => {
-    const skipLink = page.locator('a[href="#main-content"], .skip-link, [class*="skip"]');
-    const count = await skipLink.count();
-
-    // Skip link may or may not exist
-    expect(count).toBeGreaterThanOrEqual(0);
+  test('exposes a main landmark', async ({ page }) => {
+    // NOTE: there is no skip link in 5.0 — the old test asserted `count >= 0`,
+    // which passed while none existed. The main landmark is what the shell
+    // actually provides; a skip link targeting it is a genuine a11y gap.
+    await expect(page.locator('main#main-content')).toBeAttached();
   });
 });
