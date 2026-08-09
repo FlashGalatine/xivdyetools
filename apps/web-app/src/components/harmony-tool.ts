@@ -1059,6 +1059,10 @@ export class HarmonyTool extends BaseComponent {
     this.shareButton = document.createElement('v4-share-button') as ShareButton;
     this.shareButton.tool = 'harmony';
     this.shareButton.shareParams = this.getShareParams();
+    // Disabled from the first paint: without this the button sits
+    // enabled with empty params until the first update, and a click
+    // there fails ShareService validation instead of being inert.
+    this.shareButton.disabled = !this.selectedDye;
 
     resultsHeader.appendChild(resultsTitle);
     resultsHeader.appendChild(this.shareButton);

@@ -2,7 +2,8 @@
  * XIV Dye Tools v2.1.0 - Keyboard Service
  *
  * Centralized keyboard shortcut management
- * Handles global shortcuts: 1-5 (tools), Shift+T (theme), Shift+L (language), ? (help)
+ * Handles global shortcuts: 1-9 (tools), Shift+T (theme), Shift+L (language),
+ * Shift+S (share the active tool), ? (help)
  *
  * @module services/keyboard-service
  */
@@ -12,6 +13,9 @@ import { ThemeService } from './theme-service';
 import { LanguageService } from './language-service';
 import { ModalService } from './modal-service';
 import { showShortcutsPanel } from '@components/shortcuts-panel';
+// Type-only: erased at compile time, so this adds no runtime dependency from
+// the service layer onto a component.
+import type { ShareButton } from '@components/v4/share-button';
 import { logger } from '@shared/logger';
 
 // ============================================================================
@@ -130,6 +134,13 @@ export class KeyboardService {
       return;
     }
 
+    // Handle Shift+S (share the active tool)
+    if (e.shiftKey && e.key.toUpperCase() === 'S') {
+      e.preventDefault();
+      this.handleShare();
+      return;
+    }
+
     // Handle 1-5 keys (tool navigation)
     if (!e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
       const toolId = TOOL_KEY_MAP[e.key];
@@ -139,6 +150,32 @@ export class KeyboardService {
         return;
       }
     }
+  }
+
+  /**
+   * Share the active tool by triggering its own share button.
+   *
+   * Deliberately DOM-driven rather than brokered through a controller: the
+   * share button already lives in the active tool's results header, already
+   * holds fresh params, and already knows its own disabled rule. A central
+   * share-state store would duplicate all three across seven tools to move a
+   * button no design doc asks to move.
+   *
+   * The buttons render inside the shell's shadow DOM, so the query has to hop
+   * the boundary — a document-level querySelector never sees them. And the
+   * trigger is `share()`, not `click()`: the component's @click binding is on
+   * an inner <button> inside its OWN shadow root, so clicking the host is a
+   * silent no-op.
+   */
+  private static handleShare(): void {
+    const shell = document.querySelector('v4-layout-shell');
+    const button = shell?.shadowRoot?.querySelector<ShareButton>('v4-share-button:not([disabled])');
+    if (!button) {
+      logger.info('Share shortcut ignored: active tool has nothing to share');
+      return;
+    }
+    button.share();
+    logger.info('Shared via keyboard shortcut');
   }
 
   /**

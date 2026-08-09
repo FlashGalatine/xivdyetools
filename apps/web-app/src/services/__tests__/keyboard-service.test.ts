@@ -312,6 +312,73 @@ describe('KeyboardService', () => {
   });
 
   // ============================================================================
+  // Share Shortcut Tests
+  // ============================================================================
+
+  describe('Share Shortcut (Shift+S)', () => {
+    let shell: HTMLElement;
+    let shareButton: HTMLElement & { share: () => void };
+
+    beforeEach(() => {
+      KeyboardService.initialize();
+      // The share buttons live inside the layout shell's shadow DOM, so the
+      // fixture has to reproduce that boundary — a light-DOM button would
+      // pass a test the real lookup would fail.
+      shell = document.createElement('v4-layout-shell');
+      const root = shell.attachShadow({ mode: 'open' });
+      shareButton = document.createElement('v4-share-button') as HTMLElement & {
+        share: () => void;
+      };
+      // share(), not click(): the component's @click binding sits on an inner
+      // <button> in its own shadow root, so a host click is a silent no-op.
+      // Asserting on click() here would pass while the feature was broken.
+      shareButton.share = vi.fn();
+      root.appendChild(shareButton);
+      document.body.appendChild(shell);
+    });
+
+    afterEach(() => {
+      shell.remove();
+    });
+
+    it('should share the active tool on Shift+S', () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'S', shiftKey: true }));
+
+      expect(shareButton.share).toHaveBeenCalled();
+    });
+
+    it('should share on Shift+s (lowercase)', () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 's', shiftKey: true }));
+
+      expect(shareButton.share).toHaveBeenCalled();
+    });
+
+    it('should ignore a disabled share button rather than firing a bad share', () => {
+      shareButton.setAttribute('disabled', '');
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'S', shiftKey: true }));
+
+      expect(shareButton.share).not.toHaveBeenCalled();
+    });
+
+    it('should do nothing when the active tool has no share button', () => {
+      shareButton.remove();
+
+      expect(() =>
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'S', shiftKey: true }))
+      ).not.toThrow();
+    });
+
+    it('should not share while a modal is open', () => {
+      (ModalService.hasOpenModals as ReturnType<typeof vi.fn>).mockReturnValue(true);
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'S', shiftKey: true }));
+
+      expect(shareButton.share).not.toHaveBeenCalled();
+    });
+  });
+
+  // ============================================================================
   // Help Shortcut Tests
   // ============================================================================
 

@@ -252,6 +252,18 @@ export class ShareButton extends BaseLitComponent {
   }
 
   /**
+   * Trigger a share programmatically (the Shift+S global shortcut).
+   *
+   * A public method rather than letting callers `.click()` the element: the
+   * @click binding lives on the inner <button> inside this component's shadow
+   * root, so a click dispatched on the HOST never reaches it and silently does
+   * nothing. Respects `disabled` exactly as the pointer path does.
+   */
+  share(): void {
+    void this.handleShare();
+  }
+
+  /**
    * Handle share button click
    */
   private async handleShare(): Promise<void> {

@@ -1457,6 +1457,10 @@ export class MixerTool extends BaseComponent {
     this.shareButton = document.createElement('v4-share-button') as ShareButton;
     this.shareButton.tool = 'mixer';
     this.shareButton.shareParams = this.getShareParams();
+    // Disabled from the first paint: without this the button sits
+    // enabled with empty params until the first update, and a click
+    // there fails ShareService validation instead of being inert.
+    this.shareButton.disabled = !this.selectedDyes[0] || !this.selectedDyes[1];
     headerActions.appendChild(this.shareButton);
 
     resultsHeader.appendChild(resultsTitle);

@@ -51,6 +51,10 @@ function getShortcuts(): ShortcutGroup[] {
           keys: 'Shift + L',
           description: LanguageService.t('shortcuts.cycleLanguage'),
         },
+        {
+          keys: 'Shift + S',
+          description: LanguageService.t('shortcuts.shareTool'),
+        },
         { keys: '?', description: LanguageService.t('shortcuts.showHelp') },
       ],
     },

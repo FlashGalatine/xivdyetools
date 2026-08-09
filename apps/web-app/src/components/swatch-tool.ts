@@ -1434,7 +1434,9 @@ export class SwatchTool extends BaseComponent {
     // Share button
     this.shareButton = document.createElement('v4-share-button') as ShareButton;
     this.shareButton.tool = 'swatch';
-    this.shareButton.compact = true;
+    // Full-text label, matching the other six tools — swatch was the lone
+    // icon-only holdout, which read as a different control rather than the
+    // same one.
     this.shareButton.disabled = true; // Disabled until a color is selected
     matchHeaderRight.appendChild(this.shareButton);
     matchHeader.appendChild(matchHeaderRight);

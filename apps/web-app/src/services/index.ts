@@ -14,6 +14,7 @@ import { ThemeService } from './theme-service';
 import { LanguageService } from './language-service';
 import { APIService } from './api-service-wrapper';
 import { cameraService } from './camera-service';
+import { KeyboardService } from './keyboard-service';
 // APIService now from wrapper;
 
 // Export service classes
@@ -36,7 +37,7 @@ export type { CaptureResult } from './camera-service';
 export { IndexedDBService, indexedDBService, STORES } from './indexeddb-service';
 export { TutorialService } from './tutorial-service';
 export type { TutorialTool, TutorialStep, Tutorial } from './tutorial-service';
-export { KeyboardService } from './keyboard-service';
+export { KeyboardService };
 export { DyeSelectionContext } from './dye-selection-context';
 export { CollectionService } from './collection-service';
 export type { DyeId, Collection, FavoritesData, CollectionsData } from './collection-service';
@@ -159,6 +160,16 @@ export async function initializeServices(): Promise<void> {
 
     // TooltipService is static singleton, always ready
     logger.info('✅ TooltipService ready');
+
+    // Initialize KeyboardService (global shortcuts).
+    // This call was MISSING: the service, its shortcuts panel and its unit
+    // tests all existed, but nothing ever attached the keydown listener, so
+    // every shortcut (1-9 tools, Shift+T, Shift+L, Shift+S, ?) was inert in
+    // the running app. Statically imported — this module already re-exports
+    // KeyboardService below, so a dynamic import here cannot split it out
+    // (Vite reports INEFFECTIVE_DYNAMIC_IMPORT) and only obscures the flow.
+    KeyboardService.initialize();
+    logger.info('✅ KeyboardService ready');
 
     // Initialize WorldService (async - loads worlds.json, data-centers.json)
     await WorldService.initialize();
