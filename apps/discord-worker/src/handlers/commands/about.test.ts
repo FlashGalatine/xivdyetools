@@ -5,6 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleAboutCommand } from './about.js';
 import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
+import { SOCIAL_LINKS } from '@xivdyetools/core';
 
 // Mock dependencies
 vi.mock('../../services/bot-i18n.js', () => ({
@@ -133,7 +134,7 @@ describe('about.ts', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       const embed = data.data!.embeds![0];
-      const commandListField = embed.fields![0];
+      const commandListField = embed.fields!.find((f) => f.value.includes('/harmony'))!;
 
       // Check all category sections are present
       expect(commandListField.value).toContain('Color Tools');
@@ -156,7 +157,7 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const commandListField = data.data!.embeds![0].fields![0];
+      const commandListField = data.data!.embeds![0].fields!.find((f) => f.value.includes('/harmony'))!;
 
       // 5.0 roster parity: every registered command appears, nothing else
       const { COMMAND_REGISTRY } = await import('../../commands/registry.js');
@@ -227,11 +228,17 @@ describe('about.ts', () => {
         (f: { name: string }) => f.name.includes('Links')
       );
       expect(linksField).toBeDefined();
+      // The way in — a Discord reader has no other route to the app
       expect(linksField!.value).toContain('Web App');
-      expect(linksField!.value).toContain('GitHub');
       expect(linksField!.value).toContain('Invite Bot');
-      expect(linksField!.value).toContain('Patreon');
       expect(linksField!.value).toContain('xivdyetools.app');
+
+      // ...then every place we are. Sourced from core so this list and the
+      // web app's About modal cannot drift apart.
+      for (const { label, url } of SOCIAL_LINKS) {
+        expect(linksField!.value, label).toContain(`[${label}](${url})`);
+      }
+      expect(linksField!.value.length).toBeLessThanOrEqual(1024); // Discord's field cap
     });
 
     it('should include footer with powered by info', async () => {
@@ -271,7 +278,7 @@ describe('about.ts', () => {
       expect(() => new Date(data.data!.embeds![0].timestamp!)).not.toThrow();
     });
 
-    it('should use blurple embed color', async () => {
+    it('uses the product accent, never the platform’s brand', async () => {
       const interaction: DiscordInteraction = {
         type: 2,
         data: { name: 'about' },
@@ -284,8 +291,8 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      // Discord blurple is 0x5865F2
-      expect(data.data!.embeds![0].color).toBe(0x5865f2);
+      // The accent bar is the only branding an embed has — #EA4133
+      expect(data.data!.embeds![0].color).toBe(0xea4133);
     });
 
     it('should handle DM interactions with user field', async () => {
@@ -359,7 +366,7 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const commandListField = data.data!.embeds![0].fields![0];
+      const commandListField = data.data!.embeds![0].fields!.find((f) => f.value.includes('/harmony'))!;
 
       // Check for category emojis
       expect(commandListField.value).toMatch(/🎨.*Color Tools/);

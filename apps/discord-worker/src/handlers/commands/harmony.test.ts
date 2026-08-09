@@ -30,7 +30,8 @@ vi.mock('../../services/bot-i18n.js', () => ({
   createTranslator: createTranslatorMock.mockReturnValue(translatorStub),
 }));
 
-vi.mock('@xivdyetools/svg', () => ({
+vi.mock('@xivdyetools/svg', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@xivdyetools/svg')>()),
   generateHarmonyCard: vi.fn(() => '<svg />'),
 }));
 
@@ -125,7 +126,15 @@ describe('handleHarmonyCommand', () => {
   } as unknown as DiscordInteraction;
 
   const env = {
-    KV: {} as KVNamespace,
+    KV: {
+      // The handlers read stored preferences (theme, matching) before they
+      // render; an empty object throws on kv.get, which swallowed the render
+      // path and made these assertions vacuous.
+      get: async () => null,
+      put: async () => undefined,
+      delete: async () => undefined,
+      list: async () => ({ keys: [], list_complete: true, cacheStatus: null }),
+    } as unknown as KVNamespace,
     DB: {} as D1Database,
     DISCORD_CLIENT_ID: 'client-123',
     DISCORD_PUBLIC_KEY: 'pk',

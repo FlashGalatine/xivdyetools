@@ -33,13 +33,14 @@ import type { DyeTypeFilters } from '@xivdyetools/types';
 import { hasActiveFilters } from '@xivdyetools/core';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
+import { BRAND_ACCENT, STATE } from '../../utils/brand.js';
 
 // ============================================================================
 // Constants
 // ============================================================================
 
-/** Embed color for preferences display (Discord blurple) */
-const PREFS_COLOR = 0x5865f2;
+/** Preferences is the product speaking about itself — the accent. */
+const PREFS_COLOR = BRAND_ACCENT;
 
 /** Preference display order */
 const PREFERENCE_ORDER: PreferenceKey[] = [
@@ -457,7 +458,7 @@ async function handleResetSubcommand(
         {
           title: `🔄 ${t.t('preferences.reset.success')}`,
           description: t.t('preferences.reset.single', { key: `${emoji} ${label}` }),
-          color: 0xfee75c, // Yellow
+          color: STATE.warning,
         },
       ],
     });
@@ -467,7 +468,7 @@ async function handleResetSubcommand(
         {
           title: `🔄 ${t.t('preferences.reset.allTitle')}`,
           description: t.t('preferences.reset.allDescription'),
-          color: 0xfee75c, // Yellow
+          color: STATE.warning,
           footer: {
             text: t.t('preferences.reset.showHint'),
           },
@@ -650,7 +651,7 @@ async function handleFiltersSetSubcommand(
       {
         title: `✅ ${t.t('preferences.filters.updated')}`,
         description: changes.join('\n'),
-        color: 0x57f287,
+        color: STATE.success,
         footer: { text: t.t('preferences.filters.affectsHint') },
       },
     ],
@@ -718,7 +719,7 @@ async function handleFiltersResetSubcommand(
       {
         title: `🔄 ${t.t('preferences.filters.resetSuccess')}`,
         description: t.t('preferences.filters.resetDescription'),
-        color: 0xfee75c,
+        color: STATE.warning,
       },
     ],
   });

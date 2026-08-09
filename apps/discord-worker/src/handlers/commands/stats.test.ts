@@ -406,13 +406,13 @@ describe('stats.ts', () => {
       expect(data.data!.flags).toBeUndefined();
     });
 
-    it('should use blurple color', async () => {
+    it('uses the product accent', async () => {
       const interaction = makeInteraction('anyone', 'summary');
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data!.embeds![0].color).toBe(0x5865f2);
+      expect(data.data!.embeds![0].color).toBe(0xea4133);
     });
   });
 

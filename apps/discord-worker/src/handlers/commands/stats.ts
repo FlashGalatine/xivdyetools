@@ -18,17 +18,17 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 import { getStats } from '../../services/analytics.js';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import { messageResponse, errorEmbed } from '../../utils/response.js';
+import { BRAND_ACCENT, STATE } from '../../utils/brand.js';
 
 // ============================================================================
 // Constants
 // ============================================================================
 
-/** Discord embed colors */
+/** State signals only — the product accent is BRAND_ACCENT. */
 const COLORS = {
-  blurple: 0x5865f2,
-  green: 0x57f287,
-  yellow: 0xfee75c,
-  red: 0xed4245,
+  green: STATE.success,
+  yellow: STATE.warning,
+  red: STATE.error,
   purple: 0x9b59b6,
 } as const;
 
@@ -148,7 +148,7 @@ async function handleSummarySubcommand(
     embeds: [{
       title: '📊 XIV Dye Tools Bot',
       description: 'A Discord bot for FFXIV dye matching and color analysis.',
-      color: COLORS.blurple,
+      color: BRAND_ACCENT,
       fields: [
         {
           name: '🎨 Features',
@@ -208,7 +208,7 @@ async function handleOverviewSubcommand(
   return messageResponse({
     embeds: [{
       title: '📈 Usage Overview',
-      color: COLORS.blurple,
+      color: BRAND_ACCENT,
       fields: [
         {
           name: '📊 Volume',

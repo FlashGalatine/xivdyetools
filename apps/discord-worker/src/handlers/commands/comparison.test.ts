@@ -7,7 +7,13 @@ import { handleComparisonCommand } from './comparison.js';
 import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
 
 // Mock dependencies
-vi.mock('@xivdyetools/core', () => {
+// Partial-mocking core silently starved bot-logic's executeComparison of
+// helpers it imports (abbreviateDyeName, the band vocabulary), so the
+// render threw into a generic catch and generateComparisonCard was never
+// called — the assertions below were vacuous. Spread the real module and
+// override only the dye lookups these cases care about.
+vi.mock('@xivdyetools/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@xivdyetools/core')>();
   class MockDyeService {
     searchByName(query: string) {
       if (query.toLowerCase().includes('snow')) {
@@ -79,8 +85,8 @@ vi.mock('@xivdyetools/core', () => {
   };
 
   return {
+    ...actual,
     DyeService: MockDyeService,
-    dyeDatabase: {},
     LocalizationService: MockLocalizationService,
     ColorService,
   };
@@ -137,7 +143,8 @@ vi.mock('../../services/i18n.js', () => ({
   getLocalizedDyeName: vi.fn((_itemId: number, name: string) => name),
 }));
 
-vi.mock('@xivdyetools/svg', () => ({
+vi.mock('@xivdyetools/svg', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@xivdyetools/svg')>()),
   generateComparisonCard: vi.fn().mockReturnValue('<svg>comparison</svg>'),
   contrastRatio: vi.fn().mockReturnValue(4.5),
 }));
@@ -175,7 +182,15 @@ describe('comparison.ts', () => {
       DISCORD_CLIENT_ID: 'client-id',
       PRESETS_API_URL: 'https://test-api.example.com',
       INTERNAL_WEBHOOK_SECRET: 'test-secret',
-      KV: {} as KVNamespace,
+      KV: {
+      // The handlers read stored preferences (theme, matching) before they
+      // render; an empty object throws on kv.get, which swallowed the render
+      // path and made these assertions vacuous.
+      get: async () => null,
+      put: async () => undefined,
+      delete: async () => undefined,
+      list: async () => ({ keys: [], list_complete: true, cacheStatus: null }),
+    } as unknown as KVNamespace,
     } as unknown as Env;
 
     mockCtx = {

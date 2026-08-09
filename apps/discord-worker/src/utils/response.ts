@@ -6,6 +6,7 @@
  */
 
 import { InteractionResponseType } from '../types/env.js';
+import { BRAND_ACCENT } from './brand.js';
 
 /**
  * Discord Embed structure
@@ -150,7 +151,7 @@ export function infoEmbed(title: string, description: string): DiscordEmbed {
   return {
     title: `\u2139\uFE0F ${title}`,
     description,
-    color: 0x5865f2, // Discord Blurple
+    color: BRAND_ACCENT,
   };
 }
 

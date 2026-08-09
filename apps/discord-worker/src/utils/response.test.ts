@@ -170,12 +170,12 @@ describe('response.ts', () => {
     });
 
     describe('infoEmbed', () => {
-        it('should create an info embed with blurple color', () => {
+        it('should create an info embed with the product accent', () => {
             const embed = infoEmbed('Info Title', 'Here is some info');
 
             expect(embed.title).toBe('ℹ️ Info Title');
             expect(embed.description).toBe('Here is some info');
-            expect(embed.color).toBe(0x5865f2);
+            expect(embed.color).toBe(0xea4133);
         });
     });
 

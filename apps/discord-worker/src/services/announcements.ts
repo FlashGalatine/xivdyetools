@@ -8,10 +8,14 @@
  */
 
 import { sendMessage } from '../utils/discord-api.js';
+import { BRAND_ACCENT } from '../utils/brand.js';
 import type { ChangelogEntry } from './changelog-parser.js';
 
-/** Discord blurple color */
-const BLURPLE = 0x5865f2;
+/**
+ * Discord's embed description ceiling is 4096; we stop well short so the
+ * "…and more" line always has room.
+ */
+const DESCRIPTION_BUDGET = 3900;
 
 /**
  * Formats a changelog entry as a Discord embed object.
@@ -42,16 +46,21 @@ export function formatAnnouncementEmbed(
 
   const description = descriptionParts.join('\n').trim();
 
-  // Truncate if over Discord's 4096 char embed description limit
-  const truncated =
-    description.length > 4000
-      ? description.slice(0, 3997) + '...'
-      : description;
+  // A large release used to lose its tail silently, mid-bullet, behind a
+  // bare "...". With /changelog shipped the announcement can afford to be a
+  // summary that links out — but it has to SAY it is one, and it has to cut
+  // on a line boundary rather than through a word.
+  let body = description;
+  if (description.length > DESCRIPTION_BUDGET) {
+    const cut = description.slice(0, DESCRIPTION_BUDGET);
+    const lastBreak = cut.lastIndexOf('\n');
+    body = `${(lastBreak > 0 ? cut.slice(0, lastBreak) : cut).trimEnd()}\n\n*Summary shown — run \`/changelog\` for the full notes.*`;
+  }
 
   return {
     title: `🆕 XIV Dye Tools v${entry.version}`,
-    description: truncated,
-    color: BLURPLE,
+    description: body,
+    color: BRAND_ACCENT,
     footer: {
       text: `Released ${entry.date} • Full changelog: ${repoUrl}`,
     },

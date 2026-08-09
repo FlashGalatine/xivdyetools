@@ -13,6 +13,7 @@
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import { createUserTranslator } from '../../services/bot-i18n.js';
 import { ephemeralResponse } from '../../utils/response.js';
+import { BRAND_ACCENT } from '../../utils/brand.js';
 import { parseAll, type ChangelogEntry } from '../../services/changelog-parser.js';
 
 const CHANGELOG_RAW_URL =
@@ -25,7 +26,7 @@ const CACHE_TTL_SECONDS = 600;
 /** Collapsed one-liners under the expanded newest entry. */
 const COLLAPSED_COUNT = 5;
 
-const ACCENT = 0xea4133;
+
 
 async function fetchChangelog(env: Env): Promise<string | null> {
   const cached = await env.KV.get(CACHE_KEY);
@@ -97,7 +98,7 @@ export async function handleChangelogCommand(
         {
           title: `${t.t('changelog.title')} — ${expanded.version} (${expanded.date})`,
           description: renderEntry(expanded).slice(0, 4000),
-          color: ACCENT,
+          color: BRAND_ACCENT,
           fields,
         },
       ],

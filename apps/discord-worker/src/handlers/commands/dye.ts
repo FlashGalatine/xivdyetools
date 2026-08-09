@@ -22,6 +22,7 @@ import { initializeLocale, getLocalizedDyeName, getLocalizedCategory, type Local
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { executeDyeInfo, executeRandom } from '@xivdyetools/bot-logic';
 import type { Env, DiscordInteraction } from '../../types/env.js';
+import { BRAND_ACCENT, STATE } from '../../utils/brand.js';
 
 // ============================================================================
 // Entry Point
@@ -88,7 +89,7 @@ function handleSearchSubcommand(
       embeds: [{
         title: t.t('dye.search.noResults', { query }),
         description: t.t('dye.search.tryDifferent'),
-        color: 0x808080,
+        color: STATE.neutral,
       }],
     });
   }
@@ -104,7 +105,7 @@ function handleSearchSubcommand(
     embeds: [{
       title: t.t('dye.search.resultsTitle', { query }),
       description: `${foundText}\n\n${dyeList}${moreText}`,
-      color: displayResults[0] ? hexToDiscordColor(displayResults[0].hex) : 0x5865f2,
+      color: displayResults[0] ? hexToDiscordColor(displayResults[0].hex) : BRAND_ACCENT,
       footer: { text: t.t('dye.search.useInfoHint') },
     }],
   });
@@ -254,7 +255,7 @@ function handleListSubcommand(
       embeds: [{
         title: t.t('dye.list.categoryTitle', { category: localizedCategoryName }),
         description: `${t.t('dye.list.dyesInCategory', { count: categoryDyes.length })}\n\n${dyeList}`,
-        color: categoryDyes[0] ? hexToDiscordColor(categoryDyes[0].hex) : 0x5865f2,
+        color: categoryDyes[0] ? hexToDiscordColor(categoryDyes[0].hex) : BRAND_ACCENT,
         footer: { text: t.t('dye.search.useInfoHint') },
       }],
     });
@@ -272,7 +273,7 @@ function handleListSubcommand(
     embeds: [{
       title: t.t('dye.list.categoriesTitle'),
       description: `${t.t('dye.list.categorySummary', { total: allDyes.length, count: categories.size })}\n\n${categoryList}`,
-      color: 0x5865f2,
+      color: BRAND_ACCENT,
       footer: { text: t.t('dye.list.useListHint') },
     }],
   });

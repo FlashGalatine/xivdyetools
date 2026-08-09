@@ -19,16 +19,11 @@ import {
 import { createUserTranslatorWithPrefs, type Translator } from '../../services/bot-i18n.js';
 import type { LocaleCode } from '../../services/i18n.js';
 import { fetchWorlds, fetchDataCenters } from '../../services/budget/index.js';
+import { BRAND_ACCENT } from '../../utils/brand.js';
 
-// Discord embed color constants
-const COLORS = {
-  blurple: 0x5865f2,
-  green: 0x57f287,
-  yellow: 0xfee75c,
-  fuchsia: 0xeb459e,
-  red: 0xed4245,
-  blue: 0x3498db,
-} as const;
+// /manual used to spend five decorative colours across five embeds — one
+// per section, signalling nothing, in a product where green already means
+// two contradictory things. One accent, and colour reserved for state.
 
 /**
  * Build embeds for the match_image help topic
@@ -39,7 +34,7 @@ function buildMatchImageHelpEmbeds(t: Translator): object[] {
     {
       title: `🎨 ${t.t('matchImageHelp.title')}`,
       description: t.t('matchImageHelp.description'),
-      color: COLORS.blurple,
+      color: BRAND_ACCENT,
       fields: [
         {
           name: `🔍 ${t.t('matchImageHelp.howItWorks')}`,
@@ -69,7 +64,7 @@ function buildMatchImageHelpEmbeds(t: Translator): object[] {
     // Examples embed
     {
       title: `📸 ${t.t('matchImageHelp.exampleUseCases')}`,
-      color: COLORS.green,
+      color: BRAND_ACCENT,
       fields: [
         {
           name: `✨ ${t.t('matchImageHelp.goodExamples')}`,
@@ -91,7 +86,7 @@ function buildMatchImageHelpEmbeds(t: Translator): object[] {
     // Technical details embed
     {
       title: `⚙️ ${t.t('matchImageHelp.technicalDetails')}`,
-      color: COLORS.yellow,
+      color: BRAND_ACCENT,
       fields: [
         {
           name: t.t('matchImageHelp.supportedFormats'),
@@ -130,13 +125,13 @@ function buildEmbeds(t: Translator): object[] {
         t.t('manual.commandsIntro'),
         t.t('manual.autocompleteNote'),
       ].join('\n'),
-      color: COLORS.blurple,
+      color: BRAND_ACCENT,
     },
 
     // Color Matching Tools
     {
       title: `🎨 ${t.t('manual.colorMatching')}`,
-      color: COLORS.green,
+      color: BRAND_ACCENT,
       fields: [
         {
           name: t.t('manual.extractor.name'),
@@ -169,7 +164,7 @@ function buildEmbeds(t: Translator): object[] {
     // Dye Information
     {
       title: `🧪 ${t.t('manual.dyeInformation')}`,
-      color: COLORS.yellow,
+      color: BRAND_ACCENT,
       fields: [
         {
           name: t.t('manual.dyeSearch.name'),
@@ -197,7 +192,7 @@ function buildEmbeds(t: Translator): object[] {
     // Bot Information
     {
       title: `ℹ️ ${t.t('manual.botInformation')}`,
-      color: COLORS.fuchsia,
+      color: BRAND_ACCENT,
       fields: [
         {
           name: t.t('manual.preferences.name'),
@@ -220,7 +215,7 @@ function buildEmbeds(t: Translator): object[] {
     // Tips & Resources
     {
       title: `💡 ${t.t('manual.tipsResources')}`,
-      color: COLORS.blue,
+      color: BRAND_ACCENT,
       description: [
         t.t('manual.tips.autocomplete'),
         '',
@@ -302,7 +297,7 @@ function buildTopicEmbed(
   return {
     title: `${meta?.emoji ?? ''} ${t.t(`manual5.topics.${key}.name`)}`.trim(),
     description: description.join('\n'),
-    color: COLORS.blurple,
+    color: BRAND_ACCENT,
   };
 }
 

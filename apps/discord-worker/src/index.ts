@@ -14,6 +14,7 @@ import type { Env } from './types/env.js';
 import { InteractionType, InteractionResponseType } from './types/env.js';
 import { verifyDiscordRequest, unauthorizedResponse, badRequestResponse, timingSafeEqual } from './utils/verify.js';
 import { pongResponse, ephemeralResponse } from './utils/response.js';
+import { BRAND_ACCENT } from './utils/brand.js';
 import {
   handleAboutCommand,
   handleHarmonyCommand,
@@ -450,7 +451,7 @@ async function maybeSendFirstRunNotice(
       {
         title: t.t('firstRun.title'),
         description: t.t('firstRun.body'),
-        color: 0xea4133,
+        color: BRAND_ACCENT,
       },
     ],
     ephemeral: true,

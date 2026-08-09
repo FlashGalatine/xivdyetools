@@ -22,6 +22,7 @@
  */
 
 import type { Env } from '../../types/env.js';
+import { STATE } from '../../utils/brand.js';
 import type { DiscordEmbed, DiscordActionRow } from '../../utils/response.js';
 import { sendMessage } from '../../utils/discord-api.js';
 import { sanitizePresetName, sanitizePresetDescription } from '../../utils/sanitize.js';
@@ -128,7 +129,12 @@ export function buildModerationNotification(
         : `🟡 ${adminT.t('webhook.newPresetPending')}`,
     description: lines.join('\n'),
     ...(opts.extraFields ? { fields: opts.extraFields } : {}),
-    color: 0xfee75c,
+    // Our accent (#EA4133) and Discord's fixed danger red (#DA373C) are
+    // four hex points apart, so an accent bar above a Reject button reads
+    // as one colour carrying two meanings. Button styles are fixed on this
+    // platform, so the fix moves to the bar: amber whenever a destructive
+    // action is on screen.
+    color: buttonsRoutable ? STATE.confirm : STATE.warning,
     footer: { text: `ID: ${preset.id}` },
     timestamp: new Date().toISOString(),
   };

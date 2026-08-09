@@ -88,7 +88,7 @@ describe('handlers/commands/manual.ts', () => {
             expect(body.data.embeds).toBeDefined();
         });
 
-        it('should include Discord blurple color in overview', async () => {
+        it('uses the product accent in the overview', async () => {
             const interaction = {
                 id: '123',
                 token: 'token',
@@ -99,8 +99,8 @@ describe('handlers/commands/manual.ts', () => {
             const response = await handleManualCommand(interaction, mockEnv, mockCtx);
             const body = (await response.json()) as any;
 
-            // First embed should be overview with blurple color
-            expect(body.data.embeds[0].color).toBe(0x5865f2);
+            // One accent for the product; colour is reserved for state
+            expect(body.data.embeds[0].color).toBe(0xea4133);
         });
 
         it('should handle missing user (fallback to unknown)', async () => {
@@ -141,7 +141,7 @@ describe('handlers/commands/manual.ts', () => {
             expect(body.data.flags).toBe(64); // Ephemeral
         });
 
-        it('should handle match_image topic with different embed colors', async () => {
+        it('gives every topic embed the one product accent', async () => {
             const interaction = {
                 id: '123',
                 token: 'token',
@@ -157,12 +157,12 @@ describe('handlers/commands/manual.ts', () => {
             const response = await handleManualCommand(interaction, mockEnv, mockCtx);
             const body = (await response.json()) as any;
 
-            // First embed should be blurple (main help)
-            expect(body.data.embeds[0].color).toBe(0x5865f2);
-            // Second embed should be green (examples)
-            expect(body.data.embeds[1].color).toBe(0x57f287);
-            // Third embed should be yellow (technical)
-            expect(body.data.embeds[2].color).toBe(0xfee75c);
+            // /manual used to spend five decorative colours across five
+            // embeds, one per section, signalling nothing. Colour is
+            // reserved for state now, and a help topic is not a state.
+            for (const embed of body.data.embeds) {
+                expect(embed.color).toBe(0xea4133);
+            }
         });
 
         it('should show general help when topic is undefined', async () => {

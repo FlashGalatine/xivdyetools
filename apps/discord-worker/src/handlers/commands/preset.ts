@@ -35,6 +35,7 @@ import { createUserTranslator, createTranslator, type Translator } from '../../s
 import { sendModerationNotification } from './preset-notifications.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env } from '../../types/env.js';
+import { BRAND_ACCENT, STATE } from '../../utils/brand.js';
 import {
   type CommunityPreset,
   type PresetCategory,
@@ -217,7 +218,7 @@ async function processListCommand(
         {
           title,
           description,
-          color: 0x5865f2,
+          color: BRAND_ACCENT,
           footer: { text: t.t('common.footer') },
         },
       ],
@@ -778,7 +779,7 @@ async function processEditCommand(
               '',
               'Please use a different dye combination.',
             ].join('\n'),
-            color: 0xed4245,
+            color: STATE.error,
           },
         ],
       });
@@ -889,7 +890,7 @@ async function sendPresetEmbed(
           '',
           preset.tags.length > 0 ? `**${t.t('preset.tags')}:** ${preset.tags.join(', ')}` : '',
         ].filter(Boolean).join('\n'),
-        color: 0x5865f2,
+        color: BRAND_ACCENT,
         image: { url: 'attachment://preset.png' },
         fields: [
           { name: t.t('preset.author'), value: author, inline: true },
@@ -1209,7 +1210,7 @@ async function processFavoriteList(
         {
           title: `⭐ Your favorite presets (${presets.length}/${MAX_PRESET_FAVORITES})`,
           description: lines.join('\n'),
-          color: 0xfee75c,
+          color: STATE.warning,
           footer: { text: t.t('common.footer') },
         },
       ],
