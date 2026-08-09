@@ -178,7 +178,7 @@ Notes:
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `hono` | ^4.12 | HTTP framework for Workers |
+| `hono` | ^4.12.34 | HTTP framework for Workers (floor set by FINDING-001: CORS ReDoS) |
 | `discord-interactions` | ^4.4 | Ed25519 signature verification |
 | `@resvg/resvg-wasm` | ^2.6 | SVG to PNG rendering |
 | `@cf-wasm/photon` | ^0.3 | Image processing (dominant color) |
@@ -187,7 +187,7 @@ Notes:
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `hono` | ^4.12 | HTTP framework for Workers |
+| `hono` | ^4.12.34 | HTTP framework for Workers (floor set by FINDING-001: CORS ReDoS) |
 
 ### xivdyetools-stoat-worker
 

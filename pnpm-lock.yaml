@@ -50,8 +50,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-kit
       hono:
-        specifier: ^4.12.32
-        version: 4.12.32
+        specifier: ^4.12.34
+        version: 4.13.1
       spectral.js:
         specifier: ^3.0.0
         version: 3.0.0
@@ -114,8 +114,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-kit
       hono:
-        specifier: ^4.12.32
-        version: 4.12.32
+        specifier: ^4.12.34
+        version: 4.13.1
     devDependencies:
       '@types/node':
         specifier: ^26.1.2
@@ -160,8 +160,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-kit
       hono:
-        specifier: ^4.12.32
-        version: 4.12.32
+        specifier: ^4.12.34
+        version: 4.13.1
     devDependencies:
       '@types/node':
         specifier: ^26.1.2
@@ -203,8 +203,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-kit
       hono:
-        specifier: ^4.12.32
-        version: 4.12.32
+        specifier: ^4.12.34
+        version: 4.13.1
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^5.20260727.1
@@ -249,8 +249,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-kit
       hono:
-        specifier: ^4.12.32
-        version: 4.12.32
+        specifier: ^4.12.34
+        version: 4.13.1
     devDependencies:
       '@types/node':
         specifier: ^26.1.2
@@ -280,8 +280,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-kit
       hono:
-        specifier: ^4.12.32
-        version: 4.12.32
+        specifier: ^4.12.34
+        version: 4.13.1
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^5.20260727.1
@@ -568,8 +568,8 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(vitest@4.1.10)
       hono:
-        specifier: ^4.12.32
-        version: 4.12.32
+        specifier: ^4.12.34
+        version: 4.13.1
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.1.2)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@30.0.0)(msw@2.15.0(@types/node@26.1.2)(typescript@5.9.3))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
@@ -2919,8 +2919,8 @@ packages:
   headers-polyfill@5.0.1:
     resolution: {integrity: sha512-1TJ6Fih/b8h5TIcv+1+Hw0PDQWJTKDKzFZzcKOiW1wJza3XoAQlkCuXLbymPYB8+ZQyw8mHvdw560e8zVFIWyA==}
 
-  hono@4.12.32:
-    resolution: {integrity: sha512-XcuyW9qE2kJn07PkecMOBd5Vq/hMy7mmGw+idz1yblbg9N17ijJODrvPkn7/dwL3Kulj8LcRJ69DLOWf91dRUg==}
+  hono@4.13.1:
+    resolution: {integrity: sha512-kdJoFVv2xmayw6cY09H7AbMJMt8Jn5jdlEdXsP7AGBdF2DIptVlKlOLKXP41yPip4/a3yQPv9gVcJYI8YY04dw==}
     engines: {node: '>=16.9.0'}
 
   hookable@5.5.3:
@@ -6000,7 +6000,7 @@ snapshots:
       '@types/set-cookie-parser': 2.4.10
       set-cookie-parser: 3.1.1
 
-  hono@4.12.32: {}
+  hono@4.13.1: {}
 
   hookable@5.5.3: {}
 

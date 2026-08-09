@@ -22,7 +22,7 @@
     "@xivdyetools/types": "workspace:*",
     "@xivdyetools/logger": "workspace:*",
     "@xivdyetools/worker-kit": "workspace:*",
-    "hono": "^4.12.32",
+    "hono": "^4.12.34",
     "spectral.js": "^3.0.0"
   },
   "devDependencies": {
