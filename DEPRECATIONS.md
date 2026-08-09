@@ -7,6 +7,42 @@ Each entry includes a target removal date and migration guide.
 
 ## Active Deprecations
 
+### `*.xivdyetools.projectgalatine.com` custom domains
+
+| Field       | Value |
+|-------------|-------|
+| Deprecated  | 2026-08-09 |
+| Removed     | Phased — see `docs/operations/DOMAIN_DEPRECATION.md` |
+| Severity    | Medium — five live custom domains; one is a public third-party surface |
+
+**What is being retired:** every `*.xivdyetools.projectgalatine.com` hostname. All services move
+to their `xivdyetools.app` subdomain, which already serves each one today.
+
+| Retiring | Replacement |
+|---|---|
+| `bot.xivdyetools.projectgalatine.com` | `bot.xivdyetools.app` |
+| `moderation-bot.xivdyetools.projectgalatine.com` | `moderation-bot.xivdyetools.app` |
+| `api.xivdyetools.projectgalatine.com` | `api.xivdyetools.app` |
+| `auth.xivdyetools.projectgalatine.com` | `auth.xivdyetools.app` |
+| `proxy.xivdyetools.projectgalatine.com` | `proxy.xivdyetools.app` |
+| `xivdyetools.projectgalatine.com` (apex) | `xivdyetools.app` |
+
+**⚠️ Scope guard:** match `*.xivdyetools.projectgalatine.com` only. The bare string
+`projectgalatine.com` is also the maintainer's identity (Bluesky handle in
+`packages/core/src/config/product-links.ts:34`, Patreon, GitHub) and those references stay.
+
+**⚠️ Blocking pre-checks** (`DOMAIN_DEPRECATION.md` Phase 0): confirm neither Discord
+application's Interactions Endpoint URL, nor any registered OAuth redirect URI, points at the
+old domain. Removing a route those depend on breaks the bots or login instantly.
+
+**Migration path:** `apps/web-app/functions/_middleware.ts` already redirects the old apex to
+`xivdyetools.app`. It is retired **last**, so every other removal degrades to a redirect rather
+than a failure.
+
+**Third-party impact:** `proxy.*` is the public Universalis CORS proxy and gets its own phase
+plus a notice window — it is the only hostname here whose removal breaks software this project
+does not control.
+
 ### 5.0 graphics-era removals (`@xivdyetools/svg` + Discord bot surface)
 
 | Field       | Value |

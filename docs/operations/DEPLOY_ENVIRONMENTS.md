@@ -86,6 +86,12 @@ Applied identically to:
 **The `routes` block must move, not be copied.** Leaving it at top level after the rename would
 attach the production custom domains to the *dev* Worker.
 
+**Move the block verbatim, including the `*.xivdyetools.projectgalatine.com` entries.** Those
+domains are being retired, but under a separate phased plan with its own blocking pre-checks —
+see `docs/operations/DOMAIN_DEPRECATION.md`. Deleting them here would merge a mechanical config
+refactor with a user-facing domain retirement, so a post-deploy failure could not be attributed
+to either. Land this work first; remove routes afterwards.
+
 `workers_dev = true` is only required on `discord-worker`, whose dev Worker needs a reachable
 URL for Discord's Interactions Endpoint. On `moderation-worker` and `presets-api` the rename
 alone achieves the goal — a bare deploy lands on a harmless separate Worker instead of
@@ -104,7 +110,7 @@ No third environment. Deploying the default env produces the beta bot.
 |---|---|---|
 | Worker | `xivdyetools-discord-worker` | `xivdyetools-discord-worker-dev` |
 | URL | `bot.xivdyetools.app` | `xivdyetools-discord-worker-dev.<subdomain>.workers.dev` |
-| Discord application | `1447108133020369048` | **new** — "XIV Dye Tools (Beta)" |
+| Discord application | `1447108133020369048` | `1536085517270261771` — "XIV Dye Tools (Beta)" |
 | KV namespace | `1fcb7e037ccd4172a47fccd97cf8e753` | **new, isolated** |
 | D1 / `PRESETS_API` binding | live | **live (shared)** |
 | Slash commands | global | **guild-scoped** to the test server |
@@ -149,9 +155,11 @@ deliberately out of scope (see below).
 
 4. **Create the Discord application** at <https://discord.com/developers/applications> —
    name it so it is unmistakable in a member list, e.g. "XIV Dye Tools (Beta)".
-5. Copy its **Application ID**, **Public Key**, and (from Bot → Reset Token) its **Token**.
-6. Set the top-level `DISCORD_CLIENT_ID` var in `wrangler.toml` to the beta Application ID.
-   Leave `[env.production.vars]` unchanged.
+   **Already done:** Application ID `1536085517270261771`.
+5. Copy its **Public Key**, and (from Bot → Reset Token) its **Token**. The Application ID is
+   public and lives in `wrangler.toml`; the token and public key are secrets and must not.
+6. Set the top-level `DISCORD_CLIENT_ID` var in `wrangler.toml` to `1536085517270261771`.
+   Leave `[env.production.vars]` unchanged at `1447108133020369048`.
 7. Deploy once so the URL exists:
    ```bash
    pnpm --filter xivdyetools-discord-worker run deploy
