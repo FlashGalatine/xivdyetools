@@ -701,7 +701,7 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
       name: state.name.trim(),
       description: state.description.trim(),
       category_id: state.category,
-      dyes: state.selectedDyes.map((d) => d.id),
+      dyes: state.selectedDyes.map((d) => d.stainID).filter((id): id is number => id !== null),
       tags: state.tags
         .split(',')
         .map((t) => t.trim())

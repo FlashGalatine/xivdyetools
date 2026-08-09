@@ -16,7 +16,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { BaseLitComponent } from './base-lit-component';
 import {
-  dyeService,
+  resolvePresetDye,
   authService,
   communityPresetService,
   ToastService,
@@ -783,7 +783,7 @@ export class PresetDetail extends BaseLitComponent {
    * Resolve a dye ID to a Dye object
    */
   private resolveDye(dyeId: number): Dye | null {
-    return dyeService.getDyeById(dyeId);
+    return resolvePresetDye(dyeId) ?? null;
   }
 
   private resolvedDyes(): Dye[] {

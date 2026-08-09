@@ -15,7 +15,7 @@ import { ModalService } from '@services/modal-service';
 import { LanguageService } from '@services/language-service';
 import { ToastService } from '@services/toast-service';
 import { presetSubmissionService } from '@services/preset-submission-service';
-import { dyeService } from '@services/dye-service-wrapper';
+import { resolvePresetDye } from '@services/dye-service-wrapper';
 import type { CommunityPreset } from '@services/community-preset-service';
 
 type StatusKind = 'live' | 'review' | 'rejected';
@@ -56,7 +56,7 @@ function statValue(value: string, label: string, color: string): string {
 
 function bandFor(preset: CommunityPreset): string {
   const segs = preset.dyes
-    .map((id) => dyeService.getDyeById(id))
+    .map((id) => resolvePresetDye(id) ?? null)
     .filter((d) => d !== null)
     .map((d) => `<span style="flex: 1; background: ${d!.hex};"></span>`)
     .join('');

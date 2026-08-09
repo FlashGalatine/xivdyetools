@@ -131,7 +131,7 @@ export class GradientTool extends BaseComponent {
   private selectedDyes: Dye[] = [];
   private stepCount: number;
   private colorSpace: InterpolationMode;
-  private matchingMethod: MatchingMethod = 'oklab';
+  private matchingMethod: MatchingMethod = 'ciede2000';
   private currentSteps: InterpolationStep[] = [];
   /** 4C: pinned step index â†’ the dye anchored there (captured at pin time) */
   private pinnedSteps = new Map<number, Dye>();
@@ -227,6 +227,9 @@ export class GradientTool extends BaseComponent {
     const configController = ConfigController.getInstance();
     const gradientConfig = configController.getConfig('gradient');
     this.displayOptions = gradientConfig.displayOptions ?? { ...DEFAULT_DISPLAY_OPTIONS };
+    // Seed the matching method from config (suite default ΔE2000) —
+    // normalized so persisted 4.x values (hyab, oklch-weighted) migrate
+    this.matchingMethod = normalizeMatchingMethod(gradientConfig.matchingMethod ?? 'ciede2000');
 
     // Note: showPrices now comes from MarketBoardService getter
 

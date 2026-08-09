@@ -21,7 +21,7 @@ import { BaseLitComponent } from './base-lit-component';
 import { ConfigController } from '@services/config-controller';
 import { hybridPresetService } from '@services/hybrid-preset-service';
 import {
-  dyeService,
+  resolvePresetDye,
   LanguageService,
   authService,
   presetSubmissionService,
@@ -480,7 +480,7 @@ export class PresetTool extends BaseLitComponent {
   private presetToCardData(preset: UnifiedPreset): PresetCardData {
     const colors: string[] = [];
     for (const dyeId of preset.dyes.slice(0, 6)) {
-      const dye = dyeService.getDyeById(dyeId);
+      const dye = resolvePresetDye(dyeId);
       if (dye) colors.push(dye.hex);
     }
     return { preset, colors, exampleLink: preset.exampleLink ?? undefined };
@@ -489,7 +489,7 @@ export class PresetTool extends BaseLitComponent {
   /** A palette is buyable when none of its dyes are market-only (coffer). */
   private isBuyable(preset: UnifiedPreset): boolean {
     return preset.dyes.every((id) => {
-      const dye = dyeService.getDyeById(id);
+      const dye = resolvePresetDye(id);
       return !dye || dye.consolidationType !== null;
     });
   }

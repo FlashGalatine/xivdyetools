@@ -11,6 +11,7 @@ import {
   ToastService,
   LanguageService,
   dyeService,
+  resolvePresetDye,
   authService,
   presetSubmissionService,
 } from '@services/index';
@@ -76,7 +77,7 @@ export function showPresetEditForm(preset: CommunityPreset, onEdit?: OnEditCallb
 
   // Convert preset dyes to Dye objects
   const dyeObjects = preset.dyes
-    .map((dyeId) => dyeService.getDyeById(dyeId))
+    .map((dyeId) => resolvePresetDye(dyeId) ?? null)
     .filter((d): d is Dye => d !== null);
 
   // Initialize form state with existing values
@@ -483,7 +484,9 @@ function createSubmitButton(
       updates.description = state.description.trim();
     }
     if (state.selectedDyes.length >= MIN_DYES) {
-      updates.dyes = state.selectedDyes.map((d) => d.id);
+      updates.dyes = state.selectedDyes
+        .map((d) => d.stainID)
+        .filter((id): id is number => id !== null);
     }
     updates.tags = state.tags
       .split(',')

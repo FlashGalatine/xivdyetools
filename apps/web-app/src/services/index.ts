@@ -18,7 +18,7 @@ import { cameraService } from './camera-service';
 
 // Export service classes
 export { ColorService } from '@xivdyetools/core';
-export { DyeService, dyeService } from './dye-service-wrapper';
+export { DyeService, dyeService, resolvePresetDye } from './dye-service-wrapper';
 export { StorageService, appStorage, NamespacedStorage, SecureStorage } from './storage-service';
 export { ThemeService };
 export { LanguageService };

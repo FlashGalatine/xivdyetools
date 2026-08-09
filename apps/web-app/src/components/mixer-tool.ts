@@ -118,7 +118,7 @@ export class MixerTool extends BaseComponent {
   private matchedResults: MixedColorResult[] = [];
   private maxResults: number = 5;
   private mixingMode: MixingMode = 'ryb';
-  private matchingMethod: MatchingMethod = 'oklab';
+  private matchingMethod: MatchingMethod = 'ciede2000';
   /** 5C: A-share of the two-dye mix, selected in the field (0-1, A weight) */
   private mixRatio: number = 0.5;
   private fieldContainer: HTMLElement | null = null;
@@ -185,6 +185,9 @@ export class MixerTool extends BaseComponent {
     this.maxResults = config.maxResults;
     this.mixingMode = config.mixingMode ?? 'ryb';
     this.displayOptions = config.displayOptions ?? { ...DEFAULT_DISPLAY_OPTIONS };
+    // Seed the matching method from config (suite default ΔE2000) —
+    // normalized so persisted 4.x values (hyab, oklch-weighted) migrate
+    this.matchingMethod = normalizeMatchingMethod(config.matchingMethod ?? 'ciede2000');
 
     // Load persisted dye selections
     this.loadSelectedDyes();

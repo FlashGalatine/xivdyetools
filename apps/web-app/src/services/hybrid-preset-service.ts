@@ -12,7 +12,7 @@ import type {
   CategoryMeta,
   Dye,
 } from '@xivdyetools/types';
-import { dyeService as sharedDyeService } from './dye-service-wrapper';
+import { dyeService as sharedDyeService, resolvePresetDye } from './dye-service-wrapper';
 import {
   CommunityPresetService,
   communityPresetService,
@@ -401,7 +401,7 @@ export class HybridPresetService {
    * Resolve dye IDs to Dye objects
    */
   resolveDyes(dyeIds: number[]): (Dye | null)[] {
-    return dyeIds.map((id) => this.dyeService.getDyeById(id));
+    return dyeIds.map((id) => resolvePresetDye(id) ?? null);
   }
 
   /**

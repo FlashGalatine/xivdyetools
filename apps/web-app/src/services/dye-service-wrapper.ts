@@ -37,5 +37,17 @@ export class DyeService {
 // Export singleton instance for direct use
 export const dyeService = DyeService.getInstance();
 
+/**
+ * Resolve a preset dye reference. presets.json 2.0.0 and migrated community
+ * rows store stainIDs (1-254); community rows served by the live API keep
+ * legacy itemIDs (>=5729) until the user-run D1 migration lands. The two ID
+ * spaces are disjoint, so route by range — never guess.
+ */
+export function resolvePresetDye(id: number): Dye | undefined {
+  return id > 0 && id <= 254
+    ? (dyeService.getByStainId(id) ?? undefined)
+    : (dyeService.getDyeById(id) ?? undefined);
+}
+
 // Re-export Dye type for convenience
 export type { Dye };
