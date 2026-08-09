@@ -305,9 +305,7 @@ export class PresetCard extends BaseLitComponent {
     const shotStyle = hasShot
       ? `background: repeating-linear-gradient(135deg, color-mix(in srgb, ${first} 34%, var(--theme-background, #0b0b0c)) 0 9px, color-mix(in srgb, ${first} 50%, var(--theme-background, #0b0b0c)) 9px 18px);`
       : `background: linear-gradient(120deg, ${stops});`;
-    const caption = hasShot
-      ? `${LanguageService.t('preset.shotSlot')}\n${exampleLink}`
-      : LanguageService.t('preset.noShot');
+    const caption = hasShot ? `${LanguageService.t('preset.shotSlot')}\n${exampleLink}` : null;
 
     const byline = preset.isCurated
       ? LanguageService.t('preset.shipsWithApp')
@@ -334,9 +332,13 @@ export class PresetCard extends BaseLitComponent {
         }}
       >
         <div class="shot" style=${shotStyle}>
-          <span class="shot-caption" style="color: ${this.inkOver(colors[1] ?? first)}"
-            >${caption}</span
-          >
+          ${
+            caption
+              ? html`<span class="shot-caption" style="color: ${this.inkOver(colors[1] ?? first)}"
+                  >${caption}</span
+                >`
+              : nothing
+          }
         </div>
 
         ${
