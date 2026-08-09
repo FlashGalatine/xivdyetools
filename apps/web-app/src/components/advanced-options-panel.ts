@@ -219,20 +219,24 @@ function createContent(host: HTMLElement): HTMLElement {
   const configController = ConfigController.getInstance();
   const advancedConfig: AdvancedConfig = configController.getConfig('advanced');
 
-  // --- Per-tool configuration (the relocated config surface) ---
-  const configHost = document.createElement('v4-config-sidebar') as ConfigSidebar;
-  configHost.embedded = true;
-  configHost.activeTool = RouterService.getCurrentToolId();
-  // The sidebar's emits used to be re-dispatched by the shell; forward them
-  // onto the layout host so v4-layout's listeners keep working unchanged.
-  for (const eventName of ['config-change', 'clear-all-dyes'] as const) {
-    configHost.addEventListener(eventName, ((e: CustomEvent) => {
-      host.dispatchEvent(
-        new CustomEvent(eventName, { detail: e.detail, bubbles: true, composed: true })
-      );
-    }) as EventListener);
+  // --- Per-tool configuration (mobile only) ---
+  // Desktop carries the Simple-Settings column in the shell; on mobile the
+  // gear slide-over is the one route to the same controls.
+  if (window.matchMedia('(max-width: 768px)').matches) {
+    const configHost = document.createElement('v4-config-sidebar') as ConfigSidebar;
+    configHost.embedded = true;
+    configHost.activeTool = RouterService.getCurrentToolId();
+    // Forward the sidebar's emits onto the layout host so v4-layout's
+    // listeners keep working unchanged.
+    for (const eventName of ['config-change', 'clear-all-dyes'] as const) {
+      configHost.addEventListener(eventName, ((e: CustomEvent) => {
+        host.dispatchEvent(
+          new CustomEvent(eventName, { detail: e.detail, bubbles: true, composed: true })
+        );
+      }) as EventListener);
+    }
+    container.appendChild(configHost);
   }
-  container.appendChild(configHost);
 
   // --- Data (destructive resets) ---
   const data = sectionCard(t('advanced.dataTitle'), 'DEVICE', t('advanced.dataSummary'), true);

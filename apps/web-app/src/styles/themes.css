@@ -28,7 +28,8 @@
   /* 5.0 console bar: 54px, no persistent tool rail */
   --v4-header-height: 54px;
   --v4-tool-bar-height: 0px;
-  --v4-sidebar-width: 320px;
+  /* Simple-Settings column (drawn 228-252px per tool; one width suite-wide) */
+  --v4-sidebar-width: 252px;
   --v4-content-padding: 24px;
   --v4-result-card-width: 280px;
 

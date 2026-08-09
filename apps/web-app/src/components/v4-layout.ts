@@ -321,7 +321,8 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
     gridStyle.textContent = `
       .v5-results-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 320px));
+        justify-content: center;
         gap: 12px;
         width: 100%;
       }

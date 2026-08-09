@@ -18,6 +18,7 @@ import { LanguageService } from '@services/index';
 
 // Import child components to ensure registration
 import './v4-app-header';
+import './config-sidebar';
 import './dye-palette-drawer';
 
 // Import Dye type for event handling
@@ -626,6 +627,13 @@ export class V4LayoutShell extends BaseLitComponent {
   }
 
   /**
+   * Re-emit config changes from the Simple-Settings column for v4-layout
+   */
+  private handleConfigChange(e: CustomEvent): void {
+    this.emit('config-change', e.detail);
+  }
+
+  /**
    * Toggle palette drawer visibility
    */
   private togglePaletteDrawer(): void {
@@ -720,8 +728,21 @@ export class V4LayoutShell extends BaseLitComponent {
         @advanced-click=${this.handleAdvancedClick}
       ></v4-app-header>
 
-      <!-- Main Layout (Content + Drawer) -->
+      <!-- Main Layout (Simple Settings + Content + Drawer) -->
       <div class="v4-layout-main">
+        <!-- Left Simple-Settings column (drawn 1A desktop frames; desktop only —
+             mobile reaches the same controls through the gear slide-over) -->
+        ${
+          this.isMobile
+            ? ''
+            : html`<v4-config-sidebar
+                class="v4-simple-settings"
+                .activeTool=${this.activeTool}
+                @config-change=${this.handleConfigChange}
+                @clear-all-dyes=${this.handleClearAllDyes}
+              ></v4-config-sidebar>`
+        }
+
         <!-- Mobile Drawer Overlay (tap outside to close palette) -->
         <div
           class="v4-drawer-overlay ${

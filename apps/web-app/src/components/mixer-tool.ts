@@ -640,16 +640,11 @@ export class MixerTool extends BaseComponent {
       }
     }
 
-    // Load dyeC (optional third dye)
-    if (typeof params.dyeC === 'number') {
-      const dyeC = this.findSharedDye(params.dyeC);
-      if (dyeC) {
-        this.selectedDyes[2] = dyeC;
-      }
-    }
-
-    // Load mixing mode
-    if (typeof params.mode === 'string' && ['rgb', 'ryb', 'cmyk'].includes(params.mode)) {
+    // Load mixing mode (all six blend models round-trip)
+    if (
+      typeof params.mode === 'string' &&
+      ['ryb', 'spectral', 'oklab', 'lab', 'hsl', 'rgb'].includes(params.mode)
+    ) {
       this.mixingMode = params.mode as MixingMode;
       ConfigController.getInstance().setConfig('mixer', { mixingMode: this.mixingMode });
     }
@@ -748,19 +743,16 @@ export class MixerTool extends BaseComponent {
       return;
     }
 
-    // Add to first empty slot, or shift if all full
+    // Two slots: fill the first empty one, else shift the pair (A←B, B←new)
     if (!this.selectedDyes[0]) {
       this.selectedDyes[0] = dye;
     } else if (!this.selectedDyes[1]) {
       this.selectedDyes[1] = dye;
-    } else if (!this.selectedDyes[2]) {
-      this.selectedDyes[2] = dye;
     } else {
-      // All 3 slots full - shift dyes: 2→1, 3→2, new→3
       this.selectedDyes[0] = this.selectedDyes[1];
-      this.selectedDyes[1] = this.selectedDyes[2];
-      this.selectedDyes[2] = dye;
+      this.selectedDyes[1] = dye;
     }
+    this.selectedDyes[2] = null;
 
     // Update selectors
     const selectedDyes = this.selectedDyes.filter((d): d is Dye => d !== null);
@@ -1017,8 +1009,8 @@ export class MixerTool extends BaseComponent {
    * Handle dye selection from DyeSelector
    */
   private handleDyeSelection(dyes: Dye[]): void {
-    // Update selectedDyes array (limit to 3)
-    this.selectedDyes = [dyes[0] ?? null, dyes[1] ?? null, dyes[2] ?? null];
+    // Update selectedDyes array (two-dye mixer)
+    this.selectedDyes = [dyes[0] ?? null, dyes[1] ?? null, null];
 
     this.saveSelectedDyes();
     this.updateSelectedDyesDisplay();
@@ -1395,19 +1387,9 @@ export class MixerTool extends BaseComponent {
     this.slot2Element = this.createDyeSlot(1);
     equationRow.appendChild(this.slot2Element);
 
-    // Plus sign 2 (for optional slot 3)
-    const plusSign2 = this.createElement('span', {
-      className: 'mixer-operator',
-      textContent: '+',
-      attributes: {
-        style: 'font-size: 28px; font-weight: bold; color: var(--theme-text-muted);',
-      },
-    });
-    equationRow.appendChild(plusSign2);
-
-    // Slot 3 (optional)
-    this.slot3Element = this.createDyeSlot(2, true);
-    equationRow.appendChild(this.slot3Element);
+    // Two-dye mixer: the optional third slot was cut (2026-08-08 decision) —
+    // the 5C field always covers the pair.
+    this.slot3Element = null;
 
     // Arrow
     const arrow = this.createElement('span', {
