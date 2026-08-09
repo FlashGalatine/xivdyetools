@@ -57,6 +57,7 @@ vi.mock('@services/index', () => ({
     getDyeName: (itemId: number) => `Dye-${itemId}`,
     getCurrentLocale: () => 'en',
     getAcquisition: (acquisition: string) => acquisition,
+    getCurrency: (currency: string) => currency,
     subscribe: vi.fn().mockReturnValue(() => {}),
   },
   StorageService: {

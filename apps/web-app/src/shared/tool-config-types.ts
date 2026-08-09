@@ -277,9 +277,12 @@ export interface AdvancedConfig {
  * Controls which dye types and acquisition sources are filtered out.
  *
  * All fields from DyeTypeFilters are required since the web-app UI
- * always tracks the full set of filter toggles.
+ * always tracks the full set of filter toggles. `excludeCoffers` is the
+ * web-side overlay for the twenty market-only Venture Coffer dyes —
+ * core's excludeCraftDyes bundles them with Firmament and can't express
+ * coffer-only (see shared/dye-filter-utils).
  */
-export type DyeFiltersConfig = Required<DyeTypeFilters>;
+export type DyeFiltersConfig = Required<DyeTypeFilters> & { excludeCoffers: boolean };
 
 /**
  * Default dye filter configuration (all filters disabled)
@@ -293,6 +296,7 @@ export const DEFAULT_DYE_FILTERS: DyeFiltersConfig = {
   excludeExpensive: false,
   excludeVendorDyes: false,
   excludeCraftDyes: false,
+  excludeCoffers: false,
 };
 
 // ============================================================================

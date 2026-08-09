@@ -877,6 +877,7 @@
     "excludeCosmicDesc": "코스모 탐사 & 코스모 행운 염료 숨기기",
     "excludeIshgardian": "이슈가르드 염료 제외",
     "excludeExpensive": "고가 염료 제외",
+    "excludeCoffers": "보물상자 염료 제외",
     "excludeExpensiveDesc": "젯 블랙 & 퓨어 화이트 숨기기",
     "excludeSpecial": "특수 염료 제외",
     "showOnlyMetallic": "금속질만 표시",
@@ -971,7 +972,13 @@
     "boardWord": "시장",
     "noVendorMarketOnly": "상인 없음 · 시장 전용",
     "matchLine": "일치선",
-    "matchLineDesc": "대체품으로 인정하는 색 오차의 한계."
+    "matchLineDesc": "대체품으로 인정하는 색 오차의 한계.",
+    "sendTo": "보내기",
+    "handoffHarmony": "하모니",
+    "handoffCompare": "비교",
+    "copyItem": "아이템 이름 복사",
+    "saveSwap": "교체 저장",
+    "swapSaved": "교체를 이 기기에 저장했습니다."
   },
   "export": {
     "exportAsJson": "JSON으로 내보내기",

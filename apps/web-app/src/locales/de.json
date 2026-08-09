@@ -877,6 +877,7 @@
     "excludeCosmicDesc": "Farbstoffe von Kosmo-Erkundung & Kosmo-Glück ausblenden",
     "excludeIshgardian": "Ishgard-Farbstoffe ausschließen",
     "excludeExpensive": "Teure Farbstoffe ausschließen",
+    "excludeCoffers": "Truhen-Farbstoffe ausschließen",
     "excludeExpensiveDesc": "Rabenschwarz & Wolkenweiß ausblenden",
     "excludeSpecial": "Spezielle Farbstoffe ausschließen",
     "showOnlyMetallic": "Nur metallische anzeigen",
@@ -971,7 +972,13 @@
     "boardWord": "Markt",
     "noVendorMarketOnly": "kein Händler · nur Markt",
     "matchLine": "Trefferschwelle",
-    "matchLineDesc": "Wie weit ein Ersatz abweichen darf, bevor er nicht mehr zählt."
+    "matchLineDesc": "Wie weit ein Ersatz abweichen darf, bevor er nicht mehr zählt.",
+    "sendTo": "SENDEN AN",
+    "handoffHarmony": "Harmonie",
+    "handoffCompare": "Vergleichen",
+    "copyItem": "Itemnamen kopieren",
+    "saveSwap": "Tausch speichern",
+    "swapSaved": "Tausch auf diesem Gerät gespeichert."
   },
   "export": {
     "exportAsJson": "Als JSON exportieren",

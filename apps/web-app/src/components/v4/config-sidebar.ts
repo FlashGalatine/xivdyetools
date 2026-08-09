@@ -957,6 +957,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
           .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeCoffers=${this.globalDyeFilters.excludeCoffers}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
@@ -1069,6 +1070,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
           .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeCoffers=${this.globalDyeFilters.excludeCoffers}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
@@ -1244,6 +1246,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
           .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeCoffers=${this.globalDyeFilters.excludeCoffers}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
@@ -1319,6 +1322,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
           .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeCoffers=${this.globalDyeFilters.excludeCoffers}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
@@ -1618,6 +1622,7 @@ export class ConfigSidebar extends BaseLitComponent {
               .value=${this.budgetConfig.maxDeltaE}
               .min=${2}
               .max=${20}
+              .disabled=${this.budgetConfig.matchingMethod !== 'ciede2000'}
               @slider-change=${(e: CustomEvent<{ value: number }>) =>
                 this.handleConfigChange('budget', 'maxDeltaE', e.detail.value)}
             ></v4-range-slider>
@@ -1650,6 +1655,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
           .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeCoffers=${this.globalDyeFilters.excludeCoffers}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>
@@ -1765,6 +1771,7 @@ export class ConfigSidebar extends BaseLitComponent {
           .excludeCosmic=${this.globalDyeFilters.excludeCosmic}
           .excludeIshgardian=${this.globalDyeFilters.excludeIshgardian}
           .excludeExpensive=${this.globalDyeFilters.excludeExpensive}
+          .excludeCoffers=${this.globalDyeFilters.excludeCoffers}
           .excludeVendorDyes=${this.globalDyeFilters.excludeVendorDyes}
           .excludeCraftDyes=${this.globalDyeFilters.excludeCraftDyes}
           @dye-filters-change=${(e: CustomEvent<DyeFiltersChangeDetail>) =>

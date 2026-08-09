@@ -26,9 +26,12 @@ import {
   type ConsolidationType,
 } from '@xivdyetools/core';
 import { ShareService } from '@services/share-service';
+import { CollectionService } from '@services/collection-service';
 import { BaseComponent } from '@components/base-component';
 import '@components/v4/result-card';
 import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
+import '@components/v4/share-button';
+import type { ShareButton } from '@components/v4/share-button';
 import {
   ColorService,
   ConfigController,
@@ -45,7 +48,7 @@ import { ThemeService } from '@services/theme-service';
 import { ICON_TOOL_BUDGET } from '@shared/tool-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
-import type { Dye, PriceData } from '@xivdyetools/types';
+import type { Dye, DyeId, PriceData } from '@xivdyetools/types';
 import type { BudgetConfig, MatchingMethod } from '@shared/tool-config-types';
 import { DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
 import { filterDyes } from '@shared/dye-filter-utils';
@@ -172,6 +175,11 @@ export class BudgetTool extends BaseComponent {
   private targetOverviewContainer: HTMLElement | null = null;
   private verdictContainer: HTMLElement | null = null;
   private ledgerContainer: HTMLElement | null = null;
+  private shareButton: ShareButton | null = null;
+  private narrowMql: MediaQueryList | null = null;
+  private onNarrowChange = (): void => {
+    this.renderLedger();
+  };
 
   // Mobile drawer components
   private mobileTargetDyeContainer: HTMLElement | null = null;
@@ -266,6 +274,10 @@ export class BudgetTool extends BaseComponent {
     // Prices are core to this tool
     this.marketBoardService.setShowPrices(true);
 
+    // Re-render the ledger across the narrow breakpoint (BOARD column drop)
+    this.narrowMql = window.matchMedia('(max-width: 480px)');
+    this.narrowMql.addEventListener('change', this.onNarrowChange);
+
     logger.info('[BudgetTool] Mounted');
 
     this.handleDeepLink();
@@ -278,6 +290,8 @@ export class BudgetTool extends BaseComponent {
     this.targetDye = null;
     this.rows = [];
     this.priceData.clear();
+    this.narrowMql?.removeEventListener('change', this.onNarrowChange);
+    this.narrowMql = null;
 
     super.destroy();
     logger.info('[BudgetTool] Destroyed');
@@ -385,6 +399,8 @@ export class BudgetTool extends BaseComponent {
   private handleDeepLink(): void {
     const params = new URLSearchParams(window.location.search);
     const dyeParam = params.get('dye');
+    const hexParam = params.get('hex');
+    const maxDeltaParam = params.get('maxDelta');
 
     if (dyeParam) {
       // 5.0 grammar: ?dye= is a stainID
@@ -393,6 +409,18 @@ export class BudgetTool extends BaseComponent {
         this.targetDye = dye;
         this.updateTargetDyeDisplay();
         StorageService.setItem(STORAGE_KEYS.targetDyeId, dye.id);
+      }
+    } else if (hexParam && /^#?[0-9a-fA-F]{6}$/.test(hexParam)) {
+      // ?hex= is a bare colour target — exclusive with `dye`, never persisted
+      this.targetDye = this.virtualTargetFor(`#${hexParam.replace(/^#/, '')}`);
+      this.updateTargetDyeDisplay();
+    }
+
+    if (maxDeltaParam !== null) {
+      const n = Number(maxDeltaParam);
+      if (Number.isFinite(n)) {
+        this.matchLine = this.clampMatchLine(n);
+        StorageService.setItem(STORAGE_KEYS.matchLine, this.matchLine);
       }
     }
   }
@@ -422,7 +450,7 @@ export class BudgetTool extends BaseComponent {
     }
 
     const meta = CONSOLIDATED_DYES[tier];
-    const localCost = `${meta.price.toLocaleString()} ${meta.currency}`;
+    const localCost = `${meta.price.toLocaleString()} ${LanguageService.getCurrency(meta.currency)}`;
     if (tier === 'A') {
       // Vendor gil is deterministic and always known.
       return { tier, gil: meta.price, board, localCost };
@@ -1068,6 +1096,119 @@ export class BudgetTool extends BaseComponent {
 
     cardWrapper.appendChild(card);
     this.targetOverviewContainer.appendChild(cardWrapper);
+    this.targetOverviewContainer.appendChild(this.buildSendToRow(this.targetDye));
+  }
+
+  /** 9C SEND TO row: Harmony · Compare · Copy item name · Save swap · Share. */
+  private buildSendToRow(dye: Dye): HTMLElement {
+    const row = this.createElement('div', {
+      attributes: {
+        style:
+          'display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 10px;',
+      },
+    });
+    row.appendChild(
+      this.createElement('span', {
+        textContent: LanguageService.t('budget.sendTo'),
+        attributes: {
+          style: `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted); margin-right: 4px;`,
+        },
+      })
+    );
+
+    const btn = (label: string, onClick: () => void): HTMLElement => {
+      const b = this.createElement('button', {
+        textContent: label,
+        attributes: {
+          type: 'button',
+          style:
+            'min-height: 32px; padding: 4px 10px; border-radius: 8px; font-size: 11.5px; font-weight: 600; cursor: pointer; font-family: inherit; background: var(--theme-card-background); border: 1px solid var(--theme-border); color: var(--theme-text);',
+        },
+      });
+      this.on(b, 'click', onClick);
+      return b;
+    };
+
+    // Name-addressed handoffs and the swap record need a real dye
+    if (dye.stainID !== null) {
+      row.appendChild(
+        btn(LanguageService.t('budget.handoffHarmony'), () =>
+          RouterService.navigateTo('harmony', { dye: dye.name })
+        )
+      );
+      row.appendChild(
+        btn(LanguageService.t('budget.handoffCompare'), () =>
+          RouterService.navigateTo('comparison', { dye: dye.name })
+        )
+      );
+      row.appendChild(
+        btn(LanguageService.t('budget.copyItem'), () => {
+          void navigator.clipboard.writeText(this.itemNameFor(dye));
+          ToastService.success(LanguageService.t('success.copiedToClipboard'));
+        })
+      );
+      row.appendChild(btn(LanguageService.t('budget.saveSwap'), () => this.saveSwapRecord()));
+    }
+
+    const share = document.createElement('v4-share-button') as ShareButton;
+    share.tool = 'budget';
+    share.shareParams = this.getShareParams();
+    this.shareButton = share;
+    row.appendChild(share);
+
+    return row;
+  }
+
+  /**
+   * The market-searchable item name: consolidated tiers share one item;
+   * coffer dyes carry their own (the localized dye name finds it).
+   */
+  private itemNameFor(dye: Dye): string {
+    return dye.consolidationType
+      ? getConsolidatedDyeName(dye.consolidationType, LanguageService.getCurrentLocale())
+      : this.dyeName(dye);
+  }
+
+  /**
+   * Save the target and its best-priced substitute as a device-local
+   * `kind: 'swap'` record (the store's third collection kind).
+   */
+  private saveSwapRecord(): void {
+    const target = this.targetDye;
+    if (!target || target.stainID === null) return;
+
+    const record = CollectionService.createCollection(this.dyeName(target), undefined, {
+      kind: 'swap',
+      target: target.stainID as DyeId,
+    });
+    if (!record) {
+      ToastService.error(LanguageService.t('errors.saveChangesFailed'));
+      return;
+    }
+    const cheapest = this.rows.reduce<LedgerRow | null>(
+      (best, r) =>
+        r.price.gil != null &&
+        r.dye.stainID !== null &&
+        (best?.price.gil == null || r.price.gil < best.price.gil)
+          ? r
+          : best,
+      null
+    );
+    if (cheapest && cheapest.dye.stainID !== null) {
+      CollectionService.addDyeToCollection(record.id, cheapest.dye.stainID as DyeId);
+    }
+    ToastService.success(LanguageService.t('budget.swapSaved'));
+  }
+
+  private getShareParams(): Record<string, unknown> {
+    if (!this.targetDye) return {};
+    const params: Record<string, unknown> = { maxDelta: this.matchLine };
+    if (this.targetDye.stainID !== null) {
+      params.dye = this.targetDye.stainID;
+    } else {
+      params.hex = this.targetDye.hex;
+    }
+    return params;
   }
 
   /** The verdict block: badge · headline · sub · money figure. */
@@ -1076,10 +1217,12 @@ export class BudgetTool extends BaseComponent {
     clearContainer(this.verdictContainer);
 
     const dark = ThemeService.isDarkMode();
-    const accent = this.accent();
     const targetName = this.dyeName(this.targetDye);
     const upgrade = this.isUpgradeMode();
     const targetGil = this.priceOf(this.targetDye).gil;
+    const gilWord = LanguageService.getCurrency('Gil');
+
+    if (this.shareButton) this.shareButton.shareParams = this.getShareParams();
 
     let badge: string;
     let headline: string;
@@ -1097,40 +1240,48 @@ export class BudgetTool extends BaseComponent {
       badge = LanguageService.t('budget.upBadge');
       headline = LanguageService.tInterpolate('budget.upHead', { t: targetName });
       sub = LanguageService.tInterpolate('budget.upSub', { t: targetName });
-      money = `${CONSOLIDATED_DYES.A.price.toLocaleString()} gil`;
+      money = `${CONSOLIDATED_DYES.A.price.toLocaleString()} ${gilWord}`;
       moneyLabel = LanguageService.t('budget.upFloorLabel');
       unit = LanguageService.t('budget.upUnit');
     } else if (!this.marketOnline) {
       badge = LanguageService.t('budget.offBadge');
       headline = LanguageService.tInterpolate('budget.ledgerHead', { t: targetName });
       sub = LanguageService.t('budget.offText');
-      money = cheapestGil != null ? `${cheapestGil.toLocaleString()} gil` : '—';
+      money = cheapestGil != null ? `${cheapestGil.toLocaleString()} ${gilWord}` : '—';
       moneyLabel = LanguageService.t('budget.cheapestKnown');
       unit = LanguageService.t('budget.noTargetPrice');
     } else {
       badge = LanguageService.tInterpolate('budget.inRange', { n: this.rows.length });
       headline = LanguageService.tInterpolate('budget.ledgerHead', { t: targetName });
       sub = LanguageService.tInterpolate('budget.ledgerSub', {
-        thr: this.fmtValue(this.effectiveThreshold()),
+        thr: `${this.fmtValue(this.effectiveThreshold())} ${methodShort(this.matchingMethod)}`,
       });
       const bestPerPoint = this.rows.reduce<number | null>(
         (max, r) => (r.perPoint != null && (max == null || r.perPoint > max) ? r.perPoint : max),
         null
       );
       if (bestPerPoint != null) {
-        money = `${Math.round(bestPerPoint).toLocaleString()} gil`;
+        money = `${Math.round(bestPerPoint).toLocaleString()} ${gilWord}`;
         moneyLabel = LanguageService.t('budget.perPointLabel');
         unit = LanguageService.t('budget.perPointSort');
       } else {
-        money = cheapestGil != null ? `${cheapestGil.toLocaleString()} gil` : '—';
+        money = cheapestGil != null ? `${cheapestGil.toLocaleString()} ${gilWord}` : '—';
         moneyLabel = LanguageService.t('budget.cheapestKnown');
         unit = targetGil == null ? LanguageService.t('budget.noTargetPrice') : '';
       }
     }
 
+    // Drawn verdict states: green when priced, amber offline, neutral in
+    // upgrade mode — the theme accent belongs to selection, not verdicts
+    const green = dark ? '#5bbd68' : '#137A33';
+    const amber = dark ? '#ffc107' : '#B45309';
+    const tone = upgrade ? (dark ? '#8a877f' : '#6b6862') : !this.marketOnline ? amber : green;
+    const blockBorder = upgrade ? 'var(--theme-border)' : this.tint(tone, 0.35);
+    const blockBg = upgrade ? 'var(--theme-card-background)' : this.tint(tone, 0.08);
+
     const block = this.createElement('div', {
       attributes: {
-        style: `display: flex; gap: 20px; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; padding: 16px 18px; border-radius: 12px; border: 1px solid ${this.tint(accent, 0.35)}; background: ${this.tint(accent, 0.07)};`,
+        style: `display: flex; gap: 20px; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; padding: 16px 18px; border-radius: 12px; border: 1px solid ${blockBorder}; background: ${blockBg};`,
       },
     });
 
@@ -1141,7 +1292,7 @@ export class BudgetTool extends BaseComponent {
       this.createElement('span', {
         textContent: badge,
         attributes: {
-          style: `display: inline-block; font-family: ${MONO}; font-size: 8.5px; letter-spacing: 1px; padding: 3px 7px; border-radius: 5px; background: ${accent}; color: ${dark ? '#0A0A0A' : '#FFFFFF'}; margin-bottom: 8px;`,
+          style: `display: inline-block; font-family: ${MONO}; font-size: 8.5px; letter-spacing: 1px; padding: 3px 7px; border-radius: 5px; background: ${tone}; color: ${dark ? '#0A0A0A' : '#FFFFFF'}; margin-bottom: 8px;`,
         },
       })
     );
@@ -1179,7 +1330,7 @@ export class BudgetTool extends BaseComponent {
       this.createElement('div', {
         textContent: moneyLabel,
         attributes: {
-          style: `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 1px; color: ${accent}; margin-top: 4px;`,
+          style: `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 1px; color: ${tone}; margin-top: 4px;`,
         },
       })
     );
@@ -1467,7 +1618,9 @@ export class BudgetTool extends BaseComponent {
       return group;
     }
 
-    const gridCols = 'minmax(0, 1fr) 84px 96px 96px';
+    // The BOARD column drops on narrow viewports (drawn MOBILE·412 frame)
+    const narrow = window.matchMedia('(max-width: 480px)').matches;
+    const gridCols = narrow ? 'minmax(0, 1fr) 84px 96px' : 'minmax(0, 1fr) 84px 96px 96px';
 
     // Sortable column headers
     const headRow = this.createElement('div', {
@@ -1478,7 +1631,15 @@ export class BudgetTool extends BaseComponent {
     const cols: Array<{ col: SortCol; label: string; align: string }> = [
       { col: 'name', label: LanguageService.t('budget.colDye'), align: 'left' },
       { col: 'de', label: methodShort(this.matchingMethod), align: 'right' },
-      { col: 'board', label: LanguageService.t('budget.colBoard'), align: 'right' },
+      ...(narrow
+        ? []
+        : [
+            {
+              col: 'board' as SortCol,
+              label: LanguageService.t('budget.colBoard'),
+              align: 'right',
+            },
+          ]),
       { col: 'perPoint', label: LanguageService.t('budget.colPerDe'), align: 'right' },
     ];
     for (const c of cols) {
@@ -1550,14 +1711,16 @@ export class BudgetTool extends BaseComponent {
         })
       );
 
-      rowEl.appendChild(
-        this.createElement('span', {
-          textContent: row.price.board != null ? row.price.board.toLocaleString() : '—',
-          attributes: {
-            style: `font-family: ${MONO}; font-size: 12.5px; text-align: right; color: ${row.price.board != null ? 'var(--theme-text)' : 'var(--theme-text-muted)'};`,
-          },
-        })
-      );
+      if (!narrow) {
+        rowEl.appendChild(
+          this.createElement('span', {
+            textContent: row.price.board != null ? row.price.board.toLocaleString() : '—',
+            attributes: {
+              style: `font-family: ${MONO}; font-size: 12.5px; text-align: right; color: ${row.price.board != null ? 'var(--theme-text)' : 'var(--theme-text-muted)'};`,
+            },
+          })
+        );
+      }
 
       rowEl.appendChild(
         this.createElement('span', {
@@ -1688,5 +1851,38 @@ export class BudgetTool extends BaseComponent {
     this.updateTargetDyeDisplay();
     this.updateMobileTargetDyeDisplay();
     this.renderQuickPicks();
+  }
+
+  /** Wrap a bare colour in a virtual target dye (no stainID — never shared as a dye). */
+  private virtualTargetFor(hex: string): Dye {
+    return {
+      id: -Date.now(),
+      itemID: -Date.now(),
+      stainID: null,
+      name: `Custom (${hex.toUpperCase()})`,
+      hex: hex.toUpperCase(),
+      rgb: ColorService.hexToRgb(hex),
+      hsv: ColorService.hexToHsv(hex),
+      category: 'Custom',
+      acquisition: 'Custom',
+      cost: 0,
+      currency: null,
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
+      isIshgardian: false,
+      consolidationType: null,
+    };
+  }
+
+  /**
+   * Price an arbitrary colour from the Color Palette drawer's hex field /
+   * native picker — the target can be an armour base colour or UI tint,
+   * not only a dye.
+   */
+  public selectCustomColor(hex: string): void {
+    if (!hex) return;
+    this.selectDye(this.virtualTargetFor(hex));
   }
 }

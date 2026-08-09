@@ -877,6 +877,7 @@
     "excludeCosmicDesc": "Masquer les teintures d'Exploration Cosmique & Roue de la fortune cosmique",
     "excludeIshgardian": "Exclure les Teintures Ishgardaises",
     "excludeExpensive": "Exclure les Teintures Chères",
+    "excludeCoffers": "Exclure les Teintures de Coffres",
     "excludeExpensiveDesc": "Masquer Noir de Jais & Blanc Pur",
     "excludeSpecial": "Exclure les Teintures Spéciales",
     "showOnlyMetallic": "Afficher Uniquement les Métalliques",
@@ -971,7 +972,13 @@
     "boardWord": "marché",
     "noVendorMarketOnly": "pas de marchand · marché seulement",
     "matchLine": "Marge de correspondance",
-    "matchLineDesc": "Jusqu'où un substitut peut dériver avant de ne plus compter."
+    "matchLineDesc": "Jusqu'où un substitut peut dériver avant de ne plus compter.",
+    "sendTo": "ENVOYER VERS",
+    "handoffHarmony": "Harmonie",
+    "handoffCompare": "Comparer",
+    "copyItem": "Copier le nom de l'objet",
+    "saveSwap": "Enregistrer l'échange",
+    "swapSaved": "Échange enregistré sur cet appareil."
   },
   "export": {
     "exportAsJson": "Exporter en JSON",

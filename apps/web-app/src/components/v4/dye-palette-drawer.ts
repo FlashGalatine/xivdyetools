@@ -114,6 +114,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
     'swatch',
     'accessibility',
     'comparison',
+    'budget',
   ];
 
   /**

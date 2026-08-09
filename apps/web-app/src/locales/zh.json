@@ -903,6 +903,7 @@
     "excludeCosmicDesc": "隐藏宇宙探索和宇宙幸运的染剂",
     "excludeIshgardian": "排除伊修加德染剂",
     "excludeExpensive": "排除昂贵染剂",
+    "excludeCoffers": "排除宝箱染剂",
     "excludeExpensiveDesc": "隐藏煤烟黑和无瑕白",
     "excludeSpecial": "排除特殊染剂",
     "showOnlyMetallic": "仅显示金属染剂",
@@ -997,7 +998,13 @@
     "boardWord": "市场",
     "noVendorMarketOnly": "无商店 · 仅限市场",
     "matchLine": "匹配线",
-    "matchLineDesc": "替代品可偏移多远仍算数。"
+    "matchLineDesc": "替代品可偏移多远仍算数。",
+    "sendTo": "发送到",
+    "handoffHarmony": "和谐",
+    "handoffCompare": "比较",
+    "copyItem": "复制物品名称",
+    "saveSwap": "保存替换",
+    "swapSaved": "替换已保存到此设备。"
   },
   "export": {
     "exportAsJson": "导出为 JSON",

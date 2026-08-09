@@ -877,6 +877,7 @@
     "excludeCosmicDesc": "Hide dyes from Cosmic Exploration & Cosmic Fortunes",
     "excludeIshgardian": "Exclude Ishgardian Dyes",
     "excludeExpensive": "Exclude Expensive Dyes",
+    "excludeCoffers": "Exclude Coffer Dyes",
     "excludeExpensiveDesc": "Hide Jet Black & Pure White",
     "excludeSpecial": "Exclude Special Dyes",
     "showOnlyMetallic": "Show Only Metallic",
@@ -971,7 +972,13 @@
     "boardWord": "board",
     "noVendorMarketOnly": "no vendor · market only",
     "matchLine": "Match line",
-    "matchLineDesc": "How far a substitute may drift before it stops counting."
+    "matchLineDesc": "How far a substitute may drift before it stops counting.",
+    "sendTo": "SEND TO",
+    "handoffHarmony": "Harmony",
+    "handoffCompare": "Compare",
+    "copyItem": "Copy item name",
+    "saveSwap": "Save swap",
+    "swapSaved": "Swap saved to this device."
   },
   "export": {
     "exportAsJson": "Export as JSON",

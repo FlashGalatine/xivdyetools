@@ -877,6 +877,7 @@
     "excludeCosmicDesc": "コスモエクスプローラー＆コスモフォーチュンのカララントを非表示",
     "excludeIshgardian": "イシュガルドカララントを除外",
     "excludeExpensive": "高価なカララントを除外",
+    "excludeCoffers": "宝箱カララントを除外",
     "excludeExpensiveDesc": "ジェットブラック＆ピュアホワイトを非表示",
     "excludeSpecial": "特殊カララントを除外",
     "showOnlyMetallic": "メタリックのみ表示",
@@ -971,7 +972,13 @@
     "boardWord": "市場",
     "noVendorMarketOnly": "販売なし · 市場のみ",
     "matchLine": "一致しきい値",
-    "matchLineDesc": "代替として認める色ずれの上限。"
+    "matchLineDesc": "代替として認める色ずれの上限。",
+    "sendTo": "送る",
+    "handoffHarmony": "ハーモニー",
+    "handoffCompare": "比較",
+    "copyItem": "アイテム名をコピー",
+    "saveSwap": "入替を保存",
+    "swapSaved": "入替をこの端末に保存しました。"
   },
   "export": {
     "exportAsJson": "JSONとしてエクスポート",
