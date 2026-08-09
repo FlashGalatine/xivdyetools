@@ -850,6 +850,8 @@
     "unpinStep": "取消固定",
     "endAnchor": "端点 — 本就是锚点",
     "avgDrift": "平均 ΔE",
+    "maxDrift": "最大 ΔE",
+    "maxDriftDesc": "渐变中最差的一级——平均值会掩盖单点跳变。",
     "exportCss": "导出 CSS",
     "startColour": "起始颜色",
     "endColour": "结束颜色",

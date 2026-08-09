@@ -824,6 +824,8 @@
     "unpinStep": "고정 해제",
     "endAnchor": "끝점 — 이미 앵커",
     "avgDrift": "평균 ΔE",
+    "maxDrift": "최대 ΔE",
+    "maxDriftDesc": "램프에서 가장 나쁜 단계 — 평균은 한 번의 튐을 감춥니다.",
     "exportCss": "CSS 내보내기",
     "startColour": "시작 색",
     "endColour": "끝 색",

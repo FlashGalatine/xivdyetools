@@ -824,6 +824,8 @@
     "unpinStep": "Lösen",
     "endAnchor": "Endpunkt — bereits ein Anker",
     "avgDrift": "Ø ΔE",
+    "maxDrift": "max. ΔE",
+    "maxDriftDesc": "Der schlechteste Schritt der Rampe — ein Mittelwert verbirgt einen einzelnen Ausreißer.",
     "exportCss": "CSS export",
     "startColour": "Startfarbe",
     "endColour": "Endfarbe",

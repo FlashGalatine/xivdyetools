@@ -135,6 +135,8 @@ export interface GradientConfig {
   interpolation: InterpolationMode;
   /** Color matching algorithm for finding closest dyes */
   matchingMethod: MatchingMethod;
+  /** Stop consecutive ramp steps resolving to the same dye */
+  preventDuplicates: boolean;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
   /** Dye filter configuration */
@@ -447,9 +449,10 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
   },
   gradient: {
-    stepCount: 4,
+    stepCount: 8,
     interpolation: 'hsv',
     matchingMethod: 'ciede2000',
+    preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },

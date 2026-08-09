@@ -97,6 +97,10 @@ const DEFAULTS = {
  * 4C accent tints (the drawn accent-soft / accent-border), built on the
  * theme's primary token so both Light and Dark themes hold.
  */
+/** Ramp length, per the drawn 4C control — one range for slider, sidebar and share. */
+const STEP_MIN = 3;
+const STEP_MAX = 12;
+
 const ACCENT_SOFT = 'color-mix(in srgb, var(--theme-primary) 14%, transparent)';
 const ACCENT_BORDER = 'color-mix(in srgb, var(--theme-primary) 45%, transparent)';
 
@@ -132,6 +136,7 @@ export class GradientTool extends BaseComponent {
   private stepCount: number;
   private colorSpace: InterpolationMode;
   private matchingMethod: MatchingMethod = 'ciede2000';
+  private preventDuplicates = true;
   private currentSteps: InterpolationStep[] = [];
   /** 4C: pinned step index â†’ the dye anchored there (captured at pin time) */
   private pinnedSteps = new Map<number, Dye>();
@@ -219,7 +224,14 @@ export class GradientTool extends BaseComponent {
     this.marketBoardService = MarketBoardService.getInstance();
 
     // Load persisted settings
-    this.stepCount = StorageService.getItem<number>(STORAGE_KEYS.stepCount) ?? DEFAULTS.stepCount;
+    // Clamp: values stored under the old 2–10 slider still load
+    this.stepCount = Math.min(
+      STEP_MAX,
+      Math.max(
+        STEP_MIN,
+        StorageService.getItem<number>(STORAGE_KEYS.stepCount) ?? DEFAULTS.stepCount
+      )
+    );
     this.colorSpace =
       StorageService.getItem<InterpolationMode>(STORAGE_KEYS.colorSpace) ?? DEFAULTS.colorSpace;
 
@@ -230,6 +242,7 @@ export class GradientTool extends BaseComponent {
     // Seed the matching method from config (suite default ΔE2000) —
     // normalized so persisted 4.x values (hyab, oklch-weighted) migrate
     this.matchingMethod = normalizeMatchingMethod(gradientConfig.matchingMethod ?? 'ciede2000');
+    this.preventDuplicates = gradientConfig.preventDuplicates ?? true;
 
     // Note: showPrices now comes from MarketBoardService getter
 
@@ -322,8 +335,8 @@ export class GradientTool extends BaseComponent {
       }
     }
 
-    // Load step count
-    if (typeof params.steps === 'number' && params.steps >= 2 && params.steps <= 10) {
+    // Load step count — the shared range is the slider's range, 3–12
+    if (typeof params.steps === 'number' && params.steps >= STEP_MIN && params.steps <= STEP_MAX) {
       this.stepCount = params.steps;
       StorageService.setItem(STORAGE_KEYS.stepCount, params.steps);
     }
@@ -464,10 +477,23 @@ export class GradientTool extends BaseComponent {
   public setConfig(config: Partial<GradientConfig> & Partial<MarketConfig>): void {
     let needsUpdate = false;
 
+    // Handle preventDuplicates
+    if (
+      config.preventDuplicates !== undefined &&
+      config.preventDuplicates !== this.preventDuplicates
+    ) {
+      this.preventDuplicates = config.preventDuplicates;
+      needsUpdate = true;
+      logger.info(`[GradientTool] setConfig: preventDuplicates -> ${config.preventDuplicates}`);
+    }
+
     // Handle stepCount
     if (config.stepCount !== undefined && config.stepCount !== this.stepCount) {
       this.stepCount = config.stepCount;
       StorageService.setItem(STORAGE_KEYS.stepCount, config.stepCount);
+      // A pin is an index into the ramp; re-counting moves every position,
+      // so the pins no longer mean what the user set them to.
+      this.pinnedSteps.clear();
       needsUpdate = true;
       logger.info(`[GradientTool] setConfig: stepCount -> ${config.stepCount}`);
 
@@ -833,8 +859,8 @@ export class GradientTool extends BaseComponent {
       attributes: {
         'data-testid': 'gradient-step-slider',
         type: 'range',
-        min: '2',
-        max: '10',
+        min: String(STEP_MIN),
+        max: String(STEP_MAX),
         value: String(this.stepCount),
         style: 'accent-color: var(--theme-primary);',
       },
@@ -846,6 +872,9 @@ export class GradientTool extends BaseComponent {
         this.stepValueDisplay.textContent = String(this.stepCount);
       }
       StorageService.setItem(STORAGE_KEYS.stepCount, this.stepCount);
+      // Pins are ramp indices — a new count re-anchors them somewhere the
+      // user never chose, so they clear with the count.
+      this.pinnedSteps.clear();
       this.updateInterpolation();
       this.updateDrawerContent();
     });
@@ -1368,6 +1397,21 @@ export class GradientTool extends BaseComponent {
           },
         })
       );
+      // The average hides the lurch: a ramp averaging ΔE 4 can still have one
+      // step at 25, and that worst step is what decides whether it reads
+      // smooth. Print it beside the average, in its own tier colour.
+      if (drifts.length > 0) {
+        const maxRaw = Math.max(...drifts);
+        this.summaryCluster.appendChild(
+          this.createElement('span', {
+            textContent: `${LanguageService.t('gradient.maxDrift')} ${maxRaw.toFixed(avgDp)}`,
+            attributes: {
+              title: LanguageService.t('gradient.maxDriftDesc'),
+              style: `font-family: 'Fragment Mono', monospace; font-size: 11px; letter-spacing: 0.5px; white-space: nowrap; color: ${this.driftTierColor(maxRaw)};`,
+            },
+          })
+        );
+      }
       if (this.pinnedSteps.size > 0) {
         this.summaryCluster.appendChild(
           this.createElement('span', {
@@ -1615,6 +1659,10 @@ export class GradientTool extends BaseComponent {
       { index: steps - 1, hex: this.endDye.hex },
     ];
 
+    // Dyes already spoken for: the endpoints, then each step's match as the
+    // ramp resolves (see the dedupe branch below).
+    const usedDyeIds = new Set<number>([this.startDye.id, this.endDye.id]);
+
     for (let i = 0; i < steps; i++) {
       // 4C fix: the drawn endpoint rows ARE the selected endpoint dyes at
       // drift 0.0 — start/end dyes are only excluded from MIDDLE-step
@@ -1644,6 +1692,7 @@ export class GradientTool extends BaseComponent {
       // IS the anchor and its drift reads 0.0.
       const pinnedDye = this.pinnedSteps.get(i);
       if (pinnedDye) {
+        usedDyeIds.add(pinnedDye.id);
         result.push({
           position: steps === 1 ? 0 : i / (steps - 1),
           theoreticalColor,
@@ -1663,7 +1712,9 @@ export class GradientTool extends BaseComponent {
 
       // Apply filters if available
       if (matchedDye && isDyeExcluded(this.dyeFiltersConfig, matchedDye)) {
-        // Find next closest non-excluded dye
+        // Find the next closest non-excluded dye — ranked by the selected
+        // method, same as the primary path. Raw RGB here would re-rank the
+        // substitute against a different notion of "closest".
         const allDyes = dyeService.getAllDyes();
         const filteredDyes = filterDyes(this.dyeFiltersConfig, allDyes).filter(
           (dye) => !excludeIds.includes(dye.id) && dye.category !== 'Facewear'
@@ -1671,12 +1722,35 @@ export class GradientTool extends BaseComponent {
         matchedDye =
           filteredDyes.length > 0
             ? filteredDyes.reduce((best, dye) => {
-                const bestDist = ColorService.getColorDistance(theoreticalColor, best.hex);
-                const dyeDist = ColorService.getColorDistance(theoreticalColor, dye.hex);
+                const bestDist = ColorService.getDistanceForMethod(
+                  theoreticalColor,
+                  best.hex,
+                  this.matchingMethod
+                );
+                const dyeDist = ColorService.getDistanceForMethod(
+                  theoreticalColor,
+                  dye.hex,
+                  this.matchingMethod
+                );
                 return dyeDist < bestDist ? dye : best;
               })
             : null;
       }
+
+      // Dedupe: without it a flat stretch of the ramp can match the same dye
+      // four steps running (harmony and extractor both carry this toggle).
+      // Pinned steps are explicit choices and never count as duplicates.
+      if (this.preventDuplicates && matchedDye && usedDyeIds.has(matchedDye.id)) {
+        const fallback = dyeService.findClosestDye(theoreticalColor, {
+          excludeIds: [...excludeIds, ...usedDyeIds],
+          matchingMethod: this.matchingMethod,
+        });
+        // A repeat beats an empty step when the pool is exhausted
+        if (fallback && !isDyeExcluded(this.dyeFiltersConfig, fallback)) {
+          matchedDye = fallback;
+        }
+      }
+      if (matchedDye) usedDyeIds.add(matchedDye.id);
 
       // Drift in the suite vocabulary: step vs its matched dye, in the
       // active matching method â€” not raw RGB distance.
@@ -2199,8 +2273,8 @@ export class GradientTool extends BaseComponent {
       className: 'w-full',
       attributes: {
         type: 'range',
-        min: '2',
-        max: '10',
+        min: String(STEP_MIN),
+        max: String(STEP_MAX),
         value: String(this.stepCount),
         style: 'accent-color: var(--theme-primary);',
       },

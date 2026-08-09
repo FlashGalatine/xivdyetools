@@ -824,6 +824,8 @@
     "unpinStep": "Unpin",
     "endAnchor": "Endpoint — already an anchor",
     "avgDrift": "avg ΔE",
+    "maxDrift": "max ΔE",
+    "maxDriftDesc": "The worst step in the ramp — an average hides a single lurch.",
     "exportCss": "Export CSS",
     "startColour": "Start colour",
     "endColour": "End colour",

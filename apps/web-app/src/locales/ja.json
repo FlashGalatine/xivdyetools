@@ -824,6 +824,8 @@
     "unpinStep": "固定を解除",
     "endAnchor": "端点 — 既にアンカー",
     "avgDrift": "平均 ΔE",
+    "maxDrift": "最大 ΔE",
+    "maxDriftDesc": "ランプ内で最も悪いステップ。平均値は単発の飛びを隠します。",
     "exportCss": "CSS書き出し",
     "startColour": "開始色",
     "endColour": "終了色",

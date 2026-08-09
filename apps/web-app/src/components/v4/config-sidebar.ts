@@ -168,6 +168,7 @@ export class ConfigSidebar extends BaseLitComponent {
     stepCount: 8,
     interpolation: 'hsv',
     matchingMethod: 'ciede2000',
+    preventDuplicates: true,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
@@ -1199,6 +1200,15 @@ export class ConfigSidebar extends BaseLitComponent {
                 this.handleConfigChange('gradient', 'stepCount', e.detail.value)}
             ></v4-range-slider>
           </div>
+          <div class="config-row">
+            <v4-toggle-switch
+              label=${LanguageService.t('config.preventDuplicates')}
+              .checked=${this.gradientConfig.preventDuplicates ?? true}
+              @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                this.handleConfigChange('gradient', 'preventDuplicates', e.detail.checked)}
+            ></v4-toggle-switch>
+          </div>
+          <div class="config-description">${LanguageService.t('config.preventDuplicatesDesc')}</div>
         </div>
 
         <div class="config-group">

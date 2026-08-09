@@ -824,6 +824,8 @@
     "unpinStep": "Désépingler",
     "endAnchor": "Extrémité — déjà un ancrage",
     "avgDrift": "ΔE moyen",
+    "maxDrift": "ΔE max",
+    "maxDriftDesc": "Le pire palier du dégradé — une moyenne masque un écart isolé.",
     "exportCss": "Exporter le CSS",
     "startColour": "Couleur de départ",
     "endColour": "Couleur d'arrivée",
