@@ -146,7 +146,7 @@ export class HarmonyTool extends BaseComponent {
   // Display options (from ConfigController)
   private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
   private usePerceptualMatching: boolean = false;
-  private matchingMethod: MatchingMethod = 'oklab';
+  private matchingMethod: MatchingMethod = 'ciede2000';
   private preventDuplicates: boolean = true;
 
   // Child components (desktop left panel)
@@ -326,7 +326,9 @@ export class HarmonyTool extends BaseComponent {
     const harmonyConfig = configController.getConfig('harmony');
     this.displayOptions = harmonyConfig.displayOptions ?? { ...DEFAULT_DISPLAY_OPTIONS };
     this.usePerceptualMatching = harmonyConfig.strictMatching;
-    this.matchingMethod = harmonyConfig.matchingMethod ?? 'oklab';
+    // Suite default is ΔE2000; normalize so persisted 4.x values migrate
+    // (the last tool still hard-booting 'oklab' — see gradient/mixer).
+    this.matchingMethod = normalizeMatchingMethod(harmonyConfig.matchingMethod ?? 'ciede2000');
     this.preventDuplicates = harmonyConfig.preventDuplicates ?? true;
     this.dyeFiltersConfig = harmonyConfig.dyeFilters ?? { ...DEFAULT_DYE_FILTERS };
 
@@ -1441,9 +1443,14 @@ export class HarmonyTool extends BaseComponent {
     // Get price data for this dye
     const priceInfo = this.priceData.get(options.matchedDye.itemID);
 
-    // Calculate Delta-E between target color and matched dye
-    const deltaE =
-      ColorService.getDeltaE?.(options.targetColor, options.matchedDye.hex) ?? undefined;
+    // Drift in the selected method — getDeltaE() defaults to CIE76 in core,
+    // and the card trusts a value tagged ciede2000, so calling it unqualified
+    // printed a ΔE76 number under the ΔE2000 label.
+    const deltaE = ColorService.getDistanceForMethod(
+      options.targetColor,
+      options.matchedDye.hex,
+      this.matchingMethod
+    );
 
     // Get market server name - prefer worldId from price data (actual listing location)
     // Fall back to selected server if worldId not available or can't be resolved
@@ -1727,14 +1734,12 @@ export class HarmonyTool extends BaseComponent {
       // Resolve worldId to world name via MarketBoardService
       const marketServer = this.marketBoardService.getWorldNameForPrice(priceInfo);
 
-      // Update card data with new price info (triggers Lit re-render)
+      // Update card data with new price info (triggers Lit re-render).
+      // Spread, don't re-list: enumerating the fields dropped matchingMethod,
+      // and without it the card stops deriving ΔE2000 and prints whatever
+      // method the tool ordered by under the ΔE2000 label.
       card.data = {
-        dye: currentData.dye,
-        originalColor: currentData.originalColor,
-        matchedColor: currentData.matchedColor,
-        deltaE: currentData.deltaE,
-        hueDeviance: currentData.hueDeviance,
-        vendorCost: currentData.vendorCost,
+        ...currentData,
         price: this.showPrices && priceInfo ? priceInfo.currentAverage : undefined,
         marketServer: marketServer,
       };

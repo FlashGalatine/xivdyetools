@@ -162,6 +162,10 @@ export class BudgetTool extends BaseComponent {
   private showPrice: boolean = true;
   private showDeltaE: boolean = true;
   private showAcquisition: boolean = true;
+  // 5.0 card rows — no budget-local storage key; ConfigController replays them
+  private showHue: boolean = true;
+  private showStain: boolean = true;
+  private showSpectrum: boolean = true;
 
   // Child components
   private dyeFiltersConfig: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
@@ -346,6 +350,9 @@ export class BudgetTool extends BaseComponent {
         showPrice: this.showPrice,
         showDeltaE: this.showDeltaE,
         showAcquisition: this.showAcquisition,
+        showHue: this.showHue,
+        showStain: this.showStain,
+        showSpectrum: this.showSpectrum,
       };
 
       const result = applyDisplayOptions({
@@ -369,6 +376,9 @@ export class BudgetTool extends BaseComponent {
         this.showPrice = result.options.showPrice;
         this.showDeltaE = result.options.showDeltaE;
         this.showAcquisition = result.options.showAcquisition;
+        this.showHue = result.options.showHue ?? true;
+        this.showStain = result.options.showStain ?? true;
+        this.showSpectrum = result.options.showSpectrum ?? true;
         needsRerender = true;
       }
     }
@@ -1085,6 +1095,9 @@ export class BudgetTool extends BaseComponent {
     card.showCmyk = this.showCmyk;
     card.showPrice = this.showPrice;
     card.showAcquisition = this.showAcquisition;
+    card.showHue = this.showHue;
+    card.showStain = this.showStain;
+    card.showConsolidation = this.showSpectrum;
 
     card.style.setProperty('--v4-result-card-width', '320px');
 

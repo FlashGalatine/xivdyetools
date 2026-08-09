@@ -215,7 +215,7 @@
     "dragThreshold": "Auswahlempfindlichkeit",
     "dragThresholdTooltip": "Niedrigere Werte erleichtern das Ziehen, höhere Werte erleichtern das Klicken",
     "sampleAreaSize": "Pixel-Abtastbereich",
-    "sampleAreaSizeTooltip": "Größe des Bereichs, der beim Shift+Klicken auf das Bild abgetastet wird",
+    "sampleAreaSizeTooltip": "Größe des Bereichs, der beim Abtasten einer Farbe aus dem Bild gemittelt wird",
     "singlePixel": "Pixel",
     "visionTypes": "Sichttypen",
     "deuteranopia": "Deuteranopie",

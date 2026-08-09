@@ -14,6 +14,7 @@
 
 import { logger } from '@shared/logger';
 import type { DisplayOptionsConfig } from '@shared/tool-config-types';
+import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 
 // ============================================================================
 // Types
@@ -61,19 +62,12 @@ export interface ApplyDisplayOptionsResult {
 // ============================================================================
 
 /**
- * Default display options configuration
- * Used when initializing tools
+ * Default display options — re-exported, never redefined. This module used to
+ * carry its own copy with the three 5.0 keys absent and four booleans
+ * inverted; anything importing defaults via `@services/index` got that one.
+ * One object, one source of truth: `@shared/tool-config-types`.
  */
-export const DEFAULT_DISPLAY_OPTIONS: DisplayOptionsConfig = {
-  showHex: true,
-  showRgb: false,
-  showHsv: false,
-  showLab: false,
-  showCmyk: false,
-  showPrice: true,
-  showDeltaE: true,
-  showAcquisition: false,
-};
+export { DEFAULT_DISPLAY_OPTIONS };
 
 // ============================================================================
 // Helper Functions
@@ -117,6 +111,11 @@ export function applyDisplayOptions(config: ApplyDisplayOptionsConfig): ApplyDis
     'showPrice',
     'showDeltaE',
     'showAcquisition',
+    // 5.0 rows: omitted here, every tool routing config through this helper
+    // silently dropped the three toggles the sidebar was broadcasting.
+    'showHue',
+    'showStain',
+    'showSpectrum',
   ];
 
   for (const key of keys) {
@@ -163,6 +162,11 @@ export function hasDisplayOptionsChanges(
     'showPrice',
     'showDeltaE',
     'showAcquisition',
+    // 5.0 rows: omitted here, every tool routing config through this helper
+    // silently dropped the three toggles the sidebar was broadcasting.
+    'showHue',
+    'showStain',
+    'showSpectrum',
   ];
 
   return keys.some((key) => incoming[key] !== undefined && incoming[key] !== current[key]);
@@ -189,6 +193,11 @@ export function getCardDisplayOptions(
     showPrice: options.showPrice && showPrices, // Combine with market setting
     showDeltaE: options.showDeltaE,
     showAcquisition: options.showAcquisition,
+    // 5.0 rows — dropping them here silently reverted three toggles to the
+    // card's own defaults for anything routing through this helper.
+    showHue: options.showHue,
+    showStain: options.showStain,
+    showSpectrum: options.showSpectrum,
   };
 }
 

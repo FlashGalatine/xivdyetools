@@ -215,7 +215,7 @@
     "dragThreshold": "選択感度",
     "dragThresholdTooltip": "低い値はドラッグしやすく、高い値はクリックしやすくなります",
     "sampleAreaSize": "ピクセルサンプル範囲",
-    "sampleAreaSizeTooltip": "Shift+クリック時にサンプリングする範囲のサイズ",
+    "sampleAreaSizeTooltip": "画像から色を採取する際に平均化する範囲のサイズ",
     "singlePixel": "ピクセル",
     "visionTypes": "視覚タイプ",
     "deuteranopia": "第二色覚異常",

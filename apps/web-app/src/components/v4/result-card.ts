@@ -248,10 +248,12 @@ export class ResultCard extends BaseLitComponent {
   showActions: boolean = true;
 
   /**
-   * Label for primary action button
+   * Label for primary action button. Defaults to the shared localized
+   * string — four tools never pass one, and an English literal here
+   * surfaced untranslated on every card they render.
    */
   @property({ type: String, attribute: 'primary-action-label' })
-  primaryActionLabel: string = 'Select Dye';
+  primaryActionLabel: string = LanguageService.t('common.selectDye');
 
   /**
    * When true, clicking the primary button opens the context menu

@@ -215,7 +215,7 @@
     "dragThreshold": "Sensibilité de sélection",
     "dragThresholdTooltip": "Des valeurs plus basses facilitent le glissement, des valeurs plus hautes facilitent le clic",
     "sampleAreaSize": "Zone d'échantillonnage",
-    "sampleAreaSizeTooltip": "Taille de la zone échantillonnée lors d'un Shift+clic sur l'image",
+    "sampleAreaSizeTooltip": "Taille de la zone moyennée lorsque vous prélevez une couleur sur l'image",
     "singlePixel": "pixel",
     "visionTypes": "Types de vision",
     "deuteranopia": "Deutéranopie",

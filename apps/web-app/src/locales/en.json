@@ -215,7 +215,7 @@
     "dragThreshold": "Selection Sensitivity",
     "dragThresholdTooltip": "Lower values make dragging easier, higher values make clicking easier",
     "sampleAreaSize": "Pixel Sample Area",
-    "sampleAreaSizeTooltip": "Size of the area sampled when Shift+clicking on the image",
+    "sampleAreaSizeTooltip": "Size of the area averaged when you sample a colour from the image",
     "singlePixel": "pixel",
     "visionTypes": "Vision Types",
     "deuteranopia": "Deuteranopia",
