@@ -42,7 +42,7 @@ import {
 } from '../../services/i18n.js';
 import { generatePaletteGrid, generateNearestSheet } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
-import { validateAndFetchImage, processImageForExtraction } from '../../services/image/index.js';
+import { extractImagePixels } from '../../services/image-client.js';
 import { getUserPreferences } from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
@@ -439,11 +439,8 @@ async function processImageExtraction(
   await initializeLocale(locale);
 
   try {
-    // Step 1: Validate and fetch image
-    const { buffer } = await validateAndFetchImage(imageUrl);
-
-    // Step 2: Process image to extract pixels
-    const processed = await processImageForExtraction(buffer);
+    // Steps 1-2: validate, fetch and decode remotely (image-worker owns photon)
+    const processed = await extractImagePixels(env, imageUrl);
 
     // Step 3: Convert pixels to RGB array (filtering transparent pixels)
     const rgbPixels = PaletteService.pixelDataToRGBFiltered(

@@ -38,7 +38,6 @@ export default defineConfig({
         'src/utils/github-verify.ts',
         'src/handlers/modals/index.ts',
         'src/handlers/commands/index.ts',
-        'src/services/image/index.ts',
         'src/services/svg/index.ts',
       ],
       thresholds: {

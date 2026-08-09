@@ -29,6 +29,10 @@ service = "xivdyetools-presets-api"
 binding = "UNIVERSALIS_PROXY"
 service = "xivdyetools-api-worker"
 
+[[services]]
+binding = "IMAGE_WORKER"
+service = "xivdyetools-image-worker"
+
 [vars]
 DISCORD_CLIENT_ID = "1447108133020369048"
 PRESETS_API_URL = "https://api.xivdyetools.app"
@@ -65,6 +69,10 @@ service = "xivdyetools-presets-api"
 [[env.production.services]]
 binding = "UNIVERSALIS_PROXY"
 service = "xivdyetools-api-worker"
+
+[[env.production.services]]
+binding = "IMAGE_WORKER"
+service = "xivdyetools-image-worker"
 
 [[env.production.analytics_engine_datasets]]
 binding = "ANALYTICS"

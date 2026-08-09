@@ -94,6 +94,9 @@ export interface Env {
   /** Service Binding to Universalis Proxy Worker (for market board prices) */
   UNIVERSALIS_PROXY?: Fetcher;
 
+  /** Service binding → xivdyetools-image-worker (photon pixel extraction). */
+  IMAGE_WORKER?: Fetcher;
+
   /** Fallback URL for Universalis Proxy (for local development) */
   UNIVERSALIS_PROXY_URL?: string;
 
