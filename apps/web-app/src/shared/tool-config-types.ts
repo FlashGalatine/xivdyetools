@@ -10,6 +10,7 @@
 import type { ToolId } from '@services/router-service';
 import type { MatchingMethod } from '@xivdyetools/core';
 import type { DyeTypeFilters } from '@xivdyetools/types';
+import { COMPANION_DYES_DEFAULT } from '@shared/constants';
 
 // Re-export MatchingMethod for convenience
 export type { MatchingMethod } from '@xivdyetools/core';
@@ -49,6 +50,8 @@ export interface HarmonyConfig {
   matchingMethod: MatchingMethod;
   /** Prevent the same dye from appearing in multiple harmony slots */
   preventDuplicates: boolean;
+  /** Companion alternates offered per slot as swatch dots (1-5) */
+  companionDyesCount: number;
   /** Display options for result cards */
   displayOptions: DisplayOptionsConfig;
   /** Dye filter configuration */
@@ -418,6 +421,7 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
     strictMatching: true,
     matchingMethod: 'ciede2000',
     preventDuplicates: true,
+    companionDyesCount: COMPANION_DYES_DEFAULT,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },

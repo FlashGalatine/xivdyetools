@@ -176,7 +176,8 @@
     "downloaded": "Téléchargé !",
     "dismiss": "Fermer",
     "optional": "(optionnel)",
-    "done": "Terminé"
+    "done": "Terminé",
+    "alternates": "AUSSI"
   },
   "config": {
     "harmonyType": "Type d'harmonie",

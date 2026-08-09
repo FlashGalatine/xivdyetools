@@ -176,7 +176,8 @@
     "downloaded": "已下载！",
     "dismiss": "关闭",
     "optional": "（可选）",
-    "done": "完成"
+    "done": "完成",
+    "alternates": "备选"
   },
   "resultCard": {
     "inspectDyeIn": "在以下工具中查看...",

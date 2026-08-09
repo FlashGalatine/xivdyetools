@@ -16,6 +16,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { BaseLitComponent } from './base-lit-component';
 import { ConfigController } from '@services/config-controller';
 import { authService, LanguageService } from '@services/index';
+import { COMPANION_DYES_MIN, COMPANION_DYES_MAX, COMPANION_DYES_DEFAULT } from '@shared/constants';
 import type { ToolId } from '@services/router-service';
 import type {
   HarmonyConfig,
@@ -134,6 +135,7 @@ export class ConfigSidebar extends BaseLitComponent {
     strictMatching: false,
     matchingMethod: 'ciede2000',
     preventDuplicates: true,
+    companionDyesCount: COMPANION_DYES_DEFAULT,
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
@@ -941,6 +943,21 @@ export class ConfigSidebar extends BaseLitComponent {
             ></v4-toggle-switch>
           </div>
           <div class="config-description">${LanguageService.t('config.preventDuplicatesDesc')}</div>
+        </div>
+
+        <div class="config-group">
+          <div class="config-label">${LanguageService.t('harmony.companionDyes')}</div>
+          <div class="slider-wrapper">
+            <v4-range-slider
+              label=${LanguageService.t('harmony.companionDyes')}
+              .value=${this.harmonyConfig.companionDyesCount ?? COMPANION_DYES_DEFAULT}
+              .min=${COMPANION_DYES_MIN}
+              .max=${COMPANION_DYES_MAX}
+              @slider-change=${(e: CustomEvent<{ value: number }>) =>
+                this.handleConfigChange('harmony', 'companionDyesCount', e.detail.value)}
+            ></v4-range-slider>
+          </div>
+          <div class="config-description">${LanguageService.t('harmony.companionDyesDesc')}</div>
         </div>
 
         <v4-display-options

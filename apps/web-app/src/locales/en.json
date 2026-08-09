@@ -176,7 +176,8 @@
     "downloaded": "Downloaded!",
     "dismiss": "Dismiss",
     "optional": "(optional)",
-    "done": "Done"
+    "done": "Done",
+    "alternates": "ALSO"
   },
   "config": {
     "harmonyType": "Harmony Type",

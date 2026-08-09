@@ -100,7 +100,8 @@ export const CARD_CLASSES_COMPACT =
  * Companion dyes configuration for Expanded Suggestions mode
  */
 export const COMPANION_DYES_MIN = 1;
-export const COMPANION_DYES_MAX = 3;
+/** 1–5 per the drawn 1A Advanced panel (companion alternates ride the cards). */
+export const COMPANION_DYES_MAX = 5;
 export const COMPANION_DYES_DEFAULT = 1;
 
 // ============================================================================

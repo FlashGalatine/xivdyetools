@@ -75,6 +75,12 @@ export interface ResultCardData {
    * "E" prefix for other errors (e.g., "EPRS" for parse error).
    */
   marketError?: string;
+  /**
+   * Runner-up dyes for this slot. Rendered as tappable swatch dots so a slot
+   * can be swapped without leaving the grid — the tool decides what counts as
+   * an alternate (harmony passes the next-closest companions).
+   */
+  alternates?: Dye[];
 }
 
 /**
@@ -575,6 +581,55 @@ export class ResultCard extends BaseLitComponent {
       .market-error {
         color: #f4645a;
         letter-spacing: 0.5px;
+      }
+
+      /* ---- alternates ----------------------------------------------------
+         Runner-up dyes as swatch dots: one tap swaps the slot in place, so
+         choosing between near-equal companions never costs a round trip
+         through the picker. */
+
+      .card-alternates {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-top: 1px solid var(--theme-border, rgba(255, 255, 255, 0.07));
+        flex-wrap: wrap;
+      }
+
+      .alt-label {
+        font-family: 'Fragment Mono', monospace;
+        font-size: 8.5px;
+        letter-spacing: 1px;
+        color: var(--theme-text-muted, #888888);
+        flex-shrink: 0;
+      }
+
+      .alt-dot {
+        width: 22px;
+        height: 22px;
+        padding: 0;
+        border-radius: 50%;
+        border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.14));
+        box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.22);
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: transform 120ms ease;
+      }
+
+      .alt-dot:hover {
+        transform: scale(1.12);
+      }
+
+      .alt-dot:focus-visible {
+        outline: 2px solid var(--theme-primary, #ea4133);
+        outline-offset: 2px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .alt-dot {
+          transition: none;
+        }
       }
 
       /* ---- action bar ---------------------------------------------------- */
@@ -1646,6 +1701,32 @@ export class ResultCard extends BaseLitComponent {
                         `
                       : nothing
                   }
+                </div>
+              `
+            : nothing
+        }
+
+        <!-- Companion alternates — one tap swaps the slot in place -->
+        ${
+          this.data.alternates && this.data.alternates.length > 0
+            ? html`
+                <div class="card-alternates">
+                  <span class="alt-label">${LanguageService.t('common.alternates')}</span>
+                  ${this.data.alternates.map(
+                    (alt) => html`
+                      <button
+                        class="alt-dot"
+                        type="button"
+                        style="background: ${alt.hex};"
+                        title="${LanguageService.getDyeName(alt.itemID) || alt.name}"
+                        aria-label="${LanguageService.getDyeName(alt.itemID) || alt.name}"
+                        @click=${(e: Event): void => {
+                          e.stopPropagation();
+                          this.emit<{ dye: Dye }>('alternate-select', { dye: alt });
+                        }}
+                      ></button>
+                    `
+                  )}
                 </div>
               `
             : nothing

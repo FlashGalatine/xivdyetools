@@ -364,7 +364,16 @@ export class HarmonyTool extends BaseComponent {
         const algorithmChanged =
           this.usePerceptualMatching !== config.strictMatching ||
           (config.matchingMethod !== undefined && this.matchingMethod !== config.matchingMethod) ||
-          this.preventDuplicates !== (config.preventDuplicates ?? true);
+          this.preventDuplicates !== (config.preventDuplicates ?? true) ||
+          (config.companionDyesCount !== undefined &&
+            this.companionDyesCount !== config.companionDyesCount);
+
+        // The companion count lives in the sidebar now — the tool's own
+        // left-panel slider was orphaned when config moved behind the gear.
+        if (config.companionDyesCount !== undefined) {
+          this.companionDyesCount = config.companionDyesCount;
+          StorageService.setItem(STORAGE_KEYS.companionCount, config.companionDyesCount);
+        }
 
         this.displayOptions = newDisplayOptions;
         this.usePerceptualMatching = config.strictMatching;
@@ -1552,6 +1561,9 @@ export class HarmonyTool extends BaseComponent {
       marketServer: marketServer,
       price: this.showPrices && priceInfo ? priceInfo.currentAverage : undefined,
       vendorCost: options.matchedDye.cost,
+      // The companions were already computed for this slot and thrown away —
+      // they ride the card now as swatch dots (drawn 1A).
+      alternates: options.closestDyes,
     };
 
     card.data = cardData;
@@ -1575,6 +1587,15 @@ export class HarmonyTool extends BaseComponent {
       logger.info(`[HarmonyTool] Card selected: ${e.detail.dye.name}`);
       this.selectDye(e.detail.dye);
     }) as EventListener);
+
+    // Tapping an alternate swaps just this slot — the grid stays put
+    if (options.onSwapDye) {
+      const swap = options.onSwapDye;
+      card.addEventListener('alternate-select', ((e: CustomEvent<{ dye: Dye }>) => {
+        logger.info(`[HarmonyTool] Alternate picked for ${options.label}: ${e.detail.dye.name}`);
+        swap(e.detail.dye);
+      }) as EventListener);
+    }
 
     // Handle context menu actions
     card.addEventListener('context-action', ((

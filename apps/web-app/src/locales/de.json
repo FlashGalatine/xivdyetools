@@ -176,7 +176,8 @@
     "downloaded": "Heruntergeladen!",
     "dismiss": "Schließen",
     "optional": "(optional)",
-    "done": "Fertig"
+    "done": "Fertig",
+    "alternates": "AUCH"
   },
   "config": {
     "harmonyType": "Harmonie-Typ",

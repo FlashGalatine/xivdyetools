@@ -176,7 +176,8 @@
     "downloaded": "다운로드됨!",
     "dismiss": "닫기",
     "optional": "(선택사항)",
-    "done": "완료"
+    "done": "완료",
+    "alternates": "대안"
   },
   "config": {
     "harmonyType": "조화 유형",

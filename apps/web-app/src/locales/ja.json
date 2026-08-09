@@ -176,7 +176,8 @@
     "downloaded": "ダウンロードしました！",
     "dismiss": "閉じる",
     "optional": "(任意)",
-    "done": "完了"
+    "done": "完了",
+    "alternates": "候補"
   },
   "config": {
     "harmonyType": "ハーモニータイプ",
