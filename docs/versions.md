@@ -20,6 +20,7 @@
 | **Presets API** | v1.6.0 | `xivdyetools-presets-api` | Cloudflare Workers | Active |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **OpenGraph Worker** | v1.4.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **Image Worker** | v1.0.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Public REST API** | v0.5.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
 | **Stoat Bot** | v0.2.0 | `xivdyetools-stoat-worker` | Node.js | Active |
@@ -258,6 +259,12 @@
 | v1.0.4 | Feb 2026 | NaN validation for dyeId parameters, escapeHtml for themeColor |
 | v1.0.3 | Feb 2026 | Parameter bounds validation |
 | v1.0.0 | Jan 2026 | Initial release, dynamic OpenGraph metadata for social media previews |
+
+### xivdyetools-image-worker
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| **v1.0.0** | **Aug 2026** | **Initial release — split out of `discord-worker` (`docs/operations/IMAGE_WORKER_SPLIT.md`) to carry `@cf-wasm/photon`, bringing `discord-worker` back under Cloudflare's 3 MiB gzip limit (3,209.3 → 2,589.70 KiB). `POST /extract` decodes an image URL and returns raw RGBA pixels; reachable only via `discord-worker`'s `IMAGE_WORKER` service binding, no public surface** |
 
 ### @xivdyetools/test-utils
 

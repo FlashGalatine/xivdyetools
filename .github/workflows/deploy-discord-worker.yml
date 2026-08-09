@@ -1,3 +1,8 @@
+# NOTE: This Worker's IMAGE_WORKER service binding requires xivdyetools-image-worker
+# to already exist in the account. This workflow runs in parallel with
+# deploy-image-worker.yml (independent concurrency groups, no `needs:` between them) —
+# harmless after the first image-worker deploy, but load-bearing before it. See the
+# "Required one-time pre-merge step" section of docs/operations/IMAGE_WORKER_SPLIT.md.
 name: Deploy Discord Worker
 
 on:

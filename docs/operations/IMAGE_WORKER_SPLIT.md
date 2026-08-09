@@ -128,6 +128,36 @@ case is 256 × 256 × 4 bytes regardless of the 10 MB input limit.
 the binding fails to resolve. The reverse is harmless — an old bot alongside a new image Worker
 simply ignores it.
 
+### Required one-time pre-merge step
+
+`.github/workflows/deploy-image-worker.yml` and `.github/workflows/deploy-discord-worker.yml`
+both trigger on push to `main`, both match this change's paths, and have no `needs:` between
+them — they run **in parallel** on the merge commit. Cloudflare rejects a `discord-worker` deploy
+whose `IMAGE_WORKER` service binding names a script that does not exist yet, so if
+`deploy-discord-worker.yml` wins that race, its deploy fails.
+
+This only bites on the very first deploy. Once `xivdyetools-image-worker` exists in the account,
+the binding resolves regardless of which workflow wins on any future push, and the race is
+permanently harmless.
+
+**Before this work merges to `main`, `image-worker` must be deployed once, manually:**
+
+```bash
+pnpm --filter xivdyetools-image-worker run deploy:production
+```
+
+After that first deploy, the two workflows may safely run in either order, forever after — no
+further action is needed.
+
+CI cannot enforce this step for you. The two workflows are independent (different `concurrency`
+groups, no `needs:` between them) — deliberately so; do not add cross-workflow ordering machinery
+or have one workflow deploy the other's Worker. `workflow_dispatch` is not an escape hatch either:
+GitHub only exposes manual dispatch for workflows already present on the *default* branch, and
+`deploy-image-worker.yml` is not on `main` until this merges — so it cannot be manually triggered
+ahead of the merge that introduces it. The one-time `pnpm deploy:production` above, run locally or
+from a branch checkout with Cloudflare credentials, is the only way to close this gap before
+merge.
+
 ## Secondary benefit: CPU budget
 
 Cloudflare's CPU-time limit applies **per request, per Worker**. Today a single `/extractor`

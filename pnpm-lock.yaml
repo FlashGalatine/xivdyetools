@@ -144,9 +144,6 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^5.20260727.1
         version: 5.20260727.1
-      '@xivdyetools/logger':
-        specifier: workspace:*
-        version: link:../../packages/logger
       '@xivdyetools/worker-kit':
         specifier: workspace:*
         version: link:../../packages/worker-kit

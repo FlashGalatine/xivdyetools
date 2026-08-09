@@ -18,7 +18,6 @@
   "dependencies": {
     "@cf-wasm/photon": "^0.3.7",
     "@cloudflare/workers-types": "^5.20260727.1",
-    "@xivdyetools/logger": "workspace:*",
     "@xivdyetools/worker-kit": "workspace:*",
     "hono": "^4.12.34"
   },

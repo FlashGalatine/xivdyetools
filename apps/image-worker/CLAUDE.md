@@ -22,7 +22,7 @@ monorepo.
 
 ```bash
 pnpm dev                    # wrangler dev
-pnpm deploy                 # Deploy to staging (default env)
+pnpm deploy                 # Publishes the default (top-level) env — see note below
 pnpm deploy:production      # Deploy to env.production
 pnpm test                   # vitest run
 pnpm test:watch             # vitest in watch mode
@@ -30,6 +30,14 @@ pnpm test:coverage          # vitest run --coverage
 pnpm type-check             # tsc --noEmit
 pnpm lint                   # eslint src
 ```
+
+**`pnpm deploy` does not give you a usable staging instance.** The default env exists
+solely so a bare `wrangler deploy` can never touch production — it publishes under the
+`xivdyetools-image-worker-dev` name with `workers_dev = false` and no routes, so the
+result has no reachable URL and nothing binds to it. To actually exercise this Worker,
+deploy `env.production` (`pnpm deploy:production`) and call it through `discord-worker`'s
+`IMAGE_WORKER` service binding — there is no standalone way to hit `/extract` from
+outside that path.
 
 ### Pre-commit Checklist
 
@@ -153,12 +161,11 @@ to that resize without runtime validation (a non-default value is honored as-is)
 |---------|---------|
 | `hono` | HTTP framework |
 | `@cf-wasm/photon` | Image decode/resize/pixel-extraction (WASM) — the entire reason this Worker exists |
-| `@xivdyetools/logger` | Structured logging |
-| `@xivdyetools/worker-kit` | `requestIdMiddleware`, `loggerMiddleware` |
+| `@xivdyetools/worker-kit` | `requestIdMiddleware`, `loggerMiddleware` (structured logging arrives transitively via `@xivdyetools/logger`, not declared directly — see `apps/og-worker` for the same pattern) |
 
 ## Related Projects
 
-**Dependencies:** `@xivdyetools/logger`, `@xivdyetools/worker-kit`
+**Dependencies:** `@xivdyetools/worker-kit`
 
 **Service Bindings (outbound):** None.
 

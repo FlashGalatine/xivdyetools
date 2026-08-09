@@ -28,6 +28,7 @@ graph TD
         OG["xivdyetools-og-worker"]
         APIWORKER["xivdyetools-api-worker"]
         STOAT["xivdyetools-stoat-worker"]
+        IMGWORKER["xivdyetools-image-worker"]
     end
 
     %% Foundation dependencies
@@ -67,6 +68,7 @@ graph TD
     WKIT --> OG
     WKIT --> APIWORKER
     WKIT --> STOAT
+    WKIT --> IMGWORKER
     LOGGER --> WEB
     LOGGER --> DISCORD
     LOGGER --> MODBOT
@@ -83,6 +85,7 @@ graph TD
     TYPES --> OG
     TYPES --> APIWORKER
     TYPES --> STOAT
+    DISCORD -. Service Binding .-> IMGWORKER
 
     %% Test utils (dev dependency)
     TEST -.-> CORE
@@ -98,7 +101,7 @@ graph TD
     classDef consumer fill:#e8f5e9,stroke:#2e7d32
 
     class TYPES,LOGGER,AUTH,WKIT,TEST,CORE,SVG,BOTLOGIC npm
-    class WEB,DISCORD,MODBOT,OAUTH,PRESETS,OG,APIWORKER,STOAT consumer
+    class WEB,DISCORD,MODBOT,OAUTH,PRESETS,OG,APIWORKER,STOAT,IMGWORKER consumer
 ```
 
 ---
@@ -112,7 +115,7 @@ graph TD
 | **@xivdyetools/types** | — | All projects |
 | **@xivdyetools/logger** | — | All projects |
 | **@xivdyetools/auth** (incl. `/encoding`) | — | oauth, discord-worker, moderation-worker, presets-api, test-utils |
-| **@xivdyetools/worker-kit** (middleware + `/rate-limiter`) | logger | discord-worker, moderation-worker, oauth, presets-api, og-worker, api-worker, stoat-worker |
+| **@xivdyetools/worker-kit** (middleware + `/rate-limiter`) | logger | discord-worker, moderation-worker, oauth, presets-api, og-worker, api-worker, stoat-worker, image-worker |
 | **@xivdyetools/test-utils** (workspace-private) | auth, types | All projects (devDependency) |
 | **@xivdyetools/core** (incl. `/blending`) | types, logger | web-app, discord-worker, og-worker, api-worker, stoat-worker, svg, bot-logic |
 | **@xivdyetools/svg** | core, types | discord-worker, og-worker, stoat-worker, bot-logic |
@@ -123,13 +126,14 @@ graph TD
 | Project | Runtime Dependencies | Test Dependencies |
 |---------|----------------------|-------------------|
 | **web-app** | core, types, logger, lit, vite | test-utils, vitest, playwright |
-| **discord-worker** | core, types, logger, auth, worker-kit, svg, bot-logic, hono, @resvg/resvg-wasm, @cf-wasm/photon | test-utils, vitest |
+| **discord-worker** | core, types, logger, auth, worker-kit, svg, bot-logic, hono | test-utils, vitest |
 | **moderation-worker** | types, logger, auth, worker-kit, bot-logic, hono | test-utils, vitest |
 | **oauth** | types, logger, auth, worker-kit, hono | test-utils, vitest |
 | **presets-api** | types, logger, auth, worker-kit, hono | test-utils, vitest |
 | **og-worker** | core, types, svg, logger, worker-kit, hono, @resvg/resvg-wasm | vitest |
 | **api-worker** | core, types, logger, worker-kit, hono | test-utils, vitest |
 | **stoat-worker** | core, types, logger, worker-kit, bot-logic, svg, revolt.js | test-utils, vitest |
+| **image-worker** | worker-kit, hono, @cf-wasm/photon | vitest |
 
 ---
 
@@ -181,7 +185,16 @@ Notes:
 | `hono` | ^4.12.34 | HTTP framework for Workers (floor set by FINDING-001: CORS ReDoS) |
 | `discord-interactions` | ^4.4 | Ed25519 signature verification |
 | `@resvg/resvg-wasm` | ^2.6 | SVG to PNG rendering |
-| `@cf-wasm/photon` | ^0.3 | Image processing (dominant color) |
+
+`@cf-wasm/photon` moved to `xivdyetools-image-worker` (see below) — see
+`docs/operations/IMAGE_WORKER_SPLIT.md` for why.
+
+### xivdyetools-image-worker
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `hono` | ^4.12.34 | HTTP framework for Workers |
+| `@cf-wasm/photon` | ^0.3 | Image decode/resize/pixel-extraction (WASM) — the sole reason this Worker exists |
 
 ### xivdyetools-oauth / presets-api / moderation-worker
 
