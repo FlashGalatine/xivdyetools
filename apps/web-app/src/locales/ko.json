@@ -422,7 +422,9 @@
       "shadesDesc": "기본 색상의 다양한 명도와 채도 변형",
       "invertedTetradicDesc": "반전된 직사각형 패턴의 4가지 색상, 색상환 반대쪽 기준"
     },
-    "railSwipeHint": "밀어서 더 보기"
+    "railSwipeHint": "밀어서 더 보기",
+    "marketFailTitle": "가격을 불러올 수 없음",
+    "marketFailBody": "마켓보드가 응답하지 않았습니다. 색상 매칭에는 영향이 없으며 가격 줄만 비어 있습니다."
   },
   "matcher": {
     "imageUpload": "이미지 업로드",

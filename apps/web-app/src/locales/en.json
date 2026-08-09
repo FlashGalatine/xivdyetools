@@ -422,7 +422,9 @@
       "shadesDesc": "Different shades and tints of the base color",
       "invertedTetradicDesc": "Four colors in a mirrored rectangular pattern, leaning to the opposite side of the wheel"
     },
-    "railSwipeHint": "SWIPE FOR MORE"
+    "railSwipeHint": "SWIPE FOR MORE",
+    "marketFailTitle": "Prices unavailable",
+    "marketFailBody": "The market board did not answer. Colour matching is unaffected — only the price lines are missing."
   },
   "matcher": {
     "imageUpload": "Image Upload",

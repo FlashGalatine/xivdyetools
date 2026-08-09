@@ -422,7 +422,9 @@
       "shadesDesc": "Différentes nuances et teintes de la couleur de base",
       "invertedTetradicDesc": "Quatre couleurs en motif rectangulaire inversé, orienté vers l'autre côté de la roue"
     },
-    "railSwipeHint": "BALAYER POUR PLUS"
+    "railSwipeHint": "BALAYER POUR PLUS",
+    "marketFailTitle": "Prix indisponibles",
+    "marketFailBody": "Le marché n'a pas répondu. La correspondance des couleurs n'est pas affectée — seules les lignes de prix manquent."
   },
   "matcher": {
     "imageUpload": "Téléchargement d'Image",

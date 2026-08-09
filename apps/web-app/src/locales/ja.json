@@ -422,7 +422,9 @@
       "shadesDesc": "ベースカラーの異なるシェードとティント",
       "invertedTetradicDesc": "反転した長方形パターンの4色、ホイールの反対側寄り"
     },
-    "railSwipeHint": "スワイプで他の種類"
+    "railSwipeHint": "スワイプで他の種類",
+    "marketFailTitle": "価格を取得できません",
+    "marketFailBody": "マーケットボードが応答しませんでした。色の照合には影響せず、価格行だけが欠けます。"
   },
   "matcher": {
     "imageUpload": "画像アップロード",

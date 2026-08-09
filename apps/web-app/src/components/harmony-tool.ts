@@ -38,6 +38,7 @@ import {
 } from '@services/index';
 import type { ScoredDyeMatch, HarmonyConfig } from '@services/index';
 import { ConfigController } from '@services/config-controller';
+import { ThemeService } from '@services/theme-service';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
@@ -181,6 +182,9 @@ export class HarmonyTool extends BaseComponent {
   private companionDisplay: HTMLElement | null = null;
   private colorWheelContainer: HTMLElement | null = null;
   private harmonyGridContainer: HTMLElement | null = null;
+  private marketStripContainer: HTMLElement | null = null;
+  /** The last price fetch failed — the board is unreachable this session */
+  private marketFailed = false;
   private emptyStateContainer: HTMLElement | null = null;
   private resultsSection: HTMLElement | null = null;
   private shareButton: ShareButton | null = null;
@@ -1065,6 +1069,12 @@ export class HarmonyTool extends BaseComponent {
     resultsHeader.appendChild(this.shareButton);
     this.resultsSection.appendChild(resultsHeader);
 
+    // One strip for a market failure, above the grid it applies to
+    this.marketStripContainer = this.createElement('div', {
+      attributes: { style: 'display: none;' },
+    });
+    this.resultsSection.appendChild(this.marketStripContainer);
+
     // Harmony Results — shared results grid (3-up desktop / 2-up mobile)
     this.harmonyGridContainer = this.createElement('div', {
       className: 'harmony-results-container v5-results-grid',
@@ -1812,6 +1822,12 @@ export class HarmonyTool extends BaseComponent {
     try {
       const prices = await this.marketBoardService.fetchPricesForDyes(dyesToFetch);
 
+      // The service swallows its own errors and hands back an empty Map, so
+      // "asked for dyes and got nothing" is the only failure signal there is
+      // — the same test budget uses.
+      this.marketFailed = dyesToFetch.length > 0 && prices.size === 0;
+      this.renderMarketStrip();
+
       // Always update UI after fetch completes (even if empty/stale)
       // This ensures cards reflect current state when server changes
       this.updateHarmonyDisplayPrices();
@@ -1819,7 +1835,47 @@ export class HarmonyTool extends BaseComponent {
       logger.info(`[HarmonyTool] Fetched prices for ${prices.size} dyes`);
     } catch (error) {
       logger.error('[HarmonyTool] Failed to fetch prices:', error);
+      // One strip for the whole grid, not a dash repeated on every card:
+      // the board being unreachable is one fact about the session.
+      this.marketFailed = true;
+      this.renderMarketStrip();
     }
+  }
+
+  /**
+   * The single market-failure strip. Prices are the only part of a harmony
+   * that depends on the network, so their absence is stated once above the
+   * results rather than implied by dashes scattered through them.
+   */
+  private renderMarketStrip(): void {
+    if (!this.marketStripContainer) return;
+    clearContainer(this.marketStripContainer);
+    if (!this.marketFailed || !this.showPrices) {
+      this.marketStripContainer.style.display = 'none';
+      return;
+    }
+    this.marketStripContainer.style.display = '';
+
+    const amber = ThemeService.isDarkMode() ? '#F4BF4F' : '#B45309';
+    const strip = this.createElement('div', {
+      attributes: {
+        role: 'status',
+        style: `display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 12px; border-radius: 10px; border: 1px solid ${amber}59; background: ${amber}14;`,
+      },
+    });
+    strip.appendChild(
+      this.createElement('span', {
+        textContent: LanguageService.t('harmony.marketFailTitle'),
+        attributes: { style: `font-size: 13px; font-weight: 600; color: var(--theme-text);` },
+      })
+    );
+    strip.appendChild(
+      this.createElement('span', {
+        textContent: LanguageService.t('harmony.marketFailBody'),
+        attributes: { style: 'font-size: 12px; color: var(--theme-text-muted);' },
+      })
+    );
+    this.marketStripContainer.appendChild(strip);
   }
 
   /**

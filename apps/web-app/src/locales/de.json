@@ -422,7 +422,9 @@
       "shadesDesc": "Verschiedene Schattierungen und Tönungen der Grundfarbe",
       "invertedTetradicDesc": "Vier Farben in einem gespiegelten rechteckigen Muster zur anderen Seite des Farbkreises"
     },
-    "railSwipeHint": "WISCHEN FÜR MEHR"
+    "railSwipeHint": "WISCHEN FÜR MEHR",
+    "marketFailTitle": "Preise nicht verfügbar",
+    "marketFailBody": "Das Marktbrett hat nicht geantwortet. Die Farbsuche ist davon unberührt — nur die Preiszeilen fehlen."
   },
   "matcher": {
     "imageUpload": "Bild-Upload",
