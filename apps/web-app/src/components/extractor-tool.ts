@@ -29,15 +29,15 @@ import {
   buildMarketPanel,
 } from '@services/index';
 import { WorldService } from '@services/world-service';
-// Note: setupMarketBoardListeners still used by drawer code until Phase 2 refactor
-import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import {
-  ICON_MARKET,
   ICON_IMAGE,
   ICON_PALETTE,
   ICON_SETTINGS,
   ICON_CLIPBOARD,
-  ICON_EYEDROPPER,
+  ICON_CAMERA,
+  ICON_LOCK,
+  ICON_REFRESH,
+  ICON_CLOSE,
 } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { indexedDBService, STORES } from '@services/indexeddb-service';
@@ -87,6 +87,56 @@ const MAX_IMAGE_STORAGE_SIZE = 8 * 1024 * 1024;
 
 // Alias for backward compatibility
 const ICON_UPLOAD = ICON_IMAGE;
+
+// ============================================================================
+// 3C "Loupe + roll" workspace constants
+// ============================================================================
+
+/**
+ * 3C: the only sanctioned hardcoded grounds are the drawn on-image overlays —
+ * chips sitting on arbitrary image pixels use the prototype's dark glass in
+ * both themes (rgba(10,10,12,…) per the confirmed frames).
+ */
+const OVERLAY_BG = 'rgba(10, 10, 12, 0.66)';
+const OVERLAY_CHIP_BG = 'rgba(10, 10, 12, 0.72)';
+
+/** Accent tints derived from the theme accent (accent-soft / accent-border). */
+const ACCENT_SOFT = 'color-mix(in srgb, var(--theme-primary) 14%, transparent)';
+const ACCENT_BORDER = 'color-mix(in srgb, var(--theme-primary) 45%, transparent)';
+
+/** Neutral placeholder for the loupe-colour chips before the first sample. */
+const LOUPE_PLACEHOLDER = 'color-mix(in srgb, var(--theme-text-muted) 35%, transparent)';
+
+/**
+ * Responsive rules for the 3C workspace. Media queries cannot live in inline
+ * styles; the tool renders inside the shell's shadow DOM, which allows a
+ * scoped <style> element (same pattern as the shell's v5-results-grid rule).
+ * Mobile (≤768px) keeps the same one-column flow per the prototype: 244px
+ * image card, camera-first empty state, 44px Auto-extract target.
+ */
+const X3C_RESPONSIVE_CSS = `
+  .x3c-workspace {
+    display: flex; flex-direction: column; gap: 14px;
+    height: 100%; width: 100%; max-width: 1400px; margin: 0 auto;
+    padding: 18px; box-sizing: border-box;
+  }
+  .x3c-image-card { height: min(420px, 45vh); }
+  .x3c-drop-title { font-size: 19px; }
+  .x3c-dt-actions { display: flex; gap: 9px; }
+  .x3c-mb-actions { display: none; }
+  .x3c-dt-text { display: block; }
+  .x3c-mb-text { display: none; }
+  @media (max-width: 768px) {
+    .x3c-workspace { padding: 12px; gap: 10px; }
+    .x3c-image-card { height: 244px; }
+    .x3c-drop-title { font-size: 17px; }
+    .x3c-dt-actions { display: none; }
+    .x3c-mb-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 236px; }
+    .x3c-dt-text { display: none; }
+    .x3c-mb-text { display: block; }
+    .x3c-auto-btn { min-height: 44px; }
+  }
+`;
 
 // ============================================================================
 // MatcherTool Component
@@ -140,11 +190,16 @@ export class ExtractorTool extends BaseComponent {
   private colorSelectionPanel: CollapsiblePanel | null = null;
   private optionsPanel: CollapsiblePanel | null = null;
 
-  // Extracted colors history (pixel samples only)
+  // The roll: sampled + auto-extracted picks (persisted history)
   private extractedColorsHistory: Array<{ hex: string; timestamp: number }> = [];
   private readonly maxExtractedColors: number = 20;
-  private extractedColorsContainer: HTMLElement | null = null;
   private lastPixelSampleHex: string | null = null;
+  /**
+   * Dominance labels for auto-extracted picks (lowercase hex → "34%"),
+   * snapshotted when a K-means run fills the roll so the labels survive
+   * focus clicks (which clear lastPaletteResults).
+   */
+  private rollDominanceByHex: Map<string, string> = new Map();
 
   // Color info card (right panel, above results)
   private colorInfoCardContainer: HTMLElement | null = null;
@@ -160,30 +215,27 @@ export class ExtractorTool extends BaseComponent {
   private exportCssBtn: HTMLButtonElement | null = null;
   private resultsContainer: HTMLElement | null = null;
   private canvasContainer: HTMLElement | null = null;
-  private emptyStateContainer: HTMLElement | null = null;
   private resultsTitleElement: HTMLElement | null = null;
+  private resultsCountElement: HTMLElement | null = null;
   private dropZone: HTMLElement | null = null;
-  private dropContent: HTMLElement | null = null;
   private dropZoneFileInput: HTMLInputElement | null = null;
-  private imageSectionElement: HTMLElement | null = null;
-  private extractorLayoutElement: HTMLElement | null = null;
+  private cameraFileInput: HTMLInputElement | null = null;
 
-  // Mobile-specific DOM References (separate from desktop to avoid conflicts)
-  private mobileSampleSlider: HTMLInputElement | null = null;
-  private mobileSampleDisplay: HTMLElement | null = null;
-  private mobilePaletteModeCheckbox: HTMLInputElement | null = null;
-  private mobilePaletteOptionsContainer: HTMLElement | null = null;
-  private mobileColorCountSlider: HTMLInputElement | null = null;
-  private mobileColorCountDisplay: HTMLElement | null = null;
-  private mobileExtractPaletteBtn: HTMLButtonElement | null = null;
-  private mobileImageUpload: ImageUploadDisplay | null = null;
-  private mobileColorPicker: ColorPickerDisplay | null = null;
-  private mobileMarketBoard: MarketBoard | null = null;
-  private mobileImageSourceExpanded: boolean = true;
-  private mobileColorSelectionExpanded: boolean = true;
-  private mobileExtractedColorsExpanded: boolean = false;
-  private mobileOptionsExpanded: boolean = false;
-  private mobileMarketExpanded: boolean = false;
+  // 3C flow containers (empty drop-zone state vs loaded image/roll/results)
+  private emptyFlowElement: HTMLElement | null = null;
+  private loadedFlowElement: HTMLElement | null = null;
+  private imageCardElement: HTMLElement | null = null;
+
+  // 3C loupe overlay + roll strip
+  private loupeElement: HTMLElement | null = null;
+  private loupeHexChip: HTMLElement | null = null;
+  private hintSwatchElement: HTMLElement | null = null;
+  private addPickChipElement: HTMLElement | null = null;
+  private rollSectionElement: HTMLElement | null = null;
+  private rollStripElement: HTMLElement | null = null;
+  private rollAutoBtn: HTMLButtonElement | null = null;
+  /** The colour the loupe last held — feeds the hint chip and the + tile. */
+  private currentLoupeHex: string | null = null;
 
   // Palette extraction state
   private lastPaletteResults: PaletteMatch[] = [];
@@ -219,10 +271,6 @@ export class ExtractorTool extends BaseComponent {
     this.renderLeftPanel();
     this.renderRightPanel();
 
-    if (this.options.drawerContent) {
-      this.renderDrawerContent();
-    }
-
     this.element = this.container;
   }
 
@@ -234,41 +282,7 @@ export class ExtractorTool extends BaseComponent {
     // Image upload events - listen on leftPanel where ImageUploadDisplay is rendered
     this.onPanelEvent(leftPanel, 'image-loaded', (event: CustomEvent) => {
       const { image, dataUrl } = event.detail;
-      this.currentImage = image;
-
-      // OPT-012: persist to IndexedDB (async, off the image-load critical path)
-      if (dataUrl) {
-        void this.persistImage(dataUrl);
-      }
-
-      ToastService.success(LanguageService.t('matcher.imageLoaded'));
-
-      // Hide drop zone content and show canvas
-      if (this.dropContent) {
-        this.dropContent.style.display = 'none';
-      }
-      if (this.dropZone) {
-        this.dropZone.classList.add('has-image');
-      }
-      if (this.canvasContainer) {
-        this.canvasContainer.classList.remove('hidden');
-        this.canvasContainer.style.display = 'block';
-      }
-
-      if (this.imageZoom) {
-        this.imageZoom.setImage(image);
-        // Auto-fit image after loading
-        this.imageZoom.autoFit();
-      }
-
-      this.showEmptyState(false);
-      this.updateDrawerContent();
-
-      // Update responsive layout now that image is loaded
-      this.updateExtractorLayout();
-
-      // V4: Auto-extract palette on image load
-      void this.extractPalette();
+      this.onImageLoaded(image, dataUrl);
     });
 
     this.onPanelEvent(leftPanel, 'error', (event: CustomEvent) => {
@@ -377,7 +391,10 @@ export class ExtractorTool extends BaseComponent {
     if (savedExtractedColors && savedExtractedColors.length > 0) {
       this.extractedColorsHistory = savedExtractedColors;
       this.lastPixelSampleHex = savedExtractedColors[0].hex;
-      this.renderExtractedColorsList();
+      // 3C: seed the loupe-colour chips (hint swatch + add-pick tile) with
+      // the most recent pick
+      this.setLoupeHex(savedExtractedColors[0].hex);
+      this.renderRollStrip();
     }
 
     // Restore saved color from storage
@@ -389,14 +406,6 @@ export class ExtractorTool extends BaseComponent {
         logger.info('[MatcherTool] Restored saved color:', savedColor);
       }, 100);
     }
-
-    // Initial responsive layout update
-    this.updateExtractorLayout();
-
-    // Listen for window resize to update responsive layout
-    this.on(window, 'resize', () => {
-      this.updateExtractorLayout();
-    });
 
     logger.info('[MatcherTool] Mounted');
   }
@@ -448,29 +457,13 @@ export class ExtractorTool extends BaseComponent {
     img.onload = () => {
       this.currentImage = img;
 
-      // Hide drop content, show canvas
-      if (this.dropContent) {
-        this.dropContent.style.display = 'none';
-      }
-      if (this.dropZone) {
-        this.dropZone.classList.add('has-image');
-      }
-      if (this.canvasContainer) {
-        this.canvasContainer.classList.remove('hidden');
-        this.canvasContainer.style.display = 'block';
-      }
-
       if (this.imageZoom) {
         this.imageZoom.setImage(img);
         // Auto-fit image after restoring
         this.imageZoom.autoFit();
       }
 
-      this.showEmptyState(false);
-      this.updateDrawerContent();
-
-      // Update responsive layout now that image is restored
-      this.updateExtractorLayout();
+      this.updateFlowVisibility();
 
       logger.info('[ExtractorTool] Restored saved image from storage');
 
@@ -510,11 +503,6 @@ export class ExtractorTool extends BaseComponent {
     this.colorSelectionPanel?.destroy();
     this.optionsPanel?.destroy();
 
-    // Cleanup mobile components
-    this.mobileImageUpload?.destroy();
-    this.mobileColorPicker?.destroy();
-    this.mobileMarketBoard?.destroy();
-
     super.destroy();
     logger.info('[MatcherTool] Destroyed');
   }
@@ -551,13 +539,6 @@ export class ExtractorTool extends BaseComponent {
       }
       if (this.colorCountDisplay) {
         this.colorCountDisplay.textContent = String(config.maxColors);
-      }
-      // Update mobile display
-      if (this.mobileColorCountSlider) {
-        this.mobileColorCountSlider.value = String(config.maxColors);
-      }
-      if (this.mobileColorCountDisplay) {
-        this.mobileColorCountDisplay.textContent = String(config.maxColors);
       }
     }
 
@@ -744,7 +725,6 @@ export class ExtractorTool extends BaseComponent {
         this.paletteMode = this.paletteModeCheckbox.checked;
         StorageService.setItem(STORAGE_KEYS.paletteMode, this.paletteMode);
         this.updatePaletteOptionsVisibility();
-        this.updateDrawerContent();
       }
     });
 
@@ -825,39 +805,6 @@ export class ExtractorTool extends BaseComponent {
   }
 
   /**
-   * Update extractor layout for responsive design
-   * Reduces image section height on mobile when an image is loaded
-   * so users can see at least one result card
-   */
-  private updateExtractorLayout(): void {
-    const isMobile = window.innerWidth < 768;
-    const hasImage = this.currentImage !== null;
-
-    // Image section height:
-    // - Desktop: 300px (unchanged)
-    // - Mobile without image: 220px (reduced but shows drop zone UI)
-    // - Mobile with image: 180px (compact to show results)
-    if (this.imageSectionElement) {
-      if (isMobile) {
-        this.imageSectionElement.style.height = hasImage ? '180px' : '220px';
-      } else {
-        this.imageSectionElement.style.height = '300px';
-      }
-    }
-
-    // Adjust layout padding and gap on mobile
-    if (this.extractorLayoutElement) {
-      if (isMobile) {
-        this.extractorLayoutElement.style.padding = '16px';
-        this.extractorLayoutElement.style.gap = '16px';
-      } else {
-        this.extractorLayoutElement.style.padding = '32px';
-        this.extractorLayoutElement.style.gap = '32px';
-      }
-    }
-  }
-
-  /**
    * Render market board collapsible panel
    * WEB-REF-003 Phase 3: Refactored to use shared builder
    * WEB-REF-003 Phase 4: Uses MarketBoardService for state (showPrices/priceData via getters)
@@ -903,407 +850,35 @@ export class ExtractorTool extends BaseComponent {
   }
 
   // ============================================================================
-  // Right Panel Rendering
+  // Right Panel Rendering — the 3C "Loupe + roll" main flow
   // ============================================================================
 
+  /**
+   * One-column workspace per the confirmed 3C prototype:
+   * EMPTY  → drawn drop zone + permanent privacy chip row
+   * LOADED → image card (drag loupe, 44px replace/clear, hint chip)
+   *          → roll strip (picks + add-pick tile, Auto-extract)
+   *          → focus results (v5-results-grid of compact v4-result-cards)
+   */
   private renderRightPanel(): void {
     const right = this.options.rightPanel;
     clearContainer(right);
 
-    // Create main extractor layout container with inline styles
-    // Store reference for responsive updates
-    this.extractorLayoutElement = this.createElement('div', {
-      className: 'extractor-layout',
-      attributes: {
-        style: `
-          display: flex;
-          flex-direction: column;
-          gap: 32px;
-          height: 100%;
-          width: 100%;
-          max-width: 1400px;
-          margin: 0 auto;
-          padding: 32px;
-          box-sizing: border-box;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
+    // Scoped responsive rules — media queries cannot be expressed inline and
+    // the tool renders inside the shell's shadow DOM, which allows a local
+    // <style> element (same pattern as the shell's v5-results-grid rule).
+    const styleEl = this.createElement('style');
+    styleEl.textContent = X3C_RESPONSIVE_CSS;
+
+    const workspace = this.createElement('div', {
+      className: 'extractor-layout x3c-workspace',
     });
-    const extractorLayout = this.extractorLayoutElement;
+    workspace.appendChild(styleEl);
 
-    // === Top Section: Image Input ===
-    // Store reference for responsive height updates
-    this.imageSectionElement = this.createElement('div', {
-      className: 'image-input-section',
-      attributes: {
-        style: `
-          width: 100%;
-          height: 300px;
-          flex-shrink: 0;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
-    });
-    const imageSection = this.imageSectionElement;
-
-    // Image drop zone
-    // overflow: hidden clips the image content; zoom controls remain visible via inline styles
-    this.dropZone = this.createElement('div', {
-      className: 'image-drop-zone',
-      attributes: {
-        id: 'extractor-drop-zone',
-        style: `
-          width: 100%;
-          height: 100%;
-          border-radius: 12px;
-          border: 2px dashed var(--theme-border, rgba(255, 255, 255, 0.1));
-          background: rgba(255, 255, 255, 0.02);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-          overflow: hidden;
-          cursor: pointer;
-          transition: all 0.2s;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
-    });
-
-    // Drop content (shown when no image)
-    this.dropContent = this.createElement('div', {
-      className: 'drop-content',
-      attributes: {
-        style: `
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          gap: 12px;
-          pointer-events: none;
-          z-index: 2;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
-    });
-
-    const dropIcon = this.createElement('div', {
-      className: 'drop-icon',
-      attributes: {
-        style: `
-          width: 150px;
-          height: 150px;
-          color: var(--theme-text-muted, #a0a0a0);
-          opacity: 0.5;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
-    });
-    dropIcon.innerHTML = ICON_IMAGE;
-
-    const dropText = this.createElement('span', {
-      className: 'drop-text',
-      textContent: LanguageService.t('matcher.dropImageHere'),
-      attributes: {
-        style: `
-          font-size: 16px;
-          color: var(--theme-text, #e0e0e0);
-          font-weight: 500;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
-    });
-
-    const dropSubtext = this.createElement('span', {
-      className: 'drop-subtext',
-      textContent: LanguageService.t('matcher.supportedFormats'),
-      attributes: {
-        style: `
-          font-size: 13px;
-          color: var(--theme-text-muted, #a0a0a0);
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
-    });
-
-    this.dropContent.appendChild(dropIcon);
-    this.dropContent.appendChild(dropText);
-    this.dropContent.appendChild(dropSubtext);
-
-    // Paste from Clipboard button
-    // Uses navigator.clipboard.read() API (Chromium only); hidden in unsupported browsers
-    if (typeof navigator?.clipboard?.read === 'function') {
-      const pasteBtn = this.createElement('button', {
-        className: 'btn-theme-primary',
-        attributes: {
-          style: `
-            pointer-events: auto;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 4px;
-            padding: 8px 16px;
-            font-size: 13px;
-            border-radius: 8px;
-            cursor: pointer;
-          `
-            .replace(/\s+/g, ' ')
-            .trim(),
-        },
-      }) as HTMLButtonElement;
-      const pasteBtnIcon = this.createElement('span', {
-        attributes: {
-          style: 'width: 16px; height: 16px; display: inline-flex;',
-          'aria-hidden': 'true',
-        },
-      });
-      pasteBtnIcon.innerHTML = ICON_CLIPBOARD;
-      const pasteBtnText = this.createElement('span', {
-        textContent: LanguageService.t('matcher.pasteFromClipboard'),
-      });
-      pasteBtn.appendChild(pasteBtnIcon);
-      pasteBtn.appendChild(pasteBtnText);
-
-      this.on(pasteBtn, 'click', (e: Event) => {
-        e.stopPropagation(); // Don't trigger drop zone's file input click
-        void this.pasteFromClipboardAPI();
-      });
-
-      this.dropContent.appendChild(pasteBtn);
-    }
-
-    // Paste hint text (shown in all browsers — Ctrl+V always works)
-    const pasteHint = this.createElement('span', {
-      textContent: LanguageService.t('matcher.pasteHint'),
-      attributes: {
-        style: `
-          font-size: 12px;
-          color: var(--theme-text-muted, #a0a0a0);
-          opacity: 0.7;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
-    });
-    this.dropContent.appendChild(pasteHint);
-
-    this.dropZone.appendChild(this.dropContent);
-
-    // Image canvas container (hidden until image loaded)
-    // overflow: visible ensures zoom controls aren't clipped by ancestor's overflow: hidden
-    this.canvasContainer = this.createElement('div', {
-      className: 'image-canvas-container hidden',
-      attributes: {
-        style: `
-          position: relative;
-          width: 100%;
-          height: 100%;
-          overflow: visible;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
-    });
-    this.renderImageCanvas();
-    this.dropZone.appendChild(this.canvasContainer);
-
-    imageSection.appendChild(this.dropZone);
-    extractorLayout.appendChild(imageSection);
-
-    // === Extracted Colors History (inline — CollapsiblePanel uses Tailwind which doesn't work in shadow DOM) ===
-    this.extractedColorsContainer = this.createElement('div');
-    this.renderExtractedColorsList();
-    extractorLayout.appendChild(this.extractedColorsContainer);
-
-    // === Right Section: Results ===
-    const resultsSection = this.createElement('div', {
-      className: 'extractor-results-section',
-      attributes: {
-        style: `
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          overflow: hidden;
-          min-width: 0;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
-    });
-
-    // Section header with title and actions
-    const sectionHeader = this.createElement('div', {
-      className: 'extractor-section-header',
-      attributes: {
-        style: `
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding-bottom: 8px;
-          border-bottom: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
-    });
-
-    const sectionTitle = this.createElement('span', {
-      className: 'extractor-section-title',
-      textContent: LanguageService.t('matcher.extractedPalette'),
-      attributes: {
-        style: `
-          font-size: 14px;
-          text-transform: uppercase;
-          color: var(--theme-text-muted, #a0a0a0);
-          font-weight: 600;
-          letter-spacing: 1px;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
-    });
-    this.resultsTitleElement = sectionTitle;
-    sectionHeader.appendChild(sectionTitle);
-
-    // Action buttons
-    const actions = this.createElement('div', {
-      className: 'palette-actions',
-      attributes: { style: 'display: flex; gap: 16px;' },
-    });
-
-    const actionBtnStyle = `
-      background: none;
-      border: none;
-      color: var(--theme-primary, #d4af37);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    `
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    const disabledBtnStyle = `${actionBtnStyle} opacity: 0.5; cursor: not-allowed;`;
-
-    this.exportCssBtn = this.createElement('button', {
-      className: 'action-btn-text',
-      textContent: LanguageService.t('matcher.exportCss'),
-      attributes: { disabled: 'true', style: disabledBtnStyle },
-    }) as HTMLButtonElement;
-
-    this.on(this.exportCssBtn, 'click', () => {
-      this.exportPaletteAsCss();
-    });
-
-    actions.appendChild(this.exportCssBtn);
-    sectionHeader.appendChild(actions);
-
-    resultsSection.appendChild(sectionHeader);
-
-    // Color info card container (hidden until pixel sample)
-    this.colorInfoCardContainer = this.createElement('div', {
-      className: 'color-info-card-wrapper',
-      attributes: {
-        style: 'display: none; justify-content: center; margin-bottom: 8px;',
-      },
-    });
-    resultsSection.appendChild(this.colorInfoCardContainer);
-
-    // Results grid container
-    this.resultsContainer = this.createElement('div', {
-      className: 'extractor-results-grid',
-      attributes: {
-        style: `
-          display: flex;
-          flex-wrap: wrap;
-          gap: 16px;
-          overflow-y: auto;
-          padding-bottom: 16px;
-          align-content: flex-start;
-          justify-content: center;
-          flex: 1;
-          min-height: 0;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
-    });
-    resultsSection.appendChild(this.resultsContainer);
-
-    // Empty state for results (shown until results available)
-    this.emptyStateContainer = this.createElement('div', {
-      className: 'extractor-empty-results',
-      attributes: {
-        style: `
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: flex-start;
-          flex: 1;
-          text-align: center;
-          color: var(--theme-text-muted, #a0a0a0);
-          padding-top: 60px;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
-    });
-    this.renderEmptyState();
-    resultsSection.appendChild(this.emptyStateContainer);
-
-    extractorLayout.appendChild(resultsSection);
-    right.appendChild(extractorLayout);
-
-    // Setup drop zone interactions
-    this.setupDropZoneInteractions();
-
-    // If we already have an image loaded, hide the drop content immediately
-    if (this.currentImage) {
-      if (this.dropContent) {
-        this.dropContent.style.display = 'none';
-      }
-      if (this.dropZone) {
-        this.dropZone.classList.add('has-image');
-      }
-      if (this.canvasContainer) {
-        this.canvasContainer.classList.remove('hidden');
-        this.canvasContainer.style.display = 'block';
-      }
-      if (this.emptyStateContainer) {
-        this.emptyStateContainer.style.display = 'none';
-      }
-    }
-  }
-
-  /**
-   * Setup drop zone click and drag interactions
-   */
-  private setupDropZoneInteractions(): void {
-    if (!this.dropZone || !this.dropContent) return;
-
-    // Click to trigger file upload - create hidden file input in drop zone
+    // Hidden file inputs shared by both states (Choose image / Replace / camera)
     this.dropZoneFileInput = this.createElement('input', {
-      attributes: {
-        type: 'file',
-        accept: 'image/*',
-        style: 'display: none;',
-      },
+      attributes: { type: 'file', accept: 'image/*', style: 'display: none;' },
     }) as HTMLInputElement;
-    this.dropZone.appendChild(this.dropZoneFileInput);
-
     this.on(this.dropZoneFileInput, 'change', () => {
       const file = this.dropZoneFileInput?.files?.[0];
       if (file && file.type.startsWith('image/')) {
@@ -1314,34 +889,638 @@ export class ExtractorTool extends BaseComponent {
         this.dropZoneFileInput.value = '';
       }
     });
+    workspace.appendChild(this.dropZoneFileInput);
 
-    // Only trigger file dialog when clicking on drop zone if no image is loaded
-    // When an image is loaded, clicking on the canvas triggers canvas-clicked event instead
-    this.on(this.dropZone, 'click', (e: Event) => {
-      // Don't trigger if click came from the canvas (stopPropagation should handle this,
-      // but check target as a fallback)
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'CANVAS') return;
+    // Mobile camera capture — the existing camera flow (capture attribute on a
+    // file input, exactly what the shipped mobile Take-a-photo path uses), not
+    // a new capture pipeline.
+    this.cameraFileInput = this.createElement('input', {
+      attributes: {
+        type: 'file',
+        accept: 'image/*',
+        capture: 'environment',
+        style: 'display: none;',
+      },
+    }) as HTMLInputElement;
+    this.on(this.cameraFileInput, 'change', () => {
+      const file = this.cameraFileInput?.files?.[0];
+      if (file && file.type.startsWith('image/')) {
+        this.handleDroppedFile(file);
+      }
+      if (this.cameraFileInput) {
+        this.cameraFileInput.value = '';
+      }
+    });
+    workspace.appendChild(this.cameraFileInput);
 
-      // If no image loaded, trigger file dialog
+    workspace.appendChild(this.buildEmptyFlow());
+    workspace.appendChild(this.buildLoadedFlow());
+
+    right.appendChild(workspace);
+
+    // Setup drop zone interactions
+    this.setupDropZoneInteractions();
+
+    // Rebuild presentation from existing state (language switch / re-render)
+    this.renderRollStrip();
+    if (this.lastPaletteResults.length > 0) {
+      this.renderPaletteResults(this.lastPaletteResults);
+    } else if (this.matchedDyes.length > 0) {
+      this.renderMatchedResults();
+    }
+    this.updateFlowVisibility();
+  }
+
+  /**
+   * EMPTY state — the drawn drop zone: 2px-dashed 16px-radius card filling the
+   * available height (image glyph, dropTitle, dropBody / dropBodyMobile, the
+   * action buttons) with the permanent privacy chip row below the zone.
+   */
+  private buildEmptyFlow(): HTMLElement {
+    this.emptyFlowElement = this.createElement('div', {
+      attributes: {
+        style: 'flex: 1; min-height: 0; display: flex; flex-direction: column;',
+      },
+    });
+
+    this.dropZone = this.createElement('div', {
+      className: 'image-drop-zone',
+      attributes: {
+        id: 'extractor-drop-zone',
+        style: [
+          'flex: 1; min-height: 0;',
+          'display: flex; flex-direction: column; align-items: center; justify-content: center;',
+          'gap: 15px; padding: 24px 18px;',
+          'border-radius: 16px; border: 2px dashed var(--theme-border);',
+          'background: var(--theme-card-background);',
+          'text-align: center; cursor: pointer; transition: border-color 0.2s;',
+        ].join(' '),
+      },
+    });
+
+    // Image glyph (54px, dimmed per the drawn empty state)
+    const glyph = this.createElement('div', {
+      attributes: {
+        style: 'width: 54px; height: 54px; color: var(--theme-text-muted); opacity: 0.6;',
+        'aria-hidden': 'true',
+      },
+    });
+    glyph.innerHTML = ICON_IMAGE;
+    this.dropZone.appendChild(glyph);
+
+    this.dropZone.appendChild(
+      this.createElement('span', {
+        className: 'x3c-drop-title',
+        textContent: LanguageService.t('matcher.dropTitle'),
+        attributes: { style: 'font-weight: 600; color: var(--theme-text);' },
+      })
+    );
+
+    // Body copy: the desktop line names Ctrl+V, the mobile line names the camera
+    this.dropZone.appendChild(
+      this.createElement('span', {
+        className: 'x3c-dt-text',
+        textContent: LanguageService.t('matcher.dropBody'),
+        attributes: {
+          style:
+            'font-size: 13px; line-height: 1.5; color: var(--theme-text-muted); max-width: 340px;',
+        },
+      })
+    );
+    this.dropZone.appendChild(
+      this.createElement('span', {
+        className: 'x3c-mb-text',
+        textContent: LanguageService.t('matcher.dropBodyMobile'),
+        attributes: {
+          style:
+            'font-size: 13px; line-height: 1.5; color: var(--theme-text-muted); max-width: 250px;',
+        },
+      })
+    );
+
+    // Desktop actions: Choose image (accent lead) + Paste from clipboard
+    const dtActions = this.createElement('div', { className: 'x3c-dt-actions' });
+    const chooseBtn = this.createElement('button', {
+      textContent: LanguageService.t('matcher.chooseImage'),
+      attributes: {
+        type: 'button',
+        style: [
+          'min-height: 40px; padding: 0 18px; border-radius: 10px; border: none;',
+          'background: var(--theme-primary); color: #fff;',
+          'font-family: inherit; font-weight: 600; font-size: 13px; cursor: pointer;',
+        ].join(' '),
+      },
+    }) as HTMLButtonElement;
+    this.on(chooseBtn, 'click', (e: Event) => {
+      e.stopPropagation();
+      this.dropZoneFileInput?.click();
+    });
+    dtActions.appendChild(chooseBtn);
+
+    // Paste from clipboard — navigator.clipboard.read() is Chromium-only;
+    // hidden in unsupported browsers (Ctrl+V still works via the document
+    // paste listener, and the drop copy names it)
+    if (typeof navigator?.clipboard?.read === 'function') {
+      const pasteBtn = this.createElement('button', {
+        attributes: {
+          type: 'button',
+          style: [
+            'display: inline-flex; align-items: center; justify-content: center; gap: 6px;',
+            'min-height: 40px; padding: 0 16px; border-radius: 10px;',
+            'background: transparent; border: 1px solid var(--theme-border);',
+            'color: var(--theme-text-muted); font-family: inherit; font-size: 12.5px; cursor: pointer;',
+          ].join(' '),
+        },
+      }) as HTMLButtonElement;
+      const pasteIcon = this.createElement('span', {
+        attributes: {
+          style: 'width: 15px; height: 15px; display: inline-flex; flex-shrink: 0;',
+          'aria-hidden': 'true',
+        },
+      });
+      pasteIcon.innerHTML = ICON_CLIPBOARD;
+      pasteBtn.appendChild(pasteIcon);
+      pasteBtn.appendChild(
+        this.createElement('span', {
+          textContent: LanguageService.t('matcher.pasteClipboard'),
+        })
+      );
+      this.on(pasteBtn, 'click', (e: Event) => {
+        e.stopPropagation();
+        void this.pasteFromClipboardAPI();
+      });
+      dtActions.appendChild(pasteBtn);
+    }
+    this.dropZone.appendChild(dtActions);
+
+    // Mobile actions: Take a photo (accent lead) + Choose from photos
+    const mbActions = this.createElement('div', { className: 'x3c-mb-actions' });
+    const takePhotoBtn = this.createElement('button', {
+      attributes: {
+        type: 'button',
+        style: [
+          'display: flex; align-items: center; justify-content: center; gap: 8px;',
+          'min-height: 48px; padding: 0 16px; border-radius: 11px; border: none;',
+          'background: var(--theme-primary); color: #fff;',
+          'font-family: inherit; font-weight: 600; font-size: 13.5px; cursor: pointer;',
+        ].join(' '),
+      },
+    }) as HTMLButtonElement;
+    const cameraIcon = this.createElement('span', {
+      attributes: {
+        style: 'width: 18px; height: 18px; display: inline-flex; flex-shrink: 0;',
+        'aria-hidden': 'true',
+      },
+    });
+    cameraIcon.innerHTML = ICON_CAMERA;
+    takePhotoBtn.appendChild(cameraIcon);
+    takePhotoBtn.appendChild(
+      this.createElement('span', { textContent: LanguageService.t('matcher.takePhoto') })
+    );
+    this.on(takePhotoBtn, 'click', (e: Event) => {
+      e.stopPropagation();
+      this.cameraFileInput?.click();
+    });
+    mbActions.appendChild(takePhotoBtn);
+
+    const choosePhotosBtn = this.createElement('button', {
+      attributes: {
+        type: 'button',
+        style: [
+          'display: flex; align-items: center; justify-content: center; gap: 8px;',
+          'min-height: 46px; padding: 0 16px; border-radius: 11px;',
+          'background: transparent; border: 1px solid var(--theme-border);',
+          'color: var(--theme-text); font-family: inherit; font-weight: 500; font-size: 13px; cursor: pointer;',
+        ].join(' '),
+      },
+    }) as HTMLButtonElement;
+    const photosIcon = this.createElement('span', {
+      attributes: {
+        style: 'width: 18px; height: 18px; display: inline-flex; flex-shrink: 0;',
+        'aria-hidden': 'true',
+      },
+    });
+    photosIcon.innerHTML = ICON_IMAGE;
+    choosePhotosBtn.appendChild(photosIcon);
+    choosePhotosBtn.appendChild(
+      this.createElement('span', { textContent: LanguageService.t('matcher.chooseImageMobile') })
+    );
+    this.on(choosePhotosBtn, 'click', (e: Event) => {
+      e.stopPropagation();
+      this.dropZoneFileInput?.click();
+    });
+    mbActions.appendChild(choosePhotosBtn);
+    this.dropZone.appendChild(mbActions);
+
+    this.emptyFlowElement.appendChild(this.dropZone);
+
+    // Permanent privacy chip row below the zone (lock glyph + privacy line)
+    const privacyRow = this.createElement('div', {
+      attributes: {
+        style: [
+          'display: flex; align-items: flex-start; gap: 9px;',
+          'margin-top: 12px; padding: 11px 12px; border-radius: 11px;',
+          'background: var(--theme-background-secondary);',
+        ].join(' '),
+      },
+    });
+    const lockIcon = this.createElement('span', {
+      attributes: {
+        style:
+          'width: 15px; height: 15px; display: inline-flex; flex-shrink: 0; color: var(--theme-text-muted);',
+        'aria-hidden': 'true',
+      },
+    });
+    lockIcon.innerHTML = ICON_LOCK;
+    privacyRow.appendChild(lockIcon);
+    privacyRow.appendChild(
+      this.createElement('span', {
+        textContent: LanguageService.t('matcher.privacyNote'),
+        attributes: {
+          style: 'font-size: 11px; line-height: 1.45; color: var(--theme-text-muted);',
+        },
+      })
+    );
+    this.emptyFlowElement.appendChild(privacyRow);
+
+    return this.emptyFlowElement;
+  }
+
+  /**
+   * LOADED state — image card with the drag loupe, the roll strip and the
+   * focus results, top to bottom in one column.
+   */
+  private buildLoadedFlow(): HTMLElement {
+    this.loadedFlowElement = this.createElement('div', {
+      attributes: {
+        style: 'flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px;',
+      },
+    });
+
+    this.loadedFlowElement.appendChild(this.buildImageCard());
+    this.loadedFlowElement.appendChild(this.buildRollSection());
+    this.loadedFlowElement.appendChild(this.buildResultsSection());
+
+    return this.loadedFlowElement;
+  }
+
+  /**
+   * The 3C image card: #000 ground, 14px radius, the canvas (zoom controller)
+   * underneath, the 74px loupe overlay, 44px replace/clear top-right and the
+   * loupe-colour hint chip bottom-left. rgba(10,10,12,…) overlay grounds are
+   * the drawn on-image chips — the sanctioned hardcoded colours.
+   */
+  private buildImageCard(): HTMLElement {
+    this.imageCardElement = this.createElement('div', {
+      className: 'x3c-image-card',
+      attributes: {
+        style: [
+          'flex-shrink: 0; position: relative;',
+          'border-radius: 14px; overflow: hidden; background: #000;',
+          'touch-action: none;',
+        ].join(' '),
+      },
+    });
+
+    // Canvas host — the zoom controller renders into this
+    this.canvasContainer = this.createElement('div', {
+      className: 'image-canvas-container',
+      attributes: {
+        style: 'position: absolute; inset: 0; overflow: hidden;',
+      },
+    });
+    this.imageCardElement.appendChild(this.canvasContainer);
+    this.renderImageCanvas();
+
+    // The loupe: 74px circle following the pointer during drag, 3px white
+    // border + dark outline shadow, fill = colour under the pointer, 13px
+    // crosshair ring, bottom hex chip. Scales in over 120ms.
+    this.loupeElement = this.createElement('div', {
+      attributes: {
+        style: [
+          'position: absolute; top: 0; left: 0; width: 74px; height: 74px; border-radius: 50%;',
+          'transform: translate(-50%, -50%) scale(0);',
+          'border: 3px solid #fff;',
+          'box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.55), 0 6px 18px rgba(0, 0, 0, 0.45);',
+          'background: transparent; pointer-events: none;',
+          'display: flex; align-items: flex-end; justify-content: center; padding-bottom: 7px;',
+          'transition: transform 120ms ease; z-index: 120; box-sizing: border-box;',
+        ].join(' '),
+        'aria-hidden': 'true',
+      },
+    });
+    this.loupeElement.appendChild(
+      this.createElement('span', {
+        attributes: {
+          style: [
+            'position: absolute; top: 50%; left: 50%; width: 13px; height: 13px;',
+            'margin: -6.5px 0 0 -6.5px; border-radius: 50%;',
+            'border: 1.5px solid rgba(255, 255, 255, 0.9);',
+            'box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4); box-sizing: border-box;',
+          ].join(' '),
+        },
+      })
+    );
+    this.loupeHexChip = this.createElement('span', {
+      attributes: {
+        style: [
+          "font-family: 'Fragment Mono', monospace; font-size: 9px;",
+          'padding: 2px 6px; border-radius: 5px;',
+          `background: ${OVERLAY_CHIP_BG}; color: #fff;`,
+        ].join(' '),
+      },
+    });
+    this.loupeElement.appendChild(this.loupeHexChip);
+    this.imageCardElement.appendChild(this.loupeElement);
+
+    // Top-right 44px replace + clear controls on the drawn overlay ground
+    const topControls = this.createElement('div', {
+      attributes: {
+        style: 'position: absolute; top: 8px; right: 8px; display: flex; gap: 5px; z-index: 110;',
+      },
+    });
+    const overlayBtnStyle = [
+      'width: 44px; height: 44px;',
+      'display: flex; align-items: center; justify-content: center;',
+      `border-radius: 10px; border: none; background: ${OVERLAY_BG}; color: #fff; cursor: pointer;`,
+    ].join(' ');
+
+    const replaceBtn = this.createElement('button', {
+      attributes: {
+        type: 'button',
+        title: LanguageService.t('matcher.replaceImage'),
+        'aria-label': LanguageService.t('matcher.replaceImage'),
+        style: overlayBtnStyle,
+      },
+    }) as HTMLButtonElement;
+    const replaceIcon = this.createElement('span', {
+      attributes: {
+        style: 'width: 18px; height: 18px; display: inline-flex;',
+        'aria-hidden': 'true',
+      },
+    });
+    replaceIcon.innerHTML = ICON_REFRESH;
+    replaceBtn.appendChild(replaceIcon);
+    this.on(replaceBtn, 'click', (e: Event) => {
+      e.stopPropagation();
+      this.dropZoneFileInput?.click();
+    });
+    topControls.appendChild(replaceBtn);
+
+    const clearBtn = this.createElement('button', {
+      attributes: {
+        type: 'button',
+        title: LanguageService.t('matcher.clearImage'),
+        'aria-label': LanguageService.t('matcher.clearImage'),
+        style: overlayBtnStyle,
+      },
+    }) as HTMLButtonElement;
+    const clearIcon = this.createElement('span', {
+      attributes: {
+        style: 'width: 18px; height: 18px; display: inline-flex;',
+        'aria-hidden': 'true',
+      },
+    });
+    clearIcon.innerHTML = ICON_CLOSE;
+    clearBtn.appendChild(clearIcon);
+    this.on(clearBtn, 'click', (e: Event) => {
+      e.stopPropagation();
+      this.clearImage();
+    });
+    topControls.appendChild(clearBtn);
+    this.imageCardElement.appendChild(topControls);
+
+    // Bottom-left hint chip: 14px swatch of the current loupe colour + mono hint
+    const hintChip = this.createElement('div', {
+      attributes: {
+        style: [
+          'position: absolute; left: 8px; bottom: 8px;',
+          'display: flex; align-items: center; gap: 6px;',
+          `padding: 6px 10px; border-radius: 10px; background: ${OVERLAY_BG}; z-index: 110;`,
+        ].join(' '),
+      },
+    });
+    this.hintSwatchElement = this.createElement('span', {
+      attributes: {
+        style: `width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; background: ${LOUPE_PLACEHOLDER};`,
+        'aria-hidden': 'true',
+      },
+    });
+    hintChip.appendChild(this.hintSwatchElement);
+    const hintTextStyle = "font-family: 'Fragment Mono', monospace; font-size: 10px; color: #fff;";
+    hintChip.appendChild(
+      this.createElement('span', {
+        className: 'x3c-dt-text',
+        textContent: LanguageService.t('matcher.clickToSample'),
+        attributes: { style: hintTextStyle },
+      })
+    );
+    hintChip.appendChild(
+      this.createElement('span', {
+        className: 'x3c-mb-text',
+        textContent: LanguageService.t('matcher.tapToSample'),
+        attributes: { style: hintTextStyle },
+      })
+    );
+    this.imageCardElement.appendChild(hintChip);
+
+    return this.imageCardElement;
+  }
+
+  /**
+   * ROLL strip — mono uppercase roll label, Clear + Auto-extract on the right,
+   * then the horizontal strip of 58px pick tiles and the trailing add-pick
+   * tile committing the loupe colour.
+   */
+  private buildRollSection(): HTMLElement {
+    this.rollSectionElement = this.createElement('div', {
+      attributes: { style: 'flex-shrink: 0;' },
+    });
+
+    const headerRow = this.createElement('div', {
+      attributes: {
+        style:
+          'display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px;',
+      },
+    });
+    headerRow.appendChild(
+      this.createElement('span', {
+        textContent: LanguageService.t('matcher.roll'),
+        attributes: {
+          style:
+            'font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--theme-text-muted); white-space: nowrap;',
+        },
+      })
+    );
+
+    const headerActions = this.createElement('div', {
+      attributes: { style: 'display: flex; align-items: center; gap: 12px;' },
+    });
+    const rollClearBtn = this.createElement('button', {
+      textContent: LanguageService.t('common.clear'),
+      attributes: {
+        type: 'button',
+        style: [
+          'background: none; border: none; color: var(--theme-primary);',
+          'font-size: 12px; font-weight: 600; cursor: pointer;',
+          'text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 4px;',
+        ].join(' '),
+      },
+    }) as HTMLButtonElement;
+    this.on(rollClearBtn, 'click', () => {
+      this.clearExtractedColorsHistory();
+    });
+    headerActions.appendChild(rollClearBtn);
+
+    // Auto-extract: bulk extraction survives as this one button (accent-soft
+    // outlined), filling the roll via the existing K-means flow
+    this.rollAutoBtn = this.createElement('button', {
+      className: 'x3c-auto-btn',
+      textContent: LanguageService.t('matcher.autoExtract'),
+      attributes: {
+        type: 'button',
+        style: [
+          'min-height: 36px; padding: 0 13px; border-radius: 9px; cursor: pointer;',
+          'font-family: inherit; font-size: 12px; font-weight: 600; white-space: nowrap;',
+          `background: ${ACCENT_SOFT}; border: 1px solid ${ACCENT_BORDER}; color: var(--theme-primary);`,
+        ].join(' '),
+      },
+    }) as HTMLButtonElement;
+    this.on(this.rollAutoBtn, 'click', () => {
+      void this.extractPalette();
+    });
+    headerActions.appendChild(this.rollAutoBtn);
+    headerRow.appendChild(headerActions);
+    this.rollSectionElement.appendChild(headerRow);
+
+    this.rollStripElement = this.createElement('div', {
+      attributes: {
+        style: 'display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px;',
+      },
+    });
+    this.rollSectionElement.appendChild(this.rollStripElement);
+
+    return this.rollSectionElement;
+  }
+
+  /**
+   * FOCUS results — uppercase focus label, Fragment Mono count and the Export
+   * CSS action on the right, then the existing v5-results-grid card container.
+   */
+  private buildResultsSection(): HTMLElement {
+    const resultsSection = this.createElement('div', {
+      className: 'extractor-results-section',
+      attributes: {
+        style:
+          'flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; gap: 10px;',
+      },
+    });
+
+    const focusHeader = this.createElement('div', {
+      attributes: {
+        style: [
+          'display: flex; align-items: center; justify-content: space-between; gap: 10px;',
+          'padding-bottom: 8px; border-bottom: 1px solid var(--theme-border);',
+        ].join(' '),
+      },
+    });
+    this.resultsTitleElement = this.createElement('span', {
+      className: 'extractor-section-title',
+      textContent: LanguageService.t('matcher.extractedPalette'),
+      attributes: {
+        style:
+          'font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--theme-text-muted);',
+      },
+    });
+    focusHeader.appendChild(this.resultsTitleElement);
+
+    const focusActions = this.createElement('div', {
+      attributes: { style: 'display: flex; align-items: center; gap: 12px;' },
+    });
+    this.resultsCountElement = this.createElement('span', {
+      attributes: {
+        style:
+          "font-family: 'Fragment Mono', monospace; font-size: 11px; color: var(--theme-text-muted);",
+      },
+    });
+    focusActions.appendChild(this.resultsCountElement);
+
+    const actionBtnStyle = [
+      'background: none; border: none; color: var(--theme-primary);',
+      'font-size: 12px; font-weight: 600; cursor: pointer;',
+      'text-transform: uppercase; letter-spacing: 0.5px;',
+    ].join(' ');
+    this.exportCssBtn = this.createElement('button', {
+      className: 'action-btn-text',
+      textContent: LanguageService.t('matcher.exportCss'),
+      attributes: {
+        type: 'button',
+        disabled: 'true',
+        style: `${actionBtnStyle} opacity: 0.5; cursor: not-allowed;`,
+      },
+    }) as HTMLButtonElement;
+    this.on(this.exportCssBtn, 'click', () => {
+      this.exportPaletteAsCss();
+    });
+    focusActions.appendChild(this.exportCssBtn);
+    focusHeader.appendChild(focusActions);
+    resultsSection.appendChild(focusHeader);
+
+    // Color info card container (hidden until pixel sample)
+    this.colorInfoCardContainer = this.createElement('div', {
+      className: 'color-info-card-wrapper',
+      attributes: {
+        style: 'display: none; justify-content: center; margin-bottom: 8px;',
+      },
+    });
+    resultsSection.appendChild(this.colorInfoCardContainer);
+
+    // Scrolling host — the v5-results-grid container is created per render
+    // inside (grid rules come from the shell's injected style)
+    this.resultsContainer = this.createElement('div', {
+      className: 'extractor-results-scroll',
+      attributes: {
+        style: 'flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 16px;',
+      },
+    });
+    resultsSection.appendChild(this.resultsContainer);
+
+    return resultsSection;
+  }
+
+  /**
+   * Setup drop zone click and workspace-wide drag/drop
+   */
+  private setupDropZoneInteractions(): void {
+    if (!this.dropZone) return;
+
+    // Click anywhere on the dashed card opens the file dialog (the card only
+    // shows while no image is loaded)
+    this.on(this.dropZone, 'click', () => {
       if (!this.currentImage) {
         this.dropZoneFileInput?.click();
       }
     });
 
-    // Drag and drop handling
-    this.on(this.dropZone, 'dragover', (e: Event) => {
+    // Drag and drop works across the whole workspace in both states —
+    // dropping a file replaces the current image
+    const panel = this.options.rightPanel;
+    this.on(panel, 'dragover', (e: Event) => {
       e.preventDefault();
-      this.dropZone?.classList.add('drag-over');
+      if (this.dropZone) {
+        this.dropZone.style.borderColor = 'var(--theme-primary)';
+      }
     });
-
-    this.on(this.dropZone, 'dragleave', () => {
-      this.dropZone?.classList.remove('drag-over');
+    this.on(panel, 'dragleave', () => {
+      if (this.dropZone) {
+        this.dropZone.style.borderColor = '';
+      }
     });
-
-    this.on(this.dropZone, 'drop', (e: Event) => {
+    this.on(panel, 'drop', (e: Event) => {
       e.preventDefault();
-      this.dropZone?.classList.remove('drag-over');
+      if (this.dropZone) {
+        this.dropZone.style.borderColor = '';
+      }
       const dragEvent = e as DragEvent;
       const files = dragEvent.dataTransfer?.files;
       if (files && files.length > 0) {
@@ -1354,6 +1533,32 @@ export class ExtractorTool extends BaseComponent {
   }
 
   /**
+   * Shared image-arrival path (drop, file dialog, camera, paste, left-panel
+   * uploader): persist, hand to the zoom controller, flip the workspace to
+   * the loaded flow and auto-extract.
+   */
+  private onImageLoaded(image: HTMLImageElement, dataUrl?: string): void {
+    this.currentImage = image;
+
+    // OPT-012: persist to IndexedDB (async, off the image-load critical path)
+    if (dataUrl) {
+      void this.persistImage(dataUrl);
+    }
+
+    if (this.imageZoom) {
+      this.imageZoom.setImage(image);
+      // Auto-fit image after loading
+      this.imageZoom.autoFit();
+    }
+
+    this.updateFlowVisibility();
+    ToastService.success(LanguageService.t('matcher.imageLoaded'));
+
+    // V4: Auto-extract palette on image load
+    void this.extractPalette();
+  }
+
+  /**
    * Handle a dropped image file
    */
   private handleDroppedFile(file: File): void {
@@ -1362,47 +1567,8 @@ export class ExtractorTool extends BaseComponent {
       const dataUrl = e.target?.result as string;
       const img = new Image();
       img.onload = () => {
-        this.currentImage = img;
-
-        // Persist image to storage if it's small enough
-        // OPT-012: persist to IndexedDB (async, off the image-load critical path)
-        if (dataUrl) {
-          void this.persistImage(dataUrl);
-        }
-
-        // Hide drop content, show canvas
-        if (this.dropContent) {
-          this.dropContent.style.display = 'none';
-        }
-        if (this.dropZone) {
-          this.dropZone.classList.add('has-image');
-        }
-        if (this.canvasContainer) {
-          this.canvasContainer.classList.remove('hidden');
-          this.canvasContainer.style.display = 'block';
-        }
-
-        // Set image in zoom controller
-        if (this.imageZoom) {
-          this.imageZoom.setImage(img);
-          // Auto-fit image after loading from drop zone
-          this.imageZoom.autoFit();
-        }
-
-        // Emit image loaded event
+        this.onImageLoaded(img, dataUrl);
         this.emit('image-loaded', { image: img, dataUrl });
-
-        // Hide empty state and update drawer
-        this.showEmptyState(false);
-        this.updateDrawerContent();
-
-        // Update responsive layout now that image is loaded
-        this.updateExtractorLayout();
-
-        ToastService.success(LanguageService.t('matcher.imageLoaded'));
-
-        // Auto-extract palette (v4 default behavior)
-        void this.extractPalette();
       };
       img.src = dataUrl;
     };
@@ -1411,7 +1577,7 @@ export class ExtractorTool extends BaseComponent {
 
   /**
    * Read image from clipboard using the Clipboard API (navigator.clipboard.read)
-   * This is the handler for the explicit "Paste from Clipboard" button.
+   * This is the handler for the explicit "Paste from clipboard" button.
    * Ctrl+V paste is handled separately by the document-level paste listener in bindEvents.
    */
   private async pasteFromClipboardAPI(): Promise<void> {
@@ -1438,39 +1604,33 @@ export class ExtractorTool extends BaseComponent {
   }
 
   /**
-   * Clear the current image and reset to empty state
+   * Clear the current image and reset to the empty state
    */
   private clearImage(): void {
     // Clear image state
     this.currentImage = null;
 
-    // Clear from storage
+    // Clear from storage (both the legacy localStorage key and the OPT-012
+    // IndexedDB copy — otherwise the cleared image returns on reload)
     StorageService.removeItem(STORAGE_KEYS.imageDataUrl);
+    void indexedDBService.delete(STORES.IMAGE_CACHE, STORAGE_KEYS.imageDataUrl);
 
     // Clear palette results (price cache managed by MarketBoardService)
     this.lastPaletteResults = [];
     this.matchedDyes = [];
-
-    // Show drop zone content, hide canvas
-    if (this.dropContent) {
-      this.dropContent.style.display = 'flex';
-    }
-    if (this.dropZone) {
-      this.dropZone.classList.remove('has-image');
-    }
-    if (this.canvasContainer) {
-      this.canvasContainer.classList.add('hidden');
-      this.canvasContainer.style.display = 'none';
-    }
+    this.v4ResultCards = [];
 
     // Clear results container
     if (this.resultsContainer) {
       clearContainer(this.resultsContainer);
     }
 
-    // Reset section title
+    // Reset focus header
     if (this.resultsTitleElement) {
       this.resultsTitleElement.textContent = LanguageService.t('matcher.extractedPalette');
+    }
+    if (this.resultsCountElement) {
+      this.resultsCountElement.textContent = '';
     }
 
     // Disable export button
@@ -1480,12 +1640,9 @@ export class ExtractorTool extends BaseComponent {
       this.exportCssBtn.style.cursor = 'not-allowed';
     }
 
-    // Show empty state
-    this.showEmptyState(true);
-    this.updateDrawerContent();
-
-    // Update responsive layout (image cleared, may expand drop zone)
-    this.updateExtractorLayout();
+    this.hideLoupe();
+    this.hideColorInfoCard();
+    this.updateFlowVisibility();
 
     // Re-render the canvas area to clear zoom controller
     this.renderImageCanvas();
@@ -1495,877 +1652,122 @@ export class ExtractorTool extends BaseComponent {
   }
 
   /**
-   * Render image canvas with zoom controller
+   * Render image canvas with zoom controller and wire the 3C interactions:
+   * plain click/tap samples, drag drives the loupe and samples on release.
    */
   private renderImageCanvas(): void {
     if (!this.canvasContainer) return;
+
+    // Tear down any previous controller (its document-level key listeners
+    // survive clearContainer otherwise)
+    this.imageZoom?.destroy();
+    this.imageZoom = null;
     clearContainer(this.canvasContainer);
 
-    // overflow: visible ensures zoom controls aren't clipped by ancestor's overflow: hidden
     const canvasWrapper = this.createElement('div', {
-      className: 'w-full h-full relative',
       attributes: {
-        style: 'overflow: visible;',
+        style: 'position: absolute; inset: 0; overflow: hidden;',
       },
     });
     this.canvasContainer.appendChild(canvasWrapper);
 
-    // NOTE: Pixel color sampling disabled for v4 extractor - focus on palette extraction only
-    this.imageZoom = new ImageZoomController(canvasWrapper, {
-      // No onColorSampled callback - palette extraction is triggered via config instead
-    });
+    // NOTE: pixel sampling flows through the 'image-sampled' event below —
+    // the file dialog is reached through Replace/drop, never by touching the
+    // image you are trying to read.
+    this.imageZoom = new ImageZoomController(canvasWrapper, {});
     this.imageZoom.init();
 
-    // Listen for clear image request from zoom controls
-    this.onPanelEvent(canvasWrapper, 'image-clear-requested', () => {
-      this.clearImage();
-    });
-
-    // 3C: plain click samples now (the controller's default changed) — the
-    // file dialog is reached through Replace/drop, never by touching the
-    // image you are trying to read. The hint + the one surviving bulk
-    // button live OUTSIDE the wrapper (the zoom controller owns its DOM).
-    const sampleBar = this.createElement('div', {
-      attributes: {
-        style:
-          'display: flex; align-items: center; justify-content: center; gap: 12px; padding: 6px 0;',
-      },
-    });
-    sampleBar.appendChild(
-      this.createElement('span', {
-        textContent: LanguageService.t('matcher.clickToSample'),
-        attributes: {
-          style:
-            "font-family: 'Fragment Mono', monospace; font-size: 9px; letter-spacing: 0.5px; color: var(--theme-text-muted);",
-        },
-      })
-    );
-    const autoBtn = this.createElement('button', {
-      textContent: LanguageService.t('matcher.autoExtract'),
-      attributes: {
-        type: 'button',
-        style:
-          'font-size: 11.5px; font-weight: 600; padding: 4px 12px; border-radius: 7px; border: 1px solid var(--theme-border); background: transparent; color: var(--theme-text); cursor: pointer;',
-      },
-    }) as HTMLButtonElement;
-    this.on(autoBtn, 'click', () => {
-      void this.extractPalette();
-    });
-    sampleBar.appendChild(autoBtn);
-    this.canvasContainer.appendChild(sampleBar);
-
-    // Listen for image-sampled (drag to select region, or Shift+Click pixel sample)
+    // Plain click/tap and drag-release both land here with the controller's
+    // pixel-averaged sample (sampleAreaSize) — keep the existing roll path
     this.onPanelEvent(canvasWrapper, 'image-sampled', (event: CustomEvent) => {
-      const { x, y, width, height, isRegion, hex, isPixelSample } = event.detail;
-      if (isRegion) {
-        // User selected a region - extract palette from that region
-        void this.extractPaletteFromRegion(x, y, width, height);
-      } else if (isPixelSample && hex) {
-        // Shift+Click pixel sample - match single color to closest dyes
+      const { hex, isPixelSample } = event.detail;
+      if (isPixelSample && hex) {
         this.matchColor(hex, true);
       }
+    });
+
+    // 3C loupe: the drag reads the pixel under the pointer live
+    this.onPanelEvent(canvasWrapper, 'loupe-move', (event: CustomEvent) => {
+      const { hex, clientX, clientY } = event.detail;
+      this.moveLoupe(hex, clientX, clientY);
+    });
+    this.onPanelEvent(canvasWrapper, 'loupe-end', () => {
+      this.hideLoupe();
     });
 
     // If we already have an image, set it
     if (this.currentImage) {
       this.imageZoom.setImage(this.currentImage);
+      this.imageZoom.autoFit();
     }
   }
 
   /**
-   * Render empty state
+   * Position the loupe under the pointer and fill it with the colour it reads.
    */
-  private renderEmptyState(): void {
-    if (!this.emptyStateContainer) return;
-    clearContainer(this.emptyStateContainer);
+  private moveLoupe(hex: string, clientX: number, clientY: number): void {
+    if (!this.imageCardElement || !this.loupeElement) return;
 
-    // Icon with inline sizing
-    const iconSpan = this.createElement('span', {
-      attributes: {
-        style: 'width: 150px; height: 150px; display: block; margin-bottom: 16px; opacity: 0.4;',
-      },
-    });
-    iconSpan.innerHTML = ICON_IMAGE;
+    const rect = this.imageCardElement.getBoundingClientRect();
+    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+    const y = Math.max(0, Math.min(clientY - rect.top, rect.height));
 
-    // Text
-    const text = this.createElement('p', {
-      textContent: LanguageService.t('matcher.uploadPrompt'),
-      attributes: { style: 'font-size: 16px; margin: 0;' },
-    });
-
-    this.emptyStateContainer.appendChild(iconSpan);
-    this.emptyStateContainer.appendChild(text);
-  }
-
-  /**
-   * Show/hide empty state and drop zone content
-   */
-  private showEmptyState(show: boolean): void {
-    if (this.emptyStateContainer) {
-      this.emptyStateContainer.classList.toggle('hidden', !show);
-      this.emptyStateContainer.style.display = show ? 'flex' : 'none';
+    this.loupeElement.style.left = `${x}px`;
+    this.loupeElement.style.top = `${y}px`;
+    this.loupeElement.style.background = hex;
+    this.loupeElement.style.transform = 'translate(-50%, -50%) scale(1)';
+    if (this.loupeHexChip) {
+      this.loupeHexChip.textContent = hex.toUpperCase();
     }
-
-    // When hiding empty state (showing results), also hide drop content if we have an image
-    if (!show && this.currentImage) {
-      if (this.dropContent) {
-        this.dropContent.style.display = 'none';
-      }
-      if (this.dropZone) {
-        this.dropZone.classList.add('has-image');
-      }
-      if (this.canvasContainer) {
-        this.canvasContainer.classList.remove('hidden');
-        this.canvasContainer.style.display = 'block';
-      }
-    }
-  }
-
-  // ============================================================================
-  // Mobile Drawer Content
-  // ============================================================================
-
-  private renderDrawerContent(): void {
-    if (!this.options.drawerContent) return;
-    this.updateDrawerContent();
-  }
-
-  private updateDrawerContent(): void {
-    if (!this.options.drawerContent) return;
-    const drawer = this.options.drawerContent;
-    clearContainer(drawer);
-
-    // Destroy previous mobile components if they exist (clean slate)
-    this.mobileImageUpload?.destroy();
-    this.mobileImageUpload = null;
-    this.mobileColorPicker?.destroy();
-    this.mobileColorPicker = null;
-    this.mobileMarketBoard?.destroy();
-    this.mobileMarketBoard = null;
-
-    const content = this.createElement('div', { className: 'space-y-0' });
-
-    // === Image Source Accordion Section ===
-    const imageSourceSection = this.renderMobileImageSourceAccordion();
-    content.appendChild(imageSourceSection);
-
-    // === Color Selection Accordion Section ===
-    const colorSelectionSection = this.renderMobileColorSelectionAccordion();
-    content.appendChild(colorSelectionSection);
-
-    // === Extracted Colors Accordion Section ===
-    const extractedColorsSection = this.renderMobileExtractedColorsAccordion();
-    content.appendChild(extractedColorsSection);
-
-    // === Options Accordion Section ===
-    const optionsSection = this.renderMobileOptionsAccordion();
-    content.appendChild(optionsSection);
-
-    // === Market Board Accordion Section ===
-    const marketSection = this.renderMobileMarketAccordion();
-    content.appendChild(marketSection);
-
-    drawer.appendChild(content);
+    this.setLoupeHex(hex);
   }
 
   /**
-   * Render mobile extracted colors accordion section
+   * Scale the loupe away (drag ended or was cancelled).
    */
-  private renderMobileExtractedColorsAccordion(): HTMLElement {
-    const section = this.createElement('div', {
-      className: 'border-b',
-      attributes: { style: 'border-color: var(--theme-border);' },
-    });
-
-    // Accordion header
-    const header = this.createElement('button', {
-      className: 'w-full flex items-center justify-between px-4 py-3 text-left transition-colors',
-      attributes: {
-        style: 'background: var(--theme-background-secondary); color: var(--theme-text);',
-        type: 'button',
-        'aria-expanded': String(this.mobileExtractedColorsExpanded),
-      },
-    });
-
-    const titleContainer = this.createElement('span', {
-      className: 'flex items-center gap-2 font-medium text-sm',
-    });
-    const iconSpan = this.createElement('span', {
-      className: 'w-4 h-4 flex-shrink-0',
-      innerHTML: ICON_EYEDROPPER,
-    });
-    const titleText = this.createElement('span', {
-      textContent: `Extracted Colors${this.extractedColorsHistory.length > 0 ? ` (${this.extractedColorsHistory.length})` : ''}`,
-    });
-    titleContainer.appendChild(iconSpan);
-    titleContainer.appendChild(titleText);
-    header.appendChild(titleContainer);
-
-    // Chevron
-    const chevron = this.createElement('span', {
-      className: 'w-5 h-5 transition-transform duration-200',
-      innerHTML: `<svg viewBox="0 0 20 20" fill="currentColor" class="w-full h-full">
-        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-      </svg>`,
-      attributes: {
-        style: this.mobileExtractedColorsExpanded
-          ? 'transform: rotate(0deg);'
-          : 'transform: rotate(-90deg);',
-      },
-    });
-    header.appendChild(chevron);
-    section.appendChild(header);
-
-    // Content area
-    const contentWrapper = this.createElement('div', {
-      className: 'overflow-hidden transition-all duration-200',
-      attributes: {
-        style: this.mobileExtractedColorsExpanded
-          ? 'max-height: 500px; opacity: 1;'
-          : 'max-height: 0; opacity: 0;',
-      },
-    });
-
-    const contentInner = this.createElement('div', {
-      className: 'px-4 py-3',
-      attributes: { style: 'background: var(--theme-card-background);' },
-    });
-
-    // Reuse the same list rendering
-    const mobileListContainer = this.createElement('div');
-    // Build list content inline (same structure as desktop)
-    if (this.extractedColorsHistory.length === 0) {
-      const hint = this.createElement('p', {
-        textContent: 'Shift+Click on the image to sample colors',
-        attributes: {
-          style:
-            'font-size: 12px; color: var(--theme-text-muted, #a0a0a0); text-align: center; padding: 8px; margin: 0;',
-        },
-      });
-      mobileListContainer.appendChild(hint);
-    } else {
-      for (let i = 0; i < this.extractedColorsHistory.length; i++) {
-        const entry = this.extractedColorsHistory[i];
-        const isActive = entry.hex.toLowerCase() === this.lastPixelSampleHex?.toLowerCase();
-
-        const row = this.createElement('div', {
-          attributes: {
-            style: `
-              display: flex; align-items: center; gap: 8px; padding: 6px 4px;
-              border-radius: 8px; cursor: pointer;
-              border: 1px solid ${isActive ? 'var(--theme-primary, #d4af37)' : 'transparent'};
-              background: ${isActive ? 'rgba(212, 175, 55, 0.08)' : 'transparent'};
-            `
-              .replace(/\s+/g, ' ')
-              .trim(),
-          },
-        });
-
-        const badge = this.createElement('span', {
-          textContent: `#${i + 1}`,
-          attributes: {
-            style: `
-              width: 24px; height: 24px; border-radius: 50%;
-              display: flex; align-items: center; justify-content: center;
-              font-size: 9px; font-weight: 700; flex-shrink: 0;
-              background: ${isActive ? 'var(--theme-primary, #d4af37)' : 'rgba(255, 255, 255, 0.1)'};
-              color: ${isActive ? 'var(--theme-primary-text, #1a1a1a)' : 'var(--theme-text-muted, #a0a0a0)'};
-            `
-              .replace(/\s+/g, ' ')
-              .trim(),
-          },
-        });
-        row.appendChild(badge);
-
-        const swatch = this.createElement('div', {
-          attributes: {
-            style: `
-              width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
-              background-color: ${entry.hex};
-              border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
-            `
-              .replace(/\s+/g, ' ')
-              .trim(),
-          },
-        });
-        row.appendChild(swatch);
-
-        row.appendChild(
-          this.createElement('span', {
-            className: 'number',
-            textContent: entry.hex.toUpperCase(),
-            attributes: { style: 'font-size: 12px; color: var(--theme-text, #e0e0e0); flex: 1;' },
-          })
-        );
-
-        this.on(row, 'click', () => {
-          this.lastPixelSampleHex = entry.hex;
-          this.renderColorInfoCard(entry.hex);
-          this.matchColor(entry.hex);
-        });
-
-        mobileListContainer.appendChild(row);
-      }
-    }
-
-    contentInner.appendChild(mobileListContainer);
-    contentWrapper.appendChild(contentInner);
-    section.appendChild(contentWrapper);
-
-    // Toggle event
-    this.on(header, 'click', () => {
-      this.mobileExtractedColorsExpanded = !this.mobileExtractedColorsExpanded;
-      header.setAttribute('aria-expanded', String(this.mobileExtractedColorsExpanded));
-      chevron.style.transform = this.mobileExtractedColorsExpanded
-        ? 'rotate(0deg)'
-        : 'rotate(-90deg)';
-      contentWrapper.style.maxHeight = this.mobileExtractedColorsExpanded ? '500px' : '0';
-      contentWrapper.style.opacity = this.mobileExtractedColorsExpanded ? '1' : '0';
-    });
-
-    return section;
-  }
-
-  /**
-   * Render mobile options accordion section
-   */
-  private renderMobileOptionsAccordion(): HTMLElement {
-    const section = this.createElement('div', {
-      className: 'border-b',
-      attributes: { style: 'border-color: var(--theme-border);' },
-    });
-
-    // Accordion header
-    const header = this.createElement('button', {
-      className: 'w-full flex items-center justify-between px-4 py-3 text-left transition-colors',
-      attributes: {
-        style: 'background: var(--theme-background-secondary); color: var(--theme-text);',
-        type: 'button',
-        'aria-expanded': String(this.mobileOptionsExpanded),
-      },
-    });
-
-    const titleContainer = this.createElement('span', {
-      className: 'flex items-center gap-2 font-medium text-sm',
-    });
-    const iconSpan = this.createElement('span', {
-      className: 'w-4 h-4 flex-shrink-0',
-      innerHTML: ICON_SETTINGS,
-    });
-    const titleText = this.createElement('span', {
-      textContent: LanguageService.t('matcher.options'),
-    });
-    titleContainer.appendChild(iconSpan);
-    titleContainer.appendChild(titleText);
-    header.appendChild(titleContainer);
-
-    // Chevron
-    const chevron = this.createElement('span', {
-      className: 'w-5 h-5 transition-transform duration-200',
-      innerHTML: `<svg viewBox="0 0 20 20" fill="currentColor" class="w-full h-full">
-        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-      </svg>`,
-      attributes: {
-        style: this.mobileOptionsExpanded
-          ? 'transform: rotate(0deg);'
-          : 'transform: rotate(-90deg);',
-      },
-    });
-    header.appendChild(chevron);
-    section.appendChild(header);
-
-    // Content area
-    const contentWrapper = this.createElement('div', {
-      className: 'overflow-hidden transition-all duration-200',
-      attributes: {
-        style: this.mobileOptionsExpanded
-          ? 'max-height: 500px; opacity: 1;'
-          : 'max-height: 0; opacity: 0;',
-      },
-    });
-
-    const contentInner = this.createElement('div', {
-      className: 'px-4 py-3 space-y-4',
-      attributes: { style: 'background: var(--theme-card-background);' },
-    });
-
-    // Sample size slider
-    const sampleGroup = this.createElement('div');
-    const sampleLabel = this.createElement('label', {
-      className: 'flex items-center justify-between text-sm mb-2',
-    });
-    sampleLabel.innerHTML = `
-      <span style="color: var(--theme-text);">${LanguageService.t('matcher.sampleSize')}</span>
-      <span class="number" style="color: var(--theme-text-muted);">${this.sampleSize}px</span>
-    `;
-    this.mobileSampleDisplay = sampleLabel.querySelector('span:last-child') as HTMLElement;
-
-    this.mobileSampleSlider = this.createElement('input', {
-      attributes: { type: 'range', min: '1', max: '10', value: String(this.sampleSize) },
-      className: 'w-full',
-    }) as HTMLInputElement;
-
-    this.on(this.mobileSampleSlider, 'input', () => {
-      if (this.mobileSampleSlider && this.mobileSampleDisplay) {
-        this.sampleSize = parseInt(this.mobileSampleSlider.value, 10);
-        this.mobileSampleDisplay.textContent = `${this.sampleSize}px`;
-        StorageService.setItem(STORAGE_KEYS.sampleSize, this.sampleSize);
-        // Sync desktop slider if visible
-        if (this.sampleSlider) {
-          this.sampleSlider.value = String(this.sampleSize);
-        }
-        if (this.sampleDisplay) {
-          this.sampleDisplay.textContent = `${this.sampleSize}px`;
-        }
-      }
-    });
-
-    sampleGroup.appendChild(sampleLabel);
-    sampleGroup.appendChild(this.mobileSampleSlider);
-    contentInner.appendChild(sampleGroup);
-
-    // Palette mode toggle
-    const paletteToggle = this.createElement('label', {
-      className: 'flex items-center gap-3 cursor-pointer',
-    });
-
-    this.mobilePaletteModeCheckbox = this.createElement('input', {
-      attributes: { type: 'checkbox' },
-      className: 'w-5 h-5 rounded',
-    }) as HTMLInputElement;
-    this.mobilePaletteModeCheckbox.checked = this.paletteMode;
-
-    this.on(this.mobilePaletteModeCheckbox, 'change', () => {
-      if (this.mobilePaletteModeCheckbox) {
-        this.paletteMode = this.mobilePaletteModeCheckbox.checked;
-        StorageService.setItem(STORAGE_KEYS.paletteMode, this.paletteMode);
-        // Sync desktop checkbox if visible
-        if (this.paletteModeCheckbox) {
-          this.paletteModeCheckbox.checked = this.paletteMode;
-        }
-        this.updatePaletteOptionsVisibility();
-        this.updateMobilePaletteOptionsVisibility();
-      }
-    });
-
-    const toggleText = this.createElement('div');
-    toggleText.innerHTML = `
-      <p class="text-sm font-medium" style="color: var(--theme-text);">${LanguageService.t('matcher.extractPalette')}</p>
-      <p class="text-xs" style="color: var(--theme-text-muted);">${LanguageService.t('matcher.extractPaletteDesc')}</p>
-    `;
-
-    paletteToggle.appendChild(this.mobilePaletteModeCheckbox);
-    paletteToggle.appendChild(toggleText);
-    contentInner.appendChild(paletteToggle);
-
-    // Palette options (color count + extract button)
-    this.mobilePaletteOptionsContainer = this.createElement('div', {
-      className: 'space-y-3 pt-3 border-t',
-      attributes: {
-        style: `border-color: var(--theme-border); ${this.paletteMode ? '' : 'display: none;'}`,
-      },
-    });
-
-    // Color count slider
-    const colorCountGroup = this.createElement('div');
-    const colorCountLabel = this.createElement('label', {
-      className: 'flex items-center justify-between text-sm mb-2',
-    });
-    colorCountLabel.innerHTML = `
-      <span style="color: var(--theme-text);">${LanguageService.t('matcher.colorCount')}</span>
-      <span class="number font-bold" style="color: var(--theme-primary);">${this.paletteColorCount}</span>
-    `;
-    this.mobileColorCountDisplay = colorCountLabel.querySelector('span:last-child') as HTMLElement;
-
-    this.mobileColorCountSlider = this.createElement('input', {
-      attributes: { type: 'range', min: '3', max: '5', value: String(this.paletteColorCount) },
-      className: 'w-full',
-    }) as HTMLInputElement;
-
-    this.on(this.mobileColorCountSlider, 'input', () => {
-      if (this.mobileColorCountSlider && this.mobileColorCountDisplay) {
-        this.paletteColorCount = parseInt(this.mobileColorCountSlider.value, 10);
-        this.mobileColorCountDisplay.textContent = String(this.paletteColorCount);
-        StorageService.setItem(STORAGE_KEYS.paletteColorCount, this.paletteColorCount);
-        // Sync desktop slider if visible
-        if (this.colorCountSlider) {
-          this.colorCountSlider.value = String(this.paletteColorCount);
-        }
-        if (this.colorCountDisplay) {
-          this.colorCountDisplay.textContent = String(this.paletteColorCount);
-        }
-      }
-    });
-
-    colorCountGroup.appendChild(colorCountLabel);
-    colorCountGroup.appendChild(this.mobileColorCountSlider);
-    this.mobilePaletteOptionsContainer.appendChild(colorCountGroup);
-
-    // Extract palette button
-    this.mobileExtractPaletteBtn = this.createElement('button', {
-      className: 'w-full py-2 px-4 rounded-lg font-medium text-sm transition-colors',
-      textContent: LanguageService.t('matcher.extractPaletteBtn'),
-      attributes: {
-        style: 'background: var(--theme-primary); color: white;',
-      },
-    }) as HTMLButtonElement;
-
-    this.on(this.mobileExtractPaletteBtn, 'click', () => {
-      void this.extractPalette();
-    });
-
-    this.mobilePaletteOptionsContainer.appendChild(this.mobileExtractPaletteBtn);
-    contentInner.appendChild(this.mobilePaletteOptionsContainer);
-
-    contentWrapper.appendChild(contentInner);
-    section.appendChild(contentWrapper);
-
-    // Toggle event
-    this.on(header, 'click', () => {
-      this.mobileOptionsExpanded = !this.mobileOptionsExpanded;
-      header.setAttribute('aria-expanded', String(this.mobileOptionsExpanded));
-      chevron.style.transform = this.mobileOptionsExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
-      contentWrapper.style.maxHeight = this.mobileOptionsExpanded ? '500px' : '0';
-      contentWrapper.style.opacity = this.mobileOptionsExpanded ? '1' : '0';
-    });
-
-    return section;
-  }
-
-  /**
-   * Update mobile palette options visibility based on paletteMode
-   */
-  private updateMobilePaletteOptionsVisibility(): void {
-    if (this.mobilePaletteOptionsContainer) {
-      this.mobilePaletteOptionsContainer.style.display = this.paletteMode ? '' : 'none';
+  private hideLoupe(): void {
+    if (this.loupeElement) {
+      this.loupeElement.style.transform = 'translate(-50%, -50%) scale(0)';
     }
   }
 
   /**
-   * Render mobile image source accordion section
+   * Track the loupe's current colour — it feeds the bottom-left hint swatch
+   * and the roll's add-pick tile chip.
    */
-  private renderMobileImageSourceAccordion(): HTMLElement {
-    const section = this.createElement('div', {
-      className: 'border-b',
-      attributes: { style: 'border-color: var(--theme-border);' },
-    });
-
-    // Accordion header
-    const header = this.createElement('button', {
-      className: 'w-full flex items-center justify-between px-4 py-3 text-left transition-colors',
-      attributes: {
-        style: 'background: var(--theme-background-secondary); color: var(--theme-text);',
-        type: 'button',
-        'aria-expanded': String(this.mobileImageSourceExpanded),
-      },
-    });
-
-    const titleContainer = this.createElement('span', {
-      className: 'flex items-center gap-2 font-medium text-sm',
-    });
-    const iconSpan = this.createElement('span', {
-      className: 'w-4 h-4 flex-shrink-0',
-      innerHTML: ICON_UPLOAD,
-    });
-    const titleText = this.createElement('span', {
-      textContent: LanguageService.t('matcher.imageSource'),
-    });
-    titleContainer.appendChild(iconSpan);
-    titleContainer.appendChild(titleText);
-    header.appendChild(titleContainer);
-
-    // Chevron
-    const chevron = this.createElement('span', {
-      className: 'w-5 h-5 transition-transform duration-200',
-      innerHTML: `<svg viewBox="0 0 20 20" fill="currentColor" class="w-full h-full">
-        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-      </svg>`,
-      attributes: {
-        style: this.mobileImageSourceExpanded
-          ? 'transform: rotate(0deg);'
-          : 'transform: rotate(-90deg);',
-      },
-    });
-    header.appendChild(chevron);
-    section.appendChild(header);
-
-    // Content area
-    const contentWrapper = this.createElement('div', {
-      className: 'overflow-hidden transition-all duration-200',
-      attributes: {
-        style: this.mobileImageSourceExpanded
-          ? 'max-height: 800px; opacity: 1;'
-          : 'max-height: 0; opacity: 0;',
-      },
-    });
-
-    const contentInner = this.createElement('div', {
-      className: 'px-4 py-3',
-      attributes: { style: 'background: var(--theme-card-background);' },
-    });
-
-    // Create mobile ImageUploadDisplay instance
-    const uploadContainer = this.createElement('div');
-    contentInner.appendChild(uploadContainer);
-
-    this.mobileImageUpload = new ImageUploadDisplay(uploadContainer);
-    this.mobileImageUpload.init();
-
-    // Listen for image-loaded events from mobile uploader
-    this.onPanelEvent(uploadContainer, 'image-loaded', (event: CustomEvent) => {
-      const { image, dataUrl } = event.detail;
-      this.currentImage = image;
-
-      // Persist image to storage if it's small enough
-      if (dataUrl && dataUrl.length < MAX_IMAGE_STORAGE_SIZE) {
-        StorageService.setItem(STORAGE_KEYS.imageDataUrl, dataUrl);
-      } else if (dataUrl) {
-        StorageService.removeItem(STORAGE_KEYS.imageDataUrl);
-      }
-
-      ToastService.success(LanguageService.t('matcher.imageLoaded'));
-
-      if (this.imageZoom) {
-        this.imageZoom.setImage(image);
-        // Auto-fit image after loading from mobile upload
-        this.imageZoom.autoFit();
-      }
-
-      this.showEmptyState(false);
-
-      // Update responsive layout now that image is loaded
-      this.updateExtractorLayout();
-    });
-
-    contentWrapper.appendChild(contentInner);
-    section.appendChild(contentWrapper);
-
-    // Toggle event
-    this.on(header, 'click', () => {
-      this.mobileImageSourceExpanded = !this.mobileImageSourceExpanded;
-      header.setAttribute('aria-expanded', String(this.mobileImageSourceExpanded));
-      chevron.style.transform = this.mobileImageSourceExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
-      contentWrapper.style.maxHeight = this.mobileImageSourceExpanded ? '800px' : '0';
-      contentWrapper.style.opacity = this.mobileImageSourceExpanded ? '1' : '0';
-    });
-
-    return section;
+  private setLoupeHex(hex: string): void {
+    this.currentLoupeHex = hex;
+    if (this.hintSwatchElement) {
+      this.hintSwatchElement.style.background = hex;
+    }
+    if (this.addPickChipElement) {
+      this.addPickChipElement.style.background = hex;
+    }
   }
 
   /**
-   * Render mobile color selection accordion section
+   * Flip the workspace between the drawn empty state and the loaded flow.
+   * Manual colour matches without an image still get the results section
+   * (image card hidden); the roll shows whenever there is an image or picks.
    */
-  private renderMobileColorSelectionAccordion(): HTMLElement {
-    const section = this.createElement('div', {
-      className: 'border-b',
-      attributes: { style: 'border-color: var(--theme-border);' },
-    });
+  private updateFlowVisibility(): void {
+    const hasImage = this.currentImage !== null;
+    const hasResults = this.lastPaletteResults.length > 0 || this.matchedDyes.length > 0;
+    const showWorkspace = hasImage || hasResults;
 
-    // Accordion header
-    const header = this.createElement('button', {
-      className: 'w-full flex items-center justify-between px-4 py-3 text-left transition-colors',
-      attributes: {
-        style: 'background: var(--theme-background-secondary); color: var(--theme-text);',
-        type: 'button',
-        'aria-expanded': String(this.mobileColorSelectionExpanded),
-      },
-    });
-
-    const titleContainer = this.createElement('span', {
-      className: 'flex items-center gap-2 font-medium text-sm',
-    });
-    const iconSpan = this.createElement('span', {
-      className: 'w-4 h-4 flex-shrink-0',
-      innerHTML: ICON_PALETTE,
-    });
-    const titleText = this.createElement('span', {
-      textContent: LanguageService.t('matcher.colorSelection'),
-    });
-    titleContainer.appendChild(iconSpan);
-    titleContainer.appendChild(titleText);
-    header.appendChild(titleContainer);
-
-    // Chevron
-    const chevron = this.createElement('span', {
-      className: 'w-5 h-5 transition-transform duration-200',
-      innerHTML: `<svg viewBox="0 0 20 20" fill="currentColor" class="w-full h-full">
-        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-      </svg>`,
-      attributes: {
-        style: this.mobileColorSelectionExpanded
-          ? 'transform: rotate(0deg);'
-          : 'transform: rotate(-90deg);',
-      },
-    });
-    header.appendChild(chevron);
-    section.appendChild(header);
-
-    // Content area
-    const contentWrapper = this.createElement('div', {
-      className: 'overflow-hidden transition-all duration-200',
-      attributes: {
-        style: this.mobileColorSelectionExpanded
-          ? 'max-height: 500px; opacity: 1;'
-          : 'max-height: 0; opacity: 0;',
-      },
-    });
-
-    const contentInner = this.createElement('div', {
-      className: 'px-4 py-3',
-      attributes: { style: 'background: var(--theme-card-background);' },
-    });
-
-    // Create mobile ColorPickerDisplay instance
-    const pickerContainer = this.createElement('div');
-    contentInner.appendChild(pickerContainer);
-
-    this.mobileColorPicker = new ColorPickerDisplay(pickerContainer);
-    this.mobileColorPicker.init();
-
-    // Listen for color-selected events from mobile picker
-    this.onPanelEvent(pickerContainer, 'color-selected', (event: CustomEvent) => {
-      const { color } = event.detail;
-      this.matchColor(color);
-    });
-
-    contentWrapper.appendChild(contentInner);
-    section.appendChild(contentWrapper);
-
-    // Toggle event
-    this.on(header, 'click', () => {
-      this.mobileColorSelectionExpanded = !this.mobileColorSelectionExpanded;
-      header.setAttribute('aria-expanded', String(this.mobileColorSelectionExpanded));
-      chevron.style.transform = this.mobileColorSelectionExpanded
-        ? 'rotate(0deg)'
-        : 'rotate(-90deg)';
-      contentWrapper.style.maxHeight = this.mobileColorSelectionExpanded ? '500px' : '0';
-      contentWrapper.style.opacity = this.mobileColorSelectionExpanded ? '1' : '0';
-    });
-
-    return section;
-  }
-
-  /**
-   * Render mobile market board accordion section
-   */
-  private renderMobileMarketAccordion(): HTMLElement {
-    const section = this.createElement('div', {
-      className: 'border-b',
-      attributes: { style: 'border-color: var(--theme-border);' },
-    });
-
-    // Accordion header
-    const header = this.createElement('button', {
-      className: 'w-full flex items-center justify-between px-4 py-3 text-left transition-colors',
-      attributes: {
-        style: 'background: var(--theme-background-secondary); color: var(--theme-text);',
-        type: 'button',
-        'aria-expanded': String(this.mobileMarketExpanded),
-      },
-    });
-
-    const titleContainer = this.createElement('span', {
-      className: 'flex items-center gap-2 font-medium text-sm',
-    });
-    const iconSpan = this.createElement('span', {
-      className: 'w-4 h-4 flex-shrink-0',
-      innerHTML: ICON_MARKET,
-    });
-    const titleText = this.createElement('span', {
-      textContent: LanguageService.t('marketBoard.title'),
-    });
-    titleContainer.appendChild(iconSpan);
-    titleContainer.appendChild(titleText);
-    header.appendChild(titleContainer);
-
-    // Chevron
-    const chevron = this.createElement('span', {
-      className: 'w-5 h-5 transition-transform duration-200',
-      innerHTML: `<svg viewBox="0 0 20 20" fill="currentColor" class="w-full h-full">
-        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-      </svg>`,
-      attributes: {
-        style: this.mobileMarketExpanded
-          ? 'transform: rotate(0deg);'
-          : 'transform: rotate(-90deg);',
-      },
-    });
-    header.appendChild(chevron);
-    section.appendChild(header);
-
-    // Content area
-    const contentWrapper = this.createElement('div', {
-      className: 'overflow-hidden transition-all duration-200',
-      attributes: {
-        style: this.mobileMarketExpanded
-          ? 'max-height: 600px; opacity: 1;'
-          : 'max-height: 0; opacity: 0;',
-      },
-    });
-
-    const contentInner = this.createElement('div', {
-      className: 'px-4 py-3',
-      attributes: { style: 'background: var(--theme-card-background);' },
-    });
-
-    // Create mobile MarketBoard instance
-    const marketContainer = this.createElement('div');
-    contentInner.appendChild(marketContainer);
-
-    this.mobileMarketBoard = new MarketBoard(marketContainer);
-    this.mobileMarketBoard.init();
-
-    // Load server data for the dropdown
-    void this.mobileMarketBoard.loadServerData();
-
-    // Set up market board event listeners using shared utility
-    // WEB-REF-003 Phase 4: Uses MarketBoardService for state (showPrices/priceData via getters)
-    setupMarketBoardListeners(
-      marketContainer,
-      () => this.showPrices,
-      () => this.fetchPricesForMatches(),
-      {
-        onPricesToggled: () => {
-          if (this.showPrices) {
-            void this.fetchPricesForMatches();
-          } else {
-            // Service handles cache clearing; just re-render to update UI
-            if (this.lastPaletteResults.length > 0) {
-              this.renderPaletteResults(this.lastPaletteResults);
-            } else {
-              this.renderMatchedResults();
-            }
-          }
-        },
-        onServerChanged: () => {
-          // Service clears cache on server change; re-render results then fetch new prices
-          if (this.showPrices) {
-            // Re-render results to clear stale prices (cache was cleared by service)
-            if (this.lastPaletteResults.length > 0) {
-              this.renderPaletteResults(this.lastPaletteResults);
-            } else if (this.matchedDyes.length > 0) {
-              this.renderMatchedResults();
-            }
-            // Then fetch new prices for the new server
-            void this.fetchPricesForMatches();
-          }
-        },
-      }
-    );
-
-    contentWrapper.appendChild(contentInner);
-    section.appendChild(contentWrapper);
-
-    // Toggle event
-    this.on(header, 'click', () => {
-      this.mobileMarketExpanded = !this.mobileMarketExpanded;
-      header.setAttribute('aria-expanded', String(this.mobileMarketExpanded));
-      chevron.style.transform = this.mobileMarketExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
-      contentWrapper.style.maxHeight = this.mobileMarketExpanded ? '600px' : '0';
-      contentWrapper.style.opacity = this.mobileMarketExpanded ? '1' : '0';
-    });
-
-    return section;
+    if (this.emptyFlowElement) {
+      this.emptyFlowElement.style.display = showWorkspace ? 'none' : 'flex';
+    }
+    if (this.loadedFlowElement) {
+      this.loadedFlowElement.style.display = showWorkspace ? 'flex' : 'none';
+    }
+    if (this.imageCardElement) {
+      this.imageCardElement.style.display = hasImage ? '' : 'none';
+    }
+    if (this.rollSectionElement) {
+      const showRoll = hasImage || this.extractedColorsHistory.length > 0;
+      this.rollSectionElement.style.display = showRoll ? '' : 'none';
+    }
   }
 
   // ============================================================================
@@ -2531,178 +1933,128 @@ export class ExtractorTool extends BaseComponent {
   }
 
   /**
-   * Render the extracted colors history list in the left panel.
-   * Shows all pixel-sampled colors with swatches and hex codes.
+   * Render the ROLL strip tiles: one 58px tile per sampled colour (40px swatch
+   * over a mono dominance-%/hex row, focused tile ringed accent) plus the
+   * trailing dashed add-pick tile committing the current loupe colour.
+   * Sampled picks and auto-extracted picks share the one strip.
    */
-  private renderExtractedColorsList(): void {
-    if (!this.extractedColorsContainer) return;
-    clearContainer(this.extractedColorsContainer);
+  private renderRollStrip(): void {
+    if (!this.rollStripElement) return;
+    clearContainer(this.rollStripElement);
 
-    // Don't render anything when empty — keep the section invisible
-    if (this.extractedColorsHistory.length === 0) {
-      return;
-    }
+    // Dominance labels for auto-extracted picks (hex → "34%")
+    const pctByHex = this.rollDominanceByHex;
 
-    // Section header: "EXTRACTED COLORS (N)" + Clear button — matches results section header style
-    const headerRow = this.createElement('div', {
-      attributes: {
-        style: `
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding-bottom: 8px;
-          border-bottom: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
-          margin-bottom: 12px;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
-    });
+    for (const entry of this.extractedColorsHistory) {
+      const isFocused = entry.hex.toLowerCase() === this.lastPixelSampleHex?.toLowerCase();
 
-    headerRow.appendChild(
-      this.createElement('span', {
-        textContent: `Extracted Colors (${this.extractedColorsHistory.length})`,
+      const tile = this.createElement('button', {
         attributes: {
-          style: `
-            font-size: 14px;
-            text-transform: uppercase;
-            color: var(--theme-text-muted, #a0a0a0);
-            font-weight: 600;
-            letter-spacing: 1px;
-          `
-            .replace(/\s+/g, ' ')
-            .trim(),
+          type: 'button',
+          title: entry.hex.toUpperCase(),
+          style: [
+            'flex: 0 0 auto; width: 58px; padding: 0; overflow: hidden;',
+            'display: flex; flex-direction: column;',
+            'border-radius: 10px; cursor: pointer;',
+            'background: var(--theme-card-background);',
+            `border: 1px solid ${isFocused ? 'var(--theme-primary)' : 'var(--theme-border)'};`,
+            `box-shadow: ${isFocused ? `0 0 0 2px ${ACCENT_SOFT}` : 'none'};`,
+          ].join(' '),
         },
-      })
-    );
+      }) as HTMLButtonElement;
 
-    const clearBtn = this.createElement('button', {
-      textContent: 'Clear',
-      attributes: {
-        style: `
-          background: none;
-          border: none;
-          color: var(--theme-primary, #d4af37);
-          font-size: 12px;
-          font-weight: 600;
-          cursor: pointer;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          padding: 2px 4px;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
-    });
-    this.on(clearBtn, 'click', () => {
-      this.clearExtractedColorsHistory();
-    });
-    headerRow.appendChild(clearBtn);
-    this.extractedColorsContainer.appendChild(headerRow);
-
-    // Multi-column grid of color swatches
-    const grid = this.createElement('div', {
-      attributes: {
-        style: `
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-          gap: 6px;
-        `
-          .replace(/\s+/g, ' ')
-          .trim(),
-      },
-    });
-
-    for (let i = 0; i < this.extractedColorsHistory.length; i++) {
-      const entry = this.extractedColorsHistory[i];
-      const isActive = entry.hex.toLowerCase() === this.lastPixelSampleHex?.toLowerCase();
-
-      const row = this.createElement('div', {
-        attributes: {
-          style: `
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 8px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.15s;
-            border: 1px solid ${isActive ? 'var(--theme-primary, #d4af37)' : 'var(--theme-border, rgba(255, 255, 255, 0.06))'};
-            background: ${isActive ? 'rgba(212, 175, 55, 0.08)' : 'rgba(255, 255, 255, 0.02)'};
-          `
-            .replace(/\s+/g, ' ')
-            .trim(),
-        },
-      });
-
-      // Hover effect
-      row.addEventListener('mouseenter', () => {
-        if (!isActive) row.style.background = 'var(--theme-card-background, #333333)';
-      });
-      row.addEventListener('mouseleave', () => {
-        if (!isActive)
-          row.style.background = isActive
-            ? 'rgba(212, 175, 55, 0.08)'
-            : 'rgba(255, 255, 255, 0.02)';
-      });
-
-      // Color swatch
-      const swatch = this.createElement('div', {
-        attributes: {
-          style: `
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            flex-shrink: 0;
-            background-color: ${entry.hex};
-            border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
-          `
-            .replace(/\s+/g, ' ')
-            .trim(),
-        },
-      });
-      row.appendChild(swatch);
-
-      // Hex code
-      row.appendChild(
+      tile.appendChild(
         this.createElement('span', {
-          className: 'number',
-          textContent: entry.hex.toUpperCase(),
           attributes: {
-            style: `
-              font-size: 12px;
-              font-weight: 500;
-              color: ${isActive ? 'var(--theme-text, #e0e0e0)' : 'var(--theme-text-muted, #a0a0a0)'};
-            `
-              .replace(/\s+/g, ' ')
-              .trim(),
+            style: `display: block; height: 40px; width: 100%; background: ${entry.hex};`,
+          },
+        })
+      );
+      tile.appendChild(
+        this.createElement('span', {
+          textContent:
+            pctByHex.get(entry.hex.toLowerCase()) ?? entry.hex.replace('#', '').toUpperCase(),
+          attributes: {
+            style: [
+              "display: block; padding: 5px 2px 6px; font-family: 'Fragment Mono', monospace;",
+              'font-size: 9px; color: var(--theme-text-muted);',
+              'white-space: nowrap; overflow: hidden; text-overflow: ellipsis;',
+            ].join(' '),
           },
         })
       );
 
-      // Click handler — re-select this color (don't add to history again)
-      this.on(row, 'click', () => {
+      // Focus this pick — its matches fill the results
+      this.on(tile, 'click', () => {
         this.lastPixelSampleHex = entry.hex;
         this.renderColorInfoCard(entry.hex);
         this.matchColor(entry.hex);
-        this.renderExtractedColorsList();
+        this.renderRollStrip();
       });
 
-      grid.appendChild(row);
+      this.rollStripElement.appendChild(tile);
     }
 
-    this.extractedColorsContainer.appendChild(grid);
+    // Trailing add-pick tile: dashed accent border, 22px chip of the current
+    // loupe colour + '+', committing the loupe colour to the roll
+    if (this.currentImage) {
+      const addTile = this.createElement('button', {
+        attributes: {
+          type: 'button',
+          title: LanguageService.t('matcher.addPick'),
+          'aria-label': LanguageService.t('matcher.addPick'),
+          style: [
+            'flex: 0 0 auto; width: 58px; min-height: 71px; padding: 0;',
+            'display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;',
+            'border-radius: 10px; cursor: pointer; background: transparent;',
+            `border: 1px dashed ${ACCENT_BORDER}; color: var(--theme-primary);`,
+          ].join(' '),
+        },
+      }) as HTMLButtonElement;
+
+      this.addPickChipElement = this.createElement('span', {
+        attributes: {
+          style: `width: 22px; height: 22px; border-radius: 6px; background: ${this.currentLoupeHex ?? LOUPE_PLACEHOLDER};`,
+          'aria-hidden': 'true',
+        },
+      });
+      addTile.appendChild(this.addPickChipElement);
+      addTile.appendChild(
+        this.createElement('span', {
+          textContent: '+',
+          attributes: { style: 'font-size: 15px; line-height: 1;' },
+        })
+      );
+
+      this.on(addTile, 'click', () => {
+        if (this.currentLoupeHex) {
+          // Same commit path as a sample: prepends to the roll and focuses it
+          this.matchColor(this.currentLoupeHex, true);
+        }
+      });
+
+      this.rollStripElement.appendChild(addTile);
+    } else {
+      this.addPickChipElement = null;
+    }
+  }
+
+  /** Format an RGB triple as an uppercase hex string. */
+  private rgbToHexString(rgb: RGB): string {
+    return `#${rgb.r.toString(16).padStart(2, '0')}${rgb.g.toString(16).padStart(2, '0')}${rgb.b.toString(16).padStart(2, '0')}`;
   }
 
   /**
-   * Clear the extracted colors history
+   * Clear the extracted colors history (the roll)
    */
   private clearExtractedColorsHistory(): void {
     this.extractedColorsHistory = [];
     this.lastPixelSampleHex = null;
+    this.rollDominanceByHex.clear();
     StorageService.removeItem(STORAGE_KEYS.extractedColors);
-    this.renderExtractedColorsList();
+    this.renderRollStrip();
     this.hideColorInfoCard();
+    this.updateFlowVisibility();
   }
 
   /**
@@ -2711,13 +2063,19 @@ export class ExtractorTool extends BaseComponent {
    */
   private populateHistoryFromPalette(matches: PaletteMatch[]): void {
     const now = Date.now();
-    this.extractedColorsHistory = matches.map((match) => {
-      const hex = `#${match.extracted.r.toString(16).padStart(2, '0')}${match.extracted.g.toString(16).padStart(2, '0')}${match.extracted.b.toString(16).padStart(2, '0')}`;
-      return { hex, timestamp: now };
-    });
+    this.rollDominanceByHex = new Map(
+      matches.map((match) => [
+        this.rgbToHexString(match.extracted).toLowerCase(),
+        `${Math.round(match.dominance)}%`,
+      ])
+    );
+    this.extractedColorsHistory = matches.map((match) => ({
+      hex: this.rgbToHexString(match.extracted),
+      timestamp: now,
+    }));
     this.lastPixelSampleHex = null;
     StorageService.setItem(STORAGE_KEYS.extractedColors, this.extractedColorsHistory);
-    this.renderExtractedColorsList();
+    this.renderRollStrip();
   }
 
   // ============================================================================
@@ -2729,14 +2087,15 @@ export class ExtractorTool extends BaseComponent {
    */
   private matchColor(hex: string, isPixelSample: boolean = false): void {
     this.selectedColor = hex;
-    this.showEmptyState(false);
 
     // Clear palette results when doing single color match
     this.lastPaletteResults = [];
 
-    // Track pixel sample in extracted colors history
+    // Track pixel sample in the roll (extracted colors history)
     if (isPixelSample) {
       this.lastPixelSampleHex = hex;
+      // 3C: a committed sample is also the loupe's colour
+      this.setLoupeHex(hex);
       // Remove duplicate if already in history, then prepend
       this.extractedColorsHistory = this.extractedColorsHistory.filter(
         (e) => e.hex.toLowerCase() !== hex.toLowerCase()
@@ -2747,10 +2106,10 @@ export class ExtractorTool extends BaseComponent {
         this.extractedColorsHistory = this.extractedColorsHistory.slice(0, this.maxExtractedColors);
       }
       StorageService.setItem(STORAGE_KEYS.extractedColors, this.extractedColorsHistory);
-      this.renderExtractedColorsList();
+      this.renderRollStrip();
       this.renderColorInfoCard(hex);
     } else if (this.lastPixelSampleHex?.toLowerCase() === hex.toLowerCase()) {
-      // Re-selecting from history — show the info card
+      // Re-selecting from the roll — show the info card
       this.renderColorInfoCard(hex);
     }
 
@@ -2809,7 +2168,6 @@ export class ExtractorTool extends BaseComponent {
 
     // Render results
     this.renderMatchedResults();
-    this.updateDrawerContent();
 
     // Fetch prices if enabled
     if (this.showPrices && this.marketBoard) {
@@ -2829,12 +2187,15 @@ export class ExtractorTool extends BaseComponent {
     clearContainer(this.resultsContainer);
     this.v4ResultCards = [];
 
-    // Hide empty state
-    this.showEmptyState(false);
+    // Show the loaded flow (manual matches work without an image too)
+    this.updateFlowVisibility();
 
-    // Update section title
+    // Update focus header (label + Fragment Mono count)
     if (this.resultsTitleElement) {
-      this.resultsTitleElement.textContent = `${LanguageService.t('matcher.matchedDyes')} (${this.matchedDyes.length})`;
+      this.resultsTitleElement.textContent = LanguageService.t('matcher.matchedDyes');
+    }
+    if (this.resultsCountElement) {
+      this.resultsCountElement.textContent = String(this.matchedDyes.length);
     }
 
     if (this.matchedDyes.length === 0) {
@@ -3049,95 +2410,8 @@ export class ExtractorTool extends BaseComponent {
   // ============================================================================
 
   /**
-   * Extract palette from a specific region of the loaded image
-   */
-  private async extractPaletteFromRegion(
-    x: number,
-    y: number,
-    width: number,
-    height: number
-  ): Promise<void> {
-    // Get canvas from ImageZoomController
-    const canvas = this.imageZoom?.getCanvas();
-
-    if (!canvas || !this.currentImage) {
-      ToastService.error(LanguageService.t('matcher.noImageForPalette'));
-      return;
-    }
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      ToastService.error(LanguageService.t('errors.canvasContextFailed'));
-      return;
-    }
-
-    // Ensure region is within canvas bounds
-    const regionX = Math.max(0, Math.floor(x));
-    const regionY = Math.max(0, Math.floor(y));
-    const regionWidth = Math.min(Math.floor(width), canvas.width - regionX);
-    const regionHeight = Math.min(Math.floor(height), canvas.height - regionY);
-
-    if (regionWidth <= 0 || regionHeight <= 0) {
-      ToastService.error(LanguageService.t('errors.regionTooSmall'));
-      return;
-    }
-
-    try {
-      // Get pixel data from the selected region
-      const imageData = ctx.getImageData(regionX, regionY, regionWidth, regionHeight);
-      const pixels = PaletteService.pixelDataToRGBFiltered(imageData.data);
-
-      if (pixels.length === 0) {
-        ToastService.error(LanguageService.t('errors.noPixelsInRegion'));
-        return;
-      }
-
-      // Extract palette and match to dyes
-      const matches = this.paletteService.extractAndMatchPalette(pixels, dyeService, {
-        colorCount: this.paletteColorCount,
-      });
-
-      this.lastPaletteResults = matches;
-
-      // Populate extracted colors history from palette results
-      this.populateHistoryFromPalette(matches);
-
-      // Draw indicators on the original canvas to show the selected region
-      ctx.strokeStyle = '#3B82F6';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(regionX, regionY, regionWidth, regionHeight);
-
-      // Render results
-      this.renderPaletteResults(matches);
-
-      // Hide empty state
-      this.showEmptyState(false);
-
-      // Fetch prices if enabled
-      if (this.showPrices && this.marketBoard) {
-        // Convert PaletteMatch to DyeWithDistance for price fetching
-        this.matchedDyes = matches.map((m: PaletteMatch) => ({
-          ...m.matchedDye,
-          distance: m.distance,
-        }));
-        void this.fetchPricesForMatches();
-      }
-
-      ToastService.success(
-        LanguageService.tInterpolate('matcher.paletteExtracted', {
-          count: String(matches.length),
-        })
-      );
-
-      logger.info('[ExtractorTool] Palette extracted from region:', matches.length, 'colors');
-    } catch (error) {
-      logger.error('[ExtractorTool] Palette extraction from region failed:', error);
-      ToastService.error(LanguageService.t('errors.paletteExtractionFailed'));
-    }
-  }
-
-  /**
-   * Extract palette from loaded image using K-Means clustering
+   * Extract palette from loaded image using K-Means clustering.
+   * 3C: this is the one surviving bulk path (Auto-extract) — it fills the roll.
    */
   private async extractPalette(): Promise<void> {
     // Get canvas from ImageZoomController
@@ -3154,11 +2428,14 @@ export class ExtractorTool extends BaseComponent {
       return;
     }
 
-    // Update button to show loading state
-    if (this.extractPaletteBtn) {
-      this.extractPaletteBtn.textContent = LanguageService.t('matcher.extractingPalette');
-      this.extractPaletteBtn.disabled = true;
-      this.extractPaletteBtn.style.opacity = '0.7';
+    // Update the Auto-extract buttons (roll header + left panel) to show
+    // the loading state
+    for (const btn of [this.rollAutoBtn, this.extractPaletteBtn]) {
+      if (btn) {
+        btn.textContent = LanguageService.t('matcher.extractingPalette');
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+      }
     }
 
     // OPT-011: yield a frame so the "Extracting…" button state actually
@@ -3196,9 +2473,6 @@ export class ExtractorTool extends BaseComponent {
       // Render results
       this.renderPaletteResults(matches);
 
-      // Hide empty state
-      this.showEmptyState(false);
-
       // Fetch prices if enabled
       if (this.showPrices && this.marketBoard) {
         // Convert PaletteMatch to DyeWithDistance for price fetching
@@ -3221,10 +2495,12 @@ export class ExtractorTool extends BaseComponent {
       ToastService.error(LanguageService.t('errors.paletteExtractionFailed'));
     } finally {
       // Restore button state
-      if (this.extractPaletteBtn) {
-        this.extractPaletteBtn.textContent = LanguageService.t('matcher.extractPaletteBtn');
-        this.extractPaletteBtn.disabled = false;
-        this.extractPaletteBtn.style.opacity = '1';
+      for (const btn of [this.rollAutoBtn, this.extractPaletteBtn]) {
+        if (btn) {
+          btn.textContent = LanguageService.t('matcher.autoExtract');
+          btn.disabled = false;
+          btn.style.opacity = '1';
+        }
       }
     }
   }
@@ -3424,12 +2700,15 @@ export class ExtractorTool extends BaseComponent {
     // Hide color info card (palette mode doesn't use single-color info)
     this.hideColorInfoCard();
 
-    // Hide empty state
-    this.showEmptyState(false);
+    // Show the loaded flow
+    this.updateFlowVisibility();
 
-    // Update section title with color count
+    // Update focus header (label + Fragment Mono count)
     if (this.resultsTitleElement) {
-      this.resultsTitleElement.textContent = `${LanguageService.t('matcher.extractedPalette')} (${matches.length} ${matches.length === 1 ? 'color' : 'colors'})`;
+      this.resultsTitleElement.textContent = LanguageService.t('matcher.extractedPalette');
+    }
+    if (this.resultsCountElement) {
+      this.resultsCountElement.textContent = String(matches.length);
     }
 
     // Enable/disable export button based on results

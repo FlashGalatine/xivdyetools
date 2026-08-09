@@ -2,7 +2,13 @@
  * XIV Dye Tools v2.0.0 - Image Zoom Controller
  *
  * Phase 3: Architecture Refactor
- * Handles image zooming, panning, and sampling interactions
+ * Handles image zooming, panning, and sampling interactions.
+ *
+ * 3C Loupe: a plain click/tap samples (pixel-averaged via sampleAreaSize);
+ * a drag past the threshold emits `loupe-move` events (hex under the pointer
+ * + client coords) for the tool's floating loupe and commits the sample at
+ * the release point (`loupe-end` precedes the sample). The old drag-region
+ * rectangle selection is gone — Auto-extract is the bulk path.
  *
  * @module components/image-zoom-controller
  */
@@ -100,12 +106,14 @@ export class ImageZoomController extends BaseComponent {
 
     // Create zoom controls container (Overlay)
     // Inline styles ensure visibility even if CSS class isn't applied
+    // 3C: bottom-right — the image card's top-right belongs to the drawn
+    // 44px replace/clear buttons owned by the extractor tool
     const zoomControls = this.createElement('div', {
       className: 'zoom-controls',
       attributes: {
         style: `
           position: absolute;
-          top: 8px;
+          bottom: 8px;
           right: 8px;
           background: rgba(0, 0, 0, 0.7);
           backdrop-filter: blur(8px);
@@ -235,28 +243,8 @@ export class ImageZoomController extends BaseComponent {
     });
     zoomControls.appendChild(resetBtn);
 
-    // Separator before clear
-    zoomControls.appendChild(
-      this.createElement('div', {
-        className: 'zoom-separator',
-        attributes: { style: separatorStyle },
-      })
-    );
-
-    // Clear/trash button
-    const clearBtn = this.createElement('button', {
-      className: 'zoom-btn',
-      innerHTML: `<svg viewBox="0 0 24 24" style="${svgStyle}"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" /></svg>`,
-      attributes: {
-        title: LanguageService.t('matcher.clearImage'),
-        type: 'button',
-        style: btnStyle,
-      },
-    });
-    this.on(clearBtn, 'click', () => {
-      this.emit('image-clear-requested');
-    });
-    zoomControls.appendChild(clearBtn);
+    // 3C: the zoom strip's trash button is gone — the image card's drawn
+    // 44px clear button (extractor tool) owns that action now.
 
     this.container.appendChild(zoomControls);
 
@@ -493,8 +481,6 @@ export class ImageZoomController extends BaseComponent {
 
     let isDragging = false;
     let hasDraggedPastThreshold = false;
-    let startX = 0;
-    let startY = 0;
     let startClientX = 0;
     let startClientY = 0;
 
@@ -605,9 +591,6 @@ export class ImageZoomController extends BaseComponent {
         return;
       }
 
-      const coords = getCanvasCoords(mouseEvent.clientX, mouseEvent.clientY);
-      startX = coords.x;
-      startY = coords.y;
       startClientX = mouseEvent.clientX;
       startClientY = mouseEvent.clientY;
       isDragging = true;
@@ -647,19 +630,20 @@ export class ImageZoomController extends BaseComponent {
         mouseEvent.clientY
       );
 
-      // Check if we've exceeded the drag threshold
+      // 3C: past the threshold the drag drives the loupe — the pointer reads
+      // the pixel underneath live, and the sample commits on release.
       if (distance > this.dragThreshold) {
         hasDraggedPastThreshold = true;
         this.canvasRef.style.cursor = 'crosshair';
 
-        // Draw selection rectangle
         const coords = getCanvasCoords(mouseEvent.clientX, mouseEvent.clientY);
-        const ctx = this.canvasRef.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(this.currentImage, 0, 0);
-          ctx.strokeStyle = '#3B82F6';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(startX, startY, coords.x - startX, coords.y - startY);
+        const hex = this.readPixelHex(coords.x, coords.y);
+        if (hex) {
+          this.emit('loupe-move', {
+            hex,
+            clientX: mouseEvent.clientX,
+            clientY: mouseEvent.clientY,
+          });
         }
       }
     });
@@ -686,33 +670,14 @@ export class ImageZoomController extends BaseComponent {
 
       const coords = getCanvasCoords(mouseEvent.clientX, mouseEvent.clientY);
 
+      // 3C: sampling is the default — a plain click reads the real pixels
+      // (the algorithm's dominant colours are usually not the ones you
+      // want), and a drag samples at the release point after the loupe
+      // hides. Replacing the image moved to its own affordances.
       if (hasDraggedPastThreshold) {
-        // Drag completed - emit region bounds for palette extraction
-        const ctx = this.canvasRef.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(this.currentImage, 0, 0);
-        }
-
-        // Calculate region bounds
-        const x = Math.min(startX, coords.x);
-        const y = Math.min(startY, coords.y);
-        const width = Math.abs(coords.x - startX);
-        const height = Math.abs(coords.y - startY);
-
-        // Emit event with region information
-        this.emit('image-sampled', {
-          x,
-          y,
-          width,
-          height,
-          isRegion: true,
-        });
-      } else {
-        // 3C: sampling is the default — a plain click reads the real pixels
-        // (the algorithm's dominant colours are usually not the ones you
-        // want). Replacing the image moved to its own affordances.
-        sampleColorAtArea(coords.x, coords.y);
+        this.emit('loupe-end');
       }
+      sampleColorAtArea(coords.x, coords.y);
       hasDraggedPastThreshold = false;
     });
 
@@ -731,12 +696,11 @@ export class ImageZoomController extends BaseComponent {
 
       if (isDragging && this.canvasRef && this.currentImage) {
         isDragging = false;
+        if (hasDraggedPastThreshold) {
+          this.emit('loupe-end');
+        }
         hasDraggedPastThreshold = false;
         this.canvasRef.style.cursor = 'pointer';
-        const ctx = this.canvasRef.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(this.currentImage, 0, 0);
-        }
       }
     });
 
@@ -747,9 +711,6 @@ export class ImageZoomController extends BaseComponent {
       const touchEvent = e as TouchEvent;
       if (touchEvent.touches.length !== 1) return;
       const touch = touchEvent.touches[0];
-      const coords = getCanvasCoords(touch.clientX, touch.clientY);
-      startX = coords.x;
-      startY = coords.y;
       startClientX = touch.clientX;
       startClientY = touch.clientY;
       isDragging = true;
@@ -766,17 +727,18 @@ export class ImageZoomController extends BaseComponent {
       const touch = touchEvent.touches[0];
       const distance = getDistance(startClientX, startClientY, touch.clientX, touch.clientY);
 
+      // 3C: a touch drag drives the loupe just like the mouse drag
       if (distance > this.dragThreshold) {
         hasDraggedPastThreshold = true;
 
-        // Draw selection rectangle
         const coords = getCanvasCoords(touch.clientX, touch.clientY);
-        const ctx = this.canvasRef.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(this.currentImage, 0, 0);
-          ctx.strokeStyle = '#3B82F6';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(startX, startY, coords.x - startX, coords.y - startY);
+        const hex = this.readPixelHex(coords.x, coords.y);
+        if (hex) {
+          this.emit('loupe-move', {
+            hex,
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+          });
         }
       }
     });
@@ -790,44 +752,44 @@ export class ImageZoomController extends BaseComponent {
       const touch = touchEvent.changedTouches[0];
       const coords = getCanvasCoords(touch.clientX, touch.clientY);
 
+      // 3C: tap to sample — the mobile default matches desktop click; a drag
+      // hides the loupe and samples at the release point.
       if (hasDraggedPastThreshold) {
-        // Drag completed - emit region bounds for palette extraction
-        const ctx = this.canvasRef.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(this.currentImage, 0, 0);
-        }
-
-        // Calculate region bounds
-        const x = Math.min(startX, coords.x);
-        const y = Math.min(startY, coords.y);
-        const width = Math.abs(coords.x - startX);
-        const height = Math.abs(coords.y - startY);
-
-        // Emit event with region information
-        this.emit('image-sampled', {
-          x,
-          y,
-          width,
-          height,
-          isRegion: true,
-        });
-      } else {
-        // 3C: tap to sample — the mobile default matches desktop click.
-        sampleColorAtArea(coords.x, coords.y);
+        this.emit('loupe-end');
       }
+      sampleColorAtArea(coords.x, coords.y);
       hasDraggedPastThreshold = false;
     });
 
     this.on(this.canvasRef, 'touchcancel', () => {
       if (isDragging && this.canvasRef && this.currentImage) {
         isDragging = false;
-        hasDraggedPastThreshold = false;
-        const ctx = this.canvasRef.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(this.currentImage, 0, 0);
+        if (hasDraggedPastThreshold) {
+          this.emit('loupe-end');
         }
+        hasDraggedPastThreshold = false;
       }
     });
+  }
+
+  /**
+   * 3C loupe: read the single pixel under the pointer without disturbing the
+   * canvas (no redraw — the committed sample keeps the averaging path).
+   */
+  private readPixelHex(x: number, y: number): string | null {
+    if (!this.canvasRef) return null;
+    const ctx = this.canvasRef.getContext('2d');
+    if (!ctx) return null;
+    const px = Math.max(0, Math.min(this.canvasRef.width - 1, Math.floor(x)));
+    const py = Math.max(0, Math.min(this.canvasRef.height - 1, Math.floor(y)));
+    const data = ctx.getImageData(px, py, 1, 1).data;
+    return (
+      '#' +
+      [data[0], data[1], data[2]]
+        .map((v) => v.toString(16).padStart(2, '0'))
+        .join('')
+        .toUpperCase()
+    );
   }
 
   /**

@@ -10,7 +10,7 @@
  * @module components/tools/gradient-tool
  */
 
-import { BAND_METHOD_DP, normalizeMatchingMethod } from '@xivdyetools/core';
+import { BAND_METHOD_DP, classifyBandTier, normalizeMatchingMethod } from '@xivdyetools/core';
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
@@ -28,6 +28,7 @@ import {
   LanguageService,
   MarketBoardService,
   StorageService,
+  ThemeService,
   ToastService,
   WorldService,
   // WEB-REF-003 Phase 3: Shared panel builders
@@ -37,7 +38,7 @@ import {
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { ICON_TOOL_GRADIENT } from '@shared/tool-icons';
 // Note: ICON_MARKET still used by drawer code until Phase 2 refactor
-import { ICON_MARKET, ICON_EXPORT, ICON_STAIRS, ICON_PALETTE } from '@shared/ui-icons';
+import { ICON_MARKET, ICON_STAIRS, ICON_PALETTE } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import type { Dye, PriceData } from '@xivdyetools/types';
@@ -91,6 +92,28 @@ const DEFAULTS = {
   stepCount: 8,
   colorSpace: 'hsv' as const,
 };
+
+/**
+ * 4C accent tints (the drawn accent-soft / accent-border), built on the
+ * theme's primary token so both Light and Dark themes hold.
+ */
+const ACCENT_SOFT = 'color-mix(in srgb, var(--theme-primary) 14%, transparent)';
+const ACCENT_BORDER = 'color-mix(in srgb, var(--theme-primary) 45%, transparent)';
+
+/** Shared 5.0 tier ramps (same as result-card / 7C Duel / 9C Ledger). */
+const TIER_RAMP_DARK = ['#5bbd68', '#8bc34a', '#ffc107', '#f4645a'] as const;
+const TIER_RAMP_LIGHT = ['#137A33', '#1C7D3A', '#B45309', '#B91C1C'] as const;
+
+// 4C glyphs — drawn geometry from the confirmed prototype (static innerHTML
+// only, per the icons security pattern).
+const ICON_SWAP_ENDS =
+  '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"></path><path d="M7 4 4 7l3 3"></path><path d="M20 17H4"></path><path d="M17 14l3 3-3 3"></path></svg>';
+const PIN_GLYPH_PATHS =
+  '<path d="M12 17v5"></path><path d="M9 10.76V6a3 3 0 0 1 6 0v4.76a2 2 0 0 0 .55 1.38l1.16 1.24a1 1 0 0 1-.73 1.68H8.02a1 1 0 0 1-.73-1.68l1.16-1.24A2 2 0 0 0 9 10.76z"></path>';
+const ICON_PIN_OUTLINE = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${PIN_GLYPH_PATHS}</svg>`;
+const ICON_PIN_FILLED = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${PIN_GLYPH_PATHS}</svg>`;
+const ICON_END_ANCHOR =
+  '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v4"></path><path d="M12 18v4"></path></svg>';
 
 // ============================================================================
 // MixerTool Component
@@ -159,12 +182,23 @@ export class GradientTool extends BaseComponent {
   private mobileSelectedDyesContainer: HTMLElement | null = null;
   private stepValueDisplay: HTMLElement | null = null;
   private emptyStateContainer: HTMLElement | null = null;
-  private gradientContainer: HTMLElement | null = null;
   private matchesContainer: HTMLElement | null = null;
-  private exportContainer: HTMLElement | null = null;
   private resultsHeader: HTMLElement | null = null;
   private resultsHeaderContainer: HTMLElement | null = null;
   private shareButton: ShareButton | null = null;
+
+  // DOM References (4C pin-rail main flow)
+  private endpointsRowContainer: HTMLElement | null = null;
+  private railSection: HTMLElement | null = null;
+  private railPinCount: HTMLElement | null = null;
+  private pinColumn: HTMLElement | null = null;
+  private rowsColumn: HTMLElement | null = null;
+  private summaryCluster: HTMLElement | null = null;
+
+  /** 4C: armed endpoint — the dye-palette drawer's next pick lands here */
+  private activeEndpoint: 0 | 1 | null = null;
+  /** 4C: focused rail step (accent ring on the row + selected card below) */
+  private focusedStep: number | null = null;
 
   // V4 Result Card references (for price updates)
   private v4ResultCards: ResultCard[] = [];
@@ -384,15 +418,14 @@ export class GradientTool extends BaseComponent {
       this.updateDrawerContent();
     }
 
-    // Initial responsive layout update
-    this.updateGradientLayout();
-
-    // Listen for window resize to update responsive layout
-    this.on(window, 'resize', () => {
-      this.updateGradientLayout();
-    });
-
     logger.info('[GradientTool] Mounted');
+  }
+
+  onUpdate(): void {
+    // update() rebuilds both panels (e.g. on language change) — repopulate
+    // the 4C workspace from the current state instead of leaving the fresh
+    // shell in its empty default.
+    this.updateInterpolation();
   }
 
   destroy(): void {
@@ -881,234 +914,159 @@ export class GradientTool extends BaseComponent {
     const right = this.options.rightPanel;
     clearContainer(right);
 
-    // Apply gradient-view styling to the right panel
+    // Workspace shell (4C main flow). Padding lives in the injected
+    // stylesheet so the mobile media rule can win — inline padding would
+    // always override it.
     // Note: overflow-y handled by parent layout shell - do NOT add it here to avoid double scrollbars
+    right.classList.add('v5-grad-workspace');
     right.setAttribute(
       'style',
-      `
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      height: 100%;
-      padding: 32px;
-      gap: 32px;
-      box-sizing: border-box;
-    `
+      'display: flex; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box;'
     );
+
+    // Hover + media rules inline styles cannot express. The tool renders
+    // inside the shell's shadow root, so this <style> scopes there.
+    const styles = document.createElement('style');
+    styles.textContent = `
+      .v5-grad-workspace { padding: 32px; }
+      .v5-grad-ep-card:hover { border-color: ${ACCENT_BORDER} !important; }
+      .v5-grad-swap:hover:not([disabled]) { background: var(--theme-card-hover); }
+      .v5-grad-pin:hover:not([disabled]) { background: var(--theme-card-hover); }
+      .v5-grad-row:hover { border-color: ${ACCENT_BORDER} !important; }
+      @media (max-width: 768px) {
+        .v5-grad-workspace { padding: 16px 12px 24px; }
+      }
+    `;
+    right.appendChild(styles);
 
     // Content wrapper with max-width to prevent over-expansion on ultrawide monitors
     const contentWrapper = this.createElement('div', {
       attributes: {
         style:
-          'max-width: 1200px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 32px; flex: 1;',
+          'max-width: 1200px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; flex: 1; min-height: 0;',
       },
     });
 
-    // Gradient Builder UI section (Start node -> Path -> End node)
-    // Store reference for responsive layout updates
-    this.gradientBuilderUI = this.createElement('div', {
-      className: 'gradient-builder-ui',
-      attributes: {
-        'data-testid': 'gradient-builder-ui',
-        style: `
-          flex: 0 0 auto;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          position: relative;
-          min-height: 150px;
-          background: radial-gradient(circle at center, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
-          border-radius: 20px;
-          padding: 20px;
-        `,
-      },
+    // One centred column for the endpoints row + pin rail (drawn geometry)
+    const flowColumn = this.createElement('div', {
+      attributes: { style: 'width: 100%; max-width: 720px; margin: 0 auto;' },
     });
-    const gradientBuilderUI = this.gradientBuilderUI;
 
-    // Start Node - store reference for responsive layout
-    this.startNodeElement = this.createElement('div', {
-      className: 'gradient-node main start',
+    // ENDPOINTS ROW: FROM card | 44px swap | TO card
+    this.endpointsRowContainer = this.createElement('div', {
       attributes: {
-        'data-testid': 'gradient-start-node',
-        style: `
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
-          z-index: 2;
-          cursor: pointer;
-          transition: transform 0.2s;
-        `,
+        'data-testid': 'gradient-endpoints-row',
+        style:
+          'flex-shrink: 0; display: flex; align-items: stretch; gap: 8px; padding: 4px 0 10px;',
       },
     });
-    const startNode = this.startNodeElement;
-    const startCircle = this.createElement('div', {
-      className: 'node-circle start-circle',
+    flowColumn.appendChild(this.endpointsRowContainer);
+
+    // THE PIN RAIL: header (PINNED · count) over [44px pin column | step rows]
+    this.railSection = this.createElement('div', {
       attributes: {
-        style: `
-          width: 80px;
-          height: 80px;
-          border-radius: 50%;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-          border: 4px solid rgba(255, 255, 255, 0.2);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: transparent;
-          border-style: dashed;
-          border-color: rgba(255, 255, 255, 0.3);
-        `,
-        title: LanguageService.t('gradient.clickToSelectStart'),
+        'data-testid': 'gradient-pin-rail',
+        style: 'display: none; margin-bottom: 14px;',
       },
     });
-    startCircle.innerHTML =
-      '<span style="font-size: 32px; color: rgba(255, 255, 255, 0.4); font-weight: 300;">+</span>';
-    const startLabel = this.createElement('span', {
-      className: 'node-label',
-      textContent: LanguageService.t('gradient.selectColor'),
+    const railHeader = this.createElement('div', {
+      attributes: {
+        title: LanguageService.t('gradient.pinnedDesc'),
+        style:
+          'display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 9px;',
+      },
+    });
+    railHeader.appendChild(
+      this.createElement('span', {
+        textContent: LanguageService.t('gradient.pinned'),
+        attributes: {
+          style:
+            'font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--theme-text-muted);',
+        },
+      })
+    );
+    this.railPinCount = this.createElement('span', {
       attributes: {
         style:
-          'font-size: 12px; color: var(--theme-text-muted); text-transform: uppercase; font-weight: 500;',
+          "font-family: 'Fragment Mono', monospace; font-size: 10px; color: var(--theme-text-muted);",
       },
     });
-    startNode.appendChild(startCircle);
-    startNode.appendChild(startLabel);
-    gradientBuilderUI.appendChild(startNode);
+    railHeader.appendChild(this.railPinCount);
+    this.railSection.appendChild(railHeader);
 
-    // Gradient Path Container
-    const pathContainer = this.createElement('div', {
-      className: 'gradient-path-container',
-      attributes: {
-        style: `
-          flex: 1;
-          height: 6px;
-          background: rgba(255, 255, 255, 0.05);
-          margin: 0 16px;
-          position: relative;
-          border-radius: 3px;
-          max-width: 400px;
-        `,
-      },
+    const railBody = this.createElement('div', {
+      attributes: { style: 'display: flex; gap: 8px;' },
     });
-
-    // Gradient Track (filled gradient)
-    const gradientTrack = this.createElement('div', {
-      className: 'gradient-track',
-      attributes: {
-        style: `
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          border-radius: 3px;
-          opacity: 0.8;
-          background: repeating-linear-gradient(90deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 4px, transparent 4px, transparent 8px);
-        `,
-      },
-    });
-    pathContainer.appendChild(gradientTrack);
-
-    // Step markers container (we'll update these dynamically)
-    this.gradientContainer = pathContainer; // Repurpose for step markers
-    this.pathContainerElement = pathContainer; // Also store for responsive layout
-    gradientBuilderUI.appendChild(pathContainer);
-
-    // End Node - store reference for responsive layout
-    this.endNodeElement = this.createElement('div', {
-      className: 'gradient-node main end',
-      attributes: {
-        'data-testid': 'gradient-end-node',
-        style: `
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
-          z-index: 2;
-          cursor: pointer;
-          transition: transform 0.2s;
-        `,
-      },
-    });
-    const endNode = this.endNodeElement;
-    const endCircle = this.createElement('div', {
-      className: 'node-circle end-circle',
-      attributes: {
-        style: `
-          width: 80px;
-          height: 80px;
-          border-radius: 50%;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-          border: 4px solid rgba(255, 255, 255, 0.2);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: transparent;
-          border-style: dashed;
-          border-color: rgba(255, 255, 255, 0.3);
-        `,
-        title: LanguageService.t('gradient.clickToSelectEnd'),
-      },
-    });
-    endCircle.innerHTML =
-      '<span style="font-size: 32px; color: rgba(255, 255, 255, 0.4); font-weight: 300;">+</span>';
-    const endLabel = this.createElement('span', {
-      className: 'node-label',
-      textContent: LanguageService.t('gradient.selectColor'),
+    this.pinColumn = this.createElement('div', {
       attributes: {
         style:
-          'font-size: 12px; color: var(--theme-text-muted); text-transform: uppercase; font-weight: 500;',
+          'width: 44px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 2px;',
       },
     });
-    endNode.appendChild(endCircle);
-    endNode.appendChild(endLabel);
-    gradientBuilderUI.appendChild(endNode);
-
-    contentWrapper.appendChild(gradientBuilderUI);
+    this.rowsColumn = this.createElement('div', {
+      attributes: {
+        style: 'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;',
+      },
+    });
+    railBody.appendChild(this.pinColumn);
+    railBody.appendChild(this.rowsColumn);
+    this.railSection.appendChild(railBody);
+    flowColumn.appendChild(this.railSection);
+    contentWrapper.appendChild(flowColumn);
 
     // Results section container
     const resultsSection = this.createElement('div', {
       attributes: {
         'data-testid': 'gradient-results-section',
         style:
-          'width: 100%; overflow: hidden; display: flex; flex-direction: column; position: relative; flex: 1;',
+          'width: 100%; display: flex; flex-direction: column; position: relative; flex: 1; min-height: 0;',
       },
     });
 
-    // Results header (using consistent section-header/section-title pattern from other tools)
-    // Hidden by default - shown when dyes are selected via showEmptyState(false)
+    // FOCUS header: uppercase focus label left; drift summary + pin controls
+    // + share button in the right slot. Hidden until dyes are selected.
     this.resultsHeaderContainer = this.createElement('div', {
       className: 'section-header',
       attributes: {
-        style: 'width: 100%; display: none; justify-content: space-between; align-items: center;',
+        style:
+          'width: 100%; display: none; justify-content: space-between; align-items: center; gap: 10px;',
       },
     });
     this.resultsHeader = this.createElement('span', {
-      className: 'section-title',
-      textContent: `${LanguageService.t('gradient.gradientResults')} (${this.stepCount} Steps)`,
-    });
-
-    // Share Button - v4-share-button custom element
-    this.shareButton = document.createElement('v4-share-button') as ShareButton;
-    this.shareButton.tool = 'gradient';
-    this.shareButton.shareParams = this.getShareParams();
-
-    this.resultsHeaderContainer.appendChild(this.resultsHeader);
-    this.resultsHeaderContainer.appendChild(this.shareButton);
-    resultsSection.appendChild(this.resultsHeaderContainer);
-
-    // Matches container (for harmony-cards)
-    this.matchesContainer = this.createElement('div', {
-      className: 'gradient-results-list',
+      textContent: LanguageService.t('gradient.gradientResults'),
       attributes: {
-        'data-testid': 'gradient-matches-container',
-        class: 'v5-results-grid',
-        style: 'padding: 20px 0;',
+        style:
+          'font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--theme-text-muted); white-space: nowrap;',
+      },
+    });
+    this.summaryCluster = this.createElement('div', {
+      attributes: {
+        style:
+          'display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; justify-content: flex-end;',
       },
     });
 
-    // Empty state message (inside results area, positioned near the gradient nodes)
+    // Share Button - v4-share-button custom element (lives in the header's
+    // right slot; share URL write path)
+    this.shareButton = document.createElement('v4-share-button') as ShareButton;
+    this.shareButton.tool = 'gradient';
+    this.shareButton.shareParams = this.getShareParams();
+    this.summaryCluster.appendChild(this.shareButton);
+
+    this.resultsHeaderContainer.appendChild(this.resultsHeader);
+    this.resultsHeaderContainer.appendChild(this.summaryCluster);
+    resultsSection.appendChild(this.resultsHeaderContainer);
+
+    // Matches container: compact result cards as direct grid children
+    this.matchesContainer = this.createElement('div', {
+      className: 'v5-results-grid',
+      attributes: {
+        'data-testid': 'gradient-matches-container',
+        style: 'padding: 4px 0 20px; display: none;',
+      },
+    });
+
+    // Empty state message (inside results area)
     this.emptyStateContainer = this.createElement('div', {
       className: 'empty-state-message',
       attributes: {
@@ -1138,150 +1096,340 @@ export class GradientTool extends BaseComponent {
     resultsSection.appendChild(this.matchesContainer);
     contentWrapper.appendChild(resultsSection);
 
-    // Export container (hidden by default)
-    this.exportContainer = this.createElement('div', { attributes: { style: 'display: none;' } });
-    contentWrapper.appendChild(this.exportContainer);
-
     right.appendChild(contentWrapper);
 
-    // Store references to update dynamically
-    this.startCircleElement = startCircle;
-    this.startLabelElement = startLabel;
-    this.endCircleElement = endCircle;
-    this.endLabelElement = endLabel;
-    this.gradientTrackElement = gradientTrack;
-  }
-
-  // DOM element references for dynamic updates
-  private startCircleElement: HTMLElement | null = null;
-  private startLabelElement: HTMLElement | null = null;
-  private endCircleElement: HTMLElement | null = null;
-  private endLabelElement: HTMLElement | null = null;
-  private gradientTrackElement: HTMLElement | null = null;
-  // Additional references for responsive layout
-  private gradientBuilderUI: HTMLElement | null = null;
-  private startNodeElement: HTMLElement | null = null;
-  private endNodeElement: HTMLElement | null = null;
-  private pathContainerElement: HTMLElement | null = null;
-
-  /**
-   * Update gradient nodes and track based on current dye selections
-   */
-  private updateGradientNodes(): void {
-    // Update Start node
-    if (this.startCircleElement && this.startLabelElement) {
-      if (this.startDye) {
-        this.startCircleElement.style.background = this.startDye.hex;
-        this.startCircleElement.style.borderStyle = 'solid';
-        this.startCircleElement.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-        this.startCircleElement.innerHTML = '';
-        this.startLabelElement.textContent = `Start (${LanguageService.getDyeName(this.startDye.itemID) || this.startDye.name})`;
-      } else {
-        this.startCircleElement.style.background = 'transparent';
-        this.startCircleElement.style.borderStyle = 'dashed';
-        this.startCircleElement.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-        this.startCircleElement.innerHTML =
-          '<span style="font-size: 32px; color: rgba(255, 255, 255, 0.4); font-weight: 300;">+</span>';
-        this.startLabelElement.textContent = LanguageService.t('gradient.selectColor');
-      }
-    }
-
-    // Update End node
-    if (this.endCircleElement && this.endLabelElement) {
-      if (this.endDye) {
-        this.endCircleElement.style.background = this.endDye.hex;
-        this.endCircleElement.style.borderStyle = 'solid';
-        this.endCircleElement.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-        this.endCircleElement.innerHTML = '';
-        this.endLabelElement.textContent = `End (${LanguageService.getDyeName(this.endDye.itemID) || this.endDye.name})`;
-      } else {
-        this.endCircleElement.style.background = 'transparent';
-        this.endCircleElement.style.borderStyle = 'dashed';
-        this.endCircleElement.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-        this.endCircleElement.innerHTML =
-          '<span style="font-size: 32px; color: rgba(255, 255, 255, 0.4); font-weight: 300;">+</span>';
-        this.endLabelElement.textContent = LanguageService.t('gradient.selectColor');
-      }
-    }
-
-    // Update gradient track
-    if (this.gradientTrackElement) {
-      if (this.startDye && this.endDye) {
-        this.gradientTrackElement.style.background = `linear-gradient(to right, ${this.startDye.hex}, ${this.endDye.hex})`;
-      } else if (this.startDye) {
-        this.gradientTrackElement.style.background = `linear-gradient(to right, ${this.startDye.hex}, rgba(255,255,255,0.1))`;
-      } else if (this.endDye) {
-        this.gradientTrackElement.style.background = `linear-gradient(to right, rgba(255,255,255,0.1), ${this.endDye.hex})`;
-      } else {
-        this.gradientTrackElement.style.background =
-          'repeating-linear-gradient(90deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 4px, transparent 4px, transparent 8px)';
-      }
-    }
+    // Populate the endpoint cards for the current selection
+    this.updateEndpointCards();
   }
 
   /**
-   * Update gradient builder UI layout for responsive display.
-   * On mobile (<768px), reduces circle sizes and step marker sizes to fit better.
-   * Called on mount and window resize.
+   * ENDPOINTS ROW (4C): FROM card + swap + TO card. Clicking a card arms
+   * that endpoint — the dye-palette drawer's next selection lands in it via
+   * the existing selectDye() path. Swap exchanges start/end; pins clear via
+   * the endpoints-key check in calculateInterpolation().
    */
-  private updateGradientLayout(): void {
-    const isMobile = window.innerWidth < 768;
+  private updateEndpointCards(): void {
+    if (!this.endpointsRowContainer) return;
+    clearContainer(this.endpointsRowContainer);
 
-    // Circle sizes: 80px desktop, 60px mobile
-    const circleSize = isMobile ? '60px' : '80px';
-    // Plus sign font size: 32px desktop, 24px mobile
-    const plusFontSize = isMobile ? '24px' : '32px';
-    // Node gap: 12px desktop, 8px mobile
-    const nodeGap = isMobile ? '8px' : '12px';
-    // Path margin: 16px desktop, 8px mobile
-    const pathMargin = isMobile ? '0 8px' : '0 16px';
-    // Builder padding: 20px desktop, 12px mobile
-    const builderPadding = isMobile ? '12px' : '20px';
-    // Min-height: 150px desktop, 120px mobile
-    const minHeight = isMobile ? '120px' : '150px';
+    this.endpointsRowContainer.appendChild(this.buildEndpointCard(0));
 
-    // Update gradient builder UI container
-    if (this.gradientBuilderUI) {
-      this.gradientBuilderUI.style.padding = builderPadding;
-      this.gradientBuilderUI.style.minHeight = minHeight;
+    const canSwap = Boolean(this.startDye && this.endDye);
+    const swapBtn = this.createElement('button', {
+      className: 'v5-grad-swap',
+      attributes: {
+        type: 'button',
+        'data-testid': 'gradient-swap-button',
+        title: LanguageService.t('gradient.swap'),
+        'aria-label': LanguageService.t('gradient.swap'),
+        ...(canSwap ? {} : { disabled: '' }),
+        style: `width: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 11px; border: 1px solid var(--theme-border); background: var(--theme-background-secondary); color: var(--theme-text-muted); cursor: ${canSwap ? 'pointer' : 'default'}; opacity: ${canSwap ? '1' : '0.45'};`,
+      },
+    }) as HTMLButtonElement;
+    swapBtn.innerHTML = ICON_SWAP_ENDS;
+    if (canSwap) {
+      this.on(swapBtn, 'click', () => {
+        const start = this.selectedDyes[0];
+        this.selectedDyes[0] = this.selectedDyes[1];
+        this.selectedDyes[1] = start;
+        logger.info('[GradientTool] Swapped start and end dyes');
+        this.updateAfterSlotSelection();
+      });
+    }
+    this.endpointsRowContainer.appendChild(swapBtn);
+
+    this.endpointsRowContainer.appendChild(this.buildEndpointCard(1));
+  }
+
+  /** One FROM/TO endpoint card (drawn: 52px, surface, 30px swatch, mono label). */
+  private buildEndpointCard(slot: 0 | 1): HTMLElement {
+    const dye = slot === 0 ? this.startDye : this.endDye;
+    const active = this.activeEndpoint === slot;
+    const card = this.createElement('button', {
+      className: 'v5-grad-ep-card',
+      attributes: {
+        type: 'button',
+        'data-testid': slot === 0 ? 'gradient-start-node' : 'gradient-end-node',
+        title: LanguageService.t(
+          slot === 0 ? 'gradient.clickToSelectStart' : 'gradient.clickToSelectEnd'
+        ),
+        style: `flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; min-height: 52px; padding: 7px 9px; border-radius: 11px; cursor: pointer; text-align: left; font-family: inherit; background: var(--theme-card-background); border: 1px solid ${active ? ACCENT_BORDER : 'var(--theme-border)'};`,
+      },
+    }) as HTMLButtonElement;
+
+    const swatch = this.createElement('span', {
+      attributes: {
+        style: dye
+          ? `width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; background: ${dye.hex};`
+          : 'width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--theme-border); color: var(--theme-text-muted); font-size: 15px; font-weight: 300;',
+      },
+    });
+    if (!dye) swatch.textContent = '+';
+    card.appendChild(swatch);
+
+    const col = this.createElement('span', {
+      attributes: {
+        style: 'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;',
+      },
+    });
+    col.appendChild(
+      this.createElement('span', {
+        textContent: LanguageService.t(slot === 0 ? 'gradient.fromLabel' : 'gradient.toLabel'),
+        attributes: {
+          style:
+            "font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 0.8px; color: var(--theme-text-muted);",
+        },
+      })
+    );
+    col.appendChild(
+      this.createElement('span', {
+        textContent: dye
+          ? LanguageService.getDyeName(dye.itemID) || dye.name
+          : LanguageService.t('gradient.selectColor'),
+        attributes: {
+          style: `font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: ${dye ? 'var(--theme-text)' : 'var(--theme-text-muted)'};`,
+        },
+      })
+    );
+    card.appendChild(col);
+
+    this.on(card, 'click', () => {
+      // Arm this endpoint: the next palette selection replaces it
+      this.activeEndpoint = slot;
+      this.updateEndpointCards();
+    });
+    return card;
+  }
+
+  /**
+   * THE PIN RAIL (4C): one 44px pin tile and one 44px step row per gradient
+   * step. Endpoints carry dashed anchor tiles (already fixed); middle steps
+   * carry pin toggles. Each row butts the ideal band against the matched dye
+   * fill and prints the step's drift.
+   */
+  private renderPinRail(): void {
+    if (!this.railSection || !this.pinColumn || !this.rowsColumn) return;
+
+    clearContainer(this.pinColumn);
+    clearContainer(this.rowsColumn);
+
+    if (this.currentSteps.length === 0 || !this.startDye || !this.endDye) {
+      this.railSection.style.display = 'none';
+      return;
+    }
+    this.railSection.style.display = '';
+
+    if (this.railPinCount) {
+      this.railPinCount.textContent =
+        this.pinnedSteps.size > 0
+          ? `${this.pinnedSteps.size} · ${LanguageService.t('gradient.pinned')}`
+          : LanguageService.t('gradient.pinStep');
     }
 
-    // Update start circle
-    if (this.startCircleElement) {
-      this.startCircleElement.style.width = circleSize;
-      this.startCircleElement.style.height = circleSize;
-      // Update plus sign if no dye selected
-      if (!this.startDye) {
-        this.startCircleElement.innerHTML = `<span style="font-size: ${plusFontSize}; color: rgba(255, 255, 255, 0.4); font-weight: 300;">+</span>`;
+    const dp = BAND_METHOD_DP[this.matchingMethod] ?? 1;
+    const last = this.currentSteps.length - 1;
+
+    for (let i = 0; i < this.currentSteps.length; i++) {
+      const step = this.currentSteps[i];
+      const isEndpoint = i === 0 || i === last;
+      const isPinned = this.pinnedSteps.has(i);
+      const isFocused = this.focusedStep === i;
+
+      // ---- pin column tile ----
+      if (isEndpoint) {
+        // Dashed anchor: an endpoint is already fixed, never pinnable
+        const anchor = this.createElement('span', {
+          attributes: {
+            title: LanguageService.t('gradient.endAnchor'),
+            style:
+              'width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 9px; border: 1px dashed var(--theme-border); color: var(--theme-text-muted);',
+          },
+        });
+        anchor.innerHTML = ICON_END_ANCHOR;
+        this.pinColumn.appendChild(anchor);
+      } else {
+        const canPin = isPinned || step.matchedDye !== null;
+        const pinBtn = this.createElement('button', {
+          className: 'v5-grad-pin',
+          attributes: {
+            type: 'button',
+            title: LanguageService.t(isPinned ? 'gradient.unpinStep' : 'gradient.pinStep'),
+            'aria-pressed': isPinned ? 'true' : 'false',
+            ...(canPin ? {} : { disabled: '' }),
+            style: `width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border-radius: 9px; cursor: ${canPin ? 'pointer' : 'default'}; border: 1px solid ${isPinned ? ACCENT_BORDER : 'var(--theme-border)'}; background: ${isPinned ? ACCENT_SOFT : 'transparent'}; color: ${isPinned ? 'var(--theme-primary)' : 'var(--theme-text-muted)'}; opacity: ${canPin ? '1' : '0.45'};`,
+          },
+        }) as HTMLButtonElement;
+        pinBtn.innerHTML = isPinned ? ICON_PIN_FILLED : ICON_PIN_OUTLINE;
+        if (canPin) {
+          const stepIndex = i;
+          const stepDye = step.matchedDye;
+          this.on(pinBtn, 'click', () => {
+            if (this.pinnedSteps.has(stepIndex)) {
+              this.pinnedSteps.delete(stepIndex);
+            } else if (stepDye) {
+              this.pinnedSteps.set(stepIndex, stepDye);
+            }
+            this.focusedStep = stepIndex;
+            this.calculateInterpolation();
+            this.renderPinRail();
+            this.updateFocusHeader();
+            this.renderIntermediateMatches();
+          });
+        }
+        this.pinColumn.appendChild(pinBtn);
+      }
+
+      // ---- step row: [ideal band | matched dye fill (name + drift)] ----
+      const dye = step.matchedDye;
+      const name = dye ? LanguageService.getDyeName(dye.itemID) || dye.name : '—';
+      const deLabel = dye ? step.distance.toFixed(dp) : '';
+      const ink = dye ? this.onColorInk(dye.hex) : 'var(--theme-text-muted)';
+      const row = this.createElement('button', {
+        className: 'v5-grad-row',
+        attributes: {
+          type: 'button',
+          'data-gradient-rail-step': String(i + 1),
+          title: dye ? `${name} · ${deLabel}` : LanguageService.t('gradient.noMatchesFound'),
+          style: `display: flex; align-items: stretch; width: 100%; height: 44px; padding: 0; overflow: hidden; border-radius: 8px; cursor: pointer; text-align: left; font-family: inherit; border: 1px solid ${isFocused ? ACCENT_BORDER : 'var(--theme-border)'}; box-shadow: ${isFocused ? `0 0 0 2px ${ACCENT_SOFT}` : 'none'}; background: var(--theme-card-background);`,
+        },
+      }) as HTMLButtonElement;
+
+      row.appendChild(
+        this.createElement('span', {
+          attributes: {
+            style: `width: 40px; flex-shrink: 0; background: ${step.theoreticalColor};`,
+          },
+        })
+      );
+
+      const fill = this.createElement('span', {
+        attributes: {
+          style: `flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 0 10px; background: ${dye ? dye.hex : 'var(--theme-background-secondary)'};`,
+        },
+      });
+      fill.appendChild(
+        this.createElement('span', {
+          textContent: name,
+          attributes: {
+            style: `font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: ${ink};`,
+          },
+        })
+      );
+      if (deLabel) {
+        fill.appendChild(
+          this.createElement('span', {
+            textContent: deLabel,
+            attributes: {
+              style: `font-family: 'Fragment Mono', monospace; font-size: 10px; margin-left: auto; flex-shrink: 0; color: ${ink}; opacity: 0.72;`,
+            },
+          })
+        );
+      }
+      row.appendChild(fill);
+
+      const stepIndex = i;
+      this.on(row, 'click', () => {
+        this.focusedStep = stepIndex;
+        this.renderPinRail();
+        this.updateFocusHeader();
+        this.applyFocusToCards();
+      });
+      this.rowsColumn.appendChild(row);
+    }
+  }
+
+  /**
+   * FOCUS header: uppercase focus label (STEP n when a row is focused) on
+   * the left; the avg-drift summary, pinned count + Clear pins, and the
+   * share button in the right slot.
+   */
+  private updateFocusHeader(): void {
+    if (!this.resultsHeader || !this.summaryCluster) return;
+
+    this.resultsHeader.textContent =
+      this.focusedStep !== null && this.currentSteps[this.focusedStep]
+        ? `${LanguageService.t('gradient.stepLabel')} ${this.focusedStep + 1}`
+        : LanguageService.t('gradient.gradientResults');
+
+    clearContainer(this.summaryCluster);
+
+    if (this.currentSteps.length > 0) {
+      const drifts = this.currentSteps.filter((s) => s.matchedDye).map((s) => s.distance);
+      const avgRaw = drifts.length ? drifts.reduce((a, b) => a + b, 0) / drifts.length : 0;
+      const avgDp = BAND_METHOD_DP[this.matchingMethod] ?? 1;
+      this.summaryCluster.appendChild(
+        this.createElement('span', {
+          textContent: `${LanguageService.t('gradient.avgDrift')} ${avgRaw.toFixed(avgDp)}`,
+          attributes: {
+            style: `font-family: 'Fragment Mono', monospace; font-size: 11px; letter-spacing: 0.5px; white-space: nowrap; color: ${this.driftTierColor(avgRaw)};`,
+          },
+        })
+      );
+      if (this.pinnedSteps.size > 0) {
+        this.summaryCluster.appendChild(
+          this.createElement('span', {
+            textContent: `${LanguageService.t('gradient.pinned')} · ${this.pinnedSteps.size}`,
+            attributes: {
+              title: LanguageService.t('gradient.pinnedDesc'),
+              style: `font-family: 'Fragment Mono', monospace; font-size: 10px; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 5px; white-space: nowrap; background: ${ACCENT_SOFT}; color: var(--theme-primary);`,
+            },
+          })
+        );
+        const clearBtn = this.createElement('button', {
+          textContent: LanguageService.t('gradient.clearPins'),
+          attributes: {
+            type: 'button',
+            style:
+              'font-size: 11px; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--theme-border); background: transparent; color: var(--theme-text-muted); cursor: pointer; white-space: nowrap;',
+          },
+        }) as HTMLButtonElement;
+        this.on(clearBtn, 'click', () => {
+          this.pinnedSteps.clear();
+          this.calculateInterpolation();
+          this.renderPinRail();
+          this.updateFocusHeader();
+          this.renderIntermediateMatches();
+        });
+        this.summaryCluster.appendChild(clearBtn);
       }
     }
 
-    // Update end circle
-    if (this.endCircleElement) {
-      this.endCircleElement.style.width = circleSize;
-      this.endCircleElement.style.height = circleSize;
-      // Update plus sign if no dye selected
-      if (!this.endDye) {
-        this.endCircleElement.innerHTML = `<span style="font-size: ${plusFontSize}; color: rgba(255, 255, 255, 0.4); font-weight: 300;">+</span>`;
+    if (this.shareButton) {
+      this.summaryCluster.appendChild(this.shareButton);
+    }
+  }
+
+  /** Drift value → tier colour via the calibrated MATCH bands (5.0 ramps). */
+  private driftTierColor(value: number): string {
+    let dark = true;
+    try {
+      dark = ThemeService.isDarkMode();
+    } catch {
+      // jsdom/unit-test environments stub @services/index without ThemeService
+    }
+    const ramp = dark ? TIER_RAMP_DARK : TIER_RAMP_LIGHT;
+    const tier = classifyBandTier(value, this.matchingMethod, 'match');
+    return ramp[Math.min(tier, ramp.length - 1)];
+  }
+
+  /** On-colour ink for a dye fill: simple luminance best-of (mixer's cut). */
+  private onColorInk(hex: string): string {
+    const r = parseInt(hex.slice(1, 3), 16) || 0;
+    const g = parseInt(hex.slice(3, 5), 16) || 0;
+    const b = parseInt(hex.slice(5, 7), 16) || 0;
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.45 ? 'rgba(10, 10, 10, 0.9)' : 'rgba(255, 255, 255, 0.92)';
+  }
+
+  /** Reflect the focused rail step onto the compact result cards below. */
+  private applyFocusToCards(): void {
+    for (const card of this.v4ResultCards) {
+      const cardStep = Number(card.getAttribute('data-gradient-step')) - 1;
+      const focused = this.focusedStep !== null && cardStep === this.focusedStep;
+      card.toggleAttribute('selected', focused);
+      if (focused) {
+        card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
-    }
-
-    // Update node containers gap
-    if (this.startNodeElement) {
-      this.startNodeElement.style.gap = nodeGap;
-    }
-    if (this.endNodeElement) {
-      this.endNodeElement.style.gap = nodeGap;
-    }
-
-    // Update path container margin
-    if (this.pathContainerElement) {
-      this.pathContainerElement.style.margin = pathMargin;
-    }
-
-    // Re-render step markers with appropriate sizes if we have dyes selected
-    if (this.startDye && this.endDye && this.currentSteps.length > 0) {
-      this.renderGradientPreview();
     }
   }
 
@@ -1289,40 +1437,44 @@ export class GradientTool extends BaseComponent {
    * Update all results
    */
   private updateInterpolation(): void {
-    // Always update gradient nodes to reflect current selection state
-    this.updateGradientNodes();
-
-    // Update results header with current step count
-    if (this.resultsHeader) {
-      this.resultsHeader.textContent = `${LanguageService.t('gradient.gradientResults')} (${this.stepCount} Steps)`;
-    }
+    // Endpoint cards always reflect the current selection state
+    this.updateEndpointCards();
 
     if (!this.startDye || !this.endDye) {
       this.showEmptyState(true);
       this.currentSteps = [];
+      this.focusedStep = null;
+      this.renderPinRail();
       return;
     }
 
     this.showEmptyState(false);
     this.calculateInterpolation();
-    this.renderGradientPreview();
+    if (this.focusedStep !== null && this.focusedStep >= this.currentSteps.length) {
+      this.focusedStep = null;
+    }
+    this.renderPinRail();
+    this.updateFocusHeader();
     this.renderIntermediateMatches();
-    this.renderExportOptions();
   }
 
   /**
-   * Show/hide empty state and matches container
+   * Show/hide empty state, pin rail and matches container
    */
   private showEmptyState(show: boolean): void {
     if (this.emptyStateContainer) {
       this.emptyStateContainer.style.display = show ? 'flex' : 'none';
     }
     if (this.matchesContainer) {
-      this.matchesContainer.style.display = show ? 'none' : 'flex';
+      // '' lets the .v5-results-grid class rule (display: grid) apply
+      this.matchesContainer.style.display = show ? 'none' : '';
     }
     // Hide results header when showing empty state
     if (this.resultsHeaderContainer) {
       this.resultsHeaderContainer.style.display = show ? 'none' : 'flex';
+    }
+    if (show && this.railSection) {
+      this.railSection.style.display = 'none';
     }
     // Update share button state
     this.updateShareButton();
@@ -1461,6 +1613,20 @@ export class GradientTool extends BaseComponent {
     ];
 
     for (let i = 0; i < steps; i++) {
+      // 4C fix: the drawn endpoint rows ARE the selected endpoint dyes at
+      // drift 0.0 — start/end dyes are only excluded from MIDDLE-step
+      // matching, never from their own steps.
+      if (i === 0 || i === steps - 1) {
+        const endpointDye = i === 0 ? this.startDye : this.endDye;
+        result.push({
+          position: steps === 1 ? 0 : i / (steps - 1),
+          theoreticalColor: endpointDye.hex,
+          matchedDye: endpointDye,
+          distance: 0,
+        });
+        continue;
+      }
+
       let lower = anchors[0];
       let upper = anchors[anchors.length - 1];
       for (const anchor of anchors) {
@@ -1484,7 +1650,8 @@ export class GradientTool extends BaseComponent {
         continue;
       }
 
-      // Find closest dye (excluding start and end) using configured matching algorithm
+      // Middle steps hunt for the closest dye; only they exclude the
+      // endpoint dyes (the endpoints resolve to themselves above)
       const excludeIds = [this.startDye.id, this.endDye.id];
       let matchedDye = dyeService.findClosestDye(theoreticalColor, {
         excludeIds,
@@ -1526,71 +1693,9 @@ export class GradientTool extends BaseComponent {
   }
 
   /**
-   * Render gradient preview with step markers on the gradient track
-   */
-  private renderGradientPreview(): void {
-    if (!this.gradientContainer || !this.startDye || !this.endDye) return;
-
-    // Update the gradient track to reflect the actual color space interpolation
-    // CSS linear-gradient always uses RGB, so we create multi-stop gradient from calculated colors
-    if (this.gradientTrackElement && this.currentSteps.length > 0) {
-      const colorStops = this.currentSteps
-        .map((step) => `${step.theoreticalColor} ${step.position * 100}%`)
-        .join(', ');
-      this.gradientTrackElement.style.background = `linear-gradient(to right, ${colorStops})`;
-    }
-
-    // Remove existing step markers (but keep the gradient track element)
-    const existingSteps = this.gradientContainer.querySelectorAll('.gradient-step');
-    existingSteps.forEach((el) => el.remove());
-
-    // Responsive step marker size: 24px desktop, 16px mobile
-    const isMobile = window.innerWidth < 768;
-    const stepMarkerSize = isMobile ? 16 : 24;
-    const borderWidth = isMobile ? 1 : 2;
-
-    // Add step markers for each interpolation step
-    for (let i = 0; i < this.currentSteps.length; i++) {
-      const step = this.currentSteps[i];
-      // Calculate position as percentage (0 to 100)
-      const leftPercent = step.position * 100;
-
-      const stepMarker = this.createElement('div', {
-        className: 'gradient-step',
-        attributes: {
-          style: `
-            position: absolute;
-            top: 50%;
-            left: ${leftPercent}%;
-            width: ${stepMarkerSize}px;
-            height: ${stepMarkerSize}px;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            border: ${borderWidth}px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-            cursor: pointer;
-            z-index: 1;
-            transition: transform 0.1s;
-            background: ${step.theoreticalColor};
-          `,
-          title: `Step ${i}: ${step.matchedDye ? LanguageService.getDyeName(step.matchedDye.itemID) || step.matchedDye.name : 'No match'}`,
-        },
-      });
-
-      // Hover effect
-      this.on(stepMarker, 'mouseenter', () => {
-        stepMarker.style.transform = 'translate(-50%, -50%) scale(1.2)';
-      });
-      this.on(stepMarker, 'mouseleave', () => {
-        stepMarker.style.transform = 'translate(-50%, -50%)';
-      });
-
-      this.gradientContainer.appendChild(stepMarker);
-    }
-  }
-
-  /**
-   * Render intermediate dye matches using v4-result-card components
+   * FOCUS RESULTS: render the step matches as compact v4-result-card
+   * components — direct children of the v5-results-grid. The focused rail
+   * row's card carries the selected ring.
    */
   private renderIntermediateMatches(): void {
     if (!this.matchesContainer) return;
@@ -1598,63 +1703,6 @@ export class GradientTool extends BaseComponent {
 
     // Clear previous card references
     this.v4ResultCards = [];
-
-    // 4C: drift summary + pin controls above the cards.
-    if (this.currentSteps.length > 0) {
-      const drifts = this.currentSteps.filter((s) => s.matchedDye).map((s) => s.distance);
-      const avgRaw = drifts.length ? drifts.reduce((a, b) => a + b, 0) / drifts.length : 0;
-      const avgDp = BAND_METHOD_DP[this.matchingMethod] ?? 1;
-      const summary = this.createElement('div', {
-        attributes: {
-          style:
-            'width: 100%; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 4px;',
-        },
-      });
-      summary.appendChild(
-        this.createElement('span', {
-          textContent: `${LanguageService.t('gradient.avgDrift')} ${avgRaw.toFixed(avgDp)}`,
-          attributes: {
-            style:
-              "font-family: 'Fragment Mono', monospace; font-size: 11px; letter-spacing: 0.5px; color: var(--theme-text);",
-          },
-        })
-      );
-      if (this.pinnedSteps.size > 0) {
-        summary.appendChild(
-          this.createElement('span', {
-            textContent: `${LanguageService.t('gradient.pinned')} Â· ${this.pinnedSteps.size}`,
-            attributes: {
-              style:
-                "font-family: 'Fragment Mono', monospace; font-size: 10px; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 5px; background: color-mix(in srgb, var(--theme-primary) 14%, transparent); color: var(--theme-primary);",
-            },
-          })
-        );
-        const clearBtn = this.createElement('button', {
-          textContent: LanguageService.t('gradient.clearPins'),
-          attributes: {
-            type: 'button',
-            style:
-              'font-size: 11px; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--theme-border); background: transparent; color: var(--theme-text-muted); cursor: pointer;',
-          },
-        }) as HTMLButtonElement;
-        this.on(clearBtn, 'click', () => {
-          this.pinnedSteps.clear();
-          this.calculateInterpolation();
-          this.renderGradientPreview();
-          this.renderIntermediateMatches();
-        });
-        summary.appendChild(clearBtn);
-      }
-      summary.appendChild(
-        this.createElement('span', {
-          textContent: LanguageService.t('gradient.pinnedDesc'),
-          attributes: {
-            style: 'font-size: 11px; color: var(--theme-text-muted); flex: 1 1 260px;',
-          },
-        })
-      );
-      this.matchesContainer.appendChild(summary);
-    }
 
     // Render ALL steps as v4-result-card components
     for (let i = 0; i < this.currentSteps.length; i++) {
@@ -1736,53 +1784,12 @@ export class GradientTool extends BaseComponent {
       // Store reference for later price updates
       this.v4ResultCards.push(card);
 
-      // 4C: each step carries its pin control; endpoints are already anchors.
-      const wrapper = this.createElement('div', {
-        attributes: { style: 'display: flex; flex-direction: column; gap: 6px;' },
-      });
-      const isEndpoint = i === 0 || i === this.currentSteps.length - 1;
-      const isPinned = this.pinnedSteps.has(i);
-      const pinBtn = this.createElement('button', {
-        textContent: isEndpoint
-          ? LanguageService.t('gradient.endAnchor')
-          : isPinned
-            ? LanguageService.t('gradient.unpinStep')
-            : LanguageService.t('gradient.pinStep'),
-        attributes: {
-          type: 'button',
-          ...(isEndpoint ? { disabled: '' } : {}),
-          style: `font-family: 'Fragment Mono', monospace; font-size: 9px; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 5px; cursor: ${
-            isEndpoint ? 'default' : 'pointer'
-          }; border: 1px ${isEndpoint ? 'dashed' : 'solid'} ${
-            isPinned ? 'var(--theme-primary)' : 'var(--theme-border)'
-          }; background: ${
-            isPinned ? 'color-mix(in srgb, var(--theme-primary) 14%, transparent)' : 'transparent'
-          }; color: ${
-            isPinned
-              ? 'var(--theme-primary)'
-              : isEndpoint
-                ? 'var(--theme-text-muted)'
-                : 'var(--theme-text)'
-          };`,
-        },
-      }) as HTMLButtonElement;
-      if (!isEndpoint) {
-        const stepIndex = i;
-        const stepDye = step.matchedDye;
-        this.on(pinBtn, 'click', () => {
-          if (this.pinnedSteps.has(stepIndex)) {
-            this.pinnedSteps.delete(stepIndex);
-          } else if (stepDye) {
-            this.pinnedSteps.set(stepIndex, stepDye);
-          }
-          this.calculateInterpolation();
-          this.renderGradientPreview();
-          this.renderIntermediateMatches();
-        });
-      }
-      wrapper.appendChild(pinBtn);
-      wrapper.appendChild(card);
-      this.matchesContainer.appendChild(wrapper);
+      // 4C: the focused rail row's card carries the selected ring
+      card.toggleAttribute('selected', this.focusedStep === i);
+
+      // Pin controls live in the rail's pin column — cards are direct
+      // children so the shared v5-results-grid rules apply
+      this.matchesContainer.appendChild(card);
     }
 
     // If no steps have matches
@@ -1791,7 +1798,7 @@ export class GradientTool extends BaseComponent {
         textContent: LanguageService.t('gradient.noMatchesFound'),
         attributes: {
           style:
-            'padding: 24px; text-align: center; font-size: 14px; color: var(--theme-text-muted);',
+            'grid-column: 1 / -1; padding: 24px; text-align: center; font-size: 14px; color: var(--theme-text-muted);',
         },
       });
       this.matchesContainer.appendChild(noSteps);
@@ -1924,131 +1931,6 @@ export class GradientTool extends BaseComponent {
       StorageService.setItem(storageKey, existing);
     }
     ToastService.success(LanguageService.t('resultCard.addedTo'));
-  }
-
-  /**
-   * Render export options
-   */
-  private renderExportOptions(): void {
-    if (!this.exportContainer) return;
-    clearContainer(this.exportContainer);
-
-    const card = this.createElement('div', {
-      className: 'p-4 rounded-lg flex items-center justify-between',
-      attributes: {
-        style: 'background: var(--theme-card-background); border: 1px solid var(--theme-border);',
-      },
-    });
-
-    const label = this.createElement('span', {
-      className: 'text-sm font-medium',
-      textContent: LanguageService.t('mixer.exportPalette'),
-      attributes: { style: 'color: var(--theme-text);' },
-    });
-    card.appendChild(label);
-
-    const buttonGroup = this.createElement('div', { className: 'flex gap-2' });
-
-    // Copy button
-    const copyBtn = this.createElement('button', {
-      className: 'flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors',
-      attributes: {
-        style: 'background: var(--theme-background-secondary); color: var(--theme-text);',
-      },
-    });
-    const copyIcon = this.createElement('span', { className: 'w-4 h-4' });
-    copyIcon.innerHTML = ICON_EXPORT;
-    copyBtn.appendChild(copyIcon);
-    copyBtn.appendChild(document.createTextNode(LanguageService.t('common.copy')));
-
-    this.on(copyBtn, 'click', () => this.copyPalette());
-    buttonGroup.appendChild(copyBtn);
-
-    // Download button
-    const downloadBtn = this.createElement('button', {
-      className: 'flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors',
-      attributes: { style: 'background: var(--theme-primary); color: var(--theme-text-header);' },
-    });
-    const downloadIcon = this.createElement('span', { className: 'w-4 h-4' });
-    downloadIcon.innerHTML = ICON_EXPORT;
-    downloadBtn.appendChild(downloadIcon);
-    downloadBtn.appendChild(document.createTextNode(LanguageService.t('common.download')));
-
-    this.on(downloadBtn, 'click', () => this.downloadPalette());
-    buttonGroup.appendChild(downloadBtn);
-
-    card.appendChild(buttonGroup);
-    this.exportContainer.appendChild(card);
-  }
-
-  /**
-   * Copy palette to clipboard
-   */
-  private copyPalette(): void {
-    if (!this.startDye || !this.endDye) return;
-
-    const lines: string[] = [
-      `Start: ${this.startDye.name} (${this.startDye.hex})`,
-      `End: ${this.endDye.name} (${this.endDye.hex})`,
-      `Steps: ${this.stepCount}, Color Space: ${this.colorSpace.toUpperCase()}`,
-      '',
-      'Intermediate Matches:',
-    ];
-
-    for (let i = 1; i < this.currentSteps.length - 1; i++) {
-      const step = this.currentSteps[i];
-      if (step.matchedDye) {
-        lines.push(
-          `  ${i}. ${step.matchedDye.name} (${step.matchedDye.hex}) - Distance: ${step.distance.toFixed(1)}`
-        );
-      }
-    }
-
-    navigator.clipboard
-      .writeText(lines.join('\n'))
-      .then(() => {
-        ToastService.success(LanguageService.t('common.copied'));
-      })
-      .catch(() => {
-        ToastService.error(LanguageService.t('common.copyFailed'));
-      });
-  }
-
-  /**
-   * Download palette as JSON
-   */
-  private downloadPalette(): void {
-    if (!this.startDye || !this.endDye) return;
-
-    const data = {
-      startDye: { name: this.startDye.name, hex: this.startDye.hex, id: this.startDye.id },
-      endDye: { name: this.endDye.name, hex: this.endDye.hex, id: this.endDye.id },
-      stepCount: this.stepCount,
-      colorSpace: this.colorSpace,
-      intermediates: this.currentSteps.slice(1, -1).map((step, i) => ({
-        index: i + 1,
-        theoreticalColor: step.theoreticalColor,
-        matchedDye: step.matchedDye
-          ? {
-              name: step.matchedDye.name,
-              hex: step.matchedDye.hex,
-              id: step.matchedDye.id,
-            }
-          : null,
-        distance: step.distance,
-      })),
-      generatedAt: new Date().toISOString(),
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `dye-gradient-${this.startDye.name}-to-${this.endDye.name}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    ToastService.success(LanguageService.t('common.downloaded'));
   }
 
   // ============================================================================
@@ -2506,6 +2388,8 @@ export class GradientTool extends BaseComponent {
   public clearDyes(): void {
     this.selectedDyes = [];
     this.currentSteps = [];
+    this.activeEndpoint = null;
+    this.focusedStep = null;
 
     // Clear from storage (main key used for persistence)
     StorageService.removeItem(STORAGE_KEYS.selectedDyes);
@@ -2520,8 +2404,10 @@ export class GradientTool extends BaseComponent {
       clearContainer(this.matchesContainer);
     }
 
-    // Show empty state
+    // Show empty state and reset the endpoints row + rail
     this.showEmptyState(true);
+    this.updateEndpointCards();
+    this.renderPinRail();
     this.updateSelectedDyesDisplay();
     this.updateMobileSelectedDyesDisplay();
     this.updateDrawerContent();
@@ -2535,6 +2421,38 @@ export class GradientTool extends BaseComponent {
    */
   public selectDye(dye: Dye): void {
     if (!dye) return;
+
+    // 4C endpoints row: a card click arms an endpoint — palette selections
+    // land in the armed slot instead of the legacy fill-then-shift flow.
+    if (this.activeEndpoint !== null) {
+      const idx = this.activeEndpoint;
+      const cur = idx === 0 ? this.startDye : this.endDye;
+      const other = idx === 0 ? this.endDye : this.startDye;
+
+      if (cur && cur.id === dye.id) {
+        logger.info(`[GradientTool] ${dye.name} already set for that endpoint, ignoring`);
+        return;
+      }
+      if (other && other.id === dye.id) {
+        if (!cur) {
+          ToastService.warning(LanguageService.t('gradient.sameDyeWarning'));
+          return;
+        }
+        // Picked the other endpoint's dye — swap ends (existing gesture)
+        this.selectedDyes[idx === 0 ? 1 : 0] = cur;
+        this.selectedDyes[idx] = dye;
+      } else if (this.selectedDyes.length === 0) {
+        // The dense selection model always fills start first
+        this.selectedDyes = [dye];
+      } else {
+        this.selectedDyes[idx] = dye;
+      }
+      logger.info(
+        `[GradientTool] External dye set into ${idx === 0 ? 'start' : 'end'}: ${dye.name}`
+      );
+      this.updateAfterSlotSelection();
+      return;
+    }
 
     // Check if this dye is already selected
     const isAlreadyStart = this.startDye && this.startDye.id === dye.id;
