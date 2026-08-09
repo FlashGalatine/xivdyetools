@@ -834,6 +834,22 @@ with:
 The `catch` block below is unchanged — it still substring-matches `error.message`, and the client
 preserves the text.
 
+- [ ] **Step 6b: Remove the now-dead validator types from discord-worker**
+
+Task 2 copied `UrlValidationResult`, `FormatValidationResult` and `ImageFormat` into
+`apps/image-worker/src/types.ts`. In `discord-worker` their only consumers are inside
+`services/image/`, which Step 7 deletes — so they become dead once it does.
+
+Delete exactly these three declarations from `apps/discord-worker/src/types/image.ts`:
+`UrlValidationResult` (interface), `FormatValidationResult` (interface), and `ImageFormat`
+(type alias).
+
+**Keep the rest of the file.** `MatchQuality`, `MATCH_QUALITIES` and `getMatchQuality` live there
+too, are unrelated to image processing, and stay in `discord-worker`. Do not delete the file.
+
+Run: `grep -rn "UrlValidationResult\|FormatValidationResult\|ImageFormat" apps/discord-worker/src || echo "no references"`
+Expected: `no references` (run this after Step 7's deletion).
+
 - [ ] **Step 7: Delete the old image service — the whole directory**
 
 Tasks 2 and 3 *copied* these files; this is where the originals go. Nothing imports them now
