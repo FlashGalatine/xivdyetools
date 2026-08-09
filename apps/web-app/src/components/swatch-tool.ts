@@ -182,16 +182,6 @@ const METHOD_TAGS: Record<MatchingMethod, string> = {
   distinguish: 'DISTINGUISH %',
 };
 
-// TODO(i18n): needs key — swatch.selSentence (the verdict sentence template)
-const EN_SEL_SENTENCE = (subject: string, place: string, dye: string, delta: string): string =>
-  `${subject} is ${place}. ${dye} sits ${delta} away.`;
-// TODO(i18n): needs key — swatch.selSentenceCell (grid-cell variant, no slot)
-const EN_SEL_SENTENCE_CELL = (place: string, dye: string, delta: string): string =>
-  `${place}. ${dye} sits ${delta} away.`;
-// TODO(i18n): needs key — swatch.selSentenceOffGrid (arbitrary-colour variant)
-const EN_SEL_SENTENCE_OFF = (subject: string, dye: string, delta: string): string =>
-  `${subject} is an arbitrary colour. ${dye} sits ${delta} away.`;
-
 /** The selected thing the verdict card describes (sheet slot or grid cell). */
 interface SwatchSelectionContext {
   source: 'slot' | 'grid';
@@ -2026,17 +2016,30 @@ export class SwatchTool extends BaseComponent {
     if (offGrid && slotLabel) {
       sentence =
         bestName && bestDelta
-          ? EN_SEL_SENTENCE_OFF(slotLabel, bestName, bestDelta)
+          ? LanguageService.tInterpolate('swatch.selSentenceOffGrid', {
+              subject: slotLabel,
+              dye: bestName,
+              delta: bestDelta,
+            })
           : `${slotLabel} · ${subjectHex.toUpperCase()}`;
     } else if (slotLabel) {
       sentence =
         bestName && bestDelta
-          ? EN_SEL_SENTENCE(slotLabel, `${palette} ${addr}`, bestName, bestDelta)
+          ? LanguageService.tInterpolate('swatch.selSentence', {
+              subject: slotLabel,
+              place: `${palette} ${addr}`,
+              dye: bestName,
+              delta: bestDelta,
+            })
           : `${slotLabel} · ${palette} ${addr}`;
     } else {
       sentence =
         bestName && bestDelta
-          ? EN_SEL_SENTENCE_CELL(`${palette} ${addr}`, bestName, bestDelta)
+          ? LanguageService.tInterpolate('swatch.selSentenceCell', {
+              place: `${palette} ${addr}`,
+              dye: bestName,
+              delta: bestDelta,
+            })
           : `${palette} ${addr}`;
     }
 

@@ -59,43 +59,6 @@ const INSET_RING = 'box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.28);';
 const PALETTE_FLOOR = 3;
 const PALETTE_CAP = 6;
 
-// TODO(i18n): needs key — swatch.swap (the 44px SWAP chip on the file card)
-const EN_SWAP = 'SWAP';
-// TODO(i18n): needs key — swatch.warnErrorTag (tag chip on loud-failure warning rows)
-const EN_WARN_ERROR_TAG = 'ERROR';
-// TODO(i18n): needs key — swatch.unnamedCharacter
-const EN_UNNAMED = 'Unnamed character';
-// TODO(i18n): needs key — swatch.equipCount (template of both counts)
-const EN_EQUIP_COUNT = (channels: number, dyes: number): string =>
-  `${channels} channels · ${dyes} dyes`;
-// TODO(i18n): needs key — swatch.undyedNote (template of n)
-const EN_UNDYED_NOTE = (n: number): string =>
-  `${n} ${n === 1 ? 'piece is' : 'pieces are'} undyed (DyeId 0). Undyed is not a colour and is not scored.`;
-// TODO(i18n): needs key — swatch.tooFewTag
-const EN_NEEDS_FLOOR_TAG = 'NEEDS 3';
-// TODO(i18n): needs key — swatch.tooFewBody
-const EN_NEEDS_FLOOR_BODY =
-  'A palette needs at least three dyes — below that it is a swatch, not a palette. Save and submit stay disabled.';
-// TODO(i18n): needs key — swatch.overCapBody (template of n)
-const EN_OVER_CAP_BODY = (n: number): string =>
-  `${n} dyes make a strip nobody can read at card size — drop down to six or fewer. Save and submit stay disabled.`;
-// TODO(i18n): needs key — swatch.paletteDefaultName
-const EN_DEFAULT_PALETTE_NAME = 'Glamour palette';
-// TODO(i18n): needs key — swatch.blendTag (template of alpha)
-const EN_BLEND_TAG = (alpha: number): string => `BLEND · α ${alpha.toFixed(2)}`;
-// TODO(i18n): needs key — swatch.blendPlain
-const EN_BLEND_PLAIN = 'BLEND';
-// TODO(i18n): needs key — swatch.blendNote
-const EN_BLEND_NOTE =
-  'The lip colour composited over the skin colour — what the character actually shows. Dye matching follows this, not the raw cell.';
-// TODO(i18n): needs key — swatch.characterDefaultName
-const EN_DEFAULT_CHARACTER_NAME = 'Character colours';
-// TODO(i18n): needs key — swatch.saveCharacter
-const EN_SAVE_CHARACTER = 'Save character colours';
-// TODO(i18n): needs key — swatch.characterSaved (template of n)
-const EN_CHARACTER_SAVED = (n: number): string =>
-  `Saved ${n} character ${n === 1 ? 'colour' : 'colours'} to this device.`;
-
 /** Responsive grids for the sheet — injected once per render (shadow-DOM scoped). */
 const CHARA_RESPONSIVE_CSS = `
 .chara-slots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
@@ -354,7 +317,7 @@ export class CharaImport {
       const label = this.slotLabel(slot);
       if (slot.verdict === 'error' && slot.error) {
         out.push({
-          tag: EN_WARN_ERROR_TAG,
+          tag: LanguageService.t('swatch.warnErrorTag'),
           text: `${label} · ${slot.error.message}`,
           severe: true,
         });
@@ -528,7 +491,7 @@ export class CharaImport {
       this.el(
         'span',
         `font-family: ${SANS}; font-weight: 600; font-size: 16px; color: var(--theme-text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`,
-        resolved.nickname ?? this.fileName ?? EN_UNNAMED
+        resolved.nickname ?? this.fileName ?? LanguageService.t('swatch.unnamedCharacter')
       )
     );
 
@@ -553,7 +516,7 @@ export class CharaImport {
     const swapBtn = this.el(
       'button',
       `width: 44px; flex-shrink: 0; font-family: ${MONO}; font-size: 9px; letter-spacing: 0.5px; border-radius: 9px; border: 1px solid var(--theme-border); background: var(--theme-background-secondary); color: var(--theme-text); cursor: pointer;`,
-      EN_SWAP
+      LanguageService.t('swatch.swap')
     );
     (swapBtn as HTMLButtonElement).type = 'button';
     swapBtn.title = this.t('replaceFile');
@@ -573,7 +536,7 @@ export class CharaImport {
     const saveBtn = this.el(
       'button',
       `flex-shrink: 0; padding: 6px 10px; font-size: 11px; font-weight: 600; border-radius: 9px; border: 1px solid var(--theme-border); background: var(--theme-background-secondary); color: var(--theme-text); cursor: pointer; font-family: inherit;`,
-      EN_SAVE_CHARACTER
+      LanguageService.t('swatch.saveCharacter')
     );
     (saveBtn as HTMLButtonElement).type = 'button';
     saveBtn.addEventListener('click', () => this.saveCharacterRecord());
@@ -605,7 +568,11 @@ export class CharaImport {
       return;
     }
 
-    const name = (resolved.nickname ?? this.fileName ?? EN_DEFAULT_CHARACTER_NAME).slice(0, 50);
+    const name = (
+      resolved.nickname ??
+      this.fileName ??
+      LanguageService.t('swatch.characterDefaultName')
+    ).slice(0, 50);
     const record = CollectionService.createCollection(name, undefined, { kind: 'character' });
     if (!record) {
       ToastService.error(LanguageService.t('errors.saveChangesFailed'));
@@ -615,7 +582,11 @@ export class CharaImport {
       CollectionService.addDyeToCollection(record.id, stainId);
     }
     logger.info(`[CharaImport] Saved character "${name}" (${stainIds.length} colours)`);
-    ToastService.success(EN_CHARACTER_SAVED(stainIds.length));
+    ToastService.success(
+      stainIds.length === 1
+        ? LanguageService.t('swatch.characterSavedOne')
+        : LanguageService.tInterpolate('swatch.characterSavedMany', { n: stainIds.length })
+    );
   }
 
   /** Amber warnings card: one row per parse warning — TAG chip + 11px text. */
@@ -796,10 +767,12 @@ export class CharaImport {
         this.el(
           'span',
           `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 0.5px; color: var(--theme-text-muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`,
-          slot.alpha !== null ? EN_BLEND_TAG(slot.alpha) : EN_BLEND_PLAIN
+          slot.alpha !== null
+            ? LanguageService.tInterpolate('swatch.blendTag', { alpha: slot.alpha.toFixed(2) })
+            : LanguageService.t('swatch.blendPlain')
         )
       );
-      blendRow.title = EN_BLEND_NOTE;
+      blendRow.title = LanguageService.t('swatch.blendNote');
       card.appendChild(blendRow);
     }
 
@@ -886,7 +859,10 @@ export class CharaImport {
       this.el(
         'span',
         `font-family: ${MONO}; font-size: 9px; letter-spacing: 0.5px; color: var(--theme-text-muted);`,
-        EN_EQUIP_COUNT(channelCount, uniq.length)
+        LanguageService.tInterpolate('swatch.equipCount', {
+          channels: channelCount,
+          dyes: uniq.length,
+        })
       )
     );
     header.appendChild(headerLeft);
@@ -973,7 +949,7 @@ export class CharaImport {
         'div',
         'font-size: 10px; line-height: 1.5; color: var(--theme-text-muted);',
         undyedCount > 0
-          ? `${this.t('gearHint')} ${EN_UNDYED_NOTE(undyedCount)}`
+          ? `${this.t('gearHint')} ${undyedCount === 1 ? LanguageService.t('swatch.undyedNoteOne') : LanguageService.tInterpolate('swatch.undyedNoteMany', { n: undyedCount })}`
           : this.t('gearHint')
       )
     );
@@ -1106,7 +1082,7 @@ export class CharaImport {
       );
       warn.appendChild(
         this.monoChip(
-          tooFew ? EN_NEEDS_FLOOR_TAG : `${PALETTE_FLOOR}–${PALETTE_CAP}`,
+          tooFew ? LanguageService.t('swatch.tooFewTag') : `${PALETTE_FLOOR}–${PALETTE_CAP}`,
           this.amber(),
           'rgba(244, 191, 79, 0.18)'
         )
@@ -1115,7 +1091,9 @@ export class CharaImport {
         this.el(
           'span',
           'font-size: 11px; line-height: 1.45; color: var(--theme-text);',
-          tooFew ? EN_NEEDS_FLOOR_BODY : EN_OVER_CAP_BODY(kept.length)
+          tooFew
+            ? LanguageService.t('swatch.tooFewBody')
+            : LanguageService.tInterpolate('swatch.overCapBody', { n: kept.length })
         )
       );
       panel.appendChild(warn);
@@ -1165,10 +1143,11 @@ export class CharaImport {
 
   private paletteName(): string {
     const draft = (this.paletteNameDraft ?? this.resolved?.nickname ?? '').trim();
-    return (draft || this.fileName?.replace(/\.chara$/i, '') || EN_DEFAULT_PALETTE_NAME).slice(
-      0,
-      50
-    );
+    return (
+      draft ||
+      this.fileName?.replace(/\.chara$/i, '') ||
+      LanguageService.t('swatch.paletteDefaultName')
+    ).slice(0, 50);
   }
 
   /**
