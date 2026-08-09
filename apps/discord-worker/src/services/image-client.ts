@@ -52,7 +52,7 @@ export async function extractImagePixels(
   if (!response.ok) {
     let message = `Image processing failed: HTTP ${response.status}`;
     try {
-      const body = (await response.json()) as { error?: string };
+      const body = await response.json<{ error?: string }>();
       if (body.error) {
         message = body.error;
       }

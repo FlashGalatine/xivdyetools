@@ -148,8 +148,10 @@ gain independent of bundle size.
 
 1. `pnpm turbo run type-check test --force` — 17/17 each once `image-worker` joins the workspace.
 2. `wrangler deploy --dry-run` on `discord-worker` reports **gzip < 3,072 KiB**. This is the
-   gate that matters; record the actual figure.
+   gate that matters. **Measured: 2,589.70 KiB gzipped** (7,859.35 KiB raw) — 482.3 KiB of
+   headroom under the limit, down from the 3,209.3 KiB baseline (−619.6 KiB).
 3. `wrangler deploy --dry-run` on `image-worker` reports well under the limit (~650 KiB expected).
+   **Measured: 639.35 KiB gzipped** (1,648.82 KiB raw).
 4. `/extractor` on the beta bot returns a correct 14K ramp card.
 
 ## Sequencing

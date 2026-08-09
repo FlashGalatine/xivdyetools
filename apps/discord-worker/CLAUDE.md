@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The primary FFXIV Dye Tools Discord bot, running on Cloudflare Workers via Discord HTTP Interactions (no Gateway WebSocket — fully serverless). All slash commands, autocompletes, button clicks, and modal submissions hit a single POST endpoint that verifies an Ed25519 signature and routes by interaction type.
 
-This worker replaces the deprecated `xivdyetools-discord-bot` (Node.js + discord.js Gateway bot). It hosts the 5.0 command set spanning colour matching, harmony generation, image extraction, dye comparison, WCAG contrast, colour-vision accessibility, `.chara` character files, community presets, and the Universalis-backed 13G `/budget` ledger. The v4 `/match`, `/match_image`, `/favorites`, `/collection` and `/language` commands were deleted in 5.0. Renders SVG cards converted to PNG via `resvg-wasm` and uses `photon-wasm` for dominant-color extraction from uploaded images.
+This worker replaces the deprecated `xivdyetools-discord-bot` (Node.js + discord.js Gateway bot). It hosts the 5.0 command set spanning colour matching, harmony generation, image extraction, dye comparison, WCAG contrast, colour-vision accessibility, `.chara` character files, community presets, and the Universalis-backed 13G `/budget` ledger. The v4 `/match`, `/match_image`, `/favorites`, `/collection` and `/language` commands were deleted in 5.0. Renders SVG cards converted to PNG via `resvg-wasm`; dominant-color extraction from uploaded images is delegated to `xivdyetools-image-worker` over a Service Binding (`photon-wasm` moved there in the image-worker split — see `docs/operations/IMAGE_WORKER_SPLIT.md`).
 
 ## Commands
 
@@ -109,7 +109,7 @@ src/
 │   ├── changelog-parser.ts        # Parse CHANGELOG-laymans.md for /webhooks/github
 │   ├── announcements.ts           # Send formatted release embeds
 │   ├── svg/                       # Card renderers + resvg PNG conversion
-│   ├── image/                     # Photon WASM dominant color + validators
+│   ├── image-client.ts            # IMAGE_WORKER service-binding client (photon moved to xivdyetools-image-worker)
 │   └── budget/                    # Universalis price cache, calculator, quick picks
 ├── utils/
 │   ├── verify.ts                  # Ed25519 signature verification + timingSafeEqual
@@ -138,6 +138,7 @@ src/
 | `ANALYTICS` | Analytics Engine (`xivdyetools_bot_analytics`) | Long-term command usage telemetry |
 | `PRESETS_API` | Service Binding → `xivdyetools-presets-api` | Worker-to-Worker preset CRUD |
 | `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-api-worker` | Market board prices for `/budget` (via the absorbed `/api/v2/*` proxy routes) |
+| `IMAGE_WORKER` | Service Binding → `xivdyetools-image-worker` | Photon-backed pixel extraction for `/extractor` (see `docs/operations/IMAGE_WORKER_SPLIT.md`) |
 
 Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom domains: `bot.xivdyetools.app`, `bot.xivdyetools.projectgalatine.com`. `[[rules]]` includes `**/*.ttf` as `Data` (CJK subset fonts bundled into the Worker).
 
@@ -260,11 +261,11 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 | `@xivdyetools/svg` | Pure SVG card generators |
 | `@xivdyetools/bot-logic` | Platform-agnostic command business logic |
 | `@xivdyetools/bot-logic/i18n` | Bot localization strings (absorbed from bot-i18n) |
-| `@xivdyetools/color-blending` | Six blending algorithms |
+| `@xivdyetools/core/blending` | Six blending algorithms (moved from the retired `@xivdyetools/color-blending`) |
 | `@xivdyetools/logger` | Structured logging with secret redaction |
 | `@xivdyetools/worker-kit` | Shared Hono middleware (request ID, logger, rate limit) |
 | `@resvg/resvg-wasm` | SVG → PNG rasterization |
-| `@cf-wasm/photon` | Image manipulation (dominant color) |
+| `IMAGE_WORKER` (service binding) | Photon-backed pixel extraction for `/extractor`, routed to `xivdyetools-image-worker` — `@cf-wasm/photon` itself was removed from this Worker's dependencies in the image-worker split (see `docs/operations/IMAGE_WORKER_SPLIT.md`) |
 
 ## Localization
 
@@ -297,9 +298,9 @@ npm run test:integration                                  # Integration suite
 
 ## Related Projects
 
-**Dependencies:** `@xivdyetools/core`, `@xivdyetools/types`, `@xivdyetools/auth`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/svg`, `@xivdyetools/bot-logic` (incl. `/i18n`), `@xivdyetools/color-blending`, `@xivdyetools/logger`, `@xivdyetools/worker-kit`
+**Dependencies:** `@xivdyetools/core` (incl. `/blending`), `@xivdyetools/types`, `@xivdyetools/auth`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/svg`, `@xivdyetools/bot-logic` (incl. `/i18n`), `@xivdyetools/logger`, `@xivdyetools/worker-kit`
 
-**Service Bindings (outbound):** `xivdyetools-presets-api`, `xivdyetools-api-worker` (Universalis proxy routes)
+**Service Bindings (outbound):** `xivdyetools-presets-api`, `xivdyetools-api-worker` (Universalis proxy routes), `xivdyetools-image-worker` (photon pixel extraction for `/extractor`)
 
 **Service Bindings (inbound):** `xivdyetools-presets-api` calls back via `DISCORD_WORKER` for notifications
 

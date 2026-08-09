@@ -28,6 +28,7 @@ The dye database is **125 standard dyes** (`dyes.json`, schema v2: 7 fields, sta
 |---------|------|------------|
 | `xivdyetools-web-app` | Vite + Lit | [Overview](projects/web-app/overview.md) |
 | `xivdyetools-discord-worker` | CF Worker | [Overview](projects/discord-worker/overview.md) |
+| `xivdyetools-image-worker` | CF Worker | — |
 | `xivdyetools-moderation-worker` | CF Worker | [Overview](projects/moderation-worker/overview.md) |
 | `xivdyetools-oauth` | CF Worker | [Overview](projects/oauth/overview.md) |
 | `xivdyetools-api-worker` | CF Worker + KV | [Overview](projects/api-worker/overview.md) |

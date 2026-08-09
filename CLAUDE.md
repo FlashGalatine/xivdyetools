@@ -21,6 +21,7 @@ xivdyetools/
 │   └── test-utils/          # CF Workers mocks (D1, KV, R2) and test factories
 ├── apps/                    # Applications
 │   ├── discord-worker/        # Primary Discord bot (CF Worker + Hono, 20 commands)
+│   ├── image-worker/          # Photon pixel extraction, service-binding-only (CF Worker)
 │   ├── moderation-worker/     # Moderation bot for community presets (CF Worker)
 │   ├── presets-api/           # Community presets REST API (CF Worker + D1)
 │   ├── oauth/                 # Discord OAuth + JWT issuance (CF Worker + D1)
@@ -99,6 +100,7 @@ Workers communicate via Cloudflare **Service Bindings** (direct Worker-to-Worker
 
 ```
 discord-worker ──► presets-api
+discord-worker ──► image-worker
 moderation-worker ──► presets-api
 presets-api ──► discord-worker (notifications)
 api-worker ──► (standalone, public-facing)
