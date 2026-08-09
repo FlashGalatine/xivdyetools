@@ -2,6 +2,7 @@
  * Tests for category factory functions
  */
 import { describe, it, expect } from 'vitest';
+import type { PresetCategory } from '@xivdyetools/types';
 import {
   createMockCategoryRow,
   createMockCategory,
@@ -159,12 +160,22 @@ describe('DEFAULT_CATEGORIES', () => {
     expect(names).toContain('Seasons');
   });
 
-  it('has some curated and some non-curated', () => {
-    const curatedCount = DEFAULT_CATEGORIES.filter((c) => c.is_curated).length;
-    const nonCuratedCount = DEFAULT_CATEGORIES.filter((c) => !c.is_curated).length;
+  it('mirrors the live PresetCategory members exactly', () => {
+    // DEAD-006: the retired `community` row outlived the union it modelled.
+    // Pinning the fixture to the type keeps the next drop from lingering here.
+    const liveMembers: PresetCategory[] = [
+      'aesthetics',
+      'events',
+      'grand-companies',
+      'jobs',
+      'seasons',
+    ];
 
-    expect(curatedCount).toBeGreaterThan(0);
-    expect(nonCuratedCount).toBeGreaterThan(0);
+    expect(DEFAULT_CATEGORIES.map((c) => c.id).sort()).toEqual(liveMembers.sort());
+  });
+
+  it('is entirely curated (5.0 retired the only uncurated category)', () => {
+    expect(DEFAULT_CATEGORIES.every((c) => c.is_curated)).toBe(true);
   });
 });
 

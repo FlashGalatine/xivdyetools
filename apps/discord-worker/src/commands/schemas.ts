@@ -6,6 +6,8 @@
  * @module commands/schemas
  */
 
+import type { PresetCategory } from '@xivdyetools/types';
+
 /**
  * Discord command option types
  * @see https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type
@@ -23,6 +25,26 @@ export const OptionType = {
   NUMBER: 10,
   ATTACHMENT: 11,
 } as const;
+
+/**
+ * The `category` choice list shared by every `/preset` subcommand that filters
+ * or assigns a category (`list`, `random`, `submit`).
+ *
+ * `value` is typed as {@link PresetCategory} deliberately: these are *registered*
+ * Discord choices, so a value the backing union no longer defines cannot be
+ * caught at runtime — Discord itself presents it to the user as valid. Binding
+ * the literal to the union makes a dropped member a compile error here instead
+ * of a dead menu entry in every Discord client.
+ *
+ * 5.0 retired the `community` member; see BUG-001.
+ */
+export const PRESET_CATEGORY_CHOICES: ReadonlyArray<{ name: string; value: PresetCategory }> = [
+  { name: '⚔️ FFXIV Jobs', value: 'jobs' },
+  { name: '🏛️ Grand Companies', value: 'grand-companies' },
+  { name: '🍂 Seasons', value: 'seasons' },
+  { name: '🎉 FFXIV Events', value: 'events' },
+  { name: '🎨 Aesthetics', value: 'aesthetics' },
+];
 
 /**
  * All slash commands for the bot
@@ -909,14 +931,7 @@ export const commands = [
             description: 'Filter by category',
             type: OptionType.STRING,
             required: false,
-            choices: [
-              { name: '⚔️ FFXIV Jobs', value: 'jobs' },
-              { name: '🏛️ Grand Companies', value: 'grand-companies' },
-              { name: '🍂 Seasons', value: 'seasons' },
-              { name: '🎉 FFXIV Events', value: 'events' },
-              { name: '🎨 Aesthetics', value: 'aesthetics' },
-              { name: '🌐 Community', value: 'community' },
-            ],
+            choices: [...PRESET_CATEGORY_CHOICES],
           },
           {
             name: 'sort',
@@ -955,14 +970,7 @@ export const commands = [
             description: 'Filter by category',
             type: OptionType.STRING,
             required: false,
-            choices: [
-              { name: '⚔️ FFXIV Jobs', value: 'jobs' },
-              { name: '🏛️ Grand Companies', value: 'grand-companies' },
-              { name: '🍂 Seasons', value: 'seasons' },
-              { name: '🎉 FFXIV Events', value: 'events' },
-              { name: '🎨 Aesthetics', value: 'aesthetics' },
-              { name: '🌐 Community', value: 'community' },
-            ],
+            choices: [...PRESET_CATEGORY_CHOICES],
           },
         ],
       },
@@ -988,14 +996,7 @@ export const commands = [
             description: 'Preset category',
             type: OptionType.STRING,
             required: true,
-            choices: [
-              { name: '⚔️ FFXIV Jobs', value: 'jobs' },
-              { name: '🏛️ Grand Companies', value: 'grand-companies' },
-              { name: '🍂 Seasons', value: 'seasons' },
-              { name: '🎉 FFXIV Events', value: 'events' },
-              { name: '🎨 Aesthetics', value: 'aesthetics' },
-              { name: '🌐 Community', value: 'community' },
-            ],
+            choices: [...PRESET_CATEGORY_CHOICES],
           },
           {
             name: 'dye1',

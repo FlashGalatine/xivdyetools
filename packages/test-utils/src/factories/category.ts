@@ -111,7 +111,12 @@ export function createCuratedCategory(overrides: Partial<Category> = {}): Catego
 }
 
 /**
- * Default preset categories for testing
+ * Default preset categories for testing.
+ *
+ * Mirrors the five `PresetCategory` members exactly. 5.0 retired the
+ * `community` category everywhere (DEAD-006); all five survivors are curated,
+ * so use `createMockCategory({ is_curated: false })` when a test needs an
+ * uncurated row rather than reaching for a fixture entry.
  */
 export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'jobs', name: 'Jobs', description: 'Job-inspired palettes', icon: null, is_curated: true, display_order: 1 },
@@ -119,7 +124,6 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'seasons', name: 'Seasons', description: 'Seasonal themes', icon: null, is_curated: true, display_order: 3 },
   { id: 'events', name: 'Events', description: 'Event themes', icon: null, is_curated: true, display_order: 4 },
   { id: 'aesthetics', name: 'Aesthetics', description: 'Visual styles', icon: null, is_curated: true, display_order: 5 },
-  { id: 'community', name: 'Community', description: 'User submissions', icon: null, is_curated: false, display_order: 6 },
 ];
 
 /**
