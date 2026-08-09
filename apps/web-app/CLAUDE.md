@@ -29,7 +29,8 @@ npm run dev                  # vite dev server on localhost:5173
 npm run build                # tsc --noEmit && vite build
 npm run preview              # serve the production build
 npm run type-check           # tsc --noEmit only
-npm run lint                 # eslint with --fix
+npm run lint                 # eslint src (read-only check — this is the gate)
+npm run lint:fix             # eslint src --fix (explicit, review the diff before committing)
 npm run format               # prettier --write src/**/*.ts
 
 npm run test                 # vitest run
