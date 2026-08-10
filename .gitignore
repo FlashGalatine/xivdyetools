@@ -36,6 +36,10 @@ vitest.config.ts.timestamp*
 # Playwright
 test-results/
 playwright-report/
+# V8 coverage from the chromium-coverage project. NOT matched by `coverage/`
+# above — different directory name. The per-test shards under .tmp/ are ~5.7 MB
+# each and nothing deletes them, so a full `test:e2e` run leaves tens of MB here.
+e2e-coverage/
 
 # VitePress build cache (api-worker docs)
 .vitepress/cache/
