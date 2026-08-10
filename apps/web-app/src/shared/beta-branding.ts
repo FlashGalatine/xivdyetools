@@ -42,18 +42,36 @@ export const BETA_HEADERS_BLOCK = `
 /**
  * Rewrite `index.html` for a beta build.
  *
- * Icon links are matched by their href *prefix* rather than against a list of
- * filenames, so adding an icon to `index.html` later cannot silently leave
- * beta pointing at the production artwork. The `(?!beta\/)` guard makes the
- * transform idempotent.
+ * Icon links (and the icon `<link rel="preload">`) are matched by their href
+ * *prefix* rather than against a list of filenames, so adding an icon to
+ * `index.html` later cannot silently leave beta pointing at the production
+ * artwork. The `(?!beta\/)` guard makes the transform idempotent.
  */
 export function brandHtmlForBeta(html: string): string {
   const titled = html.replace(/<title>([\s\S]*?)<\/title>/, (match, title: string) =>
     title.startsWith(BETA_TITLE_PREFIX) ? match : `<title>${BETA_TITLE_PREFIX}${title}</title>`
   );
 
-  return titled.replace(/<link\b[^>]*>/g, (tag) => {
-    if (!/\brel="(?:icon|apple-touch-icon)"/.test(tag)) return tag;
+  const linksRewritten = titled.replace(/<link\b[^>]*>/g, (tag) => {
+    const isIconLink = /\brel="(?:icon|apple-touch-icon)"/.test(tag);
+    // Scoped to .png/.ico: the beta set only ships the raster formats
+    // generate-beta-icons.mjs produces. index.html also preloads
+    // icon-40x40.webp (a differently-sized icon with no beta equivalent) —
+    // rewriting that href would 404, so it is deliberately left alone.
+    const isIconPreload =
+      /\brel="preload"/.test(tag) &&
+      /\bhref="\/assets\/icons\/(?!beta\/)[^"]*\.(?:png|ico)"/.test(tag);
+    if (!isIconLink && !isIconPreload) return tag;
     return tag.replace(/\bhref="\/assets\/icons\/(?!beta\/)/, `href="${BETA_ICON_PATH}`);
+  });
+
+  // The X-Robots-Tag header (BETA_HEADERS_BLOCK) is the mechanism search
+  // engines actually respect, but an in-page <meta name="robots"> of
+  // "index, follow" left untouched would contradict it, and conflict
+  // resolution between the two is not uniformly specified across crawlers.
+  // Rewritten in place; never injected if absent.
+  return linksRewritten.replace(/<meta\b[^>]*>/g, (tag) => {
+    if (!/\bname="robots"/.test(tag)) return tag;
+    return tag.replace(/\bcontent="[^"]*"/, 'content="noindex, nofollow"');
   });
 }

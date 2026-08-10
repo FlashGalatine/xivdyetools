@@ -34,7 +34,7 @@ check(
 
 // 3. Every beta icon the HTML references actually exists in dist.
 const referenced = [...html.matchAll(/href="(\/assets\/icons\/beta\/[^"]+)"/g)].map((m) => m[1]);
-check(referenced.length === 7, `expected 7 beta icon references, found ${referenced.length}`);
+check(referenced.length >= 7, `expected at least 7 beta icon references, found ${referenced.length}`);
 for (const href of referenced) {
   check(fs.existsSync(path.join(DIST, href.slice(1))), `referenced icon missing from dist: ${href}`);
 }

@@ -18,6 +18,7 @@ const SAMPLE_HTML = `<!DOCTYPE html>
 <html lang="en">
   <head>
     <title>XIV Dye Tools - FFXIV Dye Color Matcher</title>
+    <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://xivdyetools.app/" />
     <link rel="icon" type="image/x-icon" href="/assets/icons/favicon.ico" />
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png" />
@@ -27,6 +28,18 @@ const SAMPLE_HTML = `<!DOCTYPE html>
     <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192x192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/assets/icons/icon-512x512.png" />
     <link rel="manifest" href="/manifest.json" />
+    <link rel="preload" href="/assets/icons/icon-40x40.webp" as="image" type="image/webp" fetchpriority="high" />
+    <link rel="preload" href="/assets/icons/icon-192x192.png" as="image" type="image/png" />
+  </head>
+  <body></body>
+</html>`;
+
+/** A minimal fixture with no robots meta at all, for the no-op case. */
+const SAMPLE_HTML_NO_ROBOTS = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>XIV Dye Tools - FFXIV Dye Color Matcher</title>
+    <link rel="canonical" href="https://xivdyetools.app/" />
   </head>
   <body></body>
 </html>`;
@@ -70,6 +83,48 @@ describe('brandHtmlForBeta', () => {
     const reordered = '<link href="/assets/icons/favicon.ico" rel="icon" />';
     expect(brandHtmlForBeta(reordered)).toBe(
       '<link href="/assets/icons/beta/favicon.ico" rel="icon" />'
+    );
+  });
+
+  it('rewrites the robots meta tag to noindex, nofollow', () => {
+    const out = brandHtmlForBeta(SAMPLE_HTML);
+    expect(out).toContain('<meta name="robots" content="noindex, nofollow" />');
+    expect(out).not.toContain('content="index, follow"');
+  });
+
+  it('is idempotent for the robots meta rewrite', () => {
+    const once = brandHtmlForBeta(SAMPLE_HTML);
+    const twice = brandHtmlForBeta(once);
+    expect(twice).toBe(once);
+    expect(twice).toContain('<meta name="robots" content="noindex, nofollow" />');
+  });
+
+  it('does not inject a robots meta tag when none exists', () => {
+    const out = brandHtmlForBeta(SAMPLE_HTML_NO_ROBOTS);
+    expect(out).not.toContain('name="robots"');
+  });
+
+  it('rewrites the robots meta tag regardless of attribute order', () => {
+    const reordered = '<meta content="index, follow" name="robots" />';
+    expect(brandHtmlForBeta(reordered)).toBe('<meta content="noindex, nofollow" name="robots" />');
+  });
+
+  it('repoints the icon preload link at the beta set', () => {
+    const out = brandHtmlForBeta(SAMPLE_HTML);
+    expect(out).toContain(
+      '<link rel="preload" href="/assets/icons/beta/icon-192x192.png" as="image" type="image/png" />'
+    );
+  });
+
+  it('is idempotent for the preload rewrite', () => {
+    const once = brandHtmlForBeta(SAMPLE_HTML);
+    expect(brandHtmlForBeta(once)).toBe(once);
+  });
+
+  it('leaves a preload for a non-png/ico icon format untouched (no beta equivalent exists)', () => {
+    const out = brandHtmlForBeta(SAMPLE_HTML);
+    expect(out).toContain(
+      '<link rel="preload" href="/assets/icons/icon-40x40.webp" as="image" type="image/webp" fetchpriority="high" />'
     );
   });
 
