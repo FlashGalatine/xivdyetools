@@ -35,7 +35,10 @@ async function main() {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
   for (const { name, size } of SIZES) {
-    await sharp(SOURCE).resize(size, size, { fit: 'cover' }).png().toFile(path.join(OUTPUT_DIR, name));
+    await sharp(SOURCE)
+      .resize(size, size, { fit: 'cover' })
+      .png({ compressionLevel: 9, effort: 10 })
+      .toFile(path.join(OUTPUT_DIR, name));
     console.log(`+ ${name} (${size}x${size})`);
   }
 
