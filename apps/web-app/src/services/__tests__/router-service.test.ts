@@ -863,16 +863,12 @@ describe('RouterService', () => {
     });
   });
 
-  // ==========================================================================
-  // Title composition
-  // ==========================================================================
-
-  describe('Document title', () => {
-    it('composes titles from APP_NAME so a beta build is marked everywhere', async () => {
-      const { APP_NAME } = await import('@shared/constants');
-      RouterService.initialize();
-      RouterService.navigateTo('comparison');
-      expect(document.title.endsWith(` | ${APP_NAME}`)).toBe(true);
-    });
-  });
+  // Title-composition regression coverage (all four `document.title` sites)
+  // lives in `router-service-title.test.ts`, in its own file so it can mock
+  // `@shared/constants` with a sentinel APP_NAME without affecting the tests
+  // above. Under Vitest APP_NAME resolves to the literal 'XIV Dye Tools' (no
+  // `define` block), which is byte-identical to the string that used to be
+  // hardcoded here — so a real APP_NAME cannot distinguish "reads the
+  // constant" from "still hardcoded"; only a sentinel that could never be a
+  // hardcoded literal can.
 });
