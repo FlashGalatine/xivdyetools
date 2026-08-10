@@ -13,13 +13,31 @@ The worker also owns a small D1 database (`xivdyetools-users`) that stores a uni
 ```bash
 npm run dev                          # wrangler dev (port 8788)
 npm run dev -- --env development     # Run with development env vars
-npm run deploy                       # Deploy (default = production-like)
-npm run deploy:production            # Deploy to production env
+npm run deploy                       # Deploy to PRODUCTION (auth.xivdyetools.app)
+npm run deploy:production            # Alias of the above — see the note
 npm run test                         # vitest
 npm run test:coverage                # Coverage via @vitest/coverage-v8
 npm run type-check                   # tsc --noEmit
 npm run lint                         # eslint src/
 ```
+
+> **This worker inverts the monorepo's deploy convention. Read before deploying.**
+>
+> `wrangler.toml` has **no `[env.production]`** — the **top-level** block is
+> production: it carries `name = "xivdyetools-oauth"` and the
+> `auth.xivdyetools.app` custom domain. The only environments defined are
+> `development` and `preview`.
+>
+> So a bare `wrangler deploy` **is** the production deploy (and is what
+> `.github/workflows/deploy-oauth.yml` runs). `wrangler deploy --env production`
+> does not deploy at all — it hard-errors with *"No environment found in
+> configuration with name production"*. `deploy:production` is kept only as an
+> alias so following the repo-wide convention still lands on the right worker.
+>
+> This is the opposite of `api-worker` and `presets-api`, where the top-level
+> block is the routeless `…-dev` worker and production needs an explicit
+> `--env production`. Always check the worker's `wrangler.toml` first; see
+> `docs/operations/DEPLOY_ENVIRONMENTS.md`.
 
 ### Setting Secrets
 
@@ -269,6 +287,6 @@ npx vitest run -t "PKCE"                              # Pattern match
 3. Verify `wrangler.toml` has correct `FRONTEND_URL` and `WORKER_URL` for the target env.
 4. Apply schema if needed: `wrangler d1 execute xivdyetools-users --remote --file=./schema/users.sql`.
 5. `npm run lint && npm run test -- --run && npm run type-check`.
-6. `npm run deploy:production`.
+6. `npm run deploy` (bare — this worker has no `production` env; see the note under Commands).
 7. Smoke-test the full flow from the web app: `/auth/discord` → consent → callback → `/auth/me` returns user info with the issued JWT.
 8. If switching to DO rate limiting, set `USE_DO_RATE_LIMITING = "true"` and bind `RATE_LIMITER` (already present in wrangler.toml under `env.preview`).
