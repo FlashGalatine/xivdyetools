@@ -78,6 +78,7 @@ jobs:
         run: pnpm --filter xivdyetools-web-app exec node scripts/check-beta-build.js
 
       - name: Deploy to Cloudflare Pages (beta project)
+        id: deploy
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -86,12 +87,41 @@ jobs:
           command: pages deploy dist --project-name=xivdyetools-beta --branch=beta
           packageManager: pnpm
 
-      # ARCH-002: Verify deployed site responds after deployment
-      - name: Smoke test
+      # ARCH-002: Verify the deployment responds.
+      #
+      # Asserted against the immutable per-deployment URL, NOT beta.xivdyetools.app.
+      # The custom domain is a mutable alias that keeps serving the PREVIOUS
+      # deployment until propagation finishes, so asserting there measures the wrong
+      # build (a pass proves only that *something* is up), and it 522s while the alias
+      # is cold. The latter is how this step failed on the beta project's first-ever
+      # deploy: a Pages custom domain has no origin at all until the project's first
+      # production deployment exists.
+      #
+      # There is deliberately NO X-Robots-Tag assertion here. Cloudflare injects
+      # `x-robots-tag: noindex` onto every *.pages.dev hostname itself, so asserting
+      # it on this URL passes even when vite-plugin-beta-branding never ran - a
+      # tautology, not a check. The header is only build-determined on the custom
+      # domain. Asserting it there requires first proving the domain has caught up to
+      # this deployment; that is scripts/smoke-test-pages.js (see the 2026-08-10 spec).
+      - name: Smoke test the deployment
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.deployment-url }}
         run: |
-          sleep 5
-          curl --fail --retry 6 --retry-delay 5 --retry-all-errors \
-            -o /dev/null -w "%{http_code}" \
-            -H "User-Agent: xivdyetools-ci" \
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "::error::wrangler-action returned no deployment-url; nothing to smoke test"
+            exit 1
+          fi
+          echo "Smoke testing $DEPLOY_URL"
+          curl --fail --silent --show-error --retry 6 --retry-delay 5 --retry-all-errors \
+            -o /dev/null -w 'deployment responded %{http_code}\n' \
+            -H 'User-Agent: xivdyetools-ci' "$DEPLOY_URL/"
+
+      # The custom domain is a distinct failure mode from the deployment: the alias
+      # can lag, or be detached from the project entirely. Budgeted at ~2min rather
+      # than the deployment check's ~30s because alias propagation is the slow part.
+      - name: Smoke test the custom domain
+        run: |
+          curl --fail --silent --show-error --retry 24 --retry-delay 5 --retry-all-errors \
+            -o /dev/null -w 'beta.xivdyetools.app responded %{http_code}\n' \
+            -H 'User-Agent: xivdyetools-ci' \
             https://beta.xivdyetools.app/
-          curl -sI https://beta.xivdyetools.app/ | grep -qi 'x-robots-tag: noindex'

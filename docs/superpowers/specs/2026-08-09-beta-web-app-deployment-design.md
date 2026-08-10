@@ -151,7 +151,25 @@ Modelled on `deploy-discord-worker-beta.yml`:
   `check-bundle-size`
 - `env: VITE_APP_ENV: beta` on the build step
 - `pages deploy dist --project-name=xivdyetools-beta --branch=beta`
-- Smoke test: `curl --fail` against `https://beta.xivdyetools.app/`
+- Smoke test, in two steps:
+  1. `curl --fail` against the wrangler-action `deployment-url` output (the immutable
+     `<hash>.xivdyetools-beta.pages.dev` alias) for a 2xx. This is the build just uploaded;
+     `beta.xivdyetools.app` is a mutable alias still serving the *previous* deployment
+     until propagation completes, so a reachability assertion there can pass against the
+     old build.
+  2. `curl --fail` against `https://beta.xivdyetools.app/` with a ~2min retry budget, as a
+     separate check that the custom domain is attached and current.
+
+  The first-ever run of this workflow failed here with **522**: a Pages custom domain has no
+  origin until the project's first *production* deployment exists, and the original ~36s
+  retry budget expired during that one-time cold activation.
+
+  **No `X-Robots-Tag` assertion belongs on a `*.pages.dev` URL.** Cloudflare injects
+  `x-robots-tag: noindex` onto those hostnames itself, so asserting it there passes whether
+  or not `vite-plugin-beta-branding` ran. Proof: production's `public/_headers` contains no
+  `X-Robots-Tag`, yet its deployment alias serves one. The header is only build-determined on
+  the custom domain, and asserting it there first requires proving the domain has caught up to
+  this deployment — see `2026-08-10-pages-smoke-test-design.md`, which supersedes this section.
 
 ### 5. Origin allowlists
 
