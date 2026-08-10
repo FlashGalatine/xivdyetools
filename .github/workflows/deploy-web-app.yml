@@ -47,6 +47,7 @@ jobs:
         run: pnpm --filter xivdyetools-web-app exec node scripts/check-bundle-size.js
 
       - name: Deploy to Cloudflare Pages
+        id: deploy
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -55,11 +56,18 @@ jobs:
           command: pages deploy dist --project-name=xivdyetools
           packageManager: pnpm
 
-      # ARCH-002: Verify deployed site responds after deployment
+      # ARCH-002: Verify the deployment we just made is live on the public URL and
+      # is NOT a beta build. `--expect-robots none` is the guard against a beta
+      # build reaching production and deindexing the live site; nothing else in CI
+      # catches that. See docs/superpowers/specs/2026-08-10-pages-smoke-test-design.md
+      #
+      # Note the deployment URL will be a *.xiv-colorexplorer.pages.dev host, not
+      # xivdyetools.pages.dev: Cloudflare assigns a Pages project's subdomain at
+      # creation and does not change it when the project is renamed. Reading it from
+      # the action output avoids having to know that.
       - name: Smoke test
-        run: |
-          sleep 5
-          curl --fail --retry 3 --retry-delay 5 --retry-all-errors \
-            -o /dev/null -w "%{http_code}" \
-            -H "User-Agent: xivdyetools-ci" \
-            https://xivdyetools.app/
+        run: >
+          pnpm --filter xivdyetools-web-app exec node scripts/smoke-test-pages.js
+          --deployment-url "${{ steps.deploy.outputs.deployment-url }}"
+          --domain https://xivdyetools.app
+          --expect-robots none
