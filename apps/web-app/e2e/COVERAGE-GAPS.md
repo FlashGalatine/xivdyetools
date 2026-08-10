@@ -73,6 +73,33 @@ carry over:
 
 ---
 
+---
+
+## Separately: the `mobile-chrome` project is red (pre-existing)
+
+Not a deletion — a standing failure, recorded here because Sprint 4 of the 2026-08-09 audit was
+the first time `playwright test` was run as a release gate and it needs to be honest about what
+it reports.
+
+As of 2026-08-09: **`chromium` 142/142 green; `mobile-chrome` 114 passed, 28 failed.**
+
+The 28 share one cause. At the Pixel 5 viewport the config sidebar collapses into a drawer, and
+these tests reach straight for controls inside it without opening it first:
+
+```
+waiting for getByRole('switch', { name: /deuteranopia/i })   → element(s) not found
+waiting for getByText('Vision Types').first()                → element(s) not found
+```
+
+Affected: `accessibility-checker.spec.ts` (9), `gradient-builder.spec.ts` (9),
+`budget-tool.spec.ts` (7), plus the reload/load smoke tests in `dye-comparison.spec.ts` and
+`dye-mixer.spec.ts` (2 each).
+
+The fix is one shared helper — open the drawer in `beforeEach` when the viewport is narrow, the
+way `dye-comparison`'s deleted mobile block used to — rather than 28 individual edits. Until
+then, `--project=chromium` is the meaningful gate and a full `playwright test` will exit
+non-zero.
+
 ## Closing these
 
 Rewrite against the 5.0 DOM the way `ed8f477` did for `ui-interactions.spec.ts` — that commit is
