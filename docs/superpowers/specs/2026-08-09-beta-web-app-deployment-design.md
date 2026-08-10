@@ -36,15 +36,24 @@ accident.
 
 Completed by the maintainer before implementation started:
 
-- Pages project `xivdyetools-beta` created.
+- Pages project created **with the production branch set at creation time**, which is the part
+  that matters:
+
+  ```
+  wrangler pages project create xivdyetools-beta --production-branch=beta
+  ```
+
+  Confirmed created; the project is reachable at `https://xivdyetools-beta.pages.dev/` once a
+  first deployment exists.
 - `beta.xivdyetools.app` attached to it as a custom domain.
 
-If the project was created through the dashboard rather than with
-`wrangler pages project create xivdyetools-beta --production-branch=beta`, confirm its production
-branch is `beta` before the first deploy. Direct Upload projects cannot change this from the
-dashboard — the documented route is a PATCH to the Update Project API. A mismatch is not a hard
-failure: the deploy succeeds, but it lands as a *preview* and the custom domain keeps serving
-whatever was there before, which reads as "my changes did not deploy".
+Because `beta` is the production branch, `wrangler pages deploy … --branch=beta` produces a
+**production** deployment of the beta project, which is what the custom domain serves. Getting
+this wrong would not have failed loudly — the deploy would have succeeded as a *preview* while
+the custom domain kept serving the previous content, presenting as "my changes did not deploy".
+Direct Upload projects cannot change the production branch from the dashboard afterwards; the
+documented route is a PATCH to the Update Project API. Setting it at creation avoided that
+entirely.
 
 ## Architecture
 
