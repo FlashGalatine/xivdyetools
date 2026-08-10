@@ -242,6 +242,24 @@ profile while a dev server is running.**
 **Ends with:** no deploy — a verification gate only. Run `pnpm turbo run build type-check test
 --force` plus the `web-app` Playwright suite, since bundler upgrades can shift output.
 
+### ✅ Completed 2026-08-10 — and the finding's own prescription was wrong
+
+**14 advisories → 6.** The `undici` HIGH + 4 MOD, both `brace-expansion` HIGHs and the `nanoid`
+HIGH are closed. The remaining 6 are 4 accepted with revisit triggers plus the 2 `stoat-worker`
+items that were never in scope.
+
+Re-deriving the dependency paths first — as *Standing guidance* below demands — showed the
+prescription `pnpm up -r vite@^6.4.3 esbuild@^0.28.1` would have done **nothing**: `web-app`
+already runs `vite ^8.1.5`, `esbuild` is not a direct dependency anywhere, and the actual
+vulnerable copy is `api-worker > vitepress@1.6.4 > vite@5.4.21` — a branch with no patched
+release. Meanwhile the `nanoid` and `brace-expansion` HIGHs needed **no version bump at all**;
+their parents already required patched versions and the lockfile was simply stale.
+
+Full corrected root-cause table, the accepted-with-trigger register, and the verification record
+are in [FINDING-004](findings/FINDING-004.md#resolution--sprint-6-2026-08-10). The
+`api-worker`/`vitepress` acceptance carries the trigger **"when VitePress 2 ships stable"**; the
+`stoat-worker` `esbuild` LOW folds into `FINDING-003`'s existing un-parking checklist.
+
 ---
 
 ## Sprint 7 — TERMINAL: `discord-worker` CJK font re-subset

@@ -238,7 +238,11 @@ JWT revocation is enforced on `/auth/me` and during refresh by checking `TOKEN_B
 | `@xivdyetools/worker-kit/rate-limiter` | Backend-agnostic rate limiter primitives |
 | `@xivdyetools/logger` | Structured logging |
 | `@xivdyetools/worker-kit` | Shared Hono middleware (request ID, logger) |
-| `miniflare` (dev) | Local DO + KV emulation for tests |
+
+Tests emulate KV/D1/DO with the hand-rolled `src/__tests__/mocks/cloudflare-test.ts` and
+`@xivdyetools/test-utils` — **not** `miniflare`. A direct `miniflare` devDependency was declared
+here but never imported; it was removed on 2026-08-10 because it pinned a second, older
+`miniflare` 4 (and with it `undici` 7.28.0) into the lockfile alongside the one `wrangler` resolves.
 
 ## Testing
 

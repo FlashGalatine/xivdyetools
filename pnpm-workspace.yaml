@@ -28,9 +28,6 @@ allowBuilds:
 # be at least 24 h old before install — a window in which compromised releases
 # are typically detected and yanked.
 minimumReleaseAge: 1440
-# postcss@8.5.24 entered the lockfile via the #112 dev-deps bump before this
-# policy existed and was published 2026-07-28T09:40Z. The exclusion is only
-# needed until that release is 24 h old — safe to remove any time after
-# 2026-07-29T09:40Z.
-minimumReleaseAgeExclude:
-  - postcss
+# (The one-off `minimumReleaseAgeExclude: [postcss]` carried here for the
+# 8.5.24 release expired on 2026-07-29 and was removed on 2026-08-10. There is
+# no standing exclusion — add one only with a dated expiry note like that.)
