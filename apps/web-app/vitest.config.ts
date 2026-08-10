@@ -83,7 +83,10 @@ export default defineConfig({
       branches: 75,
       statements: 80,
     },
-    include: ['src/**/*.{test,spec}.ts'],
+    // scripts/ holds the CI gates (check-bundle-size, check-beta-build,
+    // smoke-test-pages). They are plain .js ESM, not .ts, so they need their own
+    // pattern rather than an extension widened on the src glob.
+    include: ['src/**/*.{test,spec}.ts', 'scripts/**/*.{test,spec}.js'],
     exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
     server: {
       deps: {
