@@ -82,8 +82,8 @@ wrangler-action ──► outputs.deployment-url  (https://<hash>.<subdomain>.pa
         ▼                     ▼                             ▼
   1. reachable?         2. domain converged?          3. robots correct?
   GET alias, 2xx        poll domain until its         read x-robots-tag from
-  ~30s budget           index.html sha256 ==          the matched domain response
-                        the alias's, ~180s budget     (beta: has noindex,
+  ~25s budget           index.html sha256 ==          the matched domain response
+                        the alias's, ~175s budget     (beta: has noindex,
                                                        prod: has none)
 ```
 
@@ -115,7 +115,7 @@ Behaviour:
 2. **Phase 1 — reachable.** GET `<deployment-url>/`, retrying on non-2xx and transport errors,
    6 attempts × 5s. Retain the response body.
 3. **Phase 2 — converged.** sha256 the phase-1 body. GET `<domain>/` and compare hashes, retrying
-   until equal, 36 attempts × 5s (~180s). Retain the matching response's headers. Track the last
+   until equal, 36 attempts × 5s (~175s). Retain the matching response's headers. Track the last
    observed domain status separately from the hash comparison: a domain that never returned 2xx is
    a *different* failure from one serving stale bytes, and the two must not share an error
    message (a 522 reported as "serves a different build" is the class of misdirection this design
