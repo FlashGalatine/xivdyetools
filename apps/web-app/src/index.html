@@ -11,7 +11,10 @@
     <meta name="keywords" content="FFXIV, dyes, color matcher, color harmony, accessibility checker, dye comparison, dye mixer, glamour, housing decoration, fashion, Final Fantasy XIV" />
     <meta name="author" content="Flash Galatine (Balmung)" />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#4F46E5" />
+    <!-- 5.0 identity: #CE2222 light / #EA4133 dark. Media-scoped rather than one
+         compromise value, so browser chrome matches the theme either way. -->
+    <meta name="theme-color" content="#CE2222" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#EA4133" media="(prefers-color-scheme: dark)" />
     
     <!-- Canonical URL -->
     <link rel="canonical" href="https://xivdyetools.app/" />
@@ -51,7 +54,7 @@
     <link rel="manifest" href="/manifest.json" />
 
     <!-- Windows Tiles -->
-    <meta name="msapplication-TileColor" content="#4f46e5" />
+    <meta name="msapplication-TileColor" content="#CE2222" />
     <meta name="msapplication-config" content="/browserconfig.xml" />
     
     <!-- Resource Hints for Performance -->

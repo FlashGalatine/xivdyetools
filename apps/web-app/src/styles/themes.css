@@ -14,8 +14,10 @@
  */
 
 :root {
-  /* Default theme variables (updated dynamically by ThemeService) */
-  --theme-primary: #4f46e5;
+  /* Default theme variables (updated dynamically by ThemeService).
+     These are what paints before the service runs, so the accent has to be the
+     5.0 light red -- the surrounding defaults are a light ground. */
+  --theme-primary: #ce2222;
   --theme-background: #ffffff;
   --theme-text: #1f2937;
   --theme-border: #e5e7eb;
