@@ -13,35 +13,6 @@
  */
 
 /* ==========================================================================
-   Root Layout Setup
-   ========================================================================== */
-
-/**
- * Root element when using v4 layout
- * Applied to <html> or <body> when V4LayoutShell is active
- *
- * NOTE: nothing currently adds this class -- `grep -rn v4-app-root src` matches
- * only this rule. It is kept because REFACTOR-002 collapses the app's font
- * declarations into one contract and will decide this file's fate there.
- *
- * The stack below is copied verbatim from `globals.css`'s `body` rule rather
- * than being its own invention. It previously read
- * `'Segoe UI', Tahoma, Geneva, Verdana, sans-serif` -- a raw OS-dependent stack
- * matching nothing else in the app, so the shell would have rendered in a
- * different face from the content it wrapped, differently on each platform.
- */
-.v4-app-root {
-  margin: 0;
-  padding: 0;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  font-family: 'Onest', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* ==========================================================================
    Theme-Specific Layout Adjustments
    ========================================================================== */
 
@@ -728,7 +699,7 @@ body.theme-high-contrast-dark v4-config-sidebar {
 
 .vision-swatch-hex {
   font-size: 9px;
-  font-family: monospace;
+  font-family: var(--font-mono);
   color: var(--theme-text-muted);
 }
 

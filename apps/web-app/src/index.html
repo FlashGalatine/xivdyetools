@@ -58,10 +58,7 @@
     <meta name="msapplication-config" content="/browserconfig.xml" />
     
     <!-- Resource Hints for Performance -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- No font origins here: the typefaces are self-hosted from /fonts/ (REFACTOR-002). -->
     <link rel="dns-prefetch" href="https://universalis.app" />
     <link rel="preconnect" href="https://universalis.app" crossorigin />
     <!-- XIV Dye Tools API subdomains -->
@@ -74,14 +71,19 @@
     <!-- Preload critical resources for faster FCP/LCP -->
     <link rel="preload" href="/assets/icons/icon-40x40.webp" as="image" type="image/webp" fetchpriority="high" />
     <link rel="preload" href="/assets/icons/icon-192x192.png" as="image" type="image/png" />
-    <!-- Load fonts asynchronously to prevent render blocking -->
-    <script src="/js/load-fonts.js" defer></script>
-    <noscript>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet"
-      />
-    </noscript>
+    <!--
+      Self-hosted typefaces (REFACTOR-002). The @font-face blocks live in
+      styles/globals.css, but vite-plugin-async-css defers the stylesheet to keep
+      it off the render path, so the browser would not discover the faces until
+      that CSS has loaded and parsed. These two preloads start the fetches
+      immediately instead; both render above the fold. Fragment Mono is left to
+      the stylesheet -- numeric readouts only appear once a tool has mounted.
+      `crossorigin` is required even though these are same-origin: fonts are
+      always fetched in CORS mode, and a preload whose mode differs from the real
+      request is discarded and fetched twice.
+    -->
+    <link rel="preload" href="/fonts/Onest-Variable.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/SpaceGrotesk-Variable.woff2" as="font" type="font/woff2" crossorigin />
   </head>
   <body class="font-sans">
     <div id="app"></div>

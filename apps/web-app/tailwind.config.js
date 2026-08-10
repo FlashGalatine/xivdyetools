@@ -9,41 +9,15 @@ export default {
   ],
   theme: {
     extend: {
+      // Every family defers to the font contract in `src/styles/globals.css`
+      // (REFACTOR-002) -- that block is the single declaration site. Spelling
+      // the stacks out here is what let `font-mono` (Fira Code) and `font-sans`
+      // (Onest) drift from the CSS rules of the same name; a variable cannot.
       fontFamily: {
-        sans: [
-          'Onest',
-          '-apple-system',
-          'BlinkMacSystemFont',
-          'Segoe UI',
-          'Roboto',
-          'Helvetica Neue',
-          'Arial',
-          'sans-serif',
-        ],
-        heading: [
-          'Space Grotesk',
-          '-apple-system',
-          'BlinkMacSystemFont',
-          'system-ui',
-          'sans-serif',
-        ],
-        mono: [
-          'Fira Code',
-          'Consolas',
-          'Monaco',
-          'Courier New',
-          'monospace',
-        ],
-        // Mirrors the `.number` / `.font-numeric` rule in styles/globals.css.
-        // Habibi (a proportional display serif) was retired in 5.0 -- see BUG-002.
-        numeric: [
-          'Fragment Mono',
-          'ui-monospace',
-          'Cascadia Mono',
-          'Consolas',
-          'monospace',
-          'sans-serif',
-        ],
+        sans: ['var(--font-body)'],
+        heading: ['var(--font-display)'],
+        mono: ['var(--font-mono)'],
+        numeric: ['var(--font-mono)'],
       },
     },
   },

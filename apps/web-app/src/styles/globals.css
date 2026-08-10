@@ -1,18 +1,97 @@
 /* XIV Dye Tools 5.0 - Global Styles */
 
 /* ============================================================================
-   Custom Font Faces
-   ============================================================================ */
+   The Font Contract
+   ============================================================================
 
-/* Fragment Mono - the suite numeric face (5.0). Same binary the Discord and OG
-   card generators load (`apps/*/src/fonts/FragmentMono-Regular.ttf`), so a delta-E
-   value reads identically on the web and on a bot card. */
+   This block is the ONLY place the web app declares a typeface. Three families,
+   all self-hosted from `/fonts/`, matching `FONTS` in `packages/svg/src/base.ts`
+   so a dye name or a delta-E value reads the same on the web as on a bot card:
+
+     display   Space Grotesk    headings, wordmarks
+     body      Onest            everything else
+     mono      Fragment Mono    numerics, hex codes, code, keycaps
+
+   Consumers read `--font-display` / `--font-body` / `--font-mono` below; nothing
+   outside this file should name a family directly. `tailwind.config.js` points
+   its `sans` / `heading` / `mono` / `numeric` entries at the same variables, so
+   a Tailwind utility and a hand-written rule cannot disagree.
+
+   Self-hosted rather than fetched at runtime (REFACTOR-002). Four sources used
+   to declare the typefaces and no two agreed: `public/js/load-fonts.js` requested
+   Space Grotesk / Onest / Fira Code / Varela Round; the `<noscript>` fallback
+   downloaded Inter / Outfit / JetBrains Mono that no CSS rule ever referenced;
+   this file named a fifth combination and `v4-layout.css` a sixth. Serving the
+   faces ourselves means the no-JS path loads the same stylesheet as the JS path,
+   which makes the divergence structurally impossible rather than merely fixed.
+   It also drops a render-blocking third-party request and the Google Fonts
+   origins from the CSP -- no per-visitor request to fonts.googleapis.com.
+
+   Space Grotesk and Onest are variable fonts carrying exactly the axis ranges
+   the old Google Fonts request asked for (wght 300..700 and 100..900), so no
+   weight coverage was lost in the move.
+
+   `font-display: swap` throughout: a failed self-host degrades to the system
+   tail of each stack rather than to invisible text. */
+
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/fonts/SpaceGrotesk-Variable.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Onest';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/Onest-Variable.woff2') format('woff2-variations');
+}
+
+/* Same binary the Discord and OG card generators load, as
+   `apps/discord-worker/src/fonts/FragmentMono-Regular.ttf`.
+
+   Do NOT write that path as a glob here. `apps/` + `*` + `/src` contains the
+   comment-closing sequence, so a glob silently ends this comment early and CSS
+   error-recovery then swallows the @font-face rule below it. That is exactly
+   what happened between Sprint 4 and Sprint 5: `.number` computed to
+   'Fragment Mono', the woff2 served fine, and the face was never registered --
+   every numeric readout was quietly rendering in the Consolas fallback. */
 @font-face {
   font-family: 'Fragment Mono';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
   src: url('/fonts/FragmentMono-Regular.woff2') format('woff2');
+}
+
+:root {
+  /*
+   * The CJK tail, named explicitly rather than left to the browser default.
+   * None of the three Latin faces carries CJK and ja/ko/zh are shipping
+   * locales, so without this every CJK glyph fell through to an unspecified
+   * per-OS default -- it worked, but it was an accident rather than a decision.
+   *
+   * Nothing here is downloaded: every name is a locally installed family.
+   * Noto first, mirroring `FONTS.cjk` on the SVG surfaces, then the stock
+   * families for macOS/iOS, Windows-JP, Windows-SC and Windows-KR.
+   */
+  --font-cjk: 'Noto Sans JP', 'Noto Sans SC', 'Noto Sans KR', 'Hiragino Sans', 'Yu Gothic UI',
+    'Microsoft YaHei', 'Malgun Gothic';
+
+  --font-display: 'Space Grotesk', var(--font-cjk), -apple-system, BlinkMacSystemFont, system-ui,
+    sans-serif;
+  --font-body: 'Onest', var(--font-cjk), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif;
+  /*
+   * The generic `sans-serif` is the deliberate last resort, not a typo: on a
+   * CJK system it resolves to a CJK-capable face, so a mono-styled string that
+   * happens to wrap a dye name degrades to real glyphs instead of tofu.
+   */
+  --font-mono: 'Fragment Mono', ui-monospace, 'Cascadia Mono', Consolas, var(--font-cjk), monospace,
+    sans-serif;
 }
 
 /* ============================================================================
@@ -33,12 +112,12 @@
  * fallback path honest -- if Fragment Mono fails to load, the system monospace
  * still lines up.
  *
- * Fragment Mono has no CJK coverage, hence the sans tail on the stack: a
- * `.number` element wrapping CJK degrades to the body face rather than to tofu.
+ * Fragment Mono has no CJK coverage, which is why `--font-mono` carries the
+ * CJK tail: a `.number` element wrapping CJK degrades to real glyphs, not tofu.
  */
 .number,
 .font-numeric {
-  font-family: 'Fragment Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace, sans-serif;
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }
@@ -53,7 +132,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: 'Space Grotesk', '-apple-system', 'BlinkMacSystemFont', 'system-ui', sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: -0.02em;
 }
@@ -74,9 +153,9 @@ h3 {
   line-height: 1.4;
 }
 
-/* Body text - Onest font */
+/* Body text - Onest */
 body {
-  font-family: 'Onest', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', sans-serif;
+  font-family: var(--font-body);
   font-size: 1rem;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -106,31 +185,30 @@ body {
   }
 }
 
-/* Monospace elements */
+/* Monospace elements. Was Fira Code, which was a fourth mono-ish answer on a
+   surface that had already settled on Fragment Mono for numerics -- there is
+   one mono face now, so `code` and a delta-E readout match. */
 code,
 pre,
 .font-mono {
-  font-family: 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-family: var(--font-mono);
 }
 
-/* Buttons and navigation elements - Varela Round */
+/* Buttons and navigation elements. Was Varela Round, a fifth family loaded from
+   Google Fonts for controls alone; it left button labels in a different voice
+   from the text they sat beside. Controls now speak in the body face. */
 button,
 .btn,
 .nav-item,
 input[type="button"],
 input[type="submit"],
 input[type="reset"] {
-  font-family: 'Varela Round', '-apple-system', 'BlinkMacSystemFont', 'system-ui', sans-serif;
+  font-family: var(--font-body);
 }
 
 /* Improve text rendering */
 * {
   text-rendering: optimizeLegibility;
-}
-
-/* Font feature settings for Inter (improves number display) */
-body {
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
 /* Tool card styling for index.html */

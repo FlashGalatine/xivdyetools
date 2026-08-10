@@ -7,7 +7,11 @@
 /*
   # Content Security Policy (CSP)
   # Note: 'unsafe-inline' for styles is required for dynamic color swatches
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://cdn.discordapp.com; connect-src 'self' https://universalis.app https://*.workers.dev https://*.xivdyetools.app; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;
+  # font-src is 'self' only: REFACTOR-002 self-hosted the typefaces, so the
+  # fonts.googleapis.com / fonts.gstatic.com origins are gone from style-src
+  # and font-src. Do not re-add them -- a family that needs a third-party
+  # origin has escaped the font contract in styles/globals.css.
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com; connect-src 'self' https://universalis.app https://*.workers.dev https://*.xivdyetools.app; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;
 
   # Security Headers
   X-Content-Type-Options: nosniff
@@ -33,6 +37,16 @@
 # ============================================================================
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# ============================================================================
+# Self-hosted webfonts
+# ============================================================================
+# Not `immutable`: unlike /assets/*, these filenames are not content-hashed, so
+# a year-long immutable cache would strand a repeat visitor on a stale face
+# after a swap. 30 days still serves the repeat-visit case, which is the whole
+# point of self-hosting. If a face ever changes, rename the file.
+/fonts/*
+  Cache-Control: public, max-age=2592000
 
 # ============================================================================
 # JSON Data Files - Daily cache refresh
