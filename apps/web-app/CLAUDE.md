@@ -237,11 +237,11 @@ All `StorageService` keys are prefixed with `xivdyetools_`. Tutorial-offered fla
 ## Build & Bundle Notes
 
 - `npm run build:check` runs `vite build` then `scripts/check-bundle-size.js`, which enforces per-bundle byte ceilings (e.g. main entry ≤ 150 KB raw, layout shell ≤ 200 KB). CI fails if a chunk grows past its budget.
-- Webfonts (Cinzel, Lexend, Habibi) are self-hosted under `fonts/` as woff2. CJK rendering for SVG export uses subset Noto Sans SC + Noto Sans KR fonts shipped from `@xivdyetools/svg`.
+- Webfonts live in `public/fonts/` as woff2 — the only served face today is the numeric one. The families the app actually renders (Space Grotesk, Onest) are still fetched from Google Fonts at runtime by `public/js/load-fonts.js`; self-hosting them is `REFACTOR-002`. CJK rendering for SVG export uses subset Noto Sans SC + Noto Sans KR fonts shipped from `@xivdyetools/svg`.
 - `src/index.html` is the Vite entry; `vite.config.ts` sets `root: 'src'` and `outDir: '../dist'`.
 - `assets/css/tailwind.css` is built by `npm run build:css` and committed; the dev script does **not** rebuild Tailwind on save — use `build:css:watch` in another terminal if you're editing styles.
-- `public/_headers` (Netlify/Pages) sets the production CSP: `script-src 'self'`, `style-src 'self' 'unsafe-inline'`, `frame-ancestors 'none'`.
-- `manifest.json`, `robots.txt`, `service-worker.js` ship from the root (not via `public/`) due to historical filesystem layout.
+- `public/_headers` (Cloudflare Pages) is the **single** source of truth for the production CSP: `script-src 'self'`, `style-src 'self' 'unsafe-inline'`, `frame-ancestors 'none'`. Do not add a second copy — a `<meta http-equiv>` tag cannot express `frame-ancestors` and will silently diverge.
+- **Only `public/` reaches `dist/`.** `publicDir` is `../public`, so files sitting at the package root (`manifest.json`, `robots.txt`, `service-worker.js`, `assets/`) are copied by nothing and are absent from a production build. Anything that must ship belongs under `public/`.
 
 ## Security Patterns
 
