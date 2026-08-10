@@ -20,7 +20,7 @@ INSERT OR IGNORE INTO categories (id, name, description, icon, is_curated, displ
   ('grand-companies', 'Grand Companies', 'Official Grand Company colors', '🏛️', 1, 2),
   ('seasons', 'Seasons', 'Seasonal color palettes', '🌸', 1, 3),
   ('events', 'FFXIV Events', 'Colors for in-game seasonal events', '🎉', 1, 4),
-  ('aesthetics', 'Aesthetics', 'General aesthetic themes', '✨', 1, 5),
+  ('aesthetics', 'Aesthetics', 'General aesthetic themes', '✨', 1, 5);
 
 -- ============================================
 -- PRESETS TABLE

@@ -20,10 +20,13 @@ npm run type-check           # tsc --noEmit
 npm run lint                 # eslint src/
 
 # Database
-npm run db:migrate           # Apply schema.sql to remote D1
+npm run db:migrate           # Apply schema.sql to remote D1 — CREATES ONLY, see below
 npm run db:migrate:local     # Apply schema.sql to local .wrangler D1
 npm run db:migrate:indexes   # Apply migrations/002_add_composite_indexes.sql
 npm run db:seed              # tsx scripts/migrate-presets.ts (seed curated presets)
+
+# Files under migrations/ are NOT applied by any script — run them by hand:
+npx wrangler d1 execute xivdyetools-presets --remote --file=./migrations/<name>.sql
 ```
 
 ### Setting Secrets
@@ -145,7 +148,7 @@ Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS
 
 | Table | Purpose |
 |-------|---------|
-| `categories` | 6 seeded categories (jobs, grand-companies, seasons, events, aesthetics, community) |
+| `categories` | 5 seeded categories (jobs, grand-companies, seasons, events, aesthetics). `community` was retired by `migrations/0007` — community-ness is a source, not a category; any stragglers land in `aesthetics` |
 | `presets` | Both curated and community palettes; `status ∈ {pending, approved, rejected, flagged}`, `dye_signature` enforces unique dye combinations |
 | `votes` | One row per (preset_id, user_discord_id); composite PK |
 | `moderation_log` | Audit trail of approve/reject/flag/unflag/revert actions |
@@ -314,7 +317,13 @@ Production hides `err.message` and stack — only the request ID is returned. De
 ## Deployment Checklist
 
 1. `wrangler secret put` for every required secret (`BOT_API_SECRET`, `BOT_SIGNING_SECRET`, `JWT_SECRET`, `MODERATOR_IDS`).
-2. If schema changed: `npm run db:migrate` (production D1).
+2. If schema changed: apply the relevant file(s) from `migrations/` by hand (see Commands).
+   **`npm run db:migrate` cannot alter an existing database** — `schema.sql` is all
+   `CREATE TABLE IF NOT EXISTS`, so on a live D1 every statement is skipped and the
+   script exits successfully having changed nothing. A column added to `schema.sql`
+   without a matching `migrations/` file will be missing in production, and the first
+   INSERT naming it fails as an opaque 500. That is exactly how `example_link`
+   (`0008`) and `previous_values` (`0002`) went missing.
 3. `npm run lint && npm run test -- --run && npm run type-check`.
 4. `npm run deploy` — push to staging, smoke-test with `curl https://api.xivdyetools.app/health` and an authenticated `POST /api/v1/presets`.
 5. `npm run deploy:production`.
