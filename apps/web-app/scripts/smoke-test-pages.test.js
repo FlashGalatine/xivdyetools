@@ -248,6 +248,43 @@ describe('smokeTestPages', () => {
     expect(result.ok).toBe(false);
   });
 
+  it('fails when a production domain carries none, naming the likely cause', async () => {
+    // 'none' is equivalent to 'noindex, nofollow' -- production deindexed is
+    // the real hazard this assertion exists to catch.
+    const result = await run({
+      expectRobots: 'none',
+      fetchImpl: fakeFetch({
+        'abc.example.pages.dev': [response(200, BODY)],
+        'site.test': [response(200, BODY, { 'x-robots-tag': 'none' })],
+      }),
+    });
+    expect(result.ok).toBe(false);
+    expect(result.failures[0]).toMatch(/beta build/i);
+  });
+
+  it('passes for beta when the domain carries none instead of noindex', async () => {
+    // 'none' hides the site just as effectively as 'noindex'.
+    const result = await run({
+      expectRobots: 'noindex',
+      fetchImpl: fakeFetch({
+        'abc.example.pages.dev': [response(200, BODY)],
+        'site.test': [response(200, BODY, { 'x-robots-tag': 'none' })],
+      }),
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it('does not mistake nonetheless for none', async () => {
+    const result = await run({
+      fetchImpl: fakeFetch({
+        'abc.example.pages.dev': [response(200, BODY)],
+        'site.test': [response(200, BODY, { 'x-robots-tag': 'nonetheless' })],
+      }),
+    });
+    expect(result.ok).toBe(false);
+    expect(result.failures[0]).toMatch(/without X-Robots-Tag: noindex/);
+  });
+
   it('sends the CI user agent and asks the edge not to serve a cached answer', async () => {
     const seen = [];
     const base = fakeFetch({

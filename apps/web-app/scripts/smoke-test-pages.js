@@ -160,7 +160,9 @@ export async function smokeTestPages({
 
   // ---- Phase 3: robots policy, on the only host where it is ours -----------
   const robots = domainHeaders.get('x-robots-tag');
-  const hasNoindex = /\bnoindex\b/i.test(robots ?? '');
+  // `none` is defined as equivalent to `noindex, nofollow`, so it counts as
+  // noindex here -- a production site served `none` is just as deindexed.
+  const hasNoindex = /\b(noindex|none)\b/i.test(robots ?? '');
   const failures = [];
 
   if (expectRobots === 'noindex' && !hasNoindex) {

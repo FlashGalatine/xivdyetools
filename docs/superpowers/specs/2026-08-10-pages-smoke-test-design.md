@@ -119,8 +119,9 @@ Behaviour:
    message (a 522 reported as "serves a different build" is the class of misdirection this design
    exists to remove).
 4. **Phase 3 — robots.** From that response's `x-robots-tag`:
-   `--expect-robots noindex` requires the value to contain `noindex`; `--expect-robots none`
-   requires no such header, or a value without `noindex`.
+   `--expect-robots noindex` requires the value to contain `noindex` or `none`; `--expect-robots
+   none` requires no such header, or a value without `noindex` or `none` (`none` is defined as
+   equivalent to `noindex, nofollow`, so it counts as noindex on both sides of the assertion).
 
 Budgets are named constants with a comment, not flags — no caller needs to vary them.
 

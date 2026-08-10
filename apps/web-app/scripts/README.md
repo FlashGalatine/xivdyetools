@@ -61,8 +61,8 @@ Three phases:
    (~180 s budget). A Pages custom domain keeps serving the *previous* deployment
    until propagation finishes, so this is what makes phase 3 describe the right
    build.
-3. `x-robots-tag` on that matched response must contain `noindex` for beta, and
-   must not for production.
+3. `x-robots-tag` on that matched response must contain `noindex` or `none`
+   for beta, and must contain neither for production.
 
 **Phase 3 only works on the custom domain.** Cloudflare injects
 `x-robots-tag: noindex` onto every `*.pages.dev` hostname itself, so asserting it
