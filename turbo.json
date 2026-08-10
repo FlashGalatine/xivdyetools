@@ -3,6 +3,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "env": ["VITE_APP_ENV"],
       "outputs": ["dist/**"],
       "inputs": [
         "src/**",

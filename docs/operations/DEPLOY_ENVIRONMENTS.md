@@ -302,7 +302,7 @@ Cloudflare Pages project** rather than a preview branch of the production one.
 |---|---|---|
 | Pages project | `xivdyetools` | `xivdyetools-beta` |
 | Domain | `xivdyetools.app` | `beta.xivdyetools.app` |
-| Workflow | `deploy-web-app.yml` (push to `main`) | `deploy-web-app-beta.yml` (push to any other branch) |
+| Workflow | `deploy-web-app.yml` (push to `main`) | `deploy-web-app-beta.yml` (push to any non-`main` branch that touches its `paths:` filter — `apps/web-app/**`, `packages/core/**`, `packages/types/**`, `packages/logger/**`, `packages/svg/**`) |
 | Deploy command | `pages deploy dist --project-name=xivdyetools` | `pages deploy dist --project-name=xivdyetools-beta --branch=beta` |
 | Backends | production `auth.` / `api.xivdyetools.app` | **the same production backends** |
 
