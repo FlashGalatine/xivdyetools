@@ -497,6 +497,55 @@ describe('KeyboardService', () => {
       document.body.removeChild(textarea);
     });
 
+    // REGRESSION: every tool renders inside V4LayoutShell's shadow root, so
+    // `document.activeElement` retargets to the HOST (<v4-layout-shell>) and the
+    // old guard saw no input at all — meaning shortcuts fired while typing
+    // anywhere in the app. Reported as Shift+T flipping the theme while naming a
+    // palette after a .chara import; the same slip hit `1`-`9` in any search box.
+    // The three tests above miss it because a light-DOM input does not retarget.
+    it('should not handle shortcuts when typing in an input inside a shadow root', () => {
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      const shadow = host.attachShadow({ mode: 'open' });
+      const input = document.createElement('input');
+      shadow.appendChild(input);
+      input.focus();
+
+      const listener = vi.fn();
+      window.addEventListener('keyboard-navigate-tool', listener);
+
+      // composed: true — a real keystroke crosses the shadow boundary on its
+      // way to the document-level listener.
+      const event = new KeyboardEvent('keydown', { key: '1', bubbles: true, composed: true });
+      input.dispatchEvent(event);
+
+      expect(listener).not.toHaveBeenCalled();
+
+      window.removeEventListener('keyboard-navigate-tool', listener);
+      document.body.removeChild(host);
+    });
+
+    it('should not toggle the theme on Shift+T typed into a shadow-root input', () => {
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      const shadow = host.attachShadow({ mode: 'open' });
+      const input = document.createElement('input');
+      shadow.appendChild(input);
+      input.focus();
+
+      const event = new KeyboardEvent('keydown', {
+        key: 'T',
+        shiftKey: true,
+        bubbles: true,
+        composed: true,
+      });
+      input.dispatchEvent(event);
+
+      expect(ThemeService.toggleDarkMode).not.toHaveBeenCalled();
+
+      document.body.removeChild(host);
+    });
+
     it('should not handle shortcuts when typing in contenteditable', () => {
       const div = document.createElement('div');
       div.setAttribute('contenteditable', 'true');

@@ -85,16 +85,42 @@ export class KeyboardService {
     }
   }
 
+  /** Is this element something the user types into? */
+  private static isTextEntry(node: EventTarget | null | undefined): boolean {
+    if (!(node instanceof HTMLElement)) return false;
+    if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) return true;
+    // Both checks are load-bearing: `isContentEditable` catches contenteditable=""
+    // and inherited editability that the attribute test misses, but jsdom does
+    // not implement contenteditable at all and always reports false — so the
+    // attribute test is what holds the unit tests honest.
+    if (node.isContentEditable) return true;
+    const attr = node.getAttribute('contenteditable');
+    return attr === '' || attr === 'true' || attr === 'plaintext-only';
+  }
+
   /**
-   * Check if user is currently typing in an input field
+   * Check if the user is currently typing in a text field.
+   *
+   * Must see THROUGH shadow DOM. Every tool renders inside V4LayoutShell's
+   * shadow root, so `document.activeElement` retargets to the host — it reports
+   * <v4-layout-shell>, never the <input> the user is actually typing in. The
+   * old guard therefore never fired in the real app, and typing a capital
+   * letter ran the Shift+<letter> shortcuts (naming a palette after a .chara
+   * import flipped the theme on Shift+T), while digits in any search box
+   * navigated away.
+   *
+   * `composedPath()[0]` is the authoritative answer: it is the true innermost
+   * target, before any retargeting. The activeElement walk is a fallback for
+   * synthetic events dispatched without a path.
    */
-  private static isUserTyping(): boolean {
-    const activeElement = document.activeElement;
-    return (
-      activeElement instanceof HTMLInputElement ||
-      activeElement instanceof HTMLTextAreaElement ||
-      activeElement?.getAttribute('contenteditable') === 'true'
-    );
+  private static isUserTyping(e?: KeyboardEvent): boolean {
+    if (this.isTextEntry(e?.composedPath?.()[0])) return true;
+
+    let active: Element | null = document.activeElement;
+    while (active?.shadowRoot?.activeElement) {
+      active = active.shadowRoot.activeElement;
+    }
+    return this.isTextEntry(active);
   }
 
   /**
@@ -102,7 +128,7 @@ export class KeyboardService {
    */
   private static handleKeyDown(e: KeyboardEvent): void {
     // Skip if user is typing in an input
-    if (this.isUserTyping()) {
+    if (this.isUserTyping(e)) {
       return;
     }
 
