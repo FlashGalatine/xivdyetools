@@ -273,6 +273,12 @@ export class ComparisonTool extends BaseComponent {
     // The 'prices-updated' event only fires for successful fetches,
     // so we need to explicitly render here to handle discarded requests
     this.renderSelectedDyesCards();
+    // The duel is the section actually on screen once a pair is active, and it
+    // reads prices from the service at render time. Without this it keeps the
+    // cards it built before the fetch resolved and shows "Market —" forever,
+    // while the (hidden) grid behind it shows the real price. renderDuel()
+    // no-ops when no pair is active.
+    this.renderDuel();
   }
 
   /**
