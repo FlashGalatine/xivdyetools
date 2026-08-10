@@ -3,6 +3,7 @@
  * These handlers intercept network requests and return mock responses
  */
 import { http, HttpResponse } from 'msw';
+import type { PresetCategory } from '@xivdyetools/types';
 
 // API base URL - must match the URL in community-preset-service.ts
 const API_URL = 'https://api.xivdyetools.app';
@@ -44,7 +45,23 @@ export const mockPresets = [
   },
 ];
 
-export const mockCategories = [
+/**
+ * The five live `PresetCategory` members. `id` is typed rather than left as a
+ * string so that dropping a member from the union is a compile error here, the
+ * way it now is in `presetCategoryLabel`'s map.
+ *
+ * This fixture used to seed a sixth, `community`, which 5.0 retired (BUG-001).
+ * A fixture carrying a category production no longer has lets tests assert
+ * behaviour for it and pass.
+ */
+export const mockCategories: {
+  id: PresetCategory;
+  name: string;
+  description: string;
+  icon: string | null;
+  is_curated: boolean;
+  preset_count: number;
+}[] = [
   {
     id: 'jobs',
     name: 'Jobs',
@@ -62,9 +79,25 @@ export const mockCategories = [
     preset_count: 12,
   },
   {
-    id: 'community',
-    name: 'Community',
-    description: 'User-submitted color palettes',
+    id: 'seasons',
+    name: 'Seasons',
+    description: 'Palettes drawn from the seasons',
+    icon: null,
+    is_curated: true,
+    preset_count: 8,
+  },
+  {
+    id: 'events',
+    name: 'Events',
+    description: 'Palettes for seasonal FFXIV events',
+    icon: null,
+    is_curated: true,
+    preset_count: 6,
+  },
+  {
+    id: 'aesthetics',
+    name: 'Aesthetics',
+    description: 'User-submitted palettes grouped by look',
     icon: null,
     is_curated: false,
     preset_count: 100,
