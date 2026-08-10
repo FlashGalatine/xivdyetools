@@ -8,6 +8,11 @@
 
 # [FONT-001]: `discord-worker` CJK subsets are stale by 128 glyphs — CJK text renders as tofu
 
+> **✅ RESOLVED 2026-08-10 (Sprint 7).** Subsets re-cut; 128 missing → 0, verified by cmap,
+> glyph outlines, and a real `resvg-wasm` render. Jump to
+> [Resolution](#resolution--sprint-7-2026-08-10) — it also corrects four claims made below.
+> The analysis is preserved as-written for the record.
+
 ## Severity
 **HIGH** — user-visible text corruption for three of six supported languages
 
@@ -175,6 +180,45 @@ Confirm before running that no other outstanding work adds bot strings — in pa
 `/preset` backend strings and the curated-preset locale keys (`preset.<id>.*`) the design record
 lists as pending.
 
+## Resolution — Sprint 7, 2026-08-10
+
+**RESOLVED. 128 missing glyphs → 0.** Subsets re-cut from the variable sources and verified
+three ways; see
+[REMEDIATION_PLAN.md § Sprint 7](../REMEDIATION_PLAN.md#-completed-2026-08-10--128-missing-glyphs--0)
+for the full record. Summary of what this document got wrong:
+
+| Claim here | Reality |
+|---|---|
+| SC needs 821 codepoints (zh) | **1,129** — the subsetter feeds SC `ja+ko+zh+de+fr` because it is the terminal fallback. Scoping SC to zh also mislabels ~288 load-bearing ja fallback glyphs as trimmable |
+| 34/48 ja misses absent from SC | **35/48** |
+| "45/45" zh misses absent from JP | **47/47** (the evidence line was truncated) |
+| Budget: 1,577 KiB "already over" ~1.3 MB | The ~1.3 MB figure predates `NotoSansJP-Subset.ttf` and was void before this finding existed. Retired in favour of gzipped Worker headroom |
+
+**Post-fix state:**
+
+| Font | Needed | Covered | Missing | Size |
+|------|-------:|--------:|--------:|-----:|
+| `NotoSansSC-Subset.ttf` | 1,129 | 1,129 | **0** ✅ | 843.7 KiB |
+| `NotoSansJP-Subset.ttf` | 556 | 556 | **0** ✅ | 571.1 KiB |
+| `NotoSansKR-Subset.ttf` | 489 | 489 | **0** ✅ | 233.2 KiB |
+
+Total 1,648.0 KiB raw / 992.5 KiB gzipped. Worker bundle **2,632.13 KiB gzip against the
+3,072 KiB limit** — 439.9 KiB (14.3%) free.
+
+**Verified beyond the cmap.** A cmap entry proves a codepoint is *mapped*, not that it draws:
+all 128 were additionally confirmed to have non-zero contours, then **rasterised through
+`resvg-wasm`** with the Worker's own six font buffers and `frame.ts` stacks. Zero tofu.
+
+**Adjacent fix:** SC was the only face without `fix_names`, leaving `nameID 1 = "Noto Sans SC
+Thin"`. Harmless in practice (fontdb reads the correct `nameID 16`, and `og-worker` ships the
+same condition) but inconsistent with its two siblings — now fixed.
+
+**Note for the next audit:** the subsetter is **not byte-deterministic** — fontTools stamps
+`head.modified` with wall-clock time, so re-running it dirties three ~800 KiB binaries even
+when coverage is unchanged. Compare glyph coverage, never file hashes. Pinning
+`head.modified` (e.g. via `SOURCE_DATE_EPOCH`) would make font diffs reviewable and is worth
+considering alongside recommendation 3 below.
+
 ---
 
 # [FONT-002]: `og-worker` subsets — VERIFIED COMPLETE, no action
@@ -200,9 +244,9 @@ separate the ja strings from the zh ones. Verified directly: **all 10 are presen
 
 | File | Type | Size | Glyphs | Status |
 |------|------|-----:|-------:|--------|
-| `discord-worker/src/fonts/NotoSansSC-Subset.ttf` | subset | 805.8 KiB | 1,183 | ⚠️ 47 missing |
-| `discord-worker/src/fonts/NotoSansJP-Subset.ttf` | subset | 545.9 KiB | 614 | ⚠️ 48 missing |
-| `discord-worker/src/fonts/NotoSansKR-Subset.ttf` | subset | 225.4 KiB | 553 | ⚠️ 33 missing |
+| `discord-worker/src/fonts/NotoSansSC-Subset.ttf` | subset | ~~805.8~~ **843.7 KiB** | ~~1,183~~ **1,262** | ✅ re-cut 2026-08-10 |
+| `discord-worker/src/fonts/NotoSansJP-Subset.ttf` | subset | ~~545.9~~ **571.1 KiB** | ~~614~~ **663** | ✅ re-cut 2026-08-10 |
+| `discord-worker/src/fonts/NotoSansKR-Subset.ttf` | subset | ~~225.4~~ **233.2 KiB** | ~~553~~ **584** | ✅ re-cut 2026-08-10 |
 | `discord-worker/src/fonts/FragmentMono-Regular.ttf` | full | 122.4 KiB | 487 | ✅ |
 | `discord-worker/src/fonts/Onest-VariableFont_wght.ttf` | full | 120.5 KiB | 470 | ✅ |
 | `discord-worker/src/fonts/SpaceGrotesk-VariableFont_wght.ttf` | full | 131.0 KiB | 735 | ✅ |
@@ -245,13 +289,18 @@ decision rather than an accident. Fold it into
 
 ## Recommendations
 
-1. **Re-run `apps/discord-worker/scripts/subset-cjk-fonts.py`** and verify with the script
-   above. This is the audit's only user-visible i18n defect. **Schedule it last**, after every
-   other locale-touching change.
-2. **Do not touch `og-worker`'s fonts** — verified complete.
-3. **Automate the coverage check in CI.** Stale subsets are structurally recurring: every locale
-   edit invalidates them, and nothing currently fails when they drift. A CI step that fails when
-   a locale codepoint is absent from its subset would have caught this the day the 5.0 strings
-   landed.
-4. **Re-decide or confirm the ~1.3 MB CJK budget** — the three subsets already total 1,577 KiB.
+1. ~~**Re-run `apps/discord-worker/scripts/subset-cjk-fonts.py`**~~ — **DONE 2026-08-10**, all
+   three subsets verified clean. See the Resolution section above.
+2. **Do not touch `og-worker`'s fonts** — verified complete. (Still true: its subsets cover its
+   own inputs, and Sprint 7 did not change them.)
+3. **Automate the coverage check in CI.** ⬅ **the one recommendation still open, and now the
+   most important.** Stale subsets are structurally recurring: every locale edit invalidates
+   them, nothing currently fails when they drift, and the resolution above had to hand-roll the
+   check three times to trust it. A CI step asserting `locale codepoints ⊆ subset cmap` would
+   have caught this the day the 5.0 strings landed. Note the correct requirement sets — SC takes
+   **all five languages**, JP takes ja, KR takes Hangul; scoping SC to zh produces false
+   "stale glyph" reports.
+4. ~~**Re-decide or confirm the ~1.3 MB CJK budget**~~ — **DECIDED 2026-08-10: retired.** The
+   raw-KiB figure predates `NotoSansJP-Subset.ttf` and tracks nothing Cloudflare enforces.
+   Track gzipped Worker headroom via `wrangler deploy --dry-run` instead (currently 14.3% free).
 5. **Add explicit CJK families to the web-app stacks** as part of `REFACTOR-002`.

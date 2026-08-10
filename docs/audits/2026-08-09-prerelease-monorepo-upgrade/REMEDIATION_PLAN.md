@@ -9,6 +9,22 @@
 | [DEAD_CODE_REPORT.md](DEAD_CODE_REPORT.md) | 8 — `DEAD-001…008` |
 | [i18n/I18N_AUDIT_2026-08-09.md](i18n/I18N_AUDIT_2026-08-09.md) + [FONT_SUBSET_AUDIT.md](i18n/FONT_SUBSET_AUDIT.md) + [HARDCODED_STRINGS.md](i18n/HARDCODED_STRINGS.md) | 8 — `FONT-001…002`, `HC-001…004`, `I18N-001…002` |
 
+> ## ✅ ALL SEVEN SPRINTS COMPLETE — 2026-08-10
+>
+> Sprint 7 (`FONT-001`) closed the terminal sprint on 2026-08-10; every scheduled finding in
+> this plan has landed on `monorepo-2.0-prep`. What remains is **not** code:
+>
+> - **Deploys are user-run** — six Workers, one Pages project, and `register-commands` for
+>   `BUG-001` (a registered schema lives on Discord's side; the code change alone does not
+>   close it). See each sprint's *Ends with*.
+> - **Unscheduled by design:** `DEAD-008` (KEEP register) and `FINDING-003` (parked
+>   `stoat-worker`), each with a revisit trigger below.
+> - **Recommended, not scheduled:** the CI additions at the foot of this document. The
+>   font-coverage assertion is the highest-value of them — `FONT-001` is structurally
+>   recurring, since every locale edit invalidates the subsets and nothing currently fails.
+>
+> The *Status basis* below is preserved as it read at audit time.
+
 **Status basis:** 33 findings total — **0 completed** (no code was modified during the audit),
 **25 outstanding and scheduled**, **4 superseded** by cross-audit conflict resolution,
 **1 KEEP** (unscheduled, with a revisit trigger), **3 informational / no action**.
@@ -304,6 +320,97 @@ silently exceeding it. Workers have a bundle-size limit and fonts are the larges
 and reading them — this is the one finding no automated test in the repo can catch, because the
 41 `discord-worker` test files assert SVG *structure*, and glyph coverage is a property of the
 rasteriser plus the font binary.
+
+### ✅ Completed 2026-08-10 — 128 missing glyphs → 0
+
+**The precondition cleared on inspection, not on faith.** The finding named two pieces of
+pending bot-string work; both turned out to be non-blocking:
+
+- The curated-preset keys (`preset.<id>.*`) live in `apps/web-app/src/locales/` — 15 id blocks
+  in the web tree. `discord-worker`'s subsetter reads only `packages/core` +
+  `packages/bot-logic`, so they were never inputs.
+- `/preset`'s bot graphics are *deferred on the command's survival* per Bot Graphics doc 4, so
+  no bot strings are queued behind them.
+
+Confirmed independently by `git log`: **no commit in Sprints 1–6 touched either input tree.**
+Locale parity across `bot-logic` is clean at 615 leaves × 6 languages.
+
+**Result.** `subset-cjk-fonts.py` re-run from the variable sources; all three subsets verified
+against every codepoint their locale trees actually use:
+
+| Font | Needed | Was missing | Now |
+|------|-------:|------------:|----:|
+| `NotoSansSC-Subset.ttf` | 1,129 (CJK, all 5 languages) | 47 | **0** ✅ |
+| `NotoSansJP-Subset.ttf` | 556 (CJK, ja) | 48 | **0** ✅ |
+| `NotoSansKR-Subset.ttf` | 489 (Hangul) | 33 | **0** ✅ |
+
+Three gates, not one. The audit's prescribed per-language check passes; so does a **corrected**
+check that measures SC against its real requirement set (see below); so does an outline check
+confirming all 128 previously-missing codepoints map to glyphs with **non-zero contours**, not
+mapped-but-empty ones that would render as blank rather than tofu.
+
+Finally the check the finding says no test can perform: the 128 characters were **rasterised
+through the real pipeline** — `resvg-wasm` with the same six font buffers and the same
+`frame.ts` font stacks the Worker uses. Zero tofu; ja renders in Japanese letterforms, zh in
+Simplified, Hangul intact, and the mono stack still drops digits to Fragment Mono.
+
+### Three corrections to the finding's own analysis
+
+1. **The SC requirement set was understated.** The finding measures `NotoSansSC-Subset.ttf`
+   against zh alone, but the subsetter feeds it `collect_all_characters()` — ja + ko + zh + de +
+   fr — precisely because SC is the *terminal fallback* in every chain. Its real requirement is
+   1,129 codepoints, not 821. Measuring SC against zh-only also makes ~288 load-bearing ja
+   fallback glyphs look like stale weight they could be trimmed of. They cannot.
+2. **The fallback figures were slightly off** (both understated): 35 of 48 ja misses were absent
+   from the SC subset, not 34; all 47 zh misses were absent from JP, not "45/45". Substance
+   unchanged — the conclusion that ≥112 of 128 had no fallback holds.
+3. **The size budget question was already moot.** See below.
+
+### The ~1.3 MB budget is retired, not exceeded
+
+| | Raw | Gzipped |
+|---|---:|---:|
+| Three subsets before | 1,577.1 KiB | 952.0 KiB |
+| Three subsets after | 1,648.0 KiB | 992.5 KiB |
+| Delta | **+70.9 KiB** | **+40.5 KiB** |
+
+The "~1.3 MB" figure **predates `NotoSansJP-Subset.ttf`**, a 571 KiB face 5.0 added and never
+revised the budget for. It was already meaningless before `FONT-001` added a byte, so the
+explicit re-decision this plan asked for is: **retire the raw-KiB budget and track gzipped
+Worker headroom instead**, which is the only ceiling Cloudflare actually enforces.
+
+Measured with `wrangler deploy --dry-run`:
+
+```
+Total Upload: 7937.69 KiB / gzip: 2632.13 KiB     (limit 3072 KiB — 439.9 KiB free, 14.3%)
+```
+
+**The deploy blocker is gone.** The 3,209.3 KiB measurement recorded on 2026-08-09 — which put
+this Worker 137.3 KiB *over* the limit and made `FONT-001` look like it would deepen a hard
+deploy failure — predates the image-worker split (`docs/operations/IMAGE_WORKER_SPLIT.md`).
+`@cf-wasm/photon` is no longer a `discord-worker` dependency, and fonts now account for 37.7%
+of the gzipped bundle with room to spare.
+
+### One extra defect found and fixed in the same pass
+
+`NotoSansSC-Subset.ttf` was the only face the script did not run `fix_names` over, so subsetting
+the *variable* source left `nameID 1 = "Noto Sans SC Thin"` (the `wght` axis default is 100)
+while every font stack asks for `Noto Sans SC`. **Not a live bug** — `resvg`'s fontdb prefers
+the typographic family in `nameID 16`, which was already correct, and `og-worker` ships the
+identical condition in production. But any consumer matching on `nameID 1` would fail to find
+the family, and JP and KR have always been fixed up here. Fixed for consistency; re-rendered
+output is byte-identical, confirming no visual change.
+
+Also recorded in the script: **the subsetter is not byte-deterministic.** fontTools stamps
+`head.modified` with wall-clock time, so three consecutive runs produce three different file
+hashes with identical glyph coverage. Compare coverage, never hashes.
+
+**Verification gate:** `pnpm turbo run type-check test --force` → **42/42 tasks, 0 failures**
+(uncached); `build` 10/10; `lint` 24/24 with **0 errors**.
+
+**Still user-run:** the deploy itself. Nothing takes effect until
+`pnpm --filter xivdyetools-discord-worker run deploy` (beta) → read a ja/ko/zh card →
+`deploy:production`.
 
 ---
 

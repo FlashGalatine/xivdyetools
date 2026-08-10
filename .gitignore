@@ -43,3 +43,8 @@ e2e-coverage/
 
 # VitePress build cache (api-worker docs)
 .vitepress/cache/
+
+# Python bytecode — the locale/font tooling (subset-cjk-fonts.py,
+# fetch_dye_names.py, og-worker's subsetter) drops these next to the scripts
+__pycache__/
+*.pyc

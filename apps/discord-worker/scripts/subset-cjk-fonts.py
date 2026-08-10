@@ -1,31 +1,42 @@
 """
 Subset CJK fonts for the XIV Dye Tools Discord Worker.
 
-Creates subsetted versions of Noto Sans SC and Noto Sans KR containing only
-the glyphs needed for all localized text in the application. This keeps the
-Cloudflare Worker bundle size manageable (~1.2 MiB for both fonts combined
-instead of ~20 MiB for the full fonts).
+Creates subsetted versions of Noto Sans SC, JP and KR containing only the
+glyphs the application's localized text actually uses, instead of shipping
+~37 MiB of full faces inside the Worker.
 
 Prerequisites:
-  pip install fonttools
+  pip install fonttools brotli
 
 Usage:
   python scripts/subset-cjk-fonts.py
 
 The script reads all locale JSON files from:
-  - packages/core/src/data/locales/ (dye names, categories, labels, etc.)
-  - packages/bot-i18n/src/locales/ (bot UI strings, titles, quality labels, etc.)
+  - packages/core/src/data/locales/     (dye names, categories, labels, etc.)
+  - packages/bot-logic/src/i18n/locales/ (bot UI strings, card vocabulary, etc.)
 
 And produces:
-  - src/fonts/NotoSansSC-Subset.ttf (Chinese ideographs + Japanese kana)
-  - src/fonts/NotoSansKR-Subset.ttf (Korean Hangul syllables)
+  - src/fonts/NotoSansSC-Subset.ttf  CJK for ALL languages — SC is the terminal
+                                     fallback in every chain, so it must carry
+                                     the Japanese kanji too, not just Chinese
+  - src/fonts/NotoSansJP-Subset.ttf  CJK in ja only — supplies Japanese
+                                     letterforms ahead of SC for ja locales
+  - src/fonts/NotoSansKR-Subset.ttf  Hangul + ASCII only (see OPT-001 below)
 
-Source fonts must be present at:
-  - src/fonts/NotoSansSC-Regular.ttf (download from Google Fonts: Noto Sans SC)
-  - A downloaded NotoSansKR variable font (see NOTO_KR_URL below)
+Source faces are looked up locally and downloaded on demand if absent; the
+downloads land in scripts/.font-sources/, deliberately outside src/fonts so
+wrangler never bundles a 10 MiB variable font into the Worker.
+
+SIZE BUDGET: the three subsets total ~1.6 MiB raw / ~1.0 MiB gzipped, which is
+roughly 38% of the Worker bundle. The binding constraint is Cloudflare's 3 MiB
+*gzipped* Worker limit, NOT the "~1.3 MiB" raw figure quoted before 5.0 — that
+predates NotoSansJP-Subset and was never revised when it was added. Measure
+real headroom with `wrangler deploy --dry-run`, which reports the gzipped total.
 
 If new dyes are added or locale strings change, re-run this script and commit
-the updated subset files.
+the updated subset files. Every locale edit invalidates these subsets: a
+codepoint absent from its subset renders as tofu, and no test in the repo
+catches it (the SVG suites assert structure, not glyph coverage).
 """
 
 import os
@@ -53,9 +64,20 @@ FONTS_DIR = os.path.join(WORKER_ROOT, "src", "fonts")
 # and a 10 MiB variable source in src/fonts would ship inside the Worker.
 SOURCES_DIR = os.path.join(SCRIPT_DIR, ".font-sources")
 
+# The full faces checked into git, for the same reason SOURCES_DIR sits outside
+# src/fonts. No candidate list may point inside FONTS_DIR.
+FONTS_SRC_DIR = os.path.join(WORKER_ROOT, "fonts-src")
+
+# VARIABLE FACES ONLY. The shipped subsets are cut from NotoSansSC[wght], so a
+# candidate that could resolve to fonts-src/NotoSansSC-Regular.ttf — a static
+# face still tracked from the pre-5.0 era — would silently swap the face on a
+# fresh clone, where neither .font-sources/ exists (both are gitignored).
+# Falling through to the download keeps every machine on the same face.
+#
+# (Output is never byte-identical run to run: fontTools stamps head.modified
+# with wall-clock time. Compare glyph coverage, not file hashes.)
 SC_INPUT_CANDIDATES = [
     os.path.join(SOURCES_DIR, "NotoSansSC-Variable.ttf"),
-    os.path.join(FONTS_DIR, "NotoSansSC-Regular.ttf"),
     os.path.join(APPS_DIR, "og-worker", "scripts", ".font-sources", "NotoSansSC-Variable.ttf"),
 ]
 SC_OUTPUT = os.path.join(FONTS_DIR, "NotoSansSC-Subset.ttf")
@@ -196,16 +218,28 @@ def main():
 
     print(f"\n--- Noto Sans SC ---")
     print(f"Input: {os.path.getsize(sc_input) / 1024:.1f} KiB")
-    sc_size, sc_glyphs = subset_font(sc_input, SC_OUTPUT, codepoints)
+    # FONT-001 (2026-08-10): SC was the only face without fix_names, so subsetting
+    # the variable source left nameID 1 = "Noto Sans SC Thin" (the wght axis default
+    # is 100). Rendering still worked because resvg's fontdb prefers the typographic
+    # family in nameID 16, which was already correct — but any consumer that matches
+    # on nameID 1 would fail to find "Noto Sans SC". JP and KR have always been
+    # fixed up here; SC was simply missed.
+    sc_size, sc_glyphs = subset_font(sc_input, SC_OUTPUT, codepoints, fix_names={
+        1: "Noto Sans SC",
+        2: "Regular",
+        4: "Noto Sans SC Regular",
+        6: "NotoSansSC-Regular",
+    })
     print(f"Output: {sc_size / 1024:.1f} KiB ({sc_glyphs} glyphs)")
 
     # Subset Noto Sans KR
     # Look for the KR source font in several locations
+    # fonts-src/NotoSansKR-Variable.ttf is tracked in git and byte-identical to
+    # og-worker's gitignored copy, so listing it lets a fresh clone cut the same
+    # glyph set without a 10 MiB download.
     kr_candidates = [
         os.path.join(SOURCES_DIR, "NotoSansKR-Variable.ttf"),
-        os.path.join(FONTS_DIR, "NotoSansKR-Variable.ttf"),
-        os.path.join(FONTS_DIR, "NotoSansKR[wght].ttf"),
-        os.path.join(FONTS_DIR, "NotoSansKR-Regular.ttf"),
+        os.path.join(FONTS_SRC_DIR, "NotoSansKR-Variable.ttf"),
         os.path.join(APPS_DIR, "og-worker", "scripts", ".font-sources", "NotoSansKR-Variable.ttf"),
     ]
     kr_input = next((p for p in kr_candidates if os.path.exists(p)), None)
@@ -264,7 +298,10 @@ def main():
     print(f"Output: {jp_size / 1024:.1f} KiB ({jp_glyphs} glyphs)")
 
     total = sc_size + kr_size + jp_size
-    print(f"\nTotal CJK font overhead: {total / 1024:.1f} KiB (budget ~1.3 MiB)")
+    print(f"\nTotal CJK font overhead: {total / 1024:.1f} KiB raw")
+    print("These compress to roughly 60% in the Worker bundle. The real ceiling is")
+    print("Cloudflare's 3,072 KiB GZIPPED Worker limit — measure it with:")
+    print("  npx wrangler deploy --dry-run")
     print("Done! Commit the updated subset files to the repository.")
 
 
