@@ -9,6 +9,11 @@
  */
 export const ALLOWED_REDIRECT_ORIGINS = [
   'https://xivdyetools.app',
+  // Beta web app — a separate Cloudflare Pages project (xivdyetools-beta)
+  // serving non-main branches. It uses this production OAuth worker on
+  // purpose, so testers log in with their real accounts.
+  // See docs/superpowers/specs/2026-08-09-beta-web-app-deployment-design.md
+  'https://beta.xivdyetools.app',
   'https://xivdyetools.projectgalatine.com', // Transition period - remove after migration complete
   'http://localhost:5173',
   'http://localhost:3000',

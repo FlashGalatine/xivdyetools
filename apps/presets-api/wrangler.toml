@@ -39,7 +39,7 @@ routes = [
   { pattern = "api.xivdyetools.app", custom_domain = true },
   { pattern = "api.xivdyetools.projectgalatine.com", custom_domain = true }
 ]
-vars ={ ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com" }
+vars ={ ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com,https://beta.xivdyetools.app" }
 
 [[env.production.d1_databases]]
 binding = "DB"
