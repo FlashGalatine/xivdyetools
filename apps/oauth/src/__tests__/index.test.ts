@@ -69,6 +69,30 @@ describe('OAuth Worker App', () => {
             expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
         });
 
+        // Regression: CORS previously allowed ONLY FRONTEND_URL, so the beta site
+        // could pass the redirect_uri allowlist and start a login, then have every
+        // token-exchange XHR blocked — completing the flow but never appearing
+        // logged in. CORS and redirect URIs must share one allowlist.
+        it('should allow every origin trusted for redirects, not just FRONTEND_URL', async () => {
+            const response = await SELF.fetch('http://localhost/', {
+                headers: { Origin: 'https://beta.xivdyetools.app' },
+            });
+
+            expect(response.headers.get('access-control-allow-origin')).toBe(
+                'https://beta.xivdyetools.app'
+            );
+        });
+
+        it('should still reject an origin that is in neither allowlist', async () => {
+            const response = await SELF.fetch('http://localhost/', {
+                headers: { Origin: 'https://beta.xivdyetools.app.evil.com' },
+            });
+
+            expect(response.headers.get('access-control-allow-origin')).not.toBe(
+                'https://beta.xivdyetools.app.evil.com'
+            );
+        });
+
         it('should handle request without origin header', async () => {
             const response = await SELF.fetch('http://localhost/');
 

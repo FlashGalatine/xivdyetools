@@ -15,6 +15,7 @@ import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-kit';
 import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
 import { bodySizeLimit, jsonDepthLimit } from './middleware/body-validation.js';
+import { getAllowedRedirectOrigins } from './constants/oauth.js';
 
 // Define context variables type
 type Variables = MiddlewareVariables;
@@ -79,8 +80,17 @@ app.use(
 
       const env = c.env as Env;
 
-      // Allow the configured frontend URL
-      if (origin === env.FRONTEND_URL) {
+      // BUG-018 finished the job for redirect URIs but left CORS behind, so a
+      // site could be allowed to START a login and then be blocked from every
+      // XHR that completes one. beta.xivdyetools.app hit exactly that: the
+      // authorize redirect succeeded, the callback returned, and the token
+      // exchange was blocked with no Access-Control-Allow-Origin — so the app
+      // sat there still showing its two login buttons.
+      //
+      // Same allowlist as the redirect check, so a host can never be trusted
+      // for one half of the flow and not the other. getAllowedRedirectOrigins
+      // already includes FRONTEND_URL and strips localhost outside development.
+      if (getAllowedRedirectOrigins(env).includes(origin)) {
         return origin;
       }
 
