@@ -198,4 +198,44 @@ describe('ConfigSidebar', () => {
       expect(ConfigSidebar.styles).toBeDefined();
     });
   });
+
+  // ============================================================================
+  // Avatar Fallback (BUG-003)
+  // ============================================================================
+
+  describe('avatarInitial', () => {
+    it('returns the uppercased first character of a display name', async () => {
+      const { avatarInitial } = await import('../../v4/config-sidebar');
+      expect(avatarInitial('flash galatine')).toBe('F');
+      expect(avatarInitial('  padded  ')).toBe('P');
+    });
+
+    it('takes a whole code point, not a UTF-16 unit', async () => {
+      const { avatarInitial } = await import('../../v4/config-sidebar');
+      // A surrogate pair: slicing by index would yield half of it and render
+      // as a replacement character.
+      expect(avatarInitial('𝓐melia')).toBe('𝓐');
+      expect(avatarInitial('🍎 Apple')).toBe('🍎');
+    });
+
+    it('falls back to ? rather than emitting an empty chip', async () => {
+      const { avatarInitial } = await import('../../v4/config-sidebar');
+      expect(avatarInitial('')).toBe('?');
+      expect(avatarInitial('   ')).toBe('?');
+    });
+
+    it('never depends on the user id', async () => {
+      // The regression this guards. `AuthUser.id` is a `crypto.randomUUID()`
+      // minted by the oauth worker, not a Discord snowflake, so the old
+      // `parseInt(user.id) % 5` default-avatar guess produced
+      // `embed/avatars/NaN.png` -- a 404 -- for every UUID beginning with a hex
+      // letter. `BigInt` would have thrown outright on the same input.
+      const uuid = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
+      expect(Number.isNaN(parseInt(uuid, 10))).toBe(true);
+      expect(() => BigInt(uuid)).toThrow();
+
+      const { avatarInitial } = await import('../../v4/config-sidebar');
+      expect(avatarInitial('Amelia')).toBe('A');
+    });
+  });
 });

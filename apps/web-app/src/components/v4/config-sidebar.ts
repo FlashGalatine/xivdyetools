@@ -50,6 +50,25 @@ import type { DyeFiltersChangeDetail } from './dye-filters-v4';
 import type { SubRace } from '@xivdyetools/types';
 
 /**
+ * First character of a display name, for the avatar chip shown when the auth
+ * provider gave us no avatar URL.
+ *
+ * This replaces a `parseInt(user.id) % 5` guess at Discord's default-avatar
+ * index. That guess could never work: `AuthUser.id` is *our* user ID, minted by
+ * `crypto.randomUUID()` in the oauth worker -- not a Discord snowflake. When the
+ * UUID began with a hex letter (6 of 16 possible first characters) `parseInt`
+ * returned `NaN` and the app requested `embed/avatars/NaN.png`, a 404. It was
+ * also wrong in principle for XIVAuth users, who have no Discord identity at all.
+ *
+ * Iterating the string yields code points rather than UTF-16 units, so an emoji
+ * or astral-plane name does not render half a surrogate pair.
+ */
+export function avatarInitial(name: string): string {
+  const first = [...name.trim()][0];
+  return first ? first.toLocaleUpperCase() : '?';
+}
+
+/**
  * Mapping from SubRace type values to ClanKey for localization lookup
  * SubRace uses PascalCase, ClanKey uses camelCase
  */
@@ -561,6 +580,21 @@ export class ConfigSidebar extends BaseLitComponent {
         height: 36px;
         border-radius: 50%;
         object-fit: cover;
+      }
+
+      /* Shown when the provider gave us no avatar. Local, so it cannot 404 and
+         costs no third-party request. */
+      .user-avatar--initial {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        background: color-mix(in srgb, var(--theme-primary, #ea4133) 18%, transparent);
+        color: var(--theme-primary, #ea4133);
+        font-weight: 600;
+        font-size: 15px;
+        line-height: 1;
+        user-select: none;
       }
 
       .user-info {
@@ -1560,9 +1594,6 @@ export class ConfigSidebar extends BaseLitComponent {
 
     if (isAuthenticated && user) {
       // Logged in - show user card and submit button
-      const avatarUrl =
-        user.avatar_url ||
-        `https://cdn.discordapp.com/embed/avatars/${parseInt(user.id || '0') % 5}.png`;
       const displayName = user.global_name || user.username || 'User';
       const providerLabel = user.auth_provider === 'xivauth' ? 'XIVAuth' : 'Discord';
 
@@ -1570,7 +1601,13 @@ export class ConfigSidebar extends BaseLitComponent {
         <div class="auth-section">
           <div class="config-label">${LanguageService.t('config.account')}</div>
           <div class="user-card">
-            <img class="user-avatar" src="${avatarUrl}" alt="${displayName}" />
+            ${
+              user.avatar_url
+                ? html`<img class="user-avatar" src="${user.avatar_url}" alt="${displayName}" />`
+                : html`<div class="user-avatar user-avatar--initial" aria-hidden="true">
+                    ${avatarInitial(displayName)}
+                  </div>`
+            }
             <div class="user-info">
               <div class="user-name">${displayName}</div>
               <div class="user-provider">
