@@ -290,3 +290,57 @@ merge rather than needing a follow-up command.
   work interrupted; Sprint 2's `discord-worker` deploy + `register-commands` remain pending.
 - `apps/api-worker/wrangler.toml` — the reference implementation (BUG-008, 2026-07-18 audit).
 - `docs/operations/SECRET_ROTATION.md` — secret handling conventions.
+
+---
+
+## The Beta Web App (added 2026-08-09)
+
+`web-app` follows the same beta pattern as the Discord bot, using a **second
+Cloudflare Pages project** rather than a preview branch of the production one.
+
+| | Production | Beta |
+|---|---|---|
+| Pages project | `xivdyetools` | `xivdyetools-beta` |
+| Domain | `xivdyetools.app` | `beta.xivdyetools.app` |
+| Workflow | `deploy-web-app.yml` (push to `main`) | `deploy-web-app-beta.yml` (push to any other branch) |
+| Deploy command | `pages deploy dist --project-name=xivdyetools` | `pages deploy dist --project-name=xivdyetools-beta --branch=beta` |
+| Backends | production `auth.` / `api.xivdyetools.app` | **the same production backends** |
+
+**Why a second project rather than a preview branch.** A preview-branch setup
+separates beta from production by a CLI flag and a hand-edited CNAME target —
+the same "one flag away from production" shape that produced this document. Two
+projects make the mistake unavailable. It also avoids two caveats of the
+branch-alias route: it requires a *proxied* Cloudflare DNS record, and
+Cloudflare Access over previews is documented as covering `*.pages.dev` URLs but
+**not** custom domains.
+
+**`--branch=beta` is load-bearing.** The project was created with
+`wrangler pages project create xivdyetools-beta --production-branch=beta`, so a
+deploy on branch `beta` is a *production* deployment of the beta project, which
+is what the custom domain serves. Under any other branch name the deploy
+succeeds as a **preview** and the custom domain keeps serving the previous
+build — a silent no-op. Direct Upload projects cannot change the production
+branch from the dashboard; the documented route is a PATCH to the Update Project
+API.
+
+**Beta writes to production data.** It uses the production presets API and the
+production OAuth worker, exactly as the beta bot shares production D1. Presets
+submitted or votes cast on beta are real. This was a deliberate choice: no
+isolated preset database exists anywhere today — even
+`xivdyetools-presets-api-dev` binds the production D1.
+
+**Telling them apart.** A beta build carries a `[BETA] ` title prefix and the
+blue paint-bucket favicon (production is red). Both come from
+`VITE_APP_ENV=beta` via `vite-plugin-beta-branding`, and
+`scripts/check-beta-build.js` fails the job before deploy if the variable did
+not take effect. Beta also serves `X-Robots-Tag: noindex, nofollow`.
+
+**Two origin allowlists must include beta**, or login fails with an opaque
+redirect-URI error:
+
+- `apps/oauth/src/constants/oauth.ts` → `ALLOWED_REDIRECT_ORIGINS`
+- `apps/presets-api/wrangler.toml` → `env.production.ADDITIONAL_CORS_ORIGINS`
+
+Both workers deploy from `main` on push, but both expose `workflow_dispatch` and
+`actions/checkout` takes the dispatched ref — so allowlist changes can be
+released from a feature branch without merging.

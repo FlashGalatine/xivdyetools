@@ -51,6 +51,9 @@ npm run build:css:watch      # tailwindcss --watch
 npm run check-bundle-size    # validate dist/ bundles against limits
 npm run validate:i18n        # check locale completeness
 npm run build:check          # build + check-bundle-size (CI guard)
+VITE_APP_ENV=beta npm run build     # Beta build (beta.xivdyetools.app)
+node scripts/check-beta-build.js    # Assert dist/ really is a beta build
+node scripts/generate-beta-icons.mjs # Regenerate the beta favicon set (rarely needed)
 ```
 
 ### Pre-commit Checklist
@@ -242,6 +245,7 @@ All `StorageService` keys are prefixed with `xivdyetools_`. Tutorial-offered fla
 - `assets/css/tailwind.css` is built by `npm run build:css` and committed; the dev script does **not** rebuild Tailwind on save — use `build:css:watch` in another terminal if you're editing styles.
 - `public/_headers` (Cloudflare Pages) is the **single** source of truth for the production CSP: `script-src 'self'`, `style-src 'self' 'unsafe-inline'`, `frame-ancestors 'none'`. Do not add a second copy — a `<meta http-equiv>` tag cannot express `frame-ancestors` and will silently diverge.
 - **Only `public/` reaches `dist/`.** `publicDir` is `../public`, so files sitting at the package root (`manifest.json`, `robots.txt`, `service-worker.js`, `assets/`) are copied by nothing and are absent from a production build. Anything that must ship belongs under `public/`.
+- **`VITE_APP_ENV=beta` produces a beta build**: `[BETA] ` title prefix, the blue favicon set from `public/assets/icons/beta/`, and `X-Robots-Tag: noindex` appended to `dist/_headers`. All of it lives in `vite-plugin-beta-branding.ts`, which is inert without the flag, so a production build is unaffected. `node scripts/check-beta-build.js` asserts the result and is run by the beta workflow before deploy. See `docs/operations/DEPLOY_ENVIRONMENTS.md`.
 
 ## Security Patterns
 

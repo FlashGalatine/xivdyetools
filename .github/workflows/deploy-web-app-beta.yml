@@ -1,0 +1,93 @@
+# Deploys the BETA web app (Pages project xivdyetools-beta, served at
+# beta.xivdyetools.app) on any push to a non-main branch.
+#
+# Safe by construction: this is a SEPARATE Pages project from production's
+# `xivdyetools`. There is no flag on this workflow that could reach production,
+# which is the reason a second project was chosen over a preview branch of the
+# existing one. See docs/superpowers/specs/2026-08-09-beta-web-app-deployment-design.md
+#
+# `--branch=beta` matters: the project was created with
+# `--production-branch=beta`, so this is a *production* deployment of the beta
+# project and is therefore what the custom domain serves. Deploying under any
+# other branch name lands as a preview and the custom domain keeps serving the
+# previous build - a silent no-op.
+#
+# There is ONE beta site. Concurrent branches share it, so the most recent push
+# wins; cancel-in-progress makes that explicit rather than a race.
+name: Deploy Beta Web App
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+      # Dependency bumps should not seize beta from whoever is testing on it.
+      - 'dependabot/**'
+    paths:
+      - 'apps/web-app/**'
+      - 'packages/core/**'
+      - 'packages/types/**'
+      - 'packages/logger/**'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web-app-beta
+  # Unlike production, a superseded beta deploy is worth cancelling: the newer
+  # commit is the one being tested.
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build & Deploy Beta Web App
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v5
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build dependencies
+        run: pnpm turbo run build --filter=xivdyetools-web-app...
+
+      - name: Type-check
+        run: pnpm turbo run type-check --filter=xivdyetools-web-app
+
+      - name: Test
+        run: pnpm turbo run test --filter=xivdyetools-web-app --continue
+
+      - name: Build beta web app
+        run: pnpm --filter xivdyetools-web-app run build
+        env:
+          VITE_APP_ENV: beta
+
+      - name: Check bundle sizes
+        run: pnpm --filter xivdyetools-web-app exec node scripts/check-bundle-size.js
+
+      # Fails the job before deploy if VITE_APP_ENV did not take effect. Without
+      # this, a mis-set variable publishes a build indistinguishable from
+      # production onto the beta domain, indexable and unmarked.
+      - name: Verify this is a beta build
+        run: pnpm --filter xivdyetools-web-app exec node scripts/check-beta-build.js
+
+      - name: Deploy to Cloudflare Pages (beta project)
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/web-app
+          command: pages deploy dist --project-name=xivdyetools-beta --branch=beta
+          packageManager: pnpm
+
+      - name: Smoke test
+        run: |
+          sleep 5
+          curl --fail --retry 3 --retry-delay 5 --retry-all-errors \
+            -o /dev/null -w "%{http_code}" \
+            -H "User-Agent: xivdyetools-ci" \
+            https://beta.xivdyetools.app/
