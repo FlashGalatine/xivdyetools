@@ -13,7 +13,12 @@
 ## Global Constraints
 
 - Branch: `monorepo-2.0-prep`. Do **not** merge to `main`; do **not** push unless asked.
-- Production build output must be unchanged. Every beta behaviour is gated on `VITE_APP_ENV === 'beta'`.
+- **A production build must be behaviourally unchanged.** Every beta difference is gated on
+  `VITE_APP_ENV === 'beta'`. Concretely, with the flag unset: `dist/index.html`'s `<title>` has no
+  `[BETA]` prefix, no icon link points into `/assets/icons/beta/`, and `dist/_headers` has no
+  `X-Robots-Tag`. This does **not** mean the emitted JS is byte-identical — Task 2 legitimately
+  changes `router-service.ts` source, so the bundle hash will move. Byte-identical *rendered
+  output*, not byte-identical bundles.
 - Pages project name is exactly `xivdyetools-beta`; deploy branch is exactly `beta`. Both already exist — do not create or rename them.
 - Beta domain is exactly `https://beta.xivdyetools.app` (no trailing slash in allowlist entries).
 - `apps/web-app` type-check covers `src` only (`tsconfig.json` → `"include": ["src"]`). Root-level `*.ts` files such as `vite.config.ts` and the Vite plugins are **not** type-checked. Put logic that deserves type-checking and tests in `src/`.
