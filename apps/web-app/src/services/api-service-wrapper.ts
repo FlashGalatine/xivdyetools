@@ -31,25 +31,23 @@ function getUniversalisBaseUrl(): string {
     return envUrl;
   }
 
-  // In production, use the `/api/v2` compatibility mount rather than the
-  // canonical `data.xivdyetools.app/universalis` path.
+  // api-worker's absorbed Universalis routes (Monorepo 2.0 Tier 2 — formerly
+  // the standalone proxy.xivdyetools.app worker). api-worker sets
+  // `cors({ origin: '*' })`, so this answers every origin: production, beta,
+  // and *.pages.dev alike. CORS headers are present even on errors like 429.
   //
-  // WHY: api-worker absorbed the Universalis proxy (Monorepo 2.0 Tier 2), but
-  // that absorption ships only when this branch's api-worker is deployed. Until
-  // then `data.xivdyetools.app/universalis/*` is a hard 404 and every market
-  // call in the app fails — which is exactly what beta.xivdyetools.app showed.
+  // HARD DEPENDENCY: these routes exist only once THIS branch's api-worker is
+  // deployed to data.xivdyetools.app. Until that deploy, every market call is a
+  // 404 and the Market Board is dead on any site built from this branch.
   //
-  // `proxy.xivdyetools.app/api/v2/*` works in BOTH eras: today it is served by
-  // the still-live standalone universalis-proxy worker, and after the migration
-  // the custom domain moves to api-worker, whose `/api/v2` mount exists
-  // precisely to keep this path shape working (see api-worker's
-  // universalis/router.ts header). CORS headers are present on every response,
-  // including errors like 429.
-  //
-  // Once api-worker is deployed to data.xivdyetools.app, this may be switched
-  // back to the canonical `https://data.xivdyetools.app/universalis`.
+  // The legacy `proxy.xivdyetools.app/api/v2` mount is NOT a usable stand-in
+  // for beta: the old worker replies `Access-Control-Allow-Origin:
+  // https://xivdyetools.app` to every caller regardless of Origin, so the
+  // browser blocks it from any host but production. Measured 2026-08-10 — do
+  // not "fix" a beta 404 by pointing back at it; that trades a 404 for a CORS
+  // failure. Deploy api-worker instead.
   if (import.meta.env.PROD) {
-    const proxyUrl = 'https://proxy.xivdyetools.app/api/v2';
+    const proxyUrl = 'https://data.xivdyetools.app/universalis';
     logger.info(`Using production Universalis proxy: ${proxyUrl}`);
     return proxyUrl;
   }
