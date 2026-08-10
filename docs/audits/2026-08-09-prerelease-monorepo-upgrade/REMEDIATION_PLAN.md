@@ -14,9 +14,16 @@
 > Sprint 7 (`FONT-001`) closed the terminal sprint on 2026-08-10; every scheduled finding in
 > this plan has landed on `monorepo-2.0-prep`. What remains is **not** code:
 >
-> - **Deploys are user-run** — six Workers, one Pages project, and `register-commands` for
->   `BUG-001` (a registered schema lives on Discord's side; the code change alone does not
->   close it). See each sprint's *Ends with*.
+> - **The merge to main is the deploy.** ⚠️ Correcting this plan: the per-sprint *"Ends with:
+>   N `wrangler deploy` runs"* lines and the standing guidance that **`register-commands` is
+>   user-run are both wrong.** `deploy-discord-worker.yml` runs `register-commands` **globally
+>   as a step of every production deploy**, and each Worker has a path-filtered workflow that
+>   fires on push to `main`. Merging this branch deploys *and* registers — which is what
+>   actually closes `BUG-001` for real users.
+> - **Genuinely deferred, by decision:** production dye-emoji regeneration (`upload-emojis`
+>   would swap production's `legacy-icons` slot for 5.0 chips) and the D1 migrations
+>   `0007_drop_community_category.sql` / `0008_add_example_link.sql`, which must run *before*
+>   the `presets-api` deploy that names their columns.
 > - **Unscheduled by design:** `DEAD-008` (KEEP register) and `FINDING-003` (parked
 >   `stoat-worker`), each with a revisit trigger below.
 > - **Recommended, not scheduled:** the CI additions at the foot of this document. The
@@ -406,11 +413,16 @@ Also recorded in the script: **the subsetter is not byte-deterministic.** fontTo
 hashes with identical glyph coverage. Compare coverage, never hashes.
 
 **Verification gate:** `pnpm turbo run type-check test --force` → **42/42 tasks, 0 failures**
-(uncached); `build` 10/10; `lint` 24/24 with **0 errors**.
+(uncached). That figure is 17 type-check + 17 test + 8 transitive `build`, *not* the "24/24
+each" this plan asserts in *Read this first* — taken literally that criterion reads as a failure
+on every sprint. `build` 10/10; `lint` 24/24 with **0 errors**.
 
-**Still user-run:** the deploy itself. Nothing takes effect until
-`pnpm --filter xivdyetools-discord-worker run deploy` (beta) → read a ja/ko/zh card →
-`deploy:production`.
+**Deploy:** a re-subset takes effect only once the Worker ships, and that is automatic —
+`apps/discord-worker/**` is in `deploy-discord-worker.yml`'s path filter, so merging to `main`
+deploys production and re-registers commands. To see it earlier, push the branch:
+`deploy-discord-worker-beta.yml` deploys the beta bot on any non-`main` branch and registers
+guild-scoped. **Read a ja, ko and zh card there** — that visual pass is the only check the
+repo cannot automate.
 
 ---
 
