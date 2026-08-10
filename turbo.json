@@ -25,7 +25,9 @@
     "test": {
       "dependsOn": ["^build"],
       "cache": true,
-      "inputs": ["src/**", "tests/**", "vitest.config.*"],
+      // scripts/** holds the CI-gate scripts (e.g. web-app's deploy smoke test)
+      // and their tests, so it must invalidate the cache like src/** does.
+      "inputs": ["src/**", "tests/**", "scripts/**", "vitest.config.*"],
       "outputs": ["coverage/**"]
     },
     "test:coverage": {
