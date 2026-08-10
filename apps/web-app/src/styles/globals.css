@@ -1,10 +1,22 @@
-/* XIV Dye Tools v2.0.0 - Global Styles */
+/* XIV Dye Tools 5.0 - Global Styles */
 
 /* ============================================================================
    Custom Font Faces
    ============================================================================ */
 
-/* Habibi - Used for numerical values (HEX codes, prices, distances, etc.) */
+/* Fragment Mono - the suite numeric face (5.0). Same binary the Discord and OG
+   card generators load (`apps/*/src/fonts/FragmentMono-Regular.ttf`), so a delta-E
+   value reads identically on the web and on a bot card. */
+@font-face {
+  font-family: 'Fragment Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/FragmentMono-Regular.woff2') format('woff2');
+}
+
+/* Habibi - RETIRED in 5.0, kept only until the last reference is gone.
+   Removed with the asset in DEAD-004. Do not add new uses. */
 @font-face {
   font-family: 'Habibi';
   font-style: normal;
@@ -17,14 +29,27 @@
    Numerical Values Typography
    ============================================================================ */
 
-/* 
- * The .number class applies the Habibi serif font to numerical values
- * including: HEX codes, market prices, delta-E values, distance values,
- * contrast ratios, degrees, percentages, and chart values.
+/*
+ * The .number class sets the suite numeric face on values the user is expected
+ * to compare down a column: HEX codes, market prices, delta-E values, distance
+ * values, contrast ratios, degrees, percentages, and chart values.
+ *
+ * It was Habibi through 4.x -- a proportional display serif, so `1` was
+ * markedly narrower than `0` and stacked values never lined up at the decimal
+ * point. `packages/svg` corrected this for the bot and OG surfaces; this rule
+ * is the web half of the same decision.
+ *
+ * `tabular-nums` is what actually guarantees the alignment, and it keeps the
+ * fallback path honest -- if Fragment Mono fails to load, the system monospace
+ * still lines up.
+ *
+ * Fragment Mono has no CJK coverage, hence the sans tail on the stack: a
+ * `.number` element wrapping CJK degrades to the body face rather than to tofu.
  */
 .number,
 .font-numeric {
-  font-family: 'Habibi', serif !important;
+  font-family: 'Fragment Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace, sans-serif;
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }
 
