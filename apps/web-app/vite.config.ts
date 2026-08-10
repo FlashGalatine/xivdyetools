@@ -13,8 +13,9 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(pkg.version),
     // About's BUILD stat cell (yyyy.mm.dd, stamped at build time)
     __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10).replace(/-/g, '.')),
-    // Build environment, read by shared/constants.ts to mark beta builds.
-    __APP_ENV__: JSON.stringify(isBeta ? 'beta' : 'production'),
+    // __APP_ENV__ is NOT defined here — betaBranding(isBeta)'s config() hook
+    // injects it, so the runtime marker and the branding (title/icons/headers)
+    // share one switch and cannot drift apart. See vite-plugin-beta-branding.ts.
   },
   root: 'src',
   base: '/',

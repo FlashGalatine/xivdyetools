@@ -17,6 +17,19 @@ export function betaBranding(enabled: boolean): Plugin {
   return {
     name: 'beta-branding',
 
+    // __APP_ENV__ is injected here, not in vite.config.ts's `define` block, so
+    // that the title/icon/header branding below and the runtime marker
+    // (shared/constants.ts reads __APP_ENV__ to build APP_NAME) can never be
+    // switched independently — `enabled` is the single input to both. Vite
+    // merges a partial config object returned from this hook.
+    config() {
+      return {
+        define: {
+          __APP_ENV__: JSON.stringify(enabled ? 'beta' : 'production'),
+        },
+      };
+    },
+
     configResolved(config) {
       outDir = resolve(config.root, config.build.outDir);
     },
