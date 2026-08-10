@@ -45,10 +45,10 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
-    "@upstash/redis": "^1.38.0"
+    "@upstash/redis": "^1.38.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260727.1",
+    "@cloudflare/workers-types": "^5.20260804.1",
     "@vitest/coverage-v8": "^4.1.10",
     "vitest": "^4.1.10"
   },
