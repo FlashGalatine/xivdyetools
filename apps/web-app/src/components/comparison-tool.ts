@@ -960,7 +960,7 @@ export class ComparisonTool extends BaseComponent {
     chipsHeader.appendChild(this.pairUnitTag);
     this.pairChipsSection.appendChild(chipsHeader);
     this.pairChipsContainer = this.createElement('div', {
-      attributes: { style: 'display: flex; gap: 6px; flex-wrap: wrap;' },
+      attributes: { style: 'display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;' },
     });
     this.pairChipsSection.appendChild(this.pairChipsContainer);
     contentWrapper.appendChild(this.pairChipsSection);

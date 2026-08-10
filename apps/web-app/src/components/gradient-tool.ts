@@ -1135,29 +1135,17 @@ export class GradientTool extends BaseComponent {
     });
 
     // Empty state message (inside results area)
+    // Shared empty-state treatment — see v4-layout.ts for the injected rules.
     this.emptyStateContainer = this.createElement('div', {
-      className: 'empty-state-message',
+      className: 'empty-state-message v5-empty-state',
       attributes: {
         'data-testid': 'gradient-empty-state',
-        style: `
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: flex-start;
-          height: 100%;
-          min-height: 200px;
-          color: var(--theme-text-muted);
-          text-align: center;
-          padding: 60px 40px 40px 40px;
-        `,
       },
     });
     this.emptyStateContainer.innerHTML = `
-      <div style="width: 150px; height: 150px; opacity: 0.3; margin-bottom: 16px; color: currentColor;">
-        ${ICON_TOOL_GRADIENT}
-      </div>
-      <div style="font-size: 16px; color: var(--theme-text); margin-bottom: 8px;">${LanguageService.t('gradient.setStartAndEnd')}</div>
-      <div style="font-size: 14px; opacity: 0.7;">${LanguageService.t('gradient.clickPlusButtons')}</div>
+      <div class="v5-empty-state-icon" aria-hidden="true">${ICON_TOOL_GRADIENT}</div>
+      <div class="v5-empty-state-title">${LanguageService.t('gradient.setStartAndEnd')}</div>
+      <div class="v5-empty-state-text">${LanguageService.t('gradient.clickPlusButtons')}</div>
     `;
 
     resultsSection.appendChild(this.emptyStateContainer);

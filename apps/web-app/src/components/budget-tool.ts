@@ -1025,16 +1025,15 @@ export class BudgetTool extends BaseComponent {
     if (!this.emptyStateContainer) return;
     clearContainer(this.emptyStateContainer);
 
+    // Shared empty-state treatment (shaded box + dimmed glyph + instruction).
+    // Rules come from the shell's injected stylesheet — see v4-layout.ts.
     const empty = this.createElement('div', {
-      attributes: {
-        style:
-          'display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 400px; padding: 3rem 2rem;',
-      },
+      className: 'v5-empty-state',
     });
 
     empty.innerHTML = `
-      <span style="display: block; width: 150px; height: 150px; margin: 0 auto 1.5rem; opacity: 0.25; color: var(--theme-text);">${ICON_TOOL_BUDGET}</span>
-      <p style="color: var(--theme-text); font-size: 1.125rem; text-align: center;">${LanguageService.t('budget.selectTargetToStart')}</p>
+      <div class="v5-empty-state-icon" aria-hidden="true">${ICON_TOOL_BUDGET}</div>
+      <p class="v5-empty-state-text">${LanguageService.t('budget.selectTargetToStart')}</p>
     `;
 
     this.emptyStateContainer.appendChild(empty);

@@ -165,6 +165,17 @@ const MONO = "'Fragment Mono', monospace";
  */
 const GRID_CELL_DESKTOP = 26;
 const GRID_CELL_MOBILE = 44;
+/** The swatch grid's own gap, shared by the 8-column template below. */
+const GRID_GAP = 4;
+/**
+ * Width of the desktop swatch grid: 8 cells plus 7 gaps.
+ *
+ * The grid panel is `width: fit-content`, so ANY child's max-content width can
+ * decide the panel's width. Prose children must therefore be capped to this,
+ * or a single long sentence resolves fit-content to the whole sentence on one
+ * line and blows the panel out (the Evercold notice did exactly that).
+ */
+const GRID_WIDTH_DESKTOP = GRID_CELL_DESKTOP * 8 + GRID_GAP * 7;
 /** Matches globals.css h1–h6 — Space Grotesk with the system fallback. */
 const SANS = "'Space Grotesk', system-ui, sans-serif";
 
@@ -1451,49 +1462,24 @@ export class SwatchTool extends BaseComponent {
     resultsArea.appendChild(matchSection);
 
     // Empty state (shown when no color selected)
+    // Shared empty-state treatment — see v4-layout.ts for the injected rules.
     this.emptyStateContainer = this.createElement('div', {
-      attributes: {
-        style: `
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 48px 24px;
-          background: var(--theme-card-background, #2a2a2a);
-          border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
-          border-radius: 12px;
-          min-width: 320px;
-        `,
-      },
+      className: 'v5-empty-state',
     });
     // Empty state icon
     const emptyIcon = this.createElement('div', {
-      attributes: {
-        style: `
-          width: 150px;
-          height: 150px;
-          opacity: 0.3;
-          margin-bottom: 16px;
-          color: var(--theme-text-muted, #888888);
-        `,
-      },
+      className: 'v5-empty-state-icon',
+      attributes: { 'aria-hidden': 'true' },
     });
-    emptyIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" width="150" height="150">
+    emptyIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" opacity="0.3"/>
       <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.5"/>
     </svg>`;
     this.emptyStateContainer.appendChild(emptyIcon);
 
     const emptyText = this.createElement('span', {
+      className: 'v5-empty-state-text',
       textContent: LanguageService.t('tools.character.noColorSelected'),
-      attributes: {
-        style: `
-          color: var(--theme-text-muted, #888888);
-          font-size: 14px;
-          text-align: center;
-          max-width: 280px;
-        `,
-      },
     });
     this.emptyStateContainer.appendChild(emptyText);
 
@@ -1687,6 +1673,9 @@ export class SwatchTool extends BaseComponent {
       attributes: {
         role: 'note',
         style: `
+          box-sizing: border-box;
+          width: 100%;
+          max-width: ${GRID_WIDTH_DESKTOP}px;
           margin-bottom: 12px;
           padding: 10px 14px;
           border-left: 3px solid var(--theme-primary);
@@ -1694,6 +1683,7 @@ export class SwatchTool extends BaseComponent {
           background: var(--theme-background-secondary);
           font-size: 0.85rem;
           line-height: 1.5;
+          overflow-wrap: anywhere;
         `,
       },
     });

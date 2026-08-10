@@ -862,14 +862,18 @@ export class AccessibilityTool extends BaseComponent {
       attributes: {
         role: 'tablist',
         'aria-label': LanguageService.t('accessibility.lens'),
-        style: 'display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;',
+        style:
+          'display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 12px;',
       },
     });
     this.lensSection.appendChild(this.lensTabsContainer);
+    // Centred like the rest of the Lens block: `auto-fill` would keep empty
+    // trailing tracks and leave a short row hugging the left edge, so the
+    // tracks are only as many as there are cells and the row is centred.
     this.lensGridContainer = this.createElement('div', {
       attributes: {
         style:
-          'display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));',
+          'display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(180px, 220px)); justify-content: center;',
       },
     });
     this.lensSection.appendChild(this.lensGridContainer);
@@ -1160,9 +1164,10 @@ export class AccessibilityTool extends BaseComponent {
         this.handleContextAction(e.detail.action, e.detail.dye);
       }) as EventListener);
 
-      // Set card width for horizontal layout
-      card.style.width = '280px';
-      card.style.flexShrink = '0';
+      // No inline width: the card is a .v5-results-grid child and the shared
+      // rule sizes it. An inline width beats that rule (inline styles win over
+      // the stylesheet), which is why these cards drew narrower than every
+      // other tool's — and, sitting in a wider track, looked further apart too.
 
       // Store reference and add to container
       this.v4ResultCards.push(card);

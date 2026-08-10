@@ -30,6 +30,7 @@ import {
 } from '@services/index';
 import { communityPresetService } from '@services/community-preset-service';
 import { SavedPresetsService, type SavedPreset } from '@services/saved-presets-service';
+import { CollectionService, type Collection } from '@services/collection-service';
 import { RouterService } from '@services/router-service';
 import { logger } from '@shared/logger';
 import { presetCategoryLabel } from '@shared/preset-i18n';
@@ -77,6 +78,20 @@ export class PresetTool extends BaseLitComponent {
   @state()
   private savedList: SavedPreset[] = [];
 
+  /**
+   * The user's OWN palettes, held locally by CollectionService as
+   * `kind: 'palette'` records — including everything migrated in from the 4.x
+   * PaletteService store, which is where palettes built before 5.0 live.
+   *
+   * These have no presence in the community API (they were never submitted),
+   * so without this they were invisible in 5.0: the Gallery only ever showed
+   * the API pool, the curated pool and saved snapshots of those two. Reading
+   * them here is view-only and additive — nothing rewrites the records, so a
+   * user still running 4.x elsewhere keeps working.
+   */
+  @state()
+  private localPalettes: Collection[] = [];
+
   /** Preset ids the user voted for (session-tracked; API confirms) */
   @state()
   private votedIds: Set<string> = new Set();
@@ -110,6 +125,7 @@ export class PresetTool extends BaseLitComponent {
   private authUnsubscribe: (() => void) | null = null;
   private configUnsubscribe: (() => void) | null = null;
   private savedUnsubscribe: (() => void) | null = null;
+  private collectionsUnsubscribe: (() => void) | null = null;
   private languageUnsubscribe: (() => void) | null = null;
   private _searchDebounce: number = 0;
 
@@ -366,6 +382,15 @@ export class PresetTool extends BaseLitComponent {
       this.savedList = saved;
     });
 
+    // Local palettes (incl. the 4.x records CollectionService migrates on
+    // init) join the Saved shelf — see `localPalettes`.
+    // subscribeCollections() calls CollectionService.initialize(), which is
+    // what runs the 4.x → 5.0 palette migration, and fires immediately with
+    // the current records — so this both triggers and receives the migration.
+    this.collectionsUnsubscribe = CollectionService.subscribeCollections((collections) => {
+      this.localPalettes = collections.filter((c) => c.kind === 'palette');
+    });
+
     await hybridPresetService.initialize();
     await this.loadPresets();
 
@@ -384,6 +409,8 @@ export class PresetTool extends BaseLitComponent {
     this.authUnsubscribe = null;
     this.savedUnsubscribe?.();
     this.savedUnsubscribe = null;
+    this.collectionsUnsubscribe?.();
+    this.collectionsUnsubscribe = null;
     this.languageUnsubscribe?.();
     this.languageUnsubscribe = null;
   }
@@ -393,6 +420,21 @@ export class PresetTool extends BaseLitComponent {
     if (!presetId) return;
 
     logger.info('[v4-preset-tool] Deep link detected:', presetId);
+
+    // Local palettes never reach the API — resolve them from the local store
+    // instead, or a reload on /presets/local-… would 'not find' a record that
+    // is sitting in this browser.
+    if (presetId.startsWith('local-')) {
+      const local = this.localPalettes.find((c) => `local-${c.id}` === presetId);
+      if (local) {
+        this.selectedPreset = this.localPaletteToUnified(local);
+        this.tab = 'saved';
+      } else {
+        logger.warn('[v4-preset-tool] Local palette not found for deep link:', presetId);
+      }
+      return;
+    }
+
     try {
       const preset = await hybridPresetService.getPreset(presetId);
       if (preset) {
@@ -510,6 +552,41 @@ export class PresetTool extends BaseLitComponent {
     };
   }
 
+  /**
+   * A local CollectionService palette as a gallery entry.
+   *
+   * `local-` prefixes the id so it can never collide with a community
+   * (`community-…`) or curated id — the Saved shelf, voting and deep links all
+   * key off that id. `isFromAPI: false` is what keeps the vote control off the
+   * card: there is nothing on the server to vote on.
+   */
+  private localPaletteToUnified(collection: Collection): UnifiedPreset {
+    return {
+      id: `local-${collection.id}`,
+      name: collection.name,
+      description: collection.description ?? '',
+      // Local palettes carry no category; 'aesthetics' is the general bucket.
+      category: 'aesthetics',
+      dyes: [...collection.dyes],
+      tags: [],
+      voteCount: 0,
+      isCurated: false,
+      isFromAPI: false,
+      createdAt: collection.createdAt,
+      exampleLink: null,
+    };
+  }
+
+  /** Local palettes, newest first, filtered by the active search query. */
+  private localPalettePool(): UnifiedPreset[] {
+    const q = this.searchQuery.toLowerCase();
+    const pool = this.localPalettes.map((c) => this.localPaletteToUnified(c));
+    if (!q) return pool;
+    return pool.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)
+    );
+  }
+
   private presetToCardData(preset: UnifiedPreset): PresetCardData {
     const colors: string[] = [];
     for (const dyeId of preset.dyes.slice(0, 6)) {
@@ -563,7 +640,10 @@ export class PresetTool extends BaseLitComponent {
               p.tags.some((t) => t.toLowerCase().includes(q))
           );
         }
-        return pool;
+        // The user's own palettes sit alongside their saved ones — this is the
+        // only tab that survives the presets worker being unreachable, which
+        // is exactly where a purely local record belongs.
+        return [...pool, ...this.localPalettePool()];
       }
       case 'mine':
         return this.userSubmissions.map((p) => this.communityToUnified(p));
@@ -583,7 +663,7 @@ export class PresetTool extends BaseLitComponent {
       this.tab === 'official'
         ? this.presets.filter((p) => p.isCurated)
         : this.tab === 'saved'
-          ? this.savedList.map((s) => this.savedToUnified(s))
+          ? [...this.savedList.map((s) => this.savedToUnified(s)), ...this.localPalettePool()]
           : this.tab === 'mine'
             ? this.userSubmissions.map((p) => this.communityToUnified(p))
             : this.presets.filter((p) => !p.isCurated);

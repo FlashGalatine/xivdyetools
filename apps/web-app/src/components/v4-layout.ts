@@ -309,9 +309,15 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
   // This ensures the shadow DOM is available before we query for content container
   await layoutElement.updateComplete;
 
-  // Shared results-grid rule for every tool's card grid (Q4 decision:
-  // three cards per row on desktop, two on mobile). Injected once into the
-  // shell's shadow root — tool containers only carry the class.
+  // Shared rules for every tool's card grid and empty state. Injected once
+  // into the shell's shadow root — tool containers only carry the class.
+  //
+  // This injection is load-bearing, not a convenience: tools render INSIDE
+  // V4LayoutShell's shadow DOM, so nothing in styles/globals.css or
+  // styles/v4-layout.css reaches them. A rule that must apply to tool content
+  // belongs here or in an inline style; putting it in a page stylesheet is a
+  // silent no-op (that is how the Harmony empty state ended up drawing its
+  // 62px glyph at 437px — the sizing rule never applied).
   if (
     layoutElement.shadowRoot &&
     !layoutElement.shadowRoot.querySelector('#v5-results-grid-style')
@@ -319,22 +325,94 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
     const gridStyle = document.createElement('style');
     gridStyle.id = 'v5-results-grid-style';
     gridStyle.textContent = `
+      /* Results grid — Q4 decision: three cards per row on desktop, two on
+         mobile. Flex rather than fixed grid tracks so a partial final row
+         centres with the rest; with grid tracks the leftovers hugged the
+         left edge while the block itself looked centred. The max-width is
+         the 3-up row (3 x 320 + 2 x 12), so wide viewports never reach 4-up. */
       .v5-results-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 320px));
+        display: flex;
+        flex-wrap: wrap;
         justify-content: center;
+        align-content: flex-start;
         gap: 12px;
         width: 100%;
+        max-width: 984px;
+        margin-inline: auto;
       }
-      .v5-results-grid > v4-result-card {
-        width: auto;
+      .v5-results-grid > * {
+        flex: 0 1 320px;
+        max-width: 320px;
         min-width: 0;
       }
       @media (max-width: 768px) {
         .v5-results-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 8px;
+          max-width: none;
         }
+        .v5-results-grid > * {
+          flex: 1 1 calc(50% - 4px);
+          max-width: calc(50% - 4px);
+        }
+      }
+
+      /* Empty state — one treatment everywhere: the tool glyph dimmed inside
+         a shaded, dashed box with the instruction below it. Modelled on the
+         Accessibility Checker / Dye Comparison states, which were the two
+         that already looked right because they styled themselves inline. */
+      .v5-empty-state,
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        box-sizing: border-box;
+        padding: 60px 40px;
+        margin-inline: auto;
+        width: 100%;
+        max-width: 520px;
+        border-radius: 12px;
+        border: 1px dashed var(--theme-border, rgba(255, 255, 255, 0.15));
+        background: var(--theme-empty-state-background, rgba(0, 0, 0, 0.2));
+        color: var(--theme-text-muted);
+      }
+      .v5-empty-state-icon,
+      .empty-state-icon {
+        width: 150px;
+        height: 150px;
+        max-width: 60%;
+        margin: 0 0 20px;
+        opacity: 0.4;
+        color: var(--theme-text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .v5-empty-state-icon svg,
+      .empty-state-icon svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .v5-empty-state-title,
+      .empty-state-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--theme-text);
+        margin: 0 0 8px;
+      }
+      .v5-empty-state-text,
+      .empty-state-description {
+        font-size: 1rem;
+        line-height: 1.5;
+        color: var(--theme-text-muted);
+        max-width: 400px;
+        margin: 0;
+      }
+      .empty-state-action {
+        margin-top: 20px;
       }
     `;
     layoutElement.shadowRoot.appendChild(gridStyle);

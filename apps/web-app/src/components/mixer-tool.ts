@@ -1178,10 +1178,12 @@ export class MixerTool extends BaseComponent {
     };
     const RATIOS = [10, 30, 50, 70, 90];
 
+    // The field (header, caption and grid) is a 560px column centred in the
+    // results area rather than pinned to the left edge.
     const head = this.createElement('div', {
       attributes: {
         style:
-          'display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px;',
+          'display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; max-width: 560px; margin-inline: auto;',
       },
     });
     head.appendChild(
@@ -1219,7 +1221,8 @@ export class MixerTool extends BaseComponent {
       this.createElement('p', {
         textContent: LanguageService.t('mixer.fieldDesc'),
         attributes: {
-          style: 'font-size: 11.5px; color: var(--theme-text-muted); margin: 0 0 10px;',
+          style:
+            'font-size: 11.5px; color: var(--theme-text-muted); margin: 0 auto 10px; max-width: 560px;',
         },
       })
     );
@@ -1227,7 +1230,7 @@ export class MixerTool extends BaseComponent {
     const grid = this.createElement('div', {
       attributes: {
         style:
-          'display: grid; grid-template-columns: 68px repeat(5, minmax(52px, 1fr)); gap: 4px; max-width: 560px;',
+          'display: grid; grid-template-columns: 68px repeat(5, minmax(52px, 1fr)); gap: 4px; max-width: 560px; margin-inline: auto;',
       },
     });
 
@@ -1482,16 +1485,14 @@ export class MixerTool extends BaseComponent {
     if (!this.emptyStateContainer) return;
     clearContainer(this.emptyStateContainer);
 
+    // Shared empty-state treatment — see v4-layout.ts for the injected rules.
     const empty = this.createElement('div', {
-      className: 'flex flex-col items-center justify-center text-center',
-      attributes: {
-        style: 'min-height: 400px; padding: 3rem 2rem;',
-      },
+      className: 'v5-empty-state',
     });
 
     empty.innerHTML = `
-      <span style="display: block; width: 150px; height: 150px; margin: 0 auto 1.5rem; opacity: 0.25; color: var(--theme-text);">${ICON_TOOL_DYE_MIXER}</span>
-      <p style="color: var(--theme-text); font-size: 1.125rem;">${LanguageService.t('mixer.selectTwoDyesToMix')}</p>
+      <div class="v5-empty-state-icon" aria-hidden="true">${ICON_TOOL_DYE_MIXER}</div>
+      <p class="v5-empty-state-text">${LanguageService.t('mixer.selectTwoDyesToMix')}</p>
     `;
 
     this.emptyStateContainer.appendChild(empty);

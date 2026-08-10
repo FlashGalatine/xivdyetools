@@ -31,11 +31,25 @@ function getUniversalisBaseUrl(): string {
     return envUrl;
   }
 
-  // In production, use api-worker's absorbed Universalis routes (Monorepo 2.0
-  // Tier 2 — formerly the standalone proxy.xivdyetools.app worker). CORS
-  // headers are always present, even on error responses (like 429).
+  // In production, use the `/api/v2` compatibility mount rather than the
+  // canonical `data.xivdyetools.app/universalis` path.
+  //
+  // WHY: api-worker absorbed the Universalis proxy (Monorepo 2.0 Tier 2), but
+  // that absorption ships only when this branch's api-worker is deployed. Until
+  // then `data.xivdyetools.app/universalis/*` is a hard 404 and every market
+  // call in the app fails — which is exactly what beta.xivdyetools.app showed.
+  //
+  // `proxy.xivdyetools.app/api/v2/*` works in BOTH eras: today it is served by
+  // the still-live standalone universalis-proxy worker, and after the migration
+  // the custom domain moves to api-worker, whose `/api/v2` mount exists
+  // precisely to keep this path shape working (see api-worker's
+  // universalis/router.ts header). CORS headers are present on every response,
+  // including errors like 429.
+  //
+  // Once api-worker is deployed to data.xivdyetools.app, this may be switched
+  // back to the canonical `https://data.xivdyetools.app/universalis`.
   if (import.meta.env.PROD) {
-    const proxyUrl = 'https://data.xivdyetools.app/universalis';
+    const proxyUrl = 'https://proxy.xivdyetools.app/api/v2';
     logger.info(`Using production Universalis proxy: ${proxyUrl}`);
     return proxyUrl;
   }
