@@ -16,6 +16,7 @@ import {
   presetSubmissionService,
 } from '@services/index';
 import { getCategoryIcon } from '@shared/category-icons';
+import { presetCategoryLabel } from '@shared/preset-i18n';
 import { exampleLinkError } from '@shared/example-link';
 import type { Dye, PresetCategory } from '@xivdyetools/types';
 import type { CommunityPreset } from '@services/community-preset-service';
@@ -39,14 +40,6 @@ type OnEditCallback = (result: EditResult) => void;
 // ============================================
 // Configuration
 // ============================================
-
-const CATEGORIES: { id: PresetCategory; label: string }[] = [
-  { id: 'jobs', label: 'Jobs' },
-  { id: 'grand-companies', label: 'Grand Companies' },
-  { id: 'seasons', label: 'Seasons' },
-  { id: 'events', label: 'Events' },
-  { id: 'aesthetics', label: 'Aesthetics' },
-];
 
 const MIN_NAME_LENGTH = 2;
 const MAX_NAME_LENGTH = 50;
@@ -244,14 +237,13 @@ function createCategoryDisplay(state: FormState): HTMLElement {
   const label = document.createElement('label');
   label.className = 'block text-sm font-medium mb-1';
   label.style.color = 'var(--theme-text)';
-  label.textContent = 'Category (cannot be changed)';
+  label.textContent = LanguageService.t('preset.categoryLocked');
 
-  const category = CATEGORIES.find((c) => c.id === state.category);
   const display = document.createElement('div');
   display.className = 'px-3 py-2 rounded-lg border text-sm flex items-center gap-2';
   display.style.cssText =
     'background-color: var(--theme-card-background); color: var(--theme-text-secondary); border-color: var(--theme-border);';
-  display.innerHTML = `<span class="w-4 h-4 inline-block">${getCategoryIcon(state.category)}</span><span>${category?.label || state.category}</span>`;
+  display.innerHTML = `<span class="w-4 h-4 inline-block">${getCategoryIcon(state.category)}</span><span>${presetCategoryLabel(state.category)}</span>`;
 
   wrapper.appendChild(label);
   wrapper.appendChild(display);

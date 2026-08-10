@@ -32,6 +32,7 @@ import { communityPresetService } from '@services/community-preset-service';
 import { SavedPresetsService, type SavedPreset } from '@services/saved-presets-service';
 import { RouterService } from '@services/router-service';
 import { logger } from '@shared/logger';
+import { presetCategoryLabel } from '@shared/preset-i18n';
 import type { UnifiedPreset } from '@services/hybrid-preset-service';
 import type { CommunityPreset } from '@services/community-preset-service';
 import type { PresetsConfig, PresetCategoryFilter } from '@shared/tool-config-types';
@@ -750,15 +751,7 @@ export class PresetTool extends BaseLitComponent {
   // ============================================
 
   private categoryLabel(category: PresetCategoryFilter): string {
-    const keys: Record<PresetCategoryFilter, string> = {
-      all: 'preset.categories.all',
-      jobs: 'preset.categories.jobs',
-      'grand-companies': 'preset.categories.grandCompanies',
-      seasons: 'preset.categories.seasons',
-      events: 'preset.categories.events',
-      aesthetics: 'preset.categories.aesthetics',
-    };
-    return LanguageService.t(keys[category]);
+    return presetCategoryLabel(category);
   }
 
   private renderTabs(): TemplateResult {

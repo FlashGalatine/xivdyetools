@@ -16,6 +16,7 @@ import {
   validateSubmission,
 } from '@services/index';
 import { getCategoryIcon } from '@shared/category-icons';
+import { presetCategoryLabel } from '@shared/preset-i18n';
 import type { Dye, PresetCategory } from '@xivdyetools/types';
 import type { PresetSubmission, SubmissionResult } from '@services/preset-submission-service';
 import { exampleLinkError } from '@shared/example-link';
@@ -42,13 +43,8 @@ type OnSubmitCallback = (result: SubmissionResult) => void;
 // Configuration
 // ============================================
 
-const CATEGORIES: { id: PresetCategory; labelKey: string }[] = [
-  { id: 'jobs', labelKey: 'preset.categories.jobs' },
-  { id: 'grand-companies', labelKey: 'preset.categories.grandCompanies' },
-  { id: 'seasons', labelKey: 'preset.categories.seasons' },
-  { id: 'events', labelKey: 'preset.categories.events' },
-  { id: 'aesthetics', labelKey: 'preset.categories.aesthetics' },
-];
+/** Selectable categories, in display order. Labels come from `presetCategoryLabel`. */
+const CATEGORIES: PresetCategory[] = ['jobs', 'grand-companies', 'seasons', 'events', 'aesthetics'];
 
 const MIN_NAME_LENGTH = 2;
 const MAX_NAME_LENGTH = 50;
@@ -351,7 +347,7 @@ function createCategorySelector(state: FormState): HTMLElement {
     btn.className =
       'px-3 py-2 rounded-lg border text-sm transition-all flex items-center justify-center gap-1';
 
-    const isSelected = state.category === cat.id;
+    const isSelected = state.category === cat;
     if (isSelected) {
       btn.style.cssText =
         'background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);';
@@ -360,14 +356,14 @@ function createCategorySelector(state: FormState): HTMLElement {
         'background-color: var(--theme-card-background); color: var(--theme-text); border-color: var(--theme-border);';
     }
 
-    btn.innerHTML = `<span class="w-4 h-4 inline-block">${getCategoryIcon(cat.id)}</span><span>${LanguageService.t(cat.labelKey)}</span>`;
+    btn.innerHTML = `<span class="w-4 h-4 inline-block">${getCategoryIcon(cat)}</span><span>${presetCategoryLabel(cat)}</span>`;
 
     btn.addEventListener('click', () => {
-      state.category = cat.id;
+      state.category = cat;
       // Update all buttons
       const buttons = grid.querySelectorAll('button');
       buttons.forEach((b, i) => {
-        const selected = CATEGORIES[i].id === state.category;
+        const selected = CATEGORIES[i] === state.category;
         if (selected) {
           b.style.cssText =
             'background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);';
@@ -379,13 +375,13 @@ function createCategorySelector(state: FormState): HTMLElement {
     });
 
     btn.addEventListener('mouseenter', () => {
-      if (state.category !== cat.id) {
+      if (state.category !== cat) {
         btn.style.backgroundColor = 'var(--theme-card-hover)';
       }
     });
 
     btn.addEventListener('mouseleave', () => {
-      if (state.category !== cat.id) {
+      if (state.category !== cat) {
         btn.style.backgroundColor = 'var(--theme-card-background)';
       }
     });

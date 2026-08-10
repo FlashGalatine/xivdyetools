@@ -1308,6 +1308,8 @@
     "votesCount": "{count}票",
     "dyes": "染料",
     "tags": "タグ",
+    "copyLink": "リンクをコピー",
+    "categoryLocked": "カテゴリ（変更不可）",
     "linkCopied": "プリセットリンクをクリップボードにコピーしました！",
     "voteRemoved": "投票を削除しました",
     "voteAdded": "投票しました！",

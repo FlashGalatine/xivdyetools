@@ -14,6 +14,7 @@
  */
 
 import { LanguageService } from '@services/language-service';
+import type { PresetCategoryFilter } from '@shared/tool-config-types';
 
 interface CuratedTextSource {
   id: string;
@@ -39,4 +40,36 @@ export function presetName(preset: CuratedTextSource): string {
 export function presetDescription(preset: CuratedTextSource): string {
   if (!preset.isCurated) return preset.description;
   return lookup(preset.id, 'description') ?? preset.description;
+}
+
+/**
+ * Category slug -> locale key.
+ *
+ * The slugs are kebab-case because they are the API's wire values; the locale
+ * keys are camelCase because that is the convention inside the locale files.
+ * That mismatch is why this map has to exist, and why it must exist exactly
+ * once -- it was previously written out in three components, one of which
+ * (`preset-edit-form`) had drifted to hardcoded English labels, and one of
+ * which (`preset-detail`) rendered the raw slug.
+ *
+ * Typed as a total `Record` so dropping a `PresetCategory` member is a compile
+ * error here rather than a `preset.categories.undefined` string in the UI.
+ */
+const CATEGORY_LABEL_KEYS: Record<PresetCategoryFilter, string> = {
+  all: 'preset.categories.all',
+  jobs: 'preset.categories.jobs',
+  'grand-companies': 'preset.categories.grandCompanies',
+  seasons: 'preset.categories.seasons',
+  events: 'preset.categories.events',
+  aesthetics: 'preset.categories.aesthetics',
+};
+
+/**
+ * Localized category label. Falls back to the slug itself for a value the
+ * backend introduces before the frontend knows about it -- ugly, but a visible
+ * slug beats a blank badge.
+ */
+export function presetCategoryLabel(category: PresetCategoryFilter): string {
+  const key = CATEGORY_LABEL_KEYS[category];
+  return key ? LanguageService.t(key) : category;
 }

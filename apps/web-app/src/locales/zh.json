@@ -1295,6 +1295,8 @@
     "votesCount": "{count}票",
     "dyes": "染剂",
     "tags": "标签",
+    "copyLink": "复制链接",
+    "categoryLocked": "类别（不可更改）",
     "linkCopied": "预设链接已复制到剪贴板！",
     "voteRemoved": "已取消投票",
     "voteAdded": "已投票！",

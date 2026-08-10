@@ -1269,6 +1269,8 @@
     "votesCount": "{count} Stimmen",
     "dyes": "Farbstoffe",
     "tags": "Tags",
+    "copyLink": "Link kopieren",
+    "categoryLocked": "Kategorie (nicht änderbar)",
     "linkCopied": "Voreinstellungs-Link in die Zwischenablage kopiert!",
     "voteRemoved": "Stimme entfernt",
     "voteAdded": "Stimme hinzugefügt!",

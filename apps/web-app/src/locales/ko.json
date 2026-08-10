@@ -1269,6 +1269,8 @@
     "votesCount": "{count}표",
     "dyes": "염료",
     "tags": "태그",
+    "copyLink": "링크 복사",
+    "categoryLocked": "카테고리 (변경 불가)",
     "linkCopied": "프리셋 링크가 클립보드에 복사되었습니다!",
     "voteRemoved": "투표가 제거되었습니다",
     "voteAdded": "투표가 추가되었습니다!",

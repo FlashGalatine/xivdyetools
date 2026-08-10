@@ -1308,6 +1308,8 @@
     "votesCount": "{count} votes",
     "dyes": "Dyes",
     "tags": "Tags",
+    "copyLink": "Copy Link",
+    "categoryLocked": "Category (cannot be changed)",
     "linkCopied": "Preset link copied to clipboard!",
     "voteRemoved": "Vote removed",
     "voteAdded": "Vote added!",

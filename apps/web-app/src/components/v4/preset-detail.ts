@@ -22,7 +22,7 @@ import {
   ToastService,
   LanguageService,
 } from '@services/index';
-import { presetName, presetDescription } from '@shared/preset-i18n';
+import { presetName, presetDescription, presetCategoryLabel } from '@shared/preset-i18n';
 import { MarketBoardService } from '@services/market-board-service';
 import type { PriceData } from '@xivdyetools/types';
 import { ConfigController } from '@services/config-controller';
@@ -877,7 +877,8 @@ export class PresetDetail extends BaseLitComponent {
         <!-- Badges -->
         <div class="badges">
           <span class="badge badge-category">
-            ${unsafeHTML(getCategoryIcon(this.preset.category))} ${this.preset.category}
+            ${unsafeHTML(getCategoryIcon(this.preset.category))}
+            ${presetCategoryLabel(this.preset.category)}
           </span>
           ${
             this.preset.isCurated
@@ -888,7 +889,9 @@ export class PresetDetail extends BaseLitComponent {
           }
           ${
             this.currentVoteCount > 0
-              ? html`<span class="badge badge-votes">★ ${this.currentVoteCount} votes</span>`
+              ? html`<span class="badge badge-votes"
+                  >★ ${this.currentVoteCount} ${LanguageService.t('preset.votesLabel')}</span
+                >`
               : nothing
           }
         </div>
@@ -978,7 +981,8 @@ export class PresetDetail extends BaseLitComponent {
         <!-- Actions -->
         <div class="actions">
           <button class="action-btn share-btn" @click=${this.handleShare}>
-            <span class="icon">${unsafeHTML(ICON_LINK)}</span> Copy Link
+            <span class="icon">${unsafeHTML(ICON_LINK)}</span>
+            ${LanguageService.t('preset.copyLink')}
           </button>
           ${
             isVoteable
@@ -990,8 +994,9 @@ export class PresetDetail extends BaseLitComponent {
                   >
                     ${
                       this.hasVoted
-                        ? html`✓ Voted (${this.currentVoteCount})`
-                        : html`${unsafeHTML(ICON_CRYSTAL)} Vote (${this.currentVoteCount})`
+                        ? html`✓ ${LanguageService.t('preset.voted')} · ${this.currentVoteCount}`
+                        : html`${unsafeHTML(ICON_CRYSTAL)} ${LanguageService.t('preset.vote')} ·
+                          ${this.currentVoteCount}`
                     }
                   </button>
                 `
@@ -1000,9 +1005,11 @@ export class PresetDetail extends BaseLitComponent {
           ${
             this.isOwnPreset && this.preset.isFromAPI && this.preset.apiPresetId
               ? html`
-                  <button class="action-btn edit-btn" @click=${this.handleEdit}>✏️ Edit</button>
+                  <button class="action-btn edit-btn" @click=${this.handleEdit}>
+                    ✏️ ${LanguageService.t('preset.edit')}
+                  </button>
                   <button class="action-btn delete-btn" @click=${this.handleDelete}>
-                    🗑️ Delete
+                    🗑️ ${LanguageService.t('preset.delete')}
                   </button>
                 `
               : nothing

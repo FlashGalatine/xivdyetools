@@ -1269,6 +1269,8 @@
     "votesCount": "{count} votes",
     "dyes": "Teintures",
     "tags": "Tags",
+    "copyLink": "Copier le lien",
+    "categoryLocked": "Catégorie (non modifiable)",
     "linkCopied": "Lien du préréglage copié dans le presse-papiers !",
     "voteRemoved": "Vote retiré",
     "voteAdded": "Vote ajouté !",
