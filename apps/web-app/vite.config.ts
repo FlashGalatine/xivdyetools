@@ -2,13 +2,19 @@ import { defineConfig } from 'vite'
 import { resolve } from 'path'
 import { asyncCss } from './vite-plugin-async-css'
 import { changelogParser } from './vite-plugin-changelog-parser'
+import { betaBranding } from './vite-plugin-beta-branding'
 import pkg from './package.json'
+
+// Set by .github/workflows/deploy-web-app-beta.yml. Absent everywhere else.
+const isBeta = process.env.VITE_APP_ENV === 'beta';
 
 export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     // About's BUILD stat cell (yyyy.mm.dd, stamped at build time)
     __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10).replace(/-/g, '.')),
+    // Build environment, read by shared/constants.ts to mark beta builds.
+    __APP_ENV__: JSON.stringify(isBeta ? 'beta' : 'production'),
   },
   root: 'src',
   base: '/',
@@ -66,5 +72,6 @@ export default defineConfig({
   plugins: [
     asyncCss(),
     changelogParser(),
+    betaBranding(isBeta),
   ],
 })
