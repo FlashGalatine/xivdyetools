@@ -8,6 +8,7 @@
  */
 
 import { logger } from '@shared/logger';
+import { APP_NAME } from '@shared/constants';
 
 // ============================================================================
 // Types
@@ -187,7 +188,7 @@ export class RouterService {
     history.pushState({ toolId }, route.title, url);
 
     // Update document title
-    document.title = `${route.title} | XIV Dye Tools`;
+    document.title = `${route.title} | ${APP_NAME}`;
 
     // Update internal state and notify listeners
     this.currentToolId = toolId;
@@ -224,7 +225,7 @@ export class RouterService {
     const url = route.path + (queryString ? `?${queryString}` : '');
 
     history.replaceState({ toolId }, route.title, url);
-    document.title = `${route.title} | XIV Dye Tools`;
+    document.title = `${route.title} | ${APP_NAME}`;
 
     this.currentToolId = toolId;
     this.notifyListeners();
@@ -344,7 +345,7 @@ export class RouterService {
     // Update title
     const route = this.getRouteForTool(this.currentToolId);
     if (route) {
-      document.title = `${route.title} | XIV Dye Tools`;
+      document.title = `${route.title} | ${APP_NAME}`;
     }
 
     this.notifyListeners();
@@ -373,7 +374,7 @@ export class RouterService {
       // Update title
       const route = this.getRouteForTool(toolId);
       if (route) {
-        document.title = `${route.title} | XIV Dye Tools`;
+        document.title = `${route.title} | ${APP_NAME}`;
       }
     }
   }

@@ -862,4 +862,17 @@ describe('RouterService', () => {
       expect(url).not.toContain('OldDye');
     });
   });
+
+  // ==========================================================================
+  // Title composition
+  // ==========================================================================
+
+  describe('Document title', () => {
+    it('composes titles from APP_NAME so a beta build is marked everywhere', async () => {
+      const { APP_NAME } = await import('@shared/constants');
+      RouterService.initialize();
+      RouterService.navigateTo('comparison');
+      expect(document.title.endsWith(` | ${APP_NAME}`)).toBe(true);
+    });
+  });
 });

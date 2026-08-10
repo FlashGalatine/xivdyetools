@@ -9,12 +9,30 @@
 
 import type { ThemeName } from './types';
 import type { LocaleCode, LocaleDisplay } from './i18n-types';
+import { BASE_APP_NAME, BETA_TITLE_PREFIX } from './beta-branding';
 
 // ============================================================================
 // Application Metadata
 // ============================================================================
 
-export const APP_NAME = 'XIV Dye Tools';
+/**
+ * Build environment, injected by Vite's `define`. `'beta'` for builds published
+ * to beta.xivdyetools.app; absent everywhere else — including under Vitest,
+ * which has no `define` block — hence the `typeof` guard.
+ */
+declare const __APP_ENV__: string;
+export const APP_ENV = typeof __APP_ENV__ !== 'undefined' ? __APP_ENV__ : 'production';
+
+/**
+ * Product name for a given build environment. Anything that is not explicitly
+ * `'beta'` is treated as production: an unrecognised value must not invent a
+ * new marker.
+ */
+export function resolveAppName(env: string): string {
+  return env === 'beta' ? `${BETA_TITLE_PREFIX}${BASE_APP_NAME}` : BASE_APP_NAME;
+}
+
+export const APP_NAME = resolveAppName(APP_ENV);
 // Version injected from package.json by Vite at build time
 declare const __APP_VERSION__: string;
 export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
