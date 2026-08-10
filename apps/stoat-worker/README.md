@@ -2,7 +2,7 @@
 
 > XIV Dye Tools bot for [Stoat](https://revolt.chat) — a persistent Node.js process using revolt.js WebSocket client with prefix commands.
 
-# WARNING: This project is in early development and subject to breaking changes. The command interface, features, and architecture may change significantly before the 1.0 release.
+> ⚠️ **Parked — no active investment.** This project is in early development and subject to breaking changes. Only `ping`, `help`, `about`, and `dye info` are implemented end-to-end; everything else below is tagged *(planned)*. The command interface, features, and architecture may change significantly before a 1.0 release. There is no deploy workflow for this app.
 
 ## Features
 
@@ -19,12 +19,12 @@
 - **Runtime:** Node.js 22+ (persistent process, not serverless)
 - **Bot library:** [revolt.js](https://www.npmjs.com/package/revolt.js) WebSocket client
 - **Command model:** Prefix commands (`!xivdye <command>` or `!xd <shortcut>`)
-- **Shared packages:** `@xivdyetools/core`, `@xivdyetools/bot-logic`, `@xivdyetools/bot-i18n`, `@xivdyetools/svg`, `@xivdyetools/color-blending`
+- **Shared packages:** `@xivdyetools/core` (incl. `/blending`), `@xivdyetools/bot-logic` (incl. `/i18n`), `@xivdyetools/svg`, `@xivdyetools/types`, `@xivdyetools/logger`
 
 ### Planned (not yet implemented)
 
 - **Storage:** SQLite (better-sqlite3) for preferences/analytics
-- **Rate limiting:** Upstash Redis via `@xivdyetools/rate-limiter`
+- **Rate limiting:** Upstash Redis via `@xivdyetools/worker-kit/rate-limiter`
 - **Image rendering:** `@resvg/resvg-js` (Node.js native, not WASM)
 - **Image processing:** `sharp` (replaces `@cf-wasm/photon`)
 - **Hosting:** Fly.io
@@ -66,7 +66,7 @@
 ### Prerequisites
 
 - Node.js 22+
-- pnpm 10+
+- pnpm 11+
 - A Stoat bot token (see [Stoat documentation](https://developers.revolt.chat/))
 
 ### Setup
@@ -139,6 +139,7 @@ src/
 🎮 **FFXIV**: [Lodestone Character](https://na.finalfantasyxiv.com/lodestone/character/7677106/)
 📝 **Blog**: [Project Galatine](https://blog.projectgalatine.com/)
 💻 **GitHub**: [@FlashGalatine](https://github.com/FlashGalatine)
+🐦 **X/Twitter**: [@AsheJunius](https://x.com/AsheJunius)
 📺 **Twitch**: [flashgalatine](https://www.twitch.tv/flashgalatine)
 🌐 **BlueSky**: [projectgalatine.com](https://bsky.app/profile/projectgalatine.com)
 ❤️ **Patreon**: [ProjectGalatine](https://patreon.com/ProjectGalatine)
@@ -147,4 +148,11 @@ src/
 
 ## License
 
-MIT © 2025-2026 Flash Galatine
+MIT © 2025-2026 Flash Galatine — see [LICENSE](./LICENSE).
+
+## Legal Notice
+
+**FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.**
+**FINAL FANTASY XIV © SQUARE ENIX CO., LTD.**
+
+XIV Dye Tools is an unofficial fan project and is **not affiliated with, endorsed by, or sponsored by Square Enix Co., Ltd.**

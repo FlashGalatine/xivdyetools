@@ -2,6 +2,8 @@
   "name": "xivdyetools-oauth-worker",
   "version": "2.5.0",
   "private": true,
+  "description": "Discord OAuth2 + JWT issuance for XIV Dye Tools",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",

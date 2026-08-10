@@ -106,8 +106,8 @@ src/
   index.ts                 # Hono app, middleware stack, route mounting
   types.ts                 # Env bindings, Hono context variables
   middleware/
-    request-id.ts          # UUID generation, X-Request-ID header
-    rate-limit.ts          # KV-backed sliding window rate limiting
+    rate-limit.ts          # KVRateLimiter wired to worker-kit's rateLimitMiddleware
+    locale.ts              # Reads ?locale=, calls LocalizationService.setLocale once
   routes/
     dyes.ts                # /v1/dyes/* (7 endpoints)
     match.ts               # /v1/match/* (2 endpoints)
@@ -128,11 +128,12 @@ tests/
 
 | Package | Purpose |
 |---------|---------|
-| `hono` | HTTP framework |
-| `@xivdyetools/core` | Dye database, color algorithms, k-d tree matching |
+| `hono` | HTTP framework + CORS middleware |
+| `@xivdyetools/core` | `DyeService`, `dyeDatabase`, `ColorConverter`, `LocalizationService` |
 | `@xivdyetools/types` | Shared TypeScript interfaces |
 | `@xivdyetools/logger` | Structured logging |
-| `@xivdyetools/rate-limiter` | KV-backed sliding window rate limiter |
+| `@xivdyetools/worker-kit` | `requestIdMiddleware`, `loggerMiddleware`, `rateLimitMiddleware` |
+| `@xivdyetools/worker-kit/rate-limiter` | `KVRateLimiter`, `getClientIp` |
 | `spectral.js` | Spectral color mixing (transitive dep of core, explicit for pnpm strict isolation) |
 
 ### Environment Bindings
@@ -146,8 +147,46 @@ tests/
 ## Deployment
 
 ```bash
-pnpm --filter xivdyetools-api-worker run deploy              # Staging
-pnpm --filter xivdyetools-api-worker run deploy:production   # Production
+pnpm --filter xivdyetools-api-worker run deploy              # DEV worker (xivdyetools-api-worker-dev, no routes)
+pnpm --filter xivdyetools-api-worker run deploy:production   # Production (data.xivdyetools.app)
 ```
 
+> ⚠️ A bare `wrangler deploy` does **not** mean "staging" across this monorepo — the target depends on each worker's `wrangler.toml`. Production always needs an explicit `--env production`. See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../docs/operations/DEPLOY_ENVIRONMENTS.md).
+
 Before deploying, update the KV namespace IDs in `wrangler.toml` from `placeholder-*` to real Cloudflare KV namespace IDs.
+
+## Documentation Site
+
+The public API documentation is a VitePress site in [`docs/`](./docs/), deployed with this worker as Workers Static Assets on [developers.xivdyetools.app](https://developers.xivdyetools.app) (absorbed from the former `apps/api-docs`).
+
+```bash
+pnpm --filter xivdyetools-api-worker run docs:dev       # Local docs dev server
+pnpm --filter xivdyetools-api-worker run build:docs     # Build static docs
+```
+
+If you add or change an endpoint or parameter, update **both** `docs/reference/dyes.md` (or `matching.md`) and the `index.md` quick-start examples — the docs site is the public contract.
+
+## Connect With Me
+
+**Flash Galatine** | Midgardsormr (Aether)
+
+🎮 **FFXIV**: [Lodestone Character](https://na.finalfantasyxiv.com/lodestone/character/7677106/)
+📝 **Blog**: [Project Galatine](https://blog.projectgalatine.com/)
+💻 **GitHub**: [@FlashGalatine](https://github.com/FlashGalatine)
+🐦 **X/Twitter**: [@AsheJunius](https://x.com/AsheJunius)
+📺 **Twitch**: [flashgalatine](https://www.twitch.tv/flashgalatine)
+🌐 **BlueSky**: [projectgalatine.com](https://bsky.app/profile/projectgalatine.com)
+❤️ **Patreon**: [ProjectGalatine](https://patreon.com/ProjectGalatine)
+☕ **Ko-Fi**: [flashgalatine](https://ko-fi.com/flashgalatine)
+💬 **Discord**: [Join Server](https://discord.gg/5VUSKTZCe5)
+
+## License
+
+MIT © 2025-2026 Flash Galatine — see [LICENSE](./LICENSE).
+
+## Legal Notice
+
+**FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.**
+**FINAL FANTASY XIV © SQUARE ENIX CO., LTD.**
+
+XIV Dye Tools is an unofficial fan project and is **not affiliated with, endorsed by, or sponsored by Square Enix Co., Ltd.** All FINAL FANTASY XIV content served by this API, including dye names and color values, is the property of Square Enix.

@@ -16,11 +16,11 @@ npm install @xivdyetools/logger
 - **Secret redaction** - Automatically redact sensitive fields
 - **Performance timing** - Built-in performance measurement utilities
 - **Error tracking integration** - Ready for Sentry/similar services
-- **Backward compatible** - Drop-in replacement for xivdyetools-core Logger
+- **Backward compatible** - Drop-in replacement for the legacy `xivdyetools-core` Logger
 
 ## Quick Start
 
-### Browser (xivdyetools-web-app)
+### Browser (`apps/web-app`)
 
 ```typescript
 import { createBrowserLogger } from '@xivdyetools/logger/browser';
@@ -59,7 +59,7 @@ export default {
 };
 ```
 
-### Library (xivdyetools-core)
+### Library (`@xivdyetools/core` and other shared packages)
 
 ```typescript
 import { NoOpLogger, ConsoleLogger } from '@xivdyetools/logger/library';
@@ -385,6 +385,7 @@ perf.clearMetrics();
 🎮 **FFXIV**: [Lodestone Character](https://na.finalfantasyxiv.com/lodestone/character/7677106/)
 📝 **Blog**: [Project Galatine](https://blog.projectgalatine.com/)
 💻 **GitHub**: [@FlashGalatine](https://github.com/FlashGalatine)
+🐦 **X/Twitter**: [@AsheJunius](https://x.com/AsheJunius)
 📺 **Twitch**: [flashgalatine](https://www.twitch.tv/flashgalatine)
 🌐 **BlueSky**: [projectgalatine.com](https://bsky.app/profile/projectgalatine.com)
 ❤️ **Patreon**: [ProjectGalatine](https://patreon.com/ProjectGalatine)
@@ -393,4 +394,11 @@ perf.clearMetrics();
 
 ## License
 
-MIT © 2025-2026 Flash Galatine
+MIT © 2025-2026 Flash Galatine — see [LICENSE](./LICENSE).
+
+## Legal Notice
+
+**FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.**
+**FINAL FANTASY XIV © SQUARE ENIX CO., LTD.**
+
+XIV Dye Tools is an unofficial fan project and is **not affiliated with, endorsed by, or sponsored by Square Enix Co., Ltd.**

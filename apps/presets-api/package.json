@@ -3,6 +3,7 @@
   "version": "1.6.0",
   "private": true,
   "description": "Cloudflare Worker API for XIV Dye Tools Community Presets",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",

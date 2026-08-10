@@ -23,7 +23,7 @@
     "dye"
   ],
   "author": "Flash Galatine",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@xivdyetools/bot-logic": "workspace:*",
     "@xivdyetools/core": "workspace:*",

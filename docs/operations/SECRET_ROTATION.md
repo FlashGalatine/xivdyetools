@@ -286,8 +286,8 @@ After any secret rotation, verify:
 ## Contact
 
 For questions about secret rotation:
-- **Primary:** Flash Galatine (Balmung)
-- **Documentation:** xivdyetools-docs repository
+- **Primary:** Flash Galatine (Midgardsormr, Aether)
+- **Documentation:** [`docs/`](../) in this monorepo
 
 ---
 

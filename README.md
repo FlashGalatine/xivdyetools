@@ -8,31 +8,32 @@ A comprehensive suite of color and dye tools for **Final Fantasy XIV**, built as
 
 ### Shared Libraries (`packages/`)
 
-Published to npm under the `@xivdyetools` scope:
+Published to npm under the `@xivdyetools` scope (except `test-utils`, which is workspace-private):
 
 | Package | Version | Description |
 |---------|---------|-------------|
-| [`@xivdyetools/types`](packages/types/) | 1.16.0 | Branded types (`HexColor`, `DyeId`, etc.) and shared interfaces |
+| [`@xivdyetools/types`](packages/types/) | 2.0.0 | Branded types (`HexColor`, `DyeId`, etc.) and shared interfaces |
 | [`@xivdyetools/logger`](packages/logger/) | 1.3.0 | Multi-runtime logging (browser, Node, CF Workers) with secret redaction |
-| [`@xivdyetools/auth`](packages/auth/) | 1.3.0 | JWT verification, HMAC signing, Discord Ed25519 verification, Base64URL/hex encoding |
-| [`@xivdyetools/worker-kit`](packages/worker-kit/) | 1.0.0 | Worker toolkit: Hono middleware (request ID, logger, rate limit) + rate limiting backends |
-| [`@xivdyetools/core`](packages/core/) | 3.0.0 | Color algorithms, 125-dye database (schema v2) + facewear colors, k-d tree matching, 6-language i18n, blending (`/blending`) |
-| [`@xivdyetools/svg`](packages/svg/) | 1.2.1 | Platform-agnostic SVG card generators (pure functions: data in → SVG out) |
-| [`@xivdyetools/bot-logic`](packages/bot-logic/) | 1.4.0 | Platform-agnostic command business logic + bot i18n engine (shared by Discord + Stoat bots) |
-| [`@xivdyetools/test-utils`](packages/test-utils/) | 1.1.8 | Cloudflare Workers mocks (D1, KV, R2) and test factories |
+| [`@xivdyetools/auth`](packages/auth/) | 1.3.0 | JWT verification, HMAC signing, Discord Ed25519 verification, Base64URL/hex encoding (`/encoding`) |
+| [`@xivdyetools/worker-kit`](packages/worker-kit/) | 1.0.0 | Worker toolkit: Hono middleware (request ID, logger, rate limit) + sliding-window rate limiting backends (`/rate-limiter`) |
+| [`@xivdyetools/core`](packages/core/) | 4.0.0 | Color algorithms, dye database (schema v2), k-d tree matching, 6-language i18n, Universalis client, blending (`/blending`) |
+| [`@xivdyetools/svg`](packages/svg/) | 2.0.0 | Pure SVG card generators on the 5.0 frame system (data in → SVG string out) |
+| [`@xivdyetools/bot-logic`](packages/bot-logic/) | 2.0.0 | Platform-agnostic command business logic + bot UI translation engine (`/i18n`) |
+| [`@xivdyetools/test-utils`](packages/test-utils/) | 1.2.0 | Cloudflare Workers mocks (D1, KV, R2) and test factories — **not published** |
 
 ### Applications (`apps/`)
 
 | App | Version | Description |
 |-----|---------|-------------|
-| [`discord-worker`](apps/discord-worker/) | 4.7.0 | Primary Discord bot (CF Worker + Hono, HTTP Interactions) |
-| [`stoat-worker`](apps/stoat-worker/) | 0.2.0 | Stoat (Revolt) bot (Node.js + revolt.js, WebSocket, prefix commands) |
+| [`web-app`](apps/web-app/) | 5.0.0 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
+| [`discord-worker`](apps/discord-worker/) | 5.0.0 | Primary Discord bot — 17 slash commands (CF Worker + Hono, HTTP Interactions) |
+| [`image-worker`](apps/image-worker/) | 1.0.0 | Photon-backed pixel extraction, service-binding-only (CF Worker) |
 | [`moderation-worker`](apps/moderation-worker/) | 1.3.0 | Moderation bot for community presets (CF Worker) |
 | [`presets-api`](apps/presets-api/) | 1.6.0 | Community presets REST API (CF Worker + D1) |
 | [`oauth`](apps/oauth/) | 2.5.0 | Discord OAuth + JWT issuance (CF Worker + D1) |
 | [`api-worker`](apps/api-worker/) | 0.5.0 | Public REST API at [data.xivdyetools.app](https://data.xivdyetools.app) + Universalis proxy routes + docs site at [developers.xivdyetools.app](https://developers.xivdyetools.app) (CF Worker + KV) |
-| [`og-worker`](apps/og-worker/) | 1.4.0 | Dynamic OpenGraph image generation (CF Worker + WASM) |
-| [`web-app`](apps/web-app/) | 4.12.0 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
+| [`og-worker`](apps/og-worker/) | 2.0.0 | Dynamic OpenGraph image generation (CF Worker + WASM) |
+| [`stoat-worker`](apps/stoat-worker/) | 0.2.0 | Stoat (Revolt) bot (Node.js + revolt.js, WebSocket, prefix commands) — parked |
 
 ### Documentation (`docs/`)
 
@@ -44,7 +45,7 @@ Architecture overviews, API contracts, deployment guides, specifications, and re
 # Prerequisites: Node.js 22.13+, pnpm 11+
 pnpm install           # Install all workspace dependencies
 pnpm turbo run build   # Build all packages
-pnpm turbo run test    # Run all tests (~7,800 tests)
+pnpm turbo run test    # Run all tests (8,300+ across 328 files)
 ```
 
 ## Development
@@ -67,14 +68,14 @@ pnpm --filter xivdyetools-discord-worker run dev
 ### Dependency Flow
 
 ```
-types, crypto, logger ──────────────────────────────────┐ (no internal deps)
-auth ───────────────────────────────────────────────────┤
-core (→ types, logger), test-utils (→ types, logger) ──┤
-svg (→ core, types) ────────────────────────────────────┤
-bot-logic (→ core, svg) ────────────────────────────────┤
-worker-kit (→ logger) ──────────────────────────────────┤
-                                                        │
-                    Applications ◄──────────────────────┘
+types, logger, auth ─────────────────────────────────────┐ (Level 0: no internal deps)
+test-utils (→ auth, types) ──────────────────────────────┤ (Level 1)
+core (→ types, logger; incl. /blending) ─────────────────┤ (Level 2)
+worker-kit (→ logger; incl. /rate-limiter) ──────────────┤
+svg (→ core, types) ─────────────────────────────────────┤ (Level 3)
+bot-logic (→ core, svg, types; incl. /i18n) ─────────────┤ (Level 4)
+                                                         │
+                    Applications ◄───────────────────────┘
 ```
 
 ### Inter-Worker Communication
@@ -82,10 +83,14 @@ worker-kit (→ logger) ──────────────────�
 Workers communicate via Cloudflare [Service Bindings](https://developers.cloudflare.com/workers/runtime-apis/bindings/service-bindings/) (direct Worker-to-Worker, no HTTP overhead):
 
 ```
-discord-worker ──► presets-api
-moderation-worker ──► presets-api
-presets-api ──► discord-worker (notifications)
+discord-worker ──► presets-api            (preset CRUD)
+discord-worker ──► image-worker           (pixel extraction for /extractor)
+discord-worker ──► api-worker             (Universalis market prices for /budget)
+moderation-worker ──► presets-api         (approve / reject)
+presets-api ──► discord-worker            (submission notifications)
 ```
+
+All Cloudflare Workers use [Hono](https://hono.dev/) as the HTTP framework. Persistence is **D1** (SQLite) for `presets-api` and `oauth`, and **KV** elsewhere.
 
 ## CI/CD
 
@@ -94,8 +99,10 @@ All CI/CD is handled via GitHub Actions:
 | Workflow | Trigger | What it does |
 |----------|---------|-------------|
 | **CI** | Push / PR to `main` | Lint, type-check, test, build (affected packages only) |
-| **Deploy** (×7) | Push to `main` with matching path changes | Build → test → deploy to Cloudflare Workers/Pages |
-| **Publish Package** | Manual (workflow_dispatch) | Build → test → publish selected `@xivdyetools/*` package to npm |
+| **Deploy** (×10) | Push to `main` with matching path changes | Build → test → deploy to Cloudflare Workers/Pages |
+| **Publish Packages** | Manual (workflow_dispatch) | Build → test → publish selected `@xivdyetools/*` package to npm |
+
+Deploy workflows cover `api-worker`, `discord-worker` (+ beta), `image-worker`, `moderation-worker`, `oauth`, `og-worker`, `presets-api`, and `web-app` (+ beta). `stoat-worker` has no deploy workflow — it is parked.
 
 ### Required GitHub Secrets
 
@@ -110,12 +117,43 @@ The publish workflow needs **no secret**. It authenticates to npm with [trusted 
 
 - **Runtime:** Node.js 22, Cloudflare Workers
 - **Package management:** pnpm 11 with `workspace:*` protocol
-- **Build orchestration:** Turborepo with dependency-aware caching
-- **Language:** TypeScript 5.9 (strict, ES2022, bundler module resolution)
-- **Testing:** Vitest 4 (Vitest 3.2 for `@cloudflare/vitest-pool-workers` apps)
-- **Linting:** ESLint 9 flat config with typescript-eslint
+- **Build orchestration:** Turborepo 2.10 with dependency-aware caching
+- **Language:** TypeScript 5.9 (strict, ES2022, bundler module resolution, `verbatimModuleSyntax`)
+- **Testing:** Vitest 4; Playwright for `web-app` E2E
+- **Linting:** ESLint 10 flat config with typescript-eslint
 - **Formatting:** Prettier 3
 - **Localization:** 6 languages (en, ja, de, fr, ko, zh)
+
+## Credits & Acknowledgements
+
+XIV Dye Tools stands on work by others. Thank you to:
+
+| Project | Used for | License |
+|---------|----------|---------|
+| [XIVAPI](https://xivapi.com/) | Dye names in English, Japanese, German, and French | — |
+| [Universalis](https://universalis.app/) | Market board price data | MIT |
+| [spectral.js](https://github.com/rvanwijnen/spectral.js) | Kubelka-Munk physical paint mixing | MIT |
+| [Hono](https://hono.dev/) | HTTP framework for every Cloudflare Worker | MIT |
+| [Lit](https://lit.dev/) | Web component framework for the web app | BSD-3-Clause |
+| [resvg](https://github.com/linebender/resvg) | SVG → PNG rasterization (`resvg-wasm` / `resvg-js`) | MPL-2.0 |
+| [Photon](https://github.com/silvia-odwyer/photon) | WASM image pixel extraction | Apache-2.0 |
+| [revolt.js](https://github.com/revoltchat/revolt.js) | Stoat/Revolt bot client | MIT |
+
+Korean and Chinese dye names are **manually sourced** — XIVAPI does not serve them.
+
+### Fonts
+
+All bundled fonts are licensed under the [SIL Open Font License 1.1](https://openfontlicense.org/):
+
+- [Noto Sans JP / SC / KR](https://fonts.google.com/noto) — CJK glyph coverage (subset for Worker bundles)
+- [Onest](https://fonts.google.com/specimen/Onest) — body text
+- [Space Grotesk](https://fonts.google.com/specimen/Space+Grotesk) — display and headings
+- [Fragment Mono](https://fonts.google.com/specimen/Fragment+Mono) — numeric and monospace columns
+
+### Research
+
+- Color-vision deficiency simulation uses the transformation matrices from **Brettel, Viénot & Mollon (1997)**, *"Computerized simulation of color appearance for dichromats"*, JOSA A 14(10).
+- Perceptual color difference uses **CIE76** and **CIEDE2000** as published by the International Commission on Illumination.
 
 ## Connect With Me
 
@@ -124,6 +162,7 @@ The publish workflow needs **no secret**. It authenticates to npm with [trusted 
 🎮 **FFXIV**: [Lodestone Character](https://na.finalfantasyxiv.com/lodestone/character/7677106/)
 📝 **Blog**: [Project Galatine](https://blog.projectgalatine.com/)
 💻 **GitHub**: [@FlashGalatine](https://github.com/FlashGalatine)
+🐦 **X/Twitter**: [@AsheJunius](https://x.com/AsheJunius)
 📺 **Twitch**: [flashgalatine](https://www.twitch.tv/flashgalatine)
 🌐 **BlueSky**: [projectgalatine.com](https://bsky.app/profile/projectgalatine.com)
 ❤️ **Patreon**: [ProjectGalatine](https://patreon.com/ProjectGalatine)
@@ -132,4 +171,13 @@ The publish workflow needs **no secret**. It authenticates to npm with [trusted 
 
 ## License
 
-MIT © 2025-2026 Flash Galatine
+MIT © 2025-2026 Flash Galatine — see [LICENSE](./LICENSE).
+
+Every package and app in this monorepo is MIT licensed and carries its own `LICENSE` file.
+
+## Legal Notice
+
+**FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.**
+**FINAL FANTASY XIV © SQUARE ENIX CO., LTD.**
+
+XIV Dye Tools is an unofficial fan project and is **not affiliated with, endorsed by, or sponsored by Square Enix Co., Ltd.** All FINAL FANTASY XIV content, including dye names and color values, is the property of Square Enix.

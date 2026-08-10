@@ -125,10 +125,24 @@ const comparison = await executeComparison({
 
 | Package | Purpose |
 |---------|---------|
-| `@xivdyetools/core` | Dye database, color algorithms, k-d tree matching |
-| `@xivdyetools/bot-i18n` | Translation engine for bot UI strings |
-| `@xivdyetools/svg` | SVG card generators (info cards, grids, wheels) |
-| `@xivdyetools/color-blending` | Color blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral) |
+| `@xivdyetools/core` | Dye database, `DyeService`, `LocalizationService`, `filterDyes`, harmony types |
+| `@xivdyetools/core/blending` | Color blending algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral) |
+| `@xivdyetools/svg` | SVG card generators (info cards, grids, harmony cards) |
+| `@xivdyetools/types` | `Dye`, `DyeTypeFilters`, `LocaleCode`, branded color types |
+
+The bot UI translation engine is **built in** at `@xivdyetools/bot-logic/i18n` — `Translator`, `createTranslator`, and six locale JSONs, absorbed from the retired `@xivdyetools/bot-i18n`. Color blending moved from the retired `@xivdyetools/color-blending` into `@xivdyetools/core/blending`. See [`DEPRECATIONS.md`](../../DEPRECATIONS.md).
+
+```typescript
+import { createTranslator } from '@xivdyetools/bot-logic/i18n';
+
+const t = createTranslator('ja');
+t.t('about.title');
+```
+
+## Consumers
+
+- [`apps/discord-worker`](../../apps/discord-worker/) — primary consumer. Each slash command handler calls one `execute*` and renders the result.
+- [`apps/stoat-worker`](../../apps/stoat-worker/) — Revolt bot. Same `execute*` calls, different rendering shim.
 
 ## Connect With Me
 
@@ -137,6 +151,7 @@ const comparison = await executeComparison({
 🎮 **FFXIV**: [Lodestone Character](https://na.finalfantasyxiv.com/lodestone/character/7677106/)
 📝 **Blog**: [Project Galatine](https://blog.projectgalatine.com/)
 💻 **GitHub**: [@FlashGalatine](https://github.com/FlashGalatine)
+🐦 **X/Twitter**: [@AsheJunius](https://x.com/AsheJunius)
 📺 **Twitch**: [flashgalatine](https://www.twitch.tv/flashgalatine)
 🌐 **BlueSky**: [projectgalatine.com](https://bsky.app/profile/projectgalatine.com)
 ❤️ **Patreon**: [ProjectGalatine](https://patreon.com/ProjectGalatine)
@@ -145,4 +160,11 @@ const comparison = await executeComparison({
 
 ## License
 
-MIT © 2025-2026 Flash Galatine
+MIT © 2025-2026 Flash Galatine — see [LICENSE](./LICENSE).
+
+## Legal Notice
+
+**FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.**
+**FINAL FANTASY XIV © SQUARE ENIX CO., LTD.**
+
+XIV Dye Tools is an unofficial fan project and is **not affiliated with, endorsed by, or sponsored by Square Enix Co., Ltd.**

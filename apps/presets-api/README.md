@@ -1,0 +1,165 @@
+# xivdyetools-presets-api
+
+> Community presets REST API for XIV Dye Tools — a Cloudflare Worker on Hono backed by D1, serving preset submission, browsing, voting, and moderation.
+
+Deployed at [api.xivdyetools.app](https://api.xivdyetools.app).
+
+## Endpoints
+
+All routes are mounted under `/api/v1`.
+
+### Presets — `/api/v1/presets`
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/` | List approved presets — filtering, sorting, pagination |
+| `GET` | `/featured` | Curated featured presets |
+| `GET` | `/mine` | The authenticated user's own presets (any status) |
+| `GET` | `/pending` | Presets awaiting moderation (moderator only) |
+| `GET` | `/:id` | Single preset by ID |
+| `POST` | `/` | Submit a new preset |
+| `PATCH` | `/:id` | Edit a preset you own |
+| `DELETE` | `/:id` | Delete a preset you own |
+
+### Votes — `/api/v1/votes`
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/:presetId` | Cast or toggle a vote |
+| `DELETE` | `/:presetId` | Remove your vote |
+| `GET` | `/:presetId/check` | Whether the caller has voted |
+
+### Categories — `/api/v1/categories`
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/` | List preset categories with counts |
+
+### Moderation — `/api/v1/moderation`
+
+Moderator-gated. Backs the `moderation-worker` bot and the web app's moderation view.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `PATCH` | `/:presetId/status` | Approve or reject a preset |
+| `PATCH` | `/:presetId/revert` | Revert a moderation decision |
+| `GET` | `/:presetId/history` | Moderation audit trail for a preset |
+| `GET` | `/stats` | Moderation queue statistics |
+| `GET` | `/pending` | Pending queue |
+| `GET` | `/failed-notifications` | Notification deliveries that failed |
+| `PATCH` | `/failed-notifications/:id/resolve` | Mark a failed notification resolved |
+| `PATCH` | `/refresh-author` | Re-resolve stale author display names |
+| `GET` | `/rate-limit` | Current rate-limit state for the caller |
+
+### Utility
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/` | Service info JSON |
+| `GET` | `/health` | Health probe |
+
+## Authentication
+
+Two callers, two mechanisms:
+
+- **Users** present a JWT issued by [`apps/oauth`](../../apps/oauth/), verified with `@xivdyetools/auth`'s HS256-only `verifyJWT`.
+- **Bots** (`discord-worker`, `moderation-worker`) reach this Worker over a **Service Binding** and authenticate with an HMAC-SHA256 request signature over `timestamp:userId:userName`, verified by `verifyBotSignature`.
+
+## Notifications
+
+When a preset is submitted, this Worker calls back into `discord-worker` over the `DISCORD_WORKER` Service Binding to post an embed in the moderation channel. Delivery failures are recorded and surfaced through `/api/v1/moderation/failed-notifications` rather than silently dropped.
+
+## Development
+
+```bash
+# From the monorepo root
+pnpm install
+pnpm --filter xivdyetools-presets-api run dev            # wrangler dev
+pnpm --filter xivdyetools-presets-api run test
+pnpm --filter xivdyetools-presets-api run type-check
+pnpm --filter xivdyetools-presets-api run lint
+```
+
+### Database
+
+```bash
+pnpm --filter xivdyetools-presets-api run db:migrate:local    # Apply schema.sql to the local D1
+pnpm --filter xivdyetools-presets-api run db:migrate          # Apply schema.sql to the REMOTE D1
+pnpm --filter xivdyetools-presets-api run db:migrate:indexes  # Apply index migrations
+pnpm --filter xivdyetools-presets-api run db:seed             # Seed categories and sample data
+```
+
+> ⚠️ `db:migrate` runs against the **remote production** database (`--remote`). Use `db:migrate:local` for development.
+
+## Deployment
+
+```bash
+pnpm --filter xivdyetools-presets-api run deploy              # DEV worker (xivdyetools-presets-api-dev)
+pnpm --filter xivdyetools-presets-api run deploy:production   # Production (api.xivdyetools.app)
+```
+
+> ⚠️ A bare `wrangler deploy` targets the **dev** worker here. Production always needs `--env production`. See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../docs/operations/DEPLOY_ENVIRONMENTS.md).
+
+Note that the dev worker binds the **same** `xivdyetools-presets` D1 database as production. A dev deploy is not a data sandbox — treat writes accordingly.
+
+## Environment Bindings
+
+| Binding | Type | Purpose |
+|---------|------|---------|
+| `DB` | D1 (`xivdyetools-presets`) | Presets, votes, categories, moderation log |
+| `DISCORD_WORKER` | Service Binding → `xivdyetools-discord-worker` | Submission notifications |
+| `ENVIRONMENT` | Var | `development` or `production` |
+| `API_VERSION` | Var | Currently `v1` |
+
+### Required Secrets
+
+```bash
+wrangler secret put JWT_SECRET           # Must match the oauth worker's signing secret
+wrangler secret put BOT_API_SECRET       # Bearer token accepted from bot callers
+wrangler secret put BOT_SIGNING_SECRET   # HMAC key for bot request signatures
+wrangler secret put MODERATOR_IDS        # CSV of Discord IDs with moderator rights
+```
+
+`JWT_SECRET` is shared with [`apps/oauth`](../../apps/oauth/) — rotating it in one place without the other logs every user out. See [`docs/operations/SECRET_ROTATION.md`](../../docs/operations/SECRET_ROTATION.md).
+
+## Dependencies
+
+| Package | Purpose |
+|---------|---------|
+| `hono` | HTTP framework |
+| `@xivdyetools/auth` | JWT verification, HMAC bot signature verification |
+| `@xivdyetools/types` | Preset, vote, category, and moderation type definitions |
+| `@xivdyetools/logger` | Structured logging with secret redaction |
+| `@xivdyetools/worker-kit` | Request ID, logger, and rate-limit middleware |
+
+## Related Projects
+
+- [`apps/oauth`](../../apps/oauth/) — issues the JWTs this API verifies.
+- [`apps/discord-worker`](../../apps/discord-worker/) — Service Binding consumer; also the notification target.
+- [`apps/moderation-worker`](../../apps/moderation-worker/) — Service Binding consumer for approve/reject/ban.
+- [`apps/web-app`](../../apps/web-app/) — browses and submits presets over HTTPS.
+
+## Connect With Me
+
+**Flash Galatine** | Midgardsormr (Aether)
+
+🎮 **FFXIV**: [Lodestone Character](https://na.finalfantasyxiv.com/lodestone/character/7677106/)
+📝 **Blog**: [Project Galatine](https://blog.projectgalatine.com/)
+💻 **GitHub**: [@FlashGalatine](https://github.com/FlashGalatine)
+🐦 **X/Twitter**: [@AsheJunius](https://x.com/AsheJunius)
+📺 **Twitch**: [flashgalatine](https://www.twitch.tv/flashgalatine)
+🌐 **BlueSky**: [projectgalatine.com](https://bsky.app/profile/projectgalatine.com)
+❤️ **Patreon**: [ProjectGalatine](https://patreon.com/ProjectGalatine)
+☕ **Ko-Fi**: [flashgalatine](https://ko-fi.com/flashgalatine)
+💬 **Discord**: [Join Server](https://discord.gg/5VUSKTZCe5)
+
+## License
+
+MIT © 2025-2026 Flash Galatine — see [LICENSE](./LICENSE).
+
+## Legal Notice
+
+**FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.**
+**FINAL FANTASY XIV © SQUARE ENIX CO., LTD.**
+
+XIV Dye Tools is an unofficial fan project and is **not affiliated with, endorsed by, or sponsored by Square Enix Co., Ltd.**
