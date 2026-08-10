@@ -63,6 +63,20 @@ export function parseArgs(argv) {
     throw new Error(`--expect-robots must be ${ROBOTS_MODES.join('|')}, got "${expectRobots}"`);
   }
 
+  // Without this, a malformed URL dies inside `new URL()` in smokeTestPages as an
+  // uncaught TypeError -- no ::error:: annotation, so unlike every other failure
+  // path here it would not surface on the run summary.
+  for (const [flag, value] of [
+    ['--deployment-url', deploymentUrl],
+    ['--domain', domain],
+  ]) {
+    try {
+      new URL(value);
+    } catch {
+      throw new Error(`${flag} is not a valid absolute URL: "${value}"`);
+    }
+  }
+
   return { deploymentUrl, domain, expectRobots };
 }
 
@@ -74,6 +88,16 @@ const REACH_ATTEMPTS = 6;
 // deploy that actually worked.
 const CONVERGE_ATTEMPTS = 36;
 const DELAY_MS = 5000;
+// CONVERGE_ATTEMPTS attempts sleep between attempts, not after each one, so the
+// budget is (CONVERGE_ATTEMPTS - 1) sleeps, not CONVERGE_ATTEMPTS.
+const CONVERGE_BUDGET_S = ((CONVERGE_ATTEMPTS - 1) * DELAY_MS) / 1000;
+
+// `X-Robots-Tag` is a comma-separated directive list, and four of its keys take a
+// value that is not a robots state: `max-image-preview:none` does not mean noindex.
+// Anything else before a colon is a user-agent (`googlebot: none`), whose value is a
+// real directive and must still count.
+const PARAMETER_DIRECTIVES =
+  /\b(?:max-snippet|max-image-preview|max-video-preview|unavailable_after)\s*:\s*[^,]*/gi;
 
 const REQUEST_INIT = {
   headers: {
@@ -151,7 +175,7 @@ export async function smokeTestPages({
     // a different build" would send the operator to the wrong system.
     return domainEverAnswered
       ? fail(
-          `${site} answered but still serves a different build than ${alias} after ${(CONVERGE_ATTEMPTS * DELAY_MS) / 1000}s; the deploy succeeded and the Pages alias has not picked it up`
+          `${site} answered but still serves a different build than ${alias} after ${CONVERGE_BUDGET_S}s; either the Pages alias has not picked up this deployment, or a zone feature that rewrites HTML (Rocket Loader, Email Obfuscation) is mutating the response so the bytes can never match`
         )
       : fail(
           `${site} never returned 2xx (last: ${domainDetail}); the deployment is live at ${alias}, so this is the domain, not the build`
@@ -162,7 +186,7 @@ export async function smokeTestPages({
   const robots = domainHeaders.get('x-robots-tag');
   // `none` is defined as equivalent to `noindex, nofollow`, so it counts as
   // noindex here -- a production site served `none` is just as deindexed.
-  const hasNoindex = /\b(noindex|none)\b/i.test(robots ?? '');
+  const hasNoindex = /\b(noindex|none)\b/i.test((robots ?? '').replace(PARAMETER_DIRECTIVES, ''));
   const failures = [];
 
   if (expectRobots === 'noindex' && !hasNoindex) {

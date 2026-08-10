@@ -25,9 +25,11 @@
     "test": {
       "dependsOn": ["^build"],
       "cache": true,
-      // scripts/** holds the CI-gate scripts (e.g. web-app's deploy smoke test)
-      // and their tests, so it must invalidate the cache like src/** does.
-      "inputs": ["src/**", "tests/**", "scripts/**", "vitest.config.*"],
+      // scripts/**/*.js holds the CI-gate scripts (e.g. web-app's deploy smoke
+      // test) and their tests, so it must invalidate the cache like src/** does.
+      // Narrowed to *.js (matching what vitest's include actually discovers) so
+      // non-JS assets under scripts/ (e.g. icon PNGs) do not bust the cache.
+      "inputs": ["src/**", "tests/**", "scripts/**/*.js", "vitest.config.*"],
       "outputs": ["coverage/**"]
     },
     "test:coverage": {

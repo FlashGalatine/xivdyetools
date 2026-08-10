@@ -55,10 +55,10 @@ node scripts/smoke-test-pages.js \
 
 Three phases:
 
-1. The deployment alias returns 2xx (~30 s budget). This is the build just
+1. The deployment alias returns 2xx (~25 s budget). This is the build just
    uploaded, live the moment `wrangler pages deploy` returns.
 2. The custom domain is polled until its `index.html` sha256 matches the alias's
-   (~180 s budget). A Pages custom domain keeps serving the *previous* deployment
+   (~175 s budget). A Pages custom domain keeps serving the *previous* deployment
    until propagation finishes, so this is what makes phase 3 describe the right
    build.
 3. `x-robots-tag` on that matched response must contain `noindex` or `none`

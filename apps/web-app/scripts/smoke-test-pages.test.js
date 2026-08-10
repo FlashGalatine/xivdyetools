@@ -64,6 +64,30 @@ describe('parseArgs', () => {
   it('exposes exactly the two supported robots modes', () => {
     expect(ROBOTS_MODES).toEqual(['noindex', 'none']);
   });
+
+  it('rejects a malformed --deployment-url with an annotated error, not a raw TypeError', () => {
+    expect(() =>
+      parseArgs(['--deployment-url', 'notaurl', '--domain', 'https://site.test', '--expect-robots', 'noindex'])
+    ).toThrow(/--deployment-url is not a valid absolute URL/);
+  });
+
+  it('rejects a malformed --domain with an annotated error', () => {
+    expect(() =>
+      parseArgs(['--deployment-url', 'https://a.test', '--domain', 'notaurl', '--expect-robots', 'noindex'])
+    ).toThrow(/--domain is not a valid absolute URL/);
+  });
+
+  it('rejects a scheme-relative --domain, since new URL requires absolute', () => {
+    expect(() =>
+      parseArgs(['--deployment-url', 'https://a.test', '--domain', '//example.com', '--expect-robots', 'noindex'])
+    ).toThrow(/--domain is not a valid absolute URL/);
+  });
+
+  it('rejects a path-only --domain, since new URL requires absolute', () => {
+    expect(() =>
+      parseArgs(['--deployment-url', 'https://a.test', '--domain', '/foo', '--expect-robots', 'noindex'])
+    ).toThrow(/--domain is not a valid absolute URL/);
+  });
 });
 
 const BODY = '<!doctype html><title>XIV Dye Tools</title>';
@@ -196,8 +220,11 @@ describe('smokeTestPages', () => {
     });
     expect(result.ok).toBe(false);
     expect(result.failures[0]).toMatch(/different build/);
-    expect(result.failures[0]).toMatch(/180s/);
+    expect(result.failures[0]).toMatch(/175s/);
     expect(result.failures[0]).not.toMatch(/never returned 2xx/);
+    // Names the second possible cause, so a zone feature that rewrites HTML is not
+    // silently blamed on Pages alias lag forever.
+    expect(result.failures[0]).toMatch(/zone feature/);
   });
 
   it('waits for the domain to converge instead of failing on the first mismatch', async () => {
@@ -246,6 +273,44 @@ describe('smokeTestPages', () => {
       }),
     });
     expect(result.ok).toBe(false);
+  });
+
+  it('does not mistake the parameter directive max-image-preview:none for noindex', async () => {
+    // The false positive being fixed: ':' is a word boundary, so a naive
+    // /\b(noindex|none)\b/ match treats this value-taking key as noindex.
+    const result = await run({
+      expectRobots: 'none',
+      fetchImpl: fakeFetch({
+        'abc.example.pages.dev': [response(200, BODY)],
+        'site.test': [response(200, BODY, { 'x-robots-tag': 'max-image-preview:none' })],
+      }),
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it('still catches a real noindex sitting alongside a parameter directive', async () => {
+    // Proves the strip does not swallow a real directive next to a parameter one.
+    const result = await run({
+      expectRobots: 'none',
+      fetchImpl: fakeFetch({
+        'abc.example.pages.dev': [response(200, BODY)],
+        'site.test': [response(200, BODY, { 'x-robots-tag': 'max-image-preview:none, noindex' })],
+      }),
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it('still counts a per-user-agent none as noindex', async () => {
+    // Anything before a colon that is not one of the four parameter-directive keys
+    // is a user-agent name, whose value is a real directive.
+    const result = await run({
+      expectRobots: 'noindex',
+      fetchImpl: fakeFetch({
+        'abc.example.pages.dev': [response(200, BODY)],
+        'site.test': [response(200, BODY, { 'x-robots-tag': 'googlebot: none' })],
+      }),
+    });
+    expect(result.ok).toBe(true);
   });
 
   it('fails when a production domain carries none, naming the likely cause', async () => {

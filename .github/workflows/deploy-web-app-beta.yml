@@ -92,8 +92,13 @@ jobs:
       # for why the robots assertion cannot live on the *.pages.dev alias, and why
       # a check against beta.xivdyetools.app alone can pass against the old build.
       - name: Smoke test
+        # Not `pnpm --filter xivdyetools-web-app exec`: that form prints "No
+        # projects matched the filters" and exits 0 when the filter matches
+        # nothing, so a future filter typo would silently turn this gate into a
+        # passing no-op. A direct node invocation cannot do that.
+        working-directory: apps/web-app
         run: >
-          pnpm --filter xivdyetools-web-app exec node scripts/smoke-test-pages.js
+          node scripts/smoke-test-pages.js
           --deployment-url "${{ steps.deploy.outputs.deployment-url }}"
           --domain https://beta.xivdyetools.app
           --expect-robots noindex

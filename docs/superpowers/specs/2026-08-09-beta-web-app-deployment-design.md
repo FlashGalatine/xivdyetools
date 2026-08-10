@@ -151,14 +151,8 @@ Modelled on `deploy-discord-worker-beta.yml`:
   `check-bundle-size`
 - `env: VITE_APP_ENV: beta` on the build step
 - `pages deploy dist --project-name=xivdyetools-beta --branch=beta`
-- Smoke test, in two steps:
-  1. `curl --fail` against the wrangler-action `deployment-url` output (the immutable
-     `<hash>.xivdyetools-beta.pages.dev` alias) for a 2xx. This is the build just uploaded;
-     `beta.xivdyetools.app` is a mutable alias still serving the *previous* deployment
-     until propagation completes, so a reachability assertion there can pass against the
-     old build.
-  2. `curl --fail` against `https://beta.xivdyetools.app/` with a ~2min retry budget, as a
-     separate check that the custom domain is attached and current.
+- Smoke test: `apps/web-app/scripts/smoke-test-pages.js` (superseded from the two-`curl`
+  implementation originally sketched here — see below).
 
   The first-ever run of this workflow failed here with **522**: a Pages custom domain has no
   origin until the project's first *production* deployment exists, and the original ~36s

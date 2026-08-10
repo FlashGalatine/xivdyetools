@@ -94,9 +94,11 @@ the *previous* deployment.
 
 ### 1. `apps/web-app/scripts/smoke-test-pages.js` (new)
 
-ESM (the package is `"type": "module"`), following `check-beta-build.js`'s conventions: a
-`failures[]` + `check()` accumulator, a bulleted `process.exit(1)`, one-line success summary, and
-`::error::` annotations so failures surface on the run summary rather than only in the log.
+ESM (the package is `"type": "module"`), following `check-beta-build.js`'s conventions: a bulleted
+`process.exit(1)`, one-line success summary, and `::error::` annotations so failures surface on
+the run summary rather than only in the log. Phases 1–2 early-return via a `fail()` helper on
+their single failure mode; phase 3 pushes one entry per assertion onto a `failures[]` array, since
+both robots directions are checked there.
 
 ```
 node scripts/smoke-test-pages.js \
@@ -172,11 +174,12 @@ first step toward covering the two existing gate scripts, which have no tests to
 | `--deployment-url` empty | Hard fail naming `wrangler-action`, so the cause is the action's output and not the site |
 | Alias never returns 2xx | Fail naming the alias — the deployment itself is bad; the domain is irrelevant |
 | Domain never returns 2xx | Fail stating the deployment is live at `<alias>` but `<domain>` never answered, with the last status seen. This is the original 522 shape — a working deployment behind an unreachable or unattached domain |
-| Domain answers but never converges | Fail stating *"deployment is live at `<alias>` but `<domain>` still serves a different build after 180s"*. Deliberately worded so a production operator reads "the deploy worked, the alias is lagging", not "production is down" |
-| Beta missing `noindex` | Fail, dumping the response headers. Distinct from `check-beta-build.js`, which asserts the *artifact*; this asserts Cloudflare actually served it |
+| Domain answers but never converges | Fail stating *"deployment is live at `<alias>` but `<domain>` still serves a different build after ~175s"*, naming both possible causes: the Pages alias has not picked up this deployment, or a zone feature that rewrites HTML (Rocket Loader, Email Obfuscation) is mutating the response so the bytes can never match. Deliberately worded so a production operator reads "the deploy worked, the alias is lagging" first, not "production is down" |
+| Beta missing `noindex` | Fail, reporting the `x-robots-tag` value actually served (or `<absent>`). Distinct from `check-beta-build.js`, which asserts the *artifact*; this asserts Cloudflare actually served it |
 | Production has `noindex` | Fail loudly — this is the high-value guard. A beta build reaching production would deindex the live site, and nothing else in CI catches it today |
+| Phase 2 keys on `index.html` bytes only | A deploy that changes only `public/_headers` leaves `index.html` identical to the previous deployment, so the first poll matches immediately against the *previous* build and phase 3 reads *that* build's headers, not this one's. Mitigation: the flagship hazard this design exists to catch — a beta build reaching production — always changes `index.html` via the `[BETA] ` title prefix, so convergence is genuinely exercised for that case |
 
-A one-time cold custom domain (the original 522) now fails only after ~180s rather than ~36s, and
+A one-time cold custom domain (the original 522) now fails only after ~175s rather than ~36s, and
 the message identifies it as a domain problem with a working deployment behind it.
 
 ## Testing

@@ -66,8 +66,13 @@ jobs:
       # creation and does not change it when the project is renamed. Reading it from
       # the action output avoids having to know that.
       - name: Smoke test
+        # Not `pnpm --filter xivdyetools-web-app exec`: that form prints "No
+        # projects matched the filters" and exits 0 when the filter matches
+        # nothing, so a future filter typo would silently turn this gate into a
+        # passing no-op. A direct node invocation cannot do that.
+        working-directory: apps/web-app
         run: >
-          pnpm --filter xivdyetools-web-app exec node scripts/smoke-test-pages.js
+          node scripts/smoke-test-pages.js
           --deployment-url "${{ steps.deploy.outputs.deployment-url }}"
           --domain https://xivdyetools.app
           --expect-robots none
