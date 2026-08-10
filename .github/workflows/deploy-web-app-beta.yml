@@ -28,6 +28,7 @@ on:
       - 'packages/core/**'
       - 'packages/types/**'
       - 'packages/logger/**'
+      - 'packages/svg/**'
   workflow_dispatch:
 
 concurrency:
@@ -66,6 +67,7 @@ jobs:
         env:
           VITE_APP_ENV: beta
 
+      # ARCH-004: Verify bundle sizes stay within acceptable limits
       - name: Check bundle sizes
         run: pnpm --filter xivdyetools-web-app exec node scripts/check-bundle-size.js
 
@@ -84,10 +86,12 @@ jobs:
           command: pages deploy dist --project-name=xivdyetools-beta --branch=beta
           packageManager: pnpm
 
+      # ARCH-002: Verify deployed site responds after deployment
       - name: Smoke test
         run: |
           sleep 5
-          curl --fail --retry 3 --retry-delay 5 --retry-all-errors \
+          curl --fail --retry 6 --retry-delay 5 --retry-all-errors \
             -o /dev/null -w "%{http_code}" \
             -H "User-Agent: xivdyetools-ci" \
             https://beta.xivdyetools.app/
+          curl -sI https://beta.xivdyetools.app/ | grep -qi 'x-robots-tag: noindex'
