@@ -34,9 +34,15 @@ export default {
           'Courier New',
           'monospace',
         ],
+        // Mirrors the `.number` / `.font-numeric` rule in styles/globals.css.
+        // Habibi (a proportional display serif) was retired in 5.0 -- see BUG-002.
         numeric: [
-          'Habibi',
-          'serif',
+          'Fragment Mono',
+          'ui-monospace',
+          'Cascadia Mono',
+          'Consolas',
+          'monospace',
+          'sans-serif',
         ],
       },
     },

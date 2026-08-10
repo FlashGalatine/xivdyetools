@@ -15,16 +15,6 @@
   src: url('/fonts/FragmentMono-Regular.woff2') format('woff2');
 }
 
-/* Habibi - RETIRED in 5.0, kept only until the last reference is gone.
-   Removed with the asset in DEAD-004. Do not add new uses. */
-@font-face {
-  font-family: 'Habibi';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fonts/habibi-v22-latin_latin-ext-regular.woff2') format('woff2');
-}
-
 /* ============================================================================
    Numerical Values Typography
    ============================================================================ */
