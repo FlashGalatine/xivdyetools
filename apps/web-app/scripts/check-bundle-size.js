@@ -85,9 +85,18 @@ const BUNDLE_LIMITS = [
   // Eagerly loaded on first paint
   { label: 'main entry', pattern: /^index-/, limit: 150 * KB },
   { label: 'layout shell', pattern: /^v4-layout-/, limit: 200 * KB },
-  { label: 'modals (welcome/changelog)', pattern: /^modals-/, limit: 280 * KB },
+  // Named `modals` by vite.config's manualChunks, but that is not what it holds.
+  // Rolldown ignored 34 of the 51 assignments manualChunks returned and merged
+  // the shared colour engine into this chunk -- ColorConverter, ColorService,
+  // APIService, core utils and spectral.js. It is ~278 KB and loads on every
+  // visit, including for a returning visitor who never opens a modal, because
+  // every tool needs ColorService. Treat it as the app's core runtime budget.
+  { label: 'core runtime (named "modals")', pattern: /^modals-/, limit: 280 * KB },
 
   // Vendor chunks, code-split for caching
+  // Despite the name this is purely `character_colors/race_specific/*.json`:
+  // ~1.79 MB of source that CharacterColorService `import()`s on demand, so it
+  // is correctly absent from first paint. Verified in a browser.
   { label: 'swatch reference data', pattern: /^vendor-core-/, limit: 950 * KB },
   { label: 'lit framework', pattern: /^vendor-lit-/, limit: 20 * KB },
   { label: 'spectral.js', pattern: /^vendor-spectral-/, limit: 15 * KB },
