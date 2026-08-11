@@ -7,6 +7,7 @@ import { Hono } from 'hono';
 import { moderationRouter } from '../../src/handlers/moderation';
 import { authMiddleware } from '../../src/middleware/auth';
 import type { Env, AuthContext, CommunityPreset, ModerationLogEntry } from '../../src/types';
+import type { MockR2Bucket } from '@xivdyetools/test-utils';
 import {
     createMockEnv,
     createMockD1Database,
@@ -555,6 +556,231 @@ describe('ModerationHandler', () => {
             );
 
             expect(mockDb._bindings.some((b) => b.includes('revert'))).toBe(true);
+        });
+    });
+
+    // ============================================
+    // PATCH /api/v1/moderation/:presetId/preview-image
+    // ============================================
+
+    describe('PATCH /api/v1/moderation/:presetId/preview-image', () => {
+        it('approves a pending image so the URL starts being served', async () => {
+            const row = createMockPresetRow({
+                id: 'preset-123',
+                status: 'approved',
+                preview_image_key: 'preset-123/a.webp',
+                preview_image_status: 'pending',
+            });
+            mockDb._setupMock((query) => {
+                if (query.startsWith("UPDATE presets SET preview_image_status = 'approved'")) {
+                    row.preview_image_status = 'approved';
+                    return { success: true };
+                }
+                return row;
+            });
+
+            const res = await app.request(
+                '/api/v1/moderation/preset-123/preview-image',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789', // In MODERATOR_IDS
+                    },
+                    body: JSON.stringify({ action: 'approve' }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { success: boolean; preview_image_status: string };
+            expect(body.success).toBe(true);
+            expect(body.preview_image_status).toBe('approved');
+            expect(row.preview_image_status).toBe('approved');
+        });
+
+        it('rejects by clearing the image, leaving the preset status alone', async () => {
+            const row = createMockPresetRow({
+                id: 'preset-123',
+                status: 'approved',
+                preview_image_key: 'preset-123/a.webp',
+                preview_image_status: 'pending',
+            });
+            mockDb._setupMock((query) => {
+                if (query.startsWith('UPDATE presets SET preview_image_key = NULL')) {
+                    row.preview_image_key = null;
+                    row.preview_image_status = 'none';
+                    return { success: true };
+                }
+                return row;
+            });
+
+            const bucket = env.THUMBNAILS as unknown as MockR2Bucket;
+            await bucket.put('preset-123/a.webp', new ArrayBuffer(4));
+            expect(bucket._store.has('preset-123/a.webp')).toBe(true);
+
+            const res = await app.request(
+                '/api/v1/moderation/preset-123/preview-image',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789', // In MODERATOR_IDS
+                    },
+                    body: JSON.stringify({ action: 'reject' }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { success: boolean; preview_image_status: string };
+            expect(body.success).toBe(true);
+            expect(body.preview_image_status).toBe('none');
+
+            expect(row.preview_image_status).toBe('none');
+            expect(row.preview_image_key).toBeNull();
+            expect(row.status).toBe('approved'); // the preset itself is untouched
+            expect(bucket._store.has('preset-123/a.webp')).toBe(false);
+        });
+
+        // Task 4's ruling applies here too: the DB UPDATE must land before the
+        // R2 delete, so a throwing UPDATE only ever orphans an object (cheap,
+        // invisible) instead of leaving the row pointing at a deleted key
+        // (a broken image on a live card). Assert the ordering directly by
+        // observing the row's state at the moment delete() is invoked.
+        it('updates the row before deleting the R2 object', async () => {
+            const row = createMockPresetRow({
+                id: 'preset-123',
+                status: 'approved',
+                preview_image_key: 'preset-123/a.webp',
+                preview_image_status: 'pending',
+            });
+            mockDb._setupMock((query) => {
+                if (query.startsWith('UPDATE presets SET preview_image_key = NULL')) {
+                    row.preview_image_key = null;
+                    row.preview_image_status = 'none';
+                    return { success: true };
+                }
+                return row;
+            });
+
+            const bucket = env.THUMBNAILS as unknown as MockR2Bucket;
+            await bucket.put('preset-123/a.webp', new ArrayBuffer(4));
+
+            let statusAtDeleteTime: string | undefined;
+            const originalDelete = bucket.delete.bind(bucket);
+            bucket.delete = vi.fn(async (key: string | string[]) => {
+                statusAtDeleteTime = row.preview_image_status;
+                return originalDelete(key);
+            });
+
+            const res = await app.request(
+                '/api/v1/moderation/preset-123/preview-image',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789', // In MODERATOR_IDS
+                    },
+                    body: JSON.stringify({ action: 'reject' }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            expect(bucket.delete).toHaveBeenCalledTimes(1);
+            // By the time delete() ran, the row had already flipped to 'none' —
+            // proving the UPDATE happened first.
+            expect(statusAtDeleteTime).toBe('none');
+        });
+
+        it('refuses a non-moderator, including the preset\'s own author', async () => {
+            const row = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: 'the-author',
+                preview_image_key: 'preset-123/a.webp',
+                preview_image_status: 'pending',
+            });
+            mockDb._setupMock(() => row);
+
+            const res = await app.request(
+                '/api/v1/moderation/preset-123/preview-image',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': 'the-author', // author, not a moderator
+                    },
+                    body: JSON.stringify({ action: 'approve' }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(403);
+        });
+
+        it('returns 400 for an action that is neither approve nor reject', async () => {
+            const res = await app.request(
+                '/api/v1/moderation/preset-123/preview-image',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                    body: JSON.stringify({ action: 'delete' }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(400);
+            const body = await res.json() as { error: string };
+            expect(body.error).toBe('VALIDATION_ERROR');
+        });
+
+        it('returns 400 for invalid JSON body', async () => {
+            const res = await app.request(
+                '/api/v1/moderation/preset-123/preview-image',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                    body: 'not valid json',
+                },
+                env
+            );
+
+            expect(res.status).toBe(400);
+            const body = await res.json() as { error: string };
+            expect(body.error).toBe('INVALID_JSON');
+        });
+
+        it('returns 404 for a nonexistent preset', async () => {
+            mockDb._setupMock(() => null);
+
+            const res = await app.request(
+                '/api/v1/moderation/nonexistent/preview-image',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                    body: JSON.stringify({ action: 'approve' }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(404);
         });
     });
 
