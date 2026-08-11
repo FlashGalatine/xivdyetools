@@ -1218,7 +1218,10 @@ describe('PresetsHandler', () => {
             const fetchSpy = vi.fn();
             env.IMAGE_WORKER = { fetch: fetchSpy } as unknown as Fetcher;
 
+            // Real PNG magic bytes followed by padding, so the sniff check
+            // passes and ONLY the size check can reject this payload.
             const big = new Uint8Array(5 * 1024 * 1024 + 1);
+            big.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
             const res = await app.request(
                 '/api/v1/presets/preset-123/preview-image',
                 {
@@ -1322,6 +1325,57 @@ describe('PresetsHandler', () => {
             expect(
                 mockDb._queries.some((q) => q.includes("preview_image_status = 'pending'"))
             ).toBe(true);
+        });
+
+        // FINDING 2 (2026-08-10 review): the handler does the DB UPDATE
+        // before deleting the old R2 object, and must capture the OLD key
+        // before the UPDATE overwrites it — otherwise a re-upload could
+        // delete the object it just wrote instead of the stale one. This
+        // test performs two real uploads through the route (not a
+        // pre-seeded bucket) so the row's preview_image_key genuinely
+        // changes between requests, the way it would in production.
+        it('leaves exactly one object under the prefix after a re-upload, and it is the new key', async () => {
+            const row = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: '123',
+                preview_image_key: null,
+            });
+            mockDb._setupMock((query, bindings) => {
+                if (query.startsWith('UPDATE presets SET preview_image_key')) {
+                    row.preview_image_key = bindings[0] as string;
+                    return { success: true };
+                }
+                return row;
+            });
+
+            const bucket = env.THUMBNAILS as unknown as MockR2Bucket;
+            const upload = () =>
+                app.request(
+                    '/api/v1/presets/preset-123/preview-image',
+                    {
+                        method: 'POST',
+                        headers: {
+                            Authorization: 'Bearer test-bot-secret',
+                            'X-User-Discord-ID': '123',
+                        },
+                        body: png,
+                    },
+                    env
+                );
+
+            const first = await upload();
+            expect(first.status).toBe(200);
+            const firstKeys = [...bucket._store.keys()].filter((k) => k.startsWith('preset-123/'));
+            expect(firstKeys).toHaveLength(1);
+            const firstKey = firstKeys[0];
+
+            const second = await upload();
+            expect(second.status).toBe(200);
+
+            const finalKeys = [...bucket._store.keys()].filter((k) => k.startsWith('preset-123/'));
+            expect(finalKeys).toHaveLength(1);
+            expect(finalKeys[0]).not.toBe(firstKey);
+            expect(bucket._store.has(firstKey)).toBe(false);
         });
     });
 

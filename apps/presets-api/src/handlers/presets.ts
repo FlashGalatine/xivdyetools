@@ -731,14 +731,25 @@ presetsRouter.post('/:id/preview-image', async (c) => {
     );
   }
 
-  // Replace any previous image so an abandoned object is not orphaned.
-  await deletePreviewImage(c.env, preset.preview_image_key);
+  // Capture the OLD key before the UPDATE overwrites it, so the delete below
+  // can never target the object we just wrote.
+  const previousKey = preset.preview_image_key;
 
+  // DB UPDATE before the old-object delete, deliberately: if the UPDATE
+  // throws, leaving the delete undone just orphans the old object in R2
+  // (invisible, negligible cost, cleanable later). Doing it the other way
+  // round — delete then UPDATE — risks the opposite failure: a row left
+  // pointing at a key that no longer exists, so an approved preset's card
+  // starts 404ing on every view. Never trade a broken live image for a tidy
+  // bucket.
   await c.env.DB.prepare(
     `UPDATE presets SET preview_image_key = ?, preview_image_status = 'pending', updated_at = ? WHERE id = ?`
   )
     .bind(key, new Date().toISOString(), presetId)
     .run();
+
+  // Replace any previous image so an abandoned object is not orphaned.
+  await deletePreviewImage(c.env, previousKey);
 
   return c.json({ success: true, status: 'pending' });
 });
