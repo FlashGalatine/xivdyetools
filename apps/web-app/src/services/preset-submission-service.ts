@@ -151,6 +151,35 @@ export function validateSubmission(submission: PresetSubmission): ValidationErro
   return errors;
 }
 
+/** Mirror of the server limit — fail locally rather than spend the upload. */
+export const MAX_PREVIEW_IMAGE_BYTES = 5 * 1024 * 1024;
+
+/**
+ * Upload a preview image for a preset the signed-in user authored.
+ *
+ * Sent as raw bytes, not multipart: the route takes one file and nothing else,
+ * so a multipart envelope would be parsing work for no information. Can only
+ * be called once the preset exists — the route is scoped to a preset id.
+ */
+export async function uploadPreviewImage(presetId: string, file: File): Promise<void> {
+  if (file.size > MAX_PREVIEW_IMAGE_BYTES) {
+    throw new Error('Image must be at most 5 MB');
+  }
+
+  const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/${presetId}/preview-image`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': file.type || 'application/octet-stream',
+      ...authService.getAuthHeaders(),
+    },
+    body: file,
+  });
+
+  if (!response.ok) {
+    throw new Error('Preview image upload failed');
+  }
+}
+
 // ============================================
 // Service
 // ============================================

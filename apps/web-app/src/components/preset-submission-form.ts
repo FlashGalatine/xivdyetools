@@ -18,7 +18,12 @@ import {
 import { getCategoryIcon } from '@shared/category-icons';
 import { presetCategoryLabel } from '@shared/preset-i18n';
 import type { Dye, PresetCategory } from '@xivdyetools/types';
-import type { PresetSubmission, SubmissionResult } from '@services/preset-submission-service';
+import {
+  MAX_PREVIEW_IMAGE_BYTES,
+  uploadPreviewImage,
+  type PresetSubmission,
+  type SubmissionResult,
+} from '@services/preset-submission-service';
 import { exampleLinkError } from '@shared/example-link';
 
 // ============================================
@@ -33,6 +38,8 @@ interface FormState {
   tags: string;
   /** 8A example link (allowlisted host; validated on blur) */
   exampleLink: string;
+  /** Optional card image; uploaded only after the preset is created (needs its id) */
+  previewImage: File | null;
   /** Re-render the HOW IT WILL LOOK preview band (8S) */
   refreshPreview?: () => void;
 }
@@ -86,6 +93,7 @@ export function showPresetSubmissionForm(
     selectedDyes: initial?.dyes ? initial.dyes.slice(0, MAX_DYES) : [],
     tags: '',
     exampleLink: '',
+    previewImage: null,
   };
 
   // Create form content
@@ -221,6 +229,9 @@ function createFormContent(state: FormState, onSubmit?: OnSubmitCallback): HTMLE
 
   // Example link (8A) — validated on blur, not per keystroke
   form.appendChild(createExampleLinkInput(state));
+
+  // Preview image — optional; only uploadable once the preset has an id
+  form.appendChild(createPreviewImageInput(state));
 
   // Moderation rules line
   const rules = fieldHint(LanguageService.t('preset.rulesNote'));
@@ -632,6 +643,47 @@ function createExampleLinkInput(state: FormState): HTMLElement {
   return wrapper;
 }
 
+const PREVIEW_IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp';
+
+function createPreviewImageInput(state: FormState): HTMLElement {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'form-field';
+
+  const label = fieldLabelRow(
+    LanguageService.t('preset.fieldPreviewImage'),
+    LanguageService.t('preset.reqOptional'),
+    false
+  );
+
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.id = 'preset-preview-image';
+  input.accept = PREVIEW_IMAGE_ACCEPT;
+  input.className = 'w-full text-sm';
+  input.style.color = 'var(--theme-text)';
+
+  const hint = fieldHint(LanguageService.t('preset.fieldPreviewImageHint'));
+
+  input.addEventListener('change', () => {
+    const file = input.files?.[0] ?? null;
+    // Fail fast on size here — mirrors the server limit so the user finds
+    // out before waiting on an upload the server would reject anyway.
+    if (file && file.size > MAX_PREVIEW_IMAGE_BYTES) {
+      ToastService.error(LanguageService.t('preset.previewImageTooLarge'));
+      input.value = '';
+      state.previewImage = null;
+      return;
+    }
+    state.previewImage = file;
+  });
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(input);
+  wrapper.appendChild(hint);
+
+  return wrapper;
+}
+
 function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'flex justify-end gap-2 pt-4 border-t';
@@ -732,6 +784,18 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
           ToastService.success(LanguageService.t('preset.submittedPendingReview'));
         } else {
           ToastService.success(LanguageService.t('preset.submittedSuccess'));
+        }
+
+        // The preset now exists, so the image (which is scoped to a preset
+        // id) can go up. A failed upload must not read as a failed submission:
+        // the preset was created either way, so warn and continue rather than
+        // throwing.
+        if (state.previewImage && result.preset?.id) {
+          try {
+            await uploadPreviewImage(result.preset.id, state.previewImage);
+          } catch {
+            ToastService.warning(LanguageService.t('preset.previewImageFailed'));
+          }
         }
 
         console.info('[PresetSubmissionForm] calling ModalService.dismissTop()');

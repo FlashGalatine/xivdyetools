@@ -2,8 +2,8 @@
  * Tests for preset-submission-service pure functions
  * These functions can be tested without mocking API calls
  */
-import { describe, it, expect } from 'vitest';
-import { validateSubmission } from '../preset-submission-service';
+import { describe, it, expect, vi } from 'vitest';
+import { validateSubmission, uploadPreviewImage } from '../preset-submission-service';
 
 describe('PresetSubmissionService - validateSubmission', () => {
   // ============================================
@@ -462,5 +462,38 @@ describe('PresetSubmissionService - validateSubmission', () => {
       expect(errors.map((e) => e.field)).toContain('dyes');
       expect(errors.map((e) => e.field)).toContain('tags');
     });
+  });
+});
+
+// ============================================
+// uploadPreviewImage
+// ============================================
+
+describe('PresetSubmissionService - uploadPreviewImage', () => {
+  it('POSTs the raw file bytes to the preview-image route', async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({ success: true }), { status: 200 }));
+    const file = new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], 'shot.png', {
+      type: 'image/png',
+    });
+
+    await uploadPreviewImage('preset-1', file);
+
+    const [url, init] = fetchSpy.mock.calls[0];
+    expect(String(url)).toContain('/api/v1/presets/preset-1/preview-image');
+    expect((init as RequestInit).method).toBe('POST');
+
+    fetchSpy.mockRestore();
+  });
+
+  it('rejects a file over 5 MB before any request is made', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const big = new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'big.png', { type: 'image/png' });
+
+    await expect(uploadPreviewImage('preset-1', big)).rejects.toThrow();
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    fetchSpy.mockRestore();
   });
 });
