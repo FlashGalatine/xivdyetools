@@ -2218,6 +2218,85 @@ describe('PresetsHandler', () => {
 
             expect(res.status).toBe(404);
         });
+
+        // Task 7 (2026-08-11): clients can now SET category_id / secondary_categories
+        // on edit, and changing the primary category is unlocked. Auth headers mirror
+        // the neighbouring PATCH tests above (bot secret + X-User-Discord-ID) rather
+        // than the authHeaders() helper, since author_discord_id must equal the
+        // X-User-Discord-ID header for the ownership check to pass.
+        it('accepts a category change with secondary categories', async () => {
+            const row = createMockPresetRow({ author_discord_id: '123456789', status: 'approved' });
+            mockDb._setupMock((sql: string) => {
+                if (sql.includes('FROM categories')) {
+                    return [{ id: 'jobs' }, { id: 'zones' }, { id: 'events' }, { id: 'aesthetics' }];
+                }
+                return [{ ...row, category_id: 'jobs', secondary_categories: '["zones"]' }];
+            });
+
+            const res = await app.request(
+                `/api/v1/presets/${row.id}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                    body: JSON.stringify({ category_id: 'jobs', secondary_categories: ['zones'] }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+        });
+
+        it('rejects a secondary category that repeats the primary', async () => {
+            const row = createMockPresetRow({ author_discord_id: '123456789', status: 'approved' });
+            mockDb._setupMock((sql: string) => {
+                if (sql.includes('FROM categories')) return [{ id: 'jobs' }, { id: 'zones' }];
+                return [row];
+            });
+
+            const res = await app.request(
+                `/api/v1/presets/${row.id}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                    body: JSON.stringify({ category_id: 'jobs', secondary_categories: ['jobs'] }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(400);
+        });
+
+        it('a category-only edit is not "No updates provided"', async () => {
+            const row = createMockPresetRow({ author_discord_id: '123456789', status: 'approved' });
+            mockDb._setupMock((sql: string) => {
+                if (sql.includes('FROM categories')) return [{ id: 'jobs' }, { id: 'zones' }];
+                return [row];
+            });
+
+            const res = await app.request(
+                `/api/v1/presets/${row.id}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                    body: JSON.stringify({ secondary_categories: [] }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+        });
     });
 
     // ============================================

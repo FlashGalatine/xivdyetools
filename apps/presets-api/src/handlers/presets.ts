@@ -34,6 +34,7 @@ import {
   validatePresetTags,
   validateExampleLink,
   normalizeExampleLink,
+  validateSecondaryCategories,
 } from '../services/validation-service.js';
 import { addVote } from './votes.js';
 import {
@@ -324,13 +325,15 @@ presetsRouter.patch('/:id', async (c) => {
     !body.description &&
     !body.dyes &&
     !body.tags &&
-    body.example_link === undefined
+    body.example_link === undefined &&
+    body.category_id === undefined &&
+    body.secondary_categories === undefined
   ) {
     return validationErrorResponse(c, 'No updates provided');
   }
 
   // Validate provided fields
-  const validationError = validateEditRequest(body);
+  const validationError = await validateEditRequest(body, preset.category_id, c.env.DB);
   if (validationError) {
     return validationErrorResponse(c, validationError);
   }
@@ -824,6 +827,13 @@ async function validateSubmission(body: PresetSubmission, db: D1Database): Promi
     return 'Invalid category';
   }
 
+  const secondaryError = validateSecondaryCategories(
+    body.secondary_categories,
+    body.category_id,
+    validCategories
+  );
+  if (secondaryError) return secondaryError;
+
   const dyesError = validatePresetDyes(body.dyes);
   if (dyesError) return dyesError;
 
@@ -840,8 +850,16 @@ async function validateSubmission(body: PresetSubmission, db: D1Database): Promi
 /**
  * Validate preset edit request (all fields optional)
  * PRESETS-REF-001 FIX: Uses centralized validators from validation-service
+ *
+ * Async because category validation is DB-backed, exactly like validateSubmission.
+ * `currentCategoryId` supplies the primary when the request does not change it —
+ * otherwise adding a secondary equal to the unchanged primary would slip through.
  */
-function validateEditRequest(body: PresetEditRequest): string | null {
+async function validateEditRequest(
+  body: PresetEditRequest,
+  currentCategoryId: string,
+  db: D1Database
+): Promise<string | null> {
   // All fields optional for edit, but validate if provided
   if (body.name !== undefined) {
     const nameError = validatePresetName(body.name);
@@ -867,6 +885,22 @@ function validateEditRequest(body: PresetEditRequest): string | null {
     const linkError = validateExampleLink(body.example_link);
     if (linkError) return linkError;
     body.example_link = normalizeExampleLink(body.example_link);
+  }
+
+  if (body.category_id !== undefined || body.secondary_categories !== undefined) {
+    const validCategories = await getValidCategories(db);
+
+    if (body.category_id !== undefined && !validCategories.includes(body.category_id)) {
+      return 'Invalid category';
+    }
+
+    const effectivePrimary = body.category_id ?? currentCategoryId;
+    const secondaryError = validateSecondaryCategories(
+      body.secondary_categories,
+      effectivePrimary,
+      validCategories
+    );
+    if (secondaryError) return secondaryError;
   }
 
   return null;
