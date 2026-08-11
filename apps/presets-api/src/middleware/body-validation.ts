@@ -17,11 +17,30 @@ const MAX_BODY_SIZE = 100 * 1024;
 const MAX_JSON_DEPTH = 10;
 
 /**
- * SEC-004: Body size limit middleware.
- * Rejects requests with bodies larger than MAX_BODY_SIZE.
- * Uses Hono's built-in bodyLimit which checks the actual stream, not just Content-Length.
+ * The preview-image upload is the only route on this Worker that carries a
+ * binary body, and the only one that may exceed MAX_BODY_SIZE — an author's
+ * screenshot runs to megabytes. Both guards in this module exist to protect
+ * JSON endpoints, and both would reject a legitimate upload before the route
+ * ever ran, which is precisely what happened: the feature was unreachable in
+ * production while its own tests passed, because they mounted the router
+ * without this middleware.
+ *
+ * The exemption is deliberately scoped to this one method+path so no other
+ * endpoint inherits the right to a large or non-JSON body. The route enforces
+ * the real limits itself: 5 MB (MAX_PREVIEW_IMAGE_BYTES) plus a magic-byte
+ * sniff that ignores the declared Content-Type entirely.
  */
-export const bodySizeLimit = bodyLimit({
+const PREVIEW_IMAGE_PATH = /^\/api\/v1\/presets\/[^/]+\/preview-image\/?$/;
+
+/** Image media types the upload route accepts (mirrors sniffImageType). */
+export const PREVIEW_IMAGE_CONTENT_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+
+/** True for the one request shape that is allowed a large, non-JSON body. */
+export function isPreviewImageUpload(method: string, path: string): boolean {
+  return method === 'POST' && PREVIEW_IMAGE_PATH.test(path);
+}
+
+const enforceBodySizeLimit = bodyLimit({
   maxSize: MAX_BODY_SIZE,
   onError: (c) => {
     return c.json(
@@ -36,6 +55,19 @@ export const bodySizeLimit = bodyLimit({
 });
 
 /**
+ * SEC-004: Body size limit middleware.
+ * Rejects requests with bodies larger than MAX_BODY_SIZE.
+ * Uses Hono's built-in bodyLimit which checks the actual stream, not just Content-Length.
+ * Exempts the preview-image upload — see isPreviewImageUpload.
+ */
+export const bodySizeLimit: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
+  if (isPreviewImageUpload(c.req.method, c.req.path)) {
+    return next();
+  }
+  return enforceBodySizeLimit(c, next);
+};
+
+/**
  * SEC-003: JSON depth validation middleware.
  * For mutation requests (POST/PATCH/PUT) with JSON content, validates that
  * the parsed JSON does not exceed the maximum nesting depth and does not
@@ -44,6 +76,11 @@ export const bodySizeLimit = bodyLimit({
 export const jsonDepthLimit: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
   const method = c.req.method;
   if (!['POST', 'PATCH', 'PUT'].includes(method)) {
+    return next();
+  }
+
+  // Binary upload route: nothing here can apply to raw image bytes.
+  if (isPreviewImageUpload(method, c.req.path)) {
     return next();
   }
 

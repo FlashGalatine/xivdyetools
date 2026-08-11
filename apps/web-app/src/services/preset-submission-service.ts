@@ -19,7 +19,7 @@ export interface PresetSubmission {
   category_id: PresetCategory;
   dyes: number[];
   tags: string[];
-  /** 8A: allowlisted example link (Eorzea Collection / Imgur / Flickr) */
+  /** 8A: example link on an allowlisted glamour or social host */
   example_link?: string | null;
 }
 
@@ -169,7 +169,11 @@ export async function uploadPreviewImage(presetId: string, file: File): Promise<
   const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/${presetId}/preview-image`, {
     method: 'POST',
     headers: {
-      'Content-Type': file.type || 'application/octet-stream',
+      // Declare the type only when the file actually has one. Claiming
+      // application/octet-stream for a typeless file would trip the API's
+      // media-type gate on bytes it would otherwise have accepted; sending
+      // nothing lets the server's magic-byte sniff make the call.
+      ...(file.type ? { 'Content-Type': file.type } : {}),
       ...authService.getAuthHeaders(),
     },
     body: file,

@@ -18,7 +18,12 @@ import { authMiddleware } from './middleware/auth.js';
 import { publicRateLimitMiddleware } from './middleware/rate-limit.js';
 import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-kit';
 import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
-import { bodySizeLimit, jsonDepthLimit } from './middleware/body-validation.js';
+import {
+  bodySizeLimit,
+  jsonDepthLimit,
+  isPreviewImageUpload,
+  PREVIEW_IMAGE_CONTENT_TYPES,
+} from './middleware/body-validation.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { ErrorCode } from './utils/api-response.js';
 
@@ -146,6 +151,8 @@ app.use(
 app.use('/api/*', publicRateLimitMiddleware);
 
 // SEC-004: Reject oversized request bodies (100KB limit)
+// Exempts the preview-image upload, which carries up to 5 MB of image bytes
+// and enforces its own limit — see isPreviewImageUpload in body-validation.ts.
 app.use('/api/*', bodySizeLimit);
 
 // SEC-003: Validate JSON depth and structure on mutation requests
@@ -165,6 +172,23 @@ app.use('/api/*', async (c, next) => {
     // previously skipped both this gate and the JSON depth limit downstream.
     // Empty-body mutations (e.g. PATCH /refresh-author) remain exempt.
     const hasBody = c.req.raw.body !== null;
+
+    // Binary upload route: accept the image media types instead of JSON.
+    // An absent Content-Type is allowed through — a Blob with no type sends no
+    // header at all — because the route's magic-byte sniff, not the declared
+    // type, is what actually decides whether these bytes are an image.
+    if (isPreviewImageUpload(method, c.req.path)) {
+      if (hasBody && contentType && !PREVIEW_IMAGE_CONTENT_TYPES.some((t) => contentType.includes(t))) {
+        return c.json(
+          {
+            error: 'Unsupported Media Type',
+            message: `Content-Type must be one of: ${PREVIEW_IMAGE_CONTENT_TYPES.join(', ')}`,
+          },
+          415
+        );
+      }
+      return next();
+    }
 
     if (hasBody && (!contentType || !contentType.includes('application/json'))) {
       return c.json(
