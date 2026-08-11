@@ -19,6 +19,8 @@ export interface CommunityPreset {
   name: string;
   description: string;
   category_id: PresetCategory;
+  /** Up to two additional categories; never contains category_id */
+  secondary_categories?: PresetCategory[];
   dyes: number[];
   tags: string[];
   author_discord_id: string | null;
@@ -32,6 +34,8 @@ export interface CommunityPreset {
   example_link?: string | null;
   /** Approved preview image URL; present only once a moderator approves it. */
   preview_image_url?: string | null;
+  /** Moderation state of the uploaded picture (the URL stays gated on 'approved') */
+  preview_image_status?: 'none' | 'pending' | 'approved';
   /** 8S: latest moderation reject reason (own-submissions listing only) */
   rejection_reason?: string | null;
 }

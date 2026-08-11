@@ -17,6 +17,8 @@ export interface PresetSubmission {
   name: string;
   description: string;
   category_id: PresetCategory;
+  /** Up to two additional categories; must not repeat category_id */
+  secondary_categories?: PresetCategory[];
   dyes: number[];
   tags: string[];
   /** 8A: example link on an allowlisted glamour or social host */
@@ -47,6 +49,10 @@ export interface PresetEditRequest {
   description?: string;
   dyes?: number[];
   tags?: string[];
+  /** New primary category — the edit form unlocked this in 5.1 */
+  category_id?: PresetCategory;
+  /** Replacement secondary list; `[]` clears it */
+  secondary_categories?: PresetCategory[];
   /** Allowlisted glamour-page URL; null clears it. The API validates and
    *  persists this on edit — the client just never offered the field. */
   example_link?: string | null;
@@ -82,6 +88,9 @@ const VALID_CATEGORIES: PresetCategory[] = [
   'seasons',
   'events',
   'aesthetics',
+  'appearance',
+  'zones',
+  'raids-trials',
 ];
 
 /**
@@ -184,6 +193,25 @@ export async function uploadPreviewImage(presetId: string, file: File): Promise<
   }
 }
 
+/**
+ * Remove the preview image from a preset the signed-in user authored.
+ *
+ * Idempotent server-side: removing an image that is not there is a success,
+ * because the end state the caller asked for already holds.
+ */
+export async function removePreviewImage(presetId: string): Promise<void> {
+  const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/${presetId}/preview-image`, {
+    method: 'DELETE',
+    headers: {
+      ...authService.getAuthHeaders(),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Preview image removal failed');
+  }
+}
+
 // ============================================
 // Service
 // ============================================
@@ -226,6 +254,7 @@ class PresetSubmissionServiceImpl {
           name: submission.name.trim(),
           description: submission.description.trim(),
           category_id: submission.category_id,
+          secondary_categories: submission.secondary_categories ?? [],
           dyes: submission.dyes,
           tags: submission.tags.map((t) => t.trim()).filter(Boolean),
           example_link: submission.example_link ?? null,
@@ -521,6 +550,13 @@ class PresetSubmissionServiceImpl {
       if (updates.description !== undefined) body.description = updates.description.trim();
       if (updates.dyes !== undefined) body.dyes = updates.dyes;
       if (updates.tags !== undefined) body.tags = updates.tags.map((t) => t.trim()).filter(Boolean);
+      if (updates.category_id !== undefined) body.category_id = updates.category_id;
+      if (updates.secondary_categories !== undefined) {
+        body.secondary_categories = updates.secondary_categories;
+      }
+      // example_link was already accepted by the API but never sent — the edit
+      // form set it and it was silently dropped on every save.
+      if (updates.example_link !== undefined) body.example_link = updates.example_link;
 
       const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/${presetId}`, {
         method: 'PATCH',
