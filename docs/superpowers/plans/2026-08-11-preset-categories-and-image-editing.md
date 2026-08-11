@@ -2577,3 +2577,148 @@ Do **not** run these as part of executing the plan. They belong to a deploy wind
 4. Deploy `web-app` last.
 
 `@xivdyetools/types` and `@xivdyetools/svg` resolve via `workspace:*`, so their version bumps and npm publishes are housekeeping and do not gate any deploy.
+
+---
+
+## Task 17: Close the remaining exhaustive-`Record` sites
+
+**Added 2026-08-11, after Task 1 execution surfaced them.** The original plan
+traced `category_id` consumers and found one exhaustive `Record<PresetCategory, …>`
+(discord-worker's `CATEGORY_DISPLAY`, Task 16). There are three more. Widening the
+union breaks all of them, and no other task repairs them.
+
+Dispatch this immediately after Task 16 so the tree is green from that point on.
+
+**Files:**
+- Modify: `apps/moderation-worker/src/types/preset.ts:62-68`
+- Modify: `packages/svg/src/preset-swatch.ts:92-98`
+- Modify: `packages/core/src/data/presets.json` (the `categories` object)
+- Modify: `packages/core/src/services/__tests__/PresetService.test.ts:16-40`, `:744-750`
+
+**Interfaces:**
+- Consumes: `PresetCategory` (Task 1).
+- Produces: nothing later tasks depend on. This task's whole job is that
+  `pnpm turbo run type-check` passes across the workspace.
+
+**Why `presets.json` gains the three categories rather than the type going `Partial`:**
+`PresetData.categories` is `Record<PresetCategory, CategoryMeta>` and `presets.json`
+is exported straight out of `@xivdyetools/core` (`index.ts:229`) into `PresetService`,
+so the JSON is structurally checked at that call site. Relaxing the type to `Partial`
+would compile, but it would also mask a real defect: `HybridPresetService.getCategories()`
+seeds its map from the *local* categories and only ever *adds counts* from the API — a
+category absent from `presets.json` is silently dropped and can never appear. Adding
+the metadata keeps the map exhaustive and makes the three categories reachable.
+Curated palettes are unaffected: the design ships fifteen across events / seasons /
+grand-companies only, and a category with no palettes is exactly the empty row the
+gallery is specified to render.
+
+- [ ] **Step 1: Write the failing check**
+
+Run: `pnpm turbo run type-check`
+Expected: FAIL in all four files above (discord-worker is already fixed by Task 16).
+Record the exact errors.
+
+- [ ] **Step 2: moderation-worker display metadata**
+
+In `apps/moderation-worker/src/types/preset.ts`, extend `CATEGORY_DISPLAY`. This file
+uses escaped surrogate pairs rather than literal emoji — match that convention:
+
+```ts
+  aesthetics: { icon: '🎨', name: 'Aesthetics' },
+  appearance: { icon: '👤', name: 'Appearance' },
+  zones: { icon: '🏔️', name: 'Zones' },
+  // 🗡 (dagger) rather than ⚔ (crossed swords) because `jobs`
+  // still holds crossed swords. See the same note in discord-worker.
+  'raids-trials': { icon: '🗡️', name: 'Raids & Trials' },
+};
+```
+
+- [ ] **Step 3: svg preset-swatch display metadata**
+
+In `packages/svg/src/preset-swatch.ts`, extend `CATEGORY_DISPLAY`. This file uses
+literal emoji — match that:
+
+```ts
+  aesthetics: { icon: '🎨', name: 'Aesthetics' },
+  appearance: { icon: '👤', name: 'Appearance' },
+  zones: { icon: '🏔️', name: 'Zones' },
+  'raids-trials': { icon: '🗡️', name: 'Raids & Trials' },
+};
+```
+
+- [ ] **Step 4: Curated category metadata**
+
+In `packages/core/src/data/presets.json`, add three entries to `categories`, after
+`aesthetics`, matching the existing three-key shape exactly:
+
+```json
+    "appearance": {
+      "name": "Appearance",
+      "description": "Palettes built around a character's own colours",
+      "icon": "👤"
+    },
+    "zones": {
+      "name": "Zones",
+      "description": "Palettes drawn from the places of Eorzea",
+      "icon": "🏔️"
+    },
+    "raids-trials": {
+      "name": "Raids & Trials",
+      "description": "Palettes from raid and trial encounters",
+      "icon": "🗡️"
+    }
+```
+
+Do **not** add any palettes. `version` stays `2.0.0` — the schema did not change.
+
+- [ ] **Step 5: Test fixtures**
+
+In `packages/core/src/services/__tests__/PresetService.test.ts`, both `PresetData`
+fixtures declare a full `categories` map and now need the same three keys.
+
+In `mockPresetData` (starts line ~16), after the `aesthetics` entry:
+
+```ts
+    appearance: {
+      name: 'Appearance',
+      description: 'Palettes built around a character\'s own colours',
+      icon: '👤',
+    },
+    zones: {
+      name: 'Zones',
+      description: 'Palettes drawn from the places of Eorzea',
+      icon: '🏔️',
+    },
+    'raids-trials': {
+      name: 'Raids & Trials',
+      description: 'Palettes from raid and trial encounters',
+      icon: '🗡️',
+    },
+```
+
+In `minimalData` inside the `edge cases` describe (~line 744), after the `aesthetics`
+entry — this fixture deliberately omits `icon`, so match it:
+
+```ts
+          appearance: { name: 'Appearance', description: 'Test' },
+          zones: { name: 'Zones', description: 'Test' },
+          'raids-trials': { name: 'Raids & Trials', description: 'Test' },
+```
+
+If a test asserts an exact category **count** (e.g. `expect(categories).toHaveLength(5)`),
+update it to 8 — the fixture genuinely has eight now.
+
+- [ ] **Step 6: Verify the whole workspace is green**
+
+Run: `pnpm turbo run type-check`
+Expected: PASS across every package and app — this is the gate for this task.
+
+Run: `pnpm turbo run test --filter=@xivdyetools/core --filter=@xivdyetools/svg --filter=xivdyetools-moderation-worker -- --run`
+Expected: PASS.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add apps/moderation-worker/src/types/preset.ts packages/svg/src/preset-swatch.ts packages/core/src/data/presets.json packages/core/src/services/__tests__/PresetService.test.ts
+git commit -m "feat: category metadata for appearance/zones/raids-trials across core, svg and moderation-worker"
+```
