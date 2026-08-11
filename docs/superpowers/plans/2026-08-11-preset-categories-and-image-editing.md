@@ -852,7 +852,7 @@ Append inside the `describe('PATCH /api/v1/presets/:id')` block in `apps/presets
                 `/api/v1/presets/${row.id}`,
                 {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', ...authHeaders('123456789') },
+                    headers: { 'Content-Type': 'application/json', ...authHeaders('test-bot-secret', '123456789') },
                     body: JSON.stringify({ category_id: 'jobs', secondary_categories: ['zones'] }),
                 },
                 env
@@ -872,7 +872,7 @@ Append inside the `describe('PATCH /api/v1/presets/:id')` block in `apps/presets
                 `/api/v1/presets/${row.id}`,
                 {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', ...authHeaders('123456789') },
+                    headers: { 'Content-Type': 'application/json', ...authHeaders('test-bot-secret', '123456789') },
                     body: JSON.stringify({ category_id: 'jobs', secondary_categories: ['jobs'] }),
                 },
                 env
@@ -892,7 +892,7 @@ Append inside the `describe('PATCH /api/v1/presets/:id')` block in `apps/presets
                 `/api/v1/presets/${row.id}`,
                 {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', ...authHeaders('123456789') },
+                    headers: { 'Content-Type': 'application/json', ...authHeaders('test-bot-secret', '123456789') },
                     body: JSON.stringify({ secondary_categories: [] }),
                 },
                 env
@@ -1068,7 +1068,7 @@ Append to `apps/presets-api/tests/handlers/presets.test.ts`:
 
             const res = await app.request(
                 '/api/v1/presets/p1/preview-image',
-                { method: 'DELETE', headers: { ...authHeaders('123456789') } },
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } },
                 env
             );
 
@@ -1084,7 +1084,7 @@ Append to `apps/presets-api/tests/handlers/presets.test.ts`:
 
             const res = await app.request(
                 '/api/v1/presets/p1/preview-image',
-                { method: 'DELETE', headers: { ...authHeaders('123456789') } },
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } },
                 env
             );
 
@@ -1096,7 +1096,7 @@ Append to `apps/presets-api/tests/handlers/presets.test.ts`:
 
             const res = await app.request(
                 '/api/v1/presets/nope/preview-image',
-                { method: 'DELETE', headers: { ...authHeaders('123456789') } },
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } },
                 env
             );
 
@@ -1110,7 +1110,7 @@ Append to `apps/presets-api/tests/handlers/presets.test.ts`:
 
             const res = await app.request(
                 '/api/v1/presets/p1/preview-image',
-                { method: 'DELETE', headers: { ...authHeaders('123456789') } },
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } },
                 env
             );
 
@@ -1129,7 +1129,7 @@ Append to `apps/presets-api/tests/handlers/presets.test.ts`:
 
             const res = await app.request(
                 '/api/v1/presets/p1/preview-image',
-                { method: 'DELETE', headers: { ...authHeaders('123456789') } },
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } },
                 env
             );
 
@@ -1252,7 +1252,7 @@ Append to `apps/presets-api/tests/handlers/moderation.test.ts`, inside the pendi
 
             const res = await app.request(
                 '/api/v1/moderation/pending',
-                { headers: { ...authHeaders('123456789') } },
+                { headers: { ...authHeaders('test-bot-secret', '123456789') } },
                 env
             );
 
