@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-The main XIV Dye Tools web application — a static SPA that runs entirely in the browser. It is the primary consumer of `@xivdyetools/core` and exposes nine standalone tools backed by the 136-dye database.
+The main XIV Dye Tools web application — a static SPA that runs entirely in the browser. It is the primary consumer of `@xivdyetools/core` and exposes nine standalone tools backed by the 125-dye database.
 
 **Stack:** Vite 8 + Lit 3 (web components) + Tailwind CSS 4 + TypeScript (strict). Test stack is Vitest 4 (jsdom) + Playwright 1.62 with multi-project E2E. Deployed as a static bundle (Cloudflare Pages / Netlify) with a service worker for offline support.
 
@@ -111,7 +111,7 @@ src/
 │   ├── index.ts                     # initializeServices(), getServicesStatus(), re-exports
 │   ├── router-service.ts            # ToolId, ROUTES, history.pushState navigation
 │   ├── config-controller.ts         # Centralized tool config state
-│   ├── theme-service.ts             # 12 themes, persists via storage
+│   ├── theme-service.ts             # THEME_PALETTES (Light/Dark) + legacy-name migration
 │   ├── language-service.ts          # 6 languages: en, ja, de, fr, ko, zh
 │   ├── storage-service.ts           # localStorage wrapper, all keys prefixed
 │   ├── auth-service.ts              # Discord OAuth via oauth worker, JWT in localStorage
@@ -142,7 +142,7 @@ src/
 │   ├── tool-icons.ts / harmony-icons.ts / category-icons.ts / empty-state-icons.ts
 │   ├── i18n-types.ts / tool-config-types.ts / browser-api-types.ts / types.ts
 │   └── subscription-manager.ts      # Pub/sub helpers for service events
-├── styles/                          # themes.css (12 themes), v4-utilities.css, v4-layout.css, tailwind.css
+├── styles/                          # themes.css, globals.css (font contract), v4-utilities.css, v4-layout.css, tailwind.css
 ├── locales/                         # Per-language UI strings (en, ja, de, fr, ko, zh)
 └── public/                          # robots.txt, manifest.json, _headers (CSP)
 # (dev-only mockups relocated 2026-05-31 → docs/historical/web-app/20260531-Mockups/ — see docs/audits/2026-05-31/findings/DEAD-112.md)
@@ -182,7 +182,9 @@ export class MyTool extends BaseComponent {
 
 ### Theme Tokens (Never Hardcode Colors)
 
-Twelve themes in `styles/themes.css` define `--theme-*` CSS variables. Components must use these tokens; hardcoded colors break theme switching. Tailwind sees the variables via the `@apply`-friendly setup in `tailwind.config.js`.
+5.0 ships **two** themes — `standard-light` and `standard-dark` — defined as `THEME_PALETTES` in `services/theme-service.ts` on the confirmed 16A token sets. The eleven pre-5.0 themes were retired; `migrateLegacyThemeName()` maps any stored legacy name onto Light or Dark by family (`*-light`, `cotton-candy` and `parchment-light` → light, everything else → dark) so an old localStorage value never throws.
+
+Components must use the `--theme-*` CSS variables; hardcoded colors break theme switching. Tailwind sees the variables via the `@apply`-friendly setup in `tailwind.config.js`.
 
 ```css
 color: var(--theme-text);
@@ -208,7 +210,7 @@ All `StorageService` keys are prefixed with `xivdyetools_`. Tutorial-offered fla
 
 ### Universalis Pricing
 
-`MarketBoardService` calls Universalis through `data.xivdyetools.app/universalis` (api-worker's absorbed proxy routes — formerly the standalone universalis-proxy worker), never the upstream directly — this is the only way the browser gets reliable CORS. Synthetic-ID Facewear dyes (`itemID < 0`) are filtered out before any market call.
+`MarketBoardService` calls Universalis through `data.xivdyetools.app/universalis` (api-worker's absorbed proxy routes — formerly the standalone universalis-proxy worker), never the upstream directly — this is the only way the browser gets reliable CORS. Market calls filter on `dye.itemID > 0` (see `budget-tool.ts`) rather than null-checking; `Dye.itemID` is always a number.
 
 ### Service Worker
 

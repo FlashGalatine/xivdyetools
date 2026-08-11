@@ -89,10 +89,12 @@ The `/webhooks/preset-submission` endpoint receives notifications from `presets-
 src/
 ├── index.ts                       # Hono app, routing, Ed25519 verification, webhooks
 ├── handlers/
-│   ├── commands/                  # One file per slash command (about, harmony, dye, match, match-image,
-│   │                              # accessibility, comparison, mixer-v4, gradient, swatch, extractor,
-│   │                              # favorites, collection, preset, preferences, language, stats, budget,
-│   │                              # manual) — preset-notifications.ts is NOT a command; it builds/sends
+│   ├── commands/                  # One file per slash command (about, harmony, dye, accessibility,
+│   │                              # comparison, contrast, mixer-v4, gradient, swatch, extractor,
+│   │                              # preset, preferences, stats, budget, changelog, manual).
+│   │                              # The v4 match / match-image / favorites / collection / language
+│   │                              # files were DELETED in 5.0 — don't reintroduce them.
+│   │                              # preset-notifications.ts is NOT a command; it builds/sends
 │   │                              # the moderation-channel embeds for incoming preset submissions
 │   ├── buttons/                   # Component handlers (copy.ts, index.ts dispatcher)
 │   └── modals/                    # Modal submission handlers (currently unused in this worker)

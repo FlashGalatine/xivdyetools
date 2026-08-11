@@ -156,7 +156,7 @@ User-supplied `redactFields` are **merged** with the defaults, never replaced (F
 In a Cloudflare Worker, the canonical setup is:
 
 ```typescript
-// In Hono middleware (or `@xivdyetools/worker-middleware`)
+// In Hono middleware (or `@xivdyetools/worker-kit`)
 const requestId = c.req.header('x-request-id') ?? crypto.randomUUID();
 const logger = createRequestLogger({
   ENVIRONMENT: c.env.ENVIRONMENT,
@@ -166,14 +166,16 @@ const logger = createRequestLogger({
 c.set('logger', logger);
 ```
 
-`createRequestLogger` is a thin wrapper over `createWorkerLogger` that maps the `env`-shaped object to the underlying options. Most apps use it via `loggerMiddleware()` from `@xivdyetools/worker-middleware` rather than calling it directly.
+`createRequestLogger` is a thin wrapper over `createWorkerLogger` that maps the `env`-shaped object to the underlying options. Most apps use it via `loggerMiddleware()` from `@xivdyetools/worker-kit` rather than calling it directly.
 
 ## Consumers
 
 Grepped from `package.json` files in the monorepo:
 
-- Packages: `@xivdyetools/core`, `@xivdyetools/worker-middleware`
+- Packages: `@xivdyetools/core`, `@xivdyetools/worker-kit`
 - Apps: `xivdyetools-web-app`, `xivdyetools-discord-worker`, `xivdyetools-presets-api`, `xivdyetools-oauth`, `xivdyetools-moderation-worker`, `xivdyetools-api-worker`, `xivdyetools-stoat-worker`
+
+(`image-worker` and `og-worker` get the logger transitively through `@xivdyetools/worker-kit` rather than declaring it directly.)
 
 ## Internal Dependencies
 

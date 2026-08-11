@@ -177,12 +177,20 @@ import { dyeDatabase, presetData, VERSION } from '@xivdyetools/core';
 ## Key Patterns / Algorithms
 
 ### `DyeDatabase.initialize()` — the singleton init step
+- Reads **`dyes.json` only** — all 125 entries are real stains. Facewear is not in this database at all (see below).
 - Validates each entry (id/itemID, name, hex `^#[A-Fa-f0-9]{6}$`, RGB 0-255, HSV ranges, category).
-- **Synthetic IDs for Facewear**: 11 Facewear dyes have `itemID: null` in the JSON. The init step assigns negative IDs computed from a name hash (`-(1000 + Σ charCode)`), so `Dye.itemID: number` is **never null at runtime**. For market-board filters use `dye.itemID > 0` — **never** a null check.
+- **Derives the runtime `Dye` shape from the 7 stored fields**: `rgb`/`hsv`/`lab` from `hex`, `cost`/`currency` from `acquisition` via `ACQUISITION_META`, and the five `is*` flags (`isMetallic` from `METALLIC_STAIN_IDS`, `isCosmic ≡ consolidationType 'C'`, `isIshgardian ≡ 'B'`, …). `Dye.itemID` is a `number` — `legacyItemID`, falling back to `stainID` for future consolidated-only dyes.
 - Builds three indexes: `dyesByIdMap`, `dyesByStainIdMap` (for Glamourer / Mare plugin interop), and `dyesByHueBucket` (36 × 10° buckets — 70-90% speedup on harmony lookups).
-- Builds a 3D k-d tree (RGB) for nearest-neighbour matching; **Facewear dyes are excluded** from the k-d tree (not market-tradeable).
+- Builds a 3D k-d tree (RGB) over all 125 dyes for nearest-neighbour matching.
 - Pre-computes `nameLower`, `categoryLower` (search optimization) and `lab` (DeltaE pre-computation) on each entry.
 - Defends against prototype pollution by stripping `__proto__`, `constructor`, `prototype` keys via `safeClone`.
+
+### Facewear is not a dye (schema v2, 2026-07-31)
+The 11 Facewear glasses colors were split out of the dye database. They live in `data/facewear_colors.json` and are exported as `facewearColors: readonly FacewearColor[]` — a `{ id: string slug, name, hex }` shape with **no** stainID, no market presence, and no Stain-sheet row. Look them up with `getFacewearColor(slug)`.
+
+Before v2, `initialize()` assigned each one a synthetic `-(1000 + Σ charCode(name))` itemID, and those IDs escaped into serialized data (api-worker's public lookups, possibly localStorage). `LEGACY_FACEWEAR_ITEM_IDS` in `config/facewear.ts` is the **frozen** compatibility table mapping them back to slugs, read via `getFacewearColorByLegacyItemID()`. It was computed once from the names as they stood at the split and **must never be regenerated from live data** — a rename would silently orphan every persisted reference.
+
+Nothing computes a synthetic ID at runtime any more. Code that filters "real dyes" no longer needs to: every entry in the database is one. `dye.itemID > 0` remains the correct market-board predicate (`itemID` is always a number, never null).
 
 ### k-d Tree (`utils/kd-tree.ts`)
 3D RGB k-d tree with index-based construction (no point-array slicing → less GC pressure). O(log n) average for nearest-neighbour queries vs O(n) linear search.

@@ -36,7 +36,7 @@ The package is organized into per-domain subpath exports. Each subpath has its o
 ```
 src/
 ├── color/         # RGB/HSV/LAB/OKLAB/OKLCH/LCH/HSL + branded HexColor/DyeId/Hue/Saturation
-├── dye/           # Dye, LocalizedDye, DyeWithDistance, DyeTypeFilters
+├── dye/           # Dye, LocalizedDye, DyeWithDistance, DyeTypeFilters, FacewearColor
 ├── character/     # CharacterColor, CharacterColorMatch, SubRace, RACE_SUBRACES, COLOR_GRID_DIMENSIONS
 ├── preset/        # Community preset shapes + every API request/response variant
 ├── auth/          # JWT payload, Discord/XIVAuth user shapes, isValidSnowflake validator
@@ -74,6 +74,7 @@ type VisionType; type ColorblindMatrices;
 
 ```typescript
 type Dye; type LocalizedDye; type DyeWithDistance; type DyeTypeFilters;
+type FacewearColor;   // { id: string slug; name; hex } — NOT a Dye (schema v2)
 ```
 
 ### Character types
@@ -143,9 +144,11 @@ The brand is structural-only — it has no runtime cost, and the `as` cast insid
 
 Add a brand when a primitive type is being passed across a boundary where mixing it up with a similarly-typed primitive would be a bug — for example: a Discord Snowflake vs. a generic string ID, or a `DyeId` vs. an arbitrary number. Add a `create*` helper that performs validation and returns either the branded value or `null`/throws.
 
-### Synthetic Facewear IDs
+### Synthetic Facewear IDs (legacy range — TYPES-102)
 
-`createDyeId` accepts both regular IDs (1-200) and synthetic Facewear IDs (`<= -1000`). The 11 Facewear dyes lack real `itemID` values in `colors_xiv.json`, so `DyeDatabase.initialize()` (in `@xivdyetools/core`) assigns `-(1000 + nameHash)`. Anything filtering for market-board operations must use `dye.itemID > 0`, never a null check — `Dye.itemID` is always a number.
+`createDyeId` accepts regular IDs (1-200) **and** the synthetic Facewear range (`<= -1000`). The negative range is history, not a live scheme: before schema v2 (2026-07-31) the 11 Facewear entries lived in the dye database without real `itemID`s and `DyeDatabase.initialize()` assigned each `-(1000 + nameHash)`. Those IDs leaked into serialized data, so `createDyeId` still validates them and `@xivdyetools/core` keeps the frozen `LEGACY_FACEWEAR_ITEM_IDS` map to resolve them.
+
+Nothing mints a new negative ID today. Facewear colors are their own type (`FacewearColor`, a string-slug `id`) and are not `Dye`s. `Dye.itemID` is always a number, so market-board filtering uses `dye.itemID > 0` — never a null check.
 
 ### Subpath exports
 

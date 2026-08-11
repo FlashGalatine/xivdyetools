@@ -49,11 +49,12 @@ src/
 └── commands/
     ├── types.ts                   # EmbedData, EmbedField (platform-neutral)
     ├── harmony.ts                 # /harmony — triadic / complementary / analogous / split / tetradic / inverted-tetradic / square / mono
-    ├── dye-info.ts                # /dye-info AND /random (shared module)
+    ├── dye-info.ts                # /dye info AND /dye random (shared module)
     ├── mixer.ts                   # /mixer — 6-mode color blending + closest-dye match
     ├── gradient.ts                # /gradient — N-step gradient + dye matches per stop
-    ├── match.ts                   # /match — find closest N dyes for a color
-    ├── comparison.ts              # /compare — side-by-side dye grid
+    ├── comparison.ts              # /comparison — side-by-side dye grid
+    ├── contrast.ts                # /contrast — WCAG 1.4.11 ratios between dye pairs
+    ├── swatch.ts                  # /swatch — character-colour reference matching
     └── accessibility.ts           # /accessibility — colorblind sim + WCAG matrix
 ```
 
@@ -108,16 +109,17 @@ executeDyeInfo(input: DyeInfoInput): Promise<DyeInfoResult>
 executeRandom(input: RandomInput): Promise<RandomResult>      // exported from same module
 
 executeMixer(input: MixerInput): Promise<MixerResult>
-  type BlendingMode;     // re-exported from @xivdyetools/color-blending
+  type BlendingMode;     // re-exported from @xivdyetools/core/blending
   type MixerMatch;
 
 executeGradient(input: GradientInput): Promise<GradientResult>
   type GradientStepResult, InterpolationMode, MatchingMethod;
 
-executeMatch(input: MatchInput): Promise<MatchResult>
-  type MatchEntry;
-
 executeComparison(input: ComparisonInput): Promise<ComparisonResult>
+
+executeContrast(input: ContrastInput): Promise<ContrastResult>
+
+executeSwatch(input: SwatchInput): Promise<SwatchResult>
 
 executeAccessibility(input: AccessibilityInput): Promise<AccessibilityResult>
   const VISION_TYPES;
@@ -150,7 +152,7 @@ Discord adapters map `EmbedData` onto `APIEmbed` (`title → title`, `color → 
 
 - `@xivdyetools/types` — `Dye`, `DyeTypeFilters`, `LocaleCode`, etc.
 - `@xivdyetools/core` — `DyeService`, `dyeDatabase`, `LocalizationService`, harmony types, `filterDyes`.
-- `@xivdyetools/color-blending` — `blendColors`, `BlendingMode`.
+- `@xivdyetools/core/blending` — `blendColors`, `BlendingMode` (subpath of core since the retired `@xivdyetools/color-blending` was absorbed).
 - `@xivdyetools/svg` — every `generate*` SVG used by command results.
 - Built-in `src/i18n/` — `Translator`, `createTranslator`, `LocaleCode` + six bot-UI locale JSONs, exported as `@xivdyetools/bot-logic/i18n` (absorbed from the retired `@xivdyetools/bot-i18n`).
 

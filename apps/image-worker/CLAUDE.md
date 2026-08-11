@@ -14,9 +14,19 @@ dropped `discord-worker` to 2,589.70 KiB gzipped (482 KiB headroom); this Worker
 rationale and measurements.
 
 **It has no public surface.** `workers_dev = false` in `[env.production]` and there are no
-routes — the only way to reach it is `discord-worker`'s `IMAGE_WORKER` service binding. It holds
-no secrets and no storage bindings (KV/D1/R2); it is the smallest operational footprint in the
-monorepo.
+routes — the only way to reach it is an `IMAGE_WORKER` service binding. It holds no secrets and
+no storage bindings (KV/D1/R2); it is the smallest operational footprint in the monorepo.
+
+It has since become the monorepo's general photon host rather than a single-caller split. Two
+endpoints, two callers:
+
+| Route | Caller | Returns |
+|---|---|---|
+| `POST /extract` | `discord-worker` `/extractor` | raw RGBA pixels for palette extraction |
+| `POST /thumbnail` | `presets-api` preview-image upload | a cropped WebP |
+
+Adding a photon-backed feature anywhere in the monorepo means adding a route here, not a second
+copy of the WASM blob — that is the whole point of the split.
 
 ## Commands
 
@@ -75,10 +85,11 @@ discord-worker ──Service Binding──► POST /extract
 
 ```
 src/
-├── index.ts        # Hono app: GET /health, POST /extract
+├── index.ts        # Hono app: GET /health, POST /extract, POST /thumbnail
 ├── types.ts        # Env (no bindings) + UrlValidationResult/FormatValidationResult/ImageFormat
 ├── validators.ts   # SSRF allowlist, size/dimension/format checks, timeout fetch
-└── photon.ts        # loadImage / resizeImage / extractPixels / processImageForExtraction
+└── photon.ts       # loadImage / resizeImage / crop / extractPixels
+                    # + processImageForExtraction, processImageForThumbnail, computeCropBox
 ```
 
 ### The `POST /extract` contract
@@ -103,6 +114,25 @@ unmodified for every thrown `Error` (only non-`Error` throws fall back to a gene
 **Never reword, truncate, or generalize an error message thrown from `validators.ts` or
 `photon.ts`** — doing so silently breaks the caller's message-matching without failing any type
 check.
+
+### The `POST /thumbnail` contract
+
+```
+POST /thumbnail
+  body: raw image bytes (NOT JSON, and NOT a URL — the caller already holds the upload)
+
+200 → body:    WebP bytes, Content-Type: image/webp
+400 → body:    { error: string }   — empty body, or photon could not decode
+```
+
+Unlike `/extract`, this route takes **bytes, not a URL**, so none of the SSRF/size/format
+validators in `validators.ts` run on it: `presets-api` has already received and bounded the
+upload, and nothing here fetches anything. The only guard is the empty-body check.
+
+`processImageForThumbnail` crops to the 640 × 264 band (`THUMBNAIL_WIDTH`/`THUMBNAIL_HEIGHT`,
+aspect ≈ 2.42) via `computeCropBox`, resizes with Lanczos3, and encodes WebP. `computeCropBox`
+takes the largest centred region matching the target aspect, so a portrait source is cropped
+rather than letterboxed.
 
 ### Response size bound
 
@@ -169,19 +199,22 @@ to that resize without runtime validation (a non-default value is honored as-is)
 
 **Service Bindings (outbound):** None.
 
-**Service Bindings (inbound):** `xivdyetools-discord-worker` calls `POST /extract` via its
-`IMAGE_WORKER` binding — the *only* caller.
+**Service Bindings (inbound):** two callers, both over an `IMAGE_WORKER` binding —
+`xivdyetools-discord-worker` calls `POST /extract`, `xivdyetools-presets-api` calls
+`POST /thumbnail`.
 
-**Sibling:** `xivdyetools-discord-worker` (the split's origin — see
-`docs/operations/IMAGE_WORKER_SPLIT.md` for why photon moved out).
+**Siblings:** `xivdyetools-discord-worker` (the split's origin — see
+`docs/operations/IMAGE_WORKER_SPLIT.md` for why photon moved out) and
+`xivdyetools-presets-api` (preview images).
 
 ## Deployment Checklist
 
-**Deploy order is load-bearing.** This Worker must be deployed *before* `discord-worker`, or
-`discord-worker`'s `IMAGE_WORKER` service binding fails to resolve (the reverse order is
-harmless — an old bot alongside a new image Worker simply doesn't call it yet).
+**Deploy order is load-bearing.** This Worker must be deployed *before* its callers, or their
+`IMAGE_WORKER` service bindings fail to resolve (the reverse order is harmless — an old caller
+alongside a new image Worker simply doesn't use the new route yet).
 
 1. `pnpm lint && pnpm test && pnpm type-check` — must be green.
 2. `pnpm deploy:production` (or via CI: `.github/workflows/deploy-image-worker.yml`).
-3. Deploy `discord-worker` and smoke-test `/extractor` with a real Discord attachment — there is
-   no public health endpoint on this Worker to check directly.
+3. Deploy the callers and smoke-test both paths — `discord-worker`'s `/extractor` with a real
+   Discord attachment, and a preset preview-image upload through `presets-api`. There is no
+   public health endpoint on this Worker to check directly.

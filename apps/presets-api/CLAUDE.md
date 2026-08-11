@@ -120,6 +120,8 @@ src/
 |---------|------|---------|
 | `DB` | D1 (`xivdyetools-presets`) | Authoritative store for presets, votes, moderation log, banned users |
 | `DISCORD_WORKER` | Service Binding → `xivdyetools-discord-worker` | Forward submission/approval notifications to Discord |
+| `THUMBNAILS` | R2 (`xivdyetools-presets-preview-thumbnails`) | Stored preset preview images (WebP) |
+| `IMAGE_WORKER` | Service Binding → `xivdyetools-image-worker` | Crops/encodes an uploaded preview to WebP via `POST /thumbnail` |
 
 Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS` (CSV). Custom domains: `api.xivdyetools.app`, `api.xivdyetools.projectgalatine.com`.
 
@@ -144,12 +146,12 @@ Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS
 
 ## Database
 
-### Tables (`schema.sql` + `migrations/0002…0005`)
+### Tables (`schema.sql` + `migrations/0002…0010`)
 
 | Table | Purpose |
 |-------|---------|
-| `categories` | 5 seeded categories (jobs, grand-companies, seasons, events, aesthetics). `community` was retired by `migrations/0007` — community-ness is a source, not a category; any stragglers land in `aesthetics` |
-| `presets` | Both curated and community palettes; `status ∈ {pending, approved, rejected, flagged}`, `dye_signature` enforces unique dye combinations |
+| `categories` | 8 seeded categories: jobs, grand-companies, seasons, events, aesthetics, plus appearance / zones / raids-trials added by `migrations/0010`. `community` was retired by `migrations/0007` — community-ness is a source, not a category; any stragglers land in `aesthetics` |
+| `presets` | Both curated and community palettes; `status ∈ {pending, approved, rejected, flagged}`, `dye_signature` enforces unique dye combinations. Later columns arrived one migration each: `example_link` (`0008`), `preview_image_key` / `preview_image_status` (`0009`), `secondary_categories` (`0010`) |
 | `votes` | One row per (preset_id, user_discord_id); composite PK |
 | `moderation_log` | Audit trail of approve/reject/flag/unflag/revert actions |
 | `rate_limits` | Optional persistent rate-limit counters (mostly unused — IP limits are in-memory) |
@@ -175,26 +177,37 @@ Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS
 
 Base path: `/api/v1/`
 
+Route order is load-bearing in `presets.ts` and `moderation.ts`: literal paths (`/featured`, `/mine`, `/rate-limit`, `/refresh-author`, `/pending`, `/stats`, `/failed-notifications`) are registered **before** `/:id` / `/:presetId`, or Hono matches the parameter route first and the literal becomes unreachable.
+
 ### Public
 
 - `GET /presets` — `category`, `search`, `status`, `sort`, `page`, `limit` (capped at 50), `is_curated`.
 - `GET /presets/featured` — top-voted curated/approved.
-- `GET /categories` — categories with denormalized counts.
+- `GET /presets/:id` — single preset.
+- `GET /categories`, `GET /categories/:id` — categories with denormalized counts (a preset counts toward its primary **and** its `secondary_categories`).
 - `GET /` and `GET /health` — service info / liveness.
 
 ### Authenticated (Bot or Web)
 
 - `POST /presets` — submit (auto-vote for author, dye_signature dedup, profanity check).
 - `PATCH /presets/:id` — edit (stores `previous_values` JSON for revert).
+- `DELETE /presets/:id` — author-only delete.
+- `PATCH /presets/refresh-author` — re-sync the caller's denormalized author name across their presets.
 - `GET /presets/mine` — requester's submissions across all statuses.
 - `GET /presets/rate-limit` — remaining submissions today.
-- `POST /votes/:presetId`, `DELETE /votes/:presetId`.
+- `POST /presets/:id/preview-image` — upload a preview (raw image bytes → image-worker → R2).
+- `DELETE /presets/:id/preview-image` — remove the caller's preview image.
+- `POST /votes/:presetId`, `DELETE /votes/:presetId`, `GET /votes/:presetId/check`.
 
 ### Moderator-Only
 
 - `GET /moderation/pending` — queue.
 - `PATCH /moderation/:presetId/status` — approve/reject/flag/unflag.
-- `POST /moderation/:presetId/revert` — restore `previous_values` after a problematic edit.
+- `PATCH /moderation/:presetId/revert` — restore `previous_values` after a problematic edit.
+- `PATCH /moderation/:presetId/preview-image` — approve or strip a submitted preview image.
+- `GET /moderation/:presetId/history` — that preset's `moderation_log` entries.
+- `GET /moderation/stats` — moderation queue counters.
+- `GET /moderation/failed-notifications`, `PATCH /moderation/failed-notifications/:id/resolve` — dead-letter queue (BUG-015).
 
 ## Key Patterns
 
@@ -219,6 +232,25 @@ Guards:
 1. **Local profanity filter** (multi-language word lists in `data/profanity/`) — fast, runs first.
 2. **Perspective API** (optional) — ML toxicity scoring when `PERSPECTIVE_API_KEY` is set.
 3. **Manual review** — moderators approve/reject via `PATCH /moderation/:id/status`; `moderation_log` records the action.
+
+### Preview Images (R2 + image-worker)
+
+An author-uploaded picture for the preset card, stored as WebP in R2. **`preview_image_key` is not `example_link`** — the link points at a *page* about the glamour and is never fetched; the preview is bytes this worker owns.
+
+```
+POST /presets/:id/preview-image  (raw bytes)
+   └─► IMAGE_WORKER.fetch('https://image-worker/thumbnail')   crop + WebP encode
+         └─► THUMBNAILS.put(`${presetId}/${crypto.randomUUID()}.webp`)
+               cacheControl: 'public, max-age=31536000, immutable'
+```
+
+The UUID in the key is what makes `immutable` safe: every key is single-use, so a URL can never come to mean a different image. Replacing a preview writes a new key and deletes the old one; `deletePreviewImage` treats a missing key as success.
+
+`preview_image_status` (`'none' | 'pending' | 'approved'`) gates display, and moderators move it via `PATCH /moderation/:presetId/preview-image`. Note that the `CommunityPreset` shape deliberately **hides** `preview_image_key`, so any handler that needs the raw key must do its own row-level read rather than reusing the public getter.
+
+### Multi-Category Presets
+
+`category_id` remains the single **primary** category (FK and indexes untouched). `secondary_categories` (`migrations/0010`) is a JSON array of up to `SECONDARY_CATEGORY_MAX` more, `NOT NULL DEFAULT '[]'` so every pre-existing row was valid without a backfill. A secondary may not repeat the primary. Category counts in `categories.ts` union both via `json_each(p.secondary_categories)`, so one preset can count toward several categories.
 
 ### Discord Notifications via Service Binding
 
@@ -306,7 +338,7 @@ Production hides `err.message` and stack — only the request ID is returned. De
 
 **Dependencies:** `@xivdyetools/auth`, `@xivdyetools/types`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/logger`, `@xivdyetools/worker-kit`
 
-**Service Bindings (outbound):** `xivdyetools-discord-worker` (notifications)
+**Service Bindings (outbound):** `xivdyetools-discord-worker` (notifications), `xivdyetools-image-worker` (`POST /thumbnail` for preview images)
 
 **Service Bindings (inbound):** `xivdyetools-discord-worker`, `xivdyetools-moderation-worker`
 
@@ -317,7 +349,7 @@ Production hides `err.message` and stack — only the request ID is returned. De
 ## Deployment Checklist
 
 1. `wrangler secret put` for every required secret (`BOT_API_SECRET`, `BOT_SIGNING_SECRET`, `JWT_SECRET`, `MODERATOR_IDS`).
-2. If schema changed: apply the relevant file(s) from `migrations/` by hand (see Commands).
+2. If schema changed: apply the relevant file(s) from `migrations/` by hand (see Commands) — **before** deploying the worker that reads the new columns, or the first query naming one fails as an opaque 500.
    **`npm run db:migrate` cannot alter an existing database** — `schema.sql` is all
    `CREATE TABLE IF NOT EXISTS`, so on a live D1 every statement is skipped and the
    script exits successfully having changed nothing. A column added to `schema.sql`

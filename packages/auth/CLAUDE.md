@@ -35,7 +35,7 @@ pnpm --filter @xivdyetools/auth exec vitest run src/jwt.test.ts
 
 ## Architecture
 
-Four single-responsibility modules under `src/`, plus a barrel `index.ts`. Each module has its own subpath export (`/jwt`, `/hmac`, `/timing`, `/discord`) so consumers can import a focused slice.
+Five single-responsibility modules under `src/` plus an `encoding/` directory, all behind a barrel `index.ts`. Every one has its own subpath export (`/jwt`, `/hmac`, `/timing`, `/discord`, `/revocation`, `/encoding`) so consumers can import a focused slice — `/encoding` in particular exists so a caller that only needs Base64URL/hex helpers doesn't pull in `discord-interactions`.
 
 ### Key Directories
 
@@ -110,6 +110,30 @@ function verifyDiscordRequest(request: Request, publicKey: string, options?: Dis
 function unauthorizedResponse(message?: string): Response;  // 401 JSON
 function badRequestResponse(message: string): Response;     // 400 JSON
 ```
+
+### Revocation (`@xivdyetools/auth/revocation`)
+
+```typescript
+interface RevocationStore { /* the KV surface actually used — get/put */ }
+
+function isTokenRevoked(store: RevocationStore, jti: string): Promise<boolean>;
+function revokeToken(store: RevocationStore, jti: string, ttlSeconds: number): Promise<void>;
+```
+
+A `jti` blacklist rather than a whitelist: only revoked tokens are stored, with a TTL matching the token's remaining lifetime, so the keyspace stays bounded without a sweep job. The store is passed in as an interface rather than a `KVNamespace` so tests need no Workers types.
+
+### Encoding (`@xivdyetools/auth/encoding`)
+
+```typescript
+function base64UrlEncode(str: string): string;
+function base64UrlEncodeBytes(bytes: Uint8Array): string;
+function base64UrlDecode(str: string): string;
+function base64UrlDecodeBytes(str: string): Uint8Array;
+function hexToBytes(hex: string): Uint8Array;
+function bytesToHex(bytes: Uint8Array): string;
+```
+
+Absorbed from the retired `@xivdyetools/crypto`. Import from this subpath, not the barrel — the root re-export drags in `discord-interactions`.
 
 ## Key Patterns
 

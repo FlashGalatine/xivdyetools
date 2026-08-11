@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`xivdyetools-api-worker` is the **public REST API** for the XIV Dye Tools ecosystem — Phase 1 surfaces the dye database (125 standard dyes plus 11 Facewear color entries with synthetic negative IDs) and color-matching algorithms over a Cloudflare Worker on Hono. Deployed to **`data.xivdyetools.app`**.
+`xivdyetools-api-worker` is the **public REST API** for the XIV Dye Tools ecosystem — Phase 1 surfaces the dye database (125 standard dyes, schema v2) and color-matching algorithms over a Cloudflare Worker on Hono. Deployed to **`data.xivdyetools.app`**.
 
 The API is anonymous (no auth, no API key) with permissive CORS so it can be called from browsers, Dalamud plugins, Discord bots, and mobile apps. Sliding-window rate limiting (60 req/min/IP, +5 burst) is enforced via KV. Locale resolution is handled once per request by middleware so handlers can call `LocalizationService.getDyeName()` directly without per-call `setLocale()`.
 
@@ -75,9 +75,9 @@ All under `/v1`. All `GET`. All cache `Cache-Control: public, max-age=3600, s-ma
 | GET | `/v1/dyes/batch?ids=` | Multi-ID lookup, max 50, mixed types via `idType=auto\|item\|stain` |
 | GET | `/v1/dyes/consolidation-groups` | Patch 7.5 consolidation metadata (groups A/B/C + unconsolidated) |
 | GET | `/v1/dyes/stain/:stainId` | Explicit stainID lookup (1–125) |
-| GET | `/v1/dyes/:id` | Auto-detect ID type by range: `<0` Facewear, `1–125` stainID, `≥5729` itemID, `126–5728` invalid |
+| GET | `/v1/dyes/:id` | Auto-detect ID type by range: `1–125` stainID, `≥5729` itemID, `126–5728` invalid, `<0` legacy Facewear → 404 (see below) |
 | GET | `/v1/match/closest?hex=` | Single closest dye (methods: rgb, cie76, ciede2000, oklab, hyab, oklch-weighted) |
-| GET | `/v1/match/within-distance?hex=&maxDistance=` | All dyes within ΔE threshold (limit 1–136, default 20) |
+| GET | `/v1/match/within-distance?hex=&maxDistance=` | All dyes within ΔE threshold (limit 1–125, default 20) |
 
 Route registration in `routes/dyes.ts` is order-sensitive: static paths (`/search`, `/categories`, `/batch`, `/consolidation-groups`, `/stain/:stainId`) MUST be registered before `/:id` to avoid Hono matching conflicts.
 
@@ -109,12 +109,14 @@ Validation helpers (`parseHex`, `parseEnumParam`, `parseIntParam`, etc.) and rou
 
 `resolveIdType(id)` in `lib/validation.ts` partitions the integer space into disjoint ranges:
 
-- `id < 0` → Facewear (synthetic negative IDs from `DyeDatabase.initialize()`)
 - `1 ≤ id ≤ 125` → stainID (game stain table)
 - `id ≥ 5729` → itemID (game item database)
 - `126 ≤ id ≤ 5728` → `invalid` (the gap)
+- `id < 0` → `facewear` — retained **only to emit a helpful 404**
 
-Use `lookupDyeByResolvedId()` to dispatch to the correct `DyeService` method. For Facewear filtering elsewhere, prefer `dye.itemID > 0` over null-checks — `itemID` is **always** a number.
+Use `lookupDyeByResolvedId()` to dispatch to the correct `DyeService` method.
+
+**The negative range is a tombstone, not a lookup.** Schema v2 (2026-07-31) moved Facewear colors out of the dye database entirely, so this API no longer serves them as dyes. `routes/dyes.ts` resolves a negative ID through `getFacewearColorByLegacyItemID()` purely to name what the caller *used* to get: the 404 body carries the color's name, its new slug `id`, and its hex, so an old client gets a migration pointer instead of a bare miss. `/v1/dyes` filters `category !== 'Facewear'` for the same reason. Don't "fix" these by reviving negative-ID lookups.
 
 ### Locale Middleware (OPT-001)
 
@@ -126,7 +128,7 @@ Composes the shared `rateLimitMiddleware` factory from `@xivdyetools/worker-kit`
 
 ### Service Singleton
 
-`DyeService` is instantiated once per Worker isolate at module scope (`lib/services.ts`). The k-d tree (~1–2ms build for 136 entries — 125 standard dyes + 11 Facewear; the 11 Facewear entries are excluded from the k-d tree itself since they're not market-tradeable) is reused across all requests handled by the isolate. `calculateDistance()` dispatches to `ColorConverter` static methods because `findClosestDye`/`findDyesWithinDistance` return `Dye[]` without distances — match handlers recompute distance for the response.
+`DyeService` is instantiated once per Worker isolate at module scope (`lib/services.ts`). The k-d tree (~1–2ms build for the 125 dyes) is reused across all requests handled by the isolate. `calculateDistance()` dispatches to `ColorConverter` static methods because `findClosestDye`/`findDyesWithinDistance` return `Dye[]` without distances — match handlers recompute distance for the response.
 
 ## Dependencies
 
@@ -136,7 +138,7 @@ Composes the shared `rateLimitMiddleware` factory from `@xivdyetools/worker-kit`
 | `spectral.js` | (currently unused at handler level — reserved for future spectral mixing endpoints) |
 | `@xivdyetools/core` | DyeService, dyeDatabase, ColorConverter, LocalizationService |
 | `@xivdyetools/types` | `Dye` interface |
-| `@xivdyetools/logger` | Structured logger (consumed via worker-middleware) |
+| `@xivdyetools/logger` | Structured logger (wired up by `worker-kit`'s `loggerMiddleware`) |
 | `@xivdyetools/worker-kit/rate-limiter` | `KVRateLimiter`, `getClientIp` |
 | `@xivdyetools/worker-kit` | Shared `requestIdMiddleware`, `loggerMiddleware`, `rateLimitMiddleware` factory |
 | `@xivdyetools/test-utils` (dev) | KV mock for vitest |

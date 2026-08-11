@@ -102,9 +102,10 @@ Workers communicate via Cloudflare **Service Bindings** (direct Worker-to-Worker
 
 ```
 discord-worker ──► presets-api
-discord-worker ──► image-worker
+discord-worker ──► image-worker        (POST /extract — palette pixels)
 moderation-worker ──► presets-api
 presets-api ──► discord-worker (notifications)
+presets-api ──► image-worker           (POST /thumbnail — preview images)
 api-worker ──► (standalone, public-facing)
 ```
 
@@ -123,7 +124,7 @@ The **11 Facewear colors are NOT dyes** — they live in `facewear_colors.json` 
 
 ## Publishing Libraries to npm
 
-All 10 publishable packages publish through the **Publish Packages to npm** GitHub Actions workflow (`workflow_dispatch`), which authenticates with npm via **trusted publishing (OIDC)**. (`@xivdyetools/test-utils` is workspace-private and not published.) There is no npm token anywhere in CI — the workflow's `id-token: write` permission mints a short-lived credential from its own GitHub identity, which also signs the provenance attestation.
+All 7 publishable packages — types, logger, auth, worker-kit, core, svg, bot-logic — publish through the **Publish Packages to npm** GitHub Actions workflow (`workflow_dispatch`), which authenticates with npm via **trusted publishing (OIDC)**. (`@xivdyetools/test-utils` is the 8th package; it is workspace-private and not published.) There is no npm token anywhere in CI — the workflow's `id-token: write` permission mints a short-lived credential from its own GitHub identity, which also signs the provenance attestation.
 
 ```bash
 # 1. Make changes in packages/<name>/
