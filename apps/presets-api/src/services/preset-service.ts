@@ -75,11 +75,32 @@ export function rowToPreset(row: PresetRow, logger?: PresetServiceLogger): Commu
     }
   }
 
+  // Supplementary metadata, like previous_values — degrade to [] rather than
+  // throw. A corrupt list must not make the preset disappear from the gallery.
+  let secondary_categories: CommunityPreset['secondary_categories'] = [];
+  if (row.secondary_categories) {
+    try {
+      const parsed = JSON.parse(row.secondary_categories) as unknown;
+      if (Array.isArray(parsed)) {
+        secondary_categories = parsed as CommunityPreset['secondary_categories'];
+      } else {
+        (logger ?? console).error(
+          `[BUG-012] Preset ${row.id}: 'secondary_categories' is not an array, defaulting to []`
+        );
+      }
+    } catch {
+      (logger ?? console).error(
+        `[BUG-012] Preset ${row.id}: invalid JSON in 'secondary_categories', defaulting to []`
+      );
+    }
+  }
+
   return {
     id: row.id,
     name: row.name,
     description: row.description,
     category_id: row.category_id as CommunityPreset['category_id'],
+    secondary_categories,
     dyes,
     tags,
     author_discord_id: row.author_discord_id,
@@ -99,6 +120,10 @@ export function rowToPreset(row: PresetRow, logger?: PresetServiceLogger): Commu
       row.preview_image_status === 'approved' && row.preview_image_key
         ? `${PREVIEW_IMAGE_PUBLIC_BASE}/${row.preview_image_key}`
         : null,
+    // The STATUS is safe to expose everywhere — it is a label, not a URL, and
+    // it is what lets an author's own view say "under review".
+    preview_image_status: (row.preview_image_status ??
+      'none') as CommunityPreset['preview_image_status'],
     rejection_reason: row.rejection_reason ?? null,
   };
 }
@@ -289,8 +314,8 @@ export async function createPreset(
     INSERT INTO presets (
       id, name, description, category_id, dyes, tags,
       author_discord_id, author_name, vote_count, status, is_curated,
-      created_at, updated_at, dye_signature, example_link
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?, ?, ?, ?)
+      created_at, updated_at, dye_signature, example_link, secondary_categories
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?, ?, ?, ?, ?)
   `;
 
   await db
@@ -308,7 +333,8 @@ export async function createPreset(
       now,
       now,
       dyeSignature,
-      submission.example_link ?? null
+      submission.example_link ?? null,
+      JSON.stringify(submission.secondary_categories ?? [])
     )
     .run();
 
@@ -317,6 +343,7 @@ export async function createPreset(
     name: submission.name,
     description: submission.description,
     category_id: submission.category_id,
+    secondary_categories: submission.secondary_categories ?? [],
     dyes: submission.dyes,
     tags: submission.tags,
     author_discord_id: authorDiscordId,
@@ -328,6 +355,7 @@ export async function createPreset(
     updated_at: now,
     dye_signature: dyeSignature,
     example_link: submission.example_link ?? null,
+    preview_image_status: 'none',
   };
 }
 
@@ -490,6 +518,16 @@ export async function updatePreset(
   if (updates.example_link !== undefined) {
     setClauses.push('example_link = ?');
     params.push(updates.example_link);
+  }
+
+  if (updates.category_id !== undefined) {
+    setClauses.push('category_id = ?');
+    params.push(updates.category_id);
+  }
+
+  if (updates.secondary_categories !== undefined) {
+    setClauses.push('secondary_categories = ?');
+    params.push(JSON.stringify(updates.secondary_categories));
   }
 
   if (previousValues !== undefined) {

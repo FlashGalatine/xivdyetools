@@ -737,3 +737,37 @@ describe('rowToPreset preview image gate', () => {
         expect(preset.preview_image_url).toBeNull();
     });
 });
+
+describe('secondary categories and preview_image_status', () => {
+  it('rowToPreset parses the JSON list', () => {
+    const preset = rowToPreset(
+      createMockPresetRow({ secondary_categories: '["zones","events"]' })
+    );
+    expect(preset.secondary_categories).toEqual(['zones', 'events']);
+  });
+
+  it('rowToPreset degrades corrupt secondary_categories to [] instead of throwing', () => {
+    // Supplementary metadata, unlike `dyes` — a bad value must not hide the preset.
+    const preset = rowToPreset(createMockPresetRow({ secondary_categories: '{not json' }));
+    expect(preset.secondary_categories).toEqual([]);
+  });
+
+  it('rowToPreset degrades a non-array JSON value to []', () => {
+    const preset = rowToPreset(createMockPresetRow({ secondary_categories: '"zones"' }));
+    expect(preset.secondary_categories).toEqual([]);
+  });
+
+  it('rowToPreset surfaces preview_image_status but still gates the URL', () => {
+    const pending = rowToPreset(
+      createMockPresetRow({ preview_image_status: 'pending', preview_image_key: 'p/a.webp' })
+    );
+    expect(pending.preview_image_status).toBe('pending');
+    expect(pending.preview_image_url).toBeNull();
+
+    const approved = rowToPreset(
+      createMockPresetRow({ preview_image_status: 'approved', preview_image_key: 'p/a.webp' })
+    );
+    expect(approved.preview_image_status).toBe('approved');
+    expect(approved.preview_image_url).toBe('https://shots.xivdyetools.app/p/a.webp');
+  });
+});
