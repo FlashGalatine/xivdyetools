@@ -34,6 +34,8 @@ export interface PresetCardData {
   colors: string[];
   /** Example link (page URL, stored not copied), when the preset has one */
   exampleLink?: string;
+  /** Approved preview image URL; absent until a moderator approves it. */
+  previewImageUrl?: string | null;
 }
 
 /**
@@ -104,6 +106,15 @@ export class PresetCard extends BaseLitComponent {
         display: flex;
         align-items: flex-end;
         padding: 10px 12px;
+      }
+
+      .shot-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
       }
 
       .shot-caption {
@@ -311,8 +322,9 @@ export class PresetCard extends BaseLitComponent {
       return html`<div class="preset-card"></div>`;
     }
 
-    const { preset, colors, exampleLink } = this.data;
-    const hasShot = !!exampleLink && this.showShot;
+    const { preset, colors, exampleLink, previewImageUrl } = this.data;
+    const hasImage = !!previewImageUrl && this.showShot;
+    const hasShot = !hasImage && !!exampleLink && this.showShot;
     const first = colors[0] ?? '#666666';
     const stops = this.paletteStops(colors);
 
@@ -348,6 +360,17 @@ export class PresetCard extends BaseLitComponent {
         }}
       >
         <div class="shot" style=${shotStyle}>
+          ${
+            hasImage
+              ? html`<img
+                  class="shot-img"
+                  src=${previewImageUrl!}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />`
+              : nothing
+          }
           ${
             caption
               ? html`<span class="shot-caption" style="color: ${this.inkOver(colors[1] ?? first)}"

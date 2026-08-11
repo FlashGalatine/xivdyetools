@@ -11,7 +11,7 @@
   # fonts.googleapis.com / fonts.gstatic.com origins are gone from style-src
   # and font-src. Do not re-add them -- a family that needs a third-party
   # origin has escaped the font contract in styles/globals.css.
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com; connect-src 'self' https://universalis.app https://*.workers.dev https://*.xivdyetools.app; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com https://shots.xivdyetools.app; connect-src 'self' https://universalis.app https://*.workers.dev https://*.xivdyetools.app; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;
 
   # Security Headers
   X-Content-Type-Options: nosniff

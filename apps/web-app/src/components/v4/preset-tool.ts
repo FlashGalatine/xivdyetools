@@ -574,6 +574,7 @@ export class PresetTool extends BaseLitComponent {
       isFromAPI: false,
       createdAt: collection.createdAt,
       exampleLink: null,
+      previewImageUrl: null,
     };
   }
 
@@ -593,7 +594,12 @@ export class PresetTool extends BaseLitComponent {
       const dye = resolvePresetDye(dyeId);
       if (dye) colors.push(dye.hex);
     }
-    return { preset, colors, exampleLink: preset.exampleLink ?? undefined };
+    return {
+      preset,
+      colors,
+      exampleLink: preset.exampleLink ?? undefined,
+      previewImageUrl: preset.previewImageUrl ?? null,
+    };
   }
 
   /** A palette is buyable when none of its dyes are market-only (coffer). */

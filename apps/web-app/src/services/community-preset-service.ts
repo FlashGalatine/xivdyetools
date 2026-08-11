@@ -30,6 +30,8 @@ export interface CommunityPreset {
   updated_at: string;
   /** 8A: allowlisted example-link page URL (stored, never a copy) */
   example_link?: string | null;
+  /** Approved preview image URL; present only once a moderator approves it. */
+  preview_image_url?: string | null;
   /** 8S: latest moderation reject reason (own-submissions listing only) */
   rejection_reason?: string | null;
 }

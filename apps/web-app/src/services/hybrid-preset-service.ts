@@ -49,6 +49,8 @@ export interface UnifiedPreset {
   createdAt?: string;
   /** 8A: allowlisted example-link page URL, when the author gave one */
   exampleLink?: string | null;
+  /** Approved preview image URL; absent until a moderator approves it. */
+  previewImageUrl?: string | null;
 }
 
 /**
@@ -175,6 +177,7 @@ export class HybridPresetService {
       apiPresetId: preset.id,
       createdAt: preset.created_at,
       exampleLink: preset.example_link ?? null,
+      previewImageUrl: preset.preview_image_url ?? null,
     };
   }
 
