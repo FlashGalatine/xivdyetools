@@ -23,7 +23,22 @@ describe('validateExampleLink', () => {
       expect(validateExampleLink(`https://${host}/glamour/38412`)).toBeNull();
       expect(validateExampleLink(`https://www.${host}/a`)).toBeNull();
     }
-    expect(validateExampleLink('https://i.imgur.com/abc123.png')).toBeNull();
+  });
+
+  it('accepts the glamour and social destinations', () => {
+    expect(validateExampleLink('https://ffxiv.eorzeacollection.com/glamour/342206/x')).toBeNull();
+    expect(validateExampleLink('https://mirapri.com/100814')).toBeNull();
+    expect(validateExampleLink('https://www.reddit.com/r/FFXIVGlamours/comments/abc/x/')).toBeNull();
+    expect(validateExampleLink('https://redd.it/abc123')).toBeNull();
+    expect(validateExampleLink('https://x.com/user/status/123')).toBeNull();
+    expect(validateExampleLink('https://twitter.com/user/status/123')).toBeNull();
+    expect(validateExampleLink('https://bsky.app/profile/a.bsky.social/post/123')).toBeNull();
+    expect(validateExampleLink('https://www.instagram.com/p/abc123/')).toBeNull();
+  });
+
+  it('rejects bare image hosts — the field links a page, not an image', () => {
+    expect(validateExampleLink('https://i.imgur.com/abc123.png')).not.toBeNull();
+    expect(validateExampleLink('https://www.flickr.com/photos/x/123')).not.toBeNull();
   });
 
   it('accepts a bare host pasted without a scheme', () => {

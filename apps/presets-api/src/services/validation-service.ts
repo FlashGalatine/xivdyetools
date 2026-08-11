@@ -315,10 +315,27 @@ export function validateModerationReason(reason: unknown): string | null {
 }
 
 /**
- * 8A example-link host allowlist. Exact hosts plus their subdomains
- * (www.eorzeacollection.com, i.imgur.com, …). The client mirrors this list.
+ * Example-link host allowlist.
+ *
+ * This list is not "hosts we can fetch from" — the link is never fetched. It
+ * is "where we are willing to send our users", which makes it a spam and
+ * phishing control. Entries are destinations that carry a glamour's
+ * information (gear list, credit, comments), not image hosts: a raw image is
+ * exactly what this field is not for.
+ *
+ * Exact hosts plus their subdomains (www.eorzeacollection.com, old.reddit.com).
+ * The client mirrors this list in apps/web-app/src/shared/example-link.ts.
  */
-export const EXAMPLE_LINK_HOSTS = ['eorzeacollection.com', 'imgur.com', 'flickr.com'] as const;
+export const EXAMPLE_LINK_HOSTS = [
+  'eorzeacollection.com',
+  'mirapri.com',
+  'reddit.com',
+  'redd.it',
+  'x.com',
+  'twitter.com',
+  'bsky.app',
+  'instagram.com',
+] as const;
 
 const EXAMPLE_LINK_MAX_LENGTH = 300;
 

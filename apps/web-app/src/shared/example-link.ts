@@ -13,7 +13,16 @@
 import { LanguageService } from '@services/language-service';
 
 /** Client mirror of the presets-api example-link host allowlist. */
-export const EXAMPLE_LINK_HOSTS = ['eorzeacollection.com', 'imgur.com', 'flickr.com'];
+export const EXAMPLE_LINK_HOSTS = [
+  'eorzeacollection.com',
+  'mirapri.com',
+  'reddit.com',
+  'redd.it',
+  'x.com',
+  'twitter.com',
+  'bsky.app',
+  'instagram.com',
+];
 
 /** Validate an example link locally; returns an error string or null. */
 export function exampleLinkError(link: string): string | null {
