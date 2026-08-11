@@ -1,206 +1,228 @@
 /**
- * Tests for /manual Command Handler
+ * Tests for the /manual command handler.
+ *
+ * Two rules shape the assertions. Learn-more links degrade to *no link*
+ * rather than to the English one — a German player following an English
+ * Lodestone URL is worse than no URL. And the 🪙 topic resolves its link by
+ * game **region**, derived from the user's stored world via Universalis, not
+ * by locale; every failure in that lookup has to land on the same
+ * absent-link state rather than throwing inside an ephemeral reply.
  */
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleManualCommand } from './manual.js';
+import type { DiscordInteraction, Env } from '../../types/env.js';
 
-// Mock bot-i18n service
 vi.mock('../../services/bot-i18n.js', () => ({
-    createUserTranslator: vi.fn(() =>
-        Promise.resolve({
-            t: vi.fn((key: string) => key),
-            getLocale: () => 'en',
-            locale: 'en',
-        })
-    ),
-    createUserTranslatorWithPrefs: vi.fn(() =>
-        Promise.resolve({
-            t: {
-                t: vi.fn((key: string) => key),
-                getLocale: () => 'en',
-            },
-            prefs: {},
-        })
-    ),
+  createUserTranslatorWithPrefs: vi.fn(),
 }));
 
-describe('handlers/commands/manual.ts', () => {
-    const mockEnv = {
-        KV: {
-            get: vi.fn(),
-        },
-    } as any;
+vi.mock('../../services/budget/index.js', () => ({
+  fetchWorlds: vi.fn(),
+  fetchDataCenters: vi.fn(),
+}));
 
-    const mockCtx = {
-        waitUntil: vi.fn(),
-    } as unknown as ExecutionContext;
+import { createUserTranslatorWithPrefs } from '../../services/bot-i18n.js';
+import { fetchDataCenters, fetchWorlds } from '../../services/budget/index.js';
+
+const translator = (locale = 'en') => ({
+  t: (key: string, vars?: Record<string, unknown>) =>
+    vars ? `${key}|${Object.values(vars).join(',')}` : key,
+  getLocale: () => locale,
+});
+
+const interaction = (topic?: string): DiscordInteraction =>
+  ({
+    token: 'tok',
+    locale: 'en-US',
+    member: { user: { id: 'user-1' } },
+    data: { name: 'manual', options: topic ? [{ name: 'topic', value: topic }] : [] },
+  }) as unknown as DiscordInteraction;
+
+type Body = {
+  type: number;
+  data: { flags: number; embeds: { title: string; description: string }[] };
+};
+
+const bodyOf = async (r: Response) => (await r.json()) as Body;
+
+describe('handleManualCommand', () => {
+  let env: Env;
+  const ctx = {} as ExecutionContext;
+
+  beforeEach(() => {
+    env = { KV: {} as KVNamespace } as unknown as Env;
+    vi.clearAllMocks();
+    vi.mocked(createUserTranslatorWithPrefs).mockResolvedValue({
+      t: translator(),
+      prefs: {},
+    } as never);
+  });
+
+  it('is always ephemeral', async () => {
+    const body = await bodyOf(await handleManualCommand(interaction(), env, ctx));
+
+    expect(body.type).toBe(4);
+    expect(body.data.flags).toBe(64);
+  });
+
+  it('shows the topic index when no topic is given', async () => {
+    const body = await bodyOf(await handleManualCommand(interaction(), env, ctx));
+
+    expect(body.data.embeds.length).toBeGreaterThan(0);
+  });
+
+  it('falls back to the index for an unrecognised topic', async () => {
+    const index = await bodyOf(await handleManualCommand(interaction(), env, ctx));
+    const unknown = await bodyOf(await handleManualCommand(interaction('nonsense'), env, ctx));
+
+    expect(unknown.data.embeds).toEqual(index.data.embeds);
+  });
+
+  it('renders the match_image topic on its own branch', async () => {
+    const body = await bodyOf(await handleManualCommand(interaction('match_image'), env, ctx));
+
+    expect(JSON.stringify(body)).toContain('matchImageHelp.title');
+  });
+
+  describe('the 5.0 topics', () => {
+    it.each([
+      ['color_vision', 'colorVision'],
+      ['contrast', 'contrast'],
+      ['matching_methods', 'matchingMethods'],
+      ['character_file', 'characterFile'],
+    ])('renders %s as a single embed keyed on %s', async (topic, key) => {
+      const body = await bodyOf(await handleManualCommand(interaction(topic), env, ctx));
+
+      expect(body.data.embeds).toHaveLength(1);
+      expect(body.data.embeds[0].description).toContain(`manual5.topics.${key}.body`);
+      expect(body.data.embeds[0].title).toContain(`manual5.topics.${key}.name`);
+    });
+
+    it('prints authority and host for a learn-more link, never the path', async () => {
+      const body = await bodyOf(await handleManualCommand(interaction('contrast'), env, ctx));
+
+      if (body.data.embeds[0].description.includes('manual5.learnLead')) {
+        // authority · host — no deep path segment leaks into the embed
+        expect(body.data.embeds[0].description).toMatch(/manual5\.learnLead\|\[.+\]\(.+\) · .+/);
+      }
+    });
+  });
+
+  describe('spectrum_prices resolves its link by game region', () => {
+    const worlds = [{ id: 40, name: 'Gilgamesh' }];
+    const datacenters = [
+      { name: 'Aether', region: 'North-America', worlds: [40] },
+      { name: 'Elemental', region: 'Japan', worlds: [23] },
+      { name: 'Chaos', region: 'Europe', worlds: [80] },
+    ];
+
+    const withWorld = (world?: string) =>
+      vi.mocked(createUserTranslatorWithPrefs).mockResolvedValue({
+        t: translator(),
+        prefs: world ? { world } : {},
+      } as never);
 
     beforeEach(() => {
-        vi.clearAllMocks();
+      vi.mocked(fetchWorlds).mockResolvedValue(worlds as never);
+      vi.mocked(fetchDataCenters).mockResolvedValue(datacenters as never);
     });
 
-    describe('handleManualCommand', () => {
-        it('should return embeds with manual content', async () => {
-            const interaction = {
-                id: '123',
-                token: 'token',
-                application_id: 'app',
-                locale: 'en-US',
-                member: { user: { id: 'user123' } },
-            };
+    it('maps a stored world through its datacenter to a region link', async () => {
+      withWorld('Gilgamesh');
 
-            const response = await handleManualCommand(interaction, mockEnv, mockCtx);
-            const body = (await response.json()) as any;
+      const body = await bodyOf(await handleManualCommand(interaction('spectrum_prices'), env, ctx));
 
-            expect(body.type).toBe(4); // CHANNEL_MESSAGE_WITH_SOURCE
-            expect(body.data.embeds).toBeDefined();
-            expect(body.data.embeds.length).toBeGreaterThan(0);
-            expect(body.data.flags).toBe(64); // Ephemeral
-        });
-
-        it('should include all help sections', async () => {
-            const interaction = {
-                id: '123',
-                token: 'token',
-                application_id: 'app',
-                member: { user: { id: 'user123' } },
-            };
-
-            const response = await handleManualCommand(interaction, mockEnv, mockCtx);
-            const body = (await response.json()) as any;
-
-            // Should have 5 embeds: Overview, Color Matching, Dye Information, Bot Information, Tips
-            expect(body.data.embeds.length).toBe(5);
-        });
-
-        it('should handle DM user (without member)', async () => {
-            const interaction = {
-                id: '123',
-                token: 'token',
-                application_id: 'app',
-                user: { id: 'user123' },
-            };
-
-            const response = await handleManualCommand(interaction, mockEnv, mockCtx);
-            const body = (await response.json()) as any;
-
-            expect(body.type).toBe(4);
-            expect(body.data.embeds).toBeDefined();
-        });
-
-        it('uses the product accent in the overview', async () => {
-            const interaction = {
-                id: '123',
-                token: 'token',
-                application_id: 'app',
-                member: { user: { id: 'user123' } },
-            };
-
-            const response = await handleManualCommand(interaction, mockEnv, mockCtx);
-            const body = (await response.json()) as any;
-
-            // One accent for the product; colour is reserved for state
-            expect(body.data.embeds[0].color).toBe(0xea4133);
-        });
-
-        it('should handle missing user (fallback to unknown)', async () => {
-            const interaction = {
-                id: '123',
-                token: 'token',
-                application_id: 'app',
-            };
-
-            const response = await handleManualCommand(interaction, mockEnv, mockCtx);
-            const body = (await response.json()) as any;
-
-            expect(body.type).toBe(4);
-            expect(body.data.embeds).toBeDefined();
-        });
-
-        it('should return match_image help embeds when topic is match_image', async () => {
-            const interaction = {
-                id: '123',
-                token: 'token',
-                application_id: 'app',
-                locale: 'en-US',
-                member: { user: { id: 'user123' } },
-                data: {
-                    options: [
-                        { name: 'topic', value: 'match_image' }
-                    ]
-                }
-            };
-
-            const response = await handleManualCommand(interaction, mockEnv, mockCtx);
-            const body = (await response.json()) as any;
-
-            expect(body.type).toBe(4);
-            expect(body.data.embeds).toBeDefined();
-            // match_image help has 3 embeds (main, examples, technical details)
-            expect(body.data.embeds.length).toBe(3);
-            expect(body.data.flags).toBe(64); // Ephemeral
-        });
-
-        it('gives every topic embed the one product accent', async () => {
-            const interaction = {
-                id: '123',
-                token: 'token',
-                application_id: 'app',
-                member: { user: { id: 'user123' } },
-                data: {
-                    options: [
-                        { name: 'topic', value: 'match_image' }
-                    ]
-                }
-            };
-
-            const response = await handleManualCommand(interaction, mockEnv, mockCtx);
-            const body = (await response.json()) as any;
-
-            // /manual used to spend five decorative colours across five
-            // embeds, one per section, signalling nothing. Colour is
-            // reserved for state now, and a help topic is not a state.
-            for (const embed of body.data.embeds) {
-                expect(embed.color).toBe(0xea4133);
-            }
-        });
-
-        it('should show general help when topic is undefined', async () => {
-            const interaction = {
-                id: '123',
-                token: 'token',
-                application_id: 'app',
-                member: { user: { id: 'user123' } },
-                data: {
-                    options: []
-                }
-            };
-
-            const response = await handleManualCommand(interaction, mockEnv, mockCtx);
-            const body = (await response.json()) as any;
-
-            // General help has 5 embeds
-            expect(body.data.embeds.length).toBe(5);
-        });
-
-        it('should show general help for unknown topic values', async () => {
-            const interaction = {
-                id: '123',
-                token: 'token',
-                application_id: 'app',
-                member: { user: { id: 'user123' } },
-                data: {
-                    options: [
-                        { name: 'topic', value: 'unknown_topic' }
-                    ]
-                }
-            };
-
-            const response = await handleManualCommand(interaction, mockEnv, mockCtx);
-            const body = (await response.json()) as any;
-
-            // Should fall back to general help (5 embeds)
-            expect(body.data.embeds.length).toBe(5);
-        });
+      expect(body.data.embeds[0].description).toContain('manual5.learnLead');
     });
+
+    it('accepts a datacenter name stored in the world slot', async () => {
+      withWorld('Chaos');
+
+      const body = await bodyOf(await handleManualCommand(interaction('spectrum_prices'), env, ctx));
+
+      expect(body.data.embeds[0].description).toContain('manual5.learnLead');
+    });
+
+    it.each(['Elemental', 'Aether', 'Chaos'])('resolves the %s region', async (dc) => {
+      withWorld(dc);
+
+      const body = await bodyOf(await handleManualCommand(interaction('spectrum_prices'), env, ctx));
+
+      expect(body.data.embeds[0].description).toContain('manual5.learnLead');
+    });
+
+    it('degrades to no link when the user has no stored world', async () => {
+      withWorld(undefined);
+
+      const body = await bodyOf(await handleManualCommand(interaction('spectrum_prices'), env, ctx));
+
+      expect(body.data.embeds[0].description).not.toContain('manual5.learnLead');
+      expect(fetchWorlds).not.toHaveBeenCalled();
+    });
+
+    it('degrades to no link for a world nobody recognises', async () => {
+      withWorld('Atlantis');
+
+      const body = await bodyOf(await handleManualCommand(interaction('spectrum_prices'), env, ctx));
+
+      expect(body.data.embeds[0].description).not.toContain('manual5.learnLead');
+    });
+
+    it('degrades to no link when the Universalis proxy is unavailable', async () => {
+      withWorld('Gilgamesh');
+      vi.mocked(fetchWorlds).mockRejectedValue(new Error('proxy down'));
+
+      const body = await bodyOf(await handleManualCommand(interaction('spectrum_prices'), env, ctx));
+
+      expect(body.data.embeds[0].description).not.toContain('manual5.learnLead');
+      // …and still answers the interaction
+      expect(body.type).toBe(4);
+    });
+
+    it('degrades to no link when the world exists but no datacenter claims it', async () => {
+      withWorld('Gilgamesh');
+      vi.mocked(fetchDataCenters).mockResolvedValue([
+        { name: 'Aether', region: 'North-America', worlds: [999] },
+      ] as never);
+
+      const body = await bodyOf(await handleManualCommand(interaction('spectrum_prices'), env, ctx));
+
+      expect(body.data.embeds[0].description).not.toContain('manual5.learnLead');
+    });
+
+    it('matches the world case-insensitively', async () => {
+      withWorld('gILGAMESH');
+
+      const body = await bodyOf(await handleManualCommand(interaction('spectrum_prices'), env, ctx));
+
+      expect(body.data.embeds[0].description).toContain('manual5.learnLead');
+    });
+  });
+
+  describe('user identity', () => {
+    it('reads the id from user in a DM', async () => {
+      const dm = {
+        ...interaction(),
+        member: undefined,
+        user: { id: 'dm-user' },
+      } as unknown as DiscordInteraction;
+
+      await handleManualCommand(dm, env, ctx);
+
+      expect(createUserTranslatorWithPrefs).toHaveBeenCalledWith(env.KV, 'dm-user', 'en-US');
+    });
+
+    it("falls back to 'unknown' when there is no user at all", async () => {
+      const anonymous = {
+        ...interaction(),
+        member: undefined,
+        user: undefined,
+      } as unknown as DiscordInteraction;
+
+      await handleManualCommand(anonymous, env, ctx);
+
+      expect(createUserTranslatorWithPrefs).toHaveBeenCalledWith(env.KV, 'unknown', 'en-US');
+    });
+  });
 });

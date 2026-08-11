@@ -17,6 +17,8 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: [
         'src/**/*.test.ts',
+        // Test scaffolding, not shipped code
+        'src/test-utils.ts',
         'src/types/**',
         'src/locales/**',
         'src/fonts/**',
@@ -40,10 +42,16 @@ export default defineConfig({
         'src/handlers/commands/index.ts',
         'src/services/svg/index.ts',
       ],
+      // Statements / functions / lines clear the 80% bar comfortably.
+      // Branches is a RATCHET at the achieved figure rather than the 80%
+      // target: the remaining gap is concentrated in `src/index.ts` (the
+      // interaction router) and `handlers/commands/preset.ts`, which between
+      // them hold ~190 uncovered branches. Raise this as those land; do not
+      // lower it.
       thresholds: {
         statements: 85,
-        branches: 75,
-        functions: 85,
+        branches: 77,
+        functions: 88,
         lines: 85,
       },
     },

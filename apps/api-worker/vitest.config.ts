@@ -13,12 +13,18 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'json-summary'],
       include: ['src/**/*.ts'],
-      exclude: ['src/**/*.test.ts', 'src/**/*.spec.ts'],
+      exclude: [
+        'src/**/*.test.ts',
+        'src/**/*.spec.ts',
+        // Test scaffolding, not shipped code — counting its mocks as product
+        // surface understated the real figure by ~8 points on functions.
+        'src/**/test-setup.ts',
+      ],
       thresholds: {
-        lines: 85,
-        functions: 85,
+        lines: 90,
+        functions: 90,
         branches: 80,
-        statements: 85,
+        statements: 90,
       },
     },
     globals: true,

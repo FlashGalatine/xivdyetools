@@ -19,6 +19,7 @@ import {
     group,
     truncateText,
     estimateTextWidth,
+    rgbToHsv,
     THEME,
     FONTS,
 } from './base.js';
@@ -317,6 +318,132 @@ describe('svg/base.ts', () => {
             expect(FONTS.header).toBe('Space Grotesk');
             expect(FONTS.primary).toBe('Onest');
             expect(FONTS.mono).toBe('Fragment Mono');
+        });
+    });
+
+    describe('num', () => {
+        it('applies the language decimal separator at a fixed precision', () => {
+            // Not a .x5 tie — those round unpredictably through binary floats
+            expect(num(12.46, 'en', 1)).toBe('12.5');
+            expect(num(12.46, 'de', 1)).toBe('12,5');
+            expect(num(12.46, 'fr', 2)).toBe('12,46');
+            expect(num(12.46, 'ja', 1)).toBe('12.5');
+            expect(num(12.46, 'ko', 1)).toBe('12.5');
+            expect(num(12.46, 'zh', 1)).toBe('12.5');
+        });
+
+        it('falls back to English for an unknown language', () => {
+            expect(num(3.5, 'xx', 1)).toBe('3.5');
+        });
+
+        it('keeps precision with the formatter, including zero dp', () => {
+            expect(num(3.7, 'en', 0)).toBe('4');
+            expect(num(3, 'de', 2)).toBe('3,00');
+        });
+    });
+
+    describe('grp', () => {
+        it('groups thousands with the language separator', () => {
+            expect(grp(1234567, 'en')).toBe('1,234,567');
+            expect(grp(1234567, 'de')).toBe('1.234.567');
+            // French groups with U+202F NARROW NO-BREAK SPACE, not U+0020
+            expect(grp(1234567, 'fr')).toBe('1 234 567');
+        });
+
+        it('leaves values under a thousand ungrouped', () => {
+            expect(grp(999, 'en')).toBe('999');
+            expect(grp(0, 'en')).toBe('0');
+        });
+
+        it('rounds before grouping and keeps the sign', () => {
+            expect(grp(1234.6, 'en')).toBe('1,235');
+            expect(grp(-1234567, 'en')).toBe('-1,234,567');
+        });
+
+        it('falls back to English for an unknown language', () => {
+            expect(grp(1000, 'xx')).toBe('1,000');
+        });
+    });
+
+    describe('truncateText', () => {
+        it('returns the original text when it fits', () => {
+            expect(truncateText('Snow White', 20)).toBe('Snow White');
+            expect(truncateText('exact', 5)).toBe('exact');
+        });
+
+        it('appends a Unicode ellipsis when it does not', () => {
+            expect(truncateText('Dalamud Red', 6)).toBe('Dalam…');
+        });
+
+        it('counts code points, not UTF-16 units, so astral chars survive', () => {
+            // Four code points, eight UTF-16 units
+            expect(truncateText('🎨🎨🎨🎨', 4)).toBe('🎨🎨🎨🎨');
+            expect(truncateText('🎨🎨🎨🎨', 3)).toBe('🎨🎨…');
+        });
+    });
+
+    describe('estimateTextWidth', () => {
+        it('counts Latin characters at the given width', () => {
+            expect(estimateTextWidth('abc', 6)).toBe(18);
+            expect(estimateTextWidth('', 6)).toBe(0);
+        });
+
+        it.each([
+            ['Hangul Jamo', 'ᄀ'],
+            ['CJK ideograph', '青'],
+            ['kana', 'あ'],
+            ['Hangul syllable', '한'],
+            ['CJK compatibility ideograph', '豈'],
+            ['fullwidth form', '：'],
+            ['fullwidth sign', '￥'],
+        ])('counts a %s as double width', (_name, char) => {
+            expect(estimateTextWidth(char, 6)).toBe(12);
+        });
+
+        it('keeps halfwidth katakana narrow', () => {
+            // U+FF71 sits above the fullwidth-forms cut on purpose
+            expect(estimateTextWidth('ｱ', 6)).toBe(6);
+        });
+
+        it('mixes scripts additively', () => {
+            expect(estimateTextWidth('a青b', 6)).toBe(6 + 12 + 6);
+        });
+    });
+
+    describe('rgbToHsv', () => {
+        it('returns zero saturation and value for black', () => {
+            expect(rgbToHsv(0, 0, 0)).toEqual({ h: 0, s: 0, v: 0 });
+        });
+
+        it('returns zero saturation at full value for white', () => {
+            expect(rgbToHsv(255, 255, 255)).toEqual({ h: 0, s: 0, v: 100 });
+        });
+
+        it.each([
+            ['red', [255, 0, 0], 0],
+            ['yellow', [255, 255, 0], 60],
+            ['green', [0, 255, 0], 120],
+            ['cyan', [0, 255, 255], 180],
+            ['blue', [0, 0, 255], 240],
+            ['magenta', [255, 0, 255], 300],
+        ] as const)('puts %s at %s degrees', (_name, [r, g, b], hue) => {
+            const hsv = rgbToHsv(r, g, b);
+
+            expect(hsv.h).toBe(hue);
+            expect(hsv.s).toBe(100);
+            expect(hsv.v).toBe(100);
+        });
+
+        it('wraps the red branch past magenta rather than going negative', () => {
+            // g < b on a red-max colour is the (g - b) / d + 6 branch
+            const hsv = rgbToHsv(255, 0, 128);
+
+            expect(hsv.h).toBeGreaterThan(300);
+            expect(hsv.h).toBeLessThanOrEqual(360);
+        });
+
+        it('reports greys as unsaturated at their lightness', () => {
+            expect(rgbToHsv(128, 128, 128)).toEqual({ h: 0, s: 0, v: 50 });
         });
     });
 

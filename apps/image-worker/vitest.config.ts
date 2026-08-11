@@ -13,7 +13,7 @@ export default defineConfig({
       exclude: ['src/**/*.test.ts', 'src/types.ts'],
       thresholds: {
         statements: 85,
-        branches: 75,
+        branches: 80,
         functions: 85,
         lines: 85,
       },

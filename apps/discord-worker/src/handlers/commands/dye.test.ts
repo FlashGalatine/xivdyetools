@@ -550,4 +550,110 @@ describe('dye.ts', () => {
       expect(mockCtx.waitUntil).toHaveBeenCalled();
     });
   });
+
+  /**
+   * The router's own arms, plus the option-parsing defaults each subcommand
+   * falls back to. A subcommand name that reaches `default:` is a schema/code
+   * drift — the registered command list and this switch have to agree, and
+   * the user should see a named error rather than silence.
+   */
+  describe('subcommand routing', () => {
+    const invoke = (
+      subcommand?: { name: string; options?: Array<{ name: string; value?: unknown }> },
+      user: Record<string, unknown> | undefined = { id: 'user-123' }
+    ) =>
+      handleDyeCommand(
+        {
+          type: 2,
+          data: {
+            name: 'dye',
+            options: subcommand ? [{ ...subcommand, type: 1 }] : [],
+          },
+          user,
+          id: 'int-1',
+          application_id: 'app-1',
+          token: 'token-1',
+        } as unknown as DiscordInteraction,
+        mockEnv,
+        mockCtx
+      );
+
+    const bodyOf = async (r: Response) => (await r.json()) as InteractionResponseBody;
+
+    it('reports a missing subcommand rather than rendering nothing', async () => {
+      const data = await bodyOf(await invoke(undefined));
+
+      expect(JSON.stringify(data)).toContain('Missing subcommand');
+      expect(data.data?.flags).toBe(64);
+    });
+
+    it('names an unknown subcommand in the error', async () => {
+      const data = await bodyOf(await invoke({ name: 'teleport' }));
+
+      expect(JSON.stringify(data)).toContain('Unknown subcommand: teleport');
+      expect(data.data?.flags).toBe(64);
+    });
+
+    it('reports a missing query on search', async () => {
+      const data = await bodyOf(await invoke({ name: 'search', options: [] }));
+
+      expect(JSON.stringify(data)).toContain('Missing query');
+    });
+
+    it('reports a missing name on info', async () => {
+      const data = await bodyOf(await invoke({ name: 'info', options: [] }));
+
+      expect(JSON.stringify(data)).toContain('Missing name');
+    });
+
+    it('reports an unfound dye by name on info', async () => {
+      const data = await bodyOf(
+        await invoke({ name: 'info', options: [{ name: 'name', value: 'notfound' }] })
+      );
+
+      expect(JSON.stringify(data)).toContain('Dye not found: notfound');
+    });
+
+    it('reports no results for a search that matches nothing', async () => {
+      const data = await bodyOf(
+        await invoke({ name: 'search', options: [{ name: 'query', value: 'notfound' }] })
+      );
+
+      expect(JSON.stringify(data)).toContain('No results for: notfound');
+    });
+
+    it('lists the category index when list is called with no category', async () => {
+      const data = await bodyOf(await invoke({ name: 'list', options: [] }));
+
+      expect(JSON.stringify(data)).toContain('Dye Categories');
+    });
+
+    it('reports an empty category rather than an empty embed', async () => {
+      const data = await bodyOf(
+        await invoke({ name: 'list', options: [{ name: 'category', value: 'Nonexistent' }] })
+      );
+
+      expect(JSON.stringify(data)).toContain('No dyes in category: Nonexistent');
+    });
+
+    it('lists the dyes in a real category', async () => {
+      const data = await bodyOf(
+        await invoke({ name: 'list', options: [{ name: 'category', value: 'Standard' }] })
+      );
+
+      expect(JSON.stringify(data)).toContain('Category: Standard');
+    });
+
+    it('works for a DM interaction with no member object', async () => {
+      const response = await invoke({ name: 'list', options: [] }, { id: 'dm-user' });
+
+      expect((await bodyOf(response)).type).toBe(4);
+    });
+
+    it("falls back to 'unknown' when the interaction carries no user", async () => {
+      const response = await invoke({ name: 'list', options: [] }, undefined);
+
+      expect((await bodyOf(response)).type).toBe(4);
+    });
+  });
 });

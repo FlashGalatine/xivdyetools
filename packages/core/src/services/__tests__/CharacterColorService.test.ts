@@ -512,4 +512,52 @@ describe('CharacterColorService', () => {
       expect(columns).toBeGreaterThan(0);
     });
   });
+
+  /**
+   * Every lookup ends in `|| []`. Callers index straight into the result
+   * (`colors[row * columns + col]`), so a `undefined` leaking out of an
+   * unrecognised subrace/gender would be a TypeError at the call site rather
+   * than an empty grid.
+   */
+  describe('unknown keys return an empty array, never undefined', () => {
+    it('returns [] for an unrecognised shared category', () => {
+      const colors = service.getSharedColors('noSuchCategory' as never);
+
+      expect(colors).toEqual([]);
+      expect(Array.isArray(colors)).toBe(true);
+    });
+
+    it('returns [] for an unrecognised hair subrace', async () => {
+      await expect(service.getHairColors('Nonexistent' as SubRace, 'Female' as Gender)).resolves.toEqual(
+        []
+      );
+    });
+
+    it('returns [] for an unrecognised hair gender on a real subrace', async () => {
+      await expect(service.getHairColors('Midlander' as SubRace, 'Other' as Gender)).resolves.toEqual(
+        []
+      );
+    });
+
+    it('returns [] for an unrecognised skin subrace', async () => {
+      await expect(service.getSkinColors('Nonexistent' as SubRace, 'Male' as Gender)).resolves.toEqual(
+        []
+      );
+    });
+
+    it('returns [] for an unrecognised skin gender on a real subrace', async () => {
+      await expect(service.getSkinColors('Midlander' as SubRace, 'Other' as Gender)).resolves.toEqual(
+        []
+      );
+    });
+
+    it('routes both race-specific categories through the same fallback', async () => {
+      await expect(
+        service.getRaceSpecificColors('hairColors', 'Nonexistent' as SubRace, 'Male' as Gender)
+      ).resolves.toEqual([]);
+      await expect(
+        service.getRaceSpecificColors('skinColors', 'Nonexistent' as SubRace, 'Male' as Gender)
+      ).resolves.toEqual([]);
+    });
+  });
 });

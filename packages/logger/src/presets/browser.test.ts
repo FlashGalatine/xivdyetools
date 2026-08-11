@@ -113,10 +113,60 @@ describe('Browser Preset', () => {
         logger.debug('Should not appear');
 
         process.env.NODE_ENV = originalEnv;
-        
+
         // Logger should be created (we can't easily test the behavior
         // since tests run in a specific environment)
         expect(logger).toBeDefined();
+      });
+
+      /**
+       * `defaultIsDev` falls through four checks in order: import.meta.env.DEV,
+       * then MODE, then process.env.NODE_ENV, then `false`.
+       *
+       * Only the first is reachable from a test. Vitest gives every module its
+       * own `import.meta.env` object, so mutating the test file's copy is
+       * invisible to browser.ts; `vi.stubEnv` is the one channel that reaches
+       * it, and it coerces `undefined` to `false` rather than deleting the
+       * key — which still satisfies `!== undefined` and short-circuits. The
+       * MODE / NODE_ENV / default arms therefore stay uncovered by design,
+       * not by omission.
+       */
+      describe('defaultIsDev via import.meta.env.DEV', () => {
+        afterEach(() => {
+          vi.unstubAllEnvs();
+        });
+
+        it('logs debug when DEV is true', () => {
+          vi.stubEnv('DEV', true);
+
+          createBrowserLogger({}).debug('visible');
+          expect(consoleSpy.debug).toHaveBeenCalled();
+        });
+
+        it('suppresses debug when DEV is false', () => {
+          vi.stubEnv('DEV', false);
+
+          createBrowserLogger({}).debug('hidden');
+          expect(consoleSpy.debug).not.toHaveBeenCalled();
+        });
+
+        it('keeps warn and error in production', () => {
+          vi.stubEnv('DEV', false);
+          const logger = createBrowserLogger({});
+
+          logger.warn('warn');
+          logger.error('error');
+
+          expect(consoleSpy.warn).toHaveBeenCalled();
+          expect(consoleSpy.error).toHaveBeenCalled();
+        });
+
+        it('devOnly:false keeps debug in production (REFACTOR-021)', () => {
+          vi.stubEnv('DEV', false);
+
+          createBrowserLogger({ devOnly: false }).debug('still visible');
+          expect(consoleSpy.debug).toHaveBeenCalled();
+        });
       });
     });
 
@@ -363,6 +413,26 @@ describe('Browser Preset', () => {
         expect(consoleSpy.warn).toHaveBeenCalledWith(
           'No timer started for label: nonexistent'
         );
+      });
+
+      it('returns true when a timer starts cleanly', () => {
+        expect(perf.start('fresh')).toBe(true);
+        perf.end('fresh');
+      });
+
+      it('refuses to restart an active timer and warns (LOGGER-BUG-001)', () => {
+        expect(perf.start('busy')).toBe(true);
+        // The second start would silently discard the first timer's start
+        // time, losing the measurement in concurrent operations.
+        expect(perf.start('busy')).toBe(false);
+        expect(consoleSpy.warn).toHaveBeenCalledWith(
+          expect.stringContaining('Timer "busy" is already active')
+        );
+
+        perf.end('busy');
+        // …and once ended, the same label is free again
+        expect(perf.start('busy')).toBe(true);
+        perf.end('busy');
       });
 
       it('should accumulate metrics', () => {
