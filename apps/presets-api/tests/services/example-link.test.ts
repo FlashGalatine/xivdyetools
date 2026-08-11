@@ -34,6 +34,10 @@ describe('validateExampleLink', () => {
     expect(validateExampleLink('https://twitter.com/user/status/123')).toBeNull();
     expect(validateExampleLink('https://bsky.app/profile/a.bsky.social/post/123')).toBeNull();
     expect(validateExampleLink('https://www.instagram.com/p/abc123/')).toBeNull();
+    expect(validateExampleLink('https://www.pixiv.net/artworks/12345678')).toBeNull();
+    expect(validateExampleLink('https://na.finalfantasyxiv.com/lodestone/character/12345678/blog/4567890/')).toBeNull();
+    expect(validateExampleLink('https://jp.finalfantasyxiv.com/lodestone/character/12345678/')).toBeNull();
+    expect(validateExampleLink('https://misskey.io/notes/abc123')).toBeNull();
   });
 
   it('rejects bare image hosts — the field links a page, not an image', () => {

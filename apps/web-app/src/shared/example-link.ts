@@ -22,6 +22,9 @@ export const EXAMPLE_LINK_HOSTS = [
   'twitter.com',
   'bsky.app',
   'instagram.com',
+  'pixiv.net',
+  'finalfantasyxiv.com',
+  'misskey.io',
 ];
 
 /** Validate an example link locally; returns an error string or null. */

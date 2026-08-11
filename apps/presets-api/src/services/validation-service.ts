@@ -335,6 +335,9 @@ export const EXAMPLE_LINK_HOSTS = [
   'twitter.com',
   'bsky.app',
   'instagram.com',
+  'pixiv.net',
+  'finalfantasyxiv.com',
+  'misskey.io',
 ] as const;
 
 const EXAMPLE_LINK_MAX_LENGTH = 300;
