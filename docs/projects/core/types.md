@@ -35,7 +35,7 @@ processColor(createHexColor('#FF6B6B')); // ✅ Works
 ```typescript
 import { DyeId, createDyeId, isValidDyeId } from '@xivdyetools/core';
 
-// Valid dye IDs are 1-136
+// Valid stain IDs are 1-125
 const dyeId: DyeId = createDyeId(42);  // ✅ Valid
 
 createDyeId(0);    // ❌ Throws: Invalid dye ID

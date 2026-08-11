@@ -68,7 +68,7 @@ Blend two dyes together using multiple blending algorithms. New in v4.
 
 - Select two dyes and a blending algorithm to produce a blended result color
 - **Blending algorithms:** RGB, LAB, OkLAB, RYB, HSL, Spectral
-- Uses the `@xivdyetools/color-blending` package
+- Uses the `@xivdyetools/core/blending` subpath export
 - The blended color is matched to the nearest available dye
 
 **What's new in v4.x:**
@@ -102,10 +102,10 @@ Match character customization colors (skin tones, hair colors) to the closest FF
 Find affordable dye alternatives using Universalis market board data. New in v4.
 
 - Search for cheap alternatives to a target dye color, ranked by price and color distance
-- Fetches real-time market board prices via the `universalis-proxy` worker
+- Fetches real-time market board prices via `api-worker`'s `/universalis` routes (the standalone `universalis-proxy` was merged in on 2026-07-31)
 - **Dye categories:** Base, Craft, Cosmic, Special (the Allied Society category was retired post-Patch 7.5; vendor dyes were collapsed into the Base / Craft buckets)
 - Filter by category, set a max price, and sort by price or color accuracy
-- Facewear dyes (synthetic negative IDs) are excluded since they are not tradeable
+- Facewear colours are not dyes and never enter the price path
 
 **What's new in v4.x:**
 

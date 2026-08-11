@@ -1,6 +1,38 @@
-# Discord Bot Command Reference (v4.1.2)
+# Discord Bot Command Reference (v5.0.0)
 
-Full reference for all 20 slash commands in the XIV Dye Tools Discord bot.
+Reference for the XIV Dye Tools Discord bot's slash commands.
+
+## The roster of record
+
+`apps/discord-worker/src/commands/registry.ts` holds `COMMAND_REGISTRY` — the authoritative list.
+The registration script asserts schema parity against it, `/about` builds its index from it, and
+`about.test.ts` asserts roster parity, so a command cannot exist in the dispatch switch, the
+registration schema, and `/about` in three different states. **If this document and the registry
+disagree, the registry is right.**
+
+**17 registrations, 16 distinct commands:**
+
+| Category | Commands |
+|----------|----------|
+| Colour tools | `/harmony`, `/mixer`, `/gradient`, `/extractor`, `/swatch` |
+| Dye database | `/dye` |
+| Analysis | `/comparison`, `/contrast`, `/accessibility`, `/a11y`, `/budget` |
+| Community | `/preset` |
+| Utility | `/preferences`, `/manual`, `/changelog`, `/about`, `/stats` |
+
+`/a11y` is a second registration sharing the `/accessibility` handler — Discord has no alias
+mechanism, so an alias costs a registration slot.
+
+### Changed in 5.0
+
+- **`/contrast` added** — WCAG 1.4.11 contrast pairs, split out of `/accessibility`
+- **`/changelog` added** — release notes in Discord
+- **`/favorites` and `/collection` removed** as top-level commands. Preset favourites now live
+  under **`/preset favorite`** (`add` / `remove` / `list`)
+- **`/language` removed** as a top-level command — it is now an option on `/preferences`
+
+Any of these changes require re-running `register-commands`; deploying the worker alone does not
+update Discord's copy of the roster.
 
 ---
 
@@ -8,9 +40,9 @@ Full reference for all 20 slash commands in the XIV Dye Tools Discord bot.
 
 | Tier | Commands | Limit |
 |------|----------|-------|
-| Image | `/extractor`, `/gradient`, `/mixer`, `/swatch`, `/budget`, `/comparison`, `/accessibility`, `/harmony` | 5 requests/min |
-| Standard | `/dye`, `/preset`, `/favorites`, `/collection`, `/language`, `/preferences`, `/stats` | 15 requests/min |
-| Unlimited | `/about`, `/manual` | No limit |
+| Image | `/extractor`, `/gradient`, `/mixer`, `/swatch`, `/budget`, `/comparison`, `/contrast`, `/accessibility`, `/a11y`, `/harmony` | 5 requests/min |
+| Standard | `/dye`, `/preset`, `/preferences`, `/stats` | 15 requests/min |
+| Unlimited | `/about`, `/manual`, `/changelog` | No limit |
 
 ## Deferred Response Pattern
 
@@ -96,7 +128,7 @@ Was `/mixer` in v3; renamed in v4 when the new blending-focused `/mixer` was int
 
 ### /mixer
 
-Blend two dyes together at a specified ratio. New in v4. Uses the `@xivdyetools/color-blending` library for perceptually accurate blending across multiple color spaces.
+Blend two dyes together at a specified ratio. New in v4. Uses `@xivdyetools/core/blending` for perceptually accurate blending across multiple colour spaces.
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
@@ -146,7 +178,7 @@ Find affordable dye alternatives via the Universalis market board API. New in v4
 | `max_price` | Integer | No | Maximum gil price filter |
 | `count` | Integer | No | Number of alternatives to show |
 
-v4.1.x additions: Cosmic dye quick picks featuring 20 new Dawntrail dyes. Uses `fetchPricesBatched` to handle all 136 entries (125 standard dyes + 11 Facewear; Universalis max 100 items per request). Filters out Facewear dyes (`itemID > 0`) since they have no market board listings. Post-Patch 7.5 (v4.2.0+) the budget calculator uses `getMarketItemID()` so the 105 consolidated dyes share three real itemIDs (Type-A=52254, Type-B=52255, Type-C=52256) — `~105 → 3` market lookups.
+v4.1.x additions: Cosmic dye quick picks featuring 20 new Dawntrail dyes. Uses `fetchPricesBatched` to handle all 125 dyes (Universalis caps a request at 100 items). Facewear colours are not dyes and never enter the price path. Post-Patch 7.5 (v4.2.0+) the budget calculator uses `getMarketItemID()` so the 105 consolidated dyes share three real itemIDs (Type-A=52254, Type-B=52255, Type-C=52256) — `~105 → 3` market lookups.
 
 **Example usage:**
 ```
@@ -276,11 +308,15 @@ Simulate how dyes appear under various forms of colorblindness.
 
 ---
 
-## User Data (Deprecated)
+## User Data — ❌ REMOVED in v5.0
 
-These commands are deprecated in v4 and will be removed in a future release. Users should migrate to the `/preset` system.
+`/favorites` and `/collection` are **no longer registered commands.** Preset favourites moved
+under `/preset favorite` (`add` / `remove` / `list`).
 
-### /favorites
+The two sections below are retained only to document what the removed commands did. They are not
+callable.
+
+### /favorites *(removed)*
 
 Manage your favorite dyes list.
 
@@ -296,7 +332,7 @@ Manage your favorite dyes list.
 
 ---
 
-### /collection
+### /collection *(removed)*
 
 Manage custom dye collections.
 
@@ -417,22 +453,13 @@ Vote on a community preset (upvote or downvote). One vote per user per preset.
 
 ## Utility
 
-### /language
+### /language — ❌ REMOVED in v5.0
 
-Set your preferred display language for bot responses.
+No longer a registered command. Language is now an option on `/preferences`:
 
-> **Deprecated** -- use `/preferences` instead.
-
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `language` | String (choice) | Yes | Language: `en`, `ja`, `de`, `fr`, `ko`, `zh` |
-
-**Example usage:**
 ```
-/language language:ja
+/preferences set language:ja
 ```
-
-**Rate limit:** 15/min (standard tier)
 
 ---
 

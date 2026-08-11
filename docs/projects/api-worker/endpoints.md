@@ -317,7 +317,7 @@ Find all dyes within a color distance threshold.
 | `hex` | string | **required** | Hex color (`#RRGGBB` or `RRGGBB`) |
 | `maxDistance` | float | **required** | Maximum distance threshold (min 0.01) |
 | `method` | string | `oklab` | Distance algorithm |
-| `limit` | integer | `20` | Max results (1–136) |
+| `limit` | integer | `20` | Max results (1–125) |
 | `excludeIds` | string | — | Comma-separated IDs to exclude |
 | `locale` | string | `en` | Locale for localized names |
 | `kL` | float | `1.0` | Lightness weight (oklch-weighted only) |
@@ -379,7 +379,7 @@ Results are sorted by distance (closest first).
   "pagination": {
     "page": 1,
     "perPage": 50,
-    "total": 136,
+    "total": 125,
     "totalPages": 3,
     "hasNext": true,
     "hasPrev": false

@@ -30,7 +30,7 @@ curl https://data.xivdyetools.app/v1/match/closest?hex=FF0000
 
 ### 1. Look Up a Dye
 
-If you have an **item ID** (from the game's item database), a **stain ID** (from the stain table), or a **Facewear ID** (synthetic negative), you can use the same endpoint — the API auto-detects which type:
+If you have an **item ID** (from the game's item database) or a **stain ID** (from the stain table), you can use the same endpoint — the API auto-detects which type:
 
 ```bash
 # By item ID (5729 = Snow White)
@@ -38,10 +38,11 @@ curl https://data.xivdyetools.app/v1/dyes/5729
 
 # By stain ID (1 = Snow White)
 curl https://data.xivdyetools.app/v1/dyes/1
-
-# By Facewear synthetic ID
-curl https://data.xivdyetools.app/v1/dyes/-1
 ```
+
+> **Facewear colours are not dyes** and are not served by this endpoint. A negative ID (the
+> pre-2026-07-31 synthetic Facewear ID) returns a 404 that names the colour it used to refer to,
+> so old links fail informatively rather than silently.
 
 If you specifically need stain ID lookup (no auto-detection):
 
@@ -214,7 +215,7 @@ Paginated responses add:
   "pagination": {
     "page": 1,
     "perPage": 50,
-    "total": 136,
+    "total": 125,
     "totalPages": 3,
     "hasNext": true,
     "hasPrev": false

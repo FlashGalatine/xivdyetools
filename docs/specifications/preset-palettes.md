@@ -1,5 +1,5 @@
 > **⚠️ DEPRECATED:** This document has been superseded by the Documentation Bible.
-> See: [specifications/community-presets.md](specifications/community-presets.md)
+> See: [Community Presets](community-presets.md)
 
 # Seasonal/Themed Preset Palettes - Specification
 

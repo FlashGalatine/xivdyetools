@@ -78,8 +78,7 @@ src/
 
 Note: SVG generation, bot command logic, and i18n are now in shared packages:
 - `@xivdyetools/svg` — SVG card generation
-- `@xivdyetools/bot-logic` — Platform-agnostic command logic
-- `@xivdyetools/bot-i18n` — Bot-specific localization
+- `@xivdyetools/bot-logic` — Platform-agnostic command logic; bot localization lives at its `/i18n` subpath (the standalone `@xivdyetools/bot-i18n` package was absorbed on 2026-07-30)
 
 ---
 
@@ -157,7 +156,7 @@ await sendFollowup(interaction, env, {
 
 ### Rate Limiting
 
-Per-user sliding window rate limiting via `@xivdyetools/rate-limiter`:
+Per-user sliding window rate limiting via `@xivdyetools/worker-kit/rate-limiter`:
 - Image commands: 5/minute
 - Standard commands: 15/minute
 - Stored in Cloudflare KV

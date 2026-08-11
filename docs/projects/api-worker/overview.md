@@ -48,7 +48,7 @@ Unlike the presets-api (authenticated, restricted CORS), this API is fully anony
 | CORS | `origin: *` | Must be callable from any browser, plugin, or bot |
 | Rate Limiting | 60 req/min per IP | KV-backed sliding window with burst allowance of 5 |
 | Caching | `max-age=3600, s-maxage=86400` | Deterministic data, changes only with game patches |
-| Database | Bundled JSON | No D1 — the 136-dye database is part of the bundle via `@xivdyetools/core` |
+| Database | Bundled JSON | No D1 — the 125-dye database is part of the bundle via `@xivdyetools/core` |
 
 ### Source Structure
 
@@ -78,7 +78,7 @@ src/
 | `@xivdyetools/core` | Dye database, color algorithms, k-d tree, localization |
 | `@xivdyetools/types` | Shared TypeScript interfaces (Dye, RGB, etc.) |
 | `@xivdyetools/logger` | Structured logging with secret redaction |
-| `@xivdyetools/rate-limiter` | KVRateLimiter sliding window implementation |
+| `@xivdyetools/worker-kit` | Hono middleware; `KVRateLimiter` sliding window via the `/rate-limiter` subpath |
 | `spectral.js` | Spectral color mixing (explicit dep for pnpm strict isolation) |
 
 ### Environment Bindings
@@ -99,10 +99,15 @@ A core concept in this API. FFXIV dyes have three disjoint numeric ID ranges:
 
 | Range | Type | Example |
 |-------|------|---------|
-| `< 0` | Facewear (synthetic negative IDs) | `-1` |
 | `1–125` | stainID (game's internal stain table) | `1` = Snow White |
 | `>= 5729` | itemID (game item database) | `5729` = Snow White |
 | `126–5728` | Invalid (unassigned gap) | Returns 404 |
+| `< 0` | Legacy Facewear synthetic ID | Returns **404 with guidance** |
+
+Since **schema v2** (2026-07-31) Facewear colours are not dyes and are no longer served by this
+endpoint. A negative ID still routes, but only so the API can return an informative 404 naming
+the colour it used to refer to (via `getFacewearColorByLegacyItemID()`) and its `facewearId` and
+`hex`, rather than a bare "not found".
 
 The `/:id` and `/batch` endpoints auto-detect which type of ID was provided and route to the correct lookup. The `/stain/:stainId` endpoint bypasses auto-detection for explicit stainID lookups.
 
@@ -121,7 +126,7 @@ The `/:id` and `/batch` endpoints auto-detect which type of ID was provided and 
 
 ### Phase 3 (Planned) — Market Data & Advanced
 
-- Real-time Universalis market board prices (via Service Binding to universalis-proxy)
+- Real-time Universalis market board prices exposed on the public `/v1` surface (the proxy itself is already in-process, at `/universalis`, since the 2026-07-31 merge)
 - Color palette generation endpoints
 
 ---

@@ -246,7 +246,7 @@ Adds `jti` to KV blacklist with TTL matching token expiry. If KV is unavailable,
 | `GET /auth/me` | None | — |
 | `POST /auth/revoke` | None | — |
 
-Rate limits are per-IP using a sliding window algorithm (`@xivdyetools/rate-limiter`).
+Rate limits are per-IP using a sliding window algorithm (`@xivdyetools/worker-kit/rate-limiter`).
 
 **Rate limit headers** (on all limited endpoints):
 - `X-RateLimit-Limit` — Maximum requests per window

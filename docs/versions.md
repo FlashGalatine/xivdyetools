@@ -2,7 +2,14 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: July 28, 2026*
+*Last Updated: August 11, 2026*
+
+> **Versions below are read from each project's `package.json` on the working branch.** The 5.0
+> wave — `core` v4.0.0, `types` v2.0.0, `svg` v2.0.0, `bot-logic` v2.0.0, `web-app` v5.0.0,
+> `discord-worker` v5.0.0 — is complete on `monorepo-2.0-prep` but **not yet merged to `main`
+> or published to npm**. Several of those packages have not had their `CHANGELOG.md` entries
+> written yet; the Version History sections below therefore end at the last documented release.
+> See [Release Process](developer-guides/release-process.md).
 
 ---
 
@@ -12,36 +19,30 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core Library** | v3.0.0 | `@xivdyetools/core` | npm | Active |
-| **Web Application** | v4.12.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v4.7.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.3.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
-| **OAuth Worker** | v2.5.0 | `xivdyetools-oauth-worker` | Cloudflare Workers | Active |
-| **Presets API** | v1.6.0 | `xivdyetools-presets-api` | Cloudflare Workers | Active |
-| **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
-| **OpenGraph Worker** | v1.4.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.0.0 | `xivdyetools-web-app` | Cloudflare Pages | Active — release pending |
+| **Discord Bot** | v5.0.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active — release pending |
 | **Image Worker** | v1.0.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.3.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **OAuth Worker** | v2.5.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
+| **Presets API** | v1.6.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
 | **Public REST API** | v0.5.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **OpenGraph Worker** | v2.0.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **Stoat Bot** | v0.2.0 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
+| **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
-| **Stoat Bot** | v0.2.0 | `xivdyetools-stoat-worker` | Node.js | Active |
-
-### Developer Tools
-
-| Project | Version | Package Name | Platform | Status |
-|---------|---------|--------------|----------|--------|
 
 ### Shared Packages
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Types** | v1.16.0 | `@xivdyetools/types` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v4.0.0 | `@xivdyetools/core` | npm | Active — publish pending |
+| **Types** | v2.0.0 | `@xivdyetools/types` | npm | Active — publish pending |
 | **Auth** (incl. `/encoding`) | v1.3.0 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v1.3.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.0.0 | `@xivdyetools/worker-kit` | npm | Active (first publish pending) |
-| **Core** (incl. `/blending` + schema-v2 data) | v3.0.0 | `@xivdyetools/core` | npm | Active |
-| **SVG** | v1.2.1 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v1.4.0 | `@xivdyetools/bot-logic` | npm | Active |
-| **Test Utils** | v1.1.8 | `@xivdyetools/test-utils` | workspace-private | Active (unpublished) |
+| **SVG** | v2.0.0 | `@xivdyetools/svg` | npm | Active — publish pending |
+| **Bot Logic** (incl. `/i18n`) | v2.0.0 | `@xivdyetools/bot-logic` | npm | Active — publish pending |
+| **Test Utils** | v1.2.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
 
@@ -64,6 +65,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v4.0.0** | **Aug 2026** | **5.0 wave — CHANGELOG entry not yet written; see the `monorepo-2.0-prep` branch** |
+| **v3.0.0** | **Jul 2026** | **BREAKING — dye data schema v2. `colors_xiv.json` (136 × 16 fields) → `dyes.json` (125 × 7 fields, stainID-keyed); `rgb`/`hsv`/`lab`, `cost`/`currency`, and the five `is*` flags derived at `initialize()` so the runtime `Dye` shape is unchanged. The 11 Facewear colours left the dye table for `facewearColors` (`LEGACY_FACEWEAR_ITEM_IDS` retains the old synthetic IDs). `isMetallic` = the Stain sheet's 16-dye gloss set (was 14 by name prefix); `isCosmic ≡ consolidationType 'C'` (11, was 20 — Firmament dyes were mislabelled). Adds inverted-tetradic harmony and CMYK conversions** |
+| **v2.8.0** | **Jul 2026** | **Monorepo 2.0 Tier 1 — absorbed `@xivdyetools/color-blending` as the `/blending` subpath export; `build-locales.ts` made idempotent so rebuilds no longer dirty all six locale JSONs** |
 | **v2.7.0** | **Jul 2026** | **2026-07-18 audit (Sprint 4) — REFACTOR-003 exact linear scan for perceptual dye search (the k-d-radius approach could miss the true nearest), BUG-005 LRU caches return defensive copies, `APIService` batches Universalis requests above the 100-item limit** |
 | **v2.6.0** | **Apr 2026** | **REFACTOR-001 og-worker localization (`tools` / `visions` / `sheets`), BUG-002 consolidated dye name fallback (52254/52255/52256), BUG-003 acquisition contract test, ARCH-002 Facewear invariants test, removed `ALLIED_SOCIETY_ACQUISITIONS`** |
 | **v2.5.0** | **Apr 2026** | **Patch 7.5 dye consolidation activated — `CONSOLIDATED_IDS` populated with real itemIDs (A=52254, B=52255, C=52256); `CONSOLIDATED_DYES` config + `getConsolidatedDyeName()` helper; new `DyeService.getByStainId()` family** |
@@ -90,6 +94,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v5.0.0** | **Aug 2026** | **5.0 wave — themes reduced to Light + Dark (`standard-light` / `standard-dark`, legacy names migrated on load), mobile-friendly redesign. CHANGELOG entry not yet written; see the `monorepo-2.0-prep` branch** |
 | **v4.12.0** | **Jul 2026** | **REFACTOR-002 step 1 — `BaseComponent` owns a `SubscriptionManager` with automatic cleanup in `destroy()` (7 tools converted); "What's New" full-history changelog modal in the v4 header; layman's changelog backfilled v4.0.0–v4.10.0** |
 | v4.11.0 | May 2026 | Consolidation Spectrum filter chips in the dye palette drawer (Budget defaults to Unconsolidated); Budget matching-algorithm control; alternatives computed from the full in-distance pool; collection-manager E2E re-enabled (DEAD-110) |
 | **v4.10.0** | **Apr 2026** | **Result Card v4 "Spectrum" row (Standard / Wide #1 / Wide #2), `common.spectrum` i18n, SEC-001 `auth-button.ts` XSS hardening, "Exclude Allied Society Dyes" filter removed, BUG-003 test fixture drift fix, sugarRiot localization fix (DE/KO)** |
@@ -123,6 +128,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v5.0.0** | **Aug 2026** | **5.0 wave — `COMMAND_REGISTRY` becomes the roster of record (registration schema, dispatch, and `/about` can no longer disagree); `/contrast` split out of `/accessibility` for WCAG 1.4.11 pairs; `/changelog` added; `/a11y` registered as an alias; Photon decoding moved to `image-worker` behind a service binding. CHANGELOG entry not yet written** |
 | **v4.7.0** | **Jul 2026** | **2026-07-18 audit (Sprint 5) — BUG-009 moderation approve/reject buttons finally routable (embeds post via `MODERATION_BOT_TOKEN` so clicks reach moderation-worker), BUG-035 throw-safe outcome-checked Discord API wrappers, BUG-033 world → DC → region price-scope cascade in `/budget`** |
 | v4.6.1 | Jun 2026 | Dead-code cleanup (DEAD-113–120) — unused "Error UX Standard V4" module and ~1,300 lines of orphaned exports removed |
 | v4.6.0 | May 2026 | Web-parity option expansion — `/harmony` companions + matching algorithms, `/extractor` vibrancy boost + 3–10 colors, `/gradient` 2–12 steps with 9 interpolation modes, `/mixer` matching option |
@@ -204,6 +210,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.0.0** | **Aug 2026** | **5.0 wave — CHANGELOG entry not yet written; see the `monorepo-2.0-prep` branch** |
+| **v1.16.0** | **Jul 2026** | **Schema v2 support — `FacewearColor` interface (string slug `id`, `name`, `hex`) for the split-out Facewear collection, and the `CMYK` interface for core's new conversions** |
 | **v1.15.0** | **Jul 2026** | **REFACTOR-004 shared match-quality tiers — `MATCH_QUALITY_TIERS`, `classifyMatchDistance()`, `MatchQualityKey`: single source of truth for thresholds previously duplicated 4× across bot-logic/svg with inconsistent boundary operators; standardized on inclusive `<=`** |
 | **v1.14.0** | **Apr 2026** | **Removed `DyeTypeFilters.excludeAlliedSocietyDyes` (post-Patch 7.5 consolidation); REFACTOR-001 added `ToolKey` / `SheetKey` types + optional `tools` / `visions` / `sheets` fields on `LocaleData` for og-worker localization** |
 | v1.13.0 | Apr 2026 | REFACTOR-003 promoted `DiscordSnowflake` type and `createSnowflake` function from `@internal` to public API; REFACTOR-006 enabled `stripInternal: true` in `tsconfig.build.json` |
@@ -270,6 +278,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.2.0 | Jul 2026 | Monorepo 2.0 Tier 1 — package made workspace-private and unpublished from npm; factories updated for schema v2 |
 | v1.1.8 | Jul 2026 | 2026-07-18 audit (Sprints 1 & 6) — BUG-062 MockD1 `exec()` keeps `_queries`/`_bindings` index-aligned; `batch()` routes through `run()` semantics (honors RETURNING + mutation meta) |
 | v1.1.7 | Mar 2026 | Mock dye factories updated with `currency`, `consolidationType`, `isIshgardian` fields |
 | v1.1.6 | Mar 2026 | Dependency updates |
@@ -285,6 +294,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.3.0** | **Jul 2026** | **Monorepo 2.0 Tier 1 — absorbed `@xivdyetools/crypto` v1.1.2: Base64URL and hex utilities now live at `@xivdyetools/auth/encoding`. API identical; only the import specifier changes** |
 | **v1.2.0** | **Jul 2026** | **2026-07-18 audit (Sprints 2 & 6) — `jti`-based revocation + `orig_iat` absolute session anchoring primitives (consumed by oauth's refresh rotation); BUG-059 `verifyDiscordRequest` body-size check measures UTF-8 bytes, not UTF-16 code units** |
 | **v1.1.2** | **Mar 2026** | **BUG-005 LRU cache true ordering fix, BUG-010 require `sub` claim in JWT verification (security hardening)** |
 | v1.1.1 | Mar 2026 | Dependency updates |
@@ -293,7 +303,7 @@
 | v1.0.2 | Jan 2026 | Previous stable |
 | v1.0.0 | Nov 2025 | Initial release |
 
-### @xivdyetools/crypto
+### @xivdyetools/crypto (retired — merged into `@xivdyetools/auth/encoding` 2026-07-30)
 
 | Version | Date | Highlights |
 |---------|------|------------|
@@ -302,7 +312,7 @@
 | v1.1.0 | Feb 2026 | Validate hex input in hexToBytes |
 | v1.0.0 | Nov 2025 | Initial release |
 
-### @xivdyetools/rate-limiter
+### @xivdyetools/rate-limiter (retired — merged into `@xivdyetools/worker-kit/rate-limiter` 2026-07-31)
 
 | Version | Date | Highlights |
 |---------|------|------------|
@@ -320,6 +330,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.0.0** | **Aug 2026** | **5.0 wave — card generators reworked alongside og-worker v2.0.0's 15E band frame. CHANGELOG entry not yet written** |
 | v1.2.1 | Jul 2026 | Release-infrastructure validation — publish via npm trusted publishing (OIDC), confirming `workspace:*` rewriting under npm 11; contents identical to 1.2.0 |
 | **v1.2.0** | **Jul 2026** | **2026-07-18 audit (Sprint 6) — BUG-056 emoji removed from SVG text (bundled fonts have no emoji glyphs), BUG-060 code-point-safe truncation (no bisected surrogate pairs), BUG-063 single-step gradient NaN guard, REFACTOR-019 `escapeXml` on every string attribute** |
 | v1.1.2 | Mar 2026 | Dependency updates, type imports migrated from core → @xivdyetools/types |
@@ -332,6 +343,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.0.0** | **Aug 2026** | **5.0 wave — CHANGELOG entry not yet written; see the `monorepo-2.0-prep` branch** |
+| v1.5.0 | Aug 2026 | `inverted-tetradic` harmony type on `/harmony` (via core's `findInvertedTetradicDyes`), localized in all six bot locales — requires re-running slash-command registration |
+| **v1.4.0** | **Jul 2026** | **Monorepo 2.0 Tier 1 — absorbed `@xivdyetools/bot-i18n` v1.2.1: the `Translator` engine, `LocaleCode` types, and the six bot-UI locale files now live at `@xivdyetools/bot-logic/i18n`. API identical; only the import specifier changes** |
 | **v1.3.0** | **Jul 2026** | **2026-07-18 audit (Sprints 4 & 5) — shared `moderators` module (`parseModeratorIds` + snowflake validation) ends the discord-worker/moderation-worker parser drift; REFACTOR-004 match quality delegates to types' `classifyMatchDistance`; match results sorted by the displayed metric** |
 | **v1.2.0** | **Apr 2026** | **`dyeFilters?: DyeTypeFilters` parameter on all 4 execute functions (match, harmony, gradient, mixer) — filters applied during candidate selection for cross-bot DyeTypeFilters integration** |
 | v1.1.2 | Mar 2026 | Dependency updates, type imports migrated from core → @xivdyetools/types |
@@ -339,7 +353,7 @@
 | v1.1.0 | Feb 2026 | Shared color-math.ts module, 193-test comprehensive suite |
 | v1.0.0 | Feb 2026 | Initial release |
 
-### @xivdyetools/bot-i18n
+### @xivdyetools/bot-i18n (retired — merged into `@xivdyetools/bot-logic/i18n` 2026-07-30)
 
 | Version | Date | Highlights |
 |---------|------|------------|
@@ -349,7 +363,7 @@
 | v1.0.1 | Feb 2026 | Lint fixes |
 | v1.0.0 | Feb 2026 | Initial release |
 
-### @xivdyetools/color-blending
+### @xivdyetools/color-blending (retired — merged into `@xivdyetools/core/blending` 2026-07-31)
 
 | Version | Date | Highlights |
 |---------|------|------------|
@@ -384,7 +398,7 @@
 |---------|------|------------|
 | v0.1.0 | Apr 2026 | Initial VitePress docs site at `developers.xivdyetools.app` — covers all 9 Phase 1 API endpoints; inline "Try It" panels firing live requests; one-click "Copy as cURL" |
 
-### @xivdyetools/worker-middleware
+### @xivdyetools/worker-middleware (retired — merged into `@xivdyetools/worker-kit` 2026-07-31)
 
 | Version | Date | Highlights |
 |---------|------|------------|
@@ -400,7 +414,12 @@
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
-| Web App v4.9+ | @xivdyetools/core v2.5.0+ | Patch 7.5 dye consolidation active end-to-end |
+| Web App v5.0+ | @xivdyetools/core v3.0.0+ | Schema v2 — Facewear colours read from `facewearColors`, not the dye table |
+| Discord Worker v5.0+ | @xivdyetools/core v3.0.0+ | Schema v2; also requires `@xivdyetools/bot-logic` v1.4.0+ for the absorbed `/i18n` engine |
+| OG Worker v2.0+ | @xivdyetools/svg v2.0.0+ | 15E band frame generators |
+| Any consumer of blending | @xivdyetools/core v2.8.0+ | `@xivdyetools/color-blending` retired; import from `@xivdyetools/core/blending` |
+| Any worker using middleware | @xivdyetools/worker-kit v1.0.0+ | Replaces `worker-middleware` and `rate-limiter` |
+| Web App v4.9–4.12 | @xivdyetools/core v2.5.0+ | Patch 7.5 dye consolidation active end-to-end |
 | Web App v4.5–4.8 | @xivdyetools/core v2.0.0+ | Types imported from `@xivdyetools/types` directly |
 | Web App v4.0–4.1 | @xivdyetools/core v1.5.4+ | Requires facewear dye support, 9 tools |
 | Discord Worker v4.5+ | @xivdyetools/core v2.6.0+ | Allied Society filter removed (co-deleted with types/core) |
@@ -410,8 +429,7 @@
 | API Worker v0.1–0.3 | @xivdyetools/core v2.4.0+ | Requires DyeTypeFilters |
 | Presets API v1.x | @xivdyetools/core v1.2.0+ | Requires localization |
 | Web App v3.2.0+ | Universalis Proxy v1.0.0+ | Budget Suggestions tool uses proxy |
-| Stoat Worker v0.1.x | @xivdyetools/core v2.0.0+ | Uses bot-logic + bot-i18n shared packages |
-| All workers using shared middleware | @xivdyetools/worker-middleware v1.0.0+ | Replaces local request-ID + logger middleware |
+| Stoat Worker v0.1.x | @xivdyetools/core v2.0.0+ | Uses bot-logic (+ bot-i18n, before it was absorbed) |
 
 ---
 
@@ -435,9 +453,11 @@ This is a **pnpm monorepo** with Turborepo. When releasing a new version:
    # Build and test
    pnpm turbo run build test --filter=xivdyetools-discord-worker
 
-   # Deploy
+   # Deploy — note that a BARE `deploy` targets the DEV/BETA worker.
+   # Production always needs the explicit :production script.
    pnpm --filter xivdyetools-discord-worker run deploy:production
    ```
+   See [Deploy Environments](operations/DEPLOY_ENVIRONMENTS.md) before running either.
 
 3. **Web App**:
    ```bash

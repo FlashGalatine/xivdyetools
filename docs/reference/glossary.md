@@ -71,7 +71,10 @@ Web Content Accessibility Guidelines contrast ratio requirements:
 ## FFXIV Terms
 
 ### Dye
-In-game consumable item that changes equipment color. XIV Dye Tools covers 125 standard dyes plus 11 Facewear color entries (synthetic negative IDs assigned at runtime — see [Facewear Dye](#facewear-dye)) for a total of 136 entries.
+In-game consumable item that changes equipment color. XIV Dye Tools covers **125 standard dyes**, stored in `dyes.json` and keyed by `stainID`. The 11 Facewear colors are **not** dyes — see [Facewear Color](#facewear-color).
+
+### Facewear Color
+One of 11 colors usable on Facewear items. **Not dyes** — they are not tradeable, have no market data, and are excluded from the k-d tree. Since schema v2 they live in `facewear_colors.json` and the `facewearColors` export as `FacewearColor` (a string slug `id`, `name`, and `hex`), separate from the dye table. Before schema v2 they lived in the dye table under synthetic negative itemIDs; that mechanism survives only as the frozen `LEGACY_FACEWEAR_ITEM_IDS` map, read via `getFacewearColorByLegacyItemID()` for persisted IDs.
 
 ### General-Purpose Dye
 Dyes that can be purchased from NPC vendors for gil. Cheaper and more accessible.
@@ -84,6 +87,9 @@ In-game auction house where players buy/sell items, including dyes.
 
 ### Special Dye
 Rare dyes obtained from crafting, dungeons, or events. Often more expensive.
+
+### stainID
+The row ID of the game's own `Stain` sheet, and the **canonical identifier** for a dye since schema v2. Preferred over `itemID` because future dyes may ship without an individual itemID, resolving instead to a consolidated "Spectrum" item via `consolidationType`. `itemID` is now a market-board resolution concern rather than an identity.
 
 ### Universalis API
 Community-maintained API providing real-time FFXIV marketboard prices across all data centers.

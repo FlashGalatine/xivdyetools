@@ -170,7 +170,13 @@ MODERATOR_IDS=123456789,987654321
 
 ---
 
-## xivdyetools-universalis-proxy
+## Universalis proxy vars (now part of xivdyetools-api-worker)
+
+> The standalone `xivdyetools-universalis-proxy` worker was **merged into `api-worker` on
+> 2026-07-31**; its behaviour lives on behind the `/universalis` and `/api/v2` compatibility
+> routes. The variables and KV bindings below now belong to `apps/api-worker/wrangler.toml`.
+> Where the commands below say `cd xivdyetools-universalis-proxy`, use
+> `apps/api-worker` instead.
 
 ### wrangler.toml Variables
 
@@ -200,7 +206,7 @@ id = "your-static-cache-namespace-id"
 ### Creating KV Namespaces
 
 ```bash
-cd xivdyetools-universalis-proxy
+cd apps/api-worker
 
 # Create namespaces
 wrangler kv:namespace create "PRICE_CACHE"

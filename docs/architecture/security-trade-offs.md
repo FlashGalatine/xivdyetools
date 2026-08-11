@@ -74,7 +74,7 @@ export class RateLimiter implements DurableObject {
 ### Code References
 
 ```typescript
-// @xivdyetools/rate-limiter/src/backends/kv.ts
+// @xivdyetools/worker-kit/src/rate-limiter/backends/kv.ts
 // MOD-BUG-001 FIX: Optimistic concurrency with retries
 
 // Labels in codebase:
@@ -272,5 +272,5 @@ These trade-offs should be reconsidered if:
 
 - [BUG-002: KV Race Condition](../audits/2026-01-25/bugs/BUG-002-kv-race-condition.md)
 - [Security Audit Report 2026-01-25](../audits/2026-01-25/SECURITY_AUDIT_REPORT.md)
-- [@xivdyetools/rate-limiter](../../xivdyetools-rate-limiter/README.md)
-- [@xivdyetools/auth](../../xivdyetools-auth/README.md)
+- `@xivdyetools/worker-kit` — `packages/worker-kit/README.md` (absorbed the retired `rate-limiter` package on 2026-07-31; rate-limit backends live at the `/rate-limiter` subpath)
+- `@xivdyetools/auth` — `packages/auth/README.md`

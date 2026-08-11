@@ -149,15 +149,15 @@ Have a screenshot or reference image? Extract its colors:
 
 ## Choosing a Theme
 
-The app includes 12 themes:
+The app has a **Light** and a **Dark** theme, with Dark as the default.
 
 1. Click the **theme icon** in the header
-2. Choose from light, dark, and special themes:
-   - **Light**: Default Light, Forest, Ocean, Sunset
-   - **Dark**: Default Dark, Midnight, Void, Abyss
-   - **Special**: High Contrast, Eorzean Gold, Crystal Tower, Moogle
+2. Pick Light or Dark
 
 Your theme preference is saved automatically.
+
+> The novelty themes (Forest, Ocean, Midnight, Moogle, and the rest) were retired in version 5.0.
+> If you had one selected, you were moved to whichever of Light or Dark matches it.
 
 ---
 

@@ -1,28 +1,58 @@
-# Web App Theming System (v4.3.1)
+# Web App Theming System (v5.0)
 
-The web app supports 12 themes managed by `ThemeService`, a singleton. Themes are persisted in `localStorage` and applied at runtime via CSS custom properties.
+The web app ships **two themes**, managed by `ThemeService` (a static class, not an instance
+singleton). Themes are persisted in `localStorage` and applied at runtime via CSS custom
+properties.
 
 ## Available Themes
 
-**Default:** `premium-dark`
+```typescript
+export type ThemeName = 'standard-light' | 'standard-dark';
+export const THEME_NAMES: readonly ThemeName[] = ['standard-light', 'standard-dark'];
+export const DEFAULT_THEME: ThemeName = 'standard-dark';
+```
 
-There are 12 themes total: `premium-dark` and `premium-light` as base themes, plus 10 additional themed variants. Theme names are defined as constants in the theme module.
+**Default:** `standard-dark`.
+
+The novelty themes were retired in 5.0 — the pre-5.0 system had 12. This was a deliberate
+decision made at the start of Monorepo 2.0, not an accident of the redesign: two themes that are
+properly maintained beat twelve that drift.
+
+### Legacy name migration
+
+A stored theme name from before 5.0 is mapped onto the surviving pair rather than discarded, by
+`migrateLegacyThemeName()`: anything ending in `-light`, plus the two specifically-named light
+themes `cotton-candy` and `parchment-light`, becomes `standard-light`; everything else becomes
+`standard-dark`. A returning user keeps their light/dark preference across the reduction.
 
 ## ThemeService API
 
+All members are **static** — there is no `getInstance()`.
+
 ```typescript
-ThemeService.getInstance()           // Singleton accessor
-ThemeService.getCurrentTheme()       // Returns current theme ID
-ThemeService.setTheme(themeId)       // Apply and persist a theme
-ThemeService.getThemeList()          // Returns all 12 available themes
-ThemeService.subscribe(listener)     // Subscribe to theme change events
+ThemeService.initialize()                 // Load persisted theme and apply it
+ThemeService.getCurrentTheme()            // → ThemeName
+ThemeService.getCurrentThemeObject()      // → Theme
+ThemeService.getTheme(name)               // → Theme
+ThemeService.getAllThemes()               // → Theme[] (both of them)
+ThemeService.setTheme(themeName)          // Apply and persist
+ThemeService.toggleDarkMode()             // Swap to the opposite variant
+ThemeService.getLightVariant(name)        // → ThemeName
+ThemeService.getDarkVariant(name)         // → ThemeName
+ThemeService.getColor(key)                // → string | boolean | undefined
+ThemeService.getRequiredColor(key, …)     // Throws rather than returning undefined
+ThemeService.subscribe(listener)          // → unsubscribe function
 ```
+
+`subscribe` returns its own unsubscribe function. Components extending `BaseComponent` should
+register it through `this.subs.add(...)` so cleanup happens automatically in `destroy()`.
 
 ## Storage
 
-- **localStorage key:** `xivdyetools.theme`
+- **localStorage key:** `xivdyetools_theme` (`STORAGE_PREFIX` + `_theme`)
 - Persists across sessions
-- Falls back to `premium-dark` if the stored value is invalid or missing
+- An unrecognized stored value is first passed through `migrateLegacyThemeName()`; only a value
+  that survives neither validation nor migration falls back to `standard-dark`
 
 ## CSS Custom Properties
 
@@ -45,7 +75,7 @@ The v4 UI uses glassmorphism throughout:
 - Frosted glass panels via `backdrop-filter: blur()`
 - Semi-transparent backgrounds
 - Subtle borders for depth perception
-- All 12 themes supply compatible color values for glass effects
+- Both themes supply compatible color values for glass effects
 
 ## Tailwind CSS Integration
 

@@ -1,6 +1,3 @@
-> **⚠️ DEPRECATED:** This document has been superseded by the Documentation Bible.
-> See: [specifications/collections.md](specifications/collections.md)
-
 # Dye Collections & Favorites - Specification
 
 > Feature Status: Planned

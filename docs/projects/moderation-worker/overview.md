@@ -210,7 +210,7 @@ Uses the same `BOT_API_SECRET` as the main discord-worker to authenticate with t
 | Aspect | discord-worker | moderation-worker |
 |--------|----------------|-------------------|
 | **Purpose** | Public user commands | Moderator-only commands |
-| **Commands** | 20 slash commands | 3 subcommands |
+| **Commands** | 17 registered slash commands | 3 subcommands |
 | **Installation** | Any server | Admin servers only |
 | **Channel** | Any channel | Designated moderation channel |
 | **Image rendering** | SVG/PNG via resvg-wasm | None (text only) |

@@ -8,9 +8,10 @@
 
 The core library is a TypeScript package that provides:
 
-- **136 Official FFXIV Dyes** - Complete database with accurate hex colors
-- **Facewear Dye Support** - Synthetic IDs (≤ -1000) for Facewear gear slot
-- **Color Algorithms** - Conversion, accessibility, colorblindness simulation
+- **125 Official FFXIV Dyes** - Complete database (`dyes.json`, schema v2, keyed by `stainID`)
+- **11 Facewear Colors** - A separate `facewearColors` collection; not dyes
+- **Color Algorithms** - Conversion (RGB/HSV/HSL/LAB/OKLAB/CMYK), accessibility, colorblindness simulation
+- **Color Blending** - Six algorithms incl. Kubelka-Munk spectral, via the `/blending` subpath
 - **Dye Matching** - O(log n) nearest-neighbor lookup via k-d tree
 - **Color Harmonies** - Complementary, triadic, analogous, and more
 - **Palette Extraction** - K-means++ clustering from images
@@ -128,11 +129,22 @@ The library works everywhere JavaScript runs:
 
 ### 1. Dye Database
 
-Complete database of 136 official FFXIV dyes with:
-- Accurate hex colors
-- Category classification (Basic, Brown, Red, etc.)
-- Item IDs for market lookup
+Complete database of **125 official FFXIV dyes** (`dyes.json`, schema v2). Each stored entry has
+seven fields — `stainID`, `name`, `hex`, `category`, `acquisition`, `consolidationType`,
+`legacyItemID` — and everything else is **derived at `DyeDatabase.initialize()`**:
+
+- `rgb` / `hsv` / `lab` computed from `hex` (the single colour source of truth)
+- `cost` / `currency` resolved through `ACQUISITION_META`
+- The five `is*` flags — `isMetallic` from `METALLIC_STAIN_IDS` (the Stain sheet's 16-dye gloss
+  set), `isCosmic ≡ consolidationType 'C'`, `isIshgardian ≡ 'B'`
 - Localized names in 6 languages
+
+The runtime `Dye` object therefore keeps its full 16-field shape; consumers of dye objects were
+unaffected by the schema migration. `Dye.itemID` remains a `number` (= `legacyItemID`, falling
+back to `stainID` for future consolidated-only dyes).
+
+The **11 Facewear colours are separate** — `facewearColors` / `facewear_colors.json`, typed as
+`FacewearColor`. They are excluded from the k-d tree because they are not market-tradeable.
 
 ```typescript
 import { dyeDatabase } from '@xivdyetools/core';

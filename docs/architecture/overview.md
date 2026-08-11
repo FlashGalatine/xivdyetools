@@ -11,37 +11,32 @@ This document provides a high-level view of how all projects in the XIV Dye Tool
 ```mermaid
 graph TB
     subgraph "Shared Foundation"
-        TYPES["@xivdyetools/types<br/>v1.15.0<br/>─────────────<br/>Type definitions,<br/>branded types,<br/>Facewear support"]
+        TYPES["@xivdyetools/types<br/>v2.0.0<br/>─────────────<br/>Type definitions,<br/>branded types"]
         LOGGER["@xivdyetools/logger<br/>v1.3.0<br/>─────────────<br/>Multi-environment<br/>logging, secret redaction"]
-        AUTH["@xivdyetools/auth<br/>v1.2.0<br/>─────────────<br/>JWT, HMAC,<br/>Discord Ed25519"]
-        CRYPTO["@xivdyetools/crypto<br/>v1.1.2<br/>─────────────<br/>Base64URL,<br/>hex utilities"]
-        RATELIMIT["@xivdyetools/rate-limiter<br/>v1.5.0<br/>─────────────<br/>Sliding window,<br/>Memory/KV/Upstash"]
-        WMW["@xivdyetools/worker-middleware<br/>v1.2.0<br/>─────────────<br/>Shared Hono middleware<br/>(request-ID, logger,<br/>rate-limit)"]
-        TEST["@xivdyetools/test-utils<br/>v1.1.8<br/>─────────────<br/>Mocks, factories,<br/>helpers"]
+        AUTH["@xivdyetools/auth<br/>v1.3.0<br/>─────────────<br/>JWT, HMAC,<br/>Discord Ed25519,<br/>/encoding"]
+        WKIT["@xivdyetools/worker-kit<br/>v1.0.0<br/>─────────────<br/>Hono middleware<br/>(request-ID, logger,<br/>rate-limit) +<br/>/rate-limiter backends"]
+        TEST["@xivdyetools/test-utils<br/>v1.2.0<br/>─────────────<br/>Mocks, factories,<br/>helpers (private)"]
     end
 
     subgraph "Core + Feature Libraries"
-        CORE["@xivdyetools/core<br/>v2.7.0<br/>─────────────<br/>125 standard dyes plus<br/>11 Facewear color entries<br/>(synthetic negative IDs);<br/>color algorithms, Universalis API,<br/>6 languages, K-means++"]
-        SVG["@xivdyetools/svg<br/>v1.2.1"]
-        BLEND["@xivdyetools/color-blending<br/>v1.1.0"]
-        BOTLOGIC["@xivdyetools/bot-logic<br/>v1.3.0"]
-        BOTI18N["@xivdyetools/bot-i18n<br/>v1.2.1"]
+        CORE["@xivdyetools/core<br/>v4.0.0<br/>─────────────<br/>125 dyes (schema v2,<br/>stainID-keyed) + 11<br/>Facewear colours;<br/>colour algorithms,<br/>Universalis API,<br/>6 languages, K-means++,<br/>/blending"]
+        SVG["@xivdyetools/svg<br/>v2.0.0"]
+        BOTLOGIC["@xivdyetools/bot-logic<br/>v2.0.0<br/>incl. /i18n"]
     end
 
     subgraph "Consumer Applications"
-        WEB["xivdyetools-web-app<br/>v4.12.0<br/>─────────────<br/>9 interactive tools,<br/>12 themes, PWA,<br/>Vite + Lit"]
-        DISCORD["xivdyetools-discord-worker<br/>v4.7.0<br/>─────────────<br/>20 slash commands,<br/>SVG/PNG rendering,<br/>HTTP Interactions"]
-        STOAT["xivdyetools-stoat-worker<br/>v0.2.0<br/>─────────────<br/>Revolt.js bot,<br/>shared bot-logic"]
+        WEB["xivdyetools-web-app<br/>v5.0.0<br/>─────────────<br/>9 interactive tools,<br/>Light + Dark, PWA,<br/>Vite + Lit"]
+        DISCORD["xivdyetools-discord-worker<br/>v5.0.0<br/>─────────────<br/>17 slash commands,<br/>SVG/PNG rendering,<br/>HTTP Interactions"]
+        STOAT["xivdyetools-stoat-worker<br/>v0.2.0<br/>─────────────<br/>Revolt.js bot (parked),<br/>shared bot-logic"]
     end
 
     subgraph "Backend Services"
         OAUTH["xivdyetools-oauth<br/>v2.5.0<br/>─────────────<br/>Discord OAuth, PKCE,<br/>JWT issuance,<br/>timeout protection"]
         PRESETS["xivdyetools-presets-api<br/>v1.6.0<br/>─────────────<br/>Community presets,<br/>D1 database,<br/>Moderation pipeline"]
-        PROXY["xivdyetools-universalis-proxy<br/>v1.5.0<br/>─────────────<br/>CORS proxy,<br/>Dual-layer caching,<br/>Request coalescing"]
+        IMAGE["xivdyetools-image-worker<br/>v1.0.0<br/>─────────────<br/>Photon pixel extraction,<br/>service binding only"]
         MODBOT["xivdyetools-moderation-worker<br/>v1.3.0<br/>─────────────<br/>Moderation bot,<br/>Preset review"]
-        OG["xivdyetools-og-worker<br/>v1.4.0<br/>─────────────<br/>Localized OpenGraph<br/>metadata, Social previews"]
-        APIWORKER["xivdyetools-api-worker<br/>v0.5.0<br/>─────────────<br/>Public REST API,<br/>data.xivdyetools.app,<br/>9 endpoints"]
-        APIDOCS["xivdyetools-api-docs<br/>v0.1.0<br/>─────────────<br/>VitePress docs site,<br/>developers.xivdyetools.app"]
+        OG["xivdyetools-og-worker<br/>v2.0.0<br/>─────────────<br/>Localized OG cards,<br/>Discord + X frames"]
+        APIWORKER["xivdyetools-api-worker<br/>v0.5.0<br/>─────────────<br/>Public REST API,<br/>data.xivdyetools.app,<br/>/universalis proxy,<br/>VitePress docs"]
     end
 
     subgraph "External Services"
@@ -53,15 +48,14 @@ graph TB
     %% Foundation dependencies
     TYPES --> CORE
     LOGGER --> CORE
-    CRYPTO --> AUTH
-    LOGGER --> WMW
-    RATELIMIT --> WMW
+    LOGGER --> WKIT
+    AUTH --> TEST
+    TYPES --> TEST
     CORE --> SVG
-    BLEND --> SVG
+    TYPES --> SVG
     CORE --> BOTLOGIC
     SVG --> BOTLOGIC
-    BLEND --> BOTLOGIC
-    BOTI18N --> BOTLOGIC
+    TYPES --> BOTLOGIC
 
     %% Core/feature library consumers
     CORE --> WEB
@@ -69,25 +63,25 @@ graph TB
     CORE --> APIWORKER
     BOTLOGIC --> DISCORD
     BOTLOGIC --> STOAT
-    WMW -.-> DISCORD
-    WMW -.-> MODBOT
-    WMW -.-> OAUTH
-    WMW -.-> PRESETS
-    WMW -.-> PROXY
-    WMW -.-> OG
-    WMW -.-> APIWORKER
+    SVG --> OG
+    WKIT -.-> DISCORD
+    WKIT -.-> MODBOT
+    WKIT -.-> OAUTH
+    WKIT -.-> PRESETS
+    WKIT -.-> OG
+    WKIT -.-> APIWORKER
 
     %% Application relationships
     WEB --> OAUTH
     WEB --> PRESETS
-    WEB --> PROXY
-    APIDOCS -.->|"documents"| APIWORKER
+    WEB --> APIWORKER
     DISCORD -.->|"Service Binding"| PRESETS
+    DISCORD -.->|"Service Binding"| IMAGE
     MODBOT -.->|"Service Binding"| PRESETS
     PRESETS -.->|"Service Binding"| DISCORD
 
     %% External API connections
-    PROXY -.-> UNIVERSALIS
+    APIWORKER -.-> UNIVERSALIS
     DISCORD --> DISCORD_API
     OAUTH --> DISCORD_API
     PRESETS -.-> PERSPECTIVE
@@ -98,10 +92,10 @@ graph TB
     classDef backend fill:#fce4ec,stroke:#880e4f
     classDef external fill:#f5f5f5,stroke:#616161
 
-    class TYPES,LOGGER,AUTH,CRYPTO,RATELIMIT,WMW,TEST shared
-    class CORE,SVG,BLEND,BOTLOGIC,BOTI18N core
+    class TYPES,LOGGER,AUTH,WKIT,TEST shared
+    class CORE,SVG,BOTLOGIC core
     class WEB,DISCORD,STOAT app
-    class OAUTH,PRESETS,PROXY,MODBOT,OG,APIWORKER,APIDOCS backend
+    class OAUTH,PRESETS,IMAGE,MODBOT,OG,APIWORKER backend
     class DISCORD_API,UNIVERSALIS,PERSPECTIVE external
 ```
 
@@ -120,32 +114,27 @@ Layer 4: External Services
 Layer 3: Backend Services (Cloudflare Workers)
 ├── xivdyetools-oauth → JWT issuance
 ├── xivdyetools-presets-api → Community presets
-├── xivdyetools-universalis-proxy → Market data caching
 ├── xivdyetools-moderation-worker → Preset moderation bot
-├── xivdyetools-og-worker → Social media previews
-├── xivdyetools-api-worker → Public REST API (data.xivdyetools.app)
-└── xivdyetools-api-docs → Developer API docs site (developers.xivdyetools.app)
+├── xivdyetools-image-worker → Pixel extraction (service binding only)
+├── xivdyetools-og-worker → Social media preview cards
+└── xivdyetools-api-worker → Public REST API + Universalis proxy + developer docs
 
 Layer 2: Consumer Applications
 ├── xivdyetools-web-app → Browser-based tools (9 tools)
-├── xivdyetools-discord-worker → Discord bot (20 commands)
-└── xivdyetools-stoat-worker → Revolt bot (shared bot-logic)
+├── xivdyetools-discord-worker → Discord bot (17 registered commands)
+└── xivdyetools-stoat-worker → Revolt bot (parked; shared bot-logic)
 
 Layer 1: Core + Feature Libraries
-├── @xivdyetools/core → Color algorithms, dye database (125 + 11)
+├── @xivdyetools/core → Colour algorithms, 125-dye database, blending (/blending)
 ├── @xivdyetools/svg → SVG card generation
-├── @xivdyetools/color-blending → Color blending algorithms
-├── @xivdyetools/bot-logic → Platform-agnostic bot commands
-└── @xivdyetools/bot-i18n → Bot-specific localization
+└── @xivdyetools/bot-logic → Platform-agnostic bot commands + bot i18n (/i18n)
 
 Layer 0: Shared Foundation
-├── @xivdyetools/types → Type definitions, Facewear support
-├── @xivdyetools/crypto → Base64URL, hex utilities
+├── @xivdyetools/types → Type definitions, branded types
 ├── @xivdyetools/logger → Logging, secret redaction
-├── @xivdyetools/auth → JWT, HMAC, Discord Ed25519
-├── @xivdyetools/rate-limiter → Sliding window rate limiting
-├── @xivdyetools/worker-middleware → Shared Hono middleware (request-ID, logger, rate-limit)
-└── @xivdyetools/test-utils → Testing utilities
+├── @xivdyetools/auth → JWT, HMAC, Discord Ed25519, Base64URL/hex (/encoding)
+├── @xivdyetools/worker-kit → Hono middleware + rate limiting (/rate-limiter)
+└── @xivdyetools/test-utils → Testing utilities (workspace-private)
 ```
 
 ### Data Flow Summary
@@ -153,7 +142,7 @@ Layer 0: Shared Foundation
 | Flow | Path | Purpose |
 |------|------|---------|
 | **Color Matching** | User → Web/Discord → Core → Response | Find closest dye to input color |
-| **Market Prices** | Client → Universalis Proxy → Universalis API → Client | Real-time price data with caching |
+| **Market Prices** | Client → API Worker `/universalis` → Universalis API → Client | Real-time price data with caching |
 | **Authentication** | User → OAuth → Discord API → JWT → Consumer | User identity |
 | **Preset Submission** | User → Client → Presets API → Moderation → Storage | Community content |
 | **Preset Voting** | User → Client → Presets API → Database | Community curation |
@@ -163,31 +152,34 @@ Layer 0: Shared Foundation
 
 ## Project Summaries
 
-### @xivdyetools/core (v2.7.0)
+### @xivdyetools/core (v4.0.0)
 
-**Purpose**: Core TypeScript library providing color algorithms and the FFXIV dye database (125 standard dyes plus 11 Facewear color entries with synthetic negative IDs — 136 total entries).
+**Purpose**: Core TypeScript library providing colour algorithms and the FFXIV dye database — **125 standard dyes** in `dyes.json` (schema v2, stainID-keyed), plus the **11 Facewear colours** as a separate `facewearColors` collection.
 
 **Key Capabilities**:
-- Color conversion (RGB, HSV, HSL, LAB, OKLAB)
-- Nearest-neighbor dye matching via k-d tree
-- Color harmony generation (complementary, triadic, analogous, etc.)
-- Colorblindness simulation (Brettel algorithm)
+- Colour conversion (RGB, HSV, HSL, LAB, OKLAB, CMYK)
+- Nearest-neighbour dye matching via k-d tree, with an exact linear scan for perceptual metrics
+- Colour harmony generation (complementary, triadic, analogous, tetradic, inverted tetradic, …)
+- Colourblindness simulation (Brettel algorithm)
 - K-means++ palette extraction from images
 - Universalis API integration with LRU cache and metrics
 - 6-language localization (en, ja, de, fr, ko, zh)
-- Facewear dye support (synthetic IDs ≤ -1000)
-- Pre-computed lowercase names for fast search
-- LRU cache for `rgbToOklab()` conversions
+- Colour blending — six algorithms incl. Kubelka-Munk spectral — via the `/blending` subpath
+- Pre-computed lowercase names for fast search; LRU cache for `rgbToOklab()`
 
-**v2.0.0 Breaking Change**: All type re-exports removed. Import `Dye`, `RGB`, `HexColor`, etc. from `@xivdyetools/types` directly. 28 symbols marked `@internal`.
+**v3.0.0 Breaking Change (schema v2)**: `colors_xiv.json` (136 entries × 16 fields) became `dyes.json` (125 entries × 7 fields, keyed by `stainID`). `rgb`/`hsv`/`lab`, `cost`/`currency`, and the five `is*` flags are derived at `DyeDatabase.initialize()`, so the runtime `Dye` object keeps its full 16-field shape and consumers of dye objects were unaffected. The 11 Facewear colours left the dye table for `facewearColors`; the synthetic negative-ID mechanism is retired, surviving only as the frozen `LEGACY_FACEWEAR_ITEM_IDS` map. `isMetallic` is now the Stain sheet's 16-dye gloss set (was a 14-dye name-prefix guess) and `isCosmic ≡ consolidationType === 'C'` (11 dyes, no longer polluted by the 9 Firmament dyes).
 
-**v2.5.0–2.6.0 Patch 7.5 Activation**: `CONSOLIDATED_IDS` populated with real itemIDs (Type-A=52254, Type-B=52255, Type-C=52256); `isConsolidationActive()` returns `true`; `ALLIED_SOCIETY_ACQUISITIONS` removed (vendor categories collapsed by Patch 7.5).
+**v2.8.0**: absorbed `@xivdyetools/color-blending` as the `/blending` subpath export.
 
-**Consumed By**: Web app, Discord worker, OG worker, API worker
+**v2.0.0 Breaking Change**: All type re-exports removed. Import `Dye`, `RGB`, `HexColor`, etc. from `@xivdyetools/types` directly.
+
+**Patch 7.5 consolidation is active**: `CONSOLIDATED_IDS` holds real itemIDs (Type-A = 52254, Type-B = 52255, Type-C = 52256); `isConsolidationActive()` returns `true`; `ALLIED_SOCIETY_ACQUISITIONS` removed.
+
+**Consumed By**: Web app, Discord worker, OG worker, API worker, SVG, bot-logic
 
 ---
 
-### xivdyetools-web-app (v4.12.0)
+### xivdyetools-web-app (v5.0.0)
 
 **Purpose**: Browser-based interactive toolkit for exploring FFXIV dye colors.
 
@@ -203,39 +195,46 @@ Layer 0: Shared Foundation
 9. **Budget Suggestions** - Find affordable dye alternatives
 
 **Recent Highlights**:
-- **v4.10.0**: Result Card v4 "Spectrum" row (consolidated dye spectrum across Standard / Wide #1 / Wide #2); SEC-001 `auth-button.ts` XSS hardening; "Exclude Allied Society Dyes" filter retired
+- **v5.0.0**: Themes reduced to **Light + Dark** (`standard-light` / `standard-dark`), with legacy stored theme names migrated on load; mobile-friendly redesign
+- **v4.11.0**: Consolidation Spectrum filter chips in the dye palette drawer; Budget matching-algorithm control
+- **v4.10.0**: Result Card v4 "Spectrum" row (Standard / Wide #1 / Wide #2); SEC-001 `auth-button.ts` XSS hardening; "Exclude Allied Society Dyes" filter retired
 - **v4.9.0**: Patch 7.5 dye consolidation active end-to-end — Market Board fans 3 consolidated prices to 105 dyes
-- **v4.6.0**: Dye Filters v4 web component with 9 toggles
-- **v4.3.0**: Pixel sampling (Shift+Click), canvas panning (Ctrl/Cmd+Drag), configurable sample area (1×1 to 16×16)
-- **v4.0.0**: Glassmorphism UI, tool renaming, Lit.js web components, 12 themes
+- **v4.0.0**: Glassmorphism UI, tool renaming, Lit.js web components
 
-**Technology**: Vite 6, Lit web components, Tailwind CSS 4, 12 themes
+**Technology**: Vite, Lit web components, Tailwind CSS 4, two themes
 
 ---
 
-### xivdyetools-discord-worker (v4.7.0)
+### xivdyetools-discord-worker (v5.0.0)
 
 **Purpose**: Discord bot bringing dye tools to servers via slash commands.
 
-**20 Commands** organized into categories:
-- **Color Tools**: `/harmony`, `/extractor`, `/gradient`, `/mixer`, `/swatch`, `/budget`
-- **Dye Database**: `/dye search`, `/dye info`, `/dye list`, `/dye random`
-- **Analysis**: `/comparison`, `/accessibility`
-- **User Data**: `/favorites`, `/collection`
-- **Community**: `/preset list`, `/preset show`, `/preset random`, `/preset submit`, `/preset vote`
-- **Utility**: `/language`, `/preferences`, `/manual`, `/about`, `/stats`
+The roster of record is `src/commands/registry.ts` — a single `COMMAND_REGISTRY` list that the
+registration script checks schema parity against, `/about` builds its index from, and
+`about.test.ts` asserts against. A command can no longer exist in the dispatch switch, the
+registration schema, and `/about` in three different states.
+
+**17 registered commands** by category:
+- **Colour tools**: `/harmony`, `/mixer`, `/gradient`, `/extractor`, `/swatch`
+- **Dye database**: `/dye`
+- **Analysis**: `/comparison`, `/contrast`, `/accessibility`, `/a11y`, `/budget`
+- **Community**: `/preset`
+- **Utility**: `/preferences`, `/manual`, `/changelog`, `/about`, `/stats`
+
+`/a11y` is a second registration sharing the `/accessibility` handler — Discord has no alias
+mechanism — so the roster is 17 registrations covering 16 distinct commands.
+
+**v5.0 Highlights**:
+- `/contrast` split out of `/accessibility` for WCAG 1.4.11 pairs; `/changelog` added
+- `/about` reworked to build its command index from the registry
+- Photon image decoding moved out to `image-worker` behind the `IMAGE_WORKER` service binding, bringing the bundle back under Cloudflare's 3 MiB gzip limit
 
 **v4.x Highlights**:
-- Command renaming (`/match`→`/extractor`, `/mixer`→`/gradient`)
-- New commands: `/mixer` (RGB blending), `/swatch`, `/budget`, `/preferences`
-- Prevent Duplicate Results for extractor
-- Budget quick picks with 20 Cosmic dyes
-- v4.3.0: `/preferences filters` subcommand group with 9 boolean toggles
-- v4.4.0: REFACTOR-001/002 migrated request-ID + logger middleware to `@xivdyetools/worker-middleware`
-- v4.5.0: `/preferences set allied_society` slash-command option **removed** (post-Patch 7.5); ARCH-002 consolidation fan-out integration test
-- Uses shared packages: @xivdyetools/bot-logic, bot-i18n, svg, color-blending, worker-middleware
+- v4.7.0: BUG-009 moderation buttons routable via `MODERATION_BOT_TOKEN`; throw-safe Discord API wrappers; world → DC → region price cascade in `/budget`
+- v4.5.0: `/preferences set allied_society` option removed (post-Patch 7.5)
+- Uses shared packages: `@xivdyetools/bot-logic` (incl. `/i18n`), `svg`, `core` (incl. `/blending`), `worker-kit`
 
-**Technology**: Cloudflare Workers, HTTP Interactions, Hono, resvg-wasm, Photon WASM
+**Technology**: Cloudflare Workers, HTTP Interactions, Hono, resvg-wasm
 
 ---
 
@@ -282,24 +281,15 @@ Layer 0: Shared Foundation
 
 ---
 
-### xivdyetools-universalis-proxy (v1.5.0)
+### xivdyetools-image-worker (v1.0.0)
 
-**Purpose**: CORS proxy for Universalis API with intelligent caching.
+**Purpose**: Decode an image URL and return raw RGBA pixels, so `discord-worker` does not have to bundle `@cf-wasm/photon`.
 
-**Features**:
-- **Dual-layer caching**:
-  - Cloudflare Cache API (edge-level)
-  - KV storage (global persistence)
-- **Request coalescing** to prevent duplicate upstream requests
-- **Stale-while-revalidate** pattern for optimal freshness
-- Input validation (100 items max, ID range 1-1,000,000)
-- Response size limit (5MB)
-- Memory leak protection with 60s entry cleanup
-- Cache TTLs: 5 min for prices, 24h for static data
+Split out of `discord-worker` on 2026-08-09 ([IMAGE_WORKER_SPLIT](../operations/IMAGE_WORKER_SPLIT.md)) because the WASM payload pushed the bot past Cloudflare's 3 MiB gzip script limit (3,209.3 → 2,589.70 KiB after the split).
 
-**Technology**: Cloudflare Workers, Hono, KV storage
+**Surface**: `POST /extract`, reachable **only** via `discord-worker`'s `IMAGE_WORKER` service binding. No routes, no public hostname.
 
-**v1.4.5 Highlights**: REFACTOR-002 wired `@xivdyetools/worker-middleware` (`requestIdMiddleware` + `loggerMiddleware`); 4 `console.error` call sites replaced with structured `getLogger(c)?.error(...)`.
+**Technology**: Cloudflare Workers, `@cf-wasm/photon`
 
 ---
 
@@ -323,22 +313,23 @@ Layer 0: Shared Foundation
 
 ---
 
-### xivdyetools-og-worker (v1.4.0)
+### xivdyetools-og-worker (v2.0.0)
 
-**Purpose**: Dynamic OpenGraph metadata for social media previews.
+**Purpose**: Dynamic OpenGraph cards for social media previews.
 
 **Features**:
 - Crawler detection (Discord, Twitter/X, Facebook, LinkedIn, Slack, Telegram, iMessage)
-- Dynamic OG image generation for tools (Harmony, Gradient, Mixer, Swatch, Comparison, Accessibility)
+- **One 15E band frame for all nine tools**, on a 400-wide design grid rastered ×3 — Discord 1200×1050, X 1200×630 via `?frame=x` (carried by `twitter:image`). The two frames take separate cache keys
+- **Default cards** at `/og/default.png` and `/og/:tool/default.png` — no fabricated dye names, deltas, or prices
+- Localized via `?lang=` in all 6 languages, including the card artwork; SC, KR, and JP font subsets are bundled so JA no longer renders in Chinese letterforms
+- Name wrapping with hyphenation rather than truncation (resvg has no `hyphens: auto`)
 - SVG→PNG rendering via resvg-wasm
-- Embedded fonts for text rendering
-- NaN validation for dyeId parameters (v1.0.4)
-- escapeHtml for themeColor meta tag (v1.0.4)
-- **v1.2.0**: OG embed metadata localized via `?lang=` query parameter — all 6 locales preloaded at module init; `harmonyToKey()` kebab-to-camel converter; integrated `@xivdyetools/worker-middleware`
 
-**Routes**: `/og/harmony/*`, `/og/gradient/*`, `/og/mixer/*`, `/og/swatch/*`, `/og/comparison/*`, `/og/accessibility/*`
+**v2.0.0 fixed the `/og/` prefix**, which was missing from every emitted `og:image` URL — the routes registered under `/og/` while the meta tags pointed one level up, so no generated card had ever actually been fetched.
 
-**Technology**: Cloudflare Workers, Hono, resvg-wasm
+**Routes**: `/og/:tool/*` for harmony, gradient, mixer, swatch, comparison, accessibility, extractor, presets, and budget.
+
+**Technology**: Cloudflare Workers, Hono, resvg-wasm, `@xivdyetools/svg`
 
 ---
 
@@ -361,35 +352,20 @@ Layer 0: Shared Foundation
 - Anonymous (no auth, no API key) with permissive CORS
 - KV-backed sliding-window rate limiting (60 req/min/IP, +5 burst)
 - `localeMiddleware` resolves `?locale=` once per request (OPT-001)
-- Structured logging via `@xivdyetools/worker-middleware`
+- Structured logging via `@xivdyetools/worker-kit`
 
-**Technology**: Cloudflare Workers, Hono, KV; documented at the [api-docs](#xivdyetools-api-docs-v010) site.
+**Absorbed on 2026-07-31**: the standalone `universalis-proxy` (now the `/universalis` and `/api/v2` compatibility routes, keeping the dual-layer Cache API + KV caching, request coalescing, and stale-while-revalidate) and the `api-docs` VitePress site (now shipped as Workers Static Assets under `apps/api-worker/docs/`, serving `developers.xivdyetools.app`).
 
----
-
-### xivdyetools-api-docs (v0.1.0)
-
-**Purpose**: Developer-facing API documentation site for the api-worker, deployed to `developers.xivdyetools.app`.
-
-**Features**:
-- VitePress with Vue 3 custom components
-- Quick Start, Responses, Errors, Rate Limits guides
-- Full reference for all 9 Phase 1 endpoints
-- Inline "Try It" panels firing live requests against `data.xivdyetools.app`
-- One-click "Copy as cURL" on every endpoint
-- Side-by-side request/response display with HTTP status badges
-
-**Technology**: VitePress, Vue 3, deployed via Cloudflare Pages.
+**Technology**: Cloudflare Workers, Hono, KV, VitePress
 
 ---
 
 ### xivdyetools-stoat-worker (v0.2.0)
 
-**Purpose**: Revolt.js bot bringing dye tools to the Revolt platform.
+**Purpose**: Revolt.js bot bringing dye tools to the Revolt platform. **Parked** — kept in the repo, no 5.0 investment, no current demand.
 
 **Features**:
-- Shared command logic via @xivdyetools/bot-logic
-- Shared i18n via @xivdyetools/bot-i18n
+- Shared command logic and i18n via `@xivdyetools/bot-logic` (incl. its `/i18n` engine)
 - Prefix-based commands (`!xivdye` / `!xd`)
 - 4 commands: ping, help, about, info
 
@@ -401,17 +377,14 @@ Layer 0: Shared Foundation
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| **@xivdyetools/types** | v1.15.0 | Branded types (HexColor, DyeId), Facewear ID support |
-| **@xivdyetools/crypto** | v1.1.2 | Base64URL encoding, hex utilities |
+| **@xivdyetools/core** | v4.0.0 | Colour algorithms, 125-dye database (schema v2), Universalis, blending (`/blending`) |
+| **@xivdyetools/types** | v2.0.0 | Branded types (HexColor, DyeId, StainId) and shared interfaces |
 | **@xivdyetools/logger** | v1.3.0 | Unified logging, secret redaction patterns |
-| **@xivdyetools/auth** | v1.2.0 | JWT verification, HMAC signing, Discord Ed25519 |
-| **@xivdyetools/rate-limiter** | v1.5.0 | Sliding window rate limiting (Memory, KV, Upstash) |
-| **@xivdyetools/worker-middleware** | v1.2.0 | Shared Hono middleware (request-ID, logger, rate-limit) |
-| **@xivdyetools/svg** | v1.2.1 | Platform-agnostic SVG card generators |
-| **@xivdyetools/bot-logic** | v1.3.0 | Platform-agnostic bot command logic |
-| **@xivdyetools/bot-i18n** | v1.2.1 | Bot-specific internationalization |
-| **@xivdyetools/color-blending** | v1.1.0 | Color blending modes (RGB, LAB, OKLAB, Spectral) |
-| **@xivdyetools/test-utils** | v1.1.8 | Cloudflare bindings mocks, domain factories, test helpers |
+| **@xivdyetools/auth** | v1.3.0 | JWT verification, HMAC signing, Discord Ed25519, Base64URL/hex (`/encoding`) |
+| **@xivdyetools/worker-kit** | v1.0.0 | Hono middleware (request-ID, logger, rate-limit) + rate-limit backends (`/rate-limiter`) |
+| **@xivdyetools/svg** | v2.0.0 | Platform-agnostic SVG card generators |
+| **@xivdyetools/bot-logic** | v2.0.0 | Platform-agnostic bot command logic + bot UI translation engine (`/i18n`) |
+| **@xivdyetools/test-utils** | v1.2.0 | Cloudflare bindings mocks, domain factories, test helpers (workspace-private) |
 
 ---
 
@@ -434,16 +407,21 @@ return fetch(`${env.PRESETS_API_URL}/presets`, options);
 **Binding Map**:
 ```
 xivdyetools-discord-worker
-├── PRESETS_API → xivdyetools-presets-api (Service Binding)
-└── KV_STORAGE → Rate limits, user preferences (KV Binding)
+├── PRESETS_API   → xivdyetools-presets-api (Service Binding)
+├── IMAGE_WORKER  → xivdyetools-image-worker (Service Binding)
+└── KV_STORAGE    → Rate limits, user preferences (KV Binding)
+
+xivdyetools-moderation-worker
+└── PRESETS_API   → xivdyetools-presets-api (Service Binding)
 
 xivdyetools-presets-api
-├── DB → D1 Database (presets, votes, moderation)
-└── KV_CACHE → Response caching (KV Binding)
+├── DB            → D1 Database (presets, votes, moderation)
+├── DISCORD_WORKER→ xivdyetools-discord-worker (Service Binding, notifications)
+└── KV_CACHE      → Response caching (KV Binding)
 
-xivdyetools-universalis-proxy
-├── PRICE_CACHE → Price data with 5-min TTL (KV Binding)
-└── STATIC_CACHE → Item data with 24h TTL (KV Binding)
+xivdyetools-api-worker
+├── PRICE_CACHE   → Universalis price data, 5-min TTL (KV Binding)
+└── STATIC_CACHE  → Item data, 24h TTL (KV Binding)
 ```
 
 ### REST API Communication
@@ -471,12 +449,14 @@ xivdyetools-universalis-proxy
 ┌───────────────────┐         ┌───────────────────┐         ┌───────────────────┐
 │  Cloudflare Pages │         │  Cloudflare       │         │  Cloudflare       │
 │                   │         │  Workers          │         │  D1 Database      │
-│  xivdyetools      │         │                   │         │                   │
-│  web-app          │         │  • discord-worker │         │  • presets        │
-│  (Static assets)  │         │  • oauth          │         │  • votes          │
-│                   │         │  • presets-api    │         │  • users          │
-│                   │         │  • universalis-   │         │  • moderation     │
-│                   │         │    proxy          │         │                   │
+│  xivdyetools      │         │  • discord-worker │         │                   │
+│  web-app          │         │  • image-worker   │         │  • presets        │
+│  (Static assets)  │         │  • moderation-wkr │         │  • votes          │
+│                   │         │  • oauth          │         │  • users          │
+│                   │         │  • presets-api    │         │  • moderation     │
+│                   │         │  • api-worker     │         │                   │
+│                   │         │  • og-worker      │         │  (oauth keeps its │
+│                   │         │                   │         │   own D1)         │
 └───────────────────┘         └───────────────────┘         └───────────────────┘
                                           │
                                           │ KV Storage

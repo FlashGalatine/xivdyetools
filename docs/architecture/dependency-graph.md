@@ -163,7 +163,9 @@ Notes:
   @xivdyetools/types directly. 28 internal symbols are marked @internal and excluded
   from the barrel export.
 - As of v2.6.0, ALLIED_SOCIETY_ACQUISITIONS is removed. Patch 7.5 collapsed those
-  vendor categories out of colors_xiv.json.
+  vendor categories out of the dye database.
+- As of v3.0.0 (schema v2), the data file is dyes.json (125 entries, stainID-keyed).
+  The 11 Facewear colours moved to facewear_colors.json / the facewearColors export.
 ```
 
 ---

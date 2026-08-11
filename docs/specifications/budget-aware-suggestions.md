@@ -1,6 +1,3 @@
-> **⚠️ DEPRECATED:** This document has been superseded by the Documentation Bible.
-> See: [specifications/feature-roadmap.md](specifications/feature-roadmap.md)
-
 # Budget-Aware Dye Suggestions - Feature Specification
 
 > Last Updated: December 5, 2025
@@ -176,7 +173,7 @@ Already implemented for `/match`, `/harmony`, `/dye info`. Ensure consistency wi
 ### Performance
 
 **Concerns:**
-- Fetching prices for all 136 dyes on every match would be slow
+- Fetching prices for all 125 dyes on every match would be slow
 - Need to balance freshness vs responsiveness
 
 **Solutions:**
@@ -234,7 +231,7 @@ const valueScore = (normalizedDistance * 0.7) + (normalizedPrice * 0.3);
 
 ### Dye Price Mapping
 
-Need to ensure all 136 dyes have correct Universalis item IDs. This is already maintained in `dyeDatabase`:
+Need to ensure all 125 dyes resolve to a correct Universalis item ID. Post-Patch 7.5 this goes through `getMarketItemID()`, which maps the 105 consolidated dyes onto three real itemIDs:
 
 ```typescript
 interface Dye {

@@ -1,6 +1,3 @@
-> **⚠️ DEPRECATED:** This document has been superseded by the Documentation Bible.
-> See: [specifications/feature-roadmap.md](specifications/feature-roadmap.md)
-
 # XIV Dye Tools - Feature Roadmap
 
 > Last Updated: December 5, 2025

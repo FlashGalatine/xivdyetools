@@ -28,9 +28,14 @@ The dye database uses a k-d tree (k-dimensional tree) for efficient nearest-neig
 | Single lookup | O(n) | O(log n) | ~7x faster |
 | k-nearest | O(n * k) | O(k log n) | ~7x faster |
 
-For 136 dyes:
-- **Brute force**: Check all 136 dyes = 136 comparisons
-- **k-d tree**: ~7 comparisons average (log₂ 136 ≈ 7)
+For 125 dyes:
+- **Brute force**: Check all 125 dyes = 125 comparisons
+- **k-d tree**: ~7 comparisons average (log₂ 125 ≈ 7)
+
+> **Note**: perceptual distance methods use an **exact linear scan**, not the k-d tree
+> (core v2.7.0, REFACTOR-003). A k-d radius search can return an in-radius worse dye while the
+> true nearest sits just outside the radius, because perceptual distance is not the metric the
+> tree is indexed on.
 
 ### Implementation
 
@@ -95,7 +100,7 @@ const candidates = [
 
 | Operation | Without Bucketing | With Bucketing | Improvement |
 |-----------|-------------------|----------------|-------------|
-| Find complementary | O(n) = 136 checks | O(n/36) ≈ 4 checks | ~34x faster |
+| Find complementary | O(n) = 125 checks | O(n/36) ≈ 4 checks | ~34x faster |
 | Find triadic | O(n) × 2 = 272 checks | ~8 checks | ~34x faster |
 
 ---
