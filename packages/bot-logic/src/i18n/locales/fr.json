@@ -601,6 +601,13 @@
       "discord": "Discord"
     }
   },
+  "previewImage": {
+    "invalidButton": "Interaction de bouton invalide.",
+    "notPermitted": "Vous n'avez pas la permission de modérer les images d'aperçu.",
+    "actionFailed": "Échec de la mise à jour de l'image d'aperçu. Veuillez réessayer.",
+    "approvedFooter": "Image d'aperçu approuvée par {moderator}",
+    "rejectedFooter": "Image d'aperçu rejetée par {moderator} — modèle inchangé"
+  },
   "matchImage": {
     "missingImage": "Veuillez joindre une image à analyser.",
     "invalidAttachment": "Impossible de trouver l'image jointe.",

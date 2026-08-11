@@ -601,6 +601,13 @@
       "discord": "Discord"
     }
   },
+  "previewImage": {
+    "invalidButton": "无效的按钮交互。",
+    "notPermitted": "您没有权限审核预览图片。",
+    "actionFailed": "更新预览图片失败，请重试。",
+    "approvedFooter": "预览图片已由 {moderator} 批准",
+    "rejectedFooter": "预览图片已由 {moderator} 拒绝（预设本身未受影响）"
+  },
   "matchImage": {
     "missingImage": "请附加一张图片进行分析。",
     "invalidAttachment": "找不到附加的图片。",

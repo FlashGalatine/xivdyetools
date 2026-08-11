@@ -314,6 +314,53 @@ describe('index.ts', () => {
       );
     });
 
+    // Task 9: the approve/reject buttons must carry the previewimg_ prefix
+    // (not preset_, which moderation-worker already owns) and must be posted
+    // with this app's own token so the clicks route back here.
+    it('attaches approve/reject buttons carrying the previewimg_ custom_id prefix', async () => {
+      const { timingSafeEqual } = await import('./utils/verify.js');
+      const { sendMessage } = await import('./utils/discord-api.js');
+      vi.mocked(timingSafeEqual).mockResolvedValue(true);
+      vi.mocked(sendMessage).mockResolvedValue(new Response(null));
+
+      const req = new Request('http://localhost/webhooks/preset-submission', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer test-webhook-secret' },
+        body: JSON.stringify({
+          type: 'preview_image',
+          preset: { id: 'p1', name: 'Test', author_name: 'Author' },
+          preview_image_key: 'p1/abc.webp',
+        }),
+      });
+
+      const res = await app.fetch(req, mockEnv, mockCtx);
+      expect(res.status).toBe(200);
+
+      expect(sendMessage).toHaveBeenCalledWith(
+        'test-token',
+        'test-moderation-channel',
+        expect.objectContaining({
+          components: [
+            expect.objectContaining({
+              type: 1,
+              components: expect.arrayContaining([
+                expect.objectContaining({
+                  type: 2,
+                  style: 3,
+                  custom_id: 'previewimg_approve_p1',
+                }),
+                expect.objectContaining({
+                  type: 2,
+                  style: 4,
+                  custom_id: 'previewimg_reject_p1',
+                }),
+              ]),
+            }),
+          ],
+        })
+      );
+    });
+
     // The 502 is load-bearing: presets-api only retries and dead-letters a
     // notification it is told failed. Swallowing a Discord rejection here
     // would lose the moderation-queue entry silently.

@@ -601,6 +601,13 @@
       "discord": "Discord"
     }
   },
+  "previewImage": {
+    "invalidButton": "無効なボタン操作です。",
+    "notPermitted": "プレビュー画像を審査する権限がありません。",
+    "actionFailed": "プレビュー画像の更新に失敗しました。もう一度お試しください。",
+    "approvedFooter": "{moderator} がプレビュー画像を承認しました",
+    "rejectedFooter": "{moderator} がプレビュー画像を却下しました（プリセット自体は変更されません）"
+  },
   "matchImage": {
     "missingImage": "分析する画像を添付してください。",
     "invalidAttachment": "添付された画像が見つかりませんでした。",

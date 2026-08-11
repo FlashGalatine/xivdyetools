@@ -601,6 +601,13 @@
       "discord": "Discord"
     }
   },
+  "previewImage": {
+    "invalidButton": "Ungültige Schaltflächeninteraktion.",
+    "notPermitted": "Du hast keine Berechtigung, Vorschaubilder zu moderieren.",
+    "actionFailed": "Das Vorschaubild konnte nicht aktualisiert werden. Bitte versuche es erneut.",
+    "approvedFooter": "Vorschaubild genehmigt von {moderator}",
+    "rejectedFooter": "Vorschaubild abgelehnt von {moderator} – Vorlage unverändert"
+  },
   "matchImage": {
     "missingImage": "Bitte hänge ein Bild zur Analyse an.",
     "invalidAttachment": "Angehängtes Bild konnte nicht gefunden werden.",

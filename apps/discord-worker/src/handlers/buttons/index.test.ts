@@ -16,7 +16,16 @@ vi.mock('./copy.js', () => ({
     createHexButton: vi.fn(),
 }));
 
+vi.mock('./preview-image.js', async () => {
+    const actual = await vi.importActual('./preview-image.js');
+    return {
+        ...actual,
+        handlePreviewImageButton: vi.fn(() => new Response(JSON.stringify({ type: 6 }))),
+    };
+});
+
 import { handleCopyHex, handleCopyRgb, handleCopyHsv } from './copy.js';
+import { handlePreviewImageButton } from './preview-image.js';
 
 interface InteractionResponseBody {
     type: number;
@@ -73,6 +82,32 @@ describe('buttons/index.ts', () => {
             await handleButtonInteraction(interaction, mockEnv, mockCtx);
 
             expect(handleCopyHsv).toHaveBeenCalledWith(interaction);
+        });
+
+        it('should route previewimg_approve_ buttons to handlePreviewImageButton', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app_id',
+                data: { custom_id: 'previewimg_approve_p1' },
+            };
+
+            await handleButtonInteraction(interaction, mockEnv, mockCtx);
+
+            expect(handlePreviewImageButton).toHaveBeenCalledWith(interaction, mockEnv, mockCtx, undefined);
+        });
+
+        it('should route previewimg_reject_ buttons to handlePreviewImageButton', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app_id',
+                data: { custom_id: 'previewimg_reject_p1' },
+            };
+
+            await handleButtonInteraction(interaction, mockEnv, mockCtx);
+
+            expect(handlePreviewImageButton).toHaveBeenCalledWith(interaction, mockEnv, mockCtx, undefined);
         });
 
         it('should return ephemeral message for unknown buttons', async () => {

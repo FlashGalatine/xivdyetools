@@ -203,6 +203,10 @@ app.post('/webhooks/preset-submission', async (c) => {
     }
     const adminT = createTranslator('en');
     const safeName = sanitizePresetName(payload.preset.name);
+    // Posted with discord-worker's own token (not MODERATION_BOT_TOKEN): the
+    // approve/reject buttons below are handled by THIS app (Task 9), and
+    // Discord routes component clicks to whichever application's bot posted
+    // the message.
     const imageRes = await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
       embeds: [
         {
@@ -216,6 +220,27 @@ app.post('/webhooks/preset-submission', async (c) => {
             ? { image: { url: `https://shots.xivdyetools.app/${payload.preview_image_key}` } }
             : {}),
           footer: { text: `ID: ${payload.preset.id}` },
+        },
+      ],
+      components: [
+        {
+          type: 1, // Action Row
+          components: [
+            {
+              type: 2, // Button
+              style: 3, // Success (green)
+              label: adminT.t('webhook.buttons.approve'),
+              custom_id: `previewimg_approve_${payload.preset.id}`,
+              emoji: { name: '✅' },
+            },
+            {
+              type: 2, // Button
+              style: 4, // Danger (red)
+              label: adminT.t('webhook.buttons.reject'),
+              custom_id: `previewimg_reject_${payload.preset.id}`,
+              emoji: { name: '❌' },
+            },
+          ],
         },
       ],
     });

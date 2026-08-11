@@ -584,6 +584,44 @@ export async function getModerationHistory(
 }
 
 /**
+ * Result of a preview-image moderation action.
+ * Mirrors presets-api's PATCH /api/v1/moderation/:presetId/preview-image contract.
+ */
+export interface PreviewImageModerationResult {
+  success: boolean;
+  preview_image_status: 'approved' | 'none';
+}
+
+/**
+ * Approve or reject a preset's pending preview image (moderators only).
+ *
+ * Rejecting deletes the image and resets its status to 'none' — it does NOT
+ * touch the preset's own status (a bad picture is not a bad palette).
+ *
+ * SECURITY: `moderatorId`/`moderatorName` must be the CLICKING user's Discord
+ * identity, not the bot's — presets-api authorises the moderator from the
+ * bot-auth headers these populate.
+ */
+export async function setPreviewImageStatus(
+  env: Env,
+  presetId: string,
+  action: 'approve' | 'reject',
+  moderatorId: string,
+  moderatorName?: string
+): Promise<PreviewImageModerationResult> {
+  return request<PreviewImageModerationResult>(
+    env,
+    'PATCH',
+    `/api/v1/moderation/${presetId}/preview-image`,
+    {
+      body: { action },
+      userDiscordId: moderatorId,
+      userName: moderatorName,
+    }
+  );
+}
+
+/**
  * Revert a preset to its previous values (moderators only)
  *
  * Used when an edit was flagged by content moderation and the moderator

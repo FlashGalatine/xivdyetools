@@ -21,6 +21,7 @@ import {
     getPendingPresets,
     approvePreset,
     rejectPreset,
+    setPreviewImageStatus,
     flagPreset,
     getModerationStats,
     getModerationHistory,
@@ -640,6 +641,64 @@ describe('preset-api.ts', () => {
                     body: JSON.stringify({ status: 'approved', reason: 'Looks good' }),
                 })
             );
+        });
+    });
+
+    describe('setPreviewImageStatus', () => {
+        it('should call the preview-image moderation route with action approve, the clicking user id and name', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ success: true, preview_image_status: 'approved' }),
+            });
+
+            const result = await setPreviewImageStatus(env, 'preset123', 'approve', 'mod123', 'ModName');
+
+            expect(result).toEqual({ success: true, preview_image_status: 'approved' });
+            expect(mockFetch).toHaveBeenCalledWith(
+                'https://api.example.com/api/v1/moderation/preset123/preview-image',
+                expect.objectContaining({
+                    method: 'PATCH',
+                    body: JSON.stringify({ action: 'approve' }),
+                    headers: expect.objectContaining({
+                        'X-User-Discord-ID': 'mod123',
+                        'X-User-Discord-Name': 'ModName',
+                    }),
+                })
+            );
+        });
+
+        it('should call the preview-image moderation route with action reject', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ success: true, preview_image_status: 'none' }),
+            });
+
+            const result = await setPreviewImageStatus(env, 'preset123', 'reject', 'mod123', 'ModName');
+
+            expect(result).toEqual({ success: true, preview_image_status: 'none' });
+            expect(mockFetch).toHaveBeenCalledWith(
+                'https://api.example.com/api/v1/moderation/preset123/preview-image',
+                expect.objectContaining({
+                    method: 'PATCH',
+                    body: JSON.stringify({ action: 'reject' }),
+                })
+            );
+        });
+
+        it('should surface a PresetAPIError when the moderation route rejects the request', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 403,
+                json: () => Promise.resolve({ error: 'Not a moderator' }),
+            });
+
+            await expect(setPreviewImageStatus(env, 'preset123', 'approve', 'user123')).rejects.toThrow(PresetAPIError);
         });
     });
 

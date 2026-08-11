@@ -601,6 +601,13 @@
       "discord": "Discord"
     }
   },
+  "previewImage": {
+    "invalidButton": "Invalid button interaction.",
+    "notPermitted": "You do not have permission to moderate preview images.",
+    "actionFailed": "Failed to update the preview image. Please try again.",
+    "approvedFooter": "Preview image approved by {moderator}",
+    "rejectedFooter": "Preview image rejected by {moderator} — preset unaffected"
+  },
   "matchImage": {
     "missingImage": "Please attach an image to analyze.",
     "invalidAttachment": "Could not find the attached image.",
