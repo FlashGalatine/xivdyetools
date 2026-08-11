@@ -669,15 +669,38 @@ In `updatePreset`, add these two blocks after the `updates.example_link` block:
   }
 ```
 
-- [ ] **Step 6: Run the tests**
+- [ ] **Step 6: Repair the remaining `CommunityPreset` literals in this package**
+
+Task 1 made `secondary_categories` and `preview_image_status` **required** on
+`CommunityPreset`. Steps 3-4 fix the two production sites (`rowToPreset` at
+`preset-service.ts:78`, `createPreset` at `:315`). Two test fixtures construct
+the type inline and also need both fields:
+
+`apps/presets-api/tests/types.test.ts`, at roughly lines 79 and 102 — add to each
+literal:
+
+```ts
+      secondary_categories: [],
+      preview_image_status: 'none',
+```
+
+Let the compiler enumerate any further sites. Add only those two fields.
+
+- [ ] **Step 7: Run the tests, then the workspace gate**
 
 Run: `pnpm --filter xivdyetools-presets-api exec vitest run tests/services/preset-service.test.ts`
 Expected: PASS, whole file.
 
-- [ ] **Step 7: Commit**
+Run: `pnpm turbo run type-check`
+Expected: **PASS across every package and app.** This task carries the
+workspace-wide gate — it is the last one repairing a `CommunityPreset`
+construction site broken by Task 1's required fields. If anything outside
+`apps/presets-api/` still fails here, stop and report rather than widening scope.
+
+- [ ] **Step 8: Commit**
 
 ```bash
-git add apps/presets-api/src/services/preset-service.ts apps/presets-api/tests/services/preset-service.test.ts
+git add apps/presets-api/src/services/preset-service.ts apps/presets-api/tests/services/preset-service.test.ts apps/presets-api/tests/types.test.ts
 git commit -m "feat(presets-api): parse, serialize and persist secondary_categories"
 ```
 
@@ -2715,13 +2738,32 @@ entry — this fixture deliberately omits `icon`, so match it:
 If a test asserts an exact category **count** (e.g. `expect(categories).toHaveLength(5)`),
 update it to 8 — the fixture genuinely has eight now.
 
-- [ ] **Step 6: Verify the whole workspace is green**
+- [ ] **Step 5b: moderation-worker test fixtures**
 
-Run: `pnpm turbo run type-check`
-Expected: PASS across every package and app — this is the gate for this task.
+Task 1 made `secondary_categories` and `preview_image_status` **required** on
+`CommunityPreset`, so every inline `CommunityPreset` literal in this package's
+tests no longer compiles. Add `secondary_categories: []` and
+`preview_image_status: 'none'` to each one in:
+
+- `apps/moderation-worker/src/handlers/buttons/preset-moderation.test.ts`
+- `apps/moderation-worker/src/handlers/commands/preset.test.ts`
+
+Let the compiler enumerate the sites. Add only those two fields — do not
+restructure the fixtures.
+
+- [ ] **Step 6: Verify this task's three packages**
+
+Run: `pnpm turbo run type-check --filter=@xivdyetools/core --filter=@xivdyetools/svg --filter=xivdyetools-moderation-worker`
+Expected: PASS — this is the gate for this task.
 
 Run: `pnpm turbo run test --filter=@xivdyetools/core --filter=@xivdyetools/svg --filter=xivdyetools-moderation-worker -- --run`
 Expected: PASS.
+
+**A workspace-wide `type-check` still fails here, in `presets-api`, and that is
+correct.** `rowToPreset` and `createPreset` in
+`apps/presets-api/src/services/preset-service.ts` return `CommunityPreset`
+objects missing the two new required fields; **Task 5** adds them. Task 5
+carries the workspace-wide gate. Do not touch `apps/presets-api/` in this task.
 
 - [ ] **Step 7: Commit**
 
