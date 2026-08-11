@@ -3,9 +3,10 @@
  *
  * The geometry home is `@xivdyetools/svg`: the confirmed 32-grid category set
  * (jobs = mage's staff, grand-companies = flag, seasons = quartered disc,
- * events = five-ray, aesthetics = hanger) — five categories, five icons; the
- * retired `community` category has no icon. Unknown categories fall back to
- * the neutral chip-row glyph.
+ * events = five-ray, aesthetics = hanger, appearance = head in profile,
+ * zones = ridgeline, raids-trials = crossed blades) — eight categories, eight
+ * icons; the retired `community` category has no icon. Unknown categories
+ * fall back to the neutral chip-row glyph.
  *
  * SECURITY NOTE: These SVG constants are used with innerHTML in preset UI.
  * This is SAFE because content is static/code-defined, not user input.
@@ -21,7 +22,7 @@ const glyph = (name: CategoryGlyphName): string =>
   themedAccent(categoryGlyph(name, { fluid: true }));
 
 /**
- * Map of category names to their SVG icons (the five submittable categories).
+ * Map of category names to their SVG icons (the eight submittable categories).
  */
 const CATEGORY_ICONS: Record<string, string> = {
   jobs: glyph('jobs'),
@@ -29,6 +30,9 @@ const CATEGORY_ICONS: Record<string, string> = {
   seasons: glyph('seasons'),
   events: glyph('events'),
   aesthetics: glyph('aesthetics'),
+  appearance: glyph('appearance'),
+  zones: glyph('zones'),
+  'raids-trials': glyph('raids-trials'),
 };
 
 const ICON_CATEGORY_DEFAULT = glyph('default');

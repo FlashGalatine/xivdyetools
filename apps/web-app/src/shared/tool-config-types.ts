@@ -177,7 +177,15 @@ export interface MixerConfig {
  * Preset category types (matches backend categories)
  */
 export type PresetCategoryFilter =
-  'all' | 'jobs' | 'grand-companies' | 'seasons' | 'events' | 'aesthetics';
+  | 'all'
+  | 'jobs'
+  | 'grand-companies'
+  | 'seasons'
+  | 'events'
+  | 'aesthetics'
+  | 'appearance'
+  | 'zones'
+  | 'raids-trials';
 
 /**
  * Preset sort options

@@ -62,6 +62,9 @@ const CATEGORY_LABEL_KEYS: Record<PresetCategoryFilter, string> = {
   seasons: 'preset.categories.seasons',
   events: 'preset.categories.events',
   aesthetics: 'preset.categories.aesthetics',
+  appearance: 'preset.categories.appearance',
+  zones: 'preset.categories.zones',
+  'raids-trials': 'preset.categories.raidsTrials',
 };
 
 /**
