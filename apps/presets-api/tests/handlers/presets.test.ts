@@ -13,6 +13,7 @@ import {
     createMockD1Database,
     createMockPresetRow,
     createMockSubmission,
+    authHeaders,
 } from '../test-utils';
 
 type Variables = {
@@ -2797,6 +2798,94 @@ describe('PresetsHandler', () => {
             );
 
             expect(res.status).toBe(400);
+        });
+    });
+
+    // ============================================
+    // DELETE /api/v1/presets/:id/preview-image
+    // ============================================
+
+    describe('DELETE /api/v1/presets/:id/preview-image', () => {
+        // Task 8 (2026-08-11): authHeaders(token, userId?, userName?) takes the
+        // bot token first. A lone positional arg only sets Authorization and
+        // leaves X-User-Discord-ID unset, so authMiddleware never authenticates
+        // (BOT_API_SECRET mismatch, then a failed JWT parse) and every case here
+        // would 401 before reaching the route. Passing the mock bot secret
+        // explicitly matches this file's convention elsewhere (Authorization:
+        // 'Bearer test-bot-secret' + X-User-Discord-ID).
+        it('clears the key and status for the author', async () => {
+            mockDb._setupMock(() => [
+                { author_discord_id: '123456789', preview_image_key: 'p1/a.webp', name: 'Test' },
+            ]);
+
+            const res = await app.request(
+                '/api/v1/presets/p1/preview-image',
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            expect(await res.json()).toEqual({ success: true, preview_image_status: 'none' });
+            expect(mockDb._queries.join(' ')).toContain('preview_image_key = NULL');
+        });
+
+        it('refuses a non-author', async () => {
+            mockDb._setupMock(() => [
+                { author_discord_id: '999999999', preview_image_key: 'p1/a.webp', name: 'Test' },
+            ]);
+
+            const res = await app.request(
+                '/api/v1/presets/p1/preview-image',
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } },
+                env
+            );
+
+            expect(res.status).toBe(403);
+        });
+
+        it('404s an unknown preset', async () => {
+            mockDb._setupMock(() => []);
+
+            const res = await app.request(
+                '/api/v1/presets/nope/preview-image',
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } },
+                env
+            );
+
+            expect(res.status).toBe(404);
+        });
+
+        it('is idempotent when there is no image', async () => {
+            mockDb._setupMock(() => [
+                { author_discord_id: '123456789', preview_image_key: null, name: 'Test' },
+            ]);
+
+            const res = await app.request(
+                '/api/v1/presets/p1/preview-image',
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } },
+                env
+            );
+
+            expect(res.status).toBe(200);
+        });
+
+        it('still succeeds when the R2 delete throws', async () => {
+            // The DB already reflects the removal; an R2 hiccup must not 500 a
+            // request whose state is already correct.
+            mockDb._setupMock(() => [
+                { author_discord_id: '123456789', preview_image_key: 'p1/a.webp', name: 'Test' },
+            ]);
+            (env.THUMBNAILS as unknown as MockR2Bucket).delete = () => {
+                throw new Error('R2 down');
+            };
+
+            const res = await app.request(
+                '/api/v1/presets/p1/preview-image',
+                { method: 'DELETE', headers: { ...authHeaders('test-bot-secret', '123456789') } },
+                env
+            );
+
+            expect(res.status).toBe(200);
         });
     });
 });

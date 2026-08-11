@@ -802,6 +802,64 @@ presetsRouter.post('/:id/preview-image', async (c) => {
   return c.json({ success: true, status: 'pending' });
 });
 
+/**
+ * DELETE /:id/preview-image — the author removes their card picture.
+ *
+ * Author-only; a moderator removing an image uses the existing reject action,
+ * which is an act of moderation and belongs in the moderation log.
+ *
+ * The preset's own `status` is deliberately untouched. Clearing the image
+ * clears the only condition the picture contributes to the moderation queue
+ * predicate, so a preset queued *solely* for its image leaves the queue here,
+ * while one that is also `status = 'pending'` for flagged text correctly stays.
+ * That is what "auto-pass assuming all other checks pass" means, and it needs
+ * no state of its own.
+ *
+ * Content moderation is NOT re-run: doing so would let an author launder
+ * flagged text by attaching and removing a picture.
+ */
+presetsRouter.delete('/:id/preview-image', async (c) => {
+  const authError = requireAuth(c);
+  if (authError) return authError;
+
+  const userError = requireUserContext(c);
+  if (userError) return userError;
+
+  const auth = c.get('auth');
+  const presetId = c.req.param('id');
+
+  // Row-level read: CommunityPreset hides preview_image_key by design.
+  const preset = await getPresetImageState(c.env.DB, presetId);
+  if (!preset) {
+    return notFoundResponse(c, 'Preset');
+  }
+
+  if (preset.author_discord_id !== auth.userDiscordId) {
+    return forbiddenResponse(c, 'Only the author can remove the preview image');
+  }
+
+  // Idempotent: nothing to remove is a success, not a 404. The client may be
+  // retrying, and the end state it asked for already holds.
+  const previousKey = preset.preview_image_key;
+
+  // DB UPDATE before the R2 delete, as everywhere else in this file: a failed
+  // delete orphans an invisible object, while the reverse leaves a row pointing
+  // at a key that no longer exists.
+  await c.env.DB.prepare(
+    `UPDATE presets SET preview_image_key = NULL, preview_image_status = 'none', updated_at = ? WHERE id = ?`
+  )
+    .bind(new Date().toISOString(), presetId)
+    .run();
+
+  try {
+    await deletePreviewImage(c.env, previousKey);
+  } catch (err) {
+    console.error(`[preview-image] R2 delete failed after author removal: id=${presetId}`, err);
+  }
+
+  return c.json({ success: true, preview_image_status: 'none' });
+});
+
 // ============================================
 // VALIDATION HELPERS
 // ============================================
