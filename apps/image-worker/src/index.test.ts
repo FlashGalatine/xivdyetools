@@ -24,10 +24,11 @@ vi.mock('./validators.js', () => ({
 }));
 vi.mock('./photon.js', () => ({
   processImageForExtraction: vi.fn(),
+  processImageForThumbnail: vi.fn(),
 }));
 
 import { validateAndFetchImage } from './validators.js';
-import { processImageForExtraction } from './photon.js';
+import { processImageForExtraction, processImageForThumbnail } from './photon.js';
 
 describe('POST /extract', () => {
   beforeEach(() => {
@@ -121,5 +122,43 @@ describe('POST /extract', () => {
 
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: 'No image URL provided' });
+  });
+});
+
+describe('POST /thumbnail', () => {
+  beforeEach(() => {
+    vi.mocked(processImageForThumbnail).mockReset();
+  });
+
+  it('rejects an empty body', async () => {
+    const res = await app.request(
+      'http://localhost/thumbnail',
+      {
+        method: 'POST',
+        body: new Uint8Array(0),
+      },
+      env
+    );
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: 'No image data provided' });
+  });
+
+  it('rejects bytes that are not a decodable image', async () => {
+    vi.mocked(processImageForThumbnail).mockImplementationOnce(() => {
+      throw new Error('Failed to load image: Invalid image format');
+    });
+
+    const res = await app.request(
+      'http://localhost/thumbnail',
+      {
+        method: 'POST',
+        body: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]),
+      },
+      env
+    );
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({
+      error: 'Failed to load image: Invalid image format',
+    });
   });
 });

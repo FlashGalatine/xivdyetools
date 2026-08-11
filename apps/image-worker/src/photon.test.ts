@@ -37,6 +37,7 @@ import {
     extractPixels,
     processImageForExtraction,
     getImageDimensions,
+    computeCropBox,
 } from './photon.js';
 import { PhotonImage, resize, SamplingFilter } from '@cf-wasm/photon';
 
@@ -236,6 +237,48 @@ describe('photon image processing', () => {
             const buffer = new Uint8Array([0, 0, 0, 0]);
 
             expect(() => getImageDimensions(buffer)).toThrow();
+        });
+    });
+
+    describe('computeCropBox', () => {
+        it('takes the middle band of a landscape image', () => {
+            // 1920x1080 (1.78) is landscape -> vertically centred
+            const box = computeCropBox(1920, 1080);
+            expect(box.x1).toBe(0);
+            expect(box.x2).toBe(1920);
+            // band height = round(1920 / 2.4242) = 792; y = round((1080-792)/2) = 144
+            expect(box.y2 - box.y1).toBe(792);
+            expect(box.y1).toBe(144);
+        });
+
+        it('takes the upper band of a portrait image', () => {
+            // 1080x1920 (0.5625) is portrait -> flush to the top
+            const box = computeCropBox(1080, 1920);
+            expect(box.y1).toBe(0);
+            expect(box.x1).toBe(0);
+            expect(box.x2).toBe(1080);
+            expect(box.y2 - box.y1).toBe(446); // round(1080 / 2.4242)
+        });
+
+        it('takes the upper band of a square image', () => {
+            const box = computeCropBox(1000, 1000);
+            expect(box.y1).toBe(0);
+            expect(box.y2 - box.y1).toBe(413); // round(1000 / 2.4242)
+        });
+
+        it('treats 4:3 as landscape, not square', () => {
+            // 1.333 > 1.05, so the band is vertically centred rather than flush to the top
+            const box = computeCropBox(1600, 1200);
+            expect(box.y1).toBeGreaterThan(0);
+        });
+
+        it('never exceeds the source bounds on an ultra-wide image', () => {
+            // 3000x400 (7.5) is wider than the target ratio: the band is width-limited
+            const box = computeCropBox(3000, 400);
+            expect(box.y1).toBe(0);
+            expect(box.y2).toBe(400);
+            expect(box.x2 - box.x1).toBe(970); // round(400 * 2.4242)
+            expect(box.x2).toBeLessThanOrEqual(3000);
         });
     });
 });

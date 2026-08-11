@@ -15,7 +15,7 @@ import { Hono } from 'hono';
 import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-kit';
 import type { Env } from './types.js';
 import { validateAndFetchImage } from './validators.js';
-import { processImageForExtraction } from './photon.js';
+import { processImageForExtraction, processImageForThumbnail } from './photon.js';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -65,6 +65,34 @@ app.post('/extract', async (c) => {
         'X-Image-Width': String(processed.width),
         'X-Image-Height': String(processed.height),
       },
+    });
+  } catch (error) {
+    return c.json(
+      { error: error instanceof Error ? error.message : 'Image processing failed' },
+      400
+    );
+  }
+});
+
+/**
+ * Crop and encode an uploaded image into a card thumbnail.
+ *
+ * Internal only — reached via service binding from presets-api. Unlike
+ * /extract this takes raw bytes rather than a URL: the caller already holds
+ * the file, so there is nothing to fetch and no SSRF surface.
+ */
+app.post('/thumbnail', async (c) => {
+  const buffer = new Uint8Array(await c.req.arrayBuffer());
+
+  if (buffer.byteLength === 0) {
+    return c.json({ error: 'No image data provided' }, 400);
+  }
+
+  try {
+    const webp = processImageForThumbnail(buffer);
+    return new Response(webp, {
+      status: 200,
+      headers: { 'Content-Type': 'image/webp' },
     });
   } catch (error) {
     return c.json(

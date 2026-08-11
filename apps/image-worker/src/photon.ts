@@ -12,7 +12,7 @@
  * @module services/image/photon
  */
 
-import { PhotonImage, SamplingFilter, resize } from '@cf-wasm/photon';
+import { PhotonImage, SamplingFilter, resize, crop } from '@cf-wasm/photon';
 
 // ============================================================================
 // Types
@@ -49,6 +49,19 @@ const DEFAULT_MAX_DIMENSION = 256;
 
 /** Default sampling filter for best quality */
 const DEFAULT_SAMPLING_FILTER = SamplingFilter.Lanczos3;
+
+/** Card shot slot is 320x132; we encode at 2x for retina. */
+export const THUMBNAIL_WIDTH = 640;
+export const THUMBNAIL_HEIGHT = 264;
+const TARGET_ASPECT = THUMBNAIL_WIDTH / THUMBNAIL_HEIGHT; // ~2.4242
+
+/**
+ * "Landscape" means wider than tall, so 4:3 (1.33) and 3:2 (1.50) are
+ * landscape. The 0.05 tolerance only stops a nominally-square image being
+ * treated as landscape by a rounding error; square and portrait share the same
+ * branch, so the rule is one comparison.
+ */
+const LANDSCAPE_ASPECT_THRESHOLD = 1.05;
 
 // ============================================================================
 // Core Functions
@@ -218,6 +231,66 @@ export function getImageDimensions(buffer: Uint8Array): { width: number; height:
         image.free();
       } catch {
         // Ignore errors during cleanup
+      }
+    }
+  }
+}
+
+/**
+ * The largest band of the target aspect ratio that fits inside the source,
+ * positioned per the crop rule: middle for landscape, upper for square and
+ * portrait. Always horizontally centred.
+ *
+ * Glamour shots are usually portrait with the character's head high in frame,
+ * which is why those crop from the top rather than the centre.
+ */
+export function computeCropBox(
+  width: number,
+  height: number
+): { x1: number; y1: number; x2: number; y2: number } {
+  let bandWidth = width;
+  let bandHeight = Math.round(width / TARGET_ASPECT);
+
+  if (bandHeight > height) {
+    // Source is wider than the target ratio — the band is limited by width.
+    bandHeight = height;
+    bandWidth = Math.round(height * TARGET_ASPECT);
+  }
+
+  const x1 = Math.round((width - bandWidth) / 2);
+  const isLandscape = width / height > LANDSCAPE_ASPECT_THRESHOLD;
+  const y1 = isLandscape ? Math.round((height - bandHeight) / 2) : 0;
+
+  return { x1, y1, x2: x1 + bandWidth, y2: y1 + bandHeight };
+}
+
+/**
+ * Decode -> crop to the card band -> resize to exactly 640x264 -> WebP.
+ *
+ * The decode/encode round trip also drops EXIF, so GPS coordinates in an
+ * author's screenshot never reach R2.
+ */
+export function processImageForThumbnail(buffer: Uint8Array): Uint8Array {
+  let original: PhotonImage | null = null;
+  let cropped: PhotonImage | null = null;
+  let resized: PhotonImage | null = null;
+
+  try {
+    original = loadImage(buffer);
+    const box = computeCropBox(original.get_width(), original.get_height());
+    cropped = crop(original, box.x1, box.y1, box.x2, box.y2);
+    resized = resize(cropped, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, SamplingFilter.Lanczos3);
+    return resized.get_bytes_webp();
+  } finally {
+    // Distinct references only — freeing the same pointer twice corrupts the
+    // WASM heap.
+    for (const img of new Set([original, cropped, resized])) {
+      if (img) {
+        try {
+          img.free();
+        } catch {
+          // already freed
+        }
       }
     }
   }
