@@ -145,6 +145,18 @@ async function validatePresetIdOrSendError(
 
 /**
  * Handle 'pending' action - list presets awaiting moderation
+ *
+ * FINDING-001 (2026-08-11 fix wave): the queue mixes two different reasons a
+ * preset needs a moderator \u2014 its own text is pending, or (since the queue
+ * widened) an already-approved preset's NEW picture is pending. Only the
+ * first kind is safe to approve/reject from this command: approving an
+ * image-only entry is a `WHERE status = 'approved'` no-op that leaves it
+ * stuck in the queue forever, and rejecting one takes a live, approved
+ * palette out of the gallery over a disliked picture \u2014 exactly backwards
+ * from "a bad picture is not a bad palette". `status === 'approved'` is the
+ * unambiguous signal for "image-only" (its text needs nothing); image review
+ * itself happens on the moderation embed discord-worker posts (see
+ * apps/discord-worker/src/handlers/buttons/preview-image.ts), not here.
  */
 async function handlePendingAction(ctx: ModerationContext): Promise<void> {
   const presets = await presetApi.getPendingPresets(ctx.env, ctx.userId);
@@ -161,9 +173,27 @@ async function handlePendingAction(ctx: ModerationContext): Promise<void> {
     return;
   }
 
-  const presetLines = presets.slice(0, 10).map((preset, i) => {
-    return `**${i + 1}.** ${preset.name} by ${preset.author_name || 'Unknown'}\n   ID: \`${preset.id}\``;
+  const visiblePresets = presets.slice(0, 10);
+  const hasImageOnlyEntries = visiblePresets.some((preset) => preset.status === 'approved');
+
+  const presetLines = visiblePresets.map((preset, i) => {
+    const base = `**${i + 1}.** ${preset.name} by ${preset.author_name || 'Unknown'}\n   ID: \`${preset.id}\``;
+
+    // Text-pending entries keep today's rendering untouched.
+    if (preset.status !== 'approved') {
+      return base;
+    }
+
+    const imageNote = preset.pending_preview_image_url
+      ? ctx.t.t('preset.moderation.imageOnlyNote', { url: preset.pending_preview_image_url })
+      : ctx.t.t('preset.moderation.imageOnlyNoteNoUrl');
+
+    return `\uD83D\uDDBC ${base}\n   ${imageNote}`;
   });
+
+  const footerText = hasImageOnlyEntries
+    ? ctx.t.t('preset.moderation.footerMixedQueue')
+    : ctx.t.t('preset.moderation.footerTextOnly');
 
   await sendModerationResponse(ctx, {
     embeds: [
@@ -175,7 +205,7 @@ async function handlePendingAction(ctx: ModerationContext): Promise<void> {
           presetLines.join('\n\n'),
         ].join('\n'),
         color: 0xfee75c,
-        footer: { text: 'Use /preset moderate approve <id> or reject <id> <reason>' },
+        footer: { text: footerText },
       },
     ],
   });

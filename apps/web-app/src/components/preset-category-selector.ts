@@ -45,12 +45,44 @@ export const MAX_CATEGORIES = 3;
 const CHIP_BASE =
   'px-3 py-2 rounded-lg border text-sm transition-all flex items-center justify-center gap-1 relative';
 
+/**
+ * Field label row: localized label + REQUIRED chip. Visually matches the
+ * sibling fields' `fieldLabelRow` in preset-submission-form.ts — that helper
+ * is private to the form module, so it is reimplemented once here rather than
+ * imported, and lives in the selector (not each form) since both the
+ * submission and edit forms embed this control. A preset's category is
+ * always required (removing the last one is refused by `toggle()` below), so
+ * unlike the form's version this never renders an OPTIONAL variant.
+ */
+function fieldLabelRow(labelText: string, reqText: string): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'flex items-center justify-between mb-1';
+  const label = document.createElement('span');
+  label.className = 'text-sm font-medium';
+  label.style.color = 'var(--theme-text)';
+  label.textContent = labelText;
+  const chip = document.createElement('span');
+  chip.style.cssText =
+    "font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; padding: 2px 6px; border-radius: 4px; background: color-mix(in srgb, var(--theme-primary) 14%, transparent); color: var(--theme-primary);";
+  chip.textContent = reqText;
+  row.appendChild(label);
+  row.appendChild(chip);
+  return row;
+}
+
 export function createCategorySelector(
   selection: CategorySelection,
   onChange?: () => void
 ): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'form-field';
+
+  // Named fieldLabel, not label: render() below declares its own per-chip
+  // `label` span, and that inner declaration would otherwise shadow this one.
+  const fieldLabel = fieldLabelRow(
+    LanguageService.t('preset.fieldCategory'),
+    LanguageService.t('preset.reqRequired')
+  );
 
   const grid = document.createElement('div');
   grid.className = 'grid grid-cols-3 gap-2';
@@ -151,6 +183,7 @@ export function createCategorySelector(
 
   render();
 
+  wrapper.appendChild(fieldLabel);
   wrapper.appendChild(grid);
   wrapper.appendChild(hint);
   return wrapper;

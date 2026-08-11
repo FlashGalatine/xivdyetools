@@ -418,6 +418,132 @@ describe('handlePresetCommand', () => {
           embeds: expect.arrayContaining([
             expect.objectContaining({
               description: expect.stringContaining('2 preset(s) pending'),
+              footer: { text: 'Use /preset moderate approve <id> or reject <id> <reason>' },
+            }),
+          ]),
+        })
+      );
+    });
+
+    // FINDING-001 (2026-08-11 fix wave): the widened queue includes approved
+    // presets whose picture alone is pending. Those must render distinctly
+    // and the footer must stop advertising approve/reject for them.
+    it('should mark image-only entries and switch the footer when the queue mixes both kinds', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
+
+      vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(presetApi.getPendingPresets).mockResolvedValue([
+        {
+          id: 'preset-1',
+          name: 'Text Pending Preset',
+          description: 'Description 1',
+          author_discord_id: 'author-1',
+          author_name: 'Author One',
+          status: 'pending',
+          created_at: '2025-01-15T10:00:00Z',
+          updated_at: '2025-01-15T10:00:00Z',
+          category_id: 'jobs',
+          dyes: [],
+          tags: [],
+          vote_count: 0,
+          is_curated: false,
+          secondary_categories: [],
+          preview_image_status: 'none',
+        },
+        {
+          id: 'preset-2',
+          name: 'Image Only Preset',
+          description: 'Description 2',
+          author_discord_id: 'author-2',
+          author_name: 'Author Two',
+          // Text needs nothing — only the picture is under review.
+          status: 'approved',
+          created_at: '2025-01-15T11:00:00Z',
+          updated_at: '2025-01-15T11:00:00Z',
+          category_id: 'aesthetics',
+          dyes: [],
+          tags: [],
+          vote_count: 0,
+          is_curated: false,
+          secondary_categories: [],
+          preview_image_status: 'pending',
+          pending_preview_image_url: 'https://shots.xivdyetools.app/preset-2/abc.png',
+        },
+      ]);
+
+      const interaction: DiscordInteraction = {
+        id: 'int-1',
+        token: 'token-1',
+        application_id: 'app-123',
+        type: 2,
+        channel_id: 'channel-moderation',
+        member: { user: { id: 'mod-1', username: 'Moderator' } },
+        data: {
+          name: 'preset',
+          options: [
+            {
+              name: 'moderate',
+              type: 1,
+              options: [{ name: 'action', type: 3, value: 'pending' }],
+            },
+          ],
+        },
+      };
+
+      await handlePresetCommand(interaction, env, ctx, t);
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
+      if (waitUntilPromise) await waitUntilPromise;
+
+      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+        'app-123',
+        'token-1',
+        expect.objectContaining({
+          embeds: expect.arrayContaining([
+            expect.objectContaining({
+              description: expect.stringContaining(
+                'Picture pending review: https://shots.xivdyetools.app/preset-2/abc.png'
+              ),
+              footer: {
+                text: 'approve/reject apply to the text entries only — 🖼 entries are reviewed on the moderation embed in Discord',
+              },
+            }),
+          ]),
+        })
+      );
+
+      // The text-pending entry keeps today's plain rendering — no 🖼 marker.
+      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+        'app-123',
+        'token-1',
+        expect.objectContaining({
+          embeds: expect.arrayContaining([
+            expect.objectContaining({
+              description: expect.stringContaining('**1.** Text Pending Preset by Author One'),
+            }),
+          ]),
+        })
+      );
+      expect(discordApi.editOriginalResponse).not.toHaveBeenCalledWith(
+        'app-123',
+        'token-1',
+        expect.objectContaining({
+          embeds: expect.arrayContaining([
+            expect.objectContaining({
+              description: expect.stringContaining('🖼 **1.**'),
+            }),
+          ]),
+        })
+      );
+
+      // The image-only entry IS marked.
+      expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
+        'app-123',
+        'token-1',
+        expect.objectContaining({
+          embeds: expect.arrayContaining([
+            expect.objectContaining({
+              description: expect.stringContaining('🖼 **2.** Image Only Preset by Author Two'),
             }),
           ]),
         })

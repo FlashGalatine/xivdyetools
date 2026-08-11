@@ -56,6 +56,16 @@ const enLocale: LocaleData = {
       rejected: 'Preset Rejected',
       rejectedDesc: '**{name}** has been rejected.',
       stats: 'Moderation Statistics',
+      // FINDING-001 (2026-08-11 fix wave): the queue was widened to include
+      // approved presets whose picture alone is pending, but approve/reject
+      // act on the preset's own status — the wrong tool for those entries.
+      // These keys mark them instead of offering the two actions that would
+      // either no-op forever or wrongly pull a live palette from the gallery.
+      imageOnlyNote: 'Picture pending review: {url}',
+      imageOnlyNoteNoUrl: 'Picture pending review',
+      footerTextOnly: 'Use /preset moderate approve <id> or reject <id> <reason>',
+      footerMixedQueue:
+        'approve/reject apply to the text entries only — 🖼 entries are reviewed on the moderation embed in Discord',
     },
     status: {
       pending: 'Pending',

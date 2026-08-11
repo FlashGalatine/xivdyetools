@@ -19,6 +19,7 @@ import type {
   ModerationStats,
   ModerationLogEntry,
   PresetFilters,
+  ModerationQueueEntry,
 } from '../types/preset.js';
 import { PresetAPIError } from '../types/preset.js';
 
@@ -345,12 +346,18 @@ export async function getPreset(env: Env, id: string): Promise<CommunityPreset |
 
 /**
  * Get presets pending moderation
+ *
+ * FINDING-001 (2026-08-11 fix wave): typed as ModerationQueueEntry[], not
+ * CommunityPreset[] — the API has always included `pending_preview_image_url`
+ * on this endpoint (presets-api's ModerationQueueEntry), but this client
+ * discarded it at the type level, leaving handlePendingAction with no way to
+ * tell a text-pending entry from an image-only one.
  */
 export async function getPendingPresets(
   env: Env,
   moderatorId: string
-): Promise<CommunityPreset[]> {
-  const response = await request<{ presets: CommunityPreset[] }>(
+): Promise<ModerationQueueEntry[]> {
+  const response = await request<{ presets: ModerationQueueEntry[] }>(
     env,
     'GET',
     '/api/v1/moderation/pending',

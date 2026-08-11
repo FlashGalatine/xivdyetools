@@ -488,8 +488,12 @@ const PREVIEW_IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp';
 /**
  * Preview image: upload, replace, or remove.
  *
- * A new upload re-queues the IMAGE only — the preset stays live in the gallery
- * showing its previous picture until a moderator approves the new one.
+ * A new upload re-queues the IMAGE only — the preset's own status is never
+ * touched, and the preset itself stays live and listed throughout. But a
+ * REPLACEMENT is not a quiet swap: `POST /:id/preview-image` overwrites
+ * `preview_image_key` and deletes the old R2 object in the same request, so
+ * `preview_image_url` goes null immediately — the card shows no picture at
+ * all (not the old one) until a moderator approves the new upload.
  * Removing clears the picture and, with it, the only reason the preset was in
  * the queue for its image.
  */

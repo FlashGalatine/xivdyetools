@@ -25,6 +25,17 @@ describe('preset category selector', () => {
     expect(SELECTABLE_CATEGORIES as readonly string[]).not.toContain('all');
   });
 
+  it('renders a field label with a required marker', () => {
+    const selection: CategorySelection = { primary: 'jobs', secondary: [] };
+    const el = createCategorySelector(selection);
+
+    // Regression guard: the label + REQUIRED chip were dropped when the
+    // submission/edit forms' own labelled rows were replaced by this shared
+    // selector, leaving eight unheaded chips and no accessible field name.
+    expect(el.textContent).toContain('Category');
+    expect(el.textContent).toContain('REQUIRED');
+  });
+
   it('marks the initial primary with rank 1', () => {
     const selection: CategorySelection = { primary: 'jobs', secondary: [] };
     const el = createCategorySelector(selection);
