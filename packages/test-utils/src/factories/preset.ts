@@ -35,7 +35,6 @@ export interface PresetRow {
   category_id: string;
   dyes: string; // JSON string
   tags: string; // JSON string
-  secondary_categories?: string | null; // JSON string array or null
   author_discord_id: string | null;
   author_name: string | null;
   vote_count: number;
@@ -200,9 +199,6 @@ export function presetToRow(preset: CommunityPreset): PresetRow {
     ...preset,
     dyes: JSON.stringify(preset.dyes),
     tags: JSON.stringify(preset.tags),
-    secondary_categories: preset.secondary_categories
-      ? JSON.stringify(preset.secondary_categories)
-      : null,
     is_curated: preset.is_curated ? 1 : 0,
     dye_signature: JSON.stringify(preset.dyes),
     previous_values: null,
@@ -224,9 +220,7 @@ export function rowToPreset(row: PresetRow): CommunityPreset {
     name: row.name,
     description: row.description,
     category_id: row.category_id as PresetCategory,
-    secondary_categories: row.secondary_categories
-      ? JSON.parse(row.secondary_categories)
-      : [],
+    secondary_categories: [],
     dyes: JSON.parse(row.dyes),
     tags: JSON.parse(row.tags),
     author_discord_id: row.author_discord_id,
