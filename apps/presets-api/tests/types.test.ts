@@ -81,6 +81,7 @@ describe('Types', () => {
                 name: 'Test Preset',
                 description: 'Test Description',
                 category_id: 'aesthetics',
+                secondary_categories: [],
                 dyes: [1, 2, 3],
                 tags: ['tag1', 'tag2'],
                 author_discord_id: '123',
@@ -90,6 +91,7 @@ describe('Types', () => {
                 is_curated: false,
                 created_at: '2025-06-15T12:00:00Z',
                 updated_at: '2025-06-15T12:00:00Z',
+                preview_image_status: 'none',
             };
 
             expect(preset.id).toBeDefined();
@@ -104,6 +106,7 @@ describe('Types', () => {
                 name: 'Test Preset',
                 description: 'Test Description',
                 category_id: 'aesthetics',
+                secondary_categories: [],
                 dyes: [1, 2, 3],
                 tags: [],
                 author_discord_id: null,
@@ -120,6 +123,7 @@ describe('Types', () => {
                     tags: [],
                     dyes: [1, 2],
                 },
+                preview_image_status: 'none',
             };
 
             expect(preset.author_discord_id).toBeNull();
@@ -289,6 +293,7 @@ describe('Types', () => {
                 example_link: null,
                 preview_image_key: null,
                 preview_image_status: 'none',
+                secondary_categories: '[]',
             };
 
             expect(typeof row.dyes).toBe('string');

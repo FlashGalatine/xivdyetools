@@ -20,7 +20,10 @@ INSERT OR IGNORE INTO categories (id, name, description, icon, is_curated, displ
   ('grand-companies', 'Grand Companies', 'Official Grand Company colors', '🏛️', 1, 2),
   ('seasons', 'Seasons', 'Seasonal color palettes', '🌸', 1, 3),
   ('events', 'FFXIV Events', 'Colors for in-game seasonal events', '🎉', 1, 4),
-  ('aesthetics', 'Aesthetics', 'General aesthetic themes', '✨', 1, 5);
+  ('aesthetics', 'Aesthetics', 'General aesthetic themes', '✨', 1, 5),
+  ('appearance', 'Appearance', 'Palettes built around a character''s own colours', '👤', 1, 6),
+  ('zones', 'Zones', 'Palettes drawn from the places of Eorzea', '🏔️', 1, 7),
+  ('raids-trials', 'Raids & Trials', 'Palettes from raid and trial encounters', '🗡️', 1, 8);
 
 -- ============================================
 -- PRESETS TABLE
@@ -48,6 +51,8 @@ CREATE TABLE IF NOT EXISTS presets (
   example_link TEXT,
   preview_image_key TEXT,
   preview_image_status TEXT NOT NULL DEFAULT 'none',
+  -- Up to two additional categories; category_id remains the primary
+  secondary_categories TEXT NOT NULL DEFAULT '[]',
 
   FOREIGN KEY (category_id) REFERENCES categories(id)
 );

@@ -103,6 +103,7 @@ export interface PresetRow {
   example_link: string | null; // 8A: allowlisted page URL, stored not copied
   preview_image_key: string | null; // R2 key, {presetId}/{uuid}.webp
   preview_image_status: string; // 'none' | 'pending' | 'approved'
+  secondary_categories: string; // JSON array of PresetCategory; never null
   rejection_reason?: string | null; // joined from moderation_log on /mine only
 }
 

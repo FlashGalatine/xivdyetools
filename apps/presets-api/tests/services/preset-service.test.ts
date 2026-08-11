@@ -711,6 +711,7 @@ const baseRow: PresetRow = {
     example_link: null,
     preview_image_key: 'p1/abc.webp',
     preview_image_status: 'none',
+    secondary_categories: '[]',
 };
 
 describe('rowToPreset preview image gate', () => {

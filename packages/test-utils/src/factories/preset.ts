@@ -47,6 +47,7 @@ export interface PresetRow {
   example_link: string | null;
   preview_image_key: string | null;
   preview_image_status: string;
+  secondary_categories: string; // JSON string
   rejection_reason?: string | null;
 }
 
@@ -102,6 +103,7 @@ export function createMockPresetRow(overrides: Partial<PresetRow> = {}): PresetR
     example_link: null,
     preview_image_key: null,
     preview_image_status: 'none',
+    secondary_categories: '[]',
     ...overrides,
   };
 }
@@ -201,6 +203,7 @@ export function presetToRow(preset: CommunityPreset): PresetRow {
     tags: JSON.stringify(preset.tags),
     is_curated: preset.is_curated ? 1 : 0,
     dye_signature: JSON.stringify(preset.dyes),
+    secondary_categories: JSON.stringify(preset.secondary_categories),
     previous_values: null,
     example_link: preset.example_link ?? null,
     preview_image_key: null,
@@ -220,7 +223,7 @@ export function rowToPreset(row: PresetRow): CommunityPreset {
     name: row.name,
     description: row.description,
     category_id: row.category_id as PresetCategory,
-    secondary_categories: [],
+    secondary_categories: JSON.parse(row.secondary_categories || '[]'),
     dyes: JSON.parse(row.dyes),
     tags: JSON.parse(row.tags),
     author_discord_id: row.author_discord_id,
