@@ -15,9 +15,7 @@ import {
   presetSubmissionService,
   validateSubmission,
 } from '@services/index';
-import { getCategoryIcon } from '@shared/category-icons';
-import { presetCategoryLabel } from '@shared/preset-i18n';
-import type { Dye, PresetCategory } from '@xivdyetools/types';
+import type { Dye } from '@xivdyetools/types';
 import {
   MAX_PREVIEW_IMAGE_BYTES,
   uploadPreviewImage,
@@ -25,6 +23,7 @@ import {
   type SubmissionResult,
 } from '@services/preset-submission-service';
 import { exampleLinkError } from '@shared/example-link';
+import { createCategorySelector, type CategorySelection } from './preset-category-selector';
 
 // ============================================
 // Types
@@ -33,7 +32,8 @@ import { exampleLinkError } from '@shared/example-link';
 interface FormState {
   name: string;
   description: string;
-  category: PresetCategory;
+  /** Primary + up to two secondary; the shared selector owns the ranking */
+  categories: CategorySelection;
   selectedDyes: Dye[];
   tags: string;
   /** 8A example link (allowlisted host; validated on blur) */
@@ -49,9 +49,6 @@ type OnSubmitCallback = (result: SubmissionResult) => void;
 // ============================================
 // Configuration
 // ============================================
-
-/** Selectable categories, in display order. Labels come from `presetCategoryLabel`. */
-const CATEGORIES: PresetCategory[] = ['jobs', 'grand-companies', 'seasons', 'events', 'aesthetics'];
 
 const MIN_NAME_LENGTH = 2;
 const MAX_NAME_LENGTH = 50;
@@ -89,7 +86,7 @@ export function showPresetSubmissionForm(
   const state: FormState = {
     name: initial?.name ?? '',
     description: '',
-    category: 'events',
+    categories: { primary: 'events', secondary: [] },
     selectedDyes: initial?.dyes ? initial.dyes.slice(0, MAX_DYES) : [],
     tags: '',
     exampleLink: '',
@@ -218,7 +215,7 @@ function createFormContent(state: FormState, onSubmit?: OnSubmitCallback): HTMLE
   form.appendChild(createDescriptionInput(state));
 
   // Category selector
-  form.appendChild(createCategorySelector(state));
+  form.appendChild(createCategorySelector(state.categories, () => state.refreshPreview?.()));
 
   // Dye selector — slot picker only: a preset has to be buyable
   form.appendChild(createDyeSelector(state));
@@ -335,74 +332,6 @@ function createDescriptionInput(state: FormState): HTMLElement {
   wrapper.appendChild(textarea);
   wrapper.appendChild(counter);
   wrapper.appendChild(fieldHint(LanguageService.t('preset.fieldDescHint')));
-
-  return wrapper;
-}
-
-function createCategorySelector(state: FormState): HTMLElement {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'form-field';
-
-  const label = fieldLabelRow(
-    LanguageService.t('preset.fieldCategory'),
-    LanguageService.t('preset.reqRequired'),
-    true
-  );
-
-  const grid = document.createElement('div');
-  grid.className = 'grid grid-cols-3 gap-2';
-
-  for (const cat of CATEGORIES) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className =
-      'px-3 py-2 rounded-lg border text-sm transition-all flex items-center justify-center gap-1';
-
-    const isSelected = state.category === cat;
-    if (isSelected) {
-      btn.style.cssText =
-        'background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);';
-    } else {
-      btn.style.cssText =
-        'background-color: var(--theme-card-background); color: var(--theme-text); border-color: var(--theme-border);';
-    }
-
-    btn.innerHTML = `<span class="w-4 h-4 inline-block">${getCategoryIcon(cat)}</span><span>${presetCategoryLabel(cat)}</span>`;
-
-    btn.addEventListener('click', () => {
-      state.category = cat;
-      // Update all buttons
-      const buttons = grid.querySelectorAll('button');
-      buttons.forEach((b, i) => {
-        const selected = CATEGORIES[i] === state.category;
-        if (selected) {
-          b.style.cssText =
-            'background-color: var(--theme-primary); color: white; border-color: var(--theme-primary);';
-        } else {
-          b.style.cssText =
-            'background-color: var(--theme-card-background); color: var(--theme-text); border-color: var(--theme-border);';
-        }
-      });
-    });
-
-    btn.addEventListener('mouseenter', () => {
-      if (state.category !== cat) {
-        btn.style.backgroundColor = 'var(--theme-card-hover)';
-      }
-    });
-
-    btn.addEventListener('mouseleave', () => {
-      if (state.category !== cat) {
-        btn.style.backgroundColor = 'var(--theme-card-background)';
-      }
-    });
-
-    grid.appendChild(btn);
-  }
-
-  wrapper.appendChild(label);
-  wrapper.appendChild(grid);
-  wrapper.appendChild(fieldHint(LanguageService.t('preset.fieldCategoryHint')));
 
   return wrapper;
 }
@@ -728,7 +657,8 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
     const submission: PresetSubmission = {
       name: state.name.trim(),
       description: state.description.trim(),
-      category_id: state.category,
+      category_id: state.categories.primary,
+      secondary_categories: state.categories.secondary,
       dyes: state.selectedDyes.map((d) => d.stainID).filter((id): id is number => id !== null),
       tags: state.tags
         .split(',')
