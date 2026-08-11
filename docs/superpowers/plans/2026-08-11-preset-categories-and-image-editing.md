@@ -2539,10 +2539,17 @@ export const CATEGORY_DISPLAY: Record<PresetCategory, { icon: string; name: stri
 Run: `pnpm --filter xivdyetools-discord-worker run test -- --run && pnpm --filter xivdyetools-discord-worker run type-check`
 Expected: PASS.
 
-- [ ] **Step 6: Whole-workspace verification**
+- [ ] **Step 6: Verify discord-worker absorbs the widened union**
 
-Run: `pnpm turbo run lint type-check test`
-Expected: PASS across every package and app. This is the gate that the `PresetCategory` widening from Task 1 is now fully absorbed.
+Run: `pnpm turbo run lint type-check test --filter=xivdyetools-discord-worker`
+Expected: PASS.
+
+**Do not expect a workspace-wide pass yet.** Three more exhaustive
+`Record<PresetCategory, …>` sites remain red until **Task 17** repairs them —
+`apps/moderation-worker/src/types/preset.ts`, `packages/svg/src/preset-swatch.ts`,
+and the `PresetData` fixtures in
+`packages/core/src/services/__tests__/PresetService.test.ts`. Leave all three
+alone here; Task 17 owns them and carries the workspace-wide gate.
 
 - [ ] **Step 7: Commit**
 
