@@ -84,8 +84,12 @@ export interface CommunityPreset {
   previous_values?: PresetPreviousValues | null;
 
   /**
-   * Example link (8A): page URL on an allowlisted host (Eorzea Collection,
-   * Imgur, Flickr). Stored, never copied; null when the author gave none.
+   * Example link (8A): page URL on an allowlisted host — glamour destinations
+   * such as Eorzea Collection, Mirapri or the Lodestone, and social posts on
+   * X, Bluesky, Reddit, Instagram, pixiv or Misskey. Raw image hosts are
+   * deliberately excluded; see EXAMPLE_LINK_HOSTS in presets-api's
+   * validation-service for the authoritative list. Stored, never copied; null
+   * when the author gave none.
    */
   example_link?: string | null;
 
@@ -123,8 +127,10 @@ export interface PresetSubmission {
   tags: string[];
 
   /**
-   * Example link (8A): a page URL on an allowlisted host (Eorzea Collection,
-   * Imgur, Flickr). The link is stored, never a copy of the image.
+   * Example link (8A): a page URL on an allowlisted host — glamour
+   * destinations (Eorzea Collection, Mirapri, the Lodestone) and social posts
+   * (X, Bluesky, Reddit, Instagram, pixiv, Misskey), never a raw image host.
+   * The link is stored, never a copy of the image.
    */
   example_link?: string | null;
 }
