@@ -62,7 +62,12 @@ import type { PresetStatus, PresetCategory } from '@xivdyetools/types';
  */
 export interface PresetNotificationPayload {
   /** Notification type */
-  type: 'submission';
+  type: 'submission' | 'preview_image';
+  /**
+   * R2 key of an uploaded preview image awaiting review. Present only on
+   * `preview_image` notifications.
+   */
+  preview_image_key?: string | null;
   /** Preset data */
   preset: {
     id: string;

@@ -751,6 +751,27 @@ presetsRouter.post('/:id/preview-image', async (c) => {
   // Replace any previous image so an abandoned object is not orphaned.
   await deletePreviewImage(c.env, previousKey);
 
+  // Best-effort: the image is stored and pending either way. A notification
+  // failure must not fail the upload the author just completed.
+  try {
+    await c.env.DISCORD_WORKER?.fetch(
+      new Request('https://internal/webhooks/preset-submission', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${c.env.INTERNAL_WEBHOOK_SECRET}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'preview_image',
+          preset: { id: presetId, name: preset.name ?? '', author_name: auth.userName ?? '' },
+          preview_image_key: key,
+        }),
+      })
+    );
+  } catch {
+    // swallowed deliberately — see comment above
+  }
+
   return c.json({ success: true, status: 'pending' });
 });
 

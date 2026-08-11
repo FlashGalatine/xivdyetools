@@ -581,6 +581,7 @@
   "webhook": {
     "newPresetPending": "新预设待审核",
     "newPresetPublished": "新预设已发布",
+    "previewImagePending": "预览图片待审核",
     "fields": {
       "category": "类别",
       "author": "作者",

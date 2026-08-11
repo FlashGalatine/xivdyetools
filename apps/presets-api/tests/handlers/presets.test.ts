@@ -1377,6 +1377,79 @@ describe('PresetsHandler', () => {
             expect(finalKeys[0]).not.toBe(firstKey);
             expect(bucket._store.has(firstKey)).toBe(false);
         });
+
+        it('notifies the Discord worker with the new key after the DB update succeeds', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: '123',
+                name: 'My Preset',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const mockDiscordWorker = { fetch: vi.fn().mockResolvedValue(new Response('OK', { status: 200 })) };
+            const envWithDiscord = createMockEnv({
+                DB: mockDb as unknown as D1Database,
+                DISCORD_WORKER: mockDiscordWorker as unknown as Env['DISCORD_WORKER'],
+                INTERNAL_WEBHOOK_SECRET: 'test-webhook-secret',
+            });
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: png,
+                },
+                envWithDiscord
+            );
+
+            expect(res.status).toBe(200);
+            expect(mockDiscordWorker.fetch).toHaveBeenCalledTimes(1);
+            const [reqArg] = mockDiscordWorker.fetch.mock.calls[0] as [Request];
+            expect(reqArg.headers.get('Authorization')).toBe('Bearer test-webhook-secret');
+            const body = JSON.parse(await reqArg.text()) as {
+                type: string;
+                preset: { id: string; name: string };
+                preview_image_key: string;
+            };
+            expect(body.type).toBe('preview_image');
+            expect(body.preset.id).toBe('preset-123');
+            expect(body.preset.name).toBe('My Preset');
+            expect(body.preview_image_key).toMatch(/^preset-123\/.+\.webp$/);
+        });
+
+        it('still stores the image and returns 200 when the Discord notification fails', async () => {
+            const mockRow = createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
+            mockDb._setupMock(() => mockRow);
+
+            const mockDiscordWorker = { fetch: vi.fn().mockRejectedValue(new Error('service unavailable')) };
+            const envWithDiscord = createMockEnv({
+                DB: mockDb as unknown as D1Database,
+                DISCORD_WORKER: mockDiscordWorker as unknown as Env['DISCORD_WORKER'],
+                INTERNAL_WEBHOOK_SECRET: 'test-webhook-secret',
+            });
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: png,
+                },
+                envWithDiscord
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { success: boolean; status: string };
+            expect(body.success).toBe(true);
+            expect(body.status).toBe('pending');
+        });
     });
 
     // ============================================

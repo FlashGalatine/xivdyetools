@@ -96,19 +96,21 @@ export async function deletePreviewImage(env: Env, key: string | null): Promise<
 }
 
 /**
- * Read the ownership and storage-key columns straight off the row.
+ * Read the ownership, storage-key, and name columns straight off the row.
  *
  * `getPresetById` returns a CommunityPreset, which carries only the gated
  * `preview_image_url` and deliberately never exposes `preview_image_key` — so
- * it cannot answer "which object do I replace or delete?".
+ * it cannot answer "which object do I replace or delete?". `name` rides
+ * along here too so the upload route's moderator notification can title
+ * itself without a second query.
  */
 export async function getPresetImageState(
   db: D1Database,
   id: string
-): Promise<{ author_discord_id: string | null; preview_image_key: string | null } | null> {
+): Promise<{ author_discord_id: string | null; preview_image_key: string | null; name: string } | null> {
   const row = await db
-    .prepare('SELECT author_discord_id, preview_image_key FROM presets WHERE id = ?')
+    .prepare('SELECT author_discord_id, preview_image_key, name FROM presets WHERE id = ?')
     .bind(id)
-    .first<{ author_discord_id: string | null; preview_image_key: string | null }>();
+    .first<{ author_discord_id: string | null; preview_image_key: string | null; name: string }>();
   return row ?? null;
 }

@@ -581,6 +581,7 @@
   "webhook": {
     "newPresetPending": "New Preset Awaiting Review",
     "newPresetPublished": "New Preset Published",
+    "previewImagePending": "Preview image awaiting review",
     "fields": {
       "category": "Category",
       "author": "Author",

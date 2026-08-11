@@ -184,8 +184,44 @@ app.post('/webhooks/preset-submission', async (c) => {
     return c.json({ error: 'Invalid JSON body' }, 400);
   }
 
-  if (payload.type !== 'submission' || !payload.preset) {
+  if (payload.type !== 'submission' && payload.type !== 'preview_image') {
     return c.json({ error: 'Invalid payload' }, 400);
+  }
+  if (!payload.preset) {
+    return c.json({ error: 'Invalid payload' }, 400);
+  }
+
+  if (payload.type === 'preview_image') {
+    // No submission log channel configured: nothing to post to, and (unlike
+    // the moderation-channel branch below) there's no separate audience to
+    // fall back to, so this is a silent no-op rather than an error.
+    if (!env.SUBMISSION_LOG_CHANNEL_ID) {
+      return c.json({ success: true });
+    }
+    const adminT = createTranslator('en');
+    const safeName = sanitizePresetName(payload.preset.name);
+    const imageRes = await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
+      embeds: [
+        {
+          title: `🖼️ ${adminT.t('webhook.previewImagePending')}`,
+          description: `**${safeName}**`,
+          color: STATUS_DISPLAY.pending.color,
+          // Built here rather than read from the API: for a pending image the
+          // API withholds preview_image_url by design, and this embed is
+          // exactly where an unapproved image is meant to be seen.
+          ...(payload.preview_image_key
+            ? { image: { url: `https://shots.xivdyetools.app/${payload.preview_image_key}` } }
+            : {}),
+          footer: { text: `ID: ${payload.preset.id}` },
+        },
+      ],
+    });
+    if (!imageRes.ok) {
+      logger.error('Preview-image notification rejected by Discord', undefined, {
+        status: imageRes.status,
+      });
+    }
+    return c.json({ success: true });
   }
 
   const { preset } = payload;

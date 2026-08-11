@@ -581,6 +581,7 @@
   "webhook": {
     "newPresetPending": "Nouveau modèle en attente de validation",
     "newPresetPublished": "Nouveau modèle publié",
+    "previewImagePending": "Image d'aperçu en attente de validation",
     "fields": {
       "category": "Catégorie",
       "author": "Auteur",

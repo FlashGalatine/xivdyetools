@@ -581,6 +581,7 @@
   "webhook": {
     "newPresetPending": "Neue Vorlage wartet auf Überprüfung",
     "newPresetPublished": "Neue Vorlage veröffentlicht",
+    "previewImagePending": "Vorschaubild wartet auf Überprüfung",
     "fields": {
       "category": "Kategorie",
       "author": "Autor",

@@ -581,6 +581,7 @@
   "webhook": {
     "newPresetPending": "새 프리셋 검토 대기 중",
     "newPresetPublished": "새 프리셋 게시됨",
+    "previewImagePending": "미리보기 이미지 검토 대기 중",
     "fields": {
       "category": "카테고리",
       "author": "작성자",

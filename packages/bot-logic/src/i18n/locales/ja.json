@@ -581,6 +581,7 @@
   "webhook": {
     "newPresetPending": "新規プリセット審査待ち",
     "newPresetPublished": "新規プリセット公開",
+    "previewImagePending": "プレビュー画像審査待ち",
     "fields": {
       "category": "カテゴリ",
       "author": "作成者",

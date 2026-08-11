@@ -277,6 +277,38 @@ describe('index.ts', () => {
         })
       );
     });
+
+    it('posts a review message carrying the pending preview image', async () => {
+      const { timingSafeEqual } = await import('./utils/verify.js');
+      const { sendMessage } = await import('./utils/discord-api.js');
+      vi.mocked(timingSafeEqual).mockResolvedValue(true);
+      vi.mocked(sendMessage).mockResolvedValue(new Response(null));
+
+      const req = new Request('http://localhost/webhooks/preset-submission', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer test-webhook-secret' },
+        body: JSON.stringify({
+          type: 'preview_image',
+          preset: { id: 'p1', name: 'Test', author_name: 'Author' },
+          preview_image_key: 'p1/abc.webp',
+        }),
+      });
+
+      const res = await app.fetch(req, mockEnv, mockCtx);
+      expect(res.status).toBe(200);
+
+      expect(sendMessage).toHaveBeenCalledWith(
+        'test-token',
+        'test-submission-log-channel',
+        expect.objectContaining({
+          embeds: expect.arrayContaining([
+            expect.objectContaining({
+              image: { url: 'https://shots.xivdyetools.app/p1/abc.webp' },
+            }),
+          ]),
+        })
+      );
+    });
   });
 
   describe('POST / - Discord interactions', () => {
