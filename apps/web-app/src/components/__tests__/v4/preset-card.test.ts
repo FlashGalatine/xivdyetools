@@ -129,4 +129,31 @@ describe('PresetCard', () => {
     expect(el.shadowRoot!.querySelector('img.shot-img')).toBeNull();
     expect(el.shadowRoot!.querySelector('.shot-caption')).not.toBeNull();
   });
+
+  it('prefers the image over the caption when both an image and a link are present', async () => {
+    const el = await mountCard({
+      ...baseCardData,
+      previewImageUrl: 'https://shots.xivdyetools.app/p1/a.webp',
+      exampleLink: 'https://mirapri.com/100814',
+    });
+
+    const img = el.shadowRoot!.querySelector('img.shot-img') as HTMLImageElement | null;
+    expect(img).not.toBeNull();
+    expect(img!.getAttribute('src')).toBe('https://shots.xivdyetools.app/p1/a.webp');
+    expect(el.shadowRoot!.querySelector('.shot-caption')).toBeNull();
+  });
+
+  it('falls back to the palette-as-picture treatment when there is neither image nor link', async () => {
+    const el = await mountCard({
+      ...baseCardData,
+      previewImageUrl: null,
+      exampleLink: undefined,
+    });
+
+    expect(el.shadowRoot!.querySelector('img.shot-img')).toBeNull();
+    expect(el.shadowRoot!.querySelector('.shot-caption')).toBeNull();
+    const shot = el.shadowRoot!.querySelector('.shot') as HTMLElement | null;
+    expect(shot).not.toBeNull();
+    expect(shot!.getAttribute('style')).toContain('linear-gradient');
+  });
 });

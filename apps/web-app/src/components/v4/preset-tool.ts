@@ -529,6 +529,7 @@ export class PresetTool extends BaseLitComponent {
       apiPresetId: preset.id,
       createdAt: preset.created_at,
       exampleLink: preset.example_link ?? null,
+      previewImageUrl: preset.preview_image_url ?? null,
     };
   }
 
@@ -549,6 +550,7 @@ export class PresetTool extends BaseLitComponent {
       isFromAPI: false,
       createdAt: saved.savedAt,
       exampleLink: saved.exampleLink ?? null,
+      previewImageUrl: null,
     };
   }
 
