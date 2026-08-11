@@ -33,6 +33,9 @@ export const PRESET_VALIDATION_RULES = {
     maxLength: 10,
     itemMaxLength: 30,
   },
+  secondaryCategories: {
+    maxLength: 2,
+  },
 } as const;
 
 /**
@@ -263,6 +266,53 @@ export function validatePresetTags(tags: unknown): string | null {
   // Check each tag
   if (tags.some((tag) => typeof tag !== 'string' || tag.length > rules.itemMaxLength)) {
     return `Each tag must be a string of max ${rules.itemMaxLength} characters`;
+  }
+
+  return null;
+}
+
+/** Cap on additional categories. One primary + this many = three total. */
+export const SECONDARY_CATEGORY_MAX = PRESET_VALIDATION_RULES.secondaryCategories.maxLength;
+
+/**
+ * Validate the secondary category list.
+ *
+ * `undefined` is valid — the field is optional on both submit and edit. `[]`
+ * is valid and is how a caller clears the list. The primary is passed in
+ * because a category may not occupy both slots: it would double-count in the
+ * gallery rail and read as a data error to anyone looking at the row.
+ *
+ * @param value - candidate list
+ * @param primary - the preset's category_id after this request applies
+ * @param validCategories - ids from getValidCategories(db)
+ * @returns Error message or null if valid
+ */
+export function validateSecondaryCategories(
+  value: unknown,
+  primary: string,
+  validCategories: readonly string[]
+): string | null {
+  if (value === undefined) return null;
+
+  if (!Array.isArray(value)) {
+    return 'Secondary categories must be an array';
+  }
+
+  if (value.length > SECONDARY_CATEGORY_MAX) {
+    return `at most ${SECONDARY_CATEGORY_MAX} secondary categories allowed`;
+  }
+
+  for (const entry of value) {
+    if (typeof entry !== 'string' || !validCategories.includes(entry)) {
+      return 'Invalid secondary category';
+    }
+    if (entry === primary) {
+      return 'A secondary category cannot repeat the primary category';
+    }
+  }
+
+  if (new Set(value as string[]).size !== value.length) {
+    return 'Secondary categories contain a duplicate';
   }
 
   return null;
