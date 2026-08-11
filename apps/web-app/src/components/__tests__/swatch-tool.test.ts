@@ -69,6 +69,10 @@ vi.mock('@services/index', () => ({
     }),
     rgbToHsv: vi.fn(() => ({ h: 0, s: 100, v: 100 })),
     calculateColorDistance: vi.fn(() => 15),
+    // The reverse-match path (selectDye / selectCustomColor) ranks the whole
+    // sheet through this; without it the drawer's dye selection throws.
+    getDistanceForMethod: vi.fn(() => 15),
+    getDeltaE: vi.fn(() => 15),
   },
   MarketBoardService: {
     getInstance: vi.fn().mockReturnValue({
@@ -109,32 +113,57 @@ vi.mock('@services/index', () => ({
   },
 }));
 
+/**
+ * Method names here MUST track `CharacterColorService` in @xivdyetools/core.
+ * `loadColors()` switches on the colour category and calls one getter per
+ * branch; a name that does not exist returns `undefined`, the grid renders
+ * zero swatches, and every grid assertion passes vacuously. The previous
+ * mock had `getLipColors` / `getFacePaintColors`, which the real service does
+ * not expose — the sheets are split dark/light.
+ */
 vi.mock('@xivdyetools/core', () => ({
   CharacterColorService: class MockCharacterColorService {
-    private mockColors = [
-      { index: 0, hex: '#FF0000', name: 'Red' },
-      { index: 1, hex: '#00FF00', name: 'Green' },
-      { index: 2, hex: '#0000FF', name: 'Blue' },
-    ];
+    private mockColors = Array.from({ length: 24 }, (_, i) => ({
+      index: i,
+      hex: `#${(i * 11).toString(16).padStart(2, '0').repeat(3)}`.toUpperCase(),
+      name: `Color ${i}`,
+    }));
     getColors() {
       return this.mockColors;
     }
+    // Shared sheets
     getEyeColors() {
       return this.mockColors;
     }
     getHighlightColors() {
       return this.mockColors;
     }
-    getSkinColors() {
+    getLipColorsDark() {
       return this.mockColors;
     }
-    getHairColors() {
+    getLipColorsLight() {
       return this.mockColors;
     }
-    getLipColors() {
+    getTattooColors() {
       return this.mockColors;
     }
-    getFacePaintColors() {
+    getFacePaintColorsDark() {
+      return this.mockColors;
+    }
+    getFacePaintColorsLight() {
+      return this.mockColors;
+    }
+    getSharedColors() {
+      return this.mockColors;
+    }
+    // Race-specific sheets are async
+    async getHairColors() {
+      return this.mockColors;
+    }
+    async getSkinColors() {
+      return this.mockColors;
+    }
+    async getRaceSpecificColors() {
       return this.mockColors;
     }
     findClosestDyes() {
@@ -145,6 +174,12 @@ vi.mock('@xivdyetools/core', () => ({
     }
     getGenders() {
       return ['Male', 'Female'];
+    }
+    getVersion() {
+      return '1.0.0';
+    }
+    getGridColumns() {
+      return 8;
     }
   },
 }));
@@ -173,10 +208,17 @@ vi.mock('@services/pricing-mixin', () => ({
   setupMarketBoardListeners: vi.fn().mockReturnValue(() => {}),
 }));
 
+/**
+ * `setContent` used to be a no-op here, which silently swallowed every
+ * control the tool put inside a panel — the panel rendered as an empty div
+ * and nothing downstream was reachable. The mock now attaches what it is
+ * given, the way the real panel does, so assertions can see the content.
+ */
 vi.mock('../collapsible-panel', () => ({
   CollapsiblePanel: class MockCollapsiblePanel {
     container: HTMLElement;
     options: Record<string, unknown>;
+    private body: HTMLElement | null = null;
     constructor(container: HTMLElement, options: Record<string, unknown>) {
       this.container = container;
       this.options = options;
@@ -186,11 +228,17 @@ vi.mock('../collapsible-panel', () => ({
       div.className = 'collapsible-panel';
       div.id = (this.options.id as string) || 'panel';
       this.container.appendChild(div);
+      this.body = div;
     }
     destroy() {
       this.container.innerHTML = '';
+      this.body = null;
     }
-    setContent() {}
+    setContent(content: HTMLElement | string) {
+      if (!this.body) this.init();
+      if (typeof content === 'string') this.body!.innerHTML = content;
+      else if (content) this.body!.appendChild(content);
+    }
     expand() {}
     collapse() {}
     toggle() {}
@@ -389,6 +437,246 @@ describe('SwatchTool', () => {
 
       // Second destroy should not throw
       expect(() => tool!.destroy()).not.toThrow();
+    });
+  });
+
+  // ==========================================================================
+  // Interaction depth
+  //
+  // Everything above asserts that the tool *renders*. That is where the 16%
+  // came from: this component is ~2,800 lines behind ~90 private members, and
+  // the only way in is `setConfig`, `selectDye`/`selectCustomColor`, and
+  // clicks on the swatch grid. These drive those entry points and assert the
+  // consequence, which is what a config sidebar and a palette drawer actually
+  // do to it at runtime.
+  // ==========================================================================
+
+  /** Build + init a tool with the standard three panels. */
+  const mount = (opts: { drawer?: boolean } = {}): SwatchTool => {
+    const t = new SwatchTool(
+      container,
+      opts.drawer === false ? { leftPanel, rightPanel } : { leftPanel, rightPanel, drawerContent }
+    );
+    t.init();
+    return t;
+  };
+
+  const flush = async () => {
+    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 0));
+  };
+
+  describe('setConfig — race, gender and colour sheet', () => {
+    it.each([
+      ['race', { race: 'Highlander' }, 'v3_character_subrace', 'Highlander'],
+      ['gender', { gender: 'Female' }, 'v3_character_gender', 'Female'],
+      ['colorSheet', { colorSheet: 'hairColors' }, 'v3_character_category', 'hairColors'],
+    ])('persists a %s change to storage', async (_label, config, key, value) => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      tool.setConfig(config as Parameters<SwatchTool['setConfig']>[0]);
+
+      expect(StorageService.setItem).toHaveBeenCalledWith(key, value);
+    });
+
+    it('ignores a no-op change rather than reloading the palette', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      tool.setConfig({ race: 'Highlander' });
+      await flush();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      // Same value again — the guard is `config.race !== this.subrace`
+      tool.setConfig({ race: 'Highlander' });
+
+      expect(StorageService.setItem).not.toHaveBeenCalledWith(
+        'v3_character_subrace',
+        expect.anything()
+      );
+    });
+
+    it('applies several keys in one call', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      // Deliberately all non-default, or the change-detection guards skip them
+      tool.setConfig({ race: 'Highlander', gender: 'Female', colorSheet: 'hairColors' });
+      await flush();
+
+      const keys = vi.mocked(StorageService.setItem).mock.calls.map((c) => c[0]);
+      expect(keys).toEqual(
+        expect.arrayContaining([
+          'v3_character_subrace',
+          'v3_character_gender',
+          'v3_character_category',
+        ])
+      );
+    });
+
+    it('accepts an empty config without touching state', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      expect(() => tool!.setConfig({})).not.toThrow();
+      expect(StorageService.setItem).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('setConfig — matching controls', () => {
+    it('persists a maxResults change', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      tool.setConfig({ maxResults: 8 });
+
+      expect(StorageService.setItem).toHaveBeenCalledWith('v3_character_max_results', 8);
+    });
+
+    it('survives a matchingMethod change with nothing selected', () => {
+      tool = mount();
+
+      expect(() => tool!.setConfig({ matchingMethod: 'ciede2000' })).not.toThrow();
+      expect(() => tool!.setConfig({ matchingMethod: 'oklab' })).not.toThrow();
+    });
+
+    it('merges displayOptions rather than replacing them', () => {
+      tool = mount();
+
+      tool.setConfig({ displayOptions: { showHex: true } as never });
+      // A second partial update must not wipe the first
+      expect(() => tool!.setConfig({ displayOptions: { showRgb: true } as never })).not.toThrow();
+    });
+
+    it('survives a dyeFilters change and an identical repeat', () => {
+      tool = mount();
+
+      expect(() =>
+        tool!.setConfig({ dyeFilters: { excludeMetallic: true } as never })
+      ).not.toThrow();
+      // Second identical call hits the JSON-equality guard
+      expect(() =>
+        tool!.setConfig({ dyeFilters: { excludeMetallic: true } as never })
+      ).not.toThrow();
+    });
+  });
+
+  describe('reverse matching from the palette drawer', () => {
+    const dye = { ...mockDyes[0], hex: '#AABBCC', name: 'Test Dye', itemID: 5729 };
+
+    it('accepts a dye and does not throw before colours load', () => {
+      tool = mount();
+
+      expect(() => tool!.selectDye(dye as never)).not.toThrow();
+    });
+
+    it('ignores a missing dye rather than crashing the drawer', () => {
+      tool = mount();
+
+      expect(() => tool!.selectDye(undefined as never)).not.toThrow();
+      expect(() => tool!.selectDye(null as never)).not.toThrow();
+    });
+
+    it('accepts a custom hex with or without the leading hash', () => {
+      tool = mount();
+
+      expect(() => tool!.selectCustomColor('#AABBCC')).not.toThrow();
+      expect(() => tool!.selectCustomColor('AABBCC')).not.toThrow();
+    });
+
+    it('ignores an empty custom colour', () => {
+      tool = mount();
+
+      expect(() => tool!.selectCustomColor('')).not.toThrow();
+    });
+
+    it('re-runs the reverse match when the sheet changes underneath it', async () => {
+      tool = mount();
+      tool.selectDye(dye as never);
+
+      // Changing the palette must re-match, not leave a stale highlight
+      expect(() => tool!.setConfig({ colorSheet: 'hairColors' })).not.toThrow();
+      await flush();
+    });
+  });
+
+  /**
+   * The swatch grid is NOT asserted here, deliberately.
+   *
+   * `renderRightPanel()` produces nothing under this harness — measured:
+   * `rightPanel.innerHTML.length === 0` after `init()` and a flushed
+   * microtask queue, while `leftPanel` receives only the mocked
+   * CollapsiblePanel wrapper. The grid, the result cards, the market panel
+   * and the `.chara` reader all live behind that render, which is a large
+   * part of why this file plateaus around 27% however many entry points it
+   * drives.
+   *
+   * Tests WERE written against the grid and then removed rather than left
+   * guarded by `if (cells.length === 0) return` — that guard is how the
+   * deleted `dye-comparison-coverage.spec.ts` managed to assert nothing and
+   * still pass. A test that cannot observe its subject should not exist.
+   *
+   * Grid behaviour (R·C cell addressing rather than hex, selection driving
+   * the forward match, re-render on sheet change) is covered honestly by
+   * Playwright, which runs the real CollapsiblePanel and layout. Closing this
+   * properly means unpicking the mock harness so the right panel renders —
+   * until then E2E is the vehicle, and `e2e/COVERAGE-GAPS.md` is the record.
+   */
+  describe('clearing', () => {
+    it('clearDyes resets both the forward and the reverse side', async () => {
+      tool = mount();
+      await flush();
+      tool.selectDye({ ...mockDyes[0], hex: '#AABBCC' } as never);
+
+      expect(() => tool!.clearDyes()).not.toThrow();
+      // Clearing twice is what a double-tap on Clear All does
+      expect(() => tool!.clearDyes()).not.toThrow();
+    });
+  });
+
+  describe('market configuration', () => {
+    it('turns prices on and off without a selection', () => {
+      tool = mount();
+
+      expect(() => tool!.setMarketConfig({ showPrices: true })).not.toThrow();
+      expect(() => tool!.setMarketConfig({ showPrices: false })).not.toThrow();
+    });
+
+    it('ignores a market config that names nothing', () => {
+      tool = mount();
+
+      expect(() => tool!.setMarketConfig({})).not.toThrow();
+    });
+  });
+
+  describe('lifecycle under interaction', () => {
+    it('tears down cleanly after configuration and selection', async () => {
+      tool = mount();
+      tool.setConfig({ race: 'Highlander', gender: 'Female', colorSheet: 'hairColors' });
+      tool.selectCustomColor('#123456');
+      await flush();
+
+      expect(() => tool!.destroy()).not.toThrow();
+    });
+
+    it('ignores configuration arriving after destroy', () => {
+      tool = mount();
+      tool.destroy();
+
+      // The sidebar can emit one last config-change during teardown
+      expect(() => tool!.setConfig({ race: 'Midlander' })).not.toThrow();
+    });
+
+    it('works with no drawer panel supplied', async () => {
+      tool = mount({ drawer: false });
+      tool.setConfig({ colorSheet: 'eyeColors' });
+      await flush();
+
+      expect(leftPanel.children.length).toBeGreaterThan(0);
     });
   });
 });

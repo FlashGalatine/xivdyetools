@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/coverage';
 import { seedStartupStorage, dismissBlockingOverlays } from './fixtures/navigation';
 
 async function waitForGradientReady(page: Parameters<typeof test>[0]['page']): Promise<void> {

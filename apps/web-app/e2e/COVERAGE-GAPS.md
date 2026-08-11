@@ -73,18 +73,31 @@ carry over:
 
 ---
 
+## Deleted: `dye-comparison-coverage.spec.ts` (2026-08-11) — no assurance lost
+
+A near-duplicate of `dye-comparison.spec.ts` that existed only because it was the one file
+importing `./fixtures/coverage`. Every spec now imports that fixture, so a duplicate has no
+reason to exist.
+
+Nothing of assurance value went with it. Its tests were coverage-farming: each body was guarded
+by `if ((await dyeButtons.count()) >= 2)` with no `else`, so on a render where the locator
+missed, the test clicked nothing, asserted nothing, and still passed — inflating the coverage
+number without testing anything. `dye-comparison.spec.ts` covers load, select-to-four, option
+toggling and clear with real assertions.
+
+The one behaviour it reached that the survivor does not is **chart interaction** (hover on the
+hue-saturation scatter and the brightness bars). That is already listed under *Dye Comparison*
+above as a v4-rewrite gap, and stays listed.
+
 ---
 
-## Separately: the `mobile-chrome` project is red (pre-existing)
+## Separately: the `mobile-chrome` project is red — and it is right to be
 
 Not a deletion — a standing failure, recorded here because Sprint 4 of the 2026-08-09 audit was
 the first time `playwright test` was run as a release gate and it needs to be honest about what
 it reports.
 
 As of 2026-08-09: **`chromium` 142/142 green; `mobile-chrome` 114 passed, 28 failed.**
-
-The 28 share one cause. At the Pixel 5 viewport the config sidebar collapses into a drawer, and
-these tests reach straight for controls inside it without opening it first:
 
 ```
 waiting for getByRole('switch', { name: /deuteranopia/i })   → element(s) not found
@@ -95,10 +108,42 @@ Affected: `accessibility-checker.spec.ts` (9), `gradient-builder.spec.ts` (9),
 `budget-tool.spec.ts` (7), plus the reload/load smoke tests in `dye-comparison.spec.ts` and
 `dye-mixer.spec.ts` (2 each).
 
-The fix is one shared helper — open the drawer in `beforeEach` when the viewport is narrow, the
-way `dye-comparison`'s deleted mobile block used to — rather than 28 individual edits. Until
-then, `--project=chromium` is the meaningful gate and a full `playwright test` will exit
-non-zero.
+### CORRECTED DIAGNOSIS (2026-08-11) — this is a product bug, not a test bug
+
+This section previously read *"at the Pixel 5 viewport the config sidebar collapses into a
+drawer, and these tests reach straight for controls inside it without opening it first"*, and
+prescribed *"one shared helper — open the drawer in `beforeEach`"*.
+
+**That is wrong, and acting on it would have hidden a live regression.** The sidebar does not
+collapse into a drawer on mobile. `v4-layout-shell.render()` emits `''` in place of
+`<v4-config-sidebar>` when `isMobile`:
+
+```ts
+${this.isMobile ? '' : html`<v4-config-sidebar …></v4-config-sidebar>`}
+```
+
+Tools render their controls into `options.leftPanel` (`accessibility-tool.ts:493
+renderLeftPanel()`), so at phone width that content is written into an element the shell never
+mounts. Measured on the running app at 393×727 versus 1280×720:
+
+| | desktop (1280×720) | mobile (393×727) |
+|---|---|---|
+| elements with `role="switch"` | **153** | **0** |
+| vision-type control | switches | absent (only the share `<select>` remains) |
+
+The palette drawer is present and `is-open` on mobile, and toggling it via `.v4-palette-toggle`
+does not change the count — it is 0 in both states. So the vision-type toggles, and every other
+left-panel control, are **unreachable on a phone**. `accessibility-tool.ts:1743` has a
+`Render collapsible Vision Types panel for mobile drawer` path, but nothing on the observed
+mobile render reaches it.
+
+**Do not "fix" these 28 tests.** They are the only thing currently reporting the gap. The fix
+belongs in the shell or the tools — either mount the left-panel content somewhere on mobile, or
+route it into the palette drawer as line 1743 intends. When that lands, these tests should go
+green without being touched.
+
+Until then `--project=chromium` is the meaningful gate and a full `playwright test` exits
+non-zero — which is the correct signal, not a nuisance.
 
 ## Closing these
 

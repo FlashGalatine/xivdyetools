@@ -27,7 +27,7 @@
  *   the dye name in `title`.
  */
 
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './fixtures/coverage';
 import { seedStartupStorage, dismissBlockingOverlays, waitForAppReady } from './fixtures/navigation';
 
 /** Open the 16A theme modal from the header's theme glyph. */

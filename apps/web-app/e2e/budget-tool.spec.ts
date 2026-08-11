@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/coverage';
 import { gotoTool, switchToolViaMenu, seedStartupStorage, dismissBlockingOverlays } from './fixtures/navigation';
 
 /**
