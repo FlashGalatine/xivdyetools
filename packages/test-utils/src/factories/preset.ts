@@ -45,6 +45,8 @@ export interface PresetRow {
   dye_signature: string | null;
   previous_values: string | null;
   example_link: string | null;
+  preview_image_key: string | null;
+  preview_image_status: string;
   rejection_reason?: string | null;
 }
 
@@ -98,6 +100,8 @@ export function createMockPresetRow(overrides: Partial<PresetRow> = {}): PresetR
     dye_signature: JSON.stringify([1, 2, 3]),
     previous_values: null,
     example_link: null,
+    preview_image_key: null,
+    preview_image_status: 'none',
     ...overrides,
   };
 }
@@ -197,6 +201,8 @@ export function presetToRow(preset: CommunityPreset): PresetRow {
     dye_signature: JSON.stringify(preset.dyes),
     previous_values: null,
     example_link: preset.example_link ?? null,
+    preview_image_key: null,
+    preview_image_status: 'none',
   };
 }
 

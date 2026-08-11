@@ -23,6 +23,7 @@ import {
     createMockPresetRow,
     createMockSubmission,
 } from '../test-utils';
+import type { PresetRow } from '../../src/types';
 
 describe('PresetService', () => {
     beforeEach(() => {
@@ -688,5 +689,50 @@ describe('PresetService', () => {
 
             expect(db._bindings[0]).toContain('[10,20]');
         });
+    });
+});
+
+const baseRow: PresetRow = {
+    id: 'p1',
+    name: 'Test',
+    description: 'd',
+    category_id: 'aesthetics',
+    dyes: '[1,2,3]',
+    tags: '[]',
+    author_discord_id: '123',
+    author_name: 'Author',
+    vote_count: 0,
+    status: 'approved',
+    is_curated: 0,
+    created_at: '2026-08-10T00:00:00.000Z',
+    updated_at: '2026-08-10T00:00:00.000Z',
+    dye_signature: '[1,2,3]',
+    previous_values: null,
+    example_link: null,
+    preview_image_key: 'p1/abc.webp',
+    preview_image_status: 'none',
+};
+
+describe('rowToPreset preview image gate', () => {
+    it('omits the URL when status is none', () => {
+        expect(rowToPreset({ ...baseRow, preview_image_status: 'none' }).preview_image_url).toBeNull();
+    });
+
+    it('omits the URL when status is pending — an unreviewed image must never be served', () => {
+        expect(rowToPreset({ ...baseRow, preview_image_status: 'pending' }).preview_image_url).toBeNull();
+    });
+
+    it('serves the URL only when approved', () => {
+        const preset = rowToPreset({ ...baseRow, preview_image_status: 'approved' });
+        expect(preset.preview_image_url).toBe('https://shots.xivdyetools.app/p1/abc.webp');
+    });
+
+    it('omits the URL when approved but no key was ever stored', () => {
+        const preset = rowToPreset({
+            ...baseRow,
+            preview_image_key: null,
+            preview_image_status: 'approved',
+        });
+        expect(preset.preview_image_url).toBeNull();
     });
 });

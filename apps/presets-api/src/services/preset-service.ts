@@ -21,6 +21,9 @@ export interface PresetServiceLogger {
   error(message: string, ...args: unknown[]): void;
 }
 
+/** R2 custom domain serving approved preview images. */
+export const PREVIEW_IMAGE_PUBLIC_BASE = 'https://shots.xivdyetools.app';
+
 /**
  * Escape special LIKE pattern characters in user input
  * Prevents SQL injection via wildcard characters (%, _, \)
@@ -89,6 +92,13 @@ export function rowToPreset(row: PresetRow, logger?: PresetServiceLogger): Commu
     dye_signature: row.dye_signature || undefined,
     previous_values,
     example_link: row.example_link ?? null,
+    // THE MODERATION GATE. An unapproved image must never be reachable from
+    // the API, so the URL is built only for 'approved'. Do not move this
+    // condition into a caller — one place, one rule.
+    preview_image_url:
+      row.preview_image_status === 'approved' && row.preview_image_key
+        ? `${PREVIEW_IMAGE_PUBLIC_BASE}/${row.preview_image_key}`
+        : null,
     rejection_reason: row.rejection_reason ?? null,
   };
 }

@@ -90,6 +90,13 @@ export interface CommunityPreset {
   example_link?: string | null;
 
   /**
+   * Public URL of the author-uploaded preview image. Present ONLY when the
+   * image has been approved by a moderator — the serialiser omits it for every
+   * other status, which is the moderation gate.
+   */
+  preview_image_url?: string | null;
+
+  /**
    * Rejection reason from the latest moderation action (8S My Submissions).
    * Populated only on the author's own-submissions listing; null elsewhere.
    */

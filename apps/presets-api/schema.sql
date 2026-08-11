@@ -46,6 +46,8 @@ CREATE TABLE IF NOT EXISTS presets (
   previous_values TEXT,
   -- 8A: allowlisted example-link page URL (stored, never a copy of the image)
   example_link TEXT,
+  preview_image_key TEXT,
+  preview_image_status TEXT NOT NULL DEFAULT 'none',
 
   FOREIGN KEY (category_id) REFERENCES categories(id)
 );

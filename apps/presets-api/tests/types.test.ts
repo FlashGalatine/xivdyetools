@@ -287,6 +287,8 @@ describe('Types', () => {
                 dye_signature: '[1,2,3]',
                 previous_values: null,
                 example_link: null,
+                preview_image_key: null,
+                preview_image_status: 'none',
             };
 
             expect(typeof row.dyes).toBe('string');
