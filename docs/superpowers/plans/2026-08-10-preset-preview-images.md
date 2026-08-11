@@ -1076,7 +1076,16 @@ git commit -m "feat(presets-api): moderator approve/reject for preview images"
 - Modify: `apps/web-app/src/components/v4/preset-tool.ts` (populate the new field)
 - Modify: `apps/web-app/src/services/hybrid-preset-service.ts` (`UnifiedPreset`)
 - Modify: `apps/web-app/public/_headers`
-- Modify: `apps/web-app/src/components/v4/__tests__/preset-card.test.ts` (or the existing card test file)
+- Create: `apps/web-app/src/components/__tests__/v4/preset-card.test.ts`
+
+> **Test location and style:** v4 component tests live in
+> `src/components/__tests__/v4/`, NOT beside the component. There is no
+> `@open-wc/testing` in this project — do not import `fixture`/`html` from it.
+> Mount the way `src/components/__tests__/v4/result-card.test.ts` does: create a
+> container div, append the element, set properties, `await el.updateComplete`,
+> then query `el.shadowRoot`. Copy that file's `vi.mock` block for
+> `@services/index`, `@xivdyetools/core` and `@shared/logger` — a Lit component
+> pulled in without them fails at import.
 
 **Interfaces:**
 - Consumes: `preview_image_url` from the API (Task 3).
@@ -1087,29 +1096,50 @@ git commit -m "feat(presets-api): moderator approve/reject for preview images"
 Add to the preset-card test file:
 
 ```typescript
-it('renders the preview image when one is approved', async () => {
-  const card = await fixture<PresetCard>(html`<v4-preset-card></v4-preset-card>`);
-  card.data = { ...baseCardData, previewImageUrl: 'https://shots.xivdyetools.app/p1/a.webp' };
-  await card.updateComplete;
+/** Mount a card with the given data and wait for Lit to render. */
+async function mountCard(data: PresetCardData): Promise<HTMLElement> {
+  await import('../../v4/preset-card');
+  const el = document.createElement('v4-preset-card') as HTMLElement & {
+    data: PresetCardData;
+    updateComplete: Promise<unknown>;
+  };
+  el.data = data;
+  container.appendChild(el);
+  await el.updateComplete;
+  return el;
+}
 
-  const img = card.shadowRoot!.querySelector('img');
+it('renders the preview image when one is approved', async () => {
+  const el = await mountCard({
+    ...baseCardData,
+    previewImageUrl: 'https://shots.xivdyetools.app/p1/a.webp',
+  });
+
+  const img = el.shadowRoot!.querySelector('img.shot-img') as HTMLImageElement | null;
   expect(img).not.toBeNull();
-  expect(img!.src).toBe('https://shots.xivdyetools.app/p1/a.webp');
+  expect(img!.getAttribute('src')).toBe('https://shots.xivdyetools.app/p1/a.webp');
 });
 
 it('falls back to the striped link treatment when there is no image', async () => {
-  const card = await fixture<PresetCard>(html`<v4-preset-card></v4-preset-card>`);
-  card.data = { ...baseCardData, previewImageUrl: null, exampleLink: 'https://mirapri.com/1' };
-  await card.updateComplete;
+  const el = await mountCard({
+    ...baseCardData,
+    previewImageUrl: null,
+    exampleLink: 'https://mirapri.com/100814',
+  });
 
-  expect(card.shadowRoot!.querySelector('img')).toBeNull();
-  expect(card.shadowRoot!.querySelector('.shot-caption')).not.toBeNull();
+  expect(el.shadowRoot!.querySelector('img.shot-img')).toBeNull();
+  expect(el.shadowRoot!.querySelector('.shot-caption')).not.toBeNull();
 });
 ```
 
+`baseCardData` is a minimal valid `PresetCardData` you define at the top of the
+file — build it from the shape in `preset-card.ts` (`preset`, `colors`, and the
+optional fields). `container` is the `document.createElement('div')` created in
+`beforeEach`, matching `result-card.test.ts`.
+
 - [ ] **Step 2: Run it to make sure it fails**
 
-Run: `cd apps/web-app && npx vitest run src/components/v4/__tests__/preset-card.test.ts`
+Run: `cd apps/web-app && npx vitest run src/components/__tests__/v4/preset-card.test.ts`
 Expected: FAIL — no `<img>` is rendered.
 
 - [ ] **Step 3: Add the field and render branch**
@@ -1180,7 +1210,7 @@ Expected: PASS
 - [ ] **Step 7: Commit**
 
 ```bash
-git add apps/web-app/src/components/v4/preset-card.ts apps/web-app/src/components/v4/preset-tool.ts apps/web-app/src/services/hybrid-preset-service.ts apps/web-app/public/_headers apps/web-app/src/components/v4/__tests__/preset-card.test.ts
+git add apps/web-app/src/components/v4/preset-card.ts apps/web-app/src/components/v4/preset-tool.ts apps/web-app/src/services/hybrid-preset-service.ts apps/web-app/public/_headers apps/web-app/src/components/__tests__/v4/preset-card.test.ts
 git commit -m "feat(web-app): render approved preset preview images on cards"
 ```
 
