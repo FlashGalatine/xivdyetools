@@ -69,6 +69,7 @@ const basePreset: UnifiedPreset = {
   name: 'Test Preset',
   description: 'A test preset',
   category: 'aesthetics',
+  secondaryCategories: [],
   dyes: [1, 2, 3],
   tags: [],
   voteCount: 0,

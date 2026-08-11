@@ -880,6 +880,13 @@ export class PresetDetail extends BaseLitComponent {
             ${unsafeHTML(getCategoryIcon(this.preset.category))}
             ${presetCategoryLabel(this.preset.category)}
           </span>
+          ${this.preset.secondaryCategories.map(
+            (cat) => html`
+              <span class="badge badge-category">
+                ${unsafeHTML(getCategoryIcon(cat))} ${presetCategoryLabel(cat)}
+              </span>
+            `
+          )}
           ${
             this.preset.isCurated
               ? html`<span class="badge badge-curated"

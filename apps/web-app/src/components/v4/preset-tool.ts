@@ -37,6 +37,7 @@ import { presetCategoryLabel } from '@shared/preset-i18n';
 import type { UnifiedPreset } from '@services/hybrid-preset-service';
 import type { CommunityPreset } from '@services/community-preset-service';
 import type { PresetsConfig, PresetCategoryFilter } from '@shared/tool-config-types';
+import type { PresetCategory } from '@xivdyetools/types';
 import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 
 // Import child components
@@ -53,6 +54,9 @@ const CATEGORY_ORDER: readonly PresetCategoryFilter[] = [
   'seasons',
   'events',
   'grand-companies',
+  'appearance',
+  'zones',
+  'raids-trials',
 ];
 
 const SORT_ORDER = ['popular', 'recent', 'name'] as const;
@@ -520,6 +524,7 @@ export class PresetTool extends BaseLitComponent {
       name: preset.name,
       description: preset.description,
       category: preset.category_id,
+      secondaryCategories: preset.secondary_categories ?? [],
       dyes: preset.dyes,
       tags: preset.tags,
       author: preset.author_name || undefined,
@@ -542,6 +547,7 @@ export class PresetTool extends BaseLitComponent {
       name: saved.name,
       description: saved.description,
       category: saved.category,
+      secondaryCategories: saved.secondaryCategories ?? [],
       dyes: saved.dyes,
       tags: saved.tags,
       author: saved.author,
@@ -569,6 +575,8 @@ export class PresetTool extends BaseLitComponent {
       description: collection.description ?? '',
       // Local palettes carry no category; 'aesthetics' is the general bucket.
       category: 'aesthetics',
+      // Local palettes carry no categories beyond the general bucket.
+      secondaryCategories: [],
       dyes: [...collection.dyes],
       tags: [],
       voteCount: 0,
@@ -621,6 +629,19 @@ export class PresetTool extends BaseLitComponent {
   }
 
   /**
+   * Does this preset belong to `category`?
+   *
+   * Either slot counts. Rail counts therefore sum to MORE than the total —
+   * inherent to multi-category, and the intended reading ("presets tagged
+   * Zones"). Deduping them would make the number contradict the result list.
+   */
+  private matchesCategory(preset: UnifiedPreset, category: PresetCategoryFilter): boolean {
+    if (category === 'all') return true;
+    if (preset.category === category) return true;
+    return preset.secondaryCategories.includes(category as PresetCategory);
+  }
+
+  /**
    * The active tab's pool, sliced from the one loaded list and then by the
    * selected category (the rail's counts need the pool unfiltered, so the
    * category cut happens here rather than in the service query).
@@ -628,7 +649,7 @@ export class PresetTool extends BaseLitComponent {
   private currentPool(): UnifiedPreset[] {
     const pool = this.currentTabPool();
     if (this.config.category === 'all') return pool;
-    return pool.filter((p) => p.category === this.config.category);
+    return pool.filter((p) => this.matchesCategory(p, this.config.category));
   }
 
   private currentTabPool(): UnifiedPreset[] {
@@ -676,7 +697,7 @@ export class PresetTool extends BaseLitComponent {
             ? this.userSubmissions.map((p) => this.communityToUnified(p))
             : this.presets.filter((p) => !p.isCurated);
     if (category === 'all') return base.length;
-    return base.filter((p) => p.category === category).length;
+    return base.filter((p) => this.matchesCategory(p, category)).length;
   }
 
   // ============================================

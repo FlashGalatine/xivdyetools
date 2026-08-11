@@ -28,6 +28,8 @@ export interface SavedPreset {
   name: string;
   description: string;
   category: PresetCategory;
+  /** Snapshotted so the offline shelf filters the same way the live rail does */
+  secondaryCategories?: PresetCategory[];
   dyes: number[];
   tags: string[];
   author?: string;
@@ -80,6 +82,7 @@ export class SavedPresetsService {
       name: preset.name,
       description: preset.description,
       category: preset.category,
+      secondaryCategories: [...preset.secondaryCategories],
       dyes: [...preset.dyes],
       tags: [...preset.tags],
       author: preset.author,

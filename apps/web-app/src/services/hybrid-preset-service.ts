@@ -33,6 +33,8 @@ export interface UnifiedPreset {
   name: string;
   description: string;
   category: PresetCategory;
+  /** Up to two extra categories; the rail matches on either slot */
+  secondaryCategories: PresetCategory[];
   dyes: number[];
   tags: string[];
   /** Author name for community presets, undefined for curated */
@@ -150,6 +152,7 @@ export class HybridPresetService {
       name: preset.name,
       description: preset.description,
       category: preset.category,
+      secondaryCategories: [],
       dyes: preset.dyes,
       tags: preset.tags,
       author: preset.author,
@@ -168,6 +171,7 @@ export class HybridPresetService {
       name: preset.name,
       description: preset.description,
       category: preset.category_id,
+      secondaryCategories: preset.secondary_categories ?? [],
       dyes: preset.dyes,
       tags: preset.tags,
       author: preset.author_name || undefined,
