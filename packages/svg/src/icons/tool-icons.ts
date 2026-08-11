@@ -83,6 +83,9 @@ export type CategoryGlyphName =
   | 'seasons'
   | 'events'
   | 'aesthetics'
+  | 'appearance'
+  | 'zones'
+  | 'raids-trials'
   | 'default';
 
 const RING = '<circle cx="16" cy="16" r="11.6" stroke-width="1.4"/>';
@@ -229,6 +232,23 @@ const CATEGORY: Record<CategoryGlyphName, string> = {
     '<path d="M16 9.6 V2.6"/><path d="M22.1 14 L28.7 11.9"/><path d="M19.8 21.2 L23.9 26.8"/><path d="M12.2 21.2 L8.1 26.8"/><path d="M9.9 14 L3.3 11.9"/><circle cx="16" cy="16" r="3.4" fill="INK" stroke="none"/>',
   aesthetics:
     '<path d="M16 4.4 a3.2 3.2 0 0 1 3.2 3.2 c0 1.8 -1.6 2.4 -3.2 2.9 V13.4"/><path d="M16 13.4 L4.4 22.2 a1.4 1.4 0 0 0 0.9 2.5 H26.7 a1.4 1.4 0 0 0 0.9 -2.5 Z"/>',
+  // Turn 23 (design 6a/6b/6c). Fills here are INK, not accent — the category
+  // set's convention. A head in PROFILE, so it cannot collide with the Swatch
+  // tool's front-facing bust; profile is also why one eye is correct where a
+  // front view would need two.
+  appearance:
+    '<path d="M9.6 23.4 C6.6 17.4 7.4 9.4 13.6 5.4 C19.2 1.8 24.8 5.4 24.8 11.8 C24.8 14 24.2 15 24 15.8 L27 19.6 L22.2 21 V23.4 C22.2 26 20.4 27.6 17.4 27.6 H12 C10.6 27.6 9.6 26.4 9.6 25 Z"/><circle cx="20.4" cy="13.2" r="1.9" fill="INK" stroke="none"/>',
+  // TWO summits — one peak is a mountain, and the category is places. The disc
+  // is bare: rays are what make a disc a sun, and that is the only reason this
+  // can share a set with the events burst. The baseline is not decoration —
+  // without it the ridge reads as a chart.
+  zones:
+    '<path d="M3.6 25.8 H28.4"/><path d="M4.8 25.8 L11.8 12.4 L17 19.8 L21.2 14.4 L27.2 25.8"/><circle cx="24.4" cy="7.4" r="2.6" fill="INK" stroke="none"/>',
+  // Crossed blades, no fill (the aesthetics precedent). Crossed weapons only
+  // became free when jobs became one upright staff; the two differ by
+  // ORIENTATION, which is the difference that survives 16 px.
+  'raids-trials':
+    '<path d="M7 26.6 L25 8.6"/><path d="M7.9 21.5 L12.1 25.7"/><path d="M25 26.6 L7 8.6"/><path d="M19.9 25.7 L24.1 21.5"/>',
   default:
     '<rect x="12" y="12" width="8" height="8" rx="1.8"/><rect x="21.4" y="12" width="8" height="8" rx="1.8"/><rect x="2.6" y="12" width="8" height="8" rx="1.8" fill="INK" stroke="none"/>',
 };
@@ -306,7 +326,7 @@ export function panelGlyph(name: PanelGlyphName, options: GlyphRenderOptions = {
   return renderGlyph(PANEL[name], 2.4, options);
 }
 
-/** Render a preset-category glyph (five categories, five icons). */
+/** Render a preset-category glyph (eight categories, eight icons, + default). */
 export function categoryGlyph(name: CategoryGlyphName, options: GlyphRenderOptions = {}): string {
   return renderGlyph(CATEGORY[name], 2.4, options);
 }

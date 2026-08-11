@@ -27,7 +27,21 @@ describe('5.0 icon system', () => {
     expect(GLYPH_SETS.toolDetail).toHaveLength(9); // detail set complete ×9
     expect(GLYPH_SETS.harmony).toHaveLength(10); // ten ring positions
     expect(GLYPH_SETS.chrome).toEqual(['about', 'sun', 'moon', 'globe']);
-    expect(GLYPH_SETS.category).toHaveLength(6); // five categories + default
+    expect(GLYPH_SETS.category).toHaveLength(9); // eight categories + default
+  });
+
+  it('the three 2026-08-11 categories render on the category set conventions', () => {
+    // Fills in this set are INK, not accent — a flag is not a colour.
+    for (const name of ['appearance', 'zones'] as const) {
+      const svg = categoryGlyph(name, { ink: '#101010' });
+      expect(svg, name).toContain('fill="#101010"');
+      expect(svg, name).not.toContain(GLYPH_ACCENT_DARK);
+      expect(svg, name).toContain('stroke-width="2.4"');
+    }
+    // raids-trials carries no fill at all, on the aesthetics precedent.
+    const raids = categoryGlyph('raids-trials', { ink: '#101010' });
+    expect(raids).not.toContain('fill="#101010"');
+    expect(raids).toContain('<g fill="none"');
   });
 
   it('every glyph keeps fill="none" explicit on the group (tool-banner floods otherwise)', () => {
