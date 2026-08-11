@@ -304,20 +304,26 @@ describe('photon image processing', () => {
 
         it('frees WASM memory after processing', () => {
             const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+
+            // Create distinct mocks for each stage of processing
+            const mockCroppedImage = createMockPhotonImage(200, 150);
             const mockWebpImage = {
-                ...createMockPhotonImage(),
+                ...createMockPhotonImage(640, 264),
                 get_bytes_webp: vi.fn(() => new Uint8Array([0x52, 0x49])),
             };
+
+            vi.mocked(crop).mockReturnValueOnce(mockCroppedImage as unknown as ReturnType<typeof crop>);
             vi.mocked(resize).mockReturnValueOnce(mockWebpImage as unknown as ReturnType<typeof resize>);
 
             processImageForThumbnail(buffer);
 
-            // Should have freed all three images
+            // All three distinct images must be freed: original, cropped, resized
             expect(mockPhotonImage.free).toHaveBeenCalled();
-            expect(crop).toHaveBeenCalled();
+            expect(mockCroppedImage.free).toHaveBeenCalled();
+            expect(mockWebpImage.free).toHaveBeenCalled();
         });
 
-        it('frees memory even on error', () => {
+        it('frees memory even on crop error', () => {
             const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
             vi.mocked(crop).mockImplementationOnce(() => {
                 throw new Error('Crop failed');
@@ -325,8 +331,25 @@ describe('photon image processing', () => {
 
             expect(() => processImageForThumbnail(buffer)).toThrow('Crop failed');
 
-            // Should still have freed the original image
+            // Should have freed the original image on error
             expect(mockPhotonImage.free).toHaveBeenCalled();
+        });
+
+        it('frees memory even on resize error', () => {
+            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+
+            // Create a cropped image mock that will be freed on error
+            const mockCroppedImage = createMockPhotonImage(200, 150);
+            vi.mocked(crop).mockReturnValueOnce(mockCroppedImage as unknown as ReturnType<typeof crop>);
+            vi.mocked(resize).mockImplementationOnce(() => {
+                throw new Error('Resize failed');
+            });
+
+            expect(() => processImageForThumbnail(buffer)).toThrow('Resize failed');
+
+            // Both original and cropped images must be freed even when resize fails
+            expect(mockPhotonImage.free).toHaveBeenCalled();
+            expect(mockCroppedImage.free).toHaveBeenCalled();
         });
 
         it('calls crop with correct arguments', () => {
