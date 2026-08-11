@@ -130,6 +130,24 @@ describe('POST /thumbnail', () => {
     vi.mocked(processImageForThumbnail).mockReset();
   });
 
+  it('returns WebP bytes with correct content type', async () => {
+    const webpBytes = new Uint8Array([0x52, 0x49, 0x46, 0x46]); // RIFF header
+    vi.mocked(processImageForThumbnail).mockReturnValue(webpBytes);
+
+    const res = await app.request(
+      'http://localhost/thumbnail',
+      {
+        method: 'POST',
+        body: new Uint8Array([0x89, 0x50, 0x4E, 0x47]), // PNG header
+      },
+      env
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('image/webp');
+    expect(new Uint8Array(await res.arrayBuffer())).toEqual(webpBytes);
+  });
+
   it('rejects an empty body', async () => {
     const res = await app.request(
       'http://localhost/thumbnail',

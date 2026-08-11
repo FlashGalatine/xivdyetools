@@ -28,6 +28,7 @@ vi.mock('@cf-wasm/photon', () => ({
         Mitchell: 5,
     },
     resize: vi.fn(() => mockResizedImage),
+    crop: vi.fn(() => mockResizedImage),
 }));
 
 // Import after mocks
@@ -38,8 +39,11 @@ import {
     processImageForExtraction,
     getImageDimensions,
     computeCropBox,
+    processImageForThumbnail,
+    THUMBNAIL_WIDTH,
+    THUMBNAIL_HEIGHT,
 } from './photon.js';
-import { PhotonImage, resize, SamplingFilter } from '@cf-wasm/photon';
+import { PhotonImage, resize, SamplingFilter, crop } from '@cf-wasm/photon';
 
 describe('photon image processing', () => {
     beforeEach(() => {
@@ -279,6 +283,88 @@ describe('photon image processing', () => {
             expect(box.y2).toBe(400);
             expect(box.x2 - box.x1).toBe(970); // round(400 * 2.4242)
             expect(box.x2).toBeLessThanOrEqual(3000);
+        });
+    });
+
+    describe('processImageForThumbnail', () => {
+        it('returns WebP bytes', () => {
+            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const webpBytes = new Uint8Array([0x52, 0x49, 0x46, 0x46]); // RIFF
+
+            const mockWebpImage = {
+                ...createMockPhotonImage(),
+                get_bytes_webp: vi.fn(() => webpBytes),
+            };
+            vi.mocked(resize).mockReturnValueOnce(mockWebpImage as unknown as ReturnType<typeof resize>);
+
+            const result = processImageForThumbnail(buffer);
+
+            expect(result).toEqual(webpBytes);
+        });
+
+        it('frees WASM memory after processing', () => {
+            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const mockWebpImage = {
+                ...createMockPhotonImage(),
+                get_bytes_webp: vi.fn(() => new Uint8Array([0x52, 0x49])),
+            };
+            vi.mocked(resize).mockReturnValueOnce(mockWebpImage as unknown as ReturnType<typeof resize>);
+
+            processImageForThumbnail(buffer);
+
+            // Should have freed all three images
+            expect(mockPhotonImage.free).toHaveBeenCalled();
+            expect(crop).toHaveBeenCalled();
+        });
+
+        it('frees memory even on error', () => {
+            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            vi.mocked(crop).mockImplementationOnce(() => {
+                throw new Error('Crop failed');
+            });
+
+            expect(() => processImageForThumbnail(buffer)).toThrow('Crop failed');
+
+            // Should still have freed the original image
+            expect(mockPhotonImage.free).toHaveBeenCalled();
+        });
+
+        it('calls crop with correct arguments', () => {
+            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const mockWebpImage = {
+                ...createMockPhotonImage(),
+                get_bytes_webp: vi.fn(() => new Uint8Array([0x52])),
+            };
+            vi.mocked(resize).mockReturnValueOnce(mockWebpImage as unknown as ReturnType<typeof resize>);
+
+            processImageForThumbnail(buffer);
+
+            // Compute expected crop box for 100x100 image (mock size)
+            expect(crop).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.any(Number),
+                expect.any(Number),
+                expect.any(Number),
+                expect.any(Number)
+            );
+        });
+
+        it('calls resize with thumbnail dimensions and Lanczos3', () => {
+            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const mockWebpImage = {
+                ...createMockPhotonImage(),
+                get_bytes_webp: vi.fn(() => new Uint8Array([0x52])),
+            };
+            vi.mocked(resize).mockReturnValueOnce(mockWebpImage as unknown as ReturnType<typeof resize>);
+
+            processImageForThumbnail(buffer);
+
+            expect(resize).toHaveBeenCalledWith(
+                expect.anything(),
+                THUMBNAIL_WIDTH,
+                THUMBNAIL_HEIGHT,
+                SamplingFilter.Lanczos3
+            );
         });
     });
 });
