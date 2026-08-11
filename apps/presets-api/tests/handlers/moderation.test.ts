@@ -12,6 +12,7 @@ import {
     createMockEnv,
     createMockD1Database,
     createMockPresetRow,
+    authHeaders,
 } from '../test-utils';
 
 type Variables = {
@@ -141,6 +142,35 @@ describe('ModerationHandler', () => {
 
             expect(body.presets).toEqual([]);
             expect(body.total).toBe(0);
+        });
+
+        it('includes an approved preset whose image is awaiting review', async () => {
+            mockDb._setupMock(() => [
+                createMockPresetRow({
+                    status: 'approved',
+                    preview_image_status: 'pending',
+                    preview_image_key: 'p1/a.webp',
+                }),
+            ]);
+
+            const res = await app.request(
+                '/api/v1/moderation/pending',
+                { headers: { ...authHeaders('test-bot-secret', '123456789') } },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            expect(mockDb._queries.join(' ')).toContain("preview_image_status = 'pending'");
+
+            const body = (await res.json()) as {
+                presets: Array<{ preview_image_url: string | null; pending_preview_image_url: string | null }>;
+            };
+            // The gate holds: the public URL stays null for an unapproved image...
+            expect(body.presets[0].preview_image_url).toBeNull();
+            // ...and the moderator gets the pending URL from a separate field.
+            expect(body.presets[0].pending_preview_image_url).toBe(
+                'https://shots.xivdyetools.app/p1/a.webp'
+            );
         });
     });
 

@@ -421,16 +421,53 @@ export function prepareRevert(
 }
 
 /**
- * Get pending presets for moderation
+ * A moderation-queue row: the preset plus the unapproved image URL.
+ *
+ * The pending URL is built HERE and not in rowToPreset, so the gate in
+ * rowToPreset — `preview_image_url` only when status is 'approved' — remains
+ * the single rule governing every public path. This field only ever reaches a
+ * moderator-guarded route. The R2 object is already publicly readable and the
+ * discord-worker embed links it directly; the gate is about not advertising
+ * an unreviewed image, not about secrecy.
  */
-export async function getPendingPresets(db: D1Database, logger?: PresetServiceLogger): Promise<CommunityPreset[]> {
+export type ModerationQueueEntry = CommunityPreset & {
+  pending_preview_image_url: string | null;
+};
+
+/**
+ * Get the moderation queue.
+ *
+ * Two reasons a preset needs a moderator: its own content is pending, or it
+ * carries an image awaiting review. Before this widened, an uploaded image
+ * NEVER appeared here — the only signal was a fire-and-forget Discord embed,
+ * so a dropped notification meant an image nobody would ever review.
+ */
+export async function getPendingPresets(
+  db: D1Database,
+  logger?: PresetServiceLogger
+): Promise<ModerationQueueEntry[]> {
   const query = `
     SELECT * FROM presets
-    WHERE status = 'pending'
+    WHERE status = 'pending' OR preview_image_status = 'pending'
     ORDER BY created_at ASC
   `;
   const result = await db.prepare(query).all<PresetRow>();
-  return rowsToPresets(result.results || [], logger);
+  return (result.results || []).flatMap((row) => {
+    try {
+      return [
+        {
+          ...rowToPreset(row, logger),
+          pending_preview_image_url:
+            row.preview_image_status === 'pending' && row.preview_image_key
+              ? `${PREVIEW_IMAGE_PUBLIC_BASE}/${row.preview_image_key}`
+              : null,
+        },
+      ];
+    } catch (error) {
+      (logger ?? console).error(`[BUG-012] Skipping corrupted preset row id=${row.id}:`, error);
+      return [];
+    }
+  });
 }
 
 /**
