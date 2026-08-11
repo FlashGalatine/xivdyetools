@@ -174,8 +174,13 @@ export async function getPresets(
   const params: (string | number)[] = [safeStatus];
 
   if (category) {
-    conditions.push('category_id = ?');
-    params.push(category);
+    // A preset is "in" a category if it is the primary OR appears in the
+    // secondary list. Bound twice rather than as ?1: this query builds its
+    // params positionally, and mixing ? with ?1 is a trap for the next editor.
+    conditions.push(
+      '(category_id = ? OR EXISTS (SELECT 1 FROM json_each(presets.secondary_categories) WHERE value = ?))'
+    );
+    params.push(category, category);
   }
 
   if (search) {

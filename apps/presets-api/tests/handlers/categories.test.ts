@@ -324,4 +324,12 @@ describe('CategoriesHandler', () => {
             expect(body.id).toBe('grand-companies');
         });
     });
+
+    it('counts a preset under its secondary categories too', async () => {
+        mockDb._setupMock(() => []);
+
+        await app.request('/api/v1/categories', {}, env);
+
+        expect(mockDb._queries.join(' ')).toContain('json_each');
+    });
 });

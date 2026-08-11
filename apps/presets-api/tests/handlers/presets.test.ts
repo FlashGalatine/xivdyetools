@@ -74,6 +74,20 @@ describe('PresetsHandler', () => {
             expect(mockDb._bindings.some((b) => b.includes('jobs'))).toBe(true);
         });
 
+        it('matches a secondary category, not just the primary', async () => {
+            mockDb._setupMock(() => []);
+
+            await app.request('/api/v1/presets?category=zones', {}, env);
+
+            const sql = mockDb._queries.join(' ');
+            expect(sql).toContain('json_each');
+            // Bound twice: once for the primary comparison, once inside json_each
+            const zonesBinds = mockDb._bindings
+                .flat()
+                .filter((b) => b === 'zones');
+            expect(zonesBinds).toHaveLength(2);
+        });
+
         it('should filter by search', async () => {
             // Return empty array - service uses window function COUNT(*) OVER() not separate count query
             mockDb._setupMock(() => []);

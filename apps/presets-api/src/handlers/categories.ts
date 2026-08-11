@@ -27,6 +27,11 @@ let pendingCategoryListFetch: Promise<CategoryMeta[]> | null = null;
 /**
  * Execute D1 query for the full category list.
  * Extracted so it can be deduplicated via pendingCategoryListFetch.
+ *
+ * The JOIN matches primary OR secondary, so counts agree with what clicking a
+ * chip actually returns. They therefore sum to MORE than the preset total —
+ * that is inherent to multi-category and is the intended reading ("presets
+ * tagged Zones"), not a bug to normalise away.
  */
 async function fetchAllCategories(db: D1Database): Promise<CategoryMeta[]> {
   const query = `
@@ -39,7 +44,10 @@ async function fetchAllCategories(db: D1Database): Promise<CategoryMeta[]> {
       c.display_order,
       COUNT(CASE WHEN p.status = 'approved' THEN 1 END) as preset_count
     FROM categories c
-    LEFT JOIN presets p ON p.category_id = c.id
+    LEFT JOIN presets p ON (
+      p.category_id = c.id
+      OR EXISTS (SELECT 1 FROM json_each(p.secondary_categories) WHERE value = c.id)
+    )
     GROUP BY c.id
     ORDER BY c.display_order ASC
   `;
@@ -103,7 +111,10 @@ categoriesRouter.get('/:id', async (c) => {
       c.display_order,
       COUNT(CASE WHEN p.status = 'approved' THEN 1 END) as preset_count
     FROM categories c
-    LEFT JOIN presets p ON p.category_id = c.id
+    LEFT JOIN presets p ON (
+      p.category_id = c.id
+      OR EXISTS (SELECT 1 FROM json_each(p.secondary_categories) WHERE value = c.id)
+    )
     WHERE c.id = ?
     GROUP BY c.id
   `;
