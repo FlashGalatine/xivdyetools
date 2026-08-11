@@ -15,10 +15,14 @@ import {
   authService,
   presetSubmissionService,
 } from '@services/index';
-import { getCategoryIcon } from '@shared/category-icons';
-import { presetCategoryLabel } from '@shared/preset-i18n';
+import {
+  MAX_PREVIEW_IMAGE_BYTES,
+  removePreviewImage,
+  uploadPreviewImage,
+} from '@services/preset-submission-service';
+import { createCategorySelector, type CategorySelection } from './preset-category-selector';
 import { exampleLinkError } from '@shared/example-link';
-import type { Dye, PresetCategory } from '@xivdyetools/types';
+import type { Dye } from '@xivdyetools/types';
 import type { CommunityPreset } from '@services/community-preset-service';
 import type { EditResult, PresetEditRequest } from '@services/preset-submission-service';
 
@@ -29,10 +33,22 @@ import type { EditResult, PresetEditRequest } from '@services/preset-submission-
 interface FormState {
   name: string;
   description: string;
-  category: PresetCategory; // Read-only, for display
+  /** Editable since 5.1 — was a locked read-only display */
+  categories: CategorySelection;
   selectedDyes: Dye[];
   tags: string;
   exampleLink: string;
+  /** Picked file awaiting upload; null when nothing new was chosen */
+  newPreviewImage: File | null;
+  /**
+   * The author pressed Remove; mutually exclusive with newPreviewImage.
+   * Named `clearPreviewImage`, not `removePreviewImage`, so it cannot be
+   * confused with the imported service function of that name.
+   */
+  clearPreviewImage: boolean;
+  /** Status as loaded, so the field knows which affordance to render */
+  previewImageStatus: 'none' | 'pending' | 'approved';
+  previewImageUrl: string | null;
 }
 
 type OnEditCallback = (result: EditResult) => void;
@@ -81,14 +97,21 @@ export function showPresetEditForm(preset: CommunityPreset, onEdit?: OnEditCallb
   const state: FormState = {
     name: preset.name,
     description: preset.description,
-    category: preset.category_id,
+    categories: {
+      primary: preset.category_id,
+      secondary: preset.secondary_categories ?? [],
+    },
     selectedDyes: dyeObjects,
     tags: preset.tags.join(', '),
     exampleLink: preset.example_link ?? '',
+    newPreviewImage: null,
+    clearPreviewImage: false,
+    previewImageStatus: preset.preview_image_status ?? 'none',
+    previewImageUrl: preset.preview_image_url ?? null,
   };
 
   // Create form content
-  const content = createFormContent(preset.id, state, onEdit);
+  const content = createFormContent(preset, state, onEdit);
 
   // Show modal using ModalService
   ModalService.show({
@@ -105,7 +128,7 @@ export function showPresetEditForm(preset: CommunityPreset, onEdit?: OnEditCallb
 // ============================================
 
 function createFormContent(
-  presetId: string,
+  preset: CommunityPreset,
   state: FormState,
   onEdit?: OnEditCallback
 ): HTMLElement {
@@ -118,8 +141,9 @@ function createFormContent(
   // Description textarea
   form.appendChild(createDescriptionInput(state));
 
-  // Category display (read-only)
-  form.appendChild(createCategoryDisplay(state));
+  // Editable since 5.1. The category was locked here, and PresetEditRequest
+  // had no category field at all, so a change had nowhere to go.
+  form.appendChild(createCategorySelector(state.categories));
 
   // Dye selector
   form.appendChild(createDyeSelector(state));
@@ -131,8 +155,10 @@ function createFormContent(
   // link could be added at creation and then never corrected.
   form.appendChild(createExampleLinkInput(state));
 
+  form.appendChild(createPreviewImageField(state));
+
   // Submit button
-  form.appendChild(createSubmitButton(presetId, state, onEdit));
+  form.appendChild(createSubmitButton(preset, state, onEdit));
 
   return form;
 }
@@ -226,27 +252,6 @@ function createDescriptionInput(state: FormState): HTMLElement {
   wrapper.appendChild(label);
   wrapper.appendChild(textarea);
   wrapper.appendChild(counter);
-
-  return wrapper;
-}
-
-function createCategoryDisplay(state: FormState): HTMLElement {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'form-field';
-
-  const label = document.createElement('label');
-  label.className = 'block text-sm font-medium mb-1';
-  label.style.color = 'var(--theme-text)';
-  label.textContent = LanguageService.t('preset.categoryLocked');
-
-  const display = document.createElement('div');
-  display.className = 'px-3 py-2 rounded-lg border text-sm flex items-center gap-2';
-  display.style.cssText =
-    'background-color: var(--theme-card-background); color: var(--theme-text-secondary); border-color: var(--theme-border);';
-  display.innerHTML = `<span class="w-4 h-4 inline-block">${getCategoryIcon(state.category)}</span><span>${presetCategoryLabel(state.category)}</span>`;
-
-  wrapper.appendChild(label);
-  wrapper.appendChild(display);
 
   return wrapper;
 }
@@ -478,11 +483,116 @@ function createTagsInput(state: FormState): HTMLElement {
   return wrapper;
 }
 
+const PREVIEW_IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp';
+
+/**
+ * Preview image: upload, replace, or remove.
+ *
+ * A new upload re-queues the IMAGE only — the preset stays live in the gallery
+ * showing its previous picture until a moderator approves the new one.
+ * Removing clears the picture and, with it, the only reason the preset was in
+ * the queue for its image.
+ */
+function createPreviewImageField(state: FormState): HTMLElement {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'form-field';
+
+  const label = document.createElement('label');
+  label.className = 'block text-sm font-medium mb-1';
+  label.style.color = 'var(--theme-text)';
+  label.textContent = LanguageService.t('preset.fieldPreviewImage');
+
+  const body = document.createElement('div');
+  body.className = 'space-y-2';
+
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = PREVIEW_IMAGE_ACCEPT;
+  input.className = 'w-full text-sm';
+  input.style.color = 'var(--theme-text)';
+
+  input.addEventListener('change', () => {
+    const file = input.files?.[0] ?? null;
+    // Mirror the server limit so the author finds out before spending the upload.
+    if (file && file.size > MAX_PREVIEW_IMAGE_BYTES) {
+      ToastService.error(LanguageService.t('preset.previewImageTooLarge'));
+      input.value = '';
+      state.newPreviewImage = null;
+      return;
+    }
+    state.newPreviewImage = file;
+    // Picking a file supersedes a pending removal — they are mutually exclusive.
+    if (file) state.clearPreviewImage = false;
+    render();
+  });
+
+  function render(): void {
+    body.replaceChildren();
+
+    const hasStoredImage = state.previewImageStatus !== 'none' && !state.clearPreviewImage;
+
+    if (hasStoredImage && state.previewImageStatus === 'approved' && state.previewImageUrl) {
+      const img = document.createElement('img');
+      img.src = state.previewImageUrl;
+      img.alt = LanguageService.t('preset.previewImageCurrent');
+      img.style.cssText =
+        'width: 100%; max-width: 320px; border-radius: 8px; border: 1px solid var(--theme-border); display: block;';
+      body.appendChild(img);
+    } else if (hasStoredImage && state.previewImageStatus === 'pending') {
+      const note = document.createElement('div');
+      note.className = 'text-xs px-3 py-2 rounded-lg border';
+      note.style.cssText =
+        'border-color: rgba(244,191,79,0.35); background: rgba(244,191,79,0.08); color: var(--theme-text-secondary);';
+      note.textContent = LanguageService.t('preset.previewImageUnderReview');
+      body.appendChild(note);
+    }
+
+    if (state.clearPreviewImage) {
+      const note = document.createElement('div');
+      note.className = 'text-xs';
+      note.style.color = 'var(--theme-text-secondary)';
+      note.textContent = LanguageService.t('preset.previewImageRemoved');
+      body.appendChild(note);
+    }
+
+    body.appendChild(input);
+
+    if (hasStoredImage) {
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'px-3 py-1.5 rounded-lg border text-xs';
+      removeBtn.style.cssText =
+        'background-color: var(--theme-card-background); color: var(--theme-text); border-color: var(--theme-border);';
+      removeBtn.textContent = LanguageService.t('preset.previewImageRemove');
+      removeBtn.addEventListener('click', () => {
+        state.clearPreviewImage = true;
+        state.newPreviewImage = null;
+        input.value = '';
+        render();
+      });
+      body.appendChild(removeBtn);
+    }
+  }
+
+  render();
+
+  const hint = document.createElement('div');
+  hint.className = 'text-xs mt-1';
+  hint.style.color = 'var(--theme-text-secondary)';
+  hint.textContent = LanguageService.t('preset.fieldPreviewImageHint');
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(body);
+  wrapper.appendChild(hint);
+  return wrapper;
+}
+
 function createSubmitButton(
-  presetId: string,
+  preset: CommunityPreset,
   state: FormState,
   onEdit?: OnEditCallback
 ): HTMLElement {
+  const presetId = preset.id;
   const wrapper = document.createElement('div');
   wrapper.className = 'flex justify-end gap-2 pt-4 border-t';
   wrapper.style.borderColor = 'var(--theme-border)';
@@ -522,40 +632,49 @@ function createSubmitButton(
   });
 
   submitBtn.addEventListener('click', async () => {
-    // Build edit request - only include fields that have values
-    const updates: PresetEditRequest = {};
-
-    if (state.name.trim()) {
-      updates.name = state.name.trim();
-    }
-    if (state.description.trim()) {
-      updates.description = state.description.trim();
-    }
-    if (state.selectedDyes.length >= MIN_DYES) {
-      updates.dyes = state.selectedDyes
-        .map((d) => d.stainID)
-        .filter((id): id is number => id !== null);
-    }
-    updates.tags = state.tags
+    // Build the patch from what actually CHANGED, not from everything on the
+    // form. Two reasons: an image-only edit would otherwise send a body full of
+    // unchanged fields, and — because the API runs content moderation whenever
+    // `name` or `description` is present — every picture swap would spend a
+    // Perspective API call re-checking text nobody touched.
+    const name = state.name.trim();
+    const description = state.description.trim();
+    const dyes = state.selectedDyes.map((d) => d.stainID).filter((id): id is number => id !== null);
+    const tags = state.tags
       .split(',')
       .map((t) => t.trim())
       .filter(Boolean);
     // Empty clears the link rather than leaving the old one in place
-    updates.example_link = state.exampleLink.trim() || null;
+    const exampleLink = state.exampleLink.trim() || null;
+    const originalSecondary = preset.secondary_categories ?? [];
 
-    // Validate
-    const errors: string[] = [];
-    if (updates.name && updates.name.length < MIN_NAME_LENGTH) {
-      errors.push('Name must be at least 2 characters');
+    const updates: PresetEditRequest = {};
+    if (name !== preset.name) updates.name = name;
+    if (description !== preset.description) updates.description = description;
+    if (dyes.join(',') !== preset.dyes.join(',')) updates.dyes = dyes;
+    if (tags.join(',') !== preset.tags.join(',')) updates.tags = tags;
+    if (exampleLink !== (preset.example_link ?? null)) updates.example_link = exampleLink;
+    if (state.categories.primary !== preset.category_id) {
+      updates.category_id = state.categories.primary;
     }
-    if (updates.description && updates.description.length < MIN_DESC_LENGTH) {
-      errors.push('Description must be at least 10 characters');
+    if (state.categories.secondary.join(',') !== originalSecondary.join(',')) {
+      updates.secondary_categories = state.categories.secondary;
+    }
+
+    // Validate against the form's values, not the patch: a field that did not
+    // change was already valid, and one that did must be checked either way.
+    const errors: string[] = [];
+    if (name.length < MIN_NAME_LENGTH) {
+      errors.push(`Name must be at least ${MIN_NAME_LENGTH} characters`);
+    }
+    if (description.length < MIN_DESC_LENGTH) {
+      errors.push(`Description must be at least ${MIN_DESC_LENGTH} characters`);
     }
     if (state.selectedDyes.length < MIN_DYES) {
-      errors.push('Must include at least 2 dyes');
+      errors.push(`Must include at least ${MIN_DYES} dyes`);
     }
     if (state.selectedDyes.length > MAX_DYES) {
-      errors.push('Maximum 5 dyes allowed');
+      errors.push(`Maximum ${MAX_DYES} dyes allowed`);
     }
 
     if (errors.length > 0) {
@@ -563,31 +682,68 @@ function createSubmitButton(
       return;
     }
 
-    // Disable button and show loading
+    const hasFieldChanges = Object.keys(updates).length > 0;
+    const hasImageChange = state.newPreviewImage !== null || state.clearPreviewImage;
+
+    // An empty PATCH body comes back as 400 "No updates provided", which would
+    // surface as a spurious error on an image-only edit that is about to
+    // succeed. Nothing at all to do is its own, quieter message.
+    if (!hasFieldChanges && !hasImageChange) {
+      ToastService.info(LanguageService.t('preset.noChanges'));
+      return;
+    }
+
     submitBtn.disabled = true;
     submitBtn.textContent = 'Saving...';
 
     try {
-      const result = await presetSubmissionService.editPreset(presetId, updates);
+      let result: EditResult = { success: true };
 
-      if (result.success) {
-        if (result.moderation_status === 'pending') {
-          ToastService.info(LanguageService.t('preset.editPendingReview'));
-        } else {
-          ToastService.success(LanguageService.t('preset.editSuccess'));
+      if (hasFieldChanges) {
+        result = await presetSubmissionService.editPreset(presetId, updates);
+
+        if (!result.success) {
+          if (result.duplicate) {
+            const dupName = result.duplicate.name || 'another preset';
+            ToastService.error(
+              LanguageService.tInterpolate('preset.duplicateFound', { name: dupName })
+            );
+          } else {
+            ToastService.error(result.error || LanguageService.t('errors.saveChangesFailed'));
+          }
+          return;
         }
-
-        ModalService.dismissTop();
-        onEdit?.(result);
-      } else if (result.duplicate) {
-        // Dye combination already exists
-        const dupName = result.duplicate.name || 'another preset';
-        ToastService.error(
-          LanguageService.tInterpolate('preset.duplicateFound', { name: dupName })
-        );
-      } else {
-        ToastService.error(result.error || LanguageService.t('errors.saveChangesFailed'));
       }
+
+      // The image lives on its own routes, so it is a separate call — and a
+      // failure here must not read as a failed edit, because the fields did
+      // save. Warn and carry on, exactly as the submission form does.
+      if (state.newPreviewImage) {
+        try {
+          await uploadPreviewImage(presetId, state.newPreviewImage);
+        } catch {
+          ToastService.warning(LanguageService.t('preset.previewImageFailed'));
+        }
+      } else if (state.clearPreviewImage) {
+        try {
+          await removePreviewImage(presetId);
+        } catch {
+          ToastService.warning(LanguageService.t('preset.previewImageRemoveFailed'));
+        }
+      }
+
+      // A new picture is always the more surprising outcome — it is invisible
+      // until a moderator approves it — so it wins the message.
+      if (state.newPreviewImage) {
+        ToastService.info(LanguageService.t('preset.previewImagePendingReview'));
+      } else if (result.moderation_status === 'pending') {
+        ToastService.info(LanguageService.t('preset.editPendingReview'));
+      } else {
+        ToastService.success(LanguageService.t('preset.editSuccess'));
+      }
+
+      ModalService.dismissTop();
+      onEdit?.(result);
     } catch {
       ToastService.error(LanguageService.t('errors.saveChangesFailed'));
     } finally {
