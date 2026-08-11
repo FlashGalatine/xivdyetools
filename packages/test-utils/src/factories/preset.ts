@@ -35,6 +35,7 @@ export interface PresetRow {
   category_id: string;
   dyes: string; // JSON string
   tags: string; // JSON string
+  secondary_categories?: string | null; // JSON string array or null
   author_discord_id: string | null;
   author_name: string | null;
   vote_count: number;
@@ -124,6 +125,7 @@ export function createMockPreset(overrides: Partial<CommunityPreset> = {}): Comm
     name: 'Test Preset',
     description: 'A test preset description',
     category_id: 'aesthetics',
+    secondary_categories: [],
     dyes: [1, 2, 3],
     tags: ['test', 'mock'],
     author_discord_id: '123456789',
@@ -133,6 +135,7 @@ export function createMockPreset(overrides: Partial<CommunityPreset> = {}): Comm
     is_curated: false,
     created_at: now,
     updated_at: now,
+    preview_image_status: 'none',
     ...overrides,
   };
 }
@@ -197,12 +200,15 @@ export function presetToRow(preset: CommunityPreset): PresetRow {
     ...preset,
     dyes: JSON.stringify(preset.dyes),
     tags: JSON.stringify(preset.tags),
+    secondary_categories: preset.secondary_categories
+      ? JSON.stringify(preset.secondary_categories)
+      : null,
     is_curated: preset.is_curated ? 1 : 0,
     dye_signature: JSON.stringify(preset.dyes),
     previous_values: null,
     example_link: preset.example_link ?? null,
     preview_image_key: null,
-    preview_image_status: 'none',
+    preview_image_status: preset.preview_image_status || 'none',
   };
 }
 
@@ -218,6 +224,9 @@ export function rowToPreset(row: PresetRow): CommunityPreset {
     name: row.name,
     description: row.description,
     category_id: row.category_id as PresetCategory,
+    secondary_categories: row.secondary_categories
+      ? JSON.parse(row.secondary_categories)
+      : [],
     dyes: JSON.parse(row.dyes),
     tags: JSON.parse(row.tags),
     author_discord_id: row.author_discord_id,
@@ -227,5 +236,6 @@ export function rowToPreset(row: PresetRow): CommunityPreset {
     is_curated: row.is_curated === 1,
     created_at: row.created_at,
     updated_at: row.updated_at,
+    preview_image_status: (row.preview_image_status || 'none') as 'none' | 'pending' | 'approved',
   };
 }
