@@ -51,7 +51,6 @@ export function generateDyeSignature(dyes: number[]): string {
 export function rowToPreset(row: PresetRow, logger?: PresetServiceLogger): CommunityPreset {
   let dyes: CommunityPreset['dyes'];
   let tags: CommunityPreset['tags'];
-  let secondary_categories: CommunityPreset['secondary_categories'];
 
   try {
     dyes = JSON.parse(row.dyes) as CommunityPreset['dyes'];
@@ -63,15 +62,6 @@ export function rowToPreset(row: PresetRow, logger?: PresetServiceLogger): Commu
     tags = JSON.parse(row.tags) as CommunityPreset['tags'];
   } catch {
     throw new Error(`[BUG-012] Preset ${row.id}: invalid JSON in 'tags' column`);
-  }
-
-  try {
-    secondary_categories = JSON.parse(row.secondary_categories) as CommunityPreset['secondary_categories'];
-  } catch {
-    // secondary_categories defaults to [] on corruption
-    // BUG-002 FIX: Use structured logger when available for request ID correlation
-    (logger ?? console).error(`[BUG-012] Preset ${row.id}: invalid JSON in 'secondary_categories', defaulting to []`);
-    secondary_categories = [];
   }
 
   let previous_values: CommunityPreset['previous_values'] = null;
@@ -90,7 +80,6 @@ export function rowToPreset(row: PresetRow, logger?: PresetServiceLogger): Commu
     name: row.name,
     description: row.description,
     category_id: row.category_id as CommunityPreset['category_id'],
-    secondary_categories,
     dyes,
     tags,
     author_discord_id: row.author_discord_id,
@@ -110,7 +99,6 @@ export function rowToPreset(row: PresetRow, logger?: PresetServiceLogger): Commu
       row.preview_image_status === 'approved' && row.preview_image_key
         ? `${PREVIEW_IMAGE_PUBLIC_BASE}/${row.preview_image_key}`
         : null,
-    preview_image_status: row.preview_image_status as 'none' | 'pending' | 'approved',
     rejection_reason: row.rejection_reason ?? null,
   };
 }
@@ -329,7 +317,6 @@ export async function createPreset(
     name: submission.name,
     description: submission.description,
     category_id: submission.category_id,
-    secondary_categories: submission.secondary_categories ?? [],
     dyes: submission.dyes,
     tags: submission.tags,
     author_discord_id: authorDiscordId,
@@ -341,7 +328,6 @@ export async function createPreset(
     updated_at: now,
     dye_signature: dyeSignature,
     example_link: submission.example_link ?? null,
-    preview_image_status: 'none',
   };
 }
 
