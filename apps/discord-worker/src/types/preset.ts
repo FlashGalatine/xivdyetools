@@ -58,16 +58,11 @@ export type { ModerationLogEntry, ModerationStats } from '@xivdyetools/types';
 import type { PresetStatus, PresetCategory } from '@xivdyetools/types';
 
 /**
- * Payload received from preset API webhook notifications
+ * A new or re-flagged preset arriving from presets-api. Carries the whole
+ * submission because the moderation embed renders all of it.
  */
-export interface PresetNotificationPayload {
-  /** Notification type */
-  type: 'submission' | 'preview_image';
-  /**
-   * R2 key of an uploaded preview image awaiting review. Present only on
-   * `preview_image` notifications.
-   */
-  preview_image_key?: string | null;
+export interface PresetSubmissionNotification {
+  type: 'submission';
   /** Preset data */
   preset: {
     id: string;
@@ -86,6 +81,30 @@ export interface PresetNotificationPayload {
     created_at: string;
   };
 }
+
+/**
+ * An author-uploaded preview image awaiting review. The upload changes no
+ * other column, so presets-api sends only what the embed needs — modelling it
+ * as the full submission shape would promise fields that never arrive.
+ */
+export interface PreviewImageNotification {
+  type: 'preview_image';
+  /** R2 key of the pending object, used to build the embed's image URL. */
+  preview_image_key?: string | null;
+  preset: {
+    id: string;
+    name: string;
+    author_name: string;
+  };
+}
+
+/**
+ * Payload received from preset API webhook notifications.
+ * Discriminated on `type`: narrow first, then read.
+ */
+export type PresetNotificationPayload =
+  | PresetSubmissionNotification
+  | PreviewImageNotification;
 
 // ============================================================================
 // Error Types

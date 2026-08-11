@@ -1140,11 +1140,25 @@ describe('PresetsHandler', () => {
     describe('POST /api/v1/presets/:id/preview-image', () => {
         const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
 
+        // The route hands its moderator notification to executionCtx.waitUntil —
+        // the same retry/dead-letter path a new submission uses — so every
+        // request through it needs a context to hand that promise to.
+        const waitUntilPromises: Promise<unknown>[] = [];
+        const ctx = {
+            waitUntil: (p: Promise<unknown>) => { waitUntilPromises.push(p); },
+            passThroughOnException: () => {},
+        } as unknown as ExecutionContext;
+
+        beforeEach(() => {
+            waitUntilPromises.length = 0;
+        });
+
         it('should require authentication', async () => {
             const res = await app.request(
                 '/api/v1/presets/preset-123/preview-image',
                 { method: 'POST', body: png },
-                env
+                env,
+                ctx
             );
 
             expect(res.status).toBe(401);
@@ -1167,7 +1181,8 @@ describe('PresetsHandler', () => {
                     },
                     body: png,
                 },
-                env
+                env,
+                ctx
             );
 
             expect(res.status).toBe(403);
@@ -1186,7 +1201,8 @@ describe('PresetsHandler', () => {
                     },
                     body: png,
                 },
-                env
+                env,
+                ctx
             );
 
             expect(res.status).toBe(404);
@@ -1206,7 +1222,8 @@ describe('PresetsHandler', () => {
                     },
                     body: new Uint8Array(0),
                 },
-                env
+                env,
+                ctx
             );
 
             expect(res.status).toBe(400);
@@ -1232,7 +1249,8 @@ describe('PresetsHandler', () => {
                     },
                     body: big,
                 },
-                env
+                env,
+                ctx
             );
 
             expect(res.status).toBe(400);
@@ -1253,7 +1271,8 @@ describe('PresetsHandler', () => {
                     },
                     body: new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0, 0, 0, 0, 0, 0, 0, 0]),
                 },
-                env
+                env,
+                ctx
             );
 
             expect(res.status).toBe(400);
@@ -1276,7 +1295,8 @@ describe('PresetsHandler', () => {
                     },
                     body: png,
                 },
-                env
+                env,
+                ctx
             );
 
             expect(res.status).toBe(400);
@@ -1304,7 +1324,8 @@ describe('PresetsHandler', () => {
                     },
                     body: png,
                 },
-                env
+                env,
+                ctx
             );
 
             expect(res.status).toBe(200);
@@ -1360,7 +1381,8 @@ describe('PresetsHandler', () => {
                         },
                         body: png,
                     },
-                    env
+                    env,
+                    ctx
                 );
 
             const first = await upload();
@@ -1403,10 +1425,12 @@ describe('PresetsHandler', () => {
                     },
                     body: png,
                 },
-                envWithDiscord
+                envWithDiscord,
+                ctx
             );
 
             expect(res.status).toBe(200);
+            await Promise.allSettled(waitUntilPromises);
             expect(mockDiscordWorker.fetch).toHaveBeenCalledTimes(1);
             const [reqArg] = mockDiscordWorker.fetch.mock.calls[0] as [Request];
             expect(reqArg.headers.get('Authorization')).toBe('Bearer test-webhook-secret');
@@ -1421,11 +1445,19 @@ describe('PresetsHandler', () => {
             expect(body.preview_image_key).toMatch(/^preset-123\/.+\.webp$/);
         });
 
-        it('still stores the image and returns 200 when the Discord notification fails', async () => {
+        // FINDING 4 (2026-08-10 final review): this notification used to be a
+        // hand-rolled fetch, so a failure vanished — no retry, no dead-letter
+        // row, no moderator ever told an image was waiting. It now goes
+        // through notifyDiscordBot like a submission does. A 400 from the bot
+        // is the non-retryable case, which reaches the dead-letter write
+        // without spending the backoff sleeps.
+        it('records a dead-letter row when the Discord notification is rejected', async () => {
             const mockRow = createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
             mockDb._setupMock(() => mockRow);
 
-            const mockDiscordWorker = { fetch: vi.fn().mockRejectedValue(new Error('service unavailable')) };
+            const mockDiscordWorker = {
+                fetch: vi.fn().mockResolvedValue(new Response('nope', { status: 400 })),
+            };
             const envWithDiscord = createMockEnv({
                 DB: mockDb as unknown as D1Database,
                 DISCORD_WORKER: mockDiscordWorker as unknown as Env['DISCORD_WORKER'],
@@ -1442,13 +1474,21 @@ describe('PresetsHandler', () => {
                     },
                     body: png,
                 },
-                envWithDiscord
+                envWithDiscord,
+                ctx
             );
 
+            // The author's upload succeeded regardless — the image is stored
+            // and pending; the notification is someone else's problem.
             expect(res.status).toBe(200);
             const body = await res.json() as { success: boolean; status: string };
             expect(body.success).toBe(true);
             expect(body.status).toBe('pending');
+
+            await Promise.allSettled(waitUntilPromises);
+            expect(
+                mockDb._queries.some((q) => q.includes('INSERT INTO failed_notifications'))
+            ).toBe(true);
         });
     });
 

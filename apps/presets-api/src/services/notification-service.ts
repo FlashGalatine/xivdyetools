@@ -11,7 +11,8 @@
 
 import type { Env } from '../types.js';
 
-export interface PresetNotificationPayload {
+/** A new (or re-flagged) preset needing moderator eyes. */
+export interface PresetSubmissionNotification {
   type: 'submission';
   preset: {
     id: string;
@@ -28,6 +29,30 @@ export interface PresetNotificationPayload {
     created_at: string;
   };
 }
+
+/**
+ * An author-uploaded preview image awaiting review. Carries only what the
+ * moderation embed needs to title itself — the preset's other columns are
+ * unchanged by an image upload, so re-sending them would be noise.
+ */
+export interface PreviewImageNotification {
+  type: 'preview_image';
+  /** R2 key of the pending object, so the embed can show what is being judged. */
+  preview_image_key: string;
+  preset: {
+    id: string;
+    name: string;
+    author_name: string;
+  };
+}
+
+/**
+ * Discriminated on `type`: each variant declares exactly the fields it sends,
+ * so a consumer that narrows on `type` cannot read a field that isn't there.
+ */
+export type PresetNotificationPayload =
+  | PresetSubmissionNotification
+  | PreviewImageNotification;
 
 /**
  * PRESETS-CRITICAL-003: Retry configuration for Discord notifications

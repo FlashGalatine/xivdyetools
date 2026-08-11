@@ -245,7 +245,14 @@ moderationRouter.patch('/:presetId/preview-image', async (c) => {
     .bind(now, presetId)
     .run();
 
-  await deletePreviewImage(c.env, previousKey);
+  // The DB already reflects the rejection, so the moderator's action has
+  // succeeded. An R2 hiccup here must not 500 a request whose state is already
+  // correct — the orphaned object is the accepted failure mode by design.
+  try {
+    await deletePreviewImage(c.env, previousKey);
+  } catch (err) {
+    console.error(`[preview-image] R2 delete failed after rejection: id=${presetId}`, err);
+  }
 
   return c.json({ success: true, preview_image_status: 'none' });
 });

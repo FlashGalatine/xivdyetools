@@ -235,8 +235,11 @@ presetsRouter.delete('/:id', async (c) => {
   const auth = c.get('auth');
   const id = c.req.param('id');
 
-  // Get preset to check ownership
-  const preset = await getPresetById(c.env.DB, id);
+  // One row read answers both questions this handler has: who owns the preset,
+  // and which R2 object belongs to it. getPresetById returns a CommunityPreset,
+  // which deliberately hides preview_image_key, so it cannot answer the second
+  // — reading the row directly avoids a second SELECT for the same row.
+  const preset = await getPresetImageState(c.env.DB, id);
   if (!preset) {
     return notFoundResponse(c, 'Preset');
   }
@@ -246,9 +249,8 @@ presetsRouter.delete('/:id', async (c) => {
     return forbiddenResponse(c, "Cannot delete another user's preset");
   }
 
-  // The row is about to go; nothing will ever reference this key again.
-  const imageState = await getPresetImageState(c.env.DB, id);
-  await deletePreviewImage(c.env, imageState?.preview_image_key ?? null);
+  // Captured before the batch, since the row that holds it is about to go.
+  const previousKey = preset.preview_image_key;
 
   // Delete votes and preset in transaction
   // PRESETS-PERF-001: Using batch() for atomicity guarantee, not performance.
@@ -258,6 +260,21 @@ presetsRouter.delete('/:id', async (c) => {
     c.env.DB.prepare('DELETE FROM votes WHERE preset_id = ?').bind(id),
     c.env.DB.prepare('DELETE FROM presets WHERE id = ?').bind(id),
   ]);
+
+  // DB write before the R2 delete, deliberately (same rule as the upload and
+  // moderator-reject paths): if the batch throws, leaving the delete undone
+  // just orphans the object in R2 — invisible and cheap to clean up later.
+  // Delete first would risk the opposite: a row still pointing at a key that
+  // no longer exists, so an approved preset's card serves a broken image.
+  // Never trade a broken live image for a tidy bucket.
+  //
+  // The row is already gone by this point, so an R2 hiccup here must not turn
+  // a completed delete into a 500 the caller would reasonably retry.
+  try {
+    await deletePreviewImage(c.env, previousKey);
+  } catch (err) {
+    console.error(`[preview-image] R2 delete failed after preset delete: id=${id}`, err);
+  }
 
   return c.json({ success: true, message: 'Preset deleted' });
 });
@@ -749,28 +766,35 @@ presetsRouter.post('/:id/preview-image', async (c) => {
     .run();
 
   // Replace any previous image so an abandoned object is not orphaned.
-  await deletePreviewImage(c.env, previousKey);
-
-  // Best-effort: the image is stored and pending either way. A notification
-  // failure must not fail the upload the author just completed.
+  // The DB already points at the new key, so the author's upload has fully
+  // succeeded; an R2 hiccup deleting the *old* object must not be reported to
+  // them as a failed upload. The orphan is the accepted failure mode here.
   try {
-    await c.env.DISCORD_WORKER?.fetch(
-      new Request('https://internal/webhooks/preset-submission', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${c.env.INTERNAL_WEBHOOK_SECRET}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'preview_image',
-          preset: { id: presetId, name: preset.name ?? '', author_name: auth.userName ?? '' },
-          preview_image_key: key,
-        }),
-      })
-    );
-  } catch {
-    // swallowed deliberately — see comment above
+    await deletePreviewImage(c.env, previousKey);
+  } catch (err) {
+    console.error(`[preview-image] R2 delete of replaced image failed: id=${presetId}`, err);
   }
+
+  // Same fire-and-forget notification path as a new submission: retries with
+  // backoff, and a dead-letter row when they are exhausted, so a moderator
+  // queue entry is never silently lost. Not awaited — the image is stored and
+  // pending either way, and a notification failure must not fail the upload
+  // the author just completed.
+  const imagePayload: PresetNotificationPayload = {
+    type: 'preview_image',
+    preview_image_key: key,
+    preset: {
+      id: presetId,
+      name: preset.name ?? '',
+      author_name: auth.userName ?? '',
+    },
+  };
+  c.executionCtx.waitUntil(
+    notifyDiscordBot(c.env, imagePayload).catch(async (err) => {
+      console.error(`[preview-image] Discord notification failed: id=${presetId}`, err);
+      await storeFailedNotification(c.env.DB, imagePayload, err);
+    })
+  );
 
   return c.json({ success: true, status: 'pending' });
 });

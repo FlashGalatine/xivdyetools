@@ -278,7 +278,11 @@ describe('index.ts', () => {
       );
     });
 
-    it('posts a review message carrying the pending preview image', async () => {
+    // FINDING 4 (2026-08-10 final review): a pending image is a moderation
+    // task, so it belongs in the moderation channel. It used to go to the
+    // submission log — where *published* presets are announced — which both
+    // misfiled the work and showed an unapproved image to the wrong audience.
+    it('posts a review message carrying the pending preview image to the moderation channel', async () => {
       const { timingSafeEqual } = await import('./utils/verify.js');
       const { sendMessage } = await import('./utils/discord-api.js');
       vi.mocked(timingSafeEqual).mockResolvedValue(true);
@@ -299,7 +303,7 @@ describe('index.ts', () => {
 
       expect(sendMessage).toHaveBeenCalledWith(
         'test-token',
-        'test-submission-log-channel',
+        'test-moderation-channel',
         expect.objectContaining({
           embeds: expect.arrayContaining([
             expect.objectContaining({
@@ -308,6 +312,29 @@ describe('index.ts', () => {
           ]),
         })
       );
+    });
+
+    // The 502 is load-bearing: presets-api only retries and dead-letters a
+    // notification it is told failed. Swallowing a Discord rejection here
+    // would lose the moderation-queue entry silently.
+    it('returns 502 when Discord rejects the preview-image notification', async () => {
+      const { timingSafeEqual } = await import('./utils/verify.js');
+      const { sendMessage } = await import('./utils/discord-api.js');
+      vi.mocked(timingSafeEqual).mockResolvedValue(true);
+      vi.mocked(sendMessage).mockResolvedValue(new Response(null, { status: 500 }));
+
+      const req = new Request('http://localhost/webhooks/preset-submission', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer test-webhook-secret' },
+        body: JSON.stringify({
+          type: 'preview_image',
+          preset: { id: 'p1', name: 'Test', author_name: 'Author' },
+          preview_image_key: 'p1/abc.webp',
+        }),
+      });
+
+      const res = await app.fetch(req, mockEnv, mockCtx);
+      expect(res.status).toBe(502);
     });
   });
 

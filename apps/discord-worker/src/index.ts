@@ -192,15 +192,18 @@ app.post('/webhooks/preset-submission', async (c) => {
   }
 
   if (payload.type === 'preview_image') {
-    // No submission log channel configured: nothing to post to, and (unlike
-    // the moderation-channel branch below) there's no separate audience to
-    // fall back to, so this is a silent no-op rather than an error.
-    if (!env.SUBMISSION_LOG_CHANNEL_ID) {
+    // The moderation channel, not the submission log: a pending image is work
+    // for a moderator, and the submission log is where *published* presets are
+    // announced. Posting an unapproved image there would both misfile the task
+    // and show the picture to the wrong audience.
+    // No moderation channel configured: nothing to post to, so this is a
+    // silent no-op rather than an error.
+    if (!env.MODERATION_CHANNEL_ID) {
       return c.json({ success: true });
     }
     const adminT = createTranslator('en');
     const safeName = sanitizePresetName(payload.preset.name);
-    const imageRes = await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
+    const imageRes = await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
       embeds: [
         {
           title: `🖼️ ${adminT.t('webhook.previewImagePending')}`,
@@ -220,6 +223,10 @@ app.post('/webhooks/preset-submission', async (c) => {
       logger.error('Preview-image notification rejected by Discord', undefined, {
         status: imageRes.status,
       });
+      // Same contract as the submission branch (BUG-074): surface the failure
+      // so presets-api's retry/dead-letter machinery takes over instead of
+      // silently losing a moderation-queue entry.
+      return c.json({ error: 'Failed to deliver preview-image notification' }, 502);
     }
     return c.json({ success: true });
   }
