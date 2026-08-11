@@ -172,6 +172,45 @@ describe('ModerationHandler', () => {
                 'https://shots.xivdyetools.app/p1/a.webp'
             );
         });
+
+        // Coverage gap fix: the row above pairs preview_image_status: 'pending'
+        // with a non-null preview_image_key, so it can't tell "gated on status"
+        // apart from "gated merely on the key being present." This row is in
+        // the queue for its TEXT (status: 'pending') while its image is
+        // already approved — a non-null key whose status is NOT 'pending'. If
+        // the `preview_image_status === 'pending' &&` clause were ever dropped
+        // from the ternary, pending_preview_image_url would wrongly become
+        // non-null here and this test would catch it.
+        it('keeps the pending-image field independent of an already-approved image', async () => {
+            mockDb._setupMock(() => [
+                createMockPresetRow({
+                    id: 'p2',
+                    status: 'pending',
+                    preview_image_status: 'approved',
+                    preview_image_key: 'p2/b.webp',
+                }),
+            ]);
+
+            const res = await app.request(
+                '/api/v1/moderation/pending',
+                { headers: { ...authHeaders('test-bot-secret', '123456789') } },
+                env
+            );
+
+            expect(res.status).toBe(200);
+
+            const body = (await res.json()) as {
+                presets: Array<{ preview_image_url: string | null; pending_preview_image_url: string | null }>;
+            };
+            // Nothing image-wise to review — dies if the status check is dropped.
+            expect(body.presets[0].pending_preview_image_url).toBeNull();
+            // The image IS approved, so the ordinary gate correctly serves it —
+            // proving the two fields are independent and the sibling field did
+            // not disturb the gate.
+            expect(body.presets[0].preview_image_url).toBe(
+                'https://shots.xivdyetools.app/p2/b.webp'
+            );
+        });
     });
 
     // ============================================
