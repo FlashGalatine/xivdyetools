@@ -219,6 +219,8 @@ describe('handlePresetRejectionModal', () => {
       tags: [],
       vote_count: 0,
       is_curated: false,
+      secondary_categories: [],
+      preview_image_status: 'none',
     });
 
     const interaction = {
@@ -273,6 +275,8 @@ describe('handlePresetRejectionModal', () => {
       tags: [],
       vote_count: 0,
       is_curated: false,
+      secondary_categories: [],
+      preview_image_status: 'none',
     });
 
     const interaction = {
@@ -358,6 +362,8 @@ describe('handlePresetRejectionModal', () => {
       tags: [],
       vote_count: 0,
       is_curated: false,
+      secondary_categories: [],
+      preview_image_status: 'none',
     });
 
     const interaction = {
@@ -432,6 +438,8 @@ describe('handlePresetRejectionModal', () => {
       tags: [],
       vote_count: 0,
       is_curated: false,
+      secondary_categories: [],
+      preview_image_status: 'none',
     });
 
     env.SUBMISSION_LOG_CHANNEL_ID = undefined;
@@ -551,6 +559,8 @@ describe('handlePresetRejectionModal', () => {
       tags: [],
       vote_count: 0,
       is_curated: false,
+      secondary_categories: [],
+      preview_image_status: 'none',
     });
 
     const interaction = {
@@ -747,6 +757,8 @@ describe('handlePresetRevertModal', () => {
       tags: [],
       vote_count: 0,
       is_curated: false,
+      secondary_categories: [],
+      preview_image_status: 'none',
     });
 
     const interaction = {
@@ -828,6 +840,8 @@ describe('handlePresetRevertModal', () => {
       tags: [],
       vote_count: 0,
       is_curated: false,
+      secondary_categories: [],
+      preview_image_status: 'none',
     });
 
     const interaction = {

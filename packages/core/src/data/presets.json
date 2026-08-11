@@ -6,7 +6,22 @@
     "grand-companies": { "name": "Grand Companies", "description": "Official Grand Company colors", "icon": "🏛️" },
     "seasons": { "name": "Seasons", "description": "Seasonal color palettes", "icon": "🍂" },
     "events": { "name": "FFXIV Events", "description": "Colors for in-game seasonal events", "icon": "🎉" },
-    "aesthetics": { "name": "Aesthetics", "description": "General aesthetic themes", "icon": "🎨" }
+    "aesthetics": { "name": "Aesthetics", "description": "General aesthetic themes", "icon": "🎨" },
+    "appearance": {
+      "name": "Appearance",
+      "description": "Palettes built around a character's own colours",
+      "icon": "👤"
+    },
+    "zones": {
+      "name": "Zones",
+      "description": "Palettes drawn from the places of Eorzea",
+      "icon": "🏔️"
+    },
+    "raids-trials": {
+      "name": "Raids & Trials",
+      "description": "Palettes from raid and trial encounters",
+      "icon": "🗡️"
+    }
   },
   "palettes": [
     {

@@ -129,6 +129,8 @@ describe('handlePresetApproveButton', () => {
       tags: [],
       vote_count: 0,
       is_curated: false,
+      secondary_categories: [],
+      preview_image_status: 'none',
     });
 
     const interaction = {
@@ -177,6 +179,8 @@ describe('handlePresetApproveButton', () => {
       tags: [],
       vote_count: 0,
       is_curated: false,
+      secondary_categories: [],
+      preview_image_status: 'none',
     });
 
     const interaction = {
@@ -245,6 +249,8 @@ describe('handlePresetApproveButton', () => {
       tags: [],
       vote_count: 0,
       is_curated: false,
+      secondary_categories: [],
+      preview_image_status: 'none',
     });
 
     const interaction = {
@@ -299,6 +305,8 @@ describe('handlePresetApproveButton', () => {
       tags: [],
       vote_count: 0,
       is_curated: false,
+      secondary_categories: [],
+      preview_image_status: 'none',
     });
 
     env.SUBMISSION_LOG_CHANNEL_ID = undefined;
@@ -391,6 +399,8 @@ describe('handlePresetApproveButton', () => {
       tags: [],
       vote_count: 0,
       is_curated: false,
+      secondary_categories: [],
+      preview_image_status: 'none',
     });
 
     const interaction = {
@@ -425,6 +435,8 @@ describe('handlePresetApproveButton', () => {
       tags: [],
       vote_count: 0,
       is_curated: false,
+      secondary_categories: [],
+      preview_image_status: 'none',
     });
 
     const interaction = {

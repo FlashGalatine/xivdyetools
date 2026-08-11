@@ -40,6 +40,21 @@ const mockPresetData: PresetData = {
       description: 'General aesthetic themes',
       icon: '🎨',
     },
+    appearance: {
+      name: 'Appearance',
+      description: 'Palettes built around a character\'s own colours',
+      icon: '👤',
+    },
+    zones: {
+      name: 'Zones',
+      description: 'Palettes drawn from the places of Eorzea',
+      icon: '🏔️',
+    },
+    'raids-trials': {
+      name: 'Raids & Trials',
+      description: 'Palettes from raid and trial encounters',
+      icon: '🗡️',
+    },
   },
   palettes: [
     {
@@ -262,7 +277,7 @@ describe('PresetService', () => {
   describe('getCategories', () => {
     it('should return all categories with metadata', () => {
       const categories = presetService.getCategories();
-      expect(categories).toHaveLength(5);
+      expect(categories).toHaveLength(8);
     });
 
     it('should include category ID in returned objects', () => {
@@ -748,6 +763,9 @@ describe('PresetService', () => {
           seasons: { name: 'Seasons', description: 'Test' },
           events: { name: 'Events', description: 'Test' },
           aesthetics: { name: 'Aesthetics', description: 'Test' },
+          appearance: { name: 'Appearance', description: 'Test' },
+          zones: { name: 'Zones', description: 'Test' },
+          'raids-trials': { name: 'Raids & Trials', description: 'Test' },
         },
         palettes: [
           {

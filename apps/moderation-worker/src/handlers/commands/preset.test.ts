@@ -365,6 +365,8 @@ describe('handlePresetCommand', () => {
           tags: [],
           vote_count: 0,
           is_curated: false,
+          secondary_categories: [],
+          preview_image_status: 'none',
         },
         {
           id: 'preset-2',
@@ -380,6 +382,8 @@ describe('handlePresetCommand', () => {
           tags: [],
           vote_count: 0,
           is_curated: false,
+          secondary_categories: [],
+          preview_image_status: 'none',
         },
       ]);
 
@@ -439,6 +443,8 @@ describe('handlePresetCommand', () => {
         tags: [],
         vote_count: 0,
         is_curated: false,
+        secondary_categories: [],
+        preview_image_status: 'none',
       });
 
       const interaction: DiscordInteraction = {
@@ -501,6 +507,8 @@ describe('handlePresetCommand', () => {
         tags: [],
         vote_count: 0,
         is_curated: false,
+        secondary_categories: [],
+        preview_image_status: 'none',
       });
 
       const interaction: DiscordInteraction = {
@@ -606,6 +614,8 @@ describe('handlePresetCommand', () => {
         tags: [],
         vote_count: 0,
         is_curated: false,
+        secondary_categories: [],
+        preview_image_status: 'none',
       });
 
       const interaction: DiscordInteraction = {
