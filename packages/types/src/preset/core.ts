@@ -7,14 +7,23 @@
  */
 
 /**
- * Preset palette category identifiers
+ * Preset palette category identifiers.
+ *
+ * The last three joined in the 2026-08-11 change (design `6a`/`6b`/`6c`).
+ * `appearance` is deliberately NOT `character` — `kind: 'character'` is the
+ * CollectionService record type, a different thing entirely.
+ * `raids-trials` excludes dungeons; primals are descriptions inside it, not a
+ * category of their own, so no copy anywhere may call this "duties".
  */
 export type PresetCategory =
   | 'jobs'
   | 'grand-companies'
   | 'seasons'
   | 'events'
-  | 'aesthetics';
+  | 'aesthetics'
+  | 'appearance'
+  | 'zones'
+  | 'raids-trials';
 
 /**
  * Status of a preset submission in the moderation workflow

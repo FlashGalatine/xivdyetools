@@ -46,6 +46,12 @@ export interface PresetEditRequest {
   /** New description (10-200 characters) */
   description?: string;
 
+  /** New primary category (the edit form unlocked this in 5.1) */
+  category_id?: PresetCategory;
+
+  /** Replacement secondary list; `[]` clears it */
+  secondary_categories?: PresetCategory[];
+
   /** New dye IDs (2-5 dyes) */
   dyes?: number[];
 
