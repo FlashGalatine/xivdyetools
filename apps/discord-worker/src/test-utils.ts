@@ -128,6 +128,7 @@ export function createMockPreset(overrides: Partial<CommunityPreset> = {}): Comm
     name: 'Test Preset',
     description: 'A test preset',
     category_id: 'aesthetics' as PresetCategory,
+    secondary_categories: [],
     dyes: [1, 2, 3],
     tags: ['test'],
     author_discord_id: 'user-123',
@@ -137,6 +138,7 @@ export function createMockPreset(overrides: Partial<CommunityPreset> = {}): Comm
     is_curated: false,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    preview_image_status: 'none',
     ...overrides,
   };
 }

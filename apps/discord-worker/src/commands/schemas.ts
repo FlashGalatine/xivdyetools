@@ -44,6 +44,9 @@ export const PRESET_CATEGORY_CHOICES: ReadonlyArray<{ name: string; value: Prese
   { name: '🍂 Seasons', value: 'seasons' },
   { name: '🎉 FFXIV Events', value: 'events' },
   { name: '🎨 Aesthetics', value: 'aesthetics' },
+  { name: '👤 Appearance', value: 'appearance' },
+  { name: '🏔️ Zones', value: 'zones' },
+  { name: '🗡️ Raids & Trials', value: 'raids-trials' },
 ];
 
 /**

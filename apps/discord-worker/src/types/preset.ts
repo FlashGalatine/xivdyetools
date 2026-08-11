@@ -168,6 +168,12 @@ export const CATEGORY_DISPLAY: Record<PresetCategory, { icon: string; name: stri
   seasons: { icon: '🍂', name: 'Seasons' },
   events: { icon: '🎉', name: 'FFXIV Events' },
   aesthetics: { icon: '🎨', name: 'Aesthetics' },
+  appearance: { icon: '👤', name: 'Appearance' },
+  zones: { icon: '🏔️', name: 'Zones' },
+  // 🗡️ rather than ⚔️ because `jobs` still holds ⚔️. The design retired crossed
+  // swords FROM jobs (now an upright staff), so ⚔️ arguably belongs here — but
+  // reassigning it is a change to an existing category and is out of scope.
+  'raids-trials': { icon: '🗡️', name: 'Raids & Trials' },
 };
 
 /**

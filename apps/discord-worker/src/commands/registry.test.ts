@@ -41,10 +41,13 @@ describe('registered /preset category choices', () => {
     // acknowledges the registered contract changed.
     const liveMembers: PresetCategory[] = [
       'aesthetics',
+      'appearance',
       'events',
       'grand-companies',
       'jobs',
+      'raids-trials',
       'seasons',
+      'zones',
     ];
 
     expect([...PRESET_CATEGORY_CHOICES].map((c) => c.value).sort()).toEqual(liveMembers.sort());
