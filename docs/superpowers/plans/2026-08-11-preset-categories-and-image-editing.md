@@ -691,11 +691,15 @@ Let the compiler enumerate any further sites. Add only those two fields.
 Run: `pnpm --filter xivdyetools-presets-api exec vitest run tests/services/preset-service.test.ts`
 Expected: PASS, whole file.
 
-Run: `pnpm turbo run type-check`
-Expected: **PASS across every package and app.** This task carries the
-workspace-wide gate — it is the last one repairing a `CommunityPreset`
-construction site broken by Task 1's required fields. If anything outside
-`apps/presets-api/` still fails here, stop and report rather than widening scope.
+Run: `pnpm turbo run type-check --filter=xivdyetools-presets-api`
+Expected: PASS. This is the gate for this task, and with it every package
+except `web-app` is green.
+
+**`web-app` is still red here, and that is correct.** Three call sites pass a
+`PresetCategory` where a `PresetCategoryFilter` is expected — `preset-edit-form.ts`,
+`preset-submission-form.ts` and `v4/preset-detail.ts`. **Task 10** widens
+`PresetCategoryFilter` and carries the workspace-wide gate. Do not touch
+`apps/web-app/` in this task.
 
 - [ ] **Step 8: Commit**
 
@@ -1457,10 +1461,20 @@ Same key placement in each file. Values:
 | `noChanges` | 保存する変更はありません | Keine Änderungen zu speichern | Aucune modification à enregistrer | 저장할 변경 사항이 없습니다 | 没有需要保存的更改 |
 | `previewImagePendingReview` | 画像をアップロードしました。承認後に表示されます | Bild hochgeladen — es erscheint nach der Freigabe | Image envoyée — elle apparaîtra après validation | 이미지를 업로드했습니다. 승인 후 표시됩니다 | 图片已上传，审核通过后显示 |
 
-- [ ] **Step 7: Validate locale completeness and type-check**
+- [ ] **Step 7: Validate locale completeness, then the workspace gate**
 
-Run: `pnpm --filter xivdyetools-web-app run validate:i18n && pnpm --filter xivdyetools-web-app run type-check`
-Expected: PASS both. `validate:i18n` fails loudly if any of the six files is missing a key.
+Run: `pnpm --filter xivdyetools-web-app run validate:i18n`
+Expected: PASS. It fails loudly if any of the six locale files is missing a key.
+
+Run: `pnpm turbo run type-check`
+Expected: **PASS across every package and app.** This task carries the
+workspace-wide gate: widening `PresetCategoryFilter` in Step 1 is the last
+repair to the breakage that widening `PresetCategory` started. Three call sites
+were failing before this task — `preset-edit-form.ts:246`,
+`preset-submission-form.ts:370`, `v4/preset-detail.ts:881`, each passing a
+`PresetCategory` where a `PresetCategoryFilter` was expected — and Step 1 fixes
+all three by construction. If anything outside `apps/web-app/` still fails,
+stop and report rather than widening scope.
 
 - [ ] **Step 8: Commit**
 
