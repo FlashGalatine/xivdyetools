@@ -2297,6 +2297,44 @@ describe('PresetsHandler', () => {
 
             expect(res.status).toBe(200);
         });
+
+        // Review finding (2026-08-11): the three tests above never exercise the
+        // `?? currentCategoryId` fallback in validateEditRequest — tests 1/2 both
+        // set category_id explicitly, and the empty-array test never enters the
+        // collision loop at all. This test omits category_id entirely, so
+        // effectivePrimary can only come from the preset's current (unchanged)
+        // row value — 'aesthetics', the default from createMockPresetRow, set
+        // explicitly here for clarity. The mocked category list includes
+        // 'aesthetics' so the entry passes the validity check and is rejected
+        // specifically by the primary-collision rule, not "Invalid secondary
+        // category".
+        it('rejects a secondary category that repeats the unchanged primary when category_id is omitted', async () => {
+            const row = createMockPresetRow({
+                author_discord_id: '123456789',
+                status: 'approved',
+                category_id: 'aesthetics',
+            });
+            mockDb._setupMock((sql: string) => {
+                if (sql.includes('FROM categories')) return [{ id: 'aesthetics' }, { id: 'zones' }];
+                return [row];
+            });
+
+            const res = await app.request(
+                `/api/v1/presets/${row.id}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123456789',
+                    },
+                    body: JSON.stringify({ secondary_categories: ['aesthetics'] }),
+                },
+                env
+            );
+
+            expect(res.status).toBe(400);
+        });
     });
 
     // ============================================
