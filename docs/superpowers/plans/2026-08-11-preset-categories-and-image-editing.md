@@ -2197,29 +2197,41 @@ In `createSubmitButton`, replace the `updates` construction and the `presetSubmi
       // The image lives on its own routes, so it is a separate call — and a
       // failure here must not read as a failed edit, because the fields did
       // save. Warn and carry on, exactly as the submission form does.
+      //
+      // Record what actually SUCCEEDED rather than re-reading the intent flags
+      // below. ToastService stacks rather than replaces, so branching on
+      // `state.newPreviewImage` after a failed upload would print "couldn't
+      // upload the picture" and "picture uploaded, awaiting review" together.
+      let imageUploaded = false;
+      let imageCleared = false;
+
       if (state.newPreviewImage) {
         try {
           await uploadPreviewImage(presetId, state.newPreviewImage);
+          imageUploaded = true;
         } catch {
           ToastService.warning(LanguageService.t('preset.previewImageFailed'));
         }
       } else if (state.clearPreviewImage) {
         try {
           await removePreviewImage(presetId);
+          imageCleared = true;
         } catch {
           ToastService.warning(LanguageService.t('preset.previewImageRemoveFailed'));
         }
       }
 
-      // A new picture is always the more surprising outcome — it is invisible
-      // until a moderator approves it — so it wins the message.
-      if (state.newPreviewImage) {
+      // A new picture is the more surprising outcome — it is invisible until a
+      // moderator approves it — so when one actually landed it wins the message.
+      if (imageUploaded) {
         ToastService.info(LanguageService.t('preset.previewImagePendingReview'));
       } else if (result.moderation_status === 'pending') {
         ToastService.info(LanguageService.t('preset.editPendingReview'));
-      } else {
+      } else if (hasFieldChanges || imageCleared) {
         ToastService.success(LanguageService.t('preset.editSuccess'));
       }
+      // Deliberately no `else`: an image-only edit whose image call failed has
+      // already shown its warning, and has nothing to report as a success.
 
       ModalService.dismissTop();
       onEdit?.(result);
