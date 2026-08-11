@@ -52,6 +52,10 @@ export interface Env {
 
   // Service bindings
   DISCORD_WORKER?: Fetcher;
+  IMAGE_WORKER: Fetcher;
+
+  // R2 buckets
+  THUMBNAILS: R2Bucket;
 
   // Environment variables
   ENVIRONMENT: string;

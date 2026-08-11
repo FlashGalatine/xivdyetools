@@ -34,12 +34,19 @@ interface R2ObjectMeta {
   customMetadata?: Record<string, string>;
 }
 
+/** Subset of R2's httpMetadata this mock tracks. */
+interface MockR2HttpMetadata {
+  cacheControl?: string;
+  contentType?: string;
+}
+
 /**
  * Stored R2 object
  */
 interface StoredR2Object {
   body: ArrayBuffer;
   meta: R2ObjectMeta;
+  httpMetadata?: MockR2HttpMetadata;
 }
 
 /**
@@ -63,7 +70,14 @@ export interface MockR2Object {
  */
 export interface MockR2Bucket {
   get: (key: string) => Promise<MockR2Object | null>;
-  put: (key: string, value: ArrayBuffer | string | ReadableStream | Blob, options?: { customMetadata?: Record<string, string> }) => Promise<R2ObjectMeta>;
+  put: (
+    key: string,
+    value: ArrayBuffer | string | ReadableStream | Blob,
+    options?: {
+      customMetadata?: Record<string, string>;
+      httpMetadata?: MockR2HttpMetadata;
+    }
+  ) => Promise<R2ObjectMeta>;
   delete: (key: string | string[]) => Promise<void>;
   list: (options?: { prefix?: string; limit?: number; cursor?: string }) => Promise<{
     objects: R2ObjectMeta[];
@@ -139,7 +153,14 @@ export function createMockR2Bucket(): MockR2Bucket {
       };
     },
 
-    put: async (key: string, value: ArrayBuffer | string | ReadableStream | Blob, options?: { customMetadata?: Record<string, string> }) => {
+    put: async (
+      key: string,
+      value: ArrayBuffer | string | ReadableStream | Blob,
+      options?: {
+        customMetadata?: Record<string, string>;
+        httpMetadata?: MockR2HttpMetadata;
+      }
+    ) => {
       const body = await toArrayBuffer(value);
       const etag = generateEtag();
 
@@ -152,7 +173,7 @@ export function createMockR2Bucket(): MockR2Bucket {
         customMetadata: options?.customMetadata,
       };
 
-      store.set(key, { body, meta });
+      store.set(key, { body, meta, httpMetadata: options?.httpMetadata });
       return meta;
     },
 

@@ -49,6 +49,13 @@ import {
   type PresetNotificationPayload,
 } from '../services/notification-service.js';
 import { getValidCategories } from '../services/category-service.js';
+import {
+  sniffImageType,
+  storePreviewImage,
+  deletePreviewImage,
+  getPresetImageState,
+  MAX_PREVIEW_IMAGE_BYTES,
+} from '../services/preview-image-service.js';
 
 // REFACTOR-017: category cache moved to category-service; re-exported because
 // tests (and any external callers) reach it through this module
@@ -238,6 +245,10 @@ presetsRouter.delete('/:id', async (c) => {
   if (preset.author_discord_id !== auth.userDiscordId && !auth.isModerator) {
     return forbiddenResponse(c, "Cannot delete another user's preset");
   }
+
+  // The row is about to go; nothing will ever reference this key again.
+  const imageState = await getPresetImageState(c.env.DB, id);
+  await deletePreviewImage(c.env, imageState?.preview_image_key ?? null);
 
   // Delete votes and preset in transaction
   // PRESETS-PERF-001: Using batch() for atomicity guarantee, not performance.
@@ -638,6 +649,98 @@ presetsRouter.post('/', async (c) => {
     },
     201
   );
+});
+
+/**
+ * POST /:id/preview-image — the author uploads their card picture.
+ *
+ * Author-only: a preset's picture is the author's to choose. The upload lands
+ * as 'pending' and is invisible until a moderator approves it.
+ */
+presetsRouter.post('/:id/preview-image', async (c) => {
+  const authError = requireAuth(c);
+  if (authError) return authError;
+
+  const userError = requireUserContext(c);
+  if (userError) return userError;
+
+  const banError = await requireNotBannedCheck(c);
+  if (banError) return banError;
+
+  const auth = c.get('auth');
+  const presetId = c.req.param('id');
+
+  // Row-level read: we need preview_image_key, which CommunityPreset hides.
+  const preset = await getPresetImageState(c.env.DB, presetId);
+  if (!preset) {
+    return c.json(
+      { success: false, error: ErrorCode.NOT_FOUND, message: 'Preset not found' },
+      404
+    );
+  }
+
+  if (preset.author_discord_id !== auth.userDiscordId) {
+    return c.json(
+      {
+        success: false,
+        error: ErrorCode.FORBIDDEN,
+        message: 'Only the author can set a preview image',
+      },
+      403
+    );
+  }
+
+  const bytes = new Uint8Array(await c.req.arrayBuffer());
+
+  if (bytes.byteLength === 0) {
+    return c.json(
+      { success: false, error: ErrorCode.VALIDATION_ERROR, message: 'No image data provided' },
+      400
+    );
+  }
+
+  if (bytes.byteLength > MAX_PREVIEW_IMAGE_BYTES) {
+    return c.json(
+      {
+        success: false,
+        error: ErrorCode.VALIDATION_ERROR,
+        message: 'Image must be at most 5 MB',
+      },
+      400
+    );
+  }
+
+  if (!sniffImageType(bytes)) {
+    return c.json(
+      {
+        success: false,
+        error: ErrorCode.VALIDATION_ERROR,
+        message: 'Image must be a PNG, JPEG or WebP',
+      },
+      400
+    );
+  }
+
+  let key: string;
+  try {
+    key = await storePreviewImage(c.env, presetId, bytes);
+  } catch {
+    return c.json(
+      { success: false, error: ErrorCode.VALIDATION_ERROR, message: 'Image could not be processed' },
+      400
+    );
+  }
+
+  // Replace any previous image so an abandoned object is not orphaned.
+  await deletePreviewImage(c.env, preset.preview_image_key);
+
+  await c.env.DB.prepare(
+    `UPDATE presets SET preview_image_key = ?, preview_image_status = 'pending', updated_at = ? WHERE id = ?`
+  )
+    .bind(key, new Date().toISOString(), presetId)
+    .run();
+
+  return c.json({ success: true, status: 'pending' });
 });
 
 // ============================================

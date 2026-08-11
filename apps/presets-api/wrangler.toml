@@ -28,6 +28,14 @@ database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 binding = "DISCORD_WORKER"
 service = "xivdyetools-discord-worker"
 
+[[r2_buckets]]
+binding = "THUMBNAILS"
+bucket_name = "xivdyetools-presets-preview-thumbnails"
+
+[[services]]
+binding = "IMAGE_WORKER"
+service = "xivdyetools-image-worker"
+
 [vars]
 ENVIRONMENT = "development"
 API_VERSION = "v1"
@@ -49,6 +57,14 @@ database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 [[env.production.services]]
 binding = "DISCORD_WORKER"
 service = "xivdyetools-discord-worker"
+
+[[env.production.r2_buckets]]
+binding = "THUMBNAILS"
+bucket_name = "xivdyetools-presets-preview-thumbnails"
+
+[[env.production.services]]
+binding = "IMAGE_WORKER"
+service = "xivdyetools-image-worker"
 
 # Secrets: BOT_API_SECRET, BOT_SIGNING_SECRET, JWT_SECRET,
 # MODERATOR_IDS, PERSPECTIVE_API_KEY, MODERATION_WEBHOOK_URL,

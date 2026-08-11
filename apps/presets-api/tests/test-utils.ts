@@ -33,7 +33,7 @@ export {
 } from '@xivdyetools/test-utils';
 
 // Import for internal use
-import { createMockD1Database } from '@xivdyetools/test-utils';
+import { createMockD1Database, createMockR2Bucket } from '@xivdyetools/test-utils';
 
 // ============================================
 // PROJECT-SPECIFIC: MOCK ENVIRONMENT
@@ -64,6 +64,16 @@ export function createMockEnv(overrides: Partial<Env> = {}): Env {
     DISCORD_WORKER: undefined,
     DISCORD_BOT_WEBHOOK_URL: undefined,
     INTERNAL_WEBHOOK_SECRET: undefined,
+    THUMBNAILS: createMockR2Bucket() as unknown as R2Bucket,
+    IMAGE_WORKER: {
+      // Happy-path default: returns fake webp bytes. Tests that need
+      // image-worker to reject the upload override this per-test.
+      fetch: async () =>
+        new Response(new Uint8Array([1, 2, 3, 4]).buffer, {
+          status: 200,
+          headers: { 'Content-Type': 'image/webp' },
+        }),
+    } as unknown as Fetcher,
     ...overrides,
   };
 }

@@ -7,6 +7,7 @@ import { Hono } from 'hono';
 import { presetsRouter, resetCategoryCache } from '../../src/handlers/presets';
 import { authMiddleware } from '../../src/middleware/auth';
 import type { Env, AuthContext, CommunityPreset } from '../../src/types';
+import type { MockR2Bucket } from '@xivdyetools/test-utils';
 import {
     createMockEnv,
     createMockD1Database,
@@ -1133,6 +1134,198 @@ describe('PresetsHandler', () => {
     });
 
     // ============================================
+    // POST /api/v1/presets/:id/preview-image
+    // ============================================
+
+    describe('POST /api/v1/presets/:id/preview-image', () => {
+        const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+
+        it('should require authentication', async () => {
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                { method: 'POST', body: png },
+                env
+            );
+
+            expect(res.status).toBe(401);
+        });
+
+        it('should reject a user who is not the author', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: 'the-author',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': 'not-the-author',
+                    },
+                    body: png,
+                },
+                env
+            );
+
+            expect(res.status).toBe(403);
+        });
+
+        it('should return 404 for a nonexistent preset', async () => {
+            mockDb._setupMock(() => null);
+
+            const res = await app.request(
+                '/api/v1/presets/nonexistent/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: png,
+                },
+                env
+            );
+
+            expect(res.status).toBe(404);
+        });
+
+        it('should reject an empty body', async () => {
+            const mockRow = createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: new Uint8Array(0),
+                },
+                env
+            );
+
+            expect(res.status).toBe(400);
+        });
+
+        it('should reject a file over 5 MB before touching image-worker', async () => {
+            const mockRow = createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
+            mockDb._setupMock(() => mockRow);
+            const fetchSpy = vi.fn();
+            env.IMAGE_WORKER = { fetch: fetchSpy } as unknown as Fetcher;
+
+            const big = new Uint8Array(5 * 1024 * 1024 + 1);
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: big,
+                },
+                env
+            );
+
+            expect(res.status).toBe(400);
+            expect(fetchSpy).not.toHaveBeenCalled();
+        });
+
+        it('should reject bytes that are not a recognizable image, whatever the size limit allows', async () => {
+            const mockRow = createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
+            mockDb._setupMock(() => mockRow);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0, 0, 0, 0, 0, 0, 0, 0]),
+                },
+                env
+            );
+
+            expect(res.status).toBe(400);
+        });
+
+        it('should return 400 when image-worker cannot process the image', async () => {
+            const mockRow = createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
+            mockDb._setupMock(() => mockRow);
+            env.IMAGE_WORKER = {
+                fetch: async () => new Response(JSON.stringify({ error: 'bad image' }), { status: 400 }),
+            } as unknown as Fetcher;
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: png,
+                },
+                env
+            );
+
+            expect(res.status).toBe(400);
+        });
+
+        it('should store the image, mark it pending, and delete a previous image', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-123',
+                author_discord_id: '123',
+                preview_image_key: 'preset-123/old.webp',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const bucket = env.THUMBNAILS as unknown as MockR2Bucket;
+            await bucket.put('preset-123/old.webp', new ArrayBuffer(4));
+            expect(bucket._store.has('preset-123/old.webp')).toBe(true);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                    body: png,
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { success: boolean; status: string };
+            expect(body.success).toBe(true);
+            expect(body.status).toBe('pending');
+
+            // Old key gone, exactly one new key under the preset's prefix.
+            expect(bucket._store.has('preset-123/old.webp')).toBe(false);
+            const newKeys = [...bucket._store.keys()].filter((k) => k.startsWith('preset-123/'));
+            expect(newKeys).toHaveLength(1);
+            expect(newKeys[0]).toMatch(/^preset-123\/.+\.webp$/);
+
+            const stored = bucket._store.get(newKeys[0])!;
+            expect(stored.httpMetadata?.contentType).toBe('image/webp');
+            expect(stored.httpMetadata?.cacheControl).toBe('public, max-age=31536000, immutable');
+
+            expect(
+                mockDb._queries.some((q) => q.includes("preview_image_status = 'pending'"))
+            ).toBe(true);
+        });
+    });
+
+    // ============================================
     // DELETE /api/v1/presets/:id
     // ============================================
 
@@ -1231,6 +1424,34 @@ describe('PresetsHandler', () => {
             );
 
             expect(res.status).toBe(404);
+        });
+
+        it('removes the stored preview image when the preset is deleted', async () => {
+            const mockRow = createMockPresetRow({
+                id: 'preset-with-image',
+                author_discord_id: '123',
+                preview_image_key: 'preset-with-image/a.webp',
+            });
+            mockDb._setupMock(() => mockRow);
+
+            const bucket = env.THUMBNAILS as unknown as MockR2Bucket;
+            await bucket.put('preset-with-image/a.webp', new ArrayBuffer(4));
+            expect(bucket._store.has('preset-with-image/a.webp')).toBe(true);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-with-image',
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(200);
+            expect(bucket._store.has('preset-with-image/a.webp')).toBe(false);
         });
 
         // ============================================
