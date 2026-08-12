@@ -40,6 +40,8 @@ vi.mock('@services/dye-service-wrapper', () => ({
 }));
 
 vi.mock('@services/index', () => ({
+  /** Picks readable text ink for a swatch background. */
+  getContrastColor: vi.fn(() => '#FFFFFF'),
   /** Used by six of the tools; absent it throws as an unhandled rejection. */
   ThemeService: {
     getCurrentTheme: vi.fn().mockReturnValue('standard-dark'),
@@ -257,11 +259,18 @@ vi.mock('../dye-selector', () => ({
       this.container = container;
       this.options = options;
     }
+    element: HTMLElement | null = null;
     init() {
       const div = document.createElement('div');
       div.className = 'dye-selector';
       div.id = 'dye-selector';
       this.container.appendChild(div);
+      this.element = div;
+    }
+    // Inherited from BaseComponent on the real DyeSelector; the tools
+    // reach through it to bind selection-changed on its parent.
+    getElement() {
+      return this.element;
     }
     destroy() {
       this.container.innerHTML = '';

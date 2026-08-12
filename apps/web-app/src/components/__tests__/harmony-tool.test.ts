@@ -26,6 +26,14 @@ const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes } = vi.hoisted(() =>
 // and every assertion downstream sees an empty DOM instead of a failure.
 
 vi.mock('@services/dye-service-wrapper', () => ({
+  // The real harmony-generator (pulled in via importActual below) resolves
+  // dyes through this singleton, so the wrapper mock must expose it too.
+  dyeService: {
+    getAllDyes: mockGetAllDyes,
+    getDyeById: mockGetDyeById,
+    findClosestDyes: mockFindClosestDyes,
+    getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
+  },
   DyeService: {
     getInstance: vi.fn().mockReturnValue({
       getAllDyes: mockGetAllDyes,
@@ -36,7 +44,16 @@ vi.mock('@services/dye-service-wrapper', () => ({
   },
 }));
 
-vi.mock('@services/index', () => ({
+vi.mock('@services/index', async () => ({
+  /** Picks readable text ink for a swatch background. */
+  getContrastColor: vi.fn(() => '#FFFFFF'),
+  /**
+   * The harmony generator's exports are pure colour maths re-exported through
+   * the services barrel. Use the REAL ones rather than stubs: they have no
+   * side effects, they already have their own tests, and a stub here would
+   * silently change what the tool computes.
+   */
+  ...(await vi.importActual<Record<string, unknown>>('@services/harmony-generator')),
   /** Used by six of the tools; absent it throws as an unhandled rejection. */
   ThemeService: {
     getCurrentTheme: vi.fn().mockReturnValue('standard-dark'),
@@ -114,6 +131,8 @@ vi.mock('@services/index', () => ({
   },
   MarketBoardService: {
     getInstance: vi.fn().mockReturnValue({
+      getShowPrices: vi.fn().mockReturnValue(false),
+      setShowPrices: vi.fn(),
       // Kept in step with the real MarketBoardService. A missing method
       // throws inside renderContent, which safeRender() swallows into an
       // error state — the panel then renders nothing, silently.
@@ -269,11 +288,18 @@ vi.mock('../dye-selector', () => ({
       this.container = container;
       this.options = options;
     }
+    element: HTMLElement | null = null;
     init() {
       const div = document.createElement('div');
       div.className = 'dye-selector';
       div.id = 'dye-selector';
       this.container.appendChild(div);
+      this.element = div;
+    }
+    // Inherited from BaseComponent on the real DyeSelector; the tools
+    // reach through it to bind selection-changed on its parent.
+    getElement() {
+      return this.element;
     }
     destroy() {
       this.container.innerHTML = '';
@@ -539,6 +565,283 @@ describe('HarmonyTool', () => {
 
       // Second destroy should not throw
       expect(() => tool!.destroy()).not.toThrow();
+    });
+  });
+
+  // ==========================================================================
+  // Interaction depth
+  //
+  // Harmony has a single base dye rather than a selection list, so its entry
+  // points behave differently from the other tools: selectDye REPLACES rather
+  // than appends, and the harmony type is what varies. These drive the four
+  // public entry points and the harmony-type buttons the tool renders.
+  // ==========================================================================
+
+  const mount = (opts: { drawer?: boolean } = {}): HarmonyTool => {
+    const t = new HarmonyTool(
+      container,
+      opts.drawer === false ? { leftPanel, rightPanel } : { leftPanel, rightPanel, drawerContent }
+    );
+    t.init();
+    return t;
+  };
+
+  const flush = async () => {
+    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 0));
+  };
+
+  const TYPE_KEY = 'v3_harmony_type';
+  const DYE_KEY = 'v3_harmony_selected_dye';
+
+  const lastWrite = async (key: string): Promise<unknown> => {
+    const { StorageService } = await import('@services/index');
+    const calls = vi.mocked(StorageService.setItem).mock.calls.filter((c) => c[0] === key);
+    return calls.at(-1)?.[1];
+  };
+
+  const dye = (id: number, name = `Dye ${id}`) =>
+    ({ ...mockDyes[0], id, itemID: 5000 + id, name, hex: '#3366CC' }) as never;
+
+  describe('selectDye — a single base colour', () => {
+    it('persists the base dye by itemID', async () => {
+      tool = mount();
+
+      tool.selectDye(dye(1));
+
+      // itemID, not the internal id — this is what a share link carries
+      expect(await lastWrite(DYE_KEY)).toBe(5001);
+    });
+
+    it('replaces the base rather than accumulating', async () => {
+      tool = mount();
+
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+
+      // Harmony works from ONE base colour, unlike comparison or accessibility
+      expect(await lastWrite(DYE_KEY)).toBe(5002);
+    });
+
+    it('re-selecting the same dye is harmless', async () => {
+      tool = mount();
+
+      tool.selectDye(dye(1));
+      expect(() => tool!.selectDye(dye(1))).not.toThrow();
+
+      expect(await lastWrite(DYE_KEY)).toBe(5001);
+    });
+
+    it.each([
+      ['undefined', undefined],
+      ['null', null],
+    ])('ignores %s rather than crashing the drawer', (_label, value) => {
+      tool = mount();
+
+      expect(() => tool!.selectDye(value as never)).not.toThrow();
+    });
+  });
+
+  describe('selectCustomColor', () => {
+    it('is deliberately NOT persisted', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      vi.mocked(StorageService.removeItem).mockClear();
+
+      tool.selectCustomColor('#aabbcc');
+
+      // A custom hex is not a dye. Persisting it would restore something on
+      // reload that the dye list cannot represent, so the stored id is
+      // CLEARED rather than written.
+      expect(StorageService.removeItem).toHaveBeenCalledWith(DYE_KEY);
+      expect(await lastWrite(DYE_KEY)).toBeUndefined();
+    });
+
+    it('ignores an empty colour', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      vi.mocked(StorageService.removeItem).mockClear();
+
+      tool.selectCustomColor('');
+
+      expect(StorageService.removeItem).not.toHaveBeenCalled();
+    });
+
+    it('displaces a persisted base dye', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      tool.selectDye(dye(1));
+      vi.mocked(StorageService.removeItem).mockClear();
+
+      tool.selectCustomColor('#aabbcc');
+
+      // The previously stored real dye must not survive as the restore target
+      expect(StorageService.removeItem).toHaveBeenCalledWith(DYE_KEY);
+    });
+  });
+
+  describe('clearDyes', () => {
+    it('drops the base dye from storage', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      tool.selectDye(dye(1));
+      vi.mocked(StorageService.removeItem).mockClear();
+
+      tool.clearDyes();
+
+      expect(StorageService.removeItem).toHaveBeenCalledWith(DYE_KEY);
+    });
+
+    it('leaves the tool usable afterwards', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.clearDyes();
+
+      tool.selectDye(dye(9));
+
+      expect(await lastWrite(DYE_KEY)).toBe(5009);
+    });
+
+    it('is safe with nothing selected, twice', () => {
+      tool = mount();
+
+      expect(() => {
+        tool!.clearDyes();
+        tool!.clearDyes();
+      }).not.toThrow();
+    });
+  });
+
+  describe('setConfig — the harmony type', () => {
+    // `complementary` is the default, so switching TO it on a fresh tool
+    // writes nothing — the change-detection guard skips it. It gets its own
+    // test below rather than being wrongly listed here.
+    it.each(['analogous', 'triadic', 'splitComplementary', 'tetradic', 'monochromatic'])(
+      'persists a switch to %s',
+      async (harmonyType) => {
+        tool = mount();
+
+        tool.setConfig({ harmonyType });
+        await flush();
+
+        expect(await lastWrite(TYPE_KEY)).toBe(harmonyType);
+      }
+    );
+
+    it('starts on complementary, so switching back to it is observable', async () => {
+      tool = mount();
+      tool.setConfig({ harmonyType: 'triadic' });
+      await flush();
+
+      tool.setConfig({ harmonyType: 'complementary' });
+      await flush();
+
+      expect(await lastWrite(TYPE_KEY)).toBe('complementary');
+    });
+
+    it('ignores a switch to the type already selected', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      tool.setConfig({ harmonyType: 'triadic' });
+      await flush();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      // The guard is `config.harmonyType !== this.selectedHarmonyType`
+      tool.setConfig({ harmonyType: 'triadic' });
+      await flush();
+
+      expect(StorageService.setItem).not.toHaveBeenCalledWith(TYPE_KEY, expect.anything());
+    });
+
+    it('regenerates against the new type when a base dye is set', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+
+      // Switching type with a base present must recompute, not just restyle
+      expect(() => tool!.setConfig({ harmonyType: 'tetradic' })).not.toThrow();
+      await flush();
+
+      expect(await lastWrite(TYPE_KEY)).toBe('tetradic');
+    });
+
+    it('accepts a type switch with no base dye selected', async () => {
+      tool = mount();
+
+      expect(() => tool!.setConfig({ harmonyType: 'analogous' })).not.toThrow();
+      await flush();
+
+      expect(await lastWrite(TYPE_KEY)).toBe('analogous');
+    });
+
+    it.each([
+      ['showNames', { showNames: true }],
+      ['showHex', { showHex: true }],
+      ['showRgb', { showRgb: true }],
+      ['showHsv', { showHsv: true }],
+      ['strictMatching', { strictMatching: true }],
+    ])('accepts a %s change', (_label, config) => {
+      tool = mount();
+
+      expect(() => tool!.setConfig(config)).not.toThrow();
+    });
+
+    it('accepts an empty config without writing anything', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      tool.setConfig({});
+
+      expect(StorageService.setItem).not.toHaveBeenCalledWith(TYPE_KEY, expect.anything());
+    });
+  });
+
+  describe('the harmony-type buttons', () => {
+    const typeButtons = (): HTMLButtonElement[] =>
+      Array.from(container.querySelectorAll<HTMLButtonElement>('button[data-harmony-type]'));
+
+    it('renders a button per harmony type', () => {
+      tool = mount();
+
+      expect(typeButtons().length).toBeGreaterThan(0);
+    });
+
+    it('switching type through a button persists it', async () => {
+      tool = mount();
+      const buttons = typeButtons();
+      const target = buttons.find((b) => b.dataset.harmonyType !== 'complementary') ?? buttons[1];
+
+      target.click();
+      await flush();
+
+      expect(await lastWrite(TYPE_KEY)).toBe(target.dataset.harmonyType);
+    });
+  });
+
+  describe('lifecycle under interaction', () => {
+    it('tears down cleanly after selection and configuration', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.setConfig({ harmonyType: 'triadic' });
+      await flush();
+
+      expect(() => tool!.destroy()).not.toThrow();
+    });
+
+    it('ignores configuration arriving after destroy', () => {
+      tool = mount();
+      tool.destroy();
+
+      // The sidebar can emit one last config-change during teardown
+      expect(() => tool!.setConfig({ harmonyType: 'tetradic' })).not.toThrow();
+    });
+
+    it('works with no drawer panel supplied', async () => {
+      tool = mount({ drawer: false });
+
+      tool.selectDye(dye(1));
+
+      expect(await lastWrite(DYE_KEY)).toBe(5001);
     });
   });
 });

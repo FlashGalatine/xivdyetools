@@ -35,6 +35,8 @@ vi.mock('@services/dye-service-wrapper', () => ({
 }));
 
 vi.mock('@services/index', () => ({
+  /** Picks readable text ink for a swatch background. */
+  getContrastColor: vi.fn(() => '#FFFFFF'),
   /** Used by six of the tools; absent it throws as an unhandled rejection. */
   ThemeService: {
     getCurrentTheme: vi.fn().mockReturnValue('standard-dark'),
@@ -112,6 +114,8 @@ vi.mock('@services/index', () => ({
   },
   MarketBoardService: {
     getInstance: vi.fn().mockReturnValue({
+      getShowPrices: vi.fn().mockReturnValue(false),
+      setShowPrices: vi.fn(),
       // Kept in step with the real MarketBoardService. A missing method
       // throws inside renderContent, which safeRender() swallows into an
       // error state — the panel then renders nothing, silently.
