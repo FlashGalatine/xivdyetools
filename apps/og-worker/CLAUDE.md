@@ -164,8 +164,13 @@ serving cards from `beta.xivdyetools.app/og`. `tests/wrangler-env.test.ts` guard
 Compatibility date `2024-12-01`. **No `nodejs_compat`** (per ARCH-001). The `[[rules]]` block declares `**/*.ttf` as Data imports so wrangler bundles fonts as `ArrayBuffer`s.
 
 The site root `/` is deliberately **not** routed in either env — `xivdyetools.app/` and
-`beta.xivdyetools.app/` serve web-app's static card from `/assets/og/default.png`
-(`default-x.png` for X). The worker has a `GET /` handler, but only `og.`/`og-beta.` reach it.
+`beta.xivdyetools.app/` serve web-app's static card from `/og/default.png` (`default-x.png` for
+X). The worker has a `GET /` handler, but only `og.`/`og-beta.` reach it.
+
+Those static files sit at `/og/` and **not** `/assets/og/` because Cloudflare Pages merges
+overlapping `_headers` patterns rather than letting the more specific one replace the broader,
+so anything under `/assets/` inherits that section's `immutable` — fatal for a filename that
+must stay stable across artwork revisions.
 
 ### Required Secrets / Optional Secrets
 

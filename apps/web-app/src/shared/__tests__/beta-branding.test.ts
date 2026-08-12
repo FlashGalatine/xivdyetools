@@ -12,6 +12,7 @@ import {
   BETA_ORIGIN,
   BETA_TITLE_PREFIX,
   brandHtmlForBeta,
+  hasBetaHeadersBlock,
 } from '../beta-branding';
 
 /** The seven icon links as they appear in src/index.html, plus two links that must NOT change. */
@@ -23,10 +24,10 @@ const SAMPLE_HTML = `<!DOCTYPE html>
     <meta name="description" content="Free tools at https://xivdyetools.app/ for FFXIV players." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://xivdyetools.app/" />
-    <meta property="og:image" content="https://xivdyetools.app/assets/og/default.png" />
+    <meta property="og:image" content="https://xivdyetools.app/og/default.png" />
     <meta property="og:site_name" content="XIV Dye Tools" />
     <meta name="twitter:url" content="https://xivdyetools.app/" />
-    <meta name="twitter:image" content="https://xivdyetools.app/assets/og/default-x.png" />
+    <meta name="twitter:image" content="https://xivdyetools.app/og/default-x.png" />
     <link rel="canonical" href="https://xivdyetools.app/" />
     <link rel="icon" type="image/x-icon" href="/assets/icons/favicon.ico" />
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png" />
@@ -138,8 +139,8 @@ describe('brandHtmlForBeta', () => {
 
   it('repoints og:image and twitter:image at the beta origin', () => {
     const out = brandHtmlForBeta(SAMPLE_HTML);
-    expect(out).toContain(`content="${BETA_ORIGIN}/assets/og/default.png"`);
-    expect(out).toContain(`content="${BETA_ORIGIN}/assets/og/default-x.png"`);
+    expect(out).toContain(`content="${BETA_ORIGIN}/og/default.png"`);
+    expect(out).toContain(`content="${BETA_ORIGIN}/og/default-x.png"`);
   });
 
   it('repoints og:url and twitter:url so the embed links back to beta', () => {
@@ -184,6 +185,44 @@ describe('brandHtmlForBeta', () => {
   it('exposes a headers block that suppresses indexing', () => {
     expect(BETA_HEADERS_BLOCK).toContain('X-Robots-Tag: noindex, nofollow');
     expect(BETA_HEADERS_BLOCK).toContain('/*');
+  });
+});
+
+describe('hasBetaHeadersBlock', () => {
+  const WITH_BLOCK = `/assets/*\n  Cache-Control: public\n${BETA_HEADERS_BLOCK}`;
+
+  it('detects a real appended block', () => {
+    expect(hasBetaHeadersBlock(WITH_BLOCK)).toBe(true);
+  });
+
+  it('reports absent when the file has no block', () => {
+    expect(hasBetaHeadersBlock('/assets/*\n  Cache-Control: public\n')).toBe(false);
+  });
+
+  /**
+   * The regression this exists for. `public/_headers` carries a comment
+   * explaining why the social-card rule sits outside /assets/, and that
+   * explanation names X-Robots-Tag. A substring check treats the prose as the
+   * header itself, concludes the block is already present, and skips appending
+   * it — shipping a beta build that search engines are free to index. Prose is
+   * input too.
+   */
+  it('is not satisfied by a comment that merely mentions the header', () => {
+    const commentOnly = [
+      '# The X-Robots-Tag block relies on Pages merging /* rules to append itself.',
+      '#   X-Robots-Tag: noindex, nofollow  <- illustrative only',
+      '/assets/*',
+      '  Cache-Control: public',
+    ].join('\n');
+    expect(hasBetaHeadersBlock(commentOnly)).toBe(false);
+  });
+
+  it('accepts the header under any path pattern and indentation', () => {
+    expect(hasBetaHeadersBlock('/*\n\tX-Robots-Tag: noindex, nofollow\n')).toBe(true);
+  });
+
+  it('ignores an unrelated X-Robots-Tag value', () => {
+    expect(hasBetaHeadersBlock('/*\n  X-Robots-Tag: all\n')).toBe(false);
   });
 
   it('exposes the unprefixed product name', () => {

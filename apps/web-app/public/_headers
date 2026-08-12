@@ -41,13 +41,20 @@
 # ============================================================================
 # Social cards - the /fonts/* carve-out, for the same reason
 # ============================================================================
-# These sit under /assets/ but are NOT content-hashed: og:image URLs have to be
-# stable, so a revised card reuses its filename. Under the immutable rule above
-# that would strand every cache on the old artwork for a year, and social
-# scrapers are the least re-fetchable consumers there are. TTLs match what
-# og-worker serves for the same cards (24h browser / 7d edge) so the static
-# root card and the dynamic per-tool ones age alike.
-/assets/og/*
+# NOT content-hashed: og:image URLs have to be stable, so a revised card reuses
+# its filename. Under an immutable rule that would strand every cache on the old
+# artwork, and social scrapers are the least re-fetchable consumers there are.
+# TTLs match what og-worker serves for the same cards (24h browser / 7d edge) so
+# the static root card and the dynamic per-tool ones age alike.
+#
+# These live at /og/ rather than /assets/og/ for a mechanical reason: Cloudflare
+# Pages MERGES the rules of overlapping path patterns rather than letting the
+# more specific one replace the broader — the same behaviour the beta
+# X-Robots-Tag block relies on to append itself to /*. Under /assets/ this rule
+# won the max-age but inherited `immutable` from /assets/*, producing
+# `max-age=86400, immutable, s-maxage=604800`. Moving out from under the
+# pattern removes the overlap instead of fighting the merge.
+/og/*
   Cache-Control: public, max-age=86400, s-maxage=604800
 
 # ============================================================================

@@ -9,7 +9,11 @@
 import type { Plugin } from 'vite';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
-import { brandHtmlForBeta, BETA_HEADERS_BLOCK } from './src/shared/beta-branding';
+import {
+  brandHtmlForBeta,
+  BETA_HEADERS_BLOCK,
+  hasBetaHeadersBlock,
+} from './src/shared/beta-branding';
 
 export function betaBranding(enabled: boolean): Plugin {
   let outDir = 'dist';
@@ -57,7 +61,10 @@ export function betaBranding(enabled: boolean): Plugin {
       }
 
       const current = readFileSync(headersPath, 'utf-8');
-      if (current.includes('X-Robots-Tag')) return; // idempotent
+      // Deliberately NOT a substring check — a comment in public/_headers that
+      // merely names the header would read as proof the block is present and
+      // silently skip the append. See hasBetaHeadersBlock's docstring.
+      if (hasBetaHeadersBlock(current)) return; // idempotent
       writeFileSync(headersPath, current + BETA_HEADERS_BLOCK, 'utf-8');
     },
   };

@@ -52,6 +52,29 @@ export const BETA_HEADERS_BLOCK = `
 `;
 
 /**
+ * Has `BETA_HEADERS_BLOCK` already been appended to a `_headers` file?
+ *
+ * Used as the append step's idempotency guard. It matches an actual header
+ * *directive* — indented under a path pattern, carrying the `noindex` value —
+ * rather than the bare token anywhere in the file.
+ *
+ * That precision is the whole point. The guard was previously
+ * `current.includes('X-Robots-Tag')`, and `public/_headers` carries a comment
+ * explaining why the social-card rule sits outside `/assets/` — an explanation
+ * that names the header. The substring check read the prose as proof the block
+ * was already there and skipped the append, producing a beta build with
+ * nothing to keep it out of search results. `#` comments cannot satisfy the
+ * pattern below because a directive requires leading whitespace and nothing
+ * else before the token.
+ *
+ * Lives here rather than in the Vite plugin so it is type-checked and tested;
+ * being unreachable from the test suite is why the old guard's flaw survived.
+ */
+export function hasBetaHeadersBlock(headers: string): boolean {
+  return /^[ \t]+X-Robots-Tag:\s*noindex/m.test(headers);
+}
+
+/**
  * Rewrite `index.html` for a beta build.
  *
  * Icon links (and the icon `<link rel="preload">`) are matched by their href
