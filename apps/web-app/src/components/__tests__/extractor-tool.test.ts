@@ -44,6 +44,7 @@ vi.mock('@services/index', () => ({
     error: vi.fn(),
     success: vi.fn(),
     warning: vi.fn(),
+    info: vi.fn(),
   },
   /**
    * The shared market-panel builder. Absent, renderMarketPanel throws and
@@ -929,6 +930,202 @@ describe('ExtractorTool', () => {
       await loadImage();
 
       expect(() => tool!.destroy()).not.toThrow();
+    });
+
+    /*
+     * Palette EXTRACTION is not asserted here.
+     *
+     * `extractPalette()` sources its pixels from
+     * `this.imageZoom.getCanvas()`, and ImageZoomController is the real
+     * component (it is excluded from coverage, not mocked). It does not
+     * accept the fake 2D context above, so getCanvas() returns null and the
+     * tool correctly refuses with "no image for palette" — meaning a test
+     * here would assert the refusal while appearing to cover extraction.
+     *
+     * A test was written, observed to do exactly that, and removed. Covering
+     * the extraction path properly needs either a mocked ImageZoomController
+     * whose getCanvas returns a stubbed canvas, or Playwright, which has a
+     * real one. The same applies to the loupe (moveLoupe / setLoupeHex /
+     * matchColor), which is driven entirely by that controller's callbacks.
+     */
+
+    it('clears the image and offers the drop zone again', async () => {
+      const { StorageService } = await import('@services/index');
+      const { indexedDBService } = await import('@services/indexeddb-service');
+      tool = mount();
+      await loadImage();
+      vi.mocked(StorageService.removeItem).mockClear();
+      vi.mocked(indexedDBService.delete).mockClear();
+
+      // The X on the image card, found by its label rather than by icon
+      // markup — the Replace button next to it also carries an SVG
+      const clearBtn = rightPanel.querySelector<HTMLButtonElement>(
+        'button[aria-label="matcher.clearImage"]'
+      );
+      expect(clearBtn).not.toBeNull();
+      clearBtn!.click();
+      await flush();
+
+      // Both copies go: the legacy localStorage key AND the OPT-012 IndexedDB
+      // blob, or the cleared image returns on the next reload
+      expect(StorageService.removeItem).toHaveBeenCalledWith('v3_matcher_image');
+      expect(indexedDBService.delete).toHaveBeenCalled();
+    });
+  });
+
+  describe('palette mode', () => {
+    const paletteCheckbox = (): HTMLInputElement =>
+      container.querySelector('input[type="checkbox"]') as HTMLInputElement;
+
+    it('renders a palette-mode toggle', () => {
+      tool = mount();
+
+      expect(paletteCheckbox()).not.toBeNull();
+    });
+
+    it('persists the toggle', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      const box = paletteCheckbox();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      box.checked = true;
+      box.dispatchEvent(new Event('change'));
+
+      expect(StorageService.setItem).toHaveBeenCalledWith('v3_matcher_palette_mode', true);
+    });
+
+    it('reveals the palette options when enabled and hides them when off', () => {
+      tool = mount();
+      const box = paletteCheckbox();
+      const options = container.querySelector<HTMLElement>('#palette-options-container');
+      expect(options).not.toBeNull();
+
+      box.checked = true;
+      box.dispatchEvent(new Event('change'));
+      expect(options!.style.display).not.toBe('none');
+
+      box.checked = false;
+      box.dispatchEvent(new Event('change'));
+      expect(options!.style.display).toBe('none');
+    });
+
+    /** The primary button inside the palette options block. */
+    const extractButton = (): HTMLButtonElement | null =>
+      container.querySelector<HTMLButtonElement>('#palette-options-container button');
+
+    it('offers an extract button alongside the options', () => {
+      tool = mount();
+
+      expect(extractButton()).not.toBeNull();
+    });
+
+    it('refuses to extract with no image loaded', async () => {
+      const { ToastService } = await import('@services/index');
+      tool = mount();
+      vi.mocked(ToastService.error).mockClear();
+
+      extractButton()!.click();
+      await flush();
+
+      // Extraction needs pixels; say so rather than producing an empty palette
+      expect(ToastService.error).toHaveBeenCalled();
+    });
+
+    it('toggling twice returns to the original state', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      const box = paletteCheckbox();
+
+      box.checked = true;
+      box.dispatchEvent(new Event('change'));
+      box.checked = false;
+      box.dispatchEvent(new Event('change'));
+
+      expect(StorageService.setItem).toHaveBeenLastCalledWith('v3_matcher_palette_mode', false);
+    });
+  });
+
+  describe('paste from clipboard', () => {
+    let originalClipboard: PropertyDescriptor | undefined;
+
+    const withClipboard = (read: () => Promise<unknown>) => {
+      originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { read },
+      });
+    };
+
+    afterEach(() => {
+      if (originalClipboard) Object.defineProperty(navigator, 'clipboard', originalClipboard);
+      else Reflect.deleteProperty(navigator as unknown as Record<string, unknown>, 'clipboard');
+      originalClipboard = undefined;
+    });
+
+    /** The paste button only renders where navigator.clipboard.read exists. */
+    const pasteButton = (): HTMLButtonElement | undefined =>
+      [...rightPanel.querySelectorAll('button')].find((b) =>
+        b.textContent?.includes('matcher.pasteClipboard')
+      );
+
+    it('is hidden entirely where the Clipboard API is unavailable', () => {
+      // jsdom has no navigator.clipboard.read, which is the unsupported case
+      tool = mount();
+
+      expect(pasteButton()).toBeUndefined();
+    });
+
+    it('appears when the Clipboard API is available', () => {
+      withClipboard(async () => []);
+      tool = mount();
+
+      expect(pasteButton()).toBeDefined();
+    });
+
+    it('reads an image item off the clipboard', async () => {
+      const blob = new Blob(['x'], { type: 'image/png' });
+      withClipboard(async () => [{ types: ['image/png'], getType: async () => blob }]);
+      const readSpy = vi
+        .spyOn(FileReader.prototype, 'readAsDataURL')
+        .mockImplementation(() => undefined);
+      tool = mount();
+
+      pasteButton()!.click();
+      await flush();
+      await flush();
+
+      expect(readSpy).toHaveBeenCalled();
+      readSpy.mockRestore();
+    });
+
+    it('warns when the clipboard holds no image', async () => {
+      const { ToastService } = await import('@services/index');
+      withClipboard(async () => [{ types: ['text/plain'], getType: async () => new Blob() }]);
+      tool = mount();
+      vi.mocked(ToastService.error).mockClear();
+
+      pasteButton()!.click();
+      await flush();
+      await flush();
+
+      expect(ToastService.error).toHaveBeenCalled();
+    });
+
+    it('warns rather than throwing when permission is denied', async () => {
+      const { ToastService } = await import('@services/index');
+      withClipboard(async () => {
+        throw new Error('NotAllowedError');
+      });
+      tool = mount();
+      vi.mocked(ToastService.error).mockClear();
+
+      pasteButton()!.click();
+      await flush();
+      await flush();
+
+      // A denied permission is a normal outcome, not a crash
+      expect(ToastService.error).toHaveBeenCalled();
     });
   });
 
