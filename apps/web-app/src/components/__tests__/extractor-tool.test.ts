@@ -1000,11 +1000,17 @@ describe('ExtractorTool', () => {
       ctx.getImageData.mockClear();
 
       tool.setConfig({ maxColors: 3 });
-      for (let i = 0; i < 6; i++) await flush();
 
       // A config change with an image present must re-sample, not just
-      // redraw — otherwise the palette silently reflects the old count
-      expect(ctx.getImageData).toHaveBeenCalled();
+      // redraw — otherwise the palette silently reflects the old count.
+      //
+      // Waited on, not estimated: extractPalette() yields a real
+      // requestAnimationFrame (~16 ms in jsdom) before it touches the canvas,
+      // so a fixed count of setTimeout(0) flushes is a wall-clock bet on that
+      // frame. It wins on a slow host (a flush costs ~10 ms here) and loses on
+      // a fast one (~1 ms), which is why this passed locally and failed in CI.
+      // If setConfig stops re-extracting, this times out and still fails.
+      await vi.waitFor(() => expect(ctx.getImageData).toHaveBeenCalled());
     });
 
     it('survives a decode failure without leaving the tool broken', async () => {
@@ -1379,9 +1385,11 @@ describe('ExtractorTool', () => {
         for (let i = 0; i < 8; i++) await flush();
 
         // Restoring must bring the RESULTS back too, not just the bitmap —
-        // otherwise a reload shows the image above an empty panel
+        // otherwise a reload shows the image above an empty panel. The cards
+        // are rendered on the far side of extractPalette()'s frame, so this
+        // waits on them rather than betting a flush count against ~16 ms.
         expect(rightPanel.querySelector('canvas')).not.toBeNull();
-        expect(resultCards().length).toBeGreaterThan(0);
+        await vi.waitFor(() => expect(resultCards().length).toBeGreaterThan(0));
       });
 
       it('migrates a legacy localStorage image into IndexedDB', async () => {
