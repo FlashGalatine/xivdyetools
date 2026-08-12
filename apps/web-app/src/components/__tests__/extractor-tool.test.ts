@@ -625,6 +625,25 @@ describe('ExtractorTool', () => {
     await new Promise((r) => setTimeout(r, 0));
   };
 
+  /**
+   * Block until the tool is not mid-extraction.
+   *
+   * extractPalette() awaits a real requestAnimationFrame (~16ms in jsdom) and
+   * relabels the auto-extract button "Extracting…" across it, so a fixed count
+   * of setTimeout(0) flushes is a wall-clock bet on that frame: it wins on an
+   * idle machine and loses under `turbo`'s parallel load, where every helper
+   * that finds the button by its idle text then returns undefined. The label
+   * is the tool's own quiescence signal — wait on it, don't estimate it.
+   */
+  const waitForIdle = (): Promise<void> =>
+    vi.waitFor(() => {
+      const btn = Array.from(rightPanel.querySelectorAll('button')).find((b) =>
+        b.textContent?.includes('matcher.autoExtract')
+      ) as HTMLButtonElement | undefined;
+      expect(btn, 'auto-extract button still shows its busy label').toBeDefined();
+      expect(btn!.disabled).toBe(false);
+    });
+
   const dropZone = (): HTMLElement =>
     rightPanel.querySelector('#extractor-drop-zone') as HTMLElement;
 
@@ -919,6 +938,9 @@ describe('ExtractorTool', () => {
       rightPanel.dispatchEvent(dropEvent([new File(['x'], 'shot.png', { type: 'image/png' })]));
       // FileReader is async in jsdom too
       for (let i = 0; i < 6; i++) await flush();
+      // onImageLoaded auto-extracts unconditionally, so the tool is still busy
+      // when the flushes above run out. See waitForIdle.
+      await waitForIdle();
     };
 
     it('renders a canvas once an image is loaded', async () => {
@@ -1227,7 +1249,7 @@ describe('ExtractorTool', () => {
         vi.mocked(ToastService.success).mockClear();
 
         autoBtn().click();
-        for (let i = 0; i < 4; i++) await flush();
+        await waitForIdle();
 
         expect(resultCards().length).toBeGreaterThan(0);
         expect(ToastService.success).toHaveBeenCalledWith(
@@ -1241,18 +1263,26 @@ describe('ExtractorTool', () => {
         ctx.strokeText.mockClear();
 
         autoBtn().click();
-        for (let i = 0; i < 4; i++) await flush();
+        await waitForIdle();
 
         // The outlined marker labels — the call that used to throw
         expect(ctx.strokeText).toHaveBeenCalled();
       });
 
       it('restores the button after extraction rather than leaving it disabled', async () => {
+        const { ToastService } = await import('@services/index');
         tool = mount();
         await loadImage();
+        vi.mocked(ToastService.success).mockClear();
 
         autoBtn().click();
-        for (let i = 0; i < 4; i++) await flush();
+        // Deliberately NOT waitForIdle: it waits on the very label and
+        // disabled flag this test exists to check, which would make the
+        // assertions below unfalsifiable. The success toast is an independent
+        // signal. It is raised in extractPalette's try block and the restore
+        // happens in its finally, with no await between them — so once the
+        // toast is observable from a later turn, the restore has already run.
+        await vi.waitFor(() => expect(ToastService.success).toHaveBeenCalled());
 
         expect(autoBtn().disabled).toBe(false);
         expect(autoBtn().style.opacity).toBe('1');
@@ -1268,7 +1298,7 @@ describe('ExtractorTool', () => {
 
         await loadImage();
         autoBtn().click();
-        for (let i = 0; i < 4; i++) await flush();
+        await waitForIdle();
 
         expect(exportBtn.disabled).toBe(false);
       });
@@ -1278,7 +1308,7 @@ describe('ExtractorTool', () => {
         await loadImage();
 
         autoBtn().click();
-        for (let i = 0; i < 4; i++) await flush();
+        await waitForIdle();
 
         const ids = Array.from(resultCards()).map(
           (c) => (c as unknown as { data: { dye: { itemID: number } } }).data.dye.itemID
@@ -1294,7 +1324,7 @@ describe('ExtractorTool', () => {
         tool.setConfig({ preventDuplicates: false });
 
         autoBtn().click();
-        for (let i = 0; i < 4; i++) await flush();
+        await waitForIdle();
 
         expect(resultCards().length).toBeGreaterThan(0);
       });

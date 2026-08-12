@@ -54,10 +54,10 @@ export default defineConfig({
       // uncovered statements. Raise these numbers as those tests deepen; do
       // not lower them.
       thresholds: {
-        statements: 70,
-        branches: 54,
-        functions: 64,
-        lines: 71,
+        statements: 71,
+        branches: 55,
+        functions: 65,
+        lines: 72,
       },
     },
     // scripts/ holds the CI gates (check-bundle-size, check-beta-build,

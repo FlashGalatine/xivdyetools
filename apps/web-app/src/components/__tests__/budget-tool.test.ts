@@ -13,13 +13,46 @@ import { createTestContainer, cleanupTestContainer } from '../../__tests__/compo
 import { mockDyes } from '../../__tests__/mocks/services';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
-const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes, mockFindDyesWithinDistance } =
-  vi.hoisted(() => ({
+const {
+  mockGetAllDyes,
+  mockGetDyeById,
+  mockFindClosestDyes,
+  mockFindDyesWithinDistance,
+  mockDistance,
+} = vi.hoisted(() => {
+  const rgb = (hex: string) => ({
+    r: parseInt(hex.slice(1, 3), 16) || 0,
+    g: parseInt(hex.slice(3, 5), 16) || 0,
+    b: parseInt(hex.slice(5, 7), 16) || 0,
+  });
+  return {
     mockGetAllDyes: vi.fn(),
     mockGetDyeById: vi.fn(),
     mockFindClosestDyes: vi.fn(),
     mockFindDyesWithinDistance: vi.fn(),
-  }));
+    /**
+     * MUST be a real function of both hexes — never a constant.
+     *
+     * findAlternatives() keeps a candidate when `de <= matchLine` (default 8,
+     * slider range 2–20), so a constant here is not a stand-in value, it is a
+     * global on/off switch for the entire ledger. This mock returned 5 (every
+     * dye inside the line); a later pass standardised it to 15 alongside its
+     * sibling distance methods, which put every dye outside the line and
+     * silently killed the candidate map, the sort, every ledger row and the
+     * verdict — 6.6 points of statement coverage, with all 18 tests still
+     * green because none of them looked at the ledger.
+     *
+     * Plain RGB euclidean over 20, which spreads the ten fixture dyes across
+     * ~2.5–18.2 — the tool's own match-line range, with dyes on both sides of
+     * the default line so BOTH arms of the filter are exercised.
+     */
+    mockDistance: vi.fn((a: string, b: string) => {
+      const x = rgb(a);
+      const y = rgb(b);
+      return Math.sqrt((x.r - y.r) ** 2 + (x.g - y.g) ** 2 + (x.b - y.b) ** 2) / 20;
+    }),
+  };
+});
 
 // Icon modules are NOT mocked. They are compile-time string constants with
 // no dependencies, and a hand-written stub only has to miss one export for
@@ -146,11 +179,13 @@ vi.mock('@services/index', () => ({
     lchToHex: vi.fn(() => '#FF0000'),
     hexToOklch: vi.fn(() => ({ l: 0.5, c: 0.1, h: 30 })),
     oklchToHex: vi.fn(() => '#FF0000'),
-    getColorDistance: vi.fn(() => 15),
-    getDeltaE: vi.fn(() => 15),
-    getDistanceForMethod: vi.fn(() => 15),
-    calculateDistanceWithMethod: vi.fn(() => 15),
-    calculateColorDistance: vi.fn(() => 15),
+    // All five share the one real metric, so switching which of them the tool
+    // calls cannot quietly change what the suite covers.
+    getColorDistance: mockDistance,
+    getDeltaE: mockDistance,
+    getDistanceForMethod: mockDistance,
+    calculateDistanceWithMethod: mockDistance,
+    calculateColorDistance: mockDistance,
     getContrastRatio: vi.fn(() => 4.5),
     simulateColorblindnessHex: vi.fn((hex: string) => hex),
     findClosestDyes: vi.fn(() => []),
@@ -565,6 +600,128 @@ describe('BudgetTool', () => {
       expect(price.tier).toBe('C');
       expect(price.gil).toBeNull();
       expect(price.localCost).toContain('Cosmocredits');
+    });
+  });
+
+  // ============================================================================
+  // The Ledger
+  //
+  // These exist because the 6.6-point coverage swing described on mockDistance
+  // happened without a single failing assertion: nothing here had ever looked
+  // at what the ledger contained. Every count below is arithmetic off the
+  // mocked metric, not a figure read back off a run.
+  // ============================================================================
+
+  describe('The ledger', () => {
+    /**
+     * Distance from Blood Red (#CC0000) under mockDistance, display-rounded to
+     * ΔE2000's 1 dp — which is the value findAlternatives() compares:
+     *
+     *   Dalamud Red   2.6    Soot Black   9.1     Rose Pink   11.1
+     *   Wine Red      2.8    Coral Pink   9.3     Sky Blue    16.0
+     *   Sunset Orange 5.7    Ash Grey    10.2     Snow White  18.2
+     *
+     * So the default line of 8 admits three, a line of 12 admits seven, and
+     * the slider's minimum of 2 admits none.
+     */
+    const TARGET = mockDyes[6]; // Blood Red #CC0000
+    const DALAMUD = mockDyes[8];
+    const WINE = mockDyes[4];
+    const SUNSET = mockDyes[7];
+
+    /** findAlternatives() awaits fetchPrices(); one macrotask drains the chain. */
+    const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+
+    /** role="button" appears exactly once in budget-tool.ts — on a ledger row. */
+    const ledgerRows = (): HTMLElement[] =>
+      Array.from(rightPanel.querySelectorAll<HTMLElement>('div[role="button"][tabindex="0"]'));
+
+    /** Row spans in document order: swatch, name, ΔE, board, per-point. */
+    const cells = (row: HTMLElement): string[] =>
+      Array.from(row.querySelectorAll('span')).map((s) => s.textContent ?? '');
+
+    const rowNames = (): string[] => ledgerRows().map((row) => cells(row)[1]);
+
+    /** The LanguageService mock outranks dye.name, so rows read "Dye-<itemID>". */
+    const label = (dye: (typeof mockDyes)[number]): string => `Dye-${dye.itemID}`;
+
+    const build = async (): Promise<void> => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+      tool.selectDye(TARGET);
+      await settle();
+    };
+
+    it('lists only the dyes inside the match line, nearest first', async () => {
+      await build();
+
+      // Ordering is the perPoint tie-break: every fixture dye is a coffer dye
+      // with no gil, so perPoint is null throughout and sortRows falls to ΔE.
+      expect(rowNames()).toEqual([label(DALAMUD), label(WINE), label(SUNSET)]);
+    });
+
+    it('prints each row at its display-rounded distance', async () => {
+      await build();
+
+      expect(ledgerRows().map((row) => cells(row)[2])).toEqual(['2.6', '2.8', '5.7']);
+    });
+
+    it('admits more dyes as the match line is raised', async () => {
+      await build();
+      expect(ledgerRows()).toHaveLength(3);
+
+      tool!.setConfig({ maxDeltaE: 12 });
+      await settle();
+
+      // 12 clears Soot Black 9.1, Coral Pink 9.3, Ash Grey 10.2, Rose Pink
+      // 11.1 — and still excludes Sky Blue 16.0 and Snow White 18.2.
+      expect(ledgerRows()).toHaveLength(7);
+      expect(rowNames()).not.toContain(label(mockDyes[0])); // Snow White
+    });
+
+    it('empties the ledger at the tightest match line', async () => {
+      await build();
+      expect(ledgerRows()).toHaveLength(3);
+
+      tool!.setConfig({ maxDeltaE: 2 });
+      await settle();
+
+      // The nearest dye sits at 2.6, so the slider's floor admits nothing.
+      expect(ledgerRows()).toEqual([]);
+    });
+
+    it('counts the admitted dyes against the tier pool', async () => {
+      await build();
+
+      // All ten fixture dyes are coffer (consolidationType null) = tier X, so
+      // the one populated group reports three of ten.
+      expect(rightPanel.textContent).toContain('3 / 10');
+    });
+
+    it('re-sorts when a column header is clicked', async () => {
+      await build();
+
+      // Headers are real <button>s, but they are not the only ones in the
+      // panel — the quick picks come first — so match on the column label.
+      // The active column carries a ▾/▴ suffix; the name column is inactive.
+      const nameHeader = Array.from(rightPanel.querySelectorAll('button')).find(
+        (b) => b.textContent === 'budget.colDye'
+      );
+      expect(nameHeader).toBeDefined();
+      nameHeader!.click();
+
+      // By name ascending: Dye-5733 (Wine) < Dye-5736 (Sunset) < Dye-5737 (Dalamud).
+      expect(rowNames()).toEqual([label(WINE), label(SUNSET), label(DALAMUD)]);
+    });
+
+    it('picks a row as the new target', async () => {
+      await build();
+
+      ledgerRows()[0].click();
+      await settle();
+
+      // Dalamud Red is now the target, so it can no longer be its own candidate.
+      expect(rowNames()).not.toContain(label(DALAMUD));
     });
   });
 
