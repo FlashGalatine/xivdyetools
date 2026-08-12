@@ -5,6 +5,24 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  # Advisories are published continuously, but this workflow only ran when
+  # somebody pushed -- so one landing during a quiet stretch went unseen until
+  # the next PR. The nightly run closes that gap. Only the `audit` job takes
+  # part (see the `if` on `ci` below).
+  #
+  # Daily, not hourly: `minimumReleaseAge: 1440` in pnpm-workspace.yaml forbids
+  # installing a patch published in the last 24h, so detecting faster than
+  # daily surfaces nothing that can be acted on yet.
+  #
+  # 11:17 UTC ~ 07:17 in the maintainer's -0400, so a failure notification is
+  # waiting at the start of the day. The offset minute is deliberate:
+  # top-of-hour crons queue behind everyone else's and start late.
+  #
+  # Reminder: GitHub runs schedules only from the DEFAULT branch's copy of this
+  # file, so edits here do nothing until they land on main. GitHub also
+  # disables scheduled workflows after 60 days without repository activity.
+  schedule:
+    - cron: '17 11 * * *'
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -46,6 +64,11 @@ jobs:
   ci:
     name: Lint, Type-check, Test, Build
     runs-on: ubuntu-latest
+    # Every turbo filter below is '...[HEAD^]'. On the nightly schedule that
+    # resolves to whatever the last merge happened to touch, so this job would
+    # re-run an arbitrary slice of the suite against an unchanged tree. The
+    # schedule exists for the audit alone.
+    if: github.event_name != 'schedule'
     steps:
       # fetch-depth: 2 is load-bearing -- every turbo filter below is
       # '...[HEAD^]' and needs the previous commit present to diff against.
