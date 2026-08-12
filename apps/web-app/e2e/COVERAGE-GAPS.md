@@ -139,11 +139,58 @@ mobile render reaches it.
 
 **Do not "fix" these 28 tests.** They are the only thing currently reporting the gap. The fix
 belongs in the shell or the tools — either mount the left-panel content somewhere on mobile, or
-route it into the palette drawer as line 1743 intends. When that lands, these tests should go
-green without being touched.
+route it into the palette drawer as line 1743 intends.
 
 Until then `--project=chromium` is the meaningful gate and a full `playwright test` exits
 non-zero — which is the correct signal, not a nuisance.
+
+### Attempted fix, parked on `mobile-config-sidebar-wip` (2026-08-11)
+
+A fix was built and **works**, but regresses two desktop tests and is parked rather than landed.
+Branch commit `41cdfb6` carries the code and a full write-up; the essentials:
+
+**What it does.** Render `<v4-config-sidebar>` at every width instead of `''` below 768px, with a
+new `configSidebarOpen` state driving its `collapsed` attribute and a tool-settings button in the
+header to toggle it. The sidebar already carried the off-canvas presentation in its own
+stylesheet, so only the flag and a trigger were missing. Measured on the running app at 393×727:
+
+| | before | after |
+|---|---|---|
+| elements with `role="switch"` | 0 | **153** |
+| sidebar after the trigger | n/a | `collapsed=false`, 252 px, on screen |
+
+Two routes were considered. Routing the content into the **palette drawer** — which
+`accessibility-tool.ts:1743` appears written for — was rejected on investigation: `drawerContent`
+is hardcoded `null` at all 8 tool call sites in `v4-layout.ts` ("V4 doesn't use drawer"), so that
+per-tool code is dead rather than half-finished; `dye-palette-drawer` has no host for it; and
+`TOOLS_WITHOUT_PALETTE = ['extractor', 'presets']` means it could never reach the tool with the
+richest left panel.
+
+**Why it is parked.** `accessibility-checker.spec.ts` on `--project=chromium` went from 15 passed
+to 13 passed / 2 failed. Confirmed by stash-and-rerun, and confirmed to be the *product* change:
+reverting every spec edit leaves both failures in place.
+
+- **line 233** — clicks the Advanced Settings gear, expects "Vision Types" visible. Fails now,
+  and also fails with the gear click removed. Yet a direct probe of the same page finds the
+  sidebar present, uncollapsed, 252 px wide, with 153 switches and "Vision" in its text. Those
+  two observations are **not reconciled**. Unconfirmed hypothesis: the Advanced Options modal
+  marks background content `inert`/`aria-hidden`, which Playwright treats as hidden, and a second
+  `.v4-drawer-overlay` inside `.v4-layout-main` changed which subtree that covers.
+- **line 305** — resizes to mobile, toggles protanopia, resizes to desktop, expects the state to
+  have flipped. **This was passing without testing anything**: at mobile width `switchCount` was
+  0, so it took the `else` branch and asserted nothing. Fixing the product bug is what made it
+  start doing its job, and it immediately reported something. Likely the click lands on a
+  collapsed zero-width control; not confirmed.
+
+**On the 28.** Wiring a shared `openToolSettings()` helper into the affected specs took
+`mobile-chrome` from 28 failures to **11**. So the drawer-helper prescription this document
+originally gave was not wrong in kind — it was *premature*. With no sidebar rendered on mobile
+there was nothing to open; once there is, the helper becomes the correct test-side change. The
+helper lives on the branch in `e2e/fixtures/navigation.ts`.
+
+**Next step.** Diagnose line 233 first — it is the one that makes no sense yet. Run that single
+test with `--headed --debug` and dump every node matching "Vision Types" with its computed
+visibility at the moment of the assertion.
 
 ## Closing these
 
