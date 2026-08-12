@@ -13,11 +13,15 @@ import { createTestContainer, cleanupTestContainer } from '../../__tests__/compo
 import { mockDyes } from '../../__tests__/mocks/services';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
-const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes } = vi.hoisted(() => ({
-  mockGetAllDyes: vi.fn(),
-  mockGetDyeById: vi.fn(),
-  mockFindClosestDyes: vi.fn(),
-}));
+const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes, mockCharaFindClosestDyes } =
+  vi.hoisted(() => ({
+    mockGetAllDyes: vi.fn(),
+    mockGetDyeById: vi.fn(),
+    mockFindClosestDyes: vi.fn(),
+    // The forward match runs through CharacterColorService, not the
+    // DyeService wrapper — see swatch-tool.ts findMatchingDyes()
+    mockCharaFindClosestDyes: vi.fn(),
+  }));
 
 vi.mock('@services/dye-service-wrapper', () => ({
   DyeService: {
@@ -31,6 +35,14 @@ vi.mock('@services/dye-service-wrapper', () => ({
 }));
 
 vi.mock('@services/index', () => ({
+  /** Used by six of the tools; absent it throws as an unhandled rejection. */
+  ThemeService: {
+    getCurrentTheme: vi.fn().mockReturnValue('standard-dark'),
+    getAllThemes: vi.fn().mockReturnValue([]),
+    isDarkMode: vi.fn().mockReturnValue(true),
+    setTheme: vi.fn(),
+    subscribe: vi.fn().mockReturnValue(() => {}),
+  },
   DyeService: {
     getInstance: vi.fn().mockReturnValue({
       getAllDyes: mockGetAllDyes,
@@ -45,11 +57,18 @@ vi.mock('@services/index', () => ({
     findClosestDyes: mockFindClosestDyes,
     getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
   },
+  /** Complete against every LanguageService method the tools call. */
   LanguageService: {
     t: (key: string) => key,
     tInterpolate: (key: string, params: Record<string, string>) =>
       `${key}: ${Object.values(params).join('/')}`,
     getDyeName: (itemId: number) => `Dye-${itemId}`,
+    getRace: (key: string) => `race:${key}`,
+    getClan: (key: string) => `clan:${key}`,
+    getAcquisition: (key: string) => `acq:${key}`,
+    getCurrency: (key: string) => `cur:${key}`,
+    getVisionType: (key: string) => `vision:${key}`,
+    getCurrentLocale: () => 'en',
     subscribe: vi.fn().mockReturnValue(() => {}),
   },
   StorageService: {
@@ -57,25 +76,53 @@ vi.mock('@services/index', () => ({
     setItem: vi.fn(),
     removeItem: vi.fn(),
   },
+  /**
+   * Complete against every ColorService method the tool components call.
+   * A missing one throws inside renderContent, which BaseComponent's
+   * safeRender() swallows into an error state — so the panel renders nothing
+   * and the tests see an empty DOM instead of a failure.
+   */
   ColorService: {
-    hexToRgb: vi.fn((hex: string) => {
-      const r = parseInt(hex.slice(1, 3), 16) || 0;
-      const g = parseInt(hex.slice(3, 5), 16) || 0;
-      const b = parseInt(hex.slice(5, 7), 16) || 0;
-      return { r, g, b };
-    }),
-    rgbToHex: vi.fn((r: number, g: number, b: number) => {
-      return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase();
-    }),
+    hexToRgb: vi.fn((hex: string) => ({
+      r: parseInt(hex.slice(1, 3), 16) || 0,
+      g: parseInt(hex.slice(3, 5), 16) || 0,
+      b: parseInt(hex.slice(5, 7), 16) || 0,
+    })),
+    rgbToHex: vi.fn((r: number, g: number, b: number) =>
+      `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase()
+    ),
     rgbToHsv: vi.fn(() => ({ h: 0, s: 100, v: 100 })),
-    calculateColorDistance: vi.fn(() => 15),
-    // The reverse-match path (selectDye / selectCustomColor) ranks the whole
-    // sheet through this; without it the drawer's dye selection throws.
-    getDistanceForMethod: vi.fn(() => 15),
+    hexToHsv: vi.fn(() => ({ h: 0, s: 100, v: 100 })),
+    hsvToHex: vi.fn(() => '#FF0000'),
+    rgbToLab: vi.fn(() => ({ l: 50, a: 0, b: 0 })),
+    hexToLab: vi.fn(() => ({ l: 50, a: 0, b: 0 })),
+    labToHex: vi.fn(() => '#FF0000'),
+    hexToLch: vi.fn(() => ({ l: 50, c: 20, h: 30 })),
+    lchToHex: vi.fn(() => '#FF0000'),
+    hexToOklch: vi.fn(() => ({ l: 0.5, c: 0.1, h: 30 })),
+    oklchToHex: vi.fn(() => '#FF0000'),
+    getColorDistance: vi.fn(() => 15),
     getDeltaE: vi.fn(() => 15),
+    getDistanceForMethod: vi.fn(() => 15),
+    calculateDistanceWithMethod: vi.fn(() => 15),
+    calculateColorDistance: vi.fn(() => 15),
+    getContrastRatio: vi.fn(() => 4.5),
+    simulateColorblindnessHex: vi.fn((hex: string) => hex),
+    findClosestDyes: vi.fn(() => []),
   },
   MarketBoardService: {
     getInstance: vi.fn().mockReturnValue({
+      // Kept in step with the real MarketBoardService. A missing method
+      // throws inside renderContent, which safeRender() swallows into an
+      // error state — the panel then renders nothing, silently.
+      getPriceForDye: vi.fn().mockReturnValue(null),
+      getAllPrices: vi.fn().mockReturnValue(new Map()),
+      getPricesView: vi.fn().mockReturnValue(new Map()),
+      getSelectedServer: vi.fn().mockReturnValue(null),
+      setServer: vi.fn(),
+      clearCache: vi.fn(),
+      getIsFetching: vi.fn().mockReturnValue(false),
+      getWorldNameForPrice: vi.fn().mockReturnValue(null),
       subscribe: vi.fn().mockReturnValue(() => {}),
       getWorldId: vi.fn().mockReturnValue(null),
       setWorldId: vi.fn(),
@@ -114,14 +161,24 @@ vi.mock('@services/index', () => ({
 }));
 
 /**
- * Method names here MUST track `CharacterColorService` in @xivdyetools/core.
- * `loadColors()` switches on the colour category and calls one getter per
- * branch; a name that does not exist returns `undefined`, the grid renders
- * zero swatches, and every grid assertion passes vacuously. The previous
- * mock had `getLipColors` / `getFacePaintColors`, which the real service does
- * not expose — the sheets are split dark/light.
+ * Partial mock: the real module is spread in, and only
+ * `CharacterColorService` is replaced.
+ *
+ * A hand-written whole-module stub is the wrong shape here. Every name it
+ * forgets (`normalizeMatchingMethod`, `hasActiveFilters`, …) throws at the
+ * point of use, and `BaseComponent.safeRender()` swallows that into an error
+ * state — so the panel silently renders nothing and the tests see an empty
+ * DOM rather than a failure. Spreading the original means only the service
+ * under substitution can drift.
+ *
+ * The substituted method names MUST still track the real
+ * `CharacterColorService`: `loadColors()` switches on the colour category and
+ * calls one getter per branch, so a wrong name yields `undefined` and an
+ * empty grid. The previous stub had `getLipColors` / `getFacePaintColors`,
+ * which the real service does not expose — those sheets are split dark/light.
  */
-vi.mock('@xivdyetools/core', () => ({
+vi.mock('@xivdyetools/core', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   CharacterColorService: class MockCharacterColorService {
     private mockColors = Array.from({ length: 24 }, (_, i) => ({
       index: i,
@@ -166,8 +223,8 @@ vi.mock('@xivdyetools/core', () => ({
     async getRaceSpecificColors() {
       return this.mockColors;
     }
-    findClosestDyes() {
-      return [];
+    findClosestDyes(...args: unknown[]) {
+      return mockCharaFindClosestDyes(...args) ?? [];
     }
     getRaces() {
       return ['Hyur', 'Miqote', 'Lalafell'];
@@ -193,16 +250,10 @@ vi.mock('@shared/logger', () => ({
   },
 }));
 
-vi.mock('@shared/ui-icons', () => ({
-  ICON_PALETTE: '<svg></svg>',
-  ICON_MARKET: '<svg></svg>',
-  ICON_CHARACTER: '<svg></svg>',
-  ICON_CRYSTAL: '<svg></svg>',
-}));
-
-vi.mock('@shared/tool-icons', () => ({
-  ICON_TOOL_CHARACTER: '<svg></svg>',
-}));
+// `@shared/ui-icons` and `@shared/tool-icons` are NOT mocked on purpose.
+// They are compile-time string constants with no dependencies, and a
+// hand-written stub only has to miss one name (`ICON_TOOL_HARMONY` did) for
+// the render to throw into safeRender's catch and silently produce nothing.
 
 vi.mock('@services/pricing-mixin', () => ({
   setupMarketBoardListeners: vi.fn().mockReturnValue(() => {}),
@@ -245,9 +296,16 @@ vi.mock('../collapsible-panel', () => ({
   },
 }));
 
+/**
+ * Mirrors the real MarketBoard's getter/setter pair. `getShowPrices` was
+ * absent, and the tool reads it while building the left panel — same failure
+ * mode as the LanguageService gap above.
+ */
 vi.mock('../market-board', () => ({
   MarketBoard: class MockMarketBoard {
     container: HTMLElement;
+    private showPrices = false;
+    private selectedServer: string | null = null;
     constructor(container: HTMLElement) {
       this.container = container;
     }
@@ -260,7 +318,21 @@ vi.mock('../market-board', () => ({
     destroy() {
       this.container.innerHTML = '';
     }
-    setShowPrices() {}
+    getShowPrices() {
+      return this.showPrices;
+    }
+    setShowPrices(value: boolean) {
+      this.showPrices = value;
+    }
+    getSelectedServer() {
+      return this.selectedServer;
+    }
+    setSelectedServer(server: string | null) {
+      this.selectedServer = server;
+    }
+    async fetchPricesForDyes() {
+      return new Map();
+    }
   },
 }));
 
@@ -604,29 +676,104 @@ describe('SwatchTool', () => {
     });
   });
 
-  /**
-   * The swatch grid is NOT asserted here, deliberately.
-   *
-   * `renderRightPanel()` produces nothing under this harness — measured:
-   * `rightPanel.innerHTML.length === 0` after `init()` and a flushed
-   * microtask queue, while `leftPanel` receives only the mocked
-   * CollapsiblePanel wrapper. The grid, the result cards, the market panel
-   * and the `.chara` reader all live behind that render, which is a large
-   * part of why this file plateaus around 27% however many entry points it
-   * drives.
-   *
-   * Tests WERE written against the grid and then removed rather than left
-   * guarded by `if (cells.length === 0) return` — that guard is how the
-   * deleted `dye-comparison-coverage.spec.ts` managed to assert nothing and
-   * still pass. A test that cannot observe its subject should not exist.
-   *
-   * Grid behaviour (R·C cell addressing rather than hex, selection driving
-   * the forward match, re-render on sheet change) is covered honestly by
-   * Playwright, which runs the real CollapsiblePanel and layout. Closing this
-   * properly means unpicking the mock harness so the right panel renders —
-   * until then E2E is the vehicle, and `e2e/COVERAGE-GAPS.md` is the record.
-   */
-  describe('clearing', () => {
+  describe('the swatch grid', () => {
+    /** Every colour cell currently in the grid. */
+    const swatches = (): HTMLButtonElement[] =>
+      Array.from(rightPanel.querySelectorAll<HTMLButtonElement>('button[data-index]'));
+
+    it('renders one clickable cell per colour in the sheet', async () => {
+      tool = mount();
+      await flush();
+
+      // No `if (!cells.length) return` escape hatch. That guard is how the
+      // deleted dye-comparison-coverage.spec.ts asserted nothing and still
+      // passed; a mock whose getter name drifts must fail here, loudly.
+      expect(swatches()).toHaveLength(24);
+    });
+
+    it('addresses each cell by its grid position, not its hex', async () => {
+      tool = mount();
+      await flush();
+
+      // Confirmed grammar: a swatch is identified by its R·C cell address.
+      // Two cells can carry the same colour, so a hex is not an identifier.
+      const cells = swatches();
+      expect(cells[0].getAttribute('aria-label')).toMatch(/^R1·C1: #/);
+      expect(cells[8].getAttribute('aria-label')).toMatch(/^R2·C1: #/);
+      expect(cells[0].getAttribute('data-index')).toBe('0');
+      expect(cells[8].getAttribute('data-index')).toBe('8');
+    });
+
+    it('paints each cell with its own colour', async () => {
+      tool = mount();
+      await flush();
+
+      const cells = swatches();
+      expect(cells[0].getAttribute('style')).toContain('background-color: #000000');
+      expect(cells[1].getAttribute('style')).toContain('background-color: #0B0B0B');
+    });
+
+    it('records the clicked cell as the selection', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      await flush();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      swatches()[3].click();
+      await flush();
+
+      // Cell address, not hex — the index is what the R·C address derives from
+      expect(StorageService.setItem).toHaveBeenCalledWith('v3_character_color_index', 3);
+    });
+
+    it('outlines the selected cell and only that cell', async () => {
+      tool = mount();
+      await flush();
+
+      swatches()[5].click();
+      await flush();
+
+      const cells = swatches();
+      expect(cells[5].style.outline).toContain('var(--theme-primary)');
+      expect(cells[4].style.outline).toBe('none');
+      expect(cells[6].style.outline).toBe('none');
+    });
+
+    it('moves the outline when a different cell is picked', async () => {
+      tool = mount();
+      await flush();
+      swatches()[5].click();
+      await flush();
+
+      swatches()[9].click();
+      await flush();
+
+      const cells = swatches();
+      expect(cells[9].style.outline).toContain('var(--theme-primary)');
+      expect(cells[5].style.outline).toBe('none');
+    });
+
+    it('re-renders the grid when the colour sheet changes', async () => {
+      tool = mount();
+      await flush();
+      expect(swatches()).toHaveLength(24);
+
+      tool.setConfig({ colorSheet: 'tattooColors' });
+      await flush();
+
+      expect(swatches()).toHaveLength(24);
+    });
+
+    it('loads a race-specific sheet through its async getter', async () => {
+      tool = mount();
+      await flush();
+
+      tool.setConfig({ colorSheet: 'hairColors' });
+      await flush();
+
+      expect(swatches()).toHaveLength(24);
+    });
+
     it('clearDyes resets both the forward and the reverse side', async () => {
       tool = mount();
       await flush();

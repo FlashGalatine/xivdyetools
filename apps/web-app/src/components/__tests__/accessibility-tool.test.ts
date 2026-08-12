@@ -18,6 +18,12 @@ const { mockGetAllDyes, mockGetDyeById } = vi.hoisted(() => ({
   mockGetDyeById: vi.fn(),
 }));
 
+// Icon modules are NOT mocked. They are compile-time string constants with
+// no dependencies, and a hand-written stub only has to miss one export for
+// the render to throw into BaseComponent.safeRender()'s catch — which
+// swallows it into an error state, so the panel silently renders nothing
+// and every assertion downstream sees an empty DOM instead of a failure.
+
 vi.mock('@services/dye-service-wrapper', () => ({
   DyeService: {
     getInstance: vi.fn().mockReturnValue({
@@ -29,6 +35,14 @@ vi.mock('@services/dye-service-wrapper', () => ({
 }));
 
 vi.mock('@services/index', () => ({
+  /** Used by six of the tools; absent it throws as an unhandled rejection. */
+  ThemeService: {
+    getCurrentTheme: vi.fn().mockReturnValue('standard-dark'),
+    getAllThemes: vi.fn().mockReturnValue([]),
+    isDarkMode: vi.fn().mockReturnValue(true),
+    setTheme: vi.fn(),
+    subscribe: vi.fn().mockReturnValue(() => {}),
+  },
   DyeService: {
     getInstance: vi.fn().mockReturnValue({
       getAllDyes: mockGetAllDyes,
@@ -41,11 +55,18 @@ vi.mock('@services/index', () => ({
     getDyeById: mockGetDyeById,
     getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
   },
+  /** Complete against every LanguageService method the tools call. */
   LanguageService: {
     t: (key: string) => key,
     tInterpolate: (key: string, params: Record<string, string>) =>
       `${key}: ${Object.values(params).join('/')}`,
     getDyeName: (itemId: number) => `Dye-${itemId}`,
+    getRace: (key: string) => `race:${key}`,
+    getClan: (key: string) => `clan:${key}`,
+    getAcquisition: (key: string) => `acq:${key}`,
+    getCurrency: (key: string) => `cur:${key}`,
+    getVisionType: (key: string) => `vision:${key}`,
+    getCurrentLocale: () => 'en',
     subscribe: vi.fn().mockReturnValue(() => {}),
   },
   StorageService: {
@@ -53,26 +74,53 @@ vi.mock('@services/index', () => ({
     setItem: vi.fn(),
     removeItem: vi.fn(),
   },
+  /**
+   * Complete against every ColorService method the tool components call.
+   * A missing one throws inside renderContent, which BaseComponent's
+   * safeRender() swallows into an error state — so the panel renders nothing
+   * and the tests see an empty DOM instead of a failure.
+   */
   ColorService: {
-    hexToRgb: vi.fn((hex: string) => {
-      const r = parseInt(hex.slice(1, 3), 16) || 0;
-      const g = parseInt(hex.slice(3, 5), 16) || 0;
-      const b = parseInt(hex.slice(5, 7), 16) || 0;
-      return { r, g, b };
-    }),
-    rgbToHex: vi.fn((r: number, g: number, b: number) => {
-      return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase();
-    }),
+    hexToRgb: vi.fn((hex: string) => ({
+      r: parseInt(hex.slice(1, 3), 16) || 0,
+      g: parseInt(hex.slice(3, 5), 16) || 0,
+      b: parseInt(hex.slice(5, 7), 16) || 0,
+    })),
+    rgbToHex: vi.fn((r: number, g: number, b: number) =>
+      `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase()
+    ),
     rgbToHsv: vi.fn(() => ({ h: 0, s: 100, v: 100 })),
-    simulateColorblindness: vi.fn(() => ({ r: 128, g: 128, b: 128 })),
-    simulateColorblindnessHex: vi.fn((hex: string) => hex),
-    calculateContrastRatio: vi.fn(() => 4.5),
+    hexToHsv: vi.fn(() => ({ h: 0, s: 100, v: 100 })),
+    hsvToHex: vi.fn(() => '#FF0000'),
+    rgbToLab: vi.fn(() => ({ l: 50, a: 0, b: 0 })),
+    hexToLab: vi.fn(() => ({ l: 50, a: 0, b: 0 })),
+    labToHex: vi.fn(() => '#FF0000'),
+    hexToLch: vi.fn(() => ({ l: 50, c: 20, h: 30 })),
+    lchToHex: vi.fn(() => '#FF0000'),
+    hexToOklch: vi.fn(() => ({ l: 0.5, c: 0.1, h: 30 })),
+    oklchToHex: vi.fn(() => '#FF0000'),
+    getColorDistance: vi.fn(() => 15),
+    getDeltaE: vi.fn(() => 15),
+    getDistanceForMethod: vi.fn(() => 15),
+    calculateDistanceWithMethod: vi.fn(() => 15),
     calculateColorDistance: vi.fn(() => 15),
     getContrastRatio: vi.fn(() => 4.5),
-    getColorDistance: vi.fn(() => 50),
+    simulateColorblindnessHex: vi.fn((hex: string) => hex),
+    findClosestDyes: vi.fn(() => []),
   },
   MarketBoardService: {
     getInstance: vi.fn().mockReturnValue({
+      // Kept in step with the real MarketBoardService. A missing method
+      // throws inside renderContent, which safeRender() swallows into an
+      // error state — the panel then renders nothing, silently.
+      getPriceForDye: vi.fn().mockReturnValue(null),
+      getAllPrices: vi.fn().mockReturnValue(new Map()),
+      getPricesView: vi.fn().mockReturnValue(new Map()),
+      getSelectedServer: vi.fn().mockReturnValue(null),
+      setServer: vi.fn(),
+      clearCache: vi.fn(),
+      getIsFetching: vi.fn().mockReturnValue(false),
+      getWorldNameForPrice: vi.fn().mockReturnValue(null),
       subscribe: vi.fn().mockReturnValue(() => {}),
       getWorldId: vi.fn().mockReturnValue(null),
       setWorldId: vi.fn(),
@@ -114,19 +162,6 @@ vi.mock('@shared/logger', () => ({
     error: vi.fn(),
     debug: vi.fn(),
   },
-}));
-
-vi.mock('@shared/ui-icons', () => ({
-  ICON_PALETTE: '<svg></svg>',
-  ICON_MARKET: '<svg></svg>',
-  ICON_EYE: '<svg></svg>',
-  ICON_CRYSTAL: '<svg></svg>',
-  ICON_CHECK: '<svg></svg>',
-  ICON_CLOSE: '<svg></svg>',
-}));
-
-vi.mock('@shared/tool-icons', () => ({
-  ICON_TOOL_ACCESSIBILITY: '<svg></svg>',
 }));
 
 vi.mock('@services/pricing-mixin', () => ({
