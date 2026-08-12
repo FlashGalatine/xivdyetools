@@ -198,6 +198,13 @@ vi.mock('@services/pricing-mixin', () => ({
 }));
 
 vi.mock('../collapsible-panel', () => ({
+  /**
+   * Mirrors the real CollapsiblePanel's public API. `setContent` as a no-op
+   * silently swallowed every control the tools place in a panel, and a
+   * missing `getContentContainer` throws into BaseComponent.safeRender()'s
+   * catch — which converts it to an error state, so the panel renders
+   * nothing and the tests see an empty DOM instead of a failure.
+   */
   CollapsiblePanel: class MockCollapsiblePanel {
     container: HTMLElement;
     options: Record<string, unknown>;
@@ -213,17 +220,21 @@ vi.mock('../collapsible-panel', () => ({
       this.container.appendChild(div);
       this.body = div;
     }
-    destroy() {
-      this.container.innerHTML = '';
-      this.body = null;
+    getContentContainer(): HTMLElement {
+      if (!this.body) this.init();
+      return this.body!;
     }
-    // Attaches what it is given, the way the real panel does. As a no-op it
-    // silently swallowed every control the tool placed inside a panel.
     setContent(content: HTMLElement | string) {
       if (!this.body) this.init();
       if (typeof content === 'string') this.body!.innerHTML = content;
       else if (content) this.body!.appendChild(content);
     }
+    destroy() {
+      this.container.innerHTML = '';
+      this.body = null;
+    }
+    open() {}
+    close() {}
     expand() {}
     collapse() {}
     toggle() {}

@@ -35,6 +35,22 @@ vi.mock('@services/dye-service-wrapper', () => ({
 }));
 
 vi.mock('@services/index', () => ({
+  /**
+   * The shared display-options merge helper (WEB-REF-003). Absent, setConfig
+   * throws the moment a sidebar sends display options.
+   */
+  applyDisplayOptions: vi.fn(
+    ({
+      current,
+      incoming,
+    }: {
+      current: Record<string, unknown>;
+      incoming: Record<string, unknown>;
+    }) => ({
+      options: { ...current, ...incoming },
+      hasChanges: Object.keys(incoming ?? {}).length > 0,
+    })
+  ),
   /** Used by six of the tools; absent it throws as an unhandled rejection. */
   ThemeService: {
     getCurrentTheme: vi.fn().mockReturnValue('standard-dark'),
@@ -169,6 +185,13 @@ vi.mock('@services/pricing-mixin', () => ({
 }));
 
 vi.mock('../collapsible-panel', () => ({
+  /**
+   * Mirrors the real CollapsiblePanel's public API. `setContent` as a no-op
+   * silently swallowed every control the tools place in a panel, and a
+   * missing `getContentContainer` throws into BaseComponent.safeRender()'s
+   * catch — which converts it to an error state, so the panel renders
+   * nothing and the tests see an empty DOM instead of a failure.
+   */
   CollapsiblePanel: class MockCollapsiblePanel {
     container: HTMLElement;
     options: Record<string, unknown>;
@@ -184,17 +207,21 @@ vi.mock('../collapsible-panel', () => ({
       this.container.appendChild(div);
       this.body = div;
     }
-    destroy() {
-      this.container.innerHTML = '';
-      this.body = null;
+    getContentContainer(): HTMLElement {
+      if (!this.body) this.init();
+      return this.body!;
     }
-    // Attaches what it is given, the way the real panel does. As a no-op it
-    // silently swallowed every control the tool placed inside a panel.
     setContent(content: HTMLElement | string) {
       if (!this.body) this.init();
       if (typeof content === 'string') this.body!.innerHTML = content;
       else if (content) this.body!.appendChild(content);
     }
+    destroy() {
+      this.container.innerHTML = '';
+      this.body = null;
+    }
+    open() {}
+    close() {}
     expand() {}
     collapse() {}
     toggle() {}
@@ -434,6 +461,305 @@ describe('AccessibilityTool', () => {
 
       // Second destroy should not throw
       expect(() => tool!.destroy()).not.toThrow();
+    });
+  });
+
+  // ==========================================================================
+  // Interaction depth
+  //
+  // Everything above asserts the tool renders, or that a method exists. These
+  // drive the five real entry points — the palette drawer's selectDye /
+  // addDye / selectCustomColor / clearDyes, and the sidebar's setConfig —
+  // and assert what each one does to the tool's state.
+  // ==========================================================================
+
+  const mount = (opts: { drawer?: boolean } = {}): AccessibilityTool => {
+    const t = new AccessibilityTool(
+      container,
+      opts.drawer === false ? { leftPanel, rightPanel } : { leftPanel, rightPanel, drawerContent }
+    );
+    t.init();
+    return t;
+  };
+
+  const flush = async () => {
+    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 0));
+  };
+
+  const SELECTED_KEY = 'v3_accessibility_selected_dyes';
+  const VISION_KEY = 'v3_accessibility_vision_types';
+
+  /** The ids most recently persisted under the selected-dyes key. */
+  const persistedDyeIds = async (): Promise<number[] | undefined> => {
+    const { StorageService } = await import('@services/index');
+    const calls = vi.mocked(StorageService.setItem).mock.calls.filter((c) => c[0] === SELECTED_KEY);
+    return calls.at(-1)?.[1] as number[] | undefined;
+  };
+
+  const dye = (id: number, name = `Dye ${id}`) =>
+    ({ ...mockDyes[0], id, itemID: 5000 + id, name, hex: '#AABBCC' }) as never;
+
+  describe('selectDye', () => {
+    it('records the dye and persists its id', async () => {
+      tool = mount();
+
+      tool.selectDye(dye(1));
+
+      expect(await persistedDyeIds()).toEqual([1]);
+    });
+
+    it('accumulates dyes in selection order', async () => {
+      tool = mount();
+
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      tool.selectDye(dye(3));
+
+      expect(await persistedDyeIds()).toEqual([1, 2, 3]);
+    });
+
+    it('ignores a dye that is already selected', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+
+      tool.selectDye(dye(1));
+
+      // De-duplicated by id, not by hex — two dyes can share a colour
+      expect(await persistedDyeIds()).toEqual([1, 2]);
+    });
+
+    it('caps at four dyes by dropping the oldest', async () => {
+      tool = mount();
+      for (const id of [1, 2, 3, 4]) tool.selectDye(dye(id));
+
+      tool.selectDye(dye(5));
+
+      // FIFO, so the newest pick always lands rather than being refused
+      expect(await persistedDyeIds()).toEqual([2, 3, 4, 5]);
+    });
+
+    it('keeps dropping the oldest past the cap', async () => {
+      tool = mount();
+      for (const id of [1, 2, 3, 4, 5, 6]) tool.selectDye(dye(id));
+
+      expect(await persistedDyeIds()).toEqual([3, 4, 5, 6]);
+    });
+
+    it.each([
+      ['undefined', undefined],
+      ['null', null],
+    ])('ignores %s rather than crashing the drawer', (_label, value) => {
+      tool = mount();
+
+      expect(() => tool!.selectDye(value as never)).not.toThrow();
+    });
+  });
+
+  describe('addDye', () => {
+    it('behaves as selectDye does', async () => {
+      tool = mount();
+
+      tool.addDye(dye(1));
+      tool.addDye(dye(1));
+      tool.addDye(dye(2));
+
+      expect(await persistedDyeIds()).toEqual([1, 2]);
+    });
+  });
+
+  describe('selectCustomColor', () => {
+    it('adds a virtual dye carrying the uppercased hex', async () => {
+      tool = mount();
+
+      tool.selectCustomColor('#aabbcc');
+
+      const ids = await persistedDyeIds();
+      expect(ids).toHaveLength(1);
+      // Virtual dyes take a negative id so they cannot collide with real ones
+      expect(ids![0]).toBeLessThan(0);
+    });
+
+    it('ignores an empty colour', async () => {
+      tool = mount();
+
+      tool.selectCustomColor('');
+
+      expect(await persistedDyeIds()).toBeUndefined();
+    });
+
+    it('counts toward the same four-dye cap', async () => {
+      tool = mount();
+      for (const id of [1, 2, 3, 4]) tool.selectDye(dye(id));
+
+      tool.selectCustomColor('#123456');
+
+      const ids = await persistedDyeIds();
+      expect(ids).toHaveLength(4);
+      expect(ids![0]).toBe(2); // the oldest real dye was dropped
+    });
+  });
+
+  describe('clearDyes', () => {
+    it('empties the selection and removes it from storage', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      tool.selectDye(dye(1));
+      vi.mocked(StorageService.removeItem).mockClear();
+
+      tool.clearDyes();
+
+      expect(StorageService.removeItem).toHaveBeenCalledWith(SELECTED_KEY);
+    });
+
+    it('leaves the tool usable afterwards', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.clearDyes();
+
+      tool.selectDye(dye(9));
+
+      expect(await persistedDyeIds()).toEqual([9]);
+    });
+
+    it('is safe to call with nothing selected, twice', () => {
+      tool = mount();
+
+      expect(() => {
+        tool!.clearDyes();
+        tool!.clearDyes();
+      }).not.toThrow();
+    });
+  });
+
+  describe('setConfig — the vision lenses', () => {
+    /** The vision set most recently persisted. */
+    const persistedVisions = async (): Promise<string[] | undefined> => {
+      const { StorageService } = await import('@services/index');
+      const calls = vi.mocked(StorageService.setItem).mock.calls.filter((c) => c[0] === VISION_KEY);
+      return calls.at(-1)?.[1] as string[] | undefined;
+    };
+
+    // Every lens ships enabled, so "turn it on" is only observable after
+    // turning it off — otherwise the change-detection guard skips the write.
+    it.each([
+      ['deuteranopia', 'deuteranopia'],
+      ['protanopia', 'protanopia'],
+      ['tritanopia', 'tritanopia'],
+      ['achromatopsia', 'achromatopsia'],
+      ['normalVision', 'normal'],
+    ])('re-enabling %s restores %s to the persisted set', async (configKey, visionId) => {
+      tool = mount();
+      tool.setConfig({ [configKey]: false } as never);
+      await flush();
+      expect(await persistedVisions()).not.toContain(visionId);
+
+      tool.setConfig({ [configKey]: true } as never);
+      await flush();
+
+      expect(await persistedVisions()).toContain(visionId);
+    });
+
+    it('ships with every lens enabled', async () => {
+      tool = mount();
+
+      // Turning one off is what first writes the set, and it should still
+      // contain the other four
+      tool.setConfig({ deuteranopia: false } as never);
+      await flush();
+
+      expect(await persistedVisions()).toEqual(
+        expect.arrayContaining(['normal', 'protanopia', 'tritanopia', 'achromatopsia'])
+      );
+    });
+
+    it.each([
+      ['deuteranopia', 'deuteranopia'],
+      ['protanopia', 'protanopia'],
+      ['tritanopia', 'tritanopia'],
+      ['achromatopsia', 'achromatopsia'],
+    ])('disabling %s removes %s from the persisted set', async (configKey, visionId) => {
+      tool = mount();
+      tool.setConfig({ [configKey]: true } as never);
+      await flush();
+
+      tool.setConfig({ [configKey]: false } as never);
+      await flush();
+
+      expect(await persistedVisions()).not.toContain(visionId);
+    });
+
+    it('ignores a toggle already in that state', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      tool.setConfig({ deuteranopia: true } as never);
+      await flush();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      // The guard is `configValue !== isEnabled`
+      tool.setConfig({ deuteranopia: true } as never);
+      await flush();
+
+      expect(StorageService.setItem).not.toHaveBeenCalledWith(VISION_KEY, expect.anything());
+    });
+
+    it('applies several lenses in one call', async () => {
+      tool = mount();
+
+      tool.setConfig({ deuteranopia: false, tritanopia: false } as never);
+      await flush();
+
+      const visions = await persistedVisions();
+      expect(visions).not.toContain('deuteranopia');
+      expect(visions).not.toContain('tritanopia');
+      // …and leaves the untouched ones alone
+      expect(visions).toContain('protanopia');
+    });
+
+    it('accepts an empty config without writing anything', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      tool.setConfig({});
+      await flush();
+
+      expect(StorageService.setItem).not.toHaveBeenCalledWith(VISION_KEY, expect.anything());
+    });
+
+    it('merges displayOptions rather than replacing them', () => {
+      tool = mount();
+
+      tool.setConfig({ displayOptions: { showHex: true } as never });
+      expect(() => tool!.setConfig({ displayOptions: { showRgb: true } as never })).not.toThrow();
+    });
+  });
+
+  describe('lifecycle under interaction', () => {
+    it('tears down cleanly after selection and configuration', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.setConfig({ deuteranopia: true } as never);
+      await flush();
+
+      expect(() => tool!.destroy()).not.toThrow();
+    });
+
+    it('ignores configuration arriving after destroy', () => {
+      tool = mount();
+      tool.destroy();
+
+      // The sidebar can emit one last config-change during teardown
+      expect(() => tool!.setConfig({ deuteranopia: true } as never)).not.toThrow();
+    });
+
+    it('works with no drawer panel supplied', async () => {
+      tool = mount({ drawer: false });
+
+      tool.selectDye(dye(1));
+
+      expect(await persistedDyeIds()).toEqual([1]);
     });
   });
 });

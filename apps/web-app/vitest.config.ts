@@ -55,10 +55,10 @@ export default defineConfig({
       // statements against ~3k lines of shallow tests. Raise these numbers as
       // those tests deepen; do not lower them.
       thresholds: {
-        statements: 59,
-        branches: 45,
-        functions: 56,
-        lines: 59,
+        statements: 61,
+        branches: 46,
+        functions: 58,
+        lines: 62,
       },
     },
     // scripts/ holds the CI gates (check-bundle-size, check-beta-build,
