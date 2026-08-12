@@ -1,20 +1,53 @@
-# BUG-008 (2026-07-18 audit): the default (top-level) env is a separate dev
-# worker with its own name and NO routes, so a plain `wrangler deploy` can
-# never overwrite the production worker or its xivdyetools.app zone routes.
-# Production config lives exclusively under [env.production] and is deployed
-# via `wrangler deploy --env production`.
+# BUG-008 (2026-07-18 audit): the default (top-level) env is a separate worker
+# with its own name, so a plain `wrangler deploy` can never overwrite the
+# production worker. Production config lives exclusively under
+# [env.production] and is deployed via `wrangler deploy --env production`.
+#
+# ⚠️ The top-level env is the BETA worker — it now carries live
+# beta.xivdyetools.app routes, where it used to carry none. A bare
+# `wrangler deploy` therefore publishes to a real, public hostname. It still
+# cannot touch production or the xivdyetools.app zone routes, because
+# [env.production] declares its own `routes`. Mirrors discord-worker, whose
+# top-level env is likewise its beta bot.
 name = "xivdyetools-og-worker-dev"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 # ARCH-001: nodejs_compat removed — no Node.js APIs used
 
+# `routes` and `workers_dev` are INHERITABLE keys: a named environment takes the
+# top-level value unless it declares its own. Both are set explicitly in BOTH
+# environments so beta's routes can never leak into production, and so
+# production cannot silently inherit a workers.dev subdomain from up here.
+workers_dev = true
+routes = [
+  { pattern = "beta.xivdyetools.app/harmony/*", zone_name = "xivdyetools.app" },
+  { pattern = "beta.xivdyetools.app/gradient/*", zone_name = "xivdyetools.app" },
+  { pattern = "beta.xivdyetools.app/mixer/*", zone_name = "xivdyetools.app" },
+  { pattern = "beta.xivdyetools.app/swatch/*", zone_name = "xivdyetools.app" },
+  { pattern = "beta.xivdyetools.app/comparison/*", zone_name = "xivdyetools.app" },
+  { pattern = "beta.xivdyetools.app/accessibility/*", zone_name = "xivdyetools.app" },
+  { pattern = "beta.xivdyetools.app/extractor/*", zone_name = "xivdyetools.app" },
+  { pattern = "beta.xivdyetools.app/presets/*", zone_name = "xivdyetools.app" },
+  { pattern = "beta.xivdyetools.app/budget/*", zone_name = "xivdyetools.app" },
+  # Beta renders its own cards, so card-design changes are previewable before
+  # they reach production. Wrangler provisions the DNS record on first deploy.
+  { pattern = "og-beta.xivdyetools.app", custom_domain = true }
+]
+
+# Beta traffic gets its own dataset so it cannot skew production metrics
+# (same split discord-worker uses for xivdyetools_bot_analytics_beta).
 [[analytics_engine_datasets]]
 binding = "ANALYTICS"
-dataset = "xivdyetools_og_analytics"
+dataset = "xivdyetools_og_analytics_beta"
 
+# ⚠️ OG_IMAGE_BASE_URL's hostname must NEVER equal APP_BASE_URL's. `isOgImageHost`
+# in src/index.ts identifies "this request is for our own image host" by that
+# comparison, and answers it by redirecting humans to APP_BASE_URL instead of
+# passing them through to the SPA. Point both at beta.xivdyetools.app and every
+# beta tool page bounces real visitors away. Guarded by wrangler-env.test.ts.
 [vars]
-APP_BASE_URL = "https://xivdyetools.app"
-OG_IMAGE_BASE_URL = "https://og.xivdyetools.app/og"
+APP_BASE_URL = "https://beta.xivdyetools.app"
+OG_IMAGE_BASE_URL = "https://og-beta.xivdyetools.app/og"
 
 [[rules]]
 type = "Data"
@@ -23,6 +56,7 @@ fallthrough = true
 
 [env.production]
 name = "xivdyetools-og-worker"
+workers_dev = false
 routes = [
   { pattern = "xivdyetools.app/harmony/*", zone_name = "xivdyetools.app" },
   { pattern = "xivdyetools.app/gradient/*", zone_name = "xivdyetools.app" },

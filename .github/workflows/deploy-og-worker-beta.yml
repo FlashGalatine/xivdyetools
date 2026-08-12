@@ -1,0 +1,143 @@
+# Deploys the BETA OG worker (xivdyetools-og-worker-dev) on any push to a
+# non-main branch that touches og-worker or one of its packages.
+#
+# Safe because of docs/operations/DEPLOY_ENVIRONMENTS.md: a bare `wrangler deploy`
+# targets the top-level env, which is the beta worker — its own Worker name, its
+# own analytics dataset, and routes confined to beta.xivdyetools.app plus its own
+# og-beta.xivdyetools.app image host. Production is reachable only via
+# `--env production`, which this workflow never passes.
+#
+# Note this differs from the beta Discord bot in one respect: the beta OG worker
+# IS publicly routed, on real hostnames. It cannot reach production, but it is
+# not a private sandbox either.
+#
+# There is ONE beta worker. Concurrent branches share it, so the most recent push
+# wins; `cancel-in-progress: true` makes that explicit rather than a race.
+name: Deploy Beta OG Worker
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+      # Dependency bumps should not seize beta from whoever is testing on it.
+      - 'dependabot/**'
+    paths:
+      - 'apps/og-worker/**'
+      - 'packages/core/**'
+      - 'packages/types/**'
+      - 'packages/logger/**'
+      - 'packages/svg/**'
+      - 'packages/worker-kit/**'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-og-worker-beta
+  # Unlike production, a superseded beta deploy is worth cancelling: the newer
+  # commit is the one being tested.
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy Beta OG Worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v5
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build dependencies
+        run: pnpm turbo run build --filter=xivdyetools-og-worker...
+
+      - name: Type-check
+        run: pnpm turbo run type-check --filter=xivdyetools-og-worker
+
+      - name: Test
+        run: pnpm turbo run test --filter=xivdyetools-og-worker
+
+      # Bare `deploy` = the top-level env = the beta worker. Never add --env here.
+      - name: Deploy beta worker
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/og-worker
+          command: deploy
+          packageManager: pnpm
+
+      # Retries are generous because the FIRST deploy provisions the
+      # og-beta.xivdyetools.app custom domain — DNS and the edge certificate can
+      # take a couple of minutes to become resolvable. Later runs answer at once.
+      - name: Smoke test (health check)
+        run: |
+          sleep 5
+          curl --fail --retry 6 --retry-delay 20 --retry-all-errors \
+            -H "User-Agent: xivdyetools-ci" \
+            https://og-beta.xivdyetools.app/health
+
+      # The regression this exists for: og-worker once emitted og:image URLs
+      # missing the /og/ prefix its image routes register under, so every card
+      # 404'd. A health check stayed green throughout — nothing verified that
+      # the URL in the metadata was one the worker would actually serve. This
+      # follows the emitted URL end to end, which is the only way to catch it.
+      - name: Smoke test (emitted card URL resolves)
+        run: |
+          set -euo pipefail
+          # dye=1 is a stainID (Snow White), NOT an item ID. The generator
+          # degrades an unrecognised dye to the default card rather than
+          # failing, so an item-ID-era value here would still emit a valid URL
+          # and quietly test nothing. The default-card assertion below is what
+          # holds that honest.
+          PAGE="https://beta.xivdyetools.app/harmony/?dye=1&harmony=tetradic"
+          HTML=$(curl -sS --fail --retry 3 --retry-delay 10 --retry-all-errors \
+            -A "Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)" \
+            "$PAGE")
+
+          CARD=$(printf '%s' "$HTML" \
+            | grep -o 'property="og:image" content="[^"]*"' \
+            | sed 's/.*content="//; s/"$//')
+
+          if [ -z "$CARD" ]; then
+            echo "::error::No og:image tag emitted for $PAGE"
+            printf '%s\n' "$HTML" | head -40
+            exit 1
+          fi
+          echo "Emitted og:image → $CARD"
+
+          case "$CARD" in
+            https://og-beta.xivdyetools.app/og/*) ;;
+            *)
+              echo "::error::Beta emitted a card URL outside its own image host: $CARD"
+              exit 1
+              ;;
+          esac
+
+          # A fully-specified share link must render a DATA card. Falling back
+          # to default.png here means the dye lookup silently failed — the
+          # shape a stainID/itemID regression takes, and invisible to any check
+          # that only asks whether some PNG came back.
+          case "$CARD" in
+            *default.png*)
+              echo "::error::Data-bearing share URL degraded to the default card: $CARD"
+              exit 1
+              ;;
+          esac
+
+          TYPE=$(curl -sS --fail --retry 3 --retry-delay 10 --retry-all-errors \
+            -o /dev/null -w '%{content_type}' "$CARD")
+          echo "Card content-type → $TYPE"
+
+          case "$TYPE" in
+            image/png*) ;;
+            *)
+              echo "::error::Emitted card did not resolve to a PNG (got '$TYPE')"
+              exit 1
+              ;;
+          esac

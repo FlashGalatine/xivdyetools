@@ -20,6 +20,31 @@ Beta bot bindings: isolated KV `7d76d17fbb16403c8bf40e16f5b58ba6`, isolated Anal
 dataset `xivdyetools_bot_analytics_beta`, shared D1 and shared `PRESETS_API` / `UNIVERSALIS_PROXY`
 / `IMAGE_WORKER` service bindings. `DISCORD_CLIENT_ID` is the beta app, `1536085517270261771`.
 
+### Update 2026-08-12 — `og-worker` joins the beta pattern
+
+`og-worker`'s top-level env is now **the beta OG worker** and carries live routes, where the
+table above and the Evidence table below both record it as having none. Bare
+`pnpm --filter xivdyetools-og-worker deploy` therefore publishes to real, public hostnames:
+
+| Env | Worker | Routes | `APP_BASE_URL` | Cards |
+|---|---|---|---|---|
+| top-level | `xivdyetools-og-worker-dev` | `beta.xivdyetools.app/<tool>/*` ×9 + `og-beta.xivdyetools.app` | `https://beta.xivdyetools.app` | `xivdyetools_og_analytics_beta` |
+| `production` | `xivdyetools-og-worker` | `xivdyetools.app/<tool>/*` ×9 + `og.xivdyetools.app` | `https://xivdyetools.app` | `xivdyetools_og_analytics` |
+
+It still cannot reach production, and that safety does not depend on resolving the
+inheritance question below: `[env.production]` declares its own `routes` and `workers_dev`
+**explicitly**, so production gets exactly its own list whether or not the key inherits.
+`apps/og-worker/tests/wrangler-env.test.ts` fails if that explicit declaration is ever removed,
+or if a production route acquires a `beta.` hostname.
+
+**A third trap, specific to this worker:** `OG_IMAGE_BASE_URL`'s hostname must never equal
+`APP_BASE_URL`'s. `isOgImageHost()` in `src/index.ts` uses that comparison to detect "this
+request is for our own image host", and answers it by redirecting humans to `APP_BASE_URL`
+instead of passing them through to the SPA. Serving beta's cards from
+`beta.xivdyetools.app/og` — the obvious way to avoid a new hostname — would have bounced every
+real visitor off every beta tool page. Hence the separate `og-beta.xivdyetools.app` custom
+domain. Also guarded by that test file.
+
 **Two traps found while implementing, recorded so they are not re-discovered:**
 
 1. **`routes` and `workers_dev` are INHERITABLE wrangler keys** — a named environment takes the

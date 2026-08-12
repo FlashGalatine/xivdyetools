@@ -15,7 +15,7 @@ All nine tools are supported: harmony, gradient, mixer, swatch, comparison, acce
 
 ```bash
 pnpm dev                    # wrangler dev
-pnpm deploy                 # Deploy to the DEV worker (xivdyetools-og-worker-dev, no routes)
+pnpm deploy                 # Deploy the BETA worker — live on beta.xivdyetools.app (see below)
 pnpm deploy:production      # Deploy to env.production
 pnpm test                   # vitest run
 pnpm test:watch             # vitest in watch mode
@@ -139,9 +139,33 @@ All image responses set `Cache-Control: public, max-age=86400, s-maxage=604800` 
 | `ANALYTICS` | Analytics Engine Dataset (`xivdyetools_og_analytics`) | `writeDataPoint` for `og_request` / `og_image_request` events. Failures swallowed. |
 | `OG_CACHE` | KV (optional, declared in `types.ts` only) | Reserved for future caching — **not currently bound** in `wrangler.toml`. |
 | `APP_BASE_URL` | Var | `https://xivdyetools.app` — used for redirects and canonical URLs |
-| `OG_IMAGE_BASE_URL` | Var | `https://og.xivdyetools.app` — base for `og:image` URLs |
+| `OG_IMAGE_BASE_URL` | Var | `https://og.xivdyetools.app/og` — base for `og:image` URLs (the `/og` suffix is load-bearing; without it every emitted card URL 404s) |
 
-Routes (production): `xivdyetools.app/{harmony,gradient,mixer,swatch,comparison,accessibility,extractor,presets,budget}/*`, plus `og.xivdyetools.app` as a custom domain (the image host every `og:image` URL points at). Compatibility date `2024-12-01`. **No `nodejs_compat`** (per ARCH-001). The `[[rules]]` block declares `**/*.ttf` as Data imports so wrangler bundles fonts as `ArrayBuffer`s.
+### Two routed environments
+
+⚠️ **A bare `pnpm deploy` publishes to real, public hostnames.** The top-level env is the *beta*
+worker, not a routeless sandbox — see `docs/operations/DEPLOY_ENVIRONMENTS.md`.
+
+| Env | Worker | Routes | `APP_BASE_URL` | `OG_IMAGE_BASE_URL` |
+|---|---|---|---|---|
+| top-level (`pnpm deploy`) | `xivdyetools-og-worker-dev` | `beta.xivdyetools.app/<tool>/*` ×9 + `og-beta.xivdyetools.app` | `https://beta.xivdyetools.app` | `https://og-beta.xivdyetools.app/og` |
+| `production` (`pnpm deploy:production`) | `xivdyetools-og-worker` | `xivdyetools.app/<tool>/*` ×9 + `og.xivdyetools.app` | `https://xivdyetools.app` | `https://og.xivdyetools.app/og` |
+
+Beta gets its own Analytics Engine dataset (`xivdyetools_og_analytics_beta`) so its traffic
+cannot skew production metrics. Both envs declare `routes` and `workers_dev` **explicitly**,
+which is what keeps beta's routes out of production regardless of wrangler's inheritance rules.
+
+**`OG_IMAGE_BASE_URL`'s hostname must never equal `APP_BASE_URL`'s.** `isOgImageHost()` uses that
+comparison to recognise its own image host and responds by redirecting humans to `APP_BASE_URL`
+rather than passing them through to the SPA — so collapsing the two would bounce every real
+visitor off every tool page. This is why beta has a separate `og-beta.` domain instead of
+serving cards from `beta.xivdyetools.app/og`. `tests/wrangler-env.test.ts` guards both invariants.
+
+Compatibility date `2024-12-01`. **No `nodejs_compat`** (per ARCH-001). The `[[rules]]` block declares `**/*.ttf` as Data imports so wrangler bundles fonts as `ArrayBuffer`s.
+
+The site root `/` is deliberately **not** routed in either env — `xivdyetools.app/` and
+`beta.xivdyetools.app/` serve web-app's static card from `/assets/og/default.png`
+(`default-x.png` for X). The worker has a `GET /` handler, but only `og.`/`og-beta.` reach it.
 
 ### Required Secrets / Optional Secrets
 
@@ -211,5 +235,13 @@ Image route parameters are bounded to prevent resource exhaustion: `OG_MAX_GRADI
 2. If a new tool was added: register the route in `wrangler.toml` AND in the `SUPPORTED_TOOLS` array in `index.ts` AND add a `services/svg/<tool>.ts` generator.
 3. If fonts changed: re-run `scripts/subset-cjk-fonts.py` if dye/locale strings changed (CJK subsets must cover every rendered glyph or resvg falls back to tofu).
 4. Bump `version` in `package.json` if behavior changed.
-5. `pnpm deploy` to staging; spot-check a Discord embed via `https://og.xivdyetools.app/og/harmony/5771/tetradic.png`.
+5. `pnpm deploy` publishes **beta** (live on `beta.xivdyetools.app`). Spot-check a card at
+   `https://og-beta.xivdyetools.app/og/harmony/1/tetradic.png`.
+   **Use a stainID, not an item ID.** `1` is Snow White. An unrecognised dye does not error —
+   it degrades to the default card, so an item-ID-era value like `5771` renders a perfectly
+   valid-looking card that tests nothing. Check the URL you got back names the dye.
 6. `pnpm deploy:production`. Validate a real shared link in Discord — the embed should render the new SVG within ~5s of cache expiry.
+7. Both deploys run in CI on push (`deploy-og-worker-beta.yml` off non-main branches,
+   `deploy-og-worker.yml` off main). Beta's workflow follows the emitted `og:image` URL end to
+   end and fails if it 404s or degrades to a default card — the check that was missing when
+   v1's missing `/og/` prefix meant no card had ever been fetched.
