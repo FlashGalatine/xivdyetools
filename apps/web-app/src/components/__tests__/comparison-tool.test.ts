@@ -117,6 +117,15 @@ vi.mock('@services/index', () => ({
    * and the tests see an empty DOM instead of a failure.
    */
   ColorService: {
+    // Blend entry points. The mixer routes through
+    // @services/mixer-blending-engine, which calls these — so a gap here
+    // throws only once TWO dyes are selected, not on render.
+    mixColorsRgb: vi.fn(() => '#808080'),
+    mixColorsLab: vi.fn(() => '#808080'),
+    mixColorsOklab: vi.fn(() => '#808080'),
+    mixColorsHsl: vi.fn(() => '#808080'),
+    mixColorsRyb: vi.fn(() => '#808080'),
+    mixColorsSpectral: vi.fn(() => '#808080'),
     hexToRgb: vi.fn((hex: string) => ({
       r: parseInt(hex.slice(1, 3), 16) || 0,
       g: parseInt(hex.slice(3, 5), 16) || 0,

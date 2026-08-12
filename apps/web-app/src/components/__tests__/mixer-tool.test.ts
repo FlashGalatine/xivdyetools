@@ -26,6 +26,14 @@ const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes } = vi.hoisted(() =>
 // and every assertion downstream sees an empty DOM instead of a failure.
 
 vi.mock('@services/dye-service-wrapper', () => ({
+  // The real mixer-blending-engine (pulled in via importActual below)
+  // resolves dyes through this singleton, so the wrapper mock must expose it.
+  dyeService: {
+    getAllDyes: mockGetAllDyes,
+    getDyeById: mockGetDyeById,
+    findClosestDyes: mockFindClosestDyes,
+    getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
+  },
   DyeService: {
     getInstance: vi.fn().mockReturnValue({
       getAllDyes: mockGetAllDyes,
@@ -36,7 +44,16 @@ vi.mock('@services/dye-service-wrapper', () => ({
   },
 }));
 
-vi.mock('@services/index', () => ({
+vi.mock('@services/index', async () => ({
+  /**
+   * The blending engine's exports (blendColors, findMatchingDyes,
+   * getContrastColor) are pure functions re-exported through the services
+   * barrel, and they have their own test file. Use the REAL ones — a stub
+   * here would silently change what the mixer computes while the tests still
+   * passed. They call ColorService.mixColors* in turn, which is why those
+   * stubs above are still needed.
+   */
+  ...(await vi.importActual<Record<string, unknown>>('@services/mixer-blending-engine')),
   ToastService: {
     show: vi.fn(),
     error: vi.fn(),
@@ -121,6 +138,15 @@ vi.mock('@services/index', () => ({
    * and the tests see an empty DOM instead of a failure.
    */
   ColorService: {
+    // Blend entry points. The mixer routes through
+    // @services/mixer-blending-engine, which calls these — so a gap here
+    // throws only once TWO dyes are selected, not on render.
+    mixColorsRgb: vi.fn(() => '#808080'),
+    mixColorsLab: vi.fn(() => '#808080'),
+    mixColorsOklab: vi.fn(() => '#808080'),
+    mixColorsHsl: vi.fn(() => '#808080'),
+    mixColorsRyb: vi.fn(() => '#808080'),
+    mixColorsSpectral: vi.fn(() => '#808080'),
     hexToRgb: vi.fn((hex: string) => ({
       r: parseInt(hex.slice(1, 3), 16) || 0,
       g: parseInt(hex.slice(3, 5), 16) || 0,
@@ -540,6 +566,308 @@ describe('MixerTool', () => {
 
       // Second destroy should not throw
       expect(() => tool!.destroy()).not.toThrow();
+    });
+  });
+
+  // ==========================================================================
+  // Interaction depth
+  //
+  // Mixer's slot model looks like gradient's but behaves differently in the
+  // one place that matters: it ALLOWS a dye to occupy both input slots (mixing
+  // a colour with itself is a legitimate no-op blend) and only refuses a
+  // third. Gradient refuses the second. Both are driven by the same palette
+  // drawer calling the same method name, so the difference is worth pinning.
+  // ==========================================================================
+
+  const mount = (opts: { drawer?: boolean } = {}): MixerTool => {
+    const t = new MixerTool(
+      container,
+      opts.drawer === false ? { leftPanel, rightPanel } : { leftPanel, rightPanel, drawerContent }
+    );
+    t.init();
+    return t;
+  };
+
+  const flush = async () => {
+    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 0));
+  };
+
+  const DYES_KEY = 'v4_mixer_selected_dyes';
+
+  const lastWrite = async (key: string): Promise<unknown> => {
+    const { StorageService } = await import('@services/index');
+    const calls = vi.mocked(StorageService.setItem).mock.calls.filter((c) => c[0] === key);
+    return calls.at(-1)?.[1];
+  };
+
+  /** The three slot ids currently persisted: [inputA, inputB, result]. */
+  const slots = () => lastWrite(DYES_KEY) as Promise<(number | null)[] | undefined>;
+
+  const dye = (id: number, name = `Dye ${id}`) =>
+    ({ ...mockDyes[0], id, itemID: 5000 + id, name, hex: '#336699' }) as never;
+
+  describe('selectDye — the two input slots', () => {
+    it('fills the first slot', async () => {
+      tool = mount();
+
+      tool.selectDye(dye(1));
+
+      expect(await slots()).toEqual([1, null, null]);
+    });
+
+    it('fills the second slot', async () => {
+      tool = mount();
+
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+
+      expect(await slots()).toEqual([1, 2, null]);
+    });
+
+    it('shifts the pair once both slots are taken', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+
+      tool.selectDye(dye(3));
+
+      // A <- B, B <- new. The oldest input falls off.
+      expect(await slots()).toEqual([2, 3, null]);
+    });
+
+    it('keeps shifting on each further pick', async () => {
+      tool = mount();
+      for (const id of [1, 2, 3, 4]) tool.selectDye(dye(id));
+
+      expect(await slots()).toEqual([3, 4, null]);
+    });
+
+    it('ALLOWS the same dye in both slots', async () => {
+      tool = mount();
+
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(1));
+
+      // Blending a colour with itself is a legitimate (identity) mix, so
+      // unlike gradient this is accepted rather than warned about
+      expect(await slots()).toEqual([1, 1, null]);
+    });
+
+    it('refuses a third copy of the same dye', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(1));
+
+      tool.selectDye(dye(1));
+
+      // Two is a mix; three has nowhere to go and would just churn the slots
+      expect(await slots()).toEqual([1, 1, null]);
+    });
+
+    it('accepts a duplicate again after one copy is shifted out', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2)); // shifts one copy of 1 out -> [1, 2]
+
+      tool.selectDye(dye(1));
+
+      expect(await slots()).toEqual([2, 1, null]);
+    });
+
+    it('clears the result slot on every new input', async () => {
+      tool = mount();
+
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      tool.selectDye(dye(3));
+
+      // Slot 2 holds the blend result; a changed input invalidates it
+      expect((await slots())![2]).toBeNull();
+    });
+
+    it.each([
+      ['undefined', undefined],
+      ['null', null],
+    ])('ignores %s rather than crashing the drawer', (_label, value) => {
+      tool = mount();
+
+      expect(() => tool!.selectDye(value as never)).not.toThrow();
+    });
+  });
+
+  describe('selectCustomColor', () => {
+    it('takes a slot like a real dye', async () => {
+      tool = mount();
+
+      tool.selectCustomColor('#aabbcc');
+
+      expect((await slots())![0]).not.toBeNull();
+    });
+
+    it('ignores an empty colour', async () => {
+      tool = mount();
+
+      tool.selectCustomColor('');
+
+      expect(await slots()).toBeUndefined();
+    });
+
+    it('can fill the second slot after a real dye', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+
+      tool.selectCustomColor('#aabbcc');
+
+      const s = await slots();
+      expect(s![0]).toBe(1);
+      expect(s![1]).not.toBeNull();
+    });
+  });
+
+  describe('clearDyes', () => {
+    it('empties all three slots from storage', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      vi.mocked(StorageService.removeItem).mockClear();
+
+      tool.clearDyes();
+
+      expect(StorageService.removeItem).toHaveBeenCalledWith(DYES_KEY);
+    });
+
+    it('leaves the tool usable, starting from the first slot again', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      tool.clearDyes();
+
+      tool.selectDye(dye(9));
+
+      expect(await slots()).toEqual([9, null, null]);
+    });
+
+    it('is safe with nothing selected, twice', () => {
+      tool = mount();
+
+      expect(() => {
+        tool!.clearDyes();
+        tool!.clearDyes();
+      }).not.toThrow();
+    });
+  });
+
+  describe('setConfig — tool options', () => {
+    it.each(['rgb', 'lab', 'oklab', 'ryb', 'hsl', 'spectral'])(
+      'accepts %s as a mixing mode',
+      (mixingMode) => {
+        tool = mount();
+
+        expect(() => tool!.setConfig({ mixingMode } as never)).not.toThrow();
+      }
+    );
+
+    it('recomputes the blend when the mode changes with two inputs set', () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+
+      // A mode change with a full pair must re-blend, not just restyle
+      expect(() => tool!.setConfig({ mixingMode: 'lab' } as never)).not.toThrow();
+    });
+
+    it('accepts a maxResults change', () => {
+      tool = mount();
+
+      expect(() => tool!.setConfig({ maxResults: 7 } as never)).not.toThrow();
+    });
+
+    it('accepts a matchingMethod change', () => {
+      tool = mount();
+
+      expect(() => tool!.setConfig({ matchingMethod: 'oklab' } as never)).not.toThrow();
+    });
+
+    it('accepts a displayOptions change and an identical repeat', () => {
+      tool = mount();
+      const opts = { showHex: true, showRgb: false } as never;
+
+      expect(() => tool!.setConfig({ displayOptions: opts })).not.toThrow();
+      // Second identical call hits the field-by-field equality guard
+      expect(() => tool!.setConfig({ displayOptions: opts })).not.toThrow();
+    });
+
+    it('accepts an empty config', () => {
+      tool = mount();
+
+      expect(() => tool!.setConfig({})).not.toThrow();
+    });
+  });
+
+  describe('setConfig — the market channel', () => {
+    it('routes a showPrices change through the _tool marker', () => {
+      tool = mount();
+
+      // Market config arrives on the same method, discriminated by _tool
+      expect(() => tool!.setConfig({ _tool: 'market', showPrices: true } as never)).not.toThrow();
+      expect(() => tool!.setConfig({ _tool: 'market', showPrices: false } as never)).not.toThrow();
+    });
+
+    it('routes a server change', () => {
+      tool = mount();
+
+      expect(() =>
+        tool!.setConfig({ _tool: 'market', selectedServer: 'Gilgamesh' } as never)
+      ).not.toThrow();
+    });
+
+    it('ignores market fields when the _tool marker is absent', () => {
+      tool = mount();
+
+      // Without the discriminator these are not market config at all
+      expect(() => tool!.setConfig({ showPrices: true } as never)).not.toThrow();
+    });
+
+    it('handles a server change while results are on screen', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      await flush();
+
+      expect(() =>
+        tool!.setConfig({ _tool: 'market', selectedServer: 'Balmung' } as never)
+      ).not.toThrow();
+    });
+  });
+
+  describe('lifecycle under interaction', () => {
+    it('tears down cleanly after selection and configuration', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      tool.setConfig({ mixingMode: 'lab' } as never);
+      await flush();
+
+      expect(() => tool!.destroy()).not.toThrow();
+    });
+
+    it('ignores configuration arriving after destroy', () => {
+      tool = mount();
+      tool.destroy();
+
+      // The sidebar can emit one last config-change during teardown
+      expect(() => tool!.setConfig({ mixingMode: 'rgb' } as never)).not.toThrow();
+    });
+
+    it('works with no drawer panel supplied', async () => {
+      tool = mount({ drawer: false });
+
+      tool.selectDye(dye(1));
+
+      expect(await slots()).toEqual([1, null, null]);
     });
   });
 });
