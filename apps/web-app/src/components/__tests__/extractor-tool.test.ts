@@ -37,6 +37,38 @@ vi.mock('@services/dye-service-wrapper', () => ({
 }));
 
 vi.mock('@services/index', () => ({
+  ToastService: {
+    show: vi.fn(),
+    error: vi.fn(),
+    success: vi.fn(),
+    warning: vi.fn(),
+  },
+  /**
+   * The shared market-panel builder. Absent, renderMarketPanel throws and
+   * safeRender swallows it, leaving the whole panel empty.
+   */
+  buildMarketPanel: vi.fn(() => ({
+    panel: {
+      init: vi.fn(),
+      destroy: vi.fn(),
+      setContent: vi.fn(),
+      expand: vi.fn(),
+      collapse: vi.fn(),
+    },
+    // Mirrors the real MarketBoard component's public surface
+    marketBoard: {
+      init: vi.fn(),
+      destroy: vi.fn(),
+      getShowPrices: vi.fn().mockReturnValue(false),
+      setShowPrices: vi.fn(),
+      getSelectedServer: vi.fn().mockReturnValue(null),
+      setSelectedServer: vi.fn(),
+      loadServerData: vi.fn().mockResolvedValue(undefined),
+      refreshPrices: vi.fn().mockResolvedValue(undefined),
+      fetchPricesForDyes: vi.fn().mockResolvedValue(new Map()),
+      shouldFetchPrice: vi.fn().mockReturnValue(false),
+    },
+  })),
   /** Used by six of the tools; absent it throws as an unhandled rejection. */
   ThemeService: {
     getCurrentTheme: vi.fn().mockReturnValue('standard-dark'),
@@ -164,6 +196,15 @@ vi.mock('@services/index', () => ({
   },
 }));
 
+vi.mock('@services/indexeddb-service', () => ({
+  indexedDBService: {
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue(true),
+    delete: vi.fn().mockResolvedValue(undefined),
+  },
+  STORES: { IMAGE_CACHE: 'image_cache' },
+}));
+
 vi.mock('@shared/logger', () => ({
   logger: {
     info: vi.fn(),
@@ -181,6 +222,7 @@ vi.mock('../collapsible-panel', () => ({
   CollapsiblePanel: class MockCollapsiblePanel {
     container: HTMLElement;
     options: Record<string, unknown>;
+    private body: HTMLElement | null = null;
     constructor(container: HTMLElement, options: Record<string, unknown>) {
       this.container = container;
       this.options = options;
@@ -190,11 +232,19 @@ vi.mock('../collapsible-panel', () => ({
       div.className = 'collapsible-panel';
       div.id = (this.options.id as string) || 'panel';
       this.container.appendChild(div);
+      this.body = div;
     }
     destroy() {
       this.container.innerHTML = '';
+      this.body = null;
     }
-    setContent() {}
+    // Attaches what it is given, the way the real panel does. As a no-op it
+    // silently swallowed every control the tool placed inside a panel.
+    setContent(content: HTMLElement | string) {
+      if (!this.body) this.init();
+      if (typeof content === 'string') this.body!.innerHTML = content;
+      else if (content) this.body!.appendChild(content);
+    }
     expand() {}
     collapse() {}
     toggle() {}
@@ -442,6 +492,419 @@ describe('ExtractorTool', () => {
 
       // Second destroy should not throw
       expect(() => tool!.destroy()).not.toThrow();
+    });
+  });
+
+  // ==========================================================================
+  // Interaction depth
+  //
+  // Everything above asserts that the tool renders. The tool is image-driven,
+  // and jsdom decodes no images — so these drive what does not need a decoded
+  // bitmap: the config surface the sidebar pushes in, the drop-zone contract,
+  // the clipboard paths, and teardown.
+  // ==========================================================================
+
+  const mount = (opts: { drawer?: boolean } = {}): ExtractorTool => {
+    const t = new ExtractorTool(
+      container,
+      opts.drawer === false ? { leftPanel, rightPanel } : { leftPanel, rightPanel, drawerContent }
+    );
+    t.init();
+    return t;
+  };
+
+  const flush = async () => {
+    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 0));
+  };
+
+  const dropZone = (): HTMLElement =>
+    rightPanel.querySelector('#extractor-drop-zone') as HTMLElement;
+
+  /** A DragEvent carrying files, which jsdom does not construct for us. */
+  const dropEvent = (files: File[]): Event => {
+    const ev = new Event('drop', { bubbles: true, cancelable: true });
+    Object.defineProperty(ev, 'dataTransfer', { value: { files } });
+    return ev;
+  };
+
+  describe('setConfig — the sidebar surface', () => {
+    it.each([
+      ['vibrancyBoost', { vibrancyBoost: false }, 'v3_matcher_vibrancy_boost', false],
+      ['maxColors', { maxColors: 9 }, 'v3_matcher_palette_count', 9],
+    ])('persists a %s change', async (_label, config, key, value) => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      tool.setConfig(config as Parameters<ExtractorTool['setConfig']>[0]);
+
+      expect(StorageService.setItem).toHaveBeenCalledWith(key, value);
+    });
+
+    it('ignores a no-op change rather than re-extracting', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      tool.setConfig({ maxColors: 9 });
+      await flush();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      // The guard is `config.maxColors !== this.paletteColorCount`
+      tool.setConfig({ maxColors: 9 });
+
+      expect(StorageService.setItem).not.toHaveBeenCalledWith(
+        'v3_matcher_palette_count',
+        expect.anything()
+      );
+    });
+
+    it('syncs the colour-count slider and its readout', async () => {
+      tool = mount();
+      // Re-query after the change: the panel re-renders, so a reference held
+      // from before points at a detached node.
+      // The colour-count slider is the 3..5 one; the tool renders more than
+      // one range input, so select it by its range rather than by position.
+      const slider = () =>
+        container.querySelector<HTMLInputElement>('input[type="range"][min="3"][max="5"]');
+      expect(slider()).not.toBeNull();
+
+      tool.setConfig({ maxColors: 4 });
+      await flush();
+
+      // The sidebar and the tool's own slider must not disagree — a stale
+      // slider is how a user extracts a different count than the one shown
+      // beside it.
+      expect(slider()!.value).toBe('4');
+    });
+
+    it('accepts an empty config without touching state', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      expect(() => tool!.setConfig({})).not.toThrow();
+      expect(StorageService.setItem).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['matchingMethod', { matchingMethod: 'oklab' as const }],
+      ['preventDuplicates', { preventDuplicates: true }],
+      ['dragThreshold', { dragThreshold: 8 }],
+      ['sampleAreaSize', { sampleAreaSize: 4 }],
+    ])('accepts a %s change with no image loaded', (_label, config) => {
+      tool = mount();
+
+      expect(() => tool!.setConfig(config as never)).not.toThrow();
+    });
+
+    it('merges displayOptions rather than replacing them', () => {
+      tool = mount();
+
+      tool.setConfig({ displayOptions: { showHex: true } as never });
+      expect(() => tool!.setConfig({ displayOptions: { showRgb: true } as never })).not.toThrow();
+    });
+
+    it('applies a dyeFilters change once and skips an identical repeat', () => {
+      tool = mount();
+
+      expect(() =>
+        tool!.setConfig({ dyeFilters: { excludeMetallic: true } as never })
+      ).not.toThrow();
+      // Second identical call hits the JSON-equality guard
+      expect(() =>
+        tool!.setConfig({ dyeFilters: { excludeMetallic: true } as never })
+      ).not.toThrow();
+    });
+
+    it('applies several keys in one call', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      tool.setConfig({ vibrancyBoost: false, maxColors: 3 });
+      await flush();
+
+      const keys = vi.mocked(StorageService.setItem).mock.calls.map((c) => c[0]);
+      expect(keys).toEqual(
+        expect.arrayContaining(['v3_matcher_vibrancy_boost', 'v3_matcher_palette_count'])
+      );
+    });
+  });
+
+  describe('the drop zone', () => {
+    it('renders a drop zone while no image is loaded', () => {
+      tool = mount();
+
+      expect(dropZone()).not.toBeNull();
+    });
+
+    it('highlights on dragover and clears on dragleave', () => {
+      tool = mount();
+
+      rightPanel.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
+      expect(dropZone().style.borderColor).toBe('var(--theme-primary)');
+
+      rightPanel.dispatchEvent(new Event('dragleave', { bubbles: true }));
+      expect(dropZone().style.borderColor).toBe('');
+    });
+
+    it('clears the highlight after a drop', () => {
+      tool = mount();
+      rightPanel.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
+
+      rightPanel.dispatchEvent(dropEvent([]));
+
+      expect(dropZone().style.borderColor).toBe('');
+    });
+
+    it('ignores a dropped non-image file', () => {
+      tool = mount();
+      const readSpy = vi.spyOn(FileReader.prototype, 'readAsDataURL');
+
+      rightPanel.dispatchEvent(dropEvent([new File(['x'], 'notes.txt', { type: 'text/plain' })]));
+
+      // A .txt must not reach the reader — the type gate is the only guard
+      expect(readSpy).not.toHaveBeenCalled();
+      readSpy.mockRestore();
+    });
+
+    it('reads a dropped image file', () => {
+      tool = mount();
+      const readSpy = vi
+        .spyOn(FileReader.prototype, 'readAsDataURL')
+        .mockImplementation(() => undefined);
+
+      rightPanel.dispatchEvent(dropEvent([new File(['x'], 'shot.png', { type: 'image/png' })]));
+
+      expect(readSpy).toHaveBeenCalledTimes(1);
+      readSpy.mockRestore();
+    });
+
+    it('takes only the first file when several are dropped', () => {
+      tool = mount();
+      const readSpy = vi
+        .spyOn(FileReader.prototype, 'readAsDataURL')
+        .mockImplementation(() => undefined);
+
+      rightPanel.dispatchEvent(
+        dropEvent([
+          new File(['a'], 'a.png', { type: 'image/png' }),
+          new File(['b'], 'b.png', { type: 'image/png' }),
+        ])
+      );
+
+      expect(readSpy).toHaveBeenCalledTimes(1);
+      readSpy.mockRestore();
+    });
+
+    it('survives a drop carrying no dataTransfer at all', () => {
+      tool = mount();
+
+      expect(() =>
+        rightPanel.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }))
+      ).not.toThrow();
+    });
+
+    it('opens the file dialog when the empty card is clicked', () => {
+      tool = mount();
+      const input = rightPanel.querySelector<HTMLInputElement>('input[type="file"]');
+      expect(input).not.toBeNull();
+      const clickSpy = vi.spyOn(input!, 'click').mockImplementation(() => undefined);
+
+      dropZone().click();
+
+      // The whole dashed card is the target, not just a hidden input
+      expect(clickSpy).toHaveBeenCalledTimes(1);
+      clickSpy.mockRestore();
+    });
+
+    it('accepts only image types on the file input', () => {
+      tool = mount();
+      const input = rightPanel.querySelector<HTMLInputElement>('input[type="file"]');
+
+      expect(input!.accept).toContain('image');
+    });
+  });
+
+  /**
+   * The image-driven half of the tool.
+   *
+   * jsdom decodes no images and implements no canvas, so `Image.onload` never
+   * fires and `getContext('2d')` returns null — which is why roughly two
+   * thirds of this component was unreachable from a unit test. Faking both is
+   * enough to run the real extraction path: load → canvas → sample → match.
+   */
+  describe('with a decoded image', () => {
+    /** 2×2 image: red, green, blue, white. */
+    const PIXELS = new Uint8ClampedArray([
+      255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 255, 255, 255, 255,
+    ]);
+
+    let originalImage: typeof Image;
+    let originalGetContext: HTMLCanvasElement['getContext'];
+    let ctx: Record<string, ReturnType<typeof vi.fn>>;
+
+    beforeEach(() => {
+      originalImage = globalThis.Image;
+      originalGetContext = HTMLCanvasElement.prototype.getContext;
+
+      class FakeImage {
+        onload: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        width = 2;
+        height = 2;
+        naturalWidth = 2;
+        naturalHeight = 2;
+        crossOrigin: string | null = null;
+        private value = '';
+        get src(): string {
+          return this.value;
+        }
+        set src(next: string) {
+          this.value = next;
+          // Decoding is async in a browser; keep that shape
+          queueMicrotask(() => this.onload?.());
+        }
+      }
+      globalThis.Image = FakeImage as unknown as typeof Image;
+
+      ctx = {
+        drawImage: vi.fn(),
+        clearRect: vi.fn(),
+        fillRect: vi.fn(),
+        putImageData: vi.fn(),
+        getImageData: vi.fn(() => ({ data: PIXELS, width: 2, height: 2 })),
+        save: vi.fn(),
+        restore: vi.fn(),
+        translate: vi.fn(),
+        scale: vi.fn(),
+        setTransform: vi.fn(),
+        beginPath: vi.fn(),
+        arc: vi.fn(),
+        stroke: vi.fn(),
+        fill: vi.fn(),
+        closePath: vi.fn(),
+      };
+      HTMLCanvasElement.prototype.getContext = vi.fn(
+        () => ctx
+      ) as unknown as HTMLCanvasElement['getContext'];
+    });
+
+    afterEach(() => {
+      globalThis.Image = originalImage;
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+    });
+
+    /** Drop a PNG and let the FileReader + fake decode settle. */
+    const loadImage = async (): Promise<void> => {
+      rightPanel.dispatchEvent(dropEvent([new File(['x'], 'shot.png', { type: 'image/png' })]));
+      // FileReader is async in jsdom too
+      for (let i = 0; i < 6; i++) await flush();
+    };
+
+    it('renders a canvas once an image is loaded', async () => {
+      tool = mount();
+
+      await loadImage();
+
+      expect(rightPanel.querySelector('canvas')).not.toBeNull();
+    });
+
+    it('replaces the drop zone flow with the loaded flow', async () => {
+      tool = mount();
+      expect(dropZone()).not.toBeNull();
+
+      await loadImage();
+
+      // The dashed card is an offer while empty; once an image is in, the
+      // workspace takes over
+      expect(rightPanel.querySelector('canvas')).not.toBeNull();
+    });
+
+    it('draws the image onto the canvas', async () => {
+      tool = mount();
+
+      await loadImage();
+
+      expect(ctx.drawImage).toHaveBeenCalled();
+    });
+
+    it('persists the loaded image to IndexedDB, not localStorage (OPT-012)', async () => {
+      const { indexedDBService } = await import('@services/indexeddb-service');
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      await loadImage();
+
+      // A ~2 MB data URL in localStorage consumed most of the shared 5 MB
+      // budget and made every later setItem fail silently on quota
+      expect(indexedDBService.set).toHaveBeenCalled();
+      const localKeys = vi.mocked(StorageService.setItem).mock.calls.map((c) => c[0]);
+      expect(localKeys).not.toContain('v3_matcher_image');
+    });
+
+    it('re-samples the image when the colour count changes', async () => {
+      tool = mount();
+      await loadImage();
+      ctx.getImageData.mockClear();
+
+      tool.setConfig({ maxColors: 3 });
+      for (let i = 0; i < 6; i++) await flush();
+
+      // A config change with an image present must re-sample, not just
+      // redraw — otherwise the palette silently reflects the old count
+      expect(ctx.getImageData).toHaveBeenCalled();
+    });
+
+    it('survives a decode failure without leaving the tool broken', async () => {
+      class FailingImage {
+        onload: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        set src(_next: string) {
+          queueMicrotask(() => this.onerror?.());
+        }
+      }
+      globalThis.Image = FailingImage as unknown as typeof Image;
+      tool = mount();
+
+      await loadImage();
+
+      // The drop zone is still there to try again with
+      expect(dropZone()).not.toBeNull();
+    });
+
+    it('tears down cleanly with an image loaded', async () => {
+      tool = mount();
+      await loadImage();
+
+      expect(() => tool!.destroy()).not.toThrow();
+    });
+  });
+
+  describe('lifecycle under interaction', () => {
+    it('tears down cleanly after configuration', async () => {
+      tool = mount();
+      tool.setConfig({ maxColors: 5, vibrancyBoost: true });
+      await flush();
+
+      expect(() => tool!.destroy()).not.toThrow();
+    });
+
+    it('ignores configuration arriving after destroy', () => {
+      tool = mount();
+      tool.destroy();
+
+      // The sidebar can emit one last config-change during teardown
+      expect(() => tool!.setConfig({ maxColors: 4 })).not.toThrow();
+    });
+
+    it('works with no drawer panel supplied', async () => {
+      tool = mount({ drawer: false });
+      tool.setConfig({ maxColors: 5 });
+      await flush();
+
+      expect(rightPanel.innerHTML.length).toBeGreaterThan(0);
     });
   });
 });

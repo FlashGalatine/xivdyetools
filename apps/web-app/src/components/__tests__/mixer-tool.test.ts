@@ -176,6 +176,7 @@ vi.mock('../collapsible-panel', () => ({
   CollapsiblePanel: class MockCollapsiblePanel {
     container: HTMLElement;
     options: Record<string, unknown>;
+    private body: HTMLElement | null = null;
     constructor(container: HTMLElement, options: Record<string, unknown>) {
       this.container = container;
       this.options = options;
@@ -185,11 +186,19 @@ vi.mock('../collapsible-panel', () => ({
       div.className = 'collapsible-panel';
       div.id = (this.options.id as string) || 'panel';
       this.container.appendChild(div);
+      this.body = div;
     }
     destroy() {
       this.container.innerHTML = '';
+      this.body = null;
     }
-    setContent() {}
+    // Attaches what it is given, the way the real panel does. As a no-op it
+    // silently swallowed every control the tool placed inside a panel.
+    setContent(content: HTMLElement | string) {
+      if (!this.body) this.init();
+      if (typeof content === 'string') this.body!.innerHTML = content;
+      else if (content) this.body!.appendChild(content);
+    }
     expand() {}
     collapse() {}
     toggle() {}

@@ -285,6 +285,8 @@ vi.mock('../collapsible-panel', () => ({
       this.container.innerHTML = '';
       this.body = null;
     }
+    // Attaches what it is given, the way the real panel does. As a no-op it
+    // silently swallowed every control the tool placed inside a panel.
     setContent(content: HTMLElement | string) {
       if (!this.body) this.init();
       if (typeof content === 'string') this.body!.innerHTML = content;
