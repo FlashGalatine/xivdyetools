@@ -32,7 +32,6 @@ export default defineConfig({
         'src/components/v4/v4-layout-shell.ts',
         'src/components/v4/v4-app-header.ts',
         'src/components/v4/display-options-v4.ts',
-        'src/components/image-zoom-controller.ts',
         'src/components/preset-edit-form.ts',
         'src/components/collection-manager-modal.ts',
         'src/components/add-to-collection-menu.ts',
@@ -51,14 +50,14 @@ export default defineConfig({
       // actually achieves so the figure cannot regress; the goal remains
       // 80/80/80/75. The whole gap is the nine tool components
       // (accessibility, budget, comparison, extractor, gradient, harmony,
-      // mixer, swatch + chara-import), which together hold ~4.8k uncovered
-      // statements against ~3k lines of shallow tests. Raise these numbers as
-      // those tests deepen; do not lower them.
+      // mixer, swatch + chara-import), which together hold the bulk of the
+      // uncovered statements. Raise these numbers as those tests deepen; do
+      // not lower them.
       thresholds: {
-        statements: 68,
-        branches: 51,
-        functions: 62,
-        lines: 69,
+        statements: 70,
+        branches: 54,
+        functions: 64,
+        lines: 71,
       },
     },
     // scripts/ holds the CI gates (check-bundle-size, check-beta-build,

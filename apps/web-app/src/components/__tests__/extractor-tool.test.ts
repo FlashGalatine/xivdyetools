@@ -13,11 +13,57 @@ import { createTestContainer, cleanupTestContainer } from '../../__tests__/compo
 import { mockDyes } from '../../__tests__/mocks/services';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
-const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes } = vi.hoisted(() => ({
-  mockGetAllDyes: vi.fn(),
-  mockGetDyeById: vi.fn(),
-  mockFindClosestDyes: vi.fn(),
-}));
+//
+// `findClosestDye` (SINGULAR) and `findDyesWithinDistance` are the two that
+// matter and were the two missing. Both are called by `matchColor`, and
+// `findClosestDye` is also called by the REAL `PaletteService` — which this
+// file does not mock — from inside `extractAndMatchPalette`. Their absence
+// threw `dyeService.findClosestDye is not a function` as an UNHANDLED
+// rejection off the image-load path, so it never surfaced as a test failure;
+// it just left every sampling, matching and palette-result path unexecuted.
+//
+// They are given real nearest-neighbour behaviour rather than a fixed return.
+// A constant would make "the extractor matched the right dye" untestable —
+// every input would produce the same answer, so the assertions could not tell
+// a working match from a broken one.
+const {
+  mockGetAllDyes,
+  mockGetDyeById,
+  mockFindClosestDyes,
+  mockFindClosestDye,
+  mockFindDyesWithinDistance,
+} = vi.hoisted(() => {
+  const parse = (hex: string) => ({
+    r: parseInt(hex.slice(1, 3), 16) || 0,
+    g: parseInt(hex.slice(3, 5), 16) || 0,
+    b: parseInt(hex.slice(5, 7), 16) || 0,
+  });
+  /** Plain RGB euclidean — enough to be deterministic and order-correct. */
+  const dist = (a: string, b: string) => {
+    const x = parse(a);
+    const y = parse(b);
+    return Math.sqrt((x.r - y.r) ** 2 + (x.g - y.g) ** 2 + (x.b - y.b) ** 2);
+  };
+  const mockGetAllDyes = vi.fn();
+  /** The dye pool both matchers search — whatever getAllDyes is seeded with. */
+  const pool = (): { hex: string }[] => (mockGetAllDyes() as { hex: string }[]) ?? [];
+  return {
+    mockGetAllDyes,
+    mockGetDyeById: vi.fn(),
+    mockFindClosestDyes: vi.fn(),
+    mockFindClosestDye: vi.fn((hex: string) => {
+      const dyes = pool();
+      if (dyes.length === 0) return null;
+      return dyes.reduce((best, d) => (dist(hex, d.hex) < dist(hex, best.hex) ? d : best));
+    }),
+    mockFindDyesWithinDistance: vi.fn((hex: string, opts?: { limit?: number }) => {
+      const dyes = pool();
+      return [...dyes]
+        .sort((a, b) => dist(hex, a.hex) - dist(hex, b.hex))
+        .slice(0, opts?.limit ?? dyes.length);
+    }),
+  };
+});
 
 // Icon modules are NOT mocked. They are compile-time string constants with
 // no dependencies, and a hand-written stub only has to miss one export for
@@ -31,6 +77,8 @@ vi.mock('@services/dye-service-wrapper', () => ({
       getAllDyes: mockGetAllDyes,
       getDyeById: mockGetDyeById,
       findClosestDyes: mockFindClosestDyes,
+      findClosestDye: mockFindClosestDye,
+      findDyesWithinDistance: mockFindDyesWithinDistance,
       getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
     }),
   },
@@ -85,6 +133,8 @@ vi.mock('@services/index', () => ({
       getAllDyes: mockGetAllDyes,
       getDyeById: mockGetDyeById,
       findClosestDyes: mockFindClosestDyes,
+      findClosestDye: mockFindClosestDye,
+      findDyesWithinDistance: mockFindDyesWithinDistance,
       getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
     }),
   },
@@ -92,6 +142,8 @@ vi.mock('@services/index', () => ({
     getAllDyes: mockGetAllDyes,
     getDyeById: mockGetDyeById,
     findClosestDyes: mockFindClosestDyes,
+    findClosestDye: mockFindClosestDye,
+    findDyesWithinDistance: mockFindDyesWithinDistance,
     getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
   },
   /** Complete against every LanguageService method the tools call. */
@@ -230,6 +282,10 @@ vi.mock('@shared/logger', () => ({
 
 vi.mock('@services/pricing-mixin', () => ({
   setupMarketBoardListeners: vi.fn().mockReturnValue(() => {}),
+}));
+
+vi.mock('@components/export-sheet', () => ({
+  openExportSheet: vi.fn(),
 }));
 
 vi.mock('../collapsible-panel', () => ({
@@ -819,6 +875,13 @@ describe('ExtractorTool', () => {
       }
       globalThis.Image = FakeImage as unknown as typeof Image;
 
+      // Complete against every 2D-context member extractor-tool.ts and
+      // image-zoom-controller.ts touch. Completeness is the whole point: a
+      // single missing method throws inside `extractPalette`'s try block,
+      // which catches it, toasts `errors.paletteExtractionFailed` and moves
+      // on — so the suite stays green while the entire palette path is dead.
+      // That is exactly how `strokeText` (used only by drawSampleIndicators
+      // to outline the numbered markers) kept six functions unexecuted.
       ctx = {
         drawImage: vi.fn(),
         clearRect: vi.fn(),
@@ -835,6 +898,11 @@ describe('ExtractorTool', () => {
         stroke: vi.fn(),
         fill: vi.fn(),
         closePath: vi.fn(),
+        moveTo: vi.fn(),
+        lineTo: vi.fn(),
+        strokeRect: vi.fn(),
+        fillText: vi.fn(),
+        strokeText: vi.fn(),
       };
       HTMLCanvasElement.prototype.getContext = vi.fn(
         () => ctx
@@ -898,6 +966,15 @@ describe('ExtractorTool', () => {
     it('re-samples the image when the colour count changes', async () => {
       tool = mount();
       await loadImage();
+      // The re-extract branch is gated on `paletteMode` as well as on the
+      // config change. Without this the assertion below was satisfied by the
+      // load-time auto-extract's own getImageData call, not by the config
+      // change at all — it only looked green because that call had not yet
+      // landed when the mock was cleared.
+      const box = container.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
+      box.checked = true;
+      box.dispatchEvent(new Event('change'));
+      for (let i = 0; i < 6; i++) await flush();
       ctx.getImageData.mockClear();
 
       tool.setConfig({ maxColors: 3 });
@@ -933,21 +1010,527 @@ describe('ExtractorTool', () => {
     });
 
     /*
-     * Palette EXTRACTION is not asserted here.
+     * Sampling, matching and palette extraction ARE asserted below.
      *
-     * `extractPalette()` sources its pixels from
-     * `this.imageZoom.getCanvas()`, and ImageZoomController is the real
-     * component (it is excluded from coverage, not mocked). It does not
-     * accept the fake 2D context above, so getCanvas() returns null and the
-     * tool correctly refuses with "no image for palette" — meaning a test
-     * here would assert the refusal while appearing to cover extraction.
+     * An earlier note here claimed they could not be: that the real
+     * ImageZoomController rejects the fake 2D context, so `getCanvas()`
+     * returns null and any test would assert the tool's refusal while
+     * appearing to cover extraction. That was measured and is wrong —
+     * `getCanvas()` returns the canvas perfectly well, because the controller
+     * only ever calls `getContext('2d')`, which the stub above satisfies.
      *
-     * A test was written, observed to do exactly that, and removed. Covering
-     * the extraction path properly needs either a mocked ImageZoomController
-     * whose getCanvas returns a stubbed canvas, or Playwright, which has a
-     * real one. The same applies to the loupe (moveLoupe / setLoupeHex /
-     * matchColor), which is driven entirely by that controller's callbacks.
+     * Two mock gaps were doing it, and neither involved the controller:
+     *
+     * 1. `dyeService.findClosestDye` (singular) was absent. `matchColor`
+     *    calls it, and so does the REAL PaletteService inside
+     *    `extractAndMatchPalette`. It threw as an UNHANDLED rejection off the
+     *    image-load path — invisible in the report, fatal to both clusters.
+     * 2. `ctx.strokeText` was absent. `drawSampleIndicators` outlines the
+     *    numbered markers with it, and it throws inside `extractPalette`'s
+     *    try block — which catches, toasts, and returns. Green suite, dead
+     *    path.
+     *
+     * Both are now closed, so this is driven through the component's real
+     * contract: the `image-sampled` / `loupe-move` / `loupe-end` CustomEvents
+     * that ImageZoomController emits on its container (BaseComponent.emit,
+     * bubbling), and the Auto-extract button.
      */
+
+    /** The element ImageZoomController emits its events on. */
+    const canvasWrapper = (): HTMLElement => {
+      const canvas = rightPanel.querySelector('canvas');
+      // wrapper > canvas-container > canvas
+      return canvas!.parentElement!.parentElement as HTMLElement;
+    };
+
+    /** Commit a pixel sample exactly as the controller's click handler does. */
+    const sample = (hex: string, isPixelSample = true): void => {
+      canvasWrapper().dispatchEvent(
+        new CustomEvent('image-sampled', {
+          bubbles: true,
+          detail: { hex, x: 1, y: 1, isPixelSample },
+        })
+      );
+    };
+
+    const resultCards = () => rightPanel.querySelectorAll('v4-result-card');
+
+    /*
+     * NOTE ON BASELINE: `onImageLoaded` calls `extractPalette()`
+     * unconditionally ("V4: Auto-extract palette on image load"), so a loaded
+     * image already carries palette cards and a populated roll before any
+     * test does anything. That is real behaviour, and it only became
+     * observable once the mock gaps above were closed — previously the
+     * load-time extraction threw and left the panel empty. Assertions here
+     * are written against the change a sample causes, not against zero.
+     */
+
+    describe('sampling a pixel', () => {
+      it('replaces the auto-extracted palette with matches for the sample', async () => {
+        tool = mount();
+        await loadImage();
+        const auto = Array.from(resultCards()).map(
+          (c) => (c as unknown as { data: { originalColor: string } }).data.originalColor
+        );
+        expect(auto.length).toBeGreaterThan(0);
+
+        sample('#FF0000');
+
+        // Every card now reports the sampled pixel as its source colour
+        const after = Array.from(resultCards()).map(
+          (c) => (c as unknown as { data: { originalColor: string } }).data.originalColor
+        );
+        expect(after.length).toBeGreaterThan(0);
+        expect(new Set(after)).toEqual(new Set(['#FF0000']));
+      });
+
+      it('puts the NEAREST dye first, not merely some dye', async () => {
+        tool = mount();
+        await loadImage();
+
+        // Near-white must resolve to Snow White (#FFFFFF), not to Ash Grey
+        // (#888888). This is the assertion a fixed-return mock cannot make.
+        sample('#FEFEFE');
+
+        const first = resultCards()[0] as unknown as { data: { dye: { name: string } } };
+        expect(first.data.dye.name).toBe('Snow White');
+      });
+
+      it('shows the sampled-colour info card', async () => {
+        tool = mount();
+        await loadImage();
+
+        sample('#FF0000');
+
+        expect(rightPanel.textContent).toContain('Sampled Color');
+      });
+
+      it('records the sample in the roll and persists it', async () => {
+        const { StorageService } = await import('@services/index');
+        tool = mount();
+        await loadImage();
+        vi.mocked(StorageService.setItem).mockClear();
+
+        sample('#123456');
+
+        const call = vi
+          .mocked(StorageService.setItem)
+          .mock.calls.find((c) => c[0] === 'v3_matcher_extracted_colors');
+        expect(call).toBeDefined();
+        expect((call![1] as { hex: string }[])[0].hex).toBe('#123456');
+      });
+
+      it('moves a re-sampled colour to the front instead of duplicating it', async () => {
+        const { StorageService } = await import('@services/index');
+        tool = mount();
+        await loadImage();
+
+        sample('#111111');
+        sample('#222222');
+        vi.mocked(StorageService.setItem).mockClear();
+        sample('#111111');
+
+        const call = vi
+          .mocked(StorageService.setItem)
+          .mock.calls.find((c) => c[0] === 'v3_matcher_extracted_colors');
+        const roll = (call![1] as { hex: string }[]).map((e) => e.hex);
+        // Front two are the re-sample then the untouched one; the tail is
+        // whatever the load-time auto-extract left behind
+        expect(roll.slice(0, 2)).toEqual(['#111111', '#222222']);
+        expect(roll.filter((h) => h === '#111111')).toHaveLength(1);
+      });
+
+      it('caps the roll at twenty entries', async () => {
+        const { StorageService } = await import('@services/index');
+        tool = mount();
+        await loadImage();
+
+        for (let i = 0; i < 25; i++) {
+          sample(`#${i.toString(16).padStart(6, '0')}`);
+        }
+
+        const calls = vi
+          .mocked(StorageService.setItem)
+          .mock.calls.filter((c) => c[0] === 'v3_matcher_extracted_colors');
+        expect((calls.at(-1)![1] as unknown[]).length).toBe(20);
+      });
+
+      it('ignores an event that is not a pixel sample', async () => {
+        const { StorageService } = await import('@services/index');
+        tool = mount();
+        await loadImage();
+        vi.mocked(StorageService.setItem).mockClear();
+
+        sample('#FF0000', false);
+
+        // The 3C contract routes only COMMITTED pixel samples into matchColor,
+        // and matchColor is the only thing that writes the selected colour
+        const keys = vi.mocked(StorageService.setItem).mock.calls.map((c) => c[0]);
+        expect(keys).not.toContain('v3_matcher_color');
+      });
+    });
+
+    describe('the loupe', () => {
+      // The loupe carries neither id nor class — it is a bare styled div, so
+      // its 74px diameter plus aria-hidden is the only thing distinguishing
+      // it. Brittle by nature: if this selector ever stops matching, give the
+      // element an id in the component rather than widening the pattern.
+      const loupe = () =>
+        rightPanel.querySelector<HTMLElement>('div[aria-hidden="true"][style*="74px"]');
+
+      it('follows the pointer and takes the colour under it', async () => {
+        tool = mount();
+        await loadImage();
+
+        canvasWrapper().dispatchEvent(
+          new CustomEvent('loupe-move', {
+            bubbles: true,
+            detail: { hex: '#00FF00', clientX: 40, clientY: 25 },
+          })
+        );
+
+        const el = loupe();
+        expect(el).not.toBeNull();
+        expect(el!.style.background).toBe('rgb(0, 255, 0)');
+        // jsdom reports a zero-size rect, so the clamp pins both to 0 —
+        // assert the transform, which is what actually reveals the loupe
+        expect(el!.style.transform).toContain('scale(1)');
+      });
+
+      it('hides again when the drag ends', async () => {
+        tool = mount();
+        await loadImage();
+        canvasWrapper().dispatchEvent(
+          new CustomEvent('loupe-move', {
+            bubbles: true,
+            detail: { hex: '#00FF00', clientX: 10, clientY: 10 },
+          })
+        );
+
+        canvasWrapper().dispatchEvent(new CustomEvent('loupe-end', { bubbles: true }));
+
+        expect(loupe()!.style.transform).toContain('scale(0)');
+      });
+    });
+
+    describe('auto-extracting a palette', () => {
+      /** Auto-extract in the roll header — the 3C bulk path. */
+      const autoBtn = (): HTMLButtonElement =>
+        Array.from(rightPanel.querySelectorAll('button')).find((b) =>
+          b.textContent?.includes('matcher.autoExtract')
+        ) as HTMLButtonElement;
+
+      it('extracts, matches and renders a card per extracted colour', async () => {
+        const { ToastService } = await import('@services/index');
+        tool = mount();
+        await loadImage();
+        vi.mocked(ToastService.success).mockClear();
+
+        autoBtn().click();
+        for (let i = 0; i < 4; i++) await flush();
+
+        expect(resultCards().length).toBeGreaterThan(0);
+        expect(ToastService.success).toHaveBeenCalledWith(
+          expect.stringContaining('matcher.paletteExtracted')
+        );
+      });
+
+      it('draws a numbered indicator per extracted colour onto the canvas', async () => {
+        tool = mount();
+        await loadImage();
+        ctx.strokeText.mockClear();
+
+        autoBtn().click();
+        for (let i = 0; i < 4; i++) await flush();
+
+        // The outlined marker labels — the call that used to throw
+        expect(ctx.strokeText).toHaveBeenCalled();
+      });
+
+      it('restores the button after extraction rather than leaving it disabled', async () => {
+        tool = mount();
+        await loadImage();
+
+        autoBtn().click();
+        for (let i = 0; i < 4; i++) await flush();
+
+        expect(autoBtn().disabled).toBe(false);
+        expect(autoBtn().style.opacity).toBe('1');
+      });
+
+      it('enables the export button, which ships disabled', async () => {
+        tool = mount();
+        const exportBtn = Array.from(rightPanel.querySelectorAll('button')).find((b) =>
+          b.textContent?.includes('common.export')
+        ) as HTMLButtonElement;
+        // Disabled at construction — exporting an empty roll is meaningless
+        expect(exportBtn.disabled).toBe(true);
+
+        await loadImage();
+        autoBtn().click();
+        for (let i = 0; i < 4; i++) await flush();
+
+        expect(exportBtn.disabled).toBe(false);
+      });
+
+      it('assigns a distinct dye per swatch while preventDuplicates is on', async () => {
+        tool = mount();
+        await loadImage();
+
+        autoBtn().click();
+        for (let i = 0; i < 4; i++) await flush();
+
+        const ids = Array.from(resultCards()).map(
+          (c) => (c as unknown as { data: { dye: { itemID: number } } }).data.dye.itemID
+        );
+        expect(new Set(ids).size).toBe(ids.length);
+      });
+
+      it('may repeat a dye once deduplication is switched off', async () => {
+        tool = mount();
+        await loadImage();
+        // The 2×2 fixture is red/green/blue/white against a five-dye pool, so
+        // this asserts the flag reaches the dedup pass, not a specific palette
+        tool.setConfig({ preventDuplicates: false });
+
+        autoBtn().click();
+        for (let i = 0; i < 4; i++) await flush();
+
+        expect(resultCards().length).toBeGreaterThan(0);
+      });
+    });
+
+    it('routes a card context action to the target tool', async () => {
+      tool = mount();
+      await loadImage();
+      sample('#FF0000');
+      const onNavigate = vi.fn();
+      window.addEventListener('navigate-to-tool', onNavigate);
+
+      resultCards()[0].dispatchEvent(
+        new CustomEvent('context-action', {
+          detail: { action: 'add-comparison', dye: mockDyes[0] },
+        })
+      );
+
+      expect(onNavigate).toHaveBeenCalledTimes(1);
+      window.removeEventListener('navigate-to-tool', onNavigate);
+    });
+
+    it('exports the roll as sampled-pixel/matched-dye pairs', async () => {
+      const { openExportSheet } = await import('@components/export-sheet');
+      tool = mount();
+      await loadImage();
+      const exportBtn = Array.from(rightPanel.querySelectorAll('button')).find((b) =>
+        b.textContent?.includes('common.export')
+      ) as HTMLButtonElement;
+
+      exportBtn.click();
+
+      const arg = vi.mocked(openExportSheet).mock.calls[0][0];
+      expect(arg.tool).toBe('extractor');
+      expect(arg.entries.length).toBeGreaterThan(0);
+      // The pair is the point: the pixel sampled AND the dye it resolved to.
+      // Exporting only the dye would discard the drift this tool exists to show
+      expect(arg.entries[0]).toMatchObject({
+        key: 'pick-1',
+        source: expect.stringMatching(/^#[0-9a-f]{6}$/i),
+        dye: expect.objectContaining({ name: expect.any(String) }),
+        delta: expect.any(Number),
+      });
+    });
+
+    describe('restoring a saved image', () => {
+      it('restores from IndexedDB and re-extracts on mount', async () => {
+        const { indexedDBService } = await import('@services/indexeddb-service');
+        vi.mocked(indexedDBService.get).mockResolvedValueOnce('data:image/png;base64,AAAA');
+
+        tool = mount();
+        for (let i = 0; i < 8; i++) await flush();
+
+        // Restoring must bring the RESULTS back too, not just the bitmap —
+        // otherwise a reload shows the image above an empty panel
+        expect(rightPanel.querySelector('canvas')).not.toBeNull();
+        expect(resultCards().length).toBeGreaterThan(0);
+      });
+
+      it('migrates a legacy localStorage image into IndexedDB', async () => {
+        const { indexedDBService } = await import('@services/indexeddb-service');
+        const { StorageService } = await import('@services/index');
+        vi.mocked(indexedDBService.get).mockResolvedValueOnce(null);
+        vi.mocked(StorageService.getItem).mockImplementation((key: string) =>
+          key === 'v3_matcher_image' ? ('data:image/png;base64,AAAA' as never) : (null as never)
+        );
+
+        tool = mount();
+        for (let i = 0; i < 8; i++) await flush();
+
+        // OPT-012: the copy moves, it does not get duplicated — leaving the
+        // localStorage entry keeps the quota pressure the migration exists to remove
+        expect(indexedDBService.set).toHaveBeenCalledWith(
+          expect.anything(),
+          'v3_matcher_image',
+          'data:image/png;base64,AAAA'
+        );
+        expect(StorageService.removeItem).toHaveBeenCalledWith('v3_matcher_image');
+      });
+
+      it('clears a saved image that will not decode', async () => {
+        const { indexedDBService } = await import('@services/indexeddb-service');
+        const { StorageService } = await import('@services/index');
+        vi.mocked(indexedDBService.get).mockResolvedValueOnce('data:image/png;base64,BROKEN');
+        class FailingImage {
+          onload: (() => void) | null = null;
+          onerror: (() => void) | null = null;
+          set src(_v: string) {
+            queueMicrotask(() => this.onerror?.());
+          }
+        }
+        globalThis.Image = FailingImage as unknown as typeof Image;
+
+        tool = mount();
+        for (let i = 0; i < 8; i++) await flush();
+
+        // A corrupt blob that is never cleared re-fails on every single load
+        expect(indexedDBService.delete).toHaveBeenCalled();
+        expect(StorageService.removeItem).toHaveBeenCalledWith('v3_matcher_image');
+      });
+    });
+
+    describe('market prices', () => {
+      /**
+       * `showPrices` is not a field — it reads through to
+       * `MarketBoardService.getShowPrices()`, so the toggle is flipped on the
+       * service, not on the tool.
+       */
+      const withPricesOn = async () => {
+        const { MarketBoardService } = await import('@services/index');
+        const svc = MarketBoardService.getInstance();
+        vi.mocked(svc.getShowPrices).mockReturnValue(true);
+        return svc;
+      };
+
+      /** The callbacks the shared market panel would drive. */
+      const marketCallbacks = async () => {
+        const { buildMarketPanel } = await import('@services/index');
+        return vi.mocked(buildMarketPanel).mock.calls[0][2] as {
+          onPricesToggled: () => void;
+          onServerChanged: () => void;
+        };
+      };
+
+      it('fetches prices for the extracted palette when prices are switched on', async () => {
+        const svc = await withPricesOn();
+        tool = mount();
+        await loadImage();
+        vi.mocked(svc.fetchPricesForDyes).mockClear();
+
+        (await marketCallbacks()).onPricesToggled();
+        await flush();
+
+        expect(svc.fetchPricesForDyes).toHaveBeenCalled();
+        // The dyes fetched are the DEDUPED ones, so the fetch matches what is
+        // actually on screen rather than the raw pre-dedup match list
+        const fetched = vi.mocked(svc.fetchPricesForDyes).mock.calls[0][0] as { itemID: number }[];
+        expect(new Set(fetched.map((d) => d.itemID)).size).toBe(fetched.length);
+      });
+
+      it('re-fetches when the server changes', async () => {
+        const svc = await withPricesOn();
+        tool = mount();
+        await loadImage();
+        vi.mocked(svc.fetchPricesForDyes).mockClear();
+
+        (await marketCallbacks()).onServerChanged();
+        await flush();
+
+        expect(svc.fetchPricesForDyes).toHaveBeenCalled();
+      });
+
+      it('re-renders without fetching when prices are switched off', async () => {
+        const { MarketBoardService } = await import('@services/index');
+        const svc = MarketBoardService.getInstance();
+        vi.mocked(svc.getShowPrices).mockReturnValue(false);
+        tool = mount();
+        await loadImage();
+        vi.mocked(svc.fetchPricesForDyes).mockClear();
+
+        (await marketCallbacks()).onPricesToggled();
+        await flush();
+
+        expect(svc.fetchPricesForDyes).not.toHaveBeenCalled();
+        expect(resultCards().length).toBeGreaterThan(0);
+      });
+
+      /**
+       * A failed fetch must reach the cards as a short code rather than an
+       * empty price — "no data" and "the request failed" are different states
+       * and the card renders them differently.
+       */
+      it.each([
+        ['a 429', new Error('Request failed with status: 429'), 'H429'],
+        ['a 503', new Error('Request failed with status: 503'), 'H503'],
+        ['a rate-limit message', new Error('Rate limit exceeded'), 'H429'],
+        ['a timeout', new Error('Request timed out'), 'TOUT'],
+        ['a network failure', new Error('Failed to fetch'), 'NCON'],
+        ['an abort', new Error('The operation was aborted'), 'CANC'],
+        ['a bare Response-like object', { status: 404 }, 'H404'],
+        ['something unrecognised', new Error('kaboom'), 'EUNK'],
+      ])('maps %s onto a display code', async (_label, thrown, code) => {
+        const svc = await withPricesOn();
+        tool = mount();
+        await loadImage();
+        vi.mocked(svc.fetchPricesForDyes).mockRejectedValueOnce(thrown);
+
+        (await marketCallbacks()).onPricesToggled();
+        for (let i = 0; i < 4; i++) await flush();
+
+        const errors = Array.from(resultCards()).map(
+          (c) => (c as unknown as { data: { marketError?: string } }).data.marketError
+        );
+        expect(errors).toContain(code);
+      });
+
+      it('reports offline ahead of whatever the error says', async () => {
+        const svc = await withPricesOn();
+        const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+        tool = mount();
+        await loadImage();
+        vi.mocked(svc.fetchPricesForDyes).mockRejectedValueOnce(new Error('status: 500'));
+
+        (await marketCallbacks()).onPricesToggled();
+        for (let i = 0; i < 4; i++) await flush();
+
+        const errors = Array.from(resultCards()).map(
+          (c) => (c as unknown as { data: { marketError?: string } }).data.marketError
+        );
+        // A 500 raised while offline is still an offline problem
+        expect(errors).toContain('NOFF');
+        onLine.mockRestore();
+      });
+
+      it('puts a fetched price onto the card', async () => {
+        const svc = await withPricesOn();
+        tool = mount();
+        await loadImage();
+        // The cards read `getPricesView()` — a map keyed by itemID — not
+        // getPriceForDye. Seed it for every dye in the pool so whichever ones
+        // the extraction picks are covered.
+        vi.mocked(svc.getPricesView).mockReturnValue(
+          new Map(mockDyes.map((d) => [d.itemID, { currentMinPrice: 1234, worldId: 40 }])) as never
+        );
+        vi.mocked(svc.getWorldNameForPrice).mockReturnValue('Jenova' as never);
+
+        (await marketCallbacks()).onPricesToggled();
+        for (let i = 0; i < 4; i++) await flush();
+
+        const first = resultCards()[0] as unknown as {
+          data: { price?: number; marketServer?: string };
+        };
+        expect(first.data.price).toBe(1234);
+        expect(first.data.marketServer).toBe('Jenova');
+      });
+    });
 
     it('clears the image and offers the drop zone again', async () => {
       const { StorageService } = await import('@services/index');
