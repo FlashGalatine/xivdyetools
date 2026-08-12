@@ -44,8 +44,18 @@
 # NOT content-hashed: og:image URLs have to be stable, so a revised card reuses
 # its filename. Under an immutable rule that would strand every cache on the old
 # artwork, and social scrapers are the least re-fetchable consumers there are.
-# TTLs match what og-worker serves for the same cards (24h browser / 7d edge) so
-# the static root card and the dynamic per-tool ones age alike.
+#
+# Short TTLs, and deliberately NOT og-worker's (24h browser / 7d edge) despite
+# these being the same cards. og-worker generates a distinct URL per dye and
+# harmony, so each of its cache keys is effectively immutable and a long edge TTL
+# costs nothing. These files are the opposite: one fixed URL whose bytes change
+# on deploy. Borrowing the 7d edge TTL meant the 3a root card redesign sat behind
+# a stale HIT while the origin already served the new artwork. There is no
+# traffic argument for caching these hard — a handful of scraper fetches — and a
+# week of staleness after a redesign is the whole cost.
+#
+# Changing these numbers does NOT evict entries already stored under the old
+# TTL; that needs a cache purge for the specific URL.
 #
 # These live at /og/ rather than /assets/og/ for a mechanical reason: Cloudflare
 # Pages MERGES the rules of overlapping path patterns rather than letting the
@@ -55,7 +65,7 @@
 # `max-age=86400, immutable, s-maxage=604800`. Moving out from under the
 # pattern removes the overlap instead of fighting the merge.
 /og/*
-  Cache-Control: public, max-age=86400, s-maxage=604800
+  Cache-Control: public, max-age=3600, s-maxage=3600
 
 # ============================================================================
 # Self-hosted webfonts
