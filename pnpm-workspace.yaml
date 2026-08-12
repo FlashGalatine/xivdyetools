@@ -4,11 +4,16 @@ packages:
 
 # Dependency overrides (moved from package.json#pnpm.overrides — pnpm 11 no
 # longer reads that field). typescript keeps the workspace on one compiler;
-# rollup and qs are security floors.
+# rollup, qs and seroval are security floors.
 overrides:
   typescript: ^5.9.3
   rollup: '>=4.59.0'
   qs: '>=6.15.2'
+  # GHSA-mv8w-475r-vwqw (critical): seroval.fromJSON() Promise resolver type
+  # confusion invokes attacker-controlled methods during deserialization.
+  # Reaches us only transitively, via stoat-worker > revolt.js > solid-js, and
+  # seroval-plugins peers on `^1.0` so the floor satisfies it unchanged.
+  seroval: '>=1.5.3'
 
 # Explicit build-script policy (pnpm 11 `allowBuilds` map — replaces the
 # pnpm 10 onlyBuiltDependencies/ignoredBuiltDependencies pair): no dependency
