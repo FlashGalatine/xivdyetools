@@ -45,6 +45,40 @@ vi.mock('@services/dye-service-wrapper', () => ({
 }));
 
 vi.mock('@services/index', async () => ({
+  ToastService: {
+    show: vi.fn(),
+    error: vi.fn(),
+    success: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
+  },
+  /**
+   * The shared market-panel builder. Absent, renderMarketPanel throws and
+   * safeRender swallows it, leaving the whole panel empty.
+   */
+  buildMarketPanel: vi.fn(() => ({
+    panel: {
+      init: vi.fn(),
+      destroy: vi.fn(),
+      setContent: vi.fn(),
+      getContentContainer: vi.fn(() => document.createElement('div')),
+      open: vi.fn(),
+      close: vi.fn(),
+    },
+    // Mirrors the real MarketBoard component's public surface
+    marketBoard: {
+      init: vi.fn(),
+      destroy: vi.fn(),
+      getShowPrices: vi.fn().mockReturnValue(false),
+      setShowPrices: vi.fn(),
+      getSelectedServer: vi.fn().mockReturnValue(null),
+      setSelectedServer: vi.fn(),
+      loadServerData: vi.fn().mockResolvedValue(undefined),
+      refreshPrices: vi.fn().mockResolvedValue(undefined),
+      fetchPricesForDyes: vi.fn().mockResolvedValue(new Map()),
+      shouldFetchPrice: vi.fn().mockReturnValue(false),
+    },
+  })),
   /** Picks readable text ink for a swatch background. */
   getContrastColor: vi.fn(() => '#FFFFFF'),
   /**
@@ -261,8 +295,15 @@ vi.mock('../collapsible-panel', () => ({
 }));
 
 vi.mock('../market-board', () => ({
+  /**
+   * Mirrors the real MarketBoard component's public surface. Tools that build
+   * a second, mobile board construct it directly from here rather than through
+   * buildMarketPanel, so a gap shows up only on the mobile path.
+   */
   MarketBoard: class MockMarketBoard {
     container: HTMLElement;
+    private showPrices = false;
+    private selectedServer: string | null = null;
     constructor(container: HTMLElement) {
       this.container = container;
     }
@@ -275,7 +316,26 @@ vi.mock('../market-board', () => ({
     destroy() {
       this.container.innerHTML = '';
     }
-    setShowPrices() {}
+    getShowPrices() {
+      return this.showPrices;
+    }
+    setShowPrices(value: boolean) {
+      this.showPrices = value;
+    }
+    getSelectedServer() {
+      return this.selectedServer;
+    }
+    setSelectedServer(server: string | null) {
+      this.selectedServer = server;
+    }
+    async loadServerData() {}
+    async refreshPrices() {}
+    async fetchPricesForDyes() {
+      return new Map();
+    }
+    shouldFetchPrice() {
+      return false;
+    }
   },
 }));
 

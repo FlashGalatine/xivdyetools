@@ -37,8 +37,42 @@ vi.mock('@services/dye-service-wrapper', () => ({
 }));
 
 vi.mock('@services/index', () => ({
+  /**
+   * The shared market-panel builder. Absent, renderMarketPanel throws and
+   * safeRender swallows it, leaving the whole panel empty.
+   */
+  buildMarketPanel: vi.fn(() => ({
+    panel: {
+      init: vi.fn(),
+      destroy: vi.fn(),
+      setContent: vi.fn(),
+      getContentContainer: vi.fn(() => document.createElement('div')),
+      open: vi.fn(),
+      close: vi.fn(),
+    },
+    // Mirrors the real MarketBoard component's public surface
+    marketBoard: {
+      init: vi.fn(),
+      destroy: vi.fn(),
+      getShowPrices: vi.fn().mockReturnValue(false),
+      setShowPrices: vi.fn(),
+      getSelectedServer: vi.fn().mockReturnValue(null),
+      setSelectedServer: vi.fn(),
+      loadServerData: vi.fn().mockResolvedValue(undefined),
+      refreshPrices: vi.fn().mockResolvedValue(undefined),
+      fetchPricesForDyes: vi.fn().mockResolvedValue(new Map()),
+      shouldFetchPrice: vi.fn().mockReturnValue(false),
+    },
+  })),
   /** Picks readable text ink for a swatch background. */
   getContrastColor: vi.fn(() => '#FFFFFF'),
+  ToastService: {
+    show: vi.fn(),
+    error: vi.fn(),
+    success: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
+  },
   /** Used by six of the tools; absent it throws as an unhandled rejection. */
   ThemeService: {
     getCurrentTheme: vi.fn().mockReturnValue('standard-dark'),
@@ -220,8 +254,15 @@ vi.mock('../collapsible-panel', () => ({
 }));
 
 vi.mock('../market-board', () => ({
+  /**
+   * Mirrors the real MarketBoard component's public surface. Tools that build
+   * a second, mobile board construct it directly from here rather than through
+   * buildMarketPanel, so a gap shows up only on the mobile path.
+   */
   MarketBoard: class MockMarketBoard {
     container: HTMLElement;
+    private showPrices = false;
+    private selectedServer: string | null = null;
     constructor(container: HTMLElement) {
       this.container = container;
     }
@@ -234,7 +275,26 @@ vi.mock('../market-board', () => ({
     destroy() {
       this.container.innerHTML = '';
     }
-    setShowPrices() {}
+    getShowPrices() {
+      return this.showPrices;
+    }
+    setShowPrices(value: boolean) {
+      this.showPrices = value;
+    }
+    getSelectedServer() {
+      return this.selectedServer;
+    }
+    setSelectedServer(server: string | null) {
+      this.selectedServer = server;
+    }
+    async loadServerData() {}
+    async refreshPrices() {}
+    async fetchPricesForDyes() {
+      return new Map();
+    }
+    shouldFetchPrice() {
+      return false;
+    }
   },
 }));
 
@@ -492,6 +552,306 @@ describe('GradientTool', () => {
 
       // Second destroy should not throw
       expect(() => tool!.destroy()).not.toThrow();
+    });
+  });
+
+  // ==========================================================================
+  // Interaction depth
+  //
+  // Gradient has exactly TWO endpoints, and `selectDye` implements a shift
+  // model on top of them: fill start, then end, then push new picks in at the
+  // start and shove the old start along to the end. Picking a dye that is
+  // already an endpoint does something different again. None of that was
+  // covered, and it is the behaviour a user drives every time they touch the
+  // palette drawer.
+  // ==========================================================================
+
+  const mount = (opts: { drawer?: boolean } = {}): GradientTool => {
+    const t = new GradientTool(
+      container,
+      opts.drawer === false ? { leftPanel, rightPanel } : { leftPanel, rightPanel, drawerContent }
+    );
+    t.init();
+    return t;
+  };
+
+  const flush = async () => {
+    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 0));
+  };
+
+  const DYES_KEY = 'v3_mixer_selected_dyes';
+  const STEPS_KEY = 'v3_mixer_steps';
+  const SPACE_KEY = 'v3_mixer_color_space';
+
+  const lastWrite = async (key: string): Promise<unknown> => {
+    const { StorageService } = await import('@services/index');
+    const calls = vi.mocked(StorageService.setItem).mock.calls.filter((c) => c[0] === key);
+    return calls.at(-1)?.[1];
+  };
+
+  /** The [start, end] dye ids currently persisted. */
+  const endpoints = () => lastWrite(DYES_KEY) as Promise<number[] | undefined>;
+
+  const dye = (id: number, name = `Dye ${id}`) =>
+    ({ ...mockDyes[0], id, itemID: 5000 + id, name, hex: '#123456' }) as never;
+
+  describe('selectDye — the two endpoints', () => {
+    it('fills the start endpoint first', async () => {
+      tool = mount();
+
+      tool.selectDye(dye(1));
+
+      expect(await endpoints()).toEqual([1]);
+    });
+
+    it('fills the end endpoint second', async () => {
+      tool = mount();
+
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+
+      expect(await endpoints()).toEqual([1, 2]);
+    });
+
+    it('shifts once both endpoints are taken: new pick becomes start', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+
+      tool.selectDye(dye(3));
+
+      // new -> start, old start -> end. The oldest endpoint falls off.
+      expect(await endpoints()).toEqual([3, 1]);
+    });
+
+    it('keeps shifting on each further pick', async () => {
+      tool = mount();
+      for (const id of [1, 2, 3, 4]) tool.selectDye(dye(id));
+
+      expect(await endpoints()).toEqual([4, 3]);
+    });
+
+    it('ignores re-picking the current start', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+
+      tool.selectDye(dye(1));
+
+      // Would otherwise shift start into end and leave the same dye twice
+      expect(await endpoints()).toEqual([1, 2]);
+    });
+
+    it('swaps the ends when the current end is picked', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+
+      tool.selectDye(dye(2));
+
+      // A gradient from B to A is a different gradient, so this is a swap
+      // rather than a no-op
+      expect(await endpoints()).toEqual([2, 1]);
+    });
+
+    it('refuses to set the same dye at both ends', async () => {
+      const { ToastService } = await import('@services/index');
+      tool = mount();
+      tool.selectDye(dye(1));
+
+      tool.selectDye(dye(1));
+
+      // A zero-length gradient is not a gradient — warn, do not accept
+      expect(ToastService.warning).toHaveBeenCalled();
+      expect(await endpoints()).toEqual([1]);
+    });
+
+    it.each([
+      ['undefined', undefined],
+      ['null', null],
+    ])('ignores %s rather than crashing the drawer', (_label, value) => {
+      tool = mount();
+
+      expect(() => tool!.selectDye(value as never)).not.toThrow();
+    });
+  });
+
+  describe('selectCustomColor', () => {
+    it('takes an endpoint like a real dye', async () => {
+      tool = mount();
+
+      tool.selectCustomColor('#aabbcc');
+
+      expect(await endpoints()).toHaveLength(1);
+    });
+
+    it('ignores an empty colour', async () => {
+      tool = mount();
+
+      tool.selectCustomColor('');
+
+      expect(await endpoints()).toBeUndefined();
+    });
+
+    it('can fill the second endpoint after a real dye', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+
+      tool.selectCustomColor('#aabbcc');
+
+      expect(await endpoints()).toHaveLength(2);
+    });
+  });
+
+  describe('clearDyes', () => {
+    it('drops both endpoints from storage', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      vi.mocked(StorageService.removeItem).mockClear();
+
+      tool.clearDyes();
+
+      expect(StorageService.removeItem).toHaveBeenCalledWith(DYES_KEY);
+    });
+
+    it('leaves the tool usable, starting again from the start endpoint', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      tool.clearDyes();
+
+      tool.selectDye(dye(9));
+
+      expect(await endpoints()).toEqual([9]);
+    });
+
+    it('is safe with nothing selected, twice', () => {
+      tool = mount();
+
+      expect(() => {
+        tool!.clearDyes();
+        tool!.clearDyes();
+      }).not.toThrow();
+    });
+  });
+
+  describe('setConfig', () => {
+    it('persists a step-count change', async () => {
+      tool = mount();
+
+      tool.setConfig({ stepCount: 12 });
+      await flush();
+
+      expect(await lastWrite(STEPS_KEY)).toBe(12);
+    });
+
+    it('ignores a step count already in effect', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      tool.setConfig({ stepCount: 12 });
+      await flush();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      tool.setConfig({ stepCount: 12 });
+      await flush();
+
+      expect(StorageService.setItem).not.toHaveBeenCalledWith(STEPS_KEY, expect.anything());
+    });
+
+    it('persists an interpolation change as the colour space', async () => {
+      tool = mount();
+
+      tool.setConfig({ interpolation: 'oklab' } as never);
+      await flush();
+
+      // The sidebar calls it `interpolation`; storage calls it colorSpace
+      expect(await lastWrite(SPACE_KEY)).toBe('oklab');
+    });
+
+    it.each(['rgb', 'lab', 'oklab', 'lch', 'hsl'])(
+      'accepts %s as an interpolation space',
+      async (space) => {
+        tool = mount();
+
+        tool.setConfig({ interpolation: space } as never);
+        await flush();
+
+        expect(await lastWrite(SPACE_KEY)).toBe(space);
+      }
+    );
+
+    it('ignores the colour space already in effect', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      // hsv is the default
+      tool.setConfig({ interpolation: 'hsv' } as never);
+      await flush();
+
+      expect(StorageService.setItem).not.toHaveBeenCalledWith(SPACE_KEY, expect.anything());
+    });
+
+    it.each([
+      ['preventDuplicates', { preventDuplicates: true }],
+      ['matchingMethod', { matchingMethod: 'oklab' }],
+      ['displayOptions', { displayOptions: { showHex: true } }],
+    ])('accepts a %s change with no endpoints set', (_label, config) => {
+      tool = mount();
+
+      expect(() => tool!.setConfig(config as never)).not.toThrow();
+    });
+
+    it('accepts an empty config without writing anything', async () => {
+      const { StorageService } = await import('@services/index');
+      tool = mount();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      tool.setConfig({});
+
+      expect(StorageService.setItem).not.toHaveBeenCalledWith(STEPS_KEY, expect.anything());
+    });
+
+    it('recomputes against the new settings when endpoints are set', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+
+      expect(() => tool!.setConfig({ stepCount: 5 })).not.toThrow();
+      await flush();
+
+      expect(await lastWrite(STEPS_KEY)).toBe(5);
+    });
+  });
+
+  describe('lifecycle under interaction', () => {
+    it('tears down cleanly after selection and configuration', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      tool.setConfig({ stepCount: 6 });
+      await flush();
+
+      expect(() => tool!.destroy()).not.toThrow();
+    });
+
+    it('ignores configuration arriving after destroy', () => {
+      tool = mount();
+      tool.destroy();
+
+      // The sidebar can emit one last config-change during teardown
+      expect(() => tool!.setConfig({ stepCount: 4 })).not.toThrow();
+    });
+
+    it('works with no drawer panel supplied', async () => {
+      tool = mount({ drawer: false });
+
+      tool.selectDye(dye(1));
+
+      expect(await endpoints()).toEqual([1]);
     });
   });
 });

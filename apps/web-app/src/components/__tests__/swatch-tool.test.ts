@@ -35,6 +35,33 @@ vi.mock('@services/dye-service-wrapper', () => ({
 }));
 
 vi.mock('@services/index', () => ({
+  /**
+   * The shared market-panel builder. Absent, renderMarketPanel throws and
+   * safeRender swallows it, leaving the whole panel empty.
+   */
+  buildMarketPanel: vi.fn(() => ({
+    panel: {
+      init: vi.fn(),
+      destroy: vi.fn(),
+      setContent: vi.fn(),
+      getContentContainer: vi.fn(() => document.createElement('div')),
+      open: vi.fn(),
+      close: vi.fn(),
+    },
+    // Mirrors the real MarketBoard component's public surface
+    marketBoard: {
+      init: vi.fn(),
+      destroy: vi.fn(),
+      getShowPrices: vi.fn().mockReturnValue(false),
+      setShowPrices: vi.fn(),
+      getSelectedServer: vi.fn().mockReturnValue(null),
+      setSelectedServer: vi.fn(),
+      loadServerData: vi.fn().mockResolvedValue(undefined),
+      refreshPrices: vi.fn().mockResolvedValue(undefined),
+      fetchPricesForDyes: vi.fn().mockResolvedValue(new Map()),
+      shouldFetchPrice: vi.fn().mockReturnValue(false),
+    },
+  })),
   /** Picks readable text ink for a swatch background. */
   getContrastColor: vi.fn(() => '#FFFFFF'),
   /** Used by six of the tools; absent it throws as an unhandled rejection. */
@@ -148,6 +175,7 @@ vi.mock('@services/index', () => ({
     isFavorite: vi.fn().mockReturnValue(false),
   },
   ToastService: {
+    warning: vi.fn(),
     show: vi.fn(),
     error: vi.fn(),
     success: vi.fn(),

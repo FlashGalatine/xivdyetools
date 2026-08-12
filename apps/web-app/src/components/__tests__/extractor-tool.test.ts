@@ -267,8 +267,15 @@ vi.mock('../collapsible-panel', () => ({
 }));
 
 vi.mock('../market-board', () => ({
+  /**
+   * Mirrors the real MarketBoard component's public surface. Tools that build
+   * a second, mobile board construct it directly from here rather than through
+   * buildMarketPanel, so a gap shows up only on the mobile path.
+   */
   MarketBoard: class MockMarketBoard {
     container: HTMLElement;
+    private showPrices = false;
+    private selectedServer: string | null = null;
     constructor(container: HTMLElement) {
       this.container = container;
     }
@@ -281,7 +288,26 @@ vi.mock('../market-board', () => ({
     destroy() {
       this.container.innerHTML = '';
     }
-    setShowPrices() {}
+    getShowPrices() {
+      return this.showPrices;
+    }
+    setShowPrices(value: boolean) {
+      this.showPrices = value;
+    }
+    getSelectedServer() {
+      return this.selectedServer;
+    }
+    setSelectedServer(server: string | null) {
+      this.selectedServer = server;
+    }
+    async loadServerData() {}
+    async refreshPrices() {}
+    async fetchPricesForDyes() {
+      return new Map();
+    }
+    shouldFetchPrice() {
+      return false;
+    }
   },
 }));
 
