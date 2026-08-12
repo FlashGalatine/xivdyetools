@@ -39,6 +39,18 @@
   Cache-Control: public, max-age=31536000, immutable
 
 # ============================================================================
+# Social cards - the /fonts/* carve-out, for the same reason
+# ============================================================================
+# These sit under /assets/ but are NOT content-hashed: og:image URLs have to be
+# stable, so a revised card reuses its filename. Under the immutable rule above
+# that would strand every cache on the old artwork for a year, and social
+# scrapers are the least re-fetchable consumers there are. TTLs match what
+# og-worker serves for the same cards (24h browser / 7d edge) so the static
+# root card and the dynamic per-tool ones age alike.
+/assets/og/*
+  Cache-Control: public, max-age=86400, s-maxage=604800
+
+# ============================================================================
 # Self-hosted webfonts
 # ============================================================================
 # Not `immutable`: unlike /assets/*, these filenames are not content-hashed, so

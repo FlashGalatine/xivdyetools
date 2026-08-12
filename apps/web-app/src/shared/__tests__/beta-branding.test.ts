@@ -9,6 +9,7 @@ import { describe, it, expect } from 'vitest';
 import {
   BASE_APP_NAME,
   BETA_HEADERS_BLOCK,
+  BETA_ORIGIN,
   BETA_TITLE_PREFIX,
   brandHtmlForBeta,
 } from '../beta-branding';
@@ -19,6 +20,13 @@ const SAMPLE_HTML = `<!DOCTYPE html>
   <head>
     <title>XIV Dye Tools - FFXIV Dye Color Matcher</title>
     <meta name="robots" content="index, follow" />
+    <meta name="description" content="Free tools at https://xivdyetools.app/ for FFXIV players." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://xivdyetools.app/" />
+    <meta property="og:image" content="https://xivdyetools.app/assets/og/default.png" />
+    <meta property="og:site_name" content="XIV Dye Tools" />
+    <meta name="twitter:url" content="https://xivdyetools.app/" />
+    <meta name="twitter:image" content="https://xivdyetools.app/assets/og/default-x.png" />
     <link rel="canonical" href="https://xivdyetools.app/" />
     <link rel="icon" type="image/x-icon" href="/assets/icons/favicon.ico" />
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png" />
@@ -126,6 +134,51 @@ describe('brandHtmlForBeta', () => {
     expect(out).toContain(
       '<link rel="preload" href="/assets/icons/icon-40x40.webp" as="image" type="image/webp" fetchpriority="high" />'
     );
+  });
+
+  it('repoints og:image and twitter:image at the beta origin', () => {
+    const out = brandHtmlForBeta(SAMPLE_HTML);
+    expect(out).toContain(`content="${BETA_ORIGIN}/assets/og/default.png"`);
+    expect(out).toContain(`content="${BETA_ORIGIN}/assets/og/default-x.png"`);
+  });
+
+  it('repoints og:url and twitter:url so the embed links back to beta', () => {
+    const out = brandHtmlForBeta(SAMPLE_HTML);
+    expect(out).toContain(`<meta property="og:url" content="${BETA_ORIGIN}/" />`);
+    expect(out).toContain(`<meta name="twitter:url" content="${BETA_ORIGIN}/" />`);
+  });
+
+  it('leaves og/twitter tags whose content is not a production URL alone', () => {
+    const out = brandHtmlForBeta(SAMPLE_HTML);
+    expect(out).toContain('<meta property="og:type" content="website" />');
+    expect(out).toContain('<meta property="og:site_name" content="XIV Dye Tools" />');
+  });
+
+  it('does not rewrite production URLs outside og/twitter tags', () => {
+    const out = brandHtmlForBeta(SAMPLE_HTML);
+    // rel=canonical intentionally keeps pointing at production, and a prose
+    // mention of the URL in the description is not a social-embed target.
+    expect(out).toContain('<link rel="canonical" href="https://xivdyetools.app/" />');
+    expect(out).toContain(
+      '<meta name="description" content="Free tools at https://xivdyetools.app/ for FFXIV players." />'
+    );
+  });
+
+  it('is idempotent for the og/twitter origin rewrite', () => {
+    const once = brandHtmlForBeta(SAMPLE_HTML);
+    expect(brandHtmlForBeta(once)).toBe(once);
+    expect(once).not.toContain('beta.beta.');
+  });
+
+  it('rewrites og tags regardless of attribute order', () => {
+    const reordered = '<meta content="https://xivdyetools.app/x.png" property="og:image" />';
+    expect(brandHtmlForBeta(reordered)).toBe(
+      `<meta content="${BETA_ORIGIN}/x.png" property="og:image" />`
+    );
+  });
+
+  it('exposes the beta origin', () => {
+    expect(BETA_ORIGIN).toBe('https://beta.xivdyetools.app');
   });
 
   it('exposes a headers block that suppresses indexing', () => {

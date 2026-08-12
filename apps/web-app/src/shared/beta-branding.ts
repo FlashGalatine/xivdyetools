@@ -23,6 +23,18 @@ export const BASE_APP_NAME = 'XIV Dye Tools';
 const BETA_ICON_PATH = '/assets/icons/beta/';
 
 /**
+ * Origins for the social-embed rewrite.
+ *
+ * `og:*` / `twitter:*` URLs are absolute by protocol requirement — a crawler
+ * never resolves them against the page — so unlike the icon `href`s they carry
+ * a hardcoded production origin that a root-relative rewrite cannot reach.
+ * Left alone, beta's embeds serve production's card and link back to
+ * production, which makes a beta share indistinguishable from a live one.
+ */
+export const PRODUCTION_ORIGIN = 'https://xivdyetools.app';
+export const BETA_ORIGIN = 'https://beta.xivdyetools.app';
+
+/**
  * Appended to `dist/_headers` for a beta build.
  *
  * Cloudflare Pages merges the rules of repeated path patterns, so a second
@@ -70,8 +82,26 @@ export function brandHtmlForBeta(html: string): string {
   // "index, follow" left untouched would contradict it, and conflict
   // resolution between the two is not uniformly specified across crawlers.
   // Rewritten in place; never injected if absent.
+  //
+  // The social-embed rewrite rides the same pass. It is keyed on the tag's
+  // og:/twitter: prefix rather than a list of tag names, so a social tag added
+  // to index.html later cannot silently keep pointing at production — the same
+  // reasoning as the prefix-matched icon rewrite above. Scoped to those tags
+  // deliberately: <link rel="canonical"> still names production (beta is
+  // noindex, so it has no competing canonical to declare) and prose mentions
+  // of the URL are not embed targets.
+  //
+  // Swapping the full origin including scheme makes the transform idempotent
+  // for free — BETA_ORIGIN does not contain PRODUCTION_ORIGIN as a substring,
+  // so a second pass finds nothing to match.
   return linksRewritten.replace(/<meta\b[^>]*>/g, (tag) => {
-    if (!/\bname="robots"/.test(tag)) return tag;
-    return tag.replace(/\bcontent="[^"]*"/, 'content="noindex, nofollow"');
+    if (/\bname="robots"/.test(tag)) {
+      return tag.replace(/\bcontent="[^"]*"/, 'content="noindex, nofollow"');
+    }
+    if (!/\b(?:property|name)="(?:og|twitter):[^"]*"/.test(tag)) return tag;
+    return tag.replace(
+      /\bcontent="([^"]*)"/,
+      (attr, content: string) => `content="${content.split(PRODUCTION_ORIGIN).join(BETA_ORIGIN)}"`
+    );
   });
 }
