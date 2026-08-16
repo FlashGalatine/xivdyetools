@@ -8,10 +8,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  applyDisplayOptions,
-  DEFAULT_DISPLAY_OPTIONS,
-} from '../display-options-helper';
+import { applyDisplayOptions, DEFAULT_DISPLAY_OPTIONS } from '../display-options-helper';
 import type { DisplayOptionsConfig } from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS as CANONICAL_DEFAULTS } from '@shared/tool-config-types';
 import { logger } from '@shared/logger';
@@ -257,5 +254,4 @@ describe('display-options-helper', () => {
       expect(result.options).toEqual(incoming);
     });
   });
-
 });

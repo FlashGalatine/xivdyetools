@@ -140,4 +140,3 @@ export const ERROR_MESSAGES = {
   THEME_INVALID: 'Invalid theme selected. Using default theme.',
   UNKNOWN_ERROR: 'An unexpected error occurred. Please try again.',
 } as const;
-

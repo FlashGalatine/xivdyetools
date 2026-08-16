@@ -128,5 +128,4 @@ export abstract class BaseLitComponent extends LitElement {
       logger.error(`[${this.tagName}] ${message}`, error);
     }
   }
-
 }

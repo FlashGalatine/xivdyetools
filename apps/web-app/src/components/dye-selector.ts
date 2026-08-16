@@ -704,5 +704,4 @@ export class DyeSelector extends BaseComponent {
       sortOption: this.sortOption,
     };
   }
-
 }
