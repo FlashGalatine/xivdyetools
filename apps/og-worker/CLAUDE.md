@@ -116,7 +116,7 @@ carries it):
 
 | Pattern | Notes |
 |---|---|
-| `GET /og/harmony/:dyeId/:harmonyType[.png]` | `?algo=` — the 6 live `MatchingMethod`s plus 3 legacy spellings (`euclidean`/`hyab`/`oklch-weighted`, normalised on use) in `VALID_ALGORITHMS`; default `oklab` |
+| `GET /og/harmony/:dyeId/:harmonyType[.png]` | `?algo=` — the 6 live `MatchingMethod`s plus 3 legacy spellings (`euclidean`/`hyab`/`oklch-weighted`, normalised on use) in `VALID_ALGORITHMS`; default `ciede2000` (`DEFAULT_MATCHING_METHOD`, the suite default) |
 | `GET /og/gradient/:startId/:endId/:steps[.png]` | `steps` 2–20 (`OG_MAX_GRADIENT_STEPS`), then capped to `BAND_CAP` |
 | `GET /og/mixer/:dyeAId/:dyeBId/:ratio[.png]` | 2-dye mix; ratio 1–99 |
 | `GET /og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio[.png]` | 3-dye mix; ratio 1–99 |
