@@ -55,10 +55,24 @@ describe('showShortcutsPanel', () => {
     expect(config().title).toBeTruthy();
   });
 
-  it('renders three shortcut groups', () => {
+  it('renders two shortcut groups (navigation, quick actions)', () => {
     showShortcutsPanel();
 
-    expect(config().content.querySelectorAll('.shortcut-group')).toHaveLength(3);
+    expect(config().content.querySelectorAll('.shortcut-group')).toHaveLength(2);
+  });
+
+  it('does not advertise dye-selection keys the 5.0 palette drawer does not handle', () => {
+    // The old "Dye Selection" group (Tab / arrows / Enter) documented the
+    // legacy DyeGrid's roving focus. The 5.0 palette drawer renders plain
+    // swatches with no keydown handling, and the one DyeGrid host left
+    // (accessibility's left-panel DyeSelector) is wiped by the shared-panel
+    // layout — so those rows promised keys that do nothing.
+    showShortcutsPanel();
+
+    const headings = [...config().content.querySelectorAll('h4')].map((h) => h.textContent);
+    expect(headings).not.toContain('shortcuts.dyeSelection');
+    const keys = [...config().content.querySelectorAll('kbd')].map((k) => k.textContent);
+    expect(keys).not.toEqual(expect.arrayContaining(['Tab', '↑↓←→', 'Enter']));
   });
 
   it('gives every group a heading and at least one row', () => {
@@ -75,17 +89,7 @@ describe('showShortcutsPanel', () => {
     showShortcutsPanel();
 
     const keys = [...config().content.querySelectorAll('kbd')].map((k) => k.textContent);
-    expect(keys).toEqual([
-      '1-9',
-      'Esc',
-      'Shift + T',
-      'Shift + L',
-      'Shift + S',
-      '?',
-      'Tab',
-      '↑↓←→',
-      'Enter',
-    ]);
+    expect(keys).toEqual(['1-9', 'Esc', 'Shift + T', 'Shift + L', 'Shift + S', '?']);
     expect(new Set(keys).size).toBe(keys.length);
   });
 
@@ -93,7 +97,7 @@ describe('showShortcutsPanel', () => {
     showShortcutsPanel();
 
     const rows = config().content.querySelectorAll('.shortcut-group .space-y-2 > div');
-    expect(rows.length).toBe(9);
+    expect(rows.length).toBe(6);
     for (const row of rows) {
       expect(row.querySelector('kbd')).not.toBeNull();
       expect(row.querySelector('span')?.textContent).toBeTruthy();

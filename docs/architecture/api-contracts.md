@@ -69,14 +69,17 @@ Content-Type: application/json
 ```
 
 **Verification** (`apps/presets-api/src/middleware/auth.ts`): `verifyJWT(token, JWT_SECRET)` from
-`@xivdyetools/auth` (HS256 only, signature + expiry). The Presets API then uses the **`sub`** claim as
-the acting user's ID and `global_name || username` as the display name:
+`@xivdyetools/auth` (HS256 only, signature + expiry). The Presets API then uses the **`discord_id`**
+claim (Discord snowflake — the same identity the bot path sends in `X-User-Discord-ID`) as the acting
+user's ID, falling back to **`sub`** (the oauth worker's internal user UUID) only for XIVAuth-only
+accounts that have no Discord ID, and `global_name || username` as the display name:
 
 ```typescript
+const userId = resolveJWTUserId(payload); // discord_id ?? sub
 ctx.set('auth', {
   isAuthenticated: true,
-  isModerator: MODERATOR_IDS.includes(payload.sub),
-  userDiscordId: payload.sub,
+  isModerator: MODERATOR_IDS.includes(userId),
+  userDiscordId: userId,
   userName: payload.global_name || payload.username,
   authSource: 'web',
 });

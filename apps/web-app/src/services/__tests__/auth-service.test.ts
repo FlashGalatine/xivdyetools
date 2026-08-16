@@ -191,6 +191,58 @@ describe('AuthService', () => {
       await authService.initialize(); // Should be a no-op
       expect(authService.isAuthenticated()).toBe(false);
     });
+
+    // The oauth worker mints `sub` = its internal user UUID and carries the
+    // Discord snowflake as `discord_id`. Community presets are owned by the
+    // snowflake (shared with the Discord bot), so `user.id` — the value
+    // preset-edit-form compares against `author_discord_id` — must be the
+    // snowflake whenever the token has one.
+    it('should expose discord_id (not the internal sub UUID) as user.id when present', async () => {
+      const futureTime = Math.floor(Date.now() / 1000) + 3600;
+      const mockToken = createMockJWT({
+        sub: '3f1c9d2e-8a4b-4c1d-9e0f-123456789abc',
+        discord_id: '555666777888999000',
+        username: 'testuser',
+        global_name: 'Test User',
+        avatar: null,
+        auth_provider: 'discord',
+        exp: futureTime,
+        iat: Math.floor(Date.now() / 1000),
+        iss: 'xivdyetools',
+      });
+
+      mockLocalStorage['xivdyetools_auth_token'] = mockToken;
+      mockLocalStorage['xivdyetools_auth_expires'] = String(futureTime);
+
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+
+      expect(authService.getUser()?.id).toBe('555666777888999000');
+    });
+
+    it('should fall back to sub as user.id for XIVAuth-only tokens without discord_id', async () => {
+      const futureTime = Math.floor(Date.now() / 1000) + 3600;
+      const mockToken = createMockJWT({
+        sub: '3f1c9d2e-8a4b-4c1d-9e0f-123456789abc',
+        xivauth_id: 'xiv-42',
+        username: 'xivuser',
+        global_name: null,
+        avatar: null,
+        auth_provider: 'xivauth',
+        exp: futureTime,
+        iat: Math.floor(Date.now() / 1000),
+        iss: 'xivdyetools',
+      });
+
+      mockLocalStorage['xivdyetools_auth_token'] = mockToken;
+      mockLocalStorage['xivdyetools_auth_expires'] = String(futureTime);
+      mockLocalStorage['xivdyetools_auth_provider'] = 'xivauth';
+
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+
+      expect(authService.getUser()?.id).toBe('3f1c9d2e-8a4b-4c1d-9e0f-123456789abc');
+    });
   });
 
   describe('subscribe', () => {

@@ -34,6 +34,11 @@ vi.mock('@services/dye-service-wrapper', () => ({
       getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
     }),
   },
+  // The (unmocked) ShareService resolves shared stainIDs through this
+  // singleton — without it, a `start=`/`end=` share param throws on load.
+  dyeService: {
+    getByStainId: (id: number) => mockDyes.find((d) => d.stainID === id) ?? null,
+  },
 }));
 
 vi.mock('@services/index', () => ({
@@ -710,6 +715,122 @@ describe('GradientTool', () => {
       tool.selectCustomColor('#aabbcc');
 
       expect(await endpoints()).toHaveLength(2);
+    });
+  });
+
+  // ==========================================================================
+  // Share URL — 5.0 grammar: an endpoint is EITHER a stainID (`start`/`end`)
+  // OR a bare colour (`hexStart`/`hexEnd`), never both. A custom endpoint
+  // used to be written as `start=0`, which fails validation on the way out
+  // and lost the colour on the way in.
+  // ==========================================================================
+
+  describe('share URL — custom endpoints', () => {
+    const shareParams = () =>
+      (container.querySelector('v4-share-button') as unknown as {
+        shareParams: Record<string, unknown>;
+        disabled: boolean;
+      }) ?? null;
+
+    /** Mount with a share URL in the address bar; restored afterwards. */
+    const mountAt = (search: string): GradientTool => {
+      window.history.replaceState({}, '', `/gradient/${search}`);
+      return mount();
+    };
+
+    afterEach(() => {
+      window.history.replaceState({}, '', '/');
+    });
+
+    it('writes a custom start as hexStart and omits start', () => {
+      tool = mount();
+      tool.selectCustomColor('#aabbcc'); // start
+      tool.selectDye(dye(2)); // end
+
+      const share = shareParams();
+      expect(share).not.toBeNull();
+      const params = share!.shareParams;
+      // The custom colour travels as its hex slot; its dye slot is absent
+      // (mutually exclusive) — the pre-fix `start: 0` must be gone
+      expect(String(params.hexStart).toLowerCase()).toBe('aabbcc');
+      expect(params).not.toHaveProperty('start');
+      expect(params.end).toBe(mockDyes[0].stainID);
+      expect(params).not.toHaveProperty('hexEnd');
+      expect(share!.disabled).toBe(false);
+    });
+
+    it('writes a real dye as its stainID and a custom end as hexEnd', () => {
+      tool = mount();
+      tool.selectDye(dye(2)); // start
+      tool.selectCustomColor('#aabbcc'); // end
+
+      const params = shareParams()!.shareParams;
+      expect(params.start).toBe(mockDyes[0].stainID);
+      expect(params).not.toHaveProperty('hexStart');
+      expect(String(params.hexEnd).toLowerCase()).toBe('aabbcc');
+      expect(params).not.toHaveProperty('end');
+      // The pre-fix encoding must be gone
+      expect(params.end).not.toBe(0);
+    });
+
+    it('reads hexStart as a custom start endpoint alongside a stainID end', async () => {
+      tool = mountAt('?hexStart=aabbcc&end=2&v=1');
+
+      // Round-trip: the loaded state writes back the same grammar
+      const params = shareParams()!.shareParams;
+      expect(String(params.hexStart).toLowerCase()).toBe('aabbcc');
+      expect(params).not.toHaveProperty('start');
+      expect(params.end).toBe(2);
+      // and both endpoints are live in the tool
+      expect(await endpoints()).toHaveLength(2);
+    });
+
+    it('reads two bare-colour endpoints', async () => {
+      tool = mountAt('?hexStart=aabbcc&hexEnd=112233&v=1');
+
+      const params = shareParams()!.shareParams;
+      expect(String(params.hexStart).toLowerCase()).toBe('aabbcc');
+      expect(String(params.hexEnd).toLowerCase()).toBe('112233');
+      expect(params).not.toHaveProperty('start');
+      expect(params).not.toHaveProperty('end');
+      const ids = (await endpoints()) as number[];
+      expect(ids).toHaveLength(2);
+      // Two customs from one link must stay distinct endpoints
+      expect(ids[0]).not.toBe(ids[1]);
+    });
+
+    it('lets the stainID slot win when both start and hexStart are present', () => {
+      tool = mountAt('?start=1&hexStart=aabbcc&end=2&v=1');
+
+      const params = shareParams()!.shareParams;
+      expect(params.start).toBe(1);
+      expect(params).not.toHaveProperty('hexStart');
+    });
+
+    it('rejects a malformed hexStart loudly rather than loading a colour', async () => {
+      const { ToastService } = await import('@services/toast-service');
+      const toastError = vi.spyOn(ToastService, 'error');
+
+      tool = mountAt('?hexStart=zzzzzz&end=2&v=1');
+
+      expect(toastError).toHaveBeenCalled();
+
+      const ids = (await endpoints()) as number[] | undefined;
+      // Only the end endpoint loaded — the tool is not shareable yet
+      expect(ids ?? []).toHaveLength(1);
+      expect(shareParams()!.disabled).toBe(true);
+    });
+
+    it('still rejects a legacy itemID in start loudly', async () => {
+      const { ToastService } = await import('@services/toast-service');
+      const toastError = vi.spyOn(ToastService, 'error');
+
+      tool = mountAt('?start=5729&end=2&v=1');
+
+      const ids = (await endpoints()) as number[] | undefined;
+      expect(ids ?? []).toHaveLength(1);
+      expect(shareParams()!.disabled).toBe(true);
+      expect(toastError).toHaveBeenCalled();
     });
   });
 

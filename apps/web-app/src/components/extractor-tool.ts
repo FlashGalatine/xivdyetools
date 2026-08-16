@@ -52,7 +52,12 @@ import type {
 } from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
 import { isDyeExcluded, filterDyes } from '@shared/dye-filter-utils';
-import { PaletteService, type PaletteMatch } from '@xivdyetools/core';
+import {
+  DEFAULT_MATCHING_METHOD,
+  normalizeMatchingMethod,
+  PaletteService,
+  type PaletteMatch,
+} from '@xivdyetools/core';
 import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
 import '@components/v4/result-card';
 
@@ -173,7 +178,7 @@ export class ExtractorTool extends BaseComponent {
   }
   private currentImage: HTMLImageElement | null = null;
   private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
-  private matchingMethod: MatchingMethod = 'oklab';
+  private matchingMethod: MatchingMethod = DEFAULT_MATCHING_METHOD;
   private preventDuplicates: boolean = true;
 
   // Child components
@@ -256,6 +261,24 @@ export class ExtractorTool extends BaseComponent {
     this.paletteMode = StorageService.getItem<boolean>(STORAGE_KEYS.paletteMode) ?? true; // v4: Default to palette mode
     this.paletteColorCount = StorageService.getItem<number>(STORAGE_KEYS.paletteColorCount) ?? 4;
     this.vibrancyBoost = StorageService.getItem<boolean>(STORAGE_KEYS.vibrancyBoost) ?? true;
+
+    // Seed from the persisted extractor config (v4 unified config) so a stored
+    // choice survives reload and the tool agrees with what the sidebar shows.
+    // Suite default is ΔE2000; normalized so persisted 4.x values
+    // (hyab, oklch-weighted) migrate instead of reaching the matcher.
+    const extractorConfig = ConfigController.getInstance().getConfig('extractor');
+    this.matchingMethod = normalizeMatchingMethod(
+      extractorConfig.matchingMethod ?? DEFAULT_MATCHING_METHOD
+    );
+    if (extractorConfig.preventDuplicates !== undefined) {
+      this.preventDuplicates = extractorConfig.preventDuplicates;
+    }
+    if (extractorConfig.dyeFilters) {
+      this.dyeFiltersConfig = { ...extractorConfig.dyeFilters };
+    }
+    if (extractorConfig.displayOptions) {
+      this.displayOptions = { ...this.displayOptions, ...extractorConfig.displayOptions };
+    }
 
     // WEB-REF-003 Phase 4: Initialize MarketBoardService (shared price cache)
     this.marketBoardService = MarketBoardService.getInstance();

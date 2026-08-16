@@ -1076,10 +1076,6 @@
     "cycleLanguage": "Changer de langue",
     "shareTool": "Partager l'outil actuel",
     "showHelp": "Afficher ce panneau",
-    "dyeSelection": "Sélection de Teinture",
-    "focusSelector": "Focus sur le sélecteur",
-    "navigateDyes": "Naviguer entre les teintures",
-    "selectDye": "Sélectionner la teinture en focus",
     "platformHint": "Astuce",
     "useModifier": "Utilisez Ctrl pour les raccourcis système"
   },

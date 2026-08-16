@@ -124,11 +124,15 @@ const ICON_END_ANCHOR =
 // MixerTool Component
 // ============================================================================
 
+/** Monotonic suffix for synthetic custom-colour dye ids (see createCustomDye). */
+let customDyeSequence = 0;
+
 /**
  * Mixer Tool - v3 Two-Panel Layout
  *
  * Creates smooth color transitions between two dyes with intermediate matches.
  */
+
 export class GradientTool extends BaseComponent {
   private options: GradientToolOptions;
 
@@ -308,6 +312,22 @@ export class GradientTool extends BaseComponent {
   }
 
   /**
+   * Resolve one shared endpoint from its (mutually exclusive) stainID and
+   * bare-colour params. Returns null when neither is present or the value
+   * fails loudly inside ShareService.
+   */
+  private resolveSharedEndpoint(dyeParam: unknown, hexParam: unknown): Dye | null {
+    if (typeof dyeParam === 'number') {
+      return this.findSharedDye(dyeParam);
+    }
+    if (hexParam !== undefined && hexParam !== null && hexParam !== '') {
+      const hex = ShareService.parseSharedHex(hexParam);
+      return hex ? this.createCustomDye(hex) : null;
+    }
+    return null;
+  }
+
+  /**
    * Load tool state from share URL parameters if present.
    * Called on mount to restore shared state.
    */
@@ -320,22 +340,26 @@ export class GradientTool extends BaseComponent {
     const params = parsed.params;
     let hasChanges = false;
 
-    // Load start dye
-    if (typeof params.start === 'number') {
-      const startDye = this.findSharedDye(params.start);
-      if (startDye) {
-        this.selectedDyes[0] = startDye;
-        hasChanges = true;
-      }
+    // Each endpoint is EITHER a stainID (`start`/`end`) OR a bare colour
+    // (`hexStart`/`hexEnd`) — the dye slot wins when both are present, and a
+    // bare colour goes through the same virtual-dye path as the drawer's
+    // Custom Color so the rest of the tool treats it like any endpoint.
+    const startDye = this.resolveSharedEndpoint(params.start, params.hexStart);
+    if (startDye) {
+      this.selectedDyes[0] = startDye;
+      hasChanges = true;
     }
 
-    // Load end dye
-    if (typeof params.end === 'number') {
-      const endDye = this.findSharedDye(params.end);
-      if (endDye) {
-        this.selectedDyes[1] = endDye;
-        hasChanges = true;
-      }
+    const endDye = this.resolveSharedEndpoint(params.end, params.hexEnd);
+    if (endDye) {
+      this.selectedDyes[1] = endDye;
+      hasChanges = true;
+    }
+
+    // A rejected start (legacy itemID, bad hex) with a good end would leave a
+    // hole at [0]; the endpoint list is positional and cannot hold one.
+    if (hasChanges) {
+      this.selectedDyes = this.selectedDyes.filter((d): d is Dye => Boolean(d));
     }
 
     // Load step count — the shared range is the slider's range, 3–12
@@ -1639,9 +1663,21 @@ export class GradientTool extends BaseComponent {
       return {};
     }
 
+    // A custom endpoint has no stainID — share it as the declared bare-colour
+    // slot (`hexStart`/`hexEnd`) instead of an invalid `start=0` that fails
+    // validation and loses the colour. The two params are mutually exclusive.
+    const start =
+      this.startDye.stainID !== null
+        ? { start: this.startDye.stainID }
+        : { hexStart: this.startDye.hex.replace('#', '') };
+    const end =
+      this.endDye.stainID !== null
+        ? { end: this.endDye.stainID }
+        : { hexEnd: this.endDye.hex.replace('#', '') };
+
     return {
-      start: this.startDye.stainID ?? 0,
-      end: this.endDye.stainID ?? 0,
+      ...start,
+      ...end,
       steps: this.stepCount,
       interpolation: this.colorSpace,
       algo: this.matchingMethod,
@@ -2703,11 +2739,23 @@ export class GradientTool extends BaseComponent {
   public selectCustomColor(hex: string): void {
     if (!hex) return;
 
-    // Create a virtual "dye" object for the custom color
-    // Using negative ID to distinguish from real dyes
-    const virtualDye: Dye = {
-      id: -Date.now(), // Unique negative ID
-      itemID: -Date.now(),
+    // Use the existing selectDye logic to add to gradient
+    this.selectDye(this.createCustomDye(hex));
+    logger.info(`[GradientTool] Custom color selected: ${hex}`);
+  }
+
+  /**
+   * Wrap a bare colour in a virtual "dye" (negative id, no stainID) so the
+   * rest of the tool can treat it like any other endpoint. Shared by the
+   * drawer's Custom Color and the `hexStart`/`hexEnd` share params.
+   */
+  private createCustomDye(hex: string): Dye {
+    // Unique negative ID — the sequence keeps two endpoints created in the
+    // same millisecond (e.g. `hexStart` + `hexEnd` from one link) distinct.
+    const syntheticId = -(Date.now() + ++customDyeSequence);
+    return {
+      id: syntheticId,
+      itemID: syntheticId,
       stainID: null, // Custom colors don't have a stain ID
       name: `Custom (${hex})`,
       hex: hex.toUpperCase(),
@@ -2726,9 +2774,5 @@ export class GradientTool extends BaseComponent {
 
       consolidationType: null,
     };
-
-    // Use the existing selectDye logic to add to gradient
-    this.selectDye(virtualDye);
-    logger.info(`[GradientTool] Custom color selected: ${hex}`);
   }
 }

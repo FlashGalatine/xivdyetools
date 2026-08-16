@@ -108,7 +108,7 @@ const RACE_GROUPS: Array<{ raceKey: string; subraces: SubRace[] }> = [
 /**
  * V4 Config Sidebar - Tool configuration panel
  *
- * @fires sidebar-collapse - When collapse button is clicked (mobile)
+ * @fires sidebar-collapse - When the header × is clicked (desktop Simple-Settings column; the shell collapses the column and the console-bar gear restores it)
  * @fires config-change - When any config value changes
  *   - detail.tool: The tool ID or 'global'
  *   - detail.key: The config property key

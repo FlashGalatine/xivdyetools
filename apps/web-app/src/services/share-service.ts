@@ -86,7 +86,17 @@ export interface MixerShareParams {
 }
 
 export interface SwatchShareParams {
-  hex: string; // Bare colour (RRGGBB without #)
+  /** Colour sheet (`eyes`, `hair`, `skin`, …) — with `i`, addresses a character swatch cell */
+  slot?: string;
+  /** Cell index within the sheet (the R·C address derives from it) */
+  i?: number;
+  /** Bare colour (RRGGBB without #) — the reverse-match form */
+  hex?: string;
+  /** Legacy read alias for `hex` (pre-5.0 links) */
+  color?: string;
+  /** Race/gender for the race-specific sheets */
+  race?: string;
+  gender?: string;
   algo?: MatchingMethod;
   limit?: number;
 }
@@ -170,7 +180,7 @@ export interface ShareAnalyticsEvent {
  * // Generate a share URL
  * const result = ShareService.generateUrl({
  *   tool: 'harmony',
- *   params: { dye: 48227, harmony: 'Complementary', algo: 'oklab' }
+ *   params: { dye: 102, harmony: 'complementary', algo: 'ciede2000' } // 102 = Jet Black (stainID)
  * });
  *
  * // Copy to clipboard
@@ -336,16 +346,33 @@ export class ShareService {
    * without #) and returns a normalized `#rrggbb`, or null with a toast.
    */
   static parseSharedHex(raw: unknown): string | null {
-    if (typeof raw !== 'string') {
+    const normalized = this.normalizeHex(raw);
+    if (!normalized) {
       ToastService.error(LanguageService.t('share.invalidHex'));
       return null;
     }
-    const cleaned = raw.trim().replace(/^#/, '').toLowerCase();
+    return normalized;
+  }
+
+  /**
+   * Pure form of {@link parseSharedHex}: `#rrggbb` for a well-formed value,
+   * null otherwise, no toast. An all-digit hex such as `112233` arrives from
+   * `parseUrl()` as a number (its canonical decimal form is identical to the
+   * hex string), so numbers are stringified rather than rejected.
+   */
+  private static normalizeHex(raw: unknown): string | null {
+    const text =
+      typeof raw === 'string'
+        ? raw
+        : typeof raw === 'number' && Number.isInteger(raw) && raw >= 0
+          ? String(raw)
+          : null;
+    if (text === null) return null;
+    const cleaned = text.trim().replace(/^#/, '').toLowerCase();
     if (/^[0-9a-f]{6}$/.test(cleaned)) return `#${cleaned}`;
     if (/^[0-9a-f]{3}$/.test(cleaned)) {
       return `#${cleaned[0]}${cleaned[0]}${cleaned[1]}${cleaned[1]}${cleaned[2]}${cleaned[2]}`;
     }
-    ToastService.error(LanguageService.t('share.invalidHex'));
     return null;
   }
 
@@ -571,40 +598,44 @@ export class ShareService {
   static validateShareParams(shareData: ShareParams): string[] {
     const errors: string[] = [];
     const { tool, params } = shareData;
+    const record = params as Record<string, unknown>;
 
     switch (tool) {
       case 'harmony':
-        if (!('dye' in params) || !params.dye) {
-          errors.push('Missing required parameter: dye');
-        }
+        this.validateColourSlot(record, 'dye', 'hex', errors);
         if (!('harmony' in params) || !params.harmony) {
           errors.push('Missing required parameter: harmony');
         }
         break;
 
       case 'gradient':
-        if (!('start' in params) || !params.start) {
-          errors.push('Missing required parameter: start');
-        }
-        if (!('end' in params) || !params.end) {
-          errors.push('Missing required parameter: end');
-        }
+        this.validateColourSlot(record, 'start', 'hexStart', errors);
+        this.validateColourSlot(record, 'end', 'hexEnd', errors);
         break;
 
       case 'mixer':
-        if (!('dyeA' in params) || !params.dyeA) {
-          errors.push('Missing required parameter: dyeA');
-        }
-        if (!('dyeB' in params) || !params.dyeB) {
-          errors.push('Missing required parameter: dyeB');
-        }
+        this.validateColourSlot(record, 'dyeA', 'hexA', errors);
+        this.validateColourSlot(record, 'dyeB', 'hexB', errors);
         break;
 
-      case 'swatch':
-        if (!('color' in params) || !params.color) {
-          errors.push('Missing required parameter: color');
+      case 'swatch': {
+        // 5.0 grammar: a character swatch is addressed by its cell (`slot` +
+        // `i`); a bare colour rides on `hex` (`color` kept as a legacy read
+        // alias). Either form satisfies the link.
+        const hasCell =
+          typeof record.slot === 'string' &&
+          record.slot.length > 0 &&
+          Number.isInteger(Number(record.i)) &&
+          Number(record.i) >= 0;
+        const hexRaw = record.hex ?? record.color;
+        const hasHex = hexRaw !== undefined && hexRaw !== null && hexRaw !== '';
+        if (!hasCell && !hasHex) {
+          errors.push('Missing required parameter: slot + i (or hex)');
+        } else if (hasHex && this.parseSharedHex(hexRaw) === null) {
+          errors.push(`Invalid hex colour: ${String(hexRaw)}`);
         }
         break;
+      }
 
       case 'comparison':
         if (!('dyes' in params) || !params.dyes?.length) {
@@ -616,6 +647,38 @@ export class ShareService {
     }
 
     return errors;
+  }
+
+  /**
+   * One colour slot of the 5.0 grammar: satisfied by EITHER its stainID
+   * param (a positive number) OR its `hex*` param (well-formed), never both
+   * and never neither. Shared by harmony (`dye`/`hex`), gradient
+   * (`start`/`hexStart`, `end`/`hexEnd`) and mixer (`dyeA`/`hexA`, `dyeB`/`hexB`).
+   */
+  private static validateColourSlot(
+    params: Record<string, unknown>,
+    dyeKey: string,
+    hexKey: string,
+    errors: string[]
+  ): void {
+    const dye = params[dyeKey];
+    const hex = params[hexKey];
+    const hasDye = dye !== undefined && dye !== null && dye !== 0 && dye !== '';
+    const hasHex = hex !== undefined && hex !== null && hex !== '';
+
+    if (hasDye && hasHex) {
+      errors.push(`Conflicting parameters: ${dyeKey} and ${hexKey} are mutually exclusive`);
+      return;
+    }
+    if (hasHex) {
+      if (!this.normalizeHex(hex)) {
+        errors.push(`Invalid parameter: ${hexKey} must be RRGGBB`);
+      }
+      return;
+    }
+    if (!hasDye) {
+      errors.push(`Missing required parameter: ${dyeKey}`);
+    }
   }
 
   // ==========================================================================

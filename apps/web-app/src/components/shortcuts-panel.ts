@@ -58,23 +58,8 @@ function getShortcuts(): ShortcutGroup[] {
         { keys: '?', description: LanguageService.t('shortcuts.showHelp') },
       ],
     },
-    {
-      title: LanguageService.t('shortcuts.dyeSelection'),
-      shortcuts: [
-        {
-          keys: 'Tab',
-          description: LanguageService.t('shortcuts.focusSelector'),
-        },
-        {
-          keys: '↑↓←→',
-          description: LanguageService.t('shortcuts.navigateDyes'),
-        },
-        {
-          keys: 'Enter',
-          description: LanguageService.t('shortcuts.selectDye'),
-        },
-      ],
-    },
+    // No "Dye Selection" group: the 5.0 palette drawer's swatches have no
+    // keyboard (Tab / arrow / Enter) handling, so there is nothing to list.
   ];
 }
 

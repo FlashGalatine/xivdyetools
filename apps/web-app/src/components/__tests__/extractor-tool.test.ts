@@ -1198,6 +1198,70 @@ describe('ExtractorTool', () => {
       });
     });
 
+    describe('the matching method', () => {
+      /**
+       * The sidebar's Options column shows ΔE2000 selected for a fresh
+       * install, and every sibling tool seeds its own field from
+       * `ConfigController.getConfig(<tool>).matchingMethod ?? 'ciede2000'`.
+       * The extractor used to hard-code `'oklab'` and never read its config
+       * on construction — so the sidebar said one thing while the matcher
+       * did another, and a stored choice was lost on reload until the user
+       * touched the radio again.
+       */
+      const methodPassedToMatcher = (): string | undefined => {
+        const last = mockFindClosestDye.mock.calls.at(-1) as
+          [string, { matchingMethod?: string }?] | undefined;
+        return last?.[1]?.matchingMethod;
+      };
+
+      it('matches with the suite default ΔE2000 when nothing is stored', async () => {
+        tool = mount();
+        await loadImage();
+
+        sample('#FF0000');
+
+        expect(methodPassedToMatcher()).toBe('ciede2000');
+      });
+
+      it('honours a matchingMethod persisted in the extractor config', async () => {
+        const { ConfigController } = await import('@services/index');
+        const getConfig = vi.mocked(ConfigController.getInstance().getConfig);
+        getConfig.mockImplementation(((key: string) =>
+          key === 'extractor' ? { matchingMethod: 'oklab' } : {}) as never);
+        try {
+          tool = mount();
+          await loadImage();
+
+          sample('#FF0000');
+
+          expect(methodPassedToMatcher()).toBe('oklab');
+        } finally {
+          getConfig.mockReset();
+          getConfig.mockReturnValue({} as never);
+        }
+      });
+
+      it('normalizes a retired 4.x method name from storage to a supported one', async () => {
+        const { ConfigController } = await import('@services/index');
+        const getConfig = vi.mocked(ConfigController.getInstance().getConfig);
+        getConfig.mockImplementation(((key: string) =>
+          key === 'extractor' ? { matchingMethod: 'hyab' } : {}) as never);
+        try {
+          tool = mount();
+          await loadImage();
+
+          sample('#FF0000');
+
+          // 'hyab' is not a 5.0 method; the shared normalizer maps it to the
+          // suite default rather than letting an unknown string reach the matcher
+          expect(methodPassedToMatcher()).toBe('ciede2000');
+        } finally {
+          getConfig.mockReset();
+          getConfig.mockReturnValue({} as never);
+        }
+      });
+    });
+
     describe('the loupe', () => {
       // The loupe carries neither id nor class — it is a bare styled div, so
       // its 74px diameter plus aria-hidden is the only thing distinguishing

@@ -113,11 +113,15 @@ const SLOT_SIZE = {
 // Component
 // ============================================================================
 
+/** Monotonic suffix for synthetic custom-colour dye ids (see createCustomDye). */
+let customDyeSequence = 0;
+
 /**
  * Dye Mixer Tool - v4 New Tool
  *
  * Blend two dyes together to find matching FFXIV dyes.
  */
+
 export class MixerTool extends BaseComponent {
   private options: MixerToolOptions;
 
@@ -633,6 +637,22 @@ export class MixerTool extends BaseComponent {
   }
 
   /**
+   * Resolve one shared input from its (mutually exclusive) stainID and
+   * bare-colour params. Returns null when neither is present or the value
+   * fails loudly inside ShareService.
+   */
+  private resolveSharedInput(dyeParam: unknown, hexParam: unknown): Dye | null {
+    if (typeof dyeParam === 'number') {
+      return this.findSharedDye(dyeParam);
+    }
+    if (hexParam !== undefined && hexParam !== null && hexParam !== '') {
+      const hex = ShareService.parseSharedHex(hexParam);
+      return hex ? this.createCustomDye(hex) : null;
+    }
+    return null;
+  }
+
+  /**
    * Load dyes and settings from share URL parameters
    * Takes priority over localStorage if share params are present
    */
@@ -643,20 +663,18 @@ export class MixerTool extends BaseComponent {
     const params = parsed.params;
     logger.info('[MixerTool] Loading from share URL:', params);
 
-    // Load dyeA (required)
-    if (typeof params.dyeA === 'number') {
-      const dyeA = this.findSharedDye(params.dyeA);
-      if (dyeA) {
-        this.selectedDyes[0] = dyeA;
-      }
+    // Each input is EITHER a stainID (`dyeA`/`dyeB`) OR a bare colour
+    // (`hexA`/`hexB`) — the dye slot wins when both are present, and a bare
+    // colour goes through the same virtual-dye path as the drawer's Custom
+    // Color so the blend treats it like any other input.
+    const dyeA = this.resolveSharedInput(params.dyeA, params.hexA);
+    if (dyeA) {
+      this.selectedDyes[0] = dyeA;
     }
 
-    // Load dyeB (required)
-    if (typeof params.dyeB === 'number') {
-      const dyeB = this.findSharedDye(params.dyeB);
-      if (dyeB) {
-        this.selectedDyes[1] = dyeB;
-      }
+    const dyeB = this.resolveSharedInput(params.dyeB, params.hexB);
+    if (dyeB) {
+      this.selectedDyes[1] = dyeB;
     }
 
     // Load mixing mode (all six blend models round-trip)
@@ -815,11 +833,23 @@ export class MixerTool extends BaseComponent {
   public selectCustomColor(hex: string): void {
     if (!hex) return;
 
-    // Create a virtual "dye" object for the custom color
-    // Using negative ID to distinguish from real dyes
-    const virtualDye: Dye = {
-      id: -Date.now(), // Unique negative ID
-      itemID: -Date.now(),
+    // Use the existing selectDye logic to add to mix
+    this.selectDye(this.createCustomDye(hex));
+    logger.info(`[MixerTool] Custom color selected: ${hex}`);
+  }
+
+  /**
+   * Wrap a bare colour in a virtual "dye" (negative id, no stainID) so the
+   * rest of the tool can treat it like any other input. Shared by the
+   * drawer's Custom Color and the `hexA`/`hexB` share params.
+   */
+  private createCustomDye(hex: string): Dye {
+    // Unique negative ID — the sequence keeps two inputs created in the same
+    // millisecond (e.g. `hexA` + `hexB` from one link) distinct.
+    const syntheticId = -(Date.now() + ++customDyeSequence);
+    return {
+      id: syntheticId,
+      itemID: syntheticId,
       stainID: null, // Custom colors don't have a stain ID
       name: `Custom (${hex})`,
       hex: hex.toUpperCase(),
@@ -838,10 +868,6 @@ export class MixerTool extends BaseComponent {
 
       consolidationType: null,
     };
-
-    // Use the existing selectDye logic to add to mix
-    this.selectDye(virtualDye);
-    logger.info(`[MixerTool] Custom color selected: ${hex}`);
   }
 
   /**
@@ -1909,9 +1935,17 @@ export class MixerTool extends BaseComponent {
 
     // The ratio is half the answer: 75/25 Ink Blue + Snow White is a
     // different colour from 50/50, and a link without it opens on neither.
+    // A custom input has no stainID — share it as the declared bare-colour
+    // slot (`hexA`/`hexB`) instead of an invalid `dyeA=0` that fails
+    // validation and loses the colour. The two params are mutually exclusive.
+    const slotA =
+      dyeA.stainID !== null ? { dyeA: dyeA.stainID } : { hexA: dyeA.hex.replace('#', '') };
+    const slotB =
+      dyeB.stainID !== null ? { dyeB: dyeB.stainID } : { hexB: dyeB.hex.replace('#', '') };
+
     return {
-      dyeA: dyeA.stainID ?? 0,
-      dyeB: dyeB.stainID ?? 0,
+      ...slotA,
+      ...slotB,
       ratio: Math.round(this.mixRatio * 100),
       mode: this.mixingMode,
       algo: this.matchingMethod,

@@ -1076,10 +1076,6 @@
     "cycleLanguage": "Cycle language",
     "shareTool": "Share the current tool",
     "showHelp": "Show this panel",
-    "dyeSelection": "Dye Selection",
-    "focusSelector": "Focus dye selector",
-    "navigateDyes": "Navigate between dyes",
-    "selectDye": "Select focused dye",
     "platformHint": "Tip",
     "useModifier": "Use Ctrl for system shortcuts"
   },

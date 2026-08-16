@@ -220,4 +220,83 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
       expect(hint(el)).toBeNull();
     });
   });
+
+  /*
+   * The desktop Simple-Settings column's × emits `sidebar-collapse`. Nothing
+   * used to handle it — the click was a no-op — and the console-bar gear
+   * (the one settings affordance in the app bar) only ever opened the
+   * Advanced Options slide-over. The 2B/3A console design has the gear toggle
+   * the settings surface: × hides the column, the gear brings it back.
+   */
+  describe('Simple-Settings column (desktop)', () => {
+    const column = (el: ShellEl) => el.shadowRoot!.querySelector('v4-config-sidebar');
+    const header = (el: ShellEl) => el.shadowRoot!.querySelector('v4-app-header')!;
+
+    it('is visible on mount', async () => {
+      stubViewport(false);
+      const el = await mountShell();
+
+      expect(column(el)).not.toBeNull();
+      expect(column(el)!.hasAttribute('collapsed')).toBe(false);
+    });
+
+    it('the × (sidebar-collapse) hides the column', async () => {
+      stubViewport(false);
+      const el = await mountShell();
+
+      column(el)!.dispatchEvent(
+        new CustomEvent('sidebar-collapse', { bubbles: true, composed: true })
+      );
+      await el.updateComplete;
+
+      expect(column(el)!.hasAttribute('collapsed')).toBe(true);
+    });
+
+    it('the console-bar gear brings a collapsed column back instead of opening the slide-over', async () => {
+      stubViewport(false);
+      const el = await mountShell();
+      const advancedClicks = vi.fn();
+      el.addEventListener('advanced-click', advancedClicks);
+
+      column(el)!.dispatchEvent(
+        new CustomEvent('sidebar-collapse', { bubbles: true, composed: true })
+      );
+      await el.updateComplete;
+      expect(column(el)!.hasAttribute('collapsed')).toBe(true);
+
+      header(el).dispatchEvent(new CustomEvent('advanced-click'));
+      await el.updateComplete;
+
+      expect(column(el)!.hasAttribute('collapsed')).toBe(false);
+      // Restoring the column IS the gear's action here — the Advanced Options
+      // slide-over must not pop up on top of it as well.
+      expect(advancedClicks).not.toHaveBeenCalled();
+    });
+
+    it('the gear still opens the Advanced Options slide-over while the column is visible', async () => {
+      stubViewport(false);
+      const el = await mountShell();
+      const advancedClicks = vi.fn();
+      el.addEventListener('advanced-click', advancedClicks);
+
+      header(el).dispatchEvent(new CustomEvent('advanced-click'));
+      await el.updateComplete;
+
+      expect(column(el)!.hasAttribute('collapsed')).toBe(false);
+      expect(advancedClicks).toHaveBeenCalledTimes(1);
+    });
+
+    it('on mobile the gear always reaches the slide-over (there is no column)', async () => {
+      stubViewport(true);
+      const el = await mountShell();
+      const advancedClicks = vi.fn();
+      el.addEventListener('advanced-click', advancedClicks);
+
+      expect(column(el)).toBeNull();
+      header(el).dispatchEvent(new CustomEvent('advanced-click'));
+      await el.updateComplete;
+
+      expect(advancedClicks).toHaveBeenCalledTimes(1);
+    });
+  });
 });

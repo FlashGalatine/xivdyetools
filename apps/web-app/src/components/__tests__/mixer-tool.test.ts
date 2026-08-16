@@ -33,6 +33,8 @@ vi.mock('@services/dye-service-wrapper', () => ({
     getDyeById: mockGetDyeById,
     findClosestDyes: mockFindClosestDyes,
     getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
+    // The (unmocked) ShareService resolves shared stainIDs through this
+    getByStainId: (id: number) => mockDyes.find((d) => d.stainID === id) ?? null,
   },
   DyeService: {
     getInstance: vi.fn().mockReturnValue({
@@ -723,6 +725,118 @@ describe('MixerTool', () => {
       const s = await slots();
       expect(s![0]).toBe(1);
       expect(s![1]).not.toBeNull();
+    });
+  });
+
+  // ==========================================================================
+  // Share URL — 5.0 grammar: an input is EITHER a stainID (`dyeA`/`dyeB`)
+  // OR a bare colour (`hexA`/`hexB`), never both. A custom input used to be
+  // written as `dyeA=0`, which fails validation on the way out and lost the
+  // colour on the way in.
+  // ==========================================================================
+
+  describe('share URL — custom inputs', () => {
+    const shareParams = () =>
+      (container.querySelector('v4-share-button') as unknown as {
+        shareParams: Record<string, unknown>;
+        disabled: boolean;
+      }) ?? null;
+
+    /** Mount with a share URL in the address bar; restored afterwards. */
+    const mountAt = (search: string): MixerTool => {
+      window.history.replaceState({}, '', `/mixer/${search}`);
+      return mount();
+    };
+
+    afterEach(() => {
+      window.history.replaceState({}, '', '/');
+    });
+
+    it('writes a custom input A as hexA and omits dyeA', () => {
+      tool = mount();
+      tool.selectCustomColor('#aabbcc'); // A
+      tool.selectDye(dye(2)); // B
+
+      const share = shareParams();
+      expect(share).not.toBeNull();
+      const params = share!.shareParams;
+      expect(String(params.hexA).toLowerCase()).toBe('aabbcc');
+      expect(params).not.toHaveProperty('dyeA');
+      expect(params.dyeB).toBe(mockDyes[0].stainID);
+      expect(params).not.toHaveProperty('hexB');
+      expect(params.ratio).toEqual(expect.any(Number));
+      expect(share!.disabled).toBe(false);
+    });
+
+    it('writes a real dye as its stainID and a custom input B as hexB', () => {
+      tool = mount();
+      tool.selectDye(dye(2)); // A
+      tool.selectCustomColor('#aabbcc'); // B
+
+      const params = shareParams()!.shareParams;
+      expect(params.dyeA).toBe(mockDyes[0].stainID);
+      expect(params).not.toHaveProperty('hexA');
+      expect(String(params.hexB).toLowerCase()).toBe('aabbcc');
+      expect(params).not.toHaveProperty('dyeB');
+    });
+
+    it('reads hexA as a custom input alongside a stainID dyeB', async () => {
+      tool = mountAt('?hexA=aabbcc&dyeB=2&ratio=50&v=1');
+
+      // Round-trip: the loaded state writes back the same grammar
+      const params = shareParams()!.shareParams;
+      expect(String(params.hexA).toLowerCase()).toBe('aabbcc');
+      expect(params).not.toHaveProperty('dyeA');
+      expect(params.dyeB).toBe(2);
+      const s = await slots();
+      expect(s![0]).not.toBeNull();
+      expect(s![1]).toBe(mockDyes[1].id);
+    });
+
+    it('reads two bare-colour inputs as distinct slots', async () => {
+      tool = mountAt('?hexA=aabbcc&hexB=112233&ratio=50&v=1');
+
+      const params = shareParams()!.shareParams;
+      expect(String(params.hexA).toLowerCase()).toBe('aabbcc');
+      expect(String(params.hexB).toLowerCase()).toBe('112233');
+      expect(params).not.toHaveProperty('dyeA');
+      expect(params).not.toHaveProperty('dyeB');
+      const s = await slots();
+      expect(s![0]).not.toBeNull();
+      expect(s![1]).not.toBeNull();
+      expect(s![0]).not.toBe(s![1]);
+    });
+
+    it('lets the stainID slot win when both dyeA and hexA are present', () => {
+      tool = mountAt('?dyeA=1&hexA=aabbcc&dyeB=2&v=1');
+
+      const params = shareParams()!.shareParams;
+      expect(params.dyeA).toBe(1);
+      expect(params).not.toHaveProperty('hexA');
+    });
+
+    it('rejects a malformed hexA loudly rather than loading a colour', async () => {
+      const { ToastService } = await import('@services/toast-service');
+      const toastError = vi.spyOn(ToastService, 'error');
+
+      tool = mountAt('?hexA=zzzzzz&dyeB=2&v=1');
+
+      expect(toastError).toHaveBeenCalled();
+      const s = await slots();
+      expect(s?.[0] ?? null).toBeNull();
+      expect(shareParams()!.disabled).toBe(true);
+    });
+
+    it('still rejects a legacy itemID in dyeA loudly', async () => {
+      const { ToastService } = await import('@services/toast-service');
+      const toastError = vi.spyOn(ToastService, 'error');
+
+      tool = mountAt('?dyeA=5729&dyeB=2&v=1');
+
+      expect(toastError).toHaveBeenCalled();
+      const s = await slots();
+      expect(s?.[0] ?? null).toBeNull();
+      expect(shareParams()!.disabled).toBe(true);
     });
   });
 

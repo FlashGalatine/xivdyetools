@@ -542,6 +542,92 @@ describe('ComparisonTool', () => {
   });
 
   // ============================================================================
+  // Export / Share reachability (7C duel)
+  // ============================================================================
+
+  describe('Export and Share actions', () => {
+    /** Walks up from `el` and reports whether any ancestor is display:none. */
+    const isHiddenByAncestor = (el: HTMLElement): boolean => {
+      let node: HTMLElement | null = el;
+      while (node && node !== rightPanel) {
+        if (node.style.display === 'none') return true;
+        node = node.parentElement;
+      }
+      return false;
+    };
+
+    it('keeps Export and Share reachable with a pair loaded (duel view)', () => {
+      tool = new ComparisonTool(container, { leftPanel, rightPanel });
+      tool.init();
+
+      tool.selectDye(mockDyes[0]);
+      tool.selectDye(mockDyes[1]);
+
+      const exportBtn = rightPanel.querySelector<HTMLElement>('[data-testid="comparison-export"]');
+      const shareBtn = rightPanel.querySelector<HTMLElement>('v4-share-button');
+      expect(exportBtn).not.toBeNull();
+      expect(shareBtn).not.toBeNull();
+      expect(exportBtn!.isConnected).toBe(true);
+      expect(shareBtn!.isConnected).toBe(true);
+      // The defect: the pair view hid the whole "selected dyes" section, and
+      // the actions lived inside it, so nothing above could be reached.
+      expect(isHiddenByAncestor(exportBtn!)).toBe(false);
+      expect(isHiddenByAncestor(shareBtn!)).toBe(false);
+
+      // Share payload carries both dyes
+      const share = shareBtn as unknown as {
+        disabled: boolean;
+        shareParams: { dyes?: number[] };
+      };
+      expect(share.disabled).toBe(false);
+      expect(share.shareParams.dyes).toEqual([mockDyes[0].stainID, mockDyes[1].stainID]);
+    });
+
+    it('keeps Export and Share reachable with three and four dyes loaded', () => {
+      tool = new ComparisonTool(container, { leftPanel, rightPanel });
+      tool.init();
+
+      tool.selectDye(mockDyes[0]);
+      tool.selectDye(mockDyes[1]);
+      tool.selectDye(mockDyes[2]);
+      const exportBtn = rightPanel.querySelector<HTMLElement>('[data-testid="comparison-export"]');
+      expect(isHiddenByAncestor(exportBtn!)).toBe(false);
+
+      tool.selectDye(mockDyes[3]);
+      expect(isHiddenByAncestor(exportBtn!)).toBe(false);
+      expect(isHiddenByAncestor(rightPanel.querySelector<HTMLElement>('v4-share-button')!)).toBe(
+        false
+      );
+    });
+
+    it('still shows the plain single-dye card row only for exactly one dye', () => {
+      tool = new ComparisonTool(container, { leftPanel, rightPanel });
+      tool.init();
+
+      const cards = rightPanel.querySelector<HTMLElement>('.comparison-cards-container');
+      expect(cards).not.toBeNull();
+
+      tool.selectDye(mockDyes[0]);
+      expect(isHiddenByAncestor(cards!)).toBe(false);
+
+      tool.selectDye(mockDyes[1]);
+      expect(isHiddenByAncestor(cards!)).toBe(true);
+    });
+
+    it('hides the actions again in the empty state', () => {
+      tool = new ComparisonTool(container, { leftPanel, rightPanel });
+      tool.init();
+
+      tool.selectDye(mockDyes[0]);
+      tool.selectDye(mockDyes[1]);
+      tool.clearDyes();
+
+      const exportBtn = rightPanel.querySelector<HTMLElement>('[data-testid="comparison-export"]');
+      expect(isHiddenByAncestor(exportBtn!)).toBe(true);
+    });
+  });
+
+  // ============================================================================
   // Lifecycle Tests
   // ============================================================================
 

@@ -33,7 +33,7 @@ import type { EditResult, PresetEditRequest } from '@services/preset-submission-
 interface FormState {
   name: string;
   description: string;
-  /** Editable since 5.1 — was a locked read-only display */
+  /** Editable since 5.0 — was a locked read-only display */
   categories: CategorySelection;
   selectedDyes: Dye[];
   tags: string;
@@ -141,7 +141,7 @@ function createFormContent(
   // Description textarea
   form.appendChild(createDescriptionInput(state));
 
-  // Editable since 5.1. The category was locked here, and PresetEditRequest
+  // Editable since 5.0. The category was locked here, and PresetEditRequest
   // had no category field at all, so a change had nowhere to go.
   form.appendChild(createCategorySelector(state.categories));
 

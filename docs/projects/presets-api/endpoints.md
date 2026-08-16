@@ -52,14 +52,17 @@ List approved presets with pagination.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `page` | number | `1` | Page number |
-| `limit` | number | `20` | Results per page (max 100) |
+| `page` | number | `1` | Page number (clamped to ≥ 1) |
+| `limit` | number | `20` | Results per page (clamped to 1–50) |
 | `category` | string | — | Filter by category |
 | `sort` | string | — | Sort order: `popular`, `recent`, or `name` |
 | `search` | string | — | Free-text search |
-| `tags` | string | — | Filter by tags |
+| `status` | string | `approved` | Moderators only for anything other than `approved`; unknown values → 400 |
+| `is_curated` | `true` \| `false` | — | Restrict to curated (or community) presets |
 
-Actively filters out presets with `status='hidden'`.
+There is no `tags` filter — tags are stored on the preset and returned in the response, but the
+list endpoint does not filter by them. Non-moderators only ever see `approved` presets and the
+audit fields are stripped from their responses.
 
 **Response:**
 
@@ -225,15 +228,23 @@ The API supports two authentication methods:
 
 ### 1. JWT Bearer
 
-Used by the web app. Pass a JWT in the `Authorization` header:
+Used by the web app. Pass a JWT (issued by `apps/oauth`) in the `Authorization` header:
 
 ```
 Authorization: Bearer <jwt>
 ```
 
+The acting user's identity is taken from the **`discord_id`** claim (the Discord snowflake), with
+the `sub` claim (the oauth worker's internal user UUID) used only as a fallback for XIVAuth-only
+accounts that have no Discord ID. This keeps web and bot requests in the same identity space —
+`author_discord_id`, votes, bans, moderation-log actors and `MODERATOR_IDS` are all keyed by the
+snowflake. `global_name || username` becomes the display name.
+
 ### 2. Bot API Key + HMAC Signature
 
-Used by the Discord bot. Requires the bot API secret plus HMAC signature headers:
+Used by the Discord bot and the moderation worker (via Service Binding). Requires the bot API
+secret plus HMAC signature headers (`BOT_SIGNING_SECRET` is mandatory outside
+`ENVIRONMENT=development|test` — without it bot auth is rejected):
 
 ```
 Authorization: Bearer <BOT_API_SECRET>
@@ -243,10 +254,13 @@ Authorization: Bearer <BOT_API_SECRET>
 
 | Header | Description |
 |--------|-------------|
-| `X-Timestamp` | Request timestamp for replay protection |
-| `X-Discord-Id` | Discord user ID of the acting user |
-| `X-User-Name` | Discord username of the acting user |
-| `X-Signature` | HMAC signature over the request payload |
+| `X-Request-Timestamp` | Unix timestamp (seconds) for replay protection — max age 5 minutes, 1 minute future skew |
+| `X-Request-Signature` | Hex HMAC-SHA256 over `${timestamp}:${discordId}:${userName}` with `BOT_SIGNING_SECRET` |
+| `X-User-Discord-ID` | Discord user ID (snowflake) of the acting user |
+| `X-User-Discord-Name` | Discord username of the acting user (optional; part of the signed message) |
+
+Verification is `verifyBotSignature()` from `@xivdyetools/auth`; the header names live in
+`apps/presets-api/src/middleware/auth.ts`.
 
 ---
 

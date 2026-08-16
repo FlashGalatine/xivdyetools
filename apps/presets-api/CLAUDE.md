@@ -295,7 +295,7 @@ Timestamp validity: max age 5 minutes (`SIGNATURE_MAX_AGE_SECONDS = 300`), 1-min
 - Expiration check.
 - Signature verification using Web Crypto.
 
-The `sub` claim is the Discord user ID; `username` / `global_name` populate `userName`.
+The acting user ID comes from the `discord_id` claim (Discord snowflake — the same key the bot path sends in `X-User-Discord-ID`); `sub` is the oauth worker's internal user UUID and is only the fallback for XIVAuth-only accounts with no Discord ID (`resolveJWTUserId()` in `src/middleware/auth.ts`). `username` / `global_name` populate `userName`.
 
 ### Ban Checking
 

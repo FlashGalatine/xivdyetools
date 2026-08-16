@@ -1076,10 +1076,6 @@
     "cycleLanguage": "언어 변경",
     "shareTool": "현재 도구 공유",
     "showHelp": "이 패널 표시",
-    "dyeSelection": "염료 선택",
-    "focusSelector": "선택기에 포커스",
-    "navigateDyes": "염료 간 이동",
-    "selectDye": "포커스된 염료 선택",
     "platformHint": "팁",
     "useModifier": "시스템 단축키에는 Ctrl을 사용"
   },

@@ -1102,10 +1102,6 @@
     "cycleLanguage": "切换语言",
     "shareTool": "分享当前工具",
     "showHelp": "显示此面板",
-    "dyeSelection": "染剂选择",
-    "focusSelector": "聚焦选择器",
-    "navigateDyes": "在染剂间导航",
-    "selectDye": "选择聚焦的染剂",
     "platformHint": "提示",
     "useModifier": "使用 Ctrl 进行系统快捷键"
   },

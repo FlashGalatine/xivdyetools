@@ -78,6 +78,15 @@ export class V4LayoutShell extends BaseLitComponent {
   private paletteHintDismissed = false;
 
   /**
+   * Whether the desktop Simple-Settings column is collapsed (its × button).
+   * The console-bar gear toggles the settings surface: while the column is
+   * collapsed the gear restores it instead of opening the Advanced Options
+   * slide-over. Session-scoped — not persisted.
+   */
+  @state()
+  private simpleSettingsCollapsed = false;
+
+  /**
    * Tools that should NOT show the Color Palette drawer
    */
   private static readonly TOOLS_WITHOUT_PALETTE: ToolId[] = ['extractor', 'presets'];
@@ -881,10 +890,27 @@ export class V4LayoutShell extends BaseLitComponent {
   }
 
   /**
-   * Handle advanced-options (gear) button click from header
-   * Bubbles up to v4-layout.ts
+   * Handle the Simple-Settings column's × (sidebar-collapse) on desktop.
+   * The event is the column's own; it stops here so v4-layout does not see
+   * a stray collapse it has no surface for.
+   */
+  private handleSimpleSettingsCollapse(e: Event): void {
+    e.stopPropagation();
+    this.simpleSettingsCollapsed = true;
+  }
+
+  /**
+   * Handle advanced-options (gear) button click from header.
+   * On desktop with the Simple-Settings column collapsed, the gear brings the
+   * column back (the settings surface toggle) and does nothing else;
+   * otherwise it bubbles up to v4-layout.ts, which opens the Advanced Options
+   * slide-over.
    */
   private handleAdvancedClick(): void {
+    if (!this.isMobile && this.simpleSettingsCollapsed) {
+      this.simpleSettingsCollapsed = false;
+      return;
+    }
     this.emit('advanced-click');
   }
 
@@ -911,6 +937,8 @@ export class V4LayoutShell extends BaseLitComponent {
             : html`<v4-config-sidebar
                 class="v4-simple-settings"
                 .activeTool=${this.activeTool}
+                ?collapsed=${this.simpleSettingsCollapsed}
+                @sidebar-collapse=${this.handleSimpleSettingsCollapse}
                 @config-change=${this.handleConfigChange}
                 @clear-all-dyes=${this.handleClearAllDyes}
               ></v4-config-sidebar>`

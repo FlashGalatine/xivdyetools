@@ -174,6 +174,9 @@ export class ComparisonTool extends BaseComponent {
 
   // Section wrappers for visibility toggling
   private selectedDyesSection: HTMLElement | null = null;
+  /** Export + Share row — lives outside the single-dye section so the duel
+   *  (2–4 dyes) keeps both actions reachable */
+  private actionsRow: HTMLElement | null = null;
 
   // Subscriptions
   private marketBoardEventCleanup: (() => void) | null = null;
@@ -883,31 +886,17 @@ export class ComparisonTool extends BaseComponent {
     this.renderEmptyState();
     contentWrapper.appendChild(this.emptyStateContainer);
 
-    // Selected Dyes Cards Section (V4 result-cards in a horizontal row, centered)
-    // Hidden by default via inline style - shown when dyes are selected
-    this.selectedDyesSection = this.createElement('div', {
-      className: 'mb-6',
-      attributes: { style: 'display: none;' },
-    });
-
-    // Create header with Share button
-    const selectedDyesHeader = this.createElement('div', {
-      className: 'section-header',
+    // Export + Share row. Sits ABOVE the single-dye section rather than in
+    // its header: with a pair or more the duel owns the cards and that
+    // section is hidden, but export/share must stay reachable for 1–4 dyes.
+    // Hidden by default via inline style - shown when dyes are selected.
+    const actionsRow = this.createElement('div', {
       attributes: {
-        style: 'display: flex; justify-content: space-between; align-items: center;',
+        style:
+          'display: none; justify-content: flex-end; align-items: center; gap: 12px; margin-bottom: 8px;',
       },
     });
-    const selectedDyesTitle = this.createElement('span', {
-      className: 'section-title',
-      textContent: LanguageService.t('comparison.selectedDyes'),
-    });
-    selectedDyesHeader.appendChild(selectedDyesTitle);
-
-    // Right cluster: Export sits beside Share, so the header keeps its
-    // two-child space-between rather than spreading three items apart.
-    const headerActions = this.createElement('div', {
-      attributes: { style: 'display: flex; align-items: center; gap: 12px;' },
-    });
+    this.actionsRow = actionsRow;
     const exportBtn = this.createElement('button', {
       textContent: LanguageService.t('common.export'),
       attributes: {
@@ -921,16 +910,33 @@ export class ComparisonTool extends BaseComponent {
       },
     });
     this.on(exportBtn, 'click', () => this.openComparisonExport());
-    headerActions.appendChild(exportBtn);
+    actionsRow.appendChild(exportBtn);
 
     // Share Button - v4-share-button custom element
     this.shareButton = document.createElement('v4-share-button') as ShareButton;
     this.shareButton.tool = 'comparison';
     this.shareButton.shareParams = this.getShareParams();
     this.shareButton.disabled = this.selectedDyes.length === 0;
-    headerActions.appendChild(this.shareButton);
-    selectedDyesHeader.appendChild(headerActions);
+    actionsRow.appendChild(this.shareButton);
+    contentWrapper.appendChild(actionsRow);
 
+    // Selected Dyes Cards Section (V4 result-cards in a horizontal row, centered)
+    // Hidden by default via inline style - shown when exactly one dye is selected
+    this.selectedDyesSection = this.createElement('div', {
+      className: 'mb-6',
+      attributes: { style: 'display: none;' },
+    });
+    const selectedDyesHeader = this.createElement('div', {
+      className: 'section-header',
+      attributes: {
+        style: 'display: flex; justify-content: space-between; align-items: center;',
+      },
+    });
+    const selectedDyesTitle = this.createElement('span', {
+      className: 'section-title',
+      textContent: LanguageService.t('comparison.selectedDyes'),
+    });
+    selectedDyesHeader.appendChild(selectedDyesTitle);
     this.selectedDyesSection.appendChild(selectedDyesHeader);
     this.selectedDyesCardsContainer = this.createElement('div', {
       className: 'flex flex-wrap gap-4 justify-center comparison-cards-container',
@@ -1161,6 +1167,12 @@ export class ComparisonTool extends BaseComponent {
     const hasEnoughForAnalysis = count >= 2;
 
     this.showEmptyState(count === 0);
+
+    // Export + Share stay reachable for any loaded selection (1–4 dyes)
+    if (this.actionsRow) {
+      this.actionsRow.style.display = count >= 1 ? 'flex' : 'none';
+    }
+    this.updateShareButton();
 
     // 7C: the plain card row only exists for a single loaded dye — with a
     // pair or more, the duel owns the cards
@@ -2044,6 +2056,10 @@ export class ComparisonTool extends BaseComponent {
     // When empty state is hidden (has dyes), show selected dyes section
     if (this.selectedDyesSection) {
       this.selectedDyesSection.style.display = show ? 'none' : 'block';
+    }
+    // The empty state hides everything, actions row included
+    if (show && this.actionsRow) {
+      this.actionsRow.style.display = 'none';
     }
   }
 

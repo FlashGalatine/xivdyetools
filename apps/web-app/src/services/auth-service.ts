@@ -31,6 +31,13 @@ export interface PrimaryCharacter {
 }
 
 export interface AuthUser {
+  /**
+   * The user's identity as the presets API sees it: the Discord snowflake
+   * (`discord_id` claim) when the account has one, otherwise the oauth
+   * worker's internal UUID (`sub`). This is what `author_discord_id` on
+   * community presets is compared against — it must NOT be the bare `sub`,
+   * which is a UUID that never matches bot-submitted (snowflake) authorship.
+   */
   id: string;
   username: string;
   global_name: string | null;
@@ -62,6 +69,16 @@ interface JWTPayload {
   discord_id?: string;
   xivauth_id?: string;
   primary_character?: PrimaryCharacter;
+}
+
+/**
+ * Identity the presets API keys ownership by — see `AuthUser.id`.
+ * Mirrors `resolveJWTUserId()` in apps/presets-api/src/middleware/auth.ts.
+ */
+function presetsIdentity(payload: JWTPayload): string {
+  return typeof payload.discord_id === 'string' && payload.discord_id.length > 0
+    ? payload.discord_id
+    : payload.sub;
 }
 
 interface AuthResponse {
@@ -339,7 +356,7 @@ class AuthServiceImpl {
         expiresAt,
         provider,
         user: {
-          id: payload.sub,
+          id: presetsIdentity(payload),
           username: payload.username,
           global_name: payload.global_name,
           avatar: payload.avatar,
@@ -470,7 +487,7 @@ class AuthServiceImpl {
       expiresAt,
       provider,
       user: {
-        id: payload.sub,
+        id: presetsIdentity(payload),
         username: payload.username,
         global_name: payload.global_name,
         avatar: payload.avatar,

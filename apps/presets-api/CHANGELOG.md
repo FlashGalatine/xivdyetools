@@ -27,6 +27,7 @@ D1 migrations are **never** applied automatically: `npm run db:migrate` replays 
 5. `migrations/0010_add_secondary_categories.sql` — `presets.secondary_categories TEXT NOT NULL DEFAULT '[]'` + `INSERT OR IGNORE` of the three new categories `appearance` / `zones` / `raids-trials`.
 6. Deploy `xivdyetools-image-worker` first (the new `IMAGE_WORKER` service binding must resolve), then this worker with `npm run deploy:production` — a bare `npm run deploy` now targets the routeless dev worker (see Changed).
 7. Verify column presence with a single-row aggregate over `pragma_table_info('presets')`, not a column list.
+8. **Identity backfill (decide before deploy):** rows written by web users since the XIVAuth integration hold the oauth UUID in `presets.author_discord_id`, `votes.user_discord_id` and `moderation_log.moderator_discord_id`; after this deploy those authors resolve to their snowflake and can no longer see/edit them. One-time backfill: `SELECT id, discord_id FROM users WHERE discord_id IS NOT NULL` on **oauth's** D1 → `UPDATE … SET <col> = <snowflake> WHERE <col> = <uuid>` on the presets D1 for the three columns (votes may collide if someone voted from both clients — keep the earlier row). XIVAuth-only users who later link Discord flip from UUID to snowflake the same way
 
 ### Added
 
@@ -59,6 +60,7 @@ D1 migrations are **never** applied automatically: `npm run db:migrate` replays 
 
 ### Fixed
 
+- **JWT identity uses the Discord snowflake, not oauth's `sub`** — the auth middleware took `sub` as the Discord user ID, but oauth issues `sub` = internal user UUID with the snowflake in `discord_id`; web-submitted presets/votes/moderation-log rows therefore carried the UUID while bot rows carried the snowflake (same person = two authors; `/presets/mine`, edit/delete ownership, `banned_users` and `MODERATOR_IDS` never matched web users). `resolveJWTUserId()` now prefers `discord_id`, `sub` only as a fallback for XIVAuth-only accounts (`src/middleware/auth.ts`; 3 previously-skipped JWT tests un-skipped + 6 added)
 - **Preview-image upload was unreachable in production** — the two global `/api/*` guards 413'd any body over 100 KB and 415'd anything that was not `application/json`, so every realistic upload died before the route ran while the route's own tests (mounted without the middleware) stayed green. Now exempted as described under Changed, with tests that drive the real app export.
 - **Pending preview images never reached the moderator queue** — `getPendingPresets()` filtered on `status = 'pending'` only, so an approved preset with a newly uploaded image was invisible to moderators; the query now also matches `preview_image_status = 'pending'` (with a regression guard for a key-only row).
 - Preview-image moderator notification bypassed the retry path (a hand-rolled fetch with no retry, no back-off and no dead-letter row); it now goes through `notifyDiscordBot` on `waitUntil` like submissions.

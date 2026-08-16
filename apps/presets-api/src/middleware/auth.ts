@@ -19,10 +19,15 @@ type Variables = {
 
 /**
  * Extended JWT payload for this application
- * Includes Discord-specific fields beyond the base JWTPayload
+ * Includes the identity/display fields the oauth worker mints beyond the base JWTPayload
  */
 interface ExtendedJWTPayload {
-  sub: string; // Discord user ID
+  /**
+   * Subject — the oauth worker's INTERNAL user UUID (`users.id`), NOT the
+   * Discord snowflake. Only used as the identity fallback for accounts that
+   * have no Discord ID (XIVAuth-only logins). See resolveJWTUserId().
+   */
+  sub: string;
   iat: number;
   exp: number;
   iss?: string;
@@ -30,6 +35,33 @@ interface ExtendedJWTPayload {
   username?: string;
   global_name?: string | null;
   avatar?: string | null;
+  /** Discord snowflake (present for Discord logins and Discord-linked XIVAuth accounts) */
+  discord_id?: string;
+  auth_provider?: 'discord' | 'xivauth';
+}
+
+/**
+ * Resolve the acting user's identity from a verified JWT.
+ *
+ * `author_discord_id`, `votes.user_discord_id`, `moderation_log.moderator_discord_id`,
+ * `banned_users.discord_id` and `MODERATOR_IDS` are all keyed by the Discord
+ * snowflake — that is the identity the bot path (discord-worker /
+ * moderation-worker via `X-User-Discord-ID`) supplies. The oauth worker puts
+ * its internal user UUID in `sub` and the snowflake in `discord_id`, so a
+ * web session must resolve to the SAME snowflake or the same person becomes
+ * two different authors (one per client), can't edit bot-submitted presets
+ * from the web (and vice versa), never appears banned, and is never a
+ * moderator via the web.
+ *
+ * Falls back to `sub` only when the token carries no usable `discord_id`
+ * (XIVAuth-only accounts, which have no snowflake to share with the bot).
+ */
+export function resolveJWTUserId(payload: Pick<ExtendedJWTPayload, 'sub' | 'discord_id'>): string {
+  const discordId = payload.discord_id;
+  if (typeof discordId === 'string' && discordId.length > 0) {
+    return discordId;
+  }
+  return payload.sub;
 }
 
 /**
@@ -45,6 +77,9 @@ async function verifyJWT(token: string, secret: string): Promise<ExtendedJWTPayl
 
   if (!payload) return null;
 
+  // The shared JWTPayload type only declares the base claims; the oauth
+  // worker's extra claims (discord_id, auth_provider) ride along and are
+  // exposed through ExtendedJWTPayload's optional fields.
   return payload;
 }
 
@@ -178,11 +213,14 @@ export async function authMiddleware(
       if (jwtPayload) {
         // Use display name if available, fallback to username
         const displayName = jwtPayload.global_name || jwtPayload.username;
+        // Discord snowflake when the token has one, internal UUID otherwise —
+        // must match what the bot path puts in X-User-Discord-ID
+        const userId = resolveJWTUserId(jwtPayload);
 
         auth = {
           isAuthenticated: true,
-          isModerator: checkModerator(jwtPayload.sub, c.env.MODERATOR_IDS),
-          userDiscordId: jwtPayload.sub,
+          isModerator: checkModerator(userId, c.env.MODERATOR_IDS),
+          userDiscordId: userId,
           userName: displayName,
           authSource: 'web',
         };

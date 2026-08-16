@@ -1076,10 +1076,6 @@
     "cycleLanguage": "言語切り替え",
     "shareTool": "現在のツールを共有",
     "showHelp": "このパネルを表示",
-    "dyeSelection": "カララント選択",
-    "focusSelector": "セレクターにフォーカス",
-    "navigateDyes": "カララント間を移動",
-    "selectDye": "フォーカス中のカララントを選択",
     "platformHint": "ヒント",
     "useModifier": "システムショートカットにはCtrlを使用"
   },
