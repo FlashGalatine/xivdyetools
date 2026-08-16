@@ -23,16 +23,19 @@ Environment variables are configured differently based on the project type:
 
 ```bash
 # .env.local (create this file, not committed)
-VITE_OAUTH_URL=http://localhost:8788
-VITE_PRESETS_API_URL=http://localhost:8787
-VITE_ANALYTICS_ID=optional-analytics-id
+VITE_OAUTH_WORKER_URL=http://localhost:8788        # oauth worker (default: https://auth.xivdyetools.app)
+VITE_PRESETS_API_URL=http://localhost:8787         # presets-api (default: https://api.xivdyetools.app)
+VITE_UNIVERSALIS_PROXY_URL=http://localhost:8790   # optional; production uses https://data.xivdyetools.app/universalis
 ```
 
-### Production Values
+`VITE_APP_ENV=beta` at build time produces the beta build (`beta.xivdyetools.app` branding, `noindex`); `scripts/check-beta-build.js` asserts it.
+
+### Production Values (compiled-in defaults)
 
 ```bash
-VITE_OAUTH_URL=https://oauth.xivdyetools.com
-VITE_PRESETS_API_URL=https://presets.xivdyetools.com
+VITE_OAUTH_WORKER_URL=https://auth.xivdyetools.app
+VITE_PRESETS_API_URL=https://api.xivdyetools.app
+# Universalis: https://data.xivdyetools.app/universalis (api-worker's absorbed proxy routes)
 ```
 
 ---
@@ -56,8 +59,13 @@ ENVIRONMENT = "production"    # "development" | "production"
 | `INTERNAL_WEBHOOK_SECRET` | No | Webhook authentication |
 | `STATS_AUTHORIZED_USERS` | No | Comma-separated user IDs |
 | `MODERATOR_IDS` | No | Comma-separated moderator user IDs |
-| `MODERATION_CHANNEL_ID` | No | Channel for pending presets |
+| `MODERATION_CHANNEL_ID` | No | Channel for pending presets / preview images |
 | `SUBMISSION_LOG_CHANNEL_ID` | No | Channel for all submissions |
+| `MODERATION_BOT_TOKEN` | No | Moderation bot token — Discord routes button clicks to the posting application |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | No | Preferred rate-limit backend (KV fallback) |
+| `ANNOUNCEMENT_CHANNEL_ID` | No | Release-announcement channel — a **var**, declared under `[env.production.vars]` (vars are not inherited) |
+
+Bindings: `KV`, `DB` (D1 `xivdyetools-presets`), `ANALYTICS`, and service bindings `PRESETS_API` → `xivdyetools-presets-api`, `UNIVERSALIS_PROXY` → `xivdyetools-api-worker`, `IMAGE_WORKER` → `xivdyetools-image-worker`. The top-level `wrangler.toml` block is the beta bot (`xivdyetools-discord-worker-dev`); production lives under `[env.production]`.
 
 ### Setting Secrets
 
@@ -92,10 +100,12 @@ BOT_API_SECRET=local-secret
 [vars]
 ENVIRONMENT = "production"        # "development" | "production"
 DISCORD_CLIENT_ID = "your-client-id"
-FRONTEND_URL = "https://app.xivdyetools.com"
-WORKER_URL = "https://oauth.xivdyetools.com"
+FRONTEND_URL = "https://xivdyetools.app"
+WORKER_URL = "https://auth.xivdyetools.app"
 JWT_EXPIRY = "3600"               # Seconds (default: 1 hour)
 ```
+
+The redirect / CORS allowlist also carries `https://beta.xivdyetools.app` (2.6.0). Note `oauth`'s top-level block **is** production (bare `wrangler deploy` = production); `[env.development]` / `[env.preview]` are the non-production envs.
 
 ### Secrets
 
@@ -134,11 +144,11 @@ JWT_SECRET=development-jwt-secret-min-32-chars
 ### wrangler.toml Variables
 
 ```toml
-[vars]
-ENVIRONMENT = "production"        # "development" | "production"
-API_VERSION = "v1"
-CORS_ORIGIN = "https://app.xivdyetools.com"
+[env.production]
+vars = { ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com,https://beta.xivdyetools.app" }
 ```
+
+Bindings: `DB` (D1), `DISCORD_WORKER` (service → `xivdyetools-discord-worker`, notifications), `IMAGE_WORKER` (service → `xivdyetools-image-worker`, `POST /thumbnail`), `THUMBNAILS` (R2 bucket `xivdyetools-presets-preview-thumbnails`, served at `shots.xivdyetools.app`). Top-level block = `xivdyetools-presets-api-dev`; production under `[env.production]`.
 
 ### Secrets
 
@@ -147,7 +157,9 @@ CORS_ORIGIN = "https://app.xivdyetools.com"
 | `BOT_API_SECRET` | ✅ Yes | Shared with Discord worker |
 | `JWT_SECRET` | ✅ Yes | Shared with OAuth worker |
 | `MODERATOR_IDS` | No | Comma-separated user IDs |
+| `BOT_SIGNING_SECRET` | No | HMAC signing key for bot request verification |
 | `PERSPECTIVE_API_KEY` | No | Google Perspective API for ML moderation |
+| `MODERATION_WEBHOOK_URL` / `DISCORD_BOT_WEBHOOK_URL` / `INTERNAL_WEBHOOK_SECRET` | No | Notification webhooks |
 
 ### Setting Secrets
 
@@ -259,9 +271,9 @@ CORS_ORIGIN=http://localhost:5173
 
 ```bash
 ENVIRONMENT=production
-FRONTEND_URL=https://app.xivdyetools.com
-WORKER_URL=https://oauth.xivdyetools.com
-CORS_ORIGIN=https://app.xivdyetools.com
+FRONTEND_URL=https://xivdyetools.app
+WORKER_URL=https://auth.xivdyetools.app
+CORS_ORIGIN=https://xivdyetools.app
 ```
 
 ---

@@ -27,16 +27,16 @@ graph TB
     subgraph "Consumer Applications"
         WEB["xivdyetools-web-app<br/>v5.0.0<br/>─────────────<br/>9 interactive tools,<br/>Light + Dark, PWA,<br/>Vite + Lit"]
         DISCORD["xivdyetools-discord-worker<br/>v5.0.0<br/>─────────────<br/>17 slash commands,<br/>SVG/PNG rendering,<br/>HTTP Interactions"]
-        STOAT["xivdyetools-stoat-worker<br/>v0.2.0<br/>─────────────<br/>Revolt.js bot (parked),<br/>shared bot-logic"]
+        STOAT["xivdyetools-stoat-worker<br/>v0.2.1<br/>─────────────<br/>Revolt.js bot (parked),<br/>shared bot-logic"]
     end
 
     subgraph "Backend Services"
-        OAUTH["xivdyetools-oauth<br/>v2.5.0<br/>─────────────<br/>Discord OAuth, PKCE,<br/>JWT issuance,<br/>timeout protection"]
-        PRESETS["xivdyetools-presets-api<br/>v1.6.0<br/>─────────────<br/>Community presets,<br/>D1 database,<br/>Moderation pipeline"]
-        IMAGE["xivdyetools-image-worker<br/>v1.0.0<br/>─────────────<br/>Photon pixel extraction,<br/>service binding only"]
-        MODBOT["xivdyetools-moderation-worker<br/>v1.3.0<br/>─────────────<br/>Moderation bot,<br/>Preset review"]
+        OAUTH["xivdyetools-oauth<br/>v2.6.0<br/>─────────────<br/>Discord OAuth, PKCE,<br/>JWT issuance,<br/>timeout protection"]
+        PRESETS["xivdyetools-presets-api<br/>v2.0.0<br/>─────────────<br/>Community presets (stainID),<br/>D1 + R2 previews,<br/>Moderation pipeline"]
+        IMAGE["xivdyetools-image-worker<br/>v1.0.0<br/>─────────────<br/>Photon: /extract + /thumbnail,<br/>service binding only"]
+        MODBOT["xivdyetools-moderation-worker<br/>v1.4.0<br/>─────────────<br/>Moderation bot,<br/>Preset review"]
         OG["xivdyetools-og-worker<br/>v2.0.0<br/>─────────────<br/>Localized OG cards,<br/>Discord + X frames"]
-        APIWORKER["xivdyetools-api-worker<br/>v0.5.0<br/>─────────────<br/>Public REST API,<br/>data.xivdyetools.app,<br/>/universalis proxy,<br/>VitePress docs"]
+        APIWORKER["xivdyetools-api-worker<br/>v0.6.0<br/>─────────────<br/>Public REST API,<br/>data.xivdyetools.app,<br/>/universalis proxy,<br/>VitePress docs"]
     end
 
     subgraph "External Services"
@@ -256,12 +256,12 @@ mechanism — so the roster is 17 registrations covering 16 distinct commands.
 
 ---
 
-### xivdyetools-presets-api (v1.6.0)
+### xivdyetools-presets-api (v2.0.0)
 
 **Purpose**: REST API for community dye preset management.
 
 **Features**:
-- CRUD operations for presets
+- CRUD operations for presets — dyes are **stainIDs, 3–6 per preset** (2.0.0; legacy itemIDs rejected), one primary + up to two secondary categories (`community` retired; `appearance` / `zones` / `raids-trials` added), optional `example_link`, moderated preview images (R2 `THUMBNAILS` via image-worker `POST /thumbnail`, served from `shots.xivdyetools.app`)
 - Voting system with per-user tracking
 - Multi-layer moderation pipeline:
   - Local profanity filtering (6 languages)
@@ -275,7 +275,9 @@ mechanism — so the roster is 17 registrations covering 16 distinct commands.
 - Dynamic category validation (1-min cache)
 - Discord notification retries with exponential backoff
 
-**Technology**: Cloudflare Workers, Hono, D1 SQLite database
+**Technology**: Cloudflare Workers, Hono, D1 SQLite database, R2
+
+**v2.0.0 Highlights**: stainID dyes + 3–6 rule, migrations 0007–0010 (community drop, `example_link`, preview image, secondary categories), beta CORS origin, `worker-kit`, dev/prod `wrangler.toml` split.
 
 **v1.5.0 Highlights**: SEC-003 `jsonDepthLimit` middleware (100 KB body, prototype pollution rejection); SEC-004 Hono `bodyLimit` (100 KB) on `/api/*`; migrated to `rateLimitMiddleware()` from `@xivdyetools/worker-middleware` (standardized `X-RateLimit-*` + `Retry-After`); CORS `maxAge` 24h → 1h.
 
@@ -283,17 +285,17 @@ mechanism — so the roster is 17 registrations covering 16 distinct commands.
 
 ### xivdyetools-image-worker (v1.0.0)
 
-**Purpose**: Decode an image URL and return raw RGBA pixels, so `discord-worker` does not have to bundle `@cf-wasm/photon`.
+**Purpose**: Host `@cf-wasm/photon` so `discord-worker` does not have to bundle it — decode an image URL into raw RGBA pixels (`POST /extract`) and crop/encode preset preview uploads into WebP thumbnails (`POST /thumbnail`).
 
 Split out of `discord-worker` on 2026-08-09 ([IMAGE_WORKER_SPLIT](../operations/IMAGE_WORKER_SPLIT.md)) because the WASM payload pushed the bot past Cloudflare's 3 MiB gzip script limit (3,209.3 → 2,589.70 KiB after the split).
 
-**Surface**: `POST /extract`, reachable **only** via `discord-worker`'s `IMAGE_WORKER` service binding. No routes, no public hostname.
+**Surface**: `POST /extract` (discord-worker) and `POST /thumbnail` (presets-api), reachable **only** via the callers' `IMAGE_WORKER` service bindings. No routes, no public hostname.
 
 **Technology**: Cloudflare Workers, `@cf-wasm/photon`
 
 ---
 
-### xivdyetools-moderation-worker (v1.3.0)
+### xivdyetools-moderation-worker (v1.4.0)
 
 **Purpose**: Separate Discord bot for community preset moderation.
 
@@ -333,19 +335,19 @@ Split out of `discord-worker` on 2026-08-09 ([IMAGE_WORKER_SPLIT](../operations/
 
 ---
 
-### xivdyetools-api-worker (v0.5.0)
+### xivdyetools-api-worker (v0.6.0)
 
 **Purpose**: Public REST API for the XIV Dye Tools dye database and color matching, deployed to `data.xivdyetools.app`.
 
 **Phase 1 — 9 Public Endpoints**:
 - `GET /v1/dyes` — list with filtering (8 type/acquisition booleans), sorting, pagination
-- `GET /v1/dyes/:id` — auto-detect ID type (Facewear `<0`, stainID `1-125`, itemID `≥5729`)
+- `GET /v1/dyes/:id` — auto-detect ID type (stainID `1-254`, itemID `≥5729`; legacy negative Facewear IDs answer 404 carrying the new `facewearColors` slug)
 - `GET /v1/dyes/stain/:stainId` — explicit stainID lookup
 - `GET /v1/dyes/search?q=` — name search (localized via `?locale=`)
 - `GET /v1/dyes/categories` — category list with counts
 - `GET /v1/dyes/batch?ids=` — multi-ID lookup, max 50
 - `GET /v1/dyes/consolidation-groups` — Patch 7.5 consolidation metadata
-- `GET /v1/match/closest?hex=` — closest dye (6 distance algorithms)
+- `GET /v1/match/closest?hex=` — closest dye (`ciede2000` default / `oklab` / `cie76` / `redmean` / `rgb` / `distinguish`; legacy `hyab` / `oklch-weighted` accepted and normalised to `ciede2000`, `kL/kC/kH` ignored)
 - `GET /v1/match/within-distance?hex=&maxDistance=` — dyes within ΔE threshold
 
 **Features**:

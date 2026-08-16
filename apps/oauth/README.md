@@ -54,10 +54,10 @@ Revocation is a KV-backed `jti` blacklist (`TOKEN_BLACKLIST`) with a TTL matchin
 ```bash
 # From the monorepo root
 pnpm install
-pnpm --filter xivdyetools-oauth run dev          # wrangler dev on http://localhost:8788
-pnpm --filter xivdyetools-oauth run test
-pnpm --filter xivdyetools-oauth run type-check
-pnpm --filter xivdyetools-oauth run lint
+pnpm --filter xivdyetools-oauth-worker run dev          # wrangler dev on http://localhost:8788
+pnpm --filter xivdyetools-oauth-worker run test
+pnpm --filter xivdyetools-oauth-worker run type-check
+pnpm --filter xivdyetools-oauth-worker run lint
 ```
 
 The `development` environment points `FRONTEND_URL` at `http://localhost:5173` (the web app's Vite dev server) and `WORKER_URL` at `http://localhost:8788`, so the OAuth redirect round-trip works locally.
@@ -67,11 +67,11 @@ The `development` environment points `FRONTEND_URL` at `http://localhost:5173` (
 > ⚠️ **This worker is the exception to the monorepo's deploy convention.** Its top-level `wrangler.toml` config *is* production — `name = "xivdyetools-oauth"` with the `auth.xivdyetools.app` routes attached. Both `deploy` and `deploy:production` run a bare `wrangler deploy` and therefore **both ship to production**. There is no accidental-staging safety net here.
 
 ```bash
-pnpm --filter xivdyetools-oauth run deploy       # PRODUCTION (auth.xivdyetools.app)
+pnpm --filter xivdyetools-oauth-worker run deploy       # PRODUCTION (auth.xivdyetools.app)
 
 # Non-production targets must be named explicitly:
-pnpm --filter xivdyetools-oauth exec wrangler deploy --env development   # xivdyetools-oauth-dev
-pnpm --filter xivdyetools-oauth exec wrangler deploy --env preview       # auth-preview.xivdyetools.app
+pnpm --filter xivdyetools-oauth-worker exec wrangler deploy --env development   # xivdyetools-oauth-dev
+pnpm --filter xivdyetools-oauth-worker exec wrangler deploy --env preview       # auth-preview.xivdyetools.app
 ```
 
 See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../docs/operations/DEPLOY_ENVIRONMENTS.md) for the full per-worker matrix.

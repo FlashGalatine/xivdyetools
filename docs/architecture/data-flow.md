@@ -59,7 +59,7 @@ sequenceDiagram
   "sub": "user-uuid",
   "iat": 1702684800,
   "exp": 1702688400,
-  "iss": "https://oauth.xivdyetools.com",
+  "iss": "https://auth.xivdyetools.app",
   "username": "User#1234",
   "global_name": "Display Name",
   "avatar": "avatar_hash",
@@ -311,7 +311,7 @@ sequenceDiagram
     participant Core as @xivdyetools/core
 
     Note over User,Discord: 1. User runs command
-    User->>Discord: /match #FF6B6B
+    User->>Discord: /extractor color color:#FF6B6B
 
     Note over Discord,Worker: 2. HTTP Interaction
     Discord->>Worker: POST / (signed payload)

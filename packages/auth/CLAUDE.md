@@ -116,8 +116,8 @@ function badRequestResponse(message: string): Response;     // 400 JSON
 ```typescript
 interface RevocationStore { /* the KV surface actually used — get/put */ }
 
-function isTokenRevoked(store: RevocationStore, jti: string): Promise<boolean>;
-function revokeToken(store: RevocationStore, jti: string, ttlSeconds: number): Promise<void>;
+function isTokenRevoked(jti: string, store: RevocationStore | undefined): Promise<boolean>;
+function revokeToken(jti: string, expiresAt: number, store: RevocationStore | undefined): Promise<boolean>; // expiresAt = unix seconds; TTL = max(expiresAt - now, 60)
 ```
 
 A `jti` blacklist rather than a whitelist: only revoked tokens are stored, with a TTL matching the token's remaining lifetime, so the keyspace stays bounded without a sweep job. The store is passed in as an interface rather than a `KVNamespace` so tests need no Workers types.
@@ -187,9 +187,9 @@ The result includes `body` so the caller doesn't have to re-read the request str
 
 Grepped from `package.json` files in the monorepo:
 
-- Apps: `xivdyetools-discord-worker`, `xivdyetools-presets-api`, `xivdyetools-moderation-worker`
+- Apps: `xivdyetools-discord-worker`, `xivdyetools-presets-api`, `xivdyetools-moderation-worker`, `xivdyetools-oauth-worker`
 
-The `oauth` worker uses these primitives indirectly — it generates tokens locally rather than using `verifyJWT`, but it does sign JWTs with the same `hmacSign` patterns.
+The `oauth` worker issues tokens itself (it does not call `verifyJWT` for issuance) but consumes `verifyJWTSignatureOnly`, `decodeJWT`, `isTokenRevoked`, `revokeToken` and the `/encoding` primitives from this package (`apps/oauth/src/services/jwt-service.ts`).
 
 ## Internal Dependencies
 

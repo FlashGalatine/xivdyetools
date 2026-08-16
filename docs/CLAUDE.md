@@ -95,8 +95,10 @@ pnpm --filter xivdyetools-presets-api run dev       # localhost:8787
 
 ```bash
 pnpm --filter xivdyetools-discord-worker run deploy              # BETA bot (…-dev, *.workers.dev)
-# NOTE: a bare `deploy` targets the DEV/BETA worker on every app. Production always
-# needs an explicit `--env production`. See docs/operations/DEPLOY_ENVIRONMENTS.md.
+# NOTE: a bare `deploy` targets the routeless DEV/BETA worker on discord-worker, moderation-worker,
+# presets-api, api-worker and og-worker; production needs an explicit `--env production`.
+# `oauth` is the INVERSE — it has no [env.production], so its bare deploy IS production.
+# See docs/operations/DEPLOY_ENVIRONMENTS.md.
 pnpm --filter xivdyetools-discord-worker run deploy:production   # Production
 pnpm --filter xivdyetools-discord-worker run register-commands   # Register slash commands
 ```

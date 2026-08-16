@@ -96,7 +96,7 @@ Click any tool to get started!
 **"Show me community creations"**
 
 - Browse curated and user-submitted palettes
-- Filter by category (glamour, housing, roleplay)
+- Filter by category (jobs, grand companies, seasons, events, aesthetics, appearance, zones, raids & trials)
 - Save presets to your favorites
 
 ### 9. Budget Suggestions
@@ -138,7 +138,7 @@ Have a screenshot or reference image? Extract its colors:
 ### Favorites
 - Click the **heart icon** on any dye to save it
 - Access favorites from the menu
-- Maximum: 20 favorites
+- Maximum: 40 favorites
 
 ### Collections
 - Create named groups of dyes

@@ -108,7 +108,7 @@ import { Dye, LocalizedDye, DyeWithDistance, DyeDatabase } from '@xivdyetools/ty
 const dye: Dye = {
   itemID: 5729,
   stainID: 1,  // Game's internal stain table ID — the canonical key
-  id: 1,
+  id: 5729,    // always equals itemID after core's normalisation
   name: 'Snow White',
   hex: '#FFFFFF',
   rgb: { r: 255, g: 255, b: 255 },
@@ -116,10 +116,13 @@ const dye: Dye = {
   category: 'Neutral',
   acquisition: 'NPC',
   cost: 216,
+  currency: 'Gil',
   isMetallic: false,
   isPastel: false,
   isDark: false,
   isCosmic: false,
+  isIshgardian: false,
+  consolidationType: 'A',
 };
 
 // Dye with color distance (for search results)
@@ -150,7 +153,7 @@ const submission: PresetSubmission = {
   name: 'Red Mage Vibes',
   description: 'Crimson and black for the sophisticated caster',
   category_id: 'jobs',
-  dyes: [12, 45, 78],
+  dyes: [102, 21, 45],   // stainIDs, 3–6 per preset (2.0.0 — was itemIDs)
   tags: ['rdm', 'red', 'elegant'],
 };
 ```
@@ -276,7 +279,7 @@ import { CommunityPreset, PresetFilters, ModerationResult } from '@xivdyetools/t
 | Function | Description |
 |----------|-------------|
 | `createHexColor(hex)` | Validate and normalize hex color (throws on invalid format) |
-| `createDyeId(id)` | Validate dye ID — `1-200`, or synthetic Facewear IDs `<= -1000`; returns `null` otherwise |
+| `createDyeId(id)` | Validate dye ID — `1-200` (a stainID-sized window, not itemIDs), or the frozen legacy synthetic Facewear range `<= -1000`; returns `null` otherwise |
 | `createHue(hue)` | Normalize hue to 0-360 |
 | `createSaturation(sat)` | Clamp saturation to 0-100 |
 | `isOk(result)` | Type guard for successful Result |

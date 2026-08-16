@@ -49,7 +49,7 @@ Content-Type: application/json
     "sub": "user-uuid",
     "iat": 1702684800,
     "exp": 1702688400,
-    "iss": "https://oauth.xivdyetools.com",
+    "iss": "https://auth.xivdyetools.app",
     "username": "User#1234",
     "global_name": "Display Name",
     "avatar": "avatar_hash",
@@ -72,7 +72,14 @@ ctx.set('userDiscordName', payload.username);
 
 ## Presets API Endpoints
 
-Base URL: `https://presets.xivdyetools.com/api/v1`
+> **5.0 note.** The payload shapes in this section are illustrative and predate presets-api 2.0.0.
+> Since 2.0.0 a preset's `dyes` are an array of **stainIDs (3–6)**, `category_id` is a slug (`jobs`,
+> `grand-companies`, `seasons`, `events`, `aesthetics`, `appearance`, `zones`, `raids-trials` — no
+> `community`), presets carry `secondary_categories` (≤2), `example_link`, `preview_image_*` and a
+> single toggleable `vote_count` (no downvotes). The authoritative reference is
+> [presets-api/endpoints.md](../projects/presets-api/endpoints.md); this section needs a fuller rewrite.
+
+Base URL: `https://api.xivdyetools.app/api/v1`
 
 ### GET /presets
 
@@ -82,9 +89,9 @@ List community presets with filtering and pagination.
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `category` | string | — | Filter by category slug |
-| `search` | string | — | Search name/description |
+| `search` | string | — | Search name/description/tags |
 | `status` | string | `approved` | Filter by status |
-| `sort` | string | `popular` | Sort: `popular`, `newest`, `oldest` |
+| `sort` | string | `popular` | Sort: `popular`, `recent`, `name` |
 | `page` | number | `1` | Page number |
 | `limit` | number | `20` | Items per page (max 100) |
 | `is_curated` | boolean | — | Filter curated presets |
@@ -128,10 +135,15 @@ Submit a new preset.
 {
   "name": "Forest Guardian",
   "description": "Earthy tones for tank glamour",
-  "colors": [42, 78, 91],
-  "category_id": 1
+  "dyes": [42, 78, 91],
+  "category_id": "jobs",
+  "secondary_categories": ["aesthetics"],
+  "tags": ["tank", "earthy"],
+  "example_link": "https://example.com/my-glamour"
 }
 ```
+
+`dyes` are stainIDs (1–254), 3–6 of them; legacy itemIDs are rejected ("looks like a legacy item ID").
 
 **Response (201 Created):**
 ```json
@@ -148,7 +160,7 @@ Submit a new preset.
 **Error Responses:**
 | Status | Description |
 |--------|-------------|
-| 400 | Invalid input (missing fields, invalid dye IDs) |
+| 400 | Invalid input (missing fields, fewer than 3 / more than 6 dyes, legacy itemIDs, unknown category) |
 | 401 | Not authenticated |
 | 409 | Duplicate preset (same dye combination exists) |
 | 429 | Rate limited (10 submissions/day exceeded) |
@@ -291,7 +303,7 @@ Approve or reject a preset.
 
 ## OAuth API Endpoints
 
-Base URL: `https://oauth.xivdyetools.com`
+Base URL: `https://auth.xivdyetools.app`
 
 ### GET /auth/discord
 
@@ -328,7 +340,7 @@ SPA-friendly token exchange.
 {
   "code": "AUTH_CODE",
   "code_verifier": "PKCE_VERIFIER",
-  "redirect_uri": "https://app.xivdyetools.com/callback"
+  "redirect_uri": "https://xivdyetools.app/callback"
 }
 ```
 
@@ -386,7 +398,7 @@ Authorization: Bearer <JWT>
 
 ## Discord Worker Webhook Endpoints
 
-Base URL: `https://bot.xivdyetools.com`
+Base URL: `https://bot.xivdyetools.app`
 
 ### POST /webhooks/preset-submission
 
@@ -398,10 +410,10 @@ Authorization: Bearer <INTERNAL_WEBHOOK_SECRET>
 Content-Type: application/json
 ```
 
-**Request Body:**
+**Request Body** (discriminated on `type` — `submission` posts the moderation embed for a new preset; `preview_image` (2.0.0) posts a "picture pending review" embed with ✅/❌ buttons):
 ```json
 {
-  "type": "new_submission",
+  "type": "submission",
   "preset": {
     "id": "uuid",
     "name": "Preset Name",
@@ -410,18 +422,11 @@ Content-Type: application/json
 }
 ```
 
-### POST /webhooks/moderation
+The moderation embed is posted with `MODERATION_BOT_TOKEN` when set (so its buttons route to moderation-worker); preview-image embeds are posted with this bot's own token (its `previewimg_*` buttons are handled here). A Discord rejection returns 502 so presets-api's retry / dead-letter path engages.
 
-Receive moderation queue notifications.
+### POST /webhooks/github
 
-**Request Body:**
-```json
-{
-  "type": "pending_review",
-  "preset": { ... },
-  "reason": "Flagged by profanity filter"
-}
-```
+Release-announcement hook (GitHub webhook, `GITHUB_WEBHOOK_SECRET`) — posts the parsed `CHANGELOG-laymans.md` entry to `ANNOUNCEMENT_CHANNEL_ID`. There is no `/webhooks/moderation` route; the live surface is `GET /health` plus `POST /`, `POST /webhooks/preset-submission`, `POST /webhooks/github`.
 
 ---
 

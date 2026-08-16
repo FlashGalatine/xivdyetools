@@ -13,19 +13,19 @@ xivdyetools/
 ├── packages/                # Shared libraries (@xivdyetools scope, published to npm)
 │   ├── types/               # Branded types (HexColor, DyeId, etc.) and shared interfaces
 │   ├── logger/              # Multi-runtime logging with secret redaction
-│   ├── auth/                # JWT verification, HMAC signing, Discord Ed25519
+│   ├── auth/                # JWT verification, HMAC signing, Discord Ed25519, Base64URL/hex (/encoding)
 │   ├── worker-kit/          # Worker toolkit: Hono middleware + sliding-window rate limiting (Memory, KV, Upstash)
-│   ├── core/                # Color algorithms, dye database (125 standard + 11 Facewear), k-d tree, 6-language i18n
-│   ├── svg/                 # Pure SVG card generators (data → SVG string)
-│   ├── bot-logic/           # Platform-agnostic Discord/Revolt command business logic
-│   └── test-utils/          # CF Workers mocks (D1, KV, R2) and test factories
+│   ├── core/                # Color algorithms, dye database (125 dyes, schema v2) + separate facewearColors (11), k-d tree, 6-language i18n, /blending
+│   ├── svg/                 # Pure SVG card generators on the 5.0 frame system (data → SVG string) + shared glyph set
+│   ├── bot-logic/           # Platform-agnostic Discord/Revolt command business logic + bot UI i18n (/i18n)
+│   └── test-utils/          # CF Workers mocks (D1, KV, R2) and test factories (workspace-private, not published)
 ├── apps/                    # Applications
-│   ├── discord-worker/        # Primary Discord bot (CF Worker + Hono, 20 commands)
+│   ├── discord-worker/        # Primary Discord bot (CF Worker + Hono, 17 registered slash commands — see src/commands/registry.ts)
 │   ├── image-worker/          # Photon pixel extraction, service-binding-only (CF Worker)
 │   ├── moderation-worker/     # Moderation bot for community presets (CF Worker)
 │   ├── presets-api/           # Community presets REST API (CF Worker + D1)
 │   ├── oauth/                 # Discord OAuth + JWT issuance (CF Worker + D1)
-│   ├── api-worker/            # Public dye/color-matching API (CF Worker)
+│   ├── api-worker/            # Public dye/color-matching API + absorbed Universalis proxy + VitePress docs (CF Worker + KV)
 │   ├── og-worker/             # Dynamic OpenGraph image generation (CF Worker)
 │   ├── stoat-worker/          # Revolt chat bot (Node.js + revolt.js, NOT a CF Worker)
 │   └── web-app/               # Main web app with 9 color tools (Vite + Lit + Tailwind)
@@ -36,12 +36,12 @@ xivdyetools/
 ## Dependency Flow
 
 ```
-types, logger, auth ───────────────────────────────────────────┐ (Level 0: no internal deps)
-test-utils (→ auth, types) ────────────────────────────────────┤ (Level 1)
-core (→ types, logger) ────────────────────────────────────────┤ (Level 2)
-worker-kit (→ logger) ─────────────────────────────────────────┤
-svg (→ core, types) ───────────────────────────────────────────┤ (Level 3)
-bot-logic (→ core, svg, types; incl. /i18n) ───────────────────┤ (Level 4)
+types, logger, auth (incl. /encoding) ─────────────────────────┐ (Level 0: no internal deps)
+worker-kit (→ logger; incl. /rate-limiter) ────────────────────┤ (Level 1 — workers only)
+core (→ types, logger; incl. /blending) ───────────────────────┤ (Level 1)
+test-utils (→ auth, types; private) ───────────────────────────┤ (Level 1)
+svg (→ core, types) ───────────────────────────────────────────┤ (Level 2)
+bot-logic (→ core, svg, types; incl. /i18n) ───────────────────┤ (Level 3)
                                                                 │
                             Applications ◄─────────────────────┘
 ```
@@ -79,8 +79,12 @@ Workers additionally support:
 
 ```bash
 pnpm --filter xivdyetools-discord-worker run deploy              # BETA bot (…-dev, *.workers.dev)
-# NOTE: a bare `deploy` targets the DEV/BETA worker on every app. Production always
-# needs an explicit `--env production`. See docs/operations/DEPLOY_ENVIRONMENTS.md.
+# NOTE: a bare `deploy` targets the routeless `…-dev` worker on discord-worker /
+# moderation-worker / presets-api / api-worker / image-worker, and the ROUTED BETA
+# worker on og-worker (beta.xivdyetools.app). Production needs `--env production`.
+# `oauth` is the INVERSE: it has no [env.production] — a bare `wrangler deploy` IS
+# the production deploy. Check the wrangler.toml first; see
+# docs/operations/DEPLOY_ENVIRONMENTS.md.
 pnpm --filter xivdyetools-discord-worker run deploy:production   # Production
 ```
 
@@ -103,19 +107,20 @@ Workers communicate via Cloudflare **Service Bindings** (direct Worker-to-Worker
 ```
 discord-worker ──► presets-api
 discord-worker ──► image-worker        (POST /extract — palette pixels)
+discord-worker ──► api-worker          (UNIVERSALIS_PROXY binding — market prices for /budget)
 moderation-worker ──► presets-api
 presets-api ──► discord-worker (notifications)
 presets-api ──► image-worker           (POST /thumbnail — preview images)
 api-worker ──► (standalone, public-facing)
 ```
 
-All Cloudflare Workers use **Hono** as the HTTP framework. Persistence is **D1** (SQLite) for `presets-api` and `oauth`.
+All Cloudflare Workers use **Hono** (`^4.12.34` floor) as the HTTP framework and consume `@xivdyetools/worker-kit` for request-ID / logger / rate-limit middleware. Persistence is **D1** (SQLite): `presets-api` owns `xivdyetools-presets` (also bound read/write by `discord-worker` and `moderation-worker`), `oauth` owns `xivdyetools-users`; `presets-api` additionally stores preview images in R2.
 
 ### Localization
 6 languages throughout: `en`, `ja`, `de`, `fr`, `ko`, `zh`
 - XIVAPI v2 only serves en/ja/de/fr; Korean and Chinese names are manually sourced
 - Locale pipeline: `fetch_dye_names.py` → `dyenames.csv` → `build-locales.ts` → JSON
-- CJK rendering needs subset fonts (Noto Sans SC + Noto Sans KR) in SVG generation
+- CJK rendering needs subset fonts (Noto Sans JP + SC + KR, regenerated by each worker's `scripts/subset-cjk-fonts.py`) in SVG-to-PNG rendering
 
 ### Dye Database Composition (schema v2, since 2026-07-31)
 The dye database is **125 standard dyes** in `packages/core/src/data/dyes.json` — 7 fields per entry (`stainID` [canonical key], `name`, `hex`, `category`, `acquisition`, `consolidationType`, `legacyItemID`). Everything else (`rgb`/`hsv`/`lab`, `cost`/`currency` via `ACQUISITION_META`, the five `is*` flags) is **derived at `DyeDatabase.initialize()`** — the runtime `Dye` object keeps its full 16-field shape, and `Dye.itemID` remains a `number` (= `legacyItemID`, falling back to `stainID` for future consolidated-only dyes). `isMetallic` = the Stain sheet's gloss set (`METALLIC_STAIN_IDS`, 16); `isCosmic ≡ consolidationType 'C'`; `isIshgardian ≡ 'B'`.

@@ -42,7 +42,7 @@ src/
 ├── index.ts                       # Public API surface
 ├── version.ts                     # Auto-generated from package.json on build
 ├── constants/                     # RGB/HSV ranges, Universalis API config, Brettel matrices
-├── types/                         # MatchingMethod, OklchWeights, MatchingConfig, MATCHING_PRESETS
+├── types/                         # MatchingMethod (6-value 5.0 vocabulary), MATCHING_METHODS, DEFAULT_MATCHING_METHOD, normalizeMatchingMethod
 ├── blending/                      # Self-contained blending algorithms + conversions — subpath export @xivdyetools/core/blending (absorbed from color-blending)
 ├── config/consolidated-ids.ts     # Patch 7.5 dye consolidation (A=52254, B=52255, C=52256)
 ├── data/
@@ -99,7 +99,7 @@ class TranslationProvider       // Stateless — performs translations from a re
 
 Conversion: `hexToRgb`, `rgbToHex`, `rgbToHsv`, `hsvToRgb`, `hexToHsv`, `hsvToHex`, `normalizeHex`, `rgbToLab`, `hexToLab`, `labToRgb`, `labToHex`, `rgbToOklab`, `hexToOklab`, `oklabToRgb`, `oklabToHex`, `rgbToOklch`, `hexToOklch`, `oklchToRgb`, `oklchToHex`, `labToLch`, `lchToLab`, `rgbToLch`, `hexToLch`, `lchToRgb`, `lchToHex`, `rgbToHsl`, `hexToHsl`, `hslToRgb`, `hslToHex`, `rgbToCmyk`, `cmykToRgb`, `hexToCmyk`, `cmykToHex`, `rybToRgb`, `rgbToRyb`, `hexToRyb`, `rybToHex`.
 
-Distance: `getColorDistance` (Euclidean RGB), `getDeltaE` (CIE76 / CIE2000).
+Distance: `getColorDistance` (Euclidean RGB), `getRedmeanDistance`, `getDeltaE` (`DeltaEFormula`: CIE76 / CIE2000 / OKLAB / HyAB), `getDistanceForMethod(hex1, hex2, MatchingMethod)` (the 5.0 suite dispatcher). `ColorConverter` additionally exposes `getDeltaE_Oklab` / `getDeltaE_HyAB`.
 
 Accessibility: `getPerceivedLuminance`, `getContrastRatio`, `meetsWCAGAA`, `meetsWCAGAAA`, `isLightColor`, `getOptimalTextColor`.
 
@@ -141,9 +141,14 @@ interface ICacheBackend {
 }
 interface APIServiceOptions { cache?: ICacheBackend; logger?: Logger; fetchClient?: FetchClient; rateLimiter?: RateLimiter }
 class APIService {
-  fetchPrices(itemIds: number[], world: string): Promise<PriceData>     // ≤100 ids per call
-  fetchPricesBatched(itemIds: number[], world: string): Promise<PriceData> // chunks of 100
-  // + cache stats / metrics
+  constructor(options?: ICacheBackend | APIServiceOptions, fetchClient?, rateLimiter?)
+  getPriceData(itemID: number, worldID?: number, dataCenterID?: string): Promise<PriceData | null>
+  getPricesForItems(itemIDs: number[]): Promise<Map<number, PriceData>>
+  getPricesForDataCenter(itemIDs: number[], dataCenterID: string): Promise<Map<number, PriceData>>
+  isAPIAvailable(): Promise<boolean>; getAPIStatus(): Promise<{ available; latency }>
+  clearCache(); getCacheStats(); resetMetrics()
+  static formatPrice(price): string; static getPriceTrend(current, previous)
+  // Pass getMarketItemID(dye) — 105 of the 125 dyes share a Patch 7.5 consolidated itemID
 }
 ```
 
@@ -155,8 +160,10 @@ EXPENSIVE_DYE_IDS, VENDOR_ACQUISITIONS, CRAFT_ACQUISITIONS  // ['The Firmament',
 CONSOLIDATED_IDS, CONSOLIDATED_DYES, isConsolidationActive,
   getMarketItemID, getConsolidatedDyeName
 type ConsolidationType, ConsolidatedDye, LocalizedDyeName
-MATCHING_PRESETS, type MatchingMethod, OklchWeights, MatchingConfig
-type DeltaEFormula = 'cie76' | 'cie2000'
+type MatchingMethod = 'ciede2000' | 'oklab' | 'cie76' | 'redmean' | 'rgb' | 'distinguish'   // 5.0 vocabulary; hyab / oklch-weighted retired
+MATCHING_METHODS, DEFAULT_MATCHING_METHOD ('ciede2000'), MATCHING_METHOD_TAGS,
+  LEGACY_MATCHING_METHOD_MAP, isMatchingMethod, normalizeMatchingMethod   // hyab / oklch-weighted → ciede2000, euclidean → rgb
+type DeltaEFormula = 'cie76' | 'cie2000' | 'oklab' | 'hyab'   // ColorConverter.getDeltaE formulas — HyAB survives as a function, not a MatchingMethod
 type RYB
 ```
 
@@ -214,7 +221,7 @@ Nothing computes a synthetic ID at runtime any more. Code that filters "real dye
 Internal apps:
 - `apps/web-app` — Vite browser bundle, uses `dyeDatabase` JSON import, `ColorService`, `DyeService`, `LocalizationService`, `PaletteService`, `APIService`.
 - `apps/discord-worker` — Cloudflare Worker, uses `DyeService`, `LocalizationService`, `APIService` with a KV-backed `ICacheBackend`.
-- `apps/api-worker` — public dye/color-matching API.
+- `apps/api-worker` — public dye/color-matching API (accepts the retired `hyab` / `oklch-weighted` at its boundary and normalises them to `ciede2000`).
 - `apps/og-worker` — uses the stateless `LocaleLoader/Registry/TranslationProvider` trio.
 - `apps/stoat-worker` — Revolt bot.
 

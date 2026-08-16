@@ -121,7 +121,7 @@ This is the most important section. `stoat-worker` and `discord-worker` look sup
 
 #### Reactions as buttons
 
-Stoat doesn't have Discord's MessageComponent system. Instead, the bot includes `interactions.reactions` + `restrict_reactions: true` on responses, then listens for reaction events to trigger follow-ups. `MessageContextStore` (LRU, max 500 entries, 1h TTL) keeps the dye/command context alive for those reaction handlers.
+Stoat doesn't have Discord's MessageComponent system; the *design* is to send `interactions.reactions` + `restrict_reactions: true` on responses and listen for reaction events to trigger follow-ups. **Not wired yet (BUG-038, 0.2.0):** no `messageReactionAdd` listener is registered, so `dye info` currently sends *no* reactions — `DYE_INFO_REACTIONS` in `response-formatter.ts` is kept for when the listener ships. `MessageContextStore` (LRU, max 500 entries, 1h TTL, keyed by the bot *reply's* message ID) already keeps the dye/command context alive for those future handlers.
 
 ```typescript
 // From response-formatter.ts

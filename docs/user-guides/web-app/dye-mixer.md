@@ -2,7 +2,11 @@
 
 **Blend two dyes together to create custom colors**
 
-The Dye Mixer is a new tool in XIV Dye Tools v4.0.0 that lets you blend two dyes together using multiple color mixing algorithms, then find the closest matching FFXIV dyes.
+The Dye Mixer is a tool introduced in XIV Dye Tools v4.0.0 that lets you blend two dyes together using multiple color mixing algorithms, then find the closest matching FFXIV dyes.
+
+> **5.0 note.** The mixer now offers six blending modes — **RGB, LAB, OKLAB, RYB, HSL and Spectral**
+> (pigment simulation) — and matches the result with the shared matching methods (ΔE2000 by default).
+> The text below still describes the original three modes.
 
 > **Note**: This is a completely different tool from the Gradient Builder (previously called "Dye Mixer" in v3.x). The Gradient Builder creates color *transitions*, while this tool creates color *blends*.
 

@@ -96,7 +96,7 @@ pnpm --filter xivdyetools-discord-worker run deploy:production   # Production (b
 2. `pnpm lint && pnpm test && pnpm type-check` — must be green.
 3. `pnpm run deploy`, then smoke-test core commands in the test guild.
 4. `pnpm run deploy:production`.
-5. If slash command schemas changed, re-run `register-commands` against the production token.
+5. Merging to `main` runs `deploy-discord-worker.yml`, which deploys production **and** runs `register-commands` for you; a manual `register-commands` against the production token is only needed for out-of-band schema pushes.
 6. `GET https://bot.xivdyetools.app/health` to confirm the new build is live.
 
 ### Bundle size

@@ -1,6 +1,6 @@
 # Content Moderation Pipeline
 
-> Presets API v1.4.15
+> Presets API v2.0.0
 
 Content moderation runs on preset submission (`POST`) and edit (`PATCH`) when the name or description changes. The pipeline uses a two-tier filtering strategy: a fast local profanity filter followed by an optional external toxicity check.
 

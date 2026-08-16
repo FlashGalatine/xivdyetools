@@ -6,6 +6,12 @@ The Swatch Matcher helps you find FFXIV dyes that match your character's customi
 
 > **Note**: This tool was previously called "Character Color Matcher" in v3.x.
 
+> **5.0 note.** The 5.0 Swatch Matcher can also **import a `.chara` character file** (Anamnesis /
+> Ktisis export) and resolve your character's live skin, hair, highlight, eye, lip, face-paint and
+> tattoo/limbal colours in one go, and it uses the shared matching methods (ΔE2000 by default;
+> ΔEOK, ΔE76, redmean, RGB, distinguish selectable). The manual race → clan → category → colour flow
+> below still works; the screens themselves were redrawn and this guide needs a fuller update.
+
 ---
 
 ## How to Use
@@ -24,7 +30,7 @@ Choose your character's race and clan:
 | **Miqo'te** | Seeker of the Sun, Keeper of the Moon |
 | **Roegadyn** | Sea Wolf, Hellsguard |
 | **Au Ra** | Raen, Xaela |
-| **Hrothgar** | Helion, The Lost |
+| **Hrothgar** | Helions, The Lost |
 | **Viera** | Rava, Veena |
 
 ### 2. Choose a Color Category

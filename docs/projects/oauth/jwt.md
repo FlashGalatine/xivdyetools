@@ -36,7 +36,7 @@ All tokens use HMAC-SHA256 signing.
 | `sub` | string | Internal user ID (UUID) |
 | `iat` | number | Issued at (Unix timestamp, seconds) |
 | `exp` | number | Expiration (Unix timestamp, seconds) |
-| `iss` | string | Issuer URL (e.g., `https://oauth.xivdyetools.app`) |
+| `iss` | string | Issuer URL (e.g., `https://auth.xivdyetools.app`) |
 | `jti` | string | Unique token ID (UUID) for revocation tracking |
 
 ### User Claims
@@ -72,7 +72,7 @@ All tokens use HMAC-SHA256 signing.
   "sub": "550e8400-e29b-41d4-a716-446655440000",
   "iat": 1704110400,
   "exp": 1704114000,
-  "iss": "https://oauth.xivdyetools.app",
+  "iss": "https://auth.xivdyetools.app",
   "jti": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "username": "user123",
   "global_name": "Display Name",

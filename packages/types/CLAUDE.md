@@ -35,7 +35,7 @@ The package is organized into per-domain subpath exports. Each subpath has its o
 
 ```
 src/
-├── color/         # RGB/HSV/LAB/OKLAB/OKLCH/LCH/HSL + branded HexColor/DyeId/Hue/Saturation
+├── color/         # RGB/HSV/LAB/OKLAB/OKLCH/LCH/HSL/CMYK + branded HexColor/DyeId/Hue/Saturation + MATCH_QUALITY_TIERS
 ├── dye/           # Dye, LocalizedDye, DyeWithDistance, DyeTypeFilters, FacewearColor
 ├── character/     # CharacterColor, CharacterColorMatch, SubRace, RACE_SUBRACES, COLOR_GRID_DIMENSIONS
 ├── preset/        # Community preset shapes + every API request/response variant
@@ -58,7 +58,7 @@ type Hue = number & { readonly __brand: 'Hue' };
 type Saturation = number & { readonly __brand: 'Saturation' };
 
 function createHexColor(hex: string): HexColor;          // throws on invalid format
-function createDyeId(id: number): DyeId | null;          // 1-200 or <= -1000 (synthetic)
+function createDyeId(id: number): DyeId | null;          // 1-200 (a stainID-sized window — NOT itemIDs like 5729) or <= -1000 (frozen legacy synthetic range); no production caller today
 function createHue(hue: number): Hue;                     // wraps to 0-360
 function createSaturation(saturation: number): Saturation; // clamps to 0-100
 ```
@@ -66,8 +66,9 @@ function createSaturation(saturation: number): Saturation; // clamps to 0-100
 ### Color spaces and vision
 
 ```typescript
-type RGB; type HSV; type LAB; type OKLAB; type OKLCH; type LCH; type HSL;
+type RGB; type HSV; type LAB; type OKLAB; type OKLCH; type LCH; type HSL; type CMYK;
 type VisionType; type ColorblindMatrices;
+const MATCH_QUALITY_TIERS; function classifyMatchDistance(); type MatchQualityKey;
 ```
 
 ### Dye types
@@ -82,7 +83,7 @@ type FacewearColor;   // { id: string slug; name; hex } — NOT a Dye (schema v2
 ```typescript
 type CharacterColor; type CharacterColorMatch;
 type SharedColorCategory; type RaceSpecificColorCategory;
-type SubRace; type Gender;
+type SubRace; type Gender; type Race;   // SubRace 'Helion' → 'Helions' in 2.0.0 (map the old stored value on read)
 const RACE_SUBRACES; const SUBRACE_TO_RACE; const COLOR_GRID_DIMENSIONS;
 ```
 

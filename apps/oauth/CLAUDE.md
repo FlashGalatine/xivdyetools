@@ -207,7 +207,7 @@ Both emit `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`. 429
 
 ### CORS
 
-Allows `FRONTEND_URL` always; in `ENVIRONMENT === 'development'` only, also allows `localhost`/`127.0.0.1` on whitelisted ports `3000`, `5173`, `8787`. Requests without an `Origin` header (curl/Postman) are denied — server-to-server callers must use the relevant API endpoints rather than OAuth.
+CORS and redirect URIs share **one** allowlist (2.6.0 fix): the origin callback consults `getAllowedRedirectOrigins(env)` — `ALLOWED_REDIRECT_ORIGINS` in `src/constants/oauth.ts` (`https://xivdyetools.app`, `https://beta.xivdyetools.app`, the transition `projectgalatine.com` origin) plus `env.FRONTEND_URL`, with the loopback entries stripped outside `ENVIRONMENT === 'development'`. Development additionally allows `localhost`/`127.0.0.1` on whitelisted ports `3000`, `5173`, `8787`. Requests without an `Origin` header (curl/Postman) are denied — server-to-server callers must use the relevant API endpoints rather than OAuth.
 
 ### Body Hardening
 

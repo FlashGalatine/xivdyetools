@@ -4,16 +4,20 @@ Find FFXIV dyes that best match any hex color you provide, using perceptual colo
 
 ## Distance Methods
 
-| Method | Description |
-|---|---|
-| `rgb` | Euclidean distance in RGB space — fast, not perceptually uniform |
-| `cie76` | CIE76 ΔE in Lab space — older standard, reasonable accuracy |
-| `ciede2000` | CIEDE2000 ΔE — current ISO standard for perceptual color difference |
-| `oklab` | Oklab ΔE — modern algorithm, excellent perceptual uniformity (default) |
-| `hyab` | HyAB — hybrid approach, good for large color differences |
-| `oklch-weighted` | OKLCh with custom `kL`/`kC`/`kH` weights for lightness/chroma/hue emphasis |
+| Method | Tag | Scale | Description |
+|---|---|---|---|
+| `ciede2000` | ΔE2000 | 0 – 100 | CIEDE2000 ΔE — current ISO standard for perceptual color difference (**default**) |
+| `oklab` | ΔEOK | 0 – 1 | Euclidean distance in Oklab — modern, excellent perceptual uniformity |
+| `cie76` | ΔE76 | 0 – 100 | CIE76 ΔE in Lab space — older standard, reasonable accuracy |
+| `redmean` | REDMEAN | 0 – ~765 | Weighted RGB distance — cheap perceptual approximation |
+| `rgb` | RGB DIST | 0 – ~441.67 | Euclidean distance in RGB space — fast, not perceptually uniform |
+| `distinguish` | DISTINGUISH % | 0 – 100 (integer) | RGB distance rescaled to a percentage — same ranking as `rgb`, rounded, so ties are common |
 
-**Default:** `oklab` is the best general-purpose choice. Use `oklch-weighted` when you want to prioritize hue matching over lightness (e.g. `kL=0.5, kH=2`).
+**Default:** `ciede2000` — the same "what does *close* mean" answer used across the XIV Dye Tools suite. `distance` is returned in the chosen method's native unit, so thresholds are not comparable across methods.
+
+::: tip Retired methods
+The pre-5.0 values `hyab` and `oklch-weighted` are still **accepted** for compatibility but are silently normalised to `ciede2000` (and `euclidean` to `rgb`) — the response `method` field shows what was actually used. The old `kL` / `kC` / `kH` weight parameters are ignored.
+:::
 
 ---
 
@@ -26,12 +30,9 @@ Find the single closest FFXIV dye to a given hex color.
 | Name | In | Required | Description |
 |---|---|---|---|
 | `hex` | query | Yes | Hex color (`#RRGGBB` or `RRGGBB`) |
-| `method` | query | No | Distance algorithm (default: `oklab`) |
-| `excludeIds` | query | No | Comma-separated IDs to exclude from results |
+| `method` | query | No | Distance algorithm (default: `ciede2000`) |
+| `excludeIds` | query | No | Comma-separated IDs to exclude from results (max 50; itemID or stainID, auto-detected) |
 | `locale` | query | No | Locale for `localizedName` |
-| `kL` | query | No | Lightness weight for `oklch-weighted` (default: `1.0`) |
-| `kC` | query | No | Chroma weight for `oklch-weighted` (default: `1.0`) |
-| `kH` | query | No | Hue weight for `oklch-weighted` (default: `1.0`) |
 
 **Type / acquisition filters** (also supported, all optional booleans) — when set to `true`/`false`, the matcher narrows the candidate set to dyes that match the filter. See [GET /v1/dyes](dyes#get-v1dyes) for full descriptions.
 
@@ -50,7 +51,7 @@ Find the single closest FFXIV dye to a given hex color.
   endpoint="/v1/match/closest"
   :params="[
     { name: 'hex', in: 'query', required: true, default: 'FF6B6B', description: 'Hex color — #RRGGBB or RRGGBB' },
-    { name: 'method', in: 'query', required: false, default: 'oklab', description: 'Distance algorithm', options: ['rgb', 'cie76', 'ciede2000', 'oklab', 'hyab', 'oklch-weighted'] },
+    { name: 'method', in: 'query', required: false, default: 'ciede2000', description: 'Distance algorithm', options: ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish'] },
     { name: 'locale', in: 'query', required: false, default: 'en', description: 'en, ja, de, fr, ko, zh', options: ['en', 'ja', 'de', 'fr', 'ko', 'zh'] }
   ]"
 />
@@ -62,23 +63,23 @@ Example response:
   "success": true,
   "data": {
     "dye": {
-      "itemID": 48227,
-      "stainID": 52,
-      "name": "Carmine Red",
-      "hex": "#e50b18",
-      "rgb": { "r": 229, "g": 11, "b": 24 },
-      "category": "Red",
+      "itemID": 5741,
+      "stainID": 13,
+      "name": "Coral Pink",
+      "hex": "#cc6c5e",
+      "rgb": { "r": 204, "g": 108, "b": 94 },
+      "category": "Reds",
       ...
     },
-    "distance": 0.0521,
-    "method": "oklab",
+    "distance": 9.568,
+    "method": "ciede2000",
     "inputHex": "#FF6B6B"
   },
   "meta": { ... }
 }
 ```
 
-**Distance values** are unitless floats. For `oklab`, values below `0.05` are perceptually very close, and above `0.2` are noticeable differences.
+**Distance values** are floats (rounded to 4 decimals) in the chosen method's native unit. For `ciede2000`, roughly `< 2` is imperceptible, `2–10` is a visible-but-close match, and `> 10` is a clearly different color; for `oklab`, values below `0.05` are perceptually very close and above `0.2` are noticeable differences.
 
 ---
 
@@ -91,14 +92,11 @@ Find all dyes within a color distance threshold. Results are sorted closest-firs
 | Name | In | Required | Description |
 |---|---|---|---|
 | `hex` | query | Yes | Hex color (`#RRGGBB` or `RRGGBB`) |
-| `maxDistance` | query | Yes | Maximum distance threshold (min `0.01`) |
-| `method` | query | No | Distance algorithm (default: `oklab`) |
-| `limit` | query | No | Max results (1–125; default `20`) |
-| `excludeIds` | query | No | Comma-separated IDs to exclude |
+| `maxDistance` | query | Yes | Maximum distance threshold in the method's native unit (min `0.01`) |
+| `method` | query | No | Distance algorithm (default: `ciede2000`) |
+| `limit` | query | No | Max results (1–125; default `20`) — applied after `excludeIds` and the filters below |
+| `excludeIds` | query | No | Comma-separated IDs to exclude (max 50) |
 | `locale` | query | No | Locale for `localizedName` |
-| `kL` | query | No | Lightness weight for `oklch-weighted` |
-| `kC` | query | No | Chroma weight for `oklch-weighted` |
-| `kH` | query | No | Hue weight for `oklch-weighted` |
 
 **Type / acquisition filters** (`metallic`, `pastel`, `dark`, `cosmic`, `ishgardian`, `vendor`, `craft`, `expensive`) are also supported here — see the [closest endpoint](#get-v1matchclosest) above.
 
@@ -106,8 +104,8 @@ Find all dyes within a color distance threshold. Results are sorted closest-firs
   endpoint="/v1/match/within-distance"
   :params="[
     { name: 'hex', in: 'query', required: true, default: 'FF6B6B', description: 'Hex color — #RRGGBB or RRGGBB' },
-    { name: 'maxDistance', in: 'query', required: true, default: '0.15', description: 'Maximum Oklab distance (try 0.05–0.30)' },
-    { name: 'method', in: 'query', required: false, default: 'oklab', description: 'Distance algorithm', options: ['rgb', 'cie76', 'ciede2000', 'oklab', 'hyab', 'oklch-weighted'] },
+    { name: 'maxDistance', in: 'query', required: true, default: '15', description: 'Maximum distance in the method\'s unit (ΔE2000: try 5–30)' },
+    { name: 'method', in: 'query', required: false, default: 'ciede2000', description: 'Distance algorithm', options: ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish'] },
     { name: 'limit', in: 'query', required: false, default: '10', description: 'Max results (1–125)' },
     { name: 'locale', in: 'query', required: false, default: 'en', description: 'en, ja, de, fr, ko, zh', options: ['en', 'ja', 'de', 'fr', 'ko', 'zh'] }
   ]"
@@ -120,16 +118,16 @@ Example response:
   "success": true,
   "data": {
     "results": [
-      { "dye": { "itemID": 48227, "name": "Carmine Red", "hex": "#e50b18", ... }, "distance": 0.0341 },
-      { "dye": { "itemID": 48247, "name": "Rust Red", "hex": "#d4320e", ... }, "distance": 0.0892 }
+      { "dye": { "itemID": 5741, "stainID": 13, "name": "Coral Pink", "hex": "#cc6c5e", ... }, "distance": 9.568 },
+      { "dye": { "itemID": 5735, "stainID": 7, "name": "Rose Pink", "hex": "#e69f96", ... }, "distance": 12.8236 }
     ],
     "inputHex": "#FF6B6B",
-    "maxDistance": 0.15,
-    "method": "oklab",
+    "maxDistance": 15,
+    "method": "ciede2000",
     "resultCount": 2
   },
   "meta": { ... }
 }
 ```
 
-If no dyes fall within `maxDistance`, `results` will be an empty array and `resultCount` will be `0`. Try increasing `maxDistance` — for `oklab`, a value of `0.3` covers most of the visible color space.
+If no dyes fall within `maxDistance`, `results` will be an empty array and `resultCount` will be `0`. Try increasing `maxDistance` — for `ciede2000`, black-to-white is `100`, so `30` already covers a wide neighbourhood; for `oklab` (black-to-white `1.0`) a value of `0.3` covers most of the visible color space.

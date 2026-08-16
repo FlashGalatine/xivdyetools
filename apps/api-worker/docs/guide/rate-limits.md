@@ -4,15 +4,17 @@
 
 All Phase 1 endpoints are anonymous. There is no API key required.
 
-| Tier | Rate limit | Burst |
+| Surface | Rate limit | Burst |
 |---|---|---|
-| Anonymous (all users) | 60 req/min per IP | +5 |
+| `/v1/*` — anonymous (all users) | 60 req/min per IP (KV-backed sliding window) | +5 |
+| `/universalis/aggregated/*` — [market-board proxy](../reference/universalis) | 30 req/min per IP in production (per-isolate memory limiter, separate budget) | — |
+| `/universalis/data-centers`, `/universalis/worlds`, `/health`, `/` | not rate-limited | — |
 
 The burst allowance lets you fire a quick burst of up to 65 requests before the sliding window kicks in.
 
 ## Rate Limit Headers
 
-Every response includes rate limit headers regardless of status:
+Every `/v1/*` response includes rate limit headers regardless of status:
 
 ```http
 X-RateLimit-Limit: 65
@@ -40,16 +42,13 @@ When you receive a `429`:
 {
   "success": false,
   "error": "RATE_LIMITED",
-  "message": "Rate limit exceeded. 60 requests per minute allowed for anonymous access.",
-  "details": {
-    "limit": 60,
-    "remaining": 0,
-    "resetAt": "2025-12-15T12:01:00Z",
-    "retryAfter": 30,
-    "tier": "anonymous"
-  }
+  "message": "Rate limit exceeded. 60 requests per minute allowed for anonymous access. Register for an API key to get 300 requests per minute.",
+  "retryAfter": 30,
+  "meta": { "requestId": "...", "apiVersion": "v1" }
 }
 ```
+
+(The proxy's `429` is un-enveloped: `{ "error": "Rate limit exceeded", "retryAfter": 60 }` plus `Retry-After`.)
 
 ## Tips for Staying Under Limits
 
@@ -59,7 +58,7 @@ When you receive a `429`:
 
 ## CORS Preflight
 
-CORS `Access-Control-Max-Age` is `3600` (1 hour) on all `/v1/*` endpoints — browsers will cache the preflight `OPTIONS` response for one hour before re-asking. (Reduced from 24h in v0.4.0 to allow CORS policy changes to propagate within an hour.)
+CORS `Access-Control-Max-Age` is `3600` (1 hour) on every route — browsers will cache the preflight `OPTIONS` response for one hour before re-asking. (Reduced from 24h in v0.4.0 to allow CORS policy changes to propagate within an hour.)
 
 ## Coming in Phase 2
 

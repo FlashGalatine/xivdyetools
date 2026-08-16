@@ -16,8 +16,8 @@ Every dye response includes these fields:
 | `hex` | string | Hex color (`#RRGGBB`) |
 | `rgb` | object | `{ r, g, b }` — 0–255 |
 | `hsv` | object | `{ h, s, v }` — hue 0–360, sat/val 0–100 |
-| `category` | string | e.g. `Reds`, `Neutral`, `Special` |
-| `acquisition` | string | e.g. `Crafting`, `Cosmic Exploration`, `The Firmament`, `Vendor` |
+| `category` | string | One of `Blues`, `Browns`, `Greens`, `Neutral`, `Purples`, `Reds`, `Special`, `Yellows` |
+| `acquisition` | string | One of `Dye Vendor`, `The Firmament`, `Cosmic Exploration`, `Venture Coffers` |
 | `cost` | integer | Vendor price |
 | `currency` | string \| null | e.g. `Gil`, `Cosmocredits`, `Skybuilders Scrips` |
 | `isMetallic` | boolean | Metallic sheen |
@@ -40,7 +40,7 @@ List all dyes with filtering, sorting, and pagination. Returns 125 entries acros
 |---|---|---|---|
 | `page` | query | `1` | Page number |
 | `perPage` | query | `50` | Items per page (1–200) |
-| `category` | query | — | Filter by category name (e.g. `Red`, `Neutral`) |
+| `category` | query | — | Filter by exact category name (case-sensitive: `Reds`, `Neutral`, …) |
 | `metallic` | query | — | `true`/`false` — filter metallic dyes |
 | `pastel` | query | — | `true`/`false` — filter pastel dyes |
 | `dark` | query | — | `true`/`false` — filter dark dyes |
@@ -49,7 +49,9 @@ List all dyes with filtering, sorting, and pagination. Returns 125 entries acros
 | `vendor` | query | — | `true`/`false` — filter dyes acquired from vendors |
 | `craft` | query | — | `true`/`false` — filter dyes acquired by crafting |
 | `expensive` | query | — | `true`/`false` — filter premium-cost dyes (curated by `EXPENSIVE_DYE_IDS`) |
-| `consolidationType` | query | — | Filter by Patch 7.5 group: `A`, `B`, `C`, or `none` |
+| `consolidationType` | query | — | Filter by Patch 7.5 group: `A`, `B`, or `C` |
+| `minPrice` / `maxPrice` | query | — | Vendor `cost` bounds (integers ≥ 0) |
+| `excludeIds` | query | — | Comma-separated IDs to drop (max 50; itemID or stainID, auto-detected) |
 | `sort` | query | — | `name`, `brightness`, `saturation`, `hue`, or `cost` |
 | `order` | query | `asc` | `asc` or `desc` |
 | `locale` | query | `en` | `en`, `ja`, `de`, `fr`, `ko`, or `zh` |
@@ -144,9 +146,11 @@ Example response:
 {
   "success": true,
   "data": [
-    { "name": "Neutral", "count": 12 },
-    { "name": "Red", "count": 14 },
-    { "name": "Brown", "count": 8 }
+    { "name": "Blues", "count": 20 },
+    { "name": "Browns", "count": 19 },
+    { "name": "Greens", "count": 18 },
+    { "name": "Neutral", "count": 6 },
+    ...
   ],
   "meta": { ... }
 }
@@ -218,7 +222,7 @@ Example response:
       { "type": "C", "consolidatedItemID": 52256, "dyeCount": 11, "dyes": [] }
     ],
     "unconsolidated": {
-      "count": 31,
+      "count": 20,
       "dyes": []
     }
   },

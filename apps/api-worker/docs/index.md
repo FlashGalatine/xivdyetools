@@ -17,7 +17,7 @@ features:
   - title: Full Dye Database
     details: 125 standard dyes (schema v2, stainID-keyed). Hex, RGB, HSV, categories, acquisition methods, vendor costs, and Patch 7.5 consolidation groups.
   - title: Color Matching
-    details: Find the closest FFXIV dye to any hex color using six distance algorithms — RGB, CIE76, CIEDE2000, Oklab, HyAB, and OKLCh-weighted.
+    details: Find the closest FFXIV dye to any hex color using six distance methods — CIEDE2000 (default), Oklab, CIE76, redmean, RGB, and distinguishability %.
   - title: No Auth Required
     details: All Phase 1 endpoints are anonymous. Open CORS — callable from any browser, Dalamud plugin, Discord bot, or mobile app.
   - title: Edge Cached
@@ -25,5 +25,7 @@ features:
   - title: 6 Languages
     details: Dye names available in English, Japanese, German, French, Korean, and Chinese via the `locale` query parameter.
   - title: Consistent Envelopes
-    details: Every response uses the same `{ success, data, meta }` envelope with typed error codes and per-request UUIDs for easy debugging.
+    details: Every `/v1` response uses the same `{ success, data, meta }` envelope with typed error codes and per-request UUIDs for easy debugging.
+  - title: Market Board Proxy
+    details: A cached, rate-limited pass-through to the Universalis market-board API at `/universalis/*` — data centers, worlds, and aggregated prices.
 ---

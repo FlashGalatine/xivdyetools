@@ -8,7 +8,7 @@ The XIV Dye Tools API is a public REST API serving the FFXIV dye database and co
 https://data.xivdyetools.app/v1
 ```
 
-All endpoints are prefixed with `/v1`. Responses are JSON by default.
+All dye and matching endpoints are prefixed with `/v1`. Responses are JSON. (The [Universalis market-board proxy](../reference/universalis) lives outside `/v1` at `https://data.xivdyetools.app/universalis/*`.)
 
 ## Your First Request
 
@@ -24,12 +24,13 @@ curl https://data.xivdyetools.app/v1/dyes/1
   "data": {
     "itemID": 5729,
     "stainID": 1,
+    "id": 5729,
     "name": "Snow White",
     "hex": "#e4dfd0",
     "rgb": { "r": 228, "g": 223, "b": 208 },
     "hsv": { "h": 45, "s": 8.77, "v": 89.41 },
     "category": "Neutral",
-    "acquisition": "Vendor",
+    "acquisition": "Dye Vendor",
     "cost": 216,
     "currency": "Gil",
     "isMetallic": false,
@@ -38,17 +39,16 @@ curl https://data.xivdyetools.app/v1/dyes/1
     "isCosmic": false,
     "isIshgardian": false,
     "consolidationType": "A",
-    "marketItemID": 5729
+    "marketItemID": 52254
   },
   "meta": {
     "requestId": "550e8400-e29b-41d4-a716-446655440000",
-    "apiVersion": "v1",
-    "locale": "en"
+    "apiVersion": "v1"
   }
 }
 ```
 
-Every response has the same `{ success, data, meta }` envelope. See [Responses](./responses) for the full spec.
+Every `/v1` response has the same `{ success, data, meta }` envelope (`meta.locale` appears only when a non-English `locale` was requested). See [Responses](./responses) for the full spec.
 
 ## Dye ID Auto-Detection
 
@@ -80,7 +80,7 @@ curl https://data.xivdyetools.app/v1/dyes/1?locale=ja
 {
   "data": {
     "name": "Snow White",
-    "localizedName": "スノーホワイト",
+    "localizedName": "スノウホワイト",
     ...
   }
 }
@@ -88,16 +88,15 @@ curl https://data.xivdyetools.app/v1/dyes/1?locale=ja
 
 ## What's Available
 
-**Phase 1 (now):** 9 endpoints — dye lookup, filtering, search, batch, and color matching.
+**Phase 1 (now):** 9 `/v1` endpoints — dye lookup, filtering, search, batch, and color matching — plus the Universalis market-board proxy.
 
 | Endpoint group | Docs |
 |---|---|
 | `/v1/dyes/*` | [Dyes Reference](../reference/dyes) |
 | `/v1/match/*` | [Matching Reference](../reference/matching) |
+| `/universalis/*` | [Universalis Proxy](../reference/universalis) — raw Universalis responses, not enveloped |
 
 **Phase 2 (planned):** Community presets, optional API keys for higher rate limits.
-
-**Phase 3 (planned):** Live Universalis market prices.
 
 ## Rate Limits
 

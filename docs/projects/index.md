@@ -158,12 +158,12 @@ dual-layer caching, request coalescing, stale-while-revalidate — now lives beh
 | xivdyetools-web-app | v5.0.0 |
 | xivdyetools-discord-worker | v5.0.0 |
 | xivdyetools-image-worker | v1.0.0 |
-| xivdyetools-moderation-worker | v1.3.0 |
-| xivdyetools-oauth | v2.5.0 |
-| xivdyetools-presets-api | v1.6.0 |
-| xivdyetools-api-worker | v0.5.0 |
+| xivdyetools-moderation-worker | v1.4.0 |
+| xivdyetools-oauth | v2.6.0 |
+| xivdyetools-presets-api | v2.0.0 |
+| xivdyetools-api-worker | v0.6.0 |
 | xivdyetools-og-worker | v2.0.0 |
-| xivdyetools-stoat-worker | v0.2.0 |
+| xivdyetools-stoat-worker | v0.2.1 |
 
 ### Shared Libraries
 

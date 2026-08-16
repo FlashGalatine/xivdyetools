@@ -4,13 +4,19 @@
 
 Favorites and Collections help you keep track of dyes you love and organize them for different purposes.
 
+> **5.0 note.** Saved things now live in one store keyed by the game's dye (stain) IDs — the same
+> convention as share links and presets — and 4.x data migrates on first load. Everything is stored
+> in your browser; there is no account sync and no Discord-bot counterpart (the bot's `/favorites` and
+> `/collection` commands were removed in 5.0). The 5.0 layout no longer has the v4 sidebar; the
+> screens described below need a fuller update.
+
 ---
 
 ## Favorites
 
 ### What Are Favorites?
 
-A quick-access list of your most-used or most-loved dyes. Limited to 20 favorites for easy browsing.
+A quick-access list of your most-used or most-loved dyes. Limited to 40 favorites for easy browsing.
 
 ### Adding Favorites
 
@@ -25,9 +31,9 @@ Access your favorites from the sidebar:
 
 ### Limits
 
-- Maximum 20 favorites
+- Maximum 40 favorites
 - Remove old ones to add new
-- Synced across devices when logged in
+- Stored in your browser
 
 ---
 
@@ -66,25 +72,16 @@ From any tool:
 
 - Maximum 50 collections
 - Maximum 20 dyes per collection
-- Synced when logged in
+- Stored in your browser; export/import as JSON to move them
 
 ---
 
-## Syncing
+## Storage
 
-### Logged In
-
-When authenticated with Discord:
-- Favorites sync across devices
-- Collections sync across devices
-- Available on web and Discord bot
-
-### Not Logged In
-
-Data is stored locally:
-- Stays in browser only
+Favorites and collections are stored locally, logged in or not:
+- Stay in this browser only
 - Cleared if you clear browser data
-- Not synced to Discord bot
+- Not synced to other devices or to the Discord bot — use export/import to move them
 
 ---
 
@@ -109,17 +106,11 @@ Data is stored locally:
 
 ---
 
-## Discord Bot Sync
+## Discord Bot
 
-Your favorites and collections are also available via the Discord bot:
-
-| Command | Description |
-|---------|-------------|
-| `/favorites` | View and manage favorites |
-| `/collection list` | List your collections |
-| `/collection show` | View collection contents |
-
-Changes sync automatically between web and Discord.
+The Discord bot's `/favorites` and `/collection` commands were removed in 5.0. Bot results carry a
+share link that opens the same dyes in the web app, where you can save them; the bot can only
+favourite community presets (`/preset favorite`).
 
 ---
 

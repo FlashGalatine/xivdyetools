@@ -140,7 +140,7 @@ Key in-game locations referenced by the dye acquisition system.
 | Miqo'te | Seeker of the Sun | Keeper of the Moon | サンシーカー | ムーンキーパー |
 | Roegadyn | Sea Wolf | Hellsguard | ゼーヴォルフ | ローエンガルデ |
 | Au Ra | Raen | Xaela | アウラ・レン | アウラ・ゼラ |
-| Hrothgar | Helion | The Lost | ヘリオン | ロスト |
+| Hrothgar | Helions | The Lost | ヘリオン | ロスト |
 | Viera | Rava | Veena | ラヴァ・ヴィエラ | ヴィナ・ヴィエラ |
 
 ---

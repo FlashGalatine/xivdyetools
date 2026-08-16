@@ -1,6 +1,12 @@
 # Types Package Overview
 
-**@xivdyetools/types** - Shared TypeScript type definitions
+**@xivdyetools/types** v2.0.0 - Shared TypeScript type definitions
+
+> **2.0.0 (5.0 wave):** `FacewearColor` (string slug `id`, `name`, `hex` — the 11 Facewear colours are
+> not dyes), `CMYK`, `invertedTetradic`, `SubRace 'Helions'` (was `'Helion'`), the widened
+> `CommunityPreset` (`secondary_categories`, `preview_image_*`, `example_link`, `rejection_reason`),
+> and `PresetCategory` without `community` (+ `appearance`, `zones`, `raids-trials`). The snippets
+> below are illustrative and simplified — `packages/types/src/` is the source of truth.
 
 ---
 
@@ -46,19 +52,25 @@ type HexColor = string & { __brand: 'HexColor' };
 ```typescript
 import { Dye, DyeId, DyeCategory, DyeMatch } from '@xivdyetools/types';
 
+// Simplified — see packages/types/src/dye/dye.ts for the full runtime shape
 interface Dye {
-  id: DyeId;
+  itemID: number;          // legacy market itemID (always a number; use itemID > 0 for market checks)
+  stainID: number | null;  // the game's Stain sheet ID — the canonical key since schema v2
+  id: number;
   name: string;
-  hex: HexColor;
+  hex: string;
   rgb: RGB;
-  category: DyeCategory;
-  itemId?: number;
-  sellable: boolean;
+  hsv: HSV;
+  category: string;        // 'Neutral' | 'Reds' | 'Browns' | 'Yellows' | 'Greens' | 'Blues' | 'Purples' | 'Special'
+  acquisition: string;
+  cost: number;
+  currency: string | null;
+  isMetallic: boolean; isPastel: boolean; isDark: boolean; isCosmic: boolean; isIshgardian: boolean;
 }
 
-type DyeCategory =
-  | 'basic' | 'brown' | 'red' | 'orange'
-  | 'yellow' | 'green' | 'blue' | 'purple' | 'metallic';
+interface FacewearColor { id: string; name: string; hex: string; }  // not a Dye
+
+// MatchingMethod ('ciede2000' | 'oklab' | 'cie76' | 'redmean' | 'rgb' | 'distinguish') lives in @xivdyetools/core, not here
 ```
 
 ### Preset Types

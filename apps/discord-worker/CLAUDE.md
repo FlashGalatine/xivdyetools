@@ -96,17 +96,18 @@ src/
 │   │                              # files were DELETED in 5.0 — don't reintroduce them.
 │   │                              # preset-notifications.ts is NOT a command; it builds/sends
 │   │                              # the moderation-channel embeds for incoming preset submissions
-│   ├── buttons/                   # Component handlers (copy.ts, index.ts dispatcher)
-│   └── modals/                    # Modal submission handlers (currently unused in this worker)
+│   ├── buttons/                   # Component handlers (copy.ts, preview-image.ts moderation buttons, index.ts dispatcher)
+│   └── modals/                    # Modal submission handlers (index.ts only — currently unused in this worker)
 ├── services/
 │   ├── analytics.ts               # KV counters + Analytics Engine writes
 │   ├── rate-limiter.ts            # Upstash-first sliding window with KV fallback
-│   ├── user-storage.ts            # Favorites + collections in KV
-│   ├── preferences.ts             # User preferences (race/clan, world, language)
+│   ├── preset-favorites.ts        # Per-user preset favourites in KV (/preset favorite add|remove|list)
+│   ├── preferences.ts             # User preferences (race/clan, world, language, matching, theme)
 │   ├── preset-api.ts              # Service Binding client to presets-api
 │   ├── i18n.ts                    # Locale resolution + dye name lookup
 │   ├── bot-i18n.ts                # Bot UI translator (createTranslator/createUserTranslator)
 │   ├── emoji.ts                   # Application emoji helpers
+│   ├── fonts.ts                   # Bundled TTF buffers for resvg (brand + Noto Sans JP/SC/KR subsets)
 │   ├── component-context.ts       # Encodes interaction context into custom_id payloads
 │   ├── changelog-parser.ts        # Parse CHANGELOG-laymans.md for /webhooks/github
 │   ├── announcements.ts           # Send formatted release embeds
@@ -135,7 +136,7 @@ src/
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| `KV` | KV Namespace | Rate limiting fallback, user preferences, favorites, collections, analytics counters |
+| `KV` | KV Namespace | Rate limiting fallback, user preferences, preset favourites, analytics counters |
 | `DB` | D1 (`xivdyetools-presets`) | Shared with presets-api / moderation-worker |
 | `ANALYTICS` | Analytics Engine (`xivdyetools_bot_analytics`) | Long-term command usage telemetry |
 | `PRESETS_API` | Service Binding → `xivdyetools-presets-api` | Worker-to-Worker preset CRUD |
@@ -197,8 +198,7 @@ Always prefer the Service Binding (`env.PRESETS_API.fetch(req)`) — zero HTTP o
 ### Autocomplete
 
 Special routing inside `handleAutocomplete()`:
-- `/preset` autocomplete checks subcommand: `edit` shows the user's own presets, `show`/`vote` queries approved presets via the Service Binding.
-- `/collection` autocomplete reads collections from KV.
+- `/preset` autocomplete checks subcommand: `edit` shows the user's own presets, `favorite remove` shows the user's favourited presets, `show`/`vote`/`moderate` query approved presets via the Service Binding.
 - `/preferences` clan field uses `CLANS_BY_RACE` table; world field reuses budget's world autocomplete.
 - `/budget` delegates entirely to `handleBudgetAutocomplete()`.
 
@@ -312,8 +312,7 @@ npm run test:integration                                  # Integration suite
 
 1. `wrangler secret list` — verify all required secrets are present.
 2. `npm run lint && npm run test -- --run && npm run type-check`.
-3. `npm run deploy` — push to staging.
+3. `npm run deploy` — publishes the BETA bot (`xivdyetools-discord-worker-dev`; there is no staging env).
 4. Smoke-test core commands in the test guild.
-5. `npm run deploy:production`.
-6. If slash command schemas changed: `npm run register-commands` (production token).
-7. Hit `https://bot.xivdyetools.app/health` to confirm the new build is live.
+5. `npm run deploy:production` — or simply merge to `main`: `deploy-discord-worker.yml` deploys `--env production` **and then runs `register-commands` itself** (`DISCORD_TOKEN` from repo secrets), so a manual `npm run register-commands` is only needed for out-of-band schema pushes. The beta workflow registers guild-scoped commands the same way.
+6. Hit `https://bot.xivdyetools.app/health` to confirm the new build is live.

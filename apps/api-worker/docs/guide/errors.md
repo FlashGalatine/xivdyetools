@@ -1,13 +1,12 @@
 # Error Reference
 
-All errors use the same envelope. The `error` field is a stable machine-readable code — safe to `switch` on in your application code.
+All `/v1` errors use the same envelope. The `error` field is a stable machine-readable code — safe to `switch` on in your application code. (The [Universalis proxy](../reference/universalis) routes are not enveloped — they return a bare `{ "error": "..." }` body with the upstream status code.)
 
 ```json
 {
   "success": false,
   "error": "NOT_FOUND",
-  "message": "Dye with ID 999999 not found.",
-  "details": { "id": 999999 },
+  "message": "No dye found with ID 999999.",
   "meta": { "requestId": "...", "apiVersion": "v1" }
 }
 ```
@@ -24,8 +23,7 @@ All errors use the same envelope. The `error` field is a stable machine-readable
 | `INVALID_MATCHING_METHOD` | 400 | Unknown color distance algorithm |
 | `INVALID_LOCALE` | 400 | Unsupported locale code |
 | `INVALID_STAIN_ID` | 400 | stainId is not a positive integer |
-| `INVALID_CATEGORY` | 400 | Unknown category name |
-| `NOT_FOUND` | 404 | Dye, stain, or route not found |
+| `NOT_FOUND` | 404 | Dye, stain, or route not found — also returned for consolidated market itemIDs (`52254`–`52256`) and legacy negative Facewear IDs, each with an explanatory `message` (an unknown `category` is not an error; it simply matches no dyes) |
 | `RATE_LIMITED` | 429 | Rate limit exceeded |
 
 ### Server Errors (5xx)
@@ -33,8 +31,8 @@ All errors use the same envelope. The `error` field is a stable machine-readable
 | Code | HTTP | Description |
 |---|---|---|
 | `INTERNAL_ERROR` | 500 | Unexpected server error |
-| `SERVICE_UNAVAILABLE` | 503 | Upstream service unavailable |
-| `UPSTREAM_ERROR` | 502 | Upstream returned an error |
+
+The `/v1` API has no upstream, so `502`/`503` only occur on the un-enveloped [Universalis proxy](../reference/universalis) routes.
 
 ## Validation Details
 
@@ -51,18 +49,13 @@ When validation fails, `details` includes the offending parameter:
 }
 ```
 
-For multiple validation errors in the same request:
+Validation stops at the first failing parameter — a response never reports more than one validation error, so fix them one at a time:
 
 ```json
 {
   "error": "VALIDATION_ERROR",
-  "message": "Multiple validation errors.",
-  "details": {
-    "errors": [
-      { "parameter": "perPage", "received": "500", "expected": "<= 200" },
-      { "parameter": "order", "received": "random", "expected": "asc or desc" }
-    ]
-  }
+  "message": "Parameter \"perPage\" must be <= 200.",
+  "details": { "parameter": "perPage", "received": 500, "expected": "<= 200" }
 }
 ```
 
@@ -82,39 +75,36 @@ For multiple validation errors in the same request:
 | `page` | ≥ 1 | `1` |
 | `perPage` | 1 – 200 | `50` |
 | `stainId` (path) | ≥ 1 | — |
-| `maxDistance` | > 0 | — |
-| `limit` (within-distance) | 1 – 136 (covers all 125 standard dyes + 11 Facewear color entries) | `20` |
-| `kL`, `kC`, `kH` | > 0 | `1.0` |
+| `minPrice`, `maxPrice` | ≥ 0 | — |
+| `ids` (batch), `excludeIds` | ≤ 50 comma-separated integers | — |
+| `maxDistance` | ≥ 0.01 | — |
+| `limit` (within-distance) | 1 – 125 (the whole dye database) | `20` |
 
 ## Enum Values (Phase 1)
 
 | Parameter | Valid values |
 |---|---|
 | `locale` | `en` `ja` `de` `fr` `ko` `zh` |
-| `method` (matching) | `rgb` `cie76` `ciede2000` `oklab` `hyab` `oklch-weighted` |
+| `method` (matching) | `ciede2000` (default) `oklab` `cie76` `redmean` `rgb` `distinguish` — the retired `hyab` / `oklch-weighted` are still accepted and silently normalised to `ciede2000` (`euclidean` → `rgb`); the old `kL`/`kC`/`kH` weights are ignored |
 | `sort` (dyes) | `name` `brightness` `saturation` `hue` `cost` |
 | `order` | `asc` `desc` |
 | `idType` (batch) | `auto` `item` `stain` |
-| `consolidationType` | `A` `B` `C` `none` |
+| `consolidationType` | `A` `B` `C` |
 
 ## Rate Limited Response
 
-A `429` response includes actionable retry information:
+A `429` response carries the seconds to wait as a top-level `retryAfter` field:
 
 ```json
 {
   "success": false,
   "error": "RATE_LIMITED",
-  "message": "Rate limit exceeded. 60 requests per minute allowed for anonymous access.",
-  "details": {
-    "limit": 60,
-    "remaining": 0,
-    "resetAt": "2025-12-15T12:01:00Z",
-    "retryAfter": 30,
-    "tier": "anonymous"
-  },
+  "message": "Rate limit exceeded. 60 requests per minute allowed for anonymous access. Register for an API key to get 300 requests per minute.",
+  "retryAfter": 30,
   "meta": { ... }
 }
 ```
+
+(API keys are not yet available — see [Rate Limits](./rate-limits) — the message anticipates Phase 2.)
 
 The `Retry-After` header is also set on 429 responses. See [Rate Limits](./rate-limits).

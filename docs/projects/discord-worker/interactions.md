@@ -1,4 +1,4 @@
-# Discord Worker — Interactions (v4.1.2)
+# Discord Worker — Interactions (v5.0.0)
 
 Documentation for button, modal, and autocomplete handlers in the XIV Dye Tools Discord bot.
 
@@ -29,26 +29,18 @@ Buttons use `custom_id` patterns for routing. The router parses the custom ID st
 
 | Pattern                                    | Description                   |
 |--------------------------------------------|-------------------------------|
-| `preset_vote_{presetId}`                   | Vote on a preset              |
-| `preset_next_{page}`                       | Pagination for preset list    |
-| `preset_prev_{page}`                       | Pagination backward           |
-| `favorites_add_{dyeId}`                    | Add dye to favorites          |
-| `favorites_remove_{dyeId}`                 | Remove dye from favorites     |
-| `collection_add_{collectionId}_{dyeId}`    | Add dye to a collection       |
+| `copy_hex_*` / `copy_rgb_*` / `copy_hsv_*` | Copy a colour value (ephemeral reply) |
+| `previewimg_approve_{presetId}` / `previewimg_reject_{presetId}` | Preview-image moderation — handled by **this** worker (Discord routes clicks to the application that posted the message); calls presets-api `PATCH /api/v1/moderation/:id/preview-image` |
+
+The v4 `favorites_*` / `collection_*` buttons are gone with the removed commands. Preset approve/reject buttons posted by the moderation bot are handled by `xivdyetools-moderation-worker`. Button state is stored in KV (`ctx:v2:{hash}`, 15-minute TTL) via `services/component-context.ts`; `verifyContextUser` guards against another user pressing your button.
 
 ## Modal Handlers (`src/handlers/modals/`)
 
-Modals collect multi-field input from the user via Discord's modal forms.
-
-| Custom ID                          | Description                          | Fields                     |
-|------------------------------------|--------------------------------------|----------------------------|
-| `preset_submit`                    | Preset submission form               | name, description, tags    |
-| `collection_create`               | New collection creation              | name, description          |
-| `collection_rename_{collectionId}` | Rename an existing collection        | name                       |
+No modals are handled by the main worker in 5.0 — `/preset submit` takes its fields as slash-command options, and the moderation modals (ban reason, rejection reason) live in `xivdyetools-moderation-worker`. `handleModal` in `src/index.ts` answers any modal submission with an ephemeral "Unknown modal submission."
 
 ## Autocomplete Handlers
 
-Dye name autocomplete runs for all commands that accept a `dye` parameter.
+Dye name autocomplete runs for every dye/colour option (`dye`, `dye1`…`dye5`, `color`, `start_color`, `end_color`, `target_dye`, …), plus preset names, worlds and clans. Autocomplete has its own generous rate limit (60/min + 10 burst, fail-soft — a limited request returns empty choices).
 
 - Searches by localized dye name using the user's language preference
 - Returns up to 25 suggestions (Discord's maximum)

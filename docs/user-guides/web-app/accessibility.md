@@ -23,8 +23,8 @@ Enter colors to check:
 | **Deuteranopia** | Green perception | ~1% of males |
 | **Tritanopia** | Blue perception | ~0.01% |
 | **Achromatopsia** | All color (grayscale) | Very rare |
-| **Protanomaly** | Reduced red | ~1% of males |
-| **Deuteranomaly** | Reduced green | ~5% of males |
+
+(The web app simulates these four plus normal vision; the anomalous-trichromacy variants are not offered.)
 
 ### 3. View Simulation
 

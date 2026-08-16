@@ -1,6 +1,6 @@
 # OAuth Worker Overview
 
-**xivdyetools-oauth** - Discord OAuth authentication for the XIV Dye Tools ecosystem
+**xivdyetools-oauth** v2.6.0 - Discord OAuth authentication for the XIV Dye Tools ecosystem
 
 ---
 
@@ -25,9 +25,13 @@ wrangler secret put JWT_SECRET
 # Start local dev server (port 8788)
 npm run dev
 
-# Deploy
+# Deploy — NOTE: on this worker a bare `wrangler deploy` IS production
+# (no [env.production]; the top-level block is `xivdyetools-oauth` on auth.xivdyetools.app;
+# `[env.development]` / `[env.preview]` are the non-production envs)
 npm run deploy
 ```
+
+See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../operations/DEPLOY_ENVIRONMENTS.md).
 
 ---
 
@@ -127,7 +131,7 @@ const code_challenge = base64url(sha256(code_verifier));
     "sub": "user-uuid",
     "iat": 1702684800,
     "exp": 1702688400,
-    "iss": "https://oauth.xivdyetools.com",
+    "iss": "https://auth.xivdyetools.app",
     "username": "User#1234",
     "global_name": "Display Name",
     "avatar": "avatar_hash",
@@ -156,10 +160,12 @@ const code_challenge = base64url(sha256(code_verifier));
 [vars]
 ENVIRONMENT = "production"
 DISCORD_CLIENT_ID = "your-client-id"
-FRONTEND_URL = "https://app.xivdyetools.com"
-WORKER_URL = "https://oauth.xivdyetools.com"
+FRONTEND_URL = "https://xivdyetools.app"
+WORKER_URL = "https://auth.xivdyetools.app"
 JWT_EXPIRY = "3600"
 ```
+
+Redirect / CORS origins are `ALLOWED_REDIRECT_ORIGINS` (`https://xivdyetools.app`, `https://beta.xivdyetools.app`, the transitional `https://xivdyetools.projectgalatine.com`) plus `FRONTEND_URL` — unified in 2.6.0, which fixed the beta login hang.
 
 **Secrets:**
 ```bash

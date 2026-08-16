@@ -94,12 +94,12 @@ import { verifyDiscordRequest } from '@xivdyetools/auth';
 // Verify Discord interaction signature
 const result = await verifyDiscordRequest(request, env.DISCORD_PUBLIC_KEY);
 
-if (!result.valid) {
+if (!result.isValid) {
   return new Response('Unauthorized', { status: 401 });
 }
 
-// result.body contains the parsed interaction
-const interaction = result.body;
+// result.body is the raw request body string (already read — do not re-read the stream)
+const interaction = JSON.parse(result.body);
 ```
 
 ## Subpath Exports
@@ -165,8 +165,8 @@ import { base64UrlEncode, base64UrlDecode, bytesToHex, hexToBytes } from '@xivdy
 
 | Function | Description |
 |----------|-------------|
-| `revokeToken(kv, jti, exp)` | Add a token's `jti` to the KV-backed blacklist until it expires |
-| `isTokenRevoked(kv, jti)` | Check the blacklist before honouring a token |
+| `revokeToken(jti, expiresAt, store)` | Add a token's `jti` to the KV-backed blacklist until `expiresAt` (unix seconds; TTL floor 60 s); resolves `true` when recorded |
+| `isTokenRevoked(jti, store)` | Check the blacklist before honouring a token (`store` may be `undefined` → `false`) |
 
 ### Encoding (`@xivdyetools/auth/encoding`)
 
@@ -198,7 +198,7 @@ Absorbed from the retired `@xivdyetools/crypto` — see [`DEPRECATIONS.md`](../.
 
 [`discord-worker`](../../apps/discord-worker/), [`presets-api`](../../apps/presets-api/), [`moderation-worker`](../../apps/moderation-worker/), and [`@xivdyetools/test-utils`](../test-utils/).
 
-The [`oauth`](../../apps/oauth/) worker uses these primitives indirectly — it **issues** tokens rather than verifying them. This package deliberately does not issue JWTs; keeping it verify-only holds the surface exposed to every consuming worker small and audit-friendly.
+The [`oauth`](../../apps/oauth/) worker **issues** tokens itself but still consumes `verifyJWTSignatureOnly`, `decodeJWT`, the revocation helpers and `@xivdyetools/auth/encoding` from here. This package deliberately does not issue JWTs; keeping it verify-only holds the surface exposed to every consuming worker small and audit-friendly.
 
 ## Connect With Me
 

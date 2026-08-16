@@ -6,33 +6,41 @@ Community Presets lets you explore color combinations created by the community, 
 
 > **Note**: This tool was previously called "Preset Browser" in v3.x.
 
+> **5.0 note.** Presets are now keyed by the game's dye (stain) IDs, need **3 to 6 dyes**, carry one
+> primary category plus up to two secondary categories, and can include an example link and a
+> moderated preview image. The category list below is the 5.0 list; the "Community" category was
+> retired.
+
 ---
 
 ## Browsing Presets
 
 ### Categories
 
-Presets are organized by theme:
-- **Glamour** - Outfit color schemes
-- **Housing** - Interior/exterior palettes
-- **Seasonal** - Holiday and event themes
-- **Job-specific** - Class/job themed colors
-- **General** - Everything else
+Presets are organized by theme — one primary category plus up to two secondary ones:
+- **FFXIV Jobs** - Class/job themed colors
+- **Grand Companies**
+- **Seasons** - Seasonal palettes
+- **FFXIV Events** - Holiday and event themes
+- **Aesthetics** - General looks and moods
+- **Appearance** - Skin/hair/eye-matched palettes
+- **Zones** - Palettes inspired by places
+- **Raids & Trials**
 
 ### Sorting Options
 
 | Sort | Description |
 |------|-------------|
-| **Popular** | Most upvoted |
-| **New** | Recently submitted |
-| **Hot** | Trending (recent + popular) |
+| **Popular** | Most votes |
+| **Recent** | Recently submitted |
+| **Name** | Alphabetical |
 
 ### Search
 
 Search presets by:
 - Name
 - Description
-- Author
+- Tags
 
 ---
 
@@ -41,19 +49,18 @@ Search presets by:
 Each preset shows:
 - **Name** - Creator's title
 - **Description** - What it's for
-- **Colors** - The dye palette (2-6 dyes)
-- **Category** - Organization tag
+- **Colors** - The dye palette (3-6 dyes)
+- **Category** - Primary category, plus up to two secondary ones
 - **Votes** - Community rating
 - **Author** - Who created it
+- **Example link / preview image** - Optional; preview images are moderated before they show
 
 ---
 
 ## Voting
 
 Help curate the best presets:
-- **Upvote** - Good preset, well-designed
-- **Downvote** - Low quality or inappropriate
-- You can change your vote anytime
+- **Vote** - One vote per preset; click again to remove it (there are no downvotes)
 - Voting requires being logged in
 
 ---
@@ -62,7 +69,8 @@ Help curate the best presets:
 
 ### Requirements
 - Must be logged in (Discord authentication)
-- 2-6 dyes per preset
+- 3-6 dyes per preset
+- A primary category (up to two secondary categories optional)
 - Unique combination (no duplicates)
 - Appropriate name and description
 

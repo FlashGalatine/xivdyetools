@@ -266,15 +266,15 @@ Rate limits are per-IP using a sliding window algorithm (`@xivdyetools/worker-ki
 
 ## CORS
 
-**Allowed origins:** `FRONTEND_URL` + development localhost ports (5173, 3000)
+**Allowed origins:** `ALLOWED_REDIRECT_ORIGINS` (`https://xivdyetools.app`, `https://beta.xivdyetools.app`, transitional `https://xivdyetools.projectgalatine.com`) + `FRONTEND_URL`; in `ENVIRONMENT=development` also localhost / 127.0.0.1 on ports 3000, 5173, 8787
 
 **Methods:** GET, POST, OPTIONS
 
-**Headers:** Content-Type, Authorization
+**Headers:** Content-Type, Authorization (exposes the `X-RateLimit-*` and `Retry-After` headers)
 
 **Credentials:** Enabled
 
-**Preflight cache:** 24 hours
+**Preflight cache:** 1 hour (`maxAge: 3600`, was 24 h before 2.4.0)
 
 ---
 

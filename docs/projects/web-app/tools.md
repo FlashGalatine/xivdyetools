@@ -1,6 +1,15 @@
-# Web App Tools (v4.3.1)
+# Web App Tools (v5.0.0)
 
 The XIV Dye Tools web app provides 9 interactive tools for working with FFXIV dye colors. Each tool is accessible via its own route and rendered as a Lit component.
+
+> **5.0 note.** Every tool was re-ported in the 5.0 redesign (console bar + tool rail, Advanced
+> Options panel, result cards, two themes). Cross-cutting facts that changed: every matcher uses
+> the shared vocabulary `ciede2000` (default) / `oklab` / `cie76` / `redmean` / `rgb` /
+> `distinguish` (`hyab` / `oklch-weighted` retired); share URLs key on **stainID** with a `?hex=`
+> bare-colour grammar (legacy itemID links are rejected loudly); saved things live in the single
+> `CollectionService` store; the Swatch Matcher imports `.chara` character files. The per-tool
+> descriptions below are 4.x-era and need a fuller rewrite — the "What's new in v4.x" notes are
+> historical.
 
 ---
 
@@ -84,8 +93,9 @@ Blend two dyes together using multiple blending algorithms. New in v4.
 Match character customization colors (skin tones, hair colors) to the closest FFXIV dyes.
 
 - Select a clan and gender to load the corresponding customization color palette
-- Supports all 6 clans (Hyur Midlander, Hyur Highlander, Miqo'te, Lalafell, Roegadyn, Au Ra) and both genders
+- Supports all eight races / sixteen clans (Hyur Midlander & Highlander, Elezen Wildwood & Duskwight, Lalafell Plainsfolk & Dunesfolk, Miqo'te Seekers & Keepers, Roegadyn Sea Wolves & Hellsguard, Au Ra Raen & Xaela, Hrothgar Helions & The Lost, Viera Rava & Veena) and both genders
 - Click any skin tone or hair color swatch to find the closest matching dye
+- 5.0: import a `.chara` file (Anamnesis / Ktisis) to resolve every live slot at once
 
 **What's new in v4.x:**
 
@@ -156,17 +166,19 @@ Browse, vote on, and submit community dye presets.
 
 The following table shows current routes and their v3 legacy equivalents. Legacy routes redirect to the current paths.
 
-| Tool | Current Route | Legacy v3 Route | Legacy v3 Name |
+| Tool (`ToolId`) | Current Route | Legacy v3 Route | Legacy v3 Name |
 |------|---------------|-----------------|----------------|
-| Harmony Explorer | `/harmony` | `/harmony` | Harmony Explorer |
-| Palette Extractor | `/extractor` | `/matcher` | Color Matcher |
-| Gradient Builder | `/gradient` | `/mixer` | Dye Mixer |
-| Dye Mixer | `/mixer` | — | — (new in v4) |
-| Swatch Matcher | `/swatches` | `/characters` | Character Colors |
-| Budget Finder | `/budget` | — | — (new in v4) |
-| Dye Comparison | `/compare` | `/compare` | Dye Comparison |
-| Accessibility Checker | `/accessibility` | `/accessibility` | Accessibility Checker |
-| Preset Browser | `/presets` | `/presets` | Preset Browser |
+| Harmony Explorer (`harmony`) | `/harmony` | `/harmony` | Harmony Explorer |
+| Palette Extractor (`extractor`) | `/extractor` | `/matcher` (redirects) | Color Matcher |
+| Gradient Builder (`gradient`) | `/gradient` | `/mixer` (not redirected — `/mixer` is now the Dye Mixer) | Dye Mixer |
+| Dye Mixer (`mixer`) | `/mixer` | — | — (new in v4) |
+| Swatch Matcher (`swatch`) | `/swatch` | `/character` (redirects) | Character Colors |
+| Budget Suggestions (`budget`) | `/budget` | — | — (new in v4) |
+| Dye Comparison (`comparison`) | `/comparison` | — | Dye Comparison |
+| Accessibility Checker (`accessibility`) | `/accessibility` | `/accessibility` | Accessibility Checker |
+| Community Presets (`presets`) | `/presets` | `/presets` | Preset Browser |
+
+Source: `ROUTES` and `LEGACY_ROUTE_REDIRECTS` in `src/services/router-service.ts`.
 
 ---
 

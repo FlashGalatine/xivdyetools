@@ -1,6 +1,11 @@
 # Web App Component Architecture
 
-XIV Dye Tools web app (v4.3.1) is built with **Lit 3** web components organized into a layered architecture: a shared base class, a glassmorphism layout shell, tool-specific components, reusable UI primitives, and a singleton service layer.
+XIV Dye Tools web app (v5.0.0) is built with **Lit 3** web components organized into a layered architecture: a shared base class, a layout shell, tool-specific components, reusable UI primitives, and a singleton service layer.
+
+> **5.0 note.** The shell was redesigned in 5.0 (console bar + tool rail, Advanced Options panel,
+> two themes via `ThemeService`, result cards, `CollectionService` as the one saved-things store).
+> The component inventory below is 4.x-era; treat names and the shell description as
+> approximate and check `src/components/` — this page needs a fuller rewrite.
 
 ---
 

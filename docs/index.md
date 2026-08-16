@@ -59,7 +59,7 @@ by dependency depth; nothing at a given level imports from a level below it.
               ▼
    Applications
    ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐
-   │  web-app  v5.0.0    │  │ discord-worker      │  │ stoat-worker v0.2.0 │
+   │  web-app  v5.0.0    │  │ discord-worker      │  │ stoat-worker v0.2.1 │
    │  9 tools, Light +   │  │ v5.0.0              │  │ Revolt.js (parked)  │
    │  Dark, Vite + Lit   │  │ 17 slash commands   │  └─────────────────────┘
    └──────────┬──────────┘  └──────────┬──────────┘
@@ -67,21 +67,21 @@ by dependency depth; nothing at a given level imports from a level below it.
               │            ┌───────────┴───────────┐
               │            ▼                       ▼
               │   ┌──────────────────┐   ┌──────────────────────┐
-              │   │ image-worker     │   │ presets-api  v1.6.0  │
+              │   │ image-worker     │   │ presets-api  v2.0.0  │
               │   │ v1.0.0           │◄──│ D1 + moderation      │
               │   │ service-binding  │   └──────────┬───────────┘
               │   │ only, no public  │              │
               │   │ surface          │              ▼
               │   └──────────────────┘   ┌──────────────────────┐
               │                          │ moderation-worker    │
-              ▼                          │ v1.3.0               │
+              ▼                          │ v1.4.0               │
    ┌──────────────────────┐              └──────────────────────┘
-   │ oauth-worker v2.5.0  │
+   │ oauth-worker v2.6.0  │
    │ PKCE + JWT           │
    └──────────────────────┘
 
    ┌──────────────────────┐   ┌───────────────────────────────────────────┐
-   │ og-worker    v2.0.0  │   │ api-worker   v0.5.0                       │
+   │ og-worker    v2.0.0  │   │ api-worker   v0.6.0                       │
    │ Localized OG cards   │   │ data.xivdyetools.app — public REST API,   │
    │ (15E band frame)     │   │ /universalis market proxy, and the        │
    └──────────────────────┘   │ VitePress developer docs                  │
@@ -138,13 +138,13 @@ Facewear colours are **not dyes**; they live separately in `facewear_colors.json
 |---------|------|---------|---------|
 | [xivdyetools-web-app](projects/web-app/overview.md) | Vite + Lit | v5.0.0 | Interactive web toolkit with 9 colour tools |
 | [xivdyetools-discord-worker](projects/discord-worker/overview.md) | CF Worker | v5.0.0 | Discord bot, 17 registered slash commands |
-| xivdyetools-image-worker | CF Worker | v1.0.0 | Photon pixel extraction; reachable only via `discord-worker`'s service binding |
-| [xivdyetools-moderation-worker](projects/moderation-worker/overview.md) | CF Worker | v1.3.0 | Community preset moderation bot |
-| [xivdyetools-oauth](projects/oauth/overview.md) | CF Worker + D1 | v2.5.0 | Discord OAuth + JWT issuance |
-| [xivdyetools-presets-api](projects/presets-api/overview.md) | CF Worker + D1 | v1.6.0 | Community presets with moderation |
-| [xivdyetools-api-worker](projects/api-worker/overview.md) | CF Worker + KV | v0.5.0 | Public REST API, Universalis proxy, and developer docs |
+| xivdyetools-image-worker | CF Worker | v1.0.0 | Photon host — `POST /extract` (pixels) + `POST /thumbnail` (WebP); reachable only via service bindings (discord-worker, presets-api) |
+| [xivdyetools-moderation-worker](projects/moderation-worker/overview.md) | CF Worker | v1.4.0 | Community preset moderation bot |
+| [xivdyetools-oauth](projects/oauth/overview.md) | CF Worker + D1 | v2.6.0 | Discord OAuth + JWT issuance |
+| [xivdyetools-presets-api](projects/presets-api/overview.md) | CF Worker + D1 | v2.0.0 | Community presets with moderation |
+| [xivdyetools-api-worker](projects/api-worker/overview.md) | CF Worker + KV | v0.6.0 | Public REST API, Universalis proxy, and developer docs |
 | [xivdyetools-og-worker](projects/og-worker/overview.md) | CF Worker | v2.0.0 | Localized OpenGraph cards for social previews |
-| xivdyetools-stoat-worker | Node.js | v0.2.0 | Revolt (Stoat) bot — **parked**, no active investment |
+| xivdyetools-stoat-worker | Node.js | v0.2.1 | Revolt (Stoat) bot — **parked**, no active investment |
 
 ### Shared Libraries
 
@@ -185,21 +185,27 @@ filter category was retired by this consolidation.
 
 ## Recent Updates
 
-*Last updated: August 11, 2026*
+*Last updated: August 16, 2026*
 
 ### August 2026 Highlights
 
-- **Web-App 5.0 wave** (`monorepo-2.0-prep`) — coordinated major releases across `core` v4.0.0,
-  `types` v2.0.0, `svg` v2.0.0, `bot-logic` v2.0.0, `web-app` v5.0.0, and `discord-worker`
-  v5.0.0. Not yet merged to `main` or published; see [versions.md](versions.md) for the release
-  gate.
+- **XIV Dye Tools 5.0 wave** (`monorepo-2.0-prep`, root `CHANGELOG.md` 2.0.0) — coordinated
+  major releases across `core` v4.0.0, `types` v2.0.0, `svg` v2.0.0, `bot-logic` v2.0.0,
+  `worker-kit` v1.0.0 (new), `web-app` v5.0.0, `discord-worker` v5.0.0, `og-worker` v2.0.0,
+  `presets-api` v2.0.0 (stainID presets, 3–6 dyes, `community` category retired, preview
+  images), plus `oauth` 2.6.0 / `api-worker` 0.6.0 / `moderation-worker` 1.4.0. Not yet merged
+  to `main` or published — merging is the release; see [versions.md](versions.md).
+- **One matching vocabulary** — `ciede2000` (default) / `oklab` / `cie76` / `redmean` / `rgb` /
+  `distinguish` across core, web-app, bot, og-worker and api-worker; `hyab` and `oklch-weighted`
+  retired (normalised on read). Share URLs and og-worker paths key on stainID.
 - **Themes reduced to Light + Dark** — the 12-theme system is retired. `ThemeName` is now
   `'standard-light' | 'standard-dark'`, with legacy stored names migrated on load
   ([theming](projects/web-app/theming.md)).
-- **Discord command roster reworked** — `/contrast` split out of `/accessibility` for WCAG
-  1.4.11 pairs, `/changelog` added, and a `COMMAND_REGISTRY` now holds the roster of record so
-  the dispatch switch, the registration schema, and `/about` can no longer disagree
-  ([commands](projects/discord-worker/commands.md)).
+- **Discord command roster reworked** — v4 `/match`, `/match_image`, `/favorites`, `/collection`,
+  `/language` deleted; `/contrast` split out of `/accessibility` for WCAG 1.4.11 pairs,
+  `/changelog` and `/a11y` added, `/swatch` reads a `.chara` file, and a `COMMAND_REGISTRY` now
+  holds the roster of record so the dispatch switch, the registration schema, and `/about` can no
+  longer disagree ([commands](projects/discord-worker/commands.md)).
 - **og-worker v2.0.0 card rewrite** — one 15E band frame for all nine tools, Discord (1200×1050)
   and X (1200×630 via `?frame=x`) variants, default cards, and a JP font subset. Also fixed the
   missing `/og/` prefix, which meant no generated card had ever been fetched.

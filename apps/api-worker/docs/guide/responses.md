@@ -1,6 +1,6 @@
 # Responses
 
-All responses use a consistent JSON envelope regardless of endpoint.
+All `/v1` responses use a consistent JSON envelope regardless of endpoint. (The [Universalis proxy](../reference/universalis) at `/universalis/*` and the `/health` check are the exceptions — they return raw bodies.)
 
 ## Success
 
@@ -11,7 +11,7 @@ All responses use a consistent JSON envelope regardless of endpoint.
   "meta": {
     "requestId": "550e8400-e29b-41d4-a716-446655440000",
     "apiVersion": "v1",
-    "locale": "en"
+    "locale": "ja"
   }
 }
 ```
@@ -22,7 +22,7 @@ All responses use a consistent JSON envelope regardless of endpoint.
 | `data` | object \| array | The response payload |
 | `meta.requestId` | string | UUID — echo this when reporting issues |
 | `meta.apiVersion` | string | `"v1"` |
-| `meta.locale` | string | Effective locale used for this response |
+| `meta.locale` | string? | Effective locale — present only when a non-English `locale` was requested (omitted for `en`) |
 
 ## Errors
 
@@ -63,7 +63,7 @@ Endpoints returning arrays include a `pagination` field alongside `data`:
   "pagination": {
     "page": 2,
     "perPage": 50,
-    "total": 136,
+    "total": 125,
     "totalPages": 3,
     "hasNext": true,
     "hasPrev": true
@@ -76,7 +76,7 @@ Control pagination with `?page=` and `?perPage=` (max 200). Non-paginated endpoi
 
 ## Response Headers
 
-Every response includes these headers:
+Every `/v1` response includes these headers (`X-RateLimit-*` are set only on `/v1/*`):
 
 | Header | Example | Description |
 |---|---|---|
@@ -96,6 +96,8 @@ Dye data is deterministic and changes only with FFXIV patches, so aggressive cac
 |---|---|
 | `/v1/dyes/*` | `public, max-age=3600, s-maxage=86400` |
 | `/v1/match/*` | `public, max-age=3600, s-maxage=86400` |
+| `/universalis/aggregated/*` | `public, max-age=300, stale-while-revalidate=120` (stale hits: `max-age=0, must-revalidate`) + `X-Cache` headers |
+| `/universalis/data-centers`, `/universalis/worlds` | `public, max-age=86400, stale-while-revalidate=21600` |
 
 The `Age` header (set by Cloudflare) tells you how old the cached response is. A fresh cache hit means sub-millisecond response time at the nearest PoP.
 

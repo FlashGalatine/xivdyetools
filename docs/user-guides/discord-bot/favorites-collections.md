@@ -2,6 +2,20 @@
 
 **Save and organize dyes directly from Discord**
 
+> **5.0 note — these commands no longer exist.** `/favorites` and `/collection` were removed from
+> the bot in 5.0 (with their storage); everything below describes the retired v4 commands and is
+> kept only for reference. Saved dyes and palettes now live in the [web app](../web-app/favorites-collections.md)
+> — every bot result carries a share link that opens there — and the one thing you can still keep
+> in Discord is a list of favourite community presets:
+>
+> ```
+> /preset favorite add preset_name:Tank Glamour
+> /preset favorite remove preset_name:Tank Glamour
+> /preset favorite list
+> ```
+>
+> Note also that the v4 lists never synced with the web app; the sentence below was aspirational.
+
 Your favorites and collections sync between the Discord bot and web app when you're logged in.
 
 ---
@@ -120,7 +134,7 @@ Changes made on one platform appear on the other within moments.
 
 ## Quick Workflow
 
-1. **Find dyes** using `/match` or `/harmony`
+1. **Find dyes** using `/extractor color` or `/harmony`
 2. **Favorite** immediately with button click
 3. **Organize** later by moving to collections
 4. **Reference** when shopping in-game
@@ -129,7 +143,7 @@ Changes made on one platform appear on the other within moments.
 
 ## Related Commands
 
-- `/match` - Find dyes to save
+- `/extractor color` - Find dyes to save
 - `/harmony` - Find harmonious combinations
 - `/preset list` - Browse community presets to save
 

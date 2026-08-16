@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The main XIV Dye Tools web application — a static SPA that runs entirely in the browser. It is the primary consumer of `@xivdyetools/core` and exposes nine standalone tools backed by the 125-dye database.
 
-**Stack:** Vite 8 + Lit 3 (web components) + Tailwind CSS 4 + TypeScript (strict). Test stack is Vitest 4 (jsdom) + Playwright 1.62 with multi-project E2E. Deployed as a static bundle (Cloudflare Pages / Netlify) with a service worker for offline support.
+**Stack:** Vite 8 + Lit 3 (web components) + Tailwind CSS 4 + TypeScript (strict). Test stack is Vitest 4 (jsdom) + Playwright 1.62 with multi-project E2E. Deployed as a static bundle on Cloudflare Pages (production `xivdyetools.app` + a second Pages project for `beta.xivdyetools.app`) with a service worker for offline support.
 
 ### The Nine Tools (`ToolId` from `services/router-service.ts`)
 
@@ -154,7 +154,7 @@ src/
 import { ColorService } from '@services/index';
 import { BaseComponent } from '@components/base-component';
 import { escapeHtml } from '@shared/utils';
-import { THEMES } from '@v4/theme-modal';
+import { showThemeModal } from '@v4/theme-modal';
 // Also: @, @apps, @data, @assets
 ```
 
@@ -182,7 +182,7 @@ export class MyTool extends BaseComponent {
 
 ### Theme Tokens (Never Hardcode Colors)
 
-5.0 ships **two** themes — `standard-light` and `standard-dark` — defined as `THEME_PALETTES` in `services/theme-service.ts` on the confirmed 16A token sets. The eleven pre-5.0 themes were retired; `migrateLegacyThemeName()` maps any stored legacy name onto Light or Dark by family (`*-light`, `cotton-candy` and `parchment-light` → light, everything else → dark) so an old localStorage value never throws.
+5.0 ships **two** themes — `standard-light` and `standard-dark` — defined as `THEME_PALETTES` in `services/theme-service.ts` on the confirmed 16A token sets. The ten other pre-5.0 themes were retired (the old `THEME_NAMES` list had twelve entries, `standard-light`/`standard-dark` among them); `migrateLegacyThemeName()` maps any stored legacy name onto Light or Dark by family (`*-light`, `cotton-candy` and `parchment-light` → light, everything else → dark) so an old localStorage value never throws.
 
 Components must use the `--theme-*` CSS variables; hardcoded colors break theme switching. Tailwind sees the variables via the `@apply`-friendly setup in `tailwind.config.js`.
 
@@ -230,6 +230,7 @@ All `StorageService` keys are prefixed with `xivdyetools_`. Tutorial-offered fla
 | `@xivdyetools/core` | Dye database, color algorithms, Universalis client |
 | `@xivdyetools/types` | `HexColor`, `DyeId`, branded types |
 | `@xivdyetools/logger` | Browser-flavored logger |
+| `@xivdyetools/svg` | Shared glyph set (`categoryGlyph`, `harmonyGlyph`, `GLYPH_ACCENT_DARK`) used by `shared/*-icons.ts` |
 | `lit` | Web-components framework for v4 shell pieces |
 | `spectral.js` | Pigment-physics color blending (Mixer "Spectral" mode) |
 | `@tailwindcss/postcss` / `tailwindcss` | Styling |
@@ -242,7 +243,7 @@ All `StorageService` keys are prefixed with `xivdyetools_`. Tutorial-offered fla
 ## Build & Bundle Notes
 
 - `npm run build:check` runs `vite build` then `scripts/check-bundle-size.js`, which enforces per-bundle byte ceilings (e.g. main entry ≤ 150 KB raw, layout shell ≤ 200 KB). CI fails if a chunk grows past its budget.
-- **Fonts are a contract, not a per-file choice.** All three faces are self-hosted woff2 in `public/fonts/` (Space Grotesk display, Onest body, Fragment Mono numeric/mono — matching `FONTS` in `packages/svg`). The `@font-face` blocks and the `--font-display` / `--font-body` / `--font-mono` / `--font-cjk` variables in `src/styles/globals.css` are the **single** declaration site; `tailwind.config.js` points its `sans`/`heading`/`mono`/`numeric` families at the same variables. Nothing else should name a family — that is how four sources ended up disagreeing before `REFACTOR-002`. There is no runtime Google Fonts request, and the CSP's `font-src` is `'self'` only. `--font-cjk` names locally-installed CJK families (nothing is downloaded) so ja/ko/zh rendering is a decision rather than an OS accident. CJK rendering for *SVG export* is separate: subset Noto Sans SC + KR shipped from `@xivdyetools/svg`.
+- **Fonts are a contract, not a per-file choice.** All three faces are self-hosted woff2 in `public/fonts/` (Space Grotesk display, Onest body, Fragment Mono numeric/mono — matching `FONTS` in `packages/svg`). The `@font-face` blocks and the `--font-display` / `--font-body` / `--font-mono` / `--font-cjk` variables in `src/styles/globals.css` are the **single** declaration site; `tailwind.config.js` points its `sans`/`heading`/`mono`/`numeric` families at the same variables. Nothing else should name a family — that is how four sources ended up disagreeing before `REFACTOR-002`. There is no runtime Google Fonts request, and the CSP's `font-src` is `'self'` only. `--font-cjk` names locally-installed CJK families (nothing is downloaded) so ja/ko/zh rendering is a decision rather than an OS accident. The web app renders no SVG-to-PNG of its own; the Noto Sans JP/SC/KR subsets used for card rasterisation live in `apps/discord-worker/src/fonts/` and `apps/og-worker/src/fonts/` (`@xivdyetools/svg` ships no font files — it only names the stacks in `FONTS`).
 - `src/index.html` is the Vite entry; `vite.config.ts` sets `root: 'src'` and `outDir: '../dist'`.
 - `assets/css/tailwind.css` is built by `npm run build:css` and committed; the dev script does **not** rebuild Tailwind on save — use `build:css:watch` in another terminal if you're editing styles.
 - `public/_headers` (Cloudflare Pages) is the **single** source of truth for the production CSP: `script-src 'self'`, `style-src 'self' 'unsafe-inline'`, `frame-ancestors 'none'`. Do not add a second copy — a `<meta http-equiv>` tag cannot express `frame-ancestors` and will silently diverge.
@@ -270,7 +271,7 @@ npx playwright test --project=mobile-chrome
 ## Related Projects
 
 **Dependencies:**
-- `@xivdyetools/core`, `@xivdyetools/types`, `@xivdyetools/logger`
+- `@xivdyetools/core`, `@xivdyetools/types`, `@xivdyetools/logger`, `@xivdyetools/svg`
 
 **Sibling apps it talks to:**
 - `xivdyetools-presets-api` — community presets (HTTPS)
@@ -280,4 +281,4 @@ npx playwright test --project=mobile-chrome
 
 ## Documentation
 
-The project's deeper design docs live in `docs/` inside this app folder (`ARCHITECTURE.md`, `SERVICES.md`, `TOOLS.md`, `STYLE_GUIDE.md`, `TROUBLESHOOTING.md`) and the repo-level `xivdyetools/docs/`.
+The project's deeper design docs live in the repo-level hub at `xivdyetools/docs/projects/web-app/` (`overview.md`, `components.md`, `tools.md`, `theming.md`, `deployment.md`) — there is no `docs/` folder inside this app any more — plus the cross-cutting guides under `xivdyetools/docs/developer-guides/`.

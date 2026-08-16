@@ -49,13 +49,13 @@ This documentation covers the following projects:
 |---------|---------|-------------|
 | **xivdyetools-web-app** | v5.0.0 | Interactive web-based color tools (9 tools, Light + Dark themes) |
 | **xivdyetools-discord-worker** | v5.0.0 | Serverless Discord bot (Cloudflare Workers, 17 registered commands) |
-| **xivdyetools-image-worker** | v1.0.0 | Photon pixel extraction; service-binding only, no public surface |
-| **xivdyetools-moderation-worker** | v1.3.0 | Moderation bot for community presets (Cloudflare Workers) |
-| **xivdyetools-oauth** | v2.5.0 | Discord OAuth authentication worker (D1) |
-| **xivdyetools-presets-api** | v1.6.0 | Community presets REST API (D1) |
-| **xivdyetools-api-worker** | v0.5.0 | Public REST API at `data.xivdyetools.app`, Universalis proxy, and the VitePress developer docs |
+| **xivdyetools-image-worker** | v1.0.0 | Photon host — `POST /extract` (pixels) + `POST /thumbnail` (WebP); service-binding only, no public surface |
+| **xivdyetools-moderation-worker** | v1.4.0 | Moderation bot for community presets (Cloudflare Workers) |
+| **xivdyetools-oauth** | v2.6.0 | Discord OAuth authentication worker (D1) |
+| **xivdyetools-presets-api** | v2.0.0 | Community presets REST API (D1) |
+| **xivdyetools-api-worker** | v0.6.0 | Public REST API at `data.xivdyetools.app`, Universalis proxy, and the VitePress developer docs |
 | **xivdyetools-og-worker** | v2.0.0 | Localized OpenGraph card generation (`?lang=`, `?frame=x`) |
-| **xivdyetools-stoat-worker** | v0.2.0 | Revolt bot (Stoat) — parked, no active investment |
+| **xivdyetools-stoat-worker** | v0.2.1 | Revolt bot (Stoat) — parked, no active investment |
 
 ### Shared Libraries
 

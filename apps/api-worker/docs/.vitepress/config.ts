@@ -36,6 +36,7 @@ export default defineConfig({
             { text: 'Overview', link: '/reference/' },
             { text: 'Dyes', link: '/reference/dyes' },
             { text: 'Color Matching', link: '/reference/matching' },
+            { text: 'Universalis Proxy', link: '/reference/universalis' },
           ],
         },
       ],

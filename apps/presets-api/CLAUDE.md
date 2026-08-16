@@ -27,6 +27,10 @@ npm run db:seed              # tsx scripts/migrate-presets.ts (seed curated pres
 
 # Files under migrations/ are NOT applied by any script — run them by hand:
 npx wrangler d1 execute xivdyetools-presets --remote --file=./migrations/<name>.sql
+
+# 5.0 stainID data migration (one-off, data-dependent): dump the rows, generate the
+# UPDATEs with scripts/migrate-dyes-to-stainids.ts, then execute the emitted SQL —
+# usage header inside the script.
 ```
 
 ### Setting Secrets
@@ -154,7 +158,7 @@ Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS
 | `presets` | Both curated and community palettes; `status ∈ {pending, approved, rejected, flagged}`, `dye_signature` enforces unique dye combinations. Later columns arrived one migration each: `example_link` (`0008`), `preview_image_key` / `preview_image_status` (`0009`), `secondary_categories` (`0010`) |
 | `votes` | One row per (preset_id, user_discord_id); composite PK |
 | `moderation_log` | Audit trail of approve/reject/flag/unflag/revert actions |
-| `rate_limits` | Optional persistent rate-limit counters (mostly unused — IP limits are in-memory) |
+| `rate_limits` | **Dropped** by `migrations/0006` (REFACTOR-018 — never read or written; IP limits are in-memory). Still present in `schema.sql` only for fresh local DBs |
 | `banned_users` | Tracked via `discord_id` or `xivauth_id`; partial unique index for active bans |
 | `failed_notifications` | Dead-letter queue (BUG-015) for Discord notifications that exhausted retries |
 
@@ -164,7 +168,7 @@ Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS
 - `idx_presets_status_vote` — popular feed.
 - `idx_presets_status_created` — recent feed.
 - `idx_presets_author_created` — `/presets/mine`.
-- Unique `idx_presets_dye_signature` — duplicate detection at the DB layer.
+- Unique `idx_presets_dye_signature` — duplicate detection at the DB layer; `migrations/0006` re-created it as a **partial** index (`WHERE status IN ('approved','pending')`) so a rejected preset's combination can be resubmitted.
 
 ### Query Patterns
 
@@ -189,7 +193,7 @@ Route order is load-bearing in `presets.ts` and `moderation.ts`: literal paths (
 
 ### Authenticated (Bot or Web)
 
-- `POST /presets` — submit (auto-vote for author, dye_signature dedup, profanity check).
+- `POST /presets` — submit (auto-vote for author, dye_signature dedup, profanity check). `dyes` are **stainIDs, 3–6 per preset** (`validatePresetDyes`: values > 254 are rejected with a "looks like a legacy item ID" message); optional `secondary_categories` (≤ 2, never repeating the primary) and `example_link` (page URL on an `EXAMPLE_LINK_HOSTS` allowlisted host).
 - `PATCH /presets/:id` — edit (stores `previous_values` JSON for revert).
 - `DELETE /presets/:id` — author-only delete.
 - `PATCH /presets/refresh-author` — re-sync the caller's denormalized author name across their presets.
@@ -331,7 +335,7 @@ Production hides `err.message` and stack — only the request ID is returned. De
 - Local D1 lives in `.wrangler/state/v3/d1/`. Reset with `rm -rf .wrangler` if migrations get stuck.
 - `migrate-presets.ts` reads the curated preset library from `@xivdyetools/core` and emits SQL — pipe to `wrangler d1 execute`.
 - Preset submissions auto-vote for the author in the same transaction.
-- `dye_signature` is the JSON of sorted dye IDs (`"[1,12,40]"`) — both the column and a unique index.
+- `dye_signature` is the JSON of sorted **stainIDs** (`"[1,12,40]"`) — both the column and a (partial) unique index; the 5.0 stainID migration recomputed every signature.
 - A `/__force-error` test route exists outside production for exercising the global error handler.
 
 ## Related Projects
@@ -357,6 +361,6 @@ Production hides `err.message` and stack — only the request ID is returned. De
    INSERT naming it fails as an opaque 500. That is exactly how `example_link`
    (`0008`) and `previous_values` (`0002`) went missing.
 3. `npm run lint && npm run test -- --run && npm run type-check`.
-4. `npm run deploy` — push to staging, smoke-test with `curl https://api.xivdyetools.app/health` and an authenticated `POST /api/v1/presets`.
+4. `npm run deploy` — publishes the routeless `xivdyetools-presets-api-dev` worker (no staging env; it is not reachable at `api.xivdyetools.app`). Smoke-test production after step 5 with `curl https://api.xivdyetools.app/health` and an authenticated `POST /api/v1/presets`.
 5. `npm run deploy:production`.
 6. Verify Service Binding works from `discord-worker` (submit a preset via the web app and confirm the moderation channel receives the embed).

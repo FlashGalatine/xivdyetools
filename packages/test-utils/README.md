@@ -4,9 +4,13 @@ Shared testing utilities for the xivdyetools ecosystem. Provides mocks for Cloud
 
 ## Installation
 
-```bash
-npm install -D @xivdyetools/test-utils
+**Workspace-private since 1.2.0 (Monorepo 2.0 Tier 1) — not published to npm.** Consume it from inside the monorepo as a `workspace:*` devDependency:
+
+```json
+"devDependencies": { "@xivdyetools/test-utils": "workspace:*" }
 ```
+
+(Versions up to 1.1.8 remain on npm as history only.)
 
 ## Features
 

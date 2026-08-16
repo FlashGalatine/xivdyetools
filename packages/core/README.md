@@ -142,12 +142,14 @@ const dyeService = new DyeService(dyeDatabase);
 
 // Database access
 const allDyes = dyeService.getAllDyes(); // 125 dyes
-const dyeById = dyeService.getDyeById(5752); // By itemID - Jet Black Dye
+const dyeById = dyeService.getDyeById(13115); // By itemID (= Dye.id) - Jet Black; prefer getByStainId(102)
 const dyeByStain = dyeService.getByStainId(1); // By stainID (canonical key) - Snow White
 const categories = dyeService.getCategories(); // ['Neutral', 'Red', 'Blue', ...]
 
-// Color matching
+// Color matching — matchingMethod is one of the 5.0 suite:
+// 'ciede2000' (default) | 'oklab' | 'cie76' | 'redmean' | 'rgb' | 'distinguish'
 const closest = dyeService.findClosestDye('#FF6B6B');
+const closestOk = dyeService.findClosestDye('#FF6B6B', { matchingMethod: 'oklab' });
 const nearby = dyeService.findDyesWithinDistance('#FF6B6B', 50, 5);
 
 // Harmony generation (default: fast hue-based matching)
@@ -412,6 +414,8 @@ This package lives in the [xivdyetools monorepo](https://github.com/FlashGalatin
 - [`apps/web-app`](../../apps/web-app/) — interactive color tools for FFXIV
 - [`apps/discord-worker`](../../apps/discord-worker/) — Cloudflare Worker Discord bot
 - [`apps/api-worker`](../../apps/api-worker/) — public REST API
+- [`apps/og-worker`](../../apps/og-worker/) — OpenGraph cards (stateless localization trio)
+- [`apps/stoat-worker`](../../apps/stoat-worker/) — Revolt bot (parked)
 - [`@xivdyetools/svg`](../svg/), [`@xivdyetools/bot-logic`](../bot-logic/)
 
 ## Support

@@ -81,15 +81,16 @@ function getSheetName(sheet: ColorSheetCategory, locale: LocaleCode): string {
 // ============================================================================
 
 // REFACTOR-024: reuse the shared instance from dye-helpers instead of
-// constructing a second DyeService (each init validates 136 entries and
-// builds three indexes + a k-d tree — pure duplicated cold-start work).
+// constructing a second DyeService (each init validates the 125 schema-v2
+// dye entries and builds three indexes + a k-d tree — pure duplicated
+// cold-start work).
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
 
 /**
- * Get dye name and hex color by itemID
+ * Get dye name and hex color by stainID (5.0: OG paths key on stainIDs)
  */
 function getDyeInfo(stainID: number): { name: string; hex: string } | null {
   // OPT-023: O(1) map lookup via the shared helper

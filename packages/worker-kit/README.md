@@ -198,7 +198,7 @@ app.use('*', loggerMiddleware({
 
 ## Consumers
 
-All seven backend apps: [`discord-worker`](../../apps/discord-worker/), [`moderation-worker`](../../apps/moderation-worker/), [`presets-api`](../../apps/presets-api/), [`oauth`](../../apps/oauth/), [`api-worker`](../../apps/api-worker/), [`og-worker`](../../apps/og-worker/) (middleware + rate-limiter), and [`stoat-worker`](../../apps/stoat-worker/) (rate-limiter only). The web app does not consume it.
+All eight backend apps: [`discord-worker`](../../apps/discord-worker/), [`moderation-worker`](../../apps/moderation-worker/), [`presets-api`](../../apps/presets-api/), [`oauth`](../../apps/oauth/), [`api-worker`](../../apps/api-worker/), [`og-worker`](../../apps/og-worker/) and [`image-worker`](../../apps/image-worker/) (middleware only), and [`stoat-worker`](../../apps/stoat-worker/) (declared for the planned rate-limiter backend). The web app does not consume it.
 
 ## Connect With Me
 

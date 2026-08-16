@@ -15,12 +15,16 @@ A fully-featured web application built with Lit and Vite, offering 9 interactive
 | **Palette Extractor** | Find closest dye to any color + palette extraction |
 | **Color Harmony Explorer** | Discover harmonious dye combinations |
 | **Gradient Builder** | Create gradients between two dyes |
-| **Dye Mixer** | Blend two dyes together (RGB averaging) |
+| **Dye Mixer** | Blend two dyes together (RGB / LAB / OKLAB / RYB / HSL / Spectral) |
 | **Swatch Matcher** | Match character colors to dyes |
 | **Dye Comparison** | Compare dyes side-by-side |
 | **Accessibility Checker** | Colorblindness simulation |
 | **Community Presets** | Browse community dye palettes |
 | **Budget Suggestions** | Find affordable dye alternatives using market data |
+
+### New in v5.0.0
+
+- **The 5.0 redesign** — every tool re-ported onto the console bar + tool rail shell with an Advanced Options panel and result cards; themes reduced to Light + Dark ([theming](theming.md)); one matching vocabulary (`ciede2000` default / `oklab` / `cie76` / `redmean` / `rgb` / `distinguish`); share URLs key on stainID (`?dye=<stainID>`, `?hex=` bare colours; legacy itemID links rejected loudly); `CollectionService` 5.0 is the single saved-things store (stainID-keyed, 4.x data migrated on load); `.chara` character-file import in the Swatch Matcher; self-hosted fonts; root OG cards; beta build (`VITE_APP_ENV=beta`); locale keys 1,041 → 1,489 × 6. The v4.x notes below are historical.
 
 ### New in v4.10.0
 

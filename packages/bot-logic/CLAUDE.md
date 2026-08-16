@@ -46,6 +46,8 @@ src/
 ├── localization.ts                # initializeLocale, getLocalizedDyeName, getLocalizedCategory
 ├── color-math.ts                  # getColorDistance, getMatchQualityInfo
 ├── css-colors.ts                  # CSS named-color → hex (BlueViolet, coral, ...)
+├── moderators.ts                  # parseModeratorIds / isModeratorId / isValidDiscordSnowflake (shared MODERATOR_IDS grammar)
+├── i18n/                          # Bot UI Translator + six locale JSONs — subpath @xivdyetools/bot-logic/i18n
 └── commands/
     ├── types.ts                   # EmbedData, EmbedField (platform-neutral)
     ├── harmony.ts                 # /harmony — triadic / complementary / analogous / split / tetradic / inverted-tetradic / square / mono
@@ -141,7 +143,7 @@ Discord adapters map `EmbedData` onto `APIEmbed` (`title → title`, `color → 
 `input-resolution.ts` constructs one `DyeService(dyeDatabase)` at module load. Re-importing won't rebuild the database. If a command needs a custom dye filter view, **filter the result** rather than constructing a second `DyeService`.
 
 ### Input resolution order
-`resolveColorInput` tries inputs in this order: hex (`#FF0000` / `FF0000` / `#F00`) → dye name (case-insensitive partial match, Facewear excluded by default) → CSS named color (`BlueViolet`). Pass `findClosestForHex: true` when the command needs a dye attached to an arbitrary hex code.
+`resolveColorInput` tries inputs in this order: hex (`#FF0000` / `FF0000` / `#F00`) → dye name (case-insensitive partial match) → CSS named color (`BlueViolet`). `excludeFacewear` (default `true`) filters `category === 'Facewear'` and is effectively a no-op since schema v2 — Facewear colours are no longer in the dye database at all. Pass `findClosestForHex: true` when the command needs a dye attached to an arbitrary hex code.
 
 ## Consumers
 

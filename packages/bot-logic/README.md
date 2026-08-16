@@ -25,14 +25,17 @@ npm install @xivdyetools/bot-logic
 
 | Function | Description |
 |----------|-------------|
-| `executeDyeInfo(input)` | Dye info card with color values |
-| `executeRandom(input)` | Grid of random dyes |
-| `executeHarmony(input)` | Color harmony wheel (triadic, complementary, etc.) |
-| `executeGradient(input)` | Gradient bar between two colors |
-| `executeMixer(input)` | Blend two colors (6 blending modes) |
-| `executeMatch(input)` | Find closest dyes to a color |
-| `executeComparison(input)` | Side-by-side dye comparison grid |
-| `executeAccessibility(input)` | Colorblind simulation + WCAG contrast matrix |
+| `executeDyeInfo(input)` | Dye info card (11B) with color values |
+| `executeRandom(input)` | Row of up to 5 random dyes |
+| `executeHarmony(input)` | Harmony palette (11A — found dye vs computed ideal; triadic, complementary, inverted-tetradic, …) |
+| `executeGradient(input)` | N-step gradient (12H) with a ΔE2000 dye match per stop |
+| `executeMixer(input)` | Ratio-sweep blend of two colors (12F; 6 blending modes) |
+| `executeComparison(input)` | Side-by-side comparison of 2–4 dyes (14A / 14C) |
+| `executeContrast(input)` | WCAG 1.4.11 contrast ratios for 2–4 dyes (13A/13B/13C) — new in 2.0.0 |
+| `executeAccessibility(input)` | Colour-vision lens for one or two dyes, routed on `vision` (13D/13E/13H) |
+| `executeSwatch(input)` | `.chara` character-file colour matching — new in 2.0.0 |
+
+`executeMatch` was **removed in 2.0.0** (the v4 `/match` command is gone; colour → dye matching lives in discord-worker's `/extractor color` sheet). All distances are ΔE2000 and every result carries a card rendered by `@xivdyetools/svg` 2.0.0's frame system; every input accepts an optional `theme: 'dark' | 'light'`.
 
 Each function returns a discriminated union (`{ ok: true; ... } | { ok: false; error: ...; errorMessage: string }`).
 
@@ -68,7 +71,7 @@ import {
 
 // Resolve arbitrary input (hex, dye name, or CSS color name)
 const color = resolveColorInput('#FF6B6B', { findClosestForHex: true });
-// → { hex: '#FF6B6B', name: 'Coral Pink', id: 42, itemID: 5729, dye: Dye }
+// → { hex: '#FF6B6B', name: 'Coral Pink', id: 5741, itemID: 5741, dye: Dye }   // id === itemID (Coral Pink, stainID 13)
 
 // Resolve directly to a Dye object
 const dye = resolveDyeInput('jet black');
@@ -86,10 +89,11 @@ import { executeGradient, executeComparison } from '@xivdyetools/bot-logic';
 
 // Gradient between two dyes
 const gradient = await executeGradient({
-  startDye: pureWhite,
-  endDye: jetBlack,
-  steps: 7,
-  interpolation: 'oklch',
+  startColor: resolveColorInput('Pure White')!,
+  endColor: resolveColorInput('Jet Black')!,
+  stepCount: 7,           // default 6, including both ends
+  colorSpace: 'oklch',    // InterpolationMode
+  matchingMethod: 'ciede2000',
   locale: 'en',
 });
 

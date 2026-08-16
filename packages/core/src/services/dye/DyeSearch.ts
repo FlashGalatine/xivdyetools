@@ -17,7 +17,7 @@ import type { DyeDatabase } from './DyeDatabase.js';
 export interface FindClosestOptions {
   /** Dye IDs to exclude from results */
   excludeIds?: number[];
-  /** Color matching algorithm (default: 'oklab') */
+  /** Color matching algorithm (default: 'ciede2000' — see DEFAULT_MATCHING_METHOD) */
   matchingMethod?: MatchingMethod;
 }
 
@@ -148,13 +148,17 @@ export class DyeSearch {
    * Per P-7: Uses k-d tree for O(log n) initial candidates, then re-ranks
    * using the specified perceptual distance algorithm.
    *
-   * Per COLOR-MATCH-001: Supports multiple matching algorithms:
-   * - 'rgb': RGB Euclidean (fastest, least accurate)
+   * Per COLOR-MATCH-001 (5.0 suite): Supports the six `MatchingMethod`s:
+   * - 'ciede2000': CIEDE2000 (industry standard, accurate) — the default
+   * - 'oklab': OKLAB Euclidean (modern, good balance)
    * - 'cie76': CIE76 LAB Euclidean (fast, fair accuracy)
-   * - 'ciede2000': CIEDE2000 (industry standard, accurate)
-   * - 'oklab': OKLAB Euclidean (recommended, good balance)
-   * - 'hyab': HyAB hybrid (best for large color differences)
-   * - 'oklch-weighted': OKLCH with custom L/C/H weights
+   * - 'redmean': Redmean-weighted RGB (cheap perceptual approximation)
+   * - 'rgb': RGB Euclidean (fastest, least accurate)
+   * - 'distinguish': RGB distance as an unrounded percent of the max (same
+   *   ranking as 'rgb'; display-only rounding happens at the consumer)
+   *
+   * The v4 methods 'hyab' / 'oklch-weighted' are retired; unknown values fall
+   * back to CIEDE2000 (see `normalizeMatchingMethod`).
    *
    * @param hex - Target color in hex format
    * @param excludeIdsOrOptions - Either an array of IDs to exclude (legacy) or options object

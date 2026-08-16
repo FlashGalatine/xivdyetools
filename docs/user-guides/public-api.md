@@ -4,6 +4,8 @@
 
 Base URL: `https://data.xivdyetools.app/v1`
 
+Full, browsable reference with a live "try it" console: [developers.xivdyetools.app](https://developers.xivdyetools.app). The same worker also exposes a Universalis market-board proxy at `https://data.xivdyetools.app/universalis/*` (see [Market Prices](#9-market-prices-universalis-proxy)).
+
 ---
 
 ## Quick Start
@@ -65,8 +67,8 @@ Supported locales: `en`, `ja`, `de`, `fr`, `ko`, `zh`
 ### 3. Browse Dyes with Filters
 
 ```bash
-# All red dyes
-curl https://data.xivdyetools.app/v1/dyes?category=Red
+# All red dyes (category names are exact and case-sensitive: Reds, Blues, Neutral, ...)
+curl https://data.xivdyetools.app/v1/dyes?category=Reds
 
 # Metallic dyes sorted by brightness
 curl "https://data.xivdyetools.app/v1/dyes?metallic=true&sort=brightness&order=desc"
@@ -81,7 +83,7 @@ curl "https://data.xivdyetools.app/v1/dyes?cosmic=true"
 curl "https://data.xivdyetools.app/v1/dyes?page=2&perPage=10"
 ```
 
-Available boolean filters: `metallic`, `pastel`, `dark`, `cosmic`, `ishgardian`
+Available boolean filters: `metallic`, `pastel`, `dark`, `cosmic`, `ishgardian`, `vendor`, `craft`, `expensive` — plus `consolidationType=A|B|C`, `minPrice`/`maxPrice`, and `excludeIds`
 
 Available sort fields: `name`, `brightness`, `saturation`, `hue`, `cost`
 
@@ -90,8 +92,8 @@ Available sort fields: `name`, `brightness`, `saturation`, `hue`, `cost`
 Fetch up to 50 dyes in a single request:
 
 ```bash
-# Mixed ID types (auto-detected)
-curl "https://data.xivdyetools.app/v1/dyes/batch?ids=5729,1,-1"
+# Mixed ID types (auto-detected: 5729 = itemID, 1 = stainID)
+curl "https://data.xivdyetools.app/v1/dyes/batch?ids=5729,1,999999"
 
 # Explicit stain IDs
 curl "https://data.xivdyetools.app/v1/dyes/batch?ids=1,2,3,4,5&idType=stain"
@@ -111,30 +113,30 @@ The response tells you which IDs were found and which weren't:
 ### 5. Find the Closest Dye to a Color
 
 ```bash
-# Default method (oklab - recommended)
+# Default method (ciede2000 / ΔE2000 - recommended)
 curl "https://data.xivdyetools.app/v1/match/closest?hex=FF6B6B"
 
 # With a specific distance algorithm
-curl "https://data.xivdyetools.app/v1/match/closest?hex=FF6B6B&method=ciede2000"
+curl "https://data.xivdyetools.app/v1/match/closest?hex=FF6B6B&method=oklab"
 
-# Exclude specific dyes from results
-curl "https://data.xivdyetools.app/v1/match/closest?hex=FF6B6B&excludeIds=48227"
+# Exclude specific dyes from results (itemID or stainID)
+curl "https://data.xivdyetools.app/v1/match/closest?hex=FF6B6B&excludeIds=5741"
 
-# Custom OKLCH weights (prioritize hue matching over lightness)
-curl "https://data.xivdyetools.app/v1/match/closest?hex=FF6B6B&method=oklch-weighted&kL=0.5&kH=2"
+# Only consider vendor-bought dyes (same boolean filters as /v1/dyes)
+curl "https://data.xivdyetools.app/v1/match/closest?hex=FF6B6B&vendor=true"
 ```
 
 ### 6. Find All Similar Dyes
 
 ```bash
-# All dyes within distance 0.15 of a color
-curl "https://data.xivdyetools.app/v1/match/within-distance?hex=FF6B6B&maxDistance=0.15"
+# All dyes within ΔE2000 15 of a color
+curl "https://data.xivdyetools.app/v1/match/within-distance?hex=FF6B6B&maxDistance=15"
 
 # Limit to top 5 closest
-curl "https://data.xivdyetools.app/v1/match/within-distance?hex=FF6B6B&maxDistance=0.15&limit=5"
+curl "https://data.xivdyetools.app/v1/match/within-distance?hex=FF6B6B&maxDistance=15&limit=5"
 ```
 
-Results are sorted by distance (closest first).
+Results are sorted by distance (closest first). `maxDistance` is in the chosen method's unit — `15` is a sensible ΔE2000 starting point; for `oklab` use something like `0.15`.
 
 ### 7. Get Categories
 
@@ -152,22 +154,39 @@ curl https://data.xivdyetools.app/v1/dyes/consolidation-groups
 
 Returns which dyes belong to consolidation groups A, B, and C, and whether consolidation is currently active in the game.
 
+### 9. Market Prices (Universalis Proxy)
+
+The worker also proxies the [Universalis](https://universalis.app) market-board API, with caching and open CORS, at `https://data.xivdyetools.app/universalis/*` — **outside** `/v1`, so responses are Universalis' own JSON (no `{ success, data, meta }` envelope) and it has its own rate limit (30 requests/min per IP on the prices route):
+
+```bash
+# Aggregated prices for the three Patch 7.5 consolidated dye items on Aether
+curl https://data.xivdyetools.app/universalis/aggregated/Aether/52254,52255,52256
+
+# Data-center and world lists
+curl https://data.xivdyetools.app/universalis/data-centers
+curl https://data.xivdyetools.app/universalis/worlds
+```
+
+Always price a dye by its `marketItemID`, not its `itemID`. Full details: [Universalis Proxy reference](https://developers.xivdyetools.app/reference/universalis).
+
 ---
 
 ## Distance Methods Explained
 
 When matching colors, you can choose a distance algorithm. Different methods produce different "closest" results:
 
-| Method | Best For | Notes |
-|--------|----------|-------|
-| `oklab` | General use (default) | Modern perceptually uniform space. Best all-around choice |
-| `ciede2000` | Strict perceptual accuracy | Industry standard for color difference. More expensive to compute |
-| `cie76` | Quick perceptual matching | Simpler delta E formula, less accurate for saturated colors |
-| `rgb` | Simple applications | Euclidean distance in RGB — not perceptually uniform, but simple |
-| `hyab` | Large color differences | Hybrid approach, better for distant colors |
-| `oklch-weighted` | Custom priorities | Lets you weight lightness vs chroma vs hue independently |
+| Method | Scale | Best For | Notes |
+|--------|-------|----------|-------|
+| `ciede2000` | 0–100 | General use (**default**) | Industry-standard perceptual color difference — the same "closeness" used everywhere in XIV Dye Tools |
+| `oklab` | 0–1 | Modern perceptual matching | Euclidean distance in Oklab — perceptually uniform, cheap to compute |
+| `cie76` | 0–100 | Quick perceptual matching | Simpler delta E formula, less accurate for saturated colors |
+| `redmean` | 0–~765 | Cheap approximation | Weighted RGB distance — a low-cost perceptual approximation |
+| `rgb` | 0–~441.67 | Simple applications | Euclidean distance in RGB — not perceptually uniform, but simple |
+| `distinguish` | 0–100 (integer) | Human-readable percentages | RGB distance rescaled to a percentage — same ranking as `rgb`, so expect ties |
 
-For most use cases, the default `oklab` is the best choice. Use `oklch-weighted` when you want to emphasize or de-emphasize specific color properties (e.g., "match the hue closely but be flexible on brightness").
+For most use cases the default `ciede2000` is the best choice. `distance` values are in the method's own unit, so a threshold that works for one method will not transfer to another.
+
+> **Upgrading from an older client?** The pre-5.0 methods `hyab` and `oklch-weighted` are still accepted but are silently treated as `ciede2000` (`euclidean` as `rgb`), and the old `kL`/`kC`/`kH` weight parameters are ignored — check the `method` field in the response to see what was actually used.
 
 ---
 
@@ -223,6 +242,8 @@ Paginated responses add:
 }
 ```
 
+When you request a non-English `locale`, `meta.locale` is added as well.
+
 Errors return:
 
 ```json
@@ -230,7 +251,8 @@ Errors return:
   "success": false,
   "error": "VALIDATION_ERROR",
   "message": "Human-readable description",
-  "details": { ... }
+  "details": { ... },
+  "meta": { ... }
 }
 ```
 
@@ -247,8 +269,9 @@ X-RateLimit-Remaining: 59
 X-RateLimit-Reset: 1712000000
 ```
 
-- If you exceed the limit, you'll receive a `429` response with a `Retry-After` header
+- If you exceed the limit, you'll receive a `429` response with a `Retry-After` header (and a top-level `retryAfter` in the body)
 - The `/health` endpoint is not rate-limited
+- The Universalis proxy has its own, separate limit — 30 requests per minute per IP on `/universalis/aggregated/*` (the data-center and world lists are unlimited)
 
 **Tips for staying under the limit:**
 
@@ -339,9 +362,9 @@ FFXIV dyes have multiple ID systems. The API accepts all of them:
 
 | ID Type | Range | Example | Notes |
 |---------|-------|---------|-------|
-| Item ID | >= 5729 | `5729` (Snow White) | Primary game item database ID |
-| Stain ID | 1–125 | `1` (Snow White) | Internal stain table index |
-| Facewear ID | < 0 | `-1` | Synthetic IDs for Facewear dyes (not tradeable) |
+| Item ID | >= 5729 | `5729` (Snow White) | Legacy game item database ID |
+| Stain ID | 1–254 | `1` (Snow White) | Internal stain table index — the canonical dye key (125 assigned today) |
+| Legacy Facewear ID | < 0 | `-1629` | **No longer served** — Facewear colors are not dyes; you get a 404 naming the color and its new slug id |
 
 The `marketItemID` field in responses is the ID to use for Universalis market board lookups. After Patch 7.5 consolidation, multiple dyes may share the same `marketItemID`.
 

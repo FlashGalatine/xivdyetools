@@ -2,14 +2,14 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: August 11, 2026*
+*Last Updated: August 16, 2026*
 
 > **Versions below are read from each project's `package.json` on the working branch.** The 5.0
-> wave — `core` v4.0.0, `types` v2.0.0, `svg` v2.0.0, `bot-logic` v2.0.0, `web-app` v5.0.0,
-> `discord-worker` v5.0.0 — is complete on `monorepo-2.0-prep` but **not yet merged to `main`
-> or published to npm**. Several of those packages have not had their `CHANGELOG.md` entries
-> written yet; the Version History sections below therefore end at the last documented release.
-> See [Release Process](developer-guides/release-process.md).
+> wave — `core` v4.0.0, `types` v2.0.0, `svg` v2.0.0, `bot-logic` v2.0.0, `worker-kit` v1.0.0,
+> `web-app` v5.0.0, `discord-worker` v5.0.0, `og-worker` v2.0.0, `presets-api` v2.0.0 and the
+> rest — is complete on `monorepo-2.0-prep` with every `CHANGELOG.md` written, but **not yet merged
+> to `main` or published to npm**. Merging to `main` is the release; the root `CHANGELOG.md` 2.0.0
+> entry carries the deploy sequence. See [Release Process](developer-guides/release-process.md).
 
 ---
 
@@ -22,12 +22,12 @@
 | **Web Application** | v5.0.0 | `xivdyetools-web-app` | Cloudflare Pages | Active — release pending |
 | **Discord Bot** | v5.0.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active — release pending |
 | **Image Worker** | v1.0.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.3.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
-| **OAuth Worker** | v2.5.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
-| **Presets API** | v1.6.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
-| **Public REST API** | v0.5.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Moderation Bot** | v1.4.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **OAuth Worker** | v2.6.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
+| **Presets API** | v2.0.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
+| **Public REST API** | v0.6.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.0.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
-| **Stoat Bot** | v0.2.0 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
+| **Stoat Bot** | v0.2.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
 
@@ -65,7 +65,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| **v4.0.0** | **Aug 2026** | **5.0 wave — CHANGELOG entry not yet written; see the `monorepo-2.0-prep` branch** |
+| **v4.0.0** | **Aug 2026** | **5.0 wave — one matching vocabulary (`ciede2000` default / `oklab` / `cie76` / `redmean` / `rgb` / `distinguish`; `hyab` + `oklch-weighted` retired, `normalizeMatchingMethod`), per-method band tiers (`classifyBandTier`), LCh rotation, Machado CVD matrices, `.chara` character-file parser + slot resolver, `dye-vocabulary.ts` (ex-maintainer), `presets.json` 2.0.0 (stainID, 15 curated rows), `SubRace 'Helions'`, `MANUAL_TOPICS`; 2.8.0 / 3.0.0 were never published** |
 | **v3.0.0** | **Jul 2026** | **BREAKING — dye data schema v2. `colors_xiv.json` (136 × 16 fields) → `dyes.json` (125 × 7 fields, stainID-keyed); `rgb`/`hsv`/`lab`, `cost`/`currency`, and the five `is*` flags derived at `initialize()` so the runtime `Dye` shape is unchanged. The 11 Facewear colours left the dye table for `facewearColors` (`LEGACY_FACEWEAR_ITEM_IDS` retains the old synthetic IDs). `isMetallic` = the Stain sheet's 16-dye gloss set (was 14 by name prefix); `isCosmic ≡ consolidationType 'C'` (11, was 20 — Firmament dyes were mislabelled). Adds inverted-tetradic harmony and CMYK conversions** |
 | **v2.8.0** | **Jul 2026** | **Monorepo 2.0 Tier 1 — absorbed `@xivdyetools/color-blending` as the `/blending` subpath export; `build-locales.ts` made idempotent so rebuilds no longer dirty all six locale JSONs** |
 | **v2.7.0** | **Jul 2026** | **2026-07-18 audit (Sprint 4) — REFACTOR-003 exact linear scan for perceptual dye search (the k-d-radius approach could miss the true nearest), BUG-005 LRU caches return defensive copies, `APIService` batches Universalis requests above the 100-item limit** |
@@ -94,7 +94,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| **v5.0.0** | **Aug 2026** | **5.0 wave — themes reduced to Light + Dark (`standard-light` / `standard-dark`, legacy names migrated on load), mobile-friendly redesign. CHANGELOG entry not yet written; see the `monorepo-2.0-prep` branch** |
+| **v5.0.0** | **Aug 2026** | **5.0 redesign — every tool re-ported, themes reduced to Light + Dark (`standard-light` / `standard-dark`, legacy names migrated on load), console bar + tool rail, Advanced Options panel, result cards, `CollectionService` 5.0 (stainID-keyed saved things, exact-range migration), `.chara` import, share URLs on stainID + `?hex=` grammar, self-hosted fonts, root OG cards, beta build (`VITE_APP_ENV=beta`)** |
 | **v4.12.0** | **Jul 2026** | **REFACTOR-002 step 1 — `BaseComponent` owns a `SubscriptionManager` with automatic cleanup in `destroy()` (7 tools converted); "What's New" full-history changelog modal in the v4 header; layman's changelog backfilled v4.0.0–v4.10.0** |
 | v4.11.0 | May 2026 | Consolidation Spectrum filter chips in the dye palette drawer (Budget defaults to Unconsolidated); Budget matching-algorithm control; alternatives computed from the full in-distance pool; collection-manager E2E re-enabled (DEAD-110) |
 | **v4.10.0** | **Apr 2026** | **Result Card v4 "Spectrum" row (Standard / Wide #1 / Wide #2), `common.spectrum` i18n, SEC-001 `auth-button.ts` XSS hardening, "Exclude Allied Society Dyes" filter removed, BUG-003 test fixture drift fix, sugarRiot localization fix (DE/KO)** |
@@ -128,7 +128,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| **v5.0.0** | **Aug 2026** | **5.0 wave — `COMMAND_REGISTRY` becomes the roster of record (registration schema, dispatch, and `/about` can no longer disagree); `/contrast` split out of `/accessibility` for WCAG 1.4.11 pairs; `/changelog` added; `/a11y` registered as an alias; Photon decoding moved to `image-worker` behind a service binding. CHANGELOG entry not yet written** |
+| **v5.0.0** | **Aug 2026** | **5.0 command set — v4 commands (`/match`, `/match_image`, `/favorites`, `/collection`, `/language`) deleted; `COMMAND_REGISTRY` becomes the roster of record; `/contrast` split out of `/accessibility` for WCAG 1.4.11 pairs; `/changelog` added; `/a11y` registered as an alias; `/swatch` takes a `.chara` file; every card redrawn on the svg 2.0.0 frame system; matching vocabulary + `/preferences set theme`; Photon decoding moved to `image-worker` behind a service binding (2,632 KiB gzip); beta bot on the routeless `-dev` env** |
 | **v4.7.0** | **Jul 2026** | **2026-07-18 audit (Sprint 5) — BUG-009 moderation approve/reject buttons finally routable (embeds post via `MODERATION_BOT_TOKEN` so clicks reach moderation-worker), BUG-035 throw-safe outcome-checked Discord API wrappers, BUG-033 world → DC → region price-scope cascade in `/budget`** |
 | v4.6.1 | Jun 2026 | Dead-code cleanup (DEAD-113–120) — unused "Error UX Standard V4" module and ~1,300 lines of orphaned exports removed |
 | v4.6.0 | May 2026 | Web-parity option expansion — `/harmony` companions + matching algorithms, `/extractor` vibrancy boost + 3–10 colors, `/gradient` 2–12 steps with 9 interpolation modes, `/mixer` matching option |
@@ -155,6 +155,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.6.0** | **Aug 2026** | **Beta origin (`https://beta.xivdyetools.app`) on the redirect + CORS allowlist (unified — beta login hang fixed); migrated to `@xivdyetools/worker-kit` and `@xivdyetools/auth/encoding`** |
 | **v2.5.0** | **Jul 2026** | **2026-07-18 audit (Sprint 2) — refresh rotation with `jti`-based revocation + `orig_iat` absolute session anchor (refresh chains can no longer extend a session indefinitely), state-signing hardening, single JWT verifier via `@xivdyetools/auth` 1.2.0** |
 | v2.4.1 | May 2026 | FINDING-003/006 documentation — `verifyJWT()` revocation caveat (use `verifyJWTWithRevocationCheck()`), dev-env D1 placeholder note in `wrangler.toml` |
 | **v2.4.0** | **Apr 2026** | **SEC-003 `jsonDepthLimit` middleware (maxDepth 10, 10 KB body, prototype pollution rejection); SEC-004 Hono `bodyLimit` (10 KB) on all `/auth/*`; REFACTOR-004 `isValidSnowflake` validation for `DISCORD_CLIENT_ID`; CORS `maxAge` 24h → 1h; migrated middleware to `@xivdyetools/worker-middleware`** |
@@ -174,6 +175,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.0.0** | **Aug 2026** | **BREAKING — preset dyes are stainIDs (3–6 per preset; legacy itemIDs rejected loudly), `community` category dropped (migration 0007) and `appearance` / `zones` / `raids-trials` added with 1 primary + ≤2 secondary categories (0010), `example_link` (0008), moderated preview images via image-worker `POST /thumbnail` + R2 (0009), `rejection_reason`, beta CORS origin, `worker-kit`; dev/prod `wrangler.toml` split** |
 | **v1.6.0** | **Jul 2026** | **2026-07-18 audit (Sprint 1) — CRITICAL: moderation self-approval gap closed (submitters could approve their own presets); state-machine transitions validated server-side with D1 `batch()` transactions and `changes()`-gated updates; migration 0006 unique preset-signature index applied to production** |
 | **v1.5.0** | **Apr 2026** | **SEC-003 `jsonDepthLimit` middleware (maxDepth 10, 100 KB body, prototype pollution rejection); SEC-004 Hono `bodyLimit` (100 KB) on `/api/*`; migrated to `rateLimitMiddleware()` from `@xivdyetools/worker-middleware` (standardized `X-RateLimit-*` + `Retry-After`); CORS `maxAge` 24h → 1h; BUG-002 structured logger in `preset-service.ts`** |
 | **v1.4.16** | **Mar 2026** | **BUG-012 corrupted D1 row resilience, BUG-015 dead-letter table for failed Discord notifications, BUG-016 rate limiter fail-open logging, OPT-001 category cache promise deduplication** |
@@ -210,7 +212,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| **v2.0.0** | **Aug 2026** | **5.0 wave — CHANGELOG entry not yet written; see the `monorepo-2.0-prep` branch** |
+| **v2.0.0** | **Aug 2026** | **5.0 wave — `FacewearColor`, `CMYK`, `invertedTetradic`, `SubRace 'Helions'` (was `'Helion'`), `CommunityPreset` multi-category / preview-image / `example_link` / `rejection_reason` fields, `MatchingMethod` 5.0 vocabulary (1.16.0 folded in, never published)** |
 | **v1.16.0** | **Jul 2026** | **Schema v2 support — `FacewearColor` interface (string slug `id`, `name`, `hex`) for the split-out Facewear collection, and the `CMYK` interface for core's new conversions** |
 | **v1.15.0** | **Jul 2026** | **REFACTOR-004 shared match-quality tiers — `MATCH_QUALITY_TIERS`, `classifyMatchDistance()`, `MatchQualityKey`: single source of truth for thresholds previously duplicated 4× across bot-logic/svg with inconsistent boundary operators; standardized on inclusive `<=`** |
 | **v1.14.0** | **Apr 2026** | **Removed `DyeTypeFilters.excludeAlliedSocietyDyes` (post-Patch 7.5 consolidation); REFACTOR-001 added `ToolKey` / `SheetKey` types + optional `tools` / `visions` / `sheets` fields on `LocaleData` for og-worker localization** |
@@ -243,6 +245,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.4.0** | **Aug 2026** | **Image-only queue entries marked instead of mis-approved; new preset category rows; `worker-kit`; dev/prod `wrangler.toml` split (bare deploy = routeless `-dev` worker)** |
 | **v1.3.0** | **Jul 2026** | **2026-07-18 audit (Sprint 5) — BUG-035 throw-safe outcome-checked Discord API wrappers (failures logged, not silently dropped), BUG-073 `MODERATOR_IDS` parsed via the shared `@xivdyetools/bot-logic` grammar** |
 | **v1.2.0** | **Apr 2026** | **SEC-001 global `onError` handler prevents stack-trace leakage; SEC-005 placeholder `DISCORD_CLIENT_ID` detection at startup; migrated request-ID/logger/rate-limit middleware to `@xivdyetools/worker-middleware`; ARCH-001 removed `nodejs_compat`; BUG-001 strict TypeScript checks** |
 | v1.1.9 | Mar 2026 | ARCH-001 deploy trigger fix for crypto transitive dependency |
@@ -257,6 +260,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.0.0** | **Aug 2026** | **15E band cards for all nine tools (Discord 1200×1050 + X 1200×630), per-tool default cards, `?lang=` localization, stainID paths, `@xivdyetools/svg` 2.0.0 frame system, routed beta env (`deploy-og-worker-beta.yml`)** |
 | **v1.4.0** | **Jul 2026** | **2026-07-18 audit (Sprint 7) — BUG-031 validated `?algo=` and 3-dye `ratio` parameters are finally honored (the "Algorithm:" footer no longer advertises math that didn't run), BUG-068 explicit `{ browser, edge }` cache TTLs, BUG-069 self-fetch guard on pass-throughs, REFACTOR-009 local SVG fork replaced by `@xivdyetools/svg` re-exports (~230 lines)** |
 | v1.3.0 | May 2026 | CJK font subsets bundled (Noto Sans SC + KR, 466 KiB total) — ja/ko/zh dye names render on OG cards instead of falling back to English; new `scripts/subset-cjk-fonts.py` |
 | **v1.2.0** | **Apr 2026** | **REFACTOR-001 OG embed metadata localized via `?lang=` query param — all 6 locales preloaded at module init; `harmonyToKey()` kebab-to-camel converter; REFACTOR-002 wired `@xivdyetools/worker-middleware`; global `app.onError` handler with structured logging; 6 new vitest cases (total: 344)** |
@@ -272,7 +276,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| **v1.0.0** | **Aug 2026** | **Initial release — split out of `discord-worker` (`docs/operations/IMAGE_WORKER_SPLIT.md`) to carry `@cf-wasm/photon`, bringing `discord-worker` back under Cloudflare's 3 MiB gzip limit (3,209.3 → 2,589.70 KiB). `POST /extract` decodes an image URL and returns raw RGBA pixels; reachable only via `discord-worker`'s `IMAGE_WORKER` service binding, no public surface** |
+| **v1.0.0** | **Aug 2026** | **Initial release — split out of `discord-worker` (`docs/operations/IMAGE_WORKER_SPLIT.md`) to carry `@cf-wasm/photon`, bringing `discord-worker` back under Cloudflare's 3 MiB gzip limit (3,209.3 → 2,589.70 KiB). `POST /extract` decodes an image URL and returns raw RGBA pixels; `POST /thumbnail` returns a WebP preview for presets-api's preview images; reachable only via the `IMAGE_WORKER` service bindings (discord-worker, presets-api), no public surface** |
 
 ### @xivdyetools/test-utils
 
@@ -330,7 +334,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| **v2.0.0** | **Aug 2026** | **5.0 wave — card generators reworked alongside og-worker v2.0.0's 15E band frame. CHANGELOG entry not yet written** |
+| **v2.0.0** | **Aug 2026** | **5.0 card frame system (`frame.ts`: 400 px canvas, 350 px ceiling, `CARD_DARK` / `CARD_LIGHT`), nine new generators (`generateContrastCard`, `generateA11yCard`, `generateBudgetLedger`, `generateNearestSheet`, `generateSwatchCard`, …), icon home (`icons/tool-icons.ts`), Fragment Mono + JP/SC/KR font stacks, `frame-budget` guard; five 4.x `build*Svg` modules deleted** |
 | v1.2.1 | Jul 2026 | Release-infrastructure validation — publish via npm trusted publishing (OIDC), confirming `workspace:*` rewriting under npm 11; contents identical to 1.2.0 |
 | **v1.2.0** | **Jul 2026** | **2026-07-18 audit (Sprint 6) — BUG-056 emoji removed from SVG text (bundled fonts have no emoji glyphs), BUG-060 code-point-safe truncation (no bisected surrogate pairs), BUG-063 single-step gradient NaN guard, REFACTOR-019 `escapeXml` on every string attribute** |
 | v1.1.2 | Mar 2026 | Dependency updates, type imports migrated from core → @xivdyetools/types |
@@ -343,7 +347,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| **v2.0.0** | **Aug 2026** | **5.0 wave — CHANGELOG entry not yet written; see the `monorepo-2.0-prep` branch** |
+| **v2.0.0** | **Aug 2026** | **5.0 wave — one-line embeds, `executeContrast` / `executeSwatch`, gradient row capping, mixer ratio sweep, lens-based accessibility, `card.*` strings ×6 locales; `executeMatch` removed (1.4.0 / 1.5.0 never published)** |
 | v1.5.0 | Aug 2026 | `inverted-tetradic` harmony type on `/harmony` (via core's `findInvertedTetradicDyes`), localized in all six bot locales — requires re-running slash-command registration |
 | **v1.4.0** | **Jul 2026** | **Monorepo 2.0 Tier 1 — absorbed `@xivdyetools/bot-i18n` v1.2.1: the `Translator` engine, `LocaleCode` types, and the six bot-UI locale files now live at `@xivdyetools/bot-logic/i18n`. API identical; only the import specifier changes** |
 | **v1.3.0** | **Jul 2026** | **2026-07-18 audit (Sprints 4 & 5) — shared `moderators` module (`parseModeratorIds` + snowflake validation) ends the discord-worker/moderation-worker parser drift; REFACTOR-004 match quality delegates to types' `classifyMatchDistance`; match results sorted by the displayed metric** |
@@ -375,6 +379,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.2.1 | Aug 2026 | Dependency retargets only (`bot-logic/i18n`, `core/blending`); parked |
 | **v0.2.0** | **Jul 2026** | **2026-07-18 audit (Sprint 5) — BUG-038 message context keyed by the bot reply's message ID (reaction handlers can actually find it; multi-match responses no longer overwrite each other); dead reaction affordances removed** |
 | v0.1.4 | Mar 2026 | REFACTOR-007 removed Phase 2 TODO comments from command routing |
 | v0.1.3 | Mar 2026 | Dependency updates |
@@ -386,6 +391,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v0.6.0** | **Aug 2026** | **Absorbed universalis-proxy (`/universalis/*` canonical, `/api/v2/*` compat) and the api-docs VitePress site (Workers Static Assets on `developers.xivdyetools.app`); serves schema v2 (125 dyes, `facewearColors`, negative legacy IDs → 404 with slug); accepts the 5.0 matching vocabulary (`hyab` / `oklch-weighted` normalised to `ciede2000`, `kL/kC/kH` ignored); `worker-kit`; dev/prod split** |
 | **v0.5.0** | **Jul 2026** | **2026-07-18 audit (Sprint 4) — route/middleware/validation fixes; consumes `@xivdyetools/core` 2.7.0's exact perceptual-search fix so `/v1` match results are correct at radius boundaries** |
 | **v0.4.0** | **Apr 2026** | **Removed `?alliedSociety=` filter (post-Patch 7.5); OPT-001 `localeMiddleware` validates `?locale=` once per request; BUG-001 structured logger; ARCH-001 CORS `maxAge` 24h → 1h; BUG-004 per-request `KVRateLimiter` construction (eliminates singleton footgun)** |
 | v0.3.0 | Apr 2026 | OPT-001 promise deduplication on `GET /api/v1/categories` (thundering-herd prevention); REFACTOR-010 named TTL constants; migrated rate-limit/request-ID/logger middleware to `@xivdyetools/worker-middleware`; ARCH-001 removed `nodejs_compat`; BUG-001 strict TypeScript checks |
@@ -414,8 +420,8 @@
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
-| Web App v5.0+ | @xivdyetools/core v3.0.0+ | Schema v2 — Facewear colours read from `facewearColors`, not the dye table |
-| Discord Worker v5.0+ | @xivdyetools/core v3.0.0+ | Schema v2; also requires `@xivdyetools/bot-logic` v1.4.0+ for the absorbed `/i18n` engine |
+| Web App v5.0+ | @xivdyetools/core v4.0.0+ | Schema v2, 5.0 matching vocabulary + band tiers, `.chara` parser; `@xivdyetools/types` v2.0.0+ |
+| Discord Worker v5.0+ | @xivdyetools/core v4.0.0+ | Also `@xivdyetools/svg` v2.0.0+, `@xivdyetools/bot-logic` v2.0.0+ (incl. `/i18n`), `@xivdyetools/worker-kit` v1.0.0+ |
 | OG Worker v2.0+ | @xivdyetools/svg v2.0.0+ | 15E band frame generators |
 | Any consumer of blending | @xivdyetools/core v2.8.0+ | `@xivdyetools/color-blending` retired; import from `@xivdyetools/core/blending` |
 | Any worker using middleware | @xivdyetools/worker-kit v1.0.0+ | Replaces `worker-middleware` and `rate-limiter` |

@@ -25,7 +25,7 @@ This document outlines procedures for rotating secrets across the xivdyetools ec
 | DISCORD_PUBLIC_KEY | moderation-worker | Cloudflare Secrets | Never (public key) |
 | MODERATOR_IDS | presets-api, moderation-worker | Cloudflare Secrets | As needed |
 | MODERATION_CHANNEL_ID | moderation-worker | Cloudflare Secrets | As needed |
-| MAINTAINER_API_KEY | maintainer (dev) | Local .env | N/A (dev only) |
+| MODERATION_BOT_TOKEN | discord-worker | Cloudflare Secrets | On compromise (same token as moderation-worker's DISCORD_TOKEN) |
 
 ---
 

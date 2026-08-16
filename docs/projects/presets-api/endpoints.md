@@ -1,6 +1,14 @@
-# Presets API — Endpoint Reference (v1.4.15)
+# Presets API — Endpoint Reference (v2.0.0)
 
 Full API reference for the Presets API Cloudflare Worker.
+
+> **2.0.0 (5.0 wave):** preset `dyes` are **stainIDs (1–254), 3–6 per preset** — legacy itemIDs
+> (≥ 5729) are rejected with "looks like a legacy item ID"; the `community` category is gone
+> (migration 0007) and `appearance` / `zones` / `raids-trials` were added; a preset carries one
+> primary `category_id` plus up to two `secondary_categories` (0010), an optional `example_link`
+> (0008), and a moderated preview image (`preview_image_key` / `preview_image_status`, 0009 — R2
+> via image-worker `POST /thumbnail`, served from `shots.xivdyetools.app`); rejections carry a
+> `rejection_reason`. Route list below is transcribed from `src/handlers/*.ts`.
 
 ---
 
@@ -90,9 +98,11 @@ Submit a new preset.
 |-------|------|-------------|
 | `name` | string | 2-50 characters |
 | `description` | string | 10-200 characters |
-| `dyes` | number[] | 2-5 positive integers |
+| `dyes` | number[] | 3-6 stainIDs (1-254); legacy itemIDs rejected |
 | `tags` | string[] | Max 10 tags, each max 30 characters |
-| `category_id` | number | Must reference a valid category |
+| `category_id` | string | One of `jobs`, `grand-companies`, `seasons`, `events`, `aesthetics`, `appearance`, `zones`, `raids-trials` |
+| `secondary_categories` | string[] | Optional, max 2, must not repeat `category_id` |
+| `example_link` | string | Optional URL to a page about the glamour (validated + normalised) |
 
 **Moderation:** Runs content moderation on submission (local profanity filter + Perspective API).
 
@@ -113,6 +123,21 @@ Edit an owned preset. Validates that the authenticated user owns the preset.
 ### `DELETE /api/v1/presets/:id`
 
 Delete an owned preset. Validates that the authenticated user owns the preset.
+
+### `GET /api/v1/presets/rate-limit`
+
+Remaining submissions for the authenticated user today.
+
+### `PATCH /api/v1/presets/refresh-author`
+
+Refresh the stored author display name from the caller's current identity.
+
+### `POST /api/v1/presets/:id/preview-image` / `DELETE /api/v1/presets/:id/preview-image`
+
+Upload (or remove) a preview image for an owned preset. The upload is thumbnailed by
+`xivdyetools-image-worker` (`POST /thumbnail`, WebP) into the `THUMBNAILS` R2 bucket and enters
+`preview_image_status = 'pending'` until a moderator approves it (a "picture pending review" embed
+with ✅/❌ buttons is posted to the moderation channel via the `DISCORD_WORKER` service binding).
 
 ---
 
@@ -150,45 +175,47 @@ All endpoints in this section require a JWT Bearer token with moderator privileg
 
 Get presets that are pending moderator review.
 
-### `PATCH /api/v1/moderation/:id`
+### `PATCH /api/v1/moderation/:presetId/status`
 
-Update a preset's moderation status.
+Update a preset's moderation status. Transitions are validated server-side (state machine; a
+submitter can never approve their own preset) and applied as one D1 `batch()`.
 
 **Request Body:**
 
 | Field | Type | Constraints |
 |-------|------|-------------|
-| `status` | string | One of: `approve`, `reject`, `flag`, `hide` |
-| `reason` | string | 10-200 characters |
+| `status` | string | Target status: `approved`, `rejected`, `flagged`, `pending` |
+| `reason` | string | 10-200 characters (surfaced to the owner as `rejection_reason` on `GET /presets/mine`, joined from `moderation_log`) |
 
 Creates an entry in the `moderation_log` table.
 
-### `GET /api/v1/moderation/:id/history`
+### `PATCH /api/v1/moderation/:presetId/preview-image`
+
+Approve or reject a pending preview image (`{ action: 'approve' | 'reject' }`). Reject clears only
+the image, never the preset's status. Called by discord-worker's `previewimg_*` buttons as the
+clicking moderator.
+
+### `GET /api/v1/moderation/:presetId/history`
 
 Get the full moderation history for a preset.
 
-### `PATCH /api/v1/moderation/:id/revert`
+### `PATCH /api/v1/moderation/:presetId/revert`
 
 Revert a flagged edit by restoring the preset's `previous_values`.
 
-### `POST /api/v1/moderation/ban`
+### `GET /api/v1/moderation/stats`
 
-Ban a user from the Presets API.
+Moderation queue statistics.
 
-**Request Body:**
+### `GET /api/v1/moderation/failed-notifications` / `PATCH /api/v1/moderation/failed-notifications/:id/resolve`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `discord_id` | string | The Discord user ID to ban |
-| `reason` | string | Reason for the ban |
+Dead-letter queue for Discord notifications that could not be delivered (migration 0005).
 
-### `DELETE /api/v1/moderation/ban/:discordId`
+### Bans
 
-Unban a user by Discord ID.
-
-### `GET /api/v1/moderation/bans`
-
-List all currently banned users.
+There are no ban routes on this API. User bans live in the shared D1 `banned_users` table
+(migration 0003) and are written by `xivdyetools-moderation-worker` (`/preset ban_user` /
+`unban_user`); this API only *checks* the table (`requireNotBannedCheck`) on writes.
 
 ---
 

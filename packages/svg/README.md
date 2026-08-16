@@ -55,19 +55,32 @@ Several commands **route** rather than scale — `/contrast`, `/compare` and `/a
 ```typescript
 import { generateDyeInfoCard, generateHarmonyCard } from '@xivdyetools/svg';
 
-// Generate a dye info card
+// Generate a dye info card (11B). 2.0.0 generators take caller-supplied,
+// already-translated `labels` plus `lang` — the package draws no English of its own.
 const svg = generateDyeInfoCard({
-  dye: { name: 'Snow White', hex: '#FFFFFF', rgb: { r: 255, g: 255, b: 255 }, /* ... */ },
+  dye: snowWhite,                       // full Dye object
   localizedName: 'Snow White',
   localizedCategory: 'White',
+  stainID: 1,
+  srcValue: 'Dye Vendor · 216 Gil',
+  mktValue: 'Standard Spectrum · 52254',
+  nearest: [/* NearestDyeInfo[] */],
+  labels: dyeInfoLabels,                // DyeInfoLabels (translated)
+  lang: 'en',
+  theme: 'dark',                        // optional; light ships via /preferences
 });
 // → '<svg xmlns="http://www.w3.org/2000/svg" ...>...</svg>'
 
-// Generate a harmony card
+// Generate a harmony card (11A)
 const harmonySvg = generateHarmonyCard({
-  baseDye: { name: 'Coral Pink', hex: '#FF6B6B', /* ... */ },
-  slots: [/* complementary / triadic slots */],
-  harmonyType: 'triadic',
+  typeLabel: 'Triadic',
+  baseHex: '#CC6C5E',
+  baseName: 'Coral Pink',
+  slots: [/* HarmonyCardSlot[] — found dye vs computed ideal per slot */],
+  labels: harmonyLabels,                // HarmonyCardLabels
+  tierWords: ['Exact', 'Close', 'Near', 'Far'],
+  method: 'ciede2000',
+  lang: 'en',
 });
 ```
 

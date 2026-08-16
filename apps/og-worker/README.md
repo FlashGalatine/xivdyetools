@@ -6,7 +6,7 @@ Deployed at [og.xivdyetools.app](https://og.xivdyetools.app), and mounted on `xi
 
 ## What it does
 
-When someone pastes a link like `xivdyetools.app/harmony/1/triadic` into Discord, Slack, or Bluesky, the crawler hits this Worker first. It:
+When someone pastes a share link like `xivdyetools.app/harmony/?dye=102&harmony=triadic` (dye parameters are **stainIDs** — `102` is Jet Black; bare colours travel as `?hex=RRGGBB`) into Discord, Slack, or Bluesky, the crawler hits this Worker first. It:
 
 1. Parses the tool and its parameters out of the URL.
 2. Rebuilds the relevant color result from `@xivdyetools/core` (no database round-trip — the dye data is bundled).
@@ -39,7 +39,7 @@ Mounted on the app's own domain so crawlers resolve real previews:
 | `GET /og/default.png` | Site-wide fallback card |
 | `GET /health` | Health probe |
 
-All image endpoints accept **`?lang=en\|ja\|de\|fr\|ko\|zh`** to localize dye names and labels on the card.
+All image endpoints accept **`?lang=en\|ja\|de\|fr\|ko\|zh`** to localize dye names and labels on the card, and **`?frame=x`** for the 1200×630 X/Twitter frame (the default Discord frame is 1200×1050). Dye path segments are stainIDs.
 
 ## Development
 
@@ -54,11 +54,11 @@ pnpm --filter xivdyetools-og-worker run type-check
 ## Deployment
 
 ```bash
-pnpm --filter xivdyetools-og-worker run deploy              # DEV worker (xivdyetools-og-worker-dev)
+pnpm --filter xivdyetools-og-worker run deploy              # BETA worker (xivdyetools-og-worker-dev — routed on beta.xivdyetools.app + og-beta.xivdyetools.app)
 pnpm --filter xivdyetools-og-worker run deploy:production   # Production
 ```
 
-> ⚠️ A bare `wrangler deploy` targets the **dev** worker here. Production always needs `--env production`. See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../docs/operations/DEPLOY_ENVIRONMENTS.md).
+> ⚠️ Unlike the other workers, a bare `wrangler deploy` here is **not** a routeless sandbox: the top-level env is the live **beta** worker (`beta.xivdyetools.app/<tool>/*` + `og-beta.xivdyetools.app`, its own `xivdyetools_og_analytics_beta` dataset). Production always needs `--env production`. See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../docs/operations/DEPLOY_ENVIRONMENTS.md).
 
 Production takes both the `og.xivdyetools.app` custom domain and the nine `xivdyetools.app/<tool>/*` route patterns. Because those patterns sit in front of the web app, a broken deploy here takes those routes down for humans too — smoke-test a tool URL in a browser after deploying, not just the PNG endpoint.
 
@@ -87,7 +87,7 @@ This Worker uses the **stateless** localization trio from `@xivdyetools/core` �
 | `@xivdyetools/core` | Dye database, color algorithms, stateless localization |
 | `@xivdyetools/svg` | Shared SVG helpers |
 | `@xivdyetools/types` | Shared type definitions |
-| `@xivdyetools/worker-kit` | Request ID, logger, and rate-limit middleware |
+| `@xivdyetools/worker-kit` | Request ID and logger middleware (no rate limiting on this worker) |
 
 > Note: this Worker keeps its **own** local theme and card layouts. It is on the OG card directions, not the bot's 5.0 frame system — do not assume `@xivdyetools/svg`'s `CARD_WIDTH` constraints apply here.
 
