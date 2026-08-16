@@ -2,7 +2,7 @@
 
 **Using XIV Dye Tools in your Discord server**
 
-> **5.0 note.** This guide was written for the v4 bot and has been corrected for 5.0. The v4
+> **Coming from the v4 bot?** The v4
 > commands `/match`, `/match_image`, `/favorites`, `/collection` and `/language` no longer exist:
 > dye matching is `/extractor color` / `/extractor image`, language is `/preferences set language:`,
 > and saved dyes/palettes live in the web app (only community *presets* can be favourited, via
@@ -232,7 +232,7 @@ To prevent abuse, commands have per-user rate limits:
 ## Next Steps
 
 - [Command Reference](command-reference.md) - All commands in detail
-- [Favorites & Collections](favorites-collections.md) - What happened to `/favorites` and `/collection`
+- [Favorite Presets & Preferences](favorites-collections.md) - `/preset favorite`, `/preferences`, and what happened to `/favorites` and `/collection`
 - [FAQ](faq.md) - Common questions
 
 ---

@@ -186,4 +186,4 @@ Yes, contact us via GitHub issues to request deletion.
 
 - [Command Reference](command-reference.md) - All commands
 - [Getting Started](getting-started.md) - First steps
-- [Favorites & Collections](favorites-collections.md) - What happened to `/favorites` and `/collection`
+- [Favorite Presets & Preferences](favorites-collections.md) - `/preset favorite`, `/preferences`, and what happened to `/favorites` and `/collection`

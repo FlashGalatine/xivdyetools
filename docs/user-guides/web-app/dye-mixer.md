@@ -2,11 +2,7 @@
 
 **Blend two dyes together to create custom colors**
 
-The Dye Mixer is a tool introduced in XIV Dye Tools v4.0.0 that lets you blend two dyes together using multiple color mixing algorithms, then find the closest matching FFXIV dyes.
-
-> **5.0 note.** The mixer now offers six blending modes — **RGB, LAB, OKLAB, RYB, HSL and Spectral**
-> (pigment simulation) — and matches the result with the shared matching methods (ΔE2000 by default).
-> The text below still describes the original three modes.
+The Dye Mixer takes two dyes, blends them the way paint, pigment, light or a perceptual colour space would, and finds the closest FFXIV dyes to the result. In 5.0 it shows every blend at once: a **mixing field** of six models × five ratios, thirty real colours you can compare in one glance and tap to make the mix.
 
 > **Note**: This is a completely different tool from the Gradient Builder (previously called "Dye Mixer" in v3.x). The Gradient Builder creates color *transitions*, while this tool creates color *blends*.
 
@@ -14,113 +10,75 @@ The Dye Mixer is a tool introduced in XIV Dye Tools v4.0.0 that lets you blend t
 
 ## How It Works
 
-The Dye Mixer blends two dyes using your choice of color mixing algorithm:
-
-1. **Input Slot 1** - First dye color
-2. **Input Slot 2** - Second dye color
-3. **Blending Mode** - Choose RGB, RYB, or LAB mixing
-4. **Result** - The blended color based on your selected mode
-5. **Matching** - Find FFXIV dyes closest to the blended result
+1. **Dye A and Dye B** - Two input slots
+2. **The mixing field** - Every model at every ratio, each cell a real blend
+3. **The mix** - The cell you tapped becomes the result
+4. **Matching** - The closest FFXIV dyes to that result
 
 ---
 
 ## How to Use
 
-### 1. Select Two Dyes
+### 1. Pick Two Dyes
 
-Fill both input slots:
-- **Search by name** - Type to find dyes
-- **Pick from list** - Browse by category
-- **Use the palette drawer** - Quick access to all dyes
+Open the **Color Palette** drawer (the paint-palette button; on phones it starts closed) and click two dyes. The first fills slot **1**, the second slot **2**. Picking a third shifts the pair along — the newest dye takes slot 2, the old slot 2 moves to slot 1. The drawer's **Custom Color** section lets you enter a hex code instead of a dye for either slot; the dice picks a random dye and the broom clears both slots.
 
-### 2. View the Blend
+Result cards elsewhere in the app can also send a dye here — **Transform Dye in… → Dye Mixer** on any card, choosing which slot it goes into.
 
-The mixer shows:
-- **Blended color preview** - The averaged result
-- **Matched dyes** - 3-8 closest FFXIV dyes to the blend
-- **Delta E scores** - How close each match is
+### 2. Read the Field
 
-### 3. Choose Blending Mode
+As soon as both slots are filled, the equation row shows **1 + 2 → Blend**, and below it the **Model × ratio** field appears: six rows (RYB, Spectral, OKLAB, LAB, HSL, RGB) by five columns (**10/90, 30/70, 50/50, 70/30, 90/10** — Dye A's share first). Every cell is painted with that actual blend and carries a small number: the distance to the closest FFXIV dye. Hover a cell to see its model, ratio and hex.
 
-Select how colors are mixed:
-- **RGB** - Digital light-based mixing (default)
-- **RYB** - Traditional paint-based mixing
-- **LAB** - Perceptually uniform mixing
+The **Model spread** readout in the field header says how far apart the six models land at the current ratio. A high spread means the choice of model matters a lot for this pair; a low one means it barely matters.
 
-### 4. Adjust Settings
+### 3. Tap a Cell
 
-In the left panel:
-- **Blending mode** - RGB, RYB, or LAB
-- **Result count** - Show 3-8 matched dyes
-- **Dye filters** - Filter results by category (Metallic, Pastel, etc.)
-- **Market board** - See pricing for matched dyes
+Tapping a cell makes it the mix: the result swatch takes its colour, the **Matching Dyes** list below re-ranks around it, and the cell keeps a highlighted ring. The default is **RYB at 50/50**. Change dyes and the same model and ratio carry over.
 
----
+### 4. Matching Dyes
 
-## Crafting-Style Interface
+The closest dyes to your mix, one card each: the dye beside the blend colour, its distance in the current unit, hue and stain readouts, colour values, source and cost. The **⋮** menu on a card offers **Inspect Dye in…** (Harmony, Budget, Accessibility, Comparison, Swatch), **Transform Dye in…** (Gradient, Mixer) and **Open in browser…**.
 
-The Dye Mixer uses a crafting-inspired UI:
+### 5. Settings
 
-```
-┌─────────┐   ┌─────────┐
-│  Dye 1  │ + │  Dye 2  │
-└────┬────┘   └────┬────┘
-     │             │
-     └──────┬──────┘
-            ▼
-      ┌───────────┐
-      │  Result   │
-      │  (Blend)  │
-      └───────────┘
-```
-
-- **100x100px input slots** - Your selected dyes
-- **120x120px result slot** - The blended color
+In the settings column (the gear icon on phones):
+- **Mixing Mode** - The same six models as the field rows; the field and the dropdown stay in sync
+- **Max Results** - 3–8 matched dyes
+- **Matching Algorithm** - ΔE2000 by default; ΔEOK, ΔE76, Weighted RGB, RGB or a percentage
+- **Display options** - Which colour values and readouts the cards show
+- **Dye Filters** - Exclude metallic, pastel, dark, cosmic, coffer, vendor or crafted dyes; the field cells and the results list use the same filtered pool, so a cell never quotes a distance to a dye the list can't show
+- **Market Board** - Show current prices on the cards
 
 ---
 
-## Blending Modes Explained
+## Blending Models Explained
 
-### RGB Mode (Digital)
-Blends colors as light would mix on a screen. Additive color mixing.
+The row headers use each model's technical name; the settings dropdown and the cell hints use plain ones.
 
-| Dye 1 | Dye 2 | RGB Result |
-|-------|-------|------------|
-| Red + Blue | → | Purple |
-| Red + Green | → | Yellow |
-| White + Black | → | Gray |
+| Row | Name | What it does | Blue + Yellow = |
+|-----|------|--------------|-----------------|
+| **RYB** | Paint | The traditional red-yellow-blue colour wheel — mixing like paint in art class | Olive |
+| **Spectral** | Pigment | Kubelka-Munk physics — how real pigment behaves | Green |
+| **OKLAB** | Perceptual | A modern, even perceptual space; no muddiness | Cyan |
+| **LAB** | LAB | The older perceptual space, with a warmer bias | Pink |
+| **HSL** | Hue | Sweeps around the hue wheel while keeping saturation | — |
+| **RGB** | Light | Additive light mixing, the way screens blend | Grey |
 
-**Best for**: When you want results that match how colors appear on screens.
+**Best for**
+- **RYB / Spectral** - "What would happen if I mixed these two paints?"
+- **OKLAB / LAB** - Balanced middle grounds that look natural to the eye
+- **HSL** - Keeping colours vivid while moving between two hues
+- **RGB** - Matching how the two colours average on a screen
 
-### RYB Mode (Traditional)
-Blends colors like paint mixing in art class. Subtractive color mixing based on the traditional red-yellow-blue color wheel.
-
-| Dye 1 | Dye 2 | RYB Result |
-|-------|-------|------------|
-| Red + Blue | → | Purple |
-| Yellow + Blue | → | Green |
-| Red + Yellow | → | Orange |
-
-**Best for**: Intuitive mixing that matches traditional art expectations.
-
-### LAB Mode (Perceptual)
-Blends colors in CIE LAB color space, which is designed to match human perception. Creates the most "natural-looking" blends.
-
-**Best for**: Getting blends that look balanced and natural to the human eye.
+**Tip**: Unlike gradient interpolation, blending creates a single colour rather than a transition path. The field exists because the same two dyes can land somewhere different in every row — look at the spread before you trust any one answer.
 
 ---
 
-**Tip**: Unlike gradient interpolation, blending creates a single averaged color rather than a transition path. Try different modes—the same two dyes can produce noticeably different results!
+## Save, Share and Export
 
----
-
-## Dye Action Menu
-
-Click the **⋮ menu** on any result dye to:
-- **Add to Favorites** - Save for later
-- **Add to Collection** - Organize into groups
-- **See Color Harmonies** - Find complementary dyes
-- **Open in Comparison** - Compare side-by-side
+- **Save mix** (under the field) stores Dye A, Dye B and the dye the mix currently resolves to as a palette on this device, named "A × B". Find it under **Community Presets → Saved**. Custom hex colours have no dye behind them and are skipped; a mix of two customs saves nothing.
+- **Share** copies a link that reopens the same two dyes at the same model and ratio — 75/25 is a different colour from 50/50, so the ratio rides in the link. Sharing needs two real dyes in the slots.
+- **Export** opens the export sheet: the two inputs and the blend (with its resolved dye and distance) as CSS custom properties, SCSS, JSON, plain HEX or a Tailwind theme, to copy or download.
 
 ---
 
@@ -129,31 +87,30 @@ Click the **⋮ menu** on any result dye to:
 ### Creating Custom Colors
 Find dyes that don't exist as single colors:
 1. Blend two close-but-not-quite dyes
-2. See what averaged color emerges
-3. Find the closest FFXIV match
+2. Scan the field for the cell nearest what you imagined
+3. Take the closest FFXIV match
 
 ### Color Experimentation
 Discover unexpected combinations:
-1. Try blending complementary colors
-2. Mix warm and cool tones
+1. Try blending complementary colors and compare the rows
+2. Mix warm and cool tones at 30/70 and 70/30
 3. Combine metallic and non-metallic dyes
 
 ### Outfit Planning
 Find "middle ground" dyes for coordinated looks:
 1. Blend your two favorite outfit colors
 2. Use the result as an accent color
-3. Create cohesive multi-piece glamours
+3. **Save mix** so the recipe stays with the outfit
 
 ---
 
 ## Tips
 
-- **Similar colors** create subtle variations
-- **Contrasting colors** can create muddy results in RGB/RYB, but often look better in LAB
-- Use **Delta E scores** to gauge match quality (lower = better)
-- **Try all three modes** - you might be surprised which gives the best result
-- **RYB mode** is great if you're thinking "what would happen if I mixed these paints?"
-- **LAB mode** often produces the most visually pleasing middle-ground
+- **Similar colors** create subtle variations in every row
+- **Contrasting colors** go muddy in RGB and RYB but often look better in OKLAB or Spectral
+- **The number in each cell** is the distance to the nearest dye — a low number means the blend really exists as a dye
+- **Watch the spread** - when it is high, try more than one row before choosing
+- **Off-centre ratios** (10/90, 90/10) are how you nudge a dye slightly toward another rather than meeting in the middle
 
 ---
 
@@ -162,9 +119,9 @@ Find "middle ground" dyes for coordinated looks:
 | Feature | Dye Mixer | Gradient Builder |
 |---------|-----------|------------------|
 | Output | Single blended color | Multiple gradient steps |
-| Method | RGB, RYB, or LAB blending | HSV color space interpolation |
+| Method | Six blend models × five ratios | Colour-space interpolation between two dyes |
 | Use case | "Mix these colors" | "Transition between colors" |
-| Results | 3-8 matched dyes | 5-10 intermediate dyes |
+| Results | 3-8 matched dyes | One matched dye per step |
 
 ---
 
@@ -173,3 +130,4 @@ Find "middle ground" dyes for coordinated looks:
 - [Gradient Builder](gradient-builder.md) - Create color transitions
 - [Palette Extractor](palette-extractor.md) - Find dyes from any color
 - [Dye Comparison](dye-comparison.md) - Compare your blend results
+- [Favorites & Collections](favorites-collections.md) - Where saved mixes go

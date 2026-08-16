@@ -4,7 +4,7 @@
 
 ---
 
-> **5.0 note.** The 5.0 release replaced the v4 command set. `/match`, `/match_image`, `/favorites`,
+> **Coming from the v4 bot?** The 5.0 release replaced the v4 command set. `/match`, `/match_image`, `/favorites`,
 > `/collection` and `/language` are gone — dye matching is `/extractor color` / `/extractor image`,
 > language is `/preferences set language:`, and saved dyes/palettes live in the web app (favourite
 > *presets* are `/preset favorite`). `/contrast`, `/a11y` and `/changelog` are new, and `/swatch` now
@@ -344,5 +344,5 @@ Bot information, version, dye count, links, and (for one release) where each rem
 ## Related Documentation
 
 - [Getting Started](getting-started.md) - First steps with the bot
-- [Favorites & Collections](favorites-collections.md) - What happened to `/favorites` and `/collection`
+- [Favorite Presets & Preferences](favorites-collections.md) - `/preset favorite`, `/preferences`, and what happened to `/favorites` and `/collection`
 - [FAQ](faq.md) - Common questions
