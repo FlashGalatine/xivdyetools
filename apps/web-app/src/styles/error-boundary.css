@@ -119,12 +119,7 @@
    Dark Theme Support
    ============================================================================ */
 
-[data-theme="dark"] .component-error-boundary,
-.theme-standard-dark .component-error-boundary,
-.theme-og-classic-dark .component-error-boundary,
-.theme-sugar-riot .component-error-boundary,
-.theme-grayscale-dark .component-error-boundary,
-.theme-high-contrast-dark .component-error-boundary {
+.theme-standard-dark .component-error-boundary {
   background-color: var(--theme-card-background);
 }
 

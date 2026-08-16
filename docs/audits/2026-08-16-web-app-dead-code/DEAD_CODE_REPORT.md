@@ -5,7 +5,7 @@
 - **Project:** `xivdyetools-web-app` 5.0.0 (Vite + Lit + Tailwind v4) at `monorepo-2.0-prep` `950660e`
 - **Analysis Date:** 2026-08-16
 - **Analysis Depth:** standard — symbol-level. Tooling: knip 6.32 (default **and** `--production` mode), `tsc --noUnusedLocals --noUnusedParameters`, depcheck 1.4, the repo's own `analyze-unused-keys.js` plus a stricter re-implementation, four parallel verification passes (TS symbols · CSS · i18n · non-source surface), and an **empirical browser check** (`vite preview` + Playwright `getComputedStyle`) for the CSS reachability claim.
-- **Total Findings:** 29
+- **Total Findings:** 30 (DEAD-030 added during Wave 3 execution)
 - **Recommended Removals:** 25 REMOVE · 4 REFACTOR-FIRST (DEAD-018, 020, 025, parts of 026) · 0 KEEP-only findings (keep items are in the register below)
 - **Estimated dead weight:** ~**1,000 source TS lines** + ~**1,900 test lines** · **1,719 of 2,758 CSS lines (62 %)** · **472 of 1,526 i18n keys (26 %, 131 KB across six locales)** · **~3.9 MB of never-served static assets** · 1 runtime dependency · 2 whole modules · 2 whole test files · 1 whole stylesheet
 
@@ -63,7 +63,7 @@ The TypeScript grade is genuinely good for a 100k-line app. The C is earned by t
 | [DEAD-017](findings/DEAD-017.md) | always-true `FEATURE_FLAGS`, completed-migration `HarmonyConfig.show*`, `ICON_UPLOAD` alias | Legacy Code | HIGH | LOW | **REMOVE** |
 | [DEAD-018](findings/DEAD-018.md) | ~24 `console.info` traces shipping to prod (auth-service echoes URL during sign-in) | Debug Residue | MEDIUM | NONE | **REFACTOR FIRST** |
 | [DEAD-019](findings/DEAD-019.md) | provably dead CSS — entire `v4-utilities.css` + ~580 lines elsewhere | Dead CSS | HIGH | LOW | **REMOVE** |
-| [DEAD-020](findings/DEAD-020.md) | **unreachable CSS** — ~876 lines targeting shadow-DOM tool content (verified empirically) | Dead CSS | HIGH | NONE (inert) | **REFACTOR FIRST** for 4 rule groups, then **REMOVE** |
+| [DEAD-020](findings/DEAD-020.md) | **unreachable CSS** — ~876 lines targeting shadow-DOM tool content (verified empirically). *Correction at execution:* the page copies of `.number`, `.dye-swatch`, `.empty-state*`, `.component-error-*` **do** reach the light-DOM modal mounts of the same components (`preset-edit-form` → `dye-selector` → `dye-grid`), so those were kept page-side and *additionally* injected shadow-side via one shared `tool-content.css`; only tool-only rules were deleted | Dead CSS | HIGH | NONE (inert) | **REFACTOR FIRST** for 4 rule groups, then **REMOVE** |
 | [DEAD-021](findings/DEAD-021.md) | `tailwind.config.js` phantom `content`, dead `font-heading`, colliding `font-numeric` | Dead Config | HIGH | NONE | **REMOVE** |
 | [DEAD-022](findings/DEAD-022.md) | **472 dead i18n keys** × 6 locales (131 KB) | Legacy Data | HIGH | LOW | **REMOVE** |
 | [DEAD-023](findings/DEAD-023.md) | **`public/og/<tool>/` 18 static OG cards (2.06 MB)** — og-worker serves these | Orphaned Asset | HIGH | NONE | **REMOVE** |
@@ -73,6 +73,7 @@ The TypeScript grade is genuinely good for a 100k-line app. The C is earned by t
 | [DEAD-027](findings/DEAD-027.md) | `e2e/example.spec.ts` (hits playwright.dev) — *(the 3 fixture exports first reported here were re-checked and are live; kept)* | Stale Test | HIGH | NONE | **REMOVE** |
 | [DEAD-028](findings/DEAD-028.md) | 22/32 `component-utils` helpers, 9 mock factories, `errorHandlers`, 2 server helpers (~34 KB) | Stale Test | HIGH | NONE | **REMOVE** |
 | [DEAD-029](findings/DEAD-029.md) | stale `CLAUDE.md`/`scripts/README.md`/`.env` lines, `engines.node` mismatch | Stale Docs | HIGH | NONE | **CORRECT** |
+| [DEAD-030](findings/DEAD-030.md) | **`HarmonyType` never constructed** — `harmony-type.ts` (369) + `info-tooltip.ts` (118) + tests (578); found during Wave 3 (imported only as a type, so knip missed it) | Orphaned Module | HIGH | LOW | **REMOVE** (done, Wave 3) |
 
 ## Quick Wins (High Confidence, Safe to Remove, No Cascades)
 

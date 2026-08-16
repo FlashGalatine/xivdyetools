@@ -8,8 +8,10 @@
 /* Import global styles first (must precede @import "tailwindcss") */
 @import './globals.css';
 
-/* Import error boundary styles for graceful component failure handling */
-@import './error-boundary.css';
+/* Rules that must reach component markup in BOTH scopes (light-DOM modals here,
+   the shell's shadow root via v4-layout.ts `?inline`): .number, the market-board
+   spinner, the error boundary. */
+@import './tool-content.css';
 
 /* Import Tailwind CSS v4 */
 @import "tailwindcss";

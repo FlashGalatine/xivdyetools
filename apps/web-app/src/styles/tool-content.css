@@ -1,0 +1,82 @@
+/* XIV Dye Tools 5.0 - Rules that must reach component markup wherever it mounts
+ *
+ * The nine tools are appended INSIDE V4LayoutShell's shadow root
+ * (v4-layout.ts), where document stylesheets do not apply. The same
+ * BaseComponent classes also mount in light-DOM modals (preset-edit-form ->
+ * dye-selector -> dye-grid, the error boundary of any component). So the rules
+ * below are loaded in BOTH scopes from this ONE file:
+ *
+ *   - page:   `@import './tool-content.css'` in tailwind.css
+ *   - shadow: `import toolContentCss from '@/styles/tool-content.css?inline'`
+ *             in v4-layout.ts, prepended to the injected #v5-results-grid-style
+ *
+ * A rule that only ever mattered inside the shell used to sit in globals.css /
+ * v4-layout.css and silently never applied (2026-08-16 dead-code audit,
+ * DEAD-020) -- if you add a rule for tool content, put it here, not there.
+ */
+
+@import './error-boundary.css';
+
+/* ============================================================================
+   Numerical Values Typography
+   ============================================================================ */
+
+/*
+ * The .number class sets the suite numeric face on values the user is expected
+ * to compare down a column: HEX codes, market prices, delta-E values, distance
+ * values, contrast ratios, degrees, percentages, and chart values.
+ *
+ * It was Habibi through 4.x -- a proportional display serif, so `1` was
+ * markedly narrower than `0` and stacked values never lined up at the decimal
+ * point. `packages/svg` corrected this for the bot and OG surfaces; this rule
+ * is the web half of the same decision.
+ *
+ * `tabular-nums` is what actually guarantees the alignment, and it keeps the
+ * fallback path honest -- if Fragment Mono fails to load, the system monospace
+ * still lines up.
+ *
+ * Fragment Mono has no CJK coverage, which is why `--font-mono` carries the
+ * CJK tail: a `.number` element wrapping CJK degrades to real glyphs, not tofu.
+ */
+.number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================================
+   Loading Spinner (market-board refresh, inside tools)
+   ============================================================================ */
+
+@keyframes spinner-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinner-pulse {
+
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.loading-spinner {
+  animation: spinner-spin 1s linear infinite;
+}
+
+/* Reduced motion: pulse instead of spin */
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner {
+    animation: spinner-pulse 2s ease-in-out infinite;
+  }
+}

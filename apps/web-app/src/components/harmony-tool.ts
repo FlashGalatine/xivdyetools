@@ -16,7 +16,6 @@ import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
 import { MarketBoard } from '@components/market-board';
-import { HarmonyType } from '@components/harmony-type';
 import { HarmonyResultPanel } from '@components/harmony-result-panel';
 import { ColorWheelDisplay } from '@components/color-wheel-display';
 import {
@@ -160,7 +159,6 @@ export class HarmonyTool extends BaseComponent {
   private marketBoard: MarketBoard | null = null;
   private marketPanel: CollapsiblePanel | null = null;
   private colorWheel: ColorWheelDisplay | null = null;
-  private harmonyDisplays: Map<string, HarmonyType> = new Map();
   private resultPanels: HarmonyResultPanel[] = [];
 
   // Child components (mobile drawer) - separate instances for mobile config
@@ -276,11 +274,6 @@ export class HarmonyTool extends BaseComponent {
     this.colorWheel = null;
 
     this.shareButton = null;
-
-    for (const display of this.harmonyDisplays.values()) {
-      display.destroy();
-    }
-    this.harmonyDisplays.clear();
 
     for (const panel of this.resultPanels) {
       panel.destroy();
@@ -1708,12 +1701,9 @@ export class HarmonyTool extends BaseComponent {
   }
 
   /**
-   * Update price data on harmony displays and result panels
+   * Update price data on result panels
    */
   private updateHarmonyDisplayPrices(): void {
-    for (const display of this.harmonyDisplays.values()) {
-      display.setPriceData(this.priceData);
-    }
     for (const panel of this.resultPanels) {
       panel.setPriceData(this.priceData);
     }

@@ -14,8 +14,8 @@
 
    Consumers read `--font-display` / `--font-body` / `--font-mono` below; nothing
    outside this file should name a family directly. `tailwind.config.js` points
-   its `sans` / `heading` / `mono` / `numeric` entries at the same variables, so
-   a Tailwind utility and a hand-written rule cannot disagree.
+   its `sans` / `mono` entries at the same variables, so a Tailwind utility and
+   a hand-written rule cannot disagree.
 
    Self-hosted rather than fetched at runtime (REFACTOR-002). Four sources used
    to declare the typefaces and no two agreed: `public/js/load-fonts.js` requested
@@ -95,34 +95,6 @@
 }
 
 /* ============================================================================
-   Numerical Values Typography
-   ============================================================================ */
-
-/*
- * The .number class sets the suite numeric face on values the user is expected
- * to compare down a column: HEX codes, market prices, delta-E values, distance
- * values, contrast ratios, degrees, percentages, and chart values.
- *
- * It was Habibi through 4.x -- a proportional display serif, so `1` was
- * markedly narrower than `0` and stacked values never lined up at the decimal
- * point. `packages/svg` corrected this for the bot and OG surfaces; this rule
- * is the web half of the same decision.
- *
- * `tabular-nums` is what actually guarantees the alignment, and it keeps the
- * fallback path honest -- if Fragment Mono fails to load, the system monospace
- * still lines up.
- *
- * Fragment Mono has no CJK coverage, which is why `--font-mono` carries the
- * CJK tail: a `.number` element wrapping CJK degrades to real glyphs, not tofu.
- */
-.number,
-.font-numeric {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-}
-
-/* ============================================================================
    Modern Typography
    ============================================================================ */
 
@@ -198,43 +170,13 @@ pre,
    Google Fonts for controls alone; it left button labels in a different voice
    from the text they sat beside. Controls now speak in the body face. */
 button,
-.btn,
-.nav-item,
-input[type="button"],
-input[type="submit"],
-input[type="reset"] {
+input[type="button"] {
   font-family: var(--font-body);
 }
 
 /* Improve text rendering */
 * {
   text-rendering: optimizeLegibility;
-}
-
-/* Tool card styling for index.html */
-.tool-card {
-  transition: all 0.3s ease;
-}
-
-.tool-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
-
-/* Theme-aware styles for tool cards */
-body.dark-mode .tool-card,
-body.standard-dark .tool-card,
-body.theme-og-classic-dark .tool-card,
-body.theme-sugar-riot .tool-card {
-  background-color: var(--theme-card-bg);
-  border-color: var(--theme-border);
-}
-
-body.dark-mode .tool-card:hover,
-body.standard-dark .tool-card:hover,
-body.theme-og-classic-dark .tool-card:hover,
-body.theme-sugar-riot .tool-card:hover {
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
 }
 
 /* ============================================================================
@@ -330,10 +272,7 @@ body.theme-sugar-riot .tool-card:hover {
 }
 
 /* Dark theme toast colors - darker backgrounds with brighter text for visibility */
-.dark,
-[class*="-dark"],
-.theme-sugar-riot,
-.theme-og-classic-dark {
+[class*="-dark"] {
   /* Success - dark green tinted background */
   --toast-success-bg: color-mix(in srgb, #1f2937 85%, #22c55e 15%);
   --toast-success-border: color-mix(in srgb, #374151 60%, #22c55e 40%);
@@ -356,12 +295,7 @@ body.theme-sugar-riot .tool-card:hover {
 }
 
 /* Light themes that need adjusted warning colors for better contrast */
-.theme-standard-light,
-.theme-cotton-candy,
-.theme-grayscale-light,
-.theme-high-contrast-light,
-.theme-parchment-light,
-.theme-hydaelyn-light {
+.theme-standard-light {
   --toast-warning-text: #b45309;
 }
 
@@ -388,76 +322,6 @@ body.theme-sugar-riot .tool-card:hover {
   background-color: var(--toast-info-bg) !important;
   border-color: var(--toast-info-border) !important;
   color: var(--toast-info-text) !important;
-}
-
-/* Theme-aware semantic text colors */
-.text-warning {
-  color: var(--toast-warning-text);
-}
-
-.text-error {
-  color: var(--toast-error-text);
-}
-
-.text-success {
-  color: var(--toast-success-text);
-}
-
-.text-info {
-  color: var(--toast-info-text);
-}
-
-/* ============================================================================
-   Loading Spinner
-   ============================================================================ */
-
-@keyframes spinner-spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes spinner-pulse {
-
-  0%,
-  100% {
-    opacity: 0.4;
-  }
-
-  50% {
-    opacity: 1;
-  }
-}
-
-.loading-spinner {
-  animation: spinner-spin 1s linear infinite;
-}
-
-/* Reduced motion: pulse instead of spin */
-@media (prefers-reduced-motion: reduce) {
-  .loading-spinner {
-    animation: spinner-pulse 2s ease-in-out infinite;
-  }
-}
-
-/* Spinner sizes */
-.spinner-sm {
-  width: 1rem;
-  height: 1rem;
-}
-
-.spinner-md {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-.spinner-lg {
-  width: 2rem;
-  height: 2rem;
 }
 
 /* ============================================================================
@@ -511,110 +375,6 @@ body.theme-sugar-riot .tool-card:hover {
 }
 
 /* ============================================================================
-   Modal Dialogs
-   ============================================================================ */
-
-/* Modal backdrop animation */
-@keyframes modal-backdrop-fade-in {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-/* Modal dialog animation */
-@keyframes modal-slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes modal-fade-in {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-/* Modal slide out animation */
-@keyframes modal-slide-out {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-
-  to {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-}
-
-.modal-backdrop-animate-in {
-  animation: modal-backdrop-fade-in 0.2s ease-out forwards;
-}
-
-.modal-animate-in {
-  animation: modal-slide-up 0.3s ease-out forwards;
-}
-
-.modal-animate-out {
-  animation: modal-slide-out 0.15s ease-in forwards;
-}
-
-/* Reduced motion: instant display */
-@media (prefers-reduced-motion: reduce) {
-
-  .modal-backdrop-animate-in,
-  .modal-animate-in {
-    animation: modal-fade-in 0.01ms ease-out forwards;
-  }
-
-  .modal-animate-out {
-    animation: modal-fade-in 0.01ms ease-in reverse forwards;
-  }
-}
-
-/* ============================================================================
-   Dye Preview Overlay Animations
-   ============================================================================ */
-
-@keyframes preview-pulse {
-
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-
-  50% {
-    transform: scale(1.3);
-    opacity: 0.7;
-  }
-}
-
-.dye-preview-overlay .pulse-dot {
-  animation: preview-pulse 1.5s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dye-preview-overlay .pulse-dot {
-    animation: none;
-  }
-}
-
-/* ============================================================================
    Dye Swatch Micro-interactions
    ============================================================================ */
 
@@ -633,29 +393,6 @@ body.theme-sugar-riot .tool-card:hover {
   transform: scale(0.98);
 }
 
-/* Selected state indicator */
-.dye-swatch.selected {
-  position: relative;
-  box-shadow: 0 0 0 3px var(--theme-primary);
-}
-
-.dye-swatch.selected::after {
-  content: '✓';
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: var(--theme-primary);
-  color: white;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  font-size: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-}
-
 /* Reduced motion: simpler effects */
 @media (prefers-reduced-motion: reduce) {
   .dye-swatch {
@@ -672,39 +409,10 @@ body.theme-sugar-riot .tool-card:hover {
   }
 }
 
-/* Card hover effects for harmony cards */
-.harmony-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.harmony-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .harmony-card {
-    transition: none;
-  }
-
-  .harmony-card:hover {
-    transform: none;
-  }
-}
-
 /* Modal dialog styling */
 .modal-dialog {
   max-height: 90vh;
   overflow-y: auto;
-}
-
-/* Dark theme modal overrides */
-body.standard-dark .modal-dialog,
-body.theme-og-classic-dark .modal-dialog,
-body.theme-sugar-riot .modal-dialog,
-body.theme-grayscale-dark .modal-dialog {
-  background-color: var(--theme-card-background);
-  border-color: var(--theme-border);
 }
 
 /* ============================================================================
@@ -788,43 +496,6 @@ body.theme-grayscale-dark .modal-dialog {
   }
 }
 
-/* Dark theme tooltip (inverted for visibility) */
-body.standard-dark .tooltip,
-body.theme-og-classic-dark .tooltip,
-body.theme-sugar-riot .tooltip,
-body.theme-grayscale-dark .tooltip {
-  background-color: #f3f4f6;
-  color: #1f2937;
-}
-
-body.standard-dark .tooltip[data-position="top"] .tooltip-arrow,
-body.theme-og-classic-dark .tooltip[data-position="top"] .tooltip-arrow,
-body.theme-sugar-riot .tooltip[data-position="top"] .tooltip-arrow,
-body.theme-grayscale-dark .tooltip[data-position="top"] .tooltip-arrow {
-  border-top-color: #f3f4f6;
-}
-
-body.standard-dark .tooltip[data-position="bottom"] .tooltip-arrow,
-body.theme-og-classic-dark .tooltip[data-position="bottom"] .tooltip-arrow,
-body.theme-sugar-riot .tooltip[data-position="bottom"] .tooltip-arrow,
-body.theme-grayscale-dark .tooltip[data-position="bottom"] .tooltip-arrow {
-  border-bottom-color: #f3f4f6;
-}
-
-body.standard-dark .tooltip[data-position="left"] .tooltip-arrow,
-body.theme-og-classic-dark .tooltip[data-position="left"] .tooltip-arrow,
-body.theme-sugar-riot .tooltip[data-position="left"] .tooltip-arrow,
-body.theme-grayscale-dark .tooltip[data-position="left"] .tooltip-arrow {
-  border-left-color: #f3f4f6;
-}
-
-body.standard-dark .tooltip[data-position="right"] .tooltip-arrow,
-body.theme-og-classic-dark .tooltip[data-position="right"] .tooltip-arrow,
-body.theme-sugar-riot .tooltip[data-position="right"] .tooltip-arrow,
-body.theme-grayscale-dark .tooltip[data-position="right"] .tooltip-arrow {
-  border-right-color: #f3f4f6;
-}
-
 /* ============================================================================
    Screen Reader Only Utility (A3)
    Visually hidden but accessible to screen readers
@@ -842,19 +513,6 @@ body.theme-grayscale-dark .tooltip[data-position="right"] .tooltip-arrow {
   border: 0;
 }
 
-/* Allow sr-only content to be focusable for skip links */
-.sr-only-focusable:focus,
-.sr-only-focusable:active {
-  position: static;
-  width: auto;
-  height: auto;
-  padding: inherit;
-  margin: inherit;
-  overflow: visible;
-  clip: auto;
-  white-space: normal;
-}
-
 /* ============================================================================
    Focus Ring Visibility (A2)
    Consistent, high-visibility focus indicators for keyboard navigation
@@ -870,15 +528,6 @@ body.theme-grayscale-dark .tooltip[data-position="right"] .tooltip-arrow {
 /* Remove default outline for mouse/touch focus, keep for keyboard */
 :focus:not(:focus-visible) {
   outline: none;
-}
-
-/* Ensure focus ring is visible on dark backgrounds */
-body.standard-dark :focus-visible,
-body.theme-og-classic-dark :focus-visible,
-body.theme-sugar-riot :focus-visible,
-body.theme-grayscale-dark :focus-visible {
-  outline-color: var(--theme-primary, #60a5fa);
-  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.2);
 }
 
 /* High contrast mode enhancement */

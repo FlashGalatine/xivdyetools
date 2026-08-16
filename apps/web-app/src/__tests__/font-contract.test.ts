@@ -73,6 +73,7 @@ describe('font contract', () => {
       'src/styles/v4-layout.css',
       'src/styles/themes.css',
       'src/styles/error-boundary.css',
+      'src/styles/tool-content.css',
     ])('%s leaves no orphaned comment terminator when parsed', (file) => {
       const orphans = stripComments(read(file)).split('*/').length - 1;
       expect(orphans).toBe(0);
@@ -103,10 +104,17 @@ describe('font contract', () => {
     it('routes every Tailwind family through the variables', () => {
       // Spelling stacks out here is what let font-mono (Fira Code) drift from
       // the CSS rule of the same name.
-      for (const family of ['sans', 'heading', 'mono', 'numeric']) {
+      // `heading` / `numeric` were dropped in the 2026-08-16 audit (DEAD-021):
+      // no consumer, and `font-numeric` only collided with the `.number` rule.
+      for (const family of ['sans', 'mono']) {
         expect(TAILWIND_CONFIG).toMatch(
           new RegExp(`${family}:\\s*\\['var\\(--font-(display|body|mono)\\)'\\]`)
         );
+      }
+      // The invariant itself: no family name is spelled out in the config.
+      const fontFamilyBlock = TAILWIND_CONFIG.slice(TAILWIND_CONFIG.indexOf('fontFamily'));
+      for (const literal of ['Onest', 'Space Grotesk', 'Fragment Mono', 'Fira Code', 'Habibi']) {
+        expect(fontFamilyBlock).not.toContain(`'${literal}'`);
       }
     });
 

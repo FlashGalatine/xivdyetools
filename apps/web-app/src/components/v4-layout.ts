@@ -27,6 +27,10 @@ import { showAboutModal } from './about-modal';
 import { showChangelogModal } from './changelog-modal';
 import { showAdvancedOptionsPanel } from './advanced-options-panel';
 import { WelcomeModal } from './welcome-modal';
+// Rules that must reach tool content inside the shell's shadow root. The same
+// file is @imported by styles/tailwind.css for the light-DOM (modal) mounts of
+// the same components — one source, two scopes (2026-08-16 audit, DEAD-020).
+import toolContentCss from '@/styles/tool-content.css?inline';
 
 // Import V4 layout shell (registers custom element)
 import '@components/v4/v4-layout-shell';
@@ -311,9 +315,10 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
   // This injection is load-bearing, not a convenience: tools render INSIDE
   // V4LayoutShell's shadow DOM, so nothing in styles/globals.css or
   // styles/v4-layout.css reaches them. A rule that must apply to tool content
-  // belongs here or in an inline style; putting it in a page stylesheet is a
-  // silent no-op (that is how the Harmony empty state ended up drawing its
-  // 62px glyph at 437px — the sizing rule never applied).
+  // belongs in styles/tool-content.css (loaded here AND page-side) or in an
+  // inline style; putting it only in a page stylesheet is a silent no-op
+  // (that is how the Harmony empty state ended up drawing its 62px glyph at
+  // 437px — the sizing rule never applied).
   if (
     layoutElement.shadowRoot &&
     !layoutElement.shadowRoot.querySelector('#v5-results-grid-style')
@@ -321,6 +326,8 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
     const gridStyle = document.createElement('style');
     gridStyle.id = 'v5-results-grid-style';
     gridStyle.textContent = `
+      ${toolContentCss}
+
       /* Results grid — Q4 decision: three cards per row on desktop, two on
          mobile. Flex rather than fixed grid tracks so a partial final row
          centres with the rest; with grid tracks the leftovers hugged the

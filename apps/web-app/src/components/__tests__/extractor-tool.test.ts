@@ -1168,7 +1168,11 @@ describe('ExtractorTool', () => {
         expect(roll.filter((h) => h === '#111111')).toHaveLength(1);
       });
 
-      it('caps the roll at twenty entries', async () => {
+      // 25 canvas samples in a row: under coverage instrumentation, and only
+      // when the full suite is competing for workers, this sits at the 5 s
+      // default (it passes in ~1 s alone). Timing headroom, not a behaviour
+      // change; the assertions are untouched.
+      it('caps the roll at twenty entries', { timeout: 20_000 }, async () => {
         const { StorageService } = await import('@services/index');
         tool = mount();
         await loadImage();
