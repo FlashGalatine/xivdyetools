@@ -727,7 +727,6 @@
     "useModifier": "Utilisez Ctrl pour les raccourcis système"
   },
   "palette": {
-    "savePalette": "Enregistrer la palette",
     "exported": "Palettes exportées avec succès !",
     "saveSuccess": "Palette enregistrée !",
     "saveFailed": "Échec de l'enregistrement de la palette"

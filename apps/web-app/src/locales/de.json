@@ -727,7 +727,6 @@
     "useModifier": "Verwende Strg für Systemkürzel"
   },
   "palette": {
-    "savePalette": "Palette speichern",
     "exported": "Paletten erfolgreich exportiert!",
     "saveSuccess": "Palette gespeichert!",
     "saveFailed": "Palette konnte nicht gespeichert werden"

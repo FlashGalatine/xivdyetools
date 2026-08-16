@@ -118,7 +118,7 @@ export const noI18nFallback = {
  *
  * Local plugin for XIV Dye Tools i18n linting rules.
  */
-export const plugin = {
+const plugin = {
   meta: {
     name: 'eslint-plugin-xivdyetools-i18n',
     version: '1.0.0',

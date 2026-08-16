@@ -8,7 +8,10 @@
   "orientation": "portrait-primary",
   "theme_color": "#0B0B0C",
   "background_color": "#0B0B0C",
-  "categories": ["utilities", "productivity"],
+  "categories": [
+    "utilities",
+    "productivity"
+  ],
   "screenshots": [
     {
       "src": "assets/icons/icon-192x192.png",
@@ -57,10 +60,10 @@
   ],
   "shortcuts": [
     {
-      "name": "Color Matcher",
-      "short_name": "Matcher",
-      "description": "Find matching FFXIV dyes from images",
-      "url": "/colormatcher_stable.html?launch=matcher",
+      "name": "Palette Extractor",
+      "short_name": "Extractor",
+      "description": "Pull a palette from an image and match each colour to a dye",
+      "url": "/extractor",
       "icons": [
         {
           "src": "assets/icons/icon-192x192.png",
@@ -70,10 +73,10 @@
       ]
     },
     {
-      "name": "Color Harmony Explorer",
+      "name": "Harmony Explorer",
       "short_name": "Harmony",
-      "description": "Generate harmonious color palettes",
-      "url": "/colorexplorer_stable.html?launch=harmony",
+      "description": "Generate harmonious dye palettes from a base dye",
+      "url": "/harmony",
       "icons": [
         {
           "src": "assets/icons/icon-192x192.png",
@@ -83,10 +86,10 @@
       ]
     },
     {
-      "name": "Color Accessibility Checker",
+      "name": "Accessibility Checker",
       "short_name": "Accessibility",
-      "description": "Simulate colorblindness vision types",
-      "url": "/coloraccessibility_stable.html?launch=accessibility",
+      "description": "Simulate colour-vision types and check contrast",
+      "url": "/accessibility",
       "icons": [
         {
           "src": "assets/icons/icon-192x192.png",
@@ -98,8 +101,8 @@
     {
       "name": "Dye Comparison",
       "short_name": "Comparison",
-      "description": "Compare up to 4 dyes visually",
-      "url": "/dyecomparison_stable.html?launch=comparison",
+      "description": "Compare up to 4 dyes side by side",
+      "url": "/comparison",
       "icons": [
         {
           "src": "assets/icons/icon-192x192.png",
@@ -108,18 +111,5 @@
         }
       ]
     }
-  ],
-  "share_target": {
-    "action": "/share-handler",
-    "method": "POST",
-    "enctype": "multipart/form-data",
-    "params": {
-      "files": [
-        {
-          "name": "image",
-          "accept": ["image/*"]
-        }
-      ]
-    }
-  }
+  ]
 }

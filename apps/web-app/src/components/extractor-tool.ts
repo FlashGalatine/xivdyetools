@@ -836,7 +836,7 @@ export class ExtractorTool extends BaseComponent {
       getShowPrices: () => this.showPrices,
       fetchPrices: () => this.fetchPricesForMatches(),
       onPricesToggled: () => {
-        console.info('🔔 [ExtractorTool] onPricesToggled called, showPrices=', this.showPrices);
+        logger.info('🔔 [ExtractorTool] onPricesToggled called, showPrices=', this.showPrices);
         if (this.showPrices) {
           void this.fetchPricesForMatches();
         } else {
@@ -850,7 +850,7 @@ export class ExtractorTool extends BaseComponent {
       },
       onServerChanged: () => {
         // Service clears cache on server change; re-render results then fetch new prices
-        console.info('🔔 [ExtractorTool] onServerChanged called, showPrices=', this.showPrices);
+        logger.info('🔔 [ExtractorTool] onServerChanged called, showPrices=', this.showPrices);
         if (this.showPrices) {
           // Re-render results to clear stale prices (cache was cleared by service)
           if (this.lastPaletteResults.length > 0) {
@@ -2295,7 +2295,7 @@ export class ExtractorTool extends BaseComponent {
    * WEB-REF-003 Phase 4: Delegates to MarketBoardService with race condition protection
    */
   private async fetchPricesForMatches(): Promise<void> {
-    console.info('💰 [ExtractorTool] fetchPricesForMatches called, showPrices=', this.showPrices);
+    logger.info('💰 [ExtractorTool] fetchPricesForMatches called, showPrices=', this.showPrices);
     if (!this.showPrices) return;
 
     // Collect dyes to fetch prices for - either from palette results or matched dyes
@@ -2383,7 +2383,7 @@ export class ExtractorTool extends BaseComponent {
    * rather than re-rendering the entire grid
    */
   private updateV4ResultCardPrices(): void {
-    console.info(
+    logger.info(
       '🔄 [ExtractorTool] updateV4ResultCardPrices:',
       this.v4ResultCards.length,
       'cards, priceData size:',
@@ -2400,7 +2400,7 @@ export class ExtractorTool extends BaseComponent {
         this.marketBoardService.getWorldNameForPrice(priceInfo) ??
         this.marketBoard?.getSelectedServer();
 
-      console.info(
+      logger.info(
         '  📦 Updating card:',
         currentData.dye.name,
         '| server:',

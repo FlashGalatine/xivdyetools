@@ -727,7 +727,6 @@
     "useModifier": "시스템 단축키에는 Ctrl을 사용"
   },
   "palette": {
-    "savePalette": "팔레트 저장",
     "exported": "팔레트를 내보냈습니다!",
     "saveSuccess": "팔레트가 저장되었습니다!",
     "saveFailed": "팔레트 저장에 실패했습니다"

@@ -29,7 +29,8 @@ npm run dev                  # vite dev server on localhost:5173
 npm run build                # tsc --noEmit && vite build
 npm run preview              # serve the production build
 npm run type-check           # tsc --noEmit only
-npm run lint                 # eslint src (read-only check — this is the gate)
+npm run lint                 # eslint src && knip (read-only check — this is the gate)
+npm run lint:dead            # knip only — unused files/exports/deps (config: knip.jsonc)
 npm run lint:fix             # eslint src --fix (explicit, review the diff before committing)
 npm run format               # prettier --write src/**/*.ts
 
@@ -47,7 +48,8 @@ npm run test:e2e:mobile      # mobile-chrome project
 npm run test:e2e:comparison  # only dye-comparison.spec.ts
 
 npm run check-bundle-size    # validate dist/ bundles against limits
-npm run validate:i18n        # check locale completeness
+npm run validate:i18n        # every referenced key exists (all six locales)
+npm run i18n:unused          # every defined key is referenced (also a vitest gate)
 npm run build:check          # build + check-bundle-size (CI guard)
 VITE_APP_ENV=beta npm run build     # Beta build (beta.xivdyetools.app)
 node scripts/check-beta-build.js    # Assert dist/ really is a beta build

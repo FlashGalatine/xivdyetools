@@ -23,6 +23,7 @@ import {
   type SubmissionResult,
 } from '@services/preset-submission-service';
 import { exampleLinkError } from '@shared/example-link';
+import { logger } from '@shared/logger';
 import { createCategorySelector, type CategorySelection } from './preset-category-selector';
 
 // ============================================
@@ -695,9 +696,9 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
           ToastService.info(message);
 
           // Navigate to the duplicate preset after dismissing modal
-          console.info('[PresetSubmissionForm] calling ModalService.dismissTop() for duplicate');
+          logger.info('[PresetSubmissionForm] calling ModalService.dismissTop() for duplicate');
           ModalService.dismissTop();
-          console.info('[PresetSubmissionForm] dismissTop() returned for duplicate');
+          logger.info('[PresetSubmissionForm] dismissTop() returned for duplicate');
 
           // Store the duplicate preset ID for navigation
           if (result.duplicate.id) {
@@ -728,9 +729,9 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
           }
         }
 
-        console.info('[PresetSubmissionForm] calling ModalService.dismissTop()');
+        logger.info('[PresetSubmissionForm] calling ModalService.dismissTop()');
         ModalService.dismissTop();
-        console.info('[PresetSubmissionForm] dismissTop() returned');
+        logger.info('[PresetSubmissionForm] dismissTop() returned');
         onSubmit?.(result);
       } else {
         ToastService.error(result.error || LanguageService.t('errors.submitPresetFailed'));

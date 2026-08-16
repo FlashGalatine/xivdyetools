@@ -44,7 +44,7 @@ import { CollectionService } from '@services/collection-service';
 import { ThemeService } from '@services/theme-service';
 import { blendTwoColors } from '@services/mixer-blending-engine';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
-import { ICON_TOOL_DYE_MIXER } from '@shared/tool-icons';
+import { ICON_TOOL_MIXER } from '@shared/tool-icons';
 import { ICON_MARKET, ICON_PALETTE, ICON_SLIDERS } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
@@ -1516,7 +1516,7 @@ export class MixerTool extends BaseComponent {
     });
 
     empty.innerHTML = `
-      <div class="v5-empty-state-icon" aria-hidden="true">${ICON_TOOL_DYE_MIXER}</div>
+      <div class="v5-empty-state-icon" aria-hidden="true">${ICON_TOOL_MIXER}</div>
       <p class="v5-empty-state-text">${LanguageService.t('mixer.selectTwoDyesToMix')}</p>
     `;
 
@@ -1607,7 +1607,7 @@ export class MixerTool extends BaseComponent {
         `,
       },
     });
-    this.emptyStateIcon.innerHTML = ICON_TOOL_DYE_MIXER;
+    this.emptyStateIcon.innerHTML = ICON_TOOL_MIXER;
     craftingArea.appendChild(this.emptyStateIcon);
 
     // Empty state message (shown when no dyes selected)

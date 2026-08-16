@@ -752,7 +752,6 @@
     "useModifier": "使用 Ctrl 进行系统快捷键"
   },
   "palette": {
-    "savePalette": "保存调色板",
     "exported": "调色板导出成功！",
     "saveSuccess": "调色板已保存！",
     "saveFailed": "保存调色板失败"

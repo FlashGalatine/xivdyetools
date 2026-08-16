@@ -1,0 +1,26 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "//": "web-app's `lint` also runs knip, which reads far more than src/ — every entry in knip.jsonc plus the root configs — so the lint cache key must too. Extends the root task.",
+  "extends": ["//"],
+  "tasks": {
+    "lint": {
+      "inputs": [
+        "src/**",
+        "e2e/**",
+        "scripts/**",
+        "functions/**",
+        "eslint.config.*",
+        "eslint-rules/**",
+        "knip.jsonc",
+        "vite.config.ts",
+        "vitest.config.ts",
+        "playwright.config.ts",
+        "vite-plugin-*.ts",
+        "postcss.config.js",
+        "tailwind.config.js",
+        "tsconfig.json",
+        "package.json"
+      ]
+    }
+  }
+}

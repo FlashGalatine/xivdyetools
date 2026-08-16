@@ -32,9 +32,6 @@ export const ICON_TOOL_BUDGET = glyph('budget');
 export const ICON_TOOL_CHARACTER = glyph('swatch');
 export const ICON_TOOL_MENU = glyph('tools');
 
-/** Legacy constant name (pre-5.0 drift) — same glyph, kept for the mixer import. */
-export const ICON_TOOL_DYE_MIXER = ICON_TOOL_MIXER;
-
 /**
  * Map of tool icon names to SVG strings. Keys are stable (never change).
  */

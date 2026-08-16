@@ -727,7 +727,6 @@
     "useModifier": "システムショートカットにはCtrlを使用"
   },
   "palette": {
-    "savePalette": "パレットを保存",
     "exported": "パレットをエクスポートしました！",
     "saveSuccess": "パレットを保存しました！",
     "saveFailed": "パレットの保存に失敗しました"

@@ -237,7 +237,7 @@ class AuthServiceImpl {
     });
 
     if (import.meta.env.DEV) {
-      console.info('🔐 [AuthService] Initializing...', { url: window.location.href });
+      logger.info('🔐 [AuthService] Initializing...', { url: window.location.href });
     }
 
     try {
@@ -255,7 +255,7 @@ class AuthServiceImpl {
       }
 
       if (import.meta.env.DEV) {
-        console.info('🔐 [AuthService] URL params:', {
+        logger.info('🔐 [AuthService] URL params:', {
           hasCode: !!code,
           hasError: !!error,
           provider: providerFromUrl,
@@ -265,7 +265,7 @@ class AuthServiceImpl {
       if (code) {
         // New secure PKCE flow: we receive the auth code, then exchange it with our stored code_verifier
         if (import.meta.env.DEV) {
-          console.info('🔐 [AuthService] Auth code found in URL, exchanging for token...');
+          logger.info('🔐 [AuthService] Auth code found in URL, exchanging for token...');
         }
         await this.handleCallbackCode(code, urlParams.get('csrf'));
         // Get return path before cleaning URL, default to home
@@ -274,7 +274,7 @@ class AuthServiceImpl {
           urlParams.get('return_path') || sessionStorage.getItem(OAUTH_RETURN_PATH_KEY);
         const returnPath = sanitizeReturnPath(rawPath);
         if (import.meta.env.DEV) {
-          console.info(`🔐 [AuthService] Navigating to return path: ${returnPath}`);
+          logger.info(`🔐 [AuthService] Navigating to return path: ${returnPath}`);
         }
         sessionStorage.removeItem(OAUTH_RETURN_PATH_KEY);
         // Clean up URL and navigate to return path
@@ -293,7 +293,7 @@ class AuthServiceImpl {
 
       this.initialized = true;
       if (import.meta.env.DEV) {
-        console.info(
+        logger.info(
           `✅ [AuthService] Initialized: ${this.state.isAuthenticated ? 'Logged in as ' + this.state.user?.username : 'Not logged in'}`
         );
       }
@@ -407,7 +407,7 @@ class AuthServiceImpl {
           : `${OAUTH_WORKER_URL}/auth/callback`;
 
       if (import.meta.env.DEV) {
-        console.info(`🔐 [AuthService] Exchanging code via ${provider} endpoint`);
+        logger.info(`🔐 [AuthService] Exchanging code via ${provider} endpoint`);
       }
 
       // Exchange code for token via POST (code_verifier sent directly, not through redirect)
@@ -554,7 +554,7 @@ class AuthServiceImpl {
     if (returnTool) {
       finalPath = `/${returnTool}`;
       if (import.meta.env.DEV) {
-        console.info(`🔐 [AuthService] Using returnTool: ${returnTool} -> ${finalPath}`);
+        logger.info(`🔐 [AuthService] Using returnTool: ${returnTool} -> ${finalPath}`);
       }
     }
 

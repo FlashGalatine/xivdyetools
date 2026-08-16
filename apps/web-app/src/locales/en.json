@@ -727,7 +727,6 @@
     "useModifier": "Use Ctrl for system shortcuts"
   },
   "palette": {
-    "savePalette": "Save Palette",
     "exported": "Palettes exported successfully!",
     "saveSuccess": "Palette saved!",
     "saveFailed": "Failed to save palette"

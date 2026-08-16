@@ -185,7 +185,16 @@ depcheck's other "unused devDependencies" (`@tailwindcss/postcss`, `autoprefixer
 - [ ] `dist/` contains no `og/<tool>/`, no `js/`, no `assets/icons/tools/preview.html`
 - [ ] Coverage ratchet adjusted only by the measured delta from deleting fully-covered dead modules
 
-## Recommendations (preventing regrowth)
+## Recommendations (preventing regrowth) — status after Waves 1-4
+
+| # | Recommendation | Status |
+|---|---|---|
+| 1 | knip in CI | **done** — `knip.jsonc`, `lint` runs it, turbo cache key extended (Wave 4) |
+| 2 | `noUnusedLocals`/`noUnusedParameters` on | **done** (Wave 2) |
+| 3 | shadow-boundary rule where it bites | **done** — `tool-content.css` header + `v4-layout.css`/`v4-layout.ts` comments (Wave 3); the Playwright computed-style assertion is still a good idea (not done) |
+| 4 | i18n orphan detection as a gate | **done** — `i18n:unused` + `i18n-orphans.test.ts` (Wave 4) |
+| 5 | audit `public/` on UI-generation changes | **partly** — `public-metadata.test.ts` pins the metadata files and icon links to `ROUTES`/`public/` (Wave 4); a check that every file under `public/` is referenced is not done |
+
 1. **Ship knip in CI for the web-app.** With `--production` mode it would have caught `SecureStorage`, `price-utilities`, `dye-selection-context` and the barrel drift years ago. Test files as entries hide test-only symbols; run both modes.
 2. **Turn on `noUnusedLocals` / `noUnusedParameters`** in `apps/web-app/tsconfig.json`, and stop using `_`-prefixes to silence real dead code (`eslint.config.js` `varsIgnorePattern: '^_'` is what let `_toolName`, `_isFocused`, `_configController` survive).
 3. **Put the shadow-boundary rule where it bites:** a comment block at the top of `globals.css` and `v4-layout.css` ("rules here do NOT reach tool content — see v4-layout.ts") plus a Playwright assertion that a known tool element has the expected computed font-family. Half the CSS in this app was written on the wrong side of that boundary.

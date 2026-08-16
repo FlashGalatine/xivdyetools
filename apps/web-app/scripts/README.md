@@ -16,9 +16,48 @@ The script scans all TypeScript files in `src/` and validates that every transla
 
 **Related:** The project also includes a custom ESLint rule `xivdyetools-i18n/no-i18n-fallback` that warns against fallback patterns like `LanguageService.t('key') || 'fallback'`. This runs automatically with `npm run lint`.
 
-See `docs/I18N.md` for full i18n documentation.
+The i18n architecture (LanguageService, locale chunks, `preset-i18n`) is described in `xivdyetools/docs/projects/web-app/components.md`; there is no `docs/I18N.md` any more.
+
+### i18n orphans (the other direction)
+
+`validate:i18n` proves every key the code references *exists*; `i18n:unused`
+proves every key the locales define is *referenced*:
+
+```bash
+npm run i18n:unused          # report orphaned keys, exit 1 if any
+```
+
+`scripts/analyze-unused-keys.js` treats a key as used if its literal appears in
+`src/`, if a template literal starts with one of its dotted prefixes
+(`` `harmony.types.${x}` ``), or if a `` `${…}.suffix` `` template names its last
+segment. `src/__tests__/i18n-orphans.test.ts` runs the same function, so an
+orphan fails `npm test`. Remove keys from **all six** locale files together.
 
 ---
+
+## Dead-code gate (knip)
+
+```bash
+npm run lint:dead            # knip, config in knip.jsonc
+npm run lint                 # eslint src && knip
+```
+
+Unused files, exports, types, dependencies and duplicate exports across the
+import graph. Config and its blind spots are documented in `knip.jsonc`; the
+2026-08-16 audit that introduced it lives in
+`docs/audits/2026-08-16-web-app-dead-code/`.
+
+---
+
+## Other scripts
+
+| Script | Run by | Purpose |
+|--------|--------|---------|
+| `check-bundle-size.js` | `npm run check-bundle-size`, both deploy workflows | per-chunk byte budgets on `dist/` (tested by `src/__tests__/bundle-budget.test.ts`) |
+| `check-beta-build.js` | beta deploy workflow | asserts `dist/` really is a beta build |
+| `generate-icons.mjs` | manual, one-shot | regenerates `public/assets/icons/*.png` from `sparkles.svg` (only the sizes `index.html`/`manifest.json` link) |
+| `generate-beta-icons.mjs` | manual, one-shot | regenerates `public/assets/icons/beta/` from `scripts/assets/bot-avatar-beta-1024.png` |
+| `smoke-test-pages.js` | both deploy workflows | post-deploy assertions (below) |
 
 ## Pages Smoke Test
 

@@ -45,7 +45,6 @@ export {
   calculateHueDeviance,
   findClosestDyesToHue,
   replaceExcludedDyes,
-  findHarmonyDyes,
 } from './harmony-generator';
 export type { ScoredDyeMatch, HarmonyConfig } from './harmony-generator';
 export { buildMarketPanel } from './tool-panel-builders';
