@@ -705,18 +705,4 @@ export class DyeSelector extends BaseComponent {
     };
   }
 
-  protected setState(newState: Record<string, unknown>): void {
-    if (Array.isArray(newState.selectedDyes)) {
-      this.selectedDyes = newState.selectedDyes;
-    }
-    if (typeof newState.searchQuery === 'string') {
-      this.searchQuery = newState.searchQuery;
-    }
-    if (newState.currentCategory === null || typeof newState.currentCategory === 'string') {
-      this.currentCategory = newState.currentCategory;
-    }
-    if (typeof newState.sortOption === 'string') {
-      this.sortOption = newState.sortOption as SortOption;
-    }
-  }
 }

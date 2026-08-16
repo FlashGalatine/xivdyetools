@@ -32,13 +32,6 @@ vi.mock('@components/shortcuts-panel', () => ({
   showShortcutsPanel: vi.fn(),
 }));
 
-// Mock FEATURE_FLAGS
-vi.mock('@shared/constants', () => ({
-  FEATURE_FLAGS: {
-    ENABLE_KEYBOARD_SHORTCUTS: true,
-  },
-}));
-
 describe('KeyboardService', () => {
   beforeEach(() => {
     vi.clearAllMocks();

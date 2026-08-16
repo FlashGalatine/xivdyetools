@@ -25,3 +25,12 @@
 | `evidence/agent-report-css.md` | verification pass — dead / unreachable CSS |
 | `evidence/agent-report-i18n.md` | verification pass — 472 dead keys + 160 false positives |
 | `evidence/agent-report-non-source.md` | verification pass — scripts, e2e, test infra, `public/`, config, docs |
+
+## Execution Status
+
+| Wave | Status | Commit | Notes |
+|------|--------|--------|-------|
+| 1 — isolated deletions (DEAD-001..007, 013, 014, 019 `v4-utilities.css`, 023, 024, 027, 029 + `convert-icons-to-webp.js`) | **DONE 2026-08-16** | `b1c4af4` | +29 / −3,830; ~3.9 MB of assets; two prod 404s fixed on the way. DEAD-027's three fixture exports were re-checked and are live — kept. |
+| 2 — symbol removals (DEAD-008, 009, 010, 011, 012, 015, 016, 017, 028) + `noUnusedLocals`/`noUnusedParameters` → `true` | **DONE 2026-08-16** | see `git log` (the commit after `b1c4af4`) | +53 / −2,104 across 48 files. Main entry chunk 101.9 → 87.8 kB, `modals` 277 → 273 kB. Coverage after: 71.81 / 56.37 / 65.62 / 72.9 vs ratchet 71 / 55 / 65 / 72 — **no ratchet change needed**. Judgment calls: `destroyV4Layout` removed (SPA never unmounts; `languageUnsubscribe`/`configUnsubscribe` holders went with it); `DisplayOptionsChangeCallback` KEPT (it types the live `applyDisplayOptions` `onChange` — the report's DROP-EXPORT-ONLY verdict was right, my first cut was wrong); `createInfoIcon` stays exported (its tests exercise it directly); type exports in the DROP-EXPORT-ONLY list were left exported (idiomatic, zero cost) — only value symbols lost `export`; `dye-grid._isFocused` deleted with a breadcrumb comment (initial roving-tabindex is a separate a11y follow-up, not done here); `findHarmonyDyes` in `harmony-generator.ts` is now consumed only by tests after `findHarmonyDyesInternal` went — left in place, flagged. |
+| 3 — CSS (DEAD-019 remainder, 020 with the shadow-side move first, 021) + i18n (DEAD-022) | pending | | |
+| 4 — corrections + guardrails (DEAD-018, 025, 026 `analyze-unused-keys.js`, knip in CI, `validate-i18n.js` orphan gate) | pending | | |

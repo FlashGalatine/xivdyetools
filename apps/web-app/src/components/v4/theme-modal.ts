@@ -26,7 +26,7 @@ import type { ThemeName } from '@shared/types';
 /**
  * Theme modal showing the two themes as swatch cards
  */
-export class ThemeModal {
+class ThemeModal {
   private modalId: string | null = null;
   private currentTheme: ThemeName = 'standard-light';
   private themeUnsubscribe: (() => void) | null = null;
@@ -200,14 +200,4 @@ export function showThemeModal(): void {
     themeModalInstance = new ThemeModal();
   }
   themeModalInstance.show();
-}
-
-/**
- * Close the theme modal if open
- */
-export function closeThemeModal(): void {
-  if (themeModalInstance) {
-    themeModalInstance.close();
-    themeModalInstance = null;
-  }
 }

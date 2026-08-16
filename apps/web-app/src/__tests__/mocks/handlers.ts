@@ -340,23 +340,3 @@ export const handlers = [
     });
   }),
 ];
-
-// ============================================
-// Error Handlers (for testing error scenarios)
-// ============================================
-
-export const errorHandlers = {
-  networkError: http.get(`${API_URL}/health`, () => {
-    return HttpResponse.error();
-  }),
-
-  serverError: http.get(`${API_URL}/api/v1/presets`, () => {
-    return HttpResponse.json({ message: 'Internal server error' }, { status: 500 });
-  }),
-
-  timeout: http.get(`${API_URL}/api/v1/presets`, async () => {
-    // Simulate a long delay (longer than the service timeout)
-    await new Promise((resolve) => setTimeout(resolve, 15000));
-    return HttpResponse.json({ presets: [] });
-  }),
-};

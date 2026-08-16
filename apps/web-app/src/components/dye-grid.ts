@@ -99,8 +99,10 @@ export class DyeGrid extends BaseComponent {
       );
       wrapper.classList.add('flex', 'flex-col', 'items-center', 'justify-center', 'p-8');
     } else {
-      this.dyes.forEach((dye, i) => {
-        const _isFocused = i === this.focusedIndex || (this.focusedIndex === -1 && i === 0);
+      this.dyes.forEach((dye) => {
+        // NOTE: no initial roving tabindex is applied here, so every dye button is a
+        // Tab stop until setFocusedIndex() first runs. Intentional a11y follow-up
+        // (2026-08-16 dead-code audit, DEAD-015) — not addressed by this cleanup.
         const isSelected = this.selectedDyes.some((d) => d.id === dye.id);
         const isFavorite = this.favorites.has(dye.stainID ?? 0);
 

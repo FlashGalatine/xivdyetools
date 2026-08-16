@@ -91,9 +91,6 @@ const STORAGE_KEYS = {
 // only bounds memory/extraction cost.
 const MAX_IMAGE_STORAGE_SIZE = 8 * 1024 * 1024;
 
-// Alias for backward compatibility
-const ICON_UPLOAD = ICON_IMAGE;
-
 // ============================================================================
 // 3C "Loupe + roll" workspace constants
 // ============================================================================
@@ -636,7 +633,7 @@ export class ExtractorTool extends BaseComponent {
       title: LanguageService.t('matcher.imageSource'),
       storageKey: 'matcher_imageSource',
       defaultOpen: true,
-      icon: ICON_UPLOAD,
+      icon: ICON_IMAGE,
     });
     this.imageSourcePanel.init();
     const uploadContent = this.createElement('div');

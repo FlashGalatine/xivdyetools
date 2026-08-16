@@ -8,7 +8,6 @@
  * @module services/keyboard-service
  */
 
-import { FEATURE_FLAGS } from '@shared/constants';
 import { ThemeService } from './theme-service';
 import { LanguageService } from './language-service';
 import { ModalService } from './modal-service';
@@ -56,12 +55,6 @@ export class KeyboardService {
    * WEB-BUG-001: Always removes existing handler before adding new one to prevent duplicates
    */
   static initialize(): void {
-    // Check feature flag first
-    if (!FEATURE_FLAGS.ENABLE_KEYBOARD_SHORTCUTS) {
-      logger.info('Keyboard shortcuts disabled by feature flag');
-      return;
-    }
-
     // WEB-BUG-001: Always remove existing handler to prevent duplicates
     // This handles race conditions between initialize() and destroy()
     if (this.boundHandler) {

@@ -407,13 +407,3 @@ export function showAboutModal(): void {
   }
   aboutModalInstance.show();
 }
-
-/**
- * Close the about modal if open
- */
-export function closeAboutModal(): void {
-  if (aboutModalInstance) {
-    aboutModalInstance.close();
-    aboutModalInstance = null;
-  }
-}

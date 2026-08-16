@@ -129,12 +129,4 @@ export abstract class BaseLitComponent extends LitElement {
     }
   }
 
-  /**
-   * Clear error state and attempt recovery
-   */
-  protected clearError(): void {
-    this.hasError = false;
-    this.errorMessage = '';
-    this.requestUpdate();
-  }
 }

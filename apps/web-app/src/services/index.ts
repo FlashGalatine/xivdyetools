@@ -7,124 +7,50 @@
  * @module services
  */
 
-// Import service classes for internal use
-// ColorService now from xivdyetools-core;
+// Modules the initializers below call directly. Anything a component needs
+// is re-exported in the block that follows — and ONLY what is imported through
+// this barrel somewhere in src/ (2026-08-16 dead-code audit, DEAD-011): 75
+// re-exports nobody pulled through here were removed; import the rest from
+// their own module. Do not grow this list back into "export everything".
 import { StorageService } from './storage-service';
 import { ThemeService } from './theme-service';
 import { LanguageService } from './language-service';
 import { APIService } from './api-service-wrapper';
 import { cameraService } from './camera-service';
 import { KeyboardService } from './keyboard-service';
-// APIService now from wrapper;
+import { WorldService } from './world-service';
 
-// Export service classes
+// Core services
 export { ColorService } from '@xivdyetools/core';
 export { DyeService, dyeService, resolvePresetDye } from './dye-service-wrapper';
-export { StorageService, appStorage, NamespacedStorage, SecureStorage } from './storage-service';
-export { ThemeService };
-export { LanguageService };
-export { RouterService, ROUTES } from './router-service';
-export type { ToolId } from './router-service';
-export { APIService, apiService } from './api-service-wrapper';
+export { StorageService, ThemeService, LanguageService, APIService, WorldService };
+export { RouterService } from './router-service';
 export { ToastService } from './toast-service';
-export type { Toast, ToastType } from './toast-service';
 export { ModalService } from './modal-service';
-export type { Modal } from './modal-service';
-export { TooltipService } from './tooltip-service';
-export { AnnouncerService } from './announcer-service';
-export { CameraService, cameraService } from './camera-service';
-export type { CaptureResult } from './camera-service';
-export { IndexedDBService, indexedDBService, STORES } from './indexeddb-service';
+export { cameraService };
 export { TutorialService } from './tutorial-service';
-export type { TutorialTool, TutorialStep, Tutorial } from './tutorial-service';
-export { KeyboardService };
-export { DyeSelectionContext } from './dye-selection-context';
 export { CollectionService } from './collection-service';
-export type { DyeId, Collection, FavoritesData, CollectionsData } from './collection-service';
-export { CommunityPresetService, communityPresetService } from './community-preset-service';
-export type { CommunityPreset, PresetStatus, PresetFilters } from './community-preset-service';
-export { HybridPresetService, hybridPresetService } from './hybrid-preset-service';
-export type { UnifiedPreset, PresetSortOption } from './hybrid-preset-service';
-export { AuthService, authService, consumeReturnTool } from './auth-service';
-export type { AuthUser, AuthState } from './auth-service';
-export {
-  PresetSubmissionService,
-  presetSubmissionService,
-  validateSubmission,
-} from './preset-submission-service';
-export type {
-  PresetSubmission,
-  SubmissionResult,
-  PresetEditRequest,
-  EditResult,
-} from './preset-submission-service';
+export { communityPresetService } from './community-preset-service';
+export { authService } from './auth-service';
+export { presetSubmissionService, validateSubmission } from './preset-submission-service';
+export { ConfigController } from './config-controller';
+export { MarketBoardService } from './market-board-service';
 
-// V4 Config Controller
-export { ConfigController, getConfigController } from './config-controller';
-
-// V4 Share Service
-export { ShareService } from './share-service';
-export type { ShareParams, SwatchShareParams } from './share-service';
-
-// V4 Market Board Service
-export { MarketBoardService, getMarketBoardService, formatPrice } from './market-board-service';
-
-// World/DataCenter lookup service
-import { WorldService } from './world-service';
-export { WorldService };
-
-// WEB-REF-003 FIX: Extracted tool logic modules
-export {
-  blendTwoColors,
-  blendColors,
-  calculateColorDistance as calculateMixerColorDistance,
-  findMatchingDyes,
-  getContrastColor,
-} from './mixer-blending-engine';
+// Extracted tool logic (WEB-REF-003)
+export { blendColors, findMatchingDyes, getContrastColor } from './mixer-blending-engine';
 export type { MixedColorResult } from './mixer-blending-engine';
-
 export {
-  HARMONY_TYPE_IDS,
   HARMONY_OFFSETS,
   getHarmonyTypes,
-  calculateColorDistance as calculateHarmonyColorDistance,
   calculateHueDeviance,
   findClosestDyesToHue,
   replaceExcludedDyes,
   findHarmonyDyes,
-  generateHarmonyPanelData,
 } from './harmony-generator';
-export type { HarmonyTypeInfo, ScoredDyeMatch, HarmonyConfig } from './harmony-generator';
-
-// WEB-REF-003 Phase 3: Shared panel builders for tool components
+export type { ScoredDyeMatch, HarmonyConfig } from './harmony-generator';
 export { buildMarketPanel } from './tool-panel-builders';
-export type { MarketPanelRefs, MarketPanelConfig } from './tool-panel-builders';
+export { applyDisplayOptions } from './display-options-helper';
 
-// WEB-REF-003 Phase 4: Shared price utilities and display options helpers
-export {
-  formatPriceWithSuffix,
-  getDyePriceDisplay,
-  getPriceInfo,
-  preparePriceCardData,
-  preparePriceCardDataFromMap,
-  getItemIdsForPriceFetch,
-  hasCachedPrices,
-} from './price-utilities';
-
-export {
-  DEFAULT_DISPLAY_OPTIONS,
-  applyDisplayOptions,
-  hasDisplayOptionsChanges,
-  getCardDisplayOptions,
-  mergeWithDefaults,
-} from './display-options-helper';
-
-// Re-export commonly used types
-export type { Dye, VisionType, PriceData } from '@xivdyetools/types';
-export type { ThemeName } from '@shared/types';
-
-// Re-export commonly used utilities
-export { ErrorHandler } from '@shared/error-handler';
 import { logger } from '@shared/logger';
 
 /**
@@ -165,9 +91,8 @@ export async function initializeServices(): Promise<void> {
     // This call was MISSING: the service, its shortcuts panel and its unit
     // tests all existed, but nothing ever attached the keydown listener, so
     // every shortcut (1-9 tools, Shift+T, Shift+L, Shift+S, ?) was inert in
-    // the running app. Statically imported — this module already re-exports
-    // KeyboardService below, so a dynamic import here cannot split it out
-    // (Vite reports INEFFECTIVE_DYNAMIC_IMPORT) and only obscures the flow.
+    // the running app. Statically imported on purpose: the service is tiny and
+    // needed on every load, so a dynamic import would only obscure the flow.
     KeyboardService.initialize();
     logger.info('✅ KeyboardService ready');
 

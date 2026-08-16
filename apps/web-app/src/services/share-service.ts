@@ -37,12 +37,12 @@ type HarmonyType =
  * Current share URL schema version
  * Increment when making breaking changes to URL structure
  */
-export const SHARE_URL_VERSION = 1;
+const SHARE_URL_VERSION = 1;
 
 /**
  * Base URL for the application (production)
  */
-export const BASE_URL = 'https://xivdyetools.app';
+const BASE_URL = 'https://xivdyetools.app';
 
 /**
  * Tool-specific share parameters
@@ -210,7 +210,7 @@ export class ShareService {
     const paramsRecord = params as unknown as Record<string, unknown>;
 
     // Add tool-specific params
-    this.addParamsToUrl(url, tool, paramsRecord);
+    this.addParamsToUrl(url, paramsRecord);
 
     // Add version for future compatibility
     url.searchParams.set('v', String(SHARE_URL_VERSION));
@@ -232,7 +232,7 @@ export class ShareService {
   /**
    * Add tool-specific parameters to a URL
    */
-  private static addParamsToUrl(url: URL, tool: ToolId, params: Record<string, unknown>): void {
+  private static addParamsToUrl(url: URL, params: Record<string, unknown>): void {
     Object.entries(params).forEach(([key, value]) => {
       if (value === undefined || value === null) return;
 
@@ -748,7 +748,6 @@ export class ShareService {
 
     const initiated = events.filter((e) => e.event === 'share_initiated').length;
     const copied = events.filter((e) => e.event === 'share_copied').length;
-    const _failed = events.filter((e) => e.event === 'share_failed').length;
 
     // Count by tool (from initiated events)
     const sharesByTool: Record<string, number> = {};

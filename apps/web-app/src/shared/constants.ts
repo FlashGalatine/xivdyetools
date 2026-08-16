@@ -141,19 +141,3 @@ export const ERROR_MESSAGES = {
   UNKNOWN_ERROR: 'An unexpected error occurred. Please try again.',
 } as const;
 
-// ============================================================================
-// Feature Flags
-// ============================================================================
-
-/**
- * Feature flags for A/B testing and gradual rollout
- */
-export const FEATURE_FLAGS = {
-  ENABLE_PRICES: true,
-  ENABLE_PRICE_HISTORY: false,
-  ENABLE_SAVED_PALETTES: true,
-  ENABLE_EXPORT_FORMATS: true,
-  ENABLE_DARK_MODE: true,
-  ENABLE_KEYBOARD_SHORTCUTS: true,
-  DEBUG_MODE: false,
-} as const;

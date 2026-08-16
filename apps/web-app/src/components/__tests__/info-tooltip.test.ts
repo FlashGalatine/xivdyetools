@@ -10,7 +10,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   createInfoIcon,
-  createLabelWithInfo,
   addInfoIconTo,
   TOOLTIP_CONTENT,
 } from '../info-tooltip';
@@ -18,7 +17,6 @@ import {
   createTestContainer,
   cleanupTestContainer,
   query,
-  getText,
   getAttr,
   hasClass,
 } from '../../__tests__/component-utils';
@@ -139,64 +137,6 @@ describe('InfoTooltip', () => {
           showOnFocus: true,
         })
       );
-    });
-  });
-
-  // ============================================================================
-  // createLabelWithInfo Tests
-  // ============================================================================
-
-  describe('createLabelWithInfo', () => {
-    it('should create a container span', () => {
-      const element = createLabelWithInfo('Label', 'Tooltip');
-
-      expect(element.tagName).toBe('SPAN');
-    });
-
-    it('should contain the label text', () => {
-      const element = createLabelWithInfo('My Label', 'Tooltip');
-
-      const labelSpan = query(element, 'span');
-      expect(getText(labelSpan)).toBe('My Label');
-    });
-
-    it('should contain an info icon', () => {
-      const element = createLabelWithInfo('Label', 'Tooltip');
-
-      const button = query(element, 'button');
-      expect(button).not.toBeNull();
-      expect(button?.textContent).toBe('ⓘ');
-    });
-
-    it('should attach tooltip with provided content', () => {
-      createLabelWithInfo('Label', 'Custom tooltip content');
-
-      expect(TooltipService.attach).toHaveBeenCalledWith(
-        expect.any(HTMLElement),
-        expect.objectContaining({
-          content: 'Custom tooltip content',
-        })
-      );
-    });
-
-    it('should pass through options to createInfoIcon', () => {
-      createLabelWithInfo('Label', 'Tooltip', {
-        position: 'bottom',
-        ariaLabel: 'Help',
-      });
-
-      expect(TooltipService.attach).toHaveBeenCalledWith(
-        expect.any(HTMLElement),
-        expect.objectContaining({
-          position: 'bottom',
-        })
-      );
-    });
-
-    it('should have inline-flex layout', () => {
-      const element = createLabelWithInfo('Label', 'Tooltip');
-
-      expect(hasClass(element, 'inline-flex')).toBe(true);
     });
   });
 

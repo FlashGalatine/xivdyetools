@@ -14,7 +14,7 @@
 // ============================================================================
 
 // Re-export perf utilities
-export { perf, createBrowserLogger } from '@xivdyetools/logger/browser';
+export { perf } from '@xivdyetools/logger/browser';
 
 // Re-export browserLogger as logger for backward compatibility
 import { browserLogger as _browserLogger } from '@xivdyetools/logger/browser';

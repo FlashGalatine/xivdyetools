@@ -33,7 +33,6 @@ import {
   calculateHueDeviance,
   findClosestDyesToHue,
   replaceExcludedDyes,
-  findHarmonyDyes,
 } from '@services/index';
 import type { ScoredDyeMatch, HarmonyConfig } from '@services/index';
 import { ConfigController } from '@services/config-controller';
@@ -928,7 +927,6 @@ export class HarmonyTool extends BaseComponent {
 
       this.renderCurrentDyeDisplayInto(displayContainer);
       this.generateHarmonies();
-      this.updateDrawerContent();
     }) as EventListener);
   }
 
@@ -976,7 +974,6 @@ export class HarmonyTool extends BaseComponent {
     this.renderTypeRail();
 
     this.generateHarmonies();
-    this.updateDrawerContent();
   }
 
   /**
@@ -1380,15 +1377,6 @@ export class HarmonyTool extends BaseComponent {
   // selectHarmonyTypeFromDrawer, renderDrawerCompanionSlider, renderDrawerFiltersPanel,
   // and renderDrawerMarketPanel removed - now using shared builders in renderDrawerContent
 
-  /**
-   * Update drawer content - no longer needed since drawer has full interactive controls
-   * Kept for backwards compatibility but now just syncs the current dye display
-   */
-  private updateDrawerContent(): void {
-    // The drawer now has full interactive controls that sync via state
-    // No need to rebuild the entire drawer content on every change
-  }
-
   // ============================================================================
   // Harmony Generation
   // ============================================================================
@@ -1694,19 +1682,6 @@ export class HarmonyTool extends BaseComponent {
   }
 
   /**
-   * Find matching dyes for a specific harmony type (delegated to harmony-generator)
-   */
-  private findHarmonyDyesInternal(typeId: string): ScoredDyeMatch[] {
-    if (!this.selectedDye) return [];
-    return findHarmonyDyes(
-      this.selectedDye,
-      typeId,
-      this.getHarmonyConfig(),
-      this.dyeFiltersConfig
-    );
-  }
-
-  /**
    * The dyes the result grid is actually showing, slot by slot.
    *
    * The wheel used to call the generator again on its own, which meant no
@@ -2002,7 +1977,6 @@ export class HarmonyTool extends BaseComponent {
     // Re-render if needed
     if (needsRerender && this.selectedDye) {
       this.generateHarmonies();
-      this.updateDrawerContent();
 
       // Update harmony type buttons if they exist (shared method handles null containers)
       this.updateHarmonyTypeButtonStyles(this.harmonyTypesContainer, this.selectedHarmonyType);
@@ -2036,7 +2010,6 @@ export class HarmonyTool extends BaseComponent {
     // Show empty state
     this.showEmptyState(true);
     this.renderColorWheel();
-    this.updateDrawerContent();
   }
 
   /**
@@ -2061,7 +2034,6 @@ export class HarmonyTool extends BaseComponent {
 
     // Generate harmonies and update UI
     this.generateHarmonies();
-    this.updateDrawerContent();
   }
 
   /**
@@ -2110,6 +2082,5 @@ export class HarmonyTool extends BaseComponent {
 
     // Generate harmonies and update UI
     this.generateHarmonies();
-    this.updateDrawerContent();
   }
 }

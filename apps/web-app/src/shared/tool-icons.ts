@@ -53,10 +53,3 @@ export const TOOL_ICONS: Record<string, string> = {
   character: ICON_TOOL_CHARACTER,
   tools: ICON_TOOL_MENU,
 };
-
-/**
- * Get tool icon by name
- */
-export function getToolIcon(name: string): string | undefined {
-  return TOOL_ICONS[name];
-}

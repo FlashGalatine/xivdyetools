@@ -76,16 +76,6 @@ interface ComparisonOptions {
 }
 
 /**
- * Dye with HSV values for charting
- */
-interface DyeWithHSV {
-  dye: Dye;
-  h: number;
-  s: number;
-  v: number;
-}
-
-/**
  * Storage keys for v3 comparison tool
  */
 const STORAGE_KEYS = {
@@ -137,7 +127,6 @@ export class ComparisonTool extends BaseComponent {
 
   // State
   private selectedDyes: Dye[] = [];
-  private dyesWithHSV: DyeWithHSV[] = [];
   private comparisonOptions: ComparisonOptions;
   // 7C Duel state
   private activePair: [number, number] | null = null;
@@ -310,7 +299,6 @@ export class ComparisonTool extends BaseComponent {
       if (dyes.length > 0 && this.dyeSelector) {
         this.dyeSelector.setSelectedDyes(dyes);
         this.selectedDyes = dyes;
-        this.calculateHSVValues();
         this.updateSelectedDyesDisplay();
         this.updateResults();
         this.updateDrawerSelectedDyesDisplay();
@@ -348,7 +336,6 @@ export class ComparisonTool extends BaseComponent {
     this.drawerMarketPanel?.destroy();
 
     this.selectedDyes = [];
-    this.dyesWithHSV = [];
 
     super.destroy();
     logger.info('[ComparisonTool] Destroyed');
@@ -537,19 +524,6 @@ export class ComparisonTool extends BaseComponent {
   }
 
   /**
-   * Create a header for right panel sections (styled like mock-up with golden underline)
-   */
-  private createHeader(text: string): HTMLElement {
-    const header = this.createElement('div', { className: 'section-header' });
-    const title = this.createElement('span', {
-      className: 'section-title',
-      textContent: text,
-    });
-    header.appendChild(title);
-    return header;
-  }
-
-  /**
    * Render dye selector section
    */
   private renderDyeSelector(container: HTMLElement): void {
@@ -583,7 +557,6 @@ export class ComparisonTool extends BaseComponent {
     selectorContainer.addEventListener('selection-changed', () => {
       if (this.dyeSelector) {
         this.selectedDyes = this.dyeSelector.getSelectedDyes();
-        this.calculateHSVValues();
         this.updateSelectedDyesDisplay();
         this.updateResults();
         this.updateDrawerSelectedDyesDisplay();
@@ -2034,7 +2007,6 @@ export class ComparisonTool extends BaseComponent {
     this.dyeSelector?.setSelectedDyes(newSelection);
     this.drawerDyeSelector?.setSelectedDyes(newSelection);
     this.selectedDyes = newSelection;
-    this.calculateHSVValues();
     this.updateSelectedDyesDisplay();
     this.updateDrawerSelectedDyesDisplay();
     this.updateResults();
@@ -2061,21 +2033,6 @@ export class ComparisonTool extends BaseComponent {
     if (show && this.actionsRow) {
       this.actionsRow.style.display = 'none';
     }
-  }
-
-  /**
-   * Calculate HSV values for all selected dyes
-   */
-  private calculateHSVValues(): void {
-    this.dyesWithHSV = this.selectedDyes.map((dye) => {
-      const hsv = ColorService.hexToHsv(dye.hex);
-      return {
-        dye,
-        h: hsv.h,
-        s: hsv.s,
-        v: hsv.v,
-      };
-    });
   }
 
   // ============================================================================
@@ -2210,7 +2167,6 @@ export class ComparisonTool extends BaseComponent {
     selectorContainer.addEventListener('selection-changed', () => {
       if (this.drawerDyeSelector) {
         this.selectedDyes = this.drawerDyeSelector.getSelectedDyes();
-        this.calculateHSVValues();
 
         // Sync desktop selector
         this.dyeSelector?.setSelectedDyes(this.selectedDyes);
@@ -2368,7 +2324,6 @@ export class ComparisonTool extends BaseComponent {
    */
   public clearDyes(): void {
     this.selectedDyes = [];
-    this.dyesWithHSV = [];
     this.activePair = null;
 
     // Clear from storage
@@ -2427,7 +2382,6 @@ export class ComparisonTool extends BaseComponent {
     // Persist and update UI
     const dyeIds = this.selectedDyes.map((d) => d.id);
     StorageService.setItem(STORAGE_KEYS.selectedDyes, dyeIds);
-    this.calculateHSVValues();
     this.updateSelectedDyesDisplay();
     this.updateResults();
     this.updateShareButton(); // Update share button with new dye selection
@@ -2558,8 +2512,7 @@ export class ComparisonTool extends BaseComponent {
       this.dyeSelector.setSelectedDyes(loadedDyes);
     }
 
-    // Calculate HSV and update displays
-    this.calculateHSVValues();
+    // Update displays
     this.updateSelectedDyesDisplay();
     this.updateResults();
     this.updateShareButton();

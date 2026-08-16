@@ -448,23 +448,6 @@ describe('AuthService', () => {
     });
   });
 
-  describe('consumeReturnTool', () => {
-    it('should return and remove stored tool from sessionStorage', async () => {
-      mockSessionStorage['xivdyetools_oauth_return_tool'] = 'presets';
-
-      const { consumeReturnTool } = await import('../auth-service');
-
-      const tool = consumeReturnTool();
-      expect(tool).toBe('presets');
-      expect(mockSessionStorage['xivdyetools_oauth_return_tool']).toBeUndefined();
-    });
-
-    it('should return null if no tool stored', async () => {
-      const { consumeReturnTool } = await import('../auth-service');
-      expect(consumeReturnTool()).toBeNull();
-    });
-  });
-
   describe('avatar URL generation', () => {
     it('should generate correct avatar URL for static avatar', async () => {
       const futureTime = Math.floor(Date.now() / 1000) + 3600;

@@ -40,7 +40,6 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
 
   const { dye, anchorElement, onClose, onAdded } = options;
   const collections = CollectionService.getCollections();
-  const dyeName = LanguageService.getDyeName(dye.itemID) || dye.name;
 
   // Create menu container
   const menu = document.createElement('div');
@@ -90,7 +89,6 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
       const item = createCollectionMenuItem(
         collection,
         dye.stainID ?? 0,
-        dyeName,
         (addedCollection) => {
           closeAddToCollectionMenu();
           if (onAdded) {
@@ -182,7 +180,6 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
 function createCollectionMenuItem(
   collection: Collection,
   dyeId: DyeId,
-  dyeName: string,
   onAdded: (collection: Collection) => void
 ): HTMLElement {
   const alreadyInCollection = collection.dyes.includes(dyeId);
@@ -259,7 +256,7 @@ function createCollectionMenuItem(
 /**
  * Close the add to collection menu
  */
-export function closeAddToCollectionMenu(): void {
+function closeAddToCollectionMenu(): void {
   // OPT-004: Clear any pending listener setup to prevent leak
   if (pendingSetupTimeout !== null) {
     clearTimeout(pendingSetupTimeout);
@@ -273,11 +270,4 @@ export function closeAddToCollectionMenu(): void {
     activeMenu.remove();
     activeMenu = null;
   }
-}
-
-/**
- * Check if menu is currently open
- */
-export function isAddToCollectionMenuOpen(): boolean {
-  return activeMenu !== null;
 }

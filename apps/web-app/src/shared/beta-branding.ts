@@ -31,7 +31,7 @@ const BETA_ICON_PATH = '/assets/icons/beta/';
  * Left alone, beta's embeds serve production's card and link back to
  * production, which makes a beta share indistinguishable from a live one.
  */
-export const PRODUCTION_ORIGIN = 'https://xivdyetools.app';
+const PRODUCTION_ORIGIN = 'https://xivdyetools.app';
 export const BETA_ORIGIN = 'https://beta.xivdyetools.app';
 
 /**
@@ -125,7 +125,7 @@ export function brandHtmlForBeta(html: string): string {
     if (!/\b(?:property|name)="(?:og|twitter):[^"]*"/.test(tag)) return tag;
     return tag.replace(
       /\bcontent="([^"]*)"/,
-      (attr, content: string) => `content="${content.split(PRODUCTION_ORIGIN).join(BETA_ORIGIN)}"`
+      (_attr, content: string) => `content="${content.split(PRODUCTION_ORIGIN).join(BETA_ORIGIN)}"`
     );
   });
 }

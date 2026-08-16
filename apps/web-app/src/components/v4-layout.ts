@@ -6,14 +6,12 @@
  *
  * This module mirrors v3-layout.ts but uses the V4 component architecture:
  * - V4LayoutShell (header + tool banner + sidebar + content)
- * - ConfigController for centralized config state
  * - Tools rendered inside the shell's content slot
  *
  * @module components/v4-layout
  */
 
 import { RouterService, type ToolId } from '@services/router-service';
-import { ConfigController } from '@services/config-controller';
 import { LanguageService, StorageService, ModalService } from '@services/index';
 import { TutorialService, type TutorialTool } from '@services/tutorial-service';
 import { logger } from '@shared/logger';
@@ -36,7 +34,6 @@ import '@components/v4/v4-layout-shell';
 // Track active tool instance for cleanup
 let activeTool: BaseComponent | null = null;
 let layoutElement: V4LayoutShell | null = null;
-let _configController: ConfigController | null = null;
 
 // BUG-040 (2026-07-18 audit): monotonically increasing navigation sequence —
 // a loadToolContent invocation that discovers it was superseded after an
@@ -46,8 +43,6 @@ let navigationSeq = 0;
 
 // BUG-078: pending first-visit tutorial prompt timer (cleared on navigation)
 let tutorialPromptTimer: ReturnType<typeof setTimeout> | null = null;
-let languageUnsubscribe: (() => void) | null = null;
-let configUnsubscribe: (() => void) | null = null;
 let modalContainer: ModalContainer | null = null;
 let toastContainer: ToastContainer | null = null;
 
@@ -150,7 +145,6 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
   RouterService.initialize();
 
   // Get config controller instance
-  _configController = ConfigController.getInstance();
 
   const initialTool = RouterService.getCurrentToolId();
   logger.info(`[V4 Layout] Initializing with tool: ${initialTool}`);
@@ -301,7 +295,9 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
   });
 
   // Subscribe to language changes for re-rendering
-  languageUnsubscribe = LanguageService.subscribe(() => {
+  // Held for the app's lifetime — the shell is never torn down (destroyV4Layout
+  // was removed as dead code, 2026-08-16), so no unsubscribe handle is kept.
+  LanguageService.subscribe(() => {
     logger.info('[V4 Layout] Language changed, tool may need refresh');
   });
 
@@ -649,51 +645,4 @@ function renderPlaceholder(container: HTMLElement, toolId: string): void {
       <p style="font-size: 1rem; opacity: 0.7; color: var(--theme-text);">Coming soon</p>
     </div>
   `;
-}
-
-/**
- * Cleanup the v4 layout
- */
-export function destroyV4Layout(): void {
-  // Clean up subscriptions
-  if (languageUnsubscribe) {
-    languageUnsubscribe();
-    languageUnsubscribe = null;
-  }
-
-  if (configUnsubscribe) {
-    configUnsubscribe();
-    configUnsubscribe = null;
-  }
-
-  // Clean up tool
-  if (activeTool) {
-    activeTool.destroy();
-    activeTool = null;
-  }
-
-  // Clean up modal container
-  if (modalContainer) {
-    modalContainer.destroy();
-    modalContainer = null;
-  }
-
-  // Clean up toast container
-  if (toastContainer) {
-    toastContainer.destroy();
-    toastContainer = null;
-  }
-
-  // Clean up layout element
-  if (layoutElement) {
-    layoutElement.remove();
-    layoutElement = null;
-  }
-
-  // Clean up router
-  RouterService.destroy();
-
-  _configController = null;
-
-  logger.info('[V4 Layout] Destroyed');
 }

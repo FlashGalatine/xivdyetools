@@ -13,7 +13,7 @@
 import { LanguageService } from '@services/language-service';
 
 /** Client mirror of the presets-api example-link host allowlist. */
-export const EXAMPLE_LINK_HOSTS = [
+const EXAMPLE_LINK_HOSTS = [
   'eorzeacollection.com',
   'mirapri.com',
   'reddit.com',

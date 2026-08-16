@@ -619,4 +619,3 @@ class PresetSubmissionServiceImpl {
 // ============================================
 
 export const presetSubmissionService = new PresetSubmissionServiceImpl();
-export { PresetSubmissionServiceImpl as PresetSubmissionService };

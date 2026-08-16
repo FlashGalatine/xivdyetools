@@ -57,30 +57,6 @@ export function createInfoIcon(options: InfoTooltipOptions): HTMLElement {
 }
 
 /**
- * Create a label with an info icon
- */
-export function createLabelWithInfo(
-  labelText: string,
-  tooltipContent: string,
-  options: Partial<InfoTooltipOptions> = {}
-): HTMLElement {
-  const container = document.createElement('span');
-  container.className = 'inline-flex items-center gap-1';
-
-  const label = document.createElement('span');
-  label.textContent = labelText;
-  container.appendChild(label);
-
-  const icon = createInfoIcon({
-    content: tooltipContent,
-    ...options,
-  });
-  container.appendChild(icon);
-
-  return container;
-}
-
-/**
  * Add info icon to an existing element
  */
 export function addInfoIconTo(

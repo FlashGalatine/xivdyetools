@@ -175,7 +175,6 @@ export class MixerTool extends BaseComponent {
   private resultsGridContainer: HTMLElement | null = null;
   private slot1Element: HTMLElement | null = null;
   private slot2Element: HTMLElement | null = null;
-  private slot3Element: HTMLElement | null = null;
   private resultSlotElement: HTMLElement | null = null;
   private emptyStateMessage: HTMLElement | null = null;
   private emptyStateIcon: HTMLElement | null = null;
@@ -1577,7 +1576,6 @@ export class MixerTool extends BaseComponent {
 
     // Two-dye mixer: the optional third slot was cut (2026-08-08 decision) —
     // the 5C field always covers the pair.
-    this.slot3Element = null;
 
     // Arrow
     const arrow = this.createElement('span', {

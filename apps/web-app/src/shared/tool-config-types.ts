@@ -56,15 +56,6 @@ export interface HarmonyConfig {
   displayOptions: DisplayOptionsConfig;
   /** Dye filter configuration */
   dyeFilters: DyeFiltersConfig;
-  // Legacy fields (deprecated, for migration)
-  /** @deprecated Use displayOptions.showHex */
-  showHex?: boolean;
-  /** @deprecated Use displayOptions.showRgb */
-  showRgb?: boolean;
-  /** @deprecated Use displayOptions.showHsv */
-  showHsv?: boolean;
-  /** @deprecated Use displayOptions.showLab */
-  showLab?: boolean;
 }
 
 /**
@@ -410,7 +401,7 @@ export type ConfigKey = ToolId | 'global' | 'market' | 'advanced';
 /**
  * Default configuration values for all tools
  */
-export const DEFAULT_CONFIGS: ToolConfigMap = {
+const DEFAULT_CONFIGS: ToolConfigMap = {
   global: {
     theme: '',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
@@ -506,13 +497,6 @@ export const DEFAULT_CONFIGS: ToolConfigMap = {
 // ============================================================================
 // Type Guards
 // ============================================================================
-
-/**
- * Check if a config key is a valid tool ID
- */
-export function isToolId(key: ConfigKey): key is ToolId {
-  return key !== 'global' && key !== 'market' && key !== 'advanced';
-}
 
 /**
  * Get the default config for a tool

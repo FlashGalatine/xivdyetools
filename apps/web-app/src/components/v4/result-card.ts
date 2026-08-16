@@ -160,58 +160,6 @@ const EXTERNAL_URLS = {
 } as const;
 
 /**
- * Generate a short market error code from an error or HTTP status.
- *
- * Error code prefixes:
- * - "H" = HTTP error (e.g., "H429" for rate limiting, "H500" for server error)
- * - "N" = Network error (e.g., "NOFF" for offline, "NTMO" for timeout)
- * - "E" = Other errors (e.g., "EPRS" for parse error, "EUNK" for unknown)
- *
- * @param error - The error that occurred during price fetching
- * @returns Short error code string (e.g., "H429", "NOFF")
- */
-export function generateMarketErrorCode(error: unknown): string {
-  // Check for HTTP status in error message
-  if (error instanceof Error) {
-    const message = error.message;
-
-    // HTTP errors: look for "HTTP XXX" pattern
-    const httpMatch = message.match(/HTTP\s*(\d{3})/i);
-    if (httpMatch) {
-      return `H${httpMatch[1]}`;
-    }
-
-    // Timeout errors
-    if (message.includes('timeout') || message.includes('abort')) {
-      return 'NTMO';
-    }
-
-    // Network/fetch errors
-    if (message.includes('network') || message.includes('fetch')) {
-      return navigator.onLine ? 'NFCH' : 'NOFF';
-    }
-
-    // Parse errors
-    if (message.includes('JSON') || message.includes('parse')) {
-      return 'EPRS';
-    }
-
-    // Rate limit (if in message but not captured as HTTP)
-    if (message.includes('rate limit') || message.includes('too many')) {
-      return 'H429';
-    }
-  }
-
-  // Offline check
-  if (typeof navigator !== 'undefined' && !navigator.onLine) {
-    return 'NOFF';
-  }
-
-  // Unknown error
-  return 'EUNK';
-}
-
-/**
  * V4 Result Card - the 5.0 Ticket
  *
  * Structural (always rendered): swatch pair, name, ΔE2000 verdict, action bar.
@@ -1312,19 +1260,6 @@ export class ResultCard extends BaseLitComponent {
   }
 
   /**
-   * Get display name for a tool
-   */
-  private getToolDisplayName(tool: 'comparison' | 'accessibility' | 'gradient' | 'mixer'): string {
-    const toolNames: Record<typeof tool, string> = {
-      comparison: LanguageService.t('tools.comparison.shortName'),
-      accessibility: LanguageService.t('tools.accessibility.shortName'),
-      gradient: LanguageService.t('tools.gradient.shortName'),
-      mixer: LanguageService.t('tools.mixer.shortName'),
-    };
-    return toolNames[tool];
-  }
-
-  /**
    * Show modal for selecting which slot to replace when tool is full
    */
   private showSlotSelectionModal(
@@ -1333,7 +1268,6 @@ export class ResultCard extends BaseLitComponent {
     currentDyeIds: number[]
   ): void {
     const dyeService = DyeService.getInstance();
-    const _toolName = this.getToolDisplayName(tool);
 
     // Generate slot labels based on tool type
     const slotLabels =

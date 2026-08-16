@@ -26,8 +26,7 @@ import { presetName, presetDescription, presetCategoryLabel } from '@shared/pres
 import { MarketBoardService } from '@services/market-board-service';
 import type { PriceData } from '@xivdyetools/types';
 import { ConfigController } from '@services/config-controller';
-import type { DisplayOptionsConfig, MarketConfig } from '@shared/tool-config-types';
-import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
+import type { MarketConfig } from '@shared/tool-config-types';
 import { getCategoryIcon } from '@shared/category-icons';
 import { ICON_ARROW_BACK } from '@shared/ui-icons';
 import { ICON_CRYSTAL, ICON_LINK } from '@shared/ui-icons';
@@ -91,12 +90,6 @@ export class PresetDetail extends BaseLitComponent {
    */
   @state()
   private currentVoteCount: number = 0;
-
-  /**
-   * Display options from config
-   */
-  @state()
-  private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
 
   /**
    * Market config from config
@@ -587,15 +580,7 @@ export class PresetDetail extends BaseLitComponent {
     this.configController = ConfigController.getInstance();
 
     // Load initial config values
-    const globalConfig = this.configController.getConfig('global');
-    this.displayOptions = globalConfig.displayOptions || { ...DEFAULT_DISPLAY_OPTIONS };
     this.marketConfig = this.configController.getConfig('market');
-
-    // Subscribe to global display options changes
-    const unsubGlobal = this.configController.subscribe('global', (config) => {
-      this.displayOptions = config.displayOptions || { ...DEFAULT_DISPLAY_OPTIONS };
-    });
-    this.configUnsubscribers.push(unsubGlobal);
 
     // Subscribe to market config changes
     const unsubMarket = this.configController.subscribe('market', (config) => {

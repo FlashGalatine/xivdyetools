@@ -62,7 +62,7 @@ vi.mock('@xivdyetools/core', async (importOriginal) => {
   return {
     ...actual,
     ColorConverter: {
-      getDeltaE: vi.fn((hex1: string, hex2: string, algorithm: string) => {
+      getDeltaE: vi.fn((_hex1: string, _hex2: string, algorithm: string) => {
         if (algorithm === 'cie76') return 50;
         if (algorithm === 'cie2000') return 25;
         return 30;

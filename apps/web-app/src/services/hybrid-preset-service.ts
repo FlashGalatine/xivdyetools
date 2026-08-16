@@ -91,7 +91,7 @@ export interface GetPresetsOptions {
  * Hybrid Preset Service
  * Singleton that provides unified access to both local and community presets
  */
-export class HybridPresetService {
+class HybridPresetService {
   private static instance: HybridPresetService | null = null;
 
   private readonly localPresetService: PresetService;

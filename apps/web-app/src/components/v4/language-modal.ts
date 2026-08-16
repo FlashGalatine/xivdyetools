@@ -19,7 +19,7 @@ import type { LocaleCode } from '@shared/i18n-types';
 /**
  * Language modal showing available languages in a grid
  */
-export class LanguageModal {
+class LanguageModal {
   private modalId: string | null = null;
   private currentLocale: LocaleCode = 'en';
   private languageUnsubscribe: (() => void) | null = null;
@@ -231,14 +231,4 @@ export function showLanguageModal(): void {
     languageModalInstance = new LanguageModal();
   }
   languageModalInstance.show();
-}
-
-/**
- * Close the language modal if open
- */
-export function closeLanguageModal(): void {
-  if (languageModalInstance) {
-    languageModalInstance.close();
-    languageModalInstance = null;
-  }
 }

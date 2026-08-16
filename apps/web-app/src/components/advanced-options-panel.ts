@@ -407,13 +407,3 @@ export function showAdvancedOptionsPanel(host: HTMLElement = document.body): voi
     },
   });
 }
-
-/**
- * Close the Advanced Options slide-over if open
- */
-export function closeAdvancedOptionsPanel(): void {
-  if (panelModalId) {
-    ModalService.dismiss(panelModalId);
-    panelModalId = null;
-  }
-}

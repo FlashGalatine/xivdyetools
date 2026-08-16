@@ -515,19 +515,6 @@ export class MarketBoard extends BaseComponent {
   }
 
   /**
-   * Set component state
-   * Updates the service which persists and notifies subscribers
-   */
-  protected setState(newState: Record<string, unknown>): void {
-    if (typeof newState.selectedServer === 'string') {
-      this.service.setServer(newState.selectedServer);
-    }
-    if (typeof newState.showPrices === 'boolean') {
-      this.service.setShowPrices(newState.showPrices);
-    }
-  }
-
-  /**
    * Get selected server
    */
   getSelectedServer(): string {

@@ -445,16 +445,6 @@ function showSlotSelectionModal(
 ): void {
   const dyeService = DyeService.getInstance();
 
-  // Get localized tool name
-  let _toolName: string;
-  if (tool === 'comparison') {
-    _toolName = LanguageService.t('tools.comparison.shortName');
-  } else if (tool === 'mixer') {
-    _toolName = LanguageService.t('tools.mixer.shortName');
-  } else {
-    _toolName = LanguageService.t('tools.accessibility.shortName');
-  }
-
   // Generate slot labels
   const slotLabels =
     tool === 'mixer'

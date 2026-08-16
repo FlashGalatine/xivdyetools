@@ -842,16 +842,3 @@ class AuthServiceImpl {
 // ============================================
 
 export const authService = new AuthServiceImpl();
-export { AuthServiceImpl as AuthService };
-
-/**
- * Get and consume the return tool ID stored during login
- * Returns the tool ID and removes it from sessionStorage
- */
-export function consumeReturnTool(): string | null {
-  const tool = sessionStorage.getItem(OAUTH_RETURN_TOOL_KEY);
-  if (tool) {
-    sessionStorage.removeItem(OAUTH_RETURN_TOOL_KEY);
-  }
-  return tool;
-}

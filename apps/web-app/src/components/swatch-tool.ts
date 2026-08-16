@@ -279,8 +279,6 @@ export class SwatchTool extends BaseComponent {
   private gridTitleEl: HTMLElement | null = null;
   /** Loaded .chara character — drives grid pins and the readout lock */
   private charaResolved: import('@xivdyetools/core').ResolvedCharaCharacter | null = null;
-  /** Sheet index the selection-card excerpt centres on (from a sheet-slot pick) */
-  private gridExcerptAnchor: number | null = null;
   /** What the selection card describes — the last slot pick or grid click */
   private selectionContext: SwatchSelectionContext | null = null;
 
@@ -1510,7 +1508,6 @@ export class SwatchTool extends BaseComponent {
           this.selectionContext = { source: 'slot', hex, label, gridRef };
           if (gridRef) {
             // The selection card's excerpt centres on the slot's cell.
-            this.gridExcerptAnchor = gridRef.sheetIndex;
             const target = gridRef.variant
               ? `${gridRef.paletteBase}${gridRef.variant === 'light' ? 'Light' : 'Dark'}`
               : gridRef.paletteBase;
@@ -1520,14 +1517,12 @@ export class SwatchTool extends BaseComponent {
               this.updateColorGrid();
             }
           } else {
-            this.gridExcerptAnchor = null;
             this.updateColorGrid();
           }
           this.selectCustomColor(hex);
         },
         onResolved: (resolved) => {
           this.charaResolved = resolved;
-          this.gridExcerptAnchor = null;
           if (resolved === null && this.selectionContext?.source === 'slot') {
             this.selectionContext = null;
           }
@@ -1744,7 +1739,6 @@ export class SwatchTool extends BaseComponent {
         },
       }) as HTMLButtonElement;
       this.on(chip, 'click', () => {
-        this.gridExcerptAnchor = null;
         if (this.selectionContext?.source === 'slot') this.selectionContext = null;
         const target = palette.split ? `${palette.base}${currentRange}` : palette.base;
         this.setConfig({ colorSheet: target });
@@ -1775,7 +1769,6 @@ export class SwatchTool extends BaseComponent {
           },
         }) as HTMLButtonElement;
         this.on(btn, 'click', () => {
-          this.gridExcerptAnchor = null;
           if (this.selectionContext?.source === 'slot') this.selectionContext = null;
           this.setConfig({ colorSheet: `${currentBase}${range}` });
         });
@@ -3100,7 +3093,6 @@ export class SwatchTool extends BaseComponent {
    * Get localized category display name
    */
   private getCategoryDisplayName(category: ColorCategory): string {
-    const _key = `tools.character.${category.replace(/Colors?$/, 'Colors')}`;
     const labels: Record<ColorCategory, string> = {
       eyeColors: LanguageService.t('tools.character.eyeColors'),
       hairColors: LanguageService.t('tools.character.hairColors'),
