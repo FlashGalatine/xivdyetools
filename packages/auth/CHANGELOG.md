@@ -5,14 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.0] - 2026-07-30
+## [1.3.0] - 2026-08-16
 
-Monorepo 2.0 Tier 1 package consolidation.
+Monorepo 2.0 Tier 1 package consolidation. Written 2026-07-30 and unpublished until this release (npm has 1.2.0).
 
 ### Added
 
-- Absorbed `@xivdyetools/crypto` v1.1.2: Base64URL (RFC 4648) and hex encoding primitives now live at `@xivdyetools/auth/encoding` (also re-exported from the package root). The standalone `@xivdyetools/crypto` package is retired and will receive no further releases — the API is identical, only the import specifier changes.
+- Absorbed `@xivdyetools/crypto` v1.1.2: Base64URL (RFC 4648) and hex encoding primitives (`base64UrlEncode`, `base64UrlEncodeBytes`, `base64UrlDecode`, `base64UrlDecodeBytes`, `hexToBytes`, `bytesToHex`) now live in `src/encoding/` and ship at the new `@xivdyetools/auth/encoding` subpath export (also re-exported from the package root). The standalone `@xivdyetools/crypto` package is retired and will receive no further releases — the API is identical, only the import specifier changes (`'@xivdyetools/crypto'` → `'@xivdyetools/auth/encoding'`; see `DEPRECATIONS.md`).
 - `"sideEffects": false` so bundlers can tree-shake unused modules — consumers importing only `/encoding` no longer pull in `discord-interactions`.
+
+### Changed
+
+- `@xivdyetools/crypto` dropped from `dependencies`; `jwt.ts` / `hmac.ts` import the encoding primitives relatively. The package now has **no internal dependencies** (Level 0 of the monorepo graph) — `discord-interactions` is the only runtime dependency, `@cloudflare/workers-types` remains an optional peer.
+- Docs: README and `CLAUDE.md` synced to the branch state: `/encoding` and `/revocation` subpaths documented, API-reference signatures corrected (`isJWTExpired(token)` / `getJWTTimeToExpiry(token)` take the raw token string, `unauthorizedResponse(message?)` / `badRequestResponse(message)` return JSON), consumers listed, license/legal notice added, stale blog link removed.
 
 ## [1.2.0] - 2026-07-19
 

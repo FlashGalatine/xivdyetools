@@ -8,6 +8,74 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.0.0] - 2026-08-16
+
+**Monorepo 2.0 + the XIV Dye Tools 5.0 wave.** 314 commits on `monorepo-2.0-prep` since 1.18.0, spanning the workspace consolidation (12 → 8 packages, 11 → 9 apps), the schema-v2 / stainID-first data model, the 5.0 web-app redesign, the 5.0 Discord command set on a new card frame system, redrawn link previews, a beta environment for every public surface, and full remediation of the 2026-08-09 pre-release audit. Nothing on this branch has been published to npm and no production worker or web-app release carries it yet (exceptions: the beta surfaces, and `image-worker`'s one-time pre-merge production deploy on 2026-08-09). **Merging to main is the release** — see "Deploy sequence" below. Per-package detail lives in each package's / app's own `CHANGELOG.md`; the plain-language, player-facing summary is the root `CHANGELOG-laymans.md`.
+
+### ⚠️ BREAKING — workspace shape
+
+- **Tier 1 package consolidation (12 → 8 packages).** `@xivdyetools/crypto` → `@xivdyetools/auth/encoding`; `@xivdyetools/bot-i18n` → `@xivdyetools/bot-logic/i18n`; `@xivdyetools/color-blending` → `@xivdyetools/core/blending`; `@xivdyetools/worker-middleware` + `@xivdyetools/rate-limiter` → the **new** `@xivdyetools/worker-kit` (root, `/middleware`, `/rate-limiter`, `/rate-limiter/{memory,kv,upstash,presets}` — APIs unchanged); `@xivdyetools/test-utils` is now workspace-private and no longer published. Migration paths and the `npm deprecate` checklist for the five retired packages are in the new `DEPRECATIONS.md`. Dependency graph: types / logger / auth at Level 0, worker-kit (→ logger) and core (→ types, logger) at Level 1, svg → bot-logic above.
+- **Tier 2 app consolidation (11 → 9 apps).** `apps/universalis-proxy` absorbed into `api-worker` (`/universalis/*` canonical, `/api/v2/*` compat mount, discord-worker's `UNIVERSALIS_PROXY` binding retargeted; proxy-domain cutover checklist in `DEPRECATIONS.md`); `apps/api-docs` (standalone Pages site) absorbed into `api-worker` as VitePress under `apps/api-worker/docs/`, served as Workers Static Assets on `developers.xivdyetools.app` (production env only, `run_worker_first` + host check); **`apps/maintainer` deleted** — its dye vocabularies and data-invariant tests survive in core's `dye-vocabulary.ts`, and the canonical add-a-dye workflow is now `docs/maintainer/adding-dyes.md`; **`apps/image-worker` is new** — the Photon WASM host split out of discord-worker (`POST /extract` pixels, `POST /thumbnail` WebP; service-binding only, no public routes) because Photon had pushed the bot to 3,209 KiB gzip against Cloudflare's 3 MiB limit (now ~2,632 KiB).
+- **`publish-packages.yml`** offers only the seven publishable packages (types, logger, auth, worker-kit, core, svg, bot-logic) in tier order; `deploy-api-docs.yml` and `deploy-universalis-proxy.yml` deleted; `deploy-api-worker.yml` and `deploy-image-worker.yml` added; deploy path filters completed for every worker.
+- **`pnpm-workspace.yaml`**: `seroval >=1.5.3` security floor added (GHSA-mv8w-475r-vwqw, critical, reached transitively via stoat-worker › revolt.js › solid-js); the one-off `minimumReleaseAgeExclude: [postcss]` removed (expired 2026-07-29). `hono` floor raised to `^4.12.34` across every Worker (installed 4.13.1); `wrangler ^4.120.0`.
+
+### Data model — stainID first (schema v2)
+
+- `dyes.json` schema v2 (core 3.0.0 → 4.0.0): **125 dyes × 7 stored fields**, `stainID` is the canonical key; `rgb`/`hsv`/`lab`, `cost`/`currency` and the five `is*` flags are derived at `DyeDatabase.initialize()`; `isMetallic` = the Stain sheet's 16-dye gloss set, `isCosmic ≡ consolidationType 'C'`, `isIshgardian ≡ 'B'`; Wide Spectrum #1 price corrected to 100 Skybuilders' Scrips. **The 11 Facewear colors left the dye table** for `facewear_colors.json` / `facewearColors` (`FacewearColor`, string slug ids); the synthetic negative itemIDs survive only as the frozen `LEGACY_FACEWEAR_ITEM_IDS` map (api-worker serves them as a 404 carrying the new slug).
+- **stainID everywhere**: share URLs (`?dye=<stainID>` + the `?hex=` bare-colour grammar; legacy itemID links are rejected loudly), og-worker paths, `presets.json` 2.0.0 (15 curated rows), community presets in D1 (`scripts/migrate-dyes-to-stainids.ts` + migration 0007), the web-app's collections/favorites (`CollectionService` 5.0, exact disjoint-range migration on load), and the Discord dye-emoji set (regenerated from `dyes.json`, user-run re-upload).
+- **One matching vocabulary** across core, web-app, bot, og-worker and api-worker: `ciede2000` (new default) / `oklab` / `cie76` / `redmean` / `rgb` / `distinguish`; `hyab` and `oklch-weighted` retired, stored values normalise on read via `normalizeMatchingMethod`; per-method calibrated quality bands (`classifyBandTier`) replace four divergent threshold copies.
+- Preset categories: `community` retired (migration 0007); `appearance`, `zones`, `raids-trials` added with 1-primary + up-to-2-secondary categories (migration 0010); `example_link` (0008) and moderated preview images (0009, R2 via image-worker) added — across types, core, svg, presets-api, web-app, discord-worker, moderation-worker and test-utils in one coordinated change.
+- Character data: `SubRace 'Helion'` → `'Helions'` (stored-tribe migration); `.chara` character-file parser + slot resolver in core, consumed by the web-app Swatch tool and `/swatch`; Evercold (Jan 2027) deprecation notice on the eye/hair/skin preset palettes.
+
+### Package and app versions in this release
+
+| Unit | Version | Headline |
+|------|---------|----------|
+| `@xivdyetools/types` | 2.0.0 | `FacewearColor`, `CMYK`, `invertedTetradic`, `Helions`, `CommunityPreset` multi-category / preview-image / `example_link` / `rejection_reason` fields (1.16.0 folded in, never published) |
+| `@xivdyetools/logger` | 1.3.0 | unchanged (tests/coverage only) |
+| `@xivdyetools/auth` | 1.3.0 | `/encoding` subpath (ex-crypto), Level 0 |
+| `@xivdyetools/worker-kit` | 1.0.0 | **new** — worker-middleware 1.2.0 + rate-limiter 1.5.0 merged |
+| `@xivdyetools/core` | 4.0.0 | schema v2 (3.0.0), matching vocabulary + band tiers, redmean/distinguish/LCh rotation, Machado CVD matrices, `.chara` parser, `/blending`, `dye-vocabulary.ts`, presets.json 2.0.0, CMYK, inverted tetradic (2.8.0 / 3.0.0 never published) |
+| `@xivdyetools/svg` | 2.0.0 | the 5.0 card frame system (`frame.ts`), nine new generators, icon home (`icons/tool-icons.ts`), Fragment Mono + JP/SC/KR stacks; five 4.x generator modules deleted |
+| `@xivdyetools/bot-logic` | 2.0.0 | `/i18n` subpath (ex-bot-i18n), one-line embeds, `executeContrast` / `executeSwatch`, gradient row capping, mixer ratio sweep, lens-based accessibility, `card.*` strings ×6; `executeMatch` removed (1.4.0 / 1.5.0 never published) |
+| `@xivdyetools/test-utils` | 1.2.0 | workspace-private; preset factories carry every new column |
+| `web-app` | 5.0.0 | the 5.0 redesign — every tool re-ported, two themes, console bar + tool rail, Advanced Options panel, 5B result cards, CollectionService 5.0, `.chara` import, self-hosted fonts, root OG cards, beta build (locale keys 1,041 → 1,489 ×6) |
+| `discord-worker` | 5.0.0 | 5.0 command set — v4 commands deleted, every card redrawn, `/contrast` + `/a11y` + `/changelog` new, `/preferences set theme`, Photon out to image-worker, CJK re-cut (0 tofu) |
+| `image-worker` | 1.0.0 | **new** — Photon host, `POST /extract` + `POST /thumbnail` |
+| `og-worker` | 2.0.0 | 15E band cards for all nine tools (Discord 1200×1050 + X 1200×630), per-tool default cards, `?lang=`, stainID paths, routed beta env |
+| `presets-api` | *Unreleased* (bump needed — 2.0.0 recommended) | stainID dyes (3–6), preview images, secondary categories, `example_link`, `rejection_reason`, beta CORS, migrations 0007–0010 |
+| `oauth` | *Unreleased* (bump needed — 2.6.0) | beta origin on redirect + CORS allowlist (unified — beta login hang fixed), worker-kit / auth-encoding |
+| `api-worker` | *Unreleased* (bump needed — ≥ 0.6.0) | absorbed universalis-proxy + api-docs, schema v2 serving, 5.0 matching vocabulary |
+| `moderation-worker` | *Unreleased* (bump needed — 1.4.0) | image-only queue entries marked instead of mis-approved, new category rows, worker-kit, dev/prod split |
+| `stoat-worker` | *Unreleased* (parked) | dependency retargets only |
+
+### CI/CD
+
+- **Coverage gates raised to 90 % (packages) / 80 % (apps)** and made honest (`cea3643`): web-app's thresholds were declared in the Vitest 0.x/1.x shape and had never gated anything (real figure 50.9 %, not the reported 77.4 %); api-worker and discord-worker counted their own test scaffolding as product code. 24 new test files, ~1,500 assertions; web-app and discord-worker branch figures are ratchets at the achieved value with the remaining gap named in a comment. `turbo.json` `test` inputs now include `scripts/**/*.js` (the CI-gate scripts), `build` declares `VITE_APP_ENV`.
+- **Security audit is its own CI job and runs nightly** (`17 11 * * *`): as a `continue-on-error` step inside `ci` it had made a critical advisory invisible in a green run; the nightly closes the gap between pushes (daily, not hourly, because `minimumReleaseAge: 1440` forbids installing a same-day patch anyway).
+- **Beta environment for every public surface**: `deploy-web-app-beta.yml` (non-main branches → `beta.xivdyetools.app`, a second Pages project — `--branch=beta` is load-bearing; asserts the `noindex` header end-to-end), `deploy-discord-worker-beta.yml` (beta bot on non-main pushes, own KV / analytics / emoji set, shared D1 + service bindings by design), `deploy-og-worker-beta.yml` (routed beta env with an end-to-end `og:image` check). One shared Pages smoke test (`apps/web-app/scripts/`) on both web-app workflows, run against the deployment just made rather than whatever the alias serves.
+- **Safe deploy defaults** (`3329e8f`, `docs/operations/DEPLOY_ENVIRONMENTS.md`): a bare `wrangler deploy` on discord-worker, moderation-worker and presets-api now targets a routeless `-dev` worker (for discord-worker that dev worker *is* the beta bot); production requires `--env production` — five CLAUDE.md files had called the bare deploy "staging" while it went straight to production. `routes` / `workers_dev` are declared explicitly in both environments (they are inheritable), `ANNOUNCEMENT_CHANNEL_ID` added to `[env.production.vars]` (vars are not). `oauth` remains the inverse (bare deploy IS production, no `[env.production]`) — its `deploy:production` script was fixed.
+- discord-worker's `register-commands` runs in CI on merge to main (not by hand); the production deploy workflow carries `MODERATION_BOT_TOKEN`.
+- Sprint 6 dev-toolchain advisory cleanup (`4d4c1ee`); `.gitignore` gains `e2e-coverage/`, `.vitepress/cache/`, `__pycache__/`.
+
+### Documentation
+
+- `docs/research/monorepo-2.0/`: five decision documents (dye data format, stainID migration, maintainer deprecation, theme consolidation, package/app audit) plus 17 per-tool port specs written from the Claude Design project as each tool/frame landed.
+- **`DEPRECATIONS.md`** (new, root): every retired package/app/domain with its migration path and the manual npm/Cloudflare steps still owed.
+- The documentation bible reconciled with Monorepo 2.0 and the 5.0 wave (`1f71acd`): `docs/developer-guides/` gains `contributing.md`, `deployment.md`, `release-process.md`, `troubleshooting.md` and a rewritten `monorepo-setup.md`; `docs/operations/` gains `DEPLOY_ENVIRONMENTS.md`, `DOMAIN_DEPRECATION.md` (phased retirement of `*.xivdyetools.projectgalatine.com`), `IMAGE_WORKER_SPLIT.md`; every package/app `CLAUDE.md` synced (`c7156a6`); all READMEs audited for accuracy, licensing and attribution (Blog link dropped).
+- Two new audits under `docs/audits/`: `2026-08-09-prerelease-monorepo-upgrade` (deep-dive, security, dead-code, i18n — remediated in seven sprints, plan corrections recorded) and `2026-08-09-bot-graphics-conformance` (design vs. implementation for every 5.0 card).
+- Root **`CHANGELOG-laymans.md`** (new): the product-level, player-facing release notes that discord-worker's `/changelog` command and the release-announcement webhook parse (strict `## [x.y.z] - YYYY-MM-DD` grammar); every app/package changelog brought up to date for this release, plus `apps/image-worker/CHANGELOG.md` created.
+
+### Deploy sequence (pending)
+
+1. **Before merging, by hand:** presets-api D1 — migration `0007` (already applied to production, zero rows), the generated stainID rewrite from `scripts/migrate-dyes-to-stainids.ts`, then `0008`, `0009`, `0010`; release `proxy.xivdyetools.app` / `proxy.xivdyetools.projectgalatine.com` from the old universalis-proxy worker and `developers.xivdyetools.app` from the old Pages project; confirm `xivdyetools-image-worker` (deployed 2026-08-09) carries `/thumbnail` — redeploy if not; oauth + presets-api allowlists carry `https://beta.xivdyetools.app`.
+2. **Merge to main** → path-filtered worker deploys (discord-worker's job runs `register-commands` globally), the web-app Pages deploy + smoke test, the `CHANGELOG-laymans.md` announcement webhook.
+3. **npm publish** via *Publish Packages to npm*, tier order: types 2.0.0 → auth 1.3.0 → core 4.0.0 → **worker-kit 1.0.0 (first publish is a manual 2FA publish + trusted-publisher setup — OIDC cannot create a package)** → svg 2.0.0 → bot-logic 2.0.0 (logger unchanged). Then `npm deprecate` crypto, bot-i18n, color-blending, worker-middleware, rate-limiter.
+4. **User-run afterwards:** `npm run upload-emojis` with production credentials (regenerated stainID-keyed set); `scripts/cleanup-v4-kv.ts`; og-worker beta deploy then production; purge the edge cache for `/og/default.png` / `/og/default-x.png`.
+5. **Still open before merge:** version bumps for presets-api, oauth, api-worker, moderation-worker (and stoat-worker if it is ever tagged); discord-worker `/preset submit` + `/preset edit` still send legacy itemIDs and validate 2–5 dyes against an API that now requires stainIDs and 3–6 (recorded under discord-worker 5.0.0 "Known issues").
+
+---
+
 ## [1.18.0] - 2026-07-19
 
 Full remediation of the 2026-07-18 deep-dive audit (139 findings; 128 scheduled across 8 deploy-unit sprints in `docs/audits/2026-07-18/REMEDIATION_PLAN.md`) — every sprint implemented, verified, and documented, with per-finding Status sections recording what shipped and what was deliberately deferred. Sprint 1 (presets-api) deployed to production 2026-07-18; everything else awaits the coordinated npm publish + worker deploy + web-app release sequence recorded in the plan.

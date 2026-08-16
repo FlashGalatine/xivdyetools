@@ -5,6 +5,77 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Monorepo 2.0 / Web-App 5.0 release train (branch `monorepo-2.0-prep`, 2026-07-30 → 2026-08-16). Nothing below has shipped: `package.json` is still **1.6.0** and needs a bump before merge — **2.0.0 is recommended** (see ⚠️ BREAKING: the wire contract for `dyes` changes from legacy itemIDs to stainIDs, the dye-count rule moves from 2–5 to 3–6, and the `community` category is deleted, so any pre-5.0 client is rejected loudly on submit/edit).
+
+### ⚠️ BREAKING
+
+- **Preset dyes are stainIDs, not itemIDs.** `POST /api/v1/presets` and `PATCH /api/v1/presets/:id` now require every entry of `dyes` to be a stainID (`1–254`); anything `>= 5000` is rejected with `Dye <n> looks like a legacy item ID; expected a stainID (1-254)` and any other out-of-range value with `Dye IDs must be stainIDs (1-254)`. A half-migrated caller now fails loudly instead of silently rendering empty palettes. Stored rows are rewritten by the deploy-window data migration below; `dye_signature` and `previous_values` are recomputed at the same time (duplicate detection and moderation revert would otherwise break across eras).
+- **Dye count is 3–6 per preset** (was 2–5) — `PRESET_VALIDATION_RULES.dyes` in `src/services/validation-service.ts`.
+- **The `community` category no longer exists.** Community-ness is a source, not a category: migration `0007` deletes the `categories` row (any preset filed under it lands in `aesthetics`; production matched zero rows), the D1 seed in `schema.sql` no longer creates it, and `getValidCategories()` (DB-backed) therefore rejects it on submit/edit. Co-removed from `@xivdyetools/types` `PresetCategory`.
+- **CORS `allowHeaders` shrinks to `Content-Type, Authorization`** (FINDING-005). `X-User-Discord-ID` / `X-User-Discord-Name` are server-to-server bot identity headers honoured only behind a valid HMAC signature; both bot callers reach this Worker over Service Bindings and never preflight, so no browser client is affected — but a browser that was sending them will now fail preflight.
+
+### Deploy window (operator steps, in this order — all user-run)
+
+D1 migrations are **never** applied automatically: `npm run db:migrate` replays `schema.sql`, which is all `CREATE TABLE IF NOT EXISTS`, so against the live database it exits 0 having changed nothing. Every file under `migrations/` is applied by hand with `wrangler d1 execute xivdyetools-presets --remote --file=…`, and each one must land **before** the worker that reads its columns is deployed (the first `INSERT` naming a missing column fails as an opaque 500).
+
+1. `migrations/0007_drop_community_category.sql` — drop the `community` category. **Already applied to production** (matched zero rows); still required for fresh installs, local dev D1 and restores.
+2. Generate and apply the data-dependent stainID rewrite: dump `SELECT id, dyes, previous_values FROM presets` with `--json`, run `npx tsx scripts/migrate-dyes-to-stainids.ts <dump.json> > migrations/generated-stainid-updates.sql`, review, apply. Idempotent (already-migrated rows emit no `UPDATE`); must run in the **same** window as the 5.0 worker deploys.
+3. `migrations/0008_add_example_link.sql` — `presets.example_link TEXT`.
+4. `migrations/0009_add_preview_image.sql` — `presets.preview_image_key TEXT`, `presets.preview_image_status TEXT NOT NULL DEFAULT 'none'`. The R2 bucket `xivdyetools-presets-preview-thumbnails` and its public custom domain `shots.xivdyetools.app` already exist (created 2026-08-10, round-trip verified).
+5. `migrations/0010_add_secondary_categories.sql` — `presets.secondary_categories TEXT NOT NULL DEFAULT '[]'` + `INSERT OR IGNORE` of the three new categories `appearance` / `zones` / `raids-trials`.
+6. Deploy `xivdyetools-image-worker` first (the new `IMAGE_WORKER` service binding must resolve), then this worker with `npm run deploy:production` — a bare `npm run deploy` now targets the routeless dev worker (see Changed).
+7. Verify column presence with a single-row aggregate over `pragma_table_info('presets')`, not a column list.
+
+### Added
+
+- **Preview images (author-uploaded card pictures) via image-worker + R2** (`src/services/preview-image-service.ts`, spec `docs/superpowers/specs/2026-08-10-preset-glamour-thumbnails-design.md`):
+  - `POST /api/v1/presets/:id/preview-image` — author-only; raw image bytes (PNG/JPEG/WebP, ≤ 5 MB `MAX_PREVIEW_IMAGE_BYTES`, identified by magic-byte sniff, never by the declared `Content-Type`) are cropped/encoded to WebP by `IMAGE_WORKER` (`POST /thumbnail`) and stored in the `THUMBNAILS` R2 bucket as `{presetId}/{uuid}.webp` (immutable cache headers). The row flips to `preview_image_status = 'pending'`; a replaced image's old object is deleted after the DB write.
+  - `DELETE /api/v1/presets/:id/preview-image` — author-only removal; idempotent 200 when there is no image; the preset's own `status` is untouched and content moderation is not re-run.
+  - `PATCH /api/v1/moderation/:presetId/preview-image` with `{ "action": "approve" | "reject" }` — approve sets `preview_image_status = 'approved'`; reject clears the key/status and deletes the R2 object. Rejecting the image never changes the preset's status (a bad picture is not a bad palette).
+  - `DELETE /api/v1/presets/:id` now also removes the preset's R2 object.
+  - **The moderation gate**: `CommunityPreset.preview_image_url` (`https://shots.xivdyetools.app/<key>`) is built in `rowToPreset()` only when the status is `approved`; `preview_image_status` (`'none' | 'pending' | 'approved'`) is exposed everywhere as a label. `preview_image_key` is never exposed on the API shape.
+  - Moderator queue: `GET /api/v1/moderation/pending` returns rows where `status = 'pending'` **or** `preview_image_status = 'pending'`, each carrying `pending_preview_image_url` so moderators can see what they are judging.
+  - A new `preview_image` notification variant (`PresetNotificationPayload` is now a discriminated union on `type`) is sent to discord-worker through the same retry / back-off / `failed_notifications` dead-letter path as submissions.
+  - Everywhere on this feature the DB write happens **before** the R2 delete and the delete is `try/catch`ed: a failed R2 call may orphan an object (invisible, cheap to clean up) but never leaves a row pointing at a deleted key or 500s a request whose state is already correct.
+- **Secondary categories** — a preset now has one primary `category_id` plus up to two `secondary_categories` (`SECONDARY_CATEGORY_MAX = 2`, `validateSecondaryCategories`: cap, unknown value, duplicate, and primary-collision rules). Accepted on `POST /api/v1/presets` and `PATCH /api/v1/presets/:id` (`category_id` and `secondary_categories` are now editable; `[]` clears the list and counts as a real update; category-only edits do not re-queue for moderation). Persisted as a JSON array (`'[]'` default, corrupt values fall back to `[]` per BUG-012) and returned as `CommunityPreset.secondary_categories`. `?category=` filtering and the `preset_count` in `GET /api/v1/categories` / `GET /api/v1/categories/:id` match primary **or** secondary — counts therefore sum to more than the preset total by design.
+- **Three new curated categories**: `appearance` (👤 "Palettes built around a character's own colours"), `zones` (🏔️ "Palettes drawn from the places of Eorzea"), `raids-trials` (🗡️ "Palettes from raid and trial encounters") — seeded by migration `0010` and `schema.sql`.
+- **`example_link`** (8A Gallery) — an optional https page URL about the glamour, stored as a link and never fetched or copied. `validateExampleLink` / `normalizeExampleLink` in `validation-service.ts`: https only, ≤ 300 chars, bare hosts get the scheme added, host must be on `EXAMPLE_LINK_HOSTS` (exact host or subdomain, suffix look-alikes rejected): `eorzeacollection.com`, `mirapri.com`, `reddit.com`, `redd.it`, `x.com`, `twitter.com`, `bsky.app`, `instagram.com`, `pixiv.net`, `finalfantasyxiv.com` (Lodestone), `misskey.io`. Image hosts (Imgur/Flickr) were deliberately dropped from the initial list — the field is for pages that carry credit and gear info, not raw images. Accepted on submit and edit (`''`/`null` clears it), returned as `CommunityPreset.example_link`; the web app mirrors the list in `apps/web-app/src/shared/example-link.ts`.
+- **`rejection_reason` on `GET /api/v1/presets/mine`** — `getPresetsByUser()` joins the latest `moderation_log` reject reason, so a rejected submission shows *why* instead of just failing to appear (previously the reason lived only in the moderation worker).
+- `scripts/migrate-dyes-to-stainids.ts` — generates the data-dependent stainID `UPDATE`s from a D1 JSON dump using the canonical `legacyItemID → stainID` map in `packages/core/src/data/dyes.json` (see Deploy window).
+- `wrangler.toml`: `THUMBNAILS` R2 binding and `IMAGE_WORKER` service binding in both environments; `Env` gains `IMAGE_WORKER: Fetcher` and `THUMBNAILS: R2Bucket`.
+
+### Changed
+
+- **Bare `wrangler deploy` is now safe** (`docs/operations/DEPLOY_ENVIRONMENTS.md`): the top-level `wrangler.toml` block is the routeless `xivdyetools-presets-api-dev` worker (`workers_dev = false`, localhost CORS); `routes` for `api.xivdyetools.app` / `api.xivdyetools.projectgalatine.com` **moved** into `[env.production]` (they are inheritable keys — leaving them at the top level would have attached the production domains to the dev worker). Production ships only via `npm run deploy:production` (CI already passes `--env production`). Note the dev worker still binds the production D1.
+- CORS: `https://beta.xivdyetools.app` added to production `ADDITIONAL_CORS_ORIGINS` (beta uses the production presets backend on purpose; the stale `xiv-colorexplorer.pages.dev` entry is left alone). Until this ships, every community-preset call from beta is CORS-blocked.
+- Body guards: `bodySizeLimit` (100 KB) and the JSON-only mutation gate now exempt exactly one request shape — `POST /api/v1/presets/:id/preview-image` (`isPreviewImageUpload()` in `src/middleware/body-validation.ts`), which accepts `image/png`, `image/jpeg`, `image/webp` or no `Content-Type` and enforces its own 5 MB limit; every other endpoint keeps the 100 KB cap and the JSON-only rule (including `PATCH` on the same path).
+- `validateEditRequest()` is now async and DB-backed like `validateSubmission()`, taking the preset's current `category_id` so a secondary that repeats the unchanged primary is caught; the "No updates provided" guard recognises `example_link`, `category_id` and `secondary_categories`.
+- Migrated from `@xivdyetools/worker-middleware` + `@xivdyetools/rate-limiter` to `@xivdyetools/worker-kit` (`/rate-limiter` subpath) — Tier 1 package consolidation; dropped the unused `@xivdyetools/crypto` dependency. The deploy workflow's path filter now watches `packages/worker-kit/**` (worker-middleware appeared in no deploy filter before).
+- `schema.sql` repaired (removing the `community` seed row had left a trailing comma that made the file a syntax error and unable to create a database) and brought in line with migrations 0008–0010 for fresh local databases; the table doc no longer claims six seeded categories.
+- Dependencies: `hono` floor raised to `^4.12.34` (2026-08-09 security advisories); `wrangler` `^4.114.0 → ^4.120.0` (miniflare 5 / undici 7.29 — clears the undici advisories); `license: MIT` declared.
+- Docs: `README.md` written (accuracy/licensing/attribution audit), `CLAUDE.md` synced to schema v2 / preview images / worker-kit / the dev-vs-production deploy split.
+
+### Fixed
+
+- **Preview-image upload was unreachable in production** — the two global `/api/*` guards 413'd any body over 100 KB and 415'd anything that was not `application/json`, so every realistic upload died before the route ran while the route's own tests (mounted without the middleware) stayed green. Now exempted as described under Changed, with tests that drive the real app export.
+- **Pending preview images never reached the moderator queue** — `getPendingPresets()` filtered on `status = 'pending'` only, so an approved preset with a newly uploaded image was invisible to moderators; the query now also matches `preview_image_status = 'pending'` (with a regression guard for a key-only row).
+- Preview-image moderator notification bypassed the retry path (a hand-rolled fetch with no retry, no back-off and no dead-letter row); it now goes through `notifyDiscordBot` on `waitUntil` like submissions.
+- `DELETE /api/v1/presets/:id` deleted the R2 object before the D1 batch (the opposite of the documented ordering rule); collapsed a redundant second `SELECT` while there.
+- Migration `0007` lands retired `community` presets in `aesthetics` rather than `events` (a preset filed under a source rather than a theme is a general-purpose palette).
+- Preview-image upload writes the DB row before deleting the previous R2 object (a failed write must orphan an object, never point at a deleted one), and the 5 MB limit is now tested for real.
+- Stale seed-script path in `scripts/migrate-presets.ts`.
+
+### Security
+
+- **FINDING-002 (2026-08-09 pre-release audit)**: the four loopback CORS origins (`localhost`/`127.0.0.1` on 5173 and 8787) are now reflected only when `ENVIRONMENT === 'development'` — production previously reflected them alongside `credentials: true`. Mirrors OAUTH-SEC-001 in the oauth worker.
+- FINDING-005: `X-User-Discord-ID` / `X-User-Discord-Name` removed from CORS `allowHeaders` (see ⚠️ BREAKING).
+
+### Tests
+
+- Coverage raised (branches threshold 75 → 80; workspace gate is 80% for apps): new `tests/handlers/moderation.test.ts`, `tests/services/example-link.test.ts`, `tests/services/preview-image-service.test.ts`, `tests/services/preset-service.test.ts`; `createMockEnv` gains `THUMBNAILS` (mock R2) and a happy-path `IMAGE_WORKER`; D1 fixtures retired the `community` category; app-level tests for the upload exemptions and the pending-image gate.
+
 ## [1.6.0] - 2026-07-18
 
 2026-07-18 audit remediation (Sprint 1) — deployed to production 2026-07-18.

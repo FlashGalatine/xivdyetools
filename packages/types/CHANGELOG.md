@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-08-16
+
+Monorepo 2.0 / Web-App 5.0 release. The intermediate **1.16.0** bump (2026-07-31, schema v2 types + `CMYK`) was never published — npm still has 1.15.0 — so it is folded into this entry rather than listed separately.
+
+### ⚠️ BREAKING
+
+- **`SubRace` `'Helion'` → `'Helions'`** (the identifier now matches the game's plural and the `.chara` character files; a rename was chosen over an alias). `RACE_SUBRACES.Hrothgar` and `SUBRACE_TO_RACE` follow, and the localization `ClanKey` `'helion'` → `'helions'`. **Migration:** consumers persisting a subrace (localStorage, KV, URL state) must map the stored `'Helion'` to `'Helions'` on read — `@xivdyetools/core`'s `parseCharaFile` and the web app already do; the Discord bot's clan preferences stored the display plural, so no KV rewrite is needed there.
+- **`PresetCategory` loses `'community'`** — community-ness is a *source*, not a category — and gains **`'appearance'`**, **`'zones'`**, **`'raids-trials'`**: `'jobs' | 'grand-companies' | 'seasons' | 'events' | 'aesthetics' | 'appearance' | 'zones' | 'raids-trials'`. `appearance` is deliberately not `character` (`kind: 'character'` is the CollectionService record type); `raids-trials` excludes dungeons and must never be called "duties". Exhaustive `Record<PresetCategory, …>` maps must add the three new keys and drop `community`. Operator step: presets-api D1 migration `0007_drop_community_category.sql` removes the stored category.
+- **`PresetPalette.dyes` is documented as stainIDs (3–6 per palette)** — was itemIDs (2–5). The field type is unchanged (`number[]`), but the meaning is: `@xivdyetools/core`'s `presets.json` 2.0.0 stores stainIDs and resolves via `getByStainId`; anything treating a curated palette's `dyes` as itemIDs is now wrong. (Community presets in `CommunityPreset.dyes` / `PresetSubmission.dyes` are migrated to stainIDs by presets-api's `scripts/migrate-dyes-to-stainids.ts` in the same release, and the API's 2–5 range guard became 3–6 with a loud legacy-range rejection.)
+- **`CommunityPreset` gains two required fields** — `secondary_categories: PresetCategory[]` and `preview_image_status: 'none' | 'pending' | 'approved'` — so every object literal typed as `CommunityPreset` (fixtures, mocks, serialisers) must supply them.
+
+### Added
+
+- **`FacewearColor`** (`dye/facewear.ts`, exported from the root and `@xivdyetools/types/dye`) — `{ id: string slug; name: string; hex: string }`. Facewear glasses colours are **not** dyes: schema v2 (2026-07-31) moved the 11 entries out of the dye database into `@xivdyetools/core`'s `facewearColors` collection, and tools that accept both take a discriminated union (a `FacewearColor` has a string `id`; a `Dye` has numeric identifiers). The `Dye` interface itself is unchanged — the runtime dye object keeps its full 16-field shape and `Dye.itemID` is still always a `number` (`createDyeId` still accepts the frozen legacy `<= -1000` synthetic range for persisted references).
+- **`CMYK`** colour interface (`{ c, m, y, k }`, 0–100 %) — naive device-independent conversion, display/reference values, not print production. Exported from the root and `@xivdyetools/types/color`.
+- **`Race`** is now re-exported from the package root (previously subpath-only) because `@xivdyetools/core`'s `.chara` parser needs it in its public API.
+- **`HarmonyTypeKey`** gains `'invertedTetradic'` (the mirror rectangle of tetradic; core's `findInvertedTetradicDyes`).
+- **Community preset multi-category + preview-image + example-link fields:**
+  - `CommunityPreset.secondary_categories: PresetCategory[]` (required; up to two extra categories, never containing `category_id` — the gallery matches on either slot) and `PresetSubmission.secondary_categories?` / `PresetEditRequest.secondary_categories?` (`[]` clears).
+  - `PresetEditRequest.category_id?` — the edit form can now change the primary category.
+  - `CommunityPreset.example_link?: string | null`, `PresetSubmission.example_link?`, `PresetEditRequest.example_link?` (null clears) — a page URL on an allowlisted host (glamour destinations such as Eorzea Collection, Mirapri, the Lodestone, and social posts on X, Bluesky, Reddit, Instagram, pixiv, Misskey; raw image hosts deliberately excluded — `EXAMPLE_LINK_HOSTS` in presets-api's validation-service is authoritative). Stored as a link, never a copy of the image. Operator step: presets-api D1 migration `0008_add_example_link.sql`.
+  - `CommunityPreset.preview_image_url?: string | null` — present **only** when a moderator has approved the author-uploaded picture (the serialiser omits it for every other status; that omission is the moderation gate) — and `CommunityPreset.preview_image_status` (required; a status label safe to serialise everywhere so the edit form can say "under review"). Operator step: presets-api D1 migrations `0009_add_preview_image.sql` and `0010_add_secondary_categories.sql` back the two new required fields.
+  - `CommunityPreset.rejection_reason?: string | null` — the latest moderation reject reason, populated only on the author's own-submissions listing (8S My Submissions); null elsewhere.
+
+### Changed
+
+- `README.md` / `CLAUDE.md` refreshed for the branch state: `FacewearColor` in the module map, the synthetic Facewear ID range documented as a frozen legacy range rather than a live scheme, `stainID` described as the canonical key, subpath table completed (`/character`, full colour set), JWT issuer example updated to `auth.xivdyetools.app`, licensing / Square Enix legal notice added, Blog link dropped — docs only.
+
 ## [1.15.0] - 2026-07-19
 
 2026-07-18 audit remediation (Sprints 4 & 6).

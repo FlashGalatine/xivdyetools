@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Monorepo 2.0 / 5.0-release follow-through. `package.json` is still `1.3.0` — bump (1.4.0 suggested: additive behaviour) before tagging. Deploy note: production is now **only** `wrangler deploy --env production`; a bare `deploy` targets the routeless `xivdyetools-moderation-worker-dev` worker.
+
+### Added
+
+- **Image-only entries in `/preset moderate pending`** (2026-08-11 whole-branch review, FINDING-001): presets-api's moderation queue now also lists *approved* presets whose new preview picture alone is awaiting review, but this command's approve/reject act on the preset's own status — approving such an entry was a `WHERE status = 'approved'` no-op that left it stuck in the queue, and rejecting one pulled a live, approved palette from the gallery over a disliked picture. `handlePendingAction` now marks those entries with 🖼 plus a "Picture pending review: {url}" note (the API's previously-discarded `pending_preview_image_url`, surfaced through a new `ModerationQueueEntry` type in `src/types/preset.ts` and `presetApi.getPendingPresets()`), and the embed footer stops advertising approve/reject for them (`footerMixedQueue` vs `footerTextOnly`). Picture review itself happens on the moderation embed discord-worker posts. Four new en locale keys in `src/services/bot-i18n.ts` (`imageOnlyNote`, `imageOnlyNoteNoUrl`, `footerTextOnly`, `footerMixedQueue`).
+- **New preset categories** in `CATEGORY_DISPLAY` (`src/types/preset.ts`): `appearance` 👤, `zones` 🏔️, `raids-trials` 🗡️ "Raids & Trials" — the `Record<PresetCategory, …>` stays exhaustive against `@xivdyetools/types@2.0.0`. Test fixtures gained the new `secondary_categories` / `preview_image_status` fields of the widened `CommunityPreset`.
+
+### Removed
+
+- **`community` preset category** dropped from `CATEGORY_DISPLAY` — the category was retired by the 5.0 presets migration (curated presets are keyed by stainID; the community bucket no longer exists in `@xivdyetools/types`).
+
+### Changed
+
+- **Tier 1 package consolidation (2026-07-31)**: `@xivdyetools/worker-middleware` → `@xivdyetools/worker-kit` (`requestIdMiddleware`, `loggerMiddleware`, `MiddlewareVariables`) and `@xivdyetools/rate-limiter` → `@xivdyetools/worker-kit/rate-limiter` (`KVRateLimiter` in `src/middleware/rate-limit.ts`). No behaviour change; migration paths in `xivdyetools/DEPRECATIONS.md`.
+- **`wrangler.toml` deploy safety** (`docs/operations/DEPLOY_ENVIRONMENTS.md`): the top-level env is renamed `xivdyetools-moderation-worker-dev` with `workers_dev = false` and **no routes**; the two production custom domains (`moderation-bot.xivdyetools.app`, `moderation-bot.xivdyetools.projectgalatine.com`) moved under `[env.production]` so a bare `wrangler deploy` can no longer overwrite the production bot. `npm run deploy` therefore deploys the dev worker; production is `deploy:production`.
+- Docs: `README.md` rewritten from the audit template (accurate command surface, licensing/attribution, MIT + Square Enix legal notice, Blog link dropped); `CLAUDE.md` synced to worker-kit and the dev/production deploy split.
+- Tests: coverage thresholds raised to 90/80/90/90 (statements/branches/functions/lines) with new `src/utils/env-validation.test.ts` and `src/utils/sql-helpers.test.ts` suites and expanded `preset.test.ts` coverage of the pending listing.
+
+### Security
+
+- `hono` floor raised `^4.12.32` → `^4.12.34` (resolves to 4.13.1; clears the four hono advisories, though this worker mounts no CORS middleware and no `hono/language`, so none were reachable here); `wrangler` dev dependency `^4.114.0` → `^4.120.0` (Sprint 6 dev-toolchain advisory sweep).
+
 ## [1.3.0] - 2026-07-19
 
 2026-07-18 audit remediation (Sprint 5).

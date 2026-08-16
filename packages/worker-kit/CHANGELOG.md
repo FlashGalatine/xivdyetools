@@ -2,17 +2,42 @@
 
 All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-middleware`) will be documented in this file.
 
-## [1.0.0] - 2026-07-31
+## [1.0.0] - 2026-08-16
 
-Monorepo 2.0 Tier 1 package consolidation: `@xivdyetools/worker-middleware` v1.2.0 and `@xivdyetools/rate-limiter` v1.5.0 merged into this new package.
+**New npm package** — first release. Formed in the Monorepo 2.0 Tier 1 package consolidation (2026-07-31) by merging `@xivdyetools/worker-middleware` v1.2.0 and `@xivdyetools/rate-limiter` v1.5.0; both source trees moved verbatim, and neither API changed. `@xivdyetools/worker-kit` has never been published, so nothing below is breaking for an existing consumer — but see the migration notes for the two retired packages.
+
+### ⚠️ Migration from the retired packages
+
+- `import { … } from '@xivdyetools/worker-middleware'` → `import { … } from '@xivdyetools/worker-kit'` (or the `/middleware` subpath).
+- `import { … } from '@xivdyetools/rate-limiter'` → `import { … } from '@xivdyetools/worker-kit/rate-limiter'`.
+- Backend subpaths keep their names one level down: `@xivdyetools/rate-limiter/{memory,kv,upstash,presets}` → `@xivdyetools/worker-kit/rate-limiter/{memory,kv,upstash,presets}`.
+- All eight in-repo Worker consumers were flipped on the branch (`api-worker`, `discord-worker`, `moderation-worker`, `oauth`, `og-worker`, `presets-api`, `stoat-worker`, and the since-absorbed `universalis-proxy`). Full details and the removal checklist live in `DEPRECATIONS.md`.
 
 ### Added
 
-- `src/middleware/` — the Hono middleware stack (formerly worker-middleware; API unchanged), at the package root and `./middleware`.
-- `src/rate-limiter/` — the rate limiting engine (formerly rate-limiter; API unchanged), at `./rate-limiter` with backend subpaths `./rate-limiter/{memory,kv,upstash,presets}`.
-- `hono` and `@cloudflare/workers-types` are both optional peers, so rate-limiter-only consumers (e.g. stoat-worker) don't need hono.
+- `src/middleware/` — the Hono middleware stack, exported from the package root and `./middleware`: `requestIdMiddleware()` (UUID-validated `X-Request-ID`, log-injection safe), `loggerMiddleware()` (per-request `@xivdyetools/logger` with `serviceName` / env / API-version / user-agent / `sanitizePath` options), `rateLimitMiddleware()` (memoized backend factory, standard `X-RateLimit-*` + `Retry-After` headers, fail-open by default), plus the `getRequestId(c)` / `getLogger(c)` context helpers and the `MiddlewareVariables` type.
+- `src/rate-limiter/` — the sliding-window rate-limiting engine at `./rate-limiter`: `MemoryRateLimiter` (per-isolate, LRU-evicted), `KVRateLimiter` (best-effort fixed window on Cloudflare KV) and `UpstashRateLimiter` (distributed sliding window on Upstash Redis) behind the shared `RateLimiter` / `ExtendedRateLimiter` interfaces; `getClientIp(request, options?)` (prefers `CF-Connecting-IP`, never trusts `X-Forwarded-For` unless opted in); `getRateLimitHeaders()` / `formatRateLimitMessage()`; and the presets `OAUTH_LIMITS`, `DISCORD_COMMAND_LIMITS` (incl. `autocomplete`), `MODERATION_LIMITS`, `PUBLIC_API_LIMITS`, `UNIVERSALIS_PROXY_LIMITS` with the `getOAuthLimit()` / `getDiscordCommandLimit()` lookups. Every backend also has its own subpath (`./rate-limiter/{memory,kv,upstash,presets}`) so a Worker bundles only the one it uses.
+- `hono` and `@cloudflare/workers-types` are both **optional** peers, so rate-limiter-only consumers (e.g. `stoat-worker`, a Node.js bot) don't need hono at all. `@upstash/redis` and `@xivdyetools/logger` are the only runtime dependencies. `"sideEffects": false` for tree-shaking; `./package.json` is exported.
 
-Entries below this point are `@xivdyetools/worker-middleware` history; `@xivdyetools/rate-limiter`'s changelog lives in git history (`packages/rate-limiter/CHANGELOG.md` before 2026-07-31).
+### Security
+
+- Optional `hono` peer floor raised from `^4.0.0` to `^4.12.34` (2026-08-09 pre-release audit FINDING-001 — the CORS ReDoS advisory in hono < 4.12.34 is reachable on the four Workers that mount `cors()`). Tightening a peer range would normally be a major bump, but the package has never been published, so the floor simply lands in this first release.
+
+### Changed
+
+- Tests: both suites (~2,250 lines across the middleware and rate-limiter modules) came across intact; the 90% lines / functions / branches / statements gate carried over from worker-middleware and now covers the rate-limiter tree too.
+- Docs: README rewritten for the merged package (import-path table, middleware option tables, backend comparison, Worker configuration examples, license/legal notice); `CLAUDE.md` synced (incl. the `api-worker` ↔ `universalis-proxy` absorption).
+
+### Operator notes (release day)
+
+- `@xivdyetools/worker-kit` does **not** exist on npm yet. OIDC trusted publishing cannot create a new package: the first version must be published manually by a 2FA-authenticated human, and the trusted-publisher config added on npmjs.com afterwards (checklist in `DEPRECATIONS.md`). Until then, the "Publish Packages to npm" workflow entry for worker-kit will fail.
+- `npm deprecate` `@xivdyetools/worker-middleware` and `@xivdyetools/rate-limiter` pointing at this package (manual, needs npm 2FA).
+
+---
+
+## Predecessor history: `@xivdyetools/worker-middleware` (1.0.0 – 1.2.0)
+
+Everything below this line is the changelog of `@xivdyetools/worker-middleware`, the package whose shell was renamed to become worker-kit — it is **not** worker-kit release history. `@xivdyetools/rate-limiter`'s changelog (1.0.0 – 1.5.0) was not carried over; read it from git at `packages/rate-limiter/CHANGELOG.md` before commit `3f73b08` (2026-07-31).
 
 ## [1.2.0] - 2026-07-19
 

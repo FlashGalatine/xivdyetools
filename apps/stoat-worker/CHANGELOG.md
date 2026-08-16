@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Monorepo 2.0 follow-through only — the bot is parked (no active investment, no deploy workflow) and gained no features. `package.json` is still `0.2.0`; bump before tagging.
+
+### Changed
+
+- **Tier 1 package consolidation (2026-07-31)**: dependencies retargeted to the surviving packages — `@xivdyetools/bot-i18n` → `@xivdyetools/bot-logic/i18n` (`LocaleCode` imports in `src/commands/info.ts` and `src/services/dye-resolver.ts`), `@xivdyetools/rate-limiter` → `@xivdyetools/worker-kit` (`/rate-limiter` subpath; still only *planned* for the Upstash backend), and `@xivdyetools/color-blending` → `@xivdyetools/core/blending` (planned mixer command). No runtime behaviour change; the retired packages are documented in `xivdyetools/DEPRECATIONS.md`.
+- Compiles cleanly against `@xivdyetools/bot-logic@2.0.0` / `@xivdyetools/core@4.0.0` / `@xivdyetools/svg@2.0.0` — the only bot-logic surface this app touches (`executeDyeInfo`, `resolveDyeInput*`, `dyeService`) survived the 5.0 API rewrite unchanged.
+- `package.json` `license` corrected from `ISC` to `MIT` (matches the repo `LICENSE` and every other workspace package).
+- Coverage gate: `vitest.config.ts` branches threshold raised 75 → 80 (statements/functions/lines stay at 85) as part of the monorepo-wide 90% packages / 80% apps coverage pass.
+- Docs: `README.md`/`CLAUDE.md` re-audited — parked/"no deploy workflow" status called out, only `ping`/`help`/`about`/`dye info` listed as implemented (everything else tagged *planned*), shared-package table updated for the consolidated names, Blog link replaced with X/Twitter, MIT + Square Enix legal notice added.
+
 ## [0.2.0] - 2026-07-19
 
 2026-07-18 audit remediation (Sprint 5).

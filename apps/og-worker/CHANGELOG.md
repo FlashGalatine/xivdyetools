@@ -5,27 +5,55 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2026-08-09
+## [2.0.0] - 2026-08-16
 
-The 5.0 card rewrite, plus a reconciliation pass against the confirmed design
-record (`OG Card Directions` / `OG Default Cards` / `OG X Variants` /
-`String Pass - OG One-liners`, ratified in `Decisions.md`).
+The 5.0 card rewrite — the 15E band frame across all nine tools — plus a
+reconciliation pass against the confirmed design record (`OG Card Directions` /
+`OG Default Cards` / `OG X Variants` / `String Pass - OG One-liners`, ratified in
+`Decisions.md`; port spec in `docs/research/monorepo-2.0/4-og-15e-band-port-spec.md`),
+the share-URL grammar cut-over to stainID, and a routed **beta** environment.
+
+Ships together with `@xivdyetools/svg` 2.0.0, `@xivdyetools/core` 4.0.0,
+`@xivdyetools/types` 2.0.0 and web-app 5.0.0 — the share-URL grammar below is
+an atomic web + og move, so neither side should go out without the other.
+
+### ⚠️ BREAKING
+
+- **Share URLs key on stainID, not itemID.** Every dye-class parameter the crawler routes read (`?dye=`, `?start=`/`?end=`, `?a=`/`?b=`/`?c=`, comparison / accessibility dye lists, budget's `?dye=`) and every `/og/<tool>/:dyeId…` image path segment is now a **stainID (1–254)**. The dye lookup map in `services/svg/dye-helpers.ts` is re-keyed to `stainID`; legacy itemIDs (≥ 5729, a disjoint range) deliberately **miss into the default-card path** rather than guessing a dye. Budget's `?dye=NAME` outlier is gone (names are localized six ways and were never a stable key). Swatch's bare-colour param is `?hex=` with `?color=` accepted as a read alias. Old shared links from the 4.x web-app therefore unfurl as the tool's default card, not as a wrong dye. (`96f30fc`)
+- **`?algo=` speaks the 5.0 matching vocabulary.** `MatchingAlgorithm` is now core's `MatchingMethod` (`ciede2000`, `oklab`, `cie76`, `redmean`, `rgb`, `distinguish`); the retired `euclidean` / `hyab` / `oklch-weighted` values are still accepted in URLs and normalized on use via `normalizeMatchingMethod`, so old links keep rendering. Mixer / gradient blend-space switches cover the new methods; harmony's `HarmonyType` gains `inverted-tetradic` (offsets `[120, 180, 300]`). (`9f6a105`, `f0aed04`)
+- **`SubRace` `'Helion'` → `'Helions'`** in the swatch character-colour subrace list, in step with `@xivdyetools/types` 2.0.0. (`be884d1`)
+- **A bare `wrangler deploy` / `pnpm deploy` now publishes to real, public hostnames.** The top-level env is the *beta* worker and carries live `beta.xivdyetools.app/<tool>/*` routes (see "Two routed environments" below). It still cannot reach production — `[env.production]` declares its own `routes` and `workers_dev`. (`b06b6a8`)
+- `@xivdyetools/worker-middleware` → `@xivdyetools/worker-kit` (Tier 1 package consolidation): `requestIdMiddleware` / `loggerMiddleware` / `getLogger` now import from `@xivdyetools/worker-kit`. Internal to the worker; no route or output change. (`3f73b08`)
 
 ### Added
 
-- **The 15E band frame**, one shape for all nine tools, on a 400-wide design grid rastered ×3 (Discord 400×350 → 1200×1050, X 400×210 → 1200×630 via `?frame=x`, which `twitter:image` carries). `og:image:width/height` state the raster size and the two frames take separate cache keys.
-- **Routes for the three unwired tools** — extractor, presets and budget — in `SUPPORTED_TOOLS`, `wrangler.toml` and `services/svg/`. A shared preset or budget swap no longer unfurls as a bare URL.
-- **The 2a default cards**: `/og/default.png` and `/og/:tool/default.png`. A default card never fakes data — no dye names, no Δ, no prices — the mark's six spill stripes carry the identity and the tool's banner glyph floats in a dark tile. The root card takes no tile and drops the method tag.
-- **Deck strings ×6** (`OG_DECK`) — ten tool name + one-liner pairs, the worker's first tool-describing card strings.
+- **The 15E band frame**, one shape for all nine tools, on a 400-wide design grid rastered ×3 (Discord 400×350 → 1200×1050, X 400×210 → 1200×630 via `?frame=x`, which `twitter:image` carries). `og:image:width/height` state the raster size and the two frames take separate cache keys. Each tool is a thin adapter (`services/svg/<tool>.ts`) onto the shared `services/svg/band.ts` frame; the pre-5.0 1200×630 generators are gone.
+- **Routes for the three unwired tools** — extractor, presets and budget — in `SUPPORTED_TOOLS`, `wrangler.toml` (both envs) and `services/svg/`: `GET /og/extractor/:colors[.png]` (`RRGGBB-share` pairs, max 5), `GET /og/presets/:presetId[.png]` (slug `^[a-z0-9-]{1,64}$`), `GET /og/budget/:dyeId[.png]`. A shared preset or budget swap no longer unfurls as a bare URL. **Known gap:** the crawler-intercept HTML for these three still emits the generic site title and the root `/og/default.png` — `generateOGDataForTool` has no extractor / presets / budget case yet, so their 15E data cards are reachable only by direct PNG URL (`src/index.test.ts` pins the current behaviour).
+- **The 2a default cards**: `/og/default.png` and the new per-tool `GET /og/:tool/default.png` (registered before the parameterised routes so comparison can no longer parse `default.png` as a dye list). A default card never fakes data — no dye names, no Δ, no prices — the mark's six spill stripes carry the identity and the tool's banner glyph floats in a dark tile. The root card takes no tile and drops the method tag. `?lang=` reaches the defaults too (`buildDefaultCardSvg` is locale-aware).
+- **Deck strings ×6** (`OG_DECK`) — ten tool name + one-liner pairs, verbatim from the String Pass, the worker's first tool-describing card strings.
 - **The localized header tool tag ×6** (`TOOL_TAG`) — `BandCardOptions.toolTag` was documented as localized and passed an English literal at all nine call sites. EN also takes the design's card vocabulary: COMPARE, VISION, EXTRACT, PRESET.
 - **Four authored deck lines ×6** (`OG_DECK_LINE`) for the headlines that are not pure data — swatch's "Nearest {n} to {hex}", extractor's count, budget's "Best per point:", accessibility's dye count.
 - **Name wrapping** (`wrapName`): band names wrap and hyphenate instead of truncating. A character cap is an EN-width heuristic that decapitates German compounds, and a vertical band is exactly where a long dye name has nowhere to go. resvg has no `hyphens: auto`, so this is that pass.
-- Fragment Mono is bundled and every value is set in it; a JP subset joins SC and KR so JA stops rendering in Chinese letterforms.
+- **Per-method Δ precision** (`fmtDelta` in `band-shared.ts`): ΔEOK prints its raw scale to 3 dp and DISTINGUISH an integer — a blanket `.toFixed(1)` was flattening raw OKLAB deltas to `0.0`.
+- **Fonts**: Fragment Mono is bundled and every value (hex, Δ, price, path) is set in it; a **Noto Sans JP subset** joins SC and KR so JA stops rendering in Chinese letterforms (JP-first fallback is per-locale, so `zh` never picks up Japanese letterforms). Six TTFs total; `scripts/subset-cjk-fonts.py` gains the JP target and downloads sources into the gitignored `scripts/.font-sources/`. (`9399a33`)
+- **The human redirect page** (`generateOGHTML`) — the body a refresh-blocking browser or pre-fetching client sees — now wears the console palette (mark stripes, the requested title + description, the accent link) instead of `#1a1a2e` system-font paragraphs. (`69dcbd3`)
+- **A routed beta environment.** `beta.xivdyetools.app` had no og-worker coverage, so every beta tool path fell through to web-app's static root card and no shared beta link could ever render a real card. The top-level env is now the beta worker (`xivdyetools-og-worker-dev`), mirroring discord-worker: it routes `beta.xivdyetools.app/<tool>/*` ×9 plus the `og-beta.xivdyetools.app` card host (wrangler provisions the DNS record on first deploy), with `APP_BASE_URL = https://beta.xivdyetools.app` so a shared beta link's embed links back to beta, and its own Analytics Engine dataset (`xivdyetools_og_analytics_beta`) so beta traffic cannot skew production metrics. `routes` and `workers_dev` are declared explicitly in **both** envs so beta's routes can never leak into production by inheritance. `og-beta.` is a separate hostname rather than `beta.xivdyetools.app/og` because `isOgImageHost()` recognises its own image host by comparing the request hostname to `OG_IMAGE_BASE_URL`'s and answers a match by redirecting humans to `APP_BASE_URL` — collapsing the two would bounce every real visitor off every beta tool page. (`b06b6a8`)
+- `tests/wrangler-env.test.ts` pins those config invariants per environment (image host ≠ app host, the `/og` prefix on `OG_IMAGE_BASE_URL`, the analytics dataset split, and that no production route names a beta host); each assertion was mutation-tested.
+- `.github/workflows/deploy-og-worker-beta.yml` — deploys the beta env off non-`main` branches and then **follows the emitted `og:image` URL end to end**, failing if it 404s or degrades to a default card. A health check stayed green throughout the v1 era while every emitted URL was missing the `/og/` prefix; nothing verified the URL in the metadata was one the worker would serve. The smoke check uses a stainID (`dye=1`, Snow White), not the item ID the old checklist carried — an unrecognised dye degrades to the default card rather than failing, so `dye=5771` rendered a valid-looking card that tested nothing.
+- `og.xivdyetools.app` is declared in `wrangler.toml` as a `custom_domain` route (BUG-069 closure — it was dashboard-only). (`d7dba9f`)
+- `README.md` for the worker (2026-08-10 README audit).
+
+### Changed
+
+- `OG_IMAGE_BASE_URL` now carries the `/og` suffix in both envs (`https://og.xivdyetools.app/og`, beta `https://og-beta.xivdyetools.app/og`) — the suffix is load-bearing; see the first Fixed bullet. The vitest env fixtures had already assumed this value.
+- **Edge / browser TTLs, end state:** image responses `Cache-Control: public, max-age=86400, s-maxage=604800` (24 h browser, 7 d edge, explicit `{ browser, edge }` on `renderOGImage` — no hidden ×7); default cards the same 24 h / 7 d; crawler HTML `max-age=3600, s-maxage=86400`; the root crawler card `max-age=86400`. English stays unparameterised (`?lang=` is only appended for non-`en`) so cache keys stay stable.
+- Coverage gate: `branches` 75 → 80 (statements / functions / lines stay 85), part of the 2026-08-11 workspace-wide raise to 90 % packages / 80 % apps.
+- Dependencies: `hono` `^4.12.32` → `^4.12.34` (FINDING-001, 2026-08-09 pre-release audit; the CORS-ReDoS advisory does not reach this worker — it mounts no `cors()` and no `hono/language` — but the floor is now explicit), `wrangler` `^4.114.0` → `^4.120.0` (FINDING-004: miniflare 5 / undici 7.29 clears the undici advisories), `@xivdyetools/svg` consumed at 2.0.0 (band primitives), `@xivdyetools/core` at 4.0.0.
 
 ### Fixed
 
 - **The `/og/` prefix**, missing from every emitted `og:image` URL — the routes register under `/og/`, the meta tags pointed one level up, and nothing served that path. No card of any design was ever fetched.
-- **`?lang=` reaches the picture.** The text localized six ways around an English card while the worker bundled CJK subsets precisely so it would not have to.
+- **`?lang=` reaches the picture.** The text localized six ways around an English card while the worker bundled CJK subsets precisely so it would not have to. `?lang=` now travels with every emitted `og:image` URL.
 - **Harmony's Δ measures the right pair** — match → computed ideal, not base → match. A complement is far from its base by definition, so a correct tetrad printed four reds.
 - **The emoji glyphs are gone.** `✦ XIV DYE TOOLS` and `🎨 xivdyetools.app` had no glyph in a rasterizer with no emoji font, and arrived as tofu or as nothing.
 - **The CJK subsets cover the worker's own card strings.** `subset-cjk-fonts.py` read `packages/core` locales only, so every string authored in `og-strings.ts` — deck names, one-liners, tool tags — was covered by luck alone. It now reads both, and fails loudly if the ×6 tables stop parsing rather than silently under-covering them.
@@ -40,8 +68,22 @@ record (`OG Card Directions` / `OG Default Cards` / `OG X Variants` /
 
 ### Removed
 
-- `og-card.ts` and its tests — the pre-5.0 1200×630 shell, with no caller left.
+- `og-card.ts` and its tests — the pre-5.0 1200×630 shell, with no caller left — and the legacy 1200×630 text-and-circles default card.
 - The duplicate `ALGO_TAG` map in `harmony.ts`, which shadowed `band-shared.ts`.
+- `Habibi-Regular.ttf` (replaced by Fragment Mono for values).
+
+### Boundary: what this worker does *not* cover
+
+og-worker covers only the **nine tool paths**. The site root `/` is deliberately not routed in either env — `xivdyetools.app/` and `beta.xivdyetools.app/` serve web-app's **static** card from `/og/default.png` (`default-x.png` for X); that artwork and its `_headers` live in `apps/web-app` and are tracked in web-app's changelog. The worker's own `GET /` handler is reached only on the `og.` / `og-beta.` hosts.
+
+### Deploy-day steps
+
+1. No npm publish is required for the deploy itself — `@xivdyetools/svg` 2.0.0 / `core` 4.0.0 / `types` 2.0.0 / `worker-kit` are `workspace:*` deps that both deploy workflows build with `turbo run build --filter=xivdyetools-og-worker...` before `wrangler deploy`. Publish them on the normal package schedule.
+2. Re-run `scripts/subset-cjk-fonts.py` if any card string changed since the bundled subsets were generated (new JA/KO/ZH deck glyphs render as tofu otherwise), then commit the regenerated `src/fonts/NotoSans{JP,SC,KR}-Subset.ttf`.
+3. **Beta first**: `pnpm --filter xivdyetools-og-worker deploy` (or let `deploy-og-worker-beta.yml` run off the branch). The first deploy provisions the `og-beta.xivdyetools.app` DNS record. Spot-check `https://og-beta.xivdyetools.app/og/harmony/1/tetradic.png` — use a **stainID**, and check the returned card names the dye.
+4. **Production**: `pnpm --filter xivdyetools-og-worker deploy:production` (CI: `deploy-og-worker.yml` on `main`). `OG_IMAGE_BASE_URL` is a `wrangler.toml` var (`https://og.xivdyetools.app/og`) — no dashboard edit is needed, but any dashboard override of that var must carry the `/og` suffix too or every card URL 404s again.
+5. Deploy web-app 5.0.0 in the same window — old 4.x links (itemID grammar) unfurl as default cards until the app emits stainID URLs.
+6. Validate a real shared link in Discord *and* X — the embed should render the new card within ~5 s of cache expiry; the previous production cards were cached up to 7 days at the edge.
 
 ## [1.4.0] - 2026-07-19
 

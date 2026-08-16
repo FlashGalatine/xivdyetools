@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-08-16
+
+Monorepo 2.0 / web-app 5.0 branch. **This version is not published** — see "Changed" below; 1.1.8 remains the last release on npm.
+
+### Changed
+
+- **Workspace-private, no longer published to npm** (`"private": true`, removed from the Publish Packages workflow — Monorepo 2.0 Tier 1). The package is consumed only via `workspace:*` devDependencies and has no external audience; versions up to 1.1.8 stay on npm as history. Version bumps from here on are internal bookkeeping.
+- Internal dependency `@xivdyetools/crypto` → `@xivdyetools/auth`: `src/utils/crypto.ts` now re-exports the Base64URL/hex helpers from `@xivdyetools/auth/encoding` (the retired crypto package was absorbed there). Same exported names, no consumer change.
+- **`DEFAULT_CATEGORIES` dropped the `community` row** (DEAD-006) — the fixture now mirrors the five live `PresetCategory` members (`aesthetics`, `events`, `grand-companies`, `jobs`, `seasons`) exactly and is entirely curated. Tests that need an uncurated category should build one with `createMockCategory({ is_curated: false })` instead of indexing the fixture; `createMockCategories()` never indexed it and is unaffected.
+- **Preset factories follow the 5.0 `CommunityPreset` / presets-api schema** (migrations 0008–0010):
+  - `PresetRow` gains `example_link`, `preview_image_key`, `preview_image_status`, `secondary_categories` (JSON string) and optional `rejection_reason`; `createMockPresetRow()` defaults them to `null` / `null` / `'none'` / `'[]'`.
+  - `createMockPreset()` now sets the required `secondary_categories: []` and `preview_image_status: 'none'`.
+  - `presetToRow()` serializes `secondary_categories`, carries `example_link` and `preview_image_status` (default `'none'`), and always writes `preview_image_key: null`; `rowToPreset()` parses `secondary_categories` and maps `preview_image_status` back (default `'none'`). Note `rowToPreset()` does not surface `example_link` / `rejection_reason` / `preview_image_url` — presets-api's own `rowToPreset` owns that gating; the mock stays minimal.
+- `createMockR2Bucket().put()` accepts `httpMetadata` (`cacheControl` / `contentType`) and stores it on the `_store` entry so preview-image upload tests can assert on it. Existing calls without `httpMetadata` are unchanged.
+- Coverage thresholds raised to 90% lines / functions / branches / statements (were 80/80/75/80).
+- Docs: `CLAUDE.md` / README updated for the private status and the `@xivdyetools/auth` dependency; license/legal notice added, stale blog link removed.
+
 ## [1.1.8] - 2026-07-19
 
 2026-07-18 audit remediation (Sprints 1 & 6).

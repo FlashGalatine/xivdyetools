@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Monorepo 2.0 release train (branch `monorepo-2.0-prep`). Nothing below has shipped: `package.json` is still **2.5.0** and needs a bump before merge — **2.6.0 recommended** (new allowed origin + a CORS behaviour fix; no contract break).
+
+### Added
+
+- `https://beta.xivdyetools.app` added to `ALLOWED_REDIRECT_ORIGINS` (`src/constants/oauth.ts`). The beta web app is a second Cloudflare Pages project serving non-main branches and deliberately uses this production OAuth worker so testers log in with real accounts. Until this ships, beta login fails with an opaque "Redirect URI is not whitelisted" error.
+
+### Fixed
+
+- **CORS and redirect URIs now use one allowlist.** The CORS origin callback previously reflected only `env.FRONTEND_URL`, while the redirect check used `getAllowedRedirectOrigins()` — so an origin could be trusted to *start* a login (302 to the provider, callback returned) and then be blocked from every XHR that *finishes* one (token exchange, `/auth/me`) with no `Access-Control-Allow-Origin`. beta.xivdyetools.app hit exactly that and sat showing its two login buttons. CORS now consults `getAllowedRedirectOrigins(env)` (which already folds in `FRONTEND_URL` and strips localhost outside development); production behaviour is otherwise unchanged. Same class as BUG-018, which had swept the three redirect lists but not CORS. Two regression tests, both verified to fail against the old code.
+- `deploy:production` script could never succeed: this worker's `wrangler.toml` defines only `development` and `preview`, and the **top-level block is production** (`name = "xivdyetools-oauth"`, `auth.xivdyetools.app`), so `wrangler deploy --env production` hard-errors with "No environment found". The script is now an alias of the working bare `wrangler deploy` — the exact inverse of api-worker / presets-api, where the top-level block is the routeless `-dev` worker. Check the toml before assuming a convention.
+
+### Changed
+
+- Migrated from `@xivdyetools/worker-middleware` / `@xivdyetools/rate-limiter` / `@xivdyetools/crypto` to `@xivdyetools/worker-kit` (`/rate-limiter` subpath) and `@xivdyetools/auth/encoding` (Base64URL helpers) — Tier 1 package consolidation, no behaviour change. The deploy workflow's path filter now watches `packages/auth/**` and `packages/worker-kit/**` (auth itself was missing before).
+- Dependencies: `hono` floor raised to `^4.12.34` (2026-08-09 security advisories); `wrangler` `^4.114.0 → ^4.120.0`; removed the unused direct `miniflare` devDependency (never imported by any test — it only pinned a second, vulnerable undici); `description` and `license: MIT` declared.
+- Docs: `README.md` written (accuracy/licensing/attribution audit); `CLAUDE.md` corrected on the deploy command and synced to worker-kit / auth `/encoding`.
+
+### Tests
+
+- First tests for `getAllowedRedirectOrigins` (including development-only loopback filtering) and the two CORS-allowlist regression tests in `src/__tests__/index.test.ts` / `oauth-constants.test.ts`.
+
 ## [2.5.0] - 2026-07-19
 
 2026-07-18 audit remediation (Sprint 2).

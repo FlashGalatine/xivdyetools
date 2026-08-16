@@ -5,7 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [4.0.0] — 2026-08-16
+
+**Web-App / Discord 5.0 release.** 2.8.0 and 3.0.0 below were bumped mid-branch but never published — npm still has 2.7.0, so 4.0.0 is the first release carrying schema v2, the `/blending` subpath, *and* everything in this entry. Consumers upgrading from 2.7.0 must read all three entries.
+
+### Changed — BREAKING
+
+- **The 5.0 matching vocabulary** (`src/types/index.ts`) — one list suite-wide (web, Discord bot, og-worker, public API): `MatchingMethod = 'ciede2000' | 'oklab' | 'cie76' | 'redmean' | 'rgb' | 'distinguish'`, ordered as `MATCHING_METHODS`, with `DEFAULT_MATCHING_METHOD = 'ciede2000'` (one answer to "what does CLOSE mean") and `MATCHING_METHOD_TAGS` (`ΔE2000` / `ΔEOK` / `ΔE76` / `REDMEAN` / `RGB DIST` / `DISTINGUISH %`, plus a display-only `ratio: 'RATIO'` for the two tools that print WCAG contrast — RATIO is not a distance and never ranks). Tags are identifiers and never localise.
+  - **Retired:** `'hyab'` and `'oklch-weighted'` as matching methods, plus the `OklchWeights` and `MatchingConfig` types, the `MATCHING_PRESETS` constant, and the `weights?` option on `FindClosestOptions` / `CharacterMatchOptions`. The HyAB / weighted-OKLCH math itself stays available on `ColorConverter` (`getDeltaE_HyAB`, `getDeltaE_OklchWeighted`; `DeltaEFormula` still includes `'hyab'`) — only the ranking vocabulary lost them.
+  - **Migration:** run every stored/parsed value (KV preference, localStorage, URL `algo` param, API body) through `normalizeMatchingMethod(value)` — current values pass through, `LEGACY_MATCHING_METHOD_MAP` folds `hyab` / `oklch-weighted` → `ciede2000` and the informal deep-link `euclidean` → `rgb`, and anything else falls back to the default. `isMatchingMethod()` is the type guard.
+  - **Defaults moved:** `DyeSearch.findClosestDye` / `DyeService.findClosestDye` and `CharacterColorService.findClosestDyes` now default to `ciede2000` (was `oklab`); `findDyesWithinDistance` keeps its `rgb` default (its `maxDistance` is an RGB radius). Callers that relied on the implicit OKLAB ranking should pass `matchingMethod: 'oklab'` explicitly.
+  - `distinguish` ranks by the **unrounded** percent inside `DyeSearch` / `CharacterColorService` (identical ranks to RGB DIST, so display ties can never scramble an ordering); the display-rounded integer comes from `ColorService.getDistanceForMethod` / `getDistinguishabilityPercent`.
+- **`presets.json` 2.0.0 — curated palettes are stainID-keyed.** `PresetPalette.dyes` now holds **stainIDs** (3–6 per palette; was itemIDs, 2–5) and `PresetService.getPresetWithDyes()` / `resolvePresets()` resolve through `dyeService.getByStainId()` — the internal `IDyeService` contract now requires `getByStainId` alongside `getDyeById`. The curated set is 44 → **15 rows** (Grand Companies 3, Seasons 4, Events 8 — Little Ladies' Day and All Saints' Wake added; the Jobs and Aesthetics curated rows were cut, both categories stay submittable), with rewritten EN descriptions. A `curated parity` test asserts every curated stainID resolves (the silent-null guard). Localised names/descriptions/tags for the 15 rows live in the web-app locales as `preset.<id>.*`, not in core.
+- **`'community'` is no longer a `PresetCategory`** (community-ness is a *source*, not a category — `@xivdyetools/types` 2.0.0). `presets.json` categories are now **8**: `jobs`, `grand-companies`, `seasons`, `events`, `aesthetics`, and the new `appearance` (a character's own colours — deliberately *not* `character`, which is the CollectionService record kind), `zones`, `raids-trials` (excludes dungeons; primals are descriptions inside it, never "duties"), each with name/description/icon metadata.
+- **`SubRace` `'Helion'` → `'Helions'`** (matches the `.chara` files and the game's plural; `@xivdyetools/types` 2.0.0). `character_colors.json` + the split race-specific hair/skin files re-key their Hrothgar entries, `build-locales.ts` fallback tables and all six locale JSONs use the `helions` clan key, and `parseCharaFile` stores the plural while still accepting the pre-5.0 `'Helion'` as a read alias. Consumers persisting a subrace must migrate the stored value on read.
+- **Band-vocabulary method ids** unified with `MatchingMethod` (`de2000` / `deok` / `de76` / `rgbdist` → `ciede2000` / `oklab` / `cie76` / `rgb`). Only relevant if you consumed the band table from an intermediate branch build — no npm release ever carried the old ids.
+
+### Added
+
+- **Distance primitives** (`ColorConverter` + `ColorService` facade): `getRedmeanDistance` (weighted-RGB approximation, 0 – ~765), `getDistinguishabilityPercent` (RGB distance rescaled to an integer 0–100 — a display unit with identical ranks to RGB DIST, kept for continuity with the Accessibility readout; not WCAG), and `ColorService.getDistanceForMethod(hex1, hex2, method)` — the one dispatch every surface shares for a value in a method's native unit.
+- **`ColorManipulator.rotateHueLch` / `ColorService.rotateHueLch`** — perceptual hue rotation in CIE LCh (preserves perceived lightness and chroma; out-of-gamut results clamp), the basis for harmony ideal-hue math on the og-worker cards.
+- **Machado et al. (2009) severity-1.0 CVD matrices** — `MACHADO_MATRICES` constant plus `ColorblindnessSimulator.simulateColorblindnessMachado` / `…MachadoHex` (and `ColorService` mirrors) running a linear-RGB pipeline (sRGB linearise → matrix → re-encode). The legacy gamma-domain Brettel path (`BRETTEL_MATRICES`, `simulateColorblindness`) is untouched. The 5.0 band calibration's SEPARATION cuts were computed against Machado 1.0 lenses, which core previously could not reproduce.
+- **Calibrated 5.0 band vocabulary** (`src/config/band-vocabulary.ts`, generated by `scripts/calibrate-bands.ts` from the algorithm in `band-calibration.ts` and guarded by `band-vocabulary.parity.test.ts`, which recomputes it from `dyes.json` so a data change fails loudly until re-blessed): `BAND_VOCABULARY[context][method]` tier cuts for `match` / `harmony` / `separation` × all six methods (ΔE2000 rows are the settled ground truth — MATCH 5/10/20 · HARMONY 6/12/20 · SEPARATION 8/15/30; the others are accuracy-optimal cuts scored on display-rounded values; DISTINGUISH % derives from RGB DIST via `deriveDistinguishCuts`), `BAND_METHOD_DP`, `RATIO_BANDS` (Comparison `1/1/1` — the literal "unreachable through lightness" finding — and Accessibility `1/1.29/3`, anchored at WCAG 1.4.11's 3:1), `SEPARATION_TIER_KEYS` (`merged` / `tight` / `workable` / `clear`), `classifyBandTier(value, method, context)`, `classifyBandTierWithCuts` (for ΔE2000 with a user-moved match line), `roundToBandDisplay`, and the calibration API (`calibrateBandVocabulary`, `DE2000_GROUND_TRUTH`, `METHOD_DISPLAY_DP`; types `BandContext` / `BandMethod` / `BandTier` / `MethodBandSet` / `BandCalibrationResult` / `CalibratedMethodId` / `CalibratedMethodBands` / `RatioCalibration`). Standing rules: print the method wherever a tier appears; never compare a tier across methods; only ΔE2000's bands follow the user's match line.
+- **`.chara` character-file import** (`src/services/chara/`, the parse rules the 5.0 Swatch Matcher and the bot's `/swatch` share):
+  - `parseCharaFile(text)` → `ParsedCharaFile` — key-presence parsing (never trusts `TypeName`), crossed eye keys (`REyeColor` is the LEFT eye), linear-RGB extended floats gamma-encoded, flag gating (`EnableHighlights` false / `FacePaint` 0 / Hrothgar fur-pattern lip → `CharaSlotInertReason`), `MouthColor` alpha as continuous lip opacity, gear `DyeId` / `DyeId2` as stain IDs, `Base64Image` never read, and loud `AppError`s naming got-vs-expected for an unrecognised race/tribe/gender or for a JSON carrying none of the fifteen colour fields (the WRONG-KIND refusal — float-only files still parse).
+  - `resolveCharaColors(parsed, lookup)` → `ResolvedCharaCharacter` — index-vs-float arbitration (live floats only with `IsExtendedAppearanceValid`; more than `OFF_GRID_DELTA_E2000 = 6` apart = `offGrid` with both hexes named; missing flag = index wins), 0–95 / 128–223 dark-light sheet split with a loud 96–127 failure, lip composite over skin (raw + `blendHex` with alpha), limbal-vs-tattoo labelling, `R#.C#` grid addresses, shared-index eye merge signal, gear dyes resolved via a `StainIdLookup` (`getByStainId`). Slot verdicts: `index` / `offGrid` / `floatOnly` / `inert` / `error`. Types: `CharaSlotId`, `CharaGearSlotId`, `CharaColorSlotRaw`, `CharaGearDye`, `ResolvedCharaSlot`, `ResolvedGearDye`, `CharaSlotVerdict`, `CharaSlotErrorCode`.
+  - Four measured fixtures under `services/chara/__tests__/fixtures/` (Duskwight heterochromia, Hrothgar Helions, Wildwood face paint, Xaela Anamnesis header). `Race` is now re-exported by `@xivdyetools/types` because the parser's public API needs it.
+- **`/manual` topic roster + learn-more links** (`src/config/learn-links.ts`): `MANUAL_TOPICS` (`match_image`, `color_vision`, `contrast`, `matching_methods`, `spectrum_prices`, `character_file`) with per-locale authorities (NEI / Portal der Augenmedizin / Wikipédia Daltonisme / 日本眼科医会 / KDCA for colour vision — ZH deliberately open; WCAG 1.4.11 only in its endorsed en/fr/zh translations), `getLearnLink(topic, locale)` (absent locale = `null`, never English), `LODESTONE_BY_REGION` + `getLodestoneLink(region)` keyed by game region (`na` / `eu` / `jp` / `de` / `fr`) not locale, and `XIVDYETOOLS_DOCS_URL`. All URLs liveness-checked 2026-08-07.
+- **`abbreviateDyeName(name, locale)`** (`src/utils/`) — the three-character axis code for the bot's comparison triangle and contrast plot, hoisted from two identical bot-logic copies. Uppercases *before* slicing (`'ß'.toUpperCase()` is `'SS'`), strips punctuation (`Ul'dahbrauner` → `ULD`), and keeps the first three glyphs for ja/zh/ko. Codes are deliberately not unique.
+- **`SOCIAL_LINKS` / `PRODUCT_LINKS`** (`src/config/product-links.ts`, `ProductLink` type) — the one home for the seven social links and the web-app / invite-bot URLs printed by both the web About modal and the bot's `/about` (the bot had been advertising the pre-monorepo `xivdyetools-discord-worker` repo). Label + URL only; icons stay with the surface.
+- `PresetService.searchPresets(query, dyeService?)` — with a dye service, a palette also matches on the names of the dyes it contains ("search presets, dyes, tags").
+- Tests: coverage gate raised to 90 % on all four metrics (branches 85 → 90 in `vitest.config.ts`); new suites for the facewear legacy-ID map, the matching-method vocabulary, `APIService` construction, explicit-locale `LocalizationService` calls, `TranslationProvider` optional sections and `CharacterColorService`; `performance-benchmarks.test.ts` now times the CIEDE2000 exact scan and the RGB k-d tree separately and states the P-7 claim as a ratio (the old "k-d tree" budget was timing the linear scan — CI's ~5× contention over local was not a regression).
+
+### Changed
+
+- `README.md` / `CLAUDE.md` rewritten for the branch state (scoped package name, 125-dye schema v2 database + Facewear collection, `getMarketItemID` in the market-board example, `/blending` subpath, licensing/legal notice, Blog link dropped) — docs only.
+
+### Fixed
+
+- `config/facewear.ts` dropped an unnecessary type assertion that failed `turbo run lint` workspace-wide (and therefore CI for everything downstream of core).
+- `parseCharaFile` refuses a JSON document that carries none of the fifteen character-colour fields by name, instead of resolving eight dashed slots that read as a valid character wearing nothing (ordered after the race/tribe/gender mapping so a bad tribe still gets its own message).
+
+### Removed
+
+- `MATCHING_PRESETS`, `OklchWeights`, `MatchingConfig` exports and the `weights` option on `FindClosestOptions` / `CharacterMatchOptions` (see BREAKING above).
+- The `'community'` preset category and 29 curated palette rows (see BREAKING above).
+- `packages/core/CHANGELOG-laymans.md` — plain-language notes now live in the root `CHANGELOG-laymans.md` (product-level, all three surfaces).
 
 ## [3.0.0] — 2026-07-31
 
@@ -14,6 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Inverted Tetradic harmony** — `findInvertedTetradicDyes` on `HarmonyGenerator`/`DyeService` (offsets `[120, 180, 300]`, the mirror rectangle of tetradic) + `invertedTetradic` in `HarmonyTypeKey` and all six locale `harmonyTypes` blocks.
+- **Dye vocabulary module** (`src/config/dye-vocabulary.ts`, ported from the retired `apps/maintainer` GUI's validation role — preserve-first): `DYE_CATEGORIES`, `DYE_ACQUISITIONS`, `ACQUISITION_META` (acquisition → price/currency coupling), `METALLIC_STAIN_IDS`, and types `DyeCategory` / `DyeAcquisition` / `AcquisitionMeta` — the single source of truth for the closed vocabularies (the maintainer's own copies had drifted: 8 of its 10 acquisition values appeared in zero dyes). `dye-vocabulary.test.ts` pins the data invariants against the live data file: vocabulary membership, price/currency coupling, unique `stainID`s (the GUI never checked stainID), hex validity and the `consolidationType` domain.
+- `getFacewearColor(slug)` alongside `facewearColors` (see the Facewear split below).
 - **CMYK conversions** — `rgbToCmyk` / `cmykToRgb` / `hexToCmyk` / `cmykToHex` on `ColorConverter` and the `ColorService` facade, with a `CMYK` interface in `@xivdyetools/types` 1.16.0. Naive device-independent formula (display/reference values, not print production). Completes the derived-format set now that the data file stores only `hex` (RGB, HSV [= HSB], HSL, and Lab already existed).
 
 ### Changed — BREAKING
@@ -38,6 +85,14 @@ Monorepo 2.0 Tier 1 package consolidation.
 ### Changed
 
 - **`scripts/build-locales.ts` is now idempotent.** Before writing each locale, it compares the freshly built payload against the file already on disk, ignoring `meta.generated`. When nothing else differs the existing file is left untouched — same bytes, same mtime — so rebuilding from unchanged sources no longer dirties all six locale JSONs. Previously every build re-stamped the timestamp, which meant a full `pnpm turbo run build` always produced six spurious modifications and buried real locale changes in churn. `meta.generated` now marks when the locale data last *changed* rather than when the build last ran; the field remains a required ISO string on `LocaleData`, so there is no API or consumer impact. Comparison is key-order-insensitive because `JSON.parse` of an existing file and a freshly built payload do not agree on key ordering for non-integer keys (e.g. synthetic negative Facewear IDs).
+
+### Fixed
+
+- `CONSOLIDATED_DYES` Type-B (Wide Spectrum #1 Dye, itemID 52255) costs **100 Skybuilders' Scrips** (verified in game), not 1000 "Sky Builders' Scrips" — price and currency spelling now match the individual Firmament dyes.
+
+### Removed
+
+- `src/data/colors_xiv.csv` — the CSV mirror had zero readers at build or runtime and had already drifted from the JSON (Ixali Vendor row, a price 40, a phantom `itemID_consolidated` column). `dyenames.csv` (the locale-name source) is unaffected.
 
 ## [2.7.0] — 2026-07-19
 

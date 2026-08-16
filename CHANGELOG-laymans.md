@@ -21,19 +21,46 @@ Rules:
   this exact root path.
 -->
 
-## [5.0.0] - 2026-08-08
+## [5.0.0] - 2026-08-16
 
 ### 🎨 The 5.0 redesign
 
-- Web app: every tool rebuilt on the new console look — two themes (light and dark), a slide-over Advanced Options panel, and redesigned result cards that never overflow, in any of the six languages.
-- Web app: the Swatch tool now reads `.chara` character files from Anamnesis and Ktisis — drop one in and every colour on your character is matched to a dye, right in your browser.
-- Discord bot: every command's picture was redrawn — sharper, smaller cards that stay readable at Discord's display size, with your dye names in your language.
+- Web app: every tool was rebuilt on the new console look — a slim top bar with a tool rail on desktop, a slide-over Advanced Options panel, and redesigned result cards that never overflow, in any of the six languages.
+- Web app: themes are now just Light and Dark on the new red-accent palette; if you had one of the older themes selected, the closest of the two is picked for you automatically.
+- Web app: on phones the colour palette drawer now starts closed (with a one-time hint on how to open it), so the tool you opened is the first thing you see.
+- Web app: keyboard shortcuts finally work — they had been silently disabled — and Shift+S shares the tool you are looking at.
+- Web app: fonts now ship with the app instead of being fetched from Google, so pages load a little faster and no font request leaves your browser.
+- Discord bot: every command's picture was redrawn — sharper, smaller cards that stay readable at Discord's display size, with dye names in your language.
 - Discord bot: pick light or dark cards with `/preferences set theme`.
+
+### ⚠️ Old share links stop working
+
+- Everywhere: share links now key on the game's own dye numbers, so a link you save today keeps working even if the game reshuffles items — but links made before 5.0 that used the old item numbers no longer open. Please re-share anything you posted earlier.
+- Discord bot: the old `/match`, `/match_image`, `/favorites`, `/collection` and `/language` commands are gone. Colour matching lives in `/extractor`, and `/preferences` covers your language and theme.
 
 ### 📏 One matching vocabulary
 
-- Everywhere: the six matching methods are now the same list on every surface — ΔE2000 (the default), ΔEOK, ΔE76, REDMEAN, RGB DIST and DISTINGUISH % — and quality bands are calibrated per method, so a "close" match means the same thing wherever you read it.
-- Everywhere: share links now key on the game's own stain numbers, so a link you save today keeps working.
+- Everywhere: the six matching methods are the same list on every surface — ΔE2000 (the default), ΔEOK, ΔE76, REDMEAN, RGB DIST and DISTINGUISH % — and quality bands are calibrated per method, so a "close" match means the same thing wherever you read it.
+- Everywhere: the Facewear colours are no longer mixed into the dye list — they are their own set, and the dye list is the game's 125 real dyes.
+
+### 🧰 Every tool, reworked
+
+- Web app: Harmony — click a node on the wheel to jump to that dye, and each result card offers alternate companion dyes you can swap in with one tap.
+- Web app: Palette Extractor — click anywhere on your picture to sample that exact colour; the auto-extract button is still there.
+- Web app: Gradient — pin any step to a dye you own and the gradient bends through it.
+- Web app: Mixer — a mixing field shows six blending models across five ratios at once; tap a cell to see the nearest dye.
+- Web app: Accessibility — a lens view shows how your palette reads under four kinds of colour vision, with the worst pair called out.
+- Web app: Comparison — a duel view with a plain verdict on how far apart two dyes really are, and what differs.
+- Web app: Budget — prices follow the real Patch 7.5 market groups (one price per Spectrum tier), so coffer-only dyes are no longer shown as costing about 1 gil.
+- Web app: Swatch — drop a `.chara` character file from Anamnesis or Ktisis and every colour on your character is matched to a dye, entirely on your device; a notice explains that the eye, hair and skin preset palettes are going away with the Evercold expansion.
+- Web app: your saved palettes, dye swaps and character records now live in one place and carry over automatically — nothing to redo.
+
+### 🖼️ Community presets
+
+- Web app: the presets gallery has a saved shelf, sign-in, a submit form and a My Submissions view that shows why a preset was rejected.
+- Web app and Discord bot: presets can carry a preview picture (reviewed by the moderators before it shows), a link to the glamour it comes from, one main category and up to two extra ones.
+- Web app and Discord bot: three new categories — Appearance, Zones, and Raids & Trials; the old catch-all "Community" category is retired.
+- Web app and Discord bot: presets now hold 3 to 6 dyes.
 
 ### ♿ New commands
 
@@ -45,7 +72,7 @@ Rules:
 ### 🔗 Link previews
 
 - Link previews: sharing any tool link now unfurls a redrawn card — full-bleed colour bands that stay recognisable even as a tiny thumbnail, localised when the link carries a language, with a proper X/Twitter variant.
-- Link previews: bare tool links (no dye in them) finally get real preview images instead of a broken picture.
+- Link previews: bare tool links (no dye in them) and the site's front page finally get real preview images instead of a broken picture.
 
 ## [4.12.0] - 2026-07-19
 
