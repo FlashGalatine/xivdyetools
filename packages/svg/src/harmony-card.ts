@@ -30,7 +30,6 @@
  */
 
 import { classifyBandTier, MATCHING_METHOD_TAGS, type MatchingMethod } from '@xivdyetools/core';
-import { num } from './base.js';
 import { toolGlyph } from './icons/tool-icons.js';
 import {
   CARD_WIDTH,
@@ -40,6 +39,7 @@ import {
   cardShell,
   cardTheme,
   cardText,
+  formatMeasure,
   commandChip,
   dashedRule,
   fitText,
@@ -260,7 +260,8 @@ export function generateHarmonyCard(options: HarmonyCardOptions): string {
       const tier = classifyBandTier(s.deltaE, method, 'harmony');
       const tone = theme.tiers[Math.min(tier, 3)];
       parts.push(
-        cardText(CARD_WIDTH - PAD_X, cy, num(s.deltaE, lang, 1), {
+        // Printed in the method's register (ΔEOK raw to three decimals, etc.)
+        cardText(CARD_WIDTH - PAD_X, cy, formatMeasure(s.deltaE, method, lang), {
           fill: tone,
           size: 16,
           font: 'display',

@@ -61,6 +61,27 @@ describe('SVG Pipeline: Harmony Card (11A)', () => {
     lang: 'en',
   };
 
+  it('prints ΔE in the method register (ΔEOK raw, three decimals) with the method tag', () => {
+    const svg = generateHarmonyCard({
+      ...baseOptions,
+      method: 'oklab',
+      slots: [
+        {
+          idealHex: '#1A781A',
+          hex: '#658241',
+          localizedName: 'Cactuar Green',
+          subText: '#658241 · STAIN 51',
+          deltaE: 0.052,
+          angleLabel: '120°',
+        },
+      ],
+    });
+    expect(svg).toContain('>0.052</text>');
+    expect(svg).toContain('ΔEOK');
+    // never the one-decimal collapse ("0.1") that hid ΔEOK values
+    expect(svg).not.toContain('>0.1</text>');
+  });
+
   it('generates one row per slot with ideal-vs-found pair', () => {
     const svg = generateHarmonyCard({
       ...baseOptions,
