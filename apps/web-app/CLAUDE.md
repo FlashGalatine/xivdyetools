@@ -46,8 +46,6 @@ npm run test:e2e:coverage    # chromium-coverage project (V8 coverage via CDP)
 npm run test:e2e:mobile      # mobile-chrome project
 npm run test:e2e:comparison  # only dye-comparison.spec.ts
 
-npm run build:css            # tailwindcss → assets/css/tailwind.css
-npm run build:css:watch      # tailwindcss --watch
 npm run check-bundle-size    # validate dist/ bundles against limits
 npm run validate:i18n        # check locale completeness
 npm run build:check          # build + check-bundle-size (CI guard)
@@ -139,12 +137,12 @@ src/
 │   ├── logger.ts                    # Wraps @xivdyetools/logger for browser
 │   ├── utils.ts                     # escapeHtml, clearContainer, debounce, etc.
 │   ├── ui-icons.ts                  # SVG icon constants (innerHTML-safe, all static)
-│   ├── tool-icons.ts / harmony-icons.ts / category-icons.ts / empty-state-icons.ts
+│   ├── tool-icons.ts / harmony-icons.ts / category-icons.ts / state-icons.ts
 │   ├── i18n-types.ts / tool-config-types.ts / browser-api-types.ts / types.ts
 │   └── subscription-manager.ts      # Pub/sub helpers for service events
-├── styles/                          # themes.css, globals.css (font contract), v4-utilities.css, v4-layout.css, tailwind.css
+├── styles/                          # themes.css, globals.css (font contract), v4-layout.css, error-boundary.css, tailwind.css
 ├── locales/                         # Per-language UI strings (en, ja, de, fr, ko, zh)
-└── public/                          # robots.txt, manifest.json, _headers (CSP)
+└── public/                          # manifest.json, _headers (CSP), _redirects, fonts/, og/, json/, assets/icons/
 # (dev-only mockups relocated 2026-05-31 → docs/historical/web-app/20260531-Mockups/ — see docs/audits/2026-05-31/findings/DEAD-112.md)
 ```
 
@@ -154,8 +152,8 @@ src/
 import { ColorService } from '@services/index';
 import { BaseComponent } from '@components/base-component';
 import { escapeHtml } from '@shared/utils';
-import { showThemeModal } from '@v4/theme-modal';
-// Also: @, @apps, @data, @assets
+import { showThemeModal } from '@components/v4/theme-modal';
+// Also: @ → src/
 ```
 
 ## Key Patterns
@@ -198,7 +196,7 @@ border-color: var(--theme-border);
 
 - `vendor-core` — `@xivdyetools/core` (~1.2 MB raw, dye DB + locales)
 - `vendor-lit` — Lit framework
-- `vendor-spectral` — `spectral.js` (used only by Mixer)
+- `vendor-spectral` — `spectral.js` (reached only through `@xivdyetools/core/blending`; core declares the dependency)
 - `vendor` — everything else from `node_modules`
 - `modals` — welcome + changelog modals (loaded once)
 
@@ -212,9 +210,9 @@ All `StorageService` keys are prefixed with `xivdyetools_`. Tutorial-offered fla
 
 `MarketBoardService` calls Universalis through `data.xivdyetools.app/universalis` (api-worker's absorbed proxy routes — formerly the standalone universalis-proxy worker), never the upstream directly — this is the only way the browser gets reliable CORS. Market calls filter on `dye.itemID > 0` (see `budget-tool.ts`) rather than null-checking; `Dye.itemID` is always a number.
 
-### Service Worker
+### Offline Behaviour
 
-`service-worker.js` handles offline fallback for navigation requests. The `OfflineBanner` component listens to `online`/`offline` events.
+There is **no service worker** — the app has no offline cache. (The v3 `service-worker.js` was never shipped by the Vite build and was deleted in the 2026-08-16 dead-code cleanup.) The `OfflineBanner` component listens to `online`/`offline` events and shows a banner; `manifest.json` still makes the site installable.
 
 ## Custom Vite Plugins
 
@@ -232,7 +230,7 @@ All `StorageService` keys are prefixed with `xivdyetools_`. Tutorial-offered fla
 | `@xivdyetools/logger` | Browser-flavored logger |
 | `@xivdyetools/svg` | Shared glyph set (`categoryGlyph`, `harmonyGlyph`, `GLYPH_ACCENT_DARK`) used by `shared/*-icons.ts` |
 | `lit` | Web-components framework for v4 shell pieces |
-| `spectral.js` | Pigment-physics color blending (Mixer "Spectral" mode) |
+| `@xivdyetools/core/blending` (→ `spectral.js`) | Pigment-physics color blending (Mixer "Spectral" mode); `spectral.js` is core's dependency, not the app's |
 | `@tailwindcss/postcss` / `tailwindcss` | Styling |
 | `vite` | Bundler / dev server |
 | `vitest` / `@vitest/coverage-v8` | Unit tests |
@@ -245,9 +243,9 @@ All `StorageService` keys are prefixed with `xivdyetools_`. Tutorial-offered fla
 - `npm run build:check` runs `vite build` then `scripts/check-bundle-size.js`, which enforces per-bundle byte ceilings (e.g. main entry ≤ 150 KB raw, layout shell ≤ 200 KB). CI fails if a chunk grows past its budget.
 - **Fonts are a contract, not a per-file choice.** All three faces are self-hosted woff2 in `public/fonts/` (Space Grotesk display, Onest body, Fragment Mono numeric/mono — matching `FONTS` in `packages/svg`). The `@font-face` blocks and the `--font-display` / `--font-body` / `--font-mono` / `--font-cjk` variables in `src/styles/globals.css` are the **single** declaration site; `tailwind.config.js` points its `sans`/`heading`/`mono`/`numeric` families at the same variables. Nothing else should name a family — that is how four sources ended up disagreeing before `REFACTOR-002`. There is no runtime Google Fonts request, and the CSP's `font-src` is `'self'` only. `--font-cjk` names locally-installed CJK families (nothing is downloaded) so ja/ko/zh rendering is a decision rather than an OS accident. The web app renders no SVG-to-PNG of its own; the Noto Sans JP/SC/KR subsets used for card rasterisation live in `apps/discord-worker/src/fonts/` and `apps/og-worker/src/fonts/` (`@xivdyetools/svg` ships no font files — it only names the stacks in `FONTS`).
 - `src/index.html` is the Vite entry; `vite.config.ts` sets `root: 'src'` and `outDir: '../dist'`.
-- `assets/css/tailwind.css` is built by `npm run build:css` and committed; the dev script does **not** rebuild Tailwind on save — use `build:css:watch` in another terminal if you're editing styles.
+- Tailwind v4 is compiled inside Vite by `@tailwindcss/postcss` (`postcss.config.js`) from `src/styles/tailwind.css` (`@import "tailwindcss"` + `@config "../../tailwind.config.js"`); there is no separate CSS build step and no committed CSS output.
 - `public/_headers` (Cloudflare Pages) is the **single** source of truth for the production CSP: `script-src 'self'`, `style-src 'self' 'unsafe-inline'`, `frame-ancestors 'none'`. Do not add a second copy — a `<meta http-equiv>` tag cannot express `frame-ancestors` and will silently diverge.
-- **Only `public/` reaches `dist/`.** `publicDir` is `../public`, so files sitting at the package root (`manifest.json`, `robots.txt`, `service-worker.js`, `assets/`) are copied by nothing and are absent from a production build. Anything that must ship belongs under `public/`.
+- **Only `public/` reaches `dist/`.** `publicDir` is `../public`, so anything sitting at the package root is copied by nothing and is absent from a production build. Anything that must ship belongs under `public/`. (The 2026-08-16 cleanup deleted the stray root-level `assets/`, `robots.txt`, `service-worker.js` and `src/public/` for exactly this reason — production has **no** `robots.txt`; crawler policy is the `X-Robots-Tag` header in `_headers`/beta branding.)
 - **`VITE_APP_ENV=beta` produces a beta build**: `[BETA] ` title prefix, the blue favicon set from `public/assets/icons/beta/`, and `X-Robots-Tag: noindex, nofollow` appended to `dist/_headers`. All of it lives in `vite-plugin-beta-branding.ts`, which is inert without the flag, so a production build is unaffected. `node scripts/check-beta-build.js` asserts the result and is run by the beta workflow before deploy. See `docs/operations/DEPLOY_ENVIRONMENTS.md`. The end-to-end counterpart is `scripts/smoke-test-pages.js`, which asserts the header on `beta.xivdyetools.app` after deploy — **not** on the `*.pages.dev` deployment alias, because Cloudflare injects `x-robots-tag: noindex` onto those hostnames itself and an assertion there passes even when the plugin never ran.
 
 ## Security Patterns

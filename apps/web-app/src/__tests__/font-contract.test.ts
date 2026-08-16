@@ -72,7 +72,7 @@ describe('font contract', () => {
       'src/styles/globals.css',
       'src/styles/v4-layout.css',
       'src/styles/themes.css',
-      'src/styles/v4-utilities.css',
+      'src/styles/error-boundary.css',
     ])('%s leaves no orphaned comment terminator when parsed', (file) => {
       const orphans = stripComments(read(file)).split('*/').length - 1;
       expect(orphans).toBe(0);

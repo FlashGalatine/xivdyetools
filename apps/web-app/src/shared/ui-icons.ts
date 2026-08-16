@@ -29,12 +29,10 @@ import { themedAccent } from './glyph-accent';
 
 /**
  * Theme switcher icons — the confirmed 3D sun/moon pair (32 grid).
- * The header shows the glyph of the ACTIVE theme; ICON_THEME stays as a
- * legacy alias for consumers that don't switch.
+ * The header shows the glyph of the ACTIVE theme.
  */
 export const ICON_THEME_SUN = themedAccent(chromeGlyph('sun', { fluid: true }));
 export const ICON_THEME_MOON = themedAccent(chromeGlyph('moon', { fluid: true }));
-export const ICON_THEME = ICON_THEME_SUN;
 
 /**
  * Camera icon - Take photo
@@ -107,16 +105,6 @@ export const ICON_DICE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentCo
 </svg>`;
 
 /**
- * Coins icon - Budget/Gil (FFXIV-style stacked coins)
- */
-export const ICON_COINS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <ellipse cx="12" cy="7" rx="7" ry="3" />
-  <path d="M5 7v4c0 1.66 3.13 3 7 3s7-1.34 7-3V7" />
-  <path d="M5 11v4c0 1.66 3.13 3 7 3s7-1.34 7-3v-4" />
-  <path d="M5 15v2c0 1.66 3.13 3 7 3s7-1.34 7-3v-2" />
-</svg>`;
-
-/**
  * Broom icon - Clear/sweep action
  */
 export const ICON_BROOM = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -135,27 +123,11 @@ export const ICON_CLOSE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentC
 </svg>`;
 
 /**
- * Filter icon - Funnel shape
- */
-export const ICON_FILTER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path d="M3 4h18l-7 8v6l-4 2V12L3 4z"/>
-</svg>`;
-
-/**
  * Market icon - Store/shop front
  */
 export const ICON_MARKET = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
   <polyline points="9 22 9 12 15 12 15 22"/>
-</svg>`;
-
-/**
- * Export icon - Arrow out of box
- */
-export const ICON_EXPORT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-  <polyline points="17 8 12 3 7 8"/>
-  <line x1="12" y1="3" x2="12" y2="15"/>
 </svg>`;
 
 /**
@@ -184,13 +156,6 @@ export const ICON_PALETTE = `<svg viewBox="0 0 24 24" fill="none" stroke="curren
 </svg>`;
 
 /**
- * Sort icon - Vertical bars
- */
-export const ICON_SORT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path d="M3 6h18M3 12h12M3 18h6"/>
-</svg>`;
-
-/**
  * Eye icon - Vision/view
  */
 export const ICON_EYE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -211,27 +176,6 @@ export const ICON_SLIDERS = `<svg viewBox="0 0 24 24" fill="none" stroke="curren
   <circle cx="4" cy="12" r="2"/>
   <circle cx="12" cy="10" r="2"/>
   <circle cx="20" cy="14" r="2"/>
-</svg>`;
-
-/**
- * Target icon - Concentric circles (for budget/target selection)
- */
-export const ICON_TARGET = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
-</svg>`;
-
-/**
- * Sparkles icon - Magic/highlights
- */
-export const ICON_SPARKLES = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/>
-</svg>`;
-
-/**
- * Distance icon - Color distance measurement
- */
-export const ICON_DISTANCE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
 </svg>`;
 
 /**
@@ -259,39 +203,11 @@ export const ICON_STAR = panelGlyph('star', { fluid: true });
 export const ICON_STAR_FILLED = themedAccent(panelGlyph('star-fill', { fluid: true }));
 
 /**
- * Search icon - Magnifying glass
- */
-export const ICON_SEARCH = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-</svg>`;
-
-/**
  * Back arrow icon - Left-pointing chevron (moved from category-icons.ts —
  * a navigation affordance, not a category)
  */
 export const ICON_ARROW_BACK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
   <path d="M15 18l-6-6 6-6" />
-</svg>`;
-
-/**
- * User icon - Person silhouette
- */
-export const ICON_USER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-</svg>`;
-
-/**
- * Edit icon - Pencil
- */
-export const ICON_EDIT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-</svg>`;
-
-/**
- * Trash icon - Delete/remove
- */
-export const ICON_TRASH = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
 </svg>`;
 
 /**
@@ -327,32 +243,12 @@ export const ICON_LINK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentCo
 </svg>`;
 
 /**
- * Document icon - For submissions/write actions
- * Replaces: 📝 emoji
- */
-export const ICON_DOCUMENT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M14 3v4a1 1 0 001 1h4"/>
-  <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/>
-  <path d="M9 9h1M9 13h6M9 17h6"/>
-</svg>`;
-
-/**
  * Scroll / parchment icon - For the "What's New" release-notes button
  * Curled top and bottom rollers evoke an unfurled scroll
  */
 export const ICON_SCROLL = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
   <path d="M19 17V5a2 2 0 00-2-2H4"/>
   <path d="M8 21h12a2 2 0 002-2v-1a1 1 0 00-1-1H11a1 1 0 00-1 1v1a2 2 0 11-4 0V5a2 2 0 10-4 0v2a1 1 0 001 1h3"/>
-</svg>`;
-
-/**
- * Locked icon - Padlock for auth required states
- * Replaces: 🔐 emoji
- */
-export const ICON_LOCKED = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <rect x="5" y="11" width="14" height="10" rx="2"/>
-  <path d="M8 11V7a4 4 0 018 0v4"/>
-  <circle cx="12" cy="16" r="1" fill="currentColor"/>
 </svg>`;
 
 /**
@@ -378,34 +274,6 @@ export const ICON_NETWORK = `<svg viewBox="0 0 24 24" fill="none" stroke="curren
 </svg>`;
 
 /**
- * Book icon - Tutorial/guide documentation
- * Replaces: 📚 emoji
- */
-export const ICON_BOOK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
-  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
-  <path d="M8 7h8M8 11h8M8 15h5"/>
-</svg>`;
-
-/**
- * Success icon - Checkmark for success states
- * Replaces: ✅ emoji
- */
-export const ICON_SUCCESS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="12" cy="12" r="9"/>
-  <path d="M8 12l3 3 5-6"/>
-</svg>`;
-
-/**
- * Error icon - X for error states
- * Replaces: ❌ emoji
- */
-export const ICON_ERROR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="12" cy="12" r="9"/>
-  <path d="M15 9l-6 6M9 9l6 6"/>
-</svg>`;
-
-/**
  * Refresh icon - Circular arrow for reset/reload actions
  * Replaces: 🔄 emoji
  */
@@ -414,24 +282,6 @@ export const ICON_REFRESH = `<svg viewBox="0 0 24 24" fill="none" stroke="curren
   <path d="M21 3v5h-5"/>
   <path d="M21 12a9 9 0 01-9 9 9.75 9.75 0 01-6.74-2.74L3 16"/>
   <path d="M3 21v-5h5"/>
-</svg>`;
-
-/**
- * Import/Download icon - Arrow pointing down into tray
- * Replaces: 📥 emoji
- */
-export const ICON_IMPORT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-  <polyline points="7 10 12 15 17 10"/>
-  <line x1="12" y1="15" x2="12" y2="3"/>
-</svg>`;
-
-/**
- * Folder icon - For saved palettes/collections
- * Replaces: 🗂️ emoji
- */
-export const ICON_FOLDER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
 </svg>`;
 
 /**

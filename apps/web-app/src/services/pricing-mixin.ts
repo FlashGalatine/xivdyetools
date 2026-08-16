@@ -1,14 +1,3 @@
-import type { MarketBoard } from '../components/market-board';
-import type { PriceData } from '@xivdyetools/types';
-
-export interface PricingState {
-  showPrices: boolean;
-  priceData: Map<number, PriceData>;
-  marketBoard: MarketBoard | null;
-  drawerMarketBoard?: MarketBoard | null;
-  onPricesLoaded?: () => void;
-}
-
 /**
  * Options for setting up Market Board event listeners
  */

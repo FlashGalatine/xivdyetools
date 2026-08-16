@@ -90,9 +90,10 @@ export function brandHtmlForBeta(html: string): string {
   const linksRewritten = titled.replace(/<link\b[^>]*>/g, (tag) => {
     const isIconLink = /\brel="(?:icon|apple-touch-icon)"/.test(tag);
     // Scoped to .png/.ico: the beta set only ships the raster formats
-    // generate-beta-icons.mjs produces. index.html also preloads
-    // icon-40x40.webp (a differently-sized icon with no beta equivalent) —
-    // rewriting that href would 404, so it is deliberately left alone.
+    // generate-beta-icons.mjs produces. A preload of any other icon format
+    // (e.g. a .webp with no beta equivalent) is deliberately left alone —
+    // rewriting its href would 404. (index.html currently preloads no icon
+    // images at all; the guard stays so a future preload cannot break beta.)
     const isIconPreload =
       /\brel="preload"/.test(tag) &&
       /\bhref="\/assets\/icons\/(?!beta\/)[^"]*\.(?:png|ico)"/.test(tag);

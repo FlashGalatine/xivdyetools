@@ -71,16 +71,6 @@ void _assertAllConfigKeysListed;
  */
 type ConfigListener<T> = (config: T) => void;
 
-/**
- * Event detail for config change notifications
- */
-export interface ConfigChangeEvent<K extends ConfigKey = ConfigKey> {
-  tool: K;
-  key: keyof ToolConfigMap[K];
-  value: ToolConfigMap[K][keyof ToolConfigMap[K]];
-  fullConfig: ToolConfigMap[K];
-}
-
 // ============================================================================
 // ConfigController Class
 // ============================================================================

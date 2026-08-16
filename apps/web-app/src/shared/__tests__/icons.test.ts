@@ -26,7 +26,7 @@ import {
   getToolIcon,
   TOOL_ICONS,
   ICON_TOOL_HARMONY,
-  ICON_TOOL_MATCHER,
+  ICON_TOOL_EXTRACTOR,
   ICON_TOOL_ACCESSIBILITY,
   ICON_TOOL_COMPARISON,
   ICON_TOOL_MIXER,
@@ -35,7 +35,6 @@ import {
 
 // Import from ui-icons.ts
 import {
-  ICON_THEME,
   ICON_CAMERA,
   ICON_EYEDROPPER,
   ICON_HINT,
@@ -173,7 +172,7 @@ describe('Tool Icons', () => {
 
     it('should return matcher icon when name is "matcher"', () => {
       const icon = getToolIcon('matcher');
-      expect(icon).toBe(ICON_TOOL_MATCHER);
+      expect(icon).toBe(ICON_TOOL_EXTRACTOR);
       expect(icon).toContain('<svg');
     });
 
@@ -253,11 +252,6 @@ describe('Tool Icons', () => {
       expect(ICON_TOOL_HARMONY).toContain('#EA4133');
     });
 
-    it('ICON_TOOL_MATCHER is the extractor chip set (5.0)', () => {
-      expect(ICON_TOOL_MATCHER).toContain('<svg');
-      expect(ICON_TOOL_MATCHER).toContain('rect');
-    });
-
     it('ICON_TOOL_ACCESSIBILITY should be a valid SVG with eye path', () => {
       expect(ICON_TOOL_ACCESSIBILITY).toContain('<svg');
       expect(ICON_TOOL_ACCESSIBILITY).toContain('path');
@@ -288,12 +282,6 @@ describe('Tool Icons', () => {
 
 describe('UI Icons', () => {
   describe('Individual icon constants', () => {
-    it('ICON_THEME should be a valid SVG with path and circles', () => {
-      expect(ICON_THEME).toContain('<svg');
-      expect(ICON_THEME).toContain('path');
-      expect(ICON_THEME).toContain('circle');
-    });
-
     it('ICON_CAMERA should be a valid SVG with rect and circle', () => {
       expect(ICON_CAMERA).toContain('<svg');
       expect(ICON_CAMERA).toContain('rect');

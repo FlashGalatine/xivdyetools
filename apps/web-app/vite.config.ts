@@ -61,10 +61,6 @@ export default defineConfig({
       '@components': resolve(__dirname, './src/components'),
       '@services': resolve(__dirname, './src/services'),
       '@shared': resolve(__dirname, './src/shared'),
-      '@apps': resolve(__dirname, './src/apps'),
-      '@data': resolve(__dirname, './src/data'),
-      '@assets': resolve(__dirname, './assets'),
-      '@v4': resolve(__dirname, './src/components/v4'),
     },
   },
   css: {

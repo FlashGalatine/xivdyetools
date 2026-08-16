@@ -34,9 +34,6 @@ export const ICON_STATE_ALERT = themedAccent(panelGlyph('alert', FLUID));
 /** Collections empty (was ICON_FOLDER ×2) */
 export const ICON_STATE_FOLDER = panelGlyph('folder', FLUID);
 
-/** Loading, static form (rasters and reduced-motion always get this one) */
-export const ICON_STATE_WAIT = themedAccent(panelGlyph('wait', FLUID));
-
 /** 8A's launch-normal empty category — shelves with room (was ICON_EMPTY_INBOX) */
 export const ICON_STATE_PRESETS_EMPTY = themedAccent(panelGlyph('presets-empty', FLUID));
 
@@ -54,8 +51,8 @@ export const ICON_DETAIL_EXTRACTOR = themedAccent(toolGlyph('extractor', 'detail
  * cycle is seamless. `prefers-reduced-motion` pauses to the static glyph.
  *
  * Styles are embedded in the SVG so the animation survives shadow-DOM
- * boundaries; bot/OG rasters must use ICON_STATE_WAIT instead — resvg never
- * sees a keyframe.
+ * boundaries; bot/OG rasters render their own static wait glyph — resvg
+ * never sees a keyframe.
  */
 export const ICON_STATE_WAIT_ANIMATED = `<svg viewBox="0 0 32 32" aria-hidden="true">
   <style>

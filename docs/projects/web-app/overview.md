@@ -141,7 +141,6 @@ src/
 ├── styles/                     # Global styles
 │   ├── themes.css              # Light + Dark theme variables
 │   ├── v4-layout.css
-│   ├── v4-utilities.css        # Glassmorphism styles
 │   ├── error-boundary.css
 │   ├── globals.css
 │   └── tailwind.css

@@ -36,37 +36,6 @@ export type MarketBoardEventType =
   | 'fetch-completed'
   | 'fetch-error';
 
-/**
- * Event detail for prices-updated event
- */
-export interface PricesUpdatedEvent {
-  prices: Map<number, PriceData>;
-  fetchedCount: number;
-}
-
-/**
- * Event detail for server-changed event
- */
-export interface ServerChangedEvent {
-  server: string;
-  previousServer: string;
-}
-
-/**
- * Event detail for settings-changed event
- */
-export interface SettingsChangedEvent {
-  showPrices: boolean;
-}
-
-/**
- * Event detail for fetch-error event
- */
-export interface FetchErrorEvent {
-  error: Error;
-  dyeCount: number;
-}
-
 // ============================================================================
 // MarketBoardService Class
 // ============================================================================

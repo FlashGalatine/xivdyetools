@@ -3,7 +3,6 @@
   "version": "5.0.0",
   "private": true,
   "description": "A comprehensive web-based toolset for Final Fantasy XIV players",
-  "main": "index.html",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -24,8 +23,6 @@
     "test:e2e:coverage": "cross-env PLAYWRIGHT_PROJECT_NAME=chromium-coverage playwright test --project=chromium-coverage",
     "test:e2e:comparison": "playwright test dye-comparison.spec.ts",
     "test:e2e:mobile": "playwright test --project=mobile-chrome",
-    "build:css": "tailwindcss -i ./src/tailwind-input.css -o ./assets/css/tailwind.css",
-    "build:css:watch": "tailwindcss -i ./src/tailwind-input.css -o ./assets/css/tailwind.css --watch",
     "check-bundle-size": "node scripts/check-bundle-size.js",
     "validate:i18n": "node scripts/validate-i18n.js",
     "build:check": "npm run build && npm run check-bundle-size"
@@ -57,8 +54,7 @@
     "@xivdyetools/logger": "workspace:*",
     "@xivdyetools/svg": "workspace:*",
     "@xivdyetools/types": "workspace:*",
-    "lit": "^3.3.3",
-    "spectral.js": "^3.0.0"
+    "lit": "^3.3.3"
   },
   "engines": {
     "node": ">=18.0.0"

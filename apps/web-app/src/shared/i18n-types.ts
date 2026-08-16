@@ -27,38 +27,6 @@ export interface LocaleDisplay {
 }
 
 /**
- * Web app translation data structure
- */
-export interface WebAppTranslations {
-  meta: {
-    locale: LocaleCode;
-    version: string;
-  };
-  app: Record<string, string>;
-  header: Record<string, string>;
-  footer: Record<string, string>;
-  tools: {
-    harmony: Record<string, string>;
-    matcher: Record<string, string>;
-    accessibility: Record<string, string>;
-    comparison: Record<string, string>;
-    mixer: Record<string, string>;
-  };
-  common: Record<string, string>;
-  harmony: Record<string, string>;
-  matcher: Record<string, string>;
-  accessibility: Record<string, string>;
-  comparison: Record<string, string>;
-  mixer: Record<string, string>;
-  filters: Record<string, string>;
-  marketBoard: Record<string, string>;
-  export: Record<string, string>;
-  errors: Record<string, string>;
-  success: Record<string, string>;
-  themes: Record<string, string>;
-}
-
-/**
  * Listener function type for locale changes
  */
 export type LocaleChangeListener = (locale: LocaleCode) => void;
