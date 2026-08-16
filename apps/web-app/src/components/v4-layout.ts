@@ -240,7 +240,7 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
   // Listen for "What's New" (changelog) button click from header
   layoutElement.addEventListener('changelog-click', (() => {
     logger.debug('[V4 Layout] Changelog button clicked');
-    showChangelogModal();
+    void showChangelogModal();
   }) as EventListener);
 
   // Listen for theme button click from header

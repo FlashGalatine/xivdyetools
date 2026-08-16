@@ -111,6 +111,7 @@ The **XIV Dye Tools 5.0 redesign**. Every one of the nine tools was re-ported to
 
 - Self-hosted fonts remove a render-blocking third-party stylesheet plus DNS/TLS to two extra origins (152 KB of woff2 same-origin, 30-day cache)
 - Measured honestly, the 5.0 work grew the one-locale JS payload by ~88 KB (1.96 MB / 2.15 MB, 91.3 %); beta icons recompressed losslessly 169 KB → 53.5 KB so they bleed less into the production `publicDir`
+- The What's New release notes (`virtual:changelog`, ~18 KB of prose after the 5.0 notes) leave the always-loaded core-runtime chunk: `changelog-modal` now `import()`s them on open, so they are their own on-demand chunk (core runtime 288 → 271 KB). The layout-shell budget is re-set at 215 KB for the two features that measurably grew it (3A desktop tool rail, closed-by-default mobile palette drawer)
 - Legacy `opengraph.png` shrinks 693 KB → 35 KB; `icon-512x512.png` 96 KB → 57 KB
 
 ### Tests

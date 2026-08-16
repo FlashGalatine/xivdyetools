@@ -9,7 +9,11 @@
  * and every other release is a collapsed row you can open in place.
  *
  * Changelog data is parsed from CHANGELOG-laymans.md at build time by
- * vite-plugin-changelog-parser (virtual:changelog). Emoji stay — they come
+ * vite-plugin-changelog-parser (virtual:changelog). It is `import()`ed the
+ * first time a modal opens rather than at module load: this file is pinned
+ * to the eagerly-loaded core-runtime chunk (`manualChunks` → "modals"), and
+ * a static import would ship every release's prose to every visitor — the
+ * 5.0 notes alone were ~10 KB of that budget. Emoji stay — they come
  * out of the markdown and are the fastest thing on the screen to scan.
  * Bullets take the accent (green already means two different things in this
  * app); the shell owns all chrome colors via theme tokens.
@@ -21,7 +25,6 @@ import { ModalService } from '@services/modal-service';
 import { StorageService } from '@services/storage-service';
 import { LanguageService } from '@services/language-service';
 import { STORAGE_KEYS, APP_VERSION } from '@shared/constants';
-import { changelogEntries } from 'virtual:changelog';
 
 // ============================================================================
 // Changelog Data Structures
@@ -52,6 +55,12 @@ export type ChangelogMode = 'popup' | 'history';
  */
 export class ChangelogModal {
   private modalId: string | null = null;
+  /**
+   * Bumped by every `show()` and `close()`. A `show()` that resolves its
+   * `import()` after a newer call has run (a second click, or a `close()`
+   * during the load) sees a stale generation and does not open.
+   */
+  private generation = 0;
 
   /**
    * Check if changelog modal should be shown
@@ -86,14 +95,22 @@ export class ChangelogModal {
   /**
    * Show the changelog modal
    *
+   * Resolves once the modal is open (or once the call was found to be a
+   * no-op). The release data is loaded on demand — see the module comment.
+   *
    * @param opts.mode - `popup` (auto after an update; expands the running
    *   version) or `history` (header button; expands the newest release).
    */
-  show(opts: { mode?: ChangelogMode } = {}): void {
+  async show(opts: { mode?: ChangelogMode } = {}): Promise<void> {
     if (this.modalId) return; // Already showing
 
+    const generation = ++this.generation;
+    const { changelogEntries } = await import('virtual:changelog');
+    // Superseded while loading: a second show() is in flight, or close() ran.
+    if (generation !== this.generation || this.modalId) return;
+
     const mode = opts.mode ?? 'popup';
-    const content = this.createContent(mode);
+    const content = this.createContent(mode, changelogEntries);
 
     this.modalId = ModalService.showChangelog({
       title:
@@ -121,6 +138,7 @@ export class ChangelogModal {
    * Close the changelog modal
    */
   close(): void {
+    this.generation++; // cancel any show() still loading its data
     if (this.modalId) {
       ModalService.dismiss(this.modalId);
       this.modalId = null;
@@ -130,7 +148,7 @@ export class ChangelogModal {
   /**
    * Create modal content: one release expanded, the rest collapsed rows.
    */
-  private createContent(mode: ChangelogMode): HTMLElement {
+  private createContent(mode: ChangelogMode, changelogEntries: ChangelogEntry[]): HTMLElement {
     const container = document.createElement('div');
     container.className = 'changelog-modal-content';
 
@@ -355,7 +373,7 @@ export function showChangelogIfUpdated(): void {
     // Small delay to ensure app is fully loaded and welcome modal has had a chance
     setTimeout(() => {
       const modal = new ChangelogModal();
-      modal.show({ mode: 'popup' });
+      void modal.show({ mode: 'popup' });
     }, 1000);
   }
 }
@@ -370,11 +388,11 @@ let changelogModalInstance: ChangelogModal | null = null;
  * Triggered by the "What's New" button in the header.
  * Uses a singleton to prevent multiple instances, matching the About/Theme/Language modals.
  */
-export function showChangelogModal(): void {
+export function showChangelogModal(): Promise<void> {
   if (!changelogModalInstance) {
     changelogModalInstance = new ChangelogModal();
   }
-  changelogModalInstance.show({ mode: 'history' });
+  return changelogModalInstance.show({ mode: 'history' });
 }
 
 /**

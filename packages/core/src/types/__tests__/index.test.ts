@@ -101,9 +101,9 @@ describe('createDyeId', () => {
       expect(result).toBe(1);
     });
 
-    it('should accept maximum valid ID (200)', () => {
-      const result = createDyeId(200);
-      expect(result).toBe(200);
+    it('should accept maximum valid ID (254)', () => {
+      const result = createDyeId(254);
+      expect(result).toBe(254);
     });
 
     it('should accept mid-range ID', () => {
@@ -123,8 +123,8 @@ describe('createDyeId', () => {
       expect(result).toBeNull();
     });
 
-    it('should return null for ID greater than 200', () => {
-      const result = createDyeId(201);
+    it('should return null for ID greater than 254', () => {
+      const result = createDyeId(255);
       expect(result).toBeNull();
     });
 

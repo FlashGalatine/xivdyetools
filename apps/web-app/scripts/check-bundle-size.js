@@ -84,13 +84,21 @@ const BUNDLE_LIMITS = [
 
   // Eagerly loaded on first paint
   { label: 'main entry', pattern: /^index-/, limit: 150 * KB },
-  { label: 'layout shell', pattern: /^v4-layout-/, limit: 200 * KB },
+  // 200 KB was set with the shell at ~196 KB. Two 5.0 shell features then
+  // landed in it -- the 3A desktop tool rail in the console bar (+3.9 KB in
+  // v4-app-header) and the closed-by-default mobile palette drawer with its
+  // first-run hint (+4.5 KB in v4-layout-shell) -- and it sits at ~205 KB.
+  // Re-budgeted for that measured growth; it is not headroom for more.
+  { label: 'layout shell', pattern: /^v4-layout-/, limit: 215 * KB },
   // Named `modals` by vite.config's manualChunks, but that is not what it holds.
   // Rolldown ignored 34 of the 51 assignments manualChunks returned and merged
   // the shared colour engine into this chunk -- ColorConverter, ColorService,
   // APIService, core utils and spectral.js. It is ~278 KB and loads on every
   // visit, including for a returning visitor who never opens a modal, because
   // every tool needs ColorService. Treat it as the app's core runtime budget.
+  // The What's New release notes (virtual:changelog) used to be compiled in
+  // here too and doubled with the 5.0 notes; changelog-modal now `import()`s
+  // them on open, so they are their own chunk and no longer charge this budget.
   { label: 'core runtime (named "modals")', pattern: /^modals-/, limit: 280 * KB },
 
   // Vendor chunks, code-split for caching
@@ -116,6 +124,11 @@ const BUNDLE_LIMITS = [
   // Shared components
   { label: 'dye selector', pattern: /^dye-selector-/, limit: 50 * KB },
   { label: 'result card', pattern: /^result-card-/, limit: 50 * KB },
+
+  // On-demand data: the parsed CHANGELOG-laymans.md, fetched when What's New
+  // opens. Prose grows with every release, so it gets its own budget rather
+  // than the 60 KB default -- ~18 KB with the 5.0 notes.
+  { label: 'release notes (on open)', pattern: /^_virtual_changelog-/, limit: 40 * KB },
 ];
 
 /**
