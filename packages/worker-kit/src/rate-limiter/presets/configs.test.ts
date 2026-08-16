@@ -82,36 +82,55 @@ describe('DISCORD_COMMAND_LIMITS', () => {
     expect(DISCORD_COMMAND_LIMITS.default.maxRequests).toBeGreaterThan(0);
   });
 
-  it('has configs for common commands', () => {
+  it('has configs for the 5.0 command roster (no retired v4 keys)', () => {
     const expectedCommands = [
-      'match_image', 'accessibility', 'budget', 'harmony', 'match',
-      'mixer', 'comparison', 'dye', 'favorites', 'collection',
-      'language', 'about', 'manual',
+      'extractor', 'extractor:image', 'accessibility', 'budget', 'harmony',
+      'mixer', 'gradient', 'comparison', 'contrast', 'swatch', 'preset',
+      'preferences', 'dye', 'about', 'manual', 'autocomplete',
     ];
     for (const cmd of expectedCommands) {
       expect(DISCORD_COMMAND_LIMITS[cmd]).toBeDefined();
     }
+    // The v4 command set was deleted in discord-worker 5.0.0 — dead keys
+    // here would silently mis-tier their replacements.
+    for (const dead of ['match', 'match_image', 'favorites', 'collection', 'language']) {
+      expect(DISCORD_COMMAND_LIMITS[dead]).toBeUndefined();
+    }
   });
 
-  it('match_image has the lowest limit', () => {
-    expect(DISCORD_COMMAND_LIMITS.match_image.maxRequests).toBeLessThanOrEqual(
-      DISCORD_COMMAND_LIMITS.default.maxRequests,
+  it('extractor:image (Photon path) has the lowest limit', () => {
+    expect(DISCORD_COMMAND_LIMITS['extractor:image'].maxRequests).toBe(5);
+    expect(DISCORD_COMMAND_LIMITS['extractor:image'].maxRequests).toBeLessThan(
+      DISCORD_COMMAND_LIMITS.extractor.maxRequests,
     );
   });
 });
 
 describe('getDiscordCommandLimit', () => {
   it('returns the specific limit for known commands', () => {
-    expect(getDiscordCommandLimit('match_image')).toEqual(
-      DISCORD_COMMAND_LIMITS.match_image,
+    expect(getDiscordCommandLimit('extractor')).toEqual(
+      DISCORD_COMMAND_LIMITS.extractor,
     );
     expect(getDiscordCommandLimit('harmony')).toEqual(
       DISCORD_COMMAND_LIMITS.harmony,
     );
   });
 
+  it('prefers a command:subcommand entry when one exists', () => {
+    expect(getDiscordCommandLimit('extractor', 'image')).toEqual(
+      DISCORD_COMMAND_LIMITS['extractor:image'],
+    );
+    // no dedicated entry for the color subcommand → falls back to the command
+    expect(getDiscordCommandLimit('extractor', 'color')).toEqual(
+      DISCORD_COMMAND_LIMITS.extractor,
+    );
+  });
+
   it('returns default for unknown commands', () => {
     expect(getDiscordCommandLimit('nonexistent')).toEqual(
+      DISCORD_COMMAND_LIMITS.default,
+    );
+    expect(getDiscordCommandLimit('nonexistent', 'sub')).toEqual(
       DISCORD_COMMAND_LIMITS.default,
     );
   });

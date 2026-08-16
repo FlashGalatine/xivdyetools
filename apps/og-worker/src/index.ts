@@ -14,7 +14,7 @@
  * @module index
  */
 
-import { normalizeMatchingMethod } from '@xivdyetools/core';
+import { DEFAULT_MATCHING_METHOD, normalizeMatchingMethod } from '@xivdyetools/core';
 import { Hono, type Context } from 'hono';
 import {
   requestIdMiddleware,
@@ -312,7 +312,7 @@ app.get('/og/harmony/:dyeId/:harmonyType', async (c) => {
   const dyeId = parseInt(c.req.param('dyeId'), 10);
   const harmonyTypeRaw = c.req.param('harmonyType').replace('.png', '');
   const harmonyType = harmonyTypeRaw.toLowerCase() as HarmonyType;
-  const algorithm = (c.req.query('algo') || 'oklab') as MatchingAlgorithm;
+  const algorithm = (c.req.query('algo') || DEFAULT_MATCHING_METHOD) as MatchingAlgorithm;
   const locale = resolveLocale(new URL(c.req.url).searchParams);
 
   // FINDING-011: Validate dyeId to prevent NaN propagation
@@ -356,7 +356,7 @@ app.get('/og/gradient/:startId/:endId/:steps', async (c) => {
   const startDyeId = parseInt(c.req.param('startId'), 10);
   const endDyeId = parseInt(c.req.param('endId'), 10);
   const steps = parseInt(c.req.param('steps').replace('.png', ''), 10);
-  const algorithm = (c.req.query('algo') || 'oklab') as MatchingAlgorithm;
+  const algorithm = (c.req.query('algo') || DEFAULT_MATCHING_METHOD) as MatchingAlgorithm;
   const locale = resolveLocale(new URL(c.req.url).searchParams);
 
   // FINDING-011: Validate dye IDs to prevent NaN propagation
@@ -401,7 +401,7 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:ratio', async (c) => {
   const dyeAId = parseInt(c.req.param('dyeAId'), 10);
   const dyeBId = parseInt(c.req.param('dyeBId'), 10);
   const ratio = parseInt(c.req.param('ratio').replace('.png', ''), 10);
-  const algorithm = (c.req.query('algo') || 'oklab') as MatchingAlgorithm;
+  const algorithm = (c.req.query('algo') || DEFAULT_MATCHING_METHOD) as MatchingAlgorithm;
   const locale = resolveLocale(new URL(c.req.url).searchParams);
 
   // FINDING-011: Validate dye IDs to prevent NaN propagation
@@ -447,7 +447,7 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio', async (c) => {
   const dyeBId = parseInt(c.req.param('dyeBId'), 10);
   const dyeCId = parseInt(c.req.param('dyeCId'), 10);
   const ratio = parseInt(c.req.param('ratio').replace('.png', ''), 10);
-  const algorithm = (c.req.query('algo') || 'oklab') as MatchingAlgorithm;
+  const algorithm = (c.req.query('algo') || DEFAULT_MATCHING_METHOD) as MatchingAlgorithm;
   const locale = resolveLocale(new URL(c.req.url).searchParams);
 
   // FINDING-011: Validate dye IDs to prevent NaN propagation
@@ -492,7 +492,7 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio', async (c) => {
 app.get('/og/swatch/:color/:limit', async (c) => {
   const color = c.req.param('color');
   const limit = parseInt(c.req.param('limit').replace('.png', ''), 10);
-  const algorithm = (c.req.query('algo') || 'oklab') as MatchingAlgorithm;
+  const algorithm = (c.req.query('algo') || DEFAULT_MATCHING_METHOD) as MatchingAlgorithm;
   const locale = resolveLocale(new URL(c.req.url).searchParams);
 
   // Parse optional sheet context params

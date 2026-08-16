@@ -35,6 +35,7 @@ Note: the deployed production worker predates this branch, so `data.xivdyetools.
 
 ### Changed
 
+- **Error strings tell the truth** — `/v1/dyes/stain/:stainId` validation `expected` now reads `positive integer (1-254)` (was `1-125`, contradicting the accepted window); the 429 body no longer promises "Register for an API key to get 300 requests per minute" (no API keys exist) — it now says `Rate limit exceeded. 60 requests per minute allowed. Retry after the indicated number of seconds.` (docs `guide/errors.md` + `guide/rate-limits.md` updated to match)
 - Migrated from `@xivdyetools/worker-middleware` + `@xivdyetools/rate-limiter` to `@xivdyetools/worker-kit` (`/rate-limiter` subpath) — Tier 1 package consolidation, no behaviour change.
 - Consumes `@xivdyetools/core` schema v2 (stainID-keyed `dyes.json`, `facewearColors` split out, `getFacewearColorByLegacyItemID`) and the 5.0 `DEFAULT_MATCHING_METHOD` / `LEGACY_MATCHING_METHOD_MAP` exports; `calculateDistance()` in `src/lib/services.ts` no longer takes weights.
 - Dependencies: `hono` floor raised to `^4.12.34` (2026-08-09 security advisories); `wrangler` `^4.114.0 → ^4.120.0` (miniflare 5 / undici 7.29); `license: MIT` declared. Accepted and recorded (FINDING-004): `vitepress@1.6.4` pins `vite ^5.4` / `esbuild 0.21` with no patched release — revisit when VitePress 2 ships stable.

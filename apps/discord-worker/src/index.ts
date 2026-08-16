@@ -36,7 +36,7 @@ import {
   handleBudgetAutocomplete,
   handleChangelogCommand,
 } from './handlers/commands/index.js';
-import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.js';
+import { checkRateLimit, formatRateLimitMessage, resolveRateLimitScope } from './services/rate-limiter.js';
 import { trackCommandWithKV } from './services/analytics.js';
 import { getPresetFavoriteEntries, savePresetFavoriteEntries } from './services/preset-favorites.js';
 import { handleButtonInteraction } from './handlers/buttons/index.js';
@@ -555,8 +555,11 @@ async function handleCommand(
 
   logger.info('Handling command', { command: commandName, userId });
 
-  // Check rate limit (skip for utility commands)
+  // Check rate limit (skip for utility commands). Aliases (/a11y) share the
+  // canonical command's bucket; /extractor tiers its image subcommand
+  // separately (Photon path, 5/min) from the plain color lookup.
   if (commandName && !['about', 'manual', 'stats', 'changelog'].includes(commandName)) {
+    const scope = resolveRateLimitScope(commandName, interaction.data?.options?.[0]?.name);
     const rateLimitResult = await checkRateLimit(
       {
         upstashUrl: env.UPSTASH_REDIS_REST_URL,
@@ -564,7 +567,9 @@ async function handleCommand(
         kv: env.KV, // fallback if Upstash not configured
       },
       userId,
-      commandName
+      scope.command,
+      undefined,
+      scope.subcommand
     );
     if (!rateLimitResult.allowed) {
       logger.info('User rate limited', { userId, command: commandName });

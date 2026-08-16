@@ -54,6 +54,7 @@ The **5.0 command set** — the Discord half of the XIV Dye Tools 5.0 redesign (
 
 ### Fixed
 
+- **Rate limiting keyed on the 5.0 roster** — `resolveRateLimitScope()` canonicalises `/a11y` onto `/accessibility` so the alias no longer gets its own (default-tier) bucket, and passes `/extractor`'s subcommand so `image` (Photon path) is tiered at 5/min in its own bucket while `color` keeps 15/min (`@xivdyetools/worker-kit` `DISCORD_COMMAND_LIMITS` re-keyed in the same change)
 - **BUG-001 (HIGH)**: the registered `/preset list|random|submit` schemas still offered the retired `🌐 Community` category (see BREAKING).
 - **FONT-001**: 128 locale codepoints without glyphs rendered as tofu for ja/ko/zh users (see Fonts above).
 - **Beta bot rendered bare `:dye_name:` text** — application emoji are owned by the uploading application; the mapping is now per-application and an application with no uploaded set gets no emoji rather than production's markup.

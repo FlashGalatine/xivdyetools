@@ -52,6 +52,7 @@ an atomic web + og move, so neither side should go out without the other.
 
 ### Fixed
 
+- **Algo-less links render with the suite default** — the five image routes defaulted `?algo` to `oklab` while every other surface (and the page a visitor lands on) defaults to `ciede2000`, so a hand-typed or legacy link without `algo` produced a card whose harmony deltas and "Algorithm:" footer disagreed with the page; now `DEFAULT_MATCHING_METHOD` from core (web-app share links always carry `algo`, so those were already correct)
 - **The `/og/` prefix**, missing from every emitted `og:image` URL — the routes register under `/og/`, the meta tags pointed one level up, and nothing served that path. No card of any design was ever fetched.
 - **`?lang=` reaches the picture.** The text localized six ways around an English card while the worker bundled CJK subsets precisely so it would not have to. `?lang=` now travels with every emitted `og:image` URL.
 - **Harmony's Δ measures the right pair** — match → computed ideal, not base → match. A complement is far from its base by definition, so a correct tetrad printed four reds.

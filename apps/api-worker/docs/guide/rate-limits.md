@@ -42,7 +42,7 @@ When you receive a `429`:
 {
   "success": false,
   "error": "RATE_LIMITED",
-  "message": "Rate limit exceeded. 60 requests per minute allowed for anonymous access. Register for an API key to get 300 requests per minute.",
+  "message": "Rate limit exceeded. 60 requests per minute allowed. Retry after the indicated number of seconds.",
   "retryAfter": 30,
   "meta": { "requestId": "...", "apiVersion": "v1" }
 }

@@ -25,6 +25,7 @@ All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-
 
 ### Changed
 
+- **`DISCORD_COMMAND_LIMITS` re-keyed to the 5.0 command roster** — the retired v4 keys (`match`, `match_image`, `favorites`, `collection`, `language`) are gone (they had been silently mis-tiering their replacements: `/extractor image` fell to the 15/min default instead of the 5/min image tier); `extractor`, `gradient`, `swatch`, `contrast`, `preset` (10/min), `preferences` added; new `command:subcommand` convention with `getDiscordCommandLimit(command, subcommand?)` resolving `command:subcommand` → `command` → `default` (`extractor:image` = 5/min)
 - Tests: both suites (~2,250 lines across the middleware and rate-limiter modules) came across intact; the 90% lines / functions / branches / statements gate carried over from worker-middleware and now covers the rate-limiter tree too.
 - Docs: README rewritten for the merged package (import-path table, middleware option tables, backend comparison, Worker configuration examples, license/legal notice); `CLAUDE.md` synced (incl. the `api-worker` ↔ `universalis-proxy` absorption).
 

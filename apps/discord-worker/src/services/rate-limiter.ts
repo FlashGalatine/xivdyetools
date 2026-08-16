@@ -91,6 +91,37 @@ function getLimiter(config: RateLimiterConfig): RateLimiter {
 }
 
 /**
+ * Command aliases: Discord has no alias mechanism, so `/a11y` is a second
+ * registration of `/accessibility`. Both must draw from ONE rate-limit
+ * bucket, or the alias silently doubles a user's allowance.
+ */
+const COMMAND_ALIASES: Readonly<Record<string, string>> = {
+  a11y: 'accessibility',
+};
+
+/**
+ * Commands whose subcommands are tiered separately in
+ * `DISCORD_COMMAND_LIMITS` (`command:subcommand` keys). Anything else drops
+ * the subcommand so all its subcommands share the command bucket.
+ */
+const SUBCOMMAND_SCOPED = new Set<string>(['extractor']);
+
+/**
+ * Resolve the (command, subcommand) pair a rate-limit check should be keyed on:
+ * aliases canonicalised, subcommand kept only where a scoped tier exists.
+ */
+export function resolveRateLimitScope(
+  commandName: string,
+  subcommand?: string
+): { command: string; subcommand: string | undefined } {
+  const command = COMMAND_ALIASES[commandName] ?? commandName;
+  return {
+    command,
+    subcommand: SUBCOMMAND_SCOPED.has(command) ? subcommand : undefined,
+  };
+}
+
+/**
  * Check if a user is rate limited for a specific command
  *
  * Uses Upstash Redis for atomic operations (no race conditions) when available,
@@ -98,8 +129,9 @@ function getLimiter(config: RateLimiterConfig): RateLimiter {
  *
  * @param config - Rate limiter backend configuration
  * @param userId - Discord user ID
- * @param commandName - Optional command name for command-specific limits
+ * @param commandName - Optional (canonical) command name for command-specific limits
  * @param logger - Optional logger for structured logging
+ * @param subcommand - Optional subcommand; only honoured where a `command:subcommand` tier exists
  * @returns Rate limit check result
  *
  * @example
@@ -122,13 +154,17 @@ export async function checkRateLimit(
   config: RateLimiterConfig,
   userId: string,
   commandName?: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
+  subcommand?: string
 ): Promise<RateLimitResult> {
   const limiter = getLimiter(config);
-  const limitConfig = getDiscordCommandLimit(commandName ?? 'default');
+  const limitConfig = getDiscordCommandLimit(commandName ?? 'default', subcommand);
 
-  // Build compound key for user:command rate limiting
-  const key = commandName ? `${userId}:${commandName}` : `${userId}:global`;
+  // Build compound key for user:command rate limiting. A subcommand that has
+  // its own tier (e.g. extractor:image) gets its own bucket so it cannot
+  // borrow allowance from the cheaper sibling.
+  const scope = subcommand && commandName ? `${commandName}:${subcommand}` : commandName;
+  const key = scope ? `${userId}:${scope}` : `${userId}:global`;
 
   try {
     const result = await limiter.check(key, limitConfig);

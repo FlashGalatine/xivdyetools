@@ -56,36 +56,43 @@ export function getOAuthLimit(path: string): RateLimitConfig {
 // ============================================================================
 
 /**
- * Rate limits for Discord bot commands
+ * Rate limits for Discord bot commands (the 5.0 command roster).
  *
- * Per-command limits based on resource intensity.
- * Higher limits for utility commands, lower for expensive operations.
+ * Per-command limits based on resource intensity — higher for utility
+ * commands, lower for expensive operations. Keys are the registered command
+ * name; a `command:subcommand` key overrides the command entry for that
+ * subcommand only (see `getDiscordCommandLimit`). Aliases (e.g. `/a11y` for
+ * `/accessibility`) are canonicalised by the caller before lookup so both
+ * spellings share one bucket.
  */
 export const DISCORD_COMMAND_LIMITS: Record<string, RateLimitConfig> = {
   // OPT-007 (2026-07-18 audit): autocomplete fires on nearly every keystroke
   // — generous limit, fail-soft (limited requests return empty choices)
   autocomplete: { maxRequests: 60, windowMs: 60_000, burstAllowance: 10 },
 
-  // Image processing - expensive (5 per minute)
-  match_image: { maxRequests: 5, windowMs: 60_000 },
+  // Image processing — the Photon path through image-worker (5 per minute).
+  // `/extractor color` is a plain dye lookup and keeps the command default.
+  'extractor:image': { maxRequests: 5, windowMs: 60_000 },
+  extractor: { maxRequests: 15, windowMs: 60_000 },
 
-  // Accessibility features (10 per minute)
+  // Accessibility / analysis features (10 per minute)
   accessibility: { maxRequests: 10, windowMs: 60_000 },
 
-  // API-dependent commands (10 per minute)
+  // API- and D1-dependent commands (10 per minute)
   budget: { maxRequests: 10, windowMs: 60_000 },
+  preset: { maxRequests: 10, windowMs: 60_000 },
 
-  // Standard commands (15 per minute)
+  // Standard rendering commands (15 per minute)
   harmony: { maxRequests: 15, windowMs: 60_000 },
-  match: { maxRequests: 15, windowMs: 60_000 },
   mixer: { maxRequests: 15, windowMs: 60_000 },
+  gradient: { maxRequests: 15, windowMs: 60_000 },
   comparison: { maxRequests: 15, windowMs: 60_000 },
+  contrast: { maxRequests: 15, windowMs: 60_000 },
+  swatch: { maxRequests: 15, windowMs: 60_000 },
 
   // Lighter commands (20 per minute)
   dye: { maxRequests: 20, windowMs: 60_000 },
-  favorites: { maxRequests: 20, windowMs: 60_000 },
-  collection: { maxRequests: 20, windowMs: 60_000 },
-  language: { maxRequests: 20, windowMs: 60_000 },
+  preferences: { maxRequests: 20, windowMs: 60_000 },
 
   // Utility commands (30 per minute)
   about: { maxRequests: 30, windowMs: 60_000 },
@@ -96,11 +103,18 @@ export const DISCORD_COMMAND_LIMITS: Record<string, RateLimitConfig> = {
 };
 
 /**
- * Get Discord command rate limit config
+ * Get Discord command rate limit config.
+ *
+ * Resolution order: `command:subcommand` → `command` → `default`.
  */
 export function getDiscordCommandLimit(
-  commandName: string
+  commandName: string,
+  subcommand?: string
 ): RateLimitConfig {
+  if (subcommand) {
+    const scoped = DISCORD_COMMAND_LIMITS[`${commandName}:${subcommand}`];
+    if (scoped) return scoped;
+  }
   return DISCORD_COMMAND_LIMITS[commandName] ?? DISCORD_COMMAND_LIMITS.default;
 }
 

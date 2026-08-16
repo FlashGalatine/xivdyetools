@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   checkRateLimit,
+  resolveRateLimitScope,
   formatRateLimitMessage,
   resetRateLimiterInstance,
   getConfiguredBackend,
@@ -67,9 +68,15 @@ describe('rate-limiter.ts', () => {
     });
 
     it('should use command-specific limits', async () => {
-      // match_image has a limit of 5
-      let result = await checkRateLimit(config, mockUserId, 'match_image');
+      // extractor image (Photon path) has a limit of 5
+      let result = await checkRateLimit(config, mockUserId, 'extractor', undefined, 'image');
       expect(result.remaining).toBe(4); // 5 - 1 = 4
+
+      // extractor color falls back to the command entry (15)
+      resetRateLimiterInstance();
+      mockKV._clear();
+      result = await checkRateLimit(config, mockUserId, 'extractor', undefined, 'color');
+      expect(result.remaining).toBe(14); // 15 - 1 = 14
 
       // dye has a limit of 20
       resetRateLimiterInstance();
@@ -122,26 +129,30 @@ describe('rate-limiter.ts', () => {
     it('should reset after window expires', async () => {
       // Make requests until rate limited
       for (let i = 0; i < 16; i++) {
-        await checkRateLimit(config, mockUserId, 'match_image');
+        await checkRateLimit(config, mockUserId, 'extractor', undefined, 'image');
       }
 
       // Advance time by 61 seconds (window is 60 seconds)
       vi.advanceTimersByTime(61 * 1000);
 
-      const result = await checkRateLimit(config, mockUserId, 'match_image');
+      const result = await checkRateLimit(config, mockUserId, 'extractor', undefined, 'image');
 
       expect(result.allowed).toBe(true);
       expect(result.remaining).toBe(4); // Fresh window: 5 - 1 = 4
     });
 
     it('should track different commands separately', async () => {
-      // Exhaust the match_image limit (5 requests)
+      // Exhaust the extractor:image limit (5 requests)
       for (let i = 0; i < 5; i++) {
-        await checkRateLimit(config, mockUserId, 'match_image');
+        await checkRateLimit(config, mockUserId, 'extractor', undefined, 'image');
       }
 
-      const matchImageResult = await checkRateLimit(config, mockUserId, 'match_image');
-      expect(matchImageResult.allowed).toBe(false);
+      const imageResult = await checkRateLimit(config, mockUserId, 'extractor', undefined, 'image');
+      expect(imageResult.allowed).toBe(false);
+
+      // the sibling color subcommand has its own (15/min) bucket
+      const colorResult = await checkRateLimit(config, mockUserId, 'extractor', undefined, 'color');
+      expect(colorResult.allowed).toBe(true);
 
       // harmony should still be allowed (but shares singleton, so need new instance)
       resetRateLimiterInstance();
@@ -239,5 +250,32 @@ describe('rate-limiter.ts', () => {
       await checkRateLimit(config, mockUserId, 'harmony');
       expect(getConfiguredBackend()).toBe('kv');
     });
+  });
+});
+
+describe('resolveRateLimitScope', () => {
+  it('canonicalises the /a11y alias onto /accessibility so both share a bucket', () => {
+    expect(resolveRateLimitScope('a11y')).toEqual({ command: 'accessibility', subcommand: undefined });
+    expect(resolveRateLimitScope('accessibility')).toEqual({ command: 'accessibility', subcommand: undefined });
+  });
+
+  it('carries the extractor subcommand so image and color tier separately', () => {
+    expect(resolveRateLimitScope('extractor', 'image')).toEqual({ command: 'extractor', subcommand: 'image' });
+    expect(resolveRateLimitScope('extractor', 'color')).toEqual({ command: 'extractor', subcommand: 'color' });
+  });
+
+  it('drops the subcommand for commands without scoped limits', () => {
+    expect(resolveRateLimitScope('preset', 'submit')).toEqual({ command: 'preset', subcommand: undefined });
+  });
+
+  it('a11y and accessibility share one KV bucket', async () => {
+    resetRateLimiterInstance();
+    const config: RateLimiterConfig = { kv: createMockKV() };
+    const a = resolveRateLimitScope('a11y');
+    const b = resolveRateLimitScope('accessibility');
+    await checkRateLimit(config, 'user-alias', a.command, undefined, a.subcommand);
+    const result = await checkRateLimit(config, 'user-alias', b.command, undefined, b.subcommand);
+    // accessibility is 10/min: two calls across the alias pair → 8 remaining
+    expect(result.remaining).toBe(8);
   });
 });

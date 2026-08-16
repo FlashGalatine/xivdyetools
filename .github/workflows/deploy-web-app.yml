@@ -8,6 +8,7 @@ on:
       - 'packages/core/**'
       - 'packages/types/**'
       - 'packages/logger/**'
+      - 'packages/svg/**'
   workflow_dispatch:
 
 concurrency:

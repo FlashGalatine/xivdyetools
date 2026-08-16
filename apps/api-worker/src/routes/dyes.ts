@@ -174,7 +174,7 @@ dyesRouter.get('/stain/:stainId', (c) => {
     throw new ApiError(ErrorCode.INVALID_STAIN_ID, `Invalid stain ID "${raw}". Must be a positive integer.`, 400, {
       parameter: 'stainId',
       received: raw,
-      expected: 'positive integer (1-125)',
+      expected: 'positive integer (1-254)',
     });
   }
 

@@ -38,7 +38,7 @@ export const rateLimitMiddleware = createRateLimitMiddleware({
         success: false,
         error: ErrorCode.RATE_LIMITED,
         message:
-          'Rate limit exceeded. 60 requests per minute allowed for anonymous access. Register for an API key to get 300 requests per minute.',
+          'Rate limit exceeded. 60 requests per minute allowed. Retry after the indicated number of seconds.',
         retryAfter,
         meta: {
           requestId: c.get('requestId') || 'unknown',
