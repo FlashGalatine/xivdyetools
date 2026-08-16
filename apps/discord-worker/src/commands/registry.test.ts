@@ -79,8 +79,9 @@ describe('registered /preset category choices', () => {
 });
 
 describe('/extractor schema promises only what the handler reads', () => {
-  const extractor = commands.find((c) => c.name === 'extractor')!;
-  const sub = (name: string) => extractor.options!.find((o) => o.name === name)!;
+  type Opt = { name: string; options?: Opt[] };
+  const extractor = commands.find((c) => c.name === 'extractor') as unknown as Opt;
+  const sub = (name: string) => (extractor.options ?? []).find((o) => o.name === name) as Opt;
   const optionNames = (name: string) => (sub(name).options ?? []).map((o) => o.name);
 
   it('color: color/count/matching — no prevent_duplicates (nearest-N of distinct dyes cannot repeat)', () => {

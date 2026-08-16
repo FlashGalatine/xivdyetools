@@ -8,7 +8,7 @@ import type { RGB } from '@xivdyetools/types';
 
 // Mock DyeService for testing extractAndMatchPalette
 const createMockDyeService = () => ({
-  findClosestDye: vi.fn((_hex: string) => ({
+  findClosestDye: vi.fn((_hex: string, _opts?: { matchingMethod?: string }) => ({
     id: 1,
     itemID: 30116,
     name: 'Dalamud Red',

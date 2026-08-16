@@ -90,7 +90,7 @@ const redLab: LAB = { L: 53.23, a: 80.11, b: 67.22 };
 
 // Branded types with validation
 const hex: HexColor = createHexColor('#ff6b6b'); // Validates and normalizes to "#FF6B6B"
-const dyeId: DyeId | null = createDyeId(1);      // Accepts 1-200, or synthetic IDs <= -1000; else null
+const dyeId: DyeId | null = createDyeId(102);    // A stainID (1-254; 102 = Jet Black); itemIDs and negatives → null
 
 // Colorblindness types
 import { VisionType, ColorblindMatrices } from '@xivdyetools/types';
@@ -279,7 +279,7 @@ import { CommunityPreset, PresetFilters, ModerationResult } from '@xivdyetools/t
 | Function | Description |
 |----------|-------------|
 | `createHexColor(hex)` | Validate and normalize hex color (throws on invalid format) |
-| `createDyeId(id)` | Validate dye ID — `1-200` (a stainID-sized window, not itemIDs), or the frozen legacy synthetic Facewear range `<= -1000`; returns `null` otherwise |
+| `createDyeId(id)` | Validate a stainID — `1-254` (the loader window; not itemIDs like 5729, not the retired synthetic Facewear negatives); returns `null` otherwise |
 | `createHue(hue)` | Normalize hue to 0-360 |
 | `createSaturation(sat)` | Clamp saturation to 0-100 |
 | `isOk(result)` | Type guard for successful Result |

@@ -13,7 +13,7 @@ import type { Env, DiscordInteraction } from '../../types/env.js';
 const renderSvgToPngMock = vi.hoisted(() => vi.fn());
 const editOriginalResponseMock = vi.hoisted(() => vi.fn());
 const getUserPreferencesMock = vi.hoisted(() => vi.fn());
-const generateNearestSheetMock = vi.hoisted(() => vi.fn(() => '<svg />'));
+const generateNearestSheetMock = vi.hoisted(() => vi.fn((_opts: unknown) => '<svg />'));
 const translatorStub = vi.hoisted(() => ({
   t: vi.fn((key: string) => (key === 'card.matchKey' ? 'nearest by ΔE2000' : key)),
   getLocale: vi.fn(() => 'en'),
@@ -83,7 +83,7 @@ describe('/extractor color — matching method', () => {
     await flush();
 
     expect(generateNearestSheetMock).toHaveBeenCalledTimes(1);
-    const opts = generateNearestSheetMock.mock.calls[0][0] as { method: string; labels: { matchKey: string }; rows: Array<{ hex: string; deltaE: number }> };
+    const opts = generateNearestSheetMock.mock.calls[0][0] as unknown as { method: string; labels: { matchKey: string }; rows: Array<{ hex: string; deltaE: number }> };
     expect(opts.method).toBe('ciede2000');
     expect(opts.labels.matchKey).toBe('nearest by ΔE2000');
     // rows are the ΔE2000-nearest dyes, ascending, measured in ΔE2000
@@ -102,7 +102,7 @@ describe('/extractor color — matching method', () => {
     );
     await flush();
 
-    const opts = generateNearestSheetMock.mock.calls[0][0] as { method: string; labels: { matchKey: string }; rows: Array<{ hex: string; deltaE: number }> };
+    const opts = generateNearestSheetMock.mock.calls[0][0] as unknown as { method: string; labels: { matchKey: string }; rows: Array<{ hex: string; deltaE: number }> };
     expect(opts.method).toBe('redmean');
     expect(opts.labels.matchKey).toBe('nearest by REDMEAN');
     for (const r of opts.rows) {
@@ -116,7 +116,7 @@ describe('/extractor color — matching method', () => {
     await handleExtractorCommand(makeInteraction([{ name: 'color', value: '#4A6B8C' }]), env, ctx);
     await flush();
 
-    const opts = generateNearestSheetMock.mock.calls[0][0] as { method: string; labels: { matchKey: string } };
+    const opts = generateNearestSheetMock.mock.calls[0][0] as unknown as { method: string; labels: { matchKey: string } };
     expect(opts.method).toBe('oklab');
     expect(opts.labels.matchKey).toBe('nearest by ΔEOK');
   });

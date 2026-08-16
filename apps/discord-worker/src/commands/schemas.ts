@@ -421,7 +421,7 @@ export const commands = [
         choices: [
           { name: 'RGB - Simple additive averaging', value: 'rgb' },
           { name: 'LAB - Perceptual CIELAB blending', value: 'lab' },
-          { name: 'OKLAB - Modern perceptual (recommended)', value: 'oklab' },
+          { name: 'OKLAB - Modern perceptual', value: 'oklab' },
           { name: 'RYB - Traditional artist color wheel', value: 'ryb' },
           { name: 'HSL - Hue-Saturation-Lightness', value: 'hsl' },
           { name: 'Spectral - Pigment physics simulation', value: 'spectral' },
@@ -615,7 +615,7 @@ export const commands = [
             choices: [
               { name: 'RGB - Additive channel averaging', value: 'rgb' },
               { name: 'LAB - Perceptually uniform CIELAB', value: 'lab' },
-              { name: 'OKLAB - Modern perceptual (recommended)', value: 'oklab' },
+              { name: 'OKLAB - Modern perceptual', value: 'oklab' },
               { name: 'RYB - Traditional artist color wheel', value: 'ryb' },
               { name: 'HSL - Hue-Saturation-Lightness', value: 'hsl' },
               { name: 'Spectral - Kubelka-Munk physics', value: 'spectral' },

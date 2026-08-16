@@ -58,7 +58,7 @@ type Hue = number & { readonly __brand: 'Hue' };
 type Saturation = number & { readonly __brand: 'Saturation' };
 
 function createHexColor(hex: string): HexColor;          // throws on invalid format
-function createDyeId(id: number): DyeId | null;          // 1-200 (a stainID-sized window — NOT itemIDs like 5729) or <= -1000 (frozen legacy synthetic range); no production caller today
+function createDyeId(id: number): DyeId | null;          // a stainID, 1-254 (the loader window) — NOT itemIDs like 5729, NOT the retired synthetic negatives; no production caller today
 function createHue(hue: number): Hue;                     // wraps to 0-360
 function createSaturation(saturation: number): Saturation; // clamps to 0-100
 ```
@@ -145,9 +145,9 @@ The brand is structural-only — it has no runtime cost, and the `as` cast insid
 
 Add a brand when a primitive type is being passed across a boundary where mixing it up with a similarly-typed primitive would be a bug — for example: a Discord Snowflake vs. a generic string ID, or a `DyeId` vs. an arbitrary number. Add a `create*` helper that performs validation and returns either the branded value or `null`/throws.
 
-### Synthetic Facewear IDs (legacy range — TYPES-102)
+### `DyeId` is a stainID (5.0)
 
-`createDyeId` accepts regular IDs (1-200) **and** the synthetic Facewear range (`<= -1000`). The negative range is history, not a live scheme: before schema v2 (2026-07-31) the 11 Facewear entries lived in the dye database without real `itemID`s and `DyeDatabase.initialize()` assigned each `-(1000 + nameHash)`. Those IDs leaked into serialized data, so `createDyeId` still validates them and `@xivdyetools/core` keeps the frozen `LEGACY_FACEWEAR_ITEM_IDS` map to resolve them.
+`createDyeId` validates the **stainID window (1–254)** — the game's own dye number and the canonical key of the schema-v2 dye table (125 dyes today, room for future ones). It rejects legacy market itemIDs (5729…, 52254…) and the pre-v2 synthetic negative Facewear ids (`-(1000 + nameHash)`), which `DyeDatabase.initialize()` assigned before 2026-07-31 and which survive only in `@xivdyetools/core`'s frozen `LEGACY_FACEWEAR_ITEM_IDS` map for reading old serialized data — not as a `DyeId`.
 
 Nothing mints a new negative ID today. Facewear colors are their own type (`FacewearColor`, a string-slug `id`) and are not `Dye`s. `Dye.itemID` is always a number, so market-board filtering uses `dye.itemID > 0` — never a null check.
 

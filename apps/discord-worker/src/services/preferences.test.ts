@@ -272,9 +272,9 @@ describe('Preferences Service', () => {
         expect(resolveBlendingMode(undefined, prefs)).toBe('spectral');
       });
 
-      it('uses default when no explicit or preference', () => {
+      it('uses default when no explicit or preference (ryb — the web app Mixer default)', () => {
         const prefs: UserPreferences = {};
-        expect(resolveBlendingMode(undefined, prefs)).toBe('rgb');
+        expect(resolveBlendingMode(undefined, prefs)).toBe('ryb');
       });
 
       it('ignores invalid explicit value', () => {
@@ -397,7 +397,7 @@ describe('Preferences Service', () => {
   describe('getDefaultValue', () => {
     it('returns correct defaults', () => {
       expect(getDefaultValue('language')).toBe('en');
-      expect(getDefaultValue('blending')).toBe('rgb');
+      expect(getDefaultValue('blending')).toBe('ryb');
       expect(getDefaultValue('matching')).toBe('ciede2000');
       expect(getDefaultValue('count')).toBe(5);
       expect(getDefaultValue('market')).toBe(false);

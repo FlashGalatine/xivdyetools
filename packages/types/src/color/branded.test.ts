@@ -96,34 +96,19 @@ describe('createHexColor', () => {
 });
 
 describe('createDyeId', () => {
-  describe('valid regular IDs (1-200)', () => {
-    it('should accept valid dye IDs (1-200)', () => {
+  // 5.0: a DyeId is a validated stainID — the game's own dye number and the
+  // canonical key of the schema-v2 dye table.
+  describe('valid stainIDs (1-254)', () => {
+    it('should accept stainIDs in the loader window', () => {
       expect(createDyeId(1)).toBe(1);
-      expect(createDyeId(100)).toBe(100);
-      expect(createDyeId(200)).toBe(200);
+      expect(createDyeId(102)).toBe(102); // Jet Black
+      expect(createDyeId(125)).toBe(125);
+      expect(createDyeId(254)).toBe(254);
     });
 
     it('should accept boundary values', () => {
       expect(createDyeId(1)).toBe(1);
-      expect(createDyeId(200)).toBe(200);
-    });
-  });
-
-  // TYPES-102: Synthetic IDs for Facewear dyes
-  describe('valid synthetic IDs (<= -1000)', () => {
-    it('should accept synthetic Facewear dye IDs', () => {
-      expect(createDyeId(-1000)).toBe(-1000);
-      expect(createDyeId(-1500)).toBe(-1500);
-      expect(createDyeId(-2000)).toBe(-2000);
-    });
-
-    it('should accept boundary synthetic value (-1000)', () => {
-      expect(createDyeId(-1000)).toBe(-1000);
-    });
-
-    it('should accept very negative synthetic IDs', () => {
-      expect(createDyeId(-10000)).toBe(-10000);
-      expect(createDyeId(-999999)).toBe(-999999);
+      expect(createDyeId(254)).toBe(254);
     });
   });
 
@@ -132,18 +117,16 @@ describe('createDyeId', () => {
       expect(createDyeId(0)).toBeNull();
     });
 
-    it('should return null for IDs in the gap between regular and synthetic ranges', () => {
-      // Gap: -999 to 0 (exclusive)
+    it('should return null for negatives — the synthetic Facewear ids are retired (Facewear are FacewearColor, not dyes)', () => {
       expect(createDyeId(-1)).toBeNull();
-      expect(createDyeId(-100)).toBeNull();
-      expect(createDyeId(-500)).toBeNull();
-      expect(createDyeId(-999)).toBeNull();
+      expect(createDyeId(-1000)).toBeNull();
+      expect(createDyeId(-1500)).toBeNull();
     });
 
-    it('should return null for IDs above 200', () => {
-      expect(createDyeId(201)).toBeNull();
-      expect(createDyeId(999)).toBeNull();
-      expect(createDyeId(1000)).toBeNull();
+    it('should return null above the stainID window, incl. legacy itemIDs', () => {
+      expect(createDyeId(255)).toBeNull();
+      expect(createDyeId(5729)).toBeNull(); // Snow White's legacy itemID
+      expect(createDyeId(52254)).toBeNull(); // a Patch 7.5 consolidated itemID
     });
 
     it('should return null for non-integer values', () => {
@@ -164,27 +147,16 @@ describe('createDyeId', () => {
   });
 
   describe('edge cases', () => {
-    it('should handle exact boundary values for regular IDs', () => {
+    it('should handle exact boundary values of the stainID window', () => {
       expect(createDyeId(1)).toBe(1);
-      expect(createDyeId(200)).toBe(200);
+      expect(createDyeId(254)).toBe(254);
       expect(createDyeId(0)).toBeNull();
-      expect(createDyeId(201)).toBeNull();
-    });
-
-    it('should handle exact boundary values for synthetic IDs', () => {
-      expect(createDyeId(-1000)).toBe(-1000);
-      expect(createDyeId(-999)).toBeNull();
+      expect(createDyeId(255)).toBeNull();
     });
 
     it('should return the same numeric value when valid', () => {
       const result = createDyeId(42);
       expect(result).toBe(42);
-      expect(typeof result).toBe('number');
-    });
-
-    it('should return the same negative value for synthetic IDs', () => {
-      const result = createDyeId(-1500);
-      expect(result).toBe(-1500);
       expect(typeof result).toBe('number');
     });
   });

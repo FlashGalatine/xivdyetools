@@ -33,17 +33,19 @@ processColor(createHexColor('#FF6B6B')); // ✅ Works
 ### DyeId
 
 ```typescript
-import { DyeId, createDyeId, isValidDyeId } from '@xivdyetools/core';
+import type { DyeId } from '@xivdyetools/types';
+import { createDyeId } from '@xivdyetools/types';
 
-// Valid stain IDs are 1-125
-const dyeId: DyeId = createDyeId(42);  // ✅ Valid
+// A DyeId is a stainID; the accepted window is 1-254 (125 dyes today)
+const dyeId: DyeId | null = createDyeId(102);  // ✅ 102 = Jet Black
 
-createDyeId(0);    // ❌ Throws: Invalid dye ID
-createDyeId(200);  // ❌ Throws: Invalid dye ID
+createDyeId(0);     // ❌ null
+createDyeId(5729);  // ❌ null — a legacy itemID, not a stainID
 
-// Validation
-if (isValidDyeId(userInput)) {
-  const id = createDyeId(userInput);
+// Validation: the factory IS the guard — null means "not a stainID"
+const id = createDyeId(userInput);
+if (id !== null) {
+  // id is a DyeId here
 }
 ```
 

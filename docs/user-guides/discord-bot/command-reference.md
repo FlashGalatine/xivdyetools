@@ -99,7 +99,7 @@ Blend two dyes and see the closest real dyes at 25 / 40 / 50 / 65 / 80 %.
 | Parameter | Description | Required |
 |-----------|-------------|----------|
 | `dye1`, `dye2` | The two dyes (hex or name) | Yes |
-| `mode` | Blending algorithm: rgb (default), lab, oklab, ryb, hsl, spectral | No |
+| `mode` | Blending algorithm: ryb (default, like the web app), spectral, oklab, lab, hsl, rgb | No |
 | `matching` | Matching method | No |
 | `count` | Closest matches to show (1-10) | No |
 

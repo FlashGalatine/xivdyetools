@@ -77,31 +77,29 @@ export function createHexColor(hex: string): HexColor {
 export type DyeId = number & { readonly __brand: 'DyeId' };
 
 /**
- * Helper to create branded DyeId type with validation
+ * Helper to create a branded DyeId with validation.
  *
- * TYPES-102: Updated to accept synthetic negative IDs for Facewear dyes.
- * Synthetic IDs are generated as -(1000 + nameHash) to avoid collision
- * with real item IDs.
+ * 5.0 (schema v2): a `DyeId` is a **stainID** — the game's own dye number and
+ * the canonical key of the dye table. The accepted window is the loader's
+ * (1–254; 125 dyes today, room for future ones). Legacy market itemIDs
+ * (5729…) and the pre-v2 synthetic negative Facewear ids are rejected —
+ * Facewear colours are `FacewearColor`s, not dyes.
  *
- * @param id - Numeric dye ID (1-200 for regular, <= -1000 for synthetic)
+ * @param id - stainID (1-254)
  * @returns Branded DyeId or null if invalid
  *
  * @example
  * ```typescript
- * const dyeId = createDyeId(1);       // Returns 1 as DyeId
- * const synthetic = createDyeId(-1500); // Returns -1500 as DyeId (Facewear)
- * const invalid = createDyeId(0);     // Returns null
- * const bad = createDyeId(999);       // Returns null
+ * const jetBlack = createDyeId(102);   // Returns 102 as DyeId
+ * const invalid = createDyeId(0);      // Returns null
+ * const legacy = createDyeId(5729);    // Returns null (itemID, not a stainID)
  * ```
  */
 export function createDyeId(id: number): DyeId | null {
   if (!Number.isInteger(id)) {
     return null;
   }
-  // TYPES-102: Accept regular IDs (1-200) or synthetic Facewear IDs (<= -1000)
-  const isRegularId = id >= 1 && id <= 200;
-  const isSyntheticId = id <= -1000;
-  if (!isRegularId && !isSyntheticId) {
+  if (id < 1 || id > 254) {
     return null;
   }
   return id as DyeId;

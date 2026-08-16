@@ -161,7 +161,7 @@ Blend two dyes across a ratio sweep (25/40/50/65/80 %, 12F card) using `@xivdyet
 |--------|------|----------|-------------|
 | `dye1` | String (autocomplete) | Yes | First dye — hex or dye name |
 | `dye2` | String (autocomplete) | Yes | Second dye — hex or dye name |
-| `mode` | String (choice) | No | Blending algorithm: `rgb`, `lab`, `oklab`, `ryb`, `hsl`, `spectral` (default from `/preferences set blending`, else `rgb` — `PREFERENCE_DEFAULTS.blending`) |
+| `mode` | String (choice) | No | Blending algorithm: `rgb`, `lab`, `oklab`, `ryb`, `hsl`, `spectral` (default from `/preferences set blending`, else `ryb` — `PREFERENCE_DEFAULTS.blending`, the same default as the web app's Mixer) |
 | `matching` | String (choice) | No | `ciede2000` (default), `oklab`, `cie76`, `redmean`, `rgb`, `distinguish` |
 | `count` | Integer (1-10) | No | Number of closest dye matches to show |
 

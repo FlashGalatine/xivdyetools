@@ -115,7 +115,9 @@ export interface UserPreferences {
  */
 export const PREFERENCE_DEFAULTS: Required<Omit<UserPreferences, 'clan' | 'gender' | 'world' | 'updatedAt' | '_version'>> = {
   language: 'en',
-  blending: 'rgb',
+  // Same default as the web app's Mixer (first row of the 5C model order):
+  // one product, one answer for "what does blue + yellow make".
+  blending: 'ryb',
   matching: 'ciede2000',
   count: 5,
   market: false,
