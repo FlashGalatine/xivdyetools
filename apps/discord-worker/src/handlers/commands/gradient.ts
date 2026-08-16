@@ -16,7 +16,7 @@ import { getDyeEmoji } from '../../services/emoji.js';
 import { createTranslator, createUserTranslator } from '../../services/bot-i18n.js';
 import { discordLocaleToLocaleCode, initializeLocale, type LocaleCode } from '../../services/i18n.js';
 import { executeGradient, type InterpolationMode } from '@xivdyetools/bot-logic';
-import { getUserPreferences } from '../../services/preferences.js';
+import { getUserPreferences, resolveMatchingMethod } from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 export async function handleGradientCommand(
@@ -32,7 +32,7 @@ export async function handleGradientCommand(
   const endInput = options.find((opt) => opt.name === 'end_color')?.value as string | undefined;
   const stepCount = (options.find((opt) => opt.name === 'steps')?.value as number) || 6;
   const colorSpace = (options.find((opt) => opt.name === 'color_space')?.value as InterpolationMode) || 'hsv';
-  const matchingMethod = (options.find((opt) => opt.name === 'matching')?.value as MatchingMethod) || 'oklab';
+  const explicitMatching = options.find((opt) => opt.name === 'matching')?.value as string | undefined;
 
   const t = userId
     ? await createUserTranslator(env.KV, userId, interaction.locale)
@@ -70,6 +70,8 @@ export async function handleGradientCommand(
   const locale = t.getLocale();
   const deferResponse = deferredResponse();
   const prefs = userId ? await getUserPreferences(env.KV, userId) : {};
+  // Matching method: explicit option > stored preference > suite default (dE2000)
+  const matchingMethod = resolveMatchingMethod(explicitMatching, prefs);
   ctx.waitUntil(
     processGradientCommand(
       interaction, env, startResolved, endResolved, stepCount, colorSpace, matchingMethod, locale, logger, prefs.dyeFilters, prefs.theme

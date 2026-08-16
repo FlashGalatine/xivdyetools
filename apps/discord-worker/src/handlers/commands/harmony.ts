@@ -16,7 +16,7 @@ import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, createTranslator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import { executeHarmony, getHarmonyTypeChoices, type HarmonyType } from '@xivdyetools/bot-logic';
-import { getUserPreferences } from '../../services/preferences.js';
+import { getUserPreferences, resolveMatchingMethod } from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 export async function handleHarmonyCommand(
@@ -68,8 +68,10 @@ export async function handleHarmonyCommand(
   const deferResponse = deferredResponse();
   const prefs = await getUserPreferences(env.KV, userId, logger);
 
-  // Resolve matching method: explicit option > pref > undefined (let executeHarmony default).
-  const effectiveMatching: MatchingMethod | undefined = matchingMethod ?? prefs.matching;
+  // Resolve matching method: explicit option > stored preference > suite default
+  // (dE2000). Never leave it undefined - bot-logic's own default must not be
+  // the thing that decides which bands a first-time user's card is graded on.
+  const effectiveMatching: MatchingMethod = resolveMatchingMethod(matchingMethod, prefs);
 
   ctx.waitUntil(
     processHarmonyCommand(

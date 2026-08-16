@@ -29,6 +29,7 @@ import {
   type MeasuredRowWidths,
 } from './frame.js';
 import { toolGlyph } from './icons/tool-icons.js';
+import { MATCHING_METHOD_TAGS, type MatchingMethod } from '@xivdyetools/core';
 
 // ============================================================================
 // Types
@@ -68,6 +69,11 @@ export interface NearestSheetOptions {
   lang: string;
   theme?: 'dark' | 'light';
   commandLabel?: string;
+  /**
+   * The matching method the ranking ran under. Drives the ΔE column header tag,
+   * every row's tier bar and measure formatting (default `ciede2000`).
+   */
+  method?: MatchingMethod;
   commandGlyph?: string | null;
 }
 
@@ -86,7 +92,7 @@ const ROW_WIDTHS: MeasuredRowWidths = { lead: 40, pair: 54, name: 176, bar: 26, 
  * count and reaches 350 at five rows.
  */
 export function generateNearestSheet(options: NearestSheetOptions): string {
-  const { targetHex, targetText, labels, lang, commandLabel = '/EXTRACTOR COLOR' } = options;
+  const { targetHex, targetText, labels, lang, commandLabel = '/EXTRACTOR COLOR', method = 'ciede2000' } = options;
   const rows = options.rows.slice(0, ROW_CAP);
   const theme: CardTheme = cardTheme(options.theme);
   const commandGlyph =
@@ -134,7 +140,7 @@ export function generateNearestSheet(options: NearestSheetOptions): string {
     cardText(nameX, headY, labels.nearest, { fill: theme.label, size: CARD_TYPE.label, font: 'mono', letterSpacing: 1 })
   );
   parts.push(
-    cardText(CARD_WIDTH - PAD, headY, 'ΔE', {
+    cardText(CARD_WIDTH - PAD, headY, method === 'ciede2000' ? 'ΔE' : MATCHING_METHOD_TAGS[method], {
       fill: theme.label,
       size: CARD_TYPE.label,
       font: 'mono',
@@ -155,6 +161,7 @@ export function generateNearestSheet(options: NearestSheetOptions): string {
         dyeHex: r.hex,
         name: r.name,
         deltaE: r.deltaE,
+        method,
         lang,
         theme,
         widths: ROW_WIDTHS,

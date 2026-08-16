@@ -287,12 +287,6 @@ export const commands = [
               { name: 'DISTINGUISH % - RGB rescaled 0-100', value: 'distinguish' },
             ],
           },
-          {
-            name: 'prevent_duplicates',
-            description: 'Avoid showing the same dye twice across results',
-            type: OptionType.BOOLEAN,
-            required: false,
-          },
         ],
       },
       {
@@ -313,12 +307,6 @@ export const commands = [
             required: false,
             min_value: 3,
             max_value: 10,
-          },
-          {
-            name: 'vibrancy_boost',
-            description: 'Boost vibrancy of extracted colors (default: true)',
-            type: OptionType.BOOLEAN,
-            required: false,
           },
           {
             name: 'matching',

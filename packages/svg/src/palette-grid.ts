@@ -28,6 +28,7 @@ import {
   type MeasuredRowWidths,
 } from './frame.js';
 import { toolGlyph } from './icons/tool-icons.js';
+import { MATCHING_METHOD_TAGS, type MatchingMethod } from '@xivdyetools/core';
 
 // ============================================================================
 // Types
@@ -73,6 +74,12 @@ export interface PaletteGridOptions {
   labels: PaletteGridLabels;
   lang: string;
   theme?: 'dark' | 'light';
+  /**
+   * The matching method each row's dye was picked and measured with. Drives
+   * the ΔE column header tag, tier bars and measure formatting (default
+   * `ciede2000`).
+   */
+  method?: MatchingMethod;
   /** The chip names the SUBCOMMAND — a glyph cannot */
   commandLabel?: string;
   commandGlyph?: string | null;
@@ -121,7 +128,7 @@ export function bandSlices(entries: PaletteBandEntry[], totalWidth: number): num
  * and reaches 350 at five rows.
  */
 export function generatePaletteGrid(options: PaletteGridOptions): string {
-  const { title, band, labels, lang, commandLabel = '/EXTRACTOR IMAGE' } = options;
+  const { title, band, labels, lang, commandLabel = '/EXTRACTOR IMAGE', method = 'ciede2000' } = options;
   const rows = options.rows.slice(0, ROW_CAP);
   const theme: CardTheme = cardTheme(options.theme);
   const commandGlyph =
@@ -168,7 +175,7 @@ export function generatePaletteGrid(options: PaletteGridOptions): string {
     cardText(nameX, headY, labels.matched, { fill: theme.label, size: CARD_TYPE.label, font: 'mono', letterSpacing: 1 })
   );
   parts.push(
-    cardText(CARD_WIDTH - PAD, headY, 'ΔE', {
+    cardText(CARD_WIDTH - PAD, headY, method === 'ciede2000' ? 'ΔE' : MATCHING_METHOD_TAGS[method], {
       fill: theme.label,
       size: CARD_TYPE.label,
       font: 'mono',
@@ -189,6 +196,7 @@ export function generatePaletteGrid(options: PaletteGridOptions): string {
         dyeHex: r.matchedHex,
         name: r.matchedName,
         deltaE: r.deltaE,
+        method,
         lang,
         theme,
         widths: ROW_WIDTHS,

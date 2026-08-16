@@ -13,7 +13,7 @@ import {
   type HarmonyColorSpace,
   type MatchingMethod,
 } from '@xivdyetools/core';
-import { filterDyes, ColorService } from '@xivdyetools/core';
+import { filterDyes, ColorService, DEFAULT_MATCHING_METHOD } from '@xivdyetools/core';
 import { createTranslator, type Translator, type LocaleCode } from '../i18n/index.js';
 import { generateHarmonyCard, num, type HarmonyCardSlot } from '@xivdyetools/svg';
 import { dyeService } from '../input-resolution.js';
@@ -54,7 +54,7 @@ export interface HarmonyInput {
   dyeFilters?: DyeTypeFilters;
   /** Companion dyes per harmony slot (1-3, default 1). Each base hue is expanded to N closest matches. */
   companionCount?: number;
-  /** Algorithm used to find closest dye for companion expansion (default: 'oklab'). */
+  /** Matching method for ideal → dye distances and companion expansion (default: `DEFAULT_MATCHING_METHOD`, ΔE2000 — the suite default). */
   matchingMethod?: MatchingMethod;
   /** When true, applies a tighter distance threshold via deltaE matching (default: false). */
   strictMatching?: boolean;
@@ -162,7 +162,7 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
     harmonyOptions,
     dyeFilters,
     companionCount = 1,
-    matchingMethod = 'oklab',
+    matchingMethod = DEFAULT_MATCHING_METHOD,
     strictMatching = false,
     preventDuplicates = false,
   } = input;

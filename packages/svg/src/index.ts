@@ -58,6 +58,7 @@ export {
   dashedRule,
   hairline,
   measuredRow,
+  formatMeasure,
 } from './frame.js';
 export type {
   CardTheme,

@@ -40,6 +40,7 @@ The 5.0 bot release: every `execute*` now renders a card from `@xivdyetools/svg`
 
 ### Changed
 
+- **`executeHarmony` / `executeGradient` default `matchingMethod` is `DEFAULT_MATCHING_METHOD` (ΔE2000)**, not `'oklab'` — the two places bot-logic still carried the retired v4 default. A caller that passes nothing now gets the suite default (the discord-worker handlers pass an explicit method anyway); `MixerInput.matchingMethod` doc corrected to match its real ΔE2000 default
 - All `execute*` distances are ΔE2000 via `ColorService.getDistanceForMethod` (`getColorDistance` / `getMatchQualityInfo` in `color-math.ts` remain exported but no command uses them any more).
 - `executeHarmony`, `executeDyeInfo`, `executeRandom`, `executeGradient`, `executeMixer`, `executeComparison`, `executeAccessibility` call the 5.0 generators (`generateHarmonyCard`, `generateDyeInfoCard` 11B, `generateRandomDyesGrid` 11B, `generateGradientCard`, `generateMixerCard`, `generateComparisonCard`, `generateA11yCard`) with translated `labels` and the user's `theme`.
 - Accessibility simulation stays the Brettel path; separation is ΔE2000 between the **simulated** colours; the verdict sentence rides the embed (where it does not cost a lens row).

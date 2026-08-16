@@ -38,6 +38,7 @@ The 5.0 graphics release. Every Discord bot card is redrawn on one shared **fram
 
 ### Added
 
+- **Method-aware measured rows** — `measuredRow()` takes `method?: MatchingMethod` (default `ciede2000`): the tier bar is classified against that method's calibrated bands and the measure prints in its register via the new exported `formatMeasure()` (ΔE2000/ΔE76 one decimal, ΔEOK raw to three, REDMEAN/RGB DIST integers, DISTINGUISH % with `%`). `generateNearestSheet()` and `generatePaletteGrid()` accept `method?` and forward it, swapping the `ΔE` column header for the method's tag when off-default (the harmony card's convention)
 - **Frame system** (`src/frame.ts`) — the shared card vocabulary every 5.0 generator composes from:
   - Constants: `CARD_WIDTH` 400 (the canvas width IS the display width), `CARD_MAX_HEIGHT` 350 (a wall — past it Discord contracts the box horizontally), `CARD_TYPE` `{ label: 11, value: 13, name: 16 }` type floor, `ROW_CAP` 5 (R1: every list card holds five rows; the tail rides the embed), `HARMONY_ROW_CAP` 4.
   - Themes: `CARD_DARK` / `CARD_LIGHT` (`CardTheme`) + `cardTheme(mode)`. Both ship; light is selected per user via the bot's `/preferences`. Each carries the four-step tier ramp `#5bbd68 · #8bc34a · #ffc107 · #f4645a` (dark), settled 2026-08-09 against the web app's shipped ramp; the state amber `#F4BF4F` (OFF GRID, vendor flag) is deliberately a different token.

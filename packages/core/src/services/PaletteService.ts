@@ -21,6 +21,7 @@
  */
 
 import type { RGB, Dye } from '@xivdyetools/types';
+import type { MatchingMethod } from '../types/index.js';
 import type { Logger } from '@xivdyetools/logger/library';
 import { NoOpLogger } from '@xivdyetools/logger/library';
 import { ColorService } from './ColorService.js';
@@ -42,6 +43,12 @@ export interface PaletteExtractionOptions {
   convergenceThreshold?: number;
   /** Maximum pixels to sample (default: 10000) */
   maxSamples?: number;
+  /**
+   * Matching method used to pick each extracted colour's nearest dye
+   * (`extractAndMatchPalette` only). Omitted → `DyeService.findClosestDye`'s
+   * own default (`DEFAULT_MATCHING_METHOD`, ΔE2000).
+   */
+  matchingMethod?: MatchingMethod;
 }
 
 /**
@@ -296,8 +303,8 @@ function kMeansClustering(
 export class PaletteService {
   private logger: Logger;
 
-  /** Default extraction options */
-  private static readonly DEFAULT_OPTIONS: Required<PaletteExtractionOptions> = {
+  /** Default extraction options (k-means only — the matching method has no forced default here; the dye search's own default applies) */
+  private static readonly DEFAULT_OPTIONS: Required<Omit<PaletteExtractionOptions, 'matchingMethod'>> = {
     colorCount: 4,
     maxIterations: 25,
     convergenceThreshold: 1.0,
@@ -444,7 +451,10 @@ export class PaletteService {
     for (const ex of extracted) {
       // Convert RGB to hex for DyeService
       const hex = ColorService.rgbToHex(ex.color.r, ex.color.g, ex.color.b);
-      const matchedDye = dyeService.findClosestDye(hex);
+      const matchedDye = dyeService.findClosestDye(
+        hex,
+        options.matchingMethod ? { matchingMethod: options.matchingMethod } : undefined
+      );
 
       if (matchedDye) {
         // Calculate distance between extracted and matched colors

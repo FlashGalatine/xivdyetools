@@ -46,7 +46,8 @@ vi.mock('./services/analytics.js', () => ({
   trackCommandWithKV: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('./services/rate-limiter.js', () => ({
+vi.mock('./services/rate-limiter.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./services/rate-limiter.js')>()),
   checkRateLimit: vi.fn(),
   formatRateLimitMessage: vi.fn(),
 }));

@@ -28,7 +28,7 @@ export interface MixerInput {
   blendingMode: BlendingMode;
   /** Number of closest dyes to return (default: 1) */
   count?: number;
-  /** Algorithm used to find closest dye for the blended result (default: 'oklab'). */
+  /** Matching method for the blended result's nearest dye (default: `DEFAULT_MATCHING_METHOD`, ΔE2000). */
   matchingMethod?: MatchingMethod;
   locale: LocaleCode;
   /** Optional dye type filters (e.g., exclude metallic, pastel, etc.) */

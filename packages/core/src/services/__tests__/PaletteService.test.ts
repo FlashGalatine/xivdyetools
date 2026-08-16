@@ -165,6 +165,30 @@ describe('PaletteService', () => {
       });
     });
 
+    it('forwards matchingMethod to DyeService.findClosestDye (default: none → DyeService default)', () => {
+      const mockDyeService = createMockDyeService();
+      const pixels: RGB[] = [
+        ...Array(50).fill({ r: 255, g: 0, b: 0 }),
+        ...Array(30).fill({ r: 0, g: 0, b: 255 }),
+      ];
+
+      service.extractAndMatchPalette(pixels, mockDyeService as any, { colorCount: 2 });
+      // No method requested → the search's own default applies (nothing forced)
+      for (const call of mockDyeService.findClosestDye.mock.calls) {
+        expect(call[1]?.matchingMethod).toBeUndefined();
+      }
+
+      mockDyeService.findClosestDye.mockClear();
+      service.extractAndMatchPalette(pixels, mockDyeService as any, {
+        colorCount: 2,
+        matchingMethod: 'redmean',
+      });
+      expect(mockDyeService.findClosestDye).toHaveBeenCalledTimes(2);
+      for (const call of mockDyeService.findClosestDye.mock.calls) {
+        expect(call[1]).toEqual({ matchingMethod: 'redmean' });
+      }
+    });
+
     it('should preserve dominance order from extraction', () => {
       const mockDyeService = createMockDyeService();
       const pixels: RGB[] = [

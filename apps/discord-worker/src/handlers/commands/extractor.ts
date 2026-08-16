@@ -15,6 +15,8 @@
 import {
   ColorService,
   PaletteService,
+  MATCHING_METHOD_TAGS,
+  type MatchingMethod,
   type PaletteMatch,
 } from '@xivdyetools/core';
 import type { Dye } from '@xivdyetools/types';
@@ -43,7 +45,7 @@ import {
 import { generatePaletteGrid, generateNearestSheet } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { extractImagePixels } from '../../services/image-client.js';
-import { getUserPreferences } from '../../services/preferences.js';
+import { getUserPreferences, resolveMatchingMethod } from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // ============================================================================
@@ -85,13 +87,25 @@ function resolveColorInput(input: string): { hex: string; fromDye?: Dye } | null
 }
 
 /**
+ * The authored x6 key strings name dE2000 literally ("nearest by dE2000").
+ * When the ranking ran under another method the tag is swapped in place -
+ * all six strings carry the literal token, so this stays localized.
+ */
+function methodKeyLabel(label: string, method: MatchingMethod): string {
+  return method === 'ciede2000' ? label : label.replace('ΔE2000', MATCHING_METHOD_TAGS[method]);
+}
+
+/**
  * Deduplicates palette matches so each slot shows a unique dye.
  *
  * When multiple extracted colors map to the same dye (common with monochromatic
  * images), later slots are reassigned to the next-best unique alternative using
  * a ranked distance search.
  */
-function deduplicatePaletteResults(matches: PaletteMatch[]): PaletteMatch[] {
+function deduplicatePaletteResults(
+  matches: PaletteMatch[],
+  matchingMethod: MatchingMethod
+): PaletteMatch[] {
   if (matches.length <= 1) return matches;
 
   const usedDyeIds = new Set<number>();
@@ -111,7 +125,7 @@ function deduplicatePaletteResults(matches: PaletteMatch[]): PaletteMatch[] {
 
       const alternative = candidates.find((dye) => !usedDyeIds.has(dye.itemID));
       if (alternative) {
-        const distance = ColorService.getColorDistance(hex, alternative.hex);
+        const distance = ColorService.getDistanceForMethod(hex, alternative.hex, matchingMethod);
         usedDyeIds.add(alternative.itemID);
         dedupedMatches.push({
           extracted: match.extracted,
@@ -199,7 +213,11 @@ async function handleColorSubcommand(
   // Extract options
   const colorOption = options.find((opt) => opt.name === 'color');
   const countOption = options.find((opt) => opt.name === 'count');
-  // TODO: matching and market options for v4 enhancements
+  // Matching method: explicit option > stored preference > suite default (dE2000)
+  const matchingMethod = resolveMatchingMethod(
+    options.find((opt) => opt.name === 'matching')?.value as string | undefined,
+    prefs
+  );
 
   const colorInput = colorOption?.value as string | undefined;
   const matchCount = Math.min(
@@ -228,15 +246,15 @@ async function handleColorSubcommand(
 
   const targetHex = resolved.hex;
 
-  // 14J·2: ranking is ΔE2000 over the whole non-Facewear pool — the shipped
-  // raw-RGB order could differ, so this changes the answer, not just the
-  // picture.
+  // 14J·2: ranking is the chosen method (ΔE2000 by default) over the whole
+  // non-Facewear pool — the shipped raw-RGB order could differ, so this
+  // changes the answer, not just the picture.
   const matches = dyeService
     .getAllDyes()
     .filter((d) => d.category !== 'Facewear')
     .map((dye) => ({
       dye,
-      distance: ColorService.getDistanceForMethod(targetHex, dye.hex, 'ciede2000'),
+      distance: ColorService.getDistanceForMethod(targetHex, dye.hex, matchingMethod),
     }))
     .sort((a, b) => a.distance - b.distance)
     .slice(0, matchCount);
@@ -252,7 +270,7 @@ async function handleColorSubcommand(
 
   // Defer — the card renders to PNG in the background
   ctx.waitUntil(
-    renderColorSheet(interaction, env, targetHex, matches, t, theme, resolved.fromDye)
+    renderColorSheet(interaction, env, targetHex, matches, t, matchingMethod, theme, resolved.fromDye)
   );
   return deferredResponse();
 }
@@ -269,6 +287,7 @@ async function renderColorSheet(
   targetHex: string,
   matches: Array<{ dye: Dye; distance: number }>,
   t: Translator,
+  matchingMethod: MatchingMethod,
   theme?: 'dark' | 'light',
   fromDye?: Dye
 ): Promise<void> {
@@ -291,10 +310,11 @@ async function renderColorSheet(
         target: t.t('card.target'),
         rank: t.t('card.rank'),
         nearest: t.t('card.found'),
-        matchKey: t.t('card.matchKey'),
+        matchKey: methodKeyLabel(t.t('card.matchKey'), matchingMethod),
       },
       lang: locale,
       theme,
+      method: matchingMethod,
     });
     const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
 
@@ -413,9 +433,21 @@ async function handleImageSubcommand(
   const deferResponse = deferredResponse();
 
   // Process in background
-  const theme = userId ? (await getUserPreferences(env.KV, userId)).theme : undefined;
+  const prefs = userId ? await getUserPreferences(env.KV, userId) : {};
+  // Matching method: explicit option > stored preference > suite default (dE2000)
+  const matchingMethod = resolveMatchingMethod(
+    options.find((opt) => opt.name === 'matching')?.value as string | undefined,
+    prefs
+  );
+  // prevent_duplicates defaults to true (schema); only an explicit false disables it
+  const preventDuplicates = options.find((opt) => opt.name === 'prevent_duplicates')?.value !== false;
   ctx.waitUntil(
-    processImageExtraction(interaction, env, attachment.url, colorCount, locale, theme, logger)
+    processImageExtraction(interaction, env, attachment.url, colorCount, locale, {
+      matchingMethod,
+      preventDuplicates,
+      theme: prefs.theme,
+      logger,
+    })
   );
 
   return deferResponse;
@@ -430,9 +462,14 @@ async function processImageExtraction(
   imageUrl: string,
   colorCount: number,
   locale: LocaleCode,
-  theme?: 'dark' | 'light',
-  logger?: ExtendedLogger
+  opts: {
+    matchingMethod: MatchingMethod;
+    preventDuplicates: boolean;
+    theme?: 'dark' | 'light';
+    logger?: ExtendedLogger;
+  }
 ): Promise<void> {
+  const { matchingMethod, preventDuplicates, theme, logger } = opts;
   const t = createTranslator(locale);
 
   // Initialize localization for dye names
@@ -462,10 +499,14 @@ async function processImageExtraction(
       colorCount,
       maxIterations: 25,
       maxSamples: 10000,
+      matchingMethod,
     });
 
-    // Step 4b: Deduplicate — ensure each slot shows a unique dye
-    const matches = deduplicatePaletteResults(rawMatches);
+    // Step 4b: Deduplicate — ensure each slot shows a unique dye (default on;
+    // `prevent_duplicates:false` keeps every slot's true nearest dye)
+    const matches = preventDuplicates
+      ? deduplicatePaletteResults(rawMatches, matchingMethod)
+      : rawMatches;
 
     if (matches.length === 0) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
@@ -477,7 +518,8 @@ async function processImageExtraction(
     }
 
     // Step 5: 14K — the band carries ALL colours at their real share; the
-    // list is a top five by share. ΔE2000 per row (extracted → matched).
+    // list is a top five by share. Per-row distance in the chosen method
+    // (ΔE2000 by default), extracted → matched.
     const sortedByShare = [...matches].sort((a, b) => b.dominance - a.dominance);
     const entryHex = (m: PaletteMatch) =>
       ColorService.rgbToHex(m.extracted.r, m.extracted.g, m.extracted.b);
@@ -487,7 +529,7 @@ async function processImageExtraction(
       extractedHex: entryHex(m),
       matchedHex: m.matchedDye.hex,
       matchedName: getLocalizedDyeName(m.matchedDye.itemID, m.matchedDye.name, locale),
-      deltaE: ColorService.getDistanceForMethod(entryHex(m), m.matchedDye.hex, 'ciede2000'),
+      deltaE: ColorService.getDistanceForMethod(entryHex(m), m.matchedDye.hex, matchingMethod),
     }));
 
     // Step 6: Generate the card + render to PNG
@@ -501,6 +543,7 @@ async function processImageExtraction(
         rampKey: t.t('card.rampKey'),
       },
       lang: locale,
+      method: matchingMethod,
       theme,
     });
     const pngBuffer = await renderSvgToPng(svg, { scale: 2 });

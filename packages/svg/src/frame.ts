@@ -16,7 +16,7 @@
  * @module frame
  */
 
-import { classifyBandTier } from '@xivdyetools/core';
+import { classifyBandTier, type MatchingMethod } from '@xivdyetools/core';
 import { escapeXml, estimateTextWidth, num } from './base.js';
 
 // ============================================================================
@@ -428,8 +428,13 @@ export interface MeasuredRowOptions {
   dyeHex: string;
   /** Localized dye name (ellipsised to the slot, never a character count) */
   name: string;
-  /** ΔE2000 source → dye */
+  /** Distance source → dye, in `method`'s units (ΔE2000 by default) */
   deltaE: number;
+  /**
+   * The matching method `deltaE` was measured in. Drives the tier bar's band
+   * calibration and the measure's decimals (default `ciede2000`).
+   */
+  method?: MatchingMethod;
   lang: string;
   theme: CardTheme;
   widths: MeasuredRowWidths;
@@ -459,6 +464,25 @@ function halfRoundedRect(
       ? `M ${x + r} ${y} H ${x + w} V ${y + h} H ${x + r} Q ${x} ${y + h} ${x} ${y + h - r} V ${y + r} Q ${x} ${y} ${x + r} ${y} Z`
       : `M ${x} ${y} H ${x + w - r} Q ${x + w} ${y} ${x + w} ${y + r} V ${y + h - r} Q ${x + w} ${y + h} ${x + w - r} ${y + h} H ${x} Z`;
   return `<path d="${d}" fill="${escapeXml(fill)}"/>`;
+}
+
+/**
+ * Print a distance in its method's register: ΔE2000/ΔE76 to one decimal, ΔEOK
+ * raw to three (the band rules), REDMEAN / RGB DIST as integers,
+ * DISTINGUISH % as a percentage. Mirrors the /compare readouts.
+ */
+export function formatMeasure(value: number, method: MatchingMethod, lang: string): string {
+  switch (method) {
+    case 'oklab':
+      return num(value, lang, 3);
+    case 'redmean':
+    case 'rgb':
+      return num(value, lang, 0);
+    case 'distinguish':
+      return `${num(value, lang, 0)}%`;
+    default:
+      return num(value, lang, 1);
+  }
 }
 
 /**
@@ -527,13 +551,15 @@ export function measuredRow(x: number, y: number, rowH: number, o: MeasuredRowOp
   );
   cx += w.name + gap;
 
-  // Tier bar + measure, both in the tone
-  const tier = classifyBandTier(o.deltaE, 'ciede2000', o.context ?? 'match');
+  // Tier bar + measure, both in the tone. Tiers are a property of the
+  // method (each method's bands are calibrated separately), never of the pair.
+  const method = o.method ?? 'ciede2000';
+  const tier = classifyBandTier(o.deltaE, method, o.context ?? 'match');
   const tone = theme.tiers[Math.min(tier, 3)];
   parts.push(`<rect x="${cx}" y="${cy - 2.5}" width="${w.bar}" height="5" rx="2.5" fill="${tone}"/>`);
   cx += w.bar + gap;
   parts.push(
-    cardText(cx + w.measure, cy + 4, num(o.deltaE, o.lang, 1), {
+    cardText(cx + w.measure, cy + 4, formatMeasure(o.deltaE, method, o.lang), {
       fill: tone,
       size: CARD_TYPE.value,
       font: 'mono',

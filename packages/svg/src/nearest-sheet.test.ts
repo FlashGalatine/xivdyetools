@@ -62,6 +62,34 @@ describe('generateNearestSheet', () => {
     expect(svg).toContain('nearest by ΔE2000');
   });
 
+  it('is method-aware: header tag, per-method tiers and decimals', () => {
+    // ΔEOK: raw values, three decimals, its own band cuts (0.017 / 0.04 / 0.107)
+    const svg = generateNearestSheet({
+      ...defaultOptions,
+      method: 'oklab',
+      rows: [
+        { rank: 1, hex: '#3B6886', name: 'Peacock Blue', deltaE: 0.012 },
+        { rank: 2, hex: '#284B2C', name: 'Hunter Green', deltaE: 0.2 },
+      ],
+      labels: { ...LABELS, matchKey: 'nearest by ΔEOK' },
+    });
+    expect(svg).toContain('>ΔEOK</text>');
+    expect(svg).toContain('>0.012</text>');
+    expect(svg).toContain('>0.200</text>');
+    // 0.2 is past ΔEOK's 0.107 cut → the far tier colour
+    expect(svg).toContain('#f4645a');
+    expect(svg).not.toContain('>ΔE</text>');
+
+    // DISTINGUISH %: integer + %
+    const pct = generateNearestSheet({
+      ...defaultOptions,
+      method: 'distinguish',
+      rows: [{ rank: 1, hex: '#3B6886', name: 'Peacock Blue', deltaE: 4.6 }],
+    });
+    expect(pct).toContain('>DISTINGUISH %</text>');
+    expect(pct).toContain('>5%</text>');
+  });
+
   it('shows the resolved dye name when the input was a dye', () => {
     const svg = generateNearestSheet({ ...defaultOptions, targetText: 'Dalamudroter' });
     expect(svg).toContain('Dalamudroter');

@@ -77,3 +77,17 @@ describe('registered /preset category choices', () => {
     }
   });
 });
+
+describe('/extractor schema promises only what the handler reads', () => {
+  const extractor = commands.find((c) => c.name === 'extractor')!;
+  const sub = (name: string) => extractor.options!.find((o) => o.name === name)!;
+  const optionNames = (name: string) => (sub(name).options ?? []).map((o) => o.name);
+
+  it('color: color/count/matching — no prevent_duplicates (nearest-N of distinct dyes cannot repeat)', () => {
+    expect(optionNames('color')).toEqual(['color', 'count', 'matching']);
+  });
+
+  it('image: image/colors/matching/prevent_duplicates — vibrancy_boost is gone (never implemented)', () => {
+    expect(optionNames('image')).toEqual(['image', 'colors', 'matching', 'prevent_duplicates']);
+  });
+});
