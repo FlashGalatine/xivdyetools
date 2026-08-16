@@ -43,11 +43,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 | `discord-worker` | 5.0.0 | 5.0 command set — v4 commands deleted, every card redrawn, `/contrast` + `/a11y` + `/changelog` new, `/preferences set theme`, Photon out to image-worker, CJK re-cut (0 tofu) |
 | `image-worker` | 1.0.0 | **new** — Photon host, `POST /extract` + `POST /thumbnail` |
 | `og-worker` | 2.0.0 | 15E band cards for all nine tools (Discord 1200×1050 + X 1200×630), per-tool default cards, `?lang=`, stainID paths, routed beta env |
-| `presets-api` | *Unreleased* (bump needed — 2.0.0 recommended) | stainID dyes (3–6), preview images, secondary categories, `example_link`, `rejection_reason`, beta CORS, migrations 0007–0010 |
-| `oauth` | *Unreleased* (bump needed — 2.6.0) | beta origin on redirect + CORS allowlist (unified — beta login hang fixed), worker-kit / auth-encoding |
-| `api-worker` | *Unreleased* (bump needed — ≥ 0.6.0) | absorbed universalis-proxy + api-docs, schema v2 serving, 5.0 matching vocabulary |
-| `moderation-worker` | *Unreleased* (bump needed — 1.4.0) | image-only queue entries marked instead of mis-approved, new category rows, worker-kit, dev/prod split |
-| `stoat-worker` | *Unreleased* (parked) | dependency retargets only |
+| `presets-api` | 2.0.0 | stainID dyes (3–6), preview images, secondary categories, `example_link`, `rejection_reason`, beta CORS, migrations 0007–0010 |
+| `oauth` | 2.6.0 | beta origin on redirect + CORS allowlist (unified — beta login hang fixed), worker-kit / auth-encoding |
+| `api-worker` | 0.6.0 | absorbed universalis-proxy + api-docs, schema v2 serving, 5.0 matching vocabulary |
+| `moderation-worker` | 1.4.0 | image-only queue entries marked instead of mis-approved, new category rows, worker-kit, dev/prod split |
+| `stoat-worker` | 0.2.1 (parked) | dependency retargets only |
 
 ### CI/CD
 
@@ -72,7 +72,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 2. **Merge to main** → path-filtered worker deploys (discord-worker's job runs `register-commands` globally), the web-app Pages deploy + smoke test, the `CHANGELOG-laymans.md` announcement webhook.
 3. **npm publish** via *Publish Packages to npm*, tier order: types 2.0.0 → auth 1.3.0 → core 4.0.0 → **worker-kit 1.0.0 (first publish is a manual 2FA publish + trusted-publisher setup — OIDC cannot create a package)** → svg 2.0.0 → bot-logic 2.0.0 (logger unchanged). Then `npm deprecate` crypto, bot-i18n, color-blending, worker-middleware, rate-limiter.
 4. **User-run afterwards:** `npm run upload-emojis` with production credentials (regenerated stainID-keyed set); `scripts/cleanup-v4-kv.ts`; og-worker beta deploy then production; purge the edge cache for `/og/default.png` / `/og/default-x.png`.
-5. **Still open before merge:** version bumps for presets-api, oauth, api-worker, moderation-worker (and stoat-worker if it is ever tagged); discord-worker `/preset submit` + `/preset edit` still send legacy itemIDs and validate 2–5 dyes against an API that now requires stainIDs and 3–6 (recorded under discord-worker 5.0.0 "Known issues").
+5. **Still open before merge:** discord-worker `/preset submit` + `/preset edit` still send legacy itemIDs and validate 2–5 dyes against an API that now requires stainIDs and 3–6 (recorded under discord-worker 5.0.0 "Known issues").
 
 ---
 

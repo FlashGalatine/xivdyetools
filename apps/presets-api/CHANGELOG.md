@@ -5,9 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.0] - 2026-08-16
 
-Monorepo 2.0 / Web-App 5.0 release train (branch `monorepo-2.0-prep`, 2026-07-30 → 2026-08-16). Nothing below has shipped: `package.json` is still **1.6.0** and needs a bump before merge — **2.0.0 is recommended** (see ⚠️ BREAKING: the wire contract for `dyes` changes from legacy itemIDs to stainIDs, the dye-count rule moves from 2–5 to 3–6, and the `community` category is deleted, so any pre-5.0 client is rejected loudly on submit/edit).
+Monorepo 2.0 / Web-App 5.0 release train (branch `monorepo-2.0-prep`, 2026-07-30 → 2026-08-16). Nothing below has shipped until the branch merges. **Major bump**: the wire contract for `dyes` changes from legacy itemIDs to stainIDs, the dye-count rule moves from 2–5 to 3–6, and the `community` category is deleted, so any pre-5.0 client is rejected loudly on submit/edit (see ⚠️ BREAKING).
 
 ### ⚠️ BREAKING
 

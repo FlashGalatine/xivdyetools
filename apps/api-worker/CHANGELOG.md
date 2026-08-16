@@ -5,9 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0] - 2026-08-16
 
-Monorepo 2.0 / 5.0 release train (branch `monorepo-2.0-prep`, 2026-07-30 → 2026-08-16). Nothing below has shipped: `package.json` is still **0.5.0** and needs a bump before merge — **at least 0.6.0** (two whole apps absorbed, three new production domains, schema v2 serving, 5.0 matching vocabulary); **1.0.0** is defensible if the domain cutover is the moment to declare the public API stable. The ⚠️ BREAKING block lists the response-changing items for a `/v1` client.
+Monorepo 2.0 / 5.0 release train (branch `monorepo-2.0-prep`, 2026-07-30 → 2026-08-16). Nothing below has shipped until the branch merges. Two whole apps absorbed, three new production domains, schema v2 serving and the 5.0 matching vocabulary — a minor bump on the 0.x line (a later 1.0.0 can mark the moment the public API is declared stable). The ⚠️ BREAKING block lists the response-changing items for a `/v1` client.
 
 ### ⚠️ BREAKING (public `/v1` API)
 

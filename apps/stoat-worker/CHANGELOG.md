@@ -5,9 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.1] - 2026-08-16
 
-Monorepo 2.0 follow-through only — the bot is parked (no active investment, no deploy workflow) and gained no features. `package.json` is still `0.2.0`; bump before tagging.
+Monorepo 2.0 follow-through only — the bot is parked (no active investment, no deploy workflow) and gained no features; patch bump for the dependency retargets.
 
 ### Changed
 

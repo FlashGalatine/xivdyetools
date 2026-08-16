@@ -5,9 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.6.0] - 2026-08-16
 
-Monorepo 2.0 release train (branch `monorepo-2.0-prep`). Nothing below has shipped: `package.json` is still **2.5.0** and needs a bump before merge — **2.6.0 recommended** (new allowed origin + a CORS behaviour fix; no contract break).
+Monorepo 2.0 release train (branch `monorepo-2.0-prep`). Nothing below has shipped until the branch merges. Minor bump: a new allowed origin plus a CORS behaviour fix; no contract break.
 
 ### Added
 

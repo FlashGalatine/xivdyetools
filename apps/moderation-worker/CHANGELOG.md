@@ -5,9 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.4.0] - 2026-08-16
 
-Monorepo 2.0 / 5.0-release follow-through. `package.json` is still `1.3.0` — bump (1.4.0 suggested: additive behaviour) before tagging. Deploy note: production is now **only** `wrangler deploy --env production`; a bare `deploy` targets the routeless `xivdyetools-moderation-worker-dev` worker.
+Monorepo 2.0 / 5.0-release follow-through (additive behaviour). Deploy note: production is now **only** `wrangler deploy --env production`; a bare `deploy` targets the routeless `xivdyetools-moderation-worker-dev` worker.
 
 ### Added
 
