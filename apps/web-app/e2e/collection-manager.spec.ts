@@ -1,5 +1,11 @@
 import { test, expect } from './fixtures/coverage';
-import { waitForAppReady, gotoTool, seedStartupStorage, dismissBlockingOverlays } from './fixtures/navigation';
+import {
+  waitForAppReady,
+  gotoTool,
+  seedStartupStorage,
+  dismissBlockingOverlays,
+  revealToolList,
+} from './fixtures/navigation';
 
 async function switchToTool(
   page: Parameters<typeof test>[0]['page'],
@@ -48,16 +54,16 @@ test.describe('Collection Manager Modal', () => {
     // Verify the page title
     await expect(page).toHaveTitle(/XIV Dye Tools/);
 
-    // The 2B switcher holds the tool list — open it and confirm it is populated
-    await page.locator('button.tool-menu-btn').first().click();
+    // The switcher holds the tool list (rail on desktop, title-menu on mobile)
+    await revealToolList(page);
     const allToolButtons = page.locator('button[data-tool]');
     await expect(allToolButtons.first()).toBeAttached();
     expect(await allToolButtons.count()).toBeGreaterThan(0);
   });
 
   test('should show tool navigation buttons', async ({ page }) => {
-    // Every tool is reachable from the switcher's menu
-    await page.locator('button.tool-menu-btn').first().click();
+    // Every tool is reachable from the switcher
+    await revealToolList(page);
     await expect(page.locator('button[data-tool="harmony"]').first()).toBeAttached();
     expect(await page.locator('button[data-tool="extractor"]').count()).toBeGreaterThan(0);
     expect(await page.locator('button[data-tool="comparison"]').count()).toBeGreaterThan(0);

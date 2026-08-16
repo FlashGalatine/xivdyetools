@@ -1,5 +1,11 @@
 import { test, expect } from './fixtures/coverage';
-import { waitForAppReady, gotoTool, seedStartupStorage, dismissBlockingOverlays } from './fixtures/navigation';
+import {
+  waitForAppReady,
+  gotoTool,
+  seedStartupStorage,
+  dismissBlockingOverlays,
+  activeToolControl,
+} from './fixtures/navigation';
 
 /**
  * E2E Tests for Preset Browser Tool
@@ -44,11 +50,12 @@ test.describe('Preset Browser Tool', () => {
 
     test('should display tool header with title', async ({ page }) => {
       // The 5.0 shell deleted tool-banner.ts — the active tool's name lives in
-      // the header's 2B switcher, not in an <h1> inside the tool. This test
-      // used to "pass" only because a stray What's New modal was open and
-      // supplied a heading; with the changelog seed fixed there is none, so it
-      // now asserts against the switcher, which is where the title really is.
-      await expect(page.locator('button.tool-menu-btn').first()).toContainText(/preset/i);
+      // the header's switcher (the labelled rail chip on desktop, the 2B
+      // title-menu on mobile), not in an <h1> inside the tool. This test used
+      // to "pass" only because a stray What's New modal was open and supplied
+      // a heading; with the changelog seed fixed there is none, so it now
+      // asserts against the switcher, which is where the title really is.
+      await expect(activeToolControl(page)).toContainText(/preset/i);
 
       // Any heading the tool does render must not be blank.
       const headings = page.locator('h1, h2, h3');

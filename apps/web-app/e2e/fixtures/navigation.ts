@@ -1,22 +1,25 @@
 /**
  * Shared E2E navigation helpers.
  *
- * The 5.0 shell replaced the persistent tool rail with the 2B title-menu
- * switcher, so `[data-tool]` buttons no longer exist until the menu is open.
- * Every spec had its own copy of a `waitForSelector('[data-tool]')` readiness
- * gate, which is why one deleted attribute failed 83 tests at once.
+ * The 5.0 shell's tool switcher has two shapes, chosen by viewport: on desktop
+ * (> 768px, the `chromium` project) it is the 3A icon rail — nine
+ * `button.rail-chip[data-tool]` always in the bar; on mobile (`mobile-chrome`)
+ * it is the 2B title-menu, where `[data-tool]` buttons exist only once the
+ * menu is open. Every spec used to carry its own `waitForSelector('[data-tool]')`
+ * readiness gate, which is why one deleted attribute failed 83 tests at once —
+ * so the switcher's markup is known only here.
  *
  * Two ways to reach a tool, deliberately:
  * - `gotoTool` navigates by route. Use this to set up a test's subject; it is
  *   stable, fast, and independent of chrome markup.
- * - `switchToolViaMenu` drives the switcher itself. Use this when the
- *   navigation *is* what's under test.
+ * - `switchToolViaMenu` drives the switcher itself (rail chip on desktop, menu
+ *   entry on mobile). Use this when the navigation *is* what's under test.
  *
  * @module e2e/fixtures/navigation
  */
 
 import { readFileSync } from 'node:fs';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 /** Route path per tool id (mirrors ROUTES in services/router-service). */
 const TOOL_PATHS: Record<string, string> = {
@@ -60,14 +63,47 @@ export async function gotoTool(page: Page, toolId: string): Promise<void> {
 }
 
 /**
- * Switch tools through the 2B title-menu switcher — open the menu, pick the
- * entry. This is the path a user takes, so it belongs in tests that cover
- * navigation rather than tests that merely need to be somewhere.
+ * The visible switcher control: the 3A rail on desktop, the 2B title-menu
+ * button on mobile. Both are always in the header's DOM — a media query
+ * decides which is displayed — so filter on visibility, never on presence.
+ */
+export function toolSwitcher(page: Page): Locator {
+  return page.locator('nav.tool-rail, button.tool-menu-btn').filter({ visible: true }).first();
+}
+
+/**
+ * The switcher's naming of the current tool: the accent-filled rail chip on
+ * desktop (short name, e.g. "Presets"), the title-menu button on mobile
+ * (full title, e.g. "Preset Palettes"). Assert with a regex both satisfy.
+ */
+export function activeToolControl(page: Page): Locator {
+  return page
+    .locator('nav.tool-rail button.rail-chip.active, button.tool-menu-btn')
+    .filter({ visible: true })
+    .first();
+}
+
+/**
+ * Make every tool's `[data-tool]` button reachable: a no-op on desktop (the
+ * rail is always there), opens the title-menu on mobile.
+ */
+export async function revealToolList(page: Page): Promise<void> {
+  await dismissBlockingOverlays(page);
+  const menuBtn = page.locator('button.tool-menu-btn').filter({ visible: true });
+  if ((await menuBtn.count()) > 0) {
+    await menuBtn.first().click();
+  }
+}
+
+/**
+ * Switch tools through the switcher — one click on the rail chip (desktop),
+ * or open the title-menu and pick the entry (mobile). This is the path a user
+ * takes, so it belongs in tests that cover navigation rather than tests that
+ * merely need to be somewhere.
  */
 export async function switchToolViaMenu(page: Page, toolId: string): Promise<void> {
-  await dismissBlockingOverlays(page);
-  await page.locator('button.tool-menu-btn').first().click();
-  await page.locator(`button[data-tool="${toolId}"]`).first().click();
+  await revealToolList(page);
+  await page.locator(`button[data-tool="${toolId}"]`).filter({ visible: true }).first().click();
   await waitForAppReady(page);
 }
 

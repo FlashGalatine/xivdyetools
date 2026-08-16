@@ -30,7 +30,6 @@ export default defineConfig({
         'src/components/v4/preset-tool.ts',
         'src/components/v4/preset-detail.ts',
         'src/components/v4/v4-layout-shell.ts',
-        'src/components/v4/v4-app-header.ts',
         'src/components/v4/display-options-v4.ts',
         'src/components/preset-edit-form.ts',
         'src/components/collection-manager-modal.ts',

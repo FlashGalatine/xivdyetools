@@ -28,7 +28,12 @@
  */
 
 import { test, expect, type Page } from './fixtures/coverage';
-import { seedStartupStorage, dismissBlockingOverlays, waitForAppReady } from './fixtures/navigation';
+import {
+  seedStartupStorage,
+  dismissBlockingOverlays,
+  waitForAppReady,
+  toolSwitcher,
+} from './fixtures/navigation';
 
 /** Open the 16A theme modal from the header's theme glyph. */
 async function openThemeModal(page: Page): Promise<void> {
@@ -55,7 +60,7 @@ test.describe('Shell controls', () => {
   });
 
   test('renders the header chrome trio and the tool switcher', async ({ page }) => {
-    await expect(page.locator('button.tool-menu-btn').first()).toBeVisible();
+    await expect(toolSwitcher(page)).toBeVisible();
     // What's New · About · locale · theme · gear
     await expect(page.locator('button.v4-header-nav-btn')).toHaveCount(5);
   });
@@ -64,7 +69,7 @@ test.describe('Shell controls', () => {
     await page.reload();
     await waitForAppReady(page);
 
-    await expect(page.locator('button.tool-menu-btn').first()).toBeVisible();
+    await expect(toolSwitcher(page)).toBeVisible();
     await expect(page.locator('dye-palette-drawer')).toBeAttached();
   });
 });
@@ -273,7 +278,7 @@ test.describe('Modal container', () => {
 
     await dismissBlockingOverlays(page);
     await expect(page.locator('.m16-backdrop')).toHaveCount(0);
-    await expect(page.locator('button.tool-menu-btn').first()).toBeVisible();
+    await expect(toolSwitcher(page)).toBeVisible();
   });
 });
 
