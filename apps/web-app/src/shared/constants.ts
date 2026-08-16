@@ -99,6 +99,7 @@ export const STORAGE_KEYS = {
   HARMONY_COMPANION_DYES: `${STORAGE_PREFIX}_harmony_companion_dyes`,
   // Phase 2: Discoverability
   WELCOME_SEEN: `${STORAGE_PREFIX}_welcome_seen`,
+  PALETTE_HINT_SEEN: `${STORAGE_PREFIX}_palette_hint_seen`,
   LAST_VERSION_VIEWED: `${STORAGE_PREFIX}_last_version_viewed`,
   // Phase 2.2: Collections & Favorites
   FAVORITES: `${STORAGE_PREFIX}_favorites`,

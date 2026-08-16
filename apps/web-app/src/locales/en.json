@@ -356,7 +356,8 @@
     "customColorApplied": "Custom color applied",
     "invalidHexCode": "Invalid hex code",
     "noDyesAvailable": "No dyes available",
-    "randomDyeSelected": "Selected: {name}"
+    "randomDyeSelected": "Selected: {name}",
+    "mobileHint": "New here? Tap the palette button to pick dyes."
   },
   "harmony": {
     "suggestionMode": "Suggestion Mode",
@@ -1630,6 +1631,7 @@
     "selectRandomDye": "Select random dye",
     "clearAllDyes": "Clear all dyes",
     "closePalette": "Close palette",
+    "dismissHint": "Dismiss hint",
     "addToFavorites": "Add to favorites",
     "removeFromFavorites": "Remove from favorites",
     "moreActions": "More actions",

@@ -356,7 +356,8 @@
     "customColorApplied": "カスタムカラーを適用しました",
     "invalidHexCode": "無効なHexコードです",
     "noDyesAvailable": "利用可能な染料がありません",
-    "randomDyeSelected": "{name}を選択しました"
+    "randomDyeSelected": "{name}を選択しました",
+    "mobileHint": "初めてですか？パレットボタンをタップしてカララントを選択できます。"
   },
   "harmony": {
     "suggestionMode": "提案モード",
@@ -1606,6 +1607,7 @@
     "selectRandomDye": "ランダムな染料を選択",
     "clearAllDyes": "すべての染料をクリア",
     "closePalette": "パレットを閉じる",
+    "dismissHint": "ヒントを閉じる",
     "addToFavorites": "お気に入りに追加",
     "removeFromFavorites": "お気に入りから削除",
     "moreActions": "その他のアクション",

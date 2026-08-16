@@ -356,7 +356,8 @@
     "customColorApplied": "사용자 지정 색상이 적용되었습니다",
     "invalidHexCode": "유효하지 않은 Hex 코드",
     "noDyesAvailable": "사용 가능한 염료가 없습니다",
-    "randomDyeSelected": "{name} 선택됨"
+    "randomDyeSelected": "{name} 선택됨",
+    "mobileHint": "처음이신가요? 팔레트 버튼을 탭하여 염료를 선택하세요."
   },
   "harmony": {
     "suggestionMode": "제안 모드",
@@ -1605,6 +1606,7 @@
     "selectRandomDye": "무작위 염료 선택",
     "clearAllDyes": "모든 염료 지우기",
     "closePalette": "팔레트 닫기",
+    "dismissHint": "힌트 닫기",
     "addToFavorites": "즐겨찾기에 추가",
     "removeFromFavorites": "즐겨찾기에서 제거",
     "moreActions": "추가 작업",

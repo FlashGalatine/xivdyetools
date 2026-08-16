@@ -356,7 +356,8 @@
     "customColorApplied": "Benutzerdefinierte Farbe angewendet",
     "invalidHexCode": "Ungültiger Hex-Code",
     "noDyesAvailable": "Keine Farbstoffe verfügbar",
-    "randomDyeSelected": "{name} ausgewählt"
+    "randomDyeSelected": "{name} ausgewählt",
+    "mobileHint": "Neu hier? Tippe auf die Palettentaste, um Farbstoffe auszuwählen."
   },
   "harmony": {
     "suggestionMode": "Vorschlagsmodus",
@@ -1606,6 +1607,7 @@
     "selectRandomDye": "Zufälligen Farbstoff auswählen",
     "clearAllDyes": "Alle Farbstoffe löschen",
     "closePalette": "Palette schließen",
+    "dismissHint": "Hinweis schließen",
     "addToFavorites": "Zu Favoriten hinzufügen",
     "removeFromFavorites": "Aus Favoriten entfernen",
     "moreActions": "Weitere Aktionen",

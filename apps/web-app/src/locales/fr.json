@@ -356,7 +356,8 @@
     "customColorApplied": "Couleur personnalisée appliquée",
     "invalidHexCode": "Code hex invalide",
     "noDyesAvailable": "Aucune teinture disponible",
-    "randomDyeSelected": "{name} sélectionné"
+    "randomDyeSelected": "{name} sélectionné",
+    "mobileHint": "Nouveau ici ? Appuyez sur le bouton palette pour choisir des teintures."
   },
   "harmony": {
     "suggestionMode": "Mode de Suggestion",
@@ -1606,6 +1607,7 @@
     "selectRandomDye": "Sélectionner une teinture aléatoire",
     "clearAllDyes": "Effacer toutes les teintures",
     "closePalette": "Fermer la palette",
+    "dismissHint": "Fermer l’astuce",
     "addToFavorites": "Ajouter aux favoris",
     "removeFromFavorites": "Retirer des favoris",
     "moreActions": "Plus d'actions",

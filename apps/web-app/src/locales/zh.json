@@ -382,7 +382,8 @@
     "customColorApplied": "已应用自定义颜色",
     "invalidHexCode": "无效的十六进制代码",
     "noDyesAvailable": "没有可用的染剂",
-    "randomDyeSelected": "已选择 {name}"
+    "randomDyeSelected": "已选择 {name}",
+    "mobileHint": "第一次使用？点击调色板按钮即可选择染料。"
   },
   "harmony": {
     "suggestionMode": "建议模式",
@@ -1631,6 +1632,7 @@
     "selectRandomDye": "随机选择染剂",
     "clearAllDyes": "清除所有染剂",
     "closePalette": "关闭调色板",
+    "dismissHint": "关闭提示",
     "addToFavorites": "添加到收藏夹",
     "removeFromFavorites": "从收藏夹移除",
     "moreActions": "更多操作",

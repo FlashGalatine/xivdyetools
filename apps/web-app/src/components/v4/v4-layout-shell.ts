@@ -10,11 +10,12 @@
  * @module components/v4/v4-layout-shell
  */
 
-import { html, css, CSSResultGroup, TemplateResult } from 'lit';
+import { html, css, CSSResultGroup, TemplateResult, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { BaseLitComponent } from './base-lit-component';
 import type { ToolId } from '@services/router-service';
-import { LanguageService } from '@services/index';
+import { LanguageService, StorageService } from '@services/index';
+import { STORAGE_KEYS } from '@shared/constants';
 
 // Import child components to ensure registration
 import './v4-app-header';
@@ -60,10 +61,21 @@ export class V4LayoutShell extends BaseLitComponent {
   private isMobile = false;
 
   /**
-   * Whether the right palette drawer is open (visible by default)
+   * Whether the right palette drawer is open.
+   * Open by default on desktop; closed by default on mobile, where the drawer
+   * is a full-height overlay that would otherwise cover the tool on first load
+   * (see connectedCallback).
    */
   @state()
   private paletteDrawerOpen = true;
+
+  /**
+   * Whether the first-run "tap here to open the palette" hint has been
+   * dismissed — either explicitly or by opening the drawer once. Persisted
+   * under STORAGE_KEYS.PALETTE_HINT_SEEN so it only ever shows to a new user.
+   */
+  @state()
+  private paletteHintDismissed = false;
 
   /**
    * Tools that should NOT show the Color Palette drawer
@@ -75,6 +87,19 @@ export class V4LayoutShell extends BaseLitComponent {
    */
   private get shouldShowPalette(): boolean {
     return !V4LayoutShell.TOOLS_WITHOUT_PALETTE.includes(this.activeTool);
+  }
+
+  /**
+   * The mobile first-run hint shows only while the FAB is the way in: mobile
+   * viewport, a tool that has a palette, drawer closed, hint not yet dismissed.
+   */
+  private get shouldShowPaletteHint(): boolean {
+    return (
+      this.isMobile &&
+      this.shouldShowPalette &&
+      !this.paletteDrawerOpen &&
+      !this.paletteHintDismissed
+    );
   }
 
   /**
@@ -200,6 +225,114 @@ export class V4LayoutShell extends BaseLitComponent {
         display: none !important;
       }
 
+      /* Soft attention ring on the FAB while the first-run hint is showing */
+      .v4-palette-toggle.hinting::before {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        border: 2px solid var(--theme-primary, #d4af37);
+        opacity: 0;
+        animation: v4-palette-hint-pulse 1.8s ease-out infinite;
+        pointer-events: none;
+      }
+
+      @keyframes v4-palette-hint-pulse {
+        0% {
+          transform: scale(0.9);
+          opacity: 0.8;
+        }
+        100% {
+          transform: scale(1.5);
+          opacity: 0;
+        }
+      }
+
+      /* First-run mobile hint: a small callout above the palette FAB */
+      .v4-palette-hint {
+        position: fixed;
+        bottom: 84px;
+        right: 16px;
+        max-width: min(260px, calc(100vw - 32px));
+        display: none;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--v4-glass-border, rgba(255, 255, 255, 0.1));
+        background: var(--v4-glass-bg, rgba(30, 30, 30, 0.95));
+        backdrop-filter: var(--v4-glass-blur, blur(12px));
+        -webkit-backdrop-filter: var(--v4-glass-blur, blur(12px));
+        color: var(--theme-text, #e0e0e0);
+        font-size: 13px;
+        line-height: 1.4;
+        box-shadow: var(--v4-shadow-soft, 0 4px 6px rgba(0, 0, 0, 0.3));
+        z-index: 100;
+        animation: v4-palette-hint-in 0.25s ease-out;
+      }
+
+      /* Caret pointing down at the FAB (FAB centre is at right: 88px + 24px) */
+      .v4-palette-hint::after {
+        content: '';
+        position: absolute;
+        bottom: -7px;
+        right: 88px;
+        width: 12px;
+        height: 12px;
+        background: inherit;
+        border-right: 1px solid var(--v4-glass-border, rgba(255, 255, 255, 0.1));
+        border-bottom: 1px solid var(--v4-glass-border, rgba(255, 255, 255, 0.1));
+        transform: rotate(45deg);
+      }
+
+      @keyframes v4-palette-hint-in {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .v4-palette-hint-text {
+        flex: 1;
+      }
+
+      .v4-palette-hint-dismiss {
+        flex-shrink: 0;
+        width: 24px;
+        height: 24px;
+        margin: -4px -6px -4px 0;
+        padding: 0;
+        border: none;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--v4-text-secondary, #a0a0a0);
+        font-size: 16px;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      .v4-palette-hint-dismiss:hover {
+        color: var(--theme-text, #e0e0e0);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .v4-palette-toggle.hinting::before,
+        .v4-palette-hint {
+          animation: none;
+        }
+
+        .v4-palette-toggle.hinting::before {
+          opacity: 0.6;
+          transform: none;
+          inset: -3px;
+        }
+      }
+
       /* Mobile Styles */
       @media (max-width: 768px) {
         dye-palette-drawer {
@@ -214,6 +347,10 @@ export class V4LayoutShell extends BaseLitComponent {
           display: flex;
           align-items: center;
           justify-content: center;
+        }
+
+        .v4-palette-hint {
+          display: flex;
         }
       }
       /* ==========================================================================
@@ -585,6 +722,14 @@ export class V4LayoutShell extends BaseLitComponent {
     this.mobileQuery = window.matchMedia('(max-width: 768px)');
     this.isMobile = this.mobileQuery.matches;
 
+    // On mobile the drawer is a full-height overlay, so start with it closed
+    // and let the FAB (plus a one-time hint) be the way in.
+    if (this.isMobile) {
+      this.paletteDrawerOpen = false;
+    }
+    this.paletteHintDismissed =
+      StorageService.getItem<boolean>(STORAGE_KEYS.PALETTE_HINT_SEEN, false) === true;
+
     // Listen for viewport changes
     this.mobileQuery.addEventListener('change', this.handleMediaQueryChange);
   }
@@ -601,6 +746,11 @@ export class V4LayoutShell extends BaseLitComponent {
    */
   private handleMediaQueryChange = (e: MediaQueryListEvent): void => {
     this.isMobile = e.matches;
+    // Crossing into the mobile layout turns the docked drawer into an
+    // overlay — close it so it doesn't land on top of the tool.
+    if (this.isMobile) {
+      this.paletteDrawerOpen = false;
+    }
   };
 
   /**
@@ -638,6 +788,10 @@ export class V4LayoutShell extends BaseLitComponent {
    */
   private togglePaletteDrawer(): void {
     this.paletteDrawerOpen = !this.paletteDrawerOpen;
+    if (this.paletteDrawerOpen) {
+      // The user found the palette — the hint has done its job.
+      this.dismissPaletteHint();
+    }
   }
 
   /**
@@ -653,6 +807,17 @@ export class V4LayoutShell extends BaseLitComponent {
    */
   private handleOpenPaletteDrawer(): void {
     this.paletteDrawerOpen = true;
+    this.dismissPaletteHint();
+  }
+
+  /**
+   * Hide the first-run palette hint and remember that it has been seen.
+   * Idempotent — safe to call from every path that opens the drawer.
+   */
+  private dismissPaletteHint(): void {
+    if (this.paletteHintDismissed) return;
+    this.paletteHintDismissed = true;
+    StorageService.setItem(STORAGE_KEYS.PALETTE_HINT_SEEN, true);
   }
 
   /**
@@ -791,11 +956,32 @@ export class V4LayoutShell extends BaseLitComponent {
         }
       </div>
 
+      <!-- First-run mobile hint pointing at the palette FAB -->
+      ${
+        this.shouldShowPaletteHint
+          ? html`
+              <div class="v4-palette-hint" role="status">
+                <span class="v4-palette-hint-text">
+                  ${LanguageService.t('colorPalette.mobileHint')}
+                </span>
+                <button
+                  class="v4-palette-hint-dismiss"
+                  type="button"
+                  aria-label="${LanguageService.t('aria.dismissHint')}"
+                  @click=${this.dismissPaletteHint}
+                >
+                  &times;
+                </button>
+              </div>
+            `
+          : nothing
+      }
+
       <!-- Palette Drawer Toggle FAB (hidden when drawer is open or tool doesn't use palette) -->
       <button
         class="v4-palette-toggle ${this.paletteDrawerOpen ? 'drawer-open' : ''} ${
           !this.shouldShowPalette ? 'no-palette' : ''
-        }"
+        } ${this.shouldShowPaletteHint ? 'hinting' : ''}"
         type="button"
         title="${LanguageService.t('aria.showColorPalette')}"
         aria-label="${LanguageService.t('aria.showColorPalette')}"
