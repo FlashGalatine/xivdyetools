@@ -75,7 +75,7 @@ The **5.0 command set** — the Discord half of the XIV Dye Tools 5.0 redesign (
 5. Beta bot (optional): Discord portal interactions URL, `DISCORD_TOKEN` / `DISCORD_PUBLIC_KEY` secrets on the dev worker, `BETA_DISCORD_TOKEN` / `BETA_DISCORD_GUILD_ID` repo secrets — see the beta runbook.
 6. Presets D1 migrations (0007 community drop, stainID rewrite) are presets-api's, but `/preset` shows nothing sensible until they have run.
 
-### Known issues (not fixed in this release)
+### Known issues (not fixed in this release — deferred to a 5.1 discord-worker release, decision 2026-08-16)
 
 - `/preset submit` and `/preset edit` still send `dye.id` (the legacy itemID) and validate 2–5 dyes, while presets-api 5.0 accepts **stainIDs (1–254) and 3–6 dyes** and rejects legacy IDs loudly ("looks like a legacy item ID"). Bot-side preset submission/editing therefore fails against the migrated API until the handler is moved to `dye.stainID` — tracked as the open "presets stainID P1" item; browsing/voting/favorites are unaffected.
 
