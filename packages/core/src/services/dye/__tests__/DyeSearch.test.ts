@@ -312,7 +312,7 @@ describe('DyeSearch', () => {
     });
 
     it('should exclude specified IDs', () => {
-      const closest = search.findClosestDye('#FFFFFF', [5729]);
+      const closest = search.findClosestDye('#FFFFFF', { excludeIds: [5729] });
       expect(closest).toBeDefined();
       expect(closest?.id).not.toBe(5729);
     });
@@ -337,12 +337,12 @@ describe('DyeSearch', () => {
 
   describe('findDyesWithinDistance', () => {
     it('should find dyes within distance threshold', () => {
-      const results = search.findDyesWithinDistance('#FFFFFF', 50);
+      const results = search.findDyesWithinDistance('#FFFFFF', { maxDistance: 50 });
       expect(results.length).toBeGreaterThan(0);
     });
 
     it('should respect distance limit', () => {
-      const results = search.findDyesWithinDistance('#FFFFFF', 10);
+      const results = search.findDyesWithinDistance('#FFFFFF', { maxDistance: 10 });
       // Very tight distance should only find white or very close colors
       expect(
         results.every((d) => {
@@ -350,141 +350,28 @@ describe('DyeSearch', () => {
           const g = Math.abs(d.rgb.g - 255);
           const b = Math.abs(d.rgb.b - 255);
           return r + g + b <= 10;
-        })
+        }),
       ).toBe(true);
     });
 
     it('should apply limit parameter', () => {
-      const results = search.findDyesWithinDistance('#FFFFFF', 200, 2);
+      const results = search.findDyesWithinDistance('#FFFFFF', { maxDistance: 200, limit: 2 });
       expect(results.length).toBeLessThanOrEqual(2);
     });
 
     it('should exclude Facewear dyes', () => {
-      const results = search.findDyesWithinDistance('#FF0000', 100);
+      const results = search.findDyesWithinDistance('#FF0000', { maxDistance: 100 });
       expect(results.every((d) => d.category !== 'Facewear')).toBe(true);
     });
 
     it('should return empty array for invalid hex', () => {
-      const results = search.findDyesWithinDistance('invalid', 50);
+      const results = search.findDyesWithinDistance('invalid', { maxDistance: 50 });
       expect(results).toHaveLength(0);
     });
 
     it('should return empty array for zero distance', () => {
-      const results = search.findDyesWithinDistance('#123456', 0);
+      const results = search.findDyesWithinDistance('#123456', { maxDistance: 0 });
       expect(results).toHaveLength(0);
-    });
-  });
-
-  describe('getDyesSortedByBrightness', () => {
-    it('should sort by brightness ascending', () => {
-      const results = search.getDyesSortedByBrightness(true);
-
-      for (let i = 0; i < results.length - 1; i++) {
-        expect(results[i].hsv.v).toBeLessThanOrEqual(results[i + 1].hsv.v);
-      }
-    });
-
-    it('should sort by brightness descending', () => {
-      const results = search.getDyesSortedByBrightness(false);
-
-      for (let i = 0; i < results.length - 1; i++) {
-        expect(results[i].hsv.v).toBeGreaterThanOrEqual(results[i + 1].hsv.v);
-      }
-    });
-
-    it('should have Snow White as brightest', () => {
-      const results = search.getDyesSortedByBrightness(false);
-      expect(results[0].name).toBe('Snow White');
-      expect(results[0].hsv.v).toBe(100);
-    });
-
-    it('should return all dyes', () => {
-      const results = search.getDyesSortedByBrightness();
-      expect(results).toHaveLength(7);
-    });
-  });
-
-  describe('getDyesSortedBySaturation', () => {
-    it('should sort by saturation ascending', () => {
-      const results = search.getDyesSortedBySaturation(true);
-
-      for (let i = 0; i < results.length - 1; i++) {
-        expect(results[i].hsv.s).toBeLessThanOrEqual(results[i + 1].hsv.s);
-      }
-    });
-
-    it('should sort by saturation descending', () => {
-      const results = search.getDyesSortedBySaturation(false);
-
-      for (let i = 0; i < results.length - 1; i++) {
-        expect(results[i].hsv.s).toBeGreaterThanOrEqual(results[i + 1].hsv.s);
-      }
-    });
-
-    it('should have neutral colors as least saturated', () => {
-      const results = search.getDyesSortedBySaturation(true);
-      const first = results[0];
-      expect(first.hsv.s).toBe(0);
-      expect(first.category).toBe('Neutral');
-    });
-
-    it('should return all dyes', () => {
-      const results = search.getDyesSortedBySaturation();
-      expect(results).toHaveLength(7);
-    });
-  });
-
-  describe('getDyesSortedByHue', () => {
-    it('should sort by hue ascending', () => {
-      const results = search.getDyesSortedByHue(true);
-
-      for (let i = 0; i < results.length - 1; i++) {
-        expect(results[i].hsv.h).toBeLessThanOrEqual(results[i + 1].hsv.h);
-      }
-    });
-
-    it('should sort by hue descending', () => {
-      const results = search.getDyesSortedByHue(false);
-
-      for (let i = 0; i < results.length - 1; i++) {
-        expect(results[i].hsv.h).toBeGreaterThanOrEqual(results[i + 1].hsv.h);
-      }
-    });
-
-    it('should group similar hues together', () => {
-      const results = search.getDyesSortedByHue(true);
-      // Reds (h=0) should be early, greens (h=120) middle, blues (h=197) later
-      const redIndex = results.findIndex((d) => d.category === 'Reds');
-      const greenIndex = results.findIndex((d) => d.category === 'Greens');
-      const blueIndex = results.findIndex((d) => d.category === 'Blues');
-
-      expect(redIndex).toBeLessThan(greenIndex);
-      expect(greenIndex).toBeLessThan(blueIndex);
-    });
-
-    it('should return all dyes', () => {
-      const results = search.getDyesSortedByHue();
-      expect(results).toHaveLength(7);
-    });
-  });
-
-  describe('defensive copies', () => {
-    it('should return defensive copies from sorting methods', () => {
-      const results1 = search.getDyesSortedByBrightness();
-      const results2 = search.getDyesSortedByBrightness();
-
-      expect(results1).not.toBe(results2);
-      expect(results1).toEqual(results2);
-    });
-
-    it('should not affect original data', () => {
-      const original = database.getAllDyes();
-      expect(original).toBeDefined();
-      const sorted = search.getDyesSortedByHue();
-
-      // Modifying sorted should not affect original
-      sorted.pop();
-      expect(database.getDyeCount()).toBe(7);
     });
   });
 
@@ -528,7 +415,7 @@ describe('DyeSearch', () => {
       });
 
       it('should exclude specified IDs using linear search', () => {
-        const closest = fallbackSearch.findClosestDye('#FFFFFF', [5729]);
+        const closest = fallbackSearch.findClosestDye('#FFFFFF', { excludeIds: [5729] });
         expect(closest).toBeDefined();
         expect(closest?.id).not.toBe(5729);
       });
@@ -558,44 +445,47 @@ describe('DyeSearch', () => {
 
     describe('findDyesWithinDistance fallback', () => {
       it('should find dyes within distance threshold using linear search', () => {
-        const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', 50);
+        const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', { maxDistance: 50 });
         expect(results.length).toBeGreaterThan(0);
       });
 
       it('should respect distance limit using linear search', () => {
-        const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', 10);
+        const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', { maxDistance: 10 });
         expect(
           results.every((d) => {
             const r = Math.abs(d.rgb.r - 255);
             const g = Math.abs(d.rgb.g - 255);
             const b = Math.abs(d.rgb.b - 255);
             return r + g + b <= 10;
-          })
+          }),
         ).toBe(true);
       });
 
       it('should apply limit parameter using linear search', () => {
-        const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', 200, 2);
+        const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', {
+          maxDistance: 200,
+          limit: 2,
+        });
         expect(results.length).toBeLessThanOrEqual(2);
       });
 
       it('should exclude Facewear dyes using linear search', () => {
-        const results = fallbackSearch.findDyesWithinDistance('#FF0000', 100);
+        const results = fallbackSearch.findDyesWithinDistance('#FF0000', { maxDistance: 100 });
         expect(results.every((d) => d.category !== 'Facewear')).toBe(true);
       });
 
       it('should return empty array for invalid hex using linear search', () => {
-        const results = fallbackSearch.findDyesWithinDistance('invalid', 50);
+        const results = fallbackSearch.findDyesWithinDistance('invalid', { maxDistance: 50 });
         expect(results).toHaveLength(0);
       });
 
       it('should return empty array for zero distance using linear search', () => {
-        const results = fallbackSearch.findDyesWithinDistance('#123456', 0);
+        const results = fallbackSearch.findDyesWithinDistance('#123456', { maxDistance: 0 });
         expect(results).toHaveLength(0);
       });
 
       it('should sort results by distance using linear search', () => {
-        const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', 200);
+        const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', { maxDistance: 200 });
         // Results should be sorted by distance - Snow White (exact match) should be first
         if (results.length > 0) {
           expect(results[0].hex).toBe('#FFFFFF');
@@ -603,7 +493,10 @@ describe('DyeSearch', () => {
       });
 
       it('should handle limit of 0 using linear search', () => {
-        const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', 200, 0);
+        const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', {
+          maxDistance: 200,
+          limit: 0,
+        });
         // When limit is 0, if(limit) evaluates to false, so no limit is applied
         expect(results.length).toBeGreaterThan(0);
       });

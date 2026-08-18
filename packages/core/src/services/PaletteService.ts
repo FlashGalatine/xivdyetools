@@ -194,7 +194,7 @@ function kMeansPlusPlusInit(pixels: RGB[], k: number): RGB[] {
  */
 function assignToClusters(
   pixels: RGB[],
-  centroids: RGB[]
+  centroids: RGB[],
 ): { assignments: number[]; clusters: RGB[][] } {
   const assignments: number[] = new Array<number>(pixels.length);
   const clusters: RGB[][] = centroids.map(() => []);
@@ -225,7 +225,7 @@ function assignToClusters(
  */
 function updateCentroids(
   centroids: RGB[],
-  clusters: RGB[][]
+  clusters: RGB[][],
 ): { newCentroids: RGB[]; maxMovement: number } {
   const newCentroids: RGB[] = [];
   let maxMovement = 0;
@@ -256,7 +256,7 @@ function kMeansClustering(
   pixels: RGB[],
   k: number,
   maxIterations: number,
-  convergenceThreshold: number
+  convergenceThreshold: number,
 ): { centroids: RGB[]; clusterSizes: number[] } {
   if (pixels.length === 0) {
     return { centroids: [], clusterSizes: [] };
@@ -304,7 +304,9 @@ export class PaletteService {
   private logger: Logger;
 
   /** Default extraction options (k-means only — the matching method has no forced default here; the dye search's own default applies) */
-  private static readonly DEFAULT_OPTIONS: Required<Omit<PaletteExtractionOptions, 'matchingMethod'>> = {
+  private static readonly DEFAULT_OPTIONS: Required<
+    Omit<PaletteExtractionOptions, 'matchingMethod'>
+  > = {
     colorCount: 4,
     maxIterations: 25,
     convergenceThreshold: 1.0,
@@ -363,7 +365,7 @@ export class PaletteService {
     // Validate colorCount - INPUT-003: Log warning when clamping occurs
     if (opts.colorCount < 1 || opts.colorCount > 10) {
       this.logger.warn(
-        `PaletteService.extractPalette: colorCount ${opts.colorCount} clamped to [1, 10] range`
+        `PaletteService.extractPalette: colorCount ${opts.colorCount} clamped to [1, 10] range`,
       );
     }
     const colorCount = Math.max(1, Math.min(10, opts.colorCount));
@@ -372,7 +374,7 @@ export class PaletteService {
     // INPUT-003: Log warning when clamping occurs
     if (opts.maxIterations < 1 || opts.maxIterations > 100) {
       this.logger.warn(
-        `PaletteService.extractPalette: maxIterations ${opts.maxIterations} clamped to [1, 100] range`
+        `PaletteService.extractPalette: maxIterations ${opts.maxIterations} clamped to [1, 100] range`,
       );
     }
     const maxIterations = Math.max(1, Math.min(100, opts.maxIterations));
@@ -387,7 +389,7 @@ export class PaletteService {
     // deep in k-means); ≤ 0 silently produced an empty sample set
     if (opts.maxSamples < 2) {
       this.logger.warn(
-        `PaletteService.extractPalette: maxSamples ${opts.maxSamples} clamped to minimum 2`
+        `PaletteService.extractPalette: maxSamples ${opts.maxSamples} clamped to minimum 2`,
       );
     }
     const maxSamples = Math.max(2, opts.maxSamples);
@@ -402,7 +404,7 @@ export class PaletteService {
       sampledPixels,
       colorCount,
       maxIterations,
-      opts.convergenceThreshold
+      opts.convergenceThreshold,
     );
 
     // Calculate total pixels for dominance percentage
@@ -440,7 +442,7 @@ export class PaletteService {
   extractAndMatchPalette(
     pixels: RGB[],
     dyeService: DyeService,
-    options: PaletteExtractionOptions = {}
+    options: PaletteExtractionOptions = {},
   ): PaletteMatch[] {
     // Extract palette
     const extracted = this.extractPalette(pixels, options);
@@ -453,7 +455,7 @@ export class PaletteService {
       const hex = ColorService.rgbToHex(ex.color.r, ex.color.g, ex.color.b);
       const matchedDye = dyeService.findClosestDye(
         hex,
-        options.matchingMethod ? { matchingMethod: options.matchingMethod } : undefined
+        options.matchingMethod ? { matchingMethod: options.matchingMethod } : undefined,
       );
 
       if (matchedDye) {
@@ -473,28 +475,6 @@ export class PaletteService {
   }
 
   /**
-   * Convert flat pixel array (Uint8ClampedArray from canvas) to RGB array
-   * Skips alpha channel
-   *
-   * @param data - Flat array of RGBA values [r, g, b, a, r, g, b, a, ...]
-   * @returns Array of RGB objects
-   */
-  static pixelDataToRGB(data: Uint8ClampedArray | number[]): RGB[] {
-    const pixels: RGB[] = [];
-
-    for (let i = 0; i < data.length; i += 4) {
-      pixels.push({
-        r: data[i],
-        g: data[i + 1],
-        b: data[i + 2],
-        // Skip alpha at data[i + 3]
-      });
-    }
-
-    return pixels;
-  }
-
-  /**
    * Filter out near-transparent pixels from RGBA data
    * Useful for images with transparent backgrounds
    *
@@ -504,7 +484,7 @@ export class PaletteService {
    */
   static pixelDataToRGBFiltered(
     data: Uint8ClampedArray | number[],
-    alphaThreshold: number = 128
+    alphaThreshold: number = 128,
   ): RGB[] {
     const pixels: RGB[] = [];
 

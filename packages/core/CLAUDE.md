@@ -97,7 +97,7 @@ class TranslationProvider       // Stateless — performs translations from a re
 
 Conversion: `hexToRgb`, `rgbToHex`, `rgbToHsv`, `hsvToRgb`, `hexToHsv`, `hsvToHex`, `normalizeHex`, `rgbToLab`, `hexToLab`, `labToRgb`, `labToHex`, `rgbToOklab`, `hexToOklab`, `oklabToRgb`, `oklabToHex`, `rgbToOklch`, `hexToOklch`, `oklchToRgb`, `oklchToHex`, `labToLch`, `lchToLab`, `rgbToLch`, `hexToLch`, `lchToRgb`, `lchToHex`, `rgbToHsl`, `hexToHsl`, `hslToRgb`, `hslToHex`, `rgbToCmyk`, `cmykToRgb`, `hexToCmyk`, `cmykToHex`, `rybToRgb`, `rgbToRyb`, `hexToRyb`, `rybToHex`.
 
-Distance: `getColorDistance` (Euclidean RGB), `getRedmeanDistance`, `getDeltaE` (`DeltaEFormula`: CIE76 / CIE2000 / OKLAB / HyAB), `getDistanceForMethod(hex1, hex2, MatchingMethod)` (the 5.0 suite dispatcher). `ColorConverter` additionally exposes `getDeltaE_Oklab` / `getDeltaE_HyAB`.
+Distance: `getColorDistance` (Euclidean RGB), `getRedmeanDistance`, `getDeltaE` (`DeltaEFormula`: CIE76 / CIE2000 / OKLAB), `getDistanceForMethod(hex1, hex2, MatchingMethod)` (the 5.0 suite dispatcher). `ColorConverter` additionally exposes `getDeltaE_Oklab`.
 
 Accessibility: `getPerceivedLuminance`, `getContrastRatio`, `meetsWCAGAA`, `meetsWCAGAAA`, `isLightColor`, `getOptimalTextColor`.
 
@@ -105,13 +105,13 @@ Manipulation: `adjustBrightness`, `adjustSaturation`, `rotateHue`, `invert`, `de
 
 CVD simulation: `simulateColorblindness`, `simulateColorblindnessHex` (Brettel matrices for protan/deuter/tritanopia).
 
-Mixing: `mixColorsRgb`, `mixColorsLab`, `mixColorsOklab`, `mixColorsOklch`, `mixColorsLch`, `mixColorsHsl`, `mixColorsHsv`, `mixColorsRyb`, `mixColorsSpectral`, `mixMultipleSpectral`, `gradientSpectral`, `interpolateHue` (`shorter` | `longer` | `increasing` | `decreasing`), `isSpectralAvailable`.
+Mixing: `mixColorsRgb`, `mixColorsLab`, `mixColorsOklab`, `mixColorsHsl`, `mixColorsRyb`, `mixColorsSpectral`, `interpolateHue` (`shorter` | `longer` | `increasing` | `decreasing`).
 
 Cache: `clearCaches`, `getCacheStats`.
 
 ### `DyeService` (instance methods, constructor `new DyeService(dyeData?, options?)`)
 
-`getAllDyes`, `getDyeById`, `getByStainId`, `getDyesByIds`, `getDyesByStainIds`, `getDyeCount`, `getCategories`, `findClosestDye`, `findDyesWithinDistance`, `searchByName`, `findTriadicDyes`, `findComplementaryPair`, `findAnalogousDyes`, `findSplitComplementaryDyes`, `findTetradicDyes`, `findInvertedTetradicDyes`, `findSquareDyes`, `findMonochromaticDyes`, plus types `FindClosestOptions`, `FindWithinDistanceOptions`, `HarmonyOptions`, `HarmonyMatchingAlgorithm`, `HarmonyColorSpace`.
+`getAllDyes`, `getDyeById`, `getByStainId`, `getDyeCount`, `getCategories`, `findClosestDye`, `findDyesWithinDistance`, `searchByName`, `findTriadicDyes`, `findComplementaryPair`, `findAnalogousDyes`, `findSplitComplementaryDyes`, `findTetradicDyes`, `findInvertedTetradicDyes`, `findSquareDyes`, `findMonochromaticDyes`, plus types `FindClosestOptions`, `FindWithinDistanceOptions`, `HarmonyOptions`, `HarmonyMatchingAlgorithm`, `HarmonyColorSpace`. `findClosestDye`/`findDyesWithinDistance` take an options object only (the legacy positional `excludeIds`/`maxDistance`/`limit` shapes were removed — DEAD-035, 2026-08-18 audit).
 
 ### `LocalizationService` + helpers
 
@@ -139,13 +139,12 @@ interface ICacheBackend {
 }
 interface APIServiceOptions { cache?: ICacheBackend; logger?: Logger; fetchClient?: FetchClient; rateLimiter?: RateLimiter }
 class APIService {
-  constructor(options?: ICacheBackend | APIServiceOptions, fetchClient?, rateLimiter?)
+  constructor(options?: APIServiceOptions)   // legacy positional (cache, fetchClient, rateLimiter) removed — DEAD-035, 2026-08-18 audit
   getPriceData(itemID: number, worldID?: number, dataCenterID?: string): Promise<PriceData | null>
-  getPricesForItems(itemIDs: number[]): Promise<Map<number, PriceData>>
   getPricesForDataCenter(itemIDs: number[], dataCenterID: string): Promise<Map<number, PriceData>>
   isAPIAvailable(): Promise<boolean>; getAPIStatus(): Promise<{ available; latency }>
-  clearCache(); getCacheStats(); resetMetrics()
-  static formatPrice(price): string; static getPriceTrend(current, previous)
+  clearCache()
+  static formatPrice(price): string
   // Pass getMarketItemID(dye) — 105 of the 125 dyes share a Patch 7.5 consolidated itemID
 }
 ```
@@ -161,7 +160,7 @@ type ConsolidationType, ConsolidatedDye, LocalizedDyeName
 type MatchingMethod = 'ciede2000' | 'oklab' | 'cie76' | 'redmean' | 'rgb' | 'distinguish'   // 5.0 vocabulary; hyab / oklch-weighted retired
 MATCHING_METHODS, DEFAULT_MATCHING_METHOD ('ciede2000'), MATCHING_METHOD_TAGS,
   LEGACY_MATCHING_METHOD_MAP, isMatchingMethod, normalizeMatchingMethod   // hyab / oklch-weighted → ciede2000, euclidean → rgb
-type DeltaEFormula = 'cie76' | 'cie2000' | 'oklab' | 'hyab'   // ColorConverter.getDeltaE formulas — HyAB survives as a function, not a MatchingMethod
+type DeltaEFormula = 'cie76' | 'cie2000' | 'oklab'   // ColorConverter.getDeltaE formulas; getDeltaE_HyAB removed (DEAD-034, 2026-08-18 audit) — 'hyab' survives only as a legacy MatchingMethod token, normalized to ciede2000
 type RYB
 ```
 
@@ -204,7 +203,7 @@ Nothing computes a synthetic ID at runtime any more. Code that filters "real dye
 `HarmonyGenerator` supports both `'hue'` and `'deltaE'` matching, in any of 4 color spaces: `'hsv'` (default, fast bucket lookup), `'oklch'` (perceptually uniform, recommended), `'lch'`, `'hsl'`. DeltaE tolerance defaults differ per formula (`cie76: 40`, `cie2000: 25`).
 
 ### Spectral mixing (Kubelka-Munk)
-`SpectralMixer` wraps `spectral.js` and reflects light absorption/scattering across 380-750nm. Blue + Yellow = Green like real paint. `isSpectralAvailable()` lets callers gate fallbacks for environments where the dependency is unavailable.
+`SpectralMixer` wraps `spectral.js` and reflects light absorption/scattering across 380-750nm. Blue + Yellow = Green like real paint. Only `mixColors` is live — `mixMultiple`, `gradient`, and `isAvailable` were removed as uncalled (DEAD-034, 2026-08-18 audit).
 
 ### Locale build pipeline
 1. `scripts/fetch_dye_names.py` (Python, run **manually**) hits XIVAPI v2 → `dyenames.csv`. XIVAPI only serves en/ja/de/fr — **Korean and Chinese names are sourced manually** from market-board HTML and pasted into the CSV.

@@ -53,20 +53,6 @@ describe('Dye Matching Workflow - Integration Tests', () => {
       expect(dye?.id || dye?.itemID).toBe(dyeId);
     });
 
-    it('should find multiple dyes by IDs', () => {
-      // Get first 5 dyes to use their IDs
-      const allDyes = dyeService.getAllDyes();
-      expect(allDyes.length).toBeGreaterThanOrEqual(5);
-      const dyeIds = allDyes.slice(0, 5).map((d) => d.id || d.itemID);
-
-      const dyes = dyeService.getDyesByIds(dyeIds);
-      expect(dyes.length).toBeGreaterThan(0);
-      dyes.forEach((dye) => {
-        expect(dye.id || dye.itemID).toBeDefined();
-        expect(dyeIds).toContain(dye.id || dye.itemID);
-      });
-    });
-
     it('should get all dyes', () => {
       const allDyes = dyeService.getAllDyes();
       expect(allDyes.length).toBeGreaterThan(0);

@@ -115,7 +115,7 @@ export class DyeSearch {
       excludeIds?: number[];
       minPrice?: number;
       maxPrice?: number;
-    } = {}
+    } = {},
   ): Dye[] {
     this.database.ensureLoaded();
     let results = [...this.database.getDyesInternal()];
@@ -161,16 +161,11 @@ export class DyeSearch {
    * back to CIEDE2000 (see `normalizeMatchingMethod`).
    *
    * @param hex - Target color in hex format
-   * @param excludeIdsOrOptions - Either an array of IDs to exclude (legacy) or options object
+   * @param options - Options object (excludeIds, matchingMethod)
    * @returns Closest matching dye, or null if none found
    */
-  findClosestDye(hex: string, excludeIdsOrOptions: number[] | FindClosestOptions = []): Dye | null {
+  findClosestDye(hex: string, options: FindClosestOptions = {}): Dye | null {
     this.database.ensureLoaded();
-
-    // Support both legacy signature and new options object
-    const options: FindClosestOptions = Array.isArray(excludeIdsOrOptions)
-      ? { excludeIds: excludeIdsOrOptions }
-      : excludeIdsOrOptions;
 
     const { excludeIds = [], matchingMethod = 'ciede2000' } = options;
 
@@ -237,7 +232,7 @@ export class DyeSearch {
       // CORE-REF-001 FIX: Log complete search failures (e.g., invalid input hex)
       // These are unexpected and indicate caller provided bad input
       this.logger.warn(
-        `[DyeSearch.findClosestDye] Search failed for hex "${hex}": ${error instanceof Error ? error.message : 'Unknown error'}`
+        `[DyeSearch.findClosestDye] Search failed for hex "${hex}": ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       return null;
     }
@@ -252,22 +247,11 @@ export class DyeSearch {
    * Per COLOR-MATCH-001: Supports multiple matching algorithms.
    *
    * @param hex - Target color in hex format
-   * @param maxDistanceOrOptions - Either maxDistance number (legacy) or options object
-   * @param limit - Maximum results (legacy parameter, use options.limit instead)
+   * @param options - Options object (maxDistance, limit, matchingMethod)
    * @returns Array of dyes within the distance threshold
    */
-  findDyesWithinDistance(
-    hex: string,
-    maxDistanceOrOptions: number | FindWithinDistanceOptions,
-    limit?: number
-  ): Dye[] {
+  findDyesWithinDistance(hex: string, options: FindWithinDistanceOptions): Dye[] {
     this.database.ensureLoaded();
-
-    // Support both legacy signature and new options object
-    const options: FindWithinDistanceOptions =
-      typeof maxDistanceOrOptions === 'number'
-        ? { maxDistance: maxDistanceOrOptions, limit }
-        : maxDistanceOrOptions;
 
     const { maxDistance, limit: resultLimit, matchingMethod = 'rgb' } = options;
 
@@ -333,51 +317,9 @@ export class DyeSearch {
       // CORE-REF-001 FIX: Log complete search failures (e.g., invalid input hex)
       // These are unexpected and indicate caller provided bad input
       this.logger.warn(
-        `[DyeSearch.findDyesWithinDistance] Search failed for hex "${hex}": ${error instanceof Error ? error.message : 'Unknown error'}`
+        `[DyeSearch.findDyesWithinDistance] Search failed for hex "${hex}": ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       return [];
     }
-  }
-
-  /**
-   * Get dyes sorted by brightness
-   */
-  getDyesSortedByBrightness(ascending: boolean = true): Dye[] {
-    this.database.ensureLoaded();
-
-    return [...this.database.getDyesInternal()].sort((a, b) => {
-      const brightnessA = a.hsv.v;
-      const brightnessB = b.hsv.v;
-
-      return ascending ? brightnessA - brightnessB : brightnessB - brightnessA;
-    });
-  }
-
-  /**
-   * Get dyes sorted by saturation
-   */
-  getDyesSortedBySaturation(ascending: boolean = true): Dye[] {
-    this.database.ensureLoaded();
-
-    return [...this.database.getDyesInternal()].sort((a, b) => {
-      const satA = a.hsv.s;
-      const satB = b.hsv.s;
-
-      return ascending ? satA - satB : satB - satA;
-    });
-  }
-
-  /**
-   * Get dyes sorted by hue
-   */
-  getDyesSortedByHue(ascending: boolean = true): Dye[] {
-    this.database.ensureLoaded();
-
-    return [...this.database.getDyesInternal()].sort((a, b) => {
-      const hueA = a.hsv.h;
-      const hueB = b.hsv.h;
-
-      return ascending ? hueA - hueB : hueB - hueA;
-    });
   }
 }

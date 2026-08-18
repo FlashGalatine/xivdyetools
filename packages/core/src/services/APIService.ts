@@ -79,7 +79,7 @@ export interface RateLimiter {
 export class HttpError extends Error {
   constructor(
     public readonly status: number,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'HttpError';
@@ -332,15 +332,15 @@ export interface APIServiceOptions {
  *
  * // With custom cache backend (e.g., Redis)
  * const redisCache = new RedisCacheBackend(redisClient);
- * const apiService = new APIService(redisCache);
+ * const apiService = new APIService({ cacheBackend: redisCache });
  *
  * // With custom fetch client for testing
  * const mockFetch = new MockFetchClient();
- * const apiService = new APIService(undefined, mockFetch);
+ * const apiService = new APIService({ fetchClient: mockFetch });
  *
  * // With custom rate limiter (e.g., no rate limiting for tests)
  * const noRateLimit = new NoOpRateLimiter();
- * const apiService = new APIService(undefined, undefined, noRateLimit);
+ * const apiService = new APIService({ rateLimiter: noRateLimit });
  *
  * // Fetch price data
  * const priceData = await apiService.getPriceData(itemID, worldID, dataCenterID);
@@ -354,23 +354,6 @@ export interface APIServiceOptions {
  *   baseUrl: 'https://data.xivdyetools.app/universalis'
  * });
  */
-/**
- * Cache performance metrics
- * Tracks hit/miss/eviction/error counts for observability (OPT-002)
- */
-export interface CacheMetrics {
-  /** Number of cache hits (valid cached data returned) */
-  hits: number;
-  /** Number of cache misses (no cached data found) */
-  misses: number;
-  /** Number of cache evictions (expired, version mismatch, or corrupted entries removed) */
-  evictions: number;
-  /** Number of cache backend errors */
-  errors: number;
-  /** Timestamp (ms) when metrics were last reset */
-  lastReset: number;
-}
-
 export class APIService {
   private cache: ICacheBackend;
   private fetchClient: FetchClient;
@@ -385,58 +368,16 @@ export class APIService {
   private readonly logger: Logger;
   private readonly baseUrl: string;
 
-  /** OPT-002: Cache performance counters */
-  private metrics: CacheMetrics = {
-    hits: 0,
-    misses: 0,
-    evictions: 0,
-    errors: 0,
-    lastReset: Date.now(),
-  };
-
   /**
    * Constructor with optional dependency injection
-   * @param options Configuration options or legacy cache backend
+   * @param options Configuration options
    */
-  constructor(
-    options?: ICacheBackend | APIServiceOptions,
-    fetchClient?: FetchClient,
-    rateLimiter?: RateLimiter
-  ) {
-    // Support both legacy positional arguments and new options object
-    // Check for any known options property to detect options-based API
-    if (options && this.isOptionsObject(options)) {
-      // New options-based API
-      const opts = options;
-      this.cache = opts.cacheBackend ?? new MemoryCacheBackend();
-      this.fetchClient = opts.fetchClient ?? new DefaultFetchClient();
-      this.rateLimiter = opts.rateLimiter ?? new DefaultRateLimiter();
-      this.logger = opts.logger ?? NoOpLogger;
-      this.baseUrl = opts.baseUrl ?? UNIVERSALIS_API_BASE;
-    } else {
-      // Legacy positional arguments API
-      this.cache = (options as ICacheBackend) ?? new MemoryCacheBackend();
-      this.fetchClient = fetchClient ?? new DefaultFetchClient();
-      this.rateLimiter = rateLimiter ?? new DefaultRateLimiter();
-      this.logger = NoOpLogger;
-      this.baseUrl = UNIVERSALIS_API_BASE;
-    }
-  }
-
-  /**
-   * Type guard to check if the options parameter is an APIServiceOptions object
-   * Checks for any known property of APIServiceOptions
-   */
-  private isOptionsObject(options: unknown): options is APIServiceOptions {
-    if (!options || typeof options !== 'object') return false;
-    const obj = options as Record<string, unknown>;
-    return (
-      'logger' in obj ||
-      'cacheBackend' in obj ||
-      'baseUrl' in obj ||
-      'fetchClient' in obj ||
-      'rateLimiter' in obj
-    );
+  constructor(options: APIServiceOptions = {}) {
+    this.cache = options.cacheBackend ?? new MemoryCacheBackend();
+    this.fetchClient = options.fetchClient ?? new DefaultFetchClient();
+    this.rateLimiter = options.rateLimiter ?? new DefaultRateLimiter();
+    this.logger = options.logger ?? NoOpLogger;
+    this.baseUrl = options.baseUrl ?? UNIVERSALIS_API_BASE;
   }
 
   // ============================================================================
@@ -457,21 +398,18 @@ export class APIService {
     } catch (error) {
       // ERROR-001: Log cache backend error and fall through to API fetch
       // This distinguishes "cache broken" from "cache miss" in logs
-      this.metrics.errors++;
       this.logger.error(
-        `Cache backend error for key ${cacheKey}: ${error instanceof Error ? error.message : 'Unknown error'}. Falling through to API fetch.`
+        `Cache backend error for key ${cacheKey}: ${error instanceof Error ? error.message : 'Unknown error'}. Falling through to API fetch.`,
       );
       return null;
     }
 
     if (!cached) {
-      this.metrics.misses++;
       return null;
     }
 
     // Check cache version
     if (cached.version && cached.version !== API_CACHE_VERSION) {
-      this.metrics.evictions++;
       // OPT-003: Fire-and-forget — cache cleanup is best-effort, don't block request path
       void this.cache.delete(cacheKey);
       return null;
@@ -479,7 +417,6 @@ export class APIService {
 
     // Check if cache has expired
     if (Date.now() - cached.timestamp > cached.ttl) {
-      this.metrics.evictions++;
       // OPT-003: Fire-and-forget — cache cleanup is best-effort, don't block request path
       void this.cache.delete(cacheKey);
       return null;
@@ -489,7 +426,6 @@ export class APIService {
     if (cached.checksum) {
       const computedChecksum = generateChecksum(cached.data);
       if (computedChecksum !== cached.checksum) {
-        this.metrics.evictions++;
         this.logger.warn(`Cache corruption detected for key: ${cacheKey}`);
         // OPT-003: Fire-and-forget — cache cleanup is best-effort, don't block request path
         void this.cache.delete(cacheKey);
@@ -497,7 +433,6 @@ export class APIService {
       }
     }
 
-    this.metrics.hits++;
     return cached.data;
   }
 
@@ -525,9 +460,8 @@ export class APIService {
     try {
       await this.setCachedPrice(cacheKey, data);
     } catch (error) {
-      this.metrics.errors++;
       this.logger.error(
-        `Cache write failed for ${cacheKey}: ${error instanceof Error ? error.message : String(error)}`
+        `Cache write failed for ${cacheKey}: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
@@ -537,29 +471,7 @@ export class APIService {
    */
   async clearCache(): Promise<void> {
     await this.cache.clear();
-    this.resetMetrics();
     this.logger.info('Price cache cleared');
-  }
-
-  /**
-   * Get cache stats including performance metrics (OPT-002)
-   */
-  async getCacheStats(): Promise<{ size: number; keys: string[]; metrics: CacheMetrics }> {
-    const keys = await this.cache.keys();
-    return { size: keys.length, keys, metrics: { ...this.metrics } };
-  }
-
-  /**
-   * Reset cache performance metrics counters
-   */
-  resetMetrics(): void {
-    this.metrics = {
-      hits: 0,
-      misses: 0,
-      evictions: 0,
-      errors: 0,
-      lastReset: Date.now(),
-    };
   }
 
   // ============================================================================
@@ -578,7 +490,7 @@ export class APIService {
   async getPriceData(
     itemID: number,
     worldID?: number,
-    dataCenterID?: string
+    dataCenterID?: string,
   ): Promise<PriceData | null> {
     // Build cache key first (synchronous)
     const cacheKey = this.buildCacheKey(itemID, worldID, dataCenterID);
@@ -649,7 +561,7 @@ export class APIService {
   private async fetchPriceData(
     itemID: number,
     worldID?: number,
-    dataCenterID?: string
+    dataCenterID?: string,
   ): Promise<PriceData | null> {
     // Rate limiting: use injected rate limiter
     await this.rateLimiter.waitIfNeeded();
@@ -664,7 +576,7 @@ export class APIService {
         UNIVERSALIS_API_RETRY_COUNT,
         UNIVERSALIS_API_RETRY_DELAY,
         this.logger,
-        isRetryableHttpError // OPT-014: 4xx (except 429) fails fast
+        isRetryableHttpError, // OPT-014: 4xx (except 429) fails fast
       );
 
       if (!data) {
@@ -677,12 +589,12 @@ export class APIService {
       // SECURITY: Log detailed error internally but provide sanitized message to callers
       // This prevents exposing internal API structure or upstream error details
       this.logger.error(
-        `Failed to fetch price data for item ${itemID}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to fetch price data for item ${itemID}: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       throw new AppError(
         ErrorCode.API_CALL_FAILED,
         `Failed to fetch price data for item ${itemID}`,
-        'warning'
+        'warning',
       );
     }
   }
@@ -697,7 +609,7 @@ export class APIService {
    */
   private async fetchBatchPriceData(
     itemIDs: number[],
-    dataCenterID?: string
+    dataCenterID?: string,
   ): Promise<Map<number, PriceData>> {
     if (itemIDs.length === 0) {
       return new Map();
@@ -726,7 +638,7 @@ export class APIService {
     const validItemIDs = itemIDs.filter((id) => Number.isInteger(id) && id > 0);
     if (validItemIDs.length < itemIDs.length) {
       this.logger.warn(
-        `Skipping ${itemIDs.length - validItemIDs.length} invalid item IDs in batch fetch`
+        `Skipping ${itemIDs.length - validItemIDs.length} invalid item IDs in batch fetch`,
       );
     }
     if (validItemIDs.length === 0) {
@@ -746,7 +658,7 @@ export class APIService {
         UNIVERSALIS_API_RETRY_COUNT,
         UNIVERSALIS_API_RETRY_DELAY,
         this.logger,
-        isRetryableHttpError // OPT-014: 4xx (except 429) fails fast
+        isRetryableHttpError, // OPT-014: 4xx (except 429) fails fast
       );
 
       if (!data) {
@@ -757,7 +669,7 @@ export class APIService {
       return this.parseBatchApiResponse(data);
     } catch (error) {
       this.logger.error(
-        `Failed to fetch batch price data for ${itemIDs.length} items: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to fetch batch price data for ${itemIDs.length} items: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       return new Map();
     }
@@ -770,7 +682,7 @@ export class APIService {
    */
   private async fetchWithTimeout(
     url: string,
-    timeoutMs: number
+    timeoutMs: number,
   ): Promise<{ results?: UniversalisItemResult[] }> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -794,7 +706,7 @@ export class APIService {
         const size = parseInt(contentLength, 10);
         if (!isNaN(size) && size > API_MAX_RESPONSE_SIZE) {
           throw new Error(
-            `Response too large: ${size} bytes (max: ${API_MAX_RESPONSE_SIZE} bytes)`
+            `Response too large: ${size} bytes (max: ${API_MAX_RESPONSE_SIZE} bytes)`,
           );
         }
       }
@@ -803,7 +715,7 @@ export class APIService {
       const text = await response.text();
       if (text.length > API_MAX_RESPONSE_SIZE) {
         throw new Error(
-          `Response too large: ${text.length} bytes (max: ${API_MAX_RESPONSE_SIZE} bytes)`
+          `Response too large: ${text.length} bytes (max: ${API_MAX_RESPONSE_SIZE} bytes)`,
         );
       }
 
@@ -813,7 +725,7 @@ export class APIService {
       } catch (parseError) {
         throw new Error(
           `Invalid JSON response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
-          { cause: parseError }
+          { cause: parseError },
         );
       }
     } finally {
@@ -827,7 +739,7 @@ export class APIService {
    */
   private parseApiResponse(
     data: { results?: UniversalisItemResult[] },
-    itemID: number
+    itemID: number,
   ): PriceData | null {
     try {
       // Validate response structure
@@ -925,7 +837,7 @@ export class APIService {
       // Log any failed items
       if (data.failedItems && data.failedItems.length > 0) {
         this.logger.warn(
-          `Batch request had ${data.failedItems.length} failed items: ${data.failedItems.join(', ')}`
+          `Batch request had ${data.failedItems.length} failed items: ${data.failedItems.join(', ')}`,
         );
       }
 
@@ -965,7 +877,7 @@ export class APIService {
       throw new AppError(
         ErrorCode.INVALID_INPUT,
         `Cannot fetch more than 100 items in one batch (got ${itemIDs.length})`,
-        'warning'
+        'warning',
       );
     }
 
@@ -975,7 +887,7 @@ export class APIService {
       throw new AppError(
         ErrorCode.INVALID_INPUT,
         `Invalid item IDs: all IDs must be positive integers (invalid: ${invalidIds.slice(0, 5).join(', ')}${invalidIds.length > 5 ? '...' : ''})`,
-        'warning'
+        'warning',
       );
     }
 
@@ -1023,77 +935,6 @@ export class APIService {
   // ============================================================================
 
   /**
-   * Fetch prices for multiple items (global/universal pricing)
-   * PERFORMANCE: Uses batched API requests to minimize rate limiting
-   *
-   * Strategy:
-   * 1. Check cache for each item
-   * 2. Collect uncached items
-   * 3. Fetch uncached items in a single batched request
-   * 4. Store fetched items in cache
-   */
-  async getPricesForItems(itemIDs: number[]): Promise<Map<number, PriceData>> {
-    const results = new Map<number, PriceData>();
-    const uncachedItemIDs: number[] = [];
-
-    // Step 1: Check cache for each item (in parallel for async backends)
-    const cacheChecks = await Promise.all(
-      itemIDs.map(async (itemID) => {
-        const cacheKey = this.buildCacheKey(itemID);
-        const cached = await this.getCachedPrice(cacheKey);
-        return { itemID, cached };
-      })
-    );
-
-    for (const { itemID, cached } of cacheChecks) {
-      if (cached) {
-        results.set(itemID, cached);
-      } else {
-        uncachedItemIDs.push(itemID);
-      }
-    }
-
-    // Step 2: If all items are cached, return immediately
-    if (uncachedItemIDs.length === 0) {
-      this.logger.debug(`All ${itemIDs.length} items found in cache`);
-      return results;
-    }
-
-    this.logger.debug(`Fetching ${uncachedItemIDs.length} uncached items (${results.size} cached)`);
-
-    // Step 3+4: Fetch uncached items and write them to cache.
-    // OPT-001 (2026-07-18 audit): identical in-flight batches are coalesced so
-    // N concurrent cold-cache callers produce one upstream request, mirroring
-    // the single-item pendingRequests dedupe. The entry is removed on settle.
-    // BUG-011: cache writes are best-effort — one failed write must not throw
-    // away the whole fetched batch.
-    const batchKey = [...uncachedItemIDs].sort((a, b) => a - b).join(',') + ':universal';
-    let batchPromise = this.pendingBatchRequests.get(batchKey);
-    if (!batchPromise) {
-      batchPromise = (async (): Promise<Map<number, PriceData>> => {
-        const batchResults = await this.fetchBatchPriceData(uncachedItemIDs);
-        const cacheWrites: Promise<void>[] = [];
-        for (const [itemID, priceData] of batchResults) {
-          const cacheKey = this.buildCacheKey(itemID);
-          cacheWrites.push(this.trySetCachedPrice(cacheKey, priceData));
-        }
-        await Promise.all(cacheWrites);
-        return batchResults;
-      })().finally((): void => {
-        this.pendingBatchRequests.delete(batchKey);
-      });
-      this.pendingBatchRequests.set(batchKey, batchPromise);
-    }
-
-    const batchResults = await batchPromise;
-    for (const [itemID, priceData] of batchResults) {
-      results.set(itemID, priceData);
-    }
-
-    return results;
-  }
-
-  /**
    * Fetch prices for dyes in a specific data center
    * PERFORMANCE: Uses batched API requests to minimize rate limiting
    *
@@ -1105,7 +946,7 @@ export class APIService {
    */
   async getPricesForDataCenter(
     itemIDs: number[],
-    dataCenterID: string
+    dataCenterID: string,
   ): Promise<Map<number, PriceData>> {
     const results = new Map<number, PriceData>();
     const uncachedItemIDs: number[] = [];
@@ -1116,7 +957,7 @@ export class APIService {
         const cacheKey = this.buildCacheKey(itemID, undefined, dataCenterID);
         const cached = await this.getCachedPrice(cacheKey);
         return { itemID, cached };
-      })
+      }),
     );
 
     for (const { itemID, cached } of cacheChecks) {
@@ -1134,7 +975,7 @@ export class APIService {
     }
 
     this.logger.debug(
-      `Fetching ${uncachedItemIDs.length} uncached items (${results.size} cached) for ${dataCenterID}`
+      `Fetching ${uncachedItemIDs.length} uncached items (${results.size} cached) for ${dataCenterID}`,
     );
 
     // Step 3+4: Fetch uncached items and write them to cache.
@@ -1217,27 +1058,5 @@ export class APIService {
 
     // Return with small "G" suffix
     return `${formattedNumber}G`;
-  }
-
-  /**
-   * Calculate price trend (simplified)
-   */
-  static getPriceTrend(
-    currentPrice: number,
-    previousPrice: number
-  ): { trend: 'up' | 'down' | 'stable'; change: number; changePercent: number } {
-    const change = currentPrice - previousPrice;
-    const changePercent = previousPrice === 0 ? 0 : (change / previousPrice) * 100;
-
-    let trend: 'up' | 'down' | 'stable';
-    if (change > previousPrice * 0.05) {
-      trend = 'up';
-    } else if (change < -previousPrice * 0.05) {
-      trend = 'down';
-    } else {
-      trend = 'stable';
-    }
-
-    return { trend, change, changePercent: Math.round(changePercent * 100) / 100 };
   }
 }

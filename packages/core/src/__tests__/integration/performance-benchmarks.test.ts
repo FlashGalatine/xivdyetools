@@ -143,7 +143,7 @@ describe('Performance Benchmarks - Core Library', () => {
 
       const start = performance.now();
       for (let i = 0; i < iterations; i++) {
-        dyeService.findDyesWithinDistance(testColor, 50, 10);
+        dyeService.findDyesWithinDistance(testColor, { maxDistance: 50, limit: 10 });
       }
       const duration = performance.now() - start;
       const avgTime = duration / iterations;
@@ -178,7 +178,6 @@ describe('Performance Benchmarks - Core Library', () => {
         () => dyeService.findSquareDyes(testColor),
         () => dyeService.findTetradicDyes(testColor),
         () => dyeService.findSplitComplementaryDyes(testColor),
-        () => dyeService.findCompoundDyes(testColor),
         () => dyeService.findMonochromaticDyes(testColor),
       ];
 

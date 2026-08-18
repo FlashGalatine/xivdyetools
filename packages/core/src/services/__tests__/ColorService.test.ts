@@ -548,40 +548,6 @@ describe('ColorService', () => {
       });
     });
 
-    describe('OKLCH mixing', () => {
-      it('should mix colors using OKLCH with default hue method', () => {
-        const mixed = ColorService.mixColorsOklch('#FF0000', '#0000FF');
-        expect(mixed).toMatch(/^#[0-9A-F]{6}$/);
-      });
-
-      it('should mix colors using OKLCH with longer hue path', () => {
-        const mixed = ColorService.mixColorsOklch('#FF0000', '#0000FF', 0.5, 'longer');
-        expect(mixed).toMatch(/^#[0-9A-F]{6}$/);
-      });
-
-      it('should mix colors using OKLCH with increasing hue', () => {
-        const mixed = ColorService.mixColorsOklch('#FF0000', '#00FF00', 0.5, 'increasing');
-        expect(mixed).toMatch(/^#[0-9A-F]{6}$/);
-      });
-
-      it('should mix colors using OKLCH with decreasing hue', () => {
-        const mixed = ColorService.mixColorsOklch('#FF0000', '#00FF00', 0.5, 'decreasing');
-        expect(mixed).toMatch(/^#[0-9A-F]{6}$/);
-      });
-    });
-
-    describe('LCH mixing', () => {
-      it('should mix colors using LCH with default hue method', () => {
-        const mixed = ColorService.mixColorsLch('#FF0000', '#0000FF');
-        expect(mixed).toMatch(/^#[0-9A-F]{6}$/);
-      });
-
-      it('should mix colors using LCH with longer hue path', () => {
-        const mixed = ColorService.mixColorsLch('#FF0000', '#0000FF', 0.5, 'longer');
-        expect(mixed).toMatch(/^#[0-9A-F]{6}$/);
-      });
-    });
-
     describe('HSL mixing', () => {
       it('should mix colors using HSL with default hue method', () => {
         const mixed = ColorService.mixColorsHsl('#FF0000', '#00FF00');
@@ -590,18 +556,6 @@ describe('ColorService', () => {
 
       it('should mix colors using HSL with longer hue path', () => {
         const mixed = ColorService.mixColorsHsl('#FF0000', '#00FF00', 0.5, 'longer');
-        expect(mixed).toMatch(/^#[0-9A-F]{6}$/);
-      });
-    });
-
-    describe('HSV mixing', () => {
-      it('should mix colors using HSV with default hue method', () => {
-        const mixed = ColorService.mixColorsHsv('#FF0000', '#00FF00');
-        expect(mixed).toMatch(/^#[0-9A-F]{6}$/);
-      });
-
-      it('should mix colors using HSV with longer hue path', () => {
-        const mixed = ColorService.mixColorsHsv('#FF0000', '#00FF00', 0.5, 'longer');
         expect(mixed).toMatch(/^#[0-9A-F]{6}$/);
       });
     });
@@ -617,32 +571,6 @@ describe('ColorService', () => {
         const rgb = ColorService.hexToRgb(mixed);
         // Spectral mixing should produce green for blue+yellow
         expect(rgb.g).toBeGreaterThan(50);
-      });
-
-      it('should mix multiple colors spectrally', () => {
-        const mixed = ColorService.mixMultipleSpectral(['#FF0000', '#00FF00', '#0000FF']);
-        expect(mixed).toMatch(/^#[0-9A-F]{6}$/);
-      });
-
-      it('should mix multiple colors with custom weights', () => {
-        const mixed = ColorService.mixMultipleSpectral(
-          ['#FF0000', '#00FF00', '#0000FF'],
-          [0.5, 0.3, 0.2]
-        );
-        expect(mixed).toMatch(/^#[0-9A-F]{6}$/);
-      });
-
-      it('should generate spectral gradient', () => {
-        const gradient = ColorService.gradientSpectral('#FF0000', '#0000FF', 5);
-        expect(gradient).toHaveLength(5);
-        expect(gradient[0]).toBe('#FF0000');
-        expect(gradient[4]).toBe('#0000FF');
-      });
-
-      it('should check spectral availability', () => {
-        const available = ColorService.isSpectralAvailable();
-        expect(typeof available).toBe('boolean');
-        expect(available).toBe(true); // spectral.js should be loaded
       });
     });
   });

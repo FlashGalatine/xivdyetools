@@ -22,7 +22,7 @@
  * const hairColors = await characterColors.getHairColors('Midlander', 'Male');
  *
  * // Find closest dyes to an eye color
- * const matches = characterColors.findClosestDyes(eyeColors[47], dyeService, 3);
+ * const matches = characterColors.findClosestDyes(eyeColors[47], dyeService, { count: 3 });
  * ```
  */
 
@@ -52,7 +52,6 @@ export interface CharacterMatchOptions {
 // =============================================================================
 // Eager imports for shared colors (always needed, loaded at build time)
 // =============================================================================
-import colorMeta from '../data/character_colors/index.json';
 import eyeColorsData from '../data/character_colors/shared/eye_colors.json';
 import highlightColorsData from '../data/character_colors/shared/highlight_colors.json';
 import lipColorsDarkData from '../data/character_colors/shared/lip_colors_dark.json';
@@ -170,9 +169,7 @@ export class CharacterColorService {
 
     // Deduplicate concurrent loads
     if (!this.hairColorsLoading) {
-      this.hairColorsLoading = import(
-        '../data/character_colors/race_specific/hair_colors.json'
-      )
+      this.hairColorsLoading = import('../data/character_colors/race_specific/hair_colors.json')
         .then((module) => {
           this.hairColorsData = module.default;
           this.hairColorsLoading = null;
@@ -199,9 +196,7 @@ export class CharacterColorService {
 
     // Deduplicate concurrent loads
     if (!this.skinColorsLoading) {
-      this.skinColorsLoading = import(
-        '../data/character_colors/race_specific/skin_colors.json'
-      )
+      this.skinColorsLoading = import('../data/character_colors/race_specific/skin_colors.json')
         .then((module) => {
           this.skinColorsData = module.default;
           this.skinColorsLoading = null;
@@ -253,22 +248,13 @@ export class CharacterColorService {
   async getRaceSpecificColors(
     category: RaceSpecificColorCategory,
     subrace: SubRace,
-    gender: Gender
+    gender: Gender,
   ): Promise<CharacterColor[]> {
     if (category === 'hairColors') {
       return this.getHairColors(subrace, gender);
     } else {
       return this.getSkinColors(subrace, gender);
     }
-  }
-
-  /**
-   * Preload all race-specific data for faster subsequent access.
-   * Call this early (e.g., on app init) to avoid latency when
-   * the user first selects a race.
-   */
-  async preloadRaceData(): Promise<void> {
-    await Promise.all([this.loadHairColors(), this.loadSkinColors()]);
   }
 
   // ==========================================================================
@@ -313,17 +299,13 @@ export class CharacterColorService {
    *
    * @param color - The character color to match
    * @param dyeService - DyeService instance for dye lookup
-   * @param countOrOptions - Number of matches (legacy) or options object
+   * @param options - Options object (count, matchingMethod)
    * @returns Array of matches sorted by distance (closest first)
    *
    * @example
    * ```typescript
    * const eyeColor = characterColors.getEyeColors()[47];
    *
-   * // Legacy usage
-   * const matches = characterColors.findClosestDyes(eyeColor, dyeService, 3);
-   *
-   * // New usage with options
    * const matches = characterColors.findClosestDyes(eyeColor, dyeService, {
    *   count: 3,
    *   matchingMethod: 'oklab'
@@ -333,12 +315,8 @@ export class CharacterColorService {
   findClosestDyes(
     color: CharacterColor,
     dyeService: DyeService,
-    countOrOptions: number | CharacterMatchOptions = 3
+    options: CharacterMatchOptions = {},
   ): CharacterColorMatch[] {
-    // Support both legacy (count number) and new (options object) signatures
-    const options: CharacterMatchOptions =
-      typeof countOrOptions === 'number' ? { count: countOrOptions } : countOrOptions;
-
     const { count = 3, matchingMethod = 'ciede2000' } = options;
 
     const allDyes = dyeService.getAllDyes();
@@ -384,7 +362,7 @@ export class CharacterColorService {
    * Find the single closest dye to a character color
    */
   findClosestDye(color: CharacterColor, dyeService: DyeService): CharacterColorMatch | null {
-    const matches = this.findClosestDyes(color, dyeService, 1);
+    const matches = this.findClosestDyes(color, dyeService, { count: 1 });
     return matches[0] || null;
   }
 
@@ -394,7 +372,7 @@ export class CharacterColorService {
   findDyesWithinDistance(
     color: CharacterColor,
     dyeService: DyeService,
-    maxDistance: number
+    maxDistance: number,
   ): CharacterColorMatch[] {
     const allDyes = dyeService.getAllDyes();
     const results: CharacterColorMatch[] = [];
@@ -416,56 +394,6 @@ export class CharacterColorService {
 
     results.sort((a, b) => a.distance - b.distance);
     return results;
-  }
-
-  // ==========================================================================
-  // Color Lookup
-  // ==========================================================================
-
-  /**
-   * Get a specific color by index from a shared category
-   */
-  getSharedColorByIndex(category: SharedColorCategory, index: number): CharacterColor | null {
-    const colors = this.getSharedColors(category);
-    return colors.find((c) => c.index === index) || null;
-  }
-
-  /**
-   * Get a specific color by index from a race-specific category
-   */
-  async getRaceSpecificColorByIndex(
-    category: RaceSpecificColorCategory,
-    subrace: SubRace,
-    gender: Gender,
-    index: number
-  ): Promise<CharacterColor | null> {
-    const colors = await this.getRaceSpecificColors(category, subrace, gender);
-    return colors.find((c) => c.index === index) || null;
-  }
-
-  // ==========================================================================
-  // Metadata
-  // ==========================================================================
-
-  /**
-   * Get all available subraces
-   */
-  getAvailableSubraces(): SubRace[] {
-    return colorMeta.subraces as SubRace[];
-  }
-
-  /**
-   * Get the data version
-   */
-  getVersion(): string {
-    return colorMeta.meta.version;
-  }
-
-  /**
-   * Get grid column count (always 8)
-   */
-  getGridColumns(): number {
-    return colorMeta.meta.gridColumns;
   }
 
   // ==========================================================================

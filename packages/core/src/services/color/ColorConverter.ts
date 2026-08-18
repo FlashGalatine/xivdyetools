@@ -12,9 +12,8 @@ import { createHexColor, ErrorCode, AppError } from '@xivdyetools/types';
  * - cie76: Simple Euclidean distance in LAB space (fast)
  * - cie2000: CIEDE2000 formula (perceptually accurate, industry standard)
  * - oklab: OKLAB Euclidean distance (modern, simpler than cie2000, CSS standard)
- * - hyab: HyAB hybrid distance (best for large color differences/palette matching)
  */
-export type DeltaEFormula = 'cie76' | 'cie2000' | 'oklab' | 'hyab';
+export type DeltaEFormula = 'cie76' | 'cie2000' | 'oklab';
 import { RGB_MIN, RGB_MAX, HUE_MAX, COLOR_DISTANCE_MAX } from '../../constants/index.js';
 import {
   clamp,
@@ -158,7 +157,7 @@ export class ColorConverter {
       throw new AppError(
         ErrorCode.INVALID_HEX_COLOR,
         `Invalid hex color: ${hex}. Use format #RRGGBB or #RGB`,
-        'error'
+        'error',
       );
     }
 
@@ -201,7 +200,7 @@ export class ColorConverter {
       throw new AppError(
         ErrorCode.INVALID_RGB_VALUE,
         `Invalid RGB values: r=${r}, g=${g}, b=${b}. Values must be 0-255`,
-        'error'
+        'error',
       );
     }
 
@@ -242,7 +241,7 @@ export class ColorConverter {
       throw new AppError(
         ErrorCode.INVALID_RGB_VALUE,
         `Invalid RGB values: r=${r}, g=${g}, b=${b}`,
-        'error'
+        'error',
       );
     }
 
@@ -319,7 +318,7 @@ export class ColorConverter {
       throw new AppError(
         ErrorCode.INVALID_RGB_VALUE,
         `Invalid HSV values: h=${h}, s=${s}, v=${v}`,
-        'error'
+        'error',
       );
     }
 
@@ -349,9 +348,7 @@ export class ColorConverter {
     const x = c * (1 - Math.abs((hNorm % 2) - 1));
     const m = vNorm - c;
 
-    let rNorm: number,
-      gNorm: number,
-      bNorm: number;
+    let rNorm: number, gNorm: number, bNorm: number;
 
     if (hNorm >= 0 && hNorm < 1) {
       [rNorm, gNorm, bNorm] = [c, x, 0];
@@ -490,7 +487,7 @@ export class ColorConverter {
     const db = rgb1.b - rgb2.b;
 
     return Math.sqrt(
-      (2 + rMean / 256) * dr * dr + 4 * dg * dg + (2 + (255 - rMean) / 256) * db * db
+      (2 + rMean / 256) * dr * dr + 4 * dg * dg + (2 + (255 - rMean) / 256) * db * db,
     );
   }
 
@@ -560,7 +557,7 @@ export class ColorConverter {
       throw new AppError(
         ErrorCode.INVALID_RGB_VALUE,
         `Invalid RGB values: r=${r}, g=${g}, b=${b}. Values must be 0-255`,
-        'error'
+        'error',
       );
     }
 
@@ -814,7 +811,7 @@ export class ColorConverter {
       Math.pow(dLp / (kL * Sl), 2) +
         Math.pow(dCp / (kC * Sc), 2) +
         Math.pow(dHp / (kH * Sh), 2) +
-        Rt * (dCp / (kC * Sc)) * (dHp / (kH * Sh))
+        Rt * (dCp / (kC * Sc)) * (dHp / (kH * Sh)),
     );
 
     return dE;
@@ -846,7 +843,6 @@ export class ColorConverter {
    * - cie76: LAB Euclidean (fast, fair accuracy)
    * - cie2000: CIEDE2000 (industry standard, accurate)
    * - oklab: OKLAB Euclidean (modern, simpler than cie2000, CSS standard)
-   * - hyab: HyAB hybrid (best for large color differences/palette matching)
    *
    * @param hex1 First hex color
    * @param hex2 Second hex color
@@ -862,8 +858,6 @@ export class ColorConverter {
       }
       case 'oklab':
         return this.getDeltaE_Oklab(hex1, hex2);
-      case 'hyab':
-        return this.getDeltaE_HyAB(hex1, hex2);
       case 'cie76':
       default: {
         const lab1 = this.hexToLab(hex1);
@@ -919,50 +913,6 @@ export class ColorConverter {
   }
 
   /**
-   * Calculate color difference using HyAB (Hybrid) algorithm.
-   *
-   * HyAB uses taxicab distance for lightness and Euclidean for chroma.
-   * Research shows it outperforms both Euclidean AND CIEDE2000 for large
-   * color differences (>10 units), making it ideal for palette matching.
-   *
-   * Formula: ΔE_HyAB = |L₂ - L₁| + √[(a₂-a₁)² + (b₂-b₁)²]
-   *
-   * Reference: Abasi, Tehran & Fairchild (2019) -
-   * "Distance metrics for very large color differences"
-   *
-   * @param hex1 First color in hex format
-   * @param hex2 Second color in hex format
-   * @param kL Lightness weight (default 1.0). Higher = prioritize lightness matching.
-   *           Use kL > 1 for visibility-critical matching (armor, UI).
-   *           Use kL < 1 to tolerate brightness differences (find vibrant alternatives).
-   * @returns Distance value (0 = identical, scale ~0-1.5 for typical colors)
-   *
-   * @example getDeltaE_HyAB("#FF0000", "#800000") -> ~0.32
-   * @example getDeltaE_HyAB("#FF0000", "#800000", 2.0) -> higher (emphasize brightness)
-   */
-  getDeltaE_HyAB(hex1: string, hex2: string, kL: number = 1.0): number {
-    const lab1 = this.hexToOklab(hex1);
-    const lab2 = this.hexToOklab(hex2);
-
-    // Taxicab distance for lightness (weighted)
-    const dL = Math.abs(lab2.L - lab1.L) * kL;
-
-    // Euclidean distance for chroma plane
-    const da = lab2.a - lab1.a;
-    const db = lab2.b - lab1.b;
-    const dChroma = Math.sqrt(da * da + db * db);
-
-    return dL + dChroma;
-  }
-
-  /**
-   * Static method: Calculate HyAB distance using default instance
-   */
-  static getDeltaE_HyAB(hex1: string, hex2: string, kL: number = 1.0): number {
-    return this.getDefault().getDeltaE_HyAB(hex1, hex2, kL);
-  }
-
-  /**
    * Calculate color difference using OKLCH with customizable L/C/H weights.
    *
    * Allows users to prioritize different color attributes:
@@ -980,7 +930,7 @@ export class ColorConverter {
   getDeltaE_OklchWeighted(
     hex1: string,
     hex2: string,
-    weights: { kL?: number; kC?: number; kH?: number } = {}
+    weights: { kL?: number; kC?: number; kH?: number } = {},
   ): number {
     const { kL = 1.0, kC = 1.0, kH = 1.0 } = weights;
 
@@ -1012,7 +962,7 @@ export class ColorConverter {
   static getDeltaE_OklchWeighted(
     hex1: string,
     hex2: string,
-    weights: { kL?: number; kC?: number; kH?: number } = {}
+    weights: { kL?: number; kC?: number; kH?: number } = {},
   ): number {
     return this.getDefault().getDeltaE_OklchWeighted(hex1, hex2, weights);
   }
@@ -1061,7 +1011,7 @@ export class ColorConverter {
       throw new AppError(
         ErrorCode.INVALID_RGB_VALUE,
         `Invalid RGB values: r=${r}, g=${g}, b=${b}. Values must be 0-255`,
-        'error'
+        'error',
       );
     }
 
@@ -1406,7 +1356,7 @@ export class ColorConverter {
       throw new AppError(
         ErrorCode.INVALID_RGB_VALUE,
         `Invalid RGB values: r=${r}, g=${g}, b=${b}. Values must be 0-255`,
-        'error'
+        'error',
       );
     }
 
@@ -1560,7 +1510,7 @@ export class ColorConverter {
       throw new AppError(
         ErrorCode.INVALID_RGB_VALUE,
         `Invalid RGB values: r=${r}, g=${g}, b=${b}. Values must be 0-255`,
-        'error'
+        'error',
       );
     }
 

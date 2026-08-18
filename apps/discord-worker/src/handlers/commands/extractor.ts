@@ -118,9 +118,14 @@ function deduplicatePaletteResults(
     } else {
       // Duplicate — find the next-best unique dye for this extracted color
       const hex = ColorService.rgbToHex(match.extracted.r, match.extracted.g, match.extracted.b);
+      // DEAD-035 (2026-08-18 audit): pass the user's matchingMethod explicitly —
+      // findDyesWithinDistance defaults to 'rgb' for backwards compatibility,
+      // which silently gave this alternative-dye search a different
+      // neighborhood than the primary match.
       const candidates = dyeService.findDyesWithinDistance(hex, {
         maxDistance: 200,
         limit: 20,
+        matchingMethod,
       });
 
       const alternative = candidates.find((dye) => !usedDyeIds.has(dye.itemID));

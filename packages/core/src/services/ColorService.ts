@@ -699,7 +699,7 @@ export class ColorService {
     h1: number,
     h2: number,
     ratio: number,
-    method: 'shorter' | 'longer' | 'increasing' | 'decreasing' = 'shorter'
+    method: 'shorter' | 'longer' | 'increasing' | 'decreasing' = 'shorter',
   ): number {
     let diff = h2 - h1;
 
@@ -724,63 +724,6 @@ export class ColorService {
   }
 
   /**
-   * Mix two colors using OKLCH cylindrical mixing
-   *
-   * OKLCH provides control over hue interpolation direction,
-   * useful for creating gradients that go "through" specific colors.
-   *
-   * @param hex1 First hex color
-   * @param hex2 Second hex color
-   * @param ratio Mix ratio (0 = all hex1, 0.5 = equal mix, 1 = all hex2). Default: 0.5
-   * @param hueMethod Hue interpolation method ('shorter' | 'longer' | 'increasing' | 'decreasing')
-   * @returns Mixed color as hex
-   */
-  static mixColorsOklch(
-    hex1: string,
-    hex2: string,
-    ratio: number = 0.5,
-    hueMethod: 'shorter' | 'longer' | 'increasing' | 'decreasing' = 'shorter'
-  ): HexColor {
-    const oklch1 = ColorConverter.hexToOklch(hex1);
-    const oklch2 = ColorConverter.hexToOklch(hex2);
-
-    const L = oklch1.L + (oklch2.L - oklch1.L) * ratio;
-    const C = oklch1.C + (oklch2.C - oklch1.C) * ratio;
-    const h = this.interpolateHue(oklch1.h, oklch2.h, ratio, hueMethod);
-
-    return ColorConverter.oklchToHex(L, C, h);
-  }
-
-  /**
-   * Mix two colors using LCH cylindrical mixing
-   *
-   * LCH is the cylindrical form of CIE LAB, providing hue control
-   * for perceptual mixing. Note: May produce unexpected hues for
-   * blue+yellow due to LAB's red bias (use OKLCH for better results).
-   *
-   * @param hex1 First hex color
-   * @param hex2 Second hex color
-   * @param ratio Mix ratio (0 = all hex1, 0.5 = equal mix, 1 = all hex2). Default: 0.5
-   * @param hueMethod Hue interpolation method ('shorter' | 'longer' | 'increasing' | 'decreasing')
-   * @returns Mixed color as hex
-   */
-  static mixColorsLch(
-    hex1: string,
-    hex2: string,
-    ratio: number = 0.5,
-    hueMethod: 'shorter' | 'longer' | 'increasing' | 'decreasing' = 'shorter'
-  ): HexColor {
-    const lch1 = ColorConverter.hexToLch(hex1);
-    const lch2 = ColorConverter.hexToLch(hex2);
-
-    const L = lch1.L + (lch2.L - lch1.L) * ratio;
-    const C = lch1.C + (lch2.C - lch1.C) * ratio;
-    const h = this.interpolateHue(lch1.h, lch2.h, ratio, hueMethod);
-
-    return ColorConverter.lchToHex(L, C, h);
-  }
-
-  /**
    * Mix two colors using HSL hue averaging
    *
    * Simple and intuitive mixing based on hue wheel position.
@@ -797,7 +740,7 @@ export class ColorService {
     hex1: string,
     hex2: string,
     ratio: number = 0.5,
-    hueMethod: 'shorter' | 'longer' | 'increasing' | 'decreasing' = 'shorter'
+    hueMethod: 'shorter' | 'longer' | 'increasing' | 'decreasing' = 'shorter',
   ): HexColor {
     const hsl1 = ColorConverter.hexToHsl(hex1);
     const hsl2 = ColorConverter.hexToHsl(hex2);
@@ -807,34 +750,6 @@ export class ColorService {
     const l = hsl1.l + (hsl2.l - hsl1.l) * ratio;
 
     return ColorConverter.hslToHex(h, s, l);
-  }
-
-  /**
-   * Mix two colors using HSV hue averaging
-   *
-   * Similar to HSL but uses Value instead of Lightness.
-   * Useful when working with existing HSV-based workflows.
-   *
-   * @param hex1 First hex color
-   * @param hex2 Second hex color
-   * @param ratio Mix ratio (0 = all hex1, 0.5 = equal mix, 1 = all hex2). Default: 0.5
-   * @param hueMethod Hue interpolation method ('shorter' | 'longer' | 'increasing' | 'decreasing')
-   * @returns Mixed color as hex
-   */
-  static mixColorsHsv(
-    hex1: string,
-    hex2: string,
-    ratio: number = 0.5,
-    hueMethod: 'shorter' | 'longer' | 'increasing' | 'decreasing' = 'shorter'
-  ): HexColor {
-    const hsv1 = ColorConverter.hexToHsv(hex1);
-    const hsv2 = ColorConverter.hexToHsv(hex2);
-
-    const h = this.interpolateHue(hsv1.h, hsv2.h, ratio, hueMethod);
-    const s = hsv1.s + (hsv2.s - hsv1.s) * ratio;
-    const v = hsv1.v + (hsv2.v - hsv1.v) * ratio;
-
-    return ColorConverter.hsvToHex(h, s, v);
   }
 
   // ============================================================================
@@ -864,41 +779,6 @@ export class ColorService {
    */
   static mixColorsSpectral(hex1: string, hex2: string, ratio: number = 0.5): HexColor {
     return SpectralMixer.mixColors(hex1, hex2, ratio);
-  }
-
-  /**
-   * Mix multiple colors using Kubelka-Munk spectral mixing
-   *
-   * @param colors Array of hex colors to mix
-   * @param weights Optional array of weights (defaults to equal weights)
-   * @returns Mixed color as hex
-   */
-  static mixMultipleSpectral(colors: string[], weights?: number[]): HexColor {
-    return SpectralMixer.mixMultiple(colors, weights);
-  }
-
-  /**
-   * Generate a gradient using spectral mixing
-   *
-   * Creates a series of colors that transition smoothly using
-   * Kubelka-Munk theory for realistic blending.
-   *
-   * @param hex1 Starting color
-   * @param hex2 Ending color
-   * @param steps Number of colors in the gradient
-   * @returns Array of hex colors
-   */
-  static gradientSpectral(hex1: string, hex2: string, steps: number): HexColor[] {
-    return SpectralMixer.gradient(hex1, hex2, steps);
-  }
-
-  /**
-   * Check if spectral mixing is available
-   *
-   * @returns true if spectral.js is loaded and functional
-   */
-  static isSpectralAvailable(): boolean {
-    return SpectralMixer.isAvailable();
   }
 }
 

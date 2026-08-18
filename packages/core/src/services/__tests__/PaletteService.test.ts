@@ -205,40 +205,6 @@ describe('PaletteService', () => {
     });
   });
 
-  describe('pixelDataToRGB', () => {
-    it('should convert flat RGBA array to RGB objects', () => {
-      // RGBA data: 2 pixels
-      const data = new Uint8ClampedArray([
-        255,
-        0,
-        0,
-        255, // Red, fully opaque
-        0,
-        255,
-        0,
-        128, // Green, semi-transparent
-      ]);
-
-      const result = PaletteService.pixelDataToRGB(data);
-
-      expect(result).toHaveLength(2);
-      expect(result[0]).toEqual({ r: 255, g: 0, b: 0 });
-      expect(result[1]).toEqual({ r: 0, g: 255, b: 0 });
-    });
-
-    it('should handle empty array', () => {
-      const data = new Uint8ClampedArray([]);
-      const result = PaletteService.pixelDataToRGB(data);
-      expect(result).toEqual([]);
-    });
-
-    it('should work with regular number array', () => {
-      const data = [100, 150, 200, 255];
-      const result = PaletteService.pixelDataToRGB(data);
-      expect(result).toEqual([{ r: 100, g: 150, b: 200 }]);
-    });
-  });
-
   describe('pixelDataToRGBFiltered', () => {
     it('should filter out transparent pixels', () => {
       const data = new Uint8ClampedArray([

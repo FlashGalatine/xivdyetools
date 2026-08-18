@@ -57,7 +57,6 @@ export class DyeDatabase {
   // Per P-7: k-d tree for fast nearest neighbor search in RGB space
   private kdTree: KDTree | null = null;
   private isLoaded: boolean = false;
-  private lastLoaded: number = 0;
   private readonly logger: Logger;
 
   // Per P-2: Hue bucket size (10 degrees per bucket for 36 buckets total)
@@ -118,8 +117,7 @@ export class DyeDatabase {
     // Schema v2: stainID is the canonical identifier (Stain-sheet row, byte
     // range). Legacy fixture shapes may instead carry id/itemID — accepted
     // for backward compatibility with runtime-shaped test data.
-    const hasStainId =
-      typeof dye.stainID === 'number' && dye.stainID >= 1 && dye.stainID <= 254;
+    const hasStainId = typeof dye.stainID === 'number' && dye.stainID >= 1 && dye.stainID <= 254;
     const hasLegacyId = typeof dye.id === 'number' || typeof dye.itemID === 'number';
 
     if (!hasStainId && !hasLegacyId) {
@@ -222,7 +220,10 @@ export class DyeDatabase {
           // a drift hazard (the Brass hsv bug; research/monorepo-2.0/01 §2).
           // 2-dp hue precision matters: 4 dyes sit within 0.2° of a 10° hue
           // bucket edge.
-          if (typeof normalizedDye.hex === 'string' && /^#[A-Fa-f0-9]{6}$/.test(normalizedDye.hex)) {
+          if (
+            typeof normalizedDye.hex === 'string' &&
+            /^#[A-Fa-f0-9]{6}$/.test(normalizedDye.hex)
+          ) {
             const rgb = ColorConverter.hexToRgb(normalizedDye.hex);
             normalizedDye.rgb = rgb;
             normalizedDye.hsv = ColorConverter.rgbToHsv(rgb.r, rgb.g, rgb.b);
@@ -276,7 +277,9 @@ export class DyeDatabase {
 
           // Per MEM-001: Pre-compute lowercase name and category for search optimization
           normalizedDye.nameLower = String(normalizedDye.name).toLowerCase();
-          normalizedDye.categoryLower = (typeof normalizedDye.category === 'string' ? normalizedDye.category : '').toLowerCase();
+          normalizedDye.categoryLower = (
+            typeof normalizedDye.category === 'string' ? normalizedDye.category : ''
+          ).toLowerCase();
 
           return normalizedDye;
         })
@@ -321,7 +324,7 @@ export class DyeDatabase {
         // map overwrite would make one dye unreachable by ID. Fail loudly.
         if (this.dyesByIdMap.has(dye.id)) {
           this.logger.error(
-            `Duplicate dye ID detected during initialization: ${dye.id} (${dye.name}) collides with ${this.dyesByIdMap.get(dye.id)?.name}`
+            `Duplicate dye ID detected during initialization: ${dye.id} (${dye.name}) collides with ${this.dyesByIdMap.get(dye.id)?.name}`,
           );
         }
         // Map by id (which equals itemID after normalization)
@@ -362,7 +365,6 @@ export class DyeDatabase {
       this.kdTree = new KDTree(kdTreePoints);
 
       this.isLoaded = true;
-      this.lastLoaded = Date.now();
 
       this.logger.info(`Dye database loaded: ${this.dyes.length} dyes`);
     } catch (error) {
@@ -370,7 +372,7 @@ export class DyeDatabase {
       throw new AppError(
         ErrorCode.DATABASE_LOAD_FAILED,
         `Failed to load dye database: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'critical'
+        'critical',
       );
     }
   }
@@ -427,46 +429,10 @@ export class DyeDatabase {
   }
 
   /**
-   * Get multiple dyes by IDs
-   */
-  getDyesByIds(ids: number[]): Dye[] {
-    this.ensureLoaded();
-    // DyeInternal extends Dye, so this is type-safe as Dye[]
-    return ids
-      .map((id) => this.dyesByIdMap.get(id))
-      .filter((dye): dye is DyeInternal => dye !== undefined);
-  }
-
-  /**
-   * Get multiple dyes by stainIDs
-   *
-   * Batch equivalent of `getByStainId()`. Returns only the dyes that match;
-   * unknown stainIDs are silently skipped (consistent with `getDyesByIds()`).
-   *
-   * @param stainIds - Array of stain table IDs
-   * @returns Array of matching dyes (order matches input, gaps removed)
-   *
-   * @since 2.2.0
-   */
-  getDyesByStainIds(stainIds: number[]): Dye[] {
-    this.ensureLoaded();
-    return stainIds
-      .map((id) => this.dyesByStainIdMap.get(id))
-      .filter((dye): dye is DyeInternal => dye !== undefined);
-  }
-
-  /**
    * Check if database is loaded
    */
   isLoadedStatus(): boolean {
     return this.isLoaded;
-  }
-
-  /**
-   * Get timestamp of last load
-   */
-  getLastLoadedTime(): number {
-    return this.lastLoaded;
   }
 
   /**

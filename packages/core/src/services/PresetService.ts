@@ -153,18 +153,6 @@ export class PresetService {
     return this.presetById.get(id);
   }
 
-  /**
-   * Get preset count by category
-   * @returns Map of category to preset count
-   */
-  getPresetCountByCategory(): Map<PresetCategory, number> {
-    const counts = new Map<PresetCategory, number>();
-    for (const preset of this.data.palettes) {
-      counts.set(preset.category, (counts.get(preset.category) ?? 0) + 1);
-    }
-    return counts;
-  }
-
   // ============================================================================
   // Search Operations
   // ============================================================================
@@ -196,7 +184,7 @@ export class PresetService {
     const matchesDye = (p: PresetPalette): boolean => {
       if (!dyeService) return false;
       return p.dyes.some((stainId) =>
-        dyeService.getByStainId(stainId)?.name.toLowerCase().includes(lowerQuery)
+        dyeService.getByStainId(stainId)?.name.toLowerCase().includes(lowerQuery),
       );
     };
 
@@ -205,18 +193,8 @@ export class PresetService {
         p.name.toLowerCase().includes(lowerQuery) ||
         p.description.toLowerCase().includes(lowerQuery) ||
         p.tags.some((tag) => tag.toLowerCase().includes(lowerQuery)) ||
-        matchesDye(p)
+        matchesDye(p),
     );
-  }
-
-  /**
-   * Search presets by tag (exact match)
-   * @param tag - Tag to search for (case-insensitive)
-   * @returns Array of presets with that tag
-   */
-  getPresetsByTag(tag: string): PresetPalette[] {
-    const lowerTag = tag.toLowerCase().trim();
-    return this.data.palettes.filter((p) => p.tags.some((t) => t.toLowerCase() === lowerTag));
   }
 
   // ============================================================================
@@ -284,46 +262,5 @@ export class PresetService {
       // 5.0: presets.json 2.0.0 stores stainIDs (never derived from ranges)
       resolvedDyes: preset.dyes.map((stainId) => dyeService.getByStainId(stainId)),
     };
-  }
-
-  /**
-   * Resolve multiple presets with their Dye objects
-   * @param presets - Array of presets to resolve
-   * @param dyeService - DyeService instance for resolving dye IDs
-   * @returns Array of resolved presets
-   */
-  resolvePresets(presets: PresetPalette[], dyeService: IDyeService): ResolvedPreset[] {
-    return presets.map((preset) => ({
-      ...preset,
-      resolvedDyes: preset.dyes.map((stainId) => dyeService.getByStainId(stainId)),
-    }));
-  }
-
-  // ============================================================================
-  // Metadata
-  // ============================================================================
-
-  /**
-   * Get data version
-   * @returns Version string from preset data
-   */
-  getVersion(): string {
-    return this.data.version;
-  }
-
-  /**
-   * Get last update timestamp
-   * @returns ISO date string of last update
-   */
-  getLastUpdated(): string {
-    return this.data.lastUpdated;
-  }
-
-  /**
-   * Get total number of presets
-   * @returns Total preset count
-   */
-  getPresetCount(): number {
-    return this.data.palettes.length;
   }
 }

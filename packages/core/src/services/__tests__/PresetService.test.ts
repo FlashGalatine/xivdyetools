@@ -42,7 +42,7 @@ const mockPresetData: PresetData = {
     },
     appearance: {
       name: 'Appearance',
-      description: 'Palettes built around a character\'s own colours',
+      description: "Palettes built around a character's own colours",
       icon: '👤',
     },
     zones: {
@@ -144,91 +144,96 @@ const mockPresetData: PresetData = {
 // Mock DyeService interface
 const createMockDyeService = () => {
   const service = {
-  getDyeById: vi.fn((id: number): Dye | null => {
-    const mockDyes: Record<number, Dye> = {
-      5729: {
-        itemID: 5729,
-        id: 1,
-        name: 'Snow White',
-        hex: '#ECECEC',
-        rgb: { r: 236, g: 236, b: 236 },
-        hsv: { h: 0, s: 0, v: 92 },
-        category: 'Whites',
-        acquisition: 'Dye Vendor',
-        cost: 334,
-        currency: 'Gil',
-        isMetallic: false,
-        isPastel: false,
-        isDark: false,
-        isCosmic: false,
-        isIshgardian: false,
-        consolidationType: null,
-        stainID: 1,
-      },
-      5738: {
-        itemID: 5738,
-        id: 10,
-        name: 'Wine Red',
-        hex: '#8B4051',
-        rgb: { r: 139, g: 64, b: 81 },
-        hsv: { h: 346, s: 54, v: 55 },
-        category: 'Reds',
-        acquisition: 'Dye Vendor',
-        cost: 334,
-        currency: 'Gil',
-        isMetallic: false,
-        isPastel: false,
-        isDark: false,
-        isCosmic: false,
-        isIshgardian: false,
-        consolidationType: null,
-        stainID: 10,
-      },
-      13115: {
-        itemID: 13115,
-        id: 101,
-        name: 'Metallic Red',
-        hex: '#B34D4D',
-        rgb: { r: 179, g: 77, b: 77 },
-        hsv: { h: 0, s: 57, v: 70 },
-        category: 'Metallics',
-        acquisition: 'Venture Coffers',
-        cost: 0,
-        currency: 'Gil',
-        isMetallic: true,
-        isPastel: false,
-        isDark: false,
-        isCosmic: false,
-        isIshgardian: false,
-        consolidationType: null,
-        stainID: 101,
-      },
-      13117: {
-        itemID: 13117,
-        id: 103,
-        name: 'Metallic Gold',
-        hex: '#B39C4D',
-        rgb: { r: 179, g: 156, b: 77 },
-        hsv: { h: 47, s: 57, v: 70 },
-        category: 'Metallics',
-        acquisition: 'Venture Coffers',
-        cost: 0,
-        currency: 'Gil',
-        isMetallic: true,
-        isPastel: false,
-        isDark: false,
-        isCosmic: false,
-        isIshgardian: false,
-        consolidationType: null,
-        stainID: 103,
-      },
-    };
-    return mockDyes[id] || null;
-  }),
-};
+    getDyeById: vi.fn((id: number): Dye | null => {
+      const mockDyes: Record<number, Dye> = {
+        5729: {
+          itemID: 5729,
+          id: 1,
+          name: 'Snow White',
+          hex: '#ECECEC',
+          rgb: { r: 236, g: 236, b: 236 },
+          hsv: { h: 0, s: 0, v: 92 },
+          category: 'Whites',
+          acquisition: 'Dye Vendor',
+          cost: 334,
+          currency: 'Gil',
+          isMetallic: false,
+          isPastel: false,
+          isDark: false,
+          isCosmic: false,
+          isIshgardian: false,
+          consolidationType: null,
+          stainID: 1,
+        },
+        5738: {
+          itemID: 5738,
+          id: 10,
+          name: 'Wine Red',
+          hex: '#8B4051',
+          rgb: { r: 139, g: 64, b: 81 },
+          hsv: { h: 346, s: 54, v: 55 },
+          category: 'Reds',
+          acquisition: 'Dye Vendor',
+          cost: 334,
+          currency: 'Gil',
+          isMetallic: false,
+          isPastel: false,
+          isDark: false,
+          isCosmic: false,
+          isIshgardian: false,
+          consolidationType: null,
+          stainID: 10,
+        },
+        13115: {
+          itemID: 13115,
+          id: 101,
+          name: 'Metallic Red',
+          hex: '#B34D4D',
+          rgb: { r: 179, g: 77, b: 77 },
+          hsv: { h: 0, s: 57, v: 70 },
+          category: 'Metallics',
+          acquisition: 'Venture Coffers',
+          cost: 0,
+          currency: 'Gil',
+          isMetallic: true,
+          isPastel: false,
+          isDark: false,
+          isCosmic: false,
+          isIshgardian: false,
+          consolidationType: null,
+          stainID: 101,
+        },
+        13117: {
+          itemID: 13117,
+          id: 103,
+          name: 'Metallic Gold',
+          hex: '#B39C4D',
+          rgb: { r: 179, g: 156, b: 77 },
+          hsv: { h: 47, s: 57, v: 70 },
+          category: 'Metallics',
+          acquisition: 'Venture Coffers',
+          cost: 0,
+          currency: 'Gil',
+          isMetallic: true,
+          isPastel: false,
+          isDark: false,
+          isCosmic: false,
+          isIshgardian: false,
+          consolidationType: null,
+          stainID: 103,
+        },
+      };
+      return mockDyes[id] || null;
+    }),
+  };
   const byStain: Record<number, Dye> = {};
   // Re-key the same mock dyes by their stainID (5.0 resolver path)
-  for (const dye of [service.getDyeById(5729), service.getDyeById(5738), service.getDyeById(13115), service.getDyeById(13117)]) {
+  for (const dye of [
+    service.getDyeById(5729),
+    service.getDyeById(5738),
+    service.getDyeById(13115),
+    service.getDyeById(13117),
+  ]) {
     if (dye && dye.stainID !== null) byStain[dye.stainID] = dye;
   }
   return {
@@ -250,7 +255,7 @@ describe('PresetService', () => {
 
   describe('constructor', () => {
     it('should initialize with preset data', () => {
-      expect(presetService.getPresetCount()).toBe(10);
+      expect(presetService.getAllPresets()).toHaveLength(10);
     });
 
     it('should build internal lookup map for O(1) access', () => {
@@ -266,7 +271,7 @@ describe('PresetService', () => {
         palettes: [],
       };
       const emptyService = new PresetService(emptyData);
-      expect(emptyService.getPresetCount()).toBe(0);
+      expect(emptyService.getAllPresets()).toHaveLength(0);
     });
   });
 
@@ -428,34 +433,6 @@ describe('PresetService', () => {
     });
   });
 
-  describe('getPresetCountByCategory', () => {
-    it('should return counts for all categories', () => {
-      const counts = presetService.getPresetCountByCategory();
-
-      expect(counts.get('jobs')).toBe(4);
-      expect(counts.get('grand-companies')).toBe(2);
-      expect(counts.get('seasons')).toBe(1);
-      expect(counts.get('events')).toBe(1);
-      expect(counts.get('aesthetics')).toBe(2);
-    });
-
-    it('should return a Map object', () => {
-      const counts = presetService.getPresetCountByCategory();
-      expect(counts).toBeInstanceOf(Map);
-    });
-
-    it('should handle empty data', () => {
-      const emptyData: PresetData = {
-        ...mockPresetData,
-        palettes: [],
-      };
-      const emptyService = new PresetService(emptyData);
-      const counts = emptyService.getPresetCountByCategory();
-
-      expect(counts.size).toBe(0);
-    });
-  });
-
   // ============================================================================
   // Search Operations
   // ============================================================================
@@ -513,42 +490,6 @@ describe('PresetService', () => {
     it('should match partial strings', () => {
       const results = presetService.searchPresets('white');
       expect(results.some((p) => p.name === 'White Mage')).toBe(true);
-    });
-  });
-
-  describe('getPresetsByTag', () => {
-    it('should find presets by exact tag match', () => {
-      const results = presetService.getPresetsByTag('tank');
-      expect(results.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it('should be case-insensitive', () => {
-      const lowerResults = presetService.getPresetsByTag('tank');
-      const upperResults = presetService.getPresetsByTag('TANK');
-
-      expect(lowerResults.length).toBe(upperResults.length);
-    });
-
-    it('should return empty array for non-existent tag', () => {
-      const results = presetService.getPresetsByTag('nonexistenttag');
-      expect(results).toHaveLength(0);
-    });
-
-    it('should handle whitespace in query', () => {
-      const results = presetService.getPresetsByTag('  tank  ');
-      expect(results.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it('should find presets with multi-word tags', () => {
-      const results = presetService.getPresetsByTag('red mage');
-      expect(results).toHaveLength(1);
-      expect(results[0].id).toBe('job-rdm');
-    });
-
-    it('should return empty for partial tag matches', () => {
-      // 'tan' should not match 'tank' in exact tag search
-      const results = presetService.getPresetsByTag('tan');
-      expect(results).toHaveLength(0);
     });
   });
 
@@ -653,101 +594,6 @@ describe('PresetService', () => {
     });
   });
 
-  describe('resolvePresets', () => {
-    it('should resolve multiple presets', () => {
-      const mockDyeService = createMockDyeService();
-      const presets = [presetService.getPreset('job-rdm')!, presetService.getPreset('job-blm')!];
-      const resolved = presetService.resolvePresets(presets, mockDyeService);
-
-      expect(resolved).toHaveLength(2);
-      expect(resolved[0].resolvedDyes).toBeDefined();
-      expect(resolved[1].resolvedDyes).toBeDefined();
-    });
-
-    it('should return empty array for empty input', () => {
-      const mockDyeService = createMockDyeService();
-      const resolved = presetService.resolvePresets([], mockDyeService);
-
-      expect(resolved).toHaveLength(0);
-    });
-
-    it('should preserve order of presets', () => {
-      const mockDyeService = createMockDyeService();
-      const presets = [presetService.getPreset('job-blm')!, presetService.getPreset('job-rdm')!];
-      const resolved = presetService.resolvePresets(presets, mockDyeService);
-
-      expect(resolved[0].id).toBe('job-blm');
-      expect(resolved[1].id).toBe('job-rdm');
-    });
-
-    it('should handle presets with different dye counts', () => {
-      const mockDyeService = createMockDyeService();
-      // job-rdm has 4 dyes, job-blm has 3 dyes
-      const presets = [presetService.getPreset('job-rdm')!, presetService.getPreset('job-blm')!];
-      const resolved = presetService.resolvePresets(presets, mockDyeService);
-
-      expect(resolved[0].resolvedDyes).toHaveLength(4);
-      expect(resolved[1].resolvedDyes).toHaveLength(3);
-    });
-  });
-
-  // ============================================================================
-  // Metadata
-  // ============================================================================
-
-  describe('getVersion', () => {
-    it('should return version string', () => {
-      const version = presetService.getVersion();
-      expect(version).toBe('1.0.0');
-    });
-
-    it('should return exact version from data', () => {
-      const customData: PresetData = {
-        ...mockPresetData,
-        version: '2.5.0',
-      };
-      const service = new PresetService(customData);
-      expect(service.getVersion()).toBe('2.5.0');
-    });
-  });
-
-  describe('getLastUpdated', () => {
-    it('should return last updated timestamp', () => {
-      const lastUpdated = presetService.getLastUpdated();
-      expect(lastUpdated).toBe('2025-01-01T00:00:00.000Z');
-    });
-
-    it('should return exact timestamp from data', () => {
-      const customData: PresetData = {
-        ...mockPresetData,
-        lastUpdated: '2025-06-15T12:00:00.000Z',
-      };
-      const service = new PresetService(customData);
-      expect(service.getLastUpdated()).toBe('2025-06-15T12:00:00.000Z');
-    });
-  });
-
-  describe('getPresetCount', () => {
-    it('should return total number of presets', () => {
-      expect(presetService.getPresetCount()).toBe(10);
-    });
-
-    it('should return 0 for empty data', () => {
-      const emptyData: PresetData = {
-        ...mockPresetData,
-        palettes: [],
-      };
-      const emptyService = new PresetService(emptyData);
-      expect(emptyService.getPresetCount()).toBe(0);
-    });
-
-    it('should match length of getAllPresets', () => {
-      const count = presetService.getPresetCount();
-      const allPresets = presetService.getAllPresets();
-      expect(count).toBe(allPresets.length);
-    });
-  });
-
   // ============================================================================
   // Edge Cases
   // ============================================================================
@@ -779,7 +625,7 @@ describe('PresetService', () => {
         ],
       };
       const service = new PresetService(minimalData);
-      expect(service.getPresetCount()).toBe(1);
+      expect(service.getAllPresets()).toHaveLength(1);
       expect(service.getPreset('test')).toBeDefined();
     });
 
@@ -805,7 +651,9 @@ describe('curated parity (5.0 stainID migration)', () => {
   it('every curated dye resolves via getByStainId — the silent-null guard', async () => {
     const { DyeService } = await import('../DyeService.js');
     const { default: dyeData } = await import('../../data/dyes.json', { with: { type: 'json' } });
-    const { default: presetData } = await import('../../data/presets.json', { with: { type: 'json' } });
+    const { default: presetData } = await import('../../data/presets.json', {
+      with: { type: 'json' },
+    });
     const dyeService = new DyeService(dyeData);
 
     expect(presetData.version).toBe('2.0.0');

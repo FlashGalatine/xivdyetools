@@ -168,7 +168,7 @@ describe('DyeService', () => {
       const allDyes = service.getAllDyes();
       if (allDyes.length > 0) {
         const excludedId = allDyes[0].id;
-        const dye = service.findClosestDye('#FF0000', [excludedId]);
+        const dye = service.findClosestDye('#FF0000', { excludeIds: [excludedId] });
         if (dye) {
           expect(dye.id).not.toBe(excludedId);
         }
@@ -179,70 +179,14 @@ describe('DyeService', () => {
   describe('findDyesWithinDistance', () => {
     it('should return empty array for impossible distance', () => {
       const service = DyeService.getInstance();
-      const results = service.findDyesWithinDistance('#FF0000', 0);
+      const results = service.findDyesWithinDistance('#FF0000', { maxDistance: 0 });
       expect(Array.isArray(results)).toBe(true);
     });
 
     it('should respect limit parameter', () => {
       const service = DyeService.getInstance();
-      const results = service.findDyesWithinDistance('#FF0000', 500, 3);
+      const results = service.findDyesWithinDistance('#FF0000', { maxDistance: 500, limit: 3 });
       expect(results.length).toBeLessThanOrEqual(3);
-    });
-  });
-
-  // ============================================================================
-  // Sorting Tests
-  // ============================================================================
-
-  describe('getDyesSortedByBrightness', () => {
-    it('should return sorted array', () => {
-      const service = DyeService.getInstance();
-      const dyes = service.getDyesSortedByBrightness(true);
-      expect(Array.isArray(dyes)).toBe(true);
-
-      // Check sorting order
-      for (let i = 1; i < dyes.length; i++) {
-        expect(dyes[i].hsv.v).toBeGreaterThanOrEqual(dyes[i - 1].hsv.v);
-      }
-    });
-
-    it('should support descending order', () => {
-      const service = DyeService.getInstance();
-      const dyesAsc = service.getDyesSortedByBrightness(true);
-      const dyesDesc = service.getDyesSortedByBrightness(false);
-
-      // Check that descending is reverse of ascending
-      expect(dyesDesc.length).toBe(dyesAsc.length);
-
-      // Verify first element of desc is greater than or equal to last element of asc
-      expect(dyesDesc[0].hsv.v).toBeGreaterThanOrEqual(dyesAsc[dyesAsc.length - 1].hsv.v);
-
-      // Verify last element of desc is less than or equal to first element of asc
-      expect(dyesDesc[dyesDesc.length - 1].hsv.v).toBeLessThanOrEqual(dyesAsc[0].hsv.v);
-    });
-  });
-
-  describe('getDyesSortedBySaturation', () => {
-    it('should sort by saturation', () => {
-      const service = DyeService.getInstance();
-      const dyes = service.getDyesSortedBySaturation(true);
-      expect(Array.isArray(dyes)).toBe(true);
-
-      for (let i = 1; i < dyes.length; i++) {
-        expect(dyes[i].hsv.s).toBeGreaterThanOrEqual(dyes[i - 1].hsv.s);
-      }
-    });
-  });
-
-  describe('getDyesSortedByHue', () => {
-    it('should sort by hue', () => {
-      const service = DyeService.getInstance();
-      const dyes = service.getDyesSortedByHue(true);
-      expect(Array.isArray(dyes)).toBe(true);
-
-      for (let i = 1; i < dyes.length; i++) {
-        expect(dyes[i].hsv.h).toBeGreaterThanOrEqual(dyes[i - 1].hsv.h);
-      }
     });
   });
 
@@ -302,7 +246,7 @@ describe('DyeService', () => {
 
     it('should find dyes matching red color', () => {
       const service = DyeService.getInstance();
-      const results = service.findDyesWithinDistance('#FF0000', 150, 10);
+      const results = service.findDyesWithinDistance('#FF0000', { maxDistance: 150, limit: 10 });
       // Should find some red-ish dyes
       expect(results.length).toBeGreaterThan(0);
     });

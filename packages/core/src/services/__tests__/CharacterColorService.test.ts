@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { CharacterColorService } from '../CharacterColorService.js';
 import type { CharacterColor, SubRace, Gender } from '@xivdyetools/types';
+import { SUBRACE_TO_RACE } from '@xivdyetools/types';
 import type { DyeService } from '../DyeService.js';
+
+const ALL_SUBRACES = Object.keys(SUBRACE_TO_RACE) as SubRace[];
 
 describe('CharacterColorService', () => {
   let service: CharacterColorService;
@@ -68,17 +71,6 @@ describe('CharacterColorService', () => {
       expect(Array.isArray(colors)).toBe(true);
       expect(colors.length).toBeGreaterThan(0);
     });
-
-    it('should return shared color by index', () => {
-      const eyeColor = service.getSharedColorByIndex('eyeColors', 0);
-      expect(eyeColor).toBeDefined();
-      expect(eyeColor?.index).toBe(0);
-    });
-
-    it('should return null for invalid shared color index', () => {
-      const color = service.getSharedColorByIndex('eyeColors', 9999);
-      expect(color).toBeNull();
-    });
   });
 
   describe('Race-Specific Colors', () => {
@@ -99,42 +91,10 @@ describe('CharacterColorService', () => {
       expect(colors.length).toBeGreaterThan(0);
     });
 
-    it('should return race-specific color by index', async () => {
-      const hairColor = await service.getRaceSpecificColorByIndex(
-        'hairColors',
-        testSubrace,
-        testGender,
-        0
-      );
-      expect(hairColor).toBeDefined();
-      expect(hairColor?.index).toBe(0);
-    });
-
-    it('should return null for invalid race-specific color index', async () => {
-      const color = await service.getRaceSpecificColorByIndex(
-        'hairColors',
-        testSubrace,
-        testGender,
-        9999
-      );
-      expect(color).toBeNull();
-    });
-
-    it('should return all available subraces', () => {
-      const subraces = service.getAvailableSubraces();
-      expect(subraces).toContain('Midlander');
-      expect(subraces).toContain('Highlander');
-      expect(subraces).toContain('Wildwood');
-      expect(subraces).toContain('SeekerOfTheSun');
-      expect(subraces).toContain('Raen');
-      expect(subraces).toContain('Rava');
-    });
-
     it('should work with all subraces and genders', async () => {
-      const subraces = service.getAvailableSubraces();
       const genders: Gender[] = ['Male', 'Female'];
 
-      for (const subrace of subraces) {
+      for (const subrace of ALL_SUBRACES) {
         for (const gender of genders) {
           const hairColors = await service.getHairColors(subrace, gender);
           const skinColors = await service.getSkinColors(subrace, gender);
@@ -142,14 +102,6 @@ describe('CharacterColorService', () => {
           expect(skinColors.length).toBeGreaterThan(0);
         }
       }
-    });
-
-    it('should preload race data', async () => {
-      const newService = new CharacterColorService();
-      await newService.preloadRaceData();
-      // After preloading, subsequent calls should use cached data
-      const colors = await newService.getHairColors('Midlander', 'Male');
-      expect(colors.length).toBeGreaterThan(0);
     });
   });
 
@@ -191,7 +143,7 @@ describe('CharacterColorService', () => {
         rgb: { r: 255, g: 0, b: 0 },
       };
 
-      const matches = service.findClosestDyes(testColor, mockDyeService, 3);
+      const matches = service.findClosestDyes(testColor, mockDyeService, { count: 3 });
       expect(matches).toBeDefined();
       expect(matches.length).toBe(3);
 
@@ -285,7 +237,7 @@ describe('CharacterColorService', () => {
         rgb: { r: 255, g: 0, b: 0 },
       };
 
-      const matches = service.findClosestDyes(testColor, mockDyeService, 3);
+      const matches = service.findClosestDyes(testColor, mockDyeService, { count: 3 });
       expect(matches).toEqual([]);
     });
 
@@ -317,7 +269,7 @@ describe('CharacterColorService', () => {
         rgb: { r: 255, g: 0, b: 0 },
       };
 
-      const matches = service.findClosestDyes(testColor, mockDyeService, 5);
+      const matches = service.findClosestDyes(testColor, mockDyeService, { count: 5 });
       // Should only return Regular Dye, not Facewear
       expect(matches.length).toBe(1);
       expect(matches[0].dye.name).toBe('Regular Dye');
@@ -498,21 +450,6 @@ describe('CharacterColorService', () => {
     });
   });
 
-  describe('Metadata', () => {
-    it('should return version', () => {
-      const version = service.getVersion();
-      expect(version).toBeDefined();
-      expect(typeof version).toBe('string');
-    });
-
-    it('should return grid columns', () => {
-      const columns = service.getGridColumns();
-      expect(columns).toBeDefined();
-      expect(typeof columns).toBe('number');
-      expect(columns).toBeGreaterThan(0);
-    });
-  });
-
   /**
    * Every lookup ends in `|| []`. Callers index straight into the result
    * (`colors[row * columns + col]`), so a `undefined` leaking out of an
@@ -528,35 +465,35 @@ describe('CharacterColorService', () => {
     });
 
     it('returns [] for an unrecognised hair subrace', async () => {
-      await expect(service.getHairColors('Nonexistent' as SubRace, 'Female' as Gender)).resolves.toEqual(
-        []
-      );
+      await expect(
+        service.getHairColors('Nonexistent' as SubRace, 'Female' as Gender),
+      ).resolves.toEqual([]);
     });
 
     it('returns [] for an unrecognised hair gender on a real subrace', async () => {
-      await expect(service.getHairColors('Midlander' as SubRace, 'Other' as Gender)).resolves.toEqual(
-        []
-      );
+      await expect(
+        service.getHairColors('Midlander' as SubRace, 'Other' as Gender),
+      ).resolves.toEqual([]);
     });
 
     it('returns [] for an unrecognised skin subrace', async () => {
-      await expect(service.getSkinColors('Nonexistent' as SubRace, 'Male' as Gender)).resolves.toEqual(
-        []
-      );
+      await expect(
+        service.getSkinColors('Nonexistent' as SubRace, 'Male' as Gender),
+      ).resolves.toEqual([]);
     });
 
     it('returns [] for an unrecognised skin gender on a real subrace', async () => {
-      await expect(service.getSkinColors('Midlander' as SubRace, 'Other' as Gender)).resolves.toEqual(
-        []
-      );
+      await expect(
+        service.getSkinColors('Midlander' as SubRace, 'Other' as Gender),
+      ).resolves.toEqual([]);
     });
 
     it('routes both race-specific categories through the same fallback', async () => {
       await expect(
-        service.getRaceSpecificColors('hairColors', 'Nonexistent' as SubRace, 'Male' as Gender)
+        service.getRaceSpecificColors('hairColors', 'Nonexistent' as SubRace, 'Male' as Gender),
       ).resolves.toEqual([]);
       await expect(
-        service.getRaceSpecificColors('skinColors', 'Nonexistent' as SubRace, 'Male' as Gender)
+        service.getRaceSpecificColors('skinColors', 'Nonexistent' as SubRace, 'Male' as Gender),
       ).resolves.toEqual([]);
     });
   });

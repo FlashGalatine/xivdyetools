@@ -73,7 +73,7 @@ export interface HarmonyOptions {
 export class HarmonyGenerator {
   constructor(
     private database: DyeDatabase,
-    private search: DyeSearch
+    private search: DyeSearch,
   ) {}
 
   /**
@@ -125,7 +125,7 @@ export class HarmonyGenerator {
    */
   private findClosestNonFacewearDye(hex: string, excludeIds: number[] = []): Dye | null {
     // DyeSearch.findClosestDye already excludes Facewear dyes (CORE-BUG-005)
-    return this.search.findClosestDye(hex, excludeIds);
+    return this.search.findClosestDye(hex, { excludeIds });
   }
 
   /**
@@ -280,20 +280,6 @@ export class HarmonyGenerator {
   }
 
   /**
-   * Find compound harmony (analogous + complementary)
-   *
-   * @param hex Base hex color
-   * @param options Matching algorithm options
-   *
-   * @remarks
-   * May return fewer than 3 dyes if suitable matches are not found.
-   */
-  findCompoundDyes(hex: string, options?: HarmonyOptions): Dye[] {
-    // ±30° from base + complement
-    return this.findHarmonyDyesByOffsets(hex, [30, -30, 180], { tolerance: 35 }, options);
-  }
-
-  /**
    * Find split-complementary harmony (±30° from the complementary hue)
    *
    * @param hex Base hex color
@@ -304,22 +290,6 @@ export class HarmonyGenerator {
    */
   findSplitComplementaryDyes(hex: string, options?: HarmonyOptions): Dye[] {
     return this.findHarmonyDyesByOffsets(hex, [150, 210], {}, options);
-  }
-
-  /**
-   * Find shades (similar tones, ±15°)
-   *
-   * @param hex Base hex color
-   * @param options Matching algorithm options
-   *
-   * @remarks
-   * May return 0, 1, or 2 dyes depending on available matches.
-   */
-  findShadesDyes(hex: string, options?: HarmonyOptions): Dye[] {
-    this.database.ensureLoaded();
-
-    // Use tighter tolerance (5°) for shades to ensure results are close to target hue
-    return this.findHarmonyDyesByOffsets(hex, [15, -15], { tolerance: 5 }, options);
   }
 
   /**
@@ -345,7 +315,7 @@ export class HarmonyGenerator {
     hex: string,
     offsets: number[],
     internalOptions: { tolerance?: number } = {},
-    harmonyOptions?: HarmonyOptions
+    harmonyOptions?: HarmonyOptions,
   ): Dye[] {
     this.database.ensureLoaded();
 
@@ -439,7 +409,7 @@ export class HarmonyGenerator {
   private findClosestByDeltaE(
     targetHex: string,
     excludeIds: Set<number>,
-    options: HarmonyOptions
+    options: HarmonyOptions,
   ): Dye | null {
     const formula = options.deltaEFormula ?? 'cie76';
     const tolerance = options.deltaETolerance ?? (formula === 'cie2000' ? 25 : 40);
@@ -479,7 +449,7 @@ export class HarmonyGenerator {
   private findClosestDyeByHue(
     targetHue: number,
     usedIds: Set<number>,
-    tolerance: number
+    tolerance: number,
   ): Dye | null {
     let withinTolerance: { dye: Dye; diff: number } | null = null;
     let bestOverall: { dye: Dye; diff: number } | null = null;
@@ -497,7 +467,7 @@ export class HarmonyGenerator {
 
         const diff = Math.min(
           Math.abs(dye.hsv.h - targetHue),
-          360 - Math.abs(dye.hsv.h - targetHue)
+          360 - Math.abs(dye.hsv.h - targetHue),
         );
 
         if (!bestOverall || diff < bestOverall.diff) {

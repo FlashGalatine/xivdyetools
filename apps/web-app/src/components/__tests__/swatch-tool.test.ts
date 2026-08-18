@@ -274,12 +274,6 @@ vi.mock('@xivdyetools/core', async (importOriginal) => ({
     getGenders() {
       return ['Male', 'Female'];
     }
-    getVersion() {
-      return '1.0.0';
-    }
-    getGridColumns() {
-      return 8;
-    }
   },
 }));
 

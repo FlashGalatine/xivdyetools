@@ -66,7 +66,7 @@ import Redis from 'ioredis';
 // Initialize with Redis cache (for Discord bots)
 const redis = new Redis();
 const cacheBackend = new RedisCacheBackend(redis);
-const apiService = new APIService(cacheBackend);
+const apiService = new APIService({ cacheBackend });
 const dyeService = new DyeService(dyeDatabase);
 
 // Fetch live market prices.
@@ -150,7 +150,7 @@ const categories = dyeService.getCategories(); // ['Neutral', 'Red', 'Blue', ...
 // 'ciede2000' (default) | 'oklab' | 'cie76' | 'redmean' | 'rgb' | 'distinguish'
 const closest = dyeService.findClosestDye('#FF6B6B');
 const closestOk = dyeService.findClosestDye('#FF6B6B', { matchingMethod: 'oklab' });
-const nearby = dyeService.findDyesWithinDistance('#FF6B6B', 50, 5);
+const nearby = dyeService.findDyesWithinDistance('#FF6B6B', { maxDistance: 50, limit: 5 });
 
 // Harmony generation (default: fast hue-based matching)
 const triadic = dyeService.findTriadicDyes('#FF6B6B');
@@ -209,9 +209,6 @@ const matches = paletteService.extractAndMatchPalette(pixels, dyeService, {
 });
 // Returns: Array<{ extracted: RGB, matchedDye: Dye, distance: number, dominance: number }>
 
-// Helper: Convert raw pixel buffer (RGB, 3 bytes per pixel)
-const pixelsFromBuffer = PaletteService.pixelDataToRGB(buffer);
-
 // Helper: Convert RGBA ImageData, filtering transparent pixels
 const pixelsFromCanvas = PaletteService.pixelDataToRGBFiltered(imageData.data);
 ```
@@ -228,25 +225,23 @@ const apiService = new APIService();
 
 // With custom cache backend
 const cache = new MemoryCacheBackend();
-const apiService = new APIService(cache);
+const apiService = new APIService({ cacheBackend: cache });
 
 // Fetch price data
 const priceData = await apiService.getPriceData(5752); // itemID
 const pricesWithDC = await apiService.getPriceData(5752, undefined, 'Aether');
 
-// Batch operations
-const prices = await apiService.getPricesForItems([5752, 5753, 5754]);
+// Batch operations (per data center)
+const prices = await apiService.getPricesForDataCenter([5752, 5753, 5754], 'Aether');
 
 // Cache management
 await apiService.clearCache();
-const stats = await apiService.getCacheStats();
 
 // API health check
 const { available, latency } = await apiService.getAPIStatus();
 
 // Utility methods
 const formatted = APIService.formatPrice(123456); // "123,456G"
-const trend = APIService.getPriceTrend(100, 80); // { trend: 'up', ... }
 ```
 
 ## Custom Cache Backends
@@ -285,7 +280,7 @@ class RedisCacheBackend implements ICacheBackend {
 // Use with APIService
 const redis = new Redis();
 const cache = new RedisCacheBackend(redis);
-const apiService = new APIService(cache);
+const apiService = new APIService({ cacheBackend: cache });
 ```
 
 ## TypeScript Types
@@ -370,7 +365,7 @@ const harmonyDyes = dyeService.findTriadicDyes(userColor);
 import { DyeService, dyeDatabase } from '@xivdyetools/core';
 
 const dyeService = new DyeService(dyeDatabase);
-const matchingDyes = dyeService.findDyesWithinDistance(imageColor, 50, 10);
+const matchingDyes = dyeService.findDyesWithinDistance(imageColor, { maxDistance: 50, limit: 10 });
 // Display results in UI
 ```
 
