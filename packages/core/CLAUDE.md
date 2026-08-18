@@ -65,7 +65,7 @@ src/
 │   └── localization/              # LocaleLoader, LocaleRegistry, TranslationProvider
 ├── utils/
 │   ├── kd-tree.ts                 # 3D k-d tree (RGB nearest neighbour)
-│   └── index.ts                   # clamp, lerp, retry, sleep, generateChecksum, validators
+│   └── index.ts                   # clamp, round, retry, sleep, generateChecksum, validators
 └── __tests__/integration/         # End-to-end workflow + perf benchmarks
 scripts/
 ├── fetch_dye_names.py             # Pulls XIVAPI v2 names → dyenames.csv (en/ja/de/fr only)

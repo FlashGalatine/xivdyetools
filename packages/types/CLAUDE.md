@@ -42,7 +42,7 @@ src/
 ├── auth/          # JWT payload, Discord/XIVAuth user shapes, isValidSnowflake validator
 ├── api/           # CachedData, ModerationResult/Stats, PriceData, RateLimitResult
 ├── error/         # ErrorCode enum + AppError runtime class (only runtime export)
-└── localization/  # LocaleCode, TranslationKey, JobKey, GrandCompanyKey, etc.
+└── localization/  # LocaleCode, TranslationKey, RaceKey, ClanKey, etc.
 ```
 
 ## Public API
@@ -116,7 +116,7 @@ type ModerationStats; type PriceData; type RateLimitResult;
 ```typescript
 type LocaleCode;       // 'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh'
 type TranslationKey; type HarmonyTypeKey; type ToolKey; type SheetKey;
-type JobKey; type GrandCompanyKey; type RaceKey; type ClanKey;
+type RaceKey; type ClanKey;
 type LocaleData; type LocalePreference;
 ```
 
