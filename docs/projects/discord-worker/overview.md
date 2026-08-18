@@ -73,15 +73,13 @@ src/
 │   │   ├── accessibility.ts # also serves /a11y
 │   │   ├── preferences.ts
 │   │   └── ...
-│   ├── buttons/          # Button interaction handlers (copy, preview-image moderation)
-│   └── modals/           # Modal submission handlers
+│   └── buttons/          # Button interaction handlers (copy, preview-image moderation)
 ├── services/
 │   ├── analytics.ts      # Usage tracking
 │   ├── rate-limiter.ts   # Per-user rate limiting
 │   ├── preferences.ts    # User preferences (KV, prefs:v1:*)
 │   ├── preset-favorites.ts # /preset favorite storage
 │   ├── image-client.ts   # IMAGE_WORKER service-binding client (POST /extract)
-│   ├── component-context.ts # KV-backed button context (ctx:v2:*)
 │   └── preset-api.ts     # Presets API client
 └── utils/
     ├── verify.ts         # Ed25519 verification

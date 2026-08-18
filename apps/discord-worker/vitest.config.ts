@@ -38,9 +38,7 @@ export default defineConfig({
         'src/services/changelog-parser.ts',
         'src/utils/verify.ts',
         'src/utils/github-verify.ts',
-        'src/handlers/modals/index.ts',
         'src/handlers/commands/index.ts',
-        'src/services/svg/index.ts',
       ],
       // Statements / functions / lines clear the 80% bar comfortably.
       // Branches is a RATCHET at the achieved figure rather than the 80%
@@ -48,8 +46,16 @@ export default defineConfig({
       // interaction router) and `handlers/commands/preset.ts`, which between
       // them hold ~190 uncovered branches. Raise this as those land; do not
       // lower it.
+      //
+      // 2026-08-18 dead-code audit (DEAD-001/002/003): removing
+      // component-context.ts, the preset-api.ts moderation client and the
+      // three orphaned modules deleted code that was itself fully unit
+      // tested, so it lowered the aggregate statements figure (85.4% ->
+      // 84.88%) even though nothing got LESS covered. `statements` moved
+      // down to the new achieved figure; don't lower it further without a
+      // similar reason.
       thresholds: {
-        statements: 85,
+        statements: 84,
         branches: 77,
         functions: 88,
         lines: 85,

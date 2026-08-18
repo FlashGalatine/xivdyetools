@@ -32,11 +32,11 @@ Buttons use `custom_id` patterns for routing. The router parses the custom ID st
 | `copy_hex_*` / `copy_rgb_*` / `copy_hsv_*` | Copy a colour value (ephemeral reply) |
 | `previewimg_approve_{presetId}` / `previewimg_reject_{presetId}` | Preview-image moderation — handled by **this** worker (Discord routes clicks to the application that posted the message); calls presets-api `PATCH /api/v1/moderation/:id/preview-image` |
 
-The v4 `favorites_*` / `collection_*` buttons are gone with the removed commands. Preset approve/reject buttons posted by the moderation bot are handled by `xivdyetools-moderation-worker`. Button state is stored in KV (`ctx:v2:{hash}`, 15-minute TTL) via `services/component-context.ts`; `verifyContextUser` guards against another user pressing your button.
+The v4 `favorites_*` / `collection_*` buttons are gone with the removed commands. Preset approve/reject buttons posted by the moderation bot are handled by `xivdyetools-moderation-worker`. `services/component-context.ts` (KV-backed button context, `ctx:v2:{hash}`) was removed 2026-08-18 — pagination context never shipped and nothing consumed it.
 
-## Modal Handlers (`src/handlers/modals/`)
+## Modal Handlers
 
-No modals are handled by the main worker in 5.0 — `/preset submit` takes its fields as slash-command options, and the moderation modals (ban reason, rejection reason) live in `xivdyetools-moderation-worker`. `handleModal` in `src/index.ts` answers any modal submission with an ephemeral "Unknown modal submission."
+No modals are handled by the main worker in 5.0 — `/preset submit` takes its fields as slash-command options, and the moderation modals (ban reason, rejection reason) live in `xivdyetools-moderation-worker`. `handleModal` in `src/index.ts` answers any modal submission with an ephemeral "Unknown modal submission." The empty `src/handlers/modals/` placeholder module was removed 2026-08-18 (DEAD-003) — nothing imported it.
 
 ## Autocomplete Handlers
 

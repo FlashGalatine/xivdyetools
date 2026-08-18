@@ -21,10 +21,7 @@ import {
   type PresetEditRequest,
   type PresetEditResponse,
   type VoteResponse,
-  type ModerationStats,
-  type ModerationLogEntry,
   type PresetFilters,
-  type CategoryMeta,
   PresetAPIError,
 } from '../types/preset.js';
 
@@ -48,7 +45,7 @@ async function generateRequestSignature(
   timestamp: number,
   userDiscordId: string | undefined,
   userName: string | undefined,
-  signingSecret: string
+  signingSecret: string,
 ): Promise<string> {
   const message = `${timestamp}:${userDiscordId || ''}:${userName || ''}`;
 
@@ -58,7 +55,7 @@ async function generateRequestSignature(
     encoder.encode(signingSecret),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ['sign']
+    ['sign'],
   );
 
   const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
@@ -97,7 +94,7 @@ async function request<T>(
     userName?: string;
     requestId?: string; // For distributed tracing across service bindings
     logger?: ExtendedLogger;
-  } = {}
+  } = {},
 ): Promise<T> {
   // Require either service binding or URL-based configuration
   if (!env.PRESETS_API && (!env.PRESETS_API_URL || !env.BOT_API_SECRET)) {
@@ -135,7 +132,7 @@ async function request<T>(
       timestamp,
       options.userDiscordId,
       options.userName,
-      env.BOT_SIGNING_SECRET
+      env.BOT_SIGNING_SECRET,
     );
     headers['X-Request-Timestamp'] = String(timestamp);
     headers['X-Request-Signature'] = signature;
@@ -152,7 +149,7 @@ async function request<T>(
           method,
           headers,
           body: options.body ? JSON.stringify(options.body) : undefined,
-        })
+        }),
       );
     } else {
       // Fall back to external URL (for local dev or if service binding not configured)
@@ -170,7 +167,7 @@ async function request<T>(
       throw new PresetAPIError(
         response.status,
         data.message || data.error || `API request failed with status ${response.status}`,
-        data
+        data,
       );
     }
 
@@ -221,7 +218,7 @@ export function isModerator(env: Env, userId: string): boolean {
  */
 export async function getPresets(
   env: Env,
-  filters: PresetFilters = {}
+  filters: PresetFilters = {},
 ): Promise<PresetListResponse> {
   const params = new URLSearchParams();
 
@@ -234,18 +231,6 @@ export async function getPresets(
 
   const query = params.toString();
   return request<PresetListResponse>(env, 'GET', `/api/v1/presets${query ? `?${query}` : ''}`);
-}
-
-/**
- * Get featured presets (top voted)
- */
-export async function getFeaturedPresets(env: Env): Promise<CommunityPreset[]> {
-  const response = await request<{ presets: CommunityPreset[] }>(
-    env,
-    'GET',
-    '/api/v1/presets/featured'
-  );
-  return response.presets;
 }
 
 /**
@@ -269,10 +254,7 @@ export async function getPreset(env: Env, id: string): Promise<CommunityPreset |
  *
  * @returns First matching preset or null if not found
  */
-export async function getPresetByName(
-  env: Env,
-  name: string
-): Promise<CommunityPreset | null> {
+export async function getPresetByName(env: Env, name: string): Promise<CommunityPreset | null> {
   // BUG-034 (2026-07-18 audit): fetch a full page — limit 1 returned only the
   // search-RANKED top hit, making an exact-named preset unreachable whenever
   // a partial match ranked higher
@@ -283,9 +265,7 @@ export async function getPresetByName(
   });
 
   // Find exact match first, then partial match
-  const exactMatch = response.presets.find(
-    (p) => p.name.toLowerCase() === name.toLowerCase()
-  );
+  const exactMatch = response.presets.find((p) => p.name.toLowerCase() === name.toLowerCase());
   return exactMatch || response.presets[0] || null;
 }
 
@@ -294,7 +274,7 @@ export async function getPresetByName(
  */
 export async function getRandomPreset(
   env: Env,
-  category?: string
+  category?: string,
 ): Promise<CommunityPreset | null> {
   const filters: PresetFilters = {
     status: 'approved',
@@ -323,7 +303,7 @@ export async function submitPreset(
   env: Env,
   submission: PresetSubmission,
   userDiscordId: string,
-  userName: string
+  userName: string,
 ): Promise<PresetSubmitResponse> {
   return request<PresetSubmitResponse>(env, 'POST', '/api/v1/presets', {
     body: submission,
@@ -333,41 +313,17 @@ export async function submitPreset(
 }
 
 /**
- * Delete a preset (owner or moderator only)
- */
-export async function deletePreset(
-  env: Env,
-  presetId: string,
-  userDiscordId: string
-): Promise<boolean> {
-  try {
-    await request<{ success: boolean }>(env, 'DELETE', `/api/v1/presets/${presetId}`, {
-      userDiscordId,
-    });
-    return true;
-  } catch (error) {
-    if (error instanceof PresetAPIError && error.statusCode === 403) {
-      return false;
-    }
-    throw error;
-  }
-}
-
-/**
  * Get all presets owned by a user
  *
  * Returns presets in all statuses (pending, approved, rejected)
  * Sorted by creation date (newest first)
  */
-export async function getMyPresets(
-  env: Env,
-  userDiscordId: string
-): Promise<CommunityPreset[]> {
+export async function getMyPresets(env: Env, userDiscordId: string): Promise<CommunityPreset[]> {
   const response = await request<{ presets: CommunityPreset[]; total: number }>(
     env,
     'GET',
     '/api/v1/presets/mine',
-    { userDiscordId }
+    { userDiscordId },
   );
   return response.presets;
 }
@@ -386,7 +342,7 @@ export async function editPreset(
   presetId: string,
   updates: PresetEditRequest,
   userDiscordId: string,
-  userName: string
+  userName: string,
 ): Promise<PresetEditResponse> {
   return request<PresetEditResponse>(env, 'PATCH', `/api/v1/presets/${presetId}`, {
     body: updates,
@@ -405,7 +361,7 @@ export async function editPreset(
 export async function voteForPreset(
   env: Env,
   presetId: string,
-  userDiscordId: string
+  userDiscordId: string,
 ): Promise<VoteResponse> {
   return request<VoteResponse>(env, 'POST', `/api/v1/votes/${presetId}`, {
     userDiscordId,
@@ -418,7 +374,7 @@ export async function voteForPreset(
 export async function removeVote(
   env: Env,
   presetId: string,
-  userDiscordId: string
+  userDiscordId: string,
 ): Promise<VoteResponse> {
   return request<VoteResponse>(env, 'DELETE', `/api/v1/votes/${presetId}`, {
     userDiscordId,
@@ -432,14 +388,14 @@ export async function hasVoted(
   env: Env,
   presetId: string,
   userDiscordId: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<boolean> {
   try {
     const response = await request<{ has_voted: boolean }>(
       env,
       'GET',
       `/api/v1/votes/${presetId}/check`,
-      { userDiscordId, logger }
+      { userDiscordId, logger },
     );
     return response.has_voted;
   } catch (error) {
@@ -449,138 +405,6 @@ export async function hasVoted(
     }
     return false;
   }
-}
-
-// ============================================================================
-// Category Functions
-// ============================================================================
-
-/**
- * Get all preset categories with counts
- */
-export async function getCategories(env: Env): Promise<CategoryMeta[]> {
-  const response = await request<{ categories: CategoryMeta[] }>(
-    env,
-    'GET',
-    '/api/v1/categories'
-  );
-  return response.categories;
-}
-
-// ============================================================================
-// Moderation Functions
-// ============================================================================
-
-/**
- * Get presets pending moderation
- */
-export async function getPendingPresets(
-  env: Env,
-  moderatorId: string
-): Promise<CommunityPreset[]> {
-  const response = await request<{ presets: CommunityPreset[] }>(
-    env,
-    'GET',
-    '/api/v1/moderation/pending',
-    { userDiscordId: moderatorId }
-  );
-  return response.presets;
-}
-
-/**
- * Approve a preset
- */
-export async function approvePreset(
-  env: Env,
-  presetId: string,
-  moderatorId: string,
-  reason?: string
-): Promise<CommunityPreset> {
-  const response = await request<{ preset: CommunityPreset }>(
-    env,
-    'PATCH',
-    `/api/v1/moderation/${presetId}/status`,
-    {
-      body: { status: 'approved', reason },
-      userDiscordId: moderatorId,
-    }
-  );
-  return response.preset;
-}
-
-/**
- * Reject a preset
- */
-export async function rejectPreset(
-  env: Env,
-  presetId: string,
-  moderatorId: string,
-  reason: string
-): Promise<CommunityPreset> {
-  const response = await request<{ preset: CommunityPreset }>(
-    env,
-    'PATCH',
-    `/api/v1/moderation/${presetId}/status`,
-    {
-      body: { status: 'rejected', reason },
-      userDiscordId: moderatorId,
-    }
-  );
-  return response.preset;
-}
-
-/**
- * Flag a preset for review
- */
-export async function flagPreset(
-  env: Env,
-  presetId: string,
-  moderatorId: string,
-  reason: string
-): Promise<CommunityPreset> {
-  const response = await request<{ preset: CommunityPreset }>(
-    env,
-    'PATCH',
-    `/api/v1/moderation/${presetId}/status`,
-    {
-      body: { status: 'flagged', reason },
-      userDiscordId: moderatorId,
-    }
-  );
-  return response.preset;
-}
-
-/**
- * Get moderation statistics
- */
-export async function getModerationStats(
-  env: Env,
-  moderatorId: string
-): Promise<ModerationStats> {
-  const response = await request<{ stats: ModerationStats }>(
-    env,
-    'GET',
-    '/api/v1/moderation/stats',
-    { userDiscordId: moderatorId }
-  );
-  return response.stats;
-}
-
-/**
- * Get moderation history for a preset
- */
-export async function getModerationHistory(
-  env: Env,
-  presetId: string,
-  moderatorId: string
-): Promise<ModerationLogEntry[]> {
-  const response = await request<{ history: ModerationLogEntry[] }>(
-    env,
-    'GET',
-    `/api/v1/moderation/${presetId}/history`,
-    { userDiscordId: moderatorId }
-  );
-  return response.history;
 }
 
 /**
@@ -607,7 +431,7 @@ export async function setPreviewImageStatus(
   presetId: string,
   action: 'approve' | 'reject',
   moderatorId: string,
-  moderatorName?: string
+  moderatorName?: string,
 ): Promise<PreviewImageModerationResult> {
   return request<PreviewImageModerationResult>(
     env,
@@ -617,39 +441,8 @@ export async function setPreviewImageStatus(
       body: { action },
       userDiscordId: moderatorId,
       userName: moderatorName,
-    }
+    },
   );
-}
-
-/**
- * Revert a preset to its previous values (moderators only)
- *
- * Used when an edit was flagged by content moderation and the moderator
- * decides to restore the original content instead of approving the edit.
- *
- * @param env - Environment bindings
- * @param presetId - Preset to revert
- * @param reason - Reason for reverting (10-200 chars, required for audit trail)
- * @param moderatorId - Discord ID of the moderator performing the action
- * @returns Reverted preset
- * @throws PresetAPIError if preset has no previous values or moderator lacks permission
- */
-export async function revertPreset(
-  env: Env,
-  presetId: string,
-  reason: string,
-  moderatorId: string
-): Promise<CommunityPreset> {
-  const response = await request<{ success: boolean; preset: CommunityPreset }>(
-    env,
-    'PATCH',
-    `/api/v1/moderation/${presetId}/revert`,
-    {
-      body: { reason },
-      userDiscordId: moderatorId,
-    }
-  );
-  return response.preset;
 }
 
 // ============================================================================
@@ -671,7 +464,7 @@ export async function searchPresetsForAutocomplete(
     status?: 'approved' | 'pending';
     limit?: number;
     logger?: ExtendedLogger;
-  } = {}
+  } = {},
 ): Promise<Array<{ name: string; value: string }>> {
   try {
     const filters: PresetFilters = {
@@ -697,7 +490,10 @@ export async function searchPresetsForAutocomplete(
     }));
   } catch (error) {
     if (options.logger) {
-      options.logger.error('Preset autocomplete search failed', error instanceof Error ? error : undefined);
+      options.logger.error(
+        'Preset autocomplete search failed',
+        error instanceof Error ? error : undefined,
+      );
     }
     return [];
   }

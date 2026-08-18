@@ -96,8 +96,9 @@ src/
 │   │                              # files were DELETED in 5.0 — don't reintroduce them.
 │   │                              # preset-notifications.ts is NOT a command; it builds/sends
 │   │                              # the moderation-channel embeds for incoming preset submissions
-│   ├── buttons/                   # Component handlers (copy.ts, preview-image.ts moderation buttons, index.ts dispatcher)
-│   └── modals/                    # Modal submission handlers (index.ts only — currently unused in this worker)
+│   └── buttons/                   # Component handlers (copy.ts, preview-image.ts moderation buttons, index.ts dispatcher)
+│                                  # The modals/ placeholder (index.ts only, never wired to a modal) was
+│                                  # removed 2026-08-18 — don't reintroduce it without a real consumer.
 ├── services/
 │   ├── analytics.ts               # KV counters + Analytics Engine writes
 │   ├── rate-limiter.ts            # Upstash-first sliding window with KV fallback
@@ -108,7 +109,6 @@ src/
 │   ├── bot-i18n.ts                # Bot UI translator (createTranslator/createUserTranslator)
 │   ├── emoji.ts                   # Application emoji helpers
 │   ├── fonts.ts                   # Bundled TTF buffers for resvg (brand + Noto Sans JP/SC/KR subsets)
-│   ├── component-context.ts       # Encodes interaction context into custom_id payloads
 │   ├── changelog-parser.ts        # Parse CHANGELOG-laymans.md for /webhooks/github
 │   ├── announcements.ts           # Send formatted release embeds
 │   ├── svg/                       # Card renderers + resvg PNG conversion

@@ -19,7 +19,6 @@ export type {
   PresetStatus,
   PresetCategory,
   PresetSortOption,
-  CategoryMeta,
   CommunityPreset,
 } from '@xivdyetools/types';
 
@@ -27,11 +26,7 @@ export type {
  * @deprecated Import directly from '@xivdyetools/types' instead.
  * These re-exports will be removed in the next major version.
  */
-export type {
-  PresetFilters,
-  PresetSubmission,
-  PresetEditRequest,
-} from '@xivdyetools/types';
+export type { PresetFilters, PresetSubmission, PresetEditRequest } from '@xivdyetools/types';
 
 /**
  * @deprecated Import directly from '@xivdyetools/types' instead.
@@ -43,12 +38,6 @@ export type {
   PresetEditResponse,
   VoteResponse,
 } from '@xivdyetools/types';
-
-/**
- * @deprecated Import directly from '@xivdyetools/types' instead.
- * These re-exports will be removed in the next major version.
- */
-export type { ModerationLogEntry, ModerationStats } from '@xivdyetools/types';
 
 // ============================================================================
 // PROJECT-SPECIFIC TYPES
@@ -102,9 +91,7 @@ export interface PreviewImageNotification {
  * Payload received from preset API webhook notifications.
  * Discriminated on `type`: narrow first, then read.
  */
-export type PresetNotificationPayload =
-  | PresetSubmissionNotification
-  | PreviewImageNotification;
+export type PresetNotificationPayload = PresetSubmissionNotification | PreviewImageNotification;
 
 // ============================================================================
 // Error Types

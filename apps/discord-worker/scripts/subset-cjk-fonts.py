@@ -68,11 +68,12 @@ SOURCES_DIR = os.path.join(SCRIPT_DIR, ".font-sources")
 # src/fonts. No candidate list may point inside FONTS_DIR.
 FONTS_SRC_DIR = os.path.join(WORKER_ROOT, "fonts-src")
 
-# VARIABLE FACES ONLY. The shipped subsets are cut from NotoSansSC[wght], so a
-# candidate that could resolve to fonts-src/NotoSansSC-Regular.ttf — a static
-# face still tracked from the pre-5.0 era — would silently swap the face on a
-# fresh clone, where neither .font-sources/ exists (both are gitignored).
-# Falling through to the download keeps every machine on the same face.
+# VARIABLE FACES ONLY. The shipped subsets are cut from NotoSansSC[wght]. A
+# static SC face (fonts-src/NotoSansSC-Regular.ttf, pre-5.0 era) used to be
+# tracked here and would have silently swapped the face if a candidate ever
+# pointed at it; it was removed in the 2026-08-18 dead-code audit (DEAD-008)
+# since no candidate list referenced it. Falling through to the download
+# keeps every machine on the same face.
 #
 # (Output is never byte-identical run to run: fontTools stamps head.modified
 # with wall-clock time. Compare glyph coverage, not file hashes.)
