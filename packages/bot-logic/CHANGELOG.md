@@ -51,6 +51,13 @@ The 5.0 bot release: every `execute*` now renders a card from `@xivdyetools/svg`
 
 - `commands/match.ts` (+ tests) and its barrel exports; the emoji match-quality labels in mixer/gradient embeds; the multi-line embed builders in every command; the `match` / `favorites` / `collection` / `language` locale namespaces.
 
+### Removed (2026-08-18 dead-code audit)
+
+- **245 unread keys pruned from all six `/i18n` locale files** (621 → 376 leaf keys each; key-set parity preserved) — 209 orphans (never referenced outside a test file, across `packages/bot-logic/src`, `packages/svg/src`, `apps/discord-worker/src`, `apps/stoat-worker/src`) plus 36 test-only keys (referenced only from a test's mock translation table). Whole namespaces removed: `swatch.*` (37 — the 4.x `/swatch color|grid` shape, superseded by the `.chara`-driven 5.0 `/swatch`), `stats.*` (31 — controller ruling: `/stats` stays hard-coded English, not localized), `paletteGrid.*` (9), `preferences.descriptions.*` (14); `budget.*`, `mixer.*`, `preset.*`, `common.*`, `comparison.*`, `extractor.*` trimmed to their live subset. See `docs/audits/2026-08-18-discord-worker-dead-code/findings/DEAD-011.md`.
+- Matching dead entries removed from test mock tables: `about.test.ts`'s `about.cmd.*` (17 keys, incl. the already-deleted v4 `/match`, `/favorites`, `/collection`, `/language`, `/stats`) and `about.categories.userData`; 14 `accessibility.*` mocks + `comparison.fails`/`comparison.title` in `accessibility.test.ts`/`comparison.test.ts`; `dye.random.descriptionUnique` in `dye.test.ts`; `preset.moderation.accessDenied` in `preset.test.ts`.
+- `meta.locale` / `meta.name` / `meta.flag` / `meta.nativeName` are **kept** (unlike the rest of the test-only/orphan set) — the whole `meta` block is required by `LocaleData` and asserted by `locales.test.ts`'s "valid meta block" check; it becomes genuinely dead only when `Translator.getMeta()` itself is removed (Task 7 / DEAD-013).
+- New gate: `src/i18n/__tests__/locale-orphans.test.ts` — fails if any `en.json` key is unreachable (literal scan over the same four consumer trees, plus an explicit dynamic-prefix allowlist: `preferences.keys.`, `manual5.topics.`, `accessibility.`, and `meta.` until Task 7) and asserts key-set parity across all six locales, so this class of drift cannot regrow silently.
+
 ## [1.5.0] - 2026-08-01
 
 ### Added

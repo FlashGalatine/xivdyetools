@@ -22,27 +22,8 @@ vi.mock('../../services/bot-i18n.js', () => ({
         'about.categories.colorTools': 'Color Tools',
         'about.categories.dyeDatabase': 'Dye Database',
         'about.categories.analysis': 'Analysis',
-        'about.categories.userData': 'Your Data',
         'about.categories.community': 'Community',
         'about.categories.utility': 'Utility',
-        // Command descriptions
-        'about.cmd.harmony': 'Generate color harmonies',
-        'about.cmd.match': 'Find closest FFXIV dye',
-        'about.cmd.matchImage': 'Extract colors from an image',
-        'about.cmd.mixer': 'Create color gradients between two colors',
-        'about.cmd.dyeSearch': 'Search dyes by name',
-        'about.cmd.dyeInfo': 'Get detailed dye information',
-        'about.cmd.dyeList': 'List dyes by category',
-        'about.cmd.dyeRandom': 'Get random dye suggestions',
-        'about.cmd.comparison': 'Compare 2-4 dyes side by side',
-        'about.cmd.accessibility': 'Colorblindness simulation & contrast',
-        'about.cmd.favorites': 'Manage your favorite dyes',
-        'about.cmd.collection': 'Create custom dye collections',
-        'about.cmd.preset': 'Browse, submit & vote on community presets',
-        'about.cmd.language': 'Set your preferred language',
-        'about.cmd.manual': 'Show help guide',
-        'about.cmd.about': 'Bot information (this command)',
-        'about.cmd.stats': 'Usage statistics (authorized only)',
       };
       return translations[key] || key;
     },
@@ -157,7 +138,9 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const commandListField = data.data!.embeds![0].fields!.find((f) => f.value.includes('/harmony'))!;
+      const commandListField = data.data!.embeds![0].fields!.find((f) =>
+        f.value.includes('/harmony'),
+      )!;
 
       // 5.0 roster parity: every registered command appears, nothing else
       const { COMMAND_REGISTRY } = await import('../../commands/registry.js');
@@ -185,7 +168,7 @@ describe('about.ts', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       const removedField = data.data!.embeds![0].fields!.find((f) =>
-        f.name.includes('about.removedTitle')
+        f.name.includes('about.removedTitle'),
       );
       expect(removedField).toBeDefined();
       for (const dead of ['/match', '/match_image', '/favorites', '/collection', '/language']) {
@@ -224,8 +207,8 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const linksField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Links')
+      const linksField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Links'),
       );
       expect(linksField).toBeDefined();
       // The way in — a Discord reader has no other route to the app
@@ -345,13 +328,8 @@ describe('about.ts', () => {
 
       // Verify createUserTranslator was called with the correct locale
       const { createUserTranslator } = await import('../../services/bot-i18n.js');
-      expect(createUserTranslator).toHaveBeenCalledWith(
-        mockKV,
-        'user-123',
-        'ja'
-      );
+      expect(createUserTranslator).toHaveBeenCalledWith(mockKV, 'user-123', 'ja');
     });
-
 
     it('should include category emojis', async () => {
       const interaction: DiscordInteraction = {
@@ -366,7 +344,9 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const commandListField = data.data!.embeds![0].fields!.find((f) => f.value.includes('/harmony'))!;
+      const commandListField = data.data!.embeds![0].fields!.find((f) =>
+        f.value.includes('/harmony'),
+      )!;
 
       // Check for category emojis
       expect(commandListField.value).toMatch(/🎨.*Color Tools/);

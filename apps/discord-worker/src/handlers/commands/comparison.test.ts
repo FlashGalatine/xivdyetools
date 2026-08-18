@@ -17,48 +17,56 @@ vi.mock('@xivdyetools/core', async (importOriginal) => {
   class MockDyeService {
     searchByName(query: string) {
       if (query.toLowerCase().includes('snow')) {
-        return [{
-          id: 1,
-          name: 'Snow White',
-          hex: '#FFFFFF',
-          rgb: { r: 255, g: 255, b: 255 },
-          hsv: { h: 0, s: 0, v: 100 },
-          category: 'Standard',
-          itemID: 5694,
-        }];
+        return [
+          {
+            id: 1,
+            name: 'Snow White',
+            hex: '#FFFFFF',
+            rgb: { r: 255, g: 255, b: 255 },
+            hsv: { h: 0, s: 0, v: 100 },
+            category: 'Standard',
+            itemID: 5694,
+          },
+        ];
       }
       if (query.toLowerCase().includes('soot')) {
-        return [{
-          id: 2,
-          name: 'Soot Black',
-          hex: '#1A1A1A',
-          rgb: { r: 26, g: 26, b: 26 },
-          hsv: { h: 0, s: 0, v: 10 },
-          category: 'Standard',
-          itemID: 5695,
-        }];
+        return [
+          {
+            id: 2,
+            name: 'Soot Black',
+            hex: '#1A1A1A',
+            rgb: { r: 26, g: 26, b: 26 },
+            hsv: { h: 0, s: 0, v: 10 },
+            category: 'Standard',
+            itemID: 5695,
+          },
+        ];
       }
       if (query.toLowerCase().includes('facewear')) {
-        return [{
-          id: 99,
-          name: 'Facewear Red',
-          hex: '#FF0000',
-          rgb: { r: 255, g: 0, b: 0 },
-          category: 'Facewear',
-        }];
+        return [
+          {
+            id: 99,
+            name: 'Facewear Red',
+            hex: '#FF0000',
+            rgb: { r: 255, g: 0, b: 0 },
+            category: 'Facewear',
+          },
+        ];
       }
       if (query.toLowerCase().includes('notfound')) {
         return [];
       }
-      return [{
-        id: 3,
-        name: query,
-        hex: '#FF5733',
-        rgb: { r: 255, g: 87, b: 51 },
-        hsv: { h: 11, s: 80, v: 100 },
-        category: 'Standard',
-        itemID: 5696,
-      }];
+      return [
+        {
+          id: 3,
+          name: query,
+          hex: '#FF5733',
+          rgb: { r: 255, g: 87, b: 51 },
+          hsv: { h: 11, s: 80, v: 100 },
+          category: 'Standard',
+          itemID: 5696,
+        },
+      ];
     }
     findClosestDye(hex: string) {
       return {
@@ -75,8 +83,12 @@ vi.mock('@xivdyetools/core', async (importOriginal) => {
 
   class MockLocalizationService {
     async setLocale(_locale: string): Promise<void> {}
-    getDyeName(_itemID: number): string | undefined { return undefined; }
-    getCategory(category: string): string { return category; }
+    getDyeName(_itemID: number): string | undefined {
+      return undefined;
+    }
+    getCategory(category: string): string {
+      return category;
+    }
   }
 
   // 14A/14C: pair ΔEs + the duel's seven readouts run through ColorService
@@ -102,7 +114,6 @@ vi.mock('../../services/bot-i18n.js', () => ({
           'errors.missingInput': 'Please provide at least two dyes to compare',
           'errors.invalidColor': `Could not find dye or parse color: ${vars?.input}`,
           'errors.generationFailed': 'Failed to generate comparison image',
-          'comparison.title': 'Dye Comparison',
           'common.footer': 'XIV Dye Tools',
         };
         return translations[key] || key;
@@ -117,7 +128,6 @@ vi.mock('../../services/bot-i18n.js', () => ({
         'errors.missingInput': 'Please provide at least two dyes to compare',
         'errors.invalidColor': `Could not find dye or parse color: ${vars?.input}`,
         'errors.generationFailed': 'Failed to generate comparison image',
-        'comparison.title': 'Dye Comparison',
         'common.footer': 'XIV Dye Tools',
       };
       return translations[key] || key;
@@ -129,7 +139,6 @@ vi.mock('../../services/bot-i18n.js', () => ({
       const translations: Record<string, string> = {
         'common.error': 'Error',
         'errors.generationFailed': 'Failed to generate comparison image',
-        'comparison.title': 'Dye Comparison',
         'common.footer': 'XIV Dye Tools',
       };
       return translations[key] || key;
@@ -183,14 +192,14 @@ describe('comparison.ts', () => {
       PRESETS_API_URL: 'https://test-api.example.com',
       INTERNAL_WEBHOOK_SECRET: 'test-secret',
       KV: {
-      // The handlers read stored preferences (theme, matching) before they
-      // render; an empty object throws on kv.get, which swallowed the render
-      // path and made these assertions vacuous.
-      get: async () => null,
-      put: async () => undefined,
-      delete: async () => undefined,
-      list: async () => ({ keys: [], list_complete: true, cacheStatus: null }),
-    } as unknown as KVNamespace,
+        // The handlers read stored preferences (theme, matching) before they
+        // render; an empty object throws on kv.get, which swallowed the render
+        // path and made these assertions vacuous.
+        get: async () => null,
+        put: async () => undefined,
+        delete: async () => undefined,
+        list: async () => ({ keys: [], list_complete: true, cacheStatus: null }),
+      } as unknown as KVNamespace,
     } as unknown as Env;
 
     mockCtx = {
@@ -348,7 +357,7 @@ describe('comparison.ts', () => {
             expect.objectContaining({ name: 'Snow White' }),
             expect.objectContaining({ name: 'Soot Black' }),
           ]),
-        })
+        }),
       );
       expect(renderSvgToPng).toHaveBeenCalled();
       expect(editOriginalResponse).toHaveBeenCalled();
@@ -450,7 +459,7 @@ describe('comparison.ts', () => {
             expect.any(Object),
             expect.any(Object),
           ]),
-        })
+        }),
       );
     });
 
@@ -536,7 +545,7 @@ describe('comparison.ts', () => {
               description: expect.stringContaining('Failed'),
             }),
           ]),
-        })
+        }),
       );
 
       consoleSpy.mockRestore();
@@ -576,7 +585,7 @@ describe('comparison.ts', () => {
               title: expect.stringContaining('Error'),
             }),
           ]),
-        })
+        }),
       );
     });
   });
@@ -602,11 +611,7 @@ describe('comparison.ts', () => {
       await handleComparisonCommand(interaction, mockEnv, mockCtx);
 
       const { createUserTranslatorWithPrefs } = await import('../../services/bot-i18n.js');
-      expect(createUserTranslatorWithPrefs).toHaveBeenCalledWith(
-        mockEnv.KV,
-        'user-123',
-        'de'
-      );
+      expect(createUserTranslatorWithPrefs).toHaveBeenCalledWith(mockEnv.KV, 'user-123', 'de');
     });
 
     it('should handle missing user info gracefully', async () => {

@@ -135,7 +135,6 @@ const translator = {
       'preset.voteRemoved': 'Vote Removed',
       'preset.currentVotes': `Current votes: ${String(vars?.count ?? 0)}`,
       'preset.useShowTip': 'Use /preset show to view details',
-      'preset.moderation.accessDenied': 'Access denied - moderators only',
     };
     return map[key] ?? key;
   },

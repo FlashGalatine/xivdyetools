@@ -6,29 +6,17 @@
     "flag": "🇯🇵"
   },
   "common": {
-    "dye": "カララント",
     "dyes": "カララント",
-    "color": "色",
     "category": "カテゴリ",
     "hexColor": "16進数カラー",
     "rgb": "RGB",
     "hsv": "HSV",
     "itemId": "アイテムID",
-    "distance": "距離",
-    "quality": "品質",
     "footer": "XIV Dye Tools",
-    "error": "エラー",
-    "success": "成功",
-    "inputColor": "入力色",
-    "closestDye": "最も近いカララント",
-    "matchQuality": "マッチ品質",
-    "createdAt": "作成日",
-    "marketBoard": "マーケットボード"
+    "error": "エラー"
   },
   "errors": {
-    "userNotFound": "ユーザーを識別できませんでした。",
     "dyeNotFound": "「{name}」という名前のカララントが見つかりませんでした。",
-    "colorNotFound": "「{input}」に一致するカララントが見つかりませんでした。",
     "invalidColor": "「{input}」を色として解釈できませんでした。\n\n有効な16進数コード（例：`#FF0000`）またはカララント名（例：`ダラガブレッド`）を入力してください。",
     "missingInput": "色（16進数コードまたはカララント名）を入力してください。",
     "missingQuery": "検索キーワードを入力してください。",
@@ -37,8 +25,6 @@
     "unknownSubcommand": "不明なサブコマンド：{name}",
     "noMatchFound": "データベースに一致するカララントが見つかりませんでした。",
     "noDyesAvailable": "データベースにカララントがありません。",
-    "failedToSave": "設定を保存できませんでした。後でもう一度お試しください。",
-    "failedToReset": "設定をリセットできませんでした。後でもう一度お試しください。",
     "generationFailed": "可視化の生成中にエラーが発生しました。後でもう一度お試しください。"
   },
   "quality": {
@@ -138,37 +124,23 @@
       "title": "ランダムカララント",
       "titleUnique": "ランダムカララント（カテゴリごとに1つ）",
       "description": "ランダムに選ばれた{count}件のカララント：",
-      "descriptionUnique": "各カテゴリから1つずつランダムに選ばれた{count}件のカララント：",
       "runAgainHint": "もう一度実行すると別のカララントが表示されます！"
     }
   },
   "extractor": {
-    "title": "カラー抽出：{name}",
-    "topMatches": "上位{count}件のカララントマッチ",
-    "findingMatches": "{input}に最も近いマッチを検索中",
-    "useInfoHint": "/dye info で入手方法の詳細を確認できます",
-    "useInfoNameHint": "/dye info <名前> で入手方法の詳細を確認できます",
-    "colorSubcommand": "色からカララントを抽出",
-    "imageSubcommand": "画像からカララントを抽出",
-    "extractedColors": "抽出された色",
-    "dominantColor": "主要な色"
+    "topMatches": "上位{count}件のカララントマッチ"
   },
   "gradient": {
     "title": "カラーグラデーション",
     "startColor": "開始",
     "endColor": "終了",
-    "start": "開始",
-    "end": "終了",
     "steps": "{count}ステップ",
-    "gradientFrom": "{start}から{end}へのグラデーション",
-    "description": "2色間のスムーズな色の変化を作成",
     "colorSpace": "色空間",
     "matching": "マッチング"
   },
   "harmony": {
     "title": "{type}ハーモニー",
     "baseColor": "ベースカラー",
-    "harmonyColors": "ハーモニーカラー",
     "complementary": "補色",
     "analogous": "類似色",
     "triadic": "トライアド",
@@ -179,63 +151,14 @@
     "invertedTetradic": "逆テトラード"
   },
   "mixer": {
-    "title": "カララントブレンダー",
     "blendResult": "ブレンド結果",
-    "inputDyes": "入力カララント",
-    "blendedColor": "ブレンド色",
-    "closestMatch": "最も近いマッチ",
-    "topMatches": "上位{count}件のマッチ",
-    "blendingMode": "ブレンドモード",
-    "bothRequired": "カララント1とカララント2の両方が必要です。",
-    "footer": "/preferences set blending <モード> でデフォルトを変更 • /dye info {dyeName}",
-    "modes": {
-      "rgb": "RGB平均",
-      "lab": "LAB（知覚的）",
-      "oklab": "OKLAB（最新知覚）",
-      "ryb": "RYB（アーティスト）",
-      "hsl": "HSL（色相ベース）",
-      "spectral": "スペクトル（顔料物理）"
-    },
-    "modeDescriptions": {
-      "rgb": "単純な加法チャンネル平均",
-      "lab": "知覚的に均一なCIELABブレンド",
-      "oklab": "最新の知覚色空間（青→紫の問題を修正）",
-      "ryb": "伝統的なアーティストのカラーホイール混合",
-      "hsl": "色相・彩度・明度の補間",
-      "spectral": "クベルカ・ムンク顔料物理シミュレーション"
-    }
-  },
-  "comparison": {
-    "title": "カララント比較",
-    "colorDistance": "色距離",
-    "contrastRatio": "コントラスト比",
-    "mostSimilar": "最も類似",
-    "mostDifferent": "最も異なる",
-    "wcagAA": "WCAG AA",
-    "wcagAAA": "WCAG AAA",
-    "passes": "合格",
-    "fails": "不合格"
+    "bothRequired": "カララント1とカララント2の両方が必要です。"
   },
   "accessibility": {
-    "title": "色覚アクセシビリティ",
     "normalVision": "通常の視覚",
     "protanopia": "1型色覚",
     "deuteranopia": "2型色覚",
     "tritanopia": "3型色覚",
-    "protanopiaDesc": "赤色光への感度低下（男性の約1%）",
-    "deuteranopiaDesc": "緑色光への感度低下（男性の約1%）",
-    "tritanopiaDesc": "青色光への感度低下（稀）",
-    "description": "この画像は、色覚異常を持つ人々にカララントがどのように見えるかを示しています：",
-    "simulatedAppearance": "シミュレーション表示",
-    "simulationMethod": "Brettel 1997色覚シミュレーション",
-    "contrastAnalysis": "WCAGコントラスト分析",
-    "contrastTitle": "コントラスト比較",
-    "comparing": "{count}つのカララントを比較中",
-    "matrixDescription": "マトリックスは各カララント間のWCAGコントラスト比を表示しています：",
-    "wcagAAADesc": "すべてのテキストサイズに最適",
-    "wcagAADesc": "通常のテキストに許容可能",
-    "wcagFailDesc": "区別しにくい可能性があります",
-    "wcagGuidelines": "WCAG 2.1コントラストガイドライン",
     "achromatopsia": "1色覚（全色盲）"
   },
   "about": {
@@ -253,49 +176,15 @@
       "colorTools": "カラーツール",
       "dyeDatabase": "カララントデータベース",
       "analysis": "分析",
-      "userData": "ユーザーデータ",
       "community": "コミュニティ",
       "utility": "ユーティリティ"
-    },
-    "cmd": {
-      "harmony": "カラーハーモニーを生成（補色、トライアドなど）",
-      "match": "16進数カラーに最も近いFFXIVカララントを検索",
-      "matchImage": "画像から色を抽出してカララントにマッチング",
-      "mixer": "2色間のカラーグラデーションを作成",
-      "dyeSearch": "名前でカララントを検索",
-      "dyeInfo": "カララントの詳細情報を取得",
-      "dyeList": "カテゴリ別にカララントを一覧表示",
-      "dyeRandom": "ランダムなカララントを提案",
-      "comparison": "2〜4つのカララントを並べて比較",
-      "accessibility": "色覚シミュレーションとコントラスト",
-      "favorites": "お気に入りカララントを管理",
-      "collection": "カスタムカララントコレクションを作成",
-      "preset": "コミュニティプリセットの閲覧・投稿・投票",
-      "language": "言語設定を変更",
-      "manual": "ヘルプガイドを表示",
-      "about": "ボット情報（このコマンド）",
-      "stats": "使用統計（権限者のみ）"
     },
     "removedTitle": "v5で削除",
     "removedBody": "これらのコマンドは削除されました。/extractor、/preferences、またはWebアプリのコレクションをご利用ください。"
   },
-  "paletteGrid": {
-    "extracted": "抽出色",
-    "matchedDye": "マッチしたカララント",
-    "ofImage": "（画像の割合）",
-    "noColors": "画像から色を抽出できませんでした",
-    "quality": {
-      "perfect": "完璧",
-      "excellent": "優秀",
-      "good": "良好",
-      "fair": "まずまず",
-      "approximate": "近似"
-    }
-  },
   "preset": {
     "title": "コミュニティプリセット",
     "apiDisabled": "このボットではコミュニティプリセットが設定されていません。",
-    "notConfigured": "このボットではコミュニティプリセットが設定されていません。",
     "notFound": "一致するプリセットが見つかりませんでした。",
     "noneInCategory": "このカテゴリにはプリセットがありません。",
     "useShowTip": "`/preset show <名前>` で詳細を表示",
@@ -313,76 +202,14 @@
     "colors": "カラー",
     "tags": "タグ",
     "author": "作成者",
-    "votes": "投票",
-    "moderation": {
-      "accessDenied": "モデレーション操作を行う権限がありません。",
-      "pendingQueue": "審査待ちプリセット",
-      "noPending": "審査待ちのプリセットはありません。",
-      "pendingCount": "{count}件のプリセットが審査待ち",
-      "missingId": "このアクションにはプリセットIDを指定してください。",
-      "approved": "プリセットを承認しました",
-      "approvedDesc": "**{name}** が承認され、公開されました！",
-      "missingReason": "却下理由を入力してください。",
-      "rejected": "プリセットを却下しました",
-      "rejectedDesc": "**{name}** を却下しました。",
-      "stats": "モデレーション統計"
-    },
-    "status": {
-      "pending": "審査待ち",
-      "approved": "承認済み",
-      "rejected": "却下済み",
-      "flagged": "フラグ付き"
-    },
-    "categories": {
-      "jobs": "FFXIVジョブ",
-      "grand-companies": "グランドカンパニー",
-      "seasons": "季節",
-      "events": "FFXIVイベント",
-      "aesthetics": "美学",
-      "community": "コミュニティ"
-    }
+    "votes": "投票"
   },
   "budget": {
-    "title": "お手頃カラー検索",
     "findTitle": "{dyeName}の代替カラー",
     "noAlternatives": "条件に合う安価な代替品が見つかりませんでした。",
-    "foundAlternatives": "{count}件の安価な代替品が見つかりました：",
-    "headerLabel": "お手頃な代替カラー",
-    "onWorld": "{world}の価格",
-    "gilAmount": "{amount} Gil",
-    "saveAmount": "{amount} 節約 ({percent}%)",
-    "listingCount": "{count}件の出品",
-    "noAlternativesShort": "安価な代替品が見つかりませんでした",
-    "targetDye": "対象カラー",
-    "targetPrice": "対象価格",
-    "alternative": "代替品",
-    "alternatives": "お手頃な代替品",
-    "price": "価格",
-    "savings": "節約額",
-    "colorMatch": "色の一致度",
-    "valueScore": "コスパスコア",
-    "noListings": "出品なし",
-    "worldUsed": "{world}の価格",
-    "pricesUpdated": "価格更新: {time}",
     "worldSet": "デフォルトワールドを**{world}**に設定しました。",
-    "worldSetNote": "今後の`/budget`コマンドではこのワールドがデフォルトで使用されます。",
-    "quickPick": "クイックピック: {name}",
-    "sortedBy": "並び順: {method}",
-    "sortMethods": {
-      "price": "価格が安い順",
-      "color_match": "色の一致度順",
-      "value_score": "コスパ順"
-    },
-    "distanceQuality": {
-      "perfect": "完璧",
-      "excellent": "優秀",
-      "good": "良好",
-      "fair": "普通",
-      "approximate": "近似"
-    },
     "errors": {
       "notConfigured": "このサーバーではお手頃カラー機能は利用できません。マーケットボード連携が設定されていません。",
-      "noWorldSet": "まず`/budget set_world <world>`でワールドを設定するか、`world`オプションでワールドを指定してください。",
       "worldNotFound": "ワールドまたはデータセンター「{world}」が見つかりませんでした。\n\nスペルを確認するか、「Mana」や「Elemental」などのデータセンター名をお試しください。",
       "missingDye": "対象カラーを指定してください。",
       "dyeNotFound": "カラー「{name}」が見つかりませんでした。",
@@ -391,55 +218,9 @@
       "rateLimited": "リクエストが多すぎます。しばらくしてから価格を確認してください。"
     }
   },
-  "swatch": {
-    "title": "キャラクターカラーマッチ",
-    "colorType": "カラータイプ",
-    "colorTypes": {
-      "skin": "肌の色",
-      "hair": "髪の色",
-      "eyes": "目の色",
-      "highlight": "ハイライト",
-      "lips_dark": "唇の色（暗）",
-      "lips_light": "唇の色（明）",
-      "tattoo": "タトゥー/リムバルリング",
-      "facepaint_dark": "フェイスペイント（暗）",
-      "facepaint_light": "フェイスペイント（明）"
-    },
-    "clan": "部族",
-    "gender": "性別",
-    "genders": {
-      "male": "男性",
-      "female": "女性"
-    },
-    "gridPosition": "グリッド位置",
-    "row": "行",
-    "column": "列",
-    "colorIndex": "カラーインデックス",
-    "characterColor": "キャラクターカラー",
-    "closestDye": "最も近いカララント",
-    "topMatches": "上位{count}件のマッチ",
-    "raceSpecific": "種族固有のカラーパレット",
-    "sharedPalette": "共有カラーパレット（全種族）",
-    "index": "インデックス",
-    "matching": "マッチング",
-    "footer": "/preferences set clan/gender でデフォルトを設定 • /dye info {dyeName}",
-    "errors": {
-      "missingTypeAndIndex": "`type`と`index`の両方が必要です。",
-      "missingGridParams": "`type`、`row`、`col`のすべてが必要です。",
-      "invalidColorType": "無効なカラータイプ: `{type}`\n\n有効なタイプ: {validTypes}",
-      "invalidIndex": "{typeName}のインデックスが無効です。{min}から{max}の間で指定してください。",
-      "invalidRow": "{typeName}の行が無効です。{min}から{max}の間で指定してください。",
-      "invalidColumn": "列が無効です。{min}から{max}の間で指定してください。",
-      "gridOutOfRange": "グリッド位置 ({row}, {col}) は{typeName}の範囲外です。",
-      "clanGenderRequired": "{typeName}には{missing}の指定が必要です。\n\nパラメータとして指定するか、`/preferences set clan <部族>` と `/preferences set gender <性別>` でデフォルトを設定してください。",
-      "invalidClan": "無効な部族: `{clan}`\n\n有効な部族:\n{clanList}",
-      "colorNotFound": "指定されたキャラクターカラーが見つかりませんでした。"
-    }
-  },
   "preferences": {
     "title": "設定",
     "show": {
-      "title": "現在の設定",
       "description": "これらの設定はコマンドの動作に影響します。\nコマンドパラメータは常にこの設定を上書きします。",
       "default": "デフォルト",
       "notSet": "未設定",
@@ -447,8 +228,6 @@
     },
     "set": {
       "success": "設定を更新しました",
-      "updated": "**{key}**を**{value}**に設定しました。",
-      "affectedCommands": "影響するコマンド：{commands}",
       "successCount": "{count}件の設定を更新しました",
       "affects": "影響するコマンド",
       "failedToUpdate": "更新に失敗",
@@ -459,7 +238,6 @@
     "reset": {
       "success": "設定をリセットしました",
       "single": "**{key}**をデフォルト値にリセットしました。",
-      "all": "すべての設定をデフォルトにリセットしました。",
       "allTitle": "すべての設定をリセット",
       "allDescription": "すべての設定をデフォルトにリセットしました。",
       "failed": "設定のリセットに失敗しました。もう一度お試しください。",
@@ -483,27 +261,10 @@
       "filters": "カララントフィルター",
       "theme": "カードテーマ"
     },
-    "descriptions": {
-      "language": "カララント名とボットメッセージの言語",
-      "blending": "/mixerのデフォルトアルゴリズム",
-      "matching": "デフォルトのカラーマッチング方法",
-      "count": "デフォルトの結果件数（1-10）",
-      "clan": "/swatchのデフォルト部族",
-      "gender": "/swatchのデフォルト性別",
-      "world": "マーケット価格のデフォルトワールド/データセンター",
-      "market": "デフォルトでマーケット価格を表示するかどうか",
-      "showHex": "結果カードに16進カラーコードを表示",
-      "showRgb": "結果カードにRGB値を表示",
-      "showHsv": "結果カードにHSV値を表示",
-      "showLab": "結果カードにLAB値を表示",
-      "showDeltaE": "結果カードに色差ΔEを表示",
-      "showAcquisition": "結果カードにカララント入手方法を表示"
-    },
     "errors": {
       "invalidKey": "不明な設定キー：{key}",
       "invalidValue": "{key}の値が無効です。有効なオプション：{options}",
-      "noSubcommand": "サブコマンドが指定されていません",
-      "invalidTheme": "テーマは dark か light を指定してください。"
+      "noSubcommand": "サブコマンドが指定されていません"
     },
     "values": {
       "results": "{count}件の結果",
@@ -533,49 +294,6 @@
       "setHint": "/preferences filters set でカスタマイズ",
       "resetSuccess": "フィルターリセット完了",
       "resetDescription": "すべてのカララントフィルターがデフォルトにリセットされました（すべてのカララント種類が含まれます）。"
-    }
-  },
-  "stats": {
-    "summary": {
-      "title": "XIV Dye Tools Bot",
-      "description": "FFXIVカララント色の探索とマッチングのためのDiscordボット",
-      "features": "機能",
-      "featuresList": "• カラーマッチングと抽出\n• カララントブレンドとグラデーション\n• カラーハーモニー生成\n• キャラクターカラーマッチング\n• マーケット価格連携",
-      "links": "リンク"
-    },
-    "overview": {
-      "title": "使用状況概要",
-      "period": "過去{days}日間",
-      "totalCommands": "総コマンド数",
-      "uniqueUsers": "ユニークユーザー",
-      "successRate": "成功率",
-      "avgLatency": "平均レイテンシ"
-    },
-    "commands": {
-      "title": "コマンド統計",
-      "topCommands": "人気コマンド",
-      "leastUsed": "使用頻度の低いコマンド",
-      "v4Migration": "V4移行状況",
-      "v4Usage": "V4コマンド",
-      "legacyUsage": "旧コマンド"
-    },
-    "preferences": {
-      "title": "設定の利用状況",
-      "sampleSize": "サンプルサイズ：{count}ユーザー",
-      "languageDistribution": "言語分布",
-      "blendingModes": "ブレンドモード使用状況",
-      "matchingMethods": "マッチング方法使用状況"
-    },
-    "health": {
-      "title": "システムヘルス",
-      "kvLatency": "KVレイテンシ",
-      "analyticsStatus": "Analytics Engine",
-      "cacheStatus": "Cache API",
-      "externalServices": "外部サービス",
-      "universalis": "Universalis API",
-      "operational": "正常",
-      "degraded": "低下",
-      "down": "停止"
     }
   },
   "webhook": {
@@ -613,11 +331,6 @@
     "invalidAttachment": "添付された画像が見つかりませんでした。",
     "noColors": "画像が完全に透明か、分析には小さすぎるようです。",
     "extractionFailed": "画像から色を抽出できませんでした。",
-    "colorMatch": "色のマッチング",
-    "colorPalette": "{count}色パレット",
-    "closestMatch": "最も近いカララント",
-    "topMatches": "上位{count}件のマッチング",
-    "extractionMethod": "K-meansクラスタリングによる色抽出",
     "processingFailed": "画像の処理中にエラーが発生しました。",
     "onlyDiscord": "Discordに直接アップロードされた画像のみ分析できます。",
     "imageTooLarge": "画像が大きすぎます。より小さい画像を使用してください。",
@@ -656,7 +369,6 @@
     "stain": "番号",
     "src": "入手",
     "mkt": "市場",
-    "cost": "価格",
     "base": "ベース",
     "nearest": "最も近いカララント",
     "nearestMore": "他{n}色",
@@ -664,7 +376,6 @@
     "found": "最も近い色",
     "name": "カララント",
     "cat": "カテゴリ",
-    "idealKey": "枠線＝理想／塗り＝実在",
     "bandKey": "バンド: ≤6 / ≤12 / ≤20",
     "derivedNote": "ΔE2000 導出",
     "tier0": "完全",

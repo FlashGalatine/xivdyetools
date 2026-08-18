@@ -147,7 +147,6 @@ vi.mock('../../services/bot-i18n.js', () => {
       'dye.random.title': 'Random Dyes',
       'dye.random.description': `Here are ${vars?.count} random dyes`,
       'dye.random.titleUnique': 'Random Dyes (Unique Categories)',
-      'dye.random.descriptionUnique': `Here are ${vars?.count} random dyes from different categories`,
       'dye.random.runAgainHint': 'Run again for new dyes',
       'common.hexColor': 'Hex Color',
       'common.category': 'Category',
