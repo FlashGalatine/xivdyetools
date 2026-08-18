@@ -3,7 +3,14 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { APP_ENV, APP_NAME, resolveAppName } from '../constants';
+import { SUPPORTED_LOCALES as CORE_SUPPORTED_LOCALES } from '@xivdyetools/core';
+import {
+  APP_ENV,
+  APP_NAME,
+  resolveAppName,
+  SUPPORTED_LOCALES,
+  LOCALE_DISPLAY_INFO,
+} from '../constants';
 
 describe('resolveAppName', () => {
   it('returns the plain product name for production', () => {
@@ -16,6 +23,18 @@ describe('resolveAppName', () => {
 
   it('treats an unknown environment as production rather than guessing', () => {
     expect(resolveAppName('staging')).toBe('XIV Dye Tools');
+  });
+});
+
+describe('SUPPORTED_LOCALES', () => {
+  it("is exactly @xivdyetools/core's SUPPORTED_LOCALES (DEAD-037 Wave 4a)", () => {
+    // Derived directly from core's constant, so this is really a guard
+    // against a future edit reintroducing a locally-duplicated literal.
+    expect(SUPPORTED_LOCALES).toEqual(CORE_SUPPORTED_LOCALES);
+  });
+
+  it('has the same code set as LOCALE_DISPLAY_INFO, in the same order', () => {
+    expect(LOCALE_DISPLAY_INFO.map((l) => l.code)).toEqual(SUPPORTED_LOCALES);
   });
 });
 

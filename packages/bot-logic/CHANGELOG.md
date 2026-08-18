@@ -66,6 +66,10 @@ The 5.0 bot release: every `execute*` now renders a card from `@xivdyetools/svg`
 - **3 redundant core-type re-exports removed from `src/index.ts`**: `HarmonyColorSpace`, `BlendingMode`, `MatchingMethod` — every consumer already imports them from `@xivdyetools/core` / `@xivdyetools/core/blending` directly. The matching pure pass-throughs in `commands/harmony.ts` (`export type { HarmonyColorSpace }`) and `commands/gradient.ts` (`export type { MatchingMethod }`) are deleted too (`commands/mixer.ts`'s `export type { BlendingMode, ResolvedColor }` is kept — `mixer.test.ts` imports `BlendingMode` from it directly).
 - The `@xivdyetools/test-utils` devDependency removal (also listed in DEAD-013) shipped in Task 6.
 
+### Removed (2026-08-18 dead-code audit, Task 13 — Wave 4a)
+
+- **DEAD-037**: `commands/accessibility.ts`'s local `VISION_TYPES` (the 4 simulated colourblind lenses, typed against `@xivdyetools/svg`'s `VisionType`) gains a compile-time bidirectional check against `@xivdyetools/types`' 5-member `VisionType` union minus its `'normal'` baseline, so the two cannot silently drift apart. No data moved — the register's two `VISION_TYPES` copies (here and web-app's `accessibility-tool.ts`) have different element shapes and one excludes the baseline lens, so they were never a byte-identical duplicate to consolidate into a shared table.
+
 ## [1.5.0] - 2026-08-01
 
 ### Added

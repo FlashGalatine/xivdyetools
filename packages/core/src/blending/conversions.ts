@@ -1,4 +1,5 @@
 import type { RGB, LAB, HSL } from './types.js';
+import { clamp } from '../utils/index.js';
 
 // ============================================================================
 // CIELAB (D65 illuminant)
@@ -61,9 +62,9 @@ export function labToRgb(lab: LAB): RGB {
   b = b > 0.0031308 ? 1.055 * Math.pow(b, 1 / 2.4) - 0.055 : 12.92 * b;
 
   return {
-    r: Math.round(Math.max(0, Math.min(255, r * 255))),
-    g: Math.round(Math.max(0, Math.min(255, g * 255))),
-    b: Math.round(Math.max(0, Math.min(255, b * 255))),
+    r: Math.round(clamp(r * 255, 0, 255)),
+    g: Math.round(clamp(g * 255, 0, 255)),
+    b: Math.round(clamp(b * 255, 0, 255)),
   };
 }
 
@@ -116,9 +117,9 @@ export function oklabToRgb(oklab: { L: number; a: number; b: number }): RGB {
   b = b > 0.0031308 ? 1.055 * Math.pow(b, 1 / 2.4) - 0.055 : 12.92 * b;
 
   return {
-    r: Math.round(Math.max(0, Math.min(255, r * 255))),
-    g: Math.round(Math.max(0, Math.min(255, g * 255))),
-    b: Math.round(Math.max(0, Math.min(255, b * 255))),
+    r: Math.round(clamp(r * 255, 0, 255)),
+    g: Math.round(clamp(g * 255, 0, 255)),
+    b: Math.round(clamp(b * 255, 0, 255)),
   };
 }
 
@@ -174,9 +175,9 @@ export function rybToRgb(ryb: { r: number; y: number; b: number }): RGB {
   const n = Math.max(r__, g, b__) / Math.max(my, 0.001);
 
   return {
-    r: Math.round(Math.max(0, Math.min(255, (r__ / Math.max(n, 0.001) + w) * 255))),
-    g: Math.round(Math.max(0, Math.min(255, (g / Math.max(n, 0.001) + w) * 255))),
-    b: Math.round(Math.max(0, Math.min(255, (b__ / Math.max(n, 0.001) + w) * 255))),
+    r: Math.round(clamp((r__ / Math.max(n, 0.001) + w) * 255, 0, 255)),
+    g: Math.round(clamp((g / Math.max(n, 0.001) + w) * 255, 0, 255)),
+    b: Math.round(clamp((b__ / Math.max(n, 0.001) + w) * 255, 0, 255)),
   };
 }
 
@@ -255,9 +256,9 @@ export function rgbToReflectance(rgb: RGB): { r: number; g: number; b: number } 
 
 export function reflectanceToRgb(ref: { r: number; g: number; b: number }): RGB {
   return {
-    r: Math.round(Math.max(0, Math.min(255, ref.r * 255))),
-    g: Math.round(Math.max(0, Math.min(255, ref.g * 255))),
-    b: Math.round(Math.max(0, Math.min(255, ref.b * 255))),
+    r: Math.round(clamp(ref.r * 255, 0, 255)),
+    g: Math.round(clamp(ref.g * 255, 0, 255)),
+    b: Math.round(clamp(ref.b * 255, 0, 255)),
   };
 }
 
@@ -292,7 +293,10 @@ export function hexToRgb(hex: string): RGB {
   }
   const full =
     clean.length === 3
-      ? clean.split('').map((c) => c + c).join('')
+      ? clean
+          .split('')
+          .map((c) => c + c)
+          .join('')
       : clean;
   return {
     r: parseInt(full.substring(0, 2), 16),

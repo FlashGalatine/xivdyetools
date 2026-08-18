@@ -28,6 +28,7 @@ import {
 } from '@services/index';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import type { VisionType as CoreVisionType } from '@xivdyetools/types';
 import type { Dye } from '@xivdyetools/types';
 import type { AccessibilityConfig, DisplayOptionsConfig } from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
@@ -141,6 +142,19 @@ const VISION_TYPES = [
 ] as const;
 
 type VisionTypeId = (typeof VISION_TYPES)[number]['id'];
+
+// DEAD-037 (Wave 4a): bidirectional compile-time check that this list's ids
+// cover exactly the `VisionType` union from @xivdyetools/types — errors if
+// either side gains or drops a lens the other doesn't know about, without
+// forcing the two differently-shaped lists (this one carries per-app labels)
+// to merge into one.
+type AssertVisionTypesCoverExactly = VisionTypeId extends CoreVisionType
+  ? CoreVisionType extends VisionTypeId
+    ? true
+    : never
+  : never;
+const _assertVisionTypesCoverExactly: AssertVisionTypesCoverExactly = true;
+void _assertVisionTypesCoverExactly;
 
 /**
  * Storage keys for v3 accessibility tool

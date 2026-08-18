@@ -10,6 +10,7 @@
 import type { ThemeName } from './types';
 import type { LocaleCode, LocaleDisplay } from './i18n-types';
 import { BASE_APP_NAME, BETA_TITLE_PREFIX } from './beta-branding';
+import { SUPPORTED_LOCALES as CORE_SUPPORTED_LOCALES } from '@xivdyetools/core';
 
 // ============================================================================
 // Application Metadata
@@ -53,17 +54,12 @@ export const DEFAULT_THEME: ThemeName = 'standard-dark';
 // ============================================================================
 
 /**
- * Supported locale codes
- * Matches the locales available in xivdyetools-core v1.2.0
+ * Supported locale codes — derived from @xivdyetools/core's own
+ * `SUPPORTED_LOCALES` (DEAD-037 Wave 4a) so the two cannot drift; a parity
+ * test in `__tests__/constants.test.ts` also asserts `LOCALE_DISPLAY_INFO`'s
+ * codes match this list 1:1.
  */
-export const SUPPORTED_LOCALES: readonly LocaleCode[] = [
-  'en',
-  'ja',
-  'de',
-  'fr',
-  'ko',
-  'zh',
-] as const;
+export const SUPPORTED_LOCALES: readonly LocaleCode[] = CORE_SUPPORTED_LOCALES;
 
 export const DEFAULT_LOCALE: LocaleCode = 'en';
 

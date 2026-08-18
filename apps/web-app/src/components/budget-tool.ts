@@ -49,6 +49,7 @@ import { ICON_TOOL_BUDGET } from '@shared/tool-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import type { Dye, DyeId, PriceData } from '@xivdyetools/types';
+import { GLYPH_ACCENT_LIGHT, GLYPH_ACCENT_DARK } from '@xivdyetools/svg';
 import type { BudgetConfig, MatchingMethod } from '@shared/tool-config-types';
 import { DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
 import { filterDyes } from '@shared/dye-filter-utils';
@@ -496,7 +497,9 @@ export class BudgetTool extends BaseComponent {
   }
 
   private accent(): string {
-    return ThemeService.isDarkMode() ? '#EA4133' : '#CE2222';
+    // DEAD-018/DEAD-037: 4th missed site — GLYPH_ACCENT_DARK ('#EA4133') and
+    // GLYPH_ACCENT_LIGHT ('#CE2222') are the same literals this used to hardcode.
+    return ThemeService.isDarkMode() ? GLYPH_ACCENT_DARK : GLYPH_ACCENT_LIGHT;
   }
 
   private dyeName(dye: Dye): string {

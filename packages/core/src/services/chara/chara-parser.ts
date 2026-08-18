@@ -32,17 +32,11 @@
 
 import type { Gender, Race, RGB, SubRace } from '@xivdyetools/types';
 import { AppError, ErrorCode } from '@xivdyetools/types';
+import { clamp } from '../../utils/index.js';
 
 /** Colour slots a `.chara` file can populate. */
 export type CharaSlotId =
-  | 'leftEye'
-  | 'rightEye'
-  | 'hair'
-  | 'highlights'
-  | 'skin'
-  | 'limbal'
-  | 'lip'
-  | 'facePaint';
+  'leftEye' | 'rightEye' | 'hair' | 'highlights' | 'skin' | 'limbal' | 'lip' | 'facePaint';
 
 /** Equipment slots that can carry dye channels. */
 export type CharaGearSlotId =
@@ -162,10 +156,10 @@ const GENDER_MAP: Record<string, Gender> = {
 
 /** Linear-light → sRGB gamma encoding, clamped, 0-255. */
 function linearToSrgb255(c: number): number {
-  const clamped = Math.min(1, Math.max(0, c));
+  const clamped = clamp(c, 0, 1);
   const encoded =
     clamped <= 0.0031308 ? clamped * 12.92 : 1.055 * Math.pow(clamped, 1 / 2.4) - 0.055;
-  return Math.round(Math.min(1, Math.max(0, encoded)) * 255);
+  return Math.round(clamp(encoded, 0, 1) * 255);
 }
 
 interface ParsedFloat {
@@ -185,7 +179,7 @@ function parseFloatColor(field: string, value: unknown): ParsedFloat | null {
     throw new AppError(
       ErrorCode.INVALID_INPUT,
       `.chara field ${field}: expected a comma-separated float string, got ${typeof value}`,
-      'error'
+      'error',
     );
   }
   const parts = value.split(',').map((p) => Number(p.trim()));
@@ -193,7 +187,7 @@ function parseFloatColor(field: string, value: unknown): ParsedFloat | null {
     throw new AppError(
       ErrorCode.INVALID_INPUT,
       `.chara field ${field}: unparseable float colour "${value}"`,
-      'error'
+      'error',
     );
   }
   const [r, g, b] = parts;
@@ -235,7 +229,7 @@ function readIndex(record: Record<string, unknown>, key: string): number | null 
     throw new AppError(
       ErrorCode.INVALID_INPUT,
       `.chara field ${key}: expected a numeric palette index, got ${JSON.stringify(value)}`,
-      'error'
+      'error',
     );
   }
   return value;
@@ -244,14 +238,14 @@ function readIndex(record: Record<string, unknown>, key: string): number | null 
 function mapNamed<T>(
   table: Record<string, T>,
   field: string,
-  value: unknown
+  value: unknown,
 ): { mapped: T | null; raw: string | null } {
   if (value === null || value === undefined) return { mapped: null, raw: null };
   if (typeof value !== 'string') {
     throw new AppError(
       ErrorCode.INVALID_INPUT,
       `.chara field ${field}: expected a string, got ${typeof value}`,
-      'error'
+      'error',
     );
   }
   const mapped = table[value];
@@ -259,7 +253,7 @@ function mapNamed<T>(
     throw new AppError(
       ErrorCode.INVALID_INPUT,
       `.chara field ${field}: unrecognised value "${value}" (expected one of: ${Object.keys(table).join(', ')})`,
-      'error'
+      'error',
     );
   }
   return { mapped, raw: value };
@@ -297,7 +291,7 @@ export function parseCharaFile(text: string): ParsedCharaFile {
     throw new AppError(
       ErrorCode.INVALID_INPUT,
       `.chara file carries no character colour fields (expected at least one of: ${COLOR_KEYS.join(', ')})`,
-      'error'
+      'error',
     );
   }
 
@@ -322,7 +316,11 @@ export function parseCharaFile(text: string): ParsedCharaFile {
     id: CharaSlotId,
     index: number | null,
     float: ParsedFloat | null,
-    options: { indexActive?: boolean; inertReason?: CharaSlotInertReason; alpha?: number | null } = {}
+    options: {
+      indexActive?: boolean;
+      inertReason?: CharaSlotInertReason;
+      alpha?: number | null;
+    } = {},
   ): CharaColorSlotRaw => ({
     slot: id,
     index,
@@ -372,12 +370,12 @@ export function parseCharaFile(text: string): ParsedCharaFile {
   }
 
   return {
-    producer: typeof record['TypeName'] === 'string' ? (record['TypeName']) : null,
+    producer: typeof record['TypeName'] === 'string' ? record['TypeName'] : null,
     race,
     tribe,
     tribeRaw,
     gender,
-    nickname: typeof record['Nickname'] === 'string' ? (record['Nickname']) : null,
+    nickname: typeof record['Nickname'] === 'string' ? record['Nickname'] : null,
     extendedValid,
     extendedDeclared,
     slots,

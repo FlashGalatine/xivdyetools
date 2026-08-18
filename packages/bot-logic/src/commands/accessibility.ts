@@ -15,7 +15,7 @@
  * @module commands/accessibility
  */
 
-import type { Dye } from '@xivdyetools/types';
+import type { Dye, VisionType as CoreVisionType } from '@xivdyetools/types';
 import { ColorService } from '@xivdyetools/core';
 import { createTranslator, type LocaleCode, type Translator } from '../i18n/index.js';
 import { generateA11yCard, type A11yLensRow, type VisionType } from '@xivdyetools/svg';
@@ -33,6 +33,20 @@ export const VISION_TYPES: VisionType[] = [
   'tritanopia',
   'achromatopsia',
 ];
+
+// DEAD-037 (Wave 4a): bidirectional compile-time check that svg's 4-lens
+// `VisionType` (this list's element type — the simulated colourblind lenses,
+// no baseline) covers exactly @xivdyetools/types' `VisionType` union minus
+// its 'normal' baseline member. Errors if either union gains or drops a lens
+// the other doesn't know about.
+type AssertVisionTypesCoverExactly =
+  VisionType extends Exclude<CoreVisionType, 'normal'>
+    ? Exclude<CoreVisionType, 'normal'> extends VisionType
+      ? true
+      : never
+    : never;
+const _assertVisionTypesCoverExactly: AssertVisionTypesCoverExactly = true;
+void _assertVisionTypesCoverExactly;
 
 /** Untranslated lens codes — identifiers, never localized (like HEX/RGB). */
 const LENS_SHORT: Record<'normal' | VisionType, string> = {
@@ -88,7 +102,7 @@ function pairRow(
   lens: 'normal' | VisionType,
   hexA: string,
   hexB: string,
-  t: Translator
+  t: Translator,
 ): A11yLensRow {
   const simA = lens === 'normal' ? hexA : ColorService.simulateColorblindnessHex(hexA, lens);
   const simB = lens === 'normal' ? hexB : ColorService.simulateColorblindnessHex(hexB, lens);
@@ -111,7 +125,9 @@ function pairRow(
  * carrying the verdict sentence — the numbers alone would mislead, and the
  * sentence costs a lens row inside the frame, so it lives here.
  */
-export async function executeAccessibility(input: AccessibilityInput): Promise<AccessibilityResult> {
+export async function executeAccessibility(
+  input: AccessibilityInput,
+): Promise<AccessibilityResult> {
   const { dyes, locale, vision, theme, commandLabel } = input;
   const t = createTranslator(locale);
 
@@ -119,7 +135,7 @@ export async function executeAccessibility(input: AccessibilityInput): Promise<A
 
   try {
     const localized = dyes.map((d) =>
-      d.itemID ? getLocalizedDyeName(d.itemID, d.name, locale) : d.name
+      d.itemID ? getLocalizedDyeName(d.itemID, d.name, locale) : d.name,
     );
 
     const labels = {
@@ -146,7 +162,7 @@ export async function executeAccessibility(input: AccessibilityInput): Promise<A
             : ColorService.getDistanceForMethod(
                 d.hex,
                 ColorService.simulateColorblindnessHex(d.hex, lens),
-                'ciede2000'
+                'ciede2000',
               ),
         isNormal: lens === 'normal',
         hexA: lens === 'normal' ? d.hex : ColorService.simulateColorblindnessHex(d.hex, lens),
@@ -174,7 +190,7 @@ export async function executeAccessibility(input: AccessibilityInput): Promise<A
     const [a, b] = dyes;
     const pairTitle = `${localized[0]} ↔ ${localized[1]}`;
     const allRows = (['normal', ...VISION_TYPES] as const).map((lens) =>
-      pairRow(lens, a.hex, b.hex, t)
+      pairRow(lens, a.hex, b.hex, t),
     );
     const lensOnly = allRows.filter((r) => !r.isNormal);
     const worst = lensOnly.reduce((x, y) => (y.deltaE < x.deltaE ? y : x));
@@ -222,7 +238,11 @@ export async function executeAccessibility(input: AccessibilityInput): Promise<A
     };
     return { ok: true, svgString, mode: 'all', embed };
   } catch {
-    return { ok: false, error: 'GENERATION_FAILED', errorMessage: 'Failed to generate accessibility image.' };
+    return {
+      ok: false,
+      error: 'GENERATION_FAILED',
+      errorMessage: 'Failed to generate accessibility image.',
+    };
   }
 }
 

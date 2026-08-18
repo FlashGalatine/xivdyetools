@@ -75,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `PaletteService.pixelDataToRGB` (apps use `pixelDataToRGBFiltered`).
   - `KDTree.getSize` (test-only; `isEmpty()` remains).
   - **Stale-default fix**: `discord-worker`'s `extractor.ts` deduplication path called `findDyesWithinDistance` without `matchingMethod`, silently falling back to the RGB-radius default while its primary match used the user's chosen method — now passes `matchingMethod` explicitly.
+- **Inline clamps replaced with the exported `clamp()`** (DEAD-037, Wave 4a — pure refactor, no behaviour change): `blending/conversions.ts`'s six `Math.round(Math.max(0, Math.min(255, …)))` 0–255 clamps (LAB/OKLAB/RYB/Kubelka-Munk RGB conversions), `services/chara/chara-parser.ts` and `services/chara/chara-resolver.ts`'s `linearToSrgb255` 0–1 clamps, `services/chara/chara-resolver.ts`'s lip-alpha clamp, and `services/color/ColorConverter.ts`'s private `linearToSrgb`'s 0–1 clamp. `clamp()`'s `Math.min(Math.max(value, min), max)` is arithmetically identical to every inline `Math.max(min, Math.min(max, value))` / `Math.min(max, Math.max(min, value))` ordering replaced (including the shared NaN-propagates behaviour) — no new test needed, the existing suites for all four files are unchanged and green.
 
 ## [3.0.0] — 2026-07-31
 

@@ -987,7 +987,7 @@ export class ColorConverter {
    * @internal
    */
   private linearToSrgb(c: number): number {
-    const clamped = Math.max(0, Math.min(1, c));
+    const clamped = clamp(c, 0, 1);
     const srgb =
       clamped <= 0.0031308 ? clamped * 12.92 : 1.055 * Math.pow(clamped, 1 / 2.4) - 0.055;
     return Math.round(srgb * 255);

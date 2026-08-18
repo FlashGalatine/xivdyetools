@@ -21,6 +21,7 @@
 
 import type { CharacterColor, Dye, Gender, SubRace } from '@xivdyetools/types';
 import { ColorConverter } from '../color/ColorConverter.js';
+import { clamp } from '../../utils/index.js';
 import type { CharacterColorService } from '../CharacterColorService.js';
 import type {
   CharaGearSlotId,
@@ -120,10 +121,10 @@ function srgbToLinear(c: number): number {
 }
 
 function linearToSrgb255(c: number): number {
-  const clamped = Math.min(1, Math.max(0, c));
+  const clamped = clamp(c, 0, 1);
   const encoded =
     clamped <= 0.0031308 ? clamped * 12.92 : 1.055 * Math.pow(clamped, 1 / 2.4) - 0.055;
-  return Math.round(Math.min(1, Math.max(0, encoded)) * 255);
+  return Math.round(clamp(encoded, 0, 1) * 255);
 }
 
 /** Composite `top` over `base` at `alpha`, in linear light. */
@@ -150,12 +151,12 @@ async function resolveSheet(
   slot: CharaSlotId,
   index: number,
   parsed: ParsedCharaFile,
-  characterColors: CharacterColorService
+  characterColors: CharacterColorService,
 ): Promise<SheetResolution> {
   const splitRange = (
     dark: CharacterColor[],
     light: CharacterColor[],
-    field: string
+    field: string,
   ): SheetResolution => {
     if (index >= 0 && index <= 95) {
       return { sheet: dark, variant: 'dark', sheetIndex: index };
@@ -197,13 +198,13 @@ async function resolveSheet(
       return splitRange(
         characterColors.getLipColorsDark(),
         characterColors.getLipColorsLight(),
-        'LipsToneFurPattern'
+        'LipsToneFurPattern',
       );
     case 'facePaint':
       return splitRange(
         characterColors.getFacePaintColorsDark(),
         characterColors.getFacePaintColorsLight(),
-        'FacePaintColor'
+        'FacePaintColor',
       );
     case 'hair':
     case 'skin': {
@@ -234,7 +235,7 @@ async function resolveSheet(
 export async function resolveCharaColors(
   parsed: ParsedCharaFile,
   characterColors: CharacterColorService,
-  dyeLookup?: StainIdLookup
+  dyeLookup?: StainIdLookup,
 ): Promise<ResolvedCharaCharacter> {
   const slots: ResolvedCharaSlot[] = [];
 
@@ -332,11 +333,12 @@ export async function resolveCharaColors(
   const lip = slots.find((s) => s.slot === 'lip');
   const skin = slots.find((s) => s.slot === 'skin');
   if (lip && skin && lip.alpha !== null && lip.alpha > 0) {
-    const lipHex = lip.verdict === 'offGrid' || lip.verdict === 'floatOnly' ? lip.floatHex : lip.indexHex;
+    const lipHex =
+      lip.verdict === 'offGrid' || lip.verdict === 'floatOnly' ? lip.floatHex : lip.indexHex;
     const skinHex =
       skin.verdict === 'offGrid' || skin.verdict === 'floatOnly' ? skin.floatHex : skin.indexHex;
     if (lipHex && skinHex) {
-      lip.blendHex = compositeHex(lipHex, skinHex, Math.min(1, Math.max(0, lip.alpha)));
+      lip.blendHex = compositeHex(lipHex, skinHex, clamp(lip.alpha, 0, 1));
     }
   }
 
@@ -353,9 +355,7 @@ export async function resolveCharaColors(
     extendedDeclared: parsed.extendedDeclared,
     slots,
     eyesShareIndex:
-      leftEye?.index !== null &&
-      leftEye?.index !== undefined &&
-      leftEye.index === rightEye?.index,
+      leftEye?.index !== null && leftEye?.index !== undefined && leftEye.index === rightEye?.index,
     gearDyes: parsed.gearDyes.map((g) => ({
       ...g,
       dye: dyeLookup?.getByStainId(g.stainId) ?? null,

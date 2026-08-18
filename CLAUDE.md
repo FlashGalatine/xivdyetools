@@ -46,7 +46,7 @@ bot-logic (→ core, svg, types; incl. /i18n) ───────────�
                             Applications ◄─────────────────────┘
 ```
 
-`stoat-worker` consumes `bot-logic` (incl. its `/i18n` engine) + `svg` so it shares command logic with `discord-worker` despite running on Node.js + Revolt instead of Cloudflare + Discord.
+`stoat-worker` consumes `bot-logic` (incl. its `/i18n` engine) so it shares command logic with `discord-worker` despite running on Node.js + Revolt instead of Cloudflare + Discord — `svg`, `core`, and `worker-kit` were dropped from its dependencies in Task 6 (it renders no cards and needs no Workers-only middleware).
 
 ## Common Commands
 
@@ -114,7 +114,7 @@ presets-api ──► image-worker           (POST /thumbnail — preview images
 api-worker ──► (standalone, public-facing)
 ```
 
-All Cloudflare Workers use **Hono** (`^4.12.34` floor) as the HTTP framework and consume `@xivdyetools/worker-kit` for request-ID / logger / rate-limit middleware. Persistence is **D1** (SQLite): `presets-api` owns `xivdyetools-presets` (also bound read/write by `discord-worker` and `moderation-worker`), `oauth` owns `xivdyetools-users`; `presets-api` additionally stores preview images in R2.
+All Cloudflare Workers use **Hono** (`^4.12.34` floor) as the HTTP framework and consume `@xivdyetools/worker-kit` for request-ID / logger / rate-limit middleware. Persistence is **D1** (SQLite): `presets-api` owns `xivdyetools-presets` (also bound read/write by `moderation-worker` — `discord-worker`'s own D1 binding was removed, DEAD-007; it reaches preset data only through the `presets-api` service binding), `oauth` owns `xivdyetools-users`; `presets-api` additionally stores preview images in R2.
 
 ### Localization
 6 languages throughout: `en`, `ja`, `de`, `fr`, `ko`, `zh`

@@ -9,7 +9,8 @@
  */
 import { describe, it, expect } from 'vitest';
 import { RACE_SUBRACES, SUBRACE_TO_RACE, type Race } from '@xivdyetools/types';
-import { CLANS_BY_RACE, VALID_CLANS } from './preferences.js';
+import { MATCHING_METHODS as CORE_MATCHING_METHODS } from '@xivdyetools/core';
+import { CLANS_BY_RACE, VALID_CLANS, MATCHING_METHODS } from './preferences.js';
 
 describe('CLANS_BY_RACE (DEAD-024 adoption)', () => {
   it('has exactly one entry per race in the shared RACE_SUBRACES table', () => {
@@ -49,5 +50,19 @@ describe('CLANS_BY_RACE (DEAD-024 adoption)', () => {
     expect(CLANS_BY_RACE["Miqo'te"]).toEqual(['Seeker of the Sun', 'Keeper of the Moon']);
     expect(CLANS_BY_RACE['Au Ra']).toEqual(['Raen', 'Xaela']);
     expect(CLANS_BY_RACE.Hrothgar).toEqual(['Helions', 'The Lost']);
+  });
+});
+
+describe('MATCHING_METHODS (DEAD-037 anti-drift proof)', () => {
+  it('has exactly the same values, in the same order, as core MATCHING_METHODS', () => {
+    // This app's list carries per-method display name/description for
+    // /preferences and autocomplete; only the `value` column is the shared
+    // vocabulary. Proving order+values match core catches a new/renamed/
+    // reordered method landing on one side without the other.
+    expect(MATCHING_METHODS.map((m) => m.value)).toEqual(CORE_MATCHING_METHODS);
+  });
+
+  it('has no extra or missing methods relative to core', () => {
+    expect(MATCHING_METHODS).toHaveLength(CORE_MATCHING_METHODS.length);
   });
 });
