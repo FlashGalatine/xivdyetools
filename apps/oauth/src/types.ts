@@ -19,7 +19,7 @@ export type { AuthProvider } from '@xivdyetools/types';
  * @deprecated Import directly from '@xivdyetools/types' instead.
  * These re-exports will be removed in the next major version.
  */
-export type { PrimaryCharacter, JWTPayload, OAuthState } from '@xivdyetools/types';
+export type { PrimaryCharacter, JWTPayload } from '@xivdyetools/types';
 
 /**
  * @deprecated Import directly from '@xivdyetools/types' instead.

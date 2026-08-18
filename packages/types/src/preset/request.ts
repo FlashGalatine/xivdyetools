@@ -6,7 +6,7 @@
  * @module preset/request
  */
 
-import type { PresetCategory, PresetStatus, PresetSortOption } from './core.js';
+import type { PresetCategory, PresetStatus } from './core.js';
 
 /**
  * Filters for listing presets
@@ -22,7 +22,7 @@ export interface PresetFilters {
   status?: PresetStatus;
 
   /** Sort order */
-  sort?: PresetSortOption;
+  sort?: 'popular' | 'recent' | 'name';
 
   /** Page number (1-indexed) */
   page?: number;

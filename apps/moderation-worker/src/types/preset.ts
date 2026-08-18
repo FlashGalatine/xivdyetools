@@ -14,7 +14,6 @@
 export type {
   PresetStatus,
   PresetCategory,
-  PresetSortOption,
   CategoryMeta,
   CommunityPreset,
   PresetPreviousValues,

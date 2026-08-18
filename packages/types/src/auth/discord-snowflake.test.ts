@@ -2,11 +2,7 @@
  * @xivdyetools/types - Discord Snowflake Tests
  */
 import { describe, it, expect } from 'vitest';
-import {
-  isValidSnowflake,
-  createSnowflake,
-  type DiscordSnowflake,
-} from './discord-snowflake.js';
+import { isValidSnowflake } from './discord-snowflake.js';
 
 describe('isValidSnowflake', () => {
   describe('valid snowflakes', () => {
@@ -35,8 +31,8 @@ describe('isValidSnowflake', () => {
     });
 
     it('should accept real-looking Discord user IDs', () => {
-      expect(isValidSnowflake('80351110224678912')).toBe(true);   // early Discord user
-      expect(isValidSnowflake('987654321098765432')).toBe(true);  // typical current user
+      expect(isValidSnowflake('80351110224678912')).toBe(true); // early Discord user
+      expect(isValidSnowflake('987654321098765432')).toBe(true); // typical current user
     });
   });
 
@@ -46,13 +42,13 @@ describe('isValidSnowflake', () => {
     });
 
     it('should reject strings shorter than 17 digits', () => {
-      expect(isValidSnowflake('1234567890123456')).toBe(false);  // 16 digits
+      expect(isValidSnowflake('1234567890123456')).toBe(false); // 16 digits
       expect(isValidSnowflake('1')).toBe(false);
-      expect(isValidSnowflake('1234567890')).toBe(false);        // 10 digits
+      expect(isValidSnowflake('1234567890')).toBe(false); // 10 digits
     });
 
     it('should reject strings longer than 20 digits', () => {
-      expect(isValidSnowflake('123456789012345678901')).toBe(false);  // 21 digits
+      expect(isValidSnowflake('123456789012345678901')).toBe(false); // 21 digits
     });
 
     it('should reject non-numeric characters', () => {
@@ -75,25 +71,5 @@ describe('isValidSnowflake', () => {
       expect(isValidSnowflake('+12345678901234567')).toBe(false);
       expect(isValidSnowflake('-12345678901234567')).toBe(false);
     });
-  });
-});
-
-describe('createSnowflake', () => {
-  it('should return a branded DiscordSnowflake for valid input', () => {
-    const snowflake = createSnowflake('123456789012345678');
-    expect(snowflake).toBe('123456789012345678');
-    // Type assertion verifies the branded type works at compile time
-    const _typed: DiscordSnowflake = snowflake;
-    expect(_typed).toBe('123456789012345678');
-  });
-
-  it('should throw for invalid input', () => {
-    expect(() => createSnowflake('')).toThrow('Invalid Discord snowflake format');
-    expect(() => createSnowflake('abc')).toThrow('Invalid Discord snowflake format');
-    expect(() => createSnowflake('1234')).toThrow('Invalid Discord snowflake format');
-  });
-
-  it('should include the invalid value in the error message', () => {
-    expect(() => createSnowflake('not-a-snowflake')).toThrow('"not-a-snowflake"');
   });
 });

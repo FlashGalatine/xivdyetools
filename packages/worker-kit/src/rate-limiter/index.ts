@@ -42,7 +42,6 @@
 export type {
   RateLimitResult,
   RateLimitConfig,
-  EndpointRateLimitConfig,
   RateLimiter,
   ExtendedRateLimiter,
   MemoryRateLimiterOptions,
@@ -59,7 +58,7 @@ export { UpstashRateLimiter } from './backends/upstash.js';
 // Utilities
 export { getClientIp } from './ip.js';
 export type { GetClientIpOptions } from './ip.js';
-export { getRateLimitHeaders, formatRateLimitMessage } from './headers.js';
+export { getRateLimitHeaders } from './headers.js';
 
 // Presets
 export {
@@ -68,6 +67,6 @@ export {
   DISCORD_COMMAND_LIMITS,
   getDiscordCommandLimit,
   MODERATION_LIMITS,
+  getModerationLimit,
   PUBLIC_API_LIMITS,
-  UNIVERSALIS_PROXY_LIMITS,
 } from './presets/configs.js';

@@ -147,17 +147,16 @@ if (!result.allowed) {
 |--------|-------------|
 | `getClientIp(request, options?)` | Prefers `CF-Connecting-IP`. **Never** trusts `X-Forwarded-For`, which is spoofable (SEC-002). |
 | `getRateLimitHeaders(result)` | Builds the `X-RateLimit-*` / `Retry-After` header set. |
-| `formatRateLimitMessage(result)` | Human-readable "try again in N seconds" string. |
 
 ### Presets (`/rate-limiter/presets`)
 
 Shared limit configurations so every worker enforces the same policy:
 
-`OAUTH_LIMITS`, `getOAuthLimit()`, `DISCORD_COMMAND_LIMITS`, `getDiscordCommandLimit()`, `MODERATION_LIMITS`, `PUBLIC_API_LIMITS`, `UNIVERSALIS_PROXY_LIMITS`.
+`OAUTH_LIMITS`, `getOAuthLimit()`, `DISCORD_COMMAND_LIMITS`, `getDiscordCommandLimit()`, `MODERATION_LIMITS`, `getModerationLimit()`, `PUBLIC_API_LIMITS`.
 
 ### Types
 
-`RateLimitResult`, `RateLimitConfig`, `EndpointRateLimitConfig`, `RateLimiter`, `ExtendedRateLimiter`, `MemoryRateLimiterOptions`, `KVRateLimiterOptions`, `UpstashRateLimiterOptions`, `RateLimiterLogger`.
+`RateLimitResult`, `RateLimitConfig`, `RateLimiter`, `ExtendedRateLimiter`, `MemoryRateLimiterOptions`, `KVRateLimiterOptions`, `UpstashRateLimiterOptions`, `RateLimiterLogger`.
 
 ## Worker Configuration Examples
 

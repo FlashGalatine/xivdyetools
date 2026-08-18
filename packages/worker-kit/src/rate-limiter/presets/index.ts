@@ -10,6 +10,6 @@ export {
   DISCORD_COMMAND_LIMITS,
   getDiscordCommandLimit,
   MODERATION_LIMITS,
+  getModerationLimit,
   PUBLIC_API_LIMITS,
-  UNIVERSALIS_PROXY_LIMITS,
 } from './configs.js';

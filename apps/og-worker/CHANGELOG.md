@@ -76,6 +76,7 @@ an atomic web + og move, so neither side should go out without the other.
 ### Removed (2026-08-18 dead-code audit)
 
 - **`services/svg/base.ts`'s `truncateText` and `rgbToHex` re-exports** (DEAD-014/015): both were dropped from `@xivdyetools/svg`'s own barrel as dead (this worker never called either through the re-export). `services/svg/band.ts`'s hard-coded `fill="#CE2222"` on the reduced app mark (`ogMark()`) now reads `@xivdyetools/svg`'s `GLYPH_ACCENT_LIGHT` instead — same value, single source (DEAD-018).
+- **DEAD-024 (adopt)**: `services/svg/dye-helpers.ts`'s `ALL_SUBRACES` now derives its subrace set from `@xivdyetools/types`' `RACE_SUBRACES` instead of hand-rolling its own copy; the race-iteration order `buildHexIndex`'s first-match semantics depend on (Viera before Hrothgar — differs from `RACE_SUBRACES`' own key order) is preserved via a local `SUBRACE_SEARCH_ORDER` array. `ALL_SUBRACES` is now exported so `dye-helpers.test.ts` can assert the derived set matches `RACE_SUBRACES` and the pre-adoption order is unchanged.
 
 ### Boundary: what this worker does *not* cover
 

@@ -25,7 +25,7 @@
 
 import type { Context, Next } from 'hono';
 import type { Env } from '../types/env.js';
-import { KVRateLimiter } from '@xivdyetools/worker-kit/rate-limiter';
+import { KVRateLimiter, getModerationLimit } from '@xivdyetools/worker-kit/rate-limiter';
 
 /**
  * Rate limit configuration
@@ -65,17 +65,30 @@ export type RateLimitType = 'command' | 'autocomplete';
 
 /**
  * Rate limit configurations for different interaction types
+ *
+ * Sourced from the shared `MODERATION_LIMITS` preset (via `getModerationLimit`)
+ * in `@xivdyetools/worker-kit/rate-limiter` — this middleware's config shape
+ * (`requestsPerMinute`) predates and differs from the shared package's
+ * (`maxRequests` + `windowMs`), so the numbers are adapted here rather than
+ * duplicated.
  */
 export const RATE_LIMIT_CONFIGS: Record<RateLimitType, RateLimitConfig> = {
-  command: {
-    requestsPerMinute: 20,
-    burstAllowance: 5,
-  },
-  autocomplete: {
-    requestsPerMinute: 60,
-    burstAllowance: 10,
-  },
+  command: toLegacyConfig(getModerationLimit('command')),
+  autocomplete: toLegacyConfig(getModerationLimit('autocomplete')),
 };
+
+/**
+ * Adapt the shared `{ maxRequests, windowMs, burstAllowance }` preset shape
+ * to this middleware's pre-existing `{ requestsPerMinute, burstAllowance }`
+ * shape. The shared presets are always expressed per-minute (`windowMs:
+ * 60_000`), so `windowMs` is dropped rather than carried through.
+ */
+function toLegacyConfig(config: { maxRequests: number; burstAllowance?: number }): RateLimitConfig {
+  return {
+    requestsPerMinute: config.maxRequests,
+    burstAllowance: config.burstAllowance,
+  };
+}
 
 /**
  * Singleton KV rate limiter instance
@@ -113,7 +126,7 @@ export async function checkRateLimit(
   kv: KVNamespace,
   userId: string,
   type: RateLimitType,
-  config: RateLimitConfig
+  config: RateLimitConfig,
 ): Promise<RateLimitResult> {
   const limiter = getLimiter(kv);
   const key = `${type}:${userId}`;
@@ -150,7 +163,7 @@ export async function incrementRateLimit(
   kv: KVNamespace,
   userId: string,
   type: RateLimitType,
-  _maxRetries: number = 3
+  _maxRetries: number = 3,
 ): Promise<void> {
   const limiter = getLimiter(kv);
   const key = `${type}:${userId}`;
@@ -179,7 +192,7 @@ export async function incrementRateLimit(
 export async function getRateLimitInfo(
   kv: KVNamespace,
   userId: string,
-  type: RateLimitType
+  type: RateLimitType,
 ): Promise<{ current: number; limit: number; resetTime: number }> {
   const config = RATE_LIMIT_CONFIGS[type];
   const limiter = getLimiter(kv);
@@ -218,7 +231,10 @@ export async function getRateLimitInfo(
  * @param c - Hono context
  * @param next - Next middleware
  */
-export async function rateLimitMiddleware(_c: Context<{ Bindings: Env }>, next: Next): Promise<void> {
+export async function rateLimitMiddleware(
+  _c: Context<{ Bindings: Env }>,
+  next: Next,
+): Promise<void> {
   // Pass through - rate limiting is enforced at interaction handler level
   // This middleware just provides the infrastructure
   await next();

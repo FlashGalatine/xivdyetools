@@ -69,6 +69,10 @@ D1 migrations are **never** applied automatically: `npm run db:migrate` replays 
 - Preview-image upload writes the DB row before deleting the previous R2 object (a failed write must orphan an object, never point at a deleted one), and the 5 MB limit is now tested for real.
 - Stale seed-script path in `scripts/migrate-presets.ts`.
 
+### Removed (2026-08-18 dead-code audit)
+
+- **`types.ts`'s dead `ModerationResponse` / `CategoryListResponse` re-exports** (DEAD-025): this worker's handlers never typed their responses with either — only reached this shim as dead re-exports. `@xivdyetools/types`' `ModerationResponse` (and its `ModerationSuccessResponse`/`ModerationErrorResponse` constituents) and `CategoryListResponse` are gone too; nothing else referenced them.
+
 ### Security
 
 - **FINDING-002 (2026-08-09 pre-release audit)**: the four loopback CORS origins (`localhost`/`127.0.0.1` on 5173 and 8787) are now reflected only when `ENVIRONMENT === 'development'` — production previously reflected them alongside `credentials: true`. Mirrors OAUTH-SEC-001 in the oauth worker.

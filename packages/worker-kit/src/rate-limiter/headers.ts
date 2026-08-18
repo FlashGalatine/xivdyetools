@@ -34,9 +34,7 @@ import type { RateLimitResult } from './types.js';
  * return new Response('OK', { headers });
  * ```
  */
-export function getRateLimitHeaders(
-  result: RateLimitResult
-): Record<string, string> {
+export function getRateLimitHeaders(result: RateLimitResult): Record<string, string> {
   const headers: Record<string, string> = {
     'X-RateLimit-Limit': String(result.limit),
     'X-RateLimit-Remaining': String(result.remaining),
@@ -48,34 +46,4 @@ export function getRateLimitHeaders(
   }
 
   return headers;
-}
-
-/**
- * Generate a user-friendly rate limit message
- *
- * @param result - Rate limit check result
- * @returns Human-readable message for the user
- *
- * @example
- * ```typescript
- * if (!result.allowed) {
- *   return new Response(formatRateLimitMessage(result), { status: 429 });
- * }
- * ```
- */
-export function formatRateLimitMessage(result: RateLimitResult): string {
-  if (result.allowed) {
-    return `Rate limit OK. ${result.remaining} requests remaining.`;
-  }
-
-  const retryAfter = result.retryAfter ?? Math.ceil(
-    (result.resetAt.getTime() - Date.now()) / 1000
-  );
-
-  if (retryAfter <= 60) {
-    return `Rate limit exceeded. Please try again in ${retryAfter} seconds.`;
-  }
-
-  const minutes = Math.ceil(retryAfter / 60);
-  return `Rate limit exceeded. Please try again in ${minutes} minute${minutes > 1 ? 's' : ''}.`;
 }

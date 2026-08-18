@@ -47,7 +47,8 @@ import './display-options-v4';
 import './dye-filters-v4';
 import type { DisplayOptionsChangeDetail } from './display-options-v4';
 import type { DyeFiltersChangeDetail } from './dye-filters-v4';
-import type { SubRace } from '@xivdyetools/types';
+import { RACE_SUBRACES } from '@xivdyetools/types';
+import type { SubRace, Race } from '@xivdyetools/types';
 
 /**
  * First character of a display name, for the avatar chip shown when the auth
@@ -92,18 +93,33 @@ const SUBRACE_TO_CLAN_KEY: Record<SubRace, string> = {
 };
 
 /**
- * Race groups with their subraces and race key for localization
+ * Localization key for each race — a presentation concern local to this
+ * component (differs from the canonical `Race` key by casing).
  */
-const RACE_GROUPS: Array<{ raceKey: string; subraces: SubRace[] }> = [
-  { raceKey: 'hyur', subraces: ['Midlander', 'Highlander'] },
-  { raceKey: 'elezen', subraces: ['Wildwood', 'Duskwight'] },
-  { raceKey: 'lalafell', subraces: ['Plainsfolk', 'Dunesfolk'] },
-  { raceKey: 'miqote', subraces: ['SeekerOfTheSun', 'KeeperOfTheMoon'] },
-  { raceKey: 'roegadyn', subraces: ['SeaWolf', 'Hellsguard'] },
-  { raceKey: 'auRa', subraces: ['Raen', 'Xaela'] },
-  { raceKey: 'hrothgar', subraces: ['Helions', 'TheLost'] },
-  { raceKey: 'viera', subraces: ['Rava', 'Veena'] },
-];
+const RACE_KEY_BY_RACE: Record<Race, string> = {
+  Hyur: 'hyur',
+  Elezen: 'elezen',
+  Lalafell: 'lalafell',
+  "Miqo'te": 'miqote',
+  Roegadyn: 'roegadyn',
+  AuRa: 'auRa',
+  Hrothgar: 'hrothgar',
+  Viera: 'viera',
+};
+
+/**
+ * Race groups with their subraces and race key for localization.
+ *
+ * The race/subrace *set* and order are sourced from the shared
+ * `RACE_SUBRACES` table in `@xivdyetools/types` (DEAD-024 adoption);
+ * `RACE_KEY_BY_RACE` above is this component's own presentation layer.
+ */
+export const RACE_GROUPS: Array<{ raceKey: string; subraces: SubRace[] }> = (
+  Object.entries(RACE_SUBRACES) as Array<[Race, readonly [SubRace, SubRace]]>
+).map(([race, subraces]) => ({
+  raceKey: RACE_KEY_BY_RACE[race],
+  subraces: [...subraces],
+}));
 
 /**
  * V4 Config Sidebar - Tool configuration panel

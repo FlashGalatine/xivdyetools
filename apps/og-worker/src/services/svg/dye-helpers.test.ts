@@ -5,6 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { RACE_SUBRACES } from '@xivdyetools/types';
 import {
   dyeService,
   characterColorService,
@@ -12,9 +13,42 @@ import {
   findClosestDyesWithDistance,
   getDyeByItemId,
   getCharacterColorFromSheet,
+  ALL_SUBRACES,
 } from './dye-helpers';
 
 describe('dye-helpers', () => {
+  describe('ALL_SUBRACES (DEAD-024 adoption)', () => {
+    it('contains exactly the subraces the shared RACE_SUBRACES table defines', () => {
+      const expected = Object.values(RACE_SUBRACES).flat().sort();
+      expect([...ALL_SUBRACES].sort()).toEqual(expected);
+    });
+
+    it('has no duplicates', () => {
+      expect(new Set(ALL_SUBRACES).size).toBe(ALL_SUBRACES.length);
+    });
+
+    it('preserves the pre-adoption search order (Viera before Hrothgar)', () => {
+      expect(ALL_SUBRACES).toEqual([
+        'Midlander',
+        'Highlander',
+        'Wildwood',
+        'Duskwight',
+        'Plainsfolk',
+        'Dunesfolk',
+        'SeekerOfTheSun',
+        'KeeperOfTheMoon',
+        'SeaWolf',
+        'Hellsguard',
+        'Raen',
+        'Xaela',
+        'Rava',
+        'Veena',
+        'Helions',
+        'TheLost',
+      ]);
+    });
+  });
+
   describe('dyeService', () => {
     it('should be initialized', () => {
       expect(dyeService).toBeDefined();
@@ -226,10 +260,7 @@ describe('dye-helpers', () => {
       if (eyeColors.length > 0) {
         const knownColor = eyeColors[0];
 
-        const result = await getCharacterColorFromSheet(
-          knownColor.hex,
-          'eyeColors'
-        );
+        const result = await getCharacterColorFromSheet(knownColor.hex, 'eyeColors');
 
         expect(result).not.toBeNull();
         expect(result?.categoryName).toBe('Eye Colors');
@@ -242,7 +273,7 @@ describe('dye-helpers', () => {
         '#FFFFFF', // Use a placeholder - actual result depends on database
         'hairColors',
         'Midlander',
-        'Female'
+        'Female',
       );
 
       // Result may be null if color not found, but if found should have context
@@ -262,7 +293,7 @@ describe('dye-helpers', () => {
         // Use an eye color for the fallback test
         const result = await getCharacterColorFromSheet(
           eyeColors[0].hex,
-          'hairColors'
+          'hairColors',
           // No race or gender
         );
 
@@ -274,10 +305,7 @@ describe('dye-helpers', () => {
     });
 
     it('should return null for non-existent color', async () => {
-      const result = await getCharacterColorFromSheet(
-        '#FACADE',
-        'eyeColors'
-      );
+      const result = await getCharacterColorFromSheet('#FACADE', 'eyeColors');
 
       // May or may not be null depending on database - just verify no error
       expect(result === null || result !== null).toBe(true);

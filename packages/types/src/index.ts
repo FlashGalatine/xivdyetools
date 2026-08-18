@@ -41,11 +41,7 @@ export type {
   Gender,
   Race,
 } from './character/index.js';
-export {
-  RACE_SUBRACES,
-  SUBRACE_TO_RACE,
-  COLOR_GRID_DIMENSIONS,
-} from './character/index.js';
+export { RACE_SUBRACES, SUBRACE_TO_RACE } from './character/index.js';
 
 // ============================================================================
 // Preset Types
@@ -53,7 +49,6 @@ export {
 export type {
   PresetCategory,
   PresetStatus,
-  PresetSortOption,
   CategoryMeta,
   PresetPalette,
   PresetData,
@@ -75,10 +70,6 @@ export type {
   VoteSuccessResponse,
   VoteErrorResponse,
   VoteResponse,
-  ModerationSuccessResponse,
-  ModerationErrorResponse,
-  ModerationResponse,
-  CategoryListResponse,
 } from './preset/index.js';
 
 // ============================================================================
@@ -90,7 +81,6 @@ export type {
   AuthContext,
   PrimaryCharacter,
   JWTPayload,
-  OAuthState,
   DiscordTokenResponse,
   DiscordUser,
   XIVAuthTokenResponse,

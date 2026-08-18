@@ -87,6 +87,7 @@ The **XIV Dye Tools 5.0 redesign**. Every one of the nine tools was re-ported to
 ### Removed (2026-08-18 dead-code audit)
 
 - **`services/theme-service.ts`'s hard-coded `#CE2222`** (DEAD-018): `standard-light`'s `primary` now reads `@xivdyetools/svg`'s `GLYPH_ACCENT_LIGHT` — same value, single source with `shared/glyph-accent.ts`'s existing `GLYPH_ACCENT_DARK` import.
+- **DEAD-024 (adopt)**: `swatch-tool.ts`'s and `v4/config-sidebar.ts`'s `RACE_GROUPS` now derive their race/subrace set from `@xivdyetools/types`' `RACE_SUBRACES` instead of each hand-rolling its own identical copy; the localization `raceKey` mapping (`'auRa'`, `'miqote'`, etc.) stays a small local presentation adapter, order unchanged (`RACE_SUBRACES`' own key order already matched). Both components now export `RACE_GROUPS`, and their test files assert the derived set/order match `RACE_SUBRACES`.
 
 ### Fixed
 

@@ -6,6 +6,13 @@ All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-
 
 **New npm package** — first release. Formed in the Monorepo 2.0 Tier 1 package consolidation (2026-07-31) by merging `@xivdyetools/worker-middleware` v1.2.0 and `@xivdyetools/rate-limiter` v1.5.0; both source trees moved verbatim, and neither API changed. `@xivdyetools/worker-kit` has never been published, so nothing below is breaking for an existing consumer — but see the migration notes for the two retired packages.
 
+### Removed (2026-08-18 dead-code audit)
+
+- `formatRateLimitMessage()` (`rate-limiter/headers.ts`) — zero callers; discord-worker's same-named function is a different, Discord-markdown message and is unaffected.
+- `UNIVERSALIS_PROXY_LIMITS` preset — zero callers; api-worker's universalis router builds its config from env vars instead.
+- `EndpointRateLimitConfig` type — never referenced anywhere, including inside this package.
+- `MODERATION_LIMITS` **adopted, not removed**: added a `getModerationLimit(type)` lookup next to `getOAuthLimit`/`getDiscordCommandLimit`; `apps/moderation-worker/src/middleware/rate-limit.ts`'s `RATE_LIMIT_CONFIGS` now derives its numbers from the preset via a small shape adapter (its pre-existing `requestsPerMinute` field vs. the preset's `maxRequests`/`windowMs`) instead of re-declaring them inline.
+
 ### ⚠️ Migration from the retired packages
 
 - `import { … } from '@xivdyetools/worker-middleware'` → `import { … } from '@xivdyetools/worker-kit'` (or the `/middleware` subpath).

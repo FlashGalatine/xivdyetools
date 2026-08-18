@@ -114,7 +114,7 @@ wrangler secret put XIVAUTH_CLIENT_SECRET   # XIVAuth OAuth2 client secret
 |---------|---------|
 | `hono` | HTTP framework |
 | `@xivdyetools/auth` | HMAC signing primitives, Base64URL/hex encoding, revocation store |
-| `@xivdyetools/types` | `JWTPayload`, `DiscordUser`, `XIVAuthUser`, `OAuthState`, etc. |
+| `@xivdyetools/types` | `JWTPayload`, `DiscordUser`, `XIVAuthUser`, etc. |
 | `@xivdyetools/logger` | Structured logging with secret redaction |
 | `@xivdyetools/worker-kit` | Request ID, logger, and rate-limit middleware |
 

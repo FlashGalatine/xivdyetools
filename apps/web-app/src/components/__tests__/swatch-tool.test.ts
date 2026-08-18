@@ -8,7 +8,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { SwatchTool } from '../swatch-tool';
+import { RACE_SUBRACES } from '@xivdyetools/types';
+import { SwatchTool, RACE_GROUPS } from '../swatch-tool';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 
@@ -879,5 +880,26 @@ describe('SwatchTool', () => {
 
       expect(leftPanel.children.length).toBeGreaterThan(0);
     });
+  });
+});
+
+describe('RACE_GROUPS (DEAD-024 adoption)', () => {
+  it('has one group per race in the shared RACE_SUBRACES table, in the same order', () => {
+    expect(RACE_GROUPS.map((g) => g.subraces)).toEqual(
+      Object.values(RACE_SUBRACES).map((subraces) => [...subraces])
+    );
+  });
+
+  it('preserves the pre-adoption localization keys', () => {
+    expect(RACE_GROUPS.map((g) => g.raceKey)).toEqual([
+      'hyur',
+      'elezen',
+      'lalafell',
+      'miqote',
+      'roegadyn',
+      'auRa',
+      'hrothgar',
+      'viera',
+    ]);
   });
 });

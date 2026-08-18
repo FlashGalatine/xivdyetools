@@ -73,17 +73,6 @@ export interface RateLimitConfig {
 }
 
 /**
- * Endpoint-specific rate limit configuration
- *
- * Maps endpoint paths to their rate limit configurations.
- * Must include a 'default' key for unmatched endpoints.
- */
-export interface EndpointRateLimitConfig {
-  [endpoint: string]: RateLimitConfig;
-  default: RateLimitConfig;
-}
-
-/**
  * Base rate limiter interface
  *
  * All rate limiter backends must implement this interface.

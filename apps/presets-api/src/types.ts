@@ -26,8 +26,6 @@ export type {
   PresetSubmitResponse,
   PresetEditResponse,
   VoteResponse,
-  ModerationResponse,
-  CategoryListResponse,
 } from '@xivdyetools/types';
 
 /**

@@ -11,8 +11,8 @@ import {
   DISCORD_COMMAND_LIMITS,
   getDiscordCommandLimit,
   MODERATION_LIMITS,
+  getModerationLimit,
   PUBLIC_API_LIMITS,
-  UNIVERSALIS_PROXY_LIMITS,
 } from './configs.js';
 
 describe('OAUTH_LIMITS', () => {
@@ -84,9 +84,22 @@ describe('DISCORD_COMMAND_LIMITS', () => {
 
   it('has configs for the 5.0 command roster (no retired v4 keys)', () => {
     const expectedCommands = [
-      'extractor', 'extractor:image', 'accessibility', 'budget', 'harmony',
-      'mixer', 'gradient', 'comparison', 'contrast', 'swatch', 'preset',
-      'preferences', 'dye', 'about', 'manual', 'autocomplete',
+      'extractor',
+      'extractor:image',
+      'accessibility',
+      'budget',
+      'harmony',
+      'mixer',
+      'gradient',
+      'comparison',
+      'contrast',
+      'swatch',
+      'preset',
+      'preferences',
+      'dye',
+      'about',
+      'manual',
+      'autocomplete',
     ];
     for (const cmd of expectedCommands) {
       expect(DISCORD_COMMAND_LIMITS[cmd]).toBeDefined();
@@ -108,12 +121,8 @@ describe('DISCORD_COMMAND_LIMITS', () => {
 
 describe('getDiscordCommandLimit', () => {
   it('returns the specific limit for known commands', () => {
-    expect(getDiscordCommandLimit('extractor')).toEqual(
-      DISCORD_COMMAND_LIMITS.extractor,
-    );
-    expect(getDiscordCommandLimit('harmony')).toEqual(
-      DISCORD_COMMAND_LIMITS.harmony,
-    );
+    expect(getDiscordCommandLimit('extractor')).toEqual(DISCORD_COMMAND_LIMITS.extractor);
+    expect(getDiscordCommandLimit('harmony')).toEqual(DISCORD_COMMAND_LIMITS.harmony);
   });
 
   it('prefers a command:subcommand entry when one exists', () => {
@@ -121,18 +130,12 @@ describe('getDiscordCommandLimit', () => {
       DISCORD_COMMAND_LIMITS['extractor:image'],
     );
     // no dedicated entry for the color subcommand → falls back to the command
-    expect(getDiscordCommandLimit('extractor', 'color')).toEqual(
-      DISCORD_COMMAND_LIMITS.extractor,
-    );
+    expect(getDiscordCommandLimit('extractor', 'color')).toEqual(DISCORD_COMMAND_LIMITS.extractor);
   });
 
   it('returns default for unknown commands', () => {
-    expect(getDiscordCommandLimit('nonexistent')).toEqual(
-      DISCORD_COMMAND_LIMITS.default,
-    );
-    expect(getDiscordCommandLimit('nonexistent', 'sub')).toEqual(
-      DISCORD_COMMAND_LIMITS.default,
-    );
+    expect(getDiscordCommandLimit('nonexistent')).toEqual(DISCORD_COMMAND_LIMITS.default);
+    expect(getDiscordCommandLimit('nonexistent', 'sub')).toEqual(DISCORD_COMMAND_LIMITS.default);
   });
 });
 
@@ -154,6 +157,20 @@ describe('MODERATION_LIMITS', () => {
   });
 });
 
+describe('getModerationLimit', () => {
+  it('returns the command config for "command"', () => {
+    expect(getModerationLimit('command')).toEqual(MODERATION_LIMITS.command);
+  });
+
+  it('returns the autocomplete config for "autocomplete"', () => {
+    expect(getModerationLimit('autocomplete')).toEqual(MODERATION_LIMITS.autocomplete);
+  });
+
+  it('falls back to the command config for an unknown type', () => {
+    expect(getModerationLimit('unknown')).toEqual(MODERATION_LIMITS.command);
+  });
+});
+
 describe('PUBLIC_API_LIMITS', () => {
   it('has default and write configs', () => {
     expect(PUBLIC_API_LIMITS.default).toBeDefined();
@@ -161,15 +178,6 @@ describe('PUBLIC_API_LIMITS', () => {
   });
 
   it('write has lower limits than default', () => {
-    expect(PUBLIC_API_LIMITS.write.maxRequests).toBeLessThan(
-      PUBLIC_API_LIMITS.default.maxRequests,
-    );
-  });
-});
-
-describe('UNIVERSALIS_PROXY_LIMITS', () => {
-  it('has a default config', () => {
-    expect(UNIVERSALIS_PROXY_LIMITS.default).toBeDefined();
-    expect(UNIVERSALIS_PROXY_LIMITS.default.maxRequests).toBeGreaterThan(0);
+    expect(PUBLIC_API_LIMITS.write.maxRequests).toBeLessThan(PUBLIC_API_LIMITS.default.maxRequests);
   });
 });

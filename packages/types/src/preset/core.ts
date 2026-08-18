@@ -37,11 +37,6 @@ export type PresetCategory =
 export type PresetStatus = 'pending' | 'approved' | 'rejected' | 'flagged' | 'hidden';
 
 /**
- * Sort options for preset listings
- */
-export type PresetSortOption = 'popular' | 'recent' | 'name';
-
-/**
  * Metadata for a preset category
  */
 export interface CategoryMeta {

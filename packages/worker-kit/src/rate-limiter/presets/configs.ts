@@ -107,10 +107,7 @@ export const DISCORD_COMMAND_LIMITS: Record<string, RateLimitConfig> = {
  *
  * Resolution order: `command:subcommand` → `command` → `default`.
  */
-export function getDiscordCommandLimit(
-  commandName: string,
-  subcommand?: string
-): RateLimitConfig {
+export function getDiscordCommandLimit(commandName: string, subcommand?: string): RateLimitConfig {
   if (subcommand) {
     const scoped = DISCORD_COMMAND_LIMITS[`${commandName}:${subcommand}`];
     if (scoped) return scoped;
@@ -143,6 +140,16 @@ export const MODERATION_LIMITS: Record<string, RateLimitConfig> = {
   },
 };
 
+/**
+ * Get moderation-bot rate limit config for an interaction type.
+ *
+ * @param type - `'command'` or `'autocomplete'`; falls back to `'command'`
+ * for any other key.
+ */
+export function getModerationLimit(type: string): RateLimitConfig {
+  return MODERATION_LIMITS[type] ?? MODERATION_LIMITS.command;
+}
+
 // ============================================================================
 // Public API Limits
 // ============================================================================
@@ -158,16 +165,4 @@ export const PUBLIC_API_LIMITS: Record<string, RateLimitConfig> = {
 
   // Stricter for write operations (30 per minute)
   write: { maxRequests: 30, windowMs: 60_000 },
-};
-
-// ============================================================================
-// Universalis Proxy Limits
-// ============================================================================
-
-/**
- * Rate limits for Universalis API proxy
- */
-export const UNIVERSALIS_PROXY_LIMITS: Record<string, RateLimitConfig> = {
-  // Market data requests (100 per minute)
-  default: { maxRequests: 100, windowMs: 60_000 },
 };

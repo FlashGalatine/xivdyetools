@@ -13,7 +13,8 @@ import {
   ColorService,
   CharacterColorService,
 } from '@xivdyetools/core';
-import type { Dye, SubRace, Gender } from '@xivdyetools/types';
+import { RACE_SUBRACES } from '@xivdyetools/types';
+import type { Dye, SubRace, Gender, Race } from '@xivdyetools/types';
 import type { MatchingAlgorithm } from '../../types';
 
 // Shared service instances (REFACTOR-024: THE instances -- og-data-generator
@@ -32,7 +33,7 @@ const dyeByStainId = new Map<number, Dye>(
   dyeService
     .getAllDyes()
     .filter((d) => d.stainID !== null)
-    .map((d) => [d.stainID as number, d])
+    .map((d) => [d.stainID as number, d]),
 );
 
 /**
@@ -42,7 +43,7 @@ const dyeByStainId = new Map<number, Dye>(
 export function deltaForAlgorithm(
   hex1: string,
   hex2: string,
-  algorithm: MatchingAlgorithm
+  algorithm: MatchingAlgorithm,
 ): number {
   // 5.0: one dispatch suite-wide; legacy spellings normalise first
   return ColorService.getDistanceForMethod(hex1, hex2, normalizeMatchingMethod(algorithm));
@@ -76,18 +77,31 @@ const SHARED_CATEGORY_NAMES: Record<string, string> = {
 };
 
 /**
- * All subraces for searching race-specific colors
+ * Race iteration order for `ALL_SUBRACES` below. This is a presentation
+ * concern local to this file (buildHexIndex's first-match semantics depend
+ * on it), preserved verbatim from before the DEAD-024 adoption — note Viera
+ * comes before Hrothgar here, unlike `RACE_SUBRACES`' own key order.
  */
-const ALL_SUBRACES: SubRace[] = [
-  'Midlander', 'Highlander', // Hyur
-  'Wildwood', 'Duskwight', // Elezen
-  'Plainsfolk', 'Dunesfolk', // Lalafell
-  'SeekerOfTheSun', 'KeeperOfTheMoon', // Miqo'te
-  'SeaWolf', 'Hellsguard', // Roegadyn
-  'Raen', 'Xaela', // Au Ra
-  'Rava', 'Veena', // Viera
-  'Helions', 'TheLost', // Hrothgar
+const SUBRACE_SEARCH_ORDER: Race[] = [
+  'Hyur',
+  'Elezen',
+  'Lalafell',
+  "Miqo'te",
+  'Roegadyn',
+  'AuRa',
+  'Viera',
+  'Hrothgar',
 ];
+
+/**
+ * All subraces for searching race-specific colors.
+ *
+ * The race/clan *set* is sourced from the shared `RACE_SUBRACES` table in
+ * `@xivdyetools/types` (DEAD-024 adoption) so this app doesn't hand-roll its
+ * own copy of a game-data fact; `SUBRACE_SEARCH_ORDER` above is this file's
+ * own presentation concern.
+ */
+export const ALL_SUBRACES: SubRace[] = SUBRACE_SEARCH_ORDER.flatMap((race) => RACE_SUBRACES[race]);
 
 const GENDERS: Gender[] = ['Male', 'Female'];
 
@@ -189,7 +203,7 @@ export function findClosestDyesWithDistance(
     excludeIds?: number[];
     /** BUG-031: distance metric to match with (default OKLAB) */
     algorithm?: MatchingAlgorithm;
-  } = {}
+  } = {},
 ): DyeMatch[] {
   const { limit = 5, excludeIds = [], algorithm = 'oklab' } = options;
   const excludeSet = new Set(excludeIds);
@@ -244,7 +258,7 @@ export async function getCharacterColorFromSheet(
   hex: string,
   sheet: string,
   subrace?: string,
-  gender?: Gender
+  gender?: Gender,
 ): Promise<CharacterColorContext | null> {
   const normalizedHex = hex.startsWith('#') ? hex.toUpperCase() : `#${hex.toUpperCase()}`;
 
@@ -333,10 +347,10 @@ export async function getCharacterColorFromSheet(
 function formatSubraceName(subrace: string): string {
   // Handle special cases
   const specialCases: Record<string, string> = {
-    SeekerOfTheSun: "Seeker of the Sun",
-    KeeperOfTheMoon: "Keeper of the Moon",
-    SeaWolf: "Sea Wolf",
-    TheLost: "The Lost",
+    SeekerOfTheSun: 'Seeker of the Sun',
+    KeeperOfTheMoon: 'Keeper of the Moon',
+    SeaWolf: 'Sea Wolf',
+    TheLost: 'The Lost',
   };
 
   if (specialCases[subrace]) {

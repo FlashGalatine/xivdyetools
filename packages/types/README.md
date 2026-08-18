@@ -100,10 +100,11 @@ const vision: VisionType = 'deuteranopia';
 ### Dye Types
 
 ```typescript
-import { Dye, LocalizedDye, DyeWithDistance, DyeDatabase } from '@xivdyetools/types';
+import { Dye, LocalizedDye, DyeWithDistance } from '@xivdyetools/types';
 
 // Full dye object. Since schema v2, `stainID` is the canonical key and most
-// other fields are derived at DyeDatabase.initialize() in @xivdyetools/core.
+// other fields are derived at DyeDatabase.initialize() in @xivdyetools/core
+// (the DyeDatabase class, not a types-package interface).
 // `itemID` is always a number at runtime — never null.
 const dye: Dye = {
   itemID: 5729,
@@ -267,7 +268,7 @@ import { CommunityPreset, PresetFilters, ModerationResult } from '@xivdyetools/t
 | `@xivdyetools/types` | All types (barrel export) |
 | `@xivdyetools/types/color` | RGB, HSV, LAB, OKLAB, OKLCH, LCH, HSL, HexColor, branded types |
 | `@xivdyetools/types/dye` | Dye, LocalizedDye, DyeWithDistance, DyeTypeFilters |
-| `@xivdyetools/types/character` | CharacterColor, SubRace, RACE_SUBRACES, COLOR_GRID_DIMENSIONS |
+| `@xivdyetools/types/character` | CharacterColor, SubRace, RACE_SUBRACES |
 | `@xivdyetools/types/preset` | Preset, community, filters, responses |
 | `@xivdyetools/types/auth` | OAuth, JWT, Discord, XIVAuth |
 | `@xivdyetools/types/api` | APIResponse, CachedData, moderation |

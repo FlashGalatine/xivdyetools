@@ -8,6 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { RACE_SUBRACES } from '@xivdyetools/types';
 
 vi.mock('@services/index', () => ({
   LanguageService: {
@@ -237,5 +238,28 @@ describe('ConfigSidebar', () => {
       const { avatarInitial } = await import('../../v4/config-sidebar');
       expect(avatarInitial('Amelia')).toBe('A');
     });
+  });
+});
+
+describe('RACE_GROUPS (DEAD-024 adoption)', () => {
+  it('has one group per race in the shared RACE_SUBRACES table, in the same order', async () => {
+    const { RACE_GROUPS } = await import('../../v4/config-sidebar');
+    expect(RACE_GROUPS.map((g) => g.subraces)).toEqual(
+      Object.values(RACE_SUBRACES).map((subraces) => [...subraces])
+    );
+  });
+
+  it('preserves the pre-adoption localization keys', async () => {
+    const { RACE_GROUPS } = await import('../../v4/config-sidebar');
+    expect(RACE_GROUPS.map((g) => g.raceKey)).toEqual([
+      'hyur',
+      'elezen',
+      'lalafell',
+      'miqote',
+      'roegadyn',
+      'auRa',
+      'hrothgar',
+      'viera',
+    ]);
   });
 });

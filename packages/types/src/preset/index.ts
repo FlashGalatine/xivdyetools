@@ -10,18 +10,13 @@
 export type {
   PresetCategory,
   PresetStatus,
-  PresetSortOption,
   CategoryMeta,
   PresetPalette,
   PresetData,
 } from './core.js';
 
 // Community preset types
-export type {
-  PresetPreviousValues,
-  CommunityPreset,
-  PresetSubmission,
-} from './community.js';
+export type { PresetPreviousValues, CommunityPreset, PresetSubmission } from './community.js';
 
 // Request types
 export type { PresetFilters, PresetEditRequest } from './request.js';
@@ -41,8 +36,4 @@ export type {
   VoteSuccessResponse,
   VoteErrorResponse,
   VoteResponse,
-  ModerationSuccessResponse,
-  ModerationErrorResponse,
-  ModerationResponse,
-  CategoryListResponse,
 } from './response.js';

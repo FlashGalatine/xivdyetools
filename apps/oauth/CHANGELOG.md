@@ -27,6 +27,7 @@ Monorepo 2.0 release train (branch `monorepo-2.0-prep`). Nothing below has shipp
 ### Removed (2026-08-18 dead-code audit)
 
 - **DEAD-019 (adopt)**: `services/jwt-service.ts`'s hand-rolled `getSigningKey` (private) is gone; `signJwtData`/`verifyJwtData` (still exported for `utils/state-signing.ts`) now delegate to `@xivdyetools/auth`'s `hmacSign`/`hmacVerify`. Verified byte-for-byte identical — a pinned vector (fixed secret + message, signature computed with the old implementation before deletion) is asserted unchanged in `__tests__/jwt-service.test.ts`. Safe because `JWT_SECRET` — this worker's only caller of these functions, shared with `signPayload`/`state-signing.ts` — is already enforced `>= 32` characters by `utils/env-validation.ts`, satisfying the minimum key length `hmacSign`/`hmacVerify` require internally.
+- **`types.ts`'s dead `OAuthState` re-export** (DEAD-025): `@xivdyetools/types`' `OAuthState` was never actually this worker's OAuth-flow state shape — that's `StateData` in `utils/state-signing.ts`, with different fields — so the shared type was stale, not shared, and only ever reached this shim as a dead re-export. `PrimaryCharacter`/`JWTPayload` re-exports are untouched.
 
 ### Tests
 

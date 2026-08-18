@@ -21,6 +21,8 @@ Monorepo 2.0 / 5.0-release follow-through (additive behaviour). Deploy note: pro
 ### Removed (2026-08-18 dead-code audit)
 
 - **`types/preset.ts`'s `CATEGORY_DISPLAY`** (DEAD-014): this worker's own copy had zero consumers of its own (only `STATUS_DISPLAY` and `PresetAPIError` from that module were ever imported elsewhere) — deleted outright rather than replaced with an `@xivdyetools/svg` import, since nothing here needs the table at all. `PresetCategory` dropped from the same file's local type-only import as a result.
+- **`types/preset.ts`'s dead `PresetSortOption` re-export** (DEAD-025): only reached this shim, never imported past it. `@xivdyetools/types`' own `PresetSortOption` alias is gone too — its one real use (`PresetFilters.sort`) now has the union inlined directly.
+- **`middleware/rate-limit.ts`'s `RATE_LIMIT_CONFIGS` adopts worker-kit's `MODERATION_LIMITS` preset** (DEAD-023, adopt): the numbers (`command`: 20/min + 5 burst, `autocomplete`: 60/min + 10 burst) were previously hand-declared here and separately in `@xivdyetools/worker-kit/rate-limiter`'s `MODERATION_LIMITS` — identical values, never reconciled. `RATE_LIMIT_CONFIGS` now calls the new `getModerationLimit(type)` lookup and adapts its `{ maxRequests, windowMs, burstAllowance }` shape to this middleware's pre-existing `{ requestsPerMinute, burstAllowance }` one. No behaviour change — the existing `RATE_LIMIT_CONFIGS` test asserting the exact numbers still passes unmodified.
 
 ### Changed
 

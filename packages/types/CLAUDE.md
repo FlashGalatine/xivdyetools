@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Package Overview
 
-`@xivdyetools/types` is the foundational type-only package for the entire xivdyetools ecosystem. It consolidates branded types (`HexColor`, `DyeId`, `Hue`, `Saturation`, `DiscordSnowflake`), domain interfaces (dyes, presets, character colors, auth payloads, API responses), and the shared `AppError`/`ErrorCode` runtime classes.
+`@xivdyetools/types` is the foundational type-only package for the entire xivdyetools ecosystem. It consolidates branded types (`HexColor`, `DyeId`, `Hue`, `Saturation`), domain interfaces (dyes, presets, character colors, auth payloads, API responses), and the shared `AppError`/`ErrorCode` runtime classes.
 
 Splitting these out keeps every other package and app aligned on a single source of truth for cross-package data shapes and lets every consumer share branded-type guarantees without runtime cost. The package has zero internal dependencies and ships with `sideEffects: false` so unused subpaths are tree-shaken.
 
@@ -37,7 +37,7 @@ The package is organized into per-domain subpath exports. Each subpath has its o
 src/
 ├── color/         # RGB/HSV/LAB/OKLAB/OKLCH/LCH/HSL/CMYK + branded HexColor/DyeId/Hue/Saturation + MATCH_QUALITY_TIERS
 ├── dye/           # Dye, LocalizedDye, DyeWithDistance, DyeTypeFilters, FacewearColor
-├── character/     # CharacterColor, CharacterColorMatch, SubRace, RACE_SUBRACES, COLOR_GRID_DIMENSIONS
+├── character/     # CharacterColor, CharacterColorMatch, SubRace, RACE_SUBRACES
 ├── preset/        # Community preset shapes + every API request/response variant
 ├── auth/          # JWT payload, Discord/XIVAuth user shapes, isValidSnowflake validator
 ├── api/           # CachedData, ModerationResult/Stats, PriceData, RateLimitResult
@@ -84,18 +84,18 @@ type FacewearColor;   // { id: string slug; name; hex } — NOT a Dye (schema v2
 type CharacterColor; type CharacterColorMatch;
 type SharedColorCategory; type RaceSpecificColorCategory;
 type SubRace; type Gender; type Race;   // SubRace 'Helion' → 'Helions' in 2.0.0 (map the old stored value on read)
-const RACE_SUBRACES; const SUBRACE_TO_RACE; const COLOR_GRID_DIMENSIONS;
+const RACE_SUBRACES; const SUBRACE_TO_RACE;
 ```
 
 ### Preset types
 
-23 types covering `CommunityPreset`, `PresetSubmission`, `PresetFilters`, plus full request/response shapes for the presets API (`PresetListResponse`, `PresetSubmitResponse`, `PresetEditResponse`, `VoteResponse`, `ModerationResponse`, `CategoryListResponse`).
+23 types covering `CommunityPreset`, `PresetSubmission`, `PresetFilters`, plus full request/response shapes for the presets API (`PresetListResponse`, `PresetSubmitResponse`, `PresetEditResponse`, `VoteResponse`).
 
 ### Auth types
 
 ```typescript
 type AuthProvider; type AuthSource; type AuthContext; type PrimaryCharacter;
-type JWTPayload; type OAuthState;
+type JWTPayload;
 type DiscordTokenResponse; type DiscordUser;
 type XIVAuthTokenResponse; type XIVAuthUser; type XIVAuthCharacter;
 type XIVAuthCharacterRegistration; type XIVAuthSocialIdentity;
