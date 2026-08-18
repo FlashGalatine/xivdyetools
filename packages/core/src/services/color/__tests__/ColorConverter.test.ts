@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { ColorConverter } from '../ColorConverter.js';
+import { ColorConverter, normalizeDeltaEFormula } from '../ColorConverter.js';
 import { AppError } from '@xivdyetools/types';
 
 describe('ColorConverter', () => {
@@ -972,6 +972,52 @@ describe('ColorConverter', () => {
         const deltaE = ColorConverter.getDeltaE('#FF0000', '#FE0000');
         expect(deltaE).toBeLessThan(5);
       });
+
+      // DEAD-037 (2026-08-18 audit): 'ciede2000' is the canonical spelling —
+      // the one MatchingMethod uses — and 'cie2000' is a legacy alias folded
+      // onto it by normalizeDeltaEFormula() at this entry point. The two must
+      // be indistinguishable, or a caller passing a MatchingMethod straight
+      // through would silently get a different metric.
+      describe("'cie2000' is an exact alias of 'ciede2000'", () => {
+        const pairs: Array<[string, string]> = [
+          ['#FF0000', '#00FF00'],
+          ['#000000', '#FFFFFF'],
+          ['#e4dfd0', '#aca8a2'],
+          ['#000b9d', '#010101'],
+          ['#644216', '#8B4513'],
+          ['#FF0000', '#FE0000'],
+        ];
+
+        it.each(pairs)('%s vs %s (static)', (hex1, hex2) => {
+          expect(ColorConverter.getDeltaE(hex1, hex2, 'cie2000')).toBe(
+            ColorConverter.getDeltaE(hex1, hex2, 'ciede2000'),
+          );
+        });
+
+        it.each(pairs)('%s vs %s (instance)', (hex1, hex2) => {
+          expect(converter.getDeltaE(hex1, hex2, 'cie2000')).toBe(
+            converter.getDeltaE(hex1, hex2, 'ciede2000'),
+          );
+        });
+
+        it('normalizeDeltaEFormula folds the alias and passes the rest through', () => {
+          expect(normalizeDeltaEFormula('cie2000')).toBe('ciede2000');
+          expect(normalizeDeltaEFormula('ciede2000')).toBe('ciede2000');
+          expect(normalizeDeltaEFormula('cie76')).toBe('cie76');
+          expect(normalizeDeltaEFormula('oklab')).toBe('oklab');
+        });
+
+        it("'ciede2000' really is the CIEDE2000 math, not a silent cie76 fallback", () => {
+          const lab1 = ColorConverter.hexToLab('#FF0000');
+          const lab2 = ColorConverter.hexToLab('#00FF00');
+          expect(ColorConverter.getDeltaE('#FF0000', '#00FF00', 'ciede2000')).toBe(
+            ColorConverter.getDeltaE2000(lab1, lab2),
+          );
+          expect(ColorConverter.getDeltaE('#FF0000', '#00FF00', 'ciede2000')).not.toBe(
+            ColorConverter.getDeltaE('#FF0000', '#00FF00', 'cie76'),
+          );
+        });
+      });
     });
   });
 
@@ -1433,7 +1479,7 @@ describe('CMYK conversions (schema v2 follow-up: derived formats from hex)', () 
 
   it('clamps out-of-range CMYK inputs and rejects invalid RGB', () => {
     expect(ColorConverter.cmykToRgb(-10, 150, 50, 0)).toEqual(
-      ColorConverter.cmykToRgb(0, 100, 50, 0)
+      ColorConverter.cmykToRgb(0, 100, 50, 0),
     );
     expect(() => ColorConverter.rgbToCmyk(300, 0, 0)).toThrow();
   });
@@ -1450,7 +1496,7 @@ describe('redmean distance and distinguishability', () => {
     const b = '#1e1e1e';
     expect(ColorConverter.getRedmeanDistance(a, b)).toBeCloseTo(
       ColorConverter.getRedmeanDistance(b, a),
-      10
+      10,
     );
   });
 
@@ -1475,7 +1521,7 @@ describe('redmean distance and distinguishability', () => {
     const d2 = ColorConverter.getColorDistance('#FF0000', '#FFA000');
     expect(d2).toBeGreaterThan(d1);
     expect(
-      ColorConverter.getDistinguishabilityPercent('#FF0000', '#FFA000')
+      ColorConverter.getDistinguishabilityPercent('#FF0000', '#FFA000'),
     ).toBeGreaterThanOrEqual(ColorConverter.getDistinguishabilityPercent('#FF0000', '#FF2000'));
   });
 

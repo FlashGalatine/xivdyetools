@@ -63,15 +63,15 @@ export class DyeSearch {
         // Unrounded percent: identical ranks to RGB DIST (no ranking ties);
         // display rounding happens at the consumer, where ties badge TIE.
         return (ColorConverter.getColorDistance(hex1, hex2) / COLOR_DISTANCE_MAX) * 100;
+      // The three perceptual methods share their spelling with DeltaEFormula
+      // (DEAD-037, 2026-08-18 audit) — no translation switch needed.
       case 'cie76':
-        return ColorConverter.getDeltaE(hex1, hex2, 'cie76');
       case 'ciede2000':
-        return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
       case 'oklab':
-        return ColorConverter.getDeltaE_Oklab(hex1, hex2);
+        return ColorConverter.getDeltaE(hex1, hex2, method);
       default:
         // Default to dE2000 for unknown methods (the suite default)
-        return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
+        return ColorConverter.getDeltaE(hex1, hex2, 'ciede2000');
     }
   }
 

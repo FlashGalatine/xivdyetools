@@ -315,7 +315,7 @@ export async function resolveCharaColors(
     };
 
     if (floatLive && floatHex) {
-      const deltaE = ColorConverter.getDeltaE(entry.hex, floatHex, 'cie2000');
+      const deltaE = ColorConverter.getDeltaE(entry.hex, floatHex, 'ciede2000');
       resolved.deltaE = deltaE;
       resolved.verdict = deltaE > OFF_GRID_DELTA_E2000 ? 'offGrid' : 'index';
     } else {

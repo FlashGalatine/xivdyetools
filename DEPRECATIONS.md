@@ -241,7 +241,28 @@ verbatim to `packages/core/src/blending/` and ships as `@xivdyetools/core/blendi
 - [x] Flip all workspace consumers: svg, bot-logic, discord-worker; drop unused dep from stoat-worker (2026-07-31)
 - [x] Remove from publish-packages.yml and deploy path filters (2026-07-31)
 - [ ] `npm deprecate @xivdyetools/color-blending "Merged into @xivdyetools/core (import from @xivdyetools/core/blending)"` — requires npm 2FA, manual step
-- [ ] Follow-up refactor: unify duplicated conversions with ColorService inside core
+- [ ] ~~Follow-up refactor: unify duplicated conversions with ColorService inside core~~ —
+      **declined 2026-08-18** (DEAD-037, dead-code audit Wave 4b). `blending/conversions.ts` stays.
+      An equivalence guard (`packages/core/src/blending/conversions.equivalence.test.ts`) compares every
+      helper with its `ColorConverter` / `RybColorMixer` counterpart across all 125 dye hexes plus the
+      blending suites' vectors (86,319 interpolated samples per inverse helper). Only two helpers are
+      bit-identical — `hexToRgb` and `oklabToRgb`. The rest differ numerically and unifying them would
+      move rendered gradients, mixer results and bot cards:
+      - `rgbToLab` — core rounds L/a/b to 4 dp (`#e4dfd0`: `l 88.83921264346783` vs `L 88.8392`).
+      - `rgbToOklab` — core rounds to 6 dp (`#e4dfd0`: `a -0.0005799732264173962` vs `-0.00058`).
+      - `rgbToHsl` — core returns s/l on 0–100 rounded to 2 dp (`#e4dfd0`: `s 0.2702702702702704` vs `27.03`).
+      - `labToRgb` — different dark-region inverse (κ=903.3 vs the 7.787 linear segment): 15 of 86,319
+        samples differ, e.g. `#000b9d`→`#010101` @ t=0.667 gives `g 13` vs `g 12`.
+      - `hslToRgb` — the 0–100 rescale core requires loses float identity: 42 of 86,319 samples differ,
+        e.g. `#aca8a2`→`#a7a7a7` @ t=0.5 gives `(170,166,165)` vs `(169,166,164)`.
+      - `rgbToRyb` / `rybToRgb` — `RybColorMixer` is the Gossett-Chen trilinear/Newton-Raphson solver,
+        a different algorithm; `blendColors(…, 'ryb', …)` moves on essentially every pair.
+      - `rgbToHex` — same values, but core emits uppercase and `blendColors().hex` is lowercase.
+      - `rgbToReflectance` / `reflectanceToRgb` / `reflectanceToKS` / `ksToReflectance` — no core equivalent.
+      The two identical helpers were left in place too: delegating them would make the tree-shakeable
+      `@xivdyetools/core/blending` entry point import `ColorConverter` — the exact dependency REFACTOR-005
+      removed — to retire ~30 of 311 lines while the other 12 helpers stay. The equivalence test is
+      permanent: it pins the identical pair against drift and the deltas against a well-meaning "fix".
 
 ---
 

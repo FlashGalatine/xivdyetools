@@ -178,12 +178,12 @@ export class ColorService {
    */
   static getDistanceForMethod(hex1: string, hex2: string, method: MatchingMethod): number {
     switch (method) {
+      // The three perceptual methods share their spelling with DeltaEFormula
+      // (DEAD-037, 2026-08-18 audit) — no translation switch needed.
       case 'ciede2000':
-        return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
       case 'oklab':
-        return ColorConverter.getDeltaE_Oklab(hex1, hex2);
       case 'cie76':
-        return ColorConverter.getDeltaE(hex1, hex2, 'cie76');
+        return ColorConverter.getDeltaE(hex1, hex2, method);
       case 'redmean':
         return ColorConverter.getRedmeanDistance(hex1, hex2);
       case 'rgb':
@@ -350,7 +350,8 @@ export class ColorService {
    * Calculate DeltaE (color difference) between two hex colors
    * @param hex1 First hex color
    * @param hex2 Second hex color
-   * @param formula DeltaE formula to use ('cie76' or 'cie2000', default: 'cie76')
+   * @param formula DeltaE formula to use ('cie76', 'ciede2000' (alias: 'cie2000')
+   *                or 'oklab'; default: 'cie76')
    * @returns DeltaE value (0 = identical, <1 imperceptible, <3 barely noticeable, >5 clearly different)
    */
   static getDeltaE(hex1: string, hex2: string, formula: DeltaEFormula = 'cie76'): number {

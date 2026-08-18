@@ -97,7 +97,7 @@ class TranslationProvider       // Stateless — performs translations from a re
 
 Conversion: `hexToRgb`, `rgbToHex`, `rgbToHsv`, `hsvToRgb`, `hexToHsv`, `hsvToHex`, `normalizeHex`, `rgbToLab`, `hexToLab`, `labToRgb`, `labToHex`, `rgbToOklab`, `hexToOklab`, `oklabToRgb`, `oklabToHex`, `rgbToOklch`, `hexToOklch`, `oklchToRgb`, `oklchToHex`, `labToLch`, `lchToLab`, `rgbToLch`, `hexToLch`, `lchToRgb`, `lchToHex`, `rgbToHsl`, `hexToHsl`, `hslToRgb`, `hslToHex`, `rgbToCmyk`, `cmykToRgb`, `hexToCmyk`, `cmykToHex`, `rybToRgb`, `rgbToRyb`, `hexToRyb`, `rybToHex`.
 
-Distance: `getColorDistance` (Euclidean RGB), `getRedmeanDistance`, `getDeltaE` (`DeltaEFormula`: CIE76 / CIE2000 / OKLAB), `getDistanceForMethod(hex1, hex2, MatchingMethod)` (the 5.0 suite dispatcher). `ColorConverter` additionally exposes `getDeltaE_Oklab`.
+Distance: `getColorDistance` (Euclidean RGB), `getRedmeanDistance`, `getDeltaE` (`DeltaEFormula`: CIE76 / CIEDE2000 / OKLAB), `getDistanceForMethod(hex1, hex2, MatchingMethod)` (the 5.0 suite dispatcher). `ColorConverter` additionally exposes `getDeltaE_Oklab`.
 
 Accessibility: `getPerceivedLuminance`, `getContrastRatio`, `meetsWCAGAA`, `meetsWCAGAAA`, `isLightColor`, `getOptimalTextColor`.
 
@@ -160,7 +160,8 @@ type ConsolidationType, ConsolidatedDye, LocalizedDyeName
 type MatchingMethod = 'ciede2000' | 'oklab' | 'cie76' | 'redmean' | 'rgb' | 'distinguish'   // 5.0 vocabulary; hyab / oklch-weighted retired
 MATCHING_METHODS, DEFAULT_MATCHING_METHOD ('ciede2000'), MATCHING_METHOD_TAGS,
   LEGACY_MATCHING_METHOD_MAP, isMatchingMethod, normalizeMatchingMethod   // hyab / oklch-weighted → ciede2000, euclidean → rgb
-type DeltaEFormula = 'cie76' | 'cie2000' | 'oklab'   // ColorConverter.getDeltaE formulas; getDeltaE_HyAB removed (DEAD-034, 2026-08-18 audit) — 'hyab' survives only as a legacy MatchingMethod token, normalized to ciede2000
+type DeltaEFormula = 'cie76' | 'ciede2000' | 'oklab' | 'cie2000'   // ColorConverter.getDeltaE formulas; 'ciede2000' is canonical (same spelling as MatchingMethod), 'cie2000' is a legacy alias folded by normalizeDeltaEFormula() at the getDeltaE entry (DEAD-037, 2026-08-18 audit); getDeltaE_HyAB removed (DEAD-034) — 'hyab' survives only as a legacy MatchingMethod token, normalized to ciede2000
+normalizeDeltaEFormula, type CanonicalDeltaEFormula   // core-internal (not re-exported from the package root)
 type RYB
 ```
 
@@ -200,7 +201,7 @@ Nothing computes a synthetic ID at runtime any more. Code that filters "real dye
 3D RGB k-d tree with index-based construction (no point-array slicing → less GC pressure). O(log n) average for nearest-neighbour queries vs O(n) linear search.
 
 ### Harmony color spaces
-`HarmonyGenerator` supports both `'hue'` and `'deltaE'` matching, in any of 4 color spaces: `'hsv'` (default, fast bucket lookup), `'oklch'` (perceptually uniform, recommended), `'lch'`, `'hsl'`. DeltaE tolerance defaults differ per formula (`cie76: 40`, `cie2000: 25`).
+`HarmonyGenerator` supports both `'hue'` and `'deltaE'` matching, in any of 4 color spaces: `'hsv'` (default, fast bucket lookup), `'oklch'` (perceptually uniform, recommended), `'lch'`, `'hsl'`. DeltaE tolerance defaults differ per formula (`cie76: 40`, `ciede2000`/`cie2000`: 25).
 
 ### Spectral mixing (Kubelka-Munk)
 `SpectralMixer` wraps `spectral.js` and reflects light absorption/scattering across 380-750nm. Blue + Yellow = Green like real paint. Only `mixColors` is live — `mixMultiple`, `gradient`, and `isAvailable` were removed as uncalled (DEAD-034, 2026-08-18 audit).

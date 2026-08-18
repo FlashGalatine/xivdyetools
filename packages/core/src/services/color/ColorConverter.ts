@@ -10,10 +10,20 @@ import { createHexColor, ErrorCode, AppError } from '@xivdyetools/types';
 /**
  * DeltaE formula for color difference calculations
  * - cie76: Simple Euclidean distance in LAB space (fast)
- * - cie2000: CIEDE2000 formula (perceptually accurate, industry standard)
- * - oklab: OKLAB Euclidean distance (modern, simpler than cie2000, CSS standard)
+ * - ciede2000: CIEDE2000 formula (perceptually accurate, industry standard)
+ * - cie2000: legacy alias for `'ciede2000'` — see {@link normalizeDeltaEFormula}
+ * - oklab: OKLAB Euclidean distance (modern, simpler than CIEDE2000, CSS standard)
+ *
+ * `'ciede2000'` is the canonical spelling: it is the one `MatchingMethod` uses,
+ * so a `MatchingMethod` can be handed straight to {@link ColorConverter.getDeltaE}
+ * with no translation switch in between (DEAD-037, 2026-08-18 audit).
  */
-export type DeltaEFormula = 'cie76' | 'cie2000' | 'oklab';
+export type DeltaEFormula = 'cie76' | 'cie2000' | 'ciede2000' | 'oklab';
+
+/**
+ * The canonical `DeltaEFormula` spellings, after alias folding.
+ */
+export type CanonicalDeltaEFormula = Exclude<DeltaEFormula, 'cie2000'>;
 import { RGB_MIN, RGB_MAX, HUE_MAX, COLOR_DISTANCE_MAX } from '../../constants/index.js';
 import {
   clamp,
@@ -23,6 +33,19 @@ import {
   isValidHSV,
   LRUCache,
 } from '../../utils/index.js';
+
+/**
+ * Fold the legacy `'cie2000'` spelling onto the canonical `'ciede2000'`.
+ *
+ * Both name the same CIEDE2000 math and always have; only the spelling ever
+ * differed (`DeltaEFormula` said `'cie2000'`, `MatchingMethod` said
+ * `'ciede2000'`). This is the single point where that is reconciled — call it
+ * at any entry point that accepts a caller-supplied `DeltaEFormula`, never
+ * re-derive the mapping with another switch.
+ */
+export function normalizeDeltaEFormula(formula: DeltaEFormula): CanonicalDeltaEFormula {
+  return formula === 'cie2000' ? 'ciede2000' : formula;
+}
 
 /**
  * Configuration for ColorConverter caches
@@ -841,8 +864,9 @@ export class ColorConverter {
    *
    * Available formulas:
    * - cie76: LAB Euclidean (fast, fair accuracy)
-   * - cie2000: CIEDE2000 (industry standard, accurate)
-   * - oklab: OKLAB Euclidean (modern, simpler than cie2000, CSS standard)
+   * - ciede2000: CIEDE2000 (industry standard, accurate); `'cie2000'` is a
+   *   legacy alias for it and produces an identical value
+   * - oklab: OKLAB Euclidean (modern, simpler than CIEDE2000, CSS standard)
    *
    * @param hex1 First hex color
    * @param hex2 Second hex color
@@ -850,8 +874,8 @@ export class ColorConverter {
    * @returns DeltaE value (scale varies by formula)
    */
   getDeltaE(hex1: string, hex2: string, formula: DeltaEFormula = 'cie76'): number {
-    switch (formula) {
-      case 'cie2000': {
+    switch (normalizeDeltaEFormula(formula)) {
+      case 'ciede2000': {
         const lab1 = this.hexToLab(hex1);
         const lab2 = this.hexToLab(hex2);
         return this.getDeltaE2000(lab1, lab2);

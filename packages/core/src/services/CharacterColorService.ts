@@ -276,19 +276,19 @@ export class CharacterColorService {
     const hex2 = ColorConverter.rgbToHex(rgb2.r, rgb2.g, rgb2.b);
 
     switch (method) {
+      // The three perceptual methods share their spelling with DeltaEFormula
+      // (DEAD-037, 2026-08-18 audit) — no translation switch needed.
       case 'cie76':
-        return ColorConverter.getDeltaE(hex1, hex2, 'cie76');
       case 'ciede2000':
-        return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
       case 'oklab':
-        return ColorConverter.getDeltaE_Oklab(hex1, hex2);
+        return ColorConverter.getDeltaE(hex1, hex2, method);
       case 'redmean':
         return ColorConverter.getRedmeanDistance(hex1, hex2);
       case 'distinguish':
         // Unrounded percent — identical ranks to RGB DIST, no ranking ties
         return ColorConverter.getColorDistance(hex1, hex2) / 4.416729559;
       default:
-        return ColorConverter.getDeltaE(hex1, hex2, 'cie2000');
+        return ColorConverter.getDeltaE(hex1, hex2, 'ciede2000');
     }
   }
 

@@ -6,7 +6,11 @@
 
 import type { Dye } from '@xivdyetools/types';
 import { ColorManipulator } from '../color/ColorManipulator.js';
-import { ColorConverter, type DeltaEFormula } from '../color/ColorConverter.js';
+import {
+  ColorConverter,
+  normalizeDeltaEFormula,
+  type DeltaEFormula,
+} from '../color/ColorConverter.js';
 import type { DyeDatabase } from './DyeDatabase.js';
 import type { DyeSearch } from './DyeSearch.js';
 
@@ -61,7 +65,7 @@ export interface HarmonyOptions {
    * Maximum DeltaE distance for matching
    * Only used when algorithm is 'deltaE'
    * Higher values return more matches but less precise
-   * @default 40 (for cie76), 25 (for cie2000)
+   * @default 40 (for cie76), 25 (for ciede2000 / its 'cie2000' alias)
    */
   deltaETolerance?: number;
 }
@@ -222,8 +226,8 @@ export class HarmonyGenerator {
     // DeltaE-based monochromatic search
     if (options?.algorithm === 'deltaE') {
       const baseLab = ColorConverter.hexToLab(baseDye.hex);
-      const formula = options.deltaEFormula ?? 'cie76';
-      const tolerance = options.deltaETolerance ?? (formula === 'cie2000' ? 25 : 40);
+      const formula = normalizeDeltaEFormula(options.deltaEFormula ?? 'cie76');
+      const tolerance = options.deltaETolerance ?? (formula === 'ciede2000' ? 25 : 40);
 
       const results: Array<{ dye: Dye; deltaE: number; satValDiff: number }> = [];
 
@@ -233,7 +237,7 @@ export class HarmonyGenerator {
         // Use pre-computed LAB (always available for DyeInternal)
         const dyeLab = dye.lab;
         const deltaE =
-          formula === 'cie2000'
+          formula === 'ciede2000'
             ? ColorConverter.getDeltaE2000(baseLab, dyeLab)
             : ColorConverter.getDeltaE76(baseLab, dyeLab);
 
@@ -411,8 +415,8 @@ export class HarmonyGenerator {
     excludeIds: Set<number>,
     options: HarmonyOptions,
   ): Dye | null {
-    const formula = options.deltaEFormula ?? 'cie76';
-    const tolerance = options.deltaETolerance ?? (formula === 'cie2000' ? 25 : 40);
+    const formula = normalizeDeltaEFormula(options.deltaEFormula ?? 'cie76');
+    const tolerance = options.deltaETolerance ?? (formula === 'ciede2000' ? 25 : 40);
 
     const targetLab = ColorConverter.hexToLab(targetHex);
 
@@ -428,7 +432,7 @@ export class HarmonyGenerator {
       // Use pre-computed LAB (always available for DyeInternal)
       const dyeLab = dye.lab;
       const deltaE =
-        formula === 'cie2000'
+        formula === 'ciede2000'
           ? ColorConverter.getDeltaE2000(targetLab, dyeLab)
           : ColorConverter.getDeltaE76(targetLab, dyeLab);
 

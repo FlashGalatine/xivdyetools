@@ -111,7 +111,8 @@ const distance = ColorService.getColorDistance('#FF0000', '#00FF00');
 // LAB color space and DeltaE (perceptual color difference)
 const lab = ColorService.hexToLab('#FF6B6B');
 const deltaE = ColorService.getDeltaE('#FF0000', '#FF6B6B'); // CIE76 by default
-const deltaE2000 = ColorService.getDeltaE('#FF0000', '#FF6B6B', 'cie2000'); // CIEDE2000
+const deltaE2000 = ColorService.getDeltaE('#FF0000', '#FF6B6B', 'ciede2000'); // CIEDE2000
+// 'cie2000' is accepted as a legacy alias of 'ciede2000' and returns the same value
 
 // Color inversion
 const inverted = ColorService.invert('#FF6B6B');
@@ -162,7 +163,7 @@ const splitComplementary = dyeService.findSplitComplementaryDyes('#FF6B6B');
 // DeltaE-based harmony (perceptually accurate matching)
 const triadicDeltaE = dyeService.findTriadicDyes('#FF6B6B', {
   algorithm: 'deltaE',
-  deltaEFormula: 'cie2000', // or 'cie76' (faster, default)
+  deltaEFormula: 'ciede2000', // or 'cie76' (faster, default); 'cie2000' is a legacy alias
 });
 
 // Color space selection for hue rotation
