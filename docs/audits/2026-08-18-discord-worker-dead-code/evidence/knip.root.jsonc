@@ -1,0 +1,126 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreExportsUsedInFile": true,
+  "workspaces": {
+    ".": {
+      "entry": [],
+      "project": []
+    },
+    "apps/discord-worker": {
+      "entry": [
+        "src/index.ts!",
+        "src/**/*.test.ts",
+        "src/**/__tests__/**/*.ts",
+        "scripts/*.ts!",
+        "test/**/*.ts",
+        "vitest*.config.ts"
+      ],
+      "project": [
+        "src/**/*.ts",
+        "scripts/**/*.ts",
+        "test/**/*.ts"
+      ]
+    },
+    "apps/*": {
+      "entry": [
+        "src/index.ts!",
+        "src/main.ts!",
+        "src/**/*.test.ts",
+        "scripts/**/*.{ts,js,mjs}!",
+        "test/**/*.ts",
+        "e2e/**/*.ts",
+        "functions/**/*.ts!",
+        "vite-plugin-*.ts!",
+        "*.config.ts",
+        "eslint.config.js"
+      ],
+      "project": [
+        "src/**/*.ts",
+        "scripts/**",
+        "test/**",
+        "e2e/**",
+        "functions/**",
+        "*.ts"
+      ]
+    },
+    "packages/*": {
+      "entry": [
+        "src/index.ts!",
+        "src/**/index.ts!",
+        "src/**/*.test.ts",
+        "src/**/__tests__/**/*.ts",
+        "scripts/**/*.{ts,js,mjs}!",
+        "test/**/*.ts",
+        "vitest*.config.ts",
+        "*.config.ts",
+        "bench/**/*.ts"
+      ],
+      "project": [
+        "src/**/*.ts",
+        "scripts/**",
+        "test/**",
+        "bench/**",
+        "*.ts"
+      ]
+    }
+  },
+  "paths": {
+    "@xivdyetools/types": [
+      "packages/types/src/index.ts"
+    ],
+    "@xivdyetools/types/*": [
+      "packages/types/src/*/index.ts"
+    ],
+    "@xivdyetools/auth": [
+      "packages/auth/src/index.ts"
+    ],
+    "@xivdyetools/auth/encoding": [
+      "packages/auth/src/encoding/index.ts"
+    ],
+    "@xivdyetools/auth/*": [
+      "packages/auth/src/*.ts"
+    ],
+    "@xivdyetools/core": [
+      "packages/core/src/index.ts"
+    ],
+    "@xivdyetools/core/blending": [
+      "packages/core/src/blending/index.ts"
+    ],
+    "@xivdyetools/logger": [
+      "packages/logger/src/index.ts"
+    ],
+    "@xivdyetools/logger/*": [
+      "packages/logger/src/presets/*.ts"
+    ],
+    "@xivdyetools/svg": [
+      "packages/svg/src/index.ts"
+    ],
+    "@xivdyetools/bot-logic": [
+      "packages/bot-logic/src/index.ts"
+    ],
+    "@xivdyetools/bot-logic/i18n": [
+      "packages/bot-logic/src/i18n/index.ts"
+    ],
+    "@xivdyetools/worker-kit": [
+      "packages/worker-kit/src/index.ts"
+    ],
+    "@xivdyetools/worker-kit/middleware": [
+      "packages/worker-kit/src/middleware/index.ts"
+    ],
+    "@xivdyetools/worker-kit/rate-limiter": [
+      "packages/worker-kit/src/rate-limiter/index.ts"
+    ],
+    "@xivdyetools/worker-kit/rate-limiter/presets": [
+      "packages/worker-kit/src/rate-limiter/presets/index.ts"
+    ],
+    "@xivdyetools/worker-kit/rate-limiter/*": [
+      "packages/worker-kit/src/rate-limiter/backends/*.ts"
+    ],
+    "@xivdyetools/test-utils": [
+      "packages/test-utils/src/index.ts"
+    ],
+    "@xivdyetools/test-utils/*": [
+      "packages/test-utils/src/*/index.ts"
+    ]
+  }
+}

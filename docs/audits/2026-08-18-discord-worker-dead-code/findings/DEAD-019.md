@@ -1,0 +1,30 @@
+# [DEAD-019]: auth `hmacSign` / `hmacVerify` / `hmacSignHex` have zero callers — while four apps hand-roll the same HMAC code
+
+## Category
+Unused Export (DEAD) + Duplicate — adopt-or-delete
+
+## Location
+- `packages/auth/src/hmac.ts:124-141` (`hmacSign`), `161-189` (`hmacVerify`), `143-159` (`hmacSignHex`) — ~64 lines; `hmac.test.ts` (339 lines) is ~⅓ coverage of code with no runtime caller (~120 lines)
+- Hand-rolled equivalents in apps (~90 lines total):
+  - `apps/discord-worker/src/services/preset-api.ts:47-70` `generateRequestSignature` (importKey + sign + hex) ≡ `hmacSignHex(message, secret)`
+  - `apps/moderation-worker/src/services/preset-api.ts:67-92` `generateRequestSignature` — same
+  - `apps/discord-worker/src/utils/github-verify.ts:22-60` ≡ `hmacVerifyHex`
+  - `apps/oauth/src/services/jwt-service.ts:44-85` `getSigningKey`/`signJwtData`/`verifyJwtData` ≡ `hmacSign`/`hmacVerify` (base64url)
+- INTERNAL-ONLY (keep): `hmacVerifyHex` (used by `verifyBotSignature`), `createHmacKey` (used by `getOrCreateHmacKey`)
+
+## Evidence
+`git grep -nw hmacSign|hmacVerify|hmacSignHex` outside `packages/auth` → 0 (README §HMAC and CHANGELOG 1.0 document them). The four app copies were read side-by-side with the package functions.
+
+## Why It Exists
+`@xivdyetools/auth` absorbed the crypto package on 2026-07-30 with its full HMAC API; the apps had already written their own before the shared helpers existed and never migrated.
+
+## Removal Risk Assessment
+| Factor | Assessment |
+|--------|------------|
+| **Confidence** | HIGH that they are unused; the choice between the two remedies is the owner's |
+| **Blast Radius** | Adopt: 4 app files (auth-sensitive code — needs its tests re-run); Delete: package-only |
+| **Reversibility** | EASY |
+| **Hidden Consumers** | None (npm-published; DEPRECATIONS.md names workspace consumers only) |
+
+## Recommendation
+**REFACTOR FIRST** — pick one: (a) *adopt* — replace the four hand-rolled copies with the package helpers (removes ~90 app lines, gains the key cache, one tested implementation), or (b) *delete* `hmacSign`/`hmacVerify`/`hmacSignHex` + their tests. (a) is the better engineering outcome; (b) is the smaller diff. Do not do both.

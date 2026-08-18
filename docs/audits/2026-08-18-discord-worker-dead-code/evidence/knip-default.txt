@@ -1,0 +1,61 @@
+Unused files (2)
+apps/discord-worker/src/services/svg/index.ts: apps/discord-worker/src/services/svg/index.ts
+apps/discord-worker/src/types/image.ts: apps/discord-worker/src/types/image.ts
+Unused dependencies (4)
+apps/api-worker/package.json: @xivdyetools/logger, spectral.js
+apps/oauth/package.json: @xivdyetools/logger
+apps/presets-api/package.json: @xivdyetools/logger
+apps/stoat-worker/package.json: @xivdyetools/core, @xivdyetools/worker-kit, @xivdyetools/svg
+Unused devDependencies (7)
+apps/api-worker/package.json: vue
+apps/moderation-worker/package.json: discord-interactions
+apps/stoat-worker/package.json: @xivdyetools/test-utils
+apps/web-app/package.json: wrangler
+packages/bot-logic/package.json: @xivdyetools/test-utils
+packages/core/package.json: typedoc-plugin-markdown
+packages/test-utils/package.json: @testing-library/dom
+Unresolved imports (1)
+packages/core/typedoc.json: d, e, f, a, u, l, t
+Unused exports (19)
+apps/api-worker/src/lib/response.ts: errorResponse
+apps/api-worker/src/lib/services.ts: LocalizationService
+apps/api-worker/src/universalis/services/rate-limiter.ts: clearRateLimits
+apps/api-worker/src/universalis/test-setup.ts: createMockEnv
+apps/discord-worker/src/handlers/buttons/index.ts: createHexButton, handlePreviewImageButton, isPreviewImageButton
+apps/discord-worker/src/services/budget/index.ts: fetchPrices, fetchPricesBatched, CACHE_TTL_SECONDS, getCachedPrice, setCachedPrice, getCachedPrices, setCachedPrices, fetchWithCache, searchDyes, getAllDyes, getCategories, QUICK_PICKS, getQuickPickChoices
+apps/discord-worker/src/services/preferences.ts: resolvePreference
+apps/discord-worker/src/test-utils.ts: createMockExecutionContext, createMockDyes, createMockPreset
+apps/discord-worker/src/utils/color.ts: isValidHex, normalizeHex, resolveDyeInput
+apps/moderation-worker/src/handlers/buttons/index.ts: handlePresetApproveButton, handlePresetRejectButton, handlePresetRevertButton, isPresetModerationButton, handleBanConfirmButton, handleBanCancelButton, isBanConfirmButton, isBanCancelButton
+apps/moderation-worker/src/types/ban.ts: toBannedUser
+apps/moderation-worker/src/types/preset.ts: CATEGORY_DISPLAY
+apps/oauth/src/__tests__/mocks/cloudflare-test.ts: createBrokenProductionEnv
+apps/oauth/src/constants/oauth.ts: DISCORD_REQUIRED_SCOPES
+apps/oauth/src/utils/state-signing.ts: isStateSigned
+apps/og-worker/src/services/fonts.ts: cjkStack, FONT_FAMILIES
+apps/og-worker/src/services/svg/base.ts: truncateText
+apps/og-worker/src/services/svg/index.ts: generateBandCard, bandInk, cardFooter, cardHeader, ogMark, xStrip, BAND_FRAMES, BAND_CAP, DECK_H, FOOTER_H, HEADER_H, MARK_STRIPES
+apps/presets-api/src/services/validation-service.ts: validateStringLength, validateArray, validateEnum
+Unused exported types (17)
+apps/api-worker/src/universalis/types.ts: Env
+apps/discord-worker/src/services/bot-i18n.ts: LocaleCode
+apps/discord-worker/src/services/budget/index.ts: UniversalisWorld, UniversalisDataCenter
+apps/discord-worker/src/types/budget.ts: UserWorldPreference
+apps/discord-worker/src/types/github.ts: GitHubPushPayload
+apps/discord-worker/src/types/preset.ts: PresetSortOption
+apps/discord-worker/src/utils/color.ts: ResolvedColor, ResolveColorOptions
+apps/discord-worker/src/utils/verify.ts: DiscordVerificationResult, DiscordVerifyOptions
+apps/moderation-worker/src/types/env.ts: InteractionResponseBody
+apps/moderation-worker/src/types/preset.ts: PresetCategory, PresetSortOption, CategoryMeta, PresetPreviousValues, PresetSubmission, PresetEditRequest, PresetSubmitResponse, PresetEditResponse, VoteResponse
+apps/moderation-worker/src/utils/verify.ts: DiscordVerificationResult, DiscordVerifyOptions, VerificationResult
+apps/oauth/src/types.ts: OAuthState, XIVAuthSocialIdentity
+apps/og-worker/src/services/svg/index.ts: BandCardOptions, BandEntry, BandFrame, DefaultCardOptions, HarmonyOGOptions, GradientOGOptions, MixerOGOptions, SwatchOGOptions, ComparisonOGOptions, AccessibilityOGOptions, ExtractorOGOptions, PresetsOGOptions, BudgetOGOptions
+apps/og-worker/src/types.ts: ShareParams
+apps/presets-api/src/services/validation-service.ts: ModerationStatus
+apps/presets-api/src/types.ts: PresetSubmitResponse, PresetEditResponse, ModerationResponse, CategoryListResponse
+apps/presets-api/src/utils/api-response.ts: ErrorCodeType
+Unused exported enum members (1)
+apps/discord-worker/src/types/env.ts: UPDATE_MESSAGE, MODAL (InteractionResponseType)
+Duplicate exports (2)
+packages/logger/src/constants.ts: CORE_REDACT_FIELDS, DEFAULT_REDACT_FIELDS
+packages/test-utils/src/factories/vote.ts: createMockVoteRow, createMockVote

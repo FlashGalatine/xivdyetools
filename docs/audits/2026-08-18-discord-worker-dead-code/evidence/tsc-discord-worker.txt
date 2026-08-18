@@ -1,0 +1,1 @@
+tsc discord-worker exit 0

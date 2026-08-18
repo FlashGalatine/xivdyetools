@@ -1,0 +1,65 @@
+Unused files (2) :: apps/discord-worker/src/services/svg/index.ts: apps/discord-worker/src/services/svg/index.ts
+Unused files (2) :: apps/discord-worker/src/types/image.ts: apps/discord-worker/src/types/image.ts
+Unused devDependencies (7) :: packages/bot-logic/package.json: @xivdyetools/test-utils
+Unused devDependencies (7) :: packages/core/package.json: typedoc-plugin-markdown
+Unused devDependencies (7) :: packages/test-utils/package.json: @testing-library/dom
+Unresolved imports (1) :: packages/core/typedoc.json: d, e, f, a, u, l, t
+Unused exports (43) :: apps/discord-worker/src/handlers/buttons/index.ts: createHexButton, handlePreviewImageButton, isPreviewImageButton
+Unused exports (43) :: apps/discord-worker/src/services/budget/index.ts: fetchPrices, fetchPricesBatched, CACHE_TTL_SECONDS, getCachedPrice, setCachedPrice, getCachedPrices, setCachedPrices, fetchWithCache, searchDyes, getAllDyes, getCategories, QUICK_PICKS, getQuickPickChoices
+Unused exports (43) :: apps/discord-worker/src/services/preferences.ts: resolvePreference
+Unused exports (43) :: apps/discord-worker/src/test-utils.ts: createMockExecutionContext, createMockDyes, createMockPreset
+Unused exports (43) :: apps/discord-worker/src/utils/color.ts: isValidHex, normalizeHex, resolveDyeInput
+Unused exports (43) :: packages/auth/src/index.ts: isJWTExpired, getJWTTimeToExpiry, createHmacKey, hmacSign, hmacSignHex, hmacVerify, hmacVerifyHex, timingSafeEqualBytes, base64UrlEncode, base64UrlEncodeBytes, base64UrlDecode, base64UrlDecodeBytes, hexToBytes, bytesToHex
+Unused exports (43) :: packages/bot-logic/src/index.ts: isValidHex, normalizeHex, getLocalizedCurrency, getColorDistance, getMatchQualityInfo, HARMONY_TYPES, VISION_TYPES, isValidDiscordSnowflake
+Unused exports (43) :: packages/core/src/config/band-vocabulary.ts: SEPARATION_TIER_KEYS
+Unused exports (43) :: packages/core/src/constants/index.ts: VISION_TYPES, VISION_TYPE_LABELS, API_DEBOUNCE_DELAY
+Unused exports (43) :: packages/core/src/index.ts: MemoryCacheBackend, SUPPORTED_LOCALES, resolveLocaleFromPreference, MATCHING_METHODS, DYE_CATEGORIES, DYE_ACQUISITIONS, ACQUISITION_META, METALLIC_STAIN_IDS, RATIO_BANDS, SEPARATION_TIER_KEYS, classifyBandTierWithCuts, deriveDistinguishCuts, calibrateBandVocabulary, DE2000_GROUND_TRUTH, METHOD_DISPLAY_DP, OFF_GRID_DELTA_E2000, LODESTONE_BY_REGION, XIVDYETOOLS_DOCS_URL, facewearColors, LEGACY_FACEWEAR_ITEM_IDS, getFacewearColor, RGB_MIN, RGB_MAX, HUE_MIN, HUE_MAX, SATURATION_MIN, SATURATION_MAX, VALUE_MIN, VALUE_MAX, COLOR_DISTANCE_MAX, VISION_TYPES, VISION_TYPE_LABELS, BRETTEL_MATRICES, MACHADO_MATRICES, PATTERNS, UNIVERSALIS_API_TIMEOUT, UNIVERSALIS_API_RETRY_COUNT, UNIVERSALIS_API_RETRY_DELAY, API_CACHE_TTL, API_DEBOUNCE_DELAY, API_CACHE_VERSION, API_MAX_RESPONSE_SIZE, API_RATE_LIMIT_DELAY, clamp, lerp, round, distance, unique, groupBy, sortByProperty, filterNulls, isValidHexColor, isValidRGB, isValidHSV, isString, isNumber, isArray, isObject, isNullish, sleep, retry, isAbortError, generateChecksum, VERSION
+Unused exports (43) :: packages/core/src/version.ts: VERSION
+Unused exports (43) :: packages/logger/src/adapters/index.ts: ConsoleAdapter, JsonAdapter, NoopAdapter
+Unused exports (43) :: packages/logger/src/core/index.ts: BaseLogger, createSimpleLogger
+Unused exports (43) :: packages/logger/src/index.ts: BaseLogger, createSimpleLogger, ConsoleAdapter, JsonAdapter, NoopAdapter, createBrowserLogger, browserLogger, perf, createWorkerLogger, createRequestLogger, NoOpLogger, ConsoleLogger
+Unused exports (43) :: packages/logger/src/presets/index.ts: createBrowserLogger, browserLogger, perf, createWorkerLogger, createRequestLogger, NoOpLogger, ConsoleLogger
+Unused exports (43) :: packages/svg/src/base.ts: DEFAULT_DISPLAY_OPTIONS
+Unused exports (43) :: packages/svg/src/icons/tool-icons.ts: GLYPH_ACCENT_LIGHT
+Unused exports (43) :: packages/svg/src/index.ts: arcPath, truncateText, rgbToHsv, ACCENT, NUMFMT, DEFAULT_DISPLAY_OPTIONS, CARD_TYPE, HARMONY_ROW_CAP, cardShell, cardText, textWidth, fitText, commandChip, placeGlyph, appIcon, markFooter, swatch, idealSwatch, dashedRule, hairline, formatMeasure, bandSlices, LEDGER_HEADER_H, LEDGER_COLHEAD_H, LEDGER_FOOTER_H, LEDGER_FOOTER_2LINE_H, GLYPH_SETS, GLYPH_ACCENT_LIGHT
+Unused exports (43) :: packages/test-utils/src/factories/index.ts: randomId, randomStringId
+Unused exports (43) :: packages/test-utils/src/utils/crypto.ts: base64UrlDecodeBytes
+Unused exports (43) :: packages/types/src/auth/index.ts: createSnowflake
+Unused exports (43) :: packages/types/src/character/index.ts: RACE_SUBRACES, SUBRACE_TO_RACE, COLOR_GRID_DIMENSIONS
+Unused exports (43) :: packages/types/src/color/index.ts: MATCH_QUALITY_TIERS
+Unused exports (43) :: packages/types/src/index.ts: MATCH_QUALITY_TIERS, RACE_SUBRACES, SUBRACE_TO_RACE, COLOR_GRID_DIMENSIONS
+Unused exports (43) :: packages/worker-kit/src/rate-limiter/index.ts: formatRateLimitMessage, OAUTH_LIMITS, DISCORD_COMMAND_LIMITS, MODERATION_LIMITS, UNIVERSALIS_PROXY_LIMITS
+Unused exports (43) :: packages/worker-kit/src/rate-limiter/presets/index.ts: OAUTH_LIMITS, getOAuthLimit, DISCORD_COMMAND_LIMITS, getDiscordCommandLimit, MODERATION_LIMITS, PUBLIC_API_LIMITS, UNIVERSALIS_PROXY_LIMITS
+Unused exported types (41) :: apps/discord-worker/src/services/bot-i18n.ts: LocaleCode
+Unused exported types (41) :: apps/discord-worker/src/services/budget/index.ts: UniversalisWorld, UniversalisDataCenter
+Unused exported types (41) :: apps/discord-worker/src/types/budget.ts: UserWorldPreference
+Unused exported types (41) :: apps/discord-worker/src/types/github.ts: GitHubPushPayload
+Unused exported types (41) :: apps/discord-worker/src/types/preset.ts: PresetSortOption
+Unused exported types (41) :: apps/discord-worker/src/utils/color.ts: ResolvedColor, ResolveColorOptions
+Unused exported types (41) :: apps/discord-worker/src/utils/verify.ts: DiscordVerificationResult, DiscordVerifyOptions
+Unused exported types (41) :: packages/auth/src/index.ts: JWTPayload, VerifyJWTOptions, RevocationStore, BotSignatureOptions, DiscordVerificationResult, DiscordVerifyOptions
+Unused exported types (41) :: packages/bot-logic/src/commands/harmony.ts: HarmonyColorSpace
+Unused exported types (41) :: packages/bot-logic/src/i18n/index.ts: LocaleData, TranslatorLogger
+Unused exported types (41) :: packages/bot-logic/src/index.ts: ResolveColorOptions, LocaleCode, EmbedData, EmbedField, MatchQualityInfo, HarmonyInput, HarmonyResult, HarmonyColorSpace, DyeInfoInput, DyeInfoResult, RandomInput, RandomResult, MixerInput, MixerResult, MixerMatch, BlendingMode, GradientInput, GradientResult, GradientStepResult, MatchingMethod, ComparisonInput, ComparisonResult, AccessibilityInput, AccessibilityResult, SwatchResult, ContrastInput, ContrastResult
+Unused exported types (41) :: packages/core/src/blending/index.ts: RGB, LAB, HSL, BlendResult
+Unused exported types (41) :: packages/core/src/index.ts: APIServiceOptions, CacheMetrics, ResolvedPreset, PaletteExtractionOptions, ExtractedColor, PaletteServiceOptions, CharacterMatchOptions, HarmonyMatchingAlgorithm, DeltaEFormula, RYB, ConsolidatedDye, LocalizedDyeName, DyeCategory, DyeAcquisition, AcquisitionMeta, BandContext, BandMethod, BandTier, MethodBandSet, ProductLink, BandCalibrationResult, CalibratedMethodId, CalibratedMethodBands, RatioCalibration, ParsedCharaFile, CharaColorSlotRaw, CharaGearDye, CharaGearSlotId, CharaSlotInertReason, ResolvedGearDye, CharaSlotVerdict, CharaSlotErrorCode, StainIdLookup, ManualTopic
+Unused exported types (41) :: packages/logger/src/index.ts: LogLevel, LogContext, LogEntry, Logger, LoggerConfig, ErrorTracker, BrowserLoggerOptions, WorkerLoggerOptions
+Unused exported types (41) :: packages/logger/src/presets/index.ts: BrowserLoggerOptions, WorkerLoggerOptions
+Unused exported types (41) :: packages/svg/src/a11y-card.ts: AllVisionTypes
+Unused exported types (41) :: packages/svg/src/index.ts: DisplayOptions, CardTheme, CardTextOptions, CommandChipOptions, MeasuredLead, MeasuredRowOptions, MeasuredRowWidths, HarmonyCardLabels, HarmonyCardOptions, GradientCardOptions, MixerCardOptions, PaletteBandEntry, PaletteRowEntry, PaletteGridOptions, PaletteGridLabels, NearestSheetLabels, NearestSheetOptions, A11yCardOptions, A11yCardLabels, AllVisionTypes, ContrastCardLabels, ContrastCardOptions, RandomGridLabels, RandomDyesGridOptions, ComparisonCardLabels, ComparisonCardOptions, SwatchCardLabels, SwatchCardOptions, DyeInfoCardOptions, DyeInfoLabels, PresetSwatchOptions, BudgetLedgerRow, BudgetLedgerLabels, BudgetLedgerOptions, ChromeGlyphName, PanelGlyphName
+Unused exported types (41) :: packages/test-utils/src/auth/context.ts: AuthSource
+Unused exported types (41) :: packages/types/src/auth/index.ts: OAuthState, DiscordSnowflake, XIVAuthSocialIdentity, AuthSuccessResponse, AuthErrorResponse, RefreshSuccessResponse, RefreshErrorResponse, UserInfoData, UserInfoSuccessResponse, UserInfoErrorResponse
+Unused exported types (41) :: packages/types/src/auth/jwt.ts: OAuthState
+Unused exported types (41) :: packages/types/src/color/index.ts: Matrix3x3
+Unused exported types (41) :: packages/types/src/dye/database.ts: DyeDatabase
+Unused exported types (41) :: packages/types/src/dye/index.ts: DyeDatabase
+Unused exported types (41) :: packages/types/src/error/index.ts: ErrorSeverity
+Unused exported types (41) :: packages/types/src/index.ts: PresetSortOption, PresetSubmitCreatedResponse, PresetSubmitDuplicateResponse, PresetSubmitErrorResponse, PresetEditDuplicateInfo, PresetEditSuccessResponse, PresetEditDuplicateResponse, PresetEditErrorResponse, VoteSuccessResponse, VoteErrorResponse, ModerationSuccessResponse, ModerationErrorResponse, ModerationResponse, CategoryListResponse, OAuthState, XIVAuthSocialIdentity, AuthUser, ErrorSeverity
+Unused exported types (41) :: packages/types/src/preset/index.ts: PresetSortOption, PresetSubmitCreatedResponse, PresetSubmitDuplicateResponse, PresetSubmitErrorResponse, PresetEditDuplicateInfo, PresetEditSuccessResponse, PresetEditDuplicateResponse, PresetEditErrorResponse, VoteSuccessResponse, VoteErrorResponse, ModerationSuccessResponse, ModerationErrorResponse, ModerationResponse, CategoryListResponse
+Unused exported types (41) :: packages/types/src/preset/response.ts: ModerationResponse, CategoryListResponse
+Unused exported types (41) :: packages/worker-kit/src/middleware/index.ts: RequestIdOptions, LoggerMiddlewareOptions, RateLimitMiddlewareOptions
+Unused exported types (41) :: packages/worker-kit/src/rate-limiter/index.ts: EndpointRateLimitConfig, ExtendedRateLimiter, MemoryRateLimiterOptions, KVRateLimiterOptions, UpstashRateLimiterOptions, RateLimiterLogger, GetClientIpOptions
+Unused exported types (41) :: packages/worker-kit/src/rate-limiter/types.ts: EndpointRateLimitConfig
+Unused exported enum members (1) :: apps/discord-worker/src/types/env.ts: UPDATE_MESSAGE, MODAL (InteractionResponseType)
+Duplicate exports (2) :: packages/logger/src/constants.ts: CORE_REDACT_FIELDS, DEFAULT_REDACT_FIELDS
+Duplicate exports (2) :: packages/test-utils/src/factories/vote.ts: createMockVoteRow, createMockVote

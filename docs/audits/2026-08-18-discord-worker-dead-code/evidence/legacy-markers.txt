@@ -1,0 +1,82 @@
+apps/discord-worker/src/handlers/commands/index.ts:8: * - Added: handleGradientCommand (replaces legacy mixer)
+apps/discord-worker/src/handlers/commands/index.ts:10: *   (kept for backward compatibility during migration)
+apps/discord-worker/src/handlers/commands/index.ts:24:// Legacy commands (deprecated in v4, kept for backward compatibility)
+apps/discord-worker/src/handlers/commands/stats.ts:287:  // 5.0 adoption: the commands the redesign introduced (the legacy set was
+apps/discord-worker/src/index.ts:28:  // Legacy commands (kept for backward compatibility during migration)
+apps/discord-worker/src/services/analytics.ts:275:  // This provides backward compatibility during migration
+apps/discord-worker/src/services/bot-i18n.ts:50: * legacy i18n preference → Discord locale → 'en' (resolveUserLocale still
+apps/discord-worker/src/services/bot-i18n.ts:51: * performs the legacy/Discord fallbacks when the unified blob has no
+apps/discord-worker/src/services/i18n.ts:94: * Get a user's legacy language preference from KV.
+apps/discord-worker/src/services/i18n.ts:117: * 2. User's legacy preference (i18n:user:{userId})
+apps/discord-worker/src/services/i18n.ts:146:  // 2. Check legacy i18n preference
+apps/discord-worker/src/services/preferences.ts:5: * Handles migration from legacy preference keys on first access.
+apps/discord-worker/src/services/preferences.ts:59:const LEGACY_I18N_PREFIX = 'i18n:user:';
+apps/discord-worker/src/services/preferences.ts:60:const LEGACY_WORLD_PREFIX = 'budget:world:v1:';
+apps/discord-worker/src/services/preferences.ts:76: * If no unified preferences exist, attempts to migrate from legacy keys.
+apps/discord-worker/src/services/preferences.ts:98:    // No unified prefs - attempt migration from legacy keys
+apps/discord-worker/src/services/preferences.ts:466: * Migrate legacy preference keys to unified preferences
+apps/discord-worker/src/services/preferences.ts:469: * Reads from legacy keys and creates a unified preferences object.
+apps/discord-worker/src/services/preferences.ts:488:    const legacyLanguage = await kv.get(`${LEGACY_I18N_PREFIX}${userId}`);
+apps/discord-worker/src/services/preferences.ts:489:    if (legacyLanguage && isValidLocale(legacyLanguage)) {
+apps/discord-worker/src/services/preferences.ts:490:      prefs.language = legacyLanguage;
+apps/discord-worker/src/services/preferences.ts:495:    const legacyWorldData = await kv.get(`${LEGACY_WORLD_PREFIX}${userId}`);
+apps/discord-worker/src/services/preferences.ts:496:    if (legacyWorldData) {
+apps/discord-worker/src/services/preferences.ts:498:        const worldPref = JSON.parse(legacyWorldData) as { world?: string };
+apps/discord-worker/src/services/preferences.ts:504:        // Invalid JSON in legacy key, skip
+apps/discord-worker/src/services/preferences.ts:515:        logger.info('Migrated legacy preferences to unified format', { userId, keys: Object.keys(prefs) });
+apps/discord-worker/src/services/preferences.ts:520:      logger.error('Failed to migrate legacy preferences', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/preset-favorites.ts:45:/** OPT-007: denormalized favorite entry (name may be '' for legacy v1 data) */
+apps/discord-worker/src/services/preset-favorites.ts:65: * legacy v1 bare-ID blob (entries get name '' until saveEntries migrates).
+apps/discord-worker/src/types/preset.ts:15: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/discord-worker/src/types/preset.ts:27: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/discord-worker/src/types/preset.ts:37: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/discord-worker/src/types/preset.ts:48: * @deprecated Import directly from '@xivdyetools/types' instead.
+packages/bot-logic/src/commands/mixer.ts:69:      /** Nearest dyes to the 50% blend (legacy shape, still returned) */
+packages/bot-logic/src/localization.ts:74: * Defaults to 'en' for backward compatibility with callers that don't pass locale.
+packages/svg/src/base.ts:13: * current emit-everything behavior for backward compat).
+packages/core/src/config/facewear.ts:22:export const LEGACY_FACEWEAR_ITEM_IDS: Readonly<Record<number, string>> = {
+packages/core/src/config/facewear.ts:42:export function getFacewearColorByLegacyItemID(legacyId: number): FacewearColor | null {
+packages/core/src/config/facewear.ts:43:  const slug = LEGACY_FACEWEAR_ITEM_IDS[legacyId];
+packages/core/src/constants/index.ts:97: * Unlike {@link BRETTEL_MATRICES} (applied to gamma-encoded sRGB by the legacy
+packages/core/src/index.ts:66:  LEGACY_MATCHING_METHOD_MAP,
+packages/core/src/index.ts:170:  LEGACY_FACEWEAR_ITEM_IDS,
+packages/core/src/services/APIService.ts:399:   * @param options Configuration options or legacy cache backend
+packages/core/src/services/APIService.ts:406:    // Support both legacy positional arguments and new options object
+packages/core/src/services/chara/chara-resolver.ts:18: *   (`stainID`/`legacyItemID`), never derived from ranges.
+packages/core/src/services/CharacterColorService.ts:316:   * @param countOrOptions - Number of matches (legacy) or options object
+packages/core/src/services/CharacterColorService.ts:338:    // Support both legacy (count number) and new (options object) signatures
+packages/core/src/services/color/ColorblindnessSimulator.ts:116:   * was computed against; the legacy Brettel path operates on gamma-encoded
+packages/core/src/services/ColorService.ts:9: * Maintains backward compatibility while using split services internally
+packages/core/src/services/ColorService.ts:52: * Maintains backward compatibility with existing API
+packages/core/src/services/dye/DyeDatabase.ts:120:    // for backward compatibility with runtime-shaped test data.
+packages/core/src/services/dye/DyeDatabase.ts:126:      this.logger.warn('Dye missing required stainID (or legacy id/itemID) field');
+packages/core/src/services/dye/DyeDatabase.ts:204:          // Schema v2: legacyItemID carries the market-era item ID. The
+packages/core/src/services/dye/DyeDatabase.ts:206:          // downstream compatibility; a future dye with legacyItemID null
+packages/core/src/services/dye/DyeDatabase.ts:208:          if (normalizedDye.itemID === undefined && normalizedDye.legacyItemID !== undefined) {
+packages/core/src/services/dye/DyeDatabase.ts:209:            normalizedDye.itemID = normalizedDye.legacyItemID;
+packages/core/src/services/dye/DyeDatabase.ts:232:          // the entry doesn't carry them (legacy `price` still honored).
+packages/core/src/services/dye/DyeSearch.ts:32:  /** Color matching algorithm (default: 'rgb' for backwards compatibility) */
+packages/core/src/services/dye/DyeSearch.ts:164:   * @param excludeIdsOrOptions - Either an array of IDs to exclude (legacy) or options object
+packages/core/src/services/dye/DyeSearch.ts:170:    // Support both legacy signature and new options object
+packages/core/src/services/dye/DyeSearch.ts:255:   * @param maxDistanceOrOptions - Either maxDistance number (legacy) or options object
+packages/core/src/services/dye/DyeSearch.ts:256:   * @param limit - Maximum results (legacy parameter, use options.limit instead)
+packages/core/src/services/dye/DyeSearch.ts:266:    // Support both legacy signature and new options object
+packages/core/src/services/DyeService.ts:9: * Maintains backward compatibility while using split services internally
+packages/core/src/services/DyeService.ts:53: * Maintains backward compatibility with existing API
+packages/core/src/services/DyeService.ts:211:   * @param excludeIdsOrOptions - Either an array of IDs to exclude (legacy) or options object
+packages/core/src/services/DyeService.ts:225:   * @param maxDistanceOrOptions - Either maxDistance number (legacy) or options object
+packages/core/src/services/DyeService.ts:226:   * @param limit - Maximum results (legacy parameter, use options.limit instead)
+packages/core/src/types/index.ts:72:export const LEGACY_MATCHING_METHOD_MAP: Record<string, MatchingMethod> = {
+packages/core/src/types/index.ts:91:  if (typeof value === 'string' && value in LEGACY_MATCHING_METHOD_MAP) {
+packages/core/src/types/index.ts:92:    return LEGACY_MATCHING_METHOD_MAP[value];
+packages/logger/src/presets/browser.ts:46:  // Check for Node.js environment variable (using globalThis for compatibility)
+packages/logger/src/presets/library.ts:5: * Maintains backward compatibility with existing Logger interface.
+packages/logger/src/presets/worker.ts:137: * @deprecated Use app-local `getRequestId(c: Context)` instead.
+packages/logger/src/types.ts:73: * This interface is backward compatible with the existing
+packages/types/src/auth/jwt.ts:48:  /** JWT ID for revocation (optional for backward compat) */
+packages/types/src/character/index.ts:29:  /** HSV color representation (optional for compatibility) */
+packages/types/src/color/branded.ts:95: * const legacy = createDyeId(5729);    // Returns null (itemID, not a stainID)
+packages/types/src/dye/dye.ts:41:   * `stainID`. The `null` arm survives only for legacy fixture shapes that
+packages/types/src/dye/dye.ts:52:   * normalisation (schema v2 derives `itemID` from the stored `legacyItemID`,
+packages/worker-kit/src/rate-limiter/backends/kv.ts:243:            // Fallback to console.error for backward compatibility
+packages/worker-kit/src/rate-limiter/ip.ts:67:  // FINDING-003: Only trust if explicitly opted in (default true for compat)
