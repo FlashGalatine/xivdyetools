@@ -7,7 +7,6 @@ import {
   grp,
   escapeXml,
   hexToRgb,
-  rgbToHex,
   getLuminance,
   getContrastTextColor,
   createSvgDocument,
@@ -15,11 +14,8 @@ import {
   circle,
   line,
   text,
-  arcPath,
   group,
-  truncateText,
   estimateTextWidth,
-  rgbToHsv,
   THEME,
   FONTS,
 } from './base.js';
@@ -71,24 +67,6 @@ describe('svg/base.ts', () => {
 
     it('should handle mixed case hex values', () => {
       expect(hexToRgb('#AbCdEf')).toEqual({ r: 171, g: 205, b: 239 });
-    });
-  });
-
-  describe('rgbToHex', () => {
-    it('should convert RGB to hex', () => {
-      expect(rgbToHex(255, 0, 0)).toBe('#ff0000');
-      expect(rgbToHex(0, 255, 0)).toBe('#00ff00');
-      expect(rgbToHex(0, 0, 255)).toBe('#0000ff');
-    });
-
-    it('should pad single-digit hex values', () => {
-      expect(rgbToHex(0, 0, 0)).toBe('#000000');
-      expect(rgbToHex(15, 15, 15)).toBe('#0f0f0f');
-    });
-
-    it('should handle white and black', () => {
-      expect(rgbToHex(255, 255, 255)).toBe('#ffffff');
-      expect(rgbToHex(0, 0, 0)).toBe('#000000');
     });
   });
 
@@ -260,28 +238,6 @@ describe('svg/base.ts', () => {
     });
   });
 
-  describe('arcPath', () => {
-    it('should generate arc path string', () => {
-      const path = arcPath(100, 100, 50, 0, 90);
-
-      expect(path).toContain('M 100 100');
-      expect(path).toContain('A 50 50');
-      expect(path).toContain('Z');
-    });
-
-    it('should handle large arc flag for angles > 180', () => {
-      const path = arcPath(100, 100, 50, 0, 270);
-
-      expect(path).toContain('1 1'); // Large arc flag should be 1
-    });
-
-    it('should handle small arc flag for angles <= 180', () => {
-      const path = arcPath(100, 100, 50, 0, 90);
-
-      expect(path).toContain('0 1'); // Large arc flag should be 0
-    });
-  });
-
   describe('group', () => {
     it('should create group without transform', () => {
       const g = group('<rect/>');
@@ -365,23 +321,6 @@ describe('svg/base.ts', () => {
     });
   });
 
-  describe('truncateText', () => {
-    it('returns the original text when it fits', () => {
-      expect(truncateText('Snow White', 20)).toBe('Snow White');
-      expect(truncateText('exact', 5)).toBe('exact');
-    });
-
-    it('appends a Unicode ellipsis when it does not', () => {
-      expect(truncateText('Dalamud Red', 6)).toBe('Dalam…');
-    });
-
-    it('counts code points, not UTF-16 units, so astral chars survive', () => {
-      // Four code points, eight UTF-16 units
-      expect(truncateText('🎨🎨🎨🎨', 4)).toBe('🎨🎨🎨🎨');
-      expect(truncateText('🎨🎨🎨🎨', 3)).toBe('🎨🎨…');
-    });
-  });
-
   describe('estimateTextWidth', () => {
     it('counts Latin characters at the given width', () => {
       expect(estimateTextWidth('abc', 6)).toBe(18);
@@ -407,65 +346,6 @@ describe('svg/base.ts', () => {
 
     it('mixes scripts additively', () => {
       expect(estimateTextWidth('a青b', 6)).toBe(6 + 12 + 6);
-    });
-  });
-
-  describe('rgbToHsv', () => {
-    it('returns zero saturation and value for black', () => {
-      expect(rgbToHsv(0, 0, 0)).toEqual({ h: 0, s: 0, v: 0 });
-    });
-
-    it('returns zero saturation at full value for white', () => {
-      expect(rgbToHsv(255, 255, 255)).toEqual({ h: 0, s: 0, v: 100 });
-    });
-
-    it.each([
-      ['red', [255, 0, 0], 0],
-      ['yellow', [255, 255, 0], 60],
-      ['green', [0, 255, 0], 120],
-      ['cyan', [0, 255, 255], 180],
-      ['blue', [0, 0, 255], 240],
-      ['magenta', [255, 0, 255], 300],
-    ] as const)('puts %s at %s degrees', (_name, [r, g, b], hue) => {
-      const hsv = rgbToHsv(r, g, b);
-
-      expect(hsv.h).toBe(hue);
-      expect(hsv.s).toBe(100);
-      expect(hsv.v).toBe(100);
-    });
-
-    it('wraps the red branch past magenta rather than going negative', () => {
-      // g < b on a red-max colour is the (g - b) / d + 6 branch
-      const hsv = rgbToHsv(255, 0, 128);
-
-      expect(hsv.h).toBeGreaterThan(300);
-      expect(hsv.h).toBeLessThanOrEqual(360);
-    });
-
-    it('reports greys as unsaturated at their lightness', () => {
-      expect(rgbToHsv(128, 128, 128)).toEqual({ h: 0, s: 0, v: 50 });
-    });
-  });
-
-  describe('truncateText', () => {
-    it('should return text unchanged if within max length', () => {
-      expect(truncateText('hello', 10)).toBe('hello');
-    });
-
-    it('should return text unchanged if exactly at max length', () => {
-      expect(truncateText('hello', 5)).toBe('hello');
-    });
-
-    it('should truncate and append Unicode ellipsis when exceeding max length', () => {
-      expect(truncateText('hello world', 8)).toBe('hello w…');
-    });
-
-    it('should handle single-character max length', () => {
-      expect(truncateText('hello', 1)).toBe('…');
-    });
-
-    it('should handle empty string', () => {
-      expect(truncateText('', 5)).toBe('');
     });
   });
 });

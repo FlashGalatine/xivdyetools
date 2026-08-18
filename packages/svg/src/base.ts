@@ -7,40 +7,6 @@
  */
 
 /**
- * Per-card display flags controlling which color formats and metadata appear
- * on result cards. Mirrors the web app's `DisplayOptionsConfig`. Renderers
- * that read this object should treat omitted flags as `true` (preserve
- * current emit-everything behavior for backward compat).
- */
-export interface DisplayOptions {
-  /** Show HEX color codes */
-  showHex?: boolean;
-  /** Show RGB values */
-  showRgb?: boolean;
-  /** Show HSV values */
-  showHsv?: boolean;
-  /** Show LAB values */
-  showLab?: boolean;
-  /** Show market-board prices */
-  showPrice?: boolean;
-  /** Show Delta-E color distance */
-  showDeltaE?: boolean;
-  /** Show acquisition source information */
-  showAcquisition?: boolean;
-}
-
-/** Default display options (everything visible) — matches the web app's DEFAULT_DISPLAY_OPTIONS. */
-export const DEFAULT_DISPLAY_OPTIONS: Required<DisplayOptions> = {
-  showHex: true,
-  showRgb: true,
-  showHsv: true,
-  showLab: true,
-  showPrice: true,
-  showDeltaE: true,
-  showAcquisition: true,
-};
-
-/**
  * XML-escapes a string for safe SVG inclusion
  */
 export function escapeXml(str: string): string {
@@ -62,13 +28,6 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } {
     g: parseInt(cleanHex.slice(2, 4), 16),
     b: parseInt(cleanHex.slice(4, 6), 16),
   };
-}
-
-/**
- * Converts RGB to hex color string
- */
-export function rgbToHex(r: number, g: number, b: number): string {
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
 /**
@@ -95,11 +54,7 @@ export function getContrastTextColor(bgHex: string): string {
 /**
  * Creates an SVG document wrapper
  */
-export function createSvgDocument(
-  width: number,
-  height: number,
-  content: string
-): string {
+export function createSvgDocument(width: number, height: number, content: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
 ${content}
 </svg>`;
@@ -120,7 +75,7 @@ export function rect(
     stroke?: string;
     strokeWidth?: number;
     opacity?: number;
-  } = {}
+  } = {},
 ): string {
   const attrs = [
     `x="${x}"`,
@@ -151,14 +106,9 @@ export function circle(
     stroke?: string;
     strokeWidth?: number;
     opacity?: number;
-  } = {}
+  } = {},
 ): string {
-  const attrs = [
-    `cx="${cx}"`,
-    `cy="${cy}"`,
-    `r="${r}"`,
-    `fill="${escapeXml(fill)}"`,
-  ];
+  const attrs = [`cx="${cx}"`, `cy="${cy}"`, `r="${r}"`, `fill="${escapeXml(fill)}"`];
 
   if (options.stroke) attrs.push(`stroke="${escapeXml(options.stroke)}"`);
   if (options.strokeWidth) attrs.push(`stroke-width="${options.strokeWidth}"`);
@@ -180,7 +130,7 @@ export function line(
   options: {
     opacity?: number;
     dashArray?: string;
-  } = {}
+  } = {},
 ): string {
   const attrs = [
     `x1="${x1}"`,
@@ -211,12 +161,9 @@ export function text(
     fontWeight?: number | string;
     textAnchor?: 'start' | 'middle' | 'end';
     dominantBaseline?: 'auto' | 'middle' | 'hanging';
-  } = {}
+  } = {},
 ): string {
-  const attrs = [
-    `x="${x}"`,
-    `y="${y}"`,
-  ];
+  const attrs = [`x="${x}"`, `y="${y}"`];
 
   if (options.fill) attrs.push(`fill="${escapeXml(options.fill)}"`);
   if (options.fontSize) attrs.push(`font-size="${options.fontSize}"`);
@@ -226,29 +173,6 @@ export function text(
   if (options.dominantBaseline) attrs.push(`dominant-baseline="${options.dominantBaseline}"`);
 
   return `<text ${attrs.join(' ')}>${escapeXml(content)}</text>`;
-}
-
-/**
- * Creates an arc path for pie/donut charts
- */
-export function arcPath(
-  cx: number,
-  cy: number,
-  radius: number,
-  startAngle: number,
-  endAngle: number
-): string {
-  const startRad = (startAngle - 90) * (Math.PI / 180);
-  const endRad = (endAngle - 90) * (Math.PI / 180);
-
-  const x1 = cx + radius * Math.cos(startRad);
-  const y1 = cy + radius * Math.sin(startRad);
-  const x2 = cx + radius * Math.cos(endRad);
-  const y2 = cy + radius * Math.sin(endRad);
-
-  const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-
-  return `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
 }
 
 /**
@@ -357,23 +281,6 @@ export function grp(value: number, lang: string): string {
 }
 
 /**
- * Truncates text to a maximum length, appending a Unicode ellipsis (U+2026) if truncated.
- * Standardized across all SVG generators (REFACTOR-005).
- *
- * @param text - The text to truncate
- * @param maxLength - Maximum character length (including the ellipsis)
- * @returns The original text if within limits, or truncated text with '…'
- */
-export function truncateText(text: string, maxLength: number): string {
-  // BUG-060: slice by code points, not UTF-16 units — a unit slice can bisect
-  // a surrogate pair (emoji in preset names) and render � in the PNG.
-  // Also aligns length semantics with estimateTextWidth's code-point loop.
-  const chars = [...text];
-  if (chars.length <= maxLength) return text;
-  return chars.slice(0, maxLength - 1).join('') + '…';
-}
-
-/**
  * Estimates the rendered width of text in pixels, accounting for CJK characters
  * which are typically ~2x the width of Latin characters (BUG-012).
  *
@@ -394,49 +301,8 @@ export function estimateTextWidth(text: string, charWidth: number): number {
       (code >= 0xac00 && code <= 0xd7af) || // Hangul syllables
       (code >= 0xf900 && code <= 0xfaff) || // CJK Compatibility Ideographs
       (code >= 0xff00 && code <= 0xff60) || // Fullwidth forms (excl. halfwidth kana)
-      (code >= 0xffe0 && code <= 0xffe6);   // Fullwidth signs
+      (code >= 0xffe0 && code <= 0xffe6); // Fullwidth signs
     width += isWide ? charWidth * 2 : charWidth;
   }
   return width;
-}
-
-/**
- * Converts RGB values (0-255) to HSV.
- * Returns hue in degrees (0-360), saturation and value as percentages (0-100).
- *
- * Shared across SVG generators that need HSV display (comparison-grid, dye-info-card).
- */
-export function rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v: number } {
-  r /= 255;
-  g /= 255;
-  b /= 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const d = max - min;
-
-  let h = 0;
-  const s = max === 0 ? 0 : d / max;
-  const v = max;
-
-  if (max !== min) {
-    switch (max) {
-      case r:
-        h = (g - b) / d + (g < b ? 6 : 0);
-        break;
-      case g:
-        h = (b - r) / d + 2;
-        break;
-      case b:
-        h = (r - g) / d + 4;
-        break;
-    }
-    h /= 6;
-  }
-
-  return {
-    h: Math.round(h * 360),
-    s: Math.round(s * 100),
-    v: Math.round(v * 100),
-  };
 }

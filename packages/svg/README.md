@@ -107,7 +107,7 @@ const svg = cardShell(320, theme, /* content */);
 ### Low-level SVG primitives
 
 ```typescript
-import { createSvgDocument, rect, circle, line, text, group, arcPath, THEME, FONTS } from '@xivdyetools/svg';
+import { createSvgDocument, rect, circle, line, text, group, THEME, FONTS } from '@xivdyetools/svg';
 
 const svg = createSvgDocument(400, 300,
   rect(0, 0, 400, 300, { fill: THEME.background }),
@@ -120,10 +120,9 @@ const svg = createSvgDocument(400, 300,
 
 ```typescript
 import {
-  hexToRgb, rgbToHex, rgbToHsv,
+  hexToRgb,
   getLuminance, getContrastTextColor,
-  interpolateColor, generateGradientColors,
-  contrastRatio, escapeXml, estimateTextWidth, truncateText,
+  contrastRatio, escapeXml, estimateTextWidth,
 } from '@xivdyetools/svg';
 
 // Contrast-safe text color
@@ -131,9 +130,6 @@ const textColor = getContrastTextColor('#1a1a2e');   // → '#FFFFFF'
 
 // WCAG contrast ratio
 const ratio = contrastRatio('#FFFFFF', '#000000');   // → 21
-
-// Gradient interpolation
-const colors = generateGradientColors('#FF0000', '#0000FF', 5);
 ```
 
 ## Constants

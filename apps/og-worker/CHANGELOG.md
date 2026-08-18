@@ -73,6 +73,10 @@ an atomic web + og move, so neither side should go out without the other.
 - The duplicate `ALGO_TAG` map in `harmony.ts`, which shadowed `band-shared.ts`.
 - `Habibi-Regular.ttf` (replaced by Fragment Mono for values).
 
+### Removed (2026-08-18 dead-code audit)
+
+- **`services/svg/base.ts`'s `truncateText` and `rgbToHex` re-exports** (DEAD-014/015): both were dropped from `@xivdyetools/svg`'s own barrel as dead (this worker never called either through the re-export). `services/svg/band.ts`'s hard-coded `fill="#CE2222"` on the reduced app mark (`ogMark()`) now reads `@xivdyetools/svg`'s `GLYPH_ACCENT_LIGHT` instead — same value, single source (DEAD-018).
+
 ### Boundary: what this worker does *not* cover
 
 og-worker covers only the **nine tool paths**. The site root `/` is deliberately not routed in either env — `xivdyetools.app/` and `beta.xivdyetools.app/` serve web-app's **static** card from `/og/default.png` (`default-x.png` for X); that artwork and its `_headers` live in `apps/web-app` and are tracked in web-app's changelog. The worker's own `GET /` handler is reached only on the `og.` / `og-beta.` hosts.

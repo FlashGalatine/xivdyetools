@@ -91,7 +91,11 @@ export function generateGradientCard(options: GradientCardOptions): string {
   const commandGlyph =
     options.commandGlyph !== undefined
       ? options.commandGlyph
-      : toolGlyph('gradient', 'compact', { size: 13, ink: theme.pillInk, accent: theme.glyphAccent });
+      : toolGlyph('gradient', 'compact', {
+          size: 13,
+          ink: theme.pillInk,
+          accent: theme.glyphAccent,
+        });
   const parts: string[] = [];
 
   // --- Header: pill + space/steps readout
@@ -104,7 +108,7 @@ export function generateGradientCard(options: GradientCardOptions): string {
       font: 'mono',
       letterSpacing: 0.6,
       anchor: 'end',
-    })
+    }),
   );
 
   // --- The strip: every step, ideal cap over dye block
@@ -115,10 +119,10 @@ export function generateGradientCard(options: GradientCardOptions): string {
   strip.forEach((c, i) => {
     const x = PAD + i * (cellW + gap);
     parts.push(
-      `<path d="M ${x + 3} ${stripY} H ${x + cellW - 3} Q ${x + cellW} ${stripY} ${x + cellW} ${stripY + 3} V ${stripY + 7} H ${x} V ${stripY + 3} Q ${x} ${stripY} ${x + 3} ${stripY} Z" fill="${c.idealHex}"/>`
+      `<path d="M ${x + 3} ${stripY} H ${x + cellW - 3} Q ${x + cellW} ${stripY} ${x + cellW} ${stripY + 3} V ${stripY + 7} H ${x} V ${stripY + 3} Q ${x} ${stripY} ${x + 3} ${stripY} Z" fill="${c.idealHex}"/>`,
     );
     parts.push(
-      `<path d="M ${x} ${stripY + 7} H ${x + cellW} V ${stripY + 26} Q ${x + cellW} ${stripY + 30} ${x + cellW - 4} ${stripY + 30} H ${x + 4} Q ${x} ${stripY + 30} ${x} ${stripY + 26} Z" fill="${c.dyeHex}"/>`
+      `<path d="M ${x} ${stripY + 7} H ${x + cellW} V ${stripY + 26} Q ${x + cellW} ${stripY + 30} ${x + cellW - 4} ${stripY + 30} H ${x + 4} Q ${x} ${stripY + 30} ${x} ${stripY + 26} Z" fill="${c.dyeHex}"/>`,
     );
   });
 
@@ -133,7 +137,7 @@ export function generateGradientCard(options: GradientCardOptions): string {
           size: 12.5,
           font: 'body',
           weight: 600,
-        })
+        }),
       );
     });
     rowsTop += 10 + lines.length * 17;
@@ -154,7 +158,7 @@ export function generateGradientCard(options: GradientCardOptions): string {
         widths: ROW_WIDTHS,
         nameSize: 13,
         sourceIdeal: true,
-      })
+      }),
     );
   });
 
@@ -168,7 +172,7 @@ export function generateGradientCard(options: GradientCardOptions): string {
         fill: theme.label,
         size: CARD_TYPE.label,
         font: 'mono',
-      })
+      }),
     );
   });
   parts.push(markFooter(CARD_WIDTH - PAD, height - 8, theme));
@@ -194,59 +198,4 @@ function wrapVerdict(textContent: string, maxPx: number): string[] {
   }
   if (line) lines.push(line);
   return lines.length ? lines : [textContent];
-}
-
-// ============================================================================
-// Colour helpers (shared with bot-logic's interpolation)
-// ============================================================================
-
-/**
- * Interpolates between two colors in RGB space
- * @param color1 Starting hex color
- * @param color2 Ending hex color
- * @param ratio Interpolation ratio (0 = color1, 1 = color2)
- */
-export function interpolateColor(color1: string, color2: string, ratio: number): string {
-  const hex1 = color1.replace('#', '');
-  const hex2 = color2.replace('#', '');
-
-  const r1 = parseInt(hex1.slice(0, 2), 16);
-  const g1 = parseInt(hex1.slice(2, 4), 16);
-  const b1 = parseInt(hex1.slice(4, 6), 16);
-
-  const r2 = parseInt(hex2.slice(0, 2), 16);
-  const g2 = parseInt(hex2.slice(2, 4), 16);
-  const b2 = parseInt(hex2.slice(4, 6), 16);
-
-  const r = Math.round(r1 + (r2 - r1) * ratio);
-  const g = Math.round(g1 + (g2 - g1) * ratio);
-  const b = Math.round(b1 + (b2 - b1) * ratio);
-
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-}
-
-/**
- * Generates an array of interpolated colors between start and end
- * @param startColor Starting hex color
- * @param endColor Ending hex color
- * @param stepCount Number of steps (including start and end)
- */
-export function generateGradientColors(
-  startColor: string,
-  endColor: string,
-  stepCount: number
-): string[] {
-  // BUG-063: stepCount=1 made ratio 0/0 → NaN → '#NaNNaNNaN' in SVG fills.
-  if (stepCount < 2) {
-    return stepCount === 1 ? [startColor] : [];
-  }
-
-  const colors: string[] = [];
-
-  for (let i = 0; i < stepCount; i++) {
-    const ratio = i / (stepCount - 1);
-    colors.push(interpolateColor(startColor, endColor, ratio));
-  }
-
-  return colors;
 }

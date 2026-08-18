@@ -9,6 +9,7 @@
 
 import type { Theme, ThemeName, ThemePalette } from '@shared/types';
 import { ErrorCode, AppError } from '@xivdyetools/types';
+import { GLYPH_ACCENT_LIGHT } from '@xivdyetools/svg';
 import { THEME_NAMES, DEFAULT_THEME, STORAGE_KEYS } from '@shared/constants';
 import { appStorage } from './storage-service';
 import { logger } from '@shared/logger';
@@ -75,7 +76,7 @@ function createThemePalette(config: ThemePaletteConfig): ThemePalette {
  */
 const THEME_PALETTES: Record<ThemeName, ThemePalette> = {
   'standard-light': createThemePalette({
-    primary: '#CE2222',
+    primary: GLYPH_ACCENT_LIGHT,
     background: '#F2F2F4',
     text: '#17181B',
     isDark: false,

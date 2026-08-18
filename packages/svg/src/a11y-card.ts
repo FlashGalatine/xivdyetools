@@ -48,9 +48,6 @@ import { toolGlyph } from './icons/tool-icons.js';
 /** The four simulated vision types (Brettel matrices in core). */
 export type VisionType = 'protanopia' | 'deuteranopia' | 'tritanopia' | 'achromatopsia';
 
-/** Every lens including the unsimulated control. */
-export type AllVisionTypes = 'normal' | VisionType;
-
 /** One lens row: the pair's separation (or the dye's shift) under a lens. */
 export interface A11yLensRow {
   /** Localized lens label ("Deuteranopia") */
@@ -126,22 +123,30 @@ export function generateA11yCard(options: A11yCardOptions): string {
   const commandGlyph =
     options.commandGlyph !== undefined
       ? options.commandGlyph
-      : toolGlyph('accessibility', 'compact', { size: 13, ink: theme.pillInk, accent: theme.glyphAccent });
+      : toolGlyph('accessibility', 'compact', {
+          size: 13,
+          ink: theme.pillInk,
+          accent: theme.glyphAccent,
+        });
   const parts: string[] = [];
 
   // --- Header: pill + subject readout
   const chip = commandChip(PAD, 14, commandLabel, theme, { glyph: commandGlyph });
   parts.push(chip.svg);
-  const headerRight =
-    mode === 'lens' && options.subject ? options.subject.label : titleText;
+  const headerRight = mode === 'lens' && options.subject ? options.subject.label : titleText;
   parts.push(
-    cardText(CARD_WIDTH - PAD, 14 + 15, fitText(headerRight, CARD_WIDTH - PAD * 2 - chip.width - 10, 12.5, 'mono'), {
-      fill: theme.accentText,
-      size: 12.5,
-      font: 'mono',
-      letterSpacing: 0.6,
-      anchor: 'end',
-    })
+    cardText(
+      CARD_WIDTH - PAD,
+      14 + 15,
+      fitText(headerRight, CARD_WIDTH - PAD * 2 - chip.width - 10, 12.5, 'mono'),
+      {
+        fill: theme.accentText,
+        size: 12.5,
+        font: 'mono',
+        letterSpacing: 0.6,
+        anchor: 'end',
+      },
+    ),
   );
 
   let height: number;
@@ -163,7 +168,7 @@ function renderLensFrame(
   parts: string[],
   o: A11yCardOptions,
   theme: CardTheme,
-  lang: string
+  lang: string,
 ): number {
   const subject = o.subject!;
   const labels = o.labels;
@@ -175,7 +180,7 @@ function renderLensFrame(
       size: 17,
       font: 'display',
       weight: 600,
-    })
+    }),
   );
 
   // The pair through the lens: designed | perceived
@@ -191,7 +196,7 @@ function renderLensFrame(
       size: CARD_TYPE.label,
       font: 'mono',
       letterSpacing: 1,
-    })
+    }),
   );
   parts.push(
     cardText(CARD_WIDTH - PAD, pairTop + 56 + 15, labels.perceived, {
@@ -200,7 +205,7 @@ function renderLensFrame(
       font: 'mono',
       letterSpacing: 1,
       anchor: 'end',
-    })
+    }),
   );
 
   // Verdict block: separation under the lens + the normal reference
@@ -212,7 +217,7 @@ function renderLensFrame(
       size: 26,
       font: 'display',
       weight: 700,
-    })
+    }),
   );
   parts.push(
     cardText(PAD, vTop + 38, `${labels.separation} · ${subject.short}`, {
@@ -220,7 +225,7 @@ function renderLensFrame(
       size: CARD_TYPE.label,
       font: 'mono',
       letterSpacing: 1,
-    })
+    }),
   );
   if (o.normalDeltaE !== undefined) {
     parts.push(
@@ -229,7 +234,7 @@ function renderLensFrame(
         size: 15,
         font: 'mono',
         anchor: 'end',
-      })
+      }),
     );
     parts.push(
       cardText(CARD_WIDTH - PAD, vTop + 38, labels.normalShort, {
@@ -238,7 +243,7 @@ function renderLensFrame(
         font: 'mono',
         letterSpacing: 1,
         anchor: 'end',
-      })
+      }),
     );
   }
 
@@ -251,10 +256,19 @@ function renderLensFrame(
     const x = PAD + i * cw;
     const lTone = separationTone(l.deltaE, theme);
     parts.push(
-      cardText(x, stripY + 20, l.short, { fill: theme.label, size: CARD_TYPE.label, font: 'mono', letterSpacing: 0.8 })
+      cardText(x, stripY + 20, l.short, {
+        fill: theme.label,
+        size: CARD_TYPE.label,
+        font: 'mono',
+        letterSpacing: 0.8,
+      }),
     );
     parts.push(
-      cardText(x, stripY + 37, num(l.deltaE, lang, 1), { fill: lTone, size: CARD_TYPE.value, font: 'mono' })
+      cardText(x, stripY + 37, num(l.deltaE, lang, 1), {
+        fill: lTone,
+        size: CARD_TYPE.value,
+        font: 'mono',
+      }),
     );
   });
 
@@ -266,7 +280,7 @@ function renderAllFrame(
   parts: string[],
   o: A11yCardOptions,
   theme: CardTheme,
-  lang: string
+  lang: string,
 ): number {
   const labels = o.labels;
   const ROW_H = 38;
@@ -274,7 +288,12 @@ function renderAllFrame(
   // Column labels
   const headY = 14 + 21 + 16;
   parts.push(
-    cardText(PAD, headY, labels.lens, { fill: theme.label, size: CARD_TYPE.label, font: 'mono', letterSpacing: 1 })
+    cardText(PAD, headY, labels.lens, {
+      fill: theme.label,
+      size: CARD_TYPE.label,
+      font: 'mono',
+      letterSpacing: 1,
+    }),
   );
   parts.push(
     cardText(CARD_WIDTH - PAD, headY, labels.separation, {
@@ -283,7 +302,7 @@ function renderAllFrame(
       font: 'mono',
       letterSpacing: 1,
       anchor: 'end',
-    })
+    }),
   );
 
   // Rows: lens label · simulated pair chips · band bar · ΔE
@@ -299,7 +318,7 @@ function renderAllFrame(
         size: 12.5,
         font: 'body',
         weight: l.isNormal ? 500 : 600,
-      })
+      }),
     );
     // The simulated pair, butted — the collapse is visible as a shape
     const pairX = PAD + 138;
@@ -309,10 +328,15 @@ function renderAllFrame(
     const deW = textWidth(deText, CARD_TYPE.value, 'mono');
     const barW = 118 - deW;
     parts.push(
-      `<rect x="${CARD_WIDTH - PAD - 118}" y="${cy - 2.5}" width="${Math.max(barW - 8, 20)}" height="5" rx="2.5" fill="${tone}"/>`
+      `<rect x="${CARD_WIDTH - PAD - 118}" y="${cy - 2.5}" width="${Math.max(barW - 8, 20)}" height="5" rx="2.5" fill="${tone}"/>`,
     );
     parts.push(
-      cardText(CARD_WIDTH - PAD, cy + 4, deText, { fill: tone, size: CARD_TYPE.value, font: 'mono', anchor: 'end' })
+      cardText(CARD_WIDTH - PAD, cy + 4, deText, {
+        fill: tone,
+        size: CARD_TYPE.value,
+        font: 'mono',
+        anchor: 'end',
+      }),
     );
   });
 
@@ -323,16 +347,21 @@ function renderAllFrame(
       fill: theme.subValue,
       size: CARD_TYPE.label,
       font: 'mono',
-    })
+    }),
   );
 
   const height = Math.min(350, noteY + 14 + 24);
   parts.push(
-    cardText(PAD, height - 13, fitText(labels.sepBandKey, CARD_WIDTH - PAD * 2 - 130, CARD_TYPE.label, 'mono'), {
-      fill: theme.label,
-      size: CARD_TYPE.label,
-      font: 'mono',
-    })
+    cardText(
+      PAD,
+      height - 13,
+      fitText(labels.sepBandKey, CARD_WIDTH - PAD * 2 - 130, CARD_TYPE.label, 'mono'),
+      {
+        fill: theme.label,
+        size: CARD_TYPE.label,
+        font: 'mono',
+      },
+    ),
   );
   return height;
 }
@@ -342,7 +371,7 @@ function renderSoloFrame(
   parts: string[],
   o: A11yCardOptions,
   theme: CardTheme,
-  lang: string
+  lang: string,
 ): number {
   const labels = o.labels;
   const ROW_H = 40;
@@ -354,12 +383,17 @@ function renderSoloFrame(
       size: 17,
       font: 'display',
       weight: 600,
-    })
+    }),
   );
 
   const headY = 14 + 21 + 40;
   parts.push(
-    cardText(PAD, headY, labels.lens, { fill: theme.label, size: CARD_TYPE.label, font: 'mono', letterSpacing: 1 })
+    cardText(PAD, headY, labels.lens, {
+      fill: theme.label,
+      size: CARD_TYPE.label,
+      font: 'mono',
+      letterSpacing: 1,
+    }),
   );
   parts.push(
     cardText(CARD_WIDTH - PAD, headY, labels.shift, {
@@ -368,7 +402,7 @@ function renderSoloFrame(
       font: 'mono',
       letterSpacing: 1,
       anchor: 'end',
-    })
+    }),
   );
 
   const maxShift = Math.max(...o.rows.map((l) => l.deltaE), 0.1);
@@ -383,18 +417,22 @@ function renderSoloFrame(
         size: 12.5,
         font: 'body',
         weight: l.isNormal ? 500 : 600,
-      })
+      }),
     );
     parts.push(swatch(PAD + 128, cy - 11, 22, 22, l.hexA, theme, 6));
     // The simulated hex — dye-agnostic, always true, pasteable into a matcher
     parts.push(
-      cardText(PAD + 158, cy + 4, l.hexA.toUpperCase(), { fill: theme.subValue, size: 11.5, font: 'mono' })
+      cardText(PAD + 158, cy + 4, l.hexA.toUpperCase(), {
+        fill: theme.subValue,
+        size: 11.5,
+        font: 'mono',
+      }),
     );
     // Relative bar in neutral ink: a large shift is not a failure
     const barMax = 76;
     const barW = Math.max((l.deltaE / maxShift) * barMax, 2);
     parts.push(
-      `<rect x="${CARD_WIDTH - PAD - 34 - barMax}" y="${cy - 2.5}" width="${barW.toFixed(1)}" height="5" rx="2.5" fill="${theme.subValue}"/>`
+      `<rect x="${CARD_WIDTH - PAD - 34 - barMax}" y="${cy - 2.5}" width="${barW.toFixed(1)}" height="5" rx="2.5" fill="${theme.subValue}"/>`,
     );
     parts.push(
       cardText(CARD_WIDTH - PAD, cy + 4, num(l.deltaE, lang, 1), {
@@ -402,17 +440,22 @@ function renderSoloFrame(
         size: CARD_TYPE.value,
         font: 'mono',
         anchor: 'end',
-      })
+      }),
     );
   });
 
   const height = Math.min(350, rowsTop + o.rows.length * ROW_H + 32);
   parts.push(
-    cardText(PAD, height - 13, fitText(labels.soloKey, CARD_WIDTH - PAD * 2 - 130, CARD_TYPE.label, 'mono'), {
-      fill: theme.label,
-      size: CARD_TYPE.label,
-      font: 'mono',
-    })
+    cardText(
+      PAD,
+      height - 13,
+      fitText(labels.soloKey, CARD_WIDTH - PAD * 2 - 130, CARD_TYPE.label, 'mono'),
+      {
+        fill: theme.label,
+        size: CARD_TYPE.label,
+        font: 'mono',
+      },
+    ),
   );
   return height;
 }

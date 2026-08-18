@@ -38,14 +38,7 @@
 
 import type { Dye } from '@xivdyetools/types';
 import type { PresetCategory } from '@xivdyetools/types';
-import {
-  createSvgDocument,
-  estimateTextWidth,
-  rect,
-  text,
-  THEME,
-  FONTS,
-} from './base.js';
+import { createSvgDocument, estimateTextWidth, rect, text, THEME, FONTS } from './base.js';
 
 // ============================================================================
 // Measured text
@@ -71,7 +64,7 @@ function fitToWidth(
   content: string,
   maxPx: number,
   fontSize: number,
-  kind: keyof typeof WIDTH_FACTOR = 'body'
+  kind: keyof typeof WIDTH_FACTOR = 'body',
 ): string {
   const measure = (s: string) => estimateTextWidth(s, fontSize * WIDTH_FACTOR[kind]);
   if (measure(content) <= maxPx) return content;
@@ -82,12 +75,13 @@ function fitToWidth(
 }
 
 // ============================================================================
-// Category Display (visual display constant, moved from discord-worker)
+// Category Display (visual display constant, shared with discord-worker)
 // ============================================================================
 
 /**
- * Category display metadata for preset swatches.
- * Moved here from discord-worker's types/preset.ts since it is purely visual.
+ * Category display metadata for preset swatches. The single source — 2026-08-18
+ * dead-code audit (DEAD-014) had discord-worker carrying its own duplicate of
+ * this table; discord-worker's `preset.ts` now imports this export instead.
  */
 export const CATEGORY_DISPLAY: Record<PresetCategory, { icon: string; name: string }> = {
   jobs: { icon: '⚔️', name: 'FFXIV Jobs' },
@@ -160,14 +154,7 @@ const MIN_SWATCH_WIDTH = 80;
  * ```
  */
 export function generatePresetSwatch(options: PresetSwatchOptions): string {
-  const {
-    name,
-    description,
-    dyes,
-    authorName,
-    voteCount,
-    width = DEFAULT_WIDTH,
-  } = options;
+  const { name, description, dyes, authorName, voteCount, width = DEFAULT_WIDTH } = options;
 
   // Filter out null dyes (invalid dye IDs)
   const validDyes = dyes.filter((d): d is Dye => d !== null);
@@ -200,7 +187,7 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
       fontFamily: FONTS.headerCjk,
       fontWeight: 600,
       textAnchor: 'middle',
-    })
+    }),
   );
 
   elements.push(
@@ -209,7 +196,7 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
       fontSize: 13,
       fontFamily: FONTS.primaryCjk,
       textAnchor: 'middle',
-    })
+    }),
   );
 
   // Author and votes metadata line
@@ -229,13 +216,12 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
       fontSize: 11,
       fontFamily: FONTS.primaryCjk,
       textAnchor: 'middle',
-    })
+    }),
   );
 
   // Color swatches section
   const swatchY = PADDING + HEADER_HEIGHT;
-  const totalSwatchesWidth =
-    validDyes.length * swatchWidth + (validDyes.length - 1) * SWATCH_GAP;
+  const totalSwatchesWidth = validDyes.length * swatchWidth + (validDyes.length - 1) * SWATCH_GAP;
   const startX = (width - totalSwatchesWidth) / 2;
 
   validDyes.forEach((dye, index) => {
@@ -259,7 +245,7 @@ function generateDyeSwatch(dye: Dye, x: number, y: number, width: number): strin
       ry: 6,
       stroke: THEME.border,
       strokeWidth: 1,
-    })
+    }),
   );
 
   // Dye name — measured against the swatch, not divided by a Latin character
@@ -273,7 +259,7 @@ function generateDyeSwatch(dye: Dye, x: number, y: number, width: number): strin
       fontFamily: FONTS.primaryCjk,
       fontWeight: 600,
       textAnchor: 'middle',
-    })
+    }),
   );
 
   // Hex code
@@ -283,7 +269,7 @@ function generateDyeSwatch(dye: Dye, x: number, y: number, width: number): strin
       fontSize: 10,
       fontFamily: FONTS.mono,
       textAnchor: 'middle',
-    })
+    }),
   );
 
   return elements.join('\n');
@@ -305,7 +291,7 @@ function generateEmptySwatch(width: number, name: string): string {
       fontFamily: FONTS.headerCjk,
       fontWeight: 600,
       textAnchor: 'middle',
-    })
+    }),
   );
 
   elements.push(
@@ -314,7 +300,7 @@ function generateEmptySwatch(width: number, name: string): string {
       fontSize: 14,
       fontFamily: FONTS.primary,
       textAnchor: 'middle',
-    })
+    }),
   );
 
   return createSvgDocument(width, height, elements.join('\n'));

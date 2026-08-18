@@ -33,7 +33,7 @@ export type {
 // PROJECT-SPECIFIC TYPES
 // ============================================================================
 
-import type { PresetStatus, PresetCategory, CommunityPreset } from '@xivdyetools/types';
+import type { PresetStatus, CommunityPreset } from '@xivdyetools/types';
 
 /**
  * Custom error class for preset API errors
@@ -55,20 +55,6 @@ export class PresetAPIError extends Error {
 // ============================================================================
 // UI Constants
 // ============================================================================
-
-/**
- * Category display metadata for embeds
- */
-export const CATEGORY_DISPLAY: Record<PresetCategory, { icon: string; name: string }> = {
-  jobs: { icon: '\u2694\uFE0F', name: 'FFXIV Jobs' },
-  'grand-companies': { icon: '\uD83C\uDFDB\uFE0F', name: 'Grand Companies' },
-  seasons: { icon: '\uD83C\uDF42', name: 'Seasons' },
-  events: { icon: '\uD83C\uDF89', name: 'FFXIV Events' },
-  aesthetics: { icon: '\uD83C\uDFA8', name: 'Aesthetics' },
-  appearance: { icon: '\uD83D\uDC64', name: 'Appearance' },
-  zones: { icon: '\uD83C\uDFD4\uFE0F', name: 'Zones' },
-  'raids-trials': { icon: '\uD83D\uDDE1\uFE0F', name: 'Raids & Trials' },
-};
 
 /**
  * Status display metadata for embeds

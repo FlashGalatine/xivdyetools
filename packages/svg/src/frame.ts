@@ -18,6 +18,7 @@
 
 import { classifyBandTier, type MatchingMethod } from '@xivdyetools/core';
 import { escapeXml, estimateTextWidth, num } from './base.js';
+import { GLYPH_ACCENT_LIGHT } from './icons/tool-icons.js';
 
 // ============================================================================
 // Card dimensions & type scale
@@ -171,7 +172,11 @@ export function cardText(x: number, y: number, content: string, o: CardTextOptio
 }
 
 /** Approximate rendered width in px (CJK counts double via estimateTextWidth). */
-export function textWidth(content: string, size: number, font: 'mono' | 'body' | 'display' = 'mono'): number {
+export function textWidth(
+  content: string,
+  size: number,
+  font: 'mono' | 'body' | 'display' = 'mono',
+): number {
   const factor = font === 'mono' ? 0.62 : font === 'display' ? 0.58 : 0.54;
   return estimateTextWidth(content, size * factor);
 }
@@ -181,7 +186,7 @@ export function fitText(
   content: string,
   maxPx: number,
   size: number,
-  font: 'mono' | 'body' | 'display' = 'body'
+  font: 'mono' | 'body' | 'display' = 'body',
 ): string {
   if (textWidth(content, size, font) <= maxPx) return content;
   let out = content;
@@ -241,7 +246,7 @@ export function commandChip(
   y: number,
   label: string,
   theme: CardTheme,
-  options: CommandChipOptions = {}
+  options: CommandChipOptions = {},
 ): { svg: string; width: number; height: number } {
   const { glyph = null, onDye = false } = options;
   const padX = 8;
@@ -276,9 +281,10 @@ export function commandChip(
 let markUid = 0;
 
 /**
- * The official app icon — the full paint bucket on the #CE2222 tile, geometry
- * verbatim from the design project's `#botmark` symbol (512 grid). Inlined
- * per placement (no <symbol>/<use>; clip ids are unique per render).
+ * The official app icon — the full paint bucket on the `GLYPH_ACCENT_LIGHT`
+ * (`#CE2222`) tile, geometry verbatim from the design project's `#botmark`
+ * symbol (512 grid). Inlined per placement (no <symbol>/<use>; clip ids are
+ * unique per render).
  */
 export function appIcon(x: number, y: number, size: number): string {
   const id = `xdtm${markUid++}`;
@@ -289,7 +295,7 @@ export function appIcon(x: number, y: number, size: number): string {
     ['#8E4EC6', '#0091FF', '#30A46C', '#FFC53D', '#F76B15', '#E5484D']
       .map(
         (c, i) =>
-          `<path d="M 12 0 Q 24 8 18 18 T 0 40 T -39 39 T -70 0 T -59 -59 T 0 -99 T 80 -80 T 128 0" fill="none" stroke="${c}" stroke-width="32" stroke-linecap="round" transform="rotate(${i * 60})"/>`
+          `<path d="M 12 0 Q 24 8 18 18 T 0 40 T -39 39 T -70 0 T -59 -59 T 0 -99 T 80 -80 T 128 0" fill="none" stroke="${c}" stroke-width="32" stroke-linecap="round" transform="rotate(${i * 60})"/>`,
       )
       .join('') +
     `<circle cx="0" cy="0" r="17" fill="#8E4EC6"/>` +
@@ -302,7 +308,7 @@ export function appIcon(x: number, y: number, size: number): string {
     `<clipPath id="${id}f"><rect x="100" y="196" width="312" height="130"/></clipPath>` +
     `<clipPath id="${id}s"><path d="M 140 222 C 180 246 216 250 256 250 C 296 250 336 244 376 219 C 374 230 372 236 368 242 C 360 250 352 255 346 257 L 346 288 C 346 302 318 302 318 288 L 318 259 C 304 261 290 262 274 262 L 274 316 C 274 332 244 332 244 316 L 244 262 C 228 261 212 258 200 255 L 200 276 C 200 290 174 290 174 276 L 174 249 C 160 242 148 233 140 222 Z"/></clipPath>` +
     `</defs>` +
-    `<rect width="512" height="512" rx="112" fill="#CE2222"/>` +
+    `<rect width="512" height="512" rx="112" fill="${GLYPH_ACCENT_LIGHT}"/>` +
     `<ellipse cx="256" cy="428" rx="126" ry="20" fill="#000000" opacity="0.20"/>` +
     `<path d="M 114 158 C 132 40 380 40 398 158" fill="none" stroke="#9BA1AD" stroke-width="14" stroke-linecap="round"/>` +
     `<path d="M 108 176 C 112 270 122 356 140 402 C 162 436 350 436 372 402 C 390 356 400 270 404 176 C 404 222 338 250 256 250 C 174 250 108 222 108 176 Z" fill="#EEEFF3" stroke="#C8CCD5" stroke-width="3"/>` +
@@ -371,7 +377,7 @@ export function swatch(
   h: number,
   hex: string,
   theme: CardTheme,
-  radius = 9
+  radius = 9,
 ): string {
   return (
     `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${radius}" fill="${escapeXml(hex)}"/>` +
@@ -383,7 +389,14 @@ export function swatch(
  * An *ideal* (unbuyable) colour: the outlined variant — the vocabulary's
  * marker that this is the hue the maths asked for, not a thing you can buy.
  */
-export function idealSwatch(x: number, y: number, w: number, h: number, hex: string, radius = 9): string {
+export function idealSwatch(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  hex: string,
+  radius = 9,
+): string {
   return (
     `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${radius}" fill="${escapeXml(hex)}"/>` +
     `<rect x="${x + 0.75}" y="${y + 0.75}" width="${w - 1.5}" height="${h - 1.5}" rx="${radius - 0.75}" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>`
@@ -457,7 +470,7 @@ function halfRoundedRect(
   h: number,
   r: number,
   side: 'left' | 'right',
-  fill: string
+  fill: string,
 ): string {
   const d =
     side === 'left'
@@ -501,7 +514,7 @@ export function measuredRow(x: number, y: number, rowH: number, o: MeasuredRowOp
   // Lead — a plain value, or a shaped label (main line + sub line)
   if (typeof o.lead === 'string') {
     parts.push(
-      cardText(x, cy + 4, o.lead, { fill: theme.subValue, size: CARD_TYPE.value, font: 'mono' })
+      cardText(x, cy + 4, o.lead, { fill: theme.subValue, size: CARD_TYPE.value, font: 'mono' }),
     );
   } else {
     parts.push(
@@ -510,7 +523,7 @@ export function measuredRow(x: number, y: number, rowH: number, o: MeasuredRowOp
         size: CARD_TYPE.label,
         font: 'mono',
         letterSpacing: 0.8,
-      })
+      }),
     );
     if (o.lead.sub) {
       parts.push(
@@ -518,7 +531,7 @@ export function measuredRow(x: number, y: number, rowH: number, o: MeasuredRowOp
           fill: o.lead.subTone === 'warn' ? theme.tiers[2] : theme.label,
           size: CARD_TYPE.label,
           font: 'mono',
-        })
+        }),
       );
     }
   }
@@ -532,11 +545,11 @@ export function measuredRow(x: number, y: number, rowH: number, o: MeasuredRowOp
   if (o.sourceIdeal) {
     // The ideal half takes the outline ring — visibly not a thing you can buy
     parts.push(
-      `<rect x="${cx + 1.25}" y="${cy - pairH / 2 + 1.25}" width="${half - 2.5}" height="${pairH - 2.5}" rx="5.5" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>`
+      `<rect x="${cx + 1.25}" y="${cy - pairH / 2 + 1.25}" width="${half - 2.5}" height="${pairH - 2.5}" rx="5.5" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>`,
     );
   }
   parts.push(
-    `<rect x="${cx + 0.5}" y="${cy - pairH / 2 + 0.5}" width="${w.pair - 1}" height="${pairH - 1}" rx="6.5" fill="none" stroke="${escapeXml(theme.swatchRing)}" stroke-width="1"/>`
+    `<rect x="${cx + 0.5}" y="${cy - pairH / 2 + 0.5}" width="${w.pair - 1}" height="${pairH - 1}" rx="6.5" fill="none" stroke="${escapeXml(theme.swatchRing)}" stroke-width="1"/>`,
   );
   cx += w.pair + gap;
 
@@ -547,7 +560,7 @@ export function measuredRow(x: number, y: number, rowH: number, o: MeasuredRowOp
       size: nameSize,
       font: 'body',
       weight: 600,
-    })
+    }),
   );
   cx += w.name + gap;
 
@@ -556,7 +569,9 @@ export function measuredRow(x: number, y: number, rowH: number, o: MeasuredRowOp
   const method = o.method ?? 'ciede2000';
   const tier = classifyBandTier(o.deltaE, method, o.context ?? 'match');
   const tone = theme.tiers[Math.min(tier, 3)];
-  parts.push(`<rect x="${cx}" y="${cy - 2.5}" width="${w.bar}" height="5" rx="2.5" fill="${tone}"/>`);
+  parts.push(
+    `<rect x="${cx}" y="${cy - 2.5}" width="${w.bar}" height="5" rx="2.5" fill="${tone}"/>`,
+  );
   cx += w.bar + gap;
   parts.push(
     cardText(cx + w.measure, cy + 4, formatMeasure(o.deltaE, method, o.lang), {
@@ -564,7 +579,7 @@ export function measuredRow(x: number, y: number, rowH: number, o: MeasuredRowOp
       size: CARD_TYPE.value,
       font: 'mono',
       anchor: 'end',
-    })
+    }),
   );
 
   return parts.join('');

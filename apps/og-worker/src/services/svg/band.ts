@@ -36,6 +36,7 @@
  */
 
 import { escapeXml, estimateTextWidth } from './base';
+import { GLYPH_ACCENT_LIGHT } from '@xivdyetools/svg';
 
 /**
  * Font stacks with the JP subset ahead of SC (Phase 0.3 bundled
@@ -137,7 +138,7 @@ export function ogMark(x: number, y: number, size: number): string {
   return (
     `<g transform="translate(${x},${y}) scale(${s})">` +
     `<defs><clipPath id="${id}b"><path d="M 10 17 C 11 30 13 39.5 15.5 42.5 C 18 45 30 45 32.5 42.5 C 35 39.5 37 30 38 17 Z"/></clipPath></defs>` +
-    `<rect width="48" height="48" rx="11" fill="#CE2222"/>` +
+    `<rect width="48" height="48" rx="11" fill="${GLYPH_ACCENT_LIGHT}"/>` +
     `<path d="M 12 16 C 13 5 35 5 36 16" fill="none" stroke="#9BA1AD" stroke-width="2.4" stroke-linecap="round"/>` +
     `<g clip-path="url(#${id}b)">` +
     `<rect x="8" y="16" width="6" height="30" fill="#E5484D"/>` +
@@ -218,7 +219,14 @@ function bandText(
   x: number,
   y: number,
   content: string,
-  o: { fill: string; size: number; font: 'mono' | 'body' | 'display'; weight?: number; spacing?: number; anchor?: string }
+  o: {
+    fill: string;
+    size: number;
+    font: 'mono' | 'body' | 'display';
+    weight?: number;
+    spacing?: number;
+    anchor?: string;
+  },
 ): string {
   const attrs = [
     `x="${x}"`,
@@ -314,7 +322,7 @@ function wrapName(content: string, maxPx: number, size: number, maxLines: number
  */
 export function cardHeader(
   width: number,
-  o: { toolTag?: string | null; toolGlyph?: string | null }
+  o: { toolTag?: string | null; toolGlyph?: string | null },
 ): string {
   const parts: string[] = [ogMark(13, 6.5, 17)];
   const wordmark = 'XIV DYE TOOLS';
@@ -325,7 +333,7 @@ export function cardHeader(
       font: 'display',
       weight: 600,
       spacing: 1.3,
-    })
+    }),
   );
 
   if (o.toolTag) {
@@ -342,16 +350,21 @@ export function cardHeader(
         font: 'mono',
         spacing: 0.5,
         anchor: 'end',
-      })
+      }),
     );
     if (o.toolGlyph) {
       parts.push(
-        o.toolGlyph.replace('<svg ', `<svg x="${(width - 13 - tagW - 6 - 13).toFixed(1)}" y="8.5" `)
+        o.toolGlyph.replace(
+          '<svg ',
+          `<svg x="${(width - 13 - tagW - 6 - 13).toFixed(1)}" y="8.5" `,
+        ),
       );
     }
   }
 
-  parts.push(`<line x1="0" y1="${HEADER_H}" x2="${width}" y2="${HEADER_H}" stroke="${RULE}" stroke-width="1"/>`);
+  parts.push(
+    `<line x1="0" y1="${HEADER_H}" x2="${width}" y2="${HEADER_H}" stroke="${RULE}" stroke-width="1"/>`,
+  );
   return parts.join('');
 }
 
@@ -363,7 +376,7 @@ export function cardHeader(
 export function cardFooter(
   width: number,
   height: number,
-  o: { path: string; right?: string | null; rightFont?: 'mono' | 'body' }
+  o: { path: string; right?: string | null; rightFont?: 'mono' | 'body' },
 ): string {
   const footTop = height - FOOTER_H;
   const parts: string[] = [
@@ -379,7 +392,7 @@ export function cardFooter(
         size: 11,
         font: mono ? 'mono' : 'body',
         anchor: 'end',
-      })
+      }),
     );
   }
   return parts.join('');
@@ -414,14 +427,14 @@ export function generateBandCard(options: BandCardOptions): string {
     const w = ((band.grow ?? 1) / totalGrow) * width;
     const ink = bandInk(band.hex);
     parts.push(
-      `<rect x="${x.toFixed(2)}" y="${fieldTop}" width="${(w + 0.5).toFixed(2)}" height="${fieldH}" fill="${escapeXml(band.hex)}"/>`
+      `<rect x="${x.toFixed(2)}" y="${fieldTop}" width="${(w + 0.5).toFixed(2)}" height="${fieldH}" fill="${escapeXml(band.hex)}"/>`,
     );
 
     // The structural variant: source strip at the band top
     let topY = fieldTop;
     if (band.src) {
       parts.push(
-        `<rect x="${x.toFixed(2)}" y="${fieldTop}" width="${(w + 0.5).toFixed(2)}" height="${band.src.height}" fill="${escapeXml(band.src.hex)}"/>`
+        `<rect x="${x.toFixed(2)}" y="${fieldTop}" width="${(w + 0.5).toFixed(2)}" height="${band.src.height}" fill="${escapeXml(band.src.hex)}"/>`,
       );
       topY = fieldTop + band.src.height;
     }
@@ -436,7 +449,7 @@ export function generateBandCard(options: BandCardOptions): string {
           size: 11,
           font: 'mono',
           spacing: 0.6,
-        })
+        }),
       );
     }
 
@@ -449,7 +462,7 @@ export function generateBandCard(options: BandCardOptions): string {
           fill: ink.onDim,
           size: 11,
           font: 'mono',
-        })
+        }),
       );
       baseline -= 15;
     }
@@ -459,7 +472,7 @@ export function generateBandCard(options: BandCardOptions): string {
           fill: ink.onDim,
           size: 11,
           font: 'mono',
-        })
+        }),
       );
       baseline -= 15;
     }
@@ -477,7 +490,7 @@ export function generateBandCard(options: BandCardOptions): string {
             size: nameSize,
             font: 'body',
             weight: 600,
-          })
+          }),
         );
       });
     }
@@ -489,14 +502,16 @@ export function generateBandCard(options: BandCardOptions): string {
 
   if (deck) {
     const deckTop = height - FOOTER_H - DECK_H;
-    parts.push(`<line x1="0" y1="${deckTop}" x2="${width}" y2="${deckTop}" stroke="${RULE}" stroke-width="1"/>`);
+    parts.push(
+      `<line x1="0" y1="${deckTop}" x2="${width}" y2="${deckTop}" stroke="${RULE}" stroke-width="1"/>`,
+    );
     parts.push(
       bandText(13, deckTop + 23, fit(deck, width - 26, 14.5), {
         fill: NAME_INK,
         size: 14.5,
         font: 'body',
         weight: 600,
-      })
+      }),
     );
   }
 
@@ -505,7 +520,7 @@ export function generateBandCard(options: BandCardOptions): string {
       path: options.path,
       right: options.footRight,
       rightFont: options.footRightFont,
-    })
+    }),
   );
 
   return (

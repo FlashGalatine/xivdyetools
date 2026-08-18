@@ -18,6 +18,10 @@ Monorepo 2.0 / 5.0-release follow-through (additive behaviour). Deploy note: pro
 
 - **`community` preset category** dropped from `CATEGORY_DISPLAY` — the category was retired by the 5.0 presets migration (curated presets are keyed by stainID; the community bucket no longer exists in `@xivdyetools/types`).
 
+### Removed (2026-08-18 dead-code audit)
+
+- **`types/preset.ts`'s `CATEGORY_DISPLAY`** (DEAD-014): this worker's own copy had zero consumers of its own (only `STATUS_DISPLAY` and `PresetAPIError` from that module were ever imported elsewhere) — deleted outright rather than replaced with an `@xivdyetools/svg` import, since nothing here needs the table at all. `PresetCategory` dropped from the same file's local type-only import as a result.
+
 ### Changed
 
 - **Tier 1 package consolidation (2026-07-31)**: `@xivdyetools/worker-middleware` → `@xivdyetools/worker-kit` (`requestIdMiddleware`, `loggerMiddleware`, `MiddlewareVariables`) and `@xivdyetools/rate-limiter` → `@xivdyetools/worker-kit/rate-limiter` (`KVRateLimiter` in `src/middleware/rate-limit.ts`). No behaviour change; migration paths in `xivdyetools/DEPRECATIONS.md`.

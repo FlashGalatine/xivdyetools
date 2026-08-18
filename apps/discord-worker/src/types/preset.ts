@@ -142,23 +142,6 @@ export class PresetAPIError extends Error {
 // ============================================================================
 
 /**
- * Category display metadata for embeds
- */
-export const CATEGORY_DISPLAY: Record<PresetCategory, { icon: string; name: string }> = {
-  jobs: { icon: '⚔️', name: 'FFXIV Jobs' },
-  'grand-companies': { icon: '🏛️', name: 'Grand Companies' },
-  seasons: { icon: '🍂', name: 'Seasons' },
-  events: { icon: '🎉', name: 'FFXIV Events' },
-  aesthetics: { icon: '🎨', name: 'Aesthetics' },
-  appearance: { icon: '👤', name: 'Appearance' },
-  zones: { icon: '🏔️', name: 'Zones' },
-  // 🗡️ rather than ⚔️ because `jobs` still holds ⚔️. The design retired crossed
-  // swords FROM jobs (now an upright staff), so ⚔️ arguably belongs here — but
-  // reassigning it is a change to an existing category and is out of scope.
-  'raids-trials': { icon: '🗡️', name: 'Raids & Trials' },
-};
-
-/**
  * Status display metadata for embeds
  */
 export const STATUS_DISPLAY: Record<PresetStatus, { icon: string; color: number }> = {

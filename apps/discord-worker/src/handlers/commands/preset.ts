@@ -28,7 +28,7 @@ import {
   ephemeralResponse,
 } from '../../utils/response.js';
 import { sendMessage, safeEditOriginalResponse } from '../../utils/discord-api.js';
-import { generatePresetSwatch } from '@xivdyetools/svg';
+import { generatePresetSwatch, CATEGORY_DISPLAY } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import {
@@ -43,7 +43,6 @@ import { BRAND_ACCENT, STATE } from '../../utils/brand.js';
 import {
   type CommunityPreset,
   type PresetCategory,
-  CATEGORY_DISPLAY,
   STATUS_DISPLAY,
   PresetAPIError,
 } from '../../types/preset.js';

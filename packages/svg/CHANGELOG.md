@@ -73,6 +73,17 @@ The 5.0 graphics release. Every Discord bot card is redrawn on one shared **fram
 
 - Everything in the BREAKING table above, plus the navy/blurple palette, the emoji match-quality ladders, and `palette-grid`'s raw-RGB distance helper.
 
+### Removed (2026-08-18 dead-code audit)
+
+- **`arcPath`, `rgbToHsv`, `rgbToHex`** (`base.ts`, DEAD-014/015): the retired harmony-wheel arc helper; a duplicate of core's `ColorService.rgbToHsv`/`rgbToHex` that no generator in this package called. `truncateText` (`base.ts`, DEAD-014) is also gone — `fitText`/`estimateTextWidth` (pixel-budget ellipsis) were always the documented way to cut text, and this character-count helper's only external reference was og-worker's own unused re-export.
+- **`DisplayOptions` interface + `DEFAULT_DISPLAY_OPTIONS` constant** (`base.ts`, DEAD-014): no generator ever read a display-flags object; the web app's identically-named `DEFAULT_DISPLAY_OPTIONS` (`@shared/tool-config-types`) is a separate, unrelated constant.
+- **`AllVisionTypes`** (`a11y-card.ts`, DEAD-014): unused even inside its own module.
+- **`interpolateColor`, `generateGradientColors`** (`gradient.ts`, DEAD-015): test-only outside `generateGradientCard`'s own internal use of them — deleting both together leaves no orphaned caller.
+- **`GLYPH_SETS`, `LEDGER_GROUP_H`, `LEDGER_ROW_H` barrel exports** (DEAD-015): the underlying constants/exports stay defined and in production use inside `icons/tool-icons.ts` / `budget-ledger.ts` respectively — only the `index.ts` re-export was test-only (`icons/tool-icons.test.ts` and `budget-ledger.ts`'s own callers import directly, not through the barrel).
+- **`placeGlyph`, `formatMeasure`, `bandSlices` barrel exports** (DEAD-015, optional trim): internal-only helpers with no consumer outside `frame.ts`/`harmony-card.ts`/`palette-grid.ts` and no README/CLAUDE mention — trimmed from `index.ts`, code unchanged. `appIcon`, `ACCENT`, and `NUMFMT` were also candidates in the finding but are documented in the README's "Frame primitives" example and Constants table, so they were kept on the barrel.
+- **`CATEGORY_DISPLAY` adopted, not deleted** (`preset-swatch.ts`, DEAD-014): this package's copy is now the single source — `discord-worker`'s byte-identical duplicate (`types/preset.ts`) is deleted in favor of importing this export; `moderation-worker`'s duplicate had zero consumers of its own and was deleted outright with no new dependency added.
+- **`GLYPH_ACCENT_LIGHT` wired to its three hard-coded `#CE2222` copies** (DEAD-018): `frame.ts`'s `appIcon()` now reads the constant instead of the literal (og-worker's `band.ts` and web-app's `theme-service.ts` wired the same way — see their own changelogs).
+
 ## [1.2.1] - 2026-07-28
 
 Release-infrastructure validation. **No functional changes** — the published contents are identical to 1.2.0.

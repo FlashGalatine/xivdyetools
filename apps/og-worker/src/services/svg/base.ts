@@ -2,11 +2,11 @@
  * SVG Base Utilities
  *
  * REFACTOR-009 (2026-07-18 audit): the primitives layer (escapeXml, color
- * helpers, rect/circle/line/text/group, document wrapper, truncation/width
- * estimation) is now re-exported from `@xivdyetools/svg` instead of being a
- * drifted local fork — og-worker inherits the package's attribute escaping
- * (REFACTOR-019) and CJK-aware `truncateText`/`estimateTextWidth`, which the
- * local copy lacked (naive `.length` truncation overflowed ja/ko/zh names).
+ * helpers, rect/circle/line/text/group, document wrapper, width estimation)
+ * is now re-exported from `@xivdyetools/svg` instead of being a drifted local
+ * fork — og-worker inherits the package's attribute escaping (REFACTOR-019)
+ * and CJK-aware `estimateTextWidth`, which the local copy lacked (naive
+ * `.length` truncation overflowed ja/ko/zh names).
  *
  * Only og-specific pieces stay local: the OG THEME (indigo accent — deliberately
  * different from the package's Discord-blurple theme), `linearGradient`, and
@@ -16,7 +16,6 @@
 export {
   escapeXml,
   hexToRgb,
-  rgbToHex,
   getLuminance,
   getContrastTextColor,
   createSvgDocument,
@@ -25,7 +24,6 @@ export {
   line,
   text,
   group,
-  truncateText,
   estimateTextWidth,
   FONTS,
 } from '@xivdyetools/svg';
@@ -41,7 +39,7 @@ export function linearGradient(
     y1?: string;
     x2?: string;
     y2?: string;
-  } = {}
+  } = {},
 ): string {
   const { x1 = '0%', y1 = '0%', x2 = '100%', y2 = '0%' } = options;
 

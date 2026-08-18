@@ -12,7 +12,6 @@
 export {
   escapeXml,
   hexToRgb,
-  rgbToHex,
   getLuminance,
   getContrastTextColor,
   createSvgDocument,
@@ -20,20 +19,15 @@ export {
   circle,
   line,
   text,
-  arcPath,
   group,
-  truncateText,
   estimateTextWidth,
-  rgbToHsv,
   THEME,
   FONTS,
   ACCENT,
   NUMFMT,
   num,
   grp,
-  DEFAULT_DISPLAY_OPTIONS,
 } from './base.js';
-export type { DisplayOptions } from './base.js';
 
 // 5.0 bot card frame system (Turn-11 vocabulary)
 export {
@@ -50,7 +44,6 @@ export {
   textWidth,
   fitText,
   commandChip,
-  placeGlyph,
   appIcon,
   markFooter,
   swatch,
@@ -58,7 +51,6 @@ export {
   dashedRule,
   hairline,
   measuredRow,
-  formatMeasure,
 } from './frame.js';
 export type {
   CardTheme,
@@ -71,30 +63,18 @@ export type {
 
 // Harmony Card (11A — replaces the retired harmony wheel)
 export { generateHarmonyCard } from './harmony-card.js';
-export type {
-  HarmonyCardSlot,
-  HarmonyCardLabels,
-  HarmonyCardOptions,
-} from './harmony-card.js';
+export type { HarmonyCardSlot, HarmonyCardLabels, HarmonyCardOptions } from './harmony-card.js';
 
 // Gradient Card (12H·2/·3/·4 — strip over distinct dyes)
-export {
-  generateGradientCard,
-  interpolateColor,
-  generateGradientColors,
-} from './gradient.js';
-export type {
-  GradientStripCell,
-  GradientRowEntry,
-  GradientCardOptions,
-} from './gradient.js';
+export { generateGradientCard } from './gradient.js';
+export type { GradientStripCell, GradientRowEntry, GradientCardOptions } from './gradient.js';
 
 // Mixer Card (12F — the ratio sweep, the command's first image)
 export { generateMixerCard } from './mixer-card.js';
 export type { MixerCardRow, MixerCardOptions } from './mixer-card.js';
 
 // Palette Grid (14K ramp — /extractor image)
-export { generatePaletteGrid, bandSlices } from './palette-grid.js';
+export { generatePaletteGrid } from './palette-grid.js';
 export type {
   PaletteBandEntry,
   PaletteRowEntry,
@@ -104,30 +84,15 @@ export type {
 
 // Nearest Sheet (14J·2 — /extractor color)
 export { generateNearestSheet } from './nearest-sheet.js';
-export type {
-  NearestSheetRow,
-  NearestSheetLabels,
-  NearestSheetOptions,
-} from './nearest-sheet.js';
+export type { NearestSheetRow, NearestSheetLabels, NearestSheetOptions } from './nearest-sheet.js';
 
 // Accessibility card (13D/13E/13H — the vision: option chooses the frame)
 export { generateA11yCard } from './a11y-card.js';
-export type {
-  A11yCardOptions,
-  A11yCardLabels,
-  A11yLensRow,
-  VisionType,
-  AllVisionTypes,
-} from './a11y-card.js';
+export type { A11yCardOptions, A11yCardLabels, A11yLensRow, VisionType } from './a11y-card.js';
 
 // Contrast card (13A/13B/13C·1 — the pair count routes the frame)
 export { generateContrastCard, contrastRatio } from './contrast-card.js';
-export type {
-  ContrastPair,
-  ContrastCardLabels,
-  ContrastCardOptions,
-} from './contrast-card.js';
-
+export type { ContrastPair, ContrastCardLabels, ContrastCardOptions } from './contrast-card.js';
 
 // Random Dyes Grid (11B table)
 export { generateRandomDyesGrid } from './random-dyes-grid.js';
@@ -151,10 +116,7 @@ export { generateDyeInfoCard } from './dye-info-card.js';
 export type { DyeInfoCardOptions, DyeInfoLabels, NearestDyeInfo } from './dye-info-card.js';
 
 // Preset Swatch
-export {
-  generatePresetSwatch,
-  CATEGORY_DISPLAY,
-} from './preset-swatch.js';
+export { generatePresetSwatch, CATEGORY_DISPLAY } from './preset-swatch.js';
 export type { PresetSwatchOptions } from './preset-swatch.js';
 
 // Budget Ledger (13G — tier groups carry the single price)
@@ -162,8 +124,6 @@ export {
   generateBudgetLedger,
   LEDGER_HEADER_H,
   LEDGER_COLHEAD_H,
-  LEDGER_GROUP_H,
-  LEDGER_ROW_H,
   LEDGER_FOOTER_H,
   LEDGER_FOOTER_2LINE_H,
 } from './budget-ledger.js';
@@ -181,7 +141,6 @@ export {
   chromeGlyph,
   panelGlyph,
   categoryGlyph,
-  GLYPH_SETS,
   GLYPH_ACCENT_DARK,
   GLYPH_ACCENT_LIGHT,
 } from './icons/tool-icons.js';

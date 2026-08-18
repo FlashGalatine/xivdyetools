@@ -8,7 +8,6 @@ import { describe, it, expect } from 'vitest';
 import {
   escapeXml,
   hexToRgb,
-  rgbToHex,
   getLuminance,
   getContrastTextColor,
   createSvgDocument,
@@ -47,7 +46,7 @@ describe('base SVG utilities', () => {
 
     it('should escape multiple special characters', () => {
       expect(escapeXml('<script>"alert(\'XSS\')&"</script>')).toBe(
-        '&lt;script&gt;&quot;alert(&apos;XSS&apos;)&amp;&quot;&lt;/script&gt;'
+        '&lt;script&gt;&quot;alert(&apos;XSS&apos;)&amp;&quot;&lt;/script&gt;',
       );
     });
 
@@ -79,32 +78,6 @@ describe('base SVG utilities', () => {
 
     it('should convert mixed color', () => {
       expect(hexToRgb('#8B4513')).toEqual({ r: 139, g: 69, b: 19 });
-    });
-  });
-
-  describe('rgbToHex', () => {
-    it('should convert red', () => {
-      expect(rgbToHex(255, 0, 0)).toBe('#ff0000');
-    });
-
-    it('should convert green', () => {
-      expect(rgbToHex(0, 255, 0)).toBe('#00ff00');
-    });
-
-    it('should convert blue', () => {
-      expect(rgbToHex(0, 0, 255)).toBe('#0000ff');
-    });
-
-    it('should convert white', () => {
-      expect(rgbToHex(255, 255, 255)).toBe('#ffffff');
-    });
-
-    it('should convert black', () => {
-      expect(rgbToHex(0, 0, 0)).toBe('#000000');
-    });
-
-    it('should pad single digit values', () => {
-      expect(rgbToHex(1, 2, 3)).toBe('#010203');
     });
   });
 
@@ -310,11 +283,12 @@ describe('base SVG utilities', () => {
     });
 
     it('should create vertical gradient', () => {
-      const result = linearGradient(
-        'vertGrad',
-        [{ offset: '0%', color: '#000' }],
-        { x1: '0%', y1: '0%', x2: '0%', y2: '100%' }
-      );
+      const result = linearGradient('vertGrad', [{ offset: '0%', color: '#000' }], {
+        x1: '0%',
+        y1: '0%',
+        x2: '0%',
+        y2: '100%',
+      });
       expect(result).toContain('x1="0%"');
       expect(result).toContain('y1="0%"');
       expect(result).toContain('x2="0%"');

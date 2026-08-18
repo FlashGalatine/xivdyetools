@@ -84,6 +84,10 @@ The **XIV Dye Tools 5.0 redesign**. Every one of the nine tools was re-ported to
 - **Orphaned files** (Vite `root: 'src'` means none of these ever reached `dist/`): the package-root `index.html` and its drifting `<meta>` CSP, `netlify.toml`, `public/.htaccess` (a fourth, wrong CSP still permitting Google Fonts), `fonts/` (28 unreferenced woff2 — Cinzel, Cinzel Decorative, Lexend, Lexend Giga, a duplicate Habibi), `public/fonts/habibi-*.woff2` and the `numeric` Habibi family, `public/js/load-fonts.js` (Google Fonts loader), `assets/json/colors_xiv.json` + `public/json/colors_xiv.json` (stale pre-monorepo dye copies; the service-worker precache entry with them), the `.v4-app-root` rule and its ad-hoc Segoe UI stack, the `asyncCss` plugin's Google-Fonts branch, the last `#4F46E5` indigo literals
 - **E2E**: `e2e/color-matcher.spec.ts` (only a skipped block), `e2e/dye-comparison-coverage.spec.ts` (coverage-farming guards), the skipped pre-5.0 `describe` blocks in dye-comparison / dye-mixer / harmony-generator, ui-interactions' sixteen silent self-skips — every removed behaviour is listed in `e2e/COVERAGE-GAPS.md`
 
+### Removed (2026-08-18 dead-code audit)
+
+- **`services/theme-service.ts`'s hard-coded `#CE2222`** (DEAD-018): `standard-light`'s `primary` now reads `@xivdyetools/svg`'s `GLYPH_ACCENT_LIGHT` — same value, single source with `shared/glyph-accent.ts`'s existing `GLYPH_ACCENT_DARK` import.
+
 ### Fixed
 
 - **Sign-in identity = Discord snowflake** — `AuthUser.id` now takes the JWT's `discord_id` claim (oauth's `sub` is the internal user UUID), falling back to `sub` for XIVAuth-only accounts, so ownership checks against `author_discord_id` line up with presets-api's fix (see presets-api 2.0.0)

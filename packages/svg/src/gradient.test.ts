@@ -3,12 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import {
-  generateGradientCard,
-  interpolateColor,
-  generateGradientColors,
-  type GradientCardOptions,
-} from './gradient.js';
+import { generateGradientCard, type GradientCardOptions } from './gradient.js';
 
 // ============================================================================
 // Fixtures — the doc's Rose Pink → Wine Red six-step ramp
@@ -77,7 +72,10 @@ describe('generateGradientCard', () => {
   it('caps rows at five', () => {
     const svg = generateGradientCard({
       ...defaultOptions,
-      rows: [...rows, { stepText: '7', idealHex: '#111111', dyeHex: '#111111', name: 'Sixth Row', deltaE: 3 }],
+      rows: [
+        ...rows,
+        { stepText: '7', idealHex: '#111111', dyeHex: '#111111', name: 'Sixth Row', deltaE: 3 },
+      ],
     });
     expect(svg).not.toContain('Sixth Row');
   });
@@ -102,34 +100,5 @@ describe('generateGradientCard', () => {
   it('renders the light theme surface', () => {
     const svg = generateGradientCard({ ...defaultOptions, theme: 'light' });
     expect(svg).toContain('#FFFFFF');
-  });
-});
-
-// ============================================================================
-// Colour helpers
-// ============================================================================
-
-describe('interpolateColor', () => {
-  it('returns the endpoints at 0 and 1', () => {
-    expect(interpolateColor('#000000', '#ffffff', 0)).toBe('#000000');
-    expect(interpolateColor('#000000', '#ffffff', 1)).toBe('#ffffff');
-  });
-
-  it('returns the midpoint at 0.5', () => {
-    expect(interpolateColor('#000000', '#ffffff', 0.5)).toBe('#808080');
-  });
-});
-
-describe('generateGradientColors', () => {
-  it('generates the requested number of steps including endpoints', () => {
-    const colors = generateGradientColors('#000000', '#ffffff', 5);
-    expect(colors).toHaveLength(5);
-    expect(colors[0]).toBe('#000000');
-    expect(colors[4]).toBe('#ffffff');
-  });
-
-  it('handles stepCount 1 and 0 without NaN (BUG-063)', () => {
-    expect(generateGradientColors('#123456', '#654321', 1)).toEqual(['#123456']);
-    expect(generateGradientColors('#123456', '#654321', 0)).toEqual([]);
   });
 });
