@@ -5,4 +5,3 @@
  */
 
 export * from './pkce.js';
-export * from './secrets.js';

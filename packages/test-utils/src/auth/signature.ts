@@ -25,7 +25,7 @@
  * ```
  */
 
-import { bytesToHex } from '../utils/crypto.js';
+import { bytesToHex } from '@xivdyetools/auth/encoding';
 
 /** Default signing secret for tests (>= 32 bytes for FINDING-009 HMAC minimum) */
 export const TEST_SIGNING_SECRET = 'test-signing-secret-at-least-32-bytes!!!';
@@ -45,7 +45,7 @@ export async function createBotSignature(
   timestamp: string,
   userDiscordId: string,
   userName: string,
-  secret: string = TEST_SIGNING_SECRET
+  secret: string = TEST_SIGNING_SECRET,
 ): Promise<string> {
   const message = `${timestamp}:${userDiscordId}:${userName}`;
   const encoder = new TextEncoder();
@@ -55,7 +55,7 @@ export async function createBotSignature(
     encoder.encode(secret),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ['sign']
+    ['sign'],
   );
 
   const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
@@ -74,7 +74,7 @@ export async function createBotSignature(
 export async function createTimestampedSignature(
   userDiscordId: string,
   userName: string,
-  secret: string = TEST_SIGNING_SECRET
+  secret: string = TEST_SIGNING_SECRET,
 ): Promise<{ signature: string; timestamp: string }> {
   const timestamp = Math.floor(Date.now() / 1000).toString();
   const signature = await createBotSignature(timestamp, userDiscordId, userName, secret);
@@ -96,7 +96,7 @@ export async function verifyBotSignature(
   timestamp: string,
   userDiscordId: string,
   userName: string,
-  secret: string = TEST_SIGNING_SECRET
+  secret: string = TEST_SIGNING_SECRET,
 ): Promise<boolean> {
   const expected = await createBotSignature(timestamp, userDiscordId, userName, secret);
   return signature === expected;

@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { createMockKV } from '@xivdyetools/test-utils/cloudflare';
 
 // Mock xivdyetools-core to avoid JSON import issues
 vi.mock('@xivdyetools/core', () => ({
@@ -40,22 +41,6 @@ vi.mock('@xivdyetools/core', () => ({
   },
 }));
 
-// Create mock KV namespace
-function createMockKV() {
-  const store = new Map<string, string>();
-
-  return {
-    get: vi.fn(async (key: string) => store.get(key) ?? null),
-    put: vi.fn(async (key: string, value: string) => {
-      store.set(key, value);
-    }),
-    delete: vi.fn(async (key: string) => {
-      store.delete(key);
-    }),
-    _store: store,
-  } as unknown as KVNamespace & { _store: Map<string, string> };
-}
-
 // Create mock logger
 function createMockLogger() {
   return {
@@ -79,12 +64,12 @@ import {
 import type { UserPreferences } from '../types/preferences.js';
 
 describe('Preferences Service', () => {
-  let mockKV: ReturnType<typeof createMockKV>;
+  let mockKV: KVNamespace & { _store: Map<string, string> };
   let mockLogger: ReturnType<typeof createMockLogger>;
   const testUserId = 'user-123456';
 
   beforeEach(() => {
-    mockKV = createMockKV();
+    mockKV = createMockKV() as unknown as KVNamespace & { _store: Map<string, string> };
     mockLogger = createMockLogger();
   });
 

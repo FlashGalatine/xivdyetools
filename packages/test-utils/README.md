@@ -15,10 +15,8 @@ Shared testing utilities for the xivdyetools ecosystem. Provides mocks for Cloud
 ## Features
 
 - **Cloudflare Workers Mocks**: D1Database, KVNamespace, R2Bucket, AnalyticsEngineDataset, Fetcher (Service Bindings)
-- **Auth Helpers**: JWT creation/verification, HMAC signatures, auth context factories
-- **Domain Factories**: Preset, Category, Vote, User mock data factories
-- **DOM Utilities**: localStorage mock, Canvas mock, ResizeObserver mock
-- **Assertions**: Response assertion helpers for API testing
+- **Auth Helpers**: JWT creation, HMAC bot signatures, bearer-token headers
+- **Domain Factories**: Preset row, Category row, Dye mock data factories
 
 ## Usage
 
@@ -48,7 +46,7 @@ db._reset();
 ### Auth Helpers
 
 ```typescript
-import { createTestJWT, createBotSignature, createAuthContext } from '@xivdyetools/test-utils/auth';
+import { createTestJWT, createBotSignature, authHeaders } from '@xivdyetools/test-utils/auth';
 
 // Create a valid JWT for testing
 const jwt = await createTestJWT('your-secret', {
@@ -65,54 +63,23 @@ const signature = await createBotSignature(
   'signing-secret'
 );
 
-// Create auth context for middleware testing
-const ctx = createAuthContext({ isModerator: true });
+// Build a bearer-token Authorization header
+const headers = authHeaders(jwt, 'user-discord-id', 'username');
 ```
 
 ### Domain Factories
 
 ```typescript
 import {
-  createMockPreset,
   createMockPresetRow,
   createMockSubmission,
-  createMockUser,
-  resetCounters,
+  createMockDye,
 } from '@xivdyetools/test-utils/factories';
 
 // Create mock domain objects
-const preset = createMockPreset({ name: 'Custom Name' });
 const row = createMockPresetRow({ status: 'pending' });
 const submission = createMockSubmission();
-
-// Reset auto-increment counters between tests
-beforeEach(() => resetCounters());
-```
-
-### DOM Utilities
-
-```typescript
-import { MockLocalStorage, setupCanvasMocks, setupResizeObserverMock } from '@xivdyetools/test-utils/dom';
-
-// Mock localStorage
-const storage = new MockLocalStorage();
-global.localStorage = storage;
-
-// Setup canvas mocks for chart testing
-setupCanvasMocks();
-
-// Setup ResizeObserver mock
-setupResizeObserverMock();
-```
-
-### Assertions
-
-```typescript
-import { assertJsonResponse } from '@xivdyetools/test-utils/assertions';
-
-const response = await app.request('/api/v1/presets');
-const body = await assertJsonResponse<{ presets: Preset[] }>(response, 200);
-expect(body.presets).toHaveLength(1);
+const dye = createMockDye({ name: 'Custom Dye' });
 ```
 
 ### Constants
@@ -135,9 +102,9 @@ const params = new URLSearchParams({
 | `@xivdyetools/test-utils/cloudflare` | Cloudflare Workers mocks |
 | `@xivdyetools/test-utils/auth` | Authentication helpers |
 | `@xivdyetools/test-utils/factories` | Domain object factories |
-| `@xivdyetools/test-utils/dom` | DOM/browser utilities |
-| `@xivdyetools/test-utils/assertions` | Response assertions |
 | `@xivdyetools/test-utils/constants` | Test constants (PKCE, etc.) |
+
+Note: `/dom` and `/assertions` were removed 2026-08-18 (dead-code audit, DEAD-026) — zero consumers anywhere in the workspace. If the web-app ever adopts this package for DOM polyfills, pull them back from git history.
 
 ## TypeScript
 

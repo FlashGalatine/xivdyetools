@@ -25,14 +25,6 @@
       "types": "./dist/factories/index.d.ts",
       "import": "./dist/factories/index.js"
     },
-    "./dom": {
-      "types": "./dist/dom/index.d.ts",
-      "import": "./dist/dom/index.js"
-    },
-    "./assertions": {
-      "types": "./dist/assertions/index.d.ts",
-      "import": "./dist/assertions/index.js"
-    },
     "./constants": {
       "types": "./dist/constants/index.d.ts",
       "import": "./dist/constants/index.js"
@@ -67,7 +59,6 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260727.1",
-    "@testing-library/dom": "^10.0.0",
     "@vitest/coverage-v8": "^4.1.10",
     "vitest": "^4.1.10"
   },

@@ -11,6 +11,7 @@ import {
   getLocalizedCategory,
   type LocaleCode,
 } from './i18n.js';
+import { createMockKV } from '@xivdyetools/test-utils/cloudflare';
 
 // Shared mock functions for LocalizationService instances (BUG-001: per-locale instances)
 // vi.hoisted ensures these are available when vi.mock factory runs (hoisted above imports)
@@ -42,28 +43,12 @@ vi.mock('@xivdyetools/core', () => ({
 
 import { LocalizationService } from '@xivdyetools/core';
 
-// Create mock KV namespace
-function createMockKV() {
-  const store = new Map<string, string>();
-
-  return {
-    get: vi.fn(async (key: string) => store.get(key) ?? null),
-    put: vi.fn(async (key: string, value: string) => {
-      store.set(key, value);
-    }),
-    delete: vi.fn(async (key: string) => {
-      store.delete(key);
-    }),
-    _store: store,
-  } as unknown as KVNamespace & { _store: Map<string, string> };
-}
-
 describe('i18n.ts', () => {
-  let mockKV: ReturnType<typeof createMockKV>;
+  let mockKV: KVNamespace & { _store: Map<string, string> };
   const mockUserId = 'user-123';
 
   beforeEach(() => {
-    mockKV = createMockKV();
+    mockKV = createMockKV() as unknown as KVNamespace & { _store: Map<string, string> };
     vi.clearAllMocks();
     // Reset shared mocks (clears once-queue) then restore default implementations
     mockSetLocale.mockReset().mockResolvedValue(undefined);

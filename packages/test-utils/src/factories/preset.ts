@@ -1,13 +1,10 @@
 /**
  * Preset factory functions for testing
  *
- * Provides functions to create mock presets, preset rows, and submissions.
+ * Provides functions to create mock preset rows and submissions.
  *
  * @example
  * ```typescript
- * // Create a mock preset
- * const preset = createMockPreset({ name: 'Custom Name' });
- *
  * // Create a database row
  * const row = createMockPresetRow({ status: 'pending' });
  *
@@ -16,12 +13,7 @@
  * ```
  */
 
-import type {
-  CommunityPreset,
-  PresetSubmission,
-  PresetStatus,
-  PresetCategory,
-} from '@xivdyetools/types/preset';
+import type { CommunityPreset, PresetSubmission, PresetStatus } from '@xivdyetools/types/preset';
 import { nextStringId } from '../utils/counters.js';
 
 /**
@@ -105,134 +97,5 @@ export function createMockPresetRow(overrides: Partial<PresetRow> = {}): PresetR
     preview_image_status: 'none',
     secondary_categories: '[]',
     ...overrides,
-  };
-}
-
-/**
- * Creates a mock CommunityPreset (domain object)
- *
- * Note: In domain objects, `dyes` and `tags` are arrays,
- * and `is_curated` is a boolean.
- *
- * @param overrides - Optional overrides for the default values
- * @returns A CommunityPreset object
- */
-export function createMockPreset(overrides: Partial<CommunityPreset> = {}): CommunityPreset {
-  const id = overrides.id ?? nextStringId('preset');
-  const now = new Date().toISOString();
-
-  return {
-    id,
-    name: 'Test Preset',
-    description: 'A test preset description',
-    category_id: 'aesthetics',
-    secondary_categories: [],
-    dyes: [1, 2, 3],
-    tags: ['test', 'mock'],
-    author_discord_id: '123456789',
-    author_name: 'TestUser',
-    vote_count: 0,
-    status: 'approved',
-    is_curated: false,
-    created_at: now,
-    updated_at: now,
-    preview_image_status: 'none',
-    ...overrides,
-  };
-}
-
-/**
- * Creates multiple mock presets
- *
- * @param count - Number of presets to create
- * @param overrides - Optional overrides to apply to all presets
- * @returns Array of CommunityPreset objects
- */
-export function createMockPresets(
-  count: number,
-  overrides: Partial<CommunityPreset> = {}
-): CommunityPreset[] {
-  return Array.from({ length: count }, (_, i) =>
-    createMockPreset({
-      name: `Test Preset ${i + 1}`,
-      ...overrides,
-    })
-  );
-}
-
-/**
- * Creates a preset with specific status
- *
- * @param status - The preset status
- * @param overrides - Optional additional overrides
- * @returns A CommunityPreset object
- */
-export function createPresetWithStatus(
-  status: PresetStatus,
-  overrides: Partial<CommunityPreset> = {}
-): CommunityPreset {
-  return createMockPreset({ status, ...overrides });
-}
-
-/**
- * Creates a curated preset
- *
- * @param overrides - Optional overrides
- * @returns A curated CommunityPreset object
- */
-export function createCuratedPreset(
-  overrides: Partial<CommunityPreset> = {}
-): CommunityPreset {
-  return createMockPreset({
-    is_curated: true,
-    status: 'approved',
-    ...overrides,
-  });
-}
-
-/**
- * Converts a CommunityPreset to a PresetRow (for database mocking)
- *
- * @param preset - The CommunityPreset to convert
- * @returns A PresetRow object
- */
-export function presetToRow(preset: CommunityPreset): PresetRow {
-  return {
-    ...preset,
-    dyes: JSON.stringify(preset.dyes),
-    tags: JSON.stringify(preset.tags),
-    is_curated: preset.is_curated ? 1 : 0,
-    dye_signature: JSON.stringify(preset.dyes),
-    secondary_categories: JSON.stringify(preset.secondary_categories),
-    previous_values: null,
-    example_link: preset.example_link ?? null,
-    preview_image_key: null,
-    preview_image_status: preset.preview_image_status || 'none',
-  };
-}
-
-/**
- * Converts a PresetRow to a CommunityPreset (for domain logic)
- *
- * @param row - The PresetRow to convert
- * @returns A CommunityPreset object
- */
-export function rowToPreset(row: PresetRow): CommunityPreset {
-  return {
-    id: row.id,
-    name: row.name,
-    description: row.description,
-    category_id: row.category_id as PresetCategory,
-    secondary_categories: JSON.parse(row.secondary_categories || '[]'),
-    dyes: JSON.parse(row.dyes),
-    tags: JSON.parse(row.tags),
-    author_discord_id: row.author_discord_id,
-    author_name: row.author_name,
-    vote_count: row.vote_count,
-    status: row.status as PresetStatus,
-    is_curated: row.is_curated === 1,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-    preview_image_status: (row.preview_image_status || 'none') as 'none' | 'pending' | 'approved',
   };
 }

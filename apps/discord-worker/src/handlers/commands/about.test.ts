@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleAboutCommand } from './about.js';
 import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
 import { SOCIAL_LINKS } from '@xivdyetools/core';
+import { createMockKV } from '@xivdyetools/test-utils/cloudflare';
 
 // Mock dependencies
 vi.mock('../../services/bot-i18n.js', () => ({
@@ -30,14 +31,6 @@ vi.mock('../../services/bot-i18n.js', () => ({
     getLocale: () => 'en',
   }),
 }));
-
-// Create mock KV namespace
-function createMockKV() {
-  return {
-    get: vi.fn(async () => null),
-    put: vi.fn(async () => {}),
-  } as unknown as KVNamespace;
-}
 
 describe('about.ts', () => {
   let mockEnv: Env;

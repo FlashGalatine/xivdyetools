@@ -1,38 +1,13 @@
 /**
  * Shared test utilities for xivdyetools-discord-worker tests
  *
- * Provides consistent mock factories for Env, ExecutionContext, and common test data.
+ * Thin composition wrapper: the actual KV / Analytics Engine mocks are the
+ * shared implementations from @xivdyetools/test-utils (DEAD-005 consolidation,
+ * Task 5). This file just types them for this worker's Env shape.
  */
 
-import { vi } from 'vitest';
+import { createMockKV, createMockAnalyticsEngine } from '@xivdyetools/test-utils/cloudflare';
 import type { Env } from './types/env.js';
-
-/**
- * Creates a mock KV namespace
- */
-export function createMockKV() {
-  const store = new Map<string, string>();
-  return {
-    get: vi.fn(async (key: string) => store.get(key) ?? null),
-    put: vi.fn(async (key: string, value: string) => {
-      store.set(key, value);
-    }),
-    delete: vi.fn(async (key: string) => {
-      store.delete(key);
-    }),
-    list: vi.fn(async () => ({ keys: [], list_complete: true, cursor: '' })),
-    _store: store,
-  } as unknown as KVNamespace & { _store: Map<string, string> };
-}
-
-/**
- * Creates a mock AnalyticsEngineDataset
- */
-export function createMockAnalytics(): AnalyticsEngineDataset {
-  return {
-    writeDataPoint: vi.fn(),
-  } as unknown as AnalyticsEngineDataset;
-}
 
 /**
  * Creates a mock Env object with all required properties
@@ -44,8 +19,8 @@ export function createMockEnv(overrides?: Partial<Env>): Env {
     DISCORD_CLIENT_ID: 'test-app-id',
     PRESETS_API_URL: 'https://test-api.example.com',
     INTERNAL_WEBHOOK_SECRET: 'test-secret',
-    KV: createMockKV(),
-    ANALYTICS: createMockAnalytics(),
+    KV: createMockKV() as unknown as KVNamespace,
+    ANALYTICS: createMockAnalyticsEngine() as unknown as AnalyticsEngineDataset,
     ...overrides,
   } as Env;
 }
