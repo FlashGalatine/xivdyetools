@@ -2,7 +2,7 @@
  * Tests for Browser Preset
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createBrowserLogger, browserLogger, perf } from './browser.js';
+import { createBrowserLogger, browserLogger } from './browser.js';
 import type { ErrorTracker } from '../types.js';
 
 // Node.js process global — available at runtime in vitest's node environment
@@ -35,9 +35,6 @@ describe('Browser Preset', () => {
       groupEnd: vi.spyOn(console, 'groupEnd').mockImplementation(() => {}),
       log: vi.spyOn(console, 'log').mockImplementation(() => {}),
     };
-
-    // Clear perf metrics between tests
-    perf.clearMetrics();
   });
 
   afterEach(() => {
@@ -96,7 +93,7 @@ describe('Browser Preset', () => {
         const logger = createBrowserLogger({});
         // In test environment, it should detect dev mode
         logger.debug('Debug with default detection');
-        
+
         // Restore
         process.env.NODE_ENV = originalEnv;
 
@@ -258,7 +255,7 @@ describe('Browser Preset', () => {
 
         expect(errorTracker.captureMessage).toHaveBeenCalledWith(
           'Failed with string: string-error',
-          'error'
+          'error',
         );
       });
 
@@ -277,10 +274,7 @@ describe('Browser Preset', () => {
 
         logger.error('Just a message');
 
-        expect(errorTracker.captureMessage).toHaveBeenCalledWith(
-          'Just a message',
-          'error'
-        );
+        expect(errorTracker.captureMessage).toHaveBeenCalledWith('Just a message', 'error');
       });
 
       it('should send warnings to error tracker in production', () => {
@@ -300,7 +294,7 @@ describe('Browser Preset', () => {
 
         expect(errorTracker.captureMessage).toHaveBeenCalledWith(
           'Deprecated feature used',
-          'warning'
+          'warning',
         );
       });
 
@@ -393,235 +387,6 @@ describe('Browser Preset', () => {
     });
   });
 
-  describe('perf (performance monitoring)', () => {
-    describe('start/end', () => {
-      it('should measure duration', () => {
-        vi.spyOn(performance, 'now')
-          .mockReturnValueOnce(0)
-          .mockReturnValueOnce(100);
-
-        perf.start('operation');
-        const duration = perf.end('operation');
-
-        expect(duration).toBe(100);
-      });
-
-      it('should return 0 and warn for unstarted timer', () => {
-        const duration = perf.end('nonexistent');
-
-        expect(duration).toBe(0);
-        expect(consoleSpy.warn).toHaveBeenCalledWith(
-          'No timer started for label: nonexistent'
-        );
-      });
-
-      it('returns true when a timer starts cleanly', () => {
-        expect(perf.start('fresh')).toBe(true);
-        perf.end('fresh');
-      });
-
-      it('refuses to restart an active timer and warns (LOGGER-BUG-001)', () => {
-        expect(perf.start('busy')).toBe(true);
-        // The second start would silently discard the first timer's start
-        // time, losing the measurement in concurrent operations.
-        expect(perf.start('busy')).toBe(false);
-        expect(consoleSpy.warn).toHaveBeenCalledWith(
-          expect.stringContaining('Timer "busy" is already active')
-        );
-
-        perf.end('busy');
-        // …and once ended, the same label is free again
-        expect(perf.start('busy')).toBe(true);
-        perf.end('busy');
-      });
-
-      it('should accumulate metrics', () => {
-        vi.spyOn(performance, 'now')
-          .mockReturnValueOnce(0) // start 1
-          .mockReturnValueOnce(100) // end 1
-          .mockReturnValueOnce(0) // start 2
-          .mockReturnValueOnce(50) // end 2
-          .mockReturnValueOnce(0) // start 3
-          .mockReturnValueOnce(150); // end 3
-
-        perf.start('repeated');
-        perf.end('repeated');
-
-        perf.start('repeated');
-        perf.end('repeated');
-
-        perf.start('repeated');
-        perf.end('repeated');
-
-        const metrics = perf.getMetrics('repeated');
-        expect(metrics?.count).toBe(3);
-        expect(metrics?.minTime).toBe(50);
-        expect(metrics?.maxTime).toBe(150);
-        expect(metrics?.totalTime).toBe(300);
-        expect(metrics?.avgTime).toBe(100);
-      });
-    });
-
-    describe('measure (async)', () => {
-      it('should time async operation', async () => {
-        vi.spyOn(performance, 'now')
-          .mockReturnValueOnce(0)
-          .mockReturnValueOnce(75);
-
-        const result = await perf.measure('async-op', async () => {
-          return 'async-result';
-        });
-
-        expect(result).toBe('async-result');
-
-        const metrics = perf.getMetrics('async-op');
-        expect(metrics?.totalTime).toBe(75);
-      });
-
-      it('should record time even when async function throws', async () => {
-        vi.spyOn(performance, 'now')
-          .mockReturnValueOnce(0)
-          .mockReturnValueOnce(25);
-
-        await expect(
-          perf.measure('failing-op', async () => {
-            throw new Error('Async failure');
-          })
-        ).rejects.toThrow('Async failure');
-
-        const metrics = perf.getMetrics('failing-op');
-        expect(metrics?.totalTime).toBe(25);
-      });
-    });
-
-    describe('measureSync', () => {
-      it('should time synchronous operation', () => {
-        vi.spyOn(performance, 'now')
-          .mockReturnValueOnce(0)
-          .mockReturnValueOnce(30);
-
-        const result = perf.measureSync('sync-op', () => {
-          return 'sync-result';
-        });
-
-        expect(result).toBe('sync-result');
-
-        const metrics = perf.getMetrics('sync-op');
-        expect(metrics?.totalTime).toBe(30);
-      });
-
-      it('should record time even when sync function throws', () => {
-        vi.spyOn(performance, 'now')
-          .mockReturnValueOnce(0)
-          .mockReturnValueOnce(15);
-
-        expect(() =>
-          perf.measureSync('failing-sync', () => {
-            throw new Error('Sync failure');
-          })
-        ).toThrow('Sync failure');
-
-        const metrics = perf.getMetrics('failing-sync');
-        expect(metrics?.totalTime).toBe(15);
-      });
-    });
-
-    describe('getMetrics', () => {
-      it('should return null for unknown label', () => {
-        expect(perf.getMetrics('unknown')).toBeNull();
-      });
-
-      it('should return metrics for known label', () => {
-        vi.spyOn(performance, 'now')
-          .mockReturnValueOnce(0)
-          .mockReturnValueOnce(50);
-
-        perf.start('known');
-        perf.end('known');
-
-        const metrics = perf.getMetrics('known');
-        expect(metrics).toEqual({
-          count: 1,
-          totalTime: 50,
-          minTime: 50,
-          maxTime: 50,
-          avgTime: 50,
-        });
-      });
-    });
-
-    describe('getAllMetrics', () => {
-      it('should return empty object when no metrics', () => {
-        expect(perf.getAllMetrics()).toEqual({});
-      });
-
-      it('should return all collected metrics', () => {
-        vi.spyOn(performance, 'now')
-          .mockReturnValueOnce(0)
-          .mockReturnValueOnce(100)
-          .mockReturnValueOnce(0)
-          .mockReturnValueOnce(200);
-
-        perf.start('op1');
-        perf.end('op1');
-
-        perf.start('op2');
-        perf.end('op2');
-
-        const all = perf.getAllMetrics();
-        expect(Object.keys(all)).toHaveLength(2);
-        expect(all['op1']).toBeDefined();
-        expect(all['op2']).toBeDefined();
-      });
-    });
-
-    describe('logMetrics', () => {
-      it('should log all metrics to console', () => {
-        vi.spyOn(performance, 'now')
-          .mockReturnValueOnce(0)
-          .mockReturnValueOnce(100);
-
-        perf.start('logged-op');
-        perf.end('logged-op');
-
-        perf.logMetrics();
-
-        expect(consoleSpy.group).toHaveBeenCalledWith('Performance Metrics');
-        expect(consoleSpy.log).toHaveBeenCalled();
-        expect(consoleSpy.groupEnd).toHaveBeenCalled();
-      });
-    });
-
-    describe('clearMetrics', () => {
-      it('should clear all metrics', () => {
-        vi.spyOn(performance, 'now')
-          .mockReturnValueOnce(0)
-          .mockReturnValueOnce(50);
-
-        perf.start('to-clear');
-        perf.end('to-clear');
-
-        expect(perf.getMetrics('to-clear')).not.toBeNull();
-
-        perf.clearMetrics();
-
-        expect(perf.getMetrics('to-clear')).toBeNull();
-        expect(perf.getAllMetrics()).toEqual({});
-      });
-
-      it('should clear active timers', () => {
-        perf.start('active');
-
-        perf.clearMetrics();
-
-        // Now ending should return 0 and warn
-        const duration = perf.end('active');
-        expect(duration).toBe(0);
-        expect(consoleSpy.warn).toHaveBeenCalled();
-      });
-    });
-  });
-
   describe('browser integration patterns', () => {
     it('should work with typical web app pattern', () => {
       const logger = createBrowserLogger({
@@ -648,30 +413,6 @@ describe('Browser Preset', () => {
       expect(consoleSpy.debug).toHaveBeenCalledTimes(1);
       expect(consoleSpy.warn).toHaveBeenCalledTimes(1);
       expect(consoleSpy.error).toHaveBeenCalledTimes(1);
-    });
-
-    it('should support performance monitoring workflow', () => {
-      vi.spyOn(performance, 'now')
-        .mockReturnValueOnce(0)
-        .mockReturnValueOnce(120)
-        .mockReturnValueOnce(0)
-        .mockReturnValueOnce(45);
-
-      // Time a render
-      perf.start('render');
-      // ... render logic
-      perf.end('render');
-
-      // Time another operation
-      const result = perf.measureSync('compute', () => {
-        return { computed: true };
-      });
-
-      expect(result).toEqual({ computed: true });
-
-      const allMetrics = perf.getAllMetrics();
-      expect(allMetrics['render'].avgTime).toBe(120);
-      expect(allMetrics['compute'].avgTime).toBe(45);
     });
   });
 });

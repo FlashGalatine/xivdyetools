@@ -41,9 +41,9 @@ Five single-responsibility modules under `src/` plus an `encoding/` directory, a
 
 ```
 src/
-├── jwt.ts        # verifyJWT, verifyJWTSignatureOnly, decodeJWT, isJWTExpired, getJWTTimeToExpiry
+├── jwt.ts        # verifyJWT, verifyJWTSignatureOnly, decodeJWT
 ├── hmac.ts       # createHmacKey, hmacSign(Hex), hmacVerify(Hex), verifyBotSignature, getOrCreateHmacKey (internal LRU)
-├── timing.ts     # timingSafeEqual, timingSafeEqualBytes
+├── timing.ts     # timingSafeEqual
 ├── discord.ts    # verifyDiscordRequest, unauthorizedResponse, badRequestResponse
 ├── revocation.ts # isTokenRevoked, revokeToken (KV-backed jti blacklist)
 └── encoding/     # base64.ts + hex.ts — Base64URL/hex primitives (absorbed from @xivdyetools/crypto)
@@ -66,8 +66,6 @@ interface JWTPayload {
 function verifyJWT(token: string, secret: string): Promise<JWTPayload | null>;
 function verifyJWTSignatureOnly(token: string, secret: string, maxAgeMs?: number): Promise<JWTPayload | null>;
 function decodeJWT(token: string): JWTPayload | null;  // no signature check
-function isJWTExpired(token: string): boolean;
-function getJWTTimeToExpiry(token: string): number;    // seconds, 0 if expired/invalid
 ```
 
 ### HMAC (`@xivdyetools/auth/hmac`)
@@ -97,7 +95,6 @@ function verifyBotSignature(
 
 ```typescript
 function timingSafeEqual(a: string, b: string): Promise<boolean>;
-function timingSafeEqualBytes(a: Uint8Array, b: Uint8Array): Promise<boolean>;
 ```
 
 ### Discord (`@xivdyetools/auth/discord`)
@@ -189,7 +186,9 @@ Grepped from `package.json` files in the monorepo:
 
 - Apps: `xivdyetools-discord-worker`, `xivdyetools-presets-api`, `xivdyetools-moderation-worker`, `xivdyetools-oauth-worker`
 
-The `oauth` worker issues tokens itself (it does not call `verifyJWT` for issuance) but consumes `verifyJWTSignatureOnly`, `decodeJWT`, `isTokenRevoked`, `revokeToken` and the `/encoding` primitives from this package (`apps/oauth/src/services/jwt-service.ts`).
+The `oauth` worker issues tokens itself (it does not call `verifyJWT` for issuance) but consumes `verifyJWTSignatureOnly`, `decodeJWT`, `isTokenRevoked`, `revokeToken`, `hmacSign`/`hmacVerify` (2026-08-18 dead-code audit — DEAD-019 adoption replaced a hand-rolled base64url HMAC pair) and the `/encoding` primitives from this package (`apps/oauth/src/services/jwt-service.ts`).
+
+`discord-worker`'s `services/preset-api.ts`/`utils/github-verify.ts` and `moderation-worker`'s `services/preset-api.ts` keep their own hand-rolled HMAC (2026-08-18 audit, DEAD-019: not adopted) — `createHmacKey`'s `>= 32` byte minimum (FINDING-009) would silently fail-closed for `BOT_SIGNING_SECRET`/`GITHUB_WEBHOOK_SECRET`, which have no length floor anywhere in this repo (existing tests use 17-20 character secrets).
 
 ## Internal Dependencies
 

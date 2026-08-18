@@ -1,7 +1,7 @@
 /**
  * @xivdyetools/logger - Library Preset
  *
- * Pre-configured loggers for library use (xivdyetools-core).
+ * Pre-configured loggers for library use (@xivdyetools/core).
  * Maintains backward compatibility with existing Logger interface.
  *
  * @module presets/library
@@ -19,7 +19,7 @@ import type { Logger, LoggerConfig } from '../types.js';
  *
  * @example
  * ```typescript
- * import { NoOpLogger, DyeService } from 'xivdyetools-core';
+ * import { NoOpLogger, DyeService } from '@xivdyetools/core';
  *
  * // Default behavior - no console output
  * const service = new DyeService();
@@ -38,7 +38,7 @@ export const NoOpLogger: Logger = new NoopAdapter();
  *
  * @example
  * ```typescript
- * import { ConsoleLogger, DyeService } from 'xivdyetools-core';
+ * import { ConsoleLogger, DyeService } from '@xivdyetools/core';
  *
  * // Enable verbose logging during development
  * const dyeService = new DyeService({ logger: ConsoleLogger });
@@ -68,10 +68,7 @@ export const ConsoleLogger: Logger = new ConsoleAdapter({
  * // Output: [xivdyetools:color] Converting hex to RGB {"hex":"#FF0000"}
  * ```
  */
-export function createLibraryLogger(
-  prefix: string,
-  config: Partial<LoggerConfig> = {}
-): Logger {
+export function createLibraryLogger(prefix: string, config: Partial<LoggerConfig> = {}): Logger {
   return new ConsoleAdapter({
     level: 'debug',
     format: 'pretty',

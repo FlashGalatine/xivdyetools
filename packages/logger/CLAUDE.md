@@ -46,7 +46,7 @@ src/
 │   ├── json-adapter.ts    # Structured JSON (worker)
 │   └── noop-adapter.ts    # Silent (library default)
 ├── presets/
-│   ├── browser.ts         # createBrowserLogger, perf
+│   ├── browser.ts         # createBrowserLogger
 │   ├── worker.ts          # createWorkerLogger, createRequestLogger
 │   └── library.ts         # NoOpLogger, ConsoleLogger, createLibraryLogger
 ├── constants.ts           # CORE_REDACT_FIELDS, WORKER_REDACT_FIELDS
@@ -74,7 +74,6 @@ abstract class BaseLogger implements ExtendedLogger {
   protected abstract write(entry: LogEntry): void;
   // child() returns a DelegatingLogger that shares the parent's adapter
 }
-function createSimpleLogger(writeFn, config?): Logger;
 ```
 
 ### Adapters
@@ -91,7 +90,6 @@ class NoopAdapter    extends BaseLogger { /* drops everything */ }
 interface BrowserLoggerOptions { devOnly?, isDev?, errorTracker?, prefix? }
 function createBrowserLogger(options?): ExtendedLogger;
 const browserLogger: ExtendedLogger;  // singleton
-const perf: { /* performance helpers */ };
 ```
 
 ### Worker preset (`@xivdyetools/logger/worker`)
@@ -100,7 +98,6 @@ const perf: { /* performance helpers */ };
 interface WorkerLoggerOptions { service, environment, version?, level? }
 function createWorkerLogger(options, requestId?): ExtendedLogger;
 function createRequestLogger(env: { ENVIRONMENT, API_VERSION?, SERVICE_NAME? }, requestId): ExtendedLogger;
-function getRequestId(request: Request): string;  // @deprecated
 ```
 
 ### Library preset (`@xivdyetools/logger/library`)

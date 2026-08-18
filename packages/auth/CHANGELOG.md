@@ -19,6 +19,12 @@ Monorepo 2.0 Tier 1 package consolidation. Written 2026-07-30 and unpublished un
 - `@xivdyetools/crypto` dropped from `dependencies`; `jwt.ts` / `hmac.ts` import the encoding primitives relatively. The package now has **no internal dependencies** (Level 0 of the monorepo graph) — `discord-interactions` is the only runtime dependency, `@cloudflare/workers-types` remains an optional peer.
 - Docs: README and `CLAUDE.md` synced to the branch state: `/encoding` and `/revocation` subpaths documented, API-reference signatures corrected (`isJWTExpired(token)` / `getJWTTimeToExpiry(token)` take the raw token string, `unauthorizedResponse(message?)` / `badRequestResponse(message)` return JSON), consumers listed, license/legal notice added, stale blog link removed.
 
+### Removed (2026-08-18 dead-code audit)
+
+- **DEAD-020**: `isJWTExpired(token)` and `getJWTTimeToExpiry(token)` removed from `jwt.ts` and the root barrel — documented in the README but had zero callers outside their own tests; `oauth`'s `jwt-service.ts` deleted its own copy of `isJWTExpired` back in the 2026-07-18 audit and never called this package's version.
+- **DEAD-020**: `timingSafeEqualBytes(a, b)` removed from `timing.ts` and the root barrel — zero callers; every consumer uses the string-based `timingSafeEqual`, and all HMAC/JWT signature checks already route through the inherently timing-safe `crypto.subtle.verify()` instead. `timingSafeEqual` and the root `/encoding` re-exports are unaffected (KEEP).
+- **DEAD-019 (adopt)**: `apps/oauth/src/services/jwt-service.ts`'s hand-rolled `getSigningKey`/`signJwtData`/`verifyJwtData` now delegate to this package's `hmacSign`/`hmacVerify` — verified byte-for-byte identical for `JWT_SECRET` (already enforced >= 32 bytes by oauth's own env validation, satisfying `createHmacKey`'s minimum-key-length check). `discord-worker`'s `services/preset-api.ts`/`utils/github-verify.ts` and `moderation-worker`'s `services/preset-api.ts` were evaluated for the same swap and **kept as-is**: their secrets (`BOT_SIGNING_SECRET`, `GITHUB_WEBHOOK_SECRET`) have no minimum-length requirement anywhere in this repo (existing tests use 17-20 character secrets), so `createHmacKey`'s `>= 32` byte floor would silently fail-closed in real deployments with a shorter secret. `hmacSign`/`hmacSignHex`/`hmacVerify`/`hmacVerifyHex` remain exported and are no longer zero-caller.
+
 ## [1.2.0] - 2026-07-19
 
 2026-07-18 audit remediation (Sprints 2 & 6).

@@ -6,7 +6,7 @@
  * @module core/base-logger
  */
 
-import type { Logger, ExtendedLogger, LogContext, LogEntry, LogLevel, LoggerConfig } from '../types.js';
+import type { ExtendedLogger, LogContext, LogEntry, LogLevel, LoggerConfig } from '../types.js';
 // LOGGER-REF-003 FIX: Import from centralized constants
 import { DEFAULT_REDACT_FIELDS } from '../constants.js';
 
@@ -36,10 +36,7 @@ export abstract class BaseLogger implements ExtendedLogger {
       timestamps: true,
       sanitizeErrors: true,
       ...config,
-      redactFields: [
-        ...DEFAULT_REDACT_FIELDS,
-        ...(config.redactFields ?? []),
-      ],
+      redactFields: [...DEFAULT_REDACT_FIELDS, ...(config.redactFields ?? [])],
     };
   }
 
@@ -64,7 +61,7 @@ export abstract class BaseLogger implements ExtendedLogger {
     level: LogLevel,
     message: string,
     context?: LogContext,
-    error?: unknown
+    error?: unknown,
   ): LogEntry {
     const entry: LogEntry = {
       level,
@@ -152,34 +149,42 @@ export abstract class BaseLogger implements ExtendedLogger {
     // key name, so `{"token":"abc"}` and `token = abc` bypassed sanitization.
     const K = (name: string): string => `["']?${name}["']?\\s*[=:]\\s*`;
 
-    return message
-      // Bearer tokens - typically single tokens without spaces
-      .replace(/Bearer\s+\S+/gi, 'Bearer [REDACTED]')
-      // BUG-025: JSON-shaped pass — catches every "…token"/"…secret"/"…password"/
-      // "…key"-suffixed quoted key in one sweep, including compound names
-      // (sessionToken, webhook_secret) that the per-key patterns below miss.
-      .replace(
-        /"([a-z0-9_-]*(?:token|secret|password|key))"\s*:\s*"[^"]*"/gi,
-        '"$1":"[REDACTED]"'
-      )
-      // Key=value patterns - handle quoted and unquoted values
-      // Matches: key="value with spaces" or key='value' or key=value until delimiter
-      .replace(new RegExp(`${K('token')}${V}`, 'gi'), 'token=[REDACTED]')
-      .replace(new RegExp(`${K('secret')}${V}`, 'gi'), 'secret=[REDACTED]')
-      .replace(new RegExp(`${K('password')}${V}`, 'gi'), 'password=[REDACTED]')
-      .replace(new RegExp(`${K('api[_-]?key')}${V}`, 'gi'), 'api_key=[REDACTED]')
-      // Additional common sensitive patterns
-      // Use negative lookahead to skip "Authorization: Bearer ..." which is handled by Bearer pattern
-      .replace(new RegExp(`["']?authorization["']?\\s*[=:]\\s*(?!Bearer\\s)${V}`, 'gi'), 'authorization=[REDACTED]')
-      .replace(new RegExp(`${K('access[_-]?token')}${V}`, 'gi'), 'access_token=[REDACTED]')
-      .replace(new RegExp(`${K('refresh[_-]?token')}${V}`, 'gi'), 'refresh_token=[REDACTED]')
-      // FINDING-005: Additional patterns for OAuth, crypto keys, and webhook secrets
-      .replace(new RegExp(`${K('client[_-]?secret')}${V}`, 'gi'), 'client_secret=[REDACTED]')
-      .replace(new RegExp(`${K('private[_-]?key')}${V}`, 'gi'), 'private_key=[REDACTED]')
-      .replace(new RegExp(`${K('signing[_-]?(?:key|secret)')}${V}`, 'gi'), 'signing_key=[REDACTED]')
-      .replace(new RegExp(`${K('webhook[_-]?secret')}${V}`, 'gi'), 'webhook_secret=[REDACTED]')
-      .replace(new RegExp(`${K('auth[_-]?token')}${V}`, 'gi'), 'auth_token=[REDACTED]')
-      .replace(new RegExp(`${K('credential[s]?')}${V}`, 'gi'), 'credentials=[REDACTED]');
+    return (
+      message
+        // Bearer tokens - typically single tokens without spaces
+        .replace(/Bearer\s+\S+/gi, 'Bearer [REDACTED]')
+        // BUG-025: JSON-shaped pass — catches every "…token"/"…secret"/"…password"/
+        // "…key"-suffixed quoted key in one sweep, including compound names
+        // (sessionToken, webhook_secret) that the per-key patterns below miss.
+        .replace(
+          /"([a-z0-9_-]*(?:token|secret|password|key))"\s*:\s*"[^"]*"/gi,
+          '"$1":"[REDACTED]"',
+        )
+        // Key=value patterns - handle quoted and unquoted values
+        // Matches: key="value with spaces" or key='value' or key=value until delimiter
+        .replace(new RegExp(`${K('token')}${V}`, 'gi'), 'token=[REDACTED]')
+        .replace(new RegExp(`${K('secret')}${V}`, 'gi'), 'secret=[REDACTED]')
+        .replace(new RegExp(`${K('password')}${V}`, 'gi'), 'password=[REDACTED]')
+        .replace(new RegExp(`${K('api[_-]?key')}${V}`, 'gi'), 'api_key=[REDACTED]')
+        // Additional common sensitive patterns
+        // Use negative lookahead to skip "Authorization: Bearer ..." which is handled by Bearer pattern
+        .replace(
+          new RegExp(`["']?authorization["']?\\s*[=:]\\s*(?!Bearer\\s)${V}`, 'gi'),
+          'authorization=[REDACTED]',
+        )
+        .replace(new RegExp(`${K('access[_-]?token')}${V}`, 'gi'), 'access_token=[REDACTED]')
+        .replace(new RegExp(`${K('refresh[_-]?token')}${V}`, 'gi'), 'refresh_token=[REDACTED]')
+        // FINDING-005: Additional patterns for OAuth, crypto keys, and webhook secrets
+        .replace(new RegExp(`${K('client[_-]?secret')}${V}`, 'gi'), 'client_secret=[REDACTED]')
+        .replace(new RegExp(`${K('private[_-]?key')}${V}`, 'gi'), 'private_key=[REDACTED]')
+        .replace(
+          new RegExp(`${K('signing[_-]?(?:key|secret)')}${V}`, 'gi'),
+          'signing_key=[REDACTED]',
+        )
+        .replace(new RegExp(`${K('webhook[_-]?secret')}${V}`, 'gi'), 'webhook_secret=[REDACTED]')
+        .replace(new RegExp(`${K('auth[_-]?token')}${V}`, 'gi'), 'auth_token=[REDACTED]')
+        .replace(new RegExp(`${K('credential[s]?')}${V}`, 'gi'), 'credentials=[REDACTED]')
+    );
   }
 
   /**
@@ -225,7 +230,7 @@ export abstract class BaseLogger implements ExtendedLogger {
         redacted[key] = value.map((item: unknown) =>
           typeof item === 'object' && item !== null && !visited.has(item)
             ? this.redactSensitiveFields(item as LogContext, visited)
-            : item
+            : item,
         );
       } else {
         redacted[key] = this.redactSensitiveFields(value as LogContext, visited);
@@ -324,7 +329,7 @@ export abstract class BaseLogger implements ExtendedLogger {
 class DelegatingLogger implements ExtendedLogger {
   constructor(
     private parent: BaseLogger,
-    private childContext: LogContext
+    private childContext: LogContext,
   ) {}
 
   debug(message: string, context?: LogContext): void {
@@ -378,26 +383,4 @@ class DelegatingLogger implements ExtendedLogger {
   private mergeContext(context?: LogContext): LogContext {
     return context ? { ...this.childContext, ...context } : this.childContext;
   }
-}
-
-/**
- * Standalone implementation of core Logger interface (simple version)
- *
- * Use this when you only need the basic Logger interface without
- * the extended features.
- *
- * @internal No external consumers — prefer `createLibraryLogger` or
- * `createBrowserLogger` for most use cases.
- */
-export function createSimpleLogger(
-  writeFn: (entry: LogEntry) => void,
-  config: Partial<LoggerConfig> = {}
-): Logger {
-  class SimpleLogger extends BaseLogger {
-    protected write(entry: LogEntry): void {
-      writeFn(entry);
-    }
-  }
-
-  return new SimpleLogger(config);
 }

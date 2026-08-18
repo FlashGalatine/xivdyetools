@@ -6,4 +6,4 @@
  * @module core
  */
 
-export { BaseLogger, createSimpleLogger } from './base-logger.js';
+export { BaseLogger } from './base-logger.js';

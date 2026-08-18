@@ -1,8 +1,8 @@
 /**
- * Tests for BaseLogger and createSimpleLogger
+ * Tests for BaseLogger
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { BaseLogger, createSimpleLogger } from './base-logger.js';
+import { BaseLogger } from './base-logger.js';
 import type { LogEntry, LoggerConfig, LogContext } from '../types.js';
 
 // Concrete implementation for testing abstract BaseLogger
@@ -22,7 +22,7 @@ class TestLogger extends BaseLogger {
     level: 'debug' | 'info' | 'warn' | 'error',
     message: string,
     context?: LogContext,
-    error?: unknown
+    error?: unknown,
   ): LogEntry {
     return this.createEntry(level, message, context, error);
   }
@@ -417,7 +417,9 @@ describe('BaseLogger', () => {
         // BUG-024: the old MAX_REDACT_DEPTH=3 cap let secrets nested 4+
         // levels deep through verbatim; recursion is now cycle-guarded, not
         // depth-capped.
-        const l4 = (result.l1 as Record<string, unknown> as { l2: { l3: { l4: { token: string } } } }).l2.l3.l4;
+        const l4 = (
+          result.l1 as Record<string, unknown> as { l2: { l3: { l4: { token: string } } } }
+        ).l2.l3.l4;
         expect(l4.token).toBe('[REDACTED]');
       });
 
@@ -588,9 +590,7 @@ describe('BaseLogger', () => {
       it('should return duration and log', () => {
         const debugLogger = new TestLogger({ level: 'debug' });
 
-        vi.spyOn(performance, 'now')
-          .mockReturnValueOnce(0)
-          .mockReturnValueOnce(100);
+        vi.spyOn(performance, 'now').mockReturnValueOnce(0).mockReturnValueOnce(100);
 
         const end = debugLogger.time('operation');
         const duration = end();
@@ -625,9 +625,7 @@ describe('BaseLogger', () => {
       it('should time async operation and return result', async () => {
         const debugLogger = new TestLogger({ level: 'debug' });
 
-        vi.spyOn(performance, 'now')
-          .mockReturnValueOnce(0)
-          .mockReturnValueOnce(50);
+        vi.spyOn(performance, 'now').mockReturnValueOnce(0).mockReturnValueOnce(50);
 
         const result = await debugLogger.timeAsync('async-op', async () => {
           return 'async-result';
@@ -641,14 +639,12 @@ describe('BaseLogger', () => {
       it('should time even when async function throws', async () => {
         const debugLogger = new TestLogger({ level: 'debug' });
 
-        vi.spyOn(performance, 'now')
-          .mockReturnValueOnce(0)
-          .mockReturnValueOnce(25);
+        vi.spyOn(performance, 'now').mockReturnValueOnce(0).mockReturnValueOnce(25);
 
         await expect(
           debugLogger.timeAsync('failing-op', async () => {
             throw new Error('Async failure');
-          })
+          }),
         ).rejects.toThrow('Async failure');
 
         // Should still have logged the timing
@@ -656,44 +652,6 @@ describe('BaseLogger', () => {
         expect(debugLogger.entries[0].message).toContain('failing-op');
       });
     });
-  });
-});
-
-describe('createSimpleLogger', () => {
-  it('should create a simple logger with write function', () => {
-    const entries: LogEntry[] = [];
-    const logger = createSimpleLogger((entry) => entries.push(entry));
-
-    logger.info('Test message');
-    expect(entries).toHaveLength(1);
-    expect(entries[0].message).toBe('Test message');
-  });
-
-  it('should accept configuration', () => {
-    const entries: LogEntry[] = [];
-    const logger = createSimpleLogger((entry) => entries.push(entry), {
-      level: 'debug',
-      prefix: 'Simple',
-    });
-
-    logger.debug('Debug message');
-    expect(entries).toHaveLength(1);
-    expect(entries[0].message).toBe('[Simple] Debug message');
-  });
-
-  it('should respect log level', () => {
-    const entries: LogEntry[] = [];
-    const logger = createSimpleLogger((entry) => entries.push(entry), {
-      level: 'error',
-    });
-
-    logger.debug('Debug');
-    logger.info('Info');
-    logger.warn('Warn');
-    logger.error('Error');
-
-    expect(entries).toHaveLength(1);
-    expect(entries[0].level).toBe('error');
   });
 });
 
@@ -735,7 +693,7 @@ describe('DelegatingLogger timing (OPT-020)', () => {
     await expect(
       child.timeAsync('bad', async () => {
         throw new Error('nope');
-      })
+      }),
     ).rejects.toThrow('nope');
 
     // Both timers reported despite one throwing (the `finally` arm)

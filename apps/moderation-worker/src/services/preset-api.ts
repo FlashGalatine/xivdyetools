@@ -43,6 +43,14 @@ import { PresetAPIError } from '../types/preset.js';
  *
  * Signature format: HMAC-SHA256(timestamp:discordId:userName)
  *
+ * DEAD-019 (2026-08-18 dead-code audit): evaluated for adoption of
+ * `@xivdyetools/auth`'s `hmacSignHex` and kept as-is — same reasoning as
+ * discord-worker's `services/preset-api.ts`: `createHmacKey`'s 32-byte
+ * minimum-secret enforcement (FINDING-009) has no counterpart validating
+ * `BOT_SIGNING_SECRET`'s length in this repo (this file's own tests sign
+ * with a 20-character `'test-signing-secret'`), so adopting it risks an
+ * uncaught throw in production instead of a signed request.
+ *
  * @see docs/HMAC_SIGNATURE_SPEC.md for complete specification
  * @param timestamp - Unix timestamp in seconds (not milliseconds)
  * @param userDiscordId - Discord user ID initiating the request
@@ -68,7 +76,7 @@ async function generateRequestSignature(
   timestamp: number,
   userDiscordId: string | undefined,
   userName: string | undefined,
-  signingSecret: string
+  signingSecret: string,
 ): Promise<string> {
   // Message format: timestamp:discordId:userName
   // Empty string for missing fields to maintain consistent format
@@ -80,7 +88,7 @@ async function generateRequestSignature(
     encoder.encode(signingSecret),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ['sign']
+    ['sign'],
   );
 
   const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
@@ -107,7 +115,7 @@ async function request<T>(
     userName?: string;
     requestId?: string;
     logger?: ExtendedLogger;
-  } = {}
+  } = {},
 ): Promise<T> {
   if (!env.PRESETS_API && (!env.PRESETS_API_URL || !env.BOT_API_SECRET)) {
     throw new PresetAPIError(503, 'Preset API not configured');
@@ -138,7 +146,7 @@ async function request<T>(
       timestamp,
       options.userDiscordId,
       options.userName,
-      env.BOT_SIGNING_SECRET
+      env.BOT_SIGNING_SECRET,
     );
     headers['X-Request-Timestamp'] = String(timestamp);
     headers['X-Request-Signature'] = signature;
@@ -164,7 +172,7 @@ async function request<T>(
           method,
           headers,
           body: options.body ? JSON.stringify(options.body) : undefined,
-        })
+        }),
       );
     } else {
       const url = `${env.PRESETS_API_URL}${path}`;
@@ -181,7 +189,7 @@ async function request<T>(
       throw new PresetAPIError(
         response.status,
         data.message || data.error || `API request failed with status ${response.status}`,
-        data
+        data,
       );
     }
 
@@ -227,7 +235,7 @@ export function validateSecurityConfig(env: Env): {
   if (!env.BOT_SIGNING_SECRET) {
     warnings.push(
       'BOT_SIGNING_SECRET is not set - HMAC request signatures will be disabled. ' +
-        'This reduces security for worker-to-worker communication.'
+        'This reduces security for worker-to-worker communication.',
     );
   }
 
@@ -311,7 +319,7 @@ export function isModerator(env: Env, userId: string): boolean {
  */
 export async function getPresets(
   env: Env,
-  filters: PresetFilters = {}
+  filters: PresetFilters = {},
 ): Promise<PresetListResponse> {
   const params = new URLSearchParams();
 
@@ -355,13 +363,13 @@ export async function getPreset(env: Env, id: string): Promise<CommunityPreset |
  */
 export async function getPendingPresets(
   env: Env,
-  moderatorId: string
+  moderatorId: string,
 ): Promise<ModerationQueueEntry[]> {
   const response = await request<{ presets: ModerationQueueEntry[] }>(
     env,
     'GET',
     '/api/v1/moderation/pending',
-    { userDiscordId: moderatorId }
+    { userDiscordId: moderatorId },
   );
   return response.presets;
 }
@@ -373,7 +381,7 @@ export async function approvePreset(
   env: Env,
   presetId: string,
   moderatorId: string,
-  reason?: string
+  reason?: string,
 ): Promise<CommunityPreset> {
   const response = await request<{ preset: CommunityPreset }>(
     env,
@@ -382,7 +390,7 @@ export async function approvePreset(
     {
       body: { status: 'approved', reason },
       userDiscordId: moderatorId,
-    }
+    },
   );
   return response.preset;
 }
@@ -394,7 +402,7 @@ export async function rejectPreset(
   env: Env,
   presetId: string,
   moderatorId: string,
-  reason: string
+  reason: string,
 ): Promise<CommunityPreset> {
   const response = await request<{ preset: CommunityPreset }>(
     env,
@@ -403,7 +411,7 @@ export async function rejectPreset(
     {
       body: { status: 'rejected', reason },
       userDiscordId: moderatorId,
-    }
+    },
   );
   return response.preset;
 }
@@ -411,15 +419,12 @@ export async function rejectPreset(
 /**
  * Get moderation statistics
  */
-export async function getModerationStats(
-  env: Env,
-  moderatorId: string
-): Promise<ModerationStats> {
+export async function getModerationStats(env: Env, moderatorId: string): Promise<ModerationStats> {
   const response = await request<{ stats: ModerationStats }>(
     env,
     'GET',
     '/api/v1/moderation/stats',
-    { userDiscordId: moderatorId }
+    { userDiscordId: moderatorId },
   );
   return response.stats;
 }
@@ -430,13 +435,13 @@ export async function getModerationStats(
 export async function getModerationHistory(
   env: Env,
   presetId: string,
-  moderatorId: string
+  moderatorId: string,
 ): Promise<ModerationLogEntry[]> {
   const response = await request<{ history: ModerationLogEntry[] }>(
     env,
     'GET',
     `/api/v1/moderation/${presetId}/history`,
-    { userDiscordId: moderatorId }
+    { userDiscordId: moderatorId },
   );
   return response.history;
 }
@@ -448,7 +453,7 @@ export async function revertPreset(
   env: Env,
   presetId: string,
   reason: string,
-  moderatorId: string
+  moderatorId: string,
 ): Promise<CommunityPreset> {
   const response = await request<{ success: boolean; preset: CommunityPreset }>(
     env,
@@ -457,7 +462,7 @@ export async function revertPreset(
     {
       body: { reason },
       userDiscordId: moderatorId,
-    }
+    },
   );
   return response.preset;
 }
@@ -476,7 +481,7 @@ export async function searchPresetsForAutocomplete(
     status?: 'approved' | 'pending';
     limit?: number;
     logger?: ExtendedLogger;
-  } = {}
+  } = {},
 ): Promise<Array<{ name: string; value: string }>> {
   try {
     const filters: PresetFilters = {
@@ -500,7 +505,7 @@ export async function searchPresetsForAutocomplete(
     if (options.logger) {
       options.logger.error(
         'Preset autocomplete search failed',
-        error instanceof Error ? error : undefined
+        error instanceof Error ? error : undefined,
       );
     }
     return [];

@@ -24,9 +24,14 @@ Monorepo 2.0 release train (branch `monorepo-2.0-prep`). Nothing below has shipp
 - Dependencies: `hono` floor raised to `^4.12.34` (2026-08-09 security advisories); `wrangler` `^4.114.0 → ^4.120.0`; removed the unused direct `miniflare` devDependency (never imported by any test — it only pinned a second, vulnerable undici); `description` and `license: MIT` declared.
 - Docs: `README.md` written (accuracy/licensing/attribution audit); `CLAUDE.md` corrected on the deploy command and synced to worker-kit / auth `/encoding`.
 
+### Removed (2026-08-18 dead-code audit)
+
+- **DEAD-019 (adopt)**: `services/jwt-service.ts`'s hand-rolled `getSigningKey` (private) is gone; `signJwtData`/`verifyJwtData` (still exported for `utils/state-signing.ts`) now delegate to `@xivdyetools/auth`'s `hmacSign`/`hmacVerify`. Verified byte-for-byte identical — a pinned vector (fixed secret + message, signature computed with the old implementation before deletion) is asserted unchanged in `__tests__/jwt-service.test.ts`. Safe because `JWT_SECRET` — this worker's only caller of these functions, shared with `signPayload`/`state-signing.ts` — is already enforced `>= 32` characters by `utils/env-validation.ts`, satisfying the minimum key length `hmacSign`/`hmacVerify` require internally.
+
 ### Tests
 
 - First tests for `getAllowedRedirectOrigins` (including development-only loopback filtering) and the two CORS-allowlist regression tests in `src/__tests__/index.test.ts` / `oauth-constants.test.ts`.
+- Pinned-vector HMAC equivalence tests for `signJwtData`/`verifyJwtData` in `__tests__/jwt-service.test.ts` (DEAD-019 adoption proof).
 
 ## [2.5.0] - 2026-07-19
 

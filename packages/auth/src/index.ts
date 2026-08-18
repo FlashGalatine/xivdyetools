@@ -25,18 +25,12 @@ export {
   verifyJWT,
   verifyJWTSignatureOnly,
   decodeJWT,
-  isJWTExpired,
-  getJWTTimeToExpiry,
   type JWTPayload,
   type VerifyJWTOptions,
 } from './jwt.js';
 
 // Revocation utilities (KV-backed jti blacklist)
-export {
-  isTokenRevoked,
-  revokeToken,
-  type RevocationStore,
-} from './revocation.js';
+export { isTokenRevoked, revokeToken, type RevocationStore } from './revocation.js';
 
 // HMAC utilities
 export {
@@ -50,7 +44,7 @@ export {
 } from './hmac.js';
 
 // Timing-safe utilities
-export { timingSafeEqual, timingSafeEqualBytes } from './timing.js';
+export { timingSafeEqual } from './timing.js';
 
 // Discord verification
 export {

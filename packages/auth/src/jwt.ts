@@ -12,10 +12,7 @@
  * @module jwt
  */
 
-import {
-  base64UrlDecode,
-  base64UrlDecodeBytes,
-} from './encoding/index.js';
+import { base64UrlDecode, base64UrlDecodeBytes } from './encoding/index.js';
 import { getOrCreateHmacKey } from './hmac.js';
 
 /**
@@ -112,10 +109,7 @@ export function decodeJWT(token: string): JWTPayload | null {
  * @param secret - The HMAC secret
  * @returns Decoded payload if signature is valid, null otherwise
  */
-async function verifyJWTSignature(
-  token: string,
-  secret: string
-): Promise<JWTPayload | null> {
+async function verifyJWTSignature(token: string, secret: string): Promise<JWTPayload | null> {
   const parts = token.split('.');
   if (parts.length !== 3) {
     return null;
@@ -143,7 +137,7 @@ async function verifyJWTSignature(
     'HMAC',
     key,
     signatureBytes,
-    encoder.encode(signatureInput)
+    encoder.encode(signatureInput),
   );
 
   if (!isValid) {
@@ -179,7 +173,7 @@ async function verifyJWTSignature(
 export async function verifyJWT(
   token: string,
   secret: string,
-  options?: VerifyJWTOptions
+  options?: VerifyJWTOptions,
 ): Promise<JWTPayload | null> {
   try {
     const payload = await verifyJWTSignature(token, secret);
@@ -231,7 +225,7 @@ export async function verifyJWT(
 export async function verifyJWTSignatureOnly(
   token: string,
   secret: string,
-  maxAgeMs?: number
+  maxAgeMs?: number,
 ): Promise<JWTPayload | null> {
   try {
     const payload = await verifyJWTSignature(token, secret);
@@ -262,36 +256,4 @@ export async function verifyJWTSignatureOnly(
   } catch {
     return null;
   }
-}
-
-/**
- * Check if a JWT is expired without full verification.
- *
- * Useful for quick checks before making API calls.
- *
- * @param token - The JWT string
- * @returns true if token is expired or malformed
- */
-export function isJWTExpired(token: string): boolean {
-  const payload = decodeJWT(token);
-  if (!payload || !payload.exp) {
-    return true;
-  }
-  const now = Math.floor(Date.now() / 1000);
-  return payload.exp < now;
-}
-
-/**
- * Get time until JWT expiration.
- *
- * @param token - The JWT string
- * @returns Seconds until expiration, or 0 if expired/invalid
- */
-export function getJWTTimeToExpiry(token: string): number {
-  const payload = decodeJWT(token);
-  if (!payload || !payload.exp) {
-    return 0;
-  }
-  const now = Math.floor(Date.now() / 1000);
-  return Math.max(0, payload.exp - now);
 }

@@ -53,34 +53,3 @@ export async function timingSafeEqual(a: string, b: string): Promise<boolean> {
     return diff === 0;
   }
 }
-
-/**
- * Performs constant-time comparison on Uint8Arrays.
- *
- * @param a - First array to compare
- * @param b - Second array to compare
- * @returns true if arrays are equal, false otherwise
- */
-// eslint-disable-next-line @typescript-eslint/require-await -- async API contract; timingSafeEqual may be async in other runtimes
-export async function timingSafeEqualBytes(
-  a: Uint8Array,
-  b: Uint8Array
-): Promise<boolean> {
-  const maxLength = Math.max(a.length, b.length);
-
-  const aPadded = new Uint8Array(maxLength);
-  const bPadded = new Uint8Array(maxLength);
-  aPadded.set(a);
-  bPadded.set(b);
-
-  try {
-    const result = crypto.subtle.timingSafeEqual(aPadded, bPadded);
-    return result && a.length === b.length;
-  } catch {
-    let diff = a.length ^ b.length;
-    for (let i = 0; i < maxLength; i++) {
-      diff |= aPadded[i] ^ bPadded[i];
-    }
-    return diff === 0;
-  }
-}

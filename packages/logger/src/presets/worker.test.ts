@@ -2,11 +2,7 @@
  * Tests for Worker Preset
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  createWorkerLogger,
-  createRequestLogger,
-  getRequestId,
-} from './worker.js';
+import { createWorkerLogger, createRequestLogger } from './worker.js';
 
 describe('Worker Preset', () => {
   let consoleLogSpy: ReturnType<typeof vi.spyOn>;
@@ -55,7 +51,7 @@ describe('Worker Preset', () => {
           service: 'api',
           environment: 'production',
         },
-        'req-abc-123'
+        'req-abc-123',
       );
 
       logger.info('Test');
@@ -183,7 +179,7 @@ describe('Worker Preset', () => {
           service: 'api',
           environment: 'production',
         },
-        'req-123'
+        'req-123',
       );
 
       const childLogger = logger.child({ operation: 'createPreset' });
@@ -204,7 +200,7 @@ describe('Worker Preset', () => {
           API_VERSION: '2.0.0',
           SERVICE_NAME: 'xivdyetools-presets-api',
         },
-        'req-456'
+        'req-456',
       );
 
       logger.info('Test');
@@ -221,7 +217,7 @@ describe('Worker Preset', () => {
         {
           ENVIRONMENT: 'development',
         },
-        'req-789'
+        'req-789',
       );
 
       logger.info('Test');
@@ -235,66 +231,13 @@ describe('Worker Preset', () => {
         {
           ENVIRONMENT: 'production',
         },
-        'req-000'
+        'req-000',
       );
 
       logger.info('Test');
 
       const parsed = JSON.parse(consoleLogSpy.mock.calls[0][0]);
       expect(parsed.context.version).toBeUndefined();
-    });
-  });
-
-  describe('getRequestId', () => {
-    it('should return x-request-id header if present', () => {
-      const request = new Request('https://example.com', {
-        headers: { 'x-request-id': 'custom-request-id' },
-      });
-
-      const requestId = getRequestId(request);
-      expect(requestId).toBe('custom-request-id');
-    });
-
-    it('should fall back to cf-ray header', () => {
-      const request = new Request('https://example.com', {
-        headers: { 'cf-ray': 'cf-ray-123' },
-      });
-
-      const requestId = getRequestId(request);
-      expect(requestId).toBe('cf-ray-123');
-    });
-
-    it('should prefer x-request-id over cf-ray', () => {
-      const request = new Request('https://example.com', {
-        headers: {
-          'x-request-id': 'preferred-id',
-          'cf-ray': 'fallback-id',
-        },
-      });
-
-      const requestId = getRequestId(request);
-      expect(requestId).toBe('preferred-id');
-    });
-
-    it('should generate UUID when no headers present', () => {
-      const request = new Request('https://example.com');
-
-      const requestId = getRequestId(request);
-
-      // Should be a valid UUID format
-      expect(requestId).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-      );
-    });
-
-    it('should generate different UUIDs for different requests', () => {
-      const request1 = new Request('https://example.com');
-      const request2 = new Request('https://example.com');
-
-      const id1 = getRequestId(request1);
-      const id2 = getRequestId(request2);
-
-      expect(id1).not.toBe(id2);
     });
   });
 
@@ -321,14 +264,13 @@ describe('Worker Preset', () => {
       };
 
       // Simulate middleware
-      const requestId =
-        context.req.header('x-request-id') ?? crypto.randomUUID();
+      const requestId = context.req.header('x-request-id') ?? crypto.randomUUID();
       const logger = createRequestLogger(
         {
           ENVIRONMENT: context.env.ENVIRONMENT,
           API_VERSION: context.env.API_VERSION,
         },
-        requestId
+        requestId,
       );
 
       context.set('logger', logger);
@@ -348,7 +290,7 @@ describe('Worker Preset', () => {
           service: 'api',
           environment: 'production',
         },
-        'lifecycle-req'
+        'lifecycle-req',
       );
 
       // Request start

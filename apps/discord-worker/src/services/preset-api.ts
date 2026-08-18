@@ -35,6 +35,16 @@ import {
  * SECURITY: This cryptographically binds the user headers to the request,
  * preventing header spoofing attacks even if BOT_API_SECRET is leaked.
  *
+ * DEAD-019 (2026-08-18 dead-code audit): evaluated for adoption of
+ * `@xivdyetools/auth`'s `hmacSignHex` and kept as-is. `createHmacKey`
+ * (which `hmacSignHex` calls) enforces a minimum 32-byte secret and throws
+ * otherwise (FINDING-009) — but `BOT_SIGNING_SECRET` has no documented
+ * minimum length anywhere in this repo, and this file's own tests sign with
+ * a 20-character `'test-signing-secret'`. Swapping in `hmacSignHex` would
+ * make a shorter production secret throw here — outside the `request()`
+ * try/catch below — instead of signing. Left as a hand-rolled 'sign'-only
+ * key import until `BOT_SIGNING_SECRET` gets a length floor.
+ *
  * @param timestamp - Unix timestamp (seconds)
  * @param userDiscordId - User's Discord ID
  * @param userName - User's Discord name

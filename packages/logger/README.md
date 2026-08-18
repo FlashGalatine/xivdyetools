@@ -14,7 +14,7 @@ npm install @xivdyetools/logger
 - **Structured logging** - JSON output for log aggregation
 - **Request correlation** - Track requests across distributed services
 - **Secret redaction** - Automatically redact sensitive fields
-- **Performance timing** - Built-in performance measurement utilities
+- **Performance timing** - `time()`/`timeAsync()` on every logger for correlatable timing entries
 - **Error tracking integration** - Ready for Sentry/similar services
 - **Backward compatible** - Drop-in replacement for the legacy `xivdyetools-core` Logger
 
@@ -88,7 +88,7 @@ const debugService = new DyeService(ConsoleLogger);
 Optimized for web applications with dev-mode filtering and error tracking integration.
 
 ```typescript
-import { createBrowserLogger, perf } from '@xivdyetools/logger/browser';
+import { createBrowserLogger } from '@xivdyetools/logger/browser';
 
 // Basic usage (logs only in development)
 const logger = createBrowserLogger();
@@ -106,19 +106,10 @@ const logger = createBrowserLogger({
   },
 });
 
-// Performance monitoring
-perf.start('render');
+// Performance monitoring (see "Performance Timing" below)
+const endTimer = logger.time('render');
 renderComponent();
-const duration = perf.end('render'); // Logs: "render: 45.23ms"
-
-// Async timing
-const data = await perf.measure('fetchDyes', () => fetchDyes());
-
-// View metrics
-console.log(perf.getMetrics('render'));
-// { count: 5, totalTime: 125.4, minTime: 20.1, maxTime: 30.2, avgTime: 25.08 }
-
-perf.logMetrics(); // Log all metrics to console
+endTimer(); // Logs: "render: 45.23ms"
 ```
 
 ### Worker Preset
@@ -294,13 +285,13 @@ class MyService {
 
 ```typescript
 // Before
-import { logger, perf } from '../shared/logger';
+import { logger } from '../shared/logger';
 
 // After
-import { browserLogger as logger, perf } from '@xivdyetools/logger/browser';
+import { browserLogger as logger } from '@xivdyetools/logger/browser';
 
 // Or create custom instance
-import { createBrowserLogger, perf } from '@xivdyetools/logger/browser';
+import { createBrowserLogger } from '@xivdyetools/logger/browser';
 const logger = createBrowserLogger({ prefix: 'xivdyetools' });
 ```
 
@@ -355,27 +346,18 @@ const logger = new MyCustomAdapter({ level: 'info' });
 
 ### Performance Timing
 
-```typescript
-import { perf } from '@xivdyetools/logger/browser';
+Every logger implements `time()`/`timeAsync()` from `ExtendedLogger` — no separate `perf` utility is needed.
 
+```typescript
 // Manual timing
-perf.start('database-query');
+const endTimer = logger.time('database-query');
 await db.query(...);
-const duration = perf.end('database-query');
+const duration = endTimer(); // logs "database-query: N.NNms" at debug level, returns ms
 
 // Async wrapper
-const result = await perf.measure('api-call', async () => {
+const result = await logger.timeAsync('api-call', async () => {
   return fetch('/api/data').then(r => r.json());
 });
-
-// Sync wrapper
-const processed = perf.measureSync('data-processing', () => {
-  return data.map(transform);
-});
-
-// Aggregate metrics
-perf.logMetrics();
-perf.clearMetrics();
 ```
 
 ## Connect With Me

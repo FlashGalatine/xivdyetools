@@ -21,7 +21,7 @@ npm install @xivdyetools/auth
 ### JWT Verification
 
 ```typescript
-import { verifyJWT, decodeJWT, isJWTExpired } from '@xivdyetools/auth';
+import { verifyJWT, decodeJWT } from '@xivdyetools/auth';
 
 // Verify JWT with signature and expiration checking
 const payload = await verifyJWT(token, process.env.JWT_SECRET);
@@ -31,11 +31,6 @@ if (!payload) {
 
 // Decode without verification (debugging only)
 const decoded = decodeJWT(token);
-
-// Check if a token is expired — takes the raw token string, not a payload
-if (isJWTExpired(token)) {
-  // Token has expired
-}
 ```
 
 ### Token Revocation
@@ -132,8 +127,6 @@ import { base64UrlEncode, base64UrlDecode, bytesToHex, hexToBytes } from '@xivdy
 | `verifyJWT(token, secret)` | Verify JWT signature, algorithm (HS256 only), and expiration |
 | `verifyJWTSignatureOnly(token, secret, maxAgeMs?)` | Verify signature only (for refresh token grace periods) |
 | `decodeJWT(token)` | Decode JWT without verification (debugging only) |
-| `isJWTExpired(token)` | Check if a token string is expired |
-| `getJWTTimeToExpiry(token)` | Seconds until the token expires (`0` if expired or invalid) |
 
 ### HMAC (`@xivdyetools/auth/hmac`)
 
@@ -151,7 +144,6 @@ import { base64UrlEncode, base64UrlDecode, bytesToHex, hexToBytes } from '@xivdy
 | Function | Description |
 |----------|-------------|
 | `timingSafeEqual(a, b)` | Constant-time string comparison |
-| `timingSafeEqualBytes(a, b)` | Constant-time Uint8Array comparison |
 
 ### Discord (`@xivdyetools/auth/discord`)
 
@@ -198,7 +190,7 @@ Absorbed from the retired `@xivdyetools/crypto` — see [`DEPRECATIONS.md`](../.
 
 [`discord-worker`](../../apps/discord-worker/), [`presets-api`](../../apps/presets-api/), [`moderation-worker`](../../apps/moderation-worker/), and [`@xivdyetools/test-utils`](../test-utils/).
 
-The [`oauth`](../../apps/oauth/) worker **issues** tokens itself but still consumes `verifyJWTSignatureOnly`, `decodeJWT`, the revocation helpers and `@xivdyetools/auth/encoding` from here. This package deliberately does not issue JWTs; keeping it verify-only holds the surface exposed to every consuming worker small and audit-friendly.
+The [`oauth`](../../apps/oauth/) worker **issues** tokens itself but still consumes `verifyJWTSignatureOnly`, `decodeJWT`, `hmacSign`/`hmacVerify` (2026-08-18 dead-code audit adoption — replaced a hand-rolled HMAC pair), the revocation helpers, and `@xivdyetools/auth/encoding` from here. This package deliberately does not issue JWTs; keeping it verify-only holds the surface exposed to every consuming worker small and audit-friendly.
 
 ## Connect With Me
 
