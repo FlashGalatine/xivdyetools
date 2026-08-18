@@ -18,32 +18,39 @@
  *      `a.b`) anywhere in a non-test .ts/.tsx file under one of the four
  *      consumer trees: packages/bot-logic/src, packages/svg/src,
  *      apps/discord-worker/src, apps/stoat-worker/src.
- *   2. It falls under one of the DYNAMIC_PREFIXES below — namespaces built
- *      from a runtime enumeration rather than a literal key, so a plain text
- *      scan can never see the reference:
- *        - `preferences.keys.` — apps/discord-worker/src/handlers/commands/preferences.ts
- *          walks PREFERENCE_ORDER (and the filters key) to build `preferences.keys.${key}`.
- *        - `manual5.topics.` — apps/discord-worker/src/handlers/commands/manual.ts
- *          walks TOPIC_KEYS to build `manual5.topics.${topic}.name` / `.body`.
- *        - `accessibility.` — packages/bot-logic/src/commands/accessibility.ts
- *          indexes by the four vision-deficiency lens names (protanopia,
- *          deuteranopia, tritanopia, achromatopsia).
- *        - `meta.` — never read by `t()` today (`Translator.getMeta()` is
- *          itself dead — DEAD-013), but the block is a structural part of
- *          every locale file (see `../locales.test.ts`'s "valid meta block"
- *          check) and is scheduled for removal together with `getMeta()` in
- *          Task 7. Kept as a prefix allowlist entry until then.
+ *   2. It is one of the ENUMERATED keys below — namespaces built from a
+ *      runtime value rather than a literal, so a plain text scan can never
+ *      see the reference. These are enumerated EXACTLY (not by prefix), so a
+ *      future dead key added under the same namespace (e.g.
+ *      `accessibility.someUnusedKey`, `preferences.keys.deadPref`) still
+ *      fails the gate instead of riding along on the namespace:
+ *        - `accessibility.${lens}` for each of bot-logic's own `VISION_TYPES`
+ *          (imported directly — same package, so it can never drift silently).
+ *        - `preferences.keys.${key}` for each of discord-worker's
+ *          `PREFERENCE_ORDER` plus the separate `filters` key
+ *          (`apps/discord-worker/src/handlers/commands/preferences.ts`).
+ *        - `manual5.topics.${topic}.name` / `.body` for each value in
+ *          discord-worker's `TOPIC_KEYS`
+ *          (`apps/discord-worker/src/handlers/commands/manual.ts`).
+ *        - the four `meta.*` keys — never read by `t()` today
+ *          (`Translator.getMeta()` is itself dead — DEAD-013), but the block
+ *          is a structural part of every locale file (see
+ *          `../locales.test.ts`'s "valid meta block" check) and is scheduled
+ *          for removal together with `getMeta()` in Task 7.
  *
- * This is deliberately generous with (2): a real regression that only ever
- * shows up as a *different* orphan pattern would need its own investigation,
- * but this gate exists to catch the common case — a feature's handler is
- * deleted or rewritten and its strings are simply forgotten.
+ *      bot-logic must not import discord-worker, so the two discord-worker
+ *      lists are extracted at test time by reading the source file and
+ *      regex-matching the array/object literal. If discord-worker reshapes
+ *      either declaration enough that the regex stops matching, extraction
+ *      throws — this gate fails loudly instead of silently treating a whole
+ *      namespace as reachable.
  */
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { VISION_TYPES } from '../../commands/accessibility.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 // packages/bot-logic/src/i18n/__tests__ -> packages/bot-logic/src
@@ -56,25 +63,20 @@ const REPO_ROOT = join(PACKAGES_DIR, '..');
 const LOCALES_DIR = join(HERE, '..', 'locales');
 const LOCALE_CODES = ['en', 'ja', 'de', 'fr', 'ko', 'zh'] as const;
 
+const DISCORD_WORKER_SRC = join(REPO_ROOT, 'apps', 'discord-worker', 'src');
+const PREFERENCES_TS = join(DISCORD_WORKER_SRC, 'handlers', 'commands', 'preferences.ts');
+const MANUAL_TS = join(DISCORD_WORKER_SRC, 'handlers', 'commands', 'manual.ts');
+
 /** The four consumer trees the DEAD-011 finding scanned. */
 const CONSUMER_DIRS = [
   BOT_LOGIC_SRC,
   join(PACKAGES_DIR, 'svg', 'src'),
-  join(REPO_ROOT, 'apps', 'discord-worker', 'src'),
+  DISCORD_WORKER_SRC,
   join(REPO_ROOT, 'apps', 'stoat-worker', 'src'),
 ];
 
-/**
- * Namespaces read via a runtime-built key (`` `ns.${variable}` ``) rather than
- * a literal, hand-enumerated from the four consumer trees by the DEAD-011
- * finding. See the module doc comment above for the source of each.
- */
-const DYNAMIC_PREFIXES = [
-  'preferences.keys.',
-  'manual5.topics.',
-  'accessibility.',
-  'meta.', // removed with Translator.getMeta() in Task 7
-];
+/** The four `meta.*` keys — kept structurally until Task 7 removes getMeta(). */
+const META_KEYS = ['meta.locale', 'meta.name', 'meta.nativeName', 'meta.flag'];
 
 /** Flatten a nested locale object to dot-notation leaf keys. */
 function flattenKeys(obj: Record<string, unknown>, prefix = ''): string[] {
@@ -124,8 +126,68 @@ function buildCorpus(): string {
     .join('\n');
 }
 
-function isReachable(key: string, corpus: string): boolean {
-  if (DYNAMIC_PREFIXES.some((p) => key.startsWith(p))) return true;
+/**
+ * Extract every quoted string inside the FIRST capture group of `regex`
+ * matched against `source`. Throws if `regex` finds no match at all, so a
+ * shape change in the watched declaration fails the gate loudly rather than
+ * silently yielding an empty (or stale) list.
+ */
+function extractQuotedList(source: string, regex: RegExp, label: string): string[] {
+  const match = regex.exec(source);
+  if (!match || !match[1]) {
+    throw new Error(
+      `locale-orphans gate: could not find ${label} — the source shape changed. ` +
+        `Update the regex in locale-orphans.test.ts to match.`,
+    );
+  }
+  return [...match[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+}
+
+/** discord-worker's `PREFERENCE_ORDER` (+ the separate `filters` key), read from source. */
+function readPreferenceKeys(): string[] {
+  const source = readFileSync(PREFERENCES_TS, 'utf-8');
+  const order = extractQuotedList(
+    source,
+    /const PREFERENCE_ORDER: PreferenceKey\[\] = \[([\s\S]*?)\];/,
+    'PREFERENCE_ORDER in handlers/commands/preferences.ts',
+  );
+  if (!source.includes('preferences.keys.filters')) {
+    throw new Error(
+      "locale-orphans gate: expected 'preferences.keys.filters' to still be built in " +
+        'preferences.ts — update the gate if it moved.',
+    );
+  }
+  return [...order, 'filters'];
+}
+
+/** discord-worker's `TOPIC_KEYS` values, read from source. */
+function readManualTopicKeys(): string[] {
+  const source = readFileSync(MANUAL_TS, 'utf-8');
+  return extractQuotedList(
+    source,
+    /const TOPIC_KEYS: Partial<Record<ManualTopicId, string>> = \{([\s\S]*?)\};/,
+    'TOPIC_KEYS in handlers/commands/manual.ts',
+  );
+}
+
+/** Build the exact set of enumerated (non-literal) reachable keys. */
+function buildEnumeratedKeys(): Set<string> {
+  const keys = new Set<string>(META_KEYS);
+  for (const lens of VISION_TYPES) {
+    keys.add(`accessibility.${lens}`);
+  }
+  for (const prefKey of readPreferenceKeys()) {
+    keys.add(`preferences.keys.${prefKey}`);
+  }
+  for (const topic of readManualTopicKeys()) {
+    keys.add(`manual5.topics.${topic}.name`);
+    keys.add(`manual5.topics.${topic}.body`);
+  }
+  return keys;
+}
+
+function isReachable(key: string, corpus: string, enumerated: Set<string>): boolean {
+  if (enumerated.has(key)) return true;
   return new RegExp(`['"\`]${escapeRe(key)}['"\`]`).test(corpus);
 }
 
@@ -137,12 +199,13 @@ function loadLocale(code: string): Record<string, unknown> {
 }
 
 describe('bot-logic i18n orphan gate', () => {
-  it('every key in en.json is reachable from a consumer tree or the dynamic-prefix allowlist', () => {
+  it('every key in en.json is reachable from a consumer tree or an enumerated dynamic key', () => {
     const en = loadLocale('en');
     const keys = flattenKeys(en);
     const corpus = buildCorpus();
+    const enumerated = buildEnumeratedKeys();
 
-    const orphans = keys.filter((k) => !isReachable(k, corpus));
+    const orphans = keys.filter((k) => !isReachable(k, corpus, enumerated));
 
     expect(keys.length).toBeGreaterThan(300);
     expect(orphans, `orphaned locale keys:\n  ${orphans.join('\n  ')}`).toEqual([]);
