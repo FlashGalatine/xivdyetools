@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { blendColors, rgbToLab, getBlendingModeDescription } from './index.js';
+import { blendColors } from './index.js';
 import type { BlendingMode } from './types.js';
 
 const HEX_PATTERN = /^#[0-9a-f]{6}$/i;
@@ -197,62 +197,5 @@ describe('blendColors', () => {
         expect(b).toBe(result.rgb.b);
       });
     }
-  });
-});
-
-describe('rgbToLab', () => {
-  it('converts pure white correctly', () => {
-    const lab = rgbToLab({ r: 255, g: 255, b: 255 });
-
-    expect(lab.l).toBeCloseTo(100, 0);
-    expect(lab.a).toBeCloseTo(0, 0);
-    expect(lab.b).toBeCloseTo(0, 0);
-  });
-
-  it('converts pure black correctly', () => {
-    const lab = rgbToLab({ r: 0, g: 0, b: 0 });
-
-    expect(lab.l).toBeCloseTo(0, 0);
-    expect(lab.a).toBeCloseTo(0, 0);
-    expect(lab.b).toBeCloseTo(0, 0);
-  });
-
-  it('converts pure red to positive a*', () => {
-    const lab = rgbToLab({ r: 255, g: 0, b: 0 });
-
-    expect(lab.l).toBeGreaterThan(40);
-    expect(lab.a).toBeGreaterThan(50);
-  });
-
-  it('converts pure green to negative a*', () => {
-    const lab = rgbToLab({ r: 0, g: 128, b: 0 });
-
-    expect(lab.a).toBeLessThan(0);
-  });
-
-  it('maintains L ordering for greys', () => {
-    const dark = rgbToLab({ r: 50, g: 50, b: 50 });
-    const mid = rgbToLab({ r: 128, g: 128, b: 128 });
-    const light = rgbToLab({ r: 200, g: 200, b: 200 });
-
-    expect(dark.l).toBeLessThan(mid.l);
-    expect(mid.l).toBeLessThan(light.l);
-  });
-});
-
-describe('getBlendingModeDescription', () => {
-  it('returns description for all valid modes', () => {
-    for (const mode of ALL_MODES) {
-      const desc = getBlendingModeDescription(mode);
-      expect(desc).toBeDefined();
-      expect(typeof desc).toBe('string');
-      expect(desc.length).toBeGreaterThan(0);
-    }
-  });
-
-  it('returns expected descriptions', () => {
-    expect(getBlendingModeDescription('rgb')).toContain('averaging');
-    expect(getBlendingModeDescription('lab')).toContain('CIELAB');
-    expect(getBlendingModeDescription('spectral')).toContain('Kubelka-Munk');
   });
 });

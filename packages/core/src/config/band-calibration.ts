@@ -28,6 +28,7 @@ import type { VisionType } from '@xivdyetools/types';
 import { ColorConverter } from '../services/color/ColorConverter.js';
 import { ColorblindnessSimulator } from '../services/color/ColorblindnessSimulator.js';
 import { ColorAccessibility } from '../services/color/ColorAccessibility.js';
+import { BAND_METHOD_DP } from './band-vocabulary.js';
 
 /** Methods calibrated against ΔE2000 (DISTINGUISH % derives from RGB DIST). */
 export type CalibratedMethodId = 'oklab' | 'cie76' | 'redmean' | 'rgb';
@@ -69,20 +70,7 @@ export const DE2000_GROUND_TRUTH = {
   separation: [8, 15, 30],
 } as const;
 
-/** Display precision (decimal places) per calibrated method */
-export const METHOD_DISPLAY_DP: Record<CalibratedMethodId, number> = {
-  oklab: 3,
-  cie76: 1,
-  redmean: 1,
-  rgb: 1,
-};
-
-const LENSES: readonly VisionType[] = [
-  'protanopia',
-  'deuteranopia',
-  'tritanopia',
-  'achromatopsia',
-];
+const LENSES: readonly VisionType[] = ['protanopia', 'deuteranopia', 'tritanopia', 'achromatopsia'];
 
 interface PairRows {
   ciede2000: number[];
@@ -145,7 +133,7 @@ function jointAgree(
   vals: readonly number[],
   refTiers: readonly number[],
   bands: readonly number[],
-  dp: number
+  dp: number,
 ): number {
   let ok = 0;
   for (let i = 0; i < vals.length; i++) {
@@ -173,12 +161,12 @@ function pairRows(hexes: readonly string[]): PairRows {
 
 function calibrateContext(
   rows: PairRows,
-  refBands: readonly number[]
+  refBands: readonly number[],
 ): Record<CalibratedMethodId, CalibratedMethodBands> {
   const refTiers = rows.ciede2000.map((v) => tierOf(roundTo(v, 1), refBands));
   const result = {} as Record<CalibratedMethodId, CalibratedMethodBands>;
   for (const id of ['oklab', 'cie76', 'redmean', 'rgb'] as const) {
-    const dp = METHOD_DISPLAY_DP[id];
+    const dp = BAND_METHOD_DP[id];
     const vals = rows[id];
     const cuts: number[] = [];
     const quantile: number[] = [];
@@ -209,8 +197,8 @@ function calibrateRatio(rows: PairRows, refBands: readonly number[]): RatioCalib
       bestCut(
         rows.ratio,
         refTiers.map((t) => t <= k),
-        2
-      )
+        2,
+      ),
     );
   }
   for (let k = 1; k < 3; k++) if (cuts[k] < cuts[k - 1]) cuts[k] = cuts[k - 1];
@@ -239,7 +227,7 @@ export function calibrateBandVocabulary(hexes: readonly string[]): BandCalibrati
   };
   for (const lens of LENSES) {
     const simulated = hexes.map((hex) =>
-      ColorblindnessSimulator.simulateColorblindnessMachadoHex(hex, lens)
+      ColorblindnessSimulator.simulateColorblindnessMachadoHex(hex, lens),
     );
     const rows = pairRows(simulated);
     for (const key of Object.keys(pooled) as (keyof PairRows)[]) {
@@ -249,10 +237,10 @@ export function calibrateBandVocabulary(hexes: readonly string[]): BandCalibrati
 
   const accessibility = calibrateRatio(pooled, DE2000_GROUND_TRUTH.separation);
   const anchoredCuts = [accessibility.cuts[0], accessibility.cuts[1], 3.0].map((v, i, a) =>
-    i > 0 && v < a[i - 1] ? a[i - 1] : v
+    i > 0 && v < a[i - 1] ? a[i - 1] : v,
   ) as [number, number, number];
   const refTiersSep = pooled.ciede2000.map((v) =>
-    tierOf(roundTo(v, 1), DE2000_GROUND_TRUTH.separation)
+    tierOf(roundTo(v, 1), DE2000_GROUND_TRUTH.separation),
   );
 
   return {

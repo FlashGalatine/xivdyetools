@@ -2,7 +2,7 @@
   "locale": "en",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-08-08T00:43:13.434Z",
+    "generated": "2026-08-18T19:07:42.753Z",
     "dyeCount": 125
   },
   "labels": {
@@ -174,24 +174,6 @@
     "Purple Pigment": "Purple Pigment",
     "Planet-specific Credit": "Credit"
   },
-  "metallicDyeIds": [
-    13116,
-    13117,
-    13717,
-    13718,
-    13719,
-    13720,
-    13721,
-    13722,
-    13723,
-    30122,
-    30123,
-    30124,
-    48169,
-    48170,
-    48171,
-    48172
-  ],
   "harmonyTypes": {
     "complementary": "Complementary",
     "analogous": "Analogous",
@@ -236,35 +218,6 @@
     "facePaintColorsLight": "Face Paint (Light)",
     "hairColors": "Hair Colors",
     "skinColors": "Skin Colors"
-  },
-  "jobNames": {
-    "paladin": "Paladin",
-    "warrior": "Warrior",
-    "darkKnight": "Dark Knight",
-    "gunbreaker": "Gunbreaker",
-    "whiteMage": "White Mage",
-    "scholar": "Scholar",
-    "astrologian": "Astrologian",
-    "sage": "Sage",
-    "monk": "Monk",
-    "dragoon": "Dragoon",
-    "ninja": "Ninja",
-    "samurai": "Samurai",
-    "reaper": "Reaper",
-    "viper": "Viper",
-    "bard": "Bard",
-    "machinist": "Machinist",
-    "dancer": "Dancer",
-    "blackMage": "Black Mage",
-    "summoner": "Summoner",
-    "redMage": "Red Mage",
-    "pictomancer": "Pictomancer",
-    "blueMage": "Blue Mage"
-  },
-  "grandCompanyNames": {
-    "maelstrom": "The Maelstrom",
-    "twinAdder": "The Order of the Twin Adder",
-    "immortalFlames": "The Immortal Flames"
   },
   "races": {
     "hyur": "Hyur",

@@ -11,13 +11,13 @@ It is consumed by every downstream library and app — `@xivdyetools/svg`, `@xiv
 ## Commands
 
 ```bash
-pnpm --filter @xivdyetools/core run build         # build:version → build:locales → tsc → copy:locales
+pnpm --filter @xivdyetools/core run build         # build:locales → tsc → copy:locales
 pnpm --filter @xivdyetools/core run test
 pnpm --filter @xivdyetools/core run test:integration
 pnpm --filter @xivdyetools/core run test:coverage
 pnpm --filter @xivdyetools/core run type-check
 pnpm --filter @xivdyetools/core run lint
-pnpm --filter @xivdyetools/core run docs          # TypeDoc → markdown
+pnpm --filter @xivdyetools/core run calibrate:bands  # Recompute the band vocabulary from dyes.json
 pnpm --filter @xivdyetools/core run clean
 ```
 
@@ -40,7 +40,6 @@ The dye database, presets, and per-locale translation files are bundled as JSON 
 ```
 src/
 ├── index.ts                       # Public API surface
-├── version.ts                     # Auto-generated from package.json on build
 ├── constants/                     # RGB/HSV ranges, Universalis API config, Brettel matrices
 ├── types/                         # MatchingMethod (6-value 5.0 vocabulary), MATCHING_METHODS, DEFAULT_MATCHING_METHOD, normalizeMatchingMethod
 ├── blending/                      # Self-contained blending algorithms + conversions — subpath export @xivdyetools/core/blending (absorbed from color-blending)
@@ -72,7 +71,7 @@ scripts/
 ├── fetch_dye_names.py             # Pulls XIVAPI v2 names → dyenames.csv (en/ja/de/fr only)
 ├── build-locales.ts               # YAML + CSV + dyes.json → src/data/locales/*.json
 ├── copy-locales.ts                # Copies generated locales into dist/
-└── generate-version.ts            # Stamps package.json version into src/version.ts
+└── calibrate-bands.ts             # Recomputes the band vocabulary from dyes.json (manual recalibration path)
 ```
 
 ## Public API
@@ -124,7 +123,7 @@ class LocalizationService {
   setLocale(code: LocaleCode): Promise<void>
   getDyeName(itemID: number): string | null
   getCategory(key: string): string
-  // + harmony types, vision types, tool/sheet/job/grand-company/race/clan keys
+  // + harmony types, vision types, tool/sheet/race/clan keys
 }
 ```
 
@@ -168,16 +167,16 @@ type RYB
 
 ### Constants
 
-`RGB_MIN/MAX`, `HUE_MIN/MAX`, `SATURATION_MIN/MAX`, `VALUE_MIN/MAX`, `COLOR_DISTANCE_MAX`, `VISION_TYPES`, `VISION_TYPE_LABELS`, `BRETTEL_MATRICES`, `PATTERNS`, `UNIVERSALIS_API_BASE`, `UNIVERSALIS_API_TIMEOUT`, `UNIVERSALIS_API_RETRY_COUNT`, `UNIVERSALIS_API_RETRY_DELAY`, `API_CACHE_TTL`, `API_DEBOUNCE_DELAY`, `API_CACHE_VERSION`, `API_MAX_RESPONSE_SIZE`, `API_RATE_LIMIT_DELAY`.
+`RGB_MIN/MAX`, `HUE_MIN/MAX`, `SATURATION_MIN/MAX`, `VALUE_MIN/MAX`, `BRETTEL_MATRICES`, `MACHADO_MATRICES`, `PATTERNS`, `UNIVERSALIS_API_BASE`, `UNIVERSALIS_API_TIMEOUT`, `UNIVERSALIS_API_RETRY_COUNT`, `UNIVERSALIS_API_RETRY_DELAY`, `API_CACHE_TTL`, `API_CACHE_VERSION`, `API_MAX_RESPONSE_SIZE`, `API_RATE_LIMIT_DELAY`.
 
 ### Utils
 
-`clamp`, `lerp`, `round`, `distance`, `unique`, `groupBy`, `sortByProperty`, `filterNulls`, `isValidHexColor`, `isValidRGB`, `isValidHSV`, `isString`, `isNumber`, `isArray`, `isObject`, `isNullish`, `sleep`, `retry`, `isAbortError`, `generateChecksum`.
+`clamp`, `round`, `isValidHexColor`, `isValidRGB`, `isValidHSV`, `sleep`, `retry`, `isAbortError`, `generateChecksum`, `abbreviateDyeName`.
 
-### Bundled data + version
+### Bundled data
 
 ```ts
-import { dyeDatabase, presetData, VERSION } from '@xivdyetools/core';
+import { dyeDatabase, presetData } from '@xivdyetools/core';
 ```
 
 ## Key Patterns / Algorithms
@@ -249,5 +248,3 @@ pnpm turbo run build test --filter=@xivdyetools/core
 ```
 
 If you've made **manual locale fixes** (e.g., Korean/Chinese name corrections) that aren't reproducible from `dyenames.csv` / `localize.yaml`, `build:locales` will detect the difference and regenerate over them during the publish build. Fold such corrections back into the source CSV/YAML rather than editing the generated JSON, or use `--ignore-scripts` on a break-glass local publish.
-
-`build:version` runs first and stamps `src/version.ts` from `package.json` — keep `version.ts` in source control but treat it as auto-generated.

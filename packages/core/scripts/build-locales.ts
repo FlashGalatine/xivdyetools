@@ -10,7 +10,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'yaml';
 import { parse as parseCsv } from 'csv-parse/sync';
-import { METALLIC_STAIN_IDS } from '../src/config/dye-vocabulary.js';
 
 interface YamlLabels {
   Dye: string | null;
@@ -31,17 +30,6 @@ interface CsvRow {
   'French Name': string;
   'Korean Name': string;
   'Chinese Name': string;
-}
-
-/** Schema-v2 dye entry (dyes.json) — 7 fields, stainID-keyed. */
-interface Dye {
-  stainID: number;
-  name: string;
-  hex: string;
-  category: string;
-  acquisition: string;
-  consolidationType: 'A' | 'B' | 'C' | null;
-  legacyItemID: number | null;
 }
 
 type LocaleCode = 'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh';
@@ -75,10 +63,6 @@ async function main() {
     trim: true,
   });
 
-  // Read dyes.json (schema v2) for metallic dye IDs
-  const colorsPath = path.join(workingDir, 'src', 'data', 'dyes.json');
-  const colorsData: Dye[] = JSON.parse(fs.readFileSync(colorsPath, 'utf-8'));
-
   // Build each locale
   const locales: LocaleCode[] = ['en', 'ja', 'de', 'fr', 'ko', 'zh'];
   const outputDir = path.join(workingDir, 'src', 'data', 'locales');
@@ -91,7 +75,7 @@ async function main() {
   for (const locale of locales) {
     console.log(`Building ${LOCALE_NAMES[locale]} (${locale})...`);
 
-    const localeData = buildLocaleData(locale, yamlData, csvRows, colorsData);
+    const localeData = buildLocaleData(locale, yamlData, csvRows);
     const outputPath = path.join(outputDir, `${locale}.json`);
     const existing = readExistingLocale(outputPath);
 
@@ -112,7 +96,7 @@ async function main() {
   console.log(
     updatedCount === 0
       ? '✅ Locale files already up to date (nothing written).'
-      : `✅ Locale files built successfully! (${updatedCount} of ${locales.length} updated)`
+      : `✅ Locale files built successfully! (${updatedCount} of ${locales.length} updated)`,
   );
 }
 
@@ -168,7 +152,7 @@ function deepEqual(a: unknown, b: unknown): boolean {
   return aKeys.every(
     (key) =>
       Object.prototype.hasOwnProperty.call(b, key) &&
-      deepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])
+      deepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]),
   );
 }
 
@@ -176,12 +160,10 @@ function buildLocaleData(
   locale: LocaleCode,
   yamlData: Record<string, YamlLabels>,
   csvRows: CsvRow[],
-  colorsData: Dye[]
 ) {
   const labels = buildLabels(locale, yamlData[locale]);
   const dyeNames = buildDyeNames(locale, csvRows);
   const categories = buildCategories(locale);
-  const metallicDyeIds = identifyMetallicDyes(colorsData);
 
   return {
     locale,
@@ -198,14 +180,11 @@ function buildLocaleData(
     categories,
     acquisitions: buildAcquisitions(locale),
     currencies: buildCurrencies(locale),
-    metallicDyeIds,
     harmonyTypes: buildHarmonyTypes(locale),
     visionTypes: buildVisionTypes(locale),
     visions: buildVisionsShort(locale),
     tools: buildTools(locale),
     sheets: buildSheets(locale),
-    jobNames: buildJobNames(locale),
-    grandCompanyNames: buildGrandCompanyNames(locale),
     races: buildRaces(locale),
     clans: buildClans(locale),
   };
@@ -213,7 +192,7 @@ function buildLocaleData(
 
 function buildLabels(
   locale: LocaleCode,
-  yamlLabels: YamlLabels | undefined
+  yamlLabels: YamlLabels | undefined,
 ): Record<string, string> {
   // Fallback labels for locales not in YAML (ko, zh)
   const fallbackLabels: Record<LocaleCode, Record<string, string>> = {
@@ -506,20 +485,6 @@ function buildCurrencies(locale: LocaleCode): Record<string, string> {
   };
 
   return translations[locale];
-}
-
-function identifyMetallicDyes(colorsData: Dye[]): number[] {
-  // Schema v2: the authoritative metallic set is the Stain sheet's gloss rows
-  // (METALLIC_STAIN_IDS in src/config/dye-vocabulary.ts) — this replaces the
-  // old name-prefix inference + hardcoded [30122, 30123] patch list, and by
-  // construction emits the same 16 itemIDs. The locale payload stays keyed by
-  // (legacy) itemID for LocaleData compatibility.
-  const metallicIds = colorsData
-    .filter((dye) => METALLIC_STAIN_IDS.has(dye.stainID))
-    .map((dye) => dye.legacyItemID)
-    .filter((id): id is number => id !== null);
-
-  return [...new Set(metallicIds)].sort((a, b) => a - b);
 }
 
 function buildHarmonyTypes(locale: LocaleCode): Record<string, string> {
@@ -831,196 +796,6 @@ function buildSheets(locale: LocaleCode): Record<string, string> {
       facePaintColorsLight: '面部彩绘（浅）',
       hairColors: '发色',
       skinColors: '肤色',
-    },
-  };
-
-  return translations[locale];
-}
-
-function buildJobNames(locale: LocaleCode): Record<string, string> {
-  // Hardcoded FFXIV job name translations
-  const translations: Record<LocaleCode, Record<string, string>> = {
-    en: {
-      paladin: 'Paladin',
-      warrior: 'Warrior',
-      darkKnight: 'Dark Knight',
-      gunbreaker: 'Gunbreaker',
-      whiteMage: 'White Mage',
-      scholar: 'Scholar',
-      astrologian: 'Astrologian',
-      sage: 'Sage',
-      monk: 'Monk',
-      dragoon: 'Dragoon',
-      ninja: 'Ninja',
-      samurai: 'Samurai',
-      reaper: 'Reaper',
-      viper: 'Viper',
-      bard: 'Bard',
-      machinist: 'Machinist',
-      dancer: 'Dancer',
-      blackMage: 'Black Mage',
-      summoner: 'Summoner',
-      redMage: 'Red Mage',
-      pictomancer: 'Pictomancer',
-      blueMage: 'Blue Mage',
-    },
-    ja: {
-      paladin: 'ナイト',
-      warrior: '戦士',
-      darkKnight: '暗黒騎士',
-      gunbreaker: 'ガンブレイカー',
-      whiteMage: '白魔道士',
-      scholar: '学者',
-      astrologian: '占星術師',
-      sage: '賢者',
-      monk: 'モンク',
-      dragoon: '竜騎士',
-      ninja: '忍者',
-      samurai: '侍',
-      reaper: 'リーパー',
-      viper: 'ヴァイパー',
-      bard: '吟遊詩人',
-      machinist: '機工士',
-      dancer: '踊り子',
-      blackMage: '黒魔道士',
-      summoner: '召喚士',
-      redMage: '赤魔道士',
-      pictomancer: 'ピクトマンサー',
-      blueMage: '青魔道士',
-    },
-    de: {
-      paladin: 'Paladin',
-      warrior: 'Krieger',
-      darkKnight: 'Dunkelritter',
-      gunbreaker: 'Revolverklinge',
-      whiteMage: 'Weißmagier',
-      scholar: 'Gelehrter',
-      astrologian: 'Astrologe',
-      sage: 'Weiser',
-      monk: 'Mönch',
-      dragoon: 'Dragoon',
-      ninja: 'Ninja',
-      samurai: 'Samurai',
-      reaper: 'Schnitter',
-      viper: 'Viper',
-      bard: 'Barde',
-      machinist: 'Maschinist',
-      dancer: 'Tänzer',
-      blackMage: 'Schwarzmagier',
-      summoner: 'Beschwörer',
-      redMage: 'Rotmagier',
-      pictomancer: 'Piktomant',
-      blueMage: 'Blaumagier',
-    },
-    fr: {
-      paladin: 'Paladin',
-      warrior: 'Guerrier',
-      darkKnight: 'Chevalier noir',
-      gunbreaker: 'Pistosabreur',
-      whiteMage: 'Mage blanc',
-      scholar: 'Érudit',
-      astrologian: 'Astromancien',
-      sage: 'Sage',
-      monk: 'Moine',
-      dragoon: 'Chevalier dragon',
-      ninja: 'Ninja',
-      samurai: 'Samouraï',
-      reaper: 'Faucheur',
-      viper: 'Rôdeur vipère',
-      bard: 'Barde',
-      machinist: 'Machiniste',
-      dancer: 'Danseur',
-      blackMage: 'Mage noir',
-      summoner: 'Invocateur',
-      redMage: 'Mage rouge',
-      pictomancer: 'Pictomancien',
-      blueMage: 'Mage bleu',
-    },
-    ko: {
-      paladin: '나이트',
-      warrior: '전사',
-      darkKnight: '암흑기사',
-      gunbreaker: '건브레이커',
-      whiteMage: '백마도사',
-      scholar: '학자',
-      astrologian: '점성술사',
-      sage: '현자',
-      monk: '몽크',
-      dragoon: '용기사',
-      ninja: '닌자',
-      samurai: '사무라이',
-      reaper: '리퍼',
-      viper: '바이퍼',
-      bard: '음유시인',
-      machinist: '기공사',
-      dancer: '무도가',
-      blackMage: '흑마도사',
-      summoner: '소환사',
-      redMage: '적마도사',
-      pictomancer: '픽토맨서',
-      blueMage: '청마도사',
-    },
-    zh: {
-      paladin: '骑士',
-      warrior: '战士',
-      darkKnight: '暗黑骑士',
-      gunbreaker: '绝枪战士',
-      whiteMage: '白魔法师',
-      scholar: '学者',
-      astrologian: '占星术士',
-      sage: '贤者',
-      monk: '武僧',
-      dragoon: '龙骑士',
-      ninja: '忍者',
-      samurai: '武士',
-      reaper: '钐镰客',
-      viper: '蝰蛇剑士',
-      bard: '吟游诗人',
-      machinist: '机工士',
-      dancer: '舞者',
-      blackMage: '黑魔法师',
-      summoner: '召唤师',
-      redMage: '赤魔法师',
-      pictomancer: '绘灵法师',
-      blueMage: '青魔法师',
-    },
-  };
-
-  return translations[locale];
-}
-
-function buildGrandCompanyNames(locale: LocaleCode): Record<string, string> {
-  // Hardcoded FFXIV Grand Company name translations
-  const translations: Record<LocaleCode, Record<string, string>> = {
-    en: {
-      maelstrom: 'The Maelstrom',
-      twinAdder: 'The Order of the Twin Adder',
-      immortalFlames: 'The Immortal Flames',
-    },
-    ja: {
-      maelstrom: '黒渦団',
-      twinAdder: '双蛇党',
-      immortalFlames: '不滅隊',
-    },
-    de: {
-      maelstrom: 'Der Mahlstrom',
-      twinAdder: 'Die Bruderschaft der Morgenviper',
-      immortalFlames: 'Die Legion der Unsterblichen',
-    },
-    fr: {
-      maelstrom: 'Le Maelstrom',
-      twinAdder: "L'ordre des Deux Vipères",
-      immortalFlames: 'Les Immortels',
-    },
-    ko: {
-      maelstrom: '흑와단',
-      twinAdder: '쌍사당',
-      immortalFlames: '불멸대',
-    },
-    zh: {
-      maelstrom: '黑涡团',
-      twinAdder: '双蛇党',
-      immortalFlames: '恒辉队',
     },
   };
 

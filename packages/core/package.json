@@ -21,10 +21,10 @@
     "README.md"
   ],
   "scripts": {
-    "build": "npm run build:version && npm run build:locales && tsc -p tsconfig.build.json && npm run copy:locales",
-    "build:version": "tsx scripts/generate-version.ts",
+    "build": "npm run build:locales && tsc -p tsconfig.build.json && npm run copy:locales",
     "build:locales": "tsx scripts/build-locales.ts",
     "copy:locales": "tsx scripts/copy-locales.ts",
+    "calibrate:bands": "tsx scripts/calibrate-bands.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "vitest run src/__tests__/integration",
@@ -32,7 +32,6 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "type-check": "tsc --noEmit",
-    "docs": "typedoc",
     "clean": "rimraf dist coverage",
     "prepublishOnly": "npm run build"
   },
@@ -70,7 +69,6 @@
     "@vitest/coverage-v8": "^4.1.10",
     "csv-parse": "^7.0.1",
     "tsx": "^4.23.1",
-    "typedoc": "^0.28.20",
     "vitest": "^4.1.10",
     "yaml": "^2.9.0"
   },

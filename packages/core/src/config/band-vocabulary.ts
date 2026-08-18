@@ -56,7 +56,7 @@ export const BAND_METHOD_DP: Record<BandMethod, number> = {
 
 /** Derive DISTINGUISH % cuts from RGB DIST cuts (the one legal derivation). */
 export function deriveDistinguishCuts(
-  rgbdistCuts: readonly [number, number, number]
+  rgbdistCuts: readonly [number, number, number],
 ): [number, number, number] {
   return rgbdistCuts.map((v) => Math.round((v / COLOR_DISTANCE_MAX) * 100)) as [
     number,
@@ -121,12 +121,6 @@ export const RATIO_BANDS = {
   accessibility: { cuts: [1, 1.29, 3] as const, dp: 2 },
 } as const;
 
-/**
- * Separation tier keys, ascending distance (tier 0 = merged … 3 = clear).
- * Locale strings key off these; identifiers never localise.
- */
-export const SEPARATION_TIER_KEYS = ['merged', 'tight', 'workable', 'clear'] as const;
-
 /** Round a value to a method's display precision (tier-on-displayed-value). */
 export function roundToBandDisplay(value: number, method: BandMethod): number {
   const f = Math.pow(10, BAND_METHOD_DP[method]);
@@ -141,7 +135,7 @@ export function roundToBandDisplay(value: number, method: BandMethod): number {
 export function classifyBandTierWithCuts(
   value: number,
   cuts: readonly [number, number, number],
-  dp: number
+  dp: number,
 ): BandTier {
   const f = Math.pow(10, dp);
   const v = Math.round(value * f) / f;
@@ -152,7 +146,11 @@ export function classifyBandTierWithCuts(
  * Classify a measured value into its band tier for a method + context.
  * The value must be in the method's native unit (ΔEOK raw, not ×100).
  */
-export function classifyBandTier(value: number, method: BandMethod, context: BandContext): BandTier {
+export function classifyBandTier(
+  value: number,
+  method: BandMethod,
+  context: BandContext,
+): BandTier {
   const { cuts, dp } = BAND_VOCABULARY[context][method];
   return classifyBandTierWithCuts(value, cuts, dp);
 }

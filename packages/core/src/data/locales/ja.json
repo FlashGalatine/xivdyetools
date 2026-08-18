@@ -2,7 +2,7 @@
   "locale": "ja",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-08-08T00:43:13.438Z",
+    "generated": "2026-08-18T19:07:42.755Z",
     "dyeCount": 125
   },
   "labels": {
@@ -174,24 +174,6 @@
     "Purple Pigment": "パープルピグメント",
     "Planet-specific Credit": "クレジット"
   },
-  "metallicDyeIds": [
-    13116,
-    13117,
-    13717,
-    13718,
-    13719,
-    13720,
-    13721,
-    13722,
-    13723,
-    30122,
-    30123,
-    30124,
-    48169,
-    48170,
-    48171,
-    48172
-  ],
   "harmonyTypes": {
     "complementary": "補色",
     "analogous": "類似色",
@@ -236,35 +218,6 @@
     "facePaintColorsLight": "フェイスペイント（ライト）",
     "hairColors": "髪の色",
     "skinColors": "肌の色"
-  },
-  "jobNames": {
-    "paladin": "ナイト",
-    "warrior": "戦士",
-    "darkKnight": "暗黒騎士",
-    "gunbreaker": "ガンブレイカー",
-    "whiteMage": "白魔道士",
-    "scholar": "学者",
-    "astrologian": "占星術師",
-    "sage": "賢者",
-    "monk": "モンク",
-    "dragoon": "竜騎士",
-    "ninja": "忍者",
-    "samurai": "侍",
-    "reaper": "リーパー",
-    "viper": "ヴァイパー",
-    "bard": "吟遊詩人",
-    "machinist": "機工士",
-    "dancer": "踊り子",
-    "blackMage": "黒魔道士",
-    "summoner": "召喚士",
-    "redMage": "赤魔道士",
-    "pictomancer": "ピクトマンサー",
-    "blueMage": "青魔道士"
-  },
-  "grandCompanyNames": {
-    "maelstrom": "黒渦団",
-    "twinAdder": "双蛇党",
-    "immortalFlames": "不滅隊"
   },
   "races": {
     "hyur": "ヒューラン",

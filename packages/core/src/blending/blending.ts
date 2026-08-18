@@ -44,7 +44,7 @@ export function blendColors(
   hex1: string,
   hex2: string,
   mode: BlendingMode,
-  ratio: number = 0.5
+  ratio: number = 0.5,
 ): BlendResult {
   const h1 = hex1.startsWith('#') ? hex1 : `#${hex1}`;
   const h2 = hex2.startsWith('#') ? hex2 : `#${hex2}`;
@@ -80,21 +80,6 @@ export function blendColors(
   }
 
   return { hex: rgbToHex(blendedRgb), rgb: blendedRgb };
-}
-
-/**
- * Get a human-readable description of a blending mode.
- */
-export function getBlendingModeDescription(mode: BlendingMode): string {
-  const descriptions: Record<BlendingMode, string> = {
-    rgb: 'Simple additive channel averaging',
-    lab: 'Perceptually uniform CIELAB blending',
-    oklab: 'Modern perceptual (fixes LAB blue→purple)',
-    ryb: "Traditional artist's color wheel",
-    hsl: 'Hue-Saturation-Lightness interpolation',
-    spectral: 'Kubelka-Munk pigment simulation',
-  };
-  return descriptions[mode];
 }
 
 // ============================================================================

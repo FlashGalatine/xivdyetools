@@ -320,7 +320,6 @@ Access color theory and API configuration constants:
 import {
   RGB_MAX,
   HUE_MAX,
-  VISION_TYPES,
   BRETTEL_MATRICES,
   UNIVERSALIS_API_BASE,
   API_CACHE_TTL
@@ -334,7 +333,6 @@ Helper functions for common tasks:
 ```typescript
 import {
   clamp,
-  lerp,
   isValidHexColor,
   isValidRGB,
   retry,
@@ -347,7 +345,6 @@ const isValid = isValidHexColor('#FF6B6B'); // true
 
 // Math
 const clamped = clamp(150, 0, 100); // 100
-const interpolated = lerp(0, 100, 0.5); // 50
 
 // Async utilities
 await sleep(1000); // Wait 1 second

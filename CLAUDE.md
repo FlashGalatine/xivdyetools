@@ -153,7 +153,7 @@ pnpm --filter @xivdyetools/<name> publish --provenance --access public --no-git-
 
 pnpm 11 publishes natively and performs the OIDC exchange itself — no npm CLI involvement. (Under pnpm 10 the publish was delegated to npm, which needed an explicit upgrade to ≥ 11.5.1 for OIDC support; that workflow step was removed with the pnpm 11 migration.)
 
-`@xivdyetools/core`'s `build` script runs `build:version` → `build:locales` → `tsc` → `copy:locales`. `build:locales` regenerates from `dyenames.csv` / `localize.yaml`, so hand-edits to the generated locale JSON are overwritten — fold corrections into the source files instead.
+`@xivdyetools/core`'s `build` script runs `build:locales` → `tsc` → `copy:locales`. `build:locales` regenerates from `dyenames.csv` / `localize.yaml`, so hand-edits to the generated locale JSON are overwritten — fold corrections into the source files instead.
 
 ## CI/CD
 

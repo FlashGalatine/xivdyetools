@@ -17,13 +17,7 @@ export type LocaleCode = 'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh';
  * Translation keys for UI labels
  */
 export type TranslationKey =
-  | 'dye'
-  | 'dark'
-  | 'metallic'
-  | 'pastel'
-  | 'cosmic'
-  | 'cosmicExploration'
-  | 'cosmicFortunes';
+  'dye' | 'dark' | 'metallic' | 'pastel' | 'cosmic' | 'cosmicExploration' | 'cosmicFortunes';
 
 /**
  * Harmony type keys for localization
@@ -43,13 +37,7 @@ export type HarmonyTypeKey =
 /**
  * Tool keys for og-worker / web-app display name localization
  */
-export type ToolKey =
-  | 'harmony'
-  | 'gradient'
-  | 'mixer'
-  | 'swatch'
-  | 'comparison'
-  | 'accessibility';
+export type ToolKey = 'harmony' | 'gradient' | 'mixer' | 'swatch' | 'comparison' | 'accessibility';
 
 /**
  * Color-sheet category keys (FFXIV character-creator color groups exposed by
@@ -67,49 +55,10 @@ export type SheetKey =
   | 'skinColors';
 
 /**
- * FFXIV Job keys for localization
- */
-export type JobKey =
-  | 'paladin'
-  | 'warrior'
-  | 'darkKnight'
-  | 'gunbreaker'
-  | 'whiteMage'
-  | 'scholar'
-  | 'astrologian'
-  | 'sage'
-  | 'monk'
-  | 'dragoon'
-  | 'ninja'
-  | 'samurai'
-  | 'reaper'
-  | 'viper'
-  | 'bard'
-  | 'machinist'
-  | 'dancer'
-  | 'blackMage'
-  | 'summoner'
-  | 'redMage'
-  | 'pictomancer'
-  | 'blueMage';
-
-/**
- * FFXIV Grand Company keys for localization
- */
-export type GrandCompanyKey = 'maelstrom' | 'twinAdder' | 'immortalFlames';
-
-/**
  * FFXIV Playable Race keys for localization
  */
 export type RaceKey =
-  | 'hyur'
-  | 'elezen'
-  | 'lalafell'
-  | 'miqote'
-  | 'roegadyn'
-  | 'auRa'
-  | 'hrothgar'
-  | 'viera';
+  'hyur' | 'elezen' | 'lalafell' | 'miqote' | 'roegadyn' | 'auRa' | 'hrothgar' | 'viera';
 
 /**
  * FFXIV Clan (Subrace) keys for localization
@@ -165,9 +114,6 @@ export interface LocaleData {
   /** Currency display label translations */
   currencies?: Record<string, string>;
 
-  /** IDs of metallic dyes */
-  metallicDyeIds: number[];
-
   /** Harmony type translations */
   harmonyTypes: Record<HarmonyTypeKey, string>;
 
@@ -185,12 +131,6 @@ export interface LocaleData {
 
   /** Color-sheet category translations (Swatch Matcher / og-worker surfaces) */
   sheets?: Record<SheetKey, string>;
-
-  /** Job name translations */
-  jobNames: Record<JobKey, string>;
-
-  /** Grand Company name translations */
-  grandCompanyNames: Record<GrandCompanyKey, string>;
 
   /** Playable race name translations */
   races: Record<RaceKey, string>;

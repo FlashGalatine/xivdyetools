@@ -14,8 +14,6 @@ import type {
   VisionType,
   ToolKey,
   SheetKey,
-  JobKey,
-  GrandCompanyKey,
   RaceKey,
   ClanKey,
 } from '@xivdyetools/types';
@@ -218,30 +216,6 @@ export class TranslationProvider {
   }
 
   /**
-   * Get metallic dye IDs (locale-independent)
-   *
-   * @param locale - Current locale (for consistency)
-   * @returns Array of metallic dye item IDs
-   *
-   * @example
-   * ```typescript
-   * const metallicIds = provider.getMetallicDyeIds('fr');
-   * // Returns [13116, 13117, ...] for any locale
-   * ```
-   */
-  getMetallicDyeIds(locale: LocaleCode): number[] {
-    const localeData = this.registry.getLocale(locale);
-
-    if (localeData?.metallicDyeIds) {
-      return localeData.metallicDyeIds;
-    }
-
-    // Fallback to English
-    const englishData = this.registry.getLocale('en');
-    return englishData?.metallicDyeIds || [];
-  }
-
-  /**
    * Get harmony type with fallback
    *
    * @param key - Harmony type key
@@ -404,72 +378,6 @@ export class TranslationProvider {
       }
     }
 
-    return this.formatKey(key);
-  }
-
-  /**
-   * Get job name with fallback
-   *
-   * @param key - Job key
-   * @param locale - Requested locale
-   * @returns Localized job name
-   *
-   * @example
-   * ```typescript
-   * const job = provider.getJobName('darkKnight', 'ja');
-   * // Returns "暗黒騎士" (ja) or "Dark Knight" (en fallback)
-   * ```
-   */
-  getJobName(key: JobKey, locale: LocaleCode): string {
-    const localeData = this.registry.getLocale(locale);
-
-    // Try requested locale
-    if (localeData?.jobNames[key]) {
-      return localeData.jobNames[key];
-    }
-
-    // Fallback to English
-    if (locale !== 'en') {
-      const englishData = this.registry.getLocale('en');
-      if (englishData?.jobNames[key]) {
-        return englishData.jobNames[key];
-      }
-    }
-
-    // Final fallback: format key
-    return this.formatKey(key);
-  }
-
-  /**
-   * Get Grand Company name with fallback
-   *
-   * @param key - Grand Company key
-   * @param locale - Requested locale
-   * @returns Localized Grand Company name
-   *
-   * @example
-   * ```typescript
-   * const gc = provider.getGrandCompanyName('maelstrom', 'ja');
-   * // Returns "黒渦団" (ja) or "The Maelstrom" (en fallback)
-   * ```
-   */
-  getGrandCompanyName(key: GrandCompanyKey, locale: LocaleCode): string {
-    const localeData = this.registry.getLocale(locale);
-
-    // Try requested locale
-    if (localeData?.grandCompanyNames[key]) {
-      return localeData.grandCompanyNames[key];
-    }
-
-    // Fallback to English
-    if (locale !== 'en') {
-      const englishData = this.registry.getLocale('en');
-      if (englishData?.grandCompanyNames[key]) {
-        return englishData.grandCompanyNames[key];
-      }
-    }
-
-    // Final fallback: format key
     return this.formatKey(key);
   }
 

@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { blendColors, rgbToLab } from './index.js';
+import { blendColors } from './index.js';
 import type { BlendingMode } from './types.js';
 
 const ALL_MODES: BlendingMode[] = ['rgb', 'lab', 'oklab', 'ryb', 'hsl', 'spectral'];
@@ -81,25 +81,6 @@ describe('rgbToLab: Round-Trip Accuracy (RGB → LAB → Blend → RGB)', () => 
       expect(Math.abs(result.rgb.b - rgb.b)).toBeLessThanOrEqual(1);
     });
   }
-
-  it('LAB L* ordering matches perceived brightness', () => {
-    const dark = rgbToLab({ r: 30, g: 30, b: 30 });
-    const mid = rgbToLab({ r: 128, g: 128, b: 128 });
-    const bright = rgbToLab({ r: 230, g: 230, b: 230 });
-
-    expect(dark.l).toBeLessThan(mid.l);
-    expect(mid.l).toBeLessThan(bright.l);
-    expect(bright.l).toBeLessThan(100);
-    expect(dark.l).toBeGreaterThan(0);
-  });
-
-  it('LAB a* axis: red has positive a*, green has negative a*', () => {
-    const red = rgbToLab({ r: 200, g: 50, b: 50 });
-    const green = rgbToLab({ r: 50, g: 200, b: 50 });
-
-    expect(red.a).toBeGreaterThan(0);
-    expect(green.a).toBeLessThan(0);
-  });
 });
 
 // ============================================================================
@@ -113,7 +94,7 @@ describe('Gradient Generation: Monotonic Progression', () => {
       const color2 = '#FFFFFF';
       const steps = [0, 0.25, 0.5, 0.75, 1.0];
 
-      const results = steps.map(ratio => blendColors(color1, color2, mode, ratio));
+      const results = steps.map((ratio) => blendColors(color1, color2, mode, ratio));
 
       if (mode !== 'spectral' && mode !== 'ryb') {
         for (let i = 1; i < results.length; i++) {
@@ -135,7 +116,7 @@ describe('Gradient Generation: Monotonic Progression', () => {
     const blue = '#0000FF';
     const steps = [0, 0.25, 0.5, 0.75, 1.0];
 
-    const results = steps.map(ratio => blendColors(red, blue, 'hsl', ratio));
+    const results = steps.map((ratio) => blendColors(red, blue, 'hsl', ratio));
 
     expect(results[0].rgb.r).toBeGreaterThan(200);
     expect(results[0].rgb.b).toBeLessThan(50);
@@ -163,7 +144,7 @@ describe('Blending with FFXIV Dye-Typical Colors', () => {
 
   for (const { name, c1, c2 } of dyePairs) {
     it(`${name}: all modes produce distinct results`, () => {
-      const results = ALL_MODES.map(mode => ({
+      const results = ALL_MODES.map((mode) => ({
         mode,
         result: blendColors(c1, c2, mode, 0.5),
       }));
@@ -172,7 +153,7 @@ describe('Blending with FFXIV Dye-Typical Colors', () => {
         expect(result.hex).toMatch(HEX_PATTERN);
       }
 
-      const hexValues = new Set(results.map(r => r.result.hex));
+      const hexValues = new Set(results.map((r) => r.result.hex));
       expect(hexValues.size).toBeGreaterThan(1);
     });
   }

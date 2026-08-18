@@ -6,7 +6,7 @@
  * @module constants
  */
 
-import type { VisionType, ColorblindMatrices } from '@xivdyetools/types';
+import type { ColorblindMatrices } from '@xivdyetools/types';
 
 // ============================================================================
 // Color Conversion Constraints
@@ -35,28 +35,6 @@ export const VALUE_MAX = 100;
 export const COLOR_DISTANCE_MAX = Math.sqrt(255 ** 2 + 255 ** 2 + 255 ** 2); // ~441.67
 
 // ============================================================================
-// Vision Type Configuration
-// ============================================================================
-
-/** @internal */
-export const VISION_TYPES: readonly VisionType[] = [
-    'normal',
-    'deuteranopia',
-    'protanopia',
-    'tritanopia',
-    'achromatopsia',
-] as const;
-
-/** @internal */
-export const VISION_TYPE_LABELS: Record<VisionType, string> = {
-    normal: 'Normal Vision',
-    deuteranopia: 'Deuteranopia (Red-Green Colorblindness)',
-    protanopia: 'Protanopia (Red-Green Colorblindness)',
-    tritanopia: 'Tritanopia (Blue-Yellow Colorblindness)',
-    achromatopsia: 'Achromatopsia (Total Colorblindness)',
-};
-
-// ============================================================================
 // Colorblindness Transformation Matrices (Brettel 1997)
 // ============================================================================
 
@@ -65,26 +43,26 @@ export const VISION_TYPE_LABELS: Record<VisionType, string> = {
  * These matrices transform RGB values to simulate different types of colorblindness
  */
 export const BRETTEL_MATRICES: ColorblindMatrices = {
-    deuteranopia: [
-        [0.625, 0.375, 0.0],
-        [0.7, 0.3, 0.0],
-        [0.0, 0.3, 0.7],
-    ],
-    protanopia: [
-        [0.567, 0.433, 0.0],
-        [0.558, 0.442, 0.0],
-        [0.0, 0.242, 0.758],
-    ],
-    tritanopia: [
-        [0.95, 0.05, 0.0],
-        [0.0, 0.433, 0.567],
-        [0.0, 0.475, 0.525],
-    ],
-    achromatopsia: [
-        [0.299, 0.587, 0.114],
-        [0.299, 0.587, 0.114],
-        [0.299, 0.587, 0.114],
-    ],
+  deuteranopia: [
+    [0.625, 0.375, 0.0],
+    [0.7, 0.3, 0.0],
+    [0.0, 0.3, 0.7],
+  ],
+  protanopia: [
+    [0.567, 0.433, 0.0],
+    [0.558, 0.442, 0.0],
+    [0.0, 0.242, 0.758],
+  ],
+  tritanopia: [
+    [0.95, 0.05, 0.0],
+    [0.0, 0.433, 0.567],
+    [0.0, 0.475, 0.525],
+  ],
+  achromatopsia: [
+    [0.299, 0.587, 0.114],
+    [0.299, 0.587, 0.114],
+    [0.299, 0.587, 0.114],
+  ],
 };
 
 // ============================================================================
@@ -105,26 +83,26 @@ export const BRETTEL_MATRICES: ColorblindMatrices = {
  * here as Rec. 709 luminance grayscale in linear light.
  */
 export const MACHADO_MATRICES: ColorblindMatrices = {
-    protanopia: [
-        [0.152286, 1.052583, -0.204868],
-        [0.114503, 0.786281, 0.099216],
-        [-0.003882, -0.048116, 1.051998],
-    ],
-    deuteranopia: [
-        [0.367322, 0.860646, -0.227968],
-        [0.280085, 0.672501, 0.047413],
-        [-0.01182, 0.04294, 0.968881],
-    ],
-    tritanopia: [
-        [1.255528, -0.076749, -0.178779],
-        [-0.078411, 0.930809, 0.147602],
-        [0.004733, 0.691367, 0.3039],
-    ],
-    achromatopsia: [
-        [0.2126, 0.7152, 0.0722],
-        [0.2126, 0.7152, 0.0722],
-        [0.2126, 0.7152, 0.0722],
-    ],
+  protanopia: [
+    [0.152286, 1.052583, -0.204868],
+    [0.114503, 0.786281, 0.099216],
+    [-0.003882, -0.048116, 1.051998],
+  ],
+  deuteranopia: [
+    [0.367322, 0.860646, -0.227968],
+    [0.280085, 0.672501, 0.047413],
+    [-0.01182, 0.04294, 0.968881],
+  ],
+  tritanopia: [
+    [1.255528, -0.076749, -0.178779],
+    [-0.078411, 0.930809, 0.147602],
+    [0.004733, 0.691367, 0.3039],
+  ],
+  achromatopsia: [
+    [0.2126, 0.7152, 0.0722],
+    [0.2126, 0.7152, 0.0722],
+    [0.2126, 0.7152, 0.0722],
+  ],
 };
 
 // ============================================================================
@@ -135,8 +113,7 @@ export const MACHADO_MATRICES: ColorblindMatrices = {
  * Regex patterns for validation
  */
 export const PATTERNS = {
-    HEX_COLOR: /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
-    RGB_COLOR: /^rgb\(\d+,\s*\d+,\s*\d+\)$/,
+  HEX_COLOR: /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
 } as const;
 
 // ============================================================================
@@ -155,8 +132,6 @@ export const UNIVERSALIS_API_RETRY_DELAY = 1000; // milliseconds
  * API caching and rate limiting
  */
 export const API_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-/** @internal */
-export const API_DEBOUNCE_DELAY = 500; // milliseconds
 export const API_CACHE_VERSION = '1.0.0'; // Increment to invalidate all cached data
 export const API_MAX_RESPONSE_SIZE = 1024 * 1024; // 1 MB maximum response size
 export const API_RATE_LIMIT_DELAY = 200; // milliseconds between requests

@@ -30,9 +30,7 @@ export {
 } from './services/CharacterColorService.js';
 
 // Types (core-specific)
-export type {
-  MatchingMethod,
-} from './types/index.js';
+export type { MatchingMethod } from './types/index.js';
 
 // Harmony types
 export type {
@@ -89,42 +87,21 @@ export {
   ACQUISITION_META,
   METALLIC_STAIN_IDS,
 } from './config/dye-vocabulary.js';
-export type {
-  DyeCategory,
-  DyeAcquisition,
-  AcquisitionMeta,
-} from './config/dye-vocabulary.js';
+export type { DyeCategory, DyeAcquisition, AcquisitionMeta } from './config/dye-vocabulary.js';
 
 // Band vocabulary (5.0 calibrated per-method tier boundaries)
 export {
   BAND_VOCABULARY,
   BAND_METHOD_DP,
   RATIO_BANDS,
-  SEPARATION_TIER_KEYS,
   classifyBandTier,
   classifyBandTierWithCuts,
   deriveDistinguishCuts,
   roundToBandDisplay,
 } from './config/band-vocabulary.js';
-export type {
-  BandContext,
-  BandMethod,
-  BandTier,
-  MethodBandSet,
-} from './config/band-vocabulary.js';
-export {
-  calibrateBandVocabulary,
-  DE2000_GROUND_TRUTH,
-  METHOD_DISPLAY_DP,
-} from './config/band-calibration.js';
+export type { BandContext, BandMethod, BandTier, MethodBandSet } from './config/band-vocabulary.js';
 export { SOCIAL_LINKS, PRODUCT_LINKS } from './config/product-links.js';
 export type { ProductLink } from './config/product-links.js';
-export type {
-  BandCalibrationResult,
-  CalibratedMethodId,
-  CalibratedMethodBands,
-  RatioCalibration,
-} from './config/band-calibration.js';
 
 // .chara character-file import (5.0 Swatch Matcher; parse rules live in core)
 export { parseCharaFile } from './services/chara/chara-parser.js';
@@ -136,10 +113,7 @@ export type {
   CharaGearSlotId,
   CharaSlotInertReason,
 } from './services/chara/chara-parser.js';
-export {
-  resolveCharaColors,
-  OFF_GRID_DELTA_E2000,
-} from './services/chara/chara-resolver.js';
+export { resolveCharaColors, OFF_GRID_DELTA_E2000 } from './services/chara/chara-resolver.js';
 export type {
   ResolvedCharaCharacter,
   ResolvedCharaSlot,
@@ -182,9 +156,6 @@ export {
   SATURATION_MAX,
   VALUE_MIN,
   VALUE_MAX,
-  COLOR_DISTANCE_MAX,
-  VISION_TYPES,
-  VISION_TYPE_LABELS,
   BRETTEL_MATRICES,
   MACHADO_MATRICES,
   PATTERNS,
@@ -193,7 +164,6 @@ export {
   UNIVERSALIS_API_RETRY_COUNT,
   UNIVERSALIS_API_RETRY_DELAY,
   API_CACHE_TTL,
-  API_DEBOUNCE_DELAY,
   API_CACHE_VERSION,
   API_MAX_RESPONSE_SIZE,
   API_RATE_LIMIT_DELAY,
@@ -202,21 +172,10 @@ export {
 // Utils
 export {
   clamp,
-  lerp,
   round,
-  distance,
-  unique,
-  groupBy,
-  sortByProperty,
-  filterNulls,
   isValidHexColor,
   isValidRGB,
   isValidHSV,
-  isString,
-  isNumber,
-  isArray,
-  isObject,
-  isNullish,
   sleep,
   retry,
   isAbortError,
@@ -227,6 +186,3 @@ export {
 // Data (for browser environments - to be injected)
 export { default as dyeDatabase } from './data/dyes.json' with { type: 'json' };
 export { default as presetData } from './data/presets.json' with { type: 'json' };
-
-// Version (auto-generated from package.json during build)
-export { VERSION } from './version.js';

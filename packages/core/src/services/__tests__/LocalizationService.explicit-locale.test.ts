@@ -16,8 +16,6 @@ import { LocaleRegistry } from '../localization/LocaleRegistry.js';
 import { TranslationProvider } from '../localization/TranslationProvider.js';
 import type {
   ClanKey,
-  GrandCompanyKey,
-  JobKey,
   LocaleCode,
   LocaleData,
   RaceKey,
@@ -38,14 +36,11 @@ function taggedLocale(locale: LocaleCode): LocaleData {
     categories: { Whites: `Whites-${tag}` },
     acquisitions: { 'Dye Vendor': `Dye Vendor-${tag}` },
     currencies: { Gil: `Gil-${tag}` },
-    metallicDyeIds: locale === 'ja' ? [13116] : [13117],
     harmonyTypes: { complementary: `Complementary-${tag}` },
     visionTypes: { normal: `Normal Vision-${tag}` },
     visions: { normal: `Normal-${tag}`, deuteranopia: `Deuteranopia-${tag}` },
     tools: { harmony: `Harmony-${tag}` },
     sheets: { eyeColors: `Eye Colors-${tag}` },
-    jobNames: { paladin: `Paladin-${tag}` },
-    grandCompanyNames: { maelstrom: `Maelstrom-${tag}` },
     races: { hyur: `Hyur-${tag}` },
     clans: { midlander: `Midlander-${tag}` },
   } as unknown as LocaleData;
@@ -90,8 +85,7 @@ describe('LocalizationService — explicit locale argument', () => {
     ],
     [
       'getVisionShort',
-      (s: LocalizationService, l?: LocaleCode) =>
-        s.getVisionShort('deuteranopia' as VisionType, l),
+      (s: LocalizationService, l?: LocaleCode) => s.getVisionShort('deuteranopia' as VisionType, l),
       'Deuteranopia',
     ],
     [
@@ -103,17 +97,6 @@ describe('LocalizationService — explicit locale argument', () => {
       'getSheetName',
       (s: LocalizationService, l?: LocaleCode) => s.getSheetName('eyeColors' as SheetKey, l),
       'Eye Colors',
-    ],
-    [
-      'getJobName',
-      (s: LocalizationService, l?: LocaleCode) => s.getJobName('paladin' as JobKey, l),
-      'Paladin',
-    ],
-    [
-      'getGrandCompanyName',
-      (s: LocalizationService, l?: LocaleCode) =>
-        s.getGrandCompanyName('maelstrom' as GrandCompanyKey, l),
-      'Maelstrom',
     ],
     [
       'getRace',
@@ -135,11 +118,6 @@ describe('LocalizationService — explicit locale argument', () => {
   it('getDyeName honours an explicit locale', () => {
     expect(service.getDyeName(5729, 'ja')).toBe('Snow White-JA');
     expect(service.getDyeName(5729)).toBe('Snow White-EN');
-  });
-
-  it('getMetallicDyeIds honours an explicit locale', () => {
-    expect(service.getMetallicDyeIds('ja')).toEqual([13116]);
-    expect(service.getMetallicDyeIds()).toEqual([13117]);
   });
 
   it('ensureLocaleLoaded is a no-op for an already-registered locale', async () => {

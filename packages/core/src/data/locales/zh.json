@@ -2,7 +2,7 @@
   "locale": "zh",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-08-08T00:43:13.444Z",
+    "generated": "2026-08-18T19:07:42.760Z",
     "dyeCount": 125
   },
   "labels": {
@@ -174,24 +174,6 @@
     "Purple Pigment": "紫色色素",
     "Planet-specific Credit": "信用点"
   },
-  "metallicDyeIds": [
-    13116,
-    13117,
-    13717,
-    13718,
-    13719,
-    13720,
-    13721,
-    13722,
-    13723,
-    30122,
-    30123,
-    30124,
-    48169,
-    48170,
-    48171,
-    48172
-  ],
   "harmonyTypes": {
     "complementary": "互补色",
     "analogous": "类似色",
@@ -236,35 +218,6 @@
     "facePaintColorsLight": "面部彩绘（浅）",
     "hairColors": "发色",
     "skinColors": "肤色"
-  },
-  "jobNames": {
-    "paladin": "骑士",
-    "warrior": "战士",
-    "darkKnight": "暗黑骑士",
-    "gunbreaker": "绝枪战士",
-    "whiteMage": "白魔法师",
-    "scholar": "学者",
-    "astrologian": "占星术士",
-    "sage": "贤者",
-    "monk": "武僧",
-    "dragoon": "龙骑士",
-    "ninja": "忍者",
-    "samurai": "武士",
-    "reaper": "钐镰客",
-    "viper": "蝰蛇剑士",
-    "bard": "吟游诗人",
-    "machinist": "机工士",
-    "dancer": "舞者",
-    "blackMage": "黑魔法师",
-    "summoner": "召唤师",
-    "redMage": "赤魔法师",
-    "pictomancer": "绘灵法师",
-    "blueMage": "青魔法师"
-  },
-  "grandCompanyNames": {
-    "maelstrom": "黑涡团",
-    "twinAdder": "双蛇党",
-    "immortalFlames": "恒辉队"
   },
   "races": {
     "hyur": "人族",

@@ -116,8 +116,6 @@ export type {
   HarmonyTypeKey,
   ToolKey,
   SheetKey,
-  JobKey,
-  GrandCompanyKey,
   RaceKey,
   ClanKey,
   LocaleData,

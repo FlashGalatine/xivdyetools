@@ -2,7 +2,7 @@
   "locale": "ko",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-08-08T00:43:13.443Z",
+    "generated": "2026-08-18T19:07:42.759Z",
     "dyeCount": 125
   },
   "labels": {
@@ -174,24 +174,6 @@
     "Purple Pigment": "보라색 안료",
     "Planet-specific Credit": "크레딧"
   },
-  "metallicDyeIds": [
-    13116,
-    13117,
-    13717,
-    13718,
-    13719,
-    13720,
-    13721,
-    13722,
-    13723,
-    30122,
-    30123,
-    30124,
-    48169,
-    48170,
-    48171,
-    48172
-  ],
   "harmonyTypes": {
     "complementary": "보색",
     "analogous": "유사색",
@@ -236,35 +218,6 @@
     "facePaintColorsLight": "얼굴 페인트 (밝은)",
     "hairColors": "머리 색",
     "skinColors": "피부 색"
-  },
-  "jobNames": {
-    "paladin": "나이트",
-    "warrior": "전사",
-    "darkKnight": "암흑기사",
-    "gunbreaker": "건브레이커",
-    "whiteMage": "백마도사",
-    "scholar": "학자",
-    "astrologian": "점성술사",
-    "sage": "현자",
-    "monk": "몽크",
-    "dragoon": "용기사",
-    "ninja": "닌자",
-    "samurai": "사무라이",
-    "reaper": "리퍼",
-    "viper": "바이퍼",
-    "bard": "음유시인",
-    "machinist": "기공사",
-    "dancer": "무도가",
-    "blackMage": "흑마도사",
-    "summoner": "소환사",
-    "redMage": "적마도사",
-    "pictomancer": "픽토맨서",
-    "blueMage": "청마도사"
-  },
-  "grandCompanyNames": {
-    "maelstrom": "흑와단",
-    "twinAdder": "쌍사당",
-    "immortalFlames": "불멸대"
   },
   "races": {
     "hyur": "휴란",

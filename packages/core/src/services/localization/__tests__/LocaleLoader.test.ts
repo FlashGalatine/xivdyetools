@@ -21,7 +21,6 @@ describe('LocaleLoader', () => {
       expect(localeData.dyeNames).toBeDefined();
       expect(localeData.categories).toBeDefined();
       expect(localeData.acquisitions).toBeDefined();
-      expect(localeData.metallicDyeIds).toBeInstanceOf(Array);
       expect(localeData.harmonyTypes).toBeDefined();
       expect(localeData.visionTypes).toBeDefined();
     });
@@ -105,15 +104,6 @@ describe('LocaleLoader', () => {
       expect(localeData.acquisitions['Crafting']).toBe('Crafting');
     });
 
-    it('should have metallic dye IDs array', async () => {
-      const localeData = await loader.loadLocale('en');
-
-      expect(localeData.metallicDyeIds).toBeInstanceOf(Array);
-      expect(localeData.metallicDyeIds.length).toBeGreaterThan(0);
-      expect(localeData.metallicDyeIds).toContain(13116); // Metallic Silver
-      expect(localeData.metallicDyeIds).toContain(13117); // Metallic Gold
-    });
-
     it('should have harmony types in loaded locale', async () => {
       const localeData = await loader.loadLocale('en');
 
@@ -143,7 +133,6 @@ describe('LocaleLoader', () => {
       expect(localeData).toHaveProperty('dyeNames');
       expect(localeData).toHaveProperty('categories');
       expect(localeData).toHaveProperty('acquisitions');
-      expect(localeData).toHaveProperty('metallicDyeIds');
       expect(localeData).toHaveProperty('harmonyTypes');
       expect(localeData).toHaveProperty('visionTypes');
     });
@@ -160,7 +149,6 @@ describe('LocaleLoader', () => {
         expect(typeof data.meta).toBe('object');
         expect(typeof data.labels).toBe('object');
         expect(typeof data.dyeNames).toBe('object');
-        expect(Array.isArray(data.metallicDyeIds)).toBe(true);
       }
     });
   });
@@ -192,7 +180,6 @@ describe('LocaleLoader', () => {
       expect(typeof localeData.dyeNames).toBe('object');
       expect(typeof localeData.categories).toBe('object');
       expect(typeof localeData.acquisitions).toBe('object');
-      expect(Array.isArray(localeData.metallicDyeIds)).toBe(true);
       expect(typeof localeData.harmonyTypes).toBe('object');
       expect(typeof localeData.visionTypes).toBe('object');
     });
@@ -238,7 +225,6 @@ describe('LocaleLoader', () => {
         dyeNames: {},
         categories: {},
         acquisitions: {},
-        metallicDyeIds: [],
         harmonyTypes: {},
         visionTypes: {},
       };
@@ -254,23 +240,6 @@ describe('LocaleLoader', () => {
         dyeNames: {},
         categories: {},
         acquisitions: {},
-        metallicDyeIds: [],
-        harmonyTypes: {},
-        visionTypes: {},
-      };
-      const isValid = loader['isValidLocaleData'](invalidData);
-      expect(isValid).toBe(false);
-    });
-
-    it('should return false for data with non-array metallicDyeIds', () => {
-      const invalidData = {
-        locale: 'en',
-        meta: {},
-        labels: {},
-        dyeNames: {},
-        categories: {},
-        acquisitions: {},
-        metallicDyeIds: 'not an array',
         harmonyTypes: {},
         visionTypes: {},
       };
@@ -286,7 +255,6 @@ describe('LocaleLoader', () => {
         dyeNames: {},
         categories: {},
         acquisitions: {},
-        metallicDyeIds: [],
         harmonyTypes: {},
         visionTypes: {},
       };

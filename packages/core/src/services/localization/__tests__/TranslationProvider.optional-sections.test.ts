@@ -20,7 +20,7 @@ import type { LocaleCode, LocaleData, SheetKey, ToolKey, VisionType } from '@xiv
  */
 function localeFixture(
   locale: LocaleCode,
-  sections: Partial<Pick<LocaleData, 'currencies' | 'visions' | 'tools' | 'sheets'>> = {}
+  sections: Partial<Pick<LocaleData, 'currencies' | 'visions' | 'tools' | 'sheets'>> = {},
 ): LocaleData {
   return {
     locale,
@@ -29,11 +29,8 @@ function localeFixture(
     dyeNames: {},
     categories: {},
     acquisitions: {},
-    metallicDyeIds: [],
     harmonyTypes: {},
     visionTypes: {},
-    jobNames: {},
-    grandCompanies: {},
     races: {},
     clans: {},
     ...sections,
@@ -94,7 +91,7 @@ describe('TranslationProvider — optional locale sections', () => {
   describe('getVisionShort', () => {
     it('returns the compact name from the requested locale', () => {
       registry.registerLocale(
-        localeFixture('ja', { visions: { ...VISIONS, deuteranopia: 'DEUT-JA' } })
+        localeFixture('ja', { visions: { ...VISIONS, deuteranopia: 'DEUT-JA' } }),
       );
 
       expect(provider.getVisionShort('deuteranopia' as VisionType, 'ja')).toBe('DEUT-JA');
@@ -123,7 +120,7 @@ describe('TranslationProvider — optional locale sections', () => {
 
     it('returns the tool name from the requested locale', () => {
       registry.registerLocale(
-        localeFixture('ja', { tools: { harmony: 'HARMONY-JA' } as unknown as LocaleData['tools'] })
+        localeFixture('ja', { tools: { harmony: 'HARMONY-JA' } as unknown as LocaleData['tools'] }),
       );
 
       expect(provider.getToolName('harmony' as ToolKey, 'ja')).toBe('HARMONY-JA');
@@ -154,7 +151,7 @@ describe('TranslationProvider — optional locale sections', () => {
       registry.registerLocale(
         localeFixture('ja', {
           sheets: { eyeColors: 'EYES-JA' } as unknown as LocaleData['sheets'],
-        })
+        }),
       );
 
       expect(provider.getSheetName('eyeColors' as SheetKey, 'ja')).toBe('EYES-JA');
