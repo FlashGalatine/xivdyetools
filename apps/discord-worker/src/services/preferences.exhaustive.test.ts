@@ -15,7 +15,6 @@ import {
   getDefaultValue,
   getPreference,
   getUserPreferences,
-  hasPreferences,
   resetPreference,
   setPreference,
   validatePreferenceValue,
@@ -112,7 +111,7 @@ describe('validatePreferenceValue', () => {
       // count coerces strings to numbers, so feed it something else
       const bad = key === 'count' ? {} : 42;
       expect(validatePreferenceValue(key, bad).valid).toBe(false);
-    }
+    },
   );
 
   describe('the seven boolean keys', () => {
@@ -257,7 +256,7 @@ describe('getPreference', () => {
       const kv = memoryKv();
 
       expect(await getPreference(kv, 'user-1', key)).toBeUndefined();
-    }
+    },
   );
 });
 
@@ -280,7 +279,7 @@ describe('resetPreference', () => {
 
     expect(await resetPreference(kv, 'user-1', 'theme')).toBe(true);
     // Metadata alone is not worth a KV row
-    expect(await hasPreferences(kv, 'user-1')).toBe(false);
+    expect(kv.store.size).toBe(0);
   });
 
   it('drops every preference when no key is given', async () => {
@@ -289,7 +288,7 @@ describe('resetPreference', () => {
     await setPreference(kv, 'user-1', 'language', 'ja');
 
     expect(await resetPreference(kv, 'user-1')).toBe(true);
-    expect(await hasPreferences(kv, 'user-1')).toBe(false);
+    expect(kv.store.size).toBe(0);
   });
 
   it('is a no-op for a preference that was never set', async () => {
@@ -315,32 +314,19 @@ describe('resetPreference', () => {
   });
 });
 
-describe('hasPreferences', () => {
-  it('is false for a user with nothing stored', async () => {
-    expect(await hasPreferences(memoryKv(), 'user-1')).toBe(false);
-  });
-
-  it('is true once something is stored', async () => {
-    const kv = memoryKv();
-    await setPreference(kv, 'user-1', 'theme', 'light');
-
-    expect(await hasPreferences(kv, 'user-1')).toBe(true);
-  });
-});
-
 describe('getDefaultValue', () => {
   it.each(ALL_KEYS.filter((k) => !['clan', 'gender', 'world'].includes(k)))(
     '%s has a system default',
     (key) => {
       expect(getDefaultValue(key)).toBeDefined();
-    }
+    },
   );
 
   it.each(['clan', 'gender', 'world'] as const)(
     '%s deliberately has no default — it is character-specific',
     (key) => {
       expect(getDefaultValue(key)).toBeUndefined();
-    }
+    },
   );
 
   it('returns a default that its own validator accepts', () => {

@@ -17,7 +17,7 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
-import { dyeService } from '../../utils/color.js';
+import { dyeService } from '@xivdyetools/bot-logic';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import {
   deferredResponse,
@@ -31,7 +31,11 @@ import { sendMessage, safeEditOriginalResponse } from '../../utils/discord-api.j
 import { generatePresetSwatch } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
-import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
+import {
+  createUserTranslator,
+  createTranslator,
+  type Translator,
+} from '../../services/bot-i18n.js';
 import { sendModerationNotification } from './preset-notifications.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env } from '../../types/env.js';
@@ -63,7 +67,7 @@ export async function handlePresetCommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
   const userName =
@@ -102,13 +106,31 @@ export async function handlePresetCommand(
       return handleRandomSubcommand(interaction, env, ctx, t, userId, subcommand.options, logger);
 
     case 'submit':
-      return handleSubmitSubcommand(interaction, env, ctx, t, userId, userName, subcommand.options, logger);
+      return handleSubmitSubcommand(
+        interaction,
+        env,
+        ctx,
+        t,
+        userId,
+        userName,
+        subcommand.options,
+        logger,
+      );
 
     case 'vote':
       return handleVoteSubcommand(interaction, env, ctx, t, userId, subcommand.options, logger);
 
     case 'edit':
-      return handleEditSubcommand(interaction, env, ctx, t, userId, userName, subcommand.options, logger);
+      return handleEditSubcommand(
+        interaction,
+        env,
+        ctx,
+        t,
+        userId,
+        userName,
+        subcommand.options,
+        logger,
+      );
 
     case 'favorite': {
       // Subcommand group — favorite add/remove/list
@@ -116,9 +138,25 @@ export async function handlePresetCommand(
       if (!inner) return ephemeralResponse('Invalid command structure');
       switch (inner.name) {
         case 'add':
-          return handleFavoriteAddSubcommand(interaction, env, ctx, t, userId, inner.options, logger);
+          return handleFavoriteAddSubcommand(
+            interaction,
+            env,
+            ctx,
+            t,
+            userId,
+            inner.options,
+            logger,
+          );
         case 'remove':
-          return handleFavoriteRemoveSubcommand(interaction, env, ctx, t, userId, inner.options, logger);
+          return handleFavoriteRemoveSubcommand(
+            interaction,
+            env,
+            ctx,
+            t,
+            userId,
+            inner.options,
+            logger,
+          );
         case 'list':
           return handleFavoriteListSubcommand(interaction, env, ctx, t, userId, logger);
         default:
@@ -145,17 +183,16 @@ async function handleListSubcommand(
   ctx: ExecutionContext,
   t: Translator,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
-  const categoryValue = options?.find((opt) => opt.name === 'category')?.value as string | undefined;
+  const categoryValue = options?.find((opt) => opt.name === 'category')?.value as
+    string | undefined;
   const sortValue = (options?.find((opt) => opt.name === 'sort')?.value as string) || 'popular';
 
   // Defer response
   const deferResponse = deferredResponse();
 
-  ctx.waitUntil(
-    processListCommand(interaction, env, t, categoryValue, sortValue, logger)
-  );
+  ctx.waitUntil(processListCommand(interaction, env, t, categoryValue, sortValue, logger));
 
   return deferResponse;
 }
@@ -166,7 +203,7 @@ async function processListCommand(
   t: Translator,
   category: string | undefined,
   sort: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   try {
     const response = await presetApi.getPresets(env, {
@@ -181,9 +218,7 @@ async function processListCommand(
         embeds: [
           infoEmbed(
             t.t('preset.title'),
-            category
-              ? t.t('preset.noneInCategory')
-              : 'No presets found.'
+            category ? t.t('preset.noneInCategory') : 'No presets found.',
           ),
         ],
       });
@@ -191,9 +226,7 @@ async function processListCommand(
     }
 
     // Build preset list
-    const categoryDisplay = category
-      ? CATEGORY_DISPLAY[category as PresetCategory]
-      : null;
+    const categoryDisplay = category ? CATEGORY_DISPLAY[category as PresetCategory] : null;
 
     const title = categoryDisplay
       ? `${categoryDisplay.icon} ${categoryDisplay.name}`
@@ -244,7 +277,7 @@ async function handleShowSubcommand(
   t: Translator,
   _userId: string,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const presetId = options?.find((opt) => opt.name === 'name')?.value as string | undefined;
 
@@ -271,7 +304,7 @@ async function processShowCommand(
   t: Translator,
   presetId: string,
   locale: LocaleCode,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   await initializeLocale(locale);
 
@@ -308,7 +341,7 @@ async function handleRandomSubcommand(
   t: Translator,
   _userId: string,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const category = options?.find((opt) => opt.name === 'category')?.value as string | undefined;
 
@@ -328,7 +361,7 @@ async function processRandomCommand(
   t: Translator,
   category: string | undefined,
   locale: LocaleCode,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   await initializeLocale(locale);
 
@@ -340,7 +373,7 @@ async function processRandomCommand(
         embeds: [
           infoEmbed(
             t.t('preset.randomTitle'),
-            category ? t.t('preset.noneInCategory') : 'No presets found.'
+            category ? t.t('preset.noneInCategory') : 'No presets found.',
           ),
         ],
       });
@@ -370,7 +403,7 @@ async function handleSubmitSubcommand(
   userId: string,
   userName: string,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   // Extract all options
   const presetName = options?.find((opt) => opt.name === 'preset_name')?.value as string;
@@ -419,20 +452,32 @@ async function handleSubmitSubcommand(
 
   // Parse tags
   const tags = tagsRaw
-    ? tagsRaw.split(',').map((tag) => tag.trim()).filter((tag) => tag.length > 0).slice(0, 10)
+    ? tagsRaw
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0)
+        .slice(0, 10)
     : [];
 
   // Defer response
   const deferResponse = deferredResponse();
 
   ctx.waitUntil(
-    processSubmitCommand(interaction, env, t, userId, userName, {
-      name: presetName,
-      description,
-      category_id: category as PresetCategory,
-      dyes: dyeIds,
-      tags,
-    }, logger)
+    processSubmitCommand(
+      interaction,
+      env,
+      t,
+      userId,
+      userName,
+      {
+        name: presetName,
+        description,
+        category_id: category as PresetCategory,
+        dyes: dyeIds,
+        tags,
+      },
+      logger,
+    ),
   );
 
   return deferResponse;
@@ -451,7 +496,7 @@ async function processSubmitCommand(
     dyes: number[];
     tags: string[];
   },
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   try {
     const response = await presetApi.submitPreset(env, submission, userId, userName);
@@ -489,16 +534,16 @@ async function processSubmitCommand(
     const isApproved = response.moderation_status === 'approved';
 
     const embed = {
-      title: isApproved
-        ? `✅ ${t.t('preset.submitted')}`
-        : `⏳ ${t.t('preset.submitted')}`,
-      description: isApproved
-        ? t.t('preset.submittedApproved')
-        : t.t('preset.submittedPending'),
+      title: isApproved ? `✅ ${t.t('preset.submitted')}` : `⏳ ${t.t('preset.submitted')}`,
+      description: isApproved ? t.t('preset.submittedApproved') : t.t('preset.submittedPending'),
       color: isApproved ? 0x57f287 : 0xfee75c,
       fields: [
         { name: 'Name', value: preset.name, inline: true },
-        { name: 'Category', value: CATEGORY_DISPLAY[preset.category_id]?.name || preset.category_id, inline: true },
+        {
+          name: 'Category',
+          value: CATEGORY_DISPLAY[preset.category_id]?.name || preset.category_id,
+          inline: true,
+        },
         { name: 'Dyes', value: `${preset.dyes.length} colors`, inline: true },
       ],
       footer: { text: t.t('common.footer') },
@@ -522,9 +567,8 @@ async function processSubmitCommand(
       logger.error('Submit preset error', error instanceof Error ? error : undefined);
     }
     // SECURITY: Use getSafeMessage() to prevent exposing internal API details
-    const message = error instanceof PresetAPIError
-      ? error.getSafeMessage()
-      : 'Failed to submit preset.';
+    const message =
+      error instanceof PresetAPIError ? error.getSafeMessage() : 'Failed to submit preset.';
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), message)],
@@ -543,7 +587,7 @@ async function handleVoteSubcommand(
   t: Translator,
   userId: string,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const presetId = options?.find((opt) => opt.name === 'preset')?.value as string | undefined;
 
@@ -568,7 +612,7 @@ async function processVoteCommand(
   t: Translator,
   userId: string,
   presetId: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   try {
     // Check if already voted
@@ -596,10 +640,7 @@ async function processVoteCommand(
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
-        successEmbed(
-          actionMessage,
-          t.t('preset.currentVotes', { count: response.new_vote_count })
-        ),
+        successEmbed(actionMessage, t.t('preset.currentVotes', { count: response.new_vote_count })),
       ],
     });
   } catch (error) {
@@ -624,7 +665,7 @@ async function handleEditSubcommand(
   userId: string,
   userName: string,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const presetId = options?.find((opt) => opt.name === 'preset')?.value as string | undefined;
 
@@ -637,7 +678,8 @@ async function handleEditSubcommand(
 
   // Extract optional update fields
   const newName = options?.find((opt) => opt.name === 'name')?.value as string | undefined;
-  const newDescription = options?.find((opt) => opt.name === 'description')?.value as string | undefined;
+  const newDescription = options?.find((opt) => opt.name === 'description')?.value as
+    string | undefined;
   const tagsRaw = options?.find((opt) => opt.name === 'tags')?.value as string | undefined;
 
   // Collect dye names (dye1-dye5)
@@ -648,7 +690,7 @@ async function handleEditSubcommand(
   }
 
   // Check if any updates provided
-  const hasAnyDye = dyeNames.some(d => d !== undefined);
+  const hasAnyDye = dyeNames.some((d) => d !== undefined);
   if (!newName && !newDescription && !tagsRaw && !hasAnyDye) {
     return messageResponse({
       embeds: [errorEmbed(t.t('common.error'), 'Please provide at least one field to update.')],
@@ -660,12 +702,21 @@ async function handleEditSubcommand(
   const deferResponse = deferredResponse();
 
   ctx.waitUntil(
-    processEditCommand(interaction, env, t, userId, userName, presetId, {
-      name: newName,
-      description: newDescription,
-      tagsRaw,
-      dyeNames,
-    }, logger)
+    processEditCommand(
+      interaction,
+      env,
+      t,
+      userId,
+      userName,
+      presetId,
+      {
+        name: newName,
+        description: newDescription,
+        tagsRaw,
+        dyeNames,
+      },
+      logger,
+    ),
   );
 
   return deferResponse;
@@ -684,7 +735,7 @@ async function processEditCommand(
     tagsRaw?: string;
     dyeNames: (string | undefined)[];
   },
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   try {
     // First, verify the preset exists and user owns it
@@ -728,7 +779,7 @@ async function processEditCommand(
     }
 
     // Handle dyes - if any dye option is provided, we need to rebuild the full dye array
-    const hasAnyDye = updates.dyeNames.some(d => d !== undefined);
+    const hasAnyDye = updates.dyeNames.some((d) => d !== undefined);
     if (hasAnyDye) {
       // Start with existing dyes
       const newDyeIds: number[] = [...existingPreset.dyes];
@@ -806,10 +857,16 @@ async function processEditCommand(
       color: isPending ? 0xfee75c : 0x57f287,
       fields: [
         { name: 'Name', value: updatedPreset.name, inline: true },
-        { name: 'Category', value: CATEGORY_DISPLAY[updatedPreset.category_id]?.name || updatedPreset.category_id, inline: true },
+        {
+          name: 'Category',
+          value: CATEGORY_DISPLAY[updatedPreset.category_id]?.name || updatedPreset.category_id,
+          inline: true,
+        },
         { name: 'Dyes', value: `${updatedPreset.dyes.length} colors`, inline: true },
       ],
-      footer: { text: isPending ? 'A moderator will review your changes shortly.' : t.t('common.footer') },
+      footer: {
+        text: isPending ? 'A moderator will review your changes shortly.' : t.t('common.footer'),
+      },
     };
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
@@ -825,7 +882,8 @@ async function processEditCommand(
       logger.error('Edit preset error', error instanceof Error ? error : undefined);
     }
     // SECURITY: Use getSafeMessage() to prevent exposing internal API details
-    const message = error instanceof PresetAPIError ? error.getSafeMessage() : 'Failed to edit preset.';
+    const message =
+      error instanceof PresetAPIError ? error.getSafeMessage() : 'Failed to edit preset.';
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), message)],
     });
@@ -844,7 +902,7 @@ async function sendPresetEmbed(
   env: Env,
   t: Translator,
   preset: CommunityPreset,
-  locale: LocaleCode
+  locale: LocaleCode,
 ): Promise<void> {
   // Resolve stain IDs to Dye objects (5.0: preset dyes are stainIDs)
   const dyes: (Dye | null)[] = preset.dyes.map((stainId) => {
@@ -889,7 +947,9 @@ async function sendPresetEmbed(
           dyeList,
           '',
           preset.tags.length > 0 ? `**${t.t('preset.tags')}:** ${preset.tags.join(', ')}` : '',
-        ].filter(Boolean).join('\n'),
+        ]
+          .filter(Boolean)
+          .join('\n'),
         color: BRAND_ACCENT,
         image: { url: 'attachment://preset.png' },
         fields: [
@@ -914,7 +974,7 @@ async function notifySubmissionChannel(
   env: Env,
   preset: CommunityPreset,
   status: 'approved' | 'pending',
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   if (!env.SUBMISSION_LOG_CHANNEL_ID) return;
 
@@ -931,9 +991,21 @@ async function notifySubmissionChannel(
           description: preset.description,
           color: statusDisplay.color,
           fields: [
-            { name: adminT.t('webhook.fields.category'), value: categoryDisplay?.name || preset.category_id, inline: true },
-            { name: adminT.t('webhook.fields.author'), value: preset.author_name || 'Unknown', inline: true },
-            { name: adminT.t('webhook.fields.dyes'), value: `${preset.dyes.length} colors`, inline: true },
+            {
+              name: adminT.t('webhook.fields.category'),
+              value: categoryDisplay?.name || preset.category_id,
+              inline: true,
+            },
+            {
+              name: adminT.t('webhook.fields.author'),
+              value: preset.author_name || 'Unknown',
+              inline: true,
+            },
+            {
+              name: adminT.t('webhook.fields.dyes'),
+              value: `${preset.dyes.length} colors`,
+              inline: true,
+            },
           ],
           footer: { text: `ID: ${preset.id}` },
           timestamp: new Date().toISOString(),
@@ -942,7 +1014,10 @@ async function notifySubmissionChannel(
     });
   } catch (error) {
     if (logger) {
-      logger.error('Failed to notify submission channel', error instanceof Error ? error : undefined);
+      logger.error(
+        'Failed to notify submission channel',
+        error instanceof Error ? error : undefined,
+      );
     }
   }
 }
@@ -954,7 +1029,7 @@ async function notifySubmissionChannel(
 async function notifyModerationChannel(
   env: Env,
   preset: CommunityPreset,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   await sendModerationNotification(
     env,
@@ -963,7 +1038,7 @@ async function notifyModerationChannel(
       preset,
       categoryName: CATEGORY_DISPLAY[preset.category_id]?.name,
     },
-    logger
+    logger,
   );
 }
 
@@ -974,7 +1049,7 @@ async function notifyEditModerationChannel(
   env: Env,
   updatedPreset: CommunityPreset,
   originalPreset: CommunityPreset,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   // REFACTOR-025/BUG-009/BUG-072: shared sanitized builder
   await sendModerationNotification(
@@ -985,7 +1060,7 @@ async function notifyEditModerationChannel(
       original: originalPreset,
       categoryName: CATEGORY_DISPLAY[updatedPreset.category_id]?.name,
     },
-    logger
+    logger,
   );
 }
 
@@ -1003,7 +1078,7 @@ async function notifyEditModerationChannel(
 async function resolvePresetByIdOrName(
   env: Env,
   idOrName: string,
-  _logger?: ExtendedLogger
+  _logger?: ExtendedLogger,
 ): Promise<CommunityPreset | null> {
   // Try ID lookup first (UUID format from autocomplete)
   const byId = await presetApi.getPreset(env, idOrName).catch(() => null);
@@ -1023,7 +1098,7 @@ async function handleFavoriteAddSubcommand(
   t: Translator,
   userId: string,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const presetInput = options?.find((o) => o.name === 'preset_name')?.value as string | undefined;
   if (!presetInput) {
@@ -1043,13 +1118,15 @@ async function processFavoriteAdd(
   t: Translator,
   userId: string,
   presetInput: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   try {
     const preset = await resolvePresetByIdOrName(env, presetInput, logger);
     if (!preset) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-        embeds: [errorEmbed(t.t('common.error'), t.t('preset.errors.notFound', { name: presetInput }))],
+        embeds: [
+          errorEmbed(t.t('common.error'), t.t('preset.errors.notFound', { name: presetInput })),
+        ],
       });
       return;
     }
@@ -1067,7 +1144,9 @@ async function processFavoriteAdd(
       return;
     }
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [successEmbed('⭐ Favorite added', `**${preset.name}** is now in your favorited presets.`)],
+      embeds: [
+        successEmbed('⭐ Favorite added', `**${preset.name}** is now in your favorited presets.`),
+      ],
     });
   } catch (error) {
     if (logger) {
@@ -1090,7 +1169,7 @@ async function handleFavoriteRemoveSubcommand(
   t: Translator,
   userId: string,
   options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const presetInput = options?.find((o) => o.name === 'preset_name')?.value as string | undefined;
   if (!presetInput) {
@@ -1110,7 +1189,7 @@ async function processFavoriteRemove(
   t: Translator,
   userId: string,
   presetInput: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   try {
     // Try to resolve to ID first; if input already looks like an ID, use it directly.
@@ -1133,7 +1212,12 @@ async function processFavoriteRemove(
       return;
     }
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [successEmbed('🗑️ Favorite removed', `**${presetName}** has been removed from your favorites.`)],
+      embeds: [
+        successEmbed(
+          '🗑️ Favorite removed',
+          `**${presetName}** has been removed from your favorites.`,
+        ),
+      ],
     });
   } catch (error) {
     if (logger) {
@@ -1155,7 +1239,7 @@ async function handleFavoriteListSubcommand(
   ctx: ExecutionContext,
   t: Translator,
   userId: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const deferResponse = deferredResponse(true);
   ctx.waitUntil(processFavoriteList(interaction, env, t, userId, logger));
@@ -1167,7 +1251,7 @@ async function processFavoriteList(
   env: Env,
   t: Translator,
   userId: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   try {
     const ids = await getPresetFavorites(env.KV, userId, logger);
@@ -1176,14 +1260,14 @@ async function processFavoriteList(
         embeds: [
           infoEmbed(
             '⭐ Your favorite presets',
-            'You haven\'t favorited any presets yet. Use `/preset favorite add` to add one.'
+            "You haven't favorited any presets yet. Use `/preset favorite add` to add one.",
           ),
         ],
       });
       return;
     }
     const resolved = await Promise.all(
-      ids.map((id) => presetApi.getPreset(env, id).catch(() => null))
+      ids.map((id) => presetApi.getPreset(env, id).catch(() => null)),
     );
     const presets = resolved.filter((p): p is CommunityPreset => p !== null);
 
@@ -1192,7 +1276,7 @@ async function processFavoriteList(
         embeds: [
           infoEmbed(
             '⭐ Your favorite presets',
-            'All of your favorited presets appear to have been removed. Use `/preset favorite remove` to clean up entries.'
+            'All of your favorited presets appear to have been removed. Use `/preset favorite remove` to clean up entries.',
           ),
         ],
       });

@@ -48,13 +48,6 @@ import notoSansJpData from '../fonts/NotoSansJP-Subset.ttf';
 let fontBuffersCache: Uint8Array[] | null = null;
 
 /**
- * Check if CJK font is available
- */
-export function hasCjkFont(): boolean {
-  return notoSansCjkData !== null;
-}
-
-/**
  * Returns font file data as Uint8Array buffers for resvg-wasm.
  * Buffers are cached after first call.
  *
@@ -92,40 +85,4 @@ export function getFontBuffers(): Uint8Array[] {
 
   fontBuffersCache = buffers;
   return fontBuffersCache;
-}
-
-/**
- * Font family names as they appear in the font metadata.
- * Use these names in SVG font-family attributes.
- */
-export const FONT_FAMILIES = {
-  /** Space Grotesk - for headers and titles */
-  header: 'Space Grotesk',
-  /** Onest - for body text and labels */
-  body: 'Onest',
-  /** Fragment Mono - for hex codes and numeric columns (no CJK glyphs) */
-  mono: 'Fragment Mono',
-  /** Noto Sans SC - for CJK (Chinese/Japanese) text */
-  cjk: 'Noto Sans SC',
-  /** Noto Sans KR - for Korean text */
-  kr: 'Noto Sans KR',
-} as const;
-
-/**
- * Get a font-family string with CJK fallback for text that may contain
- * Japanese, Korean, or Chinese characters.
- *
- * @param primaryFont - The primary font to use (e.g., 'Onest')
- * @returns A font-family string with CJK fallback if available
- */
-export function getFontWithCjkFallback(primaryFont: string, locale?: string): string {
-  if (!hasCjkFont()) {
-    return primaryFont;
-  }
-  // JP-first belongs only to ja — zh must never pick up Japanese letterforms
-  // for shared ideographs.
-  if (locale === 'ja') {
-    return `${primaryFont}, Noto Sans JP, ${FONT_FAMILIES.cjk}, ${FONT_FAMILIES.kr}`;
-  }
-  return `${primaryFont}, ${FONT_FAMILIES.cjk}, ${FONT_FAMILIES.kr}`;
 }

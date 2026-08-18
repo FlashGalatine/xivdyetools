@@ -10,9 +10,14 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import type { Env } from './types/env.js';
+import type { Env, DiscordInteraction } from './types/env.js';
 import { InteractionType, InteractionResponseType } from './types/env.js';
-import { verifyDiscordRequest, unauthorizedResponse, badRequestResponse, timingSafeEqual } from './utils/verify.js';
+import {
+  verifyDiscordRequest,
+  unauthorizedResponse,
+  badRequestResponse,
+  timingSafeEqual,
+} from '@xivdyetools/auth';
 import { pongResponse, ephemeralResponse } from './utils/response.js';
 import { BRAND_ACCENT } from './utils/brand.js';
 import {
@@ -25,7 +30,6 @@ import {
   handlePreferencesCommand,
   handleMixerV4Command,
   handleSwatchCommand,
-  // Legacy commands (kept for backward compatibility during migration)
   handleAccessibilityCommand,
   handleContrastCommand,
   handleManualCommand,
@@ -36,11 +40,18 @@ import {
   handleBudgetAutocomplete,
   handleChangelogCommand,
 } from './handlers/commands/index.js';
-import { checkRateLimit, formatRateLimitMessage, resolveRateLimitScope } from './services/rate-limiter.js';
+import {
+  checkRateLimit,
+  formatRateLimitMessage,
+  resolveRateLimitScope,
+} from './services/rate-limiter.js';
 import { trackCommandWithKV } from './services/analytics.js';
-import { getPresetFavoriteEntries, savePresetFavoriteEntries } from './services/preset-favorites.js';
+import {
+  getPresetFavoriteEntries,
+  savePresetFavoriteEntries,
+} from './services/preset-favorites.js';
 import { handleButtonInteraction } from './handlers/buttons/index.js';
-import { dyeService } from './utils/color.js';
+import { dyeService } from '@xivdyetools/bot-logic';
 import * as presetApi from './services/preset-api.js';
 import { sendMessage, sendFollowUp } from './utils/discord-api.js';
 import { STATUS_DISPLAY, type PresetNotificationPayload } from './types/preset.js';
@@ -82,17 +93,23 @@ let envErrorsLogged = false;
 // to that default, so preflights began advertising a verb this Worker has no
 // route for. The live surface is GET /health plus three POSTs (/, /webhooks/*).
 // Matches the explicit pinning in api-worker, oauth and presets-api.
-app.use('*', cors({
-  origin: ['https://xivdyetools.app', 'https://www.xivdyetools.app'],
-  allowMethods: ['GET', 'POST', 'OPTIONS'],
-}));
+app.use(
+  '*',
+  cors({
+    origin: ['https://xivdyetools.app', 'https://www.xivdyetools.app'],
+    allowMethods: ['GET', 'POST', 'OPTIONS'],
+  }),
+);
 
 // REFACTOR-001: Shared middleware from @xivdyetools/worker-middleware
 app.use('*', requestIdMiddleware());
-app.use('*', loggerMiddleware({
-  serviceName: 'xivdyetools-discord-worker',
-  readEnvironmentFromEnv: false,
-}));
+app.use(
+  '*',
+  loggerMiddleware({
+    serviceName: 'xivdyetools-discord-worker',
+    readEnvironmentFromEnv: false,
+  }),
+);
 
 // Environment validation middleware
 // Validates required env vars once per isolate and caches result
@@ -109,7 +126,9 @@ app.use('*', async (c, next) => {
     // BUG-017 (2026-07-18 audit): checked on every request, not just the first
     // one in the isolate, so a misconfigured worker can't serve one 500 and
     // then silently process later traffic.
-    if (result.errors.some(e => e.includes('DISCORD_TOKEN') || e.includes('DISCORD_PUBLIC_KEY'))) {
+    if (
+      result.errors.some((e) => e.includes('DISCORD_TOKEN') || e.includes('DISCORD_PUBLIC_KEY'))
+    ) {
       return c.json({ error: 'Service misconfigured' }, 500);
     }
   }
@@ -257,7 +276,11 @@ app.post('/webhooks/preset-submission', async (c) => {
   }
 
   const { preset } = payload;
-  logger.info('Received preset webhook', { presetName: preset.name, presetId: preset.id, source: preset.source });
+  logger.info('Received preset webhook', {
+    presetName: preset.name,
+    presetId: preset.id,
+    source: preset.source,
+  });
 
   // Pending presets go to the moderation channel via the shared sanitized
   // builder (REFACTOR-025/BUG-009/BUG-072); Discord outcome checked (BUG-074)
@@ -269,12 +292,31 @@ app.post('/webhooks/preset-submission', async (c) => {
         kind: 'new',
         preset,
         extraFields: [
-          { name: adminT.t('webhook.fields.source'), value: preset.source === 'web' ? adminT.t('webhook.sources.web') : adminT.t('webhook.sources.discord'), inline: true },
-          { name: adminT.t('webhook.fields.dyes'), value: formatDyesForEmbed(preset.dyes), inline: false },
-          ...(preset.tags.length > 0 ? [{ name: adminT.t('webhook.fields.tags'), value: preset.tags.join(', '), inline: false }] : []),
+          {
+            name: adminT.t('webhook.fields.source'),
+            value:
+              preset.source === 'web'
+                ? adminT.t('webhook.sources.web')
+                : adminT.t('webhook.sources.discord'),
+            inline: true,
+          },
+          {
+            name: adminT.t('webhook.fields.dyes'),
+            value: formatDyesForEmbed(preset.dyes),
+            inline: false,
+          },
+          ...(preset.tags.length > 0
+            ? [
+                {
+                  name: adminT.t('webhook.fields.tags'),
+                  value: preset.tags.join(', '),
+                  inline: false,
+                },
+              ]
+            : []),
         ],
       },
-      logger
+      logger,
     );
     if (!sent) {
       // BUG-074: surface the failure so presets-api's retry/dead-letter
@@ -298,10 +340,33 @@ app.post('/webhooks/preset-submission', async (c) => {
           color: STATUS_DISPLAY.approved.color,
           fields: [
             { name: adminT.t('webhook.fields.category'), value: preset.category_id, inline: true },
-            { name: adminT.t('webhook.fields.author'), value: preset.author_name || 'Unknown', inline: true },
-            { name: adminT.t('webhook.fields.source'), value: preset.source === 'web' ? adminT.t('webhook.sources.web') : adminT.t('webhook.sources.discord'), inline: true },
-            { name: adminT.t('webhook.fields.dyes'), value: formatDyesForEmbed(preset.dyes), inline: false },
-            ...(preset.tags.length > 0 ? [{ name: adminT.t('webhook.fields.tags'), value: preset.tags.join(', '), inline: false }] : []),
+            {
+              name: adminT.t('webhook.fields.author'),
+              value: preset.author_name || 'Unknown',
+              inline: true,
+            },
+            {
+              name: adminT.t('webhook.fields.source'),
+              value:
+                preset.source === 'web'
+                  ? adminT.t('webhook.sources.web')
+                  : adminT.t('webhook.sources.discord'),
+              inline: true,
+            },
+            {
+              name: adminT.t('webhook.fields.dyes'),
+              value: formatDyesForEmbed(preset.dyes),
+              inline: false,
+            },
+            ...(preset.tags.length > 0
+              ? [
+                  {
+                    name: adminT.t('webhook.fields.tags'),
+                    value: preset.tags.join(', '),
+                    inline: false,
+                  },
+                ]
+              : []),
           ],
           footer: { text: `ID: ${preset.id} • ${adminT.t('webhook.autoApproved')}` },
           timestamp: preset.created_at,
@@ -355,7 +420,9 @@ app.post('/webhooks/github', async (c) => {
 
   // Defense-in-depth: verify actual body size (Content-Length can be missing or spoofed)
   if (rawBody.length > 10240) {
-    logger.warn('GitHub webhook body exceeds limit despite Content-Length', { size: rawBody.length });
+    logger.warn('GitHub webhook body exceeds limit despite Content-Length', {
+      size: rawBody.length,
+    });
     return c.json({ error: 'Payload too large' }, 413);
   }
 
@@ -385,7 +452,7 @@ app.post('/webhooks/github', async (c) => {
   const changelogModified = payload.commits.some(
     (commit) =>
       commit.added.includes('CHANGELOG-laymans.md') ||
-      commit.modified.includes('CHANGELOG-laymans.md')
+      commit.modified.includes('CHANGELOG-laymans.md'),
   );
 
   if (!changelogModified) {
@@ -423,7 +490,7 @@ app.post('/webhooks/github', async (c) => {
     env.DISCORD_TOKEN,
     env.ANNOUNCEMENT_CHANNEL_ID,
     latestEntry,
-    payload.repository.html_url
+    payload.repository.html_url,
   );
 
   logger.info('Changelog announcement sent', { version: latestEntry.version });
@@ -443,10 +510,7 @@ app.post('/', async (c) => {
   const env = c.env;
 
   // Verify the request signature
-  const { isValid, body, error } = await verifyDiscordRequest(
-    c.req.raw,
-    env.DISCORD_PUBLIC_KEY
-  );
+  const { isValid, body, error } = await verifyDiscordRequest(c.req.raw, env.DISCORD_PUBLIC_KEY);
 
   const logger = c.get('logger');
 
@@ -508,7 +572,7 @@ async function maybeSendFirstRunNotice(
   env: Env,
   interaction: DiscordInteraction,
   userId: string,
-  logger: ExtendedLogger
+  logger: ExtendedLogger,
 ): Promise<void> {
   const flagKey = `firstrun:v5:${userId}`;
   const seen = await env.KV.get(flagKey);
@@ -542,7 +606,7 @@ async function handleCommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger: ExtendedLogger
+  logger: ExtendedLogger,
 ): Promise<Response> {
   const commandName = interaction.data?.name;
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
@@ -569,7 +633,7 @@ async function handleCommand(
       userId,
       scope.command,
       undefined,
-      scope.subcommand
+      scope.subcommand,
     );
     if (!rateLimitResult.allowed) {
       logger.info('User rate limited', { userId, command: commandName });
@@ -583,7 +647,7 @@ async function handleCommand(
   ctx.waitUntil(
     maybeSendFirstRunNotice(env, interaction, userId, logger).catch((error) => {
       logger.warn('First-run notice failed', { error: String(error) });
-    })
+    }),
   );
 
   // DISCORD-CRITICAL-001: Track analytics AFTER command execution with actual success status
@@ -668,13 +732,15 @@ async function handleCommand(
       default:
         // Command not yet implemented
         response = ephemeralResponse(
-          `The \`/${commandName}\` command is not yet implemented in the Workers version.`
+          `The \`/${commandName}\` command is not yet implemented in the Workers version.`,
         );
         break;
     }
   } catch (error) {
     success = false;
-    logger.error('Command execution failed', error instanceof Error ? error : undefined, { command: commandName });
+    logger.error('Command execution failed', error instanceof Error ? error : undefined, {
+      command: commandName,
+    });
     response = ephemeralResponse('An error occurred while processing your command.');
   } finally {
     // Track command usage with actual success status (fire-and-forget).
@@ -693,8 +759,10 @@ async function handleCommand(
           guildId: interaction.guild_id,
           success,
         }).catch((error) => {
-          logger.error('Analytics tracking failed', error instanceof Error ? error : undefined, { error: String(error) });
-        })
+          logger.error('Analytics tracking failed', error instanceof Error ? error : undefined, {
+            error: String(error),
+          });
+        }),
       );
     }
   }
@@ -708,7 +776,7 @@ async function handleCommand(
 async function handleAutocomplete(
   interaction: DiscordInteraction,
   env: Env,
-  logger: ExtendedLogger
+  logger: ExtendedLogger,
 ): Promise<Response> {
   const commandName = interaction.data?.name;
   const options = interaction.data?.options || [];
@@ -725,7 +793,7 @@ async function handleAutocomplete(
         kv: env.KV,
       },
       acUserId,
-      'autocomplete'
+      'autocomplete',
     );
     if (!acLimit.allowed) {
       return Response.json({
@@ -736,7 +804,8 @@ async function handleAutocomplete(
   }
 
   // Find the focused option (the one the user is currently typing in)
-  let focusedOption: { name: string; value?: string | number | boolean; focused?: boolean } | undefined;
+  let focusedOption:
+    { name: string; value?: string | number | boolean; focused?: boolean } | undefined;
   let subcommandName: string | undefined;
   let subcommandGroupName: string | undefined;
 
@@ -844,7 +913,6 @@ async function handleAutocomplete(
   });
 }
 
-
 /**
  * Get dye autocomplete choices for the given query
  */
@@ -910,7 +978,7 @@ async function getMyPresetsAutocompleteChoices(
   env: Env,
   userId: string,
   query: string,
-  logger: ExtendedLogger
+  logger: ExtendedLogger,
 ): Promise<Array<{ name: string; value: string }>> {
   try {
     const presets = await presetApi.getMyPresets(env, userId);
@@ -921,20 +989,20 @@ async function getMyPresetsAutocompleteChoices(
 
     // Filter by query (case-insensitive)
     const lowerQuery = query.toLowerCase();
-    const filtered = query.length > 0
-      ? presets.filter((p) => p.name.toLowerCase().includes(lowerQuery))
-      : presets;
+    const filtered =
+      query.length > 0 ? presets.filter((p) => p.name.toLowerCase().includes(lowerQuery)) : presets;
 
     // Return up to 25 choices (Discord's maximum)
     return filtered.slice(0, 25).map((preset) => ({
       // Format: "Name (status)" to help user identify pending edits
-      name: preset.status === 'approved'
-        ? preset.name
-        : `${preset.name} (${preset.status})`,
+      name: preset.status === 'approved' ? preset.name : `${preset.name} (${preset.status})`,
       value: preset.id,
     }));
   } catch (error) {
-    logger.error('Failed to get user presets for autocomplete', error instanceof Error ? error : undefined);
+    logger.error(
+      'Failed to get user presets for autocomplete',
+      error instanceof Error ? error : undefined,
+    );
     return [];
   }
 }
@@ -947,7 +1015,7 @@ async function getFavoritedPresetsAutocompleteChoices(
   env: Env,
   userId: string,
   query: string,
-  logger: ExtendedLogger
+  logger: ExtendedLogger,
 ): Promise<Array<{ name: string; value: string }>> {
   try {
     const entries = await getPresetFavoriteEntries(env.KV, userId, logger);
@@ -960,7 +1028,7 @@ async function getFavoritedPresetsAutocompleteChoices(
     const missing = entries.filter((e) => !e.name);
     if (missing.length > 0) {
       const resolved = await Promise.all(
-        missing.map((e) => presetApi.getPreset(env, e.id).catch(() => null))
+        missing.map((e) => presetApi.getPreset(env, e.id).catch(() => null)),
       );
       for (let i = 0; i < missing.length; i++) {
         missing[i].name = resolved[i]?.name ?? missing[i].id;
@@ -969,13 +1037,15 @@ async function getFavoritedPresetsAutocompleteChoices(
     }
 
     const lowerQuery = query.toLowerCase();
-    const filtered = query.length > 0
-      ? entries.filter((e) => e.name.toLowerCase().includes(lowerQuery))
-      : entries;
+    const filtered =
+      query.length > 0 ? entries.filter((e) => e.name.toLowerCase().includes(lowerQuery)) : entries;
 
     return filtered.slice(0, 25).map((e) => ({ name: e.name, value: e.id }));
   } catch (error) {
-    logger.error('Failed to get favorited presets autocomplete', error instanceof Error ? error : undefined);
+    logger.error(
+      'Failed to get favorited presets autocomplete',
+      error instanceof Error ? error : undefined,
+    );
     return [];
   }
 }
@@ -987,7 +1057,7 @@ async function handleComponent(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger: ExtendedLogger
+  logger: ExtendedLogger,
 ): Promise<Response> {
   const customId = interaction.data?.custom_id;
   const componentType = interaction.data?.component_type;
@@ -1011,7 +1081,7 @@ async function handleModal(
   interaction: DiscordInteraction,
   _env: Env,
   _ctx: ExecutionContext,
-  logger: ExtendedLogger
+  logger: ExtendedLogger,
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
   logger.info('Handling modal', { customId });
@@ -1019,74 +1089,6 @@ async function handleModal(
   // No modals are currently supported in the main worker
   // Moderation modals are handled by xivdyetools-moderation-worker
   return ephemeralResponse('Unknown modal submission.');
-}
-
-/**
- * Discord Interaction type (simplified)
- * Full types would come from a Discord types package
- */
-interface DiscordInteraction {
-  id: string;
-  type: InteractionType;
-  application_id: string;
-  token: string;
-  locale?: string; // User's locale (e.g., "en-US", "ja")
-  guild_id?: string;
-  channel_id?: string;
-  member?: {
-    user: {
-      id: string;
-      username: string;
-      discriminator: string;
-      avatar?: string;
-    };
-  };
-  user?: {
-    id: string;
-    username: string;
-    discriminator: string;
-    avatar?: string;
-  };
-  data?: {
-    id: string;
-    name: string;
-    type?: number;
-    options?: Array<{
-      name: string;
-      type: number;
-      value?: string | number | boolean;
-      focused?: boolean;
-      options?: Array<{
-        name: string;
-        type: number;
-        value?: string | number | boolean;
-        focused?: boolean;
-      }>;
-    }>;
-    resolved?: {
-      attachments?: Record<string, {
-        id: string;
-        filename: string;
-        size: number;
-        url: string;
-        proxy_url: string;
-        content_type?: string;
-        width?: number;
-        height?: number;
-      }>;
-    };
-    custom_id?: string;
-    component_type?: number;
-    values?: string[];
-    components?: Array<{
-      type: number;
-      components: Array<{
-        type: number;
-        custom_id: string;
-        value: string;
-      }>;
-    }>;
-  };
 }
 
 // Export the Hono app as the default export for Cloudflare Workers
@@ -1104,14 +1106,7 @@ app.onError((err, c) => {
   } else {
     console.error('Unhandled error', err);
   }
-  const isDev = (c.env as { ENVIRONMENT?: string }).ENVIRONMENT === 'development';
-  return c.json(
-    {
-      error: 'Internal Server Error',
-      ...(isDev ? { message: err.message } : {}),
-    },
-    500
-  );
+  return c.json({ error: 'Internal Server Error' }, 500);
 });
 
 export default app;

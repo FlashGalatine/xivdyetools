@@ -33,18 +33,6 @@ vi.mock('../../services/preferences.js', () => ({
   getUserPreferences: vi.fn().mockResolvedValue({ theme: 'dark' }),
 }));
 
-vi.mock('../../utils/color.js', () => ({
-  resolveColorInput: vi.fn((value: string) => {
-    if (value === 'nosuchdye') return null;
-    return {
-      hex: '#FFFFFF',
-      name: `Resolved ${value}`,
-      itemID: 5729,
-      dye: { id: 1, name: `Resolved ${value}`, hex: '#FFFFFF' },
-    };
-  }),
-}));
-
 vi.mock('../../services/svg/renderer.js', () => ({
   renderSvgToPng: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
 }));
@@ -59,12 +47,20 @@ vi.mock('@xivdyetools/bot-logic', () => ({
     svgString: '<svg>contrast</svg>',
     embed: { title: 'Contrast', description: 'desc', color: 0x123456 },
   }),
+  resolveColorInput: vi.fn((value: string) => {
+    if (value === 'nosuchdye') return null;
+    return {
+      hex: '#FFFFFF',
+      name: `Resolved ${value}`,
+      itemID: 5729,
+      dye: { id: 1, name: `Resolved ${value}`, hex: '#FFFFFF' },
+    };
+  }),
 }));
 
-import { executeContrast } from '@xivdyetools/bot-logic';
+import { executeContrast, resolveColorInput } from '@xivdyetools/bot-logic';
 import { getUserPreferences } from '../../services/preferences.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
-import { resolveColorInput } from '../../utils/color.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 
 describe('handleContrastCommand', () => {
@@ -74,7 +70,7 @@ describe('handleContrastCommand', () => {
 
   const interaction = (
     dyes: string[],
-    overrides: Partial<DiscordInteraction> = {}
+    overrides: Partial<DiscordInteraction> = {},
   ): DiscordInteraction =>
     ({
       token: 'interaction-token',
@@ -117,7 +113,7 @@ describe('handleContrastCommand', () => {
             name: `Resolved ${value}`,
             itemID: 5729,
             dye: { id: 1, name: `Resolved ${value}`, hex: '#FFFFFF' },
-          } as never)
+          } as never),
     );
   });
 
@@ -143,7 +139,7 @@ describe('handleContrastCommand', () => {
       const response = await handleContrastCommand(
         interaction(['Snow White', 'nosuchdye']),
         env,
-        ctx
+        ctx,
       );
       const body = (await response.json()) as {
         data: { embeds: { description?: string; fields?: unknown }[] };
@@ -174,11 +170,7 @@ describe('handleContrastCommand', () => {
     });
 
     it('caps at four dyes — the command schema only offers four slots', async () => {
-      await handleContrastCommand(
-        interaction(['one', 'two', 'three', 'four', 'five']),
-        env,
-        ctx
-      );
+      await handleContrastCommand(interaction(['one', 'two', 'three', 'four', 'five']), env, ctx);
       await settle();
 
       expect(vi.mocked(executeContrast).mock.calls[0][0].dyes).toHaveLength(4);
@@ -190,7 +182,7 @@ describe('handleContrastCommand', () => {
       const response = await handleContrastCommand(
         interaction(['Snow White', 'Soot Black']),
         env,
-        ctx
+        ctx,
       );
       const body = (await response.json()) as { type: number };
 
@@ -289,14 +281,14 @@ describe('handleContrastCommand', () => {
         interaction(['Snow White', 'Soot Black']),
         env,
         ctx,
-        logger as never
+        logger as never,
       );
       await settle();
 
       expect(logger.error).toHaveBeenCalled();
       expect(renderSvgToPng).not.toHaveBeenCalled();
       expect(JSON.stringify(vi.mocked(safeEditOriginalResponse).mock.calls[0][2])).toContain(
-        'errors.generationFailed'
+        'errors.generationFailed',
       );
     });
 
@@ -308,13 +300,13 @@ describe('handleContrastCommand', () => {
         interaction(['Snow White', 'Soot Black']),
         env,
         ctx,
-        logger as never
+        logger as never,
       );
       await settle();
 
       expect(logger.error).toHaveBeenCalled();
       expect(JSON.stringify(vi.mocked(safeEditOriginalResponse).mock.calls[0][2])).toContain(
-        'errors.generationFailed'
+        'errors.generationFailed',
       );
     });
 

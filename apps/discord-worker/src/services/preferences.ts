@@ -11,7 +11,7 @@
  * - `budget:world:v1:{userId}` → preferences.world
  *
  * @module services/preferences
-  *
+ *
  * ⚠️ BUG-036 (2026-07-18 audit) — KNOWN LIMITATION (fix deferred): all of a
  * user's data here lives in ONE JSON blob updated get → mutate → put with no
  * concurrency control. Cloudflare KV is last-write-wins and eventually
@@ -84,7 +84,7 @@ function buildPrefsKey(userId: string): string {
 export async function getUserPreferences(
   kv: KVNamespace,
   userId: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<UserPreferences> {
   try {
     const key = buildPrefsKey(userId);
@@ -121,10 +121,12 @@ export async function getPreference<K extends PreferenceKey>(
   kv: KVNamespace,
   userId: string,
   key: K,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<UserPreferences[K] | undefined> {
   const prefs = await getUserPreferences(kv, userId, logger);
-  return prefs[key] ?? (PREFERENCE_DEFAULTS as Record<string, unknown>)[key] as UserPreferences[K];
+  return (
+    prefs[key] ?? ((PREFERENCE_DEFAULTS as Record<string, unknown>)[key] as UserPreferences[K])
+  );
 }
 
 /**
@@ -142,7 +144,7 @@ export async function setPreference(
   userId: string,
   key: PreferenceKey,
   value: string | number | boolean,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<{ success: boolean; reason?: string }> {
   try {
     // Validate the value based on the key
@@ -213,7 +215,10 @@ export async function setPreference(
     return { success: true };
   } catch (error) {
     if (logger) {
-      logger.error('Failed to set preference', error instanceof Error ? error : undefined, { key, value });
+      logger.error('Failed to set preference', error instanceof Error ? error : undefined, {
+        key,
+        value,
+      });
     }
     return { success: false, reason: 'error' };
   }
@@ -232,7 +237,7 @@ export async function resetPreference(
   kv: KVNamespace,
   userId: string,
   key?: PreferenceKey,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<boolean> {
   try {
     if (!key) {
@@ -262,22 +267,12 @@ export async function resetPreference(
     return true;
   } catch (error) {
     if (logger) {
-      logger.error('Failed to reset preference', error instanceof Error ? error : undefined, { key });
+      logger.error('Failed to reset preference', error instanceof Error ? error : undefined, {
+        key,
+      });
     }
     return false;
   }
-}
-
-/**
- * Check if a user has any preferences set
- */
-export async function hasPreferences(
-  kv: KVNamespace,
-  userId: string
-): Promise<boolean> {
-  const key = buildPrefsKey(userId);
-  const data = await kv.get(key);
-  return data !== null;
 }
 
 // ============================================================================
@@ -285,40 +280,11 @@ export async function hasPreferences(
 // ============================================================================
 
 /**
- * Resolve the effective value for a preference
- *
- * Resolution order: Explicit parameter → User preference → System default
- *
- * @param explicit - Explicitly provided value (from command parameter)
- * @param prefs - User preferences object
- * @param key - Preference key
- * @returns The resolved value
- */
-export function resolvePreference<K extends PreferenceKey>(
-  explicit: UserPreferences[K] | undefined | null,
-  prefs: UserPreferences,
-  key: K
-): UserPreferences[K] | undefined {
-  // 1. Explicit parameter takes precedence
-  if (explicit !== undefined && explicit !== null) {
-    return explicit;
-  }
-
-  // 2. User preference
-  if (prefs[key] !== undefined) {
-    return prefs[key];
-  }
-
-  // 3. System default
-  return (PREFERENCE_DEFAULTS as Record<string, unknown>)[key] as UserPreferences[K];
-}
-
-/**
  * Resolve blending mode with fallback chain
  */
 export function resolveBlendingMode(
   explicit: string | undefined | null,
-  prefs: UserPreferences
+  prefs: UserPreferences,
 ): BlendingMode {
   if (explicit && isValidBlendingMode(explicit)) {
     return explicit;
@@ -331,7 +297,7 @@ export function resolveBlendingMode(
  */
 export function resolveMatchingMethod(
   explicit: string | undefined | null,
-  prefs: UserPreferences
+  prefs: UserPreferences,
 ): MatchingMethod {
   if (explicit && isValidMatchingMethod(explicit)) {
     return explicit;
@@ -348,27 +314,11 @@ export function resolveMatchingMethod(
 /**
  * Resolve result count with fallback chain
  */
-export function resolveCount(
-  explicit: number | undefined | null,
-  prefs: UserPreferences
-): number {
+export function resolveCount(explicit: number | undefined | null, prefs: UserPreferences): number {
   if (explicit !== undefined && explicit !== null && isValidCount(explicit)) {
     return explicit;
   }
   return prefs.count ?? PREFERENCE_DEFAULTS.count;
-}
-
-/**
- * Resolve market data flag with fallback chain
- */
-export function resolveMarket(
-  explicit: boolean | undefined | null,
-  prefs: UserPreferences
-): boolean {
-  if (explicit !== undefined && explicit !== null) {
-    return explicit;
-  }
-  return prefs.market ?? PREFERENCE_DEFAULTS.market;
 }
 
 // ============================================================================
@@ -380,7 +330,7 @@ export function resolveMarket(
  */
 export function validatePreferenceValue(
   key: PreferenceKey,
-  value: unknown
+  value: unknown,
 ): { valid: boolean; reason?: string } {
   switch (key) {
     case 'language':
@@ -478,7 +428,7 @@ export function validatePreferenceValue(
 async function migrateLegacyPreferences(
   kv: KVNamespace,
   userId: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<UserPreferences> {
   const prefs: UserPreferences = {};
   let hasMigrated = false;
@@ -512,12 +462,18 @@ async function migrateLegacyPreferences(
       await kv.put(buildPrefsKey(userId), JSON.stringify(prefs));
 
       if (logger) {
-        logger.info('Migrated legacy preferences to unified format', { userId, keys: Object.keys(prefs) });
+        logger.info('Migrated legacy preferences to unified format', {
+          userId,
+          keys: Object.keys(prefs),
+        });
       }
     }
   } catch (error) {
     if (logger) {
-      logger.error('Failed to migrate legacy preferences', error instanceof Error ? error : undefined);
+      logger.error(
+        'Failed to migrate legacy preferences',
+        error instanceof Error ? error : undefined,
+      );
     }
   }
 

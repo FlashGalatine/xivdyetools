@@ -7,10 +7,11 @@
  * The full findBudgetLedger pipeline requires the Cloudflare Cache API
  * (caches.default), so we test sub-pipelines individually:
  * - universalis-client.ts: fetchPrices, fetchPricesBatched, validateWorld, getWorldAutocomplete
- * - budget-calculator.ts: searchDyes, getDyeById, getDyeByName, getAllDyes, getCategories
+ * - budget-calculator.ts: getDyeById, getDyeByName, getDyeAutocomplete
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { dyeService } from '@xivdyetools/bot-logic';
 import {
   fetchPrices,
   fetchPricesBatched,
@@ -20,15 +21,11 @@ import {
   validateWorld,
   getWorldAutocomplete,
 } from './universalis-client.js';
+import { getDyeById, getDyeByName, getDyeAutocomplete } from './budget-calculator.js';
 import {
-  searchDyes,
-  getDyeById,
-  getDyeByName,
-  getDyeAutocomplete,
-  getAllDyes,
-  getCategories,
-} from './budget-calculator.js';
-import { createMockServiceBinding, createMockUniversalisProxy } from '../../test-utils.integration.js';
+  createMockServiceBinding,
+  createMockUniversalisProxy,
+} from '../../test-utils.integration.js';
 import { createMockEnv } from '../../test-utils.js';
 import type { Env } from '../../types/env.js';
 
@@ -202,7 +199,7 @@ describe('Universalis Client: Service Binding Integration', () => {
       const suggestions = await getWorldAutocomplete(env, 'a');
 
       // First result should be the datacenter
-      const dcSuggestion = suggestions.find(s => s.name.includes('Data Center'));
+      const dcSuggestion = suggestions.find((s) => s.name.includes('Data Center'));
       expect(dcSuggestion).toBeDefined();
     });
 
@@ -220,10 +217,8 @@ describe('Universalis Client: Service Binding Integration', () => {
 
     it('throws on non-200 responses from Service Binding', async () => {
       const errorProxy = createMockServiceBinding({
-        '/api/v2/aggregated/': () => new Response(
-          JSON.stringify({ error: 'Rate limited' }),
-          { status: 429 },
-        ),
+        '/api/v2/aggregated/': () =>
+          new Response(JSON.stringify({ error: 'Rate limited' }), { status: 429 }),
       });
       const errorEnv = createMockEnv({ UNIVERSALIS_PROXY: errorProxy });
 
@@ -237,26 +232,10 @@ describe('Universalis Client: Service Binding Integration', () => {
 // ============================================================================
 
 describe('Budget Calculator: Dye Lookup with Real Core Data', () => {
-  describe('searchDyes', () => {
-    it('finds dyes by partial name', () => {
-      const results = searchDyes('white');
-      expect(results.length).toBeGreaterThan(0);
-      // All results should contain "white" (case-insensitive)
-      for (const dye of results) {
-        expect(dye.name.toLowerCase()).toContain('white');
-      }
-    });
-
-    it('returns empty for nonsense query', () => {
-      const results = searchDyes('xyznonexistent');
-      expect(results).toEqual([]);
-    });
-  });
-
   describe('getDyeById', () => {
     it('finds a dye by its internal ID', () => {
       // Use a known dye from the database by searching first
-      const allDyes = getAllDyes();
+      const allDyes = dyeService.getAllDyes();
       expect(allDyes.length).toBeGreaterThan(0);
 
       const firstDye = allDyes[0];
@@ -311,31 +290,6 @@ describe('Budget Calculator: Dye Lookup with Real Core Data', () => {
     it('respects the limit parameter', () => {
       const limited = getDyeAutocomplete('', 5);
       expect(limited.length).toBeLessThanOrEqual(5);
-    });
-  });
-
-  describe('getAllDyes', () => {
-    it('returns the full dye database', () => {
-      const dyes = getAllDyes();
-      expect(dyes.length).toBeGreaterThan(100);
-
-      // Every dye should have required fields
-      for (const dye of dyes) {
-        expect(dye.id).toBeDefined();
-        expect(dye.name).toBeDefined();
-        expect(dye.hex).toMatch(/^#[0-9a-fA-F]{6}$/);
-        expect(dye.category).toBeDefined();
-      }
-    });
-  });
-
-  describe('getCategories', () => {
-    it('returns dye categories', () => {
-      const categories = getCategories();
-      expect(categories.length).toBeGreaterThan(0);
-      // Categories in the actual database are pluralized (e.g., "Reds", "Blues")
-      expect(categories).toContain('Reds');
-      expect(categories).toContain('Blues');
     });
   });
 });

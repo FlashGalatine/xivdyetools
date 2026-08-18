@@ -49,11 +49,9 @@ function createMockKV() {
 function makeInteraction(
   userId: string,
   subcommand?: string,
-  useDmUser = false
+  useDmUser = false,
 ): DiscordInteraction {
-  const options = subcommand
-    ? [{ name: subcommand, type: 1 }]
-    : undefined;
+  const options = subcommand ? [{ name: subcommand, type: 1 }] : undefined;
 
   const base: DiscordInteraction = {
     type: 2,
@@ -245,7 +243,7 @@ describe('stats.ts', () => {
         expect(data.type).toBe(4);
         expect(data.data!.embeds![0].title).toContain('Access Denied');
         expect(data.data!.flags).toBe(64);
-      }
+      },
     );
 
     it.each(['overview', 'commands', 'preferences', 'health'])(
@@ -257,7 +255,7 @@ describe('stats.ts', () => {
         const data = (await response.json()) as InteractionResponseBody;
 
         expect(data.data!.embeds![0].title).not.toContain('Access Denied');
-      }
+      },
     );
 
     it('should allow second authorized user', async () => {
@@ -350,8 +348,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const featuresField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Features')
+      const featuresField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Features'),
       );
       expect(featuresField).toBeDefined();
       expect(featuresField!.value).toContain('Color matching');
@@ -364,8 +362,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const statsField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Stats')
+      const statsField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Stats'),
       );
       expect(statsField).toBeDefined();
       expect(statsField!.value).toContain('Commands Used');
@@ -380,8 +378,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const linksField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Links')
+      const linksField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Links'),
       );
       expect(linksField).toBeDefined();
       expect(linksField!.value).toContain('xivdyetools.com');
@@ -430,9 +428,7 @@ describe('stats.ts', () => {
       const embed = data.data!.embeds![0];
       expect(embed.title).toContain('Usage Overview');
 
-      const volumeField = embed.fields!.find(
-        (f: { name: string }) => f.name.includes('Volume')
-      );
+      const volumeField = embed.fields!.find((f: { name: string }) => f.name.includes('Volume'));
       expect(volumeField).toBeDefined();
       expect(volumeField!.value).toContain('Total Commands');
       expect(volumeField!.value).toContain('1,000');
@@ -448,8 +444,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const usersField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Users')
+      const usersField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Users'),
       );
       expect(usersField).toBeDefined();
       expect(usersField!.value).toContain('Unique Today');
@@ -463,8 +459,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const usersField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Users')
+      const usersField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Users'),
       );
       // 1000 total / 42 unique = 23.8
       expect(usersField!.value).toContain('23.8');
@@ -485,8 +481,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const usersField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Users')
+      const usersField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Users'),
       );
       expect(usersField!.value).toContain('0');
     });
@@ -497,8 +493,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const qualityField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Quality')
+      const qualityField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Quality'),
       );
       expect(qualityField).toBeDefined();
       expect(qualityField!.value).toContain('Success Rate');
@@ -540,9 +536,7 @@ describe('stats.ts', () => {
       const embed = data.data!.embeds![0];
       expect(embed.title).toContain('Command Usage Breakdown');
 
-      const topField = embed.fields!.find(
-        (f: { name: string }) => f.name.includes('Top')
-      );
+      const topField = embed.fields!.find((f: { name: string }) => f.name.includes('Top'));
       expect(topField).toBeDefined();
       // harmony has 300 uses (most), so it should be first with gold medal
       expect(topField!.value).toContain('/harmony');
@@ -555,8 +549,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const topField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Top')
+      const topField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Top'),
       );
       expect(topField!.value).toContain('\u{1F947}'); // gold medal
       expect(topField!.value).toContain('\u{1F948}'); // silver medal
@@ -569,8 +563,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const topField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Top')
+      const topField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Top'),
       );
       // harmony: 300/1000 = 30.0%
       expect(topField!.value).toContain('30.0%');
@@ -582,8 +576,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const leastField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Least Used')
+      const leastField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Least Used'),
       );
       expect(leastField).toBeDefined();
     });
@@ -594,8 +588,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const adoptionField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('5.0 Adoption')
+      const adoptionField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('5.0 Adoption'),
       );
       expect(adoptionField).toBeDefined();
       expect(adoptionField!.value).toContain('New in 5.0');
@@ -617,8 +611,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const topField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Top')
+      const topField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Top'),
       );
       expect(topField!.value).toBe('No commands executed yet');
     });
@@ -678,11 +672,7 @@ describe('stats.ts', () => {
     it('should sample preferences and calculate adoption rates', async () => {
       // Set up KV mock with preference keys
       vi.mocked(mockKV.list).mockResolvedValue({
-        keys: [
-          { name: 'prefs:v1:user1' },
-          { name: 'prefs:v1:user2' },
-          { name: 'prefs:v1:user3' },
-        ],
+        keys: [{ name: 'prefs:v1:user1' }, { name: 'prefs:v1:user2' }, { name: 'prefs:v1:user3' }],
         list_complete: true,
         cursor: '',
       } as unknown as KVNamespaceListResult<unknown>);
@@ -709,7 +699,9 @@ describe('stats.ts', () => {
         list_complete: true,
         cursor: '',
       } as unknown as KVNamespaceListResult<unknown>);
-      (mockKV.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce(JSON.stringify({ language: 'en' }));
+      (mockKV.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+        JSON.stringify({ language: 'en' }),
+      );
 
       const interaction = makeInteraction('admin-123', 'preferences');
 
@@ -724,7 +716,7 @@ describe('stats.ts', () => {
           expect.stringContaining('Character'),
           expect.stringContaining('Market'),
           expect.stringContaining('Coverage'),
-        ])
+        ]),
       );
     });
 
@@ -789,8 +781,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const storageField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Storage')
+      const storageField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Storage'),
       );
       expect(storageField).toBeDefined();
       expect(storageField!.value).toContain('KV Namespace');
@@ -817,8 +809,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, envWithAnalytics, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const analyticsField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Analytics')
+      const analyticsField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Analytics'),
       );
       expect(analyticsField).toBeDefined();
       expect(analyticsField!.value).toContain('Enabled');
@@ -830,8 +822,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const analyticsField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Analytics')
+      const analyticsField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Analytics'),
       );
       expect(analyticsField).toBeDefined();
       expect(analyticsField!.value).toContain('Disabled');
@@ -843,13 +835,36 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const externalField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('External Services')
+      const externalField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('External Services'),
       );
       expect(externalField).toBeDefined();
       expect(externalField!.value).toContain('Universalis API');
       expect(externalField!.value).toContain('Configured');
       expect(externalField!.value).toContain('Preset API');
+    });
+
+    // DEAD-010 (2026-08-18 audit): production only ever binds UNIVERSALIS_PROXY
+    // (the service binding) — UNIVERSALIS_PROXY_URL is a local-dev fallback
+    // that wrangler.toml never sets. Checking the URL alone made /stats
+    // always report Universalis "Not configured" in production.
+    it('reports Universalis as configured from the service binding alone', async () => {
+      const bindingOnlyEnv = {
+        ...mockEnv,
+        UNIVERSALIS_PROXY: {} as unknown as Fetcher,
+        UNIVERSALIS_PROXY_URL: undefined,
+      } as unknown as Env;
+
+      const interaction = makeInteraction('admin-123', 'health');
+
+      const response = await handleStatsCommand(interaction, bindingOnlyEnv, mockCtx);
+      const data = (await response.json()) as InteractionResponseBody;
+
+      const externalField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('External Services'),
+      );
+      expect(externalField!.value).toContain('Universalis API');
+      expect(externalField!.value).toContain('Configured');
     });
 
     it('should show configuration field with version and platform', async () => {
@@ -858,8 +873,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const configField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Configuration')
+      const configField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Configuration'),
       );
       expect(configField).toBeDefined();
       expect(configField!.value).toContain('4.0.0');
@@ -873,8 +888,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const securityField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Security')
+      const securityField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Security'),
       );
       expect(securityField).toBeDefined();
       expect(securityField!.value).toContain('Webhook Secret');
@@ -899,8 +914,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const storageField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Storage')
+      const storageField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Storage'),
       );
       expect(storageField!.value).toContain('Error');
       expect(data.data!.embeds![0].color).toBe(0xed4245); // red
@@ -929,13 +944,13 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, minimalEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const externalField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('External Services')
+      const externalField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('External Services'),
       );
       expect(externalField!.value).toContain('Not configured');
 
-      const securityField = data.data!.embeds![0].fields!.find(
-        (f: { name: string }) => f.name.includes('Security')
+      const securityField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Security'),
       );
       expect(securityField!.value).toContain('Not set');
     });
@@ -957,9 +972,9 @@ describe('stats.ts', () => {
 
       const interaction = makeInteraction('anyone', 'summary');
 
-      await expect(
-        handleStatsCommand(interaction, mockEnv, mockCtx)
-      ).rejects.toThrow('KV unavailable');
+      await expect(handleStatsCommand(interaction, mockEnv, mockCtx)).rejects.toThrow(
+        'KV unavailable',
+      );
     });
 
     it('should propagate getStats rejection from overview subcommand', async () => {
@@ -967,9 +982,9 @@ describe('stats.ts', () => {
 
       const interaction = makeInteraction('admin-123', 'overview');
 
-      await expect(
-        handleStatsCommand(interaction, mockEnv, mockCtx)
-      ).rejects.toThrow('KV unavailable');
+      await expect(handleStatsCommand(interaction, mockEnv, mockCtx)).rejects.toThrow(
+        'KV unavailable',
+      );
     });
 
     it('should propagate getStats rejection from commands subcommand', async () => {
@@ -977,19 +992,21 @@ describe('stats.ts', () => {
 
       const interaction = makeInteraction('admin-123', 'commands');
 
-      await expect(
-        handleStatsCommand(interaction, mockEnv, mockCtx)
-      ).rejects.toThrow('KV unavailable');
+      await expect(handleStatsCommand(interaction, mockEnv, mockCtx)).rejects.toThrow(
+        'KV unavailable',
+      );
     });
 
     it('should propagate KV list rejection from preferences subcommand', async () => {
-      vi.mocked(mockKV.list).mockImplementationOnce(() => Promise.reject(new Error('KV list failed')));
+      vi.mocked(mockKV.list).mockImplementationOnce(() =>
+        Promise.reject(new Error('KV list failed')),
+      );
 
       const interaction = makeInteraction('admin-123', 'preferences');
 
-      await expect(
-        handleStatsCommand(interaction, mockEnv, mockCtx)
-      ).rejects.toThrow('KV list failed');
+      await expect(handleStatsCommand(interaction, mockEnv, mockCtx)).rejects.toThrow(
+        'KV list failed',
+      );
     });
 
     it('should propagate rejection even when logger is provided', async () => {
@@ -1005,9 +1022,9 @@ describe('stats.ts', () => {
 
       const interaction = makeInteraction('admin-123', 'overview');
 
-      await expect(
-        handleStatsCommand(interaction, mockEnv, mockCtx, mockLogger)
-      ).rejects.toThrow('KV unavailable');
+      await expect(handleStatsCommand(interaction, mockEnv, mockCtx, mockLogger)).rejects.toThrow(
+        'KV unavailable',
+      );
 
       // Logger is NOT called because the catch block is never reached
       // (return without await bypasses try-catch for async rejections)
@@ -1020,9 +1037,7 @@ describe('stats.ts', () => {
 
       const interaction = makeInteraction('anyone', 'summary');
 
-      await expect(
-        handleStatsCommand(interaction, mockEnv, mockCtx)
-      ).rejects.toBe('string error');
+      await expect(handleStatsCommand(interaction, mockEnv, mockCtx)).rejects.toBe('string error');
     });
 
     it('should catch synchronous errors in the switch routing', async () => {

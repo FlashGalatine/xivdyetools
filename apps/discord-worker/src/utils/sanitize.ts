@@ -12,8 +12,6 @@
  */
 export const MAX_PRESET_NAME_LENGTH = 100;
 export const MAX_PRESET_DESCRIPTION_LENGTH = 500;
-export const MAX_COLLECTION_NAME_LENGTH = 50;
-export const MAX_COLLECTION_DESCRIPTION_LENGTH = 200;
 
 /**
  * Sanitize text by removing control characters and normalizing whitespace.
@@ -77,24 +75,3 @@ export function sanitizePresetName(name: string): string {
 export function sanitizePresetDescription(description: string): string {
   return sanitizeDisplayText(description, MAX_PRESET_DESCRIPTION_LENGTH);
 }
-
-/**
- * Sanitize a collection name for display and storage
- *
- * @param name - The collection name
- * @returns Sanitized collection name
- */
-export function sanitizeCollectionName(name: string): string {
-  return sanitizeDisplayText(name, MAX_COLLECTION_NAME_LENGTH);
-}
-
-/**
- * Sanitize a collection description for display
- *
- * @param description - The collection description
- * @returns Sanitized collection description
- */
-export function sanitizeCollectionDescription(description: string): string {
-  return sanitizeDisplayText(description, MAX_COLLECTION_DESCRIPTION_LENGTH);
-}
-

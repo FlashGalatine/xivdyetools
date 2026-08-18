@@ -12,7 +12,6 @@
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { messageResponse, deferredResponse, errorEmbed } from '../../utils/response.js';
-import { resolveColorInput } from '../../utils/color.js';
 import {
   getUserPreferences,
   resolveBlendingMode,
@@ -21,7 +20,7 @@ import {
 } from '../../services/preferences.js';
 import { createUserTranslator } from '../../services/bot-i18n.js';
 import { initializeLocale } from '../../services/i18n.js';
-import { executeMixer } from '@xivdyetools/bot-logic';
+import { resolveColorInput, executeMixer } from '@xivdyetools/bot-logic';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
@@ -30,7 +29,7 @@ export async function handleMixerV4Command(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
   const t = await createUserTranslator(env.KV, userId, interaction.locale);
@@ -39,7 +38,8 @@ export async function handleMixerV4Command(
   const dye1Input = options.find((opt) => opt.name === 'dye1')?.value as string | undefined;
   const dye2Input = options.find((opt) => opt.name === 'dye2')?.value as string | undefined;
   const explicitMode = options.find((opt) => opt.name === 'mode')?.value as string | undefined;
-  const explicitMatching = options.find((opt) => opt.name === 'matching')?.value as string | undefined;
+  const explicitMatching = options.find((opt) => opt.name === 'matching')?.value as
+    string | undefined;
   const explicitCount = options.find((opt) => opt.name === 'count')?.value as number | undefined;
 
   if (!dye1Input || !dye2Input) {
@@ -122,7 +122,7 @@ export async function handleMixerV4Command(
           embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
         });
       }
-    })()
+    })(),
   );
 
   return deferredResponse();

@@ -11,12 +11,8 @@ import { describe, it, expect } from 'vitest';
 import {
   sanitizePresetName,
   sanitizePresetDescription,
-  sanitizeCollectionName,
-  sanitizeCollectionDescription,
   MAX_PRESET_NAME_LENGTH,
   MAX_PRESET_DESCRIPTION_LENGTH,
-  MAX_COLLECTION_NAME_LENGTH,
-  MAX_COLLECTION_DESCRIPTION_LENGTH,
 } from './sanitize.js';
 
 // ============================================================================
@@ -140,24 +136,6 @@ describe('sanitizePresetDescription — truncation', () => {
   });
 });
 
-describe('sanitizeCollectionName — truncation', () => {
-  it('truncates names longer than MAX_COLLECTION_NAME_LENGTH', () => {
-    const longName = 'c'.repeat(MAX_COLLECTION_NAME_LENGTH + 5);
-    const result = sanitizeCollectionName(longName);
-    expect(result.length).toBeLessThanOrEqual(MAX_COLLECTION_NAME_LENGTH);
-    expect(result.endsWith('…')).toBe(true);
-  });
-});
-
-describe('sanitizeCollectionDescription — truncation', () => {
-  it('truncates descriptions longer than MAX_COLLECTION_DESCRIPTION_LENGTH', () => {
-    const longDesc = 'd'.repeat(MAX_COLLECTION_DESCRIPTION_LENGTH + 5);
-    const result = sanitizeCollectionDescription(longDesc);
-    expect(result.length).toBeLessThanOrEqual(MAX_COLLECTION_DESCRIPTION_LENGTH);
-    expect(result.endsWith('…')).toBe(true);
-  });
-});
-
 // ============================================================================
 // Non-string input defence
 // ============================================================================
@@ -184,7 +162,7 @@ describe('normal input preservation', () => {
   });
 
   it('passes through punctuation and symbols', () => {
-    expect(sanitizePresetName("FF14 Dye Set #1 (Metallic)")).toBe("FF14 Dye Set #1 (Metallic)");
+    expect(sanitizePresetName('FF14 Dye Set #1 (Metallic)')).toBe('FF14 Dye Set #1 (Metallic)');
   });
 
   it('passes through accented Latin characters', () => {

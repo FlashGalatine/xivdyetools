@@ -135,21 +135,6 @@ export interface BudgetLedgerFindResult {
 }
 
 // ============================================================================
-// USER PREFERENCE TYPES
-// ============================================================================
-
-/**
- * User's saved world/datacenter preference
- */
-export interface UserWorldPreference {
-  /** World name or datacenter */
-  world: string;
-
-  /** When this preference was set (ISO timestamp) */
-  setAt: string;
-}
-
-// ============================================================================
 // QUICK PICK TYPES
 // ============================================================================
 
@@ -194,4 +179,3 @@ export class UniversalisError extends Error {
     this.isRateLimited = status === 429;
   }
 }
-

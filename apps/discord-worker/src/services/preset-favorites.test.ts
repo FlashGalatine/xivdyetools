@@ -6,7 +6,6 @@ import {
   getPresetFavorites,
   addPresetFavorite,
   removePresetFavorite,
-  isPresetFavorited,
   MAX_PRESET_FAVORITES,
 } from './preset-favorites.js';
 
@@ -97,7 +96,7 @@ describe('preset-favorites.ts', () => {
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to get preset favorite entries',
         expect.any(Error),
-        { userId: mockUserId }
+        { userId: mockUserId },
       );
     });
 
@@ -147,13 +146,19 @@ describe('preset-favorites.ts', () => {
     it('should return error and log on KV failure', async () => {
       mockKV.put = vi.fn().mockRejectedValue(new Error('KV error'));
 
-      const result = await addPresetFavorite(mockKV, mockUserId, 'preset-a', 'Preset A', mockLogger);
+      const result = await addPresetFavorite(
+        mockKV,
+        mockUserId,
+        'preset-a',
+        'Preset A',
+        mockLogger,
+      );
 
       expect(result).toEqual({ success: false, reason: 'error' });
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to add preset favorite',
         expect.any(Error),
-        { userId: mockUserId, presetId: 'preset-a' }
+        { userId: mockUserId, presetId: 'preset-a' },
       );
     });
 
@@ -204,7 +209,7 @@ describe('preset-favorites.ts', () => {
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to remove preset favorite',
         expect.any(Error),
-        { userId: mockUserId, presetId: 'preset-a' }
+        { userId: mockUserId, presetId: 'preset-a' },
       );
     });
 
@@ -215,30 +220,6 @@ describe('preset-favorites.ts', () => {
       const result = await removePresetFavorite(mockKV, mockUserId, 'preset-a');
 
       expect(result).toEqual({ success: false, reason: 'error' });
-    });
-  });
-
-  describe('isPresetFavorited', () => {
-    it('should return true if preset is favorited', async () => {
-      mockKV._store.set(KEY, JSON.stringify(['preset-a']));
-
-      const result = await isPresetFavorited(mockKV, mockUserId, 'preset-a');
-
-      expect(result).toBe(true);
-    });
-
-    it('should return false if preset is not favorited', async () => {
-      mockKV._store.set(KEY, JSON.stringify(['preset-a']));
-
-      const result = await isPresetFavorited(mockKV, mockUserId, 'preset-missing');
-
-      expect(result).toBe(false);
-    });
-
-    it('should return false when user has no favorites', async () => {
-      const result = await isPresetFavorited(mockKV, mockUserId, 'preset-a');
-
-      expect(result).toBe(false);
     });
   });
 });

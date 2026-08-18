@@ -67,7 +67,7 @@ function buildV2Key(userId: string): string {
 export async function getPresetFavoriteEntries(
   kv: KVNamespace,
   userId: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<PresetFavoriteEntry[]> {
   try {
     const v2 = await kv.get(buildV2Key(userId));
@@ -77,7 +77,9 @@ export async function getPresetFavoriteEntries(
         Array.isArray(parsed) &&
         parsed.every(
           (x): x is PresetFavoriteEntry =>
-            typeof x === 'object' && x !== null && typeof (x as PresetFavoriteEntry).id === 'string'
+            typeof x === 'object' &&
+            x !== null &&
+            typeof (x as PresetFavoriteEntry).id === 'string',
         )
       ) {
         return parsed.map((e) => ({ id: e.id, name: typeof e.name === 'string' ? e.name : '' }));
@@ -91,7 +93,11 @@ export async function getPresetFavoriteEntries(
       ? parsedV1.filter((x): x is string => typeof x === 'string').map((id) => ({ id, name: '' }))
       : [];
   } catch (error) {
-    logger?.error('Failed to get preset favorite entries', error instanceof Error ? error : undefined, { userId });
+    logger?.error(
+      'Failed to get preset favorite entries',
+      error instanceof Error ? error : undefined,
+      { userId },
+    );
     return [];
   }
 }
@@ -101,7 +107,7 @@ export async function savePresetFavoriteEntries(
   kv: KVNamespace,
   userId: string,
   entries: PresetFavoriteEntry[],
-  _logger?: ExtendedLogger
+  _logger?: ExtendedLogger,
 ): Promise<void> {
   // Failures propagate — add/remove report them to the user; best-effort
   // callers (autocomplete lazy migration) wrap this in their own try/catch
@@ -120,7 +126,7 @@ export async function savePresetFavoriteEntries(
 export async function getPresetFavorites(
   kv: KVNamespace,
   userId: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<string[]> {
   const entries = await getPresetFavoriteEntries(kv, userId, logger);
   return entries.map((e) => e.id);
@@ -134,7 +140,7 @@ export async function addPresetFavorite(
   userId: string,
   presetId: string,
   presetName: string = '',
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<PresetFavoriteResult> {
   try {
     const entries = await getPresetFavoriteEntries(kv, userId, logger);
@@ -151,11 +157,10 @@ export async function addPresetFavorite(
     return { success: true };
   } catch (error) {
     if (logger) {
-      logger.error(
-        'Failed to add preset favorite',
-        error instanceof Error ? error : undefined,
-        { userId, presetId }
-      );
+      logger.error('Failed to add preset favorite', error instanceof Error ? error : undefined, {
+        userId,
+        presetId,
+      });
     }
     return { success: false, reason: 'error' };
   }
@@ -168,7 +173,7 @@ export async function removePresetFavorite(
   kv: KVNamespace,
   userId: string,
   presetId: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<PresetFavoriteResult> {
   try {
     const entries = await getPresetFavoriteEntries(kv, userId, logger);
@@ -181,25 +186,11 @@ export async function removePresetFavorite(
     return { success: true };
   } catch (error) {
     if (logger) {
-      logger.error(
-        'Failed to remove preset favorite',
-        error instanceof Error ? error : undefined,
-        { userId, presetId }
-      );
+      logger.error('Failed to remove preset favorite', error instanceof Error ? error : undefined, {
+        userId,
+        presetId,
+      });
     }
     return { success: false, reason: 'error' };
   }
-}
-
-/**
- * Check whether a user has favorited a given preset.
- */
-export async function isPresetFavorited(
-  kv: KVNamespace,
-  userId: string,
-  presetId: string,
-  logger?: ExtendedLogger
-): Promise<boolean> {
-  const favorites = await getPresetFavorites(kv, userId, logger);
-  return favorites.includes(presetId);
 }

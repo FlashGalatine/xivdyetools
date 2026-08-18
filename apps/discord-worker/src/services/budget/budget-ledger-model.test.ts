@@ -12,7 +12,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CONSOLIDATED_IDS, BAND_VOCABULARY, ColorService } from '@xivdyetools/core';
-import { findBudgetLedger, getDyeByName, getAllDyes } from './budget-calculator.js';
+import { dyeService } from '@xivdyetools/bot-logic';
+import { findBudgetLedger, getDyeByName } from './budget-calculator.js';
 import { fetchWithCache } from './price-cache.js';
 import { createMockEnv } from '../../test-utils.js';
 import type { DyePriceData } from '../../types/budget.js';
@@ -136,12 +137,14 @@ describe('findBudgetLedger (13G model)', () => {
     // Every pricing path in the candidate net is priced AT or above the
     // 216 vendor floor, so nothing survives the cheaper-than-target filter.
     // (Unpriced rows would stay — that is the offline degrade, not the floor.)
-    const boardOnlyNearby = getAllDyes().filter(
-      (d) =>
-        d.consolidationType === null &&
-        d.itemID !== sootBlack.itemID &&
-        ColorService.getDistanceForMethod(sootBlack.hex, d.hex, 'ciede2000') <= 8
-    );
+    const boardOnlyNearby = dyeService
+      .getAllDyes()
+      .filter(
+        (d) =>
+          d.consolidationType === null &&
+          d.itemID !== sootBlack.itemID &&
+          ColorService.getDistanceForMethod(sootBlack.hex, d.hex, 'ciede2000') <= 8,
+      );
     setPrices([
       price(CONSOLIDATED_IDS.A!, 248),
       price(CONSOLIDATED_IDS.B!, 5000),

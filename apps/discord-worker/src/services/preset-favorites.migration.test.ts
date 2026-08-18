@@ -12,7 +12,6 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   addPresetFavorite,
   getPresetFavoriteEntries,
-  isPresetFavorited,
   removePresetFavorite,
   savePresetFavoriteEntries,
 } from './preset-favorites.js';
@@ -257,26 +256,5 @@ describe('removePresetFavorite', () => {
     vi.mocked(kv.put).mockRejectedValue(new Error('KV down'));
 
     expect(await removePresetFavorite(kv, 'user-1', 'p1')).toMatchObject({ success: false });
-  });
-});
-
-describe('isPresetFavorited', () => {
-  it('is true only for an id the user actually favorited', async () => {
-    const kv = memoryKv();
-    await addPresetFavorite(kv, 'user-1', 'p1', 'One');
-
-    expect(await isPresetFavorited(kv, 'user-1', 'p1')).toBe(true);
-    expect(await isPresetFavorited(kv, 'user-1', 'p2')).toBe(false);
-  });
-
-  it('is false for a user with nothing stored', async () => {
-    expect(await isPresetFavorited(memoryKv(), 'user-1', 'p1')).toBe(false);
-  });
-
-  it('sees favorites recorded in the legacy v1 shape', async () => {
-    const { v1 } = await keyNames();
-    const kv = memoryKv({ [v1]: JSON.stringify(['p1']) });
-
-    expect(await isPresetFavorited(kv, 'user-1', 'p1')).toBe(true);
   });
 });

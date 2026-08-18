@@ -21,7 +21,7 @@ import {
   type ConsolidationType,
   type MatchingMethod,
 } from '@xivdyetools/core';
-import { dyeService } from '../../utils/color.js';
+import { dyeService } from '@xivdyetools/bot-logic';
 import type { Dye } from '@xivdyetools/types';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { Env } from '../../types/env.js';
@@ -75,7 +75,7 @@ interface GroupPricing {
 function groupPricing(
   type: ConsolidationType | null,
   ownItemId: number,
-  boardPrice: (marketId: number) => number | null
+  boardPrice: (marketId: number) => number | null,
 ): GroupPricing {
   if (type === 'A') {
     const vendor = CONSOLIDATED_DYES.A.price;
@@ -113,12 +113,11 @@ export async function findBudgetLedger(
   targetDyeId: number,
   world: string,
   options: LedgerSearchOptions = {},
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<BudgetLedgerFindResult> {
   const method: MatchingMethod = options.method ?? 'ciede2000';
   const matchLine = Math.max(2, Math.min(20, options.matchLine ?? DEFAULT_MATCH_LINE));
-  const threshold =
-    method === 'ciede2000' ? matchLine : BAND_VOCABULARY.match[method].cuts[1];
+  const threshold = method === 'ciede2000' ? matchLine : BAND_VOCABULARY.match[method].cuts[1];
 
   const targetDye = dyeService.getDyeById(targetDyeId);
   if (!targetDye) {
@@ -149,7 +148,13 @@ export async function findBudgetLedger(
       method === 'ciede2000'
         ? de
         : ColorService.getDistanceForMethod(targetDye.hex, dye.hex, 'ciede2000');
-    candidates.push({ dye, de, de2000, pricing: { price: null, source: null, vendorCheaper: false }, perDe: null });
+    candidates.push({
+      dye,
+      de,
+      de2000,
+      pricing: { price: null, source: null, vendorCheaper: false },
+      perDe: null,
+    });
   }
 
   // 2. Fetch prices (deduplicated market IDs — consolidated groups collapse)
@@ -159,7 +164,7 @@ export async function findBudgetLedger(
     world,
     Array.from(marketIds),
     (ids) => fetchPricesBatched(env, world, ids, logger),
-    logger
+    logger,
   );
   const boardPrice = (marketId: number): number | null =>
     prices.get(marketId)?.currentMinPrice ?? null;
@@ -222,8 +227,7 @@ export async function findBudgetLedger(
 
   // 7. Pixel cap: groups materialize as their first row is accepted; a row
   //    that cannot pay for its group header is omitted (named in the embed).
-  let budget =
-    LEDGER_CONTENT_BUDGET - (method === 'ciede2000' ? FOOTER_H : FOOTER_2LINE_H);
+  let budget = LEDGER_CONTENT_BUDGET - (method === 'ciede2000' ? FOOTER_H : FOOTER_2LINE_H);
   const grouped = new Map<string, LedgerGroupResult>();
   const order: string[] = [];
   const omitted: Array<{ itemID: number; name: string }> = [];
@@ -260,8 +264,7 @@ export async function findBudgetLedger(
   const priceTimestamps = Array.from(prices.values())
     .map((p) => p.fetchedAt)
     .filter(Boolean);
-  const pricesAsOf =
-    priceTimestamps.length > 0 ? priceTimestamps[0] : new Date().toISOString();
+  const pricesAsOf = priceTimestamps.length > 0 ? priceTimestamps[0] : new Date().toISOString();
 
   return {
     targetDye,
@@ -283,16 +286,6 @@ export async function findBudgetLedger(
 // ============================================================================
 
 /**
- * Search for a dye by name
- *
- * @param query - Search query (partial match, case-insensitive)
- * @returns Matching dyes
- */
-export function searchDyes(query: string): Dye[] {
-  return dyeService.searchByName(query);
-}
-
-/**
  * Get a dye by ID
  */
 export function getDyeById(id: number): Dye | null {
@@ -309,9 +302,7 @@ export function getDyeById(id: number): Dye | null {
 export function getDyeByName(name: string): Dye | null {
   const normalizedName = name.toLowerCase().trim();
   const allDyes = dyeService.getAllDyes();
-  return (
-    allDyes.find((dye) => dye.itemID > 0 && dye.name.toLowerCase() === normalizedName) ?? null
-  );
+  return allDyes.find((dye) => dye.itemID > 0 && dye.name.toLowerCase() === normalizedName) ?? null;
 }
 
 /**
@@ -319,27 +310,12 @@ export function getDyeByName(name: string): Dye | null {
  */
 export function getDyeAutocomplete(
   query: string,
-  limit: number = 25
+  limit: number = 25,
 ): Array<{ name: string; value: string }> {
-  const matches = dyeService.searchByName(query)
-    .filter((dye) => dye.itemID > 0);
+  const matches = dyeService.searchByName(query).filter((dye) => dye.itemID > 0);
 
   return matches.slice(0, limit).map((dye) => ({
     name: `${dye.name} (${dye.category})`,
     value: String(dye.itemID),
   }));
-}
-
-/**
- * Get all dyes
- */
-export function getAllDyes(): Dye[] {
-  return dyeService.getAllDyes();
-}
-
-/**
- * Get all dye categories
- */
-export function getCategories(): string[] {
-  return dyeService.getCategories();
 }

@@ -145,10 +145,12 @@ export interface DiscordInteraction {
     name?: string;
     type?: number;
     custom_id?: string; // For button/modal interactions
+    component_type?: number; // For message component interactions
     options?: Array<{
       name: string;
       type?: number;
       value?: string | number | boolean;
+      focused?: boolean;
       options?: Array<{
         name: string;
         type?: number;
@@ -213,12 +215,8 @@ export enum InteractionResponseType {
   DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE = 5,
   /** For components, ACK an interaction and edit the original message later */
   DEFERRED_UPDATE_MESSAGE = 6,
-  /** For components, edit the message the component was attached to */
-  UPDATE_MESSAGE = 7,
   /** Respond to an autocomplete interaction with suggested choices */
   APPLICATION_COMMAND_AUTOCOMPLETE_RESULT = 8,
-  /** Respond to an interaction with a popup modal */
-  MODAL = 9,
 }
 
 /**

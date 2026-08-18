@@ -8,13 +8,12 @@
 import type { Dye } from '@xivdyetools/types';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
-import { resolveColorInput as resolveColor } from '../../utils/color.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslatorWithPrefs, createTranslator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
-import { executeComparison } from '@xivdyetools/bot-logic';
+import { resolveColorInput as resolveColor, executeComparison } from '@xivdyetools/bot-logic';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 function resolveColorInput(input: string): Dye | null {
@@ -26,7 +25,7 @@ export async function handleComparisonCommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
   const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
@@ -57,7 +56,9 @@ export async function handleComparisonCommand(
     return Response.json({
       type: 4,
       data: {
-        embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: failedInputs }))],
+        embeds: [
+          errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: failedInputs })),
+        ],
         flags: 64,
       },
     });
@@ -76,7 +77,7 @@ async function processComparisonCommand(
   dyes: Dye[],
   locale: LocaleCode,
   theme?: 'dark' | 'light',
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   const t = createTranslator(locale);
   await initializeLocale(locale);
@@ -105,13 +106,15 @@ async function processComparisonCommand(
       .join('\n');
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [{
-        title: result.embed.title,
-        description: dyeList,
-        color: result.embed.color,
-        image: { url: 'attachment://image.png' },
-        footer: { text: result.embed.footer ?? t.t('common.footer') },
-      }],
+      embeds: [
+        {
+          title: result.embed.title,
+          description: dyeList,
+          color: result.embed.color,
+          image: { url: 'attachment://image.png' },
+          footer: { text: result.embed.footer ?? t.t('common.footer') },
+        },
+      ],
       file: { name: 'comparison.png', data: pngBuffer, contentType: 'image/png' },
     });
   } catch (error) {

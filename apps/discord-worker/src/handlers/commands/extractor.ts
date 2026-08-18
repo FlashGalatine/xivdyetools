@@ -27,7 +27,7 @@ import {
   errorEmbed,
   hexToDiscordColor,
 } from '../../utils/response.js';
-import { resolveColorInput as resolveColor, dyeService } from '../../utils/color.js';
+import { resolveColorInput as resolveColor, dyeService } from '@xivdyetools/bot-logic';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { createCopyButtons } from '../buttons/index.js';
 import {
@@ -104,7 +104,7 @@ function methodKeyLabel(label: string, method: MatchingMethod): string {
  */
 function deduplicatePaletteResults(
   matches: PaletteMatch[],
-  matchingMethod: MatchingMethod
+  matchingMethod: MatchingMethod,
 ): PaletteMatch[] {
   if (matches.length <= 1) return matches;
 
@@ -157,7 +157,7 @@ export async function handleExtractorCommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   // Get subcommand from options
   const options = interaction.data?.options || [];
@@ -200,7 +200,7 @@ async function handleColorSubcommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  options: Array<{ name: string; value?: string | number | boolean }>
+  options: Array<{ name: string; value?: string | number | boolean }>,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
   const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
@@ -216,13 +216,13 @@ async function handleColorSubcommand(
   // Matching method: explicit option > stored preference > suite default (dE2000)
   const matchingMethod = resolveMatchingMethod(
     options.find((opt) => opt.name === 'matching')?.value as string | undefined,
-    prefs
+    prefs,
   );
 
   const colorInput = colorOption?.value as string | undefined;
   const matchCount = Math.min(
     Math.max((countOption?.value as number) || 1, MIN_MATCH_COUNT),
-    MAX_MATCH_COUNT
+    MAX_MATCH_COUNT,
   );
 
   // Validate required input
@@ -237,9 +237,7 @@ async function handleColorSubcommand(
   const resolved = resolveColorInput(colorInput);
   if (!resolved) {
     return messageResponse({
-      embeds: [
-        errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: colorInput })),
-      ],
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: colorInput }))],
       flags: 64,
     });
   }
@@ -261,16 +259,23 @@ async function handleColorSubcommand(
 
   if (matches.length === 0) {
     return messageResponse({
-      embeds: [
-        errorEmbed(t.t('common.error'), t.t('errors.noMatchFound')),
-      ],
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.noMatchFound'))],
       flags: 64,
     });
   }
 
   // Defer — the card renders to PNG in the background
   ctx.waitUntil(
-    renderColorSheet(interaction, env, targetHex, matches, t, matchingMethod, theme, resolved.fromDye)
+    renderColorSheet(
+      interaction,
+      env,
+      targetHex,
+      matches,
+      t,
+      matchingMethod,
+      theme,
+      resolved.fromDye,
+    ),
   );
   return deferredResponse();
 }
@@ -289,7 +294,7 @@ async function renderColorSheet(
   t: Translator,
   matchingMethod: MatchingMethod,
   theme?: 'dark' | 'light',
-  fromDye?: Dye
+  fromDye?: Dye,
 ): Promise<void> {
   const locale = t.getLocale();
   try {
@@ -381,7 +386,7 @@ async function handleImageSubcommand(
   env: Env,
   ctx: ExecutionContext,
   options: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
   const attachments = interaction.data?.resolved?.attachments || {};
@@ -437,17 +442,18 @@ async function handleImageSubcommand(
   // Matching method: explicit option > stored preference > suite default (dE2000)
   const matchingMethod = resolveMatchingMethod(
     options.find((opt) => opt.name === 'matching')?.value as string | undefined,
-    prefs
+    prefs,
   );
   // prevent_duplicates defaults to true (schema); only an explicit false disables it
-  const preventDuplicates = options.find((opt) => opt.name === 'prevent_duplicates')?.value !== false;
+  const preventDuplicates =
+    options.find((opt) => opt.name === 'prevent_duplicates')?.value !== false;
   ctx.waitUntil(
     processImageExtraction(interaction, env, attachment.url, colorCount, locale, {
       matchingMethod,
       preventDuplicates,
       theme: prefs.theme,
       logger,
-    })
+    }),
   );
 
   return deferResponse;
@@ -467,7 +473,7 @@ async function processImageExtraction(
     preventDuplicates: boolean;
     theme?: 'dark' | 'light';
     logger?: ExtendedLogger;
-  }
+  },
 ): Promise<void> {
   const { matchingMethod, preventDuplicates, theme, logger } = opts;
   const t = createTranslator(locale);
@@ -482,14 +488,12 @@ async function processImageExtraction(
     // Step 3: Convert pixels to RGB array (filtering transparent pixels)
     const rgbPixels = PaletteService.pixelDataToRGBFiltered(
       processed.pixels as unknown as Uint8ClampedArray,
-      128 // Alpha threshold
+      128, // Alpha threshold
     );
 
     if (rgbPixels.length === 0) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-        embeds: [
-          errorEmbed(t.t('common.error'), t.t('matchImage.noColors')),
-        ],
+        embeds: [errorEmbed(t.t('common.error'), t.t('matchImage.noColors'))],
       });
       return;
     }
@@ -510,9 +514,7 @@ async function processImageExtraction(
 
     if (matches.length === 0) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-        embeds: [
-          errorEmbed(t.t('common.error'), t.t('matchImage.extractionFailed')),
-        ],
+        embeds: [errorEmbed(t.t('common.error'), t.t('matchImage.extractionFailed'))],
       });
       return;
     }
@@ -592,4 +594,3 @@ async function processImageExtraction(
     });
   }
 }
-

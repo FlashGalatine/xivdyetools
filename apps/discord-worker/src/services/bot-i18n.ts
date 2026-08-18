@@ -15,11 +15,7 @@ import { getUserPreferences } from './preferences.js';
 import type { UserPreferences } from '../types/preferences.js';
 
 // Re-export from the shared package
-export {
-  Translator,
-  createTranslator,
-} from '@xivdyetools/bot-logic/i18n';
-export type { LocaleCode } from '@xivdyetools/bot-logic/i18n';
+export { Translator, createTranslator } from '@xivdyetools/bot-logic/i18n';
 
 import { Translator } from '@xivdyetools/bot-logic/i18n';
 
@@ -35,7 +31,7 @@ export async function createUserTranslator(
   kv: KVNamespace,
   userId: string,
   discordLocale?: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Translator> {
   const locale = await resolveUserLocale(kv, userId, discordLocale);
   return new Translator(locale, logger);
@@ -55,7 +51,7 @@ export async function createUserTranslatorWithPrefs(
   kv: KVNamespace,
   userId: string,
   discordLocale?: string,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<{ t: Translator; prefs: UserPreferences }> {
   const prefs = await getUserPreferences(kv, userId, logger);
   if (prefs.language && isValidLocale(prefs.language)) {

@@ -1,23 +1,13 @@
 /**
- * Locale resolution and the CJK font-stack fallback.
+ * Locale resolution.
  *
- * Two rules with real rendering consequences:
- *
- * - Locale resolution is a four-rung ladder (unified prefs → legacy i18n
- *   pref → Discord's client locale → 'en'). A corrupt prefs blob must fall
- *   *through* rather than throw, because this runs before every command.
- * - Font order is not cosmetic. JP must precede SC only for `ja`; if zh
- *   picked up the Japanese face, shared ideographs would render in the wrong
- *   letterforms. SC has no Hangul at all, so KR always comes last.
+ * Locale resolution is a four-rung ladder (unified prefs → legacy i18n
+ * pref → Discord's client locale → 'en'). A corrupt prefs blob must fall
+ * *through* rather than throw, because this runs before every command.
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import {
-  discordLocaleToLocaleCode,
-  formatLocaleDisplay,
-  resolveUserLocale,
-} from './i18n.js';
-import { FONT_FAMILIES, getFontWithCjkFallback } from './fonts.js';
+import { discordLocaleToLocaleCode, resolveUserLocale } from './i18n.js';
 
 function memoryKv(seed: Record<string, string> = {}) {
   const store = new Map(Object.entries(seed));
@@ -92,55 +82,5 @@ describe('discordLocaleToLocaleCode', () => {
 
   it('returns null for a locale the bot does not ship', () => {
     expect(discordLocaleToLocaleCode('tlh-KX')).toBeNull();
-  });
-});
-
-describe('formatLocaleDisplay', () => {
-  it.each(['en', 'ja', 'de', 'fr', 'ko', 'zh'] as const)(
-    'renders %s with a flag and both names',
-    (locale) => {
-      const display = formatLocaleDisplay(locale);
-
-      expect(display).toContain('(');
-      expect(display.length).toBeGreaterThan(locale.length);
-    }
-  );
-
-  it('falls back to the bare code for an unknown locale', () => {
-    expect(formatLocaleDisplay('xx' as never)).toBe('xx');
-  });
-});
-
-describe('getFontWithCjkFallback', () => {
-  it('puts the primary font first', () => {
-    expect(getFontWithCjkFallback('Onest', 'en').startsWith('Onest')).toBe(true);
-  });
-
-  it('puts JP ahead of SC for ja, so kana and kanji use Japanese letterforms', () => {
-    const stack = getFontWithCjkFallback('Onest', 'ja');
-
-    if (!stack.includes(FONT_FAMILIES.cjk)) return; // no CJK fonts bundled here
-    expect(stack.indexOf('Noto Sans JP')).toBeLessThan(stack.indexOf(FONT_FAMILIES.cjk));
-  });
-
-  it.each(['zh', 'ko', 'en', 'de', undefined])(
-    'does not put JP first for %s',
-    (locale) => {
-      const stack = getFontWithCjkFallback('Onest', locale);
-
-      expect(stack).not.toContain('Noto Sans JP');
-    }
-  );
-
-  it('always puts KR last — SC carries no Hangul glyphs', () => {
-    for (const locale of ['ja', 'zh', 'ko', 'en']) {
-      const stack = getFontWithCjkFallback('Onest', locale);
-      if (!stack.includes(FONT_FAMILIES.kr)) continue;
-      expect(stack.trim().endsWith(FONT_FAMILIES.kr)).toBe(true);
-    }
-  });
-
-  it('names distinct families for the three Latin faces', () => {
-    expect(new Set([FONT_FAMILIES.header, FONT_FAMILIES.body, FONT_FAMILIES.mono]).size).toBe(3);
   });
 });

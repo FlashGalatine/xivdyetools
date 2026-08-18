@@ -15,13 +15,19 @@ vi.mock('@xivdyetools/core', () => ({
     };
   }),
   // bot-logic/input-resolution.ts creates a DyeService instance at module load time
-  DyeService: vi.fn().mockImplementation(function () { return {}; }),
+  DyeService: vi.fn().mockImplementation(function () {
+    return {};
+  }),
   dyeDatabase: [],
   // 5.0 matching vocabulary (mirrors core; the mock exists only to dodge
   // JSON imports, not to change behaviour)
   MATCHING_METHODS: ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish'],
   DEFAULT_MATCHING_METHOD: 'ciede2000',
-  LEGACY_MATCHING_METHOD_MAP: { hyab: 'ciede2000', 'oklch-weighted': 'ciede2000', euclidean: 'rgb' },
+  LEGACY_MATCHING_METHOD_MAP: {
+    hyab: 'ciede2000',
+    'oklch-weighted': 'ciede2000',
+    euclidean: 'rgb',
+  },
   isMatchingMethod: (v: unknown) =>
     typeof v === 'string' &&
     ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish'].includes(v),
@@ -66,7 +72,6 @@ import {
   resolveBlendingMode,
   resolveMatchingMethod,
   resolveCount,
-  resolveMarket,
   validatePreferenceValue,
   getDefaultValue,
   getAffectedCommands,
@@ -115,10 +120,13 @@ describe('Preferences Service', () => {
     });
 
     it('migrates legacy world preference', async () => {
-      mockKV._store.set(`budget:world:v1:${testUserId}`, JSON.stringify({
-        world: 'Cactuar',
-        setAt: '2025-01-01T00:00:00Z',
-      }));
+      mockKV._store.set(
+        `budget:world:v1:${testUserId}`,
+        JSON.stringify({
+          world: 'Cactuar',
+          setAt: '2025-01-01T00:00:00Z',
+        }),
+      );
 
       const prefs = await getUserPreferences(mockKV, testUserId, mockLogger);
       expect(prefs.world).toBe('Cactuar');
@@ -126,10 +134,13 @@ describe('Preferences Service', () => {
 
     it('migrates both legacy preferences', async () => {
       mockKV._store.set(`i18n:user:${testUserId}`, 'fr');
-      mockKV._store.set(`budget:world:v1:${testUserId}`, JSON.stringify({
-        world: 'Gilgamesh',
-        setAt: '2025-01-01T00:00:00Z',
-      }));
+      mockKV._store.set(
+        `budget:world:v1:${testUserId}`,
+        JSON.stringify({
+          world: 'Gilgamesh',
+          setAt: '2025-01-01T00:00:00Z',
+        }),
+      );
 
       const prefs = await getUserPreferences(mockKV, testUserId, mockLogger);
       expect(prefs.language).toBe('fr');
@@ -319,28 +330,6 @@ describe('Preferences Service', () => {
       it('uses default when no explicit or preference', () => {
         const prefs: UserPreferences = {};
         expect(resolveCount(undefined, prefs)).toBe(5);
-      });
-    });
-
-    describe('resolveMarket', () => {
-      it('uses explicit true', () => {
-        const prefs: UserPreferences = { market: false };
-        expect(resolveMarket(true, prefs)).toBe(true);
-      });
-
-      it('uses explicit false', () => {
-        const prefs: UserPreferences = { market: true };
-        expect(resolveMarket(false, prefs)).toBe(false);
-      });
-
-      it('uses preference when no explicit', () => {
-        const prefs: UserPreferences = { market: true };
-        expect(resolveMarket(undefined, prefs)).toBe(true);
-      });
-
-      it('uses default when no explicit or preference', () => {
-        const prefs: UserPreferences = {};
-        expect(resolveMarket(undefined, prefs)).toBe(false);
       });
     });
   });

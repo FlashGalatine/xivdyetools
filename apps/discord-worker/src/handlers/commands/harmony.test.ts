@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handleHarmonyCommand, getHarmonyTypeChoices } from './harmony.js';
+import { handleHarmonyCommand } from './harmony.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 const resolveUserLocaleMock = vi.hoisted(() => vi.fn());
 const initializeLocaleMock = vi.hoisted(() => vi.fn());
-const getLocalizedDyeNameMock = vi.hoisted(() => vi.fn((itemID?: number, name?: string) => name ?? `dye-${itemID ?? 'unknown'}`));
+const getLocalizedDyeNameMock = vi.hoisted(() =>
+  vi.fn((itemID?: number, name?: string) => name ?? `dye-${itemID ?? 'unknown'}`),
+);
 const createUserTranslatorMock = vi.hoisted(() => vi.fn());
 const createTranslatorMock = vi.hoisted(() => vi.fn());
 const renderSvgToPngMock = vi.hoisted(() => vi.fn());
@@ -23,10 +25,12 @@ vi.mock('../../services/i18n.js', () => ({
 }));
 
 vi.mock('../../services/bot-i18n.js', () => ({
-  createUserTranslator: createUserTranslatorMock.mockImplementation(async (kv, userId: string, discordLocale?: string) => {
-    await resolveUserLocaleMock(kv, userId, discordLocale);
-    return translatorStub;
-  }),
+  createUserTranslator: createUserTranslatorMock.mockImplementation(
+    async (kv, userId: string, discordLocale?: string) => {
+      await resolveUserLocaleMock(kv, userId, discordLocale);
+      return translatorStub;
+    },
+  ),
   createTranslator: createTranslatorMock.mockReturnValue(translatorStub),
 }));
 
@@ -50,12 +54,30 @@ vi.mock('../../utils/response.js', () => ({
 }));
 
 vi.mock('../../services/emoji.js', () => ({
-  getDyeEmoji: (id: number) => id ? '🎨' : undefined,
+  getDyeEmoji: (id: number) => (id ? '🎨' : undefined),
 }));
 
-const mockDyeRed = { id: 1, name: 'Rolanberry Red', hex: '#FF0000', category: 'General', itemID: 1001 };
-const mockDyeGreen = { id: 2, name: 'Celeste Green', hex: '#00FF00', category: 'General', itemID: 1002 };
-const mockDyeBlue = { id: 3, name: 'Ceruleum Blue', hex: '#0000FF', category: 'General', itemID: 1003 };
+const mockDyeRed = {
+  id: 1,
+  name: 'Rolanberry Red',
+  hex: '#FF0000',
+  category: 'General',
+  itemID: 1001,
+};
+const mockDyeGreen = {
+  id: 2,
+  name: 'Celeste Green',
+  hex: '#00FF00',
+  category: 'General',
+  itemID: 1002,
+};
+const mockDyeBlue = {
+  id: 3,
+  name: 'Ceruleum Blue',
+  hex: '#0000FF',
+  category: 'General',
+  itemID: 1003,
+};
 
 vi.mock('@xivdyetools/core', () => {
   class MockDyeService {
@@ -66,19 +88,37 @@ vi.mock('@xivdyetools/core', () => {
       if (lower.includes('blue')) return [mockDyeBlue];
       return [];
     }
-    findTriadicDyes() { return [mockDyeRed, mockDyeGreen, mockDyeBlue]; }
-    findComplementaryPair() { return mockDyeGreen; }
-    findAnalogousDyes() { return [mockDyeRed, mockDyeGreen]; }
-    findSplitComplementaryDyes() { return [mockDyeGreen, mockDyeBlue]; }
-    findTetradicDyes() { return [mockDyeRed, mockDyeGreen, mockDyeBlue]; }
-    findSquareDyes() { return [mockDyeRed, mockDyeGreen, mockDyeBlue]; }
-    findMonochromaticDyes() { return [mockDyeRed]; }
+    findTriadicDyes() {
+      return [mockDyeRed, mockDyeGreen, mockDyeBlue];
+    }
+    findComplementaryPair() {
+      return mockDyeGreen;
+    }
+    findAnalogousDyes() {
+      return [mockDyeRed, mockDyeGreen];
+    }
+    findSplitComplementaryDyes() {
+      return [mockDyeGreen, mockDyeBlue];
+    }
+    findTetradicDyes() {
+      return [mockDyeRed, mockDyeGreen, mockDyeBlue];
+    }
+    findSquareDyes() {
+      return [mockDyeRed, mockDyeGreen, mockDyeBlue];
+    }
+    findMonochromaticDyes() {
+      return [mockDyeRed];
+    }
   }
 
   class MockLocalizationService {
     async setLocale(_locale: string): Promise<void> {}
-    getDyeName(_itemID: number): string | undefined { return undefined; }
-    getCategory(category: string): string { return category; }
+    getDyeName(_itemID: number): string | undefined {
+      return undefined;
+    }
+    getCategory(category: string): string {
+      return category;
+    }
   }
 
   const dyeDatabase = {} as const;
@@ -194,7 +234,7 @@ describe('handleHarmonyCommand', () => {
         options: [
           { name: 'color', value: '#FF0000' },
           { name: 'type', value: 'triadic' },
-        ]
+        ],
       },
     } as unknown as DiscordInteraction;
 
@@ -212,7 +252,7 @@ describe('handleHarmonyCommand', () => {
         options: [
           { name: 'color', value: '#FF0000' },
           { name: 'type', value: 'complementary' },
-        ]
+        ],
       },
     } as unknown as DiscordInteraction;
 
@@ -230,7 +270,7 @@ describe('handleHarmonyCommand', () => {
         options: [
           { name: 'color', value: '#FF0000' },
           { name: 'type', value: 'analogous' },
-        ]
+        ],
       },
     } as unknown as DiscordInteraction;
 
@@ -248,7 +288,7 @@ describe('handleHarmonyCommand', () => {
         options: [
           { name: 'color', value: '#FF0000' },
           { name: 'type', value: 'split-complementary' },
-        ]
+        ],
       },
     } as unknown as DiscordInteraction;
 
@@ -266,7 +306,7 @@ describe('handleHarmonyCommand', () => {
         options: [
           { name: 'color', value: '#FF0000' },
           { name: 'type', value: 'tetradic' },
-        ]
+        ],
       },
     } as unknown as DiscordInteraction;
 
@@ -284,7 +324,7 @@ describe('handleHarmonyCommand', () => {
         options: [
           { name: 'color', value: '#FF0000' },
           { name: 'type', value: 'square' },
-        ]
+        ],
       },
     } as unknown as DiscordInteraction;
 
@@ -302,7 +342,7 @@ describe('handleHarmonyCommand', () => {
         options: [
           { name: 'color', value: '#FF0000' },
           { name: 'type', value: 'monochromatic' },
-        ]
+        ],
       },
     } as unknown as DiscordInteraction;
 
@@ -362,7 +402,7 @@ describe('handleHarmonyCommand', () => {
         options: [
           { name: 'color', value: '#FF0000' },
           { name: 'type', value: 'triadic' },
-        ]
+        ],
       },
     } as unknown as DiscordInteraction;
 
@@ -384,17 +424,14 @@ describe('handleHarmonyCommand', () => {
         options: [
           { name: 'color', value: '#FF0000' },
           { name: 'type', value: 'triadic' },
-        ]
+        ],
       },
     } as unknown as DiscordInteraction;
 
     await handleHarmonyCommand(interaction, env, ctx, mockLogger as any);
     await Promise.all(waitUntilCalls);
 
-    expect(mockLogger.error).toHaveBeenCalledWith(
-      'Harmony render error',
-      expect.any(Error)
-    );
+    expect(mockLogger.error).toHaveBeenCalledWith('Harmony render error', expect.any(Error));
   });
 
   it('handles case when no harmony dyes are found', async () => {
@@ -410,7 +447,7 @@ describe('handleHarmonyCommand', () => {
         options: [
           { name: 'color', value: '#000000' },
           { name: 'type', value: 'complementary' },
-        ]
+        ],
       },
     } as unknown as DiscordInteraction;
 
@@ -427,7 +464,7 @@ describe('handleHarmonyCommand', () => {
             description: 'errors.noMatchFound',
           }),
         ]),
-      })
+      }),
     );
 
     // Restore original
@@ -443,30 +480,12 @@ describe('handleHarmonyCommand', () => {
         options: [
           { name: 'color', value: '#FF0000' },
           // No type specified - should default to triadic
-        ]
+        ],
       },
     } as unknown as DiscordInteraction;
 
     const response = await handleHarmonyCommand(interaction, env, ctx);
     await Promise.all(waitUntilCalls);
     expect(response.status).toBe(200);
-  });
-});
-
-describe('getHarmonyTypeChoices', () => {
-  it('returns all harmony type choices', () => {
-    const choices = getHarmonyTypeChoices();
-
-    expect(choices).toHaveLength(8);
-    expect(choices.map(c => c.value)).toEqual([
-      'triadic',
-      'complementary',
-      'analogous',
-      'split-complementary',
-      'tetradic',
-      'inverted-tetradic',
-      'square',
-      'monochromatic',
-    ]);
   });
 });

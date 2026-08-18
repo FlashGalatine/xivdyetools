@@ -12,15 +12,28 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
-import { dyeService } from '../../utils/color.js';
-import { messageResponse, deferredResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
+import {
+  messageResponse,
+  deferredResponse,
+  errorEmbed,
+  hexToDiscordColor,
+} from '../../utils/response.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createCopyButtons } from '../buttons/index.js';
-import { createUserTranslatorWithPrefs, createTranslator, type Translator } from '../../services/bot-i18n.js';
-import { initializeLocale, getLocalizedDyeName, getLocalizedCategory, type LocaleCode } from '../../services/i18n.js';
+import {
+  createUserTranslatorWithPrefs,
+  createTranslator,
+  type Translator,
+} from '../../services/bot-i18n.js';
+import {
+  initializeLocale,
+  getLocalizedDyeName,
+  getLocalizedCategory,
+  type LocaleCode,
+} from '../../services/i18n.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
-import { executeDyeInfo, executeRandom } from '@xivdyetools/bot-logic';
+import { dyeService, executeDyeInfo, executeRandom } from '@xivdyetools/bot-logic';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import { BRAND_ACCENT, STATE } from '../../utils/brand.js';
 
@@ -31,7 +44,7 @@ import { BRAND_ACCENT, STATE } from '../../utils/brand.js';
 export async function handleDyeCommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
   const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
@@ -60,7 +73,12 @@ export async function handleDyeCommand(
       return handleRandomSubcommand(interaction, env, ctx, t, locale, theme, subcommand.options);
     default:
       return messageResponse({
-        embeds: [errorEmbed(t.t('common.error'), t.t('errors.unknownSubcommand', { name: subcommand.name }))],
+        embeds: [
+          errorEmbed(
+            t.t('common.error'),
+            t.t('errors.unknownSubcommand', { name: subcommand.name }),
+          ),
+        ],
         flags: 64,
       });
   }
@@ -73,7 +91,7 @@ export async function handleDyeCommand(
 function handleSearchSubcommand(
   t: Translator,
   applicationId: string,
-  options?: Array<{ name: string; value?: string | number | boolean }>
+  options?: Array<{ name: string; value?: string | number | boolean }>,
 ): Response {
   const query = options?.find((opt) => opt.name === 'query')?.value as string | undefined;
   if (!query) {
@@ -87,28 +105,38 @@ function handleSearchSubcommand(
 
   if (results.length === 0) {
     return messageResponse({
-      embeds: [{
-        title: t.t('dye.search.noResults', { query }),
-        description: t.t('dye.search.tryDifferent'),
-        color: STATE.neutral,
-      }],
+      embeds: [
+        {
+          title: t.t('dye.search.noResults', { query }),
+          description: t.t('dye.search.tryDifferent'),
+          color: STATE.neutral,
+        },
+      ],
     });
   }
 
   const displayResults = results.slice(0, 10);
-  const dyeList = displayResults.map((d) => formatDyeListItem(d, t.getLocale(), applicationId)).join('\n');
-  const moreText = results.length > 10 ? `\n\n*${t.t('dye.search.moreResults', { count: results.length - 10 })}*` : '';
-  const foundText = results.length === 1
-    ? t.t('dye.search.foundCount', { count: results.length })
-    : t.t('dye.search.foundCountPlural', { count: results.length });
+  const dyeList = displayResults
+    .map((d) => formatDyeListItem(d, t.getLocale(), applicationId))
+    .join('\n');
+  const moreText =
+    results.length > 10
+      ? `\n\n*${t.t('dye.search.moreResults', { count: results.length - 10 })}*`
+      : '';
+  const foundText =
+    results.length === 1
+      ? t.t('dye.search.foundCount', { count: results.length })
+      : t.t('dye.search.foundCountPlural', { count: results.length });
 
   return messageResponse({
-    embeds: [{
-      title: t.t('dye.search.resultsTitle', { query }),
-      description: `${foundText}\n\n${dyeList}${moreText}`,
-      color: displayResults[0] ? hexToDiscordColor(displayResults[0].hex) : BRAND_ACCENT,
-      footer: { text: t.t('dye.search.useInfoHint') },
-    }],
+    embeds: [
+      {
+        title: t.t('dye.search.resultsTitle', { query }),
+        description: `${foundText}\n\n${dyeList}${moreText}`,
+        color: displayResults[0] ? hexToDiscordColor(displayResults[0].hex) : BRAND_ACCENT,
+        footer: { text: t.t('dye.search.useInfoHint') },
+      },
+    ],
   });
 }
 
@@ -123,7 +151,7 @@ function handleInfoSubcommand(
   t: Translator,
   locale: LocaleCode,
   theme: 'dark' | 'light',
-  options?: Array<{ name: string; value?: string | number | boolean }>
+  options?: Array<{ name: string; value?: string | number | boolean }>,
 ): Response {
   const name = options?.find((opt) => opt.name === 'name')?.value as string | undefined;
   if (!name) {
@@ -153,7 +181,7 @@ async function processInfoCard(
   env: Env,
   dye: Dye,
   locale: LocaleCode,
-  theme: 'dark' | 'light'
+  theme: 'dark' | 'light',
 ): Promise<void> {
   const t = createTranslator(locale);
   const result = await executeDyeInfo({ dye, locale, theme });
@@ -172,17 +200,21 @@ async function processInfoCard(
     const rgb = dye.rgb;
     const hsv = dye.hsv;
     const copyButtons = createCopyButtons(dye.hex, rgb, {
-      h: Math.round(hsv.h), s: Math.round(hsv.s), v: Math.round(hsv.v),
+      h: Math.round(hsv.h),
+      s: Math.round(hsv.s),
+      v: Math.round(hsv.v),
     });
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [{
-        title: `${emojiPrefix}${result.localizedName}`,
-        description: result.embed.description,
-        color: result.embed.color,
-        image: { url: 'attachment://image.png' },
-        footer: { text: result.embed.footer ?? t.t('common.footer') },
-      }],
+      embeds: [
+        {
+          title: `${emojiPrefix}${result.localizedName}`,
+          description: result.embed.description,
+          color: result.embed.color,
+          image: { url: 'attachment://image.png' },
+          footer: { text: result.embed.footer ?? t.t('common.footer') },
+        },
+      ],
       components: [copyButtons],
       file: {
         name: `dye-${dye.name.toLowerCase().replace(/\s+/g, '-')}.png`,
@@ -200,7 +232,7 @@ async function sendDyeInfoFallback(
   env: Env,
   dye: Dye,
   locale: LocaleCode,
-  t: Translator
+  t: Translator,
 ): Promise<void> {
   const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
   const localizedCategory = getLocalizedCategory(dye.category, locale);
@@ -210,23 +242,31 @@ async function sendDyeInfoFallback(
   const hsv = dye.hsv;
 
   const copyButtons = createCopyButtons(dye.hex, rgb, {
-    h: Math.round(hsv.h), s: Math.round(hsv.s), v: Math.round(hsv.v),
+    h: Math.round(hsv.h),
+    s: Math.round(hsv.s),
+    v: Math.round(hsv.v),
   });
 
   await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-    embeds: [{
-      title: `${emojiPrefix}${localizedName}`,
-      description: t.t('dye.info.detailedInfo', { category: localizedCategory }),
-      color: hexToDiscordColor(dye.hex),
-      fields: [
-        { name: t.t('common.hexColor'), value: `\`${dye.hex.toUpperCase()}\``, inline: true },
-        { name: t.t('common.category'), value: localizedCategory, inline: true },
-        { name: t.t('common.itemId'), value: `\`${dye.id}\``, inline: true },
-        { name: t.t('common.rgb'), value: `\`rgb(${rgb.r}, ${rgb.g}, ${rgb.b})\``, inline: true },
-        { name: t.t('common.hsv'), value: `\`${Math.round(hsv.h)}°, ${Math.round(hsv.s)}%, ${Math.round(hsv.v)}%\``, inline: true },
-      ],
-      footer: { text: t.t('common.footer') },
-    }],
+    embeds: [
+      {
+        title: `${emojiPrefix}${localizedName}`,
+        description: t.t('dye.info.detailedInfo', { category: localizedCategory }),
+        color: hexToDiscordColor(dye.hex),
+        fields: [
+          { name: t.t('common.hexColor'), value: `\`${dye.hex.toUpperCase()}\``, inline: true },
+          { name: t.t('common.category'), value: localizedCategory, inline: true },
+          { name: t.t('common.itemId'), value: `\`${dye.id}\``, inline: true },
+          { name: t.t('common.rgb'), value: `\`rgb(${rgb.r}, ${rgb.g}, ${rgb.b})\``, inline: true },
+          {
+            name: t.t('common.hsv'),
+            value: `\`${Math.round(hsv.h)}°, ${Math.round(hsv.s)}%, ${Math.round(hsv.v)}%\``,
+            inline: true,
+          },
+        ],
+        footer: { text: t.t('common.footer') },
+      },
+    ],
     components: [copyButtons],
   });
 }
@@ -238,7 +278,7 @@ async function sendDyeInfoFallback(
 function handleListSubcommand(
   t: Translator,
   applicationId: string,
-  options?: Array<{ name: string; value?: string | number | boolean }>
+  options?: Array<{ name: string; value?: string | number | boolean }>,
 ): Response {
   const category = options?.find((opt) => opt.name === 'category')?.value as string | undefined;
   const allDyes = dyeService.getAllDyes().filter((d) => d.category !== 'Facewear');
@@ -251,15 +291,19 @@ function handleListSubcommand(
         flags: 64,
       });
     }
-    const dyeList = categoryDyes.map((d) => formatDyeListItem(d, t.getLocale(), applicationId)).join('\n');
+    const dyeList = categoryDyes
+      .map((d) => formatDyeListItem(d, t.getLocale(), applicationId))
+      .join('\n');
     const localizedCategoryName = getLocalizedCategory(category, t.getLocale());
     return messageResponse({
-      embeds: [{
-        title: t.t('dye.list.categoryTitle', { category: localizedCategoryName }),
-        description: `${t.t('dye.list.dyesInCategory', { count: categoryDyes.length })}\n\n${dyeList}`,
-        color: categoryDyes[0] ? hexToDiscordColor(categoryDyes[0].hex) : BRAND_ACCENT,
-        footer: { text: t.t('dye.search.useInfoHint') },
-      }],
+      embeds: [
+        {
+          title: t.t('dye.list.categoryTitle', { category: localizedCategoryName }),
+          description: `${t.t('dye.list.dyesInCategory', { count: categoryDyes.length })}\n\n${dyeList}`,
+          color: categoryDyes[0] ? hexToDiscordColor(categoryDyes[0].hex) : BRAND_ACCENT,
+          footer: { text: t.t('dye.search.useInfoHint') },
+        },
+      ],
     });
   }
 
@@ -268,16 +312,21 @@ function handleListSubcommand(
     categories.set(dye.category, (categories.get(dye.category) || 0) + 1);
   }
   const categoryList = Array.from(categories.entries())
-    .map(([cat, count]) => `**${getLocalizedCategory(cat, t.getLocale())}**: ${count} ${t.t('common.dyes')}`)
+    .map(
+      ([cat, count]) =>
+        `**${getLocalizedCategory(cat, t.getLocale())}**: ${count} ${t.t('common.dyes')}`,
+    )
     .join('\n');
 
   return messageResponse({
-    embeds: [{
-      title: t.t('dye.list.categoriesTitle'),
-      description: `${t.t('dye.list.categorySummary', { total: allDyes.length, count: categories.size })}\n\n${categoryList}`,
-      color: BRAND_ACCENT,
-      footer: { text: t.t('dye.list.useListHint') },
-    }],
+    embeds: [
+      {
+        title: t.t('dye.list.categoriesTitle'),
+        description: `${t.t('dye.list.categorySummary', { total: allDyes.length, count: categories.size })}\n\n${categoryList}`,
+        color: BRAND_ACCENT,
+        footer: { text: t.t('dye.list.useListHint') },
+      },
+    ],
   });
 }
 
@@ -292,7 +341,7 @@ function handleRandomSubcommand(
   _t: Translator,
   locale: LocaleCode,
   theme: 'dark' | 'light',
-  options?: Array<{ name: string; value?: string | number | boolean }>
+  options?: Array<{ name: string; value?: string | number | boolean }>,
 ): Response {
   const uniqueCategories = options?.find((opt) => opt.name === 'unique_categories')?.value === true;
   const deferResponse = deferredResponse();
@@ -305,7 +354,7 @@ async function processRandomGrid(
   env: Env,
   uniqueCategories: boolean,
   locale: LocaleCode,
-  theme: 'dark' | 'light'
+  theme: 'dark' | 'light',
 ): Promise<void> {
   const t = createTranslator(locale);
   const result = await executeRandom({ locale, count: 5, uniqueCategories, theme });
@@ -335,13 +384,15 @@ async function processRandomGrid(
       .join('\n');
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [{
-        title: result.title,
-        description: dyeList,
-        color: hexToDiscordColor(result.dyes[0].hex),
-        image: { url: 'attachment://image.png' },
-        footer: { text: `${t.t('dye.search.useInfoHint')} • ${t.t('dye.random.runAgainHint')}` },
-      }],
+      embeds: [
+        {
+          title: result.title,
+          description: dyeList,
+          color: hexToDiscordColor(result.dyes[0].hex),
+          image: { url: 'attachment://image.png' },
+          footer: { text: `${t.t('dye.search.useInfoHint')} • ${t.t('dye.random.runAgainHint')}` },
+        },
+      ],
       file: { name: 'random-dyes.png', data: pngBuffer, contentType: 'image/png' },
     });
   } catch {
@@ -353,7 +404,7 @@ async function sendRandomFallback(
   interaction: DiscordInteraction,
   env: Env,
   t: Translator,
-  locale: LocaleCode
+  locale: LocaleCode,
 ): Promise<void> {
   // Re-run a text-only random selection on fallback
   const result = await executeRandom({ locale, count: 5 });
@@ -375,12 +426,14 @@ async function sendRandomFallback(
     .join('\n');
 
   await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-    embeds: [{
-      title: result.title,
-      description: `${t.t('dye.random.description', { count: result.dyes.length })}\n\n${dyeList}`,
-      color: hexToDiscordColor(result.dyes[0].hex),
-      footer: { text: `${t.t('dye.search.useInfoHint')} • ${t.t('dye.random.runAgainHint')}` },
-    }],
+    embeds: [
+      {
+        title: result.title,
+        description: `${t.t('dye.random.description', { count: result.dyes.length })}\n\n${dyeList}`,
+        color: hexToDiscordColor(result.dyes[0].hex),
+        footer: { text: `${t.t('dye.search.useInfoHint')} • ${t.t('dye.random.runAgainHint')}` },
+      },
+    ],
   });
 }
 

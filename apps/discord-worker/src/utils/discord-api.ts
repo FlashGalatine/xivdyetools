@@ -47,7 +47,7 @@ export interface FollowUpOptions {
 export async function sendFollowUp(
   applicationId: string,
   interactionToken: string,
-  options: FollowUpOptions
+  options: FollowUpOptions,
 ): Promise<Response> {
   const url = `${DISCORD_API_BASE}/webhooks/${applicationId}/${interactionToken}`;
 
@@ -76,10 +76,7 @@ export async function sendFollowUp(
 /**
  * Sends a follow-up message with a file attachment using multipart form data.
  */
-async function sendFollowUpWithFile(
-  url: string,
-  options: FollowUpOptions
-): Promise<Response> {
+async function sendFollowUpWithFile(url: string, options: FollowUpOptions): Promise<Response> {
   const formData = new FormData();
 
   // Build the payload_json part
@@ -137,7 +134,7 @@ async function sendFollowUpWithFile(
 export async function editOriginalResponse(
   applicationId: string,
   interactionToken: string,
-  options: FollowUpOptions
+  options: FollowUpOptions,
 ): Promise<Response> {
   const url = `${DISCORD_API_BASE}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
 
@@ -165,10 +162,7 @@ export async function editOriginalResponse(
 /**
  * Edits the original response with a file attachment.
  */
-async function editResponseWithFile(
-  url: string,
-  options: FollowUpOptions
-): Promise<Response> {
+async function editResponseWithFile(url: string, options: FollowUpOptions): Promise<Response> {
   const formData = new FormData();
 
   // Build the payload_json part
@@ -238,7 +232,7 @@ export async function safeEditOriginalResponse(
   applicationId: string,
   interactionToken: string,
   options: FollowUpOptions,
-  logger?: SafeCallLogger
+  logger?: SafeCallLogger,
 ): Promise<boolean> {
   try {
     const res = await editOriginalResponse(applicationId, interactionToken, options);
@@ -263,52 +257,6 @@ export async function safeEditOriginalResponse(
 }
 
 /**
- * BUG-035: throw-safe, outcome-checked wrapper around sendFollowUp
- */
-export async function safeSendFollowUp(
-  applicationId: string,
-  interactionToken: string,
-  options: FollowUpOptions,
-  logger?: SafeCallLogger
-): Promise<boolean> {
-  try {
-    const res = await sendFollowUp(applicationId, interactionToken, options);
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      if (logger) {
-        logger.error('Discord follow-up send failed', undefined, { status: res.status, body });
-      } else {
-        console.error('Discord follow-up send failed', res.status, body);
-      }
-      return false;
-    }
-    return true;
-  } catch (e) {
-    if (logger) {
-      logger.error('Discord follow-up send threw', e instanceof Error ? e : undefined);
-    } else {
-      console.error('Discord follow-up send threw', e);
-    }
-    return false;
-  }
-}
-
-/**
- * Deletes the original interaction response.
- */
-export async function deleteOriginalResponse(
-  applicationId: string,
-  interactionToken: string
-): Promise<Response> {
-  const url = `${DISCORD_API_BASE}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
-
-  return fetch(url, {
-    method: 'DELETE',
-    signal: AbortSignal.timeout(DISCORD_WEBHOOK_TIMEOUT),
-  });
-}
-
-/**
  * Options for sending a message to a channel
  */
 export interface SendMessageOptions {
@@ -328,7 +276,7 @@ export interface SendMessageOptions {
 export async function sendMessage(
   botToken: string,
   channelId: string,
-  options: SendMessageOptions
+  options: SendMessageOptions,
 ): Promise<Response> {
   const url = `${DISCORD_API_BASE}/channels/${channelId}/messages`;
 
@@ -362,7 +310,7 @@ export async function editMessage(
   botToken: string,
   channelId: string,
   messageId: string,
-  options: SendMessageOptions
+  options: SendMessageOptions,
 ): Promise<Response> {
   const url = `${DISCORD_API_BASE}/channels/${channelId}/messages/${messageId}`;
 
@@ -382,4 +330,3 @@ export async function editMessage(
     signal: AbortSignal.timeout(5000),
   });
 }
-

@@ -9,7 +9,6 @@ import {
   resolveRateLimitScope,
   formatRateLimitMessage,
   resetRateLimiterInstance,
-  getConfiguredBackend,
   type RateLimitResult,
   type RateLimiterConfig,
 } from './rate-limiter.js';
@@ -24,15 +23,24 @@ function createMockKV() {
       const entry = store.get(key);
       return { value: entry?.value ?? null, metadata: entry?.metadata ?? null };
     }),
-    put: vi.fn(async (key: string, value: string, options?: { metadata?: Record<string, unknown>; expirationTtl?: number }) => {
-      store.set(key, { value, metadata: options?.metadata ?? null });
-    }),
+    put: vi.fn(
+      async (
+        key: string,
+        value: string,
+        options?: { metadata?: Record<string, unknown>; expirationTtl?: number },
+      ) => {
+        store.set(key, { value, metadata: options?.metadata ?? null });
+      },
+    ),
     delete: vi.fn(async (key: string) => {
       store.delete(key);
     }),
     _store: store,
     _clear: () => store.clear(),
-  } as unknown as KVNamespace & { _store: Map<string, { value: string; metadata: Record<string, unknown> | null }>; _clear: () => void };
+  } as unknown as KVNamespace & {
+    _store: Map<string, { value: string; metadata: Record<string, unknown> | null }>;
+    _clear: () => void;
+  };
 }
 
 describe('rate-limiter.ts', () => {
@@ -60,11 +68,6 @@ describe('rate-limiter.ts', () => {
       expect(result.allowed).toBe(true);
       expect(result.remaining).toBe(14); // harmony has limit of 15, so 14 remaining
       expect(mockKV.put).toHaveBeenCalled();
-    });
-
-    it('should configure KV backend when only KV provided', async () => {
-      await checkRateLimit(config, mockUserId, 'harmony');
-      expect(getConfiguredBackend()).toBe('kv');
     });
 
     it('should use command-specific limits', async () => {
@@ -177,10 +180,7 @@ describe('rate-limiter.ts', () => {
 
       expect(result.allowed).toBe(true);
       expect(result.backendError).toBe(true);
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        'Rate limit check failed',
-        expect.any(Error)
-      );
+      expect(mockLogger.error).toHaveBeenCalledWith('Rate limit check failed', expect.any(Error));
     });
 
     it('should include correct resetAt timestamp', async () => {
@@ -194,8 +194,9 @@ describe('rate-limiter.ts', () => {
     it('should throw if no backend configured', async () => {
       const emptyConfig: RateLimiterConfig = {};
 
-      await expect(checkRateLimit(emptyConfig, mockUserId, 'harmony'))
-        .rejects.toThrow('No rate limiter backend configured');
+      await expect(checkRateLimit(emptyConfig, mockUserId, 'harmony')).rejects.toThrow(
+        'No rate limiter backend configured',
+      );
     });
   });
 
@@ -210,7 +211,9 @@ describe('rate-limiter.ts', () => {
 
       const message = formatRateLimitMessage(result);
 
-      expect(message).toBe("You're using this command too quickly! Please wait **30 seconds** before trying again.");
+      expect(message).toBe(
+        "You're using this command too quickly! Please wait **30 seconds** before trying again.",
+      );
     });
 
     it('should use singular second for 1 second', () => {
@@ -223,7 +226,9 @@ describe('rate-limiter.ts', () => {
 
       const message = formatRateLimitMessage(result);
 
-      expect(message).toBe("You're using this command too quickly! Please wait **1 second** before trying again.");
+      expect(message).toBe(
+        "You're using this command too quickly! Please wait **1 second** before trying again.",
+      );
     });
 
     it('should calculate retryAfter from resetAt if not provided', () => {
@@ -240,32 +245,36 @@ describe('rate-limiter.ts', () => {
       expect(message).toContain('45 seconds');
     });
   });
-
-  describe('getConfiguredBackend', () => {
-    it('should return null before initialization', () => {
-      expect(getConfiguredBackend()).toBeNull();
-    });
-
-    it('should return kv after using KV backend', async () => {
-      await checkRateLimit(config, mockUserId, 'harmony');
-      expect(getConfiguredBackend()).toBe('kv');
-    });
-  });
 });
 
 describe('resolveRateLimitScope', () => {
   it('canonicalises the /a11y alias onto /accessibility so both share a bucket', () => {
-    expect(resolveRateLimitScope('a11y')).toEqual({ command: 'accessibility', subcommand: undefined });
-    expect(resolveRateLimitScope('accessibility')).toEqual({ command: 'accessibility', subcommand: undefined });
+    expect(resolveRateLimitScope('a11y')).toEqual({
+      command: 'accessibility',
+      subcommand: undefined,
+    });
+    expect(resolveRateLimitScope('accessibility')).toEqual({
+      command: 'accessibility',
+      subcommand: undefined,
+    });
   });
 
   it('carries the extractor subcommand so image and color tier separately', () => {
-    expect(resolveRateLimitScope('extractor', 'image')).toEqual({ command: 'extractor', subcommand: 'image' });
-    expect(resolveRateLimitScope('extractor', 'color')).toEqual({ command: 'extractor', subcommand: 'color' });
+    expect(resolveRateLimitScope('extractor', 'image')).toEqual({
+      command: 'extractor',
+      subcommand: 'image',
+    });
+    expect(resolveRateLimitScope('extractor', 'color')).toEqual({
+      command: 'extractor',
+      subcommand: 'color',
+    });
   });
 
   it('drops the subcommand for commands without scoped limits', () => {
-    expect(resolveRateLimitScope('preset', 'submit')).toEqual({ command: 'preset', subcommand: undefined });
+    expect(resolveRateLimitScope('preset', 'submit')).toEqual({
+      command: 'preset',
+      subcommand: undefined,
+    });
   });
 
   it('a11y and accessibility share one KV bucket', async () => {

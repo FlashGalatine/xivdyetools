@@ -10,6 +10,15 @@
  *   no v5 bot feature replaces them (saved things live in the web app's
  *   CollectionService); the keys are orphaned and get deleted.
  *
+ * ⚠️ DEAD-010 (2026-08-18 audit): this script has NO step for the legacy
+ * `budget:world:v1:*` world/datacenter preference. `preferences.ts`'s
+ * `migrateLegacyPreferences` (see LEGACY_WORLD_PREFIX) still reads that
+ * prefix on first access and folds it into `prefs:v1:*`, the same way it
+ * does for `i18n:user:*` above — so the read-side migration code can never
+ * be retired until those keys are swept too. Deliberately not added here:
+ * whether to delete `budget:world:v1:*` now is a product decision, not a
+ * dead-code cleanup.
+ *
  * This script LISTS the keys and emits `wrangler kv key delete` commands —
  * it never deletes anything itself. Review the output, then pipe it to a
  * shell in the same maintenance window as the v5 deploy.
@@ -43,7 +52,9 @@ for (const file of files) {
       continue;
     }
     total++;
-    console.log(`npx wrangler kv key delete --binding KV --remote "${key.name.replace(/"/g, '\\"')}"`);
+    console.log(
+      `npx wrangler kv key delete --binding KV --remote "${key.name.replace(/"/g, '\\"')}"`,
+    );
   }
 }
 console.error(`Delete commands emitted: ${total}`);

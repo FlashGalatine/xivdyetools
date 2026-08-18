@@ -19,6 +19,7 @@ import { getStats } from '../../services/analytics.js';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import { messageResponse, errorEmbed } from '../../utils/response.js';
 import { BRAND_ACCENT, STATE } from '../../utils/brand.js';
+import { isUniversalisEnabled } from '../../services/budget/index.js';
 
 // ============================================================================
 // Constants
@@ -47,9 +48,7 @@ function isAuthorized(env: Env, userId: string): boolean {
     return false;
   }
 
-  const authorizedUsers = env.STATS_AUTHORIZED_USERS.split(',').map((id) =>
-    id.trim()
-  );
+  const authorizedUsers = env.STATS_AUTHORIZED_USERS.split(',').map((id) => id.trim());
   return authorizedUsers.includes(userId);
 }
 
@@ -66,7 +65,7 @@ export async function handleStatsCommand(
   interaction: DiscordInteraction,
   env: Env,
   _ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
   const t = await createUserTranslator(env.KV, userId, interaction.locale);
@@ -82,11 +81,13 @@ export async function handleStatsCommand(
   const adminSubcommands = ['overview', 'commands', 'preferences', 'health'];
   if (adminSubcommands.includes(subcommand) && !isAuthorized(env, userId)) {
     return messageResponse({
-      embeds: [{
-        title: '⛔ Access Denied',
-        description: 'You do not have permission to view this statistics panel.',
-        color: COLORS.red,
-      }],
+      embeds: [
+        {
+          title: '⛔ Access Denied',
+          description: 'You do not have permission to view this statistics panel.',
+          color: COLORS.red,
+        },
+      ],
       flags: 64,
     });
   }
@@ -120,11 +121,13 @@ export async function handleStatsCommand(
     }
 
     return messageResponse({
-      embeds: [{
-        title: '❌ Error',
-        description: 'Failed to retrieve statistics. Please try again later.',
-        color: COLORS.red,
-      }],
+      embeds: [
+        {
+          title: '❌ Error',
+          description: 'Failed to retrieve statistics. Please try again later.',
+          color: COLORS.red,
+        },
+      ],
       flags: 64,
     });
   }
@@ -140,49 +143,51 @@ export async function handleStatsCommand(
 async function handleSummarySubcommand(
   env: Env,
   _t: Translator,
-  _logger?: ExtendedLogger
+  _logger?: ExtendedLogger,
 ): Promise<Response> {
   const stats = await getStats(env.KV);
 
   return messageResponse({
-    embeds: [{
-      title: '📊 XIV Dye Tools Bot',
-      description: 'A Discord bot for FFXIV dye matching and color analysis.',
-      color: BRAND_ACCENT,
-      fields: [
-        {
-          name: '🎨 Features',
-          value: [
-            '• Color matching & extraction',
-            '• Dye blending (6 algorithms)',
-            '• Character color matching',
-            '• Color harmony generation',
-            '• Accessibility analysis',
-          ].join('\n'),
-          inline: true,
+    embeds: [
+      {
+        title: '📊 XIV Dye Tools Bot',
+        description: 'A Discord bot for FFXIV dye matching and color analysis.',
+        color: BRAND_ACCENT,
+        fields: [
+          {
+            name: '🎨 Features',
+            value: [
+              '• Color matching & extraction',
+              '• Dye blending (6 algorithms)',
+              '• Character color matching',
+              '• Color harmony generation',
+              '• Accessibility analysis',
+            ].join('\n'),
+            inline: true,
+          },
+          {
+            name: '📈 Stats',
+            value: [
+              `**Commands Used:** ${stats.totalCommands.toLocaleString()}`,
+              `**Success Rate:** ${stats.successRate.toFixed(1)}%`,
+            ].join('\n'),
+            inline: true,
+          },
+          {
+            name: '🔗 Links',
+            value: [
+              '[Web App](https://xivdyetools.com)',
+              '[Documentation](https://docs.xivdyetools.com)',
+              '[Support Server](https://discord.gg/xivdyetools)',
+            ].join(' • '),
+            inline: false,
+          },
+        ],
+        footer: {
+          text: `Version ${BOT_VERSION} • Use /manual for command help`,
         },
-        {
-          name: '📈 Stats',
-          value: [
-            `**Commands Used:** ${stats.totalCommands.toLocaleString()}`,
-            `**Success Rate:** ${stats.successRate.toFixed(1)}%`,
-          ].join('\n'),
-          inline: true,
-        },
-        {
-          name: '🔗 Links',
-          value: [
-            '[Web App](https://xivdyetools.com)',
-            '[Documentation](https://docs.xivdyetools.com)',
-            '[Support Server](https://discord.gg/xivdyetools)',
-          ].join(' • '),
-          inline: false,
-        },
-      ],
-      footer: {
-        text: `Version ${BOT_VERSION} • Use /manual for command help`,
       },
-    }],
+    ],
   });
 }
 
@@ -196,50 +201,51 @@ async function handleSummarySubcommand(
 async function handleOverviewSubcommand(
   env: Env,
   _t: Translator,
-  _logger?: ExtendedLogger
+  _logger?: ExtendedLogger,
 ): Promise<Response> {
   const stats = await getStats(env.KV);
 
   // Calculate some derived metrics
-  const avgCommandsPerUser = stats.uniqueUsersToday > 0
-    ? (stats.totalCommands / stats.uniqueUsersToday).toFixed(1)
-    : '0';
+  const avgCommandsPerUser =
+    stats.uniqueUsersToday > 0 ? (stats.totalCommands / stats.uniqueUsersToday).toFixed(1) : '0';
 
   return messageResponse({
-    embeds: [{
-      title: '📈 Usage Overview',
-      color: BRAND_ACCENT,
-      fields: [
-        {
-          name: '📊 Volume',
-          value: [
-            `**Total Commands:** ${stats.totalCommands.toLocaleString()}`,
-            `**Successful:** ${stats.successCount.toLocaleString()}`,
-            `**Failed:** ${stats.failureCount.toLocaleString()}`,
-          ].join('\n'),
-          inline: true,
+    embeds: [
+      {
+        title: '📈 Usage Overview',
+        color: BRAND_ACCENT,
+        fields: [
+          {
+            name: '📊 Volume',
+            value: [
+              `**Total Commands:** ${stats.totalCommands.toLocaleString()}`,
+              `**Successful:** ${stats.successCount.toLocaleString()}`,
+              `**Failed:** ${stats.failureCount.toLocaleString()}`,
+            ].join('\n'),
+            inline: true,
+          },
+          {
+            name: '👥 Users',
+            value: [
+              `**Unique Today:** ${stats.uniqueUsersToday.toLocaleString()}`,
+              `**Avg Cmds/User:** ${avgCommandsPerUser}`,
+            ].join('\n'),
+            inline: true,
+          },
+          {
+            name: '✅ Quality',
+            value: [
+              `**Success Rate:** ${stats.successRate.toFixed(2)}%`,
+              `**Error Rate:** ${(100 - stats.successRate).toFixed(2)}%`,
+            ].join('\n'),
+            inline: true,
+          },
+        ],
+        footer: {
+          text: 'Stats stored in Cloudflare KV with 30-day retention',
         },
-        {
-          name: '👥 Users',
-          value: [
-            `**Unique Today:** ${stats.uniqueUsersToday.toLocaleString()}`,
-            `**Avg Cmds/User:** ${avgCommandsPerUser}`,
-          ].join('\n'),
-          inline: true,
-        },
-        {
-          name: '✅ Quality',
-          value: [
-            `**Success Rate:** ${stats.successRate.toFixed(2)}%`,
-            `**Error Rate:** ${(100 - stats.successRate).toFixed(2)}%`,
-          ].join('\n'),
-          inline: true,
-        },
-      ],
-      footer: {
-        text: 'Stats stored in Cloudflare KV with 30-day retention',
       },
-    }],
+    ],
     flags: 64, // Ephemeral for admin data
   });
 }
@@ -254,35 +260,34 @@ async function handleOverviewSubcommand(
 async function handleCommandsSubcommand(
   env: Env,
   _t: Translator,
-  _logger?: ExtendedLogger
+  _logger?: ExtendedLogger,
 ): Promise<Response> {
   const stats = await getStats(env.KV);
 
   // Sort commands by usage
-  const sortedCommands = Object.entries(stats.commandBreakdown)
-    .sort(([, a], [, b]) => b - a);
+  const sortedCommands = Object.entries(stats.commandBreakdown).sort(([, a], [, b]) => b - a);
 
   // Top 10 commands
   const topCommands = sortedCommands.slice(0, 10);
-  const topCommandsText = topCommands.length > 0
-    ? topCommands
-        .map(([cmd, count], index) => {
-          const percentage = stats.totalCommands > 0
-            ? ((count / stats.totalCommands) * 100).toFixed(1)
-            : '0.0';
-          const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-          return `${medal} \`/${cmd}\` - ${count.toLocaleString()} (${percentage}%)`;
-        })
-        .join('\n')
-    : 'No commands executed yet';
+  const topCommandsText =
+    topCommands.length > 0
+      ? topCommands
+          .map(([cmd, count], index) => {
+            const percentage =
+              stats.totalCommands > 0 ? ((count / stats.totalCommands) * 100).toFixed(1) : '0.0';
+            const medal =
+              index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+            return `${medal} \`/${cmd}\` - ${count.toLocaleString()} (${percentage}%)`;
+          })
+          .join('\n')
+      : 'No commands executed yet';
 
   // Bottom 5 commands (least used)
   const bottomCommands = sortedCommands.slice(-5).reverse();
-  const bottomCommandsText = bottomCommands.length > 0
-    ? bottomCommands
-        .map(([cmd, count]) => `• \`/${cmd}\` - ${count.toLocaleString()}`)
-        .join('\n')
-    : 'N/A';
+  const bottomCommandsText =
+    bottomCommands.length > 0
+      ? bottomCommands.map(([cmd, count]) => `• \`/${cmd}\` - ${count.toLocaleString()}`).join('\n')
+      : 'N/A';
 
   // 5.0 adoption: the commands the redesign introduced (the legacy set was
   // deleted with Phase 1 — its counters only drain now). Extractor telemetry
@@ -290,39 +295,47 @@ async function handleCommandsSubcommand(
   const v5NewCommands = ['contrast', 'a11y', 'changelog', 'swatch'];
   const extractorSubs = ['extractor_image', 'extractor_color'];
 
-  const v5NewUsage = v5NewCommands.reduce((sum, cmd) => sum + (stats.commandBreakdown[cmd] || 0), 0);
+  const v5NewUsage = v5NewCommands.reduce(
+    (sum, cmd) => sum + (stats.commandBreakdown[cmd] || 0),
+    0,
+  );
   const extractorSplit = extractorSubs
-    .map((cmd) => `\`${cmd.replace('extractor_', '')}\` ${(stats.commandBreakdown[cmd] || 0).toLocaleString()}`)
+    .map(
+      (cmd) =>
+        `\`${cmd.replace('extractor_', '')}\` ${(stats.commandBreakdown[cmd] || 0).toLocaleString()}`,
+    )
     .join(' · ');
 
   return messageResponse({
-    embeds: [{
-      title: '⭐ Command Usage Breakdown',
-      color: COLORS.purple,
-      fields: [
-        {
-          name: '🏆 Top 10 Commands',
-          value: topCommandsText,
-          inline: false,
+    embeds: [
+      {
+        title: '⭐ Command Usage Breakdown',
+        color: COLORS.purple,
+        fields: [
+          {
+            name: '🏆 Top 10 Commands',
+            value: topCommandsText,
+            inline: false,
+          },
+          {
+            name: '📉 Least Used',
+            value: bottomCommandsText,
+            inline: true,
+          },
+          {
+            name: '🆕 5.0 Adoption',
+            value: [
+              `**New in 5.0:** ${v5NewUsage.toLocaleString()} (${v5NewCommands.map((c) => `\`/${c}\``).join(' ')})`,
+              `**Extractor:** ${extractorSplit}`,
+            ].join('\n'),
+            inline: true,
+          },
+        ],
+        footer: {
+          text: `Total unique commands: ${sortedCommands.length}`,
         },
-        {
-          name: '📉 Least Used',
-          value: bottomCommandsText,
-          inline: true,
-        },
-        {
-          name: '🆕 5.0 Adoption',
-          value: [
-            `**New in 5.0:** ${v5NewUsage.toLocaleString()} (${v5NewCommands.map((c) => `\`/${c}\``).join(' ')})`,
-            `**Extractor:** ${extractorSplit}`,
-          ].join('\n'),
-          inline: true,
-        },
-      ],
-      footer: {
-        text: `Total unique commands: ${sortedCommands.length}`,
       },
-    }],
+    ],
     flags: 64,
   });
 }
@@ -337,7 +350,7 @@ async function handleCommandsSubcommand(
 async function handlePreferencesSubcommand(
   env: Env,
   _t: Translator,
-  _logger?: ExtendedLogger
+  _logger?: ExtendedLogger,
 ): Promise<Response> {
   // Count users with preferences set
   // We'll scan KV for preference keys to get adoption stats
@@ -376,55 +389,56 @@ async function handlePreferencesSubcommand(
   }
 
   // Calculate percentages (from sample)
-  const calcPercent = (count: number): string => sampleSize > 0
-    ? ((count / sampleSize) * 100).toFixed(1)
-    : '0.0';
+  const calcPercent = (count: number): string =>
+    sampleSize > 0 ? ((count / sampleSize) * 100).toFixed(1) : '0.0';
 
   return messageResponse({
-    embeds: [{
-      title: '⚙️ Preference Adoption',
-      description: `Based on ${sampleSize} user sample from ${totalPrefsUsers.toLocaleString()} total users with preferences.`,
-      color: COLORS.yellow,
-      fields: [
-        {
-          name: '🌐 Localization',
-          value: `**Language Set:** ${calcPercent(languageSet)}%`,
-          inline: true,
+    embeds: [
+      {
+        title: '⚙️ Preference Adoption',
+        description: `Based on ${sampleSize} user sample from ${totalPrefsUsers.toLocaleString()} total users with preferences.`,
+        color: COLORS.yellow,
+        fields: [
+          {
+            name: '🌐 Localization',
+            value: `**Language Set:** ${calcPercent(languageSet)}%`,
+            inline: true,
+          },
+          {
+            name: '🎨 Color Settings',
+            value: [
+              `**Blending Mode:** ${calcPercent(blendingSet)}%`,
+              `**Matching Method:** ${calcPercent(matchingSet)}%`,
+            ].join('\n'),
+            inline: true,
+          },
+          {
+            name: '👤 Character',
+            value: [
+              `**Clan Set:** ${calcPercent(clanSet)}%`,
+              `**Gender Set:** ${calcPercent(genderSet)}%`,
+            ].join('\n'),
+            inline: true,
+          },
+          {
+            name: '💰 Market',
+            value: [
+              `**World Set:** ${calcPercent(worldSet)}%`,
+              `**Market Enabled:** ${calcPercent(marketSet)}%`,
+            ].join('\n'),
+            inline: true,
+          },
+          {
+            name: '📊 Coverage',
+            value: `**Users with Preferences:** ${totalPrefsUsers.toLocaleString()}`,
+            inline: true,
+          },
+        ],
+        footer: {
+          text: 'Percentages based on sampled users',
         },
-        {
-          name: '🎨 Color Settings',
-          value: [
-            `**Blending Mode:** ${calcPercent(blendingSet)}%`,
-            `**Matching Method:** ${calcPercent(matchingSet)}%`,
-          ].join('\n'),
-          inline: true,
-        },
-        {
-          name: '👤 Character',
-          value: [
-            `**Clan Set:** ${calcPercent(clanSet)}%`,
-            `**Gender Set:** ${calcPercent(genderSet)}%`,
-          ].join('\n'),
-          inline: true,
-        },
-        {
-          name: '💰 Market',
-          value: [
-            `**World Set:** ${calcPercent(worldSet)}%`,
-            `**Market Enabled:** ${calcPercent(marketSet)}%`,
-          ].join('\n'),
-          inline: true,
-        },
-        {
-          name: '📊 Coverage',
-          value: `**Users with Preferences:** ${totalPrefsUsers.toLocaleString()}`,
-          inline: true,
-        },
-      ],
-      footer: {
-        text: 'Percentages based on sampled users',
       },
-    }],
+    ],
     flags: 64,
   });
 }
@@ -439,7 +453,7 @@ async function handlePreferencesSubcommand(
 async function handleHealthSubcommand(
   env: Env,
   _t: Translator,
-  _logger?: ExtendedLogger
+  _logger?: ExtendedLogger,
 ): Promise<Response> {
   // Check KV health
   let kvStatus = '🟢 Healthy';
@@ -459,62 +473,63 @@ async function handleHealthSubcommand(
   const analyticsStatus = env.ANALYTICS ? '🟢 Enabled' : '⚪ Disabled';
 
   // Check external services configuration
-  const universalisStatus = env.UNIVERSALIS_PROXY_URL ? '🟢 Configured' : '⚪ Not configured';
+  const universalisStatus = isUniversalisEnabled(env) ? '🟢 Configured' : '⚪ Not configured';
   const presetApiStatus = env.PRESETS_API_URL ? '🟢 Configured' : '⚪ Not configured';
 
   // Environment info (Workers don't have a built-in environment indicator)
   const workerEnv = 'production';
 
   return messageResponse({
-    embeds: [{
-      title: '🏥 System Health',
-      color: kvStatus.includes('🔴') ? COLORS.red : kvStatus.includes('🟡') ? COLORS.yellow : COLORS.green,
-      fields: [
-        {
-          name: '💾 Storage',
-          value: [
-            `**KV Namespace:** ${kvStatus}`,
-            `**KV Latency:** ${kvLatency}ms`,
-          ].join('\n'),
-          inline: true,
+    embeds: [
+      {
+        title: '🏥 System Health',
+        color: kvStatus.includes('🔴')
+          ? COLORS.red
+          : kvStatus.includes('🟡')
+            ? COLORS.yellow
+            : COLORS.green,
+        fields: [
+          {
+            name: '💾 Storage',
+            value: [`**KV Namespace:** ${kvStatus}`, `**KV Latency:** ${kvLatency}ms`].join('\n'),
+            inline: true,
+          },
+          {
+            name: '📊 Analytics',
+            value: [`**Analytics Engine:** ${analyticsStatus}`].join('\n'),
+            inline: true,
+          },
+          {
+            name: '🌐 External Services',
+            value: [
+              `**Universalis API:** ${universalisStatus}`,
+              `**Preset API:** ${presetApiStatus}`,
+            ].join('\n'),
+            inline: true,
+          },
+          {
+            name: '⚙️ Configuration',
+            value: [
+              `**Environment:** ${workerEnv}`,
+              `**Version:** ${BOT_VERSION}`,
+              `**Platform:** Cloudflare Workers`,
+            ].join('\n'),
+            inline: true,
+          },
+          {
+            name: '🔐 Security',
+            value: [
+              `**Webhook Secret:** ${env.INTERNAL_WEBHOOK_SECRET ? '🟢 Set' : '⚪ Not set'}`,
+              `**Mod Channel:** ${env.MODERATION_CHANNEL_ID ? '🟢 Set' : '⚪ Not set'}`,
+            ].join('\n'),
+            inline: true,
+          },
+        ],
+        footer: {
+          text: 'Health check performed at request time',
         },
-        {
-          name: '📊 Analytics',
-          value: [
-            `**Analytics Engine:** ${analyticsStatus}`,
-          ].join('\n'),
-          inline: true,
-        },
-        {
-          name: '🌐 External Services',
-          value: [
-            `**Universalis API:** ${universalisStatus}`,
-            `**Preset API:** ${presetApiStatus}`,
-          ].join('\n'),
-          inline: true,
-        },
-        {
-          name: '⚙️ Configuration',
-          value: [
-            `**Environment:** ${workerEnv}`,
-            `**Version:** ${BOT_VERSION}`,
-            `**Platform:** Cloudflare Workers`,
-          ].join('\n'),
-          inline: true,
-        },
-        {
-          name: '🔐 Security',
-          value: [
-            `**Webhook Secret:** ${env.INTERNAL_WEBHOOK_SECRET ? '🟢 Set' : '⚪ Not set'}`,
-            `**Mod Channel:** ${env.MODERATION_CHANNEL_ID ? '🟢 Set' : '⚪ Not set'}`,
-          ].join('\n'),
-          inline: true,
-        },
-      ],
-      footer: {
-        text: 'Health check performed at request time',
       },
-    }],
+    ],
     flags: 64,
   });
 }

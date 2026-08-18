@@ -10,12 +10,16 @@
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
-import { resolveColorInput } from '../../utils/color.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { createTranslator, createUserTranslator } from '../../services/bot-i18n.js';
-import { discordLocaleToLocaleCode, initializeLocale, type LocaleCode } from '../../services/i18n.js';
 import {
+  discordLocaleToLocaleCode,
+  initializeLocale,
+  type LocaleCode,
+} from '../../services/i18n.js';
+import {
+  resolveColorInput,
   executeAccessibility,
   type VisionType,
   type AccessibilityDye,
@@ -27,7 +31,7 @@ export async function handleAccessibilityCommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
 
@@ -56,12 +60,17 @@ export async function handleAccessibilityCommand(
   // Resolve all dye inputs → AccessibilityDye[]
   const resolvedDyes: AccessibilityDye[] = [];
   for (const input of dyeInputs) {
-    const resolved = resolveColorInput(input.value, { excludeFacewear: true, findClosestForHex: true });
+    const resolved = resolveColorInput(input.value, {
+      excludeFacewear: true,
+      findClosestForHex: true,
+    });
     if (!resolved) {
       return Response.json({
         type: 4,
         data: {
-          embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: input.value }))],
+          embeds: [
+            errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: input.value })),
+          ],
           flags: 64,
         },
       });
@@ -80,7 +89,16 @@ export async function handleAccessibilityCommand(
   const commandLabel = interaction.data?.name === 'a11y' ? '/A11Y' : '/ACCESSIBILITY';
   const deferResponse = deferredResponse();
   ctx.waitUntil(
-    processAccessibilityCommand(interaction, env, resolvedDyes, visionFilter, locale, commandLabel, theme, logger)
+    processAccessibilityCommand(
+      interaction,
+      env,
+      resolvedDyes,
+      visionFilter,
+      locale,
+      commandLabel,
+      theme,
+      logger,
+    ),
   );
   return deferResponse;
 }
@@ -93,14 +111,20 @@ async function processAccessibilityCommand(
   locale: LocaleCode,
   commandLabel: string,
   theme?: 'dark' | 'light',
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   const t = createTranslator(locale);
   await initializeLocale(locale);
 
   // The vision: option routes the frame — named lens → 13D, all/absent → 13E,
   // a single dye → 13H
-  const result = await executeAccessibility({ dyes, vision: visionFilter, locale, commandLabel, theme });
+  const result = await executeAccessibility({
+    dyes,
+    vision: visionFilter,
+    locale,
+    commandLabel,
+    theme,
+  });
 
   if (!result.ok) {
     if (logger) logger.error('Accessibility command failed');
@@ -114,16 +138,19 @@ async function processAccessibilityCommand(
     const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [{
-        title: result.embed.title,
-        description: result.embed.description,
-        color: result.embed.color,
-        image: { url: 'attachment://accessibility.png' },
-      }],
+      embeds: [
+        {
+          title: result.embed.title,
+          description: result.embed.description,
+          color: result.embed.color,
+          image: { url: 'attachment://accessibility.png' },
+        },
+      ],
       file: { name: 'accessibility.png', data: pngBuffer, contentType: 'image/png' },
     });
   } catch (error) {
-    if (logger) logger.error('Accessibility render error', error instanceof Error ? error : undefined);
+    if (logger)
+      logger.error('Accessibility render error', error instanceof Error ? error : undefined);
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
     });

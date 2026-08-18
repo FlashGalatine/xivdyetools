@@ -4,15 +4,23 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import app from './index.js';
-import { InteractionType, InteractionResponseType, type InteractionResponseBody } from './types/env.js';
+import {
+  InteractionType,
+  InteractionResponseType,
+  type InteractionResponseBody,
+} from './types/env.js';
 import type { Env } from './types/env.js';
 import type { CommunityPreset } from '@xivdyetools/types/preset';
 
 // Mock dependencies
-vi.mock('./utils/verify.js', () => ({
+vi.mock('@xivdyetools/auth', () => ({
   verifyDiscordRequest: vi.fn(),
-  unauthorizedResponse: vi.fn((error: string) => new Response(JSON.stringify({ error }), { status: 401 })),
-  badRequestResponse: vi.fn((error: string) => new Response(JSON.stringify({ error }), { status: 400 })),
+  unauthorizedResponse: vi.fn(
+    (error: string) => new Response(JSON.stringify({ error }), { status: 401 }),
+  ),
+  badRequestResponse: vi.fn(
+    (error: string) => new Response(JSON.stringify({ error }), { status: 400 }),
+  ),
   timingSafeEqual: vi.fn(),
 }));
 
@@ -149,12 +157,12 @@ describe('index.ts', () => {
 
   describe('POST /webhooks/preset-submission', () => {
     it('should reject unauthorized requests', async () => {
-      const { timingSafeEqual } = await import('./utils/verify.js');
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
       vi.mocked(timingSafeEqual).mockResolvedValue(false);
 
       const req = new Request('http://localhost/webhooks/preset-submission', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer wrong-secret' },
+        headers: { Authorization: 'Bearer wrong-secret' },
         body: JSON.stringify({ type: 'submission' }),
       });
 
@@ -163,12 +171,12 @@ describe('index.ts', () => {
     });
 
     it('should reject invalid JSON', async () => {
-      const { timingSafeEqual } = await import('./utils/verify.js');
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
       vi.mocked(timingSafeEqual).mockResolvedValue(true);
 
       const req = new Request('http://localhost/webhooks/preset-submission', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer test-webhook-secret' },
+        headers: { Authorization: 'Bearer test-webhook-secret' },
         body: 'invalid json',
       });
 
@@ -177,12 +185,12 @@ describe('index.ts', () => {
     });
 
     it('should reject invalid payload type', async () => {
-      const { timingSafeEqual } = await import('./utils/verify.js');
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
       vi.mocked(timingSafeEqual).mockResolvedValue(true);
 
       const req = new Request('http://localhost/webhooks/preset-submission', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer test-webhook-secret' },
+        headers: { Authorization: 'Bearer test-webhook-secret' },
         body: JSON.stringify({ type: 'invalid' }),
       });
 
@@ -191,7 +199,7 @@ describe('index.ts', () => {
     });
 
     it('should handle pending preset submission', async () => {
-      const { timingSafeEqual } = await import('./utils/verify.js');
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
       const { sendMessage } = await import('./utils/discord-api.js');
       vi.mocked(timingSafeEqual).mockResolvedValue(true);
       vi.mocked(sendMessage).mockResolvedValue(new Response(null));
@@ -211,7 +219,7 @@ describe('index.ts', () => {
 
       const req = new Request('http://localhost/webhooks/preset-submission', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer test-webhook-secret' },
+        headers: { Authorization: 'Bearer test-webhook-secret' },
         body: JSON.stringify({ type: 'submission', preset }),
       });
 
@@ -226,7 +234,7 @@ describe('index.ts', () => {
               title: '🟡 New Preset Awaiting Review',
             }),
           ]),
-        })
+        }),
       );
       // BUG-009: without MODERATION_BOT_TOKEN the buttons would route to the
       // wrong Discord application — the shared builder omits them and adds a
@@ -240,7 +248,7 @@ describe('index.ts', () => {
     });
 
     it('should handle approved preset submission', async () => {
-      const { timingSafeEqual } = await import('./utils/verify.js');
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
       const { sendMessage } = await import('./utils/discord-api.js');
       vi.mocked(timingSafeEqual).mockResolvedValue(true);
       vi.mocked(sendMessage).mockResolvedValue(new Response(null));
@@ -260,7 +268,7 @@ describe('index.ts', () => {
 
       const req = new Request('http://localhost/webhooks/preset-submission', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer test-webhook-secret' },
+        headers: { Authorization: 'Bearer test-webhook-secret' },
         body: JSON.stringify({ type: 'submission', preset }),
       });
 
@@ -275,7 +283,7 @@ describe('index.ts', () => {
               title: '🟢 New Preset Published',
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -284,14 +292,14 @@ describe('index.ts', () => {
     // submission log — where *published* presets are announced — which both
     // misfiled the work and showed an unapproved image to the wrong audience.
     it('posts a review message carrying the pending preview image to the moderation channel', async () => {
-      const { timingSafeEqual } = await import('./utils/verify.js');
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
       const { sendMessage } = await import('./utils/discord-api.js');
       vi.mocked(timingSafeEqual).mockResolvedValue(true);
       vi.mocked(sendMessage).mockResolvedValue(new Response(null));
 
       const req = new Request('http://localhost/webhooks/preset-submission', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer test-webhook-secret' },
+        headers: { Authorization: 'Bearer test-webhook-secret' },
         body: JSON.stringify({
           type: 'preview_image',
           preset: { id: 'p1', name: 'Test', author_name: 'Author' },
@@ -311,7 +319,7 @@ describe('index.ts', () => {
               image: { url: 'https://shots.xivdyetools.app/p1/abc.webp' },
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -319,14 +327,14 @@ describe('index.ts', () => {
     // (not preset_, which moderation-worker already owns) and must be posted
     // with this app's own token so the clicks route back here.
     it('attaches approve/reject buttons carrying the previewimg_ custom_id prefix', async () => {
-      const { timingSafeEqual } = await import('./utils/verify.js');
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
       const { sendMessage } = await import('./utils/discord-api.js');
       vi.mocked(timingSafeEqual).mockResolvedValue(true);
       vi.mocked(sendMessage).mockResolvedValue(new Response(null));
 
       const req = new Request('http://localhost/webhooks/preset-submission', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer test-webhook-secret' },
+        headers: { Authorization: 'Bearer test-webhook-secret' },
         body: JSON.stringify({
           type: 'preview_image',
           preset: { id: 'p1', name: 'Test', author_name: 'Author' },
@@ -358,7 +366,7 @@ describe('index.ts', () => {
               ]),
             }),
           ],
-        })
+        }),
       );
     });
 
@@ -366,14 +374,14 @@ describe('index.ts', () => {
     // notification it is told failed. Swallowing a Discord rejection here
     // would lose the moderation-queue entry silently.
     it('returns 502 when Discord rejects the preview-image notification', async () => {
-      const { timingSafeEqual } = await import('./utils/verify.js');
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
       const { sendMessage } = await import('./utils/discord-api.js');
       vi.mocked(timingSafeEqual).mockResolvedValue(true);
       vi.mocked(sendMessage).mockResolvedValue(new Response(null, { status: 500 }));
 
       const req = new Request('http://localhost/webhooks/preset-submission', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer test-webhook-secret' },
+        headers: { Authorization: 'Bearer test-webhook-secret' },
         body: JSON.stringify({
           type: 'preview_image',
           preset: { id: 'p1', name: 'Test', author_name: 'Author' },
@@ -389,7 +397,7 @@ describe('index.ts', () => {
   describe('POST / - Discord interactions', () => {
     describe('Signature verification', () => {
       it('should reject invalid signature', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
           isValid: false,
           body: '',
@@ -406,7 +414,7 @@ describe('index.ts', () => {
       });
 
       it('should handle invalid JSON body', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
           isValid: true,
           body: 'invalid json',
@@ -425,7 +433,7 @@ describe('index.ts', () => {
 
     describe('PING interaction', () => {
       it('should respond to PING with PONG', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
           isValid: true,
           body: JSON.stringify({ type: InteractionType.PING }),
@@ -446,7 +454,7 @@ describe('index.ts', () => {
 
     describe('APPLICATION_COMMAND interactions', () => {
       it('should route to about command handler', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         const { checkRateLimit } = await import('./services/rate-limiter.js');
         const { handleAboutCommand } = await import('./handlers/commands/index.js');
 
@@ -459,7 +467,11 @@ describe('index.ts', () => {
           }),
           error: '',
         });
-        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 14, resetAt: Date.now() + 60000 });
+        vi.mocked(checkRateLimit).mockResolvedValue({
+          allowed: true,
+          remaining: 14,
+          resetAt: Date.now() + 60000,
+        });
         vi.mocked(handleAboutCommand).mockResolvedValue(new Response());
 
         const req = new Request('http://localhost/', {
@@ -476,7 +488,7 @@ describe('index.ts', () => {
       });
 
       it('should route to harmony command handler', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         const { checkRateLimit } = await import('./services/rate-limiter.js');
         const { handleHarmonyCommand } = await import('./handlers/commands/index.js');
 
@@ -489,7 +501,11 @@ describe('index.ts', () => {
           }),
           error: '',
         });
-        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 14, resetAt: Date.now() + 60000 });
+        vi.mocked(checkRateLimit).mockResolvedValue({
+          allowed: true,
+          remaining: 14,
+          resetAt: Date.now() + 60000,
+        });
         vi.mocked(handleHarmonyCommand).mockResolvedValue(new Response());
 
         const req = new Request('http://localhost/', {
@@ -506,8 +522,9 @@ describe('index.ts', () => {
       });
 
       it('should enforce rate limits', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
-        const { checkRateLimit, formatRateLimitMessage } = await import('./services/rate-limiter.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        const { checkRateLimit, formatRateLimitMessage } =
+          await import('./services/rate-limiter.js');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
           isValid: true,
@@ -542,7 +559,7 @@ describe('index.ts', () => {
       });
 
       it('should handle unknown command', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         const { checkRateLimit } = await import('./services/rate-limiter.js');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
@@ -554,7 +571,11 @@ describe('index.ts', () => {
           }),
           error: '',
         });
-        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 14, resetAt: Date.now() + 60000 });
+        vi.mocked(checkRateLimit).mockResolvedValue({
+          allowed: true,
+          remaining: 14,
+          resetAt: Date.now() + 60000,
+        });
 
         const req = new Request('http://localhost/', {
           method: 'POST',
@@ -574,7 +595,7 @@ describe('index.ts', () => {
 
     describe('AUTOCOMPLETE interactions', () => {
       it('should handle dye autocomplete with query', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
           isValid: true,
@@ -620,9 +641,8 @@ describe('index.ts', () => {
         expect(data.data!.choices).toBeInstanceOf(Array);
       });
 
-
       it('should handle preset autocomplete for approved presets', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         const { searchPresetsForAutocomplete } = await import('./services/preset-api.js');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
@@ -668,15 +688,13 @@ describe('index.ts', () => {
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
         await res.json();
-        expect(searchPresetsForAutocomplete).toHaveBeenCalledWith(
-          mockEnv,
-          'test',
-          { status: 'approved' }
-        );
+        expect(searchPresetsForAutocomplete).toHaveBeenCalledWith(mockEnv, 'test', {
+          status: 'approved',
+        });
       });
 
       it('should handle preset edit autocomplete (user own presets)', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         const { getMyPresets } = await import('./services/preset-api.js');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
@@ -727,7 +745,7 @@ describe('index.ts', () => {
       });
 
       it('should handle preset show autocomplete (approved presets)', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         const { searchPresetsForAutocomplete } = await import('./services/preset-api.js');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
@@ -772,15 +790,13 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        expect(searchPresetsForAutocomplete).toHaveBeenCalledWith(
-          mockEnv,
-          'test',
-          { status: 'approved' }
-        );
+        expect(searchPresetsForAutocomplete).toHaveBeenCalledWith(mockEnv, 'test', {
+          status: 'approved',
+        });
       });
 
       it('should handle preset dye autocomplete', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
           isValid: true,
@@ -826,7 +842,7 @@ describe('index.ts', () => {
       });
 
       it('should handle dye autocomplete with empty query (show popular dyes)', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
           isValid: true,
@@ -861,7 +877,7 @@ describe('index.ts', () => {
       });
 
       it('should handle collection dye autocomplete', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
           isValid: true,
@@ -906,10 +922,8 @@ describe('index.ts', () => {
         expect(data.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
       });
 
-
-
       it('should handle getMyPresets with empty presets', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         const { getMyPresets } = await import('./services/preset-api.js');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
@@ -957,7 +971,7 @@ describe('index.ts', () => {
       });
 
       it('should handle getMyPresets error gracefully', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         const { getMyPresets } = await import('./services/preset-api.js');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
@@ -1007,7 +1021,7 @@ describe('index.ts', () => {
 
     describe('MESSAGE_COMPONENT interactions', () => {
       it('should route button interactions', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         const { handleButtonInteraction } = await import('./handlers/buttons/index.js');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
@@ -1035,7 +1049,7 @@ describe('index.ts', () => {
       });
 
       it('should handle unknown component types', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
           isValid: true,
@@ -1068,7 +1082,7 @@ describe('index.ts', () => {
       // The main worker now returns "Unknown modal submission." for all modal submissions
 
       it('should return unknown modal for any modal submission', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
           isValid: true,
@@ -1098,7 +1112,7 @@ describe('index.ts', () => {
 
     describe('Unknown interaction types', () => {
       it('should handle unknown interaction type', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
           isValid: true,
@@ -1131,7 +1145,7 @@ describe('index.ts', () => {
 
         const req = new Request('http://localhost/webhooks/preset-submission', {
           method: 'POST',
-          headers: { 'Authorization': 'Bearer some-secret' },
+          headers: { Authorization: 'Bearer some-secret' },
           body: JSON.stringify({ type: 'submission' }),
         });
 
@@ -1142,7 +1156,7 @@ describe('index.ts', () => {
 
     describe('Analytics error handling', () => {
       it('should handle analytics tracking failure gracefully', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         const { checkRateLimit } = await import('./services/rate-limiter.js');
         const { trackCommandWithKV } = await import('./services/analytics.js');
         const { handleDyeCommand } = await import('./handlers/commands/index.js');
@@ -1156,7 +1170,11 @@ describe('index.ts', () => {
           }),
           error: '',
         });
-        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 14, resetAt: Date.now() + 60000 });
+        vi.mocked(checkRateLimit).mockResolvedValue({
+          allowed: true,
+          remaining: 14,
+          resetAt: Date.now() + 60000,
+        });
         vi.mocked(trackCommandWithKV).mockRejectedValue(new Error('Analytics failed'));
         vi.mocked(handleDyeCommand).mockResolvedValue(new Response());
 
@@ -1178,7 +1196,7 @@ describe('index.ts', () => {
 
     describe('Preset edit autocomplete without user', () => {
       it('should return empty choices when no user ID available for edit', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
           isValid: true,
@@ -1225,7 +1243,7 @@ describe('index.ts', () => {
 
     describe('Command routing', () => {
       it('should route to all command handlers', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         const { checkRateLimit } = await import('./services/rate-limiter.js');
         const commands = await import('./handlers/commands/index.js');
 
@@ -1258,7 +1276,11 @@ describe('index.ts', () => {
             }),
             error: '',
           });
-          vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 14, resetAt: Date.now() + 60000 });
+          vi.mocked(checkRateLimit).mockResolvedValue({
+            allowed: true,
+            remaining: 14,
+            resetAt: Date.now() + 60000,
+          });
           vi.mocked(handler).mockResolvedValue(new Response());
 
           const req = new Request('http://localhost/', {
@@ -1276,11 +1298,11 @@ describe('index.ts', () => {
       });
 
       it('should route stats command handler', async () => {
-        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
 
         // Import stats handler - need to add it to the mock
         vi.doMock('./handlers/commands/index.js', async (importOriginal) => {
-          const original = await importOriginal() as Record<string, unknown>;
+          const original = (await importOriginal()) as Record<string, unknown>;
           return {
             ...original,
             handleStatsCommand: vi.fn().mockResolvedValue(new Response()),
@@ -1310,6 +1332,5 @@ describe('index.ts', () => {
         expect(res).toBeDefined();
       });
     });
-
   });
 });

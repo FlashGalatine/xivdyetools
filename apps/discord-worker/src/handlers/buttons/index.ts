@@ -12,10 +12,7 @@ import { handleCopyHex, handleCopyRgb, handleCopyHsv } from './copy.js';
 import { handlePreviewImageButton, isPreviewImageButton } from './preview-image.js';
 
 // Re-export button creation helpers
-export { createCopyButtons, createHexButton } from './copy.js';
-
-// Re-export preview-image moderation handler
-export { handlePreviewImageButton, isPreviewImageButton } from './preview-image.js';
+export { createCopyButtons } from './copy.js';
 
 interface ButtonInteraction {
   id: string;
@@ -36,12 +33,12 @@ interface ButtonInteraction {
   member?: {
     user: {
       id: string;
-      username: string;
+      username?: string;
     };
   };
   user?: {
     id: string;
-    username: string;
+    username?: string;
   };
   data?: {
     custom_id?: string;
@@ -56,7 +53,7 @@ export async function handleButtonInteraction(
   interaction: ButtonInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
 

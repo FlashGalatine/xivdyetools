@@ -87,7 +87,9 @@ function getLimiter(config: RateLimiterConfig): RateLimiter {
     return limiterInstance;
   }
 
-  throw new Error('No rate limiter backend configured. Provide either Upstash credentials or KV namespace.');
+  throw new Error(
+    'No rate limiter backend configured. Provide either Upstash credentials or KV namespace.',
+  );
 }
 
 /**
@@ -112,7 +114,7 @@ const SUBCOMMAND_SCOPED = new Set<string>(['extractor']);
  */
 export function resolveRateLimitScope(
   commandName: string,
-  subcommand?: string
+  subcommand?: string,
 ): { command: string; subcommand: string | undefined } {
   const command = COMMAND_ALIASES[commandName] ?? commandName;
   return {
@@ -155,7 +157,7 @@ export async function checkRateLimit(
   userId: string,
   commandName?: string,
   logger?: ExtendedLogger,
-  subcommand?: string
+  subcommand?: string,
 ): Promise<RateLimitResult> {
   const limiter = getLimiter(config);
   const limitConfig = getDiscordCommandLimit(commandName ?? 'default', subcommand);
@@ -202,14 +204,6 @@ export async function checkRateLimit(
 export function formatRateLimitMessage(result: RateLimitResult): string {
   const seconds = result.retryAfter ?? Math.ceil((result.resetAt - Date.now()) / 1000);
   return `You're using this command too quickly! Please wait **${seconds} second${seconds !== 1 ? 's' : ''}** before trying again.`;
-}
-
-/**
- * Get the currently configured backend type
- * @returns 'upstash', 'kv', or null if not initialized
- */
-export function getConfiguredBackend(): 'upstash' | 'kv' | null {
-  return configuredBackend;
 }
 
 /**

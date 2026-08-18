@@ -15,12 +15,7 @@
  * @deprecated Import directly from '@xivdyetools/types' instead.
  * These re-exports will be removed in the next major version.
  */
-export type {
-  PresetStatus,
-  PresetCategory,
-  PresetSortOption,
-  CommunityPreset,
-} from '@xivdyetools/types';
+export type { PresetCategory, CommunityPreset } from '@xivdyetools/types';
 
 /**
  * @deprecated Import directly from '@xivdyetools/types' instead.

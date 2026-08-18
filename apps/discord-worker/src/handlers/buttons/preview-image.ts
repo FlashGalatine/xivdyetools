@@ -55,12 +55,12 @@ interface ButtonInteraction {
   member?: {
     user: {
       id: string;
-      username: string;
+      username?: string;
     };
   };
   user?: {
     id: string;
-    username: string;
+    username?: string;
   };
   data?: {
     custom_id?: string;
@@ -113,7 +113,7 @@ export async function handlePreviewImageButton(
   interaction: ButtonInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
   const parsed = parseCustomId(customId);
@@ -133,7 +133,15 @@ export async function handlePreviewImageButton(
   }
 
   ctx.waitUntil(
-    processPreviewImageAction(interaction, env, parsed.action, parsed.presetId, userId, userName, logger)
+    processPreviewImageAction(
+      interaction,
+      env,
+      parsed.action,
+      parsed.presetId,
+      userId,
+      userName,
+      logger,
+    ),
   );
 
   return Response.json({ type: InteractionResponseType.DEFERRED_UPDATE_MESSAGE });
@@ -146,7 +154,7 @@ async function processPreviewImageAction(
   presetId: string,
   moderatorId: string,
   moderatorName: string | undefined,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   const adminT = createTranslator('en');
   const displayName = moderatorName ? `<@${moderatorId}>` : moderatorId;
@@ -163,16 +171,21 @@ async function processPreviewImageAction(
 
       // On success the outcome is visible and the buttons cannot be clicked
       // twice: the embed is edited (colour + footer) and components dropped.
-      const res = await editMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
-        embeds: [
-          {
-            ...originalEmbed,
-            color: action === 'approve' ? STATE.success : STATE.error,
-            footer: { text: footerText },
-          },
-        ],
-        components: [],
-      });
+      const res = await editMessage(
+        env.DISCORD_TOKEN,
+        interaction.channel_id,
+        interaction.message.id,
+        {
+          embeds: [
+            {
+              ...originalEmbed,
+              color: action === 'approve' ? STATE.success : STATE.error,
+              footer: { text: footerText },
+            },
+          ],
+          components: [],
+        },
+      );
 
       if (!res.ok) {
         logger?.error('Failed to update preview-image message after moderation action', undefined, {
@@ -186,7 +199,7 @@ async function processPreviewImageAction(
     logger?.error(
       'Preview-image moderation action failed',
       error instanceof Error ? error : undefined,
-      { presetId, action }
+      { presetId, action },
     );
 
     // On failure, leave the original message (and its buttons) untouched so

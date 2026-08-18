@@ -58,10 +58,7 @@ export function handleCopyRgb(interaction: ButtonInteraction): Response {
   const [r, g, b] = parts.map(Number);
 
   // Format options for different use cases
-  const formats = [
-    `rgb(${r}, ${g}, ${b})`,
-    `${r}, ${g}, ${b}`,
-  ];
+  const formats = [`rgb(${r}, ${g}, ${b})`, `${r}, ${g}, ${b}`];
 
   return Response.json({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -111,7 +108,7 @@ export function handleCopyHsv(interaction: ButtonInteraction): Response {
 export function createCopyButtons(
   hex: string,
   rgb: { r: number; g: number; b: number },
-  hsv: { h: number; s: number; v: number }
+  hsv: { h: number; s: number; v: number },
 ): {
   type: 1;
   components: Array<{
@@ -144,33 +141,6 @@ export function createCopyButtons(
         style: 2,
         label: `HSV: ${hsv.h}°, ${hsv.s}%, ${hsv.v}%`,
         custom_id: `copy_hsv_${hsv.h}_${hsv.s}_${hsv.v}`,
-      },
-    ],
-  };
-}
-
-/**
- * Create a simpler button row with just hex
- */
-export function createHexButton(hex: string): {
-  type: 1;
-  components: Array<{
-    type: 2;
-    style: 2;
-    label: string;
-    custom_id: string;
-  }>;
-} {
-  const cleanHex = hex.replace('#', '');
-
-  return {
-    type: 1,
-    components: [
-      {
-        type: 2,
-        style: 2,
-        label: `Copy: #${cleanHex.toUpperCase()}`,
-        custom_id: `copy_hex_${cleanHex}`,
       },
     ],
   };

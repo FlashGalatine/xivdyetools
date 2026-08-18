@@ -10,12 +10,15 @@
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
-import { resolveColorInput } from '../../utils/color.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { createTranslator, createUserTranslator } from '../../services/bot-i18n.js';
-import { discordLocaleToLocaleCode, initializeLocale, type LocaleCode } from '../../services/i18n.js';
-import { executeContrast, type ContrastDyeInput } from '@xivdyetools/bot-logic';
+import {
+  discordLocaleToLocaleCode,
+  initializeLocale,
+  type LocaleCode,
+} from '../../services/i18n.js';
+import { resolveColorInput, executeContrast, type ContrastDyeInput } from '@xivdyetools/bot-logic';
 import { getUserPreferences } from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
@@ -23,7 +26,7 @@ export async function handleContrastCommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
 
@@ -79,7 +82,7 @@ async function processContrastCommand(
   dyes: ContrastDyeInput[],
   locale: LocaleCode,
   theme?: 'dark' | 'light',
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<void> {
   const t = createTranslator(locale);
   await initializeLocale(locale);
@@ -98,12 +101,14 @@ async function processContrastCommand(
     const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [{
-        title: result.embed.title,
-        description: result.embed.description,
-        color: result.embed.color,
-        image: { url: 'attachment://contrast.png' },
-      }],
+      embeds: [
+        {
+          title: result.embed.title,
+          description: result.embed.description,
+          color: result.embed.color,
+          image: { url: 'attachment://contrast.png' },
+        },
+      ],
       file: { name: 'contrast.png', data: pngBuffer, contentType: 'image/png' },
     });
   } catch (error) {

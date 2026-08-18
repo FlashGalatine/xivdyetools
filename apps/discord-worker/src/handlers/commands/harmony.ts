@@ -9,13 +9,12 @@ import type { HarmonyColorSpace, MatchingMethod } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { DyeTypeFilters } from '@xivdyetools/types';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
-import { resolveColorInput } from '../../utils/color.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, createTranslator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
-import { executeHarmony, getHarmonyTypeChoices, type HarmonyType } from '@xivdyetools/bot-logic';
+import { resolveColorInput, executeHarmony, type HarmonyType } from '@xivdyetools/bot-logic';
 import { getUserPreferences, resolveMatchingMethod } from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
@@ -23,7 +22,7 @@ export async function handleHarmonyCommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
   const t = await createUserTranslator(env.KV, userId, interaction.locale);
@@ -57,7 +56,9 @@ export async function handleHarmonyCommand(
     return Response.json({
       type: 4,
       data: {
-        embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: colorInput }))],
+        embeds: [
+          errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: colorInput })),
+        ],
         flags: 64,
       },
     });
@@ -75,11 +76,23 @@ export async function handleHarmonyCommand(
 
   ctx.waitUntil(
     processHarmonyCommand(
-      interaction, env,
-      resolved.hex, resolved.name, resolved.id, resolved.itemID ?? undefined,
-      harmonyType, locale, logger, harmonyOptions, prefs.dyeFilters,
-      companionCount, effectiveMatching, strictMatching, preventDuplicates, prefs.theme
-    )
+      interaction,
+      env,
+      resolved.hex,
+      resolved.name,
+      resolved.id,
+      resolved.itemID ?? undefined,
+      harmonyType,
+      locale,
+      logger,
+      harmonyOptions,
+      prefs.dyeFilters,
+      companionCount,
+      effectiveMatching,
+      strictMatching,
+      preventDuplicates,
+      prefs.theme,
+    ),
   );
   return deferResponse;
 }
@@ -100,13 +113,18 @@ async function processHarmonyCommand(
   matchingMethod?: MatchingMethod,
   strictMatching?: boolean,
   preventDuplicates?: boolean,
-  theme?: 'dark' | 'light'
+  theme?: 'dark' | 'light',
 ): Promise<void> {
   const t = createTranslator(locale);
   await initializeLocale(locale);
 
   const result = await executeHarmony({
-    baseHex, baseName, baseId, baseItemID, harmonyType, locale,
+    baseHex,
+    baseName,
+    baseId,
+    baseItemID,
+    harmonyType,
+    locale,
     harmonyOptions,
     dyeFilters,
     companionCount,
@@ -148,13 +166,15 @@ async function processHarmonyCommand(
     const baseColorText = `${t.t('harmony.baseColor')}: ${baseEmojiPrefix}**${result.baseName}** (\`${baseHex.toUpperCase()}\`)`;
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [{
-        title: result.embed.title,
-        description: `${baseColorText}\n\n${dyeList}`,
-        color: result.embed.color,
-        image: { url: 'attachment://image.png' },
-        footer: { text: result.embed.footer ?? t.t('common.footer') },
-      }],
+      embeds: [
+        {
+          title: result.embed.title,
+          description: `${baseColorText}\n\n${dyeList}`,
+          color: result.embed.color,
+          image: { url: 'attachment://image.png' },
+          footer: { text: result.embed.footer ?? t.t('common.footer') },
+        },
+      ],
       file: { name: `harmony-${harmonyType}.png`, data: pngBuffer, contentType: 'image/png' },
     });
   } catch (error) {
@@ -164,5 +184,3 @@ async function processHarmonyCommand(
     });
   }
 }
-
-export { getHarmonyTypeChoices };
