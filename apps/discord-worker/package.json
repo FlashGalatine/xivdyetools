@@ -22,7 +22,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@cloudflare/workers-types": "^5.20260727.1",
     "@resvg/resvg-wasm": "^2.6.2",
     "@xivdyetools/auth": "workspace:*",
     "@xivdyetools/bot-logic": "workspace:*",
@@ -34,6 +33,7 @@
     "hono": "^4.12.34"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260727.1",
     "@types/node": "^26.1.2",
     "@vitest/coverage-v8": "^4.1.10",
     "@xivdyetools/test-utils": "workspace:*",

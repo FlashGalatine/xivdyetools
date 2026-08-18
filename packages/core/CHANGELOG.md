@@ -53,6 +53,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `'community'` preset category and 29 curated palette rows (see BREAKING above).
 - `packages/core/CHANGELOG-laymans.md` — plain-language notes now live in the root `CHANGELOG-laymans.md` (product-level, all three surfaces).
 
+### Removed (2026-08-18 dead-code audit)
+
+- `src/data/character_colors.json` — the pre-split 798 KB monolith. `CharacterColorService` has imported only the split `src/data/character_colors/` files (`index.json`, `shared/*.json`, `race_specific/*.json`) since the schema-v2 split; the monolith had no importer left and was being hand-maintained by mistake (DEAD-028).
+
 ## [3.0.0] — 2026-07-31
 
 **Schema v2** (Monorepo 2.0; spec: docs/research/monorepo-2.0/01-dye-data-format.md).

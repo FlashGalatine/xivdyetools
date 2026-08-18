@@ -26,17 +26,13 @@
   "license": "MIT",
   "dependencies": {
     "@xivdyetools/bot-logic": "workspace:*",
-    "@xivdyetools/core": "workspace:*",
     "@xivdyetools/logger": "workspace:*",
-    "@xivdyetools/worker-kit": "workspace:*",
-    "@xivdyetools/svg": "workspace:*",
     "@xivdyetools/types": "workspace:*",
     "revolt.js": "^7.1.1"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",
     "@vitest/coverage-v8": "^4.1.10",
-    "@xivdyetools/test-utils": "workspace:*",
     "tsup": "^8.5.1",
     "tsx": "^4.23.1",
     "vitest": "^4.1.10"

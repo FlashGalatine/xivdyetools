@@ -49,8 +49,7 @@ src/
 │   ├── dyes.json                  # 125 dyes (schema v2: 7 fields, stainID-keyed)
 │   ├── facewear_colors.json       # 11 facewear colors (not dyes)
 │   ├── presets.json               # Curated palette/harmony presets
-│   ├── character_colors.json      # FFXIV skin/hair color tables
-│   ├── character_colors/          # Per-race split files
+│   ├── character_colors/          # FFXIV skin/hair color tables, split per-race
 │   └── locales/                   # Generated en/ja/de/fr/ko/zh JSON (after build:locales)
 ├── services/
 │   ├── ColorService.ts            # Facade: conversion, mixing, simulation

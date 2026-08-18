@@ -180,7 +180,6 @@ A dye name introducing a glyph outside the current Noto subsets renders as `.not
 ## Consumers
 
 - [`apps/discord-worker`](../../apps/discord-worker/) — every generator; rasterizes via `resvg-wasm`.
-- [`apps/stoat-worker`](../../apps/stoat-worker/) — Revolt bot mirror.
 - [`@xivdyetools/bot-logic`](../bot-logic/) — orchestrates the command flows that call these generators.
 
 `apps/og-worker` keeps its **own** local theme and SVG services; it is on the OG card directions, not this frame system.
