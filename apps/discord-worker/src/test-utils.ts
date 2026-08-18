@@ -26,23 +26,6 @@ export function createMockKV() {
 }
 
 /**
- * Creates a mock D1Database
- */
-export function createMockD1(): D1Database {
-  return {
-    prepare: vi.fn(() => ({
-      bind: vi.fn().mockReturnThis(),
-      first: vi.fn().mockResolvedValue(null),
-      all: vi.fn().mockResolvedValue({ results: [] }),
-      run: vi.fn().mockResolvedValue({ success: true }),
-    })),
-    batch: vi.fn().mockResolvedValue([]),
-    exec: vi.fn().mockResolvedValue({ count: 0 }),
-    dump: vi.fn().mockResolvedValue(new ArrayBuffer(0)),
-  } as unknown as D1Database;
-}
-
-/**
  * Creates a mock AnalyticsEngineDataset
  */
 export function createMockAnalytics(): AnalyticsEngineDataset {
@@ -62,7 +45,6 @@ export function createMockEnv(overrides?: Partial<Env>): Env {
     PRESETS_API_URL: 'https://test-api.example.com',
     INTERNAL_WEBHOOK_SECRET: 'test-secret',
     KV: createMockKV(),
-    DB: createMockD1(),
     ANALYTICS: createMockAnalytics(),
     ...overrides,
   } as Env;

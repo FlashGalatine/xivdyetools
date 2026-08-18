@@ -137,7 +137,6 @@ src/
 | Binding | Type | Purpose |
 |---------|------|---------|
 | `KV` | KV Namespace | Rate limiting fallback, user preferences, preset favourites, analytics counters |
-| `DB` | D1 (`xivdyetools-presets`) | Shared with presets-api / moderation-worker |
 | `ANALYTICS` | Analytics Engine (`xivdyetools_bot_analytics`) | Long-term command usage telemetry |
 | `PRESETS_API` | Service Binding → `xivdyetools-presets-api` | Worker-to-Worker preset CRUD |
 | `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-api-worker` | Market board prices for `/budget` (via the absorbed `/api/v2/*` proxy routes) |

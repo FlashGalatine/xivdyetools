@@ -37,7 +37,6 @@ describe('preview-image button handlers', () => {
       DISCORD_CLIENT_ID: 'app-123',
       MODERATOR_IDS: 'mod-1,mod-2',
       MODERATION_CHANNEL_ID: 'channel-mod',
-      DB: undefined as unknown as D1Database,
       KV: undefined as unknown as KVNamespace,
       PRESETS_API: undefined,
       PRESETS_API_URL: 'https://presets-api.example.com',
@@ -125,7 +124,7 @@ describe('preview-image button handlers', () => {
         PRESET_ID,
         'approve',
         'mod-1',
-        'Moderator'
+        'Moderator',
       );
     });
 
@@ -156,7 +155,7 @@ describe('preview-image button handlers', () => {
         PRESET_ID,
         'reject',
         'mod-1',
-        'Moderator'
+        'Moderator',
       );
     });
 
@@ -202,7 +201,7 @@ describe('preview-image button handlers', () => {
             }),
           ]),
           components: [],
-        })
+        }),
       );
     });
 
@@ -236,7 +235,9 @@ describe('preview-image button handlers', () => {
 
     it('presets-api failure produces an ephemeral error and does not touch the message (buttons stay retryable)', async () => {
       vi.mocked(presetApi.isModerator).mockReturnValue(true);
-      vi.mocked(presetApi.setPreviewImageStatus).mockRejectedValue(new Error('presets-api unreachable'));
+      vi.mocked(presetApi.setPreviewImageStatus).mockRejectedValue(
+        new Error('presets-api unreachable'),
+      );
       vi.mocked(discordApi.sendFollowUp).mockResolvedValue(new Response(null, { status: 200 }));
 
       const interaction = {
@@ -260,7 +261,7 @@ describe('preview-image button handlers', () => {
         expect.objectContaining({
           content: 'Failed to update the preview image. Please try again.',
           ephemeral: true,
-        })
+        }),
       );
       // Buttons must remain clickable for a retry: no message edit at all.
       expect(discordApi.editMessage).not.toHaveBeenCalled();
@@ -296,7 +297,7 @@ describe('preview-image button handlers', () => {
               footer: expect.objectContaining({ text: expect.stringContaining('mod-1') }),
             }),
           ]),
-        })
+        }),
       );
     });
 

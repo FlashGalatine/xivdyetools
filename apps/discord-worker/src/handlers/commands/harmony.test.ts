@@ -175,7 +175,6 @@ describe('handleHarmonyCommand', () => {
       delete: async () => undefined,
       list: async () => ({ keys: [], list_complete: true, cacheStatus: null }),
     } as unknown as KVNamespace,
-    DB: {} as D1Database,
     DISCORD_CLIENT_ID: 'client-123',
     DISCORD_PUBLIC_KEY: 'pk',
     DISCORD_TOKEN: 'token',

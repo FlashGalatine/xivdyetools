@@ -108,7 +108,6 @@ The Worker bundle is close enough to Cloudflare's compressed limit to be worth w
 | Binding | Type | Purpose |
 |---------|------|---------|
 | `KV` | KV Namespace | Rate-limit fallback, user preferences, analytics counters |
-| `DB` | D1 (`xivdyetools-presets`) | Shared with `presets-api` / `moderation-worker` |
 | `ANALYTICS` | Analytics Engine | Long-term command usage telemetry |
 | `PRESETS_API` | Service Binding → `xivdyetools-presets-api` | Preset CRUD |
 | `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-api-worker` | Market prices for `/budget` |

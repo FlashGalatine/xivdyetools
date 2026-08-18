@@ -3,7 +3,7 @@
  *
  * Secrets are set via: wrangler secret put <NAME>
  * Variables are set in wrangler.toml [vars]
- * Bindings (KV, R2, D1) are configured in wrangler.toml
+ * Bindings (KV, service bindings) are configured in wrangler.toml
  */
 export interface Env {
   // =========================================================================
@@ -78,15 +78,6 @@ export interface Env {
 
   /** KV Namespace for analytics, user preferences, favorites, and collections */
   KV: KVNamespace;
-
-  /** R2 Bucket for generated images */
-  IMAGES?: R2Bucket;
-
-  /** R2 Bucket for static assets (fonts) */
-  ASSETS?: R2Bucket;
-
-  /** D1 Database for user data and presets */
-  DB: D1Database;
 
   /** Service Binding to Presets API Worker (for Worker-to-Worker communication) */
   PRESETS_API?: Fetcher;

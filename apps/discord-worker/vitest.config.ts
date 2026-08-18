@@ -1,11 +1,13 @@
-import { defineConfig } from 'vitest/config';
-import path from 'path';
+import { defineConfig, configDefaults } from 'vitest/config';
 
 export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
     include: ['src/**/*.test.ts'],
+    // vitest.integration.config.ts owns *.integration.test.ts — without this
+    // exclude, `src/**/*.test.ts` also matches it and test:all runs it twice.
+    exclude: [...configDefaults.exclude, 'src/**/*.integration.test.ts'],
     server: {
       deps: {
         inline: ['@xivdyetools/core', '@xivdyetools/test-utils'],
@@ -19,14 +21,16 @@ export default defineConfig({
         'src/**/*.test.ts',
         // Test scaffolding, not shipped code
         'src/test-utils.ts',
+        // 2026-08-18 dead-code audit (DEAD-007): the include/exclude split
+        // that stops *.integration.test.ts from double-running under the
+        // unit config also stops it exercising this integration-only helper
+        // under `test:coverage` — it has no unit-test consumer, so it needs
+        // the same scaffolding exclusion as test-utils.ts above.
+        'src/test-utils.integration.ts',
         'src/types/**',
-        'src/locales/**',
         'src/fonts/**',
         'src/data/**',
         'src/services/svg/renderer.ts',
-        'src/services/svg/dye-info-card.ts',
-        'src/services/svg/random-dyes-grid.ts',
-        'src/services/svg/budget-comparison.ts',
         'src/services/budget/**',
         'src/handlers/commands/budget.ts',
         'src/handlers/commands/extractor.ts',
@@ -60,11 +64,6 @@ export default defineConfig({
         functions: 88,
         lines: 85,
       },
-    },
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
     },
   },
 });

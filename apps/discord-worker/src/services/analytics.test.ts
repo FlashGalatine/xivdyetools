@@ -27,15 +27,21 @@ function createMockKV() {
       value: store.get(key) ?? null,
       metadata: metadata.get(key) ?? null,
     })),
-    put: vi.fn(async (key: string, value: string, options?: { metadata?: { version: number; count?: number } }) => {
-      store.set(key, value);
-      if (options?.metadata) {
-        metadata.set(key, {
-          version: options.metadata.version,
-          count: options.metadata.count ?? (parseInt(value, 10) || 0),
-        });
-      }
-    }),
+    put: vi.fn(
+      async (
+        key: string,
+        value: string,
+        options?: { metadata?: { version: number; count?: number } },
+      ) => {
+        store.set(key, value);
+        if (options?.metadata) {
+          metadata.set(key, {
+            version: options.metadata.version,
+            count: options.metadata.count ?? (parseInt(value, 10) || 0),
+          });
+        }
+      },
+    ),
     delete: vi.fn(async (key: string) => {
       store.delete(key);
       metadata.delete(key);
@@ -90,7 +96,6 @@ describe('analytics.ts', () => {
       PRESETS_API_URL: 'https://test-api.example.com',
       INTERNAL_WEBHOOK_SECRET: 'test-secret', // pragma: allowlist secret
       KV: mockKV,
-      DB: {} as unknown as D1Database,
       ANALYTICS: mockAnalytics as unknown as AnalyticsEngineDataset,
     } as Env;
 
@@ -134,7 +139,7 @@ describe('analytics.ts', () => {
       expect(mockAnalytics.writeDataPoint).toHaveBeenCalledWith(
         expect.objectContaining({
           blobs: expect.arrayContaining(['dm']),
-        })
+        }),
       );
     });
 
@@ -205,10 +210,7 @@ describe('analytics.ts', () => {
 
       trackCommand(mockEnv, event, mockLogger);
 
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        'Analytics tracking error',
-        expect.any(Error)
-      );
+      expect(mockLogger.error).toHaveBeenCalledWith('Analytics tracking error', expect.any(Error));
     });
 
     it('should pass undefined to logger for non-Error exceptions', () => {
@@ -233,10 +235,7 @@ describe('analytics.ts', () => {
 
       trackCommand(mockEnv, event, mockLogger);
 
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        'Analytics tracking error',
-        undefined
-      );
+      expect(mockLogger.error).toHaveBeenCalledWith('Analytics tracking error', undefined);
     });
   });
 
@@ -247,7 +246,7 @@ describe('analytics.ts', () => {
       expect(mockKV.put).toHaveBeenCalledWith(
         'stats:total',
         '1',
-        expect.objectContaining({ expirationTtl: 30 * 24 * 60 * 60 })
+        expect.objectContaining({ expirationTtl: 30 * 24 * 60 * 60 }),
       );
     });
 
@@ -259,18 +258,14 @@ describe('analytics.ts', () => {
       expect(mockKV.put).toHaveBeenCalledWith(
         'stats:total',
         '6',
-        expect.objectContaining({ expirationTtl: 30 * 24 * 60 * 60 })
+        expect.objectContaining({ expirationTtl: 30 * 24 * 60 * 60 }),
       );
     });
 
     it('should handle command-specific counters', async () => {
       await incrementCounter(mockKV, 'cmd:harmony');
 
-      expect(mockKV.put).toHaveBeenCalledWith(
-        'stats:cmd:harmony',
-        '1',
-        expect.any(Object)
-      );
+      expect(mockKV.put).toHaveBeenCalledWith('stats:cmd:harmony', '1', expect.any(Object));
     });
   });
 
@@ -336,7 +331,7 @@ describe('analytics.ts', () => {
       expect(mockKV.put).toHaveBeenCalledWith(
         'usertrack:2024-12-25:user-123',
         '1',
-        expect.objectContaining({ expirationTtl: expect.any(Number) })
+        expect.objectContaining({ expirationTtl: expect.any(Number) }),
       );
     });
   });

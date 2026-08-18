@@ -128,7 +128,6 @@ describe('index.ts', () => {
       KV: mockKV,
       MODERATION_CHANNEL_ID: 'test-moderation-channel',
       SUBMISSION_LOG_CHANNEL_ID: 'test-submission-log-channel',
-      DB: {} as any,
     };
 
     mockCtx = {

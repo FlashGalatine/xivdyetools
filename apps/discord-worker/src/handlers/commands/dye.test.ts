@@ -12,15 +12,6 @@ vi.mock('../../services/svg/renderer.js', () => ({
   initRenderer: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock SVG generators
-vi.mock('../../services/svg/dye-info-card.js', () => ({
-  generateDyeInfoCard: vi.fn().mockReturnValue('<svg></svg>'),
-}));
-
-vi.mock('../../services/svg/random-dyes-grid.js', () => ({
-  generateRandomDyesGrid: vi.fn().mockReturnValue('<svg></svg>'),
-}));
-
 // Mock Discord API (for deferred response follow-ups)
 vi.mock('../../utils/discord-api.js', () => ({
   editOriginalResponse: vi.fn().mockResolvedValue(undefined),
@@ -33,30 +24,82 @@ vi.mock('@xivdyetools/core', () => {
     searchByName(query: string) {
       if (query.toLowerCase().includes('snow')) {
         return [
-          { id: 1, name: 'Snow White', hex: '#FFFFFF', rgb: { r: 255, g: 255, b: 255 }, hsv: { h: 0, s: 0, v: 100 }, category: 'Standard', itemID: 5694 },
+          {
+            id: 1,
+            name: 'Snow White',
+            hex: '#FFFFFF',
+            rgb: { r: 255, g: 255, b: 255 },
+            hsv: { h: 0, s: 0, v: 100 },
+            category: 'Standard',
+            itemID: 5694,
+          },
         ];
       }
       if (query.toLowerCase().includes('notfound')) {
         return [];
       }
       return [
-        { id: 2, name: 'Ash Grey', hex: '#CCCCCC', rgb: { r: 204, g: 204, b: 204 }, hsv: { h: 0, s: 0, v: 80 }, category: 'Standard', itemID: 5695 },
+        {
+          id: 2,
+          name: 'Ash Grey',
+          hex: '#CCCCCC',
+          rgb: { r: 204, g: 204, b: 204 },
+          hsv: { h: 0, s: 0, v: 80 },
+          category: 'Standard',
+          itemID: 5695,
+        },
       ];
     }
     getAllDyes() {
       return [
-        { id: 1, name: 'Snow White', hex: '#FFFFFF', category: 'Standard', rgb: { r: 255, g: 255, b: 255 }, hsv: { h: 0, s: 0, v: 100 }, itemID: 5694 },
-        { id: 2, name: 'Ash Grey', hex: '#CCCCCC', category: 'Standard', rgb: { r: 204, g: 204, b: 204 }, hsv: { h: 0, s: 0, v: 80 }, itemID: 5695 },
-        { id: 3, name: 'Red', hex: '#FF0000', category: 'Facewear', rgb: { r: 255, g: 0, b: 0 }, hsv: { h: 0, s: 100, v: 100 }, itemID: 1234 },
-        { id: 4, name: 'Metallic Red', hex: '#DD0000', category: 'Metallic', rgb: { r: 221, g: 0, b: 0 }, hsv: { h: 0, s: 100, v: 87 }, itemID: 5696 },
+        {
+          id: 1,
+          name: 'Snow White',
+          hex: '#FFFFFF',
+          category: 'Standard',
+          rgb: { r: 255, g: 255, b: 255 },
+          hsv: { h: 0, s: 0, v: 100 },
+          itemID: 5694,
+        },
+        {
+          id: 2,
+          name: 'Ash Grey',
+          hex: '#CCCCCC',
+          category: 'Standard',
+          rgb: { r: 204, g: 204, b: 204 },
+          hsv: { h: 0, s: 0, v: 80 },
+          itemID: 5695,
+        },
+        {
+          id: 3,
+          name: 'Red',
+          hex: '#FF0000',
+          category: 'Facewear',
+          rgb: { r: 255, g: 0, b: 0 },
+          hsv: { h: 0, s: 100, v: 100 },
+          itemID: 1234,
+        },
+        {
+          id: 4,
+          name: 'Metallic Red',
+          hex: '#DD0000',
+          category: 'Metallic',
+          rgb: { r: 221, g: 0, b: 0 },
+          hsv: { h: 0, s: 100, v: 87 },
+          itemID: 5696,
+        },
       ];
     }
   }
 
   class MockLocalizationService {
     async setLocale(_locale: string): Promise<void> {}
-    getDyeName(_itemID: number): string | undefined { return undefined; }
-    getCategory(category: string): string { return category; }
+    getDyeName(_itemID: number): string | undefined {
+      return undefined;
+    }
+    getCategory(category: string): string {
+      return category;
+    }
   }
 
   return {
@@ -560,7 +603,7 @@ describe('dye.ts', () => {
   describe('subcommand routing', () => {
     const invoke = (
       subcommand?: { name: string; options?: Array<{ name: string; value?: unknown }> },
-      user: Record<string, unknown> | undefined = { id: 'user-123' }
+      user: Record<string, unknown> | undefined = { id: 'user-123' },
     ) =>
       handleDyeCommand(
         {
@@ -575,7 +618,7 @@ describe('dye.ts', () => {
           token: 'token-1',
         } as unknown as DiscordInteraction,
         mockEnv,
-        mockCtx
+        mockCtx,
       );
 
     const bodyOf = async (r: Response) => (await r.json()) as InteractionResponseBody;
@@ -608,7 +651,7 @@ describe('dye.ts', () => {
 
     it('reports an unfound dye by name on info', async () => {
       const data = await bodyOf(
-        await invoke({ name: 'info', options: [{ name: 'name', value: 'notfound' }] })
+        await invoke({ name: 'info', options: [{ name: 'name', value: 'notfound' }] }),
       );
 
       expect(JSON.stringify(data)).toContain('Dye not found: notfound');
@@ -616,7 +659,7 @@ describe('dye.ts', () => {
 
     it('reports no results for a search that matches nothing', async () => {
       const data = await bodyOf(
-        await invoke({ name: 'search', options: [{ name: 'query', value: 'notfound' }] })
+        await invoke({ name: 'search', options: [{ name: 'query', value: 'notfound' }] }),
       );
 
       expect(JSON.stringify(data)).toContain('No results for: notfound');
@@ -630,7 +673,7 @@ describe('dye.ts', () => {
 
     it('reports an empty category rather than an empty embed', async () => {
       const data = await bodyOf(
-        await invoke({ name: 'list', options: [{ name: 'category', value: 'Nonexistent' }] })
+        await invoke({ name: 'list', options: [{ name: 'category', value: 'Nonexistent' }] }),
       );
 
       expect(JSON.stringify(data)).toContain('No dyes in category: Nonexistent');
@@ -638,7 +681,7 @@ describe('dye.ts', () => {
 
     it('lists the dyes in a real category', async () => {
       const data = await bodyOf(
-        await invoke({ name: 'list', options: [{ name: 'category', value: 'Standard' }] })
+        await invoke({ name: 'list', options: [{ name: 'category', value: 'Standard' }] }),
       );
 
       expect(JSON.stringify(data)).toContain('Category: Standard');

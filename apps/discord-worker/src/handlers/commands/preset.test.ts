@@ -81,10 +81,6 @@ vi.mock('../../services/svg/renderer.js', () => ({
   renderSvgToPng: (...args: unknown[]) => mockRenderSvgToPng(...args),
 }));
 
-vi.mock('../../services/svg/preset-swatch.js', () => ({
-  generatePresetSwatch: vi.fn(() => '<svg></svg>'),
-}));
-
 // Preset API Mocks
 const mockIsApiEnabled = vi.fn().mockReturnValue(true);
 const mockGetPresets = vi.fn().mockResolvedValue({ presets: [mockPreset], total: 1 });
@@ -169,7 +165,6 @@ const baseInteraction: DiscordInteraction = {
 
 const env = {
   KV: {} as KVNamespace,
-  DB: {} as D1Database,
   DISCORD_PUBLIC_KEY: 'pk',
   DISCORD_TOKEN: 'token',
   DISCORD_CLIENT_ID: 'client-id',

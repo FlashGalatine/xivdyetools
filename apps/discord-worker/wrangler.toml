@@ -16,7 +16,7 @@ compatibility_date = "2024-12-01"
 workers_dev = true
 
 # Beta bot: isolated KV so testing never touches real users' preferences,
-# favorites, rate-limit counters or analytics. D1 and the service bindings are
+# favorites, rate-limit counters or analytics. The service bindings are
 # shared with production on purpose, so /preset renders real data.
 [[kv_namespaces]]
 binding = "KV"
@@ -25,11 +25,6 @@ id = "7d76d17fbb16403c8bf40e16f5b58ba6"
 [[analytics_engine_datasets]]
 binding = "ANALYTICS"
 dataset = "xivdyetools_bot_analytics_beta"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "xivdyetools-presets"
-database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 
 [[services]]
 binding = "PRESETS_API"
@@ -81,11 +76,6 @@ ANNOUNCEMENT_CHANNEL_ID = "1441800851747508314"
 [[env.production.kv_namespaces]]
 binding = "KV"
 id = "1fcb7e037ccd4172a47fccd97cf8e753"
-
-[[env.production.d1_databases]]
-binding = "DB"
-database_name = "xivdyetools-presets"
-database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 
 [[env.production.services]]
 binding = "PRESETS_API"
