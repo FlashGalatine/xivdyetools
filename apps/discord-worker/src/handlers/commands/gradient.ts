@@ -7,7 +7,8 @@
 
 import type { MatchingMethod } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import type { DyeTypeFilters } from '@xivdyetools/types';
+import type { DyeTypeFilters, MatchQualityKey } from '@xivdyetools/types';
+import { classifyMatchDistance } from '@xivdyetools/types';
 import { deferredResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
@@ -213,10 +214,15 @@ async function processGradientCommand(
   }
 }
 
+/** Maps `classifyMatchDistance`'s tier key onto the bot's `quality.*` locale keys. */
+const QUALITY_LOCALE_KEY: Record<MatchQualityKey, string> = {
+  perfect: 'quality.perfect',
+  excellent: 'quality.excellent',
+  good: 'quality.good',
+  fair: 'quality.fair',
+  approximate: 'quality.approximate',
+};
+
 function getMatchQualityLabel(distance: number, t: ReturnType<typeof createTranslator>): string {
-  if (distance === 0) return t.t('quality.perfect');
-  if (distance < 10) return t.t('quality.excellent');
-  if (distance < 25) return t.t('quality.good');
-  if (distance < 50) return t.t('quality.fair');
-  return t.t('quality.approximate');
+  return t.t(QUALITY_LOCALE_KEY[classifyMatchDistance(distance)]);
 }

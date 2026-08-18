@@ -46,7 +46,7 @@ describe('Translator', () => {
       translator.t('nonexistent.key.path');
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        'Missing translation: nonexistent.key.path for locale en'
+        'Missing translation: nonexistent.key.path for locale en',
       );
     });
 
@@ -109,24 +109,6 @@ describe('Translator', () => {
       expect(createTranslator('de').getLocale()).toBe('de');
     });
   });
-
-  describe('getMeta', () => {
-    it('returns locale metadata for English', () => {
-      const meta = createTranslator('en').getMeta();
-      expect(meta.locale).toBe('en');
-      expect(meta.name).toBe('English');
-      expect(meta.nativeName).toBe('English');
-      expect(meta.flag).toBe('🇺🇸');
-    });
-
-    it('returns locale metadata for Japanese', () => {
-      const meta = createTranslator('ja').getMeta();
-      expect(meta.locale).toBe('ja');
-      expect(meta.name).toBe('Japanese');
-      expect(meta.nativeName).toBe('日本語');
-      expect(meta.flag).toBe('🇯🇵');
-    });
-  });
 });
 
 describe('createTranslator', () => {
@@ -142,4 +124,3 @@ describe('createTranslator', () => {
     }
   });
 });
-

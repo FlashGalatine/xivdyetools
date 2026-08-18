@@ -15,7 +15,6 @@ import { messageResponse, deferredResponse, errorEmbed } from '../../utils/respo
 import {
   getUserPreferences,
   resolveBlendingMode,
-  resolveCount,
   resolveMatchingMethod,
 } from '../../services/preferences.js';
 import { createUserTranslator } from '../../services/bot-i18n.js';
@@ -40,7 +39,6 @@ export async function handleMixerV4Command(
   const explicitMode = options.find((opt) => opt.name === 'mode')?.value as string | undefined;
   const explicitMatching = options.find((opt) => opt.name === 'matching')?.value as
     string | undefined;
-  const explicitCount = options.find((opt) => opt.name === 'count')?.value as number | undefined;
 
   if (!dye1Input || !dye2Input) {
     return messageResponse({
@@ -67,7 +65,6 @@ export async function handleMixerV4Command(
 
   const prefs = await getUserPreferences(env.KV, userId, logger);
   const blendingMode = resolveBlendingMode(explicitMode, prefs);
-  const count = resolveCount(explicitCount, prefs);
   const matchingMethod = resolveMatchingMethod(explicitMatching, prefs);
   const locale = t.getLocale();
 
@@ -81,7 +78,6 @@ export async function handleMixerV4Command(
           dye1: dye1Resolved,
           dye2: dye2Resolved,
           blendingMode,
-          count,
           matchingMethod,
           locale,
           dyeFilters: prefs.dyeFilters,

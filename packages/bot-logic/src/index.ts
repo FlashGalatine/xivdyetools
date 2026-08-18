@@ -33,18 +33,9 @@ export type { LocaleCode } from './localization.js';
 // Shared result types
 export type { EmbedData, EmbedField } from './commands/types.js';
 
-// Shared color math utilities
-export { getColorDistance, getMatchQualityInfo } from './color-math.js';
-export type { MatchQualityInfo } from './color-math.js';
-
 // Command: Harmony wheel
 export { executeHarmony, getHarmonyTypeChoices, HARMONY_TYPES } from './commands/harmony.js';
-export type {
-  HarmonyInput,
-  HarmonyResult,
-  HarmonyType,
-  HarmonyColorSpace,
-} from './commands/harmony.js';
+export type { HarmonyInput, HarmonyResult, HarmonyType } from './commands/harmony.js';
 
 // Command: Dye info card
 export { executeDyeInfo } from './commands/dye-info.js';
@@ -56,12 +47,7 @@ export type { RandomInput, RandomResult } from './commands/dye-info.js';
 
 // Command: Dye blending (mixer)
 export { executeMixer } from './commands/mixer.js';
-export type {
-  MixerInput,
-  MixerResult,
-  MixerMatch,
-  BlendingMode,
-} from './commands/mixer.js';
+export type { MixerInput, MixerResult } from './commands/mixer.js';
 
 // Command: Color gradient
 export { executeGradient } from './commands/gradient.js';
@@ -70,9 +56,7 @@ export type {
   GradientResult,
   GradientStepResult,
   InterpolationMode,
-  MatchingMethod,
 } from './commands/gradient.js';
-
 
 // Command: Dye comparison grid
 export { executeComparison } from './commands/comparison.js';
@@ -93,11 +77,7 @@ export type { SwatchInput, SwatchResult, SwatchSlotOption } from './commands/swa
 
 // Command: Contrast (13A/13B/13C·1 — the pair count routes the frame)
 export { executeContrast } from './commands/contrast.js';
-export type {
-  ContrastInput,
-  ContrastResult,
-  ContrastDyeInput,
-} from './commands/contrast.js';
+export type { ContrastInput, ContrastResult, ContrastDyeInput } from './commands/contrast.js';
 
 // BUG-073/REFACTOR-010 (2026-07-18 audit): single MODERATOR_IDS grammar for both bot workers
 export { parseModeratorIds, isModeratorId, isValidDiscordSnowflake } from './moderators.js';

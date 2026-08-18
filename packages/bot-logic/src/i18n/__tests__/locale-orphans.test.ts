@@ -32,11 +32,13 @@
  *        - `manual5.topics.${topic}.name` / `.body` for each value in
  *          discord-worker's `TOPIC_KEYS`
  *          (`apps/discord-worker/src/handlers/commands/manual.ts`).
- *        - the four `meta.*` keys — never read by `t()` today
- *          (`Translator.getMeta()` is itself dead — DEAD-013), but the block
- *          is a structural part of every locale file (see
- *          `../locales.test.ts`'s "valid meta block" check) and is scheduled
- *          for removal together with `getMeta()` in Task 7.
+ *        - `meta.locale` / `meta.name` — never read via `t()` (only
+ *          `Translator.getLocale()` reads the constructor-stored locale
+ *          directly), but the block is a structural part of every locale
+ *          file (see `../locales.test.ts`'s "valid meta block" check).
+ *          `meta.flag` / `meta.nativeName` fed the now-deleted
+ *          `Translator.getMeta()` (DEAD-013 / Task 7) and were removed from
+ *          `LocaleData` and all six locale files in the same change.
  *
  *      bot-logic must not import discord-worker, so the two discord-worker
  *      lists are extracted at test time by reading the source file and
@@ -75,8 +77,8 @@ const CONSUMER_DIRS = [
   join(REPO_ROOT, 'apps', 'stoat-worker', 'src'),
 ];
 
-/** The four `meta.*` keys — kept structurally until Task 7 removes getMeta(). */
-const META_KEYS = ['meta.locale', 'meta.name', 'meta.nativeName', 'meta.flag'];
+/** The two surviving `meta.*` keys — kept structurally, never read via `t()`. */
+const META_KEYS = ['meta.locale', 'meta.name'];
 
 /** Flatten a nested locale object to dot-notation leaf keys. */
 function flattenKeys(obj: Record<string, unknown>, prefix = ''): string[] {

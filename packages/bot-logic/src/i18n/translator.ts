@@ -89,11 +89,6 @@ export class Translator {
   getLocale(): LocaleCode {
     return this.locale;
   }
-
-  /** Get locale metadata (name, nativeName, flag). */
-  getMeta(): LocaleData['meta'] {
-    return this.data.meta;
-  }
 }
 
 // ============================================================================
@@ -107,4 +102,3 @@ export class Translator {
 export function createTranslator(locale: LocaleCode, logger?: TranslatorLogger): Translator {
   return new Translator(locale, logger);
 }
-

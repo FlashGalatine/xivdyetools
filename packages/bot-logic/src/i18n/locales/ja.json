@@ -1,9 +1,7 @@
 {
   "meta": {
     "locale": "ja",
-    "name": "Japanese",
-    "nativeName": "日本語",
-    "flag": "🇯🇵"
+    "name": "Japanese"
   },
   "common": {
     "dyes": "カララント",

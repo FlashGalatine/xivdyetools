@@ -34,8 +34,9 @@ Each `commands/<name>.ts` exports an `execute<Name>` function plus its `<Name>In
 A small set of shared utilities lives at the top level of `src/`:
 - `input-resolution.ts` — turns hex codes, dye names, or CSS color names into a single `ResolvedColor` shape. Owns a process-singleton `DyeService` (loaded from `dyeDatabase` JSON).
 - `localization.ts` — wraps `LocalizationService` with a per-locale instance cache to avoid singleton race conditions in concurrent CF Worker requests.
-- `color-math.ts` — distance / match-quality helpers shared across commands.
 - `css-colors.ts` — 148 standard CSS color name → hex lookup.
+
+`color-math.ts` (`getColorDistance`, `getMatchQualityInfo`) was removed 2026-08-18 (DEAD-012 dead-code audit) — it was a dead delegate to core's `ColorService.getColorDistance` / `classifyMatchDistance`; no command imported it. `handlers/commands/gradient.ts` in `apps/discord-worker` now calls `classifyMatchDistance` from `@xivdyetools/types` directly instead of re-implementing a quality ladder with different thresholds.
 
 ### Key Directories
 
@@ -44,7 +45,6 @@ src/
 ├── index.ts                       # Public re-exports
 ├── input-resolution.ts            # Hex / dye-name / CSS-color resolution + dyeService singleton
 ├── localization.ts                # initializeLocale, getLocalizedDyeName, getLocalizedCategory
-├── color-math.ts                  # getColorDistance, getMatchQualityInfo
 ├── css-colors.ts                  # CSS named-color → hex (BlueViolet, coral, ...)
 ├── moderators.ts                  # parseModeratorIds / isModeratorId / isValidDiscordSnowflake (shared MODERATOR_IDS grammar)
 ├── i18n/                          # Bot UI Translator + six locale JSONs — subpath @xivdyetools/bot-logic/i18n
@@ -88,9 +88,6 @@ type LocaleCode;  // re-exported from ./i18n (formerly @xivdyetools/bot-i18n): '
 ```ts
 type EmbedData = { title; description?; fields?: EmbedField[]; color: number; footer? };
 type EmbedField = { name; value; inline? };
-function getColorDistance(hex1, hex2): number;
-function getMatchQualityInfo(distance): MatchQualityInfo;
-type MatchQualityInfo;
 ```
 
 ### Commands
@@ -105,17 +102,15 @@ executeHarmony(input: HarmonyInput): Promise<HarmonyResult>
   type HarmonyType = 'triadic'|'complementary'|'analogous'|'split-complementary'|'tetradic'|'inverted-tetradic'|'square'|'monochromatic';
   const HARMONY_TYPES: readonly HarmonyType[];
   function getHarmonyTypeChoices(): {name; value}[];
-  type HarmonyColorSpace;  // re-exported from @xivdyetools/core
 
 executeDyeInfo(input: DyeInfoInput): Promise<DyeInfoResult>
 executeRandom(input: RandomInput): Promise<RandomResult>      // exported from same module
 
 executeMixer(input: MixerInput): Promise<MixerResult>
-  type BlendingMode;     // re-exported from @xivdyetools/core/blending
-  type MixerMatch;
+  // MixerResult = { ok: true; svgString; blendingMode; sweep: MixerSweepStop[]; embed } | { ok: false; ... }
 
 executeGradient(input: GradientInput): Promise<GradientResult>
-  type GradientStepResult, InterpolationMode, MatchingMethod;
+  type GradientStepResult, InterpolationMode;
 
 executeComparison(input: ComparisonInput): Promise<ComparisonResult>
 

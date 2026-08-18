@@ -1,9 +1,7 @@
 {
   "meta": {
     "locale": "fr",
-    "name": "French",
-    "nativeName": "Français",
-    "flag": "🇫🇷"
+    "name": "French"
   },
   "common": {
     "dyes": "Teintures",

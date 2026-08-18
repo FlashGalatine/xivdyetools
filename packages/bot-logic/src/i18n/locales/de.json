@@ -1,9 +1,7 @@
 {
   "meta": {
     "locale": "de",
-    "name": "German",
-    "nativeName": "Deutsch",
-    "flag": "🇩🇪"
+    "name": "German"
   },
   "common": {
     "dyes": "Farbstoffe",

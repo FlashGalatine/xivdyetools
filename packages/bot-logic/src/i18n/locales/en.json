@@ -1,9 +1,7 @@
 {
   "meta": {
     "locale": "en",
-    "name": "English",
-    "nativeName": "English",
-    "flag": "🇺🇸"
+    "name": "English"
   },
   "common": {
     "dyes": "Dyes",

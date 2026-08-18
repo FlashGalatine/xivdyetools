@@ -179,29 +179,6 @@ describe('bot-i18n.ts', () => {
         expect(translator.getLocale()).toBe('de');
       });
     });
-
-    describe('getMeta', () => {
-      it('should return locale metadata', () => {
-        const translator = createTranslator('en');
-        const meta = translator.getMeta();
-
-        expect(meta).toBeDefined();
-        expect(meta.locale).toBe('en');
-        expect(meta.name).toBe('English');
-        expect(meta.nativeName).toBe('English');
-        expect(meta.flag).toBe('🇺🇸');
-      });
-
-      it('should return correct metadata for other locales', () => {
-        const translator = createTranslator('ja');
-        const meta = translator.getMeta();
-
-        expect(meta.locale).toBe('ja');
-        expect(meta.name).toBe('Japanese');
-        expect(meta.nativeName).toBe('日本語');
-        expect(meta.flag).toBe('🇯🇵');
-      });
-    });
   });
 
   describe('createTranslator', () => {

@@ -12,8 +12,6 @@ export interface LocaleData {
   meta: {
     locale: string;
     name: string;
-    nativeName: string;
-    flag: string;
   };
   [key: string]: unknown;
 }

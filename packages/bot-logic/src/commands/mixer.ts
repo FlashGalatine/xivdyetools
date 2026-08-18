@@ -26,8 +26,6 @@ export interface MixerInput {
   dye1: ResolvedColor;
   dye2: ResolvedColor;
   blendingMode: BlendingMode;
-  /** Number of closest dyes to return (default: 1) */
-  count?: number;
   /** Matching method for the blended result's nearest dye (default: `DEFAULT_MATCHING_METHOD`, ΔE2000). */
   matchingMethod?: MatchingMethod;
   locale: LocaleCode;
@@ -35,11 +33,6 @@ export interface MixerInput {
   dyeFilters?: DyeTypeFilters;
   /** Card theme (stored user preference; defaults dark) */
   theme?: 'dark' | 'light';
-}
-
-export interface MixerMatch {
-  dye: Dye;
-  distance: number;
 }
 
 /** One sweep stop: the ratio, its blend, and the nearest buyable dye. */
@@ -62,12 +55,7 @@ export type MixerResult =
       ok: true;
       /** The 12F ratio-sweep card — the command's first image */
       svgString: string;
-      /** The 50% blend (kept for adapters that surface a single colour) */
-      blendedHex: string;
       blendingMode: BlendingMode;
-      inputDyes: [ResolvedColor, ResolvedColor];
-      /** Nearest dyes to the 50% blend (legacy shape, still returned) */
-      matches: MixerMatch[];
       /** The five-ratio sweep behind the card */
       sweep: MixerSweepStop[];
       embed: EmbedData;
@@ -83,12 +71,13 @@ function findClosestDyeExcludingFacewear(
   excludeIds: number[] = [],
   maxAttempts = 20,
   dyeFilters?: DyeTypeFilters,
-  matchingMethod?: MatchingMethod
+  matchingMethod?: MatchingMethod,
 ): Dye | null {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const candidate = dyeService.findClosestDye(targetHex, { excludeIds, matchingMethod });
     if (!candidate) break;
-    if (candidate.category !== 'Facewear' && (!dyeFilters || !isDyeExcluded(dyeFilters, candidate))) return candidate;
+    if (candidate.category !== 'Facewear' && (!dyeFilters || !isDyeExcluded(dyeFilters, candidate)))
+      return candidate;
     excludeIds.push(candidate.id);
   }
   return null;
@@ -108,7 +97,6 @@ function findClosestDyeExcludingFacewear(
  */
 export async function executeMixer(input: MixerInput): Promise<MixerResult> {
   const { dye1, dye2, blendingMode, locale, dyeFilters, matchingMethod } = input;
-  const count = Math.max(1, input.count ?? 1);
   const t = createTranslator(locale);
 
   await initializeLocale(locale);
@@ -120,9 +108,7 @@ export async function executeMixer(input: MixerInput): Promise<MixerResult> {
     const sweep: MixerSweepStop[] = MIXER_SWEEP_RATIOS.map((pct) => {
       const blend = blendColors(dye1.hex, dye2.hex, blendingMode, pct / 100);
       const dye = findClosestDyeExcludingFacewear(blend.hex, [], 20, dyeFilters, matchingMethod);
-      const deltaE = dye
-        ? ColorService.getDistanceForMethod(blend.hex, dye.hex, 'ciede2000')
-        : 999;
+      const deltaE = dye ? ColorService.getDistanceForMethod(blend.hex, dye.hex, 'ciede2000') : 999;
       return { pct, blendHex: blend.hex, dye: dye as Dye, deltaE, best: false };
     }).filter((s) => s.dye != null);
 
@@ -131,27 +117,6 @@ export async function executeMixer(input: MixerInput): Promise<MixerResult> {
     }
     const bestStop = sweep.reduce((a, b) => (b.deltaE < a.deltaE ? b : a));
     bestStop.best = true;
-
-    // Legacy shape: nearest dyes to the 50% blend
-    const blendResult = blendColors(dye1.hex, dye2.hex, blendingMode, 0.5);
-    const matches: MixerMatch[] = [];
-    const excludeIds: number[] = [];
-    for (let i = 0; i < count; i++) {
-      const closestDye = findClosestDyeExcludingFacewear(
-        blendResult.hex,
-        [...excludeIds],
-        20,
-        dyeFilters,
-        matchingMethod
-      );
-      if (closestDye) {
-        matches.push({
-          dye: closestDye,
-          distance: ColorService.getDistanceForMethod(blendResult.hex, closestDye.hex, 'ciede2000'),
-        });
-        excludeIds.push(closestDye.id);
-      }
-    }
 
     // Localized input names for the card header
     const dye1Name =
@@ -193,10 +158,7 @@ export async function executeMixer(input: MixerInput): Promise<MixerResult> {
     return {
       ok: true,
       svgString,
-      blendedHex: blendResult.hex,
       blendingMode,
-      inputDyes: [dye1, dye2],
-      matches,
       sweep,
       embed,
     };

@@ -1,9 +1,7 @@
 {
   "meta": {
     "locale": "ko",
-    "name": "Korean",
-    "nativeName": "한국어",
-    "flag": "🇰🇷"
+    "name": "Korean"
   },
   "common": {
     "dyes": "염료",

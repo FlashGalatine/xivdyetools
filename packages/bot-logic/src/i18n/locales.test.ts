@@ -54,8 +54,6 @@ describe('locale structure', () => {
       expect(typeof meta).toBe('object');
       expect(typeof meta['locale']).toBe('string');
       expect(typeof meta['name']).toBe('string');
-      expect(typeof meta['nativeName']).toBe('string');
-      expect(typeof meta['flag']).toBe('string');
     });
   }
 });

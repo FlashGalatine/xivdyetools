@@ -8,11 +8,7 @@
  */
 
 import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
-import {
-  type HarmonyOptions,
-  type HarmonyColorSpace,
-  type MatchingMethod,
-} from '@xivdyetools/core';
+import { type HarmonyOptions, type MatchingMethod } from '@xivdyetools/core';
 import { filterDyes, ColorService, DEFAULT_MATCHING_METHOD } from '@xivdyetools/core';
 import { createTranslator, type Translator, type LocaleCode } from '../i18n/index.js';
 import { generateHarmonyCard, num, type HarmonyCardSlot } from '@xivdyetools/svg';
@@ -136,10 +132,14 @@ function getLocalizedHarmonyType(type: string, t: Translator): string {
   if (key) return t.t(key);
   // Fallback: capitalize first letter
   const formats: Record<string, string> = {
-    complementary: 'Complementary', analogous: 'Analogous', triadic: 'Triadic',
-    'split-complementary': 'Split-Complementary', tetradic: 'Tetradic',
+    complementary: 'Complementary',
+    analogous: 'Analogous',
+    triadic: 'Triadic',
+    'split-complementary': 'Split-Complementary',
+    tetradic: 'Tetradic',
     'inverted-tetradic': 'Inverted Tetradic',
-    square: 'Square', monochromatic: 'Monochromatic',
+    square: 'Square',
+    monochromatic: 'Monochromatic',
   };
   return formats[type] || type.charAt(0).toUpperCase() + type.slice(1);
 }
@@ -222,7 +222,6 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
       harmonyDyes.push(...slotDyes);
     }
 
-
     // 11A: the ideal hue the maths asked for, beside the dye that exists.
     // Each found dye pairs with the offset ideal it is nearest to, which also
     // yields the row's angle lead and the frame's verdict; monochromatic rows
@@ -267,8 +266,9 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
     // because "weakest slot" as a label overran the row in German. The card
     // draws the ↓; every word here is already localized.
     const weakest = slots.reduce<HarmonyCardSlot | null>(
-      (worst, s) => (s.deltaE != null && (worst?.deltaE == null || s.deltaE > worst.deltaE) ? s : worst),
-      null
+      (worst, s) =>
+        s.deltaE != null && (worst?.deltaE == null || s.deltaE > worst.deltaE) ? s : worst,
+      null,
     );
     const verdict =
       weakest && weakest.deltaE != null
@@ -278,9 +278,10 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
         : null;
 
     // Localize base name if it's a dye
-    const localizedBaseName = baseItemID && baseName
-      ? getLocalizedDyeName(baseItemID, baseName, locale)
-      : (baseName || baseHex.toUpperCase());
+    const localizedBaseName =
+      baseItemID && baseName
+        ? getLocalizedDyeName(baseItemID, baseName, locale)
+        : baseName || baseHex.toUpperCase();
     const harmonyTitle = getLocalizedHarmonyType(harmonyType, t);
 
     const baseDye = baseId !== undefined ? dyeService.getDyeById(baseId) : null;
@@ -327,7 +328,11 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
       embed,
     };
   } catch {
-    return { ok: false, error: 'GENERATION_FAILED', errorMessage: 'Failed to generate harmony wheel.' };
+    return {
+      ok: false,
+      error: 'GENERATION_FAILED',
+      errorMessage: 'Failed to generate harmony wheel.',
+    };
   }
 }
 
@@ -336,12 +341,14 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
  */
 export function getHarmonyTypeChoices(): Array<{ name: string; value: string }> {
   const formats: Record<string, string> = {
-    complementary: 'Complementary', analogous: 'Analogous', triadic: 'Triadic',
-    'split-complementary': 'Split-Complementary', tetradic: 'Tetradic',
+    complementary: 'Complementary',
+    analogous: 'Analogous',
+    triadic: 'Triadic',
+    'split-complementary': 'Split-Complementary',
+    tetradic: 'Tetradic',
     'inverted-tetradic': 'Inverted Tetradic',
-    square: 'Square', monochromatic: 'Monochromatic',
+    square: 'Square',
+    monochromatic: 'Monochromatic',
   };
   return HARMONY_TYPES.map((type) => ({ name: formats[type] || type, value: type }));
 }
-
-export type { HarmonyColorSpace };

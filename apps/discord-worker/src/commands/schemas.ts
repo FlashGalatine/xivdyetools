@@ -441,14 +441,6 @@ export const commands = [
           { name: 'DISTINGUISH % - RGB rescaled 0-100', value: 'distinguish' },
         ],
       },
-      {
-        name: 'count',
-        description: 'Number of closest dye matches to show (1-10)',
-        type: OptionType.INTEGER,
-        required: false,
-        min_value: 1,
-        max_value: 10,
-      },
     ],
   },
 
@@ -903,7 +895,6 @@ export const commands = [
       },
     ],
   },
-
 
   // =========================================================================
   // Community Presets

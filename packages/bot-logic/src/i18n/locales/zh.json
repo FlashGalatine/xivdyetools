@@ -1,9 +1,7 @@
 {
   "meta": {
     "locale": "zh",
-    "name": "Chinese",
-    "nativeName": "中文",
-    "flag": "🇨🇳"
+    "name": "Chinese"
   },
   "common": {
     "dyes": "染剂",

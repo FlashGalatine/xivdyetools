@@ -10,7 +10,12 @@
  */
 
 import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
-import { ColorService, type MatchingMethod, isDyeExcluded, DEFAULT_MATCHING_METHOD } from '@xivdyetools/core';
+import {
+  ColorService,
+  type MatchingMethod,
+  isDyeExcluded,
+  DEFAULT_MATCHING_METHOD,
+} from '@xivdyetools/core';
 import { blendColors } from '@xivdyetools/core/blending';
 import { createTranslator, type LocaleCode } from '../i18n/index.js';
 import {
@@ -27,15 +32,7 @@ import type { EmbedData } from './types.js';
 // ============================================================================
 
 export type InterpolationMode =
-  | 'rgb'
-  | 'hsv'
-  | 'lab'
-  | 'oklch'
-  | 'lch'
-  | 'oklab'
-  | 'ryb'
-  | 'hsl'
-  | 'spectral';
+  'rgb' | 'hsv' | 'lab' | 'oklch' | 'lch' | 'oklab' | 'ryb' | 'hsl' | 'spectral';
 
 export interface GradientInput {
   startColor: ResolvedColor;
@@ -95,7 +92,12 @@ export function capGradientRows(steps: GradientStepResult[]): {
   omitted: number;
 } {
   // Stage 1: merge
-  const merged: Array<{ startStep: number; endStep: number; step: GradientStepResult; deltaE: number }> = [];
+  const merged: Array<{
+    startStep: number;
+    endStep: number;
+    step: GradientStepResult;
+    deltaE: number;
+  }> = [];
   steps.forEach((step, i) => {
     const prev = merged[merged.length - 1];
     if (prev && step.dyeId !== undefined && prev.step.dyeId === step.dyeId) {
@@ -113,12 +115,11 @@ export function capGradientRows(steps: GradientStepResult[]): {
 
   // Stage 2: drop zero-ΔE rows (by value, never position)
   let rows = merged.filter((r) => r.deltaE >= 0.05);
-  if (rows.length <= 5) return { rows, merged: merged.length, omitted: merged.length - rows.length };
+  if (rows.length <= 5)
+    return { rows, merged: merged.length, omitted: merged.length - rows.length };
 
   // Stage 3: keep the five widest gaps, back in step order
-  const keep = new Set(
-    [...rows].sort((a, b) => b.deltaE - a.deltaE).slice(0, 5)
-  );
+  const keep = new Set([...rows].sort((a, b) => b.deltaE - a.deltaE).slice(0, 5));
   const omitted = merged.length - keep.size;
   rows = rows.filter((r) => keep.has(r));
   return { rows, merged: merged.length, omitted };
@@ -131,7 +132,7 @@ function generateGradientColorsMultiSpace(
   startColor: string,
   endColor: string,
   stepCount: number,
-  mode: InterpolationMode
+  mode: InterpolationMode,
 ): string[] {
   const colors: string[] = [];
 
@@ -253,7 +254,7 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
       startColor.hex,
       endColor.hex,
       stepCount,
-      colorSpace
+      colorSpace,
     );
 
     // Find the closest non-Facewear dye per step; ΔE2000 is the number the
@@ -267,7 +268,10 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
       for (let attempt = 0; attempt < 10; attempt++) {
         const candidate = dyeService.findClosestDye(hex, { excludeIds, matchingMethod });
         if (!candidate) break;
-        if (candidate.category !== 'Facewear' && (!dyeFilters || !isDyeExcluded(dyeFilters, candidate))) {
+        if (
+          candidate.category !== 'Facewear' &&
+          (!dyeFilters || !isDyeExcluded(dyeFilters, candidate))
+        ) {
           closestDye = candidate;
           break;
         }
@@ -314,9 +318,7 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
         : null;
 
     const legend =
-      omitted > 0
-        ? t.t('card.gradKeyCut', { n: stepCount, k: rows.length })
-        : t.t('card.gradKey');
+      omitted > 0 ? t.t('card.gradKeyCut', { n: stepCount, k: rows.length }) : t.t('card.gradKey');
 
     const svgString = generateGradientCard({
       headerText: `${colorSpace.toUpperCase()} · ${stepCount}`,
@@ -335,10 +337,16 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
       color: parseInt(startColor.hex.replace('#', ''), 16),
     };
 
-    return { ok: true, svgString, gradientSteps, startColor, endColor, omittedRows: omitted, embed };
+    return {
+      ok: true,
+      svgString,
+      gradientSteps,
+      startColor,
+      endColor,
+      omittedRows: omitted,
+      embed,
+    };
   } catch {
     return { ok: false, error: 'GENERATION_FAILED', errorMessage: 'Failed to generate gradient.' };
   }
 }
-
-export type { MatchingMethod };
