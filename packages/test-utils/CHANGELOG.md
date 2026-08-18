@@ -38,7 +38,7 @@ Wave 2b, Task 5 (DEAD-026 whole-module prune + DEAD-027 unused-extras trim). Nam
 - **KEPT, deviates from DEAD-026 — `auth/signature.ts`** (`createBotSignature`, `createTimestampedSignature`, `verifyBotSignature`, `TEST_SIGNING_SECRET`): the DEAD-026 finding called this "shim-only," but `integration/setup.ts` and `integration/discord-presets/bot-authentication.test.ts` (a 15-test suite) import `createBotSignature`/`createTimestampedSignature`/`TEST_SIGNING_SECRET` directly from this module — the audit's evidence scan evidently didn't cover this package's own `integration/` directory. Kept the whole file, including `verifyBotSignature` (untested by any external caller but the natural verify-side counterpart of `createBotSignature`, exercised by its own unit test).
 - **KEPT, deviates from DEAD-026 — `cloudflare/analytics.ts`** (`createMockAnalyticsEngine`): had zero consumers at audit time, but this same task's DEAD-005 consolidation (see `apps/discord-worker` CHANGELOG) wires it into `discord-worker/src/test-utils.ts`'s `createMockEnv`. Deleting a module in the same task that gives it a consumer would be self-defeating, so it stays.
 
-
+## [1.1.8] - 2026-07-19
 
 2026-07-18 audit remediation (Sprints 1 & 6).
 

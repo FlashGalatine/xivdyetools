@@ -219,3 +219,14 @@ DEAD-037 register: adopt shared HMAC / race tables / `CATEGORY_DISPLAY` / `MODER
 
 ## Evidence & method
 See `evidence/README.md`. knip config + three raw outputs, `tsc`, legacy markers, skipped tests, and the four track notes (`track-A…D`, ~940 lines) with per-symbol commands. `--production` mode was abandoned (it failed to traverse discord-worker's handler tree even with `!`-marked entries); the "test-only" tier was recomputed by grep instead.
+
+## Post-cleanup follow-ups (2026-08-18)
+
+Items surfaced during cleanup that were deliberately left out of scope for this pass:
+
+- **`/preferences set count` has zero production readers** since the `/mixer` `count` option was removed — it's now user-visible dead UI. Decide remove vs. re-purpose before the 5.0 deploy window (`register-commands` runs on merge, so this needs a call before the next merge to `main`, not after).
+- **`DyeSearch.findDyesWithinDistance`'s `'rgb'` default** — worth reconsidering now that `ciede2000` is the 5.0-wide default matching method elsewhere; not changed here to avoid a behavior change outside this cleanup's remit.
+- **`hmacSignHex` adoption** (in `apps/discord-worker/src/services/preset-api.ts` and `apps/moderation-worker/src/services/preset-api.ts`) is blocked on giving `BOT_SIGNING_SECRET` / `GITHUB_WEBHOOK_SECRET` a ≥32-byte floor — `@xivdyetools/auth`'s `createHmacKey` (which `hmacSignHex` calls) enforces that minimum and today's secrets don't guarantee it.
+- **`blending/conversions.ts` ↔ `ColorConverter` unification declined**, with the deltas recorded in `DEPRECATIONS.md`.
+- **web-app's ~11 local redefinitions of `@xivdyetools/types` contracts** (`AuthUser`, `AuthResponse`, `JWTPayload`, `PrimaryCharacter`, `CommunityPreset`, `PresetListResponse`, `PresetFilters`, `VoteResponse`, `PresetSubmission`, `PresetEditRequest`, `PresetSortOption`×2) remain out of scope for this cleanup.
+- **A knip gate for `packages/core` and `packages/svg`** is recommended, mirroring the web-app's `lint:dead` (see Recommendation 1 above) — not added in this pass.

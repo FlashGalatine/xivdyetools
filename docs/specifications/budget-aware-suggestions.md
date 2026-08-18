@@ -25,7 +25,7 @@ The `DyeService` can be optionally enhanced, but the feature can be implemented 
 
 **Existing APIs that support this feature:**
 - `DyeService.findClosestDyes(hex, count)` - Returns N closest dyes by color distance
-- `APIService.getPricesForItems(itemIds)` - Fetch prices for multiple dyes
+- `APIService.getPricesForDataCenter(itemIds, dataCenterID)` - Fetch prices for multiple dyes in a data center
 - `dyeDatabase` - Access to all dye data including item IDs
 
 **Optional Core Enhancement:**

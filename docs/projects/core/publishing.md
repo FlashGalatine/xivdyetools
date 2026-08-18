@@ -40,7 +40,6 @@ npm run build
 ```
 
 This runs:
-- `build:version` - Generate version info
 - `build:locales` - Build locale JSON files
 - `tsc` - Compile TypeScript
 - `copy:locales` - Copy locales to dist/

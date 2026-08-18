@@ -198,8 +198,8 @@ const prices = await api.getPriceData(19952, 'Gilgamesh');
 //   maxPrice: 2000
 // }
 
-// Bulk price lookup
-const bulk = await api.getPricesForItems([19952, 19953, 19954], 'Gilgamesh');
+// Bulk price lookup for a data center
+const bulk = await api.getPricesForDataCenter([19952, 19953, 19954], 'Aether');
 ```
 
 ### Custom Cache Backend

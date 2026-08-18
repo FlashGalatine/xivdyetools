@@ -29,8 +29,8 @@ pnpm turbo run build --filter=xivdyetools-web-app...    # note the trailing ...
 
 ### Hand-edits to `packages/core/src/data/locales/*.json` keep vanishing
 
-Those files are generated. `@xivdyetools/core`'s `build` runs `build:version` → `build:locales`
-→ `tsc` → `copy:locales`, and `build:locales` regenerates from `dyenames.csv` / `localize.yaml`.
+Those files are generated. `@xivdyetools/core`'s `build` runs `build:locales` → `tsc` →
+`copy:locales`, and `build:locales` regenerates from `dyenames.csv` / `localize.yaml`.
 Fold corrections into the **source** files.
 
 (`build:locales` is idempotent since core v2.8.0 — rebuilding from unchanged sources no longer

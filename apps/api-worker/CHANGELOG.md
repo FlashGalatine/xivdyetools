@@ -41,6 +41,10 @@ Note: the deployed production worker predates this branch, so `data.xivdyetools.
 - Dependencies: `hono` floor raised to `^4.12.34` (2026-08-09 security advisories); `wrangler` `^4.114.0 → ^4.120.0` (miniflare 5 / undici 7.29); `license: MIT` declared. Accepted and recorded (FINDING-004): `vitepress@1.6.4` pins `vite ^5.4` / `esbuild 0.21` with no patched release — revisit when VitePress 2 ships stable.
 - Docs: `README.md` and `CLAUDE.md` synced (absorbed apps, schema v2, worker-kit, dev-vs-production deploy).
 
+### Removed (2026-08-18 dead-code audit)
+
+- **Unused direct `@xivdyetools/logger` dependency declaration** dropped from `package.json` — the worker's logging goes through `@xivdyetools/worker-kit`'s logger middleware, which already depends on `@xivdyetools/logger` itself; nothing in this app imports it directly.
+
 ### Tests
 
 - Coverage thresholds raised to 90 % lines/functions/statements (branches 80 %); `src/**/*.test.ts` (the moved universalis suites: `router`, `cache-service`, `cached-fetch`, `request-coalescer`, `config/cache`) now included; `src/**/test-setup.ts` excluded from coverage (counting the scaffolding as product code understated function coverage by ~8 points); new `tests/lib/validation.branches.test.ts`; match/validation tests updated for the 5.0 vocabulary and the schema v2 ID window.

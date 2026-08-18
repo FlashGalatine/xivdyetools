@@ -15,4 +15,4 @@
   - `packages/test-utils` (3,797 / 32; devDependency, workspace-private)
 - **Depth:** standard — symbol-level
 - **Consumer rule for packages:** a package export is only "dead" if **no workspace in the monorepo** (all 9 apps + all packages, tests included) imports it. Packages are npm-published, so public-API removals are flagged one confidence tier lower and cross-checked against `DEPRECATIONS.md`.
-- **Analysis Status:** Complete — 37 findings, report at `DEAD_CODE_REPORT.md`; no code was modified (Phase 7 approval pending)
+- **Analysis Status:** Complete — 37 findings, report at `DEAD_CODE_REPORT.md`; Cleanup executed 2026-08-18 (waves 1–4, commits 9bbf889f..994804e8)

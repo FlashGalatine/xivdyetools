@@ -243,8 +243,8 @@ const api = new APIService();
 // Get price for a specific item
 const prices = await api.getPriceData(19952, 'Gilgamesh');
 
-// Get prices for multiple items
-const bulkPrices = await api.getPricesForItems([19952, 19953], 'Gilgamesh');
+// Get prices for multiple items in a data center
+const bulkPrices = await api.getPricesForDataCenter([19952, 19953], 'Aether');
 ```
 
 ---

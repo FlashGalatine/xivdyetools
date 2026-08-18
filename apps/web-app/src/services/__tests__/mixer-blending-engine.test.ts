@@ -43,7 +43,7 @@ vi.mock('@xivdyetools/core', () => ({
   ColorConverter: {
     getDeltaE: vi.fn((_hex1: string, _hex2: string, algorithm: string) => {
       if (algorithm === 'cie76') return 50;
-      if (algorithm === 'cie2000') return 25;
+      if (algorithm === 'cie2000' || algorithm === 'ciede2000') return 25;
       return 30;
     }),
     getDeltaE_Oklab: vi.fn(() => 15),

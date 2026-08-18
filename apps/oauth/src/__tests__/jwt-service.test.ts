@@ -412,8 +412,8 @@ describe('JWT Service', () => {
     });
 
     it('verifyJwtData rejects a tampered signature', async () => {
-      // Flip a character in the middle of the base64url string rather than
-      // the last one — the final base64 group's low-order bits are unused
+      // Flip the first character of the base64url string rather than the
+      // last one — the final base64 group's low-order bits are unused
       // padding, so mutating only the last character can decode to the
       // same bytes and produce a false negative here.
       const tampered = 'X' + PINNED_SIGNATURE.slice(1);

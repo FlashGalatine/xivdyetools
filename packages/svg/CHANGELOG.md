@@ -83,6 +83,7 @@ The 5.0 graphics release. Every Discord bot card is redrawn on one shared **fram
 - **`placeGlyph`, `formatMeasure`, `bandSlices` barrel exports** (DEAD-015, optional trim): internal-only helpers with no consumer outside `frame.ts`/`harmony-card.ts`/`palette-grid.ts` and no README/CLAUDE mention — trimmed from `index.ts`, code unchanged. `appIcon`, `ACCENT`, and `NUMFMT` were also candidates in the finding but are documented in the README's "Frame primitives" example and Constants table, so they were kept on the barrel.
 - **`CATEGORY_DISPLAY` adopted, not deleted** (`preset-swatch.ts`, DEAD-014): this package's copy is now the single source — `discord-worker`'s byte-identical duplicate (`types/preset.ts`) is deleted in favor of importing this export; `moderation-worker`'s duplicate had zero consumers of its own and was deleted outright with no new dependency added.
 - **`GLYPH_ACCENT_LIGHT` wired to its three hard-coded `#CE2222` copies** (DEAD-018): `frame.ts`'s `appIcon()` now reads the constant instead of the literal (og-worker's `band.ts` and web-app's `theme-service.ts` wired the same way — see their own changelogs).
+- **`PANEL` glyphs audited, KEPT** (DEAD-016): the 9 unrequested `PANEL` glyphs (`wait`, `steps`, `formats`, `stack`, `ratio`, `swap`, `pin`, `pin-off`, `anchor`) have no current caller, but were kept as a designed reserve pending the design owner's call rather than deleted.
 
 ## [1.2.1] - 2026-07-28
 
