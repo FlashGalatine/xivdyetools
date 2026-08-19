@@ -132,7 +132,7 @@ Vars: `DISCORD_CLIENT_ID = 1453806659708129374` (separate Discord app), `PRESETS
 | Secret | Purpose |
 |--------|---------|
 | `BOT_API_SECRET` | Bearer token for outbound calls to presets-api |
-| `BOT_SIGNING_SECRET` | HMAC-SHA256 key for bot request signing (required in prod) |
+| `BOT_SIGNING_SECRET` | HMAC-SHA256 key for bot request signing (required in prod) — min. 32 characters (checked by `validateEnv`; `@xivdyetools/auth` rejects shorter keys) |
 | `SUBMISSION_LOG_CHANNEL_ID` | Audit channel for approved submissions |
 
 ## Key Patterns

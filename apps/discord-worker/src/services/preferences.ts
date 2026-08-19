@@ -528,7 +528,7 @@ export function getAffectedCommands(key: PreferenceKey): string[] {
     case 'matching':
       return ['/mixer', '/gradient', '/extractor', '/swatch', '/budget'];
     case 'count':
-      return ['/mixer', '/gradient', '/extractor', '/swatch'];
+      return ['/extractor'];
     case 'clan':
     case 'gender':
       return ['/swatch'];

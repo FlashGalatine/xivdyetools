@@ -25,7 +25,10 @@
       // bust every workspace's lint cache. NOTE the gate reads the *whole*
       // monorepo graph: a dependent workspace dropping an import can turn a
       // package export dead without touching that package, and turbo will
-      // still serve a cached green. Run `pnpm lint:dead` for a full sweep.
+      // still serve a cached green. Run `pnpm lint:dead` for a full sweep —
+      // but note that root sweep currently exits non-zero (~200 issues in
+      // the ungated apps plus logger's alias duplicate) and is manual
+      // triage only; this per-package `lint` task is the actual gate.
       "inputs": ["src/**", "eslint.config.*", "knip.jsonc", "$TURBO_ROOT$/knip.jsonc"]
     },
     "test": {

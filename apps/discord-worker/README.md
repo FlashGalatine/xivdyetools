@@ -124,7 +124,7 @@ The Worker bundle is close enough to Cloudflare's compressed limit to be worth w
 
 | Secret | Purpose |
 |--------|---------|
-| `BOT_API_SECRET` / `BOT_SIGNING_SECRET` | Authenticating outbound calls to `presets-api` |
+| `BOT_API_SECRET` / `BOT_SIGNING_SECRET` | Authenticating outbound calls to `presets-api` — `BOT_SIGNING_SECRET` min. 32 characters (checked by `validateEnv`; `@xivdyetools/auth` rejects shorter keys) |
 | `INTERNAL_WEBHOOK_SECRET` | Auth for inbound `/webhooks/preset-submission` |
 | `GITHUB_WEBHOOK_SECRET` | HMAC key for the GitHub push webhook |
 | `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Primary rate-limit backend (KV is the fallback) |

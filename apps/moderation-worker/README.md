@@ -74,7 +74,7 @@ wrangler secret put DISCORD_PUBLIC_KEY   # Moderation application's Ed25519 publ
 wrangler secret put MODERATOR_IDS        # CSV of Discord IDs allowed to moderate
 ```
 
-Additional secrets for authenticating outbound calls to `presets-api` (`BOT_API_SECRET`, `BOT_SIGNING_SECRET`) follow the same names and semantics as in `discord-worker`.
+Additional secrets for authenticating outbound calls to `presets-api` (`BOT_API_SECRET`, `BOT_SIGNING_SECRET`) follow the same names and semantics as in `discord-worker`. `BOT_SIGNING_SECRET` must be min. 32 characters (checked by `validateEnv`; `@xivdyetools/auth` rejects shorter keys).
 
 ## Dependencies
 

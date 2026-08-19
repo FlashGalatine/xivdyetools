@@ -156,7 +156,7 @@ Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom 
 | Secret | Purpose |
 |--------|---------|
 | `BOT_API_SECRET` | Bearer token for outbound calls to presets-api |
-| `BOT_SIGNING_SECRET` | HMAC-SHA256 key for bot request signing |
+| `BOT_SIGNING_SECRET` | HMAC-SHA256 key for bot request signing — min. 32 characters (checked by `validateEnv`; `@xivdyetools/auth` rejects shorter keys) |
 | `INTERNAL_WEBHOOK_SECRET` | Auth for inbound `/webhooks/preset-submission` |
 | `GITHUB_WEBHOOK_SECRET` | HMAC-SHA256 key for GitHub push webhook |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Primary rate-limit backend (KV is fallback) |

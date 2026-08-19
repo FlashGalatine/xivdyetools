@@ -123,9 +123,9 @@ function deduplicatePaletteResults(
       // Duplicate — find the next-best unique dye for this extracted color
       const hex = ColorService.rgbToHex(match.extracted.r, match.extracted.g, match.extracted.b);
       // DEAD-035 (2026-08-18 audit): pass the user's matchingMethod explicitly —
-      // findDyesWithinDistance defaults to 'rgb' for backwards compatibility,
-      // which silently gave this alternative-dye search a different
-      // neighborhood than the primary match.
+      // findDyesWithinDistance now defaults to 'ciede2000' (RESOLVED 2026-08-18,
+      // see FOLLOWUPS_PLAN.md), so the explicit argument here is no longer load-
+      // bearing for correctness, only for clarity/future-proofing.
       const candidates = dyeService.findDyesWithinDistance(hex, {
         maxDistance: 200,
         limit: 20,
