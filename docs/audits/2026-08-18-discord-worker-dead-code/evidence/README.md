@@ -2,7 +2,7 @@
 
 | File | What |
 |---|---|
-| `knip.root.jsonc` | Root-level knip 6.32 config used for the run (monorepo mode, all 17 workspaces, `ignoreExportsUsedInFile: true`). knip source-maps `packages/*/dist/*.js → src/*.ts` via declaration maps, so imports of `@xivdyetools/*` from any app count as usage of the package's `src` symbol. |
+| `knip.root.jsonc` | Root-level knip 6.32 config used for the run (monorepo mode, all 17 workspaces, `ignoreExportsUsedInFile: true`). knip source-maps `packages/*/dist/*.js → src/*.ts` via declaration maps, so imports of `@xivdyetools/*` from any app count as usage of the package's `src` symbol. **Superseded (2026-08-18) by the repo-root `/knip.jsonc`**, which productionises this shape as the standing gate for `packages/{core,svg,bot-logic}`; the `paths` block below turned out to be inert (root-level `paths` applies to the root workspace only) and is not needed — knip resolves `@xivdyetools/*` through each workspace's `exports` map and rewrites `dist/** → src/**` from its tsconfig `outDir`/`rootDir`. |
 | `knip-default.txt` | Default mode: unused files / deps / exports **excluding** package entry (`index.ts`) exports. |
 | `knip-entry-exports.txt` | `--include-entry-exports`: additionally reports public-API symbols exported from a package's entry files that **no workspace in the monorepo imports** (from that file). ⚠ An export listed here for a barrel may still be live via a subpath import (e.g. `browserLogger` is imported from `@xivdyetools/logger/browser`, so the root `index.ts` re-export is "unused" but the symbol is not). Every item was manually classified — see the findings. |
 | `tsc-discord-worker.txt` | `tsc --noEmit` with the base `noUnusedLocals`/`noUnusedParameters` (already on repo-wide) — clean. |

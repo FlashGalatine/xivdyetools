@@ -235,6 +235,30 @@ Internal packages:
 
 External: `spectral.js` (Kubelka-Munk).
 
+## Dead-code gate (knip)
+
+`pnpm run lint` = `eslint src && pnpm run lint:dead`, and `lint:dead` is
+`knip --directory ../.. --workspace packages/core`. It runs against the **root**
+`knip.jsonc` (never a local one) because core's consumers live in other
+workspaces: `--workspace` filters which workspace's issues are *reported*, but
+knip still loads and traverses `apps/*` and `packages/{svg,bot-logic}`, so an
+export only `apps/web-app` imports counts as used. Resolution is
+build-independent — knip maps `@xivdyetools/core` through this package's
+`exports` map and rewrites `dist/** → src/**` from `tsconfig.json`'s
+`outDir`/`rootDir`, without touching `dist/`.
+
+`includeEntryExports` is on for this package, so **barrel exports are in scope**.
+Every symbol in `src/index.ts` that no workspace imports must carry a
+`/** @public */` JSDoc tag on its export specifier, which the config's
+`"tags": ["-public"]` excludes from the report. `@public` means *published API,
+deliberately kept without an in-repo consumer* — the ~76 already tagged are the
+2026-08-18 audit's KEEP list (companion types, `facewearColors`,
+`LEGACY_FACEWEAR_ITEM_IDS`, `RATIO_BANDS`, `MemoryCacheBackend`,
+`SUPPORTED_LOCALES`, the `utils` survivors, the API/Universalis tunables). A new
+export with neither a consumer nor a tag fails `lint`; delete it or tag it on
+purpose. knip 6 has no `classMembers` rule, so unused public **methods** are
+still invisible here.
+
 ## Publishing
 
 Publishing goes through the **Publish Packages to npm** GitHub Actions workflow, which authenticates via npm trusted publishing (OIDC). There is no npm token — see the root `CLAUDE.md` for the full flow and the break-glass local path.

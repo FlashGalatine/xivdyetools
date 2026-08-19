@@ -153,6 +153,22 @@ Discord adapters map `EmbedData` onto `APIEmbed` (`title → title`, `color → 
 - `@xivdyetools/svg` — every `generate*` SVG used by command results.
 - Built-in `src/i18n/` — `Translator`, `createTranslator`, `LocaleCode` + six bot-UI locale JSONs, exported as `@xivdyetools/bot-logic/i18n` (absorbed from the retired `@xivdyetools/bot-i18n`).
 
+## Dead-code gate (knip)
+
+`pnpm run lint` = `eslint src && pnpm run lint:dead`, and `lint:dead` is
+`knip --directory ../.. --workspace packages/bot-logic` against the **root**
+`knip.jsonc`. `--workspace` filters reporting only — knip still traverses
+`apps/discord-worker`, so an `execute*` the bot calls counts as used.
+
+`includeEntryExports` is on, so `src/index.ts` and `src/i18n/index.ts` (the
+`/i18n` subpath) are in scope. Barrel symbols nothing imports must carry
+`/** @public */` on the specifier (`"tags": ["-public"]` excludes them) — that is
+the `*Input`/`*Result` contract types plus `HARMONY_TYPES`,
+`getHarmonyTypeChoices`, `VISION_TYPES`, `isValidDiscordSnowflake`,
+`isValidHex`/`normalizeHex`, `getLocalizedCurrency`, `LocaleData`,
+`TranslatorLogger`. A new command export with no handler wiring and no tag fails
+`lint`.
+
 ## Publishing
 
 Publishing goes through the **Publish Packages to npm** GitHub Actions workflow, which authenticates via npm trusted publishing (OIDC). There is no npm token — see the root `CLAUDE.md` for the full flow and the break-glass local path.

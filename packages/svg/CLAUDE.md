@@ -151,6 +151,24 @@ A dye name introducing a glyph outside the current Noto subsets renders as `.not
 - `@xivdyetools/types` — shared `Dye`, `HexColor`, etc.
 - `@xivdyetools/test-utils` (dev) — fixtures for snapshot tests.
 
+## Dead-code gate (knip)
+
+`pnpm run lint` = `eslint src && pnpm run lint:dead`, and `lint:dead` is
+`knip --directory ../.. --workspace packages/svg` against the **root**
+`knip.jsonc`. `--workspace` filters which workspace's issues are *reported*;
+knip still traverses `packages/bot-logic` and `apps/*`, so a generator only
+discord-worker calls counts as used. Resolution needs no built `dist/`.
+
+`includeEntryExports` is on, so `src/index.ts` is in scope. Anything the barrel
+exports that no workspace imports must carry `/** @public */` on its specifier
+(`"tags": ["-public"]` in the root config excludes those). That covers the frame
+primitives (`cardShell`, `cardText`, `fitText`, `commandChip`, `markFooter`,
+`swatch`, `idealSwatch`, `dashedRule`, `hairline`, `textWidth`, `appIcon`,
+`CARD_TYPE`, `HARMONY_ROW_CAP`, `LEDGER_FOOTER_*`, `ACCENT`, `NUMFMT`) and every
+`*Options`/`*Labels` companion type — all documented in `README.md` for
+consumers knip cannot see. A new card generator or primitive with no caller and
+no tag fails `lint`.
+
 ## Publishing
 
 Publishing goes through the **Publish Packages to npm** GitHub Actions workflow, authenticated via npm trusted publishing (OIDC). There is no npm token — see the root `CLAUDE.md` for the full flow and the break-glass local path.

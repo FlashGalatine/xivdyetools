@@ -1,0 +1,98 @@
+{
+  // Monorepo-wide knip graph. Only `packages/{core,svg,bot-logic}` are GATED on
+  // it today (`pnpm --filter @xivdyetools/<pkg> run lint:dead`, which is part of
+  // each package's `lint`); every other workspace is declared purely so its
+  // imports are traversed and therefore *count as usage*.
+  //
+  // Why a root config and not one file per package: `@xivdyetools/core`'s
+  // consumers live in other workspaces (`apps/*`, `packages/svg`,
+  // `packages/bot-logic`). Running knip from inside `packages/core` with a
+  // local config would analyse core + its dependencies only, so every export
+  // that only an app imports would be reported as dead. Verified by experiment
+  // (2026-08-18): with this root config, `knip --workspace packages/svg`
+  // *does* traverse dependents — `knip --trace-export num -W packages/svg`
+  // lists `packages/bot-logic/src/commands/*.ts` and
+  // `apps/discord-worker/src/handlers/commands/budget.ts` as consumers.
+  // `--workspace` filters which workspaces' ISSUES are reported, not which
+  // files are loaded. That gives us the two properties we need at once:
+  // cross-workspace usage counts, and only the gated package is reported.
+  //
+  // Cross-workspace resolution needs no `paths` and no built `dist/`: knip
+  // resolves `@xivdyetools/x` through the workspace's own package.json
+  // `exports` map and then rewrites `dist/**` → `src/**` from that package's
+  // tsconfig `outDir`/`rootDir` (util/to-source-path.js). Both are string
+  // rewrites — nothing stats `dist/`, so `turbo run lint` does not have to
+  // build the package under test.
+  //
+  // `apps/web-app` and `apps/og-worker` keep their own `knip.jsonc` for their
+  // own gates; knip reads exactly one config, so those files apply when knip
+  // runs from inside those app directories and are untouched by this one.
+  // Their blocks below exist only so their imports are followed.
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+
+  // A symbol used inside its own file is not dead just because nothing else
+  // imports it — exported types especially. Drop-the-`export` is churn.
+  "ignoreExportsUsedInFile": true,
+
+  // `@public` = "this is published API; no in-repo consumer is expected".
+  // core/svg/bot-logic ship to npm, so their barrels are a contract with
+  // consumers knip cannot see. Tagging is deliberate and per-symbol: a NEW
+  // barrel export with no consumer and no tag still fails the gate.
+  "tags": ["-public"],
+
+  "workspaces": {
+    // The root package has no source of its own.
+    ".": { "entry": [], "project": [] },
+
+    // ---- Gated workspaces -------------------------------------------------
+    // `includeEntryExports` is what makes the gate meaningful for a library:
+    // without it the barrel keeps every symbol it re-exports alive, so only
+    // non-barrel code could ever be reported.
+    // (knip 6 dropped the `classMembers` issue type entirely — there is no
+    // per-class-member rule to enable here; unused public methods still need
+    // the manual survey the 2026-08-18 audit used.)
+    "packages/*": {
+      "entry": [
+        "src/index.ts!",
+        "src/**/index.ts!",
+        "src/**/*.test.ts",
+        "src/**/__tests__/**/*.ts",
+        "scripts/**/*.ts!",
+        "tests/**/*.ts",
+        "vitest*.config.ts"
+      ],
+      "project": ["src/**/*.ts", "scripts/**", "tests/**", "*.ts"]
+    },
+    "packages/core": { "includeEntryExports": true },
+    "packages/svg": { "includeEntryExports": true },
+    "packages/bot-logic": { "includeEntryExports": true },
+
+    // ---- Consumers (declared so their imports count as usage) -------------
+    "apps/*": {
+      "entry": [
+        "src/index.ts!",
+        "src/**/*.test.ts",
+        "src/**/__tests__/**/*.ts",
+        "tests/**/*.ts",
+        "scripts/**/*.{ts,js,mjs}!",
+        "vitest*.config.ts"
+      ],
+      "project": ["src/**/*.ts", "tests/**/*.ts", "scripts/**", "*.ts"]
+    },
+    "apps/web-app": {
+      "entry": [
+        "src/index.html!",
+        "src/main.ts!",
+        "src/**/*.test.ts",
+        "src/__tests__/**/*.ts",
+        "e2e/**/*.ts",
+        "scripts/*.{js,mjs}",
+        "functions/_middleware.ts",
+        "vite-plugin-*.ts",
+        "eslint.config.js",
+        "eslint-rules/*.js"
+      ],
+      "project": ["src/**/*.{ts,js}", "scripts/**", "functions/**", "e2e/**", "*.ts", "*.js"]
+    }
+  }
+}

@@ -62,6 +62,7 @@ The 5.0 graphics release. Every Discord bot card is redrawn on one shared **fram
 
 ### Changed
 
+- **Dead-code gate wired into `lint`** (2026-08-18 audit follow-up 6). `pnpm run lint` now ends in `lint:dead` (`knip --directory ../.. --workspace packages/svg`) against the repo-root `knip.jsonc`, with `includeEntryExports` on: a `src/index.ts` export no workspace imports fails the lint unless its specifier carries a `/** @public */` JSDoc tag. 58 specifiers were tagged — the frame primitives (`cardShell`, `cardText`, `fitText`, `commandChip`, `markFooter`, `swatch`, `idealSwatch`, `dashedRule`, `hairline`, `textWidth`, `appIcon`, `CARD_TYPE`, `HARMONY_ROW_CAP`, `LEDGER_FOOTER_*`, `ACCENT`, `NUMFMT`) and the `*Options`/`*Labels` companion types, all documented in `README.md`. Comments only — no runtime change.
 - `generateDyeInfoCard` is the 11B sheet: dye-coloured 78 px band, two-column numeric grid, SRC row carrying the vendor price, MKT row naming the consolidated market item, and a nearest-dyes strip with match-band tier bars and "+N more".
 - `generateRandomDyesGrid` is the 11B table: header row, 52 px rows, stain column, count clamped to five.
 - `generatePaletteGrid` shows all extracted colours at their real share in the band; only the top five get rows, and the tenth colour can no longer silently disappear.
