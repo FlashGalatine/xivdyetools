@@ -542,3 +542,112 @@ describe('og-data-generator', () => {
     });
   });
 });
+
+// ============================================================================
+// DEAD-001 / DEAD-022: the three 5.0 tools + algo forwarding + route parity
+// ============================================================================
+
+describe('5.0 tools: extractor / presets / budget OG data', () => {
+  it('extractor: colors= → the extractor card; no colors → the tool default', () => {
+    const hit = generateOGDataForTool('extractor', new URLSearchParams('colors=8E5A3C,c9a96a,zzz&algo=oklab'), mockEnv);
+    expect(hit.imageUrl).toBe('https://og.xivdyetools.app/og/extractor/8E5A3C,C9A96A.png');
+    expect(hit.url).toContain('/extractor/?colors=8E5A3C,C9A96A');
+    expect(hit.url).toContain('algo=oklab');
+    expect(hit.title).toContain('XIV Dye Tools');
+    expect(hit.themeColor).toBe('#8E5A3C');
+
+    const miss = generateOGDataForTool('extractor', new URLSearchParams(''), mockEnv);
+    expect(miss.imageUrl).toBe('https://og.xivdyetools.app/og/extractor/default.png');
+    expect(miss.url).toBe('https://xivdyetools.app/extractor/');
+  });
+
+  it('extractor caps at five colours (the band cap)', () => {
+    const colors = ['111111', '222222', '333333', '444444', '555555', '666666', '777777'];
+    const r = generateOGDataForTool('extractor', new URLSearchParams(`colors=${colors.join(',')}`), mockEnv);
+    expect(r.imageUrl).toContain('/og/extractor/111111,222222,333333,444444,555555.png');
+  });
+
+  it('presets: a curated id → its card with the dye names in the description', () => {
+    const r = generateOGDataForTool('presets', new URLSearchParams('id=gc-maelstrom'), mockEnv);
+    expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/presets/gc-maelstrom.png');
+    expect(r.url).toBe('https://xivdyetools.app/presets/gc-maelstrom');
+    expect(r.title).toMatch(/Maelstrom/);
+    expect(r.description.length).toBeGreaterThan(20);
+  });
+
+  it('presets: unknown / community / missing id → the presets default card', () => {
+    for (const q of ['id=community-abc', 'id=not-a-preset', '']) {
+      const r = generateOGDataForTool('presets', new URLSearchParams(q), mockEnv);
+      expect(r.imageUrl, q).toBe('https://og.xivdyetools.app/og/presets/default.png');
+      expect(r.url, q).toBe('https://xivdyetools.app/presets/');
+    }
+  });
+
+  it('budget: dye= (stainID) → its card; hex= / legacy item ID / nothing → the budget default', () => {
+    const hit = generateOGDataForTool('budget', new URLSearchParams('dye=102'), mockEnv);
+    expect(hit.imageUrl).toBe('https://og.xivdyetools.app/og/budget/102.png');
+    expect(hit.url).toBe('https://xivdyetools.app/budget/?dye=102&v=1');
+    expect(hit.title).toMatch(/Jet Black/);
+    for (const q of ['hex=ABCDEF', 'dye=5771', '']) {
+      const r = generateOGDataForTool('budget', new URLSearchParams(q), mockEnv);
+      expect(r.imageUrl, q).toBe('https://og.xivdyetools.app/og/budget/default.png');
+    }
+  });
+
+  it('every supported tool emits an image URL under its own /og/<tool>/ (route ↔ emitter parity)', () => {
+    const rep: Record<string, string> = {
+      harmony: 'dye=102&harmony=tetradic',
+      gradient: 'start=1&end=102&steps=5',
+      mixer: 'dyeA=1&dyeB=102&ratio=50',
+      swatch: 'hex=ABCDEF&limit=5',
+      comparison: 'dyes=1,2,3',
+      accessibility: 'dyes=1,2&vision=deuteranopia',
+      extractor: 'colors=8E5A3C,C9A96A',
+      presets: 'id=gc-maelstrom',
+      budget: 'dye=102',
+    };
+    for (const [tool, q] of Object.entries(rep)) {
+      const r = generateOGDataForTool(tool as never, new URLSearchParams(q), mockEnv);
+      expect(r.imageUrl, tool).toContain(`/og/${tool}/`);
+      expect(r.imageUrl, tool).not.toContain('default.png');
+      // Swatch is the standing exception: a bare /swatch/ has always defaulted
+      // to a white target card (pre-5.0 behaviour, not touched by this audit).
+      if (tool === 'swatch') continue;
+      const bare = generateOGDataForTool(tool as never, new URLSearchParams(''), mockEnv);
+      expect(bare.imageUrl, `${tool} bare`).toBe(`https://og.xivdyetools.app/og/${tool}/default.png`);
+    }
+  });
+});
+
+describe('DEAD-022: the requested algorithm rides the image URL for every tool that renders it', () => {
+  it('harmony / gradient / mixer forward a non-default algo (normalised), like swatch already did', () => {
+    const cases: Array<[string, string]> = [
+      ['harmony', 'dye=102&harmony=tetradic&algo=oklab'],
+      ['gradient', 'start=1&end=102&steps=5&algo=oklab'],
+      ['mixer', 'dyeA=1&dyeB=102&ratio=50&algo=oklab'],
+      ['mixer', 'dyeA=1&dyeB=102&dyeC=50&ratio=50&algo=oklab'],
+      ['swatch', 'hex=ABCDEF&limit=5&algo=oklab'],
+    ];
+    for (const [tool, q] of cases) {
+      const r = generateOGDataForTool(tool as never, new URLSearchParams(q), mockEnv);
+      expect(r.imageUrl, `${tool} ${q}`).toMatch(/\.png\?algo=oklab$/);
+    }
+  });
+
+  it('the suite default (ciede2000) and unknown values stay OFF the URL — one cache key for the same card', () => {
+    for (const q of ['dye=102&harmony=tetradic', 'dye=102&harmony=tetradic&algo=ciede2000', 'dye=102&harmony=tetradic&algo=nonsense']) {
+      const r = generateOGDataForTool('harmony', new URLSearchParams(q), mockEnv);
+      expect(r.imageUrl, q).toBe('https://og.xivdyetools.app/og/harmony/102/tetradic.png');
+    }
+  });
+
+  it('legacy spellings normalise before they are emitted (euclidean → rgb)', () => {
+    const r = generateOGDataForTool('harmony', new URLSearchParams('dye=102&harmony=tetradic&algo=euclidean'), mockEnv);
+    expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/harmony/102/tetradic.png?algo=rgb');
+  });
+
+  it('algo and lang compose (?algo=…&lang=…)', () => {
+    const r = generateOGDataForTool('harmony', new URLSearchParams('dye=102&harmony=tetradic&algo=oklab'), mockEnv, 'ja');
+    expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/harmony/102/tetradic.png?algo=oklab&lang=ja');
+  });
+});

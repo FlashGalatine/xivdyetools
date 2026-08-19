@@ -130,7 +130,7 @@ function trackAnalytics(env: Env, event: AnalyticsEvent): void {
   try {
     env.ANALYTICS.writeDataPoint({
       blobs: [event.event, event.tool, event.crawler],
-      doubles: [event.timestamp, event.cacheHit ? 1 : 0],
+      doubles: [event.timestamp],
       indexes: [event.tool],
     });
   } catch (error) {
@@ -195,7 +195,6 @@ function createToolHandler(tool: ToolId) {
       event: 'og_request',
       tool,
       crawler: crawlerInfo.type,
-      cacheHit: false,
       timestamp: Date.now(),
     });
 
@@ -211,8 +210,10 @@ function createToolHandler(tool: ToolId) {
       return fetch(request);
     }
 
-    // Generate OG data for this tool (locale-aware display names)
-    const ogData = generateOGDataForTool(tool, url.searchParams, env, locale);
+    // Generate OG data for this tool (locale-aware display names). Presets are
+    // shared as a PATH (/presets/<id>) — hand the segment through.
+    const pathId = tool === 'presets' ? (c.req.param('presetId') ?? null) : null;
+    const ogData = generateOGDataForTool(tool, url.searchParams, env, locale, pathId);
 
     // Structured request log (replaces ad-hoc console.log)
     getLogger(c)?.info('Serving OG metadata', {
@@ -243,6 +244,9 @@ for (const tool of SUPPORTED_TOOLS) {
   app.get(`/${tool}`, createToolHandler(tool));
   app.get(`/${tool}/`, createToolHandler(tool));
 }
+// The web app shares a preset as /presets/<id> (curated slug or
+// community-<uuid>), not as a query — the one tool whose share form is a path.
+app.get('/presets/:presetId', createToolHandler('presets'));
 
 // ============================================================================
 // OG Image Generation Routes
@@ -329,7 +333,6 @@ app.get('/og/harmony/:dyeId/:harmonyType', async (c) => {
     event: 'og_image_request',
     tool: 'harmony',
     crawler: 'none', // Image requests don't have crawler detection
-    cacheHit: false,
     timestamp: Date.now(),
   });
 
@@ -369,7 +372,6 @@ app.get('/og/gradient/:startId/:endId/:steps', async (c) => {
     event: 'og_image_request',
     tool: 'gradient',
     crawler: 'none',
-    cacheHit: false,
     timestamp: Date.now(),
   });
 
@@ -414,7 +416,6 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:ratio', async (c) => {
     event: 'og_image_request',
     tool: 'mixer',
     crawler: 'none',
-    cacheHit: false,
     timestamp: Date.now(),
   });
 
@@ -460,7 +461,6 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio', async (c) => {
     event: 'og_image_request',
     tool: 'mixer',
     crawler: 'none',
-    cacheHit: false,
     timestamp: Date.now(),
   });
 
@@ -500,7 +500,6 @@ app.get('/og/swatch/:color/:limit', async (c) => {
     event: 'og_image_request',
     tool: 'swatch',
     crawler: 'none',
-    cacheHit: false,
     timestamp: Date.now(),
   });
 
@@ -537,11 +536,10 @@ app.get('/og/comparison/:dyes', async (c) => {
     event: 'og_image_request',
     tool: 'comparison',
     crawler: 'none',
-    cacheHit: false,
     timestamp: Date.now(),
   });
 
-  const svg = generateComparisonOG({ dyeIds, locale });
+  const svg = generateComparisonOG({ dyeIds, locale, frame: frameFromQuery(c) });
 
   return renderOGImage(svg);
 });
@@ -570,7 +568,6 @@ app.get('/og/accessibility/:dyes/:visionType', async (c) => {
     event: 'og_image_request',
     tool: 'accessibility',
     crawler: 'none',
-    cacheHit: false,
     timestamp: Date.now(),
   });
 
@@ -586,8 +583,9 @@ app.get('/og/accessibility/:dyes/:visionType', async (c) => {
 
 /**
  * Extractor OG image (5.0, net-new)
- * Pattern: /og/extractor/:colors.png — colors = `RRGGBB-share` pairs,
- * comma-separated (e.g. 8E5A3C-31,C9A96A-24), max 5
+ * Pattern: /og/extractor/:colors.png — colors = `RRGGBB` or `RRGGBB-share`
+ * entries, comma-separated (e.g. 8E5A3C-31,C9A96A-24 or 8E5A3C,C9A96A), max 5.
+ * The web app's share URL carries no shares; bare entries draw equal bands.
  */
 app.get('/og/extractor/:colors', async (c) => {
   const colorsParam = c.req.param('colors').replace('.png', '');
@@ -598,9 +596,10 @@ app.get('/og/extractor/:colors', async (c) => {
     .slice(0, 5)
     .map((pair) => {
       const [hex, shareRaw] = pair.split('-');
-      return { hex: hex ?? '', share: parseInt(shareRaw ?? '0', 10) };
+      const share = shareRaw === undefined ? undefined : parseInt(shareRaw, 10);
+      return { hex: hex ?? '', share };
     })
-    .filter((e) => /^[0-9A-Fa-f]{6}$/.test(e.hex) && !isNaN(e.share) && e.share > 0);
+    .filter((e) => /^[0-9A-Fa-f]{6}$/.test(e.hex) && (e.share === undefined || (!isNaN(e.share) && e.share > 0)));
 
   if (entries.length === 0) {
     return c.json({ error: 'extractor requires RRGGBB-share pairs' }, 400);
@@ -610,7 +609,6 @@ app.get('/og/extractor/:colors', async (c) => {
     event: 'og_image_request',
     tool: 'extractor',
     crawler: 'none',
-    cacheHit: false,
     timestamp: Date.now(),
   });
 
@@ -634,7 +632,6 @@ app.get('/og/presets/:presetId', async (c) => {
     event: 'og_image_request',
     tool: 'presets',
     crawler: 'none',
-    cacheHit: false,
     timestamp: Date.now(),
   });
 
@@ -657,7 +654,6 @@ app.get('/og/budget/:dyeId', async (c) => {
     event: 'og_image_request',
     tool: 'budget',
     crawler: 'none',
-    cacheHit: false,
     timestamp: Date.now(),
   });
 

@@ -65,6 +65,19 @@ describe('generateExtractorOG (15E band)', () => {
     expect(svg).not.toContain('>3%<');
   });
 
+  it('entries without shares (the web app share grammar) draw equal ranked bands, no invented %', () => {
+    const svg = generateExtractorOG({
+      entries: [{ hex: '8E5A3C' }, { hex: 'C9A96A' }, { hex: '3E4A52' }],
+    });
+    expect(svg).not.toMatch(/>\d+%</);
+    // rank roles 1..3, in the order given (dominance is unknown, so it is not claimed)
+    expect(svg).toContain('>1<');
+    expect(svg).toContain('>3<');
+    // three equal bands
+    const widths = [...svg.matchAll(/<rect x="[\d.]+" y="30" width="([\d.]+)" height="\d+"/g)].map((m) => m[1]);
+    expect(new Set(widths).size).toBe(1);
+  });
+
   it('no valid entries renders the neutral state', () => {
     const svg = generateExtractorOG({ entries: [{ hex: 'zzz', share: 50 }] });
     expect(svg).toContain('NOT FOUND');

@@ -218,3 +218,11 @@ describe('crawler-detector', () => {
     });
   });
 });
+
+describe('deliberate exclusions', () => {
+  it('Googlebot is NOT a crawler here — Google must reach the SPA for SEO (see CLAUDE.md)', () => {
+    const info = detectCrawler('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)');
+    expect(info.isCrawler).toBe(false);
+    expect(info.type).toBe('none');
+  });
+});

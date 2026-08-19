@@ -8,8 +8,10 @@
 import { describe, it, expect, vi } from 'vitest';
 
 // Mock the renderer before importing the app
+const rendered: string[] = [];
 vi.mock('./services/renderer', () => ({
-  renderOGImage: vi.fn(async (_svg: string, _cacheMaxAge?: number) => {
+  renderOGImage: vi.fn(async (svg: string) => {
+    rendered.push(svg);
     return new Response('mock-png-data', {
       status: 200,
       headers: {
@@ -308,6 +310,16 @@ describe('GET /og/comparison/:dyes', () => {
     expect(res.status).toBe(400);
   });
 
+  it('honours ?frame=x like every other image route (DEAD-010)', async () => {
+    rendered.length = 0;
+    const res = await app.request('/og/comparison/1,2,3.png?frame=x', {}, TEST_ENV);
+    expect(res.status).toBe(200);
+    expect(rendered.at(-1)).toContain('height="210"');
+    rendered.length = 0;
+    await app.request('/og/comparison/1,2,3.png', {}, TEST_ENV);
+    expect(rendered.at(-1)).toContain('height="350"');
+  });
+
   it('filters out NaN IDs from comma-separated list', async () => {
     // "abc,43" should parse to [43] which is valid (length 1)
     const res = await app.request('/og/comparison/abc,43', {}, TEST_ENV);
@@ -430,8 +442,8 @@ describe('per-tool default OG images', () => {
   });
 });
 
-describe('extractor/presets/budget crawler routes', () => {
-  it('serves crawler HTML with og:image meta for the new tools', async () => {
+describe('extractor/presets/budget crawler routes (DEAD-001)', () => {
+  it('a bare tool URL emits the TOOL default card, never the root card', async () => {
     for (const tool of ['extractor', 'presets', 'budget']) {
       const res = await app.request(
         `/${tool}/`,
@@ -440,9 +452,79 @@ describe('extractor/presets/budget crawler routes', () => {
       );
       expect(res.status, tool).toBe(200);
       const html = await res.text();
-      expect(html).toContain('og:image');
-      expect(html).toContain('https://og.xivdyetools.app/og/default.png');
+      expect(html, tool).toContain(`https://og.xivdyetools.app/og/${tool}/default.png`);
+      expect(html, tool).not.toContain('og.xivdyetools.app/og/default.png');
     }
+  });
+
+  it('a shared extractor palette emits its 15E card', async () => {
+    const res = await app.request(
+      '/extractor/?colors=8E5A3C,C9A96A&algo=oklab',
+      { headers: { 'User-Agent': CRAWLER_UA } },
+      TEST_ENV
+    );
+    const html = await res.text();
+    expect(html).toContain('https://og.xivdyetools.app/og/extractor/8E5A3C,C9A96A.png');
+  });
+
+  it('a curated preset PATH (/presets/:id — the web app share form) emits its card', async () => {
+    const res = await app.request(
+      '/presets/gc-maelstrom',
+      { headers: { 'User-Agent': CRAWLER_UA } },
+      TEST_ENV
+    );
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    expect(html).toContain('https://og.xivdyetools.app/og/presets/gc-maelstrom.png');
+    expect(html).toContain('https://xivdyetools.app/presets/gc-maelstrom');
+  });
+
+  it('a community preset id (not in the curated set) degrades to the presets default card', async () => {
+    const res = await app.request(
+      '/presets/community-0f9d5c2a-1111-2222-3333-444444444444',
+      { headers: { 'User-Agent': CRAWLER_UA } },
+      TEST_ENV
+    );
+    const html = await res.text();
+    expect(html).toContain('/og/presets/default.png');
+  });
+
+  it('a shared budget target emits its card; a bare-hex target degrades to the default', async () => {
+    let html = await (
+      await app.request('/budget/?dye=102', { headers: { 'User-Agent': CRAWLER_UA } }, TEST_ENV)
+    ).text();
+    expect(html).toContain('https://og.xivdyetools.app/og/budget/102.png');
+    html = await (
+      await app.request('/budget/?hex=ABCDEF', { headers: { 'User-Agent': CRAWLER_UA } }, TEST_ENV)
+    ).text();
+    expect(html).toContain('/og/budget/default.png');
+  });
+
+  it('humans on /presets/:id pass through to the SPA like any tool page', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('spa'));
+    const res = await app.request('/presets/gc-maelstrom', {}, TEST_ENV);
+    expect(await res.text()).toBe('spa');
+    fetchSpy.mockRestore();
+  });
+});
+
+describe('GET /og/extractor/:colors — share is optional', () => {
+  it('accepts bare RRGGBB entries (the web app share grammar carries no shares)', async () => {
+    rendered.length = 0;
+    const res = await app.request('/og/extractor/8E5A3C,C9A96A.png', {}, TEST_ENV);
+    expect(res.status).toBe(200);
+    // Equal bands, ranked, no invented percentage
+    expect(rendered.at(-1)).not.toContain('%<');
+  });
+
+  it('still accepts RRGGBB-share pairs', async () => {
+    const res = await app.request('/og/extractor/8E5A3C-31,C9A96A-24.png', {}, TEST_ENV);
+    expect(res.status).toBe(200);
+  });
+
+  it('400s when nothing parses', async () => {
+    const res = await app.request('/og/extractor/zzz.png', {}, TEST_ENV);
+    expect(res.status).toBe(400);
   });
 });
 

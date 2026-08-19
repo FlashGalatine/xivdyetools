@@ -129,6 +129,22 @@ export interface AccessibilityParams {
   vision?: VisionType;
 }
 
+/** 5.0 extractor share: `?colors=RRGGBB,RRGGBB…` (no shares — see ExtractorOGOptions) */
+export interface ExtractorParams {
+  colors: string[]; // RRGGBB, no #, upper-cased, max 5
+  algo?: MatchingAlgorithm;
+}
+
+/** 5.0 presets share: the PATH `/presets/:id` (curated slug or `community-<uuid>`) */
+export interface PresetsParams {
+  id: string | null;
+}
+
+/** 5.0 budget share: `?dye=<stainID>` (a `?hex=` bare target has no card) */
+export interface BudgetParams {
+  dye: number | null; // stainID
+}
+
 // ============================================================================
 // Crawler Detection
 // ============================================================================
@@ -158,6 +174,5 @@ export interface AnalyticsEvent {
   event: 'og_request' | 'og_image_request';
   tool: ToolId;
   crawler: CrawlerType;
-  cacheHit?: boolean;
   timestamp: number;
 }

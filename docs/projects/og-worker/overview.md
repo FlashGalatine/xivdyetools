@@ -104,7 +104,9 @@ These routes intercept normal web app URLs when accessed by crawlers:
 | `/swatch` | `?hex=RRGGBB` (`?color=` accepted as a read alias) `&limit=…&algo=…&sheet=…&race=…&gender=…` |
 | `/comparison` | `?dyes=<stainID>,<stainID>[,…]` |
 | `/accessibility` | `?dyes=<stainID>[,…]&vision=…` |
-| `/extractor`, `/presets`, `/budget` | routed (5.0) — **known gap:** their crawler HTML still emits the generic title and root default card; the 15E data cards are reachable only by direct PNG URL |
+| `/extractor` | `?colors=RRGGBB[,RRGGBB…]&algo=…` (max 5; the share URL carries no shares, so the card draws equal ranked bands) |
+| `/presets`, `/presets/:id` | the preset id is the **path** (`/presets/gc-maelstrom`); curated slugs get their card, `community-<uuid>` / unknown ids degrade to the presets default card |
+| `/budget` | `?dye=<stainID>`; a bare-colour `?hex=` target has no card and degrades to the budget default |
 
 ### Image Routes
 
@@ -120,7 +122,7 @@ These return the actual preview images:
 | `/og/swatch/:color/:limit[.png]` | Swatch card |
 | `/og/comparison/:dyes[.png]` | Comparison card (comma-joined stainIDs) |
 | `/og/accessibility/:dyes/:visionType[.png]` | Accessibility card |
-| `/og/extractor/:colors[.png]` | Extractor card (`RRGGBB-share` pairs, max 5) |
+| `/og/extractor/:colors[.png]` | Extractor card (`RRGGBB` or `RRGGBB-share` entries, max 5; bare entries draw equal ranked bands) |
 | `/og/presets/:presetId[.png]` | Preset card (slug `^[a-z0-9-]{1,64}$`) |
 | `/og/budget/:dyeId[.png]` | Budget card |
 

@@ -8,6 +8,8 @@
  * @module og-data-generator
  */
 
+import { DEFAULT_MATCHING_METHOD, normalizeMatchingMethod, presetData } from '@xivdyetools/core';
+import type { PresetData } from '@xivdyetools/types';
 import { getDyeByItemId } from './services/svg/dye-helpers';
 import { GROUND, MARK_STRIPES } from './services/svg/tokens';
 import {
@@ -25,9 +27,13 @@ import type {
   SwatchParams,
   ComparisonParams,
   AccessibilityParams,
+  ExtractorParams,
+  PresetsParams,
+  BudgetParams,
   VisionType,
   ColorSheetCategory,
   CharacterGender,
+  MatchingAlgorithm,
   Env,
 } from './types';
 
@@ -48,6 +54,30 @@ import type {
 function withLang(url: string, locale: LocaleCode): string {
   if (locale === 'en') return url;
   return `${url}${url.includes('?') ? '&' : '?'}lang=${locale}`;
+}
+
+/**
+ * Append the requested matching algorithm to an emitted image URL, so the
+ * card computes the same Δ the page did (DEAD-022 — the embed and the picture
+ * cannot disagree). Legacy spellings normalise first; the suite default and
+ * unknown values stay off the URL so the same card keeps one cache key.
+ */
+function withAlgo(url: string, algo: MatchingAlgorithm | string | null | undefined): string {
+  if (!algo) return url;
+  const method = normalizeMatchingMethod(algo);
+  if (method === DEFAULT_MATCHING_METHOD) return url;
+  return `${url}${url.includes('?') ? '&' : '?'}algo=${method}`;
+}
+
+/** The per-tool 2a default card, for a share URL that resolves to nothing. */
+function toolDefault(tool: ToolId, env: Env, locale: LocaleCode, description: string): OGData {
+  return {
+    title: `${getToolName(tool, locale)} | XIV Dye Tools`,
+    description,
+    url: `${env.APP_BASE_URL}/${tool}/`,
+    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/${tool}/default.png`, locale),
+    siteName: 'XIV Dye Tools',
+  };
 }
 
 function getToolName(tool: ToolId, locale: LocaleCode): string {
@@ -124,7 +154,7 @@ export function generateHarmonyOGData(
     title: `${dyeInfo.name} - ${harmonyName} Harmony | XIV Dye Tools`,
     description: `Explore ${harmonyName.toLowerCase()} color harmonies for ${dyeInfo.name} (${dyeInfo.hex}) in FFXIV. Find matching dyes for your glamour!`,
     url: `${env.APP_BASE_URL}/harmony/?dye=${params.dye}&harmony=${params.harmony}&v=1`,
-    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/harmony/${params.dye}/${params.harmony}.png`, locale),
+    imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/harmony/${params.dye}/${params.harmony}.png`, params.algo), locale),
     siteName: 'XIV Dye Tools',
     themeColor: dyeInfo.hex,
   };
@@ -155,7 +185,7 @@ export function generateGradientOGData(
     title: `${startDye.name} to ${endDye.name} Gradient | XIV Dye Tools`,
     description: `${params.steps}-step gradient from ${startDye.name} (${startDye.hex}) to ${endDye.name} (${endDye.hex}). Find the perfect dye progression for your FFXIV glamour!`,
     url: `${env.APP_BASE_URL}/gradient/?start=${params.start}&end=${params.end}&steps=${params.steps}&v=1`,
-    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/gradient/${params.start}/${params.end}/${params.steps}.png`, locale),
+    imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/gradient/${params.start}/${params.end}/${params.steps}.png`, params.algo), locale),
     siteName: 'XIV Dye Tools',
     themeColor: startDye.hex,
   };
@@ -189,7 +219,7 @@ export function generateMixerOGData(
       title: `${dyeA.name} + ${dyeB.name} + ${dyeC.name} | XIV Dye Tools`,
       description: `Mix ${dyeA.name}, ${dyeB.name}, and ${dyeC.name} to find matching FFXIV dyes for your perfect blend!`,
       url: `${env.APP_BASE_URL}/mixer/?dyeA=${params.dyeA}&dyeB=${params.dyeB}&dyeC=${params.dyeC}&v=1`,
-      imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.dyeC}/${params.ratio}.png`, locale),
+      imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.dyeC}/${params.ratio}.png`, params.algo), locale),
       siteName: 'XIV Dye Tools',
       themeColor: dyeA.hex,
     };
@@ -200,7 +230,7 @@ export function generateMixerOGData(
     title: `${params.ratio}% ${dyeA.name} + ${100 - params.ratio}% ${dyeB.name} | XIV Dye Tools`,
     description: `Mix ${params.ratio}% ${dyeA.name} with ${100 - params.ratio}% ${dyeB.name} to find matching FFXIV dyes for your perfect blend!`,
     url: `${env.APP_BASE_URL}/mixer/?dyeA=${params.dyeA}&dyeB=${params.dyeB}&ratio=${params.ratio}&v=1`,
-    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.ratio}.png`, locale),
+    imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.ratio}.png`, params.algo), locale),
     siteName: 'XIV Dye Tools',
     themeColor: dyeA.hex,
   };
@@ -246,10 +276,7 @@ export function generateSwatchOGData(
   // The image URL carries only what the 15E card draws: the target, the
   // limit and the algorithm. Sheet context shapes the description above but
   // not the picture, so it stays off the image URL (one cache key per card).
-  const imageUrlParams = new URLSearchParams();
-  if (params.algo) imageUrlParams.set('algo', params.algo);
-  const imageQueryString = imageUrlParams.toString();
-  const imageUrl = withLang(`${env.OG_IMAGE_BASE_URL}/swatch/${params.color}/${limit}.png${imageQueryString ? `?${imageQueryString}` : ''}`, locale);
+  const imageUrl = withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/swatch/${params.color}/${limit}.png`, params.algo), locale);
 
   return {
     title: `Match ${hexColor} | XIV Dye Tools`,
@@ -323,6 +350,91 @@ export function generateAccessibilityOGData(
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/accessibility/${params.dyes.join(',')}/${params.vision || 'normal'}.png`, locale),
     siteName: 'XIV Dye Tools',
     themeColor: dyes[0]!.hex,
+  };
+}
+
+/**
+ * Generate OG data for the Palette Extractor (5.0). The share URL carries
+ * the palette but not each colour's share, so the card draws equal, ranked
+ * bands (see `ExtractorOGOptions`).
+ */
+export function generateExtractorOGData(
+  params: ExtractorParams,
+  env: Env,
+  locale: LocaleCode = 'en',
+): OGData {
+  const colors = params.colors.slice(0, 5);
+  if (colors.length === 0) {
+    return toolDefault('extractor', env, locale, 'Pull the palette from any image and match every color to a buyable FFXIV dye.');
+  }
+
+  const list = colors.map((c) => `#${c}`).join(', ');
+  const algoQuery = params.algo ? `&algo=${encodeURIComponent(params.algo)}` : '';
+
+  return {
+    title: `${colors.length}-color palette | XIV Dye Tools`,
+    description: `Colors extracted from an image (${list}), each matched to the nearest FFXIV dye.`,
+    // Commas stay literal (like comparison's dyes=) — the SPA reads them either way
+    url: `${env.APP_BASE_URL}/extractor/?colors=${colors.join(',')}${algoQuery}&v=1`,
+    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/extractor/${colors.join(',')}.png`, locale),
+    siteName: 'XIV Dye Tools',
+    themeColor: `#${colors[0]}`,
+  };
+}
+
+/**
+ * Generate OG data for Community Presets (5.0). Only the curated set has a
+ * card (the worker bundles `presetData`); a community id or an unknown slug
+ * degrades to the tool default rather than inventing a palette.
+ */
+export function generatePresetsOGData(
+  params: PresetsParams,
+  env: Env,
+  locale: LocaleCode = 'en',
+): OGData {
+  const preset = params.id
+    ? (presetData as PresetData).palettes.find((p) => p.id === params.id)
+    : undefined;
+  if (!preset) {
+    return toolDefault('presets', env, locale, 'Curated and community FFXIV dye palettes — browse, vote, submit your own.');
+  }
+
+  const dyes = preset.dyes.map(getDyeInfo).filter((d): d is { name: string; hex: string } => d !== null);
+  const dyeNames = dyes.map((d) => d.name).join(', ');
+
+  return {
+    title: `${preset.name} — ${getToolName('presets', locale)} | XIV Dye Tools`,
+    description: dyeNames
+      ? `Curated FFXIV dye palette: ${dyeNames}.${preset.description ? ` ${preset.description}` : ''}`
+      : `Curated FFXIV dye palette. ${preset.description ?? ''}`.trim(),
+    url: `${env.APP_BASE_URL}/presets/${preset.id}`,
+    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/presets/${preset.id}.png`, locale),
+    siteName: 'XIV Dye Tools',
+    themeColor: dyes[0]?.hex,
+  };
+}
+
+/**
+ * Generate OG data for Budget (5.0). Only a dye target has a card — the
+ * image route is stainID-keyed; a bare `?hex=` target degrades to the default.
+ */
+export function generateBudgetOGData(
+  params: BudgetParams,
+  env: Env,
+  locale: LocaleCode = 'en',
+): OGData {
+  const target = params.dye !== null ? getDyeInfo(params.dye) : null;
+  if (!target || params.dye === null) {
+    return toolDefault('budget', env, locale, 'The cheapest FFXIV dye near the one you want, priced from the market board.');
+  }
+
+  return {
+    title: `Budget alternatives for ${target.name} | XIV Dye Tools`,
+    description: `Cheaper FFXIV dyes near ${target.name} (${target.hex}), ranked by color distance and priced from the market board.`,
+    url: `${env.APP_BASE_URL}/budget/?dye=${params.dye}&v=1`,
+    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/budget/${params.dye}.png`, locale),
+    siteName: 'XIV Dye Tools',
+    themeColor: target.hex,
   };
 }
 
@@ -468,6 +580,8 @@ function escapeHtml(str: string): string {
  * @param locale - Optional locale for display-name localization (defaults to 'en').
  *                 Pass the value parsed from the request's `?lang=` query param
  *                 in `createToolHandler`.
+ * @param pathId - For tools whose share form is a PATH (`/presets/:id`), the
+ *                 path segment; `createToolHandler` passes it through.
  * @returns OGData for the requested tool and parameters
  */
 export function generateOGDataForTool(
@@ -475,6 +589,7 @@ export function generateOGDataForTool(
   searchParams: URLSearchParams,
   env: Env,
   locale: LocaleCode = 'en',
+  pathId: string | null = null,
 ): OGData {
   switch (tool) {
     case 'harmony': {
@@ -541,6 +656,33 @@ export function generateOGDataForTool(
         vision: searchParams.get('vision') as VisionType | undefined,
       };
       return generateAccessibilityOGData(params, env, locale);
+    }
+
+    case 'extractor': {
+      const params: ExtractorParams = {
+        colors: (searchParams.get('colors') || '')
+          .split(',')
+          .map((c) => c.trim().replace(/^#/, '').toUpperCase())
+          .filter((c) => /^[0-9A-F]{6}$/.test(c)),
+        algo: searchParams.get('algo') as ExtractorParams['algo'],
+      };
+      return generateExtractorOGData(params, env, locale);
+    }
+
+    case 'presets': {
+      // The web app shares presets as /presets/<id>; ?id= is accepted too.
+      const raw = pathId ?? searchParams.get('id');
+      const params: PresetsParams = {
+        id: raw && /^[a-z0-9-]{1,64}$/.test(raw) ? raw : null,
+      };
+      return generatePresetsOGData(params, env, locale);
+    }
+
+    case 'budget': {
+      const dyeRaw = searchParams.get('dye');
+      const dye = dyeRaw ? parseInt(dyeRaw, 10) : NaN;
+      const params: BudgetParams = { dye: Number.isNaN(dye) ? null : dye };
+      return generateBudgetOGData(params, env, locale);
     }
 
     default: {
