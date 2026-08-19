@@ -22,6 +22,7 @@
  */
 
 import { toolGlyph, escapeXml, estimateTextWidth, type ToolGlyphName } from '@xivdyetools/svg';
+import { COMPACT_GLYPH, GROUND, MARK_STRIPES, STACKS } from './tokens';
 import {
   BAND_FRAMES,
   FOOTER_H,
@@ -33,29 +34,15 @@ import {
   type BandFrame,
 } from './band';
 
-/**
- * The six spill colours as drawn in the app icon — the mark's source of
- * truth, referenced once, never re-typed per card.
- */
-export const MARK_STRIPES = [
-  '#E5484D',
-  '#F76B15',
-  '#FFC53D',
-  '#30A46C',
-  '#0091FF',
-  '#8E4EC6',
-] as const;
-
-const GROUND = '#0B0B0C';
+// MARK_STRIPES lives in ./tokens; re-exported so callers that think of the
+// stripes as the default card's own (the tests do) keep one import.
+export { MARK_STRIPES } from './tokens';
 
 /**
  * Two deck lines here, against a band card's one: a default card has a
  * confirmed one-liner to spend the second line on, and no data to protect.
  */
 const DEFAULT_DECK_H = 54;
-
-const STACK_BODY = 'Onest, Noto Sans JP, Noto Sans SC, Noto Sans KR';
-const STACK_MONO = 'Fragment Mono, Onest, Noto Sans JP, Noto Sans SC, Noto Sans KR';
 
 export interface DefaultCardOptions {
   /** Compact glyph name + banner (detail) glyph name; null = the root card */
@@ -104,13 +91,7 @@ export function generateDefaultCard(options: DefaultCardOptions): string {
     parts.push(
       cardHeader(width, {
         toolTag: options.tool?.label,
-        toolGlyph: options.tool
-          ? toolGlyph(options.tool.glyphName, 'compact', {
-              size: 13,
-              ink: '#ECECEE',
-              accent: '#FF6257',
-            })
-          : null,
+        toolGlyph: options.tool ? toolGlyph(options.tool.glyphName, 'compact', COMPACT_GLYPH) : null,
       })
     );
 
@@ -144,9 +125,9 @@ export function generateDefaultCard(options: DefaultCardOptions): string {
     // Deck: name + one-liner
     parts.push(`<line x1="0" y1="${deckTop}" x2="${width}" y2="${deckTop}" stroke="${RULE}" stroke-width="1"/>`);
     parts.push(
-      text(13, deckTop + 21, options.name, { fill: '#ECECEE', size: 14.5, family: STACK_BODY, weight: 600 })
+      text(13, deckTop + 21, options.name, { fill: '#ECECEE', size: 14.5, family: STACKS.body, weight: 600 })
     );
-    parts.push(text(13, deckTop + 40, options.sub, { fill: '#9C9CA2', size: 12, family: STACK_BODY }));
+    parts.push(text(13, deckTop + 40, options.sub, { fill: '#9C9CA2', size: 12, family: STACKS.body }));
 
     // Footer 26px: path · method tag (only where it is true) — shared chrome
     parts.push(cardFooter(width, height, { path: options.path, right: options.methodTag }));
@@ -174,24 +155,23 @@ export function generateDefaultCard(options: DefaultCardOptions): string {
     }
     const cy = fieldH + stripH / 2;
     parts.push(ogMark(13, cy - 9.5, 19));
-    parts.push(text(41, cy - 2, options.name, { fill: '#ECECEE', size: 14, family: STACK_BODY, weight: 600 }));
-    parts.push(text(41, cy + 14, options.path, { fill: '#86868C', size: 11, family: STACK_MONO }));
+    parts.push(text(41, cy - 2, options.name, { fill: '#ECECEE', size: 14, family: STACKS.body, weight: 600 }));
+    parts.push(text(41, cy + 14, options.path, { fill: '#86868C', size: 11, family: STACKS.mono }));
     if (options.tool) {
       const labelW = estimateTextWidth(options.tool.label, 11 * 0.62);
       parts.push(
         text(width - 13, cy + 4, options.tool.label, {
           fill: '#FF6257',
           size: 11,
-          family: STACK_MONO,
+          family: STACKS.mono,
           anchor: 'end',
         })
       );
       parts.push(
-        toolGlyph(options.tool.glyphName, 'compact', {
-          size: 13,
-          ink: '#ECECEE',
-          accent: '#FF6257',
-        }).replace('<svg ', `<svg x="${(width - 13 - labelW - 6 - 13).toFixed(1)}" y="${(cy - 6.5).toFixed(1)}" `)
+        toolGlyph(options.tool.glyphName, 'compact', COMPACT_GLYPH).replace(
+          '<svg ',
+          `<svg x="${(width - 13 - labelW - 6 - 13).toFixed(1)}" y="${(cy - 6.5).toFixed(1)}" `
+        )
       );
     }
   }

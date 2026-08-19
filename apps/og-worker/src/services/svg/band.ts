@@ -36,17 +36,7 @@
  */
 
 import { escapeXml, estimateTextWidth, GLYPH_ACCENT_LIGHT } from '@xivdyetools/svg';
-
-/**
- * Font stacks with the JP subset ahead of SC (Phase 0.3 bundled
- * NotoSansJP-Subset precisely so JA stops rendering in Chinese letterforms) —
- * mirrors the bot frame system's stacks.
- */
-const STACKS = {
-  mono: 'Fragment Mono, Onest, Noto Sans JP, Noto Sans SC, Noto Sans KR',
-  body: 'Onest, Noto Sans JP, Noto Sans SC, Noto Sans KR',
-  display: 'Space Grotesk, Noto Sans JP, Noto Sans SC, Noto Sans KR',
-} as const;
+import { GROUND, MARK_STRIPES, STACKS } from './tokens';
 
 // ============================================================================
 // Frames
@@ -84,7 +74,6 @@ export function xStrip(discordHeight: number): number {
   return Math.round(discordHeight * X_STRIP_SCALE);
 }
 
-const GROUND = '#0B0B0C';
 export const RULE = 'rgba(255,255,255,0.07)';
 const WORDMARK_INK = '#9C9CA2';
 const TAG_INK = '#FF6257';
@@ -130,6 +119,16 @@ export function bandInk(hex: string): { on: string; onDim: string } {
 
 let markUid = 0;
 
+/** The six stripes' x / width on the 48-grid, in MARK_STRIPES order. */
+const MARK_STRIPE_GEOMETRY: ReadonlyArray<readonly [number, number]> = [
+  [8, 6],
+  [14, 6],
+  [20, 5],
+  [25, 5],
+  [30, 5],
+  [35, 6],
+];
+
 /** The reduced app mark at `size` px, top-left at (x, y). */
 export function ogMark(x: number, y: number, size: number): string {
   const id = `ogm${markUid++}`;
@@ -140,12 +139,10 @@ export function ogMark(x: number, y: number, size: number): string {
     `<rect width="48" height="48" rx="11" fill="${GLYPH_ACCENT_LIGHT}"/>` +
     `<path d="M 12 16 C 13 5 35 5 36 16" fill="none" stroke="#9BA1AD" stroke-width="2.4" stroke-linecap="round"/>` +
     `<g clip-path="url(#${id}b)">` +
-    `<rect x="8" y="16" width="6" height="30" fill="#E5484D"/>` +
-    `<rect x="14" y="16" width="6" height="30" fill="#F76B15"/>` +
-    `<rect x="20" y="16" width="5" height="30" fill="#FFC53D"/>` +
-    `<rect x="25" y="16" width="5" height="30" fill="#30A46C"/>` +
-    `<rect x="30" y="16" width="5" height="30" fill="#0091FF"/>` +
-    `<rect x="35" y="16" width="6" height="30" fill="#8E4EC6"/>` +
+    MARK_STRIPES.map(
+      (hex, i) =>
+        `<rect x="${MARK_STRIPE_GEOMETRY[i][0]}" y="16" width="${MARK_STRIPE_GEOMETRY[i][1]}" height="30" fill="${hex}"/>`,
+    ).join('') +
     `</g>` +
     `<path d="M 10 17 C 11 30 13 39.5 15.5 42.5 C 18 45 30 45 32.5 42.5 C 35 39.5 37 30 38 17 Z" fill="none" stroke="#C8CCD5" stroke-width="1.4"/>` +
     `<ellipse cx="24" cy="17" rx="14" ry="5.4" fill="#FBFBFC"/>` +

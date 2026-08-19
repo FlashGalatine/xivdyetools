@@ -10,7 +10,7 @@
  */
 
 import { presetData } from '@xivdyetools/core';
-import type { Dye, LocaleCode } from '@xivdyetools/types';
+import type { Dye, LocaleCode, PresetData } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
 import { bandGlyph, notFoundBand } from './band-shared';
 import { dyeService } from './dye-helpers';
@@ -26,20 +26,13 @@ export interface PresetsOGOptions {
   frame?: BandFrame;
 }
 
-interface PresetPalette {
-  id: string;
-  name: string;
-  category: string;
-  dyes: number[];
-}
-
 /**
  * Generates the Presets OG image SVG (400-grid — raster ×3 downstream).
  */
 export function generatePresetsOG(options: PresetsOGOptions): string {
   const { presetId, locale = 'en', frame = 'discord' } = options;
 
-  const palettes = (presetData as { palettes: PresetPalette[] }).palettes;
+  const palettes = (presetData as PresetData).palettes;
   const preset = palettes.find((p) => p.id === presetId);
   if (!preset) {
     return notFoundBand(getToolTag('presets', locale), 'presets', presetId, 'presets', frame);

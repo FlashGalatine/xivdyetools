@@ -12,9 +12,8 @@
 
 import { ColorService } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
-import { toolGlyph } from '@xivdyetools/svg';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
-import { ALGO_TAG, fmtDelta } from './band-shared';
+import { ALGO_TAG, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
 import { dyeService, findClosestDyesWithDistance, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
 import { getToolTag } from '../og-strings';
 import { getLocalizedDyeName, getLocalizedHarmonyName } from '../translator';
@@ -102,17 +101,9 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
 
   const dye = getDyeByItemId(dyeId);
   if (!dye) {
-    // The generator never throws (route contract) — an unknown ID renders a
-    // neutral single-band state naming the miss. The proper glyph-tile
-    // default set replaces this in the defaults step.
-    return generateBandCard({
-      bands: [{ hex: '#17171A', role: 'NOT FOUND', name: `#${dyeId}`, nameSize: 17 }],
-      toolTag: getToolTag('harmony', locale),
-      toolGlyph: toolGlyph('harmony', 'compact', { size: 13, ink: '#ECECEE', accent: '#FF6257' }),
-      path: 'xivdyetools.app/harmony',
-      deck: `#${dyeId}`,
-      frame,
-    });
+    // The generator never throws (route contract) — an unknown ID renders the
+    // shared neutral single-band state naming the miss.
+    return notFoundBand(getToolTag('harmony', locale), 'harmony', `#${dyeId}`, 'harmony', frame);
   }
 
   const matches = getHarmonyMatches(dye, harmonyType, algorithm);
@@ -144,7 +135,7 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
   return generateBandCard({
     bands,
     toolTag: getToolTag('harmony', locale),
-    toolGlyph: toolGlyph('harmony', 'compact', { size: 13, ink: '#ECECEE', accent: '#FF6257' }),
+    toolGlyph: bandGlyph('harmony'),
     path: 'xivdyetools.app/harmony',
     // Harmony's headline is pure data — the base and the harmony it anchors.
     deck: `${baseName} · ${harmonyName}`,

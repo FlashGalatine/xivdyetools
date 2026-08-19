@@ -3,12 +3,7 @@ import {
   LocaleRegistry,
   TranslationProvider,
 } from '@xivdyetools/core';
-import type {
-  Dye,
-  HarmonyTypeKey,
-  LocaleCode,
-  VisionType as CoreVisionType,
-} from '@xivdyetools/types';
+import type { Dye, HarmonyTypeKey, LocaleCode, VisionType } from '@xivdyetools/types';
 
 /**
  * Module-scoped translator with all 6 locales eagerly preloaded.
@@ -47,6 +42,6 @@ export function getLocalizedHarmonyName(harmony: string, locale: LocaleCode): st
 }
 
 /** The localized lens name — the same shipped key the embed uses. */
-export function getLocalizedVisionName(vision: string, locale: LocaleCode): string {
-  return ogTranslator.getVisionShort(vision as CoreVisionType, locale);
+export function getLocalizedVisionName(vision: VisionType, locale: LocaleCode): string {
+  return ogTranslator.getVisionShort(vision, locale);
 }

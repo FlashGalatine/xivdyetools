@@ -65,24 +65,18 @@ FONTS_DIR = os.path.join(WORKER_ROOT, "src", "fonts")
 # and a 10 MiB variable source in src/fonts would ship inside the Worker.
 SOURCES_DIR = os.path.join(SCRIPT_DIR, ".font-sources")
 
-# Shared source fonts (full, ~10 MiB each) — stored in discord-worker to avoid duplication
-DISCORD_FONTS_DIR = os.path.join(APPS_DIR, "discord-worker", "src", "fonts")
+# Full source fonts (~10-17 MiB each) are downloaded into SOURCES_DIR on first
+# run — the ONLY place they live. (Older revisions also probed src/fonts and
+# discord-worker/src/fonts, but both ship subsets, and a subset is not a
+# valid source for a subset.)
 
 SC_INPUT_CANDIDATES = [
-    os.path.join(SCRIPT_DIR, ".font-sources", "NotoSansSC-Variable.ttf"),
-    os.path.join(FONTS_DIR, "NotoSansSC-Regular.ttf"),
-    os.path.join(DISCORD_FONTS_DIR, "NotoSansSC-Regular.ttf"),
+    os.path.join(SOURCES_DIR, "NotoSansSC-Variable.ttf"),
 ]
 SC_OUTPUT = os.path.join(FONTS_DIR, "NotoSansSC-Subset.ttf")
 
 KR_SOURCE_CANDIDATES = [
-    os.path.join(SCRIPT_DIR, ".font-sources", "NotoSansKR-Variable.ttf"),
-    os.path.join(FONTS_DIR, "NotoSansKR-Variable.ttf"),
-    os.path.join(FONTS_DIR, "NotoSansKR[wght].ttf"),
-    os.path.join(FONTS_DIR, "NotoSansKR-Regular.ttf"),
-    os.path.join(DISCORD_FONTS_DIR, "NotoSansKR-Variable.ttf"),
-    os.path.join(DISCORD_FONTS_DIR, "NotoSansKR[wght].ttf"),
-    os.path.join(DISCORD_FONTS_DIR, "NotoSansKR-Regular.ttf"),
+    os.path.join(SOURCES_DIR, "NotoSansKR-Variable.ttf"),
 ]
 KR_OUTPUT = os.path.join(FONTS_DIR, "NotoSansKR-Subset.ttf")
 
@@ -91,13 +85,7 @@ NOTO_SC_URL = "https://github.com/google/fonts/raw/main/ofl/notosanssc/NotoSansS
 NOTO_JP_URL = "https://github.com/google/fonts/raw/main/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf"
 
 JP_SOURCE_CANDIDATES = [
-    os.path.join(SCRIPT_DIR, ".font-sources", "NotoSansJP-Variable.ttf"),
-    os.path.join(FONTS_DIR, "NotoSansJP-Variable.ttf"),
-    os.path.join(FONTS_DIR, "NotoSansJP[wght].ttf"),
-    os.path.join(FONTS_DIR, "NotoSansJP-Regular.ttf"),
-    os.path.join(DISCORD_FONTS_DIR, "NotoSansJP-Variable.ttf"),
-    os.path.join(DISCORD_FONTS_DIR, "NotoSansJP[wght].ttf"),
-    os.path.join(DISCORD_FONTS_DIR, "NotoSansJP-Regular.ttf"),
+    os.path.join(SOURCES_DIR, "NotoSansJP-Variable.ttf"),
 ]
 JP_OUTPUT = os.path.join(FONTS_DIR, "NotoSansJP-Subset.ttf")
 

@@ -5,6 +5,7 @@
  */
 
 import type { AnalyticsEngineDataset } from '@cloudflare/workers-types';
+import type { VisionType } from '@xivdyetools/types';
 
 // ============================================================================
 // Environment Bindings
@@ -51,12 +52,8 @@ export type HarmonyType =
 // computed (dye-helpers.deltaForAlgorithm → normalizeMatchingMethod).
 export type MatchingAlgorithm = import('@xivdyetools/core').MatchingMethod;
 
-export type VisionType =
-  | 'normal'
-  | 'protanopia'
-  | 'deuteranopia'
-  | 'tritanopia'
-  | 'achromatopsia';
+// The five lenses are core's vocabulary — one type, no casts at the seams.
+export type { VisionType };
 
 // ============================================================================
 // OpenGraph Data

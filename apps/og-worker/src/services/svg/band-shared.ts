@@ -6,6 +6,7 @@
 
 import { toolGlyph, type ToolGlyphName } from '@xivdyetools/svg';
 import { generateBandCard, type BandFrame } from './band';
+import { COMPACT_GLYPH } from './tokens';
 
 /** Requested-algorithm display codes (identifiers — never localise). */
 export const ALGO_TAG: Record<string, string> = {
@@ -26,7 +27,7 @@ export function fmtDelta(value: number, algorithm: string): string {
 
 /** The strip glyph: compact set, 13px, strip inks. */
 export function bandGlyph(name: ToolGlyphName): string {
-  return toolGlyph(name, 'compact', { size: 13, ink: '#ECECEE', accent: '#FF6257' });
+  return toolGlyph(name, 'compact', COMPACT_GLYPH);
 }
 
 /**

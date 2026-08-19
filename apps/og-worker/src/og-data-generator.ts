@@ -9,14 +9,13 @@
  */
 
 import { getDyeByItemId } from './services/svg/dye-helpers';
-import { ogTranslator } from './services/translator';
-import type {
-  HarmonyTypeKey,
-  LocaleCode,
-  SheetKey,
-  ToolKey,
-  VisionType as CoreVisionType,
-} from '@xivdyetools/types';
+import { GROUND, MARK_STRIPES } from './services/svg/tokens';
+import {
+  ogTranslator,
+  getLocalizedHarmonyName,
+  getLocalizedVisionName,
+} from './services/translator';
+import type { LocaleCode, SheetKey, ToolKey } from '@xivdyetools/types';
 import type {
   OGData,
   ToolId,
@@ -26,7 +25,6 @@ import type {
   SwatchParams,
   ComparisonParams,
   AccessibilityParams,
-  HarmonyType,
   VisionType,
   ColorSheetCategory,
   CharacterGender,
@@ -37,14 +35,10 @@ import type {
 // Localization (REFACTOR-001, 2026-04-28 audit)
 // ============================================================================
 
-// ogTranslator is now shared from ./services/translator so SVG generators can
-// reuse the same preloaded instance without duplicating locale-loading work.
-
-/**
- * Map og-worker's kebab-case `HarmonyType` to core's camelCase `HarmonyTypeKey`
- * (general kebab→camel: 'split-complementary' → 'splitComplementary',
- * 'inverted-tetradic' → 'invertedTetradic').
- */
+// ogTranslator is shared from ./services/translator so SVG generators reuse
+// the same preloaded instance — and the harmony / lens names below come from
+// the same helpers the cards use, so the embed text and the picture inside it
+// cannot disagree.
 
 /**
  * Append the locale to an emitted image URL — the picture never localises
@@ -56,20 +50,8 @@ function withLang(url: string, locale: LocaleCode): string {
   return `${url}${url.includes('?') ? '&' : '?'}lang=${locale}`;
 }
 
-function harmonyToKey(h: HarmonyType): HarmonyTypeKey {
-  return h.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase()) as HarmonyTypeKey;
-}
-
 function getToolName(tool: ToolId, locale: LocaleCode): string {
   return ogTranslator.getToolName(tool as ToolKey, locale);
-}
-
-function getHarmonyName(harmony: HarmonyType, locale: LocaleCode): string {
-  return ogTranslator.getHarmonyType(harmonyToKey(harmony), locale);
-}
-
-function getVisionName(vision: VisionType, locale: LocaleCode): string {
-  return ogTranslator.getVisionShort(vision as CoreVisionType, locale);
 }
 
 function getSheetName(sheet: ColorSheetCategory, locale: LocaleCode): string {
@@ -126,7 +108,7 @@ export function generateHarmonyOGData(
   locale: LocaleCode = 'en',
 ): OGData {
   const dyeInfo = getDyeInfo(params.dye);
-  const harmonyName = getHarmonyName(params.harmony, locale);
+  const harmonyName = getLocalizedHarmonyName(params.harmony, locale);
 
   if (!dyeInfo) {
     return {
@@ -320,7 +302,7 @@ export function generateAccessibilityOGData(
   locale: LocaleCode = 'en',
 ): OGData {
   const dyes = params.dyes.slice(0, 4).map(getDyeInfo).filter(Boolean);
-  const visionName = params.vision ? getVisionName(params.vision, locale) : 'Color Vision';
+  const visionName = params.vision ? getLocalizedVisionName(params.vision, locale) : 'Color Vision';
 
   if (dyes.length === 0) {
     return {
@@ -348,6 +330,11 @@ export function generateAccessibilityOGData(
 // HTML Template Generator
 // ============================================================================
 
+/** Append the X frame selector to an image URL (respects existing queries). */
+function withFrameX(imageUrl: string): string {
+  return imageUrl.includes('?') ? `${imageUrl}&frame=x` : `${imageUrl}?frame=x`;
+}
+
 /**
  * Generate HTML with OpenGraph meta tags for crawler consumption.
  *
@@ -360,11 +347,6 @@ export function generateAccessibilityOGData(
  * @param ogData - The OpenGraph data to include in meta tags
  * @returns Complete HTML string
  */
-/** Append the X frame selector to an image URL (respects existing queries). */
-function withFrameX(imageUrl: string): string {
-  return imageUrl.includes('?') ? `${imageUrl}&frame=x` : `${imageUrl}?frame=x`;
-}
-
 export function generateOGHTML(ogData: OGData): string {
   const themeColorTag = ogData.themeColor
     ? `<meta name="theme-color" content="${escapeHtml(ogData.themeColor)}">`
@@ -416,7 +398,7 @@ export function generateOGHTML(ogData: OGData): string {
       align-items: center;
       min-height: 100vh;
       margin: 0;
-      background: #0B0B0C;
+      background: ${GROUND};
       color: #ECECEE;
     }
     .card {
@@ -448,7 +430,7 @@ export function generateOGHTML(ogData: OGData): string {
 <body>
   <div class="card">
     <div class="stripes">
-      <span style="background:#E5484D"></span><span style="background:#F76B15"></span><span style="background:#FFC53D"></span><span style="background:#30A46C"></span><span style="background:#0091FF"></span><span style="background:#8E4EC6"></span>
+      ${MARK_STRIPES.map((hex) => `<span style="background:${hex}"></span>`).join('')}
     </div>
     <div class="deck">
       <p class="title">${escapeHtml(ogData.title)}</p>
