@@ -6,47 +6,21 @@
 
 import { logger } from '@shared/logger';
 import { authService } from './auth-service';
-import type { PresetCategory } from '@xivdyetools/types';
+import type {
+  PresetStatus,
+  CommunityPreset,
+  PresetFilters,
+  PresetListResponse,
+} from '@xivdyetools/types';
 
 // ============================================
 // Types
 // ============================================
 
-export type PresetStatus = 'pending' | 'approved' | 'rejected' | 'flagged';
-
-export interface CommunityPreset {
-  id: string;
-  name: string;
-  description: string;
-  category_id: PresetCategory;
-  /** Up to two additional categories; never contains category_id */
-  secondary_categories?: PresetCategory[];
-  dyes: number[];
-  tags: string[];
-  author_discord_id: string | null;
-  author_name: string | null;
-  vote_count: number;
-  status: PresetStatus;
-  is_curated: boolean;
-  created_at: string;
-  updated_at: string;
-  /** 8A: allowlisted example-link page URL (stored, never a copy) */
-  example_link?: string | null;
-  /** Approved preview image URL; present only once a moderator approves it. */
-  preview_image_url?: string | null;
-  /** Moderation state of the uploaded picture (the URL stays gated on 'approved') */
-  preview_image_status?: 'none' | 'pending' | 'approved';
-  /** 8S: latest moderation reject reason (own-submissions listing only) */
-  rejection_reason?: string | null;
-}
-
-export interface PresetListResponse {
-  presets: CommunityPreset[];
-  total: number;
-  page: number;
-  limit: number;
-  has_more: boolean;
-}
+// PresetStatus, CommunityPreset, PresetFilters and PresetListResponse are the
+// shared `@xivdyetools/types` contracts, re-exported here so existing
+// `@services/community-preset-service` imports keep working unchanged.
+export type { PresetStatus, CommunityPreset, PresetFilters, PresetListResponse };
 
 export interface CategoryWithCount {
   id: string;
@@ -57,16 +31,25 @@ export interface CategoryWithCount {
   preset_count: number;
 }
 
-export interface PresetFilters {
-  category?: PresetCategory;
-  search?: string;
-  status?: PresetStatus;
-  sort?: 'popular' | 'recent' | 'name';
-  page?: number;
-  limit?: number;
-  is_curated?: boolean;
-}
-
+/**
+ * Kept local rather than adopted from `@xivdyetools/types`' `VoteResponse`.
+ *
+ * The real wire response on a 409 (already voted) is
+ * `{ success: true, already_voted: true, new_vote_count }` — see
+ * `apps/presets-api/src/handlers/votes.ts` `addVote()`, which matches the
+ * shared `VoteSuccessResponse` exactly (`already_voted` only exists on the
+ * success variant). `voteForPreset()`/`removeVote()` below deliberately
+ * report that case as `success: false` instead, so their callers
+ * (`preset-detail.ts`, `preset-tool.ts`) can route it through their
+ * already-voted branch (an info toast, no vote-count update) rather than
+ * the success branch (success toast + vote-count update) without those
+ * components having to branch on `already_voted` themselves. The shared
+ * discriminated union has no variant for "success:false with
+ * already_voted/new_vote_count", so adopting it here would mean either
+ * restructuring those two components' toast logic (out of scope for a
+ * type-only refactor) or passing through a `success: true` response that
+ * changes which toast fires. Flat and un-discriminated on purpose.
+ */
 export interface VoteResponse {
   success: boolean;
   new_vote_count: number;

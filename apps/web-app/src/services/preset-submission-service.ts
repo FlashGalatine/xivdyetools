@@ -6,24 +6,17 @@
 
 import { logger } from '@shared/logger';
 import { authService } from './auth-service';
-import type { PresetCategory } from '@xivdyetools/types';
+import type { PresetCategory, PresetSubmission, PresetEditRequest } from '@xivdyetools/types';
 import type { CommunityPreset, PresetStatus } from './community-preset-service';
 
 // ============================================
 // Types
 // ============================================
 
-export interface PresetSubmission {
-  name: string;
-  description: string;
-  category_id: PresetCategory;
-  /** Up to two additional categories; must not repeat category_id */
-  secondary_categories?: PresetCategory[];
-  dyes: number[];
-  tags: string[];
-  /** 8A: example link on an allowlisted glamour or social host */
-  example_link?: string | null;
-}
+// PresetSubmission and PresetEditRequest are the shared `@xivdyetools/types`
+// contracts, re-exported here so existing `@services/preset-submission-service`
+// imports keep working unchanged.
+export type { PresetSubmission, PresetEditRequest };
 
 export interface SubmissionResult {
   success: boolean;
@@ -42,20 +35,6 @@ export interface ValidationError {
 export interface MySubmissionsResponse {
   presets: CommunityPreset[];
   total: number;
-}
-
-export interface PresetEditRequest {
-  name?: string;
-  description?: string;
-  dyes?: number[];
-  tags?: string[];
-  /** New primary category — the edit form unlocked this in 5.1 */
-  category_id?: PresetCategory;
-  /** Replacement secondary list; `[]` clears it */
-  secondary_categories?: PresetCategory[];
-  /** Allowlisted glamour-page URL; null clears it. The API validates and
-   *  persists this on edit — the client just never offered the field. */
-  example_link?: string | null;
 }
 
 export interface EditResult {

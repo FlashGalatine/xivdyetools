@@ -9,6 +9,16 @@
 import type { PresetCategory, PresetStatus } from './core.js';
 
 /**
+ * Sort order for preset listings.
+ *
+ * Restored 2026-08-18 after the dead-code audit (DEAD-025) removed it as
+ * chain-dead — web-app had stopped importing it and kept two local copies
+ * instead (`services/hybrid-preset-service.ts`, `shared/tool-config-types.ts`).
+ * Both now import this export.
+ */
+export type PresetSortOption = 'popular' | 'recent' | 'name';
+
+/**
  * Filters for listing presets
  */
 export interface PresetFilters {
@@ -22,7 +32,7 @@ export interface PresetFilters {
   status?: PresetStatus;
 
   /** Sort order */
-  sort?: 'popular' | 'recent' | 'name';
+  sort?: PresetSortOption;
 
   /** Page number (1-indexed) */
   page?: number;

@@ -19,7 +19,7 @@ export type {
 export type { PresetPreviousValues, CommunityPreset, PresetSubmission } from './community.js';
 
 // Request types
-export type { PresetFilters, PresetEditRequest } from './request.js';
+export type { PresetFilters, PresetEditRequest, PresetSortOption } from './request.js';
 
 // Response types
 export type {

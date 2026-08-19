@@ -11,6 +11,7 @@ import type {
   PresetData,
   CategoryMeta,
   Dye,
+  PresetSortOption,
 } from '@xivdyetools/types';
 import { dyeService as sharedDyeService, resolvePresetDye } from './dye-service-wrapper';
 import {
@@ -67,10 +68,9 @@ export interface UnifiedCategory {
   isCurated: boolean;
 }
 
-/**
- * Sort options for presets
- */
-export type PresetSortOption = 'popular' | 'recent' | 'name';
+// PresetSortOption is the shared `@xivdyetools/types` contract, re-exported
+// here so existing `@services/hybrid-preset-service` imports keep working.
+export type { PresetSortOption };
 
 /**
  * Options for fetching presets

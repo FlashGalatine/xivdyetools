@@ -11,41 +11,19 @@
 import { logger } from '@shared/logger';
 // FINDING-008: Import APIService to clear cache on logout
 import { APIService } from './api-service-wrapper.js';
+import type { AuthProvider, AuthUser, AuthResponse, JWTPayload } from '@xivdyetools/types';
 
 // ============================================
 // Types
 // ============================================
 
-/**
- * Supported authentication providers
- */
-export type AuthProvider = 'discord' | 'xivauth';
-
-/**
- * Primary FFXIV character info (XIVAuth only)
- */
-export interface PrimaryCharacter {
-  name: string;
-  server: string;
-  verified: boolean;
-}
-
-export interface AuthUser {
-  /**
-   * The user's identity as the presets API sees it: the Discord snowflake
-   * (`discord_id` claim) when the account has one, otherwise the oauth
-   * worker's internal UUID (`sub`). This is what `author_discord_id` on
-   * community presets is compared against — it must NOT be the bare `sub`,
-   * which is a UUID that never matches bot-submitted (snowflake) authorship.
-   */
-  id: string;
-  username: string;
-  global_name: string | null;
-  avatar: string | null;
-  avatar_url: string | null;
-  auth_provider?: AuthProvider;
-  primary_character?: PrimaryCharacter;
-}
+// AuthProvider, AuthUser, AuthResponse and JWTPayload are the shared
+// `@xivdyetools/types` contracts (AuthUser/AuthProvider re-exported below —
+// AuthState's fields keep them part of this module's public shape).
+// PrimaryCharacter (a nested field on AuthUser/JWTPayload) is never named
+// directly in this file, so it is left unimported — its shape still flows
+// through structurally.
+export type { AuthProvider, AuthUser };
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -57,20 +35,6 @@ export interface AuthState {
 
 export type AuthStateListener = (state: AuthState) => void;
 
-interface JWTPayload {
-  sub: string;
-  iat: number;
-  exp: number;
-  iss: string;
-  username: string;
-  global_name: string | null;
-  avatar: string | null;
-  auth_provider?: AuthProvider;
-  discord_id?: string;
-  xivauth_id?: string;
-  primary_character?: PrimaryCharacter;
-}
-
 /**
  * Identity the presets API keys ownership by — see `AuthUser.id`.
  * Mirrors `resolveJWTUserId()` in apps/presets-api/src/middleware/auth.ts.
@@ -79,14 +43,6 @@ function presetsIdentity(payload: JWTPayload): string {
   return typeof payload.discord_id === 'string' && payload.discord_id.length > 0
     ? payload.discord_id
     : payload.sub;
-}
-
-interface AuthResponse {
-  success: boolean;
-  token?: string;
-  user?: AuthUser;
-  expires_at?: number;
-  error?: string;
 }
 
 // ============================================
@@ -431,8 +387,16 @@ class AuthServiceImpl {
 
       const data: AuthResponse = await response.json();
 
-      if (!data.success || !data.token) {
+      if (!data.success) {
         logger.error('Token exchange returned error:', data.error);
+        return;
+      }
+
+      // Contract guarantees `token` once `success` is true; stay defensive
+      // against an empty string without depending on `.error`, which only
+      // exists on the failure branch of the union.
+      if (!data.token) {
+        logger.error('Token exchange succeeded but returned no token');
         return;
       }
 

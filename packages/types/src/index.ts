@@ -57,6 +57,7 @@ export type {
   PresetSubmission,
   PresetFilters,
   PresetEditRequest,
+  PresetSortOption,
   PresetListResponse,
   PresetSubmitCreatedResponse,
   PresetSubmitDuplicateResponse,

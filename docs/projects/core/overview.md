@@ -180,7 +180,7 @@ const best = dyeService.findClosestDye('#FF6B6B');
 const bestOklab = dyeService.findClosestDye('#FF6B6B', { matchingMethod: 'oklab', excludeIds: [] });
 
 // Every dye within a distance, sorted
-const near = dyeService.findDyesWithinDistance('#FF6B6B', 10);
+const near = dyeService.findDyesWithinDistance('#FF6B6B', { maxDistance: 10 });
 ```
 
 ### 3. Color Harmonies

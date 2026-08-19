@@ -9,7 +9,7 @@
 
 import type { ToolId } from '@services/router-service';
 import type { MatchingMethod } from '@xivdyetools/core';
-import type { DyeTypeFilters } from '@xivdyetools/types';
+import type { DyeTypeFilters, PresetSortOption } from '@xivdyetools/types';
 import { COMPANION_DYES_DEFAULT } from '@shared/constants';
 
 // Re-export MatchingMethod for convenience
@@ -178,10 +178,9 @@ export type PresetCategoryFilter =
   | 'zones'
   | 'raids-trials';
 
-/**
- * Preset sort options
- */
-export type PresetSortOption = 'popular' | 'recent' | 'name';
+// PresetSortOption is the shared `@xivdyetools/types` contract, re-exported
+// here so existing `@shared/tool-config-types` imports keep working.
+export type { PresetSortOption };
 
 /**
  * Community Presets configuration

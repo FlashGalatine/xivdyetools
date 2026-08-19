@@ -18,6 +18,7 @@ export const mockPresets = [
     name: 'Warrior of Light',
     description: 'A heroic color palette inspired by the Warriors of Light',
     category_id: 'jobs',
+    secondary_categories: [],
     dyes: [1, 5, 10],
     tags: ['warrior', 'light', 'heroic'],
     author_discord_id: '123456789',
@@ -27,12 +28,14 @@ export const mockPresets = [
     is_curated: false,
     created_at: '2024-01-15T10:00:00Z',
     updated_at: '2024-01-15T10:00:00Z',
+    preview_image_status: 'none',
   },
   {
     id: 'preset-2',
     name: 'Dark Knight',
     description: 'Dark and brooding colors for the Dark Knight job',
     category_id: 'jobs',
+    secondary_categories: [],
     dyes: [15, 20, 25],
     tags: ['dark', 'knight', 'tank'],
     author_discord_id: '987654321',
@@ -42,6 +45,7 @@ export const mockPresets = [
     is_curated: true,
     created_at: '2024-01-10T08:00:00Z',
     updated_at: '2024-01-12T14:30:00Z',
+    preview_image_status: 'none',
   },
 ];
 
@@ -199,6 +203,7 @@ export const handlers = [
       name: body.name,
       description: body.description,
       category_id: body.category_id,
+      secondary_categories: [],
       dyes: body.dyes,
       tags: body.tags,
       author_discord_id: '123456789',
@@ -208,6 +213,7 @@ export const handlers = [
       is_curated: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      preview_image_status: 'none' as const,
     };
 
     return HttpResponse.json({
