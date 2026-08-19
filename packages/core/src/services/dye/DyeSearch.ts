@@ -29,7 +29,7 @@ export interface FindWithinDistanceOptions {
   maxDistance: number;
   /** Maximum number of results to return */
   limit?: number;
-  /** Color matching algorithm (default: 'rgb' for backwards compatibility) */
+  /** Color matching algorithm (default: 'ciede2000' — see DEFAULT_MATCHING_METHOD) */
   matchingMethod?: MatchingMethod;
 }
 
@@ -253,7 +253,7 @@ export class DyeSearch {
   findDyesWithinDistance(hex: string, options: FindWithinDistanceOptions): Dye[] {
     this.database.ensureLoaded();
 
-    const { maxDistance, limit: resultLimit, matchingMethod = 'rgb' } = options;
+    const { maxDistance, limit: resultLimit, matchingMethod = 'ciede2000' } = options;
 
     try {
       const targetRgb = ColorConverter.hexToRgb(hex);

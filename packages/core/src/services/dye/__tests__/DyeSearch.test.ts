@@ -342,7 +342,12 @@ describe('DyeSearch', () => {
     });
 
     it('should respect distance limit', () => {
-      const results = search.findDyesWithinDistance('#FFFFFF', { maxDistance: 10 });
+      // Explicit 'rgb': the assertion below checks raw RGB channel deltas,
+      // which is an RGB-scale property, not a perceptual (ciede2000) one.
+      const results = search.findDyesWithinDistance('#FFFFFF', {
+        maxDistance: 10,
+        matchingMethod: 'rgb',
+      });
       // Very tight distance should only find white or very close colors
       expect(
         results.every((d) => {
@@ -450,7 +455,12 @@ describe('DyeSearch', () => {
       });
 
       it('should respect distance limit using linear search', () => {
-        const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', { maxDistance: 10 });
+        // Explicit 'rgb': the assertion below checks raw RGB channel deltas,
+        // which is an RGB-scale property, not a perceptual (ciede2000) one.
+        const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', {
+          maxDistance: 10,
+          matchingMethod: 'rgb',
+        });
         expect(
           results.every((d) => {
             const r = Math.abs(d.rgb.r - 255);

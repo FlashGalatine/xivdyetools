@@ -141,9 +141,17 @@ describe('Performance Benchmarks - Core Library', () => {
       const testColor = '#FF5733';
       const iterations = 50;
 
+      // Explicit 'rgb': findDyesWithinDistance now defaults to 'ciede2000',
+      // which (per REFACTOR-003, see the note above) falls through to the
+      // exact linear scan. This test's title and budget are about the k-d
+      // tree fast path specifically, so pin the method that reaches it.
       const start = performance.now();
       for (let i = 0; i < iterations; i++) {
-        dyeService.findDyesWithinDistance(testColor, { maxDistance: 50, limit: 10 });
+        dyeService.findDyesWithinDistance(testColor, {
+          maxDistance: 50,
+          limit: 10,
+          matchingMethod: 'rgb',
+        });
       }
       const duration = performance.now() - start;
       const avgTime = duration / iterations;
