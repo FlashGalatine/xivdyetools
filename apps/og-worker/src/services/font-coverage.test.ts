@@ -23,6 +23,7 @@
  * every run, so bytes differ even when coverage is identical.
  */
 import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 import { LocaleLoader } from '@xivdyetools/core';
@@ -155,8 +156,8 @@ function stringsFor(locale: LocaleCode): string[] {
   return out;
 }
 
-const fontsDir = fileURLToPath(new URL('../fonts/', import.meta.url));
-const font = (name: string): Set<number> => readCmapCodepoints(new Uint8Array(readFileSync(`${fontsDir}${name}`)));
+const fontsDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'fonts');
+const font = (name: string): Set<number> => readCmapCodepoints(new Uint8Array(readFileSync(join(fontsDir, name))));
 
 const cmaps = {
   onest: font('Onest-VariableFont_wght.ttf'),
