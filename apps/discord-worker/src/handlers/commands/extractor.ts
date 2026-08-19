@@ -45,7 +45,11 @@ import {
 import { generatePaletteGrid, generateNearestSheet } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { extractImagePixels } from '../../services/image-client.js';
-import { getUserPreferences, resolveMatchingMethod } from '../../services/preferences.js';
+import {
+  getUserPreferences,
+  resolveMatchingMethod,
+  resolveCount,
+} from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // ============================================================================
@@ -225,8 +229,9 @@ async function handleColorSubcommand(
   );
 
   const colorInput = colorOption?.value as string | undefined;
+  // Result count: explicit option > stored preference > suite default (1)
   const matchCount = Math.min(
-    Math.max((countOption?.value as number) || 1, MIN_MATCH_COUNT),
+    Math.max(resolveCount(countOption?.value as number | undefined, prefs), MIN_MATCH_COUNT),
     MAX_MATCH_COUNT,
   );
 

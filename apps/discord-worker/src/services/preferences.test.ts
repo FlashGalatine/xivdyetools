@@ -314,7 +314,7 @@ describe('Preferences Service', () => {
 
       it('uses default when no explicit or preference', () => {
         const prefs: UserPreferences = {};
-        expect(resolveCount(undefined, prefs)).toBe(5);
+        expect(resolveCount(undefined, prefs)).toBe(1);
       });
     });
   });
@@ -373,7 +373,7 @@ describe('Preferences Service', () => {
       expect(getDefaultValue('language')).toBe('en');
       expect(getDefaultValue('blending')).toBe('ryb');
       expect(getDefaultValue('matching')).toBe('ciede2000');
-      expect(getDefaultValue('count')).toBe(5);
+      expect(getDefaultValue('count')).toBe(1);
       expect(getDefaultValue('market')).toBe(false);
       expect(getDefaultValue('clan')).toBeUndefined();
       expect(getDefaultValue('gender')).toBeUndefined();

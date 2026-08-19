@@ -629,7 +629,7 @@ export const commands = [
           },
           {
             name: 'count',
-            description: 'Default number of results (1-10)',
+            description: 'Default number of matches for /extractor color (1-10)',
             type: OptionType.INTEGER,
             required: false,
             min_value: 1,

@@ -122,7 +122,9 @@ export const PREFERENCE_DEFAULTS: Required<
   // one product, one answer for "what does blue + yellow make".
   blending: 'ryb',
   matching: 'ciede2000',
-  count: 5,
+  // 1 keeps /extractor color's output unchanged for users who never set this
+  // preference (matches the command's own pre-preferences default).
+  count: 1,
   market: false,
   showHex: true,
   showRgb: true,
