@@ -18,6 +18,7 @@ Monorepo 2.0 Tier 1 package consolidation. Written 2026-07-30 and unpublished un
 
 - `@xivdyetools/crypto` dropped from `dependencies`; `jwt.ts` / `hmac.ts` import the encoding primitives relatively. The package now has **no internal dependencies** (Level 0 of the monorepo graph) — `discord-interactions` is the only runtime dependency, `@cloudflare/workers-types` remains an optional peer.
 - Docs: README and `CLAUDE.md` synced to the branch state: `/encoding` and `/revocation` subpaths documented, API-reference signatures corrected (`isJWTExpired(token)` / `getJWTTimeToExpiry(token)` take the raw token string, `unauthorizedResponse(message?)` / `badRequestResponse(message)` return JSON), consumers listed, license/legal notice added, stale blog link removed.
+- **Follow-up 3**: `hmacSignHex` is now consumed by both bot workers — `discord-worker`'s `services/preset-api.ts` and `moderation-worker`'s `services/preset-api.ts` replaced their hand-rolled `crypto.subtle` signing with it, each worker's `BOT_SIGNING_SECRET` now enforced at ≥32 bytes by that worker's own env-validation. This supersedes the "kept as-is" note recorded below under DEAD-019 — both sites are now adopted, not kept; `discord-worker`'s `utils/github-verify.ts` remains the one intentional holdout (GitHub imposes no minimum webhook-secret length).
 
 ### Removed (2026-08-18 dead-code audit)
 

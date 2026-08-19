@@ -86,14 +86,11 @@ describe('validateEnv', () => {
   });
 
   describe('PRESETS_API_URL', () => {
-    it.each(['https://presets.xivdyetools.app', 'http://localhost:8787'])(
-      'accepts %s',
-      (url) => {
-        const result = validateEnv(validEnv({ PRESETS_API_URL: url }));
+    it.each(['https://presets.xivdyetools.app', 'http://localhost:8787'])('accepts %s', (url) => {
+      const result = validateEnv(validEnv({ PRESETS_API_URL: url }));
 
-        expect(result.errors.some((e) => e.includes('PRESETS_API_URL'))).toBe(false);
-      }
-    );
+      expect(result.errors.some((e) => e.includes('PRESETS_API_URL'))).toBe(false);
+    });
 
     it('rejects a non-HTTP scheme', () => {
       const result = validateEnv(validEnv({ PRESETS_API_URL: 'ftp://presets.example' }));
@@ -131,6 +128,29 @@ describe('validateEnv', () => {
       const result = validateEnv(validEnv({ MODERATOR_IDS: ' , , ' }));
 
       expect(result.errors.some((e) => e.includes('at least one Discord ID'))).toBe(true);
+    });
+  });
+
+  describe('BOT_SIGNING_SECRET', () => {
+    it('passes when BOT_SIGNING_SECRET is not set', () => {
+      const result = validateEnv(validEnv());
+
+      expect(result.valid).toBe(true);
+    });
+
+    it('passes when BOT_SIGNING_SECRET is at least 32 characters', () => {
+      const result = validateEnv(validEnv({ BOT_SIGNING_SECRET: 'a'.repeat(32) }));
+
+      expect(result.errors.some((e) => e.includes('BOT_SIGNING_SECRET'))).toBe(false);
+    });
+
+    it('fails when BOT_SIGNING_SECRET is under 32 characters', () => {
+      const result = validateEnv(validEnv({ BOT_SIGNING_SECRET: 'too-short-secret' }));
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain(
+        'BOT_SIGNING_SECRET must be at least 32 characters for security',
+      );
     });
   });
 

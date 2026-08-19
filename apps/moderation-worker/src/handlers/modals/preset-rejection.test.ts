@@ -44,7 +44,7 @@ describe('handlePresetRejectionModal', () => {
       MODERATION_CHANNEL_ID: 'channel-mod',
       SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
       BOT_API_SECRET: 'test-secret',
-      BOT_SIGNING_SECRET: 'test-signing-secret',
+      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
       DB: undefined as unknown as D1Database,
       KV: undefined as unknown as KVNamespace,
       PRESETS_API: undefined,
@@ -86,7 +86,7 @@ describe('handlePresetRejectionModal', () => {
     };
 
     const response = await handlePresetRejectionModal(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
     expect(json.data.embeds[0].description).toContain('Invalid modal submission');
@@ -116,7 +116,7 @@ describe('handlePresetRejectionModal', () => {
     };
 
     const response = await handlePresetRejectionModal(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.embeds[0].description).toContain('Invalid modal submission');
   });
@@ -147,7 +147,7 @@ describe('handlePresetRejectionModal', () => {
     };
 
     const response = await handlePresetRejectionModal(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.embeds[0].description).toContain('do not have permission');
   });
@@ -178,7 +178,7 @@ describe('handlePresetRejectionModal', () => {
     };
 
     const response = await handlePresetRejectionModal(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.embeds[0].description).toContain('at least 10 characters');
   });
@@ -198,7 +198,7 @@ describe('handlePresetRejectionModal', () => {
     };
 
     const response = await handlePresetRejectionModal(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.embeds[0].description).toContain('valid rejection reason');
   });
@@ -251,7 +251,7 @@ describe('handlePresetRejectionModal', () => {
     };
 
     const response = await handlePresetRejectionModal(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
     expect(ctx.waitUntil).toHaveBeenCalled();
@@ -316,14 +316,16 @@ describe('handlePresetRejectionModal', () => {
 
     await handlePresetRejectionModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(presetApi.rejectPreset).toHaveBeenCalledWith(
       env,
       'preset-1',
       'mod-1',
-      'Contains inappropriate imagery'
+      'Contains inappropriate imagery',
     );
     expect(discordApi.editMessage).toHaveBeenCalledWith(
       'test-bot-token',
@@ -340,7 +342,7 @@ describe('handlePresetRejectionModal', () => {
           }),
         ]),
         components: [],
-      })
+      }),
     );
   });
 
@@ -395,31 +397,29 @@ describe('handlePresetRejectionModal', () => {
 
     await handlePresetRejectionModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
-    expect(discordApi.sendMessage).toHaveBeenCalledWith(
-      'test-bot-token',
-      'channel-log',
-      {
-        embeds: [
-          {
-            color: 15548997,
-            description: 'Preset rejected by ModUser',
-            fields: [
-              {
-                name: 'Reason',
-                value: 'Violates community guidelines',
-              },
-            ],
-            footer: {
-              text: 'ID: preset-1',
+    expect(discordApi.sendMessage).toHaveBeenCalledWith('test-bot-token', 'channel-log', {
+      embeds: [
+        {
+          color: 15548997,
+          description: 'Preset rejected by ModUser',
+          fields: [
+            {
+              name: 'Reason',
+              value: 'Violates community guidelines',
             },
-            title: '❌ Bad Preset - Rejected',
+          ],
+          footer: {
+            text: 'ID: preset-1',
           },
-        ],
-      }
-    );
+          title: '❌ Bad Preset - Rejected',
+        },
+      ],
+    });
   });
 
   it('should not send log message when log channel is not configured', async () => {
@@ -473,8 +473,10 @@ describe('handlePresetRejectionModal', () => {
 
     await handlePresetRejectionModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(discordApi.sendMessage).not.toHaveBeenCalled();
   });
@@ -520,8 +522,10 @@ describe('handlePresetRejectionModal', () => {
 
     await handlePresetRejectionModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(discordApi.editMessage).toHaveBeenCalledWith(
       'test-bot-token',
@@ -539,7 +543,7 @@ describe('handlePresetRejectionModal', () => {
             ]),
           }),
         ]),
-      })
+      }),
     );
   });
 
@@ -592,8 +596,10 @@ describe('handlePresetRejectionModal', () => {
 
     await handlePresetRejectionModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(discordApi.editMessage).toHaveBeenCalledWith(
       expect.any(String),
@@ -609,7 +615,7 @@ describe('handlePresetRejectionModal', () => {
             ]),
           }),
         ]),
-      })
+      }),
     );
   });
 });
@@ -630,7 +636,7 @@ describe('handlePresetRevertModal', () => {
       MODERATION_CHANNEL_ID: 'channel-mod',
       SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
       BOT_API_SECRET: 'test-secret',
-      BOT_SIGNING_SECRET: 'test-signing-secret',
+      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
       DB: undefined as unknown as D1Database,
       KV: undefined as unknown as KVNamespace,
       PRESETS_API: undefined,
@@ -672,7 +678,7 @@ describe('handlePresetRevertModal', () => {
     };
 
     const response = await handlePresetRevertModal(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.embeds[0].description).toContain('Invalid modal submission');
   });
@@ -703,7 +709,7 @@ describe('handlePresetRevertModal', () => {
     };
 
     const response = await handlePresetRevertModal(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.embeds[0].description).toContain('do not have permission');
   });
@@ -734,7 +740,7 @@ describe('handlePresetRevertModal', () => {
     };
 
     const response = await handlePresetRevertModal(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.embeds[0].description).toContain('at least 10 characters');
   });
@@ -790,14 +796,16 @@ describe('handlePresetRevertModal', () => {
 
     await handlePresetRevertModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(presetApi.revertPreset).toHaveBeenCalledWith(
       env,
       'preset-1',
       'The edit introduced errors in dye names',
-      'mod-1'
+      'mod-1',
     );
     expect(discordApi.editMessage).toHaveBeenCalledWith(
       'test-bot-token',
@@ -818,7 +826,7 @@ describe('handlePresetRevertModal', () => {
           }),
         ]),
         components: [],
-      })
+      }),
     );
   });
 
@@ -873,31 +881,29 @@ describe('handlePresetRevertModal', () => {
 
     await handlePresetRevertModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
-    expect(discordApi.sendMessage).toHaveBeenCalledWith(
-      'test-bot-token',
-      'channel-log',
-      {
-        embeds: [
-          {
-            color: 5793266,
-            description: 'Preset edit reverted by ModUser',
-            fields: [
-              {
-                name: 'Reason',
-                value: 'Edit was vandalism',
-              },
-            ],
-            footer: {
-              text: 'ID: preset-1',
+    expect(discordApi.sendMessage).toHaveBeenCalledWith('test-bot-token', 'channel-log', {
+      embeds: [
+        {
+          color: 5793266,
+          description: 'Preset edit reverted by ModUser',
+          fields: [
+            {
+              name: 'Reason',
+              value: 'Edit was vandalism',
             },
-            title: '↩️ Test Preset - Edit Reverted',
+          ],
+          footer: {
+            text: 'ID: preset-1',
           },
-        ],
-      }
-    );
+          title: '↩️ Test Preset - Edit Reverted',
+        },
+      ],
+    });
   });
 
   it('should handle revert errors gracefully', async () => {
@@ -941,8 +947,10 @@ describe('handlePresetRevertModal', () => {
 
     await handlePresetRevertModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(discordApi.editMessage).toHaveBeenCalledWith(
       'test-bot-token',
@@ -959,7 +967,7 @@ describe('handlePresetRevertModal', () => {
             ]),
           }),
         ]),
-      })
+      }),
     );
   });
 });

@@ -23,6 +23,10 @@
  * returns `false`, so adopting it would silently fail-closed — rejecting
  * every legitimate webhook — for any deployed secret under 32 characters.
  *
+ * Decision (follow-up 3, 2026-08-18): this stays hand-rolled and off
+ * `@xivdyetools/auth` intentionally — GitHub imposes no minimum webhook
+ * secret length, while `@xivdyetools/auth`'s HMAC helpers require ≥32 bytes.
+ *
  * @param secret - The webhook secret configured in GitHub
  * @param payload - The raw request body as a string
  * @param signature - The `X-Hub-Signature-256` header value (format: `sha256=<hex>`)

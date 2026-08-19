@@ -48,7 +48,7 @@ describe('handlePresetApproveButton', () => {
       MODERATION_CHANNEL_ID: 'channel-mod',
       SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
       BOT_API_SECRET: 'test-secret',
-      BOT_SIGNING_SECRET: 'test-signing-secret',
+      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
       DB: undefined as unknown as D1Database,
       KV: undefined as unknown as KVNamespace,
       PRESETS_API: undefined,
@@ -76,7 +76,7 @@ describe('handlePresetApproveButton', () => {
     };
 
     const response = await handlePresetApproveButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.content).toContain('Invalid button interaction');
     expect(json.data.flags).toBe(64);
@@ -91,7 +91,7 @@ describe('handlePresetApproveButton', () => {
     };
 
     const response = await handlePresetApproveButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.content).toContain('Invalid button interaction');
   });
@@ -108,7 +108,7 @@ describe('handlePresetApproveButton', () => {
     };
 
     const response = await handlePresetApproveButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.content).toContain('do not have permission');
   });
@@ -155,7 +155,7 @@ describe('handlePresetApproveButton', () => {
     };
 
     const response = await handlePresetApproveButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
     expect(ctx.waitUntil).toHaveBeenCalled();
@@ -206,8 +206,10 @@ describe('handlePresetApproveButton', () => {
 
     await handlePresetApproveButton(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(presetApi.approvePreset).toHaveBeenCalledWith(env, VALID_PRESET_ID, 'mod-1');
     expect(discordApi.editMessage).toHaveBeenCalledWith(
@@ -227,7 +229,7 @@ describe('handlePresetApproveButton', () => {
           }),
         ]),
         components: [],
-      })
+      }),
     );
   });
 
@@ -268,25 +270,23 @@ describe('handlePresetApproveButton', () => {
 
     await handlePresetApproveButton(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
-    expect(discordApi.sendMessage).toHaveBeenCalledWith(
-      'test-bot-token',
-      'channel-log',
-      {
-        embeds: [
-          {
-            color: 5763719,
-            description: 'Preset approved by Moderator',
-            footer: {
-              text: `ID: ${VALID_PRESET_ID}`,
-            },
-            title: '✅ Amazing Preset - Approved',
+    expect(discordApi.sendMessage).toHaveBeenCalledWith('test-bot-token', 'channel-log', {
+      embeds: [
+        {
+          color: 5763719,
+          description: 'Preset approved by Moderator',
+          footer: {
+            text: `ID: ${VALID_PRESET_ID}`,
           },
-        ],
-      }
-    );
+          title: '✅ Amazing Preset - Approved',
+        },
+      ],
+    });
   });
 
   it('should not send log message when log channel is not configured', async () => {
@@ -326,8 +326,10 @@ describe('handlePresetApproveButton', () => {
 
     await handlePresetApproveButton(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(discordApi.sendMessage).not.toHaveBeenCalled();
   });
@@ -360,8 +362,10 @@ describe('handlePresetApproveButton', () => {
 
     await handlePresetApproveButton(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(discordApi.editMessage).toHaveBeenCalledWith(
       'test-bot-token',
@@ -379,7 +383,7 @@ describe('handlePresetApproveButton', () => {
             ]),
           }),
         ]),
-      })
+      }),
     );
   });
 
@@ -413,8 +417,10 @@ describe('handlePresetApproveButton', () => {
 
     await handlePresetApproveButton(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(discordApi.editMessage).not.toHaveBeenCalled();
   });
@@ -454,8 +460,10 @@ describe('handlePresetApproveButton', () => {
 
     await handlePresetApproveButton(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(discordApi.editMessage).toHaveBeenCalledWith(
       expect.any(String),
@@ -471,7 +479,7 @@ describe('handlePresetApproveButton', () => {
             ]),
           }),
         ]),
-      })
+      }),
     );
   });
 });
@@ -491,7 +499,7 @@ describe('handlePresetRejectButton', () => {
       MODERATION_CHANNEL_ID: 'channel-mod',
       SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
       BOT_API_SECRET: 'test-secret',
-      BOT_SIGNING_SECRET: 'test-signing-secret',
+      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
       DB: undefined as unknown as D1Database,
       KV: undefined as unknown as KVNamespace,
       PRESETS_API: undefined,
@@ -515,7 +523,7 @@ describe('handlePresetRejectButton', () => {
     };
 
     const response = await handlePresetRejectButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.content).toContain('Invalid button interaction');
   });
@@ -532,7 +540,7 @@ describe('handlePresetRejectButton', () => {
     };
 
     const response = await handlePresetRejectButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.content).toContain('do not have permission');
   });
@@ -549,7 +557,7 @@ describe('handlePresetRejectButton', () => {
     };
 
     const response = await handlePresetRejectButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.type).toBe(InteractionResponseType.MODAL);
     expect(json.data.custom_id).toBe(`preset_reject_modal_${VALID_PRESET_ID}`);
@@ -576,7 +584,7 @@ describe('handlePresetRevertButton', () => {
       MODERATION_CHANNEL_ID: 'channel-mod',
       SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
       BOT_API_SECRET: 'test-secret',
-      BOT_SIGNING_SECRET: 'test-signing-secret',
+      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
       DB: undefined as unknown as D1Database,
       KV: undefined as unknown as KVNamespace,
       PRESETS_API: undefined,
@@ -600,7 +608,7 @@ describe('handlePresetRevertButton', () => {
     };
 
     const response = await handlePresetRevertButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.content).toContain('Invalid button interaction');
   });
@@ -617,7 +625,7 @@ describe('handlePresetRevertButton', () => {
     };
 
     const response = await handlePresetRevertButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.content).toContain('do not have permission');
   });
@@ -634,7 +642,7 @@ describe('handlePresetRevertButton', () => {
     };
 
     const response = await handlePresetRevertButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.type).toBe(InteractionResponseType.MODAL);
     expect(json.data.custom_id).toBe(`preset_revert_modal_${VALID_PRESET_ID}`);

@@ -34,6 +34,7 @@ Monorepo 2.0 / 5.0-release follow-through (additive behaviour). Deploy note: pro
 ### Security
 
 - `hono` floor raised `^4.12.32` → `^4.12.34` (resolves to 4.13.1; clears the four hono advisories, though this worker mounts no CORS middleware and no `hono/language`, so none were reachable here); `wrangler` dev dependency `^4.114.0` → `^4.120.0` (Sprint 6 dev-toolchain advisory sweep).
+- **Follow-up 3 (supersedes DEAD-019's "kept as-is")**: `services/preset-api.ts`'s `generateRequestSignature` now delegates to `@xivdyetools/auth`'s `hmacSignHex` instead of a hand-rolled `crypto.subtle` implementation — verified byte-for-byte identical against a pinned vector, same change as discord-worker's `services/preset-api.ts`. `utils/env-validation.ts` now enforces `BOT_SIGNING_SECRET.length >= 32` whenever the secret is set (mirroring oauth's `JWT_SECRET` check), closing the gap that previously blocked the adoption.
 
 ## [1.3.0] - 2026-07-19
 

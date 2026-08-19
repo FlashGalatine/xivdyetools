@@ -11,6 +11,7 @@
  */
 
 import { isModeratorId } from '@xivdyetools/bot-logic';
+import { hmacSignHex } from '@xivdyetools/auth';
 import type { Env } from '../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import {
@@ -35,15 +36,12 @@ import {
  * SECURITY: This cryptographically binds the user headers to the request,
  * preventing header spoofing attacks even if BOT_API_SECRET is leaked.
  *
- * DEAD-019 (2026-08-18 dead-code audit): evaluated for adoption of
- * `@xivdyetools/auth`'s `hmacSignHex` and kept as-is. `createHmacKey`
- * (which `hmacSignHex` calls) enforces a minimum 32-byte secret and throws
- * otherwise (FINDING-009) — but `BOT_SIGNING_SECRET` has no documented
- * minimum length anywhere in this repo, and this file's own tests sign with
- * a 20-character `'test-signing-secret'`. Swapping in `hmacSignHex` would
- * make a shorter production secret throw here — outside the `request()`
- * try/catch below — instead of signing. Left as a hand-rolled 'sign'-only
- * key import until `BOT_SIGNING_SECRET` gets a length floor.
+ * Delegates to `@xivdyetools/auth`'s `hmacSignHex` (follow-up 3, superseding
+ * DEAD-019's "kept as-is" from the 2026-08-18 dead-code audit). That audit
+ * held off because `hmacSignHex` throws for secrets under 32 bytes
+ * (FINDING-009) and `BOT_SIGNING_SECRET` had no length floor; env-validation
+ * now enforces ≥32 bytes wherever the secret is set, so the throw path is
+ * unreachable in a valid deployment.
  *
  * @param timestamp - Unix timestamp (seconds)
  * @param userDiscordId - User's Discord ID
@@ -58,22 +56,7 @@ async function generateRequestSignature(
   signingSecret: string,
 ): Promise<string> {
   const message = `${timestamp}:${userDiscordId || ''}:${userName || ''}`;
-
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(signingSecret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-
-  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
-
-  // Convert to hex string
-  return Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  return hmacSignHex(message, signingSecret);
 }
 
 // ============================================================================

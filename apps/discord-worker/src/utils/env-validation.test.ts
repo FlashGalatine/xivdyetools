@@ -112,6 +112,35 @@ describe('env-validation.ts', () => {
       });
     });
 
+    describe('BOT_SIGNING_SECRET validation', () => {
+      it('should pass when BOT_SIGNING_SECRET is not set', () => {
+        const env = createMinimalEnv();
+        const result = validateEnv(env);
+
+        expect(result.valid).toBe(true);
+      });
+
+      it('should pass when BOT_SIGNING_SECRET is at least 32 characters', () => {
+        const env = createMinimalEnv({ BOT_SIGNING_SECRET: 'a'.repeat(32) });
+        const result = validateEnv(env);
+
+        expect(result.valid).toBe(true);
+        expect(result.errors).not.toContain(
+          'BOT_SIGNING_SECRET must be at least 32 characters for security',
+        );
+      });
+
+      it('should fail when BOT_SIGNING_SECRET is under 32 characters', () => {
+        const env = createMinimalEnv({ BOT_SIGNING_SECRET: 'too-short-secret' });
+        const result = validateEnv(env);
+
+        expect(result.valid).toBe(false);
+        expect(result.errors).toContain(
+          'BOT_SIGNING_SECRET must be at least 32 characters for security',
+        );
+      });
+    });
+
     describe('KV namespace binding', () => {
       it('should fail when KV is missing', () => {
         const env = createMinimalEnv({ KV: undefined as unknown as KVNamespace });

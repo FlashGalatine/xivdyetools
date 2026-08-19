@@ -45,7 +45,7 @@ describe('handleBanReasonModal', () => {
       MODERATION_CHANNEL_ID: 'channel-mod',
       SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
       BOT_API_SECRET: 'test-secret',
-      BOT_SIGNING_SECRET: 'test-signing-secret',
+      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
       DB: db as unknown as D1Database,
       KV: undefined as unknown as KVNamespace,
       PRESETS_API: undefined,
@@ -86,7 +86,7 @@ describe('handleBanReasonModal', () => {
     };
 
     const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
     expect(json.data.embeds[0].description).toContain('Invalid modal submission');
@@ -119,7 +119,7 @@ describe('handleBanReasonModal', () => {
     };
 
     const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.embeds[0].description).toContain('do not have permission');
   });
@@ -150,7 +150,7 @@ describe('handleBanReasonModal', () => {
     };
 
     const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.embeds[0].description).toContain('Invalid modal data');
   });
@@ -181,7 +181,7 @@ describe('handleBanReasonModal', () => {
     };
 
     const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.embeds[0].description).toContain('Invalid target user');
   });
@@ -212,7 +212,7 @@ describe('handleBanReasonModal', () => {
     };
 
     const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.embeds[0].description).toContain('at least 10 characters');
   });
@@ -232,7 +232,7 @@ describe('handleBanReasonModal', () => {
     };
 
     const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.embeds[0].description).toContain('valid ban reason');
   });
@@ -270,7 +270,7 @@ describe('handleBanReasonModal', () => {
     };
 
     const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
     expect(json.data.embeds[0]).toEqual(
@@ -278,7 +278,7 @@ describe('handleBanReasonModal', () => {
         title: expect.stringContaining('Processing Ban'),
         description: expect.stringContaining('BadUser'),
         color: 0xfee75c,
-      })
+      }),
     );
     expect(json.data.components).toEqual([]);
     expect(ctx.waitUntil).toHaveBeenCalled();
@@ -318,15 +318,17 @@ describe('handleBanReasonModal', () => {
 
     await handleBanReasonModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(banService.banUser).toHaveBeenCalledWith(
       db,
       'user-456',
       'SpamUser',
       'mod-1',
-      'Spamming inappropriate presets'
+      'Spamming inappropriate presets',
     );
     expect(discordApi.sendMessage).toHaveBeenCalledWith(
       'test-bot-token',
@@ -345,7 +347,7 @@ describe('handleBanReasonModal', () => {
             ]),
           }),
         ]),
-      })
+      }),
     );
   });
 
@@ -382,8 +384,10 @@ describe('handleBanReasonModal', () => {
 
     await handleBanReasonModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(discordApi.sendMessage).not.toHaveBeenCalled();
   });
@@ -422,22 +426,20 @@ describe('handleBanReasonModal', () => {
 
     await handleBanReasonModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
-    expect(discordApi.sendMessage).toHaveBeenCalledWith(
-      'test-bot-token',
-      'channel-mod',
-      {
-        embeds: [
-          {
-            color: 16711680,
-            description: 'User is already banned',
-            title: '❌ Ban Failed',
-          },
-        ],
-      }
-    );
+    expect(discordApi.sendMessage).toHaveBeenCalledWith('test-bot-token', 'channel-mod', {
+      embeds: [
+        {
+          color: 16711680,
+          description: 'User is already banned',
+          title: '❌ Ban Failed',
+        },
+      ],
+    });
   });
 
   it('should handle unexpected errors during ban', async () => {
@@ -470,8 +472,10 @@ describe('handleBanReasonModal', () => {
 
     await handleBanReasonModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(discordApi.sendMessage).toHaveBeenCalledWith(
       'test-bot-token',
@@ -483,7 +487,7 @@ describe('handleBanReasonModal', () => {
             description: expect.stringContaining('Database connection lost'),
           }),
         ]),
-      })
+      }),
     );
   });
 
@@ -519,15 +523,17 @@ describe('handleBanReasonModal', () => {
 
     await handleBanReasonModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(banService.banUser).toHaveBeenCalledWith(
       db,
       'user-789',
       'Test_User_Name',
       'mod-1',
-      'Valid ban reason'
+      'Valid ban reason',
     );
   });
 
@@ -562,8 +568,10 @@ describe('handleBanReasonModal', () => {
 
     await handleBanReasonModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(discordApi.sendMessage).toHaveBeenCalledWith(
       expect.any(String),
@@ -576,7 +584,7 @@ describe('handleBanReasonModal', () => {
             ]),
           }),
         ]),
-      })
+      }),
     );
   });
 
@@ -612,15 +620,17 @@ describe('handleBanReasonModal', () => {
 
     await handleBanReasonModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(banService.banUser).toHaveBeenCalledWith(
       db,
       'user-123',
       'User.Name-123',
       'mod-1',
-      'Valid ban reason here'
+      'Valid ban reason here',
     );
   });
 
@@ -657,8 +667,10 @@ describe('handleBanReasonModal', () => {
 
     await handleBanReasonModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(discordApi.sendMessage).toHaveBeenCalledWith(
       expect.any(String),
@@ -669,7 +681,7 @@ describe('handleBanReasonModal', () => {
             timestamp: '2025-01-15T12:00:00.000Z',
           }),
         ]),
-      })
+      }),
     );
   });
 
@@ -704,8 +716,10 @@ describe('handleBanReasonModal', () => {
 
     await handleBanReasonModal(interaction, env, ctx);
     // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
 
     expect(discordApi.sendMessage).toHaveBeenCalledWith(
       expect.any(String),
@@ -718,7 +732,7 @@ describe('handleBanReasonModal', () => {
             }),
           }),
         ]),
-      })
+      }),
     );
   });
 });

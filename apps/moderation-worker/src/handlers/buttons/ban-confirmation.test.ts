@@ -34,7 +34,7 @@ describe('handleBanConfirmButton', () => {
       MODERATION_CHANNEL_ID: 'channel-mod',
       SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
       BOT_API_SECRET: 'test-secret',
-      BOT_SIGNING_SECRET: 'test-signing-secret',
+      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
       DB: undefined as unknown as D1Database,
       KV: undefined as unknown as KVNamespace,
       PRESETS_API: undefined,
@@ -56,7 +56,7 @@ describe('handleBanConfirmButton', () => {
     };
 
     const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.content).toContain('Invalid button interaction');
     expect(json.data.flags).toBe(64);
@@ -74,7 +74,7 @@ describe('handleBanConfirmButton', () => {
     };
 
     const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.content).toContain('do not have permission');
   });
@@ -91,7 +91,7 @@ describe('handleBanConfirmButton', () => {
     };
 
     const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.content).toContain('Invalid button data');
   });
@@ -108,7 +108,7 @@ describe('handleBanConfirmButton', () => {
     };
 
     const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.content).toContain('Invalid target user');
   });
@@ -126,7 +126,7 @@ describe('handleBanConfirmButton', () => {
     };
 
     const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.type).toBe(InteractionResponseType.MODAL);
     expect(json.data.custom_id).toBe(`ban_reason_modal_user-123_${encodedUsername}`);
@@ -141,7 +141,7 @@ describe('handleBanConfirmButton', () => {
         max_length: 500,
         required: true,
         placeholder: expect.stringContaining('Explain why'),
-      })
+      }),
     );
   });
 
@@ -158,7 +158,7 @@ describe('handleBanConfirmButton', () => {
     };
 
     const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.type).toBe(InteractionResponseType.MODAL);
     expect(json.data.custom_id).toBe(`ban_reason_modal_user-456_${encodedUsername}`);
@@ -177,7 +177,7 @@ describe('handleBanConfirmButton', () => {
     };
 
     const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.type).toBe(InteractionResponseType.MODAL);
   });
@@ -195,7 +195,7 @@ describe('handleBanConfirmButton', () => {
     };
 
     const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.custom_id).toBe(`ban_reason_modal_123456789012345678_${encodedUsername}`);
   });
@@ -213,7 +213,7 @@ describe('handleBanConfirmButton', () => {
     };
 
     const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.custom_id).toBe(`ban_reason_modal_user-123_${encodedUsername}`);
   });
@@ -234,7 +234,7 @@ describe('handleBanCancelButton', () => {
       MODERATION_CHANNEL_ID: 'channel-mod',
       SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
       BOT_API_SECRET: 'test-secret',
-      BOT_SIGNING_SECRET: 'test-signing-secret',
+      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
       DB: undefined as unknown as D1Database,
       KV: undefined as unknown as KVNamespace,
       PRESETS_API: undefined,
@@ -257,7 +257,7 @@ describe('handleBanCancelButton', () => {
     };
 
     const response = await handleBanCancelButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
     expect(json.data.embeds[0]).toEqual(
@@ -265,7 +265,7 @@ describe('handleBanCancelButton', () => {
         title: expect.stringContaining('Cancelled'),
         description: 'The ban action was cancelled.',
         color: 0x5865f2,
-      })
+      }),
     );
     expect(json.data.components).toEqual([]);
   });
@@ -280,7 +280,7 @@ describe('handleBanCancelButton', () => {
     };
 
     const response = await handleBanCancelButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.data.components).toHaveLength(0);
   });
@@ -296,7 +296,7 @@ describe('handleBanCancelButton', () => {
     };
 
     const response = await handleBanCancelButton(interaction, env, ctx);
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
 
     expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
   });

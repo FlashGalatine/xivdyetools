@@ -25,7 +25,7 @@ describe('preset-api', () => {
     mockEnv = {
       PRESETS_API: mockFetcher as unknown as Fetcher,
       BOT_API_SECRET: 'test-api-secret',
-      BOT_SIGNING_SECRET: 'test-signing-secret',
+      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
       // Use valid Discord snowflake format IDs (17-19 digits)
       MODERATOR_IDS: '12345678901234567,12345678901234568,12345678901234569',
     } as Env;
@@ -97,7 +97,9 @@ describe('preset-api', () => {
     });
 
     it('should handle whitespace in MODERATOR_IDS', () => {
-      const env = { MODERATOR_IDS: '12345678901234567 , 12345678901234568  ,  12345678901234569' } as Env;
+      const env = {
+        MODERATOR_IDS: '12345678901234567 , 12345678901234568  ,  12345678901234569',
+      } as Env;
       expect(isModerator(env, '12345678901234567')).toBe(true);
       expect(isModerator(env, '12345678901234568')).toBe(true);
       expect(isModerator(env, '12345678901234569')).toBe(true);
@@ -192,6 +194,26 @@ describe('preset-api', () => {
 
       expect(timestamp).toBe('1736942400'); // Unix timestamp for 2025-01-15T12:00:00Z
     });
+
+    it('produces the exact pinned HMAC-SHA256 hex for a fixed input (follow-up 3)', async () => {
+      // Pinned vector computed 2026-08-18 with the pre-hmacSignHex hand-rolled
+      // implementation (crypto.subtle.importKey('raw')/sign('HMAC')/hex, byte
+      // for byte identical to @xivdyetools/auth's hmacSignHex) for message
+      // "1736942400:mod-1:" (mockEnv's fixed system time + BOT_SIGNING_SECRET
+      // 'test-signing-secret-padding-1234'). This proves the switch to
+      // hmacSignHex in generateRequestSignature did not change the output.
+      mockFetcher._setupHandler(() => Response.json({ presets: [] }));
+
+      await getPendingPresets(mockEnv, 'mod-1');
+
+      const fetchCall = mockFetcher._calls[0];
+      const headers = fetchCall.headers;
+
+      expect(headers['x-request-timestamp']).toBe('1736942400');
+      expect(headers['x-request-signature']).toBe(
+        '2efd37939be24d69c3cc7064e9e77d0e457a2e7602fe4952a694a7f0e534f09c',
+      );
+    });
   });
 
   describe('request headers', () => {
@@ -257,9 +279,7 @@ describe('preset-api', () => {
       } as Env;
 
       global.fetch = vi.fn(() =>
-        Promise.resolve(
-          Response.json({ presets: [], total: 0, page: 1 })
-        )
+        Promise.resolve(Response.json({ presets: [], total: 0, page: 1 })),
       ) as any;
 
       await getPresets(env);
@@ -268,7 +288,7 @@ describe('preset-api', () => {
         'https://api.example.com/api/v1/presets',
         expect.objectContaining({
           method: 'GET',
-        })
+        }),
       );
     });
 
@@ -345,8 +365,8 @@ describe('preset-api', () => {
     });
 
     it('should return null when preset not found (404)', async () => {
-      mockFetcher._setupHandler(() =>
-        new Response(JSON.stringify({ error: 'Not found' }), { status: 404 })
+      mockFetcher._setupHandler(
+        () => new Response(JSON.stringify({ error: 'Not found' }), { status: 404 }),
       );
 
       const result = await getPreset(mockEnv, 'nonexistent');
@@ -355,8 +375,8 @@ describe('preset-api', () => {
     });
 
     it('should throw PresetAPIError for other error statuses', async () => {
-      mockFetcher._setupHandler(() =>
-        new Response(JSON.stringify({ error: 'Server error' }), { status: 500 })
+      mockFetcher._setupHandler(
+        () => new Response(JSON.stringify({ error: 'Server error' }), { status: 500 }),
       );
 
       await expect(getPreset(mockEnv, 'preset-123')).rejects.toThrow(PresetAPIError);
@@ -536,9 +556,7 @@ describe('preset-api', () => {
         { id: 'p2', name: 'Red Preset', vote_count: 3, author_name: 'User2' },
       ];
 
-      mockFetcher._setupHandler(() =>
-        Response.json({ presets: mockPresets, total: 2, page: 1 })
-      );
+      mockFetcher._setupHandler(() => Response.json({ presets: mockPresets, total: 2, page: 1 }));
 
       const result = await searchPresetsForAutocomplete(mockEnv, 'preset');
 
@@ -549,11 +567,11 @@ describe('preset-api', () => {
     });
 
     it('should handle presets without author names', async () => {
-      const mockPresets = [{ id: 'p1', name: 'Anonymous Preset', vote_count: 10, author_name: null }];
+      const mockPresets = [
+        { id: 'p1', name: 'Anonymous Preset', vote_count: 10, author_name: null },
+      ];
 
-      mockFetcher._setupHandler(() =>
-        Response.json({ presets: mockPresets, total: 1, page: 1 })
-      );
+      mockFetcher._setupHandler(() => Response.json({ presets: mockPresets, total: 1, page: 1 }));
 
       const result = await searchPresetsForAutocomplete(mockEnv, 'anonymous');
 
@@ -613,8 +631,8 @@ describe('preset-api', () => {
 
   describe('error handling', () => {
     it('should throw PresetAPIError with status and message', async () => {
-      mockFetcher._setupHandler(() =>
-        new Response(JSON.stringify({ message: 'Unauthorized' }), { status: 401 })
+      mockFetcher._setupHandler(
+        () => new Response(JSON.stringify({ message: 'Unauthorized' }), { status: 401 }),
       );
 
       try {
@@ -628,8 +646,8 @@ describe('preset-api', () => {
     });
 
     it('should use error field if message is not present', async () => {
-      mockFetcher._setupHandler(() =>
-        new Response(JSON.stringify({ error: 'Bad Request' }), { status: 400 })
+      mockFetcher._setupHandler(
+        () => new Response(JSON.stringify({ error: 'Bad Request' }), { status: 400 }),
       );
 
       try {
@@ -641,9 +659,7 @@ describe('preset-api', () => {
     });
 
     it('should use generic message if neither message nor error is present', async () => {
-      mockFetcher._setupHandler(() =>
-        new Response(JSON.stringify({}), { status: 500 })
-      );
+      mockFetcher._setupHandler(() => new Response(JSON.stringify({}), { status: 500 }));
 
       try {
         await getPresets(mockEnv);

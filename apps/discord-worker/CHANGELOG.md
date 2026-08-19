@@ -68,6 +68,7 @@ The **5.0 command set** — the Discord half of the XIV Dye Tools 5.0 redesign (
 ### Security
 
 - `hono` floor `^4.12.32` → `^4.12.34` (resolves to 4.13.1; clears the four hono advisories incl. the CORS ReDoS reachable here); `wrangler` `^4.114.0` → `^4.120.0` (miniflare 5 / undici 7.29 — Sprint 6 dev-toolchain sweep).
+- **Follow-up 3 (supersedes DEAD-019's "kept as-is")**: `services/preset-api.ts`'s `generateRequestSignature` now delegates to `@xivdyetools/auth`'s `hmacSignHex` instead of a hand-rolled `crypto.subtle` implementation — verified byte-for-byte identical against a pinned vector. `utils/env-validation.ts` now enforces `BOT_SIGNING_SECRET.length >= 32` whenever the secret is set (mirroring oauth's `JWT_SECRET` check), closing the gap that previously blocked the adoption. `utils/github-verify.ts` stays hand-rolled on purpose — GitHub imposes no minimum webhook-secret length.
 
 ### Removed (2026-08-18 dead-code audit)
 

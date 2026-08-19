@@ -10,6 +10,7 @@
  */
 
 import { parseModeratorIds } from '@xivdyetools/bot-logic';
+import { hmacSignHex } from '@xivdyetools/auth';
 import type { Env } from '../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { isValidSnowflake } from '@xivdyetools/types';
@@ -43,13 +44,13 @@ import { PresetAPIError } from '../types/preset.js';
  *
  * Signature format: HMAC-SHA256(timestamp:discordId:userName)
  *
- * DEAD-019 (2026-08-18 dead-code audit): evaluated for adoption of
- * `@xivdyetools/auth`'s `hmacSignHex` and kept as-is — same reasoning as
- * discord-worker's `services/preset-api.ts`: `createHmacKey`'s 32-byte
- * minimum-secret enforcement (FINDING-009) has no counterpart validating
- * `BOT_SIGNING_SECRET`'s length in this repo (this file's own tests sign
- * with a 20-character `'test-signing-secret'`), so adopting it risks an
- * uncaught throw in production instead of a signed request.
+ * Delegates to `@xivdyetools/auth`'s `hmacSignHex` (follow-up 3, superseding
+ * DEAD-019's "kept as-is" from the 2026-08-18 dead-code audit) — same change
+ * as discord-worker's `services/preset-api.ts`. That audit held off because
+ * `hmacSignHex` throws for secrets under 32 bytes (FINDING-009) and
+ * `BOT_SIGNING_SECRET` had no length floor; env-validation now enforces
+ * ≥32 bytes wherever the secret is set, so the throw path is unreachable in
+ * a valid deployment.
  *
  * @see docs/HMAC_SIGNATURE_SPEC.md for complete specification
  * @param timestamp - Unix timestamp in seconds (not milliseconds)
@@ -81,21 +82,7 @@ async function generateRequestSignature(
   // Message format: timestamp:discordId:userName
   // Empty string for missing fields to maintain consistent format
   const message = `${timestamp}:${userDiscordId || ''}:${userName || ''}`;
-
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(signingSecret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-
-  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
-
-  return Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  return hmacSignHex(message, signingSecret);
 }
 
 // ============================================================================

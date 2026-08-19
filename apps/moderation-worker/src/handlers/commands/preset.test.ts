@@ -56,7 +56,7 @@ describe('handlePresetCommand', () => {
       MODERATION_CHANNEL_ID: 'channel-moderation',
       SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
       BOT_API_SECRET: 'test-api-secret',
-      BOT_SIGNING_SECRET: 'test-signing-secret',
+      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
       DB: db as unknown as D1Database,
       KV: kv as unknown as KVNamespace,
       PRESETS_API: undefined,
@@ -90,7 +90,7 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       expect(json.data.content).toContain('Could not identify user');
       expect(json.data.flags).toBe(64); // Ephemeral
@@ -110,7 +110,7 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       expect(json.data.content).toContain('Please specify a subcommand');
     });
@@ -129,7 +129,7 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       expect(json.data.content).toContain('Unknown subcommand');
       expect(json.data.content).toContain('invalid_subcommand');
@@ -159,7 +159,7 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       expect(json.type).toBe(InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE);
     });
@@ -195,7 +195,7 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(json.data.embeds[0].title).toContain('Confirm');
@@ -239,7 +239,7 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       expect(json.type).toBe(InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE);
       expect(json.data.flags).toBe(64); // Ephemeral
@@ -270,7 +270,7 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       expect(json.data.embeds[0].description).toContain("don't have permission");
       expect(json.data.flags).toBe(64);
@@ -293,7 +293,7 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       expect(json.data.content).toContain('Missing action');
     });
@@ -328,7 +328,9 @@ describe('handlePresetCommand', () => {
 
       // Wait for ctx.waitUntil to execute
       // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+        vi.mocked(ctx.waitUntil).mock.calls.length - 1
+      ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
       expect(ctx.waitUntil).toHaveBeenCalled();
@@ -341,7 +343,7 @@ describe('handlePresetCommand', () => {
               description: expect.stringContaining('No presets'),
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -408,7 +410,9 @@ describe('handlePresetCommand', () => {
 
       await handlePresetCommand(interaction, env, ctx, t);
       // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+        vi.mocked(ctx.waitUntil).mock.calls.length - 1
+      ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
       expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
@@ -421,7 +425,7 @@ describe('handlePresetCommand', () => {
               footer: { text: 'Use /preset moderate approve <id> or reject <id> <reason>' },
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -492,7 +496,9 @@ describe('handlePresetCommand', () => {
       };
 
       await handlePresetCommand(interaction, env, ctx, t);
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+        vi.mocked(ctx.waitUntil).mock.calls.length - 1
+      ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
       expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
@@ -502,14 +508,14 @@ describe('handlePresetCommand', () => {
           embeds: expect.arrayContaining([
             expect.objectContaining({
               description: expect.stringContaining(
-                'Picture pending review: https://shots.xivdyetools.app/preset-2/abc.png'
+                'Picture pending review: https://shots.xivdyetools.app/preset-2/abc.png',
               ),
               footer: {
                 text: 'approve/reject apply to the text entries only — 🖼 entries are reviewed on the moderation embed in Discord',
               },
             }),
           ]),
-        })
+        }),
       );
 
       // The text-pending entry keeps today's plain rendering — no 🖼 marker.
@@ -522,7 +528,7 @@ describe('handlePresetCommand', () => {
               description: expect.stringContaining('**1.** Text Pending Preset by Author One'),
             }),
           ]),
-        })
+        }),
       );
       expect(discordApi.editOriginalResponse).not.toHaveBeenCalledWith(
         'app-123',
@@ -533,7 +539,7 @@ describe('handlePresetCommand', () => {
               description: expect.stringContaining('🖼 **1.**'),
             }),
           ]),
-        })
+        }),
       );
 
       // The image-only entry IS marked.
@@ -546,7 +552,7 @@ describe('handlePresetCommand', () => {
               description: expect.stringContaining('🖼 **2.** Image Only Preset by Author Two'),
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -597,10 +603,17 @@ describe('handlePresetCommand', () => {
 
       await handlePresetCommand(interaction, env, ctx, t);
       // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+        vi.mocked(ctx.waitUntil).mock.calls.length - 1
+      ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
-      expect(presetApi.approvePreset).toHaveBeenCalledWith(env, 'a0000000-0000-4000-8000-000000000001', 'mod-1', undefined);
+      expect(presetApi.approvePreset).toHaveBeenCalledWith(
+        env,
+        'a0000000-0000-4000-8000-000000000001',
+        'mod-1',
+        undefined,
+      );
       expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
@@ -610,7 +623,7 @@ describe('handlePresetCommand', () => {
               title: expect.stringContaining('Approved'),
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -661,7 +674,9 @@ describe('handlePresetCommand', () => {
 
       await handlePresetCommand(interaction, env, ctx, t);
       // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+        vi.mocked(ctx.waitUntil).mock.calls.length - 1
+      ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
       expect(discordApi.sendMessage).toHaveBeenCalledWith(
@@ -674,7 +689,7 @@ describe('handlePresetCommand', () => {
               color: expect.any(Number),
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -705,7 +720,9 @@ describe('handlePresetCommand', () => {
 
       await handlePresetCommand(interaction, env, ctx, t);
       // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+        vi.mocked(ctx.waitUntil).mock.calls.length - 1
+      ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
       expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
@@ -717,7 +734,7 @@ describe('handlePresetCommand', () => {
               description: expect.stringContaining('specify a preset ID'),
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -769,14 +786,16 @@ describe('handlePresetCommand', () => {
 
       await handlePresetCommand(interaction, env, ctx, t);
       // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+        vi.mocked(ctx.waitUntil).mock.calls.length - 1
+      ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
       expect(presetApi.rejectPreset).toHaveBeenCalledWith(
         env,
         'a0000000-0000-4000-8000-000000000001',
         'mod-1',
-        'Contains inappropriate content'
+        'Contains inappropriate content',
       );
       expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
         'app-123',
@@ -793,7 +812,7 @@ describe('handlePresetCommand', () => {
               ]),
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -827,7 +846,9 @@ describe('handlePresetCommand', () => {
 
       await handlePresetCommand(interaction, env, ctx, t);
       // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+        vi.mocked(ctx.waitUntil).mock.calls.length - 1
+      ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
       expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
@@ -839,7 +860,7 @@ describe('handlePresetCommand', () => {
               description: expect.stringContaining('reason'),
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -876,7 +897,9 @@ describe('handlePresetCommand', () => {
 
       await handlePresetCommand(interaction, env, ctx, t);
       // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+        vi.mocked(ctx.waitUntil).mock.calls.length - 1
+      ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
       expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
@@ -888,13 +911,16 @@ describe('handlePresetCommand', () => {
               title: expect.stringContaining('Statistics'),
               fields: expect.arrayContaining([
                 expect.objectContaining({ name: expect.stringContaining('Pending'), value: '12' }),
-                expect.objectContaining({ name: expect.stringContaining('Approved'), value: '543' }),
+                expect.objectContaining({
+                  name: expect.stringContaining('Approved'),
+                  value: '543',
+                }),
                 expect.objectContaining({ name: expect.stringContaining('Rejected'), value: '87' }),
                 expect.objectContaining({ name: expect.stringContaining('Flagged'), value: '3' }),
               ]),
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -926,7 +952,9 @@ describe('handlePresetCommand', () => {
 
       await handlePresetCommand(interaction, env, ctx, t);
       // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+        vi.mocked(ctx.waitUntil).mock.calls.length - 1
+      ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
       expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
@@ -938,7 +966,7 @@ describe('handlePresetCommand', () => {
               title: expect.stringContaining('Error'),
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -969,7 +997,9 @@ describe('handlePresetCommand', () => {
 
       await handlePresetCommand(interaction, env, ctx, t);
       // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+        vi.mocked(ctx.waitUntil).mock.calls.length - 1
+      ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
       expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
@@ -981,7 +1011,7 @@ describe('handlePresetCommand', () => {
               description: expect.stringContaining('Unknown action'),
             }),
           ]),
-        })
+        }),
       );
     });
   });
@@ -1010,7 +1040,7 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       expect(json.data.content).toContain('can only be used in the moderation channel');
     });
@@ -1038,7 +1068,7 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       expect(json.data.content).toContain('do not have permission');
     });
@@ -1060,7 +1090,7 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       expect(json.data.content).toContain('specify a user');
     });
@@ -1089,7 +1119,7 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       expect(json.data.content).toContain('not found');
     });
@@ -1128,19 +1158,27 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(json.data.embeds[0].title).toContain('Confirm');
       expect(json.data.embeds[0].fields).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ name: expect.stringContaining('Username'), value: 'TargetUser' }),
-          expect.objectContaining({ name: expect.stringContaining('Discord ID'), value: 'target-user' }),
+          expect.objectContaining({
+            name: expect.stringContaining('Username'),
+            value: 'TargetUser',
+          }),
+          expect.objectContaining({
+            name: expect.stringContaining('Discord ID'),
+            value: 'target-user',
+          }),
           expect.objectContaining({ name: expect.stringContaining('Total Presets'), value: '5' }),
-        ])
+        ]),
       );
       expect(json.data.components[0].components).toHaveLength(2);
-      expect(json.data.components[0].components[0].custom_id).toBe(`ban_confirm_target-user_${encodeBase64Url('TargetUser')}`);
+      expect(json.data.components[0].components[0].custom_id).toBe(
+        `ban_confirm_target-user_${encodeBase64Url('TargetUser')}`,
+      );
       expect(json.data.flags).toBe(64); // Ephemeral
     });
 
@@ -1175,10 +1213,10 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       const recentPresetsField = json.data.embeds[0].fields.find((f: any) =>
-        f.name.includes('Recent Presets')
+        f.name.includes('Recent Presets'),
       );
       expect(recentPresetsField.value).toBe('_No presets found_');
     });
@@ -1208,7 +1246,7 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       expect(json.data.content).toContain('can only be used in the moderation channel');
     });
@@ -1236,7 +1274,7 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       expect(json.data.content).toContain('do not have permission');
     });
@@ -1258,7 +1296,7 @@ describe('handlePresetCommand', () => {
       };
 
       const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
 
       expect(json.data.content).toContain('specify a user');
     });
@@ -1291,7 +1329,9 @@ describe('handlePresetCommand', () => {
 
       await handlePresetCommand(interaction, env, ctx, t);
       // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+        vi.mocked(ctx.waitUntil).mock.calls.length - 1
+      ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
       expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
@@ -1303,7 +1343,7 @@ describe('handlePresetCommand', () => {
               description: expect.stringContaining('not currently banned'),
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -1349,7 +1389,9 @@ describe('handlePresetCommand', () => {
 
       await handlePresetCommand(interaction, env, ctx, t);
       // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+        vi.mocked(ctx.waitUntil).mock.calls.length - 1
+      ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
       expect(banService.unbanUser).toHaveBeenCalledWith(db, 'target-user', 'mod-1');
@@ -1367,7 +1409,7 @@ describe('handlePresetCommand', () => {
               ]),
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -1414,7 +1456,9 @@ describe('handlePresetCommand', () => {
 
       await handlePresetCommand(interaction, env, ctx, t);
       // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+        vi.mocked(ctx.waitUntil).mock.calls.length - 1
+      ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
       expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
@@ -1426,7 +1470,7 @@ describe('handlePresetCommand', () => {
               description: expect.stringContaining('Database error'),
             }),
           ]),
-        })
+        }),
       );
     });
 
@@ -1458,7 +1502,9 @@ describe('handlePresetCommand', () => {
 
       await handlePresetCommand(interaction, env, ctx, t);
       // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[vi.mocked(ctx.waitUntil).mock.calls.length - 1]?.[0];
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+        vi.mocked(ctx.waitUntil).mock.calls.length - 1
+      ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
       expect(discordApi.editOriginalResponse).toHaveBeenCalledWith(
@@ -1470,7 +1516,7 @@ describe('handlePresetCommand', () => {
               description: expect.stringContaining('unexpected error'),
             }),
           ]),
-        })
+        }),
       );
     });
   });
