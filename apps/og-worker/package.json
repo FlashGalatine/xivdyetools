@@ -11,7 +11,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "lint": "knip && knip --production",
+    "lint:dead": "knip",
+    "lint:dead:prod": "knip --production"
   },
   "keywords": ["cloudflare-workers", "opengraph", "ffxiv", "dye-tools"],
   "author": "",

@@ -20,7 +20,7 @@
     "lint": {
       "dependsOn": ["^build"],
       "cache": true,
-      "inputs": ["src/**", "eslint.config.*"]
+      "inputs": ["src/**", "eslint.config.*", "knip.jsonc"]
     },
     "test": {
       "dependsOn": ["^build"],

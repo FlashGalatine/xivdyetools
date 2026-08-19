@@ -12,6 +12,8 @@
 
 **Not used:** knip `--production` mode. With production entries marked (`src/index.ts!`) it still failed to traverse discord-worker's handler tree (it reported `@xivdyetools/bot-logic` etc. as unused deps of discord-worker), so its "test-only consumers" tier was recomputed by grep for the individual candidates instead.
 
+> **Correction (2026-08-18, og-worker audit follow-up):** that was a config gap, not a knip limitation. In production mode the *project* globs need the `!` suffix too (`"project": ["src/**/*.ts!"]`); the config above only marked the entry, so knip treated the entry file alone as production code and reported every dependency it did not import directly. With the `!` on the project glob, `--production` works and surfaces the test-only tier directly — see `apps/og-worker/knip.jsonc`.
+
 ## `scripts/`
 Helper scripts the manual tracks wrote (copied from the session scratchpad so the notes' references resolve):
 `refs.sh` / `symrefs.sh` (bucketed word-boundary reference counts over tracked files), `imports.py` (named-import extraction of `@xivdyetools/*` across workspaces), `members.py` (per-class public-method usage survey — knip's `classMembers` blind spot), `span.py`, `i18n_orphans.py` (bot-logic locale orphan scan). `scripts/output/` holds their raw outputs (`internal-usage.txt`, `members-out.txt`, `i18n-result.json`, `glyph-calls.txt`).

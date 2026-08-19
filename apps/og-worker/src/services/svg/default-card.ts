@@ -34,10 +34,6 @@ import {
   type BandFrame,
 } from './band';
 
-// MARK_STRIPES lives in ./tokens; re-exported so callers that think of the
-// stripes as the default card's own (the tests do) keep one import.
-export { MARK_STRIPES } from './tokens';
-
 /**
  * Two deck lines here, against a band card's one: a default card has a
  * confirmed one-liner to spend the second line on, and no data to protect.

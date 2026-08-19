@@ -3,7 +3,8 @@
  * takes no tile.
  */
 import { describe, it, expect } from 'vitest';
-import { generateDefaultCard, DEFAULT_DECK, MARK_STRIPES } from './default-card';
+import { generateDefaultCard, DEFAULT_DECK } from './default-card';
+import { MARK_STRIPES } from './tokens';
 import { BAND_FRAMES } from './band';
 
 const tool = {

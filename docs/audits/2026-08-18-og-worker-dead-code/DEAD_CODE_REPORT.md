@@ -20,6 +20,8 @@ Deviations from the plan, all deliberate:
 - **Route ↔ emitter parity test** (recommended below) was added; swatch is exempted from its bare-URL half because a bare `/swatch/` has always rendered a white-target card (pre-5.0 behaviour, out of scope — worth its own decision).
 - Wave 2's `wrangler deploy --dry-run` after: 4,367 KiB raw / 1,887 KiB gzip; a like-for-like "before" build could not be produced from a worktree (pnpm install), so the size delta is stated from the measured font files (−45 KB) rather than a bundle pair.
 
+**Recommendations resolved (follow-up commit, same day):** knip wired as `pnpm lint` (both modes — see the correction in the evidence README: `--production` needs the `!` on the *project* glob too; it was never unusable), table-driven `?frame=x` test over all 12 image routes, `services/font-coverage.test.ts` (TTF `cmap` coverage of every runtime string, parser verified against fonttools' counts), the card-design sweep line in CLAUDE.md, and the bare `/swatch/` white-target card replaced by the swatch default (the parity-test exemption is gone).
+
 ## Executive Summary
 
 - **Project:** `apps/og-worker` (`xivdyetools-og-worker` 2.0.0)

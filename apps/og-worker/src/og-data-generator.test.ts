@@ -463,9 +463,9 @@ describe('og-data-generator', () => {
       const mixerResult = generateOGDataForTool('mixer', params, mockEnv);
       expect(mixerResult.imageUrl).toContain('/mixer/default.png');
 
-      // Swatch defaults to FFFFFF color with limit 5
+      // Swatch: no target → the swatch default card (no invented #FFFFFF target)
       const swatchResult = generateOGDataForTool('swatch', params, mockEnv);
-      expect(swatchResult.imageUrl).toContain('/swatch/FFFFFF/5.png');
+      expect(swatchResult.imageUrl).toContain('/swatch/default.png');
     });
 
     it('ignores the legacy perceptual param for harmony', () => {
@@ -610,9 +610,6 @@ describe('5.0 tools: extractor / presets / budget OG data', () => {
       const r = generateOGDataForTool(tool as never, new URLSearchParams(q), mockEnv);
       expect(r.imageUrl, tool).toContain(`/og/${tool}/`);
       expect(r.imageUrl, tool).not.toContain('default.png');
-      // Swatch is the standing exception: a bare /swatch/ has always defaulted
-      // to a white target card (pre-5.0 behaviour, not touched by this audit).
-      if (tool === 'swatch') continue;
       const bare = generateOGDataForTool(tool as never, new URLSearchParams(''), mockEnv);
       expect(bare.imageUrl, `${tool} bare`).toBe(`https://og.xivdyetools.app/og/${tool}/default.png`);
     }

@@ -34,6 +34,13 @@ and one guardrail restored.
 - `og-data-generator` uses `translator.ts`'s `getLocalizedHarmonyName` / `getLocalizedVisionName` instead of private copies, so the embed text and the card share one lookup; `harmony.ts` uses `notFoundBand()` / `bandGlyph()` like the other eight adapters; `presets.ts` uses `@xivdyetools/types` `PresetData`; `types.ts` `VisionType` is core's.
 - `tsconfig.json` inherits the base `noUnusedLocals` / `noUnusedParameters` / `noImplicitReturns` (the override is what let the unused imports ship); `vitest.config.ts` no longer excludes `src/index.ts` from the coverage gate.
 - Googlebot's exclusion from the crawler table is now a stated decision with a test, not a commented-out line.
+- **A bare `/swatch/` (no `hex=`/`color=`) now emits the swatch default card** instead of inventing a white `#FFFFFF` target — the last "default that fakes data" (2a rule).
+
+### Added (guards — each one caught a real audit finding)
+
+- `pnpm lint` = `knip && knip --production` (`knip.jsonc`), wired into CI through turbo's `lint` task. Production mode works once the *project* glob carries the `!` suffix too — two audits had recorded it as unusable; that was the config gap.
+- `services/font-coverage.test.ts`: parses the six bundled TTFs' `cmap` tables (no font library) and fails if any runtime string — core locales via `LocaleLoader`, the `og-strings.ts` tables, the Δ/·/→ glyphs the adapters emit — is not drawable, or if a `ja` CJK glyph is missing from the JP subset; surplus glyphs warn. Parser verified against fonttools' glyph counts.
+- `index.test.ts`: every image route × {default, `?frame=x`} → 400×350 / 400×210 (DEAD-010's class); `og-data-generator.test.ts`: route ↔ emitter parity for all nine tools, no exemptions.
 
 ## [2.0.0] - 2026-08-16
 

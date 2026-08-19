@@ -624,8 +624,15 @@ export function generateOGDataForTool(
     }
 
     case 'swatch': {
+      // No target colour → the tool default. A white #FFFFFF stand-in was the
+      // pre-5.0 behaviour; it invented a target the user never shared (2a: a
+      // default never fakes data).
+      const color = searchParams.get('hex') || searchParams.get('color');
+      if (!color) {
+        return toolDefault('swatch', env, locale, 'Find the FFXIV dyes nearest any color — from a character file or a hex.');
+      }
       const params: SwatchParams = {
-        color: searchParams.get('hex') || searchParams.get('color') || 'FFFFFF',
+        color,
         algo: searchParams.get('algo') as SwatchParams['algo'],
         limit: parseInt(searchParams.get('limit') || '5', 10),
         sheet: searchParams.get('sheet') as ColorSheetCategory | undefined,

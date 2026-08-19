@@ -508,6 +508,36 @@ describe('extractor/presets/budget crawler routes (DEAD-001)', () => {
   });
 });
 
+describe('every image route honours ?frame=x (the class DEAD-010 belonged to)', () => {
+  // One representative URL per image route. A route that forgets to pass
+  // frameFromQuery(c) renders the Discord frame for X, which X then crops.
+  const IMAGE_ROUTES = [
+    '/og/harmony/102/tetradic.png',
+    '/og/gradient/1/102/5.png',
+    '/og/mixer/1/102/60.png',
+    '/og/mixer/1/102/50/60.png',
+    '/og/swatch/7A6B4F/4.png',
+    '/og/comparison/1,2,3.png',
+    '/og/accessibility/1,2/protanopia.png',
+    '/og/extractor/8E5A3C-31,C9A96A-24.png',
+    '/og/presets/gc-maelstrom.png',
+    '/og/budget/102.png',
+    '/og/harmony/default.png',
+    '/og/default.png',
+  ];
+
+  for (const path of IMAGE_ROUTES) {
+    it(`${path}: default → 400×350, ?frame=x → 400×210`, async () => {
+      rendered.length = 0;
+      expect((await app.request(path, {}, TEST_ENV)).status).toBe(200);
+      expect(rendered.at(-1), path).toContain('height="350"');
+      rendered.length = 0;
+      expect((await app.request(`${path}?frame=x`, {}, TEST_ENV)).status).toBe(200);
+      expect(rendered.at(-1), `${path}?frame=x`).toContain('height="210"');
+    });
+  }
+});
+
 describe('GET /og/extractor/:colors — share is optional', () => {
   it('accepts bare RRGGBB entries (the web app share grammar carries no shares)', async () => {
     rendered.length = 0;

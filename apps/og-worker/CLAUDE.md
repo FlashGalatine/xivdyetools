@@ -21,15 +21,16 @@ pnpm test                   # vitest run
 pnpm test:watch             # vitest in watch mode
 pnpm test:coverage          # vitest run --coverage
 pnpm type-check             # tsc --noEmit
+pnpm lint                   # knip && knip --production (dead-code gate; runs in CI via turbo lint)
 ```
 
 ### Pre-commit Checklist
 
 ```bash
-pnpm type-check && pnpm test
+pnpm type-check && pnpm lint && pnpm test
 ```
 
-(There is no `lint` script in this worker's `package.json`; `tsconfig.json` inherits the base `noUnusedLocals` / `noUnusedParameters` / `noImplicitReturns`, so unused imports fail `type-check`.)
+`tsconfig.json` inherits the base `noUnusedLocals` / `noUnusedParameters` / `noImplicitReturns`, so unused imports fail `type-check`. `lint` is knip in both modes (`knip.jsonc` explains why the `--production` project glob needs its `!`). Three guards in the test suite exist because each caught a real 2026-08-18 audit finding: `og-data-generator.test.ts` route ↔ emitter parity (every tool's crawler HTML points at `/og/<tool>/…`), `index.test.ts` "every image route honours `?frame=x`", and `services/font-coverage.test.ts` (the bundled fonts' `cmap`s cover every runtime string — a dye rename that needs a new glyph goes red instead of rendering tofu).
 
 ## Architecture
 
@@ -199,7 +200,7 @@ Cloudflare Workers disallow dynamic `WebAssembly.instantiate()`, so `services/re
 
 `services/fonts.ts` does static `import` of all six TTFs (three brand fonts + Noto Sans JP/SC/KR subsets) and caches `Uint8Array` views in module scope. `getFontBuffers()` is passed to `Resvg`'s `font.fontBuffers`; `defaultFontFamily: 'Onest'`. The JP subset exists because folding Japanese into the SC subset renders JA text in Chinese letterforms, so JA stacks put `Noto Sans JP` first.
 
-**Any new or changed card string means re-running `scripts/subset-cjk-fonts.py`** — a subset that has never seen a glyph renders tofu. The script reads *both* `packages/core/src/data/locales/` (dye, tool, harmony and lens names) *and* `src/services/og-strings.ts` (this worker's own deck strings, tool tags and deck lines); it fails loudly if the ×6 tables in that file stop parsing rather than silently under-covering them. Source fonts download into the gitignored `scripts/.font-sources/` on first run.
+**Any new or changed card string means re-running `scripts/subset-cjk-fonts.py`** — a subset that has never seen a glyph renders tofu. The script reads *both* `packages/core/src/data/locales/` (dye, tool, harmony and lens names) *and* `src/services/og-strings.ts` (this worker's own deck strings, tool tags and deck lines); it fails loudly if the ×6 tables in that file stop parsing rather than silently under-covering them. Source fonts download into the gitignored `scripts/.font-sources/` on first run. `services/font-coverage.test.ts` **verifies** what the script generates: it parses the six TTFs' `cmap`s and fails `pnpm test` if any runtime string (core locales via `LocaleLoader`, the `og-strings.ts` tables, the Δ/·/→ glyphs the adapters emit) is not drawable, or if a `ja` CJK glyph is missing from the JP subset; surplus glyphs only warn. Compare subsets by cmap, never by md5 — fonttools rewrites `head.modified` on every run.
 
 ### Crawler Detection
 
@@ -239,9 +240,10 @@ Image route parameters are bounded to prevent resource exhaustion: `OG_MAX_GRADI
 
 ## Deployment Checklist
 
-1. `pnpm type-check && pnpm test` — must be green.
+1. `pnpm type-check && pnpm lint && pnpm test` — must be green.
 2. If a new tool was added: register the route in `wrangler.toml` AND in the `SUPPORTED_TOOLS` array in `index.ts` AND add a `services/svg/<tool>.ts` generator.
-3. If fonts changed: re-run `scripts/subset-cjk-fonts.py` if dye/locale strings changed (CJK subsets must cover every rendered glyph or resvg falls back to tofu).
+3. If dye/locale/card strings changed: re-run `scripts/subset-cjk-fonts.py` (`font-coverage.test.ts` goes red on a missing glyph and warns on surplus ones).
+   After any **card-design revision**, also run `pnpm lint` (knip, both modes) — this worker's dead code has always been rewrite sediment, so "the cards changed" is the sweep trigger, not the calendar.
 4. Bump `version` in `package.json` if behavior changed.
 5. `pnpm deploy` publishes **beta** (live on `beta.xivdyetools.app`). Spot-check a card at
    `https://og-beta.xivdyetools.app/og/harmony/1/tetradic.png`.
