@@ -1,0 +1,6 @@
+Unused exports (2)
+apps/og-worker/src/services/fonts.ts: cjkStack, FONT_FAMILIES
+apps/og-worker/src/services/svg/index.ts: generateBandCard, bandInk, cardFooter, cardHeader, ogMark, xStrip, BAND_FRAMES, BAND_CAP, DECK_H, FOOTER_H, HEADER_H, MARK_STRIPES
+Unused exported types (2)
+apps/og-worker/src/services/svg/index.ts: BandCardOptions, BandEntry, BandFrame, DefaultCardOptions, HarmonyOGOptions, GradientOGOptions, MixerOGOptions, SwatchOGOptions, ComparisonOGOptions, AccessibilityOGOptions, ExtractorOGOptions, PresetsOGOptions, BudgetOGOptions
+apps/og-worker/src/types.ts: ShareParams

@@ -1,0 +1,15 @@
+src/index.ts:83:// 5.0 vocabulary + the legacy spellings normalizeMatchingMethod accepts
+src/index.ts:91:  // legacy (normalised on use)
+src/services/renderer.ts:126:      // (1200×1050 / 1200×630); legacy 1200-wide SVGs pass scale 1.
+src/services/svg/accessibility.ts:24:  /** Array of dye stainIDs (1-4; param name kept for call-site stability) */
+src/services/svg/comparison.ts:22:  /** Array of dye stainIDs (1-4; param name kept for call-site stability) */
+src/services/svg/dye-helpers.ts:29:// 5.0 share-URL grammar: dye params carry stainIDs (1-254). Legacy itemIDs
+src/services/svg/dye-helpers.ts:48:  // 5.0: one dispatch suite-wide; legacy spellings normalise first
+src/services/svg/dye-helpers.ts:229:  // Name kept for call-site stability; the lookup is stainID-keyed (5.0).
+src/services/svg/gradient.ts:23:  /** Start dye stainID (param name kept for call-site stability) */
+src/services/svg/harmony.ts:24:  /** Dye stainID (route param name kept for call-site stability) */
+src/services/svg/mixer.ts:22:  /** First dye stainID (param name kept for call-site stability) */
+src/services/svg/swatch.ts:45: * Async signature kept for call-site stability.
+src/services/svg/swatch.ts:47:// eslint-disable-next-line @typescript-eslint/require-await -- signature kept for call-site stability
+src/types.ts:21:  // KV namespace for caching (optional, for future use)
+src/types.ts:52:// 5.0: the shared matching vocabulary (legacy URL values like 'euclidean'

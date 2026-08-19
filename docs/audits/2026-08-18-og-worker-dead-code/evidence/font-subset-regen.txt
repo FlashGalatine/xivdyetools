@@ -1,0 +1,11 @@
+# scripts/subset-cjk-fonts.py re-run 2026-08-18 against HEAD e6eccf83 (fonttools 4.61.1), outputs compared by cmap, then reverted.
+JP: committed=341 codepoints  regenerated=306  added=0  removed=35   size 391,628 → 375,436 B
+   removed: 不人侍党占双召吟喚団士子学工師忍戦星暗機渦滅白竜蛇術詩賢踊遊道隊騎魔黒
+KR: committed=404 codepoints  regenerated=392  added=0  removed=12   size 191,324 → 188,368 B
+   removed: 닌마맨멸몽용음퍼픽학현환
+SC: committed=709 codepoints  regenerated=657  added=0  removed=52   size 590,420 → 564,388 B
+   removed: 侍僧党剑占双召吟唤喚团団士学客师師忍恒战戦星术机枪機武法涡渦游滅竜绝舞蛇蝰術詩诗賢贤踊辉遊道钐镰队隊騎黒
+Verdict: committed subsets are a strict SUPERSET of current need (no tofu risk). The surplus glyphs are FFXIV job names
+(samurai/ninja/dragoon/black mage/summoner/scholar/astrologian/dancer/bard/machinist/dark knight/white mage/sage/viper…)
+that og-worker never renders — ~45 KB of dead glyph weight across the three files.
+Note: byte hashes differ on every run regardless (fonttools rewrites head.modified), so compare cmaps, not md5s.

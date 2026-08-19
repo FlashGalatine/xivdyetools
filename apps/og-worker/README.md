@@ -89,7 +89,7 @@ This Worker uses the **stateless** localization trio from `@xivdyetools/core` �
 | `@xivdyetools/types` | Shared type definitions |
 | `@xivdyetools/worker-kit` | Request ID and logger middleware (no rate limiting on this worker) |
 
-> Note: this Worker keeps its **own** local theme and card layouts. It is on the OG card directions, not the bot's 5.0 frame system — do not assume `@xivdyetools/svg`'s `CARD_WIDTH` constraints apply here.
+> Note: the cards are this worker's own 15E band frame (`src/services/svg/band.ts`, 400-grid ×3), not the bot's card system — `@xivdyetools/svg` supplies the tool glyphs and text primitives, and its `CARD_WIDTH` constraints do not apply here.
 
 ## Connect With Me
 

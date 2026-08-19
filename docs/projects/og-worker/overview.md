@@ -1,6 +1,6 @@
 # OpenGraph Worker Overview
 
-**xivdyetools-og-worker** v2.0.0 - Dynamic OpenGraph metadata for social media previews
+**xivdyetools-og-worker** v2.1.0 - Dynamic OpenGraph metadata for social media previews
 
 ---
 
@@ -10,6 +10,7 @@ A Cloudflare Worker that generates dynamic OpenGraph metadata and preview images
 
 ### Recent Changes
 
+- **v2.1.0** — 2026-08-18 dead-code audit executed (28 findings, `docs/audits/2026-08-18-og-worker-dead-code/`): the extractor / presets / budget crawler HTML now emits their 15E cards (it emitted the root default — the cards were unreachable), `/presets/:id` crawler route, comparison honours `?frame=x`, `?algo=` rides the harmony / gradient / mixer image URLs, extractor accepts bare `RRGGBB` (equal ranked bands), ~500 lines of 15E-rewrite sediment removed (`base.ts`, the colour-sheet lookup), `services/svg/tokens.ts`, CJK subsets −45 KB, base tsconfig flags restored
 - **v2.0.0** — The 5.0 card rewrite: one 15E band frame for all nine tools (Discord 1200×1050, X 1200×630 via `?frame=x`), per-tool default cards (`/og/:tool/default.png`, `/og/default.png`), `?lang=` reaches the picture, share URLs and `/og/<tool>/:dyeId…` paths key on **stainID** (legacy itemIDs miss into the default card), `?algo=` speaks the 5.0 matching vocabulary, `Helion` → `Helions`, a routed **beta** env (`beta.xivdyetools.app/<tool>/*` + `og-beta.xivdyetools.app`), and the missing `/og/` prefix on every emitted `og:image` URL fixed (no generated card had ever been fetched)
 - **v1.4.0** — 2026-07-18 audit: `?algo=` / 3-dye `ratio` actually honoured, explicit browser/edge TTLs, `@xivdyetools/svg` re-exports replace the local fork
 - **v1.2.0** — `?lang=` localized metadata, `@xivdyetools/worker-middleware` (now `worker-kit`)

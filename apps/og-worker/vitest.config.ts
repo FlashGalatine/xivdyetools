@@ -12,7 +12,6 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: [
         'src/**/*.test.ts',
-        'src/index.ts',
         'src/services/fonts.ts',
         'src/services/renderer.ts',
       ],

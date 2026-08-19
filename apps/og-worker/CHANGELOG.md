@@ -5,6 +5,36 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-08-18
+
+The 2026-08-18 dead-code audit (`docs/audits/2026-08-18-og-worker-dead-code/`,
+28 findings) executed in four commits. Roughly 500 production lines of
+15E-rewrite sediment removed, three functional gaps the audit surfaced closed,
+and one guardrail restored.
+
+### Fixed
+
+- **The three 5.0 tools' embeds finally reach their cards (DEAD-001).** `generateOGDataForTool` had no `extractor` / `presets` / `budget` cases, so every share URL for those tools emitted the *root* default card and `/og/extractor|presets|budget/*` were unreachable from any embed. Now `?colors=` → `/og/extractor/<colors>.png`, `/presets/<id>` (the web app shares presets as a **path**, so a `/presets/:presetId` crawler route exists) → `/og/presets/<id>.png` for curated slugs, `?dye=` → `/og/budget/<stainID>.png`; a share URL that resolves to nothing emits `/og/<tool>/default.png`, never the root card. The beta deploy workflow now follows a `/budget/?dye=102` embed end to end as well as harmony.
+- **Extractor accepts bare `RRGGBB` entries.** The web app's share grammar carries the palette but not each colour's share, so the image route and `generateExtractorOG` take `RRGGBB` or `RRGGBB-share`; without shares the bands are **equal and ranked** (no invented percentage — proportion is only claimed where it was measured).
+- **Comparison honours `?frame=x` (DEAD-010).** The route dropped `frame`, so `twitter:image` for a comparison was a 1200×1050 card X crops; it now renders 1200×630 like the other eight.
+- **`?algo=` rides the image URL for harmony / gradient / mixer (DEAD-022)** as it already did for swatch — normalised, with the suite default and unknown values kept off the URL for stable cache keys — so the card computes the Δ the page showed.
+- Swatch's `?sheet=` / `?race=` / `?gender=` no longer travel on the *image* URL (the 15E card never drew them; they fragmented the edge cache key per tuple). They still shape the crawler description and the page URL.
+
+### Removed
+
+- `services/svg/dye-helpers.ts`: the character-colour-sheet lookup block (~260 lines, test-only since the 15E rewrite) and the `CharacterColorService` it built at module load on every isolate.
+- `services/svg/base.ts` (indigo `THEME`, 1200×630 `OG_DIMENSIONS`, `linearGradient`, ten unused `@xivdyetools/svg` re-exports) and its 342-line test that re-tested the package; `band.ts` / `default-card.ts` import `escapeXml` / `estimateTextWidth` from the package directly.
+- `fonts.ts` `cjkStack` / `FONT_FAMILIES`; the `svg/index.ts` barrel is trimmed to what the route table imports; `Env.OG_CACHE` (never bound), `ShareParams`, `HarmonyParams.perceptual`, `SwatchParams.index`; `AnalyticsEvent.cacheHit` (hard-coded `false` at 12 sites — Analytics `doubles` are positional, so `double2` is simply no longer written); the unreachable "legacy 1200-wide SVG" render defaults; unused imports; orphaned JSDoc; item-ID-era comments.
+- `scripts/subset-cjk-fonts.py`: the 13 source-font fallback paths that could not exist (only `scripts/.font-sources/` is real).
+- The CJK subsets are regenerated: 99 FFXIV job-name glyphs the worker never renders are gone (−45 KB); nothing rendered was lost (verified by cmap diff, not md5 — fonttools rewrites `head.modified` on every run).
+
+### Changed
+
+- `services/svg/tokens.ts` is the one source for the `#0B0B0C` ground, the font stacks, the six mark stripes and the compact-glyph inks; band frame, default cards, raster and the crawler HTML consume it instead of re-typing them. Byte-identical output (111 generator/HTML snapshots).
+- `og-data-generator` uses `translator.ts`'s `getLocalizedHarmonyName` / `getLocalizedVisionName` instead of private copies, so the embed text and the card share one lookup; `harmony.ts` uses `notFoundBand()` / `bandGlyph()` like the other eight adapters; `presets.ts` uses `@xivdyetools/types` `PresetData`; `types.ts` `VisionType` is core's.
+- `tsconfig.json` inherits the base `noUnusedLocals` / `noUnusedParameters` / `noImplicitReturns` (the override is what let the unused imports ship); `vitest.config.ts` no longer excludes `src/index.ts` from the coverage gate.
+- Googlebot's exclusion from the crawler table is now a stated decision with a test, not a commented-out line.
+
 ## [2.0.0] - 2026-08-16
 
 The 5.0 card rewrite — the 15E band frame across all nine tools — plus a

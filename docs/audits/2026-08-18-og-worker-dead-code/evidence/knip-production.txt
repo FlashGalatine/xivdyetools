@@ -1,0 +1,2 @@
+Unused dependencies (1)
+apps/og-worker/package.json: @resvg/resvg-wasm, @xivdyetools/svg
