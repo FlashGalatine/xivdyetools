@@ -35,8 +35,7 @@
  * @module services/svg/band
  */
 
-import { escapeXml, estimateTextWidth } from './base';
-import { GLYPH_ACCENT_LIGHT } from '@xivdyetools/svg';
+import { escapeXml, estimateTextWidth, GLYPH_ACCENT_LIGHT } from '@xivdyetools/svg';
 
 /**
  * Font stacks with the JP subset ahead of SC (Phase 0.3 bundled
@@ -78,7 +77,7 @@ export const DECK_H = 36;
  * rather than its absolute height, so the split still reads as annotation
  * and not as a second row of bands.
  */
-export const X_STRIP_SCALE = 0.66;
+const X_STRIP_SCALE = 0.66;
 
 /** Discord source-strip height → the X value. */
 export function xStrip(discordHeight: number): number {

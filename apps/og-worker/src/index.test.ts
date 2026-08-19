@@ -5,7 +5,7 @@
  * and the health endpoint. SVG rendering is mocked since resvg-wasm requires
  * a WASM runtime not available in test.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // Mock the renderer before importing the app
 vi.mock('./services/renderer', () => ({

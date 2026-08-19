@@ -17,9 +17,6 @@ export interface Env {
 
   // Analytics Engine binding
   ANALYTICS?: AnalyticsEngineDataset;
-
-  // KV namespace for caching (optional, for future use)
-  OG_CACHE?: KVNamespace;
 }
 
 // ============================================================================
@@ -49,8 +46,9 @@ export type HarmonyType =
   | 'compound'
   | 'shades';
 
-// 5.0: the shared matching vocabulary (legacy URL values like 'euclidean'
-// normalise at the boundary via normalizeMatchingMethod)
+// 5.0: the shared matching vocabulary. Legacy URL values like 'euclidean' are
+// accepted by the routes' VALID_ALGORITHMS and normalised where the distance is
+// computed (dye-helpers.deltaForAlgorithm → normalizeMatchingMethod).
 export type MatchingAlgorithm = import('@xivdyetools/core').MatchingMethod;
 
 export type VisionType =
@@ -78,23 +76,22 @@ export interface OGData {
 // ============================================================================
 
 export interface HarmonyParams {
-  dye: number; // itemID
+  dye: number; // stainID
   harmony: HarmonyType;
   algo?: MatchingAlgorithm;
-  perceptual?: boolean;
 }
 
 export interface GradientParams {
-  start: number; // itemID
-  end: number; // itemID
+  start: number; // stainID
+  end: number; // stainID
   steps: number;
   algo?: MatchingAlgorithm;
 }
 
 export interface MixerParams {
-  dyeA: number; // itemID
-  dyeB: number; // itemID
-  dyeC?: number; // itemID (optional third dye)
+  dyeA: number; // stainID
+  dyeB: number; // stainID
+  dyeC?: number; // stainID (optional third dye)
   ratio: number; // 0-100
   algo?: MatchingAlgorithm;
 }
@@ -124,26 +121,16 @@ export interface SwatchParams {
   race?: string;
   /** Gender for race-specific sheets */
   gender?: CharacterGender;
-  /** Index within the color sheet (for calculating row/col) */
-  index?: number;
 }
 
 export interface ComparisonParams {
-  dyes: number[]; // array of itemIDs (1-4)
+  dyes: number[]; // array of stainIDs (1-4)
 }
 
 export interface AccessibilityParams {
-  dyes: number[]; // array of itemIDs
+  dyes: number[]; // array of stainIDs
   vision?: VisionType;
 }
-
-export type ShareParams =
-  | ({ tool: 'harmony' } & HarmonyParams)
-  | ({ tool: 'gradient' } & GradientParams)
-  | ({ tool: 'mixer' } & MixerParams)
-  | ({ tool: 'swatch' } & SwatchParams)
-  | ({ tool: 'comparison' } & ComparisonParams)
-  | ({ tool: 'accessibility' } & AccessibilityParams);
 
 // ============================================================================
 // Crawler Detection

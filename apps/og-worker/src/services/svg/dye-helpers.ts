@@ -6,24 +6,16 @@
  */
 
 import { normalizeMatchingMethod } from '@xivdyetools/core';
-import {
-  DyeService,
-  dyeDatabase,
-  ColorConverter,
-  ColorService,
-  CharacterColorService,
-} from '@xivdyetools/core';
-import { RACE_SUBRACES } from '@xivdyetools/types';
-import type { Dye, SubRace, Gender, Race } from '@xivdyetools/types';
+import { DyeService, dyeDatabase, ColorService } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
 import type { MatchingAlgorithm } from '../../types';
 
-// Shared service instances (REFACTOR-024: THE instances -- og-data-generator
-// imports dyeService from here instead of constructing its own duplicate)
+// Shared service instance (REFACTOR-024: THE instance -- og-data-generator
+// imports from here instead of constructing its own duplicate)
 export const dyeService = new DyeService(dyeDatabase);
-export const characterColorService = new CharacterColorService();
 
 /**
- * OPT-023: O(1) itemID lookup -- getAllDyes() returns a fresh array copy per
+ * OPT-023: O(1) stainID lookup -- getAllDyes() returns a fresh array copy per
  * call and the comparison route did up to 16 copy+linear-scans per request.
  */
 // 5.0 share-URL grammar: dye params carry stainIDs (1-254). Legacy itemIDs
@@ -47,135 +39,6 @@ export function deltaForAlgorithm(
 ): number {
   // 5.0: one dispatch suite-wide; legacy spellings normalise first
   return ColorService.getDistanceForMethod(hex1, hex2, normalizeMatchingMethod(algorithm));
-}
-
-/**
- * Result of looking up a character color by hex
- */
-export interface CharacterColorLookup {
-  /** Display name of the category (e.g., "Eye Colors") */
-  categoryName: string;
-  /** The index within the category (0-based) */
-  index: number;
-  /** Row in the character creator grid (1-based) */
-  row: number;
-  /** Column in the character creator grid (1-based) */
-  col: number;
-}
-
-/**
- * Category display names mapping
- */
-const SHARED_CATEGORY_NAMES: Record<string, string> = {
-  eyeColors: 'Eye Colors',
-  highlightColors: 'Highlights',
-  lipColorsDark: 'Lip Colors (Dark)',
-  lipColorsLight: 'Lip Colors (Light)',
-  tattooColors: 'Tattoo/Limbal',
-  facePaintColorsDark: 'Face Paint (Dark)',
-  facePaintColorsLight: 'Face Paint (Light)',
-};
-
-/**
- * Race iteration order for `ALL_SUBRACES` below. This is a presentation
- * concern local to this file (buildHexIndex's first-match semantics depend
- * on it), preserved verbatim from before the DEAD-024 adoption — note Viera
- * comes before Hrothgar here, unlike `RACE_SUBRACES`' own key order.
- */
-const SUBRACE_SEARCH_ORDER: Race[] = [
-  'Hyur',
-  'Elezen',
-  'Lalafell',
-  "Miqo'te",
-  'Roegadyn',
-  'AuRa',
-  'Viera',
-  'Hrothgar',
-];
-
-/**
- * All subraces for searching race-specific colors.
- *
- * The race/clan *set* is sourced from the shared `RACE_SUBRACES` table in
- * `@xivdyetools/types` (DEAD-024 adoption) so this app doesn't hand-roll its
- * own copy of a game-data fact; `SUBRACE_SEARCH_ORDER` above is this file's
- * own presentation concern.
- */
-export const ALL_SUBRACES: SubRace[] = SUBRACE_SEARCH_ORDER.flatMap((race) => RACE_SUBRACES[race]);
-
-const GENDERS: Gender[] = ['Male', 'Female'];
-
-/**
- * Find a character color by its hex value.
- * Searches all shared AND race-specific color categories for a match.
- *
- * @param hex - The hex color to look up (with or without #)
- * @returns The category and position info, or null if not found
- */
-export async function findCharacterColorByHex(hex: string): Promise<CharacterColorLookup | null> {
-  // Normalize hex to uppercase with #
-  const normalizedHex = hex.startsWith('#') ? hex.toUpperCase() : `#${hex.toUpperCase()}`;
-  return (await getHexIndex()).get(normalizedHex) ?? null;
-}
-
-/**
- * OPT-005: lazily built reverse index (hex -> lookup), replacing a per-request
- * scan of 7 shared categories + 64 sequential awaited race/gender sheets
- * (~12k string comparisons on every swatch OG without ?sheet=, paid in FULL
- * on the common miss case). Insertion order mirrors the old scan precedence
- * (shared categories, then hair before skin per subrace/gender) and entries
- * are only set when absent, so first-match semantics are preserved.
- */
-let hexIndexPromise: Promise<Map<string, CharacterColorLookup>> | null = null;
-
-function getHexIndex(): Promise<Map<string, CharacterColorLookup>> {
-  hexIndexPromise ??= buildHexIndex();
-  return hexIndexPromise;
-}
-
-async function buildHexIndex(): Promise<Map<string, CharacterColorLookup>> {
-  const idx = new Map<string, CharacterColorLookup>();
-  const put = (hexValue: string, categoryName: string, index: number): void => {
-    const key = hexValue.toUpperCase();
-    if (!idx.has(key)) {
-      // Character color sheets use 8 columns
-      idx.set(key, {
-        categoryName,
-        index,
-        row: Math.floor(index / 8) + 1,
-        col: (index % 8) + 1,
-      });
-    }
-  };
-
-  const sharedCategories = [
-    'eyeColors',
-    'highlightColors',
-    'lipColorsDark',
-    'lipColorsLight',
-    'tattooColors',
-    'facePaintColorsDark',
-    'facePaintColorsLight',
-  ] as const;
-
-  for (const category of sharedCategories) {
-    for (const c of characterColorService.getSharedColors(category)) {
-      put(c.hex, SHARED_CATEGORY_NAMES[category] || category, c.index);
-    }
-  }
-
-  for (const subrace of ALL_SUBRACES) {
-    for (const gender of GENDERS) {
-      for (const c of await characterColorService.getHairColors(subrace, gender)) {
-        put(c.hex, 'Hair Colors', c.index);
-      }
-      for (const c of await characterColorService.getSkinColors(subrace, gender)) {
-        put(c.hex, 'Skin Colors', c.index);
-      }
-    }
-  }
-
-  return idx;
 }
 
 /**
@@ -223,140 +86,9 @@ export function findClosestDyesWithDistance(
 }
 
 /**
- * Get a single dye by its itemID
+ * Get a single dye by its stainID (5.0 — the canonical dye key). The name
+ * predates the stainID port and is kept for call-site stability.
  */
 export function getDyeByItemId(id: number): Dye | undefined {
-  // Name kept for call-site stability; the lookup is stainID-keyed (5.0).
   return dyeByStainId.get(id);
-}
-
-/**
- * Extended character color lookup result with full context
- */
-export interface CharacterColorContext extends CharacterColorLookup {
-  /** Full display name including race/gender if applicable */
-  fullName: string;
-  /** Whether this is a race-specific color sheet */
-  isRaceSpecific: boolean;
-  /** The subrace if race-specific */
-  subrace?: string;
-  /** The gender if race-specific */
-  gender?: 'Male' | 'Female';
-}
-
-/**
- * Get character color info from explicit sheet/race/gender parameters.
- * This is more accurate than searching by hex since it uses the exact context.
- *
- * @param hex - The hex color (with or without #)
- * @param sheet - The color sheet category
- * @param subrace - Subrace for race-specific sheets
- * @param gender - Gender for race-specific sheets
- * @returns Character color context or null if not found
- */
-export async function getCharacterColorFromSheet(
-  hex: string,
-  sheet: string,
-  subrace?: string,
-  gender?: Gender,
-): Promise<CharacterColorContext | null> {
-  const normalizedHex = hex.startsWith('#') ? hex.toUpperCase() : `#${hex.toUpperCase()}`;
-
-  // Race-specific sheets require subrace and gender
-  const isRaceSpecific = sheet === 'hairColors' || sheet === 'skinColors';
-
-  if (isRaceSpecific) {
-    if (!subrace || !gender) {
-      // Fall back to hex search if race/gender not provided
-      const fallback = await findCharacterColorByHex(normalizedHex);
-      if (fallback) {
-        return {
-          ...fallback,
-          fullName: fallback.categoryName,
-          isRaceSpecific: true,
-          subrace: undefined,
-          gender: undefined,
-        };
-      }
-      return null;
-    }
-
-    // Get colors from the specific race/gender combination
-    const colors =
-      sheet === 'hairColors'
-        ? await characterColorService.getHairColors(subrace as SubRace, gender)
-        : await characterColorService.getSkinColors(subrace as SubRace, gender);
-
-    const found = colors.find((c) => c.hex.toUpperCase() === normalizedHex);
-    if (found) {
-      const col = (found.index % 8) + 1;
-      const row = Math.floor(found.index / 8) + 1;
-
-      // Format display name like "Female Wildwood Hair Colors"
-      const sheetDisplayName = sheet === 'hairColors' ? 'Hair Colors' : 'Skin Colors';
-      const fullName = `${gender} ${formatSubraceName(subrace)} ${sheetDisplayName}`;
-
-      return {
-        categoryName: sheetDisplayName,
-        fullName,
-        index: found.index,
-        row,
-        col,
-        isRaceSpecific: true,
-        subrace,
-        gender,
-      };
-    }
-    return null;
-  }
-
-  // Shared color sheets (sync)
-  const sharedCategory = sheet as
-    | 'eyeColors'
-    | 'highlightColors'
-    | 'lipColorsDark'
-    | 'lipColorsLight'
-    | 'tattooColors'
-    | 'facePaintColorsDark'
-    | 'facePaintColorsLight';
-
-  const colors = characterColorService.getSharedColors(sharedCategory);
-  const found = colors.find((c) => c.hex.toUpperCase() === normalizedHex);
-
-  if (found) {
-    const col = (found.index % 8) + 1;
-    const row = Math.floor(found.index / 8) + 1;
-    const categoryName = SHARED_CATEGORY_NAMES[sheet] || sheet;
-
-    return {
-      categoryName,
-      fullName: categoryName,
-      index: found.index,
-      row,
-      col,
-      isRaceSpecific: false,
-    };
-  }
-
-  return null;
-}
-
-/**
- * Format subrace name for display (add spaces to camelCase)
- */
-function formatSubraceName(subrace: string): string {
-  // Handle special cases
-  const specialCases: Record<string, string> = {
-    SeekerOfTheSun: 'Seeker of the Sun',
-    KeeperOfTheMoon: 'Keeper of the Moon',
-    SeaWolf: 'Sea Wolf',
-    TheLost: 'The Lost',
-  };
-
-  if (specialCases[subrace]) {
-    return specialCases[subrace];
-  }
-
-  // Simple names like "Midlander", "Wildwood" stay as-is
-  return subrace;
 }

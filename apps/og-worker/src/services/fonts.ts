@@ -66,30 +66,3 @@ export function getFontBuffers(): Uint8Array[] {
   return fontBuffersCache;
 }
 
-/** CJK fallback stack for a locale — ja gets Japanese letterforms first. */
-export function cjkStack(locale: string): string {
-  return locale === 'ja'
-    ? 'Noto Sans JP, Noto Sans SC, Noto Sans KR'
-    : 'Noto Sans SC, Noto Sans KR';
-}
-
-/**
- * Font family names as they appear in the font metadata.
- * Use these names in SVG font-family attributes. For localized text, prefer
- * `cjkStack(locale)` composed with the base family so ja text takes the JP
- * subset before falling back to SC.
- */
-export const FONT_FAMILIES = {
-  /** Space Grotesk - for headers and titles */
-  header: 'Space Grotesk',
-  /** Onest - for body text and labels */
-  body: 'Onest',
-  /** Fragment Mono - for hex codes and numeric columns (no CJK glyphs) */
-  mono: 'Fragment Mono',
-  /** Onest with CJK fallback - for localized dye names.
-   *  NOTE: JP-first belongs only to ja — compose with cjkStack(locale) so zh
-   *  never picks up Japanese letterforms for shared ideographs. */
-  bodyCjk: 'Onest, Noto Sans SC, Noto Sans KR',
-  /** Space Grotesk with CJK fallback - for localized headers */
-  headerCjk: 'Space Grotesk, Noto Sans SC, Noto Sans KR',
-} as const;

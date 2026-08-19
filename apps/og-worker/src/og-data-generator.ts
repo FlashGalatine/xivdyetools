@@ -261,11 +261,10 @@ export function generateSwatchOGData(
   if (params.algo) urlParams.set('algo', params.algo);
   urlParams.set('v', '1');
 
-  // Build the OG image URL with query params for sheet context
+  // The image URL carries only what the 15E card draws: the target, the
+  // limit and the algorithm. Sheet context shapes the description above but
+  // not the picture, so it stays off the image URL (one cache key per card).
   const imageUrlParams = new URLSearchParams();
-  if (sheet) imageUrlParams.set('sheet', sheet);
-  if (race) imageUrlParams.set('race', race);
-  if (gender) imageUrlParams.set('gender', gender);
   if (params.algo) imageUrlParams.set('algo', params.algo);
   const imageQueryString = imageUrlParams.toString();
   const imageUrl = withLang(`${env.OG_IMAGE_BASE_URL}/swatch/${params.color}/${limit}.png${imageQueryString ? `?${imageQueryString}` : ''}`, locale);
@@ -501,7 +500,6 @@ export function generateOGDataForTool(
         dye: parseInt(searchParams.get('dye') || '0', 10),
         harmony: (searchParams.get('harmony') || 'complementary').toLowerCase() as HarmonyParams['harmony'],
         algo: searchParams.get('algo') as HarmonyParams['algo'],
-        perceptual: searchParams.get('perceptual') === '1',
       };
       return generateHarmonyOGData(params, env, locale);
     }

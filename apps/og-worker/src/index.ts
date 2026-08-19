@@ -5,7 +5,8 @@
  * dynamic OpenGraph metadata to social media crawlers (Discord, Twitter, Facebook, etc.).
  *
  * Flow:
- * 1. User shares a link like: https://xivdyetools.app/harmony/?dye=5771&harmony=tetradic
+ * 1. User shares a link like: https://xivdyetools.app/harmony/?dye=102&harmony=tetradic
+ *    (dye params are stainIDs — 102 is Jet Black; legacy item IDs miss into the default card)
  * 2. Discord/Twitter crawler fetches that URL
  * 3. This worker detects the crawler by User-Agent
  * 4. If crawler: Returns HTML with dynamic og:meta tags + og:image URL
@@ -14,14 +15,13 @@
  * @module index
  */
 
-import { DEFAULT_MATCHING_METHOD, normalizeMatchingMethod } from '@xivdyetools/core';
+import { DEFAULT_MATCHING_METHOD, extractLocaleCode } from '@xivdyetools/core';
 import { Hono, type Context } from 'hono';
 import {
   requestIdMiddleware,
   loggerMiddleware,
   getLogger,
 } from '@xivdyetools/worker-kit';
-import { extractLocaleCode } from '@xivdyetools/core';
 import type { LocaleCode } from '@xivdyetools/types';
 import { detectCrawlerFromRequest, getCrawlerName } from './crawler-detector';
 import { generateOGDataForTool, generateOGHTML } from './og-data-generator';
@@ -106,7 +106,7 @@ const app = new Hono<{ Bindings: Env }>();
 // ============================================================================
 // Middleware: Observability (request ID + structured logger)
 // REFACTOR-002 (2026-04-28 audit): aligns og-worker with the shared
-// @xivdyetools/worker-middleware stack used by presets-api / discord-worker.
+// @xivdyetools/worker-kit middleware stack used by presets-api / discord-worker.
 // ============================================================================
 
 app.use('*', requestIdMiddleware());
@@ -158,16 +158,6 @@ app.get('/health', (c) => {
 });
 
 /**
- * Tool route handler factory
- * Creates a route handler for each supported tool
- */
-/**
- * Resolve the locale for an OG request.
- *
- * Priority: ?lang= query param → 'en' fallback. The query value is validated
- * against SUPPORTED_LOCALES (via extractLocaleCode) before being trusted.
- */
-/**
  * BUG-069: is this request addressed to the worker's own image custom domain?
  * (On that host the worker is the origin, so pass-through fetch would 1042.)
  */
@@ -179,12 +169,22 @@ function isOgImageHost(url: URL, env: Env): boolean {
   }
 }
 
+/**
+ * Resolve the locale for an OG request.
+ *
+ * Priority: ?lang= query param → 'en' fallback. The query value is validated
+ * against SUPPORTED_LOCALES (via extractLocaleCode) before being trusted.
+ */
 function resolveLocale(searchParams: URLSearchParams): LocaleCode {
   const raw = searchParams.get('lang');
   if (!raw) return 'en';
   return extractLocaleCode(raw) ?? 'en';
 }
 
+/**
+ * Tool route handler factory
+ * Creates a route handler for each supported tool
+ */
 function createToolHandler(tool: ToolId) {
   return async (c: Context<{ Bindings: Env }>) => {
     const request = c.req.raw;
@@ -487,18 +487,13 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio', async (c) => {
 
 /**
  * Swatch tool OG image
- * Pattern: /og/swatch/:color/:limit.png?sheet=X&race=Y&gender=Z
+ * Pattern: /og/swatch/:color/:limit.png
  */
 app.get('/og/swatch/:color/:limit', async (c) => {
   const color = c.req.param('color');
   const limit = parseInt(c.req.param('limit').replace('.png', ''), 10);
   const algorithm = (c.req.query('algo') || DEFAULT_MATCHING_METHOD) as MatchingAlgorithm;
   const locale = resolveLocale(new URL(c.req.url).searchParams);
-
-  // Parse optional sheet context params
-  const sheet = c.req.query('sheet') as import('./types').ColorSheetCategory | undefined;
-  const race = c.req.query('race') || undefined;
-  const gender = c.req.query('gender') as import('./types').CharacterGender | undefined;
 
   // BUG-002: Validate algorithm param
   if (!VALID_ALGORITHMS.includes(algorithm)) {
@@ -517,14 +512,11 @@ app.get('/og/swatch/:color/:limit', async (c) => {
     return c.json({ error: `limit must be between 1 and ${OG_MAX_SWATCH_LIMIT}` }, 400);
   }
 
-  const svg = await generateSwatchOG({
+  const svg = generateSwatchOG({
     frame: frameFromQuery(c),
     color,
     limit,
     algorithm,
-    sheet,
-    race,
-    gender,
     locale,
   });
 
@@ -534,7 +526,7 @@ app.get('/og/swatch/:color/:limit', async (c) => {
 /**
  * Comparison tool OG image
  * Pattern: /og/comparison/:dyes.png
- * where dyes is comma-separated itemIDs (e.g., "5771,5772,5773")
+ * where dyes is comma-separated stainIDs (e.g., "1,2,3")
  */
 app.get('/og/comparison/:dyes', async (c) => {
   const dyesParam = c.req.param('dyes').replace('.png', '');

@@ -4,7 +4,7 @@
  * @module og-data-generator.test
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   generateHarmonyOGData,
   generateGradientOGData,
@@ -199,20 +199,26 @@ describe('og-data-generator', () => {
       expect(result.description).toContain('hair');
     });
 
-    it('should include sheet params in image URL', () => {
+    it('keeps sheet context OFF the image URL — the card does not draw it, so one cache key per card', () => {
       const result = generateSwatchOGData(
         {
           color: 'FF5733',
           sheet: 'hairColors',
           race: 'Wildwood',
           gender: 'Male',
+          algo: 'oklab',
         },
         mockEnv
       );
 
-      expect(result.imageUrl).toContain('sheet=hairColors');
-      expect(result.imageUrl).toContain('race=Wildwood');
-      expect(result.imageUrl).toContain('gender=Male');
+      expect(result.imageUrl).not.toContain('sheet=');
+      expect(result.imageUrl).not.toContain('race=');
+      expect(result.imageUrl).not.toContain('gender=');
+      // …but the algorithm still rides, because the card renders it
+      expect(result.imageUrl).toContain('algo=oklab');
+      // and the page URL keeps the full context (it shapes the description)
+      expect(result.url).toContain('sheet=hairColors');
+      expect(result.url).toContain('race=Wildwood');
     });
   });
 
@@ -462,12 +468,13 @@ describe('og-data-generator', () => {
       expect(swatchResult.imageUrl).toContain('/swatch/FFFFFF/5.png');
     });
 
-    it('should parse perceptual param for harmony', () => {
+    it('ignores the legacy perceptual param for harmony', () => {
       const params = new URLSearchParams('dye=43&harmony=analogous&perceptual=1');
       const result = generateOGDataForTool('harmony', params, mockEnv);
 
-      // Should complete without error
+      // Should complete without error and never forward it
       expect(result.imageUrl).toContain('/harmony/');
+      expect(result.imageUrl).not.toContain('perceptual');
     });
 
     it('should handle optional dyeC for mixer', () => {

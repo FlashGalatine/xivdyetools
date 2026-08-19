@@ -16,7 +16,7 @@ import { ALGO_TAG, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
 import { dyeService, deltaForAlgorithm } from './dye-helpers';
 import { deckLine, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
-import type { MatchingAlgorithm, ColorSheetCategory, CharacterGender } from '../../types';
+import type { MatchingAlgorithm } from '../../types';
 
 export interface SwatchOGOptions {
   /** Input color hex (without #) */
@@ -25,12 +25,6 @@ export interface SwatchOGOptions {
   limit?: number;
   /** Matching algorithm */
   algorithm?: MatchingAlgorithm;
-  /** Which color sheet this color is from (context only in 15E) */
-  sheet?: ColorSheetCategory;
-  /** Subrace for race-specific sheets */
-  race?: string;
-  /** Gender for race-specific sheets */
-  gender?: CharacterGender;
   /** Locale for dye name display */
   locale?: LocaleCode;
   /** 15E frame */
@@ -42,10 +36,8 @@ const MATCH_CAP = 4;
 
 /**
  * Generates the Swatch OG image SVG (400-grid — raster ×3 downstream).
- * Async signature kept for call-site stability.
  */
-// eslint-disable-next-line @typescript-eslint/require-await -- signature kept for call-site stability
-export async function generateSwatchOG(options: SwatchOGOptions): Promise<string> {
+export function generateSwatchOG(options: SwatchOGOptions): string {
   const { algorithm = 'oklab', locale = 'en', frame = 'discord' } = options;
 
   const clean = options.color.replace('#', '').toUpperCase();

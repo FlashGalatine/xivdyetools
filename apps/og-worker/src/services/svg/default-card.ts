@@ -21,8 +21,7 @@
  * @module services/svg/default-card
  */
 
-import { toolGlyph, type ToolGlyphName } from '@xivdyetools/svg';
-import { escapeXml, estimateTextWidth } from './base';
+import { toolGlyph, escapeXml, estimateTextWidth, type ToolGlyphName } from '@xivdyetools/svg';
 import {
   BAND_FRAMES,
   FOOTER_H,
