@@ -39,6 +39,12 @@ npm run lint && npm run test -- --run && npm run type-check
    revolt.js Client  ──  client.on('messageCreate')
                          │
                          ▼
+   createMessageHandler()           ◄─ src/message-handler.ts
+   ├─ ignores own + any other bot's messages
+   ├─ per-user CommandThrottle (5 / 10 s, silent drop)  ◄─ src/services/command-throttle.ts
+   └─ fixed-text error reply if a handler throws
+                         │
+                         ▼
    parseCommand(content)            ◄─ src/commands/parser.ts
    ├─ matches '!xivdye' or '!xd' prefix?
    ├─ resolves SHORT_ALIASES (info → dye.info)
@@ -61,6 +67,7 @@ npm run lint && npm run test -- --run && npm run type-check
 ```
 src/
 ├── index.ts                     # Bootstrap: load config, create Client, register handlers, login
+├── message-handler.ts           # messageCreate gate: bot-ignore, per-user throttle, route, error reply (FINDING-035)
 ├── config.ts                    # loadConfig() from env, ULID validation, isAuthorized()
 ├── router.ts                    # CommandContext, COMMAND_ROUTES dispatch table
 ├── commands/
@@ -71,6 +78,7 @@ src/
 │   └── info.ts                  # !xd info <dye> via bot-logic.executeDyeInfo
 ├── services/
 │   ├── dye-resolver.ts          # Multi-strategy resolution (name → ID → hex), disambiguation
+│   ├── command-throttle.ts      # CommandThrottle: in-memory sliding window per user (default 5 / 10 s)
 │   ├── message-context.ts       # MessageContextStore (LRU+TTL, max 500, 1h) for reaction handlers
 │   ├── response-formatter.ts    # StoatEmbed shape, error/disambig/no-match formatters,
 │   │                            # DYE_INFO_REACTIONS, masquerade helpers
@@ -104,7 +112,7 @@ This is the most important section. `stoat-worker` and `discord-worker` look sup
 | **Image rendering** | `@resvg/resvg-wasm` (WASM in worker) | Planned: `@resvg/resvg-js` (Node native) |
 | **Image processing** | `@cf-wasm/photon` | Planned: `sharp` |
 | **Storage** | KV (rate-limit, prefs, analytics), D1 via service binding | Planned: SQLite (better-sqlite3) for prefs/analytics |
-| **Rate limit backend** | KV-backed `@xivdyetools/worker-kit/rate-limiter` | Planned: Upstash Redis backend |
+| **Rate limit backend** | KV-backed `@xivdyetools/worker-kit/rate-limiter` | In-memory per-user `CommandThrottle` (5 / 10 s, `services/command-throttle.ts`, since 0.2.2 — FINDING-035); Upstash backend still only planned |
 | **Signature verification** | Ed25519 on every request | None — WebSocket session is implicitly authenticated by `BOT_TOKEN` |
 | **Embed shape** | Discord rich embeds w/ fields, footer, author | Stoat `SendableEmbed`: title/description/icon_url/colour/media (no fields) |
 | **Interactive buttons** | Discord MessageComponent buttons + modals | Stoat reactions with `restrict_reactions: true`; `MessageContextStore` maps message IDs to dye context |
@@ -148,7 +156,7 @@ await withLoadingIndicator(message, async () => {
 
 #### Best-effort error reply
 
-The top-level `messageCreate` handler wraps `routeCommand()` in try/catch. If a handler throws, the bot tries to send a generic "An unexpected error occurred" reply; if even that fails, the error is just logged.
+`createMessageHandler()` (`src/message-handler.ts`, unit-tested) wraps `routeCommand()` in try/catch. If a handler throws, the bot tries to send a generic "An unexpected error occurred" reply (never the error text); if even that fails, the error is just logged. The same gate ignores the bot's own messages and messages from any other bot (`message.author?.bot` — no bot-to-bot loops) and drops commands silently once a user exceeds the `CommandThrottle` window. Echoed user text (`No dye found matching …`, unknown-command replies) goes through `sanitizeEcho()` in `response-formatter.ts` (Revolt mention defuse + the shared `sanitizeEmbedText`), and the three command tables are consulted with `Object.hasOwn` (2026-08-21 security audit, FINDING-019/027/035).
 
 ## Build & Runtime Notes
 
