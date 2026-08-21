@@ -358,10 +358,14 @@ export abstract class BaseComponent implements ComponentLifecycle {
     });
     errorWrapper.appendChild(title);
 
-    // Error details
+    // Error details — the raw Error message is developer English, so it goes
+    // to the log and the panel shows the translated line instead.
+    if (this.errorState.error?.message) {
+      logger.error('[BaseComponent] Error boundary:', this.errorState.error.message);
+    }
     const details = this.createElement('p', {
       className: 'component-error-details',
-      textContent: this.errorState.error?.message || LanguageService.t('errors.unexpectedError'),
+      textContent: LanguageService.t('errors.unexpectedError'),
     });
     errorWrapper.appendChild(details);
 

@@ -18,6 +18,7 @@ import { ConfigController } from '@services/config-controller';
 import { authService, LanguageService } from '@services/index';
 import { COMPANION_DYES_MIN, COMPANION_DYES_MAX, COMPANION_DYES_DEFAULT } from '@shared/constants';
 import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
+import { regionLabel } from '@shared/region-name';
 import type { ToolId } from '@services/router-service';
 import type {
   HarmonyConfig,
@@ -1596,7 +1597,8 @@ export class ConfigSidebar extends BaseLitComponent {
 
     if (isAuthenticated && user) {
       // Logged in - show user card and submit button
-      const displayName = user.global_name || user.username || 'User';
+      const displayName =
+        user.global_name || user.username || LanguageService.t('config.userFallback');
       const providerLabel = user.auth_provider === 'xivauth' ? 'XIVAuth' : 'Discord';
 
       return html`
@@ -1930,7 +1932,7 @@ export class ConfigSidebar extends BaseLitComponent {
                     </option>`
                   : sortedDataCenters.map(
                       (dc) => html`
-                        <optgroup label="${dc.name} (${dc.region})">
+                        <optgroup label="${dc.name} (${regionLabel(dc.region)})">
                           <option
                             value="${dc.name}"
                             ?selected=${this.marketConfig.selectedServer === dc.name}

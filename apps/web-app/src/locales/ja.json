@@ -23,13 +23,13 @@
     "elsewhere": "その他のリンク",
     "apiSummary": "公開染色データ、2つのエンドポイント",
     "legalLabel": "権利表記",
-    "spectralCredit": "リアルな絵の具混色（クベルカ・ムンク理論）:",
+    "spectralCredit": "リアルな絵の具混色（クベルカ・ムンク理論）：{link}",
     "dataApiLabel": "データAPI",
     "apiDocsLabel": "API Worker ドキュメント"
   },
   "footer": {
     "createdBy": "Flash Galatine (Midgardsormr) がFFXIVコミュニティのために作成",
-    "universalisCredit": "マーケットボードデータ提供元:",
+    "universalisCredit": "マーケットボードデータ提供元：{link}",
     "disclaimer": "FINAL FANTASY XIV © 2010-2025 SQUARE ENIX CO., LTD. All Rights Reserved.",
     "notAffiliated": "XIV 染色ツールはファンメイドのアプリケーションであり、スクウェア・エニックスとは提携または承認されていません。"
   },
@@ -127,7 +127,10 @@
     "loadingTool": "{tool}を読み込み中…",
     "closeModal": "ダイアログを閉じる",
     "confirm": "確認",
-    "slotN": "スロット {n}"
+    "slotN": "スロット {n}",
+    "unknown": "不明",
+    "comingSoonTool": "{tool}ツール",
+    "comingSoon": "近日公開"
   },
   "config": {
     "harmonyType": "ハーモニータイプ",
@@ -228,7 +231,8 @@
     "matchingDistinguishDesc": "RGB距離を0～100に換算した値。RGB DISTと同じ順位で、パーセントとして表示します。",
     "showHue": "色相差",
     "showStain": "ステインID",
-    "showSpectrum": "スペクトル"
+    "showSpectrum": "スペクトル",
+    "userFallback": "ユーザー"
   },
   "colorPalette": {
     "title": "カラーパレット",
@@ -400,7 +404,14 @@
     "prevalenceDeuteranopia": "男性の約6%",
     "prevalenceProtanopia": "男性の約2%",
     "prevalenceTritanopia": "約0.01%",
-    "prevalenceAchromatopsia": "約0.003%"
+    "prevalenceAchromatopsia": "約0.003%",
+    "visionShort": {
+      "normal": "正常",
+      "deuteranopia": "2型",
+      "protanopia": "1型",
+      "tritanopia": "3型",
+      "achromatopsia": "全色"
+    }
   },
   "comparison": {
     "selectedDyes": "選択された染料",
@@ -589,7 +600,15 @@
     "pricesRefreshed": "価格を更新しました！",
     "refreshError": "価格の更新に失敗しました。もう一度お試しください。",
     "priceUnavailable": "価格不明",
-    "offlineWarning": "オフラインです。価格を更新できません。"
+    "offlineWarning": "オフラインです。価格を更新できません。",
+    "region": {
+      "japan": "日本",
+      "northAmerica": "北米",
+      "europe": "ヨーロッパ",
+      "oceania": "オセアニア",
+      "china": "中国",
+      "korea": "韓国"
+    }
   },
   "budget": {
     "targetDye": "対象カララント",
@@ -1204,7 +1223,8 @@
     "stainShort": "ステイン",
     "replaceSlotN": "スロット{n}を置き換え",
     "dyeResultAria": "カララント結果：{name}",
-    "addingDyeLabel": "追加中："
+    "addingDyeLabel": "追加中：",
+    "noData": "データなし"
   },
   "share": {
     "button": "共有",
@@ -1329,5 +1349,13 @@
     "sameModelList": "同一モデル：{list}",
     "gridTitle": "{name}（{count}）",
     "cellTag": "{palette} #{index}"
+  },
+  "languages": {
+    "en": "英語",
+    "ja": "日本語",
+    "de": "ドイツ語",
+    "fr": "フランス語",
+    "ko": "韓国語",
+    "zh": "中国語"
   }
 }

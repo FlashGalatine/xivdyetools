@@ -118,7 +118,11 @@ const TIER_ORDER: readonly TierKey[] = ['A', 'B', 'C', 'X'];
 /** Upgrade mode drops the target's own (A) tier. */
 const UPGRADE_ORDER: readonly TierKey[] = ['B', 'C', 'X'];
 
-/** Mono tier tags are identifiers, never localized. rampIndex maps into the tier color ramps. */
+/**
+ * Mono tier tags are identifiers by decision (2026-08-20 i18n audit): labels
+ * for the match-line bands, untranslated in every locale. rampIndex maps into
+ * the tier color ramps.
+ */
 const TIER_META: Record<TierKey, { tag: string; rampIndex: number }> = {
   A: { tag: 'STANDARD', rampIndex: 0 },
   B: { tag: 'WIDE #1', rampIndex: 1 },
@@ -869,7 +873,7 @@ export class BudgetTool extends BaseComponent {
       );
       btn.appendChild(
         this.createElement('span', {
-          textContent: this.dyeName(dye).split(' ')[0],
+          textContent: this.dyeName(dye),
           attributes: {
             style:
               'font-size: 11px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;',

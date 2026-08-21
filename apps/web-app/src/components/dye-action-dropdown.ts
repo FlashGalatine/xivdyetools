@@ -471,7 +471,7 @@ function showSlotSelectionModal(
     const existingDye = dyeService.getDyeById(dyeId);
     const dyeName = existingDye
       ? LanguageService.getDyeName(existingDye.itemID) || existingDye.name
-      : 'Unknown';
+      : LanguageService.t('common.unknown');
     const dyeHex = existingDye?.hex ?? '#888888';
 
     const btn = document.createElement('button');

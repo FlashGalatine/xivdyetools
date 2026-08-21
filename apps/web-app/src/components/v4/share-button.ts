@@ -330,12 +330,12 @@ export class ShareButton extends BaseLitComponent {
    */
   private getLabel(): string {
     if (this.isCopied) {
-      return LanguageService.t('share.copied') || 'Copied!';
+      return LanguageService.t('share.copied');
     }
     if (this.label) {
       return this.label;
     }
-    return LanguageService.t('share.button') || 'Share';
+    return LanguageService.t('share.button');
   }
 
   protected override render(): TemplateResult {

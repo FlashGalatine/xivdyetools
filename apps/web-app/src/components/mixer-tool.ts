@@ -1159,10 +1159,13 @@ export class MixerTool extends BaseComponent {
 
     const MONO = "'Fragment Mono', monospace";
     const MODELS: MixingMode[] = ['ryb', 'spectral', 'oklab', 'lab', 'hsl', 'rgb'];
-    // Row headers use the technical abbreviation — identical in every locale.
+    // Row headers use the technical abbreviation, which is identical in every
+    // locale — except Spectral, a word rather than an initialism, which takes
+    // the model's translated name. Resolved per render, so a locale switch
+    // re-labels the rows.
     const MODEL_SHORT: Record<string, string> = {
       ryb: 'RYB',
-      spectral: 'Spectral',
+      spectral: LanguageService.t('mixer.modelSpectral'),
       oklab: 'OKLAB',
       lab: 'LAB',
       hsl: 'HSL',

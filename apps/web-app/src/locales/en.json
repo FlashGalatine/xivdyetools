@@ -23,13 +23,13 @@
     "elsewhere": "ELSEWHERE",
     "apiSummary": "Public dye data, two endpoints",
     "legalLabel": "ATTRIBUTION",
-    "spectralCredit": "Realistic paint mixing (Kubelka–Munk theory) by",
+    "spectralCredit": "Realistic paint mixing (Kubelka–Munk theory) by {link}",
     "dataApiLabel": "Data API",
     "apiDocsLabel": "API Worker docs"
   },
   "footer": {
     "createdBy": "Created by Flash Galatine (Midgardsormr) for the FFXIV community",
-    "universalisCredit": "Market Board data provided by",
+    "universalisCredit": "Market Board data provided by {link}",
     "disclaimer": "FINAL FANTASY XIV © 2010-2025 SQUARE ENIX CO., LTD. All Rights Reserved.",
     "notAffiliated": "XIV Dye Tools is a fan-made application and is not affiliated with or endorsed by Square Enix."
   },
@@ -127,7 +127,10 @@
     "loadingTool": "Loading {tool}…",
     "closeModal": "Close modal",
     "confirm": "Confirm",
-    "slotN": "Slot {n}"
+    "slotN": "Slot {n}",
+    "unknown": "Unknown",
+    "comingSoonTool": "{tool} Tool",
+    "comingSoon": "Coming soon"
   },
   "config": {
     "harmonyType": "Harmony Type",
@@ -228,7 +231,8 @@
     "matchingDistinguishDesc": "RGB distance rescaled to 0-100. Same ranking as RGB DIST, shown as a percentage.",
     "showHue": "Hue deviance",
     "showStain": "Stain ID",
-    "showSpectrum": "Spectrum"
+    "showSpectrum": "Spectrum",
+    "userFallback": "User"
   },
   "colorPalette": {
     "title": "Color Palette",
@@ -309,7 +313,7 @@
     "takePhoto": "Take a photo",
     "supportedFormatsWithSize": "Supported formats: PNG, JPG, WebP, GIF. Maximum size: 20MB",
     "privacyNote": "Images are read in your browser and never uploaded.",
-    "privacyTitle": "Privacy Protected:",
+    "privacyTitle": "Privacy Protected: ",
     "privacyMessage": "Photos and images are processed locally in your browser and never uploaded to any server.",
     "privacyLearnMore": "Learn more",
     "pasteHint": "Tip: Paste an image using Ctrl+V (Cmd+V on Mac)",
@@ -400,7 +404,14 @@
     "prevalenceDeuteranopia": "~6% males",
     "prevalenceProtanopia": "~2% males",
     "prevalenceTritanopia": "~0.01%",
-    "prevalenceAchromatopsia": "~0.003%"
+    "prevalenceAchromatopsia": "~0.003%",
+    "visionShort": {
+      "normal": "NRM",
+      "deuteranopia": "DEU",
+      "protanopia": "PRO",
+      "tritanopia": "TRI",
+      "achromatopsia": "ACH"
+    }
   },
   "comparison": {
     "selectedDyes": "Selected Dyes",
@@ -589,7 +600,15 @@
     "pricesRefreshed": "Prices refreshed successfully!",
     "refreshError": "Error refreshing prices. Please try again.",
     "priceUnavailable": "Price unavailable",
-    "offlineWarning": "You are offline. Cannot refresh prices."
+    "offlineWarning": "You are offline. Cannot refresh prices.",
+    "region": {
+      "japan": "Japan",
+      "northAmerica": "North America",
+      "europe": "Europe",
+      "oceania": "Oceania",
+      "china": "China",
+      "korea": "Korea"
+    }
   },
   "budget": {
     "targetDye": "Target Dye",
@@ -1204,7 +1223,8 @@
     "stainShort": "STAIN",
     "replaceSlotN": "Replace Slot {n}",
     "dyeResultAria": "Dye result: {name}",
-    "addingDyeLabel": "Adding:"
+    "addingDyeLabel": "Adding:",
+    "noData": "No data"
   },
   "share": {
     "button": "Share",
@@ -1329,5 +1349,13 @@
     "sameModelList": "Same model: {list}",
     "gridTitle": "{name} ({count})",
     "cellTag": "{palette} #{index}"
+  },
+  "languages": {
+    "en": "English",
+    "ja": "Japanese",
+    "de": "German",
+    "fr": "French",
+    "ko": "Korean",
+    "zh": "Chinese"
   }
 }

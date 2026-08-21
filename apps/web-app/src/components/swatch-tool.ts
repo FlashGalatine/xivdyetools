@@ -1869,6 +1869,7 @@ export class SwatchTool extends BaseComponent {
     for (let sheetIndex = 0; sheetIndex < this.colors.length; sheetIndex++) {
       const color = this.colors[sheetIndex];
       const cellRow = Math.floor(sheetIndex / 8);
+      // R/C grid address: an identifier by decision (2026-08-20 i18n audit).
       const address = `R${cellRow + 1}·C${(sheetIndex % 8) + 1}`;
 
       const swatch = this.createElement('button', {

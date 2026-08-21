@@ -23,13 +23,13 @@
     "elsewhere": "ANDERSWO",
     "apiSummary": "Öffentliche Farbstoffdaten, zwei Endpunkte",
     "legalLabel": "RECHTLICHES",
-    "spectralCredit": "Realistische Farbmischung (Kubelka–Munk-Theorie) von",
+    "spectralCredit": "Realistische Farbmischung (Kubelka–Munk-Theorie) von {link}",
     "dataApiLabel": "Daten-API",
     "apiDocsLabel": "API-Worker-Doku"
   },
   "footer": {
     "createdBy": "Erstellt von Flash Galatine (Midgardsormr) für die FFXIV-Community",
-    "universalisCredit": "Marktbrett-Daten bereitgestellt von",
+    "universalisCredit": "Marktbrett-Daten bereitgestellt von {link}",
     "disclaimer": "FINAL FANTASY XIV © 2010-2025 SQUARE ENIX CO., LTD. Alle Rechte vorbehalten.",
     "notAffiliated": "XIV Farbwerkzeuge ist eine Fan-Anwendung und steht in keiner Verbindung zu Square Enix und wird von diesem nicht unterstützt."
   },
@@ -127,7 +127,10 @@
     "loadingTool": "{tool} wird geladen…",
     "closeModal": "Dialog schließen",
     "confirm": "Bestätigen",
-    "slotN": "Platz {n}"
+    "slotN": "Platz {n}",
+    "unknown": "Unbekannt",
+    "comingSoonTool": "Werkzeug „{tool}“",
+    "comingSoon": "Demnächst verfügbar"
   },
   "config": {
     "harmonyType": "Harmonie-Typ",
@@ -228,7 +231,8 @@
     "matchingDistinguishDesc": "RGB-Distanz auf 0-100 skaliert. Gleiche Rangfolge wie RGB DIST, als Prozentwert angezeigt.",
     "showHue": "Farbton-Abweichung",
     "showStain": "Stain-ID",
-    "showSpectrum": "Spektrum"
+    "showSpectrum": "Spektrum",
+    "userFallback": "Benutzer"
   },
   "colorPalette": {
     "title": "Farbpalette",
@@ -309,7 +313,7 @@
     "takePhoto": "Foto aufnehmen",
     "supportedFormatsWithSize": "Unterstützte Formate: PNG, JPG, WebP, GIF. Maximale Größe: 20MB",
     "privacyNote": "Bilder werden im Browser gelesen und nie hochgeladen.",
-    "privacyTitle": "Datenschutz geschützt:",
+    "privacyTitle": "Datenschutz geschützt: ",
     "privacyMessage": "Fotos und Bilder werden lokal in deinem Browser verarbeitet und niemals auf einen Server hochgeladen.",
     "privacyLearnMore": "Mehr erfahren",
     "pasteHint": "Tipp: Bild mit Strg+V (Cmd+V auf Mac) einfügen",
@@ -400,7 +404,14 @@
     "prevalenceDeuteranopia": "~6 % der Männer",
     "prevalenceProtanopia": "~2 % der Männer",
     "prevalenceTritanopia": "~0,01 %",
-    "prevalenceAchromatopsia": "~0,003 %"
+    "prevalenceAchromatopsia": "~0,003 %",
+    "visionShort": {
+      "normal": "NRM",
+      "deuteranopia": "DEU",
+      "protanopia": "PRO",
+      "tritanopia": "TRI",
+      "achromatopsia": "ACH"
+    }
   },
   "comparison": {
     "selectedDyes": "Ausgewählte Farbstoffe",
@@ -589,7 +600,15 @@
     "pricesRefreshed": "Preise erfolgreich aktualisiert!",
     "refreshError": "Fehler beim Aktualisieren der Preise. Bitte erneut versuchen.",
     "priceUnavailable": "Preis nicht verfügbar",
-    "offlineWarning": "Sie sind offline. Preise können nicht aktualisiert werden."
+    "offlineWarning": "Sie sind offline. Preise können nicht aktualisiert werden.",
+    "region": {
+      "japan": "Japan",
+      "northAmerica": "Nordamerika",
+      "europe": "Europa",
+      "oceania": "Ozeanien",
+      "china": "China",
+      "korea": "Korea"
+    }
   },
   "budget": {
     "targetDye": "Ziel-Farbstoff",
@@ -1204,7 +1223,8 @@
     "stainShort": "STAIN",
     "replaceSlotN": "Slot {n} ersetzen",
     "dyeResultAria": "Farbstoff-Ergebnis: {name}",
-    "addingDyeLabel": "Hinzufügen:"
+    "addingDyeLabel": "Hinzufügen:",
+    "noData": "Keine Daten"
   },
   "share": {
     "button": "Teilen",
@@ -1329,5 +1349,13 @@
     "sameModelList": "Gleiches Modell: {list}",
     "gridTitle": "{name} ({count})",
     "cellTag": "{palette} #{index}"
+  },
+  "languages": {
+    "en": "Englisch",
+    "ja": "Japanisch",
+    "de": "Deutsch",
+    "fr": "Französisch",
+    "ko": "Koreanisch",
+    "zh": "Chinesisch"
   }
 }

@@ -78,10 +78,9 @@ export class DyeGrid extends BaseComponent {
         this.emptyState.type === 'search'
           ? getEmptyStateHTML({
               icon: ICON_STATE_SEARCH,
-              title:
-                LanguageService.tInterpolate('dyeSelector.noResults', {
-                  query: this.emptyState.query || '',
-                }) || `No dyes match "${this.emptyState.query}"`,
+              title: LanguageService.tInterpolate('dyeSelector.noResults', {
+                query: this.emptyState.query || '',
+              }),
               description: LanguageService.t('dyeSelector.noResultsHint'),
             })
           : getEmptyStateHTML({
@@ -276,8 +275,7 @@ export class DyeGrid extends BaseComponent {
         // Likely at max favorites
         const max = CollectionService.getMaxFavorites();
         ToastService.warning(
-          LanguageService.tInterpolate('collections.favoritesFull', { max: String(max) }) ||
-            `Maximum ${max} favorites allowed`
+          LanguageService.tInterpolate('collections.favoritesFull', { max: String(max) })
         );
       }
     }

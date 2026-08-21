@@ -27,6 +27,52 @@ import { TutorialService } from '@services/index';
 import { ShareService } from '@services/share-service';
 
 /**
+ * The fatal-error overlay runs when service initialization threw, so
+ * LanguageService may never have loaded a locale — `t()` would echo raw keys
+ * at the one moment the user needs a sentence. These six lines are therefore
+ * inlined and picked off `navigator.language`, English when nothing matches.
+ * They are the ONLY strings in the app allowed to live outside `src/locales`.
+ */
+const FATAL_STRINGS: Record<string, { title: string; body: string; button: string }> = {
+  en: {
+    title: 'Application Error',
+    body: 'Failed to initialize XIV Dye Tools',
+    button: 'Reload Page',
+  },
+  de: {
+    title: 'Anwendungsfehler',
+    body: 'XIV Dye Tools konnte nicht initialisiert werden',
+    button: 'Seite neu laden',
+  },
+  fr: {
+    title: "Erreur de l'application",
+    body: "Échec de l'initialisation de XIV Dye Tools",
+    button: 'Recharger la page',
+  },
+  ja: {
+    title: 'アプリケーションエラー',
+    body: 'XIV Dye Tools の初期化に失敗しました',
+    button: 'ページを再読み込み',
+  },
+  ko: {
+    title: '애플리케이션 오류',
+    body: 'XIV Dye Tools 초기화에 실패했습니다',
+    button: '페이지 새로고침',
+  },
+  zh: {
+    title: '应用程序错误',
+    body: 'XIV Dye Tools 初始化失败',
+    button: '重新加载页面',
+  },
+};
+
+/** Fatal-overlay copy for the browser's language, falling back to English. */
+function fatalStrings(): { title: string; body: string; button: string } {
+  const lang = (navigator.language || 'en').slice(0, 2).toLowerCase();
+  return FATAL_STRINGS[lang] ?? FATAL_STRINGS.en;
+}
+
+/**
  * Initialize the application
  */
 async function initializeApp(): Promise<void> {
@@ -103,20 +149,21 @@ async function initializeApp(): Promise<void> {
     // Show error to user
     const container = document.getElementById('app');
     if (container) {
+      const fatal = fatalStrings();
       container.innerHTML = `
         <div class="min-h-screen flex items-center justify-center bg-red-50 dark:bg-red-900">
           <div class="text-center">
             <h1 class="text-2xl font-bold text-red-900 dark:text-red-100 mb-4">
-              Application Error
+              ${fatal.title}
             </h1>
             <p class="text-red-700 dark:text-red-200 mb-4">
-              Failed to initialize XIV Dye Tools
+              ${fatal.body}
             </p>
             <p class="text-sm text-red-600 dark:text-red-300">
               ${ErrorHandler.createUserMessage(appError)}
             </p>
             <button onclick="location.reload()" class="mt-6 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-              Reload Page
+              ${fatal.button}
             </button>
           </div>
         </div>

@@ -23,13 +23,13 @@
     "elsewhere": "다른 곳에서",
     "apiSummary": "공개 염료 데이터, 엔드포인트 2개",
     "legalLabel": "저작권 표기",
-    "spectralCredit": "사실적인 물감 혼합(쿠벨카-뭉크 이론):",
+    "spectralCredit": "사실적인 물감 혼합(쿠벨카-뭉크 이론): {link}",
     "dataApiLabel": "데이터 API",
     "apiDocsLabel": "API Worker 문서"
   },
   "footer": {
     "createdBy": "Flash Galatine (Midgardsormr)이 FFXIV 커뮤니티를 위해 제작",
-    "universalisCredit": "시장 게시판 데이터 제공:",
+    "universalisCredit": "시장 게시판 데이터 제공: {link}",
     "disclaimer": "FINAL FANTASY XIV © 2010-2025 SQUARE ENIX CO., LTD. All Rights Reserved.",
     "notAffiliated": "XIV 염색 도구는 팬이 만든 애플리케이션이며 Square Enix와 제휴하거나 승인받지 않았습니다."
   },
@@ -127,7 +127,10 @@
     "loadingTool": "{tool} 로딩 중…",
     "closeModal": "대화 상자 닫기",
     "confirm": "확인",
-    "slotN": "슬롯 {n}"
+    "slotN": "슬롯 {n}",
+    "unknown": "알 수 없음",
+    "comingSoonTool": "{tool} 도구",
+    "comingSoon": "출시 예정"
   },
   "config": {
     "harmonyType": "조화 유형",
@@ -228,7 +231,8 @@
     "matchingDistinguishDesc": "RGB 거리를 0~100으로 환산한 값입니다. RGB DIST와 순위가 같으며 퍼센트로 표시됩니다.",
     "showHue": "색상차",
     "showStain": "스테인 ID",
-    "showSpectrum": "스펙트럼"
+    "showSpectrum": "스펙트럼",
+    "userFallback": "사용자"
   },
   "colorPalette": {
     "title": "색상 팔레트",
@@ -309,7 +313,7 @@
     "takePhoto": "사진 촬영",
     "supportedFormatsWithSize": "지원 형식: PNG, JPG, WebP, GIF. 최대 크기: 20MB",
     "privacyNote": "이미지는 브라우저 안에서만 읽히며 업로드되지 않습니다.",
-    "privacyTitle": "개인정보 보호:",
+    "privacyTitle": "개인정보 보호: ",
     "privacyMessage": "사진과 이미지는 브라우저에서 로컬로 처리되며 서버에 업로드되지 않습니다.",
     "privacyLearnMore": "자세히 알아보기",
     "pasteHint": "팁: Ctrl+V (Mac에서는 Cmd+V)로 이미지 붙여넣기",
@@ -400,7 +404,14 @@
     "prevalenceDeuteranopia": "남성의 약 6%",
     "prevalenceProtanopia": "남성의 약 2%",
     "prevalenceTritanopia": "약 0.01%",
-    "prevalenceAchromatopsia": "약 0.003%"
+    "prevalenceAchromatopsia": "약 0.003%",
+    "visionShort": {
+      "normal": "정상",
+      "deuteranopia": "2색",
+      "protanopia": "1색",
+      "tritanopia": "3색",
+      "achromatopsia": "전색"
+    }
   },
   "comparison": {
     "selectedDyes": "선택된 염료",
@@ -589,7 +600,15 @@
     "pricesRefreshed": "가격이 새로고침되었습니다!",
     "refreshError": "가격 새로고침 오류. 다시 시도해주세요.",
     "priceUnavailable": "가격 정보 없음",
-    "offlineWarning": "오프라인 상태입니다. 가격을 새로고침할 수 없습니다."
+    "offlineWarning": "오프라인 상태입니다. 가격을 새로고침할 수 없습니다.",
+    "region": {
+      "japan": "일본",
+      "northAmerica": "북미",
+      "europe": "유럽",
+      "oceania": "오세아니아",
+      "china": "중국",
+      "korea": "한국"
+    }
   },
   "budget": {
     "targetDye": "대상 염료",
@@ -1204,7 +1223,8 @@
     "stainShort": "스테인",
     "replaceSlotN": "슬롯 {n} 교체",
     "dyeResultAria": "염료 결과: {name}",
-    "addingDyeLabel": "추가 중:"
+    "addingDyeLabel": "추가 중:",
+    "noData": "데이터 없음"
   },
   "share": {
     "button": "공유",
@@ -1329,5 +1349,13 @@
     "sameModelList": "동일 모델: {list}",
     "gridTitle": "{name} ({count})",
     "cellTag": "{palette} #{index}"
+  },
+  "languages": {
+    "en": "영어",
+    "ja": "일본어",
+    "de": "독일어",
+    "fr": "프랑스어",
+    "ko": "한국어",
+    "zh": "중국어"
   }
 }

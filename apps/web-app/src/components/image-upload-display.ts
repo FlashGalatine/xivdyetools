@@ -168,8 +168,11 @@ export class ImageUploadDisplay extends BaseComponent {
     });
     privacyNotice.appendChild(privacyTitle);
     // Message text
+    // No separator space here: `privacyTitle` carries its own trailing space
+    // where the script needs one, and ja/zh end on a fullwidth colon that must
+    // butt straight against the message.
     const privacyMessage = document.createTextNode(
-      ` ${LanguageService.t('matcher.privacyMessage')} `
+      `${LanguageService.t('matcher.privacyMessage')} `
     );
     privacyNotice.appendChild(privacyMessage);
     // Learn more link (hardcoded URL is safe, only text is translated)

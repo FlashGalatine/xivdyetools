@@ -1304,7 +1304,7 @@ export class ResultCard extends BaseLitComponent {
       const existingDye = dyeService.getDyeById(dyeId);
       const dyeName = existingDye
         ? LanguageService.getDyeName(existingDye.itemID) || existingDye.name
-        : 'Unknown';
+        : LanguageService.t('common.unknown');
       const dyeHex = existingDye?.hex ?? '#888888';
 
       const btn = document.createElement('button');
@@ -1479,7 +1479,7 @@ export class ResultCard extends BaseLitComponent {
 
   protected override render(): TemplateResult {
     if (!this.data) {
-      return html`<div class="ticket">No data</div>`;
+      return html`<div class="ticket">${LanguageService.t('resultCard.noData')}</div>`;
     }
 
     const { dye, originalColor, matchedColor, hueDeviance, marketServer, price } = this.data;

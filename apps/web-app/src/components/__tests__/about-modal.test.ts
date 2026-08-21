@@ -19,9 +19,12 @@ vi.mock('@services/modal-service', () => ({
   },
 }));
 
+/** Overrides for the key-echoing default, so a test can supply real copy. */
+const mockTranslations: Record<string, string> = {};
+
 vi.mock('@services/language-service', () => ({
   LanguageService: {
-    t: (key: string) => key,
+    t: (key: string) => mockTranslations[key] ?? key,
     subscribe: vi.fn().mockReturnValue(() => {}),
   },
 }));
@@ -140,6 +143,45 @@ describe('AboutModal', () => {
       modal.show();
 
       expect(mockShow).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // ============================================================================
+  // Credits
+  // ============================================================================
+
+  describe('Credits', () => {
+    afterEach(() => {
+      for (const key of Object.keys(mockTranslations)) delete mockTranslations[key];
+    });
+
+    it('renders the credit anchor at the {link} placeholder, not always last', async () => {
+      // ja/ko/zh put the attribution straight after a colon; the anchor has to
+      // land where the sentence puts it, so the copy carries a placeholder.
+      mockTranslations['footer.universalisCredit'] = 'before {link} after';
+      const { AboutModal } = await import('../about-modal');
+      new AboutModal().show();
+
+      const content = mockShow.mock.calls[0][0].content as HTMLElement;
+      const anchor = content.querySelector('a[href="https://universalis.app/"]');
+      expect(anchor).not.toBeNull();
+      const line = anchor?.parentElement;
+      expect(line?.textContent).toBe('before universalis.app after');
+      expect(line?.childNodes[0]?.textContent).toBe('before ');
+      expect(line?.childNodes[1]).toBe(anchor);
+      expect(line?.childNodes[2]?.textContent).toBe(' after');
+    });
+
+    it('renders the anchor last when the placeholder ends the sentence', async () => {
+      mockTranslations['about.spectralCredit'] = 'Realistic paint mixing by {link}';
+      const { AboutModal } = await import('../about-modal');
+      new AboutModal().show();
+
+      const content = mockShow.mock.calls[0][0].content as HTMLElement;
+      const anchor = content.querySelector('a[href="https://github.com/rvanwijnen/spectral.js"]');
+      const line = anchor?.parentElement;
+      expect(line?.textContent).toBe('Realistic paint mixing by spectral.js');
+      expect(line?.lastChild).toBe(anchor);
     });
   });
 

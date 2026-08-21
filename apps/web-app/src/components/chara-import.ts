@@ -1319,7 +1319,8 @@ export class CharaImport {
           entry.dye ? this.dyeName(entry.dye) : `#${stainId}`
         )
       );
-      // Stain ID is an identifier — mono, never localised.
+      // Stain ID is an identifier by decision (2026-08-20 i18n audit) — mono,
+      // never localised.
       text.appendChild(
         this.el(
           'span',

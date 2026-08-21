@@ -23,13 +23,13 @@
     "elsewhere": "其他平台",
     "apiSummary": "公开染剂数据，两个接口",
     "legalLabel": "版权声明",
-    "spectralCredit": "逼真的颜料混合（Kubelka–Munk 理论）来自",
+    "spectralCredit": "逼真的颜料混合（Kubelka–Munk 理论）来自 {link}",
     "dataApiLabel": "数据API",
     "apiDocsLabel": "API Worker 文档"
   },
   "footer": {
     "createdBy": "由 Flash Galatine (Midgardsormr) 为 FFXIV 社区创建",
-    "universalisCredit": "市场板数据由以下提供:",
+    "universalisCredit": "市场板数据由以下提供：{link}",
     "disclaimer": "FINAL FANTASY XIV © 2010-2025 SQUARE ENIX CO., LTD. 保留所有权利。",
     "notAffiliated": "XIV 染色工具是粉丝制作的应用程序，与 Square Enix 无关，也未获得其认可。"
   },
@@ -127,7 +127,10 @@
     "loadingTool": "正在加载{tool}…",
     "closeModal": "关闭对话框",
     "confirm": "确认",
-    "slotN": "槽位 {n}"
+    "slotN": "槽位 {n}",
+    "unknown": "未知",
+    "comingSoonTool": "{tool}工具",
+    "comingSoon": "敬请期待"
   },
   "resultCard": {
     "inspectDyeIn": "在以下工具中查看...",
@@ -155,7 +158,8 @@
     "stainShort": "染色ID",
     "replaceSlotN": "替换槽位{n}",
     "dyeResultAria": "染剂结果：{name}",
-    "addingDyeLabel": "正在添加："
+    "addingDyeLabel": "正在添加：",
+    "noData": "无数据"
   },
   "config": {
     "harmonyType": "和谐类型",
@@ -256,7 +260,8 @@
     "matchingDistinguishDesc": "RGB距离换算为0-100。与RGB DIST排名相同，以百分比显示。",
     "showHue": "色相差",
     "showStain": "染色ID",
-    "showSpectrum": "光谱"
+    "showSpectrum": "光谱",
+    "userFallback": "用户"
   },
   "colorPalette": {
     "title": "调色板",
@@ -428,7 +433,14 @@
     "prevalenceDeuteranopia": "约6%男性",
     "prevalenceProtanopia": "约2%男性",
     "prevalenceTritanopia": "约0.01%",
-    "prevalenceAchromatopsia": "约0.003%"
+    "prevalenceAchromatopsia": "约0.003%",
+    "visionShort": {
+      "normal": "正常",
+      "deuteranopia": "绿盲",
+      "protanopia": "红盲",
+      "tritanopia": "蓝盲",
+      "achromatopsia": "全盲"
+    }
   },
   "comparison": {
     "selectedDyes": "已选染剂",
@@ -617,7 +629,15 @@
     "pricesRefreshed": "价格刷新成功！",
     "refreshError": "刷新价格时出错。请重试。",
     "priceUnavailable": "价格不可用",
-    "offlineWarning": "您处于离线状态。无法刷新价格。"
+    "offlineWarning": "您处于离线状态。无法刷新价格。",
+    "region": {
+      "japan": "日本",
+      "northAmerica": "北美",
+      "europe": "欧洲",
+      "oceania": "大洋洲",
+      "china": "中国",
+      "korea": "韩国"
+    }
   },
   "budget": {
     "targetDye": "目标染剂",
@@ -1329,5 +1349,13 @@
     "sameModelList": "同一模型：{list}",
     "gridTitle": "{name}（{count}）",
     "cellTag": "{palette} #{index}"
+  },
+  "languages": {
+    "en": "英语",
+    "ja": "日语",
+    "de": "德语",
+    "fr": "法语",
+    "ko": "韩语",
+    "zh": "中文"
   }
 }

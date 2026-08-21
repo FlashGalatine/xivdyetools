@@ -23,13 +23,13 @@
     "elsewhere": "AILLEURS",
     "apiSummary": "Données publiques des teintures, deux points d'accès",
     "legalLabel": "ATTRIBUTION",
-    "spectralCredit": "Mélange de peinture réaliste (théorie de Kubelka–Munk) par",
+    "spectralCredit": "Mélange de peinture réaliste (théorie de Kubelka–Munk) par {link}",
     "dataApiLabel": "API de données",
     "apiDocsLabel": "Docs de l'API Worker"
   },
   "footer": {
     "createdBy": "Créé par Flash Galatine (Midgardsormr) pour la communauté FFXIV",
-    "universalisCredit": "Données du tableau des marchés fournies par",
+    "universalisCredit": "Données du tableau des ventes fournies par {link}",
     "disclaimer": "FINAL FANTASY XIV © 2010-2025 SQUARE ENIX CO., LTD. Tous droits réservés.",
     "notAffiliated": "Outils de Teinture XIV est une application créée par des fans et n'est pas affiliée à Square Enix ni approuvée par eux."
   },
@@ -127,7 +127,10 @@
     "loadingTool": "Chargement de {tool}…",
     "closeModal": "Fermer la fenêtre",
     "confirm": "Confirmer",
-    "slotN": "Emplacement {n}"
+    "slotN": "Emplacement {n}",
+    "unknown": "Inconnu",
+    "comingSoonTool": "Outil {tool}",
+    "comingSoon": "Bientôt disponible"
   },
   "config": {
     "harmonyType": "Type d'harmonie",
@@ -228,7 +231,8 @@
     "matchingDistinguishDesc": "Distance RVB ramenée de 0 à 100. Même classement que RGB DIST, affichée en pourcentage.",
     "showHue": "Écart de teinte",
     "showStain": "ID Stain",
-    "showSpectrum": "Spectre"
+    "showSpectrum": "Spectre",
+    "userFallback": "Utilisateur"
   },
   "colorPalette": {
     "title": "Palette de couleurs",
@@ -309,7 +313,7 @@
     "takePhoto": "Prendre une photo",
     "supportedFormatsWithSize": "Formats supportés : PNG, JPG, WebP, GIF. Taille max : 20 Mo",
     "privacyNote": "Les images sont lues dans votre navigateur et jamais envoyées.",
-    "privacyTitle": "Protection de la vie privée :",
+    "privacyTitle": "Protection de la vie privée : ",
     "privacyMessage": "Les photos et images sont traitées localement dans votre navigateur et ne sont jamais téléchargées sur un serveur.",
     "privacyLearnMore": "En savoir plus",
     "pasteHint": "Astuce : Collez une image avec Ctrl+V (Cmd+V sur Mac)",
@@ -400,7 +404,14 @@
     "prevalenceDeuteranopia": "~6 % des hommes",
     "prevalenceProtanopia": "~2 % des hommes",
     "prevalenceTritanopia": "~0,01 %",
-    "prevalenceAchromatopsia": "~0,003 %"
+    "prevalenceAchromatopsia": "~0,003 %",
+    "visionShort": {
+      "normal": "NRM",
+      "deuteranopia": "DEU",
+      "protanopia": "PRO",
+      "tritanopia": "TRI",
+      "achromatopsia": "ACH"
+    }
   },
   "comparison": {
     "selectedDyes": "Teintures sélectionnées",
@@ -589,7 +600,15 @@
     "pricesRefreshed": "Prix actualisés avec succès !",
     "refreshError": "Erreur lors de l'actualisation des prix. Veuillez réessayer.",
     "priceUnavailable": "Prix indisponible",
-    "offlineWarning": "Vous êtes hors ligne. Impossible de rafraîchir les prix."
+    "offlineWarning": "Vous êtes hors ligne. Impossible de rafraîchir les prix.",
+    "region": {
+      "japan": "Japon",
+      "northAmerica": "Amérique du Nord",
+      "europe": "Europe",
+      "oceania": "Océanie",
+      "china": "Chine",
+      "korea": "Corée"
+    }
   },
   "budget": {
     "targetDye": "Teinture cible",
@@ -1204,7 +1223,8 @@
     "stainShort": "STAIN",
     "replaceSlotN": "Remplacer l'emplacement {n}",
     "dyeResultAria": "Résultat de teinture : {name}",
-    "addingDyeLabel": "Ajout :"
+    "addingDyeLabel": "Ajout :",
+    "noData": "Aucune donnée"
   },
   "share": {
     "button": "Partager",
@@ -1329,5 +1349,13 @@
     "sameModelList": "Même modèle : {list}",
     "gridTitle": "{name} ({count})",
     "cellTag": "{palette} #{index}"
+  },
+  "languages": {
+    "en": "Anglais",
+    "ja": "Japonais",
+    "de": "Allemand",
+    "fr": "Français",
+    "ko": "Coréen",
+    "zh": "Chinois"
   }
 }

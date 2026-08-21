@@ -1520,7 +1520,7 @@ export class AccessibilityTool extends BaseComponent {
       const note =
         this.activeVision === 'normal'
           ? '\u2014'
-          : `${unit.format(this.pairValue(i, j, 'normal'))} NRM \u2192 ${unit.format(value)} ${activeShort}`;
+          : `${unit.format(this.pairValue(i, j, 'normal'))} ${this.visionShort('normal')} \u2192 ${unit.format(value)} ${activeShort}`;
       text.appendChild(
         this.createElement('span', {
           textContent: note,
@@ -1545,16 +1545,19 @@ export class AccessibilityTool extends BaseComponent {
     }
   }
 
-  /** Mono short code for a vision type (NRM/DEU/PRO/TRI/ACH) */
+  /**
+   * Short code for a vision type (NRM/DEU/PRO/TRI/ACH in Latin locales). The
+   * keys are written out literally so the orphan scanner sees each one.
+   */
   private visionShort(vision: VisionTypeId): string {
-    const shorts: Record<VisionTypeId, string> = {
-      normal: 'NRM',
-      deuteranopia: 'DEU',
-      protanopia: 'PRO',
-      tritanopia: 'TRI',
-      achromatopsia: 'ACH',
+    const keys: Record<VisionTypeId, string> = {
+      normal: 'accessibility.visionShort.normal',
+      deuteranopia: 'accessibility.visionShort.deuteranopia',
+      protanopia: 'accessibility.visionShort.protanopia',
+      tritanopia: 'accessibility.visionShort.tritanopia',
+      achromatopsia: 'accessibility.visionShort.achromatopsia',
     };
-    return shorts[vision];
+    return LanguageService.t(keys[vision]);
   }
 
   private capitalize(id: string): string {
