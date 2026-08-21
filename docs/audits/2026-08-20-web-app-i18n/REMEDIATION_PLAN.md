@@ -84,7 +84,7 @@ The three scaffolds from Sprint 0 are wired into the nine tools, route titles go
 
 | ID | Source | Sev/Pri | Item |
 |----|--------|---------|------|
-| TERM-003 | terminology | 🟡 P2 | `config-sidebar.ts:944-957` harmony `<option>` labels → `LanguageService.getHarmonyType(value)`; delete `config.{complementary,analogous,triadic,splitComplementary,tetradic,square,monochromatic,compound,shades}` ×6 (9 keys). |
+| TERM-003 | terminology | 🟡 P2 | `config-sidebar.ts:944-957` harmony `<option>` labels → `LanguageService.getHarmonyType(value)`; delete `config.{complementary,analogous,triadic,splitComplementary,tetradic,square,monochromatic,compound,shades}` ×6 (10 keys, incl. `config.invertedTetradic`). |
 | TERM-004 | terminology | 🟡 P2 | `config-sidebar.ts:1170-1194` vision toggle labels: keep the short form but align the ja/ko/zh head nouns to core's (`2型色覚` / `제2색맹` / `绿色盲`…) — edit the 10 cells; or add a `getVisionTypeShort()` to core and delete `config.{deuteranopia,protanopia,tritanopia,achromatopsia}`. Decide once; the former is a locale-only edit, the latter a core bump. |
 | TERM-005 | terminology | 🟢 P3 | Translator call on "Venture Coffer" in `filters.excludeCoffers` (de/fr), `preset.cfgHideUnbuyableDesc` (de/fr/ko), `budget.offText` (fr) — adopt Schatzkiste / Trouvaille / 보물상자 or record the paraphrase as accepted. |
 | HC-V4-008 (+ swatch `METHOD_TAGS`) | hardcoded | 🟡 P2 decision | `RGB DIST` / `DISTINGUISH %` in `config-sidebar.ts:1467/1469` and `swatch-tool.ts:209-216`: decide identifier-vs-key; if key, `config.matchingRgbTag/matchingDistinguishTag`. Record the decision in the design record alongside the ΔE tags. |
@@ -214,7 +214,6 @@ All seven sprints above shipped as 19 tasks (Task 20 is this close-out) on branc
 - The loop-guard test added for the collection-import path doesn't reproduce the double-collision case it guards against.
 
 **Config sidebar / vocabulary (Tasks 11, 13)**
-- `config-sidebar.ts` holds its own copy of the `SUBRACE_TO_CLAN_KEY` map — a third copy alongside `chara-import.ts` and `swatch-tool.ts` — never folded into a shared module.
 - `METHOD_TAGS` is duplicated across three files; `RACE_KEY_BY_RACE` is unshared.
 - A full `<v4-config-sidebar>` mount is impossible in the current test harness (the `ConfigController` mock doesn't support it).
 
@@ -226,7 +225,6 @@ All seven sprints above shipped as 19 tasks (Task 20 is this close-out) on branc
 - The pre-existing "Market · Market" duplication in one label was left as-is (predates this remediation).
 
 **Swatch / chara-import (Task 16)**
-- `image-upload-display.ts:172` has a leading ASCII space after a fullwidth colon in one locale string.
 - French `harmony.baseColorSection` ("Couleur de Base") capitalisation doesn't match the newer `baseColorTitle` key's convention.
 - `gradient-tool.test.ts` carries negative assertions that can't fail (inert).
 - Swatch's `gridTitle` is computed twice per render.

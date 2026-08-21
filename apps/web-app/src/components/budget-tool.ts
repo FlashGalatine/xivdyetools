@@ -467,7 +467,10 @@ export class BudgetTool extends BaseComponent {
     }
 
     const meta = CONSOLIDATED_DYES[tier];
-    const localCost = `${formatNumber(meta.price)} ${LanguageService.getCurrency(meta.currency)}`;
+    const localCost =
+      meta.currency === 'Gil'
+        ? formatGil(meta.price)
+        : `${formatNumber(meta.price)} ${LanguageService.getCurrency(meta.currency)}`;
     if (tier === 'A') {
       // Vendor gil is deterministic and always known.
       return { tier, gil: meta.price, board, localCost };
@@ -1525,7 +1528,10 @@ export class BudgetTool extends BaseComponent {
       priceSub = LanguageService.t('budget.noVendorMarketOnly');
     } else {
       const tierMeta = CONSOLIDATED_DYES[tier];
-      const localCost = `${formatNumber(tierMeta.price)} ${LanguageService.getCurrency(tierMeta.currency)}`;
+      const localCost =
+        tierMeta.currency === 'Gil'
+          ? formatGil(tierMeta.price)
+          : `${formatNumber(tierMeta.price)} ${LanguageService.getCurrency(tierMeta.currency)}`;
       const boardPrice = list.length > 0 ? list[0].price.board : null;
       if (tier === 'A') {
         priceMain = formatGil(tierMeta.price);

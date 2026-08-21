@@ -1736,9 +1736,7 @@ export class ComparisonTool extends BaseComponent {
     // A custom colour has no acquisition — print the localized "Custom"
     // label instead of running the sentinel through getAcquisition().
     const sourceLabel = (d: Dye): string =>
-      isCustomDye(d)
-        ? customDyeLabel()
-        : LanguageService.getAcquisition(d.acquisition) || d.acquisition;
+      isCustomDye(d) ? customDyeLabel() : LanguageService.getAcquisition(d.acquisition);
     const rows: Array<[string, string, string, string]> = [
       [
         t('deltaLight'),
