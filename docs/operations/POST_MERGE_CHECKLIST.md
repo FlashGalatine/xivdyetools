@@ -16,24 +16,25 @@ api-worker, image-worker; the **routed beta** worker on og-worker; and **product
 
 ## 0. Before merging (branch readiness)
 
-*Walked 2026-08-21 against the live account (`wrangler` OAuth + `gh` admin). Two items stay
-open: the i18n-branch decision and the optional cache-purge secrets. The production-D1 item was
-split — only `0011` belongs before the merge; the stainID rewrite and the identity backfill moved
-to §1 (see the reasoning inline).*
+*Walked 2026-08-21 against the live account (`wrangler` OAuth + `gh` admin). One item stays
+open: the optional cache-purge secrets. The production-D1 item was split — only `0011` belongs
+before the merge; the stainID rewrite and the identity backfill moved to §1 (see the reasoning
+inline). The i18n branch was merged the same day (`29efe5f0`).*
 
 - [x] CI green on `monorepo-2.0-prep` including the new `secret-scan` job — run on `4a07f249`
       (2026-08-21): *Secret scan (gitleaks)*, *Security audit (production dependencies)* and
       *Lint, Type-check, Test, Build* all `success`; gitleaks' first CI run was clean, no
       `.gitleaks.toml` change needed.
-- [ ] **Decide the fate of the unmerged i18n remediation branch `i18n-remediation-2026-08-20`**
-      (worktree `.worktrees/xivdyetools-i18n`, pushed to origin, 25 commits ahead / 50 behind,
-      gates green). Measured 2026-08-21 with `git merge-tree --write-tree`: 141 files auto-merge,
-      **6 conflict** — `apps/web-app/CHANGELOG.md`, `apps/web-app/src/main.ts` (5.0 side
-      −22/+… vs i18n side +53), `apps/web-app/src/components/my-submissions-modal.ts` (14 vs 30
-      changed lines), and add/add on the three `docs/audits/2026-08-20-web-app-i18n/*.md`. All
-      small. **Recommendation: merge it into `monorepo-2.0-prep` before main** — landing it as
-      the first post-merge PR would re-ship the same six locale files a second time and the
-      `i18n` lint gates it adds would not protect the 5.0 release itself. Do not let it drift.
+- [x] **i18n remediation branch `i18n-remediation-2026-08-20` merged into the 5.0 line** —
+      merge commit `29efe5f0` (2026-08-21). 141 files auto-merged, 6 conflicted and were resolved
+      keeping both sides' intent: `main.ts` keeps the CSP-safe `renderFatalError` (WEB-9) and
+      feeds it the i18n branch's six-language copy through a new optional `copy` parameter;
+      `my-submissions-modal.ts` keeps the FINDING-011 `escapeHtml()` on remote strings *and* the
+      localized vote count / `var(--font-mono)` row; `CHANGELOG.md` is one `[Unreleased]` block;
+      the three add/add audit docs took the branch's post-remediation versions. Gates on the
+      merged tree: eslint + knip clean, `tsc` clean, `validate:i18n` parity clean, vitest
+      2591/2591, `build:check` within budget. The `.worktrees/xivdyetools-i18n` worktree and the
+      remote branch can be removed once `monorepo-2.0-prep` carries `29efe5f0`.
 - [x] **presets-api D1 — `0011_submission_events` applied to production 2026-08-21**
       (`wrangler d1 execute DB --remote --env production --file=./migrations/0011_submission_events.sql`,
       2 queries, verified via `sqlite_master`: table + `idx_submission_events_user_kind_created`).
