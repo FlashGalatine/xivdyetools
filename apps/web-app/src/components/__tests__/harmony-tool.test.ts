@@ -236,25 +236,6 @@ vi.mock('@components/v4/v4-color-wheel', () => ({}));
 
 vi.mock('@components/v4/result-card', () => ({}));
 
-vi.mock('../harmony-result-panel', () => ({
-  HarmonyResultPanel: class MockHarmonyResultPanel {
-    container: HTMLElement;
-    constructor(container: HTMLElement) {
-      this.container = container;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'harmony-result-panel';
-      this.container.appendChild(div);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-    }
-    setPriceData() {}
-    setShowPrices() {}
-  },
-}));
-
 vi.mock('@services/pricing-mixin', () => ({
   setupMarketBoardListeners: vi.fn().mockReturnValue(() => {}),
 }));
@@ -425,26 +406,6 @@ vi.mock('../harmony-type', () => ({
     setPriceData() {}
     updateDyes() {}
     updateBaseColor() {}
-  },
-}));
-
-vi.mock('../color-wheel-display', () => ({
-  ColorWheelDisplay: class MockColorWheelDisplay {
-    container: HTMLElement;
-    constructor(container: HTMLElement) {
-      this.container = container;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'color-wheel-display';
-      this.container.appendChild(div);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-    }
-    setActiveHarmony() {}
-    setBaseColor() {}
-    setHarmonyDyes() {}
   },
 }));
 
