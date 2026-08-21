@@ -119,7 +119,10 @@
     "dismiss": "Dismiss",
     "optional": "(optional)",
     "done": "Done",
-    "alternates": "ALSO"
+    "alternates": "ALSO",
+    "custom": "Custom",
+    "customColorName": "Custom ({hex})",
+    "gilAmount": "{n} {unit}"
   },
   "config": {
     "harmonyType": "Harmony Type",

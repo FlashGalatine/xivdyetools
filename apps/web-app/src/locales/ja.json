@@ -119,7 +119,10 @@
     "dismiss": "閉じる",
     "optional": "(任意)",
     "done": "完了",
-    "alternates": "候補"
+    "alternates": "候補",
+    "custom": "カスタム",
+    "customColorName": "カスタム（{hex}）",
+    "gilAmount": "{n}{unit}"
   },
   "config": {
     "harmonyType": "ハーモニータイプ",

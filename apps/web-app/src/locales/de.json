@@ -119,7 +119,10 @@
     "dismiss": "Schließen",
     "optional": "(optional)",
     "done": "Fertig",
-    "alternates": "AUCH"
+    "alternates": "AUCH",
+    "custom": "Benutzerdefiniert",
+    "customColorName": "Benutzerdefiniert ({hex})",
+    "gilAmount": "{n} {unit}"
   },
   "config": {
     "harmonyType": "Harmonie-Typ",

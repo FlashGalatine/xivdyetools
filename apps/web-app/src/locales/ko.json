@@ -119,7 +119,10 @@
     "dismiss": "닫기",
     "optional": "(선택사항)",
     "done": "완료",
-    "alternates": "대안"
+    "alternates": "대안",
+    "custom": "사용자 지정",
+    "customColorName": "사용자 지정 ({hex})",
+    "gilAmount": "{n} {unit}"
   },
   "config": {
     "harmonyType": "조화 유형",

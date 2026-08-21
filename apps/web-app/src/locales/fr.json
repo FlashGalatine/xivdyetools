@@ -119,7 +119,10 @@
     "dismiss": "Fermer",
     "optional": "(optionnel)",
     "done": "Terminé",
-    "alternates": "AUSSI"
+    "alternates": "AUSSI",
+    "custom": "Personnalisé",
+    "customColorName": "Personnalisé ({hex})",
+    "gilAmount": "{n} {unit}"
   },
   "config": {
     "harmonyType": "Type d'harmonie",

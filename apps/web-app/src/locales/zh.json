@@ -119,7 +119,10 @@
     "dismiss": "关闭",
     "optional": "（可选）",
     "done": "完成",
-    "alternates": "备选"
+    "alternates": "备选",
+    "custom": "自定义",
+    "customColorName": "自定义（{hex}）",
+    "gilAmount": "{n} {unit}"
   },
   "resultCard": {
     "inspectDyeIn": "在以下工具中查看...",
