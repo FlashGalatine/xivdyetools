@@ -34,27 +34,27 @@ Every finding has a `## Status` section in its file with the per-unit detail; th
 | 006 / 007 | MED | moderation-worker | Fixed — autocomplete moderator gate; `custom_id` ≤ 100 | 8a05949d |
 | 008 | MED | presets-api | Fixed — append-only quota events (migration 0011) | 2a8a034b |
 | 009 / 010 | MED | CI, docs | Fixed — SHA pins, `permissions`, `environment: production`, SECRET_ROTATION rewrite | 5d49bf2b |
-| 011 | LOW | web-app | Fixed | 2f1e19d9 |
-| 012 / 013 / 029 | LOW | oauth | Fixed — PKCE-state binding mandatory (`400 Missing state`), web-app forwards `state` | b9f15bf1, 6448ef6c, web-app 30cbd41f |
-| 014 | LOW | auth, bots, presets-api | Fixed — bot signature v2; v1 acceptance kept for rollover (removal gated — checklist §3); nonce bound, not cached (residual) | beec3f8b |
+| 011 | LOW | web-app | Fixed | 049ec057 |
+| 012 / 013 / 029 | LOW | oauth | Fixed — PKCE-state binding mandatory (`400 Missing state`), web-app forwards `state` | 51ce8aab, c97a4192, web-app b83455dc |
+| 014 | LOW | auth, bots, presets-api | Fixed — bot signature v2; v1 acceptance kept for rollover (removal gated — checklist §3); nonce bound, not cached (residual) | b5906a21 |
 | 015 | MED | auth, presets-api | Fixed — claim typing, `iss` | 4078c722 |
-| 016 / 017 / 018 | LOW | presets-api | Fixed (018 purge opt-in via two secrets; 017 cross-identity bans deferred) | 066ec770 |
-| 019 | LOW | bot-logic, both bots, stoat, presets-api | Fixed | beec3f8b, 8e75b4ab, d07ab763, aad6f2b3, 066ec770 |
-| 020 | LOW | bots, web-app | Fixed | 8e75b4ab, d07ab763, 2f1e19d9 |
-| 021 | LOW | auth | Fixed — Discord timestamp freshness | beec3f8b |
-| 022 | LOW | discord-worker | Fixed (AE retention figure to confirm) | d07ab763 |
-| 023 | LOW | bots, stoat | Fixed — no `xivdyetools.com` left outside audit/historical docs | 8e75b4ab, d07ab763, aad6f2b3 |
-| 024 | LOW | og-worker | Fixed (OG-4 WAF rule = dashboard action) | 86c951e0 |
-| 025 | LOW | api-worker | Fixed (API-6 second-tier limiter = policy, deferred) | ce067261 |
-| 026 | LOW | logger | Fixed — logger 2.1.0 | beec3f8b |
-| 027 | LOW | core, web-app, stoat | Fixed | beec3f8b, 2f1e19d9, aad6f2b3 |
-| 028 | LOW | svg, presets-api | Fixed — svg 2.0.1 + validation | beec3f8b, 066ec770 |
-| 030 | LOW | repo | Fixed in-repo (gitleaks CI + `.gitleaks.toml`, `.dev.vars.*`, redaction); GitHub secret scanning + push protection = settings (checklist §2) | aad6f2b3 |
-| 031 / 032 | LOW | web-app | Fixed (WEB-10 source maps deliberately unchanged) | 2f1e19d9 |
-| 033 | LOW | discord-worker | Fixed | d07ab763 |
-| 034 | LOW | moderation-worker | Fixed (`moderation_log` rows for bans deferred — presets-api-owned table) | 8e75b4ab |
-| 035 | LOW | stoat-worker | Fixed — 0.2.2 | aad6f2b3 |
-| 036 | LOW | deps | Fixed — scoped overrides (vitepress>vite 6.4.3, tsup>esbuild 0.28.1), `pnpm audit` 0 advisories | 1ecbd1be |
+| 016 / 017 / 018 | LOW | presets-api | Fixed (018 purge opt-in via two secrets; 017 cross-identity bans deferred) | 0decf5c2 |
+| 019 | LOW | bot-logic, both bots, stoat, presets-api | Fixed | b5906a21, 812d6f8b, 9f548aba, d4ea3e78, 0decf5c2 |
+| 020 | LOW | bots, web-app | Fixed | 812d6f8b, 9f548aba, 049ec057 |
+| 021 | LOW | auth | Fixed — Discord timestamp freshness | b5906a21 |
+| 022 | LOW | discord-worker | Fixed (AE retention figure to confirm) | 9f548aba |
+| 023 | LOW | bots, stoat | Fixed — no `xivdyetools.com` left outside audit/historical docs | 812d6f8b, 9f548aba, d4ea3e78 |
+| 024 | LOW | og-worker | Fixed (OG-4 WAF rule = dashboard action) | 3ff697c1 |
+| 025 | LOW | api-worker | Fixed (API-6 second-tier limiter = policy, deferred) | 6e23014d |
+| 026 | LOW | logger | Fixed — logger 2.1.0 | b5906a21 |
+| 027 | LOW | core, web-app, stoat | Fixed | b5906a21, 049ec057, d4ea3e78 |
+| 028 | LOW | svg, presets-api | Fixed — svg 2.0.1 + validation | b5906a21, 0decf5c2 |
+| 030 | LOW | repo | Fixed in-repo (gitleaks CI + `.gitleaks.toml`, `.dev.vars.*`, redaction); GitHub secret scanning + push protection = settings (checklist §2) | d4ea3e78 |
+| 031 / 032 | LOW | web-app | Fixed (WEB-10 source maps deliberately unchanged) | 049ec057 |
+| 033 | LOW | discord-worker | Fixed | 9f548aba |
+| 034 | LOW | moderation-worker | Fixed (`moderation_log` rows for bans deferred — presets-api-owned table) | 812d6f8b |
+| 035 | LOW | stoat-worker | Fixed — 0.2.2 | d4ea3e78 |
+| 036 | LOW | deps | Fixed — scoped overrides (vitepress>vite 6.4.3, tsup>esbuild 0.28.1), `pnpm audit` 0 advisories | 50d8f6bd |
 
 Programme-level: `SECURITY.md` added at the repo root (disclosure via GitHub private vulnerability reporting — enable it in the repo settings, checklist §2); `CODEOWNERS` not added (single maintainer).
 
