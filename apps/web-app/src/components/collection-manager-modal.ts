@@ -31,9 +31,12 @@ export function showCollectionManagerModal(): void {
 
   const countText = document.createElement('span');
   countText.className = 'text-sm text-gray-600 dark:text-gray-400';
-  countText.textContent = LanguageService.tInterpolate('collections.collectionsCount', {
-    count: String(collections.length),
-  });
+  countText.textContent = LanguageService.tInterpolate(
+    collections.length === 1
+      ? 'collections.collectionsCountOne'
+      : 'collections.collectionsCountMany',
+    { count: String(collections.length) }
+  );
   header.appendChild(countText);
 
   const actionsDiv = document.createElement('div');
@@ -218,9 +221,10 @@ function createCollectionItem(collection: Collection, onRefresh: () => void): HT
   metaRow.className = 'flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400';
 
   const dyeCount = document.createElement('span');
-  dyeCount.textContent = LanguageService.tInterpolate('collections.dyeCount', {
-    count: String(collection.dyes.length),
-  });
+  dyeCount.textContent = LanguageService.tInterpolate(
+    collection.dyes.length === 1 ? 'collections.dyeCountOne' : 'collections.dyeCountMany',
+    { count: String(collection.dyes.length) }
+  );
   metaRow.appendChild(dyeCount);
 
   const separator = document.createElement('span');
@@ -379,9 +383,10 @@ function showEditCollectionDialog(collection: Collection, onUpdated: () => void)
 
     const dyesLabel = document.createElement('label');
     dyesLabel.className = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
-    dyesLabel.textContent = LanguageService.tInterpolate('collections.dyeCount', {
-      count: String(collection.dyes.length),
-    });
+    dyesLabel.textContent = LanguageService.tInterpolate(
+      collection.dyes.length === 1 ? 'collections.dyeCountOne' : 'collections.dyeCountMany',
+      { count: String(collection.dyes.length) }
+    );
     dyesGroup.appendChild(dyesLabel);
 
     const dyesGrid = document.createElement('div');

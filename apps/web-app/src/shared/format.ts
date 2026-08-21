@@ -28,6 +28,17 @@ export function formatDate(
   return new Date(d).toLocaleDateString(locale);
 }
 
+/**
+ * Join items into one list phrase with the locale's own conjunction and
+ * separators ("A, B and C" / "A、B、C") instead of a hardcoded ", ".
+ */
+export function formatList(
+  items: string[],
+  locale: LocaleCode = LanguageService.getCurrentLocale()
+): string {
+  return new Intl.ListFormat(locale, { style: 'long', type: 'conjunction' }).format(items);
+}
+
 /** Format a gil amount as "{n} {unit}" (no space in ja), localized. */
 export function formatGil(n: number): string {
   return LanguageService.tInterpolate('common.gilAmount', {

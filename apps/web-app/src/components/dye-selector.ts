@@ -498,7 +498,9 @@ export class DyeSelector extends BaseComponent {
     // Title with count
     const title = this.createElement('span', {
       id: 'favorites-title',
-      textContent: `${LanguageService.t('collections.favorites')} (${this.favoriteDyes.length})`,
+      textContent: LanguageService.tInterpolate('collections.favoritesWithCount', {
+        count: this.favoriteDyes.length,
+      }),
       className: 'font-medium text-gray-900 dark:text-white',
     });
     headerLeft.appendChild(title);
@@ -625,7 +627,9 @@ export class DyeSelector extends BaseComponent {
     // Update title count
     const title = panel.querySelector('#favorites-title');
     if (title) {
-      title.textContent = `${LanguageService.t('collections.favorites')} (${this.favoriteDyes.length})`;
+      title.textContent = LanguageService.tInterpolate('collections.favoritesWithCount', {
+        count: this.favoriteDyes.length,
+      });
     }
 
     // Update content

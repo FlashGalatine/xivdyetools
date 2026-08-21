@@ -1452,7 +1452,7 @@ export class HarmonyTool extends BaseComponent {
         });
 
       this.renderResultPanel({
-        label: `${LanguageService.t('harmony.harmony')} ${index + 1}`,
+        label: LanguageService.tInterpolate('harmony.harmonyN', { n: index + 1 }),
         matchedDye: displayDye,
         targetColor,
         deviance,

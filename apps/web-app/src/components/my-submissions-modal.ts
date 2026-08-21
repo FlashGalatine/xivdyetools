@@ -214,10 +214,13 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
   ModalService.show({
     type: 'custom',
     title: t('preset.mySubmissions'),
-    subtitle: LanguageService.tInterpolate('preset.mineSummary', {
-      n: presets.length,
-      v: totalVotes,
-    }),
+    subtitle: `${LanguageService.tInterpolate(
+      presets.length === 1 ? 'preset.mineSummaryPresetsOne' : 'preset.mineSummaryPresetsMany',
+      { n: presets.length }
+    )} · ${LanguageService.tInterpolate(
+      totalVotes === 1 ? 'preset.votesCountOne' : 'preset.votesCount',
+      { n: totalVotes }
+    )}`,
     content,
     panelWidth: 620,
   });

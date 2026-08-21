@@ -110,7 +110,6 @@
     "options": "选项",
     "hexColor": "十六进制颜色",
     "selectDye": "选择染剂",
-    "slot": "槽位",
     "replace": "替换",
     "acquisition": "获取方式",
     "original": "原始",
@@ -127,7 +126,8 @@
     "gilAmount": "{n} {unit}",
     "loadingTool": "正在加载{tool}…",
     "closeModal": "关闭对话框",
-    "confirm": "确认"
+    "confirm": "确认",
+    "slotN": "槽位 {n}"
   },
   "resultCard": {
     "inspectDyeIn": "在以下工具中查看...",
@@ -139,7 +139,6 @@
     "addedTo": "添加成功",
     "slotsFull": "所有槽位已满。请选择要替换的槽位：",
     "selectSlotToReplace": "选择要替换的槽位",
-    "addingDye": "正在添加",
     "replacedInTool": "替换成功",
     "tools": {
       "harmony": "色彩和谐探索器",
@@ -155,7 +154,8 @@
     "hueOff": "色相差",
     "stainShort": "染色ID",
     "replaceSlotN": "替换槽位{n}",
-    "dyeResultAria": "染剂结果：{name}"
+    "dyeResultAria": "染剂结果：{name}",
+    "addingDyeLabel": "正在添加："
   },
   "config": {
     "harmonyType": "和谐类型",
@@ -271,7 +271,6 @@
     "spectrumWide1": "追加染剂1",
     "spectrumWide2": "追加染剂2",
     "spectrumUnconsolidated": "未合并",
-    "favorites": "收藏夹",
     "noDyesFound": "未找到染剂",
     "customColor": "自定义颜色",
     "enterHexCode": "输入十六进制代码",
@@ -280,7 +279,8 @@
     "invalidHexCode": "无效的十六进制代码",
     "noDyesAvailable": "没有可用的染剂",
     "randomDyeSelected": "已选择 {name}",
-    "mobileHint": "第一次使用？点击调色板按钮即可选择染料。"
+    "mobileHint": "第一次使用？点击调色板按钮即可选择染料。",
+    "favoritesWithCount": "收藏夹（{count}）"
   },
   "harmony": {
     "companionDyes": "每个和谐颜色的额外染剂",
@@ -292,7 +292,6 @@
     "addToComparison": "添加到比较",
     "addToMixer": "添加到混合器",
     "copyHex": "复制十六进制代码",
-    "copiedHex": "已复制",
     "copyFailed": "复制失败",
     "seeBudget": "查看预算建议",
     "seeHarmonies": "查看颜色和谐",
@@ -305,11 +304,9 @@
     "dyeAlreadyInAccessibility": "该染剂已在无障碍检查器中",
     "slotsFull": "所有槽位已满。请选择一个要替换的槽位：",
     "selectSlotToReplace": "选择要替换的槽位",
-    "addingDye": "正在添加",
     "replacedInTool": "替换成功",
     "selectColorPrompt": "选择基础颜色",
     "base": "基础",
-    "harmony": "和谐",
     "baseDye": "基础染剂",
     "harmonyType": "和谐类型",
     "actionsMenu": "操作菜单",
@@ -327,7 +324,11 @@
     },
     "railSwipeHint": "滑动查看更多",
     "marketFailTitle": "无法获取价格",
-    "marketFailBody": "市场板未响应。颜色匹配不受影响，仅缺少价格行。"
+    "marketFailBody": "市场板未响应。颜色匹配不受影响，仅缺少价格行。",
+    "harmonyN": "和谐 {n}",
+    "baseColorTitle": "基础颜色：{hex}",
+    "addingDyeLabel": "正在添加：",
+    "copiedHexValue": "已复制 {hex}"
   },
   "matcher": {
     "uploadImage": "上传图像",
@@ -336,7 +337,7 @@
     "takePhoto": "拍摄照片",
     "supportedFormatsWithSize": "支持格式：PNG、JPG、WebP、GIF。最大大小：20MB",
     "privacyNote": "图像仅在浏览器中读取，绝不上传。",
-    "privacyTitle": "隐私保护",
+    "privacyTitle": "隐私保护：",
     "privacyMessage": "照片和图像在浏览器中本地处理，永远不会上传到任何服务器。",
     "privacyLearnMore": "了解更多",
     "pasteHint": "提示：使用 Ctrl+V（Mac 上使用 Cmd+V）粘贴图像",
@@ -379,7 +380,8 @@
     "copyColorInfo": "复制颜色信息",
     "zoomOut": "缩小",
     "zoomLevel": "当前缩放",
-    "zoomIn": "放大"
+    "zoomIn": "放大",
+    "paletteExtractedOne": "已从图片提取 {count} 种颜色"
   },
   "accessibility": {
     "inspectDyes": "检查染剂",
@@ -551,7 +553,6 @@
       "oklch": "现代感知（最佳）",
       "lch": "圆柱LAB"
     },
-    "stepLabel": "步骤",
     "fromLabel": "起点",
     "toLabel": "终点",
     "swap": "交换",
@@ -561,12 +562,14 @@
     "pinStep": "固定此步骤",
     "unpinStep": "取消固定",
     "endAnchor": "端点 — 本就是锚点",
-    "avgDrift": "平均 ΔE",
-    "maxDrift": "最大 ΔE",
     "maxDriftDesc": "渐变中最差的一级——平均值会掩盖单点跳变。",
     "bandIdeal": "理想",
     "bandAchievable": "可实现",
-    "exportMeta": "插值：{space} · {n} 步骤"
+    "exportMeta": "插值：{space} · {n} 步骤",
+    "stepN": "步骤 {n}",
+    "pinnedCount": "已固定步骤 · {n}",
+    "avgDriftValue": "平均 ΔE {v}",
+    "maxDriftValue": "最大 ΔE {v}"
   },
   "dyeSelector": {
     "searchPlaceholder": "按名称搜索染剂...",
@@ -748,8 +751,7 @@
     "cycleLanguage": "切换语言",
     "shareTool": "分享当前工具",
     "showHelp": "显示此面板",
-    "platformHint": "提示",
-    "useModifier": "使用 Ctrl 进行系统快捷键"
+    "platformHintFull": "提示：使用 Ctrl 触发系统快捷键。"
   },
   "palette": {
     "exported": "调色板导出成功！",
@@ -1058,7 +1060,6 @@
     "dyesReq": "需 3–6 色",
     "dyesHint": "点击槽位选择。这里不提供十六进制输入和取色器 — 配色必须可购买，每个槽位都得是真实染剂。",
     "rulesNote": "投稿在发布前会经过检查：不得与现有配色重复，名称不得违反行为准则，示例链接必须指向允许的站点。通常需要一天。",
-    "mineSummary": "{n} 个 · {v} 票",
     "statusLive": "已发布",
     "statusReview": "审核中",
     "statusRejected": "未发布",
@@ -1078,8 +1079,6 @@
     "cfgSavedFirstDesc": "固定在每个标签顶部",
     "cfgKeepDeleted": "保留已删除配色",
     "cfgKeepDeletedDesc": "作者删除后仍保留并标记",
-    "cfgStoredLocally": "本地存储",
-    "cfgStoredLocallyDesc": "绝不上传服务器，未登录也可用",
     "authorBy": "由 {author} 创建",
     "editTitle": "编辑预设",
     "saveChanges": "保存更改",
@@ -1111,10 +1110,12 @@
       "dyesInvalid": "染剂选择无效",
       "tagsMax": "最多允许 {n} 个标签",
       "tagLength": "每个标签不能超过 {n} 个字符"
-    }
+    },
+    "cfgStoredLocallyHint": "保存在本机，绝不上传服务器，未登录也可使用。",
+    "mineSummaryPresetsOne": "{n} 个",
+    "mineSummaryPresetsMany": "{n} 个"
   },
   "collections": {
-    "favorites": "收藏夹",
     "favoritesEmptyHint": "点击染剂的★将其添加到收藏夹",
     "favoritesFull": "最多允许 {max} 个收藏",
     "addToFavorites": "添加到收藏夹",
@@ -1123,7 +1124,6 @@
     "removedFromFavorites": "已从收藏夹移除",
     "collectionsEmpty": "暂无集合",
     "collectionsEmptyHint": "创建集合来整理您的染剂",
-    "collectionsCount": "{count} 个集合",
     "newCollection": "新建集合",
     "createCollection": "创建集合",
     "editCollection": "编辑集合",
@@ -1136,7 +1136,6 @@
     "addToCollection": "添加到集合",
     "addedToCollection": "已添加到 {name}",
     "removedFromCollection": "已从 {name} 移除",
-    "dyeCount": "{count} 种染剂",
     "collectionFull": "集合已满（最多 {max} 种染剂）",
     "export": "导出",
     "exportAll": "全部导出",
@@ -1150,7 +1149,12 @@
     "importCreateFailed": "创建集合失败：{name}",
     "importedSuffix": "{name}（导入 {n}）",
     "unnamed": "未命名",
-    "full": "已满"
+    "full": "已满",
+    "favoritesWithCount": "收藏夹（{count}）",
+    "collectionsCountOne": "{count} 个集合",
+    "collectionsCountMany": "{count} 个集合",
+    "dyeCountOne": "{count} 种染剂",
+    "dyeCountMany": "{count} 种染剂"
   },
   "emptyStates": {
     "noSearchResults": {
@@ -1198,7 +1202,9 @@
     "toggle": "切换",
     "toolSelection": "工具选择",
     "modalDialogs": "对话框",
-    "notifications": "通知"
+    "notifications": "通知",
+    "removeFromFavoritesNamed": "从收藏夹移除 {name}",
+    "addToFavoritesNamed": "添加 {name} 到收藏夹"
   },
   "share": {
     "button": "分享",
@@ -1307,8 +1313,8 @@
     "saveCharacter": "保存角色颜色",
     "characterSavedOne": "已将 1 个角色颜色保存到本设备。",
     "characterSavedMany": "已将 {n} 个角色颜色保存到本设备。",
-    "selSentence": "{subject} 位于 {place}。{dye} 相差 {delta}。",
-    "selSentenceCell": "{place}。{dye} 相差 {delta}。",
+    "selSentence": "{subject} 位于 {palette} {addr}。{dye} 相差 {delta}。",
+    "selSentenceCell": "{palette} {addr}。{dye} 相差 {delta}。",
     "selSentenceOffGrid": "{subject} 是任意颜色。{dye} 相差 {delta}。",
     "closestSwatchesHead": "最接近的色板",
     "rowColumn": "第{row}行，第{col}列",
@@ -1320,6 +1326,8 @@
       "noTribe": "该栏位需要文件中的部族与性别信息才能解析",
       "unknown": "无法读取此栏位"
     },
-    "sameModelList": "同一模型：{list}"
+    "sameModelList": "同一模型：{list}",
+    "gridTitle": "{name}（{count}）",
+    "cellTag": "{palette} #{index}"
   }
 }

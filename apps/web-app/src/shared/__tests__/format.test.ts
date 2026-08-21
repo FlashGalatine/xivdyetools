@@ -21,7 +21,7 @@ vi.mock('@services/language-service', () => ({
   },
 }));
 
-import { formatDate, formatGil, formatNumber } from '../format';
+import { formatDate, formatGil, formatList, formatNumber } from '../format';
 
 describe('format', () => {
   beforeEach(() => {
@@ -53,6 +53,28 @@ describe('format', () => {
       mockGetCurrentLocale.mockReturnValue('en');
       const iso = '2026-01-15T00:00:00Z';
       expect(formatDate(iso)).toBe(new Date(iso).toLocaleDateString('en'));
+    });
+  });
+
+  describe('formatList', () => {
+    it('joins with the locale conjunction rather than a hardcoded ", "', () => {
+      expect(formatList(['A', 'B', 'C'], 'en')).toBe('A, B, and C');
+      expect(formatList(['A', 'B', 'C'], 'de')).toBe('A, B und C');
+    });
+
+    it('uses the CJK separator for ja', () => {
+      // ja joins with the ideographic comma, never ", "
+      expect(formatList(['A', 'B'], 'ja')).not.toContain(', ');
+    });
+
+    it('returns a lone item unchanged and an empty list as an empty string', () => {
+      expect(formatList(['A'], 'en')).toBe('A');
+      expect(formatList([], 'en')).toBe('');
+    });
+
+    it('defaults to the current locale when none is passed', () => {
+      mockGetCurrentLocale.mockReturnValue('de');
+      expect(formatList(['A', 'B'])).toBe('A und B');
     });
   });
 

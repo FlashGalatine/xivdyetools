@@ -23,7 +23,7 @@ import {
   LanguageService,
 } from '@services/index';
 import { presetName, presetDescription, presetCategoryLabel } from '@shared/preset-i18n';
-import { formatGil, formatNumber } from '@shared/format';
+import { formatGil, formatList, formatNumber } from '@shared/format';
 import { MarketBoardService } from '@services/market-board-service';
 import type { PriceData } from '@xivdyetools/types';
 import { ConfigController } from '@services/config-controller';
@@ -832,8 +832,8 @@ export class PresetDetail extends BaseLitComponent {
     return LanguageService.tInterpolate('preset.costNotePartial', {
       bought: gilDyes.length,
       total: dyes.length,
-      names: notSold.map((d) => this.dyeNameOf(d)).join(' · '),
-      sources: sources.join(', '),
+      names: formatList(notSold.map((d) => this.dyeNameOf(d))),
+      sources: formatList(sources),
     });
   }
 

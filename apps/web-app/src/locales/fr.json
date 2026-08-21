@@ -110,7 +110,6 @@
     "options": "Options",
     "hexColor": "Couleur Hex",
     "selectDye": "Sélectionner une teinture",
-    "slot": "Emplacement",
     "replace": "Remplacer",
     "acquisition": "Acquisition",
     "original": "Original",
@@ -127,7 +126,8 @@
     "gilAmount": "{n} {unit}",
     "loadingTool": "Chargement de {tool}…",
     "closeModal": "Fermer la fenêtre",
-    "confirm": "Confirmer"
+    "confirm": "Confirmer",
+    "slotN": "Emplacement {n}"
   },
   "config": {
     "harmonyType": "Type d'harmonie",
@@ -243,7 +243,6 @@
     "spectrumWide1": "Teinture additionnelle n°1",
     "spectrumWide2": "Teinture additionnelle n°2",
     "spectrumUnconsolidated": "Non regroupées",
-    "favorites": "Favoris",
     "noDyesFound": "Aucune teinture trouvée",
     "customColor": "Couleur personnalisée",
     "enterHexCode": "Entrer le code hex",
@@ -252,7 +251,8 @@
     "invalidHexCode": "Code hex invalide",
     "noDyesAvailable": "Aucune teinture disponible",
     "randomDyeSelected": "{name} sélectionné",
-    "mobileHint": "Nouveau ici ? Appuyez sur le bouton palette pour choisir des teintures."
+    "mobileHint": "Nouveau ici ? Appuyez sur le bouton palette pour choisir des teintures.",
+    "favoritesWithCount": "Favoris ({count})"
   },
   "harmony": {
     "companionDyes": "Teintures Supplémentaires par Couleur d'Harmonie",
@@ -264,7 +264,6 @@
     "addToComparison": "Ajouter à la comparaison",
     "addToMixer": "Ajouter au mélangeur",
     "copyHex": "Copier le code Hex",
-    "copiedHex": "Copié",
     "copyFailed": "Échec de la copie",
     "seeBudget": "Voir les suggestions Budget",
     "seeHarmonies": "Voir les harmonies de couleurs",
@@ -277,11 +276,9 @@
     "dyeAlreadyInAccessibility": "Teinture déjà dans le vérificateur",
     "slotsFull": "Tous les emplacements sont pleins. Sélectionnez-en un à remplacer :",
     "selectSlotToReplace": "Sélectionner l'emplacement à remplacer",
-    "addingDye": "Ajout",
     "replacedInTool": "Remplacé avec succès",
     "selectColorPrompt": "Sélectionnez une couleur de base",
     "base": "Base",
-    "harmony": "Harmonie",
     "baseDye": "Teinture de base",
     "harmonyType": "Type d'harmonie",
     "actionsMenu": "Menu d'actions",
@@ -299,7 +296,11 @@
     },
     "railSwipeHint": "BALAYER POUR PLUS",
     "marketFailTitle": "Prix indisponibles",
-    "marketFailBody": "Le marché n'a pas répondu. La correspondance des couleurs n'est pas affectée — seules les lignes de prix manquent."
+    "marketFailBody": "Le marché n'a pas répondu. La correspondance des couleurs n'est pas affectée — seules les lignes de prix manquent.",
+    "harmonyN": "Harmonie {n}",
+    "baseColorTitle": "Couleur de base : {hex}",
+    "addingDyeLabel": "Ajout :",
+    "copiedHexValue": "{hex} copié"
   },
   "matcher": {
     "uploadImage": "Télécharger une Image",
@@ -308,7 +309,7 @@
     "takePhoto": "Prendre une photo",
     "supportedFormatsWithSize": "Formats supportés : PNG, JPG, WebP, GIF. Taille max : 20 Mo",
     "privacyNote": "Les images sont lues dans votre navigateur et jamais envoyées.",
-    "privacyTitle": "Protection de la vie privée",
+    "privacyTitle": "Protection de la vie privée :",
     "privacyMessage": "Les photos et images sont traitées localement dans votre navigateur et ne sont jamais téléchargées sur un serveur.",
     "privacyLearnMore": "En savoir plus",
     "pasteHint": "Astuce : Collez une image avec Ctrl+V (Cmd+V sur Mac)",
@@ -351,7 +352,8 @@
     "copyColorInfo": "Copier les infos couleur",
     "zoomOut": "Zoom arrière",
     "zoomLevel": "Zoom actuel",
-    "zoomIn": "Zoom avant"
+    "zoomIn": "Zoom avant",
+    "paletteExtractedOne": "{count} couleur extraite de l'image"
   },
   "accessibility": {
     "inspectDyes": "Inspecter les Teintures",
@@ -523,7 +525,6 @@
       "oklch": "Perceptuel moderne (optimal)",
       "lch": "LAB cylindrique"
     },
-    "stepLabel": "PALIER",
     "fromLabel": "DE",
     "toLabel": "À",
     "swap": "Échanger",
@@ -533,12 +534,14 @@
     "pinStep": "Épingler ce palier",
     "unpinStep": "Désépingler",
     "endAnchor": "Extrémité — déjà un ancrage",
-    "avgDrift": "ΔE moyen",
-    "maxDrift": "ΔE max",
     "maxDriftDesc": "Le pire palier du dégradé — une moyenne masque un écart isolé.",
     "bandIdeal": "IDÉAL",
     "bandAchievable": "RÉALISABLE",
-    "exportMeta": "Interpolation : {space} · {n} paliers"
+    "exportMeta": "Interpolation : {space} · {n} paliers",
+    "stepN": "PALIER {n}",
+    "pinnedCount": "{n} · Paliers épinglés",
+    "avgDriftValue": "ΔE moyen {v}",
+    "maxDriftValue": "ΔE max {v}"
   },
   "dyeSelector": {
     "searchPlaceholder": "Rechercher des teintures par nom...",
@@ -720,8 +723,7 @@
     "cycleLanguage": "Changer de langue",
     "shareTool": "Partager l'outil actuel",
     "showHelp": "Afficher ce panneau",
-    "platformHint": "Astuce",
-    "useModifier": "Utilisez Ctrl pour les raccourcis système"
+    "platformHintFull": "Astuce : utilisez Ctrl pour les raccourcis système."
   },
   "palette": {
     "exported": "Palettes exportées avec succès !",
@@ -1030,7 +1032,6 @@
     "dyesReq": "3–6 REQUIS",
     "dyesHint": "Touchez un emplacement pour choisir. Ni champ hex ni pipette ici — une palette doit être achetable, chaque emplacement doit être une vraie teinture.",
     "rulesNote": "Les contributions sont vérifiées avant mise en ligne : pas de doublon d'une palette existante, pas de nom contraire au code de conduite, et tout lien d'exemple doit pointer vers un site autorisé. Comptez une journée.",
-    "mineSummary": "{n} palettes · {v} voix",
     "statusLive": "EN LIGNE",
     "statusReview": "EN RELECTURE",
     "statusRejected": "NON PUBLIÉE",
@@ -1050,8 +1051,6 @@
     "cfgSavedFirstDesc": "Épingle votre étagère en haut de chaque onglet",
     "cfgKeepDeleted": "Garder les palettes supprimées",
     "cfgKeepDeletedDesc": "Une palette enregistrée que l'auteur retire reste, marquée",
-    "cfgStoredLocally": "Stocké en local",
-    "cfgStoredLocallyDesc": "Jamais envoyé au serveur, fonctionne déconnecté",
     "authorBy": "Créé par {author}",
     "editTitle": "Modifier le preset",
     "saveChanges": "Enregistrer les modifications",
@@ -1083,10 +1082,12 @@
       "dyesInvalid": "Sélection de teintures invalide",
       "tagsMax": "Maximum {n} tags autorisés",
       "tagLength": "Chaque tag ne doit pas dépasser {n} caractères"
-    }
+    },
+    "cfgStoredLocallyHint": "Stocké en local sur cet appareil, jamais envoyé au serveur, et fonctionne même déconnecté.",
+    "mineSummaryPresetsOne": "{n} palette",
+    "mineSummaryPresetsMany": "{n} palettes"
   },
   "collections": {
-    "favorites": "Favoris",
     "favoritesEmptyHint": "Cliquez sur ★ d'une teinture pour l'ajouter aux favoris",
     "favoritesFull": "Maximum {max} favoris autorisés",
     "addToFavorites": "Ajouter aux favoris",
@@ -1095,7 +1096,6 @@
     "removedFromFavorites": "Retiré des favoris",
     "collectionsEmpty": "Pas de collections",
     "collectionsEmptyHint": "Créez une collection pour organiser vos teintures",
-    "collectionsCount": "{count} collections",
     "newCollection": "Nouvelle collection",
     "createCollection": "Créer une collection",
     "editCollection": "Modifier la collection",
@@ -1108,7 +1108,6 @@
     "addToCollection": "Ajouter à la collection",
     "addedToCollection": "Ajouté à {name}",
     "removedFromCollection": "Retiré de {name}",
-    "dyeCount": "{count} teintures",
     "collectionFull": "Collection pleine (max {max} teintures)",
     "export": "Exporter",
     "exportAll": "Tout exporter",
@@ -1122,7 +1121,12 @@
     "importCreateFailed": "Échec de la création de la collection : {name}",
     "importedSuffix": "{name} (importé {n})",
     "unnamed": "sans nom",
-    "full": "Pleine"
+    "full": "Pleine",
+    "favoritesWithCount": "Favoris ({count})",
+    "collectionsCountOne": "{count} collection",
+    "collectionsCountMany": "{count} collections",
+    "dyeCountOne": "{count} teinture",
+    "dyeCountMany": "{count} teintures"
   },
   "emptyStates": {
     "noSearchResults": {
@@ -1170,7 +1174,9 @@
     "toggle": "Basculer",
     "toolSelection": "Sélection d'outil",
     "modalDialogs": "Fenêtres modales",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "removeFromFavoritesNamed": "Retirer {name} des favoris",
+    "addToFavoritesNamed": "Ajouter {name} aux favoris"
   },
   "resultCard": {
     "inspectDyeIn": "Inspecter la teinture dans...",
@@ -1182,7 +1188,6 @@
     "addedTo": "Ajouté avec succès",
     "slotsFull": "Tous les emplacements sont pleins. Sélectionnez-en un à remplacer :",
     "selectSlotToReplace": "Sélectionner l'emplacement à remplacer",
-    "addingDye": "Ajout",
     "replacedInTool": "Remplacé avec succès",
     "tools": {
       "harmony": "Explorateur d'Harmonie",
@@ -1198,7 +1203,8 @@
     "hueOff": "TEINTE",
     "stainShort": "STAIN",
     "replaceSlotN": "Remplacer l'emplacement {n}",
-    "dyeResultAria": "Résultat de teinture : {name}"
+    "dyeResultAria": "Résultat de teinture : {name}",
+    "addingDyeLabel": "Ajout :"
   },
   "share": {
     "button": "Partager",
@@ -1307,8 +1313,8 @@
     "saveCharacter": "Enregistrer les couleurs",
     "characterSavedOne": "1 couleur de personnage enregistrée sur cet appareil.",
     "characterSavedMany": "{n} couleurs de personnage enregistrées sur cet appareil.",
-    "selSentence": "{subject} est {place}. {dye} se situe à {delta}.",
-    "selSentenceCell": "{place}. {dye} se situe à {delta}.",
+    "selSentence": "{subject} est {palette} {addr}. {dye} se situe à {delta}.",
+    "selSentenceCell": "{palette} {addr}. {dye} se situe à {delta}.",
     "selSentenceOffGrid": "{subject} est une couleur libre. {dye} se situe à {delta}.",
     "closestSwatchesHead": "Nuances les plus proches",
     "rowColumn": "Ligne {row}, colonne {col}",
@@ -1320,6 +1326,8 @@
       "noTribe": "Cet emplacement nécessite l'ethnie et le genre du fichier",
       "unknown": "Impossible de lire cet emplacement"
     },
-    "sameModelList": "Même modèle : {list}"
+    "sameModelList": "Même modèle : {list}",
+    "gridTitle": "{name} ({count})",
+    "cellTag": "{palette} #{index}"
   }
 }

@@ -1307,7 +1307,10 @@ export class SwatchTool extends BaseComponent {
     });
     this.gridTitleEl = this.createElement('span', {
       className: 'section-title',
-      textContent: `${this.getCategoryDisplayName(this.colorCategory)} (${this.colors.length})`,
+      textContent: LanguageService.tInterpolate('swatch.gridTitle', {
+        name: this.getCategoryDisplayName(this.colorCategory),
+        count: this.colors.length,
+      }),
       attributes: {
         style: `
           font-size: 14px;
@@ -1837,7 +1840,10 @@ export class SwatchTool extends BaseComponent {
     this.renderPaletteRail();
     // Title tracks the palette — it went stale on category change before.
     if (this.gridTitleEl) {
-      this.gridTitleEl.textContent = `${this.getCategoryDisplayName(this.colorCategory)} (${this.colors.length})`;
+      this.gridTitleEl.textContent = LanguageService.tInterpolate('swatch.gridTitle', {
+        name: this.getCategoryDisplayName(this.colorCategory),
+        count: this.colors.length,
+      });
     }
     if (!this.colorGridContainer) return;
     this.updateEvercoldNotice();
@@ -1848,7 +1854,10 @@ export class SwatchTool extends BaseComponent {
     if (gridHeader) {
       const titleSpan = gridHeader.querySelector('.section-title');
       if (titleSpan) {
-        titleSpan.textContent = `${this.getCategoryDisplayName(this.colorCategory)} (${this.colors.length})`;
+        titleSpan.textContent = LanguageService.tInterpolate('swatch.gridTitle', {
+          name: this.getCategoryDisplayName(this.colorCategory),
+          count: this.colors.length,
+        });
       }
     }
 
@@ -1977,7 +1986,10 @@ export class SwatchTool extends BaseComponent {
     } else if (this.selectedColor) {
       subjectHex = this.selectedColor.hex;
       anchor = this.selectedColor.index;
-      tag = `${this.getCategoryDisplayName(this.colorCategory).toUpperCase()} #${this.selectedColor.index}`;
+      tag = LanguageService.tInterpolate('swatch.cellTag', {
+        palette: this.getCategoryDisplayName(this.colorCategory).toUpperCase(),
+        index: this.selectedColor.index,
+      });
       addr = `R${Math.floor(this.selectedColor.index / 8) + 1}·C${(this.selectedColor.index % 8) + 1}`;
     }
 
@@ -2019,7 +2031,8 @@ export class SwatchTool extends BaseComponent {
         bestName && bestDelta
           ? LanguageService.tInterpolate('swatch.selSentence', {
               subject: slotLabel,
-              place: `${palette} ${addr}`,
+              palette,
+              addr,
               dye: bestName,
               delta: bestDelta,
             })
@@ -2028,7 +2041,8 @@ export class SwatchTool extends BaseComponent {
       sentence =
         bestName && bestDelta
           ? LanguageService.tInterpolate('swatch.selSentenceCell', {
-              place: `${palette} ${addr}`,
+              palette,
+              addr,
               dye: bestName,
               delta: bestDelta,
             })

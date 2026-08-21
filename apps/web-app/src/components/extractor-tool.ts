@@ -2497,9 +2497,10 @@ export class ExtractorTool extends BaseComponent {
       }
 
       ToastService.success(
-        LanguageService.tInterpolate('matcher.paletteExtracted', {
-          count: String(matches.length),
-        })
+        LanguageService.tInterpolate(
+          matches.length === 1 ? 'matcher.paletteExtractedOne' : 'matcher.paletteExtracted',
+          { count: String(matches.length) }
+        )
       );
 
       logger.info('[MatcherTool] Palette extracted:', matches.length, 'colors');

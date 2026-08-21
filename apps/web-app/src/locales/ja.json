@@ -110,7 +110,6 @@
     "options": "オプション",
     "hexColor": "16進カラー",
     "selectDye": "カララントを選択",
-    "slot": "スロット",
     "replace": "置き換え",
     "acquisition": "入手方法",
     "original": "オリジナル",
@@ -127,7 +126,8 @@
     "gilAmount": "{n}{unit}",
     "loadingTool": "{tool}を読み込み中…",
     "closeModal": "ダイアログを閉じる",
-    "confirm": "確認"
+    "confirm": "確認",
+    "slotN": "スロット {n}"
   },
   "config": {
     "harmonyType": "ハーモニータイプ",
@@ -243,7 +243,6 @@
     "spectrumWide1": "アディショナルカラー1",
     "spectrumWide2": "アディショナルカラー2",
     "spectrumUnconsolidated": "未統合",
-    "favorites": "お気に入り",
     "noDyesFound": "染料が見つかりません",
     "customColor": "カスタムカラー",
     "enterHexCode": "Hexコードを入力",
@@ -252,7 +251,8 @@
     "invalidHexCode": "無効なHexコードです",
     "noDyesAvailable": "利用可能な染料がありません",
     "randomDyeSelected": "{name}を選択しました",
-    "mobileHint": "初めてですか？パレットボタンをタップしてカララントを選択できます。"
+    "mobileHint": "初めてですか？パレットボタンをタップしてカララントを選択できます。",
+    "favoritesWithCount": "お気に入り（{count}）"
   },
   "harmony": {
     "companionDyes": "ハーモニーカラーごとの追加カララント",
@@ -264,7 +264,6 @@
     "addToComparison": "比較に追加",
     "addToMixer": "ミキサーに追加",
     "copyHex": "Hexコードをコピー",
-    "copiedHex": "コピーしました",
     "copyFailed": "コピーに失敗しました",
     "seeBudget": "予算提案を見る",
     "seeHarmonies": "カラーハーモニーを見る",
@@ -277,11 +276,9 @@
     "dyeAlreadyInAccessibility": "このカララントは既にアクセシビリティにあります",
     "slotsFull": "すべてのスロットが埋まっています。置き換えるスロットを選択してください：",
     "selectSlotToReplace": "置き換えるスロットを選択",
-    "addingDye": "追加中",
     "replacedInTool": "正常に置き換えました",
     "selectColorPrompt": "ベースカラーを選択",
     "base": "ベース",
-    "harmony": "ハーモニー",
     "baseDye": "ベースカララント",
     "harmonyType": "ハーモニータイプ",
     "actionsMenu": "アクションメニュー",
@@ -299,7 +296,11 @@
     },
     "railSwipeHint": "スワイプで他の種類",
     "marketFailTitle": "価格を取得できません",
-    "marketFailBody": "マーケットボードが応答しませんでした。色の照合には影響せず、価格行だけが欠けます。"
+    "marketFailBody": "マーケットボードが応答しませんでした。色の照合には影響せず、価格行だけが欠けます。",
+    "harmonyN": "ハーモニー {n}",
+    "baseColorTitle": "ベースカラー：{hex}",
+    "addingDyeLabel": "追加中：",
+    "copiedHexValue": "{hex}をコピーしました"
   },
   "matcher": {
     "uploadImage": "画像をアップロード",
@@ -308,7 +309,7 @@
     "takePhoto": "写真を撮る",
     "supportedFormatsWithSize": "対応形式: PNG, JPG, WebP, GIF。最大サイズ: 20MB",
     "privacyNote": "画像はブラウザ内で処理され、送信されません。",
-    "privacyTitle": "プライバシー保護",
+    "privacyTitle": "プライバシー保護：",
     "privacyMessage": "写真と画像はブラウザ内でローカル処理され、サーバーにアップロードされることはありません。",
     "privacyLearnMore": "詳細",
     "pasteHint": "ヒント: Ctrl+V（Macの場合はCmd+V）で画像を貼り付け",
@@ -351,7 +352,8 @@
     "copyColorInfo": "色情報をコピー",
     "zoomOut": "縮小",
     "zoomLevel": "現在の倍率",
-    "zoomIn": "拡大"
+    "zoomIn": "拡大",
+    "paletteExtractedOne": "{count}色を抽出しました"
   },
   "accessibility": {
     "inspectDyes": "カララントを検査",
@@ -523,7 +525,6 @@
       "oklch": "現代知覚的（最適）",
       "lch": "円筒LAB"
     },
-    "stepLabel": "ステップ",
     "fromLabel": "開始",
     "toLabel": "終了",
     "swap": "入れ替え",
@@ -533,12 +534,14 @@
     "pinStep": "このステップを固定",
     "unpinStep": "固定を解除",
     "endAnchor": "端点 — 既にアンカー",
-    "avgDrift": "平均 ΔE",
-    "maxDrift": "最大 ΔE",
     "maxDriftDesc": "ランプ内で最も悪いステップ。平均値は単発の飛びを隠します。",
     "bandIdeal": "理想",
     "bandAchievable": "実現可能",
-    "exportMeta": "補間：{space} · {n} ステップ"
+    "exportMeta": "補間：{space} · {n} ステップ",
+    "stepN": "ステップ {n}",
+    "pinnedCount": "固定ステップ · {n}",
+    "avgDriftValue": "平均 ΔE {v}",
+    "maxDriftValue": "最大 ΔE {v}"
   },
   "dyeSelector": {
     "searchPlaceholder": "カララント名で検索...",
@@ -720,8 +723,7 @@
     "cycleLanguage": "言語切り替え",
     "shareTool": "現在のツールを共有",
     "showHelp": "このパネルを表示",
-    "platformHint": "ヒント",
-    "useModifier": "システムショートカットにはCtrlを使用"
+    "platformHintFull": "ヒント：システムショートカットにはCtrlを使用します。"
   },
   "palette": {
     "exported": "パレットをエクスポートしました！",
@@ -750,7 +752,6 @@
     "banner": "オフラインです。一部の機能が制限される場合があります。"
   },
   "collections": {
-    "favorites": "お気に入り",
     "favoritesEmptyHint": "カララントのクリスタルアイコンをクリックしてお気に入りに追加",
     "favoritesFull": "最大{max}個までお気に入り登録できます",
     "addToFavorites": "お気に入りに追加",
@@ -759,7 +760,6 @@
     "removedFromFavorites": "お気に入りから削除しました",
     "collectionsEmpty": "コレクションがありません",
     "collectionsEmptyHint": "コレクションを作成してカララントを整理",
-    "collectionsCount": "{count}個のコレクション",
     "newCollection": "新規コレクション",
     "createCollection": "コレクションを作成",
     "editCollection": "コレクションを編集",
@@ -772,7 +772,6 @@
     "addToCollection": "コレクションに追加",
     "addedToCollection": "{name}に追加しました",
     "removedFromCollection": "{name}から削除しました",
-    "dyeCount": "{count}個のカララント",
     "collectionFull": "コレクションがいっぱいです（最大{max}個）",
     "export": "エクスポート",
     "exportAll": "すべてエクスポート",
@@ -786,7 +785,12 @@
     "importCreateFailed": "コレクションの作成に失敗しました：{name}",
     "importedSuffix": "{name}（インポート{n}）",
     "unnamed": "名称未設定",
-    "full": "満杯"
+    "full": "満杯",
+    "favoritesWithCount": "お気に入り（{count}）",
+    "collectionsCountOne": "{count}個のコレクション",
+    "collectionsCountMany": "{count}個のコレクション",
+    "dyeCountOne": "{count}個のカララント",
+    "dyeCountMany": "{count}個のカララント"
   },
   "tutorial": {
     "skip": "スキップ",
@@ -1069,7 +1073,6 @@
     "dyesReq": "3〜6色必須",
     "dyesHint": "スロットをタップして選択。ここではHEX入力とカラーピッカーは使えません — 実際に入手できる色である必要があります。",
     "rulesNote": "投稿は公開前に確認されます。既存パレットの重複、規約違反の名称、許可されたサイト以外への作例リンクは差し戻されます。目安は1日です。",
-    "mineSummary": "{n}件 · {v}票",
     "statusLive": "公開中",
     "statusReview": "審査中",
     "statusRejected": "非公開",
@@ -1089,8 +1092,6 @@
     "cfgSavedFirstDesc": "各タブの先頭に固定",
     "cfgKeepDeleted": "削除済みも保持",
     "cfgKeepDeletedDesc": "作者が削除しても印付きで残す",
-    "cfgStoredLocally": "端末に保存",
-    "cfgStoredLocallyDesc": "サーバー送信なし・ログアウト時も有効",
     "authorBy": "{author} が作成",
     "editTitle": "プリセットを編集",
     "saveChanges": "変更を保存",
@@ -1122,7 +1123,10 @@
       "dyesInvalid": "カララントの選択が無効です",
       "tagsMax": "タグは最大{n}個までです",
       "tagLength": "各タグは{n}文字以内で入力してください"
-    }
+    },
+    "cfgStoredLocallyHint": "この端末に保存され、サーバーには送信されないため、ログアウト時でも利用できます。",
+    "mineSummaryPresetsOne": "{n}件",
+    "mineSummaryPresetsMany": "{n}件"
   },
   "emptyStates": {
     "noSearchResults": {
@@ -1170,7 +1174,9 @@
     "toggle": "切り替え",
     "toolSelection": "ツール選択",
     "modalDialogs": "ダイアログ",
-    "notifications": "通知"
+    "notifications": "通知",
+    "removeFromFavoritesNamed": "{name}をお気に入りから削除",
+    "addToFavoritesNamed": "{name}をお気に入りに追加"
   },
   "resultCard": {
     "inspectDyeIn": "染料を確認...",
@@ -1182,7 +1188,6 @@
     "addedTo": "追加しました",
     "slotsFull": "すべてのスロットが使用中です。置き換えるスロットを選択してください：",
     "selectSlotToReplace": "置き換えるスロットを選択",
-    "addingDye": "追加中",
     "replacedInTool": "置き換えました",
     "tools": {
       "harmony": "ハーモニーエクスプローラー",
@@ -1198,7 +1203,8 @@
     "hueOff": "色相差",
     "stainShort": "ステイン",
     "replaceSlotN": "スロット{n}を置き換え",
-    "dyeResultAria": "カララント結果：{name}"
+    "dyeResultAria": "カララント結果：{name}",
+    "addingDyeLabel": "追加中："
   },
   "share": {
     "button": "共有",
@@ -1307,8 +1313,8 @@
     "saveCharacter": "キャラクターの色を保存",
     "characterSavedOne": "キャラクターの色を1件この端末に保存しました。",
     "characterSavedMany": "キャラクターの色を{n}件この端末に保存しました。",
-    "selSentence": "{subject}は{place}。{dye}との差は{delta}です。",
-    "selSentenceCell": "{place}。{dye}との差は{delta}です。",
+    "selSentence": "{subject}は{palette} {addr}。{dye}との差は{delta}です。",
+    "selSentenceCell": "{palette} {addr}。{dye}との差は{delta}です。",
     "selSentenceOffGrid": "{subject}は任意の色です。{dye}との差は{delta}です。",
     "closestSwatchesHead": "最も近いスウォッチ",
     "rowColumn": "{row}行、{col}列",
@@ -1320,6 +1326,8 @@
       "noTribe": "このスロットの解決にはファイルの部族と性別が必要です",
       "unknown": "このスロットを読み取れませんでした"
     },
-    "sameModelList": "同一モデル：{list}"
+    "sameModelList": "同一モデル：{list}",
+    "gridTitle": "{name}（{count}）",
+    "cellTag": "{palette} #{index}"
   }
 }

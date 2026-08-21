@@ -1282,7 +1282,7 @@ export class ResultCard extends BaseLitComponent {
     const slotLabels =
       tool === 'mixer' || tool === 'gradient'
         ? [LanguageService.t('mixer.startDye'), LanguageService.t('mixer.endDye')]
-        : currentDyeIds.map((_, i) => `${LanguageService.t('common.slot')} ${i + 1}`);
+        : currentDyeIds.map((_, i) => LanguageService.tInterpolate('common.slotN', { n: i + 1 }));
 
     // Build content as DOM elements (SEC-002: avoid innerHTML for defense-in-depth)
     const contentEl = document.createElement('div');
@@ -1391,7 +1391,7 @@ export class ResultCard extends BaseLitComponent {
     const addingLabel = document.createElement('p');
     addingLabel.className = 'text-xs';
     addingLabel.style.color = 'var(--theme-text-muted)';
-    addingLabel.textContent = LanguageService.t('resultCard.addingDye') + ':';
+    addingLabel.textContent = LanguageService.t('resultCard.addingDyeLabel');
     previewInfo.appendChild(addingLabel);
     const addingName = document.createElement('p');
     addingName.className = 'font-medium text-sm';

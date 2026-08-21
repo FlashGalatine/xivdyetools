@@ -1377,7 +1377,7 @@ export class GradientTool extends BaseComponent {
     if (this.railPinCount) {
       this.railPinCount.textContent =
         this.pinnedSteps.size > 0
-          ? `${this.pinnedSteps.size} · ${LanguageService.t('gradient.pinned')}`
+          ? LanguageService.tInterpolate('gradient.pinnedCount', { n: this.pinnedSteps.size })
           : LanguageService.t('gradient.pinStep');
     }
 
@@ -1503,7 +1503,7 @@ export class GradientTool extends BaseComponent {
 
     this.resultsHeader.textContent =
       this.focusedStep !== null && this.currentSteps[this.focusedStep]
-        ? `${LanguageService.t('gradient.stepLabel')} ${this.focusedStep + 1}`
+        ? LanguageService.tInterpolate('gradient.stepN', { n: this.focusedStep + 1 })
         : LanguageService.t('gradient.gradientResults');
 
     clearContainer(this.summaryCluster);
@@ -1514,7 +1514,9 @@ export class GradientTool extends BaseComponent {
       const avgDp = BAND_METHOD_DP[this.matchingMethod] ?? 1;
       this.summaryCluster.appendChild(
         this.createElement('span', {
-          textContent: `${LanguageService.t('gradient.avgDrift')} ${avgRaw.toFixed(avgDp)}`,
+          textContent: LanguageService.tInterpolate('gradient.avgDriftValue', {
+            v: avgRaw.toFixed(avgDp),
+          }),
           attributes: {
             style: `font-family: 'Fragment Mono', monospace; font-size: 11px; letter-spacing: 0.5px; white-space: nowrap; color: ${this.driftTierColor(avgRaw)};`,
           },
@@ -1527,7 +1529,9 @@ export class GradientTool extends BaseComponent {
         const maxRaw = Math.max(...drifts);
         this.summaryCluster.appendChild(
           this.createElement('span', {
-            textContent: `${LanguageService.t('gradient.maxDrift')} ${maxRaw.toFixed(avgDp)}`,
+            textContent: LanguageService.tInterpolate('gradient.maxDriftValue', {
+              v: maxRaw.toFixed(avgDp),
+            }),
             attributes: {
               title: LanguageService.t('gradient.maxDriftDesc'),
               style: `font-family: 'Fragment Mono', monospace; font-size: 11px; letter-spacing: 0.5px; white-space: nowrap; color: ${this.driftTierColor(maxRaw)};`,
@@ -1538,7 +1542,9 @@ export class GradientTool extends BaseComponent {
       if (this.pinnedSteps.size > 0) {
         this.summaryCluster.appendChild(
           this.createElement('span', {
-            textContent: `${LanguageService.t('gradient.pinned')} · ${this.pinnedSteps.size}`,
+            textContent: LanguageService.tInterpolate('gradient.pinnedCount', {
+              n: this.pinnedSteps.size,
+            }),
             attributes: {
               title: LanguageService.t('gradient.pinnedDesc'),
               style: `font-family: 'Fragment Mono', monospace; font-size: 10px; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 5px; white-space: nowrap; background: ${ACCENT_SOFT}; color: var(--theme-primary);`,

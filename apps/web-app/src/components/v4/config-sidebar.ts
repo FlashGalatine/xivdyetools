@@ -1563,8 +1563,7 @@ export class ConfigSidebar extends BaseLitComponent {
           </div>
           <div class="config-hint">${LanguageService.t('preset.cfgKeepDeletedDesc')}</div>
           <div class="config-hint" style="margin-top: 6px; opacity: 0.85;">
-            ${LanguageService.t('preset.cfgStoredLocally')} —
-            ${LanguageService.t('preset.cfgStoredLocallyDesc')}
+            ${LanguageService.t('preset.cfgStoredLocallyHint')}
           </div>
         </div>
 

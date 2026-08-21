@@ -110,7 +110,6 @@
     "options": "Optionen",
     "hexColor": "Hex-Farbe",
     "selectDye": "Farbstoff auswählen",
-    "slot": "Platz",
     "replace": "Ersetzen",
     "acquisition": "Beschaffung",
     "original": "Original",
@@ -127,7 +126,8 @@
     "gilAmount": "{n} {unit}",
     "loadingTool": "{tool} wird geladen…",
     "closeModal": "Dialog schließen",
-    "confirm": "Bestätigen"
+    "confirm": "Bestätigen",
+    "slotN": "Platz {n}"
   },
   "config": {
     "harmonyType": "Harmonie-Typ",
@@ -243,7 +243,6 @@
     "spectrumWide1": "Zusatzfarbstoff 1",
     "spectrumWide2": "Zusatzfarbstoff 2",
     "spectrumUnconsolidated": "Nicht konsolidiert",
-    "favorites": "Favoriten",
     "noDyesFound": "Keine Farbstoffe gefunden",
     "customColor": "Benutzerdefinierte Farbe",
     "enterHexCode": "Hex-Code eingeben",
@@ -252,7 +251,8 @@
     "invalidHexCode": "Ungültiger Hex-Code",
     "noDyesAvailable": "Keine Farbstoffe verfügbar",
     "randomDyeSelected": "{name} ausgewählt",
-    "mobileHint": "Neu hier? Tippe auf die Palettentaste, um Farbstoffe auszuwählen."
+    "mobileHint": "Neu hier? Tippe auf die Palettentaste, um Farbstoffe auszuwählen.",
+    "favoritesWithCount": "Favoriten ({count})"
   },
   "harmony": {
     "companionDyes": "Zusätzliche Farbstoffe pro Harmoniefarbe",
@@ -264,7 +264,6 @@
     "addToComparison": "Zum Vergleich hinzufügen",
     "addToMixer": "Zum Mixer hinzufügen",
     "copyHex": "Hex-Code kopieren",
-    "copiedHex": "Kopiert",
     "copyFailed": "Kopieren fehlgeschlagen",
     "seeBudget": "Budget-Vorschläge anzeigen",
     "seeHarmonies": "Farbharmonien anzeigen",
@@ -277,11 +276,9 @@
     "dyeAlreadyInAccessibility": "Farbstoff bereits in Barrierefreiheit",
     "slotsFull": "Alle Plätze sind belegt. Wähle einen Platz zum Ersetzen:",
     "selectSlotToReplace": "Platz zum Ersetzen auswählen",
-    "addingDye": "Hinzufügen",
     "replacedInTool": "Erfolgreich ersetzt",
     "selectColorPrompt": "Grundfarbe auswählen",
     "base": "Basis",
-    "harmony": "Harmonie",
     "baseDye": "Basis-Farbstoff",
     "harmonyType": "Harmonie-Typ",
     "actionsMenu": "Aktionsmenü",
@@ -299,7 +296,11 @@
     },
     "railSwipeHint": "WISCHEN FÜR MEHR",
     "marketFailTitle": "Preise nicht verfügbar",
-    "marketFailBody": "Das Marktbrett hat nicht geantwortet. Die Farbsuche ist davon unberührt — nur die Preiszeilen fehlen."
+    "marketFailBody": "Das Marktbrett hat nicht geantwortet. Die Farbsuche ist davon unberührt — nur die Preiszeilen fehlen.",
+    "harmonyN": "Harmonie {n}",
+    "baseColorTitle": "Grundfarbe: {hex}",
+    "addingDyeLabel": "Hinzufügen:",
+    "copiedHexValue": "{hex} kopiert"
   },
   "matcher": {
     "uploadImage": "Bild hochladen",
@@ -308,7 +309,7 @@
     "takePhoto": "Foto aufnehmen",
     "supportedFormatsWithSize": "Unterstützte Formate: PNG, JPG, WebP, GIF. Maximale Größe: 20MB",
     "privacyNote": "Bilder werden im Browser gelesen und nie hochgeladen.",
-    "privacyTitle": "Datenschutz geschützt",
+    "privacyTitle": "Datenschutz geschützt:",
     "privacyMessage": "Fotos und Bilder werden lokal in deinem Browser verarbeitet und niemals auf einen Server hochgeladen.",
     "privacyLearnMore": "Mehr erfahren",
     "pasteHint": "Tipp: Bild mit Strg+V (Cmd+V auf Mac) einfügen",
@@ -351,7 +352,8 @@
     "copyColorInfo": "Farbinfos kopieren",
     "zoomOut": "Verkleinern",
     "zoomLevel": "Aktuelle Vergrößerung",
-    "zoomIn": "Vergrößern"
+    "zoomIn": "Vergrößern",
+    "paletteExtractedOne": "{count} Farbe aus Bild extrahiert"
   },
   "accessibility": {
     "inspectDyes": "Farbstoffe prüfen",
@@ -523,7 +525,6 @@
       "oklch": "Modern perzeptuell (beste)",
       "lch": "Zylindrisches LAB"
     },
-    "stepLabel": "STUFE",
     "fromLabel": "VON",
     "toLabel": "BIS",
     "swap": "Tauschen",
@@ -533,12 +534,14 @@
     "pinStep": "Stufe fixieren",
     "unpinStep": "Lösen",
     "endAnchor": "Endpunkt — bereits ein Anker",
-    "avgDrift": "Ø ΔE",
-    "maxDrift": "max. ΔE",
     "maxDriftDesc": "Der schlechteste Schritt der Rampe — ein Mittelwert verbirgt einen einzelnen Ausreißer.",
     "bandIdeal": "IDEAL",
     "bandAchievable": "ERREICHBAR",
-    "exportMeta": "Interpolation: {space} · {n} Stufen"
+    "exportMeta": "Interpolation: {space} · {n} Stufen",
+    "stepN": "STUFE {n}",
+    "pinnedCount": "{n} · Fixierte Stufen",
+    "avgDriftValue": "Ø ΔE {v}",
+    "maxDriftValue": "max. ΔE {v}"
   },
   "dyeSelector": {
     "searchPlaceholder": "Farbstoffe nach Name suchen...",
@@ -720,8 +723,7 @@
     "cycleLanguage": "Sprache wechseln",
     "shareTool": "Aktuelles Werkzeug teilen",
     "showHelp": "Dieses Panel anzeigen",
-    "platformHint": "Tipp",
-    "useModifier": "Verwende Strg für Systemkürzel"
+    "platformHintFull": "Tipp: Verwende Strg für Systemkürzel."
   },
   "palette": {
     "exported": "Paletten erfolgreich exportiert!",
@@ -1030,7 +1032,6 @@
     "dyesReq": "3–6 PFLICHT",
     "dyesHint": "Auf einen Platz tippen zum Wählen. Hex-Feld und Farbwähler gibt es hier nicht — eine Palette muss kaufbar sein.",
     "rulesNote": "Einreichungen werden geprüft: keine Dubletten, keine Namen gegen die Verhaltensregeln, und ein Beispiel-Link muss auf eine erlaubte Website verweisen. Dauert etwa einen Tag.",
-    "mineSummary": "{n} Paletten · {v} Stimmen",
     "statusLive": "ÖFFENTLICH",
     "statusReview": "IN PRÜFUNG",
     "statusRejected": "ABGELEHNT",
@@ -1050,8 +1051,6 @@
     "cfgSavedFirstDesc": "Heftet die Merkliste nach oben",
     "cfgKeepDeleted": "Gelöschte behalten",
     "cfgKeepDeletedDesc": "Vom Autor gelöschte bleiben markiert",
-    "cfgStoredLocally": "Lokal gespeichert",
-    "cfgStoredLocallyDesc": "Nie an den Server, auch abgemeldet",
     "authorBy": "Erstellt von {author}",
     "editTitle": "Preset bearbeiten",
     "saveChanges": "Änderungen speichern",
@@ -1083,10 +1082,12 @@
       "dyesInvalid": "Ungültige Farbstoffauswahl",
       "tagsMax": "Maximal {n} Tags erlaubt",
       "tagLength": "Jeder Tag darf höchstens {n} Zeichen lang sein"
-    }
+    },
+    "cfgStoredLocallyHint": "Wird lokal auf diesem Gerät gespeichert, nie an den Server gesendet und funktioniert auch abgemeldet.",
+    "mineSummaryPresetsOne": "{n} Palette",
+    "mineSummaryPresetsMany": "{n} Paletten"
   },
   "collections": {
-    "favorites": "Favoriten",
     "favoritesEmptyHint": "Klicke auf das ★ einer Farbe, um sie zu den Favoriten hinzuzufügen",
     "favoritesFull": "Maximal {max} Favoriten erlaubt",
     "addToFavorites": "Zu Favoriten hinzufügen",
@@ -1095,7 +1096,6 @@
     "removedFromFavorites": "Aus Favoriten entfernt",
     "collectionsEmpty": "Keine Sammlungen",
     "collectionsEmptyHint": "Erstelle eine Sammlung, um deine Farbstoffe zu organisieren",
-    "collectionsCount": "{count} Sammlungen",
     "newCollection": "Neue Sammlung",
     "createCollection": "Sammlung erstellen",
     "editCollection": "Sammlung bearbeiten",
@@ -1108,7 +1108,6 @@
     "addToCollection": "Zur Sammlung hinzufügen",
     "addedToCollection": "Zu {name} hinzugefügt",
     "removedFromCollection": "Aus {name} entfernt",
-    "dyeCount": "{count} Farbstoffe",
     "collectionFull": "Sammlung voll (max. {max} Farbstoffe)",
     "export": "Exportieren",
     "exportAll": "Alle exportieren",
@@ -1122,7 +1121,12 @@
     "importCreateFailed": "Sammlung konnte nicht erstellt werden: {name}",
     "importedSuffix": "{name} (importiert {n})",
     "unnamed": "unbenannt",
-    "full": "Voll"
+    "full": "Voll",
+    "favoritesWithCount": "Favoriten ({count})",
+    "collectionsCountOne": "{count} Sammlung",
+    "collectionsCountMany": "{count} Sammlungen",
+    "dyeCountOne": "{count} Farbstoff",
+    "dyeCountMany": "{count} Farbstoffe"
   },
   "emptyStates": {
     "noSearchResults": {
@@ -1170,7 +1174,9 @@
     "toggle": "Umschalten",
     "toolSelection": "Werkzeugauswahl",
     "modalDialogs": "Dialogfenster",
-    "notifications": "Benachrichtigungen"
+    "notifications": "Benachrichtigungen",
+    "removeFromFavoritesNamed": "{name} aus Favoriten entfernen",
+    "addToFavoritesNamed": "{name} zu Favoriten hinzufügen"
   },
   "resultCard": {
     "inspectDyeIn": "Farbstoff prüfen in...",
@@ -1182,7 +1188,6 @@
     "addedTo": "Erfolgreich hinzugefügt",
     "slotsFull": "Alle Plätze belegt. Wählen Sie einen zum Ersetzen:",
     "selectSlotToReplace": "Platz zum Ersetzen auswählen",
-    "addingDye": "Hinzufügen",
     "replacedInTool": "Erfolgreich ersetzt",
     "tools": {
       "harmony": "Harmonie-Explorer",
@@ -1198,7 +1203,8 @@
     "hueOff": "FARBTON",
     "stainShort": "STAIN",
     "replaceSlotN": "Slot {n} ersetzen",
-    "dyeResultAria": "Farbstoff-Ergebnis: {name}"
+    "dyeResultAria": "Farbstoff-Ergebnis: {name}",
+    "addingDyeLabel": "Hinzufügen:"
   },
   "share": {
     "button": "Teilen",
@@ -1307,8 +1313,8 @@
     "saveCharacter": "Charakterfarben speichern",
     "characterSavedOne": "1 Charakterfarbe auf diesem Gerät gespeichert.",
     "characterSavedMany": "{n} Charakterfarben auf diesem Gerät gespeichert.",
-    "selSentence": "{subject} ist {place}. {dye} liegt {delta} entfernt.",
-    "selSentenceCell": "{place}. {dye} liegt {delta} entfernt.",
+    "selSentence": "{subject} ist {palette} {addr}. {dye} liegt {delta} entfernt.",
+    "selSentenceCell": "{palette} {addr}. {dye} liegt {delta} entfernt.",
     "selSentenceOffGrid": "{subject} ist eine freie Farbe. {dye} liegt {delta} entfernt.",
     "closestSwatchesHead": "Nächste Farbfelder",
     "rowColumn": "Zeile {row}, Spalte {col}",
@@ -1320,6 +1326,8 @@
       "noTribe": "Dieser Slot benötigt Volksgruppe und Geschlecht aus der Datei",
       "unknown": "Dieser Slot konnte nicht gelesen werden"
     },
-    "sameModelList": "Gleiches Modell: {list}"
+    "sameModelList": "Gleiches Modell: {list}",
+    "gridTitle": "{name} ({count})",
+    "cellTag": "{palette} #{index}"
   }
 }

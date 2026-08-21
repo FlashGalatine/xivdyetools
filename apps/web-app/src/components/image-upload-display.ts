@@ -164,7 +164,7 @@ export class ImageUploadDisplay extends BaseComponent {
     privacyNotice.appendChild(lockIcon);
     // Strong title
     const privacyTitle = this.createElement('strong', {
-      textContent: `${LanguageService.t('matcher.privacyTitle')}:`,
+      textContent: LanguageService.t('matcher.privacyTitle'),
     });
     privacyNotice.appendChild(privacyTitle);
     // Message text

@@ -125,8 +125,7 @@ function createPanelContent(): HTMLElement {
 
   platformHint.innerHTML = `
     <span class="opacity-70">
-      ${LanguageService.t('shortcuts.platformHint')}:
-      ${LanguageService.t('shortcuts.useModifier')}
+      ${LanguageService.t('shortcuts.platformHintFull')}
     </span>
   `;
   container.appendChild(platformHint);
