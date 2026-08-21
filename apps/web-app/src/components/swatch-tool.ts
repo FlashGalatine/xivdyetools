@@ -183,6 +183,8 @@ const SANS = "'Space Grotesk', system-ui, sans-serif";
  * Method display tags — identifiers, never localised. Mirrors core's
  * MATCHING_METHOD_TAGS (kept local so the tag map is available even where
  * core is mocked/minimal).
+ *
+ * RGB DIST and DISTINGUISH % stay untranslated identifiers by decision (2026-08-20 i18n audit).
  */
 const METHOD_TAGS: Record<MatchingMethod, string> = {
   ciede2000: 'ΔE2000',
