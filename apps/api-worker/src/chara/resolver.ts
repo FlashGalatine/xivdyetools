@@ -127,7 +127,7 @@ export function resolveCharaEquipment(
         mainItem !== null &&
         (key === mainKey || mainRows.some((r) => r.modelSub === key));
       items.OffHand = pairedWithMain
-        ? { ...mainItem!, viaMainHand: true }
+        ? { ...mainItem, viaMainHand: true }
         : pickItem(rowsFor({ field: CHARA_SLOT_SEARCH_FIELD.OffHand, key }));
       continue;
     }

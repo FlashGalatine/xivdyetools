@@ -98,7 +98,7 @@ export function iconAssetUrl(base: string, iconId: number): string {
   const id6 = String(iconId).padStart(6, '0');
   const folder = `${id6.slice(0, 3)}000`;
   const path = `ui/icon/${folder}/${id6}_hr1.tex`;
-  return `${base}/api/asset?${new URLSearchParams({ path, format: 'png' })}`;
+  return `${base}/api/asset?${new URLSearchParams({ path, format: 'png' }).toString()}`;
 }
 
 interface RawSearchRow {
@@ -209,25 +209,25 @@ export class XivapiClient {
       query: buildResolveQuery(lookups),
       fields: ITEM_FIELDS,
       limit: String(SEARCH_LIMIT),
-    })}`;
+    }).toString()}`;
     const response = await this.get(url);
     if (!response.ok) {
       throw new UpstreamUnavailableError(response.status, response.statusText || 'search failed');
     }
-    const body = (await response.json()) as RawSearchResponse;
+    const body = await response.json<RawSearchResponse>();
     const rows = (body.results ?? []).map(parseItemRow);
     return { version: body.version ?? null, rows };
   }
 
   /** Facewear: `GlassesId` IS the Glasses sheet row_id. 404 → null (row 0 / unknown). */
   async getGlasses(id: number): Promise<{ version: string | null; row: GlassesRow | null }> {
-    const url = `${this.base}/api/sheet/Glasses/${id}?${this.params({ fields: GLASSES_FIELDS })}`;
+    const url = `${this.base}/api/sheet/Glasses/${id}?${this.params({ fields: GLASSES_FIELDS }).toString()}`;
     const response = await this.get(url);
     if (response.status === 404) return { version: null, row: null };
     if (!response.ok) {
       throw new UpstreamUnavailableError(response.status, response.statusText || 'sheet failed');
     }
-    const body = (await response.json()) as RawSheetRow;
+    const body = await response.json<RawSheetRow>();
     return {
       version: body.version ?? null,
       row: { rowId: body.row_id, names: namesOf(body.fields), iconId: iconIdOf(body.fields) },

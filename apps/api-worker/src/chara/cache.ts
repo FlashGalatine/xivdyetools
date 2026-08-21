@@ -53,7 +53,7 @@ export class CharaRowCache {
         const cached = await this.service.get(this.rowKey(lookup));
         if (!cached) return;
         try {
-          const rows = (await cached.response.json()) as ItemRow[];
+          const rows = await cached.response.json<ItemRow[]>();
           if (Array.isArray(rows)) hits.set(lookupKey(lookup), rows);
         } catch {
           // A corrupt entry reads as a miss; the upstream answer overwrites it.
@@ -72,7 +72,7 @@ export class CharaRowCache {
     const cached = await this.service.get(this.glassesKey(id));
     if (!cached) return undefined;
     try {
-      return (await cached.response.json()) as GlassesRow | null;
+      return await cached.response.json<GlassesRow | null>();
     } catch {
       return undefined;
     }
