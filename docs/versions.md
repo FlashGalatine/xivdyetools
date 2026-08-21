@@ -6,7 +6,7 @@
 
 > **Versions below are read from each project's `package.json` on the working branch.** The 5.0
 > wave — `core` v4.0.0, `types` v2.0.0, `svg` v2.0.0, `bot-logic` v2.0.0, `worker-kit` v1.0.0,
-> `web-app` v5.0.0, `discord-worker` v5.0.0, `og-worker` v2.1.0, `presets-api` v2.0.0 and the
+> `web-app` v5.0.0, `discord-worker` v5.0.0, `og-worker` v2.2.0, `presets-api` v2.0.0 and the
 > rest — is complete on `monorepo-2.0-prep` with every `CHANGELOG.md` written, but **not yet merged
 > to `main` or published to npm**. Merging to `main` is the release; the root `CHANGELOG.md` 2.0.0
 > entry carries the deploy sequence. See [Release Process](developer-guides/release-process.md).
@@ -26,7 +26,7 @@
 | **OAuth Worker** | v2.6.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.0.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
 | **Public REST API** | v0.7.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.1.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **OpenGraph Worker** | v2.2.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.2.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
