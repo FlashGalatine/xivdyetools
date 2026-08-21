@@ -6,7 +6,22 @@
  * reference keys that exist in the locale files.
  *
  * Also performs cross-locale structural comparison to detect keys missing in
- * non-English locale files.
+ * non-English locale files, plus two file-shape gates added by the 2026-08-20
+ * i18n audit:
+ *
+ *   KEY ORDER  - every target file must list its keys in `en.json`'s order,
+ *                recursively. Run `node scripts/reorder-locales.mjs` to fix.
+ *                Without this, an appended key lands wherever the editor put
+ *                it, and "insert at the same position in all six files" stops
+ *                being checkable by eye — which is how all five targets had
+ *                drifted by the time the audit measured them.
+ *   WHITESPACE - a target value must not carry leading/trailing whitespace
+ *                that the `en` value does not. Stray padding survives JSON
+ *                round-trips invisibly and renders as a misaligned label
+ *                (or, next to an NBSP, an unbreakable one).
+ *
+ * `npm run validate:i18n` then runs `scripts/i18n-parity.mjs`, which covers
+ * duplicate keys, extra keys, placeholder mismatch and untranslated values.
  *
  * Usage:
  *   npm run validate:i18n
@@ -18,6 +33,7 @@
  *   0 - All translation keys are valid
  *   1 - One or more missing keys found
  *   2 - Cross-locale keys missing (only with --strict)
+ *   3 - A locale file's key order or value whitespace is wrong
  */
 
 import { readFileSync, readdirSync, statSync } from 'fs';
@@ -254,6 +270,115 @@ function compareLocales(primaryKeys) {
   return results;
 }
 
+/**
+ * Flatten to an ORDERED array of `[dotPath, leafValue]`, preserving the file's
+ * own key order (`flattenKeys` returns a Set, which is fine for membership but
+ * useless for comparing order).
+ * @param {object} obj
+ * @param {string} [prefix]
+ * @returns {Array<[string, unknown]>}
+ */
+function flattenOrdered(obj, prefix = '') {
+  const entries = [];
+  for (const [key, value] of Object.entries(obj)) {
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      entries.push(...flattenOrdered(value, fullKey));
+    } else {
+      entries.push([fullKey, value]);
+    }
+  }
+  return entries;
+}
+
+/**
+ * Gate the two file-shape invariants: key order matches `en.json`, and no
+ * target value carries leading/trailing whitespace `en` does not have.
+ *
+ * Order is compared over the keys the two files SHARE, so a missing key (which
+ * the cross-locale comparison already reports) cannot masquerade as disorder.
+ *
+ * @param {object} referenceData - parsed en.json
+ * @returns {{locale: string, order: {index: number, expected: string, actual: string}|null, whitespace: string[]}[]}
+ */
+function checkOrderAndWhitespace(referenceData) {
+  const referenceEntries = flattenOrdered(referenceData);
+  const referenceValues = new Map(referenceEntries);
+  const results = [];
+
+  for (const localeFile of ALL_LOCALES) {
+    if (localeFile === PRIMARY_LOCALE) continue;
+
+    const localePath = join(LOCALES_DIR, localeFile);
+    let localeData;
+    try {
+      localeData = JSON.parse(readFileSync(localePath, 'utf-8'));
+    } catch (error) {
+      console.error(`  ⚠️  Error loading ${localeFile}: ${error.message}`);
+      continue;
+    }
+
+    const localeEntries = flattenOrdered(localeData);
+    const localeKeys = new Set(localeEntries.map(([key]) => key));
+
+    const expectedOrder = referenceEntries.map(([key]) => key).filter((key) => localeKeys.has(key));
+    const actualOrder = localeEntries.map(([key]) => key).filter((key) => referenceValues.has(key));
+
+    let order = null;
+    for (let i = 0; i < expectedOrder.length; i++) {
+      if (expectedOrder[i] !== actualOrder[i]) {
+        order = { index: i, expected: expectedOrder[i], actual: actualOrder[i] ?? '(end of file)' };
+        break;
+      }
+    }
+
+    const whitespace = [];
+    for (const [key, value] of localeEntries) {
+      if (typeof value !== 'string') continue;
+      const referenceValue = referenceValues.get(key);
+      if (typeof referenceValue !== 'string') continue;
+      if (value !== value.trim() && referenceValue === referenceValue.trim()) {
+        whitespace.push(key);
+      }
+    }
+
+    results.push({ locale: localeFile.replace('.json', ''), order, whitespace });
+  }
+
+  return results;
+}
+
+/**
+ * Print the order/whitespace report.
+ * @param {ReturnType<typeof checkOrderAndWhitespace>} results
+ * @returns {boolean} true when everything is in order
+ */
+function reportOrderAndWhitespace(results) {
+  console.log('\n' + '='.repeat(70));
+  console.log('\n📐 Locale File Shape (key order + value whitespace)\n');
+
+  let clean = true;
+  for (const { locale, order, whitespace } of results) {
+    if (order) {
+      clean = false;
+      console.log(`❌ ${locale}.json: key order diverges from en.json at position ${order.index}`);
+      console.log(`      expected "${order.expected}", found "${order.actual}"`);
+    }
+    for (const key of whitespace) {
+      clean = false;
+      console.log(`❌ ${locale}.json: "${key}" has leading/trailing whitespace en.json does not`);
+    }
+  }
+
+  if (clean) {
+    console.log('✅ All locale files match en.json key order and carry no stray whitespace.\n');
+  } else {
+    console.log('\n   Fix key order with: node scripts/reorder-locales.mjs');
+    console.log('   Fix whitespace by trimming the affected value(s) by hand.\n');
+  }
+  return clean;
+}
+
 // ============================================================================
 // Main
 // ============================================================================
@@ -364,10 +489,12 @@ function validateI18n() {
         }
       }
       console.log('');
-      process.exit(0);
+      process.exit(reportOrderAndWhitespace(checkOrderAndWhitespace(localeData)) ? 0 : 3);
     } else {
       const totalMissing = localeIssues.reduce((sum, l) => sum + l.missing.length, 0);
-      console.log(`⚠️  Found ${totalMissing} missing key(s) across ${localeIssues.length} locale(s):\n`);
+      console.log(
+        `⚠️  Found ${totalMissing} missing key(s) across ${localeIssues.length} locale(s):\n`
+      );
 
       for (const { locale, file, missing, totalKeys } of localeIssues) {
         console.log(`📄 ${file} (${totalKeys} keys, missing ${missing.length}):`);
@@ -395,6 +522,7 @@ function validateI18n() {
       }
 
       console.log('='.repeat(70));
+      const shapeClean = reportOrderAndWhitespace(checkOrderAndWhitespace(localeData));
       if (strictMode) {
         console.log(`\n❌ Cross-locale validation FAILED (--strict mode)`);
         console.log('   Add missing keys to the affected locale files.\n');
@@ -402,7 +530,7 @@ function validateI18n() {
       } else {
         console.log(`\n⚠️  Cross-locale keys missing (run with --strict to fail on this)`);
         console.log('   Consider adding missing keys to maintain translation parity.\n');
-        process.exit(0);
+        process.exit(shapeClean ? 0 : 3);
       }
     }
   } else {

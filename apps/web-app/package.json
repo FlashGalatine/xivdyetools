@@ -25,7 +25,7 @@
     "test:e2e:comparison": "playwright test dye-comparison.spec.ts",
     "test:e2e:mobile": "playwright test --project=mobile-chrome",
     "check-bundle-size": "node scripts/check-bundle-size.js",
-    "validate:i18n": "node scripts/validate-i18n.js",
+    "validate:i18n": "node scripts/validate-i18n.js && node scripts/i18n-parity.mjs",
     "i18n:unused": "node scripts/analyze-unused-keys.js",
     "build:check": "npm run build && npm run check-bundle-size"
   },

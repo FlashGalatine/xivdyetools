@@ -31,6 +31,11 @@ const languageServiceMock = {
   getAcquisition: (acquisition: string) => `${locale}:ACQ:${acquisition}`,
   getCategory: (category: string) => `${locale}:CAT:${category}`,
   getCurrency: (currency: string) => `${locale}:CUR:${currency}`,
+  // The core-vocabulary lookups the sweep's components reach for.
+  getHarmonyType: (key: string) => `${locale}:HARMONY:${key}`,
+  getVisionType: (key: string) => `${locale}:VISION:${key}`,
+  getRace: (key: string) => `${locale}:RACE:${key}`,
+  getClan: (key: string) => `${locale}:CLAN:${key}`,
   subscribe: (listener: () => void) => {
     listeners.add(listener);
     return () => listeners.delete(listener);
@@ -61,7 +66,11 @@ const settle = async (el: Updatable): Promise<void> => {
   throw new Error('component never settled');
 };
 
-vi.mock('@services/index', () => ({
+// Spread the real barrel: the sweep mounts components that reach services the
+// four targeted tests never touch (authService, APIService, ...), and stubbing
+// them one by one turns every new dependency into a mystery mock error.
+vi.mock('@services/index', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   LanguageService: languageServiceMock,
   StorageService: {
     getItem: vi.fn(() => null),
@@ -76,7 +85,12 @@ vi.mock('@services/language-service', () => ({
   LanguageService: languageServiceMock,
 }));
 
-vi.mock('@xivdyetools/core', () => ({
+// The sweep at the bottom imports every v4 module, which between them reach far
+// more of `@xivdyetools/core` than the four targeted tests do. Spreading the
+// real module keeps that surface intact while the overrides below still pin the
+// handful of values these assertions depend on.
+vi.mock('@xivdyetools/core', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   ColorService: {
     hexToRgb: vi.fn(() => ({ r: 255, g: 0, b: 0 })),
     rgbToHex: vi.fn(() => '#FF0000'),
@@ -98,6 +112,9 @@ vi.mock('@xivdyetools/core', () => ({
     getDyeById() {
       return null;
     }
+    getByStainId() {
+      return null;
+    }
     getCategories() {
       return [];
     }
@@ -109,7 +126,8 @@ vi.mock('@shared/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
-vi.mock('@shared/ui-icons', () => ({
+vi.mock('@shared/ui-icons', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   ICON_CONTEXT_MENU: '<svg></svg>',
 }));
 
@@ -221,4 +239,167 @@ describe('v4 components follow a language switch', () => {
     panel.remove();
     expect(listeners.size).toBe(0);
   });
+});
+
+// ============================================================================
+// Sweep: every custom element registered by src/components/v4/
+// ============================================================================
+
+/**
+ * The four tests above pin the components the audit named. This block is the
+ * guardrail that stops the NEXT one from slipping through.
+ *
+ * It imports every module in `src/components/v4/`, collects the custom elements
+ * they register, and fails if any tag is not accounted for by one of the three
+ * lists below. A new v4 component therefore cannot be added without someone
+ * deciding, in writing, whether it follows the locale.
+ *
+ * "Followed the switch" is checked two ways, because either alone can lie: the
+ * component's own `requestUpdate` was called (so a subscription exists), and no
+ * `en:` text is left in its shadow root (so the re-render reached the DOM).
+ *
+ * Nothing is skipped silently — `it.skip` and bare `continue` are deliberately
+ * absent. A component that cannot be exercised has to appear in `EXCLUDED`
+ * with the reason, and one that is known-broken in `NOT_YET_LOCALE_AWARE`.
+ */
+
+/**
+ * Elements the sweep cannot mount, with the reason each.
+ *
+ * Empty on purpose: as of 2026-08-21 every v4 element mounts bare in jsdom.
+ * `v4-config-sidebar` was expected to need a `ConfigController`, but it
+ * tolerates a bare mount, so it is exercised like the rest.
+ */
+const EXCLUDED: Record<string, string> = {};
+
+/**
+ * Elements that render localized text but do NOT subscribe — open defects, not
+ * intended behaviour. The assertion below is inverted so the ledger stays
+ * honest: fix one and this suite goes red, which is the prompt to move its tag
+ * up into `LOCALE_AWARE`.
+ *
+ * All three are the HC-SYS-007 defect class that the tests at the top of this
+ * file were written for; they were outside the remediation task that added the
+ * sweep, and are recorded here rather than quietly excused.
+ */
+const NOT_YET_LOCALE_AWARE: Record<string, string> = {
+  'v4-color-wheel':
+    'renders 8 localized strings (harmony.* labels, the base-colour prompt) but never calls LanguageService.subscribe()',
+  'v4-range-slider':
+    'aria-label falls back to LanguageService.t("aria.slider") with no subscription',
+  'v4-toggle-switch':
+    'aria-label falls back to LanguageService.t("aria.toggle") with no subscription',
+};
+
+/** Elements that must follow a language switch. */
+const LOCALE_AWARE = [
+  'dye-palette-drawer',
+  'v4-app-header',
+  'v4-config-sidebar',
+  'v4-display-options',
+  'v4-dye-filters',
+  'v4-layout-shell',
+  'v4-preset-card',
+  'v4-preset-detail',
+  'v4-preset-tool',
+  'v4-result-card',
+  'v4-share-button',
+];
+
+/**
+ * Every tag registered in this test file's realm.
+ *
+ * The wrapper is installed at module scope, not inside the sweep: the tests
+ * above already import `result-card` and `display-options-v4`, and a wrapper
+ * installed later would miss those two registrations entirely — the sweep would
+ * then "know about" 11 of the 14 elements and still pass.
+ */
+const registeredTags: string[] = [];
+const nativeDefine = customElements.define.bind(customElements);
+customElements.define = ((
+  tag: string,
+  constructor: CustomElementConstructor,
+  options?: ElementDefinitionOptions
+) => {
+  registeredTags.push(tag);
+  return nativeDefine(tag, constructor, options);
+}) as typeof customElements.define;
+
+const v4Modules = import.meta.glob('../../v4/*.ts');
+let allImported: Promise<void> | null = null;
+const importAllV4Modules = (): Promise<void> => {
+  allImported ??= (async () => {
+    for (const load of Object.values(v4Modules)) await load();
+  })();
+  return allImported;
+};
+
+/** Mount a tag, let it settle, and report whether a locale flip moved it. */
+const mountAndSwitch = async (
+  tag: string,
+  container: HTMLElement
+): Promise<{ rerendered: boolean; text: string }> => {
+  const element = document.createElement(tag) as HTMLElement & {
+    updateComplete: Promise<boolean>;
+    requestUpdate: () => void;
+  };
+  container.appendChild(element);
+  await settle(element);
+
+  const rerender = vi.spyOn(element, 'requestUpdate');
+  switchLocale('ja');
+  await settle(element);
+
+  return {
+    rerendered: rerender.mock.calls.length > 0,
+    text: element.shadowRoot?.textContent ?? '',
+  };
+};
+
+describe('every v4 custom element is accounted for', () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    locale = 'en';
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+    locale = 'en';
+  });
+
+  it('covers every element the v4 directory registers', async () => {
+    await importAllV4Modules();
+    const expected = [
+      ...LOCALE_AWARE,
+      ...Object.keys(NOT_YET_LOCALE_AWARE),
+      ...Object.keys(EXCLUDED),
+    ];
+    expect([...new Set(registeredTags)].sort()).toEqual([...expected].sort());
+  });
+
+  it.each(LOCALE_AWARE)('<%s> re-renders when the locale changes', async (tag) => {
+    await importAllV4Modules();
+    const { rerendered, text } = await mountAndSwitch(tag, container);
+
+    expect(rerendered, `${tag} never re-rendered — is LanguageService.subscribe() wired up?`).toBe(
+      true
+    );
+    expect(text, `${tag} still shows en: text after the switch`).not.toMatch(/\ben:/);
+  });
+
+  it.each(Object.entries(NOT_YET_LOCALE_AWARE))(
+    '<%s> does NOT yet follow a language switch (open defect: %s)',
+    async (tag) => {
+      await importAllV4Modules();
+      const { rerendered } = await mountAndSwitch(tag, container);
+
+      expect(
+        rerendered,
+        `${tag} now re-renders on a language switch — move it into LOCALE_AWARE and delete its NOT_YET_LOCALE_AWARE entry`
+      ).toBe(false);
+    }
+  );
 });
