@@ -16,10 +16,11 @@ api-worker, image-worker; the **routed beta** worker on og-worker; and **product
 
 ## 0. Before merging (branch readiness)
 
-*Walked 2026-08-21 against the live account (`wrangler` OAuth + `gh` admin). One item stays
-open: the optional cache-purge secrets. The production-D1 item was split — only `0011` belongs
-before the merge; the stainID rewrite and the identity backfill moved to §1 (see the reasoning
-inline). The i18n branch was merged the same day (`29efe5f0`).*
+*Walked 2026-08-21 against the live account (`wrangler` OAuth + `gh` admin) — **every item
+closed**, except the dashboard re-check of bindings after the first production deploy. The
+production-D1 item was split — only `0011` belongs before the merge; the stainID rewrite and the
+identity backfill moved to §1 (see the reasoning inline). The i18n branch was merged the same day
+(`29efe5f0`) and the optional cache-purge credentials were configured.*
 
 - [x] CI green on `monorepo-2.0-prep` including the new `secret-scan` job — run on `4a07f249`
       (2026-08-21): *Secret scan (gitleaks)*, *Security audit (production dependencies)* and
@@ -81,10 +82,15 @@ inline). The i18n branch was merged the same day (`29efe5f0`).*
       `API_RATE_LIMITER`; oauth `RL_AUTH_10/20/30` (top-level = production); moderation-worker two
       `[[ratelimits]]`; discord-worker uses Upstash + KV (no `ratelimits` binding by design).
   - [ ] Confirm in the dashboard after the first production deploy (Worker → Settings → Bindings).
-- [ ] **Optional presets-api secrets** (FINDING-018): `CACHE_PURGE_ZONE_ID` + `CACHE_PURGE_API_TOKEN`
-      — **absent on the production worker as of 2026-08-21** (user-run, optional; zone of
-      `shots.xivdyetools.app`, token scoped to *Zone → Cache Purge*, `--env production`); without
-      them the 1-day `s-maxage` is the bound.
+- [x] **Optional presets-api cache-purge credentials** (FINDING-018) — done 2026-08-21:
+      `CACHE_PURGE_API_TOKEN` (purge-only token on the `xivdyetools.app` zone) set by the
+      maintainer on the **production** worker (`wrangler secret list --env production` shows it);
+      `CACHE_PURGE_ZONE_ID` (`ec1fb94c…`, from `wrangler r2 bucket domain list`) ships as a
+      `[env.production]` **var** rather than a secret. Inventory + rotation-log rows added to
+      `SECRET_ROTATION.md`; success now logs `[preview-image] cache purged <url>`. The production
+      build (2026-08-11) predates the purge code, so the path goes live with the merge-day deploy —
+      verify in §1 (`cf-cache-status` flips off `HIT` after a delete; tail shows `cache purged`).
+      Side fix: `shots.xivdyetools.app` minimum TLS raised 1.0 → 1.2.
 - [x] Domain cutovers — **already live, verified 2026-08-21**: `proxy.xivdyetools.app` and
       `proxy.xivdyetools.projectgalatine.com` answer api-worker (`/v1/dyes` 200,
       `/api/v2/data-centers` 200 — the old proxy had no `/v1`); `developers.xivdyetools.app` is
@@ -155,6 +161,10 @@ inline). The i18n branch was merged the same day (`29efe5f0`).*
   - [ ] og-worker: `/og/<tool>/…` returns `cf-cache-status: HIT` on the second request;
         Discord / X link previews render (validators).
   - [ ] image-worker: a > 1,000-px PNG is rejected at the header gate (FINDING-004).
+  - [ ] presets-api preview-image purge (FINDING-018, credentials set 2026-08-21): upload a
+        preview → `curl -I https://shots.xivdyetools.app/<key>` twice → `cf-cache-status: HIT`;
+        delete it → the next `curl -I` is not `HIT`; the tail shows `[preview-image] cache purged`
+        and no `cache purge failed`.
   - [ ] web-app: response headers (`_headers`) as intended incl. CSP; Swatch `.chara` import
         resolves gear; presets list/submit/vote; OG card for `/`.
   - [ ] moderation bot: autocomplete only for moderators; ban flow on a long CJK name

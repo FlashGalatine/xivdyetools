@@ -97,6 +97,7 @@ describe('purgePreviewImageCache / deletePreviewImage (FINDING-018)', () => {
   }
 
   it('purges the public URL of the key through the Cloudflare cache-purge API', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
     const fetchMock = stubPurgeApi(
       async () => new Response(JSON.stringify({ success: true }), { status: 200 })
     );
@@ -105,6 +106,11 @@ describe('purgePreviewImageCache / deletePreviewImage (FINDING-018)', () => {
     const result = await purgePreviewImageCache(env, 'preset-1/a.webp');
 
     expect(result).toBe('purged');
+    // A production tail must be able to prove the purge path is live, not
+    // merely that it did not fail — success is logged with the purged URL.
+    expect(info).toHaveBeenCalledWith(
+      expect.stringContaining('cache purged https://shots.xivdyetools.app/preset-1/a.webp')
+    );
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://api.cloudflare.com/client/v4/zones/zone-123/purge_cache');

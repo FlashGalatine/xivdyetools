@@ -148,7 +148,7 @@ JWT_SECRET=development-jwt-secret-min-32-chars
 vars = { ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com,https://beta.xivdyetools.app", JWT_ISSUER = "https://auth.xivdyetools.app" }
 ```
 
-Bindings: `DB` (D1), `DISCORD_WORKER` (service → `xivdyetools-discord-worker`, notifications), `IMAGE_WORKER` (service → `xivdyetools-image-worker`, `POST /thumbnail`), `THUMBNAILS` (R2 bucket `xivdyetools-presets-preview-thumbnails`, served at `shots.xivdyetools.app`), `TOKEN_BLACKLIST` (KV — the oauth worker's jti blacklist, shared so revoked tokens are rejected here too; FINDING-002). `JWT_ISSUER` pins the accepted `iss` claim (FINDING-015). Top-level block = `xivdyetools-presets-api-dev`; production under `[env.production]`.
+Bindings: `DB` (D1), `DISCORD_WORKER` (service → `xivdyetools-discord-worker`, notifications), `IMAGE_WORKER` (service → `xivdyetools-image-worker`, `POST /thumbnail`), `THUMBNAILS` (R2 bucket `xivdyetools-presets-preview-thumbnails`, served at `shots.xivdyetools.app`), `TOKEN_BLACKLIST` (KV — the oauth worker's jti blacklist, shared so revoked tokens are rejected here too; FINDING-002). `JWT_ISSUER` pins the accepted `iss` claim (FINDING-015). `CACHE_PURGE_ZONE_ID` (production var, `ec1fb94c…` — the `xivdyetools.app` zone id behind `shots.xivdyetools.app`) is the purge target for FINDING-018; it is config, not a secret, and pairs with the `CACHE_PURGE_API_TOKEN` secret below. Top-level block = `xivdyetools-presets-api-dev`; production under `[env.production]`.
 
 ### Secrets
 
@@ -159,8 +159,7 @@ Bindings: `DB` (D1), `DISCORD_WORKER` (service → `xivdyetools-discord-worker`,
 | `MODERATOR_IDS` | No | Comma-separated user IDs |
 | `BOT_SIGNING_SECRET` | No | HMAC signing key for bot request verification |
 | `PERSPECTIVE_API_KEY` | No | Google Perspective API for ML moderation |
-| `CACHE_PURGE_ZONE_ID` | No | Cloudflare zone id of `shots.xivdyetools.app` — enables single-file edge purge of deleted/replaced preview images (FINDING-018); without it the 1-day `s-maxage` is the bound |
-| `CACHE_PURGE_API_TOKEN` | No | API token with *Zone → Cache Purge* on that zone (pairs with `CACHE_PURGE_ZONE_ID`) |
+| `CACHE_PURGE_API_TOKEN` | No | API token scoped to *Zone → Cache Purge* on the `xivdyetools.app` zone — enables single-file edge purge of deleted/replaced preview images (FINDING-018); pairs with the `CACHE_PURGE_ZONE_ID` **var** (see above). Without it the 1-day `s-maxage` is the bound. Set on production 2026-08-21 |
 | `MODERATION_WEBHOOK_URL` / `DISCORD_BOT_WEBHOOK_URL` / `INTERNAL_WEBHOOK_SECRET` | No | Notification webhooks |
 
 ### Setting Secrets
@@ -172,8 +171,7 @@ wrangler secret put BOT_API_SECRET
 wrangler secret put JWT_SECRET
 wrangler secret put MODERATOR_IDS
 wrangler secret put PERSPECTIVE_API_KEY  # Optional
-wrangler secret put CACHE_PURGE_ZONE_ID    # Optional — preview-image edge purge (FINDING-018)
-wrangler secret put CACHE_PURGE_API_TOKEN  # Optional — pairs with CACHE_PURGE_ZONE_ID
+wrangler secret put CACHE_PURGE_API_TOKEN --env production  # Optional — preview-image edge purge (FINDING-018); CACHE_PURGE_ZONE_ID is a wrangler.toml var, not a secret
 ```
 
 ### Local Development (.dev.vars)

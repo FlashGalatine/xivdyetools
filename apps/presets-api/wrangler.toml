@@ -61,7 +61,12 @@ routes = [
   { pattern = "api.xivdyetools.app", custom_domain = true },
   { pattern = "api.xivdyetools.projectgalatine.com", custom_domain = true }
 ]
-vars ={ ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com,https://beta.xivdyetools.app", JWT_ISSUER = "https://auth.xivdyetools.app" }
+vars ={ ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com,https://beta.xivdyetools.app", JWT_ISSUER = "https://auth.xivdyetools.app", CACHE_PURGE_ZONE_ID = "ec1fb94c1ee9f6763f631b6fcfa3c52c" }
+# CACHE_PURGE_ZONE_ID is the `xivdyetools.app` zone that serves the R2 custom
+# domain shots.xivdyetools.app (`wrangler r2 bucket domain list
+# xivdyetools-presets-preview-thumbnails` → zone_id). A zone id is not a
+# secret — it is config, kept here so the purge target is reviewable; only
+# CACHE_PURGE_API_TOKEN is a secret (FINDING-018).
 
 [[env.production.d1_databases]]
 binding = "DB"
@@ -84,9 +89,10 @@ service = "xivdyetools-image-worker"
 # MODERATOR_IDS, PERSPECTIVE_API_KEY, MODERATION_WEBHOOK_URL,
 # OWNER_DISCORD_ID, DISCORD_BOT_TOKEN,
 # DISCORD_BOT_WEBHOOK_URL, INTERNAL_WEBHOOK_SECRET,
-# CACHE_PURGE_ZONE_ID + CACHE_PURGE_API_TOKEN (optional, FINDING-018:
-#   zone serving shots.xivdyetools.app + token with Zone → Cache Purge;
-#   unset → preview-image takedowns skip the edge purge)
+# CACHE_PURGE_API_TOKEN (optional, FINDING-018: a token with only
+#   Zone → Cache Purge on the xivdyetools.app zone; pairs with the
+#   CACHE_PURGE_ZONE_ID var above; unset → preview-image takedowns skip
+#   the edge purge. Set on production 2026-08-21.)
 
 # FINDING-002: production oauth TOKEN_BLACKLIST namespace (see apps/oauth/wrangler.toml)
 [[env.production.kv_namespaces]]

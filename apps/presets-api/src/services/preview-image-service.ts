@@ -76,6 +76,9 @@ export async function purgePreviewImageCache(
       console.error(`[preview-image] cache purge failed for ${url}: HTTP ${response.status}`);
       return 'failed';
     }
+    // Success is logged too, so a production tail can prove the purge path is
+    // live (not merely that it did not fail) once the optional credentials are set.
+    console.info(`[preview-image] cache purged ${url}`);
     return 'purged';
   } catch (err) {
     console.error(`[preview-image] cache purge failed for ${url}`, err);

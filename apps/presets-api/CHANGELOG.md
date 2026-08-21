@@ -29,8 +29,8 @@ Security audit remediation (docs/audits/2026-08-21-security, FINDING-002 / FINDI
 
 ### Deploy notes
 
-- **Optional — cache purge for preview-image takedown** (FINDING-018): `wrangler secret put CACHE_PURGE_ZONE_ID` (the zone that serves `shots.xivdyetools.app`) and `wrangler secret put CACHE_PURGE_API_TOKEN` (an API token scoped to *Zone → Cache Purge* on that zone) on the production worker. Without them nothing breaks: the purge is skipped and a rejected / deleted image can still be served from the edge for up to a day (was: a year). No new migration in this release beyond `0011`.
-- **Apply migration `0011_submission_events.sql` before deploying** (`wrangler d1 execute xivdyetools-presets --remote --file=migrations/0011_submission_events.sql`); without the table every quota check 500s.
+- **Optional — cache purge for preview-image takedown** (FINDING-018): `CACHE_PURGE_ZONE_ID` ships as a `[env.production]` **var** in `wrangler.toml` (`ec1fb94c…`, the `xivdyetools.app` zone that serves `shots.xivdyetools.app` — a zone id is config, not a secret); `wrangler secret put CACHE_PURGE_API_TOKEN --env production` (an API token scoped to *Zone → Cache Purge* on that zone only) completes it — **done on production 2026-08-21**. Without the token nothing breaks: the purge is skipped and a rejected / deleted image can still be served from the edge for up to a day (was: a year). A successful purge now logs `[preview-image] cache purged <url>` so a production tail can prove the path is live. No new migration in this release beyond `0011`.
+- **Apply migration `0011_submission_events.sql` before deploying** (`wrangler d1 execute xivdyetools-presets --remote --file=migrations/0011_submission_events.sql`); without the table every quota check 500s. **Applied to production 2026-08-21.**
 - `RL_PUBLIC` (`[[ratelimits]]`, `namespace_id` 1011 prod / 1012 dev) needs no resource creation.
 - `TOKEN_BLACKLIST` binds an existing namespace (`0d6f3be3…` prod / `891bbbe8…` dev) — no `wrangler kv namespace create` needed. `JWT_ISSUER` is a plain var, already in `wrangler.toml`.
 

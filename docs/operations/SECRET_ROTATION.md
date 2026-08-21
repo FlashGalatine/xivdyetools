@@ -51,6 +51,7 @@ Names come from `env.X` reads in `apps/*/src` that are **not** in any `[vars]` b
 | `XIVAUTH_CLIENT_SECRET` | oauth (optional, confidential-client mode) | XIVAuth OAuth2 secret | On compromise (rotated 2026-01-25) |
 | `GITHUB_WEBHOOK_SECRET` | discord-worker (`/webhooks/github` changelog push) | shared with the GitHub webhook | On compromise |
 | `PERSPECTIVE_API_KEY` | presets-api | Google API key | On compromise |
+| `CACHE_PURGE_API_TOKEN` | presets-api (optional, FINDING-018 — single-file edge purge of deleted / replaced preview images; pairs with the `CACHE_PURGE_ZONE_ID` **var** in `wrangler.toml`, the `xivdyetools.app` zone) | Cloudflare API token scoped to *Zone → Cache Purge → Purge* on that one zone only (it can read or write nothing else) | On compromise; created 2026-08-21 |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | discord-worker (rate-limit backend; **required in production** — the KV fallback cannot throttle fast clients, FINDING-003) | Upstash REST credentials | On compromise |
 | `MODERATOR_IDS` | discord-worker, moderation-worker, presets-api | CSV of Discord IDs (config, not secret) | As needed — all three at once |
 | `MODERATION_CHANNEL_ID`, `SUBMISSION_LOG_CHANNEL_ID` | discord-worker, moderation-worker | channel IDs (config) | As needed |
@@ -180,3 +181,4 @@ Set on the listed consumers with `--env production`; no ordering constraints. Fo
 | Date | Secret(s) | By | Notes |
 |---|---|---|---|
 | 2026-01-25 | `XIVAUTH_CLIENT_SECRET` | maintainer | leaked in a committed `.env` (audit 2026-01-25 FINDING-003); rotated same day |
+| 2026-08-21 | `CACHE_PURGE_API_TOKEN` | maintainer | created (not rotated) — purge-only token on the `xivdyetools.app` zone, set on the **production** presets-api worker (`--env production`) for FINDING-018; `CACHE_PURGE_ZONE_ID` shipped as a `wrangler.toml` var the same day |

@@ -46,8 +46,7 @@ wrangler secret put DISCORD_BOT_TOKEN
 wrangler secret put DISCORD_BOT_WEBHOOK_URL
 wrangler secret put MODERATION_WEBHOOK_URL
 wrangler secret put INTERNAL_WEBHOOK_SECRET
-wrangler secret put CACHE_PURGE_ZONE_ID           # Optional (FINDING-018): zone serving shots.xivdyetools.app
-wrangler secret put CACHE_PURGE_API_TOKEN         # Optional (FINDING-018): token with Zone → Cache Purge
+wrangler secret put CACHE_PURGE_API_TOKEN --env production   # Optional (FINDING-018): token scoped to Zone → Cache Purge on xivdyetools.app; pairs with the CACHE_PURGE_ZONE_ID var in wrangler.toml
 ```
 
 ### Pre-commit Checklist
@@ -129,7 +128,7 @@ src/
 | `THUMBNAILS` | R2 (`xivdyetools-presets-preview-thumbnails`) | Stored preset preview images (WebP) |
 | `IMAGE_WORKER` | Service Binding → `xivdyetools-image-worker` | Crops/encodes an uploaded preview to WebP via `POST /thumbnail` |
 
-Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS` (CSV). Custom domains: `api.xivdyetools.app`, `api.xivdyetools.projectgalatine.com`.
+Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS` (CSV), `JWT_ISSUER`, `CACHE_PURGE_ZONE_ID` (production only — the `xivdyetools.app` zone id behind `shots.xivdyetools.app`, FINDING-018). Custom domains: `api.xivdyetools.app`, `api.xivdyetools.projectgalatine.com`.
 
 ### Required Secrets
 
@@ -149,7 +148,7 @@ Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS
 | `OWNER_DISCORD_ID` | Owner override for elevated debug routes |
 | `DISCORD_BOT_TOKEN` / `DISCORD_BOT_WEBHOOK_URL` | Optional direct bot notification path |
 | `INTERNAL_WEBHOOK_SECRET` | Shared with discord-worker for `/webhooks/preset-submission` |
-| `CACHE_PURGE_ZONE_ID` / `CACHE_PURGE_API_TOKEN` | FINDING-018: zone serving `shots.xivdyetools.app` + a token with *Zone → Cache Purge*; when both are set, every preview-image takedown purges the image URL from the edge cache. Absent → purge skipped, the object's one-day `s-maxage` is the only bound |
+| `CACHE_PURGE_API_TOKEN` | FINDING-018: API token scoped to *Zone → Cache Purge* on the `xivdyetools.app` zone (the zone that serves `shots.xivdyetools.app`); pairs with the `CACHE_PURGE_ZONE_ID` **var** in `wrangler.toml` `[env.production]` (a zone id is config, not a secret). When set, every preview-image takedown purges the image URL from the edge cache and logs `[preview-image] cache purged …`. Absent → purge skipped, the object's one-day `s-maxage` is the only bound. Set on production 2026-08-21 |
 
 ## Database
 

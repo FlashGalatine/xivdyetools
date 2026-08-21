@@ -130,11 +130,10 @@ wrangler secret put MODERATOR_IDS        # CSV of Discord IDs with moderator rig
 ### Optional Secrets
 
 ```bash
-wrangler secret put CACHE_PURGE_ZONE_ID    # Zone that serves shots.xivdyetools.app
-wrangler secret put CACHE_PURGE_API_TOKEN  # API token with Zone → Cache Purge on that zone
+wrangler secret put CACHE_PURGE_API_TOKEN --env production  # API token scoped to Zone → Cache Purge on xivdyetools.app
 ```
 
-When both are set, every preview-image takedown (moderator reject, author delete, preset delete, replace) also purges the image URL from the Cloudflare edge cache (FINDING-018). Without them the purge is skipped and the object's one-day `s-maxage` is the only bound on how long a removed image stays reachable.
+`CACHE_PURGE_ZONE_ID` (the `xivdyetools.app` zone that serves `shots.xivdyetools.app`) is **not** a secret — it ships as a var in `wrangler.toml`'s `[env.production]` block. When the token is set alongside it, every preview-image takedown (moderator reject, author delete, preset delete, replace) also purges the image URL from the Cloudflare edge cache (FINDING-018; set on production 2026-08-21). Without the token the purge is skipped and the object's one-day `s-maxage` is the only bound on how long a removed image stays reachable.
 
 ## Dependencies
 
