@@ -561,7 +561,8 @@
     "swatchDropped": "Retiré (le plus sûr) : {slot} · ΔE {de}",
     "swatchParseError": "Fichier illisible — {message}",
     "swatchNoSlots": "Aucun emplacement de couleur actif dans ce fichier.",
-    "swatchSlotMissing": "{slot} n’est pas un emplacement actif dans ce fichier."
+    "swatchSlotMissing": "{slot} n’est pas un emplacement actif dans ce fichier.",
+    "perDe": "GIL/ΔE"
   },
   "firstRun": {
     "title": "XIV Dye Tools 5.0",

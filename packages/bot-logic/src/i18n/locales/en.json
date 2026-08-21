@@ -561,7 +561,8 @@
     "swatchDropped": "Dropped (safest): {slot} · ΔE {de}",
     "swatchParseError": "Could not read the file — {message}",
     "swatchNoSlots": "No live colour slots in this file.",
-    "swatchSlotMissing": "{slot} is not a live slot in this file."
+    "swatchSlotMissing": "{slot} is not a live slot in this file.",
+    "perDe": "GIL/ΔE"
   },
   "firstRun": {
     "title": "XIV Dye Tools 5.0",

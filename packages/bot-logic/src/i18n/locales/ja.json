@@ -561,7 +561,8 @@
     "swatchDropped": "省略（最も近い一致）: {slot} · ΔE {de}",
     "swatchParseError": "ファイルを読み取れません — {message}",
     "swatchNoSlots": "このファイルに有効なカラー部位がありません。",
-    "swatchSlotMissing": "{slot}はこのファイルでは有効な部位ではありません。"
+    "swatchSlotMissing": "{slot}はこのファイルでは有効な部位ではありません。",
+    "perDe": "GIL/ΔE"
   },
   "firstRun": {
     "title": "XIV Dye Tools 5.0",

@@ -26,6 +26,7 @@ import {
   type CardTheme,
   type MeasuredRowWidths,
 } from './frame.js';
+import { num } from './base.js';
 import { toolGlyph } from './icons/tool-icons.js';
 
 // ============================================================================
@@ -127,7 +128,7 @@ export function generateMixerCard(options: MixerCardOptions): string {
     if (r.best) {
       // Lead % in the accent for the sweep's best landing
       parts.push(
-        cardText(PAD, top + ROW_H / 2 + 4, `${r.pct}%`, {
+        cardText(PAD, top + ROW_H / 2 + 4, `${num(r.pct, lang, 0)}%`, {
           fill: theme.accentText,
           size: CARD_TYPE.value,
           font: 'mono',
@@ -137,7 +138,7 @@ export function generateMixerCard(options: MixerCardOptions): string {
     }
     parts.push(
       measuredRow(PAD, top, ROW_H, {
-        lead: r.best ? '' : `${r.pct}%`,
+        lead: r.best ? '' : `${num(r.pct, lang, 0)}%`,
         sourceHex: r.blendHex,
         dyeHex: r.dyeHex,
         name: r.name,

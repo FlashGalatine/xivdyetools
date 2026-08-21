@@ -27,6 +27,7 @@ import {
   type CardTheme,
   type MeasuredRowWidths,
 } from './frame.js';
+import { num } from './base.js';
 import { toolGlyph } from './icons/tool-icons.js';
 import { MATCHING_METHOD_TAGS, type MatchingMethod } from '@xivdyetools/core';
 
@@ -191,7 +192,7 @@ export function generatePaletteGrid(options: PaletteGridOptions): string {
     parts.push(hairline(PAD, CARD_WIDTH - PAD, top, theme));
     parts.push(
       measuredRow(PAD, top, ROW_H, {
-        lead: `${Math.round(r.share)}%`,
+        lead: `${num(r.share, lang, 0)}%`,
         sourceHex: r.extractedHex,
         dyeHex: r.matchedHex,
         name: r.matchedName,

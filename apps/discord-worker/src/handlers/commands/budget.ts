@@ -292,7 +292,7 @@ async function processFindCommand(
         lTarget: t.t('card.lTarget'),
         lCandidate: t.t('card.lCandidate'),
         deLabel: DE_LABEL[method],
-        perDeLabel: 'GIL/ΔE',
+        perDeLabel: t.t('card.perDe'),
         keyLines,
       },
       lang: locale,

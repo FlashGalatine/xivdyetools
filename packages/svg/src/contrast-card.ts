@@ -35,6 +35,7 @@ import {
   markFooter,
   type CardTheme,
 } from './frame.js';
+import { num } from './base.js';
 import { toolGlyph } from './icons/tool-icons.js';
 
 // ============================================================================
@@ -118,8 +119,9 @@ function axisPos(ratio: number): number {
   return Math.min(Math.log(Math.max(ratio, 1)) / Math.log(21), 1);
 }
 
-function formatRatio(ratio: number, decimals = 2): string {
-  return `${ratio.toFixed(decimals)}:1`;
+/** Ratio with the language's decimal separator (F-08 — was a bare toFixed). */
+function formatRatio(ratio: number, lang: string, decimals = 2): string {
+  return `${num(ratio, lang, decimals)}:1`;
 }
 
 // ============================================================================
@@ -194,7 +196,7 @@ function render13A(o: ContrastCardOptions, theme: CardTheme): string {
   const tone = ratioTone(worst.ratio, theme);
   const vTop = divY + 11;
   parts.push(
-    cardText(PAD, vTop + 26, formatRatio(worst.ratio), { fill: tone, size: 30, font: 'mono' })
+    cardText(PAD, vTop + 26, formatRatio(worst.ratio, o.lang), { fill: tone, size: 30, font: 'mono' })
   );
   parts.push(
     cardText(PAD, vTop + 44, labels.ratioCol, {
@@ -239,7 +241,7 @@ function render13A(o: ContrastCardOptions, theme: CardTheme): string {
         `<rect x="${x}" y="${stripY}" width="11" height="18" rx="3" fill="${p.hexA}"/>` +
           `<rect x="${x + 11}" y="${stripY}" width="11" height="18" rx="3" fill="${p.hexB}"/>`
       );
-      const rText = p.ratio.toFixed(1);
+      const rText = num(p.ratio, o.lang, 1);
       parts.push(
         cardText(x + 26, stripY + 13, rText, { fill: ratioTone(p.ratio, theme), size: CARD_TYPE.label, font: 'mono' })
       );
@@ -320,7 +322,7 @@ function render13B(o: ContrastCardOptions, theme: CardTheme): string {
     );
     parts.push(`<rect x="${CARD_WIDTH - PAD - 48 - 38}" y="${cy - 2}" width="28" height="4" rx="2" fill="${tone}"/>`);
     parts.push(
-      cardText(CARD_WIDTH - PAD, cy + 4, formatRatio(p.ratio), {
+      cardText(CARD_WIDTH - PAD, cy + 4, formatRatio(p.ratio, o.lang), {
         fill: tone,
         size: 13.5,
         font: 'mono',
@@ -422,7 +424,7 @@ function render13C1(o: ContrastCardOptions, theme: CardTheme): string {
     );
     // One decimal — nothing in this tool acts on the second digit
     parts.push(
-      cardText(CARD_WIDTH - PAD, cy + 4, p.ratio.toFixed(1), {
+      cardText(CARD_WIDTH - PAD, cy + 4, num(p.ratio, o.lang, 1), {
         fill: tone,
         size: CARD_TYPE.value,
         font: 'mono',

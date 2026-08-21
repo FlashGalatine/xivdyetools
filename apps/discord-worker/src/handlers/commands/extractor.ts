@@ -42,7 +42,7 @@ import {
   getLocalizedDyeName,
   type LocaleCode,
 } from '../../services/i18n.js';
-import { generatePaletteGrid, generateNearestSheet } from '@xivdyetools/svg';
+import { generatePaletteGrid, generateNearestSheet, num } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { extractImagePixels } from '../../services/image-client.js';
 import {
@@ -343,7 +343,7 @@ async function renderColorSheet(
     const tailLines = tail
       .map((m, i) => {
         const name = getLocalizedDyeName(m.dye.itemID, m.dye.name, locale);
-        return `**${i + 6}.** ${name} (\`${m.dye.hex.toUpperCase()}\`) · ${m.distance.toFixed(1)}`;
+        return `**${i + 6}.** ${name} (\`${m.dye.hex.toUpperCase()}\`) · ${num(m.distance, locale, 1)}`;
       })
       .join('\n');
 

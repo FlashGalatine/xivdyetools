@@ -561,7 +561,8 @@
     "swatchDropped": "Entfernt (sicherster Treffer): {slot} · ΔE {de}",
     "swatchParseError": "Datei nicht lesbar — {message}",
     "swatchNoSlots": "Keine aktiven Farb-Slots in dieser Datei.",
-    "swatchSlotMissing": "{slot} ist in dieser Datei kein aktiver Slot."
+    "swatchSlotMissing": "{slot} ist in dieser Datei kein aktiver Slot.",
+    "perDe": "GIL/ΔE"
   },
   "firstRun": {
     "title": "XIV Dye Tools 5.0",
