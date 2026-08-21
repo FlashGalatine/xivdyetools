@@ -16,7 +16,7 @@
 
 ---
 
-## Sprint 0 — Prerequisites: delete, scaffold, one-liners
+## Sprint 0 — Prerequisites: delete, scaffold, one-liners ✅ COMPLETED 2026-08-21 (commits `37668a97..27db39d2`, Tasks 1–3)
 
 Nothing here is a hotfix; nothing ships out-of-band. The sprint removes ≈25 rows of work by deleting the four dead components, gives Sprints 1–4 the helpers they call, and lands the seven locale-file edits (pure content, no key changes, so the gates cannot move).
 
@@ -35,7 +35,7 @@ Nothing here is a hotfix; nothing ships out-of-band. The sprint removes ≈25 ro
 
 ---
 
-## Sprint 1 — Community Presets surface + the palette-drawer bug (P1)
+## Sprint 1 — Community Presets surface + the palette-drawer bug (P1) ✅ COMPLETED 2026-08-21 (commits `62e82bf7..2f64b44f`, Tasks 4–7)
 
 The two things a ja/de/fr user hits first on 5.0: the palette drawer (every tool) and the presets flow (edit form, validation toasts, vote errors, collection import). `preset-edit-form.ts` is rewritten against the already-localized `preset-submission-form.ts` as the template; services stop returning English and return codes.
 
@@ -55,7 +55,7 @@ The two things a ja/de/fr user hits first on 5.0: the palette drawer (every tool
 
 ---
 
-## Sprint 2 — Cross-tool P1 shapes and per-tool High rows
+## Sprint 2 — Cross-tool P1 shapes and per-tool High rows ✅ COMPLETED 2026-08-21 (commits `2380e1dc..971a2ae0`, Tasks 8–12)
 
 The three scaffolds from Sprint 0 are wired into the nine tools, route titles go through keys, and the five components that never subscribe start re-rendering on locale change.
 
@@ -80,7 +80,7 @@ The three scaffolds from Sprint 0 are wired into the nine tools, route titles go
 
 ---
 
-## Sprint 3 — One vocabulary: core owns harmony / vision / category labels (P2)
+## Sprint 3 — One vocabulary: core owns harmony / vision / category labels (P2) ✅ COMPLETED 2026-08-21 (commit `8b1ca836`, Task 13)
 
 | ID | Source | Sev/Pri | Item |
 |----|--------|---------|------|
@@ -93,7 +93,7 @@ The three scaffolds from Sprint 0 are wired into the nine tools, route titles go
 
 ---
 
-## Sprint 4 — Medium: aria/title/placeholder, English names in search/sort/aria, locale formatting
+## Sprint 4 — Medium: aria/title/placeholder, English names in search/sort/aria, locale formatting ✅ COMPLETED 2026-08-21 (commits `d6fefd1c..f42a22af`, Tasks 14–15)
 
 | ID | Source | Sev/Pri | Item |
 |----|--------|---------|------|
@@ -110,7 +110,7 @@ The three scaffolds from Sprint 0 are wired into the nine tools, route titles go
 
 ---
 
-## Sprint 5 — Low polish + guardrails
+## Sprint 5 — Low polish + guardrails ✅ COMPLETED 2026-08-21 (commits `ca0ee36d..71c72651`, Tasks 16–18)
 
 | ID | Source | Sev/Pri | Item |
 |----|--------|---------|------|
@@ -131,7 +131,7 @@ The three scaffolds from Sprint 0 are wired into the nine tools, route titles go
 
 ---
 
-## Sprint 6 — Fonts (terminal, always last)
+## Sprint 6 — Fonts (terminal, always last) ✅ COMPLETED 2026-08-21 (commit `13b84fdb`, Task 19)
 
 | ID | Source | Sev/Pri | Item |
 |----|--------|---------|------|
@@ -175,3 +175,68 @@ None — single-source plan; no fix-vs-delete collisions. (HC-SYS-012 deletions 
 - Core locale values (`packages/core/src/data/locales/*.json`) are **generated** — any correction there goes through `dyenames.csv` / `localize.yaml`, never the JSON. Nothing in this plan requires a core change unless TERM-004 takes the `getVisionTypeShort()` route (then: core bump + publish via the GitHub Action, not a local `pnpm publish`).
 - Beta first (`beta.xivdyetools.app`, Pages `--branch=beta` is load-bearing), production on the 5.0 merge; a bare `wrangler deploy` is not involved — web-app is Pages.
 - Re-run the i18n sweep (this folder's evidence scripts + a fresh hardcoded scan) after Sprint 2 and again after Sprint 5; the lint guardrail should make the third run boring.
+
+---
+
+## Execution notes (added 2026-08-21, Task 20 close-out)
+
+All seven sprints above shipped as 19 tasks (Task 20 is this close-out) on branch **`i18n-remediation-2026-08-20`**, worktree `C:\dev\XIVProjects\.worktrees\xivdyetools-i18n`, cut from `monorepo-2.0-prep` @ `1cbb303e`. Full commit range: `37668a97..13b84fdb` (22 commits including the audit-doc commit `cae7c68c` itself). Per-task detail lives in `.superpowers/sdd/EXECUTION_TASKS/progress.md` and the individual `task-N-report.md` files; this section pulls forward only what a future reader of this plan needs without opening the ledger.
+
+### Rulings made during execution
+
+- **Worktree/branch choice**: work landed on a new branch in a dedicated worktree rather than directly on `monorepo-2.0-prep`, because `.worktrees/` is not gitignored in this repo and another session was concurrently editing the main checkout. The branch fast-forwards cleanly onto `monorepo-2.0-prep`.
+- **10 harmony keys, not 9** (Sprint 3 / TERM-003, Task 13): all ten `config.*` harmony option keys — including `config.invertedTetradic`, which the plan's item list omitted — were converted to `LanguageService.getHarmonyType()` and deleted from all six locales together, not nine. Splitting them would have orphaned the tenth key against the `i18n:unused` gate; the deletion had to be atomic.
+- **TERM-004 took the locale-edit route**, not a core `getVisionTypeShort()` addition: the ja/ko/zh head nouns for the vision-toggle short labels were aligned to core's vocabulary by editing the locale values directly, avoiding a `@xivdyetools/core` publish from inside a web-app-only branch. The duplicate short-label vocabulary in web-app `config.*` keys remains (accepted cost).
+- **Identifier rulings**: `HC-V4-008` and `HC-SWA-004`/`HC-BUD-010` tags (`RGB DIST`, `DISTINGUISH %`, `R{row}·C{col}`, `ID {n}`, tier tags) stay English identifiers, consistent with how the ΔE method tags are already treated — not translated. The mixer's `MODEL_SHORT` **`Spectral`** row header (Task 17) stays an identifier for the same reason (the tooltip beside it does carry the localized `mixer.modelSpectral` string).
+- **ko/zh CIEDE2000 learn-link — no English fallback** (Task 17): the dispatch brief for Task 17 had assumed ko/zh would fall back to an English Wikipedia link when no localized article exists. Execution instead followed core's already-documented `getLearnLink` policy: absent means no link, never an English one. Repo convention won over the brief's assumption — cost if wrong: ko/zh users lose a Wikipedia link they could have read in English anyway.
+- **`errors.networkError` wording** (Task 6): the shipped string "Network error. Please try again." was kept as originally translated rather than revised, since it matches the register of the rest of the `errors.*` namespace.
+
+### Deferred minors that remain (grouped, not blocking; none change gate status)
+
+**Shared helpers / custom dye (Tasks 2, 8)**
+- `custom-dye.ts:509` and `:57` carry a redundant `as Dye` cast.
+- `dyeNameMatches()` has no test for the empty-query case.
+- A custom dye's localized name is frozen at mint time (the swatch tool's `reverseDyeName` caches the interpolated string) — same behaviour as the real-dye path, so treated as consistent rather than a defect.
+- Comparison tool's `sourceLabel` keeps a dead `|| d.acquisition` fallback.
+
+**Presets services and forms (Tasks 5, 6, 7)**
+- German `preset.anotherPreset` should be nominative ("eine andere Voreinstellung").
+- `preset-edit-form.test.ts:239-247` dye-name assertions are vacuous (they stub `getDyeName`).
+- Korean `saveChanges` spacing is inconsistent with `noChanges`.
+- Pre-existing: ja `preset.dyes` = 染料 vs the runtime's カララント (not introduced by this remediation).
+- `importedCopyName`'s loop is unguarded if a locale ever drops the `{n}` placeholder.
+- `MIN_`/`MAX_` validation constants are duplicated between the form and the service.
+- The vote-failure path drops the server's wire message and surfaces only the mapped code as `details`.
+- A stale comment remains in `collection-service-branches.test.ts:170`.
+- `preset-detail.ts`, `preset-tool.ts`, `my-submissions-modal.ts`, `add-to-collection-menu.ts` still have no dedicated test files.
+- The loop-guard test added for the collection-import path doesn't reproduce the double-collision case it guards against.
+
+**Config sidebar / vocabulary (Tasks 11, 13)**
+- `config-sidebar.ts` holds its own copy of the `SUBRACE_TO_CLAN_KEY` map — a third copy alongside `chara-import.ts` and `swatch-tool.ts` — never folded into a shared module.
+- `METHOD_TAGS` is duplicated across three files; `RACE_KEY_BY_RACE` is unshared.
+- A full `<v4-config-sidebar>` mount is impossible in the current test harness (the `ConfigController` mock doesn't support it).
+
+**Budget / gil / currency (Tasks 9, 15)**
+- Hand-off, out of `apps/web-app` scope: `packages/core`'s `CONSOLIDATED_DYES.B.currency` reads "Skybuilders' Scrips" while the web-app currency table's key is "Skybuilders Scrips" — the apostrophe mismatch makes the tier-B currency label fall back to English. Needs a core fix, not a web-app one.
+- `budget-tool.ts:466` and `:1524` still hand-roll tier-A gil formatting instead of `formatGil()` (visible as a ja spacing inconsistency).
+- `camera-preview-modal`'s device-count fallback branch is unreachable as written.
+- A key-count typo in one of the sprint reports (cosmetic, doc-only).
+- The pre-existing "Market · Market" duplication in one label was left as-is (predates this remediation).
+
+**Swatch / chara-import (Task 16)**
+- `image-upload-display.ts:172` has a leading ASCII space after a fullwidth colon in one locale string.
+- French `harmony.baseColorSection` ("Couleur de Base") capitalisation doesn't match the newer `baseColorTitle` key's convention.
+- `gradient-tool.test.ts` carries negative assertions that can't fail (inert).
+- Swatch's `gridTitle` is computed twice per render.
+- Swatch-tool fallback branches still join `{palette}`/`{addr}` manually instead of through a shared formatter.
+
+**Guardrails / lint infrastructure (Task 18)**
+- `validate-i18n.js:583` has a stale `--fix` hint in its output.
+- The `no-hardcoded-ui-strings` rule splits `html`` `` text at `${}` interpolation holes, so a sentence broken across a hole is invisible to it.
+- Only the `html` tagged template is scanned — `svg`` `` templates are not.
+- `innerHTML` assignments inside the nine `BaseComponent`-derived tools (≈28 call sites) are not covered by the rule — flagged as a follow-up, not fixed here.
+- `checkOrderAndWhitespace` re-parses each locale file rather than reusing an already-parsed AST.
+
+**Doc corrections folded into this close-out**
+- `FONT_SUBSET_AUDIT.md`'s FONT-WEB-002 count was wrong (said one `my-submissions-modal.ts` inline `'Fragment Mono'` site, there were four — two of which predated the 2026-08-20 audit and were missed by its grep). Corrected in this task.
+- `result-card.ts:1858`'s `no-hardcoded-ui-strings` warning for the "Saddlebag Exchange" brand name is now suppressed with a rule-scoped disable comment (Task 20), leaving `npm run lint` at 0 warnings / 0 errors.

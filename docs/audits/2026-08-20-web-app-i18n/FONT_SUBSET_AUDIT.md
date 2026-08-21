@@ -46,7 +46,7 @@ This mirrors how `FONTS.cjk` would be chosen per-locale in `packages/svg` for th
 | `--font-mono` | Fragment Mono → ui-monospace → … → `--font-cjk` → `monospace` → `sans-serif` | ✅ (generic `sans-serif` last on purpose so a CJK dye name inside a mono label degrades to real glyphs, not tofu) |
 | `:lang(ja/ko/zh) .m16-eyebrow/.m16-label` | drops the mono face for CJK | ✅ |
 
-`tailwind.config.js` points `sans`/`mono` at the same variables; `tool-content.css` `.number` rule is loaded both page-side and inside the shell's shadow root (the shadow-DOM CSS boundary is documented in web-app `CLAUDE.md`). No component names a family directly (grep: only `globals.css` and the `.number` rule carry `font-family:`). The single exception is `my-submissions-modal.ts:139` which inlines `font-family: 'Fragment Mono', monospace` in a style attribute — it bypasses the `--font-mono` contract and so has **no CJK fallback** and no `:lang()` override; a ja preset name in that row would fall to the browser's default monospace. Minor, but it is the one place the "fonts are a contract" rule is broken.
+`tailwind.config.js` points `sans`/`mono` at the same variables; `tool-content.css` `.number` rule is loaded both page-side and inside the shell's shadow root (the shadow-DOM CSS boundary is documented in web-app `CLAUDE.md`). No component names a family directly (grep: only `globals.css` and the `.number` rule carry `font-family:`). **Correction (2026-08-21, Task 19 remediation):** the exception is not a single site — `my-submissions-modal.ts` inlines `font-family: 'Fragment Mono', monospace` in a style attribute at **four** call sites (the `statValue()` helper's big stat-card numbers, predating this audit, plus the votes/status badge pair the original grep caught) — it bypasses the `--font-mono` contract and so has **no CJK fallback** and no `:lang()` override; a ja preset name in that row would fall to the browser's default monospace. All four were fixed in the same commit (`13b84fdb`) by switching to `font-family: var(--font-mono)`.
 
 ### FONT-WEB-003 · `<html lang>` and `og:locale` 📝 Info
 `src/index.html` ships `lang="en"` and `og:locale="en_US"`; the runtime flips `documentElement.lang` on `setLocale`. Because the locale is a localStorage preference, not a URL segment, there is no per-language URL for crawlers to index, so `hreflang`/`og:locale:alternate` do not apply. `public/manifest.json` has no `lang` field and English-only `shortcuts[]` — a PWA manifest cannot be localized per user without a manifest per locale; acceptable.
@@ -54,6 +54,6 @@ This mirrors how `FONTS.cjk` would be chosen per-locale in `packages/svg` for th
 ---
 
 ## Recommendations
-1. Add the two `:lang()` `--font-cjk` overrides (FONT-WEB-001) — one CSS edit, no bundle impact.
-2. Replace the inline `font-family` in `my-submissions-modal.ts:139` with `var(--font-mono)`.
+1. ✅ DONE 2026-08-21 (commit `13b84fdb`) — added the two `:lang()` `--font-cjk` overrides (FONT-WEB-001) — one CSS edit, no bundle impact.
+2. ✅ DONE 2026-08-21 (commit `13b84fdb`) — replaced all four inline `font-family: 'Fragment Mono', monospace` occurrences in `my-submissions-modal.ts` with `var(--font-mono)` (see correction above — the original count of one was wrong).
 3. Nothing to subset; nothing to re-subset. Re-run the **worker** font-coverage checks whenever `packages/core` or `bot-logic` locale strings change — that is where stale subsets bite (see 2026-08-09 FONT-001).

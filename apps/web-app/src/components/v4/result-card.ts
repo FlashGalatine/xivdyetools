@@ -1854,7 +1854,7 @@ export class ResultCard extends BaseLitComponent {
                           <button
                             class="menu-item"
                             role="menuitem"
-                            @click=${() => this.handleMenuAction('external-saddlebag')}
+                            @click=${/* eslint-disable-next-line xivdyetools-i18n/no-hardcoded-ui-strings -- brand name */ () => this.handleMenuAction('external-saddlebag')}
                           >
                             Saddlebag Exchange
                           </button>
