@@ -121,6 +121,66 @@ app.use(
 );
 
 // ============================================================================
+// Middleware: /og/* request guards (FINDING-005, 2026-08-21 security audit)
+// ============================================================================
+
+/** No legitimate /og/* path segment (hex, stainID list, preset UUID, …) is longer than this. */
+const OG_MAX_SEGMENT_CHARS = 64;
+/** And no legitimate /og/* path is longer than this. */
+const OG_MAX_PATH_CHARS = 512;
+
+/**
+ * Reject oversized path segments before any card is generated. A 16 KB
+ * `:color` used to reach the not-found card's text-wrap and burn minutes of
+ * CPU; Cloudflare accepts URLs up to 16 KB, so the bound has to be ours.
+ */
+app.use('/og/*', async (c, next) => {
+  const path = new URL(c.req.url).pathname;
+  if (
+    path.length > OG_MAX_PATH_CHARS ||
+    path.split('/').some((segment) => segment.length > OG_MAX_SEGMENT_CHARS)
+  ) {
+    return c.json({ error: 'Request path too long' }, 400);
+  }
+  return next();
+});
+
+/**
+ * Edge cache for rendered PNGs. The `Cache-Control` / `CDN-Cache-Control`
+ * headers set by renderOGImage describe the TTLs but do nothing by themselves
+ * on a Worker response — every hit was a full resvg raster. Key = full URL
+ * (lang / frame / algo all vary the image), GET only, 200s only; the Cache
+ * API honours the response's own s-maxage for expiry. Absent outside Workers
+ * (tests, Node) → pass-through.
+ */
+app.use('/og/*', async (c, next) => {
+  const cache = (globalThis as { caches?: { default?: Cache } }).caches?.default;
+  if (!cache || c.req.method !== 'GET') {
+    return next();
+  }
+
+  const cacheKey = new Request(c.req.url, { method: 'GET' });
+  const hit = await cache.match(cacheKey);
+  if (hit) {
+    return hit;
+  }
+
+  await next();
+
+  const res = c.res;
+  if (res.status === 200) {
+    const put = cache.put(cacheKey, res.clone());
+    try {
+      c.executionCtx.waitUntil(put);
+    } catch {
+      // No execution context (unit tests / non-Workers runtime): complete inline
+      await put;
+    }
+  }
+  return res;
+});
+
+// ============================================================================
 // Middleware: Analytics Tracking
 // ============================================================================
 

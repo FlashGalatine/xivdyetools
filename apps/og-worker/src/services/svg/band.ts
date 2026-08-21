@@ -237,13 +237,37 @@ function bandText(
   return `<text ${attrs.join(' ')}>${escapeXml(content)}</text>`;
 }
 
-/** Ellipsise to a pixel budget (CJK-aware via estimateTextWidth). */
+/**
+ * FINDING-005 (2026-08-21 audit): every text helper below is linear in the
+ * input. `fit` and `wrapName` used to re-measure the remaining string on every
+ * trimmed character (quadratic / cubic), so a 16 KB not-found label burned
+ * minutes of CPU. `estimateTextWidth` is additive per code point, so a single
+ * forward pass with an accumulator is exact.
+ */
+
+/** Longest name any card will ever wrap; anything longer is clipped first. */
+const MAX_NAME_CHARS = 512;
+
+/** Longest prefix of `chars` (code points) whose width + `reserve` fits in `maxPx`. */
+function prefixThatFits(chars: string[], px: number, maxPx: number, reserve: number): number {
+  let acc = 0;
+  let keep = 0;
+  for (let i = 0; i < chars.length; i++) {
+    const w = estimateTextWidth(chars[i], px);
+    if (acc + w + reserve > maxPx) break;
+    acc += w;
+    keep = i + 1;
+  }
+  return keep;
+}
+
+/** Ellipsise to a pixel budget (CJK-aware via estimateTextWidth). Linear. */
 function fit(content: string, maxPx: number, size: number, mono = false): string {
-  const w = (s: string): number => estimateTextWidth(s, size * (mono ? 0.62 : 0.54));
-  if (w(content) <= maxPx) return content;
-  let out = content;
-  while (out.length > 1 && w(out + '…') > maxPx) out = out.slice(0, -1);
-  return out.trimEnd() + '…';
+  const px = size * (mono ? 0.62 : 0.54);
+  if (estimateTextWidth(content, px) <= maxPx) return content;
+  const chars = [...content];
+  const keep = Math.max(1, prefixThatFits(chars, px, maxPx, estimateTextWidth('…', px)));
+  return chars.slice(0, keep).join('').trimEnd() + '…';
 }
 
 /** CJK by codepoint, never by "has no spaces" — so is `Rußschwarzer`. */
@@ -261,28 +285,32 @@ const CJK_RE = /[　-ヿ㐀-䶿一-鿿豈-﫿가-힯]/;
  * CJK wraps per character; `estimateTextWidth` already knows a CJK glyph is a
  * full em. Only the final line can still overflow, and it ellipsises.
  */
-function wrapName(content: string, maxPx: number, size: number, maxLines: number): string[] {
-  const w = (s: string): number => estimateTextWidth(s, size * 0.54);
+function wrapName(rawContent: string, maxPx: number, size: number, maxLines: number): string[] {
+  const px = size * 0.54;
+  const w = (s: string): number => estimateTextWidth(s, px);
+  // FINDING-005: clip absurd inputs before doing any work — no name is this long
+  const content = [...rawContent].slice(0, MAX_NAME_CHARS).join('');
   if (w(content) <= maxPx) return [content];
 
   const cjk = CJK_RE.test(content);
+  const hyphenW = w('-');
 
-  // Break any over-wide word into hyphenated fragments that do fit
+  // Break any over-wide word into hyphenated fragments that do fit (linear:
+  // one forward pass per fragment, never re-measuring the remainder)
   const atoms: string[] = [];
   for (const word of cjk ? [...content] : content.split(' ')) {
     if (cjk || w(word) <= maxPx) {
       atoms.push(word);
       continue;
     }
-    let rest = word;
-    while (w(rest) > maxPx) {
-      let cut = rest.length - 1;
-      while (cut > 2 && w(`${rest.slice(0, cut)}-`) > maxPx) cut--;
+    let rest = [...word];
+    while (w(rest.join('')) > maxPx) {
+      const cut = Math.min(rest.length - 1, prefixThatFits(rest, px, maxPx, hyphenW));
       if (cut <= 2) break;
-      atoms.push(`${rest.slice(0, cut)}-`);
+      atoms.push(`${rest.slice(0, cut).join('')}-`);
       rest = rest.slice(cut);
     }
-    atoms.push(rest);
+    atoms.push(rest.join(''));
   }
 
   const lines: string[] = [];

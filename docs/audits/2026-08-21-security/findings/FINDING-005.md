@@ -26,3 +26,6 @@ Cost amplification / degraded availability of social cards on the production ori
 
 ## References
 - Evidence: `../evidence/review-og-image-workers.md` (OG-1, OG-4, OG-5)
+
+## Status
+**FIXED 2026-08-21** — `fix(og-worker): /og/* length guard, linear text wrap, capped not-found echo, edge cache (FINDING-005)`: og-worker 2.3.0 — path segments > 64 chars / paths > 512 → 400 before any card work; `fit`/`wrapName` linear (one forward pass, 512-char clip); `notFoundBand` clips the echoed input to 32 chars; `/og/*` GET 200s stored in `caches.default` keyed on the full URL. Regression tests: 16 KB label (was 177 s) now < 2 s and 400 at the route; cache reuse; error responses not cached.

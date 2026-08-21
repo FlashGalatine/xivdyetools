@@ -5,6 +5,20 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-08-21
+
+Security audit remediation (docs/audits/2026-08-21-security, FINDING-005). Minor bump: new request guards and an edge cache; card output for valid inputs is unchanged.
+
+### Security
+
+- **`/og/*` path-segment length guard** (`index.ts`): any segment longer than 64 characters, or a path longer than 512, is answered with `400 {"error":"Request path too long"}` before any card is generated. A 16 KB `:color` on `/og/swatch/:color/:limit` used to reach the not-found card and its text wrapper — measured at **177 s of CPU** in the regression test — unauthenticated, unrate-limited and uncached.
+- **Linear-time text layout** (`services/svg/band.ts`): `fit()` and `wrapName()` re-measured the remaining string on every trimmed character (quadratic / cubic). They now take one forward pass using `estimateTextWidth`'s per-code-point additivity, clip inputs at 512 code points, and hyphenate with a single scan per fragment. Same output for every real dye/preset name.
+- **Not-found card echo is capped** (`services/svg/band-shared.ts`): `notFoundBand` clips the echoed input to 32 code points + `…` (`clipLabel`, `NOT_FOUND_LABEL_MAX`) before it reaches layout.
+
+### Added
+
+- **Edge cache for rendered PNGs** (`index.ts`): `/og/*` GET 200s are stored in `caches.default` keyed on the full URL (lang / frame / algo all vary the image) and served from the cache on repeat requests; the `Cache-Control` / `CDN-Cache-Control` headers renderOGImage sets were inert on their own, so every hit was a full resvg raster. Error responses are not cached; outside Workers (tests) the middleware is a pass-through.
+
 ## [2.2.0] - 2026-08-21
 
 The 2026-08-20 i18n audit (`docs/audits/2026-08-20-og-worker-i18n/I18N_AUDIT.md`, 14 findings)

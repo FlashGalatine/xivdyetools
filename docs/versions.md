@@ -6,7 +6,7 @@
 
 > **Versions below are read from each project's `package.json` on the working branch.** The 5.0
 > wave — `core` v4.0.0, `types` v2.0.0, `svg` v2.0.0, `bot-logic` v2.0.0, `worker-kit` v1.1.0,
-> `web-app` v5.0.0, `discord-worker` v5.0.0, `og-worker` v2.2.0, `presets-api` v2.1.0 and the
+> `web-app` v5.0.0, `discord-worker` v5.0.0, `og-worker` v2.3.0, `presets-api` v2.1.0 and the
 > rest — is complete on `monorepo-2.0-prep` with every `CHANGELOG.md` written, but **not yet merged
 > to `main` or published to npm**. Merging to `main` is the release; the root `CHANGELOG.md` 2.0.0
 > entry carries the deploy sequence. See [Release Process](developer-guides/release-process.md).
@@ -26,7 +26,7 @@
 | **OAuth Worker** | v2.7.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.1.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
 | **Public REST API** | v0.8.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.2.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **OpenGraph Worker** | v2.3.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.2.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
@@ -263,6 +263,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.3.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-005) — /og/* segment-length guard (400), linear-time `fit`/`wrapName` (a 16 KB not-found label took 177 s), not-found echo capped at 32 chars, `caches.default` edge cache for rendered PNGs** |
 | **v2.1.0** | **Aug 2026** | **Dead-code audit cleanup: extractor / presets / budget embeds reach their cards (were unreachable — root default only), `/presets/:id` crawler route, comparison honours `?frame=x`, `?algo=` rides harmony/gradient/mixer image URLs, ~500 lines of 15E-rewrite sediment removed (colour-sheet lookup, `base.ts`), CJK subsets −45 KB, base tsconfig flags restored** |
 | **v2.0.0** | **Aug 2026** | **15E band cards for all nine tools (Discord 1200×1050 + X 1200×630), per-tool default cards, `?lang=` localization, stainID paths, `@xivdyetools/svg` 2.0.0 frame system, routed beta env (`deploy-og-worker-beta.yml`)** |
 | **v1.4.0** | **Jul 2026** | **2026-07-18 audit (Sprint 7) — BUG-031 validated `?algo=` and 3-dye `ratio` parameters are finally honored (the "Algorithm:" footer no longer advertises math that didn't run), BUG-068 explicit `{ browser, edge }` cache TTLs, BUG-069 self-fetch guard on pass-throughs, REFACTOR-009 local SVG fork replaced by `@xivdyetools/svg` re-exports (~230 lines)** |

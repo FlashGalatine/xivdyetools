@@ -47,12 +47,27 @@ export function notFoundBand(
   frame: BandFrame = 'discord',
   locale: LocaleCode = 'en'
 ): string {
+  // FINDING-005 (2026-08-21 audit): the label is caller input echoed back.
+  // Clip it before it reaches the wrap/fit helpers so an attacker-length URL
+  // segment cannot turn a "not found" card into a CPU sink.
+  const shown = clipLabel(label);
   return generateBandCard({
-    bands: [{ hex: '#17171A', role: role('notFound', locale), name: label, nameSize: 17 }],
+    bands: [{ hex: '#17171A', role: role('notFound', locale), name: shown, nameSize: 17 }],
     toolTag,
     toolGlyph: bandGlyph(glyphName),
     path: `xivdyetools.app/${urlPath}`,
-    deck: label,
+    deck: shown,
     frame,
   });
+}
+
+/** Longest echoed input the not-found card will show (code points). */
+export const NOT_FOUND_LABEL_MAX = 32;
+
+/** Clip a user-supplied label to NOT_FOUND_LABEL_MAX code points + ellipsis. */
+export function clipLabel(label: string): string {
+  const chars = [...label];
+  return chars.length <= NOT_FOUND_LABEL_MAX
+    ? label
+    : `${chars.slice(0, NOT_FOUND_LABEL_MAX).join('')}…`;
 }
