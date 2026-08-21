@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added — 2026-08-20 i18n audit remediation
+
+- `Translator.tc(key, count, vars?)` — count-aware lookup of `<key>_one` / `<key>_other` (falls back to the bare key). All six locale files carry both forms for `card.swatchFootKey`, `gradient.steps`, `card.gradVerdict`, `card.gradKeyCut`, `dye.search.foundCount` (replaces `foundCountPlural`) and `errors.rateLimited` (F-09).
+- `searchDyesByName(query, locale)` / `findDyeByName(name, locale)` — English-or-localized dye lookup; `resolveColorInput` gains `options.locale`, `resolveDyeInput(input, locale)` (F-02).
+- Every `execute*` input accepts `logger?: TranslatorLogger`, passed to `createTranslator` (F-13).
+- ~160 new UI keys ×6 locales (`errors.*`, `copy.*`, `preset.*`, `preferences.*`, `stats.*`, `commands.<name>.description`, `budget.*`, `card.perDe`, `accessibility.allLenses`); the orphan gate enumerates the new template-key namespaces and a **reverse gate** now fails when a `t()`/`tc()` call site names a key en.json lacks (F-01).
+
+### Fixed
+
+- Twelve `execute*` failure paths returned hardcoded English `errorMessage` strings (F-06); `/dye info` MKT row uses `CONSOLIDATED_DYES[].names[locale]` (F-10).
+
 ## [2.0.0] - 2026-08-16
 
 > **1.4.0 and 1.5.0 were never published to npm** (the registry has 1.3.0). This release ships everything from those two entries — the `/i18n` subpath and the `inverted-tetradic` harmony type — together with the 5.0 command rewrite below. Consumers upgrading from 1.3.0 should read all three entries.

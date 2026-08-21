@@ -1107,7 +1107,6 @@ async function routerTranslator(
 /**
  * Handle modal submissions
  */
-// eslint-disable-next-line @typescript-eslint/require-await -- handler interface requires async
 async function handleModal(
   interaction: DiscordInteraction,
   env: Env,

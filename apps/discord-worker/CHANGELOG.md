@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed — 2026-08-20 i18n audit remediation (`docs/audits/2026-08-20-discord-worker-i18n/`)
+
+- **Seven `t.t()` keys that never existed** (`budget.noWorldSet.*`, `budget.errors.missingWorld|saveFailed|missingPreset`, `common.unknownError`, `preset.errors.notFound`) rendered raw dotted keys on `/budget` (no world set) and `/preset favorite` since 2026-02 — added / repointed, plus a reverse key-existence gate in bot-logic (F-01).
+- **Localized dye-name input**: autocomplete and typed dye names match English *or* the user's locale (`searchDyesByName` / `findDyeByName`), choices are labelled with the localized name; every handler passes `t.getLocale()` into `resolveColorInput` (F-02).
+- **Discord command localizations** (`src/commands/localize.ts`): `description_localizations` for all 17 commands and `name_localizations` for the preferences-reset, gender/theme, harmony-type, vision-lens and dye-category choice lists, attached by `register-commands.ts` (F-03 phase 1 — option descriptions and the remaining lists are phase 2).
+- Rate-limit message, router/button/copy/extractor error replies, `PresetAPIError` messages (now `getSafeMessageKey()`), `/preferences` filter labels / theme / affected-commands / method and blending descriptions / world autocomplete, `/preset` list-submit-edit-vote-favorite replies, `/stats summary` — all through the translator (F-04, F-05a–d). The four `/stats` admin dashboards are documented as deliberately operator-English.
+- `/swatch` generation failure no longer English-only (F-06); locale decimal separators for ratios, percents and ΔE tails, `card.perDe` (F-08); `Translator.tc()` plurals (`1 of 1 slots`, `1 Steps`, `second/seconds`) (F-09); consolidated market-item names in the user's locale on `/dye info` and the budget ledger (F-10); localized preset swatch card (F-11); handlers pass their logger into bot-logic so Translator misses are warned (F-13).
+- **Fonts**: CJK subsets re-cut (they predated the `previewImage.*` keys); new `src/services/font-coverage.test.ts` asserts the bundled TTFs cover every locale string + code glyph, JP covers ja, KR covers Hangul; `subset-cjk-fonts.py` also reads `consolidated-ids.ts` (F-17).
+- `index.test.ts` AUTOCOMPLETE block had been red since OPT-007 (unmocked `checkRateLimit`); fixed.
+
 ## [5.0.0] - 2026-08-16
 
 The **5.0 command set** — the Discord half of the XIV Dye Tools 5.0 redesign (`docs/research/monorepo-2.0/`, Phases 0–5 plus the 2026-08-09 pre-release audit sprints and the bot-graphics conformance audit). Every card the bot draws was redrawn on the new `@xivdyetools/svg` frame system, the v4 command set is gone, `/contrast` and `/changelog` are new, and the Worker now sits on `@xivdyetools/core@4.0.0` / `types@2.0.0` / `svg@2.0.0` / `bot-logic@2.0.0` / `worker-kit@1.0.0`. Nothing in this entry has shipped yet — merging to `main` deploys production **and** runs `register-commands` (see Deploy window).

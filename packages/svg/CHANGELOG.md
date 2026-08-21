@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed — 2026-08-20 i18n audit remediation
+
+- `FONTS.cjk / headerCjk / primaryCjk / monoCjk` (base.ts) now list `Noto Sans JP` ahead of SC, matching `frame.ts` — `preset-swatch` was the one card drawing ja text in Chinese letterforms (F-17).
+- `generatePresetSwatch` accepts `authorLine`, `emptyLabel` and `dyeName(dye)` so the card renders in the user's locale; defaults unchanged (F-11).
+- `contrast-card` ratios (`:1`), `mixer-card` / `palette-grid` percent leads use `num()` with the card's `lang` instead of bare `toFixed()` (F-08).
+
 ## [2.0.0] - 2026-08-16
 
 The 5.0 graphics release. Every Discord bot card is redrawn on one shared **frame system** (`src/frame.ts`) at Discord's real display width, the pre-5.0 generators are deleted, and the package becomes the single geometry home for the 5.0 icon set consumed by the web app and og-worker. Consumers on the branch: `apps/discord-worker` 5.0.0, `@xivdyetools/bot-logic` 2.0.0, `apps/og-worker` 2.0.0, `apps/web-app` 5.0.0. See `DEPRECATIONS.md` → "5.0 graphics-era removals" for the removal table.

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed — 2026-08-20 i18n audit remediation
+
+- `ACQUISITION_META['The Firmament'].currency` and `CONSOLIDATED_DYES.B.currency` spelled the currency with an apostrophe (`Skybuilders' Scrips`) while the locale `currencies` key is `Skybuilders Scrips`, so `getCurrency()` missed and the 9 Firmament dyes printed English in every locale. Aligned on the locale-key spelling; `dye-vocabulary.test.ts` now asserts every derived currency is a locale key (F-07).
+
 ## [4.0.0] — 2026-08-16
 
 **Web-App / Discord 5.0 release.** 2.8.0 and 3.0.0 below were bumped mid-branch but never published — npm still has 2.7.0, so 4.0.0 is the first release carrying schema v2, the `/blending` subpath, *and* everything in this entry. Consumers upgrading from 2.7.0 must read all three entries.
