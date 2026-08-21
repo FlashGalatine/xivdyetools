@@ -601,5 +601,21 @@
     "invalidFormat": "无效的 {format} 格式。",
     "rgbValues": "RGB 值：",
     "hsvValues": "HSV 值："
+  },
+  "stats": {
+    "accessDeniedTitle": "拒绝访问",
+    "accessDenied": "您没有权限查看此统计面板。",
+    "fetchFailed": "无法获取统计信息。请稍后重试。",
+    "summary": {
+      "features": "功能",
+      "featureList": "• 颜色匹配与提取\n• 染剂混合（6 种算法）\n• 角色颜色匹配\n• 色彩和谐生成\n• 无障碍分析",
+      "stats": "统计",
+      "commandsUsed": "命令使用次数",
+      "successRate": "成功率",
+      "webApp": "网页应用",
+      "documentation": "文档",
+      "supportServer": "支持服务器",
+      "footer": "版本 {version} • 使用 /manual 查看命令帮助"
+    }
   }
 }

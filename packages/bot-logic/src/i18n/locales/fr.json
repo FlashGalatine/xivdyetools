@@ -601,5 +601,21 @@
     "invalidFormat": "Format {format} invalide.",
     "rgbValues": "Valeurs RVB :",
     "hsvValues": "Valeurs TSV :"
+  },
+  "stats": {
+    "accessDeniedTitle": "Accès refusé",
+    "accessDenied": "Vous n'avez pas la permission de consulter ce panneau de statistiques.",
+    "fetchFailed": "Impossible de récupérer les statistiques. Veuillez réessayer plus tard.",
+    "summary": {
+      "features": "Fonctionnalités",
+      "featureList": "• Correspondance et extraction de couleurs\n• Mélange de teintures (6 algorithmes)\n• Correspondance des couleurs de personnage\n• Harmonies de couleurs\n• Analyse d'accessibilité",
+      "stats": "Statistiques",
+      "commandsUsed": "Commandes utilisées",
+      "successRate": "Taux de réussite",
+      "webApp": "Application web",
+      "documentation": "Documentation",
+      "supportServer": "Serveur d'assistance",
+      "footer": "Version {version} • Aide des commandes : /manual"
+    }
   }
 }

@@ -601,5 +601,21 @@
     "invalidFormat": "Ungültiges {format}-Format.",
     "rgbValues": "RGB-Werte:",
     "hsvValues": "HSV-Werte:"
+  },
+  "stats": {
+    "accessDeniedTitle": "Zugriff verweigert",
+    "accessDenied": "Du hast keine Berechtigung, dieses Statistik-Panel anzuzeigen.",
+    "fetchFailed": "Statistiken konnten nicht abgerufen werden. Bitte versuche es später erneut.",
+    "summary": {
+      "features": "Funktionen",
+      "featureList": "• Farbabgleich & -extraktion\n• Farbstoffmischung (6 Algorithmen)\n• Charakterfarben-Abgleich\n• Farbharmonien\n• Barrierefreiheits-Analyse",
+      "stats": "Statistiken",
+      "commandsUsed": "Ausgeführte Befehle",
+      "successRate": "Erfolgsquote",
+      "webApp": "Web-App",
+      "documentation": "Dokumentation",
+      "supportServer": "Support-Server",
+      "footer": "Version {version} • Befehlshilfe mit /manual"
+    }
   }
 }

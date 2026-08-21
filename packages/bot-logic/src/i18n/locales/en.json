@@ -601,5 +601,21 @@
     "invalidFormat": "Invalid {format} format.",
     "rgbValues": "RGB Values:",
     "hsvValues": "HSV Values:"
+  },
+  "stats": {
+    "accessDeniedTitle": "Access Denied",
+    "accessDenied": "You do not have permission to view this statistics panel.",
+    "fetchFailed": "Failed to retrieve statistics. Please try again later.",
+    "summary": {
+      "features": "Features",
+      "featureList": "• Color matching & extraction\n• Dye blending (6 algorithms)\n• Character color matching\n• Color harmony generation\n• Accessibility analysis",
+      "stats": "Stats",
+      "commandsUsed": "Commands Used",
+      "successRate": "Success Rate",
+      "webApp": "Web App",
+      "documentation": "Documentation",
+      "supportServer": "Support Server",
+      "footer": "Version {version} • Use /manual for command help"
+    }
   }
 }

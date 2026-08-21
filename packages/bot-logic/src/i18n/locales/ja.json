@@ -601,5 +601,21 @@
     "invalidFormat": "{format} の形式が無効です。",
     "rgbValues": "RGB 値:",
     "hsvValues": "HSV 値:"
+  },
+  "stats": {
+    "accessDeniedTitle": "アクセス拒否",
+    "accessDenied": "この統計パネルを表示する権限がありません。",
+    "fetchFailed": "統計を取得できませんでした。後でもう一度お試しください。",
+    "summary": {
+      "features": "機能",
+      "featureList": "• カラーマッチングと抽出\n• カララントのブレンド（6種のアルゴリズム）\n• キャラクターカラーのマッチング\n• カラーハーモニー生成\n• アクセシビリティ分析",
+      "stats": "統計",
+      "commandsUsed": "コマンド実行数",
+      "successRate": "成功率",
+      "webApp": "Web アプリ",
+      "documentation": "ドキュメント",
+      "supportServer": "サポートサーバー",
+      "footer": "バージョン {version} • コマンドのヘルプは /manual"
+    }
   }
 }

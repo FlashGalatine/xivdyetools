@@ -18,6 +18,7 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 import { getStats } from '../../services/analytics.js';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import { messageResponse, errorEmbed } from '../../utils/response.js';
+import { grp, num } from '@xivdyetools/svg';
 import { BRAND_ACCENT, STATE } from '../../utils/brand.js';
 import { isUniversalisEnabled } from '../../services/budget/index.js';
 
@@ -83,8 +84,8 @@ export async function handleStatsCommand(
     return messageResponse({
       embeds: [
         {
-          title: '⛔ Access Denied',
-          description: 'You do not have permission to view this statistics panel.',
+          title: `⛔ ${t.t('stats.accessDeniedTitle')}`,
+          description: t.t('stats.accessDenied'),
           color: COLORS.red,
         },
       ],
@@ -98,20 +99,20 @@ export async function handleStatsCommand(
         return handleSummarySubcommand(env, t, logger);
 
       case 'overview':
-        return handleOverviewSubcommand(env, t, logger);
+        return handleOverviewSubcommand(env, logger);
 
       case 'commands':
-        return handleCommandsSubcommand(env, t, logger);
+        return handleCommandsSubcommand(env, logger);
 
       case 'preferences':
-        return handlePreferencesSubcommand(env, t, logger);
+        return handlePreferencesSubcommand(env, logger);
 
       case 'health':
-        return handleHealthSubcommand(env, t, logger);
+        return handleHealthSubcommand(env, logger);
 
       default:
         return messageResponse({
-          embeds: [errorEmbed(t.t('common.error'), `Unknown subcommand: ${subcommand}`)],
+          embeds: [errorEmbed(t.t('common.error'), t.t('errors.unknownSubcommand', { name: subcommand }))],
           flags: 64,
         });
     }
@@ -123,8 +124,8 @@ export async function handleStatsCommand(
     return messageResponse({
       embeds: [
         {
-          title: '❌ Error',
-          description: 'Failed to retrieve statistics. Please try again later.',
+          title: `❌ ${t.t('common.error')}`,
+          description: t.t('stats.fetchFailed'),
           color: COLORS.red,
         },
       ],
@@ -142,49 +143,44 @@ export async function handleStatsCommand(
  */
 async function handleSummarySubcommand(
   env: Env,
-  _t: Translator,
+  t: Translator,
   _logger?: ExtendedLogger,
 ): Promise<Response> {
   const stats = await getStats(env.KV);
+  const lang = t.getLocale();
 
   return messageResponse({
     embeds: [
       {
-        title: '📊 XIV Dye Tools Bot',
-        description: 'A Discord bot for FFXIV dye matching and color analysis.',
+        title: `📊 ${t.t('about.title')}`,
+        description: t.t('about.description'),
         color: BRAND_ACCENT,
         fields: [
           {
-            name: '🎨 Features',
+            name: `🎨 ${t.t('stats.summary.features')}`,
+            value: t.t('stats.summary.featureList'),
+            inline: true,
+          },
+          {
+            name: `📈 ${t.t('stats.summary.stats')}`,
             value: [
-              '• Color matching & extraction',
-              '• Dye blending (6 algorithms)',
-              '• Character color matching',
-              '• Color harmony generation',
-              '• Accessibility analysis',
+              `**${t.t('stats.summary.commandsUsed')}:** ${grp(stats.totalCommands, lang)}`,
+              `**${t.t('stats.summary.successRate')}:** ${num(stats.successRate, lang, 1)}%`,
             ].join('\n'),
             inline: true,
           },
           {
-            name: '📈 Stats',
+            name: `🔗 ${t.t('about.links')}`,
             value: [
-              `**Commands Used:** ${stats.totalCommands.toLocaleString()}`,
-              `**Success Rate:** ${stats.successRate.toFixed(1)}%`,
-            ].join('\n'),
-            inline: true,
-          },
-          {
-            name: '🔗 Links',
-            value: [
-              '[Web App](https://xivdyetools.com)',
-              '[Documentation](https://docs.xivdyetools.com)',
-              '[Support Server](https://discord.gg/xivdyetools)',
+              `[${t.t('stats.summary.webApp')}](https://xivdyetools.com)`,
+              `[${t.t('stats.summary.documentation')}](https://docs.xivdyetools.com)`,
+              `[${t.t('stats.summary.supportServer')}](https://discord.gg/xivdyetools)`,
             ].join(' • '),
             inline: false,
           },
         ],
         footer: {
-          text: `Version ${BOT_VERSION} • Use /manual for command help`,
+          text: t.t('stats.summary.footer', { version: BOT_VERSION }),
         },
       },
     ],
@@ -194,13 +190,18 @@ async function handleSummarySubcommand(
 // ============================================================================
 // Overview Subcommand (Admin)
 // ============================================================================
+//
+// The four admin panels below (overview / commands / preferences / health) are
+// operator dashboards gated by STATS_AUTHORIZED_USERS. They are deliberately
+// English-only (2026-08-20 i18n audit, F-05): the public /stats summary and
+// every error reply are localized above, the dashboards take no Translator.
+// ============================================================================
 
 /**
  * Handles /stats overview - Admin usage metrics
  */
 async function handleOverviewSubcommand(
   env: Env,
-  _t: Translator,
   _logger?: ExtendedLogger,
 ): Promise<Response> {
   const stats = await getStats(env.KV);
@@ -259,7 +260,6 @@ async function handleOverviewSubcommand(
  */
 async function handleCommandsSubcommand(
   env: Env,
-  _t: Translator,
   _logger?: ExtendedLogger,
 ): Promise<Response> {
   const stats = await getStats(env.KV);
@@ -349,7 +349,6 @@ async function handleCommandsSubcommand(
  */
 async function handlePreferencesSubcommand(
   env: Env,
-  _t: Translator,
   _logger?: ExtendedLogger,
 ): Promise<Response> {
   // Count users with preferences set
@@ -452,7 +451,6 @@ async function handlePreferencesSubcommand(
  */
 async function handleHealthSubcommand(
   env: Env,
-  _t: Translator,
   _logger?: ExtendedLogger,
 ): Promise<Response> {
   // Check KV health

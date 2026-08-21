@@ -18,12 +18,12 @@ vi.mock('../../services/analytics.js', () => ({
   getStats: vi.fn(),
 }));
 
-vi.mock('../../services/bot-i18n.js', () => ({
-  createUserTranslator: vi.fn().mockResolvedValue({
-    t: (key: string) => key,
-    getLocale: () => 'en',
-  }),
-}));
+vi.mock('../../services/bot-i18n.js', async () => {
+  // F-05 (2026-08-20): /stats summary is localized now, so the assertions on
+  // its English copy need the real English translator, not a key echo.
+  const { createTranslator } = await import('@xivdyetools/bot-logic/i18n');
+  return { createUserTranslator: vi.fn().mockResolvedValue(createTranslator('en')) };
+});
 
 import { getStats } from '../../services/analytics.js';
 
@@ -339,7 +339,7 @@ describe('stats.ts', () => {
 
       const embed = data.data!.embeds![0];
       expect(embed.title).toBe('📊 XIV Dye Tools Bot');
-      expect(embed.description).toContain('Discord bot for FFXIV dye matching');
+      expect(embed.description).toContain('Discord bot for FFXIV dye');
     });
 
     it('should display features field', async () => {

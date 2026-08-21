@@ -601,5 +601,21 @@
     "invalidFormat": "잘못된 {format} 형식입니다.",
     "rgbValues": "RGB 값:",
     "hsvValues": "HSV 값:"
+  },
+  "stats": {
+    "accessDeniedTitle": "접근 거부",
+    "accessDenied": "이 통계 패널을 볼 권한이 없습니다.",
+    "fetchFailed": "통계를 가져오지 못했습니다. 나중에 다시 시도해 주세요.",
+    "summary": {
+      "features": "기능",
+      "featureList": "• 색상 매칭 및 추출\n• 염료 혼합 (알고리즘 6종)\n• 캐릭터 색상 매칭\n• 색상 조화 생성\n• 접근성 분석",
+      "stats": "통계",
+      "commandsUsed": "명령어 사용 횟수",
+      "successRate": "성공률",
+      "webApp": "웹 앱",
+      "documentation": "문서",
+      "supportServer": "지원 서버",
+      "footer": "버전 {version} • 명령어 도움말은 /manual"
+    }
   }
 }
