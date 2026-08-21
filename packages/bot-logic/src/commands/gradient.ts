@@ -347,6 +347,6 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
       embed,
     };
   } catch {
-    return { ok: false, error: 'GENERATION_FAILED', errorMessage: 'Failed to generate gradient.' };
+    return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }

@@ -186,7 +186,7 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
       : getHarmonyDyes(baseHex, harmonyType, effectiveHarmonyOptions);
 
     if (baseHarmonyDyes.length === 0) {
-      return { ok: false, error: 'NO_MATCHES', errorMessage: 'No harmony dyes found.' };
+      return { ok: false, error: 'NO_MATCHES', errorMessage: t.t('errors.noMatchFound') };
     }
 
     // Companion expansion: for each base harmony dye, find N-1 additional close matches
@@ -331,7 +331,7 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
     return {
       ok: false,
       error: 'GENERATION_FAILED',
-      errorMessage: 'Failed to generate harmony wheel.',
+      errorMessage: t.t('errors.generationFailed'),
     };
   }
 }

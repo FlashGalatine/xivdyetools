@@ -241,7 +241,7 @@ export async function executeAccessibility(
     return {
       ok: false,
       error: 'GENERATION_FAILED',
-      errorMessage: 'Failed to generate accessibility image.',
+      errorMessage: t.t('errors.generationFailed'),
     };
   }
 }

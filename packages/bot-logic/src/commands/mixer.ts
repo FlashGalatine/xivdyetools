@@ -113,7 +113,7 @@ export async function executeMixer(input: MixerInput): Promise<MixerResult> {
     }).filter((s) => s.dye != null);
 
     if (sweep.length === 0) {
-      return { ok: false, error: 'NO_MATCHES', errorMessage: 'No matching dyes found.' };
+      return { ok: false, error: 'NO_MATCHES', errorMessage: t.t('errors.noMatchFound') };
     }
     const bestStop = sweep.reduce((a, b) => (b.deltaE < a.deltaE ? b : a));
     bestStop.best = true;
@@ -163,7 +163,7 @@ export async function executeMixer(input: MixerInput): Promise<MixerResult> {
       embed,
     };
   } catch {
-    return { ok: false, error: 'GENERATION_FAILED', errorMessage: 'Failed to blend colors.' };
+    return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }
 

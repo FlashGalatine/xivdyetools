@@ -131,6 +131,6 @@ export async function executeComparison(input: ComparisonInput): Promise<Compari
 
     return { ok: true, svgString, dyes, embed };
   } catch {
-    return { ok: false, error: 'GENERATION_FAILED', errorMessage: 'Failed to generate comparison card.' };
+    return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }

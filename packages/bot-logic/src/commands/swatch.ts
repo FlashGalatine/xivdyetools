@@ -375,7 +375,7 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
     return {
       ok: false,
       error: 'GENERATION_FAILED',
-      errorMessage: 'Failed to generate swatch card.',
+      errorMessage: t.t('errors.generationFailed'),
     };
   }
 }

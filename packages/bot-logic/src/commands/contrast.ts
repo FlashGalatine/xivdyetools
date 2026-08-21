@@ -122,6 +122,6 @@ export async function executeContrast(input: ContrastInput): Promise<ContrastRes
       embed,
     };
   } catch {
-    return { ok: false, error: 'GENERATION_FAILED', errorMessage: 'Failed to generate contrast card.' };
+    return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }

@@ -144,7 +144,7 @@ export async function executeDyeInfo(input: DyeInfoInput): Promise<DyeInfoResult
 
     return { ok: true, svgString, dye, localizedName, localizedCategory, embed };
   } catch {
-    return { ok: false, error: 'GENERATION_FAILED', errorMessage: 'Failed to generate dye info card.' };
+    return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }
 
@@ -187,7 +187,7 @@ export async function executeRandom(input: RandomInput): Promise<RandomResult> {
   const allDyes = dyeService.getAllDyes().filter((d) => d.category !== 'Facewear');
 
   if (allDyes.length === 0) {
-    return { ok: false, error: 'NO_DYES', errorMessage: 'No dyes available.' };
+    return { ok: false, error: 'NO_DYES', errorMessage: t.t('errors.noDyesAvailable') };
   }
 
   let selectedDyes: Dye[];
@@ -250,7 +250,7 @@ export async function executeRandom(input: RandomInput): Promise<RandomResult> {
 
     return { ok: true, svgString, dyes: selectedDyes, title, embed };
   } catch {
-    return { ok: false, error: 'GENERATION_FAILED', errorMessage: 'Failed to generate random dyes grid.' };
+    return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }
 
