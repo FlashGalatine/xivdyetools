@@ -26,18 +26,18 @@ Every finding has a `## Status` section in its file with the per-unit detail; th
 
 | ID | Sev | Unit(s) | Status | Commit(s) |
 |---|---|---|---|---|
-| 001 | HIGH | oauth, auth | Fixed — revocation TTL ≥ exp + refresh grace | step 1 |
-| 002 | MED | presets-api | Fixed — `TOKEN_BLACKLIST` enforced, `JWT_ISSUER` | step 2 |
-| 003 | MED | worker-kit, api-worker, oauth, moderation, discord | Fixed — native `[[ratelimits]]` `CloudflareRateLimiter`; KV fallback kept for rollover (removal gated — checklist §3) | step 3 |
-| 004 | MED | image-worker | Fixed — header-only dimension gate, capped reads, timeouts | step 4 |
-| 005 | MED | og-worker | Fixed — `/og/*` guards, linear wrap, `caches.default` | step 5 |
-| 006 / 007 | MED | moderation-worker | Fixed — autocomplete moderator gate; `custom_id` ≤ 100 | step 6 |
-| 008 | MED | presets-api | Fixed — append-only quota events (migration 0011) | step 7 |
-| 009 / 010 | MED | CI, docs | Fixed — SHA pins, `permissions`, `environment: production`, SECRET_ROTATION rewrite | step 7 |
+| 001 | HIGH | oauth, auth | Fixed — revocation TTL ≥ exp + refresh grace | 4078c722 |
+| 002 | MED | presets-api | Fixed — `TOKEN_BLACKLIST` enforced, `JWT_ISSUER` | 4078c722 |
+| 003 | MED | worker-kit, api-worker, oauth, moderation, discord | Fixed — native `[[ratelimits]]` `CloudflareRateLimiter`; KV fallback kept for rollover (removal gated — checklist §3) | e90922f9 |
+| 004 | MED | image-worker | Fixed — header-only dimension gate, capped reads, timeouts | 62898ed6 |
+| 005 | MED | og-worker | Fixed — `/og/*` guards, linear wrap, `caches.default` | f7a0c58e |
+| 006 / 007 | MED | moderation-worker | Fixed — autocomplete moderator gate; `custom_id` ≤ 100 | 8a05949d |
+| 008 | MED | presets-api | Fixed — append-only quota events (migration 0011) | 2a8a034b |
+| 009 / 010 | MED | CI, docs | Fixed — SHA pins, `permissions`, `environment: production`, SECRET_ROTATION rewrite | 5d49bf2b |
 | 011 | LOW | web-app | Fixed | 2f1e19d9 |
-| 012 / 013 / 029 | LOW | oauth | Fixed (PKCE-state binding mandatory once the web-app forwards `state` — same merge) | b9f15bf1 (+ follow-up) |
+| 012 / 013 / 029 | LOW | oauth | Fixed — PKCE-state binding mandatory (`400 Missing state`), web-app forwards `state` | b9f15bf1, 6448ef6c, web-app 30cbd41f |
 | 014 | LOW | auth, bots, presets-api | Fixed — bot signature v2; v1 acceptance kept for rollover (removal gated — checklist §3); nonce bound, not cached (residual) | beec3f8b |
-| 015 | MED | auth, presets-api | Fixed — claim typing, `iss` | step 2 |
+| 015 | MED | auth, presets-api | Fixed — claim typing, `iss` | 4078c722 |
 | 016 / 017 / 018 | LOW | presets-api | Fixed (018 purge opt-in via two secrets; 017 cross-identity bans deferred) | 066ec770 |
 | 019 | LOW | bot-logic, both bots, stoat, presets-api | Fixed | beec3f8b, 8e75b4ab, d07ab763, aad6f2b3, 066ec770 |
 | 020 | LOW | bots, web-app | Fixed | 8e75b4ab, d07ab763, 2f1e19d9 |
@@ -54,7 +54,7 @@ Every finding has a `## Status` section in its file with the per-unit detail; th
 | 033 | LOW | discord-worker | Fixed | d07ab763 |
 | 034 | LOW | moderation-worker | Fixed (`moderation_log` rows for bans deferred — presets-api-owned table) | 8e75b4ab |
 | 035 | LOW | stoat-worker | Fixed — 0.2.2 | aad6f2b3 |
-| 036 | LOW | deps | Fixed — scoped overrides (vitepress>vite 6.4.3, tsup>esbuild 0.28.1), `pnpm audit` 0 advisories | deps commit |
+| 036 | LOW | deps | Fixed — scoped overrides (vitepress>vite 6.4.3, tsup>esbuild 0.28.1), `pnpm audit` 0 advisories | 1ecbd1be |
 
 Programme-level: `SECURITY.md` added at the repo root (disclosure via GitHub private vulnerability reporting — enable it in the repo settings, checklist §2); `CODEOWNERS` not added (single maintainer).
 
