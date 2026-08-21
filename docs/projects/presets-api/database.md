@@ -137,6 +137,7 @@ Users banned from the presets system.
 | `0008_add_example_link.sql` | `example_link` column |
 | `0009_add_preview_image.sql` | `preview_image_key` / `preview_image_status` columns |
 | `0010_add_secondary_categories.sql` | `secondary_categories` column |
+| `0011_submission_events.sql` | `submission_events` append-only per-user quota log (FINDING-008) |
 | `002_add_composite_indexes.sql` | Performance indexes for common query patterns |
 
 ---

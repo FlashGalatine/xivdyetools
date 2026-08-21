@@ -18,8 +18,11 @@ Security audit remediation (docs/audits/2026-08-21-security, FINDING-002 / FINDI
 
 - **Preview-image upload is capped while streaming** (FINDING-004 / PAPI-3): `bodySizeLimit` now applies a 5 MB `bodyLimit` to `POST /api/v1/presets/:id/preview-image` (Content-Length first, then the actual stream) instead of exempting the route and letting the handler buffer the whole body before its own 5 MB check. Same 400 / "Image must be at most 5 MB" response, so the client contract is unchanged; the handler's check stays as a backstop.
 
+- **Append-only daily quotas** (FINDING-008 / PAPI-1). The daily submission cap counted surviving rows in `presets`, so deleting your own presets refilled it; flagged edits and preview-image uploads had no per-user cap at all although each fans out a moderation embed, a Perspective call and dead-letter rows. New `submission_events` table (migration `0011_submission_events.sql`, never deleted by user action) records every submission / flagged edit / preview upload; `checkSubmissionRateLimit` now counts max(live rows, events), and new per-user daily caps apply to edits that trip moderation (`DAILY_FLAGGED_EDIT_LIMIT` = 10 → 429 before anything is persisted) and preview uploads (`DAILY_PREVIEW_UPLOAD_LIMIT` = 20 → 429 before the body is read). Same 429 envelope as the submission cap (`error: RATE_LIMITED`, `remaining`, `reset_at`).
+
 ### Deploy notes
 
+- **Apply migration `0011_submission_events.sql` before deploying** (`wrangler d1 execute xivdyetools-presets --remote --file=migrations/0011_submission_events.sql`); without the table every quota check 500s.
 - `RL_PUBLIC` (`[[ratelimits]]`, `namespace_id` 1011 prod / 1012 dev) needs no resource creation.
 - `TOKEN_BLACKLIST` binds an existing namespace (`0d6f3be3…` prod / `891bbbe8…` dev) — no `wrangler kv namespace create` needed. `JWT_ISSUER` is a plain var, already in `wrangler.toml`.
 

@@ -43,6 +43,11 @@ import {
   getSubmissionCountToday,
   getNextResetUTC,
   DAILY_SUBMISSION_LIMIT,
+  // FINDING-008: append-only per-user quotas
+  checkDailyEventLimit,
+  recordSubmissionEvent,
+  DAILY_FLAGGED_EDIT_LIMIT,
+  DAILY_PREVIEW_UPLOAD_LIMIT,
 } from '../services/rate-limit-service.js';
 import {
   notifyDiscordBot,
@@ -372,6 +377,9 @@ presetsRouter.patch('/:id', async (c) => {
   let moderationStatus: 'approved' | 'pending' =
     preset.status === 'approved' ? 'approved' : 'pending';
   let previousValues: PresetPreviousValues | null | undefined;
+  // FINDING-008: only an edit that itself trips moderation counts against the
+  // daily flagged-edit cap (a preset that is merely still pending does not)
+  let flaggedByThisEdit = false;
 
   if (body.name || body.description) {
     // Run content moderation on new values
@@ -385,6 +393,7 @@ presetsRouter.patch('/:id', async (c) => {
     );
 
     if (!moderationResult.passed) {
+      flaggedByThisEdit = true;
       // BUG-052 (2026-07-18 audit): write-once snapshot — only capture
       // previous_values when none exists yet, so successive flagged edits
       // can't overwrite the oldest known-good state (the revert target).
@@ -402,6 +411,24 @@ presetsRouter.patch('/:id', async (c) => {
     // previous_values holds the oldest clean snapshot (last-known-good for
     // moderator revert), not an append-only history — leaving previousValues
     // undefined here preserves whatever snapshot already exists.
+  }
+
+  // FINDING-008: a flagged edit fans out a moderation embed, a Perspective call
+  // and dead-letter rows — cap them per user per day before persisting anything
+  if (flaggedByThisEdit) {
+    const cap = await checkDailyEventLimit(c.env.DB, auth.userDiscordId, 'flagged_edit');
+    if (!cap.allowed) {
+      return c.json(
+        {
+          success: false,
+          error: ErrorCode.RATE_LIMITED,
+          message: `You've reached your daily limit of edits that need moderator review (${DAILY_FLAGGED_EDIT_LIMIT} per day). Try again tomorrow.`,
+          remaining: 0,
+          reset_at: cap.resetAt.toISOString(),
+        },
+        429
+      );
+    }
   }
 
   // Update the preset
@@ -446,6 +473,15 @@ presetsRouter.patch('/:id', async (c) => {
 
   if (!updatedPreset) {
     return internalErrorResponse(c, 'Failed to update preset');
+  }
+
+  // FINDING-008: count this flagged edit against the daily cap (append-only)
+  if (flaggedByThisEdit) {
+    try {
+      await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'flagged_edit', id);
+    } catch (err) {
+      console.error(`[FINDING-008] submission_events insert failed: preset=${id}`, err);
+    }
   }
 
   // If flagged, notify Discord for moderation
@@ -610,6 +646,15 @@ presetsRouter.post('/', async (c) => {
     throw error;
   }
 
+  // FINDING-008: append-only quota record — survives the author deleting the
+  // preset, so the daily cap cannot be refilled from the outside. Best-effort:
+  // a failed insert must not fail the submission that just landed.
+  try {
+    await recordSubmissionEvent(c.env.DB, auth.userDiscordId!, 'submission', preset.id);
+  } catch (err) {
+    console.error(`[FINDING-008] submission_events insert failed: preset=${preset.id}`, err);
+  }
+
   // Auto-vote for own preset
   await addVote(c.env.DB, preset.id, auth.userDiscordId!);
 
@@ -710,6 +755,22 @@ presetsRouter.post('/:id/preview-image', async (c) => {
     );
   }
 
+  // FINDING-008: each upload costs an image-worker decode, an R2 write and a
+  // moderation embed — cap per user per day before reading the body
+  const uploadCap = await checkDailyEventLimit(c.env.DB, auth.userDiscordId, 'preview_upload');
+  if (!uploadCap.allowed) {
+    return c.json(
+      {
+        success: false,
+        error: ErrorCode.RATE_LIMITED,
+        message: `You've reached your daily preview-image upload limit (${DAILY_PREVIEW_UPLOAD_LIMIT} per day). Try again tomorrow.`,
+        remaining: 0,
+        reset_at: uploadCap.resetAt.toISOString(),
+      },
+      429
+    );
+  }
+
   const bytes = new Uint8Array(await c.req.arrayBuffer());
 
   if (bytes.byteLength === 0) {
@@ -798,6 +859,13 @@ presetsRouter.post('/:id/preview-image', async (c) => {
       await storeFailedNotification(c.env.DB, imagePayload, err);
     })
   );
+
+  // FINDING-008: count this upload against the daily cap (append-only)
+  try {
+    await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'preview_upload', presetId);
+  } catch (err) {
+    console.error(`[FINDING-008] submission_events insert failed: preset=${presetId}`, err);
+  }
 
   return c.json({ success: true, status: 'pending' });
 });

@@ -23,3 +23,6 @@ Moderation-channel spam, Perspective/R2/image-worker quota burn, dead-letter tab
 
 ## References
 - Evidence: `../evidence/review-presets-api.md` (PAPI-1, PAPI-17)
+
+## Status
+**FIXED 2026-08-21** — `fix(presets-api): append-only daily quotas for submissions, flagged edits and preview uploads (FINDING-008)`: presets-api 2.1.0 — migration `0011_submission_events.sql` (append-only `submission_events`); `checkSubmissionRateLimit` counts max(live rows, events) so self-deletes no longer refill the cap; new per-user daily caps `DAILY_FLAGGED_EDIT_LIMIT` (10) on edits that trip moderation and `DAILY_PREVIEW_UPLOAD_LIMIT` (20) on preview uploads, both 429 before any write/decode; every quota-bearing mutation records an event. Deploy window: apply migration 0011 before deploying.
