@@ -16,50 +16,90 @@ api-worker, image-worker; the **routed beta** worker on og-worker; and **product
 
 ## 0. Before merging (branch readiness)
 
-- [ ] CI green on `monorepo-2.0-prep` including the new `secret-scan` job (first run of
-      gitleaks in CI — if it reds on a fixture, extend `.gitleaks.toml` with a comment, do not
-      bypass).
-- [ ] Decide the fate of the unmerged i18n remediation branch `i18n-remediation-2026-08-20`
-      (worktree `.worktrees/xivdyetools-i18n`, 25 commits, gates green): merge into
-      `monorepo-2.0-prep` **before** main, or land it as the first post-merge PR. Do not let it
-      drift — it touches the same locale files the 5.0 branch ships.
-- [ ] **presets-api D1 (user-run, `--remote`, production database):** apply in order
-      `0007` (already applied, zero rows) → the generated stainID rewrite from
-      `scripts/migrate-dyes-to-stainids.ts` → `0008` → `0009` → `0010` → **`0011_submission_events`**
-      (FINDING-007 append-only quota table) → any `0012+` added by the 2026-08-21 remediation
-      (check `apps/presets-api/migrations/`). Then the JWT-identity backfill (`5a34fe7c`).
-      `docs/projects/presets-api/database.md` lists every migration.
-- [ ] **GitHub → Settings → Environments → `production`** (FINDING-009): create it *before* the
-      merge and add **Deployment branches: `main` only** + (optional) **Required reviewers: you**.
-      Every production deploy / npm publish job now declares `environment: production`; without
-      the environment they still run, just ungated. With required reviewers, the merge-day
-      deploys will **wait for your approval** in the Actions UI — plan to be at the keyboard.
-- [ ] **Secrets present on the PRODUCTION workers** (`wrangler secret list --env production`
-      per app; oauth without `--env`): the inventory in `docs/operations/SECRET_ROTATION.md` —
-      in particular `BOT_SIGNING_SECRET` (≥ 32 chars, same value on discord-worker,
-      moderation-worker, presets-api — the v2 signature is now mandatory when the header is
-      present), `JWT_SECRET` (oauth = presets-api), `INTERNAL_WEBHOOK_SECRET`,
-      `UPSTASH_REDIS_REST_URL/TOKEN` on discord-worker prod (FINDING-003 — the KV fallback now
-      logs a one-time warning if it is ever used), `PERSPECTIVE_API_KEY` on presets-api.
-- [ ] **New bindings/vars from the audit remediation exist in production config** (they ship in
-      the `wrangler.toml` `[env.production]` blocks and are created on deploy — just confirm after
-      the first deploy): presets-api `TOKEN_BLACKLIST` KV (same namespace as oauth's —
-      FINDING-002), `JWT_ISSUER` var, `[[ratelimits]]` `RL_PUBLIC`; api-worker `API_RATE_LIMITER`;
-      oauth `RL_AUTH_10/20/30`; moderation-worker / discord-worker rate-limit bindings. Cloudflare
-      creates `ratelimits` bindings automatically — no dashboard step.
+*Walked 2026-08-21 against the live account (`wrangler` OAuth + `gh` admin). Two items stay
+open: the i18n-branch decision and the optional cache-purge secrets. The production-D1 item was
+split — only `0011` belongs before the merge; the stainID rewrite and the identity backfill moved
+to §1 (see the reasoning inline).*
+
+- [x] CI green on `monorepo-2.0-prep` including the new `secret-scan` job — run on `4a07f249`
+      (2026-08-21): *Secret scan (gitleaks)*, *Security audit (production dependencies)* and
+      *Lint, Type-check, Test, Build* all `success`; gitleaks' first CI run was clean, no
+      `.gitleaks.toml` change needed.
+- [ ] **Decide the fate of the unmerged i18n remediation branch `i18n-remediation-2026-08-20`**
+      (worktree `.worktrees/xivdyetools-i18n`, pushed to origin, 25 commits ahead / 50 behind,
+      gates green). Measured 2026-08-21 with `git merge-tree --write-tree`: 141 files auto-merge,
+      **6 conflict** — `apps/web-app/CHANGELOG.md`, `apps/web-app/src/main.ts` (5.0 side
+      −22/+… vs i18n side +53), `apps/web-app/src/components/my-submissions-modal.ts` (14 vs 30
+      changed lines), and add/add on the three `docs/audits/2026-08-20-web-app-i18n/*.md`. All
+      small. **Recommendation: merge it into `monorepo-2.0-prep` before main** — landing it as
+      the first post-merge PR would re-ship the same six locale files a second time and the
+      `i18n` lint gates it adds would not protect the 5.0 release itself. Do not let it drift.
+- [x] **presets-api D1 — `0011_submission_events` applied to production 2026-08-21**
+      (`wrangler d1 execute DB --remote --env production --file=./migrations/0011_submission_events.sql`,
+      2 queries, verified via `sqlite_master`: table + `idx_submission_events_user_kind_created`).
+      It is additive, the 2026-08-11 production build ignores it, and it **had** to precede the
+      merge because `deploy-presets-api.yml` deploys 2.1.0 automatically on merge and that build
+      writes the table on every quota-bearing mutation. State of the rest, verified the same day:
+      - `0002`–`0010` are all live (columns `example_link`, `preview_image_key/status`,
+        `secondary_categories` present; `rate_limits` gone; `banned_users` / `failed_notifications`
+        exist). **`d1_migrations` is empty** — every file was applied with `d1 execute --file`, which
+        is this project's documented procedure; **never run `wrangler d1 migrations apply`** against
+        this database, it would replay `002`–`0010` and fail on the first duplicate column.
+      - No `0012+` exists (`apps/presets-api/migrations/` ends at `0011`).
+      - **The generated stainID rewrite is NOT applied** (16 presets, 16 still keyed by legacy
+        itemIDs — first element > 254 — 0 by stainID) and **must not be applied before the merge**:
+        the production web-app (4.x) and discord-worker (4.x) render preset palettes by itemID and
+        presets-api serves the stored array raw; only the 5.0 clients (`resolvePresetDye`) read
+        both eras. It moved to §1, after the web-app / discord-worker deploys land.
+      - **The JWT-identity backfill (`5a34fe7c`) is NOT applied and is not optional**: production
+        presets-api is the 2026-08-11T13:29Z build (pre-`5a34fe7c`), so web sessions still resolve
+        to the oauth UUID today; **all 16 `presets.author_discord_id` and all 33 `votes.user_discord_id`
+        are UUIDs** (0 in `moderation_log`), and 17 of oauth's 18 `users` rows have a `discord_id`
+        (1 XIVAuth-only user keeps its UUID by design). Moved to §1, immediately after the
+        presets-api production deploy.
+- [x] **GitHub → Settings → Environments → `production`** (FINDING-009) — created 2026-08-21 via
+      the REST API with **Deployment branches: `main` only** (custom branch policy, `main`/branch).
+      **Required reviewers were NOT added** — every merge-day deploy + publish job would wait for
+      a click; add them under Settings → Environments → production if you want that gate.
+- [x] **Secrets present on the PRODUCTION workers** — `wrangler secret list --env production`
+      (oauth bare) on 2026-08-21 matches the `SECRET_ROTATION.md` inventory name-for-name:
+      discord-worker (incl. `UPSTASH_REDIS_REST_URL/TOKEN`, `BOT_SIGNING_SECRET`,
+      `INTERNAL_WEBHOOK_SECRET`, `GITHUB_WEBHOOK_SECRET`), moderation-worker, presets-api (incl.
+      `JWT_SECRET`, `PERSPECTIVE_API_KEY`, `BOT_SIGNING_SECRET`), oauth (`JWT_SECRET`,
+      `DISCORD_CLIENT_SECRET`, `XIVAUTH_CLIENT_SECRET`); api-worker / image-worker / og-worker
+      hold none and need none. Values cannot be read back — length (≥ 32) and cross-worker
+      equality of `BOT_SIGNING_SECRET` / `JWT_SECRET` are proven only by the §1 tail + oauth
+      login → presets call. Three **orphans** with no code reference (candidates for
+      `wrangler secret delete … --env production`, listed in §3): discord-worker
+      `PRESET_API_SECRET` and `PERSPECTIVE_API_KEY`; presets-api `MODERATOR_CHANNEL_ID`
+      (plus the four PAPI-16 dead vars already tracked there).
+- [x] **New bindings/vars from the audit remediation exist in production config** — verified in
+      the `wrangler.toml` `[env.production]` blocks 2026-08-21: presets-api `TOKEN_BLACKLIST`
+      KV id `0d6f3be3…` **= oauth's production namespace** (dev `891bbbe8…` = oauth dev),
+      `JWT_ISSUER = https://auth.xivdyetools.app`, `[[ratelimits]] RL_PUBLIC`; api-worker
+      `API_RATE_LIMITER`; oauth `RL_AUTH_10/20/30` (top-level = production); moderation-worker two
+      `[[ratelimits]]`; discord-worker uses Upstash + KV (no `ratelimits` binding by design).
+  - [ ] Confirm in the dashboard after the first production deploy (Worker → Settings → Bindings).
 - [ ] **Optional presets-api secrets** (FINDING-018): `CACHE_PURGE_ZONE_ID` + `CACHE_PURGE_API_TOKEN`
-      (zone of `shots.xivdyetools.app`, token scoped to *Zone → Cache Purge*) on the production
-      worker (`--env production`) so deleted/replaced preview images are purged from the edge;
-      without them the 1-day `s-maxage` is the bound.
-- [ ] Domain cutovers that must precede the worker deploys (`DEPRECATIONS.md` checkboxes):
-      release `proxy.xivdyetools.app` / `proxy.xivdyetools.projectgalatine.com` from the old
-      universalis-proxy worker; release `developers.xivdyetools.app` from the old api-docs Pages
-      project; confirm `xivdyetools-image-worker` carries `/thumbnail`.
-- [ ] oauth + presets-api allowlists carry `https://beta.xivdyetools.app` (already deployed by
-      hand 2026-08-21 / 2026-08-11 — verify nothing regressed).
-- [ ] Package versions bumped for everything touched on the branch (the publish workflow only
-      publishes when local ≠ registry): types 2.0.0, logger, auth **1.4.0**, worker-kit **1.1.0**,
-      core, svg, bot-logic — see `docs/versions.md` "Unreleased" rows.
+      — **absent on the production worker as of 2026-08-21** (user-run, optional; zone of
+      `shots.xivdyetools.app`, token scoped to *Zone → Cache Purge*, `--env production`); without
+      them the 1-day `s-maxage` is the bound.
+- [x] Domain cutovers — **already live, verified 2026-08-21**: `proxy.xivdyetools.app` and
+      `proxy.xivdyetools.projectgalatine.com` answer api-worker (`/v1/dyes` 200,
+      `/api/v2/data-centers` 200 — the old proxy had no `/v1`); `developers.xivdyetools.app` is
+      no longer attached to the `xivdyetools-api-docs` Pages project (only its `pages.dev` alias
+      remains) and serves the Workers-Static-Assets VitePress build; image-worker production
+      (deploy 2026-08-11T03:26Z) post-dates `POST /thumbnail` (`b9be5724`, 2026-08-11T00:20Z).
+      Left for §2: the old `xivdyetools-universalis-proxy` worker still exists (last deploy
+      2026-07-13) and so does the `xivdyetools-api-docs` Pages project.
+- [x] oauth + presets-api allowlists carry `https://beta.xivdyetools.app` — live `OPTIONS`
+      preflight with `Origin: https://beta.xivdyetools.app` returns
+      `Access-Control-Allow-Origin: https://beta.xivdyetools.app` on `api.xivdyetools.app` and
+      `auth.xivdyetools.app` (2026-08-21).
+- [x] Package versions bumped — local ≠ registry for all seven on 2026-08-21: types 2.0.0 (npm
+      1.15.0), logger 2.1.0 (1.3.0), auth 1.4.0 (1.2.0), worker-kit 1.1.0 (never published),
+      core 4.0.1 (2.7.0), svg 2.0.1 (1.2.1), bot-logic 2.1.0 (1.3.0); `docs/versions.md` agrees
+      with every `package.json` (7 packages + 8 apps).
 
 ## 1. Merge day (what runs, what to watch)
 
@@ -70,6 +110,29 @@ api-worker, image-worker; the **routed beta** worker on og-worker; and **product
       `dm_permission: false`, guild-only contexts — FINDING-006/007). Run
       `pnpm --filter xivdyetools-moderation-worker run register-commands` with the moderation
       bot's production token / guild.
+- [ ] **presets-api production D1 — the two data migrations (user-run, moved here from §0):**
+  - [ ] **JWT-identity backfill — immediately after `deploy-presets-api.yml` goes green** (the
+        2.1.0 build resolves web sessions to the Discord snowflake; until the backfill runs the 16
+        existing presets / 33 votes are invisible to their authors, and before the deploy the
+        backfill would hide them from the old build instead — so the window is the deploy itself).
+        Source of truth is **oauth's** D1 (`xivdyetools-users`, from `apps/oauth`):
+        `SELECT id, discord_id FROM users WHERE discord_id IS NOT NULL` (17 rows on 2026-08-21) →
+        on the presets D1 (`apps/presets-api`, `--env production`), per row:
+        `UPDATE presets SET author_discord_id = '<snowflake>' WHERE author_discord_id = '<uuid>';`
+        `UPDATE votes SET user_discord_id = '<snowflake>' WHERE user_discord_id = '<uuid>';`
+        (`moderation_log.moderator_discord_id` had 0 UUID rows — skip). `votes` has a composite
+        `PRIMARY KEY (preset_id, user_discord_id)` — if an UPDATE collides (same person voted from
+        both clients), delete the UUID row and keep the earlier snowflake row.
+        Verify with `SELECT COUNT(*) FROM presets WHERE length(author_discord_id) = 36` → 1 at most
+        (the single XIVAuth-only account).
+  - [ ] **stainID rewrite — after the web-app Pages deploy AND the discord-worker deploy are live**
+        (4.x clients render the stored array by itemID; the 5.0 ones read both eras), from
+        `apps/presets-api`: dump `SELECT id, dyes, previous_values FROM presets` with `--json`,
+        `npx tsx scripts/migrate-dyes-to-stainids.ts <dump.json> > migrations/generated-stainid-updates.sql`,
+        review (expect 16 UPDATEs), apply with `d1 execute DB --remote --env production --file=…`.
+        Idempotent. Verify: `SELECT COUNT(*) FROM presets WHERE CAST(json_extract(dyes,'$[0]') AS INTEGER) > 254` → 0.
+        Until this runs, 5.0 clients keep working through `resolvePresetDye`'s legacy fallback;
+        the §3 "legacy itemID preset fallback" removal is gated on it.
 - [ ] Web-app Pages deploy + smoke test job; confirm the custom domain and the `pages.dev` alias
       serve the same asset hashes (cache-poisoning check — `docs/…/xiv-pages-asset-cache-poisoning`).
 - [ ] `CHANGELOG-laymans.md` announcement webhook fired once.
@@ -141,6 +204,7 @@ is gone, and a CHANGELOG line.
 | **KV rate-limiter fallbacks** (`selectApiRateLimiter` KV branch, oauth `kv` backend, discord-worker / moderation-worker KV paths, the `RATE_LIMIT_KV` namespaces) | api-worker `middleware/rate-limit.ts`, oauth `services/rate-limit.ts`, discord-worker `services/rate-limiter.ts`, moderation-worker `middleware/rate-limit.ts`, wrangler KV bindings | one week of production logs with no fallback warning — FINDING-003/005 |
 | **Legacy itemID preset fallback** (`resolvePresetDye` legacy path) | presets-api | stainID D1 rewrite applied + backfill verified |
 | **Dead notification path + env vars** `notifyModerators`, `MODERATION_WEBHOOK_URL`, `OWNER_DISCORD_ID`, `DISCORD_BOT_TOKEN`, `DISCORD_BOT_WEBHOOK_URL` | presets-api `services/moderation-service.ts`, `Env`, docs/env-var table (PAPI-16) | none — dead today; remove in the first cleanup PR (unless the 2026-08-21 presets-api remediation already did — check its CHANGELOG) |
+| **Orphan production secrets** (set on the worker, no code reference as of 2026-08-21): discord-worker `PRESET_API_SECRET`, `PERSPECTIVE_API_KEY`; presets-api `MODERATOR_CHANNEL_ID` (+ the four PAPI-16 vars above once their code goes) | `wrangler secret delete <NAME> --env production` from the app dir | the §1 tail is clean for a day (proves nothing deployed still reads them) |
 | **oauth `[env.preview]`** bound to production D1/KV with a dead redirect | `apps/oauth/wrangler.toml` | none — delete if the 2026-08-21 oauth remediation (FINDING-029) kept it |
 | `LocalStorageCacheBackend` | web-app (`DEPRECATIONS.md`) | confirm no active path |
 | `scripts/cleanup-v4-kv.ts` | repo | after it has been run once in production |
