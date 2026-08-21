@@ -180,6 +180,23 @@ describe('CameraService', () => {
       expect(cameras[0].deviceId).toBe('camera-1');
       expect(cameras[0].label).toBe('Front Camera');
     });
+
+    it('numbers unlabelled devices from the position in the new list', async () => {
+      // A device with no `label` (the pre-permission case) falls back to the
+      // localized "Camera {n}". Before the fix the number came from
+      // `this.availableCameras.length + 1` — the PREVIOUS enumeration's size —
+      // so every unlabelled device got the same wrong number.
+      mockMediaDevices.enumerateDevices.mockResolvedValue([
+        { deviceId: 'camera-1', kind: 'videoinput', label: '', groupId: 'group-1' },
+        { deviceId: 'mic-1', kind: 'audioinput', label: '', groupId: 'group-3' },
+        { deviceId: 'camera-2', kind: 'videoinput', label: '', groupId: 'group-2' },
+      ]);
+
+      await cameraService.initialize();
+
+      const cameras = cameraService.getAvailableCameras();
+      expect(cameras.map((c) => c.label)).toEqual(['Camera 1', 'Camera 2']);
+    });
   });
 
   describe('onCameraAvailabilityChange', () => {

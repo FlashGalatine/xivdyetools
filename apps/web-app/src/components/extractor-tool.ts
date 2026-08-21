@@ -2246,7 +2246,7 @@ export class ExtractorTool extends BaseComponent {
         cardData.marketServer =
           WorldService.getWorldName(price.worldId) ||
           this.marketBoard?.getSelectedServer() ||
-          'Market';
+          LanguageService.t('common.market');
       }
 
       // Create the v4-result-card element
@@ -2765,7 +2765,7 @@ export class ExtractorTool extends BaseComponent {
         cardData.marketServer =
           WorldService.getWorldName(price.worldId) ||
           this.marketBoard?.getSelectedServer() ||
-          'Market';
+          LanguageService.t('common.market');
       }
 
       // Create the v4-result-card element

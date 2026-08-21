@@ -125,7 +125,9 @@
     "custom": "Personnalisé",
     "customColorName": "Personnalisé ({hex})",
     "gilAmount": "{n} {unit}",
-    "loadingTool": "Chargement de {tool}…"
+    "loadingTool": "Chargement de {tool}…",
+    "closeModal": "Fermer la fenêtre",
+    "confirm": "Confirmer"
   },
   "config": {
     "harmonyType": "Type d'harmonie",
@@ -346,7 +348,10 @@
     "addPick": "Ajouter un prélèvement",
     "autoExtract": "Extraction auto",
     "sampledColor": "Couleur prélevée",
-    "copyColorInfo": "Copier les infos couleur"
+    "copyColorInfo": "Copier les infos couleur",
+    "zoomOut": "Zoom arrière",
+    "zoomLevel": "Zoom actuel",
+    "zoomIn": "Zoom avant"
   },
   "accessibility": {
     "inspectDyes": "Inspecter les Teintures",
@@ -634,7 +639,11 @@
     "copied": "Extrait copié dans le presse-papiers",
     "copyFailed": "Échec de la copie de l'extrait",
     "download": "Télécharger",
-    "nothing": "Rien à exporter pour l'instant"
+    "nothing": "Rien à exporter pour l'instant",
+    "generatedLine": "Généré le {date} · {n} entrées",
+    "generatedLineOne": "Généré le {date} · {n} entrée",
+    "hexSourceHeader": "Source",
+    "hexDyesHeader": "Teintures"
   },
   "errors": {
     "apiFailed": "Échec de la récupération des données du tableau des ventes.",
@@ -734,7 +743,8 @@
     "captureFailed": "Échec de la capture",
     "permissionDenied": "Accès à la caméra refusé",
     "checkPermissions": "Veuillez vérifier les permissions de votre navigateur",
-    "error": "Erreur caméra"
+    "error": "Erreur caméra",
+    "deviceFallback": "Caméra {n}"
   },
   "offline": {
     "banner": "Vous êtes hors ligne. Certaines fonctionnalités peuvent être limitées."
@@ -833,7 +843,8 @@
         "description": "Configurez les options d'affichage pour la vue vérificateur d'accessibilité."
       }
     },
-    "stepOf": "Étape {i} sur {n}"
+    "stepOf": "Étape {i} sur {n}",
+    "dialogLabel": "Tutoriel"
   },
   "preset": {
     "mySubmissions": "Mes soumissions",
@@ -1157,7 +1168,9 @@
     "moreActions": "Plus d'actions",
     "slider": "Curseur",
     "toggle": "Basculer",
-    "toolSelection": "Sélection d'outil"
+    "toolSelection": "Sélection d'outil",
+    "modalDialogs": "Fenêtres modales",
+    "notifications": "Notifications"
   },
   "resultCard": {
     "inspectDyeIn": "Inspecter la teinture dans...",
@@ -1262,7 +1275,6 @@
     "equipCount": "{channels} canaux · {dyes} teintures",
     "glamourViewPieces": "Pièces",
     "glamourViewDyes": "Teintures",
-    "sameModel": "Même modèle : ",
     "namesUnavailable": "Noms des objets indisponibles — seuls les emplacements sont affichés. Les teintures sont lues localement depuis le fichier et ne sont pas concernées.",
     "footSplit": "{undyed} · {empty}.",
     "footWornUndyedOne": "1 pièce portée est non teinte (DyeId 0)",
@@ -1307,6 +1319,7 @@
       "indexOutOfRange": "Cet indice de couleur est en dehors de la plage de sa grille",
       "noTribe": "Cet emplacement nécessite l'ethnie et le genre du fichier",
       "unknown": "Impossible de lire cet emplacement"
-    }
+    },
+    "sameModelList": "Même modèle : {list}"
   }
 }

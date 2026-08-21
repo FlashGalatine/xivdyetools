@@ -1198,10 +1198,16 @@ export class CharaImport {
         `font-family: ${MONO}; font-size: 8.5px; color: var(--theme-primary); background: color-mix(in srgb, var(--theme-primary) 12%, transparent); border-radius: 4px; padding: 1px 5px; cursor: help; white-space: nowrap;`,
         `+${item.familySize - 1}`
       );
-      const alternates = item.alternates.map((a) => itemNameFor(a.names, lang)).join(', ');
-      badge.title = `${this.t('sameModel')}${alternates}${
-        item.familySize - 1 > item.alternates.length ? ' …' : ''
-      }`;
+      // `Intl.ListFormat` rather than `join(', ')`: a comma is not the list
+      // separator in every language (ja/zh use 、, and ko/de/fr add a
+      // conjunction), and the tooltip is prose, not data.
+      const alternates = new Intl.ListFormat(lang, { style: 'short', type: 'unit' }).format(
+        item.alternates.map((a) => itemNameFor(a.names, lang))
+      );
+      const truncated = item.familySize - 1 > item.alternates.length ? ' …' : '';
+      badge.title = `${LanguageService.tInterpolate('swatch.sameModelList', {
+        list: alternates,
+      })}${truncated}`;
       badge.dataset.role = 'same-model';
       overline.appendChild(badge);
     }

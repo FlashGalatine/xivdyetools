@@ -463,7 +463,7 @@ export class BudgetTool extends BaseComponent {
     }
 
     const meta = CONSOLIDATED_DYES[tier];
-    const localCost = `${meta.price.toLocaleString()} ${LanguageService.getCurrency(meta.currency)}`;
+    const localCost = `${formatNumber(meta.price)} ${LanguageService.getCurrency(meta.currency)}`;
     if (tier === 'A') {
       // Vendor gil is deterministic and always known.
       return { tier, gil: meta.price, board, localCost };
@@ -878,7 +878,7 @@ export class BudgetTool extends BaseComponent {
       );
       btn.appendChild(
         this.createElement('span', {
-          textContent: board != null ? board.toLocaleString() : '—',
+          textContent: board != null ? formatNumber(board) : '—',
           attributes: {
             style: `font-family: ${MONO}; font-size: 9.5px; opacity: 0.75;`,
           },
@@ -1237,7 +1237,6 @@ export class BudgetTool extends BaseComponent {
     const targetName = this.dyeName(this.targetDye);
     const upgrade = this.isUpgradeMode();
     const targetGil = this.priceOf(this.targetDye).gil;
-    const gilWord = LanguageService.getCurrency('Gil');
 
     if (this.shareButton) this.shareButton.shareParams = this.getShareParams();
 
@@ -1257,14 +1256,14 @@ export class BudgetTool extends BaseComponent {
       badge = LanguageService.t('budget.upBadge');
       headline = LanguageService.tInterpolate('budget.upHead', { t: targetName });
       sub = LanguageService.tInterpolate('budget.upSub', { t: targetName });
-      money = `${CONSOLIDATED_DYES.A.price.toLocaleString()} ${gilWord}`;
+      money = formatGil(CONSOLIDATED_DYES.A.price);
       moneyLabel = LanguageService.t('budget.upFloorLabel');
       unit = LanguageService.t('budget.upUnit');
     } else if (!this.marketOnline) {
       badge = LanguageService.t('budget.offBadge');
       headline = LanguageService.tInterpolate('budget.ledgerHead', { t: targetName });
       sub = LanguageService.t('budget.offText');
-      money = cheapestGil != null ? `${cheapestGil.toLocaleString()} ${gilWord}` : '—';
+      money = cheapestGil != null ? formatGil(cheapestGil) : '—';
       moneyLabel = LanguageService.t('budget.cheapestKnown');
       unit = LanguageService.t('budget.noTargetPrice');
     } else {
@@ -1278,11 +1277,11 @@ export class BudgetTool extends BaseComponent {
         null
       );
       if (bestPerPoint != null) {
-        money = `${Math.round(bestPerPoint).toLocaleString()} ${gilWord}`;
+        money = formatGil(Math.round(bestPerPoint));
         moneyLabel = LanguageService.t('budget.perPointLabel');
         unit = LanguageService.t('budget.perPointSort');
       } else {
-        money = cheapestGil != null ? `${cheapestGil.toLocaleString()} ${gilWord}` : '—';
+        money = cheapestGil != null ? formatGil(cheapestGil) : '—';
         moneyLabel = LanguageService.t('budget.cheapestKnown');
         unit = targetGil == null ? LanguageService.t('budget.noTargetPrice') : '';
       }
@@ -1534,7 +1533,7 @@ export class BudgetTool extends BaseComponent {
             : localCost;
         if (boardPrice != null && boardPrice > tierMeta.price) {
           flag = LanguageService.tInterpolate('budget.vendorSaves', {
-            diff: (boardPrice - tierMeta.price).toLocaleString(),
+            diff: formatNumber(boardPrice - tierMeta.price),
           });
           flagBg = this.tint('#5bbd68', 0.14);
           flagColor = goodGreen;
@@ -1733,7 +1732,7 @@ export class BudgetTool extends BaseComponent {
       if (!narrow) {
         rowEl.appendChild(
           this.createElement('span', {
-            textContent: row.price.board != null ? row.price.board.toLocaleString() : '—',
+            textContent: row.price.board != null ? formatNumber(row.price.board) : '—',
             attributes: {
               style: `font-family: ${MONO}; font-size: 12.5px; text-align: right; color: ${row.price.board != null ? 'var(--theme-text)' : 'var(--theme-text-muted)'};`,
             },
@@ -1743,7 +1742,7 @@ export class BudgetTool extends BaseComponent {
 
       rowEl.appendChild(
         this.createElement('span', {
-          textContent: row.perPoint != null ? Math.round(row.perPoint).toLocaleString() : '',
+          textContent: row.perPoint != null ? formatNumber(Math.round(row.perPoint)) : '',
           attributes: {
             style: `font-family: ${MONO}; font-size: 12.5px; text-align: right; color: var(--theme-text);`,
           },

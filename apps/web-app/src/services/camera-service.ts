@@ -7,6 +7,7 @@
  * @module services/camera-service
  */
 
+import { LanguageService } from '@services/language-service';
 import { logger } from '@shared/logger';
 
 /**
@@ -90,11 +91,17 @@ export class CameraService {
 
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
+      // The fallback number comes from the index of the array being built, not
+      // from `this.availableCameras.length` — that field still holds the
+      // PREVIOUS enumeration during the map, so every unlabelled device used to
+      // be called "Camera <old count + 1>" (all the same number, and wrong).
       this.availableCameras = devices
         .filter((device) => device.kind === 'videoinput')
-        .map((device) => ({
+        .map((device, index) => ({
           deviceId: device.deviceId,
-          label: device.label || `Camera ${this.availableCameras.length + 1}`,
+          label:
+            device.label ||
+            LanguageService.tInterpolate('camera.deviceFallback', { n: String(index + 1) }),
           groupId: device.groupId,
         }));
 

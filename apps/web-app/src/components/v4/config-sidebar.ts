@@ -63,11 +63,13 @@ import type { SubRace, Race } from '@xivdyetools/types';
  * also wrong in principle for XIVAuth users, who have no Discord identity at all.
  *
  * Iterating the string yields code points rather than UTF-16 units, so an emoji
- * or astral-plane name does not render half a surrogate pair.
+ * or astral-plane name does not render half a surrogate pair. Upper-casing is
+ * app-locale aware: bare `toLocaleUpperCase()` follows the BROWSER locale, so a
+ * Turkish-locale browser would render a dotted `İ` for an English UI.
  */
 export function avatarInitial(name: string): string {
   const first = [...name.trim()][0];
-  return first ? first.toLocaleUpperCase() : '?';
+  return first ? first.toLocaleUpperCase(LanguageService.getCurrentLocale()) : '?';
 }
 
 /**

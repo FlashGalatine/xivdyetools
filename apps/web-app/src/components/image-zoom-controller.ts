@@ -186,7 +186,7 @@ export class ImageZoomController extends BaseComponent {
       className: 'zoom-btn',
       innerHTML: `<svg viewBox="0 0 24 24" style="${svgStyle}"><path d="M19 13H5v-2h14v2z" /></svg>`,
       attributes: {
-        title: 'Zoom Out',
+        title: LanguageService.t('matcher.zoomOut'),
         type: 'button',
         style: btnStyle,
       },
@@ -197,7 +197,7 @@ export class ImageZoomController extends BaseComponent {
     const zoomDisplayBtn = this.createElement('button', {
       className: 'zoom-btn',
       attributes: {
-        title: 'Current Zoom',
+        title: LanguageService.t('matcher.zoomLevel'),
         style: `${btnStyle} width: auto; padding: 0 8px; cursor: default;`,
       },
     });
@@ -216,7 +216,7 @@ export class ImageZoomController extends BaseComponent {
       className: 'zoom-btn',
       innerHTML: `<svg viewBox="0 0 24 24" style="${svgStyle}"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" /></svg>`,
       attributes: {
-        title: 'Zoom In',
+        title: LanguageService.t('matcher.zoomIn'),
         type: 'button',
         style: btnStyle,
       },

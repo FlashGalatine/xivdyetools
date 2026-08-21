@@ -12,6 +12,7 @@ import {
 } from '@services/index';
 import type { Collection, ImportError } from '@services/collection-service';
 import { ICON_STATE_FOLDER as ICON_FOLDER } from '@shared/state-icons';
+import { formatDate } from '@shared/format';
 import type { Dye } from '@xivdyetools/types';
 
 /**
@@ -227,7 +228,7 @@ function createCollectionItem(collection: Collection, onRefresh: () => void): HT
   metaRow.appendChild(separator);
 
   const date = document.createElement('span');
-  date.textContent = new Date(collection.updatedAt).toLocaleDateString();
+  date.textContent = formatDate(collection.updatedAt);
   metaRow.appendChild(date);
 
   item.appendChild(metaRow);

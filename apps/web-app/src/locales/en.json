@@ -125,7 +125,9 @@
     "custom": "Custom",
     "customColorName": "Custom ({hex})",
     "gilAmount": "{n} {unit}",
-    "loadingTool": "Loading {tool}…"
+    "loadingTool": "Loading {tool}…",
+    "closeModal": "Close modal",
+    "confirm": "Confirm"
   },
   "config": {
     "harmonyType": "Harmony Type",
@@ -346,7 +348,10 @@
     "addPick": "Add a pick",
     "autoExtract": "Auto-extract",
     "sampledColor": "Sampled Color",
-    "copyColorInfo": "Copy Color Info"
+    "copyColorInfo": "Copy Color Info",
+    "zoomOut": "Zoom Out",
+    "zoomLevel": "Current Zoom",
+    "zoomIn": "Zoom In"
   },
   "accessibility": {
     "inspectDyes": "Inspect Dyes",
@@ -634,7 +639,11 @@
     "copied": "Snippet copied to clipboard",
     "copyFailed": "Failed to copy snippet",
     "download": "Download",
-    "nothing": "Nothing to export yet"
+    "nothing": "Nothing to export yet",
+    "generatedLine": "Generated {date} · {n} entries",
+    "generatedLineOne": "Generated {date} · {n} entry",
+    "hexSourceHeader": "Source",
+    "hexDyesHeader": "Dyes"
   },
   "errors": {
     "apiFailed": "Failed to fetch data from market board.",
@@ -734,7 +743,8 @@
     "captureFailed": "Failed to capture image",
     "permissionDenied": "Camera access denied",
     "checkPermissions": "Please check your browser permissions",
-    "error": "Camera error"
+    "error": "Camera error",
+    "deviceFallback": "Camera {n}"
   },
   "offline": {
     "banner": "You are offline. Some features may be limited."
@@ -872,7 +882,8 @@
         "description": "Configure display options for the accessibility checker view."
       }
     },
-    "stepOf": "Step {i} of {n}"
+    "stepOf": "Step {i} of {n}",
+    "dialogLabel": "Tutorial"
   },
   "preset": {
     "mySubmissions": "My Submissions",
@@ -1157,7 +1168,9 @@
     "moreActions": "More actions",
     "slider": "Slider",
     "toggle": "Toggle",
-    "toolSelection": "Tool selection"
+    "toolSelection": "Tool selection",
+    "modalDialogs": "Modal dialogs",
+    "notifications": "Notifications"
   },
   "resultCard": {
     "inspectDyeIn": "Inspect Dye in...",
@@ -1262,7 +1275,6 @@
     "equipCount": "{channels} channels · {dyes} dyes",
     "glamourViewPieces": "Pieces",
     "glamourViewDyes": "Dyes",
-    "sameModel": "Same model: ",
     "namesUnavailable": "Item names unavailable — showing slots only. Dyes are read locally from the file and are unaffected.",
     "footSplit": "{undyed} · {empty}.",
     "footWornUndyedOne": "1 worn piece is undyed (DyeId 0)",
@@ -1307,6 +1319,7 @@
       "indexOutOfRange": "This colour index is outside the range of its sheet",
       "noTribe": "This slot needs the file's clan and gender to resolve",
       "unknown": "Could not read this slot"
-    }
+    },
+    "sameModelList": "Same model: {list}"
   }
 }

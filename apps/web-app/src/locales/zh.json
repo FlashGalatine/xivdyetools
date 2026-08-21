@@ -125,7 +125,9 @@
     "custom": "自定义",
     "customColorName": "自定义（{hex}）",
     "gilAmount": "{n} {unit}",
-    "loadingTool": "正在加载{tool}…"
+    "loadingTool": "正在加载{tool}…",
+    "closeModal": "关闭对话框",
+    "confirm": "确认"
   },
   "resultCard": {
     "inspectDyeIn": "在以下工具中查看...",
@@ -374,7 +376,10 @@
     "addPick": "添加取色",
     "autoExtract": "自动提取",
     "sampledColor": "取得的颜色",
-    "copyColorInfo": "复制颜色信息"
+    "copyColorInfo": "复制颜色信息",
+    "zoomOut": "缩小",
+    "zoomLevel": "当前缩放",
+    "zoomIn": "放大"
   },
   "accessibility": {
     "inspectDyes": "检查染剂",
@@ -662,7 +667,11 @@
     "copied": "已复制代码片段到剪贴板",
     "copyFailed": "复制代码片段失败",
     "download": "下载",
-    "nothing": "暂无可导出的内容"
+    "nothing": "暂无可导出的内容",
+    "generatedLine": "生成于 {date} · {n} 条",
+    "generatedLineOne": "生成于 {date} · {n} 条",
+    "hexSourceHeader": "源色",
+    "hexDyesHeader": "染剂"
   },
   "errors": {
     "apiFailed": "从市场布告板获取数据失败。",
@@ -762,7 +771,8 @@
     "captureFailed": "图像捕获失败",
     "permissionDenied": "摄像头访问被拒绝",
     "checkPermissions": "请检查您的浏览器权限设置",
-    "error": "摄像头错误"
+    "error": "摄像头错误",
+    "deviceFallback": "摄像头 {n}"
   },
   "offline": {
     "banner": "您处于离线状态。部分功能可能受限。"
@@ -861,7 +871,8 @@
         "description": "配置无障碍检查器视图的显示选项。"
       }
     },
-    "stepOf": "第 {i} 步，共 {n} 步"
+    "stepOf": "第 {i} 步，共 {n} 步",
+    "dialogLabel": "教程"
   },
   "preset": {
     "mySubmissions": "我的提交",
@@ -1185,7 +1196,9 @@
     "moreActions": "更多操作",
     "slider": "滑块",
     "toggle": "切换",
-    "toolSelection": "工具选择"
+    "toolSelection": "工具选择",
+    "modalDialogs": "对话框",
+    "notifications": "通知"
   },
   "share": {
     "button": "分享",
@@ -1262,7 +1275,6 @@
     "equipCount": "{channels} 个通道 · {dyes} 种染剂",
     "glamourViewPieces": "部位",
     "glamourViewDyes": "染剂",
-    "sameModel": "同一模型：",
     "namesUnavailable": "无法获取物品名称 — 仅显示部位。染剂从文件本地读取，不受影响。",
     "footSplit": "{undyed} · {empty}。",
     "footWornUndyedOne": "1 件已穿戴部位未染色（DyeId 0）",
@@ -1307,6 +1319,7 @@
       "indexOutOfRange": "该颜色索引超出了所属色表的范围",
       "noTribe": "该栏位需要文件中的部族与性别信息才能解析",
       "unknown": "无法读取此栏位"
-    }
+    },
+    "sameModelList": "同一模型：{list}"
   }
 }

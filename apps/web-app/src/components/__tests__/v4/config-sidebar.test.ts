@@ -18,6 +18,7 @@ vi.mock('@services/index', () => ({
     getHarmonyType: (key: string) => `core:harmony:${key}`,
     getRace: (key: string) => `core:race:${key}`,
     getClan: (key: string) => `core:clan:${key}`,
+    getCurrentLocale: () => 'en',
     subscribe: vi.fn().mockReturnValue(() => {}),
   },
   authService: {

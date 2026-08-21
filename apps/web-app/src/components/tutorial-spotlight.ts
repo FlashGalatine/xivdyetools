@@ -86,7 +86,7 @@ export class TutorialSpotlight extends BaseComponent {
       attributes: {
         'aria-live': 'polite',
         role: 'dialog',
-        'aria-label': 'Tutorial',
+        'aria-label': LanguageService.t('tutorial.dialogLabel'),
       },
     });
 

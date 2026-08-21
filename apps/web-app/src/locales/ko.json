@@ -125,7 +125,9 @@
     "custom": "사용자 지정",
     "customColorName": "사용자 지정 ({hex})",
     "gilAmount": "{n} {unit}",
-    "loadingTool": "{tool} 로딩 중…"
+    "loadingTool": "{tool} 로딩 중…",
+    "closeModal": "대화 상자 닫기",
+    "confirm": "확인"
   },
   "config": {
     "harmonyType": "조화 유형",
@@ -346,7 +348,10 @@
     "addPick": "추출 추가",
     "autoExtract": "자동 추출",
     "sampledColor": "추출한 색상",
-    "copyColorInfo": "색상 정보 복사"
+    "copyColorInfo": "색상 정보 복사",
+    "zoomOut": "축소",
+    "zoomLevel": "현재 배율",
+    "zoomIn": "확대"
   },
   "accessibility": {
     "inspectDyes": "염료 검사",
@@ -634,7 +639,11 @@
     "copied": "스니펫을 클립보드에 복사했습니다",
     "copyFailed": "스니펫을 복사하지 못했습니다",
     "download": "다운로드",
-    "nothing": "아직 내보낼 항목이 없습니다"
+    "nothing": "아직 내보낼 항목이 없습니다",
+    "generatedLine": "생성일 {date} · {n}개 항목",
+    "generatedLineOne": "생성일 {date} · {n}개 항목",
+    "hexSourceHeader": "원본 색상",
+    "hexDyesHeader": "염료"
   },
   "errors": {
     "apiFailed": "마켓보드에서 데이터를 가져오지 못했습니다.",
@@ -734,7 +743,8 @@
     "captureFailed": "이미지 캡처에 실패했습니다",
     "permissionDenied": "카메라 접근이 거부되었습니다",
     "checkPermissions": "브라우저 권한 설정을 확인해주세요",
-    "error": "카메라 오류"
+    "error": "카메라 오류",
+    "deviceFallback": "카메라 {n}"
   },
   "offline": {
     "banner": "오프라인 상태입니다. 일부 기능이 제한될 수 있습니다."
@@ -833,7 +843,8 @@
         "description": "접근성 검사기 보기의 표시 옵션을 구성합니다."
       }
     },
-    "stepOf": "{n}단계 중 {i}단계"
+    "stepOf": "{n}단계 중 {i}단계",
+    "dialogLabel": "튜토리얼"
   },
   "preset": {
     "mySubmissions": "내 제출물",
@@ -1157,7 +1168,9 @@
     "moreActions": "추가 작업",
     "slider": "슬라이더",
     "toggle": "토글",
-    "toolSelection": "도구 선택"
+    "toolSelection": "도구 선택",
+    "modalDialogs": "대화 상자",
+    "notifications": "알림"
   },
   "resultCard": {
     "inspectDyeIn": "염료 검사...",
@@ -1262,7 +1275,6 @@
     "equipCount": "{channels}채널 · {dyes}색",
     "glamourViewPieces": "부위",
     "glamourViewDyes": "염료",
-    "sameModel": "동일 모델: ",
     "namesUnavailable": "아이템 이름을 가져올 수 없습니다 — 부위만 표시합니다. 염료는 파일에서 로컬로 읽어오므로 영향이 없습니다.",
     "footSplit": "{undyed} · {empty}.",
     "footWornUndyedOne": "착용 중 1개 부위가 미염색(DyeId 0)",
@@ -1307,6 +1319,7 @@
       "indexOutOfRange": "이 색 인덱스는 해당 시트의 범위를 벗어났습니다",
       "noTribe": "이 부위를 해석하려면 파일의 부족과 성별이 필요합니다",
       "unknown": "이 부위를 읽을 수 없습니다"
-    }
+    },
+    "sameModelList": "동일 모델: {list}"
   }
 }

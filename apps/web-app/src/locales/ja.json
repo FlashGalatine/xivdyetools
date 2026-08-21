@@ -125,7 +125,9 @@
     "custom": "カスタム",
     "customColorName": "カスタム（{hex}）",
     "gilAmount": "{n}{unit}",
-    "loadingTool": "{tool}を読み込み中…"
+    "loadingTool": "{tool}を読み込み中…",
+    "closeModal": "ダイアログを閉じる",
+    "confirm": "確認"
   },
   "config": {
     "harmonyType": "ハーモニータイプ",
@@ -346,7 +348,10 @@
     "addPick": "採取を追加",
     "autoExtract": "自動抽出",
     "sampledColor": "採取した色",
-    "copyColorInfo": "色情報をコピー"
+    "copyColorInfo": "色情報をコピー",
+    "zoomOut": "縮小",
+    "zoomLevel": "現在の倍率",
+    "zoomIn": "拡大"
   },
   "accessibility": {
     "inspectDyes": "カララントを検査",
@@ -634,7 +639,11 @@
     "copied": "スニペットをクリップボードにコピーしました",
     "copyFailed": "スニペットをコピーできませんでした",
     "download": "ダウンロード",
-    "nothing": "書き出せるものがありません"
+    "nothing": "書き出せるものがありません",
+    "generatedLine": "生成日 {date} · {n} 件",
+    "generatedLineOne": "生成日 {date} · {n} 件",
+    "hexSourceHeader": "元の色",
+    "hexDyesHeader": "カララント"
   },
   "errors": {
     "apiFailed": "マーケットボードからのデータ取得に失敗しました。",
@@ -734,7 +743,8 @@
     "captureFailed": "画像のキャプチャに失敗しました",
     "permissionDenied": "カメラへのアクセスが拒否されました",
     "checkPermissions": "ブラウザの権限設定を確認してください",
-    "error": "カメラエラー"
+    "error": "カメラエラー",
+    "deviceFallback": "カメラ{n}"
   },
   "offline": {
     "banner": "オフラインです。一部の機能が制限される場合があります。"
@@ -872,7 +882,8 @@
         "description": "アクセシビリティチェッカービューの表示オプションを設定します。"
       }
     },
-    "stepOf": "ステップ {i}/{n}"
+    "stepOf": "ステップ {i}/{n}",
+    "dialogLabel": "チュートリアル"
   },
   "preset": {
     "mySubmissions": "マイ投稿",
@@ -1157,7 +1168,9 @@
     "moreActions": "その他のアクション",
     "slider": "スライダー",
     "toggle": "切り替え",
-    "toolSelection": "ツール選択"
+    "toolSelection": "ツール選択",
+    "modalDialogs": "ダイアログ",
+    "notifications": "通知"
   },
   "resultCard": {
     "inspectDyeIn": "染料を確認...",
@@ -1262,7 +1275,6 @@
     "equipCount": "{channels}チャンネル・{dyes}色",
     "glamourViewPieces": "部位",
     "glamourViewDyes": "カララント",
-    "sameModel": "同一モデル: ",
     "namesUnavailable": "アイテム名を取得できません — スロット名のみ表示します。カララントはファイルからローカルに読み込み済みで、影響ありません。",
     "footSplit": "{undyed}・{empty}。",
     "footWornUndyedOne": "装備中1部位が未染色（DyeId 0）",
@@ -1307,6 +1319,7 @@
       "indexOutOfRange": "この色のインデックスはシートの範囲外です",
       "noTribe": "このスロットの解決にはファイルの部族と性別が必要です",
       "unknown": "このスロットを読み取れませんでした"
-    }
+    },
+    "sameModelList": "同一モデル：{list}"
   }
 }

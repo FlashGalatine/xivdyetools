@@ -25,8 +25,24 @@ import {
   exportMimeType,
   generateExport,
   type ExportFormat,
+  type ExportLabels,
   type ExportPayload,
 } from '@shared/palette-export';
+
+/**
+ * App-locale strings for the generated text. Built here rather than in
+ * `@shared/palette-export` so that module stays pure and service-free.
+ */
+function exportLabels(): ExportLabels {
+  return {
+    generatedLine: (date, count) =>
+      count === 1
+        ? LanguageService.tInterpolate('export.generatedLineOne', { date, n: String(count) })
+        : LanguageService.tInterpolate('export.generatedLine', { date, n: String(count) }),
+    sourceHeader: LanguageService.t('export.hexSourceHeader'),
+    dyesHeader: LanguageService.t('export.hexDyesHeader'),
+  };
+}
 
 const CHIP_BASE = [
   'min-height: 30px; padding: 0 12px; border-radius: 8px; cursor: pointer;',
@@ -87,10 +103,15 @@ export function openExportSheet(input: ExportPayload): void {
   }
 
   // The generators are pure and service-free, so the locale-aware name lookup
-  // is injected here — the one place an export meets the running app. Every
-  // caller gets localized dye names in the commented formats for free; the
-  // JSON format keeps the canonical English name regardless.
-  const payload: ExportPayload = { ...input, nameOf: input.nameOf ?? localizedDyeName };
+  // and the header/column strings are injected here — the one place an export
+  // meets the running app. Every caller gets localized dye names and headers in
+  // the commented formats for free; the JSON format keeps the canonical English
+  // name (and no prose) regardless.
+  const payload: ExportPayload = {
+    ...input,
+    nameOf: input.nameOf ?? localizedDyeName,
+    labels: input.labels ?? exportLabels(),
+  };
 
   // Mutable across the sheet's life: the footer's Copy handler runs long after
   // show(), and must read the format the user has since switched to.

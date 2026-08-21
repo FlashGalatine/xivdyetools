@@ -125,7 +125,9 @@
     "custom": "Benutzerdefiniert",
     "customColorName": "Benutzerdefiniert ({hex})",
     "gilAmount": "{n} {unit}",
-    "loadingTool": "{tool} wird geladen…"
+    "loadingTool": "{tool} wird geladen…",
+    "closeModal": "Dialog schließen",
+    "confirm": "Bestätigen"
   },
   "config": {
     "harmonyType": "Harmonie-Typ",
@@ -346,7 +348,10 @@
     "addPick": "Auswahl hinzufügen",
     "autoExtract": "Auto-Extraktion",
     "sampledColor": "Gemessene Farbe",
-    "copyColorInfo": "Farbinfos kopieren"
+    "copyColorInfo": "Farbinfos kopieren",
+    "zoomOut": "Verkleinern",
+    "zoomLevel": "Aktuelle Vergrößerung",
+    "zoomIn": "Vergrößern"
   },
   "accessibility": {
     "inspectDyes": "Farbstoffe prüfen",
@@ -634,7 +639,11 @@
     "copied": "Snippet in die Zwischenablage kopiert",
     "copyFailed": "Snippet konnte nicht kopiert werden",
     "download": "Herunterladen",
-    "nothing": "Noch nichts zum Exportieren"
+    "nothing": "Noch nichts zum Exportieren",
+    "generatedLine": "Erstellt am {date} · {n} Einträge",
+    "generatedLineOne": "Erstellt am {date} · {n} Eintrag",
+    "hexSourceHeader": "Quelle",
+    "hexDyesHeader": "Farbstoffe"
   },
   "errors": {
     "apiFailed": "Daten konnten nicht vom Marktbrett abgerufen werden.",
@@ -734,7 +743,8 @@
     "captureFailed": "Bildaufnahme fehlgeschlagen",
     "permissionDenied": "Kamerazugriff verweigert",
     "checkPermissions": "Bitte überprüfen Sie Ihre Browserberechtigungen",
-    "error": "Kamerafehler"
+    "error": "Kamerafehler",
+    "deviceFallback": "Kamera {n}"
   },
   "offline": {
     "banner": "Sie sind offline. Einige Funktionen sind möglicherweise eingeschränkt."
@@ -833,7 +843,8 @@
         "description": "Konfigurieren Sie die Anzeigeoptionen für die Barrierefreiheitsprüfung."
       }
     },
-    "stepOf": "Schritt {i} von {n}"
+    "stepOf": "Schritt {i} von {n}",
+    "dialogLabel": "Tutorial"
   },
   "preset": {
     "mySubmissions": "Meine Einreichungen",
@@ -1157,7 +1168,9 @@
     "moreActions": "Weitere Aktionen",
     "slider": "Schieberegler",
     "toggle": "Umschalten",
-    "toolSelection": "Werkzeugauswahl"
+    "toolSelection": "Werkzeugauswahl",
+    "modalDialogs": "Dialogfenster",
+    "notifications": "Benachrichtigungen"
   },
   "resultCard": {
     "inspectDyeIn": "Farbstoff prüfen in...",
@@ -1262,7 +1275,6 @@
     "equipCount": "{channels} Kanäle · {dyes} Farbstoffe",
     "glamourViewPieces": "Teile",
     "glamourViewDyes": "Farbstoffe",
-    "sameModel": "Gleiches Modell: ",
     "namesUnavailable": "Gegenstandsnamen nicht verfügbar — nur Slot-Namen. Farbstoffe werden lokal aus der Datei gelesen und sind nicht betroffen.",
     "footSplit": "{undyed} · {empty}.",
     "footWornUndyedOne": "1 getragenes Teil ist ungefärbt (DyeId 0)",
@@ -1307,6 +1319,7 @@
       "indexOutOfRange": "Dieser Farbindex liegt außerhalb des Bereichs seiner Tabelle",
       "noTribe": "Dieser Slot benötigt Volksgruppe und Geschlecht aus der Datei",
       "unknown": "Dieser Slot konnte nicht gelesen werden"
-    }
+    },
+    "sameModelList": "Gleiches Modell: {list}"
   }
 }

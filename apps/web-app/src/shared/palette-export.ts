@@ -67,6 +67,35 @@ export interface ExportEntry {
   delta?: number | null;
 }
 
+/**
+ * The localizable strings the generated text carries.
+ *
+ * Injected the same way `nameOf` is, and for the same reason: this module is
+ * pure (no DOM, no services) so the formats stay unit-testable without a
+ * browser. `openExportSheet` supplies the app-locale resolver; the defaults
+ * below keep the generators usable on their own.
+ */
+export interface ExportLabels {
+  /**
+   * The header line, given the ISO date and the entry count. A function rather
+   * than a template string because the count picks the singular/plural key,
+   * and only the caller owns `LanguageService`.
+   */
+  generatedLine: (date: string, count: number) => string;
+  /** Column heading above the source hexes in the HEX format. */
+  sourceHeader: string;
+  /** Column heading above the dye hexes in the HEX format. */
+  dyesHeader: string;
+}
+
+/** English defaults — what the generators emit with no labels injected. */
+const DEFAULT_LABELS: ExportLabels = {
+  generatedLine: (date, count) =>
+    `Generated ${date} · ${count} ${count === 1 ? 'entry' : 'entries'}`,
+  sourceHeader: 'Source',
+  dyesHeader: 'Dyes',
+};
+
 /** Everything a tool hands the exporter. */
 export interface ExportPayload {
   /** Tool slug — used for the filename. */
@@ -87,6 +116,11 @@ export interface ExportPayload {
    * language.
    */
   nameOf?: (dye: Dye) => string;
+  /**
+   * Localized header/column strings. Injected for the same reason as `nameOf`;
+   * omitted, the English `DEFAULT_LABELS` apply.
+   */
+  labels?: ExportLabels;
 }
 
 /** Default display name — the canonical English one carried on the dye. */
@@ -129,9 +163,10 @@ function suffix(entry: ExportEntry, half: 'source' | 'dye'): string {
 
 /** Header lines shared by all commented formats, without comment markers. */
 function headerLines(payload: ExportPayload): string[] {
+  const labels = payload.labels ?? DEFAULT_LABELS;
   const lines = [
     `XIV Dye Tools — ${payload.title}`,
-    `Generated ${today()} · ${payload.entries.length} ${payload.entries.length === 1 ? 'entry' : 'entries'}`,
+    labels.generatedLine(today(), payload.entries.length),
   ];
   if (payload.meta?.length) lines.push(...payload.meta);
   return lines;
@@ -254,9 +289,10 @@ function generateHex(payload: ExportPayload): string {
     .filter((hex): hex is string => Boolean(hex))
     .map(normalizeHex);
 
+  const labels = payload.labels ?? DEFAULT_LABELS;
   const blocks: string[] = [];
-  if (sources.length) blocks.push(`Source\n${sources.join('\n')}`);
-  if (dyes.length) blocks.push(`Dyes\n${dyes.join('\n')}`);
+  if (sources.length) blocks.push(`${labels.sourceHeader}\n${sources.join('\n')}`);
+  if (dyes.length) blocks.push(`${labels.dyesHeader}\n${dyes.join('\n')}`);
   return `${blocks.join('\n\n')}\n`;
 }
 
