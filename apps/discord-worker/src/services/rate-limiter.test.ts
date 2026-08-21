@@ -4,6 +4,7 @@
  * Tests both KV fallback and new config-based interface.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createTranslator } from '@xivdyetools/bot-logic/i18n';
 import {
   checkRateLimit,
   resolveRateLimitScope,
@@ -209,14 +210,14 @@ describe('rate-limiter.ts', () => {
         retryAfter: 30,
       };
 
-      const message = formatRateLimitMessage(result);
+      const message = formatRateLimitMessage(result, createTranslator('en'));
 
       expect(message).toBe(
-        "You're using this command too quickly! Please wait **30 seconds** before trying again.",
+        "You're using this command too quickly! Please wait **30s** before trying again.",
       );
     });
 
-    it('should use singular second for 1 second', () => {
+    it('renders in the translator locale (F-04)', () => {
       const result: RateLimitResult = {
         allowed: false,
         remaining: 0,
@@ -224,11 +225,8 @@ describe('rate-limiter.ts', () => {
         retryAfter: 1,
       };
 
-      const message = formatRateLimitMessage(result);
-
-      expect(message).toBe(
-        "You're using this command too quickly! Please wait **1 second** before trying again.",
-      );
+      expect(formatRateLimitMessage(result, createTranslator('ja'))).toContain('**1秒**');
+      expect(formatRateLimitMessage(result, createTranslator('de'))).toContain('**1 s**');
     });
 
     it('should calculate retryAfter from resetAt if not provided', () => {
@@ -240,9 +238,9 @@ describe('rate-limiter.ts', () => {
         resetAt: Date.now() + 45000, // 45 seconds from now
       };
 
-      const message = formatRateLimitMessage(result);
+      const message = formatRateLimitMessage(result, createTranslator('en'));
 
-      expect(message).toContain('45 seconds');
+      expect(message).toContain('45s');
     });
   });
 });

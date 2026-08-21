@@ -24,7 +24,8 @@
     "unknownSubcommand": "Unbekannter Unterbefehl: {name}",
     "noMatchFound": "Keine passenden Farbstoffe in der Datenbank gefunden.",
     "noDyesAvailable": "Keine Farbstoffe in der Datenbank verfügbar.",
-    "generationFailed": "Beim Erstellen der Visualisierung ist ein Fehler aufgetreten. Bitte versuche es später erneut."
+    "generationFailed": "Beim Erstellen der Visualisierung ist ein Fehler aufgetreten. Bitte versuche es später erneut.",
+    "rateLimited": "Du verwendest diesen Befehl zu schnell! Bitte warte **{seconds} s**, bevor du es erneut versuchst."
   },
   "quality": {
     "perfect": "Perfekt",

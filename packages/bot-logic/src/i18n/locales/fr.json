@@ -24,7 +24,8 @@
     "unknownSubcommand": "Sous-commande inconnue : {name}",
     "noMatchFound": "Aucune teinture correspondante trouvée dans la base de données.",
     "noDyesAvailable": "Aucune teinture disponible dans la base de données.",
-    "generationFailed": "Une erreur s'est produite lors de la génération de la visualisation. Veuillez réessayer plus tard."
+    "generationFailed": "Une erreur s'est produite lors de la génération de la visualisation. Veuillez réessayer plus tard.",
+    "rateLimited": "Vous utilisez cette commande trop rapidement ! Veuillez patienter **{seconds} s** avant de réessayer."
   },
   "quality": {
     "perfect": "Parfait",

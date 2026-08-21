@@ -24,7 +24,8 @@
     "unknownSubcommand": "Unknown subcommand: {name}",
     "noMatchFound": "Could not find any matching dyes in the database.",
     "noDyesAvailable": "No dyes available in the database.",
-    "generationFailed": "An error occurred while generating the visualization. Please try again later."
+    "generationFailed": "An error occurred while generating the visualization. Please try again later.",
+    "rateLimited": "You're using this command too quickly! Please wait **{seconds}s** before trying again."
   },
   "quality": {
     "perfect": "Perfect",

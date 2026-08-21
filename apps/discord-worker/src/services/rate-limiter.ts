@@ -12,6 +12,7 @@
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
+import type { Translator } from '@xivdyetools/bot-logic/i18n';
 import {
   UpstashRateLimiter,
   KVRateLimiter,
@@ -199,11 +200,13 @@ export async function checkRateLimit(
 }
 
 /**
- * Format a rate limit error message for the user
+ * Format a rate limit error message for the user in their locale
+ * (2026-08-20 i18n audit, F-04 — this was the most-seen untranslated string
+ * in the bot, and it hand-rolled an English plural).
  */
-export function formatRateLimitMessage(result: RateLimitResult): string {
+export function formatRateLimitMessage(result: RateLimitResult, t: Translator): string {
   const seconds = result.retryAfter ?? Math.ceil((result.resetAt - Date.now()) / 1000);
-  return `You're using this command too quickly! Please wait **${seconds} second${seconds !== 1 ? 's' : ''}** before trying again.`;
+  return t.t('errors.rateLimited', { seconds });
 }
 
 /**

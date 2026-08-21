@@ -61,7 +61,7 @@ import {
   resolveUserLocale,
   initializeLocale,
 } from './services/i18n.js';
-import { createTranslator } from './services/bot-i18n.js';
+import { createTranslator, createUserTranslator } from './services/bot-i18n.js';
 import { sendModerationNotification } from './handlers/commands/preset-notifications.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-kit';
@@ -642,7 +642,8 @@ async function handleCommand(
     );
     if (!rateLimitResult.allowed) {
       logger.info('User rate limited', { userId, command: commandName });
-      return ephemeralResponse(formatRateLimitMessage(rateLimitResult));
+      const t = await createUserTranslator(env.KV, userId, interaction.locale, logger);
+      return ephemeralResponse(formatRateLimitMessage(rateLimitResult, t));
     }
   }
 

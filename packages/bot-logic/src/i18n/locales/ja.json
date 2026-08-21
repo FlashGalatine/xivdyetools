@@ -24,7 +24,8 @@
     "unknownSubcommand": "不明なサブコマンド：{name}",
     "noMatchFound": "データベースに一致するカララントが見つかりませんでした。",
     "noDyesAvailable": "データベースにカララントがありません。",
-    "generationFailed": "可視化の生成中にエラーが発生しました。後でもう一度お試しください。"
+    "generationFailed": "可視化の生成中にエラーが発生しました。後でもう一度お試しください。",
+    "rateLimited": "コマンドの実行が早すぎます。**{seconds}秒**待ってからもう一度お試しください。"
   },
   "quality": {
     "perfect": "完璧",

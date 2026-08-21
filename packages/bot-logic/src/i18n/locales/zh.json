@@ -24,7 +24,8 @@
     "unknownSubcommand": "未知子命令：{name}",
     "noMatchFound": "在数据库中找不到匹配的染剂。",
     "noDyesAvailable": "数据库中没有可用的染剂。",
-    "generationFailed": "生成可视化时发生错误。请稍后重试。"
+    "generationFailed": "生成可视化时发生错误。请稍后重试。",
+    "rateLimited": "命令使用过于频繁！请等待 **{seconds} 秒**后再试。"
   },
   "quality": {
     "perfect": "完美",
