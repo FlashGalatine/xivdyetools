@@ -17,7 +17,7 @@
 
 import type { Dye, VisionType as CoreVisionType } from '@xivdyetools/types';
 import { ColorService } from '@xivdyetools/core';
-import { createTranslator, type LocaleCode, type Translator } from '../i18n/index.js';
+import { createTranslator, type LocaleCode, type Translator, type TranslatorLogger } from '../i18n/index.js';
 import { generateA11yCard, type A11yLensRow, type VisionType } from '@xivdyetools/svg';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
 import type { EmbedData } from './types.js';
@@ -66,6 +66,11 @@ export interface AccessibilityDye {
 }
 
 export interface AccessibilityInput {
+  /**
+   * Optional logger — surfaces Translator missing-key warnings, which are
+   * otherwise silent (2026-08-20 i18n audit, F-13). Any `{ warn(msg) }`.
+   */
+  logger?: TranslatorLogger;
   /** 1 dye → 13H solo; 2 dyes → the pair frames */
   dyes: AccessibilityDye[];
   /**
@@ -129,7 +134,7 @@ export async function executeAccessibility(
   input: AccessibilityInput,
 ): Promise<AccessibilityResult> {
   const { dyes, locale, vision, theme, commandLabel } = input;
-  const t = createTranslator(locale);
+  const t = createTranslator(locale, input.logger);
 
   await initializeLocale(locale);
 

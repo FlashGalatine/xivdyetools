@@ -82,6 +82,7 @@ export async function handleMixerV4Command(
           locale,
           dyeFilters: prefs.dyeFilters,
           theme: prefs.theme,
+          logger,
         });
 
         if (!result.ok) {

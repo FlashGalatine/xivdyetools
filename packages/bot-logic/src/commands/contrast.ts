@@ -17,7 +17,7 @@
 
 import type { Dye } from '@xivdyetools/types';
 import { abbreviateDyeName } from '@xivdyetools/core';
-import { createTranslator, type LocaleCode } from '../i18n/index.js';
+import { createTranslator, type LocaleCode, type TranslatorLogger } from '../i18n/index.js';
 import { generateContrastCard, contrastRatio, type ContrastPair } from '@xivdyetools/svg';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
 import type { EmbedData } from './types.js';
@@ -34,6 +34,11 @@ export interface ContrastDyeInput {
 }
 
 export interface ContrastInput {
+  /**
+   * Optional logger — surfaces Translator missing-key warnings, which are
+   * otherwise silent (2026-08-20 i18n audit, F-13). Any `{ warn(msg) }`.
+   */
+  logger?: TranslatorLogger;
   /** 2–4 dyes (the schema caps at four; more pairs would sink the plot) */
   dyes: ContrastDyeInput[];
   locale: LocaleCode;
@@ -59,7 +64,7 @@ export type ContrastResult =
  */
 export async function executeContrast(input: ContrastInput): Promise<ContrastResult> {
   const { dyes, locale, theme } = input;
-  const t = createTranslator(locale);
+  const t = createTranslator(locale, input.logger);
 
   await initializeLocale(locale);
 

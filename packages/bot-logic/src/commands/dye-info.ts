@@ -15,7 +15,7 @@
 
 import type { Dye } from '@xivdyetools/types';
 import { ColorService, CONSOLIDATED_DYES } from '@xivdyetools/core';
-import { createTranslator, type LocaleCode } from '../i18n/index.js';
+import { createTranslator, type LocaleCode, type TranslatorLogger } from '../i18n/index.js';
 import {
   generateDyeInfoCard,
   generateRandomDyesGrid,
@@ -39,6 +39,11 @@ import type { EmbedData } from './types.js';
 // ============================================================================
 
 export interface DyeInfoInput {
+  /**
+   * Optional logger — surfaces Translator missing-key warnings, which are
+   * otherwise silent (2026-08-20 i18n audit, F-13). Any `{ warn(msg) }`.
+   */
+  logger?: TranslatorLogger;
   dye: Dye;
   locale: LocaleCode;
   /** Card theme (stored user preference; defaults dark) */
@@ -81,7 +86,7 @@ function marketValue(dye: Dye, locale: LocaleCode): string {
  */
 export async function executeDyeInfo(input: DyeInfoInput): Promise<DyeInfoResult> {
   const { dye, locale, theme } = input;
-  const t = createTranslator(locale);
+  const t = createTranslator(locale, input.logger);
 
   await initializeLocale(locale);
 
@@ -154,6 +159,11 @@ export async function executeDyeInfo(input: DyeInfoInput): Promise<DyeInfoResult
 // ============================================================================
 
 export interface RandomInput {
+  /**
+   * Optional logger — surfaces Translator missing-key warnings, which are
+   * otherwise silent (2026-08-20 i18n audit, F-13). Any `{ warn(msg) }`.
+   */
+  logger?: TranslatorLogger;
   locale: LocaleCode;
   /** Number of dyes to select (default and cap: 5 — R1) */
   count?: number;
@@ -180,7 +190,7 @@ export async function executeRandom(input: RandomInput): Promise<RandomResult> {
   const { locale, uniqueCategories = false, theme } = input;
   // R1 Cap: five rows is the ceiling for every list graphic
   const count = Math.max(1, Math.min(input.count ?? ROW_CAP, ROW_CAP));
-  const t = createTranslator(locale);
+  const t = createTranslator(locale, input.logger);
 
   await initializeLocale(locale);
 

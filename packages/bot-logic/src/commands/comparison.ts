@@ -15,7 +15,7 @@
 
 import type { Dye } from '@xivdyetools/types';
 import { abbreviateDyeName, ColorService } from '@xivdyetools/core';
-import { createTranslator, type LocaleCode } from '../i18n/index.js';
+import { createTranslator, type LocaleCode, type TranslatorLogger } from '../i18n/index.js';
 import {
   generateComparisonCard,
   contrastRatio,
@@ -30,6 +30,11 @@ import type { EmbedData } from './types.js';
 // ============================================================================
 
 export interface ComparisonInput {
+  /**
+   * Optional logger — surfaces Translator missing-key warnings, which are
+   * otherwise silent (2026-08-20 i18n audit, F-13). Any `{ warn(msg) }`.
+   */
+  logger?: TranslatorLogger;
   /** 2-4 already-resolved Dye objects (the schema caps at four) */
   dyes: Dye[];
   locale: LocaleCode;
@@ -79,7 +84,7 @@ function buildReadouts(hexA: string, hexB: string): ComparisonReadout[] {
  */
 export async function executeComparison(input: ComparisonInput): Promise<ComparisonResult> {
   const { dyes, locale, theme } = input;
-  const t = createTranslator(locale);
+  const t = createTranslator(locale, input.logger);
 
   await initializeLocale(locale);
 

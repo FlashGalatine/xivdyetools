@@ -11,7 +11,7 @@
 
 import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
 import { ColorService, isDyeExcluded, type MatchingMethod } from '@xivdyetools/core';
-import { createTranslator, type LocaleCode } from '../i18n/index.js';
+import { createTranslator, type LocaleCode, type TranslatorLogger } from '../i18n/index.js';
 import { blendColors, type BlendingMode } from '@xivdyetools/core/blending';
 import { generateMixerCard, type MixerCardRow } from '@xivdyetools/svg';
 import { dyeService, type ResolvedColor } from '../input-resolution.js';
@@ -23,6 +23,11 @@ import type { EmbedData } from './types.js';
 // ============================================================================
 
 export interface MixerInput {
+  /**
+   * Optional logger — surfaces Translator missing-key warnings, which are
+   * otherwise silent (2026-08-20 i18n audit, F-13). Any `{ warn(msg) }`.
+   */
+  logger?: TranslatorLogger;
   dye1: ResolvedColor;
   dye2: ResolvedColor;
   blendingMode: BlendingMode;
@@ -97,7 +102,7 @@ function findClosestDyeExcludingFacewear(
  */
 export async function executeMixer(input: MixerInput): Promise<MixerResult> {
   const { dye1, dye2, blendingMode, locale, dyeFilters, matchingMethod } = input;
-  const t = createTranslator(locale);
+  const t = createTranslator(locale, input.logger);
 
   await initializeLocale(locale);
 

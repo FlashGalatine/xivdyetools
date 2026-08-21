@@ -10,7 +10,7 @@
 import type { Dye, DyeTypeFilters } from '@xivdyetools/types';
 import { type HarmonyOptions, type MatchingMethod } from '@xivdyetools/core';
 import { filterDyes, ColorService, DEFAULT_MATCHING_METHOD } from '@xivdyetools/core';
-import { createTranslator, type Translator, type LocaleCode } from '../i18n/index.js';
+import { createTranslator, type Translator, type LocaleCode, type TranslatorLogger } from '../i18n/index.js';
 import { generateHarmonyCard, num, type HarmonyCardSlot } from '@xivdyetools/svg';
 import { dyeService } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
@@ -35,6 +35,11 @@ export const HARMONY_TYPES = [
 export type HarmonyType = (typeof HARMONY_TYPES)[number];
 
 export interface HarmonyInput {
+  /**
+   * Optional logger — surfaces Translator missing-key warnings, which are
+   * otherwise silent (2026-08-20 i18n audit, F-13). Any `{ warn(msg) }`.
+   */
+  logger?: TranslatorLogger;
   /** Base color as normalized hex (#RRGGBB) */
   baseHex: string;
   /** Dye name for the base color, if known */
@@ -166,7 +171,7 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
     strictMatching = false,
     preventDuplicates = false,
   } = input;
-  const t = createTranslator(locale);
+  const t = createTranslator(locale, input.logger);
 
   await initializeLocale(locale);
 

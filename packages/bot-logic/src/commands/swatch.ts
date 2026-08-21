@@ -28,7 +28,7 @@ import {
   type ResolvedCharaSlot,
 } from '@xivdyetools/core';
 import type { Dye } from '@xivdyetools/types';
-import { createTranslator, type LocaleCode } from '../i18n/index.js';
+import { createTranslator, type LocaleCode, type TranslatorLogger } from '../i18n/index.js';
 import {
   cardTheme,
   generateNearestSheet,
@@ -56,6 +56,11 @@ export type SwatchSlotOption =
   | 'limbal';
 
 export interface SwatchInput {
+  /**
+   * Optional logger — surfaces Translator missing-key warnings, which are
+   * otherwise silent (2026-08-20 i18n audit, F-13). Any `{ warn(msg) }`.
+   */
+  logger?: TranslatorLogger;
   /** Raw text of the .chara attachment */
   fileText: string;
   /** Attachment filename — the name fallback when the file has no nickname */
@@ -172,7 +177,7 @@ interface LiveRow {
 /** Execute the /swatch command against a .chara file's text. */
 export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
   const { locale } = input;
-  const t = createTranslator(locale);
+  const t = createTranslator(locale, input.logger);
   await initializeLocale(locale);
 
   let character: ResolvedCharaCharacter;

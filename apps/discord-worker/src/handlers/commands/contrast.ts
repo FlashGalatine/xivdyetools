@@ -87,7 +87,7 @@ async function processContrastCommand(
   const t = createTranslator(locale);
   await initializeLocale(locale);
 
-  const result = await executeContrast({ dyes, locale, theme });
+  const result = await executeContrast({ dyes, locale, theme, logger });
 
   if (!result.ok) {
     if (logger) logger.error('Contrast command failed');

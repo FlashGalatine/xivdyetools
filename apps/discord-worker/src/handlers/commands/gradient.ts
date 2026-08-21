@@ -135,6 +135,7 @@ async function processGradientCommand(
     locale,
     dyeFilters,
     theme,
+    logger,
   });
 
   if (!result.ok) {
@@ -194,7 +195,7 @@ async function processGradientCommand(
           description: [
             `**${t.t('gradient.startColor')}:** ${startText}`,
             `**${t.t('gradient.endColor')}:** ${endText}`,
-            `**${t.t('gradient.colorSpace') || 'Color Space'}:** ${colorSpaceLabel} • **${t.t('gradient.matching') || 'Matching'}:** ${matchingLabel}`,
+            `**${t.t('gradient.colorSpace')}:** ${colorSpaceLabel} • **${t.t('gradient.matching')}:** ${matchingLabel}`,
             '',
             `**${t.t('extractor.topMatches', { count: stepCount })}:**`,
             dyeLines,

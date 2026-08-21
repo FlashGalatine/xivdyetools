@@ -65,6 +65,7 @@ export async function handleSwatchCommand(
     fileText: '',
     fileName: attachment.filename,
     locale: t.getLocale(),
+    logger,
   };
   if (theme) input.theme = theme;
   if (orderRaw === 'hardest' || orderRaw === 'slots') input.order = orderRaw;

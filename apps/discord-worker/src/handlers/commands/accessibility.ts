@@ -125,6 +125,7 @@ async function processAccessibilityCommand(
     locale,
     commandLabel,
     theme,
+    logger,
   });
 
   if (!result.ok) {

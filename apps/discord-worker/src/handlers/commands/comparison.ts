@@ -82,7 +82,7 @@ async function processComparisonCommand(
   const t = createTranslator(locale);
   await initializeLocale(locale);
 
-  const result = await executeComparison({ dyes, locale, theme });
+  const result = await executeComparison({ dyes, locale, theme, logger });
 
   if (!result.ok) {
     if (logger) logger.error('Comparison command failed');

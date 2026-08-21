@@ -17,7 +17,7 @@ import {
   DEFAULT_MATCHING_METHOD,
 } from '@xivdyetools/core';
 import { blendColors } from '@xivdyetools/core/blending';
-import { createTranslator, type LocaleCode } from '../i18n/index.js';
+import { createTranslator, type LocaleCode, type TranslatorLogger } from '../i18n/index.js';
 import {
   generateGradientCard,
   type GradientRowEntry,
@@ -35,6 +35,11 @@ export type InterpolationMode =
   'rgb' | 'hsv' | 'lab' | 'oklch' | 'lch' | 'oklab' | 'ryb' | 'hsl' | 'spectral';
 
 export interface GradientInput {
+  /**
+   * Optional logger — surfaces Translator missing-key warnings, which are
+   * otherwise silent (2026-08-20 i18n audit, F-13). Any `{ warn(msg) }`.
+   */
+  logger?: TranslatorLogger;
   startColor: ResolvedColor;
   endColor: ResolvedColor;
   /** Number of steps including start and end (default: 6) */
@@ -245,7 +250,7 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
     matchingMethod = DEFAULT_MATCHING_METHOD,
     dyeFilters,
   } = input;
-  const t = createTranslator(locale);
+  const t = createTranslator(locale, input.logger);
 
   await initializeLocale(locale);
 

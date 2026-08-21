@@ -132,6 +132,7 @@ async function processHarmonyCommand(
     strictMatching,
     preventDuplicates,
     theme,
+    logger,
   });
 
   if (!result.ok) {
