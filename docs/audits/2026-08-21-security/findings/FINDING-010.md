@@ -16,3 +16,6 @@ CWE-1059 Insufficient Technical Documentation · operational security
 
 ## References
 - Evidence: `../evidence/review-infra-stoat.md` (INF-4, secrets inventory)
+
+## Status
+**FIXED 2026-08-21** — `docs(ops): rewrite SECRET_ROTATION.md for the monorepo (FINDING-010)`: per-app `pnpm --filter … exec wrangler secret put … --env production` (oauth inverted), the 24-secret inventory incl. CI secrets and shared-secret ordering, rotation schedule, emergency steps, verification checklist and a rotation log.

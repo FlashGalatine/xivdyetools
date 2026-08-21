@@ -25,3 +25,6 @@ A compromised or hijacked action tag (cf. the 2025 `tj-actions/changed-files` in
 ## References
 - OpenSSF Scorecard checks; GitHub "Security hardening for GitHub Actions"
 - Evidence: `../evidence/review-infra-stoat.md` (INF-1, INF-2, INF-3, INF-10, INF-11, INF-16)
+
+## Status
+**FIXED 2026-08-21** — `chore(ci): pin actions to SHAs, least-privilege tokens, production environment, step-scoped beta token (FINDING-009)`: all 13 workflows pin `uses:` to full commit SHAs (version comments kept; Dependabot github-actions updates continue, stale pnpm/action-setup ignore removed); top-level `permissions: contents: read` everywhere (publish job keeps `id-token: write`); `timeout-minutes: 30` on every job; `environment: production` on the 8 production deploy jobs + the npm publish job (configure branch restriction / reviewers on the environment to gate `workflow_dispatch` from other refs); `BETA_DISCORD_TOKEN` no longer job-scoped — a boolean flag gates the register step and the token is step-scoped.

@@ -12,6 +12,12 @@ on:
       - 'packages/worker-kit/**'
   workflow_dispatch:
 
+# FINDING-009 (2026-08-21 security audit): least-privilege GITHUB_TOKEN —
+# the default repo token is never needed beyond checkout here. Jobs that need
+# more (npm OIDC publish) declare it at job level.
+permissions:
+  contents: read
+
 concurrency:
   group: deploy-oauth
   cancel-in-progress: false
@@ -20,12 +26,16 @@ jobs:
   deploy:
     name: Deploy OAuth Worker
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # FINDING-009: bind production deploys/publishes to the `production` GitHub
+    # environment so branch restrictions / required reviewers can gate them.
+    environment: production
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -42,7 +52,7 @@ jobs:
         run: pnpm turbo run test --filter=xivdyetools-oauth-worker
 
       - name: Deploy to Cloudflare
-        uses: cloudflare/wrangler-action@v4
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
