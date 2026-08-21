@@ -8,6 +8,8 @@
 import type { Env } from '../../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { ephemeralResponse } from '../../utils/response.js';
+import { createUserTranslator, createTranslator } from '../../services/bot-i18n.js';
+import { discordLocaleToLocaleCode } from '../../services/i18n.js';
 import { handleCopyHex, handleCopyRgb, handleCopyHsv } from './copy.js';
 import { handlePreviewImageButton, isPreviewImageButton } from './preview-image.js';
 
@@ -44,6 +46,8 @@ interface ButtonInteraction {
     custom_id?: string;
     component_type?: number;
   };
+  /** Discord client locale of the clicking user (e.g. 'ja', 'en-US') */
+  locale?: string;
 }
 
 /**
@@ -61,17 +65,23 @@ export async function handleButtonInteraction(
     logger.info('Handling button', { customId });
   }
 
-  // Copy buttons
+  // Copy buttons (F-05: replies in the clicking user's locale)
   if (customId.startsWith('copy_hex_')) {
     return handleCopyHex(interaction);
   }
 
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
+  const translator = async () =>
+    userId
+      ? createUserTranslator(env.KV, userId, interaction.locale, logger)
+      : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+
   if (customId.startsWith('copy_rgb_')) {
-    return handleCopyRgb(interaction);
+    return handleCopyRgb(interaction, await translator());
   }
 
   if (customId.startsWith('copy_hsv_')) {
-    return handleCopyHsv(interaction);
+    return handleCopyHsv(interaction, await translator());
   }
 
   // Preview-image moderation buttons (approve/reject) — handled here, not
@@ -85,5 +95,5 @@ export async function handleButtonInteraction(
   if (logger) {
     logger.warn(`Unknown button custom_id: ${customId}`);
   }
-  return ephemeralResponse('This button is not recognized.');
+  return ephemeralResponse((await translator()).t('errors.unknownButton'));
 }

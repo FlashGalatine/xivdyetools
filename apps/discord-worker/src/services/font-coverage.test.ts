@@ -171,7 +171,7 @@ function stringsFor(locale: LocaleCode): string[] {
   >;
   const { meta: _botMeta, ...botRest } = bot;
   collectStrings(botRest, out);
-  for (const entry of Object.values(CONSOLIDATED_DYES)) out.push(entry.names[locale]);
+  for (const entry of Object.values(CONSOLIDATED_DYES)) out.push(entry.names[locale] ?? "");
   collectStrings(Object.values(MATCHING_METHOD_TAGS), out);
   return out;
 }

@@ -25,7 +25,13 @@
     "noMatchFound": "在数据库中找不到匹配的染剂。",
     "noDyesAvailable": "数据库中没有可用的染剂。",
     "generationFailed": "生成可视化时发生错误。请稍后重试。",
-    "rateLimited": "命令使用过于频繁！请等待 **{seconds} 秒**后再试。"
+    "rateLimited": "命令使用过于频繁！请等待 **{seconds} 秒**后再试。",
+    "unknownUser": "无法识别用户。请重试。",
+    "notImplemented": "`/{command}` 命令尚未实现。",
+    "commandFailed": "处理您的命令时发生错误。",
+    "unsupportedComponent": "尚不支持此组件类型。",
+    "unknownModal": "未知的模态框提交。",
+    "unknownButton": "无法识别此按钮。"
   },
   "quality": {
     "perfect": "完美",
@@ -202,7 +208,16 @@
     "colors": "颜色",
     "tags": "标签",
     "author": "作者",
-    "votes": "投票"
+    "votes": "投票",
+    "api": {
+      "badRequest": "无效的请求。请检查您的输入并重试。",
+      "permissionDenied": "权限不足。",
+      "notFound": "未找到。",
+      "conflict": "此项已存在或与其他资源冲突。",
+      "rateLimited": "请求过多。请稍等片刻后重试。",
+      "serverError": "发生服务器错误。请稍后重试。",
+      "unknown": "发生错误。请重试。"
+    }
   },
   "budget": {
     "findTitle": "{dyeName}的实惠替代品",
@@ -499,5 +514,10 @@
         "body": "/swatch 读取来自 Anamnesis 或 Ktisis 的 .chara 导出文件：颜色部位（皮肤、头发、眼睛、嘴唇、彩绘）和穿戴装备的染色。文件仅为生成回复读取一次，不会保存。超出游戏调色板的颜色按实际值匹配，并标记为「网格外」。"
       }
     }
+  },
+  "copy": {
+    "invalidFormat": "无效的 {format} 格式。",
+    "rgbValues": "RGB 值：",
+    "hsvValues": "HSV 值："
   }
 }

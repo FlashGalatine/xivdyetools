@@ -73,7 +73,7 @@ describe('buttons/index.ts', () => {
 
       await handleButtonInteraction(interaction, mockEnv, mockCtx);
 
-      expect(handleCopyRgb).toHaveBeenCalledWith(interaction);
+      expect(handleCopyRgb).toHaveBeenCalledWith(interaction, expect.anything());
     });
 
     it('should route copy_hsv_ buttons to handleCopyHsv', async () => {
@@ -86,7 +86,7 @@ describe('buttons/index.ts', () => {
 
       await handleButtonInteraction(interaction, mockEnv, mockCtx);
 
-      expect(handleCopyHsv).toHaveBeenCalledWith(interaction);
+      expect(handleCopyHsv).toHaveBeenCalledWith(interaction, expect.anything());
     });
 
     it('should route previewimg_approve_ buttons to handlePreviewImageButton', async () => {

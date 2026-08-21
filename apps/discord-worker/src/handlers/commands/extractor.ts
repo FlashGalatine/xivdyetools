@@ -173,8 +173,9 @@ export async function handleExtractorCommand(
   const subcommandOption = options[0];
 
   if (!subcommandOption) {
+    const t = createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
     return messageResponse({
-      embeds: [errorEmbed('Error', 'No subcommand provided')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingSubcommand'))],
       flags: 64,
     });
   }
@@ -188,11 +189,15 @@ export async function handleExtractorCommand(
     case 'image':
       return handleImageSubcommand(interaction, env, ctx, subcommandOption.options || [], logger);
 
-    default:
+    default: {
+      const t = createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
       return messageResponse({
-        embeds: [errorEmbed('Error', `Unknown subcommand: ${subcommand}`)],
+        embeds: [
+          errorEmbed(t.t('common.error'), t.t('errors.unknownSubcommand', { name: subcommand })),
+        ],
         flags: 64,
       });
+    }
   }
 }
 

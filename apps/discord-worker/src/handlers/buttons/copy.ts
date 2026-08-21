@@ -12,6 +12,7 @@
  */
 
 import { InteractionResponseType } from '../../types/env.js';
+import { createTranslator, type Translator } from '../../services/bot-i18n.js';
 
 interface ButtonInteraction {
   data?: {
@@ -41,7 +42,10 @@ export function handleCopyHex(interaction: ButtonInteraction): Response {
 /**
  * Handle copy_rgb button
  */
-export function handleCopyRgb(interaction: ButtonInteraction): Response {
+export function handleCopyRgb(
+  interaction: ButtonInteraction,
+  t: Translator = createTranslator('en'),
+): Response {
   const customId = interaction.data?.custom_id || '';
   const parts = customId.replace('copy_rgb_', '').split('_');
 
@@ -49,7 +53,7 @@ export function handleCopyRgb(interaction: ButtonInteraction): Response {
     return Response.json({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: 'Invalid RGB format.',
+        content: t.t('copy.invalidFormat', { format: 'RGB' }),
         flags: 64,
       },
     });
@@ -63,7 +67,7 @@ export function handleCopyRgb(interaction: ButtonInteraction): Response {
   return Response.json({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
-      content: `**RGB Values:**\n\`\`\`\n${formats.join('\n')}\n\`\`\``,
+      content: `**${t.t('copy.rgbValues')}**\n\`\`\`\n${formats.join('\n')}\n\`\`\``,
       flags: 64,
     },
   });
@@ -72,7 +76,10 @@ export function handleCopyRgb(interaction: ButtonInteraction): Response {
 /**
  * Handle copy_hsv button
  */
-export function handleCopyHsv(interaction: ButtonInteraction): Response {
+export function handleCopyHsv(
+  interaction: ButtonInteraction,
+  t: Translator = createTranslator('en'),
+): Response {
   const customId = interaction.data?.custom_id || '';
   const parts = customId.replace('copy_hsv_', '').split('_');
 
@@ -80,7 +87,7 @@ export function handleCopyHsv(interaction: ButtonInteraction): Response {
     return Response.json({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: 'Invalid HSV format.',
+        content: t.t('copy.invalidFormat', { format: 'HSV' }),
         flags: 64,
       },
     });
@@ -91,7 +98,7 @@ export function handleCopyHsv(interaction: ButtonInteraction): Response {
   return Response.json({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
-      content: `**HSV Values:**\n\`\`\`\nH: ${h}°, S: ${s}%, V: ${v}%\n\`\`\``,
+      content: `**${t.t('copy.hsvValues')}**\n\`\`\`\nH: ${h}°, S: ${s}%, V: ${v}%\n\`\`\``,
       flags: 64,
     },
   });

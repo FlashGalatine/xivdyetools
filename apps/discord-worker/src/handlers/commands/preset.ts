@@ -567,7 +567,7 @@ async function processSubmitCommand(
     }
     // SECURITY: Use getSafeMessage() to prevent exposing internal API details
     const message =
-      error instanceof PresetAPIError ? error.getSafeMessage() : 'Failed to submit preset.';
+      error instanceof PresetAPIError ? t.t(error.getSafeMessageKey()) : 'Failed to submit preset.';
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), message)],
@@ -882,7 +882,7 @@ async function processEditCommand(
     }
     // SECURITY: Use getSafeMessage() to prevent exposing internal API details
     const message =
-      error instanceof PresetAPIError ? error.getSafeMessage() : 'Failed to edit preset.';
+      error instanceof PresetAPIError ? t.t(error.getSafeMessageKey()) : 'Failed to edit preset.';
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), message)],
     });

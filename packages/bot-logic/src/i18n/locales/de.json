@@ -25,7 +25,13 @@
     "noMatchFound": "Keine passenden Farbstoffe in der Datenbank gefunden.",
     "noDyesAvailable": "Keine Farbstoffe in der Datenbank verfügbar.",
     "generationFailed": "Beim Erstellen der Visualisierung ist ein Fehler aufgetreten. Bitte versuche es später erneut.",
-    "rateLimited": "Du verwendest diesen Befehl zu schnell! Bitte warte **{seconds} s**, bevor du es erneut versuchst."
+    "rateLimited": "Du verwendest diesen Befehl zu schnell! Bitte warte **{seconds} s**, bevor du es erneut versuchst.",
+    "unknownUser": "Benutzer konnte nicht identifiziert werden. Bitte versuche es erneut.",
+    "notImplemented": "Der Befehl `/{command}` ist noch nicht implementiert.",
+    "commandFailed": "Bei der Verarbeitung deines Befehls ist ein Fehler aufgetreten.",
+    "unsupportedComponent": "Dieser Komponententyp wird noch nicht unterstützt.",
+    "unknownModal": "Unbekannte Modal-Übermittlung.",
+    "unknownButton": "Dieser Button wird nicht erkannt."
   },
   "quality": {
     "perfect": "Perfekt",
@@ -202,7 +208,16 @@
     "colors": "Farben",
     "tags": "Tags",
     "author": "Autor",
-    "votes": "Stimmen"
+    "votes": "Stimmen",
+    "api": {
+      "badRequest": "Ungültige Anfrage. Bitte überprüfe deine Eingabe und versuche es erneut.",
+      "permissionDenied": "Zugriff verweigert.",
+      "notFound": "Nicht gefunden.",
+      "conflict": "Dies existiert bereits oder steht im Konflikt mit einer anderen Ressource.",
+      "rateLimited": "Zu viele Anfragen. Bitte warte einen Moment und versuche es erneut.",
+      "serverError": "Ein Serverfehler ist aufgetreten. Bitte versuche es später erneut.",
+      "unknown": "Ein Fehler ist aufgetreten. Bitte versuche es erneut."
+    }
   },
   "budget": {
     "findTitle": "Budget-Alternativen für {dyeName}",
@@ -499,5 +514,10 @@
         "body": "/swatch liest einen .chara-Export aus Anamnesis oder Ktisis: Farb-Slots (Haut, Haar, Augen, Lippe, Bemalung) und getragene Ausrüstungsfarben. Die Datei wird einmal für die Antwort gelesen und nicht gespeichert. Farben abseits des Rasters werden nach ihrem Live-Wert gematcht und als ABSEITS markiert."
       }
     }
+  },
+  "copy": {
+    "invalidFormat": "Ungültiges {format}-Format.",
+    "rgbValues": "RGB-Werte:",
+    "hsvValues": "HSV-Werte:"
   }
 }

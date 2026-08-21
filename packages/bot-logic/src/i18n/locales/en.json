@@ -25,7 +25,13 @@
     "noMatchFound": "Could not find any matching dyes in the database.",
     "noDyesAvailable": "No dyes available in the database.",
     "generationFailed": "An error occurred while generating the visualization. Please try again later.",
-    "rateLimited": "You're using this command too quickly! Please wait **{seconds}s** before trying again."
+    "rateLimited": "You're using this command too quickly! Please wait **{seconds}s** before trying again.",
+    "unknownUser": "Unable to identify user. Please try again.",
+    "notImplemented": "The `/{command}` command is not yet implemented.",
+    "commandFailed": "An error occurred while processing your command.",
+    "unsupportedComponent": "This component type is not yet supported.",
+    "unknownModal": "Unknown modal submission.",
+    "unknownButton": "This button is not recognized."
   },
   "quality": {
     "perfect": "Perfect",
@@ -202,7 +208,16 @@
     "colors": "Colors",
     "tags": "Tags",
     "author": "Author",
-    "votes": "Votes"
+    "votes": "Votes",
+    "api": {
+      "badRequest": "Invalid request. Please check your input and try again.",
+      "permissionDenied": "Permission denied.",
+      "notFound": "Not found.",
+      "conflict": "This already exists or conflicts with another resource.",
+      "rateLimited": "Too many requests. Please wait a moment and try again.",
+      "serverError": "A server error occurred. Please try again later.",
+      "unknown": "An error occurred. Please try again."
+    }
   },
   "budget": {
     "findTitle": "Budget Alternatives for {dyeName}",
@@ -499,5 +514,10 @@
         "body": "/swatch reads a .chara export from Anamnesis or Ktisis: colour slots (skin, hair, eyes, lip, paint) and worn gear dyes. The file is read once to build the reply and is not stored. Off-grid colours (edited past the game's palette) are matched by their live value and flagged OFF GRID."
       }
     }
+  },
+  "copy": {
+    "invalidFormat": "Invalid {format} format.",
+    "rgbValues": "RGB Values:",
+    "hsvValues": "HSV Values:"
   }
 }

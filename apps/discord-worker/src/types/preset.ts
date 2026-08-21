@@ -109,30 +109,31 @@ export class PresetAPIError extends Error {
   }
 
   /**
-   * Get a safe, user-friendly error message based on status code.
-   * This prevents exposing internal API details to end users.
+   * Get the locale key of a safe, user-friendly error message based on status
+   * code (render with `t.t(error.getSafeMessageKey())`). This prevents
+   * exposing internal API details to end users.
    *
    * SECURITY: Use this method when displaying errors to users instead of `message`
    */
-  getSafeMessage(): string {
+  getSafeMessageKey(): string {
     switch (this.statusCode) {
       case 400:
-        return 'Invalid request. Please check your input and try again.';
+        return 'preset.api.badRequest';
       case 401:
       case 403:
-        return 'Permission denied.';
+        return 'preset.api.permissionDenied';
       case 404:
-        return 'Not found.';
+        return 'preset.api.notFound';
       case 409:
-        return 'This already exists or conflicts with another resource.';
+        return 'preset.api.conflict';
       case 429:
-        return 'Too many requests. Please wait a moment and try again.';
+        return 'preset.api.rateLimited';
       case 500:
       case 502:
       case 503:
-        return 'A server error occurred. Please try again later.';
+        return 'preset.api.serverError';
       default:
-        return 'An error occurred. Please try again.';
+        return 'preset.api.unknown';
     }
   }
 }

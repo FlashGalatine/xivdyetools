@@ -61,7 +61,7 @@ import {
   resolveUserLocale,
   initializeLocale,
 } from './services/i18n.js';
-import { createTranslator, createUserTranslator } from './services/bot-i18n.js';
+import { createTranslator, createUserTranslator, type Translator } from './services/bot-i18n.js';
 import { sendModerationNotification } from './handlers/commands/preset-notifications.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-kit';
@@ -619,7 +619,9 @@ async function handleCommand(
   // DISCORD-HIGH-003: Guard against missing userId to prevent rate limit bypass
   if (!userId) {
     logger.error('Unable to identify user from interaction', { commandName });
-    return ephemeralResponse('Unable to identify user. Please try again.');
+    return ephemeralResponse(
+      (await routerTranslator(env, interaction, logger)).t('errors.unknownUser'),
+    );
   }
 
   logger.info('Handling command', { command: commandName, userId });
@@ -738,7 +740,9 @@ async function handleCommand(
       default:
         // Command not yet implemented
         response = ephemeralResponse(
-          `The \`/${commandName}\` command is not yet implemented in the Workers version.`,
+          (await routerTranslator(env, interaction, logger)).t('errors.notImplemented', {
+            command: commandName ?? '',
+          }),
         );
         break;
     }
@@ -747,7 +751,9 @@ async function handleCommand(
     logger.error('Command execution failed', error instanceof Error ? error : undefined, {
       command: commandName,
     });
-    response = ephemeralResponse('An error occurred while processing your command.');
+    response = ephemeralResponse(
+      (await routerTranslator(env, interaction, logger)).t('errors.commandFailed'),
+    );
   } finally {
     // Track command usage with actual success status (fire-and-forget).
     // 5.0 telemetry: /extractor records its subcommand (extractor_image /
@@ -1078,7 +1084,24 @@ async function handleComponent(
   }
 
   // Select menus and other components
-  return ephemeralResponse('This component type is not yet supported.');
+  return ephemeralResponse(
+    (await routerTranslator(env, interaction, logger)).t('errors.unsupportedComponent'),
+  );
+}
+
+/**
+ * Translator for router-level replies (2026-08-20 i18n audit, F-05): the
+ * user's stored preference when a user id is present, else the Discord
+ * client locale, else English. Only built on the rare paths that need it.
+ */
+async function routerTranslator(
+  env: Env,
+  interaction: DiscordInteraction,
+  logger: ExtendedLogger,
+): Promise<Translator> {
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
+  if (userId) return createUserTranslator(env.KV, userId, interaction.locale, logger);
+  return createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
 }
 
 /**
@@ -1087,7 +1110,7 @@ async function handleComponent(
 // eslint-disable-next-line @typescript-eslint/require-await -- handler interface requires async
 async function handleModal(
   interaction: DiscordInteraction,
-  _env: Env,
+  env: Env,
   _ctx: ExecutionContext,
   logger: ExtendedLogger,
 ): Promise<Response> {
@@ -1096,7 +1119,7 @@ async function handleModal(
 
   // No modals are currently supported in the main worker
   // Moderation modals are handled by xivdyetools-moderation-worker
-  return ephemeralResponse('Unknown modal submission.');
+  return ephemeralResponse((await routerTranslator(env, interaction, logger)).t('errors.unknownModal'));
 }
 
 // Export the Hono app as the default export for Cloudflare Workers

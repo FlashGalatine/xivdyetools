@@ -25,7 +25,13 @@
     "noMatchFound": "Aucune teinture correspondante trouvée dans la base de données.",
     "noDyesAvailable": "Aucune teinture disponible dans la base de données.",
     "generationFailed": "Une erreur s'est produite lors de la génération de la visualisation. Veuillez réessayer plus tard.",
-    "rateLimited": "Vous utilisez cette commande trop rapidement ! Veuillez patienter **{seconds} s** avant de réessayer."
+    "rateLimited": "Vous utilisez cette commande trop rapidement ! Veuillez patienter **{seconds} s** avant de réessayer.",
+    "unknownUser": "Impossible d'identifier l'utilisateur. Veuillez réessayer.",
+    "notImplemented": "La commande `/{command}` n'est pas encore implémentée.",
+    "commandFailed": "Une erreur s'est produite lors du traitement de votre commande.",
+    "unsupportedComponent": "Ce type de composant n'est pas encore pris en charge.",
+    "unknownModal": "Soumission de formulaire inconnue.",
+    "unknownButton": "Ce bouton n'est pas reconnu."
   },
   "quality": {
     "perfect": "Parfait",
@@ -202,7 +208,16 @@
     "colors": "Couleurs",
     "tags": "Tags",
     "author": "Auteur",
-    "votes": "Votes"
+    "votes": "Votes",
+    "api": {
+      "badRequest": "Requête invalide. Veuillez vérifier votre saisie et réessayer.",
+      "permissionDenied": "Permission refusée.",
+      "notFound": "Introuvable.",
+      "conflict": "Cet élément existe déjà ou entre en conflit avec une autre ressource.",
+      "rateLimited": "Trop de requêtes. Veuillez patienter un instant et réessayer.",
+      "serverError": "Une erreur serveur s'est produite. Veuillez réessayer plus tard.",
+      "unknown": "Une erreur s'est produite. Veuillez réessayer."
+    }
   },
   "budget": {
     "findTitle": "Alternatives économiques pour {dyeName}",
@@ -499,5 +514,10 @@
         "body": "/swatch lit un export .chara d'Anamnesis ou de Ktisis : les emplacements de couleur (peau, cheveux, yeux, lèvres, peinture) et les teintures d'équipement portées. Le fichier est lu une fois pour construire la réponse et n'est pas conservé. Les couleurs hors grille sont associées par leur valeur réelle et marquées HORS GRILLE."
       }
     }
+  },
+  "copy": {
+    "invalidFormat": "Format {format} invalide.",
+    "rgbValues": "Valeurs RVB :",
+    "hsvValues": "Valeurs TSV :"
   }
 }

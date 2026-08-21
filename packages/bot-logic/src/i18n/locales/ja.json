@@ -25,7 +25,13 @@
     "noMatchFound": "データベースに一致するカララントが見つかりませんでした。",
     "noDyesAvailable": "データベースにカララントがありません。",
     "generationFailed": "可視化の生成中にエラーが発生しました。後でもう一度お試しください。",
-    "rateLimited": "コマンドの実行が早すぎます。**{seconds}秒**待ってからもう一度お試しください。"
+    "rateLimited": "コマンドの実行が早すぎます。**{seconds}秒**待ってからもう一度お試しください。",
+    "unknownUser": "ユーザーを特定できませんでした。もう一度お試しください。",
+    "notImplemented": "`/{command}` コマンドはまだ実装されていません。",
+    "commandFailed": "コマンドの処理中にエラーが発生しました。",
+    "unsupportedComponent": "このコンポーネントタイプはまだサポートされていません。",
+    "unknownModal": "不明なモーダル送信です。",
+    "unknownButton": "このボタンは認識されません。"
   },
   "quality": {
     "perfect": "完璧",
@@ -202,7 +208,16 @@
     "colors": "カラー",
     "tags": "タグ",
     "author": "作成者",
-    "votes": "投票"
+    "votes": "投票",
+    "api": {
+      "badRequest": "無効なリクエストです。入力内容を確認して、もう一度お試しください。",
+      "permissionDenied": "権限がありません。",
+      "notFound": "見つかりませんでした。",
+      "conflict": "すでに存在するか、他のリソースと競合しています。",
+      "rateLimited": "リクエストが多すぎます。しばらく待ってからもう一度お試しください。",
+      "serverError": "サーバーエラーが発生しました。後でもう一度お試しください。",
+      "unknown": "エラーが発生しました。もう一度お試しください。"
+    }
   },
   "budget": {
     "findTitle": "{dyeName}の代替カラー",
@@ -499,5 +514,10 @@
         "body": "/swatch は Anamnesis / Ktisis の .chara エクスポートを読み取ります：カラー部位（肌・髪・瞳・唇・ペイント）と装備の染色です。ファイルは返信の生成に一度だけ読み取られ、保存されません。パレット外に編集された色は実際の値でマッチされ、「グリッド外」と表示されます。"
       }
     }
+  },
+  "copy": {
+    "invalidFormat": "{format} の形式が無効です。",
+    "rgbValues": "RGB 値:",
+    "hsvValues": "HSV 値:"
   }
 }
