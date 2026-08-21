@@ -15,3 +15,7 @@ Validate each echoed parameter against its enum/regex (fallback to defaults), `e
 
 ## References
 - Evidence: `../evidence/review-og-image-workers.md` (OG-2, OG-3, OG-6, OG-9)
+
+## Status
+**FIXED 2026-08-21** (og-worker 2.3.0)
+- og-worker 2.3.0: OG-2/6 `og-params.ts` validates/clamps every query + path parameter (harmony/vision/sheet/race/gender/hex/algo enums, steps/ratio/limit clamps, dye lists ≤ 16, `encodeURIComponent` on share paths), translator `Object.hasOwn`; OG-3 crawler HTML carries CSP `default-src 'none'` + nosniff + `Referrer-Policy: no-referrer` + XFO DENY + `Vary: User-Agent`, `/og/*` nosniff; OG-9 catch-all crawler → 404 `no-store`; OG-8 400 bodies don't echo input; OG-5 `workers_dev=false`, pass-through only on the `APP_BASE_URL` host; OG-7 `logUserAgent` off, analytics for crawler hits only. Not code: OG-4 WAF rate-limit rule (dashboard) — checklist.

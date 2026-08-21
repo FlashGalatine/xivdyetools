@@ -396,11 +396,14 @@ describe('GET /og/default.png', () => {
 // ============================================================================
 
 describe('Catch-all route', () => {
-  it('returns OG HTML for crawlers on unknown paths', async () => {
+  // FINDING-024 / OG-9: an unknown path is a 404, not a cacheable 200 — the
+  // crawler still gets the fallback embed in the body.
+  it('returns the fallback OG HTML with a 404 for crawlers on unknown paths', async () => {
     const req = makeRequest('/unknown/path');
     req.headers.set('User-Agent', CRAWLER_UA);
     const res = await app.fetch(req, TEST_ENV);
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(404);
+    expect(res.headers.get('Cache-Control')).toBe('no-store');
     const html = await res.text();
     expect(html).toContain('og:title');
     expect(html).toContain('XIV Dye Tools');
@@ -502,7 +505,8 @@ describe('extractor/presets/budget crawler routes (DEAD-001)', () => {
 
   it('humans on /presets/:id pass through to the SPA like any tool page', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('spa'));
-    const res = await app.request('/presets/gc-maelstrom', {}, TEST_ENV);
+    // On the app host — any other ingress host redirects instead (FINDING-024 / OG-5)
+    const res = await app.request('https://xivdyetools.app/presets/gc-maelstrom', {}, TEST_ENV);
     expect(await res.text()).toBe('spa');
     fetchSpy.mockRestore();
   });
@@ -592,11 +596,118 @@ describe('the root and catch-all crawler cards localize via ?lang= too (OG-I18N-
     expect(html).toContain('カララント');
   });
 
-  it('an unknown path with ?lang=de serves a German fallback embed', async () => {
+  it('an unknown path with ?lang=de serves a German fallback embed (as a 404 — OG-9)', async () => {
     const res = await app.request('/nope/?lang=de', { headers: { 'User-Agent': CRAWLER_UA } }, TEST_ENV);
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(404);
     const html = await res.text();
     expect(html).toContain('<html lang="de">');
     expect(html).not.toContain('FFXIV Color &amp; Dye Companion');
+  });
+});
+
+// ============================================================================
+// FINDING-024 (2026-08-21 security audit): crawler HTML hygiene on the
+// production origin — OG-3 (headers / Vary), OG-9 (404 for unknown paths),
+// OG-8 (400 bodies), OG-5 (pass-through host gate), OG-7 (analytics footprint)
+// ============================================================================
+
+describe('FINDING-024: crawler HTML carries security headers and varies on User-Agent (OG-3)', () => {
+  const expectHardened = (res: Response) => {
+    const csp = res.headers.get('Content-Security-Policy') ?? '';
+    expect(csp).toContain("default-src 'none'");
+    expect(csp).toContain("style-src 'unsafe-inline'"); // the template's one <style> block
+    expect(csp).toContain("frame-ancestors 'none'");
+    expect(csp).toContain("base-uri 'none'");
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+    expect(res.headers.get('Referrer-Policy')).toBe('no-referrer');
+    expect(res.headers.get('X-Frame-Options')).toBe('DENY');
+    expect(res.headers.get('Vary')).toMatch(/User-Agent/);
+  };
+
+  it('tool-route crawler HTML', async () => {
+    const res = await app.request(
+      '/harmony/?dye=1&harmony=triadic',
+      { headers: { 'User-Agent': CRAWLER_UA } },
+      TEST_ENV
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('text/html; charset=utf-8');
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=3600, s-maxage=86400');
+    expectHardened(res);
+  });
+
+  it('the root crawler HTML', async () => {
+    const res = await app.request('/', { headers: { 'User-Agent': CRAWLER_UA } }, TEST_ENV);
+    expect(res.status).toBe(200);
+    expectHardened(res);
+  });
+
+  it('the catch-all crawler HTML (404 + no-store — OG-9)', async () => {
+    const res = await app.request('/harmony/anything/else', { headers: { 'User-Agent': CRAWLER_UA } }, TEST_ENV);
+    expect(res.status).toBe(404);
+    expect(res.headers.get('Cache-Control')).toBe('no-store');
+    expectHardened(res);
+    expect(await res.text()).toContain('og:title');
+  });
+});
+
+describe('FINDING-024: 400 bodies do not echo the offending parameter (OG-8)', () => {
+  it.each([
+    ['/og/harmony/1/junkvalue', 'Invalid harmony type'],
+    ['/og/harmony/1/complementary?algo=junkvalue', 'Invalid algorithm'],
+    ['/og/gradient/1/2/5?algo=junkvalue', 'Invalid algorithm'],
+    ['/og/accessibility/1/junkvalue', 'Invalid vision type'],
+  ])('%s → "%s"', async (path, error) => {
+    const res = await app.request(path, {}, TEST_ENV);
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe(error);
+    expect(JSON.stringify(body)).not.toContain('junkvalue');
+  });
+});
+
+describe('FINDING-024 / OG-5: the human pass-through only ever fetches the app host', () => {
+  it('passes humans through to the SPA on the APP_BASE_URL host', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('spa'));
+    const res = await app.request('https://xivdyetools.app/harmony/?dye=1', {}, TEST_ENV);
+    expect(await res.text()).toBe('spa');
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    fetchSpy.mockRestore();
+  });
+
+  it('redirects humans to the app instead of self-fetching on any other ingress host', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    for (const url of [
+      'https://xivdyetools-og-worker-dev.example.workers.dev/harmony/?dye=1', // workers.dev (OG-5)
+      'https://og.xivdyetools.app/harmony/', // the image host (BUG-069)
+      'http://localhost/gradient/', // wrangler dev
+      'https://xivdyetools-og-worker-dev.example.workers.dev/unknown/path', // catch-all on workers.dev
+    ]) {
+      const res = await app.request(url, {}, TEST_ENV);
+      expect(res.status, url).toBe(302);
+      expect(res.headers.get('Location'), url).toBe('https://xivdyetools.app/');
+    }
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it('keeps answering 404 JSON for unknown paths on the image host itself (BUG-069)', async () => {
+    const res = await app.request('https://og.xivdyetools.app/not/a/card', {}, TEST_ENV);
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: 'Not found' });
+  });
+});
+
+describe('FINDING-024 / OG-7: analytics datapoints only for crawler hits', () => {
+  it('a human page view on a tool path writes no datapoint; a crawler hit writes one', async () => {
+    const writeDataPoint = vi.fn();
+    const env = { ...TEST_ENV, ANALYTICS: { writeDataPoint } };
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('spa'));
+    await app.request('https://xivdyetools.app/harmony/?dye=1', {}, env);
+    expect(writeDataPoint).not.toHaveBeenCalled();
+    await app.request('https://xivdyetools.app/harmony/?dye=1', { headers: { 'User-Agent': CRAWLER_UA } }, env);
+    expect(writeDataPoint).toHaveBeenCalledTimes(1);
+    expect(writeDataPoint.mock.calls[0][0].blobs).toEqual(['og_request', 'harmony', 'discord']);
+    fetchSpy.mockRestore();
   });
 });

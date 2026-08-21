@@ -96,4 +96,17 @@ describe('wrangler.toml environments', () => {
     const productionRoutes = productionBlock.slice(0, productionBlock.indexOf(']'));
     expect(productionRoutes).not.toContain('beta.');
   });
+
+  /**
+   * FINDING-024 / OG-5 (2026-08-21 security audit): the beta env already has
+   * its zone routes and the og-beta custom domain; a workers.dev hostname on
+   * top was a third, unauthenticated copy of the render surface on which the
+   * human pass-through self-fetched (CF error 1042). Both environments
+   * declare the flag explicitly (it is inheritable) and both keep it off.
+   */
+  it('keeps every environment off workers.dev', () => {
+    const flags = [...toml.matchAll(/^workers_dev\s*=\s*(true|false)/gm)].map((m) => m[1]);
+    expect(flags).toHaveLength(2);
+    expect(flags).toEqual(['false', 'false']);
+  });
 });

@@ -20,7 +20,23 @@ import {
   getLocalizedHarmonyName,
   getLocalizedVisionName,
   getLocalizedClanOrRace,
+  isKnownClanOrRace,
 } from './services/translator';
+import {
+  OG_MAX_GRADIENT_STEPS,
+  OG_MAX_MIXER_RATIO,
+  OG_MAX_SWATCH_LIMIT,
+  OG_MIN_GRADIENT_STEPS,
+  OG_MIN_MIXER_RATIO,
+  clampInt,
+  isHarmonyType,
+  isSheet,
+  isVisionType,
+  parseAlgo,
+  parseDyeIdList,
+  parseGender,
+  parseHexColor,
+} from './og-params';
 import type { LocaleCode, SheetKey } from '@xivdyetools/types';
 import type {
   OGData,
@@ -34,7 +50,6 @@ import type {
   ExtractorParams,
   PresetsParams,
   BudgetParams,
-  VisionType,
   ColorSheetCategory,
   CharacterGender,
   MatchingAlgorithm,
@@ -193,8 +208,9 @@ export function generateHarmonyOGData(
       dye: dyeInfo.name,
       hex: dyeInfo.hex,
     }),
-    url: `${env.APP_BASE_URL}/harmony/?dye=${params.dye}&harmony=${params.harmony}&v=1`,
-    imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/harmony/${params.dye}/${params.harmony}.png`, params.algo), locale),
+    // OG-6: the harmony is enum-validated upstream; encoding is belt-and-braces
+    url: `${env.APP_BASE_URL}/harmony/?dye=${params.dye}&harmony=${encodeURIComponent(params.harmony)}&v=1`,
+    imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/harmony/${params.dye}/${encodeURIComponent(params.harmony)}.png`, params.algo), locale),
     siteName: SITE_NAME,
     themeColor: dyeInfo.hex,
     locale,
@@ -319,7 +335,7 @@ export function generateSwatchOGData(
   // The image URL carries only what the 15E card draws: the target, the
   // limit and the algorithm. Sheet context shapes the description above but
   // not the picture, so it stays off the image URL (one cache key per card).
-  const imageUrl = withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/swatch/${params.color}/${limit}.png`, params.algo), locale);
+  const imageUrl = withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/swatch/${encodeURIComponent(params.color)}/${limit}.png`, params.algo), locale);
 
   return {
     title: site(embed('swatch.title', locale, { hex: hexColor })),
@@ -381,8 +397,8 @@ export function generateAccessibilityOGData(
   return {
     title: site(embed('accessibility.title', locale, { lens: visionName, names: dyeNames })),
     description: embed('accessibility.description', locale, { names: dyeNames, lens: lc(visionName, locale) }),
-    url: `${env.APP_BASE_URL}/accessibility/?dyes=${params.dyes.join(',')}&vision=${params.vision || 'normal'}&v=1`,
-    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/accessibility/${params.dyes.join(',')}/${params.vision || 'normal'}.png`, locale),
+    url: `${env.APP_BASE_URL}/accessibility/?dyes=${params.dyes.join(',')}&vision=${encodeURIComponent(params.vision || 'normal')}&v=1`,
+    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/accessibility/${params.dyes.join(',')}/${encodeURIComponent(params.vision || 'normal')}.png`, locale),
     siteName: SITE_NAME,
     themeColor: dyes[0]!.hex,
     locale,
@@ -677,11 +693,18 @@ export function generateOGDataForTool(
   pathId: string | null = null,
 ): OGData {
   switch (tool) {
+    // FINDING-024 (OG-2 / OG-6): every value below that reaches og:title /
+    // og:description / og:url / og:image is validated against the same
+    // vocabulary the image routes enforce (og-params.ts). An unknown value
+    // takes the parameter's default — the same thing a missing value gets —
+    // so a share link can neither spoof preview text under the production
+    // domain nor emit an image URL the image route would 400.
     case 'harmony': {
+      const harmonyRaw = (searchParams.get('harmony') || 'complementary').toLowerCase();
       const params: HarmonyParams = {
         dye: parseInt(searchParams.get('dye') || '0', 10),
-        harmony: (searchParams.get('harmony') || 'complementary').toLowerCase() as HarmonyParams['harmony'],
-        algo: searchParams.get('algo') as HarmonyParams['algo'],
+        harmony: isHarmonyType(harmonyRaw) ? harmonyRaw : 'complementary',
+        algo: parseAlgo(searchParams.get('algo')),
       };
       return generateHarmonyOGData(params, env, locale);
     }
@@ -690,8 +713,8 @@ export function generateOGDataForTool(
       const params: GradientParams = {
         start: parseInt(searchParams.get('start') || '0', 10),
         end: parseInt(searchParams.get('end') || '0', 10),
-        steps: parseInt(searchParams.get('steps') || '5', 10),
-        algo: searchParams.get('algo') as GradientParams['algo'],
+        steps: clampInt(searchParams.get('steps'), OG_MIN_GRADIENT_STEPS, OG_MAX_GRADIENT_STEPS, 5),
+        algo: parseAlgo(searchParams.get('algo')),
       };
       return generateGradientOGData(params, env, locale);
     }
@@ -702,8 +725,8 @@ export function generateOGDataForTool(
         dyeA: parseInt(searchParams.get('dyeA') || '0', 10),
         dyeB: parseInt(searchParams.get('dyeB') || '0', 10),
         dyeC: dyeCRaw ? parseInt(dyeCRaw, 10) : undefined,
-        ratio: parseInt(searchParams.get('ratio') || '50', 10),
-        algo: searchParams.get('algo') as MixerParams['algo'],
+        ratio: clampInt(searchParams.get('ratio'), OG_MIN_MIXER_RATIO, OG_MAX_MIXER_RATIO, 50),
+        algo: parseAlgo(searchParams.get('algo')),
       };
       return generateMixerOGData(params, env, locale);
     }
@@ -711,41 +734,36 @@ export function generateOGDataForTool(
     case 'swatch': {
       // No target colour → the tool default. A white #FFFFFF stand-in was the
       // pre-5.0 behaviour; it invented a target the user never shared (2a: a
-      // default never fakes data).
-      const color = searchParams.get('hex') || searchParams.get('color');
+      // default never fakes data). A NON-HEX target is the same case: the
+      // card cannot draw it and the crawler must not echo it.
+      const color = parseHexColor(searchParams.get('hex') || searchParams.get('color'));
       if (!color) {
         return toolDefault('swatch', env, locale, embed('swatch.descriptionDefault', locale));
       }
+      const sheetRaw = searchParams.get('sheet');
+      const raceRaw = searchParams.get('race');
       const params: SwatchParams = {
         color,
-        algo: searchParams.get('algo') as SwatchParams['algo'],
-        limit: parseInt(searchParams.get('limit') || '5', 10),
-        sheet: searchParams.get('sheet') as ColorSheetCategory | undefined,
-        race: searchParams.get('race') || undefined,
-        gender: searchParams.get('gender') as CharacterGender | undefined,
+        algo: parseAlgo(searchParams.get('algo')),
+        limit: clampInt(searchParams.get('limit'), 1, OG_MAX_SWATCH_LIMIT, 5),
+        sheet: sheetRaw && isSheet(sheetRaw) ? sheetRaw : undefined,
+        // only a slug a locale table knows is ever looked up or echoed
+        race: raceRaw && isKnownClanOrRace(raceRaw) ? raceRaw : undefined,
+        gender: parseGender(searchParams.get('gender')),
       };
       return generateSwatchOGData(params, env, locale);
     }
 
     case 'comparison': {
-      const dyesParam = searchParams.get('dyes') || '';
-      const params: ComparisonParams = {
-        dyes: dyesParam
-          .split(',')
-          .map((id) => parseInt(id, 10))
-          .filter((id) => !isNaN(id)),
-      };
+      const params: ComparisonParams = { dyes: parseDyeIdList(searchParams.get('dyes')) };
       return generateComparisonOGData(params, env, locale);
     }
 
     case 'accessibility': {
-      const dyesParam = searchParams.get('dyes') || '';
+      const visionRaw = searchParams.get('vision')?.toLowerCase();
       const params: AccessibilityParams = {
-        dyes: dyesParam
-          .split(',')
-          .map((id) => parseInt(id, 10))
-          .filter((id) => !isNaN(id)),
-        vision: searchParams.get('vision') as VisionType | undefined,
+        dyes: parseDyeIdList(searchParams.get('dyes')),
+        vision: visionRaw && isVisionType(visionRaw) ? visionRaw : undefined,
       };
       return generateAccessibilityOGData(params, env, locale);
     }
@@ -756,7 +774,7 @@ export function generateOGDataForTool(
           .split(',')
           .map((c) => c.trim().replace(/^#/, '').toUpperCase())
           .filter((c) => /^[0-9A-F]{6}$/.test(c)),
-        algo: searchParams.get('algo') as ExtractorParams['algo'],
+        algo: parseAlgo(searchParams.get('algo')),
       };
       return generateExtractorOGData(params, env, locale);
     }

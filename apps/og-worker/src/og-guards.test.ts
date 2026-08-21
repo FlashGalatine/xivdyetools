@@ -74,6 +74,14 @@ describe('/og/* parameter length guard', () => {
     expect(res.status).toBe(200);
     expect(renderOGImage).toHaveBeenCalledTimes(1);
   });
+
+  // FINDING-024 / OG-3 (defence in depth for the image surface): a PNG is a
+  // PNG — the browser must never sniff a card response as anything else.
+  it('image responses carry X-Content-Type-Options: nosniff', async () => {
+    const res = await app.request('/og/harmony/1/complementary', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+  });
 });
 
 describe('/og/* edge cache', () => {

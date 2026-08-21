@@ -765,3 +765,116 @@ describe('localized embed copy', () => {
     expect(en).toContain('Open XIV Dye Tools →');
   });
 });
+
+// ---------------------------------------------------------------------------
+// FINDING-024 (2026-08-21 security audit, OG-2 / OG-6): every query parameter
+// that used to be echoed — escaped but unvalidated — into og:title /
+// og:description / og:url / og:image on the production domain is validated
+// against its enum, regex or range first. Unknown values fall back to the
+// parameter's default (or the tool default card); nothing attacker-authored
+// survives into a link preview.
+// ---------------------------------------------------------------------------
+describe('FINDING-024: echoed parameters are validated (OG-2 / OG-6)', () => {
+  const gen = (tool: string, q: string, locale: 'en' | 'ja' = 'en') =>
+    generateOGDataForTool(tool as never, new URLSearchParams(q), mockEnv, locale);
+  const ids = (n: number) => Array.from({ length: n }, (_, i) => i + 1).join(',');
+
+  it('harmony: an unknown ?harmony= falls back to the default harmony — the text is never echoed', () => {
+    const r = gen('harmony', 'dye=1&harmony=free%20gil%20giveaway%20at%20evil.example%20official');
+    expect(r.title).not.toMatch(/gil|evil|official/i);
+    expect(r.description).not.toMatch(/gil|evil|official/i);
+    expect(r.url).toBe('https://xivdyetools.app/harmony/?dye=1&harmony=complementary&v=1');
+    expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/harmony/1/complementary.png');
+  });
+
+  it('harmony: prototype keys are not looked up (?harmony=constructor)', () => {
+    const r = gen('harmony', 'dye=1&harmony=constructor');
+    expect(r.title).not.toMatch(/function|native code|constructor/i);
+    expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/harmony/1/complementary.png');
+  });
+
+  it('accessibility: an unknown ?vision= is treated as absent', () => {
+    const r = gen('accessibility', 'dyes=1,2&vision=scam%20alert');
+    expect(r.title).not.toMatch(/scam/i);
+    expect(r.description).not.toMatch(/scam/i);
+    expect(r.url).toContain('vision=normal');
+    expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/accessibility/1,2/normal.png');
+  });
+
+  it('swatch: unknown sheet / race / gender are dropped from the description and og:url', () => {
+    const plain = gen('swatch', 'hex=AABBCC&limit=5');
+    const junkSheet = gen('swatch', 'hex=AABBCC&limit=5&sheet=evil%20corp');
+    expect(junkSheet.description).toBe(plain.description);
+    expect(junkSheet.url).not.toContain('sheet=');
+
+    const junkRace = gen('swatch', 'hex=AABBCC&limit=5&sheet=hairColors&race=constructor&gender=Female');
+    expect(junkRace.description).not.toMatch(/constructor|function/i);
+    expect(junkRace.description).toContain('hair colors');
+    expect(junkRace.url).not.toContain('race=');
+
+    const junkGender = gen('swatch', 'hex=AABBCC&limit=5&sheet=hairColors&race=Midlander&gender=Attacker');
+    expect(junkGender.description).not.toMatch(/attacker/i);
+    expect(junkGender.url).not.toContain('gender=');
+
+    // …and the real thing still works, case-insensitively on gender
+    const ok = gen('swatch', 'hex=AABBCC&limit=5&sheet=hairColors&race=Midlander&gender=female');
+    expect(ok.description).toContain('female Midlander hair colors');
+    expect(ok.url).toContain('gender=Female');
+  });
+
+  it('swatch: a non-hex ?hex=/?color= degrades to the swatch default card (no junk image URL)', () => {
+    for (const q of ['hex=junk', 'color=%3Cscript%3E', 'hex=GGGGGG', 'hex=12345', `hex=${'A'.repeat(100)}`]) {
+      const r = gen('swatch', q);
+      expect(r.imageUrl, q).toBe('https://og.xivdyetools.app/og/swatch/default.png');
+      expect(r.url, q).toBe('https://xivdyetools.app/swatch/');
+      expect(r.title, q).not.toMatch(/junk|script|GGGGGG|12345/i);
+      expect(r.themeColor, q).toBeUndefined();
+    }
+  });
+
+  it('swatch: a valid colour is normalised to RRGGBB in the image URL (#, case)', () => {
+    const r = gen('swatch', 'hex=%23ff5733&limit=5');
+    expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/swatch/FF5733/5.png');
+    expect(r.title).toContain('#FF5733');
+    expect(r.themeColor).toBe('#FF5733');
+  });
+
+  it("gradient / mixer / swatch numeric params are clamped to the image routes' bounds (no NaN, no 400ing image URL)", () => {
+    expect(gen('gradient', 'start=1&end=102&steps=999').imageUrl).toBe('https://og.xivdyetools.app/og/gradient/1/102/20.png');
+    expect(gen('gradient', 'start=1&end=102&steps=-3').imageUrl).toBe('https://og.xivdyetools.app/og/gradient/1/102/2.png');
+    const nanSteps = gen('gradient', 'start=1&end=102&steps=abc');
+    expect(nanSteps.imageUrl).toBe('https://og.xivdyetools.app/og/gradient/1/102/5.png');
+    expect(nanSteps.description).not.toContain('NaN');
+
+    expect(gen('mixer', 'dyeA=1&dyeB=102&ratio=500').imageUrl).toBe('https://og.xivdyetools.app/og/mixer/1/102/99.png');
+    expect(gen('mixer', 'dyeA=1&dyeB=102&ratio=0').imageUrl).toBe('https://og.xivdyetools.app/og/mixer/1/102/1.png');
+    const nanRatio = gen('mixer', 'dyeA=1&dyeB=102&ratio=abc');
+    expect(nanRatio.imageUrl).toBe('https://og.xivdyetools.app/og/mixer/1/102/50.png');
+    expect(nanRatio.title).not.toContain('NaN');
+
+    expect(gen('swatch', 'hex=AABBCC&limit=999').imageUrl).toBe('https://og.xivdyetools.app/og/swatch/AABBCC/20.png');
+    expect(gen('swatch', 'hex=AABBCC&limit=0').imageUrl).toBe('https://og.xivdyetools.app/og/swatch/AABBCC/1.png');
+  });
+
+  it("comparison / accessibility dye lists are capped at the image routes' 16", () => {
+    const c = gen('comparison', `dyes=${ids(40)}`);
+    expect(c.imageUrl).toBe(`https://og.xivdyetools.app/og/comparison/${ids(16)}.png`);
+    expect(c.url).toBe(`https://xivdyetools.app/comparison/?dyes=${ids(16)}&v=1`);
+    const a = gen('accessibility', `dyes=${ids(40)}&vision=protanopia`);
+    expect(a.imageUrl).toBe(`https://og.xivdyetools.app/og/accessibility/${ids(16)}/protanopia.png`);
+  });
+
+  it('an unknown ?algo= never reaches og:url (swatch / extractor used to echo it raw)', () => {
+    expect(gen('swatch', 'hex=AABBCC&algo=evil').url).not.toContain('algo=');
+    expect(gen('extractor', 'colors=AABBCC&algo=evil').url).not.toContain('algo=');
+    // …while a known one still rides
+    expect(gen('swatch', 'hex=AABBCC&algo=oklab').url).toContain('algo=oklab');
+    expect(gen('extractor', 'colors=AABBCC&algo=oklab').url).toContain('algo=oklab');
+  });
+
+  it('the validation holds under every locale (the ja gate still passes with junk params)', () => {
+    const r = gen('harmony', 'dye=1&harmony=free%20gil%20giveaway', 'ja');
+    expect(r.title).not.toMatch(/gil|giveaway/i);
+    expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/harmony/1/complementary.png?lang=ja');
+  });
+});

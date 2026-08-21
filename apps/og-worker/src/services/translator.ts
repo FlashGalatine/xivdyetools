@@ -48,16 +48,35 @@ export function getLocalizedVisionName(vision: VisionType, locale: LocaleCode): 
   return ogTranslator.getVisionShort(vision, locale);
 }
 
+/** `SeekerOfTheSun` → `seekerOfTheSun`: the URL slug as a locale-table key. */
+function clanOrRaceKey(raw: string): string {
+  return raw.charAt(0).toLowerCase() + raw.slice(1);
+}
+
+/**
+ * Does a locale table know this clan or race? Own properties only
+ * (FINDING-024 / OG-2): `?race=constructor` used to pass an `in` check via
+ * the prototype chain and stringify a function into the embed.
+ */
+export function isKnownClanOrRace(raw: string): boolean {
+  const key = clanOrRaceKey(raw);
+  const en = ogRegistry.getLocale('en');
+  return Boolean(
+    (en?.clans && Object.hasOwn(en.clans, key)) || (en?.races && Object.hasOwn(en.races, key))
+  );
+}
+
 /**
  * The web-app shares the character's clan (`SeekerOfTheSun`, `Midlander`)
  * in swatch `?race=`; older links carry a race. Try the clan table, then the
  * race table, then echo the slug — never a formatted key in another language
- * (OG-I18N-007).
+ * (OG-I18N-007). Callers validate with `isKnownClanOrRace` first, so the
+ * echo is reached only by a known slug.
  */
 export function getLocalizedClanOrRace(raw: string, locale: LocaleCode): string {
-  const key = raw.charAt(0).toLowerCase() + raw.slice(1);
+  const key = clanOrRaceKey(raw);
   const en = ogRegistry.getLocale('en');
-  if (en?.clans && key in en.clans) return ogTranslator.getClan(key as ClanKey, locale);
-  if (en?.races && key in en.races) return ogTranslator.getRace(key as RaceKey, locale);
+  if (en?.clans && Object.hasOwn(en.clans, key)) return ogTranslator.getClan(key as ClanKey, locale);
+  if (en?.races && Object.hasOwn(en.races, key)) return ogTranslator.getRace(key as RaceKey, locale);
   return raw;
 }
