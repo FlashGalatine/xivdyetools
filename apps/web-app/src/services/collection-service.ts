@@ -98,13 +98,28 @@ export interface CollectionExport {
 }
 
 /**
+ * Why import failures are codes and not sentences: this service used to push
+ * English prose into `errors[]`, which `collection-manager-modal` toasted
+ * verbatim in every locale. It now names the reason and (where the message
+ * needs one) the collection involved; the modal owns the wording.
+ */
+export type ImportErrorCode =
+  'invalidFormat' | 'missingData' | 'skippedInvalid' | 'createFailed' | 'parseFailed';
+
+export interface ImportError {
+  code: ImportErrorCode;
+  /** Collection name, for the `{name}` in `skippedInvalid`/`createFailed`. */
+  name?: string;
+}
+
+/**
  * Import result
  */
 export interface ImportResult {
   success: boolean;
   favoritesImported: number;
   collectionsImported: number;
-  errors: string[];
+  errors: ImportError[];
 }
 
 // ============================================================================
@@ -915,6 +930,21 @@ export class CollectionService {
   }
 
   /**
+   * Name for an imported copy when the original name is already taken.
+   *
+   * `LanguageService.t()` echoes the key back when the locale bundles have not
+   * been loaded (unit tests, or a load failure). Every suffix would then
+   * produce the identical string and the caller's uniqueness loop would spin
+   * forever, so fall back to a plain counter whenever the lookup did not
+   * resolve.
+   */
+  private static importedCopyName(baseName: string, suffix: number): string {
+    const key = 'collections.importedSuffix';
+    const localized = LanguageService.tInterpolate(key, { name: baseName, n: suffix });
+    return localized === key ? `${baseName} (${suffix})` : localized;
+  }
+
+  /**
    * Import favorites and/or collections from JSON string
    */
   static importData(json: string): ImportResult {
@@ -930,12 +960,12 @@ export class CollectionService {
 
       // Validate structure
       if (data.type !== 'xivdyetools-collection') {
-        result.errors.push('Invalid file format: not an XIV Dye Tools collection');
+        result.errors.push({ code: 'invalidFormat' });
         return result;
       }
 
       if (!data.data) {
-        result.errors.push('Invalid file format: missing data');
+        result.errors.push({ code: 'missingData' });
         return result;
       }
 
@@ -954,7 +984,7 @@ export class CollectionService {
       if (Array.isArray(data.data.collections)) {
         for (const collection of data.data.collections) {
           if (!collection.name || !Array.isArray(collection.dyes)) {
-            result.errors.push(`Skipped invalid collection: ${collection.name || 'unnamed'}`);
+            result.errors.push({ code: 'skippedInvalid', name: collection.name });
             continue;
           }
 
@@ -968,7 +998,7 @@ export class CollectionService {
           let name = collection.name;
           let suffix = 1;
           while (this.getCollectionByName(name)) {
-            name = `${collection.name}_imported_${suffix}`;
+            name = this.importedCopyName(collection.name, suffix);
             suffix++;
           }
 
@@ -990,7 +1020,7 @@ export class CollectionService {
             }
             result.collectionsImported++;
           } else {
-            result.errors.push(`Failed to create collection: ${name}`);
+            result.errors.push({ code: 'createFailed', name });
           }
         }
       }
@@ -1000,7 +1030,7 @@ export class CollectionService {
         `📥 Imported ${result.favoritesImported} favorites, ${result.collectionsImported} collections`
       );
     } catch (error) {
-      result.errors.push('Failed to parse JSON: invalid format');
+      result.errors.push({ code: 'parseFailed' });
       logger.error('Import failed:', error);
     }
 

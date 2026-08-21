@@ -27,6 +27,15 @@ export interface CategoryWithCount {
 }
 
 /**
+ * Why a vote failure is a code and not a sentence: this service has no locale,
+ * so every English string it used to return was toasted verbatim by
+ * `preset-detail` regardless of the user's language. It names the reason; the
+ * component looks the text up (`VOTE_ERROR_KEYS` there).
+ */
+export type VoteErrorCode =
+  'notLoggedIn' | 'alreadyVoted' | 'voteFailed' | 'removeVoteFailed' | 'network';
+
+/**
  * Kept local rather than adopted from `@xivdyetools/types`' `VoteResponse`.
  *
  * The real wire response on a 409 (already voted) is
@@ -49,6 +58,8 @@ export interface VoteResponse {
   success: boolean;
   new_vote_count: number;
   already_voted?: boolean;
+  errorCode?: VoteErrorCode;
+  /** The presets-API's own message, when it sent one. Never app-authored copy. */
   error?: string;
 }
 
@@ -355,7 +366,7 @@ export class CommunityPresetService {
       return {
         success: false,
         new_vote_count: 0,
-        error: 'You must be logged in to vote',
+        errorCode: 'notLoggedIn',
       };
     }
 
@@ -376,7 +387,7 @@ export class CommunityPresetService {
           success: false,
           new_vote_count: data.new_vote_count || 0,
           already_voted: true,
-          error: 'You have already voted for this preset',
+          errorCode: 'alreadyVoted',
         };
       }
 
@@ -384,7 +395,8 @@ export class CommunityPresetService {
         return {
           success: false,
           new_vote_count: 0,
-          error: (data as { message?: string }).message || 'Failed to vote',
+          errorCode: 'voteFailed',
+          error: (data as { message?: string }).message,
         };
       }
 
@@ -399,7 +411,7 @@ export class CommunityPresetService {
       return {
         success: false,
         new_vote_count: 0,
-        error: 'Network error - please try again',
+        errorCode: 'network',
       };
     }
   }
@@ -413,7 +425,7 @@ export class CommunityPresetService {
       return {
         success: false,
         new_vote_count: 0,
-        error: 'You must be logged in to remove your vote',
+        errorCode: 'notLoggedIn',
       };
     }
 
@@ -430,7 +442,8 @@ export class CommunityPresetService {
         return {
           success: false,
           new_vote_count: 0,
-          error: data.message || 'Failed to remove vote',
+          errorCode: 'removeVoteFailed',
+          error: data.message,
         };
       }
 
@@ -447,7 +460,7 @@ export class CommunityPresetService {
       return {
         success: false,
         new_vote_count: 0,
-        error: 'Network error - please try again',
+        errorCode: 'network',
       };
     }
   }

@@ -656,7 +656,9 @@
     "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten",
     "tryAgain": "Erneut versuchen",
     "resetComponent": "Komponente zurücksetzen",
-    "retryAttempts": "Wiederholungsversuche: {count}/{max}"
+    "retryAttempts": "Wiederholungsversuche: {count}/{max}",
+    "requestTimeout": "Zeitüberschreitung der Anfrage. Bitte versuchen Sie es erneut.",
+    "networkError": "Netzwerkfehler. Bitte versuchen Sie es erneut."
   },
   "success": {
     "copiedToClipboard": "In Zwischenablage kopiert!"
@@ -1054,7 +1056,13 @@
     "validation": {
       "nameMin": "Der Name muss mindestens {n} Zeichen lang sein",
       "descMin": "Die Beschreibung muss mindestens {n} Zeichen lang sein",
-      "dyesMin": "Es müssen mindestens {n} Farbstoffe enthalten sein"
+      "dyesMin": "Es müssen mindestens {n} Farbstoffe enthalten sein",
+      "nameMax": "Der Name darf höchstens {n} Zeichen lang sein",
+      "descMax": "Die Beschreibung darf höchstens {n} Zeichen lang sein",
+      "category": "Bitte wählen Sie eine gültige Kategorie",
+      "dyesInvalid": "Ungültige Farbstoffauswahl",
+      "tagsMax": "Maximal {n} Tags erlaubt",
+      "tagLength": "Jeder Tag darf höchstens {n} Zeichen lang sein"
     }
   },
   "collections": {
@@ -1089,7 +1097,11 @@
     "importFailed": "Import fehlgeschlagen",
     "invalidFormat": "Ungültiges Dateiformat",
     "confirmDelete": "Diese Sammlung wirklich löschen?",
-    "manageCollections": "Sammlungen verwalten"
+    "manageCollections": "Sammlungen verwalten",
+    "importSkippedInvalid": "Ungültige Sammlung übersprungen: {name}",
+    "importCreateFailed": "Sammlung konnte nicht erstellt werden: {name}",
+    "importedSuffix": "{name} (importiert {n})",
+    "unnamed": "unbenannt"
   },
   "emptyStates": {
     "noSearchResults": {

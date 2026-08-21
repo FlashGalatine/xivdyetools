@@ -10,7 +10,7 @@ import {
   ToastService,
   dyeService,
 } from '@services/index';
-import type { Collection } from '@services/collection-service';
+import type { Collection, ImportError } from '@services/collection-service';
 import { ICON_STATE_FOLDER as ICON_FOLDER } from '@shared/state-icons';
 import type { Dye } from '@xivdyetools/types';
 
@@ -523,6 +523,30 @@ function downloadSingleCollection(collection: Collection): void {
 }
 
 /**
+ * Import failure -> toast text.
+ *
+ * `CollectionService` names the reason (it has no locale); the three
+ * malformed-file reasons all read as "invalid file format" to a user, so they
+ * share one key. The two per-collection reasons carry the name.
+ */
+function importErrorMessage(error: ImportError): string {
+  switch (error.code) {
+    case 'skippedInvalid':
+      return LanguageService.tInterpolate('collections.importSkippedInvalid', {
+        name: error.name || LanguageService.t('collections.unnamed'),
+      });
+    case 'createFailed':
+      return LanguageService.tInterpolate('collections.importCreateFailed', {
+        name: error.name || LanguageService.t('collections.unnamed'),
+      });
+    case 'invalidFormat':
+    case 'missingData':
+    case 'parseFailed':
+      return LanguageService.t('collections.invalidFormat');
+  }
+}
+
+/**
  * Trigger file import
  */
 function triggerImport(container: HTMLElement): void {
@@ -550,11 +574,10 @@ function triggerImport(container: HTMLElement): void {
         ModalService.dismissTop();
         showCollectionManagerModal();
       } else {
-        const errorMsg =
-          result.errors.length > 0
-            ? result.errors[0]
-            : LanguageService.t('collections.importFailed');
-        ToastService.error(errorMsg);
+        const first = result.errors[0];
+        ToastService.error(
+          first ? importErrorMessage(first) : LanguageService.t('collections.importFailed')
+        );
       }
     } catch {
       ToastService.error(LanguageService.t('collections.invalidFormat'));

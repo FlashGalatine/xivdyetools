@@ -254,7 +254,7 @@ describe('CommunityPresetService Integration Tests', () => {
         const result = await service.voteForPreset('preset-1');
 
         expect(result.success).toBe(false);
-        expect(result.error).toContain('logged in');
+        expect(result.errorCode).toBe('notLoggedIn');
       });
 
       it('should successfully vote when authenticated', async () => {
@@ -285,6 +285,7 @@ describe('CommunityPresetService Integration Tests', () => {
 
         expect(result.success).toBe(false);
         expect(result.already_voted).toBe(true);
+        expect(result.errorCode).toBe('alreadyVoted');
       });
     });
 
@@ -295,7 +296,7 @@ describe('CommunityPresetService Integration Tests', () => {
         const result = await service.removeVote('preset-1');
 
         expect(result.success).toBe(false);
-        expect(result.error).toContain('logged in');
+        expect(result.errorCode).toBe('notLoggedIn');
       });
 
       it('should successfully remove vote when authenticated', async () => {

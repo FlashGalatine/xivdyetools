@@ -4,6 +4,7 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { CollectionService } from '../collection-service';
+import { LanguageService } from '../language-service';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -350,7 +351,7 @@ describe('CollectionService', () => {
     it('should reject wrong file type', () => {
       const result = CollectionService.importData(JSON.stringify({ type: 'wrong-type' }));
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('Invalid file format: not an XIV Dye Tools collection');
+      expect(result.errors).toContainEqual({ code: 'invalidFormat' });
     });
 
     it('should handle duplicate collection names on import', () => {
@@ -376,8 +377,11 @@ describe('CollectionService', () => {
       const result = CollectionService.importData(importData);
       expect(result.success).toBe(true);
 
-      // Should have renamed the imported collection
-      const imported = CollectionService.getCollectionByName('Test_imported_1');
+      // Should have renamed the imported collection, using the localized
+      // "imported copy" wording rather than a hardcoded `_imported_` suffix
+      const imported = CollectionService.getCollectionByName(
+        LanguageService.tInterpolate('collections.importedSuffix', { name: 'Test', n: 1 })
+      );
       expect(imported).not.toBeUndefined();
     });
   });

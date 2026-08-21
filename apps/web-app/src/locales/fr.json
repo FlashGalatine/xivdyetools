@@ -656,7 +656,9 @@
     "unexpectedError": "Une erreur inattendue s'est produite",
     "tryAgain": "Réessayer",
     "resetComponent": "Réinitialiser le composant",
-    "retryAttempts": "Tentatives: {count}/{max}"
+    "retryAttempts": "Tentatives: {count}/{max}",
+    "requestTimeout": "Délai d'attente dépassé. Veuillez réessayer.",
+    "networkError": "Erreur réseau. Veuillez réessayer."
   },
   "success": {
     "copiedToClipboard": "Copié dans le presse-papiers !"
@@ -1054,7 +1056,13 @@
     "validation": {
       "nameMin": "Le nom doit contenir au moins {n} caractères",
       "descMin": "La description doit contenir au moins {n} caractères",
-      "dyesMin": "Vous devez inclure au moins {n} teintures"
+      "dyesMin": "Vous devez inclure au moins {n} teintures",
+      "nameMax": "Le nom ne doit pas dépasser {n} caractères",
+      "descMax": "La description ne doit pas dépasser {n} caractères",
+      "category": "Veuillez sélectionner une catégorie valide",
+      "dyesInvalid": "Sélection de teintures invalide",
+      "tagsMax": "Maximum {n} tags autorisés",
+      "tagLength": "Chaque tag ne doit pas dépasser {n} caractères"
     }
   },
   "collections": {
@@ -1089,7 +1097,11 @@
     "importFailed": "Échec de l'import",
     "invalidFormat": "Format de fichier invalide",
     "confirmDelete": "Supprimer cette collection ?",
-    "manageCollections": "Gérer les collections"
+    "manageCollections": "Gérer les collections",
+    "importSkippedInvalid": "Collection invalide ignorée : {name}",
+    "importCreateFailed": "Échec de la création de la collection : {name}",
+    "importedSuffix": "{name} (importé {n})",
+    "unnamed": "sans nom"
   },
   "emptyStates": {
     "noSearchResults": {

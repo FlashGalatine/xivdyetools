@@ -10,6 +10,11 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { CollectionService } from '../collection-service';
+import { LanguageService } from '../language-service';
+
+/** The name an imported copy takes when the original name is already used. */
+const importedName = (name: string, n: number): string =>
+  LanguageService.tInterpolate('collections.importedSuffix', { name, n });
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -70,7 +75,7 @@ describe('CollectionService Branch Coverage', () => {
       const result = CollectionService.importData(importData);
 
       expect(result.collectionsImported).toBe(0);
-      expect(result.errors.some((e) => e.includes('invalid') || e.includes('Skipped'))).toBe(true);
+      expect(result.errors.some((e) => e.code === 'skippedInvalid')).toBe(true);
     });
 
     it('should skip collections with non-array dyes', () => {
@@ -153,14 +158,14 @@ describe('CollectionService Branch Coverage', () => {
       const result = CollectionService.importData(importData);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('Invalid file format: missing data');
+      expect(result.errors).toContainEqual({ code: 'missingData' });
     });
 
     it('should handle name conflicts with incrementing suffix', () => {
       // Create base collection
       CollectionService.createCollection('Test');
-      // Create another with same name (will become Test_imported_1)
-      CollectionService.createCollection('Test_imported_1');
+      // Create another with the name the first import would have taken
+      CollectionService.createCollection(importedName('Test', 1));
 
       // Import with name conflict - should become Test_imported_2
       const importData = JSON.stringify({
@@ -183,7 +188,7 @@ describe('CollectionService Branch Coverage', () => {
       const result = CollectionService.importData(importData);
 
       expect(result.collectionsImported).toBe(1);
-      expect(CollectionService.getCollectionByName('Test_imported_2')).not.toBeUndefined();
+      expect(CollectionService.getCollectionByName(importedName('Test', 2))).not.toBeUndefined();
     });
 
     it('should handle collection creation failure during import', () => {
@@ -214,7 +219,7 @@ describe('CollectionService Branch Coverage', () => {
       const result = CollectionService.importData(importData);
 
       expect(result.collectionsImported).toBe(0);
-      expect(result.errors.some((e) => e.includes('Failed to create collection'))).toBe(true);
+      expect(result.errors.some((e) => e.code === 'createFailed')).toBe(true);
     });
   });
 

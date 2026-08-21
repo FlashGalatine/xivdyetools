@@ -656,7 +656,9 @@
     "unexpectedError": "예기치 않은 오류가 발생했습니다",
     "tryAgain": "다시 시도",
     "resetComponent": "컴포넌트 초기화",
-    "retryAttempts": "재시도 횟수: {count}/{max}"
+    "retryAttempts": "재시도 횟수: {count}/{max}",
+    "requestTimeout": "요청 시간이 초과되었습니다. 다시 시도해 주세요.",
+    "networkError": "네트워크 오류가 발생했습니다. 다시 시도해 주세요."
   },
   "success": {
     "copiedToClipboard": "클립보드에 복사되었습니다!"
@@ -1054,7 +1056,13 @@
     "validation": {
       "nameMin": "이름은 최소 {n}자 이상이어야 합니다",
       "descMin": "설명은 최소 {n}자 이상이어야 합니다",
-      "dyesMin": "염료를 최소 {n}개 포함해야 합니다"
+      "dyesMin": "염료를 최소 {n}개 포함해야 합니다",
+      "nameMax": "이름은 최대 {n}자까지 입력할 수 있습니다",
+      "descMax": "설명은 최대 {n}자까지 입력할 수 있습니다",
+      "category": "유효한 카테고리를 선택하세요",
+      "dyesInvalid": "잘못된 염료 선택입니다",
+      "tagsMax": "최대 {n}개의 태그만 허용됩니다",
+      "tagLength": "각 태그는 최대 {n}자까지 입력할 수 있습니다"
     }
   },
   "collections": {
@@ -1089,7 +1097,11 @@
     "importFailed": "가져오기 실패",
     "invalidFormat": "잘못된 파일 형식",
     "confirmDelete": "이 컬렉션을 삭제하시겠습니까?",
-    "manageCollections": "컬렉션 관리"
+    "manageCollections": "컬렉션 관리",
+    "importSkippedInvalid": "잘못된 컬렉션을 건너뛰었습니다: {name}",
+    "importCreateFailed": "컬렉션 생성 실패: {name}",
+    "importedSuffix": "{name} (가져옴 {n})",
+    "unnamed": "이름 없음"
   },
   "emptyStates": {
     "noSearchResults": {

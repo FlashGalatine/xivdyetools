@@ -68,7 +68,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'name',
-        message: 'Name must be at least 2 characters',
+        code: 'nameMin',
+        limit: 2,
       });
     });
 
@@ -84,7 +85,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'name',
-        message: 'Name must be at least 2 characters',
+        code: 'nameMin',
+        limit: 2,
       });
     });
 
@@ -100,7 +102,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'name',
-        message: 'Name must be at least 2 characters',
+        code: 'nameMin',
+        limit: 2,
       });
     });
 
@@ -116,7 +119,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'name',
-        message: 'Name must be 50 characters or less',
+        code: 'nameMax',
+        limit: 50,
       });
     });
   });
@@ -138,7 +142,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'description',
-        message: 'Description must be at least 10 characters',
+        code: 'descMin',
+        limit: 10,
       });
     });
 
@@ -154,7 +159,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'description',
-        message: 'Description must be at least 10 characters',
+        code: 'descMin',
+        limit: 10,
       });
     });
 
@@ -170,7 +176,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'description',
-        message: 'Description must be at least 10 characters',
+        code: 'descMin',
+        limit: 10,
       });
     });
 
@@ -186,7 +193,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'description',
-        message: 'Description must be 200 characters or less',
+        code: 'descMax',
+        limit: 200,
       });
     });
   });
@@ -208,7 +216,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'category_id',
-        message: 'Please select a valid category',
+        code: 'category',
       });
     });
 
@@ -224,7 +232,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'category_id',
-        message: 'Please select a valid category',
+        code: 'category',
       });
     });
 
@@ -270,7 +278,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'dyes',
-        message: 'Must include at least 3 dyes',
+        code: 'dyesMin',
+        limit: 3,
       });
     });
 
@@ -286,7 +295,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'dyes',
-        message: 'Must include at least 3 dyes',
+        code: 'dyesMin',
+        limit: 3,
       });
     });
 
@@ -302,7 +312,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'dyes',
-        message: 'Maximum 6 dyes allowed',
+        code: 'dyesMax',
+        limit: 6,
       });
     });
 
@@ -318,7 +329,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'dyes',
-        message: 'Must include at least 3 dyes',
+        code: 'dyesMin',
+        limit: 3,
       });
     });
 
@@ -334,7 +346,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'dyes',
-        message: 'Invalid dye selection',
+        code: 'dyesInvalid',
       });
     });
 
@@ -350,7 +362,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'dyes',
-        message: 'Invalid dye selection',
+        code: 'dyesInvalid',
       });
     });
   });
@@ -386,7 +398,7 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'tags',
-        message: 'Tags must be an array',
+        code: 'tagsArray',
       });
     });
 
@@ -402,7 +414,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'tags',
-        message: 'Maximum 10 tags allowed',
+        code: 'tagsMax',
+        limit: 10,
       });
     });
 
@@ -418,7 +431,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'tags',
-        message: 'Each tag must be 30 characters or less',
+        code: 'tagLength',
+        limit: 30,
       });
     });
 
@@ -434,7 +448,8 @@ describe('PresetSubmissionService - validateSubmission', () => {
       const errors = validateSubmission(submission);
       expect(errors).toContainEqual({
         field: 'tags',
-        message: 'Each tag must be 30 characters or less',
+        code: 'tagLength',
+        limit: 30,
       });
     });
   });

@@ -18,18 +18,63 @@ import type { CommunityPreset } from './community-preset-service';
 // imports keep working unchanged.
 export type { PresetSubmission, PresetEditRequest };
 
+/**
+ * Why the results carry codes and not sentences.
+ *
+ * Every string this service used to return was English written here and
+ * toasted verbatim by the forms, so a French user got an English error. The
+ * service is the wrong layer to hold UI copy — it has no locale — so it now
+ * names the *reason* and the caller looks up the text
+ * (`@shared/preset-i18n`). `error` survives for the one string that is
+ * legitimately not ours: the presets-API's own wire message, which the toast
+ * shows as `details` beneath the translated headline.
+ */
+export type PresetValidationCode =
+  | 'nameMin'
+  | 'nameMax'
+  | 'descMin'
+  | 'descMax'
+  | 'category'
+  | 'dyesMin'
+  | 'dyesMax'
+  | 'dyesInvalid'
+  | 'dyesRange'
+  | 'tagsArray'
+  | 'tagsMax'
+  | 'tagLength';
+
+/**
+ * Transport/auth failure reasons shared by `submitPreset` and `editPreset`.
+ * `validation` means "see `validationErrors`" — the per-field list, not one
+ * joined sentence, so each error can be shown in the user's language.
+ */
+export type PresetErrorCode =
+  | 'notLoggedInSubmit'
+  | 'notLoggedInEdit'
+  | 'validation'
+  | 'submitFailed'
+  | 'editFailed'
+  | 'timeout'
+  | 'network'
+  | 'duplicate';
+
 export interface SubmissionResult {
   success: boolean;
   preset?: CommunityPreset;
   duplicate?: CommunityPreset;
   vote_added?: boolean;
   moderation_status?: 'approved' | 'pending';
+  errorCode?: PresetErrorCode;
+  validationErrors?: ValidationError[];
+  /** The presets-API's own message, when it sent one. Never app-authored copy. */
   error?: string;
 }
 
 export interface ValidationError {
   field: string;
-  message: string;
+  code: PresetValidationCode;
+  /** The bound the value broke, for the `{n}`/`{count}` in the message. */
+  limit?: number;
 }
 
 export interface MySubmissionsResponse {
@@ -46,6 +91,9 @@ export interface EditResult {
     name: string;
     author_name: string | null;
   };
+  errorCode?: PresetErrorCode;
+  validationErrors?: ValidationError[];
+  /** The presets-API's own message, when it sent one. Never app-authored copy. */
   error?: string;
 }
 
@@ -77,6 +125,23 @@ const VALID_CATEGORIES: PresetCategory[] = [
  */
 const REQUEST_TIMEOUT = 15000;
 
+/**
+ * Field limits, named so the `limit` a `ValidationError` carries and the bound
+ * it was checked against can never drift apart (the message used to repeat the
+ * number in prose, and the two were free to disagree).
+ */
+const MIN_NAME_LENGTH = 2;
+const MAX_NAME_LENGTH = 50;
+const MIN_DESC_LENGTH = 10;
+const MAX_DESC_LENGTH = 200;
+const MIN_DYES = 3;
+const MAX_DYES = 6;
+const MAX_TAGS = 10;
+const MAX_TAG_LENGTH = 30;
+/** stainIDs run 1-254; anything at or above this is a 4.x market itemID. */
+const MAX_STAIN_ID = 254;
+const LEGACY_ITEM_ID_FLOOR = 5000;
+
 // ============================================
 // Validation
 // ============================================
@@ -89,51 +154,50 @@ export function validateSubmission(submission: PresetSubmission): ValidationErro
   const errors: ValidationError[] = [];
 
   // Name validation (2-50 characters)
-  if (!submission.name || submission.name.trim().length < 2) {
-    errors.push({ field: 'name', message: 'Name must be at least 2 characters' });
-  } else if (submission.name.length > 50) {
-    errors.push({ field: 'name', message: 'Name must be 50 characters or less' });
+  if (!submission.name || submission.name.trim().length < MIN_NAME_LENGTH) {
+    errors.push({ field: 'name', code: 'nameMin', limit: MIN_NAME_LENGTH });
+  } else if (submission.name.length > MAX_NAME_LENGTH) {
+    errors.push({ field: 'name', code: 'nameMax', limit: MAX_NAME_LENGTH });
   }
 
   // Description validation (10-200 characters)
-  if (!submission.description || submission.description.trim().length < 10) {
-    errors.push({ field: 'description', message: 'Description must be at least 10 characters' });
-  } else if (submission.description.length > 200) {
-    errors.push({ field: 'description', message: 'Description must be 200 characters or less' });
+  if (!submission.description || submission.description.trim().length < MIN_DESC_LENGTH) {
+    errors.push({ field: 'description', code: 'descMin', limit: MIN_DESC_LENGTH });
+  } else if (submission.description.length > MAX_DESC_LENGTH) {
+    errors.push({ field: 'description', code: 'descMax', limit: MAX_DESC_LENGTH });
   }
 
   // Category validation
   if (!submission.category_id || !VALID_CATEGORIES.includes(submission.category_id)) {
-    errors.push({ field: 'category_id', message: 'Please select a valid category' });
+    errors.push({ field: 'category_id', code: 'category' });
   }
 
   // Dyes validation (5.0: 3-6 stainIDs)
-  if (!Array.isArray(submission.dyes) || submission.dyes.length < 3) {
-    errors.push({ field: 'dyes', message: 'Must include at least 3 dyes' });
-  } else if (submission.dyes.length > 6) {
-    errors.push({ field: 'dyes', message: 'Maximum 6 dyes allowed' });
+  if (!Array.isArray(submission.dyes) || submission.dyes.length < MIN_DYES) {
+    errors.push({ field: 'dyes', code: 'dyesMin', limit: MIN_DYES });
+  } else if (submission.dyes.length > MAX_DYES) {
+    errors.push({ field: 'dyes', code: 'dyesMax', limit: MAX_DYES });
   } else if (
     !submission.dyes.every((id) => typeof id === 'number' && Number.isInteger(id) && id > 0)
   ) {
-    errors.push({ field: 'dyes', message: 'Invalid dye selection' });
-  } else if (submission.dyes.some((id) => id >= 5000)) {
+    errors.push({ field: 'dyes', code: 'dyesInvalid' });
+  } else if (submission.dyes.some((id) => id >= LEGACY_ITEM_ID_FLOOR)) {
     // 5.0 range guard: dyes are stainIDs (1-254); a legacy itemID means a
     // half-migrated caller — fail loudly, never submit the wrong era
-    errors.push({
-      field: 'dyes',
-      message: 'Dye IDs must be stainIDs (1-254), not legacy item IDs',
-    });
-  } else if (submission.dyes.some((id) => id > 254)) {
-    errors.push({ field: 'dyes', message: 'Dye IDs must be stainIDs (1-254)' });
+    errors.push({ field: 'dyes', code: 'dyesRange' });
+  } else if (submission.dyes.some((id) => id > MAX_STAIN_ID)) {
+    errors.push({ field: 'dyes', code: 'dyesRange' });
   }
 
   // Tags validation (0-10 tags, max 30 chars each)
   if (!Array.isArray(submission.tags)) {
-    errors.push({ field: 'tags', message: 'Tags must be an array' });
-  } else if (submission.tags.length > 10) {
-    errors.push({ field: 'tags', message: 'Maximum 10 tags allowed' });
-  } else if (submission.tags.some((tag) => typeof tag !== 'string' || tag.length > 30)) {
-    errors.push({ field: 'tags', message: 'Each tag must be 30 characters or less' });
+    errors.push({ field: 'tags', code: 'tagsArray' });
+  } else if (submission.tags.length > MAX_TAGS) {
+    errors.push({ field: 'tags', code: 'tagsMax', limit: MAX_TAGS });
+  } else if (
+    submission.tags.some((tag) => typeof tag !== 'string' || tag.length > MAX_TAG_LENGTH)
+  ) {
+    errors.push({ field: 'tags', code: 'tagLength', limit: MAX_TAG_LENGTH });
   }
 
   return errors;
@@ -204,16 +268,19 @@ class PresetSubmissionServiceImpl {
     if (!authService.isAuthenticated()) {
       return {
         success: false,
-        error: 'You must be logged in to submit presets',
+        errorCode: 'notLoggedInSubmit',
       };
     }
 
-    // Client-side validation
+    // Client-side validation. The list is returned whole rather than joined
+    // into one sentence: ". "-joining translated fragments builds English
+    // grammar out of pieces that do not survive translation.
     const validationErrors = validateSubmission(submission);
     if (validationErrors.length > 0) {
       return {
         success: false,
-        error: validationErrors.map((e) => e.message).join('. '),
+        errorCode: 'validation',
+        validationErrors,
       };
     }
 
@@ -249,7 +316,8 @@ class PresetSubmissionServiceImpl {
         logger.error('Preset submission failed:', result);
         return {
           success: false,
-          error: result.message || 'Submission failed',
+          errorCode: 'submitFailed',
+          error: result.message,
         };
       }
 
@@ -274,14 +342,14 @@ class PresetSubmissionServiceImpl {
         logger.error('Preset submission timed out');
         return {
           success: false,
-          error: 'Request timed out. Please try again.',
+          errorCode: 'timeout',
         };
       }
 
       logger.error('Preset submission error:', err);
       return {
         success: false,
-        error: 'Failed to submit preset. Please try again.',
+        errorCode: 'network',
       };
     }
   }
@@ -415,7 +483,7 @@ class PresetSubmissionServiceImpl {
     if (!authService.isAuthenticated()) {
       return {
         success: false,
-        error: 'You must be logged in to edit presets',
+        errorCode: 'notLoggedInEdit',
       };
     }
 
@@ -423,58 +491,52 @@ class PresetSubmissionServiceImpl {
     const errors: ValidationError[] = [];
 
     if (updates.name !== undefined) {
-      if (updates.name.trim().length < 2) {
-        errors.push({ field: 'name', message: 'Name must be at least 2 characters' });
-      } else if (updates.name.length > 50) {
-        errors.push({ field: 'name', message: 'Name must be 50 characters or less' });
+      if (updates.name.trim().length < MIN_NAME_LENGTH) {
+        errors.push({ field: 'name', code: 'nameMin', limit: MIN_NAME_LENGTH });
+      } else if (updates.name.length > MAX_NAME_LENGTH) {
+        errors.push({ field: 'name', code: 'nameMax', limit: MAX_NAME_LENGTH });
       }
     }
 
     if (updates.description !== undefined) {
-      if (updates.description.trim().length < 10) {
-        errors.push({
-          field: 'description',
-          message: 'Description must be at least 10 characters',
-        });
-      } else if (updates.description.length > 200) {
-        errors.push({
-          field: 'description',
-          message: 'Description must be 200 characters or less',
-        });
+      if (updates.description.trim().length < MIN_DESC_LENGTH) {
+        errors.push({ field: 'description', code: 'descMin', limit: MIN_DESC_LENGTH });
+      } else if (updates.description.length > MAX_DESC_LENGTH) {
+        errors.push({ field: 'description', code: 'descMax', limit: MAX_DESC_LENGTH });
       }
     }
 
     if (updates.dyes !== undefined) {
-      if (!Array.isArray(updates.dyes) || updates.dyes.length < 3) {
-        errors.push({ field: 'dyes', message: 'Must include at least 3 dyes' });
-      } else if (updates.dyes.length > 6) {
-        errors.push({ field: 'dyes', message: 'Maximum 6 dyes allowed' });
-      } else if (updates.dyes.some((id) => id >= 5000)) {
-        errors.push({
-          field: 'dyes',
-          message: 'Dye IDs must be stainIDs (1-254), not legacy item IDs',
-        });
-      } else if (updates.dyes.some((id) => id < 1 || id > 254)) {
-        errors.push({ field: 'dyes', message: 'Dye IDs must be stainIDs (1-254)' });
+      if (!Array.isArray(updates.dyes) || updates.dyes.length < MIN_DYES) {
+        errors.push({ field: 'dyes', code: 'dyesMin', limit: MIN_DYES });
+      } else if (updates.dyes.length > MAX_DYES) {
+        errors.push({ field: 'dyes', code: 'dyesMax', limit: MAX_DYES });
+      } else if (updates.dyes.some((id) => id >= LEGACY_ITEM_ID_FLOOR)) {
+        errors.push({ field: 'dyes', code: 'dyesRange' });
+      } else if (updates.dyes.some((id) => id < 1 || id > MAX_STAIN_ID)) {
+        errors.push({ field: 'dyes', code: 'dyesRange' });
       } else if (!updates.dyes.every((id) => typeof id === 'number' && id > 0)) {
-        errors.push({ field: 'dyes', message: 'Invalid dye selection' });
+        errors.push({ field: 'dyes', code: 'dyesInvalid' });
       }
     }
 
     if (updates.tags !== undefined) {
       if (!Array.isArray(updates.tags)) {
-        errors.push({ field: 'tags', message: 'Tags must be an array' });
-      } else if (updates.tags.length > 10) {
-        errors.push({ field: 'tags', message: 'Maximum 10 tags allowed' });
-      } else if (updates.tags.some((tag) => typeof tag !== 'string' || tag.length > 30)) {
-        errors.push({ field: 'tags', message: 'Each tag must be 30 characters or less' });
+        errors.push({ field: 'tags', code: 'tagsArray' });
+      } else if (updates.tags.length > MAX_TAGS) {
+        errors.push({ field: 'tags', code: 'tagsMax', limit: MAX_TAGS });
+      } else if (
+        updates.tags.some((tag) => typeof tag !== 'string' || tag.length > MAX_TAG_LENGTH)
+      ) {
+        errors.push({ field: 'tags', code: 'tagLength', limit: MAX_TAG_LENGTH });
       }
     }
 
     if (errors.length > 0) {
       return {
         success: false,
-        error: errors.map((e) => e.message).join('. '),
+        errorCode: 'validation',
+        validationErrors: errors,
       };
     }
 
@@ -513,11 +575,12 @@ class PresetSubmissionServiceImpl {
       const result = await response.json();
 
       if (response.status === 409 && result.duplicate) {
-        // Duplicate dye combination exists
+        // Duplicate dye combination exists. The name goes in `duplicate`, not
+        // into a prebuilt sentence — the caller owns the wording.
         return {
           success: false,
+          errorCode: 'duplicate',
           duplicate: result.duplicate,
-          error: `This dye combination already exists as "${result.duplicate.name}"`,
         };
       }
 
@@ -525,7 +588,8 @@ class PresetSubmissionServiceImpl {
         logger.error('Preset edit failed:', result);
         return {
           success: false,
-          error: result.message || 'Edit failed',
+          errorCode: 'editFailed',
+          error: result.message,
         };
       }
 
@@ -541,14 +605,14 @@ class PresetSubmissionServiceImpl {
         logger.error('Preset edit timed out');
         return {
           success: false,
-          error: 'Request timed out. Please try again.',
+          errorCode: 'timeout',
         };
       }
 
       logger.error('Preset edit error:', err);
       return {
         success: false,
-        error: 'Failed to edit preset. Please try again.',
+        errorCode: 'network',
       };
     }
   }

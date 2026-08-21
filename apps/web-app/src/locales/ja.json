@@ -656,7 +656,9 @@
     "unexpectedError": "予期しないエラーが発生しました",
     "tryAgain": "再試行",
     "resetComponent": "コンポーネントをリセット",
-    "retryAttempts": "再試行回数: {count}/{max}"
+    "retryAttempts": "再試行回数: {count}/{max}",
+    "requestTimeout": "リクエストがタイムアウトしました。もう一度お試しください。",
+    "networkError": "ネットワークエラーが発生しました。もう一度お試しください。"
   },
   "success": {
     "copiedToClipboard": "クリップボードにコピーしました！"
@@ -764,7 +766,11 @@
     "importFailed": "インポートに失敗しました",
     "invalidFormat": "無効なファイル形式です",
     "confirmDelete": "このコレクションを削除しますか？",
-    "manageCollections": "コレクション管理"
+    "manageCollections": "コレクション管理",
+    "importSkippedInvalid": "無効なコレクションをスキップしました：{name}",
+    "importCreateFailed": "コレクションの作成に失敗しました：{name}",
+    "importedSuffix": "{name}（インポート{n}）",
+    "unnamed": "名称未設定"
   },
   "tutorial": {
     "step": "ステップ",
@@ -1088,7 +1094,13 @@
     "validation": {
       "nameMin": "名前は{n}文字以上で入力してください",
       "descMin": "説明は{n}文字以上で入力してください",
-      "dyesMin": "カララントを{n}個以上選択してください"
+      "dyesMin": "カララントを{n}個以上選択してください",
+      "nameMax": "名前は{n}文字以内で入力してください",
+      "descMax": "説明は{n}文字以内で入力してください",
+      "category": "有効なカテゴリーを選択してください",
+      "dyesInvalid": "カララントの選択が無効です",
+      "tagsMax": "タグは最大{n}個までです",
+      "tagLength": "各タグは{n}文字以内で入力してください"
     }
   },
   "emptyStates": {

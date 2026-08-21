@@ -681,7 +681,9 @@
     "unexpectedError": "发生意外错误",
     "tryAgain": "重试",
     "resetComponent": "重置组件",
-    "retryAttempts": "重试次数: {count}/{max}"
+    "retryAttempts": "重试次数: {count}/{max}",
+    "requestTimeout": "请求超时。请重试。",
+    "networkError": "网络错误。请重试。"
   },
   "success": {
     "copiedToClipboard": "已复制到剪贴板！"
@@ -1079,7 +1081,13 @@
     "validation": {
       "nameMin": "名称至少需要 {n} 个字符",
       "descMin": "描述至少需要 {n} 个字符",
-      "dyesMin": "至少需要包含 {n} 种染剂"
+      "dyesMin": "至少需要包含 {n} 种染剂",
+      "nameMax": "名称不能超过 {n} 个字符",
+      "descMax": "描述不能超过 {n} 个字符",
+      "category": "请选择有效的分类",
+      "dyesInvalid": "染剂选择无效",
+      "tagsMax": "最多允许 {n} 个标签",
+      "tagLength": "每个标签不能超过 {n} 个字符"
     }
   },
   "collections": {
@@ -1114,7 +1122,11 @@
     "importFailed": "导入失败",
     "invalidFormat": "文件格式无效",
     "confirmDelete": "确定要删除此集合吗？",
-    "manageCollections": "管理集合"
+    "manageCollections": "管理集合",
+    "importSkippedInvalid": "已跳过无效的集合：{name}",
+    "importCreateFailed": "创建集合失败：{name}",
+    "importedSuffix": "{name}（导入 {n}）",
+    "unnamed": "未命名"
   },
   "emptyStates": {
     "noSearchResults": {

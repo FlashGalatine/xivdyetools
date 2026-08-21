@@ -21,6 +21,7 @@ import {
   uploadPreviewImage,
 } from '@services/preset-submission-service';
 import { createCategorySelector, type CategorySelection } from './preset-category-selector';
+import { presetErrorMessage, presetValidationMessage } from '@shared/preset-i18n';
 import { exampleLinkError } from '@shared/example-link';
 import { dyeNameMatches, localizedDyeName } from '@shared/dye-name';
 import type { Dye } from '@xivdyetools/types';
@@ -754,8 +755,19 @@ function createSubmitButton(
             ToastService.error(
               LanguageService.tInterpolate('preset.duplicateFound', { name: dupName })
             );
+          } else if (result.validationErrors?.length) {
+            // One toast per rule; the service names the rule, the text is
+            // looked up here (same table the form's own checks use).
+            for (const error of result.validationErrors) {
+              ToastService.error(presetValidationMessage(error));
+            }
           } else {
-            ToastService.error(result.error || LanguageService.t('errors.saveChangesFailed'));
+            // `result.error` is the presets-API's own message when it sent one —
+            // shown as toast details under the translated headline.
+            ToastService.error(
+              presetErrorMessage(result.errorCode, 'errors.saveChangesFailed'),
+              result.error
+            );
           }
           return;
         }

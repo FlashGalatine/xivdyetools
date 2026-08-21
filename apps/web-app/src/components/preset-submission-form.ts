@@ -22,6 +22,7 @@ import {
   type PresetSubmission,
   type SubmissionResult,
 } from '@services/preset-submission-service';
+import { presetErrorMessage, presetValidationMessage } from '@shared/preset-i18n';
 import { exampleLinkError } from '@shared/example-link';
 import { dyeNameMatches, localizedDyeName } from '@shared/dye-name';
 import { logger } from '@shared/logger';
@@ -692,9 +693,9 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
     if (errors.length > 0) {
       // One toast per error: joining them with ". " builds an English sentence
       // out of translated fragments, which does not survive translation.
-      // (The message strings themselves still come from the service.)
+      // The service names the broken rule; the text is looked up here.
       for (const error of errors) {
-        ToastService.error(error.message);
+        ToastService.error(presetValidationMessage(error));
       }
       return;
     }
@@ -757,8 +758,18 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
         ModalService.dismissTop();
         logger.info('[PresetSubmissionForm] dismissTop() returned');
         onSubmit?.(result);
+      } else if (result.validationErrors?.length) {
+        // The service revalidates; one toast per rule, same as above.
+        for (const error of result.validationErrors) {
+          ToastService.error(presetValidationMessage(error));
+        }
       } else {
-        ToastService.error(result.error || LanguageService.t('errors.submitPresetFailed'));
+        // `result.error` is the presets-API's own message when it sent one —
+        // shown as toast details under the translated headline, not instead of it.
+        ToastService.error(
+          presetErrorMessage(result.errorCode, 'errors.submitPresetFailed'),
+          result.error
+        );
       }
     } catch {
       ToastService.error(LanguageService.t('errors.submitPresetFailed'));
