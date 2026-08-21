@@ -17,3 +17,7 @@ Route ban/unban/hide through presets-api moderation endpoints (single writer, lo
 
 ## References
 - Evidence: `../evidence/review-moderation-worker.md` (MOD-4, MOD-5, MOD-8, MOD-12, MOD-13)
+
+## Status
+**FIXED 2026-08-21** (moderation-worker 1.5.0; deferred items listed)
+- moderation-worker 1.5.0: MOD-4 ban/unban in one `db.batch` + UNIQUE race handled + `isPresetAuthorBanned()` refused by both approve paths; MOD-8 fixed channel-safe error strings (raw error logged as `cause`), `sanitizeErrorMessage` blocks D1 internals; MOD-12 buttons/modals share the command rate limiter, `ban_cancel_` moderator-gated; MOD-13/14 autocomplete forwards moderator id, drops xivauth-only entries, clamps names. Deferred: `moderation_log` rows for bans (presets-api-owned table — cross-app decision), hiding pending/flagged presets on ban (needs schema), MOD-9/MOD-15 INFO infra.

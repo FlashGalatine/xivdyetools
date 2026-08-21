@@ -284,6 +284,8 @@ describe('handleBanCancelButton', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // MOD-12 (FINDING-034): cancel is moderator-gated like every other button
+    vi.mocked(presetApi.isModerator).mockReturnValue(true);
 
     env = {
       DISCORD_PUBLIC_KEY: 'test-key',
@@ -344,21 +346,6 @@ describe('handleBanCancelButton', () => {
     expect(json.data.components).toHaveLength(0);
   });
 
-  it('should work without requiring moderator check', async () => {
-    // Ban cancel doesn't check moderator status - any user who had access to the button can cancel
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: { custom_id: 'ban_cancel_123456789012345678' },
-      user: { id: 'any-user', username: 'AnyUser' },
-    };
-
-    const response = await handleBanCancelButton(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
-  });
 });
 
 describe('isBanConfirmButton', () => {
@@ -400,5 +387,84 @@ describe('isBanCancelButton', () => {
 
   it('should return false for partial match', () => {
     expect(isBanCancelButton('ban_cancel')).toBe(false);
+  });
+});
+
+// ============================================================================
+// 2026-08-21 security audit — FINDING-034 (MOD-12) / FINDING-019
+// ============================================================================
+describe('handleBanCancelButton — MOD-12 moderator gate', () => {
+  let env: Env;
+  let ctx: ExecutionContext;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    env = {
+      DISCORD_PUBLIC_KEY: 'test-key',
+      DISCORD_TOKEN: 'test-bot-token',
+      DISCORD_CLIENT_ID: 'app-123',
+      MODERATOR_IDS: 'mod-1,mod-2',
+      MODERATION_CHANNEL_ID: 'channel-mod',
+      SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
+      BOT_API_SECRET: 'test-secret',
+      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
+      DB: undefined as unknown as D1Database,
+      KV: undefined as unknown as KVNamespace,
+      PRESETS_API: undefined,
+      PRESETS_API_URL: 'https://presets-api.example.com',
+    };
+    ctx = { waitUntil: vi.fn(), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
+  });
+
+  it('denies a non-moderator (uniform with every other button)', async () => {
+    vi.mocked(presetApi.isModerator).mockReturnValue(false);
+
+    const response = await handleBanCancelButton(
+      {
+        id: 'int-1',
+        token: 'token-1',
+        application_id: 'app-123',
+        data: { custom_id: 'ban_cancel_123456789012345678' },
+        user: { id: '999999999999999999', username: 'AnyUser' },
+      },
+      env,
+      ctx,
+    );
+    const json = (await response.json()) as any;
+
+    expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+    expect(json.data.flags).toBe(64);
+    expect(json.data.content).toContain('do not have permission');
+  });
+
+  it('denies when the user cannot be identified', async () => {
+    const response = await handleBanCancelButton(
+      { id: 'int-1', token: 'token-1', application_id: 'app-123', data: { custom_id: 'ban_cancel_1' } },
+      env,
+      ctx,
+    );
+    const json = (await response.json()) as any;
+    expect(json.data.flags).toBe(64);
+  });
+
+  it('a moderator still gets the UPDATE_MESSAGE with allowed_mentions (FINDING-019)', async () => {
+    vi.mocked(presetApi.isModerator).mockReturnValue(true);
+
+    const response = await handleBanCancelButton(
+      {
+        id: 'int-1',
+        token: 'token-1',
+        application_id: 'app-123',
+        data: { custom_id: 'ban_cancel_123456789012345678' },
+        member: { user: { id: 'mod-1', username: 'Moderator' } },
+      },
+      env,
+      ctx,
+    );
+    const json = (await response.json()) as any;
+
+    expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
+    expect(json.data.allowed_mentions).toEqual({ parse: [] });
+    expect(json.data.components).toEqual([]);
   });
 });

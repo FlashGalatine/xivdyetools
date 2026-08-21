@@ -41,6 +41,7 @@ import { createUserTranslator } from './services/bot-i18n.js';
 import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-kit';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
+import { sanitizeEmbedText } from '@xivdyetools/bot-logic';
 import { sanitizeUrl } from './utils/url-sanitizer.js';
 
 // Define context variables type
@@ -202,30 +203,8 @@ async function handleCommand(
   }
 
   // Check rate limit for commands (FINDING-003: native bindings when bound, KV fallback)
-  const rateLimitCheck = await checkRateLimit(
-    env.KV,
-    userId,
-    'command',
-    RATE_LIMIT_CONFIGS.command,
-    moderationRateLimitBindings(env)
-  );
-
-  if (!rateLimitCheck.allowed) {
-    logger.warn('Rate limit exceeded', {
-      userId,
-      commandName,
-      type: 'command',
-      retryAfter: rateLimitCheck.retryAfter,
-    });
-    return rateLimitedResponse(rateLimitCheck.resetTime);
-  }
-
-  // Increment rate limit counter
-  ctx.waitUntil(
-    incrementRateLimit(env.KV, userId, 'command', 3, moderationRateLimitBindings(env)).catch((err) => {
-      logger.error('Failed to increment command rate limit', err instanceof Error ? err : undefined);
-    })
-  );
+  const limited = await enforceCommandRateLimit(env, ctx, userId, logger, { commandName });
+  if (limited) return limited;
 
   logger.info('Handling command', { command: commandName, userId });
 
@@ -239,15 +218,68 @@ async function handleCommand(
         return await handlePresetCommand(interaction, env, ctx, t, logger);
 
       default:
-        // Command not supported by this moderation bot
+        // Command not supported by this moderation bot (FINDING-019: the name
+        // is client-supplied text echoed into `content`)
         return ephemeralResponse(
-          `The \`/${commandName}\` command is not supported by this moderation bot.`
+          `The \`/${sanitizeEmbedText(commandName ?? 'unknown', 32)}\` command is not supported by this moderation bot.`
         );
     }
   } catch (error) {
     logger.error('Command execution failed', error instanceof Error ? error : undefined, { command: commandName });
     return ephemeralResponse('An error occurred while processing your command.');
   }
+}
+
+/**
+ * Per-user `command` rate limit (FINDING-003: native bindings when bound, KV
+ * fallback). MOD-12 (FINDING-034, 2026-08-21 audit): button clicks and modal
+ * submits now share it with slash commands — they were the only interaction
+ * types with no throttle at all.
+ *
+ * @returns the rate-limited reply to send, or null when the request may proceed
+ */
+async function enforceCommandRateLimit(
+  env: Env,
+  ctx: ExecutionContext,
+  userId: string,
+  logger: ExtendedLogger,
+  context: Record<string, unknown>
+): Promise<Response | null> {
+  const rateLimitCheck = await checkRateLimit(
+    env.KV,
+    userId,
+    'command',
+    RATE_LIMIT_CONFIGS.command,
+    moderationRateLimitBindings(env)
+  );
+
+  if (!rateLimitCheck.allowed) {
+    logger.warn('Rate limit exceeded', {
+      userId,
+      ...context,
+      type: 'command',
+      retryAfter: rateLimitCheck.retryAfter,
+    });
+    return rateLimitedResponse(rateLimitCheck.resetTime);
+  }
+
+  // Increment rate limit counter (kept alive past the response)
+  ctx.waitUntil(
+    incrementRateLimit(env.KV, userId, 'command', 3, moderationRateLimitBindings(env)).catch((err) => {
+      logger.error('Failed to increment command rate limit', err instanceof Error ? err : undefined);
+    })
+  );
+
+  return null;
+}
+
+/**
+ * Discord caps autocomplete choice names at 100 characters and rejects the
+ * whole response otherwise — one long author name must not blank the list.
+ */
+function clampChoiceName(name: string): string {
+  const chars = [...name];
+  return chars.length <= 100 ? name : `${chars.slice(0, 99).join('')}\u2026`;
 }
 
 /**
@@ -350,7 +382,12 @@ export async function handleAutocomplete(
     // Preset name autocomplete for moderate subcommand
     if (focusedName === 'preset_id') {
       if (subcommandName === 'moderate') {
-        choices = await presetApi.searchPresetsForAutocomplete(env, query, { status: 'pending' });
+        // MOD-13 (FINDING-034): presets-api 403s `status=pending` without a
+        // moderator identity — this list was always empty before
+        choices = await presetApi.searchPresetsForAutocomplete(env, query, {
+          status: 'pending',
+          userDiscordId: userId,
+        });
       }
     }
     // User autocomplete for ban_user/unban_user subcommands
@@ -382,7 +419,9 @@ async function getBanUserAutocompleteChoices(
 
     return users.map((user) => ({
       // Format: "Username (discord:123456789) - 5 presets"
-      name: `${user.username} (discord:${user.discordId}) - ${user.presetCount} presets`,
+      name: clampChoiceName(
+        `${user.username} (discord:${user.discordId}) - ${user.presetCount} presets`
+      ),
       value: user.discordId,
     }));
   } catch (error) {
@@ -402,15 +441,15 @@ async function getUnbanUserAutocompleteChoices(
   try {
     const users = await banService.searchBannedUsers(env.DB, query);
 
-    return users.map((user) => {
-      const idSuffix = user.discordId
-        ? `discord:${user.discordId}`
-        : `xivauth:${user.xivAuthId}`;
-      return {
-        name: `${user.username} (${idSuffix})`,
-        value: user.discordId || user.xivAuthId || '',
-      };
-    });
+    // MOD-14 (FINDING-034, 2026-08-21 audit): unbanUser / getActiveBan key on
+    // discord_id, so an xivauth-only ban cannot be lifted from this bot — do
+    // not offer a value the command would then reject.
+    return users
+      .filter((user): user is typeof user & { discordId: string } => Boolean(user.discordId))
+      .map((user) => ({
+        name: clampChoiceName(`${user.username} (discord:${user.discordId})`),
+        value: user.discordId,
+      }));
   } catch (error) {
     logger.error('Failed to get unban user autocomplete', error instanceof Error ? error : undefined);
     return [];
@@ -419,8 +458,10 @@ async function getUnbanUserAutocompleteChoices(
 
 /**
  * Handle button/select menu interactions
+ *
+ * Exported for tests (the interactions route is Ed25519-signed).
  */
-async function handleComponent(
+export async function handleComponent(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
@@ -428,8 +469,18 @@ async function handleComponent(
 ): Promise<Response> {
   const customId = interaction.data?.custom_id;
   const componentType = interaction.data?.component_type;
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
 
   logger.info('Handling component', { customId, componentType });
+
+  if (!userId) {
+    logger.error('Unable to identify user from component interaction', { customId });
+    return ephemeralResponse('Unable to identify user. Please try again.');
+  }
+
+  // MOD-12 (FINDING-034): same per-user limiter as slash commands
+  const limited = await enforceCommandRateLimit(env, ctx, userId, logger, { customId });
+  if (limited) return limited;
 
   // Buttons have component_type 2
   if (componentType === 2) {
@@ -442,15 +493,27 @@ async function handleComponent(
 
 /**
  * Handle modal submissions
+ *
+ * Exported for tests (the interactions route is Ed25519-signed).
  */
-async function handleModal(
+export async function handleModal(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
   logger: ExtendedLogger
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
   logger.info('Handling modal', { customId });
+
+  if (!userId) {
+    logger.error('Unable to identify user from modal interaction', { customId });
+    return ephemeralResponse('Unable to identify user. Please try again.');
+  }
+
+  // MOD-12 (FINDING-034): same per-user limiter as slash commands
+  const limited = await enforceCommandRateLimit(env, ctx, userId, logger, { customId });
+  if (limited) return limited;
 
   // Route preset rejection modal
   if (isPresetRejectionModal(customId)) {

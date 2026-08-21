@@ -5,7 +5,21 @@
  * @see https://discord.com/developers/docs/interactions/receiving-and-responding
  */
 
+import { ALLOWED_MENTIONS_NONE } from '@xivdyetools/bot-logic';
 import { InteractionResponseType } from '../types/env.js';
+
+/**
+ * Discord `allowed_mentions` object. FINDING-019 (2026-08-21 security audit):
+ * every response / follow-up / channel post built by this worker carries
+ * `ALLOWED_MENTIONS_NONE` unless a caller explicitly supplies its own, so user
+ * text echoed into `content` can never ping @everyone, roles or users.
+ */
+export interface AllowedMentions {
+  parse: readonly string[];
+  users?: string[];
+  roles?: string[];
+  replied_user?: boolean;
+}
 
 /**
  * Discord Embed structure
@@ -66,6 +80,18 @@ export interface InteractionResponseData {
   embeds?: DiscordEmbed[];
   components?: DiscordActionRow[];
   flags?: number;
+  /** Defaults to `ALLOWED_MENTIONS_NONE` (FINDING-019); set explicitly to allow pings. */
+  allowed_mentions?: AllowedMentions;
+}
+
+/**
+ * Spread `ALLOWED_MENTIONS_NONE` under any caller-supplied `allowed_mentions`
+ * (FINDING-019). Caller wins, default otherwise.
+ */
+function withAllowedMentions<T extends { allowed_mentions?: AllowedMentions }>(
+  data: T
+): T & { allowed_mentions: AllowedMentions } {
+  return { allowed_mentions: ALLOWED_MENTIONS_NONE, ...data };
 }
 
 // Response flags
@@ -86,7 +112,19 @@ export function pongResponse(): Response {
 export function messageResponse(data: InteractionResponseData): Response {
   return Response.json({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data,
+    data: withAllowedMentions(data),
+  });
+}
+
+/**
+ * Creates an UPDATE_MESSAGE response (edits the message the component /
+ * modal came from). Carries `allowed_mentions` like every other text-bearing
+ * response (FINDING-019).
+ */
+export function updateMessageResponse(data: InteractionResponseData): Response {
+  return Response.json({
+    type: InteractionResponseType.UPDATE_MESSAGE,
+    data: withAllowedMentions(data),
   });
 }
 
@@ -198,6 +236,9 @@ export function sanitizeErrorMessage(
     if (apiError.statusCode >= 400 && apiError.statusCode < 500) {
       return apiError.message;
     }
+    // MOD-8 (FINDING-034, 2026-08-21 audit): a 5xx / transport error carries
+    // an upstream body — never fall through to the generic Error branch
+    return fallbackMessage;
   }
 
   // For generic Error objects, only show message if it looks user-friendly
@@ -216,6 +257,12 @@ export function sanitizeErrorMessage(
       /\bDELETE\b/i,
       /\benv\./i,
       /\bprocess\./i,
+      // MOD-8 (FINDING-034, 2026-08-21 audit): D1 / SQLite internals — the
+      // runtime's messages name tables, columns and constraints
+      /\bD1_/,
+      /\bSQLITE_/,
+      /\bno such (table|column|index)\b/i,
+      /\bconstraint\b/i,
     ];
 
     if (!unsafePatterns.some((pattern) => pattern.test(msg))) {
@@ -307,6 +354,7 @@ export function rateLimitedResponse(_resetTime: number): Response {
       data: {
         content: 'Rate limit exceeded. Please wait before trying again.',
         flags: MessageFlags.EPHEMERAL,
+        allowed_mentions: ALLOWED_MENTIONS_NONE,
       },
     }),
     {

@@ -10,7 +10,7 @@
 
 import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
-import { ephemeralResponse } from '../../utils/response.js';
+import { ephemeralResponse, updateMessageResponse } from '../../utils/response.js';
 
 /** Discord snowflake — the only shape a ban target id may take (FINDING-007 / MOD-5). */
 const SNOWFLAKE_RE = /^\d{17,20}$/;
@@ -116,26 +116,37 @@ export async function handleBanConfirmButton(
 
 /**
  * Handle the ban cancel button click
+ *
+ * MOD-12 (FINDING-034, 2026-08-21 audit): moderator-gated like every other
+ * button — the confirmation is ephemeral to the moderator who opened it, so
+ * this changes nothing for them and keeps the authorization model uniform.
  */
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function handleBanCancelButton(
-  _interaction: ButtonInteraction,
-  _env: Env,
+  interaction: ButtonInteraction,
+  env: Env,
   _ctx: ExecutionContext,
   _logger?: ExtendedLogger
 ): Promise<Response> {
-  return Response.json({
-    type: InteractionResponseType.UPDATE_MESSAGE,
-    data: {
-      embeds: [
-        {
-          title: '\u274C Ban Cancelled',
-          description: 'The ban action was cancelled.',
-          color: 0x5865f2,
-        },
-      ],
-      components: [],
-    },
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
+
+  if (!userId) {
+    return ephemeralResponse('Invalid button interaction.');
+  }
+
+  if (!presetApi.isModerator(env, userId)) {
+    return ephemeralResponse('You do not have permission to ban users.');
+  }
+
+  return updateMessageResponse({
+    embeds: [
+      {
+        title: '\u274C Ban Cancelled',
+        description: 'The ban action was cancelled.',
+        color: 0x5865f2,
+      },
+    ],
+    components: [],
   });
 }
 

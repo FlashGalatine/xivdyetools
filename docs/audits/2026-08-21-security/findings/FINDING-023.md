@@ -16,3 +16,7 @@ Point all three at the canonical `https://xivdyetools.app` / `https://developers
 
 ## References
 - Evidence: `../evidence/review-infra-stoat.md` (STOAT-1), `../evidence/review-discord-worker.md` (DW-8), `../evidence/review-moderation-worker.md` (MOD-7)
+
+## Status
+**IN PROGRESS 2026-08-21** — per-app adoption below (discord-worker `/stats` pending).
+- moderation-worker 1.5.0 (MOD-7): `PRESETS_WEB_URL` → `https://xivdyetools.app`; stoat-worker 0.2.2 (STOAT-1): about card → `.app` hosts.

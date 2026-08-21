@@ -16,3 +16,7 @@ Validate at the handler boundary (UUID v4 / snowflake regex) **and** `encodeURIC
 
 ## References
 - Evidence: `../evidence/review-discord-worker.md` (DW-3), `../evidence/review-moderation-worker.md` (MOD-5), `../evidence/review-web-app.md` (WEB-11)
+
+## Status
+**IN PROGRESS 2026-08-21** — per-app adoption below.
+- moderation-worker 1.5.0 (MOD-5): `encodeURIComponent` on every preset-id path segment in `services/preset-api.ts`; rejection/revert modals validate UUIDs, ban/unban validate snowflakes before D1.

@@ -91,8 +91,10 @@ export interface BanResult {
   success: boolean;
   /** Number of presets hidden */
   presetsHidden: number;
-  /** Error message if unsuccessful */
+  /** Channel-safe error message if unsuccessful (MOD-8: never a raw D1 message) */
   error?: string;
+  /** The underlying error, for logging only — never shown to Discord */
+  cause?: unknown;
 }
 
 /**
@@ -103,8 +105,10 @@ export interface UnbanResult {
   success: boolean;
   /** Number of presets restored */
   presetsRestored: number;
-  /** Error message if unsuccessful */
+  /** Channel-safe error message if unsuccessful (MOD-8: never a raw D1 message) */
   error?: string;
+  /** The underlying error, for logging only — never shown to Discord */
+  cause?: unknown;
 }
 
 /**

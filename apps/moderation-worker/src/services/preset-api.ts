@@ -332,6 +332,7 @@ export function isModerator(env: Env, userId: string): boolean {
 export async function getPresets(
   env: Env,
   filters: PresetFilters = {},
+  moderatorId?: string,
 ): Promise<PresetListResponse> {
   const params = new URLSearchParams();
 
@@ -343,7 +344,22 @@ export async function getPresets(
   if (filters.limit) params.set('limit', String(filters.limit));
 
   const query = params.toString();
-  return request<PresetListResponse>(env, 'GET', `/api/v1/presets${query ? `?${query}` : ''}`);
+  // MOD-13 (FINDING-034, 2026-08-21 audit): presets-api 403s `status=pending`
+  // for anonymous callers, so the moderator identity must travel with the
+  // request (it is also what the HMAC covers).
+  return request<PresetListResponse>(env, 'GET', `/api/v1/presets${query ? `?${query}` : ''}`, {
+    userDiscordId: moderatorId,
+  });
+}
+
+/**
+ * FINDING-020 (2026-08-21 security audit): every identifier interpolated into
+ * a presets-api path is encoded first. Handlers validate the shape (UUID /
+ * snowflake) at their boundary; this is the defence-in-depth layer so that a
+ * value which slipped through can only ever address a single path segment.
+ */
+function pathSegment(id: string): string {
+  return encodeURIComponent(id);
 }
 
 /**
@@ -351,7 +367,7 @@ export async function getPresets(
  */
 export async function getPreset(env: Env, id: string): Promise<CommunityPreset | null> {
   try {
-    return await request<CommunityPreset>(env, 'GET', `/api/v1/presets/${id}`);
+    return await request<CommunityPreset>(env, 'GET', `/api/v1/presets/${pathSegment(id)}`);
   } catch (error) {
     if (error instanceof PresetAPIError && error.statusCode === 404) {
       return null;
@@ -398,7 +414,7 @@ export async function approvePreset(
   const response = await request<{ preset: CommunityPreset }>(
     env,
     'PATCH',
-    `/api/v1/moderation/${presetId}/status`,
+    `/api/v1/moderation/${pathSegment(presetId)}/status`,
     {
       body: { status: 'approved', reason },
       userDiscordId: moderatorId,
@@ -419,7 +435,7 @@ export async function rejectPreset(
   const response = await request<{ preset: CommunityPreset }>(
     env,
     'PATCH',
-    `/api/v1/moderation/${presetId}/status`,
+    `/api/v1/moderation/${pathSegment(presetId)}/status`,
     {
       body: { status: 'rejected', reason },
       userDiscordId: moderatorId,
@@ -452,7 +468,7 @@ export async function getModerationHistory(
   const response = await request<{ history: ModerationLogEntry[] }>(
     env,
     'GET',
-    `/api/v1/moderation/${presetId}/history`,
+    `/api/v1/moderation/${pathSegment(presetId)}/history`,
     { userDiscordId: moderatorId },
   );
   return response.history;
@@ -470,7 +486,7 @@ export async function revertPreset(
   const response = await request<{ success: boolean; preset: CommunityPreset }>(
     env,
     'PATCH',
-    `/api/v1/moderation/${presetId}/revert`,
+    `/api/v1/moderation/${pathSegment(presetId)}/revert`,
     {
       body: { reason },
       userDiscordId: moderatorId,
@@ -492,6 +508,8 @@ export async function searchPresetsForAutocomplete(
   options: {
     status?: 'approved' | 'pending';
     limit?: number;
+    /** MOD-13: the moderator asking — required for `status: 'pending'` to return anything */
+    userDiscordId?: string;
     logger?: ExtendedLogger;
   } = {},
 ): Promise<Array<{ name: string; value: string }>> {
@@ -505,7 +523,7 @@ export async function searchPresetsForAutocomplete(
       filters.search = query;
     }
 
-    const response = await getPresets(env, filters);
+    const response = await getPresets(env, filters, options.userDiscordId);
 
     return response.presets.map((preset) => ({
       name: preset.author_name

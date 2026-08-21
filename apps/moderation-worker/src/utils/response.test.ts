@@ -11,6 +11,9 @@ import {
   infoEmbed,
   hexToDiscordColor,
   MessageFlags,
+  updateMessageResponse,
+  rateLimitedResponse,
+  sanitizeErrorMessage,
   type DiscordEmbed,
   type DiscordButton,
   type DiscordActionRow,
@@ -106,7 +109,8 @@ describe('messageResponse', () => {
     const body = await response.json() as any;
 
     expect(body.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(body.data).toEqual({});
+    // FINDING-019: allowed_mentions is always present
+    expect(body.data).toEqual({ allowed_mentions: { parse: [] } });
   });
 });
 
@@ -449,5 +453,84 @@ describe('MessageFlags', () => {
     expect(() => {
       (MessageFlags as any).EPHEMERAL = 128;
     }).toThrow();
+  });
+});
+
+// FINDING-019 (2026-08-21 security audit): every interaction response that can
+// carry text must also carry `allowed_mentions` that parse nothing, so user
+// text echoed into `content` can never ping @everyone / roles / users.
+describe('allowed_mentions on interaction responses (FINDING-019)', () => {
+  it('messageResponse carries allowed_mentions that parse nothing', async () => {
+    const json = (await messageResponse({ content: 'hi @everyone' }).json()) as any;
+    expect(json.data.allowed_mentions).toEqual({ parse: [] });
+    expect(json.data.content).toBe('hi @everyone');
+  });
+
+  it('lets a caller-supplied allowed_mentions win', async () => {
+    const json = (await messageResponse({
+      content: 'x',
+      allowed_mentions: { parse: ['users'] },
+    } as InteractionResponseData).json()) as any;
+    expect(json.data.allowed_mentions).toEqual({ parse: ['users'] });
+  });
+
+  it('ephemeralResponse(string) carries allowed_mentions', async () => {
+    const json = (await ephemeralResponse('@here').json()) as any;
+    expect(json.data.allowed_mentions).toEqual({ parse: [] });
+    expect(json.data.flags).toBe(64);
+  });
+
+  it('updateMessageResponse uses UPDATE_MESSAGE and carries allowed_mentions', async () => {
+    const json = (await updateMessageResponse({
+      embeds: [{ title: 'x' }],
+      components: [],
+    }).json()) as any;
+    expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
+    expect(json.data.allowed_mentions).toEqual({ parse: [] });
+    expect(json.data.embeds).toEqual([{ title: 'x' }]);
+    expect(json.data.components).toEqual([]);
+  });
+
+  it('rateLimitedResponse carries allowed_mentions', async () => {
+    const json = (await rateLimitedResponse(Date.now()).json()) as any;
+    expect(json.data.allowed_mentions).toEqual({ parse: [] });
+    expect(json.data.flags).toBe(64);
+  });
+});
+
+// MOD-8 (FINDING-034): raw D1 / API error strings must not reach a channel.
+describe('sanitizeErrorMessage (MOD-8)', () => {
+  it('passes a 4xx API error message through', () => {
+    const err = { statusCode: 404, message: 'Preset not found' };
+    expect(sanitizeErrorMessage(err, 'fallback')).toBe('Preset not found');
+  });
+
+  it('hides 5xx API error bodies', () => {
+    const err = { statusCode: 502, message: 'upstream said: <html>Bad Gateway</html>' };
+    expect(sanitizeErrorMessage(err, 'fallback')).toBe('fallback');
+  });
+
+  it('hides D1 / SQLite internals', () => {
+    const internals = [
+      'D1_ERROR: UNIQUE constraint failed: banned_users.discord_id: SQLITE_CONSTRAINT',
+      'no such table: banned_users',
+      'SQLITE_BUSY: database is locked',
+      'SELECT * FROM presets failed',
+      'Error at handler (src/services/ban-service.ts:280)',
+    ];
+    for (const msg of internals) {
+      expect(sanitizeErrorMessage(new Error(msg), 'fallback')).toBe('fallback');
+    }
+  });
+
+  it('keeps a user-friendly Error message', () => {
+    expect(sanitizeErrorMessage(new Error('User is already banned.'), 'fallback')).toBe(
+      'User is already banned.'
+    );
+  });
+
+  it('returns the fallback for non-Error values', () => {
+    expect(sanitizeErrorMessage('raw string', 'fallback')).toBe('fallback');
+    expect(sanitizeErrorMessage(undefined)).toBe('An unexpected error occurred.');
   });
 });

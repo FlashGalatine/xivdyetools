@@ -685,3 +685,94 @@ describe('preset-api', () => {
     });
   });
 });
+
+describe('preset-api (FINDING-020 / MOD-13)', () => {
+  let mockEnv: Env;
+  let mockFetcher: ReturnType<typeof createMockFetcher>;
+
+  beforeEach(() => {
+    mockFetcher = createMockFetcher();
+    mockEnv = {
+      PRESETS_API: mockFetcher as unknown as Fetcher,
+      BOT_API_SECRET: 'test-api-secret',
+      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
+      MODERATOR_IDS: '12345678901234567',
+    } as Env;
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+// FINDING-020 (2026-08-21 security audit): identifiers are encoded before
+// they are interpolated into a presets-api path, so a value that slipped past
+// the handler-boundary validation can only ever address one path segment.
+describe('path-segment encoding (FINDING-020)', () => {
+  const TRAVERSAL = '../../presets/abc';
+  const ENCODED = encodeURIComponent(TRAVERSAL); // ..%2F..%2Fpresets%2Fabc
+
+  it('approvePreset encodes the preset id', async () => {
+    mockFetcher._setupHandler(() => Response.json({ success: true, preset: { id: 'p' } }));
+    await approvePreset(mockEnv, TRAVERSAL, '12345678901234567');
+    expect(mockFetcher._calls[0].url).toBe(`https://internal/api/v1/moderation/${ENCODED}/status`);
+  });
+
+  it('rejectPreset encodes the preset id', async () => {
+    mockFetcher._setupHandler(() => Response.json({ success: true, preset: { id: 'p' } }));
+    await rejectPreset(mockEnv, TRAVERSAL, '12345678901234567', 'reason');
+    expect(mockFetcher._calls[0].url).toBe(`https://internal/api/v1/moderation/${ENCODED}/status`);
+  });
+
+  it('revertPreset encodes the preset id', async () => {
+    mockFetcher._setupHandler(() => Response.json({ success: true, preset: { id: 'p' } }));
+    await revertPreset(mockEnv, TRAVERSAL, 'reason', '12345678901234567');
+    expect(mockFetcher._calls[0].url).toBe(`https://internal/api/v1/moderation/${ENCODED}/revert`);
+  });
+
+  it('getModerationHistory encodes the preset id', async () => {
+    mockFetcher._setupHandler(() => Response.json({ history: [] }));
+    await getModerationHistory(mockEnv, TRAVERSAL, '12345678901234567');
+    expect(mockFetcher._calls[0].url).toBe(`https://internal/api/v1/moderation/${ENCODED}/history`);
+  });
+
+  it('getPreset encodes the preset id', async () => {
+    mockFetcher._setupHandler(() => Response.json({ id: 'p' }));
+    await getPreset(mockEnv, TRAVERSAL);
+    expect(mockFetcher._calls[0].url).toBe(`https://internal/api/v1/presets/${ENCODED}`);
+  });
+
+  it('leaves a plain UUID untouched', async () => {
+    mockFetcher._setupHandler(() => Response.json({ success: true, preset: { id: 'p' } }));
+    await approvePreset(mockEnv, 'a0000000-0000-4000-8000-000000000001', '12345678901234567');
+    expect(mockFetcher._calls[0].url).toBe(
+      'https://internal/api/v1/moderation/a0000000-0000-4000-8000-000000000001/status',
+    );
+  });
+});
+
+// MOD-13 (FINDING-034): the preset_id autocomplete always returned [] because
+// no moderator identity was sent and presets-api 403s `status=pending` for
+// anonymous callers. The moderator id is now forwarded.
+describe('moderator identity on list requests (MOD-13)', () => {
+  it('getPresets forwards the moderator id when given', async () => {
+    mockFetcher._setupHandler(() => Response.json({ presets: [], total: 0, page: 1 }));
+    await getPresets(mockEnv, { status: 'pending' }, '12345678901234567');
+    expect(mockFetcher._calls[0].headers['x-user-discord-id']).toBe('12345678901234567');
+  });
+
+  it('getPresets stays anonymous without one', async () => {
+    mockFetcher._setupHandler(() => Response.json({ presets: [], total: 0, page: 1 }));
+    await getPresets(mockEnv, { status: 'pending' });
+    expect(mockFetcher._calls[0].headers['x-user-discord-id']).toBeUndefined();
+  });
+
+  it('searchPresetsForAutocomplete forwards options.userDiscordId', async () => {
+    mockFetcher._setupHandler(() => Response.json({ presets: [], total: 0, page: 1 }));
+    await searchPresetsForAutocomplete(mockEnv, 'blue', {
+      status: 'pending',
+      userDiscordId: '12345678901234567',
+    });
+    expect(mockFetcher._calls[0].headers['x-user-discord-id']).toBe('12345678901234567');
+  });
+});
+});

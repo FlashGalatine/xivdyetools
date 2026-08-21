@@ -99,7 +99,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_preset-1',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
         components: [
           {
             type: 1,
@@ -129,7 +129,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_preset-1',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
         components: [
           {
             type: 1,
@@ -160,7 +160,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_preset-1',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
         components: [
           {
             type: 1,
@@ -191,7 +191,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_preset-1',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
         components: [],
       },
       member: { user: { id: 'mod-1', username: 'Moderator' } },
@@ -206,7 +206,7 @@ describe('handlePresetRejectionModal', () => {
   it('should return deferred update response', async () => {
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
     vi.mocked(presetApi.rejectPreset).mockResolvedValue({
-      id: 'preset-1',
+      id: 'a0000000-0000-4000-8000-000000000001',
       name: 'Test Preset',
       description: 'Description',
       author_discord_id: 'author-1',
@@ -228,7 +228,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_preset-1',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
         components: [
           {
             type: 1,
@@ -262,7 +262,7 @@ describe('handlePresetRejectionModal', () => {
 
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
     vi.mocked(presetApi.rejectPreset).mockResolvedValue({
-      id: 'preset-1',
+      id: 'a0000000-0000-4000-8000-000000000001',
       name: 'Test Preset',
       description: 'Description',
       author_discord_id: 'author-1',
@@ -284,7 +284,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_preset-1',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
         components: [
           {
             type: 1,
@@ -307,7 +307,7 @@ describe('handlePresetRejectionModal', () => {
             title: 'Preset Submission',
             description: 'A preset submission',
             fields: [{ name: 'Author', value: 'Author' }],
-            footer: { text: 'ID: preset-1' },
+            footer: { text: 'ID: a0000000-0000-4000-8000-000000000001' },
             timestamp: '2025-01-15T10:00:00Z',
           },
         ],
@@ -323,7 +323,7 @@ describe('handlePresetRejectionModal', () => {
 
     expect(presetApi.rejectPreset).toHaveBeenCalledWith(
       env,
-      'preset-1',
+      'a0000000-0000-4000-8000-000000000001',
       'mod-1',
       'Contains inappropriate imagery',
     );
@@ -351,7 +351,7 @@ describe('handlePresetRejectionModal', () => {
 
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
     vi.mocked(presetApi.rejectPreset).mockResolvedValue({
-      id: 'preset-1',
+      id: 'a0000000-0000-4000-8000-000000000001',
       name: 'Bad Preset',
       description: 'Description',
       author_discord_id: 'author-1',
@@ -373,7 +373,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_preset-1',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
         components: [
           {
             type: 1,
@@ -414,7 +414,7 @@ describe('handlePresetRejectionModal', () => {
             },
           ],
           footer: {
-            text: 'ID: preset-1',
+            text: 'ID: a0000000-0000-4000-8000-000000000001',
           },
           title: '❌ Bad Preset - Rejected',
         },
@@ -425,7 +425,7 @@ describe('handlePresetRejectionModal', () => {
   it('should not send log message when log channel is not configured', async () => {
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
     vi.mocked(presetApi.rejectPreset).mockResolvedValue({
-      id: 'preset-1',
+      id: 'a0000000-0000-4000-8000-000000000001',
       name: 'Test Preset',
       description: 'Description',
       author_discord_id: 'author-1',
@@ -449,7 +449,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_preset-1',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
         components: [
           {
             type: 1,
@@ -492,7 +492,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_preset-1',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
         components: [
           {
             type: 1,
@@ -550,7 +550,7 @@ describe('handlePresetRejectionModal', () => {
   it('should use fallback username when username is missing', async () => {
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
     vi.mocked(presetApi.rejectPreset).mockResolvedValue({
-      id: 'preset-1',
+      id: 'a0000000-0000-4000-8000-000000000001',
       name: 'Test Preset',
       description: 'Description',
       author_discord_id: 'author-1',
@@ -572,7 +572,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_preset-1',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
         components: [
           {
             type: 1,
@@ -691,7 +691,7 @@ describe('handlePresetRevertModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_revert_modal_preset-1',
+        custom_id: 'preset_revert_modal_a0000000-0000-4000-8000-000000000001',
         components: [
           {
             type: 1,
@@ -722,7 +722,7 @@ describe('handlePresetRevertModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_revert_modal_preset-1',
+        custom_id: 'preset_revert_modal_a0000000-0000-4000-8000-000000000001',
         components: [
           {
             type: 1,
@@ -750,7 +750,7 @@ describe('handlePresetRevertModal', () => {
 
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
     vi.mocked(presetApi.revertPreset).mockResolvedValue({
-      id: 'preset-1',
+      id: 'a0000000-0000-4000-8000-000000000001',
       name: 'Reverted Preset',
       description: 'Original description',
       author_discord_id: 'author-1',
@@ -772,7 +772,7 @@ describe('handlePresetRevertModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_revert_modal_preset-1',
+        custom_id: 'preset_revert_modal_a0000000-0000-4000-8000-000000000001',
         components: [
           {
             type: 1,
@@ -803,7 +803,7 @@ describe('handlePresetRevertModal', () => {
 
     expect(presetApi.revertPreset).toHaveBeenCalledWith(
       env,
-      'preset-1',
+      'a0000000-0000-4000-8000-000000000001',
       'The edit introduced errors in dye names',
       'mod-1',
     );
@@ -835,7 +835,7 @@ describe('handlePresetRevertModal', () => {
 
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
     vi.mocked(presetApi.revertPreset).mockResolvedValue({
-      id: 'preset-1',
+      id: 'a0000000-0000-4000-8000-000000000001',
       name: 'Test Preset',
       description: 'Description',
       author_discord_id: 'author-1',
@@ -857,7 +857,7 @@ describe('handlePresetRevertModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_revert_modal_preset-1',
+        custom_id: 'preset_revert_modal_a0000000-0000-4000-8000-000000000001',
         components: [
           {
             type: 1,
@@ -898,7 +898,7 @@ describe('handlePresetRevertModal', () => {
             },
           ],
           footer: {
-            text: 'ID: preset-1',
+            text: 'ID: a0000000-0000-4000-8000-000000000001',
           },
           title: '↩️ Test Preset - Edit Reverted',
         },
@@ -917,7 +917,7 @@ describe('handlePresetRevertModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_revert_modal_preset-1',
+        custom_id: 'preset_revert_modal_a0000000-0000-4000-8000-000000000001',
         components: [
           {
             type: 1,
@@ -1003,5 +1003,139 @@ describe('isPresetRevertModal', () => {
 
   it('should return false for empty string', () => {
     expect(isPresetRevertModal('')).toBe(false);
+  });
+});
+
+// ============================================================================
+// 2026-08-21 security audit — FINDING-019 / 020 (MOD-5)
+// ============================================================================
+describe('rejection / revert modals — security audit remediations', () => {
+  let env: Env;
+  let ctx: ExecutionContext;
+  const PRESET_ID = 'a0000000-0000-4000-8000-000000000001';
+
+  const modal = (
+    customId: string,
+    field: 'rejection_reason' | 'revert_reason',
+    value: string,
+    username = 'Moderator',
+  ) => ({
+    id: 'int-1',
+    token: 'token-1',
+    application_id: 'app-123',
+    data: {
+      custom_id: customId,
+      components: [{ type: 1, components: [{ type: 4, custom_id: field, value }] }],
+    },
+    member: { user: { id: 'mod-1', username } },
+    channel_id: 'channel-mod',
+    message: {
+      id: 'msg-1',
+      embeds: [{ title: 'Preset Submission', description: 'A preset submission', fields: [] }],
+    },
+  });
+
+  const flushWaitUntil = async () => {
+    const calls = vi.mocked(ctx.waitUntil).mock.calls;
+    const p = calls[calls.length - 1]?.[0];
+    if (p) await p;
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(presetApi.isModerator).mockReturnValue(true);
+    env = {
+      DISCORD_PUBLIC_KEY: 'test-key',
+      DISCORD_TOKEN: 'test-bot-token',
+      DISCORD_CLIENT_ID: 'app-123',
+      MODERATOR_IDS: 'mod-1,mod-2',
+      MODERATION_CHANNEL_ID: 'channel-mod',
+      SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
+      BOT_API_SECRET: 'test-secret',
+      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
+      DB: undefined as unknown as D1Database,
+      KV: undefined as unknown as KVNamespace,
+      PRESETS_API: undefined,
+      PRESETS_API_URL: 'https://presets-api.example.com',
+    };
+    ctx = {
+      waitUntil: vi.fn((promise: Promise<any>) => promise),
+      passThroughOnException: vi.fn(),
+    } as unknown as ExecutionContext;
+  });
+
+  describe('MOD-5 — modal preset ids must be UUID v4 (FINDING-020)', () => {
+    it('rejection modal refuses a non-UUID id and never calls presets-api', async () => {
+      const response = await handlePresetRejectionModal(
+        modal('preset_reject_modal_../../presets/abc', 'rejection_reason', 'A perfectly valid reason'),
+        env,
+        ctx,
+      );
+      const json = (await response.json()) as any;
+
+      expect(json.data.flags).toBe(64);
+      expect(json.data.embeds[0].description).toContain('Invalid preset ID');
+      expect(json.data.allowed_mentions).toEqual({ parse: [] });
+      expect(ctx.waitUntil).not.toHaveBeenCalled();
+      expect(presetApi.rejectPreset).not.toHaveBeenCalled();
+    });
+
+    it('revert modal refuses a non-UUID id and never calls presets-api', async () => {
+      const response = await handlePresetRevertModal(
+        modal('preset_revert_modal_not-a-uuid', 'revert_reason', 'A perfectly valid reason'),
+        env,
+        ctx,
+      );
+      const json = (await response.json()) as any;
+
+      expect(json.data.embeds[0].description).toContain('Invalid preset ID');
+      expect(presetApi.revertPreset).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('FINDING-019 — moderator name, reason and preset name are sanitised', () => {
+    it('rejection: escapes markdown / mentions in the edited embed and the log message', async () => {
+      vi.mocked(presetApi.rejectPreset).mockResolvedValueOnce({
+        id: PRESET_ID,
+        name: '[Evil](https://evil.example) preset',
+      } as any);
+
+      await handlePresetRejectionModal(
+        modal(`preset_reject_modal_${PRESET_ID}`, 'rejection_reason', '**too loud** @everyone\nsecond line', '@here Mod'),
+        env,
+        ctx,
+      );
+      await flushWaitUntil();
+
+      const edit = vi.mocked(discordApi.editMessage).mock.calls[0][3] as any;
+      const fields: Array<{ name: string; value: string }> = edit.embeds[0].fields;
+      const action = fields.find((f) => f.name === 'Action')!.value;
+      const reason = fields.find((f) => f.name === 'Reason')!.value;
+      expect(action).not.toContain('@here');
+      expect(reason).toBe('\\*\\*too loud\\*\\* @‍everyone\nsecond line');
+
+      const log = vi.mocked(discordApi.sendMessage).mock.calls[0][2] as any;
+      expect(log.embeds[0].title).not.toMatch(/\[Evil\]\(https:\/\/evil\.example\)/);
+      expect(log.embeds[0].description).not.toContain('@here');
+    });
+
+    it('revert: escapes the preset name and moderator name in the edited embed', async () => {
+      vi.mocked(presetApi.revertPreset).mockResolvedValueOnce({
+        id: PRESET_ID,
+        name: '||spoiler|| `code`',
+      } as any);
+
+      await handlePresetRevertModal(
+        modal(`preset_revert_modal_${PRESET_ID}`, 'revert_reason', 'Reverting a bad edit here', '_Mod_'),
+        env,
+        ctx,
+      );
+      await flushWaitUntil();
+
+      const edit = vi.mocked(discordApi.editMessage).mock.calls[0][3] as any;
+      const fields: Array<{ name: string; value: string }> = edit.embeds[0].fields;
+      expect(fields.find((f) => f.name === 'Preset')!.value).toBe('\\|\\|spoiler\\|\\| \\`code\\`');
+      expect(fields.find((f) => f.name === 'Action')!.value).toBe('Reverted by \\_Mod\\_');
+    });
   });
 });

@@ -12,6 +12,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createMockKV, createMockD1Database } from '@xivdyetools/test-utils';
 import type { Env } from './types/env.js';
 import * as banService from './services/ban-service.js';
+import * as presetApi from './services/preset-api.js';
 import * as rateLimit from './middleware/rate-limit.js';
 
 vi.mock('./services/ban-service.js', () => ({
@@ -111,5 +112,88 @@ describe('handleAutocomplete moderator gate', () => {
     expect((logger as { error: { mock: { calls: unknown[] } } }).error.mock.calls).toEqual([]);
     expect(json.data.choices).toHaveLength(1);
     expect(json.data.choices[0].name).toContain('banned-person');
+  });
+});
+
+// MOD-13 / MOD-14 (FINDING-034) and choice-name bounds (FINDING-019/034)
+describe('handleAutocomplete — FINDING-034 follow-ups', () => {
+  let env: Env;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    rateLimit.resetRateLimiterInstance();
+    env = {
+      DISCORD_PUBLIC_KEY: 'k',
+      DISCORD_TOKEN: 't',
+      DISCORD_CLIENT_ID: 'app',
+      MODERATOR_IDS: '111111111111111111',
+      MODERATION_CHANNEL_ID: 'channel-mod',
+      SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
+      BOT_API_SECRET: 's',
+      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
+      DB: createMockD1Database() as unknown as D1Database,
+      KV: createMockKV() as unknown as KVNamespace,
+      PRESETS_API: undefined,
+      PRESETS_API_URL: 'https://presets-api.example.com',
+    };
+  });
+
+  it('MOD-13: the preset_id autocomplete sends the moderator identity to presets-api', async () => {
+    const interaction = {
+      id: 'int-1',
+      token: 'tok',
+      application_id: 'app',
+      type: 4,
+      channel_id: 'channel-mod',
+      member: { user: { id: '111111111111111111', username: 'mod' } },
+      data: {
+        name: 'preset',
+        options: [
+          {
+            name: 'moderate',
+            type: 1,
+            options: [
+              { name: 'action', type: 3, value: 'approve' },
+              { name: 'preset_id', type: 3, value: 'blu', focused: true },
+            ],
+          },
+        ],
+      },
+    } as unknown as AutocompleteInteraction;
+
+    await handleAutocomplete(interaction, env, ctx, logger);
+
+    expect(presetApi.searchPresetsForAutocomplete).toHaveBeenCalledWith(
+      env,
+      'blu',
+      expect.objectContaining({ status: 'pending', userDiscordId: '111111111111111111' }),
+    );
+  });
+
+  it('MOD-14: unban autocomplete only offers discord-id targets (xivauth-only bans cannot be unbanned here)', async () => {
+    vi.mocked(banService.searchBannedUsers).mockResolvedValueOnce([
+      { discordId: '999999999999999999', xivAuthId: null, username: 'discord-person' },
+      { discordId: null, xivAuthId: 'c2d9d2c4-0000-4000-8000-000000000000', username: 'xivauth-only' },
+    ] as never);
+
+    const res = await handleAutocomplete(autocompleteInteraction('111111111111111111', 'unban_user'), env, ctx, logger);
+    const json = (await res.json()) as { data: { choices: Array<{ name: string; value: string }> } };
+
+    expect(json.data.choices).toHaveLength(1);
+    expect(json.data.choices[0].value).toBe('999999999999999999');
+    expect(json.data.choices[0].name).toContain('discord-person');
+  });
+
+  it('caps autocomplete choice names at 100 characters (Discord rejects longer ones)', async () => {
+    vi.mocked(banService.searchPresetAuthors).mockResolvedValueOnce([
+      { discordId: '555555555555555555', username: 'x'.repeat(200), presetCount: 3 },
+    ] as never);
+
+    const res = await handleAutocomplete(autocompleteInteraction('111111111111111111', 'ban_user'), env, ctx, logger);
+    const json = (await res.json()) as { data: { choices: Array<{ name: string; value: string }> } };
+
+    expect(json.data.choices).toHaveLength(1);
+    expect([...json.data.choices[0].name].length).toBeLessThanOrEqual(100);
+    expect(json.data.choices[0].value).toBe('555555555555555555');
   });
 });

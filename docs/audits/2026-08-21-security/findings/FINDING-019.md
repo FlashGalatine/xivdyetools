@@ -20,3 +20,7 @@ One shared `escapeDiscordMarkdown()` / `sanitizeForEmbed()` in `@xivdyetools/bot
 
 ## References
 - Evidence: `../evidence/review-discord-worker.md` (DW-1, DW-2, DW-10, DW-16), `../evidence/review-presets-api.md` (PAPI-6), `../evidence/review-moderation-worker.md` (MOD-6), `../evidence/review-infra-stoat.md` (STOAT-4)
+
+## Status
+**IN PROGRESS 2026-08-21** — shared helpers shipped in `@xivdyetools/bot-logic` 2.1.0 (`escapeDiscordMarkdown`, `sanitizeEmbedText`, `ALLOWED_MENTIONS_NONE`); per-app adoption below.
+- moderation-worker 1.5.0 (MOD-6): new `utils/embed-text.ts` (`sanitizeName`/`sanitizeUserName`/`sanitizeReason` over the shared `sanitizeEmbedText`) applied to every user-sourced string in embeds/messages incl. masked-link labels; `allowed_mentions: ALLOWED_MENTIONS_NONE` defaulted in `utils/response.ts` + `utils/discord-api.ts`.

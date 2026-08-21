@@ -800,3 +800,128 @@ describe('isBanReasonModal', () => {
     expect(isBanReasonModal('ban_reason_modal')).toBe(false);
   });
 });
+
+// ============================================================================
+// 2026-08-21 security audit — FINDING-019 / FINDING-034 (MOD-8)
+// ============================================================================
+describe('ban reason modal — security audit remediations', () => {
+  let env: Env;
+  let ctx: ExecutionContext;
+  let db: ReturnType<typeof createMockD1Database>;
+  const TARGET = '123456789012345678';
+
+  const modal = (reason: string, username = 'Moderator') => ({
+    id: 'int-1',
+    token: 'token-1',
+    application_id: 'app-123',
+    data: {
+      custom_id: `ban_reason_modal_${TARGET}`,
+      components: [{ type: 1, components: [{ type: 4, custom_id: 'ban_reason', value: reason }] }],
+    },
+    member: { user: { id: 'mod-1', username } },
+  });
+
+  const flushWaitUntil = async () => {
+    const calls = vi.mocked(ctx.waitUntil).mock.calls;
+    const p = calls[calls.length - 1]?.[0];
+    if (p) await p;
+  };
+
+  beforeEach(() => {
+    db = createMockD1Database();
+    vi.clearAllMocks();
+    vi.mocked(presetApi.isModerator).mockReturnValue(true);
+    env = {
+      DISCORD_PUBLIC_KEY: 'test-key',
+      DISCORD_TOKEN: 'test-bot-token',
+      DISCORD_CLIENT_ID: 'app-123',
+      MODERATOR_IDS: 'mod-1,mod-2',
+      MODERATION_CHANNEL_ID: 'channel-mod',
+      SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
+      BOT_API_SECRET: 'test-secret',
+      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
+      DB: db as unknown as D1Database,
+      KV: undefined as unknown as KVNamespace,
+      PRESETS_API: undefined,
+      PRESETS_API_URL: 'https://presets-api.example.com',
+    };
+    ctx = {
+      waitUntil: vi.fn((promise: Promise<any>) => promise),
+      passThroughOnException: vi.fn(),
+    } as unknown as ExecutionContext;
+  });
+
+  it('FINDING-019: the D1-sourced username, moderator name and reason are sanitised everywhere they render', async () => {
+    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('[Bad](https://evil.example) @everyone');
+    vi.mocked(banService.banUser).mockResolvedValueOnce({ success: true, presetsHidden: 2 });
+
+    const response = await handleBanReasonModal(
+      modal('**spam** <@&123456789012345678>\nline two', '@here Mod'),
+      env,
+      ctx,
+    );
+    const json = (await response.json()) as any;
+
+    // the immediate UPDATE_MESSAGE
+    expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
+    expect(json.data.allowed_mentions).toEqual({ parse: [] });
+    expect(json.data.embeds[0].description).not.toMatch(/\[Bad\]\(https:\/\/evil\.example\)/);
+    expect(json.data.embeds[0].description).not.toContain('@everyone');
+
+    await flushWaitUntil();
+
+    // the channel post
+    const post = vi.mocked(discordApi.sendMessage).mock.calls.at(-1)?.[2] as any;
+    const embed = post.embeds[0];
+    expect(embed.description).not.toMatch(/\[Bad\]\(https:\/\/evil\.example\)/);
+    expect(embed.description).not.toContain('@everyone');
+    const fields: Array<{ name: string; value: string }> = embed.fields;
+    expect(fields.find((f) => f.name === 'Banned By')!.value).not.toContain('@here');
+    expect(fields.find((f) => f.name === 'Reason')!.value).toBe(
+      '\\*\\*spam\\*\\* @123456789012345678\nline two',
+    );
+    // the stored reason is the moderator's raw text (sanitising is a render concern)
+    expect(banService.banUser).toHaveBeenCalledWith(
+      env.DB,
+      TARGET,
+      '[Bad](https://evil.example) @everyone',
+      'mod-1',
+      '**spam** <@&123456789012345678>\nline two',
+    );
+  });
+
+  it('MOD-8: a failed ban posts only the service message and logs the cause', async () => {
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() } as never;
+    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('Someone');
+    const cause = new Error('D1_ERROR: disk I/O error: SQLITE_IOERR');
+    vi.mocked(banService.banUser).mockResolvedValueOnce({
+      success: false,
+      presetsHidden: 0,
+      error: 'Failed to ban user.',
+      cause,
+    });
+
+    await handleBanReasonModal(modal('A valid reason for the ban'), env, ctx, logger);
+    await flushWaitUntil();
+
+    const post = vi.mocked(discordApi.sendMessage).mock.calls.at(-1)?.[2] as any;
+    expect(post.embeds[0].description).toBe('Failed to ban user.');
+    expect(post.embeds[0].description).not.toContain('SQLITE');
+    expect((logger as any).error).toHaveBeenCalledWith(expect.stringContaining('Ban failed'), cause);
+  });
+
+  it('MOD-8: a thrown D1 error is not echoed into the channel', async () => {
+    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('Someone');
+    vi.mocked(banService.banUser).mockRejectedValueOnce(
+      new Error('D1_ERROR: UNIQUE constraint failed: banned_users.discord_id: SQLITE_CONSTRAINT'),
+    );
+
+    await handleBanReasonModal(modal('A valid reason for the ban'), env, ctx);
+    await flushWaitUntil();
+
+    const post = vi.mocked(discordApi.sendMessage).mock.calls.at(-1)?.[2] as any;
+    expect(post.embeds[0].description).not.toContain('banned_users');
+    expect(post.embeds[0].description).not.toContain('SQLITE');
+    expect(post.embeds[0].description).toContain('An unexpected error occurred');
+  });
+});
