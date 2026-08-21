@@ -247,7 +247,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| **v1.5.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-003) — per-user limiter uses native `RL_COMMAND` / `RL_AUTOCOMPLETE` rate-limit bindings, KV fallback only** |
+| **v1.5.0** | **Aug 2026** | **2026-08-21 security audit — native `RL_COMMAND` / `RL_AUTOCOMPLETE` rate-limit bindings (FINDING-003); autocomplete moderator-gated (FINDING-006); ban-flow `custom_id`s carry only the snowflake, username resolved from D1 (FINDING-007); command registration guild-scoped** |
 | **v1.4.0** | **Aug 2026** | **Image-only queue entries marked instead of mis-approved; new preset category rows; `worker-kit`; dev/prod `wrangler.toml` split (bare deploy = routeless `-dev` worker)** |
 | **v1.3.0** | **Jul 2026** | **2026-07-18 audit (Sprint 5) — BUG-035 throw-safe outcome-checked Discord API wrappers (failures logged, not silently dropped), BUG-073 `MODERATOR_IDS` parsed via the shared `@xivdyetools/bot-logic` grammar** |
 | **v1.2.0** | **Apr 2026** | **SEC-001 global `onError` handler prevents stack-trace leakage; SEC-005 placeholder `DISCORD_CLIENT_ID` detection at startup; migrated request-ID/logger/rate-limit middleware to `@xivdyetools/worker-middleware`; ARCH-001 removed `nodejs_compat`; BUG-001 strict TypeScript checks** |

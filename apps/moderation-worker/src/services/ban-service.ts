@@ -221,6 +221,34 @@ export async function getUserForBanConfirmation(
   };
 }
 
+/**
+ * FINDING-007 (2026-08-21 audit): the display name a preset author is known
+ * by, resolved at click/submit time so it no longer has to ride along inside
+ * Discord `custom_id`s (100-char cap — long CJK/emoji names overflowed it and
+ * made the user un-bannable). Most recent preset wins when names differ.
+ *
+ * @returns the author name, or null when the user has no presets
+ */
+export async function getPresetAuthorName(
+  db: D1Database,
+  discordId: string
+): Promise<string | null> {
+  const row = await db
+    .prepare(
+      `
+      SELECT author_name
+      FROM presets
+      WHERE author_discord_id = ?
+      ORDER BY created_at DESC
+      LIMIT 1
+      `
+    )
+    .bind(discordId)
+    .first<{ author_name: string | null }>();
+
+  return row?.author_name ?? null;
+}
+
 // ============================================================================
 // Ban Operations
 // ============================================================================

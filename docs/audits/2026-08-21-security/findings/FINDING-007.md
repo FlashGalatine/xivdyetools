@@ -22,3 +22,6 @@ Do not carry the username in `custom_id`. Keep only the snowflake (`ban_confirm_
 ## References
 - Discord API: component `custom_id` max length 100
 - Evidence: `../evidence/review-moderation-worker.md` (MOD-2)
+
+## Status
+**FIXED 2026-08-21** — `fix(moderation-worker): moderator-gate autocomplete, id-only ban custom_ids (FINDING-006/007)`: `ban_confirm_<id>` / `ban_reason_modal_<id>` carry only the Discord snowflake (validated `^\d{17,20}$`, MOD-5); username resolved at submit time via new `banService.getPresetAuthorName()` (legacy suffixed ids still accepted); regression test: 32-char CJK username → custom_id `ban_confirm_<id>` ≤ 100 chars.

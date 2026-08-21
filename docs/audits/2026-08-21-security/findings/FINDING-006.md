@@ -32,3 +32,6 @@ Disclosure of the banned-user list and author identities to non-moderators; smal
 
 ## References
 - Evidence: `../evidence/review-moderation-worker.md` (MOD-1, MOD-3, authorization matrix)
+
+## Status
+**FIXED 2026-08-21** — `fix(moderation-worker): moderator-gate autocomplete, id-only ban custom_ids (FINDING-006/007)`: moderation-worker 1.5.0 — `handleAutocomplete` enforces `MODERATOR_IDS` (non-moderators get `choices: []`, D1 never queried), increment under `ctx.waitUntil`; `register-commands` sets `default_member_permissions` (Manage Server), `dm_permission: false`, guild-only contexts (re-register required).

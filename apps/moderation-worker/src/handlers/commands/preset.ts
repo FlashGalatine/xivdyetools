@@ -20,7 +20,6 @@ import {
   errorEmbed,
   successEmbed,
   isValidUuid,
-  encodeBase64Url,
 } from '../../utils/response.js';
 import { editOriginalResponse, safeSendMessage } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
@@ -484,7 +483,11 @@ async function handleBanUserSubcommand(
               style: 4, // Danger (red)
               label: t.t('ban.yesBan'),
               emoji: { name: '\uD83D\uDD28' },
-              custom_id: `ban_confirm_${targetUserId}_${encodeBase64Url(user.username)}`,
+              // FINDING-007: id only — the username used to ride along base64url-
+              // encoded and overflowed Discord's 100-char custom_id cap for long
+              // CJK/emoji names, which made those users un-bannable. The reason
+              // modal resolves the name from D1 at submit time.
+              custom_id: `ban_confirm_${targetUserId}`,
             },
             {
               type: 2, // Button

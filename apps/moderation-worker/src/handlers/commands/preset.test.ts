@@ -1176,10 +1176,49 @@ describe('handlePresetCommand', () => {
         ]),
       );
       expect(json.data.components[0].components).toHaveLength(2);
-      expect(json.data.components[0].components[0].custom_id).toBe(
-        `ban_confirm_target-user_${encodeBase64Url('TargetUser')}`,
-      );
+      // FINDING-007: the confirm button carries ONLY the target id — the
+      // username used to ride along base64url-encoded and overflowed
+      // Discord's 100-char custom_id cap for long CJK/emoji names
+      expect(json.data.components[0].components[0].custom_id).toBe('ban_confirm_target-user');
       expect(json.data.flags).toBe(64); // Ephemeral
+    });
+
+    it('FINDING-007: confirm custom_id stays within 100 chars for a 32-character CJK username', async () => {
+      vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(banService.getUserForBanConfirmation).mockResolvedValue({
+        user: {
+          discordId: '123456789012345678',
+          username: '彩'.repeat(32),
+          presetCount: 1,
+        },
+        recentPresets: [],
+      });
+
+      const interaction: DiscordInteraction = {
+        id: 'int-1',
+        token: 'token-1',
+        application_id: 'app-123',
+        channel_id: 'channel-moderation',
+        data: {
+          name: 'preset',
+          options: [
+            {
+              name: 'ban_user',
+              type: 1,
+              options: [{ name: 'user', type: 3, value: '123456789012345678' }],
+            },
+          ],
+        },
+        member: { user: { id: 'mod-1', username: 'Moderator' } },
+      };
+
+      const response = await handlePresetCommand(interaction, env, ctx, t);
+      const json = (await response.json()) as any;
+
+      const customId = json.data.components[0].components[0].custom_id as string;
+      expect(customId).toBe('ban_confirm_123456789012345678');
+      expect(customId.length).toBeLessThanOrEqual(100);
+      expect(customId).not.toContain(encodeBase64Url('彩'.repeat(32)));
     });
 
     it('should show "No presets found" when user has no recent presets', async () => {

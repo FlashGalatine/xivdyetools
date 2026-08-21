@@ -166,7 +166,7 @@ app.post('/', async (c) => {
 
   // Handle Autocomplete
   if (interactionType === InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE) {
-    return handleAutocomplete(interaction, env, logger);
+    return handleAutocomplete(interaction, env, c.executionCtx as ExecutionContext, logger);
   }
 
   // Handle Message Components (buttons, select menus)
@@ -252,22 +252,38 @@ async function handleCommand(
 
 /**
  * Handle autocomplete interactions
+ *
+ * Exported for tests (the interactions route is Ed25519-signed).
  */
-async function handleAutocomplete(
+export async function handleAutocomplete(
   interaction: DiscordInteraction,
   env: Env,
+  ctx: ExecutionContext,
   logger: ExtendedLogger
 ): Promise<Response> {
   const commandName = interaction.data?.name;
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
   const options = interaction.data?.options || [];
 
-  if (!userId) {
-    logger.error('Unable to identify user from autocomplete interaction', { commandName });
-    return Response.json({
+  const noChoices = (): Response =>
+    Response.json({
       type: InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
       data: { choices: [] },
     });
+
+  if (!userId) {
+    logger.error('Unable to identify user from autocomplete interaction', { commandName });
+    return noChoices();
+  }
+
+  // FINDING-006 (2026-08-21 security audit): every command, button and modal
+  // enforces the MODERATOR_IDS allowlist — autocomplete must too. The
+  // ban_user / unban_user branches query production D1 directly and would
+  // otherwise hand the banned-user list and author name → Discord-ID pairs to
+  // anyone who can see the command. Non-moderators get an empty list, silently.
+  if (!presetApi.isModerator(env, userId)) {
+    logger.warn('Autocomplete from non-moderator ignored', { userId, commandName });
+    return noChoices();
   }
 
   // Check rate limit for autocomplete (higher limit due to typing)
@@ -292,10 +308,19 @@ async function handleAutocomplete(
     });
   }
 
-  // Increment rate limit counter (non-blocking)
-  incrementRateLimit(env.KV, userId, 'autocomplete', 3, moderationRateLimitBindings(env)).catch((err) => {
-    logger.error('Failed to increment autocomplete rate limit', err instanceof Error ? err : undefined);
-  });
+  // Increment rate limit counter (non-blocking, but kept alive past the
+  // response — MOD-3: a fire-and-forget promise could be cancelled with the
+  // isolate, silently dropping the increment)
+  ctx.waitUntil(
+    incrementRateLimit(env.KV, userId, 'autocomplete', 3, moderationRateLimitBindings(env)).catch(
+      (err) => {
+        logger.error(
+          'Failed to increment autocomplete rate limit',
+          err instanceof Error ? err : undefined
+        );
+      }
+    )
+  );
 
   // Find the focused option (the one the user is currently typing in)
   let focusedOption: { name: string; value?: string | number | boolean; focused?: boolean } | undefined;

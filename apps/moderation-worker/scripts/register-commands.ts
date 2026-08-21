@@ -42,6 +42,15 @@ const commands = [
   {
     name: 'preset',
     description: 'Preset moderation commands (moderators only)',
+    // FINDING-006 (2026-08-21 security audit): hide the command from everyone
+    // without Manage Server and keep it out of DMs / user installs. The
+    // handlers still enforce MODERATOR_IDS server-side; this narrows who can
+    // even see (and trigger autocomplete for) the command. Re-register after
+    // changing these: `DISCORD_GUILD_ID=<moderation guild> pnpm run register-commands`.
+    default_member_permissions: '32', // MANAGE_GUILD
+    dm_permission: false,
+    contexts: [0], // GUILD only
+    integration_types: [0], // guild install only
     options: [
       {
         name: 'moderate',

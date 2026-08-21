@@ -13,9 +13,14 @@ Security audit remediation (docs/audits/2026-08-21-security, FINDING-003). Minor
 
 - **Per-user rate limiting now uses the native Workers Rate Limiting bindings `RL_COMMAND` (25 / 60 s = 20 + 5 burst) and `RL_AUTOCOMPLETE` (70 / 60 s = 60 + 10)** via `CloudflareRateLimiter` (`@xivdyetools/worker-kit` 1.1.0). The KV-backed limiter could not throttle a fast client (KV 1 write/s/key + swallowed put failures + fail-open), which mattered most on the autocomplete path that queries production D1. `checkRateLimit` / `incrementRateLimit` take an optional trailing `bindings` argument (`moderationRateLimitBindings(env)`); without it they keep using KV, so dev/tests are unchanged.
 
+- **Autocomplete is moderator-gated** (FINDING-006). Every command, button and modal already enforced `MODERATOR_IDS`; autocomplete did not, yet `/preset ban_user` / `unban_user` autocomplete query the production presets D1 directly and returned the live banned-user list and author name → Discord-ID pairs to anyone who could see the command. Non-moderators now get an empty choice list. The autocomplete rate-limit increment also moved under `ctx.waitUntil` (MOD-3). `handleAutocomplete` is exported for tests.
+- **Ban flow no longer embeds the username in `custom_id`s** (FINDING-007). `ban_confirm_<id>_<base64 username>` / `ban_reason_modal_<id>_<…>` overflowed Discord's 100-char `custom_id` cap for ≈17 CJK / 13 emoji characters, so users with long display names could not be banned at all. The button and modal ids now carry only the Discord snowflake (validated as such — MOD-5), and the reason modal resolves the name from D1 (`banService.getPresetAuthorName`) at submit time; in-flight legacy ids are still accepted.
+- **Command registration narrowed** (`scripts/register-commands.ts`): `default_member_permissions` = Manage Server, `dm_permission: false`, guild contexts / guild install only. Re-register with `DISCORD_GUILD_ID=<moderation guild> pnpm run register-commands` after deploying.
+
 ### Deploy notes
 
 - `[[ratelimits]]` bindings need no resource creation (`namespace_id` 1031/1032 prod, 1033/1034 dev).
+- Re-run `register-commands` (guild-scoped) so the new command permissions take effect.
 
 ## [1.4.0] - 2026-08-16
 

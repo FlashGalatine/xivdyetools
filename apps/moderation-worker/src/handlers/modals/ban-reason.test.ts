@@ -25,6 +25,9 @@ vi.mock('../../services/preset-api.js', async () => {
 
 vi.mock('../../services/ban-service.js', () => ({
   banUser: vi.fn(),
+  // FINDING-007: the modal custom_id carries only the id; the username is
+  // resolved from D1 at submit time
+  getPresetAuthorName: vi.fn(),
 }));
 
 describe('handleBanReasonModal', () => {
@@ -69,7 +72,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_user-123_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
         components: [
           {
             type: 1,
@@ -101,7 +104,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_user-123_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
         components: [
           {
             type: 1,
@@ -115,7 +118,7 @@ describe('handleBanReasonModal', () => {
           },
         ],
       },
-      member: { user: { id: 'user-123', username: 'NormalUser' } },
+      member: { user: { id: '123456789012345678', username: 'NormalUser' } },
     };
 
     const response = await handleBanReasonModal(interaction, env, ctx);
@@ -194,7 +197,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_user-123_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
         components: [
           {
             type: 1,
@@ -225,7 +228,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_user-123_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
         components: [],
       },
       member: { user: { id: 'mod-1', username: 'Moderator' } },
@@ -235,6 +238,46 @@ describe('handleBanReasonModal', () => {
     const json = (await response.json()) as any;
 
     expect(json.data.embeds[0].description).toContain('valid ban reason');
+  });
+
+  it('FINDING-007: resolves the target username from D1 when the custom_id carries only the id', async () => {
+    vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
+
+    vi.mocked(presetApi.isModerator).mockReturnValue(true);
+    // Once — vi.clearAllMocks() keeps implementations, so a sticky value would
+    // leak into the legacy-suffix tests below
+    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('ResolvedFromDb');
+    vi.mocked(banService.banUser).mockResolvedValue({ success: true, presetsHidden: 2 });
+
+    const interaction = {
+      id: 'int-1',
+      token: 'token-1',
+      application_id: 'app-123',
+      data: {
+        custom_id: 'ban_reason_modal_123456789012345678',
+        components: [
+          {
+            type: 1,
+            components: [{ type: 4, custom_id: 'ban_reason', value: 'Repeatedly posted inappropriate content' }],
+          },
+        ],
+      },
+      member: { user: { id: 'mod-1', username: 'Moderator' } },
+    };
+
+    const response = await handleBanReasonModal(interaction, env, ctx);
+    const json = (await response.json()) as any;
+
+    expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
+    expect(json.data.embeds[0].description).toContain('ResolvedFromDb');
+    expect(banService.getPresetAuthorName).toHaveBeenCalledWith(env.DB, '123456789012345678');
+    expect(banService.banUser).toHaveBeenCalledWith(
+      env.DB,
+      '123456789012345678',
+      'ResolvedFromDb',
+      'mod-1',
+      'Repeatedly posted inappropriate content',
+    );
   });
 
   it('should return processing message and ban user', async () => {
@@ -252,7 +295,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: `ban_reason_modal_user-123_${encodedUsername}`,
+        custom_id: `ban_reason_modal_123456789012345678_${encodedUsername}`,
         components: [
           {
             type: 1,
@@ -299,7 +342,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: `ban_reason_modal_user-456_${encodedUsername}`,
+        custom_id: `ban_reason_modal_123456789012345679_${encodedUsername}`,
         components: [
           {
             type: 1,
@@ -325,7 +368,7 @@ describe('handleBanReasonModal', () => {
 
     expect(banService.banUser).toHaveBeenCalledWith(
       db,
-      'user-456',
+      '123456789012345679',
       'SpamUser',
       'mod-1',
       'Spamming inappropriate presets',
@@ -340,7 +383,7 @@ describe('handleBanReasonModal', () => {
             description: expect.stringContaining('SpamUser'),
             color: 0xed4245,
             fields: expect.arrayContaining([
-              expect.objectContaining({ name: 'User ID', value: 'user-456' }),
+              expect.objectContaining({ name: 'User ID', value: '123456789012345679' }),
               expect.objectContaining({ name: 'Presets Hidden', value: '7' }),
               expect.objectContaining({ name: 'Banned By', value: 'ModUser' }),
               expect.objectContaining({ name: 'Reason', value: 'Spamming inappropriate presets' }),
@@ -365,7 +408,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_user-123_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
         components: [
           {
             type: 1,
@@ -407,7 +450,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_user-123_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
         components: [
           {
             type: 1,
@@ -453,7 +496,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_user-123_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
         components: [
           {
             type: 1,
@@ -504,7 +547,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: `ban_reason_modal_user-789_${encodedUsername}`,
+        custom_id: `ban_reason_modal_123456789012345680_${encodedUsername}`,
         components: [
           {
             type: 1,
@@ -530,7 +573,7 @@ describe('handleBanReasonModal', () => {
 
     expect(banService.banUser).toHaveBeenCalledWith(
       db,
-      'user-789',
+      '123456789012345680',
       'Test_User_Name',
       'mod-1',
       'Valid ban reason',
@@ -549,7 +592,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_user-123_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
         components: [
           {
             type: 1,
@@ -601,7 +644,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: `ban_reason_modal_user-123_${encodedUsername}`,
+        custom_id: `ban_reason_modal_123456789012345678_${encodedUsername}`,
         components: [
           {
             type: 1,
@@ -627,7 +670,7 @@ describe('handleBanReasonModal', () => {
 
     expect(banService.banUser).toHaveBeenCalledWith(
       db,
-      'user-123',
+      '123456789012345678',
       'User.Name-123',
       'mod-1',
       'Valid ban reason here',
@@ -648,7 +691,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_user-123_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
         components: [
           {
             type: 1,
@@ -697,7 +740,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_user-123_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
         components: [
           {
             type: 1,
@@ -739,7 +782,7 @@ describe('handleBanReasonModal', () => {
 
 describe('isBanReasonModal', () => {
   it('should return true for ban reason modals', () => {
-    expect(isBanReasonModal('ban_reason_modal_user-123_TestUser')).toBe(true);
+    expect(isBanReasonModal('ban_reason_modal_123456789012345678_TestUser')).toBe(true);
     expect(isBanReasonModal('ban_reason_modal_456_AnotherUser')).toBe(true);
   });
 

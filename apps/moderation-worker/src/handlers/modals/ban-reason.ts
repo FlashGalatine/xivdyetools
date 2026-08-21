@@ -55,39 +55,15 @@ export async function handleBanReasonModal(
     });
   }
 
-  // Parse custom_id: ban_reason_modal_{discordId}_{base64username}
+  // Parse custom_id: ban_reason_modal_{discordId}
+  // FINDING-007 (2026-08-21 audit): the id is all the modal carries; the
+  // username is resolved from D1 here. Older modals
+  // (ban_reason_modal_{discordId}_{base64username}) still work — their
+  // suffix is used only as a fallback when D1 has no name.
   const idPart = customId.replace('ban_reason_modal_', '');
-  const underscoreIndex = idPart.indexOf('_');
-
-  if (underscoreIndex === -1) {
-    return Response.json({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        embeds: [errorEmbed('Error', 'Invalid modal data.')],
-        flags: 64,
-      },
-    });
-  }
-
-  const targetUserId = idPart.substring(0, underscoreIndex);
-  const encodedUsername = idPart.substring(underscoreIndex + 1);
-
-  let targetUsername: string;
-  try {
-    targetUsername = decodeBase64Url(encodedUsername);
-  } catch (error) {
-    logger?.error(
-      'Failed to decode username from modal custom_id',
-      error instanceof Error ? error : undefined
-    );
-    return Response.json({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        embeds: [errorEmbed('Error', 'Invalid modal data.')],
-        flags: 64,
-      },
-    });
-  }
+  const separator = idPart.indexOf('_');
+  const targetUserId = separator === -1 ? idPart : idPart.substring(0, separator);
+  const legacyEncodedUsername = separator === -1 ? '' : idPart.substring(separator + 1);
 
   if (!targetUserId) {
     return Response.json({
@@ -97,6 +73,34 @@ export async function handleBanReasonModal(
         flags: 64,
       },
     });
+  }
+  // MOD-5: the id must be a Discord snowflake before it reaches D1 or the API
+  if (!/^\d{17,20}$/.test(targetUserId)) {
+    logger?.warn('Ban reason modal with a malformed target id', { customId });
+    return Response.json({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        embeds: [errorEmbed('Error', 'Invalid modal data.')],
+        flags: 64,
+      },
+    });
+  }
+
+  let targetUsername: string | null = null;
+  try {
+    targetUsername = await banService.getPresetAuthorName(env.DB, targetUserId);
+  } catch (error) {
+    logger?.error('Failed to resolve target username', error instanceof Error ? error : undefined);
+  }
+  if (!targetUsername && legacyEncodedUsername) {
+    try {
+      targetUsername = decodeBase64Url(legacyEncodedUsername);
+    } catch {
+      // ignore — fall through to the id
+    }
+  }
+  if (!targetUsername) {
+    targetUsername = targetUserId;
   }
 
   const reason = extractTextInputValue(interaction.data?.components, 'ban_reason');
