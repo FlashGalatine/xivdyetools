@@ -135,8 +135,24 @@ const translator = {
       'preset.voteRemoved': 'Vote Removed',
       'preset.currentVotes': `Current votes: ${String(vars?.count ?? 0)}`,
       'preset.useShowTip': 'Use /preset show to view details',
+      // F-05c (2026-08-20 i18n audit) — the strings the tests below assert on
+      'preset.invalidStructure': 'Invalid command structure',
+      'preset.none': 'No presets found.',
+      'preset.loadFailed': 'Failed to load presets.',
+      'preset.loadOneFailed': 'Failed to load preset.',
+      'preset.loadRandomFailed': 'Failed to load random preset.',
+      'preset.edit.notOwner': 'You can only edit your own presets.',
+      'preset.edit.invalidDye': 'Invalid dye: {name}',
+      'preset.edit.dyeCount': 'Preset must have 2-5 dyes.',
+      'preset.edit.updatedPending': 'Preset Updated - Pending Review',
+      'preset.edit.updated': 'Preset Updated',
+      'errors.unknownSubcommand': 'Unknown subcommand: {name}',
+      'preset.edit.noFields': 'Please provide at least one field to update.',
+      'preset.edit.duplicateTitle': 'Duplicate Dye Combination',
+      'preset.editFailed': 'Failed to edit preset.',
+      'preset.voteFailed': 'Failed to process vote.',
     };
-    return map[key] ?? key;
+    return (map[key] ?? key).replace(/\{(\w+)\}/g, (m, k: string) => String(vars?.[k] ?? m));
   },
   getLocale: () => 'en',
 };

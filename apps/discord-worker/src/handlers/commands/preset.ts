@@ -90,7 +90,7 @@ export async function handlePresetCommand(
   const subcommand = options.find((opt) => opt.type === 1 || opt.type === 2);
 
   if (!subcommand) {
-    return ephemeralResponse('Invalid command structure');
+    return ephemeralResponse(t.t('preset.invalidStructure'));
   }
 
   // Route to subcommand handler
@@ -134,7 +134,7 @@ export async function handlePresetCommand(
     case 'favorite': {
       // Subcommand group — favorite add/remove/list
       const inner = subcommand.options?.[0];
-      if (!inner) return ephemeralResponse('Invalid command structure');
+      if (!inner) return ephemeralResponse(t.t('preset.invalidStructure'));
       switch (inner.name) {
         case 'add':
           return handleFavoriteAddSubcommand(
@@ -159,12 +159,12 @@ export async function handlePresetCommand(
         case 'list':
           return handleFavoriteListSubcommand(interaction, env, ctx, t, userId, logger);
         default:
-          return ephemeralResponse(`Unknown favorite subcommand: ${inner.name}`);
+          return ephemeralResponse(t.t('errors.unknownSubcommand', { name: `favorite ${inner.name}` }));
       }
     }
 
     default:
-      return ephemeralResponse(`Unknown subcommand: ${subcommand.name}`);
+      return ephemeralResponse(t.t('errors.unknownSubcommand', { name: subcommand.name }));
   }
 }
 
@@ -217,7 +217,7 @@ async function processListCommand(
         embeds: [
           infoEmbed(
             t.t('preset.title'),
-            category ? t.t('preset.noneInCategory') : 'No presets found.',
+            category ? t.t('preset.noneInCategory') : t.t('preset.none'),
           ),
         ],
       });
@@ -233,14 +233,14 @@ async function processListCommand(
 
     const presetLines = response.presets.map((preset, index) => {
       const catIcon = CATEGORY_DISPLAY[preset.category_id]?.icon || '🎨';
-      const author = preset.author_name ? ` by ${preset.author_name}` : '';
+      const author = preset.author_name ? ` ${t.t('preset.byAuthor', { author: preset.author_name })}` : '';
       return `**${index + 1}.** ${catIcon} ${preset.name} (${preset.vote_count}★)${author}`;
     });
 
     const description = [
       presetLines.join('\n'),
       '',
-      `📊 Showing ${response.presets.length} of ${response.total} presets`,
+      `📊 ${t.t('preset.showing', { shown: response.presets.length, total: response.total })}`,
       '',
       t.t('preset.useShowTip'),
     ].join('\n');
@@ -260,7 +260,7 @@ async function processListCommand(
       logger.error('List presets error', error instanceof Error ? error : undefined);
     }
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [errorEmbed(t.t('common.error'), 'Failed to load presets.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('preset.loadFailed'))],
     });
   }
 }
@@ -324,7 +324,7 @@ async function processShowCommand(
       logger.error('Show preset error', error instanceof Error ? error : undefined);
     }
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [errorEmbed(t.t('common.error'), 'Failed to load preset.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('preset.loadOneFailed'))],
     });
   }
 }
@@ -372,7 +372,7 @@ async function processRandomCommand(
         embeds: [
           infoEmbed(
             t.t('preset.randomTitle'),
-            category ? t.t('preset.noneInCategory') : 'No presets found.',
+            category ? t.t('preset.noneInCategory') : t.t('preset.none'),
           ),
         ],
       });
@@ -385,7 +385,7 @@ async function processRandomCommand(
       logger.error('Random preset error', error instanceof Error ? error : undefined);
     }
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [errorEmbed(t.t('common.error'), 'Failed to load random preset.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('preset.loadRandomFailed'))],
     });
   }
 }
@@ -507,8 +507,8 @@ async function processSubmitCommand(
           {
             title: `⚠️ ${t.t('preset.duplicateExists')}`,
             description: [
-              `A preset with the same dyes already exists:`,
-              `**"${response.duplicate.name}"** by ${response.duplicate.author_name || 'Official'}`,
+              t.t('preset.duplicateIntro'),
+              `**"${response.duplicate.name}"** ${t.t('preset.byAuthor', { author: response.duplicate.author_name || t.t('preset.official') })}`,
               `(${response.duplicate.vote_count}★)`,
               '',
               response.vote_added ? `✅ ${t.t('preset.duplicateVoted')}` : '',
@@ -537,13 +537,13 @@ async function processSubmitCommand(
       description: isApproved ? t.t('preset.submittedApproved') : t.t('preset.submittedPending'),
       color: isApproved ? 0x57f287 : 0xfee75c,
       fields: [
-        { name: 'Name', value: preset.name, inline: true },
+        { name: t.t('preset.name'), value: preset.name, inline: true },
         {
-          name: 'Category',
+          name: t.t('common.category'),
           value: CATEGORY_DISPLAY[preset.category_id]?.name || preset.category_id,
           inline: true,
         },
-        { name: 'Dyes', value: `${preset.dyes.length} colors`, inline: true },
+        { name: t.t('common.dyes'), value: t.t('preset.colorCount', { n: preset.dyes.length }), inline: true },
       ],
       footer: { text: t.t('common.footer') },
     };
@@ -567,7 +567,7 @@ async function processSubmitCommand(
     }
     // SECURITY: Use getSafeMessage() to prevent exposing internal API details
     const message =
-      error instanceof PresetAPIError ? t.t(error.getSafeMessageKey()) : 'Failed to submit preset.';
+      error instanceof PresetAPIError ? t.t(error.getSafeMessageKey()) : t.t('preset.submitFailed');
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), message)],
@@ -647,7 +647,7 @@ async function processVoteCommand(
       logger.error('Vote error', error instanceof Error ? error : undefined);
     }
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [errorEmbed(t.t('common.error'), 'Failed to process vote.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('preset.voteFailed'))],
     });
   }
 }
@@ -692,7 +692,7 @@ async function handleEditSubcommand(
   const hasAnyDye = dyeNames.some((d) => d !== undefined);
   if (!newName && !newDescription && !tagsRaw && !hasAnyDye) {
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), 'Please provide at least one field to update.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('preset.edit.noFields'))],
       flags: 64,
     });
   }
@@ -748,7 +748,7 @@ async function processEditCommand(
 
     if (existingPreset.author_discord_id !== userId) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-        embeds: [errorEmbed(t.t('common.error'), 'You can only edit your own presets.')],
+        embeds: [errorEmbed(t.t('common.error'), t.t('preset.edit.notOwner'))],
       });
       return;
     }
@@ -796,7 +796,7 @@ async function processEditCommand(
             }
           } else {
             await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-              embeds: [errorEmbed(t.t('common.error'), `Invalid dye: ${dyeName}`)],
+              embeds: [errorEmbed(t.t('common.error'), t.t('preset.edit.invalidDye', { name: dyeName }))],
             });
             return;
           }
@@ -806,7 +806,7 @@ async function processEditCommand(
       // Validate dye count (2-5)
       if (newDyeIds.length < 2 || newDyeIds.length > 5) {
         await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-          embeds: [errorEmbed(t.t('common.error'), 'Preset must have 2-5 dyes.')],
+          embeds: [errorEmbed(t.t('common.error'), t.t('preset.edit.dyeCount'))],
         });
         return;
       }
@@ -822,12 +822,12 @@ async function processEditCommand(
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           {
-            title: '⚠️ Duplicate Dye Combination',
+            title: `⚠️ ${t.t('preset.edit.duplicateTitle')}`,
             description: [
-              'This dye combination already exists in another preset:',
-              `**"${response.duplicate.name}"** by ${response.duplicate.author_name || 'Unknown'}`,
+              t.t('preset.edit.duplicateIntro'),
+              `**"${response.duplicate.name}"** ${t.t('preset.byAuthor', { author: response.duplicate.author_name || t.t('preset.unknownAuthor') })}`,
               '',
-              'Please use a different dye combination.',
+              t.t('preset.edit.duplicateHint'),
             ].join('\n'),
             color: STATE.error,
           },
@@ -849,22 +849,26 @@ async function processEditCommand(
     const isPending = response.moderation_status === 'pending';
 
     const embed = {
-      title: isPending ? '⏳ Preset Updated - Pending Review' : '✅ Preset Updated',
+      title: isPending ? `⏳ ${t.t('preset.edit.updatedPending')}` : `✅ ${t.t('preset.edit.updated')}`,
       description: isPending
-        ? 'Your changes have been submitted for review due to content moderation.'
-        : 'Your changes have been applied.',
+        ? t.t('preset.edit.pendingDescription')
+        : t.t('preset.edit.appliedDescription'),
       color: isPending ? 0xfee75c : 0x57f287,
       fields: [
-        { name: 'Name', value: updatedPreset.name, inline: true },
+        { name: t.t('preset.name'), value: updatedPreset.name, inline: true },
         {
-          name: 'Category',
+          name: t.t('common.category'),
           value: CATEGORY_DISPLAY[updatedPreset.category_id]?.name || updatedPreset.category_id,
           inline: true,
         },
-        { name: 'Dyes', value: `${updatedPreset.dyes.length} colors`, inline: true },
+        {
+          name: t.t('common.dyes'),
+          value: t.t('preset.colorCount', { n: updatedPreset.dyes.length }),
+          inline: true,
+        },
       ],
       footer: {
-        text: isPending ? 'A moderator will review your changes shortly.' : t.t('common.footer'),
+        text: isPending ? t.t('preset.edit.pendingFooter') : t.t('common.footer'),
       },
     };
 
@@ -882,7 +886,7 @@ async function processEditCommand(
     }
     // SECURITY: Use getSafeMessage() to prevent exposing internal API details
     const message =
-      error instanceof PresetAPIError ? t.t(error.getSafeMessageKey()) : 'Failed to edit preset.';
+      error instanceof PresetAPIError ? t.t(error.getSafeMessageKey()) : t.t('preset.editFailed');
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), message)],
     });
@@ -933,7 +937,9 @@ async function sendPresetEmbed(
     .join('\n');
 
   const categoryDisplay = CATEGORY_DISPLAY[preset.category_id];
-  const author = preset.author_name ? `by ${preset.author_name}` : 'Official';
+  const author = preset.author_name
+    ? t.t('preset.byAuthor', { author: preset.author_name })
+    : t.t('preset.official');
 
   await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
     embeds: [
@@ -1002,7 +1008,7 @@ async function notifySubmissionChannel(
             },
             {
               name: adminT.t('webhook.fields.dyes'),
-              value: `${preset.dyes.length} colors`,
+              value: adminT.t('preset.colorCount', { n: preset.dyes.length }),
               inline: true,
             },
           ],
@@ -1102,7 +1108,7 @@ async function handleFavoriteAddSubcommand(
   const presetInput = options?.find((o) => o.name === 'preset_name')?.value as string | undefined;
   if (!presetInput) {
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), 'preset_name is required')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('preset.favorite.nameRequired'))],
       flags: 64,
     });
   }
@@ -1133,10 +1139,10 @@ async function processFavoriteAdd(
     if (!result.success) {
       const reasonMsg =
         result.reason === 'alreadyExists'
-          ? `**${preset.name}** is already in your favorites.`
+          ? t.t('preset.favorite.alreadyExists', { name: preset.name })
           : result.reason === 'limitReached'
-            ? `You've reached the limit of ${MAX_PRESET_FAVORITES} favorited presets.`
-            : 'Failed to add favorite — please try again.';
+            ? t.t('preset.favorite.limitReached', { max: MAX_PRESET_FAVORITES })
+            : t.t('preset.favorite.addFailed');
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), reasonMsg)],
       });
@@ -1144,7 +1150,10 @@ async function processFavoriteAdd(
     }
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
-        successEmbed('⭐ Favorite added', `**${preset.name}** is now in your favorited presets.`),
+        successEmbed(
+          `⭐ ${t.t('preset.favorite.addedTitle')}`,
+          t.t('preset.favorite.added', { name: preset.name }),
+        ),
       ],
     });
   } catch (error) {
@@ -1173,7 +1182,7 @@ async function handleFavoriteRemoveSubcommand(
   const presetInput = options?.find((o) => o.name === 'preset_name')?.value as string | undefined;
   if (!presetInput) {
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), 'preset_name is required')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('preset.favorite.nameRequired'))],
       flags: 64,
     });
   }
@@ -1203,8 +1212,8 @@ async function processFavoriteRemove(
     if (!result.success) {
       const reasonMsg =
         result.reason === 'notFound'
-          ? `**${presetName}** is not in your favorites.`
-          : 'Failed to remove favorite — please try again.';
+          ? t.t('preset.favorite.notFound', { name: presetName })
+          : t.t('preset.favorite.removeFailed');
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), reasonMsg)],
       });
@@ -1213,8 +1222,8 @@ async function processFavoriteRemove(
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         successEmbed(
-          '🗑️ Favorite removed',
-          `**${presetName}** has been removed from your favorites.`,
+          `🗑️ ${t.t('preset.favorite.removedTitle')}`,
+          t.t('preset.favorite.removed', { name: presetName }),
         ),
       ],
     });
@@ -1257,10 +1266,7 @@ async function processFavoriteList(
     if (ids.length === 0) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
-          infoEmbed(
-            '⭐ Your favorite presets',
-            "You haven't favorited any presets yet. Use `/preset favorite add` to add one.",
-          ),
+          infoEmbed(`⭐ ${t.t('preset.favorite.listTitle')}`, t.t('preset.favorite.empty')),
         ],
       });
       return;
@@ -1273,10 +1279,7 @@ async function processFavoriteList(
     if (presets.length === 0) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
-          infoEmbed(
-            '⭐ Your favorite presets',
-            'All of your favorited presets appear to have been removed. Use `/preset favorite remove` to clean up entries.',
-          ),
+          infoEmbed(`⭐ ${t.t('preset.favorite.listTitle')}`, t.t('preset.favorite.allRemoved')),
         ],
       });
       return;
@@ -1291,7 +1294,7 @@ async function processFavoriteList(
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
-          title: `⭐ Your favorite presets (${presets.length}/${MAX_PRESET_FAVORITES})`,
+          title: `⭐ ${t.t('preset.favorite.listTitleCount', { n: presets.length, max: MAX_PRESET_FAVORITES })}`,
           description: lines.join('\n'),
           color: STATE.warning,
           footer: { text: t.t('common.footer') },
