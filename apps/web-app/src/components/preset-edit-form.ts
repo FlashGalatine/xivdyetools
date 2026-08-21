@@ -22,6 +22,7 @@ import {
 } from '@services/preset-submission-service';
 import { createCategorySelector, type CategorySelection } from './preset-category-selector';
 import { exampleLinkError } from '@shared/example-link';
+import { dyeNameMatches, localizedDyeName } from '@shared/dye-name';
 import type { Dye } from '@xivdyetools/types';
 import type { CommunityPreset } from '@services/community-preset-service';
 import type { EditResult, PresetEditRequest } from '@services/preset-submission-service';
@@ -66,6 +67,29 @@ const MAX_DESC_LENGTH = 200;
 const MIN_DYES = 3;
 const MAX_DYES = 6;
 const MAX_TAGS = 10;
+const MAX_TAG_LENGTH = 30;
+
+// ============================================
+// Localized Counters
+// ============================================
+
+/** "{n}/{max} (min {min})" — the description character counter. */
+function descCounterText(length: number): string {
+  return LanguageService.tInterpolate('preset.counterWithMin', {
+    n: length,
+    max: MAX_DESC_LENGTH,
+    min: MIN_DESC_LENGTH,
+  });
+}
+
+/** "{n}/{max} (min {min})" — the selected-dye counter. */
+function dyeCounterText(count: number): string {
+  return LanguageService.tInterpolate('preset.counterWithMin', {
+    n: count,
+    max: MAX_DYES,
+    min: MIN_DYES,
+  });
+}
 
 // ============================================
 // Show Modal Function
@@ -116,7 +140,7 @@ export function showPresetEditForm(preset: CommunityPreset, onEdit?: OnEditCallb
   // Show modal using ModalService
   ModalService.show({
     type: 'custom',
-    title: 'Edit Preset',
+    title: LanguageService.t('preset.editTitle'),
     content,
     size: 'lg',
     closable: true,
@@ -174,7 +198,7 @@ function createNameInput(state: FormState): HTMLElement {
   const label = document.createElement('label');
   label.className = 'block text-sm font-medium mb-1';
   label.style.color = 'var(--theme-text)';
-  label.textContent = 'Preset Name';
+  label.textContent = LanguageService.t('preset.fieldName');
   label.htmlFor = 'edit-preset-name';
 
   const input = document.createElement('input');
@@ -184,7 +208,7 @@ function createNameInput(state: FormState): HTMLElement {
     'w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500';
   input.style.cssText =
     'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
-  input.placeholder = 'e.g., Dark Knight Abyssal';
+  input.placeholder = LanguageService.t('preset.fieldNamePlaceholder');
   input.maxLength = MAX_NAME_LENGTH;
   input.value = state.name;
 
@@ -219,7 +243,7 @@ function createDescriptionInput(state: FormState): HTMLElement {
   const label = document.createElement('label');
   label.className = 'block text-sm font-medium mb-1';
   label.style.color = 'var(--theme-text)';
-  label.textContent = 'Description';
+  label.textContent = LanguageService.t('preset.fieldDesc');
   label.htmlFor = 'edit-preset-description';
 
   const textarea = document.createElement('textarea');
@@ -228,7 +252,7 @@ function createDescriptionInput(state: FormState): HTMLElement {
     'w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none';
   textarea.style.cssText =
     'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
-  textarea.placeholder = 'Describe your color palette and when to use it...';
+  textarea.placeholder = LanguageService.t('preset.fieldDescPlaceholder');
   textarea.rows = 3;
   textarea.maxLength = MAX_DESC_LENGTH;
   textarea.value = state.description;
@@ -236,11 +260,11 @@ function createDescriptionInput(state: FormState): HTMLElement {
   const counter = document.createElement('div');
   counter.className = 'text-xs mt-1 text-right';
   counter.style.color = 'var(--theme-text-secondary)';
-  counter.textContent = `${state.description.length}/${MAX_DESC_LENGTH} (min ${MIN_DESC_LENGTH})`;
+  counter.textContent = descCounterText(state.description.length);
 
   textarea.addEventListener('input', () => {
     state.description = textarea.value;
-    counter.textContent = `${state.description.length}/${MAX_DESC_LENGTH} (min ${MIN_DESC_LENGTH})`;
+    counter.textContent = descCounterText(state.description.length);
 
     if (state.description.length < MIN_DESC_LENGTH) {
       counter.style.color = '#ef4444';
@@ -266,13 +290,13 @@ function createDyeSelector(state: FormState): HTMLElement {
   const label = document.createElement('label');
   label.className = 'text-sm font-medium';
   label.style.color = 'var(--theme-text)';
-  label.textContent = 'Select Dyes';
+  label.textContent = `${LanguageService.t('preset.dyes')} — ${LanguageService.t('preset.dyesReq')}`;
 
   const counter = document.createElement('span');
   counter.className = 'text-xs';
   counter.id = 'edit-dye-counter';
   counter.style.color = 'var(--theme-text-secondary)';
-  counter.textContent = `${state.selectedDyes.length}/${MAX_DYES} (min ${MIN_DYES})`;
+  counter.textContent = dyeCounterText(state.selectedDyes.length);
 
   labelRow.appendChild(label);
   labelRow.appendChild(counter);
@@ -288,10 +312,15 @@ function createDyeSelector(state: FormState): HTMLElement {
       const chip = document.createElement('div');
       chip.className = 'flex items-center gap-1 px-2 py-1 rounded-full text-xs';
       chip.style.cssText = `background-color: ${dye.hex}; color: ${getContrastColor(dye.hex)};`;
-      chip.innerHTML = `
-        <span>${dye.name}</span>
-        <button type="button" class="ml-1 hover:opacity-75" data-remove="${dye.id}">&times;</button>
-      `;
+      const chipName = document.createElement('span');
+      chipName.textContent = localizedDyeName(dye);
+      const chipRemove = document.createElement('button');
+      chipRemove.type = 'button';
+      chipRemove.className = 'ml-1 hover:opacity-75';
+      chipRemove.dataset.remove = String(dye.id);
+      chipRemove.innerHTML = '&times;';
+      chip.appendChild(chipName);
+      chip.appendChild(chipRemove);
 
       chip.querySelector('button')?.addEventListener('click', () => {
         state.selectedDyes = state.selectedDyes.filter((d) => d.id !== dye.id);
@@ -306,7 +335,7 @@ function createDyeSelector(state: FormState): HTMLElement {
   }
 
   function updateDyeCounter(): void {
-    counter.textContent = `${state.selectedDyes.length}/${MAX_DYES} (min ${MIN_DYES})`;
+    counter.textContent = dyeCounterText(state.selectedDyes.length);
     if (state.selectedDyes.length < MIN_DYES) {
       counter.style.color = '#ef4444';
     } else if (state.selectedDyes.length >= MAX_DYES) {
@@ -324,7 +353,7 @@ function createDyeSelector(state: FormState): HTMLElement {
   // Search input
   const searchInput = document.createElement('input');
   searchInput.type = 'text';
-  searchInput.placeholder = 'Search dyes...';
+  searchInput.placeholder = LanguageService.t('colorPalette.searchPlaceholder');
   searchInput.className = 'w-full px-3 py-2 border-b focus:outline-none';
   searchInput.style.cssText =
     'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
@@ -349,7 +378,7 @@ function createDyeSelector(state: FormState): HTMLElement {
       swatch.type = 'button';
       swatch.className = 'w-8 h-8 rounded border-2 hover:scale-110 transition-transform';
       swatch.style.cssText = `background-color: ${dye.hex}; border-color: transparent;`;
-      swatch.title = dye.name;
+      swatch.title = localizedDyeName(dye);
 
       swatch.addEventListener('click', () => {
         if (state.selectedDyes.length < MAX_DYES) {
@@ -368,7 +397,9 @@ function createDyeSelector(state: FormState): HTMLElement {
       empty.className = 'col-span-full text-center py-4 text-sm';
       empty.style.color = 'var(--theme-text-secondary)';
       empty.textContent =
-        filteredDyes.length === 0 ? 'No dyes found' : 'All matching dyes selected';
+        filteredDyes.length === 0
+          ? LanguageService.t('colorPalette.noDyesFound')
+          : LanguageService.t('preset.allMatchingSelected');
       dyeGrid.appendChild(empty);
     }
   }
@@ -377,7 +408,7 @@ function createDyeSelector(state: FormState): HTMLElement {
     const query = searchInput.value.toLowerCase().trim();
     if (query) {
       filteredDyes = allDyes.filter(
-        (d) => d.name.toLowerCase().includes(query) || d.category.toLowerCase().includes(query)
+        (d) => dyeNameMatches(d, query) || d.category.toLowerCase().includes(query)
       );
     } else {
       filteredDyes = [...allDyes];
@@ -454,7 +485,7 @@ function createTagsInput(state: FormState): HTMLElement {
   const label = document.createElement('label');
   label.className = 'block text-sm font-medium mb-1';
   label.style.color = 'var(--theme-text)';
-  label.textContent = 'Tags (optional)';
+  label.textContent = `${LanguageService.t('preset.fieldTags')} ${LanguageService.t('common.optional')}`;
   label.htmlFor = 'edit-preset-tags';
 
   const input = document.createElement('input');
@@ -464,13 +495,16 @@ function createTagsInput(state: FormState): HTMLElement {
     'w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500';
   input.style.cssText =
     'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
-  input.placeholder = 'e.g., dark, edgy, tank (comma-separated)';
+  input.placeholder = LanguageService.t('preset.fieldTagsPlaceholder');
   input.value = state.tags;
 
   const hint = document.createElement('div');
   hint.className = 'text-xs mt-1';
   hint.style.color = 'var(--theme-text-secondary)';
-  hint.textContent = `Max ${MAX_TAGS} tags, 30 chars each`;
+  hint.textContent = LanguageService.tInterpolate('preset.fieldTagsLimit', {
+    max: MAX_TAGS,
+    chars: MAX_TAG_LENGTH,
+  });
 
   input.addEventListener('input', () => {
     state.tags = input.value;
@@ -606,7 +640,7 @@ function createSubmitButton(
   cancelBtn.className = 'px-4 py-2 rounded-lg font-medium transition-colors';
   cancelBtn.style.cssText =
     'background-color: var(--theme-card-background); color: var(--theme-text); border: 1px solid var(--theme-border);';
-  cancelBtn.textContent = 'Cancel';
+  cancelBtn.textContent = LanguageService.t('common.cancel');
 
   cancelBtn.addEventListener('click', () => {
     ModalService.dismissTop();
@@ -625,7 +659,7 @@ function createSubmitButton(
   submitBtn.id = 'save-preset-btn';
   submitBtn.className = 'px-4 py-2 rounded-lg font-medium text-white transition-colors';
   submitBtn.style.cssText = 'background-color: var(--theme-primary);';
-  submitBtn.textContent = 'Save Changes';
+  submitBtn.textContent = LanguageService.t('preset.saveChanges');
 
   submitBtn.addEventListener('mouseenter', () => {
     submitBtn.style.opacity = '0.9';
@@ -669,20 +703,28 @@ function createSubmitButton(
     // change was already valid, and one that did must be checked either way.
     const errors: string[] = [];
     if (name.length < MIN_NAME_LENGTH) {
-      errors.push(`Name must be at least ${MIN_NAME_LENGTH} characters`);
+      errors.push(
+        LanguageService.tInterpolate('preset.validation.nameMin', { n: MIN_NAME_LENGTH })
+      );
     }
     if (description.length < MIN_DESC_LENGTH) {
-      errors.push(`Description must be at least ${MIN_DESC_LENGTH} characters`);
+      errors.push(
+        LanguageService.tInterpolate('preset.validation.descMin', { n: MIN_DESC_LENGTH })
+      );
     }
     if (state.selectedDyes.length < MIN_DYES) {
-      errors.push(`Must include at least ${MIN_DYES} dyes`);
+      errors.push(LanguageService.tInterpolate('preset.validation.dyesMin', { n: MIN_DYES }));
     }
     if (state.selectedDyes.length > MAX_DYES) {
-      errors.push(`Maximum ${MAX_DYES} dyes allowed`);
+      errors.push(LanguageService.tInterpolate('preset.maxDyesAllowed', { count: MAX_DYES }));
     }
 
     if (errors.length > 0) {
-      ToastService.error(errors.join('. '));
+      // One toast per error: joining them with ". " builds an English sentence
+      // out of translated fragments, which does not survive translation.
+      for (const error of errors) {
+        ToastService.error(error);
+      }
       return;
     }
 
@@ -698,7 +740,7 @@ function createSubmitButton(
     }
 
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Saving...';
+    submitBtn.textContent = LanguageService.t('preset.saving');
 
     try {
       let result: EditResult = { success: true };
@@ -708,7 +750,7 @@ function createSubmitButton(
 
         if (!result.success) {
           if (result.duplicate) {
-            const dupName = result.duplicate.name || 'another preset';
+            const dupName = result.duplicate.name || LanguageService.t('preset.anotherPreset');
             ToastService.error(
               LanguageService.tInterpolate('preset.duplicateFound', { name: dupName })
             );
@@ -760,7 +802,7 @@ function createSubmitButton(
       ToastService.error(LanguageService.t('errors.saveChangesFailed'));
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Save Changes';
+      submitBtn.textContent = LanguageService.t('preset.saveChanges');
     }
   });
 

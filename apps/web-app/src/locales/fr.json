@@ -1037,7 +1037,25 @@
     "cfgKeepDeletedDesc": "Une palette enregistrée que l'auteur retire reste, marquée",
     "cfgStoredLocally": "Stocké en local",
     "cfgStoredLocallyDesc": "Jamais envoyé au serveur, fonctionne déconnecté",
-    "authorBy": "Créé par {author}"
+    "authorBy": "Créé par {author}",
+    "editTitle": "Modifier le preset",
+    "saveChanges": "Enregistrer les modifications",
+    "saving": "Enregistrement...",
+    "submitting": "Envoi en cours...",
+    "fieldNamePlaceholder": "ex. : Dark Knight Abyssal",
+    "fieldDescPlaceholder": "Décrivez votre palette de couleurs et quand l’utiliser...",
+    "fieldTagsPlaceholder": "ex. : dark, edgy, tank (séparés par des virgules)",
+    "fieldTagsLimit": "{max} tags max., {chars} caractères chacun",
+    "counterWithMin": "{n}/{max} (min. {min})",
+    "allMatchingSelected": "Toutes les teintures correspondantes sont sélectionnées",
+    "clickDyesToAdd": "Cliquez sur les teintures ci-dessous pour les ajouter...",
+    "clickToRemove": "Cliquez pour retirer",
+    "anotherPreset": "un autre préréglage",
+    "validation": {
+      "nameMin": "Le nom doit contenir au moins {n} caractères",
+      "descMin": "La description doit contenir au moins {n} caractères",
+      "dyesMin": "Vous devez inclure au moins {n} teintures"
+    }
   },
   "collections": {
     "favorites": "Favoris",

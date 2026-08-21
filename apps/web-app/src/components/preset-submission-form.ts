@@ -23,6 +23,7 @@ import {
   type SubmissionResult,
 } from '@services/preset-submission-service';
 import { exampleLinkError } from '@shared/example-link';
+import { dyeNameMatches, localizedDyeName } from '@shared/dye-name';
 import { logger } from '@shared/logger';
 import { createCategorySelector, type CategorySelection } from './preset-category-selector';
 
@@ -112,6 +113,24 @@ export function showPresetSubmissionForm(
 // ============================================
 // Form Content Creation
 // ============================================
+
+/** "{n}/{max} (min {min})" — the description character counter. */
+function descCounterText(length: number): string {
+  return LanguageService.tInterpolate('preset.counterWithMin', {
+    n: length,
+    max: MAX_DESC_LENGTH,
+    min: MIN_DESC_LENGTH,
+  });
+}
+
+/** "{n}/{max} (min {min})" — the selected-dye counter. */
+function dyeCounterText(count: number): string {
+  return LanguageService.tInterpolate('preset.counterWithMin', {
+    n: count,
+    max: MAX_DYES,
+    min: MIN_DYES,
+  });
+}
 
 /** 8S label row: localized label + REQUIRED/OPTIONAL chip. */
 function fieldLabelRow(labelText: string, reqText: string, required: boolean): HTMLElement {
@@ -263,7 +282,7 @@ function createNameInput(state: FormState): HTMLElement {
     'w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500';
   input.style.cssText =
     'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
-  input.placeholder = 'e.g., Dark Knight Abyssal';
+  input.placeholder = LanguageService.t('preset.fieldNamePlaceholder');
   input.maxLength = MAX_NAME_LENGTH;
   input.value = state.name;
 
@@ -308,7 +327,7 @@ function createDescriptionInput(state: FormState): HTMLElement {
     'w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none';
   textarea.style.cssText =
     'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
-  textarea.placeholder = 'Describe your color palette and when to use it...';
+  textarea.placeholder = LanguageService.t('preset.fieldDescPlaceholder');
   textarea.rows = 3;
   textarea.maxLength = MAX_DESC_LENGTH;
   textarea.value = state.description;
@@ -316,11 +335,11 @@ function createDescriptionInput(state: FormState): HTMLElement {
   const counter = document.createElement('div');
   counter.className = 'text-xs mt-1 text-right';
   counter.style.color = 'var(--theme-text-secondary)';
-  counter.textContent = `${state.description.length}/${MAX_DESC_LENGTH} (min ${MIN_DESC_LENGTH})`;
+  counter.textContent = descCounterText(state.description.length);
 
   textarea.addEventListener('input', () => {
     state.description = textarea.value;
-    counter.textContent = `${state.description.length}/${MAX_DESC_LENGTH} (min ${MIN_DESC_LENGTH})`;
+    counter.textContent = descCounterText(state.description.length);
 
     if (state.description.length < MIN_DESC_LENGTH) {
       counter.style.color = '#ef4444';
@@ -353,7 +372,7 @@ function createDyeSelector(state: FormState): HTMLElement {
   counter.className = 'text-xs';
   counter.id = 'dye-counter';
   counter.style.color = 'var(--theme-text-secondary)';
-  counter.textContent = `${state.selectedDyes.length}/${MAX_DYES} (min ${MIN_DYES})`;
+  counter.textContent = dyeCounterText(state.selectedDyes.length);
 
   labelRow.appendChild(label);
   labelRow.appendChild(counter);
@@ -372,7 +391,7 @@ function createDyeSelector(state: FormState): HTMLElement {
       const placeholder = document.createElement('span');
       placeholder.className = 'text-sm opacity-50';
       placeholder.style.color = 'var(--theme-text)';
-      placeholder.textContent = 'Click dyes below to add them...';
+      placeholder.textContent = LanguageService.t('preset.clickDyesToAdd');
       selectedDisplay.appendChild(placeholder);
     } else {
       state.selectedDyes.forEach((dye, index) => {
@@ -386,7 +405,7 @@ function createDyeSelector(state: FormState): HTMLElement {
         swatch.style.backgroundColor = dye.hex;
 
         const name = document.createElement('span');
-        name.textContent = dye.name;
+        name.textContent = localizedDyeName(dye);
 
         const remove = document.createElement('span');
         remove.className = 'ml-1 hover:text-red-500';
@@ -402,7 +421,7 @@ function createDyeSelector(state: FormState): HTMLElement {
           updateCounter();
         });
 
-        chip.title = 'Click to remove';
+        chip.title = LanguageService.t('preset.clickToRemove');
 
         selectedDisplay.appendChild(chip);
       });
@@ -412,7 +431,7 @@ function createDyeSelector(state: FormState): HTMLElement {
   const updateCounter = () => {
     const counterEl = document.getElementById('dye-counter');
     if (counterEl) {
-      counterEl.textContent = `${state.selectedDyes.length}/${MAX_DYES} (min ${MIN_DYES})`;
+      counterEl.textContent = dyeCounterText(state.selectedDyes.length);
       if (state.selectedDyes.length < MIN_DYES) {
         counterEl.style.color = '#ef4444';
       } else if (state.selectedDyes.length > MAX_DYES) {
@@ -429,7 +448,7 @@ function createDyeSelector(state: FormState): HTMLElement {
   searchInput.className = 'w-full px-3 py-2 rounded-lg border mb-2 focus:outline-none focus:ring-2';
   searchInput.style.cssText =
     'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
-  searchInput.placeholder = 'Search dyes by name...';
+  searchInput.placeholder = LanguageService.t('dyeSelector.searchPlaceholder');
 
   // Dye grid
   const dyeGrid = document.createElement('div');
@@ -453,7 +472,7 @@ function createDyeSelector(state: FormState): HTMLElement {
       const isSelected = state.selectedDyes.some((d) => d.id === dye.id);
       btn.style.cssText = `background-color: ${dye.hex}; border-color: ${isSelected ? 'white' : 'transparent'}; ${isSelected ? 'box-shadow: 0 0 0 2px var(--theme-primary);' : ''}`;
 
-      btn.title = dye.name;
+      btn.title = localizedDyeName(dye);
 
       btn.addEventListener('click', () => {
         const existingIndex = state.selectedDyes.findIndex((d) => d.id === dye.id);
@@ -482,7 +501,7 @@ function createDyeSelector(state: FormState): HTMLElement {
   searchInput.addEventListener('input', () => {
     const query = searchInput.value.toLowerCase();
     if (query) {
-      filteredDyes = allDyes.filter((d) => d.name.toLowerCase().includes(query));
+      filteredDyes = allDyes.filter((d) => dyeNameMatches(d, query));
     } else {
       filteredDyes = allDyes;
     }
@@ -518,7 +537,7 @@ function createTagsInput(state: FormState): HTMLElement {
     'w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500';
   input.style.cssText =
     'background-color: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);';
-  input.placeholder = 'dark, gothic, elegant (comma-separated)';
+  input.placeholder = LanguageService.t('preset.fieldTagsPlaceholder');
   input.value = state.tags;
 
   const hint = fieldHint(LanguageService.t('preset.fieldTagsHint'));
@@ -671,7 +690,12 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
     // Validate
     const errors = validateSubmission(submission);
     if (errors.length > 0) {
-      ToastService.error(errors.map((e) => e.message).join('. '));
+      // One toast per error: joining them with ". " builds an English sentence
+      // out of translated fragments, which does not survive translation.
+      // (The message strings themselves still come from the service.)
+      for (const error of errors) {
+        ToastService.error(error.message);
+      }
       return;
     }
     const linkError = exampleLinkError(state.exampleLink);
@@ -682,14 +706,14 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
 
     // Disable button and show loading
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Submitting...';
+    submitBtn.textContent = LanguageService.t('preset.submitting');
 
     try {
       const result = await presetSubmissionService.submitPreset(submission);
 
       if (result.success) {
         if (result.duplicate) {
-          const duplicateName = result.duplicate.name || 'existing preset';
+          const duplicateName = result.duplicate.name || LanguageService.t('preset.anotherPreset');
           const message = result.vote_added
             ? LanguageService.tInterpolate('preset.duplicateWithVote', { name: duplicateName })
             : LanguageService.tInterpolate('preset.duplicateFound', { name: duplicateName });

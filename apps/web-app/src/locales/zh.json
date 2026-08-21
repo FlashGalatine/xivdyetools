@@ -1062,7 +1062,25 @@
     "cfgKeepDeletedDesc": "作者删除后仍保留并标记",
     "cfgStoredLocally": "本地存储",
     "cfgStoredLocallyDesc": "绝不上传服务器，未登录也可用",
-    "authorBy": "由 {author} 创建"
+    "authorBy": "由 {author} 创建",
+    "editTitle": "编辑预设",
+    "saveChanges": "保存更改",
+    "saving": "正在保存...",
+    "submitting": "正在提交...",
+    "fieldNamePlaceholder": "例如：Dark Knight Abyssal",
+    "fieldDescPlaceholder": "描述你的配色以及适合的使用场景...",
+    "fieldTagsPlaceholder": "例如：dark, edgy, tank（用逗号分隔）",
+    "fieldTagsLimit": "最多 {max} 个标签，每个 {chars} 字符",
+    "counterWithMin": "{n}/{max}（最少 {min}）",
+    "allMatchingSelected": "已选择所有匹配的染剂",
+    "clickDyesToAdd": "点击下方染剂进行添加...",
+    "clickToRemove": "点击移除",
+    "anotherPreset": "另一个预设",
+    "validation": {
+      "nameMin": "名称至少需要 {n} 个字符",
+      "descMin": "描述至少需要 {n} 个字符",
+      "dyesMin": "至少需要包含 {n} 种染剂"
+    }
   },
   "collections": {
     "favorites": "收藏夹",

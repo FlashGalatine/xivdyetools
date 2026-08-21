@@ -1071,7 +1071,25 @@
     "cfgKeepDeletedDesc": "作者が削除しても印付きで残す",
     "cfgStoredLocally": "端末に保存",
     "cfgStoredLocallyDesc": "サーバー送信なし・ログアウト時も有効",
-    "authorBy": "{author} が作成"
+    "authorBy": "{author} が作成",
+    "editTitle": "プリセットを編集",
+    "saveChanges": "変更を保存",
+    "saving": "保存中...",
+    "submitting": "投稿中...",
+    "fieldNamePlaceholder": "例：Dark Knight Abyssal",
+    "fieldDescPlaceholder": "カラーパレットの説明と、使いどころを書いてください...",
+    "fieldTagsPlaceholder": "例：dark, edgy, tank（カンマ区切り）",
+    "fieldTagsLimit": "最大{max}個のタグ、各{chars}文字まで",
+    "counterWithMin": "{n}/{max}（最小{min}）",
+    "allMatchingSelected": "一致するカララントはすべて選択済みです",
+    "clickDyesToAdd": "下のカララントをクリックして追加してください...",
+    "clickToRemove": "クリックで削除",
+    "anotherPreset": "別のプリセット",
+    "validation": {
+      "nameMin": "名前は{n}文字以上で入力してください",
+      "descMin": "説明は{n}文字以上で入力してください",
+      "dyesMin": "カララントを{n}個以上選択してください"
+    }
   },
   "emptyStates": {
     "noSearchResults": {

@@ -1037,7 +1037,25 @@
     "cfgKeepDeletedDesc": "Vom Autor gelöschte bleiben markiert",
     "cfgStoredLocally": "Lokal gespeichert",
     "cfgStoredLocallyDesc": "Nie an den Server, auch abgemeldet",
-    "authorBy": "Erstellt von {author}"
+    "authorBy": "Erstellt von {author}",
+    "editTitle": "Preset bearbeiten",
+    "saveChanges": "Änderungen speichern",
+    "saving": "Wird gespeichert...",
+    "submitting": "Wird eingereicht...",
+    "fieldNamePlaceholder": "z. B. Dark Knight Abyssal",
+    "fieldDescPlaceholder": "Beschreibe deine Farbpalette und wann man sie einsetzt...",
+    "fieldTagsPlaceholder": "z. B. dark, edgy, tank (kommagetrennt)",
+    "fieldTagsLimit": "Max. {max} Tags, je {chars} Zeichen",
+    "counterWithMin": "{n}/{max} (min. {min})",
+    "allMatchingSelected": "Alle passenden Farbstoffe ausgewählt",
+    "clickDyesToAdd": "Unten Farbstoffe anklicken, um sie hinzuzufügen...",
+    "clickToRemove": "Zum Entfernen klicken",
+    "anotherPreset": "einer anderen Voreinstellung",
+    "validation": {
+      "nameMin": "Der Name muss mindestens {n} Zeichen lang sein",
+      "descMin": "Die Beschreibung muss mindestens {n} Zeichen lang sein",
+      "dyesMin": "Es müssen mindestens {n} Farbstoffe enthalten sein"
+    }
   },
   "collections": {
     "favorites": "Favoriten",

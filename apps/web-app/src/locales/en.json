@@ -1071,7 +1071,25 @@
     "cfgKeepDeletedDesc": "A saved preset the author removes stays, marked",
     "cfgStoredLocally": "Stored locally",
     "cfgStoredLocallyDesc": "Never sent to the server, works signed out",
-    "authorBy": "Created by {author}"
+    "authorBy": "Created by {author}",
+    "editTitle": "Edit Preset",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "submitting": "Submitting...",
+    "fieldNamePlaceholder": "e.g., Dark Knight Abyssal",
+    "fieldDescPlaceholder": "Describe your color palette and when to use it...",
+    "fieldTagsPlaceholder": "e.g., dark, edgy, tank (comma-separated)",
+    "fieldTagsLimit": "Max {max} tags, {chars} chars each",
+    "counterWithMin": "{n}/{max} (min {min})",
+    "allMatchingSelected": "All matching dyes selected",
+    "clickDyesToAdd": "Click dyes below to add them...",
+    "clickToRemove": "Click to remove",
+    "anotherPreset": "another preset",
+    "validation": {
+      "nameMin": "Name must be at least {n} characters",
+      "descMin": "Description must be at least {n} characters",
+      "dyesMin": "Must include at least {n} dyes"
+    }
   },
   "emptyStates": {
     "noSearchResults": {
