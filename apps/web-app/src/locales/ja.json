@@ -1181,7 +1181,9 @@
     },
     "spectrumShort": "スペクトル",
     "acquisitionShort": "入手先",
-    "hueOff": "色相差"
+    "hueOff": "色相差",
+    "stainShort": "ステイン",
+    "replaceSlotN": "スロット{n}を置き換え"
   },
   "share": {
     "button": "共有",

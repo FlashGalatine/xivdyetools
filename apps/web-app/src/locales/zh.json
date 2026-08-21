@@ -148,7 +148,9 @@
     },
     "spectrumShort": "光谱",
     "acquisitionShort": "来源",
-    "hueOff": "色相差"
+    "hueOff": "色相差",
+    "stainShort": "染色ID",
+    "replaceSlotN": "替换槽位{n}"
   },
   "config": {
     "harmonyType": "和谐类型",

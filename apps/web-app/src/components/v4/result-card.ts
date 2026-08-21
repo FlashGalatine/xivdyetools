@@ -204,12 +204,19 @@ export class ResultCard extends BaseLitComponent {
   showActions: boolean = true;
 
   /**
-   * Label for primary action button. Defaults to the shared localized
-   * string — four tools never pass one, and an English literal here
-   * surfaced untranslated on every card they render.
+   * Label for primary action button. Left undefined by the four tools that
+   * never pass one; `primaryLabel` then supplies the shared localized string.
+   * A field initialiser cannot be used here — it is evaluated once at
+   * construction, so the default froze at whatever locale was active when the
+   * first card mounted and never followed a language switch.
    */
   @property({ type: String, attribute: 'primary-action-label' })
-  primaryActionLabel: string = LanguageService.t('common.selectDye');
+  primaryActionLabel?: string;
+
+  /** Primary-button label: the caller's override, else the localized default. */
+  private get primaryLabel(): string {
+    return this.primaryActionLabel ?? LanguageService.t('common.selectDye');
+  }
 
   /**
    * When true, clicking the primary button opens the context menu
@@ -1443,14 +1450,19 @@ export class ResultCard extends BaseLitComponent {
     }
   };
 
+  private languageUnsubscribe: (() => void) | null = null;
+
   override connectedCallback(): void {
     super.connectedCallback();
+    this.languageUnsubscribe = LanguageService.subscribe(() => this.requestUpdate());
     document.addEventListener('click', this.handleDocumentClick);
     document.addEventListener('keydown', this.handleKeyDown);
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.languageUnsubscribe?.();
+    this.languageUnsubscribe = null;
     document.removeEventListener('click', this.handleDocumentClick);
     document.removeEventListener('keydown', this.handleKeyDown);
   }
@@ -1534,7 +1546,9 @@ export class ResultCard extends BaseLitComponent {
                         ? html`
                             <div class="readout">
                               <div class="readout-val">${stain}</div>
-                              <div class="metric-label">STAIN</div>
+                              <div class="metric-label">
+                                ${LanguageService.t('resultCard.stainShort')}
+                              </div>
                             </div>
                           `
                         : nothing
@@ -1686,7 +1700,7 @@ export class ResultCard extends BaseLitComponent {
                               aria-expanded=${this.slotMenuOpen}
                               @click=${this.handleSelectClick}
                             >
-                              ${this.primaryActionLabel}
+                              ${this.primaryLabel}
                             </button>
                             <!-- Slot Picker Menu - Pops UP -->
                             <div
@@ -1699,16 +1713,18 @@ export class ResultCard extends BaseLitComponent {
                                 role="menuitem"
                                 @click=${() => this.handleSlotAction(1)}
                               >
-                                ${LanguageService.t('common.replace')}
-                                ${LanguageService.t('common.slot')} 1
+                                ${LanguageService.tInterpolate('resultCard.replaceSlotN', {
+                                  n: 1,
+                                })}
                               </button>
                               <button
                                 class="slot-picker-item"
                                 role="menuitem"
                                 @click=${() => this.handleSlotAction(2)}
                               >
-                                ${LanguageService.t('common.replace')}
-                                ${LanguageService.t('common.slot')} 2
+                                ${LanguageService.tInterpolate('resultCard.replaceSlotN', {
+                                  n: 2,
+                                })}
                               </button>
                             </div>
                           </div>
@@ -1719,7 +1735,7 @@ export class ResultCard extends BaseLitComponent {
                             type="button"
                             @click=${this.handleSelectClick}
                           >
-                            ${this.primaryActionLabel}
+                            ${this.primaryLabel}
                           </button>
                         `
                   }

@@ -92,6 +92,24 @@ export class DyeFiltersV4 extends BaseLitComponent {
   @state()
   private acquisitionCollapsed: boolean = true;
 
+  private languageUnsubscribe: (() => void) | null = null;
+
+  /**
+   * Every filter label is localized, but the parent re-renders this panel with
+   * identical boolean props on a language switch, so Lit skips the update.
+   * Subscribing is what makes the labels follow the language.
+   */
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.languageUnsubscribe = LanguageService.subscribe(() => this.requestUpdate());
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.languageUnsubscribe?.();
+    this.languageUnsubscribe = null;
+  }
+
   static override styles: CSSResultGroup = [
     BaseLitComponent.baseStyles,
     css`

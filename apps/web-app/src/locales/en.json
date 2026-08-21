@@ -1181,7 +1181,9 @@
     },
     "spectrumShort": "SPEC",
     "acquisitionShort": "SOURCE",
-    "hueOff": "HUE OFF"
+    "hueOff": "HUE OFF",
+    "stainShort": "STAIN",
+    "replaceSlotN": "Replace Slot {n}"
   },
   "share": {
     "button": "Share",

@@ -1181,7 +1181,9 @@
     },
     "spectrumShort": "스펙트럼",
     "acquisitionShort": "출처",
-    "hueOff": "색상차"
+    "hueOff": "색상차",
+    "stainShort": "스테인",
+    "replaceSlotN": "슬롯 {n} 교체"
   },
   "share": {
     "button": "공유",

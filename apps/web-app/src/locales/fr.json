@@ -1181,7 +1181,9 @@
     },
     "spectrumShort": "SPECTRE",
     "acquisitionShort": "SOURCE",
-    "hueOff": "TEINTE"
+    "hueOff": "TEINTE",
+    "stainShort": "STAIN",
+    "replaceSlotN": "Remplacer l'emplacement {n}"
   },
   "share": {
     "button": "Partager",
