@@ -238,7 +238,8 @@
       "presetNotFound": "빠른 선택 프리셋 \"{id}\"를 찾을 수 없습니다.",
       "apiError": "장터 데이터를 가져올 수 없습니다. 나중에 다시 시도해 주세요.",
       "rateLimited": "요청이 너무 많습니다. 잠시 후에 가격을 다시 확인해 주세요."
-    }
+    },
+    "dataCenterLabel": "{name} ({region} 데이터 센터)"
   },
   "preferences": {
     "title": "설정",
@@ -246,7 +247,8 @@
       "description": "이 설정은 명령어의 동작에 영향을 줍니다.\n제공하는 매개변수는 항상 이 기본값을 덮어씁니다.",
       "default": "기본값",
       "notSet": "미설정",
-      "hint": "/preferences set으로 설정을 변경하세요"
+      "hint": "/preferences set으로 설정을 변경하세요",
+      "lastUpdated": "마지막 업데이트"
     },
     "set": {
       "success": "설정 업데이트됨",
@@ -288,7 +290,9 @@
       "male": "남성 ♂️",
       "female": "여성 ♀️",
       "yes": "예",
-      "no": "아니오"
+      "no": "아니오",
+      "themeDark": "다크",
+      "themeLight": "라이트"
     },
     "validation": {
       "invalidLanguage": "잘못된 언어입니다. 유효한 옵션: `en`, `ja`, `de`, `fr`, `ko`, `zh`",
@@ -299,7 +303,8 @@
       "invalidGender": "잘못된 성별입니다. 유효한 옵션: `male`, `female`",
       "invalidWorld": "잘못된 월드입니다. 유효한 FFXIV 월드 또는 데이터 센터 이름을 입력해 주세요.",
       "invalidMarket": "잘못된 값입니다. `on`/`off` 또는 `true`/`false`를 사용하세요.",
-      "error": "설정 저장 중 오류가 발생했습니다. 다시 시도해 주세요."
+      "error": "설정 저장 중 오류가 발생했습니다. 다시 시도해 주세요.",
+      "invalidTheme": "잘못된 테마입니다. `dark` 또는 `light`를 선택하세요."
     },
     "errors": {
       "invalidKey": "알 수 없는 설정 키: {key}",
@@ -315,7 +320,39 @@
       "title": "염료 필터",
       "setHint": "/preferences filters set으로 사용자 지정",
       "resetSuccess": "필터 초기화 완료",
-      "resetDescription": "모든 염료 필터가 기본값으로 초기화되었습니다 (모든 염료 유형 포함)."
+      "resetDescription": "모든 염료 필터가 기본값으로 초기화되었습니다 (모든 염료 유형 포함).",
+      "labels": {
+        "metallic": "메탈릭",
+        "pastel": "파스텔",
+        "dark": "다크",
+        "cosmic": "코스모",
+        "ishgardian": "이슈가르드",
+        "expensive": "고가 (순백색 / 칠흑색)",
+        "vendor": "상인",
+        "craft": "제작"
+      }
+    },
+    "affects": {
+      "allCommands": "모든 명령어",
+      "marketData": "결과 카드의 장터 데이터",
+      "everyCard": "생성되는 모든 카드",
+      "resultCards": "결과 카드가 있는 모든 명령어"
+    },
+    "methods": {
+      "ciede2000": "업계 표준 지각 색차 공식 (기본)",
+      "oklab": "OKLAB 지각 거리",
+      "cie76": "CIELAB 유클리드 거리",
+      "redmean": "가중 RGB 근사",
+      "rgb": "RGB 유클리드 거리",
+      "distinguish": "RGB DIST를 0-100으로 재조정"
+    },
+    "blendingModes": {
+      "rgb": "가산 채널 평균 (기본)",
+      "lab": "지각적으로 균일한 CIELAB 혼합",
+      "oklab": "현대적 지각 모델 (LAB의 파랑→보라 문제 수정)",
+      "ryb": "전통적인 화가의 색상환",
+      "hsl": "색상-채도-명도 보간",
+      "spectral": "Kubelka-Munk 물리 시뮬레이션"
     }
   },
   "webhook": {

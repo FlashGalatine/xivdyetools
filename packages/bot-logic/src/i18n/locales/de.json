@@ -238,7 +238,8 @@
       "presetNotFound": "Schnellauswahl-Vorlage \"{id}\" konnte nicht gefunden werden.",
       "apiError": "Marktbrett-Daten konnten nicht abgerufen werden. Bitte versuche es später erneut.",
       "rateLimited": "Zu viele Anfragen. Bitte warte einen Moment, bevor du erneut Preise abrufst."
-    }
+    },
+    "dataCenterLabel": "{name} ({region}-Datenzentrum)"
   },
   "preferences": {
     "title": "Deine Einstellungen",
@@ -246,7 +247,8 @@
       "description": "Diese Einstellungen beeinflussen die Funktionsweise der Befehle.\nParameter, die du angibst, überschreiben immer diese Standardwerte.",
       "default": "Standard",
       "notSet": "Nicht gesetzt",
-      "hint": "Verwende /preferences set zum Anpassen"
+      "hint": "Verwende /preferences set zum Anpassen",
+      "lastUpdated": "Zuletzt aktualisiert"
     },
     "set": {
       "success": "Einstellung aktualisiert",
@@ -293,7 +295,9 @@
       "male": "Männlich ♂️",
       "female": "Weiblich ♀️",
       "yes": "Ja",
-      "no": "Nein"
+      "no": "Nein",
+      "themeDark": "dunkel",
+      "themeLight": "hell"
     },
     "validation": {
       "invalidLanguage": "Ungültige Sprache. Gültige Optionen: `en`, `ja`, `de`, `fr`, `ko`, `zh`",
@@ -304,7 +308,8 @@
       "invalidGender": "Ungültiges Geschlecht. Gültige Optionen: `male`, `female`",
       "invalidWorld": "Ungültige Welt. Bitte gib einen gültigen FFXIV Welt- oder Datenzentrum-Namen ein.",
       "invalidMarket": "Ungültiger Wert. Verwende `on`/`off` oder `true`/`false`.",
-      "error": "Beim Speichern der Einstellung ist ein Fehler aufgetreten. Bitte versuche es erneut."
+      "error": "Beim Speichern der Einstellung ist ein Fehler aufgetreten. Bitte versuche es erneut.",
+      "invalidTheme": "Ungültiges Design. Wähle `dark` oder `light`."
     },
     "filters": {
       "noOptions": "Bitte gib mindestens eine Filteroption an.",
@@ -315,7 +320,39 @@
       "title": "Farbstoff-Filter",
       "setHint": "Verwende /preferences filters set zum Anpassen",
       "resetSuccess": "Filter zurückgesetzt",
-      "resetDescription": "Alle Farbstoff-Filter wurden auf Standardwerte zurückgesetzt (alle Farbstofftypen eingeschlossen)."
+      "resetDescription": "Alle Farbstoff-Filter wurden auf Standardwerte zurückgesetzt (alle Farbstofftypen eingeschlossen).",
+      "labels": {
+        "metallic": "Metallic",
+        "pastel": "Pastell",
+        "dark": "Dunkel",
+        "cosmic": "Kosmo",
+        "ishgardian": "Ishgard",
+        "expensive": "Teuer (Reinweiß / Tiefschwarz)",
+        "vendor": "Händler",
+        "craft": "Hergestellt"
+      }
+    },
+    "affects": {
+      "allCommands": "alle Befehle",
+      "marketData": "Marktdaten auf Ergebniskarten",
+      "everyCard": "jede erzeugte Karte",
+      "resultCards": "alle Befehle mit Ergebniskarten"
+    },
+    "methods": {
+      "ciede2000": "Branchenübliche Wahrnehmungsformel (Standard)",
+      "oklab": "OKLAB-Wahrnehmungsabstand",
+      "cie76": "Euklidischer CIELAB-Abstand",
+      "redmean": "Gewichtete RGB-Näherung",
+      "rgb": "Euklidischer RGB-Abstand",
+      "distinguish": "RGB DIST auf 0–100 skaliert"
+    },
+    "blendingModes": {
+      "rgb": "Additive Kanalmittelung (Standard)",
+      "lab": "Wahrnehmungsgleichmäßiges CIELAB-Mischen",
+      "oklab": "Moderne Wahrnehmung (behebt LAB Blau→Violett)",
+      "ryb": "Traditioneller Künstler-Farbkreis",
+      "hsl": "Farbton-Sättigung-Helligkeit-Interpolation",
+      "spectral": "Kubelka-Munk-Physiksimulation"
     }
   },
   "webhook": {

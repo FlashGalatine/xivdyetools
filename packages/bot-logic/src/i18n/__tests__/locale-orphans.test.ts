@@ -32,6 +32,11 @@
  *        - `manual5.topics.${topic}.name` / `.body` for each value in
  *          discord-worker's `TOPIC_KEYS`
  *          (`apps/discord-worker/src/handlers/commands/manual.ts`).
+ *        - `preferences.filters.labels.${option}` for each `option` in
+ *          discord-worker's `FILTER_OPTION_KEYS` (preferences.ts), and
+ *          `preferences.methods.${method}` / `preferences.blendingModes.${mode}`
+ *          for core's `MATCHING_METHOD_TAGS` keys / `BLENDING_MODES` values
+ *          (2026-08-20 i18n audit, F-05 — rendered via template keys).
  *        - `meta.locale` / `meta.name` — never read via `t()` (only
  *          `Translator.getLocale()` reads the constructor-stored locale
  *          directly), but the block is a structural part of every locale
@@ -53,6 +58,8 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { VISION_TYPES } from '../../commands/accessibility.js';
+import { MATCHING_METHOD_TAGS } from '@xivdyetools/core';
+import { BLENDING_MODES } from '@xivdyetools/core/blending';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 // packages/bot-logic/src/i18n/__tests__ -> packages/bot-logic/src
@@ -162,6 +169,21 @@ function readPreferenceKeys(): string[] {
   return [...order, 'filters'];
 }
 
+/** discord-worker's `FILTER_OPTION_KEYS` option names, read from source. */
+function readFilterOptions(): string[] {
+  const source = readFileSync(PREFERENCES_TS, 'utf-8');
+  const block = /const FILTER_OPTION_KEYS: Array<\{ option: string; key: keyof DyeTypeFilters \}> = \[([\s\S]*?)\];/.exec(
+    source,
+  );
+  if (!block || !block[1]) {
+    throw new Error(
+      'locale-orphans gate: could not find FILTER_OPTION_KEYS in handlers/commands/preferences.ts — ' +
+        'the source shape changed. Update the regex in locale-orphans.test.ts to match.',
+    );
+  }
+  return [...block[1].matchAll(/option: '([^']+)'/g)].map((m) => m[1]);
+}
+
 /** discord-worker's `TOPIC_KEYS` values, read from source. */
 function readManualTopicKeys(): string[] {
   const source = readFileSync(MANUAL_TS, 'utf-8');
@@ -184,6 +206,15 @@ function buildEnumeratedKeys(): Set<string> {
   for (const topic of readManualTopicKeys()) {
     keys.add(`manual5.topics.${topic}.name`);
     keys.add(`manual5.topics.${topic}.body`);
+  }
+  for (const option of readFilterOptions()) {
+    keys.add(`preferences.filters.labels.${option}`);
+  }
+  for (const method of Object.keys(MATCHING_METHOD_TAGS)) {
+    keys.add(`preferences.methods.${method}`);
+  }
+  for (const mode of BLENDING_MODES) {
+    keys.add(`preferences.blendingModes.${mode.value}`);
   }
   return keys;
 }

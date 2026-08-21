@@ -383,7 +383,7 @@ describe('Preferences Service', () => {
 
   describe('getAffectedCommands', () => {
     it('returns correct commands for each key', () => {
-      expect(getAffectedCommands('language')).toContain('all commands');
+      expect(getAffectedCommands('language')).toContain('preferences.affects.allCommands');
       expect(getAffectedCommands('blending')).toContain('/mixer');
       expect(getAffectedCommands('blending')).toContain('/gradient');
       expect(getAffectedCommands('matching')).toContain('/extractor');

@@ -517,12 +517,16 @@ export function getDefaultValue(key: PreferenceKey): string | number | boolean |
 }
 
 /**
- * Get commands affected by a preference key
+ * Get commands affected by a preference key.
+ *
+ * Entries are either a literal command token (`/mixer` — never localized) or
+ * a `preferences.affects.*` locale key the caller renders with `t.t()`
+ * (F-05, 2026-08-20 audit).
  */
 export function getAffectedCommands(key: PreferenceKey): string[] {
   switch (key) {
     case 'language':
-      return ['all commands'];
+      return ['preferences.affects.allCommands'];
     case 'blending':
       return ['/mixer', '/gradient'];
     case 'matching':
@@ -533,9 +537,9 @@ export function getAffectedCommands(key: PreferenceKey): string[] {
     case 'gender':
       return ['/swatch'];
     case 'world':
-      return ['/budget', 'market data on Result Cards'];
+      return ['/budget', 'preferences.affects.marketData'];
     case 'theme':
-      return ['every generated card'];
+      return ['preferences.affects.everyCard'];
     case 'market':
     case 'showHex':
     case 'showRgb':
@@ -543,6 +547,6 @@ export function getAffectedCommands(key: PreferenceKey): string[] {
     case 'showLab':
     case 'showDeltaE':
     case 'showAcquisition':
-      return ['all commands with Result Cards'];
+      return ['preferences.affects.resultCards'];
   }
 }

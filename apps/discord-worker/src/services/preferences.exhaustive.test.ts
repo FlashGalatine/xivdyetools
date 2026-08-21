@@ -348,19 +348,19 @@ describe('getAffectedCommands', () => {
   });
 
   it.each([
-    ['language', 'all commands'],
+    ['language', 'preferences.affects.allCommands'],
     ['blending', '/mixer'],
     ['matching', '/budget'],
     ['count', '/extractor'],
     ['clan', '/swatch'],
     ['gender', '/swatch'],
     ['world', '/budget'],
-    ['theme', 'every generated card'],
+    ['theme', 'preferences.affects.everyCard'],
   ] as const)('%s lists %s', (key, expected) => {
     expect(getAffectedCommands(key)).toContain(expected);
   });
 
   it.each(BOOLEAN_KEYS)('%s affects all Result Cards', (key) => {
-    expect(getAffectedCommands(key)).toEqual(['all commands with Result Cards']);
+    expect(getAffectedCommands(key)).toEqual(['preferences.affects.resultCards']);
   });
 });

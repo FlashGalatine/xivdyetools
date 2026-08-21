@@ -98,17 +98,25 @@ function resolveOptionKey(name: string): PreferenceKey {
   return OPTION_NAME_TO_KEY[name] ?? (name as PreferenceKey);
 }
 
-/** Maps Discord option names to DyeTypeFilters keys and display labels */
-const FILTER_OPTION_KEYS: Array<{ option: string; key: keyof DyeTypeFilters; label: string }> = [
-  { option: 'metallic', key: 'excludeMetallic', label: 'Metallic' },
-  { option: 'pastel', key: 'excludePastel', label: 'Pastel' },
-  { option: 'dark', key: 'excludeDark', label: 'Dark' },
-  { option: 'cosmic', key: 'excludeCosmic', label: 'Cosmic' },
-  { option: 'ishgardian', key: 'excludeIshgardian', label: 'Ishgardian' },
-  { option: 'expensive', key: 'excludeExpensive', label: 'Expensive (Pure White / Jet Black)' },
-  { option: 'vendor', key: 'excludeVendorDyes', label: 'Vendor' },
-  { option: 'craft', key: 'excludeCraftDyes', label: 'Crafted' },
+/**
+ * Maps Discord option names to DyeTypeFilters keys. The display label is
+ * `t.t(\`preferences.filters.labels.${option}\`)` (F-05, 2026-08-20 audit).
+ */
+const FILTER_OPTION_KEYS: Array<{ option: string; key: keyof DyeTypeFilters }> = [
+  { option: 'metallic', key: 'excludeMetallic' },
+  { option: 'pastel', key: 'excludePastel' },
+  { option: 'dark', key: 'excludeDark' },
+  { option: 'cosmic', key: 'excludeCosmic' },
+  { option: 'ishgardian', key: 'excludeIshgardian' },
+  { option: 'expensive', key: 'excludeExpensive' },
+  { option: 'vendor', key: 'excludeVendorDyes' },
+  { option: 'craft', key: 'excludeCraftDyes' },
 ];
+
+/** Localized display label of a dye-type filter option. */
+function filterLabel(t: Translator, option: string): string {
+  return t.t(`preferences.filters.labels.${option}`);
+}
 
 // ============================================================================
 // Main Handler
@@ -225,7 +233,7 @@ async function handleShowSubcommand(
   if (dyeFilters && hasActiveFilters(dyeFilters)) {
     const activeFilters = FILTER_OPTION_KEYS
       .filter(({ key }) => dyeFilters[key])
-      .map(({ label }) => label);
+      .map(({ option }) => filterLabel(t, option));
     fields.push({
       name: `🚫 ${t.t('preferences.keys.filters')}`,
       value: activeFilters.join(', '),
@@ -239,10 +247,13 @@ async function handleShowSubcommand(
     });
   }
 
-  // Add last updated timestamp if available
+  // Last-updated: the embed `timestamp` is rendered by the Discord client in
+  // the viewer's own locale and timezone, so no server-side date formatting
+  // (F-05/F-08 — the old `toLocaleString()` ignored the user's locale).
   const footer = prefs.updatedAt
-    ? { text: `Last updated: ${new Date(prefs.updatedAt).toLocaleString()}` }
+    ? { text: t.t('preferences.show.lastUpdated') }
     : { text: t.t('preferences.show.hint') };
+  const timestamp = prefs.updatedAt ? new Date(prefs.updatedAt).toISOString() : undefined;
 
   return ephemeralResponse({
     embeds: [
@@ -252,6 +263,7 @@ async function handleShowSubcommand(
         color: PREFS_COLOR,
         fields,
         footer,
+        ...(timestamp ? { timestamp } : {}),
       },
     ],
   });
@@ -349,11 +361,13 @@ async function handleSetSubcommand(
   // Build response embed
   const fields: Array<{ name: string; value: string; inline: boolean }> = [];
 
-  // Add affected commands field
+  // Add affected commands field (command tokens verbatim, phrases via t())
   if (affectedCommandsSet.size > 0) {
     fields.push({
       name: `📋 ${t.t('preferences.set.affects')}`,
-      value: Array.from(affectedCommandsSet).join(', '),
+      value: Array.from(affectedCommandsSet)
+        .map((v) => (v.startsWith('/') ? v : t.t(v)))
+        .join(', '),
       inline: false,
     });
   }
@@ -516,7 +530,9 @@ function formatPreferenceValue(key: PreferenceKey, value: unknown, t: Translator
         ? t.t('preferences.values.yes')
         : t.t('preferences.values.no');
     case 'theme':
-      return value === 'light' ? '☀️ light' : '🌙 dark';
+      return value === 'light'
+        ? `☀️ ${t.t('preferences.values.themeLight')}`
+        : `🌙 ${t.t('preferences.values.themeDark')}`;
 
     default:
       return String(value);
@@ -554,12 +570,16 @@ function getValidationErrorMessage(t: Translator, _key: PreferenceKey, reason?: 
       return t.t('preferences.validation.invalidLanguage');
 
     case 'invalidBlendingMode': {
-      const options = BLENDING_MODES.map((m) => `• \`${m.value}\` - ${m.description}`).join('\n');
+      const options = BLENDING_MODES.map(
+        (m) => `• \`${m.value}\` - ${t.t(`preferences.blendingModes.${m.value}`)}`,
+      ).join('\n');
       return t.t('preferences.validation.invalidBlendingMode', { options });
     }
 
     case 'invalidMatchingMethod': {
-      const options = MATCHING_METHODS.map((m) => `• \`${m.value}\` - ${m.description}`).join('\n');
+      const options = MATCHING_METHODS.map(
+        (m) => `• \`${m.value}\` - ${t.t(`preferences.methods.${m.value}`)}`,
+      ).join('\n');
       return t.t('preferences.validation.invalidMatchingMethod', { options });
     }
 
@@ -576,6 +596,9 @@ function getValidationErrorMessage(t: Translator, _key: PreferenceKey, reason?: 
 
     case 'invalidWorld':
       return t.t('preferences.validation.invalidWorld');
+
+    case 'invalidTheme':
+      return t.t('preferences.validation.invalidTheme');
 
     case 'invalidMarket':
     case 'invalidBoolean':
@@ -620,7 +643,7 @@ async function handleFiltersSetSubcommand(
 
     filters[mapping.key] = opt.value;
     const status = opt.value ? '🚫' : '✅';
-    changes.push(`${status} **${mapping.label}**: ${opt.value ? t.t('preferences.filters.excluded') : t.t('preferences.filters.included')}`);
+    changes.push(`${status} **${filterLabel(t, mapping.option)}**: ${opt.value ? t.t('preferences.filters.excluded') : t.t('preferences.filters.included')}`);
   }
 
   if (changes.length === 0) {
@@ -661,11 +684,11 @@ async function handleFiltersShowSubcommand(
   const prefs = await getUserPreferences(env.KV, userId, logger);
   const filters = prefs.dyeFilters ?? {};
 
-  const lines = FILTER_OPTION_KEYS.map(({ key, label }) => {
+  const lines = FILTER_OPTION_KEYS.map(({ key, option }) => {
     const isExcluded = filters[key] === true;
     const emoji = isExcluded ? '🚫' : '✅';
     const status = isExcluded ? t.t('preferences.filters.excluded') : t.t('preferences.filters.included');
-    return `${emoji} **${label}**: ${status}`;
+    return `${emoji} **${filterLabel(t, option)}**: ${status}`;
   });
 
   return ephemeralResponse({

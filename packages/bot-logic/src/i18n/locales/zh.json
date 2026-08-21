@@ -238,7 +238,8 @@
       "presetNotFound": "找不到快速选择预设「{id}」。",
       "apiError": "无法获取市场板数据。请稍后再试。",
       "rateLimited": "请求过多。请稍等片刻后再查询价格。"
-    }
+    },
+    "dataCenterLabel": "{name}（{region} 数据中心）"
   },
   "preferences": {
     "title": "您的偏好设置",
@@ -246,7 +247,8 @@
       "description": "这些设置会影响命令的运行方式。\n您提供的参数将始终覆盖这些默认值。",
       "default": "默认",
       "notSet": "未设置",
-      "hint": "使用 /preferences set 自定义设置"
+      "hint": "使用 /preferences set 自定义设置",
+      "lastUpdated": "最后更新"
     },
     "set": {
       "success": "偏好设置已更新",
@@ -293,7 +295,9 @@
       "male": "男性 ♂️",
       "female": "女性 ♀️",
       "yes": "是",
-      "no": "否"
+      "no": "否",
+      "themeDark": "深色",
+      "themeLight": "浅色"
     },
     "validation": {
       "invalidLanguage": "无效的语言。有效选项: `en`, `ja`, `de`, `fr`, `ko`, `zh`",
@@ -304,7 +308,8 @@
       "invalidGender": "无效的性别。有效选项: `male`, `female`",
       "invalidWorld": "无效的服务器。请输入有效的FFXIV服务器或数据中心名称。",
       "invalidMarket": "无效的值。请使用 `on`/`off` 或 `true`/`false`。",
-      "error": "保存设置时发生错误，请重试。"
+      "error": "保存设置时发生错误，请重试。",
+      "invalidTheme": "无效的主题。请选择 `dark` 或 `light`。"
     },
     "filters": {
       "noOptions": "请至少提供一个过滤选项。",
@@ -315,7 +320,39 @@
       "title": "染剂过滤",
       "setHint": "使用 /preferences filters set 进行自定义",
       "resetSuccess": "过滤器已重置",
-      "resetDescription": "所有染剂过滤器已重置为默认值（包含所有染剂类型）。"
+      "resetDescription": "所有染剂过滤器已重置为默认值（包含所有染剂类型）。",
+      "labels": {
+        "metallic": "金属",
+        "pastel": "粉彩",
+        "dark": "暗色",
+        "cosmic": "宇宙",
+        "ishgardian": "伊修加德",
+        "expensive": "高价（纯白 / 墨黑）",
+        "vendor": "商店",
+        "craft": "制作"
+      }
+    },
+    "affects": {
+      "allCommands": "所有命令",
+      "marketData": "结果卡片上的市场数据",
+      "everyCard": "所有生成的卡片",
+      "resultCards": "所有带结果卡片的命令"
+    },
+    "methods": {
+      "ciede2000": "行业标准感知色差公式（默认）",
+      "oklab": "OKLAB 感知距离",
+      "cie76": "CIELAB 欧氏距离",
+      "redmean": "加权 RGB 近似",
+      "rgb": "RGB 欧氏距离",
+      "distinguish": "RGB DIST 重新缩放至 0-100"
+    },
+    "blendingModes": {
+      "rgb": "加色通道平均（默认）",
+      "lab": "感知均匀的 CIELAB 混合",
+      "oklab": "现代感知模型（修复 LAB 蓝→紫问题）",
+      "ryb": "传统美术色环",
+      "hsl": "色相-饱和度-亮度插值",
+      "spectral": "Kubelka-Munk 物理模拟"
     }
   },
   "webhook": {

@@ -916,7 +916,7 @@ async function handleAutocomplete(
       choices = getClanAutocompleteChoices(query);
     } else if (focusedName === 'world') {
       // World/datacenter autocomplete - reuse budget world autocomplete
-      choices = await getWorldAutocomplete(env, query, logger);
+      choices = await getWorldAutocomplete(env, query, logger, locale);
     }
   }
   // Default: Dye autocomplete for other commands

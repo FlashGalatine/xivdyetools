@@ -238,7 +238,8 @@
       "presetNotFound": "クイックピックプリセット「{id}」が見つかりませんでした。",
       "apiError": "マーケットボードデータを取得できませんでした。後でもう一度お試しください。",
       "rateLimited": "リクエストが多すぎます。しばらくしてから価格を確認してください。"
-    }
+    },
+    "dataCenterLabel": "{name}（{region} データセンター）"
   },
   "preferences": {
     "title": "設定",
@@ -246,7 +247,8 @@
       "description": "これらの設定はコマンドの動作に影響します。\nコマンドパラメータは常にこの設定を上書きします。",
       "default": "デフォルト",
       "notSet": "未設定",
-      "hint": "/preferences set で設定を変更できます"
+      "hint": "/preferences set で設定を変更できます",
+      "lastUpdated": "最終更新"
     },
     "set": {
       "success": "設定を更新しました",
@@ -293,7 +295,9 @@
       "male": "男性 ♂️",
       "female": "女性 ♀️",
       "yes": "はい",
-      "no": "いいえ"
+      "no": "いいえ",
+      "themeDark": "ダーク",
+      "themeLight": "ライト"
     },
     "validation": {
       "invalidLanguage": "無効な言語です。有効なオプション: `en`, `ja`, `de`, `fr`, `ko`, `zh`",
@@ -304,7 +308,8 @@
       "invalidGender": "無効な性別です。有効なオプション: `male`, `female`",
       "invalidWorld": "無効なワールドです。有効なFFXIVワールドまたはデータセンター名を入力してください。",
       "invalidMarket": "無効な値です。`on`/`off` または `true`/`false` を使用してください。",
-      "error": "設定の保存中にエラーが発生しました。もう一度お試しください。"
+      "error": "設定の保存中にエラーが発生しました。もう一度お試しください。",
+      "invalidTheme": "無効なテーマです。`dark` または `light` を選択してください。"
     },
     "filters": {
       "noOptions": "少なくとも1つのフィルターオプションを指定してください。",
@@ -315,7 +320,39 @@
       "title": "カララントフィルター",
       "setHint": "/preferences filters set でカスタマイズ",
       "resetSuccess": "フィルターリセット完了",
-      "resetDescription": "すべてのカララントフィルターがデフォルトにリセットされました（すべてのカララント種類が含まれます）。"
+      "resetDescription": "すべてのカララントフィルターがデフォルトにリセットされました（すべてのカララント種類が含まれます）。",
+      "labels": {
+        "metallic": "メタリック",
+        "pastel": "パステル",
+        "dark": "ダーク",
+        "cosmic": "コスモ",
+        "ishgardian": "イシュガルド",
+        "expensive": "高価（ピュアホワイト／ジェットブラック）",
+        "vendor": "ベンダー",
+        "craft": "クラフト"
+      }
+    },
+    "affects": {
+      "allCommands": "すべてのコマンド",
+      "marketData": "結果カードのマーケットデータ",
+      "everyCard": "生成されるすべてのカード",
+      "resultCards": "結果カードを持つすべてのコマンド"
+    },
+    "methods": {
+      "ciede2000": "業界標準の知覚色差式（既定）",
+      "oklab": "OKLAB 知覚距離",
+      "cie76": "CIELAB ユークリッド距離",
+      "redmean": "重み付き RGB 近似",
+      "rgb": "RGB ユークリッド距離",
+      "distinguish": "RGB DIST を 0〜100 に再スケール"
+    },
+    "blendingModes": {
+      "rgb": "加法チャンネル平均（既定）",
+      "lab": "知覚的に均一な CIELAB ブレンド",
+      "oklab": "最新の知覚モデル（LAB の青→紫問題を修正）",
+      "ryb": "伝統的な画家の色相環",
+      "hsl": "色相・彩度・明度の補間",
+      "spectral": "Kubelka-Munk 物理シミュレーション"
     }
   },
   "webhook": {

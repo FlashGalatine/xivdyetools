@@ -238,7 +238,8 @@
       "presetNotFound": "Impossible de trouver le préréglage rapide \"{id}\".",
       "apiError": "Impossible de récupérer les données du tableau des ventes. Veuillez réessayer plus tard.",
       "rateLimited": "Trop de requêtes. Veuillez patienter avant de vérifier à nouveau les prix."
-    }
+    },
+    "dataCenterLabel": "{name} (centre de données {region})"
   },
   "preferences": {
     "title": "Vos préférences",
@@ -246,7 +247,8 @@
       "description": "Ces paramètres affectent le fonctionnement des commandes.\nLes paramètres que vous fournissez remplacent toujours ces valeurs par défaut.",
       "default": "Par défaut",
       "notSet": "Non défini",
-      "hint": "Utilisez /preferences set pour personnaliser"
+      "hint": "Utilisez /preferences set pour personnaliser",
+      "lastUpdated": "Dernière mise à jour"
     },
     "set": {
       "success": "Préférence mise à jour",
@@ -288,7 +290,9 @@
       "male": "Masculin ♂️",
       "female": "Féminin ♀️",
       "yes": "Oui",
-      "no": "Non"
+      "no": "Non",
+      "themeDark": "sombre",
+      "themeLight": "clair"
     },
     "validation": {
       "invalidLanguage": "Langue invalide. Options valides : `en`, `ja`, `de`, `fr`, `ko`, `zh`",
@@ -299,7 +303,8 @@
       "invalidGender": "Genre invalide. Options valides : `male`, `female`",
       "invalidWorld": "Monde invalide. Veuillez entrer un nom de monde ou de centre de données FFXIV valide.",
       "invalidMarket": "Valeur invalide. Utilisez `on`/`off` ou `true`/`false`.",
-      "error": "Une erreur est survenue lors de l'enregistrement de la préférence. Veuillez réessayer."
+      "error": "Une erreur est survenue lors de l'enregistrement de la préférence. Veuillez réessayer.",
+      "invalidTheme": "Thème invalide. Choisissez `dark` ou `light`."
     },
     "errors": {
       "invalidKey": "Clé de préférence inconnue : {key}",
@@ -315,7 +320,39 @@
       "title": "Filtres de teinture",
       "setHint": "Utilisez /preferences filters set pour personnaliser",
       "resetSuccess": "Filtres réinitialisés",
-      "resetDescription": "Tous les filtres de teinture ont été réinitialisés aux valeurs par défaut (tous les types de teinture inclus)."
+      "resetDescription": "Tous les filtres de teinture ont été réinitialisés aux valeurs par défaut (tous les types de teinture inclus).",
+      "labels": {
+        "metallic": "Métallique",
+        "pastel": "Pastel",
+        "dark": "Sombre",
+        "cosmic": "Cosmique",
+        "ishgardian": "Ishgardais",
+        "expensive": "Coûteuses (blanc pur / noir de jais)",
+        "vendor": "Vendeur",
+        "craft": "Artisanat"
+      }
+    },
+    "affects": {
+      "allCommands": "toutes les commandes",
+      "marketData": "données du marché sur les cartes de résultat",
+      "everyCard": "chaque carte générée",
+      "resultCards": "toutes les commandes avec cartes de résultat"
+    },
+    "methods": {
+      "ciede2000": "Formule perceptuelle de référence (par défaut)",
+      "oklab": "distance perceptuelle OKLAB",
+      "cie76": "distance euclidienne CIELAB",
+      "redmean": "approximation RVB pondérée",
+      "rgb": "distance euclidienne RVB",
+      "distinguish": "RGB DIST ramené sur 0-100"
+    },
+    "blendingModes": {
+      "rgb": "moyenne additive des canaux (par défaut)",
+      "lab": "mélange CIELAB perceptuellement uniforme",
+      "oklab": "perceptuel moderne (corrige le bleu→violet de LAB)",
+      "ryb": "cercle chromatique traditionnel des artistes",
+      "hsl": "interpolation teinte-saturation-luminosité",
+      "spectral": "simulation physique Kubelka-Munk"
     }
   },
   "webhook": {

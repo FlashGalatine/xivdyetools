@@ -238,7 +238,8 @@
       "presetNotFound": "Could not find quick pick preset \"{id}\".",
       "apiError": "Could not fetch market board data. Please try again later.",
       "rateLimited": "Too many requests. Please wait a moment before checking prices again."
-    }
+    },
+    "dataCenterLabel": "{name} ({region} Data Center)"
   },
   "preferences": {
     "title": "Your Preferences",
@@ -246,7 +247,8 @@
       "description": "These settings affect how commands work for you.\nParameters you provide always override these defaults.",
       "default": "Default",
       "notSet": "Not set",
-      "hint": "Use /preferences set to customize (e.g., /preferences set language:en)"
+      "hint": "Use /preferences set to customize (e.g., /preferences set language:en)",
+      "lastUpdated": "Last updated"
     },
     "set": {
       "success": "Preference Updated",
@@ -288,7 +290,9 @@
       "male": "Male ♂️",
       "female": "Female ♀️",
       "yes": "Yes",
-      "no": "No"
+      "no": "No",
+      "themeDark": "dark",
+      "themeLight": "light"
     },
     "validation": {
       "invalidLanguage": "Invalid language. Valid options: `en`, `ja`, `de`, `fr`, `ko`, `zh`",
@@ -299,7 +303,8 @@
       "invalidGender": "Invalid gender. Valid options: `male`, `female`",
       "invalidWorld": "Invalid world. Please enter a valid FFXIV world or datacenter name.",
       "invalidMarket": "Invalid value. Use `on`/`off` or `true`/`false`.",
-      "error": "An error occurred while saving the preference. Please try again."
+      "error": "An error occurred while saving the preference. Please try again.",
+      "invalidTheme": "Invalid theme. Choose `dark` or `light`."
     },
     "errors": {
       "invalidKey": "Unknown preference key: {key}",
@@ -315,7 +320,39 @@
       "title": "Dye Filters",
       "setHint": "Use /preferences filters set to customize",
       "resetSuccess": "Filters Reset",
-      "resetDescription": "All dye filters have been reset to defaults (all dye types included)."
+      "resetDescription": "All dye filters have been reset to defaults (all dye types included).",
+      "labels": {
+        "metallic": "Metallic",
+        "pastel": "Pastel",
+        "dark": "Dark",
+        "cosmic": "Cosmic",
+        "ishgardian": "Ishgardian",
+        "expensive": "Expensive (Pure White / Jet Black)",
+        "vendor": "Vendor",
+        "craft": "Crafted"
+      }
+    },
+    "affects": {
+      "allCommands": "all commands",
+      "marketData": "market data on Result Cards",
+      "everyCard": "every generated card",
+      "resultCards": "all commands with Result Cards"
+    },
+    "methods": {
+      "ciede2000": "Industry-standard perceptual formula (default)",
+      "oklab": "OKLAB perceptual distance",
+      "cie76": "CIELAB Euclidean distance",
+      "redmean": "Weighted RGB approximation",
+      "rgb": "Euclidean RGB distance",
+      "distinguish": "RGB DIST rescaled to 0-100"
+    },
+    "blendingModes": {
+      "rgb": "Additive channel averaging (default)",
+      "lab": "Perceptually uniform CIELAB blending",
+      "oklab": "Modern perceptual (fixes LAB blue→purple)",
+      "ryb": "Traditional artist's color wheel",
+      "hsl": "Hue-Saturation-Lightness interpolation",
+      "spectral": "Kubelka-Munk physics simulation"
     }
   },
   "webhook": {

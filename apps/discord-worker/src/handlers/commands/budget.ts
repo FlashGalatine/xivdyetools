@@ -481,7 +481,7 @@ export async function handleBudgetAutocomplete(
       break;
 
     case 'world':
-      choices = await getWorldAutocomplete(env, query, logger);
+      choices = await getWorldAutocomplete(env, query, logger, locale);
       break;
 
     default:
