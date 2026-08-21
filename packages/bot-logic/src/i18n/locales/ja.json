@@ -11,7 +11,8 @@
     "hsv": "HSV",
     "itemId": "アイテムID",
     "footer": "XIV Dye Tools",
-    "error": "エラー"
+    "error": "エラー",
+    "unknownError": "問題が発生しました。もう一度お試しください。"
   },
   "errors": {
     "dyeNotFound": "「{name}」という名前のカララントが見つかりませんでした。",
@@ -206,11 +207,18 @@
     "findTitle": "{dyeName}の代替カラー",
     "noAlternatives": "条件に合う安価な代替品が見つかりませんでした。",
     "worldSet": "デフォルトワールドを**{world}**に設定しました。",
+    "noWorldSet": {
+      "title": "ワールドが未設定です",
+      "description": "`/budget set_world <world>` でワールドを設定するか、`world` オプションを指定してください。"
+    },
     "errors": {
       "notConfigured": "このサーバーではお手頃カラー機能は利用できません。マーケットボード連携が設定されていません。",
       "worldNotFound": "ワールドまたはデータセンター「{world}」が見つかりませんでした。\n\nスペルを確認するか、「Mana」や「Elemental」などのデータセンター名をお試しください。",
+      "missingWorld": "ワールドを指定してください。",
+      "saveFailed": "ワールド設定を保存できませんでした。もう一度お試しください。",
       "missingDye": "対象カラーを指定してください。",
       "dyeNotFound": "カラー「{name}」が見つかりませんでした。",
+      "missingPreset": "クイックピックプリセットを選択してください。",
       "presetNotFound": "クイックピックプリセット「{id}」が見つかりませんでした。",
       "apiError": "マーケットボードデータを取得できませんでした。後でもう一度お試しください。",
       "rateLimited": "リクエストが多すぎます。しばらくしてから価格を確認してください。"

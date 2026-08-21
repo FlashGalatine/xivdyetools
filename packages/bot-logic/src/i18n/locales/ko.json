@@ -11,7 +11,8 @@
     "hsv": "HSV",
     "itemId": "아이템 ID",
     "footer": "XIV Dye Tools",
-    "error": "오류"
+    "error": "오류",
+    "unknownError": "문제가 발생했습니다. 다시 시도해 주세요."
   },
   "errors": {
     "dyeNotFound": "\"{name}\"(이)라는 이름의 염료를 찾을 수 없습니다.",
@@ -206,11 +207,18 @@
     "findTitle": "{dyeName}의 저렴한 대안",
     "noAlternatives": "조건에 맞는 저렴한 대안을 찾을 수 없습니다.",
     "worldSet": "기본 월드가 **{world}**(으)로 설정되었습니다.",
+    "noWorldSet": {
+      "title": "월드가 설정되지 않았습니다",
+      "description": "`/budget set_world <world>`로 월드를 설정하거나 `world` 옵션을 지정해 주세요."
+    },
     "errors": {
       "notConfigured": "이 서버에서는 저렴한 염료 기능을 사용할 수 없습니다. 장터 연동이 설정되어 있지 않습니다.",
       "worldNotFound": "월드 또는 데이터센터 \"{world}\"를 찾을 수 없습니다.\n\n철자를 확인하거나 \"모그리\" 또는 \"초코보\" 같은 데이터센터 이름을 시도해 보세요.",
+      "missingWorld": "월드를 지정해 주세요.",
+      "saveFailed": "월드 설정을 저장할 수 없습니다. 다시 시도해 주세요.",
       "missingDye": "대상 염료를 지정해 주세요.",
       "dyeNotFound": "염료 \"{name}\"를 찾을 수 없습니다.",
+      "missingPreset": "빠른 선택 프리셋을 선택해 주세요.",
       "presetNotFound": "빠른 선택 프리셋 \"{id}\"를 찾을 수 없습니다.",
       "apiError": "장터 데이터를 가져올 수 없습니다. 나중에 다시 시도해 주세요.",
       "rateLimited": "요청이 너무 많습니다. 잠시 후에 가격을 다시 확인해 주세요."

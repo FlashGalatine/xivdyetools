@@ -11,7 +11,8 @@
     "hsv": "HSV",
     "itemId": "ID d'objet",
     "footer": "XIV Dye Tools",
-    "error": "Erreur"
+    "error": "Erreur",
+    "unknownError": "Une erreur s'est produite. Veuillez réessayer."
   },
   "errors": {
     "dyeNotFound": "Impossible de trouver une teinture nommée \"{name}\".",
@@ -206,11 +207,18 @@
     "findTitle": "Alternatives économiques pour {dyeName}",
     "noAlternatives": "Aucune alternative moins chère trouvée selon vos critères.",
     "worldSet": "Votre monde par défaut a été défini sur **{world}**.",
+    "noWorldSet": {
+      "title": "Aucun monde défini",
+      "description": "Définissez votre monde avec `/budget set_world <world>` ou indiquez l'option `world`."
+    },
     "errors": {
       "notConfigured": "La fonction budget n'est pas disponible sur ce serveur. L'intégration du tableau des ventes n'est pas configurée.",
       "worldNotFound": "Impossible de trouver le monde ou le centre de données \"{world}\".\n\nVeuillez vérifier l'orthographe ou essayer un nom de centre de données comme \"Chaos\" ou \"Light\".",
+      "missingWorld": "Veuillez spécifier un monde.",
+      "saveFailed": "Impossible d'enregistrer votre monde. Veuillez réessayer.",
       "missingDye": "Veuillez spécifier une teinture cible.",
       "dyeNotFound": "Impossible de trouver la teinture \"{name}\".",
+      "missingPreset": "Veuillez choisir un préréglage rapide.",
       "presetNotFound": "Impossible de trouver le préréglage rapide \"{id}\".",
       "apiError": "Impossible de récupérer les données du tableau des ventes. Veuillez réessayer plus tard.",
       "rateLimited": "Trop de requêtes. Veuillez patienter avant de vérifier à nouveau les prix."

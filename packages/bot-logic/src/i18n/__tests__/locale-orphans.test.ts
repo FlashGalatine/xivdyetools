@@ -213,6 +213,33 @@ describe('bot-logic i18n orphan gate', () => {
     expect(orphans, `orphaned locale keys:\n  ${orphans.join('\n  ')}`).toEqual([]);
   });
 
+  /**
+   * Reverse direction (2026-08-20 i18n audit, F-01): every static key a consumer
+   * passes to `Translator.t()` must exist in en.json. `t()` returns the raw
+   * dotted key on a miss, so a typo or a renamed key ships `budget.noWorldSet.title`
+   * straight into a Discord embed — and the forward orphan check above cannot
+   * see it (it only asks whether en.json keys are *read*, not whether read keys
+   * *exist*). Seven such keys survived six months this way.
+   *
+   * Matches `<anything>.t('a.b')` / `.t("a.b")` / `.t(\`a.b\`)` with a literal,
+   * fully static dotted key — template keys (`t.t(\`accessibility.${lens}\`)`)
+   * are out of scope here and are covered by the enumerated set above.
+   */
+  it('every static key passed to Translator.t() exists in en.json', () => {
+    const en = loadLocale('en');
+    const defined = new Set(flattenKeys(en));
+    const corpus = buildCorpus();
+
+    const called = new Set<string>();
+    for (const m of corpus.matchAll(/\.t\(\s*['"`]([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+)['"`]/g)) {
+      called.add(m[1]);
+    }
+    const missing = [...called].filter((k) => !defined.has(k)).sort();
+
+    expect(called.size).toBeGreaterThan(200);
+    expect(missing, `t() keys with no en.json entry:\n  ${missing.join('\n  ')}`).toEqual([]);
+  });
+
   it('keeps identical key sets across all six locales', () => {
     const keySets = LOCALE_CODES.map((code) => new Set(flattenKeys(loadLocale(code))));
     const [enKeys, ...rest] = keySets;

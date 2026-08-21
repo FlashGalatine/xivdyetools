@@ -1124,7 +1124,7 @@ async function processFavoriteAdd(
     if (!preset) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
-          errorEmbed(t.t('common.error'), t.t('preset.errors.notFound', { name: presetInput })),
+          errorEmbed(t.t('common.error'), t.t('preset.notFound')),
         ],
       });
       return;

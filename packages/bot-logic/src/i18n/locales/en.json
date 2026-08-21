@@ -11,7 +11,8 @@
     "hsv": "HSV",
     "itemId": "Item ID",
     "footer": "XIV Dye Tools",
-    "error": "Error"
+    "error": "Error",
+    "unknownError": "Something went wrong. Please try again."
   },
   "errors": {
     "dyeNotFound": "Could not find a dye named \"{name}\".",
@@ -206,11 +207,18 @@
     "findTitle": "Budget Alternatives for {dyeName}",
     "noAlternatives": "No cheaper alternatives found within your criteria.",
     "worldSet": "Your default world has been set to **{world}**.",
+    "noWorldSet": {
+      "title": "No world set",
+      "description": "Set your world with `/budget set_world <world>` or pass the `world` option."
+    },
     "errors": {
       "notConfigured": "The budget feature is not available on this server. Market board integration is not configured.",
       "worldNotFound": "Could not find world or datacenter \"{world}\".\n\nPlease check the spelling or try a datacenter name like \"Crystal\" or \"Chaos\".",
+      "missingWorld": "Please specify a world.",
+      "saveFailed": "Could not save your world preference. Please try again.",
       "missingDye": "Please specify a target dye.",
       "dyeNotFound": "Could not find dye \"{name}\".",
+      "missingPreset": "Please choose a quick pick preset.",
       "presetNotFound": "Could not find quick pick preset \"{id}\".",
       "apiError": "Could not fetch market board data. Please try again later.",
       "rateLimited": "Too many requests. Please wait a moment before checking prices again."

@@ -379,7 +379,7 @@ async function handleSetWorldSubcommand(
   const validatedWorld = await validateWorld(env, worldInput, logger);
 
   if (!validatedWorld) {
-    return ephemeralResponse(t.t('budget.errors.worldNotFound', { name: worldInput }));
+    return ephemeralResponse(t.t('budget.errors.worldNotFound', { world: worldInput }));
   }
 
   // Save preference via unified preferences system
@@ -419,7 +419,7 @@ async function handleQuickSubcommand(
   // Get preset
   const preset = getQuickPickById(presetId);
   if (!preset) {
-    return ephemeralResponse(t.t('budget.errors.presetNotFound'));
+    return ephemeralResponse(t.t('budget.errors.presetNotFound', { id: presetId }));
   }
 
   const world = worldOverride ?? prefs.world;

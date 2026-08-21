@@ -11,7 +11,8 @@
     "hsv": "HSV",
     "itemId": "Gegenstands-ID",
     "footer": "XIV Dye Tools",
-    "error": "Fehler"
+    "error": "Fehler",
+    "unknownError": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
   },
   "errors": {
     "dyeNotFound": "Farbstoff mit dem Namen \"{name}\" wurde nicht gefunden.",
@@ -206,11 +207,18 @@
     "findTitle": "Budget-Alternativen für {dyeName}",
     "noAlternatives": "Keine günstigeren Alternativen innerhalb deiner Kriterien gefunden.",
     "worldSet": "Deine Standardwelt wurde auf **{world}** gesetzt.",
+    "noWorldSet": {
+      "title": "Keine Welt festgelegt",
+      "description": "Lege deine Welt mit `/budget set_world <world>` fest oder gib die Option `world` an."
+    },
     "errors": {
       "notConfigured": "Die Budget-Funktion ist auf diesem Server nicht verfügbar. Marktbrett-Integration ist nicht konfiguriert.",
       "worldNotFound": "Welt oder Datenzentrum \"{world}\" konnte nicht gefunden werden.\n\nBitte überprüfe die Schreibweise oder versuche einen Datenzentrumsnamen wie \"Light\" oder \"Chaos\".",
+      "missingWorld": "Bitte gib eine Welt an.",
+      "saveFailed": "Deine Welt-Einstellung konnte nicht gespeichert werden. Bitte versuche es erneut.",
       "missingDye": "Bitte gib eine Zielfarbe an.",
       "dyeNotFound": "Farbe \"{name}\" konnte nicht gefunden werden.",
+      "missingPreset": "Bitte wähle eine Schnellauswahl-Vorlage.",
       "presetNotFound": "Schnellauswahl-Vorlage \"{id}\" konnte nicht gefunden werden.",
       "apiError": "Marktbrett-Daten konnten nicht abgerufen werden. Bitte versuche es später erneut.",
       "rateLimited": "Zu viele Anfragen. Bitte warte einen Moment, bevor du erneut Preise abrufst."

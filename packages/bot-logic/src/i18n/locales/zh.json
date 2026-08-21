@@ -11,7 +11,8 @@
     "hsv": "HSV",
     "itemId": "物品ID",
     "footer": "XIV Dye Tools",
-    "error": "错误"
+    "error": "错误",
+    "unknownError": "出现问题。请重试。"
   },
   "errors": {
     "dyeNotFound": "找不到名为「{name}」的染剂。",
@@ -206,11 +207,18 @@
     "findTitle": "{dyeName}的实惠替代品",
     "noAlternatives": "未找到符合条件的更实惠替代品。",
     "worldSet": "您的默认服务器已设置为**{world}**。",
+    "noWorldSet": {
+      "title": "尚未设置服务器",
+      "description": "请使用 `/budget set_world <world>` 设置服务器，或指定 `world` 选项。"
+    },
     "errors": {
       "notConfigured": "此服务器不支持实惠染料功能。市场板集成未配置。",
       "worldNotFound": "找不到服务器或数据中心「{world}」。\n\n请检查拼写，或尝试使用数据中心名称，如「陆行鸟」或「莫古力」。",
+      "missingWorld": "请指定服务器。",
+      "saveFailed": "无法保存服务器设置。请重试。",
       "missingDye": "请指定目标染料。",
       "dyeNotFound": "找不到染料「{name}」。",
+      "missingPreset": "请选择一个快速选择预设。",
       "presetNotFound": "找不到快速选择预设「{id}」。",
       "apiError": "无法获取市场板数据。请稍后再试。",
       "rateLimited": "请求过多。请稍等片刻后再查询价格。"
