@@ -227,7 +227,7 @@ class AuthServiceImpl {
         if (import.meta.env.DEV) {
           logger.info('🔐 [AuthService] Auth code found in URL, exchanging for token...');
         }
-        await this.handleCallbackCode(code, urlParams.get('csrf'));
+        await this.handleCallbackCode(code, urlParams.get('csrf'), urlParams.get('state'));
         // Get return path before cleaning URL, default to home
         // SECURITY: Sanitize to prevent open redirect attacks
         const rawPath =
@@ -344,8 +344,17 @@ class AuthServiceImpl {
    * Handle authorization code received from OAuth callback
    * Exchanges the code for a token via POST to the OAuth worker
    * This is the secure PKCE flow - the code_verifier never leaves the client
+   *
+   * @param code - Authorization code from the bounce
+   * @param csrf - The SPA's own state nonce echoed by the worker (CSRF check)
+   * @param signedState - The worker's signed state envelope (`?state=`), forwarded
+   *   so the worker can bind the verifier to its challenge; null on older bounces
    */
-  private async handleCallbackCode(code: string, csrf: string | null): Promise<void> {
+  private async handleCallbackCode(
+    code: string,
+    csrf: string | null,
+    signedState: string | null
+  ): Promise<void> {
     // Retrieve the stored code_verifier (stored during login initiation)
     const codeVerifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
     const storedState = sessionStorage.getItem(OAUTH_STATE_KEY);
@@ -378,7 +387,11 @@ class AuthServiceImpl {
         logger.info(`🔐 [AuthService] Exchanging code via ${provider} endpoint`);
       }
 
-      // Exchange code for token via POST (code_verifier sent directly, not through redirect)
+      // Exchange code for token via POST (code_verifier sent directly, not through redirect).
+      // FINDING-012 / OAUTH-5: the worker's bounce echoes its signed `state`
+      // envelope; forwarding it lets the worker bind this verifier to the
+      // challenge it issued (S256(code_verifier) must equal state.code_challenge).
+      // Older bounces carry none — then the body is exactly what it was.
       const response = await fetch(callbackEndpoint, {
         method: 'POST',
         headers: {
@@ -388,6 +401,7 @@ class AuthServiceImpl {
           code,
           code_verifier: codeVerifier,
           redirect_uri: `${window.location.origin}/auth/callback`,
+          ...(signedState ? { state: signedState } : {}),
         }),
       });
 

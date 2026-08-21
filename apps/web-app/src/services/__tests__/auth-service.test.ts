@@ -938,6 +938,88 @@ describe('AuthService', () => {
       expect(mockSessionStorage['xivdyetools_oauth_provider']).toBeUndefined();
     });
 
+    // FINDING-012 / OAUTH-5: the oauth worker's GET bounce now echoes its
+    // signed `state` envelope; the POST exchange forwards it so the worker can
+    // bind the PKCE verifier to state.code_challenge. Older bounces carry no
+    // `state` and must keep working with the unchanged body shape.
+    describe('signed state forwarding (FINDING-012)', () => {
+      const exchangeBody = (): Record<string, unknown> => {
+        const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+        return JSON.parse((call[1] as RequestInit).body as string) as Record<string, unknown>;
+      };
+
+      const arrangeSuccessfulExchange = (authProvider: 'discord' | 'xivauth') => {
+        const futureTime = Math.floor(Date.now() / 1000) + 3600;
+        const mockToken = createMockJWT({
+          sub: '123',
+          auth_provider: authProvider,
+          username: 'testuser',
+          global_name: null,
+          avatar: null,
+          exp: futureTime,
+        });
+        mockSessionStorage['xivdyetools_pkce_verifier'] = 'test-verifier';
+        mockSessionStorage['xivdyetools_oauth_state'] = 'test-state';
+        (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve({ success: true, token: mockToken, expires_at: futureTime }),
+        });
+      };
+
+      it('forwards the signed state from the Discord bounce in the POST body', async () => {
+        arrangeSuccessfulExchange('discord');
+        (window.location as { search: string }).search =
+          '?code=auth-code&csrf=test-state&state=signed.envelope.sig';
+
+        const { authService } = await import('../auth-service');
+        await authService.initialize();
+
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining('/auth/callback'),
+          expect.objectContaining({ method: 'POST' })
+        );
+        expect(exchangeBody()).toEqual({
+          code: 'auth-code',
+          code_verifier: 'test-verifier',
+          redirect_uri: 'http://localhost:3000/auth/callback',
+          state: 'signed.envelope.sig',
+        });
+        expect(authService.isAuthenticated()).toBe(true);
+      });
+
+      it('forwards the signed state from the XIVAuth bounce in the POST body', async () => {
+        arrangeSuccessfulExchange('xivauth');
+        (window.location as { search: string }).search =
+          '?code=auth-code&provider=xivauth&csrf=test-state&state=signed.xivauth.sig';
+
+        const { authService } = await import('../auth-service');
+        await authService.initialize();
+
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining('/auth/xivauth/callback'),
+          expect.objectContaining({ method: 'POST' })
+        );
+        expect(exchangeBody().state).toBe('signed.xivauth.sig');
+        expect(exchangeBody().code_verifier).toBe('test-verifier');
+      });
+
+      it('still exchanges an older bounce that carries no state, with the unchanged body', async () => {
+        arrangeSuccessfulExchange('discord');
+        (window.location as { search: string }).search = '?code=auth-code&csrf=test-state';
+
+        const { authService } = await import('../auth-service');
+        await authService.initialize();
+
+        expect(exchangeBody()).toEqual({
+          code: 'auth-code',
+          code_verifier: 'test-verifier',
+          redirect_uri: 'http://localhost:3000/auth/callback',
+        });
+        expect('state' in exchangeBody()).toBe(false);
+        expect(authService.isAuthenticated()).toBe(true);
+      });
+    });
+
     it('should use return path from URL or session storage', async () => {
       const futureTime = Math.floor(Date.now() / 1000) + 3600;
       const mockToken = createMockJWT({
