@@ -29,6 +29,7 @@ import type {
   CharaSlotInertReason,
   ParsedCharaFile,
 } from './chara-parser.js';
+import type { CharaGearModel } from './chara-models.js';
 
 /** ΔE2000 beyond which a live float overrides the palette index (OFF GRID). */
 export const OFF_GRID_DELTA_E2000 = 6;
@@ -96,6 +97,10 @@ export interface ResolvedCharaCharacter {
   /** True when both eyes carry the same palette index — merge into one badge */
   eyesShareIndex: boolean;
   gearDyes: ResolvedGearDye[];
+  /** Worn pieces' model keys (undyed included) — item names resolve off-device */
+  gearModels: CharaGearModel[];
+  /** Facewear `Glasses` sheet row; null when none */
+  glassesId: number | null;
 }
 
 /** Minimal dye lookup the resolver needs (DyeService satisfies this). */
@@ -360,5 +365,7 @@ export async function resolveCharaColors(
       ...g,
       dye: dyeLookup?.getByStainId(g.stainId) ?? null,
     })),
+    gearModels: parsed.gearModels,
+    glassesId: parsed.glassesId,
   };
 }

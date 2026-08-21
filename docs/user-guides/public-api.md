@@ -138,6 +138,21 @@ curl "https://data.xivdyetools.app/v1/match/within-distance?hex=FF6B6B&maxDistan
 
 Results are sorted by distance (closest first). `maxDistance` is in the chosen method's unit — `15` is a sensible ΔE2000 starting point; for `oklab` use something like `0.15`.
 
+### Resolve a `.chara` file's equipment (POST)
+
+A character file names no items — it stores each slot's model key. Send the worn slots' keys (and nothing else from the file) and get back the items, their names in six languages, icon ids and same-model alternates:
+
+```bash
+curl -X POST "https://data.xivdyetools.app/v1/chara/resolve" \
+  -H "Content-Type: application/json" \
+  -d '{"gear":[{"slot":"HeadGear","base":361,"variant":5},{"slot":"MainHand","set":634,"base":19,"variant":1}],"glasses":40}'
+
+# The icon for a resolved item (PNG, long-cached)
+curl -o mask.png "https://data.xivdyetools.app/v1/chara/icon/41716"
+```
+
+`items.<slot>` is `null` when the key has no Item row (NPC / prop models); `503 UPSTREAM_UNAVAILABLE` means XIVAPI is down or re-indexing after a patch — retry later. Full reference: [developers.xivdyetools.app/reference/chara](https://developers.xivdyetools.app/reference/chara).
+
 ### 7. Get Categories
 
 ```bash

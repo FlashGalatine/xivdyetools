@@ -62,6 +62,28 @@ describe('parseCharaFile', () => {
         { slot: 'Feet', channel: 1, stainId: 97 },
       ]);
     });
+
+    it('emits every WORN piece as a model key, undyed accessories included, empty off-hand skipped', () => {
+      expect(parsed.gearModels).toEqual([
+        { slot: 'MainHand', set: 5603, base: 9, variant: 3 },
+        { slot: 'HeadGear', base: 813, variant: 2 },
+        { slot: 'Body', base: 876, variant: 1 },
+        { slot: 'Hands', base: 835, variant: 2 },
+        { slot: 'Legs', base: 835, variant: 2 },
+        { slot: 'Feet', base: 6135, variant: 1 },
+        { slot: 'Ears', base: 124, variant: 6 },
+        { slot: 'Neck', base: 111, variant: 2 },
+        { slot: 'Wrists', base: 134, variant: 6 },
+        { slot: 'LeftRing', base: 53, variant: 1 },
+        { slot: 'RightRing', base: 53, variant: 1 },
+      ]);
+      // Worn ≠ dyed: 11 pieces worn, 5 slots dyed — the footnote needs both.
+      expect(new Set(parsed.gearDyes.map((g) => g.slot)).size).toBe(5);
+    });
+
+    it('Glasses { GlassesId: 0 } is no facewear', () => {
+      expect(parsed.glassesId).toBeNull();
+    });
   });
 
   describe('Hrothgar Helions (fur pattern, highlights off, alpha-0 lip)', () => {
@@ -88,6 +110,54 @@ describe('parseCharaFile', () => {
     it('FacePaint: 106 stays active (do not range-validate FacePaint)', () => {
       const facePaint = parsed.slots.find((s) => s.slot === 'facePaint');
       expect(facePaint?.indexActive).toBe(true);
+    });
+
+    it('carries both weapon triples — the off-hand here is the main hand\'s ModelSub (fist pair)', () => {
+      expect(parsed.gearModels.slice(0, 2)).toEqual([
+        { slot: 'MainHand', set: 301, base: 31, variant: 1 },
+        { slot: 'OffHand', set: 351, base: 31, variant: 1 },
+      ]);
+      // Five accessory slots are all-zero in this file → not worn, not emitted.
+      expect(parsed.gearModels.map((m) => m.slot)).toEqual([
+        'MainHand',
+        'OffHand',
+        'HeadGear',
+        'Body',
+        'Legs',
+        'Feet',
+      ]);
+    });
+  });
+
+  describe('gear model quirks', () => {
+    const base = { Race: 'Viera', Tribe: 'Rava', Gender: 'Feminine', Skintone: 1 };
+
+    it('accepts Glasses as a bare integer (Brio-era Ktisis) or { GlassesId }', () => {
+      expect(parseCharaFile(JSON.stringify({ ...base, Glasses: 40 })).glassesId).toBe(40);
+      expect(parseCharaFile(JSON.stringify({ ...base, Glasses: { GlassesId: 160 } })).glassesId).toBe(160);
+      expect(parseCharaFile(JSON.stringify({ ...base })).glassesId).toBeNull();
+      expect(parseCharaFile(JSON.stringify({ ...base, Glasses: 0 })).glassesId).toBeNull();
+    });
+
+    it('treats a null hand record as empty (one Anamnesis file writes MainHand: null)', () => {
+      const parsed = parseCharaFile(
+        JSON.stringify({ ...base, MainHand: null, OffHand: null, Body: { ModelBase: 279, ModelVariant: 1 } }),
+      );
+      expect(parsed.gearModels).toEqual([{ slot: 'Body', base: 279, variant: 1 }]);
+    });
+
+    it('a weapon with set but no base is still worn; armour with base 0 is not', () => {
+      const parsed = parseCharaFile(
+        JSON.stringify({
+          ...base,
+          MainHand: { ModelSet: 2099, ModelBase: 0, ModelVariant: 0 },
+          Body: { ModelBase: 0, ModelVariant: 7, DyeId: 5 },
+        }),
+      );
+      expect(parsed.gearModels).toEqual([{ slot: 'MainHand', set: 2099, base: 0, variant: 0 }]);
+      // The dye channel is still reported even though no model is worn — the
+      // file said so; the UI decides how to show a dye on nothing.
+      expect(parsed.gearDyes).toEqual([{ slot: 'Body', channel: 1, stainId: 5 }]);
     });
   });
 

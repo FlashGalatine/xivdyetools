@@ -23,8 +23,14 @@
  *   float-bearing files): the floats count as live only when it is present
  *   and true — a missing flag means the index wins, and the UI says so.
  * - **Gear dyes are stain IDs** (`DyeId`/`DyeId2` per slot, 0 = undyed; 35%
- *   of dyed channels are the second one). Rows are labelled by equipment
- *   slot only.
+ *   of dyed channels are the second one).
+ * - **Gear models are emitted beside the dyes** (`gearModels`): the
+ *   `ModelBase`/`ModelVariant` pair (weapons add `ModelSet`) of every WORN
+ *   slot — `ModelBase == 0` (weapons: `ModelSet == 0` too) is an empty slot
+ *   and is skipped. `null` hand records (one Anamnesis file) are empty.
+ *   `Glasses` is `{ GlassesId }` or, on Brio-era Ktisis, a bare integer —
+ *   both are accepted; 0 = no facewear. Resolution to item names happens
+ *   off-device (api-worker) — the parser only carries the keys.
  * - **Never read `Base64Image`.**
  * - An unrecognised tribe/race/gender fails loudly (name got vs expected),
  *   never an empty palette.
@@ -33,6 +39,7 @@
 import type { Gender, Race, RGB, SubRace } from '@xivdyetools/types';
 import { AppError, ErrorCode } from '@xivdyetools/types';
 import { clamp } from '../../utils/index.js';
+import { isWornCharaModel, isCharaWeaponSlot, type CharaGearModel } from './chara-models.js';
 
 /** Colour slots a `.chara` file can populate. */
 export type CharaSlotId =
@@ -95,6 +102,10 @@ export interface ParsedCharaFile {
   slots: CharaColorSlotRaw[];
   /** Dyed gear channels only (stainId > 0), in file slot order */
   gearDyes: CharaGearDye[];
+  /** Worn pieces only (model base > 0), in file slot order — undyed pieces included */
+  gearModels: CharaGearModel[];
+  /** Facewear `Glasses` sheet row; null when none / absent */
+  glassesId: number | null;
 }
 
 const GEAR_SLOTS: readonly CharaGearSlotId[] = [
@@ -354,6 +365,7 @@ export function parseCharaFile(text: string): ParsedCharaFile {
   ];
 
   const gearDyes: CharaGearDye[] = [];
+  const gearModels: CharaGearModel[] = [];
   for (const gearSlot of GEAR_SLOTS) {
     const gear = record[gearSlot];
     if (typeof gear !== 'object' || gear === null) continue;
@@ -366,6 +378,16 @@ export function parseCharaFile(text: string): ParsedCharaFile {
       if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
         gearDyes.push({ slot: gearSlot, channel, stainId: value });
       }
+    }
+    const set = readModelLane(gearRecord['ModelSet']);
+    const base = readModelLane(gearRecord['ModelBase']);
+    const variant = readModelLane(gearRecord['ModelVariant']);
+    if (isWornCharaModel(gearSlot, set, base)) {
+      gearModels.push(
+        isCharaWeaponSlot(gearSlot)
+          ? { slot: gearSlot, set, base, variant }
+          : { slot: gearSlot, base, variant },
+      );
     }
   }
 
@@ -380,5 +402,26 @@ export function parseCharaFile(text: string): ParsedCharaFile {
     extendedDeclared,
     slots,
     gearDyes,
+    gearModels,
+    glassesId: readGlassesId(record['Glasses']),
   };
+}
+
+/** A model lane is a non-negative integer; anything else reads as 0 (empty). */
+function readModelLane(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0
+    ? Math.floor(value)
+    : 0;
+}
+
+/**
+ * `Glasses` is `{ GlassesId: n }` (Anamnesis, Ktisis) or a bare integer
+ * (Brio-era "Ktisis/Anamnesis Character File"). Row 0 is "none".
+ */
+function readGlassesId(value: unknown): number | null {
+  const raw =
+    typeof value === 'object' && value !== null
+      ? (value as Record<string, unknown>)['GlassesId']
+      : value;
+  return typeof raw === 'number' && Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : null;
 }

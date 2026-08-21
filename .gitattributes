@@ -6,3 +6,7 @@
 
 # Ensure lockfile always uses LF line endings (pnpm YAML parser requires it)
 pnpm-lock.yaml text eol=lf
+
+# Generated ko/zh equipment-name tables (apps/api-worker/scripts/build-item-names.mjs):
+# ~1 MB single-line JSON each — keep them out of diffs and language stats.
+apps/api-worker/src/chara/data/item-names.*.json linguist-generated=true -diff

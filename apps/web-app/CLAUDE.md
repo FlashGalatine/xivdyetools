@@ -116,6 +116,7 @@ src/
 │   ├── storage-service.ts           # localStorage wrapper, all keys prefixed
 │   ├── auth-service.ts              # Discord OAuth via oauth worker, JWT in localStorage
 │   ├── api-service-wrapper.ts       # Wraps core APIService (Universalis through proxy)
+│   ├── chara-resolve-service.ts     # POST data.xivdyetools.app/v1/chara/resolve — .chara model keys → item names/icons (Swatch 11a/11c); session cache; any failure = CharaResolveUnavailableError
 │   ├── dye-service-wrapper.ts       # Wraps core DyeService
 │   ├── harmony-generator.ts         # Color-harmony math
 │   ├── palette-service.ts           # K-means++ palette extraction for image upload
@@ -276,7 +277,7 @@ npx playwright test --project=mobile-chrome
 **Sibling apps it talks to:**
 - `xivdyetools-presets-api` — community presets (HTTPS)
 - `xivdyetools-oauth` — Discord login + JWT issuance
-- `xivdyetools-api-worker` — market-board pricing via its `/universalis` routes (absorbed CORS proxy)
+- `xivdyetools-api-worker` — market-board pricing via its `/universalis` routes (absorbed CORS proxy), and `.chara` equipment identity via `POST /v1/chara/resolve` + `GET /v1/chara/icon/:id` (the Swatch Matcher's DYES ON THIS GLAMOUR names/icons; the SPA never talks to XIVAPI — CSP `img-src` allows `data.xivdyetools.app` for the proxied icons, `connect-src` already covers `*.xivdyetools.app`). Local dev: `VITE_API_WORKER_URL` (default `http://localhost:8790`); when the worker is down the block degrades to slot-only rows by design
 - `xivdyetools-og-worker` — dynamic OpenGraph images for share links
 
 ## Documentation

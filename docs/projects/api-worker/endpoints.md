@@ -356,6 +356,20 @@ Results are sorted by distance (closest first).
 
 ---
 
+## Character Equipment (`.chara` import)
+
+Resolves the equipment model keys an Anamnesis / Ktisis / Brio `.chara` file carries (`ModelBase` / `ModelVariant`, weapons `ModelSet`) to in-game items — names in six languages, icon ids, and the family of visually identical alternates on the same mesh. Powers the web app's Swatch Matcher "Dyes on this glamour" (11a/11c). Full reference: [developers.xivdyetools.app/reference/chara](https://developers.xivdyetools.app/reference/chara).
+
+### `POST /v1/chara/resolve`
+
+Body `{ gear: [{ slot, set?, base, variant }], glasses? }` — one entry per **worn** slot (≤ 12, `base` 0 rejected), optional Glasses row. Answer per requested slot: `{ itemId, names { en, ja, de, fr, ko?, zh? }, iconId, familySize, alternates[], viaMainHand }` or `null` (no Item row — NPC / prop model). Lowest row_id names a same-model family; off-hands resolve through the main hand (`viaMainHand: true` when the off-hand key is the weapon's own `ModelSub`). One upstream XIVAPI search at most; each (slot, key) is edge-cached ~7 days (`X-Cache: HIT` = no upstream call). Envelope is `Cache-Control: no-store`. Errors: `400 VALIDATION_ERROR` / `INVALID_BODY`, `413` over 8 KB, `503 UPSTREAM_UNAVAILABLE` while XIVAPI is down or re-indexing after a patch.
+
+### `GET /v1/chara/icon/:iconId`
+
+The item icon PNG (80 px `_hr1`), proxied from XIVAPI and edge-cached (`Cache-Control: public, max-age=2592000, immutable`). `404 NOT_FOUND` / `503 UPSTREAM_UNAVAILABLE`.
+
+---
+
 ## Universalis Market-Board Proxy
 
 Absorbed from the retired `apps/universalis-proxy` (Monorepo 2.0 Tier 2). Mounted at **`/universalis/*`** (canonical, on `data.xivdyetools.app`) and **`/api/v2/*`** (compatibility mount — the path shape used by `proxy.xivdyetools.app` / `proxy.xivdyetools.projectgalatine.com` and by discord-worker's `UNIVERSALIS_PROXY` service binding). Deliberately **outside** `/v1`: no `{ success, data, meta }` envelope (responses are raw Universalis bodies), no `?locale=`, no KV rate limiter, no `X-RateLimit-*` headers on success. Errors are a bare `{ "error": "..." }` object with the upstream status code. Full reference: [developers.xivdyetools.app/reference/universalis](https://developers.xivdyetools.app/reference/universalis).
@@ -433,7 +447,9 @@ Cache headers: `Cache-Control: public, max-age=<ttl>, stale-while-revalidate=<sw
 | `INVALID_STAIN_ID` | 400 | Stain ID not a positive integer |
 | `NOT_FOUND` | 404 | Dye or route not found |
 | `RATE_LIMITED` | 429 | Rate limit exceeded (body carries a top-level `retryAfter` in seconds; `Retry-After` header set) |
+| `INVALID_BODY` | 400 / 413 | `POST /v1/chara/resolve` body is not JSON / not an object (400) or over 8 KB (413) |
 | `INTERNAL_ERROR` | 500 | Unexpected server error |
+| `UPSTREAM_UNAVAILABLE` | 503 | XIVAPI (`/v1/chara/*`) is down, timed out, or re-indexing after a game patch — retry later; `details.upstreamStatus` carries the upstream code |
 
 Validation stops at the first failing parameter — one error per response.
 

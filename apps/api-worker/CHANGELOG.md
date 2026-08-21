@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-08-20
+
+### Added
+
+- **`POST /v1/chara/resolve`** — equipment-model resolution for the web app's `.chara` import (Swatch Matcher 11a/11c "Dyes on this glamour", pulled forward from 5.1 into 5.0). Body: `{ gear: [{ slot, set?, base, variant }], glasses? }` — the twelve packed model lanes and nothing else from the file. Answer per requested slot: the lowest-row_id Item on that (slot, `ModelMain`) key, `names` in en/ja/de/fr (from XIVAPI v2, U+00AD stripped) plus ko/zh when the build-time tables know the item, `iconId`, `familySize` and up to 8 `alternates` (same-mesh families — Augmented / Replica / +1 / role variants; prefixes are never stripped), `viaMainHand` on OffHand when the off-hand key is the main weapon's own `ModelSub` (quiver / focus / fist pair) or the main key itself. `null` = no Item row (NPC / prop model) — not an error. Optional `glasses` resolves the Glasses sheet row (facewear). Rules per `docs/research/chara-equipment-resolution` (273/273 gear keys, 41/41 weapons on the corpus).
+  - One upstream XIVAPI search per request at most (nested required groups, slot column as the mandatory second key); every (slot, key) is edge-cached ~7 d + 1 d SWR under a cache name of its own (`chara-resolve`), namespaced by the game-version pin — twenty users importing the same glamour is one upstream call. Empty answers are cached too. `X-Cache: HIT` = no upstream call. The POST envelope is `no-store`.
+  - `503 UPSTREAM_UNAVAILABLE` (`details.upstreamStatus`) when XIVAPI is down, times out (10 s), or is re-indexing search after a patch — the client falls back to slot-only rows; dyes never depend on this call.
+  - Validation is loud about the field: `400 VALIDATION_ERROR` for a bad slot / lane outside 0–65535 / duplicate slot / empty piece / bad `glasses` / >12 entries; `400 INVALID_BODY` for non-JSON; `413` over 8 KB.
+- **`GET /v1/chara/icon/:iconId`** — the item icon PNG (`_hr1`, 80 px) proxied from XIVAPI's `/api/asset`, edge-cached under `caches.default` with `Cache-Control: public, max-age=2592000, immutable`; `404 NOT_FOUND` / `503 UPSTREAM_UNAVAILABLE` pass-through; 1 MB ceiling.
+- **`scripts/build-item-names.mjs`** + `src/chara/data/item-names.{ko,zh}.json` — build-time Korean/Chinese equipment-name tables (28 986 ko / 28 992 zh of 28 993 equippable rows, ~200 KB gz each) from Teamcraft's `ko-items.json` / `zh-items.json`, filtered to equippable rows via `Item.csv` (`EquipSlotCategory ≠ 0`, local ffxiv-datamining clone or GitHub raw). Run by hand after a patch and commit; the worker never fetches GitHub at request time. `item-names.meta.json` records the build.
+- New env vars (both envs): `XIVAPI_BASE` (`https://v2.xivapi.com`), `XIVAPI_VERSION` (`latest` — pin to a `/api/version` key to freeze; also the cache namespace), optional `XIVAPI_SCHEMA` (`exdschema@2:rev:<sha>`). New `ErrorCode`s `INVALID_BODY`, `UPSTREAM_UNAVAILABLE`.
+- Docs: `docs/reference/chara.md` + sidebar/index entries.
+
+### Changed
+
+- CORS `allowMethods` gains `POST` (only `/v1/chara/resolve` accepts it; still anonymous, still `origin: *`).
+- `CacheService` takes an optional third `cacheName` constructor argument (default `'universalis-proxy'`, unchanged for the proxy) so the chara row cache lives in its own Cache API store.
+
 ## [0.6.0] - 2026-08-16
 
 Monorepo 2.0 / 5.0 release train (branch `monorepo-2.0-prep`, 2026-07-30 → 2026-08-16). Nothing below has shipped until the branch merges. Two whole apps absorbed, three new production domains, schema v2 serving and the 5.0 matching vocabulary — a minor bump on the 0.x line (a later 1.0.0 can mark the moment the public API is declared stable). The ⚠️ BREAKING block lists the response-changing items for a `/v1` client.

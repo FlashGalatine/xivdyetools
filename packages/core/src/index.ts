@@ -154,6 +154,19 @@ export {
   resolveCharaColors,
   /** @public */ OFF_GRID_DELTA_E2000,
 } from './services/chara/chara-resolver.js';
+// Equipment model identity (packing helpers shared by api-worker's resolver
+// and the web-app client; the parser emits the keys, nothing in core resolves)
+export {
+  /** @public */ gearModelKey,
+  /** @public */ weaponModelKey,
+  charaModelKey,
+  formatCharaModelLabel,
+  CHARA_SLOT_SEARCH_FIELD,
+  /** @public */ CHARA_WEAPON_SLOTS,
+  isCharaWeaponSlot,
+  isWornCharaModel,
+} from './services/chara/chara-models.js';
+export type { CharaGearModel } from './services/chara/chara-models.js';
 export type {
   ResolvedCharaCharacter,
   ResolvedCharaSlot,

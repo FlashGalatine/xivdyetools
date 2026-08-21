@@ -201,6 +201,21 @@ MAX_ITEMS = "100"                 # Max items per request
 MAX_RESPONSE_SIZE = "5242880"     # Max response size in bytes (5MB)
 ```
 
+### `/v1/chara/*` variables (api-worker, 0.7.0)
+
+The `.chara` equipment-resolution routes (web-app Swatch Matcher 11a/11c) talk to XIVAPI v2 server-side — no secrets, plain vars in both `wrangler.toml` envs:
+
+```toml
+XIVAPI_BASE = "https://v2.xivapi.com"   # upstream origin
+XIVAPI_VERSION = "latest"               # game-version key: `latest` or a key from /api/version.
+                                        # ALSO the row-cache namespace. After a patch, search
+                                        # returns 503 on the new key until ingested — keep the
+                                        # old key until a probe answers 200, then roll forward.
+# XIVAPI_SCHEMA = "exdschema@2:rev:<sha>"  # optional schema pin (field renames land unannounced)
+```
+
+No new bindings: the per-key row cache is the Cache API (store `chara-resolve`), not KV. Korean/Chinese item names are build-time JSON (`apps/api-worker/scripts/build-item-names.mjs`), not a runtime fetch.
+
 ### KV Bindings
 
 The proxy requires two KV namespaces:

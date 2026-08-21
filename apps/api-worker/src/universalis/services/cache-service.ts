@@ -23,11 +23,18 @@ export class CacheService {
   private cache: Cache | null = null;
   private ctx: ExecutionContext;
   private baseUrl: string;
+  private cacheName: string;
   private cacheInitPromise: Promise<Cache> | null = null;
 
-  constructor(ctx: ExecutionContext, baseUrl: string) {
+  /**
+   * @param cacheName Named Cache API store. The Universalis proxy keeps its
+   * original name; other consumers (chara-resolve) pass their own so their
+   * synthetic URLs can never collide with proxy entries.
+   */
+  constructor(ctx: ExecutionContext, baseUrl: string, cacheName = 'universalis-proxy') {
     this.ctx = ctx;
     this.baseUrl = baseUrl;
+    this.cacheName = cacheName;
   }
 
   /**
@@ -44,7 +51,7 @@ export class CacheService {
     }
 
     if (!this.cacheInitPromise) {
-      this.cacheInitPromise = caches.open('universalis-proxy');
+      this.cacheInitPromise = caches.open(this.cacheName);
     }
 
     this.cache = await this.cacheInitPromise;

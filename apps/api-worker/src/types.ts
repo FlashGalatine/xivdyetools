@@ -10,6 +10,17 @@ export interface Env {
   /** Per-IP memory rate limit for /universalis aggregated route */
   RATE_LIMIT_REQUESTS: string;
   RATE_LIMIT_WINDOW_SECONDS: string;
+  /** XIVAPI v2 origin for /v1/chara/* (default https://v2.xivapi.com) */
+  XIVAPI_BASE?: string;
+  /**
+   * XIVAPI game-version key the chara resolver is pinned to — `latest` or a
+   * key from `/api/version`. Also namespaces the row cache. After a patch,
+   * search 503s on the new key until ingested: keep the old key until a
+   * probe succeeds, then roll forward.
+   */
+  XIVAPI_VERSION?: string;
+  /** Optional `exdschema@2:rev:<sha>` pin so an upstream field rename cannot break parsing */
+  XIVAPI_SCHEMA?: string;
 }
 
 /** Hono context variables set by middleware */

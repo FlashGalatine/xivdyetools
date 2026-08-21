@@ -27,18 +27,30 @@ import {
   CharacterColorService,
   classifyBandTier,
   roundToBandDisplay,
+  formatCharaModelLabel,
   type ResolvedCharaCharacter,
   type ResolvedCharaSlot,
+  type ResolvedGearDye,
+  type CharaGearSlotId,
 } from '@xivdyetools/core';
 import {
   ColorService,
   CollectionService,
   dyeService,
   LanguageService,
+  StorageService,
   ToastService,
 } from '@services/index';
 import { ThemeService } from '@services/theme-service';
+import {
+  resolveCharaEquipment,
+  itemNameFor,
+  charaIconUrl,
+  type CharaResolveResult,
+  type CharaResolvedItem,
+} from '@services/chara-resolve-service';
 import { ICON_TOOL_PRESETS } from '@shared/tool-icons';
+import { STORAGE_PREFIX } from '@shared/constants';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import type { Dye, SubRace, Gender } from '@xivdyetools/types';
@@ -59,10 +71,29 @@ const INSET_RING = 'box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.28);';
 const PALETTE_FLOOR = 3;
 const PALETTE_CAP = 6;
 
-/** Responsive grids for the sheet — injected once per render (shadow-DOM scoped). */
+/** The twelve dyeable slots — the footnote's "N slots are empty" denominator. */
+const GEAR_SLOT_COUNT = 12;
+
+/**
+ * DYES ON THIS GLAMOUR lens (Turn 11, confirmed): Pieces (11a, default) puts
+ * the item under the dyes' feet; Dyes (11c) flips the unit to the dye with
+ * carriers as icons. Persists per user.
+ */
+type GlamourView = 'pieces' | 'dyes';
+const GLAMOUR_VIEW_KEY = `${STORAGE_PREFIX}_swatch_glamour_view`;
+
+function readGlamourView(): GlamourView {
+  return StorageService.getItem<string>(GLAMOUR_VIEW_KEY) === 'dyes' ? 'dyes' : 'pieces';
+}
+
+/**
+ * Responsive grids for the sheet — injected once per render (shadow-DOM scoped).
+ * The equip grid is 2-up (Turn 11: rows grew 40 → 48 px and the JA/DE item
+ * names are the width budget — they wrap, never ellipsise).
+ */
 const CHARA_RESPONSIVE_CSS = `
 .chara-slots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
-.chara-equip-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.chara-equip-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 @media (max-width: 768px) {
   .chara-slots-grid { grid-template-columns: repeat(2, 1fr); }
   .chara-equip-grid { grid-template-columns: 1fr; }
@@ -123,6 +154,14 @@ export class CharaImport {
   private paletteOpen = false;
   /** Name field draft; null = default to the character's nickname */
   private paletteNameDraft: string | null = null;
+  /** Equipment identity from api-worker — null until the round-trip lands */
+  private equipment: CharaResolveResult | null = null;
+  private resolveState: 'idle' | 'resolving' | 'ready' | 'unavailable' = 'idle';
+  private resolveAbort: AbortController | null = null;
+  /** Pieces (11a, default) or Dyes (11c) — persists per user */
+  private glamourView: GlamourView;
+  /** The mounted DYES ON THIS GLAMOUR block, re-rendered in place when names land */
+  private glamourBox: HTMLElement | null = null;
 
   constructor(
     container: HTMLElement,
@@ -132,6 +171,7 @@ export class CharaImport {
     this.container = container;
     this.callbacks = callbacks;
     this.glamourContainer = options?.glamourContainer ?? null;
+    this.glamourView = readGlamourView();
   }
 
   init(): void {
@@ -139,9 +179,13 @@ export class CharaImport {
   }
 
   destroy(): void {
+    this.resolveAbort?.abort();
+    this.resolveAbort = null;
     clearContainer(this.container);
     if (this.glamourContainer) clearContainer(this.glamourContainer);
     this.resolved = null;
+    this.equipment = null;
+    this.glamourBox = null;
   }
 
   // ==========================================================================
@@ -174,7 +218,71 @@ export class CharaImport {
       ToastService.error(error instanceof Error ? error.message : String(error));
       return;
     }
+    // Dyes never wait: the round-trip is started first so the block renders
+    // in its RESOLVING state (skeleton where the name lands) with the file's
+    // stains already on it; the names re-render the block in place.
+    this.startResolve();
     this.render();
+  }
+
+  // ==========================================================================
+  // Equipment identity (Turn 11) — the resolve round-trip
+  // ==========================================================================
+
+  /**
+   * One POST per file — model keys only, nothing else from the file. A
+   * failure costs labels, not data: the rows fall back to exactly the shipped
+   * row (slot tag + dye names) plus one quiet line under the list.
+   */
+  private startResolve(): void {
+    this.resolveAbort?.abort();
+    this.resolveAbort = null;
+    this.equipment = null;
+    const resolved = this.resolved;
+    if (!resolved) {
+      this.resolveState = 'idle';
+      return;
+    }
+    if (resolved.gearModels.length === 0 && resolved.glassesId === null) {
+      this.resolveState = 'ready';
+      this.equipment = { items: {}, glasses: null, version: null };
+      return;
+    }
+    const controller = new AbortController();
+    this.resolveAbort = controller;
+    this.resolveState = 'resolving';
+    void resolveCharaEquipment(resolved.gearModels, resolved.glassesId, controller.signal).then(
+      (result) => {
+        if (controller.signal.aborted || this.resolved !== resolved) return;
+        this.equipment = result;
+        this.resolveState = 'ready';
+        this.rerenderGlamour();
+      },
+      (error: unknown) => {
+        if (controller.signal.aborted || this.resolved !== resolved) return;
+        logger.warn('[CharaImport] Equipment names unavailable:', error);
+        this.resolveState = 'unavailable';
+        this.rerenderGlamour();
+      }
+    );
+  }
+
+  /**
+   * What api-worker said about a slot: an item, `null` for "no Item row"
+   * (NPC / prop model), or `undefined` when nothing has been said yet — not
+   * resolved, unavailable, or a dye on a slot the file wears nothing in.
+   */
+  private itemFor(slot: CharaGearSlotId): CharaResolvedItem | null | undefined {
+    return this.equipment?.items[slot];
+  }
+
+  /** Swap the mounted block for a fresh render — the sheet above is untouched. */
+  private rerenderGlamour(): void {
+    const old = this.glamourBox;
+    if (!old || !old.isConnected) return;
+    const fresh = this.renderGlamour();
+    if (fresh) old.replaceWith(fresh);
+    else old.remove();
   }
 
   // ==========================================================================
@@ -521,7 +629,11 @@ export class CharaImport {
     (swapBtn as HTMLButtonElement).type = 'button';
     swapBtn.title = this.t('replaceFile');
     swapBtn.addEventListener('click', () => {
+      this.resolveAbort?.abort();
+      this.resolveAbort = null;
       this.resolved = null;
+      this.equipment = null;
+      this.resolveState = 'idle';
       this.fileName = null;
       this.selectedSlotKey = null;
       this.paletteOpen = false;
@@ -827,16 +939,32 @@ export class CharaImport {
   // DYES ON THIS GLAMOUR + Make a palette
   // ==========================================================================
 
+  /**
+   * Turn 11 (confirmed): 11a Named rows is the default lens — each dyed piece
+   * gains the item it sits on (icon, slot overline, name, dyes, chips at the
+   * row's end); 11c Dye-led is the second lens — one row per unique dye with
+   * its carriers as icons. Both sit behind the Pieces/Dyes toggle in the
+   * block head. Only DYED pieces are rows; the footnote splits worn-undyed
+   * pieces from empty slots. Five states ride either lens: RESOLVING
+   * (skeleton where the name lands), NAMES UNAVAILABLE (shipped row + one
+   * quiet line), SAME MODEL ×N (badge + tooltip), NO ITEM ROW (the packed
+   * key), ICON MISSING (a blank tile, never a broken row).
+   */
   private renderGlamour(): HTMLElement | null {
     const resolved = this.resolved!;
-    if (resolved.gearDyes.length === 0) return null;
+    if (resolved.gearDyes.length === 0) {
+      this.glamourBox = null;
+      return null;
+    }
 
     const box = this.el(
       'div',
       'padding: 11px 12px; border-radius: 14px; margin-bottom: 12px; background: var(--theme-background-secondary); border: 1px solid var(--theme-border); display: flex; flex-direction: column; gap: 9px; width: 100%; box-sizing: border-box;'
     );
+    box.dataset.role = 'glamour-block';
+    this.glamourBox = box;
 
-    // Header: equipHead + counts left, Make-a-palette button right.
+    // Header: equipHead + counts left; Pieces/Dyes toggle + Make-a-palette right.
     const uniq = this.wornDyes();
     const channelCount = resolved.gearDyes.length;
 
@@ -867,6 +995,12 @@ export class CharaImport {
     );
     header.appendChild(headerLeft);
 
+    const headerRight = this.el(
+      'span',
+      'display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-shrink: 0;'
+    );
+    headerRight.appendChild(this.renderViewToggle());
+
     const paletteBtn = this.el(
       'button',
       `display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 11px; border-radius: 9px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600; ${
@@ -887,78 +1021,345 @@ export class CharaImport {
       this.paletteOpen = !this.paletteOpen;
       this.render();
     });
-    header.appendChild(paletteBtn);
+    headerRight.appendChild(paletteBtn);
+    header.appendChild(headerRight);
     box.appendChild(header);
 
-    // Equip rows — one 40px row per gear slot, both channels as 20×26 chips.
-    const bySlot = new Map<string, typeof resolved.gearDyes>();
-    for (const gear of resolved.gearDyes) {
-      const list = bySlot.get(gear.slot) ?? [];
-      list.push(gear);
-      bySlot.set(gear.slot, list);
-    }
-
-    const equipGrid = this.el('div', '');
-    equipGrid.className = 'chara-equip-grid';
-    for (const [slotId, dyes] of bySlot) {
-      const row = this.el(
-        'div',
-        'display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 5px 7px; border-radius: 9px; background: var(--theme-card-background); border: 1px solid var(--theme-border); box-sizing: border-box; min-width: 0;'
-      );
-      const chips = this.el('span', 'display: flex; gap: 3px; flex-shrink: 0;');
-      for (const gear of dyes) {
-        const chip = this.el(
-          'span',
-          `width: 20px; height: 26px; border-radius: 5px; background: ${
-            gear.dye?.hex ?? 'transparent'
-          }; ${gear.dye ? INSET_RING : 'border: 1px dashed var(--theme-border); box-sizing: border-box;'}`
-        );
-        chip.title = gear.dye ? `${this.dyeName(gear.dye)} · ${gear.stainId}` : `#${gear.stainId}`;
-        chips.appendChild(chip);
-      }
-      row.appendChild(chips);
-
-      const text = this.el(
-        'span',
-        'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;'
-      );
-      // Gear slot tags are identifiers — mono, never localised.
-      text.appendChild(
-        this.el(
-          'span',
-          `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 0.5px; color: var(--theme-text-muted); text-transform: uppercase;`,
-          slotId
-        )
-      );
-      text.appendChild(
-        this.el(
-          'span',
-          'font-size: 10.5px; color: var(--theme-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;',
-          dyes.map((g) => (g.dye ? this.dyeName(g.dye) : `#${g.stainId}`)).join(' + ')
-        )
-      );
-      row.appendChild(text);
-      equipGrid.appendChild(row);
-    }
-    box.appendChild(equipGrid);
-
-    // Hint + undyed note. DyeId 0 is undyed, not black.
-    const undyedCount = 12 - bySlot.size;
+    const bySlot = this.dyesBySlot();
     box.appendChild(
-      this.el(
-        'div',
-        'font-size: 10px; line-height: 1.5; color: var(--theme-text-muted);',
-        undyedCount > 0
-          ? `${this.t('gearHint')} ${undyedCount === 1 ? LanguageService.t('swatch.undyedNoteOne') : LanguageService.tInterpolate('swatch.undyedNoteMany', { n: undyedCount })}`
-          : this.t('gearHint')
-      )
+      this.glamourView === 'dyes' ? this.renderDyeRows() : this.renderPieceRows(bySlot)
     );
+    box.appendChild(this.renderGlamourFoot(bySlot));
 
     if (this.paletteOpen) {
       box.appendChild(this.renderPalettePanel());
     }
 
     return box;
+  }
+
+  /** Dyed channels grouped by slot, in file slot order. */
+  private dyesBySlot(): Map<CharaGearSlotId, ResolvedGearDye[]> {
+    const bySlot = new Map<CharaGearSlotId, ResolvedGearDye[]>();
+    for (const gear of this.resolved!.gearDyes) {
+      const list = bySlot.get(gear.slot) ?? [];
+      list.push(gear);
+      bySlot.set(gear.slot, list);
+    }
+    return bySlot;
+  }
+
+  /** Localised slot label (the design's GEAR_LABELS) — the mono overline uppercases it. */
+  private gearSlotLabel(slot: CharaGearSlotId): string {
+    return this.t(`gearSlot.${slot}`);
+  }
+
+  /** Pieces | Dyes — two-position pill, accent on the live lens. */
+  private renderViewToggle(): HTMLElement {
+    const wrap = this.el(
+      'span',
+      'display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; background: var(--theme-card-background); border: 1px solid var(--theme-border);'
+    );
+    wrap.setAttribute('role', 'group');
+    wrap.setAttribute('aria-label', this.t('equipHead'));
+    for (const view of ['pieces', 'dyes'] as const) {
+      const active = this.glamourView === view;
+      const btn = this.el(
+        'button',
+        `min-height: 26px; padding: 0 10px; border-radius: 6px; cursor: pointer; font-family: ${SANS}; font-weight: 600; font-size: 11px; border: none; ${
+          active
+            ? 'background: var(--theme-primary); color: #fff;'
+            : 'background: transparent; color: var(--theme-text-muted);'
+        }`,
+        this.t(view === 'pieces' ? 'glamourViewPieces' : 'glamourViewDyes')
+      );
+      (btn as HTMLButtonElement).type = 'button';
+      btn.setAttribute('aria-pressed', String(active));
+      btn.dataset.glamourView = view;
+      btn.addEventListener('click', () => {
+        if (this.glamourView === view) return;
+        this.glamourView = view;
+        StorageService.setItem(GLAMOUR_VIEW_KEY, view);
+        this.rerenderGlamour();
+      });
+      wrap.appendChild(btn);
+    }
+    return wrap;
+  }
+
+  /** 20×26 dye chip — the suite's swatch vocabulary; dashed when the stain is unknown. */
+  private dyeChip(gear: ResolvedGearDye): HTMLElement {
+    const chip = this.el(
+      'span',
+      `display: block; width: 20px; height: 26px; border-radius: 5px; background: ${
+        gear.dye?.hex ?? 'transparent'
+      }; ${gear.dye ? INSET_RING : 'border: 1px dashed var(--theme-border); box-sizing: border-box;'}`
+    );
+    chip.title = gear.dye ? `${this.dyeName(gear.dye)} · ${gear.stainId}` : `#${gear.stainId}`;
+    return chip;
+  }
+
+  /** 11a — one 48px row per DYED piece: icon · slot overline (+N) · name · dyes · chips. */
+  private renderPieceRows(bySlot: Map<CharaGearSlotId, ResolvedGearDye[]>): HTMLElement {
+    const grid = this.el('div', '');
+    grid.className = 'chara-equip-grid';
+    grid.dataset.role = 'piece-rows';
+    const lang = LanguageService.getCurrentLocale();
+    for (const [slot, dyes] of bySlot) {
+      grid.appendChild(this.renderPieceRow(slot, dyes, lang));
+    }
+    return grid;
+  }
+
+  private renderPieceRow(
+    slot: CharaGearSlotId,
+    dyes: ResolvedGearDye[],
+    lang: string
+  ): HTMLElement {
+    const item = this.itemFor(slot);
+    const model = this.resolved!.gearModels.find((m) => m.slot === slot) ?? null;
+
+    const row = this.el(
+      'div',
+      'display: flex; align-items: center; gap: 9px; min-height: 48px; padding: 6px 8px; border-radius: 9px; background: var(--theme-card-background); border: 1px solid var(--theme-border); box-sizing: border-box; min-width: 0;'
+    );
+    row.dataset.slot = slot;
+
+    // 28px icon tile. A failed asset leaves the tile blank — ICON MISSING
+    // costs the tile, not the row (background-image errors are silent).
+    const tile = this.el(
+      'span',
+      'display: block; width: 28px; height: 28px; flex-shrink: 0; border-radius: 6px; background-color: var(--theme-background-secondary); background-size: cover; background-position: center;'
+    );
+    tile.setAttribute('aria-hidden', 'true');
+    tile.dataset.role = 'item-icon';
+    if (item?.iconId) tile.style.backgroundImage = `url("${charaIconUrl(item.iconId)}")`;
+    row.appendChild(tile);
+
+    const text = this.el(
+      'span',
+      'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;'
+    );
+
+    // Overline: localised slot tag (mono, uppercased) + SAME MODEL badge.
+    const overline = this.el(
+      'span',
+      'display: flex; align-items: baseline; gap: 6px; min-width: 0;'
+    );
+    overline.appendChild(
+      this.el(
+        'span',
+        `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 0.7px; color: var(--theme-text-muted); text-transform: uppercase; white-space: nowrap;`,
+        this.gearSlotLabel(slot)
+      )
+    );
+    if (item && item.familySize > 1) {
+      // A third of all keys are families of visually identical items. The
+      // name never pretends to be unique: +N counts the rest, the tooltip
+      // lists them, prefixes are never stripped.
+      const badge = this.el(
+        'span',
+        `font-family: ${MONO}; font-size: 8.5px; color: var(--theme-primary); background: color-mix(in srgb, var(--theme-primary) 12%, transparent); border-radius: 4px; padding: 1px 5px; cursor: help; white-space: nowrap;`,
+        `+${item.familySize - 1}`
+      );
+      const alternates = item.alternates.map((a) => itemNameFor(a.names, lang)).join(', ');
+      badge.title = `${this.t('sameModel')}${alternates}${
+        item.familySize - 1 > item.alternates.length ? ' …' : ''
+      }`;
+      badge.dataset.role = 'same-model';
+      overline.appendChild(badge);
+    }
+    text.appendChild(overline);
+
+    if (item) {
+      // The item name is the label here: it wraps with lang + hyphens,
+      // never an ellipsis.
+      const name = this.el(
+        'span',
+        'font-size: 11.5px; line-height: 1.3; font-weight: 600; color: var(--theme-text); overflow-wrap: anywhere; hyphens: auto;',
+        itemNameFor(item.names, lang)
+      );
+      name.lang = lang;
+      name.dataset.role = 'item-name';
+      text.appendChild(name);
+    } else if (this.resolveState === 'resolving') {
+      // RESOLVING — a skeleton where the name will land, never a spinner
+      // over the chips.
+      const skeleton = this.el(
+        'span',
+        'display: block; width: 128px; max-width: 100%; height: 9px; margin: 3px 0; border-radius: 4px; background: color-mix(in srgb, var(--theme-text) 12%, transparent);'
+      );
+      skeleton.setAttribute('aria-hidden', 'true');
+      skeleton.dataset.role = 'name-skeleton';
+      text.appendChild(skeleton);
+    } else if (item === null && model) {
+      // NO ITEM ROW — NPC and prop models have none. The packed key is the
+      // honest label: never an error, never a guess.
+      const key = this.el(
+        'span',
+        `font-family: ${MONO}; font-size: 10px; letter-spacing: 0.5px; color: var(--theme-text-muted);`,
+        LanguageService.tInterpolate('swatch.modelKeyTag', {
+          key: formatCharaModelLabel(model),
+        })
+      );
+      key.dataset.role = 'model-key';
+      text.appendChild(key);
+    }
+    // NAMES UNAVAILABLE (or a dye on a slot wearing nothing): exactly the
+    // shipped row — slot tag and dye names — with no name line at all.
+
+    text.appendChild(
+      this.el(
+        'span',
+        'font-size: 10px; line-height: 1.3; color: var(--theme-text-muted); overflow-wrap: anywhere;',
+        dyes.map((g) => (g.dye ? this.dyeName(g.dye) : `#${g.stainId}`)).join(' + ')
+      )
+    );
+    row.appendChild(text);
+
+    const chips = this.el('span', 'display: flex; gap: 3px; flex-shrink: 0;');
+    for (const gear of dyes) chips.appendChild(this.dyeChip(gear));
+    row.appendChild(chips);
+
+    if (item) row.title = itemNameFor(item.names, lang);
+    return row;
+  }
+
+  /** 11c — one 44px row per unique dye: chip · name + ID · carriers as icons · ×N. */
+  private renderDyeRows(): HTMLElement {
+    const grid = this.el('div', '');
+    grid.className = 'chara-equip-grid';
+    grid.dataset.role = 'dye-rows';
+    const lang = LanguageService.getCurrentLocale();
+
+    // Unique dyes in wear order, each with its channel count and carriers.
+    const order: number[] = [];
+    const info = new Map<
+      number,
+      { dye: Dye | null; channels: number; carriers: CharaGearSlotId[] }
+    >();
+    for (const gear of this.resolved!.gearDyes) {
+      let entry = info.get(gear.stainId);
+      if (!entry) {
+        entry = { dye: gear.dye, channels: 0, carriers: [] };
+        info.set(gear.stainId, entry);
+        order.push(gear.stainId);
+      }
+      entry.channels++;
+      if (!entry.carriers.includes(gear.slot)) entry.carriers.push(gear.slot);
+    }
+
+    for (const stainId of order) {
+      const entry = info.get(stainId)!;
+      const row = this.el(
+        'div',
+        'display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 6px 8px; border-radius: 9px; background: var(--theme-card-background); border: 1px solid var(--theme-border); box-sizing: border-box; min-width: 0;'
+      );
+      row.dataset.stainId = String(stainId);
+
+      row.appendChild(
+        this.el(
+          'span',
+          `display: block; width: 22px; height: 28px; flex-shrink: 0; border-radius: 5px; background: ${
+            entry.dye?.hex ?? 'transparent'
+          }; ${entry.dye ? INSET_RING : 'border: 1px dashed var(--theme-border); box-sizing: border-box;'}`
+        )
+      );
+
+      const text = this.el(
+        'span',
+        'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;'
+      );
+      text.appendChild(
+        this.el(
+          'span',
+          'font-size: 11.5px; line-height: 1.3; font-weight: 600; color: var(--theme-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;',
+          entry.dye ? this.dyeName(entry.dye) : `#${stainId}`
+        )
+      );
+      // Stain ID is an identifier — mono, never localised.
+      text.appendChild(
+        this.el(
+          'span',
+          `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 0.7px; color: var(--theme-text-muted);`,
+          `ID ${stainId}`
+        )
+      );
+      row.appendChild(text);
+
+      // Carriers: one 20px icon tile per piece wearing the dye; the slot
+      // retreats into the tooltip (the accepted cost of this lens).
+      const right = this.el(
+        'span',
+        'display: flex; align-items: center; gap: 4px; flex-shrink: 0;'
+      );
+      for (const slot of entry.carriers) {
+        const item = this.itemFor(slot);
+        const tile = this.el(
+          'span',
+          'display: block; width: 20px; height: 20px; border-radius: 5px; background-color: var(--theme-background-secondary); background-size: cover; background-position: center; cursor: help;'
+        );
+        tile.dataset.role = 'carrier';
+        tile.dataset.slot = slot;
+        if (item?.iconId) tile.style.backgroundImage = `url("${charaIconUrl(item.iconId)}")`;
+        const slotLabel = this.gearSlotLabel(slot).toUpperCase();
+        tile.title = item ? `${slotLabel} — ${itemNameFor(item.names, lang)}` : slotLabel;
+        right.appendChild(tile);
+      }
+      right.appendChild(
+        this.el(
+          'span',
+          `font-family: ${MONO}; font-size: 8.5px; color: var(--theme-text-muted); min-width: 16px; text-align: right;`,
+          entry.channels > 1 ? `×${entry.channels}` : ''
+        )
+      );
+      row.appendChild(right);
+      grid.appendChild(row);
+    }
+    return grid;
+  }
+
+  /**
+   * Footnote: worn-undyed pieces vs empty slots — the two things the shipped
+   * `12 − dyed` line conflated. Plus, when the resolve failed, one quiet line
+   * saying names are off and dyes are not. DyeId 0 is undyed, not black
+   * (`gearHint`, on hover).
+   */
+  private renderGlamourFoot(bySlot: Map<CharaGearSlotId, ResolvedGearDye[]>): HTMLElement {
+    const resolved = this.resolved!;
+    const worn = resolved.gearModels.length;
+    const undyedWorn = resolved.gearModels.filter((m) => !bySlot.has(m.slot)).length;
+    const empty = Math.max(0, GEAR_SLOT_COUNT - worn);
+
+    const foot = this.el('div', 'display: flex; flex-direction: column; gap: 3px;');
+    const split = this.el(
+      'div',
+      'font-size: 10px; line-height: 1.5; color: var(--theme-text-muted); overflow-wrap: anywhere;',
+      LanguageService.tInterpolate('swatch.footSplit', {
+        undyed:
+          undyedWorn === 1
+            ? LanguageService.t('swatch.footWornUndyedOne')
+            : LanguageService.tInterpolate('swatch.footWornUndyedMany', { n: undyedWorn }),
+        empty:
+          empty === 1
+            ? LanguageService.t('swatch.footEmptyOne')
+            : LanguageService.tInterpolate('swatch.footEmptyMany', { n: empty }),
+      })
+    );
+    split.title = this.t('gearHint');
+    split.dataset.role = 'glamour-foot';
+    foot.appendChild(split);
+
+    if (this.resolveState === 'unavailable') {
+      const note = this.el(
+        'div',
+        'font-size: 10px; line-height: 1.45; color: var(--theme-text-muted); overflow-wrap: anywhere;',
+        this.t('namesUnavailable')
+      );
+      note.dataset.role = 'names-unavailable';
+      foot.appendChild(note);
+    }
+    return foot;
   }
 
   /**

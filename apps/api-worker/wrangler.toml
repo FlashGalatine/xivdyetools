@@ -22,6 +22,12 @@ API_VERSION = "v1"
 UNIVERSALIS_API_BASE = "https://universalis.app/api/v2"
 RATE_LIMIT_REQUESTS = "60"
 RATE_LIMIT_WINDOW_SECONDS = "60"
+# /v1/chara/* (equipment-model resolution for the web app's .chara import).
+# XIVAPI_VERSION pins the game-version key AND namespaces the row cache; after
+# a patch, search returns 503 on the new key until ingested — roll forward by
+# hand once `GET /api/search?...&version=<new>` answers 200.
+XIVAPI_BASE = "https://v2.xivapi.com"
+XIVAPI_VERSION = "latest"
 
 [env.production]
 name = "xivdyetools-api-worker"
@@ -35,7 +41,7 @@ routes = [
   { pattern = "proxy.xivdyetools.projectgalatine.com", custom_domain = true },
   { pattern = "developers.xivdyetools.app", custom_domain = true }
 ]
-vars = { ENVIRONMENT = "production", API_VERSION = "v1", UNIVERSALIS_API_BASE = "https://universalis.app/api/v2", RATE_LIMIT_REQUESTS = "30", RATE_LIMIT_WINDOW_SECONDS = "60" }
+vars = { ENVIRONMENT = "production", API_VERSION = "v1", UNIVERSALIS_API_BASE = "https://universalis.app/api/v2", RATE_LIMIT_REQUESTS = "30", RATE_LIMIT_WINDOW_SECONDS = "60", XIVAPI_BASE = "https://v2.xivapi.com", XIVAPI_VERSION = "latest" }
 
 # API docs site (absorbed apps/api-docs, Tier 2). Production-only so plain
 # `wrangler dev` needs no docs build; run `pnpm build:docs` before deploying.

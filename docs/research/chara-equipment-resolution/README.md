@@ -5,6 +5,8 @@
 **Question:** Can the `ModelBase` / `ModelVariant` (and weapon `ModelSet`) values stored in a `.chara` file be turned into in-game equipment names — in the game's supported languages — so the "Dyes on this glamour" panel can label rows by item instead of by slot?
 **Verdict:** **Yes — deterministically, with one XIVAPI v2 request per file, in en/ja/de/fr.** Korean and Chinese need a separate name source (same situation as dye names). Details, measurements and the recommended architecture follow.
 
+> **Status (2026-08-20): IMPLEMENTED for web-app 5.0** (pulled forward from 5.1), as option B in §8 — `@xivdyetools/core` `chara-models.ts` + `gearModels[]`/`glassesId` on the parser; api-worker 0.7.0 `POST /v1/chara/resolve` + `GET /v1/chara/icon/:id` (`apps/api-worker/src/chara/`, ko/zh tables from `scripts/build-item-names.mjs`, docs at `developers.xivdyetools.app/reference/chara`); web-app `services/chara-resolve-service.ts` + the Turn 11 "Dyes on this glamour" block in `chara-import.ts` (11a Named rows default / 11c Dye-led behind a Pieces/Dyes toggle, five states). Of the §8.3 open questions: ko/zh refresh is manual-after-patch (script + commit); the zh live mirror was not used; the Glamourer off-hand suffix was not added (the posing-tool convention — weapon name, no suffix — was kept); icons ship via the api-worker proxy; patch-day invalidation is the `XIVAPI_VERSION` pin (also the cache namespace), rolled forward by hand.
+
 Files in this folder:
 
 | File | What |

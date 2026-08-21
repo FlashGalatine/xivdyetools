@@ -63,7 +63,9 @@ src/
 │   ├── services.ts       # Module-scope DyeService singleton + calculateDistance (→ ColorService.getDistanceForMethod)
 │   ├── dye-serializer.ts # Dye → API response shape (with optional localizedName / distance)
 │   └── validation.ts     # parseHex, parseLocale, parseMatchingMethod, parseDyeFilters, resolveIdType, etc.
-└── universalis/          # Market-board proxy absorbed from apps/universalis-proxy (router, cache-service, cached-fetch, coalescer, memory rate limiter)
+├── universalis/          # Market-board proxy absorbed from apps/universalis-proxy (router, cache-service, cached-fetch, coalescer, memory rate limiter)
+└── chara/                # .chara equipment resolution: router (POST /resolve, GET /icon/:id), xivapi client (UA, version/schema pin, 503→UpstreamUnavailableError), resolver (pure rules: slot column × ModelMain, lowest row_id, off-hand via main ModelSub), cache (per-key Cache API, own store), regional-names (+ data/item-names.{ko,zh}.json from scripts/build-item-names.mjs)
+scripts/build-item-names.mjs  # Regenerates the ko/zh tables after a patch (local ffxiv-datamining clone or GitHub raw + Teamcraft JSON); manual, commit the output
 docs/                     # VitePress site → developers.xivdyetools.app (built by `pnpm build:docs`, shipped as Workers Static Assets)
 ```
 
@@ -84,6 +86,8 @@ All `GET`. All `/v1` routes cache `Cache-Control: public, max-age=3600, s-maxage
 | GET | `/v1/dyes/:id` | Auto-detect ID type by range: `1–254` stainID, `≥5729` itemID, `255–5728` invalid, `<0` legacy Facewear → 404 (see below); consolidated market IDs 52254–52256 → explanatory 404 |
 | GET | `/v1/match/closest?hex=` | Single closest dye (methods: `ciede2000` default, `oklab`, `cie76`, `redmean`, `rgb`, `distinguish`; retired `hyab`/`oklch-weighted` accepted → normalised to `ciede2000`, `euclidean` → `rgb`; `kL`/`kC`/`kH` ignored) |
 | GET | `/v1/match/within-distance?hex=&maxDistance=` | All dyes within a distance threshold in the method's unit (`maxDistance` ≥ 0.01, `limit` 1–125 default 20, applied after excludes/filters) |
+| POST | `/v1/chara/resolve` | `.chara` equipment-model resolution (web-app Swatch Matcher 11a/11c) — body `{ gear: [{ slot, set?, base, variant }], glasses? }`; per slot: lowest-row_id item, names ×6 (ko/zh from build-time tables), `iconId`, `familySize` + `alternates`, `viaMainHand` off-hand rule; `null` = no Item row. One XIVAPI search max, per-key Cache API (~7 d, `chara-resolve` store, namespaced by `XIVAPI_VERSION`); `503 UPSTREAM_UNAVAILABLE` while XIVAPI re-indexes after a patch. `src/chara/` |
+| GET | `/v1/chara/icon/:iconId` | Item icon PNG proxied from XIVAPI `/api/asset` (`_hr1`), edge-cached 30 d immutable |
 | GET | `/universalis/aggregated/:dc/:itemIds` | Universalis proxy — cached 300 s + 120 s SWR, coalesced, per-IP memory limiter (`RATE_LIMIT_REQUESTS`/`RATE_LIMIT_WINDOW_SECONDS`: 30/60 prod, 60/60 dev); raw Universalis body, no envelope |
 | GET | `/universalis/data-centers`, `/universalis/worlds` | Universalis proxy — cached 24 h + 6 h SWR |
 | GET | `/api/v2/*` | Same router as `/universalis/*` — compatibility mount for `proxy.xivdyetools.app` and the discord-worker service binding |
@@ -100,6 +104,7 @@ Route registration in `routes/dyes.ts` is order-sensitive: static paths (`/searc
 | `API_VERSION` | Var | Currently `v1`; surfaced in response `meta.apiVersion` and `X-API-Version` |
 | `UNIVERSALIS_API_BASE` | Var | `https://universalis.app/api/v2` — upstream for the proxy |
 | `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS` | Var | Proxy's per-IP memory limiter — `30`/`60` in production, `60`/`60` in dev |
+| `XIVAPI_BASE` / `XIVAPI_VERSION` / `XIVAPI_SCHEMA` | Var | `/v1/chara/*` upstream (`https://v2.xivapi.com`), the game-version pin (`latest` or a `/api/version` key — ALSO the row-cache namespace; after a patch search 503s on the new key until ingested, so roll forward by hand once a probe answers 200), optional `exdschema@2:rev:<sha>` schema pin |
 
 Routes (production env only): `data.xivdyetools.app`, `proxy.xivdyetools.app`, `proxy.xivdyetools.projectgalatine.com`, `developers.xivdyetools.app` (all custom domains). The top-level env is the routeless `xivdyetools-api-worker-dev` worker. Dev runs on port `8790`. Compatibility date `2024-12-01`. **No `nodejs_compat`** — the worker uses zero Node.js APIs (per ARCH-001 comment in `wrangler.toml`).
 

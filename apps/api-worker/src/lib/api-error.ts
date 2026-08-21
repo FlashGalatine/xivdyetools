@@ -26,4 +26,8 @@ export const ErrorCode = {
   NOT_FOUND: 'NOT_FOUND',
   RATE_LIMITED: 'RATE_LIMITED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
+  /** Request body is not the JSON the route expects */
+  INVALID_BODY: 'INVALID_BODY',
+  /** A third-party upstream (XIVAPI) is down, ingesting, or timed out — retry later */
+  UPSTREAM_UNAVAILABLE: 'UPSTREAM_UNAVAILABLE',
 } as const;

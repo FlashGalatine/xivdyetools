@@ -18,6 +18,15 @@ All `/v1` responses use the `{ success, data, meta }` envelope. See [Responses](
 | `GET` | [`/v1/match/closest`](./matching#get-v1-match-closest) | Find closest dye to a hex color |
 | `GET` | [`/v1/match/within-distance`](./matching#get-v1-match-within-distance) | Find dyes within a distance threshold |
 
+## Character Equipment (`.chara` import)
+
+Resolves a character file's equipment model keys to item names (six languages), icons and same-model families — see [Character Equipment](./chara).
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | [`/v1/chara/resolve`](./chara#post-v1-chara-resolve) | Resolve every worn slot (+ facewear) in one call; per-key edge cache |
+| `GET` | [`/v1/chara/icon/:iconId`](./chara#get-v1-chara-icon-iconid) | Item icon PNG, proxied and edge-cached |
+
 ## Universalis Market-Board Proxy
 
 Outside `/v1`, un-enveloped, separately rate-limited — see [Universalis Proxy](./universalis).

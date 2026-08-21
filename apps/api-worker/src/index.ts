@@ -19,6 +19,7 @@ import { localeMiddleware } from './middleware/locale.js';
 import { dyesRouter } from './routes/dyes.js';
 import { matchRouter } from './routes/match.js';
 import { universalisRouter } from './universalis/router.js';
+import { charaRouter } from './chara/router.js';
 
 // Lib
 import { ApiError, ErrorCode } from './lib/api-error.js';
@@ -65,12 +66,14 @@ app.use('*', async (c, next) => {
   }
 });
 
-// 4. CORS — permissive for public read-only API
+// 4. CORS — permissive for public read-only API (POST exists only for
+//    /v1/chara/resolve, whose body is twelve small integers — still anonymous,
+//    still idempotent, still cacheable per key behind it)
 app.use(
   '*',
   cors({
     origin: '*',
-    allowMethods: ['GET', 'OPTIONS'],
+    allowMethods: ['GET', 'POST', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Accept', 'X-API-Key'],
     exposeHeaders: [
       'X-RateLimit-Limit',
@@ -122,6 +125,9 @@ app.get('/health', (c) => {
 
 app.route('/v1/dyes', dyesRouter);
 app.route('/v1/match', matchRouter);
+// .chara equipment-model resolution (web-app Swatch Matcher import) — one
+// XIVAPI search per file, per-key edge cache, icons proxied. See chara/router.ts.
+app.route('/v1/chara', charaRouter);
 
 // Universalis market-board proxy (absorbed from apps/universalis-proxy).
 // Canonical mount + /api/v2 compatibility mount for the proxy.xivdyetools.app

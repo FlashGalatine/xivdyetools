@@ -1,0 +1,21 @@
+{
+  "generated": "2026-08-21",
+  "equippable": 28993,
+  "sources": {
+    "itemCsv": "local ffxiv-datamining clone",
+    "ko": "https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/ko/ko-items.json",
+    "zh": "https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/zh/zh-items.json"
+  },
+  "counts": {
+    "ko": {
+      "named": 28986,
+      "missing": 7,
+      "bytes": 1103611
+    },
+    "zh": {
+      "named": 28992,
+      "missing": 1,
+      "bytes": 899454
+    }
+  }
+}
