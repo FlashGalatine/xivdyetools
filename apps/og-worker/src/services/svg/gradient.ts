@@ -15,7 +15,7 @@ import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, BAND_CAP, type BandEntry, type BandFrame } from './band';
 import { ALGO_TAG, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
 import { dyeService, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
-import { getToolTag } from '../og-strings';
+import { role, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm } from '../../types';
 
@@ -57,7 +57,8 @@ export function generateGradientOG(options: GradientOGOptions): string {
       'gradient',
       `#${startDyeId} → #${endDyeId}`,
       'gradient',
-      frame
+      frame,
+      locale
     );
   }
 
@@ -72,7 +73,7 @@ export function generateGradientOG(options: GradientOGOptions): string {
       const dye = i === 0 ? startDye : endDye;
       bands.push({
         hex: dye.hex,
-        role: i === 0 ? 'START' : 'END',
+        role: i === 0 ? role('start', locale) : role('end', locale),
         name: getLocalizedDyeName(dye, locale),
         value: dye.hex.toUpperCase(),
         tag: `#${dye.stainID ?? dye.id}`,

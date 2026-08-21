@@ -14,7 +14,7 @@ import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, xStrip, type BandEntry, type BandFrame } from './band';
 import { ALGO_TAG, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
 import { dyeService, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
-import { getToolTag } from '../og-strings';
+import { role, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm } from '../../types';
 
@@ -62,7 +62,7 @@ export function generateMixerOG(options: MixerOGOptions): string {
   const dyeB = getDyeByItemId(dyeBId);
   const dyeC = dyeCId !== undefined ? getDyeByItemId(dyeCId) : undefined;
   if (!dyeA || !dyeB || (dyeCId !== undefined && !dyeC)) {
-    return notFoundBand(getToolTag('mixer', locale), 'mixer', `#${dyeAId} + #${dyeBId}`, 'mixer', frame);
+    return notFoundBand(getToolTag('mixer', locale), 'mixer', `#${dyeAId} + #${dyeBId}`, 'mixer', frame, locale);
   }
 
   // The mix: A at ratio% against B (LAB), the third dye folded in equally
@@ -90,7 +90,7 @@ export function generateMixerOG(options: MixerOGOptions): string {
     ...inputs,
     {
       hex: hit.dye.hex,
-      role: 'BUYABLE',
+      role: role('buyable', locale),
       name: getLocalizedDyeName(hit.dye, locale),
       value: hit.dye.hex.toUpperCase(),
       tag: `Δ${fmtDelta(delta, algorithm)}`,

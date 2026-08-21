@@ -62,7 +62,7 @@ export function generateExtractorOG(options: ExtractorOGOptions): string {
     BAND_CAP
   );
   if (entries.length === 0) {
-    return notFoundBand(getToolTag('extractor', locale), 'extractor', '—', 'extractor', frame);
+    return notFoundBand(getToolTag('extractor', locale), 'extractor', '—', 'extractor', frame, locale);
   }
 
   const stripH = frame === 'x' ? xStrip(EXTRACT_STRIP_H) : EXTRACT_STRIP_H;

@@ -15,7 +15,7 @@ import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
 import { bandGlyph, notFoundBand } from './band-shared';
 import { getDyeByItemId } from './dye-helpers';
-import { getToolTag } from '../og-strings';
+import { role, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 
 export interface ComparisonOGOptions {
@@ -43,7 +43,8 @@ export function generateComparisonOG(options: ComparisonOGOptions): string {
       'comparison',
       options.dyeIds.join(' · '),
       'comparison',
-      frame
+      frame,
+      locale
     );
   }
 
@@ -65,7 +66,7 @@ export function generateComparisonOG(options: ComparisonOGOptions): string {
   const ordered: Dye[] = [closest.a, closest.b, ...dyes.filter((d) => d !== closest.a && d !== closest.b)];
   const bands: BandEntry[] = ordered.map((dye, i) => ({
     hex: dye.hex,
-    role: i < 2 ? 'CLOSEST PAIR' : '',
+    role: i < 2 ? role('closestPair', locale) : '',
     name: getLocalizedDyeName(dye, locale),
     value: dye.hex.toUpperCase(),
     tag: `#${dye.stainID ?? dye.id}`,
@@ -82,7 +83,7 @@ export function generateComparisonOG(options: ComparisonOGOptions): string {
     // Six pair numbers are not four of anything, so only the closest survives:
     // the deck on Discord, the footer's right slot on X.
     deck: `${closestLine} · Δ${closest.delta.toFixed(1)}`,
-    footRight: frame === 'x' ? `CLOSEST Δ${closest.delta.toFixed(1)}` : 'ΔE2000',
+    footRight: frame === 'x' ? `${role('closest', locale)} Δ${closest.delta.toFixed(1)}` : 'ΔE2000',
     frame,
   });
 }

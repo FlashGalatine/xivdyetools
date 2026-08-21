@@ -7,6 +7,8 @@
 import { toolGlyph, type ToolGlyphName } from '@xivdyetools/svg';
 import { generateBandCard, type BandFrame } from './band';
 import { COMPACT_GLYPH } from './tokens';
+import { role } from '../og-strings';
+import type { LocaleCode } from '@xivdyetools/types';
 
 /** Requested-algorithm display codes (identifiers — never localise). */
 export const ALGO_TAG: Record<string, string> = {
@@ -42,10 +44,11 @@ export function notFoundBand(
   glyphName: ToolGlyphName,
   label: string,
   urlPath: string,
-  frame: BandFrame = 'discord'
+  frame: BandFrame = 'discord',
+  locale: LocaleCode = 'en'
 ): string {
   return generateBandCard({
-    bands: [{ hex: '#17171A', role: 'NOT FOUND', name: label, nameSize: 17 }],
+    bands: [{ hex: '#17171A', role: role('notFound', locale), name: label, nameSize: 17 }],
     toolTag,
     toolGlyph: bandGlyph(glyphName),
     path: `xivdyetools.app/${urlPath}`,

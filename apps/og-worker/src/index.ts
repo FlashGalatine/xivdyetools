@@ -30,7 +30,7 @@ import {
   generateRootOGData,
   generateFallbackOGData,
 } from './og-data-generator';
-import { getOgDeck, getToolTag } from './services/og-strings';
+import { getOgDeck, getToolTag, role } from './services/og-strings';
 import { renderOGImage } from './services/renderer';
 import {
   generateHarmonyOG,
@@ -278,7 +278,7 @@ function buildDefaultCardSvg(
       name: strings.name,
       sub: strings.sub,
       path: `xivdyetools.app/${tool}`,
-      methodTag: tool === 'presets' ? 'CURATED' : 'ΔE2000',
+      methodTag: tool === 'presets' ? role('curated', locale) : 'ΔE2000',
       frame,
     });
   }

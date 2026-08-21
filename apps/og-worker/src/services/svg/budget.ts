@@ -18,7 +18,7 @@ import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
 import { bandGlyph, notFoundBand } from './band-shared';
 import { dyeService, getDyeByItemId } from './dye-helpers';
-import { deckLine, getToolTag } from '../og-strings';
+import { role, deckLine, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 
 export interface BudgetOGOptions {
@@ -30,12 +30,15 @@ export interface BudgetOGOptions {
   frame?: BandFrame;
 }
 
-/** Pricing-path short labels (identifiers on the card). */
-function tierLabel(dye: Dye): string {
+/**
+ * Pricing-path short labels. The three tier names are codes (identifiers on
+ * the card); the two sources are words and take the ×6 role vocabulary.
+ */
+function tierLabel(dye: Dye, locale: LocaleCode): string {
   if (dye.consolidationType === 'A') return 'STD SPECTRUM';
   if (dye.consolidationType === 'B') return 'WIDE #1';
   if (dye.consolidationType === 'C') return 'WIDE #2';
-  return dye.acquisition === 'Venture Coffers' ? 'COFFER' : 'BOARD';
+  return dye.acquisition === 'Venture Coffers' ? role('coffer', locale) : role('board', locale);
 }
 
 /** The one static price: the Standard Spectrum vendor's 216 gil. */
@@ -51,7 +54,7 @@ export function generateBudgetOG(options: BudgetOGOptions): string {
 
   const target = getDyeByItemId(dyeId);
   if (!target) {
-    return notFoundBand(getToolTag('budget', locale), 'budget', `#${dyeId}`, 'budget', frame);
+    return notFoundBand(getToolTag('budget', locale), 'budget', `#${dyeId}`, 'budget', frame, locale);
   }
 
   // Nearest four from a CHEAPER pricing path than the target's own — for a
@@ -71,7 +74,7 @@ export function generateBudgetOG(options: BudgetOGOptions): string {
   const bands: BandEntry[] = [
     {
       hex: target.hex,
-      role: `TARGET · ${tierLabel(target)}`,
+      role: `${role('target', locale)} · ${tierLabel(target, locale)}`,
       name: getLocalizedDyeName(target, locale),
       value: target.hex.toUpperCase(),
       tag: `#${target.stainID ?? target.id}`,
@@ -88,7 +91,7 @@ export function generateBudgetOG(options: BudgetOGOptions): string {
     // The coffer keeps its label and no figure — no listing is its answer.
     ...candidates.map((c) => ({
       hex: c.dye.hex,
-      role: tierPrice(c.dye) !== '—' ? tierPrice(c.dye) : tierLabel(c.dye),
+      role: tierPrice(c.dye) !== '—' ? tierPrice(c.dye) : tierLabel(c.dye, locale),
       name: getLocalizedDyeName(c.dye, locale),
       value: c.dye.hex.toUpperCase(),
       tag: `Δ${c.delta.toFixed(1)}`,
@@ -105,8 +108,8 @@ export function generateBudgetOG(options: BudgetOGOptions): string {
     path: 'xivdyetools.app/budget',
     // The ledger ranked four; the band recommends one. That verdict is the
     // deck on Discord and moves to the footer's right slot on X.
-    deck: `${deckLine('budgetBest', locale)} ${bestName}`,
-    footRight: frame === 'x' ? `BEST · ${bestName}` : 'VENDOR 216 G',
+    deck: deckLine('budgetBest', locale, { name: bestName }),
+    footRight: frame === 'x' ? `${role('best', locale)} · ${bestName}` : `${role('vendor', locale)} 216 G`,
     footRightFont: frame === 'x' ? 'body' : 'mono',
     frame,
   });

@@ -28,7 +28,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 import { LocaleLoader } from '@xivdyetools/core';
 import type { LocaleCode } from '@xivdyetools/types';
-import { OG_DECK, TOOL_TAG, OG_DECK_LINE } from './og-strings';
+import { OG_DECK, TOOL_TAG, OG_DECK_LINE, OG_ROLE } from './og-strings';
 
 // ---------------------------------------------------------------------------
 // Minimal TrueType/OpenType cmap reader
@@ -153,6 +153,7 @@ function stringsFor(locale: LocaleCode): string[] {
   collectStrings(OG_DECK[locale], out);
   collectStrings(TOOL_TAG[locale], out);
   collectStrings(OG_DECK_LINE[locale], out);
+  collectStrings(OG_ROLE[locale], out);
   return out;
 }
 

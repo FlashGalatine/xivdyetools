@@ -15,7 +15,7 @@ import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
 import { ALGO_TAG, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
 import { dyeService, findClosestDyesWithDistance, getDyeByItemId, deltaForAlgorithm } from './dye-helpers';
-import { getToolTag } from '../og-strings';
+import { role, getToolTag } from '../og-strings';
 import { getLocalizedDyeName, getLocalizedHarmonyName } from '../translator';
 import type { HarmonyType, MatchingAlgorithm } from '../../types';
 
@@ -103,7 +103,7 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
   if (!dye) {
     // The generator never throws (route contract) — an unknown ID renders the
     // shared neutral single-band state naming the miss.
-    return notFoundBand(getToolTag('harmony', locale), 'harmony', `#${dyeId}`, 'harmony', frame);
+    return notFoundBand(getToolTag('harmony', locale), 'harmony', `#${dyeId}`, 'harmony', frame, locale);
   }
 
   const matches = getHarmonyMatches(dye, harmonyType, algorithm);
@@ -114,7 +114,7 @@ export function generateHarmonyOG(options: HarmonyOGOptions): string {
   const bands: BandEntry[] = [
     {
       hex: dye.hex,
-      role: 'BASE',
+      role: role('base', locale),
       name: baseName,
       value: dye.hex.toUpperCase(),
       tag: stainTag,

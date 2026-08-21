@@ -14,7 +14,7 @@ import type { Dye, LocaleCode, PresetData } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
 import { bandGlyph, notFoundBand } from './band-shared';
 import { dyeService } from './dye-helpers';
-import { getToolTag } from '../og-strings';
+import { role, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 
 export interface PresetsOGOptions {
@@ -35,14 +35,14 @@ export function generatePresetsOG(options: PresetsOGOptions): string {
   const palettes = (presetData as PresetData).palettes;
   const preset = palettes.find((p) => p.id === presetId);
   if (!preset) {
-    return notFoundBand(getToolTag('presets', locale), 'presets', presetId, 'presets', frame);
+    return notFoundBand(getToolTag('presets', locale), 'presets', presetId, 'presets', frame, locale);
   }
 
   const dyes = preset.dyes
     .map((stainId) => dyeService.getByStainId(stainId))
     .filter((d): d is Dye => d !== null && d !== undefined);
   if (dyes.length === 0) {
-    return notFoundBand(getToolTag('presets', locale), 'presets', presetId, 'presets', frame);
+    return notFoundBand(getToolTag('presets', locale), 'presets', presetId, 'presets', frame, locale);
   }
 
   // Equal bands, whatever the count — the 8A strip inherited
@@ -62,7 +62,7 @@ export function generatePresetsOG(options: PresetsOGOptions): string {
     // The preset's name was the deck's whole job, so on X it moves to the
     // footer verbatim — preset names are never localised, so no key is needed.
     deck: preset.name,
-    footRight: frame === 'x' ? `${preset.name} · CURATED` : 'CURATED',
+    footRight: frame === 'x' ? `${preset.name} · ${role('curated', locale)}` : role('curated', locale),
     footRightFont: frame === 'x' ? 'body' : 'mono',
     frame,
   });

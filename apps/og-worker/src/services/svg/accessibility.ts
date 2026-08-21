@@ -16,7 +16,7 @@ import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, xStrip, type BandEntry, type BandFrame } from './band';
 import { bandGlyph, notFoundBand } from './band-shared';
 import { getDyeByItemId } from './dye-helpers';
-import { deckLine, getToolTag } from '../og-strings';
+import { role, deckLine, getToolTag } from '../og-strings';
 import { getLocalizedDyeName, getLocalizedVisionName } from '../translator';
 import type { VisionType } from '../../types';
 
@@ -59,7 +59,8 @@ export function generateAccessibilityOG(options: AccessibilityOGOptions): string
       'accessibility',
       options.dyeIds.join(' · '),
       'accessibility',
-      frame
+      frame,
+      locale
     );
   }
 
@@ -77,7 +78,7 @@ export function generateAccessibilityOG(options: AccessibilityOGOptions): string
     const shift = ColorService.getDistanceForMethod(dye.hex, simulated, 'ciede2000');
     return {
       hex: simulated,
-      role: 'AS DESIGNED',
+      role: role('asDesigned', locale),
       name: getLocalizedDyeName(dye, locale),
       value: dye.hex.toUpperCase(),
       tag: `Δ${shift.toFixed(1)}`,

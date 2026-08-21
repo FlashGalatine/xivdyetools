@@ -180,18 +180,19 @@ export function generateDefaultCard(options: DefaultCardOptions): string {
 }
 
 /**
- * Per-tool glyph + chip label for the default cards. Deck strings (name +
- * one-liner ×6) live in `services/og-strings.ts` — the confirmed string
- * pass, not these constants.
+ * Per-tool banner glyph for the default cards. The chip label is built at the
+ * call site from the localized `TOOL_TAG` (it used to carry an English
+ * `/HARMONY` here that nothing read — OG-I18N-014); deck strings (name + one-liner
+ * ×6) live in `services/og-strings.ts`.
  */
-export const DEFAULT_DECK: Record<string, { glyphName: ToolGlyphName; label: string }> = {
-  harmony: { glyphName: 'harmony', label: '/HARMONY' },
-  gradient: { glyphName: 'gradient', label: '/GRADIENT' },
-  mixer: { glyphName: 'mixer', label: '/MIXER' },
-  swatch: { glyphName: 'swatch', label: '/SWATCH' },
-  comparison: { glyphName: 'comparison', label: '/COMPARISON' },
-  accessibility: { glyphName: 'accessibility', label: '/A11Y' },
-  extractor: { glyphName: 'extractor', label: '/EXTRACTOR' },
-  presets: { glyphName: 'presets', label: '/PRESETS' },
-  budget: { glyphName: 'budget', label: '/BUDGET' },
+export const DEFAULT_DECK: Record<string, { glyphName: ToolGlyphName }> = {
+  harmony: { glyphName: 'harmony' },
+  gradient: { glyphName: 'gradient' },
+  mixer: { glyphName: 'mixer' },
+  swatch: { glyphName: 'swatch' },
+  comparison: { glyphName: 'comparison' },
+  accessibility: { glyphName: 'accessibility' },
+  extractor: { glyphName: 'extractor' },
+  presets: { glyphName: 'presets' },
+  budget: { glyphName: 'budget' },
 };

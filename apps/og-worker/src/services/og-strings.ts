@@ -213,7 +213,7 @@ export function getToolTag(key: ToolTagKey, locale: LocaleCode): string {
  * and lens keys). These four do not, so they are authored here ×6 against the
  * suite's existing vocabulary. EN writes EN-US, per the String Pass.
  *
- * `{n}` / `{hex}` are substituted by `deckLine()`.
+ * `{n}` / `{hex}` / `{name}` are substituted by `deckLine()`.
  */
 export type DeckLineKey = 'swatchNearest' | 'extractorCount' | 'budgetBest' | 'a11yDyeCount';
 
@@ -221,37 +221,37 @@ export const OG_DECK_LINE: Record<LocaleCode, Record<DeckLineKey, string>> = {
   en: {
     swatchNearest: 'Nearest {n} to {hex}',
     extractorCount: '{n} colors from an image',
-    budgetBest: 'Best per point:',
+    budgetBest: 'Best per point: {name}',
     a11yDyeCount: '{n} dyes',
   },
   de: {
     swatchNearest: 'Die {n} nächsten zu {hex}',
     extractorCount: '{n} Farben aus einem Bild',
-    budgetBest: 'Bestes pro Punkt:',
+    budgetBest: 'Bestes pro Punkt: {name}',
     a11yDyeCount: '{n} Farbstoffe',
   },
   fr: {
     swatchNearest: 'Les {n} plus proches de {hex}',
     extractorCount: '{n} couleurs extraites d’une image',
-    budgetBest: 'Meilleur par point :',
+    budgetBest: 'Meilleur par point : {name}',
     a11yDyeCount: '{n} teintures',
   },
   ja: {
     swatchNearest: '{hex} に最も近い{n}色',
     extractorCount: '画像から{n}色',
-    budgetBest: 'ポイント当たり最良：',
+    budgetBest: 'ポイント当たり最良：{name}',
     a11yDyeCount: '{n}色の染料',
   },
   ko: {
     swatchNearest: '{hex}에 가장 가까운 {n}개',
     extractorCount: '이미지에서 {n}색',
-    budgetBest: '포인트당 최적:',
+    budgetBest: '포인트당 최적: {name}',
     a11yDyeCount: '염료 {n}개',
   },
   zh: {
     swatchNearest: '最接近 {hex} 的 {n} 种',
     extractorCount: '从图像提取 {n} 种颜色',
-    budgetBest: '每点最优：',
+    budgetBest: '每点最优：{name}',
     a11yDyeCount: '{n} 种染剂',
   },
 };
@@ -260,10 +260,155 @@ export const OG_DECK_LINE: Record<LocaleCode, Record<DeckLineKey, string>> = {
 export function deckLine(
   key: DeckLineKey,
   locale: LocaleCode,
-  vars: { n?: number | string; hex?: string } = {}
+  vars: { n?: number | string; hex?: string; name?: string } = {}
 ): string {
   const template = OG_DECK_LINE[locale]?.[key] ?? OG_DECK_LINE.en[key];
-  return template
-    .replace('{n}', String(vars.n ?? ''))
-    .replace('{hex}', vars.hex ?? '');
+  return template.replace(/\{(\w+)\}/g, (_, k: string) =>
+    String((vars as Record<string, string | number | undefined>)[k] ?? '')
+  );
+}
+
+// ============================================================================
+// Band role labels ×6 — the words beside a band
+// ============================================================================
+
+/**
+ * The word-roles a card prints above a band (BASE, TARGET, AS DESIGNED …) and
+ * the footer verdict words (BEST, VENDOR, CURATED). Authored ×6 against the
+ * bot's card vocabulary (bot-logic `card.base` = BASIS / ベース, `card.target`
+ * = ZIEL / 目標色, `card.designed` = WIE ENTWORFEN / 本来の色) so the unfurl
+ * and the bot embed of the same result say the same thing (2026-08-20 i18n
+ * audit, OG-I18N-011).
+ *
+ * Codes are not roles and stay untranslated: the mixer's A/B/C, `ALGO_TAG`,
+ * `LENS_SHORT`, the budget tier names (STD SPECTRUM / WIDE #1) and `216 G`.
+ * The role slot is 11px mono on a band that can be 67px wide, so every
+ * translation is kept as short as the EN word — `fit()` ellipsises anything
+ * longer, as it already did for EN.
+ */
+export type RoleKey =
+  | 'base'
+  | 'start'
+  | 'end'
+  | 'buyable'
+  | 'target'
+  | 'closestPair'
+  | 'closest'
+  | 'asDesigned'
+  | 'notFound'
+  | 'curated'
+  | 'best'
+  | 'vendor'
+  | 'coffer'
+  | 'board'
+  | 'noStainId';
+
+export const OG_ROLE: Record<LocaleCode, Record<RoleKey, string>> = {
+  en: {
+    base: 'BASE',
+    start: 'START',
+    end: 'END',
+    buyable: 'BUYABLE',
+    target: 'TARGET',
+    closestPair: 'CLOSEST PAIR',
+    closest: 'CLOSEST',
+    asDesigned: 'AS DESIGNED',
+    notFound: 'NOT FOUND',
+    curated: 'CURATED',
+    best: 'BEST',
+    vendor: 'VENDOR',
+    coffer: 'COFFER',
+    board: 'BOARD',
+    noStainId: 'NO STAIN ID',
+  },
+  de: {
+    base: 'BASIS',
+    start: 'START',
+    end: 'ENDE',
+    buyable: 'KAUFBAR',
+    target: 'ZIEL',
+    closestPair: 'NÄCHSTES PAAR',
+    closest: 'NÄCHSTE',
+    asDesigned: 'WIE ENTWORFEN',
+    notFound: 'NICHT GEFUNDEN',
+    curated: 'KURATIERT',
+    best: 'BESTE',
+    vendor: 'HÄNDLER',
+    coffer: 'SCHATZKISTE',
+    board: 'MARKTBRETT',
+    noStainId: 'KEINE STAIN-ID',
+  },
+  fr: {
+    base: 'BASE',
+    start: 'DÉBUT',
+    end: 'FIN',
+    buyable: 'ACHETABLE',
+    target: 'CIBLE',
+    closestPair: 'PAIRE PROCHE',
+    closest: 'PLUS PROCHE',
+    asDesigned: 'COULEUR RÉELLE',
+    notFound: 'INTROUVABLE',
+    curated: 'SÉLECTION',
+    best: 'MEILLEUR',
+    vendor: 'MARCHAND',
+    coffer: 'TROUVAILLE',
+    board: 'MARCHÉ',
+    noStainId: 'SANS STAIN ID',
+  },
+  ja: {
+    base: 'ベース',
+    start: '開始',
+    end: '終了',
+    buyable: '購入可',
+    target: '目標色',
+    closestPair: '最近接ペア',
+    closest: '最近接',
+    asDesigned: '本来の色',
+    notFound: '該当なし',
+    curated: 'キュレーション',
+    best: '最良',
+    vendor: '店売り',
+    coffer: '宝箱',
+    board: 'マーケット',
+    noStainId: 'STAIN IDなし',
+  },
+  ko: {
+    base: '기준',
+    start: '시작',
+    end: '끝',
+    buyable: '구매 가능',
+    target: '목표색',
+    closestPair: '최근접 쌍',
+    closest: '최근접',
+    asDesigned: '원래 색',
+    notFound: '없음',
+    curated: '큐레이션',
+    best: '최적',
+    vendor: '상점',
+    coffer: '보물상자',
+    board: '장터',
+    noStainId: 'STAIN ID 없음',
+  },
+  zh: {
+    base: '基色',
+    start: '起点',
+    end: '终点',
+    buyable: '可购买',
+    target: '目标色',
+    closestPair: '最近一对',
+    closest: '最近',
+    asDesigned: '原始颜色',
+    notFound: '未找到',
+    curated: '精选',
+    best: '最优',
+    vendor: '商店',
+    coffer: '宝箱',
+    board: '市场',
+    noStainId: '无 STAIN ID',
+  },
+};
+
+/** A band role label in a locale, EN fallback. */
+export function role(key: RoleKey, locale: LocaleCode): string {
+  return OG_ROLE[locale]?.[key] ?? OG_ROLE.en[key];
 }

@@ -14,7 +14,7 @@ import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
 import { ALGO_TAG, bandGlyph, fmtDelta, notFoundBand } from './band-shared';
 import { dyeService, deltaForAlgorithm } from './dye-helpers';
-import { deckLine, getToolTag } from '../og-strings';
+import { role, deckLine, getToolTag } from '../og-strings';
 import { getLocalizedDyeName } from '../translator';
 import type { MatchingAlgorithm } from '../../types';
 
@@ -42,7 +42,7 @@ export function generateSwatchOG(options: SwatchOGOptions): string {
 
   const clean = options.color.replace('#', '').toUpperCase();
   if (!/^[0-9A-F]{6}$/.test(clean)) {
-    return notFoundBand(getToolTag('swatch', locale), 'swatch', `#${clean}`, 'swatch', frame);
+    return notFoundBand(getToolTag('swatch', locale), 'swatch', `#${clean}`, 'swatch', frame, locale);
   }
   const targetHex = `#${clean}`;
 
@@ -59,9 +59,9 @@ export function generateSwatchOG(options: SwatchOGOptions): string {
   const bands: BandEntry[] = [
     {
       hex: targetHex,
-      role: 'TARGET',
+      role: role('target', locale),
       name: targetHex,
-      tag: 'NO STAIN ID',
+      tag: role('noStainId', locale),
       grow: 2,
       nameSize: 17,
     },

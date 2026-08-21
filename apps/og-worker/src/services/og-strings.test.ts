@@ -137,3 +137,27 @@ describe('OG_EMBED', () => {
     expect(JSON.stringify(OG_EMBED.en)).not.toMatch(/colour/i);
   });
 });
+
+// ---------------------------------------------------------------------------
+// OG_ROLE — band role labels ×6 (OG-I18N-011)
+// ---------------------------------------------------------------------------
+import { OG_ROLE, role, type RoleKey } from './og-strings';
+
+describe('OG_ROLE', () => {
+  const keys = Object.keys(OG_ROLE.en) as RoleKey[];
+  it('covers every role in all six locales', () => {
+    expect(keys.length).toBeGreaterThanOrEqual(15);
+    for (const lc of LOCALES) {
+      expect(Object.keys(OG_ROLE[lc]).sort()).toEqual([...keys].sort());
+      for (const k of keys) expect(OG_ROLE[lc][k], `${lc}.${k}`).toBeTruthy();
+    }
+  });
+  it('role() falls back to EN', () => {
+    expect(role('base', 'xx' as LocaleCode)).toBe('BASE');
+    expect(role('base', 'de')).toBe('BASIS');
+  });
+  it('deckLine fills {name} for the budget verdict (OG-I18N-012)', () => {
+    expect(deckLine('budgetBest', 'ja', { name: 'X' })).toBe('ポイント当たり最良：X');
+    expect(deckLine('budgetBest', 'en', { name: 'X' })).toBe('Best per point: X');
+  });
+});

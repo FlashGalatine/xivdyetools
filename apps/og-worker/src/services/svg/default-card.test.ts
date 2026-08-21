@@ -8,7 +8,7 @@ import { MARK_STRIPES } from './tokens';
 import { BAND_FRAMES } from './band';
 
 const tool = {
-  tool: DEFAULT_DECK.harmony,
+  tool: { ...DEFAULT_DECK.harmony, label: '/HARMONY' },
   name: 'Color Harmony',
   sub: 'Build a palette around any dye. Six harmony types, real dyes only.',
   path: 'xivdyetools.app/harmony',
