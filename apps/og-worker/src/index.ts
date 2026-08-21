@@ -24,7 +24,12 @@ import {
 } from '@xivdyetools/worker-kit';
 import type { LocaleCode } from '@xivdyetools/types';
 import { detectCrawlerFromRequest, getCrawlerName } from './crawler-detector';
-import { generateOGDataForTool, generateOGHTML } from './og-data-generator';
+import {
+  generateOGDataForTool,
+  generateOGHTML,
+  generateRootOGData,
+  generateFallbackOGData,
+} from './og-data-generator';
 import { getOgDeck, getToolTag } from './services/og-strings';
 import { renderOGImage } from './services/renderer';
 import {
@@ -683,15 +688,8 @@ app.get('/', (c) => {
   const crawlerInfo = detectCrawlerFromRequest(c.req.raw);
 
   if (crawlerInfo.isCrawler) {
-    // Return generic OG data for root
-    const ogData = {
-      title: 'XIV Dye Tools - FFXIV Color & Dye Companion',
-      description:
-        'Explore FFXIV dye colors, create harmonious palettes, build gradients, mix colors, and find your perfect glamour combinations. Free web tools for Final Fantasy XIV players.',
-      url: c.env.APP_BASE_URL,
-      imageUrl: `${c.env.OG_IMAGE_BASE_URL}/default.png`,
-      siteName: 'XIV Dye Tools',
-    };
+    // Return generic OG data for root (localized via ?lang= like every tool)
+    const ogData = generateRootOGData(c.env, resolveLocale(new URL(c.req.url).searchParams));
 
     const html = generateOGHTML(ogData);
     return c.text(html, 200, {
@@ -713,13 +711,7 @@ app.all('*', (c) => {
 
   if (crawlerInfo.isCrawler) {
     // Unknown route for crawler - return minimal OG tags
-    const ogData = {
-      title: 'XIV Dye Tools',
-      description: 'FFXIV Color & Dye Companion',
-      url: c.env.APP_BASE_URL,
-      imageUrl: `${c.env.OG_IMAGE_BASE_URL}/default.png`,
-      siteName: 'XIV Dye Tools',
-    };
+    const ogData = generateFallbackOGData(c.env, resolveLocale(new URL(c.req.url).searchParams));
 
     const html = generateOGHTML(ogData);
     return c.text(html, 200, {

@@ -97,3 +97,43 @@ describe('OG_DECK_LINE', () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// OG_EMBED — the crawler copy ×6 (2026-08-20 i18n audit, OG-I18N-002)
+// ---------------------------------------------------------------------------
+import { OG_EMBED, embed, type EmbedKey } from './og-embed';
+
+const placeholders = (s: string): string[] => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
+
+describe('OG_EMBED', () => {
+  const keys = Object.keys(OG_EMBED.en) as EmbedKey[];
+
+  it('covers every embed string in all six locales', () => {
+    expect(keys.length).toBeGreaterThan(30);
+    for (const lc of LOCALES) {
+      for (const k of keys) {
+        expect(OG_EMBED[lc][k], `${lc}.${k}`).toBeTruthy();
+      }
+      expect(Object.keys(OG_EMBED[lc]).sort()).toEqual([...keys].sort());
+    }
+  });
+
+  it('every locale carries exactly the placeholders EN does', () => {
+    for (const lc of LOCALES) {
+      for (const k of keys) {
+        expect(placeholders(OG_EMBED[lc][k]), `${lc}.${k}`).toEqual(placeholders(OG_EMBED.en[k]));
+      }
+    }
+  });
+
+  it('embed() fills every named variable and falls back to EN', () => {
+    expect(embed('harmony.titleNoDye', 'ja', { harmony: '補色' })).toContain('補色');
+    expect(embed('harmony.titleNoDye', 'ja', { harmony: '補色' })).not.toMatch(/\{\w+\}/);
+    expect(embed('gender.female', 'en')).toBe('female');
+    expect(embed('gender.female', 'xx' as LocaleCode)).toBe('female');
+  });
+
+  it('EN writes EN-US', () => {
+    expect(JSON.stringify(OG_EMBED.en)).not.toMatch(/colour/i);
+  });
+});

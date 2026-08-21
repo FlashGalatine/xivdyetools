@@ -12,12 +12,16 @@ import { DEFAULT_MATCHING_METHOD, normalizeMatchingMethod, presetData } from '@x
 import type { PresetData } from '@xivdyetools/types';
 import { getDyeByItemId } from './services/svg/dye-helpers';
 import { GROUND, MARK_STRIPES } from './services/svg/tokens';
+import { getOgDeck } from './services/og-strings';
+import { embed } from './services/og-embed';
 import {
   ogTranslator,
+  getLocalizedDyeName,
   getLocalizedHarmonyName,
   getLocalizedVisionName,
+  getLocalizedClanOrRace,
 } from './services/translator';
-import type { LocaleCode, SheetKey, ToolKey } from '@xivdyetools/types';
+import type { LocaleCode, SheetKey } from '@xivdyetools/types';
 import type {
   OGData,
   ToolId,
@@ -38,13 +42,14 @@ import type {
 } from './types';
 
 // ============================================================================
-// Localization (REFACTOR-001, 2026-04-28 audit)
+// Localization (REFACTOR-001, 2026-04-28 audit; OG-I18N-002, 2026-08-20 audit)
 // ============================================================================
 
 // ogTranslator is shared from ./services/translator so SVG generators reuse
-// the same preloaded instance — and the harmony / lens names below come from
-// the same helpers the cards use, so the embed text and the picture inside it
-// cannot disagree.
+// the same preloaded instance — and the harmony / lens / dye names below come
+// from the same helpers the cards use, so the embed text and the picture
+// inside it cannot disagree. The sentences themselves are `OG_EMBED` ×6 in
+// services/og-strings.ts; this module only fills them.
 
 /**
  * Append the locale to an emitted image URL — the picture never localises
@@ -69,23 +74,51 @@ function withAlgo(url: string, algo: MatchingAlgorithm | string | null | undefin
   return `${url}${url.includes('?') ? '&' : '?'}algo=${method}`;
 }
 
+/** The root name never localises, and it closes every title. */
+const SITE_NAME = 'XIV Dye Tools';
+function site(title: string): string {
+  return `${title} | ${SITE_NAME}`;
+}
+
+/**
+ * EN sentences lower-case a noun mid-sentence ("explore triadic color
+ * harmonies"); no other locale does, and German nouns must keep their
+ * capital (OG-I18N-006).
+ */
+function lc(s: string, locale: LocaleCode): string {
+  return locale === 'en' ? s.toLowerCase() : s;
+}
+
+/**
+ * The tool's display name for the embed title — the ×6 deck name (the 5.0
+ * web-app title), never core `tools.*`: core has no extractor / presets /
+ * budget and its six older names differ from the page and the card in 20 of
+ * 36 cells (OG-I18N-004/005).
+ */
+function getToolName(tool: ToolId, locale: LocaleCode): string {
+  return getOgDeck(tool, locale).name;
+}
+
 /** The per-tool 2a default card, for a share URL that resolves to nothing. */
 function toolDefault(tool: ToolId, env: Env, locale: LocaleCode, description: string): OGData {
   return {
-    title: `${getToolName(tool, locale)} | XIV Dye Tools`,
+    title: site(getToolName(tool, locale)),
     description,
     url: `${env.APP_BASE_URL}/${tool}/`,
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/${tool}/default.png`, locale),
-    siteName: 'XIV Dye Tools',
+    siteName: SITE_NAME,
+    locale,
   };
-}
-
-function getToolName(tool: ToolId, locale: LocaleCode): string {
-  return ogTranslator.getToolName(tool as ToolKey, locale);
 }
 
 function getSheetName(sheet: ColorSheetCategory, locale: LocaleCode): string {
   return ogTranslator.getSheetName(sheet as SheetKey, locale);
+}
+
+function getGenderName(raw: CharacterGender | string, locale: LocaleCode): string {
+  const g = raw.toLowerCase();
+  if (g === 'male' || g === 'female') return embed(`gender.${g}`, locale);
+  return raw;
 }
 
 // ============================================================================
@@ -102,9 +135,11 @@ function getSheetName(sheet: ColorSheetCategory, locale: LocaleCode): string {
 // ============================================================================
 
 /**
- * Get dye name and hex color by stainID (5.0: OG paths key on stainIDs)
+ * Get dye name and hex color by stainID (5.0: OG paths key on stainIDs).
+ * The name is the localized one — the same lookup the card uses
+ * (OG-I18N-003).
  */
-function getDyeInfo(stainID: number): { name: string; hex: string } | null {
+function getDyeInfo(stainID: number, locale: LocaleCode): { name: string; hex: string } | null {
   // OPT-023: O(1) map lookup via the shared helper
   const dye = getDyeByItemId(stainID);
 
@@ -113,7 +148,7 @@ function getDyeInfo(stainID: number): { name: string; hex: string } | null {
   }
 
   return {
-    name: dye.name,
+    name: getLocalizedDyeName(dye, locale),
     hex: dye.hex,
   };
 }
@@ -137,26 +172,32 @@ export function generateHarmonyOGData(
   env: Env,
   locale: LocaleCode = 'en',
 ): OGData {
-  const dyeInfo = getDyeInfo(params.dye);
+  const dyeInfo = getDyeInfo(params.dye, locale);
   const harmonyName = getLocalizedHarmonyName(params.harmony, locale);
 
   if (!dyeInfo) {
     return {
-      title: `${harmonyName} Harmony | XIV Dye Tools`,
-      description: `Explore ${harmonyName.toLowerCase()} color harmonies for FFXIV dyes.`,
+      title: site(embed('harmony.titleNoDye', locale, { harmony: harmonyName })),
+      description: embed('harmony.descriptionNoDye', locale, { harmony: lc(harmonyName, locale) }),
       url: `${env.APP_BASE_URL}/harmony/`,
       imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/harmony/default.png`, locale),
-      siteName: 'XIV Dye Tools',
+      siteName: SITE_NAME,
+      locale,
     };
   }
 
   return {
-    title: `${dyeInfo.name} - ${harmonyName} Harmony | XIV Dye Tools`,
-    description: `Explore ${harmonyName.toLowerCase()} color harmonies for ${dyeInfo.name} (${dyeInfo.hex}) in FFXIV. Find matching dyes for your glamour!`,
+    title: site(embed('harmony.title', locale, { dye: dyeInfo.name, harmony: harmonyName })),
+    description: embed('harmony.description', locale, {
+      harmony: lc(harmonyName, locale),
+      dye: dyeInfo.name,
+      hex: dyeInfo.hex,
+    }),
     url: `${env.APP_BASE_URL}/harmony/?dye=${params.dye}&harmony=${params.harmony}&v=1`,
     imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/harmony/${params.dye}/${params.harmony}.png`, params.algo), locale),
-    siteName: 'XIV Dye Tools',
+    siteName: SITE_NAME,
     themeColor: dyeInfo.hex,
+    locale,
   };
 }
 
@@ -168,26 +209,27 @@ export function generateGradientOGData(
   env: Env,
   locale: LocaleCode = 'en',
 ): OGData {
-  const startDye = getDyeInfo(params.start);
-  const endDye = getDyeInfo(params.end);
+  const startDye = getDyeInfo(params.start, locale);
+  const endDye = getDyeInfo(params.end, locale);
 
   if (!startDye || !endDye) {
-    return {
-      title: `${getToolName('gradient', locale)} | XIV Dye Tools`,
-      description: 'Create smooth color gradients between FFXIV dyes.',
-      url: `${env.APP_BASE_URL}/gradient/`,
-      imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/gradient/default.png`, locale),
-      siteName: 'XIV Dye Tools',
-    };
+    return toolDefault('gradient', env, locale, embed('gradient.descriptionDefault', locale));
   }
 
   return {
-    title: `${startDye.name} to ${endDye.name} Gradient | XIV Dye Tools`,
-    description: `${params.steps}-step gradient from ${startDye.name} (${startDye.hex}) to ${endDye.name} (${endDye.hex}). Find the perfect dye progression for your FFXIV glamour!`,
+    title: site(embed('gradient.title', locale, { start: startDye.name, end: endDye.name })),
+    description: embed('gradient.description', locale, {
+      n: params.steps,
+      start: startDye.name,
+      startHex: startDye.hex,
+      end: endDye.name,
+      endHex: endDye.hex,
+    }),
     url: `${env.APP_BASE_URL}/gradient/?start=${params.start}&end=${params.end}&steps=${params.steps}&v=1`,
     imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/gradient/${params.start}/${params.end}/${params.steps}.png`, params.algo), locale),
-    siteName: 'XIV Dye Tools',
+    siteName: SITE_NAME,
     themeColor: startDye.hex,
+    locale,
   };
 }
 
@@ -199,40 +241,38 @@ export function generateMixerOGData(
   env: Env,
   locale: LocaleCode = 'en',
 ): OGData {
-  const dyeA = getDyeInfo(params.dyeA);
-  const dyeB = getDyeInfo(params.dyeB);
-  const dyeC = params.dyeC ? getDyeInfo(params.dyeC) : null;
+  const dyeA = getDyeInfo(params.dyeA, locale);
+  const dyeB = getDyeInfo(params.dyeB, locale);
+  const dyeC = params.dyeC ? getDyeInfo(params.dyeC, locale) : null;
 
   if (!dyeA || !dyeB) {
-    return {
-      title: `${getToolName('mixer', locale)} | XIV Dye Tools`,
-      description: 'Mix FFXIV dyes and find the closest matching result.',
-      url: `${env.APP_BASE_URL}/mixer/`,
-      imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/mixer/default.png`, locale),
-      siteName: 'XIV Dye Tools',
-    };
+    return toolDefault('mixer', env, locale, embed('mixer.descriptionDefault', locale));
   }
 
   // 3-dye mix
   if (dyeC) {
+    const names = { a: dyeA.name, b: dyeB.name, c: dyeC.name };
     return {
-      title: `${dyeA.name} + ${dyeB.name} + ${dyeC.name} | XIV Dye Tools`,
-      description: `Mix ${dyeA.name}, ${dyeB.name}, and ${dyeC.name} to find matching FFXIV dyes for your perfect blend!`,
+      title: site(embed('mixer.title3', locale, names)),
+      description: embed('mixer.description3', locale, names),
       url: `${env.APP_BASE_URL}/mixer/?dyeA=${params.dyeA}&dyeB=${params.dyeB}&dyeC=${params.dyeC}&v=1`,
       imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.dyeC}/${params.ratio}.png`, params.algo), locale),
-      siteName: 'XIV Dye Tools',
+      siteName: SITE_NAME,
       themeColor: dyeA.hex,
+      locale,
     };
   }
 
   // 2-dye mix
+  const vars = { ratio: params.ratio, a: dyeA.name, ratioB: 100 - params.ratio, b: dyeB.name };
   return {
-    title: `${params.ratio}% ${dyeA.name} + ${100 - params.ratio}% ${dyeB.name} | XIV Dye Tools`,
-    description: `Mix ${params.ratio}% ${dyeA.name} with ${100 - params.ratio}% ${dyeB.name} to find matching FFXIV dyes for your perfect blend!`,
+    title: site(embed('mixer.title2', locale, vars)),
+    description: embed('mixer.description2', locale, vars),
     url: `${env.APP_BASE_URL}/mixer/?dyeA=${params.dyeA}&dyeB=${params.dyeB}&ratio=${params.ratio}&v=1`,
     imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.ratio}.png`, params.algo), locale),
-    siteName: 'XIV Dye Tools',
+    siteName: SITE_NAME,
     themeColor: dyeA.hex,
+    locale,
   };
 }
 
@@ -249,18 +289,21 @@ export function generateSwatchOGData(
   const { sheet, race, gender } = params;
 
   // Build description based on available context
-  let description = `Find the top ${limit} FFXIV dyes that match ${hexColor}.`;
+  let description = embed('swatch.description', locale, { n: limit, hex: hexColor });
 
   if (sheet) {
     const isRaceSpecific = sheet === 'hairColors' || sheet === 'skinColors';
-    const sheetName = getSheetName(sheet, locale).toLowerCase();
+    const sheetName = lc(getSheetName(sheet, locale), locale);
     if (isRaceSpecific && race && gender) {
-      description = `Find FFXIV dyes matching this ${gender} ${race} ${sheetName} (${hexColor}).`;
+      description = embed('swatch.descriptionSheetRace', locale, {
+        gender: getGenderName(gender, locale),
+        race: getLocalizedClanOrRace(race, locale),
+        sheet: sheetName,
+        hex: hexColor,
+      });
     } else {
-      description = `Find FFXIV dyes matching this ${sheetName} (${hexColor}).`;
+      description = embed('swatch.descriptionSheet', locale, { sheet: sheetName, hex: hexColor });
     }
-  } else {
-    description += ' Perfect for matching character colors or custom palettes!';
   }
 
   // Build the web app URL with all params
@@ -279,12 +322,13 @@ export function generateSwatchOGData(
   const imageUrl = withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/swatch/${params.color}/${limit}.png`, params.algo), locale);
 
   return {
-    title: `Match ${hexColor} | XIV Dye Tools`,
+    title: site(embed('swatch.title', locale, { hex: hexColor })),
     description,
     url: `${env.APP_BASE_URL}/swatch/?${urlParams.toString()}`,
     imageUrl,
-    siteName: 'XIV Dye Tools',
+    siteName: SITE_NAME,
     themeColor: hexColor,
+    locale,
   };
 }
 
@@ -296,27 +340,22 @@ export function generateComparisonOGData(
   env: Env,
   locale: LocaleCode = 'en',
 ): OGData {
-  const dyes = params.dyes.slice(0, 4).map(getDyeInfo).filter(Boolean);
+  const dyes = params.dyes.slice(0, 4).map((id) => getDyeInfo(id, locale)).filter(Boolean);
 
   if (dyes.length === 0) {
-    return {
-      title: `${getToolName('comparison', locale)} | XIV Dye Tools`,
-      description: 'Compare up to 4 FFXIV dyes side by side.',
-      url: `${env.APP_BASE_URL}/comparison/`,
-      imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/comparison/default.png`, locale),
-      siteName: 'XIV Dye Tools',
-    };
+    return toolDefault('comparison', env, locale, embed('comparison.descriptionDefault', locale));
   }
 
   const dyeNames = dyes.map((d) => d!.name).join(', ');
 
   return {
-    title: `Compare: ${dyeNames} | XIV Dye Tools`,
-    description: `Side-by-side comparison of ${dyes.length} FFXIV dyes: ${dyeNames}. See how they look together!`,
+    title: site(embed('comparison.title', locale, { names: dyeNames })),
+    description: embed('comparison.description', locale, { n: dyes.length, names: dyeNames }),
     url: `${env.APP_BASE_URL}/comparison/?dyes=${params.dyes.join(',')}&v=1`,
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/comparison/${params.dyes.join(',')}.png`, locale),
-    siteName: 'XIV Dye Tools',
+    siteName: SITE_NAME,
     themeColor: dyes[0]!.hex,
+    locale,
   };
 }
 
@@ -328,28 +367,25 @@ export function generateAccessibilityOGData(
   env: Env,
   locale: LocaleCode = 'en',
 ): OGData {
-  const dyes = params.dyes.slice(0, 4).map(getDyeInfo).filter(Boolean);
-  const visionName = params.vision ? getLocalizedVisionName(params.vision, locale) : 'Color Vision';
+  const dyes = params.dyes.slice(0, 4).map((id) => getDyeInfo(id, locale)).filter(Boolean);
+  const visionName = params.vision
+    ? getLocalizedVisionName(params.vision, locale)
+    : embed('accessibility.lensAll', locale);
 
   if (dyes.length === 0) {
-    return {
-      title: `${getToolName('accessibility', locale)} | XIV Dye Tools`,
-      description: 'Check how FFXIV dyes appear to players with color vision differences.',
-      url: `${env.APP_BASE_URL}/accessibility/`,
-      imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/accessibility/default.png`, locale),
-      siteName: 'XIV Dye Tools',
-    };
+    return toolDefault('accessibility', env, locale, embed('accessibility.descriptionDefault', locale));
   }
 
   const dyeNames = dyes.map((d) => d!.name).join(', ');
 
   return {
-    title: `${visionName}: ${dyeNames} | XIV Dye Tools`,
-    description: `See how ${dyeNames} appear with ${visionName.toLowerCase()}. Design inclusive glamours!`,
+    title: site(embed('accessibility.title', locale, { lens: visionName, names: dyeNames })),
+    description: embed('accessibility.description', locale, { names: dyeNames, lens: lc(visionName, locale) }),
     url: `${env.APP_BASE_URL}/accessibility/?dyes=${params.dyes.join(',')}&vision=${params.vision || 'normal'}&v=1`,
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/accessibility/${params.dyes.join(',')}/${params.vision || 'normal'}.png`, locale),
-    siteName: 'XIV Dye Tools',
+    siteName: SITE_NAME,
     themeColor: dyes[0]!.hex,
+    locale,
   };
 }
 
@@ -365,20 +401,21 @@ export function generateExtractorOGData(
 ): OGData {
   const colors = params.colors.slice(0, 5);
   if (colors.length === 0) {
-    return toolDefault('extractor', env, locale, 'Pull the palette from any image and match every color to a buyable FFXIV dye.');
+    return toolDefault('extractor', env, locale, embed('extractor.descriptionDefault', locale));
   }
 
   const list = colors.map((c) => `#${c}`).join(', ');
   const algoQuery = params.algo ? `&algo=${encodeURIComponent(params.algo)}` : '';
 
   return {
-    title: `${colors.length}-color palette | XIV Dye Tools`,
-    description: `Colors extracted from an image (${list}), each matched to the nearest FFXIV dye.`,
+    title: site(embed('extractor.title', locale, { n: colors.length })),
+    description: embed('extractor.description', locale, { list }),
     // Commas stay literal (like comparison's dyes=) — the SPA reads them either way
     url: `${env.APP_BASE_URL}/extractor/?colors=${colors.join(',')}${algoQuery}&v=1`,
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/extractor/${colors.join(',')}.png`, locale),
-    siteName: 'XIV Dye Tools',
+    siteName: SITE_NAME,
     themeColor: `#${colors[0]}`,
+    locale,
   };
 }
 
@@ -386,6 +423,10 @@ export function generateExtractorOGData(
  * Generate OG data for Community Presets (5.0). Only the curated set has a
  * card (the worker bundles `presetData`); a community id or an unknown slug
  * degrades to the tool default rather than inventing a palette.
+ *
+ * The preset's own `name` / `description` are EN-only by design
+ * (OG-I18N-010: "preset names not localised") — the sentence around them is
+ * localized, the blurb is appended as-is.
  */
 export function generatePresetsOGData(
   params: PresetsParams,
@@ -396,21 +437,25 @@ export function generatePresetsOGData(
     ? (presetData as PresetData).palettes.find((p) => p.id === params.id)
     : undefined;
   if (!preset) {
-    return toolDefault('presets', env, locale, 'Curated and community FFXIV dye palettes — browse, vote, submit your own.');
+    return toolDefault('presets', env, locale, embed('presets.descriptionDefault', locale));
   }
 
-  const dyes = preset.dyes.map(getDyeInfo).filter((d): d is { name: string; hex: string } => d !== null);
+  const dyes = preset.dyes
+    .map((id) => getDyeInfo(id, locale))
+    .filter((d): d is { name: string; hex: string } => d !== null);
   const dyeNames = dyes.map((d) => d.name).join(', ');
+  const blurb = preset.description ? ` ${preset.description}` : '';
 
   return {
-    title: `${preset.name} — ${getToolName('presets', locale)} | XIV Dye Tools`,
-    description: dyeNames
-      ? `Curated FFXIV dye palette: ${dyeNames}.${preset.description ? ` ${preset.description}` : ''}`
-      : `Curated FFXIV dye palette. ${preset.description ?? ''}`.trim(),
+    title: site(embed('presets.title', locale, { preset: preset.name, tool: getToolName('presets', locale) })),
+    description: (dyeNames
+      ? embed('presets.description', locale, { names: dyeNames })
+      : embed('presets.descriptionNoDyes', locale)) + blurb,
     url: `${env.APP_BASE_URL}/presets/${preset.id}`,
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/presets/${preset.id}.png`, locale),
-    siteName: 'XIV Dye Tools',
+    siteName: SITE_NAME,
     themeColor: dyes[0]?.hex,
+    locale,
   };
 }
 
@@ -423,18 +468,46 @@ export function generateBudgetOGData(
   env: Env,
   locale: LocaleCode = 'en',
 ): OGData {
-  const target = params.dye !== null ? getDyeInfo(params.dye) : null;
+  const target = params.dye !== null ? getDyeInfo(params.dye, locale) : null;
   if (!target || params.dye === null) {
-    return toolDefault('budget', env, locale, 'The cheapest FFXIV dye near the one you want, priced from the market board.');
+    return toolDefault('budget', env, locale, embed('budget.descriptionDefault', locale));
   }
 
   return {
-    title: `Budget alternatives for ${target.name} | XIV Dye Tools`,
-    description: `Cheaper FFXIV dyes near ${target.name} (${target.hex}), ranked by color distance and priced from the market board.`,
+    title: site(embed('budget.title', locale, { dye: target.name })),
+    description: embed('budget.description', locale, { dye: target.name, hex: target.hex }),
     url: `${env.APP_BASE_URL}/budget/?dye=${params.dye}&v=1`,
     imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/budget/${params.dye}.png`, locale),
-    siteName: 'XIV Dye Tools',
+    siteName: SITE_NAME,
     themeColor: target.hex,
+    locale,
+  };
+}
+
+/**
+ * The site-root embed (`og.` / `og-beta.` only reach it — the web-app serves
+ * its own static card on the apex).
+ */
+export function generateRootOGData(env: Env, locale: LocaleCode = 'en'): OGData {
+  return {
+    title: embed('root.title', locale),
+    description: embed('root.description', locale),
+    url: env.APP_BASE_URL,
+    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/default.png`, locale),
+    siteName: SITE_NAME,
+    locale,
+  };
+}
+
+/** The minimal embed for an unknown path. */
+export function generateFallbackOGData(env: Env, locale: LocaleCode = 'en'): OGData {
+  return {
+    title: SITE_NAME,
+    description: embed('fallback.description', locale),
+    url: env.APP_BASE_URL,
+    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/default.png`, locale),
+    siteName: SITE_NAME,
+    locale,
   };
 }
 
@@ -447,11 +520,21 @@ function withFrameX(imageUrl: string): string {
   return imageUrl.includes('?') ? `${imageUrl}&frame=x` : `${imageUrl}?frame=x`;
 }
 
+/** `og:locale` wants a territory; these are the six the app ships. */
+const OG_LOCALE: Record<LocaleCode, string> = {
+  en: 'en_US',
+  ja: 'ja_JP',
+  de: 'de_DE',
+  fr: 'fr_FR',
+  ko: 'ko_KR',
+  zh: 'zh_CN',
+};
+
 /**
  * Generate HTML with OpenGraph meta tags for crawler consumption.
  *
  * This HTML includes:
- * - Standard OG tags (og:title, og:description, og:image, etc.)
+ * - Standard OG tags (og:title, og:description, og:image, og:locale, etc.)
  * - Twitter Card tags
  * - Discord-specific theme-color
  * - A meta refresh to redirect JS-enabled browsers to the real page
@@ -460,12 +543,13 @@ function withFrameX(imageUrl: string): string {
  * @returns Complete HTML string
  */
 export function generateOGHTML(ogData: OGData): string {
+  const locale: LocaleCode = ogData.locale ?? 'en';
   const themeColorTag = ogData.themeColor
     ? `<meta name="theme-color" content="${escapeHtml(ogData.themeColor)}">`
     : '';
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${locale}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -477,6 +561,7 @@ export function generateOGHTML(ogData: OGData): string {
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
+  <meta property="og:locale" content="${OG_LOCALE[locale] ?? OG_LOCALE.en}">
   <meta property="og:url" content="${escapeHtml(ogData.url)}">
   <meta property="og:title" content="${escapeHtml(ogData.title)}">
   <meta property="og:description" content="${escapeHtml(ogData.description)}">
@@ -547,7 +632,7 @@ export function generateOGHTML(ogData: OGData): string {
     <div class="deck">
       <p class="title">${escapeHtml(ogData.title)}</p>
       <p class="sub">${escapeHtml(ogData.description)}</p>
-      <p><a href="${escapeHtml(ogData.url)}">Open XIV Dye Tools →</a></p>
+      <p><a href="${escapeHtml(ogData.url)}">${escapeHtml(embed('body.open', locale))}</a></p>
       <p class="foot">xivdyetools.app</p>
     </div>
   </div>
@@ -629,7 +714,7 @@ export function generateOGDataForTool(
       // default never fakes data).
       const color = searchParams.get('hex') || searchParams.get('color');
       if (!color) {
-        return toolDefault('swatch', env, locale, 'Find the FFXIV dyes nearest any color — from a character file or a hex.');
+        return toolDefault('swatch', env, locale, embed('swatch.descriptionDefault', locale));
       }
       const params: SwatchParams = {
         color,
@@ -695,11 +780,12 @@ export function generateOGDataForTool(
     default: {
       // Fallback for unknown tools
       return {
-        title: 'XIV Dye Tools',
-        description: 'Explore FFXIV dye colors, create harmonious palettes, and find your perfect glamour combinations.',
+        title: SITE_NAME,
+        description: embed('unknown.description', locale),
         url: env.APP_BASE_URL,
         imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/default.png`, locale),
-        siteName: 'XIV Dye Tools',
+        siteName: SITE_NAME,
+        locale,
       };
     }
   }

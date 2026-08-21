@@ -4,6 +4,7 @@
  * @module types
  */
 
+import type { LocaleCode } from '@xivdyetools/types';
 import type { AnalyticsEngineDataset } from '@cloudflare/workers-types';
 import type { VisionType } from '@xivdyetools/types';
 
@@ -66,6 +67,8 @@ export interface OGData {
   imageUrl: string;
   siteName: string;
   themeColor?: string;
+  /** The locale the copy was authored in — `<html lang>` / `og:locale`. Defaults to `en`. */
+  locale?: LocaleCode;
 }
 
 // ============================================================================

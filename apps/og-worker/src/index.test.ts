@@ -581,3 +581,22 @@ describe('?lang= travels with emitted og:image URLs', () => {
     expect(html).not.toContain('.png?lang=');
   });
 });
+
+describe('the root and catch-all crawler cards localize via ?lang= too (OG-I18N-002)', () => {
+  it('GET /?lang=ja serves a Japanese root embed', async () => {
+    const res = await app.request('/?lang=ja', { headers: { 'User-Agent': CRAWLER_UA } }, TEST_ENV);
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    expect(html).toContain('<html lang="ja">');
+    expect(html).not.toContain('FFXIV Color &amp; Dye Companion');
+    expect(html).toContain('カララント');
+  });
+
+  it('an unknown path with ?lang=de serves a German fallback embed', async () => {
+    const res = await app.request('/nope/?lang=de', { headers: { 'User-Agent': CRAWLER_UA } }, TEST_ENV);
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    expect(html).toContain('<html lang="de">');
+    expect(html).not.toContain('FFXIV Color &amp; Dye Companion');
+  });
+});

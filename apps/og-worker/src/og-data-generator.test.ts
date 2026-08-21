@@ -194,7 +194,8 @@ describe('og-data-generator', () => {
         mockEnv
       );
 
-      expect(result.description).toContain('Female');
+      // EN lower-cases the gender mid-sentence; the clan resolves to its name
+      expect(result.description).toContain('female Midlander hair colors');
       expect(result.description).toContain('Midlander');
       expect(result.description).toContain('hair');
     });
@@ -518,8 +519,8 @@ describe('og-data-generator', () => {
     it('uses German tool fallback name when no dyes provided', () => {
       const params = new URLSearchParams('start=999999&end=999999&steps=5');
       const de = generateOGDataForTool('gradient', params, mockEnv, 'de');
-      // Tool name "Verlaufs-Generator" from buildTools(de)
-      expect(de.title).toContain('Verlaufs-Generator');
+      // The x6 deck name (the 5.0 web-app title), not core tools.* -- OG-I18N-005
+      expect(de.title).toContain('Verlauf-Ersteller');
     });
 
     it('uses Korean sheet name in swatch description', () => {
@@ -646,5 +647,121 @@ describe('DEAD-022: the requested algorithm rides the image URL for every tool t
   it('algo and lang compose (?algo=…&lang=…)', () => {
     const r = generateOGDataForTool('harmony', new URLSearchParams('dye=102&harmony=tetradic&algo=oklab'), mockEnv, 'ja');
     expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/harmony/102/tetradic.png?algo=oklab&lang=ja');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Localized embed copy (2026-08-20 i18n audit, OG-I18N-002…009): under ?lang=
+// the title and description are whole sentences in that language, not English
+// templates with localized nouns spliced in.
+// ---------------------------------------------------------------------------
+import { ogTranslator } from './services/translator';
+
+describe('localized embed copy', () => {
+  const SHARES: Array<[string, string, string | null]> = [
+    ['harmony', 'dye=1&harmony=split-complementary', null],
+    ['harmony', 'dye=9999&harmony=triadic', null],
+    ['gradient', 'start=1&end=102&steps=5', null],
+    ['gradient', '', null],
+    ['mixer', 'dyeA=1&dyeB=102&ratio=30', null],
+    ['mixer', 'dyeA=1&dyeB=102&dyeC=5&ratio=30', null],
+    ['mixer', '', null],
+    ['swatch', 'hex=AABBCC&limit=3', null],
+    ['swatch', 'hex=AABBCC&sheet=hairColors&race=SeekerOfTheSun&gender=Female', null],
+    ['swatch', 'hex=AABBCC&sheet=eyeColors', null],
+    ['swatch', '', null],
+    ['comparison', 'dyes=1,2,3', null],
+    ['comparison', '', null],
+    ['accessibility', 'dyes=1,2&vision=deuteranopia', null],
+    ['accessibility', 'dyes=1,2', null],
+    ['accessibility', '', null],
+    ['extractor', 'colors=AABBCC,112233', null],
+    ['extractor', '', null],
+    ['presets', '', 'community-abc'],
+    ['budget', 'dye=1', null],
+    ['budget', '', null],
+    ['nope', '', null],
+  ];
+
+  // Latin runs that are legitimately English in any locale: the brand, the
+  // game, hex codes. Anything else four letters long is an untranslated word.
+  const strip = (s: string): string =>
+    s.replace(/XIV Dye Tools/g, '').replace(/FFXIV/g, '').replace(/#[0-9A-Fa-f]{6}/g, '');
+
+  it('ja: no English word survives in any tool title or description', () => {
+    for (const [tool, q, pid] of SHARES) {
+      const d = generateOGDataForTool(tool as never, new URLSearchParams(q), mockEnv, 'ja', pid);
+      expect(strip(d.title), `${tool}?${q} title: ${d.title}`).not.toMatch(/[A-Za-z]{4,}/);
+      expect(strip(d.description), `${tool}?${q} description: ${d.description}`).not.toMatch(/[A-Za-z]{4,}/);
+    }
+  });
+
+  it('en output is unchanged in shape (templates, not rewrites)', () => {
+    const d = generateOGDataForTool('harmony', new URLSearchParams('dye=1&harmony=triadic'), mockEnv, 'en');
+    expect(d.title).toBe('Snow White - Triadic Harmony | XIV Dye Tools');
+    expect(d.description).toBe('Explore triadic color harmonies for Snow White (#e4dfd0) in FFXIV. Find matching dyes for your glamour!');
+  });
+
+  it('dye names localize in the embed like they do on the card (OG-I18N-003)', () => {
+    const ja = generateOGDataForTool('harmony', new URLSearchParams('dye=1&harmony=triadic'), mockEnv, 'ja');
+    expect(ja.title).toContain('スノウホワイト');
+    expect(ja.title).not.toContain('Snow White');
+    const de = generateOGDataForTool('gradient', new URLSearchParams('start=1&end=102&steps=5'), mockEnv, 'de');
+    expect(de.title).toContain('Schneeweißer');
+    expect(de.title).toContain('Rabenschwarzer');
+  });
+
+  it('extractor / presets / budget defaults take the ×6 deck names, not a formatted key (OG-I18N-004)', () => {
+    expect(generateOGDataForTool('presets', new URLSearchParams(), mockEnv, 'ja', 'community-abc').title).toContain('コミュニティプリセット');
+    expect(generateOGDataForTool('extractor', new URLSearchParams(), mockEnv, 'de').title).toContain('Paletten-Extraktor');
+    expect(generateOGDataForTool('budget', new URLSearchParams(), mockEnv, 'fr').title).toContain('Budget');
+    expect(generateOGDataForTool('presets', new URLSearchParams(), mockEnv, 'fr', 'gc-maelstrom').title).toContain('Palettes Communautaires');
+  });
+
+  it('tool names in the title match the card deck, not core tools.* (OG-I18N-005)', () => {
+    const de = generateOGDataForTool('gradient', new URLSearchParams(), mockEnv, 'de');
+    expect(de.title).toContain('Verlauf-Ersteller');
+    expect(de.title).not.toContain('Verlaufs-Generator');
+  });
+
+  it('German nouns keep their capital — no .toLowerCase() on localized text (OG-I18N-006)', () => {
+    const de = generateOGDataForTool('harmony', new URLSearchParams('dye=1&harmony=split-complementary'), mockEnv, 'de');
+    expect(de.description).toContain('Geteiltes Komplement');
+    expect(de.description).not.toContain('geteiltes komplement');
+  });
+
+  it('swatch race and gender localize instead of echoing URL slugs (OG-I18N-007)', () => {
+    const ja = generateOGDataForTool(
+      'swatch',
+      new URLSearchParams('hex=AABBCC&sheet=hairColors&race=SeekerOfTheSun&gender=Female'),
+      mockEnv,
+      'ja'
+    );
+    expect(ja.description).toContain(ogTranslator.getClan('seekerOfTheSun', 'ja'));
+    expect(ja.description).not.toContain('SeekerOfTheSun');
+    expect(ja.description).not.toContain('Female');
+    const en = generateOGDataForTool(
+      'swatch',
+      new URLSearchParams('hex=AABBCC&sheet=hairColors&race=Miqote&gender=Male'),
+      mockEnv,
+      'en'
+    );
+    expect(en.description).toContain("male Miqo'te hair colors");
+  });
+
+  it('accessibility without ?vision= has no "Color Vision" literal in other locales (OG-I18N-008)', () => {
+    const ja = generateOGDataForTool('accessibility', new URLSearchParams('dyes=1,2'), mockEnv, 'ja');
+    expect(ja.title).not.toContain('Color Vision');
+  });
+
+  it('the HTML carries the locale: <html lang>, og:locale, localized body link (OG-I18N-009)', () => {
+    const ja = generateOGHTML(generateOGDataForTool('harmony', new URLSearchParams('dye=1&harmony=triadic'), mockEnv, 'ja'));
+    expect(ja).toContain('<html lang="ja">');
+    expect(ja).toContain('<meta property="og:locale" content="ja_JP">');
+    expect(ja).not.toContain('Open XIV Dye Tools');
+    const en = generateOGHTML(generateOGDataForTool('harmony', new URLSearchParams('dye=1&harmony=triadic'), mockEnv));
+    expect(en).toContain('<html lang="en">');
+    expect(en).toContain('<meta property="og:locale" content="en_US">');
+    expect(en).toContain('Open XIV Dye Tools →');
   });
 });
