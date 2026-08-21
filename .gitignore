@@ -5,9 +5,12 @@ node_modules/
 dist/
 *.tsbuildinfo
 
-# Wrangler
+# Wrangler — wrangler also reads per-environment `.dev.vars.<env>` files
+# (FINDING-030, 2026-08-21 security audit); only a committed example is allowed.
 .wrangler/
 .dev.vars
+.dev.vars.*
+!.dev.vars.example
 
 # Coverage
 coverage/

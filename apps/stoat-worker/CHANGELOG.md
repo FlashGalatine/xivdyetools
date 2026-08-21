@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-08-21
+
+Security-audit remediation only (2026-08-21 security audit, `docs/audits/2026-08-21-security/`). The bot stays parked — these close the gaps the audit wanted fixed *before* any revival.
+
+### Security
+
+- **FINDING-035 / STOAT-2, STOAT-6 — abuse control**: the `messageCreate` gate moved out of `index.ts` into the unit-tested `src/message-handler.ts` (`createMessageHandler`); it now ignores messages from *any* bot (`message.author?.bot`, not only our own ID — no bot-to-bot loops) and applies a per-user sliding-window throttle (`src/services/command-throttle.ts`, `CommandThrottle`, default 5 commands / 10 s, in-memory, stale users pruned). Throttled commands are dropped silently so the throttle cannot itself be used to amplify; the error reply stays fixed text.
+- **FINDING-027 / STOAT-3 — prototype-key lookups**: `SHORT_ALIASES` (parser), `COMMAND_ROUTES` (router) and `COMMAND_HELP` (help) are now consulted with `Object.hasOwn`, so `!xd constructor` / `!xd __proto__` / `!xd help constructor` are plain unknown commands instead of resolving to `Object.prototype` members.
+- **FINDING-019 / STOAT-4 — echoed user text**: `No dye found matching "…"`, `Found N dyes matching "…"` and the unknown-command reply go through the new `sanitizeEcho()` (`response-formatter.ts`): Revolt `<@ULID>` mentions defused, then the shared `sanitizeEmbedText` from `@xivdyetools/bot-logic` (control / zero-width stripping, `@everyone`, markdown escaping) with a 64-char cap (32 for the unknown-command token).
+- **FINDING-023 / STOAT-1 — dangling links**: `!xd about` links to `https://xivdyetools.app` and `https://developers.xivdyetools.app` instead of the unregistered `xivdyetools.com` / `docs.xivdyetools.com`.
+
+### Tests
+
+- New: `message-handler.test.ts`, `services/command-throttle.test.ts`, `services/echo-sanitisation.test.ts`, `commands/prototype-keys.test.ts`, `commands/about.test.ts`; `test-utils/revolt-mocks.ts` gained the `author.bot` marker.
+
 ## [0.2.1] - 2026-08-16
 
 Monorepo 2.0 follow-through only — the bot is parked (no active investment, no deploy workflow) and gained no features; patch bump for the dependency retargets.

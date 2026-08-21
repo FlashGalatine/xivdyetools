@@ -8,6 +8,8 @@
  * - media field renders images inline in embed
  */
 
+import { sanitizeEmbedText } from '@xivdyetools/bot-logic';
+
 /** Stoat SendableEmbed structure */
 export interface StoatEmbed {
   title?: string;
@@ -63,6 +65,20 @@ export function formatErrorReply(
   };
 }
 
+/** Revolt user mentions are `<@ULID>` (Crockford Base32, 26 chars). */
+const REVOLT_MENTION = /<@([0-9A-HJKMNP-TV-Z]{26})>/g;
+
+/**
+ * Make user-supplied text safe to echo inside a bot-authored message:
+ * defuse Revolt mentions, then apply the shared Discord-style sanitiser
+ * (control / zero-width stripping, `@everyone`, markdown escaping, length cap).
+ *
+ * FINDING-019 / STOAT-4 (2026-08-21 security audit).
+ */
+export function sanitizeEcho(text: string, maxLength = 64): string {
+  return sanitizeEmbedText(text.replace(REVOLT_MENTION, '@$1'), maxLength);
+}
+
 /**
  * Format a disambiguation list when too many dyes match a query.
  */
@@ -76,7 +92,7 @@ export function formatDisambiguationList(
     (dye, i) => `  ${i + 1}. ${dye.name}${dye.itemID && dye.itemID > 0 ? ` (${dye.itemID})` : ''}`,
   );
 
-  let content = `Found ${total} dyes matching "${query}":\n${lines.join('\n')}`;
+  let content = `Found ${total} dyes matching "${sanitizeEcho(query, 64)}":\n${lines.join('\n')}`;
   if (total > dyes.length) {
     content += `\n  ... and ${total - dyes.length} more`;
   }
@@ -97,7 +113,7 @@ export function formatNoMatchReply(
   query: string,
   suggestions: string[],
 ): StoatMessage {
-  let content = `No dye found matching "${query}".`;
+  let content = `No dye found matching "${sanitizeEcho(query, 64)}".`;
   if (suggestions.length > 0) {
     content += `\nDid you mean: ${suggestions.join(', ')}?`;
   }

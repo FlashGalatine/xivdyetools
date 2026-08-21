@@ -64,7 +64,7 @@ No CRITICAL or HIGH finding in either scope. The CI layer is in good shape on su
 
 - **Severity:** LOW — the doc records the secret as rotated on 2026-01-25 (`FINDING-003…:64-66`), so the value should be dead; but the two sibling findings redacted their values and this one did not, and the value also sits in git history (`evidence/git-history-secrets.txt` line `699507`). If the rotation did not actually happen, this is HIGH.
 - **CWE:** CWE-312 / CWE-540.
-- **Where:** `docs/audits/2026-01-25/findings/FINDING-003-exposed-xivauth-secret.md:20` — `XIVAUTH_CLIENT_SECRET=H8WXCdiSdvxnspEcxk59VEhIaB43nrxpOCszndWgNnM`.
+- **Where:** `docs/audits/2026-01-25/findings/FINDING-003-exposed-xivauth-secret.md:20` — `XIVAUTH_CLIENT_SECRET=H8WX****REDACTED****`.
 - **Fix:** Redact in place (`H8WX****REDACTED****`), confirm in the XIVAuth developer portal that the current secret differs, and decide whether a history rewrite is worth it (the project is public-source). Add this value to the secret-scanning ignore list only after redaction.
 - **Confidence:** CONFIRMED present; rotation status per the document only.
 

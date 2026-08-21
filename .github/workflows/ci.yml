@@ -68,6 +68,34 @@ jobs:
 
       - run: pnpm audit --prod --audit-level high
 
+  # FINDING-030 (2026-08-21 security audit): secret scanning in CI. On push /
+  # pull_request the action scans exactly the commits of the event (the
+  # pre-commit detect-secrets config it replaces never ran anywhere). Rules +
+  # allowlist live in `.gitleaks.toml` at the repo root. This is a personal-
+  # account repository, so no GITLEAKS_LICENSE is required. GitHub's own
+  # secret scanning + push protection (repo settings) is the complement that
+  # covers full history and blocks pushes.
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # The action diffs the event's commit range, so it needs history.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: ${{ github.workspace }}/.gitleaks.toml
+          # contents: read only — PR comments would need pull-requests: write.
+          GITLEAKS_ENABLE_COMMENTS: 'false'
+          GITLEAKS_ENABLE_SUMMARY: 'true'
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
+
   ci:
     name: Lint, Type-check, Test, Build
     runs-on: ubuntu-latest

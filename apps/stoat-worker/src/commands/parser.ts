@@ -95,8 +95,10 @@ export function parseCommand(content: string): ParsedCommand | null {
   const tokens = rest.split(/\s+/);
   const firstToken = tokens[0].toLowerCase();
 
-  // Check short aliases first (e.g., `!xd info Snow White`)
-  if (SHORT_ALIASES[firstToken]) {
+  // Check short aliases first (e.g., `!xd info Snow White`).
+  // Own-property check: `constructor` / `__proto__` are not aliases
+  // (FINDING-027, 2026-08-21 security audit).
+  if (Object.hasOwn(SHORT_ALIASES, firstToken)) {
     const alias = SHORT_ALIASES[firstToken];
     return {
       prefix: matchedPrefix,

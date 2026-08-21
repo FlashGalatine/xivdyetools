@@ -16,3 +16,6 @@ Add `.dev.vars.*` to `.gitignore`; redact the value in the old finding (and, if 
 
 ## References
 - Evidence: `../evidence/review-infra-stoat.md` (INF-5, INF-7, INF-8)
+
+## Status
+**FIXED 2026-08-21** (repo side) — `.gitignore` covers `.dev.vars.*` (only `.dev.vars.example` may be committed); the rotated XIVAuth secret is redacted in `docs/audits/2026-01-25/findings/FINDING-003…md` and in this audit's two evidence files (value confirmed absent from the tree; history untouched — rotation already happened, per the 2026-01-25 doc); the dead `docs/.pre-commit-config.yaml` / `docs/.secrets.baseline` were removed and `docs/developer-guides/contributing.md` now documents the replacement: a SHA-pinned `gitleaks/gitleaks-action@v3.0.0` `secret-scan` job in `ci.yml` (push + PR, `contents: read`, comments off) driven by the new root `.gitleaks.toml` (default rules, `discord-client-id` disabled, test-fixture paths + the public `XIVAUTH_CLIENT_ID` / `storageKey` lines allowlisted — full-history and working-tree scans with gitleaks 8.30.1 are clean). **Remaining (outside the repo, post-merge checklist):** enable GitHub secret scanning + push protection on the repository.

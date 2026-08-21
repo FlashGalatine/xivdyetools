@@ -18,3 +18,6 @@ Before un-parking: per-user cooldown, ignore `author.bot`, reuse the shared embe
 
 ## References
 - Evidence: `../evidence/review-infra-stoat.md` (STOAT-1..6)
+
+## Status
+**FIXED 2026-08-21** — stoat-worker 0.2.2: `messageCreate` gate extracted to the unit-tested `src/message-handler.ts` — ignores every bot author (`message.author?.bot`), per-user sliding-window `CommandThrottle` (5 / 10 s, in-memory, pruned), silent drop when throttled, fixed-text error reply; `Object.hasOwn` on the three command tables (STOAT-3); echoed user text goes through `sanitizeEcho()` (Revolt mention defuse + shared `sanitizeEmbedText`, capped) (STOAT-4); `!xd about` links to `xivdyetools.app` / `developers.xivdyetools.app` (STOAT-1). The multi-match case still sends one message per dye (≤ 4) — bounded by the throttle; collapsing it into one message is a product change left for un-parking.

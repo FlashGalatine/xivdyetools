@@ -102,19 +102,26 @@ that never went red is not a guard. See [Testing](testing.md) for the fuller str
 
 ---
 
-## Pre-commit hooks
+## Secret scanning
 
-The repo uses [pre-commit](https://pre-commit.com/) with **detect-secrets** as the headline hook,
-baselined against `.secrets.baseline`.
+CI runs [gitleaks](https://github.com/gitleaks/gitleaks) on every push and pull request
+(`secret-scan` job in `.github/workflows/ci.yml`, FINDING-030 of the 2026-08-21 security audit);
+it scans exactly the commits of the event. Rules and the allowlist live in `.gitleaks.toml` at the
+repo root — add an allowlist entry only for a confirmed false positive (test fixtures, already
+rotated values quoted in an audit), with a comment saying why. GitHub's own secret scanning +
+push protection (repository settings → Code security) is the full-history complement — keep it
+enabled; it is a post-merge checklist item, not something the repo can configure for itself.
+
+Run the same scan locally before pushing (binary from the gitleaks releases page):
 
 ```bash
-pip install pre-commit detect-secrets
-pre-commit install
-pre-commit run --all-files      # manual full pass
+gitleaks git --no-banner --redact --log-opts="origin/main..HEAD"   # commits you are about to push
+gitleaks dir --no-banner --redact .                               # the working tree
 ```
 
-If detect-secrets flags a genuine false positive, update the baseline deliberately — do not
-bypass the hook.
+Wrangler's `.dev.vars` and `.dev.vars.<env>` files are git-ignored (only `.dev.vars.example`
+may be committed); worker secrets are set with `wrangler secret put` — see
+`docs/operations/SECRET_ROTATION.md`.
 
 ---
 

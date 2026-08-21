@@ -97,7 +97,9 @@ Show bot information and quick start guide.`,
 export async function handleHelpCommand(ctx: CommandContext): Promise<void> {
   const topic = ctx.parsed.rawArgs[0]?.toLowerCase();
 
-  if (topic && COMMAND_HELP[topic]) {
+  // Own-property check: `constructor` / `__proto__` are not topics
+  // (FINDING-027, 2026-08-21 security audit).
+  if (topic && Object.hasOwn(COMMAND_HELP, topic)) {
     await ctx.message.channel?.sendMessage({
       content: COMMAND_HELP[topic],
       replies: [{ id: ctx.message.id, mention: false }],

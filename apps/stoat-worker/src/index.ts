@@ -10,9 +10,9 @@
 import { Client } from 'revolt.js';
 import { createLibraryLogger } from '@xivdyetools/logger';
 import { loadConfig } from './config.js';
-import { parseCommand } from './commands/parser.js';
-import { routeCommand } from './router.js';
+import { createMessageHandler } from './message-handler.js';
 import { MessageContextStore } from './services/message-context.js';
+import { CommandThrottle } from './services/command-throttle.js';
 
 const logger = createLibraryLogger('stoat');
 
@@ -30,6 +30,7 @@ async function main(): Promise<void> {
 
   // ── Shared services ────────────────────────────────────────────────
   const messageContextStore = new MessageContextStore();
+  const throttle = new CommandThrottle();
 
   // ── Client setup ───────────────────────────────────────────────────
   const client = new Client();
@@ -43,50 +44,10 @@ async function main(): Promise<void> {
   });
 
   // ── Message handler ────────────────────────────────────────────────
+  // Bot/self filtering, per-user throttle and error handling live in
+  // message-handler.ts (unit-tested; FINDING-035, 2026-08-21 security audit).
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  client.on('messageCreate', async (message) => {
-    // Ignore bot's own messages
-    if (message.authorId === client.user?.id) return;
-
-    // Ignore system messages (no content)
-    if (!message.content) return;
-
-    // Parse the message for a command
-    const parsed = parseCommand(message.content);
-    if (!parsed) return;
-
-    logger.debug(`Command: ${parsed.command}${parsed.subcommand ? `.${parsed.subcommand}` : ''}`, {
-      userId: message.authorId,
-      channelId: message.channelId,
-      args: parsed.rawArgs,
-    });
-
-    try {
-      await routeCommand({
-        message,
-        parsed,
-        config,
-        messageContextStore,
-      });
-    } catch (error) {
-      logger.error('Unhandled error in command handler', {
-        command: parsed.command,
-        subcommand: parsed.subcommand,
-        error: error instanceof Error ? error.message : String(error),
-      });
-
-      // Best-effort error reply to the user
-      try {
-        await message.channel?.sendMessage({
-          content: 'An unexpected error occurred. Please try again later.',
-          replies: [{ id: message.id, mention: false }],
-        });
-      } catch {
-        // If we can't even send the error message, just log it
-        logger.error('Failed to send error reply to user');
-      }
-    }
-  });
+  client.on('messageCreate', createMessageHandler({ client, config, messageContextStore, throttle }));
 
   // ── Graceful shutdown ──────────────────────────────────────────────
   const shutdown = (): void => {

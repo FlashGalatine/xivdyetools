@@ -14,6 +14,7 @@ import { handlePingCommand } from './commands/ping.js';
 import { handleHelpCommand } from './commands/help.js';
 import { handleAboutCommand } from './commands/about.js';
 import { handleInfoCommand } from './commands/info.js';
+import { sanitizeEcho } from './services/response-formatter.js';
 
 /**
  * Context passed to every command handler.
@@ -51,16 +52,17 @@ export async function routeCommand(ctx: CommandContext): Promise<void> {
   // Build a compound key for subcommand routing
   const routeKey = subcommand ? `${command}.${subcommand}` : command;
 
-  const handler = COMMAND_ROUTES[routeKey];
-
-  if (handler) {
-    await handler(ctx);
+  // Own-property check: `constructor` / `__proto__` are not routes
+  // (FINDING-027, 2026-08-21 security audit).
+  if (Object.hasOwn(COMMAND_ROUTES, routeKey)) {
+    await COMMAND_ROUTES[routeKey](ctx);
     return;
   }
 
-  // Fallback: unknown command
+  // Fallback: unknown command. The token is user text — sanitise and cap it
+  // before echoing it under the bot's identity (FINDING-019 / STOAT-4).
   await ctx.message.channel?.sendMessage({
-    content: `Unknown command \`${routeKey}\`. Try \`!xd help\` for a list of commands.`,
+    content: `Unknown command "${sanitizeEcho(routeKey, 32)}". Try \`!xd help\` for a list of commands.`,
     replies: [{ id: ctx.message.id, mention: false }],
   });
 }
