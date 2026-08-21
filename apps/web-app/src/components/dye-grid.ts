@@ -2,6 +2,7 @@ import { BaseComponent } from './base-component';
 import { LanguageService, CollectionService, ToastService } from '@services/index';
 import { Dye } from '@xivdyetools/types';
 import { clearContainer } from '@shared/utils';
+import { localizedDyeName } from '@shared/dye-name';
 import { getEmptyStateHTML } from './empty-state';
 import { ICON_STATE_SEARCH, ICON_STATE_FUNNEL } from '@shared/state-icons';
 import { showAddToCollectionMenu } from './add-to-collection-menu';
@@ -114,7 +115,7 @@ export class DyeGrid extends BaseComponent {
           }`,
           attributes: {
             'data-dye-id': String(dye.id),
-            'aria-label': dye.name,
+            'aria-label': localizedDyeName(dye),
             'aria-selected': isSelected ? 'true' : 'false',
             type: 'button',
           },

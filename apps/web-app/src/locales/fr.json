@@ -1184,7 +1184,8 @@
     "acquisitionShort": "SOURCE",
     "hueOff": "TEINTE",
     "stainShort": "STAIN",
-    "replaceSlotN": "Remplacer l'emplacement {n}"
+    "replaceSlotN": "Remplacer l'emplacement {n}",
+    "dyeResultAria": "Résultat de teinture : {name}"
   },
   "share": {
     "button": "Partager",

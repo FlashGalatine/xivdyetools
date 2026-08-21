@@ -21,6 +21,7 @@ import { customElement, property } from 'lit/decorators.js';
 import { BaseLitComponent } from './base-lit-component';
 import { LanguageService } from '@services/index';
 import type { Dye } from '@xivdyetools/types';
+import { localizedDyeName } from '@shared/dye-name';
 
 /**
  * Supported harmony types
@@ -475,7 +476,7 @@ export class V4ColorWheel extends BaseLitComponent {
       const color = this.harmonyColors[index] || this.baseColor;
       const dye = this.harmonyDyes[index];
       const slot = `${LanguageService.t('harmony.harmony')} ${index + 1}`;
-      const title = dye ? `${slot} · ${dye.name}` : `${slot} · ${color.toUpperCase()}`;
+      const title = dye ? `${slot} · ${localizedDyeName(dye)}` : `${slot} · ${color.toUpperCase()}`;
 
       nodes.push(html`
         <button

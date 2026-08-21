@@ -1495,7 +1495,12 @@ export class ResultCard extends BaseLitComponent {
       : LanguageService.t('common.market');
 
     return html`
-      <article class="ticket" lang="${locale}" role="article" aria-label="Dye result: ${dyeName}">
+      <article
+        class="ticket"
+        lang="${locale}"
+        role="article"
+        aria-label="${LanguageService.tInterpolate('resultCard.dyeResultAria', { name: dyeName })}"
+      >
         <!-- Verdict stub -->
         <div class="head">
           <div class="swatches">

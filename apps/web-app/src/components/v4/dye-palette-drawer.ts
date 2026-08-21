@@ -14,6 +14,7 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { BaseLitComponent } from './base-lit-component';
 import { DyeService, type Dye } from '@services/dye-service-wrapper';
 import { filterDyesBySpectra, ALL_SPECTRA } from '@shared/spectrum-filter-utils';
+import { dyeNameMatches, localizedDyeName } from '@shared/dye-name';
 import type { SpectrumKey } from '@shared/spectrum-filter-utils';
 import { CollectionService } from '@services/collection-service';
 import { ToastService } from '@services/toast-service';
@@ -760,8 +761,8 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
     // Apply search filter
     if (this.searchQuery.trim()) {
-      const query = this.searchQuery.toLowerCase();
-      dyes = dyes.filter((d) => d.name.toLowerCase().includes(query));
+      const query = this.searchQuery.trim();
+      dyes = dyes.filter((d) => dyeNameMatches(d, query));
     }
 
     // Apply category filter
@@ -868,7 +869,9 @@ export class DyePaletteDrawer extends BaseLitComponent {
     this.emit('dye-selected', { dye: randomDye });
     logger.debug(`[DyePaletteDrawer] Random dye selected: ${randomDye.name}`);
     ToastService.info(
-      LanguageService.tInterpolate('colorPalette.randomDyeSelected', { name: randomDye.name })
+      LanguageService.tInterpolate('colorPalette.randomDyeSelected', {
+        name: localizedDyeName(randomDye),
+      })
     );
   }
 

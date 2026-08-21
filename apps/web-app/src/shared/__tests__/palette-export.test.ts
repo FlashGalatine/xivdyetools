@@ -119,6 +119,28 @@ describe('generateExport', () => {
     expect(generateExport(PAYLOAD, 'css')).toContain('3 entries');
   });
 
+  it('annotates commented formats with the injected localized name', () => {
+    // `openExportSheet` injects the locale-aware resolver; the generators stay
+    // pure and service-free.
+    const localized: ExportPayload = { ...PAYLOAD, nameOf: (dye) => `ja-${dye.stainID}` };
+    expect(generateExport(localized, 'css')).toContain(
+      '/* pick-1 — ja-27 · stainID 27 · ΔE 3.4 */'
+    );
+    expect(generateExport(localized, 'scss')).toContain('// pick-1 — ja-27 · stainID 27 · ΔE 3.4');
+    expect(generateExport(localized, 'tailwind')).toContain('ja-27 · stainID 27');
+    expect(generateExport(localized, 'css')).not.toContain('Rolanberry Red');
+  });
+
+  it('keeps the canonical English name in JSON regardless of the resolver', () => {
+    const localized: ExportPayload = { ...PAYLOAD, nameOf: (dye) => `ja-${dye.stainID}` };
+    const parsed = JSON.parse(generateExport(localized, 'json'));
+    expect(parsed.entries[0].dye.name).toBe('Rolanberry Red');
+  });
+
+  it('falls back to the canonical name when no resolver is supplied', () => {
+    expect(generateExport(PAYLOAD, 'css')).toContain('Rolanberry Red');
+  });
+
   it('produces non-empty output in every format', () => {
     for (const format of EXPORT_FORMATS) {
       expect(generateExport(PAYLOAD, format).length).toBeGreaterThan(0);

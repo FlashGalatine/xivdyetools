@@ -152,7 +152,8 @@
     "acquisitionShort": "来源",
     "hueOff": "色相差",
     "stainShort": "染色ID",
-    "replaceSlotN": "替换槽位{n}"
+    "replaceSlotN": "替换槽位{n}",
+    "dyeResultAria": "染剂结果：{name}"
   },
   "config": {
     "harmonyType": "和谐类型",

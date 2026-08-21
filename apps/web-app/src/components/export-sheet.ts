@@ -17,6 +17,7 @@ import { LanguageService } from '@services/language-service';
 import { ModalService } from '@services/modal-service';
 import { ToastService } from '@services/toast-service';
 import { logger } from '@shared/logger';
+import { localizedDyeName } from '@shared/dye-name';
 import {
   EXPORT_FORMATS,
   EXPORT_FORMAT_LABELS,
@@ -79,11 +80,17 @@ async function copyText(text: string): Promise<void> {
  * Open the export sheet for a payload. No-ops with a toast when the tool has
  * nothing to export yet, so every caller can wire the action unconditionally.
  */
-export function openExportSheet(payload: ExportPayload): void {
-  if (payload.entries.length === 0) {
+export function openExportSheet(input: ExportPayload): void {
+  if (input.entries.length === 0) {
     ToastService.error(LanguageService.t('export.nothing'));
     return;
   }
+
+  // The generators are pure and service-free, so the locale-aware name lookup
+  // is injected here — the one place an export meets the running app. Every
+  // caller gets localized dye names in the commented formats for free; the
+  // JSON format keeps the canonical English name regardless.
+  const payload: ExportPayload = { ...input, nameOf: input.nameOf ?? localizedDyeName };
 
   // Mutable across the sheet's life: the footer's Copy handler runs long after
   // show(), and must read the format the user has since switched to.

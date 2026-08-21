@@ -1184,7 +1184,8 @@
     "acquisitionShort": "SOURCE",
     "hueOff": "HUE OFF",
     "stainShort": "STAIN",
-    "replaceSlotN": "Replace Slot {n}"
+    "replaceSlotN": "Replace Slot {n}",
+    "dyeResultAria": "Dye result: {name}"
   },
   "share": {
     "button": "Share",

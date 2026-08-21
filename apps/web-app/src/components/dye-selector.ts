@@ -12,6 +12,7 @@ import { DyeService, LanguageService, CollectionService } from '@services/index'
 import type { Dye } from '@xivdyetools/types';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { compareDyeNames, dyeNameMatches } from '@shared/dye-name';
 import { ICON_CRYSTAL } from '@shared/ui-icons';
 import { DyeSearchBox, SortOption } from './dye-search-box';
 import { DyeGrid } from './dye-grid';
@@ -390,8 +391,8 @@ export class DyeSelector extends BaseComponent {
     }
 
     if (this.searchQuery.trim()) {
-      const query = this.searchQuery.trim().toLowerCase();
-      dyes = dyes.filter((d) => d.name.toLowerCase().includes(query));
+      const query = this.searchQuery.trim();
+      dyes = dyes.filter((d) => dyeNameMatches(d, query));
     }
 
     dyes.sort((a, b) => this.compareDyes(a, b, this.sortOption));
@@ -402,7 +403,7 @@ export class DyeSelector extends BaseComponent {
   private compareDyes(a: Dye, b: Dye, sortOption: SortOption): number {
     switch (sortOption) {
       case 'alphabetical':
-        return a.name.localeCompare(b.name);
+        return compareDyeNames(a, b);
       case 'brightness-asc':
         return a.hsv.v - b.hsv.v;
       case 'brightness-desc':
@@ -422,10 +423,10 @@ export class DyeSelector extends BaseComponent {
       case 'category': {
         const categoryDiff = a.category.localeCompare(b.category);
         if (categoryDiff !== 0) return categoryDiff;
-        return a.name.localeCompare(b.name);
+        return compareDyeNames(a, b);
       }
       default:
-        return a.name.localeCompare(b.name);
+        return compareDyeNames(a, b);
     }
   }
 

@@ -1184,7 +1184,8 @@
     "acquisitionShort": "QUELLE",
     "hueOff": "FARBTON",
     "stainShort": "STAIN",
-    "replaceSlotN": "Slot {n} ersetzen"
+    "replaceSlotN": "Slot {n} ersetzen",
+    "dyeResultAria": "Farbstoff-Ergebnis: {name}"
   },
   "share": {
     "button": "Teilen",

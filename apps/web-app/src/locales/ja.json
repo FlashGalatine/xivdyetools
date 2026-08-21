@@ -1184,7 +1184,8 @@
     "acquisitionShort": "入手先",
     "hueOff": "色相差",
     "stainShort": "ステイン",
-    "replaceSlotN": "スロット{n}を置き換え"
+    "replaceSlotN": "スロット{n}を置き換え",
+    "dyeResultAria": "カララント結果：{name}"
   },
   "share": {
     "button": "共有",
