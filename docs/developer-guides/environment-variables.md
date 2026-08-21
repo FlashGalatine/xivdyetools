@@ -159,6 +159,8 @@ Bindings: `DB` (D1), `DISCORD_WORKER` (service → `xivdyetools-discord-worker`,
 | `MODERATOR_IDS` | No | Comma-separated user IDs |
 | `BOT_SIGNING_SECRET` | No | HMAC signing key for bot request verification |
 | `PERSPECTIVE_API_KEY` | No | Google Perspective API for ML moderation |
+| `CACHE_PURGE_ZONE_ID` | No | Cloudflare zone id of `shots.xivdyetools.app` — enables single-file edge purge of deleted/replaced preview images (FINDING-018); without it the 1-day `s-maxage` is the bound |
+| `CACHE_PURGE_API_TOKEN` | No | API token with *Zone → Cache Purge* on that zone (pairs with `CACHE_PURGE_ZONE_ID`) |
 | `MODERATION_WEBHOOK_URL` / `DISCORD_BOT_WEBHOOK_URL` / `INTERNAL_WEBHOOK_SECRET` | No | Notification webhooks |
 
 ### Setting Secrets
@@ -170,6 +172,8 @@ wrangler secret put BOT_API_SECRET
 wrangler secret put JWT_SECRET
 wrangler secret put MODERATOR_IDS
 wrangler secret put PERSPECTIVE_API_KEY  # Optional
+wrangler secret put CACHE_PURGE_ZONE_ID    # Optional — preview-image edge purge (FINDING-018)
+wrangler secret put CACHE_PURGE_API_TOKEN  # Optional — pairs with CACHE_PURGE_ZONE_ID
 ```
 
 ### Local Development (.dev.vars)
@@ -264,7 +268,7 @@ Per-client abuse limiting uses the native **Workers Rate Limiting binding** (`[[
 |--------|---------|----------------|---------------------------|----------------------|
 | api-worker | `API_RATE_LIMITER` | 65 / 60 s (60 + 5 burst per IP on `/v1/*`) | 1001 / 1002 | KV `RATE_LIMIT` |
 | presets-api | `RL_PUBLIC` | 100 / 60 s per IP on `/api/*` | 1011 / 1012 | per-isolate memory |
-| oauth | `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` | 10 / 20 / 30 per 60 s per IP+path (`OAUTH_LIMITS`) | 1021-1023 (top-level = prod), 1024-1026 (development), 1027-1029 (preview) | KV `TOKEN_BLACKLIST` (`rl:` prefix), then memory |
+| oauth | `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` | 10 / 20 / 30 per 60 s per IP+path (`OAUTH_LIMITS`) | 1021-1023 (top-level = prod), 1024-1026 (development) — the preview tier (1027-1029) went with the deleted `[env.preview]` block (FINDING-029) | KV `TOKEN_BLACKLIST` (`rl:` prefix), then memory |
 | moderation-worker | `RL_COMMAND` / `RL_AUTOCOMPLETE` | 25 / 70 per 60 s per Discord user | 1031-1032 / 1033-1034 | KV `KV` |
 | discord-worker | — (Upstash Redis is the primary backend) | per-command tiers | — | KV — logs a one-time warning; configure `UPSTASH_REDIS_REST_URL/TOKEN` in production |
 

@@ -47,6 +47,10 @@ api-worker, image-worker; the **routed beta** worker on og-worker; and **product
       FINDING-002), `JWT_ISSUER` var, `[[ratelimits]]` `RL_PUBLIC`; api-worker `API_RATE_LIMITER`;
       oauth `RL_AUTH_10/20/30`; moderation-worker / discord-worker rate-limit bindings. Cloudflare
       creates `ratelimits` bindings automatically — no dashboard step.
+- [ ] **Optional presets-api secrets** (FINDING-018): `CACHE_PURGE_ZONE_ID` + `CACHE_PURGE_API_TOKEN`
+      (zone of `shots.xivdyetools.app`, token scoped to *Zone → Cache Purge*) on the production
+      worker (`--env production`) so deleted/replaced preview images are purged from the edge;
+      without them the 1-day `s-maxage` is the bound.
 - [ ] Domain cutovers that must precede the worker deploys (`DEPRECATIONS.md` checkboxes):
       release `proxy.xivdyetools.app` / `proxy.xivdyetools.projectgalatine.com` from the old
       universalis-proxy worker; release `developers.xivdyetools.app` from the old api-docs Pages
@@ -102,10 +106,19 @@ api-worker, image-worker; the **routed beta** worker on og-worker; and **product
 - [ ] `production` environment protection rules verified (see §0).
 - [ ] `CLOUDFLARE_API_TOKEN` scoped to Workers Scripts + Pages + KV/D1/R2 edit on this account
       only (SECRET_ROTATION.md §7); note the rotation date in the rotation log.
+- [ ] **Code security → Private vulnerability reporting: ON** — `SECURITY.md` (new) points
+      reporters at it.
 
 ### Cloudflare
 - [ ] Confirm the `[[ratelimits]]` bindings exist on every production worker (dashboard →
       Worker → Settings → Bindings) and that KV rate-limit namespaces are now idle.
+- [ ] og-worker (OG-4, FINDING-024): add a WAF rate-limiting rule on `xivdyetools.app/og/*`
+      (image renders are CPU-bound; the worker-side guard + edge cache cover the common case).
+- [ ] If a `xivdyetools-oauth-preview` worker or the `auth-preview.xivdyetools.app` custom domain
+      ever existed, delete both (the `[env.preview]` config is gone — FINDING-029; DNS is NXDOMAIN
+      today, so most likely nothing to do).
+- [ ] api-worker's dev worker is no longer reachable over `*.workers.dev` (`workers_dev = false`,
+      FINDING-025) — use `pnpm dev` for ad-hoc testing; same for og-worker's dev worker.
 - [ ] presets-api R2 preview bucket: lifecycle / cache behaviour as set by FINDING-018.
 - [ ] Delete the old `xivdyetools-universalis-proxy` worker and the old api-docs Pages project
       after the cutover window (`DEPRECATIONS.md`).
@@ -135,7 +148,11 @@ is gone, and a CHANGELOG line.
 | `LEGACY_FACEWEAR_ITEM_IDS` | `@xivdyetools/core` | **do not remove** — frozen compatibility map by design |
 
 Also 5.1 work, not removal: discord-worker `/preset submit` / `/preset edit` still send legacy
-itemIDs (deferred; recorded under discord-worker 5.0.0 "Known issues").
+itemIDs (deferred; recorded under discord-worker 5.0.0 "Known issues"); the web-app submission
+form does not yet mirror presets-api's new tag charset / control-character rules (users see the
+API's 400 message — FINDING-019/028); `moderation_log` rows for ban / unban / hide / restore need a
+presets-api-owned decision (table has `preset_id NOT NULL`; moderation-worker deferred it —
+FINDING-034); cross-identity (`xivauth_id`) bans need oauth + moderation changes (FINDING-017).
 
 ## 4. Audits to (re-)run after the merge
 
@@ -161,6 +178,12 @@ itemIDs (deferred; recorded under discord-worker 5.0.0 "Known issues").
   not reachable at runtime; tracked in FINDING-036.
 - Beta surfaces share production presets-api / oauth data by design (`xiv-beta-web-app`).
 - stoat-worker stays parked; its abuse controls now exist but it has no deploy workflow.
+- discord-worker `PRIVACY_POLICY.md` states Analytics Engine retention as "3 months" — confirm
+  against Cloudflare's current limits page and correct if needed (FINDING-022).
+- api-worker: no second-tier / origin-aware rate limiter (API-6) and discord-worker does not
+  forward a per-user key to the Universalis proxy (API-7 other half) — policy decisions, not bugs.
+- web-app ships source maps (WEB-10) — MIT project, no secrets; kept for E2E coverage mapping and
+  bundle bisects.
 
 ---
 

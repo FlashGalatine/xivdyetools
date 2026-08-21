@@ -12,7 +12,7 @@ The API is anonymous (no auth, no API key) with permissive CORS so it can be cal
 
 ```bash
 pnpm dev                    # wrangler dev on http://localhost:8790
-pnpm deploy                 # Deploy to the DEV worker (xivdyetools-api-worker-dev, no routes) — NOT staging, NOT production
+pnpm deploy                 # Deploy to the DEV worker (xivdyetools-api-worker-dev, no routes, workers_dev=false since FINDING-025 → not reachable; use `pnpm dev`) — NOT staging, NOT production
 pnpm deploy:production      # Deploy to env.production (data/proxy/developers domains) — CI does this on merge to main
 pnpm docs:dev               # VitePress dev server for docs/
 pnpm build:docs             # Build docs/.vitepress/dist (required before a by-hand production deploy)
@@ -100,7 +100,7 @@ Route registration in `routes/dyes.ts` is order-sensitive: static paths (`/searc
 |---|---|---|
 | `RATE_LIMIT` | KV Namespace | Sliding-window rate limit counters, key prefix `api:ip:` |
 | `ASSETS` | Static Assets (`[env.production.assets]` only) | `docs/.vitepress/dist`, `run_worker_first = true`, `not_found_handling = "404-page"` — served when the request host is `developers.xivdyetools.app` |
-| `ENVIRONMENT` | Var | `development` or `production` (gates HSTS header + verbose error stacks) |
+| `ENVIRONMENT` | Var | `development` or `production` (gates the HSTS header and whether `err.message` is echoed on unknown errors — a stack is never returned, FINDING-025) |
 | `API_VERSION` | Var | Currently `v1`; surfaced in response `meta.apiVersion` and `X-API-Version` |
 | `UNIVERSALIS_API_BASE` | Var | `https://universalis.app/api/v2` — upstream for the proxy |
 | `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS` | Var | Proxy's per-IP memory limiter — `30`/`60` in production, `60`/`60` in dev |
@@ -120,7 +120,7 @@ Every success response uses `{ success: true, data, meta }`; paginated responses
 
 ### ApiError Flow
 
-Validation helpers (`parseHex`, `parseEnumParam`, `parseIntParam`, etc.) and route handlers `throw new ApiError(code, message, statusCode, details)`. The global `app.onError` in `index.ts` catches it and emits the structured envelope. Unknown errors map to `INTERNAL_ERROR` with `500`; in `development` the stack is included.
+Validation helpers (`parseHex`, `parseEnumParam`, `parseIntParam`, etc.) and route handlers `throw new ApiError(code, message, statusCode, details)`. The global `app.onError` in `index.ts` catches it and emits the structured envelope. Unknown errors map to `INTERNAL_ERROR` with `500`; in `development` the error message is included — the stack never is (FINDING-025).
 
 ### Dye ID Auto-Detection
 
@@ -181,7 +181,7 @@ Moved verbatim from `apps/universalis-proxy`. Mounted twice in `index.ts` — `/
 
 1. `pnpm lint && pnpm type-check && pnpm test` — must be green.
 2. Bump `version` in `package.json` if behavior changed (currently `0.6.0`).
-3. Merging to `main` **is** the production deploy: `.github/workflows/deploy-api-worker.yml` builds deps, type-checks, tests, runs `build:docs`, runs `wrangler deploy --env production`, then smoke-tests `data.xivdyetools.app/health` and `developers.xivdyetools.app/`. There is no staging worker — `pnpm deploy` only pushes the routeless `xivdyetools-api-worker-dev` worker for ad-hoc testing.
+3. Merging to `main` **is** the production deploy: `.github/workflows/deploy-api-worker.yml` builds deps, type-checks, tests, runs `build:docs`, runs `wrangler deploy --env production`, then smoke-tests `data.xivdyetools.app/health` and `developers.xivdyetools.app/`. There is no staging worker — `pnpm deploy` only pushes the routeless `xivdyetools-api-worker-dev` worker, which has `workers_dev = false` (FINDING-025) and is therefore not reachable over `*.workers.dev`; ad-hoc testing is `pnpm dev`.
 4. Deploying by hand: `pnpm build:docs && pnpm deploy:production` (the assets directory must exist or the production deploy fails). See `docs/operations/DEPLOY_ENVIRONMENTS.md`.
 5. If any new endpoints/parameters were added, update **both** `docs/reference/dyes.md` (or `matching.md` / `universalis.md`) and the `index.md` quick-start examples — the docs site is the public contract.
 6. Verify `X-RateLimit-*` headers appear on a `/v1/*` response and `X-Request-Id` is unique per call.

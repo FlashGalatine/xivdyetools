@@ -170,7 +170,7 @@ Vars: `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID`. Custom 
 
 ### Command Routing (`src/index.ts`)
 
-A single `switch (commandName)` in `handleCommand()` dispatches to handlers in `handlers/commands/`. Tracking is done in a `try/finally` so analytics record actual success/failure rather than assuming success. Rate-limit check runs before dispatch (skipped for `about`, `manual`, `stats`).
+A single `switch (commandName)` in `handleCommand()` dispatches to handlers in `handlers/commands/`. Tracking is done in a `try/finally` so analytics record actual success/failure rather than assuming success. Rate-limit check runs before dispatch (skipped only for `about` and `manual` — `/stats` has been rate-limited since the 2026-08-21 security audit, FINDING-033).
 
 ### Deferred Responses
 
@@ -217,7 +217,7 @@ Both `/webhooks/preset-submission` and `/webhooks/github` enforce 10KB payload c
 
 ### User Content Sanitization
 
-`sanitizePresetName()` and `sanitizePresetDescription()` strip control characters, invisible Unicode, and Zalgo before sending names/descriptions into Discord embeds.
+`sanitizePresetName()` and `sanitizePresetDescription()` (`utils/sanitize.ts`) delegate to `@xivdyetools/bot-logic`'s `sanitizeEmbedText` — control / zero-width / bidi stripping, `@everyone`/`@here`/`<@…>` defusing, markdown + masked-link escaping, length caps — and every user-sourced string that reaches an embed (preset names/descriptions/tags/authors, `/dye search` queries, `.chara` error echoes, `/budget` names, webhook author/tags) goes through them. Every outbound payload built in `utils/discord-api.ts` carries `allowed_mentions: { parse: [] }` unless the caller passes `allowedMentions` (FINDING-019, 2026-08-21 security audit). The swatch PNG still receives the raw text — the SVG layer XML-escapes it and backslashes would render.
 
 ### Security Headers
 

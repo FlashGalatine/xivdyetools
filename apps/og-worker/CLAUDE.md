@@ -133,7 +133,7 @@ carries it):
 | `GET /og/budget/:dyeId[.png]` | stainID |
 | `GET /og/:tool/default.png` | Per-tool 2a fallback card |
 | `GET /og/default.png` | Root fallback card; cached 7 days |
-| `GET *` | Fallthrough — minimal OG for crawlers, `fetch(req)` to origin for humans |
+| `GET *` | Fallthrough — crawlers get a minimal **404** (`no-store`) page; humans are passed through only on the `APP_BASE_URL` host (any other host → 302 to the app) — FINDING-024 |
 
 All image responses set `Cache-Control: public, max-age=86400, s-maxage=604800` (24h browser, 7d edge — BUG-068: `renderOGImage` now takes explicit `{ browser, edge }` TTLs instead of an implicit ×7 multiplier), plus a duplicated `CDN-Cache-Control`. Crawler HTML is `max-age=3600, s-maxage=86400`.
 
@@ -141,7 +141,7 @@ All image responses set `Cache-Control: public, max-age=86400, s-maxage=604800` 
 
 | Binding | Type | Purpose |
 |---|---|---|
-| `ANALYTICS` | Analytics Engine Dataset (`xivdyetools_og_analytics`) | `writeDataPoint` for `og_request` / `og_image_request` events. Failures swallowed. |
+| `ANALYTICS` | Analytics Engine Dataset (`xivdyetools_og_analytics`) | `writeDataPoint` for `og_request` (crawler hits only since FINDING-024 — human page views no longer produce a datapoint) / `og_image_request` events. Failures swallowed. |
 | `APP_BASE_URL` | Var | `https://xivdyetools.app` — used for redirects and canonical URLs |
 | `OG_IMAGE_BASE_URL` | Var | `https://og.xivdyetools.app/og` — base for `og:image` URLs (the `/og` suffix is load-bearing; without it every emitted card URL 404s) |
 

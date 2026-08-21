@@ -20,6 +20,44 @@ Scope, method and versions: [`AUDIT_MANIFEST.md`](AUDIT_MANIFEST.md). Per-unit r
 | Low | 26 | 011–036 |
 | Informational | ≈70 | catalogued in `evidence/review-*.md` (see table below) |
 
+## Remediation status (2026-08-21, same day — `monorepo-2.0-prep`)
+
+Every finding has a `## Status` section in its file with the per-unit detail; this is the roll-up. "Fixed" = code + tests committed on the branch; production picks it up with the 5.0 merge (`docs/operations/POST_MERGE_CHECKLIST.md`).
+
+| ID | Sev | Unit(s) | Status | Commit(s) |
+|---|---|---|---|---|
+| 001 | HIGH | oauth, auth | Fixed — revocation TTL ≥ exp + refresh grace | step 1 |
+| 002 | MED | presets-api | Fixed — `TOKEN_BLACKLIST` enforced, `JWT_ISSUER` | step 2 |
+| 003 | MED | worker-kit, api-worker, oauth, moderation, discord | Fixed — native `[[ratelimits]]` `CloudflareRateLimiter`; KV fallback kept for rollover (removal gated — checklist §3) | step 3 |
+| 004 | MED | image-worker | Fixed — header-only dimension gate, capped reads, timeouts | step 4 |
+| 005 | MED | og-worker | Fixed — `/og/*` guards, linear wrap, `caches.default` | step 5 |
+| 006 / 007 | MED | moderation-worker | Fixed — autocomplete moderator gate; `custom_id` ≤ 100 | step 6 |
+| 008 | MED | presets-api | Fixed — append-only quota events (migration 0011) | step 7 |
+| 009 / 010 | MED | CI, docs | Fixed — SHA pins, `permissions`, `environment: production`, SECRET_ROTATION rewrite | step 7 |
+| 011 | LOW | web-app | Fixed | 2f1e19d9 |
+| 012 / 013 / 029 | LOW | oauth | Fixed (PKCE-state binding mandatory once the web-app forwards `state` — same merge) | b9f15bf1 (+ follow-up) |
+| 014 | LOW | auth, bots, presets-api | Fixed — bot signature v2; v1 acceptance kept for rollover (removal gated — checklist §3); nonce bound, not cached (residual) | beec3f8b |
+| 015 | MED | auth, presets-api | Fixed — claim typing, `iss` | step 2 |
+| 016 / 017 / 018 | LOW | presets-api | Fixed (018 purge opt-in via two secrets; 017 cross-identity bans deferred) | 066ec770 |
+| 019 | LOW | bot-logic, both bots, stoat, presets-api | Fixed | beec3f8b, 8e75b4ab, d07ab763, aad6f2b3, 066ec770 |
+| 020 | LOW | bots, web-app | Fixed | 8e75b4ab, d07ab763, 2f1e19d9 |
+| 021 | LOW | auth | Fixed — Discord timestamp freshness | beec3f8b |
+| 022 | LOW | discord-worker | Fixed (AE retention figure to confirm) | d07ab763 |
+| 023 | LOW | bots, stoat | Fixed — no `xivdyetools.com` left outside audit/historical docs | 8e75b4ab, d07ab763, aad6f2b3 |
+| 024 | LOW | og-worker | Fixed (OG-4 WAF rule = dashboard action) | 86c951e0 |
+| 025 | LOW | api-worker | Fixed (API-6 second-tier limiter = policy, deferred) | ce067261 |
+| 026 | LOW | logger | Fixed — logger 2.1.0 | beec3f8b |
+| 027 | LOW | core, web-app, stoat | Fixed | beec3f8b, 2f1e19d9, aad6f2b3 |
+| 028 | LOW | svg, presets-api | Fixed — svg 2.0.1 + validation | beec3f8b, 066ec770 |
+| 030 | LOW | repo | Fixed in-repo (gitleaks CI + `.gitleaks.toml`, `.dev.vars.*`, redaction); GitHub secret scanning + push protection = settings (checklist §2) | aad6f2b3 |
+| 031 / 032 | LOW | web-app | Fixed (WEB-10 source maps deliberately unchanged) | 2f1e19d9 |
+| 033 | LOW | discord-worker | Fixed | d07ab763 |
+| 034 | LOW | moderation-worker | Fixed (`moderation_log` rows for bans deferred — presets-api-owned table) | 8e75b4ab |
+| 035 | LOW | stoat-worker | Fixed — 0.2.2 | aad6f2b3 |
+| 036 | LOW | deps | See the FINDING-036 status (dev-only advisories) | — |
+
+Programme-level: `SECURITY.md` added at the repo root (disclosure via GitHub private vulnerability reporting — enable it in the repo settings, checklist §2); `CODEOWNERS` not added (single maintainer).
+
 ## Critical Findings (Immediate Action Required)
 None.
 
