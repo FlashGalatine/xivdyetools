@@ -634,7 +634,9 @@ export class SwatchTool extends BaseComponent {
   public selectCustomColor(hex: string): void {
     if (!hex) return;
     this.reverseDyeHex = hex.startsWith('#') ? hex : `#${hex}`;
-    this.reverseDyeName = `Custom (${this.reverseDyeHex.toUpperCase()})`;
+    this.reverseDyeName = LanguageService.tInterpolate('common.customColorName', {
+      hex: this.reverseDyeHex.toUpperCase(),
+    });
     logger.info(`[SwatchTool] Reverse match: custom color ${this.reverseDyeHex}`);
     this.performReverseMatch();
   }

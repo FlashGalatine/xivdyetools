@@ -28,6 +28,7 @@ import {
 } from '@services/index';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { makeCustomDye } from '@shared/custom-dye';
 import type { VisionType as CoreVisionType } from '@xivdyetools/types';
 import type { Dye } from '@xivdyetools/types';
 import type { AccessibilityConfig, DisplayOptionsConfig } from '@shared/tool-config-types';
@@ -411,27 +412,7 @@ export class AccessibilityTool extends BaseComponent {
   public selectCustomColor(hex: string): void {
     if (!hex) return;
 
-    const virtualDye: Dye = {
-      id: -Date.now(),
-      itemID: -Date.now(),
-      stainID: null,
-      name: `Custom (${hex.toUpperCase()})`,
-      hex: hex.toUpperCase(),
-      rgb: ColorService.hexToRgb(hex),
-      hsv: ColorService.hexToHsv(hex),
-      category: 'Custom',
-      acquisition: 'Custom',
-      cost: 0,
-      currency: null,
-      isMetallic: false,
-      isPastel: false,
-      isDark: false,
-      isCosmic: false,
-      isIshgardian: false,
-      consolidationType: null,
-    };
-
-    this.selectDye(virtualDye);
+    this.selectDye(makeCustomDye(hex));
   }
 
   /**

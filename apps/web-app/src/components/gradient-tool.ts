@@ -42,6 +42,7 @@ import { ICON_TOOL_GRADIENT } from '@shared/tool-icons';
 import { ICON_MARKET, ICON_STAIRS, ICON_PALETTE } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { makeCustomDye } from '@shared/custom-dye';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import type {
   GradientConfig,
@@ -123,9 +124,6 @@ const ICON_END_ANCHOR =
 // ============================================================================
 // MixerTool Component
 // ============================================================================
-
-/** Monotonic suffix for synthetic custom-colour dye ids (see createCustomDye). */
-let customDyeSequence = 0;
 
 /**
  * Mixer Tool - v3 Two-Panel Layout
@@ -322,7 +320,7 @@ export class GradientTool extends BaseComponent {
     }
     if (hexParam !== undefined && hexParam !== null && hexParam !== '') {
       const hex = ShareService.parseSharedHex(hexParam);
-      return hex ? this.createCustomDye(hex) : null;
+      return hex ? makeCustomDye(hex) : null;
     }
     return null;
   }
@@ -2740,39 +2738,7 @@ export class GradientTool extends BaseComponent {
     if (!hex) return;
 
     // Use the existing selectDye logic to add to gradient
-    this.selectDye(this.createCustomDye(hex));
+    this.selectDye(makeCustomDye(hex));
     logger.info(`[GradientTool] Custom color selected: ${hex}`);
-  }
-
-  /**
-   * Wrap a bare colour in a virtual "dye" (negative id, no stainID) so the
-   * rest of the tool can treat it like any other endpoint. Shared by the
-   * drawer's Custom Color and the `hexStart`/`hexEnd` share params.
-   */
-  private createCustomDye(hex: string): Dye {
-    // Unique negative ID — the sequence keeps two endpoints created in the
-    // same millisecond (e.g. `hexStart` + `hexEnd` from one link) distinct.
-    const syntheticId = -(Date.now() + ++customDyeSequence);
-    return {
-      id: syntheticId,
-      itemID: syntheticId,
-      stainID: null, // Custom colors don't have a stain ID
-      name: `Custom (${hex})`,
-      hex: hex.toUpperCase(),
-      rgb: ColorService.hexToRgb(hex),
-      hsv: ColorService.hexToHsv(hex),
-      category: 'Custom',
-      acquisition: 'Custom',
-      cost: 0,
-      currency: null,
-      isMetallic: false,
-      isPastel: false,
-      isDark: false,
-      isCosmic: false,
-
-      isIshgardian: false,
-
-      consolidationType: null,
-    };
   }
 }

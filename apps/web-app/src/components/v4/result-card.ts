@@ -25,6 +25,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { BaseLitComponent } from './base-lit-component';
 import { ICON_CONTEXT_MENU } from '@shared/ui-icons';
+import { customDyeLabel, isCustomDye } from '@shared/custom-dye';
 import type { Dye, DyeWithDistance } from '@xivdyetools/types';
 import type { MatchingMethod } from '@shared/tool-config-types';
 import {
@@ -1606,9 +1607,11 @@ export class ResultCard extends BaseLitComponent {
                             >
                             <span class="zval"
                               >${
-                                dye.acquisition
-                                  ? LanguageService.getAcquisition(dye.acquisition)
-                                  : '—'
+                                isCustomDye(dye)
+                                  ? customDyeLabel()
+                                  : dye.acquisition
+                                    ? LanguageService.getAcquisition(dye.acquisition)
+                                    : '—'
                               }</span
                             >
                           </div>

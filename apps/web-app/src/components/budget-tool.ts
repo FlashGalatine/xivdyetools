@@ -48,6 +48,7 @@ import { ThemeService } from '@services/theme-service';
 import { ICON_TOOL_BUDGET } from '@shared/tool-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { makeCustomDye } from '@shared/custom-dye';
 import type { Dye, DyeId, PriceData } from '@xivdyetools/types';
 import { GLYPH_ACCENT_LIGHT, GLYPH_ACCENT_DARK } from '@xivdyetools/svg';
 import type { BudgetConfig, MatchingMethod } from '@shared/tool-config-types';
@@ -423,7 +424,7 @@ export class BudgetTool extends BaseComponent {
       }
     } else if (hexParam && /^#?[0-9a-fA-F]{6}$/.test(hexParam)) {
       // ?hex= is a bare colour target — exclusive with `dye`, never persisted
-      this.targetDye = this.virtualTargetFor(`#${hexParam.replace(/^#/, '')}`);
+      this.targetDye = makeCustomDye(`#${hexParam.replace(/^#/, '')}`);
       this.updateTargetDyeDisplay();
     }
 
@@ -1868,29 +1869,6 @@ export class BudgetTool extends BaseComponent {
     this.renderQuickPicks();
   }
 
-  /** Wrap a bare colour in a virtual target dye (no stainID — never shared as a dye). */
-  private virtualTargetFor(hex: string): Dye {
-    return {
-      id: -Date.now(),
-      itemID: -Date.now(),
-      stainID: null,
-      name: `Custom (${hex.toUpperCase()})`,
-      hex: hex.toUpperCase(),
-      rgb: ColorService.hexToRgb(hex),
-      hsv: ColorService.hexToHsv(hex),
-      category: 'Custom',
-      acquisition: 'Custom',
-      cost: 0,
-      currency: null,
-      isMetallic: false,
-      isPastel: false,
-      isDark: false,
-      isCosmic: false,
-      isIshgardian: false,
-      consolidationType: null,
-    };
-  }
-
   /**
    * Price an arbitrary colour from the Color Palette drawer's hex field /
    * native picker — the target can be an armour base colour or UI tint,
@@ -1898,6 +1876,6 @@ export class BudgetTool extends BaseComponent {
    */
   public selectCustomColor(hex: string): void {
     if (!hex) return;
-    this.selectDye(this.virtualTargetFor(hex));
+    this.selectDye(makeCustomDye(hex));
   }
 }

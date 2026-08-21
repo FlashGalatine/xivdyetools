@@ -31,6 +31,7 @@ import { ICON_TOOL_COMPARISON } from '@shared/tool-icons';
 import { ICON_BEAKER, ICON_SETTINGS, ICON_MARKET } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { customDyeLabel, isCustomDye, makeCustomDye } from '@shared/custom-dye';
 import type { Dye } from '@xivdyetools/types';
 import {
   BAND_METHOD_DP,
@@ -1731,6 +1732,12 @@ export class ComparisonTool extends BaseComponent {
     // crosses currencies (the "price 1 = one venture" defect class)
     const aGil = a.cost > 0 && a.currency === 'Gil';
     const bGil = b.cost > 0 && b.currency === 'Gil';
+    // A custom colour has no acquisition — print the localized "Custom"
+    // label instead of running the sentinel through getAcquisition().
+    const sourceLabel = (d: Dye): string =>
+      isCustomDye(d)
+        ? customDyeLabel()
+        : LanguageService.getAcquisition(d.acquisition) || d.acquisition;
     const rows: Array<[string, string, string, string]> = [
       [
         t('deltaLight'),
@@ -1758,8 +1765,8 @@ export class ComparisonTool extends BaseComponent {
       ],
       [
         t('deltaSource'),
-        LanguageService.getAcquisition(a.acquisition) || a.acquisition,
-        LanguageService.getAcquisition(b.acquisition) || b.acquisition,
+        sourceLabel(a),
+        sourceLabel(b),
         a.acquisition === b.acquisition ? t('same') : t('differs'),
       ],
     ];
@@ -2403,27 +2410,7 @@ export class ComparisonTool extends BaseComponent {
   public selectCustomColor(hex: string): void {
     if (!hex) return;
 
-    const virtualDye: Dye = {
-      id: -Date.now(),
-      itemID: -Date.now(),
-      stainID: null,
-      name: `Custom (${hex.toUpperCase()})`,
-      hex: hex.toUpperCase(),
-      rgb: ColorService.hexToRgb(hex),
-      hsv: ColorService.hexToHsv(hex),
-      category: 'Custom',
-      acquisition: 'Custom',
-      cost: 0,
-      currency: null,
-      isMetallic: false,
-      isPastel: false,
-      isDark: false,
-      isCosmic: false,
-      isIshgardian: false,
-      consolidationType: null,
-    };
-
-    this.addDye(virtualDye);
+    this.addDye(makeCustomDye(hex));
   }
 
   // ============================================================================

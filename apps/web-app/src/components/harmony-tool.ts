@@ -37,6 +37,7 @@ import { ThemeService } from '@services/theme-service';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { makeCustomDye } from '@shared/custom-dye';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import {
   DisplayOptionsConfig,
@@ -2009,29 +2010,10 @@ export class HarmonyTool extends BaseComponent {
   public selectCustomColor(hex: string): void {
     if (!hex) return;
 
-    // Create a virtual "dye" object for the custom color
-    // Using negative ID to distinguish from real dyes
-    const virtualDye: Dye = {
-      id: -1,
-      itemID: -1,
-      stainID: null, // Custom colors don't have a stain ID
-      name: `Custom (${hex})`,
-      hex: hex.toUpperCase(),
-      rgb: ColorService.hexToRgb(hex),
-      hsv: ColorService.hexToHsv(hex),
-      category: 'Custom',
-      acquisition: 'Custom',
-      cost: 0,
-      currency: null,
-      isMetallic: false,
-      isPastel: false,
-      isDark: false,
-      isCosmic: false,
-
-      isIshgardian: false,
-
-      consolidationType: null,
-    };
+    // Create a virtual "dye" object for the custom color.
+    // Harmony keeps its own id scheme: the single base slot is always -1, so
+    // `usedDyeIds` and the (never-restored) persisted id stay stable.
+    const virtualDye: Dye = { ...makeCustomDye(hex), id: -1, itemID: -1 };
 
     this.selectedDye = virtualDye;
 
