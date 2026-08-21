@@ -13,11 +13,24 @@ import { showChangelogModal } from '../changelog-modal';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
-const { mockNavigateTo, mockGetCurrentToolId, mockSubscribe, mockInitialize } = vi.hoisted(() => ({
+const {
+  mockNavigateTo,
+  mockGetCurrentToolId,
+  mockSubscribe,
+  mockInitialize,
+  mockGetRouteForTool,
+  mockRefreshDocumentTitle,
+} = vi.hoisted(() => ({
   mockNavigateTo: vi.fn(),
   mockGetCurrentToolId: vi.fn().mockReturnValue('harmony'),
   mockSubscribe: vi.fn().mockReturnValue(() => {}),
   mockInitialize: vi.fn(),
+  mockGetRouteForTool: vi.fn((id: string) => ({
+    id,
+    path: `/${id}`,
+    titleKey: `tools.${id}.title`,
+  })),
+  mockRefreshDocumentTitle: vi.fn(),
 }));
 
 vi.mock('@services/router-service', () => ({
@@ -26,6 +39,8 @@ vi.mock('@services/router-service', () => ({
     getCurrentToolId: mockGetCurrentToolId,
     subscribe: mockSubscribe,
     navigateTo: mockNavigateTo,
+    getRouteForTool: mockGetRouteForTool,
+    refreshDocumentTitle: mockRefreshDocumentTitle,
   },
 }));
 
@@ -38,10 +53,19 @@ vi.mock('@services/config-controller', () => ({
   },
 }));
 
+const { mockLanguageSubscribe } = vi.hoisted(() => ({
+  mockLanguageSubscribe: vi.fn().mockReturnValue(() => {}),
+}));
+
 vi.mock('@services/index', () => ({
   LanguageService: {
     t: (key: string) => key,
-    subscribe: vi.fn().mockReturnValue(() => {}),
+    tInterpolate: (key: string, params: Record<string, string | number>) =>
+      Object.entries(params).reduce<string>(
+        (acc, [name, value]) => acc.replace(`{${name}}`, String(value)),
+        key
+      ),
+    subscribe: mockLanguageSubscribe,
   },
 }));
 
@@ -276,6 +300,18 @@ describe('V4Layout', () => {
       await initializeV4Layout(container);
 
       expect(container.children.length).toBeGreaterThan(0);
+    });
+
+    it('should refresh the document title when the locale changes', async () => {
+      await initializeV4Layout(container);
+
+      const localeListener = mockLanguageSubscribe.mock.calls.at(-1)?.[0] as () => void;
+      expect(localeListener).toBeTypeOf('function');
+
+      mockRefreshDocumentTitle.mockClear();
+      localeListener();
+
+      expect(mockRefreshDocumentTitle).toHaveBeenCalledTimes(1);
     });
   });
 });

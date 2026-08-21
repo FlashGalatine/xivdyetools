@@ -475,7 +475,7 @@ export class ShareService {
     try {
       await navigator.clipboard.writeText(url);
 
-      ToastService.success('Link copied to clipboard!');
+      ToastService.success(LanguageService.t('share.linkCopied'));
 
       this.trackAnalytics({
         event: 'share_copied',
@@ -492,9 +492,12 @@ export class ShareService {
       const success = this.fallbackCopyToClipboard(url);
 
       if (success) {
-        ToastService.success('Link copied to clipboard!');
+        ToastService.success(LanguageService.t('share.linkCopied'));
       } else {
-        ToastService.error('Failed to copy link', 'Please copy the URL manually');
+        ToastService.error(
+          LanguageService.t('errors.copyLinkFailed'),
+          LanguageService.t('share.copyManually')
+        );
       }
 
       return success;
@@ -552,7 +555,7 @@ export class ShareService {
         timestamp: Date.now(),
       });
 
-      ToastService.error('Failed to generate share link');
+      ToastService.error(LanguageService.t('share.generateFailed'));
       return null;
     }
   }

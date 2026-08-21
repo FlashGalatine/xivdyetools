@@ -278,7 +278,24 @@ const METHOD_KIND: Record<MatchingMethod, 0 | 1 | 2> = {
   distinguish: 0,
 };
 
-const METHODS_LEARN_URL = 'https://en.wikipedia.org/wiki/Color_difference#CIEDE2000';
+/**
+ * Colour-difference reading for the matching-method switch. Core's
+ * `getLearnLink()` table has no colour-difference topic (it covers contrast,
+ * colour vision and the docs site), so the per-locale articles live here — but
+ * they follow core's rule (`learn-links.ts`): an absent locale renders NO
+ * link, never the English URL. ko and zh have no article worth linking yet.
+ */
+const METHODS_LEARN_URLS: Record<string, string> = {
+  en: 'https://en.wikipedia.org/wiki/Color_difference#CIEDE2000',
+  de: 'https://de.wikipedia.org/wiki/Delta_E',
+  fr: 'https://fr.wikipedia.org/wiki/Delta_E',
+  ja: 'https://ja.wikipedia.org/wiki/色差',
+};
+
+/** Colour-difference article for the active locale, or undefined when absent. */
+function methodsLearnUrl(): string | undefined {
+  return METHODS_LEARN_URLS[LanguageService.getCurrentLocale()];
+}
 
 /** Mono tag for a method (used by readout rows and the switcher) */
 export function methodShort(method: MatchingMethod): string {
@@ -345,13 +362,19 @@ export function createMethodHelp(options: MethodHelpOptions): HTMLElement {
   }
   box.appendChild(switcher);
 
-  const link = document.createElement('a');
-  link.style.cssText = 'font-size: 12px; color: var(--theme-primary); text-decoration: underline;';
-  link.href = METHODS_LEARN_URL;
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  link.textContent = t('methodsLearnMore');
-  box.appendChild(link);
+  // An absent locale renders the absent state, exactly as the ratio branch
+  // above does with core's table — never the English article.
+  const learnUrl = methodsLearnUrl();
+  if (learnUrl) {
+    const link = document.createElement('a');
+    link.style.cssText =
+      'font-size: 12px; color: var(--theme-primary); text-decoration: underline;';
+    link.href = learnUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = t('methodsLearnMore');
+    box.appendChild(link);
+  }
 
   return box;
 }

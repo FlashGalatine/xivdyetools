@@ -159,7 +159,8 @@ Key in-game locations referenced by the dye acquisition system.
 | Square | 正方形配色 | Quadrat | Carré | 정사각형 | 正方形配色 |
 | Monochromatic | 単色 | Monochromatisch | Monochromatique | 단색 | 单色 |
 | Compound | 複合 | Zusammengesetzt | Composé | 복합 | 复合 |
-| Shades | 明度配色 | Schattierungen | Nuances | 명암 | 明暗 |
+| Shades | シェード | Schattierungen | Nuances | 명암 | 明暗 |
+| Inverted Tetradic | 逆四色配色 | Invertiert-Tetradisch | Tétradique inversé | 반전 사색 | 逆四色配色 |
 
 ---
 

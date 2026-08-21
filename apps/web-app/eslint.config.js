@@ -63,6 +63,10 @@ export default [
       'no-var': 'error',
       // Custom i18n rule: warn against fallback patterns
       'xivdyetools-i18n/no-i18n-fallback': 'warn',
+      // Custom i18n rule: user-visible English that never reaches
+      // LanguageService. `warn` while the tail from the 2026-08-20 audit is
+      // worked down - promote to `error` once the count reaches zero.
+      'xivdyetools-i18n/no-hardcoded-ui-strings': 'warn',
     },
   },
   pluginPrettier,

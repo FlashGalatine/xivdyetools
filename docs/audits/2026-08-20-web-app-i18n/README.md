@@ -13,4 +13,4 @@
 
 **Headline:** locale files clean (0 dup / 0 missing / 0 interp); code has ≈100 High hardcoded-string rows incl. one bug (palette-drawer category headings English in every locale), an un-localized `preset-edit-form.ts`, English service toasts, a 7-tool `Custom (#HEX)` leak, hardcoded `gil`, English-only route titles, and a 58-cell vocabulary split between web-app `config.*` keys and core getters.
 
-No source or locale file was modified by this audit.
+No source or locale file was modified by this audit itself — the audit only produced the catalogs above. The remediation it planned was executed separately, on branch `i18n-remediation-2026-08-20`, commits `37668a97..13b84fdb` (22 commits, Tasks 1–19 of [EXECUTION_TASKS.md](EXECUTION_TASKS.md); Task 20 closes out this folder). See `REMEDIATION_PLAN.md`'s per-sprint completion annotations and "Execution notes" section for what shipped and what was deferred.

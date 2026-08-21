@@ -546,6 +546,34 @@ describe('GradientTool', () => {
   });
 
   // ============================================================================
+  // Interpolated summary strings (HC-SYS-009)
+  // ============================================================================
+
+  describe('drift summary and pin badge — one key, not label + number', () => {
+    it('prints the average drift through gradient.avgDriftValue', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      await flush();
+
+      // The number lives inside the key's value, so a language that puts the
+      // unit first can still order it: "avg ΔE 4.1" vs "ΔE moyen 4,1".
+      expect(container.textContent).toContain('gradient.avgDriftValue:');
+      expect(container.textContent).not.toContain('gradient.avgDrift:');
+    });
+
+    it('prints the worst step through gradient.maxDriftValue', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      await flush();
+
+      expect(container.textContent).toContain('gradient.maxDriftValue:');
+      expect(container.textContent).not.toContain('gradient.maxDrift:');
+    });
+  });
+
+  // ============================================================================
   // Lifecycle Tests
   // ============================================================================
 

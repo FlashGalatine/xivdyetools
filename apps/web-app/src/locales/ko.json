@@ -23,11 +23,13 @@
     "elsewhere": "다른 곳에서",
     "apiSummary": "공개 염료 데이터, 엔드포인트 2개",
     "legalLabel": "저작권 표기",
-    "spectralCredit": "사실적인 물감 혼합(쿠벨카-뭉크 이론):"
+    "spectralCredit": "사실적인 물감 혼합(쿠벨카-뭉크 이론): {link}",
+    "dataApiLabel": "데이터 API",
+    "apiDocsLabel": "API Worker 문서"
   },
   "footer": {
     "createdBy": "Flash Galatine (Midgardsormr)이 FFXIV 커뮤니티를 위해 제작",
-    "universalisCredit": "시장 게시판 데이터 제공:",
+    "universalisCredit": "시장 게시판 데이터 제공: {link}",
     "disclaimer": "FINAL FANTASY XIV © 2010-2025 SQUARE ENIX CO., LTD. All Rights Reserved.",
     "notAffiliated": "XIV 염색 도구는 팬이 만든 애플리케이션이며 Square Enix와 제휴하거나 승인받지 않았습니다."
   },
@@ -108,7 +110,6 @@
     "options": "옵션",
     "hexColor": "Hex 색상",
     "selectDye": "염료 선택",
-    "slot": "슬롯",
     "replace": "교체",
     "acquisition": "획득",
     "original": "원본",
@@ -119,19 +120,20 @@
     "dismiss": "닫기",
     "optional": "(선택사항)",
     "done": "완료",
-    "alternates": "대안"
+    "alternates": "대안",
+    "custom": "사용자 지정",
+    "customColorName": "사용자 지정 ({hex})",
+    "gilAmount": "{n} {unit}",
+    "loadingTool": "{tool} 로딩 중…",
+    "closeModal": "대화 상자 닫기",
+    "confirm": "확인",
+    "slotN": "슬롯 {n}",
+    "unknown": "알 수 없음",
+    "comingSoonTool": "{tool} 도구",
+    "comingSoon": "출시 예정"
   },
   "config": {
     "harmonyType": "조화 유형",
-    "complementary": "보색",
-    "analogous": "유사색",
-    "triadic": "삼원색",
-    "splitComplementary": "분할 보색",
-    "tetradic": "사원색",
-    "square": "정사각형",
-    "monochromatic": "단색",
-    "compound": "복합",
-    "shades": "명암",
     "matchingMode": "매칭 모드",
     "perceptualMatching": "지각적 매칭",
     "perceptualMatchingDesc": "지각적으로 정확한 색상 매칭을 위해 DeltaE 사용",
@@ -160,9 +162,9 @@
     "sampleAreaSizeTooltip": "이미지에서 색을 추출할 때 평균을 내는 영역의 크기",
     "singlePixel": "픽셀",
     "visionTypes": "시각 유형",
-    "deuteranopia": "녹색맹",
-    "protanopia": "적색맹",
-    "tritanopia": "청색맹",
+    "deuteranopia": "제2색맹",
+    "protanopia": "제1색맹",
+    "tritanopia": "제3색맹",
     "achromatopsia": "전색맹",
     "gradientSteps": "그라데이션 단계",
     "count": "수",
@@ -223,14 +225,14 @@
     "importSettings": "가져오기",
     "importError": "설정을 가져오지 못했습니다. 파일 형식을 확인해 주세요.",
     "cmykValues": "CMYK 값",
-    "invertedTetradic": "반전 사원색",
     "matchingRedmean": "가중 RGB",
     "matchingRedmeanDesc": "가중 RGB 거리 — 지각 차이의 간단한 근사치입니다.",
     "matchingDistinguish": "퍼센트",
     "matchingDistinguishDesc": "RGB 거리를 0~100으로 환산한 값입니다. RGB DIST와 순위가 같으며 퍼센트로 표시됩니다.",
     "showHue": "색상차",
     "showStain": "스테인 ID",
-    "showSpectrum": "스펙트럼"
+    "showSpectrum": "스펙트럼",
+    "userFallback": "사용자"
   },
   "colorPalette": {
     "title": "색상 팔레트",
@@ -245,18 +247,6 @@
     "spectrumWide1": "추가 색상 1",
     "spectrumWide2": "추가 색상 2",
     "spectrumUnconsolidated": "미통합",
-    "favorites": "즐겨찾기",
-    "reds": "레드",
-    "browns": "브라운",
-    "yellows": "옐로우",
-    "oranges": "오렌지",
-    "greens": "그린",
-    "blues": "블루",
-    "purples": "퍼플",
-    "pinks": "핑크",
-    "whites": "화이트",
-    "blacks": "블랙",
-    "grays": "그레이",
     "noDyesFound": "염료를 찾을 수 없습니다",
     "customColor": "사용자 지정 색상",
     "enterHexCode": "Hex 코드 입력",
@@ -265,7 +255,8 @@
     "invalidHexCode": "유효하지 않은 Hex 코드",
     "noDyesAvailable": "사용 가능한 염료가 없습니다",
     "randomDyeSelected": "{name} 선택됨",
-    "mobileHint": "처음이신가요? 팔레트 버튼을 탭하여 염료를 선택하세요."
+    "mobileHint": "처음이신가요? 팔레트 버튼을 탭하여 염료를 선택하세요.",
+    "favoritesWithCount": "즐겨찾기 ({count})"
   },
   "harmony": {
     "companionDyes": "조화 색상별 추가 염료",
@@ -273,37 +264,27 @@
     "baseColorSection": "기본 색상",
     "results": "결과",
     "selectDye": "염료 선택",
-    "noMatchingDyes": "매칭되는 염료를 찾을 수 없습니다",
-    "avgHueDiff": "평균 색상 차이",
-    "hueDiff": "색상 차이",
     "actions": "염료 작업",
     "addToComparison": "비교에 추가",
     "addToMixer": "믹서에 추가",
     "copyHex": "Hex 코드 복사",
-    "copiedHex": "복사됨",
     "copyFailed": "복사 실패",
     "seeBudget": "예산 제안 보기",
     "seeHarmonies": "색상 하모니 보기",
     "addedToComparison": "비교에 추가됨",
     "addedToMixer": "믹서에 추가됨",
-    "dyeAlreadyInComparison": "이 염료는 이미 비교에 있습니다",
-    "dyeAlreadyInMixer": "이 염료는 이미 믹서에 있습니다",
     "addToAccessibility": "접근성 검사기에 추가",
     "addedToAccessibility": "접근성 검사기에 추가됨",
+    "dyeAlreadyInComparison": "이 염료는 이미 비교에 있습니다",
+    "dyeAlreadyInMixer": "이 염료는 이미 믹서에 있습니다",
     "dyeAlreadyInAccessibility": "이 염료는 이미 접근성 검사기에 있습니다",
     "slotsFull": "모든 슬롯이 가득 찼습니다. 교체할 슬롯을 선택하세요:",
     "selectSlotToReplace": "교체할 슬롯 선택",
-    "addingDye": "추가 중",
     "replacedInTool": "성공적으로 교체됨",
     "selectColorPrompt": "기본 색상 선택",
     "base": "기본",
-    "harmony": "하모니",
-    "fromIdeal": "이상과의 차이",
-    "closestDyes": "유사 염료:",
     "baseDye": "기본 염료",
     "harmonyType": "하모니 타입",
-    "colorWheel": "컬러 휠",
-    "colors": "색상",
     "actionsMenu": "작업 메뉴",
     "types": {
       "complementaryDesc": "색상환에서 정반대에 위치한 색상으로 최대 대비 효과",
@@ -319,7 +300,11 @@
     },
     "railSwipeHint": "밀어서 더 보기",
     "marketFailTitle": "가격을 불러올 수 없음",
-    "marketFailBody": "마켓보드가 응답하지 않았습니다. 색상 매칭에는 영향이 없으며 가격 줄만 비어 있습니다."
+    "marketFailBody": "마켓보드가 응답하지 않았습니다. 색상 매칭에는 영향이 없으며 가격 줄만 비어 있습니다.",
+    "harmonyN": "하모니 {n}",
+    "baseColorTitle": "기본 색상: {hex}",
+    "addingDyeLabel": "추가 중:",
+    "copiedHexValue": "{hex} 복사됨"
   },
   "matcher": {
     "uploadImage": "이미지 업로드",
@@ -328,7 +313,7 @@
     "takePhoto": "사진 촬영",
     "supportedFormatsWithSize": "지원 형식: PNG, JPG, WebP, GIF. 최대 크기: 20MB",
     "privacyNote": "이미지는 브라우저 안에서만 읽히며 업로드되지 않습니다.",
-    "privacyTitle": "개인정보 보호",
+    "privacyTitle": "개인정보 보호: ",
     "privacyMessage": "사진과 이미지는 브라우저에서 로컬로 처리되며 서버에 업로드되지 않습니다.",
     "privacyLearnMore": "자세히 알아보기",
     "pasteHint": "팁: Ctrl+V (Mac에서는 Cmd+V)로 이미지 붙여넣기",
@@ -338,19 +323,15 @@
     "useEyedropper": "스포이트 사용",
     "sampleSize": "샘플 크기",
     "matchedDyes": "매칭된 염료",
-    "distance": "거리",
+    "noMatchingDyes": "매칭되는 염료를 찾을 수 없습니다",
     "clickToSample": "클릭으로 추출 · 드래그로 돋보기",
     "zoomFit": "맞춤",
     "zoomWidth": "너비 맞춤",
     "zoomReset": "초기화",
-    "market": "마켓",
-    "recentColors": "최근 선택",
-    "clearHistory": "지우기",
     "colorCount": "색상 수",
     "extractPalette": "팔레트 추출",
     "extractingPalette": "추출 중...",
     "noImageForPalette": "팔레트를 추출하려면 먼저 이미지를 업로드하세요",
-    "noMatchingDyes": "매칭되는 염료를 찾을 수 없습니다",
     "imageSource": "이미지 소스",
     "colorSelection": "색상 선택",
     "options": "옵션",
@@ -370,7 +351,13 @@
     "pasteClipboard": "클립보드에서 붙여넣기",
     "tapToSample": "탭하여 추출",
     "addPick": "추출 추가",
-    "autoExtract": "자동 추출"
+    "autoExtract": "자동 추출",
+    "sampledColor": "추출한 색상",
+    "copyColorInfo": "색상 정보 복사",
+    "zoomOut": "축소",
+    "zoomLevel": "현재 배율",
+    "zoomIn": "확대",
+    "paletteExtractedOne": "이미지에서 {count}개 색상 추출됨"
   },
   "accessibility": {
     "inspectDyes": "염료 검사",
@@ -412,7 +399,19 @@
     "visionDescDeuteranopia": "적록색각. 가장 흔한 형태로 남성 약 12명 중 1명.",
     "visionDescProtanopia": "적록색각. 빨간색이 이동할 뿐 아니라 어둡게 보입니다.",
     "visionDescTritanopia": "청황색각. 드물며 청록과 노랑에 가장 큰 영향.",
-    "visionDescAchromatopsia": "색이 없으며 밝기만이 두 염료를 구별합니다."
+    "visionDescAchromatopsia": "색이 없으며 밝기만이 두 염료를 구별합니다.",
+    "prevalenceNormal": "약 92%",
+    "prevalenceDeuteranopia": "남성의 약 6%",
+    "prevalenceProtanopia": "남성의 약 2%",
+    "prevalenceTritanopia": "약 0.01%",
+    "prevalenceAchromatopsia": "약 0.003%",
+    "visionShort": {
+      "normal": "정상",
+      "deuteranopia": "2색",
+      "protanopia": "1색",
+      "tritanopia": "3색",
+      "achromatopsia": "전색"
+    }
   },
   "comparison": {
     "selectedDyes": "선택된 염료",
@@ -481,7 +480,8 @@
     "mDistinguishLabel": "구별도",
     "mDistinguishShort": "구별도 %",
     "mDistinguishDesc": "같은 RGB 거리를 색 입체 대각선 441.67로 나눠 백분율로 표시한 값 — 접근성 검사기가 쌍에 대해 보여주는 수치입니다.",
-    "mDistinguishCaveat": "RGB 거리의 모든 약점을 공유하며 % 기호가 있지 않은 정밀도를 암시합니다. 접근성 검사기와 맞춰 볼 때만 유용하며 WCAG 등급이 아닙니다."
+    "mDistinguishCaveat": "RGB 거리의 모든 약점을 공유하며 % 기호가 있지 않은 정밀도를 암시합니다. 접근성 검사기와 맞춰 볼 때만 유용하며 WCAG 등급이 아닙니다.",
+    "mRatioShort": "비율"
   },
   "mixer": {
     "dyeSelection": "염료 선택",
@@ -516,7 +516,8 @@
     "modelOklab": "지각적",
     "modelLab": "LAB",
     "modelHsl": "색상",
-    "modelRgb": "빛"
+    "modelRgb": "빛",
+    "exportMeta": "블렌드: {model} @ {pct}%"
   },
   "gradient": {
     "selectColor": "색상 선택",
@@ -535,7 +536,6 @@
       "oklch": "현대 지각적 (최적)",
       "lch": "원통형 LAB"
     },
-    "stepLabel": "스텝",
     "fromLabel": "시작",
     "toLabel": "끝",
     "swap": "교환",
@@ -545,11 +545,14 @@
     "pinStep": "이 스텝 고정",
     "unpinStep": "고정 해제",
     "endAnchor": "끝점 — 이미 앵커",
-    "avgDrift": "평균 ΔE",
-    "maxDrift": "최대 ΔE",
     "maxDriftDesc": "램프에서 가장 나쁜 단계 — 평균은 한 번의 튐을 감춥니다.",
     "bandIdeal": "이상",
-    "bandAchievable": "실현 가능"
+    "bandAchievable": "실현 가능",
+    "exportMeta": "보간: {space} · {n} 스텝",
+    "stepN": "스텝 {n}",
+    "pinnedCount": "고정된 스텝 · {n}",
+    "avgDriftValue": "평균 ΔE {v}",
+    "maxDriftValue": "최대 ΔE {v}"
   },
   "dyeSelector": {
     "searchPlaceholder": "염료 이름으로 검색...",
@@ -597,7 +600,15 @@
     "pricesRefreshed": "가격이 새로고침되었습니다!",
     "refreshError": "가격 새로고침 오류. 다시 시도해주세요.",
     "priceUnavailable": "가격 정보 없음",
-    "offlineWarning": "오프라인 상태입니다. 가격을 새로고침할 수 없습니다."
+    "offlineWarning": "오프라인 상태입니다. 가격을 새로고침할 수 없습니다.",
+    "region": {
+      "japan": "일본",
+      "northAmerica": "북미",
+      "europe": "유럽",
+      "oceania": "오세아니아",
+      "china": "중국",
+      "korea": "한국"
+    }
   },
   "budget": {
     "targetDye": "대상 염료",
@@ -631,8 +642,6 @@
     "priciestNow": "현재 최고가 · {world}",
     "priciestOff": "시장 전용 · 오프라인 가격 없음",
     "vendorSaves": "상인 구매 시 {diff} 절약",
-    "orWord": "또는",
-    "boardWord": "시장",
     "noVendorMarketOnly": "상인 없음 · 시장 전용",
     "matchLine": "일치선",
     "matchLineDesc": "대체품으로 인정하는 색 오차의 한계.",
@@ -641,7 +650,9 @@
     "handoffCompare": "비교",
     "copyItem": "아이템 이름 복사",
     "saveSwap": "교체 저장",
-    "swapSaved": "교체를 이 기기에 저장했습니다."
+    "swapSaved": "교체를 이 기기에 저장했습니다.",
+    "boardPrice": "시장 {price}",
+    "orLocalCost": "또는 {cost}"
   },
   "export": {
     "title": "팔레트 내보내기",
@@ -650,7 +661,11 @@
     "copied": "스니펫을 클립보드에 복사했습니다",
     "copyFailed": "스니펫을 복사하지 못했습니다",
     "download": "다운로드",
-    "nothing": "아직 내보낼 항목이 없습니다"
+    "nothing": "아직 내보낼 항목이 없습니다",
+    "generatedLine": "생성일 {date} · {n}개 항목",
+    "generatedLineOne": "생성일 {date} · {n}개 항목",
+    "hexSourceHeader": "원본 색상",
+    "hexDyesHeader": "염료"
   },
   "errors": {
     "apiFailed": "마켓보드에서 데이터를 가져오지 못했습니다.",
@@ -676,7 +691,11 @@
     "unexpectedError": "예기치 않은 오류가 발생했습니다",
     "tryAgain": "다시 시도",
     "resetComponent": "컴포넌트 초기화",
-    "retryAttempts": "재시도 횟수: {count}/{max}"
+    "retryAttempts": "재시도 횟수: {count}/{max}",
+    "requestTimeout": "요청 시간이 초과되었습니다. 다시 시도해 주세요.",
+    "networkError": "네트워크 오류가 발생했습니다. 다시 시도해 주세요.",
+    "toolLoadFailed": "도구를 불러오지 못했습니다",
+    "tryAgainOrRefresh": "다시 시도하거나 페이지를 새로고침해 주세요."
   },
   "success": {
     "copiedToClipboard": "클립보드에 복사되었습니다!"
@@ -724,8 +743,7 @@
     "cycleLanguage": "언어 변경",
     "shareTool": "현재 도구 공유",
     "showHelp": "이 패널 표시",
-    "platformHint": "팁",
-    "useModifier": "시스템 단축키에는 Ctrl을 사용"
+    "platformHintFull": "팁: 시스템 단축키에는 Ctrl을 사용하세요."
   },
   "palette": {
     "exported": "팔레트를 내보냈습니다!",
@@ -747,14 +765,54 @@
     "captureFailed": "이미지 캡처에 실패했습니다",
     "permissionDenied": "카메라 접근이 거부되었습니다",
     "checkPermissions": "브라우저 권한 설정을 확인해주세요",
-    "error": "카메라 오류"
+    "error": "카메라 오류",
+    "deviceFallback": "카메라 {n}"
   },
   "offline": {
     "banner": "오프라인 상태입니다. 일부 기능이 제한될 수 있습니다."
   },
+  "collections": {
+    "favoritesEmptyHint": "아무 염료의 ★를 클릭하여 즐겨찾기에 추가하세요",
+    "favoritesFull": "최대 {max}개의 즐겨찾기만 허용됩니다",
+    "addToFavorites": "즐겨찾기에 추가",
+    "removeFromFavorites": "즐겨찾기에서 제거",
+    "addedToFavorites": "즐겨찾기에 추가됨",
+    "removedFromFavorites": "즐겨찾기에서 제거됨",
+    "collectionsEmpty": "컬렉션 없음",
+    "collectionsEmptyHint": "염료를 정리하려면 컬렉션을 만드세요",
+    "newCollection": "새 컬렉션",
+    "createCollection": "컬렉션 만들기",
+    "editCollection": "컬렉션 편집",
+    "deleteCollection": "컬렉션 삭제",
+    "collectionName": "컬렉션 이름",
+    "collectionDescription": "설명 (선택사항)",
+    "collectionCreated": "컬렉션 생성됨",
+    "collectionUpdated": "컬렉션 업데이트됨",
+    "collectionDeleted": "컬렉션 삭제됨",
+    "addToCollection": "컬렉션에 추가",
+    "addedToCollection": "{name}에 추가됨",
+    "removedFromCollection": "{name}에서 제거됨",
+    "collectionFull": "컬렉션이 가득 찼습니다 (최대 {max}개 염료)",
+    "export": "내보내기",
+    "exportAll": "모두 내보내기",
+    "import": "가져오기",
+    "importSuccess": "{favorites}개 즐겨찾기, {collections}개 컬렉션 가져옴",
+    "importFailed": "가져오기 실패",
+    "invalidFormat": "잘못된 파일 형식",
+    "confirmDelete": "이 컬렉션을 삭제하시겠습니까?",
+    "manageCollections": "컬렉션 관리",
+    "importSkippedInvalid": "잘못된 컬렉션을 건너뛰었습니다: {name}",
+    "importCreateFailed": "컬렉션 생성 실패: {name}",
+    "importedSuffix": "{name} (가져옴 {n})",
+    "unnamed": "이름 없음",
+    "full": "가득 참",
+    "favoritesWithCount": "즐겨찾기 ({count})",
+    "collectionsCountOne": "{count}개 컬렉션",
+    "collectionsCountMany": "{count}개 컬렉션",
+    "dyeCountOne": "{count}개 염료",
+    "dyeCountMany": "{count}개 염료"
+  },
   "tutorial": {
-    "step": "단계",
-    "of": "중",
     "skip": "건너뛰기",
     "previous": "이전",
     "next": "다음",
@@ -847,7 +905,9 @@
         "title": "표시 설정",
         "description": "접근성 검사기 보기의 표시 옵션을 구성합니다."
       }
-    }
+    },
+    "stepOf": "{n}단계 중 {i}단계",
+    "dialogLabel": "튜토리얼"
   },
   "preset": {
     "mySubmissions": "내 제출물",
@@ -973,7 +1033,6 @@
     "tabSaved": "저장됨",
     "tabMine": "내 팔레트",
     "searchAll": "팔레트·염료·태그 검색",
-    "resultsWord": "개",
     "shotSlot": "글래머 샷 · 링크만 저장",
     "paletteLabel": "팔레트",
     "paletteCost": "팔레트 비용",
@@ -1001,7 +1060,7 @@
     "signinBlurb": "저장한 팔레트는 이 기기에 남아 로그아웃해도, 서비스가 중단돼도 사라지지 않습니다. 계정은 투고할 때만 필요합니다.",
     "gateTitle": "계정으로 할 수 있는 것",
     "gateBrowse": "둘러보기·검색",
-    "gateBrowseNote": "계정 불필요.",
+    "gateBrowseNote": "계정 불필요, 속도 제한 없음.",
     "gateSave": "팔레트 저장",
     "gateSaveNote": "이 기기에 저장.",
     "gateVote": "투표",
@@ -1034,14 +1093,12 @@
     "dyesReq": "3〜6색 필수",
     "dyesHint": "슬롯을 눌러 선택하세요. 여기서는 HEX 입력과 색상 선택기를 쓸 수 없습니다 — 실제로 구할 수 있는 염료여야 합니다.",
     "rulesNote": "투고는 공개 전에 확인합니다. 기존 팔레트와의 중복, 행동 강령에 어긋나는 이름, 허용되지 않은 사이트를 가리키는 예시 링크는 반려됩니다. 대략 하루 걸립니다.",
-    "mineSummary": "{n}건 · {v}표",
     "statusLive": "공개 중",
     "statusReview": "검토 중",
     "statusRejected": "비공개",
     "reviewNote": "검토 대기 중입니다. 대부분 하루 안에 처리됩니다.",
     "actView": "보기",
     "actResubmit": "재투고",
-    "votesLabel": "투표",
     "statPublished": "공개",
     "statTotalVotes": "총 투표수",
     "statAwaitingReview": "검토 대기",
@@ -1050,48 +1107,46 @@
     "cfgBlend": "공식을 피드에 섞기",
     "cfgBlendDesc": "공식 팔레트를 커뮤니티 탭에 섞습니다. 끄면 별도 탭 유지",
     "cfgHideUnbuyable": "구매 불가 팔레트 숨기기",
-    "cfgHideUnbuyableDesc": "제작·상자 한정 염료가 필요한 팔레트 제외",
+    "cfgHideUnbuyableDesc": "제작·보물상자 한정 염료가 필요한 팔레트 제외",
     "cfgSavedFirst": "저장됨을 먼저 표시",
     "cfgSavedFirstDesc": "모든 탭 상단에 고정",
     "cfgKeepDeleted": "삭제된 팔레트 유지",
     "cfgKeepDeletedDesc": "작성자가 삭제해도 표시된 채 남습니다",
-    "cfgStoredLocally": "로컬 저장",
-    "cfgStoredLocallyDesc": "서버로 전송되지 않으며 로그아웃 상태에서도 동작",
-    "authorBy": "{author} 님이 제작"
-  },
-  "collections": {
-    "favorites": "즐겨찾기",
-    "favoritesEmptyHint": "아무 염료의 ★를 클릭하여 즐겨찾기에 추가하세요",
-    "favoritesFull": "최대 {max}개의 즐겨찾기만 허용됩니다",
-    "addToFavorites": "즐겨찾기에 추가",
-    "removeFromFavorites": "즐겨찾기에서 제거",
-    "addedToFavorites": "즐겨찾기에 추가됨",
-    "removedFromFavorites": "즐겨찾기에서 제거됨",
-    "collectionsEmpty": "컬렉션 없음",
-    "collectionsEmptyHint": "염료를 정리하려면 컬렉션을 만드세요",
-    "collectionsCount": "{count}개 컬렉션",
-    "newCollection": "새 컬렉션",
-    "createCollection": "컬렉션 만들기",
-    "editCollection": "컬렉션 편집",
-    "deleteCollection": "컬렉션 삭제",
-    "collectionName": "컬렉션 이름",
-    "collectionDescription": "설명 (선택사항)",
-    "collectionCreated": "컬렉션 생성됨",
-    "collectionUpdated": "컬렉션 업데이트됨",
-    "collectionDeleted": "컬렉션 삭제됨",
-    "addToCollection": "컬렉션에 추가",
-    "addedToCollection": "{name}에 추가됨",
-    "removedFromCollection": "{name}에서 제거됨",
-    "dyeCount": "{count}개 염료",
-    "collectionFull": "컬렉션이 가득 찼습니다 (최대 {max}개 염료)",
-    "export": "내보내기",
-    "exportAll": "모두 내보내기",
-    "import": "가져오기",
-    "importSuccess": "{favorites}개 즐겨찾기, {collections}개 컬렉션 가져옴",
-    "importFailed": "가져오기 실패",
-    "invalidFormat": "잘못된 파일 형식",
-    "confirmDelete": "이 컬렉션을 삭제하시겠습니까?",
-    "manageCollections": "컬렉션 관리"
+    "authorBy": "{author} 님이 제작",
+    "editTitle": "프리셋 편집",
+    "saveChanges": "변경 사항 저장",
+    "saving": "저장 중...",
+    "submitting": "제출 중...",
+    "fieldNamePlaceholder": "예: Dark Knight Abyssal",
+    "fieldDescPlaceholder": "색상 팔레트와 어울리는 상황을 설명하세요...",
+    "fieldTagsPlaceholder": "예: dark, edgy, tank (쉼표로 구분)",
+    "fieldTagsLimit": "최대 {max}개 태그, 각 {chars}자까지",
+    "counterWithMin": "{n}/{max} (최소 {min})",
+    "allMatchingSelected": "일치하는 염료를 모두 선택했습니다",
+    "clickDyesToAdd": "아래 염료를 클릭해 추가하세요...",
+    "clickToRemove": "클릭하면 제거됩니다",
+    "anotherPreset": "다른 프리셋",
+    "loadingOne": "프리셋 로딩 중...",
+    "votesCount": "{n}표",
+    "votesCountOne": "{n}표",
+    "dyeCountShort": "{n}개 염료",
+    "dyeCountShortOne": "{n}개 염료",
+    "resultsCount": "{n}건",
+    "resultsCountOne": "{n}건",
+    "validation": {
+      "nameMin": "이름은 최소 {n}자 이상이어야 합니다",
+      "descMin": "설명은 최소 {n}자 이상이어야 합니다",
+      "dyesMin": "염료를 최소 {n}개 포함해야 합니다",
+      "nameMax": "이름은 최대 {n}자까지 입력할 수 있습니다",
+      "descMax": "설명은 최대 {n}자까지 입력할 수 있습니다",
+      "category": "유효한 카테고리를 선택하세요",
+      "dyesInvalid": "잘못된 염료 선택입니다",
+      "tagsMax": "최대 {n}개의 태그만 허용됩니다",
+      "tagLength": "각 태그는 최대 {n}자까지 입력할 수 있습니다"
+    },
+    "cfgStoredLocallyHint": "이 기기에 저장되며 서버로 전송되지 않아 로그아웃 상태에서도 동작합니다.",
+    "mineSummaryPresetsOne": "{n}건",
+    "mineSummaryPresetsMany": "{n}건"
   },
   "emptyStates": {
     "noSearchResults": {
@@ -1137,7 +1192,11 @@
     "moreActions": "추가 작업",
     "slider": "슬라이더",
     "toggle": "토글",
-    "toolSelection": "도구 선택"
+    "toolSelection": "도구 선택",
+    "modalDialogs": "대화 상자",
+    "notifications": "알림",
+    "removeFromFavoritesNamed": "즐겨찾기에서 {name} 제거",
+    "addToFavoritesNamed": "즐겨찾기에 {name} 추가"
   },
   "resultCard": {
     "inspectDyeIn": "염료 검사...",
@@ -1149,7 +1208,6 @@
     "addedTo": "추가됨",
     "slotsFull": "모든 슬롯이 꽉 찼습니다. 교체할 슬롯을 선택하세요:",
     "selectSlotToReplace": "교체할 슬롯 선택",
-    "addingDye": "추가 중",
     "replacedInTool": "교체됨",
     "tools": {
       "harmony": "하모니 탐색기",
@@ -1162,14 +1220,22 @@
     },
     "spectrumShort": "스펙트럼",
     "acquisitionShort": "출처",
-    "hueOff": "색상차"
+    "hueOff": "색상차",
+    "stainShort": "스테인",
+    "replaceSlotN": "슬롯 {n} 교체",
+    "dyeResultAria": "염료 결과: {name}",
+    "addingDyeLabel": "추가 중:",
+    "noData": "데이터 없음"
   },
   "share": {
     "button": "공유",
     "copied": "복사됨!",
     "invalidDye": "이 링크는 이 버전에서 인식할 수 없는 염색약을 가리킵니다.",
     "legacyLink": "이 링크는 이전 버전에서 생성되어 오래된 염색약 ID를 사용합니다. 새 링크를 요청하세요.",
-    "invalidHex": "이 링크에 잘못된 색상 값이 포함되어 있습니다."
+    "invalidHex": "이 링크에 잘못된 색상 값이 포함되어 있습니다.",
+    "linkCopied": "링크를 클립보드에 복사했습니다!",
+    "copyManually": "URL을 직접 복사해 주세요",
+    "generateFailed": "공유 링크 생성 실패"
   },
   "advanced": {
     "eyebrow": "설정",
@@ -1178,7 +1244,9 @@
     "backupTitle": "백업",
     "backupSummary": "설정을 JSON으로 내보내기 / 가져오기",
     "behaviorTitle": "동작",
-    "behaviorSummary": "성능 모드 · 분석"
+    "behaviorSummary": "성능 모드 · 분석",
+    "dataBadge": "기기",
+    "behaviorBadge": "저장됨"
   },
   "swatch": {
     "charaHint": "이 기기에서 해석합니다. 아무것도 전송하지 않습니다 — 파일에는 캐릭터 이름과 때로는 스크린샷이 들어 있습니다.",
@@ -1224,7 +1292,7 @@
     "absentHighlightsOff": "이 파일에서는 브릿지가 꺼져 있습니다",
     "absentFacePaintOff": "이 파일에는 페이스 페인트가 적용되어 있지 않습니다",
     "absentNoLips": "입술 색이 꺼져 있거나(알파 0) 파일에 없습니다",
-    "absentFurPattern": "로스가르에서는 이 값이 모피 무늬이며 색이 아닙니다",
+    "absentFurPattern": "로스갈에서는 이 값이 모피 무늬이며 색이 아닙니다",
     "absentNotInFile": "이 파일에 없습니다",
     "offGridNote": "임의의 색에는 제작 화면 그리드 주소가 없습니다",
     "indexWinsNote": "인덱스와 저장된 색이 다릅니다 — 어느 쪽이 적용됐는지 파일이 말해주지 않아 인덱스를 표시합니다",
@@ -1234,7 +1302,6 @@
     "equipCount": "{channels}채널 · {dyes}색",
     "glamourViewPieces": "부위",
     "glamourViewDyes": "염료",
-    "sameModel": "동일 모델: ",
     "namesUnavailable": "아이템 이름을 가져올 수 없습니다 — 부위만 표시합니다. 염료는 파일에서 로컬로 읽어오므로 영향이 없습니다.",
     "footSplit": "{undyed} · {empty}.",
     "footWornUndyedOne": "착용 중 1개 부위가 미염색(DyeId 0)",
@@ -1267,8 +1334,29 @@
     "saveCharacter": "캐릭터 색상 저장",
     "characterSavedOne": "캐릭터 색상 1개를 이 기기에 저장했습니다.",
     "characterSavedMany": "캐릭터 색상 {n}개를 이 기기에 저장했습니다.",
-    "selSentence": "{subject}은(는) {place}. {dye}와(과)의 차이는 {delta}입니다.",
-    "selSentenceCell": "{place}. {dye}와(과)의 차이는 {delta}입니다.",
-    "selSentenceOffGrid": "{subject}은(는) 임의의 색입니다. {dye}와(과)의 차이는 {delta}입니다."
+    "selSentence": "{subject}은(는) {palette} {addr}. {dye}와(과)의 차이는 {delta}입니다.",
+    "selSentenceCell": "{palette} {addr}. {dye}와(과)의 차이는 {delta}입니다.",
+    "selSentenceOffGrid": "{subject}은(는) 임의의 색입니다. {dye}와(과)의 차이는 {delta}입니다.",
+    "closestSwatchesHead": "가장 가까운 견본",
+    "rowColumn": "{row}행, {col}열",
+    "exploreDye": "염료 살펴보기",
+    "parseFailed": "이 캐릭터 파일을 읽을 수 없습니다: {reason}",
+    "slotError": {
+      "midRangeIndex": "이 색은 다크와 라이트 범위 사이의 사용되지 않는 96–127 구간에 있습니다",
+      "indexOutOfRange": "이 색 인덱스는 해당 시트의 범위를 벗어났습니다",
+      "noTribe": "이 부위를 해석하려면 파일의 부족과 성별이 필요합니다",
+      "unknown": "이 부위를 읽을 수 없습니다"
+    },
+    "sameModelList": "동일 모델: {list}",
+    "gridTitle": "{name} ({count})",
+    "cellTag": "{palette} #{index}"
+  },
+  "languages": {
+    "en": "영어",
+    "ja": "일본어",
+    "de": "독일어",
+    "fr": "프랑스어",
+    "ko": "한국어",
+    "zh": "중국어"
   }
 }

@@ -13,6 +13,7 @@ import {
   exportFilename,
   exportMimeType,
   generateExport,
+  type ExportLabels,
   type ExportPayload,
 } from '../palette-export';
 
@@ -117,6 +118,47 @@ describe('generateExport', () => {
     };
     expect(generateExport(single, 'css')).toContain('1 entry');
     expect(generateExport(PAYLOAD, 'css')).toContain('3 entries');
+  });
+
+  it('uses the injected labels for the header line and the hex columns', () => {
+    // `openExportSheet` injects the app-locale strings the same way it injects
+    // `nameOf`; the generators stay pure and service-free.
+    const labels: ExportLabels = {
+      generatedLine: (date, count) => `Erstellt am ${date} · ${count} Eintraege`,
+      sourceHeader: 'Quelle',
+      dyesHeader: 'Farbstoffe',
+    };
+    const localized: ExportPayload = { ...PAYLOAD, labels };
+
+    expect(generateExport(localized, 'css')).toContain('Erstellt am ');
+    expect(generateExport(localized, 'css')).toContain('· 3 Eintraege');
+    expect(generateExport(localized, 'css')).not.toContain('Generated ');
+
+    const hex = generateExport(localized, 'hex');
+    expect(hex).toContain('Quelle\n#A32D35');
+    expect(hex).toContain('Farbstoffe\n#A22C34');
+  });
+
+  it('annotates commented formats with the injected localized name', () => {
+    // `openExportSheet` injects the locale-aware resolver; the generators stay
+    // pure and service-free.
+    const localized: ExportPayload = { ...PAYLOAD, nameOf: (dye) => `ja-${dye.stainID}` };
+    expect(generateExport(localized, 'css')).toContain(
+      '/* pick-1 — ja-27 · stainID 27 · ΔE 3.4 */'
+    );
+    expect(generateExport(localized, 'scss')).toContain('// pick-1 — ja-27 · stainID 27 · ΔE 3.4');
+    expect(generateExport(localized, 'tailwind')).toContain('ja-27 · stainID 27');
+    expect(generateExport(localized, 'css')).not.toContain('Rolanberry Red');
+  });
+
+  it('keeps the canonical English name in JSON regardless of the resolver', () => {
+    const localized: ExportPayload = { ...PAYLOAD, nameOf: (dye) => `ja-${dye.stainID}` };
+    const parsed = JSON.parse(generateExport(localized, 'json'));
+    expect(parsed.entries[0].dye.name).toBe('Rolanberry Red');
+  });
+
+  it('falls back to the canonical name when no resolver is supplied', () => {
+    expect(generateExport(PAYLOAD, 'css')).toContain('Rolanberry Red');
   });
 
   it('produces non-empty output in every format', () => {

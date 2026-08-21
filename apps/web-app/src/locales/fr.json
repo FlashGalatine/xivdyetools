@@ -23,11 +23,13 @@
     "elsewhere": "AILLEURS",
     "apiSummary": "Données publiques des teintures, deux points d'accès",
     "legalLabel": "ATTRIBUTION",
-    "spectralCredit": "Mélange de peinture réaliste (théorie de Kubelka–Munk) par"
+    "spectralCredit": "Mélange de peinture réaliste (théorie de Kubelka–Munk) par {link}",
+    "dataApiLabel": "API de données",
+    "apiDocsLabel": "Docs de l'API Worker"
   },
   "footer": {
     "createdBy": "Créé par Flash Galatine (Midgardsormr) pour la communauté FFXIV",
-    "universalisCredit": "Données du tableau des marchés fournies par",
+    "universalisCredit": "Données du tableau des ventes fournies par {link}",
     "disclaimer": "FINAL FANTASY XIV © 2010-2025 SQUARE ENIX CO., LTD. Tous droits réservés.",
     "notAffiliated": "Outils de Teinture XIV est une application créée par des fans et n'est pas affiliée à Square Enix ni approuvée par eux."
   },
@@ -108,7 +110,6 @@
     "options": "Options",
     "hexColor": "Couleur Hex",
     "selectDye": "Sélectionner une teinture",
-    "slot": "Emplacement",
     "replace": "Remplacer",
     "acquisition": "Acquisition",
     "original": "Original",
@@ -119,19 +120,20 @@
     "dismiss": "Fermer",
     "optional": "(optionnel)",
     "done": "Terminé",
-    "alternates": "AUSSI"
+    "alternates": "AUSSI",
+    "custom": "Personnalisé",
+    "customColorName": "Personnalisé ({hex})",
+    "gilAmount": "{n} {unit}",
+    "loadingTool": "Chargement de {tool}…",
+    "closeModal": "Fermer la fenêtre",
+    "confirm": "Confirmer",
+    "slotN": "Emplacement {n}",
+    "unknown": "Inconnu",
+    "comingSoonTool": "Outil {tool}",
+    "comingSoon": "Bientôt disponible"
   },
   "config": {
     "harmonyType": "Type d'harmonie",
-    "complementary": "Complémentaire",
-    "analogous": "Analogue",
-    "triadic": "Triadique",
-    "splitComplementary": "Complémentaire divisé",
-    "tetradic": "Tétradique",
-    "square": "Carré",
-    "monochromatic": "Monochromatique",
-    "compound": "Composé",
-    "shades": "Nuances",
     "matchingMode": "Mode de correspondance",
     "perceptualMatching": "Correspondance perceptuelle",
     "perceptualMatchingDesc": "Utilise DeltaE pour une correspondance de couleur perceptuellement précise",
@@ -170,9 +172,9 @@
     "mixingMode": "Mode de mélange",
     "mixingRgb": "Lumière",
     "mixingLab": "Perceptuel",
-    "mixingOklab": " Perceptuel moderne",
-    "mixingRyb": " Peinture",
-    "mixingHsl": " Basé sur la teinte",
+    "mixingOklab": "Perceptuel moderne",
+    "mixingRyb": "Peinture",
+    "mixingHsl": "Basé sur la teinte",
     "mixingSpectral": "Spectral - Peinture réaliste",
     "mixingRgbDesc": "Mélange additif de lumière. Bleu + Jaune = Gris.",
     "mixingLabDesc": "Mélange perceptuellement uniforme. Bleu + Jaune = Rose.",
@@ -223,14 +225,14 @@
     "importSettings": "Importer",
     "importError": "Échec de l'importation des paramètres. Veuillez vérifier le format du fichier.",
     "cmykValues": "Valeurs CMYK",
-    "invertedTetradic": "Tétradique inversé",
     "matchingRedmean": "RVB pondéré",
     "matchingRedmeanDesc": "Distance RVB pondérée — une approximation simple de la différence perçue.",
     "matchingDistinguish": "Pourcentage",
     "matchingDistinguishDesc": "Distance RVB ramenée de 0 à 100. Même classement que RGB DIST, affichée en pourcentage.",
     "showHue": "Écart de teinte",
     "showStain": "ID Stain",
-    "showSpectrum": "Spectre"
+    "showSpectrum": "Spectre",
+    "userFallback": "Utilisateur"
   },
   "colorPalette": {
     "title": "Palette de couleurs",
@@ -245,18 +247,6 @@
     "spectrumWide1": "Teinture additionnelle n°1",
     "spectrumWide2": "Teinture additionnelle n°2",
     "spectrumUnconsolidated": "Non regroupées",
-    "favorites": "Favoris",
-    "reds": "Rouges",
-    "browns": "Marrons",
-    "yellows": "Jaunes",
-    "oranges": "Oranges",
-    "greens": "Verts",
-    "blues": "Bleus",
-    "purples": "Violets",
-    "pinks": "Roses",
-    "whites": "Blancs",
-    "blacks": "Noirs",
-    "grays": "Gris",
     "noDyesFound": "Aucune teinture trouvée",
     "customColor": "Couleur personnalisée",
     "enterHexCode": "Entrer le code hex",
@@ -265,7 +255,8 @@
     "invalidHexCode": "Code hex invalide",
     "noDyesAvailable": "Aucune teinture disponible",
     "randomDyeSelected": "{name} sélectionné",
-    "mobileHint": "Nouveau ici ? Appuyez sur le bouton palette pour choisir des teintures."
+    "mobileHint": "Nouveau ici ? Appuyez sur le bouton palette pour choisir des teintures.",
+    "favoritesWithCount": "Favoris ({count})"
   },
   "harmony": {
     "companionDyes": "Teintures Supplémentaires par Couleur d'Harmonie",
@@ -273,37 +264,27 @@
     "baseColorSection": "Couleur de Base",
     "results": "Résultats",
     "selectDye": "Sélectionner une teinture",
-    "noMatchingDyes": "Aucune teinture correspondante trouvée",
-    "avgHueDiff": "Écart de teinte moyen",
-    "hueDiff": "écart teinte",
     "actions": "Actions de teinture",
     "addToComparison": "Ajouter à la comparaison",
     "addToMixer": "Ajouter au mélangeur",
     "copyHex": "Copier le code Hex",
-    "copiedHex": "Copié",
     "copyFailed": "Échec de la copie",
     "seeBudget": "Voir les suggestions Budget",
     "seeHarmonies": "Voir les harmonies de couleurs",
     "addedToComparison": "Ajouté à la comparaison",
     "addedToMixer": "Ajouté au mélangeur",
-    "dyeAlreadyInComparison": "Teinture déjà dans la comparaison",
-    "dyeAlreadyInMixer": "Teinture déjà dans le mélangeur",
     "addToAccessibility": "Ajouter au vérificateur",
     "addedToAccessibility": "Ajouté au vérificateur",
+    "dyeAlreadyInComparison": "Teinture déjà dans la comparaison",
+    "dyeAlreadyInMixer": "Teinture déjà dans le mélangeur",
     "dyeAlreadyInAccessibility": "Teinture déjà dans le vérificateur",
     "slotsFull": "Tous les emplacements sont pleins. Sélectionnez-en un à remplacer :",
     "selectSlotToReplace": "Sélectionner l'emplacement à remplacer",
-    "addingDye": "Ajout",
     "replacedInTool": "Remplacé avec succès",
     "selectColorPrompt": "Sélectionnez une couleur de base",
     "base": "Base",
-    "harmony": "Harmonie",
-    "fromIdeal": "de l'idéal",
-    "closestDyes": "Teintures proches :",
     "baseDye": "Teinture de base",
     "harmonyType": "Type d'harmonie",
-    "colorWheel": "Roue chromatique",
-    "colors": "couleurs",
     "actionsMenu": "Menu d'actions",
     "types": {
       "complementaryDesc": "Couleurs directement opposées sur le cercle chromatique pour un contraste maximal",
@@ -319,7 +300,11 @@
     },
     "railSwipeHint": "BALAYER POUR PLUS",
     "marketFailTitle": "Prix indisponibles",
-    "marketFailBody": "Le marché n'a pas répondu. La correspondance des couleurs n'est pas affectée — seules les lignes de prix manquent."
+    "marketFailBody": "Le marché n'a pas répondu. La correspondance des couleurs n'est pas affectée — seules les lignes de prix manquent.",
+    "harmonyN": "Harmonie {n}",
+    "baseColorTitle": "Couleur de base : {hex}",
+    "addingDyeLabel": "Ajout :",
+    "copiedHexValue": "{hex} copié"
   },
   "matcher": {
     "uploadImage": "Télécharger une Image",
@@ -328,7 +313,7 @@
     "takePhoto": "Prendre une photo",
     "supportedFormatsWithSize": "Formats supportés : PNG, JPG, WebP, GIF. Taille max : 20 Mo",
     "privacyNote": "Les images sont lues dans votre navigateur et jamais envoyées.",
-    "privacyTitle": "Protection de la vie privée",
+    "privacyTitle": "Protection de la vie privée : ",
     "privacyMessage": "Les photos et images sont traitées localement dans votre navigateur et ne sont jamais téléchargées sur un serveur.",
     "privacyLearnMore": "En savoir plus",
     "pasteHint": "Astuce : Collez une image avec Ctrl+V (Cmd+V sur Mac)",
@@ -338,19 +323,15 @@
     "useEyedropper": "Utiliser la Pipette",
     "sampleSize": "Taille d'Échantillon",
     "matchedDyes": "Teintures Correspondantes",
-    "distance": "Distance",
+    "noMatchingDyes": "Aucune teinture correspondante trouvée",
     "clickToSample": "Cliquez pour prélever · glissez pour la loupe",
     "zoomFit": "Ajuster",
     "zoomWidth": "Largeur",
     "zoomReset": "Réinitialiser",
-    "market": "marché",
-    "recentColors": "Sélections récentes",
-    "clearHistory": "Effacer",
     "colorCount": "Nombre de couleurs",
     "extractPalette": "Extraire la palette",
     "extractingPalette": "Extraction...",
     "noImageForPalette": "Veuillez d'abord charger une image pour extraire la palette",
-    "noMatchingDyes": "Aucune teinture correspondante trouvée",
     "imageSource": "Source d'Image",
     "colorSelection": "Sélection de Couleur",
     "options": "Options",
@@ -370,7 +351,13 @@
     "pasteClipboard": "Coller depuis le presse-papiers",
     "tapToSample": "Touchez pour prélever",
     "addPick": "Ajouter un prélèvement",
-    "autoExtract": "Extraction auto"
+    "autoExtract": "Extraction auto",
+    "sampledColor": "Couleur prélevée",
+    "copyColorInfo": "Copier les infos couleur",
+    "zoomOut": "Zoom arrière",
+    "zoomLevel": "Zoom actuel",
+    "zoomIn": "Zoom avant",
+    "paletteExtractedOne": "{count} couleur extraite de l'image"
   },
   "accessibility": {
     "inspectDyes": "Inspecter les Teintures",
@@ -412,7 +399,19 @@
     "visionDescDeuteranopia": "Rouge-vert. La forme la plus courante, environ un homme sur douze.",
     "visionDescProtanopia": "Rouge-vert, avec des rouges assombris en plus d'être décalés.",
     "visionDescTritanopia": "Bleu-jaune. Rare, touche surtout les sarcelles et les jaunes.",
-    "visionDescAchromatopsia": "Aucune couleur — seule la luminosité sépare deux teintures."
+    "visionDescAchromatopsia": "Aucune couleur — seule la luminosité sépare deux teintures.",
+    "prevalenceNormal": "~92 %",
+    "prevalenceDeuteranopia": "~6 % des hommes",
+    "prevalenceProtanopia": "~2 % des hommes",
+    "prevalenceTritanopia": "~0,01 %",
+    "prevalenceAchromatopsia": "~0,003 %",
+    "visionShort": {
+      "normal": "NRM",
+      "deuteranopia": "DEU",
+      "protanopia": "PRO",
+      "tritanopia": "TRI",
+      "achromatopsia": "ACH"
+    }
   },
   "comparison": {
     "selectedDyes": "Teintures sélectionnées",
@@ -481,14 +480,15 @@
     "mDistinguishLabel": "Distinguabilité",
     "mDistinguishShort": "Distinguabilité %",
     "mDistinguishDesc": "La même distance RGB divisée par la diagonale 441,67 du cube et affichée en pourcentage — le nombre que la Vérification d'accessibilité donne pour une paire.",
-    "mDistinguishCaveat": "Hérite de toutes les faiblesses de la distance RGB et ajoute un signe % qui suggère une fausse précision. Utile seulement pour s'aligner sur la Vérification d'accessibilité — jamais comme note WCAG."
+    "mDistinguishCaveat": "Hérite de toutes les faiblesses de la distance RGB et ajoute un signe % qui suggère une fausse précision. Utile seulement pour s'aligner sur la Vérification d'accessibilité — jamais comme note WCAG.",
+    "mRatioShort": "RAPPORT"
   },
   "mixer": {
     "dyeSelection": "Sélection de Teintures",
     "selectDyes": "Sélectionnez les teintures ci-dessous",
+    "selectTwoDyes": "Sélectionnez deux teintures pour voir l'interpolation",
     "interpolationSettings": "Paramètres d'Interpolation",
     "colorSpace": "Espace Colorimétrique",
-    "selectTwoDyes": "Sélectionnez deux teintures pour voir l'interpolation",
     "startDye": "Teinture de départ",
     "endDye": "Teinture de fin",
     "steps": "Étapes",
@@ -516,7 +516,8 @@
     "modelOklab": "Perceptuel",
     "modelLab": "LAB",
     "modelHsl": "Teinte",
-    "modelRgb": "Lumière"
+    "modelRgb": "Lumière",
+    "exportMeta": "Mélange : {model} @ {pct} %"
   },
   "gradient": {
     "selectColor": "Sélectionner une Couleur",
@@ -535,7 +536,6 @@
       "oklch": "Perceptuel moderne (optimal)",
       "lch": "LAB cylindrique"
     },
-    "stepLabel": "PALIER",
     "fromLabel": "DE",
     "toLabel": "À",
     "swap": "Échanger",
@@ -545,11 +545,14 @@
     "pinStep": "Épingler ce palier",
     "unpinStep": "Désépingler",
     "endAnchor": "Extrémité — déjà un ancrage",
-    "avgDrift": "ΔE moyen",
-    "maxDrift": "ΔE max",
     "maxDriftDesc": "Le pire palier du dégradé — une moyenne masque un écart isolé.",
     "bandIdeal": "IDÉAL",
-    "bandAchievable": "RÉALISABLE"
+    "bandAchievable": "RÉALISABLE",
+    "exportMeta": "Interpolation : {space} · {n} paliers",
+    "stepN": "PALIER {n}",
+    "pinnedCount": "{n} · Paliers épinglés",
+    "avgDriftValue": "ΔE moyen {v}",
+    "maxDriftValue": "ΔE max {v}"
   },
   "dyeSelector": {
     "searchPlaceholder": "Rechercher des teintures par nom...",
@@ -581,7 +584,7 @@
     "excludeCosmic": "Exclure les Teintures Cosmiques",
     "excludeIshgardian": "Exclure les Teintures Ishgardaises",
     "excludeExpensive": "Exclure les Teintures Chères",
-    "excludeCoffers": "Exclure les Teintures de Coffres",
+    "excludeCoffers": "Exclure les teintures de trouvaille",
     "acquisitionSource": "Source d'Acquisition",
     "excludeVendorDyes": "Exclure les Teintures de Vendeur",
     "excludeCraftDyes": "Exclure les Teintures Artisanales"
@@ -597,7 +600,15 @@
     "pricesRefreshed": "Prix actualisés avec succès !",
     "refreshError": "Erreur lors de l'actualisation des prix. Veuillez réessayer.",
     "priceUnavailable": "Prix indisponible",
-    "offlineWarning": "Vous êtes hors ligne. Impossible de rafraîchir les prix."
+    "offlineWarning": "Vous êtes hors ligne. Impossible de rafraîchir les prix.",
+    "region": {
+      "japan": "Japon",
+      "northAmerica": "Amérique du Nord",
+      "europe": "Europe",
+      "oceania": "Océanie",
+      "china": "Chine",
+      "korea": "Corée"
+    }
   },
   "budget": {
     "targetDye": "Teinture cible",
@@ -616,7 +627,7 @@
     "noTargetPrice": "aucun prix cible pour comparer",
     "perPointNote": "Le gil par ΔE est le prix cible moins le prix de la ligne, divisé par le ΔE de la ligne — ce que vaut ici un point de fidélité de couleur. Un ratio propre à cet outil, pas une mesure publiée.",
     "offBadge": "DONNÉES DE MARCHÉ INDISPONIBLES",
-    "offText": "Universalis n'a pas répondu. Les prix marchands et en jetons sont stockés localement et restent affichés ; les prix du marché passent en tirets, et les teintures de coffre de mission n'ont aucun prix marchand — cette catégorie reste sans prix jusqu'au retour de la connexion.",
+    "offText": "Universalis n'a pas répondu. Les prix marchands et en jetons sont stockés localement et restent affichés ; les prix du marché passent en tirets, et les teintures de trouvaille de servant n'ont aucun prix marchand — cette catégorie reste sans prix jusqu'au retour de la connexion.",
     "upBadge": "DÉJÀ AU PLANCHER",
     "upUnit": "rien en dessous",
     "upHead": "Rien n'est moins cher que {t}.",
@@ -631,8 +642,6 @@
     "priciestNow": "LES PLUS CHERS · {world}",
     "priciestOff": "MARCHÉ UNIQUEMENT · PAS DE PRIX HORS LIGNE",
     "vendorSaves": "LE MARCHAND ÉCONOMISE {diff} vs MARCHÉ",
-    "orWord": "ou",
-    "boardWord": "marché",
     "noVendorMarketOnly": "pas de marchand · marché seulement",
     "matchLine": "Marge de correspondance",
     "matchLineDesc": "Jusqu'où un substitut peut dériver avant de ne plus compter.",
@@ -641,7 +650,9 @@
     "handoffCompare": "Comparer",
     "copyItem": "Copier le nom de l'objet",
     "saveSwap": "Enregistrer l'échange",
-    "swapSaved": "Échange enregistré sur cet appareil."
+    "swapSaved": "Échange enregistré sur cet appareil.",
+    "boardPrice": "marché {price}",
+    "orLocalCost": "ou {cost}"
   },
   "export": {
     "title": "Exporter la palette",
@@ -650,7 +661,11 @@
     "copied": "Extrait copié dans le presse-papiers",
     "copyFailed": "Échec de la copie de l'extrait",
     "download": "Télécharger",
-    "nothing": "Rien à exporter pour l'instant"
+    "nothing": "Rien à exporter pour l'instant",
+    "generatedLine": "Généré le {date} · {n} entrées",
+    "generatedLineOne": "Généré le {date} · {n} entrée",
+    "hexSourceHeader": "Source",
+    "hexDyesHeader": "Teintures"
   },
   "errors": {
     "apiFailed": "Échec de la récupération des données du tableau des ventes.",
@@ -676,7 +691,11 @@
     "unexpectedError": "Une erreur inattendue s'est produite",
     "tryAgain": "Réessayer",
     "resetComponent": "Réinitialiser le composant",
-    "retryAttempts": "Tentatives: {count}/{max}"
+    "retryAttempts": "Tentatives: {count}/{max}",
+    "requestTimeout": "Délai d'attente dépassé. Veuillez réessayer.",
+    "networkError": "Erreur réseau. Veuillez réessayer.",
+    "toolLoadFailed": "Échec du chargement de l'outil",
+    "tryAgainOrRefresh": "Veuillez réessayer ou actualiser la page."
   },
   "success": {
     "copiedToClipboard": "Copié dans le presse-papiers !"
@@ -724,8 +743,7 @@
     "cycleLanguage": "Changer de langue",
     "shareTool": "Partager l'outil actuel",
     "showHelp": "Afficher ce panneau",
-    "platformHint": "Astuce",
-    "useModifier": "Utilisez Ctrl pour les raccourcis système"
+    "platformHintFull": "Astuce : utilisez Ctrl pour les raccourcis système."
   },
   "palette": {
     "exported": "Palettes exportées avec succès !",
@@ -747,14 +765,54 @@
     "captureFailed": "Échec de la capture",
     "permissionDenied": "Accès à la caméra refusé",
     "checkPermissions": "Veuillez vérifier les permissions de votre navigateur",
-    "error": "Erreur caméra"
+    "error": "Erreur caméra",
+    "deviceFallback": "Caméra {n}"
   },
   "offline": {
     "banner": "Vous êtes hors ligne. Certaines fonctionnalités peuvent être limitées."
   },
+  "collections": {
+    "favoritesEmptyHint": "Cliquez sur ★ d'une teinture pour l'ajouter aux favoris",
+    "favoritesFull": "Maximum {max} favoris autorisés",
+    "addToFavorites": "Ajouter aux favoris",
+    "removeFromFavorites": "Retirer des favoris",
+    "addedToFavorites": "Ajouté aux favoris",
+    "removedFromFavorites": "Retiré des favoris",
+    "collectionsEmpty": "Pas de collections",
+    "collectionsEmptyHint": "Créez une collection pour organiser vos teintures",
+    "newCollection": "Nouvelle collection",
+    "createCollection": "Créer une collection",
+    "editCollection": "Modifier la collection",
+    "deleteCollection": "Supprimer la collection",
+    "collectionName": "Nom de la collection",
+    "collectionDescription": "Description (optionnelle)",
+    "collectionCreated": "Collection créée",
+    "collectionUpdated": "Collection mise à jour",
+    "collectionDeleted": "Collection supprimée",
+    "addToCollection": "Ajouter à la collection",
+    "addedToCollection": "Ajouté à {name}",
+    "removedFromCollection": "Retiré de {name}",
+    "collectionFull": "Collection pleine (max {max} teintures)",
+    "export": "Exporter",
+    "exportAll": "Tout exporter",
+    "import": "Importer",
+    "importSuccess": "{favorites} favoris, {collections} collections importés",
+    "importFailed": "Échec de l'import",
+    "invalidFormat": "Format de fichier invalide",
+    "confirmDelete": "Supprimer cette collection ?",
+    "manageCollections": "Gérer les collections",
+    "importSkippedInvalid": "Collection invalide ignorée : {name}",
+    "importCreateFailed": "Échec de la création de la collection : {name}",
+    "importedSuffix": "{name} (importé {n})",
+    "unnamed": "sans nom",
+    "full": "Pleine",
+    "favoritesWithCount": "Favoris ({count})",
+    "collectionsCountOne": "{count} collection",
+    "collectionsCountMany": "{count} collections",
+    "dyeCountOne": "{count} teinture",
+    "dyeCountMany": "{count} teintures"
+  },
   "tutorial": {
-    "step": "Étape",
-    "of": "sur",
     "skip": "Passer",
     "previous": "Précédent",
     "next": "Suivant",
@@ -847,7 +905,9 @@
         "title": "Paramètres d'affichage",
         "description": "Configurez les options d'affichage pour la vue vérificateur d'accessibilité."
       }
-    }
+    },
+    "stepOf": "Étape {i} sur {n}",
+    "dialogLabel": "Tutoriel"
   },
   "preset": {
     "mySubmissions": "Mes soumissions",
@@ -973,7 +1033,6 @@
     "tabSaved": "Enregistrés",
     "tabMine": "Les miens",
     "searchAll": "Chercher palettes, teintures, tags",
-    "resultsWord": "palettes",
     "shotSlot": "APERÇU GLAMOUR · LIEN, PAS DE COPIE",
     "paletteLabel": "PALETTE",
     "paletteCost": "COÛT DE LA PALETTE",
@@ -1034,14 +1093,12 @@
     "dyesReq": "3–6 REQUIS",
     "dyesHint": "Touchez un emplacement pour choisir. Ni champ hex ni pipette ici — une palette doit être achetable, chaque emplacement doit être une vraie teinture.",
     "rulesNote": "Les contributions sont vérifiées avant mise en ligne : pas de doublon d'une palette existante, pas de nom contraire au code de conduite, et tout lien d'exemple doit pointer vers un site autorisé. Comptez une journée.",
-    "mineSummary": "{n} palettes · {v} voix",
     "statusLive": "EN LIGNE",
     "statusReview": "EN RELECTURE",
     "statusRejected": "NON PUBLIÉE",
     "reviewNote": "En file de modération. La plupart des contributions passent en une journée.",
     "actView": "Voir",
     "actResubmit": "Renvoyer",
-    "votesLabel": "VOIX",
     "statPublished": "PUBLIÉES",
     "statTotalVotes": "VOIX AU TOTAL",
     "statAwaitingReview": "EN ATTENTE",
@@ -1050,48 +1107,46 @@
     "cfgBlend": "Mêler l'Officiel au flux",
     "cfgBlendDesc": "Mêle les palettes officielles à la Communauté. Désactivé : onglet séparé",
     "cfgHideUnbuyable": "Masquer les palettes inachetables",
-    "cfgHideUnbuyableDesc": "Écarte les palettes exigeant des teintures artisanales ou de coffre",
+    "cfgHideUnbuyableDesc": "Écarte les palettes exigeant des teintures artisanales ou de trouvaille",
     "cfgSavedFirst": "Enregistrées d'abord",
     "cfgSavedFirstDesc": "Épingle votre étagère en haut de chaque onglet",
     "cfgKeepDeleted": "Garder les palettes supprimées",
     "cfgKeepDeletedDesc": "Une palette enregistrée que l'auteur retire reste, marquée",
-    "cfgStoredLocally": "Stocké en local",
-    "cfgStoredLocallyDesc": "Jamais envoyé au serveur, fonctionne déconnecté",
-    "authorBy": "Créé par {author}"
-  },
-  "collections": {
-    "favorites": "Favoris",
-    "favoritesEmptyHint": "Cliquez sur ★ d'une teinture pour l'ajouter aux favoris",
-    "favoritesFull": "Maximum {max} favoris autorisés",
-    "addToFavorites": "Ajouter aux favoris",
-    "removeFromFavorites": "Retirer des favoris",
-    "addedToFavorites": "Ajouté aux favoris",
-    "removedFromFavorites": "Retiré des favoris",
-    "collectionsEmpty": "Pas de collections",
-    "collectionsEmptyHint": "Créez une collection pour organiser vos teintures",
-    "collectionsCount": "{count} collections",
-    "newCollection": "Nouvelle collection",
-    "createCollection": "Créer une collection",
-    "editCollection": "Modifier la collection",
-    "deleteCollection": "Supprimer la collection",
-    "collectionName": "Nom de la collection",
-    "collectionDescription": "Description (optionnelle)",
-    "collectionCreated": "Collection créée",
-    "collectionUpdated": "Collection mise à jour",
-    "collectionDeleted": "Collection supprimée",
-    "addToCollection": "Ajouter à la collection",
-    "addedToCollection": "Ajouté à {name}",
-    "removedFromCollection": "Retiré de {name}",
-    "dyeCount": "{count} teintures",
-    "collectionFull": "Collection pleine (max {max} teintures)",
-    "export": "Exporter",
-    "exportAll": "Tout exporter",
-    "import": "Importer",
-    "importSuccess": "{favorites} favoris, {collections} collections importés",
-    "importFailed": "Échec de l'import",
-    "invalidFormat": "Format de fichier invalide",
-    "confirmDelete": "Supprimer cette collection ?",
-    "manageCollections": "Gérer les collections"
+    "authorBy": "Créé par {author}",
+    "editTitle": "Modifier le preset",
+    "saveChanges": "Enregistrer les modifications",
+    "saving": "Enregistrement...",
+    "submitting": "Envoi en cours...",
+    "fieldNamePlaceholder": "ex. : Dark Knight Abyssal",
+    "fieldDescPlaceholder": "Décrivez votre palette de couleurs et quand l’utiliser...",
+    "fieldTagsPlaceholder": "ex. : dark, edgy, tank (séparés par des virgules)",
+    "fieldTagsLimit": "{max} tags max., {chars} caractères chacun",
+    "counterWithMin": "{n}/{max} (min. {min})",
+    "allMatchingSelected": "Toutes les teintures correspondantes sont sélectionnées",
+    "clickDyesToAdd": "Cliquez sur les teintures ci-dessous pour les ajouter...",
+    "clickToRemove": "Cliquez pour retirer",
+    "anotherPreset": "un autre préréglage",
+    "loadingOne": "Chargement du préréglage...",
+    "votesCount": "{n} voix",
+    "votesCountOne": "{n} voix",
+    "dyeCountShort": "{n} teintures",
+    "dyeCountShortOne": "{n} teinture",
+    "resultsCount": "{n} palettes",
+    "resultsCountOne": "{n} palette",
+    "validation": {
+      "nameMin": "Le nom doit contenir au moins {n} caractères",
+      "descMin": "La description doit contenir au moins {n} caractères",
+      "dyesMin": "Vous devez inclure au moins {n} teintures",
+      "nameMax": "Le nom ne doit pas dépasser {n} caractères",
+      "descMax": "La description ne doit pas dépasser {n} caractères",
+      "category": "Veuillez sélectionner une catégorie valide",
+      "dyesInvalid": "Sélection de teintures invalide",
+      "tagsMax": "Maximum {n} tags autorisés",
+      "tagLength": "Chaque tag ne doit pas dépasser {n} caractères"
+    },
+    "cfgStoredLocallyHint": "Stocké en local sur cet appareil, jamais envoyé au serveur, et fonctionne même déconnecté.",
+    "mineSummaryPresetsOne": "{n} palette",
+    "mineSummaryPresetsMany": "{n} palettes"
   },
   "emptyStates": {
     "noSearchResults": {
@@ -1137,7 +1192,11 @@
     "moreActions": "Plus d'actions",
     "slider": "Curseur",
     "toggle": "Basculer",
-    "toolSelection": "Sélection d'outil"
+    "toolSelection": "Sélection d'outil",
+    "modalDialogs": "Fenêtres modales",
+    "notifications": "Notifications",
+    "removeFromFavoritesNamed": "Retirer {name} des favoris",
+    "addToFavoritesNamed": "Ajouter {name} aux favoris"
   },
   "resultCard": {
     "inspectDyeIn": "Inspecter la teinture dans...",
@@ -1149,7 +1208,6 @@
     "addedTo": "Ajouté avec succès",
     "slotsFull": "Tous les emplacements sont pleins. Sélectionnez-en un à remplacer :",
     "selectSlotToReplace": "Sélectionner l'emplacement à remplacer",
-    "addingDye": "Ajout",
     "replacedInTool": "Remplacé avec succès",
     "tools": {
       "harmony": "Explorateur d'Harmonie",
@@ -1162,14 +1220,22 @@
     },
     "spectrumShort": "SPECTRE",
     "acquisitionShort": "SOURCE",
-    "hueOff": "TEINTE"
+    "hueOff": "TEINTE",
+    "stainShort": "STAIN",
+    "replaceSlotN": "Remplacer l'emplacement {n}",
+    "dyeResultAria": "Résultat de teinture : {name}",
+    "addingDyeLabel": "Ajout :",
+    "noData": "Aucune donnée"
   },
   "share": {
     "button": "Partager",
     "copied": "Copié !",
     "invalidDye": "Ce lien pointe vers une teinture que cette version ne reconnaît pas.",
     "legacyLink": "Ce lien provient d'une ancienne version et utilise un ID de teinture obsolète — demandez un nouveau lien.",
-    "invalidHex": "Ce lien contient une valeur de couleur invalide."
+    "invalidHex": "Ce lien contient une valeur de couleur invalide.",
+    "linkCopied": "Lien copié dans le presse-papiers !",
+    "copyManually": "Veuillez copier l'URL manuellement",
+    "generateFailed": "Échec de la création du lien de partage"
   },
   "advanced": {
     "eyebrow": "RÉGLAGES",
@@ -1178,7 +1244,9 @@
     "backupTitle": "Sauvegarde",
     "backupSummary": "exporter / importer les réglages en JSON",
     "behaviorTitle": "Comportement",
-    "behaviorSummary": "mode performance · statistiques"
+    "behaviorSummary": "mode performance · statistiques",
+    "dataBadge": "APPAREIL",
+    "behaviorBadge": "ENREGISTRÉ"
   },
   "swatch": {
     "charaHint": "Analysé sur cet appareil. Rien n'est envoyé — le fichier contient un nom de personnage et parfois une capture.",
@@ -1234,7 +1302,6 @@
     "equipCount": "{channels} canaux · {dyes} teintures",
     "glamourViewPieces": "Pièces",
     "glamourViewDyes": "Teintures",
-    "sameModel": "Même modèle : ",
     "namesUnavailable": "Noms des objets indisponibles — seuls les emplacements sont affichés. Les teintures sont lues localement depuis le fichier et ne sont pas concernées.",
     "footSplit": "{undyed} · {empty}.",
     "footWornUndyedOne": "1 pièce portée est non teinte (DyeId 0)",
@@ -1267,8 +1334,29 @@
     "saveCharacter": "Enregistrer les couleurs",
     "characterSavedOne": "1 couleur de personnage enregistrée sur cet appareil.",
     "characterSavedMany": "{n} couleurs de personnage enregistrées sur cet appareil.",
-    "selSentence": "{subject} est {place}. {dye} se situe à {delta}.",
-    "selSentenceCell": "{place}. {dye} se situe à {delta}.",
-    "selSentenceOffGrid": "{subject} est une couleur libre. {dye} se situe à {delta}."
+    "selSentence": "{subject} est {palette} {addr}. {dye} se situe à {delta}.",
+    "selSentenceCell": "{palette} {addr}. {dye} se situe à {delta}.",
+    "selSentenceOffGrid": "{subject} est une couleur libre. {dye} se situe à {delta}.",
+    "closestSwatchesHead": "Nuances les plus proches",
+    "rowColumn": "Ligne {row}, colonne {col}",
+    "exploreDye": "Explorer la teinture",
+    "parseFailed": "Impossible de lire ce fichier de personnage : {reason}",
+    "slotError": {
+      "midRangeIndex": "Cette couleur se situe dans l'intervalle inutilisé 96–127 entre les plages foncée et claire",
+      "indexOutOfRange": "Cet indice de couleur est en dehors de la plage de sa grille",
+      "noTribe": "Cet emplacement nécessite l'ethnie et le genre du fichier",
+      "unknown": "Impossible de lire cet emplacement"
+    },
+    "sameModelList": "Même modèle : {list}",
+    "gridTitle": "{name} ({count})",
+    "cellTag": "{palette} #{index}"
+  },
+  "languages": {
+    "en": "Anglais",
+    "ja": "Japonais",
+    "de": "Allemand",
+    "fr": "Français",
+    "ko": "Coréen",
+    "zh": "Chinois"
   }
 }

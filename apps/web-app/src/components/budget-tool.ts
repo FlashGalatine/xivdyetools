@@ -48,6 +48,8 @@ import { ThemeService } from '@services/theme-service';
 import { ICON_TOOL_BUDGET } from '@shared/tool-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { makeCustomDye } from '@shared/custom-dye';
+import { formatGil, formatNumber } from '@shared/format';
 import type { Dye, DyeId, PriceData } from '@xivdyetools/types';
 import { GLYPH_ACCENT_LIGHT, GLYPH_ACCENT_DARK } from '@xivdyetools/svg';
 import type { BudgetConfig, MatchingMethod } from '@shared/tool-config-types';
@@ -116,7 +118,11 @@ const TIER_ORDER: readonly TierKey[] = ['A', 'B', 'C', 'X'];
 /** Upgrade mode drops the target's own (A) tier. */
 const UPGRADE_ORDER: readonly TierKey[] = ['B', 'C', 'X'];
 
-/** Mono tier tags are identifiers, never localized. rampIndex maps into the tier color ramps. */
+/**
+ * Mono tier tags are identifiers by decision (2026-08-20 i18n audit): labels
+ * for the match-line bands, untranslated in every locale. rampIndex maps into
+ * the tier color ramps.
+ */
 const TIER_META: Record<TierKey, { tag: string; rampIndex: number }> = {
   A: { tag: 'STANDARD', rampIndex: 0 },
   B: { tag: 'WIDE #1', rampIndex: 1 },
@@ -423,7 +429,7 @@ export class BudgetTool extends BaseComponent {
       }
     } else if (hexParam && /^#?[0-9a-fA-F]{6}$/.test(hexParam)) {
       // ?hex= is a bare colour target — exclusive with `dye`, never persisted
-      this.targetDye = this.virtualTargetFor(`#${hexParam.replace(/^#/, '')}`);
+      this.targetDye = makeCustomDye(`#${hexParam.replace(/^#/, '')}`);
       this.updateTargetDyeDisplay();
     }
 
@@ -461,7 +467,10 @@ export class BudgetTool extends BaseComponent {
     }
 
     const meta = CONSOLIDATED_DYES[tier];
-    const localCost = `${meta.price.toLocaleString()} ${LanguageService.getCurrency(meta.currency)}`;
+    const localCost =
+      meta.currency === 'Gil'
+        ? formatGil(meta.price)
+        : `${formatNumber(meta.price)} ${LanguageService.getCurrency(meta.currency)}`;
     if (tier === 'A') {
       // Vendor gil is deterministic and always known.
       return { tier, gil: meta.price, board, localCost };
@@ -778,7 +787,7 @@ export class BudgetTool extends BaseComponent {
     const price = this.priceOf(target);
     let priceText: string;
     if (price.board != null) {
-      priceText = `~${price.board.toLocaleString()} gil`;
+      priceText = `~${formatGil(price.board)}`;
     } else if (price.localCost != null) {
       priceText = price.localCost;
     } else if (this.isLoading) {
@@ -867,7 +876,7 @@ export class BudgetTool extends BaseComponent {
       );
       btn.appendChild(
         this.createElement('span', {
-          textContent: this.dyeName(dye).split(' ')[0],
+          textContent: this.dyeName(dye),
           attributes: {
             style:
               'font-size: 11px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;',
@@ -876,7 +885,7 @@ export class BudgetTool extends BaseComponent {
       );
       btn.appendChild(
         this.createElement('span', {
-          textContent: board != null ? board.toLocaleString() : '—',
+          textContent: board != null ? formatNumber(board) : '—',
           attributes: {
             style: `font-family: ${MONO}; font-size: 9.5px; opacity: 0.75;`,
           },
@@ -1235,7 +1244,6 @@ export class BudgetTool extends BaseComponent {
     const targetName = this.dyeName(this.targetDye);
     const upgrade = this.isUpgradeMode();
     const targetGil = this.priceOf(this.targetDye).gil;
-    const gilWord = LanguageService.getCurrency('Gil');
 
     if (this.shareButton) this.shareButton.shareParams = this.getShareParams();
 
@@ -1255,14 +1263,14 @@ export class BudgetTool extends BaseComponent {
       badge = LanguageService.t('budget.upBadge');
       headline = LanguageService.tInterpolate('budget.upHead', { t: targetName });
       sub = LanguageService.tInterpolate('budget.upSub', { t: targetName });
-      money = `${CONSOLIDATED_DYES.A.price.toLocaleString()} ${gilWord}`;
+      money = formatGil(CONSOLIDATED_DYES.A.price);
       moneyLabel = LanguageService.t('budget.upFloorLabel');
       unit = LanguageService.t('budget.upUnit');
     } else if (!this.marketOnline) {
       badge = LanguageService.t('budget.offBadge');
       headline = LanguageService.tInterpolate('budget.ledgerHead', { t: targetName });
       sub = LanguageService.t('budget.offText');
-      money = cheapestGil != null ? `${cheapestGil.toLocaleString()} ${gilWord}` : '—';
+      money = cheapestGil != null ? formatGil(cheapestGil) : '—';
       moneyLabel = LanguageService.t('budget.cheapestKnown');
       unit = LanguageService.t('budget.noTargetPrice');
     } else {
@@ -1276,11 +1284,11 @@ export class BudgetTool extends BaseComponent {
         null
       );
       if (bestPerPoint != null) {
-        money = `${Math.round(bestPerPoint).toLocaleString()} ${gilWord}`;
+        money = formatGil(Math.round(bestPerPoint));
         moneyLabel = LanguageService.t('budget.perPointLabel');
         unit = LanguageService.t('budget.perPointSort');
       } else {
-        money = cheapestGil != null ? `${cheapestGil.toLocaleString()} ${gilWord}` : '—';
+        money = cheapestGil != null ? formatGil(cheapestGil) : '—';
         moneyLabel = LanguageService.t('budget.cheapestKnown');
         unit = targetGil == null ? LanguageService.t('budget.noTargetPrice') : '';
       }
@@ -1513,31 +1521,36 @@ export class BudgetTool extends BaseComponent {
           flagColor = '#F4BF4F';
         }
       } else if (groupGil === gilMax) {
-        priceMain = `${groupGil.toLocaleString()} gil`;
+        priceMain = formatGil(groupGil);
       } else {
-        priceMain = `${groupGil.toLocaleString()} – ${gilMax!.toLocaleString()} gil`;
+        priceMain = `${formatNumber(groupGil)} – ${formatGil(gilMax!)}`;
       }
       priceSub = LanguageService.t('budget.noVendorMarketOnly');
     } else {
       const tierMeta = CONSOLIDATED_DYES[tier];
-      const localCost = `${tierMeta.price.toLocaleString()} ${tierMeta.currency}`;
+      const localCost =
+        tierMeta.currency === 'Gil'
+          ? formatGil(tierMeta.price)
+          : `${formatNumber(tierMeta.price)} ${LanguageService.getCurrency(tierMeta.currency)}`;
       const boardPrice = list.length > 0 ? list[0].price.board : null;
       if (tier === 'A') {
-        priceMain = `${tierMeta.price.toLocaleString()} gil`;
+        priceMain = formatGil(tierMeta.price);
         priceSub =
           boardPrice != null
-            ? `${LanguageService.t('budget.boardWord')} ${boardPrice.toLocaleString()}`
+            ? LanguageService.tInterpolate('budget.boardPrice', {
+                price: formatNumber(boardPrice),
+              })
             : localCost;
         if (boardPrice != null && boardPrice > tierMeta.price) {
           flag = LanguageService.tInterpolate('budget.vendorSaves', {
-            diff: (boardPrice - tierMeta.price).toLocaleString(),
+            diff: formatNumber(boardPrice - tierMeta.price),
           });
           flagBg = this.tint('#5bbd68', 0.14);
           flagColor = goodGreen;
         }
       } else if (boardPrice != null) {
-        priceMain = `${boardPrice.toLocaleString()} gil`;
-        priceSub = `${LanguageService.t('budget.orWord')} ${localCost}`;
+        priceMain = formatGil(boardPrice);
+        priceSub = LanguageService.tInterpolate('budget.orLocalCost', { cost: localCost });
       } else {
         priceMain = localCost;
         priceSub = '';
@@ -1729,7 +1742,7 @@ export class BudgetTool extends BaseComponent {
       if (!narrow) {
         rowEl.appendChild(
           this.createElement('span', {
-            textContent: row.price.board != null ? row.price.board.toLocaleString() : '—',
+            textContent: row.price.board != null ? formatNumber(row.price.board) : '—',
             attributes: {
               style: `font-family: ${MONO}; font-size: 12.5px; text-align: right; color: ${row.price.board != null ? 'var(--theme-text)' : 'var(--theme-text-muted)'};`,
             },
@@ -1739,7 +1752,7 @@ export class BudgetTool extends BaseComponent {
 
       rowEl.appendChild(
         this.createElement('span', {
-          textContent: row.perPoint != null ? Math.round(row.perPoint).toLocaleString() : '',
+          textContent: row.perPoint != null ? formatNumber(Math.round(row.perPoint)) : '',
           attributes: {
             style: `font-family: ${MONO}; font-size: 12.5px; text-align: right; color: var(--theme-text);`,
           },
@@ -1868,29 +1881,6 @@ export class BudgetTool extends BaseComponent {
     this.renderQuickPicks();
   }
 
-  /** Wrap a bare colour in a virtual target dye (no stainID — never shared as a dye). */
-  private virtualTargetFor(hex: string): Dye {
-    return {
-      id: -Date.now(),
-      itemID: -Date.now(),
-      stainID: null,
-      name: `Custom (${hex.toUpperCase()})`,
-      hex: hex.toUpperCase(),
-      rgb: ColorService.hexToRgb(hex),
-      hsv: ColorService.hexToHsv(hex),
-      category: 'Custom',
-      acquisition: 'Custom',
-      cost: 0,
-      currency: null,
-      isMetallic: false,
-      isPastel: false,
-      isDark: false,
-      isCosmic: false,
-      isIshgardian: false,
-      consolidationType: null,
-    };
-  }
-
   /**
    * Price an arbitrary colour from the Color Palette drawer's hex field /
    * native picker — the target can be an armour base colour or UI tint,
@@ -1898,6 +1888,6 @@ export class BudgetTool extends BaseComponent {
    */
   public selectCustomColor(hex: string): void {
     if (!hex) return;
-    this.selectDye(this.virtualTargetFor(hex));
+    this.selectDye(makeCustomDye(hex));
   }
 }

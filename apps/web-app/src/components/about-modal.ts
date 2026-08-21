@@ -248,11 +248,13 @@ export class AboutModal {
     const creditsSection = document.createElement('div');
     creditsSection.className = 'text-center mb-5 space-y-1.5';
 
+    // The credit line carries a `{link}` placeholder rather than assuming the
+    // host name trails the sentence: ja/ko/zh put the attribution after a
+    // colon, and a future locale may want it mid-sentence.
     const credit = (text: string, host: string, url: string): HTMLElement => {
       const p = document.createElement('p');
       p.className = 'text-xs';
       p.style.color = 'var(--theme-text-muted)';
-      p.appendChild(document.createTextNode(text + ' '));
       const a = document.createElement('a');
       a.href = url;
       a.target = '_blank';
@@ -261,7 +263,13 @@ export class AboutModal {
       a.style.color = 'var(--theme-primary)';
       a.style.fontFamily = "'Fragment Mono', monospace";
       a.textContent = host;
+      // A value without the placeholder (or a missing key echoing back) still
+      // needs the trailing separator the old concatenation supplied.
+      const hasPlaceholder = text.includes('{link}');
+      const [before, after = ''] = hasPlaceholder ? text.split('{link}') : [text + ' '];
+      if (before) p.appendChild(document.createTextNode(before));
       p.appendChild(a);
+      if (after) p.appendChild(document.createTextNode(after));
       return p;
     };
 
@@ -346,9 +354,19 @@ export class AboutModal {
       a.appendChild(h);
       return a;
     };
-    links.appendChild(apiLink('Data API', 'data.xivdyetools.app', 'https://data.xivdyetools.app'));
     links.appendChild(
-      apiLink('API Worker docs', 'developers.xivdyetools.app', 'https://developers.xivdyetools.app')
+      apiLink(
+        LanguageService.t('about.dataApiLabel'),
+        'data.xivdyetools.app',
+        'https://data.xivdyetools.app'
+      )
+    );
+    links.appendChild(
+      apiLink(
+        LanguageService.t('about.apiDocsLabel'),
+        'developers.xivdyetools.app',
+        'https://developers.xivdyetools.app'
+      )
     );
     body.appendChild(links);
 

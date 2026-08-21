@@ -15,7 +15,6 @@ import { CollapsiblePanel } from '@components/collapsible-panel';
 import { ImageUploadDisplay } from '@components/image-upload-display';
 import { ColorPickerDisplay } from '@components/color-picker-display';
 import { ImageZoomController } from '@components/image-zoom-controller';
-import { RecentColorsPanel } from '@components/recent-colors-panel';
 import { MarketBoard } from '@components/market-board';
 import { openExportSheet } from '@components/export-sheet';
 import {
@@ -183,7 +182,6 @@ export class ExtractorTool extends BaseComponent {
   private imageUpload: ImageUploadDisplay | null = null;
   private colorPicker: ColorPickerDisplay | null = null;
   private imageZoom: ImageZoomController | null = null;
-  private recentColors: RecentColorsPanel | null = null;
   private dyeFiltersConfig: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
   private marketBoard: MarketBoard | null = null;
   private marketPanel: CollapsiblePanel | null = null;
@@ -308,7 +306,7 @@ export class ExtractorTool extends BaseComponent {
     });
 
     this.onPanelEvent(leftPanel, 'error', (event: CustomEvent) => {
-      const message = event.detail?.message || 'Failed to load image';
+      const message = event.detail?.message || LanguageService.t('errors.imageLoadFailed');
       logger.error('[MatcherTool] Image upload error:', event.detail);
       ToastService.error(message);
     });
@@ -516,7 +514,6 @@ export class ExtractorTool extends BaseComponent {
     this.imageUpload?.destroy();
     this.colorPicker?.destroy();
     this.imageZoom?.destroy();
-    this.recentColors?.destroy();
     this.marketBoard?.destroy();
     this.marketPanel?.destroy();
 
@@ -1844,7 +1841,7 @@ export class ExtractorTool extends BaseComponent {
       },
     });
     const title = this.createElement('span', {
-      textContent: 'Sampled Color',
+      textContent: LanguageService.t('matcher.sampledColor'),
       attributes: {
         style: 'font-size: 14px; font-weight: 600; color: var(--theme-text, #e0e0e0);',
       },
@@ -1910,7 +1907,7 @@ export class ExtractorTool extends BaseComponent {
 
     // Copy button
     const copyBtn = this.createElement('button', {
-      textContent: 'Copy Color Info',
+      textContent: LanguageService.t('matcher.copyColorInfo'),
       attributes: {
         style: `
           width: 100%;
@@ -1942,7 +1939,7 @@ export class ExtractorTool extends BaseComponent {
         `LAB: ${Math.round(lab.L)}, ${Math.round(lab.a)}, ${Math.round(lab.b)}`,
       ].join('\n');
       void navigator.clipboard.writeText(text).then(() => {
-        ToastService.success('Color info copied to clipboard');
+        ToastService.success(LanguageService.t('success.copiedToClipboard'));
       });
     });
     card.appendChild(copyBtn);
@@ -2144,11 +2141,6 @@ export class ExtractorTool extends BaseComponent {
     // Persist selected color to storage
     StorageService.setItem(STORAGE_KEYS.selectedColor, hex);
 
-    // Add to recent colors
-    if (this.recentColors) {
-      this.recentColors.addRecentColor(hex);
-    }
-
     // Find closest dyes using configured matching algorithm
     let closestDye = dyeService.findClosestDye(hex, { matchingMethod: this.matchingMethod });
     let withinDistance = dyeService.findDyesWithinDistance(hex, {
@@ -2261,7 +2253,7 @@ export class ExtractorTool extends BaseComponent {
         cardData.marketServer =
           WorldService.getWorldName(price.worldId) ||
           this.marketBoard?.getSelectedServer() ||
-          'Market';
+          LanguageService.t('common.market');
       }
 
       // Create the v4-result-card element
@@ -2512,9 +2504,10 @@ export class ExtractorTool extends BaseComponent {
       }
 
       ToastService.success(
-        LanguageService.tInterpolate('matcher.paletteExtracted', {
-          count: String(matches.length),
-        })
+        LanguageService.tInterpolate(
+          matches.length === 1 ? 'matcher.paletteExtractedOne' : 'matcher.paletteExtracted',
+          { count: String(matches.length) }
+        )
       );
 
       logger.info('[MatcherTool] Palette extracted:', matches.length, 'colors');
@@ -2780,7 +2773,7 @@ export class ExtractorTool extends BaseComponent {
         cardData.marketServer =
           WorldService.getWorldName(price.worldId) ||
           this.marketBoard?.getSelectedServer() ||
-          'Market';
+          LanguageService.t('common.market');
       }
 
       // Create the v4-result-card element

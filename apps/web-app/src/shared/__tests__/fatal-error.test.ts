@@ -50,4 +50,19 @@ describe('renderFatalError', () => {
     button.click();
     expect(onReload).toHaveBeenCalledTimes(1);
   });
+
+  it('renders the caller-supplied copy (main.ts passes a navigator.language translation)', () => {
+    const container = document.createElement('div');
+
+    renderFatalError(container, 'boom', () => {}, {
+      title: 'アプリケーションエラー',
+      body: 'XIV Dye Tools の初期化に失敗しました',
+      button: 'ページを再読み込み',
+    });
+
+    expect(container.querySelector('h1')!.textContent).toBe('アプリケーションエラー');
+    expect(container.textContent).toContain('XIV Dye Tools の初期化に失敗しました');
+    expect(container.querySelector('button')!.textContent).toBe('ページを再読み込み');
+    expect(container.textContent).not.toContain('Application Error');
+  });
 });

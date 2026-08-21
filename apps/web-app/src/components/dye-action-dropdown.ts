@@ -317,7 +317,7 @@ export function createDyeActionDropdown(dye: Dye, onAction?: DyeActionCallback):
 async function copyHexToClipboard(hex: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(hex);
-    ToastService.success(`${LanguageService.t('harmony.copiedHex')}: ${hex}`);
+    ToastService.success(LanguageService.tInterpolate('harmony.copiedHexValue', { hex }));
   } catch {
     // Fallback for older browsers
     const textArea = document.createElement('textarea');
@@ -328,7 +328,7 @@ async function copyHexToClipboard(hex: string): Promise<void> {
     textArea.select();
     try {
       document.execCommand('copy');
-      ToastService.success(`${LanguageService.t('harmony.copiedHex')}: ${hex}`);
+      ToastService.success(LanguageService.tInterpolate('harmony.copiedHexValue', { hex }));
     } catch {
       ToastService.error(LanguageService.t('harmony.copyFailed'));
     } finally {
@@ -449,7 +449,7 @@ function showSlotSelectionModal(
   const slotLabels =
     tool === 'mixer'
       ? [LanguageService.t('mixer.startDye'), LanguageService.t('mixer.endDye')]
-      : currentDyeIds.map((_, i) => `${LanguageService.t('common.slot')} ${i + 1}`);
+      : currentDyeIds.map((_, i) => LanguageService.tInterpolate('common.slotN', { n: i + 1 }));
 
   // Build content as DOM elements (SEC-002: avoid innerHTML for defense-in-depth)
   const contentEl = document.createElement('div');
@@ -471,7 +471,7 @@ function showSlotSelectionModal(
     const existingDye = dyeService.getDyeById(dyeId);
     const dyeName = existingDye
       ? LanguageService.getDyeName(existingDye.itemID) || existingDye.name
-      : 'Unknown';
+      : LanguageService.t('common.unknown');
     const dyeHex = existingDye?.hex ?? '#888888';
 
     const btn = document.createElement('button');
@@ -547,7 +547,7 @@ function showSlotSelectionModal(
   const addingLabel = document.createElement('p');
   addingLabel.className = 'text-xs';
   addingLabel.style.color = 'var(--theme-text-muted)';
-  addingLabel.textContent = LanguageService.t('harmony.addingDye') + ':';
+  addingLabel.textContent = LanguageService.t('harmony.addingDyeLabel');
   previewInfo.appendChild(addingLabel);
   const addingName = document.createElement('p');
   addingName.className = 'font-medium text-sm';

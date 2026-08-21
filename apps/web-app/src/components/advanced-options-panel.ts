@@ -239,7 +239,12 @@ function createContent(host: HTMLElement): HTMLElement {
   }
 
   // --- Data (destructive resets) ---
-  const data = sectionCard(t('advanced.dataTitle'), 'DEVICE', t('advanced.dataSummary'), true);
+  const data = sectionCard(
+    t('advanced.dataTitle'),
+    t('advanced.dataBadge'),
+    t('advanced.dataSummary'),
+    true
+  );
   data.body.appendChild(
     actionRow(t('config.resetSettings'), '', () =>
       destructiveConfirm(t('config.resetSettingsConfirm'), () => {
@@ -343,7 +348,7 @@ function createContent(host: HTMLElement): HTMLElement {
   // --- Behaviour (persisted toggles) ---
   const behaviour = sectionCard(
     t('advanced.behaviorTitle'),
-    'SAVED',
+    t('advanced.behaviorBadge'),
     t('advanced.behaviorSummary'),
     false
   );

@@ -243,8 +243,18 @@ export class ShareButton extends BaseLitComponent {
     `,
   ];
 
+  private languageUnsubscribe: (() => void) | null = null;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    // The button label is localized — follow a language switch.
+    this.languageUnsubscribe = LanguageService.subscribe(() => this.requestUpdate());
+  }
+
   disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.languageUnsubscribe?.();
+    this.languageUnsubscribe = null;
     // Clean up timeout on unmount
     if (this.copiedTimeout) {
       clearTimeout(this.copiedTimeout);
@@ -320,12 +330,12 @@ export class ShareButton extends BaseLitComponent {
    */
   private getLabel(): string {
     if (this.isCopied) {
-      return LanguageService.t('share.copied') || 'Copied!';
+      return LanguageService.t('share.copied');
     }
     if (this.label) {
       return this.label;
     }
-    return LanguageService.t('share.button') || 'Share';
+    return LanguageService.t('share.button');
   }
 
   protected override render(): TemplateResult {

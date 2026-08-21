@@ -724,8 +724,14 @@ export class V4LayoutShell extends BaseLitComponent {
     `,
   ];
 
+  private languageUnsubscribe: (() => void) | null = null;
+
   override connectedCallback(): void {
     super.connectedCallback();
+
+    // The shell's own chrome (palette drawer aria-labels, mobile hint) is
+    // localized, so it has to re-render when the language changes.
+    this.languageUnsubscribe = LanguageService.subscribe(() => this.requestUpdate());
 
     // Set up mobile detection
     this.mobileQuery = window.matchMedia('(max-width: 768px)');
@@ -745,6 +751,9 @@ export class V4LayoutShell extends BaseLitComponent {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+
+    this.languageUnsubscribe?.();
+    this.languageUnsubscribe = null;
 
     // Clean up media query listener
     this.mobileQuery?.removeEventListener('change', this.handleMediaQueryChange);

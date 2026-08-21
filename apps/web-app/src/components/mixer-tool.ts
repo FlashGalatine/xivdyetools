@@ -48,6 +48,7 @@ import { ICON_TOOL_MIXER } from '@shared/tool-icons';
 import { ICON_MARKET, ICON_PALETTE, ICON_SLIDERS } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { makeCustomDye } from '@shared/custom-dye';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import type {
   MixerConfig,
@@ -65,6 +66,7 @@ import type { ShareButton } from '@components/v4/share-button';
 import { openExportSheet } from '@components/export-sheet';
 import type { ExportEntry } from '@shared/palette-export';
 import { ShareService } from '@services/share-service';
+import { formatGil } from '@shared/format';
 
 // ============================================================================
 // Types and Constants
@@ -112,9 +114,6 @@ const SLOT_SIZE = {
 // ============================================================================
 // Component
 // ============================================================================
-
-/** Monotonic suffix for synthetic custom-colour dye ids (see createCustomDye). */
-let customDyeSequence = 0;
 
 /**
  * Dye Mixer Tool - v4 New Tool
@@ -646,7 +645,7 @@ export class MixerTool extends BaseComponent {
     }
     if (hexParam !== undefined && hexParam !== null && hexParam !== '') {
       const hex = ShareService.parseSharedHex(hexParam);
-      return hex ? this.createCustomDye(hex) : null;
+      return hex ? makeCustomDye(hex) : null;
     }
     return null;
   }
@@ -833,40 +832,8 @@ export class MixerTool extends BaseComponent {
     if (!hex) return;
 
     // Use the existing selectDye logic to add to mix
-    this.selectDye(this.createCustomDye(hex));
+    this.selectDye(makeCustomDye(hex));
     logger.info(`[MixerTool] Custom color selected: ${hex}`);
-  }
-
-  /**
-   * Wrap a bare colour in a virtual "dye" (negative id, no stainID) so the
-   * rest of the tool can treat it like any other input. Shared by the
-   * drawer's Custom Color and the `hexA`/`hexB` share params.
-   */
-  private createCustomDye(hex: string): Dye {
-    // Unique negative ID — the sequence keeps two inputs created in the same
-    // millisecond (e.g. `hexA` + `hexB` from one link) distinct.
-    const syntheticId = -(Date.now() + ++customDyeSequence);
-    return {
-      id: syntheticId,
-      itemID: syntheticId,
-      stainID: null, // Custom colors don't have a stain ID
-      name: `Custom (${hex})`,
-      hex: hex.toUpperCase(),
-      rgb: ColorService.hexToRgb(hex),
-      hsv: ColorService.hexToHsv(hex),
-      category: 'Custom',
-      acquisition: 'Custom',
-      cost: 0,
-      currency: null,
-      isMetallic: false,
-      isPastel: false,
-      isDark: false,
-      isCosmic: false,
-
-      isIshgardian: false,
-
-      consolidationType: null,
-    };
   }
 
   /**
@@ -1192,7 +1159,9 @@ export class MixerTool extends BaseComponent {
 
     const MONO = "'Fragment Mono', monospace";
     const MODELS: MixingMode[] = ['ryb', 'spectral', 'oklab', 'lab', 'hsl', 'rgb'];
-    // Row headers use the technical abbreviation — identical in every locale.
+    // Row headers name the blending method: identifiers by decision
+    // (2026-08-20 i18n audit), identical in every locale. The tooltip carries
+    // the translated model name (`mixer.model*`).
     const MODEL_SHORT: Record<string, string> = {
       ryb: 'RYB',
       spectral: 'Spectral',
@@ -1914,10 +1883,19 @@ export class MixerTool extends BaseComponent {
       });
     }
 
+    const modelLabel = LanguageService.t(
+      `mixer.model${this.mixingMode.charAt(0).toUpperCase()}${this.mixingMode.slice(1)}`
+    );
+
     openExportSheet({
       tool: 'mixer',
       title: LanguageService.t('mixer.matchingDyes'),
-      meta: [`Blend: ${this.mixingMode} @ ${Math.round(this.mixRatio * 100)}%`],
+      meta: [
+        LanguageService.tInterpolate('mixer.exportMeta', {
+          model: modelLabel,
+          pct: Math.round(this.mixRatio * 100),
+        }),
+      ],
       entries,
     });
   }
@@ -2202,7 +2180,7 @@ export class MixerTool extends BaseComponent {
     if (!this.showPrices) return null;
     const price = this.priceData.get(dye.itemID);
     if (!price?.currentMinPrice) return null;
-    return `${price.currentMinPrice.toLocaleString()} gil`;
+    return formatGil(price.currentMinPrice);
   }
 
   /**

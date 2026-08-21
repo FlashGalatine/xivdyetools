@@ -108,9 +108,6 @@ export const STORAGE_KEYS = {
 // UI Configuration
 // ============================================================================
 
-export const CARD_CLASSES_COMPACT =
-  'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4';
-
 /**
  * Companion dyes configuration for Expanded Suggestions mode
  */

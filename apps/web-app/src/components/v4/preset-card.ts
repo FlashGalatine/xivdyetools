@@ -335,6 +335,10 @@ export class PresetCard extends BaseLitComponent {
       : `background: linear-gradient(120deg, ${stops});`;
     const caption = hasShot ? `${LanguageService.t('preset.shotSlot')}\n${exampleLink}` : null;
 
+    const dyeCount = LanguageService.tInterpolate(
+      preset.dyes.length === 1 ? 'preset.dyeCountShortOne' : 'preset.dyeCountShort',
+      { n: preset.dyes.length }
+    );
     const byline = preset.isCurated
       ? LanguageService.t('preset.shipsWithApp')
       : (preset.author ?? '');
@@ -409,7 +413,7 @@ export class PresetCard extends BaseLitComponent {
           <p class="preset-description">${presetDescription(preset)}</p>
 
           <div class="meta-row">
-            <span class="byline">${byline} · ${preset.dyes.length} · ${this.ageText(preset)}</span>
+            <span class="byline">${byline} · ${dyeCount} · ${this.ageText(preset)}</span>
             <span class="actions">
               ${
                 !preset.isCurated && preset.isFromAPI

@@ -213,48 +213,48 @@ describe('ImageZoomController', () => {
     });
 
     it('steps in and out by ten points', () => {
-      btn('Zoom In').click();
+      btn('matcher.zoomIn').click();
       expect(level()).toBe('110.00%');
 
-      btn('Zoom Out').click();
-      btn('Zoom Out').click();
+      btn('matcher.zoomOut').click();
+      btn('matcher.zoomOut').click();
       expect(level()).toBe('90.00%');
     });
 
     it('scales the canvas from its top-left rather than its centre', () => {
-      btn('Zoom In').click();
+      btn('matcher.zoomIn').click();
 
       expect(canvas().style.transform).toBe('scale(1.1)');
       expect(canvas().style.transformOrigin).toBe('top left');
     });
 
     it('switches the cursor to move once the image overflows', () => {
-      btn('Zoom In').click();
+      btn('matcher.zoomIn').click();
       expect(canvas().style.cursor).toBe('move');
 
-      btn('Zoom Out').click();
+      btn('matcher.zoomOut').click();
       expect(canvas().style.cursor).toBe('crosshair');
     });
 
     it('clamps at 400% and disables the in button there', () => {
-      for (let i = 0; i < 40; i++) btn('Zoom In').click();
+      for (let i = 0; i < 40; i++) btn('matcher.zoomIn').click();
 
       expect(level()).toBe('400.00%');
-      expect(btn('Zoom In').disabled).toBe(true);
-      expect(btn('Zoom In').classList.contains('opacity-50')).toBe(true);
+      expect(btn('matcher.zoomIn').disabled).toBe(true);
+      expect(btn('matcher.zoomIn').classList.contains('opacity-50')).toBe(true);
     });
 
     it('clamps at 10% and disables the out button there', () => {
-      for (let i = 0; i < 20; i++) btn('Zoom Out').click();
+      for (let i = 0; i < 20; i++) btn('matcher.zoomOut').click();
 
       expect(level()).toBe('10.00%');
-      expect(btn('Zoom Out').disabled).toBe(true);
-      expect(btn('Zoom Out').classList.contains('cursor-not-allowed')).toBe(true);
+      expect(btn('matcher.zoomOut').disabled).toBe(true);
+      expect(btn('matcher.zoomOut').classList.contains('cursor-not-allowed')).toBe(true);
     });
 
     it('returns to 100% on reset', () => {
-      btn('Zoom In').click();
-      btn('Zoom In').click();
+      btn('matcher.zoomIn').click();
+      btn('matcher.zoomIn').click();
 
       btn('matcher.zoomReset').click();
 

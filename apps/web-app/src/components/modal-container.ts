@@ -25,6 +25,7 @@
  */
 
 import { BaseComponent } from './base-component';
+import { LanguageService } from '@services/language-service';
 import { ModalService, Modal, ModalId } from '@services/modal-service';
 import { clearContainer } from '@shared/utils';
 
@@ -381,7 +382,7 @@ export class ModalContainer extends BaseComponent {
       if (modal.closable) {
         const closeBtn = this.createElement('button', {
           className: 'm16-close',
-          attributes: { type: 'button', 'aria-label': 'Close modal' },
+          attributes: { type: 'button', 'aria-label': LanguageService.t('common.closeModal') },
           innerHTML:
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
         });
@@ -417,16 +418,20 @@ export class ModalContainer extends BaseComponent {
 
       if (modal.cancelText || modal.type === 'confirm') {
         footer.appendChild(
-          this.createActionButton(modal.cancelText || 'Cancel', 'cancel', () => {
-            if (modal.onCancel) modal.onCancel();
-            ModalService.dismiss(modal.id);
-          })
+          this.createActionButton(
+            modal.cancelText || LanguageService.t('common.cancel'),
+            'cancel',
+            () => {
+              if (modal.onCancel) modal.onCancel();
+              ModalService.dismiss(modal.id);
+            }
+          )
         );
       }
       if (modal.confirmText || modal.type === 'confirm') {
         footer.appendChild(
           this.createActionButton(
-            modal.confirmText || 'Confirm',
+            modal.confirmText || LanguageService.t('common.confirm'),
             modal.destructive ? 'destructive' : 'primary',
             () => {
               if (modal.onConfirm) modal.onConfirm();
@@ -462,7 +467,7 @@ export class ModalContainer extends BaseComponent {
       this.element = this.createElement('div', {
         id: 'modal-container',
         className: 'modal-container',
-        attributes: { 'aria-label': 'Modal dialogs' },
+        attributes: { 'aria-label': LanguageService.t('aria.modalDialogs') },
       });
       // Inject into <head>, NOT into this.element — the container is cleared
       // when the last modal closes, which would take the styles with it and

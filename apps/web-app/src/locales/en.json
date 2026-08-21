@@ -23,11 +23,13 @@
     "elsewhere": "ELSEWHERE",
     "apiSummary": "Public dye data, two endpoints",
     "legalLabel": "ATTRIBUTION",
-    "spectralCredit": "Realistic paint mixing (Kubelka–Munk theory) by"
+    "spectralCredit": "Realistic paint mixing (Kubelka–Munk theory) by {link}",
+    "dataApiLabel": "Data API",
+    "apiDocsLabel": "API Worker docs"
   },
   "footer": {
     "createdBy": "Created by Flash Galatine (Midgardsormr) for the FFXIV community",
-    "universalisCredit": "Market Board data provided by",
+    "universalisCredit": "Market Board data provided by {link}",
     "disclaimer": "FINAL FANTASY XIV © 2010-2025 SQUARE ENIX CO., LTD. All Rights Reserved.",
     "notAffiliated": "XIV Dye Tools is a fan-made application and is not affiliated with or endorsed by Square Enix."
   },
@@ -108,7 +110,6 @@
     "options": "Options",
     "hexColor": "Hex Color",
     "selectDye": "Select Dye",
-    "slot": "Slot",
     "replace": "Replace",
     "acquisition": "Acquisition",
     "original": "Original",
@@ -119,19 +120,20 @@
     "dismiss": "Dismiss",
     "optional": "(optional)",
     "done": "Done",
-    "alternates": "ALSO"
+    "alternates": "ALSO",
+    "custom": "Custom",
+    "customColorName": "Custom ({hex})",
+    "gilAmount": "{n} {unit}",
+    "loadingTool": "Loading {tool}…",
+    "closeModal": "Close modal",
+    "confirm": "Confirm",
+    "slotN": "Slot {n}",
+    "unknown": "Unknown",
+    "comingSoonTool": "{tool} Tool",
+    "comingSoon": "Coming soon"
   },
   "config": {
     "harmonyType": "Harmony Type",
-    "complementary": "Complementary",
-    "analogous": "Analogous",
-    "triadic": "Triadic",
-    "splitComplementary": "Split-Complementary",
-    "tetradic": "Tetradic",
-    "square": "Square",
-    "monochromatic": "Monochromatic",
-    "compound": "Compound",
-    "shades": "Shades",
     "matchingMode": "Matching Mode",
     "perceptualMatching": "Perceptual Matching",
     "perceptualMatchingDesc": "Uses DeltaE for perceptually accurate color matching",
@@ -223,14 +225,14 @@
     "importSettings": "Import",
     "importError": "Failed to import settings. Please check the file format.",
     "cmykValues": "CMYK Values",
-    "invertedTetradic": "Inverted Tetradic",
     "matchingRedmean": "Weighted RGB",
     "matchingRedmeanDesc": "Weighted RGB distance — a low-cost approximation of perceived difference.",
     "matchingDistinguish": "Percentage",
     "matchingDistinguishDesc": "RGB distance rescaled to 0-100. Same ranking as RGB DIST, shown as a percentage.",
     "showHue": "Hue deviance",
     "showStain": "Stain ID",
-    "showSpectrum": "Spectrum"
+    "showSpectrum": "Spectrum",
+    "userFallback": "User"
   },
   "colorPalette": {
     "title": "Color Palette",
@@ -245,18 +247,6 @@
     "spectrumWide1": "Wide Spectrum #1",
     "spectrumWide2": "Wide Spectrum #2",
     "spectrumUnconsolidated": "Unconsolidated",
-    "favorites": "Favorites",
-    "reds": "Reds",
-    "browns": "Browns",
-    "yellows": "Yellows",
-    "oranges": "Oranges",
-    "greens": "Greens",
-    "blues": "Blues",
-    "purples": "Purples",
-    "pinks": "Pinks",
-    "whites": "Whites",
-    "blacks": "Blacks",
-    "grays": "Grays",
     "noDyesFound": "No dyes found",
     "customColor": "Custom Color",
     "enterHexCode": "Enter hex code",
@@ -265,7 +255,8 @@
     "invalidHexCode": "Invalid hex code",
     "noDyesAvailable": "No dyes available",
     "randomDyeSelected": "Selected: {name}",
-    "mobileHint": "New here? Tap the palette button to pick dyes."
+    "mobileHint": "New here? Tap the palette button to pick dyes.",
+    "favoritesWithCount": "Favorites ({count})"
   },
   "harmony": {
     "companionDyes": "Additional Dyes per Harmony Color",
@@ -273,14 +264,10 @@
     "baseColorSection": "Base Color",
     "results": "Results",
     "selectDye": "Select a dye",
-    "noMatchingDyes": "No matching dyes found",
-    "avgHueDiff": "Avg Hue Diff",
-    "hueDiff": "hue diff",
     "actions": "Dye Actions",
     "addToComparison": "Add to Comparison",
     "addToMixer": "Add to Mixer",
     "copyHex": "Copy Hex Code",
-    "copiedHex": "Copied",
     "copyFailed": "Failed to copy",
     "seeBudget": "See Budget Suggestions",
     "seeHarmonies": "See Color Harmonies",
@@ -293,17 +280,11 @@
     "dyeAlreadyInAccessibility": "Dye already in Accessibility Checker",
     "slotsFull": "All slots are full. Select one to replace:",
     "selectSlotToReplace": "Select Slot to Replace",
-    "addingDye": "Adding",
     "replacedInTool": "Replaced successfully",
     "selectColorPrompt": "Select a Base Color",
     "base": "Base",
-    "harmony": "Harmony",
-    "fromIdeal": "from ideal",
-    "closestDyes": "Closest dyes:",
     "baseDye": "Base Dye",
     "harmonyType": "Harmony Type",
-    "colorWheel": "Color Wheel",
-    "colors": "colors",
     "actionsMenu": "Actions menu",
     "types": {
       "complementaryDesc": "Colors directly opposite on the color wheel for maximum contrast",
@@ -319,7 +300,11 @@
     },
     "railSwipeHint": "SWIPE FOR MORE",
     "marketFailTitle": "Prices unavailable",
-    "marketFailBody": "The market board did not answer. Colour matching is unaffected — only the price lines are missing."
+    "marketFailBody": "The market board did not answer. Colour matching is unaffected — only the price lines are missing.",
+    "harmonyN": "Harmony {n}",
+    "baseColorTitle": "Base Color: {hex}",
+    "addingDyeLabel": "Adding:",
+    "copiedHexValue": "Copied {hex}"
   },
   "matcher": {
     "uploadImage": "Upload Image",
@@ -328,7 +313,7 @@
     "takePhoto": "Take a photo",
     "supportedFormatsWithSize": "Supported formats: PNG, JPG, WebP, GIF. Maximum size: 20MB",
     "privacyNote": "Images are read in your browser and never uploaded.",
-    "privacyTitle": "Privacy Protected",
+    "privacyTitle": "Privacy Protected: ",
     "privacyMessage": "Photos and images are processed locally in your browser and never uploaded to any server.",
     "privacyLearnMore": "Learn more",
     "pasteHint": "Tip: Paste an image using Ctrl+V (Cmd+V on Mac)",
@@ -338,15 +323,11 @@
     "useEyedropper": "Use Eyedropper",
     "sampleSize": "Sample Size (for image color averaging)",
     "matchedDyes": "Matched Dyes",
-    "distance": "Distance",
     "noMatchingDyes": "No matching dyes found",
     "clickToSample": "Click to sample · drag for the loupe",
-    "market": "market",
     "zoomFit": "Fit",
     "zoomWidth": "Width",
     "zoomReset": "Reset",
-    "recentColors": "Recent Picks",
-    "clearHistory": "Clear",
     "colorCount": "Number of Colors",
     "extractPalette": "Extract Palette",
     "extractingPalette": "Extracting...",
@@ -370,7 +351,13 @@
     "pasteClipboard": "Paste from clipboard",
     "tapToSample": "Tap to sample",
     "addPick": "Add a pick",
-    "autoExtract": "Auto-extract"
+    "autoExtract": "Auto-extract",
+    "sampledColor": "Sampled Color",
+    "copyColorInfo": "Copy Color Info",
+    "zoomOut": "Zoom Out",
+    "zoomLevel": "Current Zoom",
+    "zoomIn": "Zoom In",
+    "paletteExtractedOne": "Extracted {count} color from image"
   },
   "accessibility": {
     "inspectDyes": "Inspect Dyes",
@@ -412,7 +399,19 @@
     "visionDescDeuteranopia": "Red-green. The most common form, and about one man in twelve.",
     "visionDescProtanopia": "Red-green, with reds darkened as well as shifted.",
     "visionDescTritanopia": "Blue-yellow. Rare, and it hits teals and yellows hardest.",
-    "visionDescAchromatopsia": "No colour at all — only lightness separates two dyes."
+    "visionDescAchromatopsia": "No colour at all — only lightness separates two dyes.",
+    "prevalenceNormal": "~92%",
+    "prevalenceDeuteranopia": "~6% males",
+    "prevalenceProtanopia": "~2% males",
+    "prevalenceTritanopia": "~0.01%",
+    "prevalenceAchromatopsia": "~0.003%",
+    "visionShort": {
+      "normal": "NRM",
+      "deuteranopia": "DEU",
+      "protanopia": "PRO",
+      "tritanopia": "TRI",
+      "achromatopsia": "ACH"
+    }
   },
   "comparison": {
     "selectedDyes": "Selected Dyes",
@@ -481,7 +480,8 @@
     "mDistinguishLabel": "Distinguishability",
     "mDistinguishShort": "Distinguishability %",
     "mDistinguishDesc": "The same RGB distance divided by the 441.67 diagonal of the colour cube and shown as a percentage — the number the Accessibility Checker reports for a pair.",
-    "mDistinguishCaveat": "Shares every weakness of RGB distance and adds a percent sign that invites false precision. Useful only for lining this tool up against the Accessibility Checker — never as a WCAG rating."
+    "mDistinguishCaveat": "Shares every weakness of RGB distance and adds a percent sign that invites false precision. Useful only for lining this tool up against the Accessibility Checker — never as a WCAG rating.",
+    "mRatioShort": "RATIO"
   },
   "mixer": {
     "dyeSelection": "Dye Selection",
@@ -516,7 +516,8 @@
     "modelOklab": "Perceptual",
     "modelLab": "LAB",
     "modelHsl": "Hue",
-    "modelRgb": "Light"
+    "modelRgb": "Light",
+    "exportMeta": "Blend: {model} @ {pct}%"
   },
   "gradient": {
     "selectColor": "Select Color",
@@ -535,7 +536,6 @@
       "oklch": "Modern perceptual (best)",
       "lch": "Cylindrical LAB"
     },
-    "stepLabel": "STEP",
     "fromLabel": "FROM",
     "toLabel": "TO",
     "swap": "Swap",
@@ -545,11 +545,14 @@
     "pinStep": "Pin this step",
     "unpinStep": "Unpin",
     "endAnchor": "Endpoint — already an anchor",
-    "avgDrift": "avg ΔE",
-    "maxDrift": "max ΔE",
     "maxDriftDesc": "The worst step in the ramp — an average hides a single lurch.",
     "bandIdeal": "IDEAL",
-    "bandAchievable": "ACHIEVABLE"
+    "bandAchievable": "ACHIEVABLE",
+    "exportMeta": "Interpolation: {space} · {n} steps",
+    "stepN": "STEP {n}",
+    "pinnedCount": "{n} · Pinned steps",
+    "avgDriftValue": "avg ΔE {v}",
+    "maxDriftValue": "max ΔE {v}"
   },
   "dyeSelector": {
     "searchPlaceholder": "Search dyes by name...",
@@ -597,7 +600,15 @@
     "pricesRefreshed": "Prices refreshed successfully!",
     "refreshError": "Error refreshing prices. Please try again.",
     "priceUnavailable": "Price unavailable",
-    "offlineWarning": "You are offline. Cannot refresh prices."
+    "offlineWarning": "You are offline. Cannot refresh prices.",
+    "region": {
+      "japan": "Japan",
+      "northAmerica": "North America",
+      "europe": "Europe",
+      "oceania": "Oceania",
+      "china": "China",
+      "korea": "Korea"
+    }
   },
   "budget": {
     "targetDye": "Target Dye",
@@ -631,8 +642,6 @@
     "priciestNow": "PRICIEST ON {world} NOW",
     "priciestOff": "MARKET-ONLY DYES · NO PRICES OFFLINE",
     "vendorSaves": "VENDOR SAVES {diff} vs BOARD",
-    "orWord": "or",
-    "boardWord": "board",
     "noVendorMarketOnly": "no vendor · market only",
     "matchLine": "Match line",
     "matchLineDesc": "How far a substitute may drift before it stops counting.",
@@ -641,7 +650,9 @@
     "handoffCompare": "Compare",
     "copyItem": "Copy item name",
     "saveSwap": "Save swap",
-    "swapSaved": "Swap saved to this device."
+    "swapSaved": "Swap saved to this device.",
+    "boardPrice": "board {price}",
+    "orLocalCost": "or {cost}"
   },
   "export": {
     "title": "Export Palette",
@@ -650,7 +661,11 @@
     "copied": "Snippet copied to clipboard",
     "copyFailed": "Failed to copy snippet",
     "download": "Download",
-    "nothing": "Nothing to export yet"
+    "nothing": "Nothing to export yet",
+    "generatedLine": "Generated {date} · {n} entries",
+    "generatedLineOne": "Generated {date} · {n} entry",
+    "hexSourceHeader": "Source",
+    "hexDyesHeader": "Dyes"
   },
   "errors": {
     "apiFailed": "Failed to fetch data from market board.",
@@ -676,7 +691,11 @@
     "unexpectedError": "An unexpected error occurred",
     "tryAgain": "Try Again",
     "resetComponent": "Reset Component",
-    "retryAttempts": "Retry attempts: {count}/{max}"
+    "retryAttempts": "Retry attempts: {count}/{max}",
+    "requestTimeout": "Request timed out. Please try again.",
+    "networkError": "Network error. Please try again.",
+    "toolLoadFailed": "Failed to load tool",
+    "tryAgainOrRefresh": "Please try again or refresh the page"
   },
   "success": {
     "copiedToClipboard": "Copied to clipboard!"
@@ -724,8 +743,7 @@
     "cycleLanguage": "Cycle language",
     "shareTool": "Share the current tool",
     "showHelp": "Show this panel",
-    "platformHint": "Tip",
-    "useModifier": "Use Ctrl for system shortcuts"
+    "platformHintFull": "Tip: use Ctrl for system shortcuts."
   },
   "palette": {
     "exported": "Palettes exported successfully!",
@@ -747,13 +765,13 @@
     "captureFailed": "Failed to capture image",
     "permissionDenied": "Camera access denied",
     "checkPermissions": "Please check your browser permissions",
-    "error": "Camera error"
+    "error": "Camera error",
+    "deviceFallback": "Camera {n}"
   },
   "offline": {
     "banner": "You are offline. Some features may be limited."
   },
   "collections": {
-    "favorites": "Favorites",
     "favoritesEmptyHint": "Click the ★ on any dye to add it to your favorites",
     "favoritesFull": "Maximum {max} favorites allowed",
     "addToFavorites": "Add to favorites",
@@ -762,7 +780,6 @@
     "removedFromFavorites": "Removed from favorites",
     "collectionsEmpty": "No collections yet",
     "collectionsEmptyHint": "Create a collection to organize your dyes",
-    "collectionsCount": "{count} collection(s)",
     "newCollection": "New Collection",
     "createCollection": "Create Collection",
     "editCollection": "Edit Collection",
@@ -775,7 +792,6 @@
     "addToCollection": "Add to collection",
     "addedToCollection": "Added to {name}",
     "removedFromCollection": "Removed from {name}",
-    "dyeCount": "{count} dye(s)",
     "collectionFull": "Collection is full ({max} dyes max)",
     "export": "Export",
     "exportAll": "Export All",
@@ -784,11 +800,19 @@
     "importFailed": "Import failed",
     "invalidFormat": "Invalid file format",
     "confirmDelete": "Are you sure you want to delete this collection?",
-    "manageCollections": "Manage Collections"
+    "manageCollections": "Manage Collections",
+    "importSkippedInvalid": "Skipped invalid collection: {name}",
+    "importCreateFailed": "Failed to create collection: {name}",
+    "importedSuffix": "{name} (imported {n})",
+    "unnamed": "unnamed",
+    "full": "Full",
+    "favoritesWithCount": "Favorites ({count})",
+    "collectionsCountOne": "{count} collection",
+    "collectionsCountMany": "{count} collections",
+    "dyeCountOne": "{count} dye",
+    "dyeCountMany": "{count} dyes"
   },
   "tutorial": {
-    "step": "Step",
-    "of": "of",
     "skip": "Skip",
     "previous": "Previous",
     "next": "Next",
@@ -881,7 +905,9 @@
         "title": "Display Settings",
         "description": "Configure display options for the accessibility checker view."
       }
-    }
+    },
+    "stepOf": "Step {i} of {n}",
+    "dialogLabel": "Tutorial"
   },
   "preset": {
     "mySubmissions": "My Submissions",
@@ -1007,7 +1033,6 @@
     "tabSaved": "Saved",
     "tabMine": "Mine",
     "searchAll": "Search presets, dyes, tags",
-    "resultsWord": "presets",
     "shotSlot": "GLAMOUR SHOT · LINKED, NOT UPLOADED",
     "paletteLabel": "PALETTE",
     "paletteCost": "PALETTE COST",
@@ -1068,14 +1093,12 @@
     "dyesReq": "3–6 REQUIRED",
     "dyesHint": "Tap a slot to pick. The hex field and the native colour picker are not offered here — a preset has to be buyable, so every slot must be a real dye.",
     "rulesNote": "Submissions are checked before they go live: no duplicates of an existing palette, no names that break the code of conduct, and any example link must point to an allowed site. Expect a day.",
-    "mineSummary": "{n} presets · {v} votes",
     "statusLive": "LIVE",
     "statusReview": "IN REVIEW",
     "statusRejected": "NOT PUBLISHED",
     "reviewNote": "Queued for moderation. Most submissions clear within a day.",
     "actView": "View",
     "actResubmit": "Resubmit",
-    "votesLabel": "VOTES",
     "statPublished": "PUBLISHED",
     "statTotalVotes": "TOTAL VOTES",
     "statAwaitingReview": "AWAITING REVIEW",
@@ -1089,9 +1112,41 @@
     "cfgSavedFirstDesc": "Pins your shelf to the top of every tab",
     "cfgKeepDeleted": "Keep deleted presets",
     "cfgKeepDeletedDesc": "A saved preset the author removes stays, marked",
-    "cfgStoredLocally": "Stored locally",
-    "cfgStoredLocallyDesc": "Never sent to the server, works signed out",
-    "authorBy": "Created by {author}"
+    "authorBy": "Created by {author}",
+    "editTitle": "Edit Preset",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "submitting": "Submitting...",
+    "fieldNamePlaceholder": "e.g., Dark Knight Abyssal",
+    "fieldDescPlaceholder": "Describe your color palette and when to use it...",
+    "fieldTagsPlaceholder": "e.g., dark, edgy, tank (comma-separated)",
+    "fieldTagsLimit": "Max {max} tags, {chars} chars each",
+    "counterWithMin": "{n}/{max} (min {min})",
+    "allMatchingSelected": "All matching dyes selected",
+    "clickDyesToAdd": "Click dyes below to add them...",
+    "clickToRemove": "Click to remove",
+    "anotherPreset": "another preset",
+    "loadingOne": "Loading preset...",
+    "votesCount": "{n} votes",
+    "votesCountOne": "{n} vote",
+    "dyeCountShort": "{n} dyes",
+    "dyeCountShortOne": "{n} dye",
+    "resultsCount": "{n} presets",
+    "resultsCountOne": "{n} preset",
+    "validation": {
+      "nameMin": "Name must be at least {n} characters",
+      "descMin": "Description must be at least {n} characters",
+      "dyesMin": "Must include at least {n} dyes",
+      "nameMax": "Name must be {n} characters or less",
+      "descMax": "Description must be {n} characters or less",
+      "category": "Please select a valid category",
+      "dyesInvalid": "Invalid dye selection",
+      "tagsMax": "Maximum {n} tags allowed",
+      "tagLength": "Each tag must be {n} characters or less"
+    },
+    "cfgStoredLocallyHint": "Stored locally on this device, never sent to the server, so it works signed out.",
+    "mineSummaryPresetsOne": "{n} preset",
+    "mineSummaryPresetsMany": "{n} presets"
   },
   "emptyStates": {
     "noSearchResults": {
@@ -1137,7 +1192,11 @@
     "moreActions": "More actions",
     "slider": "Slider",
     "toggle": "Toggle",
-    "toolSelection": "Tool selection"
+    "toolSelection": "Tool selection",
+    "modalDialogs": "Modal dialogs",
+    "notifications": "Notifications",
+    "removeFromFavoritesNamed": "Remove {name} from favorites",
+    "addToFavoritesNamed": "Add {name} to favorites"
   },
   "resultCard": {
     "inspectDyeIn": "Inspect Dye in...",
@@ -1149,7 +1208,6 @@
     "addedTo": "Added successfully",
     "slotsFull": "All slots are full. Select one to replace:",
     "selectSlotToReplace": "Select Slot to Replace",
-    "addingDye": "Adding",
     "replacedInTool": "Replaced successfully",
     "tools": {
       "harmony": "Harmony Explorer",
@@ -1162,14 +1220,22 @@
     },
     "spectrumShort": "SPEC",
     "acquisitionShort": "SOURCE",
-    "hueOff": "HUE OFF"
+    "hueOff": "HUE OFF",
+    "stainShort": "STAIN",
+    "replaceSlotN": "Replace Slot {n}",
+    "dyeResultAria": "Dye result: {name}",
+    "addingDyeLabel": "Adding:",
+    "noData": "No data"
   },
   "share": {
     "button": "Share",
     "copied": "Copied!",
     "invalidDye": "This link points at a dye this version doesn't recognise.",
     "legacyLink": "This link was made with an older version and uses an outdated dye ID — ask for a fresh link.",
-    "invalidHex": "This link carries an invalid colour value."
+    "invalidHex": "This link carries an invalid colour value.",
+    "linkCopied": "Link copied to clipboard!",
+    "copyManually": "Please copy the URL manually",
+    "generateFailed": "Failed to generate share link"
   },
   "advanced": {
     "eyebrow": "SETTINGS",
@@ -1178,7 +1244,9 @@
     "backupTitle": "Backup",
     "backupSummary": "export / import settings as JSON",
     "behaviorTitle": "Behaviour",
-    "behaviorSummary": "performance mode · analytics"
+    "behaviorSummary": "performance mode · analytics",
+    "dataBadge": "DEVICE",
+    "behaviorBadge": "SAVED"
   },
   "swatch": {
     "charaHint": "Parsed on this device. Nothing is uploaded — the file holds a character name and sometimes a screenshot.",
@@ -1234,7 +1302,6 @@
     "equipCount": "{channels} channels · {dyes} dyes",
     "glamourViewPieces": "Pieces",
     "glamourViewDyes": "Dyes",
-    "sameModel": "Same model: ",
     "namesUnavailable": "Item names unavailable — showing slots only. Dyes are read locally from the file and are unaffected.",
     "footSplit": "{undyed} · {empty}.",
     "footWornUndyedOne": "1 worn piece is undyed (DyeId 0)",
@@ -1267,8 +1334,29 @@
     "saveCharacter": "Save character colours",
     "characterSavedOne": "Saved 1 character colour to this device.",
     "characterSavedMany": "Saved {n} character colours to this device.",
-    "selSentence": "{subject} is {place}. {dye} sits {delta} away.",
-    "selSentenceCell": "{place}. {dye} sits {delta} away.",
-    "selSentenceOffGrid": "{subject} is an arbitrary colour. {dye} sits {delta} away."
+    "selSentence": "{subject} is {palette} {addr}. {dye} sits {delta} away.",
+    "selSentenceCell": "{palette} {addr}. {dye} sits {delta} away.",
+    "selSentenceOffGrid": "{subject} is an arbitrary colour. {dye} sits {delta} away.",
+    "closestSwatchesHead": "Closest Swatches",
+    "rowColumn": "Row {row}, Column {col}",
+    "exploreDye": "Explore Dye",
+    "parseFailed": "Couldn't read this character file: {reason}",
+    "slotError": {
+      "midRangeIndex": "This colour sits in the unused 96–127 gap between the dark and light ranges",
+      "indexOutOfRange": "This colour index is outside the range of its sheet",
+      "noTribe": "This slot needs the file's clan and gender to resolve",
+      "unknown": "Could not read this slot"
+    },
+    "sameModelList": "Same model: {list}",
+    "gridTitle": "{name} ({count})",
+    "cellTag": "{palette} #{index}"
+  },
+  "languages": {
+    "en": "English",
+    "ja": "Japanese",
+    "de": "German",
+    "fr": "French",
+    "ko": "Korean",
+    "zh": "Chinese"
   }
 }

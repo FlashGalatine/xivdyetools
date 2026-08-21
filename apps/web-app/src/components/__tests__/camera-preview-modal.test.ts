@@ -28,6 +28,8 @@ vi.mock('@services/index', () => ({
   },
   LanguageService: {
     t: (key: string) => key,
+    tInterpolate: (key: string, params: Record<string, string>) =>
+      `${key}: ${Object.values(params).join('/')}`,
     subscribe: vi.fn().mockReturnValue(() => {}),
   },
   cameraService: mockCameraService,

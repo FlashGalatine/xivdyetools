@@ -94,6 +94,28 @@
     sans-serif;
 }
 
+/*
+ * Han-unification override for `--font-cjk`, per locale.
+ *
+ * The base list above puts Noto Sans JP first for every locale, which is
+ * fine for ja but wrong for zh/ko: a Simplified-Chinese or Korean reader who
+ * also has Noto Sans JP installed (common -- it ships as part of the Google
+ * Noto CJK family pack) would get Han characters drawn with Japanese glyph
+ * forms (骨, 直, 曜, 令, 糸 ...) because the JP face matches first and
+ * carries the codepoint too. `LanguageService.setLocale` sets
+ * `document.documentElement.lang`, so `:root:lang(...)` reliably tracks the
+ * active locale and can retarget `--font-cjk` without touching the
+ * three families above. ja is intentionally left alone -- the default
+ * order already puts the correct glyph forms first for it.
+ */
+:root:lang(zh) {
+  --font-cjk: 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans JP', 'Noto Sans KR';
+}
+
+:root:lang(ko) {
+  --font-cjk: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans JP', 'Noto Sans SC';
+}
+
 /* ============================================================================
    Modern Typography
    ============================================================================ */

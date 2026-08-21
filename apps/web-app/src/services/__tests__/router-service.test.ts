@@ -4,6 +4,17 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+// Route titles are locale keys resolved through LanguageService at render
+// time. `t()` is stubbed to a sentinel-wrapped echo so a title assertion
+// cannot pass on a hardcoded English literal — the string has to have come
+// back through `t()` with the route's own key.
+vi.mock('../language-service', () => ({
+  LanguageService: {
+    t: (key: string) => `i18n:${key}`,
+  },
+}));
+
 import { RouterService, ROUTES, type ToolId, type RouteState } from '../router-service';
 
 // ============================================================================
@@ -71,7 +82,8 @@ describe('RouterService', () => {
       ROUTES.forEach((route) => {
         expect(route.id).toBeDefined();
         expect(route.path).toBeDefined();
-        expect(route.title).toBeDefined();
+        expect(route.titleKey).toBeDefined();
+        expect(route.titleKey.startsWith('tools.')).toBe(true);
         expect(route.path.startsWith('/')).toBe(true);
       });
     });
@@ -169,7 +181,7 @@ describe('RouterService', () => {
 
       RouterService.initialize();
 
-      expect(document.title).toContain('Comparison');
+      expect(document.title).toContain('i18n:tools.comparison.title');
     });
   });
 
@@ -192,7 +204,7 @@ describe('RouterService', () => {
     it('should update document title on navigation', () => {
       RouterService.navigateTo('accessibility');
 
-      expect(document.title).toContain('Accessibility');
+      expect(document.title).toContain('i18n:tools.accessibility.title');
     });
 
     it('should handle navigation with additional params', () => {
@@ -260,7 +272,7 @@ describe('RouterService', () => {
     it('should update document title on replace', () => {
       RouterService.replaceRoute('presets');
 
-      expect(document.title).toContain('Presets');
+      expect(document.title).toContain('i18n:tools.presets.title');
     });
 
     it('should handle replace with additional params', () => {
@@ -455,7 +467,7 @@ describe('RouterService', () => {
       expect(route).toBeDefined();
       expect(route?.id).toBe('harmony');
       expect(route?.path).toBe('/harmony');
-      expect(route?.title).toBe('Harmony Explorer');
+      expect(route?.titleKey).toBe('tools.harmony.title');
     });
 
     it('should return undefined for invalid tool', () => {
@@ -684,7 +696,24 @@ describe('RouterService', () => {
       });
       window.dispatchEvent(event);
 
-      expect(document.title).toContain('Presets');
+      expect(document.title).toContain('i18n:tools.presets.title');
+    });
+  });
+
+  // ============================================================================
+  // refreshDocumentTitle
+  // ============================================================================
+
+  describe('refreshDocumentTitle', () => {
+    it('should re-compose the title for the current route', () => {
+      RouterService.initialize();
+      RouterService.navigateTo('budget');
+
+      // Simulate a language switch clobbering the tab title.
+      document.title = 'stale';
+      RouterService.refreshDocumentTitle();
+
+      expect(document.title).toContain('i18n:tools.budget.title');
     });
   });
 

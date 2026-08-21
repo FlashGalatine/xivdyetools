@@ -15,9 +15,11 @@
  * (vi.mock is per-module-graph-per-test-file) so router-service.test.ts is
  * unaffected and keeps exercising the real constant.
  *
- * router-service.ts imports only `APP_NAME` from `@shared/constants` (its
- * only transitive dependency, `@shared/logger`, does not touch constants),
- * so the mock factory only needs to provide that one export.
+ * router-service.ts imports only `APP_NAME` from `@shared/constants`, so the
+ * mock factory only needs to provide that one export. `LanguageService` (which
+ * resolves the route title keys) is stubbed too — it reads a great deal more of
+ * `@shared/constants` than the sentinel mock provides, and the tool title is
+ * not what these tests are about.
  *
  * @module services/__tests__/router-service-title.test
  */
@@ -28,6 +30,12 @@ const { SENTINEL_APP_NAME } = vi.hoisted(() => ({ SENTINEL_APP_NAME: 'SENTINEL_A
 
 vi.mock('@shared/constants', () => ({
   APP_NAME: SENTINEL_APP_NAME,
+}));
+
+vi.mock('../language-service', () => ({
+  LanguageService: {
+    t: (key: string) => `i18n:${key}`,
+  },
 }));
 
 import { RouterService } from '../router-service';

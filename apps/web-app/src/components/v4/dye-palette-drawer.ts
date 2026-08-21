@@ -14,6 +14,7 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { BaseLitComponent } from './base-lit-component';
 import { DyeService, type Dye } from '@services/dye-service-wrapper';
 import { filterDyesBySpectra, ALL_SPECTRA } from '@shared/spectrum-filter-utils';
+import { dyeNameMatches, localizedDyeName } from '@shared/dye-name';
 import type { SpectrumKey } from '@shared/spectrum-filter-utils';
 import { CollectionService } from '@services/collection-service';
 import { ToastService } from '@services/toast-service';
@@ -21,45 +22,12 @@ import { logger } from '@shared/logger';
 import { ICON_DICE, ICON_BROOM, ICON_CLOSE } from '@shared/ui-icons';
 import { LanguageService } from '@services/index';
 import type { ToolId } from '@services/router-service';
+import { DYE_CATEGORIES } from '@xivdyetools/core';
 
 /**
  * Filter types for dye categories
  */
 type DyeFilter = 'all' | 'metallic' | 'pastel' | 'dark' | 'vibrant';
-
-/**
- * Dye categories for grouping
- */
-const DYE_CATEGORY_ORDER = [
-  'White',
-  'Grey',
-  'Black',
-  'Brown',
-  'Red',
-  'Orange',
-  'Yellow',
-  'Green',
-  'Blue',
-  'Purple',
-  'Pink',
-] as const;
-
-/**
- * Mapping from dye category names to translation keys
- */
-const CATEGORY_TRANSLATION_KEYS: Record<string, string> = {
-  White: 'colorPalette.whites',
-  Grey: 'colorPalette.grays',
-  Black: 'colorPalette.blacks',
-  Brown: 'colorPalette.browns',
-  Red: 'colorPalette.reds',
-  Orange: 'colorPalette.oranges',
-  Yellow: 'colorPalette.yellows',
-  Green: 'colorPalette.greens',
-  Blue: 'colorPalette.blues',
-  Purple: 'colorPalette.purples',
-  Pink: 'colorPalette.pinks',
-};
 
 /**
  * Consolidation spectrum chips (multi-select). Labels come from colorPalette.* keys.
@@ -793,8 +761,8 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
     // Apply search filter
     if (this.searchQuery.trim()) {
-      const query = this.searchQuery.toLowerCase();
-      dyes = dyes.filter((d) => d.name.toLowerCase().includes(query));
+      const query = this.searchQuery.trim();
+      dyes = dyes.filter((d) => dyeNameMatches(d, query));
     }
 
     // Apply category filter
@@ -826,7 +794,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
   private groupByCategory(dyes: Dye[]): Map<string, Dye[]> {
     const groups = new Map<string, Dye[]>();
 
-    for (const category of DYE_CATEGORY_ORDER) {
+    for (const category of DYE_CATEGORIES) {
       const categoryDyes = dyes.filter((d) => d.category === category);
       if (categoryDyes.length > 0) {
         groups.set(category, categoryDyes);
@@ -835,7 +803,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
     // Add any remaining categories not in our order
     for (const dye of dyes) {
-      if (!DYE_CATEGORY_ORDER.includes(dye.category as (typeof DYE_CATEGORY_ORDER)[number])) {
+      if (!DYE_CATEGORIES.includes(dye.category as (typeof DYE_CATEGORIES)[number])) {
         const existing = groups.get(dye.category) || [];
         existing.push(dye);
         groups.set(dye.category, existing);
@@ -901,7 +869,9 @@ export class DyePaletteDrawer extends BaseLitComponent {
     this.emit('dye-selected', { dye: randomDye });
     logger.debug(`[DyePaletteDrawer] Random dye selected: ${randomDye.name}`);
     ToastService.info(
-      LanguageService.tInterpolate('colorPalette.randomDyeSelected', { name: randomDye.name })
+      LanguageService.tInterpolate('colorPalette.randomDyeSelected', {
+        name: localizedDyeName(randomDye),
+      })
     );
   }
 
@@ -1235,8 +1205,10 @@ export class DyePaletteDrawer extends BaseLitComponent {
           }"
           aria-label="${
             isFav
-              ? `${LanguageService.t('aria.removeFromFavorites')}: ${localizedName}`
-              : `${LanguageService.t('aria.addToFavorites')}: ${localizedName}`
+              ? LanguageService.tInterpolate('aria.removeFromFavoritesNamed', {
+                  name: localizedName,
+                })
+              : LanguageService.tInterpolate('aria.addToFavoritesNamed', { name: localizedName })
           }"
           @click=${(e: Event) => this.handleFavoriteToggle(e, dye)}
         >
@@ -1268,7 +1240,9 @@ export class DyePaletteDrawer extends BaseLitComponent {
                 d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
               />
             </svg>
-            ${LanguageService.t('colorPalette.favorites')} (${this.favoriteDyes.length})
+            ${LanguageService.tInterpolate('colorPalette.favoritesWithCount', {
+              count: this.favoriteDyes.length,
+            })}
           </span>
           <svg
             class="chevron ${this.favoritesExpanded ? '' : 'collapsed'}"
@@ -1323,9 +1297,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
       ${Array.from(groupedDyes.entries()).map(
         ([category, dyes]) => html`
           <div class="category-section">
-            <div class="category-label">
-              ${LanguageService.t(CATEGORY_TRANSLATION_KEYS[category] || category)}
-            </div>
+            <div class="category-label">${LanguageService.getCategory(category)}</div>
             <div class="swatch-grid">${dyes.map((dye) => this.renderSwatch(dye))}</div>
           </div>
         `

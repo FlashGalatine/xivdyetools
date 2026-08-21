@@ -20,9 +20,9 @@
     "functions/_middleware.ts",
     "vite-plugin-*.ts",
     "eslint.config.js",
-    "eslint-rules/*.js"
+    "eslint-rules/**/*.js"
   ],
-  "project": ["src/**/*.{ts,js,css}", "scripts/**", "functions/**", "e2e/**", "*.ts", "*.js"],
+  "project": ["src/**/*.{ts,js,css}", "scripts/**", "functions/**", "e2e/**", "eslint-rules/**", "*.ts", "*.js"],
   // A symbol used inside its own file is not dead just because nothing else
   // imports it — exported types especially. Drop-the-`export` is churn, not cleanup.
   "ignoreExportsUsedInFile": true,

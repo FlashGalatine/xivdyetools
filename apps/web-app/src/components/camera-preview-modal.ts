@@ -51,7 +51,9 @@ export async function showCameraPreviewModal(onCapture: OnCaptureCallback): Prom
     cameras.forEach((camera, index) => {
       const option = document.createElement('option');
       option.value = camera.deviceId;
-      option.textContent = camera.label || `Camera ${index + 1}`;
+      option.textContent =
+        camera.label ||
+        LanguageService.tInterpolate('camera.deviceFallback', { n: String(index + 1) });
       selector.appendChild(option);
     });
 

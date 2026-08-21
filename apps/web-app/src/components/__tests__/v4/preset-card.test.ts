@@ -15,7 +15,19 @@ import type { UnifiedPreset } from '@services/hybrid-preset-service';
 vi.mock('@services/index', () => ({
   LanguageService: {
     t: (key: string) => key,
-    tInterpolate: (key: string) => key,
+    // Echoes keys, except for the two count templates the byline reads: those
+    // interpolate for real, so a test can tell "3 dyes" from "1 dye" instead of
+    // only seeing a key name come back.
+    tInterpolate: (key: string, params: Record<string, string | number>) => {
+      const templates: Record<string, string> = {
+        'preset.dyeCountShort': '{n} dyes',
+        'preset.dyeCountShortOne': '{n} dye',
+      };
+      return Object.entries(params).reduce(
+        (text, [name, value]) => text.replaceAll(`{${name}}`, String(value)),
+        templates[key] ?? key
+      );
+    },
     subscribe: vi.fn().mockReturnValue(() => {}),
   },
 }));
@@ -23,7 +35,19 @@ vi.mock('@services/index', () => ({
 vi.mock('@services/language-service', () => ({
   LanguageService: {
     t: (key: string) => key,
-    tInterpolate: (key: string) => key,
+    // Echoes keys, except for the two count templates the byline reads: those
+    // interpolate for real, so a test can tell "3 dyes" from "1 dye" instead of
+    // only seeing a key name come back.
+    tInterpolate: (key: string, params: Record<string, string | number>) => {
+      const templates: Record<string, string> = {
+        'preset.dyeCountShort': '{n} dyes',
+        'preset.dyeCountShortOne': '{n} dye',
+      };
+      return Object.entries(params).reduce(
+        (text, [name, value]) => text.replaceAll(`{${name}}`, String(value)),
+        templates[key] ?? key
+      );
+    },
     subscribe: vi.fn().mockReturnValue(() => {}),
   },
 }));
@@ -108,6 +132,25 @@ describe('PresetCard', () => {
     await el.updateComplete;
     return el;
   }
+
+  it('renders the plural dye count in the byline', async () => {
+    const el = await mountCard(baseCardData);
+
+    const byline = el.shadowRoot!.querySelector('.byline')!.textContent!;
+    expect(byline).toContain('3 dyes');
+  });
+
+  it('renders the singular dye count for a one-dye preset', async () => {
+    const el = await mountCard({
+      ...baseCardData,
+      preset: { ...basePreset, dyes: [1] },
+      colors: ['#ff0000'],
+    });
+
+    const byline = el.shadowRoot!.querySelector('.byline')!.textContent!;
+    expect(byline).toContain('1 dye');
+    expect(byline).not.toContain('1 dyes');
+  });
 
   it('renders the preview image when one is approved', async () => {
     const el = await mountCard({

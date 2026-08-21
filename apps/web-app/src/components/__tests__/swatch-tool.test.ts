@@ -753,6 +753,28 @@ describe('SwatchTool', () => {
       expect(cells[8].getAttribute('data-index')).toBe('8');
     });
 
+    it('titles the grid through swatch.gridTitle rather than name + "(n)"', async () => {
+      tool = mount();
+      await flush();
+
+      // One key holds both halves, so ja can write "{name}（{count}）"
+      const title = rightPanel.querySelector('.section-title');
+      expect(title?.textContent).toContain('swatch.gridTitle:');
+      expect(title?.textContent).toContain('/24');
+    });
+
+    it('feeds the selection sentence the palette and the address as separate params', async () => {
+      tool = mount();
+      await flush();
+
+      swatches()[3].click();
+      await flush();
+
+      // {palette} and {addr} arrive apart, so a language may reorder them
+      expect(rightPanel.textContent).toContain('swatch.selSentenceCell:');
+      expect(rightPanel.textContent).toContain('/R1·C4/');
+    });
+
     it('paints each cell with its own colour', async () => {
       tool = mount();
       await flush();

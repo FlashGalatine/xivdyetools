@@ -1151,7 +1151,7 @@ describe('ExtractorTool', () => {
 
         sample('#FF0000');
 
-        expect(rightPanel.textContent).toContain('Sampled Color');
+        expect(rightPanel.textContent).toContain('matcher.sampledColor');
       });
 
       it('records the sample in the roll and persists it', async () => {
@@ -1348,7 +1348,24 @@ describe('ExtractorTool', () => {
 
         expect(resultCards().length).toBeGreaterThan(0);
         expect(ToastService.success).toHaveBeenCalledWith(
-          expect.stringContaining('matcher.paletteExtracted')
+          expect.stringContaining('matcher.paletteExtracted:')
+        );
+      });
+
+      it('uses the singular key when the image yields one colour', async () => {
+        const { ToastService } = await import('@services/index');
+        tool = mount();
+        await loadImage();
+        tool.setConfig({ maxColors: 1 });
+        await waitForIdle();
+        vi.mocked(ToastService.success).mockClear();
+
+        autoBtn().click();
+        await waitForIdle();
+
+        // "1 colors" is the bug this pair exists to prevent
+        expect(ToastService.success).toHaveBeenCalledWith(
+          expect.stringContaining('matcher.paletteExtractedOne:')
         );
       });
 

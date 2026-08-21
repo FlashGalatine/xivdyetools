@@ -12,6 +12,20 @@ import { LanguageService } from '@services/language-service';
 import { LOCALE_DISPLAY_INFO } from '@shared/constants';
 import type { LocaleCode } from '@shared/i18n-types';
 
+/**
+ * Second-line language name, in the UI's own language — the exonym, not the
+ * English name the tiles used to print regardless of locale. Keys are written
+ * out literally so the orphan scanner (`npm run i18n:unused`) sees each one.
+ */
+const LANGUAGE_NAME_KEYS: Record<LocaleCode, string> = {
+  en: 'languages.en',
+  ja: 'languages.ja',
+  de: 'languages.de',
+  fr: 'languages.fr',
+  ko: 'languages.ko',
+  zh: 'languages.zh',
+};
+
 // ============================================================================
 // Language Modal Class
 // ============================================================================
@@ -150,13 +164,15 @@ class LanguageModal {
       nativeName.textContent = locale.name;
       nameContainer.appendChild(nativeName);
 
-      // English name (for non-English languages)
-      if (locale.code !== 'en') {
-        const englishName = document.createElement('span');
-        englishName.className = 'text-xs';
-        englishName.style.color = 'var(--theme-text-muted)';
-        englishName.textContent = locale.englishName;
-        nameContainer.appendChild(englishName);
+      // Exonym line — suppressed when it would just repeat the native name
+      // (the current locale's own tile, e.g. Deutsch/Deutsch under de).
+      const exonym = LanguageService.t(LANGUAGE_NAME_KEYS[locale.code]);
+      if (exonym !== locale.name) {
+        const exonymEl = document.createElement('span');
+        exonymEl.className = 'text-xs';
+        exonymEl.style.color = 'var(--theme-text-muted)';
+        exonymEl.textContent = exonym;
+        nameContainer.appendChild(exonymEl);
       }
 
       localeBtn.appendChild(nameContainer);

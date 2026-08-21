@@ -18,9 +18,41 @@ import {
 import { mockDyes } from '../../__tests__/mocks/services';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
-const { mockGetAllDyes, mockGetDyeById } = vi.hoisted(() => ({
+const { mockGetAllDyes, mockGetDyeById, JA_DYE_NAMES } = vi.hoisted(() => ({
   mockGetAllDyes: vi.fn(),
   mockGetDyeById: vi.fn(),
+  /**
+   * Localized names for the mockDyes itemIDs, deliberately numbered so that
+   * their alphabetical order is the REVERSE of the English one: `mockDyes[0]`
+   * ("Snow White", 5729) sorts last in English and first here. A sort or search
+   * that still reads `dye.name` therefore produces a different result, so these
+   * tests fail if the localized helpers are reverted.
+   */
+  JA_DYE_NAMES: {
+    5729: 'ja-01-スノーホワイト',
+    5730: 'ja-02-アッシュグレイ',
+    5731: 'ja-03-ソートブラック',
+    5732: 'ja-04-ローズピンク',
+    5733: 'ja-05-ワインレッド',
+    5734: 'ja-06-コーラルピンク',
+    5735: 'ja-07-ブラッドレッド',
+    5736: 'ja-08-サンセットオレンジ',
+    5737: 'ja-09-ダラガブレッド',
+    5738: 'ja-10-スカイブルー',
+  } as Record<number, string>,
+}));
+
+// `@shared/dye-name` imports LanguageService from its own module, not the
+// `@services/index` barrel — mocking only the barrel would leave the helpers
+// talking to the real service.
+vi.mock('@services/language-service', () => ({
+  LanguageService: {
+    t: (key: string) => key,
+    tInterpolate: (key: string) => key,
+    getCurrentLocale: () => 'ja',
+    getDyeName: (itemID: number) => JA_DYE_NAMES[itemID] ?? null,
+    subscribe: vi.fn().mockReturnValue(() => {}),
+  },
 }));
 
 vi.mock('@services/dye-service-wrapper', () => ({
@@ -44,7 +76,11 @@ vi.mock('@services/index', () => ({
     t: (key: string) => key,
     tInterpolate: (key: string, params: Record<string, string>) =>
       `${key}: ${Object.values(params).join('/')}`,
-    getDyeName: (itemId: number) => `Dye-${itemId}`,
+    getDyeName: (itemId: number) => JA_DYE_NAMES[itemId] ?? null,
+    getCurrentLocale: () => 'ja',
+    getCategory: (category: string) => category,
+    getAcquisition: (acquisition: string) => acquisition,
+    getCurrency: (currency: string) => currency,
     subscribe: vi.fn().mockReturnValue(() => {}),
   },
   CollectionService: {
@@ -62,9 +98,9 @@ vi.mock('@shared/logger', () => ({
   },
 }));
 
-vi.mock('@shared/ui-icons', () => ({
-  ICON_CRYSTAL: '<svg></svg>',
-}));
+// `@shared/ui-icons` is a bag of inert SVG string constants, so the real module
+// is used: the previous hand-written stub exported only ICON_CRYSTAL, which made
+// DyeSearchBox throw and render an error boundary instead of the dye grid.
 
 vi.mock('../collection-manager-modal', () => ({
   showCollectionManagerModal: vi.fn(),
@@ -255,6 +291,74 @@ describe('DyeSelector', () => {
       selector.setSelectedDyes([]);
 
       expect(selector.getSelectedDyes()).toHaveLength(0);
+    });
+  });
+
+  // ============================================================================
+  // Localized Dye Name Tests (HC-SYS-004 / HC-SYS-005)
+  // ============================================================================
+
+  describe('Localized dye names', () => {
+    /** aria-labels of the rendered dye buttons, in DOM order. */
+    const renderedNames = (): string[] =>
+      Array.from(container.querySelectorAll('.dye-select-btn')).map(
+        (btn) => btn.getAttribute('aria-label') ?? ''
+      );
+
+    /**
+     * DyeSelector binds its custom-event handlers to its own root element (see
+     * `BaseComponent.onCustom`), not to the host container, so events have to
+     * be dispatched from inside it. The real DyeSearchBox emits `search-changed`
+     * on a debounce; firing it directly keeps these tests timer-free while still
+     * running the component's real filter + re-render path.
+     */
+    const fire = (name: string, detail: unknown): void => {
+      const root = container.firstElementChild as HTMLElement;
+      root.dispatchEvent(new CustomEvent(name, { detail, bubbles: true }));
+    };
+
+    const search = (query: string): void => fire('search-changed', query);
+
+    it('labels each dye button with its localized name', () => {
+      selector = new DyeSelector(container);
+      selector.init();
+
+      // English labels would read 'Snow White' — the mocked ja name must win.
+      expect(renderedNames()).toContain('ja-01-スノーホワイト');
+      expect(renderedNames()).not.toContain('Snow White');
+    });
+
+    it('finds a dye by searching its localized name', () => {
+      selector = new DyeSelector(container);
+      selector.init();
+
+      search('ja-04');
+
+      // 'ja-04' appears in no English dye name, so a `dye.name` search finds nothing.
+      expect(renderedNames()).toEqual(['ja-04-ローズピンク']);
+    });
+
+    it('still finds a dye by its English name', () => {
+      selector = new DyeSelector(container);
+      selector.init();
+
+      search('rose pink');
+
+      expect(renderedNames()).toEqual(['ja-04-ローズピンク']);
+    });
+
+    it('sorts alphabetically by the localized name, not the English one', () => {
+      selector = new DyeSelector(container);
+      selector.init();
+
+      fire('sort-changed', 'alphabetical');
+
+      const names = renderedNames();
+      expect(names).toHaveLength(mockDyes.length);
+      // Sorting by `dye.name` would put 'Ash Grey' (ja-02) first; by localized
+      // name 'Snow White' (ja-01) leads.
+      expect(names[0]).toBe('ja-01-スノーホワイト');
+      expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b, 'ja')));
     });
   });
 

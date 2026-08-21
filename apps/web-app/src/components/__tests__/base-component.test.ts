@@ -19,6 +19,7 @@ vi.mock('@services/tool-panel-builders', () => ({
 }));
 
 import { BaseComponent } from '../base-component';
+import { logger } from '@shared/logger';
 import {
   createTestContainer,
   cleanupTestContainer,
@@ -493,14 +494,21 @@ describe('BaseComponent', () => {
       expect(container.querySelector('.component-error-boundary')).not.toBeNull();
     });
 
-    it('should display error message in fallback UI', () => {
+    it('should show the translated error line and log the raw message', () => {
+      const logSpy = vi.spyOn(logger, 'error').mockImplementation(() => {});
       component = new TestComponent(container);
       component.shouldThrowOnRender = true;
 
       component.init();
 
+      // The raw Error message is developer English: it goes to the log, never
+      // to the panel, which shows the translated `errors.unexpectedError`.
       const errorDetails = container.querySelector('.component-error-details');
-      expect(errorDetails?.textContent).toContain('Test render error');
+      expect(errorDetails?.textContent).toBe('An unexpected error occurred');
+      expect(errorDetails?.textContent).not.toContain('Test render error');
+      expect(logSpy).toHaveBeenCalledWith('[BaseComponent] Error boundary:', 'Test render error');
+
+      logSpy.mockRestore();
     });
 
     it('should show retry button in error state', () => {

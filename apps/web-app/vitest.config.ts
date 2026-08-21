@@ -60,9 +60,14 @@ export default defineConfig({
       },
     },
     // scripts/ holds the CI gates (check-bundle-size, check-beta-build,
-    // smoke-test-pages). They are plain .js ESM, not .ts, so they need their own
-    // pattern rather than an extension widened on the src glob.
-    include: ['src/**/*.{test,spec}.ts', 'scripts/**/*.{test,spec}.js'],
+    // smoke-test-pages) and the i18n guardrails; eslint-rules/ holds the custom
+    // lint rules. All are plain .js ESM, not .ts, so they need their own
+    // patterns rather than an extension widened on the src glob.
+    include: [
+      'src/**/*.{test,spec}.ts',
+      'scripts/**/*.{test,spec}.js',
+      'eslint-rules/**/*.{test,spec}.js',
+    ],
     exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
     server: {
       deps: {

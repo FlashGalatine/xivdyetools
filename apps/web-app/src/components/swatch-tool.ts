@@ -43,6 +43,7 @@ import {
 import { ICON_PALETTE, ICON_MARKET } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import type {
   SwatchConfig,
@@ -97,29 +98,6 @@ const STORAGE_KEYS = {
   maxResults: 'v3_character_max_results',
   incomingDye: 'v4_swatch_target_dye',
 } as const;
-
-/**
- * Mapping from SubRace type values to ClanKey for localization lookup
- * SubRace uses PascalCase, ClanKey uses camelCase
- */
-const SUBRACE_TO_CLAN_KEY: Record<SubRace, string> = {
-  Midlander: 'midlander',
-  Highlander: 'highlander',
-  Wildwood: 'wildwood',
-  Duskwight: 'duskwight',
-  Plainsfolk: 'plainsfolk',
-  Dunesfolk: 'dunesfolk',
-  SeekerOfTheSun: 'seekerOfTheSun',
-  KeeperOfTheMoon: 'keeperOfTheMoon',
-  SeaWolf: 'seaWolf',
-  Hellsguard: 'hellsguard',
-  Raen: 'raen',
-  Xaela: 'xaela',
-  Helions: 'helions',
-  TheLost: 'theLost',
-  Rava: 'rava',
-  Veena: 'veena',
-};
 
 /**
  * Localization key for each race — a presentation concern local to this
@@ -205,6 +183,8 @@ const SANS = "'Space Grotesk', system-ui, sans-serif";
  * Method display tags — identifiers, never localised. Mirrors core's
  * MATCHING_METHOD_TAGS (kept local so the tag map is available even where
  * core is mocked/minimal).
+ *
+ * RGB DIST and DISTINGUISH % stay untranslated identifiers by decision (2026-08-20 i18n audit).
  */
 const METHOD_TAGS: Record<MatchingMethod, string> = {
   ciede2000: 'ΔE2000',
@@ -634,7 +614,9 @@ export class SwatchTool extends BaseComponent {
   public selectCustomColor(hex: string): void {
     if (!hex) return;
     this.reverseDyeHex = hex.startsWith('#') ? hex : `#${hex}`;
-    this.reverseDyeName = `Custom (${this.reverseDyeHex.toUpperCase()})`;
+    this.reverseDyeName = LanguageService.tInterpolate('common.customColorName', {
+      hex: this.reverseDyeHex.toUpperCase(),
+    });
     logger.info(`[SwatchTool] Reverse match: custom color ${this.reverseDyeHex}`);
     this.performReverseMatch();
   }
@@ -891,7 +873,10 @@ export class SwatchTool extends BaseComponent {
       });
 
       const posLabel = this.createElement('span', {
-        textContent: `Row ${gridRow}, Column ${gridCol}`,
+        textContent: LanguageService.tInterpolate('swatch.rowColumn', {
+          row: gridRow,
+          col: gridCol,
+        }),
         attributes: {
           style: `
             font-size: 13px;
@@ -1322,7 +1307,10 @@ export class SwatchTool extends BaseComponent {
     });
     this.gridTitleEl = this.createElement('span', {
       className: 'section-title',
-      textContent: `${this.getCategoryDisplayName(this.colorCategory)} (${this.colors.length})`,
+      textContent: LanguageService.tInterpolate('swatch.gridTitle', {
+        name: this.getCategoryDisplayName(this.colorCategory),
+        count: this.colors.length,
+      }),
       attributes: {
         style: `
           font-size: 14px;
@@ -1392,7 +1380,7 @@ export class SwatchTool extends BaseComponent {
     });
     const reverseTitle = this.createElement('span', {
       className: 'section-title',
-      textContent: 'Closest Swatches',
+      textContent: LanguageService.t('swatch.closestSwatchesHead'),
     });
     reverseHeader.appendChild(reverseTitle);
     this.reverseSection.appendChild(reverseHeader);
@@ -1852,7 +1840,10 @@ export class SwatchTool extends BaseComponent {
     this.renderPaletteRail();
     // Title tracks the palette — it went stale on category change before.
     if (this.gridTitleEl) {
-      this.gridTitleEl.textContent = `${this.getCategoryDisplayName(this.colorCategory)} (${this.colors.length})`;
+      this.gridTitleEl.textContent = LanguageService.tInterpolate('swatch.gridTitle', {
+        name: this.getCategoryDisplayName(this.colorCategory),
+        count: this.colors.length,
+      });
     }
     if (!this.colorGridContainer) return;
     this.updateEvercoldNotice();
@@ -1863,7 +1854,10 @@ export class SwatchTool extends BaseComponent {
     if (gridHeader) {
       const titleSpan = gridHeader.querySelector('.section-title');
       if (titleSpan) {
-        titleSpan.textContent = `${this.getCategoryDisplayName(this.colorCategory)} (${this.colors.length})`;
+        titleSpan.textContent = LanguageService.tInterpolate('swatch.gridTitle', {
+          name: this.getCategoryDisplayName(this.colorCategory),
+          count: this.colors.length,
+        });
       }
     }
 
@@ -1875,6 +1869,7 @@ export class SwatchTool extends BaseComponent {
     for (let sheetIndex = 0; sheetIndex < this.colors.length; sheetIndex++) {
       const color = this.colors[sheetIndex];
       const cellRow = Math.floor(sheetIndex / 8);
+      // R/C grid address: an identifier by decision (2026-08-20 i18n audit).
       const address = `R${cellRow + 1}·C${(sheetIndex % 8) + 1}`;
 
       const swatch = this.createElement('button', {
@@ -1992,7 +1987,10 @@ export class SwatchTool extends BaseComponent {
     } else if (this.selectedColor) {
       subjectHex = this.selectedColor.hex;
       anchor = this.selectedColor.index;
-      tag = `${this.getCategoryDisplayName(this.colorCategory).toUpperCase()} #${this.selectedColor.index}`;
+      tag = LanguageService.tInterpolate('swatch.cellTag', {
+        palette: this.getCategoryDisplayName(this.colorCategory).toUpperCase(),
+        index: this.selectedColor.index,
+      });
       addr = `R${Math.floor(this.selectedColor.index / 8) + 1}·C${(this.selectedColor.index % 8) + 1}`;
     }
 
@@ -2034,7 +2032,8 @@ export class SwatchTool extends BaseComponent {
         bestName && bestDelta
           ? LanguageService.tInterpolate('swatch.selSentence', {
               subject: slotLabel,
-              place: `${palette} ${addr}`,
+              palette,
+              addr,
               dye: bestName,
               delta: bestDelta,
             })
@@ -2043,7 +2042,8 @@ export class SwatchTool extends BaseComponent {
       sentence =
         bestName && bestDelta
           ? LanguageService.tInterpolate('swatch.selSentenceCell', {
-              place: `${palette} ${addr}`,
+              palette,
+              addr,
               dye: bestName,
               delta: bestDelta,
             })
@@ -2328,7 +2328,7 @@ export class SwatchTool extends BaseComponent {
       card.setAttribute('show-actions', 'true');
       // Make primary button open context menu (same as the ... button)
       card.setAttribute('primary-opens-menu', 'true');
-      card.setAttribute('primary-action-label', 'Explore Dye');
+      card.setAttribute('primary-action-label', LanguageService.t('swatch.exploreDye'));
 
       // Get price data for this dye
       const priceDataForDye = this.priceData.get(match.dye.itemID);

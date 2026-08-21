@@ -11,6 +11,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { BudgetTool } from '../budget-tool';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
+import { formatGil } from '@shared/format';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
 const {
@@ -586,7 +587,10 @@ describe('BudgetTool', () => {
 
       expect(price.tier).toBe('A');
       expect(price.gil).toBe(216);
-      expect(price.localCost).toContain('216');
+      // Tier-A localCost must route through formatGil() (like the sibling
+      // gil display), not a hand-rolled `${formatNumber} ${getCurrency}` —
+      // the latter drops ja's no-space-before-ギル rule.
+      expect(price.localCost).toBe(formatGil(216));
     });
 
     it('should leave scrip/credit tiers without a gil figure when the board is silent', () => {

@@ -67,6 +67,35 @@ export interface ExportEntry {
   delta?: number | null;
 }
 
+/**
+ * The localizable strings the generated text carries.
+ *
+ * Injected the same way `nameOf` is, and for the same reason: this module is
+ * pure (no DOM, no services) so the formats stay unit-testable without a
+ * browser. `openExportSheet` supplies the app-locale resolver; the defaults
+ * below keep the generators usable on their own.
+ */
+export interface ExportLabels {
+  /**
+   * The header line, given the ISO date and the entry count. A function rather
+   * than a template string because the count picks the singular/plural key,
+   * and only the caller owns `LanguageService`.
+   */
+  generatedLine: (date: string, count: number) => string;
+  /** Column heading above the source hexes in the HEX format. */
+  sourceHeader: string;
+  /** Column heading above the dye hexes in the HEX format. */
+  dyesHeader: string;
+}
+
+/** English defaults — what the generators emit with no labels injected. */
+const DEFAULT_LABELS: ExportLabels = {
+  generatedLine: (date, count) =>
+    `Generated ${date} · ${count} ${count === 1 ? 'entry' : 'entries'}`,
+  sourceHeader: 'Source',
+  dyesHeader: 'Dyes',
+};
+
 /** Everything a tool hands the exporter. */
 export interface ExportPayload {
   /** Tool slug — used for the filename. */
@@ -76,7 +105,26 @@ export interface ExportPayload {
   entries: ExportEntry[];
   /** Extra header lines: blend model, interpolation space, step count. */
   meta?: string[];
+  /**
+   * Resolves the display name for a dye in the commented formats' annotations.
+   * Injected rather than imported so this module stays service-free and pure —
+   * `openExportSheet` supplies the locale-aware resolver, and the default keeps
+   * the generators usable (and unit-testable) on their own.
+   *
+   * The JSON format deliberately ignores this: its `name` field is the
+   * canonical English name, so a machine-read export never shifts with the UI
+   * language.
+   */
+  nameOf?: (dye: Dye) => string;
+  /**
+   * Localized header/column strings. Injected for the same reason as `nameOf`;
+   * omitted, the English `DEFAULT_LABELS` apply.
+   */
+  labels?: ExportLabels;
 }
+
+/** Default display name — the canonical English one carried on the dye. */
+const canonicalName = (dye: Dye): string => dye.name;
 
 /** Normalise a hex string to uppercase `#RRGGBB`. */
 function normalizeHex(hex: string): string {
@@ -92,10 +140,10 @@ function today(): string {
  * The per-entry annotation shared by every commented format: which dye it is,
  * its canonical stainID, and how far the match drifted.
  */
-function describeEntry(entry: ExportEntry): string {
+function describeEntry(entry: ExportEntry, nameOf: (dye: Dye) => string): string {
   const parts: string[] = [];
   if (entry.dye) {
-    parts.push(entry.dye.name);
+    parts.push(nameOf(entry.dye));
     if (typeof entry.dye.stainID === 'number') parts.push(`stainID ${entry.dye.stainID}`);
   }
   if (typeof entry.delta === 'number' && Number.isFinite(entry.delta)) {
@@ -115,22 +163,24 @@ function suffix(entry: ExportEntry, half: 'source' | 'dye'): string {
 
 /** Header lines shared by all commented formats, without comment markers. */
 function headerLines(payload: ExportPayload): string[] {
+  const labels = payload.labels ?? DEFAULT_LABELS;
   const lines = [
     `XIV Dye Tools — ${payload.title}`,
-    `Generated ${today()} · ${payload.entries.length} ${payload.entries.length === 1 ? 'entry' : 'entries'}`,
+    labels.generatedLine(today(), payload.entries.length),
   ];
   if (payload.meta?.length) lines.push(...payload.meta);
   return lines;
 }
 
 function generateCss(payload: ExportPayload): string {
+  const nameOf = payload.nameOf ?? canonicalName;
   const head = headerLines(payload)
     .map((line) => ` * ${line}`)
     .join('\n');
   const body = payload.entries
     .map((entry) => {
       const lines: string[] = [];
-      const note = describeEntry(entry);
+      const note = describeEntry(entry, nameOf);
       lines.push(`  /* ${entry.key}${note ? ` — ${note}` : ''} */`);
       if (entry.source) {
         lines.push(`  --${entry.key}${suffix(entry, 'source')}: ${normalizeHex(entry.source)};`);
@@ -145,13 +195,14 @@ function generateCss(payload: ExportPayload): string {
 }
 
 function generateScss(payload: ExportPayload): string {
+  const nameOf = payload.nameOf ?? canonicalName;
   const head = headerLines(payload)
     .map((line) => `// ${line}`)
     .join('\n');
   const body = payload.entries
     .map((entry) => {
       const lines: string[] = [];
-      const note = describeEntry(entry);
+      const note = describeEntry(entry, nameOf);
       lines.push(`// ${entry.key}${note ? ` — ${note}` : ''}`);
       if (entry.source) {
         lines.push(`$${entry.key}${suffix(entry, 'source')}: ${normalizeHex(entry.source)};`);
@@ -170,13 +221,14 @@ function generateScss(payload: ExportPayload): string {
  * `--color-*` names become colour utilities — hence the prefix.
  */
 function generateTailwind(payload: ExportPayload): string {
+  const nameOf = payload.nameOf ?? canonicalName;
   const head = headerLines(payload)
     .map((line) => ` * ${line}`)
     .join('\n');
   const body = payload.entries
     .map((entry) => {
       const lines: string[] = [];
-      const note = describeEntry(entry);
+      const note = describeEntry(entry, nameOf);
       lines.push(`  /* ${entry.key}${note ? ` — ${note}` : ''} */`);
       if (entry.source) {
         lines.push(
@@ -237,9 +289,10 @@ function generateHex(payload: ExportPayload): string {
     .filter((hex): hex is string => Boolean(hex))
     .map(normalizeHex);
 
+  const labels = payload.labels ?? DEFAULT_LABELS;
   const blocks: string[] = [];
-  if (sources.length) blocks.push(`Source\n${sources.join('\n')}`);
-  if (dyes.length) blocks.push(`Dyes\n${dyes.join('\n')}`);
+  if (sources.length) blocks.push(`${labels.sourceHeader}\n${sources.join('\n')}`);
+  if (dyes.length) blocks.push(`${labels.dyesHeader}\n${dyes.join('\n')}`);
   return `${blocks.join('\n\n')}\n`;
 }
 

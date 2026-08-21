@@ -25,6 +25,8 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { BaseLitComponent } from './base-lit-component';
 import { ICON_CONTEXT_MENU } from '@shared/ui-icons';
+import { customDyeLabel, isCustomDye } from '@shared/custom-dye';
+import { formatGil, formatNumber } from '@shared/format';
 import type { Dye, DyeWithDistance } from '@xivdyetools/types';
 import type { MatchingMethod } from '@shared/tool-config-types';
 import {
@@ -202,12 +204,19 @@ export class ResultCard extends BaseLitComponent {
   showActions: boolean = true;
 
   /**
-   * Label for primary action button. Defaults to the shared localized
-   * string — four tools never pass one, and an English literal here
-   * surfaced untranslated on every card they render.
+   * Label for primary action button. Left undefined by the four tools that
+   * never pass one; `primaryLabel` then supplies the shared localized string.
+   * A field initialiser cannot be used here — it is evaluated once at
+   * construction, so the default froze at whatever locale was active when the
+   * first card mounted and never followed a language switch.
    */
   @property({ type: String, attribute: 'primary-action-label' })
-  primaryActionLabel: string = LanguageService.t('common.selectDye');
+  primaryActionLabel?: string;
+
+  /** Primary-button label: the caller's override, else the localized default. */
+  private get primaryLabel(): string {
+    return this.primaryActionLabel ?? LanguageService.t('common.selectDye');
+  }
 
   /**
    * When true, clicking the primary button opens the context menu
@@ -1003,14 +1012,14 @@ export class ResultCard extends BaseLitComponent {
   }
 
   /**
-   * Format price with commas and "G" suffix.
+   * Format a market price as a localized gil amount.
    * If an error code is provided, displays the error code instead.
    */
   private formatPrice(price?: number, errorCode?: string): string {
     // If there's an error code, display it instead of the price
     if (errorCode) return errorCode;
     if (price === undefined || price === null) return '—';
-    return `${price.toLocaleString()} G`;
+    return formatGil(price);
   }
 
   /**
@@ -1019,7 +1028,7 @@ export class ResultCard extends BaseLitComponent {
   private formatVendorCost(cost?: number, currency?: string | null): string {
     if (cost === undefined || cost === null || !currency) return '—';
     const label = LanguageService.getCurrency(currency);
-    return `${cost.toLocaleString()} ${label}`;
+    return `${formatNumber(cost)} ${label}`;
   }
 
   /**
@@ -1273,7 +1282,7 @@ export class ResultCard extends BaseLitComponent {
     const slotLabels =
       tool === 'mixer' || tool === 'gradient'
         ? [LanguageService.t('mixer.startDye'), LanguageService.t('mixer.endDye')]
-        : currentDyeIds.map((_, i) => `${LanguageService.t('common.slot')} ${i + 1}`);
+        : currentDyeIds.map((_, i) => LanguageService.tInterpolate('common.slotN', { n: i + 1 }));
 
     // Build content as DOM elements (SEC-002: avoid innerHTML for defense-in-depth)
     const contentEl = document.createElement('div');
@@ -1295,7 +1304,7 @@ export class ResultCard extends BaseLitComponent {
       const existingDye = dyeService.getDyeById(dyeId);
       const dyeName = existingDye
         ? LanguageService.getDyeName(existingDye.itemID) || existingDye.name
-        : 'Unknown';
+        : LanguageService.t('common.unknown');
       const dyeHex = existingDye?.hex ?? '#888888';
 
       const btn = document.createElement('button');
@@ -1382,7 +1391,7 @@ export class ResultCard extends BaseLitComponent {
     const addingLabel = document.createElement('p');
     addingLabel.className = 'text-xs';
     addingLabel.style.color = 'var(--theme-text-muted)';
-    addingLabel.textContent = LanguageService.t('resultCard.addingDye') + ':';
+    addingLabel.textContent = LanguageService.t('resultCard.addingDyeLabel');
     previewInfo.appendChild(addingLabel);
     const addingName = document.createElement('p');
     addingName.className = 'font-medium text-sm';
@@ -1441,14 +1450,19 @@ export class ResultCard extends BaseLitComponent {
     }
   };
 
+  private languageUnsubscribe: (() => void) | null = null;
+
   override connectedCallback(): void {
     super.connectedCallback();
+    this.languageUnsubscribe = LanguageService.subscribe(() => this.requestUpdate());
     document.addEventListener('click', this.handleDocumentClick);
     document.addEventListener('keydown', this.handleKeyDown);
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.languageUnsubscribe?.();
+    this.languageUnsubscribe = null;
     document.removeEventListener('click', this.handleDocumentClick);
     document.removeEventListener('keydown', this.handleKeyDown);
   }
@@ -1465,7 +1479,7 @@ export class ResultCard extends BaseLitComponent {
 
   protected override render(): TemplateResult {
     if (!this.data) {
-      return html`<div class="ticket">No data</div>`;
+      return html`<div class="ticket">${LanguageService.t('resultCard.noData')}</div>`;
     }
 
     const { dye, originalColor, matchedColor, hueDeviance, marketServer, price } = this.data;
@@ -1481,7 +1495,12 @@ export class ResultCard extends BaseLitComponent {
       : LanguageService.t('common.market');
 
     return html`
-      <article class="ticket" lang="${locale}" role="article" aria-label="Dye result: ${dyeName}">
+      <article
+        class="ticket"
+        lang="${locale}"
+        role="article"
+        aria-label="${LanguageService.tInterpolate('resultCard.dyeResultAria', { name: dyeName })}"
+      >
         <!-- Verdict stub -->
         <div class="head">
           <div class="swatches">
@@ -1532,7 +1551,9 @@ export class ResultCard extends BaseLitComponent {
                         ? html`
                             <div class="readout">
                               <div class="readout-val">${stain}</div>
-                              <div class="metric-label">STAIN</div>
+                              <div class="metric-label">
+                                ${LanguageService.t('resultCard.stainShort')}
+                              </div>
                             </div>
                           `
                         : nothing
@@ -1606,9 +1627,11 @@ export class ResultCard extends BaseLitComponent {
                             >
                             <span class="zval"
                               >${
-                                dye.acquisition
-                                  ? LanguageService.getAcquisition(dye.acquisition)
-                                  : '—'
+                                isCustomDye(dye)
+                                  ? customDyeLabel()
+                                  : dye.acquisition
+                                    ? LanguageService.getAcquisition(dye.acquisition)
+                                    : '—'
                               }</span
                             >
                           </div>
@@ -1682,7 +1705,7 @@ export class ResultCard extends BaseLitComponent {
                               aria-expanded=${this.slotMenuOpen}
                               @click=${this.handleSelectClick}
                             >
-                              ${this.primaryActionLabel}
+                              ${this.primaryLabel}
                             </button>
                             <!-- Slot Picker Menu - Pops UP -->
                             <div
@@ -1695,16 +1718,18 @@ export class ResultCard extends BaseLitComponent {
                                 role="menuitem"
                                 @click=${() => this.handleSlotAction(1)}
                               >
-                                ${LanguageService.t('common.replace')}
-                                ${LanguageService.t('common.slot')} 1
+                                ${LanguageService.tInterpolate('resultCard.replaceSlotN', {
+                                  n: 1,
+                                })}
                               </button>
                               <button
                                 class="slot-picker-item"
                                 role="menuitem"
                                 @click=${() => this.handleSlotAction(2)}
                               >
-                                ${LanguageService.t('common.replace')}
-                                ${LanguageService.t('common.slot')} 2
+                                ${LanguageService.tInterpolate('resultCard.replaceSlotN', {
+                                  n: 2,
+                                })}
                               </button>
                             </div>
                           </div>
@@ -1715,7 +1740,7 @@ export class ResultCard extends BaseLitComponent {
                             type="button"
                             @click=${this.handleSelectClick}
                           >
-                            ${this.primaryActionLabel}
+                            ${this.primaryLabel}
                           </button>
                         `
                   }
@@ -1829,7 +1854,7 @@ export class ResultCard extends BaseLitComponent {
                           <button
                             class="menu-item"
                             role="menuitem"
-                            @click=${() => this.handleMenuAction('external-saddlebag')}
+                            @click=${/* eslint-disable-next-line xivdyetools-i18n/no-hardcoded-ui-strings -- brand name */ () => this.handleMenuAction('external-saddlebag')}
                           >
                             Saddlebag Exchange
                           </button>

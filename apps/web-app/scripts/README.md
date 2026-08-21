@@ -5,16 +5,58 @@
 Validate all `LanguageService.t()` calls against the locale files:
 
 ```bash
-# Check for missing translation keys
+# Key existence + file shape + cross-locale parity (two scripts, one gate)
 npm run validate:i18n
 
 # Check with typo suggestions (Levenshtein-based)
-npm run validate:i18n -- --fix
+node scripts/validate-i18n.js --fix
 ```
 
-The script scans all TypeScript files in `src/` and validates that every translation key exists in `src/locales/en.json`.
+`npm run validate:i18n` runs `validate-i18n.js` and then `i18n-parity.mjs`.
 
-**Related:** The project also includes a custom ESLint rule `xivdyetools-i18n/no-i18n-fallback` that warns against fallback patterns like `LanguageService.t('key') || 'fallback'`. This runs automatically with `npm run lint`.
+`validate-i18n.js` scans all TypeScript files in `src/` and validates that every
+translation key exists in `src/locales/en.json`; it then checks the *shape* of
+the five target files — that each lists its keys in `en.json`'s order
+(recursively), and that no value carries leading/trailing whitespace the `en`
+value does not. Exit 3 means one of those two failed.
+
+`i18n-parity.mjs` compares each target file with `en.json` and fails on:
+
+| Check | Why it is an error |
+|-------|--------------------|
+| duplicate keys | `JSON.parse` keeps the last one silently, so the earlier translation is dead text. Found with a real tokenizer — a reviver cannot see them. |
+| missing / extra keys | every key lands in all six files, in the same commit |
+| placeholder mismatch | `{name}` tokens must match `en`, or `tInterpolate()` renders a literal brace |
+| empty values | an empty target value renders as nothing, which is worse than English |
+
+Values still *identical to English* are a **warning**, not an error: legitimate
+ones (brands, units, symbols, identifiers, cognates) live in
+`scripts/i18n-identical-allowlist.json`, one line of reasoning each. An
+allow-list entry that stops being identical is reported as stale, so the file
+cannot rot.
+
+### Restoring key order
+
+```bash
+node scripts/reorder-locales.mjs           # rewrite de/fr/ja/ko/zh in en.json order
+node scripts/reorder-locales.mjs --check   # report only, exit 1 on drift
+```
+
+Pure permutation — values are never rewritten. `scripts/i18n-guardrails.test.js`
+proves that on the shipped files, and re-running `--check` after a rewrite must
+be clean.
+
+**Related lint rules** (both custom, both `warn`, both run by `npm run lint`):
+
+- `xivdyetools-i18n/no-i18n-fallback` — `LanguageService.t('key') || 'fallback'`
+  is dead code, because `t()` returns the key when it is missing.
+- `xivdyetools-i18n/no-hardcoded-ui-strings` — user-visible English that never
+  reaches `LanguageService`: text and `title`/`placeholder`/`aria-label`/`alt`
+  inside `` html`` `` templates, `textContent`/`innerText`/`title`/… assignments,
+  and the first argument of `ToastService.*()` / `AnnouncerService.announce()`.
+  Single words, ALL-CAPS identifiers, brands, URLs, CSS, `logger`/`console`
+  arguments and test files are skipped by design. Tests:
+  `eslint-rules/__tests__/no-hardcoded-ui-strings.test.js`.
 
 The i18n architecture (LanguageService, locale chunks, `preset-i18n`) is described in `xivdyetools/docs/projects/web-app/components.md`; there is no `docs/I18N.md` any more.
 
@@ -58,6 +100,8 @@ import graph. Config and its blind spots are documented in `knip.jsonc`; the
 | `generate-icons.mjs` | manual, one-shot | regenerates `public/assets/icons/*.png` from `sparkles.svg` (only the sizes `index.html`/`manifest.json` link) |
 | `generate-beta-icons.mjs` | manual, one-shot | regenerates `public/assets/icons/beta/` from `scripts/assets/bot-avatar-beta-1024.png` |
 | `smoke-test-pages.js` | both deploy workflows | post-deploy assertions (below) |
+| `i18n-parity.mjs` | `npm run validate:i18n` | cross-locale parity: duplicates, missing/extra, placeholders, empties, identical-to-EN |
+| `reorder-locales.mjs` | manual / after adding keys | rewrites de/fr/ja/ko/zh into `en.json` key order (values untouched) |
 
 ## Pages Smoke Test
 
@@ -87,7 +131,8 @@ Three phases:
 on the deployment alias passes whether or not the build set it. See
 `docs/superpowers/specs/2026-08-10-pages-smoke-test-design.md`.
 
-Unit tests: `scripts/smoke-test-pages.test.js` (`npm run test`).
+Unit tests: `scripts/smoke-test-pages.test.js` and
+`scripts/i18n-guardrails.test.js` (`npm run test`).
 
 ## License
 

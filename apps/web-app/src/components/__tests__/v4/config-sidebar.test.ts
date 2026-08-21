@@ -8,15 +8,22 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { render, nothing, type TemplateResult } from 'lit';
 import { RACE_SUBRACES } from '@xivdyetools/types';
 
 vi.mock('@services/index', () => ({
   LanguageService: {
     t: (key: string) => key,
+    tInterpolate: (key: string) => key,
+    getHarmonyType: (key: string) => `core:harmony:${key}`,
+    getRace: (key: string) => `core:race:${key}`,
+    getClan: (key: string) => `core:clan:${key}`,
+    getCurrentLocale: () => 'en',
     subscribe: vi.fn().mockReturnValue(() => {}),
   },
   authService: {
     isAuthenticated: vi.fn().mockReturnValue(false),
+    getUser: vi.fn().mockReturnValue(null),
     subscribe: vi.fn().mockReturnValue(() => {}),
   },
   StorageService: {
@@ -238,6 +245,49 @@ describe('ConfigSidebar', () => {
       const { avatarInitial } = await import('../../v4/config-sidebar');
       expect(avatarInitial('Amelia')).toBe('A');
     });
+  });
+});
+
+describe('harmony type labels (TERM-003)', () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(nothing, container);
+    container.remove();
+  });
+
+  it('labels every harmony option from core vocabulary, not web-app config.* keys', async () => {
+    const { ConfigSidebar } = await import('../../v4/config-sidebar');
+    // The harmony panel is rendered on its own: mounting the whole sidebar
+    // would also render every other tool panel against empty mock config.
+    const sidebar = new ConfigSidebar() as unknown as {
+      renderHarmonyConfig(): TemplateResult;
+    };
+    render(sidebar.renderHarmonyConfig(), container);
+
+    const select = container.querySelector('select.config-select') as HTMLSelectElement | null;
+    expect(select).toBeTruthy();
+
+    // Values stay the hyphenated ids the harmony generator understands; the
+    // labels are core's camelCase vocabulary, so the sidebar and the result
+    // cards / colour wheel say the same word for the same harmony.
+    expect([...select!.options].map((o) => [o.value, o.textContent?.trim()])).toEqual([
+      ['complementary', 'core:harmony:complementary'],
+      ['analogous', 'core:harmony:analogous'],
+      ['triadic', 'core:harmony:triadic'],
+      ['split-complementary', 'core:harmony:splitComplementary'],
+      ['tetradic', 'core:harmony:tetradic'],
+      ['inverted-tetradic', 'core:harmony:invertedTetradic'],
+      ['square', 'core:harmony:square'],
+      ['monochromatic', 'core:harmony:monochromatic'],
+      ['compound', 'core:harmony:compound'],
+      ['shades', 'core:harmony:shades'],
+    ]);
   });
 });
 

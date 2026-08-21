@@ -21,6 +21,7 @@ import { customElement, property } from 'lit/decorators.js';
 import { BaseLitComponent } from './base-lit-component';
 import { LanguageService } from '@services/index';
 import type { Dye } from '@xivdyetools/types';
+import { localizedDyeName } from '@shared/dye-name';
 
 /**
  * Supported harmony types
@@ -444,7 +445,7 @@ export class V4ColorWheel extends BaseLitComponent {
             title="${
               index === 0
                 ? LanguageService.t('harmony.selectColorPrompt')
-                : `${LanguageService.t('harmony.harmony')} ${index}`
+                : LanguageService.tInterpolate('harmony.harmonyN', { n: index })
             }"
           ></div>
         `;
@@ -463,7 +464,9 @@ export class V4ColorWheel extends BaseLitComponent {
         type="button"
         class="harmony-node main"
         style="top: ${basePos.top}; left: ${basePos.left}; background-color: ${this.baseColor};"
-        title="${LanguageService.t('harmony.baseColorSection')}: ${this.baseColor.toUpperCase()}"
+        title="${LanguageService.tInterpolate('harmony.baseColorTitle', {
+          hex: this.baseColor.toUpperCase(),
+        })}"
         @click=${() => this.handleNodeClick(this.baseColor, baseHue)}
       ></button>
     `);
@@ -474,8 +477,8 @@ export class V4ColorWheel extends BaseLitComponent {
       const pos = this.hueToPosition(hue, depthFor(hue));
       const color = this.harmonyColors[index] || this.baseColor;
       const dye = this.harmonyDyes[index];
-      const slot = `${LanguageService.t('harmony.harmony')} ${index + 1}`;
-      const title = dye ? `${slot} · ${dye.name}` : `${slot} · ${color.toUpperCase()}`;
+      const slot = LanguageService.tInterpolate('harmony.harmonyN', { n: index + 1 });
+      const title = dye ? `${slot} · ${localizedDyeName(dye)}` : `${slot} · ${color.toUpperCase()}`;
 
       nodes.push(html`
         <button

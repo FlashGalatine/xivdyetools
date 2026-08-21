@@ -28,6 +28,7 @@ import {
 } from '@services/index';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { makeCustomDye } from '@shared/custom-dye';
 import type { VisionType as CoreVisionType } from '@xivdyetools/types';
 import type { Dye } from '@xivdyetools/types';
 import type { AccessibilityConfig, DisplayOptionsConfig } from '@shared/tool-config-types';
@@ -112,32 +113,27 @@ const VISION_TYPES = [
   {
     id: 'normal',
     localeKey: 'normal',
-    prevalence: '~92%',
-    description: 'Standard Color Perception',
+    prevalenceKey: 'accessibility.prevalenceNormal',
   },
   {
     id: 'deuteranopia',
     localeKey: 'deuteranopia',
-    prevalence: '~6% males',
-    description: 'Red-Green Colorblindness',
+    prevalenceKey: 'accessibility.prevalenceDeuteranopia',
   },
   {
     id: 'protanopia',
     localeKey: 'protanopia',
-    prevalence: '~2% males',
-    description: 'Red-Green Colorblindness',
+    prevalenceKey: 'accessibility.prevalenceProtanopia',
   },
   {
     id: 'tritanopia',
     localeKey: 'tritanopia',
-    prevalence: '~0.01%',
-    description: 'Blue-Yellow Colorblindness',
+    prevalenceKey: 'accessibility.prevalenceTritanopia',
   },
   {
     id: 'achromatopsia',
     localeKey: 'achromatopsia',
-    prevalence: '~0.003%',
-    description: 'Total Colorblindness',
+    prevalenceKey: 'accessibility.prevalenceAchromatopsia',
   },
 ] as const;
 
@@ -411,27 +407,7 @@ export class AccessibilityTool extends BaseComponent {
   public selectCustomColor(hex: string): void {
     if (!hex) return;
 
-    const virtualDye: Dye = {
-      id: -Date.now(),
-      itemID: -Date.now(),
-      stainID: null,
-      name: `Custom (${hex.toUpperCase()})`,
-      hex: hex.toUpperCase(),
-      rgb: ColorService.hexToRgb(hex),
-      hsv: ColorService.hexToHsv(hex),
-      category: 'Custom',
-      acquisition: 'Custom',
-      cost: 0,
-      currency: null,
-      isMetallic: false,
-      isPastel: false,
-      isDark: false,
-      isCosmic: false,
-      isIshgardian: false,
-      consolidationType: null,
-    };
-
-    this.selectDye(virtualDye);
+    this.selectDye(makeCustomDye(hex));
   }
 
   /**
@@ -722,7 +698,7 @@ export class AccessibilityTool extends BaseComponent {
       });
       const typePrevalence = this.createElement('p', {
         className: 'text-xs',
-        textContent: type.prevalence,
+        textContent: LanguageService.t(type.prevalenceKey),
         attributes: { style: 'color: var(--theme-text-muted);' },
       });
       textContainer.appendChild(typeName);
@@ -1380,7 +1356,7 @@ export class AccessibilityTool extends BaseComponent {
       });
       subRow.appendChild(
         this.createElement('span', {
-          textContent: vision.prevalence,
+          textContent: LanguageService.t(vision.prevalenceKey),
           attributes: {
             style: `font-family: 'Fragment Mono', monospace; font-size: 10px; white-space: nowrap; ${active ? 'color: var(--theme-text-header); opacity: 0.8;' : 'color: var(--theme-text-muted);'}`,
           },
@@ -1544,7 +1520,7 @@ export class AccessibilityTool extends BaseComponent {
       const note =
         this.activeVision === 'normal'
           ? '\u2014'
-          : `${unit.format(this.pairValue(i, j, 'normal'))} NRM \u2192 ${unit.format(value)} ${activeShort}`;
+          : `${unit.format(this.pairValue(i, j, 'normal'))} ${this.visionShort('normal')} \u2192 ${unit.format(value)} ${activeShort}`;
       text.appendChild(
         this.createElement('span', {
           textContent: note,
@@ -1569,16 +1545,19 @@ export class AccessibilityTool extends BaseComponent {
     }
   }
 
-  /** Mono short code for a vision type (NRM/DEU/PRO/TRI/ACH) */
+  /**
+   * Short code for a vision type (NRM/DEU/PRO/TRI/ACH in Latin locales). The
+   * keys are written out literally so the orphan scanner sees each one.
+   */
   private visionShort(vision: VisionTypeId): string {
-    const shorts: Record<VisionTypeId, string> = {
-      normal: 'NRM',
-      deuteranopia: 'DEU',
-      protanopia: 'PRO',
-      tritanopia: 'TRI',
-      achromatopsia: 'ACH',
+    const keys: Record<VisionTypeId, string> = {
+      normal: 'accessibility.visionShort.normal',
+      deuteranopia: 'accessibility.visionShort.deuteranopia',
+      protanopia: 'accessibility.visionShort.protanopia',
+      tritanopia: 'accessibility.visionShort.tritanopia',
+      achromatopsia: 'accessibility.visionShort.achromatopsia',
     };
-    return shorts[vision];
+    return LanguageService.t(keys[vision]);
   }
 
   private capitalize(id: string): string {
@@ -1817,7 +1796,7 @@ export class AccessibilityTool extends BaseComponent {
       });
       const typePrevalence = this.createElement('p', {
         className: 'text-xs',
-        textContent: type.prevalence,
+        textContent: LanguageService.t(type.prevalenceKey),
         attributes: { style: 'color: var(--theme-text-muted);' },
       });
       textContainer.appendChild(typeName);

@@ -23,11 +23,13 @@
     "elsewhere": "その他のリンク",
     "apiSummary": "公開染色データ、2つのエンドポイント",
     "legalLabel": "権利表記",
-    "spectralCredit": "リアルな絵の具混色（クベルカ・ムンク理論）:"
+    "spectralCredit": "リアルな絵の具混色（クベルカ・ムンク理論）：{link}",
+    "dataApiLabel": "データAPI",
+    "apiDocsLabel": "API Worker ドキュメント"
   },
   "footer": {
     "createdBy": "Flash Galatine (Midgardsormr) がFFXIVコミュニティのために作成",
-    "universalisCredit": "マーケットボードデータ提供元:",
+    "universalisCredit": "マーケットボードデータ提供元：{link}",
     "disclaimer": "FINAL FANTASY XIV © 2010-2025 SQUARE ENIX CO., LTD. All Rights Reserved.",
     "notAffiliated": "XIV 染色ツールはファンメイドのアプリケーションであり、スクウェア・エニックスとは提携または承認されていません。"
   },
@@ -108,7 +110,6 @@
     "options": "オプション",
     "hexColor": "16進カラー",
     "selectDye": "カララントを選択",
-    "slot": "スロット",
     "replace": "置き換え",
     "acquisition": "入手方法",
     "original": "オリジナル",
@@ -119,19 +120,20 @@
     "dismiss": "閉じる",
     "optional": "(任意)",
     "done": "完了",
-    "alternates": "候補"
+    "alternates": "候補",
+    "custom": "カスタム",
+    "customColorName": "カスタム（{hex}）",
+    "gilAmount": "{n}{unit}",
+    "loadingTool": "{tool}を読み込み中…",
+    "closeModal": "ダイアログを閉じる",
+    "confirm": "確認",
+    "slotN": "スロット {n}",
+    "unknown": "不明",
+    "comingSoonTool": "{tool}ツール",
+    "comingSoon": "近日公開"
   },
   "config": {
     "harmonyType": "ハーモニータイプ",
-    "complementary": "補色",
-    "analogous": "類似色",
-    "triadic": "トライアド",
-    "splitComplementary": "分裂補色",
-    "tetradic": "テトラード",
-    "square": "スクエア",
-    "monochromatic": "モノクロマティック",
-    "compound": "コンパウンド",
-    "shades": "シェード",
     "matchingMode": "マッチングモード",
     "perceptualMatching": "知覚的マッチング",
     "perceptualMatchingDesc": "知覚的に正確な色のマッチングにDeltaEを使用",
@@ -160,9 +162,9 @@
     "sampleAreaSizeTooltip": "画像から色を採取する際に平均化する範囲のサイズ",
     "singlePixel": "ピクセル",
     "visionTypes": "視覚タイプ",
-    "deuteranopia": "第二色覚異常",
-    "protanopia": "第一色覚異常",
-    "tritanopia": "第三色覚異常",
+    "deuteranopia": "2型色覚",
+    "protanopia": "1型色覚",
+    "tritanopia": "3型色覚",
     "achromatopsia": "全色盲",
     "gradientSteps": "グラデーションステップ",
     "count": "数",
@@ -223,14 +225,14 @@
     "importSettings": "インポート",
     "importError": "設定のインポートに失敗しました。ファイル形式を確認してください。",
     "cmykValues": "CMYK値",
-    "invertedTetradic": "逆テトラード",
     "matchingRedmean": "加重RGB",
     "matchingRedmeanDesc": "加重RGB距離。知覚差の軽量な近似です。",
     "matchingDistinguish": "パーセント",
     "matchingDistinguishDesc": "RGB距離を0～100に換算した値。RGB DISTと同じ順位で、パーセントとして表示します。",
     "showHue": "色相差",
     "showStain": "ステインID",
-    "showSpectrum": "スペクトル"
+    "showSpectrum": "スペクトル",
+    "userFallback": "ユーザー"
   },
   "colorPalette": {
     "title": "カラーパレット",
@@ -245,18 +247,6 @@
     "spectrumWide1": "アディショナルカラー1",
     "spectrumWide2": "アディショナルカラー2",
     "spectrumUnconsolidated": "未統合",
-    "favorites": "お気に入り",
-    "reds": "レッド系",
-    "browns": "ブラウン系",
-    "yellows": "イエロー系",
-    "oranges": "オレンジ系",
-    "greens": "グリーン系",
-    "blues": "ブルー系",
-    "purples": "パープル系",
-    "pinks": "ピンク系",
-    "whites": "ホワイト系",
-    "blacks": "ブラック系",
-    "grays": "グレー系",
     "noDyesFound": "染料が見つかりません",
     "customColor": "カスタムカラー",
     "enterHexCode": "Hexコードを入力",
@@ -265,7 +255,8 @@
     "invalidHexCode": "無効なHexコードです",
     "noDyesAvailable": "利用可能な染料がありません",
     "randomDyeSelected": "{name}を選択しました",
-    "mobileHint": "初めてですか？パレットボタンをタップしてカララントを選択できます。"
+    "mobileHint": "初めてですか？パレットボタンをタップしてカララントを選択できます。",
+    "favoritesWithCount": "お気に入り（{count}）"
   },
   "harmony": {
     "companionDyes": "ハーモニーカラーごとの追加カララント",
@@ -273,37 +264,27 @@
     "baseColorSection": "ベースカラー",
     "results": "結果",
     "selectDye": "カララントを選択",
-    "noMatchingDyes": "マッチするカララントが見つかりません",
-    "avgHueDiff": "平均色相差",
-    "hueDiff": "色相差",
     "actions": "カララント操作",
     "addToComparison": "比較に追加",
     "addToMixer": "ミキサーに追加",
     "copyHex": "Hexコードをコピー",
-    "copiedHex": "コピーしました",
     "copyFailed": "コピーに失敗しました",
     "seeBudget": "予算提案を見る",
     "seeHarmonies": "カラーハーモニーを見る",
     "addedToComparison": "比較に追加しました",
     "addedToMixer": "ミキサーに追加しました",
-    "dyeAlreadyInComparison": "このカララントは既に比較にあります",
-    "dyeAlreadyInMixer": "このカララントは既にミキサーにあります",
     "addToAccessibility": "アクセシビリティに追加",
     "addedToAccessibility": "アクセシビリティに追加しました",
+    "dyeAlreadyInComparison": "このカララントは既に比較にあります",
+    "dyeAlreadyInMixer": "このカララントは既にミキサーにあります",
     "dyeAlreadyInAccessibility": "このカララントは既にアクセシビリティにあります",
     "slotsFull": "すべてのスロットが埋まっています。置き換えるスロットを選択してください：",
     "selectSlotToReplace": "置き換えるスロットを選択",
-    "addingDye": "追加中",
     "replacedInTool": "正常に置き換えました",
     "selectColorPrompt": "ベースカラーを選択",
     "base": "ベース",
-    "harmony": "ハーモニー",
-    "fromIdeal": "理想との差",
-    "closestDyes": "近いカララント：",
     "baseDye": "ベースカララント",
     "harmonyType": "ハーモニータイプ",
-    "colorWheel": "カラーホイール",
-    "colors": "色",
     "actionsMenu": "アクションメニュー",
     "types": {
       "complementaryDesc": "カラーホイールで正反対の色、最大コントラストを実現",
@@ -319,7 +300,11 @@
     },
     "railSwipeHint": "スワイプで他の種類",
     "marketFailTitle": "価格を取得できません",
-    "marketFailBody": "マーケットボードが応答しませんでした。色の照合には影響せず、価格行だけが欠けます。"
+    "marketFailBody": "マーケットボードが応答しませんでした。色の照合には影響せず、価格行だけが欠けます。",
+    "harmonyN": "ハーモニー {n}",
+    "baseColorTitle": "ベースカラー：{hex}",
+    "addingDyeLabel": "追加中：",
+    "copiedHexValue": "{hex}をコピーしました"
   },
   "matcher": {
     "uploadImage": "画像をアップロード",
@@ -328,7 +313,7 @@
     "takePhoto": "写真を撮る",
     "supportedFormatsWithSize": "対応形式: PNG, JPG, WebP, GIF。最大サイズ: 20MB",
     "privacyNote": "画像はブラウザ内で処理され、送信されません。",
-    "privacyTitle": "プライバシー保護",
+    "privacyTitle": "プライバシー保護：",
     "privacyMessage": "写真と画像はブラウザ内でローカル処理され、サーバーにアップロードされることはありません。",
     "privacyLearnMore": "詳細",
     "pasteHint": "ヒント: Ctrl+V（Macの場合はCmd+V）で画像を貼り付け",
@@ -338,19 +323,15 @@
     "useEyedropper": "スポイトを使用",
     "sampleSize": "サンプルサイズ",
     "matchedDyes": "マッチしたカララント",
-    "distance": "距離",
+    "noMatchingDyes": "マッチするカララントが見つかりません",
     "clickToSample": "クリックで採取・ドラッグでルーペ",
     "zoomFit": "フィット",
     "zoomWidth": "幅に合わせる",
     "zoomReset": "リセット",
-    "market": "マーケット",
-    "recentColors": "最近の選択",
-    "clearHistory": "クリア",
     "colorCount": "色の数",
     "extractPalette": "パレットを抽出",
     "extractingPalette": "抽出中...",
     "noImageForPalette": "パレットを抽出するには、まず画像をアップロードしてください",
-    "noMatchingDyes": "マッチするカララントが見つかりません",
     "imageSource": "画像ソース",
     "colorSelection": "色を選択",
     "options": "オプション",
@@ -370,7 +351,13 @@
     "pasteClipboard": "クリップボードから",
     "tapToSample": "タップで採取",
     "addPick": "採取を追加",
-    "autoExtract": "自動抽出"
+    "autoExtract": "自動抽出",
+    "sampledColor": "採取した色",
+    "copyColorInfo": "色情報をコピー",
+    "zoomOut": "縮小",
+    "zoomLevel": "現在の倍率",
+    "zoomIn": "拡大",
+    "paletteExtractedOne": "{count}色を抽出しました"
   },
   "accessibility": {
     "inspectDyes": "カララントを検査",
@@ -412,7 +399,19 @@
     "visionDescDeuteranopia": "赤緑型。最も多く、男性の約12人に1人。",
     "visionDescProtanopia": "赤緑型。赤がさらに暗く見える。",
     "visionDescTritanopia": "青黄型。まれ。青緑と黄色に影響。",
-    "visionDescAchromatopsia": "色が無く、明度だけが手がかり。"
+    "visionDescAchromatopsia": "色が無く、明度だけが手がかり。",
+    "prevalenceNormal": "約92%",
+    "prevalenceDeuteranopia": "男性の約6%",
+    "prevalenceProtanopia": "男性の約2%",
+    "prevalenceTritanopia": "約0.01%",
+    "prevalenceAchromatopsia": "約0.003%",
+    "visionShort": {
+      "normal": "正常",
+      "deuteranopia": "2型",
+      "protanopia": "1型",
+      "tritanopia": "3型",
+      "achromatopsia": "全色"
+    }
   },
   "comparison": {
     "selectedDyes": "選択された染料",
@@ -481,14 +480,15 @@
     "mDistinguishLabel": "判別度",
     "mDistinguishShort": "判別度 %",
     "mDistinguishDesc": "同じRGB距離を色立体の対角線441.67で割った百分率。アクセシビリティチェッカーがペアに対して表示する値です。",
-    "mDistinguishCaveat": "RGB距離の弱点をすべて引き継ぎ、%表記が実際以上の精度を思わせます。アクセシビリティチェッカーとの突き合わせ用で、WCAG評価ではありません。"
+    "mDistinguishCaveat": "RGB距離の弱点をすべて引き継ぎ、%表記が実際以上の精度を思わせます。アクセシビリティチェッカーとの突き合わせ用で、WCAG評価ではありません。",
+    "mRatioShort": "比率"
   },
   "mixer": {
     "dyeSelection": "カララント選択",
     "selectDyes": "下からカララントを選択してください",
+    "selectTwoDyes": "補間を見るには2つのカララントを選択してください",
     "interpolationSettings": "補間設定",
     "colorSpace": "色空間",
-    "selectTwoDyes": "補間を見るには2つのカララントを選択してください",
     "startDye": "開始カララント",
     "endDye": "終了カララント",
     "steps": "ステップ",
@@ -516,7 +516,8 @@
     "modelOklab": "知覚的",
     "modelLab": "LAB",
     "modelHsl": "色相",
-    "modelRgb": "光"
+    "modelRgb": "光",
+    "exportMeta": "ブレンド：{model} @ {pct}%"
   },
   "gradient": {
     "selectColor": "色を選択",
@@ -535,7 +536,6 @@
       "oklch": "現代知覚的（最適）",
       "lch": "円筒LAB"
     },
-    "stepLabel": "ステップ",
     "fromLabel": "開始",
     "toLabel": "終了",
     "swap": "入れ替え",
@@ -545,11 +545,14 @@
     "pinStep": "このステップを固定",
     "unpinStep": "固定を解除",
     "endAnchor": "端点 — 既にアンカー",
-    "avgDrift": "平均 ΔE",
-    "maxDrift": "最大 ΔE",
     "maxDriftDesc": "ランプ内で最も悪いステップ。平均値は単発の飛びを隠します。",
     "bandIdeal": "理想",
-    "bandAchievable": "実現可能"
+    "bandAchievable": "実現可能",
+    "exportMeta": "補間：{space} · {n} ステップ",
+    "stepN": "ステップ {n}",
+    "pinnedCount": "固定ステップ · {n}",
+    "avgDriftValue": "平均 ΔE {v}",
+    "maxDriftValue": "最大 ΔE {v}"
   },
   "dyeSelector": {
     "searchPlaceholder": "カララント名で検索...",
@@ -597,7 +600,15 @@
     "pricesRefreshed": "価格を更新しました！",
     "refreshError": "価格の更新に失敗しました。もう一度お試しください。",
     "priceUnavailable": "価格不明",
-    "offlineWarning": "オフラインです。価格を更新できません。"
+    "offlineWarning": "オフラインです。価格を更新できません。",
+    "region": {
+      "japan": "日本",
+      "northAmerica": "北米",
+      "europe": "ヨーロッパ",
+      "oceania": "オセアニア",
+      "china": "中国",
+      "korea": "韓国"
+    }
   },
   "budget": {
     "targetDye": "対象カララント",
@@ -631,8 +642,6 @@
     "priciestNow": "現在の高額品 · {world}",
     "priciestOff": "市場限定 · オフラインでは価格なし",
     "vendorSaves": "販売業者なら {diff} 安い",
-    "orWord": "または",
-    "boardWord": "市場",
     "noVendorMarketOnly": "販売なし · 市場のみ",
     "matchLine": "一致しきい値",
     "matchLineDesc": "代替として認める色ずれの上限。",
@@ -641,7 +650,9 @@
     "handoffCompare": "比較",
     "copyItem": "アイテム名をコピー",
     "saveSwap": "入替を保存",
-    "swapSaved": "入替をこの端末に保存しました。"
+    "swapSaved": "入替をこの端末に保存しました。",
+    "boardPrice": "市場 {price}",
+    "orLocalCost": "または {cost}"
   },
   "export": {
     "title": "パレットを書き出す",
@@ -650,7 +661,11 @@
     "copied": "スニペットをクリップボードにコピーしました",
     "copyFailed": "スニペットをコピーできませんでした",
     "download": "ダウンロード",
-    "nothing": "書き出せるものがありません"
+    "nothing": "書き出せるものがありません",
+    "generatedLine": "生成日 {date} · {n} 件",
+    "generatedLineOne": "生成日 {date} · {n} 件",
+    "hexSourceHeader": "元の色",
+    "hexDyesHeader": "カララント"
   },
   "errors": {
     "apiFailed": "マーケットボードからのデータ取得に失敗しました。",
@@ -676,7 +691,11 @@
     "unexpectedError": "予期しないエラーが発生しました",
     "tryAgain": "再試行",
     "resetComponent": "コンポーネントをリセット",
-    "retryAttempts": "再試行回数: {count}/{max}"
+    "retryAttempts": "再試行回数: {count}/{max}",
+    "requestTimeout": "リクエストがタイムアウトしました。もう一度お試しください。",
+    "networkError": "ネットワークエラーが発生しました。もう一度お試しください。",
+    "toolLoadFailed": "ツールを読み込めませんでした",
+    "tryAgainOrRefresh": "もう一度お試しいただくか、ページを再読み込みしてください。"
   },
   "success": {
     "copiedToClipboard": "クリップボードにコピーしました！"
@@ -724,8 +743,7 @@
     "cycleLanguage": "言語切り替え",
     "shareTool": "現在のツールを共有",
     "showHelp": "このパネルを表示",
-    "platformHint": "ヒント",
-    "useModifier": "システムショートカットにはCtrlを使用"
+    "platformHintFull": "ヒント：システムショートカットにはCtrlを使用します。"
   },
   "palette": {
     "exported": "パレットをエクスポートしました！",
@@ -747,13 +765,13 @@
     "captureFailed": "画像のキャプチャに失敗しました",
     "permissionDenied": "カメラへのアクセスが拒否されました",
     "checkPermissions": "ブラウザの権限設定を確認してください",
-    "error": "カメラエラー"
+    "error": "カメラエラー",
+    "deviceFallback": "カメラ{n}"
   },
   "offline": {
     "banner": "オフラインです。一部の機能が制限される場合があります。"
   },
   "collections": {
-    "favorites": "お気に入り",
     "favoritesEmptyHint": "カララントのクリスタルアイコンをクリックしてお気に入りに追加",
     "favoritesFull": "最大{max}個までお気に入り登録できます",
     "addToFavorites": "お気に入りに追加",
@@ -762,7 +780,6 @@
     "removedFromFavorites": "お気に入りから削除しました",
     "collectionsEmpty": "コレクションがありません",
     "collectionsEmptyHint": "コレクションを作成してカララントを整理",
-    "collectionsCount": "{count}個のコレクション",
     "newCollection": "新規コレクション",
     "createCollection": "コレクションを作成",
     "editCollection": "コレクションを編集",
@@ -775,7 +792,6 @@
     "addToCollection": "コレクションに追加",
     "addedToCollection": "{name}に追加しました",
     "removedFromCollection": "{name}から削除しました",
-    "dyeCount": "{count}個のカララント",
     "collectionFull": "コレクションがいっぱいです（最大{max}個）",
     "export": "エクスポート",
     "exportAll": "すべてエクスポート",
@@ -784,11 +800,19 @@
     "importFailed": "インポートに失敗しました",
     "invalidFormat": "無効なファイル形式です",
     "confirmDelete": "このコレクションを削除しますか？",
-    "manageCollections": "コレクション管理"
+    "manageCollections": "コレクション管理",
+    "importSkippedInvalid": "無効なコレクションをスキップしました：{name}",
+    "importCreateFailed": "コレクションの作成に失敗しました：{name}",
+    "importedSuffix": "{name}（インポート{n}）",
+    "unnamed": "名称未設定",
+    "full": "満杯",
+    "favoritesWithCount": "お気に入り（{count}）",
+    "collectionsCountOne": "{count}個のコレクション",
+    "collectionsCountMany": "{count}個のコレクション",
+    "dyeCountOne": "{count}個のカララント",
+    "dyeCountMany": "{count}個のカララント"
   },
   "tutorial": {
-    "step": "ステップ",
-    "of": "/",
     "skip": "スキップ",
     "previous": "前へ",
     "next": "次へ",
@@ -881,7 +905,9 @@
         "title": "表示設定",
         "description": "アクセシビリティチェッカービューの表示オプションを設定します。"
       }
-    }
+    },
+    "stepOf": "ステップ {i}/{n}",
+    "dialogLabel": "チュートリアル"
   },
   "preset": {
     "mySubmissions": "マイ投稿",
@@ -1007,7 +1033,6 @@
     "tabSaved": "保存済み",
     "tabMine": "自分の",
     "searchAll": "パレット・カララント・タグ検索",
-    "resultsWord": "件",
     "shotSlot": "ミラプリ画像 · リンクのみ保存",
     "paletteLabel": "パレット",
     "paletteCost": "パレット合計",
@@ -1035,7 +1060,7 @@
     "signinBlurb": "保存したパレットはこの端末に残るため、ログアウトしてもサービスが停止しても消えません。アカウントが要るのは投稿するときだけです。",
     "gateTitle": "アカウントでできること",
     "gateBrowse": "閲覧・検索",
-    "gateBrowseNote": "アカウント不要。",
+    "gateBrowseNote": "アカウント不要、レート制限なし。",
     "gateSave": "パレット保存",
     "gateSaveNote": "この端末に保存。",
     "gateVote": "投票",
@@ -1068,14 +1093,12 @@
     "dyesReq": "3〜6色必須",
     "dyesHint": "スロットをタップして選択。ここではHEX入力とカラーピッカーは使えません — 実際に入手できる色である必要があります。",
     "rulesNote": "投稿は公開前に確認されます。既存パレットの重複、規約違反の名称、許可されたサイト以外への作例リンクは差し戻されます。目安は1日です。",
-    "mineSummary": "{n}件 · {v}票",
     "statusLive": "公開中",
     "statusReview": "審査中",
     "statusRejected": "非公開",
     "reviewNote": "審査待ちです。多くは1日以内に公開されます。",
     "actView": "表示",
     "actResubmit": "再投稿",
-    "votesLabel": "投票",
     "statPublished": "公開",
     "statTotalVotes": "総投票数",
     "statAwaitingReview": "審査待ち",
@@ -1089,9 +1112,41 @@
     "cfgSavedFirstDesc": "各タブの先頭に固定",
     "cfgKeepDeleted": "削除済みも保持",
     "cfgKeepDeletedDesc": "作者が削除しても印付きで残す",
-    "cfgStoredLocally": "端末に保存",
-    "cfgStoredLocallyDesc": "サーバー送信なし・ログアウト時も有効",
-    "authorBy": "{author} が作成"
+    "authorBy": "{author} が作成",
+    "editTitle": "プリセットを編集",
+    "saveChanges": "変更を保存",
+    "saving": "保存中...",
+    "submitting": "投稿中...",
+    "fieldNamePlaceholder": "例：Dark Knight Abyssal",
+    "fieldDescPlaceholder": "カラーパレットの説明と、使いどころを書いてください...",
+    "fieldTagsPlaceholder": "例：dark, edgy, tank（カンマ区切り）",
+    "fieldTagsLimit": "最大{max}個のタグ、各{chars}文字まで",
+    "counterWithMin": "{n}/{max}（最小{min}）",
+    "allMatchingSelected": "一致するカララントはすべて選択済みです",
+    "clickDyesToAdd": "下のカララントをクリックして追加してください...",
+    "clickToRemove": "クリックで削除",
+    "anotherPreset": "別のプリセット",
+    "loadingOne": "プリセットを読み込み中...",
+    "votesCount": "{n}票",
+    "votesCountOne": "{n}票",
+    "dyeCountShort": "{n}個のカララント",
+    "dyeCountShortOne": "{n}個のカララント",
+    "resultsCount": "{n}件",
+    "resultsCountOne": "{n}件",
+    "validation": {
+      "nameMin": "名前は{n}文字以上で入力してください",
+      "descMin": "説明は{n}文字以上で入力してください",
+      "dyesMin": "カララントを{n}個以上選択してください",
+      "nameMax": "名前は{n}文字以内で入力してください",
+      "descMax": "説明は{n}文字以内で入力してください",
+      "category": "有効なカテゴリーを選択してください",
+      "dyesInvalid": "カララントの選択が無効です",
+      "tagsMax": "タグは最大{n}個までです",
+      "tagLength": "各タグは{n}文字以内で入力してください"
+    },
+    "cfgStoredLocallyHint": "この端末に保存され、サーバーには送信されないため、ログアウト時でも利用できます。",
+    "mineSummaryPresetsOne": "{n}件",
+    "mineSummaryPresetsMany": "{n}件"
   },
   "emptyStates": {
     "noSearchResults": {
@@ -1137,7 +1192,11 @@
     "moreActions": "その他のアクション",
     "slider": "スライダー",
     "toggle": "切り替え",
-    "toolSelection": "ツール選択"
+    "toolSelection": "ツール選択",
+    "modalDialogs": "ダイアログ",
+    "notifications": "通知",
+    "removeFromFavoritesNamed": "{name}をお気に入りから削除",
+    "addToFavoritesNamed": "{name}をお気に入りに追加"
   },
   "resultCard": {
     "inspectDyeIn": "染料を確認...",
@@ -1149,7 +1208,6 @@
     "addedTo": "追加しました",
     "slotsFull": "すべてのスロットが使用中です。置き換えるスロットを選択してください：",
     "selectSlotToReplace": "置き換えるスロットを選択",
-    "addingDye": "追加中",
     "replacedInTool": "置き換えました",
     "tools": {
       "harmony": "ハーモニーエクスプローラー",
@@ -1162,14 +1220,22 @@
     },
     "spectrumShort": "スペクトル",
     "acquisitionShort": "入手先",
-    "hueOff": "色相差"
+    "hueOff": "色相差",
+    "stainShort": "ステイン",
+    "replaceSlotN": "スロット{n}を置き換え",
+    "dyeResultAria": "カララント結果：{name}",
+    "addingDyeLabel": "追加中：",
+    "noData": "データなし"
   },
   "share": {
     "button": "共有",
     "copied": "コピーしました！",
     "invalidDye": "このリンクは、このバージョンでは認識できないカララントを指しています。",
     "legacyLink": "このリンクは旧バージョンで作成され、古いカララントIDを使用しています。新しいリンクを取得してください。",
-    "invalidHex": "このリンクには無効なカラー値が含まれています。"
+    "invalidHex": "このリンクには無効なカラー値が含まれています。",
+    "linkCopied": "リンクをクリップボードにコピーしました！",
+    "copyManually": "URLを手動でコピーしてください",
+    "generateFailed": "共有リンクの生成に失敗しました"
   },
   "advanced": {
     "eyebrow": "設定",
@@ -1178,7 +1244,9 @@
     "backupTitle": "バックアップ",
     "backupSummary": "設定をJSONで書き出し / 読み込み",
     "behaviorTitle": "動作",
-    "behaviorSummary": "パフォーマンスモード · 分析"
+    "behaviorSummary": "パフォーマンスモード · 分析",
+    "dataBadge": "端末",
+    "behaviorBadge": "保存済み"
   },
   "swatch": {
     "charaHint": "この端末で解析します。送信はしません。ファイルには名前や画像が含まれることがあります。",
@@ -1234,7 +1302,6 @@
     "equipCount": "{channels}チャンネル・{dyes}色",
     "glamourViewPieces": "部位",
     "glamourViewDyes": "カララント",
-    "sameModel": "同一モデル: ",
     "namesUnavailable": "アイテム名を取得できません — スロット名のみ表示します。カララントはファイルからローカルに読み込み済みで、影響ありません。",
     "footSplit": "{undyed}・{empty}。",
     "footWornUndyedOne": "装備中1部位が未染色（DyeId 0）",
@@ -1267,8 +1334,29 @@
     "saveCharacter": "キャラクターの色を保存",
     "characterSavedOne": "キャラクターの色を1件この端末に保存しました。",
     "characterSavedMany": "キャラクターの色を{n}件この端末に保存しました。",
-    "selSentence": "{subject}は{place}。{dye}との差は{delta}です。",
-    "selSentenceCell": "{place}。{dye}との差は{delta}です。",
-    "selSentenceOffGrid": "{subject}は任意の色です。{dye}との差は{delta}です。"
+    "selSentence": "{subject}は{palette} {addr}。{dye}との差は{delta}です。",
+    "selSentenceCell": "{palette} {addr}。{dye}との差は{delta}です。",
+    "selSentenceOffGrid": "{subject}は任意の色です。{dye}との差は{delta}です。",
+    "closestSwatchesHead": "最も近いスウォッチ",
+    "rowColumn": "{row}行、{col}列",
+    "exploreDye": "カララントを見る",
+    "parseFailed": "このキャラクターファイルを読み込めませんでした：{reason}",
+    "slotError": {
+      "midRangeIndex": "この色はダークとライトの範囲の間にある未使用の96〜127に含まれます",
+      "indexOutOfRange": "この色のインデックスはシートの範囲外です",
+      "noTribe": "このスロットの解決にはファイルの部族と性別が必要です",
+      "unknown": "このスロットを読み取れませんでした"
+    },
+    "sameModelList": "同一モデル：{list}",
+    "gridTitle": "{name}（{count}）",
+    "cellTag": "{palette} #{index}"
+  },
+  "languages": {
+    "en": "英語",
+    "ja": "日本語",
+    "de": "ドイツ語",
+    "fr": "フランス語",
+    "ko": "韓国語",
+    "zh": "中国語"
   }
 }

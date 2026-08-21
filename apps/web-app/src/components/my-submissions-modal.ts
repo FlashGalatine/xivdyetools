@@ -50,8 +50,8 @@ function tint(hex: string, alpha: number): string {
 function statValue(value: string, label: string, color: string): string {
   return `
     <div style="flex: 1; min-width: 0; text-align: center; padding: 10px 6px; border: 1px solid var(--theme-border); border-radius: 10px;">
-      <div style="font-family: 'Fragment Mono', monospace; font-size: 20px; color: ${color};">${value}</div>
-      <div style="font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted); margin-top: 2px;">${label}</div>
+      <div style="font-family: var(--font-mono); font-size: 20px; color: ${color};">${value}</div>
+      <div style="font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted); margin-top: 2px;">${label}</div>
     </div>`;
 }
 
@@ -111,6 +111,15 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
             : t('preset.reviewNote')
       );
       const name = escapeHtml(preset.name);
+      // Only a live row has a published vote tally; the others show an em
+      // dash in the count slot so the label still reads as a votes column.
+      const votesText =
+        kind === 'live'
+          ? LanguageService.tInterpolate(
+              preset.vote_count === 1 ? 'preset.votesCountOne' : 'preset.votesCount',
+              { n: preset.vote_count }
+            )
+          : LanguageService.tInterpolate('preset.votesCount', { n: '—' });
       const actions =
         kind === 'live'
           ? [
@@ -144,10 +153,8 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
           <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
             ${bandFor(preset)}
             <span style="flex: 1; min-width: 0; font-size: 13.5px; font-weight: 650; color: var(--theme-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name}</span>
-            <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: var(--theme-text-muted); flex: 0 0 auto;">${
-              kind === 'live' ? preset.vote_count : '—'
-            } ${t('preset.votesLabel')}</span>
-            <span style="font-family: 'Fragment Mono', monospace; font-size: 8.5px; letter-spacing: 1px; padding: 3px 7px; border-radius: 5px; background: ${tint(tone, 0.16)}; color: ${tone}; flex: 0 0 auto;">${statusLabel}</span>
+            <span style="font-family: var(--font-mono); font-size: 11px; color: var(--theme-text-muted); flex: 0 0 auto;">${votesText}</span>
+            <span style="font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 1px; padding: 3px 7px; border-radius: 5px; background: ${tint(tone, 0.16)}; color: ${tone}; flex: 0 0 auto;">${statusLabel}</span>
           </div>
           ${
             note
@@ -215,10 +222,13 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
   ModalService.show({
     type: 'custom',
     title: t('preset.mySubmissions'),
-    subtitle: LanguageService.tInterpolate('preset.mineSummary', {
-      n: presets.length,
-      v: totalVotes,
-    }),
+    subtitle: `${LanguageService.tInterpolate(
+      presets.length === 1 ? 'preset.mineSummaryPresetsOne' : 'preset.mineSummaryPresetsMany',
+      { n: presets.length }
+    )} · ${LanguageService.tInterpolate(
+      totalVotes === 1 ? 'preset.votesCountOne' : 'preset.votesCount',
+      { n: totalVotes }
+    )}`,
     content,
     panelWidth: 620,
   });

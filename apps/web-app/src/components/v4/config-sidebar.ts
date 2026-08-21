@@ -17,6 +17,8 @@ import { BaseLitComponent } from './base-lit-component';
 import { ConfigController } from '@services/config-controller';
 import { authService, LanguageService } from '@services/index';
 import { COMPANION_DYES_MIN, COMPANION_DYES_MAX, COMPANION_DYES_DEFAULT } from '@shared/constants';
+import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
+import { regionLabel } from '@shared/region-name';
 import type { ToolId } from '@services/router-service';
 import type {
   HarmonyConfig,
@@ -62,35 +64,14 @@ import type { SubRace, Race } from '@xivdyetools/types';
  * also wrong in principle for XIVAuth users, who have no Discord identity at all.
  *
  * Iterating the string yields code points rather than UTF-16 units, so an emoji
- * or astral-plane name does not render half a surrogate pair.
+ * or astral-plane name does not render half a surrogate pair. Upper-casing is
+ * app-locale aware: bare `toLocaleUpperCase()` follows the BROWSER locale, so a
+ * Turkish-locale browser would render a dotted `İ` for an English UI.
  */
 export function avatarInitial(name: string): string {
   const first = [...name.trim()][0];
-  return first ? first.toLocaleUpperCase() : '?';
+  return first ? first.toLocaleUpperCase(LanguageService.getCurrentLocale()) : '?';
 }
-
-/**
- * Mapping from SubRace type values to ClanKey for localization lookup
- * SubRace uses PascalCase, ClanKey uses camelCase
- */
-const SUBRACE_TO_CLAN_KEY: Record<SubRace, string> = {
-  Midlander: 'midlander',
-  Highlander: 'highlander',
-  Wildwood: 'wildwood',
-  Duskwight: 'duskwight',
-  Plainsfolk: 'plainsfolk',
-  Dunesfolk: 'dunesfolk',
-  SeekerOfTheSun: 'seekerOfTheSun',
-  KeeperOfTheMoon: 'keeperOfTheMoon',
-  SeaWolf: 'seaWolf',
-  Hellsguard: 'hellsguard',
-  Raen: 'raen',
-  Xaela: 'xaela',
-  Helions: 'helions',
-  TheLost: 'theLost',
-  Rava: 'rava',
-  Veena: 'veena',
-};
 
 /**
  * Localization key for each race — a presentation concern local to this
@@ -941,20 +922,24 @@ export class ConfigSidebar extends BaseLitComponent {
               this.handleConfigChange('harmony', 'harmonyType', value);
             }}
           >
-            <option value="complementary">${LanguageService.t('config.complementary')}</option>
-            <option value="analogous">${LanguageService.t('config.analogous')}</option>
-            <option value="triadic">${LanguageService.t('config.triadic')}</option>
+            <option value="complementary">
+              ${LanguageService.getHarmonyType('complementary')}
+            </option>
+            <option value="analogous">${LanguageService.getHarmonyType('analogous')}</option>
+            <option value="triadic">${LanguageService.getHarmonyType('triadic')}</option>
             <option value="split-complementary">
-              ${LanguageService.t('config.splitComplementary')}
+              ${LanguageService.getHarmonyType('splitComplementary')}
             </option>
-            <option value="tetradic">${LanguageService.t('config.tetradic')}</option>
+            <option value="tetradic">${LanguageService.getHarmonyType('tetradic')}</option>
             <option value="inverted-tetradic">
-              ${LanguageService.t('config.invertedTetradic')}
+              ${LanguageService.getHarmonyType('invertedTetradic')}
             </option>
-            <option value="square">${LanguageService.t('config.square')}</option>
-            <option value="monochromatic">${LanguageService.t('config.monochromatic')}</option>
-            <option value="compound">${LanguageService.t('config.compound')}</option>
-            <option value="shades">${LanguageService.t('config.shades')}</option>
+            <option value="square">${LanguageService.getHarmonyType('square')}</option>
+            <option value="monochromatic">
+              ${LanguageService.getHarmonyType('monochromatic')}
+            </option>
+            <option value="compound">${LanguageService.getHarmonyType('compound')}</option>
+            <option value="shades">${LanguageService.getHarmonyType('shades')}</option>
           </select>
         </div>
 
@@ -1442,6 +1427,9 @@ export class ConfigSidebar extends BaseLitComponent {
 
   /**
    * Render matching method dropdown for a tool
+   *
+   * The leading ΔE2000 / ΔEOK / ΔE76 / REDMEAN / RGB DIST / DISTINGUISH % tags are
+   * identifiers by decision (2026-08-20 i18n audit) — never localised.
    */
   private renderMatchingMethodSection(
     toolKey: 'harmony' | 'extractor' | 'gradient' | 'mixer' | 'budget' | 'swatch',
@@ -1576,8 +1564,7 @@ export class ConfigSidebar extends BaseLitComponent {
           </div>
           <div class="config-hint">${LanguageService.t('preset.cfgKeepDeletedDesc')}</div>
           <div class="config-hint" style="margin-top: 6px; opacity: 0.85;">
-            ${LanguageService.t('preset.cfgStoredLocally')} —
-            ${LanguageService.t('preset.cfgStoredLocallyDesc')}
+            ${LanguageService.t('preset.cfgStoredLocallyHint')}
           </div>
         </div>
 
@@ -1610,7 +1597,8 @@ export class ConfigSidebar extends BaseLitComponent {
 
     if (isAuthenticated && user) {
       // Logged in - show user card and submit button
-      const displayName = user.global_name || user.username || 'User';
+      const displayName =
+        user.global_name || user.username || LanguageService.t('config.userFallback');
       const providerLabel = user.auth_provider === 'xivauth' ? 'XIVAuth' : 'Discord';
 
       return html`
@@ -1944,7 +1932,7 @@ export class ConfigSidebar extends BaseLitComponent {
                     </option>`
                   : sortedDataCenters.map(
                       (dc) => html`
-                        <optgroup label="${dc.name} (${dc.region})">
+                        <optgroup label="${dc.name} (${regionLabel(dc.region)})">
                           <option
                             value="${dc.name}"
                             ?selected=${this.marketConfig.selectedServer === dc.name}

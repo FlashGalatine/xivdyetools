@@ -9,11 +9,37 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
+/**
+ * `t()` returns the key so a locale-routed string is provable by its key
+ * (`common.custom`); `tInterpolate` echoes the interpolated custom-colour
+ * name so we can tell "the placeholder was filled" from "the key leaked".
+ */
+const languageServiceMock = {
+  t: (key: string) => key,
+  tInterpolate: (key: string, params: Record<string, string | number>) =>
+    key === 'common.customColorName' ? `Custom (${params.hex})` : key,
+  getCurrentLocale: () => 'en',
+  /** No database entry for a synthetic negative id — the card falls back to `dye.name`. */
+  getDyeName: () => undefined,
+  getAcquisition: (acquisition: string) => `ACQ:${acquisition}`,
+  getCategory: (category: string) => `CAT:${category}`,
+  subscribe: vi.fn().mockReturnValue(() => {}),
+};
+
 vi.mock('@services/index', () => ({
-  LanguageService: {
-    t: (key: string) => key,
-    subscribe: vi.fn().mockReturnValue(() => {}),
+  LanguageService: languageServiceMock,
+  StorageService: {
+    getItem: vi.fn(() => null),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
   },
+  RouterService: { navigateTo: vi.fn() },
+  ThemeService: { isDarkMode: vi.fn(() => false) },
+}));
+
+// `@shared/custom-dye` reaches LanguageService through its own module path.
+vi.mock('@services/language-service', () => ({
+  LanguageService: languageServiceMock,
 }));
 
 vi.mock('@xivdyetools/core', () => ({
@@ -22,8 +48,15 @@ vi.mock('@xivdyetools/core', () => ({
     rgbToHex: vi.fn(() => '#FF0000'),
     rgbToHsv: vi.fn(() => ({ h: 0, s: 100, v: 100 })),
     hexToHsv: vi.fn(() => ({ h: 0, s: 100, v: 100 })),
+    hexToLab: vi.fn(() => ({ L: 50, a: 0, b: 0 })),
+    hexToCmyk: vi.fn(() => ({ c: 0, m: 100, y: 100, k: 0 })),
+    getDistanceForMethod: vi.fn(() => 0),
     isLightColor: vi.fn(() => false),
   },
+  classifyBandTier: vi.fn(() => 'A'),
+  getConsolidatedDyeName: vi.fn(() => 'General-purpose Dye'),
+  getMarketItemID: vi.fn((dye: { itemID: number }) => dye.itemID),
+  BAND_METHOD_DP: 2,
   DyeService: class MockDyeService {
     getAllDyes() {
       return [];
@@ -110,6 +143,99 @@ describe('ResultCard', () => {
       const { ResultCard } = await import('../../v4/result-card');
       const { BaseLitComponent } = await import('../../v4/base-lit-component');
       expect(ResultCard.prototype instanceof BaseLitComponent).toBe(true);
+    });
+  });
+
+  // ============================================================================
+  // Custom colours (HC-SYS-002)
+  //
+  // A colour picked from the Custom Color drawer is wrapped by
+  // `makeCustomDye()`; its `category`/`acquisition` hold a sentinel, not a
+  // real database value. The card must print the localized "Custom" label
+  // for the ACQ row — running the sentinel through `getAcquisition()` would
+  // leak `__custom__` — and must show the interpolated custom-colour name.
+  // ============================================================================
+
+  describe('custom dye rendering', () => {
+    /** Mount a card over a custom colour with the ACQ zone switched on. */
+    const mountCustomCard = async (hex: string) => {
+      await import('../../v4/result-card');
+      const { makeCustomDye } = await import('@shared/custom-dye');
+      const dye = makeCustomDye(hex);
+
+      const card = document.createElement('v4-result-card') as HTMLElement & {
+        data?: unknown;
+        showAcquisition?: boolean;
+        showActions?: boolean;
+        updateComplete?: Promise<unknown>;
+      };
+      card.data = { dye, originalColor: hex, matchedColor: hex };
+      card.showAcquisition = true;
+      card.showActions = false;
+      container.appendChild(card);
+      await card.updateComplete;
+      return { card, dye };
+    };
+
+    it('prints the localized "Custom" label instead of the acquisition sentinel', async () => {
+      const { card } = await mountCustomCard('#aabbcc');
+
+      const text = card.shadowRoot?.textContent ?? '';
+      expect(text).toContain('common.custom');
+      // The sentinel must never reach the user, raw or through getAcquisition()
+      expect(text).not.toContain('__custom__');
+      expect(text).not.toContain('ACQ:');
+    });
+
+    it('shows the interpolated custom-colour name', async () => {
+      const { card, dye } = await mountCustomCard('#aabbcc');
+
+      expect(dye.name).toBe('Custom (#AABBCC)');
+      expect(card.shadowRoot?.textContent ?? '').toContain('Custom (#AABBCC)');
+      // The raw key must not leak when the placeholder is filled
+      expect(card.shadowRoot?.textContent ?? '').not.toContain('common.customColorName');
+    });
+
+    it('still routes a real dye through getAcquisition()', async () => {
+      await import('../../v4/result-card');
+
+      const card = document.createElement('v4-result-card') as HTMLElement & {
+        data?: unknown;
+        showAcquisition?: boolean;
+        showActions?: boolean;
+        updateComplete?: Promise<unknown>;
+      };
+      card.data = {
+        dye: {
+          id: 1,
+          itemID: 5729,
+          stainID: 1,
+          name: 'Snow White',
+          hex: '#E4E4E4',
+          rgb: { r: 228, g: 228, b: 228 },
+          hsv: { h: 0, s: 0, v: 89 },
+          category: 'White',
+          acquisition: 'Vendor',
+          cost: 216,
+          currency: 'Gil',
+          isMetallic: false,
+          isPastel: false,
+          isDark: false,
+          isCosmic: false,
+          isIshgardian: false,
+          consolidationType: null,
+        },
+        originalColor: '#E4E4E4',
+        matchedColor: '#E4E4E4',
+      };
+      card.showAcquisition = true;
+      card.showActions = false;
+      container.appendChild(card);
+      await card.updateComplete;
+
+      const text = card.shadowRoot?.textContent ?? '';
+      expect(text).toContain('ACQ:Vendor');
+      expect(text).not.toContain('common.custom');
     });
   });
 });

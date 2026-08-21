@@ -1,0 +1,120 @@
+Post-remediation gate output — 2026-08-21
+Branch i18n-remediation-2026-08-20, commits 37668a97..13b84fdb (Tasks 1-19 complete)
+Run from apps/web-app.
+
+======================================================================
+$ npm run validate:i18n
+======================================================================
+
+> xivdyetools-web-app@5.0.0 validate:i18n
+> node scripts/validate-i18n.js && node scripts/i18n-parity.mjs
+
+
+🌐 i18n Translation Key Validator
+
+======================================================================
+📚 Loaded 1153 translation keys from en.json
+
+📁 Scanning 118 source files...
+
+======================================================================
+
+✅ All 1084 translation key references are valid!
+
+📊 Summary:
+   • Total keys in en.json: 1153
+   • Keys referenced in code: 790
+   • Total references checked: 1084
+
+======================================================================
+
+🌍 Cross-Locale Structural Comparison
+
+✅ All locale files have matching key structure!
+
+📊 Locale Summary:
+   • en: 1153 keys (reference)
+   • ja: 1153 keys ✓
+   • de: 1153 keys ✓
+   • fr: 1153 keys ✓
+   • ko: 1153 keys ✓
+   • zh: 1153 keys ✓
+
+
+======================================================================
+
+📐 Locale File Shape (key order + value whitespace)
+
+✅ All locale files match en.json key order and carry no stray whitespace.
+
+
+🔁 i18n Locale Parity
+
+======================================================================
+EN keys 1153
+
+== de: dups=0 missing=0 extra=0 identical=42 empty=0 varMismatch=0
+  ✓ 42 identical value(s) allow-listed as intentional
+
+== fr: dups=0 missing=0 extra=0 identical=46 empty=0 varMismatch=0
+  ✓ 46 identical value(s) allow-listed as intentional
+
+== ja: dups=0 missing=0 extra=0 identical=9 empty=0 varMismatch=0
+  ✓ 9 identical value(s) allow-listed as intentional
+
+== ko: dups=0 missing=0 extra=0 identical=12 empty=0 varMismatch=0
+  ✓ 12 identical value(s) allow-listed as intentional
+
+== zh: dups=0 missing=0 extra=0 identical=9 empty=0 varMismatch=0
+  ✓ 9 identical value(s) allow-listed as intentional
+
+======================================================================
+
+✅ i18n parity clean — no duplicates, no drift, no untranslated values.
+
+Exit code: 0
+
+======================================================================
+$ npm run i18n:unused
+======================================================================
+
+> xivdyetools-web-app@5.0.0 i18n:unused
+> node scripts/analyze-unused-keys.js
+
+
+🌍 i18n orphan check — 1151 keys in en.json (meta.* excluded)
+   used: 1151   orphaned: 0
+
+✅ No orphaned keys.
+
+Exit code: 0
+
+======================================================================
+$ node scripts/i18n-parity.mjs
+======================================================================
+
+🔁 i18n Locale Parity
+
+======================================================================
+EN keys 1153
+
+== de: dups=0 missing=0 extra=0 identical=42 empty=0 varMismatch=0
+  ✓ 42 identical value(s) allow-listed as intentional
+
+== fr: dups=0 missing=0 extra=0 identical=46 empty=0 varMismatch=0
+  ✓ 46 identical value(s) allow-listed as intentional
+
+== ja: dups=0 missing=0 extra=0 identical=9 empty=0 varMismatch=0
+  ✓ 9 identical value(s) allow-listed as intentional
+
+== ko: dups=0 missing=0 extra=0 identical=12 empty=0 varMismatch=0
+  ✓ 12 identical value(s) allow-listed as intentional
+
+== zh: dups=0 missing=0 extra=0 identical=9 empty=0 varMismatch=0
+  ✓ 9 identical value(s) allow-listed as intentional
+
+======================================================================
+
+✅ i18n parity clean — no duplicates, no drift, no untranslated values.
+
+Exit code: 0

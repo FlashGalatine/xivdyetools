@@ -23,6 +23,7 @@ import { ToastService } from '@services/toast-service';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
+import { regionLabel } from '@shared/region-name';
 
 /**
  * Market Board component - displays FFXIV market prices for dyes
@@ -247,7 +248,7 @@ export class MarketBoard extends BaseComponent {
     for (const dc of sortedDataCenters) {
       // Create optgroup for this data center
       const optgroup = document.createElement('optgroup');
-      optgroup.label = `${dc.name} (${dc.region})`;
+      optgroup.label = `${dc.name} (${regionLabel(dc.region)})`;
 
       // Add the data center itself as an option
       const dcOption = document.createElement('option');

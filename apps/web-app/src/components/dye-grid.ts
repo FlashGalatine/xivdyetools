@@ -2,6 +2,7 @@ import { BaseComponent } from './base-component';
 import { LanguageService, CollectionService, ToastService } from '@services/index';
 import { Dye } from '@xivdyetools/types';
 import { clearContainer } from '@shared/utils';
+import { localizedDyeName } from '@shared/dye-name';
 import { getEmptyStateHTML } from './empty-state';
 import { ICON_STATE_SEARCH, ICON_STATE_FUNNEL } from '@shared/state-icons';
 import { showAddToCollectionMenu } from './add-to-collection-menu';
@@ -77,10 +78,9 @@ export class DyeGrid extends BaseComponent {
         this.emptyState.type === 'search'
           ? getEmptyStateHTML({
               icon: ICON_STATE_SEARCH,
-              title:
-                LanguageService.tInterpolate('dyeSelector.noResults', {
-                  query: this.emptyState.query || '',
-                }) || `No dyes match "${this.emptyState.query}"`,
+              title: LanguageService.tInterpolate('dyeSelector.noResults', {
+                query: this.emptyState.query || '',
+              }),
               description: LanguageService.t('dyeSelector.noResultsHint'),
             })
           : getEmptyStateHTML({
@@ -114,7 +114,7 @@ export class DyeGrid extends BaseComponent {
           }`,
           attributes: {
             'data-dye-id': String(dye.id),
-            'aria-label': dye.name,
+            'aria-label': localizedDyeName(dye),
             'aria-selected': isSelected ? 'true' : 'false',
             type: 'button',
           },
@@ -275,8 +275,7 @@ export class DyeGrid extends BaseComponent {
         // Likely at max favorites
         const max = CollectionService.getMaxFavorites();
         ToastService.warning(
-          LanguageService.tInterpolate('collections.favoritesFull', { max: String(max) }) ||
-            `Maximum ${max} favorites allowed`
+          LanguageService.tInterpolate('collections.favoritesFull', { max: String(max) })
         );
       }
     }

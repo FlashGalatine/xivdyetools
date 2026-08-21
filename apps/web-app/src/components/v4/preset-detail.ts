@@ -23,6 +23,7 @@ import {
   LanguageService,
 } from '@services/index';
 import { presetName, presetDescription, presetCategoryLabel } from '@shared/preset-i18n';
+import { formatGil, formatList, formatNumber } from '@shared/format';
 import { MarketBoardService } from '@services/market-board-service';
 import type { PriceData } from '@xivdyetools/types';
 import { ConfigController } from '@services/config-controller';
@@ -30,11 +31,39 @@ import type { MarketConfig } from '@shared/tool-config-types';
 import { getCategoryIcon } from '@shared/category-icons';
 import { ICON_ARROW_BACK } from '@shared/ui-icons';
 import { ICON_CRYSTAL, ICON_LINK } from '@shared/ui-icons';
+import type { VoteErrorCode } from '@services/community-preset-service';
 import type { UnifiedPreset } from '@services/hybrid-preset-service';
 import type { Dye } from '@xivdyetools/types';
 
 // Import v4-result-card to ensure registration
 import './result-card';
+
+/**
+ * Vote failure code -> locale key.
+ *
+ * `community-preset-service` has no locale, so it names the reason and the
+ * text lives here. Total `Record`, so a new `VoteErrorCode` without a key is a
+ * compile error rather than a raw dot-path in a toast.
+ */
+const VOTE_ERROR_KEYS: Record<VoteErrorCode, string> = {
+  notLoggedIn: 'preset.loginToVote',
+  alreadyVoted: 'preset.alreadyVoted',
+  voteFailed: 'errors.voteFailed',
+  removeVoteFailed: 'errors.removeVoteFailed',
+  network: 'errors.networkError',
+};
+
+/** Localized "{n} votes" for a badge, singular at exactly one. */
+function votesText(n: number): string {
+  return LanguageService.tInterpolate(n === 1 ? 'preset.votesCountOne' : 'preset.votesCount', {
+    n,
+  });
+}
+
+/** Localized text for a vote failure; `fallbackKey` covers a code-less result. */
+function voteErrorMessage(code: VoteErrorCode | undefined, fallbackKey: string): string {
+  return LanguageService.t(code ? VOTE_ERROR_KEYS[code] : fallbackKey);
+}
 
 /**
  * V4 Preset Detail - Full preset view with dye cards
@@ -740,7 +769,7 @@ export class PresetDetail extends BaseLitComponent {
           this.emit<{ preset: UnifiedPreset }>('vote-update', { preset: updatedPreset });
           ToastService.info(LanguageService.t('preset.voteRemoved'));
         } else {
-          ToastService.error(result.error || LanguageService.t('errors.removeVoteFailed'));
+          ToastService.error(voteErrorMessage(result.errorCode, 'errors.removeVoteFailed'));
         }
       } else {
         // Add vote
@@ -756,7 +785,7 @@ export class PresetDetail extends BaseLitComponent {
           this.hasVoted = true;
           ToastService.info(LanguageService.t('preset.alreadyVoted'));
         } else {
-          ToastService.error(result.error || LanguageService.t('errors.voteFailed'));
+          ToastService.error(voteErrorMessage(result.errorCode, 'errors.voteFailed'));
         }
       }
     } catch (error) {
@@ -793,7 +822,7 @@ export class PresetDetail extends BaseLitComponent {
     if (gilDyes.length === dyes.length && dyes.length > 0) {
       return LanguageService.tInterpolate('preset.costNoteAll', {
         total: dyes.length,
-        gil: gil.toLocaleString(),
+        gil: formatNumber(gil),
       });
     }
     const notSold = dyes.filter((d) => !(/gil/i.test(d.currency || '') && d.cost > 0));
@@ -803,8 +832,8 @@ export class PresetDetail extends BaseLitComponent {
     return LanguageService.tInterpolate('preset.costNotePartial', {
       bought: gilDyes.length,
       total: dyes.length,
-      names: notSold.map((d) => this.dyeNameOf(d)).join(' · '),
-      sources: sources.join(', '),
+      names: formatList(notSold.map((d) => this.dyeNameOf(d))),
+      sources: formatList(sources),
     });
   }
 
@@ -842,7 +871,7 @@ export class PresetDetail extends BaseLitComponent {
         <div class="preset-detail">
           <div class="loading">
             <div class="spinner"></div>
-            <span>Loading preset...</span>
+            <span>${LanguageService.t('preset.loadingOne')}</span>
           </div>
         </div>
       `;
@@ -881,9 +910,7 @@ export class PresetDetail extends BaseLitComponent {
           }
           ${
             this.currentVoteCount > 0
-              ? html`<span class="badge badge-votes"
-                  >★ ${this.currentVoteCount} ${LanguageService.t('preset.votesLabel')}</span
-                >`
+              ? html`<span class="badge badge-votes">★ ${votesText(this.currentVoteCount)}</span>`
               : nothing
           }
         </div>
@@ -929,11 +956,7 @@ export class PresetDetail extends BaseLitComponent {
                   <span class="dye-hex">${dye.hex.toUpperCase()}</span>
                   <span class="dye-source">${LanguageService.getAcquisition(dye.acquisition)}</span>
                   <span class="dye-price ${gilVendor ? '' : 'dye-price--na'}"
-                    >${
-                      gilVendor
-                        ? `${dye.cost.toLocaleString()}g`
-                        : LanguageService.t('preset.notSold')
-                    }</span
+                    >${gilVendor ? formatGil(dye.cost) : LanguageService.t('preset.notSold')}</span
                   >
                 </div>
               `;
@@ -1011,9 +1034,7 @@ export class PresetDetail extends BaseLitComponent {
         <!-- Login CTA for non-authenticated users viewing voteable presets -->
         ${
           isVoteable && !isAuthenticated
-            ? html`
-                <div class="login-cta">Login with Discord or XIVAuth to vote for this preset</div>
-              `
+            ? html` <div class="login-cta">${LanguageService.t('preset.loginToVote')}</div> `
             : nothing
         }
       </div>
