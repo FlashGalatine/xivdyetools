@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { DyeService, dyeService } from '../dye-service-wrapper';
+import { DyeService, dyeService, resolvePresetDye } from '../dye-service-wrapper';
 
 describe('DyeService Wrapper', () => {
   beforeEach(() => {
@@ -191,5 +191,49 @@ describe('DyeService integration', () => {
     const dyes = instance.getAllDyes();
 
     expect(dyes.length).toBe(125);
+  });
+});
+
+// ============================================================================
+// resolvePresetDye — the one read path every community preset goes through
+// ============================================================================
+
+/**
+ * The live presets-api (2.0.0 worker, deployed 2026-08-11) still serves rows
+ * whose `dyes` are legacy itemIDs, because the user-run stainID D1 migration
+ * is coupled to the 5.0 production launch. Until it runs, beta's Presets tool
+ * renders only because this resolver routes >254 through the legacy lookup.
+ * Removing that branch before the migration lands blanks every live palette —
+ * this block is the tripwire.
+ */
+describe('resolvePresetDye', () => {
+  it('resolves stainIDs (1–254) through the stain lookup', () => {
+    expect(resolvePresetDye(1)?.stainID).toBe(1);
+    expect(resolvePresetDye(254)).toBeUndefined(); // unassigned stain byte
+  });
+
+  it('resolves legacy itemIDs (≥ 5729) — the rows the live API still serves', () => {
+    // Verbatim from production D1 on 2026-08-20 (`SELECT dyes FROM presets`).
+    const livePresetDyes = [
+      [48171, 5785, 5787, 30124],
+      [5761, 30124, 5734, 5749],
+      [5762, 5785, 13715, 5758],
+      [5804, 13722, 13117],
+    ];
+    for (const row of livePresetDyes) {
+      for (const id of row) {
+        const dye = resolvePresetDye(id);
+        expect(dye, `itemID ${id} must resolve until the D1 migration runs`).toBeDefined();
+        expect(dye!.itemID).toBe(id);
+        expect(dye!.stainID).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('never guesses: ids in the 255–5728 gap, zero, negatives and unknowns resolve to nothing', () => {
+    expect(resolvePresetDye(0)).toBeUndefined();
+    expect(resolvePresetDye(300)).toBeUndefined();
+    expect(resolvePresetDye(-1042)).toBeUndefined(); // pre-v2 synthetic facewear id
+    expect(resolvePresetDye(99_999_999)).toBeUndefined();
   });
 });
