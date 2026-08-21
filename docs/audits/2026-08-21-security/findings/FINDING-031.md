@@ -17,3 +17,7 @@ Drop the `*.workers.dev` entry (or list the exact beta worker hostnames); add `o
 
 ## References
 - Evidence: `../evidence/review-infra-stoat.md` (INF-9), `../evidence/review-web-app.md` (WEB-5, WEB-7, WEB-8)
+
+## Status
+**FIXED 2026-08-21** (web-app)
+- web-app `public/_headers`: `connect-src` drops `https://*.workers.dev`, `object-src 'none'` + `frame-src 'none'`, `X-XSS-Protection` removed, `Permissions-Policy` `camera=(self)` (webcam capture kept); `security-headers.test.ts` pins the contract and the positive controls.

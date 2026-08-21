@@ -3,7 +3,22 @@
  * These functions can be tested without mocking API calls
  */
 import { describe, it, expect, vi } from 'vitest';
-import { validateSubmission, uploadPreviewImage } from '../preset-submission-service';
+
+// The authenticated routes (delete / edit) gate on authService before they
+// build a request; the token itself is irrelevant to what is asserted here.
+vi.mock('../auth-service', () => ({
+  authService: {
+    isAuthenticated: vi.fn(() => true),
+    getAuthHeaders: vi.fn(() => ({ Authorization: 'Bearer test-token' })),
+  },
+}));
+
+import {
+  validateSubmission,
+  uploadPreviewImage,
+  removePreviewImage,
+  presetSubmissionService,
+} from '../preset-submission-service';
 
 describe('PresetSubmissionService - validateSubmission', () => {
   // ============================================
@@ -494,6 +509,44 @@ describe('PresetSubmissionService - uploadPreviewImage', () => {
     await expect(uploadPreviewImage('preset-1', big)).rejects.toThrow();
     expect(fetchSpy).not.toHaveBeenCalled();
 
+    fetchSpy.mockRestore();
+  });
+});
+
+// ============================================
+// Path encoding (2026-08-21 security audit, FINDING-020 / WEB-11)
+// ============================================
+
+describe('PresetSubmissionService - path encoding', () => {
+  const okJson = () =>
+    new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  it('percent-encodes the preset id in the preview-image routes', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => okJson());
+    const file = new File([new Uint8Array([0x89, 0x50])], 'shot.png', { type: 'image/png' });
+
+    await uploadPreviewImage('a/b c', file);
+    await removePreviewImage('a/b c');
+
+    const paths = fetchSpy.mock.calls.map((call) => new URL(String(call[0])).pathname);
+    expect(paths).toEqual([
+      '/api/v1/presets/a%2Fb%20c/preview-image',
+      '/api/v1/presets/a%2Fb%20c/preview-image',
+    ]);
+    fetchSpy.mockRestore();
+  });
+
+  it('percent-encodes the preset id in the delete and edit routes', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => okJson());
+
+    await presetSubmissionService.deletePreset('a/b');
+    await presetSubmissionService.editPreset('a/b', { tags: ['glam'] });
+
+    const paths = fetchSpy.mock.calls.map((call) => new URL(String(call[0])).pathname);
+    expect(paths).toEqual(['/api/v1/presets/a%2Fb', '/api/v1/presets/a%2Fb']);
     fetchSpy.mockRestore();
   });
 });

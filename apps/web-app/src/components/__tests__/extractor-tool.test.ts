@@ -806,6 +806,27 @@ describe('ExtractorTool', () => {
       readSpy.mockRestore();
     });
 
+    // WEB-13 (2026-08-21 security audit): the drop/paste path had no size cap
+    // while the upload-display path enforced 20 MB — decoding a huge image
+    // hangs the tab. Same cap, same toast, before the reader ever runs.
+    it('refuses a dropped image over the size cap before reading it', async () => {
+      tool = mount();
+      const { ToastService } = await import('@services/index');
+      const { MAX_USER_FILE_BYTES } = await import('@shared/constants');
+      vi.mocked(ToastService.error).mockClear();
+      const readSpy = vi
+        .spyOn(FileReader.prototype, 'readAsDataURL')
+        .mockImplementation(() => undefined);
+      const huge = new File(['x'], 'huge.png', { type: 'image/png' });
+      Object.defineProperty(huge, 'size', { value: MAX_USER_FILE_BYTES + 1 });
+
+      rightPanel.dispatchEvent(dropEvent([huge]));
+
+      expect(readSpy).not.toHaveBeenCalled();
+      expect(ToastService.error).toHaveBeenCalledWith('errors.imageTooLarge');
+      readSpy.mockRestore();
+    });
+
     it('takes only the first file when several are dropped', () => {
       tool = mount();
       const readSpy = vi

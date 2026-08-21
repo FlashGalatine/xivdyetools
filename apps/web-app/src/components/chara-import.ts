@@ -50,7 +50,7 @@ import {
   type CharaResolvedItem,
 } from '@services/chara-resolve-service';
 import { ICON_TOOL_PRESETS } from '@shared/tool-icons';
-import { STORAGE_PREFIX } from '@shared/constants';
+import { STORAGE_PREFIX, MAX_USER_FILE_BYTES } from '@shared/constants';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import type { Dye, SubRace, Gender } from '@xivdyetools/types';
@@ -193,6 +193,12 @@ export class CharaImport {
   // ==========================================================================
 
   private async loadFile(file: File): Promise<void> {
+    // Refuse before reading: a multi-GB drop would hang the tab in
+    // file.text() / JSON.parse (WEB-13). Same cap as the image inputs.
+    if (file.size > MAX_USER_FILE_BYTES) {
+      ToastService.error(LanguageService.t('errors.fileTooLarge'));
+      return;
+    }
     try {
       const text = await file.text();
       const parsed = parseCharaFile(text);

@@ -8,7 +8,7 @@
  */
 
 import { BaseComponent } from './base-component';
-import { clearContainer } from '@shared/utils';
+import { clearContainer, escapeHtml } from '@shared/utils';
 import { LanguageService } from '@services/index';
 import {
   ICON_STATE_SEARCH,
@@ -230,14 +230,18 @@ export function createEmptyState(container: HTMLElement, preset: EmptyStateOptio
  * Create empty state HTML string for use in innerHTML.
  * `options.icon` must be a static SVG constant — anything else renders as an
  * empty icon slot (defense-in-depth: this string goes into innerHTML).
+ * `title` / `description` are rendered as text: the dye-grid title carries
+ * the user's search query (FINDING-011 / WEB-2), so both are HTML-escaped.
  */
 export function getEmptyStateHTML(options: EmptyStateOptions): string {
   const iconContent = options.icon.trimStart().startsWith('<svg') ? options.icon : '';
+  const title = escapeHtml(options.title);
+  const description = options.description ? escapeHtml(options.description) : '';
   return `
     <div class="empty-state">
       <div class="empty-state-icon" aria-hidden="true">${iconContent}</div>
-      <h3 class="empty-state-title">${options.title}</h3>
-      ${options.description ? `<p class="empty-state-description">${options.description}</p>` : ''}
+      <h3 class="empty-state-title">${title}</h3>
+      ${description ? `<p class="empty-state-description">${description}</p>` : ''}
     </div>
   `.trim();
 }

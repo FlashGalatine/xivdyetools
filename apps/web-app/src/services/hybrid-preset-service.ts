@@ -21,6 +21,7 @@ import {
   type PresetFilters,
 } from './community-preset-service';
 import { logger } from '@shared/logger';
+import { sanitizeExampleLink, sanitizePreviewImageUrl } from '@shared/example-link';
 
 // ============================================
 // Types
@@ -180,8 +181,11 @@ class HybridPresetService {
       isFromAPI: true,
       apiPresetId: preset.id,
       createdAt: preset.created_at,
-      exampleLink: preset.example_link ?? null,
-      previewImageUrl: preset.preview_image_url ?? null,
+      // WEB-14: API → UI boundary. The server enforces the host allowlist;
+      // the read path re-checks so a server-side regression cannot put an
+      // arbitrary href/src into a trusted card.
+      exampleLink: sanitizeExampleLink(preset.example_link),
+      previewImageUrl: sanitizePreviewImageUrl(preset.preview_image_url),
     };
   }
 

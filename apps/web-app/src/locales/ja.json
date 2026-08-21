@@ -656,6 +656,7 @@
     "apiFailed": "マーケットボードからのデータ取得に失敗しました。",
     "imageLoadFailed": "画像の読み込みに失敗しました。有効な画像ファイルであることを確認してください。",
     "imageTooLarge": "画像ファイルが大きすぎます。最大サイズは20MBです。",
+    "fileTooLarge": "ファイルが大きすぎます。最大サイズは20MBです。",
     "pleaseSelectImageFile": "画像ファイルを選択してください",
     "failedToReadImage": "画像の読み取りに失敗しました",
     "failedToReadFile": "ファイルの読み取りに失敗しました",

@@ -11,6 +11,7 @@ import { BaseComponent } from './base-component';
 import { LanguageService, cameraService } from '@services/index';
 import { showCameraPreviewModal } from './camera-preview-modal';
 import { clearContainer } from '@shared/utils';
+import { MAX_USER_FILE_BYTES } from '@shared/constants';
 import { ICON_UPLOAD, ICON_CAMERA, ICON_HINT, ICON_LOCK } from '@shared/ui-icons';
 
 /**
@@ -306,8 +307,8 @@ export class ImageUploadDisplay extends BaseComponent {
       return;
     }
 
-    // Validate file size (20MB max)
-    if (file.size > 20 * 1024 * 1024) {
+    // Validate file size (shared 20 MB cap — same as the drop/paste path)
+    if (file.size > MAX_USER_FILE_BYTES) {
       this.emit('error', { message: LanguageService.t('errors.imageTooLarge') });
       return;
     }

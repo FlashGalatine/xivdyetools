@@ -119,6 +119,16 @@ export const COMPANION_DYES_MIN = 1;
 export const COMPANION_DYES_MAX = 5;
 export const COMPANION_DYES_DEFAULT = 1;
 
+/**
+ * Largest user-supplied file any input accepts (images dropped / pasted /
+ * picked for the Palette Extractor, `.chara` files for the Swatch Matcher).
+ * One cap so the drop/paste path cannot drift from the upload-display path
+ * again (2026-08-21 security audit, WEB-13): decoding a multi-GB image or
+ * parsing a multi-GB JSON hangs the tab. `errors.imageTooLarge` /
+ * `errors.fileTooLarge` quote the same 20 MB.
+ */
+export const MAX_USER_FILE_BYTES = 20 * 1024 * 1024;
+
 // ============================================================================
 // Error Messages
 // ============================================================================

@@ -656,6 +656,7 @@
     "apiFailed": "Échec de la récupération des données du tableau des ventes.",
     "imageLoadFailed": "Échec du chargement de l'image. Assurez-vous qu'il s'agit d'un fichier image valide.",
     "imageTooLarge": "Le fichier image est trop volumineux. Taille maximale : 20 Mo.",
+    "fileTooLarge": "Le fichier est trop volumineux. Taille maximale : 20 Mo.",
     "pleaseSelectImageFile": "Veuillez sélectionner un fichier image",
     "failedToReadImage": "Échec de la lecture de l'image",
     "failedToReadFile": "Échec de la lecture du fichier",

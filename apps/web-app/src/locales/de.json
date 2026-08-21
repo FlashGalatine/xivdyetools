@@ -656,6 +656,7 @@
     "apiFailed": "Daten konnten nicht vom Marktbrett abgerufen werden.",
     "imageLoadFailed": "Bild konnte nicht geladen werden. Bitte stelle sicher, dass es eine gültige Bilddatei ist.",
     "imageTooLarge": "Bilddatei ist zu groß. Maximale Größe ist 20MB.",
+    "fileTooLarge": "Datei ist zu groß. Maximale Größe ist 20MB.",
     "pleaseSelectImageFile": "Bitte wählen Sie eine Bilddatei aus",
     "failedToReadImage": "Bild konnte nicht gelesen werden",
     "failedToReadFile": "Datei konnte nicht gelesen werden",

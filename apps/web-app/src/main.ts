@@ -14,6 +14,7 @@ import '@/styles/tailwind.css';
 // Import services
 import { initializeServices, getServicesStatus, LanguageService } from '@services/index';
 import { ErrorHandler } from '@shared/error-handler';
+import { renderFatalError } from '@shared/fatal-error';
 import { APP_VERSION } from '@shared/constants';
 import { logger } from '@shared/logger';
 
@@ -100,27 +101,11 @@ async function initializeApp(): Promise<void> {
     const appError = ErrorHandler.log(error);
     logger.error('❌ Failed to initialize application:', appError);
 
-    // Show error to user
+    // Show error to user. DOM-built with a real click listener: an inline
+    // onclick is blocked by the production CSP (WEB-9).
     const container = document.getElementById('app');
     if (container) {
-      container.innerHTML = `
-        <div class="min-h-screen flex items-center justify-center bg-red-50 dark:bg-red-900">
-          <div class="text-center">
-            <h1 class="text-2xl font-bold text-red-900 dark:text-red-100 mb-4">
-              Application Error
-            </h1>
-            <p class="text-red-700 dark:text-red-200 mb-4">
-              Failed to initialize XIV Dye Tools
-            </p>
-            <p class="text-sm text-red-600 dark:text-red-300">
-              ${ErrorHandler.createUserMessage(appError)}
-            </p>
-            <button onclick="location.reload()" class="mt-6 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-              Reload Page
-            </button>
-          </div>
-        </div>
-      `;
+      renderFatalError(container, ErrorHandler.createUserMessage(appError));
     }
 
     throw error;

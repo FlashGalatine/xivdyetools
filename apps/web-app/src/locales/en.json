@@ -656,6 +656,7 @@
     "apiFailed": "Failed to fetch data from market board.",
     "imageLoadFailed": "Failed to load image. Please ensure it is a valid image file.",
     "imageTooLarge": "Image file is too large. Maximum size is 20MB.",
+    "fileTooLarge": "File is too large. Maximum size is 20MB.",
     "pleaseSelectImageFile": "Please select an image file",
     "failedToReadImage": "Failed to read image",
     "failedToReadFile": "Failed to read file",

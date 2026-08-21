@@ -681,6 +681,7 @@
     "apiFailed": "从市场布告板获取数据失败。",
     "imageLoadFailed": "加载图像失败。请确保它是有效的图像文件。",
     "imageTooLarge": "图像文件太大。最大大小为 20MB。",
+    "fileTooLarge": "文件太大。最大大小为 20MB。",
     "pleaseSelectImageFile": "请选择图像文件",
     "failedToReadImage": "读取图像失败",
     "failedToReadFile": "读取文件失败",

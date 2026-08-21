@@ -203,10 +203,14 @@ class AuthServiceImpl {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
       const error = urlParams.get('error');
-      const providerFromUrl = urlParams.get('provider') as AuthProvider | null;
-
-      // If provider is in URL (from XIVAuth callback), store it for handleCallbackCode
-      if (providerFromUrl) {
+      // `provider=<name>` is the oauth worker's marker on the XIVAuth callback
+      // redirect. SECURITY (FINDING-032 / WEB-3): honour it only on an actual
+      // callback (a `code` is present) and only for a known provider — it
+      // used to be persisted from ANY page load, so a crafted share link
+      // (`/presets?provider=xivauth`) could route the victim's next Discord
+      // code exchange to the XIVAuth endpoint and silently fail the sign-in.
+      const providerFromUrl = this.parseProvider(urlParams.get('provider'));
+      if (code && providerFromUrl) {
         sessionStorage.setItem(OAUTH_PROVIDER_KEY, providerFromUrl);
       }
 
@@ -329,6 +333,14 @@ class AuthServiceImpl {
   }
 
   /**
+   * Narrow an externally supplied provider name (URL param, sessionStorage)
+   * to the known set; anything else is `null` (→ the Discord default).
+   */
+  private parseProvider(value: string | null): AuthProvider | null {
+    return value === 'discord' || value === 'xivauth' ? value : null;
+  }
+
+  /**
    * Handle authorization code received from OAuth callback
    * Exchanges the code for a token via POST to the OAuth worker
    * This is the secure PKCE flow - the code_verifier never leaves the client
@@ -337,7 +349,7 @@ class AuthServiceImpl {
     // Retrieve the stored code_verifier (stored during login initiation)
     const codeVerifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
     const storedState = sessionStorage.getItem(OAUTH_STATE_KEY);
-    const provider = (sessionStorage.getItem(OAUTH_PROVIDER_KEY) as AuthProvider) || 'discord';
+    const provider = this.parseProvider(sessionStorage.getItem(OAUTH_PROVIDER_KEY)) ?? 'discord';
 
     // Clean up PKCE session storage
     sessionStorage.removeItem(PKCE_VERIFIER_KEY);
@@ -618,6 +630,10 @@ class AuthServiceImpl {
       sessionStorage.setItem(PKCE_VERIFIER_KEY, codeVerifier);
       sessionStorage.setItem(OAUTH_STATE_KEY, state);
       sessionStorage.setItem(OAUTH_RETURN_PATH_KEY, returnPath || window.location.pathname);
+      // Each flow starts clean: a provider marker left by an earlier XIVAuth
+      // attempt (or a crafted link) must not route THIS code exchange to the
+      // XIVAuth callback (FINDING-032 / WEB-3).
+      sessionStorage.removeItem(OAUTH_PROVIDER_KEY);
       // Store return tool if provided
       if (returnTool) {
         sessionStorage.setItem(OAUTH_RETURN_TOOL_KEY, returnTool);
@@ -707,6 +723,8 @@ class AuthServiceImpl {
 
     this.clearStorage();
     this.clearState();
+    // A half-finished OAuth flow must not outlive the session it started in
+    sessionStorage.removeItem(OAUTH_PROVIDER_KEY);
     // FINDING-008: Clear cached market prices so they don't persist across sessions
     void APIService.clearCache().catch(() => {});
     this.notifyListeners();

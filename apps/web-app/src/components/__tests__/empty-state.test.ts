@@ -422,6 +422,30 @@ describe('EmptyState', () => {
       expect(html).not.toContain('<script>');
       expect(html).not.toContain('alert');
     });
+
+    // FINDING-011 / WEB-2: the dye-search query is interpolated into the
+    // title; a query must never become markup.
+    it('escapes markup in the title and description', () => {
+      const title = 'No dyes match "<img src=x onerror=alert(1)>"';
+      const description = '<b>Try</b> another <a href="https://evil.example">search</a>';
+      const html = getEmptyStateHTML({
+        icon: '<svg viewBox="0 0 24 24"></svg>',
+        title,
+        description,
+      });
+
+      expect(html).not.toContain('<img');
+      expect(html).not.toContain('<b>');
+      expect(html).not.toContain('<a ');
+
+      const host = document.createElement('div');
+      host.innerHTML = html;
+      expect(host.querySelector('img, b, a')).toBeNull();
+      expect(host.querySelector('.empty-state-title')!.textContent).toBe(title);
+      expect(host.querySelector('.empty-state-description')!.textContent).toBe(description);
+      // The icon slot is unaffected — it is still the trusted SVG constant
+      expect(host.querySelector('.empty-state-icon svg')).not.toBeNull();
+    });
   });
 
   // ============================================================================

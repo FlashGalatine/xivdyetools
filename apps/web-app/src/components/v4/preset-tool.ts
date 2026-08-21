@@ -34,6 +34,7 @@ import { CollectionService, type Collection } from '@services/collection-service
 import { RouterService } from '@services/router-service';
 import { logger } from '@shared/logger';
 import { presetCategoryLabel } from '@shared/preset-i18n';
+import { sanitizeExampleLink, sanitizePreviewImageUrl } from '@shared/example-link';
 import type { UnifiedPreset } from '@services/hybrid-preset-service';
 import type { CommunityPreset } from '@services/community-preset-service';
 import type { PresetsConfig, PresetCategoryFilter } from '@shared/tool-config-types';
@@ -533,8 +534,9 @@ export class PresetTool extends BaseLitComponent {
       isFromAPI: true,
       apiPresetId: preset.id,
       createdAt: preset.created_at,
-      exampleLink: preset.example_link ?? null,
-      previewImageUrl: preset.preview_image_url ?? null,
+      // WEB-14: read-path re-check of the server allowlist (see example-link.ts)
+      exampleLink: sanitizeExampleLink(preset.example_link),
+      previewImageUrl: sanitizePreviewImageUrl(preset.preview_image_url),
     };
   }
 
@@ -555,7 +557,8 @@ export class PresetTool extends BaseLitComponent {
       isCurated: saved.isCurated,
       isFromAPI: false,
       createdAt: saved.savedAt,
-      exampleLink: saved.exampleLink ?? null,
+      // WEB-14: the snapshot lives in localStorage — same read-path guard
+      exampleLink: sanitizeExampleLink(saved.exampleLink),
       previewImageUrl: null,
     };
   }

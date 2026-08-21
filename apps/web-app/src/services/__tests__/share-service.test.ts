@@ -247,7 +247,7 @@ describe('ShareService', () => {
   // ==========================================================================
 
   describe('generateUrl', () => {
-    it('carries the sharer\'s locale as ?lang= when it is not English (OG-I18N-001)', () => {
+    it("carries the sharer's locale as ?lang= when it is not English (OG-I18N-001)", () => {
       langState.locale = 'ja';
       try {
         const { url } = ShareService.generateUrl({

@@ -5,7 +5,27 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { clearContainer } from '../utils';
+import { clearContainer, escapeHtml } from '../utils';
+
+describe('escapeHtml', () => {
+  it('escapes every HTML-significant character', () => {
+    expect(escapeHtml(`<a href="x" title='y'>Tom & Jerry</a>`)).toBe(
+      '&lt;a href=&quot;x&quot; title=&#39;y&#39;&gt;Tom &amp; Jerry&lt;/a&gt;'
+    );
+  });
+
+  it('leaves plain text untouched', () => {
+    expect(escapeHtml('Snow White 2')).toBe('Snow White 2');
+    expect(escapeHtml('')).toBe('');
+  });
+
+  it('yields text, not elements, once parsed as HTML', () => {
+    const host = document.createElement('div');
+    host.innerHTML = `<p>${escapeHtml('<img src=x onerror=alert(1)><b>bold</b>')}</p>`;
+    expect(host.querySelector('img, b')).toBeNull();
+    expect(host.querySelector('p')!.textContent).toBe('<img src=x onerror=alert(1)><b>bold</b>');
+  });
+});
 
 describe('DOM Utilities', () => {
   let container: HTMLElement;

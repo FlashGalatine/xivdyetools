@@ -16,6 +16,7 @@ import { LanguageService } from '@services/language-service';
 import { ToastService } from '@services/toast-service';
 import { presetSubmissionService } from '@services/preset-submission-service';
 import { resolvePresetDye } from '@services/dye-service-wrapper';
+import { escapeHtml } from '@shared/utils';
 import type { CommunityPreset } from '@services/community-preset-service';
 
 type StatusKind = 'live' | 'review' | 'rejected';
@@ -97,12 +98,19 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
             : t('preset.statusRejected');
       // Rejected rows show the actual moderation reason (joined by the API
       // from moderation_log); the review note is the fallback.
-      const note =
+      // SECURITY (FINDING-011): the reason is moderator-typed text and the
+      // name is author-typed text — both remote strings, both interpolated
+      // into the innerHTML template below, so both are escaped here. Every
+      // other interpolation in this file is code-controlled (t() strings,
+      // dye-DB hex values, numbers, the tint()/tone palette).
+      const note = escapeHtml(
         kind === 'live'
           ? ''
           : kind === 'rejected'
             ? preset.rejection_reason || t('preset.reviewNote')
-            : t('preset.reviewNote');
+            : t('preset.reviewNote')
+      );
+      const name = escapeHtml(preset.name);
       const actions =
         kind === 'live'
           ? [
@@ -135,7 +143,7 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
         <div style="border: 1px solid ${kind === 'rejected' ? tint('#F4645A', 0.35) : 'var(--theme-border)'}; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;">
           <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
             ${bandFor(preset)}
-            <span style="flex: 1; min-width: 0; font-size: 13.5px; font-weight: 650; color: var(--theme-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${preset.name}</span>
+            <span style="flex: 1; min-width: 0; font-size: 13.5px; font-weight: 650; color: var(--theme-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name}</span>
             <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: var(--theme-text-muted); flex: 0 0 auto;">${
               kind === 'live' ? preset.vote_count : '—'
             } ${t('preset.votesLabel')}</span>

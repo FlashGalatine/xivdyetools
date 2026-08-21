@@ -18,5 +18,7 @@ Validate at the handler boundary (UUID v4 / snowflake regex) **and** `encodeURIC
 - Evidence: `../evidence/review-discord-worker.md` (DW-3), `../evidence/review-moderation-worker.md` (MOD-5), `../evidence/review-web-app.md` (WEB-11)
 
 ## Status
-**IN PROGRESS 2026-08-21** — per-app adoption below.
+**FIXED 2026-08-21** — moderation-worker 1.5.0, web-app, discord-worker 5.0.0 (bullets below).
 - moderation-worker 1.5.0 (MOD-5): `encodeURIComponent` on every preset-id path segment in `services/preset-api.ts`; rejection/revert modals validate UUIDs, ban/unban validate snowflakes before D1.
+- web-app (WEB-11): `encodeURIComponent` in `community-preset-service` (preset + vote routes) and `preset-submission-service` (preview-image, delete, edit).
+- discord-worker 5.0.0: `encodeURIComponent` on all six preset-id path sites; `isValidPresetId()` (UUID v4) — non-UUID `/preset show|vote|edit|favorite` input is treated as a NAME and resolved via search (never a path segment); preview-image buttons refuse non-UUID `custom_id`s.

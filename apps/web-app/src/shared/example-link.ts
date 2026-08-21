@@ -27,20 +27,51 @@ const EXAMPLE_LINK_HOSTS = [
   'misskey.io',
 ];
 
-/** Validate an example link locally; returns an error string or null. */
-export function exampleLinkError(link: string): string | null {
-  const trimmed = link.trim();
-  if (!trimmed) return null;
+/** Is `trimmed` (non-empty) an https URL on an allowlisted host? */
+function isAllowedExampleLink(trimmed: string): boolean {
   let url: URL;
   try {
     url = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
   } catch {
-    return LanguageService.t('preset.fieldLinkHint');
+    return false;
   }
   const host = url.hostname.toLowerCase();
   const allowed = EXAMPLE_LINK_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
-  if (url.protocol !== 'https:' || !allowed) {
-    return LanguageService.t('preset.fieldLinkHint');
+  return url.protocol === 'https:' && allowed;
+}
+
+/** Validate an example link locally; returns an error string or null. */
+export function exampleLinkError(link: string): string | null {
+  const trimmed = link.trim();
+  if (!trimmed) return null;
+  return isAllowedExampleLink(trimmed) ? null : LanguageService.t('preset.fieldLinkHint');
+}
+
+/**
+ * Read-path counterpart of `exampleLinkError`: the link as stored by the API
+ * (or a localStorage snapshot) is bound to `href` in trusted cards, so it
+ * passes the same https + host-allowlist policy on the way in, and anything
+ * else renders as "no link" (2026-08-21 security audit, WEB-14). Trims.
+ */
+export function sanitizeExampleLink(link: string | null | undefined): string | null {
+  const trimmed = link?.trim() ?? '';
+  if (!trimmed) return null;
+  // The form validator tolerates a missing scheme; the read path does not —
+  // a stored value without one would have failed server-side validation.
+  if (!/^https:\/\//i.test(trimmed)) return null;
+  return isAllowedExampleLink(trimmed) ? trimmed : null;
+}
+
+/**
+ * Read-path guard for the author-uploaded preview image URL: only an absolute
+ * https URL reaches an `<img src>` (the CSP's img-src decides the host). Any
+ * other scheme, a relative path or an unparsable value renders as "no image".
+ */
+export function sanitizePreviewImageUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).protocol === 'https:' ? url : null;
+  } catch {
+    return null;
   }
-  return null;
 }

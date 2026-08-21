@@ -19,4 +19,5 @@ Use `Object.hasOwn(table, key)` (or `Map`/`Object.create(null)` tables) for ever
 - Evidence: `../evidence/review-packages.md` (PKG-6, PKG-18), `../evidence/review-web-app.md` (WEB-12), `../evidence/review-infra-stoat.md` (STOAT-3)
 
 ## Status
-**PARTIALLY FIXED 2026-08-21** — core: `.chara` `mapNamed` and `TranslationProvider.getLabel` use `Object.hasOwn`. stoat-worker 0.2.2: `SHORT_ALIASES` / `COMMAND_ROUTES` / `COMMAND_HELP` lookups use `Object.hasOwn` (STOAT-3, tested with `constructor` / `__proto__` / `toString` / `hasOwnProperty` / `valueOf`). Remaining (same batch, per-app commit): web-app `category-icons` lookup (WEB-12).
+**FIXED 2026-08-21** — core 4.0.1 (PKG-6/18), stoat-worker 0.2.2 (STOAT-3), web-app (WEB-12).
+- web-app: `category-icons` uses `Object.hasOwn` with a fallback glyph (WEB-12) — all four sites (core, stoat, web-app) now closed.

@@ -140,11 +140,13 @@ export class CommunityPresetService {
   private available = false;
 
   private constructor() {
-    // Try to get API URL from environment or use default
-    this.apiUrl =
-      (typeof window !== 'undefined' &&
-        (window as unknown as { PRESET_API_URL?: string }).PRESET_API_URL) ||
-      DEFAULT_API_URL;
+    // Build-time override only (same as auth-service / preset-submission-
+    // service). SECURITY (FINDING-032 / WEB-4): this used to fall back to a
+    // `window.PRESET_API_URL` global that nothing set — a markup injection
+    // could have defined it by DOM clobbering (`<a id="PRESET_API_URL"
+    // href="https://evil…">`) and pointed the bearer-token vote requests at
+    // an attacker host. Runtime globals never choose an API origin.
+    this.apiUrl = import.meta.env.VITE_PRESETS_API_URL || DEFAULT_API_URL;
     this.cache = new SimpleCache(CACHE_TTL);
   }
 
@@ -309,7 +311,10 @@ export class CommunityPresetService {
    */
   async getPreset(id: string): Promise<CommunityPreset | null> {
     try {
-      return await this.request<CommunityPreset>(`/api/v1/presets/${id}`, `preset:${id}`);
+      return await this.request<CommunityPreset>(
+        `/api/v1/presets/${encodeURIComponent(id)}`,
+        `preset:${id}`
+      );
     } catch (error) {
       if (error instanceof Error && error.message.includes('404')) {
         return null;
@@ -365,13 +370,16 @@ export class CommunityPresetService {
     }
 
     try {
-      const response = await this.fetchWithTimeout(`${this.apiUrl}/api/v1/votes/${presetId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authService.getAuthHeaders(),
-        },
-      });
+      const response = await this.fetchWithTimeout(
+        `${this.apiUrl}/api/v1/votes/${encodeURIComponent(presetId)}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...authService.getAuthHeaders(),
+          },
+        }
+      );
 
       const data = (await response.json()) as VoteResponse;
 
@@ -423,12 +431,15 @@ export class CommunityPresetService {
     }
 
     try {
-      const response = await this.fetchWithTimeout(`${this.apiUrl}/api/v1/votes/${presetId}`, {
-        method: 'DELETE',
-        headers: {
-          ...authService.getAuthHeaders(),
-        },
-      });
+      const response = await this.fetchWithTimeout(
+        `${this.apiUrl}/api/v1/votes/${encodeURIComponent(presetId)}`,
+        {
+          method: 'DELETE',
+          headers: {
+            ...authService.getAuthHeaders(),
+          },
+        }
+      );
 
       if (!response.ok) {
         const data = (await response.json().catch(() => ({}))) as { message?: string };
@@ -475,7 +486,7 @@ export class CommunityPresetService {
 
     try {
       const response = await this.fetchWithTimeout(
-        `${this.apiUrl}/api/v1/votes/${presetId}/check`,
+        `${this.apiUrl}/api/v1/votes/${encodeURIComponent(presetId)}/check`,
         {
           method: 'GET',
           headers: {

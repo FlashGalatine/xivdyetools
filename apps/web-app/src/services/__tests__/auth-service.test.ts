@@ -310,6 +310,15 @@ describe('AuthService', () => {
       expect(mockLocalStorage['xivdyetools_auth_expires']).toBeUndefined();
     });
 
+    it('clears the OAuth provider marker on logout (FINDING-032)', async () => {
+      mockSessionStorage['xivdyetools_oauth_provider'] = 'xivauth';
+
+      const { authService } = await import('../auth-service');
+      await authService.logout();
+
+      expect(mockSessionStorage['xivdyetools_oauth_provider']).toBeUndefined();
+    });
+
     it('should notify listeners on logout', async () => {
       const futureTime = Math.floor(Date.now() / 1000) + 3600;
       const mockToken = createMockJWT({
@@ -575,6 +584,23 @@ describe('AuthService', () => {
       await authService.login();
 
       expect(mockSessionStorage['xivdyetools_oauth_return_path']).toBe('/current-page');
+    });
+
+    // FINDING-032 / WEB-3: each Discord flow starts clean — a provider marker
+    // left behind by an earlier XIVAuth attempt (or a crafted link) must not
+    // route this flow's code exchange to the XIVAuth callback.
+    it('clears a stale OAuth provider marker when starting a Discord login', async () => {
+      mockSessionStorage['xivdyetools_oauth_provider'] = 'xivauth';
+
+      const { authService } = await import('../auth-service');
+      (global.crypto.subtle.digest as ReturnType<typeof vi.fn>).mockResolvedValue(
+        new Uint8Array(32).buffer
+      );
+
+      await authService.login();
+
+      expect(mockSessionStorage['xivdyetools_oauth_provider']).toBeUndefined();
+      expect(window.location.href).toContain('auth/discord');
     });
 
     it('should handle login errors', async () => {
@@ -856,6 +882,60 @@ describe('AuthService', () => {
         expect.stringContaining('/auth/xivauth/callback'),
         expect.anything()
       );
+    });
+
+    // FINDING-032 / WEB-3: `?provider=` is the oauth worker's XIVAuth callback
+    // marker. It used to be persisted from ANY page load, so a crafted share
+    // link (`/presets?provider=xivauth`) could misroute the victim's next
+    // Discord code exchange to the XIVAuth endpoint.
+    it('ignores a ?provider= parameter when no auth code is present', async () => {
+      (window.location as { search: string }).search = '?provider=xivauth';
+
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+
+      expect(mockSessionStorage['xivdyetools_oauth_provider']).toBeUndefined();
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('ignores an unknown ?provider= value on the callback and exchanges via the Discord endpoint', async () => {
+      const futureTime = Math.floor(Date.now() / 1000) + 3600;
+      const mockToken = createMockJWT({
+        sub: '123',
+        username: 'testuser',
+        global_name: null,
+        avatar: null,
+        exp: futureTime,
+      });
+
+      mockSessionStorage['xivdyetools_pkce_verifier'] = 'test-verifier';
+      mockSessionStorage['xivdyetools_oauth_state'] = 'test-state';
+
+      (window.location as { search: string }).search =
+        '?code=auth-code&provider=evil-provider&csrf=test-state';
+
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            token: mockToken,
+            expires_at: futureTime,
+          }),
+      });
+
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/auth/callback'),
+        expect.anything()
+      );
+      expect(global.fetch).not.toHaveBeenCalledWith(
+        expect.stringContaining('/auth/xivauth/callback'),
+        expect.anything()
+      );
+      expect(mockSessionStorage['xivdyetools_oauth_provider']).toBeUndefined();
     });
 
     it('should use return path from URL or session storage', async () => {

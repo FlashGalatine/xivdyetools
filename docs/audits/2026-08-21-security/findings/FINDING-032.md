@@ -15,3 +15,7 @@ Validate `provider` against the `{'discord','xivauth'}` set and clear it on `log
 
 ## References
 - Evidence: `../evidence/review-web-app.md` (WEB-3, WEB-4)
+
+## Status
+**FIXED 2026-08-21** (web-app)
+- web-app: `auth-service` `parseProvider` narrows to `discord|xivauth`, `?provider=` stored only with a `code`, stale `OAUTH_PROVIDER_KEY` cleared on login/logout; `window.PRESET_API_URL` hook removed (`VITE_PRESETS_API_URL`); plus WEB-11 `encodeURIComponent` on every API path segment, WEB-14 example-link / preview-image URL sanitisers at the API→UI boundary, WEB-13 20 MB `MAX_USER_FILE_BYTES` guard (extractor drop, upload, `.chara` loader; `errors.fileTooLarge` ×6 locales), WEB-6 collection/config import sanitising, WEB-9 DOM-built fatal error. WEB-10 source maps deliberately unchanged (documented).

@@ -16,3 +16,7 @@ Add a tiny `escapeHtml()` (or build these rows with `document.createElement`/Lit
 
 ## References
 - Evidence: `../evidence/review-web-app.md` (WEB-1, WEB-2, positive controls)
+
+## Status
+**FIXED 2026-08-21** (web-app)
+- web-app: `escapeHtml` restored at `@shared/utils` (the May dead-code purge had removed it); `my-submissions-modal` escapes `preset.name` + the review note; `empty-state` escapes title/description (the dye-grid search query); DOM-asserting tests.

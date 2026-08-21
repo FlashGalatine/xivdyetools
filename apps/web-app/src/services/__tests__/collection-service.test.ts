@@ -500,6 +500,73 @@ describe('CollectionService', () => {
       expect(collection?.dyes).toEqual([1, 2]);
     });
 
+    // WEB-6 (2026-08-21 security audit): import/persistence paths validated
+    // shape loosely — an unknown `kind` persisted and vanished from every
+    // kind-filtered view, and a hand-edited `dyes` that was not an array made
+    // initialize() throw on every call until storage was cleared.
+    it('importData coerces an unknown kind to palette instead of persisting it', () => {
+      const result = CollectionService.importData(
+        JSON.stringify({
+          version: '2.0.0',
+          exportedAt: new Date().toISOString(),
+          type: 'xivdyetools-collection',
+          data: {
+            collections: [
+              {
+                id: 'odd-1',
+                name: 'Odd Kind',
+                kind: 'not-a-kind',
+                dyes: [1, 2],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              },
+            ],
+          },
+        })
+      );
+
+      expect(result.collectionsImported).toBe(1);
+      const imported = CollectionService.getCollectionByName('Odd Kind');
+      expect(imported?.kind).toBe('palette');
+      expect(CollectionService.getCollectionsByKind('palette').map((c) => c.name)).toContain(
+        'Odd Kind'
+      );
+    });
+
+    it('skips a malformed stored record on load instead of throwing', () => {
+      localStorageMock.setItem(
+        'xivdyetools_collections',
+        JSON.stringify({
+          version: '2.0.0',
+          collections: [
+            {
+              id: 'bad-1',
+              name: 'Broken',
+              kind: 'palette',
+              dyes: 'not an array',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+            'not even an object',
+            {
+              id: 'good-1',
+              name: 'Intact',
+              kind: 'palette',
+              dyes: [3, 4],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          ],
+          lastModified: new Date().toISOString(),
+        })
+      );
+
+      expect(() => CollectionService.__reloadForTesting()).not.toThrow();
+      expect(CollectionService.getCollectionByName('Intact')?.dyes).toEqual([3, 4]);
+      expect(CollectionService.getCollectionByName('Broken')).toBeUndefined();
+      expect(CollectionService.getCollections().length).toBe(1);
+    });
+
     it('should migrate legacy PaletteService records into palette-kind collections', () => {
       localStorageMock.setItem(
         'xivdyetools_saved_palettes',

@@ -43,6 +43,7 @@ import {
 import { logger } from '@shared/logger';
 import { indexedDBService, STORES } from '@services/indexeddb-service';
 import { clearContainer } from '@shared/utils';
+import { MAX_USER_FILE_BYTES } from '@shared/constants';
 import type { Dye, DyeWithDistance, PriceData, RGB } from '@xivdyetools/types';
 import type {
   ExtractorConfig,
@@ -1580,9 +1581,15 @@ export class ExtractorTool extends BaseComponent {
   }
 
   /**
-   * Handle a dropped image file
+   * Handle a dropped image file (also the clipboard path). Refuses a file
+   * over the shared cap before the reader runs — decoding a huge image hangs
+   * the tab, and the upload-display path already enforced this (WEB-13).
    */
   private handleDroppedFile(file: File): void {
+    if (file.size > MAX_USER_FILE_BYTES) {
+      ToastService.error(LanguageService.t('errors.imageTooLarge'));
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string;

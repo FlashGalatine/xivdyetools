@@ -38,8 +38,13 @@ const CATEGORY_ICONS: Record<string, string> = {
 const ICON_CATEGORY_DEFAULT = glyph('default');
 
 /**
- * Get category icon by name, returns the neutral default glyph if not found
+ * Get category icon by name, returns the neutral default glyph if not found.
+ *
+ * `name` is API-controlled (`category_id` / `secondary_categories`) and the
+ * result feeds Lit `unsafeHTML()`, so the lookup is own-property only: a
+ * prototype key such as `constructor` or `toString` must yield the fallback
+ * glyph, not an inherited function (FINDING-027 / WEB-12).
  */
 export function getCategoryIcon(name: string): string {
-  return CATEGORY_ICONS[name] || ICON_CATEGORY_DEFAULT;
+  return Object.hasOwn(CATEGORY_ICONS, name) ? CATEGORY_ICONS[name] : ICON_CATEGORY_DEFAULT;
 }

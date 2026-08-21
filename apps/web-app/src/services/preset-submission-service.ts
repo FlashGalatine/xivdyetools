@@ -154,18 +154,21 @@ export async function uploadPreviewImage(presetId: string, file: File): Promise<
     throw new Error('Image must be at most 5 MB');
   }
 
-  const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/${presetId}/preview-image`, {
-    method: 'POST',
-    headers: {
-      // Declare the type only when the file actually has one. Claiming
-      // application/octet-stream for a typeless file would trip the API's
-      // media-type gate on bytes it would otherwise have accepted; sending
-      // nothing lets the server's magic-byte sniff make the call.
-      ...(file.type ? { 'Content-Type': file.type } : {}),
-      ...authService.getAuthHeaders(),
-    },
-    body: file,
-  });
+  const response = await fetch(
+    `${PRESETS_API_URL}/api/v1/presets/${encodeURIComponent(presetId)}/preview-image`,
+    {
+      method: 'POST',
+      headers: {
+        // Declare the type only when the file actually has one. Claiming
+        // application/octet-stream for a typeless file would trip the API's
+        // media-type gate on bytes it would otherwise have accepted; sending
+        // nothing lets the server's magic-byte sniff make the call.
+        ...(file.type ? { 'Content-Type': file.type } : {}),
+        ...authService.getAuthHeaders(),
+      },
+      body: file,
+    }
+  );
 
   if (!response.ok) {
     throw new Error('Preview image upload failed');
@@ -179,12 +182,15 @@ export async function uploadPreviewImage(presetId: string, file: File): Promise<
  * because the end state the caller asked for already holds.
  */
 export async function removePreviewImage(presetId: string): Promise<void> {
-  const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/${presetId}/preview-image`, {
-    method: 'DELETE',
-    headers: {
-      ...authService.getAuthHeaders(),
-    },
-  });
+  const response = await fetch(
+    `${PRESETS_API_URL}/api/v1/presets/${encodeURIComponent(presetId)}/preview-image`,
+    {
+      method: 'DELETE',
+      headers: {
+        ...authService.getAuthHeaders(),
+      },
+    }
+  );
 
   if (!response.ok) {
     throw new Error('Preview image removal failed');
@@ -422,13 +428,16 @@ class PresetSubmissionServiceImpl {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
-      const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/${presetId}`, {
-        method: 'DELETE',
-        headers: {
-          ...authService.getAuthHeaders(),
-        },
-        signal: controller.signal,
-      });
+      const response = await fetch(
+        `${PRESETS_API_URL}/api/v1/presets/${encodeURIComponent(presetId)}`,
+        {
+          method: 'DELETE',
+          headers: {
+            ...authService.getAuthHeaders(),
+          },
+          signal: controller.signal,
+        }
+      );
 
       clearTimeout(timeout);
 
@@ -537,15 +546,18 @@ class PresetSubmissionServiceImpl {
       // form set it and it was silently dropped on every save.
       if (updates.example_link !== undefined) body.example_link = updates.example_link;
 
-      const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/${presetId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authService.getAuthHeaders(),
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
+      const response = await fetch(
+        `${PRESETS_API_URL}/api/v1/presets/${encodeURIComponent(presetId)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...authService.getAuthHeaders(),
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        }
+      );
 
       clearTimeout(timeout);
 

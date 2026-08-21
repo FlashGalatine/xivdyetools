@@ -72,6 +72,42 @@ void _assertAllConfigKeysListed;
 type ConfigListener<T> = (config: T) => void;
 
 // ============================================================================
+// Import validation (WEB-6)
+// ============================================================================
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** Does `candidate` have the runtime shape of the default value `reference`? */
+function hasShapeOf(reference: unknown, candidate: unknown): boolean {
+  if (Array.isArray(reference)) return Array.isArray(candidate);
+  if (isPlainObject(reference)) return isPlainObject(candidate);
+  if (reference === null || reference === undefined) return true; // nothing to compare against
+  return typeof candidate === typeof reference;
+}
+
+/**
+ * Narrow an imported per-tool object to the fields its default config
+ * declares, each with the default's runtime shape. `null` when the entry is
+ * not a plain object at all (the tool is then left untouched).
+ */
+function sanitizeConfigPartial<K extends ConfigKey>(
+  key: K,
+  value: unknown
+): Partial<ToolConfigMap[K]> | null {
+  if (!isPlainObject(value)) return null;
+  const defaults = getDefaultConfig(key) as unknown as Record<string, unknown>;
+  const partial: Record<string, unknown> = {};
+  for (const [field, candidate] of Object.entries(value)) {
+    if (!Object.hasOwn(defaults, field)) continue;
+    if (!hasShapeOf(defaults[field], candidate)) continue;
+    partial[field] = candidate;
+  }
+  return partial as Partial<ToolConfigMap[K]>;
+}
+
+// ============================================================================
 // ConfigController Class
 // ============================================================================
 
@@ -267,8 +303,13 @@ export class ConfigController {
    */
   importConfigs(configs: Partial<ToolConfigMap>): void {
     for (const key of CONFIG_KEYS) {
-      if (key in configs && configs[key]) {
-        this.setConfig(key, configs[key] as Partial<ToolConfigMap[typeof key]>);
+      if (!(key in configs)) continue;
+      // WEB-6: the per-tool object used to be spread raw into state and
+      // storage, so unknown / ill-typed fields from a hand-edited settings
+      // file survived. Keep only declared fields with the default's shape.
+      const partial = sanitizeConfigPartial(key, configs[key]);
+      if (partial) {
+        this.setConfig(key, partial);
       }
     }
 

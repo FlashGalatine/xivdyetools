@@ -40,6 +40,13 @@ export type DyeId = number;
  */
 export type CollectionKind = 'palette' | 'swap' | 'character';
 
+const COLLECTION_KINDS: readonly CollectionKind[] = ['palette', 'swap', 'character'];
+
+/** Runtime check for the `kind` field of an imported / stored record. */
+function isCollectionKind(value: unknown): value is CollectionKind {
+  return typeof value === 'string' && (COLLECTION_KINDS as readonly string[]).includes(value);
+}
+
 /**
  * Favorites data structure
  */
@@ -265,8 +272,25 @@ export class CollectionService {
         data.collections = data.collections.slice(0, MAX_COLLECTIONS);
       }
 
-      // Also validate dyes per collection + apply the 5.0 record shape
+      // WEB-6: a hand-edited record (dyes not an array, no name, not an
+      // object) used to throw here on every initialize() — a crash loop
+      // until storage was cleared. Skip such records and persist the rest.
       let migrated = false;
+      const wellFormed = data.collections.filter((collection) => {
+        const ok =
+          !!collection &&
+          typeof collection === 'object' &&
+          typeof collection.name === 'string' &&
+          Array.isArray(collection.dyes);
+        if (!ok) logger.warn('[CollectionService] Skipped malformed stored collection record');
+        return ok;
+      });
+      if (wellFormed.length !== data.collections.length) {
+        data.collections = wellFormed;
+        migrated = true;
+      }
+
+      // Also validate dyes per collection + apply the 5.0 record shape
       for (const collection of data.collections) {
         if (collection.dyes.length > MAX_DYES_PER_COLLECTION) {
           logger.warn(
@@ -976,8 +1000,13 @@ export class CollectionService {
             typeof collection.target === 'number'
               ? (toStainId(collection.target) ?? undefined)
               : undefined;
+          // WEB-6: an unknown `kind` used to persist as-is and then vanish
+          // from every kind-filtered view. Treat it as a plain dye list.
+          const kind: CollectionKind = isCollectionKind(collection.kind)
+            ? collection.kind
+            : 'palette';
           const newCollection = this.createCollection(name, collection.description, {
-            kind: collection.kind ?? 'palette',
+            kind,
             ...(target !== undefined ? { target } : {}),
           });
           if (newCollection) {
