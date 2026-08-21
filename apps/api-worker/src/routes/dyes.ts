@@ -40,12 +40,24 @@ const dyesRouter = new Hono<{ Bindings: Env; Variables: Variables }>();
 // GET /search — Name search
 // ============================================================================
 
+/** FINDING-025 / API-13: no dye name comes anywhere near this; anything longer is not a search. */
+const MAX_SEARCH_QUERY_CHARS = 100;
+/** FINDING-025 / API-13: 125 dyes at perPage=1 is 125 pages — 1000 is a generous ceiling. */
+const MAX_PAGE = 1000;
+
 dyesRouter.get('/search', (c) => {
   const q = c.req.query('q');
   if (!q || q.trim() === '') {
     throw new ApiError(ErrorCode.MISSING_PARAMETER, 'Missing required parameter: q', 400, {
       parameter: 'q',
       required: true,
+    });
+  }
+  if (q.length > MAX_SEARCH_QUERY_CHARS) {
+    throw new ApiError(ErrorCode.VALIDATION_ERROR, `Parameter "q" must be at most ${MAX_SEARCH_QUERY_CHARS} characters.`, 400, {
+      parameter: 'q',
+      received: q.length,
+      expected: `<= ${MAX_SEARCH_QUERY_CHARS} characters`,
     });
   }
 
@@ -266,7 +278,7 @@ dyesRouter.get('/', (c) => {
   const sortRaw = c.req.query('sort');
   const sort = sortRaw !== undefined ? parseEnumParam(sortRaw, 'sort', VALID_SORT_FIELDS) : undefined;
   const order = parseEnumParam(c.req.query('order'), 'order', VALID_ORDERS, 'asc');
-  const page = parseIntParam(c.req.query('page'), 'page', { min: 1, defaultValue: 1 });
+  const page = parseIntParam(c.req.query('page'), 'page', { min: 1, max: MAX_PAGE, defaultValue: 1 });
   const perPage = parseIntParam(c.req.query('perPage'), 'perPage', { min: 1, max: 200, defaultValue: 50 });
 
   // Boolean filters

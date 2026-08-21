@@ -27,6 +27,12 @@ export interface CachedFetchOptions {
   ctx: ExecutionContext;
   /** Base URL for Cache API synthetic URLs */
   baseUrl: string;
+  /**
+   * FINDING-025 / API-7: runs only when the Cache API missed, before the
+   * upstream fetch — the place to charge a per-client budget so fully cached
+   * answers stay free. Throw to abort; the error propagates to the caller.
+   */
+  onMiss?: () => Promise<void>;
 }
 
 /**
@@ -41,6 +47,12 @@ const USER_AGENT = 'XIVDyeTools/1.0 (https://xivdyetools.app)';
 const MAX_RESPONSE_SIZE_BYTES = 5 * 1024 * 1024;
 
 /**
+ * FINDING-025 / API-9: a hung Universalis response used to pin the request
+ * (and every coalesced waiter) until the coalescer's 60 s sweep.
+ */
+const UPSTREAM_TIMEOUT_MS = 10_000;
+
+/**
  * Main cached fetch function - orchestrates cache lookup
  *
  * @returns CacheResult with data, source, and staleness info
@@ -49,7 +61,7 @@ const MAX_RESPONSE_SIZE_BYTES = 5 * 1024 * 1024;
 export async function cachedFetch<T = unknown>(
   options: CachedFetchOptions
 ): Promise<CacheResult<T>> {
-  const { cacheKey, config, upstreamUrl, ctx, baseUrl } = options;
+  const { cacheKey, config, upstreamUrl, ctx, baseUrl, onMiss } = options;
 
   const cacheService = new CacheService(ctx, baseUrl);
   const coalescer = new RequestCoalescer(ctx);
@@ -88,6 +100,12 @@ export async function cachedFetch<T = unknown>(
     key: cacheKey,
   }));
 
+  // FINDING-025 / API-7: the caller's miss budget (per-IP limiter) is charged
+  // here — after the cache lookup, so hits are free — and may abort the fetch.
+  if (onMiss) {
+    await onMiss();
+  }
+
   // Fetch from upstream with request coalescing
   const data = await coalescer.coalesce<T>(cacheKey, async () => {
     const response = await fetchFromUpstream(upstreamUrl);
@@ -124,6 +142,10 @@ async function fetchFromUpstream(url: string): Promise<Response> {
       Accept: 'application/json',
       'User-Agent': USER_AGENT,
     },
+    // FINDING-025 / API-9: never follow a redirect to a third host and cache
+    // whatever it serves; never wait on a hung upstream indefinitely.
+    redirect: 'error',
+    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   });
 
   // PROXY-HIGH-002: Check Content-Length to prevent OOM from huge responses

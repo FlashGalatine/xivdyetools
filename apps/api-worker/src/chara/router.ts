@@ -16,9 +16,11 @@
  */
 
 import { Hono } from 'hono';
+import { getLogger } from '@xivdyetools/worker-kit';
 import { CHARA_SLOT_SEARCH_FIELD, isCharaWeaponSlot, isWornCharaModel } from '@xivdyetools/core';
 import type { Env, Variables } from '../types.js';
 import { ApiError, ErrorCode } from '../lib/api-error.js';
+import { BodyTooLargeError, readBoundedBytes, readBoundedText } from '../lib/bounded-body.js';
 import { successResponse } from '../lib/response.js';
 import { parseIntParam } from '../lib/validation.js';
 import { CharaRowCache } from './cache.js';
@@ -43,6 +45,18 @@ const MAX_BODY_BYTES = 8 * 1024;
 /** Icon PNGs are ~10 KB at _hr1; 1 MB is a generous ceiling before we refuse to buffer. */
 const MAX_ICON_BYTES = 1024 * 1024;
 const ICON_CACHE_CONTROL = 'public, max-age=2592000, immutable';
+/**
+ * FINDING-025 / API-4: the canonical decimal form only. `parseInt` accepts
+ * `041716`, `41716abc`, `41716 ` as 41716 — each a distinct edge-cache key and
+ * a fresh upstream fetch for the same icon.
+ */
+const CANONICAL_ICON_ID = /^[1-9]\d{0,5}$/;
+/** The eight-byte PNG signature — the only body the icon proxy will serve (API-12). */
+const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+
+function isPng(bytes: Uint8Array): boolean {
+  return bytes.byteLength >= PNG_SIGNATURE.length && PNG_SIGNATURE.every((b, i) => bytes[i] === b);
+}
 
 // ============================================================================
 // Validation
@@ -138,13 +152,22 @@ export function parseResolveBody(body: unknown): CharaResolveRequest {
 }
 
 async function readJsonBody(raw: Request): Promise<unknown> {
+  // Cheap fast-fail when the client declares its size …
   const length = Number(raw.headers.get('Content-Length') ?? '0');
   if (length > MAX_BODY_BYTES) {
     throw new ApiError(ErrorCode.INVALID_BODY, `Body exceeds ${MAX_BODY_BYTES} bytes`, 413);
   }
-  const text = await raw.text();
-  if (text.length > MAX_BODY_BYTES) {
-    throw new ApiError(ErrorCode.INVALID_BODY, `Body exceeds ${MAX_BODY_BYTES} bytes`, 413);
+  // … and the authoritative guard: FINDING-025 / API-2 — a chunked or HTTP/2
+  // body carries no Content-Length, so the cap is enforced on the stream and
+  // the reader cancelled the moment it passes 8 KB (bytes, not UTF-16 units).
+  let text: string;
+  try {
+    text = await readBoundedText(raw.body, MAX_BODY_BYTES);
+  } catch (error) {
+    if (error instanceof BodyTooLargeError) {
+      throw new ApiError(ErrorCode.INVALID_BODY, `Body exceeds ${MAX_BODY_BYTES} bytes`, 413);
+    }
+    throw error;
   }
   try {
     return JSON.parse(text) as unknown;
@@ -195,10 +218,20 @@ charaRouter.post('/resolve', async (c) => {
       upstreamCalls++;
       version = search.version;
       const index = indexRows(search.rows);
+      // FINDING-025 / API-3: a truncated page (next cursor / 500-row cap) may
+      // be missing tail groups — answer this request from what came back, but
+      // never store those keys as "no item row" for a week.
+      if (search.truncated) {
+        getLogger(c)?.warn('XIVAPI search page truncated — not caching this request\'s misses', {
+          operation: 'chara.resolve',
+          lookups: misses.length,
+          rows: search.rows.length,
+        });
+      }
       for (const lookup of misses) {
         const found: ItemRow[] = index.get(lookupKey(lookup)) ?? [];
         rows.set(lookupKey(lookup), found);
-        cache.storeRows(lookup, found);
+        if (!search.truncated) cache.storeRows(lookup, found);
       }
     }
 
@@ -236,10 +269,20 @@ charaRouter.post('/resolve', async (c) => {
 // ============================================================================
 
 charaRouter.get('/icon/:iconId', async (c) => {
-  const iconId = parseIntParam(c.req.param('iconId'), 'iconId', { min: 1, max: 999_999 });
-  // Cache under the public URL (query stripped) so every viewer of the same
-  // icon shares one edge entry, and the browser gets a long immutable TTL.
+  const rawId = c.req.param('iconId');
+  if (!CANONICAL_ICON_ID.test(rawId)) {
+    throw new ApiError(ErrorCode.VALIDATION_ERROR, 'Parameter "iconId" must be a positive integer (canonical decimal, 1–999999).', 400, {
+      parameter: 'iconId',
+      received: rawId,
+      expected: 'integer 1–999999 without leading zeros, signs or trailing characters',
+    });
+  }
+  const iconId = parseIntParam(rawId, 'iconId', { min: 1, max: 999_999 });
+  // Cache under the CANONICAL public URL (path rebuilt from the parsed id,
+  // query stripped) so every viewer of the same icon shares one edge entry,
+  // and the browser gets a long immutable TTL.
   const url = new URL(c.req.url);
+  url.pathname = `/v1/chara/icon/${iconId}`;
   url.search = '';
   const cacheKey = new Request(url.toString(), { method: 'GET' });
   const edge = typeof caches !== 'undefined' ? caches.default : null;
@@ -268,15 +311,29 @@ charaRouter.get('/icon/:iconId', async (c) => {
   if (declared > MAX_ICON_BYTES) {
     throw new ApiError(ErrorCode.UPSTREAM_UNAVAILABLE, 'Icon exceeds the size ceiling', 503);
   }
-  const bytes = await upstream.arrayBuffer();
-  if (bytes.byteLength > MAX_ICON_BYTES) {
-    throw new ApiError(ErrorCode.UPSTREAM_UNAVAILABLE, 'Icon exceeds the size ceiling', 503);
+  // FINDING-025 / API-12: byte-budgeted read (Content-Length is advisory) …
+  let bytes: Uint8Array;
+  try {
+    bytes = await readBoundedBytes(upstream.body, MAX_ICON_BYTES);
+  } catch (error) {
+    if (error instanceof BodyTooLargeError) {
+      throw new ApiError(ErrorCode.UPSTREAM_UNAVAILABLE, 'Icon exceeds the size ceiling', 503);
+    }
+    throw error;
+  }
+  // … and the proxy serves image/png or nothing: the upstream Content-Type is
+  // never reflected, and a 2xx body that is not a PNG is refused — not stored
+  // under a 30-day immutable key.
+  if (!isPng(bytes)) {
+    throw new ApiError(ErrorCode.UPSTREAM_UNAVAILABLE, 'Icon upstream did not return a PNG', 503);
   }
 
   const response = new Response(bytes, {
     status: 200,
     headers: {
-      'Content-Type': upstream.headers.get('Content-Type') ?? 'image/png',
+      'Content-Type': 'image/png',
+      'Content-Disposition': 'inline',
+      'Content-Security-Policy': 'sandbox',
       'Cache-Control': ICON_CACHE_CONTROL,
       'X-Cache': 'MISS',
     },

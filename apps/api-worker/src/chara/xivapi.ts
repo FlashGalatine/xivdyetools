@@ -186,6 +186,9 @@ export class XivapiClient {
         method: 'GET',
         headers: { Accept: 'application/json', 'User-Agent': USER_AGENT },
         signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+        // FINDING-025 / API-9: never follow a redirect to a third host and
+        // then cache (or proxy) whatever it serves — XIVAPI answers directly.
+        redirect: 'error',
       });
     } catch (error) {
       throw new UpstreamUnavailableError(0, error instanceof Error ? error.message : 'fetch failed');
@@ -199,11 +202,16 @@ export class XivapiClient {
   /**
    * One request for every lookup. Returns the rows as XIVAPI grouped them —
    * the caller re-associates by (slot column × ModelMain).
+   *
+   * `truncated` (FINDING-025 / API-3): the single page could not have held
+   * every family — XIVAPI handed back a `next` cursor, or filled the page to
+   * the 500-row cap. The tail groups may then be incomplete or absent, so
+   * the caller must not cache this answer's misses as "no item row".
    */
   async searchItems(
     lookups: readonly SlotLookup[],
-  ): Promise<{ version: string | null; rows: ItemRow[] }> {
-    if (lookups.length === 0) return { version: null, rows: [] };
+  ): Promise<{ version: string | null; rows: ItemRow[]; truncated: boolean }> {
+    if (lookups.length === 0) return { version: null, rows: [], truncated: false };
     const url = `${this.base}/api/search?${this.params({
       sheets: 'Item',
       query: buildResolveQuery(lookups),
@@ -215,8 +223,9 @@ export class XivapiClient {
       throw new UpstreamUnavailableError(response.status, response.statusText || 'search failed');
     }
     const body = await response.json<RawSearchResponse>();
-    const rows = (body.results ?? []).map(parseItemRow);
-    return { version: body.version ?? null, rows };
+    const results = body.results ?? [];
+    const truncated = (typeof body.next === 'string' && body.next.length > 0) || results.length >= SEARCH_LIMIT;
+    return { version: body.version ?? null, rows: results.map(parseItemRow), truncated };
   }
 
   /** Facewear: `GlassesId` IS the Glasses sheet row_id. 404 → null (row 0 / unknown). */

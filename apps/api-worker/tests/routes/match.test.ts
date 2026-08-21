@@ -130,6 +130,16 @@ describe('GET /v1/match/within-distance', () => {
     expect(typeof body.data.resultCount).toBe('number');
   });
 
+  // FINDING-025 / API-13: parseFloat('Infinity') is not NaN — it must still be rejected
+  it('rejects a non-finite maxDistance', async () => {
+    for (const value of ['Infinity', '-Infinity', '1e400']) {
+      const { res, body } = await getJson(`/v1/match/within-distance?hex=FF0000&maxDistance=${value}`);
+      expect(res.status, value).toBe(400);
+      expect(body.error, value).toBe('VALIDATION_ERROR');
+      expect(body.details.parameter, value).toBe('maxDistance');
+    }
+  });
+
   it('results are sorted by distance ascending', async () => {
     const { body } = await getJson('/v1/match/within-distance?hex=FF0000&maxDistance=100');
 

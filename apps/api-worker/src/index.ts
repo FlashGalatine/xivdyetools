@@ -34,7 +34,18 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 // so docs requests skip rate limiting, locale handling, and API headers.
 app.use('*', async (c, next) => {
   if (c.env.ASSETS && new URL(c.req.url).hostname === 'developers.xivdyetools.app') {
-    return c.env.ASSETS.fetch(c.req.raw);
+    // FINDING-025 / API-10: the docs host skips the API middleware chain, so
+    // the security headers the API sets must be applied here. The asset
+    // response's headers are immutable — copy before setting.
+    const asset = await c.env.ASSETS.fetch(c.req.raw);
+    const response = new Response(asset.body, asset);
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    if (c.env.ENVIRONMENT === 'production') {
+      response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+    return response;
   }
   return next();
 });
@@ -64,17 +75,25 @@ app.use('*', async (c, next) => {
   if (c.env.ENVIRONMENT === 'production') {
     c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
+  // FINDING-025 / API-13: 4xx/5xx bodies (the error envelope, the proxy's
+  // bare {error}, the 429s) are per-request answers — a 404 is heuristically
+  // cacheable by RFC 9111, so say no-store explicitly on every error path.
+  if (c.res.status >= 400 && !c.res.headers.has('Cache-Control')) {
+    c.header('Cache-Control', 'no-store');
+  }
 });
 
 // 4. CORS — permissive for public read-only API (POST exists only for
 //    /v1/chara/resolve, whose body is twelve small integers — still anonymous,
-//    still idempotent, still cacheable per key behind it)
+//    still idempotent, still cacheable per key behind it).
+//    FINDING-025 / API-11: `X-API-Key` is no longer advertised — no API-key
+//    feature exists; add it back with the feature, not before.
 app.use(
   '*',
   cors({
     origin: '*',
     allowMethods: ['GET', 'POST', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Accept', 'X-API-Key'],
+    allowHeaders: ['Content-Type', 'Accept'],
     exposeHeaders: [
       'X-RateLimit-Limit',
       'X-RateLimit-Remaining',
@@ -175,7 +194,10 @@ app.onError((err, c) => {
     );
   }
 
-  // Unexpected error — log and return generic message
+  // Unexpected error — log (with the stack) and return a generic message.
+  // FINDING-025 / API-5: the stack is never part of an HTTP response, in any
+  // environment — the dev worker is publicly deployable and ENVIRONMENT is
+  // just a var; correlate through requestId in the logs instead.
   if (logger) {
     logger.error('Unhandled error', err, { operation: 'globalErrorHandler' });
   } else {
@@ -190,7 +212,6 @@ app.onError((err, c) => {
       error: ErrorCode.INTERNAL_ERROR,
       message: isDev ? err.message : 'An unexpected error occurred',
       meta: { requestId, apiVersion: c.env.API_VERSION || 'v1' },
-      ...(isDev && { stack: err.stack }),
     },
     500,
   );

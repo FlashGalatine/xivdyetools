@@ -41,6 +41,21 @@ import { checkRateLimit, getRateLimitHeaders, type RateLimitConfig } from './ser
 const RATE_LIMIT_RETRY_AFTER = 60;
 
 /**
+ * FINDING-025 / API-7: thrown from cachedFetch's `onMiss` hook when the
+ * per-IP budget is exhausted — only cache misses are charged, so a fully
+ * cached answer (and a service-binding caller's repeats) stays free.
+ */
+class ProxyRateLimitedError extends Error {
+  constructor(
+    public readonly result: Awaited<ReturnType<typeof checkRateLimit>>,
+    public readonly config: RateLimitConfig,
+  ) {
+    super('Rate limit exceeded');
+    this.name = 'ProxyRateLimitedError';
+  }
+}
+
+/**
  * Normalize item IDs for consistent cache keys.
  * OPT-022: dedupe + numeric sort so "5729,5729" / "3,1,2" share cache entries.
  */
@@ -72,22 +87,12 @@ universalisRouter.get('/aggregated/:datacenter/:itemIds', async (c) => {
     maxRequests: parseInt(c.env.RATE_LIMIT_REQUESTS, 10) || 60,
     windowSeconds: parseInt(c.env.RATE_LIMIT_WINDOW_SECONDS, 10) || 60,
   };
-  const rateLimitResult = await checkRateLimit(clientIP, rateLimitConfig);
-
-  if (!rateLimitResult.allowed) {
-    const headers = getRateLimitHeaders(rateLimitResult, rateLimitConfig.maxRequests);
-    return c.json(
-      {
-        error: 'Rate limit exceeded',
-        retryAfter: rateLimitResult.resetInSeconds,
-      },
-      429,
-      {
-        ...headers,
-        'Retry-After': String(rateLimitResult.resetInSeconds),
-      }
-    );
-  }
+  // FINDING-025 / API-7: charged from cachedFetch's onMiss hook below — after
+  // the Cache API lookup — so cache hits never consume the per-IP budget.
+  const chargeLimiter = async (): Promise<void> => {
+    const result = await checkRateLimit(clientIP, rateLimitConfig);
+    if (!result.allowed) throw new ProxyRateLimitedError(result, rateLimitConfig);
+  };
 
   // SECURITY: datacenter whitelist, with BUG-029 live-list fallback so worlds
   // added after the static list was written are accepted without a code change.
@@ -164,10 +169,26 @@ universalisRouter.get('/aggregated/:datacenter/:itemIds', async (c) => {
       // workers-types; the runtime value is the full Workers ExecutionContext.
       ctx: c.executionCtx as ExecutionContext,
       baseUrl: new URL(c.req.url).origin,
+      onMiss: chargeLimiter,
     });
 
     return c.json(result.data, 200, buildCacheHeaders(result.source, result.isStale, config));
   } catch (error) {
+    if (error instanceof ProxyRateLimitedError) {
+      const headers = getRateLimitHeaders(error.result, error.config.maxRequests);
+      return c.json(
+        {
+          error: 'Rate limit exceeded',
+          retryAfter: error.result.resetInSeconds,
+        },
+        429,
+        {
+          ...headers,
+          'Retry-After': String(error.result.resetInSeconds),
+        }
+      );
+    }
+
     if (error instanceof UpstreamError) {
       if (error.status === 429) {
         return c.json(
@@ -183,10 +204,17 @@ universalisRouter.get('/aggregated/:datacenter/:itemIds', async (c) => {
         );
       }
 
+      // FINDING-025 / API-8: the upstream statusText is logged, not echoed
+      getLogger(c)?.warn('Upstream API error', {
+        operation: 'universalis.aggregated',
+        datacenter,
+        upstreamStatus: error.status,
+        upstreamStatusText: error.statusText,
+      });
       return c.json(
         {
           error: `Upstream API error: ${error.status}`,
-          message: error.statusText,
+          message: 'The upstream API returned an error',
         },
         error.status as 400 | 404 | 500 | 502 | 503
       );
@@ -207,6 +235,8 @@ universalisRouter.get('/aggregated/:datacenter/:itemIds', async (c) => {
       );
     }
 
+    // FINDING-025 / API-8: raw Error.message (fetch / JSON internals) is
+    // logged with the request ID, never returned
     getLogger(c)?.error('Error proxying to Universalis', error, {
       operation: 'universalis.aggregated',
       datacenter,
@@ -214,7 +244,7 @@ universalisRouter.get('/aggregated/:datacenter/:itemIds', async (c) => {
     return c.json(
       {
         error: 'Failed to fetch from upstream API',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'The upstream request failed; retry later',
       },
       502
     );

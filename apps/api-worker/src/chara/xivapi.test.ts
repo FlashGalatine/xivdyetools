@@ -114,15 +114,35 @@ describe('XivapiClient', () => {
     expect(u.searchParams.get('query')).toBe('+((+EquipSlotCategory.Head=1 +ModelMain=328041))');
     expect(u.searchParams.get('fields')).toContain('EquipSlotCategory.FingerR');
     expect((init.headers as Record<string, string>)['User-Agent']).toMatch(/XIVDyeTools/);
+    // FINDING-025 / API-9: a redirecting upstream must not be followed to a third host
+    expect(init.redirect).toBe('error');
     expect(client.versionKey).toBe('vkey');
+    expect(res.truncated).toBe(false);
   });
 
   it('skips the network for an empty lookup list', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     const client = new XivapiClient({});
-    expect(await client.searchItems([])).toEqual({ version: null, rows: [] });
+    expect(await client.searchItems([])).toEqual({ version: null, rows: [], truncated: false });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  // FINDING-025 / API-3: the caller must know when the single 500-row page
+  // could not have held every family it asked for.
+  it('flags a truncated page — a next cursor, or a page filled to the 500 cap', async () => {
+    const client = new XivapiClient({});
+    const lookups = [{ field: 'Head' as const, key: '1' }];
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okJson({ version: 'v', results: [], next: 'cursor' })));
+    expect((await client.searchItems(lookups)).truncated).toBe(true);
+
+    const full = Array.from({ length: 500 }, (_, i) => ({ row_id: i + 1, fields: { Name: `Item ${i}` } }));
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okJson({ version: 'v', results: full })));
+    expect((await client.searchItems(lookups)).truncated).toBe(true);
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okJson({ version: 'v', results: full.slice(0, 499), next: '' })));
+    expect((await client.searchItems(lookups)).truncated).toBe(false);
   });
 
   it('maps a 503 (search not ready) to UpstreamUnavailableError', async () => {

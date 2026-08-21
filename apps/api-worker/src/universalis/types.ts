@@ -33,10 +33,13 @@ export type CacheSource = 'cache-api' | 'upstream';
 
 /**
  * Extended environment bindings
+ *
+ * FINDING-025 / API-11: `ALLOWED_ORIGINS` was typed here but never read — the
+ * proxy is deliberately origin-agnostic (api-worker's global `cors({ origin: '*' })`
+ * is the policy). Removed so nobody assumes an allowlist is enforced.
  */
 export interface Env {
   ENVIRONMENT: string;
-  ALLOWED_ORIGINS: string;
   UNIVERSALIS_API_BASE: string;
   RATE_LIMIT_REQUESTS: string;
   RATE_LIMIT_WINDOW_SECONDS: string;

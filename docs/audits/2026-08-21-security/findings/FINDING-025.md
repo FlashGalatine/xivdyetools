@@ -18,3 +18,7 @@ Check `Content-Length` and stream-limit the body; canonicalise the icon id (`/^\
 
 ## References
 - Evidence: `../evidence/review-api-worker.md` (API-2..5, API-8, API-12), `../evidence/review-infra-stoat.md` (INF-12)
+
+## Status
+**FIXED 2026-08-21** (api-worker 0.8.0)
+- api-worker 0.8.0: API-2 streamed 8 KB body cap (`lib/bounded-body.ts`); API-3 truncated XIVAPI pages not cached; API-4 `iconId` shape-validated + cache key rebuilt; API-12 icon proxy 1 MB cap, PNG-signature check, pinned `image/png` + sandbox CSP; API-5/INF-12 `workers_dev=false` + `preview_urls=false`, no `stack` in any env; API-7 proxy limiter charged on cache misses only; API-8 constant error messages; API-9 `redirect:'error'` + 10 s timeout upstream; API-10 docs-host security headers; API-11 dead `ALLOWED_ORIGINS` / `X-API-Key` removed; API-13 `q` ≤ 100, `page` ≤ 1000, finite floats, `no-store` on ≥ 400. Not done: API-6 second-tier limiter (policy), API-7 discord-worker per-user key forwarding.

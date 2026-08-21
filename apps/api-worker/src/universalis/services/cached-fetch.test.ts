@@ -60,6 +60,11 @@ describe('cachedFetch', () => {
           Accept: 'application/json',
           'User-Agent': expect.stringContaining('XIVDyeTools'),
         },
+        // FINDING-025 / API-9: a hung upstream cannot pin the request (and
+        // every coalesced waiter) indefinitely, and a redirecting upstream
+        // cannot send the worker to a third host whose body then gets cached.
+        redirect: 'error',
+        signal: expect.any(AbortSignal),
       });
     });
 

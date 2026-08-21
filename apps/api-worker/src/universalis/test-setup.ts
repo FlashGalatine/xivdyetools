@@ -113,7 +113,6 @@ export function createMockExecutionContext(): ExecutionContext {
 export function createMockEnv(
   overrides: Partial<{
     ENVIRONMENT: string;
-    ALLOWED_ORIGINS: string;
     UNIVERSALIS_API_BASE: string;
     RATE_LIMIT_REQUESTS: string;
     RATE_LIMIT_WINDOW_SECONDS: string;
@@ -121,7 +120,6 @@ export function createMockEnv(
 ) {
   return {
     ENVIRONMENT: 'test',
-    ALLOWED_ORIGINS: 'https://xivdyetools.app',
     UNIVERSALIS_API_BASE: 'https://universalis.app/api/v2',
     RATE_LIMIT_REQUESTS: '100',
     RATE_LIMIT_WINDOW_SECONDS: '60',

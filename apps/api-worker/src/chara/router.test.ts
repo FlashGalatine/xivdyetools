@@ -63,6 +63,28 @@ function post(body: unknown, ctx = createMockExecutionContext()) {
   );
 }
 
+/**
+ * A pull-counted stream: `chunks` × `chunk`, and `pulls` tells how many the
+ * consumer actually took before it stopped reading (cancel / completion).
+ */
+function countedStream(chunk: Uint8Array, chunks: number) {
+  const counter = { pulls: 0 };
+  const stream = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (counter.pulls >= chunks) {
+        controller.close();
+        return;
+      }
+      counter.pulls++;
+      controller.enqueue(chunk);
+    },
+  });
+  return { stream, counter };
+}
+
+const flush = (ctx: ExecutionContext) =>
+  (ctx as unknown as { _waitForAll: () => Promise<unknown> })._waitForAll();
+
 describe('POST /v1/chara/resolve', () => {
   beforeEach(() => {
     resetAllMocks();
@@ -179,6 +201,60 @@ describe('POST /v1/chara/resolve', () => {
     }
   });
 
+  // FINDING-025 / API-2: the 8 KB cap is enforced while the body streams in —
+  // a chunked POST with no Content-Length must be cut off, not buffered whole.
+  it('stops reading a chunked body once it passes 8 KB instead of buffering it (API-2)', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { stream, counter } = countedStream(new Uint8Array(1024).fill(0x61), 100); // 100 KB of "a"
+    const req = new Request('http://localhost/v1/chara/resolve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: stream,
+      // Node needs the duplex hint for stream bodies; workers-types does not declare it
+      duplex: 'half',
+    } as RequestInit);
+    const res = await app.request(req, undefined, env, createMockExecutionContext());
+    expect(res.status).toBe(413);
+    expect(((await res.json()) as any).error).toBe('INVALID_BODY');
+    // 8 KB cap → ~9 chunks read before the reader is cancelled; never the whole 100
+    expect(counter.pulls).toBeLessThan(20);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('still rejects an honestly-declared oversized body up front', async () => {
+    const res = await app.request(
+      '/v1/chara/resolve',
+      { method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': '9000' }, body: '{}' },
+      env,
+      createMockExecutionContext(),
+    );
+    expect(res.status).toBe(413);
+  });
+
+  // FINDING-025 / API-3: a truncated XIVAPI page (next cursor / full 500-row
+  // page) may be missing tail groups — those keys must not be cached as
+  // "no item row" for a week.
+  it('does not cache the misses of a truncated upstream page (API-3)', async () => {
+    // a fresh Response per call — the second POST must reach upstream again
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(okJson({ version: 'v', results: [BEECH_MASK], next: 'cursor-page-2' })));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const ctx = createMockExecutionContext();
+    const first = await post(GALATINE_BODY, ctx);
+    expect(first.status).toBe(200);
+    // the rows that did come back still answer this request
+    expect(((await first.json()) as any).data.items.HeadGear.itemId).toBe(18085);
+    await flush(ctx);
+
+    const second = await post(GALATINE_BODY);
+    expect(second.status).toBe(200);
+    expect(second.headers.get('X-Cache')).toBe('MISS');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('parseResolveBody normalises weapon vs gear shapes and drops glasses 0', () => {
     expect(
       parseResolveBody({ gear: [{ slot: 'MainHand', base: 19, variant: 1 }, { slot: 'Feet', base: 376 }], glasses: 0 }),
@@ -198,10 +274,12 @@ describe('GET /v1/chara/icon/:iconId', () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  const png = () =>
-    new Response(new Uint8Array([0x89, 0x50, 0x4e, 0x47]), {
+  /** The 8-byte PNG signature plus a few bytes of "body". */
+  const PNG_BYTES = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d]);
+  const png = (contentType = 'image/png') =>
+    new Response(PNG_BYTES, {
       status: 200,
-      headers: { 'Content-Type': 'image/png', 'Content-Length': '4' },
+      headers: { 'Content-Type': contentType, 'Content-Length': String(PNG_BYTES.byteLength) },
     });
 
   it('proxies the icon PNG with a long immutable cache header and edge-caches it', async () => {
@@ -214,11 +292,11 @@ describe('GET /v1/chara/icon/:iconId', () => {
     expect(res.headers.get('Content-Type')).toBe('image/png');
     expect(res.headers.get('Cache-Control')).toBe('public, max-age=2592000, immutable');
     expect(res.headers.get('X-Cache')).toBe('MISS');
-    expect(new Uint8Array(await res.arrayBuffer())).toEqual(new Uint8Array([0x89, 0x50, 0x4e, 0x47]));
+    expect(new Uint8Array(await res.arrayBuffer())).toEqual(PNG_BYTES);
     const upstream = new URL(fetchMock.mock.calls[0][0] as string);
     expect(upstream.searchParams.get('path')).toBe('ui/icon/041000/041716_hr1.tex');
 
-    await (ctx as unknown as { _waitForAll: () => Promise<unknown> })._waitForAll();
+    await flush(ctx);
     const again = await app.request('/v1/chara/icon/41716?cb=1', { method: 'GET' }, env, createMockExecutionContext());
     expect(again.status).toBe(200);
     expect(again.headers.get('X-Cache')).toBe('HIT');
@@ -231,6 +309,74 @@ describe('GET /v1/chara/icon/:iconId', () => {
     expect((await app.request('/v1/chara/icon/abc', {}, env, createMockExecutionContext())).status).toBe(400);
     expect((await app.request('/v1/chara/icon/0', {}, env, createMockExecutionContext())).status).toBe(400);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  // FINDING-025 / API-4: lenient parseInt let `041716`, `41716abc`, `41716%20`
+  // all resolve to icon 41716 under distinct edge-cache keys — one fresh
+  // upstream fetch per alias. Only the canonical decimal form is accepted.
+  it('rejects non-canonical spellings of an id (API-4)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(png());
+    vi.stubGlobal('fetch', fetchMock);
+    for (const alias of ['041716', '41716abc', '41716%20', '+41716', '41716.0', '0x41716']) {
+      const res = await app.request(`/v1/chara/icon/${alias}`, {}, env, createMockExecutionContext());
+      expect(res.status, alias).toBe(400);
+      expect(((await res.json()) as any).error, alias).toBe('VALIDATION_ERROR');
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('keys the edge cache on the canonical id path (API-4)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(png()));
+    const putSpy = vi.spyOn(caches.default, 'put');
+    const ctx = createMockExecutionContext();
+    await app.request('/v1/chara/icon/41716?cb=1&x=2', { method: 'GET' }, env, ctx);
+    await flush(ctx);
+    expect(putSpy).toHaveBeenCalledTimes(1);
+    expect((putSpy.mock.calls[0][0] as Request).url).toBe('http://localhost/v1/chara/icon/41716');
+  });
+
+  // FINDING-025 / API-12: the proxy serves image/png or nothing — the
+  // upstream's Content-Type is never reflected and a non-PNG body is refused
+  // (and not cached) rather than stored for 30 days.
+  it('pins Content-Type to image/png and sandboxes the response (API-12)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(png('application/octet-stream')));
+    const res = await app.request('/v1/chara/icon/41717', {}, env, createMockExecutionContext());
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('image/png');
+    expect(res.headers.get('Content-Disposition')).toBe('inline');
+    expect(res.headers.get('Content-Security-Policy')).toBe('sandbox');
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+  });
+
+  it('refuses a 2xx upstream body that is not a PNG and does not cache it (API-12)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('<svg xmlns="http://www.w3.org/2000/svg"/>', {
+        status: 200,
+        headers: { 'Content-Type': 'image/svg+xml' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const putSpy = vi.spyOn(caches.default, 'put');
+    const ctx = createMockExecutionContext();
+    const res = await app.request('/v1/chara/icon/41718', {}, env, ctx);
+    expect(res.status).toBe(503);
+    const body = (await res.json()) as any;
+    expect(body.error).toBe('UPSTREAM_UNAVAILABLE');
+    expect(res.headers.get('Content-Type')).toContain('application/json');
+    await flush(ctx);
+    expect(putSpy).not.toHaveBeenCalled();
+  });
+
+  it('stops reading an oversized upstream body at the 1 MB ceiling (API-12)', async () => {
+    // 64 KB chunks, no Content-Length: the cap has to be enforced on the stream
+    const { stream, counter } = countedStream(new Uint8Array(64 * 1024).fill(0x00), 100);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(stream, { status: 200, headers: { 'Content-Type': 'image/png' } })),
+    );
+    const res = await app.request('/v1/chara/icon/41719', {}, env, createMockExecutionContext());
+    expect(res.status).toBe(503);
+    expect(counter.pulls).toBeLessThan(40);
   });
 
   it('maps an upstream 404 to NOT_FOUND and a 5xx to UPSTREAM_UNAVAILABLE', async () => {

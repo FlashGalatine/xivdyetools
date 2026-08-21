@@ -43,11 +43,11 @@ curl https://data.xivdyetools.app/universalis/aggregated/Aether/52254,52255,5225
 | `429` | `{ "error": "Rate limited by upstream API", "retryAfter": 60, ... }` | Universalis rate-limited the proxy |
 | `502` | `{ "error": "Upstream response too large", ... }` | Upstream body exceeded 5 MB |
 | `502` | `{ "error": "Failed to fetch from upstream API", ... }` | Network / unexpected upstream failure |
-| other 4xx/5xx | `{ "error": "Upstream API error: <status>", "message": ... }` | Universalis returned that status |
+| other 4xx/5xx | `{ "error": "Upstream API error: <status>", "message": "The upstream API returned an error" }` | Universalis returned that status (its own status text is logged, not echoed) |
 
 ### Rate limit
 
-Per IP, separate from the `/v1` budget: **30 requests per minute** in production (`RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS`, 60/60 in local dev), enforced by a per-isolate memory limiter — so the effective ceiling is per Cloudflare isolate, not global. `X-RateLimit-*` headers are only attached to the `429` response on this route.
+Per IP, separate from the `/v1` budget: **30 requests per minute** in production (`RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS`, 60/60 in local dev), enforced by a per-isolate memory limiter — so the effective ceiling is per Cloudflare isolate, not global. Only **cache misses** are charged: a request answered from the edge cache is free, so repeating a `(datacenter, itemIds)` you just asked for never counts against the budget. `X-RateLimit-*` headers are only attached to the `429` response on this route.
 
 ### Caching
 

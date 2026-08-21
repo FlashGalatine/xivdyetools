@@ -11,6 +11,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Hono } from 'hono';
 import { universalisRouter } from './router';
 import { resetAllMocks, createMockExecutionContext } from './test-setup';
+import { clearRateLimits } from './services/rate-limiter';
 import type { Env } from '../types';
 
 const env = {
@@ -125,6 +126,55 @@ describe('universalis router', () => {
     const res = await request('/universalis/aggregated/Crystal/48163');
     expect(res.status).toBe(429);
     expect(res.headers.get('Retry-After')).toBe('60');
+  });
+
+  // FINDING-025 / API-8: upstream statusText and raw Error.message are
+  // implementation detail — log them, answer with a constant.
+  it('does not echo upstream statusText or internal error messages (API-8)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response('x', { status: 404, statusText: 'Secret Upstream Detail' }))
+    );
+    const notFound = await request('/universalis/aggregated/Crystal/48164');
+    expect(notFound.status).toBe(404);
+    const notFoundBody = (await notFound.json()) as { error: string; message?: string };
+    expect(notFoundBody.error).toBe('Upstream API error: 404');
+    expect(JSON.stringify(notFoundBody)).not.toContain('Secret Upstream Detail');
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new Error('ECONNRESET at node:internal/undici/index.js:42'))
+    );
+    const failed = await request('/universalis/aggregated/Crystal/48165');
+    expect(failed.status).toBe(502);
+    const failedBody = (await failed.json()) as { error: string };
+    expect(failedBody.error).toBe('Failed to fetch from upstream API');
+    expect(JSON.stringify(failedBody)).not.toContain('ECONNRESET');
+  });
+
+  // FINDING-025 / API-7: the per-IP limiter is charged on cache misses only —
+  // a fully cached answer is free, so a service-binding caller sharing one
+  // bucket cannot throttle itself on repeats.
+  it('charges the per-IP limiter only on cache misses (API-7)', async () => {
+    await clearRateLimits();
+    const tightEnv = { ...env, RATE_LIMIT_REQUESTS: '1' } as unknown as Env;
+    const ctx = createMockExecutionContext() as unknown as ExecutionContext;
+    const tight = (path: string) => app.request(path, {}, tightEnv, ctx);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okJson({ results: [] })));
+
+    const miss = await tight('/universalis/aggregated/Crystal/7001');
+    expect(miss.status).toBe(200);
+    expect(miss.headers.get('X-Cache')).toBe('MISS');
+    await (ctx as unknown as { _waitForAll: () => Promise<unknown> })._waitForAll();
+
+    const hit = await tight('/universalis/aggregated/Crystal/7001');
+    expect(hit.status).toBe(200);
+    expect(hit.headers.get('X-Cache')).toBe('HIT');
+
+    const secondMiss = await tight('/universalis/aggregated/Crystal/7002');
+    expect(secondMiss.status).toBe(429);
+    expect(secondMiss.headers.get('Retry-After')).toBeTruthy();
+    await clearRateLimits();
   });
 
 });

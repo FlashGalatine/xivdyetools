@@ -8,6 +8,16 @@ main = "src/index.ts"
 compatibility_date = "2024-12-01"
 # ARCH-001: nodejs_compat removed — no Node.js APIs used
 
+# FINDING-025 / API-5 (2026-08-21 security audit): this env has no routes, and
+# without routes wrangler defaults workers_dev (and, on wrangler >= 4.44,
+# preview URLs) ON — so a single `pnpm deploy` used to publish a second,
+# publicly reachable copy of the Universalis/XIVAPI relay on
+# xivdyetools-api-worker-dev.<account>.workers.dev with ENVIRONMENT=development.
+# Both are off explicitly (tests/wrangler-config.test.ts guards this); use
+# `pnpm dev` for ad-hoc testing, or flip these deliberately for a session.
+workers_dev = false
+preview_urls = false
+
 [dev]
 port = 8790
 local_protocol = "http"
@@ -20,6 +30,10 @@ id = "8f2028935b544902bf468a9055d765ef"
 ENVIRONMENT = "development"
 API_VERSION = "v1"
 UNIVERSALIS_API_BASE = "https://universalis.app/api/v2"
+# RATE_LIMIT_REQUESTS / RATE_LIMIT_WINDOW_SECONDS govern ONLY the Universalis
+# proxy's per-IP memory limiter (/universalis/aggregated, /api/v2/aggregated),
+# and only on cache misses. The /v1/* limiter is the API_RATE_LIMITER binding
+# below (65 / 60 s, hard-coded in src/middleware/rate-limit.ts) — API-11.
 RATE_LIMIT_REQUESTS = "60"
 RATE_LIMIT_WINDOW_SECONDS = "60"
 # /v1/chara/* (equipment-model resolution for the web app's .chara import).

@@ -89,7 +89,7 @@ Names are never "cleaned": Augmented / Replica / +1 prefixes stay, because the n
 |---|---|---|
 | `400` | `INVALID_BODY` | Not JSON / not an object |
 | `400` | `VALIDATION_ERROR` | Bad slot, lane out of 0–65535, duplicate slot, empty piece, bad `glasses`, more than 12 entries — the message names the field |
-| `413` | `INVALID_BODY` | Body over 8 KB |
+| `413` | `INVALID_BODY` | Body over 8 KB (enforced while the body streams in — `Content-Length` is not required) |
 | `503` | `UPSTREAM_UNAVAILABLE` | XIVAPI is down, timed out, or **re-indexing search after a game patch** (`details.upstreamStatus`). Retry later; treat as "names unavailable", never as a failed import — the dyes in the file are unaffected. |
 
 ## GET /v1/chara/icon/:iconId
@@ -102,9 +102,9 @@ GET https://data.xivdyetools.app/v1/chara/icon/41716
 
 | Param | Type | Notes |
 |---|---|---|
-| `iconId` | integer 1–999999 | From `items.<slot>.iconId` or `glasses.iconId` |
+| `iconId` | integer 1–999999, canonical decimal (no leading zeros, sign or trailing characters — `041716` and `41716abc` are `400 VALIDATION_ERROR`) | From `items.<slot>.iconId` or `glasses.iconId` |
 
-Returns `image/png` with `Cache-Control: public, max-age=2592000, immutable` and an `X-Cache` header (`HIT` / `MISS`). `404 NOT_FOUND` when the upstream has no such asset; `503 UPSTREAM_UNAVAILABLE` when XIVAPI is down. A missing icon should cost the tile, not the row.
+Returns `image/png` (always — the upstream content type is never reflected; a 2xx upstream body that is not a PNG is refused) with `Cache-Control: public, max-age=2592000, immutable`, `Content-Disposition: inline`, `Content-Security-Policy: sandbox` and an `X-Cache` header (`HIT` / `MISS`). `404 NOT_FOUND` when the upstream has no such asset; `503 UPSTREAM_UNAVAILABLE` when XIVAPI is down, answers with something other than a PNG, or exceeds the 1 MB ceiling. A missing icon should cost the tile, not the row.
 
 ## Model key packing (for reference)
 

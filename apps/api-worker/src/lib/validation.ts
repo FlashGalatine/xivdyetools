@@ -185,11 +185,13 @@ export function parseFloatParam(
   }
 
   const num = parseFloat(value);
-  if (isNaN(num)) {
-    throw new ApiError(ErrorCode.VALIDATION_ERROR, `Parameter "${name}" must be a number.`, 400, {
+  // FINDING-025 / API-13: parseFloat('Infinity') / '1e400' are not NaN but
+  // are no more a usable distance than 'abc' is
+  if (!Number.isFinite(num)) {
+    throw new ApiError(ErrorCode.VALIDATION_ERROR, `Parameter "${name}" must be a finite number.`, 400, {
       parameter: name,
       received: value,
-      expected: 'number',
+      expected: 'finite number',
     });
   }
 

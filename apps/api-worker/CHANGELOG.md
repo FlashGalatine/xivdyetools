@@ -7,15 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.8.0] - 2026-08-21
 
-Security audit remediation (docs/audits/2026-08-21-security, FINDING-003). Minor bump: new binding, no API contract change.
+Security audit remediation (docs/audits/2026-08-21-security, FINDING-003 + FINDING-025 with the API-n items of `evidence/review-api-worker.md`). Minor bump: new binding, no intended API contract change — only malformed inputs that used to be accepted leniently are now rejected (API-4, API-13 below).
 
 ### Security
 
-- **`/v1/*` per-IP rate limiting now uses the native Workers Rate Limiting binding `API_RATE_LIMITER`** (`[[ratelimits]]`, `simple = { limit = 65, period = 60 }` = the 60 + 5 burst it always advertised) via `CloudflareRateLimiter` from `@xivdyetools/worker-kit` 1.1.0. The KV-backed limiter could not throttle a fast client — KV allows 1 write/s/key and the increment swallowed the resulting 429s, so a single client sending >1 req/s never reached the threshold, and any KV error failed open. KV `RATE_LIMIT` is kept only as the fallback when the binding is absent. `createApiRateLimitMiddleware()` / `selectApiRateLimiter()` are exported for tests; the 429 body is unchanged.
+- **`/v1/*` per-IP rate limiting now uses the native Workers Rate Limiting binding `API_RATE_LIMITER`** (`[[ratelimits]]`, `simple = { limit = 65, period = 60 }` = the 60 + 5 burst it always advertised) via `CloudflareRateLimiter` from `@xivdyetools/worker-kit` 1.1.0. The KV-backed limiter could not throttle a fast client — KV allows 1 write/s/key and the increment swallowed the resulting 429s, so a single client sending >1 req/s never reached the threshold, and any KV error failed open. KV `RATE_LIMIT` is kept only as the fallback when the binding is absent. `createApiRateLimitMiddleware()` / `selectApiRateLimiter()` are exported for tests; the 429 body is unchanged. (FINDING-003)
+- **FINDING-025 / API-2 — `POST /v1/chara/resolve` enforces its 8 KB cap on the stream** (new `src/lib/bounded-body.ts`): the body used to be buffered whole (`Request.text()`) before the size check, so a chunked / HTTP/2 POST with no `Content-Length` could push ~100 MB into the isolate. The reader is now cancelled the moment 8 KB (bytes, not UTF-16 units) is exceeded; `413 INVALID_BODY` as before.
+- **API-3 — truncated XIVAPI search pages are not cached**: when the single 500-row search comes back with a `next` cursor or a full page, the request is still answered from the rows that arrived, but its misses are no longer stored as "no item row" for ~8 days (`XivapiClient.searchItems` now returns `truncated`; a warn log notes it).
+- **API-4 — `GET /v1/chara/icon/:iconId` accepts the canonical decimal id only** (`/^[1-9]\d{0,5}$/`, otherwise `400 VALIDATION_ERROR`) and keys the edge cache on the canonical path. `041716`, `41716abc`, `41716%20` used to resolve to the same icon under distinct cache keys, each a fresh upstream fetch.
+- **API-12 — the icon proxy serves `image/png` or nothing**: the upstream `Content-Type` is never reflected; the body is read with a 1 MB byte budget (`Content-Length` is advisory), must start with the PNG signature (else `503 UPSTREAM_UNAVAILABLE`, not cached), and the response carries `Content-Disposition: inline` + `Content-Security-Policy: sandbox`.
+- **API-5 / INF-12 — no stack traces in any HTTP response** (the `stack` field is gone from the 500 envelope in every environment; `development` still returns `err.message`), and the routeless dev worker is off workers.dev: top-level `workers_dev = false` + `preview_urls = false` in `wrangler.toml` (guarded by `tests/wrangler-config.test.ts`). A bare `pnpm deploy` no longer publishes a second, public copy of the Universalis/XIVAPI relay with `ENVIRONMENT=development`; use `pnpm dev` for ad-hoc testing.
+- **API-8 — Universalis proxy error bodies are constant**: `message` no longer carries the upstream `statusText` or a raw `Error.message` (`Upstream API error: <status>` + `The upstream API returned an error`; `Failed to fetch from upstream API` + `The upstream request failed; retry later`); both are logged with the request ID instead.
+- **API-9 — upstream fetches cannot hang or wander**: `redirect: 'error'` on both the Universalis and the XIVAPI clients, and a 10 s `AbortSignal.timeout` on the Universalis fetch (XIVAPI already had one).
+- **API-10 — `developers.xivdyetools.app` responses carry the API's security headers** (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, HSTS in production) — the docs host returned `ASSETS.fetch()` before the middleware chain, so it had none.
+- **API-13 — input-bound nits**: `/v1/dyes/search?q=` ≤ 100 characters, `/v1/dyes?page=` ≤ 1000, `maxDistance` must be finite (`Infinity` / `1e400` → `400`), and every 4xx/5xx (the envelope, the proxy's bare `{error}`, the 429s) is `Cache-Control: no-store` — a 404 is heuristically cacheable by RFC 9111.
+
+### Changed
+
+- **API-7 — the Universalis proxy's per-IP limiter is charged on cache misses only** (`cachedFetch` gained an `onMiss` hook): a cached answer is free, so a service-binding caller sharing one `unknown` bucket (discord-worker `/budget`) cannot throttle itself on repeats, and invalid requests no longer consume the budget. The budget and the 429 body are unchanged.
+- **API-11 — dead / misleading config removed**: `ALLOWED_ORIGINS` (typed and mocked, never read — the proxy is origin-agnostic by design, api-worker's global `cors({ origin: '*' })` is the policy) is gone from `universalis/types.ts` / `test-setup.ts`; `X-API-Key` is no longer advertised in CORS `allowHeaders` (no API-key feature exists); `wrangler.toml` now says that `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS` govern only the proxy's limiter (the `/v1` limit is the binding).
+- Docs: `reference/chara.md` (canonical icon id, pinned PNG, streamed 8 KB cap) and `reference/universalis.md` (constant error messages, misses-only budget) updated to match.
 
 ### Deploy notes
 
 - `[[ratelimits]]` bindings need no resource creation — they deploy with the worker (`namespace_id` 1001 prod / 1002 dev; see `docs/developer-guides/environment-variables.md`).
+- The top-level (dev) worker stops answering on `*.workers.dev` at its next deploy (API-5) — intentional; production is unaffected (custom domains only).
 
 ## [0.7.0] - 2026-08-20
 
