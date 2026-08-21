@@ -76,7 +76,7 @@ reason. Nothing in the command, the script name, or the docs indicated the risk.
 |---|---|---|---|
 | `api-worker` | `xivdyetools-api-worker-dev` | no | a dev Worker ✅ |
 | `og-worker` | `xivdyetools-og-worker-dev` | no | a dev Worker ✅ |
-| `oauth` | `xivdyetools-oauth` | yes | production (has `[env.development]` / `[env.preview]`) |
+| `oauth` | `xivdyetools-oauth` | yes | production (has `[env.development]`; `[env.preview]` deleted 2026-08-21, FINDING-029) |
 | `discord-worker` | `xivdyetools-discord-worker` | **yes** | **production** ❌ |
 | `moderation-worker` | `xivdyetools-moderation-worker` | **yes** | **production** ❌ |
 | `presets-api` | `xivdyetools-presets-api` | **yes** | **production** ❌ |

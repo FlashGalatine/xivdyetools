@@ -27,7 +27,7 @@ npm run dev
 
 # Deploy — NOTE: on this worker a bare `wrangler deploy` IS production
 # (no [env.production]; the top-level block is `xivdyetools-oauth` on auth.xivdyetools.app;
-# `[env.development]` / `[env.preview]` are the non-production envs)
+# `[env.development]` is the only non-production env — `[env.preview]` was deleted 2026-08-21, FINDING-029)
 npm run deploy
 ```
 

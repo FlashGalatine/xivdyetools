@@ -16,3 +16,7 @@ Only use characters with `verified: true` for display names (fallback to the XIV
 
 ## References
 - Evidence: `../evidence/review-oauth.md` (OAUTH-7..9)
+
+## Status
+**FIXED 2026-08-21** (oauth 2.7.0)
+- oauth 2.7.0: only a verified XIVAuth character becomes `username`/`global_name` (unverified carried as `primary_character{verified:false}`, else an opaque label); the asserted Discord `external_id` must be a snowflake; no identifiers in logs, upstream bodies only in `development`; the silent account merge is removed — a Discord ID owned by another row is left alone (audit event without identifiers), an existing Discord link is never overwritten from an XIVAuth claim.

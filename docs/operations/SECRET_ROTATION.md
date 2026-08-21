@@ -25,7 +25,7 @@ and the `--env` flag is **load-bearing**. The top-level block of most `wrangler.
 | `xivdyetools-api-worker` | `--env production` | bare (`…-dev`) |
 | `xivdyetools-og-worker` | `--env production` | bare (**routed beta** on `beta.xivdyetools.app`) |
 | `xivdyetools-image-worker` | `--env production` | bare (`…-dev`) |
-| `xivdyetools-oauth-worker` | **bare** (top-level block IS production, no `[env.production]`) | `--env development` / `--env preview` |
+| `xivdyetools-oauth-worker` | **bare** (top-level block IS production, no `[env.production]`) | `--env development` (the `[env.preview]` block was deleted 2026-08-21, FINDING-029) |
 
 See `docs/operations/DEPLOY_ENVIRONMENTS.md` for the full story. `wrangler secret list --env production` (or bare for oauth) confirms where a secret landed.
 

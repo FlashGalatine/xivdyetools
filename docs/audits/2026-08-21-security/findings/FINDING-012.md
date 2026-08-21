@@ -15,3 +15,7 @@ Pin `redirect_uri` to an exact path allowlist per origin (e.g. `/auth/callback`)
 
 ## References
 - Evidence: `../evidence/review-oauth.md` (OAUTH-4, OAUTH-5)
+
+## Status
+**FIXED 2026-08-21** (oauth 2.7.0; PKCE-state binding optional pending the web-app change)
+- oauth 2.7.0: `validateRedirectUri` requires origin + exact `/auth/callback` path (no query/fragment); `validateReturnPath` / `validateStateParam` bounds (400); GET callback re-validates and echoes the signed `state`; new `utils/pkce-binding.ts` — when the POST callback body carries `state`, it must verify and `S256(code_verifier)` must equal its `code_challenge` (400 otherwise, provider never called). `state` is OPTIONAL until the web-app forwards it (follow-up: web-app forwards `state`, then make it required).

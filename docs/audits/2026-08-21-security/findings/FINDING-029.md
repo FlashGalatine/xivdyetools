@@ -16,3 +16,7 @@ Delete `[env.preview]` (or give it its own D1/KV and a current frontend), remove
 
 ## References
 - Evidence: `../evidence/review-oauth.md` (OAUTH-6), `../evidence/review-infra-stoat.md` (INF-6)
+
+## Status
+**FIXED 2026-08-21** (oauth 2.7.0)
+- oauth 2.7.0: `[env.preview]` deleted from `wrangler.toml`; `ENVIRONMENT` must be `development` | `production` and every URL HTTPS outside `development` (500 fail-closed), HSTS on non-development; dev D1 placeholder annotated; docs (SECRET_ROTATION, DEPLOY_ENVIRONMENTS, projects/oauth/overview, README, CLAUDE) updated. Deploy note: delete any `xivdyetools-oauth-preview` worker / `auth-preview.xivdyetools.app` domain if one ever existed (DNS is NXDOMAIN today).

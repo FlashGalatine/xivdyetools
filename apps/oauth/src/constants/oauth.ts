@@ -22,6 +22,16 @@ export const ALLOWED_REDIRECT_ORIGINS = [
 ];
 
 /**
+ * FINDING-012 / OAUTH-4 (2026-08-21 security audit): the only path on an
+ * allowlisted origin that may receive the `?code=` bounce. Every frontend
+ * (xivdyetools.app, beta, the transition domain, the localhost dev servers)
+ * mounts its callback route here. Origin-only matching let an attacker-chosen
+ * path on a trusted origin receive the authorization code; RFC 8252 §8.4 /
+ * OAuth 2.1 want an exact redirect-URI match.
+ */
+export const REDIRECT_CALLBACK_PATH = '/auth/callback';
+
+/**
  * BUG-018 (2026-07-18 audit): the single redirect-URI allowlist used by every
  * authorize handler AND every GET callback. Three divergent inline lists
  * previously let a login start on the transition domain and then bounce at

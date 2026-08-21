@@ -41,13 +41,21 @@ app.use('*', loggerMiddleware({
 
 // Environment validation middleware
 // Validates required env vars once per isolate and caches result
+//
+// FINDING-029 (2026-08-21 security audit): the gate keyed on
+// ENVIRONMENT === 'production', so a non-development, non-production deploy
+// (the since-deleted `[env.preview]`) failed OPEN. Everything that is not
+// local `development` is production as far as fail-closed behaviour goes —
+// and validateEnv additionally rejects any ENVIRONMENT value other than the
+// two wrangler.toml defines.
 app.use('*', async (c, next) => {
   const result = validateEnv(c.env);
   if (!result.valid) {
+    const isDevelopment = c.env.ENVIRONMENT === 'development';
     if (!envErrorsLogged) {
       envErrorsLogged = true;
       logValidationErrors(result.errors);
-      if (c.env.ENVIRONMENT !== 'production') {
+      if (isDevelopment) {
         // In development, log warnings but continue
         const logger = getLogger(c);
         if (logger) {
@@ -55,9 +63,9 @@ app.use('*', async (c, next) => {
         }
       }
     }
-    // In production, fail fast on misconfiguration — on every request, not
-    // just the first one in the isolate (BUG-017)
-    if (c.env.ENVIRONMENT === 'production') {
+    // Outside development, fail fast on misconfiguration — on every request,
+    // not just the first one in the isolate (BUG-017)
+    if (!isDevelopment) {
       return c.json({ error: 'Service misconfigured' }, 500);
     }
   }
@@ -129,8 +137,9 @@ app.use('*', async (c, next) => {
   c.header('X-Content-Type-Options', 'nosniff');
   // Prevent clickjacking by denying iframe embedding
   c.header('X-Frame-Options', 'DENY');
-  // Enforce HTTPS for 1 year (only in production)
-  if (c.env.ENVIRONMENT === 'production') {
+  // Enforce HTTPS for 1 year everywhere except local development (FINDING-029:
+  // was production-only, so any other non-development env went without HSTS)
+  if (c.env.ENVIRONMENT !== 'development') {
     c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
 });

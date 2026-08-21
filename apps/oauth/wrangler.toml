@@ -37,31 +37,17 @@ name = "RL_AUTH_30"
 namespace_id = "1023"
 simple = { limit = 30, period = 60 }
 
+# FINDING-029 (2026-08-21 security audit): the former `[env.preview]`
+# (xivdyetools-oauth-preview / auth-preview.xivdyetools.app) was deleted. It
+# bound the PRODUCTION D1 + KV behind a stale pages.dev FRONTEND_URL and, with
+# ENVIRONMENT = "preview", sat outside every fail-closed gate — one
+# `wrangler deploy --env preview` away from a second token issuer on production
+# data. `development` is the only non-production environment; the worker's
+# env validation now rejects any ENVIRONMENT other than development/production.
+
 [env.development]
 name = "xivdyetools-oauth-dev"
 vars = { ENVIRONMENT = "development", DISCORD_CLIENT_ID = "1447108133020369048", XIVAUTH_CLIENT_ID = "phx-sXZeb_Ran6GAdcnsnjvdtOeNM4df0BZyF3Jyti0", FRONTEND_URL = "http://localhost:5173", WORKER_URL = "http://localhost:8788", JWT_EXPIRY = "3600" }
-
-[env.preview]
-name = "xivdyetools-oauth-preview"
-routes = [
-  { pattern = "auth-preview.xivdyetools.app", custom_domain = true }
-]
-[env.preview.vars]
-ENVIRONMENT = "preview"
-DISCORD_CLIENT_ID = "1447108133020369048"
-XIVAUTH_CLIENT_ID = "phx-sXZeb_Ran6GAdcnsnjvdtOeNM4df0BZyF3Jyti0"
-FRONTEND_URL = "https://v4-ui-migration.xiv-colorexplorer.pages.dev"
-WORKER_URL = "https://auth-preview.xivdyetools.app"
-JWT_EXPIRY = "3600"
-
-[[env.preview.kv_namespaces]]
-binding = "TOKEN_BLACKLIST"
-id = "0d6f3be3b4704e91a83e6387b9769e45"
-
-[[env.preview.d1_databases]]
-binding = "DB"
-database_name = "xivdyetools-users"
-database_id = "6e97b759-70dd-49a8-a93c-0541c7fe6c67"
 
 [[kv_namespaces]]
 binding = "TOKEN_BLACKLIST"
@@ -82,6 +68,8 @@ binding = "DB"
 database_name = "xivdyetools-users-dev"
 # To populate: run `wrangler d1 create xivdyetools-users-dev` and paste the returned UUID here.
 # Local `wrangler dev` works without this (uses .wrangler/state/ SQLite); only needed for --remote ops.
+# FINDING-029: still a placeholder — create the database (or drop this env block) before any
+# `wrangler deploy --env development`; it must never point at the production database id.
 database_id = "TODO_RUN_WRANGLER_D1_CREATE"
 
 # Secrets: DISCORD_CLIENT_SECRET, JWT_SECRET, XIVAUTH_CLIENT_SECRET
@@ -100,20 +88,4 @@ simple = { limit = 20, period = 60 }
 [[env.development.ratelimits]]
 name = "RL_AUTH_30"
 namespace_id = "1026"
-simple = { limit = 30, period = 60 }
-
-# FINDING-003: preview env rate-limit bindings
-[[env.preview.ratelimits]]
-name = "RL_AUTH_10"
-namespace_id = "1027"
-simple = { limit = 10, period = 60 }
-
-[[env.preview.ratelimits]]
-name = "RL_AUTH_20"
-namespace_id = "1028"
-simple = { limit = 20, period = 60 }
-
-[[env.preview.ratelimits]]
-name = "RL_AUTH_30"
-namespace_id = "1029"
 simple = { limit = 30, period = 60 }

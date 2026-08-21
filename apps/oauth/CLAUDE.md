@@ -25,8 +25,8 @@ npm run lint                         # eslint src/
 >
 > `wrangler.toml` has **no `[env.production]`** — the **top-level** block is
 > production: it carries `name = "xivdyetools-oauth"` and the
-> `auth.xivdyetools.app` custom domain. The only environments defined are
-> `development` and `preview`.
+> `auth.xivdyetools.app` custom domain. The only other environment defined is
+> `development` (the former `preview` env was deleted — FINDING-029).
 >
 > So a bare `wrangler deploy` **is** the production deploy (and is what
 > `.github/workflows/deploy-oauth.yml` runs). `wrangler deploy --env production`
@@ -115,7 +115,8 @@ src/
 ├── durable-objects/
 │   └── rate-limiter.ts               # Durable Object class for distributed rate limiting
 ├── utils/
-│   ├── oauth-validation.ts           # validateCodeChallenge, validateCodeVerifier, validateRedirectUri, validateScopes, validateStateExpiration
+│   ├── oauth-validation.ts           # validateCodeChallenge/Verifier, validateRedirectUri (origin + exact path), validateReturnPath, validateStateParam, validateScopes
+│   ├── pkce-binding.ts               # verifyPkceStateBinding: S256(code_verifier) vs the signed code_challenge (FINDING-012)
 │   ├── state-signing.ts              # signState/verifyState (HMAC-SHA256 over base64url JSON)
 │   └── env-validation.ts             # First-request env validation
 └── __tests__/                        # Test suites (separate __tests__ dir, not co-located)
@@ -129,7 +130,7 @@ src/
 | `TOKEN_BLACKLIST` | KV Namespace | Revoked JWT IDs (TTL matches token expiry) |
 | `RATE_LIMITER` | Durable Object Namespace (optional) | Persistent per-IP rate limit when `USE_DO_RATE_LIMITING = "true"` |
 
-Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `XIVAUTH_CLIENT_ID`, `FRONTEND_URL`, `WORKER_URL`, `JWT_EXPIRY` (seconds, default `3600`). Custom domains: `auth.xivdyetools.app`, `auth-preview.xivdyetools.app`, `auth.xivdyetools.projectgalatine.com`. The `wrangler.toml` also defines a development env (`xivdyetools-oauth-dev`) and a preview env (`xivdyetools-oauth-preview`) — note the dev D1 still has `database_id = "TODO_RUN_WRANGLER_D1_CREATE"` placeholder.
+Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `XIVAUTH_CLIENT_ID`, `FRONTEND_URL`, `WORKER_URL`, `JWT_EXPIRY` (seconds, default `3600`). Custom domains: `auth.xivdyetools.app`, `auth.xivdyetools.projectgalatine.com`. The `wrangler.toml` also defines a development env (`xivdyetools-oauth-dev`) — note the dev D1 still has `database_id = "TODO_RUN_WRANGLER_D1_CREATE"` placeholder. There is no preview env (deleted in the 2026-08-21 audit, FINDING-029); `ENVIRONMENT` must be `development` or `production`, and anything other than `development` gets the production gates (HTTPS-only URLs, fail-closed env validation, HSTS).
 
 ### Required Secrets
 
@@ -175,7 +176,7 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 
 ### PKCE Enforcement
 
-`validateCodeChallenge` rejects anything not matching `/^[A-Za-z0-9\-_]{43,128}$/`; `validateCodeVerifier` rejects anything not matching `/^[A-Za-z0-9\-._~]{43,128}$/`. Only `S256` is accepted as `code_challenge_method`. The verifier is **only** ever sent in the POST body — never as a query parameter — so it can't leak through redirects, server logs, or browser history.
+`validateCodeChallenge` rejects anything not matching `/^[A-Za-z0-9\-_]{43,128}$/`; `validateCodeVerifier` rejects anything not matching `/^[A-Za-z0-9\-._~]{43,128}$/`. Only `S256` is accepted as `code_challenge_method`. The verifier is **only** ever sent in the POST body — never as a query parameter — so it can't leak through redirects, server logs, or browser history. The GET callbacks echo the signed `state` in the bounce; when the SPA posts it back, `utils/pkce-binding.ts` verifies it (signature, expiry, provider) and requires `S256(code_verifier) === state.code_challenge` before the provider is called (FINDING-012 — optional until the web app forwards `state`, then make it required).
 
 ### State Parameter Signing
 
@@ -195,7 +196,7 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 
 ### Redirect URI Validation
 
-`validateRedirectUri(uri, ALLOWED_REDIRECT_ORIGINS)` parses the URL and compares the origin against an allowlist (constants/oauth.ts). Anything that doesn't parse, doesn't match, or fails origin equality is rejected — prevents open redirect attacks.
+`validateRedirectUri(uri, ALLOWED_REDIRECT_ORIGINS)` parses the URL, compares the origin against an allowlist (constants/oauth.ts) **and** requires the path to be exactly `REDIRECT_CALLBACK_PATH` (`/auth/callback`, no query string or fragment). Anything that doesn't parse, doesn't match, or fails origin/path equality is rejected — prevents open redirect attacks (FINDING-012). `validateReturnPath` / `validateStateParam` bound `return_path` and the SPA `state` (256 visible-ASCII characters) before they enter the signed state.
 
 ### Rate Limiting
 
@@ -289,4 +290,4 @@ npx vitest run -t "PKCE"                              # Pattern match
 5. `npm run lint && npm run test -- --run && npm run type-check`.
 6. `npm run deploy` (bare — this worker has no `production` env; see the note under Commands).
 7. Smoke-test the full flow from the web app: `/auth/discord` → consent → callback → `/auth/me` returns user info with the issued JWT.
-8. If switching to DO rate limiting, set `USE_DO_RATE_LIMITING = "true"` and bind `RATE_LIMITER` (already present in wrangler.toml under `env.preview`).
+8. If switching to DO rate limiting, set `USE_DO_RATE_LIMITING = "true"` and bind `RATE_LIMITER`.

@@ -14,6 +14,12 @@ export interface EnvValidationResult {
 }
 
 /**
+ * The only ENVIRONMENT values wrangler.toml defines. Everything that is not
+ * `development` gets production behaviour (FINDING-029).
+ */
+export const ALLOWED_ENVIRONMENTS: readonly string[] = ['development', 'production'];
+
+/**
  * Validates all required environment variables for the OAuth worker.
  *
  * Required variables:
@@ -49,6 +55,21 @@ export function validateEnv(env: Env): EnvValidationResult {
     }
   }
 
+  // FINDING-029 (2026-08-21 security audit): every fail-closed gate in this
+  // worker keys on ENVIRONMENT, and anything that is not `development` is
+  // treated as production. Restrict the value to the two environments
+  // wrangler.toml defines so a stray label (the deleted `preview` env) cannot
+  // sit between the two and pick up neither set of guarantees.
+  if (
+    env.ENVIRONMENT &&
+    typeof env.ENVIRONMENT === 'string' &&
+    !ALLOWED_ENVIRONMENTS.includes(env.ENVIRONMENT)
+  ) {
+    errors.push(
+      `ENVIRONMENT must be one of ${ALLOWED_ENVIRONMENTS.join(', ')}, got: ${env.ENVIRONMENT}`
+    );
+  }
+
   // OAUTH-MED-001: Validate JWT_SECRET has sufficient length for security
   if (env.JWT_SECRET && typeof env.JWT_SECRET === 'string') {
     if (env.JWT_SECRET.length < 32) {
@@ -71,9 +92,10 @@ export function validateEnv(env: Env): EnvValidationResult {
     if (value && typeof value === 'string') {
       try {
         const url = new URL(value);
-        // Ensure URLs use HTTPS in production
-        if (env.ENVIRONMENT === 'production' && url.protocol !== 'https:') {
-          errors.push(`${key} must use HTTPS in production: ${value}`);
+        // FINDING-029: HTTPS everywhere except local development (was
+        // production-only, so a non-development, non-production env failed open)
+        if (env.ENVIRONMENT !== 'development' && url.protocol !== 'https:') {
+          errors.push(`${key} must use HTTPS outside development: ${value}`);
         }
       } catch {
         errors.push(`Invalid URL for ${key}: ${value}`);

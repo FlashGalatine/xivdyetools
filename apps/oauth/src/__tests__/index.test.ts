@@ -328,4 +328,56 @@ describe('OAuth Worker App', () => {
             consoleSpy.mockRestore();
         });
     });
+
+    /**
+     * FINDING-029 (2026-08-21 security audit): the env-validation gate and HSTS
+     * keyed on ENVIRONMENT === 'production', so a non-development, non-production
+     * deployment (the deleted `[env.preview]`) failed OPEN. Everything that is
+     * not `development` is now treated as production.
+     */
+    describe('Environment gates (FINDING-029)', () => {
+        it('should fail closed with 500 when production config is invalid', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const brokenProd = { ...createProductionEnv(), FRONTEND_URL: 'http://insecure.example.com' };
+
+            const response = await fetchWithEnv(brokenProd, 'http://localhost/health');
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(500);
+            expect(json.error).toBe('Service misconfigured');
+            consoleSpy.mockRestore();
+        });
+
+        it('should fail closed for a non-development environment that is not production either', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            // Exactly what the deleted preview env looked like: an unknown ENVIRONMENT
+            // label with otherwise production-shaped config.
+            const previewLike = { ...createProductionEnv(), ENVIRONMENT: 'preview' };
+
+            const response = await fetchWithEnv(previewLike, 'http://localhost/health');
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(500);
+            expect(json.error).toBe('Service misconfigured');
+            consoleSpy.mockRestore();
+        });
+
+        it('should keep serving with a warning when development config is invalid', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const brokenDev = { ...env, JWT_EXPIRY: 'not-a-number' };
+
+            const response = await fetchWithEnv(brokenDev, 'http://localhost/health');
+
+            expect(response.status).toBe(200);
+            consoleSpy.mockRestore();
+        });
+
+        it('should send HSTS in production and not in development', async () => {
+            const prod = await fetchWithEnv(createProductionEnv(), 'http://localhost/health');
+            expect(prod.headers.get('Strict-Transport-Security')).toContain('max-age=31536000');
+
+            const dev = await SELF.fetch('http://localhost/health');
+            expect(dev.headers.get('Strict-Transport-Security')).toBeNull();
+        });
+    });
 });

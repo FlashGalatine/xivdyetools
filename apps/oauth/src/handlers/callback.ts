@@ -7,6 +7,7 @@ import { Hono } from 'hono';
 import type { Env, DiscordTokenResponse, DiscordUser, AuthResponse } from '../types.js';
 import { createJWTForUser, getAvatarUrl } from '../services/jwt-service.js';
 import { findOrCreateUser } from '../services/user-service.js';
+import { verifyPkceStateBinding } from '../utils/pkce-binding.js';
 import { buildGetCallbackHandler } from './oauth-flow.js';
 import { DISCORD_FLOW_CONFIG } from './authorize.js';
 
@@ -44,7 +45,7 @@ callbackRouter.get('/callback', buildGetCallbackHandler(DISCORD_FLOW_CONFIG));
  * - redirect_uri: The redirect URI used in the initial request
  */
 callbackRouter.post('/callback', async (c) => {
-  let body: { code: string; code_verifier: string; redirect_uri?: string };
+  let body: { code: string; code_verifier: string; redirect_uri?: string; state?: unknown };
 
   try {
     body = await c.req.json();
@@ -58,7 +59,7 @@ callbackRouter.post('/callback', async (c) => {
     );
   }
 
-  const { code, code_verifier, redirect_uri } = body;
+  const { code, code_verifier, redirect_uri, state } = body;
 
   if (!code || !code_verifier) {
     return c.json<AuthResponse>(
@@ -82,6 +83,25 @@ callbackRouter.post('/callback', async (c) => {
       },
       400
     );
+  }
+
+  // FINDING-012 / OAUTH-5 (2026-08-21 security audit): when the SPA returns
+  // the signed state from the GET bounce, bind the verifier to the challenge
+  // this worker signed at authorize time BEFORE calling Discord — PKCE then
+  // holds regardless of provider behaviour. The web app does not forward the
+  // state yet, so an absent state still falls through to the provider-enforced
+  // check; once the SPA ships the change, make `state` required here.
+  if (state !== undefined && state !== null) {
+    const binding = await verifyPkceStateBinding(state, code_verifier, 'discord', c.env.JWT_SECRET);
+    if (!binding.ok) {
+      return c.json<AuthResponse>(
+        {
+          success: false,
+          error: binding.reason === 'pkce_mismatch' ? 'PKCE verification failed' : 'Invalid state',
+        },
+        400
+      );
+    }
   }
 
   try {

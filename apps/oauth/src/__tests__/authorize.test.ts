@@ -237,4 +237,141 @@ describe('Authorize Handler', () => {
             expect(response.status).toBe(302);
         });
     });
+
+    /**
+     * FINDING-012 / OAUTH-4 (2026-08-21 security audit): redirect_uri used to be
+     * matched by origin only, so any path on an allowed origin could receive the
+     * ?code= bounce; return_path and state were embedded into the signed state
+     * unbounded. Exact callback path + server-side caps.
+     */
+    describe('GET /auth/discord — redirect_uri path pin and parameter bounds', () => {
+        it('should reject a redirect_uri on an allowed origin but a different path', async () => {
+            const params = new URLSearchParams({
+                code_challenge: VALID_CODE_CHALLENGE,
+                redirect_uri: 'https://xivdyetools.app/anything/else',
+            });
+
+            const response = await SELF.fetch(`http://localhost/auth/discord?${params}`);
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(400);
+            expect(json.error).toBe('Invalid redirect_uri');
+        });
+
+        it('should reject a redirect_uri that carries a query string', async () => {
+            const params = new URLSearchParams({
+                code_challenge: VALID_CODE_CHALLENGE,
+                redirect_uri: 'https://xivdyetools.app/auth/callback?next=https://evil.com',
+            });
+
+            const response = await SELF.fetch(`http://localhost/auth/discord?${params}`);
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(400);
+            expect(json.error).toBe('Invalid redirect_uri');
+        });
+
+        it('should reject a redirect_uri that carries a fragment', async () => {
+            const params = new URLSearchParams({
+                code_challenge: VALID_CODE_CHALLENGE,
+                redirect_uri: 'https://xivdyetools.app/auth/callback#frag',
+            });
+
+            const response = await SELF.fetch(`http://localhost/auth/discord?${params}`);
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(400);
+            expect(json.error).toBe('Invalid redirect_uri');
+        });
+
+        it('should reject a return_path longer than 256 characters', async () => {
+            const params = new URLSearchParams({
+                code_challenge: VALID_CODE_CHALLENGE,
+                return_path: '/' + 'a'.repeat(256),
+            });
+
+            const response = await SELF.fetch(`http://localhost/auth/discord?${params}`);
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(400);
+            expect(json.error).toBe('Invalid return_path');
+        });
+
+        it('should reject a return_path that does not start with a single slash', async () => {
+            for (const return_path of ['settings', '//evil.com/x', 'https://evil.com/', '\\evil']) {
+                const params = new URLSearchParams({ code_challenge: VALID_CODE_CHALLENGE, return_path });
+
+                const response = await SELF.fetch(`http://localhost/auth/discord?${params}`);
+                const json = (await response.json()) as Record<string, any>;
+
+                expect(response.status, return_path).toBe(400);
+                expect(json.error, return_path).toBe('Invalid return_path');
+            }
+        });
+
+        it('should reject a return_path containing a backslash or control characters', async () => {
+            for (const return_path of ['/settings\\..\\x', '/a\nb', '/a' + String.fromCharCode(0) + 'b']) {
+                const params = new URLSearchParams({ code_challenge: VALID_CODE_CHALLENGE, return_path });
+
+                const response = await SELF.fetch(`http://localhost/auth/discord?${params}`);
+                const json = (await response.json()) as Record<string, any>;
+
+                expect(response.status, JSON.stringify(return_path)).toBe(400);
+                expect(json.error, JSON.stringify(return_path)).toBe('Invalid return_path');
+            }
+        });
+
+        it('should accept a return_path of exactly 256 characters (boundary)', async () => {
+            const return_path = '/' + 'a'.repeat(255);
+            const params = new URLSearchParams({ code_challenge: VALID_CODE_CHALLENGE, return_path });
+
+            const response = await SELF.fetch(`http://localhost/auth/discord?${params}`, {
+                redirect: 'manual',
+            });
+
+            expect(response.status).toBe(302);
+            const location = new URL(response.headers.get('location')!);
+            expect(decodeSignedState(location.searchParams.get('state')!).return_path).toBe(return_path);
+        });
+
+        it('should reject a state longer than 256 characters', async () => {
+            const params = new URLSearchParams({
+                code_challenge: VALID_CODE_CHALLENGE,
+                state: 'x'.repeat(257),
+            });
+
+            const response = await SELF.fetch(`http://localhost/auth/discord?${params}`);
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(400);
+            expect(json.error).toBe('Invalid state');
+        });
+
+        it('should reject a state containing control characters', async () => {
+            const params = new URLSearchParams({
+                code_challenge: VALID_CODE_CHALLENGE,
+                state: 'abc\r\ndef',
+            });
+
+            const response = await SELF.fetch(`http://localhost/auth/discord?${params}`);
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(400);
+            expect(json.error).toBe('Invalid state');
+        });
+
+        it('should accept a state of exactly 256 printable characters and the SPA 64-hex form', async () => {
+            for (const state of ['f'.repeat(64), 'x'.repeat(256)]) {
+                const params = new URLSearchParams({ code_challenge: VALID_CODE_CHALLENGE, state });
+
+                const response = await SELF.fetch(`http://localhost/auth/discord?${params}`, {
+                    redirect: 'manual',
+                });
+
+                expect(response.status).toBe(302);
+                const location = new URL(response.headers.get('location')!);
+                expect(decodeSignedState(location.searchParams.get('state')!).csrf).toBe(state);
+            }
+        });
+    });
 });

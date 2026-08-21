@@ -70,8 +70,7 @@ The `development` environment points `FRONTEND_URL` at `http://localhost:5173` (
 pnpm --filter xivdyetools-oauth-worker run deploy       # PRODUCTION (auth.xivdyetools.app)
 
 # Non-production targets must be named explicitly:
-pnpm --filter xivdyetools-oauth-worker exec wrangler deploy --env development   # xivdyetools-oauth-dev
-pnpm --filter xivdyetools-oauth-worker exec wrangler deploy --env preview       # auth-preview.xivdyetools.app
+pnpm --filter xivdyetools-oauth-worker exec wrangler deploy --env development   # xivdyetools-oauth-dev (the only other env)
 ```
 
 See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../docs/operations/DEPLOY_ENVIRONMENTS.md) for the full per-worker matrix.
@@ -89,7 +88,7 @@ See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../docs/operations/DEPLOY_ENVI
 | `WORKER_URL` | Var | This Worker's own origin — becomes the JWT `iss` claim |
 | `JWT_EXPIRY` | Var | Access token lifetime in seconds (default `3600`) |
 
-The `preview` and `development` environments carry their own KV namespace and D1 database (`xivdyetools-users-dev`), so they do not share user state with production.
+The `development` environment carries its own KV namespace and D1 database (`xivdyetools-users-dev` — its `database_id` in `wrangler.toml` is still a placeholder to be created with `wrangler d1 create`), so it does not share user state with production. There is no `preview` environment any more: it bound the production D1/KV behind a stale frontend origin and was deleted in the 2026-08-21 security audit (FINDING-029). `ENVIRONMENT` must be `development` or `production`, and every value other than `development` gets the full production gates (HTTPS-only URLs, fail-closed env validation, HSTS).
 
 ### Required Secrets
 
@@ -103,7 +102,9 @@ wrangler secret put XIVAUTH_CLIENT_SECRET   # XIVAuth OAuth2 client secret
 
 ## Security
 
-- **PKCE** on both OAuth2 flows — the authorization code alone is not sufficient to obtain a token.
+- **PKCE** on both OAuth2 flows — the authorization code alone is not sufficient to obtain a token. The GET callback echoes the worker-signed `state`; when the SPA returns it to the POST callback, the worker verifies `S256(code_verifier)` against the signed `code_challenge` **before** calling the provider, so PKCE does not depend on the IdP enforcing it (FINDING-012).
+- **Exact redirect target** — `redirect_uri` must be an allowlisted origin **and** exactly `/auth/callback` (no query string or fragment); `return_path` and the SPA `state` are bounded server-side (256 visible-ASCII characters).
+- **XIVAuth identity** — only a verified character becomes `username`/`global_name`; the XIVAuth-asserted Discord link must be a valid snowflake, an existing local account is never silently merged or deleted, and the XIVAuth handler logs no identifiers (FINDING-013).
 - **HS256 pinning** — tokens are signed and verified with HS256 only; `alg: none` and `alg: RS256` confusion attacks are rejected at verification time in `@xivdyetools/auth`.
 - **Required claims** — issued tokens always carry `exp` and `sub`; consumers reject tokens missing either.
 - **Timing-safe comparison** for all secret comparisons.
