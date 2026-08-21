@@ -16,6 +16,8 @@ Security audit remediation (docs/audits/2026-08-21-security, FINDING-002 / FINDI
 
 - **Public per-IP rate limiting prefers the native Workers Rate Limiting binding `RL_PUBLIC`** (100 / 60 s) via `CloudflareRateLimiter` (`@xivdyetools/worker-kit` 1.1.0, FINDING-003); the per-isolate memory limiter remains the fallback for dev/tests. `createPublicRateLimitMiddleware()` / `selectPublicRateLimiter()` exported for tests; headers and 429 shape unchanged.
 
+- **Preview-image upload is capped while streaming** (FINDING-004 / PAPI-3): `bodySizeLimit` now applies a 5 MB `bodyLimit` to `POST /api/v1/presets/:id/preview-image` (Content-Length first, then the actual stream) instead of exempting the route and letting the handler buffer the whole body before its own 5 MB check. Same 400 / "Image must be at most 5 MB" response, so the client contract is unchanged; the handler's check stays as a backstop.
+
 ### Deploy notes
 
 - `RL_PUBLIC` (`[[ratelimits]]`, `namespace_id` 1011 prod / 1012 dev) needs no resource creation.

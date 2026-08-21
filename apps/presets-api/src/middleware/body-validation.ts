@@ -9,6 +9,7 @@
 import { bodyLimit } from 'hono/body-limit';
 import type { MiddlewareHandler } from 'hono';
 import type { Env } from '../types.js';
+import { MAX_PREVIEW_IMAGE_BYTES } from '../services/preview-image-service.js';
 
 /** Maximum request body size in bytes (100KB) */
 const MAX_BODY_SIZE = 100 * 1024;
@@ -55,14 +56,37 @@ const enforceBodySizeLimit = bodyLimit({
 });
 
 /**
+ * FINDING-004 / PAPI-3 (2026-08-21 security audit): the upload route used to
+ * be exempt and then buffer the whole body with `arrayBuffer()` before
+ * comparing against MAX_PREVIEW_IMAGE_BYTES — the 5 MB rule only applied
+ * after up to ~100 MB had been held in memory. Hono's bodyLimit checks
+ * Content-Length first and then the actual stream, so the cap binds while
+ * bytes arrive. Same status + message as the route's own check, which stays
+ * as a backstop, so the client contract is unchanged.
+ */
+const enforcePreviewImageLimit = bodyLimit({
+  maxSize: MAX_PREVIEW_IMAGE_BYTES,
+  onError: (c) => {
+    return c.json(
+      {
+        success: false,
+        error: 'VALIDATION_ERROR',
+        message: 'Image must be at most 5 MB',
+      },
+      400
+    );
+  },
+});
+
+/**
  * SEC-004: Body size limit middleware.
  * Rejects requests with bodies larger than MAX_BODY_SIZE.
  * Uses Hono's built-in bodyLimit which checks the actual stream, not just Content-Length.
- * Exempts the preview-image upload — see isPreviewImageUpload.
+ * The preview-image upload gets its own (5 MB) limit — see isPreviewImageUpload.
  */
 export const bodySizeLimit: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
   if (isPreviewImageUpload(c.req.method, c.req.path)) {
-    return next();
+    return enforcePreviewImageLimit(c, next);
   }
   return enforceBodySizeLimit(c, next);
 };

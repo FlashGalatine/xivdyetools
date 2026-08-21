@@ -14,6 +14,7 @@ import type {
   FormatValidationResult,
   ImageFormat,
 } from './types.js';
+import { readImageDimensions, type ImageDimensions } from './dimensions.js';
 
 // ============================================================================
 // Constants
@@ -223,6 +224,77 @@ export function validateDimensions(
   return undefined;
 }
 
+/**
+ * FINDING-004 (2026-08-21 audit): the pre-decode dimension gate.
+ *
+ * Reads width × height from the container header (no decoding) and applies
+ * {@link validateDimensions}. Unreadable headers fail closed — photon would
+ * otherwise decode blind and a decompression bomb would OOM the isolate.
+ *
+ * @returns the dimensions when acceptable
+ * @throws Error with a user-facing message (contains "too large" / "too many
+ *   pixels" / "format" so discord-worker's substring contract keeps working)
+ */
+export function assertImageDimensionsFromHeader(buffer: Uint8Array): ImageDimensions {
+  const dims = readImageDimensions(buffer);
+  if (!dims) {
+    throw new Error('Unsupported image format or unreadable image dimensions');
+  }
+  const error = validateDimensions(dims.width, dims.height);
+  if (error) {
+    throw new Error(error);
+  }
+  return dims;
+}
+
+/**
+ * Read a body stream into memory, abandoning it as soon as it exceeds `maxBytes`.
+ *
+ * FINDING-004: the previous `arrayBuffer()`-then-check pattern buffered the
+ * whole body (up to the platform's ~100 MB request cap) before the 10 MB rule
+ * ran. Streaming lets the cap bind while bytes arrive.
+ *
+ * @throws Error("Image too large…") once the cap is exceeded
+ */
+export async function readBodyWithCap(
+  body: ReadableStream<Uint8Array> | null,
+  maxBytes: number = MAX_FILE_SIZE_BYTES
+): Promise<Uint8Array> {
+  if (!body) return new Uint8Array(0);
+
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel().catch(() => undefined);
+        const maxMB = (maxBytes / 1024 / 1024).toFixed(0);
+        throw new Error(`Image too large. Maximum size is ${maxMB}MB`);
+      }
+      chunks.push(value);
+    }
+  } finally {
+    try {
+      reader.releaseLock();
+    } catch {
+      // already released by cancel()
+    }
+  }
+
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
+}
+
 // ============================================================================
 // Format Validation
 // ============================================================================
@@ -320,7 +392,11 @@ export function validateImageFormat(buffer: Uint8Array): FormatValidationResult 
  * @returns Image buffer
  * @throws Error if fetch fails or times out
  */
-export async function fetchImageWithTimeout(url: string): Promise<Uint8Array> {
+export async function fetchImageWithTimeout(
+  url: string,
+  options: { maxBytes?: number } = {}
+): Promise<Uint8Array> {
+  const maxBytes = options.maxBytes ?? MAX_FILE_SIZE_BYTES;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
@@ -363,25 +439,31 @@ export async function fetchImageWithTimeout(url: string): Promise<Uint8Array> {
       throw new Error(`Failed to fetch image: HTTP ${response.status}`);
     }
 
-    // Check Content-Length if available
+    // Check Content-Length if available (cheap early reject)
     const contentLength = response.headers.get('Content-Length');
     if (contentLength) {
       const size = parseInt(contentLength, 10);
-      const sizeError = validateFileSize(size);
-      if (sizeError) {
-        throw new Error(sizeError);
+      if (Number.isFinite(size) && size > maxBytes) {
+        const sizeError = validateFileSize(size);
+        throw new Error(sizeError ?? 'Image too large');
       }
     }
 
-    const buffer = await response.arrayBuffer();
+    // FINDING-004: stream with a cap — a missing or lying Content-Length must
+    // not let the body be buffered to completion before the size rule applies.
+    // (Real responses always expose `body`; the arrayBuffer() branch only
+    // serves hand-built responses without a stream, e.g. in tests.)
+    const bytes = response.body
+      ? await readBodyWithCap(response.body, maxBytes)
+      : new Uint8Array(await response.arrayBuffer());
 
-    // Validate actual size
-    const sizeError = validateFileSize(buffer.byteLength);
+    // Validate actual size (also catches empty bodies)
+    const sizeError = validateFileSize(bytes.byteLength);
     if (sizeError) {
       throw new Error(sizeError);
     }
 
-    return new Uint8Array(buffer);
+    return bytes;
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error('Image fetch timed out', { cause: error });

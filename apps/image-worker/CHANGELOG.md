@@ -5,6 +5,16 @@ All notable changes to the XIV Dye Tools Image Worker will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-08-21
+
+Security audit remediation (docs/audits/2026-08-21-security, FINDING-004). Minor bump: stricter input handling, same service-binding contract and error envelope.
+
+### Security
+
+- **Pre-decode dimension gate.** `PhotonImage.new_from_byteslice` decodes the whole image to RGBA before any size check could run, so a few-MB decompression bomb (e.g. a 20 000 × 20 000 PNG) could OOM the 128 MB isolate from `/extractor` or a preset preview upload. New `src/dimensions.ts` reads width × height from the container header only (PNG IHDR, JPEG SOFn — APPn/DQT skipped, GIF logical screen, WebP VP8/VP8L/VP8X, BMP) and `assertImageDimensionsFromHeader()` applies the existing `MAX_IMAGE_DIMENSION` (4096) / `MAX_PIXEL_COUNT` (16 MP) rules — which were defined but never called — before `processImageForExtraction` / `processImageForThumbnail` decode. Unreadable headers fail closed. Error text keeps the "too large" / "format" substrings discord-worker matches on.
+- **`maxDimension` is validated** (integer 16–4096) at `POST /extract` (400) and again inside `processImageForExtraction`; NaN / 0 / huge values no longer reach `resize()`.
+- **Byte caps are enforced while streaming.** `fetchImageWithTimeout` (new `maxBytes` option) and `POST /thumbnail` use `readBodyWithCap()` — Content-Length pre-check, then the actual stream, abandoned as soon as the cap is exceeded — instead of buffering the whole body and checking afterwards; `/thumbnail` now has its own 10 MB cap.
+
 ## [1.0.0] - 2026-08-16
 
 The first release of `xivdyetools-image-worker`: the monorepo's **Photon WASM host**,

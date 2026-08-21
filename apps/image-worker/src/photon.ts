@@ -13,6 +13,23 @@
  */
 
 import { PhotonImage, SamplingFilter, resize, crop } from '@cf-wasm/photon';
+import { assertImageDimensionsFromHeader, MAX_IMAGE_DIMENSION } from './validators.js';
+
+/** Smallest `maxDimension` that still yields a usable palette sample. */
+export const MIN_MAX_DIMENSION = 16;
+
+/**
+ * FINDING-004 (2026-08-21 audit): `maxDimension` arrives from the request body
+ * and used to flow straight into `resize()` — NaN / 0 / huge values produced a
+ * zero-sized or full-resolution RGBA buffer. Integer 16..MAX_IMAGE_DIMENSION.
+ */
+export function assertValidMaxDimension(value: number): void {
+  if (!Number.isInteger(value) || value < MIN_MAX_DIMENSION || value > MAX_IMAGE_DIMENSION) {
+    throw new Error(
+      `Invalid maxDimension: expected an integer between ${MIN_MAX_DIMENSION} and ${MAX_IMAGE_DIMENSION}`
+    );
+  }
+}
 
 // ============================================================================
 // Types
@@ -168,6 +185,10 @@ export async function processImageForExtraction(
     samplingFilter = DEFAULT_SAMPLING_FILTER,
   } = options;
 
+  // FINDING-004: validate inputs and gate on header dimensions BEFORE decoding
+  assertValidMaxDimension(maxDimension);
+  assertImageDimensionsFromHeader(buffer);
+
   let originalImage: PhotonImage | null = null;
   let resizedImage: PhotonImage | null = null;
 
@@ -271,6 +292,9 @@ export function computeCropBox(
  * author's screenshot never reach R2.
  */
 export function processImageForThumbnail(buffer: Uint8Array): Uint8Array {
+  // FINDING-004: reject decompression bombs from the header, before decoding
+  assertImageDimensionsFromHeader(buffer);
+
   let original: PhotonImage | null = null;
   let cropped: PhotonImage | null = null;
   let resized: PhotonImage | null = null;

@@ -32,3 +32,6 @@ Cheap, repeatable crashes/CPU burn of the shared image service (affects `/extrac
 
 ## References
 - Evidence: `../evidence/review-og-image-workers.md` (IMG-1..3), `../evidence/review-presets-api.md` (PAPI-3)
+
+## Status
+**FIXED 2026-08-21** — `fix(image-worker,presets-api): pre-decode dimension gate + streamed size caps (FINDING-004)`: image-worker 1.1.0 reads width×height from the container header (`src/dimensions.ts`) and rejects >4096 px / >16 MP (or unreadable headers) before `PhotonImage.new_from_byteslice`; `maxDimension` validated (integer 16–4096) at the route and in photon.ts; `/extract` fetches and `/thumbnail` bodies are read with a streaming cap (Content-Length pre-check + `readBodyWithCap`); presets-api 2.1.0 applies a streamed 5 MB `bodyLimit` to the preview-image route instead of exempting it.

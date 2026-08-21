@@ -19,9 +19,13 @@ describe('image-worker', () => {
   });
 });
 
-vi.mock('./validators.js', () => ({
-  validateAndFetchImage: vi.fn(),
-}));
+// Keep the real helpers (readBodyWithCap, validateFileSize, limits) and mock
+// only the network-touching entry point — FINDING-004 wired the helpers into
+// the routes, so a bare mock would leave them undefined.
+vi.mock('./validators.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./validators.js')>();
+  return { ...actual, validateAndFetchImage: vi.fn() };
+});
 vi.mock('./photon.js', () => ({
   processImageForExtraction: vi.fn(),
   processImageForThumbnail: vi.fn(),

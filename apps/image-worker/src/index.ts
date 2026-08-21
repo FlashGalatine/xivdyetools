@@ -14,8 +14,25 @@
 import { Hono } from 'hono';
 import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-kit';
 import type { Env } from './types.js';
-import { validateAndFetchImage } from './validators.js';
+import {
+  validateAndFetchImage,
+  validateFileSize,
+  readBodyWithCap,
+  MAX_FILE_SIZE_BYTES,
+  MAX_IMAGE_DIMENSION,
+} from './validators.js';
 import { processImageForExtraction, processImageForThumbnail } from './photon.js';
+
+/** FINDING-004: `maxDimension` must be an integer in [16, MAX_IMAGE_DIMENSION]. */
+const MIN_MAX_DIMENSION = 16;
+function isValidMaxDimension(value: unknown): value is number {
+  return (
+    typeof value === 'number' &&
+    Number.isInteger(value) &&
+    value >= MIN_MAX_DIMENSION &&
+    value <= MAX_IMAGE_DIMENSION
+  );
+}
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -51,6 +68,16 @@ app.post('/extract', async (c) => {
     return c.json({ error: 'No image URL provided' }, 400);
   }
 
+  // FINDING-004: reject a malformed maxDimension before any fetch/decode work
+  if (body.maxDimension !== undefined && !isValidMaxDimension(body.maxDimension)) {
+    return c.json(
+      {
+        error: `Invalid maxDimension: expected an integer between ${MIN_MAX_DIMENSION} and ${MAX_IMAGE_DIMENSION}`,
+      },
+      400
+    );
+  }
+
   try {
     const { buffer } = await validateAndFetchImage(body.url);
     const processed = await processImageForExtraction(
@@ -82,7 +109,22 @@ app.post('/extract', async (c) => {
  * the file, so there is nothing to fetch and no SSRF surface.
  */
 app.post('/thumbnail', async (c) => {
-  const buffer = new Uint8Array(await c.req.arrayBuffer());
+  // FINDING-004: enforce the byte cap from Content-Length before buffering,
+  // then while streaming — never hold an oversized body in memory.
+  const declared = c.req.header('Content-Length');
+  if (declared) {
+    const size = parseInt(declared, 10);
+    if (Number.isFinite(size) && size > MAX_FILE_SIZE_BYTES) {
+      return c.json({ error: validateFileSize(size) ?? 'Image too large' }, 400);
+    }
+  }
+
+  let buffer: Uint8Array;
+  try {
+    buffer = await readBodyWithCap(c.req.raw.body, MAX_FILE_SIZE_BYTES);
+  } catch (error) {
+    return c.json({ error: error instanceof Error ? error.message : 'Image too large' }, 400);
+  }
 
   if (buffer.byteLength === 0) {
     return c.json({ error: 'No image data provided' }, 400);

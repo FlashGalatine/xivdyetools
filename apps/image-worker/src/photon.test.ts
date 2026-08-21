@@ -8,12 +8,25 @@ const createMockPhotonImage = (width = 100, height = 100) => ({
     get_width: () => width,
     get_height: () => height,
     get_raw_pixels: () => new Uint8Array([255, 0, 0, 255, 0, 255, 0, 255]),
-    get_bytes: () => new Uint8Array([0x89, 0x50, 0x4E, 0x47]),
+    get_bytes: () => pngHeader(100, 100),
     free: vi.fn(),
 });
 
 const mockPhotonImage = createMockPhotonImage();
 const mockResizedImage = createMockPhotonImage(50, 50);
+
+/**
+ * FINDING-004: the processing entry points now gate on the container header
+ * before decoding, so test buffers must carry a readable PNG IHDR.
+ */
+function pngHeader(width: number, height: number): Uint8Array {
+    const u32 = (n: number): number[] => [(n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff];
+    return new Uint8Array([
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+        ...u32(13), 0x49, 0x48, 0x44, 0x52, ...u32(width), ...u32(height),
+        8, 6, 0, 0, 0, 0, 0, 0, 0,
+    ]);
+}
 
 vi.mock('@cf-wasm/photon', () => ({
     PhotonImage: {
@@ -54,7 +67,7 @@ describe('photon image processing', () => {
 
     describe('loadImage', () => {
         it('loads image from buffer', () => {
-            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const buffer = pngHeader(100, 100);
             const result = loadImage(buffer);
 
             expect(PhotonImage.new_from_byteslice).toHaveBeenCalledWith(buffer);
@@ -170,7 +183,7 @@ describe('photon image processing', () => {
 
     describe('processImageForExtraction', () => {
         it('processes image and returns dimensions and pixels', async () => {
-            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const buffer = pngHeader(100, 100);
 
             const result = await processImageForExtraction(buffer);
 
@@ -181,7 +194,7 @@ describe('photon image processing', () => {
         });
 
         it('uses custom max dimension', async () => {
-            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const buffer = pngHeader(100, 100);
 
             await processImageForExtraction(buffer, { maxDimension: 128 });
 
@@ -190,7 +203,7 @@ describe('photon image processing', () => {
         });
 
         it('frees WASM memory after processing', async () => {
-            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const buffer = pngHeader(100, 100);
 
             await processImageForExtraction(buffer);
 
@@ -203,7 +216,7 @@ describe('photon image processing', () => {
                 .mockReturnValueOnce(mockPhotonImage as unknown as ReturnType<typeof PhotonImage.new_from_byteslice>)
                 .mockImplementationOnce(() => { throw new Error('Resize failed'); });
 
-            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const buffer = pngHeader(100, 100);
 
             try {
                 await processImageForExtraction(buffer);
@@ -218,7 +231,7 @@ describe('photon image processing', () => {
 
     describe('getImageDimensions', () => {
         it('returns width and height', () => {
-            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const buffer = pngHeader(100, 100);
 
             const result = getImageDimensions(buffer);
 
@@ -226,7 +239,7 @@ describe('photon image processing', () => {
         });
 
         it('frees image after getting dimensions', () => {
-            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const buffer = pngHeader(100, 100);
 
             getImageDimensions(buffer);
 
@@ -288,7 +301,7 @@ describe('photon image processing', () => {
 
     describe('processImageForThumbnail', () => {
         it('returns WebP bytes', () => {
-            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const buffer = pngHeader(100, 100);
             const webpBytes = new Uint8Array([0x52, 0x49, 0x46, 0x46]); // RIFF
 
             const mockWebpImage = {
@@ -303,7 +316,7 @@ describe('photon image processing', () => {
         });
 
         it('frees WASM memory after processing', () => {
-            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const buffer = pngHeader(100, 100);
 
             // Create distinct mocks for each stage of processing
             const mockCroppedImage = createMockPhotonImage(200, 150);
@@ -324,7 +337,7 @@ describe('photon image processing', () => {
         });
 
         it('frees memory even on crop error', () => {
-            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const buffer = pngHeader(100, 100);
             vi.mocked(crop).mockImplementationOnce(() => {
                 throw new Error('Crop failed');
             });
@@ -336,7 +349,7 @@ describe('photon image processing', () => {
         });
 
         it('frees memory even on resize error', () => {
-            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const buffer = pngHeader(100, 100);
 
             // Create a cropped image mock that will be freed on error
             const mockCroppedImage = createMockPhotonImage(200, 150);
@@ -353,7 +366,7 @@ describe('photon image processing', () => {
         });
 
         it('calls crop with correct arguments', () => {
-            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const buffer = pngHeader(100, 100);
             const mockWebpImage = {
                 ...createMockPhotonImage(),
                 get_bytes_webp: vi.fn(() => new Uint8Array([0x52])),
@@ -373,7 +386,7 @@ describe('photon image processing', () => {
         });
 
         it('calls resize with thumbnail dimensions and Lanczos3', () => {
-            const buffer = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+            const buffer = pngHeader(100, 100);
             const mockWebpImage = {
                 ...createMockPhotonImage(),
                 get_bytes_webp: vi.fn(() => new Uint8Array([0x52])),
