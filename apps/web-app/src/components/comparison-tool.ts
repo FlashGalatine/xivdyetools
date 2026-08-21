@@ -47,6 +47,7 @@ import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
 import { openExportSheet } from '@components/export-sheet';
 import { ShareService } from '@services/share-service';
+import { formatGil } from '@shared/format';
 
 // ============================================================================
 // Types and Constants
@@ -1634,7 +1635,7 @@ export class ComparisonTool extends BaseComponent {
         costLine = t('costSame');
       } else {
         const cheap = a.cost < b.cost ? nameA : nameB;
-        const saving = `${Math.abs(a.cost - b.cost)} gil`;
+        const saving = formatGil(Math.abs(a.cost - b.cost));
         costLine = LanguageService.tInterpolate('comparison.costDiff', { cheap, saving });
       }
     } else if (aVendor !== bVendor) {

@@ -303,6 +303,8 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
   // was removed as dead code, 2026-08-16), so no unsubscribe handle is kept.
   LanguageService.subscribe(() => {
     logger.info('[V4 Layout] Language changed, tool may need refresh');
+    // Route titles are locale keys, so the tab title is stale until re-read.
+    RouterService.refreshDocumentTitle();
   });
 
   // Wait for V4LayoutShell to complete its initial Lit render
@@ -446,6 +448,16 @@ function getContentContainer(): HTMLElement | null {
 }
 
 /**
+ * Localized display name for a tool, for user-facing copy that names it.
+ * Falls back to the raw id if the route table has no entry (unreachable for a
+ * real `ToolId`, but `loadToolContent` must not throw on one).
+ */
+function toolDisplayName(toolId: ToolId): string {
+  const route = RouterService.getRouteForTool(toolId);
+  return route ? LanguageService.t(route.titleKey) : toolId;
+}
+
+/**
  * Load tool content into the V4 layout content area
  */
 async function loadToolContent(toolId: ToolId): Promise<void> {
@@ -482,7 +494,10 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
     <div class="flex items-center justify-center h-64">
       <div class="text-center">
         <div class="inline-block w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mb-3" style="border-color: var(--theme-primary); border-top-color: transparent;"></div>
-        <p style="color: var(--theme-text-muted);">Loading ${toolId}...</p>
+        <p style="color: var(--theme-text-muted);">${LanguageService.tInterpolate(
+          'common.loadingTool',
+          { tool: toolDisplayName(toolId) }
+        )}</p>
       </div>
     </div>
   `;
@@ -632,8 +647,8 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
         <svg style="width: 150px; height: 150px; opacity: 0.25; margin-bottom: 1.5rem; color: var(--theme-text);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
-        <p style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--theme-text);">Failed to load tool</p>
-        <p style="font-size: 1rem; opacity: 0.7; color: var(--theme-text);">Please try again or refresh the page</p>
+        <p style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--theme-text);">${LanguageService.t('errors.toolLoadFailed')}</p>
+        <p style="font-size: 1rem; opacity: 0.7; color: var(--theme-text);">${LanguageService.t('errors.tryAgainOrRefresh')}</p>
       </div>
     `;
   }

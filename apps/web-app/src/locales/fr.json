@@ -122,7 +122,8 @@
     "alternates": "AUSSI",
     "custom": "Personnalisé",
     "customColorName": "Personnalisé ({hex})",
-    "gilAmount": "{n} {unit}"
+    "gilAmount": "{n} {unit}",
+    "loadingTool": "Chargement de {tool}…"
   },
   "config": {
     "harmonyType": "Type d'harmonie",
@@ -612,8 +613,6 @@
     "priciestNow": "LES PLUS CHERS · {world}",
     "priciestOff": "MARCHÉ UNIQUEMENT · PAS DE PRIX HORS LIGNE",
     "vendorSaves": "LE MARCHAND ÉCONOMISE {diff} vs MARCHÉ",
-    "orWord": "ou",
-    "boardWord": "marché",
     "noVendorMarketOnly": "pas de marchand · marché seulement",
     "matchLine": "Marge de correspondance",
     "matchLineDesc": "Jusqu'où un substitut peut dériver avant de ne plus compter.",
@@ -622,7 +621,9 @@
     "handoffCompare": "Comparer",
     "copyItem": "Copier le nom de l'objet",
     "saveSwap": "Enregistrer l'échange",
-    "swapSaved": "Échange enregistré sur cet appareil."
+    "swapSaved": "Échange enregistré sur cet appareil.",
+    "boardPrice": "marché {price}",
+    "orLocalCost": "ou {cost}"
   },
   "export": {
     "title": "Exporter la palette",
@@ -658,7 +659,9 @@
     "resetComponent": "Réinitialiser le composant",
     "retryAttempts": "Tentatives: {count}/{max}",
     "requestTimeout": "Délai d'attente dépassé. Veuillez réessayer.",
-    "networkError": "Erreur réseau. Veuillez réessayer."
+    "networkError": "Erreur réseau. Veuillez réessayer.",
+    "toolLoadFailed": "Échec du chargement de l'outil",
+    "tryAgainOrRefresh": "Veuillez réessayer ou actualiser la page."
   },
   "success": {
     "copiedToClipboard": "Copié dans le presse-papiers !"

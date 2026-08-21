@@ -122,7 +122,8 @@
     "alternates": "备选",
     "custom": "自定义",
     "customColorName": "自定义（{hex}）",
-    "gilAmount": "{n} {unit}"
+    "gilAmount": "{n} {unit}",
+    "loadingTool": "正在加载{tool}…"
   },
   "resultCard": {
     "inspectDyeIn": "在以下工具中查看...",
@@ -637,8 +638,6 @@
     "priciestNow": "当前最贵 · {world}",
     "priciestOff": "仅限市场 · 离线无价格",
     "vendorSaves": "商店比市场省 {diff}",
-    "orWord": "或",
-    "boardWord": "市场",
     "noVendorMarketOnly": "无商店 · 仅限市场",
     "matchLine": "匹配线",
     "matchLineDesc": "替代品可偏移多远仍算数。",
@@ -647,7 +646,9 @@
     "handoffCompare": "比较",
     "copyItem": "复制物品名称",
     "saveSwap": "保存替换",
-    "swapSaved": "替换已保存到此设备。"
+    "swapSaved": "替换已保存到此设备。",
+    "boardPrice": "市场 {price}",
+    "orLocalCost": "或 {cost}"
   },
   "export": {
     "title": "导出调色板",
@@ -683,7 +684,9 @@
     "resetComponent": "重置组件",
     "retryAttempts": "重试次数: {count}/{max}",
     "requestTimeout": "请求超时。请重试。",
-    "networkError": "网络错误。请重试。"
+    "networkError": "网络错误。请重试。",
+    "toolLoadFailed": "工具加载失败",
+    "tryAgainOrRefresh": "请重试或刷新页面。"
   },
   "success": {
     "copiedToClipboard": "已复制到剪贴板！"

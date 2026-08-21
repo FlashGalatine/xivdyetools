@@ -122,7 +122,8 @@
     "alternates": "AUCH",
     "custom": "Benutzerdefiniert",
     "customColorName": "Benutzerdefiniert ({hex})",
-    "gilAmount": "{n} {unit}"
+    "gilAmount": "{n} {unit}",
+    "loadingTool": "{tool} wird geladen…"
   },
   "config": {
     "harmonyType": "Harmonie-Typ",
@@ -612,8 +613,6 @@
     "priciestNow": "AKTUELL AM TEUERSTEN · {world}",
     "priciestOff": "NUR ÜBER DEN MARKT · OFFLINE OHNE PREISE",
     "vendorSaves": "HÄNDLER SPART {diff} vs MARKT",
-    "orWord": "oder",
-    "boardWord": "Markt",
     "noVendorMarketOnly": "kein Händler · nur Markt",
     "matchLine": "Trefferschwelle",
     "matchLineDesc": "Wie weit ein Ersatz abweichen darf, bevor er nicht mehr zählt.",
@@ -622,7 +621,9 @@
     "handoffCompare": "Vergleichen",
     "copyItem": "Itemnamen kopieren",
     "saveSwap": "Tausch speichern",
-    "swapSaved": "Tausch auf diesem Gerät gespeichert."
+    "swapSaved": "Tausch auf diesem Gerät gespeichert.",
+    "boardPrice": "Markt {price}",
+    "orLocalCost": "oder {cost}"
   },
   "export": {
     "title": "Palette exportieren",
@@ -658,7 +659,9 @@
     "resetComponent": "Komponente zurücksetzen",
     "retryAttempts": "Wiederholungsversuche: {count}/{max}",
     "requestTimeout": "Zeitüberschreitung der Anfrage. Bitte versuchen Sie es erneut.",
-    "networkError": "Netzwerkfehler. Bitte versuchen Sie es erneut."
+    "networkError": "Netzwerkfehler. Bitte versuchen Sie es erneut.",
+    "toolLoadFailed": "Werkzeug konnte nicht geladen werden",
+    "tryAgainOrRefresh": "Bitte versuchen Sie es erneut oder laden Sie die Seite neu."
   },
   "success": {
     "copiedToClipboard": "In Zwischenablage kopiert!"

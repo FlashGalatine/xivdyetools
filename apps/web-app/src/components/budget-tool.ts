@@ -49,6 +49,7 @@ import { ICON_TOOL_BUDGET } from '@shared/tool-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import { makeCustomDye } from '@shared/custom-dye';
+import { formatGil, formatNumber } from '@shared/format';
 import type { Dye, DyeId, PriceData } from '@xivdyetools/types';
 import { GLYPH_ACCENT_LIGHT, GLYPH_ACCENT_DARK } from '@xivdyetools/svg';
 import type { BudgetConfig, MatchingMethod } from '@shared/tool-config-types';
@@ -779,7 +780,7 @@ export class BudgetTool extends BaseComponent {
     const price = this.priceOf(target);
     let priceText: string;
     if (price.board != null) {
-      priceText = `~${price.board.toLocaleString()} gil`;
+      priceText = `~${formatGil(price.board)}`;
     } else if (price.localCost != null) {
       priceText = price.localCost;
     } else if (this.isLoading) {
@@ -1514,20 +1515,22 @@ export class BudgetTool extends BaseComponent {
           flagColor = '#F4BF4F';
         }
       } else if (groupGil === gilMax) {
-        priceMain = `${groupGil.toLocaleString()} gil`;
+        priceMain = formatGil(groupGil);
       } else {
-        priceMain = `${groupGil.toLocaleString()} – ${gilMax!.toLocaleString()} gil`;
+        priceMain = `${formatNumber(groupGil)} – ${formatGil(gilMax!)}`;
       }
       priceSub = LanguageService.t('budget.noVendorMarketOnly');
     } else {
       const tierMeta = CONSOLIDATED_DYES[tier];
-      const localCost = `${tierMeta.price.toLocaleString()} ${tierMeta.currency}`;
+      const localCost = `${formatNumber(tierMeta.price)} ${LanguageService.getCurrency(tierMeta.currency)}`;
       const boardPrice = list.length > 0 ? list[0].price.board : null;
       if (tier === 'A') {
-        priceMain = `${tierMeta.price.toLocaleString()} gil`;
+        priceMain = formatGil(tierMeta.price);
         priceSub =
           boardPrice != null
-            ? `${LanguageService.t('budget.boardWord')} ${boardPrice.toLocaleString()}`
+            ? LanguageService.tInterpolate('budget.boardPrice', {
+                price: formatNumber(boardPrice),
+              })
             : localCost;
         if (boardPrice != null && boardPrice > tierMeta.price) {
           flag = LanguageService.tInterpolate('budget.vendorSaves', {
@@ -1537,8 +1540,8 @@ export class BudgetTool extends BaseComponent {
           flagColor = goodGreen;
         }
       } else if (boardPrice != null) {
-        priceMain = `${boardPrice.toLocaleString()} gil`;
-        priceSub = `${LanguageService.t('budget.orWord')} ${localCost}`;
+        priceMain = formatGil(boardPrice);
+        priceSub = LanguageService.tInterpolate('budget.orLocalCost', { cost: localCost });
       } else {
         priceMain = localCost;
         priceSub = '';

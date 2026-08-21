@@ -122,7 +122,8 @@
     "alternates": "ALSO",
     "custom": "Custom",
     "customColorName": "Custom ({hex})",
-    "gilAmount": "{n} {unit}"
+    "gilAmount": "{n} {unit}",
+    "loadingTool": "Loading {tool}…"
   },
   "config": {
     "harmonyType": "Harmony Type",
@@ -612,8 +613,6 @@
     "priciestNow": "PRICIEST ON {world} NOW",
     "priciestOff": "MARKET-ONLY DYES · NO PRICES OFFLINE",
     "vendorSaves": "VENDOR SAVES {diff} vs BOARD",
-    "orWord": "or",
-    "boardWord": "board",
     "noVendorMarketOnly": "no vendor · market only",
     "matchLine": "Match line",
     "matchLineDesc": "How far a substitute may drift before it stops counting.",
@@ -622,7 +621,9 @@
     "handoffCompare": "Compare",
     "copyItem": "Copy item name",
     "saveSwap": "Save swap",
-    "swapSaved": "Swap saved to this device."
+    "swapSaved": "Swap saved to this device.",
+    "boardPrice": "board {price}",
+    "orLocalCost": "or {cost}"
   },
   "export": {
     "title": "Export Palette",
@@ -658,7 +659,9 @@
     "resetComponent": "Reset Component",
     "retryAttempts": "Retry attempts: {count}/{max}",
     "requestTimeout": "Request timed out. Please try again.",
-    "networkError": "Network error. Please try again."
+    "networkError": "Network error. Please try again.",
+    "toolLoadFailed": "Failed to load tool",
+    "tryAgainOrRefresh": "Please try again or refresh the page"
   },
   "success": {
     "copiedToClipboard": "Copied to clipboard!"

@@ -26,6 +26,7 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { BaseLitComponent } from './base-lit-component';
 import { ICON_CONTEXT_MENU } from '@shared/ui-icons';
 import { customDyeLabel, isCustomDye } from '@shared/custom-dye';
+import { formatGil, formatNumber } from '@shared/format';
 import type { Dye, DyeWithDistance } from '@xivdyetools/types';
 import type { MatchingMethod } from '@shared/tool-config-types';
 import {
@@ -1004,14 +1005,14 @@ export class ResultCard extends BaseLitComponent {
   }
 
   /**
-   * Format price with commas and "G" suffix.
+   * Format a market price as a localized gil amount.
    * If an error code is provided, displays the error code instead.
    */
   private formatPrice(price?: number, errorCode?: string): string {
     // If there's an error code, display it instead of the price
     if (errorCode) return errorCode;
     if (price === undefined || price === null) return '—';
-    return `${price.toLocaleString()} G`;
+    return formatGil(price);
   }
 
   /**
@@ -1020,7 +1021,7 @@ export class ResultCard extends BaseLitComponent {
   private formatVendorCost(cost?: number, currency?: string | null): string {
     if (cost === undefined || cost === null || !currency) return '—';
     const label = LanguageService.getCurrency(currency);
-    return `${cost.toLocaleString()} ${label}`;
+    return `${formatNumber(cost)} ${label}`;
   }
 
   /**

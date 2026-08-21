@@ -66,6 +66,7 @@ import type { ShareButton } from '@components/v4/share-button';
 import { openExportSheet } from '@components/export-sheet';
 import type { ExportEntry } from '@shared/palette-export';
 import { ShareService } from '@services/share-service';
+import { formatGil } from '@shared/format';
 
 // ============================================================================
 // Types and Constants
@@ -2168,7 +2169,7 @@ export class MixerTool extends BaseComponent {
     if (!this.showPrices) return null;
     const price = this.priceData.get(dye.itemID);
     if (!price?.currentMinPrice) return null;
-    return `${price.currentMinPrice.toLocaleString()} gil`;
+    return formatGil(price.currentMinPrice);
   }
 
   /**

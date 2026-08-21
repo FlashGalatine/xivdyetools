@@ -122,7 +122,8 @@
     "alternates": "대안",
     "custom": "사용자 지정",
     "customColorName": "사용자 지정 ({hex})",
-    "gilAmount": "{n} {unit}"
+    "gilAmount": "{n} {unit}",
+    "loadingTool": "{tool} 로딩 중…"
   },
   "config": {
     "harmonyType": "조화 유형",
@@ -612,8 +613,6 @@
     "priciestNow": "현재 최고가 · {world}",
     "priciestOff": "시장 전용 · 오프라인 가격 없음",
     "vendorSaves": "상인 구매 시 {diff} 절약",
-    "orWord": "또는",
-    "boardWord": "시장",
     "noVendorMarketOnly": "상인 없음 · 시장 전용",
     "matchLine": "일치선",
     "matchLineDesc": "대체품으로 인정하는 색 오차의 한계.",
@@ -622,7 +621,9 @@
     "handoffCompare": "비교",
     "copyItem": "아이템 이름 복사",
     "saveSwap": "교체 저장",
-    "swapSaved": "교체를 이 기기에 저장했습니다."
+    "swapSaved": "교체를 이 기기에 저장했습니다.",
+    "boardPrice": "시장 {price}",
+    "orLocalCost": "또는 {cost}"
   },
   "export": {
     "title": "팔레트 내보내기",
@@ -658,7 +659,9 @@
     "resetComponent": "컴포넌트 초기화",
     "retryAttempts": "재시도 횟수: {count}/{max}",
     "requestTimeout": "요청 시간이 초과되었습니다. 다시 시도해 주세요.",
-    "networkError": "네트워크 오류가 발생했습니다. 다시 시도해 주세요."
+    "networkError": "네트워크 오류가 발생했습니다. 다시 시도해 주세요.",
+    "toolLoadFailed": "도구를 불러오지 못했습니다",
+    "tryAgainOrRefresh": "다시 시도하거나 페이지를 새로고침해 주세요."
   },
   "success": {
     "copiedToClipboard": "클립보드에 복사되었습니다!"
