@@ -16,3 +16,7 @@ CWE-400 · CWE-20
 
 ## References
 - Evidence: `../evidence/review-discord-worker.md` (DW-4, DW-7, DW-9)
+
+## Status
+**FIXED 2026-08-21** (discord-worker 5.0.0)
+- discord-worker 5.0.0: `/swatch` attachment fetch — HTTPS + host allowlist (`cdn.discordapp.com`, `media.discordapp.net`) before deferring, `redirect:'error'`, 10 s timeout, Content-Length pre-check + streamed 1 MiB cap; `/stats` no longer exempt from the per-user rate limiter; `/budget` `world:` override goes through `validateWorld()` (canonical name, `worldNotFound`). Not done (INFO, out of brief): `BOT_VERSION` constant, `/preferences set world:` validation, `copy.ts` custom_id echo.

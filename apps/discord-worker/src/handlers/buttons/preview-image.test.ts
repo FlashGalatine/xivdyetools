@@ -85,6 +85,27 @@ describe('preview-image button handlers', () => {
       expect(presetApi.setPreviewImageStatus).not.toHaveBeenCalled();
     });
 
+    // FINDING-020 (2026-08-21 security audit): the preset id travels in the
+    // custom_id and ends up in a presets-api URL path — anything that is not
+    // a UUID is refused before any API call, even for a moderator.
+    it('refuses a custom_id whose preset id is not a UUID (path-steering guard)', async () => {
+      vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      const interaction = {
+        id: 'int-1',
+        token: 'token-1',
+        application_id: 'app-123',
+        data: { custom_id: 'previewimg_approve_../../presets/mine' },
+        member: { user: { id: 'mod-1', username: 'Moderator' } },
+      };
+
+      const response = await handlePreviewImageButton(interaction, env, ctx);
+      const json = (await response.json()) as any;
+
+      expect(json.data.content).toBe('Invalid button interaction.');
+      expect(json.data.flags).toBe(64);
+      expect(presetApi.setPreviewImageStatus).not.toHaveBeenCalled();
+    });
+
     it('a moderator clicking approve calls presets-api with action approve and the correct preset id', async () => {
       vi.mocked(presetApi.isModerator).mockReturnValue(true);
       vi.mocked(presetApi.setPreviewImageStatus).mockResolvedValue({

@@ -18,5 +18,6 @@ Point all three at the canonical `https://xivdyetools.app` / `https://developers
 - Evidence: `../evidence/review-infra-stoat.md` (STOAT-1), `../evidence/review-discord-worker.md` (DW-8), `../evidence/review-moderation-worker.md` (MOD-7)
 
 ## Status
-**IN PROGRESS 2026-08-21** — per-app adoption below (discord-worker `/stats` pending).
+**FIXED 2026-08-21** — moderation-worker 1.5.0, stoat-worker 0.2.2, discord-worker 5.0.0 (`git grep xivdyetools\.com` is clean outside `docs/audits` + `docs/historical`).
 - moderation-worker 1.5.0 (MOD-7): `PRESETS_WEB_URL` → `https://xivdyetools.app`; stoat-worker 0.2.2 (STOAT-1): about card → `.app` hosts.
+- discord-worker 5.0.0: `/stats` links from core `PRODUCT_LINKS` / `XIVDYETOOLS_DOCS_URL` / `SOCIAL_LINKS` — `xivdyetools.com`, `docs.xivdyetools.com` and `discord.gg/xivdyetools` are gone from the app.

@@ -15,3 +15,7 @@ Either stop writing guild IDs to Analytics Engine (hash them, or record only a D
 
 ## References
 - Evidence: `../evidence/review-discord-worker.md` (DW-6)
+
+## Status
+**FIXED 2026-08-21** (discord-worker 5.0.0)
+- discord-worker 5.0.0: Analytics Engine blob3 is `'guild' | 'dm'` (raw guild id never written); `PRIVACY_POLICY.md` gained a Usage Analytics section (AE events, 30-day KV counters, 30-day `usertrack:{date}:{userId}` keys), a Guild ID row and use / storage / retention tables. Open: confirm the Analytics Engine retention figure (written as 3 months).

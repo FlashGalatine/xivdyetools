@@ -22,7 +22,7 @@ import {
   num,
   type BudgetLedgerGroup,
 } from '@xivdyetools/svg';
-import { getLocalizedAcquisition } from '@xivdyetools/bot-logic';
+import { getLocalizedAcquisition, sanitizeEmbedText } from '@xivdyetools/bot-logic';
 import { BAND_METHOD_DP, CONSOLIDATED_DYES, classifyBandTier, type MatchingMethod } from '@xivdyetools/core';
 import { createUserTranslatorWithPrefs, type Translator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
@@ -110,13 +110,40 @@ export async function handleBudgetCommand(
 }
 
 // ============================================================================
+// World resolution
+// ============================================================================
+
+/**
+ * Resolve the world a ledger should be priced on.
+ *
+ * FINDING-033 (2026-08-21 security audit): a `world:` override used to be
+ * forwarded verbatim (`worldOverride ?? prefs.world`) — only `set_world`
+ * validated. Now every override goes through `validateWorld()` (cached for
+ * an hour) and the CANONICAL name is what reaches the Universalis proxy and
+ * the price-cache key.
+ *
+ * @returns the world to use; `undefined` when nothing is set (no override,
+ *          no preference); `null` when the override names an unknown world
+ */
+async function resolveWorld(
+  env: Env,
+  worldOverride: string | undefined,
+  prefs: UserPreferences,
+  logger?: ExtendedLogger
+): Promise<string | null | undefined> {
+  if (worldOverride) {
+    return validateWorld(env, worldOverride, logger);
+  }
+  return prefs.world || undefined;
+}
+
+// ============================================================================
 // Find Subcommand
 // ============================================================================
 
 /**
  * Handles /budget find <target_dye>
  */
-// eslint-disable-next-line @typescript-eslint/require-await -- handler interface requires async
 async function handleFindSubcommand(
   interaction: DiscordInteraction,
   env: Env,
@@ -160,11 +187,22 @@ async function handleFindSubcommand(
     : getDyeByName(targetDyeInput, t.getLocale());
 
   if (!targetDye || targetDye.itemID <= 0) {
-    return ephemeralResponse(t.t('budget.errors.dyeNotFound', { name: targetDyeInput }));
+    // FINDING-019: typed option value echoed back — sanitise it
+    return ephemeralResponse(
+      t.t('budget.errors.dyeNotFound', { name: sanitizeEmbedText(targetDyeInput, 100) })
+    );
   }
 
-  // Get world preference from unified preferences system
-  const world = worldOverride ?? prefs.world;
+  // World: explicit option > stored preference. FINDING-033 (2026-08-21
+  // audit): the override is validated like `set_world` — only a known world
+  // or data centre (canonical name) reaches the Universalis proxy and the
+  // shared price-cache key.
+  const world = await resolveWorld(env, worldOverride, prefs, logger);
+  if (world === null) {
+    return ephemeralResponse(
+      t.t('budget.errors.worldNotFound', { world: sanitizeEmbedText(worldOverride ?? '', 64) })
+    );
+  }
   if (!world) {
     return ephemeralResponse(
       `**${t.t('budget.noWorldSet.title')}**\n\n${t.t('budget.noWorldSet.description')}`
@@ -385,7 +423,9 @@ async function handleSetWorldSubcommand(
   const validatedWorld = await validateWorld(env, worldInput, logger);
 
   if (!validatedWorld) {
-    return ephemeralResponse(t.t('budget.errors.worldNotFound', { world: worldInput }));
+    return ephemeralResponse(
+      t.t('budget.errors.worldNotFound', { world: sanitizeEmbedText(worldInput, 64) })
+    );
   }
 
   // Save preference via unified preferences system
@@ -405,7 +445,6 @@ async function handleSetWorldSubcommand(
 /**
  * Handles /budget quick <preset>
  */
-// eslint-disable-next-line @typescript-eslint/require-await -- handler interface requires async
 async function handleQuickSubcommand(
   interaction: DiscordInteraction,
   env: Env,
@@ -425,10 +464,18 @@ async function handleQuickSubcommand(
   // Get preset
   const preset = getQuickPickById(presetId);
   if (!preset) {
-    return ephemeralResponse(t.t('budget.errors.presetNotFound', { id: presetId }));
+    return ephemeralResponse(
+      t.t('budget.errors.presetNotFound', { id: sanitizeEmbedText(presetId, 64) })
+    );
   }
 
-  const world = worldOverride ?? prefs.world;
+  // FINDING-033: same world validation as find / set_world
+  const world = await resolveWorld(env, worldOverride, prefs, logger);
+  if (world === null) {
+    return ephemeralResponse(
+      t.t('budget.errors.worldNotFound', { world: sanitizeEmbedText(worldOverride ?? '', 64) })
+    );
+  }
   if (!world) {
     return ephemeralResponse(t.t('budget.noWorldSet.description'));
   }

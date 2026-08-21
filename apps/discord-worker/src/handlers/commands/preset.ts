@@ -17,7 +17,7 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
-import { dyeService, searchDyesByName } from '@xivdyetools/bot-logic';
+import { dyeService, searchDyesByName, sanitizeEmbedText } from '@xivdyetools/bot-logic';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import {
   deferredResponse,
@@ -45,7 +45,9 @@ import {
   type PresetCategory,
   STATUS_DISPLAY,
   PresetAPIError,
+  isValidPresetId,
 } from '../../types/preset.js';
+import { sanitizePresetName, sanitizePresetDescription } from '../../utils/sanitize.js';
 import * as presetApi from '../../services/preset-api.js';
 import {
   getPresetFavorites,
@@ -231,10 +233,13 @@ async function processListCommand(
       ? `${categoryDisplay.icon} ${categoryDisplay.name}`
       : t.t('preset.title');
 
+    // FINDING-019: stored names / authors are user content — escape before embedding
     const presetLines = response.presets.map((preset, index) => {
       const catIcon = CATEGORY_DISPLAY[preset.category_id]?.icon || '🎨';
-      const author = preset.author_name ? ` ${t.t('preset.byAuthor', { author: preset.author_name })}` : '';
-      return `**${index + 1}.** ${catIcon} ${preset.name} (${preset.vote_count}★)${author}`;
+      const author = preset.author_name
+        ? ` ${t.t('preset.byAuthor', { author: sanitizePresetName(preset.author_name) })}`
+        : '';
+      return `**${index + 1}.** ${catIcon} ${sanitizePresetName(preset.name)} (${preset.vote_count}★)${author}`;
     });
 
     const description = [
@@ -308,8 +313,9 @@ async function processShowCommand(
   await initializeLocale(locale);
 
   try {
-    // Get preset by ID
-    const preset = await presetApi.getPreset(env, presetId);
+    // FINDING-020: a UUID is fetched by ID; anything else is a typed NAME and
+    // goes through the search query — never into the URL path
+    const preset = await lookupPreset(env, presetId);
 
     if (!preset) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
@@ -508,7 +514,8 @@ async function processSubmitCommand(
             title: `⚠️ ${t.t('preset.duplicateExists')}`,
             description: [
               t.t('preset.duplicateIntro'),
-              `**"${response.duplicate.name}"** ${t.t('preset.byAuthor', { author: response.duplicate.author_name || t.t('preset.official') })}`,
+              // FINDING-019: the duplicate's stored name/author are user content
+              `**"${sanitizePresetName(response.duplicate.name)}"** ${t.t('preset.byAuthor', { author: response.duplicate.author_name ? sanitizePresetName(response.duplicate.author_name) : t.t('preset.official') })}`,
               `(${response.duplicate.vote_count}★)`,
               '',
               response.vote_added ? `✅ ${t.t('preset.duplicateVoted')}` : '',
@@ -537,7 +544,7 @@ async function processSubmitCommand(
       description: isApproved ? t.t('preset.submittedApproved') : t.t('preset.submittedPending'),
       color: isApproved ? 0x57f287 : 0xfee75c,
       fields: [
-        { name: t.t('preset.name'), value: preset.name, inline: true },
+        { name: t.t('preset.name'), value: sanitizePresetName(preset.name), inline: true },
         {
           name: t.t('common.category'),
           value: CATEGORY_DISPLAY[preset.category_id]?.name || preset.category_id,
@@ -610,10 +617,22 @@ async function processVoteCommand(
   env: Env,
   t: Translator,
   userId: string,
-  presetId: string,
+  presetInput: string,
   logger?: ExtendedLogger,
 ): Promise<void> {
   try {
+    // FINDING-020: autocomplete sends the UUID; a typed value is a NAME and is
+    // resolved through the search query — only the API's own id reaches a path
+    const presetId = isValidPresetId(presetInput)
+      ? presetInput
+      : (await presetApi.getPresetByName(env, presetInput))?.id;
+    if (!presetId) {
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [errorEmbed(t.t('common.error'), t.t('preset.notFound'))],
+      });
+      return;
+    }
+
     // Check if already voted
     const alreadyVoted = await presetApi.hasVoted(env, presetId, userId);
 
@@ -738,7 +757,8 @@ async function processEditCommand(
 ): Promise<void> {
   try {
     // First, verify the preset exists and user owns it
-    const existingPreset = await presetApi.getPreset(env, presetId);
+    // FINDING-020: UUID → by id; anything else is a typed name (search query)
+    const existingPreset = await lookupPreset(env, presetId);
     if (!existingPreset) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), t.t('preset.notFound'))],
@@ -796,7 +816,13 @@ async function processEditCommand(
             }
           } else {
             await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-              embeds: [errorEmbed(t.t('common.error'), t.t('preset.edit.invalidDye', { name: dyeName }))],
+              embeds: [
+                errorEmbed(
+                  t.t('common.error'),
+                  // FINDING-019: typed option value echoed into a public embed
+                  t.t('preset.edit.invalidDye', { name: sanitizeEmbedText(dyeName, 100) }),
+                ),
+              ],
             });
             return;
           }
@@ -814,8 +840,14 @@ async function processEditCommand(
       editPayload.dyes = newDyeIds;
     }
 
-    // Call the edit API
-    const response = await presetApi.editPreset(env, presetId, editPayload, userId, userName);
+    // Call the edit API — with the API's own id, never the raw option value
+    const response = await presetApi.editPreset(
+      env,
+      existingPreset.id,
+      editPayload,
+      userId,
+      userName,
+    );
 
     // Handle duplicate dyes error
     if (!response.success && 'duplicate' in response) {
@@ -825,7 +857,7 @@ async function processEditCommand(
             title: `⚠️ ${t.t('preset.edit.duplicateTitle')}`,
             description: [
               t.t('preset.edit.duplicateIntro'),
-              `**"${response.duplicate.name}"** ${t.t('preset.byAuthor', { author: response.duplicate.author_name || t.t('preset.unknownAuthor') })}`,
+              `**"${sanitizePresetName(response.duplicate.name)}"** ${t.t('preset.byAuthor', { author: response.duplicate.author_name ? sanitizePresetName(response.duplicate.author_name) : t.t('preset.unknownAuthor') })}`,
               '',
               t.t('preset.edit.duplicateHint'),
             ].join('\n'),
@@ -855,7 +887,7 @@ async function processEditCommand(
         : t.t('preset.edit.appliedDescription'),
       color: isPending ? 0xfee75c : 0x57f287,
       fields: [
-        { name: t.t('preset.name'), value: updatedPreset.name, inline: true },
+        { name: t.t('preset.name'), value: sanitizePresetName(updatedPreset.name), inline: true },
         {
           name: t.t('common.category'),
           value: CATEGORY_DISPLAY[updatedPreset.category_id]?.name || updatedPreset.category_id,
@@ -898,6 +930,22 @@ async function processEditCommand(
 // ============================================================================
 
 /**
+ * Resolve a user-supplied preset option to a preset.
+ *
+ * FINDING-020 (2026-08-21 security audit): autocomplete sends the preset's
+ * UUID, a user who ignores it sends free text. Only a UUID is ever fetched
+ * by id (and so interpolated into a presets-api path); anything else is a
+ * NAME and goes through the search query parameter. Errors propagate — the
+ * caller decides between "not found" and "load failed".
+ */
+async function lookupPreset(env: Env, input: string): Promise<CommunityPreset | null> {
+  if (isValidPresetId(input)) {
+    return presetApi.getPreset(env, input);
+  }
+  return presetApi.getPresetByName(env, input);
+}
+
+/**
  * Send a preset embed with color swatch image
  */
 async function sendPresetEmbed(
@@ -911,6 +959,14 @@ async function sendPresetEmbed(
   const dyes: (Dye | null)[] = preset.dyes.map((stainId) => {
     return dyeService.getByStainId(stainId) || null;
   });
+
+  // FINDING-019: the EMBED gets sanitised text (markdown escaped, mentions
+  // defused, controls stripped); the SVG card below keeps the raw strings —
+  // the svg layer XML-escapes itself and would otherwise print backslashes.
+  const safeName = sanitizePresetName(preset.name);
+  const safeDescription = sanitizePresetDescription(preset.description);
+  const safeAuthor = preset.author_name ? sanitizePresetName(preset.author_name) : null;
+  const safeTags = preset.tags.map((tag) => sanitizeEmbedText(tag, 50)).filter(Boolean);
 
   // Generate SVG swatch
   const svg = generatePresetSwatch({
@@ -943,21 +999,21 @@ async function sendPresetEmbed(
     .join('\n');
 
   const categoryDisplay = CATEGORY_DISPLAY[preset.category_id];
-  const author = preset.author_name
-    ? t.t('preset.byAuthor', { author: preset.author_name })
+  const author = safeAuthor
+    ? t.t('preset.byAuthor', { author: safeAuthor })
     : t.t('preset.official');
 
   await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
     embeds: [
       {
-        title: `${categoryDisplay?.icon || '🎨'} ${preset.name}`,
+        title: `${categoryDisplay?.icon || '🎨'} ${safeName}`,
         description: [
-          preset.description,
+          safeDescription,
           '',
           `**${t.t('preset.colors')}:**`,
           dyeList,
           '',
-          preset.tags.length > 0 ? `**${t.t('preset.tags')}:** ${preset.tags.join(', ')}` : '',
+          safeTags.length > 0 ? `**${t.t('preset.tags')}:** ${safeTags.join(', ')}` : '',
         ]
           .filter(Boolean)
           .join('\n'),
@@ -993,13 +1049,18 @@ async function notifySubmissionChannel(
   const statusDisplay = STATUS_DISPLAY[status];
   // Use English translator for admin notifications (no user context)
   const adminT = createTranslator('en');
+  // FINDING-019 (DW-1): this path used to skip the sanitiser the moderation
+  // path applies — same treatment for name / description / author now
+  const safeName = sanitizePresetName(preset.name);
+  const safeDescription = sanitizePresetDescription(preset.description);
+  const safeAuthor = sanitizePresetName(preset.author_name || 'Unknown');
 
   try {
     await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
       embeds: [
         {
-          title: `${statusDisplay.icon} New Preset: ${preset.name}`,
-          description: preset.description,
+          title: `${statusDisplay.icon} New Preset: ${safeName}`,
+          description: safeDescription,
           color: statusDisplay.color,
           fields: [
             {
@@ -1009,7 +1070,7 @@ async function notifySubmissionChannel(
             },
             {
               name: adminT.t('webhook.fields.author'),
-              value: preset.author_name || 'Unknown',
+              value: safeAuthor,
               inline: true,
             },
             {
@@ -1091,11 +1152,8 @@ async function resolvePresetByIdOrName(
   idOrName: string,
   _logger?: ExtendedLogger,
 ): Promise<CommunityPreset | null> {
-  // Try ID lookup first (UUID format from autocomplete)
-  const byId = await presetApi.getPreset(env, idOrName).catch(() => null);
-  if (byId) return byId;
-  // Fall back to name lookup for manually-typed values
-  return presetApi.getPresetByName(env, idOrName).catch(() => null);
+  // FINDING-020: UUID → by id, anything else → name search (never a path segment)
+  return lookupPreset(env, idOrName).catch(() => null);
 }
 
 /**
@@ -1142,10 +1200,12 @@ async function processFavoriteAdd(
       return;
     }
     const result = await addPresetFavorite(env.KV, userId, preset.id, preset.name, logger);
+    // FINDING-019: stored preset name → escaped before it reaches the embed
+    const safeName = sanitizePresetName(preset.name);
     if (!result.success) {
       const reasonMsg =
         result.reason === 'alreadyExists'
-          ? t.t('preset.favorite.alreadyExists', { name: preset.name })
+          ? t.t('preset.favorite.alreadyExists', { name: safeName })
           : result.reason === 'limitReached'
             ? t.t('preset.favorite.limitReached', { max: MAX_PRESET_FAVORITES })
             : t.t('preset.favorite.addFailed');
@@ -1158,7 +1218,7 @@ async function processFavoriteAdd(
       embeds: [
         successEmbed(
           `⭐ ${t.t('preset.favorite.addedTitle')}`,
-          t.t('preset.favorite.added', { name: preset.name }),
+          t.t('preset.favorite.added', { name: safeName }),
         ),
       ],
     });
@@ -1215,10 +1275,12 @@ async function processFavoriteRemove(
       presetName = preset.name;
     }
     const result = await removePresetFavorite(env.KV, userId, presetId, logger);
+    // FINDING-019: presetName may be the raw typed value when nothing resolved
+    const safeName = sanitizePresetName(presetName);
     if (!result.success) {
       const reasonMsg =
         result.reason === 'notFound'
-          ? t.t('preset.favorite.notFound', { name: presetName })
+          ? t.t('preset.favorite.notFound', { name: safeName })
           : t.t('preset.favorite.removeFailed');
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), reasonMsg)],
@@ -1229,7 +1291,7 @@ async function processFavoriteRemove(
       embeds: [
         successEmbed(
           `🗑️ ${t.t('preset.favorite.removedTitle')}`,
-          t.t('preset.favorite.removed', { name: presetName }),
+          t.t('preset.favorite.removed', { name: safeName }),
         ),
       ],
     });
@@ -1294,7 +1356,7 @@ async function processFavoriteList(
     const lines = presets.map((p, i) => {
       const catEntry = CATEGORY_DISPLAY[p.category_id];
       const cat = catEntry?.name ?? p.category_id;
-      return `**${i + 1}.** ${p.name} — *${cat}*`;
+      return `**${i + 1}.** ${sanitizePresetName(p.name)} — *${cat}*`;
     });
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {

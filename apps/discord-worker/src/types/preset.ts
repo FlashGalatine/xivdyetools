@@ -139,6 +139,27 @@ export class PresetAPIError extends Error {
 }
 
 // ============================================================================
+// Identifier guards
+// ============================================================================
+
+/**
+ * presets-api preset IDs are `crypto.randomUUID()` values (UUID v4), the same
+ * shape moderation-worker's `isValidUuid` enforces on its own paths.
+ */
+const PRESET_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * FINDING-020 (2026-08-21 security audit): handler-boundary check for values
+ * that are about to be interpolated into a presets-api URL path. A value that
+ * is not a UUID is a free-typed NAME (autocomplete sends the UUID, a user who
+ * ignores it sends text) and must be resolved through the search query
+ * parameter instead — never sent as a path segment.
+ */
+export function isValidPresetId(value: unknown): value is string {
+  return typeof value === 'string' && PRESET_ID_PATTERN.test(value);
+}
+
+// ============================================================================
 // UI Constants
 // ============================================================================
 

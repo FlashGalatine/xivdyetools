@@ -289,6 +289,90 @@ describe('index.ts', () => {
       );
     });
 
+    // FINDING-019 (2026-08-21 security audit): author name and tags on the
+    // webhook embeds are user content — the name/description already went
+    // through the sanitiser; these two did not.
+    it('sanitises author name and tags on the auto-approved submission-log embed', async () => {
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
+      const { sendMessage } = await import('./utils/discord-api.js');
+      vi.mocked(timingSafeEqual).mockResolvedValue(true);
+      vi.mocked(sendMessage).mockResolvedValue(new Response(null));
+
+      const preset = {
+        id: 'preset-789',
+        name: 'Plain Name',
+        description: 'Plain description',
+        category_id: 'aesthetics',
+        author_name: '<@999> [Mallory](https://phish.example) @everyone',
+        source: 'web' as const,
+        dyes: [1],
+        tags: ['ok', '[tag](https://evil.example) @here'],
+        status: 'approved' as const,
+        created_at: new Date().toISOString(),
+      };
+
+      const req = new Request('http://localhost/webhooks/preset-submission', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer test-webhook-secret' },
+        body: JSON.stringify({ type: 'submission', preset }),
+      });
+
+      const res = await app.fetch(req, mockEnv, mockCtx);
+      expect(res.status).toBe(200);
+
+      const call = vi.mocked(sendMessage).mock.calls.at(-1)?.[2] as {
+        embeds: Array<{ fields: Array<{ name: string; value: string }> }>;
+      };
+      const fields = call.embeds[0].fields;
+      const authorField = fields.find((f) => f.value.includes('Mallory'));
+      expect(authorField).toBeDefined();
+      expect(authorField!.value).not.toContain('<@999>');
+      expect(authorField!.value).not.toContain('[Mallory](https://phish.example)');
+      expect(authorField!.value).not.toContain('@everyone');
+      const tagsField = fields.find((f) => f.value.includes('evil.example'));
+      expect(tagsField).toBeDefined();
+      expect(tagsField!.value).not.toContain('[tag](https://evil.example)');
+      expect(tagsField!.value).not.toContain('@here');
+      expect(tagsField!.value).toContain('ok');
+    });
+
+    it('sanitises tags on the pending moderation embed extra fields', async () => {
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
+      const { sendMessage } = await import('./utils/discord-api.js');
+      vi.mocked(timingSafeEqual).mockResolvedValue(true);
+      vi.mocked(sendMessage).mockResolvedValue(new Response(null));
+
+      const preset = {
+        id: 'preset-790',
+        name: 'Plain Name',
+        description: 'Plain description',
+        category_id: 'aesthetics',
+        author_name: 'Author',
+        source: 'web' as const,
+        dyes: [1],
+        tags: ['[tag](https://evil.example) @everyone'],
+        status: 'pending' as const,
+        created_at: new Date().toISOString(),
+      };
+
+      const req = new Request('http://localhost/webhooks/preset-submission', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer test-webhook-secret' },
+        body: JSON.stringify({ type: 'submission', preset }),
+      });
+
+      const res = await app.fetch(req, mockEnv, mockCtx);
+      expect(res.status).toBe(200);
+
+      const call = vi.mocked(sendMessage).mock.calls.at(-1)?.[2] as {
+        embeds: Array<{ fields?: Array<{ name: string; value: string }> }>;
+      };
+      const tagsField = call.embeds[0].fields?.find((f) => f.value.includes('evil.example'));
+      expect(tagsField).toBeDefined();
+      expect(tagsField!.value).not.toContain('[tag](https://evil.example)');
+      expect(tagsField!.value).not.toContain('@everyone');
+    });
+
     // FINDING 4 (2026-08-10 final review): a pending image is a moderation
     // task, so it belongs in the moderation channel. It used to go to the
     // submission log — where *published* presets are announced — which both
@@ -558,6 +642,51 @@ describe('index.ts', () => {
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
         expect(data.data!.flags).toBe(64); // Ephemeral
+      });
+
+      // FINDING-033 (2026-08-21 security audit): /stats summary runs paginated
+      // KV list() scans and was on the rate-limit exemption list
+      it('applies the per-user rate limiter to /stats like any other command', async () => {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        const { checkRateLimit, formatRateLimitMessage } =
+          await import('./services/rate-limiter.js');
+        const { handleStatsCommand } = await import('./handlers/commands/index.js');
+
+        const interaction = {
+          type: InteractionType.APPLICATION_COMMAND,
+          data: { name: 'stats', options: [{ name: 'summary', type: 1 }] },
+          user: { id: 'user-123' },
+        };
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify(interaction),
+          error: '',
+        });
+        vi.mocked(checkRateLimit).mockResolvedValue({
+          allowed: false,
+          retryAfter: 30,
+          remaining: 0,
+          resetAt: Date.now() + 30000,
+        });
+        vi.mocked(formatRateLimitMessage).mockReturnValue('Rate limited');
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify(interaction),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = (await res.json()) as InteractionResponseBody;
+        expect(checkRateLimit).toHaveBeenCalledWith(
+          expect.anything(),
+          'user-123',
+          'stats',
+          undefined,
+          undefined,
+        );
+        expect(data.data!.flags).toBe(64);
+        expect(handleStatsCommand).not.toHaveBeenCalled();
       });
 
       it('should handle unknown command', async () => {

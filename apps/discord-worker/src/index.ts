@@ -314,7 +314,8 @@ app.post('/webhooks/preset-submission', async (c) => {
             ? [
                 {
                   name: adminT.t('webhook.fields.tags'),
-                  value: preset.tags.join(', '),
+                  // FINDING-019: tags are user content too
+                  value: preset.tags.map((tag) => sanitizePresetName(tag)).join(', '),
                   inline: false,
                 },
               ]
@@ -333,8 +334,12 @@ app.post('/webhooks/preset-submission', async (c) => {
   // Auto-approved presets go directly to submission log channel
   if (preset.status === 'approved' && env.SUBMISSION_LOG_CHANNEL_ID) {
     // SECURITY: Sanitize user-provided content before display
+    // FINDING-019 (2026-08-21 audit): author name and tags included — they
+    // were the two user-sourced strings this embed still carried raw
     const safeName = sanitizePresetName(preset.name);
     const safeDescription = sanitizePresetDescription(preset.description);
+    const safeAuthor = sanitizePresetName(preset.author_name || 'Unknown');
+    const safeTags = preset.tags.map((tag) => sanitizePresetName(tag));
     // Use English translator for admin notifications (no user context)
     const adminT = createTranslator('en');
     const logRes = await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
@@ -347,7 +352,7 @@ app.post('/webhooks/preset-submission', async (c) => {
             { name: adminT.t('webhook.fields.category'), value: preset.category_id, inline: true },
             {
               name: adminT.t('webhook.fields.author'),
-              value: preset.author_name || 'Unknown',
+              value: safeAuthor,
               inline: true,
             },
             {
@@ -363,11 +368,11 @@ app.post('/webhooks/preset-submission', async (c) => {
               value: formatDyesForEmbed(preset.dyes),
               inline: false,
             },
-            ...(preset.tags.length > 0
+            ...(safeTags.length > 0
               ? [
                   {
                     name: adminT.t('webhook.fields.tags'),
-                    value: preset.tags.join(', '),
+                    value: safeTags.join(', '),
                     inline: false,
                   },
                 ]
@@ -629,7 +634,9 @@ async function handleCommand(
   // Check rate limit (skip for utility commands). Aliases (/a11y) share the
   // canonical command's bucket; /extractor tiers its image subcommand
   // separately (Photon path, 5/min) from the plain color lookup.
-  if (commandName && !['about', 'manual', 'stats', 'changelog'].includes(commandName)) {
+  // FINDING-033 (2026-08-21 audit): /stats is NOT exempt — its public summary
+  // runs paginated KV list() scans, so it takes the default per-user tier.
+  if (commandName && !['about', 'manual', 'changelog'].includes(commandName)) {
     const scope = resolveRateLimitScope(commandName, interaction.data?.options?.[0]?.name);
     const rateLimitResult = await checkRateLimit(
       {

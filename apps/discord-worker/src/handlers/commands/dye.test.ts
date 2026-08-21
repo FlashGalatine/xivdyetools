@@ -700,4 +700,58 @@ describe('dye.ts', () => {
       expect((await bodyOf(response)).type).toBe(4);
     });
   });
+
+  // FINDING-019 (2026-08-21 security audit): /dye search echoes the query into
+  // a PUBLIC embed title — it must go through the shared embed sanitiser.
+  describe('search query sanitisation (FINDING-019)', () => {
+    const invokeSearch = (query: string) =>
+      handleDyeCommand(
+        {
+          type: 2,
+          data: {
+            name: 'dye',
+            options: [{ name: 'search', type: 1, options: [{ name: 'query', value: query }] }],
+          },
+          user: { id: 'user-123' },
+          id: 'int-1',
+          application_id: 'app-1',
+          token: 'token-1',
+        },
+        mockEnv,
+        mockCtx,
+      );
+
+    it('escapes markdown and masked links in the results title', async () => {
+      const data = (await (
+        await invokeSearch('snow **[x](https://phish.example)**')
+      ).json()) as InteractionResponseBody;
+
+      const title = data.data!.embeds![0].title!;
+      expect(title).not.toContain('[x](https://phish.example)');
+      expect(title).toContain('\\[x\\]\\(https://phish.example\\)');
+      expect(title).not.toContain('**');
+    });
+
+    it('defuses mass mentions and strips zero-width characters in the no-results title', async () => {
+      const data = (await (
+        await invokeSearch('notfound @everyone zero​width')
+      ).json()) as InteractionResponseBody;
+
+      const title = data.data!.embeds![0].title!;
+      expect(title).toContain('No results for:');
+      expect(title).not.toContain('@everyone');
+      expect(title).not.toContain('​');
+      expect(title).toContain('zerowidth');
+    });
+
+    it('caps an over-long query instead of forwarding it whole', async () => {
+      const data = (await (
+        await invokeSearch(`notfound ${'a'.repeat(400)}`)
+      ).json()) as InteractionResponseBody;
+
+      const title = data.data!.embeds![0].title!;
+      expect(title.length).toBeLessThan(200);
+      expect(title.endsWith('…')).toBe(true);
+    });
+  });
 });

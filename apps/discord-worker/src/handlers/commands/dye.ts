@@ -39,6 +39,7 @@ import {
   findDyeByName,
   executeDyeInfo,
   executeRandom,
+  sanitizeEmbedText,
 } from '@xivdyetools/bot-logic';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import { BRAND_ACCENT, STATE } from '../../utils/brand.js';
@@ -109,11 +110,16 @@ function handleSearchSubcommand(
 
   const results = searchDyesByName(query, t.getLocale()).filter((d) => d.category !== 'Facewear');
 
+  // FINDING-019 (2026-08-21 security audit): the query is echoed into a PUBLIC
+  // embed title — strip controls / zero-width, defuse mentions, escape
+  // markdown and cap it before it goes out.
+  const safeQuery = sanitizeEmbedText(query, 100);
+
   if (results.length === 0) {
     return messageResponse({
       embeds: [
         {
-          title: t.t('dye.search.noResults', { query }),
+          title: t.t('dye.search.noResults', { query: safeQuery }),
           description: t.t('dye.search.tryDifferent'),
           color: STATE.neutral,
         },
@@ -134,7 +140,7 @@ function handleSearchSubcommand(
   return messageResponse({
     embeds: [
       {
-        title: t.t('dye.search.resultsTitle', { query }),
+        title: t.t('dye.search.resultsTitle', { query: safeQuery }),
         description: `${foundText}\n\n${dyeList}${moreText}`,
         color: displayResults[0] ? hexToDiscordColor(displayResults[0].hex) : BRAND_ACCENT,
         footer: { text: t.t('dye.search.useInfoHint') },

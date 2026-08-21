@@ -26,6 +26,7 @@ import { InteractionResponseType } from '../../types/env.js';
 import { ephemeralResponse } from '../../utils/response.js';
 import { editMessage, sendFollowUp } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
+import { isValidPresetId } from '../../types/preset.js';
 import { createTranslator } from '../../services/bot-i18n.js';
 import { STATE } from '../../utils/brand.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
@@ -122,7 +123,10 @@ export async function handlePreviewImageButton(
 
   const adminT = createTranslator('en');
 
-  if (!parsed || !parsed.presetId || !userId) {
+  // FINDING-020 (2026-08-21 security audit): the preset id rides in the
+  // custom_id and becomes a presets-api path segment — refuse anything that
+  // is not a UUID before authorisation, let alone an API call.
+  if (!parsed || !isValidPresetId(parsed.presetId) || !userId) {
     return ephemeralResponse(adminT.t('previewImage.invalidButton'));
   }
 

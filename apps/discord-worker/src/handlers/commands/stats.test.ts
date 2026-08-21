@@ -382,7 +382,13 @@ describe('stats.ts', () => {
         f.name.includes('Links'),
       );
       expect(linksField).toBeDefined();
-      expect(linksField!.value).toContain('xivdyetools.com');
+      // FINDING-023 (2026-08-21 security audit): the canonical product links
+      // from core — never the non-resolving xivdyetools.com / docs.xivdyetools.com
+      expect(linksField!.value).toContain('https://xivdyetools.app/');
+      expect(linksField!.value).toContain('https://developers.xivdyetools.app/');
+      expect(linksField!.value).toContain('https://discord.gg/5VUSKTZCe5');
+      expect(linksField!.value).not.toContain('xivdyetools.com');
+      expect(linksField!.value).not.toContain('discord.gg/xivdyetools');
     });
 
     it('should display version in footer', async () => {

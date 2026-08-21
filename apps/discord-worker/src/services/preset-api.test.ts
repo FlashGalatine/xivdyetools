@@ -750,4 +750,80 @@ describe('preset-api.ts', () => {
       dateNowSpy.mockRestore();
     });
   });
+
+  // ==========================================================================
+  // FINDING-020 (2026-08-21 security audit): every caller-supplied path
+  // segment is percent-encoded so `..`, `/`, `?` and `#` cannot steer the
+  // request onto another presets-api route.
+  // ==========================================================================
+  describe('path-segment encoding (FINDING-020)', () => {
+    const HOSTILE_ID = '../moderation/pending?x=1#frag';
+    const ENCODED_ID = encodeURIComponent(HOSTILE_ID);
+
+    function okFetch(payload: unknown = {}): void {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(payload),
+      });
+    }
+
+    it('getPreset encodes the id', async () => {
+      const env = createMockEnv({ withUrlConfig: true });
+      okFetch({ id: 'x' });
+
+      await getPreset(env, HOSTILE_ID);
+
+      expect(mockFetch.mock.calls[0][0]).toBe(`https://api.example.com/api/v1/presets/${ENCODED_ID}`);
+      expect(mockFetch.mock.calls[0][0]).not.toContain('/presets/../');
+    });
+
+    it('editPreset encodes the id', async () => {
+      const env = createMockEnv({ withUrlConfig: true });
+      okFetch({ success: true });
+
+      await editPreset(env, HOSTILE_ID, { name: 'n' }, '123', 'u');
+
+      expect(mockFetch.mock.calls[0][0]).toBe(`https://api.example.com/api/v1/presets/${ENCODED_ID}`);
+    });
+
+    it('voteForPreset / removeVote / hasVoted encode the id', async () => {
+      const env = createMockEnv({ withUrlConfig: true });
+      okFetch({ success: true, new_vote_count: 1 });
+      await voteForPreset(env, HOSTILE_ID, '123');
+      expect(mockFetch.mock.calls[0][0]).toBe(`https://api.example.com/api/v1/votes/${ENCODED_ID}`);
+
+      okFetch({ success: true, new_vote_count: 0 });
+      await removeVote(env, HOSTILE_ID, '123');
+      expect(mockFetch.mock.calls[1][0]).toBe(`https://api.example.com/api/v1/votes/${ENCODED_ID}`);
+
+      okFetch({ has_voted: false });
+      await hasVoted(env, HOSTILE_ID, '123');
+      expect(mockFetch.mock.calls[2][0]).toBe(
+        `https://api.example.com/api/v1/votes/${ENCODED_ID}/check`,
+      );
+    });
+
+    it('setPreviewImageStatus encodes the id', async () => {
+      const env = createMockEnv({ withUrlConfig: true });
+      okFetch({ success: true, preview_image_status: 'approved' });
+
+      await setPreviewImageStatus(env, HOSTILE_ID, 'approve', '123', 'mod');
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        `https://api.example.com/api/v1/moderation/${ENCODED_ID}/preview-image`,
+      );
+    });
+
+    it('a plain UUID is left readable (encoding is a no-op for it)', async () => {
+      const env = createMockEnv({ withUrlConfig: true });
+      okFetch({ id: 'x' });
+
+      await getPreset(env, '12345678-1234-4123-8123-123456789abc');
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        'https://api.example.com/api/v1/presets/12345678-1234-4123-8123-123456789abc',
+      );
+    });
+  });
 });

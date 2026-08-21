@@ -19,6 +19,7 @@ import { getStats } from '../../services/analytics.js';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import { messageResponse, errorEmbed } from '../../utils/response.js';
 import { grp, num } from '@xivdyetools/svg';
+import { PRODUCT_LINKS, SOCIAL_LINKS, XIVDYETOOLS_DOCS_URL } from '@xivdyetools/core';
 import { BRAND_ACCENT, STATE } from '../../utils/brand.js';
 import { isUniversalisEnabled } from '../../services/budget/index.js';
 
@@ -36,6 +37,19 @@ const COLORS = {
 
 /** Bot version */
 const BOT_VERSION = '4.0.0';
+
+/**
+ * FINDING-023 (2026-08-21 security audit): the summary used to link
+ * `xivdyetools.com` / `docs.xivdyetools.com` / `discord.gg/xivdyetools`,
+ * none of which resolve (a registrable third-party phishing target behind
+ * bot-authored "official" links). Source the three from core, like /about.
+ */
+const SUMMARY_LINKS = {
+  webApp: PRODUCT_LINKS.webApp.url,
+  docs: XIVDYETOOLS_DOCS_URL,
+  supportServer:
+    SOCIAL_LINKS.find((link) => link.label === 'Discord')?.url ?? PRODUCT_LINKS.webApp.url,
+} as const;
 
 // ============================================================================
 // Authorization
@@ -172,9 +186,9 @@ async function handleSummarySubcommand(
           {
             name: `🔗 ${t.t('about.links')}`,
             value: [
-              `[${t.t('stats.summary.webApp')}](https://xivdyetools.com)`,
-              `[${t.t('stats.summary.documentation')}](https://docs.xivdyetools.com)`,
-              `[${t.t('stats.summary.supportServer')}](https://discord.gg/xivdyetools)`,
+              `[${t.t('stats.summary.webApp')}](${SUMMARY_LINKS.webApp})`,
+              `[${t.t('stats.summary.documentation')}](${SUMMARY_LINKS.docs})`,
+              `[${t.t('stats.summary.supportServer')}](${SUMMARY_LINKS.supportServer})`,
             ].join(' • '),
             inline: false,
           },

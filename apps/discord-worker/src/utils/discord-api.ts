@@ -6,9 +6,31 @@
  *
  */
 
+import { ALLOWED_MENTIONS_NONE } from '@xivdyetools/bot-logic';
 import type { DiscordEmbed, DiscordActionRow } from './response.js';
 
 const DISCORD_API_BASE = 'https://discord.com/api/v10';
+
+/**
+ * Discord `allowed_mentions` object.
+ * @see https://discord.com/developers/docs/resources/message#allowed-mentions-object
+ */
+export interface AllowedMentions {
+  parse: string[];
+  users?: string[];
+  roles?: string[];
+  replied_user?: boolean;
+}
+
+/**
+ * FINDING-019 (2026-08-21 security audit): every payload this module sends
+ * carries `allowed_mentions` so a user-sourced string that reaches message
+ * `content` can never ping @everyone / @here / roles / users. Callers that
+ * genuinely need a ping pass an explicit `allowedMentions` override.
+ */
+function allowedMentionsFor(override?: AllowedMentions): AllowedMentions {
+  return override ?? { ...ALLOWED_MENTIONS_NONE, parse: [...ALLOWED_MENTIONS_NONE.parse] };
+}
 
 /**
  * Timeout for Discord webhook API requests without file uploads (ms).
@@ -34,6 +56,8 @@ export interface FollowUpOptions {
   };
   /** Make the message ephemeral (only visible to user) */
   ephemeral?: boolean;
+  /** Override the default no-ping `allowed_mentions` (FINDING-019) */
+  allowedMentions?: AllowedMentions;
 }
 
 /**
@@ -57,7 +81,7 @@ export async function sendFollowUp(
   }
 
   // Otherwise, send JSON
-  const body: Record<string, unknown> = {};
+  const body: Record<string, unknown> = { allowed_mentions: allowedMentionsFor(options.allowedMentions) };
   if (options.content) body.content = options.content;
   if (options.embeds) body.embeds = options.embeds;
   if (options.components) body.components = options.components;
@@ -80,7 +104,9 @@ async function sendFollowUpWithFile(url: string, options: FollowUpOptions): Prom
   const formData = new FormData();
 
   // Build the payload_json part
-  const payload: Record<string, unknown> = {};
+  const payload: Record<string, unknown> = {
+    allowed_mentions: allowedMentionsFor(options.allowedMentions),
+  };
 
   if (options.content) payload.content = options.content;
   if (options.ephemeral) payload.flags = 64;
@@ -144,7 +170,7 @@ export async function editOriginalResponse(
   }
 
   // Otherwise, send JSON
-  const body: Record<string, unknown> = {};
+  const body: Record<string, unknown> = { allowed_mentions: allowedMentionsFor(options.allowedMentions) };
   if (options.content) body.content = options.content;
   if (options.embeds) body.embeds = options.embeds;
   if (options.components) body.components = options.components;
@@ -166,7 +192,9 @@ async function editResponseWithFile(url: string, options: FollowUpOptions): Prom
   const formData = new FormData();
 
   // Build the payload_json part
-  const payload: Record<string, unknown> = {};
+  const payload: Record<string, unknown> = {
+    allowed_mentions: allowedMentionsFor(options.allowedMentions),
+  };
 
   if (options.content) payload.content = options.content;
 
@@ -263,6 +291,8 @@ export interface SendMessageOptions {
   content?: string;
   embeds?: DiscordEmbed[];
   components?: DiscordActionRow[];
+  /** Override the default no-ping `allowed_mentions` (FINDING-019) */
+  allowedMentions?: AllowedMentions;
 }
 
 /**
@@ -280,7 +310,7 @@ export async function sendMessage(
 ): Promise<Response> {
   const url = `${DISCORD_API_BASE}/channels/${channelId}/messages`;
 
-  const body: Record<string, unknown> = {};
+  const body: Record<string, unknown> = { allowed_mentions: allowedMentionsFor(options.allowedMentions) };
   if (options.content) body.content = options.content;
   if (options.embeds) body.embeds = options.embeds;
   if (options.components) body.components = options.components;
@@ -314,7 +344,7 @@ export async function editMessage(
 ): Promise<Response> {
   const url = `${DISCORD_API_BASE}/channels/${channelId}/messages/${messageId}`;
 
-  const body: Record<string, unknown> = {};
+  const body: Record<string, unknown> = { allowed_mentions: allowedMentionsFor(options.allowedMentions) };
   if (options.content) body.content = options.content;
   if (options.embeds) body.embeds = options.embeds;
   if (options.components) body.components = options.components;

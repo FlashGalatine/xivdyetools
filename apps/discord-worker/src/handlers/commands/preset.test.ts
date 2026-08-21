@@ -21,8 +21,11 @@ const dyeGreen = {
 // ---------------------------------------------------------------------------
 // Mock Presets
 // ---------------------------------------------------------------------------
+// FINDING-020 (2026-08-21 audit): presets-api IDs are UUID v4; the handler
+// only sends a UUID as a path segment — anything else is treated as a name.
+const PRESET_ID = '12345678-1234-4123-8123-123456789abc';
 const mockPreset = {
-  id: 'preset-1',
+  id: PRESET_ID,
   name: 'Test Preset',
   description: 'A test preset',
   category_id: 'glamour',
@@ -55,6 +58,10 @@ vi.mock('@xivdyetools/core', () => {
       if (id === 3) return dyeGreen;
       return null;
     }
+    // 5.0 presets are stainID-keyed; sendPresetEmbed resolves through this
+    getByStainId(id: number) {
+      return this.getDyeById(id);
+    }
   }
 
   return { DyeService: MockDyeService, dyeDatabase: [] };
@@ -81,10 +88,26 @@ vi.mock('../../services/svg/renderer.js', () => ({
   renderSvgToPng: (...args: unknown[]) => mockRenderSvgToPng(...args),
 }));
 
+// FINDING-019: spy on the swatch generator (real implementation) so the tests
+// can prove the card still receives RAW preset text — the SVG layer escapes
+// for XML itself, and markdown backslashes would otherwise render in the PNG.
+const mockGeneratePresetSwatch = vi.fn();
+vi.mock('@xivdyetools/svg', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@xivdyetools/svg')>();
+  return {
+    ...actual,
+    generatePresetSwatch: (...args: Parameters<typeof actual.generatePresetSwatch>) => {
+      mockGeneratePresetSwatch(...args);
+      return actual.generatePresetSwatch(...args);
+    },
+  };
+});
+
 // Preset API Mocks
 const mockIsApiEnabled = vi.fn().mockReturnValue(true);
 const mockGetPresets = vi.fn().mockResolvedValue({ presets: [mockPreset], total: 1 });
 const mockGetPreset = vi.fn().mockResolvedValue(mockPreset);
+const mockGetPresetByName = vi.fn().mockResolvedValue(null);
 const mockGetRandomPreset = vi.fn().mockResolvedValue(mockPreset);
 const mockSubmitPreset = vi
   .fn()
@@ -101,6 +124,7 @@ vi.mock('../../services/preset-api.js', () => ({
   isApiEnabled: (...args: unknown[]) => mockIsApiEnabled(...args),
   getPresets: (...args: unknown[]) => mockGetPresets(...args),
   getPreset: (...args: unknown[]) => mockGetPreset(...args),
+  getPresetByName: (...args: unknown[]) => mockGetPresetByName(...args),
   getRandomPreset: (...args: unknown[]) => mockGetRandomPreset(...args),
   submitPreset: (...args: unknown[]) => mockSubmitPreset(...args),
   hasVoted: (...args: unknown[]) => mockHasVoted(...args),
@@ -151,6 +175,11 @@ const translator = {
       'preset.edit.duplicateTitle': 'Duplicate Dye Combination',
       'preset.editFailed': 'Failed to edit preset.',
       'preset.voteFailed': 'Failed to process vote.',
+      // FINDING-019 sanitisation assertions need the author/tag labels resolved
+      'preset.byAuthor': 'by {author}',
+      'preset.author': 'Author',
+      'preset.tags': 'Tags',
+      'preset.colors': 'Colors',
     };
     return (map[key] ?? key).replace(/\{(\w+)\}/g, (m, k: string) => String(vars?.[k] ?? m));
   },
@@ -202,6 +231,7 @@ describe('/preset command', () => {
     vi.clearAllMocks();
     mockIsApiEnabled.mockReturnValue(true);
     mockGetPreset.mockResolvedValue(mockPreset);
+    mockGetPresetByName.mockResolvedValue(null);
     mockGetPresets.mockResolvedValue({ presets: [mockPreset], total: 1 });
     mockHasVoted.mockResolvedValue(false);
   });
@@ -365,7 +395,7 @@ describe('/preset command', () => {
             {
               type: 1,
               name: 'show',
-              options: [{ name: 'name', value: 'preset-1' }],
+              options: [{ name: 'name', value: PRESET_ID }],
             },
           ],
         },
@@ -379,7 +409,8 @@ describe('/preset command', () => {
     });
 
     it('shows error when preset not found', async () => {
-      mockGetPreset.mockResolvedValueOnce(null);
+      // FINDING-020: 'nonexistent' is not a UUID, so it is resolved as a NAME
+      mockGetPresetByName.mockResolvedValueOnce(null);
 
       const interaction: DiscordInteraction = {
         ...baseInteraction,
@@ -613,7 +644,7 @@ describe('/preset command', () => {
             {
               type: 1,
               name: 'vote',
-              options: [{ name: 'preset', value: 'preset-1' }],
+              options: [{ name: 'preset', value: PRESET_ID }],
             },
           ],
         },
@@ -636,7 +667,7 @@ describe('/preset command', () => {
             {
               type: 1,
               name: 'vote',
-              options: [{ name: 'preset', value: 'preset-1' }],
+              options: [{ name: 'preset', value: PRESET_ID }],
             },
           ],
         },
@@ -674,7 +705,7 @@ describe('/preset command', () => {
             {
               type: 1,
               name: 'edit',
-              options: [{ name: 'preset', value: 'preset-1' }],
+              options: [{ name: 'preset', value: PRESET_ID }],
             },
           ],
         },
@@ -696,7 +727,7 @@ describe('/preset command', () => {
               type: 1,
               name: 'edit',
               options: [
-                { name: 'preset', value: 'preset-1' },
+                { name: 'preset', value: PRESET_ID },
                 { name: 'name', value: 'Updated Name' },
               ],
             },
@@ -710,7 +741,8 @@ describe('/preset command', () => {
     });
 
     it('returns error when preset not found', async () => {
-      mockGetPreset.mockResolvedValueOnce(null);
+      // FINDING-020: 'nonexistent' is not a UUID, so it is resolved as a NAME
+      mockGetPresetByName.mockResolvedValueOnce(null);
 
       const interaction: DiscordInteraction = {
         ...baseInteraction,
@@ -760,7 +792,7 @@ describe('/preset command', () => {
               type: 1,
               name: 'edit',
               options: [
-                { name: 'preset', value: 'preset-1' },
+                { name: 'preset', value: PRESET_ID },
                 { name: 'name', value: 'Updated Name' },
               ],
             },
@@ -794,7 +826,7 @@ describe('/preset command', () => {
               type: 1,
               name: 'edit',
               options: [
-                { name: 'preset', value: 'preset-1' },
+                { name: 'preset', value: PRESET_ID },
                 { name: 'description', value: 'New Description' },
               ],
             },
@@ -807,7 +839,7 @@ describe('/preset command', () => {
 
       expect(mockEditPreset).toHaveBeenCalledWith(
         expect.anything(),
-        'preset-1',
+        PRESET_ID,
         expect.objectContaining({ description: 'New Description' }),
         expect.anything(),
         expect.anything(),
@@ -824,7 +856,7 @@ describe('/preset command', () => {
               type: 1,
               name: 'edit',
               options: [
-                { name: 'preset', value: 'preset-1' },
+                { name: 'preset', value: PRESET_ID },
                 { name: 'tags', value: 'tag1, tag2, tag3' },
               ],
             },
@@ -837,7 +869,7 @@ describe('/preset command', () => {
 
       expect(mockEditPreset).toHaveBeenCalledWith(
         expect.anything(),
-        'preset-1',
+        PRESET_ID,
         expect.objectContaining({ tags: ['tag1', 'tag2', 'tag3'] }),
         expect.anything(),
         expect.anything(),
@@ -854,7 +886,7 @@ describe('/preset command', () => {
               type: 1,
               name: 'edit',
               options: [
-                { name: 'preset', value: 'preset-1' },
+                { name: 'preset', value: PRESET_ID },
                 { name: 'dye1', value: 'Ceruleum Blue' },
               ],
             },
@@ -867,7 +899,7 @@ describe('/preset command', () => {
 
       expect(mockEditPreset).toHaveBeenCalledWith(
         expect.anything(),
-        'preset-1',
+        PRESET_ID,
         expect.objectContaining({
           dyes: expect.arrayContaining([2]), // dyeBlue.id
         }),
@@ -891,7 +923,7 @@ describe('/preset command', () => {
               type: 1,
               name: 'edit',
               options: [
-                { name: 'preset', value: 'preset-1' },
+                { name: 'preset', value: PRESET_ID },
                 { name: 'dye3', value: 'Celeste Green' }, // Add at position 3
               ],
             },
@@ -904,7 +936,7 @@ describe('/preset command', () => {
 
       expect(mockEditPreset).toHaveBeenCalledWith(
         expect.anything(),
-        'preset-1',
+        PRESET_ID,
         expect.objectContaining({
           dyes: [1, 2, 3], // Extended with green
         }),
@@ -923,7 +955,7 @@ describe('/preset command', () => {
               type: 1,
               name: 'edit',
               options: [
-                { name: 'preset', value: 'preset-1' },
+                { name: 'preset', value: PRESET_ID },
                 { name: 'dye1', value: 'Nonexistent Dye' },
               ],
             },
@@ -962,7 +994,7 @@ describe('/preset command', () => {
               type: 1,
               name: 'edit',
               options: [
-                { name: 'preset', value: 'preset-1' },
+                { name: 'preset', value: PRESET_ID },
                 { name: 'dye1', value: 'Rolanberry Red' },
               ],
             },
@@ -1006,7 +1038,7 @@ describe('/preset command', () => {
               type: 1,
               name: 'edit',
               options: [
-                { name: 'preset', value: 'preset-1' },
+                { name: 'preset', value: PRESET_ID },
                 { name: 'name', value: 'Updated Name' },
               ],
             },
@@ -1046,7 +1078,7 @@ describe('/preset command', () => {
               type: 1,
               name: 'edit',
               options: [
-                { name: 'preset', value: 'preset-1' },
+                { name: 'preset', value: PRESET_ID },
                 { name: 'name', value: 'Updated Name' },
               ],
             },
@@ -1088,7 +1120,7 @@ describe('/preset command', () => {
               type: 1,
               name: 'edit',
               options: [
-                { name: 'preset', value: 'preset-1' },
+                { name: 'preset', value: PRESET_ID },
                 { name: 'name', value: 'Updated Name' },
               ],
             },
@@ -1124,7 +1156,7 @@ describe('/preset command', () => {
               type: 1,
               name: 'edit',
               options: [
-                { name: 'preset', value: 'preset-1' },
+                { name: 'preset', value: PRESET_ID },
                 { name: 'name', value: 'Updated Name' },
               ],
             },
@@ -1495,7 +1527,7 @@ describe('/preset command', () => {
             {
               type: 1,
               name: 'show',
-              options: [{ name: 'name', value: 'preset-1' }],
+              options: [{ name: 'name', value: PRESET_ID }],
             },
           ],
         },
@@ -1531,7 +1563,7 @@ describe('/preset command', () => {
             {
               type: 1,
               name: 'vote',
-              options: [{ name: 'preset', value: 'preset-1' }],
+              options: [{ name: 'preset', value: PRESET_ID }],
             },
           ],
         },
@@ -1584,7 +1616,7 @@ describe('/preset command', () => {
               type: 1,
               name: 'edit',
               options: [
-                { name: 'preset', value: 'preset-1' },
+                { name: 'preset', value: PRESET_ID },
                 { name: 'name', value: 'New Name' },
                 { name: 'description', value: 'New description' },
                 { name: 'tags', value: 'new-tag' },
@@ -1627,7 +1659,7 @@ describe('/preset command', () => {
               type: 1,
               name: 'edit',
               options: [
-                { name: 'preset', value: 'preset-1' },
+                { name: 'preset', value: PRESET_ID },
                 { name: 'name', value: 'Updated Name' },
               ],
             },
@@ -1701,6 +1733,270 @@ describe('/preset command', () => {
 
       const res = await handlePresetCommand(interaction, env, ctx);
       expect(res).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // FINDING-019 (2026-08-21 security audit): stored preset text is user
+  // content. It must reach every bot-authored embed markdown-escaped,
+  // mention-defused and control-stripped, while the swatch CARD keeps the
+  // raw text (the SVG layer XML-escapes itself; backslashes would render).
+  // =========================================================================
+  describe('embed sanitisation (FINDING-019)', () => {
+    const hostilePreset = {
+      ...mockPreset,
+      name: 'Free gil [here](https://phish.example) @everyone',
+      description: '**Bold** claim​ ||spoiler||',
+      tags: ['nice', '[tag](https://evil.example)'],
+      author_name: '<@999> _Mallory_',
+    };
+
+    const lastEdit = () => {
+      const call = mockEditOriginalResponse.mock.calls.at(-1) as unknown[];
+      return (call[2] as { embeds: Array<Record<string, unknown>> }).embeds[0];
+    };
+
+    it('/preset show escapes name, description, tags and author in the public embed', async () => {
+      mockGetPreset.mockResolvedValueOnce(hostilePreset);
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [{ type: 1, name: 'show', options: [{ name: 'name', value: PRESET_ID }] }],
+        },
+      };
+
+      await handlePresetCommand(interaction, env, ctx);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const embed = lastEdit();
+      const title = embed.title as string;
+      const description = embed.description as string;
+      expect(title).not.toContain('[here](https://phish.example)');
+      expect(title).toContain('\\[here\\]\\(https://phish.example\\)');
+      expect(title).not.toContain('@everyone');
+      expect(description).not.toContain('**Bold**');
+      expect(description).toContain('\\*\\*Bold\\*\\*');
+      expect(description).not.toContain('​');
+      expect(description).not.toContain('[tag](https://evil.example)');
+      expect(description).toContain('\\[tag\\]\\(https://evil.example\\)');
+      const fields = embed.fields as Array<{ name: string; value: string }>;
+      const authorField = fields.find((f) => f.name === 'Author');
+      expect(authorField).toBeDefined();
+      expect(authorField!.value).not.toContain('<@999>');
+      expect(authorField!.value).toContain('\\_Mallory\\_');
+    });
+
+    it('/preset show still hands the RAW text to the swatch card generator', async () => {
+      mockGetPreset.mockResolvedValueOnce(hostilePreset);
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [{ type: 1, name: 'show', options: [{ name: 'name', value: PRESET_ID }] }],
+        },
+      };
+
+      await handlePresetCommand(interaction, env, ctx);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(mockGeneratePresetSwatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: hostilePreset.name,
+          description: hostilePreset.description,
+          authorName: hostilePreset.author_name,
+        }),
+      );
+    });
+
+    it('/preset list escapes preset names and author names', async () => {
+      mockGetPresets.mockResolvedValueOnce({ presets: [hostilePreset], total: 1 });
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [{ type: 1, name: 'list', options: [] }],
+        },
+      };
+
+      await handlePresetCommand(interaction, env, ctx);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const description = lastEdit().description as string;
+      expect(description).not.toContain('[here](https://phish.example)');
+      expect(description).toContain('\\[here\\]\\(https://phish.example\\)');
+      expect(description).not.toContain('@everyone');
+      expect(description).not.toContain('<@999>');
+      expect(description).toContain('\\_Mallory\\_');
+    });
+
+    it('the auto-approved submission-log embed is sanitised like the moderation path', async () => {
+      mockSubmitPreset.mockResolvedValueOnce({
+        success: true,
+        preset: hostilePreset,
+        moderation_status: 'approved',
+      });
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [
+            {
+              type: 1,
+              name: 'submit',
+              options: [
+                { name: 'preset_name', value: 'Test Preset' },
+                { name: 'description', value: 'A test' },
+                { name: 'category', value: 'glamour' },
+                { name: 'dye1', value: 'Rolanberry Red' },
+                { name: 'dye2', value: 'Ceruleum Blue' },
+              ],
+            },
+          ],
+        },
+      };
+      const envWithLog = { ...env, SUBMISSION_LOG_CHANNEL_ID: 'submission-channel' } as Env;
+
+      await handlePresetCommand(interaction, envWithLog, ctx);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const logCall = mockSendMessage.mock.calls.find((c) => c[1] === 'submission-channel');
+      expect(logCall).toBeDefined();
+      const embed = (logCall![2] as { embeds: Array<Record<string, unknown>> }).embeds[0];
+      expect(embed.title as string).not.toContain('[here](https://phish.example)');
+      expect(embed.title as string).not.toContain('@everyone');
+      expect(embed.description as string).not.toContain('**Bold**');
+      const fields = embed.fields as Array<{ name: string; value: string }>;
+      const authorField = fields.find((f) => f.value.includes('Mallory'));
+      expect(authorField).toBeDefined();
+      expect(authorField!.value).not.toContain('<@999>');
+
+      // The user-facing confirmation also carries the name
+      const confirm = mockEditOriginalResponse.mock.calls.at(-1) as unknown[];
+      const confirmEmbed = (confirm[2] as { embeds: Array<Record<string, unknown>> }).embeds[0];
+      const nameField = (confirmEmbed.fields as Array<{ name: string; value: string }>)[0];
+      expect(nameField.value).not.toContain('[here](https://phish.example)');
+    });
+  });
+
+  // =========================================================================
+  // FINDING-020 (2026-08-21 security audit): only a UUID is ever interpolated
+  // into a presets-api path; a free-typed value is a NAME and goes through the
+  // search query parameter instead.
+  // =========================================================================
+  describe('preset ID boundary (FINDING-020)', () => {
+    it('/preset show with a free-typed value never sends it as a path segment', async () => {
+      mockGetPresetByName.mockResolvedValueOnce(mockPreset);
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [
+            { type: 1, name: 'show', options: [{ name: 'name', value: '../moderation/pending' }] },
+          ],
+        },
+      };
+
+      await handlePresetCommand(interaction, env, ctx);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(mockGetPreset).not.toHaveBeenCalled();
+      expect(mockGetPresetByName).toHaveBeenCalledWith(expect.anything(), '../moderation/pending');
+      // resolved by name → the preset embed went out
+      expect(mockEditOriginalResponse).toHaveBeenCalled();
+    });
+
+    it('/preset show with a UUID fetches by ID', async () => {
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [{ type: 1, name: 'show', options: [{ name: 'name', value: PRESET_ID }] }],
+        },
+      };
+
+      await handlePresetCommand(interaction, env, ctx);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(mockGetPreset).toHaveBeenCalledWith(expect.anything(), PRESET_ID);
+      expect(mockGetPresetByName).not.toHaveBeenCalled();
+    });
+
+    it('/preset vote with a non-UUID resolves by name and votes on the resolved ID', async () => {
+      mockGetPresetByName.mockResolvedValueOnce(mockPreset);
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [{ type: 1, name: 'vote', options: [{ name: 'preset', value: 'Test Preset' }] }],
+        },
+      };
+
+      await handlePresetCommand(interaction, env, ctx);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(mockHasVoted).toHaveBeenCalledWith(expect.anything(), PRESET_ID, 'user-1');
+      expect(mockVoteForPreset).toHaveBeenCalledWith(expect.anything(), PRESET_ID, 'user-1');
+    });
+
+    it('/preset vote with an unresolvable non-UUID reports not found and never calls the vote API', async () => {
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [
+            { type: 1, name: 'vote', options: [{ name: 'preset', value: 'x?status=pending' }] },
+          ],
+        },
+      };
+
+      await handlePresetCommand(interaction, env, ctx);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(mockHasVoted).not.toHaveBeenCalled();
+      expect(mockVoteForPreset).not.toHaveBeenCalled();
+      expect(mockRemoveVote).not.toHaveBeenCalled();
+      expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          embeds: expect.arrayContaining([
+            expect.objectContaining({ description: 'Preset not found' }),
+          ]),
+        }),
+      );
+    });
+
+    it('/preset edit with a non-UUID resolves by name and edits the resolved ID', async () => {
+      mockGetPresetByName.mockResolvedValueOnce(mockPreset);
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [
+            {
+              type: 1,
+              name: 'edit',
+              options: [
+                { name: 'preset', value: 'Test Preset' },
+                { name: 'description', value: 'Updated description' },
+              ],
+            },
+          ],
+        },
+      };
+
+      await handlePresetCommand(interaction, env, ctx);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(mockGetPreset).not.toHaveBeenCalled();
+      expect(mockEditPreset).toHaveBeenCalledWith(
+        expect.anything(),
+        PRESET_ID,
+        expect.objectContaining({ description: 'Updated description' }),
+        'user-1',
+        expect.any(String),
+      );
     });
   });
 });

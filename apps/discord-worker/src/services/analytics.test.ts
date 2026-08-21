@@ -120,11 +120,29 @@ describe('analytics.ts', () => {
       trackCommand(mockEnv, event);
 
       expect(mockAnalytics.writeDataPoint).toHaveBeenCalledTimes(1);
+      // FINDING-022 (2026-08-21 security audit): blob3 is the CONTEXT
+      // ('guild' | 'dm'), never the guild id itself
       expect(mockAnalytics.writeDataPoint).toHaveBeenCalledWith({
         indexes: ['harmony'],
-        blobs: ['harmony', 'user-123', 'guild-456', '1', ''],
+        blobs: ['harmony', 'user-123', 'guild', '1', ''],
         doubles: [1, 150, 1],
       });
+    });
+
+    it('never writes the raw guild id to Analytics Engine (FINDING-022)', () => {
+      trackCommand(mockEnv, {
+        commandName: 'harmony',
+        userId: 'user-123',
+        guildId: '123456789012345678',
+        success: true,
+      });
+
+      const point = mockAnalytics.writeDataPoint.mock.calls[0][0] as {
+        blobs: string[];
+        indexes: string[];
+      };
+      expect(JSON.stringify(point)).not.toContain('123456789012345678');
+      expect(point.blobs[2]).toBe('guild');
     });
 
     it('should use "dm" for guildId when not provided', () => {
@@ -156,7 +174,7 @@ describe('analytics.ts', () => {
 
       expect(mockAnalytics.writeDataPoint).toHaveBeenCalledWith({
         indexes: ['dye'],
-        blobs: ['dye', 'user-123', 'guild-456', '0', 'VALIDATION_ERROR'],
+        blobs: ['dye', 'user-123', 'guild', '0', 'VALIDATION_ERROR'],
         doubles: [0, 0, 1],
       });
     });

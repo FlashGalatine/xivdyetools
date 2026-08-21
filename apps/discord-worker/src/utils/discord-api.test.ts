@@ -334,6 +334,73 @@ describe('discord-api.ts', () => {
     });
   });
 
+  // FINDING-019 (2026-08-21 security audit): every outbound payload pins
+  // allowed_mentions so a user-sourced string that ends up in `content` can
+  // never ping @everyone / roles / users, whichever helper built the body.
+  describe('allowed_mentions (FINDING-019)', () => {
+    const NONE = { parse: [] };
+
+    it('sendFollowUp JSON body pins allowed_mentions to nothing', async () => {
+      await sendFollowUp(mockApplicationId, mockInteractionToken, { content: '@everyone hi' });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.allowed_mentions).toEqual(NONE);
+    });
+
+    it('sendFollowUp multipart payload_json pins allowed_mentions to nothing', async () => {
+      await sendFollowUp(mockApplicationId, mockInteractionToken, {
+        content: '@here',
+        file: { name: 'x.png', data: new Uint8Array([1]), contentType: 'image/png' },
+      });
+
+      const formData = mockFetch.mock.calls[0][1].body as FormData;
+      const payload = JSON.parse(formData.get('payload_json') as string);
+      expect(payload.allowed_mentions).toEqual(NONE);
+    });
+
+    it('editOriginalResponse JSON body pins allowed_mentions to nothing', async () => {
+      await editOriginalResponse(mockApplicationId, mockInteractionToken, { content: 'x' });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.allowed_mentions).toEqual(NONE);
+    });
+
+    it('editOriginalResponse multipart payload_json pins allowed_mentions to nothing', async () => {
+      await editOriginalResponse(mockApplicationId, mockInteractionToken, {
+        embeds: [{ title: 'x' }],
+        file: { name: 'x.png', data: new Uint8Array([1]), contentType: 'image/png' },
+      });
+
+      const formData = mockFetch.mock.calls[0][1].body as FormData;
+      const payload = JSON.parse(formData.get('payload_json') as string);
+      expect(payload.allowed_mentions).toEqual(NONE);
+    });
+
+    it('sendMessage body pins allowed_mentions to nothing', async () => {
+      await sendMessage(mockBotToken, mockChannelId, { content: '<@&1> <@2>' });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.allowed_mentions).toEqual(NONE);
+    });
+
+    it('editMessage body pins allowed_mentions to nothing', async () => {
+      await editMessage(mockBotToken, mockChannelId, mockMessageId, { content: 'x' });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.allowed_mentions).toEqual(NONE);
+    });
+
+    it('an explicit allowedMentions override replaces the default', async () => {
+      await sendFollowUp(mockApplicationId, mockInteractionToken, {
+        content: '<@123>',
+        allowedMentions: { parse: [], users: ['123'] },
+      });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.allowed_mentions).toEqual({ parse: [], users: ['123'] });
+    });
+  });
+
   describe('editMessage', () => {
     it('should send a PATCH request with bot authorization', async () => {
       await editMessage(mockBotToken, mockChannelId, mockMessageId, {

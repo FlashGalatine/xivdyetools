@@ -75,6 +75,12 @@ async function generateRequestSignature(
  * communication. Falls back to external URL (env.PRESETS_API_URL) if binding is not
  * configured (useful for local development).
  *
+ * FINDING-020 (2026-08-21 security audit): callers percent-encode every
+ * user-influenced path segment (`encodeURIComponent`) before building `path`,
+ * so `..`, `/`, `?` and `#` in a preset id cannot steer the request onto a
+ * different presets-api route. The same encoded path is what the v2
+ * signature binds.
+ *
  * @param env - Environment bindings
  * @param method - HTTP method
  * @param path - API path (e.g., '/api/v1/presets')
@@ -258,7 +264,7 @@ export async function getPresets(
  */
 export async function getPreset(env: Env, id: string): Promise<CommunityPreset | null> {
   try {
-    return await request<CommunityPreset>(env, 'GET', `/api/v1/presets/${id}`);
+    return await request<CommunityPreset>(env, 'GET', `/api/v1/presets/${encodeURIComponent(id)}`);
   } catch (error) {
     if (error instanceof PresetAPIError && error.statusCode === 404) {
       return null;
@@ -362,7 +368,7 @@ export async function editPreset(
   userDiscordId: string,
   userName: string,
 ): Promise<PresetEditResponse> {
-  return request<PresetEditResponse>(env, 'PATCH', `/api/v1/presets/${presetId}`, {
+  return request<PresetEditResponse>(env, 'PATCH', `/api/v1/presets/${encodeURIComponent(presetId)}`, {
     body: updates,
     userDiscordId,
     userName,
@@ -381,7 +387,7 @@ export async function voteForPreset(
   presetId: string,
   userDiscordId: string,
 ): Promise<VoteResponse> {
-  return request<VoteResponse>(env, 'POST', `/api/v1/votes/${presetId}`, {
+  return request<VoteResponse>(env, 'POST', `/api/v1/votes/${encodeURIComponent(presetId)}`, {
     userDiscordId,
   });
 }
@@ -394,7 +400,7 @@ export async function removeVote(
   presetId: string,
   userDiscordId: string,
 ): Promise<VoteResponse> {
-  return request<VoteResponse>(env, 'DELETE', `/api/v1/votes/${presetId}`, {
+  return request<VoteResponse>(env, 'DELETE', `/api/v1/votes/${encodeURIComponent(presetId)}`, {
     userDiscordId,
   });
 }
@@ -412,7 +418,7 @@ export async function hasVoted(
     const response = await request<{ has_voted: boolean }>(
       env,
       'GET',
-      `/api/v1/votes/${presetId}/check`,
+      `/api/v1/votes/${encodeURIComponent(presetId)}/check`,
       { userDiscordId, logger },
     );
     return response.has_voted;
@@ -454,7 +460,7 @@ export async function setPreviewImageStatus(
   return request<PreviewImageModerationResult>(
     env,
     'PATCH',
-    `/api/v1/moderation/${presetId}/preview-image`,
+    `/api/v1/moderation/${encodeURIComponent(presetId)}/preview-image`,
     {
       body: { action },
       userDiscordId: moderatorId,
