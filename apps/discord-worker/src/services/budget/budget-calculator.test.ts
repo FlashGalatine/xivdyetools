@@ -2,7 +2,7 @@
  * Tests for Budget Calculator Service
  */
 import { describe, it, expect } from 'vitest';
-import { dyeService } from '@xivdyetools/bot-logic';
+import { dyeService, initializeLocale } from '@xivdyetools/bot-logic';
 import { getDyeById, getDyeByName, getDyeAutocomplete } from './budget-calculator.js';
 
 describe('budget-calculator.ts', () => {
@@ -88,6 +88,23 @@ describe('budget-calculator.ts', () => {
       choices.forEach((choice) => {
         expect(choice.name.toLowerCase()).toContain('red');
       });
+    });
+
+    // 2026-08-20 i18n audit, F-02
+    it('matches and labels in the user locale', async () => {
+      await initializeLocale('ja');
+      const choices = getDyeAutocomplete('スノウ', 25, 'ja');
+      expect(choices.length).toBeGreaterThan(0);
+      expect(choices[0].name).toMatch(/^スノウホワイト \(/); // localized name + localized category
+      expect(choices[0].value).toMatch(/^\d+$/); // value stays the itemID
+    });
+  });
+
+  describe('getDyeByName (localized)', () => {
+    it('resolves an exact Japanese name when the locale is passed', async () => {
+      await initializeLocale('ja');
+      expect(getDyeByName('スノウホワイト', 'ja')?.name).toBe('Snow White');
+      expect(getDyeByName('スノウホワイト')).toBeNull();
     });
   });
 });

@@ -47,7 +47,7 @@ export async function handleMixerV4Command(
     });
   }
 
-  const dye1Resolved = resolveColorInput(dye1Input, { excludeFacewear: true });
+  const dye1Resolved = resolveColorInput(dye1Input, { excludeFacewear: true, locale: t.getLocale() });
   if (!dye1Resolved) {
     return messageResponse({
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: dye1Input }))],
@@ -55,7 +55,7 @@ export async function handleMixerV4Command(
     });
   }
 
-  const dye2Resolved = resolveColorInput(dye2Input, { excludeFacewear: true });
+  const dye2Resolved = resolveColorInput(dye2Input, { excludeFacewear: true, locale: t.getLocale() });
   if (!dye2Resolved) {
     return messageResponse({
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: dye2Input }))],

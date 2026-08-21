@@ -63,6 +63,7 @@ export async function handleAccessibilityCommand(
     const resolved = resolveColorInput(input.value, {
       excludeFacewear: true,
       findClosestForHex: true,
+      locale: t.getLocale(),
     });
     if (!resolved) {
       return Response.json({

@@ -84,8 +84,8 @@ const MAX_MATCH_COUNT = 10;
 /**
  * Resolves color input to a hex value
  */
-function resolveColorInput(input: string): { hex: string; fromDye?: Dye } | null {
-  const resolved = resolveColor(input, { excludeFacewear: true });
+function resolveColorInput(input: string, locale: LocaleCode): { hex: string; fromDye?: Dye } | null {
+  const resolved = resolveColor(input, { excludeFacewear: true, locale });
   if (!resolved) return null;
   return { hex: resolved.hex, fromDye: resolved.dye };
 }
@@ -244,7 +244,7 @@ async function handleColorSubcommand(
   }
 
   // Resolve the color input
-  const resolved = resolveColorInput(colorInput);
+  const resolved = resolveColorInput(colorInput, t.getLocale());
   if (!resolved) {
     return messageResponse({
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: colorInput }))],

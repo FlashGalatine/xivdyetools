@@ -17,7 +17,7 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
-import { dyeService } from '@xivdyetools/bot-logic';
+import { dyeService, searchDyesByName } from '@xivdyetools/bot-logic';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import {
   deferredResponse,
@@ -438,7 +438,7 @@ async function handleSubmitSubcommand(
   // Resolve dye names to IDs
   const dyeIds: number[] = [];
   for (const name of dyeNames) {
-    const dyes = dyeService.searchByName(name);
+    const dyes = searchDyesByName(name, t.getLocale());
     if (dyes.length > 0) {
       dyeIds.push(dyes[0].id);
     } else {
@@ -787,7 +787,7 @@ async function processEditCommand(
       for (let i = 0; i < 5; i++) {
         const dyeName = updates.dyeNames[i];
         if (dyeName) {
-          const dyes = dyeService.searchByName(dyeName);
+          const dyes = searchDyesByName(dyeName, t.getLocale());
           if (dyes.length > 0) {
             if (i < newDyeIds.length) {
               newDyeIds[i] = dyes[0].id;

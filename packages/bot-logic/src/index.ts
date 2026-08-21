@@ -26,6 +26,8 @@ export {
   normalizeHex,
   resolveColorInput,
   resolveDyeInput,
+  searchDyesByName,
+  findDyeByName,
   dyeService,
 } from './input-resolution.js';
 export type { ResolvedColor, /** @public */ ResolveColorOptions } from './input-resolution.js';

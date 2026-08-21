@@ -8,6 +8,8 @@ import { createMockKV } from '@xivdyetools/test-utils/cloudflare';
 // Mock the i18n.js module for resolveUserLocale
 vi.mock('./i18n.js', () => ({
   resolveUserLocale: vi.fn().mockResolvedValue('en'),
+  isValidLocale: vi.fn((code: string) => ['en', 'ja', 'de', 'fr', 'ko', 'zh'].includes(code)),
+  initializeLocale: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { resolveUserLocale } from './i18n.js';

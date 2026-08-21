@@ -51,7 +51,7 @@ export async function handleGradientCommand(
     });
   }
 
-  const startResolved = resolveColorInput(startInput);
+  const startResolved = resolveColorInput(startInput, { locale: t.getLocale() });
   if (!startResolved) {
     return Response.json({
       type: 4,
@@ -64,7 +64,7 @@ export async function handleGradientCommand(
     });
   }
 
-  const endResolved = resolveColorInput(endInput);
+  const endResolved = resolveColorInput(endInput, { locale: t.getLocale() });
   if (!endResolved) {
     return Response.json({
       type: 4,

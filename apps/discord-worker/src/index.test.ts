@@ -71,6 +71,9 @@ vi.mock('./utils/discord-api.js', () => ({
 
 vi.mock('./services/i18n.js', () => ({
   getLocalizedDyeName: vi.fn((_itemId: number, name: string) => name),
+  discordLocaleToLocaleCode: vi.fn(() => 'en'),
+  resolveUserLocale: vi.fn().mockResolvedValue('en'),
+  initializeLocale: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock DyeService
@@ -593,6 +596,17 @@ describe('index.ts', () => {
     });
 
     describe('AUTOCOMPLETE interactions', () => {
+      // OPT-007 rate-limits autocomplete; the bare vi.fn() mock resolved to
+      // undefined and `acLimit.allowed` threw, so this block had been red.
+      beforeEach(async () => {
+        const { checkRateLimit } = await import('./services/rate-limiter.js');
+        vi.mocked(checkRateLimit).mockResolvedValue({
+          allowed: true,
+          remaining: 10,
+          resetAt: Date.now() + 60_000,
+        });
+      });
+
       it('should handle dye autocomplete with query', async () => {
         const { verifyDiscordRequest } = await import('@xivdyetools/auth');
 

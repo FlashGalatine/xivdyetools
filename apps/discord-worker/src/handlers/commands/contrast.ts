@@ -52,7 +52,7 @@ export async function handleContrastCommand(
 
   const resolvedDyes: ContrastDyeInput[] = [];
   for (const value of dyeInputs.slice(0, 4)) {
-    const resolved = resolveColorInput(value, { excludeFacewear: true, findClosestForHex: true });
+    const resolved = resolveColorInput(value, { excludeFacewear: true, findClosestForHex: true, locale: t.getLocale() });
     if (!resolved) {
       return Response.json({
         type: 4,

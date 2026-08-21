@@ -21,7 +21,14 @@ import {
   type ConsolidationType,
   type MatchingMethod,
 } from '@xivdyetools/core';
-import { dyeService } from '@xivdyetools/bot-logic';
+import {
+  dyeService,
+  searchDyesByName,
+  findDyeByName,
+  getLocalizedDyeName,
+  getLocalizedCategory,
+  type LocaleCode,
+} from '@xivdyetools/bot-logic';
 import type { Dye } from '@xivdyetools/types';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { Env } from '../../types/env.js';
@@ -299,23 +306,27 @@ export function getDyeById(id: number): Dye | null {
  * are excluded — budget lookups feed Universalis price fetches, and a
  * negative ID in the batch makes the proxy reject the whole request.
  */
-export function getDyeByName(name: string): Dye | null {
-  const normalizedName = name.toLowerCase().trim();
-  const allDyes = dyeService.getAllDyes();
-  return allDyes.find((dye) => dye.itemID > 0 && dye.name.toLowerCase() === normalizedName) ?? null;
+export function getDyeByName(name: string, locale: LocaleCode = 'en'): Dye | null {
+  // F-02 (2026-08-20 i18n audit): exact match on the English OR localized name
+  const dye = findDyeByName(name, locale);
+  return dye && dye.itemID > 0 ? dye : null;
 }
 
 /**
- * Get autocomplete suggestions for dye names
+ * Get autocomplete suggestions for dye names.
+ *
+ * F-02: matches English OR the locale's name and labels with the localized
+ * name + category; `value` stays the itemID.
  */
 export function getDyeAutocomplete(
   query: string,
   limit: number = 25,
+  locale: LocaleCode = 'en',
 ): Array<{ name: string; value: string }> {
-  const matches = dyeService.searchByName(query).filter((dye) => dye.itemID > 0);
+  const matches = searchDyesByName(query, locale).filter((dye) => dye.itemID > 0);
 
   return matches.slice(0, limit).map((dye) => ({
-    name: `${dye.name} (${dye.category})`,
+    name: `${getLocalizedDyeName(dye.itemID, dye.name, locale)} (${getLocalizedCategory(dye.category, locale)})`,
     value: String(dye.itemID),
   }));
 }

@@ -51,7 +51,7 @@ export async function handleHarmonyCommand(
     });
   }
 
-  const resolved = resolveColorInput(colorInput, { excludeFacewear: false });
+  const resolved = resolveColorInput(colorInput, { excludeFacewear: false, locale: t.getLocale() });
   if (!resolved) {
     return Response.json({
       type: 4,

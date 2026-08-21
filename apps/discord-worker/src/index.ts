@@ -51,11 +51,16 @@ import {
   savePresetFavoriteEntries,
 } from './services/preset-favorites.js';
 import { handleButtonInteraction } from './handlers/buttons/index.js';
-import { dyeService } from '@xivdyetools/bot-logic';
+import { dyeService, searchDyesByName, type LocaleCode } from '@xivdyetools/bot-logic';
 import * as presetApi from './services/preset-api.js';
 import { sendMessage, sendFollowUp } from './utils/discord-api.js';
 import { STATUS_DISPLAY, type PresetNotificationPayload } from './types/preset.js';
-import { getLocalizedDyeName, discordLocaleToLocaleCode } from './services/i18n.js';
+import {
+  getLocalizedDyeName,
+  discordLocaleToLocaleCode,
+  resolveUserLocale,
+  initializeLocale,
+} from './services/i18n.js';
 import { createTranslator } from './services/bot-i18n.js';
 import { sendModerationNotification } from './handlers/commands/preset-notifications.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
@@ -851,6 +856,11 @@ async function handleAutocomplete(
   const query = (focusedOption?.value as string) || '';
   let choices: Array<{ name: string; value: string }> = [];
 
+  // F-02 (2026-08-20 i18n audit): dye suggestions match and display the
+  // user's locale (stored preference → Discord client locale → en).
+  const locale = await resolveUserLocale(env.KV, acUserId ?? '', interaction.locale);
+  await initializeLocale(locale);
+
   // Handle preset command autocomplete
   if (commandName === 'preset') {
     const focusedName = focusedOption?.name;
@@ -883,12 +893,12 @@ async function handleAutocomplete(
     }
     // Dye autocomplete (for submit and edit subcommands)
     else if (focusedName?.startsWith('dye')) {
-      choices = getDyeAutocompleteChoices(query);
+      choices = getDyeAutocompleteChoices(query, locale);
     }
   }
   // Handle budget command autocomplete (returns its own Response)
   else if (commandName === 'budget') {
-    return handleBudgetAutocomplete(interaction, env, logger);
+    return handleBudgetAutocomplete(interaction, env, locale, logger);
   }
   // Handle preferences command autocomplete
   else if (commandName === 'preferences') {
@@ -904,7 +914,7 @@ async function handleAutocomplete(
   }
   // Default: Dye autocomplete for other commands
   else {
-    choices = getDyeAutocompleteChoices(query);
+    choices = getDyeAutocompleteChoices(query, locale);
   }
 
   return Response.json({
@@ -914,31 +924,28 @@ async function handleAutocomplete(
 }
 
 /**
- * Get dye autocomplete choices for the given query
+ * Get dye autocomplete choices for the given query.
+ *
+ * F-02 (2026-08-20 i18n audit): matches English OR the locale's dye name and
+ * labels each choice with the localized name. The `value` stays the English
+ * name so every downstream resolver (`resolveColorInput`, `searchDyesByName`)
+ * keeps working unchanged.
  */
-function getDyeAutocompleteChoices(query: string): Array<{ name: string; value: string }> {
-  if (query.length >= 1) {
-    const matchingDyes = dyeService.searchByName(query);
+function getDyeAutocompleteChoices(
+  query: string,
+  locale: LocaleCode = 'en',
+): Array<{ name: string; value: string }> {
+  // Empty query: show the first dyes in database order (excluding Facewear)
+  const matchingDyes = query.length >= 1 ? searchDyesByName(query, locale) : dyeService.getAllDyes();
 
-    // Filter out Facewear dyes and limit to 25 (Discord's maximum)
-    return matchingDyes
-      .filter((dye) => dye.category !== 'Facewear')
-      .slice(0, 25)
-      .map((dye) => ({
-        name: `${dye.name} (${dye.hex.toUpperCase()})`,
-        value: dye.name,
-      }));
-  } else {
-    // Show popular/common dyes when no query (excluding Facewear)
-    const allDyes = dyeService.getAllDyes();
-    return allDyes
-      .filter((dye) => dye.category !== 'Facewear')
-      .slice(0, 25)
-      .map((dye) => ({
-        name: `${dye.name} (${dye.hex.toUpperCase()})`,
-        value: dye.name,
-      }));
-  }
+  // Filter out Facewear dyes and limit to 25 (Discord's maximum)
+  return matchingDyes
+    .filter((dye) => dye.category !== 'Facewear')
+    .slice(0, 25)
+    .map((dye) => ({
+      name: `${getLocalizedDyeName(dye.itemID, dye.name, locale)} (${dye.hex.toUpperCase()})`,
+      value: dye.name,
+    }));
 }
 
 /**

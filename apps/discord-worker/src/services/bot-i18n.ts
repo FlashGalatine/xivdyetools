@@ -9,7 +9,7 @@
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { resolveUserLocale } from './i18n.js';
+import { resolveUserLocale, initializeLocale } from './i18n.js';
 import { isValidLocale } from './i18n.js';
 import { getUserPreferences } from './preferences.js';
 import type { UserPreferences } from '../types/preferences.js';
@@ -34,6 +34,11 @@ export async function createUserTranslator(
   logger?: ExtendedLogger,
 ): Promise<Translator> {
   const locale = await resolveUserLocale(kv, userId, discordLocale);
+  // F-02 (2026-08-20 i18n audit): warm the per-locale dye-name cache here so
+  // `resolveColorInput(..., { locale })` / `searchDyesByName` can match
+  // localized names on the very first request of an isolate. Cached after
+  // the first call per locale; the bot-logic command executors also call it.
+  await initializeLocale(locale);
   return new Translator(locale, logger);
 }
 
@@ -55,8 +60,10 @@ export async function createUserTranslatorWithPrefs(
 ): Promise<{ t: Translator; prefs: UserPreferences }> {
   const prefs = await getUserPreferences(kv, userId, logger);
   if (prefs.language && isValidLocale(prefs.language)) {
+    await initializeLocale(prefs.language);
     return { t: new Translator(prefs.language, logger), prefs };
   }
   const locale = await resolveUserLocale(kv, userId, discordLocale);
+  await initializeLocale(locale);
   return { t: new Translator(locale, logger), prefs };
 }

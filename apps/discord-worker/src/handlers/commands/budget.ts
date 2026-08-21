@@ -25,7 +25,7 @@ import {
 import { getLocalizedAcquisition } from '@xivdyetools/bot-logic';
 import { BAND_METHOD_DP, classifyBandTier, type MatchingMethod } from '@xivdyetools/core';
 import { createUserTranslatorWithPrefs, type Translator } from '../../services/bot-i18n.js';
-import { initializeLocale, getLocalizedDyeName } from '../../services/i18n.js';
+import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import { setPreference } from '../../services/preferences.js';
 import { MATCHING_METHODS, isValidMatchingMethod, type UserPreferences } from '../../types/preferences.js';
 import {
@@ -157,7 +157,7 @@ async function handleFindSubcommand(
   const isNumericInput = /^\s*\d+\s*$/.test(targetDyeInput);
   const targetDye = isNumericInput
     ? getDyeById(parseInt(targetDyeInput, 10))
-    : getDyeByName(targetDyeInput);
+    : getDyeByName(targetDyeInput, t.getLocale());
 
   if (!targetDye || targetDye.itemID <= 0) {
     return ephemeralResponse(t.t('budget.errors.dyeNotFound', { name: targetDyeInput }));
@@ -453,6 +453,7 @@ async function handleQuickSubcommand(
 export async function handleBudgetAutocomplete(
   interaction: DiscordInteraction,
   env: Env,
+  locale: LocaleCode,
   logger?: ExtendedLogger
 ): Promise<Response> {
   const options = interaction.data?.options || [];
@@ -476,7 +477,7 @@ export async function handleBudgetAutocomplete(
 
   switch (focusedOption.name) {
     case 'target_dye':
-      choices = getDyeAutocomplete(query, 25);
+      choices = getDyeAutocomplete(query, 25, locale);
       break;
 
     case 'world':

@@ -33,7 +33,13 @@ import {
   type LocaleCode,
 } from '../../services/i18n.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
-import { dyeService, executeDyeInfo, executeRandom } from '@xivdyetools/bot-logic';
+import {
+  dyeService,
+  searchDyesByName,
+  findDyeByName,
+  executeDyeInfo,
+  executeRandom,
+} from '@xivdyetools/bot-logic';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import { BRAND_ACCENT, STATE } from '../../utils/brand.js';
 
@@ -101,7 +107,7 @@ function handleSearchSubcommand(
     });
   }
 
-  const results = dyeService.searchByName(query).filter((d) => d.category !== 'Facewear');
+  const results = searchDyesByName(query, t.getLocale()).filter((d) => d.category !== 'Facewear');
 
   if (results.length === 0) {
     return messageResponse({
@@ -161,8 +167,8 @@ function handleInfoSubcommand(
     });
   }
 
-  const results = dyeService.searchByName(name);
-  const dye = results.find((d) => d.name.toLowerCase() === name.toLowerCase()) || results[0];
+  const results = searchDyesByName(name, t.getLocale());
+  const dye = findDyeByName(name, t.getLocale()) ?? results[0];
 
   if (!dye) {
     return messageResponse({

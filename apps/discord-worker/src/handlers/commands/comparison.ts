@@ -16,8 +16,8 @@ import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../se
 import { resolveColorInput as resolveColor, executeComparison } from '@xivdyetools/bot-logic';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
-function resolveColorInput(input: string): Dye | null {
-  const resolved = resolveColor(input, { excludeFacewear: true, findClosestForHex: true });
+function resolveColorInput(input: string, locale: LocaleCode): Dye | null {
+  const resolved = resolveColor(input, { excludeFacewear: true, findClosestForHex: true, locale });
   return resolved?.dye ?? null;
 }
 
@@ -44,11 +44,11 @@ export async function handleComparisonCommand(
   }
 
   const resolvedDyes: Array<{ input: string; dye: Dye | null }> = [
-    { input: dye1Input, dye: resolveColorInput(dye1Input) },
-    { input: dye2Input, dye: resolveColorInput(dye2Input) },
+    { input: dye1Input, dye: resolveColorInput(dye1Input, t.getLocale()) },
+    { input: dye2Input, dye: resolveColorInput(dye2Input, t.getLocale()) },
   ];
-  if (dye3Input) resolvedDyes.push({ input: dye3Input, dye: resolveColorInput(dye3Input) });
-  if (dye4Input) resolvedDyes.push({ input: dye4Input, dye: resolveColorInput(dye4Input) });
+  if (dye3Input) resolvedDyes.push({ input: dye3Input, dye: resolveColorInput(dye3Input, t.getLocale()) });
+  if (dye4Input) resolvedDyes.push({ input: dye4Input, dye: resolveColorInput(dye4Input, t.getLocale()) });
 
   const failures = resolvedDyes.filter((r) => r.dye === null);
   if (failures.length > 0) {
