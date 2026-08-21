@@ -225,7 +225,8 @@ export const THEME = {
  * - primary: Onest (variable 100-900) - body text, labels
  * - mono: Fragment Mono - hex codes, numeric columns, mono labels
  *   (the previous 'Habibi' was a proportional serif — numbers never aligned)
- * - cjk: Noto Sans SC + Noto Sans KR - Japanese, Korean, Chinese text
+ * - cjk: Noto Sans JP + SC + KR - Japanese (JP letterforms first), Chinese, Korean text
+ *   (JP added 2026-08-20 — F-17: preset-swatch was the one card rendering ja in SC letterforms)
  * - primaryCjk: Onest with CJK/KR fallback - for localized text that may contain CJK
  * - monoCjk: Fragment Mono has no CJK — mono labels containing CJK fall back
  *   to the body sans (letter-spacing 0.04em at the call site; no case in CJK)
@@ -234,13 +235,13 @@ export const FONTS = {
   header: 'Space Grotesk',
   primary: 'Onest',
   mono: 'Fragment Mono',
-  cjk: 'Noto Sans SC, Noto Sans KR',
+  cjk: 'Noto Sans JP, Noto Sans SC, Noto Sans KR',
   /** Use this for headings that may contain CJK characters (e.g., dye names) */
-  headerCjk: 'Space Grotesk, Noto Sans SC, Noto Sans KR',
+  headerCjk: 'Space Grotesk, Noto Sans JP, Noto Sans SC, Noto Sans KR',
   /** Use this for body text that may contain CJK characters (e.g., dye names) */
-  primaryCjk: 'Onest, Noto Sans SC, Noto Sans KR',
+  primaryCjk: 'Onest, Noto Sans JP, Noto Sans SC, Noto Sans KR',
   /** Mono labels that may contain CJK (Fragment Mono has no CJK glyphs) */
-  monoCjk: 'Fragment Mono, Onest, Noto Sans SC, Noto Sans KR',
+  monoCjk: 'Fragment Mono, Onest, Noto Sans JP, Noto Sans SC, Noto Sans KR',
 } as const;
 
 /**
