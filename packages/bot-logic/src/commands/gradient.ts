@@ -314,11 +314,11 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
     const distinctAfterMerge = capGradientRows(gradientSteps).merged;
     const verdict =
       stepCount >= 4 && distinctAfterMerge <= 2
-        ? t.t('card.gradVerdict', { n: stepCount, k: distinctAfterMerge })
+        ? t.tc('card.gradVerdict', distinctAfterMerge, { n: stepCount, k: distinctAfterMerge })
         : null;
 
     const legend =
-      omitted > 0 ? t.t('card.gradKeyCut', { n: stepCount, k: rows.length }) : t.t('card.gradKey');
+      omitted > 0 ? t.tc('card.gradKeyCut', rows.length, { n: stepCount, k: rows.length }) : t.t('card.gradKey');
 
     const svgString = generateGradientCard({
       headerText: `${colorSpace.toUpperCase()} · ${stepCount}`,
@@ -332,7 +332,7 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
 
     // One line: the card carries every step; the embed names the omissions
     const embed: EmbedData = {
-      title: `${t.t('gradient.title')} • ${t.t('gradient.steps', { count: stepCount })}`,
+      title: `${t.t('gradient.title')} • ${t.tc('gradient.steps', stepCount)}`,
       description: omitted > 0 ? t.t('card.gradOmitted', { n: omitted }) : undefined,
       color: parseInt(startColor.hex.replace('#', ''), 16),
     };

@@ -132,8 +132,8 @@ vi.mock('../../services/bot-i18n.js', () => {
       'errors.noDyesAvailable': 'No dyes available',
       'dye.search.noResults': `No results for: ${vars?.query}`,
       'dye.search.tryDifferent': 'Try a different search term',
-      'dye.search.foundCount': `Found ${vars?.count} dye`,
-      'dye.search.foundCountPlural': `Found ${vars?.count} dyes`,
+      'dye.search.foundCount_one': `Found ${vars?.count} dye`,
+      'dye.search.foundCount_other': `Found ${vars?.count} dyes`,
       'dye.search.resultsTitle': `Search Results: ${vars?.query}`,
       'dye.search.moreResults': `+${vars?.count} more results`,
       'dye.search.useInfoHint': 'Use /dye info to see details',
@@ -160,6 +160,8 @@ vi.mock('../../services/bot-i18n.js', () => {
   };
   const mockTranslator = {
     t: translatorFn,
+    tc: (key: string, count: number, vars?: Record<string, any>) =>
+      translatorFn(`${key}_${count === 1 ? 'one' : 'other'}`, { count, ...vars }),
     getLocale: () => 'en',
   };
   return {

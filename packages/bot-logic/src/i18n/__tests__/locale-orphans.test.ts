@@ -241,9 +241,13 @@ function buildEnumeratedKeys(): Set<string> {
   return keys;
 }
 
+/** `card.x_one` / `card.x_other` are reached through `t.tc('card.x', n)` (F-09). */
+const PLURAL_SUFFIX = /_(one|other)$/;
+
 function isReachable(key: string, corpus: string, enumerated: Set<string>): boolean {
   if (enumerated.has(key)) return true;
-  return new RegExp(`['"\`]${escapeRe(key)}['"\`]`).test(corpus);
+  const base = key.replace(PLURAL_SUFFIX, '');
+  return new RegExp(`['"\`]${escapeRe(base)}['"\`]`).test(corpus);
 }
 
 function loadLocale(code: string): Record<string, unknown> {
@@ -284,10 +288,13 @@ describe('bot-logic i18n orphan gate', () => {
     const corpus = buildCorpus();
 
     const called = new Set<string>();
-    for (const m of corpus.matchAll(/\.t\(\s*['"`]([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+)['"`]/g)) {
+    for (const m of corpus.matchAll(/\.tc?\(\s*['"`]([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+)['"`]/g)) {
       called.add(m[1]);
     }
-    const missing = [...called].filter((k) => !defined.has(k)).sort();
+    // a `.tc()` key is satisfied by its _one/_other pair
+    const missing = [...called]
+      .filter((k) => !defined.has(k) && !(defined.has(`${k}_one`) && defined.has(`${k}_other`)))
+      .sort();
 
     expect(called.size).toBeGreaterThan(200);
     expect(missing, `t() keys with no en.json entry:\n  ${missing.join('\n  ')}`).toEqual([]);

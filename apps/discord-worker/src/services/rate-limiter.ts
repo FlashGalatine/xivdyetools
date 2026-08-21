@@ -206,7 +206,7 @@ export async function checkRateLimit(
  */
 export function formatRateLimitMessage(result: RateLimitResult, t: Translator): string {
   const seconds = result.retryAfter ?? Math.ceil((result.resetAt - Date.now()) / 1000);
-  return t.t('errors.rateLimited', { seconds });
+  return t.tc('errors.rateLimited', seconds, { seconds });
 }
 
 /**

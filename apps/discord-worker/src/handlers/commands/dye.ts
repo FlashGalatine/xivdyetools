@@ -129,10 +129,7 @@ function handleSearchSubcommand(
     results.length > 10
       ? `\n\n*${t.t('dye.search.moreResults', { count: results.length - 10 })}*`
       : '';
-  const foundText =
-    results.length === 1
-      ? t.t('dye.search.foundCount', { count: results.length })
-      : t.t('dye.search.foundCountPlural', { count: results.length });
+  const foundText = t.tc('dye.search.foundCount', results.length);
 
   return messageResponse({
     embeds: [

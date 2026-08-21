@@ -114,7 +114,7 @@ describe('bot-i18n.ts', () => {
         const translator = createTranslator('en');
 
         // Test with a number variable
-        const result = translator.t('dye.search.foundCount', { count: 1 });
+        const result = translator.tc('dye.search.foundCount', 1);
         expect(result).toBe('Found 1 dye:');
       });
 

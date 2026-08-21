@@ -10,6 +10,27 @@ import { describe, it, expect, vi } from 'vitest';
 import { Translator, createTranslator } from './index.js';
 
 describe('Translator', () => {
+  describe('tc (count-aware translate, F-09)', () => {
+    it('picks the _one form for exactly 1 and _other otherwise (en)', () => {
+      const t = createTranslator('en');
+      expect(t.tc('gradient.steps', 1)).toBe('1 Step');
+      expect(t.tc('gradient.steps', 4)).toBe('4 Steps');
+      expect(t.tc('gradient.steps', 0)).toBe('0 Steps');
+    });
+
+    it('single-form locales carry identical _one/_other strings', () => {
+      const t = createTranslator('ja');
+      expect(t.tc('gradient.steps', 1)).toBe('1ステップ');
+      expect(t.tc('gradient.steps', 4)).toBe('4ステップ');
+    });
+
+    it('merges count with extra variables and falls back to the bare key', () => {
+      const t = createTranslator('en');
+      expect(t.tc('card.gradVerdict', 1, { n: 4, k: 1 })).toContain('4 steps resolve to 1 dye.');
+      expect(t.tc('common.error', 2)).toBe('Error');
+    });
+  });
+
   describe('constructor', () => {
     it('creates a translator with the specified locale', () => {
       const translator = new Translator('ja');
@@ -71,7 +92,7 @@ describe('Translator', () => {
 
     it('handles numeric variables', () => {
       const translator = createTranslator('en');
-      const result = translator.t('dye.search.foundCount', { count: 1 });
+      const result = translator.tc('dye.search.foundCount', 1);
       expect(result).toBe('Found 1 dye:');
     });
 

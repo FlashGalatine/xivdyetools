@@ -319,7 +319,7 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
       labels: {
         lSlot: t.t('card.swatchSlot'),
         lNearest: t.t('card.swatchNearest'),
-        footKey: t.t('card.swatchFootKey', { s: kept.length, n: totalLive }),
+        footKey: t.tc('card.swatchFootKey', totalLive, { s: kept.length, n: totalLive }),
       },
       lang: locale,
       theme: input.theme,

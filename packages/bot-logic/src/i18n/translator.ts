@@ -85,6 +85,33 @@ export class Translator {
     return variables ? interpolate(value, variables) : value;
   }
 
+  /**
+   * Count-aware translate (2026-08-20 i18n audit, F-09). Resolves
+   * `${key}_one` when `count === 1`, else `${key}_other`, falling back to
+   * the bare `key`; `count` is always available as `{count}` in the
+   * template alongside `variables`. Every locale file carries both forms
+   * (ja/ko/zh with identical strings) so the six files keep key parity.
+   *
+   * Two CLDR categories (one/other) cover the shipped locales; a locale with
+   * few/many forms would extend this, not the call sites.
+   *
+   * @example
+   * t.tc('gradient.steps', 1)  // → '1 Step'
+   * t.tc('gradient.steps', 4)  // → '4 Steps'
+   */
+  tc(key: string, count: number, variables?: Record<string, string | number>): string {
+    const vars = { count, ...(variables ?? {}) };
+    const suffixed = `${key}_${count === 1 ? 'one' : 'other'}`;
+    if (this.has(suffixed)) return this.t(suffixed, vars);
+    return this.t(key, vars);
+  }
+
+  /** Whether `key` resolves to a string in this locale or the English fallback. */
+  private has(key: string): boolean {
+    const v = getNestedValue(this.data, key) ?? getNestedValue(this.fallbackData, key);
+    return typeof v === 'string';
+  }
+
   /** Get the current locale code. */
   getLocale(): LocaleCode {
     return this.locale;

@@ -213,7 +213,7 @@ describe('rate-limiter.ts', () => {
       const message = formatRateLimitMessage(result, createTranslator('en'));
 
       expect(message).toBe(
-        "You're using this command too quickly! Please wait **30s** before trying again.",
+        "You're using this command too quickly! Please wait **30 seconds** before trying again.",
       );
     });
 
@@ -226,7 +226,8 @@ describe('rate-limiter.ts', () => {
       };
 
       expect(formatRateLimitMessage(result, createTranslator('ja'))).toContain('**1秒**');
-      expect(formatRateLimitMessage(result, createTranslator('de'))).toContain('**1 s**');
+      expect(formatRateLimitMessage(result, createTranslator('de'))).toContain('**1 Sekunde**');
+      expect(formatRateLimitMessage(result, createTranslator('en'))).toContain('**1 second**');
     });
 
     it('should calculate retryAfter from resetAt if not provided', () => {
@@ -240,7 +241,7 @@ describe('rate-limiter.ts', () => {
 
       const message = formatRateLimitMessage(result, createTranslator('en'));
 
-      expect(message).toContain('45s');
+      expect(message).toContain('45 seconds');
     });
   });
 });
