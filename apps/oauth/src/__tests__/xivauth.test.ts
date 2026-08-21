@@ -43,6 +43,14 @@ async function createTestSignedState(data: Partial<StateData>): Promise<string> 
 }
 
 /**
+ * What the SPA returns to the POST callback: a signed XIVAuth-flow state whose
+ * code_challenge is the real S256 of VALID_CODE_VERIFIER (state is REQUIRED).
+ */
+async function boundState(): Promise<string> {
+    return createTestSignedState({ code_challenge: await s256(VALID_CODE_VERIFIER) });
+}
+
+/**
  * Real S256 challenge for a verifier — VALID_CODE_CHALLENGE is format-valid
  * only, not the hash of VALID_CODE_VERIFIER.
  */
@@ -539,6 +547,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'invalid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -572,6 +581,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -623,6 +633,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -674,6 +685,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -719,6 +731,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -761,6 +774,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -817,6 +831,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -840,6 +855,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -895,6 +911,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -916,6 +933,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -940,6 +958,7 @@ describe('XIVAuth Handler', () => {
                 body: JSON.stringify({
                     code: 'code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -996,6 +1015,24 @@ describe('XIVAuth Handler', () => {
             expect(json.token).toBeTruthy();
         });
 
+        it('should reject a missing, null or empty state with 400 Missing state', async () => {
+            for (const body of [
+                { code_verifier: VALID_CODE_VERIFIER, code: 'valid_code' },
+                { code_verifier: VALID_CODE_VERIFIER, code: 'valid_code', state: null },
+                { code_verifier: VALID_CODE_VERIFIER, code: 'valid_code', state: '' },
+            ]) {
+                const fetchMock = mockXIVAuth();
+
+                const response = await postXIVAuthCallback(body);
+                const json = (await response.json()) as Record<string, any>;
+
+                expect(response.status, JSON.stringify(body)).toBe(400);
+                expect(json.success).toBe(false);
+                expect(json.error).toBe('Missing state');
+                expect(fetchMock).not.toHaveBeenCalled();
+            }
+        });
+
         it('should reject a Discord-flow state presented to the XIVAuth exchange', async () => {
             const fetchMock = mockXIVAuth();
             const state = await createTestSignedState({
@@ -1026,7 +1063,7 @@ describe('XIVAuth Handler', () => {
                 ],
             });
 
-            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER });
+            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() });
             const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
@@ -1050,7 +1087,7 @@ describe('XIVAuth Handler', () => {
                 ],
             });
 
-            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER });
+            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() });
             const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
@@ -1071,7 +1108,7 @@ describe('XIVAuth Handler', () => {
                 socialIdentities: [{ provider: 'discord', external_id: 'not-a-snowflake' }],
             });
 
-            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER });
+            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() });
             const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
@@ -1084,7 +1121,7 @@ describe('XIVAuth Handler', () => {
                 socialIdentities: [{ provider: 'discord', external_id: '987654321098765432' }],
             });
 
-            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER });
+            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() });
             const json = (await response.json()) as Record<string, any>;
 
             expect(response.status).toBe(200);
@@ -1119,7 +1156,7 @@ describe('XIVAuth Handler', () => {
             mockXIVAuth({ tokenStatus: 400, tokenErrorBody: '{"error":"UPSTREAM-TOKEN-BODY-MARKER"}' });
 
             const response = await postXIVAuthCallback(
-                { code: 'bad', code_verifier: VALID_CODE_VERIFIER },
+                { code: 'bad', code_verifier: VALID_CODE_VERIFIER, state: await boundState() },
                 createProductionEnv()
             );
 
@@ -1134,7 +1171,7 @@ describe('XIVAuth Handler', () => {
             mockXIVAuth({ userStatus: 403, userErrorBody: 'UPSTREAM-USER-BODY-MARKER' });
 
             const response = await postXIVAuthCallback(
-                { code: 'valid_code', code_verifier: VALID_CODE_VERIFIER },
+                { code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() },
                 createProductionEnv()
             );
 
@@ -1152,7 +1189,7 @@ describe('XIVAuth Handler', () => {
             });
 
             const response = await postXIVAuthCallback(
-                { code: 'valid_code', code_verifier: VALID_CODE_VERIFIER },
+                { code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() },
                 createProductionEnv()
             );
 
@@ -1167,7 +1204,7 @@ describe('XIVAuth Handler', () => {
         it('should log the upstream error body only in development', async () => {
             mockXIVAuth({ tokenStatus: 400, tokenErrorBody: '{"error":"DEV-ONLY-BODY-MARKER"}' });
 
-            const response = await postXIVAuthCallback({ code: 'bad', code_verifier: VALID_CODE_VERIFIER });
+            const response = await postXIVAuthCallback({ code: 'bad', code_verifier: VALID_CODE_VERIFIER, state: await boundState() });
 
             expect(response.status).toBe(401);
             expect(lines.join('\n')).toContain('DEV-ONLY-BODY-MARKER');

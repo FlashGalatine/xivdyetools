@@ -65,8 +65,8 @@ xivauthRouter.get('/xivauth/callback', buildGetCallbackHandler(XIVAUTH_FLOW_CONF
  * Body:
  * - code: Authorization code from XIVAuth
  * - code_verifier: PKCE verifier to prove ownership
- * - state: (optional) the signed state echoed by the GET callback — when
- *   present, the verifier is bound to the signed code_challenge (FINDING-012)
+ * - state: the signed state echoed by the GET callback — REQUIRED; the
+ *   verifier is bound to the signed code_challenge (FINDING-012)
  *
  * FINDING-013 / OAUTH-7 (2026-08-21 security audit): everything this handler
  * logs goes through the request-scoped structured logger and carries no
@@ -117,20 +117,30 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
     );
   }
 
-  // FINDING-012 / OAUTH-5: bind the verifier to the challenge this worker
-  // signed at authorize time BEFORE calling XIVAuth (see callback.ts for the
-  // contract; the web app does not forward the state yet).
-  if (state !== undefined && state !== null) {
-    const binding = await verifyPkceStateBinding(state, code_verifier, 'xivauth', c.env.JWT_SECRET);
-    if (!binding.ok) {
-      return c.json<AuthResponse>(
-        {
-          success: false,
-          error: binding.reason === 'pkce_mismatch' ? 'PKCE verification failed' : 'Invalid state',
-        },
-        400
-      );
-    }
+  // FINDING-012 / OAUTH-5: the SPA returns the signed state from the GET
+  // bounce; bind the verifier to the challenge this worker signed at authorize
+  // time BEFORE calling XIVAuth (same contract as callback.ts). REQUIRED —
+  // without it there is nothing to bind to and the exchange does not reach
+  // the provider.
+  if (state === undefined || state === null || state === '') {
+    return c.json<AuthResponse>(
+      {
+        success: false,
+        error: 'Missing state',
+      },
+      400
+    );
+  }
+
+  const binding = await verifyPkceStateBinding(state, code_verifier, 'xivauth', c.env.JWT_SECRET);
+  if (!binding.ok) {
+    return c.json<AuthResponse>(
+      {
+        success: false,
+        error: binding.reason === 'pkce_mismatch' ? 'PKCE verification failed' : 'Invalid state',
+      },
+      400
+    );
   }
 
   try {

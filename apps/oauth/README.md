@@ -18,7 +18,7 @@ All auth routes are mounted under `/auth`.
 |--------|------|-------------|
 | `GET` | `/auth/discord` | Begin the Discord OAuth2 flow — redirects to Discord with PKCE state |
 | `GET` | `/auth/callback` | Discord redirect target; exchanges the code and issues a JWT |
-| `POST` | `/auth/callback` | Same exchange for clients that prefer to POST the code |
+| `POST` | `/auth/callback` | SPA token exchange — body `{ code, code_verifier, state }` (`state` = the signed value echoed by the GET callback) |
 
 ### XIVAuth
 
@@ -26,7 +26,7 @@ All auth routes are mounted under `/auth`.
 |--------|------|-------------|
 | `GET` | `/auth/xivauth` | Begin the XIVAuth flow — links verified FFXIV characters |
 | `GET` | `/auth/xivauth/callback` | XIVAuth redirect target |
-| `POST` | `/auth/xivauth/callback` | POST variant of the exchange |
+| `POST` | `/auth/xivauth/callback` | SPA token exchange — body `{ code, code_verifier, state }` |
 
 ### Token lifecycle
 
@@ -102,7 +102,7 @@ wrangler secret put XIVAUTH_CLIENT_SECRET   # XIVAuth OAuth2 client secret
 
 ## Security
 
-- **PKCE** on both OAuth2 flows — the authorization code alone is not sufficient to obtain a token. The GET callback echoes the worker-signed `state`; when the SPA returns it to the POST callback, the worker verifies `S256(code_verifier)` against the signed `code_challenge` **before** calling the provider, so PKCE does not depend on the IdP enforcing it (FINDING-012).
+- **PKCE** on both OAuth2 flows — the authorization code alone is not sufficient to obtain a token. The GET callback echoes the worker-signed `state`; the SPA must return it in the POST callback body (`{ code, code_verifier, state }` — `400 Missing state` otherwise), and the worker verifies `S256(code_verifier)` against the signed `code_challenge` **before** calling the provider, so PKCE does not depend on the IdP enforcing it (FINDING-012).
 - **Exact redirect target** — `redirect_uri` must be an allowlisted origin **and** exactly `/auth/callback` (no query string or fragment); `return_path` and the SPA `state` are bounded server-side (256 visible-ASCII characters).
 - **XIVAuth identity** — only a verified character becomes `username`/`global_name`; the XIVAuth-asserted Discord link must be a valid snowflake, an existing local account is never silently merged or deleted, and the XIVAuth handler logs no identifiers (FINDING-013).
 - **HS256 pinning** — tokens are signed and verified with HS256 only; `alg: none` and `alg: RS256` confusion attacks are rejected at verification time in `@xivdyetools/auth`.

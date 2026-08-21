@@ -51,6 +51,14 @@ async function createSignedState(overrides: Partial<StateData> = {}): Promise<st
 }
 
 /**
+ * What the SPA returns to the POST callback: a signed state whose
+ * code_challenge is the real S256 of VALID_CODE_VERIFIER (state is REQUIRED).
+ */
+async function boundState(): Promise<string> {
+    return createSignedState({ code_challenge: await s256(VALID_CODE_VERIFIER) });
+}
+
+/**
  * Discord token + user endpoints mocked to succeed; returns the fetch mock so
  * tests can assert whether the token exchange was attempted.
  */
@@ -504,17 +512,30 @@ describe('Callback Handler', () => {
             expect(fetchMock).not.toHaveBeenCalled();
         });
 
-        it('should treat a null state like an absent one (provider-enforced PKCE path)', async () => {
-            const fetchMock = mockDiscordSuccess();
+        // The web app forwards the signed state from the GET bounce, so the
+        // binding is mandatory: without a state there is nothing to bind the
+        // verifier to and the exchange must not reach the provider.
+        it('should reject a missing, null or empty state with 400 Missing state', async () => {
+            for (const body of [
+                { code: 'valid_code', code_verifier: VALID_CODE_VERIFIER },
+                { code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: null },
+                { code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: '' },
+            ]) {
+                const fetchMock = mockDiscordSuccess();
 
-            const response = await SELF.fetch('http://localhost/auth/callback', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: null }),
-            });
+                const response = await SELF.fetch('http://localhost/auth/callback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
 
-            expect(response.status).toBe(200);
-            expect(fetchMock).toHaveBeenCalled();
+                const json = (await response.json()) as Record<string, any>;
+
+                expect(response.status, JSON.stringify(body)).toBe(400);
+                expect(json.success).toBe(false);
+                expect(json.error).toBe('Missing state');
+                expect(fetchMock).not.toHaveBeenCalled();
+            }
         });
     });
 
@@ -610,6 +631,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'invalid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -643,6 +665,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -673,6 +696,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -703,6 +727,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -742,6 +767,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -781,6 +807,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -820,6 +847,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'valid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -876,6 +904,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                     redirect_uri: 'http://localhost:5173/custom/callback',
                 }),
             });
@@ -912,6 +941,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -933,6 +963,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -964,6 +995,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'invalid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -991,6 +1023,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 
@@ -1025,6 +1058,7 @@ describe('Callback Handler', () => {
                 body: JSON.stringify({
                     code: 'invalid_code',
                     code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
                 }),
             });
 

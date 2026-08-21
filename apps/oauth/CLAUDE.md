@@ -80,7 +80,7 @@ Frontend                       OAuth Worker                       Discord
    │ ◄────────────── 302 /auth/callback?code=…&state=…────────────── │
    │                                │                                │
    │  POST /auth/callback           │  verifyState(signature + age)  │
-   │  { code, code_verifier, ... } ►│                                │
+   │  { code, code_verifier, state }►│                                │
    │                                │  exchange code+verifier (10s)  │
    │                                │ ──────────────────────────────►│
    │                                │ ◄────────── tokens ────────────│
@@ -165,7 +165,7 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 | `/health` | GET | Liveness probe |
 | `/auth/discord` | GET | Initiates Discord OAuth (requires `code_challenge`) |
 | `/auth/callback` | GET | Discord redirect handler (exchanges code, mints JWT, redirects) |
-| `/auth/callback` | POST | SPA token exchange (`{ code, code_verifier, ... }`) |
+| `/auth/callback` | POST | SPA token exchange (`{ code, code_verifier, state }` — `state` is the signed value echoed by the GET callback; required) |
 | `/auth/xivauth` | GET | Initiates XIVAuth OAuth |
 | `/auth/xivauth/cb` | GET / POST | XIVAuth redirect handler |
 | `/auth/refresh` | POST | Refresh JWT (24h grace window after expiry) |
@@ -176,7 +176,7 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 
 ### PKCE Enforcement
 
-`validateCodeChallenge` rejects anything not matching `/^[A-Za-z0-9\-_]{43,128}$/`; `validateCodeVerifier` rejects anything not matching `/^[A-Za-z0-9\-._~]{43,128}$/`. Only `S256` is accepted as `code_challenge_method`. The verifier is **only** ever sent in the POST body — never as a query parameter — so it can't leak through redirects, server logs, or browser history. The GET callbacks echo the signed `state` in the bounce; when the SPA posts it back, `utils/pkce-binding.ts` verifies it (signature, expiry, provider) and requires `S256(code_verifier) === state.code_challenge` before the provider is called (FINDING-012 — optional until the web app forwards `state`, then make it required).
+`validateCodeChallenge` rejects anything not matching `/^[A-Za-z0-9\-_]{43,128}$/`; `validateCodeVerifier` rejects anything not matching `/^[A-Za-z0-9\-._~]{43,128}$/`. Only `S256` is accepted as `code_challenge_method`. The verifier is **only** ever sent in the POST body — never as a query parameter — so it can't leak through redirects, server logs, or browser history. The GET callbacks echo the signed `state` in the bounce; the SPA must post it back (`400 Missing state` otherwise) and `utils/pkce-binding.ts` verifies it (signature, expiry, provider) and requires `S256(code_verifier) === state.code_challenge` before the provider is called (FINDING-012).
 
 ### State Parameter Signing
 
