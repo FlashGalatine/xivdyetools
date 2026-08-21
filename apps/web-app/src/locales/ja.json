@@ -1026,7 +1026,7 @@
     "signinBlurb": "保存したパレットはこの端末に残るため、ログアウトしてもサービスが停止しても消えません。アカウントが要るのは投稿するときだけです。",
     "gateTitle": "アカウントでできること",
     "gateBrowse": "閲覧・検索",
-    "gateBrowseNote": "アカウント不要。",
+    "gateBrowseNote": "アカウント不要、レート制限なし。",
     "gateSave": "パレット保存",
     "gateSaveNote": "この端末に保存。",
     "gateVote": "投票",

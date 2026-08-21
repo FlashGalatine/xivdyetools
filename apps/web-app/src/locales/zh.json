@@ -1017,7 +1017,7 @@
     "signinBlurb": "保存的配色留在本机，退出登录或服务中断都不会丢失。只有投稿时才需要账号。",
     "gateTitle": "账号的用途",
     "gateBrowse": "浏览与搜索",
-    "gateBrowseNote": "无需账号。",
+    "gateBrowseNote": "无需账号，无速率限制。",
     "gateSave": "保存配色",
     "gateSaveNote": "存储在本机。",
     "gateVote": "投票",
