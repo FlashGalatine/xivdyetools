@@ -21,45 +21,12 @@ import { logger } from '@shared/logger';
 import { ICON_DICE, ICON_BROOM, ICON_CLOSE } from '@shared/ui-icons';
 import { LanguageService } from '@services/index';
 import type { ToolId } from '@services/router-service';
+import { DYE_CATEGORIES } from '@xivdyetools/core';
 
 /**
  * Filter types for dye categories
  */
 type DyeFilter = 'all' | 'metallic' | 'pastel' | 'dark' | 'vibrant';
-
-/**
- * Dye categories for grouping
- */
-const DYE_CATEGORY_ORDER = [
-  'White',
-  'Grey',
-  'Black',
-  'Brown',
-  'Red',
-  'Orange',
-  'Yellow',
-  'Green',
-  'Blue',
-  'Purple',
-  'Pink',
-] as const;
-
-/**
- * Mapping from dye category names to translation keys
- */
-const CATEGORY_TRANSLATION_KEYS: Record<string, string> = {
-  White: 'colorPalette.whites',
-  Grey: 'colorPalette.grays',
-  Black: 'colorPalette.blacks',
-  Brown: 'colorPalette.browns',
-  Red: 'colorPalette.reds',
-  Orange: 'colorPalette.oranges',
-  Yellow: 'colorPalette.yellows',
-  Green: 'colorPalette.greens',
-  Blue: 'colorPalette.blues',
-  Purple: 'colorPalette.purples',
-  Pink: 'colorPalette.pinks',
-};
 
 /**
  * Consolidation spectrum chips (multi-select). Labels come from colorPalette.* keys.
@@ -826,7 +793,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
   private groupByCategory(dyes: Dye[]): Map<string, Dye[]> {
     const groups = new Map<string, Dye[]>();
 
-    for (const category of DYE_CATEGORY_ORDER) {
+    for (const category of DYE_CATEGORIES) {
       const categoryDyes = dyes.filter((d) => d.category === category);
       if (categoryDyes.length > 0) {
         groups.set(category, categoryDyes);
@@ -835,7 +802,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
     // Add any remaining categories not in our order
     for (const dye of dyes) {
-      if (!DYE_CATEGORY_ORDER.includes(dye.category as (typeof DYE_CATEGORY_ORDER)[number])) {
+      if (!DYE_CATEGORIES.includes(dye.category as (typeof DYE_CATEGORIES)[number])) {
         const existing = groups.get(dye.category) || [];
         existing.push(dye);
         groups.set(dye.category, existing);
@@ -1323,9 +1290,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
       ${Array.from(groupedDyes.entries()).map(
         ([category, dyes]) => html`
           <div class="category-section">
-            <div class="category-label">
-              ${LanguageService.t(CATEGORY_TRANSLATION_KEYS[category] || category)}
-            </div>
+            <div class="category-label">${LanguageService.getCategory(category)}</div>
             <div class="swatch-grid">${dyes.map((dye) => this.renderSwatch(dye))}</div>
           </div>
         `
