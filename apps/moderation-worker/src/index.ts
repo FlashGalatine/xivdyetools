@@ -21,6 +21,7 @@ import { safeParseJSON } from './utils/safe-json.js';
 import {
   checkRateLimit,
   incrementRateLimit,
+  moderationRateLimitBindings,
   RATE_LIMIT_CONFIGS,
 } from './middleware/rate-limit.js';
 import { handlePresetCommand } from './handlers/commands/index.js';
@@ -200,12 +201,13 @@ async function handleCommand(
     return ephemeralResponse('Unable to identify user. Please try again.');
   }
 
-  // Check rate limit for commands
+  // Check rate limit for commands (FINDING-003: native bindings when bound, KV fallback)
   const rateLimitCheck = await checkRateLimit(
     env.KV,
     userId,
     'command',
-    RATE_LIMIT_CONFIGS.command
+    RATE_LIMIT_CONFIGS.command,
+    moderationRateLimitBindings(env)
   );
 
   if (!rateLimitCheck.allowed) {
@@ -220,7 +222,7 @@ async function handleCommand(
 
   // Increment rate limit counter
   ctx.waitUntil(
-    incrementRateLimit(env.KV, userId, 'command').catch((err) => {
+    incrementRateLimit(env.KV, userId, 'command', 3, moderationRateLimitBindings(env)).catch((err) => {
       logger.error('Failed to increment command rate limit', err instanceof Error ? err : undefined);
     })
   );
@@ -273,7 +275,8 @@ async function handleAutocomplete(
     env.KV,
     userId,
     'autocomplete',
-    RATE_LIMIT_CONFIGS.autocomplete
+    RATE_LIMIT_CONFIGS.autocomplete,
+    moderationRateLimitBindings(env)
   );
 
   if (!rateLimitCheck.allowed) {
@@ -290,7 +293,7 @@ async function handleAutocomplete(
   }
 
   // Increment rate limit counter (non-blocking)
-  incrementRateLimit(env.KV, userId, 'autocomplete').catch((err) => {
+  incrementRateLimit(env.KV, userId, 'autocomplete', 3, moderationRateLimitBindings(env)).catch((err) => {
     logger.error('Failed to increment autocomplete rate limit', err instanceof Error ? err : undefined);
   });
 

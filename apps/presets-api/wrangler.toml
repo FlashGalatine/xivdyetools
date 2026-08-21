@@ -42,6 +42,12 @@ service = "xivdyetools-image-worker"
 binding = "TOKEN_BLACKLIST"
 id = "891bbbe834ba4055a06b672b589094be"
 
+# FINDING-003: native Workers Rate Limiting binding for the public per-IP limiter (100 / 60 s).
+[[ratelimits]]
+name = "RL_PUBLIC"
+namespace_id = "1012"
+simple = { limit = 100, period = 60 }
+
 [vars]
 ENVIRONMENT = "development"
 API_VERSION = "v1"
@@ -83,3 +89,9 @@ service = "xivdyetools-image-worker"
 [[env.production.kv_namespaces]]
 binding = "TOKEN_BLACKLIST"
 id = "0d6f3be3b4704e91a83e6387b9769e45"
+
+# FINDING-003: production public per-IP rate-limit binding
+[[env.production.ratelimits]]
+name = "RL_PUBLIC"
+namespace_id = "1011"
+simple = { limit = 100, period = 60 }

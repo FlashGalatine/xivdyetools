@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-08-21
+
+Security audit remediation (docs/audits/2026-08-21-security, FINDING-003). Minor bump: two new bindings, no behaviour change for users under the limits.
+
+### Security
+
+- **Per-user rate limiting now uses the native Workers Rate Limiting bindings `RL_COMMAND` (25 / 60 s = 20 + 5 burst) and `RL_AUTOCOMPLETE` (70 / 60 s = 60 + 10)** via `CloudflareRateLimiter` (`@xivdyetools/worker-kit` 1.1.0). The KV-backed limiter could not throttle a fast client (KV 1 write/s/key + swallowed put failures + fail-open), which mattered most on the autocomplete path that queries production D1. `checkRateLimit` / `incrementRateLimit` take an optional trailing `bindings` argument (`moderationRateLimitBindings(env)`); without it they keep using KV, so dev/tests are unchanged.
+
+### Deploy notes
+
+- `[[ratelimits]]` bindings need no resource creation (`namespace_id` 1031/1032 prod, 1033/1034 dev).
+
 ## [1.4.0] - 2026-08-16
 
 Monorepo 2.0 / 5.0-release follow-through (additive behaviour). Deploy note: production is now **only** `wrangler deploy --env production`; a bare `deploy` targets the routeless `xivdyetools-moderation-worker-dev` worker.

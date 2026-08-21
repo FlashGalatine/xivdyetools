@@ -2,6 +2,18 @@
 
 All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-middleware`) will be documented in this file.
 
+## [1.1.0] - 2026-08-21
+
+Security audit remediation (docs/audits/2026-08-21-security, FINDING-003). Minor bump: additive API.
+
+### Added
+
+- **`CloudflareRateLimiter`** (`src/rate-limiter/backends/cloudflare.ts`, exported from `/rate-limiter` and the new `/rate-limiter/cloudflare` subpath) — a backend over the native Workers **Rate Limiting binding** (`[[ratelimits]]`, GA 2025-09). Takes one or more *tiers* (`{ limit, periodSeconds, binding }`, one per distinct `[[ratelimits]]` entry) and routes each `RateLimitConfig` to the smallest tier that holds `maxRequests + burstAllowance`. Implements `ExtendedRateLimiter` so it drops into both the one-shot (`check`) and two-phase (`checkOnly` / `increment`) call styles; `checkOnly` consumes a slot (the binding has no peek) and `increment` / `reset` / `resetAll` are no-ops. Fail-open with `backendError` unless `config.failOpen === false`. Also exports `RateLimitBinding`, `CloudflareRateLimitTier`, `CloudflareRateLimiterOptions`.
+
+### Security
+
+- **The KV backend is documented as unable to throttle a fast client** and should only be a fallback: KV allows 1 write/s/key, `KVRateLimiter.increment()` swallows the resulting 429s (so a counter advances at most ≈1/s, never reaching a 60 s threshold of 65), reads are eventually consistent, and `check()` fails open on any KV error. All per-client limiters in the monorepo (api-worker, presets-api, oauth, moderation-worker) now prefer `CloudflareRateLimiter`; discord-worker keeps Upstash (atomic INCR) and warns when it falls back to KV.
+
 ## [1.0.0] - 2026-08-16
 
 **New npm package** — first release. Formed in the Monorepo 2.0 Tier 1 package consolidation (2026-07-31) by merging `@xivdyetools/worker-middleware` v1.2.0 and `@xivdyetools/rate-limiter` v1.5.0; both source trees moved verbatim, and neither API changed. `@xivdyetools/worker-kit` has never been published, so nothing below is breaking for an existing consumer — but see the migration notes for the two retired packages.

@@ -12,6 +12,7 @@ Security audit remediation (docs/audits/2026-08-21-security, FINDING-001). Minor
 ### Security
 
 - **`/auth/refresh` grace window reduced from 24 h to the shared `REFRESH_GRACE_SECONDS` (15 min) from `@xivdyetools/auth` 1.4.0**, and `/auth/revoke` / rotation-revoke blacklist entries now outlive `exp` by that same window. Before this, a blacklist entry expired exactly at `exp` while the refresh endpoint still accepted the token for another 24 h — so a token the user had revoked at logout (or a leaked one) became refreshable the moment it expired and could be re-minted for up to the 30-day session cap with no way for the victim to stop it. Regression tests: revoke → expire → refresh must 401; refresh → expire → refresh-again must 401.
+- **`/auth/*` rate limiting now prefers the native Workers Rate Limiting bindings `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30`** (one per `OAUTH_LIMITS` value, keyed per IP + path) via `CloudflareRateLimiter` from `@xivdyetools/worker-kit` 1.1.0 (FINDING-003). The KV-backed limiter could not throttle a fast client (KV 1 write/s/key, swallowed put failures, fail-open), which is exactly the brute-force pattern these limits exist for. `checkRateLimit(ip, path, backends?)` takes `{ cloudflare?, kv? }`; KV (`TOKEN_BLACKLIST`, `rl:` prefix) and per-isolate memory remain as fallbacks. Bindings need no resource creation (`namespace_id` 1021-1023 prod, 1024-1026 development, 1027-1029 preview).
 
 ## [2.6.0] - 2026-08-16
 

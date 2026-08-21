@@ -56,6 +56,8 @@ export interface RateLimiterConfig {
  */
 let limiterInstance: RateLimiter | null = null;
 let configuredBackend: 'upstash' | 'kv' | null = null;
+/** FINDING-003: the KV-fallback warning is emitted once per isolate */
+let kvFallbackWarned = false;
 
 /**
  * Get or create the rate limiter instance
@@ -163,6 +165,19 @@ export async function checkRateLimit(
   const limiter = getLimiter(config);
   const limitConfig = getDiscordCommandLimit(commandName ?? 'default', subcommand);
 
+  // FINDING-003 (2026-08-21 audit): KV cannot throttle a fast client
+  // (1 write/s/key, swallowed put failures, eventually-consistent reads) —
+  // it is a dev fallback only. Say so once per isolate so a production
+  // deployment missing UPSTASH_REDIS_REST_URL/TOKEN is visible in the logs.
+  if (configuredBackend === 'kv' && !kvFallbackWarned) {
+    kvFallbackWarned = true;
+    // optional call: some callers/tests pass a partial logger without warn()
+    logger?.warn?.(
+      'Rate limiter using KV fallback — KV cannot throttle fast clients; configure Upstash (UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN) in production',
+      { backend: 'kv' },
+    );
+  }
+
   // Build compound key for user:command rate limiting. A subcommand that has
   // its own tier (e.g. extractor:image) gets its own bucket so it cannot
   // borrow allowance from the cheaper sibling.
@@ -215,4 +230,5 @@ export function formatRateLimitMessage(result: RateLimitResult, t: Translator): 
 export function resetRateLimiterInstance(): void {
   limiterInstance = null;
   configuredBackend = null;
+  kvFallbackWarned = false;
 }

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-08-21
+
+Security audit remediation (docs/audits/2026-08-21-security, FINDING-003). Minor bump: new binding, no API contract change.
+
+### Security
+
+- **`/v1/*` per-IP rate limiting now uses the native Workers Rate Limiting binding `API_RATE_LIMITER`** (`[[ratelimits]]`, `simple = { limit = 65, period = 60 }` = the 60 + 5 burst it always advertised) via `CloudflareRateLimiter` from `@xivdyetools/worker-kit` 1.1.0. The KV-backed limiter could not throttle a fast client — KV allows 1 write/s/key and the increment swallowed the resulting 429s, so a single client sending >1 req/s never reached the threshold, and any KV error failed open. KV `RATE_LIMIT` is kept only as the fallback when the binding is absent. `createApiRateLimitMiddleware()` / `selectApiRateLimiter()` are exported for tests; the 429 body is unchanged.
+
+### Deploy notes
+
+- `[[ratelimits]]` bindings need no resource creation — they deploy with the worker (`namespace_id` 1001 prod / 1002 dev; see `docs/developer-guides/environment-variables.md`).
+
 ## [0.7.0] - 2026-08-20
 
 ### Added

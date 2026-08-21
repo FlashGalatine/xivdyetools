@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/worker-kit",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Shared Cloudflare Worker toolkit for xivdyetools: Hono middleware (request ID, logger, rate limit) + rate limiting backends (Memory, KV, Upstash)",
   "author": "XIV Dye Tools",
   "license": "MIT",
@@ -31,6 +31,10 @@
     "./rate-limiter/upstash": {
       "types": "./dist/rate-limiter/backends/upstash.d.ts",
       "import": "./dist/rate-limiter/backends/upstash.js"
+    },
+    "./rate-limiter/cloudflare": {
+      "types": "./dist/rate-limiter/backends/cloudflare.d.ts",
+      "import": "./dist/rate-limiter/backends/cloudflare.js"
     },
     "./rate-limiter/presets": {
       "types": "./dist/rate-limiter/presets/index.d.ts",

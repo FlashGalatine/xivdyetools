@@ -1,6 +1,11 @@
 /** Cloudflare Worker bindings */
 export interface Env {
   RATE_LIMIT: KVNamespace;
+  /**
+   * FINDING-003: native Workers Rate Limiting binding (`[[ratelimits]]`,
+   * limit 65 / 60 s) — the /v1/* per-IP limiter when bound; KV is the fallback.
+   */
+  API_RATE_LIMITER?: RateLimit;
   ENVIRONMENT: string;
   API_VERSION: string;
   /** Universalis proxy routes (absorbed from apps/universalis-proxy) */

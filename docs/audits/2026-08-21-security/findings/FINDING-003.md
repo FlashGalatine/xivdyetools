@@ -34,3 +34,6 @@ Unlimited request rate against `data.xivdyetools.app/v1/*` (incl. `/v1/chara/res
 ## References
 - Cloudflare KV limits ("1 write per second to the same key"); Workers Rate Limiting binding docs
 - Evidence: `../evidence/review-api-worker.md` (API-1, API-7), `../evidence/review-packages.md` (PKG-9)
+
+## Status
+**FIXED 2026-08-21** — `fix(worker-kit,api-worker,oauth,presets-api,moderation-worker): native rate-limit bindings (FINDING-003)`: `@xivdyetools/worker-kit` 1.1.0 adds `CloudflareRateLimiter` (tiered `[[ratelimits]]` backend); api-worker 0.8.0 (`API_RATE_LIMITER`), presets-api 2.1.0 (`RL_PUBLIC`), oauth 2.7.0 (`RL_AUTH_10/20/30`), moderation-worker 1.5.0 (`RL_COMMAND`/`RL_AUTOCOMPLETE`) use it with KV/memory only as fallbacks; discord-worker warns once when it falls back from Upstash to KV. Residual (documented): counters are per-colo; service-binding callers still share an IP bucket on presets-api (PAPI-8).

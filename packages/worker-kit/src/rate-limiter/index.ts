@@ -54,6 +54,14 @@ export type {
 export { MemoryRateLimiter } from './backends/memory.js';
 export { KVRateLimiter } from './backends/kv.js';
 export { UpstashRateLimiter } from './backends/upstash.js';
+// FINDING-003 (2026-08-21 security audit): native Workers Rate Limiting binding —
+// the recommended per-client abuse limiter (KV cannot throttle a fast client)
+export {
+  CloudflareRateLimiter,
+  type CloudflareRateLimiterOptions,
+  type CloudflareRateLimitTier,
+  type RateLimitBinding,
+} from './backends/cloudflare.js';
 
 // Utilities
 export { getClientIp } from './ip.js';

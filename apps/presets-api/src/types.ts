@@ -55,6 +55,12 @@ export interface Env {
   // R2 buckets
   THUMBNAILS: R2Bucket;
 
+  /**
+   * FINDING-003: native Workers Rate Limiting binding (`[[ratelimits]]`,
+   * limit 100 / 60 s) for the public per-IP limiter; memory fallback when absent.
+   */
+  RL_PUBLIC?: RateLimit;
+
   // Environment variables
   ENVIRONMENT: string;
   API_VERSION: string;

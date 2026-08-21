@@ -256,6 +256,20 @@ Update `wrangler.toml` with the preview IDs for local testing.
 
 ---
 
+## Rate-limit bindings (FINDING-003, 2026-08-21 audit)
+
+Per-client abuse limiting uses the native **Workers Rate Limiting binding** (`[[ratelimits]]`, GA 2025-09) via `CloudflareRateLimiter` from `@xivdyetools/worker-kit/rate-limiter`. Bindings need no resource creation — they deploy with the worker. Each binding carries ONE fixed `{ limit, period }`, so workers with several limits bind one tier per distinct limit. `namespace_id` must be unique per account; the allocation is:
+
+| Worker | Binding | limit / period | namespace_id (prod / dev) | Fallback when absent |
+|--------|---------|----------------|---------------------------|----------------------|
+| api-worker | `API_RATE_LIMITER` | 65 / 60 s (60 + 5 burst per IP on `/v1/*`) | 1001 / 1002 | KV `RATE_LIMIT` |
+| presets-api | `RL_PUBLIC` | 100 / 60 s per IP on `/api/*` | 1011 / 1012 | per-isolate memory |
+| oauth | `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` | 10 / 20 / 30 per 60 s per IP+path (`OAUTH_LIMITS`) | 1021-1023 (top-level = prod), 1024-1026 (development), 1027-1029 (preview) | KV `TOKEN_BLACKLIST` (`rl:` prefix), then memory |
+| moderation-worker | `RL_COMMAND` / `RL_AUTOCOMPLETE` | 25 / 70 per 60 s per Discord user | 1031-1032 / 1033-1034 | KV `KV` |
+| discord-worker | — (Upstash Redis is the primary backend) | per-command tiers | — | KV — logs a one-time warning; configure `UPSTASH_REDIS_REST_URL/TOKEN` in production |
+
+Why: KV allows one write per second per key and the read-modify-write counter swallows the resulting 429s, so a single fast client never reaches a 60 s threshold (FINDING-003). KV/memory remain only as fallbacks for environments without the binding.
+
 ## Shared Secrets
 
 These secrets must match across services:

@@ -14,8 +14,11 @@ Security audit remediation (docs/audits/2026-08-21-security, FINDING-002 / FINDI
 - **Revoked JWTs are now rejected by `authMiddleware`.** The oauth worker's `TOKEN_BLACKLIST` KV namespace is bound into this worker (`wrangler.toml`, dev + production) and a token whose `jti` is blacklisted (logout via `/auth/revoke`, refresh rotation) is treated as unauthenticated. Previously revocation only affected the oauth worker's own `/auth/me` + `/auth/refresh`, so a logged-out token kept full API access until `exp`. Fail-open on KV errors, consistent with the oauth README.
 - **Issuer pinning.** New `JWT_ISSUER` var (`https://auth.xivdyetools.app` in production, `http://localhost:8788` in dev) is passed to `verifyJWT({ issuer })`; tokens minted by any other issuer that shares `JWT_SECRET` (e.g. the dormant oauth preview env) are refused. Claim typing from `@xivdyetools/auth` 1.4.0 applies as well (`exp` must be numeric, `sub` a string).
 
+- **Public per-IP rate limiting prefers the native Workers Rate Limiting binding `RL_PUBLIC`** (100 / 60 s) via `CloudflareRateLimiter` (`@xivdyetools/worker-kit` 1.1.0, FINDING-003); the per-isolate memory limiter remains the fallback for dev/tests. `createPublicRateLimitMiddleware()` / `selectPublicRateLimiter()` exported for tests; headers and 429 shape unchanged.
+
 ### Deploy notes
 
+- `RL_PUBLIC` (`[[ratelimits]]`, `namespace_id` 1011 prod / 1012 dev) needs no resource creation.
 - `TOKEN_BLACKLIST` binds an existing namespace (`0d6f3be3…` prod / `891bbbe8…` dev) — no `wrangler kv namespace create` needed. `JWT_ISSUER` is a plain var, already in `wrangler.toml`.
 
 ## [2.0.0] - 2026-08-16

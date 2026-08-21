@@ -29,6 +29,17 @@ database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 binding = "PRESETS_API"
 service = "xivdyetools-presets-api"
 
+# FINDING-003: native Workers Rate Limiting bindings (per Discord user): command 20+5, autocomplete 60+10 per 60 s.
+[[ratelimits]]
+name = "RL_COMMAND"
+namespace_id = "1033"
+simple = { limit = 25, period = 60 }
+
+[[ratelimits]]
+name = "RL_AUTOCOMPLETE"
+namespace_id = "1034"
+simple = { limit = 70, period = 60 }
+
 [vars]
 DISCORD_CLIENT_ID = "1453806659708129374"
 PRESETS_API_URL = "https://api.xivdyetools.app"
@@ -60,3 +71,14 @@ database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 [[env.production.services]]
 binding = "PRESETS_API"
 service = "xivdyetools-presets-api"
+
+# FINDING-003: production per-user rate-limit bindings
+[[env.production.ratelimits]]
+name = "RL_COMMAND"
+namespace_id = "1031"
+simple = { limit = 25, period = 60 }
+
+[[env.production.ratelimits]]
+name = "RL_AUTOCOMPLETE"
+namespace_id = "1032"
+simple = { limit = 70, period = 60 }

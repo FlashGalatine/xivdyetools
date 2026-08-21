@@ -5,7 +5,7 @@
 *Last Updated: August 21, 2026*
 
 > **Versions below are read from each project's `package.json` on the working branch.** The 5.0
-> wave — `core` v4.0.0, `types` v2.0.0, `svg` v2.0.0, `bot-logic` v2.0.0, `worker-kit` v1.0.0,
+> wave — `core` v4.0.0, `types` v2.0.0, `svg` v2.0.0, `bot-logic` v2.0.0, `worker-kit` v1.1.0,
 > `web-app` v5.0.0, `discord-worker` v5.0.0, `og-worker` v2.2.0, `presets-api` v2.1.0 and the
 > rest — is complete on `monorepo-2.0-prep` with every `CHANGELOG.md` written, but **not yet merged
 > to `main` or published to npm**. Merging to `main` is the release; the root `CHANGELOG.md` 2.0.0
@@ -22,10 +22,10 @@
 | **Web Application** | v5.0.0 | `xivdyetools-web-app` | Cloudflare Pages | Active — release pending |
 | **Discord Bot** | v5.0.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active — release pending |
 | **Image Worker** | v1.0.0 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.4.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.5.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v2.7.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.1.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 | Active |
-| **Public REST API** | v0.7.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.8.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.2.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.2.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -39,7 +39,7 @@
 | **Types** | v2.0.0 | `@xivdyetools/types` | npm | Active — publish pending |
 | **Auth** (incl. `/encoding`) | v1.4.0 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v1.3.0 | `@xivdyetools/logger` | npm | Active |
-| **Worker Kit** (middleware + `/rate-limiter`) | v1.0.0 | `@xivdyetools/worker-kit` | npm | Active (first publish pending) |
+| **Worker Kit** (middleware + `/rate-limiter`) | v1.1.0 | `@xivdyetools/worker-kit` | npm | Active (first publish pending) |
 | **SVG** | v2.0.0 | `@xivdyetools/svg` | npm | Active — publish pending |
 | **Bot Logic** (incl. `/i18n`) | v2.0.0 | `@xivdyetools/bot-logic` | npm | Active — publish pending |
 | **Test Utils** | v1.2.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
@@ -247,6 +247,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v1.5.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-003) — per-user limiter uses native `RL_COMMAND` / `RL_AUTOCOMPLETE` rate-limit bindings, KV fallback only** |
 | **v1.4.0** | **Aug 2026** | **Image-only queue entries marked instead of mis-approved; new preset category rows; `worker-kit`; dev/prod `wrangler.toml` split (bare deploy = routeless `-dev` worker)** |
 | **v1.3.0** | **Jul 2026** | **2026-07-18 audit (Sprint 5) — BUG-035 throw-safe outcome-checked Discord API wrappers (failures logged, not silently dropped), BUG-073 `MODERATOR_IDS` parsed via the shared `@xivdyetools/bot-logic` grammar** |
 | **v1.2.0** | **Apr 2026** | **SEC-001 global `onError` handler prevents stack-trace leakage; SEC-005 placeholder `DISCORD_CLIENT_ID` detection at startup; migrated request-ID/logger/rate-limit middleware to `@xivdyetools/worker-middleware`; ARCH-001 removed `nodejs_compat`; BUG-001 strict TypeScript checks** |
@@ -395,6 +396,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v0.8.0** | **Aug 2026** | **2026-08-21 security audit (FINDING-003) — `/v1/*` per-IP limiter now uses the native Workers Rate Limiting binding `API_RATE_LIMITER` (65 / 60 s); KV (which cannot throttle a fast client) is only the fallback** |
 | **v0.6.0** | **Aug 2026** | **Absorbed universalis-proxy (`/universalis/*` canonical, `/api/v2/*` compat) and the api-docs VitePress site (Workers Static Assets on `developers.xivdyetools.app`); serves schema v2 (125 dyes, `facewearColors`, negative legacy IDs → 404 with slug); accepts the 5.0 matching vocabulary (`hyab` / `oklch-weighted` normalised to `ciede2000`, `kL/kC/kH` ignored); `worker-kit`; dev/prod split** |
 | **v0.5.0** | **Jul 2026** | **2026-07-18 audit (Sprint 4) — route/middleware/validation fixes; consumes `@xivdyetools/core` 2.7.0's exact perceptual-search fix so `/v1` match results are correct at radius boundaries** |
 | **v0.4.0** | **Apr 2026** | **Removed `?alliedSociety=` filter (post-Patch 7.5); OPT-001 `localeMiddleware` validates `?locale=` once per request; BUG-001 structured logger; ARCH-001 CORS `maxAge` 24h → 1h; BUG-004 per-request `KVRateLimiter` construction (eliminates singleton footgun)** |

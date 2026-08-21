@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Two modules:
 
 - **`src/middleware/`** — the Hono middleware stack used by every CF Worker: `requestIdMiddleware`, `loggerMiddleware`, `rateLimitMiddleware` factories, plus `MiddlewareVariables` and Hono `ContextVariableMap` augmentation (`c.get('requestId')` / `c.get('logger')` typed globally).
-- **`src/rate-limiter/`** — the sliding-window rate limiting engine: `RateLimiter` interface, `MemoryRateLimiter` / `KVRateLimiter` / `UpstashRateLimiter` backends, `getClientIp` (SEC-002: prefers `CF-Connecting-IP`, never trust `X-Forwarded-For`), `getRateLimitHeaders`, and shared limit presets (`PUBLIC_API_LIMITS`, …).
+- **`src/rate-limiter/`** — the rate limiting engine: `RateLimiter` / `ExtendedRateLimiter` interfaces, `CloudflareRateLimiter` (native `[[ratelimits]]` binding, tiered — the **preferred per-client limiter** since FINDING-003, 2026-08-21), `MemoryRateLimiter` / `KVRateLimiter` / `UpstashRateLimiter` backends, `getClientIp` (SEC-002: prefers `CF-Connecting-IP`, never trust `X-Forwarded-For`), `getRateLimitHeaders`, and shared limit presets (`PUBLIC_API_LIMITS`, …). **KV cannot throttle a fast client** (1 write/s/key, swallowed put failures, eventually-consistent reads, fail-open) — use it only as a fallback.
 
 ## Import Paths
 

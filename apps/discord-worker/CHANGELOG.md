@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security — 2026-08-21 security audit (`docs/audits/2026-08-21-security/`, FINDING-003)
+
+- Rate limiter logs a one-time warning per isolate when it falls back from Upstash to KV (`services/rate-limiter.ts`). The KV backend cannot throttle a fast client (KV 1 write/s/key, swallowed put failures, eventually-consistent reads), so it is a dev fallback only — production must configure `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`, and the warning makes a missing configuration visible in the logs instead of silently running unthrottled.
+
 ### Fixed — 2026-08-20 i18n audit remediation (`docs/audits/2026-08-20-discord-worker-i18n/`)
 
 - **Seven `t.t()` keys that never existed** (`budget.noWorldSet.*`, `budget.errors.missingWorld|saveFailed|missingPreset`, `common.unknownError`, `preset.errors.notFound`) rendered raw dotted keys on `/budget` (no world set) and `/preset favorite` since 2026-02 — added / repointed, plus a reverse key-existence gate in bot-logic (F-01).

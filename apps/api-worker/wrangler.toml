@@ -29,6 +29,13 @@ RATE_LIMIT_WINDOW_SECONDS = "60"
 XIVAPI_BASE = "https://v2.xivapi.com"
 XIVAPI_VERSION = "latest"
 
+# FINDING-003: native Workers Rate Limiting binding for /v1/* (65 = 60 + 5 burst per 60 s).
+# namespace_id must be unique per account — see docs/developer-guides/environment-variables.md.
+[[ratelimits]]
+name = "API_RATE_LIMITER"
+namespace_id = "1002"
+simple = { limit = 65, period = 60 }
+
 [env.production]
 name = "xivdyetools-api-worker"
 # proxy.* domains absorbed from the retired universalis-proxy worker (Tier 2).
@@ -60,3 +67,9 @@ not_found_handling = "404-page"
 [[env.production.kv_namespaces]]
 binding = "RATE_LIMIT"
 id = "a57d958973884b578889e827311f9ee2"
+
+# FINDING-003: production /v1/* rate-limit binding (see top-level block)
+[[env.production.ratelimits]]
+name = "API_RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 65, period = 60 }

@@ -10,7 +10,7 @@ import { authorizeRouter } from './handlers/authorize.js';
 import { callbackRouter } from './handlers/callback.js';
 import { tokenRouter } from './handlers/refresh.js';
 import { xivauthRouter } from './handlers/xivauth.js';
-import { checkRateLimit, getClientIp } from './services/rate-limit.js';
+import { checkRateLimit, getClientIp, oauthRateLimitTiers } from './services/rate-limit.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-kit';
 import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
@@ -150,7 +150,11 @@ app.use('/auth/*', async (c, next) => {
   const clientIp = getClientIp(c.req.raw);
   const path = new URL(c.req.url).pathname;
 
-  const result = await checkRateLimit(clientIp, path, c.env.TOKEN_BLACKLIST);
+  // FINDING-003: native rate-limit bindings first, KV (TOKEN_BLACKLIST) as fallback
+  const result = await checkRateLimit(clientIp, path, {
+    cloudflare: oauthRateLimitTiers(c.env),
+    kv: c.env.TOKEN_BLACKLIST,
+  });
 
   // Set rate limit headers on all responses
   c.header('X-RateLimit-Limit', result.limit.toString());

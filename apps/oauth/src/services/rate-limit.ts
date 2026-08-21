@@ -1,31 +1,39 @@
 /**
  * Rate Limiting Service for OAuth Endpoints
  *
- * Implements IP-based sliding window rate limiting to protect auth endpoints
- * from abuse (brute force attacks, credential stuffing, etc.)
+ * Implements IP-based rate limiting to protect auth endpoints from abuse
+ * (brute force attacks, credential stuffing, etc.)
  *
- * REFACTOR-002: Uses @xivdyetools/rate-limiter shared package
+ * REFACTOR-002: Uses @xivdyetools/worker-kit/rate-limiter shared package
  * REFACTOR-006/OPT-004 (2026-07-18 audit): the dead Durable Object limiter was
- * deleted. When a KV namespace is provided (TOKEN_BLACKLIST, under an 'rl:'
- * prefix so keys can't collide with revocation entries), limiting is backed
- * by KV so counters are globally meaningful instead of per-isolate — a
- * per-isolate memory limiter let distributed attackers exceed the configured
- * limits by a large multiple. Falls back to the in-memory limiter when no KV
- * is bound (dev/tests); KV errors fail open inside KVRateLimiter.
+ * deleted; KV-backed counters replaced the per-isolate memory limiter.
  *
- * Limits:
- * - /auth/discord: 10 req/min per IP (initiate login)
- * - /auth/callback: 20 req/min per IP (token exchange)
- * - /auth/refresh: 30 req/min per IP (token refresh)
+ * FINDING-003 (2026-08-21 security audit): KV cannot throttle a fast client
+ * (1 write/s/key, swallowed put failures, eventually-consistent reads, fail-open),
+ * so the auth endpoints were effectively unthrottled against the one pattern
+ * that matters here — a single client hammering token exchange. Backend
+ * selection is now, in order:
+ *   1. native Workers Rate Limiting bindings (`RL_AUTH_10` / `RL_AUTH_20` /
+ *      `RL_AUTH_30`, one per distinct per-minute limit; atomic, per-colo)
+ *   2. KV (`TOKEN_BLACKLIST` under an 'rl:' prefix) — legacy fallback
+ *   3. per-isolate memory (dev/tests)
+ *
+ * Limits (per IP, per path — see OAUTH_LIMITS):
+ * - /auth/discord, /auth/xivauth: 10 req/min (initiate login)
+ * - /auth/callback, /auth/xivauth/callback: 20 req/min (token exchange)
+ * - /auth/refresh and everything else: 30 req/min
  */
 
 import {
   MemoryRateLimiter,
   KVRateLimiter,
+  CloudflareRateLimiter,
   getClientIp as sharedGetClientIp,
   getOAuthLimit,
   type RateLimiter,
+  type CloudflareRateLimitTier,
 } from '@xivdyetools/worker-kit/rate-limiter';
+import type { Env } from '../types.js';
 
 /**
  * Rate limit check result
@@ -38,7 +46,36 @@ export interface RateLimitResult {
 }
 
 /**
- * Fallback in-memory limiter (per-isolate; dev/tests or missing KV binding)
+ * Backends available to the limiter, in priority order (see module doc).
+ */
+export interface RateLimitBackends {
+  /** Native Workers Rate Limiting bindings, one tier per distinct limit */
+  cloudflare?: CloudflareRateLimitTier[];
+  /** KV namespace for globally consistent counters (legacy fallback) */
+  kv?: KVNamespace;
+}
+
+/** Key prefix shared by the KV and binding backends (keeps KV keys clear of revocation entries). */
+const KEY_PREFIX = 'rl:';
+
+/**
+ * Map the worker's `RL_AUTH_*` bindings to limiter tiers. Any subset works —
+ * the limiter routes each config to the smallest tier that fits and falls
+ * back to the largest — but production binds all three so every OAUTH_LIMITS
+ * value has an exact tier.
+ */
+export function oauthRateLimitTiers(
+  env: Pick<Env, 'RL_AUTH_10' | 'RL_AUTH_20' | 'RL_AUTH_30'>
+): CloudflareRateLimitTier[] {
+  const tiers: CloudflareRateLimitTier[] = [];
+  if (env.RL_AUTH_10) tiers.push({ limit: 10, periodSeconds: 60, binding: env.RL_AUTH_10 });
+  if (env.RL_AUTH_20) tiers.push({ limit: 20, periodSeconds: 60, binding: env.RL_AUTH_20 });
+  if (env.RL_AUTH_30) tiers.push({ limit: 30, periodSeconds: 60, binding: env.RL_AUTH_30 });
+  return tiers;
+}
+
+/**
+ * Fallback in-memory limiter (per-isolate; dev/tests or no binding/KV)
  */
 const memoryLimiter = new MemoryRateLimiter({
   maxEntries: 10_000,
@@ -46,17 +83,29 @@ const memoryLimiter = new MemoryRateLimiter({
 });
 
 /**
- * Per-isolate KVRateLimiter instance cache — the instance is cheap but there
- * is no reason to reconstruct it per request. State lives in KV, not here.
+ * Per-isolate instance caches — the instances are cheap but there is no
+ * reason to reconstruct them per request. State lives in the binding / KV.
  */
 let kvLimiter: KVRateLimiter | null = null;
+let cloudflareLimiter: CloudflareRateLimiter | null = null;
 
-function getLimiter(kv?: KVNamespace): RateLimiter {
-  if (!kv) return memoryLimiter;
-  if (!kvLimiter) {
-    kvLimiter = new KVRateLimiter({ kv, keyPrefix: 'rl:' });
+function getLimiter(backends: RateLimitBackends | undefined): RateLimiter {
+  if (backends?.cloudflare && backends.cloudflare.length > 0) {
+    if (!cloudflareLimiter) {
+      cloudflareLimiter = new CloudflareRateLimiter({
+        tiers: backends.cloudflare,
+        keyPrefix: KEY_PREFIX,
+      });
+    }
+    return cloudflareLimiter;
   }
-  return kvLimiter;
+  if (backends?.kv) {
+    if (!kvLimiter) {
+      kvLimiter = new KVRateLimiter({ kv: backends.kv, keyPrefix: KEY_PREFIX });
+    }
+    return kvLimiter;
+  }
+  return memoryLimiter;
 }
 
 /**
@@ -74,19 +123,19 @@ export function getClientIp(request: Request): string {
  *
  * @param ip - Client IP address
  * @param path - Request path (e.g., "/auth/discord")
- * @param kv - Optional KV namespace for globally consistent counters (OPT-004)
+ * @param backends - Optional backends (bindings preferred, then KV); memory when omitted
  * @returns Rate limit result
  */
 export async function checkRateLimit(
   ip: string,
   path: string,
-  kv?: KVNamespace
+  backends?: RateLimitBackends
 ): Promise<RateLimitResult> {
   const config = getOAuthLimit(path);
   // Use compound key for path-specific rate limiting
   const key = `${ip}:${path}`;
 
-  const result = await getLimiter(kv).check(key, config);
+  const result = await getLimiter(backends).check(key, config);
 
   return {
     allowed: result.allowed,
@@ -102,4 +151,5 @@ export async function checkRateLimit(
 export async function resetRateLimiter(): Promise<void> {
   await memoryLimiter.resetAll();
   kvLimiter = null;
+  cloudflareLimiter = null;
 }
